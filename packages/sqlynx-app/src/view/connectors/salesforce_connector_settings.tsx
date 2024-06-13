@@ -1,4 +1,6 @@
 import * as React from 'react';
+import * as symbols from '../../../static/svg/symbols.generated.svg';
+import * as style from './connector_settings.module.css';
 
 import { FileSymlinkFileIcon, KeyIcon, PlugIcon, XIcon } from '@primer/octicons-react';
 
@@ -20,9 +22,9 @@ import { classNames } from '../../utils/classnames.js';
 import { useLogger } from '../../platform/logger_provider.js';
 import { Logger } from '../../platform/logger.js';
 import { ConnectionHealth, ConnectionStatus } from '../../connectors/connection_status.js';
-
-import * as symbols from '../../../static/svg/symbols.generated.svg';
-import * as style from './connector_settings.module.css';
+import { useSessionStates } from '../../session/session_state_registry.js';
+import { useCurrentSessionSelector } from '../../session/current_session.js';
+import { useNavigate } from 'react-router-dom';
 import { Button, ButtonVariant } from '../base/button.js';
 
 const LOG_CTX = "sf_connector";
@@ -162,6 +164,24 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
         });
     };
 
+    // Find any session that is associated with the connection id
+    const sessionRegistry = useSessionStates();
+    let anySessionWithThisConnection: number | null = null;
+    const sessionsWithThisConnection = sessionRegistry.sessionsByConnection.get(connectionId) ?? [];
+    if (sessionsWithThisConnection.length > 0) {
+        anySessionWithThisConnection = sessionsWithThisConnection[0];
+    }
+
+    // Helper to switch to the editor
+    const selectCurrentSession = useCurrentSessionSelector();
+    const navigate = useNavigate()
+    const switchToEditor = React.useCallback(() => {
+        if (anySessionWithThisConnection != null) {
+            selectCurrentSession(anySessionWithThisConnection);
+            navigate("/editor");
+        }
+    }, [anySessionWithThisConnection]);
+
     // Get the connection status
     const statusText = getConnectionStatusText(salesforceConnection?.connectionStatus, logger);
 
@@ -183,19 +203,19 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
     }
 
     // Get the action button
-    let connnectButton: React.ReactElement = <div />;
+    let connectButton: React.ReactElement = <div />;
     let freezeInput = false;
     switch (salesforceConnection?.connectionHealth) {
         case ConnectionHealth.NOT_STARTED:
         case ConnectionHealth.FAILED:
-            connnectButton = <Button variant={ButtonVariant.Primary} leadingVisual={PlugIcon} onClick={startAuth}>Connect</Button>;
+            connectButton = <Button variant={ButtonVariant.Primary} leadingVisual={PlugIcon} onClick={startAuth}>Connect</Button>;
             break;
         case ConnectionHealth.CONNECTING:
-            connnectButton = <Button variant={ButtonVariant.Danger} leadingVisual={XIcon} onClick={cancelAuth}>Cancel</Button>;
+            connectButton = <Button variant={ButtonVariant.Danger} leadingVisual={XIcon} onClick={cancelAuth}>Cancel</Button>;
             freezeInput = true;
             break;
         case ConnectionHealth.ONLINE:
-            connnectButton = <Button variant={ButtonVariant.Danger} leadingVisual={XIcon} onClick={resetAuth}>Disconnect</Button>;
+            connectButton = <Button variant={ButtonVariant.Danger} leadingVisual={XIcon} onClick={resetAuth}>Disconnect</Button>;
             freezeInput = true;
             break;
     }
@@ -214,9 +234,9 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
                 </div>
                 <div className={style.platform_actions}>
                     {(salesforceConnection?.connectionHealth == ConnectionHealth.ONLINE) && (
-                        <Button variant={ButtonVariant.Default} leadingVisual={FileSymlinkFileIcon}>Open Editor</Button>
+                        <Button variant={ButtonVariant.Default} leadingVisual={FileSymlinkFileIcon} onClick={switchToEditor}>Open Editor</Button>
                     )}
-                    {connnectButton}
+                    {connectButton}
                 </div>
             </div>
             <div className={style.status_container}>

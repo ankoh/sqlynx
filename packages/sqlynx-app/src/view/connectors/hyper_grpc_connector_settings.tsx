@@ -1,5 +1,7 @@
 import * as React from 'react';
 import * as Immutable from 'immutable';
+import * as symbols from '../../../static/svg/symbols.generated.svg';
+import * as style from './connector_settings.module.css';
 
 import {
     ChecklistIcon,
@@ -41,9 +43,9 @@ import {
 import { HYPER_GRPC_CONNECTOR } from '../../connectors/connector_info.js';
 import { HyperGrpcConnectionParams } from '../../connectors/connection_params.js';
 import { ConnectionHealth, ConnectionStatus } from '../../connectors/connection_status.js';
-
-import * as symbols from '../../../static/svg/symbols.generated.svg';
-import * as style from './connector_settings.module.css';
+import { useSessionStates } from '../../session/session_state_registry.js';
+import { useCurrentSessionSelector } from '../../session/current_session.js';
+import { useNavigate } from 'react-router-dom';
 import { Logger } from '../../platform/logger.js';
 
 const LOG_CTX = "hyper_connector";
@@ -105,6 +107,7 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
     const modifyAttachedDbs: Dispatch<UpdateKeyValueList> = (action: UpdateKeyValueList) => setPageState(s => ({ ...s, attachedDatabases: action(s.attachedDatabases) }));
     const modifyGrpcMetadata: Dispatch<UpdateKeyValueList> = (action: UpdateKeyValueList) => setPageState(s => ({ ...s, gRPCMetadata: action(s.gRPCMetadata) }));
 
+    // Helper to setup the connection
     const setupConnection = async () => {
         // Helper to dispatch actions against the connection state
         const modifyState = (action: HyperGrpcConnectorAction) => {
@@ -217,6 +220,24 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
         });
     };
 
+    // Find any session that is associated with the connection id
+    const sessionRegistry = useSessionStates();
+    let anySessionWithThisConnection: number | null = null;
+    const sessionsWithThisConnection = sessionRegistry.sessionsByConnection.get(connectionId) ?? [];
+    if (sessionsWithThisConnection.length > 0) {
+        anySessionWithThisConnection = sessionsWithThisConnection[0];
+    }
+
+    // Helper to switch to the editor
+    const selectCurrentSession = useCurrentSessionSelector();
+    const navigate = useNavigate()
+    const switchToEditor = React.useCallback(() => {
+        if (anySessionWithThisConnection != null) {
+            selectCurrentSession(anySessionWithThisConnection);
+            navigate("/editor");
+        }
+    }, [anySessionWithThisConnection]);
+
     // Get the connection status
     const statusText: string = getConnectionStatusText(hyperConnection?.connectionStatus, logger);
 
@@ -268,7 +289,7 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
                 </div>
                 <div className={style.platform_actions}>
                     {(hyperConnection?.connectionHealth == ConnectionHealth.ONLINE) && (
-                        <Button variant={ButtonVariant.Default} leadingVisual={FileSymlinkFileIcon}>Open Editor</Button>
+                        <Button variant={ButtonVariant.Default} leadingVisual={FileSymlinkFileIcon} onClick={switchToEditor}>Open Editor</Button>
                     )}
                     {connectButton}
                 </div>
