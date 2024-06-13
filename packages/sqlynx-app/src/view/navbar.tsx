@@ -13,6 +13,7 @@ import { useConnectionState } from '../connectors/connection_registry.js';
 
 import * as styles from './navbar.module.css';
 import * as symbols from '../../static/svg/symbols.generated.svg';
+import { useAppConfig } from '../app_config.js';
 
 const PageTab = (props: { route: string; alt?: string; location: string; icon: string; label: string | null }) => (
     <div
@@ -86,6 +87,7 @@ export const NavBar = (): React.ReactElement => {
     const platformType = usePlatformType();
     const [sessionState, _modifySessionState] = useCurrentSessionState();
     const [connectionState, _setConnectionState] = useConnectionState(sessionState?.connectionId ?? null);
+    const appConfig = useAppConfig();
 
     const isBrowser = platformType === PlatformType.WEB;
     const isMac = platformType === PlatformType.MACOS;
@@ -104,7 +106,9 @@ export const NavBar = (): React.ReactElement => {
                 data-tauri-drag-region="true"
             >
                 <PageTab label="Editor" route="/" location={location.pathname} icon={`${symbols}#file`} />
-                <PageTab label="Files" route="/files" location={location.pathname} icon={`${symbols}#folder`} />
+                {appConfig.isResolved() && appConfig.value?.features?.files && (
+                    <PageTab label="Files" route="/files" location={location.pathname} icon={`${symbols}#folder`} />
+                )}
                 <PageTab label="Connectors" route="/connectors" location={location.pathname} icon={`${symbols}#database`} />
             </div>
             <div className={styles.version_container}>
