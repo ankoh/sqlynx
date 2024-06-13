@@ -54,15 +54,15 @@ export function SessionListDropdown(props: { className?: string; short: boolean 
     ), [sessionState?.connectorInfo, connectorName]);
 
     const renderItem = ([sessionId, session]: [number, SessionState]) => {
-        const connection = connRegistry.get(session.connectionId);
+        const connection = connRegistry.connectionMap.get(session.connectionId)!;
         let description: React.ReactElement | undefined = undefined;
         let enabled: boolean = true;
 
-        switch (connection!.type) {
+        switch (connection.details.type) {
             case SALESFORCE_DATA_CLOUD_CONNECTOR: {
-                enabled = connection!.value.connectionHealth === ConnectionHealth.ONLINE;
+                enabled = connection.connectionHealth === ConnectionHealth.ONLINE;
                 if (enabled) {
-                    const dcTenant = connection!.value.dataCloudAccessToken?.dcTenantId;
+                    const dcTenant = connection.details.value.dataCloudAccessToken?.dcTenantId;
                     description = (
                         <ActionList.ItemTextDescription>
                             {dcTenant ? dcTenant : "-"}
@@ -78,9 +78,9 @@ export function SessionListDropdown(props: { className?: string; short: boolean 
                 break;
             }
             case HYPER_GRPC_CONNECTOR: {
-                enabled = connection!.value.connectionHealth === ConnectionHealth.ONLINE;
+                enabled = connection.connectionHealth === ConnectionHealth.ONLINE;
                 if (enabled) {
-                    const endpoint = connection!.value.channelSetupParams?.channel.endpoint;
+                    const endpoint = connection.details.value.channelSetupParams?.channel.endpoint;
                     description = (
                         <ActionList.ItemTextDescription>
                             {endpoint ? endpoint : "-"}

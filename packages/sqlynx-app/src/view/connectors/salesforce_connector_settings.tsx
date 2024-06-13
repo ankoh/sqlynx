@@ -7,14 +7,14 @@ import { FileSymlinkFileIcon, KeyIcon, PlugIcon, XIcon } from '@primer/octicons-
 import { useConnectionState } from '../../connectors/connection_registry.js';
 import { useSalesforceConnectionId } from '../../connectors/salesforce_connector.js';
 import { useSalesforceAuthFlow } from '../../connectors/salesforce_auth_flow.js';
-import { asSalesforceConnection, ConnectionState } from '../../connectors/connection_state.js';
+import { ConnectionState } from '../../connectors/connection_state.js';
 import { SalesforceAuthParams } from '../../connectors/connection_params.js';
 import {
+    asSalesforceConnection,
     reduceSalesforceConnectionState,
     RESET,
     SalesforceConnectionStateAction,
 } from '../../connectors/salesforce_connection_state.js';
-import { SALESFORCE_DATA_CLOUD_CONNECTOR } from '../../connectors/connector_info.js';
 import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_UNKNOWN } from '../base/text_field.js';
 import { IndicatorStatus, StatusIndicator } from '../base/status_indicator.js';
 import { Dispatch } from '../../utils/variant.js';
@@ -127,13 +127,7 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
 
         // Helper to dispatch auth state actions against the connection state
         const salesforceAuthDispatch = (action: SalesforceConnectionStateAction) => {
-            setConnectionState((c: ConnectionState) => {
-                const s = asSalesforceConnection(c)!;
-                return {
-                    type: SALESFORCE_DATA_CLOUD_CONNECTOR,
-                    value: reduceSalesforceConnectionState(s, action)
-                };
-            });
+            setConnectionState((s: ConnectionState) => reduceSalesforceConnectionState(s, action));
         };
         // Authorize the client
         authAbortController.current = new AbortController();
@@ -155,13 +149,7 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
     };
     // Helper to reset the authorization
     const resetAuth = () => {
-        setConnectionState((c: ConnectionState) => {
-            const s = asSalesforceConnection(c)!;
-            return {
-                type: SALESFORCE_DATA_CLOUD_CONNECTOR,
-                value: reduceSalesforceConnectionState(s, { type: RESET, value: null })
-            };
-        });
+        setConnectionState((s: ConnectionState) => reduceSalesforceConnectionState(s, { type: RESET, value: null }));
     };
 
     // Find any session that is associated with the connection id
@@ -183,11 +171,11 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
     }, [anySessionWithThisConnection]);
 
     // Get the connection status
-    const statusText = getConnectionStatusText(salesforceConnection?.connectionStatus, logger);
+    const statusText = getConnectionStatusText(connectionState?.connectionStatus, logger);
 
     // Get the indicator status
     let indicatorStatus: IndicatorStatus = IndicatorStatus.None;
-    switch (salesforceConnection?.connectionHealth) {
+    switch (connectionState?.connectionHealth) {
         case ConnectionHealth.NOT_STARTED:
             indicatorStatus = IndicatorStatus.None;
             break;
@@ -205,7 +193,7 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
     // Get the action button
     let connectButton: React.ReactElement = <div />;
     let freezeInput = false;
-    switch (salesforceConnection?.connectionHealth) {
+    switch (connectionState?.connectionHealth) {
         case ConnectionHealth.NOT_STARTED:
         case ConnectionHealth.FAILED:
             connectButton = <Button variant={ButtonVariant.Primary} leadingVisual={PlugIcon} onClick={startAuth}>Connect</Button>;
@@ -233,7 +221,7 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
                     Salesforce Data Cloud
                 </div>
                 <div className={style.platform_actions}>
-                    {(salesforceConnection?.connectionHealth == ConnectionHealth.ONLINE) && (
+                    {(connectionState?.connectionHealth == ConnectionHealth.ONLINE) && (
                         <Button variant={ButtonVariant.Default} leadingVisual={FileSymlinkFileIcon} onClick={switchToEditor}>Open Editor</Button>
                     )}
                     {connectButton}

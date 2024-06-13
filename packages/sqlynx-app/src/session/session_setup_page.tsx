@@ -14,14 +14,10 @@ import {
     requiresSwitchingToNative,
     SALESFORCE_DATA_CLOUD_CONNECTOR,
 } from '../connectors/connector_info.js';
-import {
-    asSalesforceConnection,
-    checkSalesforceAuth,
-    ConnectionState,
-    ConnectorAuthCheck,
-} from '../connectors/connection_state.js';
+import { checkSalesforceAuth, ConnectionState, ConnectorAuthCheck } from '../connectors/connection_state.js';
 import { generateSessionSetupUrl, SessionLinkTarget } from './session_setup_url.js';
 import {
+    asSalesforceConnection,
     reduceSalesforceConnectionState,
     SalesforceConnectionStateAction,
 } from '../connectors/salesforce_connection_state.js';
@@ -114,13 +110,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                 }
                 // Helper to dispatch auth state actions against the connection state
                 const salesforceAuthDispatch = (action: SalesforceConnectionStateAction) => {
-                    setConnectionState((c: ConnectionState) => {
-                        const s = asSalesforceConnection(c)!;
-                        return {
-                            type: SALESFORCE_DATA_CLOUD_CONNECTOR,
-                            value: reduceSalesforceConnectionState(s, action)
-                        }
-                    });
+                    setConnectionState(s => reduceSalesforceConnectionState(s, action));
                 };
                 // Authorize the client
                 const abortController = new AbortController();

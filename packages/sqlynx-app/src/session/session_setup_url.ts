@@ -1,7 +1,7 @@
 import * as proto from '@ankoh/sqlynx-pb';
 
 import { SessionState, ScriptData, ScriptKey } from './session_state.js';
-import { ConnectionState, buildConnectorParams } from '../connectors/connection_state.js';
+import { ConnectionDetailsVariant, buildConnectorParams, ConnectionState } from '../connectors/connection_state.js';
 import { BASE64_CODEC } from '../utils/base64.js';
 
 export enum SessionLinkTarget {
@@ -10,7 +10,7 @@ export enum SessionLinkTarget {
 }
 
 export function generateSessionSetupUrl(sessionState: SessionState, connection: ConnectionState, target: SessionLinkTarget): URL {
-    const connectorParams = buildConnectorParams(connection);
+    const connectorParams = buildConnectorParams(connection.details);
     const scripts: proto.sqlynx_session.pb.SessionScript[] = [];
     const addScript = (script: ScriptData | null) => {
         if (script != null) {

@@ -10,7 +10,6 @@ import {
     QueryExecutionTaskVariant,
 } from '../connectors/query_execution.js';
 import { useSalesforceAPI, useSalesforceConnectionId } from '../connectors/salesforce_connector.js';
-import { asSalesforceConnection } from '../connectors/connection_state.js';
 import { ConnectorType, SALESFORCE_DATA_CLOUD_CONNECTOR } from '../connectors/connector_info.js';
 import {
     QUERY_EXECUTION_ACCEPTED,
@@ -23,6 +22,7 @@ import {
     QUERY_EXECUTION_SUCCEEDED,
 } from './session_state_reducer.js';
 import { ScriptKey } from './session_state.js';
+import { asSalesforceConnection } from '../connectors/salesforce_connection_state.js';
 
 export const QueryExecutor = (props: { children?: React.ReactElement }) => {
     const [state, dispatch] = useCurrentSessionState();

@@ -8,7 +8,6 @@ import {
     FULL_CATALOG_REFRESH,
 } from '../connectors/catalog_update.js';
 import { SALESFORCE_DATA_CLOUD_CONNECTOR } from '../connectors/connector_info.js';
-import { asSalesforceConnection } from '../connectors/connection_state.js';
 import { useCurrentSessionState } from './current_session.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
 import { useSalesforceAPI, useSalesforceConnectionId } from '../connectors/salesforce_connector.js';
@@ -18,6 +17,7 @@ import {
     CATALOG_UPDATE_STARTED,
     CATALOG_UPDATE_SUCCEEDED,
 } from './session_state_reducer.js';
+import { asSalesforceConnection } from '../connectors/salesforce_connection_state.js';
 
 export const CatalogLoader = (props: { children?: React.ReactElement }) => {
     const [state, dispatch] = useCurrentSessionState();
