@@ -6,11 +6,11 @@ import { IconButton, ProgressBar } from '@primer/react';
 
 import { SQLYNX_GIT_COMMIT, SQLYNX_VERSION } from '../globals.js';
 import { InstallableUpdate, InstallationState, InstallationStatus, useCanaryReleaseManifest, useCanaryUpdateManifest, useInstallationStatus, useStableReleaseManifest, useStableUpdateManifest } from '../platform/version_check.js';
-import { Button } from './base/button.js';
+import { Button } from './foundations/button.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 import { ReleaseManifest } from '../platform/web_version_check.js';
 import { RESULT_ERROR, RESULT_OK, Result } from '../utils/result.js';
-import { StatusIndicator, IndicatorStatus } from './base/status_indicator.js';
+import { StatusIndicator, IndicatorStatus } from './foundations/status_indicator.js';
 import { ReleaseBundles } from './release_bundle.js';
 
 import * as symbols from '../../static/svg/symbols.generated.svg';

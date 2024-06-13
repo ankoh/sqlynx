@@ -3,8 +3,8 @@ import * as React from 'react';
 import { Box, IconButton } from '@primer/react';
 import { DownloadIcon, FileIcon } from '@primer/octicons-react';
 
-import { AnchoredOverlay } from '../base/anchored_overlay.js';
-import { AnchorAlignment } from '../base/anchored_position.js';
+import { AnchoredOverlay } from '../foundations/anchored_overlay.js';
+import { AnchorAlignment } from '../foundations/anchored_position.js';
 import { classNames } from '../../utils/classnames.js';
 
 import * as styles from './script_filesave_overlay.module.css';

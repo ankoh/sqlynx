@@ -14,18 +14,18 @@ import {
 } from '@primer/octicons-react';
 
 import { classNames } from '../../utils/classnames.js';
-import { KeyValueTextField, TextField } from '../base/text_field.js';
+import { KeyValueTextField, TextField } from '../foundations/text_field.js';
 import { useLogger } from '../../platform/logger_provider.js';
 import { useHyperDatabaseClient } from '../../platform/hyperdb_client_provider.js';
-import { KeyValueListBuilder, KeyValueListElement, UpdateKeyValueList } from '../base/keyvalue_list.js';
-import { IndicatorStatus, StatusIndicator } from '../base/status_indicator.js';
+import { KeyValueListBuilder, KeyValueListElement, UpdateKeyValueList } from '../foundations/keyvalue_list.js';
+import { IndicatorStatus, StatusIndicator } from '../foundations/status_indicator.js';
 import { Dispatch } from '../../utils/variant.js';
 import {
     AttachedDatabase,
     HyperDatabaseChannel,
     HyperDatabaseConnectionContext,
 } from '../../platform/hyperdb_client.js';
-import { Button, ButtonVariant } from '../base/button.js';
+import { Button, ButtonVariant } from '../foundations/button.js';
 import { useHyperGrpcConnectionId } from '../../connectors/hyper_grpc_connector.js';
 import { useConnectionState } from '../../connectors/connection_registry.js';
 import { ConnectionDetailsVariant, ConnectionState } from '../../connectors/connection_state.js';

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as ActionList from '../base/action_list.js'
+import * as ActionList from '../foundations/action_list.js'
 import * as styles from './ui_internals_page.module.css';
 
 import {
@@ -12,9 +12,9 @@ import {
 } from '@primer/octicons-react';
 import { ActionList as GHAL, Button as GHButton } from '@primer/react';
 
-import { TextInput, TextInputValidationStatus } from '../base/text_input.js';
-import { TextInputAction } from '../base/text_input_action.js';
-import { Button, ButtonSize, ButtonVariant } from '../base/button.js';
+import { TextInput, TextInputValidationStatus } from '../foundations/text_input.js';
+import { TextInputAction } from '../foundations/text_input_action.js';
+import { Button, ButtonSize, ButtonVariant } from '../foundations/button.js';
 
 export function UIInternalsPage(): React.ReactElement {
     return <div className={styles.root}>

@@ -34,8 +34,8 @@ describe('Native gRPC client', () => {
         }, logger);
         expect(async () => await client.connect(testChannelArgs, fakeMetadataProvider)).resolves;
     });
-    // Make sure channel creation fails with wrong base url
-    it("fails to create a channel with invalid base URL", () => {
+    // Make sure channel creation fails with wrong foundations url
+    it("fails to create a channel with invalid foundations URL", () => {
         const logger = new TestLogger();
         const client = new NativeGrpcClient({
             proxyEndpoint: new URL("not-sqlynx-native://localhost")

@@ -3,7 +3,7 @@ import * as React from "react";
 import { CheckIcon, CopyIcon, Icon } from "@primer/octicons-react";
 
 import { useLogger } from "../platform/logger_provider.js";
-import { TextInputAction } from '../view/base/text_input_action.js';
+import { TextInputAction } from '../view/foundations/text_input_action.js';
 
 const DEFAULT_COPY_TIMEOUT = 2000;
 

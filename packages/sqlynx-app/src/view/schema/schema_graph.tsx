@@ -2,7 +2,7 @@ import * as React from 'react';
 import { NodeLayer } from './node_layer.js';
 import { EdgeHighlightingLayer, EdgeLayer } from './edge_layer.js';
 import { GraphNodeDescriptor } from './graph_view_model.js';
-import { observeSize } from '../base/size_observer.js';
+import { observeSize } from '../foundations/size_observer.js';
 import { useCurrentSessionState } from '../../session/current_session.js';
 import {
     FOCUS_QUERY_GRAPH_EDGE,

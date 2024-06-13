@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as ActionList from '../base/action_list.js';
+import * as ActionList from '../foundations/action_list.js';
 import * as styles from './editor_page.module.css';
 import * as theme from '../../github_theme.module.css';
 import * as icons from '../../../static/svg/symbols.generated.svg';
@@ -23,7 +23,7 @@ import { SchemaGraph } from '../schema/schema_graph.js';
 import { QueryProgress } from '../progress/query_progress.js';
 import { DataTable } from '../table/data_table.js';
 import { KeyEventHandler, useKeyEvents } from '../../utils/key_events.js';
-import { VerticalTabs, VerticalTabVariant } from '../base/vertical_tabs.js';
+import { VerticalTabs, VerticalTabVariant } from '../foundations/vertical_tabs.js';
 import { ScriptFileSaveOverlay } from './script_filesave_overlay.js';
 import { ScriptURLOverlay } from './script_url_overlay.js';
 import { useAppConfig } from '../../app_config.js';

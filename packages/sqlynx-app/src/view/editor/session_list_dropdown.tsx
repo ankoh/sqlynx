@@ -1,10 +1,10 @@
 import * as React from 'react';
-import * as ActionList from '../base/action_list.js';
+import * as ActionList from '../foundations/action_list.js';
 
 import { useCurrentSessionSelector, useCurrentSessionState } from '../../session/current_session.js';
 import { useSessionStates } from '../../session/session_state_registry.js';
-import { AnchoredOverlay } from '../base/anchored_overlay.js';
-import { Button, ButtonVariant } from '../base/button.js';
+import { AnchoredOverlay } from '../foundations/anchored_overlay.js';
+import { Button, ButtonVariant } from '../foundations/button.js';
 import { ConnectorIcon, ConnectorIconVariant } from '../connectors/connector_icons.js';
 import {
     HYPER_GRPC_CONNECTOR,

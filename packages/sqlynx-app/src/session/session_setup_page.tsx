@@ -24,12 +24,12 @@ import {
 import { SalesforceAuthParams } from '../connectors/connection_params.js';
 import { SQLYNX_VERSION } from '../globals.js';
 import { REPLACE_SCRIPT_CONTENT } from './session_state_reducer.js';
-import { TextField } from '../view/base/text_field.js';
+import { TextField } from '../view/foundations/text_field.js';
 import { LogViewerInPortal } from '../view/log_viewer.js';
 
 import * as page_styles from '../view/banner_page.module.css';
 import * as symbols from '../../static/svg/symbols.generated.svg';
-import { Button, ButtonVariant } from '../view/base/button.js';
+import { Button, ButtonVariant } from '../view/foundations/button.js';
 
 const LOG_CTX = "session_setup";
 const AUTOTRIGGER_DELAY = 2000;
