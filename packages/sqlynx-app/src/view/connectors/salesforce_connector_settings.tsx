@@ -10,7 +10,7 @@ import { useSalesforceAuthFlow } from '../../connectors/salesforce_auth_flow.js'
 import { ConnectionState } from '../../connectors/connection_state.js';
 import { SalesforceAuthParams } from '../../connectors/connection_params.js';
 import {
-    asSalesforceConnection,
+    getSalesforceConnectionDetails,
     reduceSalesforceConnectionState,
     RESET,
     SalesforceConnectionStateAction,
@@ -75,7 +75,7 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
     const logger = useLogger();
     const connectionId = useSalesforceConnectionId();
     const [connectionState, setConnectionState] = useConnectionState(connectionId);
-    const salesforceConnection = asSalesforceConnection(connectionState);
+    const salesforceConnection = getSalesforceConnectionDetails(connectionState);
     const salesforceAuthFlow = useSalesforceAuthFlow();
 
     // Wire up the page state

@@ -1,7 +1,7 @@
 import * as proto from '@ankoh/sqlynx-pb';
 
-import { HyperGrpcConnectionState } from './hyper_grpc_connection_state.js';
-import { SalesforceConnectionState } from './salesforce_connection_state.js';
+import { HyperGrpcConnectionDetails } from './hyper_grpc_connection_state.js';
+import { SalesforceConnectionDetails } from './salesforce_connection_state.js';
 import { ConnectionStatistics, createConnectionStatistics } from './connection_statistics.js';
 import { VariantKind } from '../utils/variant.js';
 import { HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, SERVERLESS_CONNECTOR } from './connector_info.js';
@@ -13,9 +13,9 @@ import {
 import { ConnectionHealth, ConnectionStatus } from './connection_status.js';
 
 export type ConnectionDetailsVariant =
-    | VariantKind<typeof SALESFORCE_DATA_CLOUD_CONNECTOR, SalesforceConnectionState>
+    | VariantKind<typeof SALESFORCE_DATA_CLOUD_CONNECTOR, SalesforceConnectionDetails>
     | VariantKind<typeof SERVERLESS_CONNECTOR, ServerlessConnectionState>
-    | VariantKind<typeof HYPER_GRPC_CONNECTOR, HyperGrpcConnectionState>
+    | VariantKind<typeof HYPER_GRPC_CONNECTOR, HyperGrpcConnectionDetails>
     ;
 
 export interface ConnectionState {
@@ -54,7 +54,7 @@ export enum ConnectorAuthCheck {
 }
 
 export function checkSalesforceAuth(
-    state: SalesforceConnectionState | null,
+    state: SalesforceConnectionDetails | null,
     params: proto.sqlynx_session.pb.SalesforceConnectorParams,
 ): ConnectorAuthCheck {
     if (!state) {

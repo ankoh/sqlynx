@@ -17,7 +17,7 @@ import {
     CATALOG_UPDATE_STARTED,
     CATALOG_UPDATE_SUCCEEDED,
 } from './session_state_reducer.js';
-import { asSalesforceConnection } from '../connectors/salesforce_connection_state.js';
+import { getSalesforceConnectionDetails } from '../connectors/salesforce_connection_state.js';
 
 export const CatalogLoader = (props: { children?: React.ReactElement }) => {
     const [state, dispatch] = useCurrentSessionState();
@@ -32,7 +32,7 @@ export const CatalogLoader = (props: { children?: React.ReactElement }) => {
         const catalog = state.catalog;
         const states: CatalogUpdateTaskState[] = [];
         const startedAt = new Date();
-        const sfconn = asSalesforceConnection(connection)!;
+        const sfconn = getSalesforceConnectionDetails(connection)!;
 
         for (const [taskId, requestVariant] of state.catalogUpdateRequests) {
             let task: CatalogUpdateTaskVariant;

@@ -17,7 +17,7 @@ import {
 import { checkSalesforceAuth, ConnectionState, ConnectorAuthCheck } from '../connectors/connection_state.js';
 import { generateSessionSetupUrl, SessionLinkTarget } from './session_setup_url.js';
 import {
-    asSalesforceConnection,
+    getSalesforceConnectionDetails,
     reduceSalesforceConnectionState,
     SalesforceConnectionStateAction,
 } from '../connectors/salesforce_connection_state.js';
@@ -85,7 +85,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     let connectorAuthCheck: ConnectorAuthCheck | null = null;
     switch (props.setupProto.connectorParams?.connector.case) {
         case "salesforce":
-            connectorAuthCheck = checkSalesforceAuth(asSalesforceConnection(connectionState), props.setupProto.connectorParams.connector.value);
+            connectorAuthCheck = checkSalesforceAuth(getSalesforceConnectionDetails(connectionState), props.setupProto.connectorParams.connector.value);
             break;
         default:
             break;

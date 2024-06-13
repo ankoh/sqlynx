@@ -22,7 +22,7 @@ import {
     QUERY_EXECUTION_SUCCEEDED,
 } from './session_state_reducer.js';
 import { ScriptKey } from './session_state.js';
-import { asSalesforceConnection } from '../connectors/salesforce_connection_state.js';
+import { getSalesforceConnectionDetails } from '../connectors/salesforce_connection_state.js';
 
 export const QueryExecutor = (props: { children?: React.ReactElement }) => {
     const [state, dispatch] = useCurrentSessionState();
@@ -39,7 +39,7 @@ export const QueryExecutor = (props: { children?: React.ReactElement }) => {
         let task: QueryExecutionTaskVariant;
         switch (state.connectorInfo.connectorType) {
             case ConnectorType.SALESFORCE_DATA_CLOUD: {
-                const sfconn = asSalesforceConnection(connection)!;
+                const sfconn = getSalesforceConnectionDetails(connection)!;
                 task = {
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {

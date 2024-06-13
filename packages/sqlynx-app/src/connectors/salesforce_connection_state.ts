@@ -58,7 +58,7 @@ export function createSalesforceAuthTimings(): SalesforceAuthTimings {
     };
 }
 
-export interface SalesforceConnectionState {
+export interface SalesforceConnectionDetails {
     /// The timings
     authTimings: SalesforceAuthTimings;
     /// The auth params
@@ -93,7 +93,7 @@ export function createSalesforceConnectorState(): ConnectionStateWithoutId {
     });
 }
 
-export function asSalesforceConnection(state: ConnectionState | null): SalesforceConnectionState | null {
+export function getSalesforceConnectionDetails(state: ConnectionState | null): SalesforceConnectionDetails | null {
     if (state == null) return null;
     switch (state.details.type) {
         case SALESFORCE_DATA_CLOUD_CONNECTOR: return state.details.value;
@@ -133,7 +133,7 @@ export type SalesforceConnectionStateAction =
     | VariantKind<typeof RECEIVED_DATA_CLOUD_ACCESS_TOKEN, SalesforceDataCloudAccessToken>;
 
 export function reduceSalesforceConnectionState(state: ConnectionState, action: SalesforceConnectionStateAction): ConnectionState {
-    const details = state.details.value as SalesforceConnectionState;
+    const details = state.details.value as SalesforceConnectionDetails;
     switch (action.type) {
         case RESET:
             return {

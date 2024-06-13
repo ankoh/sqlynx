@@ -24,7 +24,7 @@ export interface HyperGrpcSetupTimings {
     healthCheckSucceededAt: Date | null;
 }
 
-export interface HyperGrpcConnectionState {
+export interface HyperGrpcConnectionDetails {
     /// The setup timings
     setupTimings: HyperGrpcSetupTimings;
     /// The auth params
@@ -59,7 +59,7 @@ export function createHyperGrpcConnectionState(): ConnectionStateWithoutId {
     });
 }
 
-export function asHyperGrpcConnection(state: ConnectionState | null): HyperGrpcConnectionState | null {
+export function getHyperGrpcConnectionDetails(state: ConnectionState | null): HyperGrpcConnectionDetails | null {
     if (state == null) return null;
     switch (state.details.type) {
         case HYPER_GRPC_CONNECTOR: return state.details.value;
@@ -90,7 +90,7 @@ export type HyperGrpcConnectorAction =
     ;
 
 export function reduceHyperGrpcConnectorState(state: ConnectionState, action: HyperGrpcConnectorAction): ConnectionState {
-    const details = state.details.value as HyperGrpcConnectionState;
+    const details = state.details.value as HyperGrpcConnectionDetails;
     switch (action.type) {
         case RESET:
             if (details.channel) {
