@@ -2,6 +2,8 @@ import { VariantKind } from '../utils/variant.js';
 import { HyperGrpcConnectionParams } from './connection_params.js';
 import { HyperDatabaseChannel } from '../platform/hyperdb_client.js';
 import { ConnectionHealth, ConnectionStatus } from './connection_status.js';
+import { HYPER_GRPC_CONNECTOR } from './connector_info.js';
+import { ConnectionState, ConnectionStateWithoutId, createConnectionState } from './connection_state.js';
 
 export interface HyperGrpcSetupTimings {
     /// The time when the channel setup started
@@ -23,10 +25,6 @@ export interface HyperGrpcSetupTimings {
 }
 
 export interface HyperGrpcConnectionState {
-    /// The connection state
-    connectionStatus: ConnectionStatus;
-    /// The connection health
-    connectionHealth: ConnectionHealth;
     /// The setup timings
     setupTimings: HyperGrpcSetupTimings;
     /// The auth params
@@ -39,24 +37,33 @@ export interface HyperGrpcConnectionState {
     healthCheckError: string | null;
 }
 
-export function createHyperGrpcConnectionState(): HyperGrpcConnectionState {
-    return {
-        connectionStatus: ConnectionStatus.NOT_STARTED,
-        connectionHealth: ConnectionHealth.NOT_STARTED,
-        setupTimings: {
-            channelSetupStartedAt: null,
-            channelSetupCancelledAt: null,
-            channelSetupFailedAt: null,
-            channelReadyAt: null,
-            healthCheckStartedAt: null,
-            healthCheckCancelledAt: null,
-            healthCheckFailedAt: null,
-            healthCheckSucceededAt: null,
-        },
-        channelSetupParams: null,
-        channelError: null,
-        channel: null,
-        healthCheckError: null,
+export function createHyperGrpcConnectionState(): ConnectionStateWithoutId {
+    return createConnectionState({
+        type: HYPER_GRPC_CONNECTOR,
+        value: {
+            setupTimings: {
+                channelSetupStartedAt: null,
+                channelSetupCancelledAt: null,
+                channelSetupFailedAt: null,
+                channelReadyAt: null,
+                healthCheckStartedAt: null,
+                healthCheckCancelledAt: null,
+                healthCheckFailedAt: null,
+                healthCheckSucceededAt: null,
+            },
+            channelSetupParams: null,
+            channelError: null,
+            channel: null,
+            healthCheckError: null,
+        }
+    });
+}
+
+export function asHyperGrpcConnection(state: ConnectionState | null): HyperGrpcConnectionState | null {
+    if (state == null) return null;
+    switch (state.details.type) {
+        case HYPER_GRPC_CONNECTOR: return state.details.value;
+        default: return null;
     }
 }
 
@@ -82,83 +89,116 @@ export type HyperGrpcConnectorAction =
     | VariantKind<typeof HEALTH_CHECK_SUCCEEDED, null>
     ;
 
-export function reduceHyperGrpcConnectorState(state: HyperGrpcConnectionState, action: HyperGrpcConnectorAction): HyperGrpcConnectionState {
+export function reduceHyperGrpcConnectorState(state: ConnectionState, action: HyperGrpcConnectorAction): ConnectionState {
+    const details = state.details.value as HyperGrpcConnectionState;
     switch (action.type) {
         case RESET:
-            if (state.channel) {
-                state.channel.close()
+            if (details.channel) {
+                details.channel.close();
             }
             return {
+                ...state,
                 connectionStatus: ConnectionStatus.NOT_STARTED,
                 connectionHealth: ConnectionHealth.NOT_STARTED,
-                setupTimings: {
-                    channelSetupStartedAt: new Date(),
-                    channelSetupCancelledAt: null,
-                    channelSetupFailedAt: null,
-                    channelReadyAt: null,
-                    healthCheckStartedAt: null,
-                    healthCheckCancelledAt: null,
-                    healthCheckFailedAt: null,
-                    healthCheckSucceededAt: null,
+                details: {
+                    type: HYPER_GRPC_CONNECTOR,
+                    value: {
+                        ...details,
+                        setupTimings: {
+                            channelSetupStartedAt: new Date(),
+                            channelSetupCancelledAt: null,
+                            channelSetupFailedAt: null,
+                            channelReadyAt: null,
+                            healthCheckStartedAt: null,
+                            healthCheckCancelledAt: null,
+                            healthCheckFailedAt: null,
+                            healthCheckSucceededAt: null,
+                        },
+                        channelSetupParams: details.channelSetupParams,
+                        channelError: null,
+                        channel: null,
+                        healthCheckError: null,
+                    }
                 },
-                channelSetupParams: state.channelSetupParams,
-                channelError: null,
-                channel: null,
-                healthCheckError: null,
             };
         case CHANNEL_SETUP_CANCELLED:
             return {
                 ...state,
                 connectionStatus: ConnectionStatus.CHANNEL_SETUP_CANCELLED,
                 connectionHealth: ConnectionHealth.CANCELLED,
-                setupTimings: {
-                    ...state.setupTimings,
-                    channelSetupCancelledAt: new Date(),
+                details: {
+                    type: HYPER_GRPC_CONNECTOR,
+                    value: {
+                        ...details,
+                        setupTimings: {
+                            ...details.setupTimings,
+                            channelSetupCancelledAt: new Date(),
+                        },
+                        channelError: action.value,
+                        channel: null
+                    }
                 },
-                channelError: action.value,
-                channel: null
             };
         case CHANNEL_SETUP_FAILED:
             return {
                 ...state,
                 connectionStatus: ConnectionStatus.CHANNEL_SETUP_FAILED,
                 connectionHealth: ConnectionHealth.FAILED,
-                setupTimings: {
-                    ...state.setupTimings,
-                    channelSetupFailedAt: new Date(),
+                details: {
+                    type: HYPER_GRPC_CONNECTOR,
+                    value: {
+                        ...details,
+                        setupTimings: {
+                            ...details.setupTimings,
+                            channelSetupFailedAt: new Date(),
+                        },
+                        channelError: action.value,
+                        channel: null
+                    }
                 },
-                channelError: action.value,
-                channel: null
             };
         case CHANNEL_SETUP_STARTED:
             return {
+                ...state,
                 connectionStatus: ConnectionStatus.CHANNEL_SETUP_STARTED,
                 connectionHealth: ConnectionHealth.CONNECTING,
-                setupTimings: {
-                    channelSetupStartedAt: new Date(),
-                    channelSetupCancelledAt: null,
-                    channelSetupFailedAt: null,
-                    channelReadyAt: null,
-                    healthCheckStartedAt: null,
-                    healthCheckCancelledAt: null,
-                    healthCheckFailedAt: null,
-                    healthCheckSucceededAt: null,
+                details: {
+                    type: HYPER_GRPC_CONNECTOR,
+                    value: {
+                        ...details,
+                        setupTimings: {
+                            channelSetupStartedAt: new Date(),
+                            channelSetupCancelledAt: null,
+                            channelSetupFailedAt: null,
+                            channelReadyAt: null,
+                            healthCheckStartedAt: null,
+                            healthCheckCancelledAt: null,
+                            healthCheckFailedAt: null,
+                            healthCheckSucceededAt: null,
+                        },
+                        channelSetupParams: action.value,
+                        channelError: null,
+                        channel: null,
+                        healthCheckError: null,
+                    }
                 },
-                channelSetupParams: action.value,
-                channelError: null,
-                channel: null,
-                healthCheckError: null,
             };
         case CHANNEL_READY:
             return {
                 ...state,
                 connectionStatus: ConnectionStatus.CHANNEL_READY,
                 connectionHealth: ConnectionHealth.CONNECTING,
-                setupTimings: {
-                    ...state.setupTimings,
-                    channelReadyAt: new Date(),
+                details: {
+                    type: HYPER_GRPC_CONNECTOR,
+                    value: {
+                        ...details,
+                        setupTimings: {
+                            ...details.setupTimings,
+                            channelReadyAt: new Date(),
+                        },
+                        channel: action.value
+                    }
                 },
-                channel: action.value
             };
 
         case HEALTH_CHECK_STARTED:
@@ -166,9 +206,15 @@ export function reduceHyperGrpcConnectorState(state: HyperGrpcConnectionState, a
                 ...state,
                 connectionStatus: ConnectionStatus.HEALTH_CHECK_STARTED,
                 connectionHealth: ConnectionHealth.CONNECTING,
-                setupTimings: {
-                    ...state.setupTimings,
-                    healthCheckStartedAt: new Date(),
+                details: {
+                    type: HYPER_GRPC_CONNECTOR,
+                    value: {
+                        ...details,
+                        setupTimings: {
+                            ...details.setupTimings,
+                            healthCheckStartedAt: new Date(),
+                        },
+                    }
                 },
             };
         case HEALTH_CHECK_FAILED:
@@ -176,20 +222,32 @@ export function reduceHyperGrpcConnectorState(state: HyperGrpcConnectionState, a
                 ...state,
                 connectionStatus: ConnectionStatus.HEALTH_CHECK_FAILED,
                 connectionHealth: ConnectionHealth.FAILED,
-                setupTimings: {
-                    ...state.setupTimings,
-                    healthCheckFailedAt: new Date(),
+                details: {
+                    type: HYPER_GRPC_CONNECTOR,
+                    value: {
+                        ...details,
+                        setupTimings: {
+                            ...details.setupTimings,
+                            healthCheckFailedAt: new Date(),
+                        },
+                        healthCheckError: action.value,
+                    }
                 },
-                healthCheckError: action.value,
             };
         case HEALTH_CHECK_CANCELLED:
             return {
                 ...state,
                 connectionStatus: ConnectionStatus.HEALTH_CHECK_CANCELLED,
                 connectionHealth: ConnectionHealth.CANCELLED,
-                setupTimings: {
-                    ...state.setupTimings,
-                    healthCheckCancelledAt: new Date(),
+                details: {
+                    type: HYPER_GRPC_CONNECTOR,
+                    value: {
+                        ...details,
+                        setupTimings: {
+                            ...details.setupTimings,
+                            healthCheckCancelledAt: new Date(),
+                        },
+                    }
                 },
             };
         case HEALTH_CHECK_SUCCEEDED:
@@ -197,9 +255,15 @@ export function reduceHyperGrpcConnectorState(state: HyperGrpcConnectionState, a
                 ...state,
                 connectionStatus: ConnectionStatus.HEALTH_CHECK_SUCCEEDED,
                 connectionHealth: ConnectionHealth.ONLINE,
-                setupTimings: {
-                    ...state.setupTimings,
-                    healthCheckSucceededAt: new Date(),
+                details: {
+                    type: HYPER_GRPC_CONNECTOR,
+                    value: {
+                        ...details,
+                        setupTimings: {
+                            ...details.setupTimings,
+                            healthCheckSucceededAt: new Date(),
+                        },
+                    }
                 },
             };
     }

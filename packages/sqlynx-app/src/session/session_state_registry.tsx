@@ -1,5 +1,4 @@
 import * as React from 'react';
-import * as Immutable from 'immutable';
 
 import { SessionState } from './session_state.js';
 import { Dispatch } from '../utils/variant.js';

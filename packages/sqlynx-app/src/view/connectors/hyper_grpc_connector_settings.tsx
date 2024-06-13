@@ -28,8 +28,9 @@ import {
 import { Button, ButtonVariant } from '../base/button.js';
 import { useHyperGrpcConnectionId } from '../../connectors/hyper_grpc_connector.js';
 import { useConnectionState } from '../../connectors/connection_registry.js';
-import { asHyperGrpcConnection, ConnectionState } from '../../connectors/connection_state.js';
+import { ConnectionDetailsVariant, ConnectionState } from '../../connectors/connection_state.js';
 import {
+    asHyperGrpcConnection,
     CHANNEL_READY,
     CHANNEL_SETUP_FAILED,
     CHANNEL_SETUP_STARTED,
@@ -111,13 +112,7 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
     const setupConnection = async () => {
         // Helper to dispatch actions against the connection state
         const modifyState = (action: HyperGrpcConnectorAction) => {
-            setConnectionState((c: ConnectionState) => {
-                const s = asHyperGrpcConnection(c)!;
-                return {
-                    type: HYPER_GRPC_CONNECTOR,
-                    value: reduceHyperGrpcConnectorState(s, action)
-                };
-            });
+            setConnectionState((s: ConnectionState) => reduceHyperGrpcConnectorState(s, action));
         };
 
         // Is there a Hyper client
@@ -211,13 +206,7 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
     };
     // Helper to reset the authorization
     const resetAuth = () => {
-        setConnectionState((c: ConnectionState) => {
-            const s = asHyperGrpcConnection(c)!;
-            return {
-                type: HYPER_GRPC_CONNECTOR,
-                value: reduceHyperGrpcConnectorState(s, { type: RESET, value: null })
-            };
-        });
+        setConnectionState((s: ConnectionState) => reduceHyperGrpcConnectorState(s, { type: RESET, value: null }));
     };
 
     // Find any session that is associated with the connection id
@@ -239,11 +228,11 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
     }, [anySessionWithThisConnection]);
 
     // Get the connection status
-    const statusText: string = getConnectionStatusText(hyperConnection?.connectionStatus, logger);
+    const statusText: string = getConnectionStatusText(connectionState?.connectionStatus, logger);
 
     // Get the indicator status
     let indicatorStatus: IndicatorStatus = IndicatorStatus.None;
-    switch (hyperConnection?.connectionHealth) {
+    switch (connectionState?.connectionHealth) {
         case ConnectionHealth.NOT_STARTED:
             indicatorStatus = IndicatorStatus.None;
             break;
@@ -261,7 +250,7 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
     // Get the action button
     let connectButton: React.ReactElement = <div />;
     let freezeInput = false;
-    switch (hyperConnection?.connectionHealth) {
+    switch (connectionState?.connectionHealth) {
         case ConnectionHealth.NOT_STARTED:
         case ConnectionHealth.FAILED:
             connectButton = <Button variant={ButtonVariant.Primary} leadingVisual={PlugIcon} onClick={setupConnection}>Connect</Button>;
@@ -288,7 +277,7 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
                     Hyper Database
                 </div>
                 <div className={style.platform_actions}>
-                    {(hyperConnection?.connectionHealth == ConnectionHealth.ONLINE) && (
+                    {(connectionState?.connectionHealth == ConnectionHealth.ONLINE) && (
                         <Button variant={ButtonVariant.Default} leadingVisual={FileSymlinkFileIcon} onClick={switchToEditor}>Open Editor</Button>
                     )}
                     {connectButton}

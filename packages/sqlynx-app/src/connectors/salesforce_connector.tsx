@@ -1,14 +1,14 @@
 import * as React from 'react';
-import { useAppConfig } from '../app_config.js';
-import { useAllocatedConnectionState } from './connection_registry.js';
-import { useHttpClient } from '../platform/http_client_provider.js';
-import { useLogger } from '../platform/logger_provider.js';
+
 import { SalesforceAPIClient, SalesforceAPIClientInterface } from './salesforce_api_client.js';
 import { SalesforceAPIClientMock } from './salesforce_api_client_mock.js';
-import { SalesforceAuthFlowProvider } from './salesforce_auth_flow.js';
 import { SalesforceAuthFlowMockProvider } from './salesforce_auth_flow_mock.js';
+import { SalesforceAuthFlowProvider } from './salesforce_auth_flow.js';
 import { createSalesforceConnectorState } from './salesforce_connection_state.js';
-import { SALESFORCE_DATA_CLOUD_CONNECTOR } from './connector_info.js';
+import { useAllocatedConnectionState } from './connection_registry.js';
+import { useAppConfig } from '../app_config.js';
+import { useHttpClient } from '../platform/http_client_provider.js';
+import { useLogger } from '../platform/logger_provider.js';
 
 const API_CTX = React.createContext<SalesforceAPIClientInterface | null>(null);
 const CONNECTION_ID_CTX = React.createContext<number | null>(null);
@@ -26,10 +26,7 @@ export const SalesforceConnector: React.FC<Props> = (props: Props) => {
     // This might change in the future when we start maintaining multiple connections per connector.
     // In that case, someone else would create the connection id, and we would need an "active" connection id provider
     // similar to how we maintain the active session.
-    const connectionId = useAllocatedConnectionState((_) => ({
-        type: SALESFORCE_DATA_CLOUD_CONNECTOR,
-        value: createSalesforceConnectorState()
-    }));
+    const connectionId = useAllocatedConnectionState((_) => createSalesforceConnectorState());
 
     if (config == null || !config.isResolved()) {
         return undefined;

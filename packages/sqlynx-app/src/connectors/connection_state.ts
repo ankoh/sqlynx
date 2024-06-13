@@ -2,44 +2,47 @@ import * as proto from '@ankoh/sqlynx-pb';
 
 import { HyperGrpcConnectionState } from './hyper_grpc_connection_state.js';
 import { SalesforceConnectionState } from './salesforce_connection_state.js';
-import { ConnectionStatistics } from './connection_statistics.js';
+import { ConnectionStatistics, createConnectionStatistics } from './connection_statistics.js';
 import { VariantKind } from '../utils/variant.js';
-import {
-    SERVERLESS_CONNECTOR,
-    HYPER_GRPC_CONNECTOR,
-    SALESFORCE_DATA_CLOUD_CONNECTOR,
-} from './connector_info.js';
+import { HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, SERVERLESS_CONNECTOR } from './connector_info.js';
 import {
     buildBrainstormConnectorParams,
     buildHyperConnectorParams,
     buildSalesforceConnectorParams,
 } from './connection_params.js';
+import { ConnectionHealth, ConnectionStatus } from './connection_status.js';
 
-export type ConnectionState =
+export type ConnectionDetailsVariant =
     | VariantKind<typeof SALESFORCE_DATA_CLOUD_CONNECTOR, SalesforceConnectionState>
-    | VariantKind<typeof SERVERLESS_CONNECTOR, BrainstormConnectionState>
+    | VariantKind<typeof SERVERLESS_CONNECTOR, ServerlessConnectionState>
     | VariantKind<typeof HYPER_GRPC_CONNECTOR, HyperGrpcConnectionState>
     ;
 
-export interface BrainstormConnectionState {
+export interface ConnectionState {
+    /// The connection id
+    connectionId: number;
+    /// The connection state
+    connectionStatus: ConnectionStatus;
+    /// The connection health
+    connectionHealth: ConnectionHealth;
+    /// The connection statistics
     stats: ConnectionStatistics;
+    /// The connection details
+    details: ConnectionDetailsVariant;
 }
 
-export function asHyperGrpcConnection(state: ConnectionState | null): HyperGrpcConnectionState | null {
-    if (state == null) return null;
-    switch (state.type) {
-        case HYPER_GRPC_CONNECTOR: return state.value;
-        default: return null;
-    }
+export type ConnectionStateWithoutId = Omit<ConnectionState, "connectionId">;
+
+export function createConnectionState(details: ConnectionDetailsVariant): ConnectionStateWithoutId {
+    return {
+        connectionStatus: ConnectionStatus.NOT_STARTED,
+        connectionHealth: ConnectionHealth.NOT_STARTED,
+        stats: createConnectionStatistics(),
+        details
+    };
 }
 
-export function asSalesforceConnection(state: ConnectionState | null): SalesforceConnectionState | null {
-    if (state == null) return null;
-    switch (state.type) {
-        case SALESFORCE_DATA_CLOUD_CONNECTOR: return state.value;
-        default: return null;
-    }
-}
+export interface ServerlessConnectionState {}
 
 export enum ConnectorAuthCheck {
     UNKNOWN,
@@ -75,7 +78,7 @@ export function checkSalesforceAuth(
     return ConnectorAuthCheck.UNKNOWN;
 }
 
-export function buildConnectorParams(state: ConnectionState) {
+export function buildConnectorParams(state: ConnectionDetailsVariant) {
     switch (state.type) {
         case SERVERLESS_CONNECTOR:
             return buildBrainstormConnectorParams();
