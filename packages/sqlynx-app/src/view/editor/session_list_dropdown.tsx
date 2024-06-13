@@ -15,7 +15,7 @@ import { SessionState } from '../../session/session_state.js';
 import { useConnectionRegistry } from '../../connectors/connection_registry.js';
 import { ConnectionHealth } from '../../connectors/connection_status.js';
 
-export function SessionSelectorButton(props: { className?: string; short: boolean }) {
+export function SessionListDropdown(props: { className?: string; short: boolean }) {
     const sessionRegistry = useSessionStates();
     const [sessionState, _modifySessionState] = useCurrentSessionState();
     const [isOpen, setIsOpen] = React.useState<boolean>(false);

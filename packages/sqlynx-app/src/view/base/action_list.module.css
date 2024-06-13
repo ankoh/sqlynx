@@ -13,6 +13,7 @@
     padding: 4px 20px;
 }
 .item_container {
+    position: relative;
     display: grid;
     grid-template-columns: max-content auto max-content;
     column-gap: 12px;
@@ -27,6 +28,16 @@
     margin-left: 8px;
     margin-right: 8px;
     align-items: center;
+}
+.item_container.selected::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    bottom: 2px;
+    left: -8px;
+    width: 4px;
+    border-radius: 8px;
+    background-color: #0969da;
 }
 .item_container.disabled {
     cursor: not-allowed;
@@ -56,7 +67,6 @@
     display: inline-flex;
     font-size: 0.8rem;
     white-space: nowrap;
-
 }
 .trailing_container {
     grid-column: 3;
