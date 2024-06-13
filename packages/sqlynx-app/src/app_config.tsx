@@ -7,8 +7,8 @@ import { SQLYNX_BUILD_MODE } from './globals.js';
 const CONFIG_URL = new URL('../static/config.json', import.meta.url);
 
 export interface AppFeatures {
+    files?: boolean;
     completionDetails?: boolean;
-    grpcConnector?: boolean;
     refreshSchema?: boolean;
     saveQueryAsSql?: boolean;
     saveResultsAsArrow?: boolean;
