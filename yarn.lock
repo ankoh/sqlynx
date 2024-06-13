@@ -51,7 +51,7 @@ __metadata:
     "@octokit/graphql": "npm:^8.1.1"
     "@primer/behaviors": "npm:^1.5.1"
     "@primer/octicons-react": "patch:@primer/octicons-react@npm%3A19.9.0#~/.yarn/patches/@primer-octicons-react-npm-19.9.0-65341cfa23.patch"
-    "@primer/react": "npm:^36.20.0"
+    "@primer/react": "npm:^36.22.0"
     "@primer/react-brand": "npm:^0.34.0"
     "@react-hook/resize-observer": "npm:^2.0.1"
     "@tauri-apps/api": "npm:^2.0.0-beta.13"
@@ -1038,7 +1038,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@github/relative-time-element@npm:^4.1.2":
+"@github/relative-time-element@npm:^4.4.1":
   version: 4.4.2
   resolution: "@github/relative-time-element@npm:4.4.2"
   checksum: 10c0/05ce6970df8f8570097f0ecc8f344c75e4114f69fe8ef48a3fbf10dc53e2415e173794eee26bc730776b7db717b774717d641fa03490e9ca30db88abc0014351
@@ -1667,14 +1667,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@primer/react@npm:^36.20.0":
-  version: 36.20.0
-  resolution: "@primer/react@npm:36.20.0"
+"@primer/react@npm:^36.22.0":
+  version: 36.22.0
+  resolution: "@primer/react@npm:36.22.0"
   dependencies:
     "@github/combobox-nav": "npm:^2.1.5"
     "@github/markdown-toolbar-element": "npm:^2.1.0"
     "@github/paste-markdown": "npm:^1.4.0"
-    "@github/relative-time-element": "npm:^4.1.2"
+    "@github/relative-time-element": "npm:^4.4.1"
     "@github/tab-container-element": "npm:^4.8.0"
     "@lit-labs/react": "npm:1.2.1"
     "@oddbird/popover-polyfill": "npm:^0.3.1"
@@ -1715,7 +1715,7 @@ __metadata:
       optional: true
     "@types/styled-components":
       optional: true
-  checksum: 10c0/ae41465aa5dbbade4bb5e47a2bd779554c72fb30b3cdaea9e7c6036987a3cadb35b17cecd0c062c484fcd88a2bc8d48b0460e30666cf5650525779656ad4f33b
+  checksum: 10c0/5c2fae65c8c27e90537e30d3ba73054125986c372ed26148410ced8d38384062a892c43abf74aac88e17d5a4722b8f311035ac40533e1571564380d7fc6d62d9
   languageName: node
   linkType: hard
 
