@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { KeyIcon, PlugIcon, XIcon } from '@primer/octicons-react';
+import { FileSymlinkFileIcon, KeyIcon, PlugIcon, XIcon } from '@primer/octicons-react';
 
 import { useConnectionState } from '../../connectors/connection_registry.js';
 import { useSalesforceConnectionId } from '../../connectors/salesforce_connector.js';
@@ -183,19 +183,19 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
     }
 
     // Get the action button
-    let actionButton: React.ReactElement = <div />;
+    let connnectButton: React.ReactElement = <div />;
     let freezeInput = false;
     switch (salesforceConnection?.connectionHealth) {
         case ConnectionHealth.NOT_STARTED:
         case ConnectionHealth.FAILED:
-            actionButton = <Button variant={ButtonVariant.Primary} leadingVisual={PlugIcon} onClick={startAuth}>Connect</Button>;
+            connnectButton = <Button variant={ButtonVariant.Primary} leadingVisual={PlugIcon} onClick={startAuth}>Connect</Button>;
             break;
         case ConnectionHealth.CONNECTING:
-            actionButton = <Button variant={ButtonVariant.Danger} leadingVisual={XIcon} onClick={cancelAuth}>Cancel</Button>;
+            connnectButton = <Button variant={ButtonVariant.Danger} leadingVisual={XIcon} onClick={cancelAuth}>Cancel</Button>;
             freezeInput = true;
             break;
         case ConnectionHealth.ONLINE:
-            actionButton = <Button variant={ButtonVariant.Danger} leadingVisual={XIcon} onClick={resetAuth}>Reset</Button>;
+            connnectButton = <Button variant={ButtonVariant.Danger} leadingVisual={XIcon} onClick={resetAuth}>Disconnect</Button>;
             freezeInput = true;
             break;
     }
@@ -213,7 +213,10 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
                     Salesforce Data Cloud
                 </div>
                 <div className={style.platform_actions}>
-                    {actionButton}
+                    {(salesforceConnection?.connectionHealth == ConnectionHealth.ONLINE) && (
+                        <Button variant={ButtonVariant.Default} leadingVisual={FileSymlinkFileIcon}>Open Editor</Button>
+                    )}
+                    {connnectButton}
                 </div>
             </div>
             <div className={style.status_container}>
