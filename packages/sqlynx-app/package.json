@@ -29,7 +29,7 @@
         "@octokit/graphql": "^8.1.1",
         "@primer/behaviors": "^1.5.1",
         "@primer/octicons-react": "patch:@primer/octicons-react@npm%3A19.9.0#~/.yarn/patches/@primer-octicons-react-npm-19.9.0-65341cfa23.patch",
-        "@primer/react": "^36.20.0",
+        "@primer/react": "^36.22.0",
         "@primer/react-brand": "^0.34.0",
         "@react-hook/resize-observer": "^2.0.1",
         "@tauri-apps/api": "^2.0.0-beta.13",
