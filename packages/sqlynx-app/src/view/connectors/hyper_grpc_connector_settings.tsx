@@ -30,7 +30,7 @@ import { useHyperGrpcConnectionId } from '../../connectors/hyper_grpc_connector.
 import { useConnectionState } from '../../connectors/connection_registry.js';
 import { ConnectionDetailsVariant, ConnectionState } from '../../connectors/connection_state.js';
 import {
-    asHyperGrpcConnection,
+    getHyperGrpcConnectionDetails,
     CHANNEL_READY,
     CHANNEL_SETUP_FAILED,
     CHANNEL_SETUP_STARTED,
@@ -97,7 +97,7 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
     // Resolve Hyper connection state
     const connectionId = useHyperGrpcConnectionId();
     const [connectionState, setConnectionState] = useConnectionState(connectionId);
-    const hyperConnection = asHyperGrpcConnection(connectionState);
+    const hyperConnection = getHyperGrpcConnectionDetails(connectionState);
 
     // Wire up the page state
     const [pageState, setPageState] = React.useContext(PAGE_STATE_CTX)!;
