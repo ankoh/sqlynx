@@ -12,7 +12,6 @@ import {
     StopwatchIcon,
     SyncIcon,
     ThreeBarsIcon,
-    TriangleDownIcon,
 } from '@primer/octicons-react';
 
 import { ConnectorInfo } from '../../connectors/connector_info.js';
@@ -28,6 +27,7 @@ import { ScriptFileSaveOverlay } from './script_filesave_overlay.js';
 import { ScriptURLOverlay } from './script_url_overlay.js';
 import { useAppConfig } from '../../app_config.js';
 import { SessionListDropdown } from './session_list_dropdown.js';
+import { DragSizing, DragSizingBorder } from '../foundations/drag_sizing.js';
 
 const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
     const config = useAppConfig();
@@ -199,40 +199,42 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                 </div>
             </div>
             <div className={styles.body_container}>
-                <VerticalTabs
-                    variant={VerticalTabVariant.Stacked}
-                    className={styles.output_card}
-                    selectedTab={selectedTab}
-                    selectTab={selectTab}
-                    tabProps={{
-                        [TabKey.SchemaView]: { tabId: TabKey.SchemaView, icon: `${icons}#tables_connected`, labelShort: 'Graph', disabled: false },
-                        [TabKey.QueryProgressView]: {
-                            tabId: TabKey.QueryProgressView,
-                            icon: `${icons}#plan`,
-                            labelShort: 'Status',
-                            disabled: tabState.current.enabledTabs < 2,
-                        },
-                        [TabKey.QueryResultView]: {
-                            tabId: TabKey.QueryResultView,
-                            icon: `${icons}#table`,
-                            labelShort: 'Data',
-                            disabled: tabState.current.enabledTabs < 3,
-                        },
-                    }}
-                    tabKeys={[TabKey.SchemaView, TabKey.QueryProgressView, TabKey.QueryResultView]}
-                    tabRenderers={{
-                        [TabKey.SchemaView]: _props => <SchemaGraph />,
-                        [TabKey.QueryProgressView]: _props => (
-                            <QueryProgress
-                                queryStatus={currentSession?.queryExecutionState?.status ?? null}
-                                queryProgress={currentSession?.queryExecutionState?.latestProgressUpdate ?? null}
-                            />
-                        ),
-                        [TabKey.QueryResultView]: _props => (
-                            <DataTable data={currentSession?.queryExecutionResult?.resultTable ?? null} />
-                        ),
-                    }}
-                />
+                <DragSizing border={DragSizingBorder.Bottom}>
+                    <VerticalTabs
+                        variant={VerticalTabVariant.Stacked}
+                        className={styles.output_card}
+                        selectedTab={selectedTab}
+                        selectTab={selectTab}
+                        tabProps={{
+                            [TabKey.SchemaView]: { tabId: TabKey.SchemaView, icon: `${icons}#tables_connected`, labelShort: 'Graph', disabled: false },
+                            [TabKey.QueryProgressView]: {
+                                tabId: TabKey.QueryProgressView,
+                                icon: `${icons}#plan`,
+                                labelShort: 'Status',
+                                disabled: tabState.current.enabledTabs < 2,
+                            },
+                            [TabKey.QueryResultView]: {
+                                tabId: TabKey.QueryResultView,
+                                icon: `${icons}#table`,
+                                labelShort: 'Data',
+                                disabled: tabState.current.enabledTabs < 3,
+                            },
+                        }}
+                        tabKeys={[TabKey.SchemaView, TabKey.QueryProgressView, TabKey.QueryResultView]}
+                        tabRenderers={{
+                            [TabKey.SchemaView]: _props => <SchemaGraph />,
+                            [TabKey.QueryProgressView]: _props => (
+                                <QueryProgress
+                                    queryStatus={currentSession?.queryExecutionState?.status ?? null}
+                                    queryProgress={currentSession?.queryExecutionState?.latestProgressUpdate ?? null}
+                                />
+                            ),
+                            [TabKey.QueryResultView]: _props => (
+                                <DataTable data={currentSession?.queryExecutionResult?.resultTable ?? null} />
+                            ),
+                        }}
+                    />
+                </DragSizing>
                 <ScriptEditor className={styles.editor_card} />
             </div>
             <div className={styles.action_sidebar}>
