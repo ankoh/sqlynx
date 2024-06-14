@@ -13,7 +13,7 @@ import {
 } from '../../connectors/connector_info.js';
 import { SessionState } from '../../session/session_state.js';
 import { useConnectionRegistry } from '../../connectors/connection_registry.js';
-import { ConnectionHealth } from '../../connectors/connection_status.js';
+import { ConnectionHealth } from '../../connectors/connection_state.js';
 
 export function SessionListDropdown(props: { className?: string; short: boolean }) {
     const sessionRegistry = useSessionStates();

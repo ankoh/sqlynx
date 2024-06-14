@@ -2,13 +2,13 @@ import { PKCEChallenge } from '../utils/pkce.js';
 import { VariantKind } from '../utils/variant.js';
 import { SalesforceCoreAccessToken, SalesforceDataCloudAccessToken } from './salesforce_api_client.js';
 import { SalesforceAuthParams } from './connection_params.js';
-import { createConnectionStatistics } from './connection_statistics.js';
-import { ConnectionHealth, ConnectionStatus } from './connection_status.js';
 import { SALESFORCE_DATA_CLOUD_CONNECTOR } from './connector_info.js';
 import {
+    ConnectionHealth,
+    ConnectionStatus,
     ConnectionState,
     ConnectionStateWithoutId,
-    createConnectionState,
+    createConnectionState, RESET,
 } from './connection_state.js';
 
 export interface SalesforceAuthTimings {
@@ -101,7 +101,6 @@ export function getSalesforceConnectionDetails(state: ConnectionState | null): S
     }
 }
 
-export const RESET = Symbol('RESET');
 export const AUTH_CANCELLED = Symbol('AUTH_CANCELLED');
 export const AUTH_FAILED = Symbol('AUTH_FAILED');
 export const AUTH_STARTED = Symbol('AUTH_STARTED');
@@ -132,15 +131,13 @@ export type SalesforceConnectionStateAction =
     | VariantKind<typeof REQUESTING_DATA_CLOUD_ACCESS_TOKEN, null>
     | VariantKind<typeof RECEIVED_DATA_CLOUD_ACCESS_TOKEN, SalesforceDataCloudAccessToken>;
 
-export function reduceSalesforceConnectionState(state: ConnectionState, action: SalesforceConnectionStateAction): ConnectionState {
+export function reduceSalesforceConnectionState(state: ConnectionState, action: SalesforceConnectionStateAction): ConnectionState | null {
     const details = state.details.value as SalesforceConnectionDetails;
+    let next: ConnectionState | null = null;
     switch (action.type) {
         case RESET:
-            return {
+            next = {
                 ...state,
-                connectionStatus: ConnectionStatus.NOT_STARTED,
-                connectionHealth: ConnectionHealth.NOT_STARTED,
-                stats: createConnectionStatistics(),
                 details: {
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
@@ -155,8 +152,9 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     }
                 }
             };
+            break;
         case AUTH_STARTED:
-            return {
+            next = {
                 ...state,
                 connectionStatus: ConnectionStatus.AUTH_STARTED,
                 connectionHealth: ConnectionHealth.CONNECTING,
@@ -178,8 +176,9 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     }
                 }
             };
+            break
         case AUTH_CANCELLED:
-            return {
+            next = {
                 ...state,
                 connectionStatus: ConnectionStatus.AUTH_CANCELLED,
                 connectionHealth: ConnectionHealth.CANCELLED,
@@ -195,8 +194,9 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     }
                 }
             };
+            break;
         case AUTH_FAILED:
-            return {
+            next = {
                 ...state,
                 connectionStatus: ConnectionStatus.AUTH_FAILED,
                 connectionHealth: ConnectionHealth.FAILED,
@@ -212,8 +212,9 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     }
                 }
             };
+            break;
         case GENERATING_PKCE_CHALLENGE:
-            return {
+            next = {
                 ...state,
                 connectionStatus: ConnectionStatus.PKCE_GENERATION_STARTED,
                 connectionHealth: ConnectionHealth.CONNECTING,
@@ -228,8 +229,9 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     }
                 }
             };
+            break;
         case GENERATED_PKCE_CHALLENGE:
-            return {
+            next = {
                 ...state,
                 connectionStatus: ConnectionStatus.PKCE_GENERATED,
                 connectionHealth: ConnectionHealth.CONNECTING,
@@ -245,8 +247,9 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     }
                 }
             };
+            break;
         case OAUTH_NATIVE_LINK_OPENED:
-            return {
+            next = {
                 ...state,
                 connectionStatus: ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_LINK,
                 connectionHealth: ConnectionHealth.CONNECTING,
@@ -262,8 +265,9 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     }
                 }
             };
+            break;
         case OAUTH_WEB_WINDOW_OPENED:
-            return {
+            next = {
                 ...state,
                 connectionStatus: ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_WINDOW,
                 connectionHealth: ConnectionHealth.CONNECTING,
@@ -279,9 +283,10 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     }
                 }
             };
+            break;
         case OAUTH_WEB_WINDOW_CLOSED:
             if (!details.openAuthWindow) return state;
-            return {
+            next = {
                 ...state,
                 details: {
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
@@ -295,8 +300,9 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     }
                 }
             };
+            break;
         case RECEIVED_CORE_AUTH_CODE:
-            return {
+            next = {
                 ...state,
                 connectionStatus: ConnectionStatus.OAUTH_CODE_RECEIVED,
                 connectionHealth: ConnectionHealth.CONNECTING,
@@ -312,8 +318,9 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     }
                 }
             };
+            break;
         case REQUESTING_CORE_AUTH_TOKEN:
-            return {
+            next = {
                 ...state,
                 connectionStatus: ConnectionStatus.CORE_ACCESS_TOKEN_REQUESTED,
                 connectionHealth: ConnectionHealth.CONNECTING,
@@ -328,8 +335,9 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     }
                 }
             };
+            break;
         case RECEIVED_CORE_AUTH_TOKEN:
-            return {
+            next = {
                 ...state,
                 connectionStatus: ConnectionStatus.CORE_ACCESS_TOKEN_RECEIVED,
                 connectionHealth: ConnectionHealth.CONNECTING,
@@ -345,8 +353,9 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     }
                 }
             };
+            break;
         case REQUESTING_DATA_CLOUD_ACCESS_TOKEN:
-            return {
+            next = {
                 ...state,
                 connectionStatus: ConnectionStatus.DATA_CLOUD_TOKEN_REQUESTED,
                 connectionHealth: ConnectionHealth.CONNECTING,
@@ -361,8 +370,9 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     }
                 }
             };
+            break;
         case RECEIVED_DATA_CLOUD_ACCESS_TOKEN:
-            return {
+            next = {
                 ...state,
                 connectionStatus: ConnectionStatus.DATA_CLOUD_TOKEN_RECEIVED,
                 connectionHealth: ConnectionHealth.ONLINE,
@@ -378,5 +388,7 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     }
                 }
             };
+            break;
     }
+    return next;
 }

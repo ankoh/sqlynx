@@ -1,18 +1,17 @@
 import * as React from 'react';
 
 import {
+    AUTH_CANCELLED,
+    AUTH_FAILED,
+    AUTH_STARTED,
+    GENERATED_PKCE_CHALLENGE,
+    GENERATING_PKCE_CHALLENGE,
     RECEIVED_CORE_AUTH_CODE,
     RECEIVED_CORE_AUTH_TOKEN,
     RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
-    GENERATED_PKCE_CHALLENGE,
-    SalesforceConnectionStateAction,
-    AUTH_STARTED,
-    GENERATING_PKCE_CHALLENGE,
     REQUESTING_CORE_AUTH_TOKEN,
     REQUESTING_DATA_CLOUD_ACCESS_TOKEN,
-    AUTH_CANCELLED,
-    AUTH_FAILED,
-    RESET,
+    SalesforceConnectionStateAction,
 } from './salesforce_connection_state.js';
 import { useSalesforceAPI } from './salesforce_connector.js';
 import { useAppConfig } from '../app_config.js';
@@ -22,9 +21,10 @@ import { sleep } from '../utils/sleep.js';
 import { Dispatch } from '../utils/variant.js';
 import { Logger } from '../platform/logger.js';
 import { SalesforceAPIClientInterface } from './salesforce_api_client.js';
-import { SalesforceAuthFlowApi, AUTH_FLOW_CTX } from './salesforce_auth_flow.js';
+import { AUTH_FLOW_CTX, SalesforceAuthFlowApi } from './salesforce_auth_flow.js';
 import { SalesforceAuthParams } from './connection_params.js';
 import { SalesforceConnectorConfig } from './connector_configs.js';
+import { RESET } from './connection_state.js';
 
 interface Props {
     children: React.ReactElement;

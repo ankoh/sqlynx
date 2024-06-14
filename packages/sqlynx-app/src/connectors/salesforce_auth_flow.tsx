@@ -6,17 +6,16 @@ import {
     AUTH_CANCELLED,
     AUTH_FAILED,
     AUTH_STARTED,
-    RESET,
     GENERATED_PKCE_CHALLENGE,
     GENERATING_PKCE_CHALLENGE,
     OAUTH_NATIVE_LINK_OPENED,
     OAUTH_WEB_WINDOW_OPENED,
+    RECEIVED_CORE_AUTH_CODE,
     RECEIVED_CORE_AUTH_TOKEN,
     RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
     REQUESTING_CORE_AUTH_TOKEN,
     REQUESTING_DATA_CLOUD_ACCESS_TOKEN,
     SalesforceConnectionStateAction,
-    RECEIVED_CORE_AUTH_CODE,
 } from './salesforce_connection_state.js';
 import { useSalesforceAPI } from './salesforce_connector.js';
 import { useAppConfig } from '../app_config.js';
@@ -35,6 +34,7 @@ import { isNativePlatform } from '../platform/native_globals.js';
 import { isDebugBuild } from '../globals.js';
 
 import * as shell from '@tauri-apps/plugin-shell';
+import { RESET } from './connection_state.js';
 
 // By default, a Salesforce OAuth Access Token expires after 2 hours = 7200 seconds
 const DEFAULT_EXPIRATION_TIME_MS = 2 * 60 * 60 * 1000;

@@ -12,6 +12,7 @@ import {
 import { useSalesforceAPI, useSalesforceConnectionId } from '../connectors/salesforce_connector.js';
 import { ConnectorType, SALESFORCE_DATA_CLOUD_CONNECTOR } from '../connectors/connector_info.js';
 import {
+    ScriptKey,
     QUERY_EXECUTION_ACCEPTED,
     QUERY_EXECUTION_CANCELLED,
     QUERY_EXECUTION_FAILED,
@@ -20,8 +21,7 @@ import {
     QUERY_EXECUTION_RECEIVED_SCHEMA,
     QUERY_EXECUTION_STARTED,
     QUERY_EXECUTION_SUCCEEDED,
-} from './session_state_reducer.js';
-import { ScriptKey } from './session_state.js';
+} from './session_state.js';
 import { getSalesforceConnectionDetails } from '../connectors/salesforce_connection_state.js';
 
 export const QueryExecutor = (props: { children?: React.ReactElement }) => {

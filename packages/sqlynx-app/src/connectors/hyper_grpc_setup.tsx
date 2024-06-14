@@ -21,10 +21,11 @@ import {
     HyperDatabaseClient,
     HyperDatabaseConnectionContext,
 } from '../platform/hyperdb_client.js';
-import { RESET, SalesforceConnectionStateAction } from './salesforce_connection_state.js';
+import { SalesforceConnectionStateAction } from './salesforce_connection_state.js';
 import { useLogger } from '../platform/logger_provider.js';
 import { useAppConfig } from '../app_config.js';
 import { useHyperDatabaseClient } from '../platform/hyperdb_client_provider.js';
+import { RESET } from './connection_state.js';
 
 export async function setupHyperGrpcConnection(dispatch: Dispatch<HyperGrpcConnectorAction>, logger: Logger, params: HyperGrpcConnectionParams, _config: HyperGrpcConnectorConfig, client: HyperDatabaseClient, abortSignal: AbortSignal): Promise<void> {
     // First prepare the channel
