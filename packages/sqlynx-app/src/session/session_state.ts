@@ -1,11 +1,6 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
 import Immutable from 'immutable';
 
-import {
-    CatalogUpdateRequestVariant,
-    CatalogUpdateTaskState,
-    CatalogUpdateTaskStatus,
-} from '../connectors/catalog_update.js';
 import { generateBlankScript, ScriptMetadata } from './script_metadata.js';
 import { ScriptLoadingStatus } from './script_loader.js';
 import { analyzeScript, parseAndAnalyzeScript, SQLynxScriptBuffers } from '../view/editor/sqlynx_processor.js';
@@ -17,15 +12,8 @@ import {
 } from '../view/schema/graph_view_model.js';
 import { ScriptLoadingInfo } from './script_loader.js';
 import { deriveScriptFocusFromCursor, focusGraphEdge, focusGraphNode, FocusInfo } from './focus.js';
-import {
-    QueryExecutionProgress,
-    QueryExecutionResponseStream,
-    QueryExecutionResult, QueryExecutionStatus,
-    QueryExecutionTaskState,
-} from '../connectors/query_execution.js';
 import { ConnectorInfo } from '../connectors/connector_info.js';
 import { VariantKind } from '../utils/index.js';
-import * as arrow from 'apache-arrow';
 
 /// A key to identify the target script
 export enum ScriptKey {
@@ -43,16 +31,16 @@ export interface SessionState {
     connectorInfo: ConnectorInfo;
     /// The connector state
     connectionId: number;
-    /// The catalog
-    catalog: sqlynx.SQLynxCatalog | null;
-    /// The catalog updates
-    catalogUpdates: Immutable.Map<number, CatalogUpdateTaskState>;
-    /// The pending catalog updates
-    catalogUpdateRequests: Immutable.Map<number, CatalogUpdateRequestVariant>;
-    /// The id for the next catalog update
-    nextCatalogUpdateId: number;
+    /// THe connection catalog
+    connectionCatalog: sqlynx.SQLynxCatalog;
     /// The scripts (main or external)j
     scripts: { [id: number]: ScriptData };
+    /// The running queries of this session
+    runningQueries: Set<number>;
+    /// The finished queries of this session
+    finishedQueries: number[];
+    /// The main editor query
+    editorQuery: number | null;
     /// The graph
     graph: sqlynx.SQLynxQueryGraphLayout | null;
     /// The graph config
@@ -63,12 +51,6 @@ export interface SessionState {
     graphViewModel: GraphViewModel;
     /// The user focus info
     userFocus: FocusInfo | null;
-    /// The query execution was requested?
-    queryExecutionRequested: boolean;
-    /// The query execution state
-    queryExecutionState: QueryExecutionTaskState | null;
-    /// The response stream of the active query
-    queryExecutionResult: QueryExecutionResult | null;
 }
 
 /// The script data
@@ -97,10 +79,6 @@ export function destroyState(state: SessionState): SessionState {
     const schema = state.scripts[ScriptKey.SCHEMA_SCRIPT];
     main.processed.destroy(main.processed);
     schema.processed.destroy(schema.processed);
-    if (state.catalog) {
-        state.catalog.delete();
-        state.catalog = null;
-    }
     if (state.graphLayout) {
         state.graphLayout.delete();
         state.graphLayout = null;
@@ -149,22 +127,6 @@ export const SCRIPT_LOADING_STARTED = Symbol('SCRIPT_LOADING_STARTED');
 export const SCRIPT_LOADING_SUCCEEDED = Symbol('SCRIPT_LOADING_SUCCEEDED');
 export const SCRIPT_LOADING_FAILED = Symbol('SCRIPT_LOADING_FAILED');
 
-export const UPDATE_CATALOG = Symbol('UPDATE_CATALOG');
-export const CATALOG_UPDATE_STARTED = Symbol('CATALOG_UPDATE_STARTED');
-export const CATALOG_UPDATE_SUCCEEDED = Symbol('CATALOG_UPDATE_SUCCEEDED');
-export const CATALOG_UPDATE_FAILED = Symbol('CATALOG_UPDATE_FAILED');
-export const CATALOG_UPDATE_CANCELLED = Symbol('CATALOG_UPDATE_CANCELLED');
-
-export const EXECUTE_QUERY = Symbol('EXECUTE_QUERY');
-export const QUERY_EXECUTION_ACCEPTED = Symbol('QUERY_EXECUTION_ACCEPTED');
-export const QUERY_EXECUTION_STARTED = Symbol('QUERY_EXECUTION_STARTED');
-export const QUERY_EXECUTION_PROGRESS_UPDATED = Symbol('QUERY_EXECUTION_PROGRESS_UPDATED');
-export const QUERY_EXECUTION_RECEIVED_SCHEMA = Symbol('QUERY_EXECUTION_RECEIVED_SCHEMA');
-export const QUERY_EXECUTION_RECEIVED_BATCH = Symbol('QUERY_EXECUTION_RECEIVED_BATCH');
-export const QUERY_EXECUTION_SUCCEEDED = Symbol('QUERY_EXECUTION_SUCCEEDED');
-export const QUERY_EXECUTION_FAILED = Symbol('QUERY_EXECUTION_FAILED');
-export const QUERY_EXECUTION_CANCELLED = Symbol('QUERY_EXECUTION_CANCELLED');
-
 export const FOCUS_QUERY_GRAPH_NODE = Symbol('FOCUS_GRAPH_NODE');
 export const FOCUS_QUERY_GRAPH_EDGE = Symbol('FOCUS_GRAPH_EDGE');
 export const RESIZE_QUERY_GRAPH = Symbol('RESIZE_EDITOR');
@@ -178,20 +140,6 @@ export type SessionStateAction =
     | VariantKind<typeof SCRIPT_LOADING_STARTED, ScriptKey>
     | VariantKind<typeof SCRIPT_LOADING_SUCCEEDED, [ScriptKey, string]>
     | VariantKind<typeof SCRIPT_LOADING_FAILED, [ScriptKey, any]>
-    | VariantKind<typeof UPDATE_CATALOG, CatalogUpdateRequestVariant>
-    | VariantKind<typeof CATALOG_UPDATE_STARTED, CatalogUpdateTaskState[]>
-    | VariantKind<typeof CATALOG_UPDATE_CANCELLED, number>
-    | VariantKind<typeof CATALOG_UPDATE_SUCCEEDED, number>
-    | VariantKind<typeof CATALOG_UPDATE_FAILED, [number, any]>
-    | VariantKind<typeof EXECUTE_QUERY, null>
-    | VariantKind<typeof QUERY_EXECUTION_ACCEPTED, QueryExecutionTaskState>
-    | VariantKind<typeof QUERY_EXECUTION_STARTED, QueryExecutionResponseStream>
-    | VariantKind<typeof QUERY_EXECUTION_PROGRESS_UPDATED, QueryExecutionProgress>
-    | VariantKind<typeof QUERY_EXECUTION_RECEIVED_SCHEMA, arrow.Schema>
-    | VariantKind<typeof QUERY_EXECUTION_RECEIVED_BATCH, arrow.RecordBatch>
-    | VariantKind<typeof QUERY_EXECUTION_SUCCEEDED, arrow.RecordBatch | null>
-    | VariantKind<typeof QUERY_EXECUTION_FAILED, any>
-    | VariantKind<typeof QUERY_EXECUTION_CANCELLED, null>
     | VariantKind<typeof FOCUS_QUERY_GRAPH_NODE, GraphNodeDescriptor | null>
     | VariantKind<typeof FOCUS_QUERY_GRAPH_EDGE, GraphConnectionId.Value | null>
     | VariantKind<typeof RESIZE_QUERY_GRAPH, [number, number]>; // width, height
@@ -231,7 +179,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
             // Is schema script?
             if (scriptKey == ScriptKey.SCHEMA_SCRIPT) {
                 // Update the catalog since the schema might have changed
-                next.catalog!.loadScript(state.scripts[ScriptKey.SCHEMA_SCRIPT].script!, SCHEMA_SCRIPT_CATALOG_RANK);
+                next.connectionCatalog!.loadScript(state.scripts[ScriptKey.SCHEMA_SCRIPT].script!, SCHEMA_SCRIPT_CATALOG_RANK);
                 // Update the main script since the schema graph depends on it
                 const mainData = next.scripts[ScriptKey.MAIN_SCRIPT];
                 const newMain = { ...mainData };
@@ -279,7 +227,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                     schema.script.replaceText(newSchema);
                     const analyzed = parseAndAnalyzeScript(schema.script);
                     // Update the catalog
-                    next.catalog!.loadScript(schema.script, SCHEMA_SCRIPT_CATALOG_RANK);
+                    next.connectionCatalog!.loadScript(schema.script, SCHEMA_SCRIPT_CATALOG_RANK);
                     // Update the state
                     next.scripts[ScriptKey.SCHEMA_SCRIPT] = {
                         ...next.scripts[ScriptKey.SCHEMA_SCRIPT],
@@ -429,7 +377,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                         script.replaceText(content);
                         const schemaAnalyzed = parseAndAnalyzeScript(script);
                         // Update the catalog
-                        next.catalog!.loadScript(script, SCHEMA_SCRIPT_CATALOG_RANK);
+                        next.connectionCatalog!.loadScript(script, SCHEMA_SCRIPT_CATALOG_RANK);
                         // We updated the schema script, do we have to re-analyze the main script?
                         const main = next.scripts[ScriptKey.MAIN_SCRIPT];
                         if (main.script && main.processed.parsed != null) {
@@ -467,222 +415,222 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
             return computeSchemaGraph(next);
         }
 
-        case UPDATE_CATALOG: {
-            const task = action.value;
-            const taskId = state.nextCatalogUpdateId;
-            return {
-                ...state,
-                nextCatalogUpdateId: taskId + 1,
-                catalogUpdateRequests: state.catalogUpdateRequests.set(taskId, task),
-            };
-        }
-        case CATALOG_UPDATE_STARTED: {
-            const requests = state.catalogUpdateRequests.withMutations(requests => {
-                for (const task of action.value) {
-                    requests.delete(task.taskId);
-                }
-            });
-            const updates = state.catalogUpdates.withMutations(updates => {
-                for (const task of action.value) {
-                    updates.set(task.taskId, task);
-                }
-            });
-            return {
-                ...state,
-                catalogUpdateRequests: requests,
-                catalogUpdates: updates,
-            };
-        }
-        case CATALOG_UPDATE_CANCELLED: {
-            const taskId = action.value;
-            const task = state.catalogUpdates.get(taskId)!;
-            return {
-                ...state,
-                catalogUpdates: state.catalogUpdates.set(taskId, {
-                    ...task,
-                    status: CatalogUpdateTaskStatus.CANCELLED,
-                    finishedAt: new Date(),
-                }),
-            };
-        }
-        case CATALOG_UPDATE_FAILED: {
-            const [taskId, error] = action.value;
-            const task = state.catalogUpdates.get(taskId)!;
-            return {
-                ...state,
-                catalogUpdates: state.catalogUpdates.set(taskId, {
-                    ...task,
-                    status: CatalogUpdateTaskStatus.FAILED,
-                    error,
-                    finishedAt: new Date(),
-                }),
-            };
-        }
-        case CATALOG_UPDATE_SUCCEEDED: {
-            const taskId = action.value;
-            const task = state.catalogUpdates.get(taskId)!;
-            const next = {
-                ...state,
-                catalogUpdates: state.catalogUpdates.set(taskId, {
-                    ...task,
-                    status: CatalogUpdateTaskStatus.SUCCEEDED,
-                    finishedAt: new Date(),
-                }),
-            };
-            // Update the scripts
-            const main = next.scripts[ScriptKey.MAIN_SCRIPT];
-            const schema = next.scripts[ScriptKey.SCHEMA_SCRIPT];
-            try {
-                if (schema && schema.script) {
-                    // Destroy the old script and buffers
-                    schema.processed.destroy(schema.processed);
-                    // Analyze the new schema
-                    const schemaAnalyzed = parseAndAnalyzeScript(schema.script);
-                    // Update the catalog
-                    next.catalog!.loadScript(schema.script, SCHEMA_SCRIPT_CATALOG_RANK);
-                    // Update the state
-                    next.scripts[ScriptKey.SCHEMA_SCRIPT] = {
-                        ...next.scripts[ScriptKey.SCHEMA_SCRIPT],
-                        scriptVersion: ++schema.scriptVersion,
-                        processed: schemaAnalyzed,
-                        statistics: rotateStatistics(schema.statistics, schema.script!.getStatistics() ?? null),
-                    };
-                }
-                if (main && main.script) {
-                    // Destroy the old buffers
-                    main.processed.destroy(main.processed);
-                    const analysis = parseAndAnalyzeScript(main.script);
-                    // Update the state
-                    next.scripts[ScriptKey.MAIN_SCRIPT] = {
-                        ...main,
-                        scriptVersion: ++main.scriptVersion,
-                        processed: analysis,
-                        statistics: rotateStatistics(main.statistics, main.script!.getStatistics() ?? null),
-                    };
-                }
-            } catch (e: any) {
-                console.warn(e);
-            }
-            // Update the schema graph
-            return computeSchemaGraph(next);
-        }
-
-        case EXECUTE_QUERY: {
-            // Concurrent execution ongoing?
-            // Should we force the user to cancel here?
-            if (state.queryExecutionState != null && state.queryExecutionState.finishedAt == null) {
-                return state;
-            }
-            return {
-                ...state,
-                queryExecutionRequested: true,
-                queryExecutionState: null,
-                queryExecutionResult: null,
-            };
-        }
-        case QUERY_EXECUTION_ACCEPTED: {
-            return {
-                ...state,
-                queryExecutionRequested: false,
-                queryExecutionState: {
-                    ...action.value,
-                    status: QueryExecutionStatus.ACCEPTED,
-                    lastUpdatedAt: new Date(),
-                },
-                queryExecutionResult: null,
-            };
-        }
-        case QUERY_EXECUTION_STARTED: {
-            return {
-                ...state,
-                queryExecutionRequested: false,
-                queryExecutionState: {
-                    ...state.queryExecutionState!,
-                    status: QueryExecutionStatus.STARTED,
-                    lastUpdatedAt: new Date(),
-                    resultStream: action.value,
-                },
-                queryExecutionResult: null,
-            };
-        }
-        case QUERY_EXECUTION_PROGRESS_UPDATED: {
-            return {
-                ...state,
-                queryExecutionState: {
-                    ...state.queryExecutionState!,
-                    lastUpdatedAt: new Date(),
-                    latestProgressUpdate: action.value,
-                },
-            };
-        }
-        case QUERY_EXECUTION_RECEIVED_SCHEMA: {
-            return {
-                ...state,
-                queryExecutionState: {
-                    ...state.queryExecutionState!,
-                    status: QueryExecutionStatus.RECEIVED_SCHEMA,
-                    lastUpdatedAt: new Date(),
-                    resultSchema: state.queryExecutionState!.resultSchema,
-                },
-            };
-        }
-        case QUERY_EXECUTION_RECEIVED_BATCH: {
-            return {
-                ...state,
-                queryExecutionState: {
-                    ...state.queryExecutionState!,
-                    status: QueryExecutionStatus.RECEIVED_FIRST_RESULT,
-                    lastUpdatedAt: new Date(),
-                    resultBatches: state.queryExecutionState!.resultBatches.push(action.value),
-                },
-            };
-        }
-        case QUERY_EXECUTION_SUCCEEDED: {
-            const now = new Date();
-
-            const table = new arrow.Table(state.queryExecutionState!.resultBatches);
-            return {
-                ...state,
-                queryExecutionState: {
-                    ...state.queryExecutionState!,
-                    status: QueryExecutionStatus.SUCCEEDED,
-                    lastUpdatedAt: now,
-                    finishedAt: now,
-                },
-                queryExecutionResult: {
-                    startedAt: state.queryExecutionState!.startedAt,
-                    finishedAt: state.queryExecutionState!.finishedAt,
-                    latestProgressUpdate: state.queryExecutionState!.lastUpdatedAt!,
-                    resultTable: table,
-                },
-            };
-        }
-        case QUERY_EXECUTION_FAILED: {
-            const now = new Date();
-            return {
-                ...state,
-                queryExecutionState: {
-                    ...state.queryExecutionState!,
-                    status: QueryExecutionStatus.FAILED,
-                    lastUpdatedAt: now,
-                    finishedAt: now,
-                    error: action.value,
-                },
-            };
-        }
-        case QUERY_EXECUTION_CANCELLED: {
-            const now = new Date();
-            return {
-                ...state,
-                queryExecutionState: {
-                    ...state.queryExecutionState!,
-                    status: QueryExecutionStatus.CANCELLED,
-                    lastUpdatedAt: now,
-                    finishedAt: now,
-                    error: action.value,
-                },
-            };
-        }
+//        case UPDATE_CATALOG: {
+//            const task = action.value;
+//            const taskId = state.nextCatalogUpdateId;
+//            return {
+//                ...state,
+//                nextCatalogUpdateId: taskId + 1,
+//                catalogUpdateRequests: state.catalogUpdateRequests.set(taskId, task),
+//            };
+//        }
+//        case CATALOG_UPDATE_STARTED: {
+//            const requests = state.catalogUpdateRequests.withMutations(requests //=> {
+//                for (const task of action.value) {
+//                    requests.delete(task.taskId);
+//                }
+//            });
+//            const updates = state.catalogUpdates.withMutations(updates //=> {
+//                for (const task of action.value) {
+//                    updates.set(task.taskId, task);
+//                }
+//            });
+//            return {
+//                ...state,
+//                catalogUpdateRequests: requests,
+//                catalogUpdates: updates,
+//            };
+//        }
+//        case CATALOG_UPDATE_CANCELLED: {
+//            const taskId = action.value;
+//            const task = state.catalogUpdates.get(taskId)!;
+//            return {
+//                ...state,
+//                catalogUpdates: state.catalogUpdates.set(taskId, {
+//                    ...task,
+//                    status: CatalogUpdateTaskStatus.CANCELLED,
+//                    finishedAt: new Date(),
+//                }),
+//            };
+//        }
+//        case CATALOG_UPDATE_FAILED: {
+//            const [taskId, error] = action.value;
+//            const task = state.catalogUpdates.get(taskId)!;
+//            return {
+//                ...state,
+//                catalogUpdates: state.catalogUpdates.set(taskId, {
+//                    ...task,
+//                    status: CatalogUpdateTaskStatus.FAILED,
+//                    error,
+//                    finishedAt: new Date(),
+//                }),
+//            };
+//        }
+//        case CATALOG_UPDATE_SUCCEEDED: {
+//            const taskId = action.value;
+//            const task = state.catalogUpdates.get(taskId)!;
+//            const next = {
+//                ...state,
+//                catalogUpdates: state.catalogUpdates.set(taskId, {
+//                    ...task,
+//                    status: CatalogUpdateTaskStatus.SUCCEEDED,
+//                    finishedAt: new Date(),
+//                }),
+//            };
+//            // Update the scripts
+//            const main = next.scripts[ScriptKey.MAIN_SCRIPT];
+//            const schema = next.scripts[ScriptKey.SCHEMA_SCRIPT];
+//            try {
+//                if (schema && schema.script) {
+//                    // Destroy the old script and buffers
+//                    schema.processed.destroy(schema.processed);
+//                    // Analyze the new schema
+//                    const schemaAnalyzed = parseAndAnalyzeScript(schema.script);
+//                    // Update the catalog
+//                    next.catalog!.loadScript(schema.script, SCHEMA_SCRIPT_CATALOG_RANK);
+//                    // Update the state
+//                    next.scripts[ScriptKey.SCHEMA_SCRIPT] = {
+//                        ...next.scripts[ScriptKey.SCHEMA_SCRIPT],
+//                        scriptVersion: ++schema.scriptVersion,
+//                        processed: schemaAnalyzed,
+//                        statistics: rotateStatistics(schema.statistics, schema.script!.getStatistics() ?? null),
+//                    };
+//                }
+//                if (main && main.script) {
+//                    // Destroy the old buffers
+//                    main.processed.destroy(main.processed);
+//                    const analysis = parseAndAnalyzeScript(main.script);
+//                    // Update the state
+//                    next.scripts[ScriptKey.MAIN_SCRIPT] = {
+//                        ...main,
+//                        scriptVersion: ++main.scriptVersion,
+//                        processed: analysis,
+//                        statistics: rotateStatistics(main.statistics, main.script!.getStatistics() ?? null),
+//                    };
+//                }
+//            } catch (e: any) {
+//                console.warn(e);
+//            }
+//            // Update the schema graph
+//            return computeSchemaGraph(next);
+//        }
+//
+//        case EXECUTE_QUERY: {
+//            // Concurrent execution ongoing?
+//            // Should we force the user to cancel here?
+//            if (state.queryExecutionState != null && state.queryExecutionState.finishedAt == null) {
+//                return state;
+//            }
+//            return {
+//                ...state,
+//                queryExecutionRequested: true,
+//                queryExecutionState: null,
+//                queryExecutionResult: null,
+//            };
+//        }
+//        case QUERY_EXECUTION_ACCEPTED: {
+//            return {
+//                ...state,
+//                queryExecutionRequested: false,
+//                queryExecutionState: {
+//                    ...action.value,
+//                    status: QueryExecutionStatus.ACCEPTED,
+//                    lastUpdatedAt: new Date(),
+//                },
+//                queryExecutionResult: null,
+//            };
+//        }
+//        case QUERY_EXECUTION_STARTED: {
+//            return {
+//                ...state,
+//                queryExecutionRequested: false,
+//                queryExecutionState: {
+//                    ...state.queryExecutionState!,
+//                    status: QueryExecutionStatus.STARTED,
+//                    lastUpdatedAt: new Date(),
+//                    resultStream: action.value,
+//                },
+//                queryExecutionResult: null,
+//            };
+//        }
+//        case QUERY_EXECUTION_PROGRESS_UPDATED: {
+//            return {
+//                ...state,
+//                queryExecutionState: {
+//                    ...state.queryExecutionState!,
+//                    lastUpdatedAt: new Date(),
+//                    latestProgressUpdate: action.value,
+//                },
+//            };
+//        }
+//        case QUERY_EXECUTION_RECEIVED_SCHEMA: {
+//            return {
+//                ...state,
+//                queryExecutionState: {
+//                    ...state.queryExecutionState!,
+//                    status: QueryExecutionStatus.RECEIVED_SCHEMA,
+//                    lastUpdatedAt: new Date(),
+//                    resultSchema: state.queryExecutionState!.resultSchema,
+//                },
+//            };
+//        }
+//        case QUERY_EXECUTION_RECEIVED_BATCH: {
+//            return {
+//                ...state,
+//                queryExecutionState: {
+//                    ...state.queryExecutionState!,
+//                    status: QueryExecutionStatus.RECEIVED_FIRST_RESULT,
+//                    lastUpdatedAt: new Date(),
+//                    resultBatches: state.queryExecutionState!.resultBatches.push(action.value),
+//                },
+//            };
+//        }
+//        case QUERY_EXECUTION_SUCCEEDED: {
+//            const now = new Date();
+//
+//            const table = new arrow.Table(state.queryExecutionState!.resultBatches);
+//            return {
+//                ...state,
+//                queryExecutionState: {
+//                    ...state.queryExecutionState!,
+//                    status: QueryExecutionStatus.SUCCEEDED,
+//                    lastUpdatedAt: now,
+//                    finishedAt: now,
+//                },
+//                queryExecutionResult: {
+//                    startedAt: state.queryExecutionState!.startedAt,
+//                    finishedAt: state.queryExecutionState!.finishedAt,
+//                    latestProgressUpdate: state.queryExecutionState!.lastUpdatedAt!,
+//                    resultTable: table,
+//                },
+//            };
+//        }
+//        case QUERY_EXECUTION_FAILED: {
+//            const now = new Date();
+//            return {
+//                ...state,
+//                queryExecutionState: {
+//                    ...state.queryExecutionState!,
+//                    status: QueryExecutionStatus.FAILED,
+//                    lastUpdatedAt: now,
+//                    finishedAt: now,
+//                    error: action.value,
+//                },
+//            };
+//        }
+//        case QUERY_EXECUTION_CANCELLED: {
+//            const now = new Date();
+//            return {
+//                ...state,
+//                queryExecutionState: {
+//                    ...state.queryExecutionState!,
+//                    status: QueryExecutionStatus.CANCELLED,
+//                    lastUpdatedAt: now,
+//                    finishedAt: now,
+//                    error: action.value,
+//                },
+//            };
+//        }
 
         case FOCUS_QUERY_GRAPH_NODE:
             return focusGraphNode(state, action.value);

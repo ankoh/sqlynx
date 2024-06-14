@@ -5,14 +5,10 @@ import * as style from './connector_settings.module.css';
 import { FileSymlinkFileIcon, KeyIcon, PlugIcon, XIcon } from '@primer/octicons-react';
 
 import { useConnectionState } from '../../connectors/connection_registry.js';
-import { useSalesforceConnectionId } from '../../connectors/salesforce_connector.js';
 import { useSalesforceAuthFlow } from '../../connectors/salesforce_auth_flow.js';
-import { ConnectionHealth, ConnectionStatus, reduceConnectionState, RESET } from '../../connectors/connection_state.js';
+import { ConnectionHealth, ConnectionStatus, RESET } from '../../connectors/connection_state.js';
 import { SalesforceAuthParams } from '../../connectors/connection_params.js';
-import {
-    getSalesforceConnectionDetails,
-    SalesforceConnectionStateAction,
-} from '../../connectors/salesforce_connection_state.js';
+import { getSalesforceConnectionDetails } from '../../connectors/salesforce_connection_state.js';
 import {
     TextField,
     TextFieldValidationStatus,
@@ -22,12 +18,13 @@ import {
 import { IndicatorStatus, StatusIndicator } from '../foundations/status_indicator.js';
 import { Dispatch } from '../../utils/variant.js';
 import { classNames } from '../../utils/classnames.js';
-import { useLogger } from '../../platform/logger_provider.js';
 import { Logger } from '../../platform/logger.js';
-import { useSessionStates } from '../../session/session_state_registry.js';
+import { useLogger } from '../../platform/logger_provider.js';
+import { useSessionState, useSessionRegistry } from '../../session/session_state_registry.js';
 import { useCurrentSessionSelector } from '../../session/current_session.js';
 import { useNavigate } from 'react-router-dom';
 import { Button, ButtonVariant } from '../foundations/button.js';
+import { useDefaultSessions } from '../../session/session_setup.js';
 
 const LOG_CTX = "sf_connector";
 
@@ -75,10 +72,17 @@ function getConnectionStatusText(status: ConnectionStatus | undefined, logger: L
 
 export const SalesforceConnectorSettings: React.FC<object> = (_props: object) => {
     const logger = useLogger();
-    const connectionId = useSalesforceConnectionId();
-    const [connectionState, setConnectionState] = useConnectionState(connectionId);
-    const salesforceConnection = getSalesforceConnectionDetails(connectionState);
     const salesforceAuthFlow = useSalesforceAuthFlow();
+
+    // Get Hyper connection from default session
+    const defaultSessions = useDefaultSessions();
+    const sessionId = defaultSessions?.hyper ?? null;
+    const [sessionState, _sessionDispatch] = useSessionState(sessionId);
+
+    // Resolve connection for the default session
+    const connectionId = sessionState?.connectionId ?? null;
+    const [connectionState, dispatchConnectionState] = useConnectionState(connectionId);
+    const salesforceConnection = getSalesforceConnectionDetails(connectionState);
 
     // Wire up the page state
     const [pageState, setPageState] = React.useContext(PAGE_STATE_CTX)!;
@@ -127,10 +131,6 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
             return;
         }
 
-        // Helper to dispatch auth state actions against the connection state
-        const salesforceAuthDispatch = (action: SalesforceConnectionStateAction) => {
-            setConnectionState(s => reduceConnectionState(s, action));
-        };
         // Authorize the client
         authAbortController.current = new AbortController();
         const authParams: SalesforceAuthParams = {
@@ -138,7 +138,7 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
             appConsumerKey: pageState.appConsumerKey,
             appConsumerSecret: null,
         };
-        await salesforceAuthFlow.authorize(salesforceAuthDispatch, authParams, authAbortController.current.signal);
+        await salesforceAuthFlow.authorize(dispatchConnectionState, authParams, authAbortController.current.signal);
         authAbortController.current = null;
     };
 
@@ -151,26 +151,18 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
     };
     // Helper to reset the authorization
     const resetAuth = () => {
-        setConnectionState(s => reduceConnectionState(s, { type: RESET, value: null }));
+        dispatchConnectionState({ type: RESET, value: null });
     };
-
-    // Find any session that is associated with the connection id
-    const sessionRegistry = useSessionStates();
-    let anySessionWithThisConnection: number | null = null;
-    const sessionsWithThisConnection = sessionRegistry.sessionsByConnection.get(connectionId) ?? [];
-    if (sessionsWithThisConnection.length > 0) {
-        anySessionWithThisConnection = sessionsWithThisConnection[0];
-    }
 
     // Helper to switch to the editor
     const selectCurrentSession = useCurrentSessionSelector();
     const navigate = useNavigate()
     const switchToEditor = React.useCallback(() => {
-        if (anySessionWithThisConnection != null) {
-            selectCurrentSession(anySessionWithThisConnection);
+        if (sessionId != null) {
+            selectCurrentSession(sessionId);
             navigate("/editor");
         }
-    }, [anySessionWithThisConnection]);
+    }, [sessionId]);
 
     // Get the connection status
     const statusText = getConnectionStatusText(connectionState?.connectionStatus, logger);

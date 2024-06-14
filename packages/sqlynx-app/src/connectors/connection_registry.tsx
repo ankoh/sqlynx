@@ -1,11 +1,6 @@
 import * as React from 'react';
 
-import {
-    ConnectionDetailsVariant,
-    ConnectionState,
-    ConnectionStateWithoutId,
-    createConnectionState,
-} from './connection_state.js';
+import { ConnectionState, ConnectionStateAction, ConnectionStateWithoutId, reduceConnectionState } from './connection_state.js';
 import { Dispatch } from '../utils/variant.js';
 
 /// The connection registry
@@ -19,9 +14,9 @@ interface ConnectionRegistry {
 }
 
 type SetConnectionRegistryAction = React.SetStateAction<ConnectionRegistry>;
-type ConnectionAllocator = (details: ConnectionDetailsVariant) => number;
-type ConnectionReducer = (prev: ConnectionState) => ConnectionState;
-export type ModifyConnectionAction = (reducer: ConnectionReducer) => void;
+type ConnectionAllocator = (state: ConnectionStateWithoutId) => number;
+export type ConnectionDispatch = (action: ConnectionStateAction) => void;
+export type DynamicConnectionDispatch = (id: number | null, action: ConnectionStateAction) => void;
 
 const CONNECTION_REGISTRY_CTX = React.createContext<[ConnectionRegistry, Dispatch<SetConnectionRegistryAction>] | null>(null);
 let NEXT_CONNECTION_ID: number = 1;
@@ -41,25 +36,11 @@ export const ConnectionRegistry: React.FC<Props> = (props: Props) => {
     );
 };
 
-export function useAllocatedConnectionState(init: (id: number) => ConnectionStateWithoutId): number {
-    const [_reg, setReg] = React.useContext(CONNECTION_REGISTRY_CTX)!;
-    const cid = React.useMemo(() => NEXT_CONNECTION_ID++, []);
-    React.useEffect(() => {
-        setReg((reg) => {
-            const state = init(cid);
-            reg.connectionMap.set(cid, { connectionId: cid, ...state, })
-            return { ...reg };
-        });
-    }, []);
-    return cid;
-}
-
 export function useConnectionStateAllocator(): ConnectionAllocator {
     const [_reg, setReg] = React.useContext(CONNECTION_REGISTRY_CTX)!;
-    return React.useCallback((details: ConnectionDetailsVariant) => {
+    return React.useCallback((state: ConnectionStateWithoutId) => {
         const cid = NEXT_CONNECTION_ID++;
         setReg((reg) => {
-            const state = createConnectionState(details);
             reg.connectionMap.set(cid, { ...state, connectionId: cid });
             return { ...reg };
         });
@@ -69,17 +50,17 @@ export function useConnectionStateAllocator(): ConnectionAllocator {
 
 export const useConnectionRegistry = () => React.useContext(CONNECTION_REGISTRY_CTX)![0];
 
-export function useConnectionState(id: number | null): [ConnectionState | null, ModifyConnectionAction] {
+export function useDynamicConnectionDispatch(): [ConnectionRegistry, DynamicConnectionDispatch] {
     const [registry, setRegistry] = React.useContext(CONNECTION_REGISTRY_CTX)!;
 
-    /// Wrapper to modify an individual connection
-    const setConnection = React.useCallback((reducer: ConnectionReducer) => {
+    /// Helper to modify a dynamic connection
+    const dispatch = React.useCallback((id: number | null, action: ConnectionStateAction) => {
+        // No id provided? Then do nothing.
+        if (!id) {
+            return;
+        }
         setRegistry(
             (reg: ConnectionRegistry) => {
-                // No id provided? Then do nothing.
-                if (!id) {
-                    return reg;
-                }
                 // Find the previous session state
                 const prev = reg.connectionMap.get(id);
                 // Ignore if the session does not exist
@@ -88,11 +69,18 @@ export function useConnectionState(id: number | null): [ConnectionState | null, 
                     return reg;
                 }
                 // Reduce the session action
-                const next = reducer(prev);
+                const next = reduceConnectionState(prev, action);
                 reg.connectionMap.set(id, next);
                 return { ...reg };
             }
         );
-    }, [id, setRegistry]);
-    return [id == null ? null : (registry.connectionMap.get(id) ?? null), setConnection]
+    }, [setRegistry]);
+
+    return [registry, dispatch];
+}
+
+export function useConnectionState(id: number | null): [ConnectionState | null, ConnectionDispatch] {
+    const [registry, dispatch] = useDynamicConnectionDispatch();
+    const capturingDispatch = React.useCallback((action: ConnectionStateAction) => dispatch(id, action), [id, dispatch]);
+    return [id == null ? null : (registry.connectionMap.get(id) ?? null), capturingDispatch]
 }

@@ -97,7 +97,7 @@ export function computeGraphViewModel(state: SessionState): GraphViewModel {
         [ScriptKey.SCHEMA_SCRIPT]: schemaProcessed?.analyzed?.read(new sqlynx.proto.AnalyzedScript()) ?? null,
     };
 
-    if (!state.graphLayout || !state.catalog) {
+    if (!state.graphLayout || !state.connectionCatalog) {
         return {
             nodes: [],
             nodesByTable: new Map(),

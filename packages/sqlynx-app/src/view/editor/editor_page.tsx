@@ -15,12 +15,12 @@ import {
 } from '@primer/octicons-react';
 
 import { ConnectorInfo } from '../../connectors/connector_info.js';
-import { QueryExecutionStatus } from '../../connectors/query_execution.js';
+import { QueryExecutionStatus } from '../../connectors/query_execution_state.js';
 import { useCurrentSessionState } from '../../session/current_session.js';
 import { ScriptEditor } from './editor.js';
 import { SchemaGraph } from '../schema/schema_graph.js';
-import { QueryProgress } from '../progress/query_progress.js';
-import { DataTable } from '../table/data_table.js';
+// import { QueryProgress } from '../progress/query_progress.js';
+// import { DataTable } from '../table/data_table.js';
 import { KeyEventHandler, useKeyEvents } from '../../utils/key_events.js';
 import { VerticalTabs, VerticalTabVariant } from '../foundations/vertical_tabs.js';
 import { ScriptFileSaveOverlay } from './script_filesave_overlay.js';
@@ -28,6 +28,7 @@ import { ScriptURLOverlay } from './script_url_overlay.js';
 import { useAppConfig } from '../../app_config.js';
 import { SessionListDropdown } from './session_list_dropdown.js';
 import { DragSizing, DragSizingBorder } from '../foundations/drag_sizing.js';
+import { useQueryState } from '../../connectors/query_executor.js';
 
 const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
     const config = useAppConfig();
@@ -118,17 +119,20 @@ interface TabState {
 interface Props { }
 
 export const EditorPage: React.FC<Props> = (_props: Props) => {
-    const [currentSession, _modifyCurrentSession] = useCurrentSessionState();
+    const [currentSession, _dispatchCurrentSession] = useCurrentSessionState();
     const [selectedTab, selectTab] = React.useState<TabKey>(TabKey.SchemaView);
     const [sharingIsOpen, setSharingIsOpen] = React.useState<boolean>(false);
+
+    // Resolve the editor query state (if any)
+    const queryState = useQueryState(currentSession?.connectionId ?? null,currentSession?.editorQuery ?? null);
 
     // Determine selected tabs
     const tabState = React.useRef<TabState>({
         enabledTabs: 1,
     });
     let enabledTabs = 1;
-    enabledTabs += +((currentSession?.queryExecutionState?.startedAt ?? null) != null);
-    enabledTabs += +(currentSession?.queryExecutionResult != null);
+    enabledTabs += +((queryState?.startedAt ?? null) != null);
+    enabledTabs += +(queryState?.status == QueryExecutionStatus.SUCCEEDED);
     tabState.current.enabledTabs = enabledTabs;
 
     // Register keyboard events
@@ -152,7 +156,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
     // Automatically switch tabs when the execution status changes meaningfully
     const prevStatus = React.useRef<QueryExecutionStatus | null>(null);
     React.useEffect(() => {
-        const status = currentSession?.queryExecutionState?.status ?? null;
+        const status = queryState?.status ?? null;
         switch (status) {
             case null:
                 selectTab(TabKey.SchemaView);
@@ -172,7 +176,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                 break;
         }
         prevStatus.current = status;
-    }, [currentSession?.queryExecutionState?.status]);
+    }, [queryState?.status]);
 
     return (
         <div className={styles.page}>
@@ -224,13 +228,10 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                         tabRenderers={{
                             [TabKey.SchemaView]: _props => <SchemaGraph />,
                             [TabKey.QueryProgressView]: _props => (
-                                <QueryProgress
-                                    queryStatus={currentSession?.queryExecutionState?.status ?? null}
-                                    queryProgress={currentSession?.queryExecutionState?.latestProgressUpdate ?? null}
-                                />
+                                <div />
                             ),
                             [TabKey.QueryResultView]: _props => (
-                                <DataTable data={currentSession?.queryExecutionResult?.resultTable ?? null} />
+                                <div />
                             ),
                         }}
                     />

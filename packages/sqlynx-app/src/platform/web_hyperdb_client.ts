@@ -4,7 +4,7 @@ import * as bufconnect from '@connectrpc/connect-web';
 
 import { createPromiseClient, PromiseClient } from '@connectrpc/connect';
 import { Logger } from "./logger.js";
-import { QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionStatus } from '../connectors/query_execution.js';
+import { QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionStatus } from '../connectors/query_execution_state.js';
 
 export class QueryResultReader implements AsyncIterator<Uint8Array>, AsyncIterable<Uint8Array> {
     /// The logger

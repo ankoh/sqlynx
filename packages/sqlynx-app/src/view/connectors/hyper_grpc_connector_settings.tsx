@@ -26,30 +26,26 @@ import {
     HyperDatabaseConnectionContext,
 } from '../../platform/hyperdb_client.js';
 import { Button, ButtonVariant } from '../foundations/button.js';
-import { useHyperGrpcConnectionId } from '../../connectors/hyper_grpc_connector.js';
 import { useConnectionState } from '../../connectors/connection_registry.js';
 import {
     ConnectionHealth,
-    ConnectionState,
     ConnectionStatus,
-    reduceConnectionState,
     RESET,
 } from '../../connectors/connection_state.js';
 import {
     CHANNEL_READY,
     CHANNEL_SETUP_FAILED,
     CHANNEL_SETUP_STARTED,
-    getHyperGrpcConnectionDetails,
     HEALTH_CHECK_FAILED,
     HEALTH_CHECK_STARTED,
     HEALTH_CHECK_SUCCEEDED,
-    HyperGrpcConnectorAction,
 } from '../../connectors/hyper_grpc_connection_state.js';
 import { HyperGrpcConnectionParams } from '../../connectors/connection_params.js';
-import { useSessionStates } from '../../session/session_state_registry.js';
+import { useSessionState, useSessionRegistry } from '../../session/session_state_registry.js';
 import { useCurrentSessionSelector } from '../../session/current_session.js';
 import { useNavigate } from 'react-router-dom';
 import { Logger } from '../../platform/logger.js';
+import { useDefaultSessions } from '../../session/session_setup.js';
 
 const LOG_CTX = "hyper_connector";
 
@@ -96,10 +92,14 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
     const logger = useLogger();
     const hyperClient = useHyperDatabaseClient();
 
-    // Resolve Hyper connection state
-    const connectionId = useHyperGrpcConnectionId();
-    const [connectionState, setConnectionState] = useConnectionState(connectionId);
-    const hyperConnection = getHyperGrpcConnectionDetails(connectionState);
+    // Get Hyper connection from default session
+    const defaultSessions = useDefaultSessions();
+    const sessionId = defaultSessions?.hyper ?? null;
+    const [sessionState, _sessionDispatch] = useSessionState(sessionId);
+
+    // Resolve connection for the default session
+    const connectionId = sessionState?.connectionId ?? null;
+    const [connectionState, dispatchConnectionState] = useConnectionState(connectionId);
 
     // Wire up the page state
     const [pageState, setPageState] = React.useContext(PAGE_STATE_CTX)!;
@@ -112,14 +112,14 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
 
     // Helper to setup the connection
     const setupConnection = async () => {
-        // Helper to dispatch actions against the connection state
-        const modifyState = (action: HyperGrpcConnectorAction) => {
-            setConnectionState(s => reduceConnectionState(s, action));
-        };
-
-        // Is there a Hyper client
+        // Is there a Hyper client?
         if (hyperClient == null) {
             logger.error("Hyper client is unavailable", LOG_CTX);
+            return;
+        }
+        // Is there a connection id?
+        if (connectionId == null) {
+            logger.warn("Hyper connection id is null", LOG_CTX);
             return;
         }
 
@@ -133,7 +133,7 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
         };
 
         // Mark the setup as started
-        modifyState({
+        dispatchConnectionState({
             type: CHANNEL_SETUP_STARTED,
             value: connectionParams
         });
@@ -160,13 +160,13 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
             channel = await hyperClient.connect({
                 endpoint: pageState.endpoint
             }, fakeConnection);
-            modifyState({
+            dispatchConnectionState({
                 type: CHANNEL_READY,
                 value: channel
             });
         } catch (e: any) {
             console.error(e);
-            modifyState({
+            dispatchConnectionState({
                 type: CHANNEL_SETUP_FAILED,
                 value: e.toString()!
             });
@@ -175,20 +175,20 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
         }
 
         // Check the channel health
-        modifyState({
+        dispatchConnectionState({
             type: HEALTH_CHECK_STARTED,
             value: null
         });
         const healthCheck = await channel.checkHealth();
         if (!healthCheck.ok) {
-            modifyState({
+            dispatchConnectionState({
                 type: HEALTH_CHECK_FAILED,
                 value: healthCheck.errorMessage!
             });
             logger.error(healthCheck.errorMessage!, LOG_CTX);
             return;
         }
-        modifyState({
+        dispatchConnectionState({
             type: HEALTH_CHECK_SUCCEEDED,
             value: null
         });
@@ -208,26 +208,18 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
     };
     // Helper to reset the authorization
     const resetAuth = () => {
-        setConnectionState(s => reduceConnectionState(s, { type: RESET, value: null }));
+        dispatchConnectionState({ type: RESET, value: null });
     };
-
-    // Find any session that is associated with the connection id
-    const sessionRegistry = useSessionStates();
-    let anySessionWithThisConnection: number | null = null;
-    const sessionsWithThisConnection = sessionRegistry.sessionsByConnection.get(connectionId) ?? [];
-    if (sessionsWithThisConnection.length > 0) {
-        anySessionWithThisConnection = sessionsWithThisConnection[0];
-    }
 
     // Helper to switch to the editor
     const selectCurrentSession = useCurrentSessionSelector();
     const navigate = useNavigate()
     const switchToEditor = React.useCallback(() => {
-        if (anySessionWithThisConnection != null) {
-            selectCurrentSession(anySessionWithThisConnection);
+        if (sessionId != null) {
+            selectCurrentSession(sessionId);
             navigate("/editor");
         }
-    }, [anySessionWithThisConnection]);
+    }, [sessionId]);
 
     // Get the connection status
     const statusText: string = getConnectionStatusText(connectionState?.connectionStatus, logger);

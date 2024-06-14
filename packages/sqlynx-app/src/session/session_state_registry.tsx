@@ -18,7 +18,7 @@ interface SessionRegistry {
 type SessionStateWithoutId = Omit<SessionState, "sessionId">;
 type SetSessionRegistryAction = React.SetStateAction<SessionRegistry>;
 export type SessionAllocator = (session: SessionStateWithoutId) => number;
-export type ModifySessionAction = (action: SessionStateAction) => void;
+export type SessionDispatch = (action: SessionStateAction) => void;
 
 const SESSION_REGISTRY_CTX = React.createContext<[SessionRegistry, Dispatch<SetSessionRegistryAction>] | null>(null);
 let NEXT_SESSION_ID: number = 1;
@@ -39,7 +39,7 @@ export const SessionStateRegistry: React.FC<Props> = (props: Props) => {
     );
 };
 
-export function useSessionStates(): SessionRegistry {
+export function useSessionRegistry(): SessionRegistry {
     return React.useContext(SESSION_REGISTRY_CTX)![0];
 }
 
@@ -61,11 +61,11 @@ export function useSessionStateAllocator(): SessionAllocator {
     }, [setReg]);
 }
 
-export function useSessionState(id: number | null): [SessionState | null, ModifySessionAction] {
+export function useSessionState(id: number | null): [SessionState | null, SessionDispatch] {
     const [registry, setRegistry] = React.useContext(SESSION_REGISTRY_CTX)!;
 
     /// Wrapper to modify an individual session
-    const setSession = React.useCallback((action: SessionStateAction) => {
+    const dispatch = React.useCallback((action: SessionStateAction) => {
         setRegistry(
             (reg: SessionRegistry) => {
                 // No id provided? Then do nothing.
@@ -100,5 +100,5 @@ export function useSessionState(id: number | null): [SessionState | null, Modify
         );
     }, [id, setRegistry]);
 
-    return [id == null ? null : registry.sessionMap.get(id) ?? null, setSession];
+    return [id == null ? null : registry.sessionMap.get(id) ?? null, dispatch];
 };

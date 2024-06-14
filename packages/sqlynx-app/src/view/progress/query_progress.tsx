@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { RectangleWaveSpinner } from '../foundations/spinners.js';
-import { QueryExecutionProgress, QueryExecutionStatus } from '../../connectors/query_execution.js';
+import { QueryExecutionProgress, QueryExecutionStatus } from '../../connectors/query_execution_state.js';
 
 import * as styles from './query_progress.module.css';
 

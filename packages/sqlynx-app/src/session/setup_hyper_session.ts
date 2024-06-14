@@ -9,14 +9,15 @@ import { ScriptLoadingStatus } from './script_loader.js';
 import { generateBlankScript } from './script_metadata.js';
 import { useSQLynxSetup } from '../sqlynx_loader.js';
 import { useSessionStateAllocator } from './session_state_registry.js';
-import { useHyperGrpcConnectionId } from '../connectors/hyper_grpc_connector.js';
+import { useConnectionStateAllocator } from '../connectors/connection_registry.js';
+import { createHyperGrpcConnectionState } from '../connectors/hyper_grpc_connection_state.js';
 
 type SessionSetupFn = (abort?: AbortSignal) => Promise<number>;
 
 export function useHyperSessionSetup(): SessionSetupFn {
     const setupSQLynx = useSQLynxSetup();
+    const allocateConnection = useConnectionStateAllocator();
     const allocateSessionState = useSessionStateAllocator();
-    const connectionId = useHyperGrpcConnectionId();
 
     return React.useCallback(async (signal?: AbortSignal) => {
         const instance = await setupSQLynx("hyper_session");
@@ -24,9 +25,10 @@ export function useHyperSessionSetup(): SessionSetupFn {
         signal?.throwIfAborted();
 
         const lnx = instance.value;
+        const connectionState = createHyperGrpcConnectionState(lnx);
+        const connectionId = allocateConnection(connectionState);
         const graph = lnx.createQueryGraphLayout();
-        const catalog = lnx.createCatalog();
-        const mainScript = lnx.createScript(catalog, ScriptKey.MAIN_SCRIPT);
+        const mainScript = lnx.createScript(connectionState.catalog, ScriptKey.MAIN_SCRIPT);
 
         const mainScriptData: ScriptData = {
             scriptKey: ScriptKey.MAIN_SCRIPT,
@@ -53,13 +55,13 @@ export function useHyperSessionSetup(): SessionSetupFn {
             instance: instance.value,
             connectorInfo: CONNECTOR_INFOS[ConnectorType.HYPER_GRPC],
             connectionId,
+            connectionCatalog: connectionState.catalog,
             scripts: {
                 [ScriptKey.MAIN_SCRIPT]: mainScriptData,
             },
-            nextCatalogUpdateId: 2,
-            catalogUpdateRequests: Immutable.Map(),
-            catalogUpdates: Immutable.Map(),
-            catalog,
+            runningQueries: new Set(),
+            finishedQueries: [],
+            editorQuery: null,
             graph,
             graphConfig: {
                 boardWidth: DEFAULT_BOARD_WIDTH,
@@ -84,9 +86,6 @@ export function useHyperSessionSetup(): SessionSetupFn {
                 },
             },
             userFocus: null,
-            queryExecutionRequested: false,
-            queryExecutionState: null,
-            queryExecutionResult: null,
         });
     }, [setupSQLynx, allocateSessionState]);
 };

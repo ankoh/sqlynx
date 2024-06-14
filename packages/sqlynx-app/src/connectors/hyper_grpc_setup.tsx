@@ -130,7 +130,7 @@ export async function setupHyperGrpcConnection(dispatch: Dispatch<HyperGrpcConne
 }
 export interface HyperGrpcSetupApi {
     setup(dispatch: Dispatch<HyperGrpcConnectorAction>, params: HyperGrpcConnectionParams, abortSignal: AbortSignal): Promise<void>
-    reset(dispatch: Dispatch<SalesforceConnectionStateAction>): Promise<void>
+    reset(dispatch: Dispatch<HyperGrpcConnectorAction>): Promise<void>
 };
 
 export const SETUP_CTX = React.createContext<HyperGrpcSetupApi | null>(null);
@@ -154,7 +154,7 @@ export const HyperGrpcSetupProvider: React.FC<Props> = (props: Props) => {
         const setup = async (dispatch: Dispatch<HyperGrpcConnectorAction>, params: HyperGrpcConnectionParams, abort: AbortSignal) => {
             return setupHyperGrpcConnection(dispatch, logger, params, connectorConfig, hyperClient, abort);
         };
-        const reset = async (dispatch: Dispatch<SalesforceConnectionStateAction>) => {
+        const reset = async (dispatch: Dispatch<HyperGrpcConnectorAction>) => {
             dispatch({
                 type: RESET,
                 value: null,

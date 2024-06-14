@@ -6,35 +6,27 @@ import { IconButton } from '@primer/react';
 import { formatHHMMSS } from '../utils/format.js';
 import { useLogger } from '../platform/logger_provider.js';
 import { useSalesforceAuthFlow } from '../connectors/salesforce_auth_flow.js';
-import { useSalesforceConnectionId } from '../connectors/salesforce_connector.js';
-import { useConnectionState } from '../connectors/connection_registry.js';
-import { useCurrentSessionState } from './current_session.js';
 import { ConnectorInfo, requiresSwitchingToNative } from '../connectors/connector_info.js';
 import { generateSessionSetupUrl, SessionLinkTarget } from './session_setup_url.js';
-import {
-    getSalesforceConnectionDetails,
-    SalesforceConnectionStateAction,
-} from '../connectors/salesforce_connection_state.js';
 import { SalesforceAuthParams } from '../connectors/connection_params.js';
 import { SQLYNX_VERSION } from '../globals.js';
 import { REPLACE_SCRIPT_CONTENT } from './session_state.js';
 import { TextField } from '../view/foundations/text_field.js';
 import { LogViewerInPortal } from '../view/log_viewer.js';
-import { reduceConnectionState } from '../connectors/connection_state.js';
 
 import * as page_styles from '../view/banner_page.module.css';
 import * as symbols from '../../static/svg/symbols.generated.svg';
 import { Button, ButtonVariant } from '../view/foundations/button.js';
-import { checkSalesforceAuth, ConnectorAuthCheck } from '../connectors/connector_auth_check.js';
+import {
+    checkHyperConnectionSetup,
+    checkSalesforceConnectionSetup,
+    ConnectionSetupCheck,
+} from '../connectors/connector_setup_check.js';
+import { useSessionState } from './session_state_registry.js';
+import { useConnectionState } from '../connectors/connection_registry.js';
 
 const LOG_CTX = "session_setup";
 const AUTOTRIGGER_DELAY = 2000;
-
-interface Props {
-    setupProto: proto.sqlynx_session.pb.SessionSetup;
-    connectorInfo: ConnectorInfo;
-    onDone: () => void;
-}
 
 const ConnectorParamsSection: React.FC<{ params: proto.sqlynx_session.pb.ConnectorParams }> = (props: { params: proto.sqlynx_session.pb.ConnectorParams }) => {
     switch (props.params.connector.case) {
@@ -68,33 +60,47 @@ const ConnectorParamsSection: React.FC<{ params: proto.sqlynx_session.pb.Connect
     }
 };
 
+interface Props {
+    sessionId: number;
+    connector: ConnectorInfo;
+    setupProto: proto.sqlynx_session.pb.SessionSetup;
+    onDone: () => void;
+}
+
 export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     const now = new Date();
     const logger = useLogger();
-    const salesforceConnectionId = useSalesforceConnectionId();
     const salesforceAuthFlow = useSalesforceAuthFlow();
-    const [connectionState, setConnectionState] = useConnectionState(salesforceConnectionId);
-    const [currentSessionState, modifyCurrentSession] = useCurrentSessionState();
     const [logsAreOpen, setLogsAreOpen] = React.useState<boolean>(false);
+    const [maybeSession, dispatchSession] = useSessionState(props.sessionId);
+    const session = maybeSession!;
+    const [maybeConnection,  dispatchConnection]= useConnectionState(session!.connectionId);
+    const connection = maybeConnection!;
+
 
     // Resolve the connector info
-    let connectorAuthCheck: ConnectorAuthCheck | null = null;
+    let connectionSetupCheck: ConnectionSetupCheck | null = null;
     switch (props.setupProto.connectorParams?.connector.case) {
-        case "salesforce":
-            connectorAuthCheck = checkSalesforceAuth(getSalesforceConnectionDetails(connectionState), props.setupProto.connectorParams.connector.value);
+        case "salesforce": {
+            connectionSetupCheck = checkSalesforceConnectionSetup(connection, props.setupProto.connectorParams.connector.value);
             break;
+        }
+        case "hyper": {
+            connectionSetupCheck = checkHyperConnectionSetup(connection, props.setupProto.connectorParams.connector.value);
+            break;
+        }
         default:
             break;
     }
 
     // Need to switch to native?
     // Some connectors only run in the native app.
-    let canExecuteHere = props.connectorInfo ? !requiresSwitchingToNative(props.connectorInfo) : true;
+    let canExecuteHere = props.connector ? !requiresSwitchingToNative(props.connector) : true;
     if (props.setupProto.noPlatformCheck) {
         canExecuteHere = true;
     }
 
-    // Helper to setup the session
+    // Helper to configure the session
     const configure = React.useCallback(async () => {
         // Check which connector configuring
         const connectorParams = props.setupProto.connectorParams?.connector;
@@ -104,10 +110,6 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                 if (!salesforceAuthFlow) {
                     return;
                 }
-                // Helper to dispatch auth state actions against the connection state
-                const salesforceAuthDispatch = (action: SalesforceConnectionStateAction) => {
-                    setConnectionState(s => reduceConnectionState(s, action));
-                };
                 // Authorize the client
                 const abortController = new AbortController();
                 const authParams: SalesforceAuthParams = {
@@ -115,7 +117,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                     appConsumerKey: connectorParams.value.appConsumerKey,
                     appConsumerSecret: null,
                 };
-                await salesforceAuthFlow.authorize(salesforceAuthDispatch, authParams, abortController.signal);
+                await salesforceAuthFlow.authorize(dispatchConnection, authParams, abortController.signal);
 
                 break;
             }
@@ -126,11 +128,11 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
         //
         // XXX This is the first time we're modifying the attached session....
         //     We should make sure this is sane, ideally we would get the connector info from there.
-        const update: any = {};
+        const update: Record<number, string> = {};
         for (const script of props.setupProto.scripts) {
             update[script.scriptId] = script.scriptText;
         }
-        modifyCurrentSession({ type: REPLACE_SCRIPT_CONTENT, value: update });
+        dispatchSession({ type: REPLACE_SCRIPT_CONTENT, value: update });
 
         // We're done, return close the session setup page
         props.onDone();
@@ -194,15 +196,12 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
 
     // Generate the session setup url
     const sessionSetupURL = React.useMemo(() => {
-        if (canExecuteHere || !currentSessionState || !connectionState) {
+        if (canExecuteHere) {
             return null;
         } else {
-            return generateSessionSetupUrl(currentSessionState, connectionState, SessionLinkTarget.NATIVE);
+            return generateSessionSetupUrl(session, connection, SessionLinkTarget.NATIVE);
         }
-    }, [
-        currentSessionState,
-        connectionState
-    ]);
+    }, []);
 
     // Do we need to switch to native?
     // Render a warning, information where to get the app and a button to switch.

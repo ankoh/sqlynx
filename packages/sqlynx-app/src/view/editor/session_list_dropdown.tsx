@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as ActionList from '../foundations/action_list.js';
 
 import { useCurrentSessionSelector, useCurrentSessionState } from '../../session/current_session.js';
-import { useSessionStates } from '../../session/session_state_registry.js';
+import { useSessionRegistry } from '../../session/session_state_registry.js';
 import { AnchoredOverlay } from '../foundations/anchored_overlay.js';
 import { Button, ButtonVariant } from '../foundations/button.js';
 import { ConnectorIcon, ConnectorIconVariant } from '../connectors/connector_icons.js';
@@ -16,7 +16,7 @@ import { useConnectionRegistry } from '../../connectors/connection_registry.js';
 import { ConnectionHealth } from '../../connectors/connection_state.js';
 
 export function SessionListDropdown(props: { className?: string; short: boolean }) {
-    const sessionRegistry = useSessionStates();
+    const sessionRegistry = useSessionRegistry();
     const [sessionState, _modifySessionState] = useCurrentSessionState();
     const selectSession = useCurrentSessionSelector();
     const [isOpen, setIsOpen] = React.useState<boolean>(false);

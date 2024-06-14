@@ -1,7 +1,9 @@
+import * as sqlynx from "@ankoh/sqlynx-core";
+
 import { VariantKind } from '../utils/variant.js';
 import { HyperGrpcConnectionParams } from './connection_params.js';
 import { HyperDatabaseChannel } from '../platform/hyperdb_client.js';
-import { HYPER_GRPC_CONNECTOR } from './connector_info.js';
+import { CONNECTOR_INFOS, ConnectorType, HYPER_GRPC_CONNECTOR } from './connector_info.js';
 import {
     ConnectionHealth,
     ConnectionStatus,
@@ -43,8 +45,8 @@ export interface HyperGrpcConnectionDetails {
     healthCheckError: string | null;
 }
 
-export function createHyperGrpcConnectionState(): ConnectionStateWithoutId {
-    return createConnectionState({
+export function createHyperGrpcConnectionState(lnx: sqlynx.SQLynx): ConnectionStateWithoutId {
+    return createConnectionState(lnx, CONNECTOR_INFOS[ConnectorType.HYPER_GRPC], {
         type: HYPER_GRPC_CONNECTOR,
         value: {
             setupTimings: {

@@ -1,5 +1,4 @@
 import * as arrow from 'apache-arrow';
-import Immutable from 'immutable';
 
 import { VariantKind } from '../utils/index.js';
 import { SalesforceAPIClientInterface, SalesforceDataCloudAccessToken } from './salesforce_api_client.js';
@@ -43,6 +42,8 @@ export interface QueryExecutionResponseStream {
 }
 
 export interface QueryExecutionTaskState {
+    /// The query id
+    queryId: number;
     /// The script text that is executed
     task: QueryExecutionTaskVariant;
     /// The current status
@@ -65,15 +66,4 @@ export interface QueryExecutionTaskState {
     resultSchema: arrow.Schema | null;
     /// The number of record batches that are already buffered
     resultBatches: arrow.RecordBatch[];
-}
-
-export interface QueryExecutionResult {
-    /// The time at which the query execution started (if any)
-    startedAt: Date | null;
-    /// The time at which the query execution finished (if any)
-    finishedAt: Date | null;
-    /// The latest update for the query execution
-    latestProgressUpdate: QueryExecutionProgress;
-    /// The result table
-    resultTable: arrow.Table;
 }
