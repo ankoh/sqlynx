@@ -199,10 +199,10 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                 </div>
             </div>
             <div className={styles.body_container}>
-                <DragSizing border={DragSizingBorder.Bottom}>
+                <DragSizing border={DragSizingBorder.Bottom} className={styles.output_container}>
                     <VerticalTabs
-                        variant={VerticalTabVariant.Stacked}
                         className={styles.output_card}
+                        variant={VerticalTabVariant.Stacked}
                         selectedTab={selectedTab}
                         selectTab={selectTab}
                         tabProps={{
