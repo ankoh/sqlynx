@@ -24,9 +24,8 @@
         grid-row: 2;
         height: 100%;
 
-        display: grid;
-        grid-template-rows: 3fr 7fr;
-        grid-template-columns: 100%;
+        display: flex;
+        flex-direction: column;
     }
     .header_action_container {
         grid-column: 3;
@@ -73,9 +72,8 @@
         grid-column: 1;
 
         height: 100%;
-        display: grid;
-        grid-template-rows: 3fr 7fr;
-        grid-template-columns: 100%;
+        display: flex;
+        flex-direction: column;
     }
     .header_action_container {
         display: none;
@@ -121,6 +119,10 @@
     column-gap: 16px;
 }
 
+.output_container {
+    height: 40%;
+}
+
 .output_card {
     grid-column: 1;
     grid-row: 1;
@@ -129,6 +131,7 @@
 }
 
 .editor_card {
+    flex: 1;
     grid-column: 1;
     grid-row: 2;
     box-sizing: border-box;
