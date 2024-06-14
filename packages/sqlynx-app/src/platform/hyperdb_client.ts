@@ -1,7 +1,7 @@
 import * as proto from "@ankoh/sqlynx-pb";
 
 import { GrpcChannelArgs, GrpcMetadataProvider } from './grpc_common.js';
-import { QueryExecutionProgress, QueryExecutionResponseStream } from "../connectors/query_execution.js";
+import { QueryExecutionProgress, QueryExecutionResponseStream } from "../connectors/query_execution_state.js";
 
 export interface AttachedDatabase {
     path: string;

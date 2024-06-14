@@ -4,7 +4,6 @@ import { Route, Routes, Navigate, BrowserRouter, HashRouter } from 'react-router
 
 import { AppConfigProvider } from './app_config.js';
 import { AppEventListenerProvider } from './platform/event_listener_provider.js';
-import { CatalogLoader } from './session/catalog_loader.js';
 import { ConnectionRegistry } from './connectors/connection_registry.js';
 import { ConnectorsPage, ConnectorsPageStateProvider } from './view/connectors/connectors_page.js';
 import { CurrentSessionStateProvider } from './session/current_session.js';
@@ -18,7 +17,7 @@ import { HyperGrpcConnector } from './connectors/hyper_grpc_connector.js';
 import { HyperGrpcConnectorSettingsStateProvider } from './view/connectors/hyper_grpc_connector_settings.js';
 import { LoggerProvider } from './platform/logger_provider.js';
 import { PlatformTypeProvider } from './platform/platform_type.js';
-import { QueryExecutor } from './session/query_executor.js';
+import { QueryExecutorProvider } from './connectors/query_executor.js';
 import { SQLynxLoader } from './sqlynx_loader.js';
 import { SalesforceConnector } from './connectors/salesforce_connector.js';
 import { SalesforceConnectorSettingsStateProvider } from './view/connectors/salesforce_connector_settings.js';
@@ -37,8 +36,6 @@ const SessionProviders = (props: { children: React.ReactElement }) => (
     <SessionStateRegistry>
         <CurrentSessionStateProvider>
             <ScriptLoader />
-            <CatalogLoader />
-            <QueryExecutor />
             <SessionCommands>
                 <SessionSetup>
                     {props.children}
@@ -62,7 +59,9 @@ const Connectors = (props: { children: React.ReactElement }) => (
     <ConnectionRegistry>
         <SalesforceConnector>
             <HyperGrpcConnector>
-                {props.children}
+                <QueryExecutorProvider>
+                    {props.children}
+                </QueryExecutorProvider>
             </HyperGrpcConnector>
         </SalesforceConnector>
     </ConnectionRegistry>

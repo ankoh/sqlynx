@@ -8,15 +8,16 @@ import { ScriptData, ScriptKey } from './session_state.js';
 import { ScriptLoadingStatus } from './script_loader.js';
 import { generateBlankScript } from './script_metadata.js';
 import { useSQLynxSetup } from '../sqlynx_loader.js';
-import { useSalesforceConnectionId } from '../connectors/salesforce_connector.js';
 import { useSessionStateAllocator } from './session_state_registry.js';
+import { createSalesforceConnectorState } from '../connectors/salesforce_connection_state.js';
+import { useConnectionStateAllocator } from '../connectors/connection_registry.js';
 
 type SessionSetupFn = (abort?: AbortSignal) => Promise<number>;
 
 export function useSalesforceSessionSetup(): SessionSetupFn {
     const setupSQLynx = useSQLynxSetup();
+    const allocateConnection = useConnectionStateAllocator();
     const allocateSessionState = useSessionStateAllocator();
-    const connectionId = useSalesforceConnectionId();
 
     return React.useCallback(async (signal?: AbortSignal) => {
         const instance = await setupSQLynx("salesforce_session");
@@ -24,9 +25,10 @@ export function useSalesforceSessionSetup(): SessionSetupFn {
         signal?.throwIfAborted();
 
         const lnx = instance.value;
+        const connectionState = createSalesforceConnectorState(lnx);
+        const connectionId = allocateConnection(connectionState);
         const graph = lnx.createQueryGraphLayout();
-        const catalog = lnx.createCatalog();
-        const mainScript = lnx.createScript(catalog, ScriptKey.MAIN_SCRIPT);
+        const mainScript = lnx.createScript(connectionState.catalog, ScriptKey.MAIN_SCRIPT);
 
         const mainScriptData: ScriptData = {
             scriptKey: ScriptKey.MAIN_SCRIPT,
@@ -53,13 +55,13 @@ export function useSalesforceSessionSetup(): SessionSetupFn {
             instance: instance.value,
             connectorInfo: CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD],
             connectionId: connectionId,
+            connectionCatalog: connectionState.catalog,
             scripts: {
                 [ScriptKey.MAIN_SCRIPT]: mainScriptData,
             },
-            nextCatalogUpdateId: 2,
-            catalogUpdateRequests: Immutable.Map(),
-            catalogUpdates: Immutable.Map(),
-            catalog,
+            runningQueries: new Set(),
+            finishedQueries: [],
+            editorQuery: null,
             graph,
             graphConfig: {
                 boardWidth: DEFAULT_BOARD_WIDTH,
@@ -84,9 +86,6 @@ export function useSalesforceSessionSetup(): SessionSetupFn {
                 },
             },
             userFocus: null,
-            queryExecutionRequested: false,
-            queryExecutionState: null,
-            queryExecutionResult: null,
         });
     }, [setupSQLynx, allocateSessionState]);
 };

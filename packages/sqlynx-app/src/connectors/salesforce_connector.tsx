@@ -4,14 +4,11 @@ import { SalesforceAPIClient, SalesforceAPIClientInterface } from './salesforce_
 import { SalesforceAPIClientMock } from './salesforce_api_client_mock.js';
 import { SalesforceAuthFlowMockProvider } from './salesforce_auth_flow_mock.js';
 import { SalesforceAuthFlowProvider } from './salesforce_auth_flow.js';
-import { createSalesforceConnectorState } from './salesforce_connection_state.js';
-import { useAllocatedConnectionState } from './connection_registry.js';
 import { useAppConfig } from '../app_config.js';
 import { useHttpClient } from '../platform/http_client_provider.js';
 import { useLogger } from '../platform/logger_provider.js';
 
 const API_CTX = React.createContext<SalesforceAPIClientInterface | null>(null);
-const CONNECTION_ID_CTX = React.createContext<number | null>(null);
 
 interface Props {
     children: React.ReactElement;
@@ -22,38 +19,27 @@ export const SalesforceConnector: React.FC<Props> = (props: Props) => {
     const config = useAppConfig();
     const httpClient = useHttpClient();
 
-    // Pre-allocate a connection id for all Salesforce connections.
-    // This might change in the future when we start maintaining multiple connections per connector.
-    // In that case, someone else would create the connection id, and we would need an "active" connection id provider
-    // similar to how we maintain the active session.
-    const connectionId = useAllocatedConnectionState((_) => createSalesforceConnectorState());
-
     if (config == null || !config.isResolved()) {
         return undefined;
     } else if (config.value?.connectors?.salesforce?.mock?.enabled) {
         const api = new SalesforceAPIClientMock(config.value!.connectors?.salesforce?.mock);
         return (
             <API_CTX.Provider value={api}>
-                <CONNECTION_ID_CTX.Provider value={connectionId}>
-                    <SalesforceAuthFlowMockProvider>
-                        {props.children}
-                    </SalesforceAuthFlowMockProvider>
-                </CONNECTION_ID_CTX.Provider>
+                <SalesforceAuthFlowMockProvider>
+                    {props.children}
+                </SalesforceAuthFlowMockProvider>
             </API_CTX.Provider>
         );
     } else {
         const api = new SalesforceAPIClient(logger, httpClient);
         return (
             <API_CTX.Provider value={api}>
-                <CONNECTION_ID_CTX.Provider value={connectionId}>
-                    <SalesforceAuthFlowProvider>
-                        {props.children}
-                    </SalesforceAuthFlowProvider>
-                </CONNECTION_ID_CTX.Provider>
+                <SalesforceAuthFlowProvider>
+                    {props.children}
+                </SalesforceAuthFlowProvider>
             </API_CTX.Provider>
         );
     }
 };
 
 export const useSalesforceAPI = (): SalesforceAPIClientInterface => React.useContext(API_CTX)!;
-export const useSalesforceConnectionId = (): number => React.useContext(CONNECTION_ID_CTX)!;

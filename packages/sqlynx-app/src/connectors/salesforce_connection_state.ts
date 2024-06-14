@@ -1,8 +1,10 @@
+import * as sqlynx from '@ankoh/sqlynx-core';
+
 import { PKCEChallenge } from '../utils/pkce.js';
 import { VariantKind } from '../utils/variant.js';
 import { SalesforceCoreAccessToken, SalesforceDataCloudAccessToken } from './salesforce_api_client.js';
 import { SalesforceAuthParams } from './connection_params.js';
-import { SALESFORCE_DATA_CLOUD_CONNECTOR } from './connector_info.js';
+import { CONNECTOR_INFOS, ConnectorType, SALESFORCE_DATA_CLOUD_CONNECTOR } from './connector_info.js';
 import {
     ConnectionHealth,
     ConnectionStatus,
@@ -77,8 +79,8 @@ export interface SalesforceConnectionDetails {
     dataCloudAccessToken: SalesforceDataCloudAccessToken | null;
 }
 
-export function createSalesforceConnectorState(): ConnectionStateWithoutId {
-    return createConnectionState({
+export function createSalesforceConnectorState(lnx: sqlynx.SQLynx): ConnectionStateWithoutId {
+    return createConnectionState(lnx, CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD], {
         type: SALESFORCE_DATA_CLOUD_CONNECTOR,
         value: {
             authTimings: createSalesforceAuthTimings(),

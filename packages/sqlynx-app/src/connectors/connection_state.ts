@@ -13,8 +13,19 @@ import {
 } from './salesforce_connection_state.js';
 import { CatalogUpdateRequestVariant, CatalogUpdateTaskState } from './catalog_update.js';
 import { VariantKind } from '../utils/variant.js';
-import { HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, SERVERLESS_CONNECTOR } from './connector_info.js';
-import { QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionTaskState } from './query_execution.js';
+import {
+    CONNECTOR_INFOS,
+    ConnectorInfo,
+    ConnectorType,
+    HYPER_GRPC_CONNECTOR,
+    SALESFORCE_DATA_CLOUD_CONNECTOR,
+    SERVERLESS_CONNECTOR,
+} from './connector_info.js';
+import {
+    QueryExecutionProgress,
+    QueryExecutionResponseStream,
+    QueryExecutionTaskState,
+} from './query_execution_state.js';
 
 export interface ConnectionState {
     /// The connection id
@@ -23,6 +34,8 @@ export interface ConnectionState {
     connectionStatus: ConnectionStatus;
     /// The connection health
     connectionHealth: ConnectionHealth;
+    /// The connection info
+    connectionInfo: ConnectorInfo;
     /// The connection statistics
     stats: ConnectionStatistics;
 
@@ -30,16 +43,12 @@ export interface ConnectionState {
     details: ConnectionDetailsVariant;
 
     /// The catalog
-    catalog: sqlynx.SQLynxCatalog | null;
-    /// The pending catalog updates
-    catalogUpdatesQueued: Map<number, CatalogUpdateRequestVariant>;
+    catalog: sqlynx.SQLynxCatalog;
     /// The catalog updates that are currently running
     catalogUpdatesRunning: Map<number, CatalogUpdateTaskState>;
     /// The catalog updates that are currently running
     catalogUpdatesFinished: Map<number, CatalogUpdateTaskState>;
 
-    /// The queries that are queued
-    queriesQueued: Map<number, QueryExecutionTaskState>;
     /// The queries that are currently running
     queriesRunning: Map<number, QueryExecutionTaskState>;
     /// The queries that finished (succeeded, failed, cancelled)
@@ -111,20 +120,26 @@ export enum ConnectionHealth {
 
 export type ConnectionStateWithoutId = Omit<ConnectionState, "connectionId">;
 
-export function createConnectionState(details: ConnectionDetailsVariant): ConnectionStateWithoutId {
+export function createConnectionState(lnx: sqlynx.SQLynx, info: ConnectorInfo, details: ConnectionDetailsVariant): ConnectionStateWithoutId {
     return {
         connectionStatus: ConnectionStatus.NOT_STARTED,
         connectionHealth: ConnectionHealth.NOT_STARTED,
+        connectionInfo: info,
         stats: createConnectionStatistics(),
         details,
-        catalog: null,
-        catalogUpdatesQueued: new Map(),
+        catalog: lnx.createCatalog(),
         catalogUpdatesRunning: new Map(),
         catalogUpdatesFinished: new Map(),
-        queriesQueued: new Map(),
         queriesRunning: new Map(),
         queriesFinished: new Map(),
     };
+}
+
+export function createServerlessConnectionState(lnx: sqlynx.SQLynx): ConnectionStateWithoutId {
+    return createConnectionState(lnx, CONNECTOR_INFOS[ConnectorType.SERVERLESS], {
+        type: SERVERLESS_CONNECTOR,
+        value: {}
+    });
 }
 
 export const RESET = Symbol('RESET');
@@ -183,9 +198,22 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
 
         // RESET is a bit special since we want to clean up our details as well
         case RESET: {
-            // XXX Cleanup query executions and catalog
-            const cleaned: ConnectionState = state;
+            // Reset the SQLynx catalog
+            state.catalog.clear();
 
+            // XXX Cancel currently running queries
+
+            // Cleanup query executions and catalog
+            const cleaned: ConnectionState = {
+                ...state,
+                connectionStatus: ConnectionStatus.NOT_STARTED,
+                connectionHealth: ConnectionHealth.NOT_STARTED,
+                stats: createConnectionStatistics(),
+                catalogUpdatesRunning: new Map(),
+                catalogUpdatesFinished: new Map(),
+                queriesRunning: new Map(),
+                queriesFinished: new Map(),
+            };
             // Cleanup the details
             let details: ConnectionState | null = null;
             switch (state.details.type) {

@@ -1,6 +1,6 @@
 import { PKCEChallenge } from '../utils/pkce.js';
 import { sleep } from '../utils/sleep.js';
-import { QueryExecutionResponseStream } from './query_execution.js';
+import { QueryExecutionResponseStream } from './query_execution_state.js';
 import {
     SalesforceAPIClientInterface,
     SalesforceCoreAccessToken,

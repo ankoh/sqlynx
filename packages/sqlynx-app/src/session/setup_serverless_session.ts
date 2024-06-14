@@ -9,6 +9,7 @@ import { ScriptLoadingStatus } from './script_loader.js';
 import { useConnectionStateAllocator } from '../connectors/connection_registry.js';
 import { useSQLynxSetup } from '../sqlynx_loader.js';
 import { useSessionStateAllocator } from './session_state_registry.js';
+import { createSalesforceConnectorState } from '../connectors/salesforce_connection_state.js';
 
 export const DEFAULT_BOARD_WIDTH = 800;
 export const DEFAULT_BOARD_HEIGHT = 600;
@@ -17,8 +18,8 @@ type SessionSetupFn = (abort?: AbortSignal) => Promise<number>;
 
 export function useServerlessSessionSetup(): SessionSetupFn {
     const setupSQLynx = useSQLynxSetup();
+    const allocateConnection = useConnectionStateAllocator();
     const allocateSessionState = useSessionStateAllocator();
-    const allocateConnectionId = useConnectionStateAllocator();
 
     return React.useCallback(async (signal?: AbortSignal) => {
         const instance = await setupSQLynx("serverless_session");
@@ -26,10 +27,11 @@ export function useServerlessSessionSetup(): SessionSetupFn {
         signal?.throwIfAborted();
 
         const lnx = instance.value;
+        const connectionState = createSalesforceConnectorState(lnx);
+        const connectionId = allocateConnection(connectionState);
         const graph = lnx.createQueryGraphLayout();
-        const catalog = lnx.createCatalog();
-        const mainScript = lnx.createScript(catalog, ScriptKey.MAIN_SCRIPT);
-        const schemaScript = lnx.createScript(catalog, ScriptKey.SCHEMA_SCRIPT);
+        const mainScript = lnx.createScript(connectionState.catalog, ScriptKey.MAIN_SCRIPT);
+        const schemaScript = lnx.createScript(connectionState.catalog, ScriptKey.SCHEMA_SCRIPT);
 
         const mainScriptData: ScriptData = {
             scriptKey: ScriptKey.MAIN_SCRIPT,
@@ -75,18 +77,15 @@ export function useServerlessSessionSetup(): SessionSetupFn {
         return allocateSessionState({
             instance: instance.value,
             connectorInfo: CONNECTOR_INFOS[ConnectorType.SERVERLESS],
-            connectionId: allocateConnectionId({
-                type: SERVERLESS_CONNECTOR,
-                value: {}
-            }),
+            connectionId: connectionId,
+            connectionCatalog: connectionState.catalog,
             scripts: {
                 [ScriptKey.MAIN_SCRIPT]: mainScriptData,
                 [ScriptKey.SCHEMA_SCRIPT]: schemaScriptData,
             },
-            nextCatalogUpdateId: 1,
-            catalogUpdateRequests: Immutable.Map(),
-            catalogUpdates: Immutable.Map(),
-            catalog,
+            runningQueries: new Set(),
+            finishedQueries: [],
+            editorQuery: null,
             graph,
             graphConfig: {
                 boardWidth: DEFAULT_BOARD_WIDTH,
@@ -111,9 +110,6 @@ export function useServerlessSessionSetup(): SessionSetupFn {
                 },
             },
             userFocus: null,
-            queryExecutionRequested: false,
-            queryExecutionState: null,
-            queryExecutionResult: null,
         });
 
     }, [setupSQLynx, allocateSessionState]);

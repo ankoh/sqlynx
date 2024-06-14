@@ -19,7 +19,7 @@ import {
     QueryExecutionProgress,
     QueryExecutionResponseStream,
     QueryExecutionStatus,
-} from '../connectors/query_execution.js';
+} from '../connectors/query_execution_state.js';
 import { GrpcChannelArgs } from './grpc_common.js';
 import { Logger } from './logger.js';
 

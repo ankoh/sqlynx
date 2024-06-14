@@ -1,5 +1,5 @@
 import * as arrow from 'apache-arrow';
-import { QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionStatus } from './query_execution.js';
+import { QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionStatus } from './query_execution_state.js';
 import { sleep } from '../utils/sleep.js';
 
 export class QueryExecutorMock implements QueryExecutionResponseStream {

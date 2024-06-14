@@ -2,8 +2,6 @@ import * as React from 'react';
 
 import { KeyEventHandler, useKeyEvents } from '../utils/key_events.js';
 import { ConnectorInfo } from '../connectors/connector_info.js';
-import { FULL_CATALOG_REFRESH } from '../connectors/catalog_update.js';
-import { EXECUTE_QUERY, UPDATE_CATALOG } from './session_state.js';
 import { useCurrentSessionState } from './current_session.js';
 
 export enum ScriptCommandType {
@@ -30,19 +28,21 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
         async (command: ScriptCommandType) => {
             switch (command) {
                 case ScriptCommandType.ExecuteQuery:
-                    modifySession({
-                        type: EXECUTE_QUERY,
-                        value: null,
-                    });
+                    // XXX
+                    // modifySession({
+                    //     type: EXECUTE_QUERY,
+                    //     value: null,
+                    // });
                     break;
                 case ScriptCommandType.RefreshSchema:
-                    modifySession({
-                        type: UPDATE_CATALOG,
-                        value: {
-                            type: FULL_CATALOG_REFRESH,
-                            value: null,
-                        },
-                    });
+                    // XXX
+                    // modifySession({
+                    //     type: UPDATE_CATALOG,
+                    //     value: {
+                    //         type: FULL_CATALOG_REFRESH,
+                    //         value: null,
+                    //     },
+                    // });
                     break;
                 case ScriptCommandType.SaveQueryAsSql:
                     console.log('save query as sql command');
