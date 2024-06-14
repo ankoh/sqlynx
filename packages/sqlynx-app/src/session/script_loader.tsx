@@ -1,9 +1,8 @@
 import * as React from 'react';
 
 import { ScriptMetadata } from './script_metadata.js';
-import { SCRIPT_LOADING_FAILED, SCRIPT_LOADING_STARTED, SCRIPT_LOADING_SUCCEEDED } from './session_state_reducer.js';
 import { useCurrentSessionState } from './current_session.js';
-import { ScriptData, ScriptKey } from './session_state.js';
+import { SCRIPT_LOADING_FAILED, SCRIPT_LOADING_STARTED, SCRIPT_LOADING_SUCCEEDED, ScriptData, ScriptKey } from './session_state.js';
 
 export enum ScriptLoadingStatus {
     PENDING = 1,

@@ -6,7 +6,6 @@ import { EXAMPLES } from './example_scripts.js';
 import { RESULT_OK } from '../utils/result.js';
 import { ScriptData, ScriptKey } from './session_state.js';
 import { ScriptLoadingStatus } from './script_loader.js';
-import { createConnectionStatistics } from '../connectors/connection_statistics.js';
 import { useConnectionStateAllocator } from '../connectors/connection_registry.js';
 import { useSQLynxSetup } from '../sqlynx_loader.js';
 import { useSessionStateAllocator } from './session_state_registry.js';
@@ -78,9 +77,7 @@ export function useServerlessSessionSetup(): SessionSetupFn {
             connectorInfo: CONNECTOR_INFOS[ConnectorType.SERVERLESS],
             connectionId: allocateConnectionId({
                 type: SERVERLESS_CONNECTOR,
-                value: {
-                    stats: createConnectionStatistics()
-                }
+                value: {}
             }),
             scripts: {
                 [ScriptKey.MAIN_SCRIPT]: mainScriptData,

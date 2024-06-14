@@ -1,8 +1,9 @@
 import * as React from 'react';
+
 import { KeyEventHandler, useKeyEvents } from '../utils/key_events.js';
 import { ConnectorInfo } from '../connectors/connector_info.js';
 import { FULL_CATALOG_REFRESH } from '../connectors/catalog_update.js';
-import { EXECUTE_QUERY, UPDATE_CATALOG } from './session_state_reducer.js';
+import { EXECUTE_QUERY, UPDATE_CATALOG } from './session_state.js';
 import { useCurrentSessionState } from './current_session.js';
 
 export enum ScriptCommandType {

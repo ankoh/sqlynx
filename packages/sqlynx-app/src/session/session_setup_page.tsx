@@ -9,27 +9,23 @@ import { useSalesforceAuthFlow } from '../connectors/salesforce_auth_flow.js';
 import { useSalesforceConnectionId } from '../connectors/salesforce_connector.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
 import { useCurrentSessionState } from './current_session.js';
-import {
-    ConnectorInfo,
-    requiresSwitchingToNative,
-    SALESFORCE_DATA_CLOUD_CONNECTOR,
-} from '../connectors/connector_info.js';
-import { checkSalesforceAuth, ConnectionState, ConnectorAuthCheck } from '../connectors/connection_state.js';
+import { ConnectorInfo, requiresSwitchingToNative } from '../connectors/connector_info.js';
 import { generateSessionSetupUrl, SessionLinkTarget } from './session_setup_url.js';
 import {
     getSalesforceConnectionDetails,
-    reduceSalesforceConnectionState,
     SalesforceConnectionStateAction,
 } from '../connectors/salesforce_connection_state.js';
 import { SalesforceAuthParams } from '../connectors/connection_params.js';
 import { SQLYNX_VERSION } from '../globals.js';
-import { REPLACE_SCRIPT_CONTENT } from './session_state_reducer.js';
+import { REPLACE_SCRIPT_CONTENT } from './session_state.js';
 import { TextField } from '../view/foundations/text_field.js';
 import { LogViewerInPortal } from '../view/log_viewer.js';
+import { reduceConnectionState } from '../connectors/connection_state.js';
 
 import * as page_styles from '../view/banner_page.module.css';
 import * as symbols from '../../static/svg/symbols.generated.svg';
 import { Button, ButtonVariant } from '../view/foundations/button.js';
+import { checkSalesforceAuth, ConnectorAuthCheck } from '../connectors/connector_auth_check.js';
 
 const LOG_CTX = "session_setup";
 const AUTOTRIGGER_DELAY = 2000;
@@ -110,7 +106,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                 }
                 // Helper to dispatch auth state actions against the connection state
                 const salesforceAuthDispatch = (action: SalesforceConnectionStateAction) => {
-                    setConnectionState(s => reduceSalesforceConnectionState(s, action));
+                    setConnectionState(s => reduceConnectionState(s, action));
                 };
                 // Authorize the client
                 const abortController = new AbortController();

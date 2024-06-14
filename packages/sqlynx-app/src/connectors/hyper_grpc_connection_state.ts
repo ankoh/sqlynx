@@ -1,9 +1,15 @@
 import { VariantKind } from '../utils/variant.js';
 import { HyperGrpcConnectionParams } from './connection_params.js';
 import { HyperDatabaseChannel } from '../platform/hyperdb_client.js';
-import { ConnectionHealth, ConnectionStatus } from './connection_status.js';
 import { HYPER_GRPC_CONNECTOR } from './connector_info.js';
-import { ConnectionState, ConnectionStateWithoutId, createConnectionState } from './connection_state.js';
+import {
+    ConnectionHealth,
+    ConnectionStatus,
+    ConnectionState,
+    ConnectionStateWithoutId,
+    createConnectionState,
+    RESET,
+} from './connection_state.js';
 
 export interface HyperGrpcSetupTimings {
     /// The time when the channel setup started
@@ -67,7 +73,6 @@ export function getHyperGrpcConnectionDetails(state: ConnectionState | null): Hy
     }
 }
 
-export const RESET = Symbol('RESET');
 export const CHANNEL_SETUP_CANCELLED = Symbol('CHANNEL_SETUP_CANCELLED');
 export const CHANNEL_SETUP_FAILED = Symbol('CHANNEL_SETUP_FAILED');
 export const CHANNEL_SETUP_STARTED = Symbol('CHANNEL_SETUP_STARTED');
@@ -89,17 +94,16 @@ export type HyperGrpcConnectorAction =
     | VariantKind<typeof HEALTH_CHECK_SUCCEEDED, null>
     ;
 
-export function reduceHyperGrpcConnectorState(state: ConnectionState, action: HyperGrpcConnectorAction): ConnectionState {
+export function reduceHyperGrpcConnectorState(state: ConnectionState, action: HyperGrpcConnectorAction): ConnectionState | null {
     const details = state.details.value as HyperGrpcConnectionDetails;
+    let next: ConnectionState | null = null;
     switch (action.type) {
         case RESET:
             if (details.channel) {
                 details.channel.close();
             }
-            return {
+            next = {
                 ...state,
-                connectionStatus: ConnectionStatus.NOT_STARTED,
-                connectionHealth: ConnectionHealth.NOT_STARTED,
                 details: {
                     type: HYPER_GRPC_CONNECTOR,
                     value: {
@@ -121,8 +125,9 @@ export function reduceHyperGrpcConnectorState(state: ConnectionState, action: Hy
                     }
                 },
             };
+            break;
         case CHANNEL_SETUP_CANCELLED:
-            return {
+            next = {
                 ...state,
                 connectionStatus: ConnectionStatus.CHANNEL_SETUP_CANCELLED,
                 connectionHealth: ConnectionHealth.CANCELLED,
@@ -139,8 +144,9 @@ export function reduceHyperGrpcConnectorState(state: ConnectionState, action: Hy
                     }
                 },
             };
+            break;
         case CHANNEL_SETUP_FAILED:
-            return {
+            next = {
                 ...state,
                 connectionStatus: ConnectionStatus.CHANNEL_SETUP_FAILED,
                 connectionHealth: ConnectionHealth.FAILED,
@@ -157,8 +163,9 @@ export function reduceHyperGrpcConnectorState(state: ConnectionState, action: Hy
                     }
                 },
             };
+            break;
         case CHANNEL_SETUP_STARTED:
-            return {
+            next = {
                 ...state,
                 connectionStatus: ConnectionStatus.CHANNEL_SETUP_STARTED,
                 connectionHealth: ConnectionHealth.CONNECTING,
@@ -183,8 +190,9 @@ export function reduceHyperGrpcConnectorState(state: ConnectionState, action: Hy
                     }
                 },
             };
+            break;
         case CHANNEL_READY:
-            return {
+            next = {
                 ...state,
                 connectionStatus: ConnectionStatus.CHANNEL_READY,
                 connectionHealth: ConnectionHealth.CONNECTING,
@@ -200,9 +208,9 @@ export function reduceHyperGrpcConnectorState(state: ConnectionState, action: Hy
                     }
                 },
             };
-
+            break;
         case HEALTH_CHECK_STARTED:
-            return {
+            next = {
                 ...state,
                 connectionStatus: ConnectionStatus.HEALTH_CHECK_STARTED,
                 connectionHealth: ConnectionHealth.CONNECTING,
@@ -217,8 +225,9 @@ export function reduceHyperGrpcConnectorState(state: ConnectionState, action: Hy
                     }
                 },
             };
+            break;
         case HEALTH_CHECK_FAILED:
-            return {
+            next = {
                 ...state,
                 connectionStatus: ConnectionStatus.HEALTH_CHECK_FAILED,
                 connectionHealth: ConnectionHealth.FAILED,
@@ -234,8 +243,9 @@ export function reduceHyperGrpcConnectorState(state: ConnectionState, action: Hy
                     }
                 },
             };
+            break;
         case HEALTH_CHECK_CANCELLED:
-            return {
+            next = {
                 ...state,
                 connectionStatus: ConnectionStatus.HEALTH_CHECK_CANCELLED,
                 connectionHealth: ConnectionHealth.CANCELLED,
@@ -250,8 +260,9 @@ export function reduceHyperGrpcConnectorState(state: ConnectionState, action: Hy
                     }
                 },
             };
+            break;
         case HEALTH_CHECK_SUCCEEDED:
-            return {
+            next = {
                 ...state,
                 connectionStatus: ConnectionStatus.HEALTH_CHECK_SUCCEEDED,
                 connectionHealth: ConnectionHealth.ONLINE,
@@ -266,5 +277,7 @@ export function reduceHyperGrpcConnectorState(state: ConnectionState, action: Hy
                     }
                 },
             };
+            break;
     }
+    return next;
 }

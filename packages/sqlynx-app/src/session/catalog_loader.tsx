@@ -16,7 +16,7 @@ import {
     CATALOG_UPDATE_FAILED,
     CATALOG_UPDATE_STARTED,
     CATALOG_UPDATE_SUCCEEDED,
-} from './session_state_reducer.js';
+} from './session_state.js';
 import { getSalesforceConnectionDetails } from '../connectors/salesforce_connection_state.js';
 
 export const CatalogLoader = (props: { children?: React.ReactElement }) => {

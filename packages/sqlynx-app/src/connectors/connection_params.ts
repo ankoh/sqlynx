@@ -3,6 +3,8 @@ import Immutable from 'immutable';
 
 import { KeyValueListElement } from '../view/foundations/keyvalue_list.js';
 import { GrpcChannelArgs } from '../platform/grpc_common.js';
+import { ConnectionDetailsVariant } from './connection_state.js';
+import { HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, SERVERLESS_CONNECTOR } from './connector_info.js';
 
 export interface HyperGrpcConnectionParams {
     /// The gRPC endpoint
@@ -50,4 +52,16 @@ export function buildHyperConnectorParams(): proto.sqlynx_session.pb.ConnectorPa
             value: new proto.sqlynx_session.pb.HyperConnectorParams()
         }
     });
+}
+
+export function buildConnectorParams(state: ConnectionDetailsVariant) {
+    switch (state.type) {
+        case SERVERLESS_CONNECTOR:
+            return buildBrainstormConnectorParams();
+        case HYPER_GRPC_CONNECTOR:
+            return buildHyperConnectorParams();
+        case SALESFORCE_DATA_CLOUD_CONNECTOR: {
+            return buildSalesforceConnectorParams(state.value.authParams);
+        }
+    }
 }

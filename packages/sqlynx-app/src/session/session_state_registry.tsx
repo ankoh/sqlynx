@@ -1,8 +1,7 @@
 import * as React from 'react';
 
-import { SessionState } from './session_state.js';
+import { SessionState, DESTROY, SessionStateAction, reduceSessionState } from './session_state.js';
 import { Dispatch } from '../utils/variant.js';
-import { DESTROY, SessionStateAction, reduceSessionState } from './session_state_reducer.js';
 
 /// The session registry.
 ///

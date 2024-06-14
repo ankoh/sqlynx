@@ -6,9 +6,9 @@ import * as style from './connector_settings.module.css';
 import {
     ChecklistIcon,
     DatabaseIcon,
-    FileBadgeIcon, FileIcon, FileSymlinkFileIcon,
+    FileBadgeIcon,
+    FileSymlinkFileIcon,
     KeyIcon,
-    MoveToStartIcon,
     PlugIcon,
     XIcon,
 } from '@primer/octicons-react';
@@ -28,22 +28,24 @@ import {
 import { Button, ButtonVariant } from '../foundations/button.js';
 import { useHyperGrpcConnectionId } from '../../connectors/hyper_grpc_connector.js';
 import { useConnectionState } from '../../connectors/connection_registry.js';
-import { ConnectionDetailsVariant, ConnectionState } from '../../connectors/connection_state.js';
 import {
-    getHyperGrpcConnectionDetails,
+    ConnectionHealth,
+    ConnectionState,
+    ConnectionStatus,
+    reduceConnectionState,
+    RESET,
+} from '../../connectors/connection_state.js';
+import {
     CHANNEL_READY,
     CHANNEL_SETUP_FAILED,
     CHANNEL_SETUP_STARTED,
+    getHyperGrpcConnectionDetails,
     HEALTH_CHECK_FAILED,
     HEALTH_CHECK_STARTED,
     HEALTH_CHECK_SUCCEEDED,
     HyperGrpcConnectorAction,
-    reduceHyperGrpcConnectorState,
-    RESET,
 } from '../../connectors/hyper_grpc_connection_state.js';
-import { HYPER_GRPC_CONNECTOR } from '../../connectors/connector_info.js';
 import { HyperGrpcConnectionParams } from '../../connectors/connection_params.js';
-import { ConnectionHealth, ConnectionStatus } from '../../connectors/connection_status.js';
 import { useSessionStates } from '../../session/session_state_registry.js';
 import { useCurrentSessionSelector } from '../../session/current_session.js';
 import { useNavigate } from 'react-router-dom';
@@ -112,7 +114,7 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
     const setupConnection = async () => {
         // Helper to dispatch actions against the connection state
         const modifyState = (action: HyperGrpcConnectorAction) => {
-            setConnectionState((s: ConnectionState) => reduceHyperGrpcConnectorState(s, action));
+            setConnectionState(s => reduceConnectionState(s, action));
         };
 
         // Is there a Hyper client
@@ -206,7 +208,7 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
     };
     // Helper to reset the authorization
     const resetAuth = () => {
-        setConnectionState((s: ConnectionState) => reduceHyperGrpcConnectorState(s, { type: RESET, value: null }));
+        setConnectionState(s => reduceConnectionState(s, { type: RESET, value: null }));
     };
 
     // Find any session that is associated with the connection id

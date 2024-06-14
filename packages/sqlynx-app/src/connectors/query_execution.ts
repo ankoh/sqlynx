@@ -64,7 +64,7 @@ export interface QueryExecutionTaskState {
     /// The number of record batches that are already buffered
     resultSchema: arrow.Schema | null;
     /// The number of record batches that are already buffered
-    resultBatches: Immutable.List<arrow.RecordBatch>;
+    resultBatches: arrow.RecordBatch[];
 }
 
 export interface QueryExecutionResult {
