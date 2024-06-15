@@ -40,7 +40,7 @@
     grid-column: 1;
     height: var(--drag_handler_size);
     cursor: ns-resize;
-    border-top: 1px solid var(--border_color_primary);
+    border-bottom: 1px solid var(--border_color_primary);
 }
 .container_n > .handler.dragging * {
     cursor: ns-resize !important;

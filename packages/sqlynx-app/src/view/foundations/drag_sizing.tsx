@@ -175,6 +175,8 @@ export const DragSizing: React.FC<DragSizingProps> = props => {
     // Drag start
     const onStart = React.useCallback(
         (event: MouseEvent | TouchEvent) => {
+            event.stopPropagation();
+            event.preventDefault();
             const normedEvent = normalizeMouseEvent(event);
             const container = containerRef.current;
             if (!container) return;
@@ -206,6 +208,8 @@ export const DragSizing: React.FC<DragSizingProps> = props => {
     // Drag updates
     const onUpdate = React.useCallback(
         (event: MouseEvent | TouchEvent) => {
+            event.stopPropagation();
+            event.preventDefault();
             const normedEvent = normalizeMouseEvent(event);
 
             if (positionWhenStarted.current === null) return;
