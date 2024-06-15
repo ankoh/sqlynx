@@ -120,20 +120,19 @@
 }
 
 .output_container {
-    height: 40%;
+    flex: 1;
 }
 
 .output_card {
-    grid-column: 1;
-    grid-row: 1;
     position: relative;
     border-bottom: 1px solid var(--border_color_primary);
 }
 
+.editor_container {
+    height: 60%;
+}
+
 .editor_card {
-    flex: 1;
-    grid-column: 1;
-    grid-row: 2;
     box-sizing: border-box;
     background-color: white;
     width: 100%;
