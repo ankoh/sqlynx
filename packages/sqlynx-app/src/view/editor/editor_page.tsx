@@ -201,6 +201,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                 </div>
             </div>
             <div className={styles.body_container}>
+                <DragSizing border={DragSizingBorder.Bottom} className={styles.output_container}>
                     <VerticalTabs
                         className={styles.output_card}
                         variant={VerticalTabVariant.Stacked}
@@ -232,9 +233,10 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                             ),
                         }}
                     />
-                    <DragSizing border={DragSizingBorder.Top} className={styles.editor_container}>
-                        <ScriptEditor className={styles.editor_card} />
-                    </DragSizing>
+                </DragSizing>
+                <div className={styles.editor_container}>
+                    <ScriptEditor className={styles.editor_card} />
+                </div>
             </div>
             <div className={styles.action_sidebar}>
                 <ActionList.List aria-label="Actions">
