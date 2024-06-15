@@ -3,9 +3,14 @@ import * as React from 'react';
 import { KeyEventHandler, useKeyEvents } from '../utils/key_events.js';
 import { ConnectorInfo } from '../connectors/connector_info.js';
 import { useCurrentSessionState } from './current_session.js';
+import { useQueryExecutor } from '../connectors/query_executor.js';
+import { useConnectionState } from '../connectors/connection_registry.js';
+import { ConnectionHealth } from '../connectors/connection_state.js';
+import { useLogger } from '../platform/logger_provider.js';
+import { REGISTER_EDITOR_QUERY, ScriptKey } from './session_state.js';
 
 export enum ScriptCommandType {
-    ExecuteQuery = 1,
+    ExecuteEditorQuery = 1,
     RefreshSchema = 2,
     SaveQueryAsSql = 3,
     SaveQueryAsLink = 4,
@@ -21,18 +26,34 @@ interface Props {
 const COMMAND_DISPATCH_CTX = React.createContext<ScriptCommandDispatch | null>(null);
 
 export const SessionCommands: React.FC<Props> = (props: Props) => {
-    const [state, modifySession] = useCurrentSessionState();
+    const logger = useLogger();
+    const [session, dispatchSession] = useCurrentSessionState();
+    const [connection, _dispatchConnection] = useConnectionState(session?.connectionId ?? null);
+    const executeQuery = useQueryExecutor();
 
     // Setup command dispatch logic
     const commandDispatch = React.useCallback(
         async (command: ScriptCommandType) => {
+            if (session == null) {
+                logger.error("session is null");
+                return;
+            }
             switch (command) {
-                case ScriptCommandType.ExecuteQuery:
-                    // XXX
-                    // modifySession({
-                    //     type: EXECUTE_QUERY,
-                    //     value: null,
-                    // });
+                // Execute the query script in the current session
+                case ScriptCommandType.ExecuteEditorQuery:
+                    if (connection!.connectionHealth != ConnectionHealth.ONLINE) {
+                        logger.error("cannot execute query command with an unhealthy connection");
+                    } else {
+                        const mainScript = session.scripts[ScriptKey.MAIN_SCRIPT];
+                        const mainScriptText = mainScript.script!.toString();
+                        const [queryId, _run] = executeQuery(session.connectionId, {
+                            query: mainScriptText
+                        });
+                        dispatchSession({
+                            type: REGISTER_EDITOR_QUERY,
+                            value: queryId
+                        })
+                    }
                     break;
                 case ScriptCommandType.RefreshSchema:
                     // XXX
@@ -55,12 +76,12 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
                     break;
             }
         },
-        [state?.connectorInfo],
+        [session?.connectorInfo],
     );
 
     // Helper to require connector info
     const requireConnector = (handler: (connectorInfo: ConnectorInfo) => () => void) => {
-        const connectorInfo = state?.connectorInfo ?? null;
+        const connectorInfo = session?.connectorInfo ?? null;
         if (connectorInfo == null) {
             return () => console.warn(`command requires an active connector`);
         } else {
@@ -81,7 +102,7 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
                 callback: requireConnector(c =>
                     !c.features.executeQueryAction
                         ? () => commandNotImplemented(c, 'EXECUTE_QUERY')
-                        : () => commandDispatch(ScriptCommandType.ExecuteQuery),
+                        : () => commandDispatch(ScriptCommandType.ExecuteEditorQuery),
                 ),
             },
             {
@@ -113,7 +134,7 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
                 ),
             },
         ],
-        [state?.connectorInfo, commandDispatch],
+        [session?.connectorInfo, commandDispatch],
     );
 
     // Setup key event handlers

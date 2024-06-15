@@ -2,8 +2,7 @@ import * as arrow from 'apache-arrow';
 
 import { VariantKind } from '../utils/index.js';
 import { SalesforceAPIClientInterface, SalesforceDataCloudAccessToken } from './salesforce_api_client.js';
-import { SalesforceAuthParams } from './connection_params.js';
-import { SALESFORCE_DATA_CLOUD_CONNECTOR } from './connector_info.js';
+import { HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR } from './connector_info.js';
 import {
     ConnectionState,
     EXECUTE_QUERY, QUERY_EXECUTION_CANCELLED, QUERY_EXECUTION_FAILED,
@@ -12,18 +11,26 @@ import {
     QueryExecutionAction,
 } from './connection_state.js';
 import { ConnectionQueryMetrics } from './connection_statistics.js';
+import { HyperDatabaseChannel } from '../platform/hyperdb_client.js';
 
-export type QueryExecutionTaskVariant = VariantKind<typeof SALESFORCE_DATA_CLOUD_CONNECTOR, ExecuteDataCloudQueryTask>;
+export type QueryExecutionTaskVariant =
+    | VariantKind<typeof SALESFORCE_DATA_CLOUD_CONNECTOR, ExecuteDataCloudQueryTask>
+    | VariantKind<typeof HYPER_GRPC_CONNECTOR, HyperGrpcQueryTask>;
 
 export interface ExecuteDataCloudQueryTask {
     /// The salesforce api client
     api: SalesforceAPIClientInterface;
-    /// The auth params
-    authParams: SalesforceAuthParams;
     /// The access token
     dataCloudAccessToken: SalesforceDataCloudAccessToken;
     /// The script text
     scriptText: string;
+}
+
+export interface HyperGrpcQueryTask {
+    /// The script text
+    scriptText: string;
+    /// The channel
+    hyperChannel: HyperDatabaseChannel;
 }
 
 export enum QueryExecutionStatus {
