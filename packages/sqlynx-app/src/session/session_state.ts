@@ -39,7 +39,7 @@ export interface SessionState {
     runningQueries: Set<number>;
     /// The finished queries of this session
     finishedQueries: number[];
-    /// The main editor query
+    /// The editor query
     editorQuery: number | null;
     /// The graph
     graph: sqlynx.SQLynxQueryGraphLayout | null;
