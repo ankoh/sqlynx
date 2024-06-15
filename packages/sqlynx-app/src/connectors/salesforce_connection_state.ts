@@ -160,7 +160,7 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                 ...state,
                 connectionStatus: ConnectionStatus.AUTH_STARTED,
                 connectionHealth: ConnectionHealth.CONNECTING,
-                stats: state.stats,
+                metrics: state.metrics,
                 details: {
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {

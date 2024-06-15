@@ -19,8 +19,6 @@ import { QueryExecutionStatus } from '../../connectors/query_execution_state.js'
 import { useCurrentSessionState } from '../../session/current_session.js';
 import { ScriptEditor } from './editor.js';
 import { SchemaGraph } from '../schema/schema_graph.js';
-// import { QueryProgress } from '../progress/query_progress.js';
-// import { DataTable } from '../table/data_table.js';
 import { KeyEventHandler, useKeyEvents } from '../../utils/key_events.js';
 import { VerticalTabs, VerticalTabVariant } from '../foundations/vertical_tabs.js';
 import { ScriptFileSaveOverlay } from './script_filesave_overlay.js';
@@ -131,7 +129,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
         enabledTabs: 1,
     });
     let enabledTabs = 1;
-    enabledTabs += +((queryState?.startedAt ?? null) != null);
+    enabledTabs += +(queryState != null);
     enabledTabs += +(queryState?.status == QueryExecutionStatus.SUCCEEDED);
     tabState.current.enabledTabs = enabledTabs;
 

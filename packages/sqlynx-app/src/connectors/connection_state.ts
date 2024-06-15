@@ -21,11 +21,9 @@ import {
     SALESFORCE_DATA_CLOUD_CONNECTOR,
     SERVERLESS_CONNECTOR,
 } from './connector_info.js';
-import {
-    QueryExecutionProgress,
-    QueryExecutionResponseStream,
-    QueryExecutionTaskState,
-} from './query_execution_state.js';
+import { QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionState } from './query_execution_state.js';
+import { ConnectionMetrics, createConnectionMetrics } from './connection_statistics.js';
+import { reduceQueryExecution } from './query_execution_state.js';
 
 export interface ConnectionState {
     /// The connection id
@@ -37,7 +35,7 @@ export interface ConnectionState {
     /// The connection info
     connectionInfo: ConnectorInfo;
     /// The connection statistics
-    stats: ConnectionStatistics;
+    metrics: ConnectionMetrics;
 
     /// The connection details
     details: ConnectionDetailsVariant;
@@ -50,33 +48,9 @@ export interface ConnectionState {
     catalogUpdatesFinished: Map<number, CatalogUpdateTaskState>;
 
     /// The queries that are currently running
-    queriesRunning: Map<number, QueryExecutionTaskState>;
+    queriesRunning: Map<number, QueryExecutionState>;
     /// The queries that finished (succeeded, failed, cancelled)
-    queriesFinished: Map<number, QueryExecutionTaskState>;
-}
-
-export type ConnectionDetailsVariant =
-    | VariantKind<typeof SALESFORCE_DATA_CLOUD_CONNECTOR, SalesforceConnectionDetails>
-    | VariantKind<typeof SERVERLESS_CONNECTOR, unknown>
-    | VariantKind<typeof HYPER_GRPC_CONNECTOR, HyperGrpcConnectionDetails>
-    ;
-
-export interface ConnectionStatistics {
-    totalQueriesStarted: bigint;
-    totalQueriesFinished: bigint;
-    totalQueryDurationMs: bigint;
-    lastQueryStarted: Date | null;
-    lastQueryFinished: Date | null;
-}
-
-export function createConnectionStatistics(): ConnectionStatistics {
-    return {
-        totalQueriesStarted: BigInt(0),
-        totalQueriesFinished: BigInt(0),
-        totalQueryDurationMs: BigInt(0),
-        lastQueryStarted: null,
-        lastQueryFinished: null
-    };
+    queriesFinished: Map<number, QueryExecutionState>;
 }
 
 export enum ConnectionStatus {
@@ -117,29 +91,13 @@ export enum ConnectionHealth {
     FAILED,
 }
 
+export type ConnectionDetailsVariant =
+    | VariantKind<typeof SALESFORCE_DATA_CLOUD_CONNECTOR, SalesforceConnectionDetails>
+    | VariantKind<typeof SERVERLESS_CONNECTOR, unknown>
+    | VariantKind<typeof HYPER_GRPC_CONNECTOR, HyperGrpcConnectionDetails>
+    ;
+
 export type ConnectionStateWithoutId = Omit<ConnectionState, "connectionId">;
-
-export function createConnectionState(lnx: sqlynx.SQLynx, info: ConnectorInfo, details: ConnectionDetailsVariant): ConnectionStateWithoutId {
-    return {
-        connectionStatus: ConnectionStatus.NOT_STARTED,
-        connectionHealth: ConnectionHealth.NOT_STARTED,
-        connectionInfo: info,
-        stats: createConnectionStatistics(),
-        details,
-        catalog: lnx.createCatalog(),
-        catalogUpdatesRunning: new Map(),
-        catalogUpdatesFinished: new Map(),
-        queriesRunning: new Map(),
-        queriesFinished: new Map(),
-    };
-}
-
-export function createServerlessConnectionState(lnx: sqlynx.SQLynx): ConnectionStateWithoutId {
-    return createConnectionState(lnx, CONNECTOR_INFOS[ConnectorType.SERVERLESS], {
-        type: SERVERLESS_CONNECTOR,
-        value: {}
-    });
-}
 
 export const RESET = Symbol('RESET');
 export const UPDATE_CATALOG = Symbol('UPDATE_CATALOG');
@@ -149,7 +107,6 @@ export const CATALOG_UPDATE_FAILED = Symbol('CATALOG_UPDATE_FAILED');
 export const CATALOG_UPDATE_CANCELLED = Symbol('CATALOG_UPDATE_CANCELLED');
 
 export const EXECUTE_QUERY = Symbol('EXECUTE_QUERY');
-export const QUERY_EXECUTION_ACCEPTED = Symbol('QUERY_EXECUTION_ACCEPTED');
 export const QUERY_EXECUTION_STARTED = Symbol('QUERY_EXECUTION_STARTED');
 export const QUERY_EXECUTION_PROGRESS_UPDATED = Symbol('QUERY_EXECUTION_PROGRESS_UPDATED');
 export const QUERY_EXECUTION_RECEIVED_SCHEMA = Symbol('QUERY_EXECUTION_RECEIVED_SCHEMA');
@@ -158,24 +115,32 @@ export const QUERY_EXECUTION_SUCCEEDED = Symbol('QUERY_EXECUTION_SUCCEEDED');
 export const QUERY_EXECUTION_FAILED = Symbol('QUERY_EXECUTION_FAILED');
 export const QUERY_EXECUTION_CANCELLED = Symbol('QUERY_EXECUTION_CANCELLED');
 
-export type ConnectionStateBaseAction =
-    | VariantKind<typeof RESET, null>
+export type CatalogAction =
     | VariantKind<typeof UPDATE_CATALOG, CatalogUpdateRequestVariant>
     | VariantKind<typeof CATALOG_UPDATE_STARTED, CatalogUpdateTaskState[]>
     | VariantKind<typeof CATALOG_UPDATE_CANCELLED, number>
     | VariantKind<typeof CATALOG_UPDATE_SUCCEEDED, number>
-    | VariantKind<typeof CATALOG_UPDATE_FAILED, [number, any]>
-    | VariantKind<typeof EXECUTE_QUERY, null>
-    | VariantKind<typeof QUERY_EXECUTION_ACCEPTED, QueryExecutionTaskState>
-    | VariantKind<typeof QUERY_EXECUTION_STARTED, QueryExecutionResponseStream>
-    | VariantKind<typeof QUERY_EXECUTION_PROGRESS_UPDATED, QueryExecutionProgress>
-    | VariantKind<typeof QUERY_EXECUTION_RECEIVED_SCHEMA, arrow.Schema>
-    | VariantKind<typeof QUERY_EXECUTION_RECEIVED_BATCH, arrow.RecordBatch>
-    | VariantKind<typeof QUERY_EXECUTION_SUCCEEDED, arrow.RecordBatch | null>
-    | VariantKind<typeof QUERY_EXECUTION_FAILED, any>
-    | VariantKind<typeof QUERY_EXECUTION_CANCELLED, null>
+    | VariantKind<typeof CATALOG_UPDATE_FAILED, [number, Error]>
+    ;
 
-export type ConnectionStateAction = ConnectionStateBaseAction | HyperGrpcConnectorAction | SalesforceConnectionStateAction;
+export type QueryExecutionAction =
+    | VariantKind<typeof EXECUTE_QUERY, [number, QueryExecutionState]>
+    | VariantKind<typeof QUERY_EXECUTION_STARTED, [number, QueryExecutionResponseStream]>
+    | VariantKind<typeof QUERY_EXECUTION_PROGRESS_UPDATED, [number, QueryExecutionProgress]>
+    | VariantKind<typeof QUERY_EXECUTION_RECEIVED_SCHEMA, [number, arrow.Schema]>
+    | VariantKind<typeof QUERY_EXECUTION_RECEIVED_BATCH, [number, arrow.RecordBatch]>
+    | VariantKind<typeof QUERY_EXECUTION_SUCCEEDED, [number, arrow.RecordBatch | null]>
+    | VariantKind<typeof QUERY_EXECUTION_FAILED, [number, Error]>
+    | VariantKind<typeof QUERY_EXECUTION_CANCELLED, [number, Error]>
+    ;
+
+export type ConnectionStateAction =
+    | VariantKind<typeof RESET, null>
+    | CatalogAction
+    | QueryExecutionAction
+    | HyperGrpcConnectorAction
+    | SalesforceConnectionStateAction
+    ;
 
 export function reduceConnectionState(state: ConnectionState, action: ConnectionStateAction): ConnectionState {
     switch (action.type) {
@@ -184,8 +149,9 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
         case CATALOG_UPDATE_CANCELLED:
         case CATALOG_UPDATE_SUCCEEDED:
         case CATALOG_UPDATE_FAILED:
+            return state;
+
         case EXECUTE_QUERY:
-        case QUERY_EXECUTION_ACCEPTED:
         case QUERY_EXECUTION_STARTED:
         case QUERY_EXECUTION_PROGRESS_UPDATED:
         case QUERY_EXECUTION_RECEIVED_SCHEMA:
@@ -193,7 +159,7 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
         case QUERY_EXECUTION_SUCCEEDED:
         case QUERY_EXECUTION_CANCELLED:
         case QUERY_EXECUTION_FAILED:
-            return state;
+            return reduceQueryExecution(state, action);
 
         // RESET is a bit special since we want to clean up our details as well
         case RESET: {
@@ -207,7 +173,7 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
                 ...state,
                 connectionStatus: ConnectionStatus.NOT_STARTED,
                 connectionHealth: ConnectionHealth.NOT_STARTED,
-                stats: createConnectionStatistics(),
+                metrics: createConnectionMetrics(),
                 catalogUpdatesRunning: new Map(),
                 catalogUpdatesFinished: new Map(),
                 queriesRunning: new Map(),
@@ -248,4 +214,27 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
             return next;
         }
     }
+}
+
+export function createConnectionState(lnx: sqlynx.SQLynx, info: ConnectorInfo, details: ConnectionDetailsVariant): ConnectionStateWithoutId {
+    const catalog = lnx.createCatalog();
+    return {
+        connectionStatus: ConnectionStatus.NOT_STARTED,
+        connectionHealth: ConnectionHealth.NOT_STARTED,
+        connectionInfo: info,
+        metrics: createConnectionMetrics(),
+        details,
+        catalog,
+        catalogUpdatesRunning: new Map(),
+        catalogUpdatesFinished: new Map(),
+        queriesRunning: new Map(),
+        queriesFinished: new Map(),
+    };
+}
+
+export function createServerlessConnectionState(lnx: sqlynx.SQLynx): ConnectionStateWithoutId {
+    return createConnectionState(lnx, CONNECTOR_INFOS[ConnectorType.SERVERLESS], {
+        type: SERVERLESS_CONNECTOR,
+        value: {}
+    });
 }
