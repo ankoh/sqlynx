@@ -22,8 +22,8 @@
     .body_container {
         position: relative;
         grid-row: 2;
-        height: 100%;
 
+        height: 100%;
         display: flex;
         flex-direction: column;
     }
@@ -120,7 +120,8 @@
 }
 
 .output_container {
-    flex: 1;
+    height: 35%;
+    flex-shrink: 0;
 }
 
 .output_card {
@@ -129,7 +130,7 @@
 }
 
 .editor_container {
-    height: 60%;
+    flex: 1;
 }
 
 .editor_card {

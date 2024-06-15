@@ -31,6 +31,7 @@
     padding: 4px;
     row-gap: 4px;
     height: 100%;
+    overflow: auto;
 }
 
 .stacked_tab {
