@@ -5,9 +5,14 @@ import { SalesforceAPIClientInterface, SalesforceDataCloudAccessToken } from './
 import { HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR } from './connector_info.js';
 import {
     ConnectionState,
-    EXECUTE_QUERY, QUERY_EXECUTION_CANCELLED, QUERY_EXECUTION_FAILED,
-    QUERY_EXECUTION_PROGRESS_UPDATED, QUERY_EXECUTION_RECEIVED_BATCH, QUERY_EXECUTION_RECEIVED_SCHEMA,
-    QUERY_EXECUTION_STARTED, QUERY_EXECUTION_SUCCEEDED,
+    EXECUTE_QUERY,
+    QUERY_EXECUTION_CANCELLED,
+    QUERY_EXECUTION_FAILED,
+    QUERY_EXECUTION_PROGRESS_UPDATED,
+    QUERY_EXECUTION_RECEIVED_BATCH,
+    QUERY_EXECUTION_RECEIVED_SCHEMA,
+    QUERY_EXECUTION_STARTED,
+    QUERY_EXECUTION_SUCCEEDED,
     QueryExecutionAction,
 } from './connection_state.js';
 import { ConnectionQueryMetrics } from './connection_statistics.js';
@@ -105,13 +110,16 @@ export interface QueryExecutionState {
 export function reduceQueryExecution(state: ConnectionState, action: QueryExecutionAction): ConnectionState {
     const now = new Date();
     const queryId = action.value[0];
+
+    // Initial setup?
+    if (action.type == EXECUTE_QUERY)  {
+        state.queriesRunning.set(queryId, action.value[1]);
+        return { ...state };
+    }
+
     let query = state.queriesRunning.get(queryId);
     if (!query) return state;
-
     switch (action.type) {
-        case EXECUTE_QUERY:
-            state.queriesRunning.set(queryId, action.value[1]);
-            return { ...state };
         case QUERY_EXECUTION_STARTED: {
             query = {
                 ...query,
