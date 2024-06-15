@@ -1,7 +1,7 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
 import Immutable from 'immutable';
 
-import { generateBlankScript, ScriptMetadata } from './script_metadata.js';
+import { ScriptMetadata } from './script_metadata.js';
 import { ScriptLoadingStatus } from './script_loader.js';
 import { analyzeScript, parseAndAnalyzeScript, SQLynxScriptBuffers } from '../view/editor/sqlynx_processor.js';
 import {
@@ -90,30 +90,6 @@ export function destroyState(state: SessionState): SessionState {
         stats.delete();
     }
     return state;
-}
-
-export function createScriptData(key: ScriptKey, empty: sqlynx.SQLynxScript) {
-    const script: ScriptData = {
-        scriptKey: key,
-        scriptVersion: 1,
-        script: empty,
-        metadata: generateBlankScript(),
-        loading: {
-            status: ScriptLoadingStatus.SUCCEEDED,
-            error: null,
-            startedAt: null,
-            finishedAt: null,
-        },
-        processed: {
-            scanned: null,
-            parsed: null,
-            analyzed: null,
-            destroy: () => { },
-        },
-        statistics: Immutable.List(),
-        cursor: null,
-    };
-    return script;
 }
 
 export const DESTROY = Symbol('DESTROY');

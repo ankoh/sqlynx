@@ -117,7 +117,6 @@ export enum ConnectionHealth {
     FAILED,
 }
 
-
 export type ConnectionStateWithoutId = Omit<ConnectionState, "connectionId">;
 
 export function createConnectionState(lnx: sqlynx.SQLynx, info: ConnectorInfo, details: ConnectionDetailsVariant): ConnectionStateWithoutId {
