@@ -36,9 +36,8 @@ export const useQueryExecutor = () => React.useContext(EXECUTOR_CTX)!;
 /// Use the query state
 export function useQueryState(connectionId: number | null, queryId: number | null) {
     const [connReg, _connDispatch] = useConnectionState(connectionId);
-    if (!queryId) return null;
-    const queryState = connReg?.queriesFinished.get(queryId) ?? connReg?.queriesRunning.get(queryId);
-    return queryState ?? null;
+    if (queryId == null) return null;
+    return connReg?.queriesRunning.get(queryId) ?? connReg?.queriesFinished.get(queryId) ?? null;
 }
 
 export function QueryExecutorProvider(props: { children?: React.ReactElement }) {
@@ -211,7 +210,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
     // Allocate the next query id and start the execution
     const execute = React.useCallback<QueryExecutor>((connectionId: number, args: QueryExecutionArgs): [number, Promise<void>] => {
         const queryId = NEXT_QUERY_ID++;
-        const execution = executeWithId(connectionId, args, NEXT_QUERY_ID);
+        const execution = executeWithId(connectionId, args, queryId);
         return [queryId, execution];
     }, [executeWithId]);
 
