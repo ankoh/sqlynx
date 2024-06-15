@@ -195,7 +195,7 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
 
         // Close the channel
         // XXX Remove
-        await channel.close();
+        // await channel.close();
     };
 
     // Helper to cancel the authorization

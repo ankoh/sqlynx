@@ -1,10 +1,11 @@
 import * as React from 'react';
+import * as proto from '@ankoh/sqlynx-pb';
 
 import { useConnectionState, useDynamicConnectionDispatch } from './connection_registry.js';
 import {
     QueryExecutionResponseStream,
-    QueryExecutionStatus,
     QueryExecutionState,
+    QueryExecutionStatus,
     QueryExecutionTaskVariant,
 } from './query_execution_state.js';
 import { useSalesforceAPI } from './salesforce_connector.js';
@@ -34,8 +35,8 @@ const EXECUTOR_CTX = React.createContext<QueryExecutor | null>(null);
 export const useQueryExecutor = () => React.useContext(EXECUTOR_CTX)!;
 /// Use the query state
 export function useQueryState(connectionId: number | null, queryId: number | null) {
-    if (!connectionId || !queryId) return null;
     const [connReg, _connDispatch] = useConnectionState(connectionId);
+    if (!queryId) return null;
     const queryState = connReg?.queriesFinished.get(queryId) ?? connReg?.queriesRunning.get(queryId);
     return queryState ?? null;
 }
@@ -60,21 +61,32 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
         let task: QueryExecutionTaskVariant;
         switch (conn.details.type) {
             case SALESFORCE_DATA_CLOUD_CONNECTOR: {
-                const sfConn = conn.details.value;
+                const c = conn.details.value;
                 task = {
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
                         api: sfApi,
-                        authParams: sfConn.authParams!,
-                        dataCloudAccessToken: sfConn.dataCloudAccessToken!,
+                        dataCloudAccessToken: c.dataCloudAccessToken!,
                         scriptText: args.query,
                     },
                 };
                 break;
             }
-            case HYPER_GRPC_CONNECTOR:
-                // XXX
-                return;
+            case HYPER_GRPC_CONNECTOR: {
+                const c = conn.details.value;
+                const channel = c.channel;
+                if (!channel) {
+                    throw new Error(`hyper channel is not set up`);
+                }
+                task = {
+                    type: HYPER_GRPC_CONNECTOR,
+                    value: {
+                        hyperChannel: channel,
+                        scriptText: args.query,
+                    }
+                }
+                break;
+            }
             case SERVERLESS_CONNECTOR:
                 throw new Error(
                     `script query executor does not support connector ${conn.connectionInfo.connectorType} yet`,
@@ -84,7 +96,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
         // Accept the query and clear the request
         const initialState: QueryExecutionState = {
             queryId,
-            task,
+            task: task,
             status: QueryExecutionStatus.ACCEPTED,
             cancellation: new AbortController(),
             resultStream: null,
@@ -157,6 +169,13 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                     const req = task.value;
                     resultStream = req.api.executeQuery(req.scriptText, req.dataCloudAccessToken);
                     break;
+                }
+                case HYPER_GRPC_CONNECTOR: {
+                    const req = task.value;
+                    const param = new proto.salesforce_hyperdb_grpc_v1.pb.QueryParam({
+                        query: req.scriptText
+                    });
+                    resultStream = await req.hyperChannel.executeQuery(param);
                 }
             }
             if (resultStream != null) {

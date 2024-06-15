@@ -107,6 +107,8 @@ export const FOCUS_QUERY_GRAPH_NODE = Symbol('FOCUS_GRAPH_NODE');
 export const FOCUS_QUERY_GRAPH_EDGE = Symbol('FOCUS_GRAPH_EDGE');
 export const RESIZE_QUERY_GRAPH = Symbol('RESIZE_EDITOR');
 
+export const REGISTER_EDITOR_QUERY = Symbol('REGISTER_EDITOR_QUERY');
+
 export type SessionStateAction =
     | VariantKind<typeof DESTROY, null>
     | VariantKind<typeof UPDATE_SCRIPT_ANALYSIS, [ScriptKey, SQLynxScriptBuffers, sqlynx.proto.ScriptCursorInfoT]>
@@ -118,7 +120,8 @@ export type SessionStateAction =
     | VariantKind<typeof SCRIPT_LOADING_FAILED, [ScriptKey, any]>
     | VariantKind<typeof FOCUS_QUERY_GRAPH_NODE, GraphNodeDescriptor | null>
     | VariantKind<typeof FOCUS_QUERY_GRAPH_EDGE, GraphConnectionId.Value | null>
-    | VariantKind<typeof RESIZE_QUERY_GRAPH, [number, number]>; // width, height
+    | VariantKind<typeof RESIZE_QUERY_GRAPH, [number, number]> // width, height
+    | VariantKind<typeof REGISTER_EDITOR_QUERY, number>;
 
 const SCHEMA_SCRIPT_CATALOG_RANK = 1e9;
 const STATS_HISTORY_LIMIT = 20;
@@ -391,223 +394,11 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
             return computeSchemaGraph(next);
         }
 
-//        case UPDATE_CATALOG: {
-//            const task = action.value;
-//            const taskId = state.nextCatalogUpdateId;
-//            return {
-//                ...state,
-//                nextCatalogUpdateId: taskId + 1,
-//                catalogUpdateRequests: state.catalogUpdateRequests.set(taskId, task),
-//            };
-//        }
-//        case CATALOG_UPDATE_STARTED: {
-//            const requests = state.catalogUpdateRequests.withMutations(requests //=> {
-//                for (const task of action.value) {
-//                    requests.delete(task.taskId);
-//                }
-//            });
-//            const updates = state.catalogUpdates.withMutations(updates //=> {
-//                for (const task of action.value) {
-//                    updates.set(task.taskId, task);
-//                }
-//            });
-//            return {
-//                ...state,
-//                catalogUpdateRequests: requests,
-//                catalogUpdates: updates,
-//            };
-//        }
-//        case CATALOG_UPDATE_CANCELLED: {
-//            const taskId = action.value;
-//            const task = state.catalogUpdates.get(taskId)!;
-//            return {
-//                ...state,
-//                catalogUpdates: state.catalogUpdates.set(taskId, {
-//                    ...task,
-//                    status: CatalogUpdateTaskStatus.CANCELLED,
-//                    finishedAt: new Date(),
-//                }),
-//            };
-//        }
-//        case CATALOG_UPDATE_FAILED: {
-//            const [taskId, error] = action.value;
-//            const task = state.catalogUpdates.get(taskId)!;
-//            return {
-//                ...state,
-//                catalogUpdates: state.catalogUpdates.set(taskId, {
-//                    ...task,
-//                    status: CatalogUpdateTaskStatus.FAILED,
-//                    error,
-//                    finishedAt: new Date(),
-//                }),
-//            };
-//        }
-//        case CATALOG_UPDATE_SUCCEEDED: {
-//            const taskId = action.value;
-//            const task = state.catalogUpdates.get(taskId)!;
-//            const next = {
-//                ...state,
-//                catalogUpdates: state.catalogUpdates.set(taskId, {
-//                    ...task,
-//                    status: CatalogUpdateTaskStatus.SUCCEEDED,
-//                    finishedAt: new Date(),
-//                }),
-//            };
-//            // Update the scripts
-//            const main = next.scripts[ScriptKey.MAIN_SCRIPT];
-//            const schema = next.scripts[ScriptKey.SCHEMA_SCRIPT];
-//            try {
-//                if (schema && schema.script) {
-//                    // Destroy the old script and buffers
-//                    schema.processed.destroy(schema.processed);
-//                    // Analyze the new schema
-//                    const schemaAnalyzed = parseAndAnalyzeScript(schema.script);
-//                    // Update the catalog
-//                    next.catalog!.loadScript(schema.script, SCHEMA_SCRIPT_CATALOG_RANK);
-//                    // Update the state
-//                    next.scripts[ScriptKey.SCHEMA_SCRIPT] = {
-//                        ...next.scripts[ScriptKey.SCHEMA_SCRIPT],
-//                        scriptVersion: ++schema.scriptVersion,
-//                        processed: schemaAnalyzed,
-//                        statistics: rotateStatistics(schema.statistics, schema.script!.getStatistics() ?? null),
-//                    };
-//                }
-//                if (main && main.script) {
-//                    // Destroy the old buffers
-//                    main.processed.destroy(main.processed);
-//                    const analysis = parseAndAnalyzeScript(main.script);
-//                    // Update the state
-//                    next.scripts[ScriptKey.MAIN_SCRIPT] = {
-//                        ...main,
-//                        scriptVersion: ++main.scriptVersion,
-//                        processed: analysis,
-//                        statistics: rotateStatistics(main.statistics, main.script!.getStatistics() ?? null),
-//                    };
-//                }
-//            } catch (e: any) {
-//                console.warn(e);
-//            }
-//            // Update the schema graph
-//            return computeSchemaGraph(next);
-//        }
-//
-//        case EXECUTE_QUERY: {
-//            // Concurrent execution ongoing?
-//            // Should we force the user to cancel here?
-//            if (state.queryExecutionState != null && state.queryExecutionState.finishedAt == null) {
-//                return state;
-//            }
-//            return {
-//                ...state,
-//                queryExecutionRequested: true,
-//                queryExecutionState: null,
-//                queryExecutionResult: null,
-//            };
-//        }
-//        case QUERY_EXECUTION_ACCEPTED: {
-//            return {
-//                ...state,
-//                queryExecutionRequested: false,
-//                queryExecutionState: {
-//                    ...action.value,
-//                    status: QueryExecutionStatus.ACCEPTED,
-//                    lastUpdatedAt: new Date(),
-//                },
-//                queryExecutionResult: null,
-//            };
-//        }
-//        case QUERY_EXECUTION_STARTED: {
-//            return {
-//                ...state,
-//                queryExecutionRequested: false,
-//                queryExecutionState: {
-//                    ...state.queryExecutionState!,
-//                    status: QueryExecutionStatus.STARTED,
-//                    lastUpdatedAt: new Date(),
-//                    resultStream: action.value,
-//                },
-//                queryExecutionResult: null,
-//            };
-//        }
-//        case QUERY_EXECUTION_PROGRESS_UPDATED: {
-//            return {
-//                ...state,
-//                queryExecutionState: {
-//                    ...state.queryExecutionState!,
-//                    lastUpdatedAt: new Date(),
-//                    latestProgressUpdate: action.value,
-//                },
-//            };
-//        }
-//        case QUERY_EXECUTION_RECEIVED_SCHEMA: {
-//            return {
-//                ...state,
-//                queryExecutionState: {
-//                    ...state.queryExecutionState!,
-//                    status: QueryExecutionStatus.RECEIVED_SCHEMA,
-//                    lastUpdatedAt: new Date(),
-//                    resultSchema: state.queryExecutionState!.resultSchema,
-//                },
-//            };
-//        }
-//        case QUERY_EXECUTION_RECEIVED_BATCH: {
-//            return {
-//                ...state,
-//                queryExecutionState: {
-//                    ...state.queryExecutionState!,
-//                    status: QueryExecutionStatus.RECEIVED_FIRST_RESULT,
-//                    lastUpdatedAt: new Date(),
-//                    resultBatches: state.queryExecutionState!.resultBatches.push(action.value),
-//                },
-//            };
-//        }
-//        case QUERY_EXECUTION_SUCCEEDED: {
-//            const now = new Date();
-//
-//            const table = new arrow.Table(state.queryExecutionState!.resultBatches);
-//            return {
-//                ...state,
-//                queryExecutionState: {
-//                    ...state.queryExecutionState!,
-//                    status: QueryExecutionStatus.SUCCEEDED,
-//                    lastUpdatedAt: now,
-//                    finishedAt: now,
-//                },
-//                queryExecutionResult: {
-//                    startedAt: state.queryExecutionState!.startedAt,
-//                    finishedAt: state.queryExecutionState!.finishedAt,
-//                    latestProgressUpdate: state.queryExecutionState!.lastUpdatedAt!,
-//                    resultTable: table,
-//                },
-//            };
-//        }
-//        case QUERY_EXECUTION_FAILED: {
-//            const now = new Date();
-//            return {
-//                ...state,
-//                queryExecutionState: {
-//                    ...state.queryExecutionState!,
-//                    status: QueryExecutionStatus.FAILED,
-//                    lastUpdatedAt: now,
-//                    finishedAt: now,
-//                    error: action.value,
-//                },
-//            };
-//        }
-//        case QUERY_EXECUTION_CANCELLED: {
-//            const now = new Date();
-//            return {
-//                ...state,
-//                queryExecutionState: {
-//                    ...state.queryExecutionState!,
-//                    status: QueryExecutionStatus.CANCELLED,
-//                    lastUpdatedAt: now,
-//                    finishedAt: now,
-//                    error: action.value,
-//                },
-//            };
-//        }
-
+        case REGISTER_EDITOR_QUERY:
+            return {
+                ...state,
+                editorQuery: action.value
+            };
         case FOCUS_QUERY_GRAPH_NODE:
             return focusGraphNode(state, action.value);
         case FOCUS_QUERY_GRAPH_EDGE:
