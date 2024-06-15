@@ -9,7 +9,7 @@ import { ScriptLoadingStatus } from './script_loader.js';
 import { useConnectionStateAllocator } from '../connectors/connection_registry.js';
 import { useSQLynxSetup } from '../sqlynx_loader.js';
 import { useSessionStateAllocator } from './session_state_registry.js';
-import { createSalesforceConnectorState } from '../connectors/salesforce_connection_state.js';
+import { createServerlessConnectionState } from '../connectors/connection_state.js';
 
 export const DEFAULT_BOARD_WIDTH = 800;
 export const DEFAULT_BOARD_HEIGHT = 600;
@@ -27,7 +27,7 @@ export function useServerlessSessionSetup(): SessionSetupFn {
         signal?.throwIfAborted();
 
         const lnx = instance.value;
-        const connectionState = createSalesforceConnectorState(lnx);
+        const connectionState = createServerlessConnectionState(lnx);
         const connectionId = allocateConnection(connectionState);
         const graph = lnx.createQueryGraphLayout();
         const mainScript = lnx.createScript(connectionState.catalog, ScriptKey.MAIN_SCRIPT);
