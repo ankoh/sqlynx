@@ -4,13 +4,13 @@ import { useConnectionState, useDynamicConnectionDispatch } from './connection_r
 import {
     QueryExecutionResponseStream,
     QueryExecutionStatus,
-    QueryExecutionTaskState,
+    QueryExecutionState,
     QueryExecutionTaskVariant,
 } from './query_execution_state.js';
 import { useSalesforceAPI } from './salesforce_connector.js';
 import { HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, SERVERLESS_CONNECTOR } from './connector_info.js';
 import {
-    QUERY_EXECUTION_ACCEPTED,
+    EXECUTE_QUERY,
     QUERY_EXECUTION_CANCELLED,
     QUERY_EXECUTION_FAILED,
     QUERY_EXECUTION_PROGRESS_UPDATED,
@@ -82,23 +82,32 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
         }
 
         // Accept the query and clear the request
-        const initialState: QueryExecutionTaskState = {
+        const initialState: QueryExecutionState = {
             queryId,
             task,
             status: QueryExecutionStatus.ACCEPTED,
             cancellation: new AbortController(),
             resultStream: null,
             error: null,
-            startedAt: new Date(),
-            finishedAt: null,
-            lastUpdatedAt: null,
+            metrics: {
+                startedAt: null,
+                finishedAt: null,
+                lastUpdatedAt: null,
+                batchesReceived: 0,
+                rowsReceived: 0,
+                progressUpdatesReceived: 0,
+                durationUntilSchemaMs: null,
+                durationUntilFirstBatchMs: null,
+                queryDurationMs: null,
+            },
             latestProgressUpdate: null,
             resultSchema: null,
             resultBatches: [],
+            resultTable: null,
         };
         connDispatch(connectionId, {
-            type: QUERY_EXECUTION_ACCEPTED,
-            value: initialState,
+            type: EXECUTE_QUERY,
+            value: [queryId, initialState],
         });
 
         // Helper to subscribe to progress updates
@@ -110,7 +119,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                 }
                 connDispatch(connectionId, {
                     type: QUERY_EXECUTION_PROGRESS_UPDATED,
-                    value: update,
+                    value: [queryId, update],
                 });
             }
         };
@@ -123,7 +132,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                 }
                 connDispatch(connectionId, {
                     type: QUERY_EXECUTION_RECEIVED_SCHEMA,
-                    value: schema,
+                    value: [queryId, schema],
                 });
                 while (true) {
                     const batch = await resultStream.nextRecordBatch();
@@ -132,7 +141,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                     }
                     connDispatch(connectionId, {
                         type: QUERY_EXECUTION_RECEIVED_BATCH,
-                        value: batch,
+                        value: [queryId, batch],
                     });
                 }
             } catch (e: any) {
@@ -153,7 +162,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
             if (resultStream != null) {
                 connDispatch(connectionId, {
                     type: QUERY_EXECUTION_STARTED,
-                    value: resultStream,
+                    value: [queryId, resultStream],
                 });
                 // Subscribe to progress and result messages
                 const progress = progressUpdater(resultStream);
@@ -161,14 +170,14 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                 await Promise.all([results, progress]);
                 connDispatch(connectionId, {
                     type: QUERY_EXECUTION_SUCCEEDED,
-                    value: null,
+                    value: [queryId, null],
                 });
             }
         } catch (e: any) {
             if ((e.message === 'AbortError')) {
                 connDispatch(connectionId, {
                     type: QUERY_EXECUTION_CANCELLED,
-                    value: null,
+                    value: [queryId, e],
                 });
             } else {
                 connDispatch(connectionId, {
