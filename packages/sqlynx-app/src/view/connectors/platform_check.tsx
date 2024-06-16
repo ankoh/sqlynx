@@ -5,8 +5,16 @@ import { ReleaseBundles } from '../release_bundle.js';
 
 import * as styles from './platform_check.module.css';
 import * as icons from '../../../static/svg/symbols.generated.svg';
+import { VersionViewerOverlay } from '../version_viewer.js';
+import { HoverMode, NavBarButtonWithRef } from '../navbar_button.js';
+import * as symbols from '../../../static/svg/symbols.generated.svg';
+import { SQLYNX_VERSION } from '../../globals.js';
+import { AnchorAlignment, AnchorSide } from '../foundations/anchored_position.js';
+import { Button, ButtonVariant } from '../foundations/button.js';
+import { PackageIcon } from '@primer/octicons-react';
 
 export const PlatformCheck: React.FC<{ connectorType: ConnectorType, children: React.ReactElement }> = (props) => {
+    const [showVersionOverlay, setShowVersionOverlay] = React.useState<boolean>(false);
     const info = CONNECTOR_INFOS[props.connectorType];
     if (requiresSwitchingToNative(info)) {
         return (
@@ -24,8 +32,24 @@ export const PlatformCheck: React.FC<{ connectorType: ConnectorType, children: R
                             Web connectors for Hyper and Data Cloud
                         </a>
                     </div>
-                    <div className={styles.release_bundles}>
-                        <ReleaseBundles />
+                    <div className={styles.actions}>
+                        <VersionViewerOverlay
+                            isOpen={showVersionOverlay}
+                            onClose={() => setShowVersionOverlay(false)}
+                            renderAnchor={(p: object) => (
+                                <Button
+                                    className={styles.download_button}
+                                    {...p}
+                                    variant={ButtonVariant.Default}
+                                    onClick={() => setShowVersionOverlay(true)}
+                                    leadingVisual={PackageIcon}>
+                                    Download App
+                                </Button>
+                            )}
+                            side={AnchorSide.OutsideTop}
+                            align={AnchorAlignment.Start}
+                            anchorOffset={8}
+                        />
                     </div>
                 </div>
             </div>

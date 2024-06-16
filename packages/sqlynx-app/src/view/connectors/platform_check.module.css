@@ -30,4 +30,8 @@
     text-decoration: none;
 }
 
-.release_bundles {}
+.actions {
+    display: flex;
+    flex-direction: row;
+}
+.download_button {}
