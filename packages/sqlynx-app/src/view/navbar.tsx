@@ -3,20 +3,19 @@ import { useLocation } from 'react-router-dom';
 
 import { SQLYNX_VERSION } from '../globals.js';
 import { classNames } from '../utils/classnames.js';
-import { HoverMode, NavBarLink, NavBarButtonWithRef } from './navbar_button.js';
+import { HoverMode, NavBarButtonWithRef, NavBarLink } from './navbar_button.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
-import { LogViewerInPortal } from './log_viewer.js';
 import { VersionViewerOverlay } from './version_viewer.js';
-import { SessionLinkTarget, generateSessionSetupUrl } from '../session/session_setup_url.js';
+import { generateSessionSetupUrl, SessionLinkTarget } from '../session/session_setup_url.js';
 import { useCurrentSessionState } from '../session/current_session.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
 
 import * as styles from './navbar.module.css';
 import * as symbols from '../../static/svg/symbols.generated.svg';
 import { useAppConfig } from '../app_config.js';
-import { Button, ButtonVariant } from './foundations/button.js';
-import { PackageIcon } from '@primer/octicons-react';
 import { AnchorAlignment, AnchorSide } from './foundations/anchored_position.js';
+import { LogViewerOverlay } from './log_viewer.js';
+import { OverlaySize } from './foundations/overlay.js';
 
 const PageTab = (props: { route: string; alt?: string; location: string; icon: string; label: string | null }) => (
     <div
@@ -52,23 +51,38 @@ const ExternalLink = (props: { url?: string | null; alt?: string; icon?: string;
 );
 
 const LogButton = (_props: {}) => {
-    const [showVersionOverlay, setShowVersionOverlay] = React.useState<boolean>(false);
+    const [showLogOverlay, setShowLogOverlay] = React.useState<boolean>(false);
     return (
         <div className={styles.tab}>
-            <NavBarButtonWithRef className={styles.tab_button} hover={HoverMode.Darken} onClick={() => setShowVersionOverlay(s => !s)}>
-                <>
-                    <svg width="14px" height="14px">
-                        <use xlinkHref={`${symbols}#log`} />
-                    </svg>
-                    <span className={styles.tab_button_text}>Logs</span>
-                </>
-            </NavBarButtonWithRef>
-            {showVersionOverlay && <LogViewerInPortal onClose={() => setShowVersionOverlay(false)} />}
+            <LogViewerOverlay
+                isOpen={showLogOverlay}
+                onClose={() => setShowLogOverlay(false)}
+                renderAnchor={(p: object) => (
+                    <NavBarButtonWithRef
+                        {...p}
+                        className={styles.tab_button}
+                        hover={HoverMode.Darken} onClick={() => setShowLogOverlay(true)}>
+                        <>
+                            <svg width="14px" height="14px">
+                                <use xlinkHref={`${symbols}#log`} />
+                            </svg>
+                            <span className={styles.tab_button_text}>Logs</span>
+                        </>
+                    </NavBarButtonWithRef>
+                )}
+                side={AnchorSide.OutsideTop}
+                align={AnchorAlignment.End}
+                anchorOffset={16}
+                overlayProps={{
+                    width: OverlaySize.XL,
+                    height: OverlaySize.XL
+                }}
+            />
         </div>
     );
 }
 
-const UpdateButton = (_props: {}) => {
+const VersionButton = (_props: {}) => {
     const [showVersionOverlay, setShowVersionOverlay] = React.useState<boolean>(false);
     return (
         <div className={styles.tab}>
@@ -127,7 +141,7 @@ export const NavBar = (): React.ReactElement => {
             </div>
             <div className={styles.version_container}>
                 <LogButton />
-                <UpdateButton />
+                <VersionButton />
                 {isBrowser
                     ? <ExternalLink label="Open in App" url={setupUrl?.toString()} icon={`${symbols}#download_desktop`} newWindow={false} />
                     : <ExternalLink label="Open in Browser" url={setupUrl?.toString()} icon={`${symbols}#upload_browser`} newWindow={true} />

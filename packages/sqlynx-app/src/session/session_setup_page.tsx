@@ -6,6 +6,7 @@ import * as page_styles from '../view/banner_page.module.css';
 import * as styles from '../view/connectors/platform_check.module.css';
 
 import { IconButton } from '@primer/react';
+import { DesktopDownloadIcon, PackageIcon } from '@primer/octicons-react';
 
 import { formatHHMMSS } from '../utils/format.js';
 import { useLogger } from '../platform/logger_provider.js';
@@ -16,7 +17,8 @@ import { SalesforceAuthParams } from '../connectors/connection_params.js';
 import { SQLYNX_VERSION } from '../globals.js';
 import { REPLACE_SCRIPT_CONTENT } from './session_state.js';
 import { TextField } from '../view/foundations/text_field.js';
-import { LogViewerInPortal } from '../view/log_viewer.js';
+import { VersionViewerOverlay } from '../view/version_viewer.js';
+import { AnchorAlignment, AnchorSide } from '../view/foundations/anchored_position.js';
 
 import { Button, ButtonVariant } from '../view/foundations/button.js';
 import {
@@ -26,9 +28,8 @@ import {
 } from '../connectors/connector_setup_check.js';
 import { useSessionState } from './session_state_registry.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
-import { DesktopDownloadIcon, PackageIcon } from '@primer/octicons-react';
-import { VersionViewerOverlay } from '../view/version_viewer.js';
-import { AnchorAlignment, AnchorSide } from '../view/foundations/anchored_position.js';
+import { LogViewerOverlay } from '../view/log_viewer.js';
+import { OverlaySize } from '../view/foundations/overlay.js';
 
 const LOG_CTX = "session_setup";
 const AUTOTRIGGER_DELAY = 2000;
@@ -298,17 +299,30 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                         Setup
                     </div>
                     <div className={page_styles.card_header_right_container}>
-                        <IconButton
-                            variant="invisible"
-                            icon={() => (
-                                <svg width="16px" height="16px">
-                                    <use xlinkHref={`${symbols}#log`} />
-                                </svg>
+                        <LogViewerOverlay
+                            isOpen={showLogs}
+                            onClose={() => setShowLogs(false)}
+                            renderAnchor={(p: object) => (
+                                <IconButton
+                                    {...p}
+                                    variant="invisible"
+                                    icon={() => (
+                                        <svg width="16px" height="16px">
+                                            <use xlinkHref={`${symbols}#log`} />
+                                        </svg>
+                                    )}
+                                    aria-label="close-overlay"
+                                    onClick={() => setShowLogs(s => !s)}
+                                />
                             )}
-                            aria-label="close-overlay"
-                            onClick={() => setShowLogs(s => !s)}
+                            side={AnchorSide.OutsideBottom}
+                            align={AnchorAlignment.End}
+                            anchorOffset={16}
+                            overlayProps={{
+                                width: OverlaySize.L,
+                                height: OverlaySize.M
+                            }}
                         />
-                        {showLogs && <LogViewerInPortal onClose={() => setShowLogs(false)} />}
                     </div>
                 </div>
                 {sections}
