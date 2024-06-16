@@ -414,9 +414,8 @@ export class NativeAPIMock {
             }
             const stream = channel.streams.get(streamId);
             if (!stream) {
-                return new Response(null, {
+                return new Response(`stream not found`, {
                     status: 404,
-                    statusText: `stream not found`
                 });
             }
             switch (req.method) {
@@ -434,9 +433,8 @@ export class NativeAPIMock {
             const streamId = Number.parseInt(matches.groups!["stream"]!);
             const stream = this.httpStreams.get(streamId);
             if (!stream) {
-                return new Response(null, {
+                return new Response(`stream not found`, {
                     status: 404,
-                    statusText: `stream not found`
                 });
             }
             switch (req.method) {
