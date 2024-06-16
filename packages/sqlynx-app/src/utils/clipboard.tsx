@@ -1,13 +1,25 @@
-import * as React from "react";
+import * as React from 'react';
 
-import { CheckIcon, CopyIcon, Icon } from "@primer/octicons-react";
+import { CheckIcon, CopyIcon, Icon } from '@primer/octicons-react';
 
-import { useLogger } from "../platform/logger_provider.js";
-import { TextInputAction } from '../view/foundations/text_input_action.js';
+import { useLogger } from '../platform/logger_provider.js';
+import { Tooltip } from '../view/foundations/tooltip.js';
+import { IconButton } from '@primer/react';
+import { ButtonVariant, mapButtonVariant } from '../view/foundations/button.js';
 
 const DEFAULT_COPY_TIMEOUT = 2000;
 
-export function CopyToClipboardAction(props: { value: string, timeoutMs?: number, logContext: string, ariaLabel: string }): React.ReactElement {
+interface Props {
+    variant?: ButtonVariant;
+    className?: string;
+    value: string;
+    timeoutMs?: number;
+    logContext: string;
+    ['aria-label']: string;
+    ['aria-labelledby']: string;
+}
+/// The icon to render inside the button
+export function CopyToClipboardButton(props: Props): React.ReactElement {
     const logger = useLogger();
     const [lastCopied, setLastCopied] = React.useState<number | null>(null);
     const [wasRecentlyCopied, setWasRecentlyCopied] = React.useState<boolean>(false);
@@ -40,12 +52,21 @@ export function CopyToClipboardAction(props: { value: string, timeoutMs?: number
     } else {
         icon = CopyIcon;
     }
+
+    const ariaLabel = props['aria-label'];
+    const ariaLabelledBy = props['aria-labelledby'];
+    const buttonVariant = mapButtonVariant(props.variant ?? ButtonVariant.Invisible);
     return (
-        <TextInputAction
-            onClick={copy}
-            icon={icon}
-            aria-label={props.ariaLabel}
-            aria-labelledby=""
-        />
+        <Tooltip text={ariaLabel} type="label" direction="s">
+            <IconButton
+                className={props.className}
+                type="button"
+                icon={icon}
+                variant={buttonVariant}
+                size="small"
+                aria-labelledby={ariaLabelledBy}
+                onClick={copy}
+            />
+        </Tooltip>
     );
 }

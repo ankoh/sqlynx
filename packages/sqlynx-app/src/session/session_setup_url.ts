@@ -43,3 +43,21 @@ export function generateSessionSetupUrl(sessionState: SessionState, connection: 
             return new URL(`sqlynx://localhost?data=${eventDataBase64}`);
     };
 }
+
+export function encodeSessionSetupUrl(setup: proto.sqlynx_session.pb.SessionSetup, target: SessionLinkTarget): URL {
+    const eventData = new proto.sqlynx_app_event.pb.AppEventData({
+        data: {
+            case: "sessionSetup",
+            value: setup
+        }
+    });
+    const eventDataBytes = eventData.toBinary();
+    const eventDataBase64 = BASE64_CODEC.encode(eventDataBytes.buffer);
+
+    switch (target) {
+        case SessionLinkTarget.WEB:
+            return new URL(`${process.env.SQLYNX_APP_URL!}?data=${eventDataBase64}`);
+        case SessionLinkTarget.NATIVE:
+            return new URL(`sqlynx://localhost?data=${eventDataBase64}`);
+    };
+}

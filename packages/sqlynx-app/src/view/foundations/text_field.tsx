@@ -1,9 +1,9 @@
 import * as React from 'react';
 
-import { CopyToClipboardAction } from '../../utils/clipboard.js';
 import { classNames } from '../../utils/classnames.js';
 import { VariantKind } from '../../utils/variant.js';
 import { TextInput, TextInputValidationStatus } from './text_input.js';
+import { CopyToClipboardAction } from './text_input_action.js';
 
 import * as icons from '../../../static/svg/symbols.generated.svg';
 import * as styles from './text_field.module.css';
