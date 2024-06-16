@@ -303,7 +303,7 @@ const OAuthFailed: React.FC<OAuthFailedProps> = (props: OAuthFailedProps) => {
                     <div className={styles.app_version}>version {SQLYNX_VERSION}</div>
                 </div>
             </div>
-            <div className={styles.card_container}>
+            <div className={styles.card}>
                 <div className={styles.card_header}>
                     <div>Authorization Failed</div>
                 </div>

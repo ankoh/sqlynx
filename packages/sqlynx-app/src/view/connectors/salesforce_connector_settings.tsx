@@ -190,6 +190,7 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
     switch (connectionState?.connectionHealth) {
         case ConnectionHealth.NOT_STARTED:
         case ConnectionHealth.FAILED:
+        case ConnectionHealth.CANCELLED:
             connectButton = <Button variant={ButtonVariant.Primary} leadingVisual={PlugIcon} onClick={startAuth}>Connect</Button>;
             break;
         case ConnectionHealth.CONNECTING:

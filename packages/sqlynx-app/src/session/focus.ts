@@ -140,16 +140,18 @@ export function deriveScriptFocusFromCursor(
 }
 
 function clearCursors(state: SessionState): SessionState {
-    state.scripts = {
-        [ScriptKey.MAIN_SCRIPT]: {
+    if (state.scripts[ScriptKey.MAIN_SCRIPT]) {
+        state.scripts[ScriptKey.MAIN_SCRIPT] = {
             ...state.scripts[ScriptKey.MAIN_SCRIPT],
             cursor: null,
-        },
-        [ScriptKey.SCHEMA_SCRIPT]: {
+        };
+    }
+    if (state.scripts[ScriptKey.SCHEMA_SCRIPT]) {
+        state.scripts[ScriptKey.SCHEMA_SCRIPT] = {
             ...state.scripts[ScriptKey.SCHEMA_SCRIPT],
             cursor: null,
-        },
-    };
+        };
+    }
     return state;
 }
 
