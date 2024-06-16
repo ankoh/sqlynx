@@ -108,7 +108,7 @@ export class NativeHyperQueryResultStream implements QueryExecutionResponseStrea
             return result.value;
         }
     }
-    /// Await the next progress update
+    /// Await the next query_status update
     async nextProgressUpdate(): Promise<QueryExecutionProgress | null> {
         return null;
     }

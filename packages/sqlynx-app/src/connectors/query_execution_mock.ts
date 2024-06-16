@@ -26,7 +26,7 @@ export class QueryExecutorMock implements QueryExecutionResponseStream {
         await sleep(200);
         return this.schema;
     }
-    /// Await the next progress update
+    /// Await the next query_status update
     async nextProgressUpdate(): Promise<QueryExecutionProgress | null> {
         await sleep(100);
         return null;

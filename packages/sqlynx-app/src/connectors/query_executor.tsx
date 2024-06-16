@@ -122,7 +122,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
             value: [queryId, initialState],
         });
 
-        // Helper to subscribe to progress updates
+        // Helper to subscribe to query_status updates
         const progressUpdater = async (resultStream: QueryExecutionResponseStream) => {
             while (true) {
                 const update = await resultStream.nextProgressUpdate();
@@ -179,7 +179,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                     type: QUERY_EXECUTION_STARTED,
                     value: [queryId, resultStream],
                 });
-                // Subscribe to progress and result messages
+                // Subscribe to query_status and result messages
                 const progress = progressUpdater(resultStream);
                 const results = resultReader(resultStream);
                 await Promise.all([results, progress]);
@@ -198,7 +198,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                 console.error(e);
                 connDispatch(connectionId, {
                     type: QUERY_EXECUTION_FAILED,
-                    value: e,
+                    value: [queryId, e],
                 });
             }
         }

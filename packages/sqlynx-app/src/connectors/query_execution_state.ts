@@ -55,7 +55,7 @@ export interface QueryExecutionResponseStream {
     getStatus(): QueryExecutionStatus;
     /// Await the schema message
     getSchema(): Promise<arrow.Schema | null>;
-    /// Await the next progress update
+    /// Await the next query_status update
     nextProgressUpdate(): Promise<QueryExecutionProgress | null>;
     /// Await the next record batch
     nextRecordBatch(): Promise<arrow.RecordBatch | null>;
@@ -72,7 +72,7 @@ export interface QueryMetrics {
     batchesReceived: number;
     /// The number of rows received
     rowsReceived: number;
-    /// The number of progress updates received
+    /// The number of query_status updates received
     progressUpdatesReceived: number;
     /// The duration until the first batch
     durationUntilSchemaMs: number | null;
@@ -118,7 +118,9 @@ export function reduceQueryExecution(state: ConnectionState, action: QueryExecut
     }
 
     let query = state.queriesRunning.get(queryId);
-    if (!query) return state;
+    if (!query) {
+        return state;
+    }
     switch (action.type) {
         case QUERY_EXECUTION_STARTED: {
             query = {

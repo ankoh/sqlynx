@@ -33,7 +33,7 @@ export const SQLynxLoader: React.FC<Props> = (props: Props) => {
             return await instantiation.current;
         }
 
-        // Create instantiation progress
+        // Create instantiation query_status
         const now = new Date();
         const internal: InstantiationProgress = {
             startedAt: now,
@@ -41,7 +41,7 @@ export const SQLynxLoader: React.FC<Props> = (props: Props) => {
             bytesTotal: BigInt(0),
             bytesLoaded: BigInt(0),
         };
-        // Fetch an url with progress tracking
+        // Fetch an url with query_status tracking
         const fetchWithProgress = async (url: URL) => {
             logger.info(`instantiating core for ${context}`, "sqlynx_loader");
 

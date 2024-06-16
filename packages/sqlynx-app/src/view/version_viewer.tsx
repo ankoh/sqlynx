@@ -60,7 +60,7 @@ const UpdateChannel: React.FC<UpdateChannelProps> = (props: UpdateChannelProps) 
                 if (props.installationStatus.update == props.updateManifest.value) {
                     console.log(props.installationStatus);
                     // Do we know the total bytes already?
-                    // Render a progress bar then.
+                    // Render a query_status bar then.
                     if (props.installationStatus.totalBytes != null && props.installationStatus.totalBytes > 0) {
                         if (props.installationStatus.state == InstallationState.InProgress) {
                             const progress = props.installationStatus.loadedBytes / props.installationStatus.totalBytes;
