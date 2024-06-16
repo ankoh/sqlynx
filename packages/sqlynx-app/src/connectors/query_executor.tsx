@@ -20,6 +20,7 @@ import {
     QUERY_EXECUTION_STARTED,
     QUERY_EXECUTION_SUCCEEDED,
 } from './connection_state.js';
+import { GrpcError } from '../platform/grpc_common.js';
 
 let NEXT_QUERY_ID = 1;
 
@@ -136,27 +137,23 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
         };
         // Helper to subscribe to result batches
         const resultReader = async (resultStream: QueryExecutionResponseStream) => {
-            try {
-                const schema = await resultStream.getSchema();
-                if (schema == null) {
-                    return;
+            const schema = await resultStream.getSchema();
+            if (schema == null) {
+                return;
+            }
+            connDispatch(connectionId, {
+                type: QUERY_EXECUTION_RECEIVED_SCHEMA,
+                value: [queryId, schema],
+            });
+            while (true) {
+                const batch = await resultStream.nextRecordBatch();
+                if (batch == null) {
+                    break;
                 }
                 connDispatch(connectionId, {
-                    type: QUERY_EXECUTION_RECEIVED_SCHEMA,
-                    value: [queryId, schema],
+                    type: QUERY_EXECUTION_RECEIVED_BATCH,
+                    value: [queryId, batch],
                 });
-                while (true) {
-                    const batch = await resultStream.nextRecordBatch();
-                    if (batch == null) {
-                        break;
-                    }
-                    connDispatch(connectionId, {
-                        type: QUERY_EXECUTION_RECEIVED_BATCH,
-                        value: [queryId, batch],
-                    });
-                }
-            } catch (e: any) {
-                console.error(e);
             }
         };
         // Execute the query and consume the results
@@ -198,12 +195,12 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                     value: [queryId, e],
                 });
             } else {
+                console.error(e);
                 connDispatch(connectionId, {
                     type: QUERY_EXECUTION_FAILED,
                     value: e,
                 });
             }
-            throw e;
         }
     }, [connMap, sfApi]);
 
