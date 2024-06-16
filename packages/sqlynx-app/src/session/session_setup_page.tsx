@@ -12,7 +12,7 @@ import { formatHHMMSS } from '../utils/format.js';
 import { useLogger } from '../platform/logger_provider.js';
 import { useSalesforceAuthFlow } from '../connectors/salesforce_auth_flow.js';
 import { ConnectorInfo, requiresSwitchingToNative } from '../connectors/connector_info.js';
-import { encodeSessionSetupUrl, generateSessionSetupUrl, SessionLinkTarget } from './session_setup_url.js';
+import { encodeSessionSetupUrl, SessionLinkTarget } from './session_setup_url.js';
 import { SalesforceAuthParams } from '../connectors/connection_params.js';
 import { SQLYNX_VERSION } from '../globals.js';
 import { REPLACE_SCRIPT_CONTENT } from './session_state.js';
@@ -271,7 +271,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                     </div>
                 </div>
                 <div className={baseStyles.card_actions}>
-                    <div className={baseStyles.card_actions_right}>
+                    <div className={baseStyles.card_actions_left}>
                         <VersionViewerOverlay
                             isOpen={showVersionOverlay}
                             onClose={() => setShowVersionOverlay(false)}
@@ -288,6 +288,8 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                             align={AnchorAlignment.Center}
                             anchorOffset={8}
                         />
+                    </div>
+                    <div className={baseStyles.card_actions_right}>
                         <CopyToClipboardButton
                             className={baseStyles.card_action_icon_button}
                             variant={ButtonVariant.Primary}
