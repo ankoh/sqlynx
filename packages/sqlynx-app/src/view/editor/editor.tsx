@@ -134,8 +134,8 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                 targetKey = ScriptKey.SCHEMA_SCRIPT;
                 break;
         }
-        const targetScriptData = ctx?.scripts[targetKey];
-        const schemaScriptData = schemaKey != null ? ctx?.scripts[schemaKey] : null;
+        const targetScriptData = ctx?.scripts[targetKey] ?? null;
+        const schemaScriptData = schemaKey != null ? (ctx?.scripts[schemaKey] ?? null) : null;
         const schemaScript = schemaScriptData?.script ?? null;
         if (!targetScriptData) {
             return;

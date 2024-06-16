@@ -349,7 +349,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                     <div className={baseStyles.card}>
                         <div className={baseStyles.card_header}>
                             <div className={baseStyles.card_header_left_container}>
-                                Setup
+                                Setup {connection.connectionInfo.displayName.long}
                             </div>
                             <div className={baseStyles.card_header_right_container}>
                                 <LogViewerOverlay
