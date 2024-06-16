@@ -26,7 +26,7 @@ import { useAppConfig } from '../../app_config.js';
 import { SessionListDropdown } from './session_list_dropdown.js';
 import { DragSizing, DragSizingBorder } from '../foundations/drag_sizing.js';
 import { useQueryState } from '../../connectors/query_executor.js';
-import { QueryResultView } from '../table/query_result_view.js';
+import { DataTable } from '../table/data_table.js';
 import { QueryStatus } from '../query_status/query_status.js';
 
 const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
@@ -98,8 +98,8 @@ const OutputCommandList = (props: { connector: ConnectorInfo | null }) => {
 
 enum TabKey {
     SchemaView = 0,
-    QueryProgressView = 1,
-    QueryResultView = 2,
+    QueryStatusView = 1,
+    DataTableView = 2,
 }
 
 interface TabState {
@@ -134,7 +134,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                 ctrlKey: true,
                 callback: () => {
                     selectTab(key => {
-                        const tabs = [TabKey.SchemaView, TabKey.QueryProgressView, TabKey.QueryResultView];
+                        const tabs = [TabKey.SchemaView, TabKey.QueryStatusView, TabKey.DataTableView];
                         return tabs[((key as number) + 1) % tabState.current.enabledTabs];
                     });
                 },
@@ -157,14 +157,14 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
             case QueryExecutionStatus.RECEIVED_SCHEMA:
             case QueryExecutionStatus.RECEIVED_FIRST_RESULT:
                 if (prevStatus.current == null || prevStatus.current[0] != editorQuery || prevStatus.current[1] != status) {
-                    selectTab(TabKey.QueryProgressView);
+                    selectTab(TabKey.QueryStatusView);
                 }
                 break;
             case QueryExecutionStatus.FAILED:
-                selectTab(TabKey.QueryProgressView);
+                selectTab(TabKey.QueryStatusView);
                 break;
             case QueryExecutionStatus.SUCCEEDED:
-                selectTab(TabKey.QueryResultView);
+                selectTab(TabKey.DataTableView);
                 break;
         }
         prevStatus.current = [editorQuery, status];
@@ -202,27 +202,27 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                         selectTab={selectTab}
                         tabProps={{
                             [TabKey.SchemaView]: { tabId: TabKey.SchemaView, icon: `${icons}#tables_connected`, labelShort: 'Graph', disabled: false },
-                            [TabKey.QueryProgressView]: {
-                                tabId: TabKey.QueryProgressView,
+                            [TabKey.QueryStatusView]: {
+                                tabId: TabKey.QueryStatusView,
                                 icon: `${icons}#plan`,
                                 labelShort: 'Status',
                                 disabled: tabState.current.enabledTabs < 2,
                             },
-                            [TabKey.QueryResultView]: {
-                                tabId: TabKey.QueryResultView,
+                            [TabKey.DataTableView]: {
+                                tabId: TabKey.DataTableView,
                                 icon: `${icons}#table`,
                                 labelShort: 'Data',
                                 disabled: tabState.current.enabledTabs < 3,
                             },
                         }}
-                        tabKeys={[TabKey.SchemaView, TabKey.QueryProgressView, TabKey.QueryResultView]}
+                        tabKeys={[TabKey.SchemaView, TabKey.QueryStatusView, TabKey.DataTableView]}
                         tabRenderers={{
                             [TabKey.SchemaView]: _props => <SchemaGraph />,
-                            [TabKey.QueryProgressView]: _props => (
+                            [TabKey.QueryStatusView]: _props => (
                                 <QueryStatus query={queryState} />
                             ),
-                            [TabKey.QueryResultView]: _props => (
-                                <QueryResultView />
+                            [TabKey.DataTableView]: _props => (
+                                <DataTable data={queryState?.resultTable ?? null} />
                             ),
                         }}
                     />

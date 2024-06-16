@@ -198,6 +198,7 @@ export function reduceQueryExecution(state: ConnectionState, action: QueryExecut
             }
             query = {
                 ...query,
+                resultTable: new arrow.Table(query.resultSchema!, query.resultBatches!),
                 status: QueryExecutionStatus.SUCCEEDED,
                 metrics: metrics,
             };

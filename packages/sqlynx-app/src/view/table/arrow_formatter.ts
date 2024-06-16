@@ -1,5 +1,5 @@
 import * as arrow from 'apache-arrow';
-import * as styles from './arrow_renderer.module.css';
+import * as styles from './arrow_formatter.module.css';
 
 export interface ColumnLayoutInfo {
     headerWidth: number;
@@ -7,13 +7,13 @@ export interface ColumnLayoutInfo {
     valueMaxWidth: number;
 }
 
-export interface ColumnRenderer {
+export interface ArrowColumnFormatter {
     getColumnName(): string;
     getLayoutInfo(): ColumnLayoutInfo;
     getValue(batch: number, row: number): string;
 }
 
-export class TextColumnRenderer implements ColumnRenderer {
+export class ArrowTextColumnFormatter implements ArrowColumnFormatter {
     readonly columnName: string;
     readonly batches: arrow.RecordBatch[];
     readonly batchOffsets: Uint32Array;
@@ -34,7 +34,7 @@ export class TextColumnRenderer implements ColumnRenderer {
         this.valueClassName = styles.data_value_text;
         this.batches = batches;
         this.batchOffsets = batchOffsets;
-        this.batchValues = Array.from({length: batches.length}, () => []);
+        this.batchValues = Array.from({length: batches.length}, () => null);
         this.currentRowCount = 0;
         this.valueLengthMax = 0;
         this.valueLengthSum = 0;
@@ -112,7 +112,7 @@ export class TextColumnRenderer implements ColumnRenderer {
                 break;
         }
     }
-    public ensureLoaded(index: number): string[] {
+    public ensureBatchIsLoaded(index: number): string[] {
         if (this.batchValues[index] != null) {
             return this.batchValues[index]!;
         }
@@ -135,7 +135,7 @@ export class TextColumnRenderer implements ColumnRenderer {
     }
 
     public getBatchValues(batch: number) {
-        return this.ensureLoaded(batch);
+        return this.ensureBatchIsLoaded(batch);
     }
     public getValue(batch: number, row: number): string {
         return this.getBatchValues(batch)[row];
@@ -152,8 +152,8 @@ export class TextColumnRenderer implements ColumnRenderer {
     }
 }
 
-export class TableRenderer {
-    columns: ColumnRenderer[];
+export class ArrowTableFormatter {
+    columns: ArrowColumnFormatter[];
     batchOffsets: Uint32Array;
     rowIndex: Uint32Array;
 
@@ -171,9 +171,9 @@ export class TableRenderer {
                 rowIndex[rowIndexWriter++] = i;
             }
         }
-        const columns: ColumnRenderer[] = [];
+        const columns: ArrowColumnFormatter[] = [];
         for (let i = 0; i < schema.fields.length; ++i) {
-            const renderer = new TextColumnRenderer(schema, i, batches, batchOffsets);
+            const renderer = new ArrowTextColumnFormatter(schema, i, batches, batchOffsets);
             columns.push(renderer);
         }
         this.columns = columns;
@@ -181,9 +181,9 @@ export class TableRenderer {
         this.rowIndex = rowIndex;
     }
 
-    public getValue(row: number): string {
+    public getValue(row: number, column: number): string {
         const batch = this.rowIndex[row];
         const indexInBatch = row - this.batchOffsets[batch];
-        return this.getValue(batch)[indexInBatch];
+        return this.columns[column].getValue(batch, indexInBatch);
     }
 }
