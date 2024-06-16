@@ -20,7 +20,7 @@ import { Dispatch } from '../../utils/variant.js';
 import { classNames } from '../../utils/classnames.js';
 import { Logger } from '../../platform/logger.js';
 import { useLogger } from '../../platform/logger_provider.js';
-import { useSessionState, useSessionRegistry } from '../../session/session_state_registry.js';
+import { useSessionState } from '../../session/session_state_registry.js';
 import { useCurrentSessionSelector } from '../../session/current_session.js';
 import { useNavigate } from 'react-router-dom';
 import { Button, ButtonVariant } from '../foundations/button.js';
@@ -76,7 +76,7 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
 
     // Get Hyper connection from default session
     const defaultSessions = useDefaultSessions();
-    const sessionId = defaultSessions?.hyper ?? null;
+    const sessionId = defaultSessions?.salesforce ?? null;
     const [sessionState, _sessionDispatch] = useSessionState(sessionId);
 
     // Resolve connection for the default session
