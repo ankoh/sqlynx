@@ -1,5 +1,9 @@
 import * as proto from '@ankoh/sqlynx-pb';
 import * as React from 'react';
+import * as symbols from '../../static/svg/symbols.generated.svg';
+import * as icons from '../../static/svg/symbols.generated.svg';
+import * as page_styles from '../view/banner_page.module.css';
+import * as styles from '../view/connectors/platform_check.module.css';
 
 import { IconButton } from '@primer/react';
 
@@ -14,8 +18,6 @@ import { REPLACE_SCRIPT_CONTENT } from './session_state.js';
 import { TextField } from '../view/foundations/text_field.js';
 import { LogViewerInPortal } from '../view/log_viewer.js';
 
-import * as page_styles from '../view/banner_page.module.css';
-import * as symbols from '../../static/svg/symbols.generated.svg';
 import { Button, ButtonVariant } from '../view/foundations/button.js';
 import {
     checkHyperConnectionSetup,
@@ -24,6 +26,9 @@ import {
 } from '../connectors/connector_setup_check.js';
 import { useSessionState } from './session_state_registry.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
+import { DesktopDownloadIcon, PackageIcon } from '@primer/octicons-react';
+import { VersionViewerOverlay } from '../view/version_viewer.js';
+import { AnchorAlignment, AnchorSide } from '../view/foundations/anchored_position.js';
 
 const LOG_CTX = "session_setup";
 const AUTOTRIGGER_DELAY = 2000;
@@ -71,7 +76,8 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     const now = new Date();
     const logger = useLogger();
     const salesforceAuthFlow = useSalesforceAuthFlow();
-    const [logsAreOpen, setLogsAreOpen] = React.useState<boolean>(false);
+    const [showLogs, setShowLogs] = React.useState<boolean>(false);
+    const [showVersionOverlay, setShowVersionOverlay] = React.useState<boolean>(false);
     const [maybeSession, dispatchSession] = useSessionState(props.sessionId);
     const session = maybeSession!;
     const [maybeConnection,  dispatchConnection]= useConnectionState(session!.connectionId);
@@ -207,18 +213,52 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     // Render a warning, information where to get the app and a button to switch.
     if (!canExecuteHere && sessionSetupURL != null) {
         sections.push(
-            <div key={sections.length} className={page_styles.card_actions}>
-                <Button
-                    className={page_styles.card_action_right}
-                    variant={ButtonVariant.Primary}
-                    onClick={() => {
-                        const link = document.createElement('a');
-                        link.href = sessionSetupURL.toString();
-                        logger.info(`opening deep link: ${link.href}`);
-                        link.click();
-                    }}>
-                    Open App
-                </Button>
+            <div key={sections.length} className={page_styles.card_section}>
+                <div className={page_styles.section_entries}>
+                    <div className={page_styles.section_description}>
+                        This connector can only be used in the native app.<br />
+                        cf.
+                        <svg className={styles.github_link_icon} width="20px" height="20px">
+                            <use xlinkHref={`${icons}#github`} />
+                        </svg>
+                        &nbsp;
+                        <a className={styles.github_link_text} href="https://github.com/ankoh/sqlynx/issues/738"
+                           target="_blank">
+                            Web connectors for Hyper and Data Cloud
+                        </a>
+                    </div>
+                </div>
+                <div className={page_styles.card_actions}>
+                    <div className={page_styles.card_actions_right}>
+                        <VersionViewerOverlay
+                            isOpen={showVersionOverlay}
+                            onClose={() => setShowVersionOverlay(false)}
+                            renderAnchor={(p: object) => (
+                                <Button
+                                    {...p}
+                                    variant={ButtonVariant.Default}
+                                    onClick={() => setShowVersionOverlay(true)}
+                                    leadingVisual={PackageIcon}>
+                                    Download App
+                                </Button>
+                            )}
+                            side={AnchorSide.OutsideTop}
+                            align={AnchorAlignment.Center}
+                            anchorOffset={8}
+                        />
+                        <Button
+                            variant={ButtonVariant.Primary}
+                            leadingVisual={DesktopDownloadIcon}
+                            onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = sessionSetupURL.toString();
+                                logger.info(`opening deep link: ${link.href}`);
+                                link.click();
+                            }}>
+                            Open in App
+                        </Button>
+                    </div>
+                </div>
             </div>
         );
 
@@ -226,20 +266,21 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
         // We can stay here, render normal action bar
         sections.push(
             <div key={sections.length} className={page_styles.card_actions}>
-                <Button
-                    className={page_styles.card_action_right}
-                    variant={ButtonVariant.Primary}
-                    onClick={() => props.onDone()}>
-                    Continue
-                </Button>
-            </div>
+                <div className={page_styles.card_actions_right}>
+                    <Button
+                        variant={ButtonVariant.Primary}
+                        onClick={() => props.onDone()}>
+                        Continue
+                    </Button>
+                </div>
+            </div>,
         );
     }
 
     // Render the page
     return (
         <div className={page_styles.page}
-            data-tauri-drag-region="true">
+             data-tauri-drag-region="true">
             <div className={page_styles.banner_container}>
                 <div className={page_styles.banner_logo}>
                     <svg width="100%" height="100%">
@@ -265,9 +306,9 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                                 </svg>
                             )}
                             aria-label="close-overlay"
-                            onClick={() => setLogsAreOpen(s => !s)}
+                            onClick={() => setShowLogs(s => !s)}
                         />
-                        {logsAreOpen && <LogViewerInPortal onClose={() => setLogsAreOpen(false)} />}
+                        {showLogs && <LogViewerInPortal onClose={() => setShowLogs(false)} />}
                     </div>
                 </div>
                 {sections}

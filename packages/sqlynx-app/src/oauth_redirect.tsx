@@ -1,6 +1,7 @@
 import * as React from 'react';
-
 import * as proto from '@ankoh/sqlynx-pb';
+import * as styles from './view/banner_page.module.css';
+import * as symbols from '../static/svg/symbols.generated.svg';
 
 import { IconButton } from '@primer/react';
 import { createRoot } from 'react-dom/client';
@@ -16,8 +17,6 @@ import { formatHHMMSS, formatTimeDifference } from './utils/format.js';
 import { LogViewerInPortal } from './view/log_viewer.js';
 import { LoggerProvider, useLogger } from './platform/logger_provider.js';
 import { Logger } from './platform/logger.js';
-import * as page_styles from './view/banner_page.module.css';
-import * as symbols from '../static/svg/symbols.generated.svg';
 
 import '../static/fonts/fonts.css';
 import './globals.css';
@@ -99,8 +98,8 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
             codeIsExpired = now.getTime() > (expiresAt ?? 0);
             codeExpiresAt = codeIsExpired ? undefined : new Date(Number(expiresAt));
             providerOptionsSection = (
-                <div className={page_styles.card_section}>
-                    <div className={page_styles.section_entries}>
+                <div className={styles.card_section}>
+                    <div className={styles.section_entries}>
                         <TextField
                             name="Salesforce Instance URL"
                             value={props.state.providerOptions.value.instanceUrl}
@@ -159,9 +158,9 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
         case proto.sqlynx_oauth.pb.OAuthFlowVariant.NATIVE_LINK_FLOW: {
             if (props.state.debugMode) {
                 flowContinuation = (
-                    <div className={page_styles.card_section}>
-                        <div className={page_styles.section_entries}>
-                            <div className={page_styles.section_description}>
+                    <div className={styles.card_section}>
+                        <div className={styles.section_entries}>
+                            <div className={styles.section_description}>
                                 The initiator is a native app in debug mode which cannot register as deep link handler.
                                 Copy the following url and paste it anywhere into the app window.
                             </div>
@@ -179,22 +178,21 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
 
             } else {
                 flowContinuation = (
-                    <div className={page_styles.card_section}>
-                        <div className={page_styles.section_description}>
+                    <div className={styles.card_section}>
+                        <div className={styles.section_description}>
                             Your browser should prompt you to open the native app. You can retry until the code expires.
                         </div>
-                        <div className={page_styles.card_actions}>
+                        <div className={styles.card_actions}>
+                            <div className={styles.card_actions_right}>
                             {
                                 remainingUntilAutoTrigger == 0
                                     ? <Button
-                                        className={page_styles.card_action_right}
                                         variant={ButtonVariant.Primary}
                                         onClick={() => triggerFlow(props.state, eventBase64, logger)}
                                     >
                                         Send to App
                                     </Button>
                                     : <Button
-                                        className={page_styles.card_action_right}
                                         variant={ButtonVariant.Primary}
                                         onClick={() => triggerFlow(props.state, eventBase64, logger)}
                                         trailingVisual={() => <div>{Math.ceil(remainingUntilAutoTrigger / 1000)}</div>}
@@ -202,6 +200,7 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                                         Send to App
                                     </Button>
                             }
+                            </div>
                         </div>
                     </div>
                 );
@@ -212,24 +211,24 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
 
     // Construct the page
     return (
-        <div className={page_styles.page}>
-            <div className={page_styles.banner_container}>
-                <div className={page_styles.banner_logo}>
+        <div className={styles.page}>
+            <div className={styles.banner_container}>
+                <div className={styles.banner_logo}>
                     <svg width="100%" height="100%">
                         <use xlinkHref={`${symbols}#sqlynx-inverted`} />
                     </svg>
                 </div>
-                <div className={page_styles.banner_text_container}>
-                    <div className={page_styles.banner_title}>sqlynx</div>
-                    <div className={page_styles.app_version}>version {SQLYNX_VERSION}</div>
+                <div className={styles.banner_text_container}>
+                    <div className={styles.banner_title}>sqlynx</div>
+                    <div className={styles.app_version}>version {SQLYNX_VERSION}</div>
                 </div>
             </div>
-            <div className={page_styles.card_container}>
-                <div className={page_styles.card_header}>
-                    <div className={page_styles.card_header_left_container}>
+            <div className={styles.card_container}>
+                <div className={styles.card_header}>
+                    <div className={styles.card_header_left_container}>
                         Authorization Succeeded
                     </div>
-                    <div className={page_styles.card_header_right_container}>
+                    <div className={styles.card_header_right_container}>
                         <IconButton
                             variant="invisible"
                             icon={() => (
@@ -244,8 +243,8 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                     </div>
                 </div>
                 {providerOptionsSection}
-                <div className={page_styles.card_section}>
-                    <div className={page_styles.section_entries}>
+                <div className={styles.card_section}>
+                    <div className={styles.section_entries}>
                         <TextField
                             name="Authorization Code"
                             value={code ?? ""}
@@ -270,20 +269,20 @@ interface OAuthFailedProps {
 
 const OAuthFailed: React.FC<OAuthFailedProps> = (props: OAuthFailedProps) => {
     return (
-        <div className={page_styles.page}>
-            <div className={page_styles.banner_container}>
-                <div className={page_styles.banner_logo}>
+        <div className={styles.page}>
+            <div className={styles.banner_container}>
+                <div className={styles.banner_logo}>
                     <svg width="100%" height="100%">
                         <use xlinkHref={`${symbols}#sqlynx-inverted`} />
                     </svg>
                 </div>
-                <div className={page_styles.banner_text_container}>
-                    <div className={page_styles.banner_title}>sqlynx</div>
-                    <div className={page_styles.app_version}>version {SQLYNX_VERSION}</div>
+                <div className={styles.banner_text_container}>
+                    <div className={styles.banner_title}>sqlynx</div>
+                    <div className={styles.app_version}>version {SQLYNX_VERSION}</div>
                 </div>
             </div>
-            <div className={page_styles.card_container}>
-                <div className={page_styles.card_header}>
+            <div className={styles.card_container}>
+                <div className={styles.card_header}>
                     <div>Authorization Failed</div>
                 </div>
                 {props.error.toString()}

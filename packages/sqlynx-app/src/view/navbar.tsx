@@ -6,7 +6,7 @@ import { classNames } from '../utils/classnames.js';
 import { HoverMode, NavBarLink, NavBarButtonWithRef } from './navbar_button.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 import { LogViewerInPortal } from './log_viewer.js';
-import { VersionViewerInPortal } from './version_viewer.js';
+import { VersionViewerOverlay } from './version_viewer.js';
 import { SessionLinkTarget, generateSessionSetupUrl } from '../session/session_setup_url.js';
 import { useCurrentSessionState } from '../session/current_session.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
@@ -14,6 +14,9 @@ import { useConnectionState } from '../connectors/connection_registry.js';
 import * as styles from './navbar.module.css';
 import * as symbols from '../../static/svg/symbols.generated.svg';
 import { useAppConfig } from '../app_config.js';
+import { Button, ButtonVariant } from './foundations/button.js';
+import { PackageIcon } from '@primer/octicons-react';
+import { AnchorAlignment, AnchorSide } from './foundations/anchored_position.js';
 
 const PageTab = (props: { route: string; alt?: string; location: string; icon: string; label: string | null }) => (
     <div
@@ -49,10 +52,10 @@ const ExternalLink = (props: { url?: string | null; alt?: string; icon?: string;
 );
 
 const LogButton = (_props: {}) => {
-    const [isOpen, setIsOpen] = React.useState<boolean>(false);
+    const [showVersionOverlay, setShowVersionOverlay] = React.useState<boolean>(false);
     return (
         <div className={styles.tab}>
-            <NavBarButtonWithRef className={styles.tab_button} hover={HoverMode.Darken} onClick={() => setIsOpen(s => !s)}>
+            <NavBarButtonWithRef className={styles.tab_button} hover={HoverMode.Darken} onClick={() => setShowVersionOverlay(s => !s)}>
                 <>
                     <svg width="14px" height="14px">
                         <use xlinkHref={`${symbols}#log`} />
@@ -60,24 +63,35 @@ const LogButton = (_props: {}) => {
                     <span className={styles.tab_button_text}>Logs</span>
                 </>
             </NavBarButtonWithRef>
-            {isOpen && <LogViewerInPortal onClose={() => setIsOpen(false)} />}
+            {showVersionOverlay && <LogViewerInPortal onClose={() => setShowVersionOverlay(false)} />}
         </div>
     );
 }
 
 const UpdateButton = (_props: {}) => {
-    const [isOpen, setIsOpen] = React.useState<boolean>(false);
+    const [showVersionOverlay, setShowVersionOverlay] = React.useState<boolean>(false);
     return (
         <div className={styles.tab}>
-            <NavBarButtonWithRef className={styles.tab_button} hover={HoverMode.Darken} onClick={() => setIsOpen(s => !s)}>
-                <>
-                    <svg width="14px" height="14px">
-                        <use xlinkHref={`${symbols}#package`} />
-                    </svg>
-                    <span className={styles.tab_button_text}>{SQLYNX_VERSION}</span>
-                </>
-            </NavBarButtonWithRef>
-            {isOpen && <VersionViewerInPortal onClose={() => setIsOpen(false)} />}
+            <VersionViewerOverlay
+                isOpen={showVersionOverlay}
+                onClose={() => setShowVersionOverlay(false)}
+                renderAnchor={(p: object) => (
+                    <NavBarButtonWithRef
+                        {...p}
+                        className={styles.tab_button} hover={HoverMode.Darken} onClick={() => setShowVersionOverlay(true)}
+                    >
+                        <>
+                            <svg width="14px" height="14px">
+                                <use xlinkHref={`${symbols}#package`} />
+                            </svg>
+                            <span className={styles.tab_button_text}>{SQLYNX_VERSION}</span>
+                        </>
+                    </NavBarButtonWithRef>
+                )}
+                side={AnchorSide.OutsideBottom}
+                align={AnchorAlignment.End}
+                anchorOffset={16}
+            />
         </div>
     );
 };
