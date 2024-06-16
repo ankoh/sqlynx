@@ -2,6 +2,8 @@ use std::fmt::{Display, Formatter, Error};
 
 use tauri::http::{header::CONTENT_TYPE, Response, StatusCode};
 
+use crate::proxy_headers::HEADER_NAME_GRPC_STATUS;
+
 #[derive(Debug)]
 pub enum GrpcStreamElement {
     Message,
@@ -138,12 +140,24 @@ impl From<&Status> for StatusCode {
 
 impl From<&Status> for Response<Vec<u8>> {
     fn from(status: &Status) -> Response<Vec<u8>> {
-        let message = status.to_string();
+        let grpc_status = match &status {
+            Status::GrpcCallFailed { ref status } => status,
+            Status::GrpcStreamReadFailed { channel_id: _, stream_id: _, element: _, ref status } => status,
+            _ => {
+                let message = status.to_string();
+                return Response::builder()
+                    .status(StatusCode::from(status).as_u16())
+                    .header(CONTENT_TYPE, mime::TEXT_PLAIN.essence_str())
+                    .body(message.as_bytes().to_vec())
+                    .unwrap();
+            }
+        };
+        let code = (grpc_status.code() as usize).to_string();
         Response::builder()
             .status(StatusCode::from(status).as_u16())
             .header(CONTENT_TYPE, mime::TEXT_PLAIN.essence_str())
-            .body(message.as_bytes().to_vec())
+            .header(HEADER_NAME_GRPC_STATUS, &code)
+            .body(grpc_status.message().as_bytes().to_vec())
             .unwrap()
-
     }
 }

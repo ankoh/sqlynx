@@ -56,9 +56,9 @@ export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
             </div>
             <VerticalTabs
                 variant={VerticalTabVariant.Wide}
-                selectedTab={selectedConnector ?? (ConnectorType.SALESFORCE_DATA_CLOUD as number)}
+                selectedTab={selectedConnector ?? (ConnectorType.HYPER_GRPC as number)}
                 selectTab={selectConnector}
-                tabKeys={[ConnectorType.SALESFORCE_DATA_CLOUD as number, ConnectorType.HYPER_GRPC as number]}
+                tabKeys={[ConnectorType.HYPER_GRPC as number, ConnectorType.SALESFORCE_DATA_CLOUD as number]}
                 tabProps={connectors}
                 tabRenderers={connectorRenderers}
             />

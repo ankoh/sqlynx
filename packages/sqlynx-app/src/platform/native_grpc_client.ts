@@ -16,7 +16,7 @@ export interface NativeGrpcServerStreamBatch {
     /// The messages
     messages: Uint8Array[];
     /// The trailers (if any)
-    trailers?: Record<string, string>;
+    metadata?: Record<string, string>;
 }
 
 export interface NativeGrpcProxyConfig {
@@ -63,11 +63,11 @@ export class NativeGrpcServerStream implements AsyncIterator<NativeGrpcServerStr
     public async read(): Promise<NativeGrpcServerStreamBatch> {
         const url = new URL(this.endpoint.proxyEndpoint);
         url.pathname = `/grpc/channel/${this.channelId}/stream/${this.streamId}`;
-        const metadata = await this.metadataProvider.getRequestMetadata();
+        const requestMetadata = await this.metadataProvider.getRequestMetadata();
         const request = new Request(url, {
             method: 'GET',
             headers: {
-                ...metadata,
+                ...requestMetadata,
                 [HEADER_NAME_READ_TIMEOUT]: DEFAULT_READ_TIMEOUT.toString(),
                 [HEADER_NAME_BATCH_TIMEOUT]: DEFAULT_BATCH_TIMEOUT.toString(),
                 [HEADER_NAME_BATCH_BYTES]: DEFAULT_BATCH_BYTES.toString(),
@@ -76,7 +76,9 @@ export class NativeGrpcServerStream implements AsyncIterator<NativeGrpcServerStr
         const response = await fetch(request);
 
         if (response.status != 200) {
-            throw new GrpcError(response.status, response.statusText);
+            const grpcStatus = requireIntegerHeader(response.headers, "sqlynx-grpc-status");
+            const body = await response.text();
+            throw new GrpcError(grpcStatus, body);
         }
 
         const streamBatchEvent = requireStringHeader(response.headers, "sqlynx-batch-event");
@@ -105,13 +107,20 @@ export class NativeGrpcServerStream implements AsyncIterator<NativeGrpcServerStr
             });
             await fetch(request);
             // XXX Log if the dropping failed
-            throw new GrpcError(500, "batch message count mismatch");
+            throw new GrpcError(13, "batch message count mismatch");
         }
+
+        // Return the batch event and all messages
+        const metadata: Record<string, string> = {};
+        response.headers.forEach((value, key) => {
+            metadata[key] = value;
+        });
 
         // Return the batch event and all messages
         return {
             event: streamBatchEvent as NativeGrpcServerStreamBatchEvent,
             messages: messages,
+            metadata
         };
     }
 
@@ -133,7 +142,8 @@ export class NativeGrpcServerStream implements AsyncIterator<NativeGrpcServerStr
 
             case NativeGrpcServerStreamBatchEvent.StreamFailed:
                 this.reachedEndOfStream = true;
-                throw new GrpcError(400, "", batch.trailers);
+                console.log(batch.metadata);
+                throw new GrpcError(400, "", batch.metadata);
         }
     }
 }
