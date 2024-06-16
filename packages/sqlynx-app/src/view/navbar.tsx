@@ -71,10 +71,10 @@ const LogButton = (_props: {}) => {
                     </NavBarButtonWithRef>
                 )}
                 side={AnchorSide.OutsideBottom}
-                align={AnchorAlignment.Center}
+                align={AnchorAlignment.End}
                 anchorOffset={16}
                 overlayProps={{
-                    width: OverlaySize.L,
+                    width: OverlaySize.XL,
                     height: OverlaySize.XL
                 }}
             />
