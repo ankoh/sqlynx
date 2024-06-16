@@ -27,6 +27,7 @@ import { useAppConfig } from '../../app_config.js';
 import { SessionListDropdown } from './session_list_dropdown.js';
 import { DragSizing, DragSizingBorder } from '../foundations/drag_sizing.js';
 import { useQueryState } from '../../connectors/query_executor.js';
+import { QueryResultView } from '../table/query_result_view.js';
 
 const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
     const config = useAppConfig();
@@ -229,7 +230,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                                 <div />
                             ),
                             [TabKey.QueryResultView]: _props => (
-                                <div />
+                                <QueryResultView />
                             ),
                         }}
                     />
