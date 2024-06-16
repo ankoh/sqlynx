@@ -9,7 +9,6 @@ import {
     DownloadIcon,
     LinkIcon,
     PaperAirplaneIcon,
-    StopwatchIcon,
     SyncIcon,
     ThreeBarsIcon,
 } from '@primer/octicons-react';
@@ -41,15 +40,6 @@ const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
                     Execute Query
                 </ActionList.ItemText>
                 <ActionList.Trailing>Ctrl + E</ActionList.Trailing>
-            </ActionList.ListItem>
-            <ActionList.ListItem disabled={true}>
-                <ActionList.Leading>
-                    <StopwatchIcon />
-                </ActionList.Leading>
-                <ActionList.ItemText>
-                    Analyze Query
-                </ActionList.ItemText>
-                <ActionList.Trailing>Ctrl + A</ActionList.Trailing>
             </ActionList.ListItem>
             <ActionList.ListItem
                 disabled={!props.connector?.features.refreshSchemaAction || !config.value?.features?.refreshSchema}
@@ -188,7 +178,6 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                     <div>
                         <ButtonGroup className={theme.button_group}>
                             <IconButton icon={PaperAirplaneIcon} aria-labelledby="execute-query" />
-                            <IconButton icon={StopwatchIcon} aria-labelledby="analyze-query" />
                             <IconButton icon={SyncIcon} aria-labelledby="refresh-schema" />
                             <IconButton
                                 icon={LinkIcon}
