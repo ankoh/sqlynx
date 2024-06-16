@@ -1,10 +1,11 @@
-import * as React from 'react'
+import * as React from 'react';
 import * as styles from './text_input_action.module.css';
 
-import type { IconProps } from '@primer/octicons-react'
+import type { IconProps } from '@primer/octicons-react';
 import { IconButton } from '@primer/react';
 import { Tooltip } from './tooltip.js';
 import { CopyToClipboardButton } from '../../utils/clipboard.js';
+import { ButtonSize, ButtonVariant } from './button.js';
 
 interface TextInputActionProps {
     children?: React.ReactElement;
@@ -57,6 +58,8 @@ export function CopyToClipboardAction(props: CopyToClipboardActionProps): React.
             timeoutMs={props.timeoutMs}
             logContext={props.logContext}
             value={props.value}
+            variant={ButtonVariant.Invisible}
+            size={ButtonSize.Small}
         />
     );
 }

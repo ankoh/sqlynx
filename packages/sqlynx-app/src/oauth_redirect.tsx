@@ -10,7 +10,7 @@ import { BrowserRouter, Route, Routes, useSearchParams } from 'react-router-dom'
 import { BASE64_CODEC } from './utils/base64.js';
 import { Result, RESULT_ERROR, RESULT_OK } from './utils/result.js';
 import { SQLYNX_VERSION } from './globals.js';
-import { Button, ButtonVariant } from './view/foundations/button.js';
+import { Button, ButtonSize, ButtonVariant } from './view/foundations/button.js';
 import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_WARNING } from './view/foundations/text_field.js';
 import { GitHubTheme } from './github_theme.js';
 import { formatHHMMSS, formatTimeDifference } from './utils/format.js';
@@ -25,6 +25,7 @@ import { PackageIcon } from '@primer/octicons-react';
 import { AnchorAlignment, AnchorSide } from './view/foundations/anchored_position.js';
 import { OverlaySize } from './view/foundations/overlay.js';
 import * as page_styles from './view/banner_page.module.css';
+import { CopyToClipboardButton } from './utils/clipboard.js';
 
 const AUTOTRIGGER_DELAY = 2000;
 
@@ -39,10 +40,9 @@ function buildDeepLink(eventBase64: string) {
     return new URL(`sqlynx://localhost?data=${eventBase64}`);
 }
 
-function triggerFlow(state: proto.sqlynx_oauth.pb.OAuthState, eventBase64: string, logger: Logger) {
+function triggerFlow(state: proto.sqlynx_oauth.pb.OAuthState, eventBase64: string, deepLink: string, logger: Logger) {
     switch (state.flowVariant) {
         case proto.sqlynx_oauth.pb.OAuthFlowVariant.NATIVE_LINK_FLOW: {
-            const deepLink = buildDeepLink(eventBase64).toString();
             logger.info(`opening deep link`, LOG_CTX);
             window.open(deepLink, '_self');
             break;
@@ -67,14 +67,18 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
     const [logsAreOpen, setLogsAreOpen] = React.useState<boolean>(false);
 
     // Encode the event as base64
-    const eventBase64 = React.useMemo(() => {
+    const { eventBase64, deepLink } = React.useMemo(() => {
         const eventMessage = new proto.sqlynx_app_event.pb.AppEventData({
             data: {
                 case: "oauthRedirect",
                 value: new proto.sqlynx_oauth.pb.OAuthRedirectData({ code, state: props.state })
             }
         });
-        return BASE64_CODEC.encode(eventMessage.toBinary().buffer);
+        const event = BASE64_CODEC.encode(eventMessage.toBinary().buffer);
+        return {
+            eventBase64: event,
+            deepLink: buildDeepLink(event).toString(),
+        }
     }, [code, props.state]);
 
     // Setup autotrigger
@@ -88,7 +92,7 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
             return () => { };
         } else {
             logger.info(`setup auto-trigger in ${formatHHMMSS(remainingUntilAutoTrigger / 1000)}`, LOG_CTX);
-            const timeoutId = setTimeout(() => triggerFlow(props.state, eventBase64, logger), remainingUntilAutoTrigger);
+            const timeoutId = setTimeout(() => triggerFlow(props.state, eventBase64, deepLink, logger), remainingUntilAutoTrigger);
             return () => clearTimeout(timeoutId);
         }
     }, [props.state, code]);
@@ -96,6 +100,7 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
     // Render provider options
     let providerOptionsSection: React.ReactElement = <div />;
     let codeExpiresAt: Date | undefined = undefined;
+    // eslint-disable-next-line prefer-const
     let [codeIsExpired, setCodeIsExpired] = React.useState(false);
     switch (props.state.providerOptions.case) {
         case "salesforceProvider": {
@@ -189,20 +194,28 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                         </div>
                         <div className={styles.card_actions}>
                             <div className={styles.card_actions_right}>
+                            <CopyToClipboardButton
+                                variant={ButtonVariant.Primary}
+                                size={ButtonSize.Medium}
+                                logContext={LOG_CTX}
+                                value={deepLink}
+                                aria-label="copy-deeplink"
+                                aria-labelledby=""
+                            />
                             {
                                 remainingUntilAutoTrigger == 0
                                     ? <Button
                                         variant={ButtonVariant.Primary}
-                                        onClick={() => triggerFlow(props.state, eventBase64, logger)}
+                                        onClick={() => triggerFlow(props.state, eventBase64, deepLink, logger)}
                                     >
-                                        Send to App
+                                        Open in App
                                     </Button>
                                     : <Button
                                         variant={ButtonVariant.Primary}
-                                        onClick={() => triggerFlow(props.state, eventBase64, logger)}
+                                        onClick={() => triggerFlow(props.state, eventBase64, deepLink, logger)}
                                         trailingVisual={() => <div>{Math.ceil(remainingUntilAutoTrigger / 1000)}</div>}
                                     >
-                                        Send to App
+                                        Open in App
                                     </Button>
                             }
                             </div>
