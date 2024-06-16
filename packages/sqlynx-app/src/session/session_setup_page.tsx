@@ -19,7 +19,7 @@ import { REPLACE_SCRIPT_CONTENT } from './session_state.js';
 import { KeyValueTextField, TextField } from '../view/foundations/text_field.js';
 import { VersionViewerOverlay } from '../view/version_viewer.js';
 import { AnchorAlignment, AnchorSide } from '../view/foundations/anchored_position.js';
-import { Button, ButtonVariant } from '../view/foundations/button.js';
+import { Button, ButtonSize, ButtonVariant } from '../view/foundations/button.js';
 import {
     checkHyperConnectionSetup,
     checkSalesforceConnectionSetup,
@@ -149,6 +149,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
 
     // Helper to configure the session
     const configure = React.useCallback(async () => {
+        console.log("---------------- configure");
         // Check which connector configuring
         const connectorParams = props.setupProto.connectorParams?.connector;
         switch (connectorParams?.case) {
@@ -197,8 +198,10 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
         }
         // Otherwise setup an autotrigger for the setup
         logger.info(`setup config auto-trigger in ${formatHHMMSS(remainingUntilAutoTrigger / 1000)}`, "session_setup");
-        const timeoutId = setTimeout(() => configure, remainingUntilAutoTrigger);
-        return () => clearTimeout(timeoutId);
+        const timeoutId = setTimeout(configure, remainingUntilAutoTrigger);
+        return () => {
+            clearTimeout(timeoutId);
+        }
     }, [props.setupProto]);
     const sections: React.ReactElement[] = [];
 
@@ -291,8 +294,8 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                     </div>
                     <div className={baseStyles.card_actions_right}>
                         <CopyToClipboardButton
-                            className={baseStyles.card_action_icon_button}
                             variant={ButtonVariant.Primary}
+                            size={ButtonSize.Medium}
                             logContext={LOG_CTX}
                             value={sessionSetupURL.toString()}
                             aria-label="copy-deeplink"
@@ -316,6 +319,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
 
     } else {
         // We can stay here, render normal action bar
+        // TODO Actually load the script here...?
         sections.push(
             <div key={sections.length} className={baseStyles.card_actions}>
                 <div className={baseStyles.card_actions_right}>

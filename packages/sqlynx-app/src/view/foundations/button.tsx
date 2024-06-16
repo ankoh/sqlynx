@@ -40,6 +40,14 @@ export enum ButtonSize {
     Large
 }
 
+export function mapButtonSize(size: ButtonSize) {
+    switch (size) {
+        case ButtonSize.Small: return 'small';
+        case ButtonSize.Medium: return 'medium';
+        case ButtonSize.Large: return 'large';
+    }
+}
+
 interface ButtonProps {
     className?: string;
     variant?: ButtonVariant;

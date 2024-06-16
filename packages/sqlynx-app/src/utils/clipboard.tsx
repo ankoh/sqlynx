@@ -5,12 +5,13 @@ import { CheckIcon, CopyIcon, Icon } from '@primer/octicons-react';
 import { useLogger } from '../platform/logger_provider.js';
 import { Tooltip } from '../view/foundations/tooltip.js';
 import { IconButton } from '@primer/react';
-import { ButtonVariant, mapButtonVariant } from '../view/foundations/button.js';
+import { ButtonSize, ButtonVariant, mapButtonSize, mapButtonVariant } from '../view/foundations/button.js';
 
 const DEFAULT_COPY_TIMEOUT = 2000;
 
 interface Props {
-    variant?: ButtonVariant;
+    variant: ButtonVariant;
+    size: ButtonSize;
     className?: string;
     value: string;
     timeoutMs?: number;
@@ -55,7 +56,8 @@ export function CopyToClipboardButton(props: Props): React.ReactElement {
 
     const ariaLabel = props['aria-label'];
     const ariaLabelledBy = props['aria-labelledby'];
-    const buttonVariant = mapButtonVariant(props.variant ?? ButtonVariant.Invisible);
+    const buttonVariant = mapButtonVariant(props.variant);
+    const buttonSize = mapButtonSize(props.size);
     return (
         <Tooltip text={ariaLabel} type="label" direction="s">
             <IconButton
@@ -63,7 +65,7 @@ export function CopyToClipboardButton(props: Props): React.ReactElement {
                 type="button"
                 icon={icon}
                 variant={buttonVariant}
-                size="small"
+                size={buttonSize}
                 aria-labelledby={ariaLabelledBy}
                 onClick={copy}
             />
