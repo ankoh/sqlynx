@@ -28,7 +28,7 @@ export function generateSessionSetupUrl(sessionState: SessionState, connection: 
         data: {
             case: "sessionSetup",
             value: new proto.sqlynx_session.pb.SessionSetup({
-                connectorParams,
+                connectorParams: (connectorParams == null) ? undefined : connectorParams,
                 scripts: scripts
             })
         }

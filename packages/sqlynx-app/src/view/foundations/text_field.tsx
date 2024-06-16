@@ -103,15 +103,15 @@ export function TextField(props: {
 export function KeyValueTextField(props: {
     className?: string;
     name: string;
-    caption: string;
+    caption?: string;
     k: string;
     v: string;
     keyPlaceholder: string;
     valuePlaceholder: string;
     keyIcon?: React.ElementType;
     valueIcon?: React.ElementType;
-    onChangeKey: React.ChangeEventHandler<HTMLInputElement>;
-    onChangeValue: React.ChangeEventHandler<HTMLInputElement>;
+    onChangeKey?: React.ChangeEventHandler<HTMLInputElement>;
+    onChangeValue?: React.ChangeEventHandler<HTMLInputElement>;
     disabled?: boolean;
     readOnly?: boolean;
     keyAriaLabel: string;
@@ -121,7 +121,7 @@ export function KeyValueTextField(props: {
     return (
         <div className={classNames(styles.kv_field, props.className)}>
             <div className={styles.kv_field_name}>{props.name}</div>
-            <div className={styles.kv_field_caption}>{props.caption}</div>
+            {props.caption && <div className={styles.kv_field_caption}>{props.caption}</div>}
             <TextInput
                 className={styles.kv_field_input_key}
                 block

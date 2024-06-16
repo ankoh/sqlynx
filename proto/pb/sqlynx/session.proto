@@ -1,10 +1,29 @@
 syntax = "proto3";
 
 import "sqlynx/oauth.proto";
+import "salesforce/hyperdb/grpc/v1/hyper_service.proto";
 
 package sqlynx;
 
-message HyperConnectorParams {}
+message TlsConfig {
+    /// The path to the client private key
+    string client_key_path = 1;
+    /// The path to the client public key
+    string client_cert_path = 2;
+    /// The path to the CA certificates
+    string ca_certs_path = 3;
+}
+
+message HyperConnectorParams {
+    /// The endpoint
+    string endpoint = 1;
+    /// The TLS config
+    TlsConfig tls = 2;
+    /// The attached databases
+    repeated salesforce.hyperdb.grpc.v1.AttachedDatabase attached_databases = 3;
+    /// The metadata
+    map<string, string> metadata = 4;
+}
 
 message SalesforceConnectorParams {
     /// The instance url

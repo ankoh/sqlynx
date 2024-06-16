@@ -36,7 +36,24 @@ export function buildSalesforceConnectorParams(params: SalesforceAuthParams | nu
     });
 }
 
-export function buildBrainstormConnectorParams(): proto.sqlynx_session.pb.ConnectorParams {
+export function buildHyperConnectorParams(params: HyperGrpcConnectionParams): proto.sqlynx_session.pb.ConnectorParams {
+    const tls = new proto.sqlynx_session.pb.TlsConfig({
+        clientKeyPath: params.channel.tls?.keyPath,
+        clientCertPath: params.channel.tls?.pubPath,
+        caCertsPath: params.channel.tls?.caPath,
+    });
+    return new proto.sqlynx_session.pb.ConnectorParams({
+        connector: {
+            case: "hyper",
+            value: new proto.sqlynx_session.pb.HyperConnectorParams({
+                endpoint: params.channel.endpoint ?? "",
+                tls
+            })
+        }
+    });
+}
+
+export function buildServerlessConnectorParams(): proto.sqlynx_session.pb.ConnectorParams {
     return new proto.sqlynx_session.pb.ConnectorParams({
         connector: {
             case: "serverless",
@@ -45,21 +62,17 @@ export function buildBrainstormConnectorParams(): proto.sqlynx_session.pb.Connec
     });
 }
 
-export function buildHyperConnectorParams(): proto.sqlynx_session.pb.ConnectorParams {
-    return new proto.sqlynx_session.pb.ConnectorParams({
-        connector: {
-            case: "hyper",
-            value: new proto.sqlynx_session.pb.HyperConnectorParams()
-        }
-    });
-}
-
 export function buildConnectorParams(state: ConnectionDetailsVariant) {
     switch (state.type) {
         case SERVERLESS_CONNECTOR:
-            return buildBrainstormConnectorParams();
-        case HYPER_GRPC_CONNECTOR:
-            return buildHyperConnectorParams();
+            return buildServerlessConnectorParams();
+        case HYPER_GRPC_CONNECTOR: {
+            if (state.value.channelSetupParams == null) {
+                return null;
+            } else {
+                return buildHyperConnectorParams(state.value.channelSetupParams);
+            }
+        }
         case SALESFORCE_DATA_CLOUD_CONNECTOR: {
             return buildSalesforceConnectorParams(state.value.authParams);
         }
