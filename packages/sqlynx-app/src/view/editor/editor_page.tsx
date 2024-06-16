@@ -27,6 +27,7 @@ import { SessionListDropdown } from './session_list_dropdown.js';
 import { DragSizing, DragSizingBorder } from '../foundations/drag_sizing.js';
 import { useQueryState } from '../../connectors/query_executor.js';
 import { QueryResultView } from '../table/query_result_view.js';
+import { QueryStatus } from '../query_status/query_status.js';
 
 const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
     const config = useAppConfig();
@@ -113,7 +114,8 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
     const [sharingIsOpen, setSharingIsOpen] = React.useState<boolean>(false);
 
     // Resolve the editor query state (if any)
-    const queryState = useQueryState(currentSession?.connectionId ?? null,currentSession?.editorQuery ?? null);
+    const editorQuery = currentSession?.editorQuery ?? null;
+    const queryState = useQueryState(currentSession?.connectionId ?? null, editorQuery);
 
     // Determine selected tabs
     const tabState = React.useRef<TabState>({
@@ -143,7 +145,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
     useKeyEvents(keyHandlers);
 
     // Automatically switch tabs when the execution status changes meaningfully
-    const prevStatus = React.useRef<QueryExecutionStatus | null>(null);
+    const prevStatus = React.useRef<[number | null, QueryExecutionStatus | null] | null>(null);
     React.useEffect(() => {
         const status = queryState?.status ?? null;
         switch (status) {
@@ -154,18 +156,19 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
             case QueryExecutionStatus.ACCEPTED:
             case QueryExecutionStatus.RECEIVED_SCHEMA:
             case QueryExecutionStatus.RECEIVED_FIRST_RESULT:
-                if (prevStatus.current == null) {
+                if (prevStatus.current == null || prevStatus.current[0] != editorQuery || prevStatus.current[1] != status) {
                     selectTab(TabKey.QueryProgressView);
                 }
                 break;
             case QueryExecutionStatus.FAILED:
+                selectTab(TabKey.QueryProgressView);
                 break;
             case QueryExecutionStatus.SUCCEEDED:
                 selectTab(TabKey.QueryResultView);
                 break;
         }
-        prevStatus.current = status;
-    }, [queryState?.status]);
+        prevStatus.current = [editorQuery, status];
+    }, [editorQuery, queryState?.status]);
 
     return (
         <div className={styles.page}>
@@ -216,7 +219,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                         tabRenderers={{
                             [TabKey.SchemaView]: _props => <SchemaGraph />,
                             [TabKey.QueryProgressView]: _props => (
-                                <div />
+                                <QueryStatus query={queryState} />
                             ),
                             [TabKey.QueryResultView]: _props => (
                                 <QueryResultView />

@@ -78,7 +78,7 @@ export class WebHyperQueryResultStream implements QueryExecutionResponseStream {
         }
         return this.arrowReader!.next();
     }
-    /// Await the next progress update
+    /// Await the next query_status update
     async nextProgressUpdate(): Promise<QueryExecutionProgress | null> {
         return null;
     }
