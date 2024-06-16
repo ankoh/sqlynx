@@ -88,8 +88,8 @@
     border-radius: var(--border_radius);
     border: 1px solid transparent;
 
-    display: flex;
-    flex-direction: row;
+    display: flex !important;
+    flex-direction: row  !important;
     column-gap: 8px;
 }
 .tab_button_text {

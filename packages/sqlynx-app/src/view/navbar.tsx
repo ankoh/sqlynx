@@ -1,4 +1,7 @@
 import * as React from 'react';
+import * as styles from './navbar.module.css';
+import * as symbols from '../../static/svg/symbols.generated.svg';
+
 import { useLocation } from 'react-router-dom';
 
 import { SQLYNX_VERSION } from '../globals.js';
@@ -9,9 +12,6 @@ import { VersionViewerOverlay } from './version_viewer.js';
 import { generateSessionSetupUrl, SessionLinkTarget } from '../session/session_setup_url.js';
 import { useCurrentSessionState } from '../session/current_session.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
-
-import * as styles from './navbar.module.css';
-import * as symbols from '../../static/svg/symbols.generated.svg';
 import { useAppConfig } from '../app_config.js';
 import { AnchorAlignment, AnchorSide } from './foundations/anchored_position.js';
 import { LogViewerOverlay } from './log_viewer.js';
@@ -70,11 +70,11 @@ const LogButton = (_props: {}) => {
                         </>
                     </NavBarButtonWithRef>
                 )}
-                side={AnchorSide.OutsideTop}
-                align={AnchorAlignment.End}
+                side={AnchorSide.OutsideBottom}
+                align={AnchorAlignment.Center}
                 anchorOffset={16}
                 overlayProps={{
-                    width: OverlaySize.XL,
+                    width: OverlaySize.L,
                     height: OverlaySize.XL
                 }}
             />
