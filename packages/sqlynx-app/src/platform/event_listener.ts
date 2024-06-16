@@ -3,6 +3,7 @@ import * as proto from '@ankoh/sqlynx-pb';
 import { BASE64_CODEC } from '../utils/base64.js';
 import { Logger } from './logger.js';
 
+const LOG_CTX = "event_listener";
 export const EVENT_QUERY_PARAMETER = "data";
 
 // An oauth subscriber
@@ -20,6 +21,7 @@ interface OAuthSubscriber {
 export abstract class AppEventListener {
     /// The logger
     protected logger: Logger;
+
     /// The oauth subscriber.
     /// There can only be a single OAuth subscriber at a single point in time.
     private oAuthSubscriber: OAuthSubscriber | null = null;
@@ -29,12 +31,16 @@ export abstract class AppEventListener {
     /// The clipboard subscriber
     private clipboardEventHandler: (e: ClipboardEvent) => void;
 
+    /// The queued session setup (if any)
+    private queuedSessionSetupEvent: proto.sqlynx_session.pb.SessionSetup | null;
+
     /// Constructor
     constructor(logger: Logger) {
         this.logger = logger;
         this.oAuthSubscriber = null;
         this.sessionSetupSubscriber = null;
         this.clipboardEventHandler = this.processClipboardEvent.bind(this);
+        this.queuedSessionSetupEvent = null;
     }
 
     /// Method to setup the listener
@@ -63,7 +69,8 @@ export abstract class AppEventListener {
     /// Received navigation event
     protected dispatchSessionSetup(data: proto.sqlynx_session.pb.SessionSetup) {
         if (!this.sessionSetupSubscriber) {
-            console.warn("received navigation event but there's no registered subscriber");
+            this.logger.info("queuing session setup event since there's no registered subscriber", LOG_CTX);
+            this.queuedSessionSetupEvent = data;
         } else {
             this.sessionSetupSubscriber(data);
         }
@@ -72,7 +79,7 @@ export abstract class AppEventListener {
     /// OAuth succeeded, let the subscriber now
     protected dispatchOAuthRedirect(data: proto.sqlynx_oauth.pb.OAuthRedirectData) {
         if (!this.oAuthSubscriber) {
-            console.warn("received oauth redirect data but there's no registered oauth subscriber");
+            console.warn("received oauth redirect data but there's no registered oauth subscriber", LOG_CTX);
         } else {
             const sub = this.oAuthSubscriber;
             sub.signal.removeEventListener("abort", sub.abortListener!);
@@ -119,17 +126,25 @@ export abstract class AppEventListener {
     /// Subscribe navigation events
     public subscribeSessionSetupEvents(handler: (data: proto.sqlynx_session.pb.SessionSetup) => void): void {
         if (this.sessionSetupSubscriber) {
-            this.logger.error("tried to register more than one session setup subscriber");
-        } else {
-            this.logger.debug("subscribing to session setup events", "event_listener");
-            this.sessionSetupSubscriber = handler;
+            this.logger.error("tried to register more than one session setup subscriber", LOG_CTX);
+            return;
+        }
+        this.logger.info("subscribing to session setup events", LOG_CTX);
+        this.sessionSetupSubscriber = handler;
+
+        // Is there a pending session setup?
+        if (this.queuedSessionSetupEvent != null) {
+            const setup = this.queuedSessionSetupEvent;
+            this.queuedSessionSetupEvent = null;
+            this.logger.info("dispatching buffered session setup event", LOG_CTX);
+            this.sessionSetupSubscriber(setup);
         }
     }
 
     /// Unsubscribe from session setup events
     public unsubscribeSessionSetupEvents(handler: (data: proto.sqlynx_session.pb.SessionSetup) => void): void {
         if (this.sessionSetupSubscriber != handler) {
-            this.logger.error("tried to unregister a session setup subscriber that is not registered");
+            this.logger.error("tried to unregister a session setup subscriber that is not registered", LOG_CTX);
         } else {
             this.sessionSetupSubscriber = null;
         }
@@ -137,7 +152,7 @@ export abstract class AppEventListener {
 
     /// Method to listen for pasted sqlynx links
     private listenForClipboardEvents() {
-        this.logger.debug("subscribing to clipboard events", "event_listener");
+        this.logger.info("subscribing to clipboard events", LOG_CTX);
         window.addEventListener("paste", this.clipboardEventHandler);
     }
 
@@ -157,7 +172,7 @@ export abstract class AppEventListener {
             const dataBytes = new Uint8Array(dataBuffer);
             return proto.sqlynx_app_event.pb.AppEventData.fromBinary(dataBytes);
         } catch (error: any) {
-            this.logger.error(`${fromWhat} does not encode valid link data`, "event_listener");
+            this.logger.error(`${fromWhat} does not encode valid link data`, LOG_CTX);
             return null;
         }
     }
@@ -171,16 +186,16 @@ export abstract class AppEventListener {
             let deepLinkData: any = null;
             try {
                 const deepLink = new URL(pastedText);
-                this.logger.info(`received deep link: ${deepLink.toString()}`, "event_listener");
+                this.logger.info(`received deep link: ${deepLink.toString()}`, LOG_CTX);
                 // Has link data?
                 deepLinkData = deepLink.searchParams.get(EVENT_QUERY_PARAMETER);
                 if (!deepLinkData) {
-                    this.logger.warn(`deep link lacks the query parameter '${EVENT_QUERY_PARAMETER}'`, "event_listener");
+                    this.logger.warn(`deep link lacks the query parameter '${EVENT_QUERY_PARAMETER}'`, LOG_CTX);
                     return;
                 }
             } catch (e: any) {
                 console.warn(e);
-                this.logger.warn(`parsing deep link failed with error: ${e.toString()}`, "event_listener");
+                this.logger.warn(`parsing deep link failed with error: ${e.toString()}`, LOG_CTX);
             }
 
             // Unpack the app event

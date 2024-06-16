@@ -175,7 +175,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                     value={script.scriptText}
                     readOnly={true}
                     disabled={true}
-                    leadingVisual={() => <div>Script text with 0 characters</div>}
+                    leadingVisual={() => <div>SQL</div>}
                     logContext={LOG_CTX}
                 />
             )
