@@ -14,12 +14,16 @@ import { Button, ButtonVariant } from './view/foundations/button.js';
 import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_WARNING } from './view/foundations/text_field.js';
 import { GitHubTheme } from './github_theme.js';
 import { formatHHMMSS, formatTimeDifference } from './utils/format.js';
-import { LogViewerInPortal } from './view/log_viewer.js';
+import { LogViewerOverlay } from './view/log_viewer.js';
 import { LoggerProvider, useLogger } from './platform/logger_provider.js';
 import { Logger } from './platform/logger.js';
 
 import '../static/fonts/fonts.css';
 import './globals.css';
+import { VersionViewerOverlay } from './view/version_viewer.js';
+import { PackageIcon } from '@primer/octicons-react';
+import { AnchorAlignment, AnchorSide } from './view/foundations/anchored_position.js';
+import { OverlaySize } from './view/foundations/overlay.js';
 
 const AUTOTRIGGER_DELAY = 2000;
 
@@ -229,17 +233,30 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                         Authorization Succeeded
                     </div>
                     <div className={styles.card_header_right_container}>
-                        <IconButton
-                            variant="invisible"
-                            icon={() => (
-                                <svg width="16px" height="16px">
-                                    <use xlinkHref={`${symbols}#log`} />
-                                </svg>
+                        <LogViewerOverlay
+                            isOpen={logsAreOpen}
+                            onClose={() => setLogsAreOpen(false)}
+                            renderAnchor={(p: object) => (
+                                <IconButton
+                                    {...p}
+                                    variant="invisible"
+                                    icon={() => (
+                                        <svg width="16px" height="16px">
+                                            <use xlinkHref={`${symbols}#log`} />
+                                        </svg>
+                                    )}
+                                    aria-label="close-overlay"
+                                    onClick={() => setLogsAreOpen(s => !s)}
+                                />
                             )}
-                            aria-label="close-overlay"
-                            onClick={() => setLogsAreOpen(s => !s)}
+                            side={AnchorSide.OutsideBottom}
+                            align={AnchorAlignment.End}
+                            anchorOffset={16}
+                            overlayProps={{
+                                width: OverlaySize.L,
+                                height: OverlaySize.M
+                            }}
                         />
-                        {logsAreOpen && <LogViewerInPortal onClose={() => setLogsAreOpen(false)} />}
                     </div>
                 </div>
                 {providerOptionsSection}

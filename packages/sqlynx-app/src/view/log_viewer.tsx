@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { motion } from "framer-motion"
-import { createPortal } from 'react-dom';
+import * as styles from './log_viewer.module.css';
+
 import { VariableSizeGrid as Grid } from 'react-window';
 import { IconButton } from '@primer/react';
 import { XIcon } from '@primer/octicons-react';
@@ -9,8 +9,9 @@ import { useScrollbarWidth } from '../utils/scrollbar.js';
 import { LogLevel, getLogLevelName } from '../platform/log_buffer.js';
 import { useLogger } from '../platform/logger_provider.js';
 import { observeSize } from './foundations/size_observer.js';
-
-import * as styles from './log_viewer.module.css';
+import { OverlayProps } from './foundations/overlay.js';
+import { AnchorAlignment, AnchorSide } from './foundations/anchored_position.js';
+import { AnchoredOverlay } from './foundations/anchored_overlay.js';
 
 interface LevelCellProps {
     level: LogLevel;
@@ -165,52 +166,59 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
 
     return (
         <div className={styles.overlay}>
-            <motion.div
-                className={styles.overlay_background}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.4 }}
-                onClick={props.onClose}
-            />
-            <motion.div
-                className={styles.overlay_card}
-                initial={{ translateY: "20px" }}
-                animate={{ translateY: 0 }}
-                transition={{ duration: 0.2 }}
-            >
-                <div className={styles.header_container}>
-                    <div className={styles.header_left_container}>
-                        <div className={styles.title}>Logs</div>
-                    </div>
-                    <div className={styles.header_right_container}>
-                        <IconButton
-                            variant="invisible"
-                            icon={XIcon}
-                            aria-label="close-overlay"
-                            onClick={props.onClose}
-                        />
-                    </div>
+            <div className={styles.header_container}>
+                <div className={styles.header_left_container}>
+                    <div className={styles.title}>Logs</div>
                 </div>
-                <div className={styles.log_grid_container} ref={containerRef}>
-                    <Grid
-                        ref={gridRef}
-                        width={containerWidth}
-                        height={containerHeight}
-                        columnCount={COLUMN_COUNT}
-                        columnWidth={getColumnWidth}
-                        rowCount={logger.buffer.length}
-                        rowHeight={getRowHeight}
-                        estimatedColumnWidth={containerWidth / COLUMN_COUNT}
-                        estimatedRowHeight={ROW_HEIGHT}
-                    >
-                        {Cell}
-                    </Grid>
+                <div className={styles.header_right_container}>
+                    <IconButton
+                        variant="invisible"
+                        icon={XIcon}
+                        aria-label="close-overlay"
+                        onClick={props.onClose}
+                    />
                 </div>
-            </motion.div>
+            </div>
+            <div className={styles.log_grid_container} ref={containerRef}>
+                <Grid
+                    ref={gridRef}
+                    width={containerWidth}
+                    height={containerHeight}
+                    columnCount={COLUMN_COUNT}
+                    columnWidth={getColumnWidth}
+                    rowCount={logger.buffer.length}
+                    rowHeight={getRowHeight}
+                    estimatedColumnWidth={containerWidth / COLUMN_COUNT}
+                    estimatedRowHeight={ROW_HEIGHT}
+                >
+                    {Cell}
+                </Grid>
+            </div>
         </div>
     );
 }
 
-const element = document.getElementById('root');
-
-export const LogViewerInPortal = (props: LogViewerProps) => createPortal(<LogViewer {...props} />, element!);
+type LogViewerOverlayProps = {
+    isOpen: boolean;
+    onClose: () => void;
+    renderAnchor: (p: object) => React.ReactElement;
+    side?: AnchorSide;
+    align?: AnchorAlignment;
+    anchorOffset?: number;
+    overlayProps?: Partial<OverlayProps>;
+}
+export function LogViewerOverlay(props: LogViewerOverlayProps) {
+    return (
+        <AnchoredOverlay
+            open={props.isOpen}
+            onClose={props.onClose}
+            renderAnchor={props.renderAnchor}
+            side={props.side}
+            align={props.align}
+            anchorOffset={props.anchorOffset}
+            overlayProps={props.overlayProps}
+        >
+            <LogViewer onClose={props.onClose} />
+        </AnchoredOverlay>
+    );
+}
