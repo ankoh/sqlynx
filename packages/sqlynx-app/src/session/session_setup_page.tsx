@@ -6,7 +6,7 @@ import * as page_styles from '../view/banner_page.module.css';
 import * as styles from '../view/connectors/platform_check.module.css';
 
 import { IconButton } from '@primer/react';
-import { DesktopDownloadIcon, PackageIcon } from '@primer/octicons-react';
+import { ChecklistIcon, DesktopDownloadIcon, FileBadgeIcon, KeyIcon, PackageIcon } from '@primer/octicons-react';
 
 import { formatHHMMSS } from '../utils/format.js';
 import { useLogger } from '../platform/logger_provider.js';
@@ -16,10 +16,9 @@ import { generateSessionSetupUrl, SessionLinkTarget } from './session_setup_url.
 import { SalesforceAuthParams } from '../connectors/connection_params.js';
 import { SQLYNX_VERSION } from '../globals.js';
 import { REPLACE_SCRIPT_CONTENT } from './session_state.js';
-import { TextField } from '../view/foundations/text_field.js';
+import { KeyValueTextField, TextField } from '../view/foundations/text_field.js';
 import { VersionViewerOverlay } from '../view/version_viewer.js';
 import { AnchorAlignment, AnchorSide } from '../view/foundations/anchored_position.js';
-
 import { Button, ButtonVariant } from '../view/foundations/button.js';
 import {
     checkHyperConnectionSetup,
@@ -30,6 +29,7 @@ import { useSessionState } from './session_state_registry.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
 import { LogViewerOverlay } from '../view/log_viewer.js';
 import { OverlaySize } from '../view/foundations/overlay.js';
+import * as style from '../view/connectors/connector_settings.module.css';
 
 const LOG_CTX = "session_setup";
 const AUTOTRIGGER_DELAY = 2000;
@@ -55,6 +55,46 @@ const ConnectorParamsSection: React.FC<{ params: proto.sqlynx_session.pb.Connect
                             disabled
                             leadingVisual={() => <div>ID</div>}
                             logContext={LOG_CTX}
+                        />
+                    </div>
+                </div>
+            );
+        }
+        case "hyper": {
+            return (
+                <div className={page_styles.card_section}>
+                    <div className={page_styles.section_entries}>
+                        <TextField
+                            name="gRPC Endpoint"
+                            value={props.params.connector.value.endpoint ?? ""}
+                            leadingVisual={() => <div>URL</div>}
+                            logContext={LOG_CTX}
+                            readOnly
+                            disabled
+                        />
+                        <KeyValueTextField
+                            className={style.grid_column_1}
+                            name="mTLS Client Key"
+                            k={props.params.connector.value.tls?.clientKeyPath ?? ""}
+                            v={props.params.connector.value.tls?.clientCertPath ?? ""}
+                            keyPlaceholder="client.key"
+                            valuePlaceholder="client.pem"
+                            keyIcon={KeyIcon}
+                            valueIcon={FileBadgeIcon}
+                            keyAriaLabel='mTLS Client Key'
+                            valueAriaLabel='mTLS Client Certificate'
+                            logContext={LOG_CTX}
+                            disabled
+                            readOnly
+                        />
+                        <TextField
+                            name="mTLS CA certificates"
+                            value={props.params.connector.value.tls?.caCertsPath ?? ""}
+                            placeholder="cacerts.pem"
+                            leadingVisual={ChecklistIcon}
+                            logContext={LOG_CTX}
+                            disabled
+                            readOnly
                         />
                     </div>
                 </div>
@@ -160,9 +200,9 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
         const timeoutId = setTimeout(() => configure, remainingUntilAutoTrigger);
         return () => clearTimeout(timeoutId);
     }, [props.setupProto]);
+    const sections: React.ReactElement[] = [];
 
     // Collect all sections (after parsing the params)
-    const sections: React.ReactElement[] = [];
     if (props.setupProto.scripts.length > 0) {
         const scriptElems: React.ReactElement[] = [];
         for (const script of props.setupProto.scripts) {
@@ -195,6 +235,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
             </div>
         );
     }
+
     // Do we have connector params?
     // Then render them in a dedicated section.
     if (props.setupProto?.connectorParams) {
@@ -281,51 +322,55 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     // Render the page
     return (
         <div className={page_styles.page}
-             data-tauri-drag-region="true">
-            <div className={page_styles.banner_container}>
-                <div className={page_styles.banner_logo}>
-                    <svg width="100%" height="100%">
-                        <use xlinkHref={`${symbols}#sqlynx-inverted`} />
-                    </svg>
-                </div>
-                <div className={page_styles.banner_text_container}>
-                    <div className={page_styles.banner_title}>sqlynx</div>
-                    <div className={page_styles.app_version}>version {SQLYNX_VERSION}</div>
-                </div>
-            </div>
-            <div className={page_styles.card_container}>
-                <div className={page_styles.card_header}>
-                    <div className={page_styles.card_header_left_container}>
-                        Setup
+                 data-tauri-drag-region="true">
+            <div className={page_styles.banner_and_content_container}>
+                <div className={page_styles.banner_container}>
+                    <div className={page_styles.banner_logo}>
+                        <svg width="100%" height="100%">
+                            <use xlinkHref={`${symbols}#sqlynx-inverted`} />
+                        </svg>
                     </div>
-                    <div className={page_styles.card_header_right_container}>
-                        <LogViewerOverlay
-                            isOpen={showLogs}
-                            onClose={() => setShowLogs(false)}
-                            renderAnchor={(p: object) => (
-                                <IconButton
-                                    {...p}
-                                    variant="invisible"
-                                    icon={() => (
-                                        <svg width="16px" height="16px">
-                                            <use xlinkHref={`${symbols}#log`} />
-                                        </svg>
+                    <div className={page_styles.banner_text_container}>
+                        <div className={page_styles.banner_title}>sqlynx</div>
+                        <div className={page_styles.app_version}>version {SQLYNX_VERSION}</div>
+                    </div>
+                </div>
+                <div className={page_styles.content_container}>
+                    <div className={page_styles.card}>
+                        <div className={page_styles.card_header}>
+                            <div className={page_styles.card_header_left_container}>
+                                Setup
+                            </div>
+                            <div className={page_styles.card_header_right_container}>
+                                <LogViewerOverlay
+                                    isOpen={showLogs}
+                                    onClose={() => setShowLogs(false)}
+                                    renderAnchor={(p: object) => (
+                                        <IconButton
+                                            {...p}
+                                            variant="invisible"
+                                            icon={() => (
+                                                <svg width="16px" height="16px">
+                                                    <use xlinkHref={`${symbols}#log`} />
+                                                </svg>
+                                            )}
+                                            aria-label="close-overlay"
+                                            onClick={() => setShowLogs(s => !s)}
+                                        />
                                     )}
-                                    aria-label="close-overlay"
-                                    onClick={() => setShowLogs(s => !s)}
+                                    side={AnchorSide.OutsideBottom}
+                                    align={AnchorAlignment.End}
+                                    anchorOffset={16}
+                                    overlayProps={{
+                                        width: OverlaySize.L,
+                                        height: OverlaySize.M
+                                    }}
                                 />
-                            )}
-                            side={AnchorSide.OutsideBottom}
-                            align={AnchorAlignment.End}
-                            anchorOffset={16}
-                            overlayProps={{
-                                width: OverlaySize.L,
-                                height: OverlaySize.M
-                            }}
-                        />
+                            </div>
+                        </div>
+                        {sections}
                     </div>
                 </div>
-                {sections}
             </div>
         </div>
     );
