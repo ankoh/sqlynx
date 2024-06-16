@@ -231,6 +231,11 @@
     column-gap: 8px;
 }
 
+.card_action_icon_button {
+    height: 32px!important;
+    width: 32px!important;
+}
+
 .section_description {
     font-size: 0.9rem;
     font-weight: 400;

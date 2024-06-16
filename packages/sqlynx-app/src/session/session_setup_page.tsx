@@ -2,8 +2,8 @@ import * as proto from '@ankoh/sqlynx-pb';
 import * as React from 'react';
 import * as symbols from '../../static/svg/symbols.generated.svg';
 import * as icons from '../../static/svg/symbols.generated.svg';
-import * as page_styles from '../view/banner_page.module.css';
-import * as styles from '../view/connectors/platform_check.module.css';
+import * as baseStyles from '../view/banner_page.module.css';
+import * as style from '../view/connectors/connector_settings.module.css';
 
 import { IconButton } from '@primer/react';
 import { ChecklistIcon, DesktopDownloadIcon, FileBadgeIcon, KeyIcon, PackageIcon } from '@primer/octicons-react';
@@ -12,7 +12,7 @@ import { formatHHMMSS } from '../utils/format.js';
 import { useLogger } from '../platform/logger_provider.js';
 import { useSalesforceAuthFlow } from '../connectors/salesforce_auth_flow.js';
 import { ConnectorInfo, requiresSwitchingToNative } from '../connectors/connector_info.js';
-import { generateSessionSetupUrl, SessionLinkTarget } from './session_setup_url.js';
+import { encodeSessionSetupUrl, generateSessionSetupUrl, SessionLinkTarget } from './session_setup_url.js';
 import { SalesforceAuthParams } from '../connectors/connection_params.js';
 import { SQLYNX_VERSION } from '../globals.js';
 import { REPLACE_SCRIPT_CONTENT } from './session_state.js';
@@ -29,7 +29,7 @@ import { useSessionState } from './session_state_registry.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
 import { LogViewerOverlay } from '../view/log_viewer.js';
 import { OverlaySize } from '../view/foundations/overlay.js';
-import * as style from '../view/connectors/connector_settings.module.css';
+import { CopyToClipboardButton } from '../utils/clipboard.js';
 
 const LOG_CTX = "session_setup";
 const AUTOTRIGGER_DELAY = 2000;
@@ -38,8 +38,8 @@ const ConnectorParamsSection: React.FC<{ params: proto.sqlynx_session.pb.Connect
     switch (props.params.connector.case) {
         case "salesforce": {
             return (
-                <div className={page_styles.card_section}>
-                    <div className={page_styles.section_entries}>
+                <div className={baseStyles.card_section}>
+                    <div className={baseStyles.section_entries}>
                         <TextField
                             name="Salesforce Instance URL"
                             value={props.params.connector.value.instanceUrl ?? ""}
@@ -62,8 +62,8 @@ const ConnectorParamsSection: React.FC<{ params: proto.sqlynx_session.pb.Connect
         }
         case "hyper": {
             return (
-                <div className={page_styles.card_section}>
-                    <div className={page_styles.section_entries}>
+                <div className={baseStyles.card_section}>
+                    <div className={baseStyles.section_entries}>
                         <TextField
                             name="gRPC Endpoint"
                             value={props.params.connector.value.endpoint ?? ""}
@@ -228,8 +228,8 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
             )
         }
         sections.push(
-            <div key={sections.length} className={page_styles.card_section}>
-                <div className={page_styles.section_entries}>
+            <div key={sections.length} className={baseStyles.card_section}>
+                <div className={baseStyles.section_entries}>
                     {scriptElems}
                 </div>
             </div>
@@ -238,7 +238,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
 
     // Do we have connector params?
     // Then render them in a dedicated section.
-    if (props.setupProto?.connectorParams) {
+    if (props.setupProto.connectorParams) {
         sections.push(<ConnectorParamsSection key={sections.length} params={props?.setupProto?.connectorParams} />);
     }
 
@@ -247,7 +247,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
         if (canExecuteHere) {
             return null;
         } else {
-            return generateSessionSetupUrl(session, connection, SessionLinkTarget.NATIVE);
+            return encodeSessionSetupUrl(props.setupProto, SessionLinkTarget.NATIVE);
         }
     }, []);
 
@@ -255,23 +255,23 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     // Render a warning, information where to get the app and a button to switch.
     if (!canExecuteHere && sessionSetupURL != null) {
         sections.push(
-            <div key={sections.length} className={page_styles.card_section}>
-                <div className={page_styles.section_entries}>
-                    <div className={page_styles.section_description}>
+            <div key={sections.length} className={baseStyles.card_section}>
+                <div className={baseStyles.section_entries}>
+                    <div className={baseStyles.section_description}>
                         This connector can only be used in the native app.<br />
                         cf.
-                        <svg className={styles.github_link_icon} width="20px" height="20px">
+                        <svg className={baseStyles.github_link_icon} width="20px" height="20px">
                             <use xlinkHref={`${icons}#github`} />
                         </svg>
                         &nbsp;
-                        <a className={styles.github_link_text} href="https://github.com/ankoh/sqlynx/issues/738"
+                        <a className={baseStyles.github_link_text} href="https://github.com/ankoh/sqlynx/issues/738"
                            target="_blank">
                             Web connectors for Hyper and Data Cloud
                         </a>
                     </div>
                 </div>
-                <div className={page_styles.card_actions}>
-                    <div className={page_styles.card_actions_right}>
+                <div className={baseStyles.card_actions}>
+                    <div className={baseStyles.card_actions_right}>
                         <VersionViewerOverlay
                             isOpen={showVersionOverlay}
                             onClose={() => setShowVersionOverlay(false)}
@@ -287,6 +287,14 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                             side={AnchorSide.OutsideTop}
                             align={AnchorAlignment.Center}
                             anchorOffset={8}
+                        />
+                        <CopyToClipboardButton
+                            className={baseStyles.card_action_icon_button}
+                            variant={ButtonVariant.Primary}
+                            logContext={LOG_CTX}
+                            value={sessionSetupURL.toString()}
+                            aria-label="copy-deeplink"
+                            aria-labelledby=""
                         />
                         <Button
                             variant={ButtonVariant.Primary}
@@ -307,8 +315,8 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     } else {
         // We can stay here, render normal action bar
         sections.push(
-            <div key={sections.length} className={page_styles.card_actions}>
-                <div className={page_styles.card_actions_right}>
+            <div key={sections.length} className={baseStyles.card_actions}>
+                <div className={baseStyles.card_actions_right}>
                     <Button
                         variant={ButtonVariant.Primary}
                         onClick={() => props.onDone()}>
@@ -321,27 +329,27 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
 
     // Render the page
     return (
-        <div className={page_styles.page}
+        <div className={baseStyles.page}
                  data-tauri-drag-region="true">
-            <div className={page_styles.banner_and_content_container}>
-                <div className={page_styles.banner_container}>
-                    <div className={page_styles.banner_logo}>
+            <div className={baseStyles.banner_and_content_container}>
+                <div className={baseStyles.banner_container}>
+                    <div className={baseStyles.banner_logo}>
                         <svg width="100%" height="100%">
                             <use xlinkHref={`${symbols}#sqlynx-inverted`} />
                         </svg>
                     </div>
-                    <div className={page_styles.banner_text_container}>
-                        <div className={page_styles.banner_title}>sqlynx</div>
-                        <div className={page_styles.app_version}>version {SQLYNX_VERSION}</div>
+                    <div className={baseStyles.banner_text_container}>
+                        <div className={baseStyles.banner_title}>sqlynx</div>
+                        <div className={baseStyles.app_version}>version {SQLYNX_VERSION}</div>
                     </div>
                 </div>
-                <div className={page_styles.content_container}>
-                    <div className={page_styles.card}>
-                        <div className={page_styles.card_header}>
-                            <div className={page_styles.card_header_left_container}>
+                <div className={baseStyles.content_container}>
+                    <div className={baseStyles.card}>
+                        <div className={baseStyles.card_header}>
+                            <div className={baseStyles.card_header_left_container}>
                                 Setup
                             </div>
-                            <div className={page_styles.card_header_right_container}>
+                            <div className={baseStyles.card_header_right_container}>
                                 <LogViewerOverlay
                                     isOpen={showLogs}
                                     onClose={() => setShowLogs(false)}

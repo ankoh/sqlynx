@@ -4,6 +4,7 @@ import * as styles from './text_input_action.module.css';
 import type { IconProps } from '@primer/octicons-react'
 import { IconButton } from '@primer/react';
 import { Tooltip } from './tooltip.js';
+import { CopyToClipboardButton } from '../../utils/clipboard.js';
 
 interface TextInputActionProps {
     children?: React.ReactElement;
@@ -37,5 +38,25 @@ export function TextInputAction(props: Props) {
                 onClick={props.onClick}
             />
         </Tooltip>
+    );
+}
+
+interface CopyToClipboardActionProps {
+    value: string;
+    timeoutMs?: number;
+    logContext: string;
+    ariaLabel: string;
+}
+
+export function CopyToClipboardAction(props: CopyToClipboardActionProps): React.ReactElement {
+    return (
+        <CopyToClipboardButton
+            className={styles.input_action}
+            aria-label={props.ariaLabel}
+            aria-labelledby={''}
+            timeoutMs={props.timeoutMs}
+            logContext={props.logContext}
+            value={props.value}
+        />
     );
 }
