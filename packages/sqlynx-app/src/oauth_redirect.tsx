@@ -24,6 +24,7 @@ import { VersionViewerOverlay } from './view/version_viewer.js';
 import { PackageIcon } from '@primer/octicons-react';
 import { AnchorAlignment, AnchorSide } from './view/foundations/anchored_position.js';
 import { OverlaySize } from './view/foundations/overlay.js';
+import * as page_styles from './view/banner_page.module.css';
 
 const AUTOTRIGGER_DELAY = 2000;
 
@@ -216,65 +217,69 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
     // Construct the page
     return (
         <div className={styles.page}>
-            <div className={styles.banner_container}>
-                <div className={styles.banner_logo}>
-                    <svg width="100%" height="100%">
-                        <use xlinkHref={`${symbols}#sqlynx-inverted`} />
-                    </svg>
-                </div>
-                <div className={styles.banner_text_container}>
-                    <div className={styles.banner_title}>sqlynx</div>
-                    <div className={styles.app_version}>version {SQLYNX_VERSION}</div>
-                </div>
-            </div>
-            <div className={styles.card_container}>
-                <div className={styles.card_header}>
-                    <div className={styles.card_header_left_container}>
-                        Authorization Succeeded
+            <div className={page_styles.banner_and_content_container}>
+                <div className={styles.banner_container}>
+                    <div className={styles.banner_logo}>
+                        <svg width="100%" height="100%">
+                            <use xlinkHref={`${symbols}#sqlynx-inverted`} />
+                        </svg>
                     </div>
-                    <div className={styles.card_header_right_container}>
-                        <LogViewerOverlay
-                            isOpen={logsAreOpen}
-                            onClose={() => setLogsAreOpen(false)}
-                            renderAnchor={(p: object) => (
-                                <IconButton
-                                    {...p}
-                                    variant="invisible"
-                                    icon={() => (
-                                        <svg width="16px" height="16px">
-                                            <use xlinkHref={`${symbols}#log`} />
-                                        </svg>
+                    <div className={styles.banner_text_container}>
+                        <div className={styles.banner_title}>sqlynx</div>
+                        <div className={styles.app_version}>version {SQLYNX_VERSION}</div>
+                    </div>
+                </div>
+                <div className={page_styles.content_container}>
+                    <div className={styles.card}>
+                        <div className={styles.card_header}>
+                            <div className={styles.card_header_left_container}>
+                                Authorization Succeeded
+                            </div>
+                            <div className={styles.card_header_right_container}>
+                                <LogViewerOverlay
+                                    isOpen={logsAreOpen}
+                                    onClose={() => setLogsAreOpen(false)}
+                                    renderAnchor={(p: object) => (
+                                        <IconButton
+                                            {...p}
+                                            variant="invisible"
+                                            icon={() => (
+                                                <svg width="16px" height="16px">
+                                                    <use xlinkHref={`${symbols}#log`} />
+                                                </svg>
+                                            )}
+                                            aria-label="close-overlay"
+                                            onClick={() => setLogsAreOpen(s => !s)}
+                                        />
                                     )}
-                                    aria-label="close-overlay"
-                                    onClick={() => setLogsAreOpen(s => !s)}
+                                    side={AnchorSide.OutsideBottom}
+                                    align={AnchorAlignment.End}
+                                    anchorOffset={16}
+                                    overlayProps={{
+                                        width: OverlaySize.L,
+                                        height: OverlaySize.M
+                                    }}
                                 />
-                            )}
-                            side={AnchorSide.OutsideBottom}
-                            align={AnchorAlignment.End}
-                            anchorOffset={16}
-                            overlayProps={{
-                                width: OverlaySize.L,
-                                height: OverlaySize.M
-                            }}
-                        />
+                            </div>
+                        </div>
+                        {providerOptionsSection}
+                        <div className={styles.card_section}>
+                            <div className={styles.section_entries}>
+                                <TextField
+                                    name="Authorization Code"
+                                    value={code ?? ""}
+                                    leadingVisual={() => <div>Code</div>}
+                                    validation={codeExpirationValidation}
+                                    logContext={LOG_CTX}
+                                    readOnly
+                                    disabled
+                                    concealed
+                                />
+                            </div>
+                        </div>
+                        {flowContinuation}
                     </div>
                 </div>
-                {providerOptionsSection}
-                <div className={styles.card_section}>
-                    <div className={styles.section_entries}>
-                        <TextField
-                            name="Authorization Code"
-                            value={code ?? ""}
-                            leadingVisual={() => <div>Code</div>}
-                            validation={codeExpirationValidation}
-                            logContext={LOG_CTX}
-                            readOnly
-                            disabled
-                            concealed
-                        />
-                    </div>
-                </div>
-                {flowContinuation}
             </div>
         </div>
     );
