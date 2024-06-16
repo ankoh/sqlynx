@@ -25,14 +25,10 @@ export const DataTable: React.FC<Props> = (props: Props) => {
     const gridContainerHeight = Math.max(gridContainerSize?.height ?? 0, MIN_GRID_HEIGHT) - COLUMN_HEADER_HEIGHT;
     const gridContainerWidth = Math.max(gridContainerSize?.width ?? 0, MIN_GRID_WIDTH);
 
-    if (props.data == null) {
-        return <div />;
-    }
-
     const rows = React.useMemo(() => props.data?.toArray() ?? null, [props.data]);
 
-    const gridRows = props.data.numRows;
-    const gridColumns = 1 + props.data.numCols;
+    const gridRows = props.data?.numRows ?? 0;
+    const gridColumns = 1 + (props.data?.numCols ?? 0);
     const getColumnWidth = (i: number) => (i == 0 ? ROW_HEADER_WIDTH : MIN_COLUMN_WIDTH);
 
     const HeaderCell = (cellProps: GridChildComponentProps) => {
@@ -62,6 +58,9 @@ export const DataTable: React.FC<Props> = (props: Props) => {
             );
         }
     };
+    if (props.data == null) {
+        return <div />;
+    }
     return (
         <div className={classNames(styles.root, props.className)}>
             <div className={styles.title_container}>

@@ -75,7 +75,7 @@ const FileSelector = (props: { className?: string; variant: 'default' | 'invisib
 export const ScriptEditor: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
     const config = useAppConfig();
-    const [ctx, ctxDispatch] = useCurrentSessionState();
+    const [session, sessionDispatch] = useCurrentSessionState();
 
     const [activeTab, setActiveTab] = React.useState<TabId>(TabId.MAIN_SCRIPT);
     const [view, setView] = React.useState<EditorView | null>(null);
@@ -90,30 +90,30 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         cursor: null,
     });
     const activeScriptKey = activeTab == TabId.SCHEMA_SCRIPT ? ScriptKey.SCHEMA_SCRIPT : ScriptKey.MAIN_SCRIPT;
-    const activeScript = ctx?.scripts[activeScriptKey] ?? null;
+    const activeScript = session?.scripts[activeScriptKey] ?? null;
     const activeScriptStatistics = activeScript?.statistics ?? null;
 
     // Helper to update a script
     const updateScript = React.useCallback(
         (scriptKey: SQLynxScriptKey, buffers: SQLynxScriptBuffers, cursor: sqlynx.proto.ScriptCursorInfoT) => {
             active.current.cursor = cursor;
-            ctxDispatch({
+            sessionDispatch({
                 type: UPDATE_SCRIPT_ANALYSIS,
                 value: [scriptKey, buffers, cursor],
             });
         },
-        [ctxDispatch],
+        [sessionDispatch],
     );
     // Helper to update a script cursor
     const updateScriptCursor = React.useCallback(
         (scriptKey: SQLynxScriptKey, cursor: sqlynx.proto.ScriptCursorInfoT) => {
             active.current.cursor = cursor;
-            ctxDispatch({
+            sessionDispatch({
                 type: UPDATE_SCRIPT_CURSOR,
                 value: [scriptKey, cursor],
             });
         },
-        [ctxDispatch],
+        [sessionDispatch],
     );
 
     // Effect to update the editor context whenever the script changes
@@ -134,8 +134,8 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                 targetKey = ScriptKey.SCHEMA_SCRIPT;
                 break;
         }
-        const targetScriptData = ctx?.scripts[targetKey] ?? null;
-        const schemaScriptData = schemaKey != null ? (ctx?.scripts[schemaKey] ?? null) : null;
+        const targetScriptData = session?.scripts[targetKey] ?? null;
+        const schemaScriptData = schemaKey != null ? (session?.scripts[schemaKey] ?? null) : null;
         const schemaScript = schemaScriptData?.script ?? null;
         if (!targetScriptData) {
             return;
@@ -179,8 +179,8 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                 targetScript: targetScriptData.script,
                 scriptBuffers: targetScriptData.processed,
                 scriptCursor: targetScriptData.cursor,
-                focusedColumnRefs: ctx?.userFocus?.columnRefs ?? null,
-                focusedTableRefs: ctx?.userFocus?.tableRefs ?? null,
+                focusedColumnRefs: session?.userFocus?.columnRefs ?? null,
+                focusedTableRefs: session?.userFocus?.tableRefs ?? null,
                 onUpdateScript: updateScript,
                 onUpdateScriptCursor: updateScriptCursor,
             }),
@@ -189,9 +189,9 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
     }, [
         view,
         activeTab,
-        ctx?.scripts[ScriptKey.MAIN_SCRIPT],
-        ctx?.scripts[ScriptKey.SCHEMA_SCRIPT],
-        ctx?.connectionCatalog,
+        session?.scripts[ScriptKey.MAIN_SCRIPT],
+        session?.scripts[ScriptKey.SCHEMA_SCRIPT],
+        session?.connectionCatalog,
         updateScript,
     ]);
 
@@ -237,6 +237,13 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         </div>
     );
 
+    // Collect the tab keys
+    const tabKeys = [TabId.MAIN_SCRIPT];
+    const hasSchema = session && session.scripts[ScriptKey.SCHEMA_SCRIPT] != undefined;
+    if (hasSchema) {
+        tabKeys.push(TabId.SCHEMA_SCRIPT);
+    }
+
     return (
         <VerticalTabs
             variant={VerticalTabVariant.Stacked}
@@ -251,7 +258,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                     labelShort: 'Model',
                 },
             }}
-            tabKeys={[TabId.MAIN_SCRIPT, TabId.SCHEMA_SCRIPT]}
+            tabKeys={tabKeys}
             tabRenderers={{
                 [TabId.MAIN_SCRIPT]: () => EditorPage,
                 [TabId.SCHEMA_SCRIPT]: () => EditorPage,
