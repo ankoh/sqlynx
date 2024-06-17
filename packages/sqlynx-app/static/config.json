@@ -9,7 +9,7 @@
     "connectors": {
         "salesforce": {
             "auth": {
-                "oauthRedirect": "http://localhost:9002/oauth.html"
+                "oauthRedirect": "https://sqlynx.app/oauth.html"
             },
             "defaultApp": {
                 "instanceUrl": "https://trialorgfarmforu-16f.test2.my.pc-rnd.salesforce.com",
