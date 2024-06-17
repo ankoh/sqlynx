@@ -77,36 +77,31 @@ export const DataTable: React.FC<Props> = (props: Props) => {
         return <div />;
     }
     return (
-        <div className={classNames(styles.root, props.className)}>
-            <div className={styles.title_container}>
-                <div className={styles.title}>Query Results</div>
+        <div className={classNames(styles.root, props.className)} ref={gridContainerElement}>
+            <div className={styles.header_background} />
+            <div className={styles.header_grid}>
+                <Grid
+                    columnCount={gridColumns}
+                    columnWidth={getColumnWidth}
+                    height={COLUMN_HEADER_HEIGHT}
+                    rowCount={1}
+                    rowHeight={() => COLUMN_HEADER_HEIGHT}
+                    width={gridContainerWidth}
+                >
+                    {HeaderCell}
+                </Grid>
             </div>
-            <div className={styles.grid_container} ref={gridContainerElement}>
-                <div className={styles.header_background} />
-                <div className={styles.header_grid}>
-                    <Grid
-                        columnCount={gridColumns}
-                        columnWidth={getColumnWidth}
-                        height={COLUMN_HEADER_HEIGHT}
-                        rowCount={1}
-                        rowHeight={() => COLUMN_HEADER_HEIGHT}
-                        width={gridContainerWidth}
-                    >
-                        {HeaderCell}
-                    </Grid>
-                </div>
-                <div className={styles.data_grid}>
-                    <Grid
-                        columnCount={gridColumns}
-                        columnWidth={getColumnWidth}
-                        rowCount={gridRows}
-                        rowHeight={() => ROW_HEIGHT}
-                        height={gridContainerHeight}
-                        width={gridContainerWidth}
-                    >
-                        {DataCell}
-                    </Grid>
-                </div>
+            <div className={styles.data_grid}>
+                <Grid
+                    columnCount={gridColumns}
+                    columnWidth={getColumnWidth}
+                    rowCount={gridRows}
+                    rowHeight={() => ROW_HEIGHT}
+                    height={gridContainerHeight}
+                    width={gridContainerWidth}
+                >
+                    {DataCell}
+                </Grid>
             </div>
         </div>
     );

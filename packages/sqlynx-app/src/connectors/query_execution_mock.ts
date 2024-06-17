@@ -1,5 +1,9 @@
 import * as arrow from 'apache-arrow';
-import { QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionStatus } from './query_execution_state.js';
+import {
+    QueryExecutionProgress,
+    QueryExecutionResponseStream, QueryExecutionResponseStreamMetrics,
+    QueryExecutionStatus,
+} from './query_execution_state.js';
 import { sleep } from '../utils/sleep.js';
 
 export class QueryExecutorMock implements QueryExecutionResponseStream {
@@ -17,6 +21,12 @@ export class QueryExecutorMock implements QueryExecutionResponseStream {
         this.batchesWritten = 0;
     }
 
+    /// Get the metrics
+    getMetrics(): QueryExecutionResponseStreamMetrics {
+        return {
+            dataBytes: 42
+        };
+    }
     /// Get the status
     getStatus() {
         return QueryExecutionStatus.STARTED;

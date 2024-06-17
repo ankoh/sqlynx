@@ -12,7 +12,7 @@ export enum ScriptType {
 export interface ScriptAnnotations {
     /// The foundations tables
     tableRefs?: Set<string>;
-    /// The table definitions
+    /// The query_result definitions
     tableDefs?: Set<string>;
     /// The tenant name (if any)
     tenantName?: string;

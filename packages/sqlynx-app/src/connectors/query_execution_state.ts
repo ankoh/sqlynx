@@ -50,7 +50,14 @@ export enum QueryExecutionStatus {
 
 export interface QueryExecutionProgress { }
 
+export interface QueryExecutionResponseStreamMetrics {
+    /// The total data bytes
+    dataBytes: number;
+}
+
 export interface QueryExecutionResponseStream {
+    /// Get the stream metrics
+    getMetrics(): QueryExecutionResponseStreamMetrics;
     /// Get the current query status
     getStatus(): QueryExecutionStatus;
     /// Await the schema message
@@ -103,7 +110,7 @@ export interface QueryExecutionState {
     resultSchema: arrow.Schema | null;
     /// The number of record batches that are already buffered
     resultBatches: arrow.RecordBatch[];
-    /// The result table iff the query succeeded
+    /// The result query_result iff the query succeeded
     resultTable: arrow.Table | null;
 }
 
@@ -184,7 +191,7 @@ export function reduceQueryExecution(state: ConnectionState, action: QueryExecut
         case QUERY_EXECUTION_SUCCEEDED: {
             const batch = action.value[1];
             const metrics = { ...query.metrics };
-            const untilNow = (query.metrics.startedAt ?? now).getTime();
+            const untilNow = now.getTime() - (query.metrics.startedAt ?? now).getTime();
             metrics.lastUpdatedAt = now;
             metrics.finishedAt = now;
             metrics.queryDurationMs = untilNow;

@@ -4,7 +4,7 @@ export class Base64Codec {
     lookupTable: Uint8Array;
 
     constructor() {
-        // Build a lookup table
+        // Build a lookup query_result
         this.lookupTable = new Uint8Array(256);
         this.lookupTable.fill(0xFF);
         for (let i = 0; i < BASE64.length; i++) {

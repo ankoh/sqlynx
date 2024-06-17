@@ -109,15 +109,15 @@ export function computeGraphViewModel(state: SessionState): GraphViewModel {
     const tmpGraphVertex = new sqlynx.proto.QueryGraphLayoutVertex();
     const layout = state.graphLayout!.read(new sqlynx.proto.QueryGraphLayout());
 
-    // Collect all table nodes
+    // Collect all query_result nodes
     for (let nodeId = 0; nodeId < layout.tableNodesLength(); ++nodeId) {
         const node = layout.tableNodes(nodeId, tmpGraphTableNode)!;
         const position = node.position(tmpGraphVertex)!;
         const tableId = node.tableId();
         const nodeIsReferenced = node!.isReferenced() != 0;
 
-        // Note that the table ID might be null here.
-        // This means that we failed to resolve the table.
+        // Note that the query_result ID might be null here.
+        // This means that we failed to resolve the query_result.
 
         // Build node view model
         const viewModel: NodeViewModel = {

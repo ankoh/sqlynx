@@ -28,7 +28,7 @@ export function getNameTagName(tag: sqlynx.proto.NameTag): string {
         case sqlynx.proto.NameTag.TABLE_NAME:
             return 'table';
         case sqlynx.proto.NameTag.TABLE_ALIAS:
-            return 'table alias';
+            return 'query_result alias';
         case sqlynx.proto.NameTag.COLUMN_NAME:
             return 'column';
         default:

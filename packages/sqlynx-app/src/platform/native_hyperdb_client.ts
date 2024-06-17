@@ -17,7 +17,7 @@ import {
 } from './native_grpc_client.js';
 import {
     QueryExecutionProgress,
-    QueryExecutionResponseStream,
+    QueryExecutionResponseStream, QueryExecutionResponseStreamMetrics,
     QueryExecutionStatus,
 } from '../connectors/query_execution_state.js';
 import { GrpcChannelArgs } from './grpc_common.js';
@@ -32,12 +32,15 @@ export class QueryResultReader implements AsyncIterator<Uint8Array>, AsyncIterab
     messageIterator: NativeGrpcServerStreamMessageIterator;
     /// The current status
     currentStatus: QueryExecutionStatus;
+    /// The total data bytes
+    dataBytes: number;
 
     constructor(stream: NativeGrpcServerStream, logger: Logger) {
         this.grpcStream = stream;
         this.logger = logger;
         this.messageIterator = new NativeGrpcServerStreamMessageIterator(this.grpcStream, logger);
         this.currentStatus = QueryExecutionStatus.STARTED;
+        this.dataBytes = 0;
     }
 
     /// Get the next binary result chunk
@@ -56,8 +59,11 @@ export class QueryResultReader implements AsyncIterator<Uint8Array>, AsyncIterab
                 case "qsv1Chunk":
                     throw new Error("invalid result data message. expected arrowChunk, received qsv1Chunk");
                 // Unpack an arrow chunk
-                case "arrowChunk":
-                    return { done: false, value: resultMessage.result.value.data };
+                case "arrowChunk": {
+                    const buffer = resultMessage.result.value.data;
+                    this.dataBytes += buffer.byteLength;
+                    return { done: false, value: buffer };
+                }
             }
         }
     }
@@ -84,6 +90,12 @@ export class NativeHyperQueryResultStream implements QueryExecutionResponseStrea
     protected async setupArrowReader(): Promise<void> {
         this.arrowReader = await arrow.AsyncRecordBatchStreamReader.from(this.resultReader);
         await this.arrowReader.open();
+    }
+    /// Get the metrics
+    getMetrics(): QueryExecutionResponseStreamMetrics {
+        return {
+            dataBytes: this.resultReader.dataBytes
+        };
     }
     /// Get the current query status
     getStatus(): QueryExecutionStatus {
