@@ -152,7 +152,7 @@ export interface SalesforceMetadataEntity {
 }
 
 export interface SalesforceMetadata {
-    metadata: SalesforceMetadataEntity[];
+    metadata?: SalesforceMetadataEntity[];
 }
 
 export function readCoreAccessToken(obj: any): SalesforceCoreAccessToken {
@@ -351,17 +351,17 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
             signal: cancel,
         });
         const responseJson = await response.json();
-        const responseInfo = readUserInformation(responseJson);
-        return responseInfo;
+        return readUserInformation(responseJson);
     }
 
     public async getDataCloudMetadata(
         access: SalesforceDataCloudAccessToken,
         cancel: AbortSignal,
     ): Promise<SalesforceMetadata> {
-        const params = new URLSearchParams();
+        console.log(access);
         console.log(access.instanceUrl);
-        const response = await this.httpClient.fetch(`${access.instanceUrl}api/v1/metadata?${params.toString()}`, {
+        console.log(`${access.instanceUrl.toString()}api/v1/metadata`);
+        const response = await this.httpClient.fetch(new URL(`${access.instanceUrl.toString()}api/v1/metadata`), {
             headers: {
                 authorization: `Bearer ${access.jwt}`,
             },

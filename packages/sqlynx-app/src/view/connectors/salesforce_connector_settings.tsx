@@ -62,6 +62,10 @@ function getConnectionStatusText(status: ConnectionStatus | undefined, logger: L
             return "Requesting Data Cloud access token";
         case ConnectionStatus.DATA_CLOUD_TOKEN_RECEIVED:
             return "Received Data Cloud access token";
+        case ConnectionStatus.DATA_CLOUD_METADATA_REQUESTED:
+            return "Requested Data Cloud metadata";
+        case ConnectionStatus.DATA_CLOUD_METADATA_RECEIVED:
+            return "Received Data Cloud metadata";
         case undefined:
             break;
         default:

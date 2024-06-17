@@ -2,7 +2,11 @@ import * as sqlynx from '@ankoh/sqlynx-core';
 
 import { PKCEChallenge } from '../utils/pkce.js';
 import { VariantKind } from '../utils/variant.js';
-import { SalesforceCoreAccessToken, SalesforceDataCloudAccessToken } from './salesforce_api_client.js';
+import {
+    SalesforceCoreAccessToken,
+    SalesforceDataCloudAccessToken,
+    SalesforceMetadata,
+} from './salesforce_api_client.js';
 import { SalesforceAuthParams } from './connection_params.js';
 import { CONNECTOR_INFOS, ConnectorType, SALESFORCE_DATA_CLOUD_CONNECTOR } from './connector_info.js';
 import {
@@ -12,6 +16,7 @@ import {
     ConnectionStateWithoutId,
     createConnectionState, RESET,
 } from './connection_state.js';
+import { updateDataCloudCatalog } from './salesforce_catalog_update.js';
 
 export interface SalesforceAuthTimings {
     /// The time when the auth started
@@ -40,6 +45,10 @@ export interface SalesforceAuthTimings {
     dataCloudAccessTokenRequestedAt: Date | null;
     /// The time when we received the data cloud access token
     dataCloudAccessTokenReceivedAt: Date | null;
+    /// The time when we started to request the data cloud metadata
+    dataCloudMetadataRequestedAt: Date | null;
+    /// The time when we received the data cloud metadata
+    dataCloudMetadataReceivedAt: Date | null;
 }
 
 export function createSalesforceAuthTimings(): SalesforceAuthTimings {
@@ -56,7 +65,9 @@ export function createSalesforceAuthTimings(): SalesforceAuthTimings {
         coreAccessTokenRequestedAt: null,
         coreAccessTokenReceivedAt: null,
         dataCloudAccessTokenRequestedAt: null,
-        dataCloudAccessTokenReceivedAt: null
+        dataCloudAccessTokenReceivedAt: null,
+        dataCloudMetadataRequestedAt: null,
+        dataCloudMetadataReceivedAt: null
     };
 }
 
@@ -116,6 +127,8 @@ export const REQUESTING_CORE_AUTH_TOKEN = Symbol('REQUESTING_CORE_AUTH_TOKEN');
 export const RECEIVED_CORE_AUTH_TOKEN = Symbol('RECEIVED_CORE_ACCESS_TOKEN');
 export const REQUESTING_DATA_CLOUD_ACCESS_TOKEN = Symbol('REQUESTING_DATA_CLOUD_ACCESS_TOKEN');
 export const RECEIVED_DATA_CLOUD_ACCESS_TOKEN = Symbol('RECEIVED_DATA_CLOUD_ACCESS_TOKEN');
+export const REQUESTING_DATA_CLOUD_METADATA = Symbol('REQUESTING_DATA_CLOUD_METADATA');
+export const RECEIVED_DATA_CLOUD_METADATA = Symbol('RECEIVED_DATA_CLOUD_METADATA');
 
 export type SalesforceConnectionStateAction =
     | VariantKind<typeof RESET, null>
@@ -131,7 +144,10 @@ export type SalesforceConnectionStateAction =
     | VariantKind<typeof REQUESTING_CORE_AUTH_TOKEN, null>
     | VariantKind<typeof RECEIVED_CORE_AUTH_TOKEN, SalesforceCoreAccessToken>
     | VariantKind<typeof REQUESTING_DATA_CLOUD_ACCESS_TOKEN, null>
-    | VariantKind<typeof RECEIVED_DATA_CLOUD_ACCESS_TOKEN, SalesforceDataCloudAccessToken>;
+    | VariantKind<typeof RECEIVED_DATA_CLOUD_ACCESS_TOKEN, SalesforceDataCloudAccessToken>
+    | VariantKind<typeof REQUESTING_DATA_CLOUD_METADATA, null>
+    | VariantKind<typeof RECEIVED_DATA_CLOUD_METADATA, SalesforceMetadata>
+    ;
 
 export function reduceSalesforceConnectionState(state: ConnectionState, action: SalesforceConnectionStateAction): ConnectionState | null {
     const details = state.details.value as SalesforceConnectionDetails;
@@ -377,7 +393,7 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
             next = {
                 ...state,
                 connectionStatus: ConnectionStatus.DATA_CLOUD_TOKEN_RECEIVED,
-                connectionHealth: ConnectionHealth.ONLINE,
+                connectionHealth: ConnectionHealth.CONNECTING,
                 details: {
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
@@ -387,6 +403,41 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                             dataCloudAccessTokenReceivedAt: new Date(),
                         },
                         dataCloudAccessToken: action.value,
+                    }
+                }
+            };
+            break;
+        case REQUESTING_DATA_CLOUD_METADATA:
+            next = {
+                ...state,
+                connectionStatus: ConnectionStatus.DATA_CLOUD_METADATA_RECEIVED,
+                connectionHealth: ConnectionHealth.CONNECTING,
+                details: {
+                    type: SALESFORCE_DATA_CLOUD_CONNECTOR,
+                    value: {
+                        ...details,
+                        authTimings: {
+                            ...details.authTimings,
+                            dataCloudMetadataRequestedAt: new Date(),
+                        },
+                    }
+                }
+            };
+            break;
+        case RECEIVED_DATA_CLOUD_METADATA:
+            updateDataCloudCatalog(state.catalog, action.value);
+            next = {
+                ...state,
+                connectionStatus: ConnectionStatus.DATA_CLOUD_METADATA_RECEIVED,
+                connectionHealth: ConnectionHealth.ONLINE,
+                details: {
+                    type: SALESFORCE_DATA_CLOUD_CONNECTOR,
+                    value: {
+                        ...details,
+                        authTimings: {
+                            ...details.authTimings,
+                            dataCloudMetadataReceivedAt: new Date(),
+                        },
                     }
                 }
             };
