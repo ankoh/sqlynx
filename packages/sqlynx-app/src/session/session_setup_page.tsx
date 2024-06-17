@@ -10,7 +10,7 @@ import { ChecklistIcon, DesktopDownloadIcon, FileBadgeIcon, KeyIcon, PackageIcon
 
 import { formatHHMMSS } from '../utils/format.js';
 import { useLogger } from '../platform/logger_provider.js';
-import { useSalesforceAuthFlow } from '../connectors/salesforce_auth_flow.js';
+import { useSalesforceSetup } from '../connectors/salesforce_setup.js';
 import { ConnectorInfo, requiresSwitchingToNative } from '../connectors/connector_info.js';
 import { encodeSessionSetupUrl, SessionLinkTarget } from './session_setup_url.js';
 import { SalesforceAuthParams } from '../connectors/connection_params.js';
@@ -116,7 +116,7 @@ interface Props {
 export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     const now = new Date();
     const logger = useLogger();
-    const salesforceAuthFlow = useSalesforceAuthFlow();
+    const salesforceAuthFlow = useSalesforceSetup();
     const [showLogs, setShowLogs] = React.useState<boolean>(false);
     const [showVersionOverlay, setShowVersionOverlay] = React.useState<boolean>(false);
     const [maybeSession, dispatchSession] = useSessionState(props.sessionId);

@@ -31,6 +31,7 @@ import './../static/fonts/fonts.css';
 import './globals.css';
 import { isDebugBuild } from './globals.js';
 import { NavBarContainer } from './view/navbar.js';
+import { CatalogUpdaterProvider } from './connectors/catalog_loader.js';
 
 const SessionProviders = (props: { children: React.ReactElement }) => (
     <SessionStateRegistry>
@@ -59,9 +60,11 @@ const Connectors = (props: { children: React.ReactElement }) => (
     <ConnectionRegistry>
         <SalesforceConnector>
             <HyperGrpcConnector>
-                <QueryExecutorProvider>
-                    {props.children}
-                </QueryExecutorProvider>
+                <CatalogUpdaterProvider>
+                    <QueryExecutorProvider>
+                            {props.children}
+                    </QueryExecutorProvider>
+                </CatalogUpdaterProvider>
             </HyperGrpcConnector>
         </SalesforceConnector>
     </ConnectionRegistry>

@@ -2,8 +2,8 @@ import * as React from 'react';
 
 import { SalesforceAPIClient, SalesforceAPIClientInterface } from './salesforce_api_client.js';
 import { SalesforceAPIClientMock } from './salesforce_api_client_mock.js';
-import { SalesforceAuthFlowMockProvider } from './salesforce_auth_flow_mock.js';
-import { SalesforceAuthFlowProvider } from './salesforce_auth_flow.js';
+import { SalesforceAuthFlowMockProvider } from './salesforce_setup_mock.js';
+import { SalesforceSetupProvider } from './salesforce_setup.js';
 import { useAppConfig } from '../app_config.js';
 import { useHttpClient } from '../platform/http_client_provider.js';
 import { useLogger } from '../platform/logger_provider.js';
@@ -34,9 +34,9 @@ export const SalesforceConnector: React.FC<Props> = (props: Props) => {
         const api = new SalesforceAPIClient(logger, httpClient);
         return (
             <API_CTX.Provider value={api}>
-                <SalesforceAuthFlowProvider>
+                <SalesforceSetupProvider>
                     {props.children}
-                </SalesforceAuthFlowProvider>
+                </SalesforceSetupProvider>
             </API_CTX.Provider>
         );
     }

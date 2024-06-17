@@ -20,7 +20,6 @@ import {
     QUERY_EXECUTION_STARTED,
     QUERY_EXECUTION_SUCCEEDED,
 } from './connection_state.js';
-import { GrpcError } from '../platform/grpc_common.js';
 
 let NEXT_QUERY_ID = 1;
 

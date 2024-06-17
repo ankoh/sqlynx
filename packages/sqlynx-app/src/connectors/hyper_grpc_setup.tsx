@@ -21,7 +21,6 @@ import {
     HyperDatabaseClient,
     HyperDatabaseConnectionContext,
 } from '../platform/hyperdb_client.js';
-import { SalesforceConnectionStateAction } from './salesforce_connection_state.js';
 import { useLogger } from '../platform/logger_provider.js';
 import { useAppConfig } from '../app_config.js';
 import { useHyperDatabaseClient } from '../platform/hyperdb_client_provider.js';
@@ -131,7 +130,7 @@ export async function setupHyperGrpcConnection(dispatch: Dispatch<HyperGrpcConne
 export interface HyperGrpcSetupApi {
     setup(dispatch: Dispatch<HyperGrpcConnectorAction>, params: HyperGrpcConnectionParams, abortSignal: AbortSignal): Promise<void>
     reset(dispatch: Dispatch<HyperGrpcConnectorAction>): Promise<void>
-};
+}
 
 export const SETUP_CTX = React.createContext<HyperGrpcSetupApi | null>(null);
 export const useHyperGrpcSetup = () => React.useContext(SETUP_CTX!);
