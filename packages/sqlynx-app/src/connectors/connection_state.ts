@@ -21,7 +21,12 @@ import {
     SALESFORCE_DATA_CLOUD_CONNECTOR,
     SERVERLESS_CONNECTOR,
 } from './connector_info.js';
-import { QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionState } from './query_execution_state.js';
+import {
+    QueryExecutionProgress,
+    QueryExecutionResponseStream,
+    QueryExecutionResponseStreamMetrics,
+    QueryExecutionState,
+} from './query_execution_state.js';
 import { ConnectionMetrics, createConnectionMetrics } from './connection_statistics.js';
 import { reduceQueryExecution } from './query_execution_state.js';
 
@@ -128,10 +133,10 @@ export type QueryExecutionAction =
     | VariantKind<typeof QUERY_EXECUTION_STARTED, [number, QueryExecutionResponseStream]>
     | VariantKind<typeof QUERY_EXECUTION_PROGRESS_UPDATED, [number, QueryExecutionProgress]>
     | VariantKind<typeof QUERY_EXECUTION_RECEIVED_SCHEMA, [number, arrow.Schema]>
-    | VariantKind<typeof QUERY_EXECUTION_RECEIVED_BATCH, [number, arrow.RecordBatch]>
-    | VariantKind<typeof QUERY_EXECUTION_SUCCEEDED, [number, arrow.RecordBatch | null]>
-    | VariantKind<typeof QUERY_EXECUTION_FAILED, [number, Error]>
-    | VariantKind<typeof QUERY_EXECUTION_CANCELLED, [number, Error]>
+    | VariantKind<typeof QUERY_EXECUTION_RECEIVED_BATCH, [number, arrow.RecordBatch, QueryExecutionResponseStreamMetrics]>
+    | VariantKind<typeof QUERY_EXECUTION_SUCCEEDED, [number, arrow.RecordBatch | null, QueryExecutionResponseStreamMetrics]>
+    | VariantKind<typeof QUERY_EXECUTION_FAILED, [number, Error, QueryExecutionResponseStreamMetrics | null]>
+    | VariantKind<typeof QUERY_EXECUTION_CANCELLED, [number, Error, QueryExecutionResponseStreamMetrics | null]>
     ;
 
 export type ConnectionStateAction =

@@ -75,6 +75,8 @@ export interface QueryMetrics {
     finishedAt: Date | null;
     /// The time at which the query execution was last updated
     lastUpdatedAt: Date | null;
+    /// The number of data bytes received
+    dataBytesReceived: number;
     /// The number of batches received
     batchesReceived: number;
     /// The number of rows received
@@ -179,6 +181,7 @@ export function reduceQueryExecution(state: ConnectionState, action: QueryExecut
             }
             metrics.batchesReceived += 1;
             metrics.rowsReceived += batch.numRows;
+            metrics.dataBytesReceived = action.value[2]?.dataBytes ?? metrics.dataBytesReceived;
             query.resultBatches.push(batch);
             query = {
                 ...query,
@@ -201,6 +204,7 @@ export function reduceQueryExecution(state: ConnectionState, action: QueryExecut
                 }
                 metrics.batchesReceived += 1;
                 metrics.rowsReceived += batch.numRows;
+                metrics.dataBytesReceived = action.value[2].dataBytes;
                 query.resultBatches.push(batch);
             }
             query = {
@@ -225,6 +229,7 @@ export function reduceQueryExecution(state: ConnectionState, action: QueryExecut
             metrics.lastUpdatedAt = now;
             metrics.finishedAt = now;
             metrics.queryDurationMs = untilNow;
+            metrics.dataBytesReceived = action.value[2]?.dataBytes ?? metrics.dataBytesReceived;
             query = {
                 ...query,
                 status: QueryExecutionStatus.CANCELLED,
@@ -247,6 +252,7 @@ export function reduceQueryExecution(state: ConnectionState, action: QueryExecut
             metrics.lastUpdatedAt = now;
             metrics.finishedAt = now;
             metrics.queryDurationMs = untilNow;
+            metrics.dataBytesReceived = action.value[2]?.dataBytes ?? metrics.dataBytesReceived;
             query = {
                 ...query,
                 status: QueryExecutionStatus.FAILED,
