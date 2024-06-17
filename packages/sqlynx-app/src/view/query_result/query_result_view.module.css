@@ -47,3 +47,10 @@
     flex-direction: row-reverse;
     align-items: center;
 }
+.metric_clipboard {
+    font-size: 0.9rem;
+    padding: 2px 16px 2px 0;
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+}

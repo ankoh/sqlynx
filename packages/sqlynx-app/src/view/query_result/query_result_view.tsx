@@ -24,7 +24,7 @@ function MetricEntry(props: MetricEntryProps) {
             </div>
             {
                 props.clipboard
-                    ? <div className={styles.metric_value}>
+                    ? <div className={styles.metric_clipboard}>
                         <CopyToClipboardButton
                             variant={ButtonVariant.Default}
                             size={ButtonSize.Small}
