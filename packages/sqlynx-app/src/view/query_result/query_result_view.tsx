@@ -3,7 +3,8 @@ import * as styles from './query_result_view.module.css';
 
 import { QueryExecutionState } from '../../connectors/query_execution_state.js';
 import { DataTable } from './data_table.js';
-import { formatMilliseconds } from '../../utils/index.js';
+import { ByteFormat, formatMilliseconds } from '../../utils/index.js';
+import { formatBytes } from '../../utils/format.js';
 
 interface MetricEntryProps {
     name: string;
@@ -34,6 +35,7 @@ export function QueryResultView(props: Props) {
     }
 
     const metrics = props.query.metrics;
+    const dataBytes = (metrics.dataBytesReceived == null) ? '-' : formatBytes(metrics.dataBytesReceived, ByteFormat.SI);
     const untilSchema = (metrics.durationUntilSchemaMs == null) ? "-" : formatMilliseconds(metrics.durationUntilSchemaMs);
     const untilFirstRow = (metrics.durationUntilFirstBatchMs == null) ? "-" : formatMilliseconds(metrics.durationUntilFirstBatchMs);
     const queryDuration = (metrics.queryDurationMs == null) ? "-" : formatMilliseconds(metrics.queryDurationMs);
@@ -45,7 +47,7 @@ export function QueryResultView(props: Props) {
                     <div className={styles.metrics_group}>
                         <MetricEntry name="Records" value={metrics.rowsReceived.toString()} />
                         <MetricEntry name="Record Batches" value={metrics.batchesReceived.toString()} />
-                        <MetricEntry name="Data Bytes" value="" delimiter />
+                        <MetricEntry name="Data Bytes" value={dataBytes.toString()} />
                     </div>
                     <div className={styles.metrics_group}>
                         <MetricEntry name="Schema At" value={untilSchema} />

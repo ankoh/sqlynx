@@ -105,6 +105,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                 startedAt: null,
                 finishedAt: null,
                 lastUpdatedAt: null,
+                dataBytesReceived: 0,
                 batchesReceived: 0,
                 rowsReceived: 0,
                 progressUpdatesReceived: 0,
@@ -152,14 +153,14 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                 }
                 connDispatch(connectionId, {
                     type: QUERY_EXECUTION_RECEIVED_BATCH,
-                    value: [queryId, batch],
+                    value: [queryId, batch, resultStream.getMetrics()],
                 });
             }
         };
         // Execute the query and consume the results
+        let resultStream: QueryExecutionResponseStream | null = null;
         try {
             // Start the query
-            let resultStream: QueryExecutionResponseStream | null = null;
             switch (task.type) {
                 case SALESFORCE_DATA_CLOUD_CONNECTOR: {
                     const req = task.value;
@@ -185,20 +186,20 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                 await Promise.all([results, progress]);
                 connDispatch(connectionId, {
                     type: QUERY_EXECUTION_SUCCEEDED,
-                    value: [queryId, null],
+                    value: [queryId, null, resultStream!.getMetrics()],
                 });
             }
         } catch (e: any) {
             if ((e.message === 'AbortError')) {
                 connDispatch(connectionId, {
                     type: QUERY_EXECUTION_CANCELLED,
-                    value: [queryId, e],
+                    value: [queryId, e, resultStream?.getMetrics() ?? null],
                 });
             } else {
                 console.error(e);
                 connDispatch(connectionId, {
                     type: QUERY_EXECUTION_FAILED,
-                    value: [queryId, e],
+                    value: [queryId, e, resultStream?.getMetrics() ?? null],
                 });
             }
         }
