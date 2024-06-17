@@ -5,11 +5,15 @@ import { QueryExecutionState } from '../../connectors/query_execution_state.js';
 import { DataTable } from './data_table.js';
 import { ByteFormat, formatMilliseconds, formatThousands } from '../../utils/index.js';
 import { formatBytes } from '../../utils/format.js';
+import { CopyToClipboardButton } from '../../utils/clipboard.js';
+import { ButtonSize, ButtonVariant } from '../foundations/button.js';
+
+const LOG_CTX = "query_result_viewer"
 
 interface MetricEntryProps {
     name: string;
     value: string;
-    delimiter?: boolean;
+    clipboard?: boolean;
 }
 
 function MetricEntry(props: MetricEntryProps) {
@@ -18,9 +22,21 @@ function MetricEntry(props: MetricEntryProps) {
             <div className={styles.metric_key}>
                 {props.name}
             </div>
-            <div className={styles.metric_value}>
-                {props.value}
-            </div>
+            {
+                props.clipboard
+                    ? <div className={styles.metric_value}>
+                        <CopyToClipboardButton
+                            variant={ButtonVariant.Default}
+                            size={ButtonSize.Small}
+                            value={props.value}
+                            logContext={LOG_CTX}
+                            aria-label={`Copy ${props.name}`}
+                            aria-labelledby="" />
+                    </div>
+                    : <div className={styles.metric_value}>
+                            {props.value}
+                    </div>
+            }
         </>
     );
 }
@@ -48,7 +64,7 @@ export function QueryResultView(props: Props) {
                 <div className={styles.metrics_container}>
                     <div className={styles.metrics_group}>
                         <MetricEntry name="Records" value={rowsReceived} />
-                        <MetricEntry name="Batches Batches" value={batchesReceived} />
+                        <MetricEntry name="Record Batches" value={batchesReceived} />
                         <MetricEntry name="Data Bytes" value={dataBytes.toString()} />
                     </div>
                     <div className={styles.metrics_group}>
@@ -57,9 +73,9 @@ export function QueryResultView(props: Props) {
                         <MetricEntry name="Finished At" value={queryDuration} />
                     </div>
                     <div className={styles.metrics_group}>
-                        <MetricEntry name="Trace Id" value="foo" />
-                        <MetricEntry name="Span Id" value="foo" />
-                        <MetricEntry name="Parentspan Id" value="foo" />
+                        <MetricEntry name="TraceId" value="foo" clipboard />
+                        <MetricEntry name="SpanId" value="foo" clipboard />
+                        <MetricEntry name="ParentSpanId" value="foo" clipboard />
                     </div>
                 </div>
             </div>
