@@ -20,8 +20,6 @@ import { Logger } from './platform/logger.js';
 
 import '../static/fonts/fonts.css';
 import './globals.css';
-import { VersionViewerOverlay } from './view/version_viewer.js';
-import { PackageIcon } from '@primer/octicons-react';
 import { AnchorAlignment, AnchorSide } from './view/foundations/anchored_position.js';
 import { OverlaySize } from './view/foundations/overlay.js';
 import * as page_styles from './view/banner_page.module.css';
