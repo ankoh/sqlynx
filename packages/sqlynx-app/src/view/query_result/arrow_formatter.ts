@@ -14,30 +14,29 @@ export interface ArrowColumnFormatter {
 }
 
 export class ArrowTextColumnFormatter implements ArrowColumnFormatter {
+    readonly columnId: number;
     readonly columnName: string;
     readonly batches: arrow.RecordBatch[];
-    readonly batchOffsets: Uint32Array;
     readonly batchValues: (string[] | null)[];
-    readonly currentRowCount: number;
     readonly valueClassName: string;
-    valueLengthMax: number;
-    valueLengthSum: number;
+    formattedRowCount: number;
+    formattedLengthMax: number;
+    formattedLengthSum: number;
     formatter: ((o: any) => (null | string));
 
     public constructor(
-        schema: arrow.Schema,
         columnId: number,
-        batches: arrow.RecordBatch[],
-        batchOffsets: Uint32Array,
+        schema: arrow.Schema,
+        batches: arrow.RecordBatch[]
     ) {
+        this.columnId = columnId;
         this.columnName = schema.fields[columnId].name;
         this.valueClassName = styles.data_value_text;
         this.batches = batches;
-        this.batchOffsets = batchOffsets;
         this.batchValues = Array.from({length: batches.length}, () => null);
-        this.currentRowCount = 0;
-        this.valueLengthMax = 0;
-        this.valueLengthSum = 0;
+        this.formattedRowCount = 0;
+        this.formattedLengthMax = 0;
+        this.formattedLengthSum = 0;
         this.formatter = _ => "";
 
         // Find formatter and classname
@@ -117,7 +116,7 @@ export class ArrowTextColumnFormatter implements ArrowColumnFormatter {
             return this.batchValues[index]!;
         }
         const data = this.batches[index];
-        const column = data.getChildAt(index)!;
+        const column = data.getChildAt(this.columnId)!;
 
         const values = [];
         let valueLengthSum = 0;
@@ -128,8 +127,9 @@ export class ArrowTextColumnFormatter implements ArrowColumnFormatter {
             valueLengthSum += text.length;
             valueLengthMax = Math.max(valueLengthMax, text.length);
         }
-        this.valueLengthMax = Math.max(this.valueLengthMax, valueLengthMax)
-        this.valueLengthSum += valueLengthSum;
+        this.formattedLengthMax = Math.max(this.formattedLengthMax, valueLengthMax)
+        this.formattedLengthSum += valueLengthSum;
+        this.formattedRowCount += values.length;
         this.batchValues[index] = values;
         return values;
     }
@@ -146,8 +146,8 @@ export class ArrowTextColumnFormatter implements ArrowColumnFormatter {
     public getLayoutInfo(): ColumnLayoutInfo {
         return {
             headerWidth: this.columnName.length,
-            valueMaxWidth: this.valueLengthMax,
-            valueAvgWidth: this.valueLengthSum / this.currentRowCount,
+            valueMaxWidth: this.formattedLengthMax,
+            valueAvgWidth: this.formattedLengthSum / Math.max(this.formattedRowCount, 1),
         };
     }
 }
@@ -173,7 +173,7 @@ export class ArrowTableFormatter {
         }
         const columns: ArrowColumnFormatter[] = [];
         for (let i = 0; i < schema.fields.length; ++i) {
-            const renderer = new ArrowTextColumnFormatter(schema, i, batches, batchOffsets);
+            const renderer = new ArrowTextColumnFormatter(i, schema, batches);
             columns.push(renderer);
         }
         this.columns = columns;
