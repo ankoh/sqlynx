@@ -6,6 +6,7 @@ import { classNames } from '../../utils/classnames.js';
 
 import * as styles from './data_table.module.css';
 import { observeSize } from '../foundations/size_observer.js';
+import { ArrowTableFormatter } from './arrow_formatter.js';
 
 interface Props {
     className?: string;
@@ -25,11 +26,17 @@ export const DataTable: React.FC<Props> = (props: Props) => {
     const gridContainerHeight = Math.max(gridContainerSize?.height ?? 0, MIN_GRID_HEIGHT) - COLUMN_HEADER_HEIGHT;
     const gridContainerWidth = Math.max(gridContainerSize?.width ?? 0, MIN_GRID_WIDTH);
 
-    const rows = React.useMemo(() => props.data?.toArray() ?? null, [props.data]);
-
     const gridRows = props.data?.numRows ?? 0;
     const gridColumns = 1 + (props.data?.numCols ?? 0);
     const getColumnWidth = (i: number) => (i == 0 ? ROW_HEADER_WIDTH : MIN_COLUMN_WIDTH);
+
+    /// Construct the arrow formatter
+    const tableFormatter = React.useMemo(() => {
+        if (props.data == null) {
+            return;
+        }
+        return new ArrowTableFormatter(props.data.schema, props.data.batches);
+    }, [props.data]);
 
     const HeaderCell = (cellProps: GridChildComponentProps) => {
         if (cellProps.columnIndex == 0) {
@@ -51,11 +58,19 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                 </div>
             );
         } else {
-            return (
-                <div className={styles.data_cell} style={cellProps.style}>
-                    {rows?.[cellProps.rowIndex][props.data?.schema.fields[cellProps.columnIndex - 1].name ?? 0] ?? null}
-                </div>
-            );
+            if (!tableFormatter) {
+                return (
+                    <div className={styles.data_cell} style={cellProps.style} />
+                )
+            } else {
+                const dataColumn = cellProps.columnIndex - 1;
+                const formatted = tableFormatter.getValue(cellProps.rowIndex, dataColumn);
+                return (
+                    <div className={styles.data_cell} style={cellProps.style}>
+                        {formatted}
+                    </div>
+                );
+            }
         }
     };
     if (props.data == null) {
