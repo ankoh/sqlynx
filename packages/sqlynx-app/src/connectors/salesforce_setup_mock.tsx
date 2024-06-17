@@ -21,7 +21,7 @@ import { sleep } from '../utils/sleep.js';
 import { Dispatch } from '../utils/variant.js';
 import { Logger } from '../platform/logger.js';
 import { SalesforceAPIClientInterface } from './salesforce_api_client.js';
-import { AUTH_FLOW_CTX, SalesforceAuthFlowApi } from './salesforce_auth_flow.js';
+import { SalesforceSetupApi, SETUP_CTX } from './salesforce_setup.js';
 import { SalesforceAuthParams } from './connection_params.js';
 import { SalesforceConnectorConfig } from './connector_configs.js';
 import { RESET } from './connection_state.js';
@@ -115,7 +115,7 @@ export const SalesforceAuthFlowMockProvider: React.FC<Props> = (props: Props) =>
     const salesforceApi = useSalesforceAPI();
     const connectorConfig = appConfig.value?.connectors?.salesforce ?? null;
 
-    const api = React.useMemo<SalesforceAuthFlowApi | null>(() => {
+    const api = React.useMemo<SalesforceSetupApi | null>(() => {
         if (!connectorConfig) {
             return null;
         }
@@ -132,6 +132,6 @@ export const SalesforceAuthFlowMockProvider: React.FC<Props> = (props: Props) =>
     }, [connectorConfig]);
 
     return (
-        <AUTH_FLOW_CTX.Provider value={api}>{props.children}</AUTH_FLOW_CTX.Provider>
+        <SETUP_CTX.Provider value={api}>{props.children}</SETUP_CTX.Provider>
     );
 };

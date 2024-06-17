@@ -72,7 +72,7 @@ const DEFAULT_EXPIRATION_TIME_MS = 2 * 60 * 60 * 1000;
 const OAUTH_POPUP_NAME = 'SQLynx OAuth';
 const OAUTH_POPUP_SETTINGS = 'toolbar=no, menubar=no, width=600, height=700, top=100, left=100';
 
-export async function authorizeSalesforceConnection(dispatch: Dispatch<SalesforceConnectionStateAction>, logger: Logger, params: SalesforceAuthParams, config: SalesforceConnectorConfig, platformType: PlatformType, apiClient: SalesforceAPIClientInterface, appEvents: AppEventListener, abortSignal: AbortSignal): Promise<void> {
+export async function setupSalesforceConnection(dispatch: Dispatch<SalesforceConnectionStateAction>, logger: Logger, params: SalesforceAuthParams, config: SalesforceConnectorConfig, platformType: PlatformType, apiClient: SalesforceAPIClientInterface, appEvents: AppEventListener, abortSignal: AbortSignal): Promise<void> {
     try {
         // Start the authorization process
         dispatch({
@@ -210,20 +210,20 @@ export async function authorizeSalesforceConnection(dispatch: Dispatch<Salesforc
     }
 }
 
-export interface SalesforceAuthFlowApi {
+export interface SalesforceSetupApi {
     authorize(dispatch: Dispatch<SalesforceConnectionStateAction>, params: SalesforceAuthParams, abortSignal: AbortSignal): Promise<void>
     reset(dispatch: Dispatch<SalesforceConnectionStateAction>): Promise<void>
-};
+}
 
-export const AUTH_FLOW_CTX = React.createContext<SalesforceAuthFlowApi | null>(null);
-export const useSalesforceAuthFlow = () => React.useContext(AUTH_FLOW_CTX!);
+export const SETUP_CTX = React.createContext<SalesforceSetupApi | null>(null);
+export const useSalesforceSetup = () => React.useContext(SETUP_CTX!);
 
 interface Props {
     /// The children
     children: React.ReactElement;
 }
 
-export const SalesforceAuthFlowProvider: React.FC<Props> = (props: Props) => {
+export const SalesforceSetupProvider: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
     const appConfig = useAppConfig();
     const appEvents = useAppEventListener();
@@ -231,12 +231,12 @@ export const SalesforceAuthFlowProvider: React.FC<Props> = (props: Props) => {
     const salesforceApi = useSalesforceAPI();
     const connectorConfig = appConfig.value?.connectors?.salesforce ?? null;
 
-    const api = React.useMemo<SalesforceAuthFlowApi | null>(() => {
+    const api = React.useMemo<SalesforceSetupApi | null>(() => {
         if (!connectorConfig) {
             return null;
         }
         const auth = async (dispatch: Dispatch<SalesforceConnectionStateAction>, params: SalesforceAuthParams, abort: AbortSignal) => {
-            return authorizeSalesforceConnection(dispatch, logger, params, connectorConfig, platformType, salesforceApi, appEvents, abort);
+            return setupSalesforceConnection(dispatch, logger, params, connectorConfig, platformType, salesforceApi, appEvents, abort);
         };
         const reset = async (dispatch: Dispatch<SalesforceConnectionStateAction>) => {
             dispatch({
@@ -248,6 +248,6 @@ export const SalesforceAuthFlowProvider: React.FC<Props> = (props: Props) => {
     }, [connectorConfig]);
 
     return (
-        <AUTH_FLOW_CTX.Provider value={api}>{props.children}</AUTH_FLOW_CTX.Provider>
+        <SETUP_CTX.Provider value={api}>{props.children}</SETUP_CTX.Provider>
     );
 };

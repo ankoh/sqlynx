@@ -116,7 +116,7 @@ export interface QueryExecutionState {
     resultTable: arrow.Table | null;
 }
 
-export function reduceQueryExecution(state: ConnectionState, action: QueryExecutionAction): ConnectionState {
+export function reduceQueryAction(state: ConnectionState, action: QueryExecutionAction): ConnectionState {
     const now = new Date();
     const queryId = action.value[0];
 

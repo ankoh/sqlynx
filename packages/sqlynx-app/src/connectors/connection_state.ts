@@ -11,7 +11,7 @@ import {
     SalesforceConnectionDetails,
     SalesforceConnectionStateAction,
 } from './salesforce_connection_state.js';
-import { CatalogUpdateRequestVariant, CatalogUpdateTaskState } from './catalog_update.js';
+import { CatalogUpdateTaskState, reduceCatalogAction } from './catalog_update_state.js';
 import { VariantKind } from '../utils/variant.js';
 import {
     CONNECTOR_INFOS,
@@ -28,7 +28,7 @@ import {
     QueryExecutionState,
 } from './query_execution_state.js';
 import { ConnectionMetrics, createConnectionMetrics } from './connection_statistics.js';
-import { reduceQueryExecution } from './query_execution_state.js';
+import { reduceQueryAction } from './query_execution_state.js';
 
 export interface ConnectionState {
     /// The connection id
@@ -121,11 +121,10 @@ export const QUERY_EXECUTION_FAILED = Symbol('QUERY_EXECUTION_FAILED');
 export const QUERY_EXECUTION_CANCELLED = Symbol('QUERY_EXECUTION_CANCELLED');
 
 export type CatalogAction =
-    | VariantKind<typeof UPDATE_CATALOG, CatalogUpdateRequestVariant>
-    | VariantKind<typeof CATALOG_UPDATE_STARTED, CatalogUpdateTaskState[]>
-    | VariantKind<typeof CATALOG_UPDATE_CANCELLED, number>
-    | VariantKind<typeof CATALOG_UPDATE_SUCCEEDED, number>
+    | VariantKind<typeof UPDATE_CATALOG, [number, CatalogUpdateTaskState]>
+    | VariantKind<typeof CATALOG_UPDATE_CANCELLED, [number, Error]>
     | VariantKind<typeof CATALOG_UPDATE_FAILED, [number, Error]>
+    | VariantKind<typeof CATALOG_UPDATE_SUCCEEDED, [number]>
     ;
 
 export type QueryExecutionAction =
@@ -150,11 +149,10 @@ export type ConnectionStateAction =
 export function reduceConnectionState(state: ConnectionState, action: ConnectionStateAction): ConnectionState {
     switch (action.type) {
         case UPDATE_CATALOG:
-        case CATALOG_UPDATE_STARTED:
         case CATALOG_UPDATE_CANCELLED:
         case CATALOG_UPDATE_SUCCEEDED:
         case CATALOG_UPDATE_FAILED:
-            return state;
+            return reduceCatalogAction(state, action);
 
         case EXECUTE_QUERY:
         case QUERY_EXECUTION_STARTED:
@@ -164,7 +162,7 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
         case QUERY_EXECUTION_SUCCEEDED:
         case QUERY_EXECUTION_CANCELLED:
         case QUERY_EXECUTION_FAILED:
-            return reduceQueryExecution(state, action);
+            return reduceQueryAction(state, action);
 
         // RESET is a bit special since we want to clean up our details as well
         case RESET: {

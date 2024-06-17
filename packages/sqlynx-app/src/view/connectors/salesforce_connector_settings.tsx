@@ -5,7 +5,7 @@ import * as style from './connector_settings.module.css';
 import { FileSymlinkFileIcon, KeyIcon, PlugIcon, XIcon } from '@primer/octicons-react';
 
 import { useConnectionState } from '../../connectors/connection_registry.js';
-import { useSalesforceAuthFlow } from '../../connectors/salesforce_auth_flow.js';
+import { useSalesforceSetup } from '../../connectors/salesforce_setup.js';
 import { ConnectionHealth, ConnectionStatus, RESET } from '../../connectors/connection_state.js';
 import { SalesforceAuthParams } from '../../connectors/connection_params.js';
 import { getSalesforceConnectionDetails } from '../../connectors/salesforce_connection_state.js';
@@ -72,7 +72,7 @@ function getConnectionStatusText(status: ConnectionStatus | undefined, logger: L
 
 export const SalesforceConnectorSettings: React.FC<object> = (_props: object) => {
     const logger = useLogger();
-    const salesforceAuthFlow = useSalesforceAuthFlow();
+    const salesforceAuthFlow = useSalesforceSetup();
 
     // Get Hyper connection from default session
     const defaultSessions = useDefaultSessions();
