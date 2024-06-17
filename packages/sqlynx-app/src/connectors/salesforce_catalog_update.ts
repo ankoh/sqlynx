@@ -4,13 +4,15 @@ import { SalesforceMetadata } from './salesforce_api_client.js';
 
 export function updateDataCloudCatalog(catalog: sqlynx.SQLynxCatalog, metadata: SalesforceMetadata) {
     const tables: sqlynx.proto.SchemaTableT[] = [];
-    for (const entry of metadata.metadata) {
-        const table = new sqlynx.proto.SchemaTableT();
-        table.tableName = entry.name;
-        for (const field of entry.fields) {
-            table.columns.push(new sqlynx.proto.SchemaTableColumnT(field.name));
+    if (metadata.metadata) {
+        for (const entry of metadata.metadata) {
+            const table = new sqlynx.proto.SchemaTableT();
+            table.tableName = entry.name;
+            for (const field of entry.fields) {
+                table.columns.push(new sqlynx.proto.SchemaTableColumnT(field.name));
+            }
+            tables.push(table);
         }
-        tables.push(table);
     }
 
     catalog.dropDescriptorPool(42);

@@ -13,8 +13,10 @@ import {
     RECEIVED_CORE_AUTH_CODE,
     RECEIVED_CORE_AUTH_TOKEN,
     RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
+    RECEIVED_DATA_CLOUD_METADATA,
     REQUESTING_CORE_AUTH_TOKEN,
     REQUESTING_DATA_CLOUD_ACCESS_TOKEN,
+    REQUESTING_DATA_CLOUD_METADATA,
     SalesforceConnectionStateAction,
 } from './salesforce_connection_state.js';
 import { useSalesforceAPI } from './salesforce_connector.js';
@@ -190,6 +192,19 @@ export async function setupSalesforceConnection(dispatch: Dispatch<SalesforceCon
         dispatch({
             type: RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
             value: token,
+        });
+        abortSignal.throwIfAborted();
+
+        // Request the data cloud metadata
+        dispatch({
+            type: REQUESTING_DATA_CLOUD_METADATA,
+            value: null,
+        });
+        const metadata = await apiClient.getDataCloudMetadata(token, abortSignal);
+        logger.debug(`received data cloud metadata`);
+        dispatch({
+            type: RECEIVED_DATA_CLOUD_METADATA,
+            value: metadata,
         });
         abortSignal.throwIfAborted();
 

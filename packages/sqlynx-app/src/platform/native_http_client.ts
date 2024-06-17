@@ -45,8 +45,13 @@ export class NativeHttpServerStream implements HttpFetchResult {
     async json(): Promise<any> {
         const buffer = await this.arrayBuffer();
         const text = this.textDecoder.decode(buffer);
-        this.logger.debug(`parsing json response body: ${text}`);
-        return JSON.parse(text);
+        if (text == "") {
+            this.logger.debug(`response body is empty`);
+            return {};
+        } else {
+            this.logger.debug(`parsing json response body: ${text}`);
+            return JSON.parse(text);
+        }
     }
 
     /// Get the response as array buffer
