@@ -1,7 +1,7 @@
 .root {
     height: 100%;
     display: grid;
-    grid-template-columns: auto 220px;
+    grid-template-columns: auto max-content;
     grid-template-rows: 100%;
 }
 
@@ -26,6 +26,7 @@
     display: grid;
     grid-template-columns: max-content auto;
     align-items: center;
+    column-gap: 16px;
     padding: 6px 0;
 }
 .metrics_group:not(:first-child) {
@@ -33,7 +34,7 @@
 }
 .metric_key {
     font-weight: 500;
-    padding: 0 8px 0 16px;
+    padding: 0 0 0 16px;
     height: 28px;
     font-size: 0.9rem;
     display: flex;
@@ -42,7 +43,7 @@
 .metric_value {
     font-size: 0.9rem;
     height: 28px;
-    padding: 0 16px 0 8px;
+    padding: 0 16px 0 0;
     display: flex;
     flex-direction: row-reverse;
     align-items: center;
