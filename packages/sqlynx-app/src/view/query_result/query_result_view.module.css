@@ -1,0 +1,35 @@
+.root {
+    height: 100%;
+    display: grid;
+    grid-template-columns: auto 220px;
+    grid-template-rows: 100%;
+}
+
+.data_table {
+    grid-row: 1;
+    grid-column: 1;
+}
+
+.info_container {
+    grid-row: 1;
+    grid-column: 2;
+    border-left: 1px solid var(--border_color_primary);
+}
+
+.metrics_container {
+    display: grid;
+    grid-template-columns: max-content auto;
+    align-items: center;
+    column-gap: 16px;
+    padding: 6px 0;
+}
+
+.metric_key {
+    font-weight: 500;
+    padding: 2px 0 2px 16px;
+    font-size: 0.9rem;
+}
+.metric_value {
+    font-size: 0.9rem;
+    padding-right: 16px;
+}

@@ -23,7 +23,7 @@ export interface SQLynxScriptUpdate {
     scriptCursor: sqlynx.proto.ScriptCursorInfoT | null;
     /// The focused column references
     focusedColumnRefs: Set<sqlynx.ExternalObjectID.Value> | null;
-    /// The focused table references
+    /// The focused query_result references
     focusedTableRefs: Set<sqlynx.ExternalObjectID.Value> | null;
     // This callback is called when the editor updates the script
     onUpdateScript: (

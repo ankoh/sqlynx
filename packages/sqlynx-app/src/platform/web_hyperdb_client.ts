@@ -4,7 +4,12 @@ import * as bufconnect from '@connectrpc/connect-web';
 
 import { createPromiseClient, PromiseClient } from '@connectrpc/connect';
 import { Logger } from "./logger.js";
-import { QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionStatus } from '../connectors/query_execution_state.js';
+import {
+    QueryExecutionProgress,
+    QueryExecutionResponseStream,
+    QueryExecutionResponseStreamMetrics,
+    QueryExecutionStatus,
+} from '../connectors/query_execution_state.js';
 
 export class QueryResultReader implements AsyncIterator<Uint8Array>, AsyncIterable<Uint8Array> {
     /// The logger
@@ -13,11 +18,14 @@ export class QueryResultReader implements AsyncIterator<Uint8Array>, AsyncIterab
     stream: AsyncIterator<hyper.salesforce_hyperdb_grpc_v1.pb.QueryResult>;
     /// The current status
     currentStatus: QueryExecutionStatus;
+    /// The data bytes
+    dataBytes: number;
 
     constructor(stream: AsyncIterator<hyper.salesforce_hyperdb_grpc_v1.pb.QueryResult>, logger: Logger) {
         this.stream = stream;
         this.logger = logger;
         this.currentStatus = QueryExecutionStatus.STARTED;
+        this.dataBytes = 0;
     }
 
     async next(): Promise<IteratorResult<Uint8Array>> {
@@ -32,6 +40,7 @@ export class QueryResultReader implements AsyncIterator<Uint8Array>, AsyncIterab
                         break;
                     case 'arrowChunk': {
                         const buffer = next.value.result.value.data;
+                        this.dataBytes += buffer.byteLength;
                         return { done: false, value: buffer };
                     }
                 }
@@ -59,6 +68,12 @@ export class WebHyperQueryResultStream implements QueryExecutionResponseStream {
     protected async setupArrowReader(): Promise<void> {
         this.arrowReader = await arrow.AsyncRecordBatchStreamReader.from(this.resultReader);
         await this.arrowReader.open();
+    }
+    /// Get the metrics
+    getMetrics(): QueryExecutionResponseStreamMetrics {
+        return {
+            dataBytes: this.resultReader.dataBytes
+        };
     }
     /// Get the current query status
     getStatus(): QueryExecutionStatus {

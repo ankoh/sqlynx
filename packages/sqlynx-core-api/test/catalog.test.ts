@@ -54,7 +54,7 @@ describe('Catalog Tests ', () => {
         const catalog = lnx!.createCatalog();
         catalog.addDescriptorPool(1, 10);
 
-        // Create and analyze a script referencing an unknown table
+        // Create and analyze a script referencing an unknown query_result
         const script = lnx!.createScript(catalog, 2);
         script.replaceText('select * from db1.schema1.table1');
         script.scan().delete();
@@ -63,19 +63,19 @@ describe('Catalog Tests ', () => {
         let analyzed = analyzedBuffer.read(new sqlynx.proto.AnalyzedScript());
         expect(analyzed.tableReferencesLength()).toEqual(1);
 
-        // The analyzed script contains an unresolved table ref
+        // The analyzed script contains an unresolved query_result ref
         const tableRef = analyzed.tableReferences(0)!;
         let resolved = tableRef.resolvedTableId();
         expect(sqlynx.ExternalObjectID.isNull(resolved)).toBeTruthy();
 
-        // Check the table name
+        // Check the query_result name
         const tableName = tableRef.tableName(new sqlynx.proto.QualifiedTableName())!;
         expect(tableName.databaseName()).toEqual('db1');
         expect(tableName.schemaName()).toEqual('schema1');
         expect(tableName.tableName()).toEqual('table1');
         analyzedBuffer.delete();
 
-        // Resolve the table declaration and add a schema descriptor to the descriptor pool
+        // Resolve the query_result declaration and add a schema descriptor to the descriptor pool
         catalog.addSchemaDescriptorT(
             1,
             new sqlynx.proto.SchemaDescriptorT('db1', 'schema1', [

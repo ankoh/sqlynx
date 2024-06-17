@@ -159,7 +159,7 @@ function buildDecorationsFromCursor(
             if (externalId !== scriptKey) {
                 continue;
             }
-            // XXX invalidate focused table refs at write front
+            // XXX invalidate focused query_result refs at write front
             if (objectId >= analyzed.columnReferencesLength()) {
                 continue;
             }
@@ -175,7 +175,7 @@ function buildDecorationsFromCursor(
         }
     }
 
-    // Build decorations for table refs
+    // Build decorations for query_result refs
     if (focusedTableRefs !== null) {
         for (const refId of focusedTableRefs) {
             const externalId = sqlynx.ExternalObjectID.getExternalID(refId);
@@ -183,7 +183,7 @@ function buildDecorationsFromCursor(
             if (externalId !== scriptKey) {
                 continue;
             }
-            // XXX invalidate focused table refs at write front
+            // XXX invalidate focused query_result refs at write front
             if (objectId >= analyzed.tableReferencesLength()) {
                 continue;
             }

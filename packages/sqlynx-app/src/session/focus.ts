@@ -5,7 +5,7 @@ import { GraphConnectionId, GraphNodeDescriptor, GraphViewModel } from '../view/
 export interface FocusInfo {
     /// The connection ids of focused edges
     graphConnections: Set<GraphConnectionId.Value>;
-    /// The table ids
+    /// The query_result ids
     tableIds: Set<sqlynx.ExternalObjectID.Value>;
     /// The column references
     columnRefs: Set<sqlynx.ExternalObjectID.Value>;
@@ -69,9 +69,9 @@ export function deriveScriptFocusFromCursor(
         return focus;
     }
 
-    // Helper to derive focus from a table id
+    // Helper to derive focus from a query_result id
     const deriveFocusFromTableId = (tableId: sqlynx.ExternalObjectID.Value): FocusInfo => {
-        // Find all column and table refs that are referencing that table
+        // Find all column and query_result refs that are referencing that query_result
         const tableIds: Set<sqlynx.ExternalObjectID.Value> = new Set();
         const columnRefs: Set<sqlynx.ExternalObjectID.Value> = new Set();
         const tableRefs: Set<sqlynx.ExternalObjectID.Value> = new Set();
@@ -108,7 +108,7 @@ export function deriveScriptFocusFromCursor(
         };
     };
 
-    // Focus a table ref?
+    // Focus a query_result ref?
     const tableRefId = sqlynx.ExternalObjectID.create(scriptKey, cursor.tableReferenceId);
     if (!sqlynx.ExternalObjectID.isNull(tableRefId)) {
         const ctxData = scriptData[scriptKey];
@@ -199,7 +199,7 @@ export function focusGraphNode(state: SessionState, target: GraphNodeDescriptor 
         return state;
     }
 
-    // Find all column and table refs that are referencing that table
+    // Find all column and query_result refs that are referencing that query_result
     const tableIds: Set<sqlynx.ExternalObjectID.Value> = new Set();
     const columnRefs: Set<sqlynx.ExternalObjectID.Value> = new Set();
     const tableRefs: Set<sqlynx.ExternalObjectID.Value> = new Set();

@@ -26,8 +26,8 @@ import { useAppConfig } from '../../app_config.js';
 import { SessionListDropdown } from './session_list_dropdown.js';
 import { DragSizing, DragSizingBorder } from '../foundations/drag_sizing.js';
 import { useQueryState } from '../../connectors/query_executor.js';
-import { DataTable } from '../table/data_table.js';
-import { QueryStatus } from '../query_status/query_status.js';
+import { QueryStatusView } from '../query_status/query_status_view.js';
+import { QueryResultView } from '../query_result/query_result_view.js';
 
 const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
     const config = useAppConfig();
@@ -99,7 +99,7 @@ const OutputCommandList = (props: { connector: ConnectorInfo | null }) => {
 enum TabKey {
     SchemaView = 0,
     QueryStatusView = 1,
-    DataTableView = 2,
+    QueryResultView = 2,
 }
 
 interface TabState {
@@ -134,7 +134,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                 ctrlKey: true,
                 callback: () => {
                     selectTab(key => {
-                        const tabs = [TabKey.SchemaView, TabKey.QueryStatusView, TabKey.DataTableView];
+                        const tabs = [TabKey.SchemaView, TabKey.QueryStatusView, TabKey.QueryResultView];
                         return tabs[((key as number) + 1) % tabState.current.enabledTabs];
                     });
                 },
@@ -164,7 +164,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                 selectTab(TabKey.QueryStatusView);
                 break;
             case QueryExecutionStatus.SUCCEEDED:
-                selectTab(TabKey.DataTableView);
+                selectTab(TabKey.QueryResultView);
                 break;
         }
         prevStatus.current = [editorQuery, status];
@@ -208,21 +208,21 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                                 labelShort: 'Status',
                                 disabled: tabState.current.enabledTabs < 2,
                             },
-                            [TabKey.DataTableView]: {
-                                tabId: TabKey.DataTableView,
+                            [TabKey.QueryResultView]: {
+                                tabId: TabKey.QueryResultView,
                                 icon: `${icons}#table`,
                                 labelShort: 'Data',
                                 disabled: tabState.current.enabledTabs < 3,
                             },
                         }}
-                        tabKeys={[TabKey.SchemaView, TabKey.QueryStatusView, TabKey.DataTableView]}
+                        tabKeys={[TabKey.SchemaView, TabKey.QueryStatusView, TabKey.QueryResultView]}
                         tabRenderers={{
                             [TabKey.SchemaView]: _props => <SchemaGraph />,
                             [TabKey.QueryStatusView]: _props => (
-                                <QueryStatus query={queryState} />
+                                <QueryStatusView query={queryState} />
                             ),
-                            [TabKey.DataTableView]: _props => (
-                                <DataTable data={queryState?.resultTable ?? null} />
+                            [TabKey.QueryResultView]: _props => (
+                                <QueryResultView query={queryState} />
                             ),
                         }}
                     />
