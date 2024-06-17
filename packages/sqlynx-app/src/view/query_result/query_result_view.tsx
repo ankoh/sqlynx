@@ -8,6 +8,7 @@ import { formatMilliseconds } from '../../utils/index.js';
 interface MetricEntryProps {
     name: string;
     value: string;
+    delimiter?: boolean;
 }
 
 function MetricEntry(props: MetricEntryProps) {
@@ -41,11 +42,21 @@ export function QueryResultView(props: Props) {
             <DataTable className={styles.data_table} data={props.query.resultTable} />
             <div className={styles.info_container}>
                 <div className={styles.metrics_container}>
-                    <MetricEntry name="Rows" value={metrics.rowsReceived.toString()} />
-                    <MetricEntry name="Batches" value={metrics.batchesReceived.toString()} />
-                    <MetricEntry name="Schema At" value={untilSchema} />
-                    <MetricEntry name="First Batch At" value={untilFirstRow} />
-                    <MetricEntry name="Finished At" value={queryDuration} />
+                    <div className={styles.metrics_group}>
+                        <MetricEntry name="Records" value={metrics.rowsReceived.toString()} />
+                        <MetricEntry name="Record Batches" value={metrics.batchesReceived.toString()} />
+                        <MetricEntry name="Data Bytes" value="" delimiter />
+                    </div>
+                    <div className={styles.metrics_group}>
+                        <MetricEntry name="Schema At" value={untilSchema} />
+                        <MetricEntry name="First Batch At" value={untilFirstRow} />
+                        <MetricEntry name="Finished At" value={queryDuration} />
+                    </div>
+                    <div className={styles.metrics_group}>
+                        <MetricEntry name="Trace Id" value="foo" />
+                        <MetricEntry name="Span Id" value="foo" />
+                        <MetricEntry name="Parentspan Id" value="foo" />
+                    </div>
                 </div>
             </div>
         </div>
