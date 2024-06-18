@@ -1,6 +1,6 @@
 import { GrpcChannelArgs, GrpcError, GrpcMetadataProvider } from './grpc_common.js';
 import { Logger } from "./logger.js";
-import { HEADER_NAME_BATCH_BYTES, HEADER_NAME_BATCH_TIMEOUT, HEADER_NAME_CHANNEL_ID, HEADER_NAME_ENDPOINT, HEADER_NAME_PATH, HEADER_NAME_READ_TIMEOUT, HEADER_NAME_STREAM_ID, HEADER_NAME_TLS_CACERTS, HEADER_NAME_TLS_CLIENT_CERT, HEADER_NAME_TLS_CLIENT_KEY } from "./native_api_mock.js";
+import { HEADER_NAME_BATCH_BYTES, HEADER_NAME_BATCH_TIMEOUT, HEADER_NAME_CHANNEL_ID, HEADER_NAME_ENDPOINT, HEADER_NAME_PATH, HEADER_NAME_READ_TIMEOUT, HEADER_NAME_STREAM_ID, HEADER_NAME_TLS, HEADER_NAME_TLS_CACERTS, HEADER_NAME_TLS_CLIENT_CERT, HEADER_NAME_TLS_CLIENT_KEY } from "./native_api_mock.js";
 
 export enum NativeGrpcServerStreamBatchEvent {
     StreamFailed = "StreamFailed",
@@ -288,13 +288,14 @@ export class NativeGrpcClient {
         const headers = new Headers(additionalMetadata);
         headers.set(HEADER_NAME_ENDPOINT, args.endpoint);
         if (args.tls) {
-            if (args.tls.keyPath !== "") {
+            headers.set(HEADER_NAME_TLS, "1");
+            if (args.tls.keyPath && args.tls.keyPath !== "") {
                 headers.set(HEADER_NAME_TLS_CLIENT_KEY, args.tls.keyPath);
             }
-            if (args.tls.pubPath !== "") {
+            if (args.tls.pubPath && args.tls.pubPath !== "") {
                 headers.set(HEADER_NAME_TLS_CLIENT_CERT, args.tls.pubPath);
             }
-            if (args.tls.caPath !== "") {
+            if (args.tls.caPath && args.tls.caPath !== "") {
                 headers.set(HEADER_NAME_TLS_CACERTS, args.tls.caPath);
             }
         }

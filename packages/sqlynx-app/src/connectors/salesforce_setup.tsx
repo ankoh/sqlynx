@@ -226,7 +226,8 @@ export async function setupSalesforceConnection(dispatch: Dispatch<SalesforceCon
 
         // Start the channel setup
         const channelArgs: GrpcChannelArgs = {
-            endpoint: dcToken.instanceUrl.toString()
+            endpoint: dcToken.instanceUrl.toString(),
+            tls: {},
         };
         dispatch({
             type: CHANNEL_SETUP_STARTED,

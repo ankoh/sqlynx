@@ -1,10 +1,10 @@
 export interface GrpcTlsSettings {
     /// The mTLS client key path
-    keyPath: string;
+    keyPath?: string;
     /// The mTLS client certificate path
-    pubPath: string;
+    pubPath?: string;
     /// The mTLS ca certificates path
-    caPath: string;
+    caPath?: string;
 }
 
 export interface GrpcChannelArgs {

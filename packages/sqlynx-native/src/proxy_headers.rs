@@ -1,6 +1,7 @@
 pub const HEADER_PREFIX: &'static str = "sqlynx-";
 pub const HEADER_NAME_METHOD: &'static str = "sqlynx-method";
 pub const HEADER_NAME_ENDPOINT: &'static str = "sqlynx-endpoint";
+pub const HEADER_NAME_TLS: &'static str = "sqlynx-tls";
 pub const HEADER_NAME_TLS_CLIENT_KEY: &'static str = "sqlynx-tls-client-key";
 pub const HEADER_NAME_TLS_CLIENT_CERT: &'static str = "sqlynx-tls-client-cert";
 pub const HEADER_NAME_TLS_CACERTS: &'static str = "sqlynx-tls-cacerts";
