@@ -9,9 +9,14 @@ use std::time::Duration;
 use tonic::codegen::http::uri::PathAndQuery;
 use tauri::http::HeaderMap;
 use tauri::http::HeaderValue;
+use tonic::metadata::AsciiMetadataKey;
+use tonic::metadata::AsciiMetadataValue;
 use tonic::metadata::MetadataMap;
 use tonic::transport::channel::Endpoint;
 use http::HeaderName;
+
+use tonic::transport::ClientTlsConfig;
+use tonic::transport::Certificate;
 
 use crate::grpc_client::GenericGrpcClient;
 use crate::grpc_stream_manager::GrpcServerStreamBatch;
@@ -55,6 +60,31 @@ impl Default for GrpcProxy {
             channels: Default::default(),
             streams: Default::default(),
         }
+    }
+}
+
+/// Helper to copy incoming metadata
+fn prepare_metadata(out: &mut MetadataMap, headers: &mut HeaderMap) {
+    for (key, value) in headers.drain() {
+        let key = match &key {
+            Some(k) => k.as_str(),
+            None => continue,
+        };
+        if !key.starts_with(HEADER_PREFIX) {
+            if let Ok(value) = value.to_str() {
+                let k = AsciiMetadataKey::from_str(key);
+                let v = AsciiMetadataValue::from_str(value);
+                if let (Ok(k), Ok(v)) = (k, v) {
+                    out.insert(k, v);
+                } else {
+                    log::warn!("failed to add extra metadata with key: {}", key);
+                }
+            }
+        }
+    }
+    // TODO Data Cloud is returning PermissionDenied if the origin header is set, find out why
+    for masked in vec!["origin", "accept", "referrer"] {
+        out.remove(masked);
     }
 }
 
@@ -167,8 +197,14 @@ impl GrpcProxy {
             .next_channel_id
             .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         let params = read_channel_params(headers)?;
+
+        let pem = tokio::fs::read("/etc/ssl/cert.pem").await.expect("oh no, the cert file wasn't loaded");
+        let cert = Certificate::from_pem(pem);
+        let tls = ClientTlsConfig::new().ca_certificate(cert);
+
         let channel = params
             .endpoint
+            .tls_config(tls).unwrap()
             .connect()
             .await
             .map_err(|e| {
@@ -190,7 +226,7 @@ impl GrpcProxy {
     }
 
     /// Call a unary gRPC function
-    pub async fn call_unary(&self, channel_id: usize, headers: &HeaderMap, body: Vec<u8>) -> Result<(Vec<u8>, MetadataMap), Status> {
+    pub async fn call_unary(&self, channel_id: usize, headers: &mut HeaderMap, body: Vec<u8>) -> Result<(Vec<u8>, MetadataMap), Status> {
         let path = require_string_header(headers, HEADER_NAME_PATH)?;
         let channel_entry = if let Some(channel) = self.channels.read().unwrap().get(&channel_id) {
             channel.clone()
@@ -203,16 +239,20 @@ impl GrpcProxy {
                 Status::HeaderPathIsInvalid { header: HEADER_NAME_PATH, path: path.to_string(), message: e.to_string() }
             })?;
 
-        let request = tonic::Request::new(body);
+        let mut request = tonic::Request::new(body);
+        prepare_metadata(request.metadata_mut(), headers);
         let mut response = client.call_unary(request, path).await
-            .map_err(|status| Status::GrpcCallFailed { status })?;
+            .map_err(|status| {
+                log::error!("{:?}", status);
+                Status::GrpcCallFailed { status }
+            })?;
         let metadata = std::mem::take(response.metadata_mut());
         let body = response.into_inner();
         Ok((body, metadata))
     }
 
     /// Call a gRPC function with results streamed from the server
-    pub async fn start_server_stream(&self, channel_id: usize, headers: &HeaderMap, body: Vec<u8>) -> Result<(usize, MetadataMap), Status> {
+    pub async fn start_server_stream(&self, channel_id: usize, headers: &mut HeaderMap, body: Vec<u8>) -> Result<(usize, MetadataMap), Status> {
         let path = require_string_header(headers, HEADER_NAME_PATH)?;
         let channel_entry = if let Some(channel) = self.channels.read().unwrap().get(&channel_id) {
             channel.clone()
@@ -226,9 +266,15 @@ impl GrpcProxy {
             .map_err(|e| {
                 Status::HeaderPathIsInvalid { header: HEADER_NAME_PATH, path: path.to_string(), message: e.to_string() }
             })?;
-        let request = tonic::Request::new(body);
+        let mut request = tonic::Request::new(body);
+        prepare_metadata(request.metadata_mut(), headers);
+        log::debug!("sending gRPC request: channel_id={}, path={}, request={:?}", channel_id, path.to_string(), &request);
+
         let mut response = client.call_server_streaming(request, path).await
-            .map_err(|status| Status::GrpcCallFailed { status })?;
+            .map_err(|status| {
+                log::error!("{:?}", status);
+                Status::GrpcCallFailed { status }
+            })?;
 
         // Save the response headers
         let response_headers = std::mem::take(response.metadata_mut());
@@ -241,7 +287,7 @@ impl GrpcProxy {
     }
 
     /// Read from a result stream
-    pub async fn read_server_stream(&self, channel_id: usize, stream_id: usize, headers: &HeaderMap) -> Result<GrpcServerStreamBatch, Status> {
+    pub async fn read_server_stream(&self, channel_id: usize, stream_id: usize, headers: &mut HeaderMap) -> Result<GrpcServerStreamBatch, Status> {
         // We don't need the channel id to resolve the stream today since the stream id is unique across all channels.
         // We still check if the channel id exists so that we can still maintain streams per channel later.
         if self.channels.read().unwrap().get(&channel_id).is_none() {

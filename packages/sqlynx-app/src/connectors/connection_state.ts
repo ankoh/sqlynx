@@ -67,13 +67,13 @@ export enum ConnectionStatus {
     HEALTH_CHECK_CANCELLED,
     HEALTH_CHECK_SUCCEEDED,
 
-    // Hyper gRPC setup status
+    // gRPC channel setup
     CHANNEL_SETUP_STARTED,
     CHANNEL_SETUP_FAILED,
     CHANNEL_SETUP_CANCELLED,
     CHANNEL_READY,
 
-    // Salesforce setup status
+    // Salesforce OAuth
     AUTH_STARTED,
     AUTH_CANCELLED,
     AUTH_FAILED,
@@ -86,6 +86,8 @@ export enum ConnectionStatus {
     DATA_CLOUD_TOKEN_RECEIVED,
     CORE_ACCESS_TOKEN_REQUESTED,
     CORE_ACCESS_TOKEN_RECEIVED,
+
+    // Data Cloud metadata
     DATA_CLOUD_METADATA_REQUESTED,
     DATA_CLOUD_METADATA_RECEIVED,
 }

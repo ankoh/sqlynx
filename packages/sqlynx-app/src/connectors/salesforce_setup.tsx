@@ -6,6 +6,14 @@ import {
     AUTH_CANCELLED,
     AUTH_FAILED,
     AUTH_STARTED,
+    CHANNEL_SETUP_STARTED,
+    CHANNEL_READY,
+    CHANNEL_SETUP_CANCELLED,
+    CHANNEL_SETUP_FAILED,
+    HEALTH_CHECK_CANCELLED,
+    HEALTH_CHECK_FAILED,
+    HEALTH_CHECK_STARTED,
+    HEALTH_CHECK_SUCCEEDED,
     GENERATED_PKCE_CHALLENGE,
     GENERATING_PKCE_CHALLENGE,
     OAUTH_NATIVE_LINK_OPENED,
@@ -37,6 +45,14 @@ import { isDebugBuild } from '../globals.js';
 
 import * as shell from '@tauri-apps/plugin-shell';
 import { RESET } from './connection_state.js';
+import {
+    AttachedDatabase,
+    HyperDatabaseChannel,
+    HyperDatabaseClient,
+    HyperDatabaseConnectionContext,
+} from '../platform/hyperdb_client.js';
+import { GrpcChannelArgs } from '../platform/grpc_common.js';
+import { useHyperDatabaseClient } from '../platform/hyperdb_client_provider.js';
 
 // By default, a Salesforce OAuth Access Token expires after 2 hours = 7200 seconds
 const DEFAULT_EXPIRATION_TIME_MS = 2 * 60 * 60 * 1000;
@@ -74,7 +90,7 @@ const DEFAULT_EXPIRATION_TIME_MS = 2 * 60 * 60 * 1000;
 const OAUTH_POPUP_NAME = 'SQLynx OAuth';
 const OAUTH_POPUP_SETTINGS = 'toolbar=no, menubar=no, width=600, height=700, top=100, left=100';
 
-export async function setupSalesforceConnection(dispatch: Dispatch<SalesforceConnectionStateAction>, logger: Logger, params: SalesforceAuthParams, config: SalesforceConnectorConfig, platformType: PlatformType, apiClient: SalesforceAPIClientInterface, appEvents: AppEventListener, abortSignal: AbortSignal): Promise<void> {
+export async function setupSalesforceConnection(dispatch: Dispatch<SalesforceConnectionStateAction>, logger: Logger, params: SalesforceAuthParams, config: SalesforceConnectorConfig, platformType: PlatformType, apiClient: SalesforceAPIClientInterface, hyperClient: HyperDatabaseClient, appEvents: AppEventListener, abortSignal: AbortSignal): Promise<void> {
     try {
         // Start the authorization process
         dispatch({
@@ -187,11 +203,11 @@ export async function setupSalesforceConnection(dispatch: Dispatch<SalesforceCon
             type: REQUESTING_DATA_CLOUD_ACCESS_TOKEN,
             value: null,
         });
-        const token = await apiClient.getDataCloudAccessToken(coreAccessToken, abortSignal);
-        logger.debug(`received data cloud token: ${JSON.stringify(token)}`);
+        const dcToken = await apiClient.getDataCloudAccessToken(coreAccessToken, abortSignal);
+        logger.debug(`received data cloud token: ${JSON.stringify(dcToken)}`);
         dispatch({
             type: RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
-            value: token,
+            value: dcToken,
         });
         abortSignal.throwIfAborted();
 
@@ -200,13 +216,75 @@ export async function setupSalesforceConnection(dispatch: Dispatch<SalesforceCon
             type: REQUESTING_DATA_CLOUD_METADATA,
             value: null,
         });
-        const metadata = await apiClient.getDataCloudMetadata(token, abortSignal);
+        const metadata = await apiClient.getDataCloudMetadata(dcToken, abortSignal);
         logger.debug(`received data cloud metadata`);
         dispatch({
             type: RECEIVED_DATA_CLOUD_METADATA,
             value: metadata,
         });
         abortSignal.throwIfAborted();
+
+        // Start the channel setup
+        const channelArgs: GrpcChannelArgs = {
+            endpoint: dcToken.instanceUrl.toString()
+        };
+        dispatch({
+            type: CHANNEL_SETUP_STARTED,
+            value: channelArgs,
+        });
+        abortSignal.throwIfAborted()
+
+        // Static connection context.
+        // Inject the database name, the audience header and the bearer token
+        const connectionContext: HyperDatabaseConnectionContext = {
+            getAttachedDatabases(): AttachedDatabase[] {
+                return [{
+                    path: "lakehouse:" + dcToken.dcTenantId + ";default",
+                }];
+            },
+            async getRequestMetadata(): Promise<Record<string, string>> {
+                return {
+                    audience: dcToken.dcTenantId,
+                    authorization: `Bearer ${dcToken.jwt.raw}`,
+                };
+            }
+        };
+
+        // Create the channel
+        const channel = await hyperClient.connect(channelArgs, connectionContext);
+        abortSignal.throwIfAborted();
+
+        // Mark the channel as ready
+        dispatch({
+            type: CHANNEL_READY,
+            value: channel,
+        });
+        abortSignal.throwIfAborted();
+
+        // Start the channel setup
+        dispatch({
+            type: HEALTH_CHECK_STARTED,
+            value: null,
+        });
+        abortSignal.throwIfAborted();
+
+        // Create the channel
+        const health = await channel.checkHealth();
+        abortSignal.throwIfAborted();
+
+        if (health.ok) {
+            dispatch({
+                type: HEALTH_CHECK_SUCCEEDED,
+                value: null,
+            });
+            return;
+        } else {
+            dispatch({
+                type: HEALTH_CHECK_FAILED,
+                value: health.errorMessage!,
+            });
+            return;
+        }
 
     } catch (error: any) {
         if (error.name === 'AbortError') {
@@ -223,6 +301,7 @@ export async function setupSalesforceConnection(dispatch: Dispatch<SalesforceCon
             });
         }
     }
+
 }
 
 export interface SalesforceSetupApi {
@@ -244,14 +323,15 @@ export const SalesforceSetupProvider: React.FC<Props> = (props: Props) => {
     const appEvents = useAppEventListener();
     const platformType = usePlatformType();
     const salesforceApi = useSalesforceAPI();
+    const hyperClient = useHyperDatabaseClient();
     const connectorConfig = appConfig.value?.connectors?.salesforce ?? null;
 
     const api = React.useMemo<SalesforceSetupApi | null>(() => {
-        if (!connectorConfig) {
+        if (!connectorConfig || !hyperClient) {
             return null;
         }
         const auth = async (dispatch: Dispatch<SalesforceConnectionStateAction>, params: SalesforceAuthParams, abort: AbortSignal) => {
-            return setupSalesforceConnection(dispatch, logger, params, connectorConfig, platformType, salesforceApi, appEvents, abort);
+            return setupSalesforceConnection(dispatch, logger, params, connectorConfig, platformType, salesforceApi, hyperClient, appEvents, abort);
         };
         const reset = async (dispatch: Dispatch<SalesforceConnectionStateAction>) => {
             dispatch({
