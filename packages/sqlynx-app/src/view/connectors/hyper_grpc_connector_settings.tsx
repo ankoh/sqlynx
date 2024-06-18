@@ -27,11 +27,7 @@ import {
 } from '../../platform/hyperdb_client.js';
 import { Button, ButtonVariant } from '../foundations/button.js';
 import { useConnectionState } from '../../connectors/connection_registry.js';
-import {
-    ConnectionHealth,
-    ConnectionStatus,
-    RESET,
-} from '../../connectors/connection_state.js';
+import { ConnectionHealth, RESET } from '../../connectors/connection_state.js';
 import {
     CHANNEL_READY,
     CHANNEL_SETUP_FAILED,
@@ -41,11 +37,11 @@ import {
     HEALTH_CHECK_SUCCEEDED,
 } from '../../connectors/hyper_grpc_connection_state.js';
 import { HyperGrpcConnectionParams } from '../../connectors/connection_params.js';
-import { useSessionState, useSessionRegistry } from '../../session/session_state_registry.js';
+import { useSessionState } from '../../session/session_state_registry.js';
 import { useCurrentSessionSelector } from '../../session/current_session.js';
 import { useNavigate } from 'react-router-dom';
-import { Logger } from '../../platform/logger.js';
 import { useDefaultSessions } from '../../session/session_setup.js';
+import { getConnectionHealthIndicator, getConnectionStatusText } from './salesforce_connector_settings.js';
 
 const LOG_CTX = "hyper_connector";
 
@@ -59,34 +55,6 @@ interface PageState {
 };
 type PageStateSetter = Dispatch<React.SetStateAction<PageState>>;
 const PAGE_STATE_CTX = React.createContext<[PageState, PageStateSetter] | null>(null);
-
-function getConnectionStatusText(status: ConnectionStatus | undefined, logger: Logger) {
-    switch (status) {
-        case ConnectionStatus.NOT_STARTED:
-            return "Disconnected";
-        case ConnectionStatus.CHANNEL_SETUP_STARTED:
-            return "Creating channel";
-        case ConnectionStatus.CHANNEL_SETUP_FAILED:
-            return "Failed to create channel";
-        case ConnectionStatus.CHANNEL_SETUP_CANCELLED:
-            return "Cancelled channel setup";
-        case ConnectionStatus.CHANNEL_READY:
-            return "Channel is ready";
-        case ConnectionStatus.HEALTH_CHECK_STARTED:
-            return "Health check started";
-        case ConnectionStatus.HEALTH_CHECK_FAILED:
-            return "Health check failed";
-        case ConnectionStatus.HEALTH_CHECK_CANCELLED:
-            return "Health check cancelled";
-        case ConnectionStatus.HEALTH_CHECK_SUCCEEDED:
-            return "Health check succeeded";
-        case undefined:
-            break;
-        default:
-            logger.warn(`unexpected connection status: ${status}`);
-    }
-    return "";
-}
 
 export const HyperGrpcConnectorSettings: React.FC = () => {
     const logger = useLogger();
@@ -223,23 +191,8 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
 
     // Get the connection status
     const statusText: string = getConnectionStatusText(connectionState?.connectionStatus, logger);
-
     // Get the indicator status
-    let indicatorStatus: IndicatorStatus = IndicatorStatus.None;
-    switch (connectionState?.connectionHealth) {
-        case ConnectionHealth.NOT_STARTED:
-            indicatorStatus = IndicatorStatus.None;
-            break;
-        case ConnectionHealth.ONLINE:
-            indicatorStatus = IndicatorStatus.Succeeded;
-            break;
-        case ConnectionHealth.FAILED:
-            indicatorStatus = IndicatorStatus.Failed;
-            break;
-        case ConnectionHealth.CONNECTING:
-            indicatorStatus = IndicatorStatus.Running;
-            break;
-    }
+    const indicatorStatus: IndicatorStatus = getConnectionHealthIndicator(connectionState?.connectionHealth ?? null);
 
     // Get the action button
     let connectButton: React.ReactElement = <div />;
