@@ -61,11 +61,14 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
         switch (conn.details.type) {
             case SALESFORCE_DATA_CLOUD_CONNECTOR: {
                 const c = conn.details.value;
+                const channel = c.channel;
+                if (!channel) {
+                    throw new Error(`hyper channel is not set up`);
+                }
                 task = {
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
-                        api: sfApi,
-                        dataCloudAccessToken: c.dataCloudAccessToken!,
+                        hyperChannel: channel,
                         scriptText: args.query,
                     },
                 };
@@ -163,7 +166,10 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
             switch (task.type) {
                 case SALESFORCE_DATA_CLOUD_CONNECTOR: {
                     const req = task.value;
-                    resultStream = req.api.executeQuery(req.scriptText, req.dataCloudAccessToken);
+                    const param = new proto.salesforce_hyperdb_grpc_v1.pb.QueryParam({
+                        query: req.scriptText
+                    });
+                    resultStream = await req.hyperChannel.executeQuery(param);
                     break;
                 }
                 case HYPER_GRPC_CONNECTOR: {

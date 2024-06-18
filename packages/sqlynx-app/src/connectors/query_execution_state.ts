@@ -23,12 +23,10 @@ export type QueryExecutionTaskVariant =
     | VariantKind<typeof HYPER_GRPC_CONNECTOR, HyperGrpcQueryTask>;
 
 export interface ExecuteDataCloudQueryTask {
-    /// The salesforce api client
-    api: SalesforceAPIClientInterface;
-    /// The access token
-    dataCloudAccessToken: SalesforceDataCloudAccessToken;
     /// The script text
     scriptText: string;
+    /// The channel
+    hyperChannel: HyperDatabaseChannel;
 }
 
 export interface HyperGrpcQueryTask {
