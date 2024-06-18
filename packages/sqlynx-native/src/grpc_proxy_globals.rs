@@ -80,7 +80,7 @@ fn copy_metadata(metadata: &mut MetadataMap, headers: &mut HeaderMap) {
 
 pub async fn call_grpc_unary(channel_id: usize, mut req: Request<Vec<u8>>) -> Response<Vec<u8>> {
     let body = std::mem::take(req.body_mut());
-    match GRPC_PROXY.call_unary(channel_id, req.headers(), body).await {
+    match GRPC_PROXY.call_unary(channel_id, req.headers_mut(), body).await {
         Ok((body, mut metadata)) => {
             let mut response = Response::builder()
                 .status(200)
@@ -96,7 +96,7 @@ pub async fn call_grpc_unary(channel_id: usize, mut req: Request<Vec<u8>>) -> Re
 
 pub async fn start_grpc_server_stream(channel_id: usize, mut req: Request<Vec<u8>>) -> Response<Vec<u8>> {
     let body = std::mem::take(req.body_mut());
-    match GRPC_PROXY.start_server_stream(channel_id, req.headers(), body).await {
+    match GRPC_PROXY.start_server_stream(channel_id, req.headers_mut(), body).await {
         Ok((stream_id, mut metadata)) => {
             let mut response = Response::builder()
                 .status(200)
@@ -111,8 +111,8 @@ pub async fn start_grpc_server_stream(channel_id: usize, mut req: Request<Vec<u8
     }
 }
 
-pub async fn read_grpc_server_stream(channel_id: usize, stream_id: usize, req: Request<Vec<u8>>) -> Response<Vec<u8>> {
-    match GRPC_PROXY.read_server_stream(channel_id, stream_id, req.headers()).await {
+pub async fn read_grpc_server_stream(channel_id: usize, stream_id: usize, mut req: Request<Vec<u8>>) -> Response<Vec<u8>> {
+    match GRPC_PROXY.read_server_stream(channel_id, stream_id, req.headers_mut()).await {
         Ok(batches) => {
             let mut buffer: Vec<u8> = Vec::with_capacity(batches.total_message_bytes + 4 * batches.messages.len());
             for message in batches.messages.iter() {

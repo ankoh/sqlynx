@@ -147,6 +147,7 @@ impl From<&Status> for Response<Vec<u8>> {
                 let message = status.to_string();
                 return Response::builder()
                     .status(StatusCode::from(status).as_u16())
+                    .header(HEADER_NAME_GRPC_STATUS, 13)
                     .header(CONTENT_TYPE, mime::TEXT_PLAIN.essence_str())
                     .body(message.as_bytes().to_vec())
                     .unwrap();

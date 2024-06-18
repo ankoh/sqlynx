@@ -5,7 +5,7 @@ import { QueryExecutionProgress, QueryExecutionResponseStream } from "../connect
 
 export interface AttachedDatabase {
     path: string;
-    alias: string;
+    alias?: string;
 }
 
 export interface HyperDatabaseConnectionContext extends GrpcMetadataProvider {

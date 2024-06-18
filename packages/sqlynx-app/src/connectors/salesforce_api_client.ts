@@ -281,7 +281,8 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
             throw new Error('missing instance_url');
         }
 
-        const jwtParts = obj.access_token.split('.');
+        const access_token = obj.access_token;
+        const jwtParts = access_token.split('.');
         if (jwtParts.length != 3) {
             throw new Error(`invalid jwt, expected 3 parts, received ${jwtParts.length}`);
         }
@@ -303,7 +304,7 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
             obj.issued_token_type ?? null,
             new Date(Number.parseInt(jwtPayloadParsed.exp) * 1000),
             {
-                raw: obj.access_token,
+                raw: access_token,
                 header: jwtHeaderParsed,
                 payload: jwtPayloadParsed
             },

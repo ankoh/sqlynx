@@ -142,7 +142,6 @@ export class NativeGrpcServerStream implements AsyncIterator<NativeGrpcServerStr
 
             case NativeGrpcServerStreamBatchEvent.StreamFailed:
                 this.reachedEndOfStream = true;
-                console.log(batch.metadata);
                 throw new GrpcError(400, "", batch.metadata);
         }
     }
@@ -234,7 +233,9 @@ export class NativeGrpcChannel {
         });
         const response = await fetch(request);
         if (response.status != 200) {
-            throw new GrpcError(response.status, response.statusText);
+            const grpcStatus = requireIntegerHeader(response.headers, "sqlynx-grpc-status");
+            const body = await response.text();
+            throw new GrpcError(grpcStatus, body);
         }
 
         const streamId = requireIntegerHeader(response.headers, HEADER_NAME_STREAM_ID);
@@ -257,7 +258,9 @@ export class NativeGrpcChannel {
         });
         const response = await fetch(request);
         if (response.status != 200) {
-            throw new GrpcError(response.status, response.statusText);
+            const grpcStatus = requireIntegerHeader(response.headers, "sqlynx-grpc-status");
+            const body = await response.text();
+            throw new GrpcError(grpcStatus, body);
         }
     }
 }
@@ -301,7 +304,9 @@ export class NativeGrpcClient {
         });
         const response = await fetch(request);
         if (response.status !== 200) {
-            throw new GrpcError(response.status, response.statusText);
+            const grpcStatus = requireIntegerHeader(response.headers, "sqlynx-grpc-status");
+            const body = await response.text();
+            throw new GrpcError(grpcStatus, body);
         }
 
         const channelId = requireIntegerHeader(response.headers, HEADER_NAME_CHANNEL_ID);

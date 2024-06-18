@@ -66,6 +66,22 @@ function getConnectionStatusText(status: ConnectionStatus | undefined, logger: L
             return "Requested Data Cloud metadata";
         case ConnectionStatus.DATA_CLOUD_METADATA_RECEIVED:
             return "Received Data Cloud metadata";
+        case ConnectionStatus.CHANNEL_SETUP_STARTED:
+            return "Creating channel";
+        case ConnectionStatus.CHANNEL_SETUP_FAILED:
+            return "Failed to create channel";
+        case ConnectionStatus.CHANNEL_SETUP_CANCELLED:
+            return "Cancelled channel setup";
+        case ConnectionStatus.CHANNEL_READY:
+            return "Channel is ready";
+        case ConnectionStatus.HEALTH_CHECK_STARTED:
+            return "Health check started";
+        case ConnectionStatus.HEALTH_CHECK_FAILED:
+            return "Health check failed";
+        case ConnectionStatus.HEALTH_CHECK_CANCELLED:
+            return "Health check cancelled";
+        case ConnectionStatus.HEALTH_CHECK_SUCCEEDED:
+            return "Health check succeeded";
         case undefined:
             break;
         default:

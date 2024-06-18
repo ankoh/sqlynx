@@ -11,20 +11,24 @@ import { SalesforceAuthParams } from './connection_params.js';
 import { CONNECTOR_INFOS, ConnectorType, SALESFORCE_DATA_CLOUD_CONNECTOR } from './connector_info.js';
 import {
     ConnectionHealth,
-    ConnectionStatus,
     ConnectionState,
     ConnectionStateWithoutId,
-    createConnectionState, RESET,
+    ConnectionStatus,
+    createConnectionState,
+    RESET,
 } from './connection_state.js';
 import { updateDataCloudCatalog } from './salesforce_catalog_update.js';
+import { HyperDatabaseChannel } from '../platform/hyperdb_client.js';
+import { GrpcChannelArgs } from '../platform/grpc_common.js';
 
-export interface SalesforceAuthTimings {
+export interface SalesforceSetupTimings {
     /// The time when the auth started
     authStartedAt: Date | null;
     /// The time when the auth got cancelled
     authCancelledAt: Date | null;
     /// The time when the auth failed
     authFailedAt: Date | null;
+
     /// The time when the PKCE generation started
     pkceGenStartedAt: Date | null;
     /// The time when the PKCE generation finished
@@ -45,17 +49,36 @@ export interface SalesforceAuthTimings {
     dataCloudAccessTokenRequestedAt: Date | null;
     /// The time when we received the data cloud access token
     dataCloudAccessTokenReceivedAt: Date | null;
+
     /// The time when we started to request the data cloud metadata
     dataCloudMetadataRequestedAt: Date | null;
     /// The time when we received the data cloud metadata
     dataCloudMetadataReceivedAt: Date | null;
+
+    /// The time when the channel setup started
+    channelSetupStartedAt: Date | null;
+    /// The time when the channel setup got cancelled
+    channelSetupCancelledAt: Date | null;
+    /// The time when the channel setup failed
+    channelSetupFailedAt: Date | null;
+    /// The time when the channel was marked ready
+    channelReadyAt: Date | null;
+    /// The time when the health check started
+    healthCheckStartedAt: Date | null;
+    /// The time when the health check got cancelled
+    healthCheckCancelledAt: Date | null;
+    /// The time when the health check failed
+    healthCheckFailedAt: Date | null;
+    /// The time when the health check succeeded
+    healthCheckSucceededAt: Date | null;
 }
 
-export function createSalesforceAuthTimings(): SalesforceAuthTimings {
+export function createSalesforceSetupTimings(): SalesforceSetupTimings {
     return {
         authCancelledAt: null,
         authFailedAt: null,
         authStartedAt: null,
+
         pkceGenStartedAt: null,
         pkceGenFinishedAt: null,
         openedNativeAuthLinkAt: null,
@@ -66,18 +89,29 @@ export function createSalesforceAuthTimings(): SalesforceAuthTimings {
         coreAccessTokenReceivedAt: null,
         dataCloudAccessTokenRequestedAt: null,
         dataCloudAccessTokenReceivedAt: null,
+
         dataCloudMetadataRequestedAt: null,
-        dataCloudMetadataReceivedAt: null
+        dataCloudMetadataReceivedAt: null,
+
+        channelSetupStartedAt: null,
+        channelSetupCancelledAt: null,
+        channelSetupFailedAt: null,
+        channelReadyAt: null,
+        healthCheckStartedAt: null,
+        healthCheckCancelledAt: null,
+        healthCheckFailedAt: null,
+        healthCheckSucceededAt: null,
     };
 }
 
 export interface SalesforceConnectionDetails {
     /// The timings
-    authTimings: SalesforceAuthTimings;
+    authTimings: SalesforceSetupTimings;
     /// The auth params
     authParams: SalesforceAuthParams | null;
     /// The authentication error
     authError: string | null;
+
     /// The PKCE challenge
     pkceChallenge: PKCEChallenge | null;
     /// The popup window (if starting the OAuth flow from the browser)
@@ -88,20 +122,32 @@ export interface SalesforceConnectionDetails {
     coreAccessToken: SalesforceCoreAccessToken | null;
     /// The data cloud access token
     dataCloudAccessToken: SalesforceDataCloudAccessToken | null;
+
+    /// The authentication error
+    channelError: string | null;
+    /// The Hyper connection
+    channel: HyperDatabaseChannel | null;
+    /// The health check error
+    healthCheckError: string | null;
 }
 
 export function createSalesforceConnectorState(lnx: sqlynx.SQLynx): ConnectionStateWithoutId {
     return createConnectionState(lnx, CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD], {
         type: SALESFORCE_DATA_CLOUD_CONNECTOR,
         value: {
-            authTimings: createSalesforceAuthTimings(),
+            authTimings: createSalesforceSetupTimings(),
             authParams: null,
             authError: null,
+
             pkceChallenge: null,
             openAuthWindow: null,
             coreAuthCode: null,
             coreAccessToken: null,
             dataCloudAccessToken: null,
+
+            channelError: null,
+            channel: null,
+            healthCheckError: null,
         }
     });
 }
@@ -117,6 +163,7 @@ export function getSalesforceConnectionDetails(state: ConnectionState | null): S
 export const AUTH_CANCELLED = Symbol('AUTH_CANCELLED');
 export const AUTH_FAILED = Symbol('AUTH_FAILED');
 export const AUTH_STARTED = Symbol('AUTH_STARTED');
+
 export const GENERATING_PKCE_CHALLENGE = Symbol('GENERATING_PKCE_CHALLENGE');
 export const GENERATED_PKCE_CHALLENGE = Symbol('GENERATED_PKCE_CHALLENGE');
 export const OAUTH_NATIVE_LINK_OPENED = Symbol('OAUTH_NATIVE_LINK_OPENED');
@@ -127,8 +174,18 @@ export const REQUESTING_CORE_AUTH_TOKEN = Symbol('REQUESTING_CORE_AUTH_TOKEN');
 export const RECEIVED_CORE_AUTH_TOKEN = Symbol('RECEIVED_CORE_ACCESS_TOKEN');
 export const REQUESTING_DATA_CLOUD_ACCESS_TOKEN = Symbol('REQUESTING_DATA_CLOUD_ACCESS_TOKEN');
 export const RECEIVED_DATA_CLOUD_ACCESS_TOKEN = Symbol('RECEIVED_DATA_CLOUD_ACCESS_TOKEN');
+
 export const REQUESTING_DATA_CLOUD_METADATA = Symbol('REQUESTING_DATA_CLOUD_METADATA');
 export const RECEIVED_DATA_CLOUD_METADATA = Symbol('RECEIVED_DATA_CLOUD_METADATA');
+
+export const CHANNEL_SETUP_CANCELLED = Symbol('CHANNEL_SETUP_CANCELLED');
+export const CHANNEL_SETUP_FAILED = Symbol('CHANNEL_SETUP_FAILED');
+export const CHANNEL_SETUP_STARTED = Symbol('CHANNEL_SETUP_STARTED');
+export const CHANNEL_READY = Symbol('CHANNEL_READY');
+export const HEALTH_CHECK_STARTED = Symbol('HEALTH_CHECK_STARTED');
+export const HEALTH_CHECK_CANCELLED = Symbol('HEALTH_CHECK_CANCELLED');
+export const HEALTH_CHECK_SUCCEEDED = Symbol('HEALTH_CHECK_SUCCEEDED');
+export const HEALTH_CHECK_FAILED = Symbol('HEALTH_CHECK_FAILED');
 
 export type SalesforceConnectionStateAction =
     | VariantKind<typeof RESET, null>
@@ -147,6 +204,14 @@ export type SalesforceConnectionStateAction =
     | VariantKind<typeof RECEIVED_DATA_CLOUD_ACCESS_TOKEN, SalesforceDataCloudAccessToken>
     | VariantKind<typeof REQUESTING_DATA_CLOUD_METADATA, null>
     | VariantKind<typeof RECEIVED_DATA_CLOUD_METADATA, SalesforceMetadata>
+    | VariantKind<typeof CHANNEL_SETUP_STARTED, GrpcChannelArgs>
+    | VariantKind<typeof CHANNEL_SETUP_CANCELLED, string>
+    | VariantKind<typeof CHANNEL_SETUP_FAILED, string>
+    | VariantKind<typeof CHANNEL_READY, HyperDatabaseChannel>
+    | VariantKind<typeof HEALTH_CHECK_STARTED, null>
+    | VariantKind<typeof HEALTH_CHECK_CANCELLED, null>
+    | VariantKind<typeof HEALTH_CHECK_FAILED, string>
+    | VariantKind<typeof HEALTH_CHECK_SUCCEEDED, null>
     ;
 
 export function reduceSalesforceConnectionState(state: ConnectionState, action: SalesforceConnectionStateAction): ConnectionState | null {
@@ -159,14 +224,19 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                 details: {
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
-                        authTimings: createSalesforceAuthTimings(),
+                        authTimings: createSalesforceSetupTimings(),
                         authParams: details.authParams,
                         authError: null,
+
                         pkceChallenge: null,
                         openAuthWindow: null,
                         coreAuthCode: null,
                         coreAccessToken: null,
                         dataCloudAccessToken: null,
+
+                        channelError: null,
+                        channel: null,
+                        healthCheckError: null,
                     }
                 }
             };
@@ -181,16 +251,21 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
                         authTimings: {
-                            ...createSalesforceAuthTimings(),
+                            ...createSalesforceSetupTimings(),
                             authStartedAt: new Date(),
                         },
                         authParams: action.value,
                         authError: null,
+
                         pkceChallenge: null,
                         openAuthWindow: null,
                         coreAuthCode: null,
                         coreAccessToken: null,
                         dataCloudAccessToken: null,
+
+                        channelError: null,
+                        channel: null,
+                        healthCheckError: null,
                     }
                 }
             };
@@ -440,6 +515,151 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                         },
                     }
                 }
+            };
+            break;
+        case CHANNEL_SETUP_STARTED:
+            next = {
+                ...state,
+                connectionStatus: ConnectionStatus.CHANNEL_SETUP_STARTED,
+                connectionHealth: ConnectionHealth.CONNECTING,
+                details: {
+                    type: SALESFORCE_DATA_CLOUD_CONNECTOR,
+                    value: {
+                        ...details,
+                        authTimings: {
+                            ...details.authTimings,
+                            channelSetupStartedAt: new Date(),
+                        },
+                        channelError: null,
+                        channel: null,
+                        healthCheckError: null,
+                    }
+                },
+            };
+            break;
+        case CHANNEL_SETUP_CANCELLED:
+            next = {
+                ...state,
+                connectionStatus: ConnectionStatus.CHANNEL_SETUP_CANCELLED,
+                connectionHealth: ConnectionHealth.CANCELLED,
+                details: {
+                    type: SALESFORCE_DATA_CLOUD_CONNECTOR,
+                    value: {
+                        ...details,
+                        authTimings: {
+                            ...details.authTimings,
+                            channelSetupCancelledAt: new Date(),
+                        },
+                        channelError: action.value,
+                        channel: null
+                    }
+                },
+            };
+            break;
+        case CHANNEL_SETUP_FAILED:
+            next = {
+                ...state,
+                connectionStatus: ConnectionStatus.CHANNEL_SETUP_FAILED,
+                connectionHealth: ConnectionHealth.FAILED,
+                details: {
+                    type: SALESFORCE_DATA_CLOUD_CONNECTOR,
+                    value: {
+                        ...details,
+                        authTimings: {
+                            ...details.authTimings,
+                            channelSetupFailedAt: new Date(),
+                        },
+                        channelError: action.value,
+                        channel: null
+                    }
+                },
+            };
+            break;
+        case CHANNEL_READY:
+            next = {
+                ...state,
+                connectionStatus: ConnectionStatus.CHANNEL_READY,
+                connectionHealth: ConnectionHealth.CONNECTING,
+                details: {
+                    type: SALESFORCE_DATA_CLOUD_CONNECTOR,
+                    value: {
+                        ...details,
+                        authTimings: {
+                            ...details.authTimings,
+                            channelReadyAt: new Date(),
+                        },
+                        channel: action.value
+                    }
+                },
+            };
+            break;
+        case HEALTH_CHECK_STARTED:
+            next = {
+                ...state,
+                connectionStatus: ConnectionStatus.HEALTH_CHECK_STARTED,
+                connectionHealth: ConnectionHealth.CONNECTING,
+                details: {
+                    type: SALESFORCE_DATA_CLOUD_CONNECTOR,
+                    value: {
+                        ...details,
+                        authTimings: {
+                            ...details.authTimings,
+                            healthCheckStartedAt: new Date(),
+                        },
+                    }
+                },
+            };
+            break;
+        case HEALTH_CHECK_FAILED:
+            next = {
+                ...state,
+                connectionStatus: ConnectionStatus.HEALTH_CHECK_FAILED,
+                connectionHealth: ConnectionHealth.FAILED,
+                details: {
+                    type: SALESFORCE_DATA_CLOUD_CONNECTOR,
+                    value: {
+                        ...details,
+                        authTimings: {
+                            ...details.authTimings,
+                            healthCheckFailedAt: new Date(),
+                        },
+                        healthCheckError: action.value,
+                    }
+                },
+            };
+            break;
+        case HEALTH_CHECK_CANCELLED:
+            next = {
+                ...state,
+                connectionStatus: ConnectionStatus.HEALTH_CHECK_CANCELLED,
+                connectionHealth: ConnectionHealth.CANCELLED,
+                details: {
+                    type: SALESFORCE_DATA_CLOUD_CONNECTOR,
+                    value: {
+                        ...details,
+                        authTimings: {
+                            ...details.authTimings,
+                            healthCheckCancelledAt: new Date(),
+                        },
+                    }
+                },
+            };
+            break;
+        case HEALTH_CHECK_SUCCEEDED:
+            next = {
+                ...state,
+                connectionStatus: ConnectionStatus.HEALTH_CHECK_SUCCEEDED,
+                connectionHealth: ConnectionHealth.ONLINE,
+                details: {
+                    type: SALESFORCE_DATA_CLOUD_CONNECTOR,
+                    value: {
+                        ...details,
+                        authTimings: {
+                            ...details.authTimings,
+                            healthCheckSucceededAt: new Date(),
+                        },
+                    }
+                },
             };
             break;
     }

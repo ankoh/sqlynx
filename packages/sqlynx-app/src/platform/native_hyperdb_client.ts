@@ -23,6 +23,8 @@ import {
 import { GrpcChannelArgs } from './grpc_common.js';
 import { Logger } from './logger.js';
 
+const LOG_CTX = "native_hyperdb_client";
+
 export class QueryResultReader implements AsyncIterator<Uint8Array>, AsyncIterable<Uint8Array> {
     /// The gRPC stream
     grpcStream: NativeGrpcServerStream;
@@ -175,6 +177,11 @@ class NativeHyperDatabaseChannel implements HyperDatabaseChannel {
             }
             return { ok: true, errorMessage: null };
         } catch (e: any) {
+            if (e.grpcStatus) {
+                this.logger.warn(`health check failed: grcp_status=${e.grpcStatus}`, LOG_CTX);
+            } else {
+                this.logger.warn(`health check failed: message=${e.message}`, LOG_CTX);
+            }
             return { ok: false, errorMessage: e.toString() };
         }
     }
