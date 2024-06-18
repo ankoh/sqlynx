@@ -4,7 +4,9 @@
         "^(\\.{1,2}/.*)\\.js$": "$1",
         ".*\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga|html|wasm)$": "<rootDir>/__tests__/file_mock.ts",
         "^.+\\.(css|styl|less|sass|scss)$": "identity-obj-proxy",
-        "react-router-dom": "react-router-dom/react-router-dom.development.js"
+        "react-router-dom": "react-router-dom/react-router-dom.development.js",
+        "@ankoh/sqlynx-pb": "<rootDir>/../sqlynx-pb/dist/sqlynx-proto.module.js",
+        "@ankoh/sqlynx-core": "<rootDir>/../sqlynx-core-api/dist/sqlynx.module.js"
     },
     "extensionsToTreatAsEsm": [
         ".ts",
