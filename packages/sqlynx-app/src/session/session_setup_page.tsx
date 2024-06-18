@@ -31,6 +31,7 @@ import {
     getConnectionHealthIndicator,
     getConnectionStatusText,
 } from '../view/connectors/salesforce_connector_settings.js';
+import { useNavigate } from 'react-router-dom';
 
 const LOG_CTX = "session_setup";
 const AUTO_TRIGGER_DELAY = 4000;
@@ -117,6 +118,7 @@ interface Props {
 
 export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     const now = new Date();
+    const navigate = useNavigate();
     const logger = useLogger();
     const salesforceSetup = useSalesforceSetup();
     const [showLogs, setShowLogs] = React.useState<boolean>(false);
@@ -207,6 +209,9 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                 update[script.scriptId] = script.scriptText;
             }
             dispatchSession({ type: REPLACE_SCRIPT_CONTENT, value: update });
+
+            // Navigate to the app root
+            navigate("/");
 
             // We're done, return close the session setup page
             props.onDone();
