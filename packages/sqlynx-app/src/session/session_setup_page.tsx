@@ -20,11 +20,6 @@ import { KeyValueTextField, TextField } from '../view/foundations/text_field.js'
 import { VersionViewerOverlay } from '../view/version_viewer.js';
 import { AnchorAlignment, AnchorSide } from '../view/foundations/anchored_position.js';
 import { Button, ButtonSize, ButtonVariant } from '../view/foundations/button.js';
-import {
-    checkHyperConnectionSetup,
-    checkSalesforceConnectionSetup,
-    ConnectionSetupCheck,
-} from '../connectors/connector_setup_check.js';
 import { useSessionState } from './session_state_registry.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
 import { LogViewerOverlay } from '../view/log_viewer.js';
@@ -156,12 +151,13 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
 
     // Helper to configure the session
     const [configStarted, setConfigStarted] = React.useState<boolean>(false);
-    const configInProgress = React.useRef<boolean>(false);
+    const configInProgressOrDone = React.useRef<boolean>(false);
     const configure = React.useCallback(async () => {
         setConfigStarted(true);
-        if (configInProgress.current) {
+        if (configInProgressOrDone.current) {
             return;
         }
+        configInProgressOrDone.current = true;
         try {
             // Check which connector configuring
             const connectorParams = props.setupProto.connectorParams?.connector;
@@ -196,8 +192,8 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
 
             // We're done, return close the session setup page
             props.onDone();
-        } finally {
-            configInProgress.current = false;
+        } catch(e: any) {
+            configInProgressOrDone.current = false;
         }
     }, [salesforceSetup]);
 
@@ -345,7 +341,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                 </div>
             </div>
         );
-    } else if (connection && connection.connectionHealth != ConnectionHealth.ONLINE) {
+    } else if (connection.connectionHealth != ConnectionHealth.ONLINE) {
         // Get the connection status
         const statusText: string = getConnectionStatusText(connection.connectionStatus, logger);
         // Get the indicator status

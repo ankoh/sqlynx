@@ -76,7 +76,7 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
                     break;
             }
         },
-        [session?.connectorInfo],
+        [connection, session, session?.connectorInfo],
     );
 
     // Helper to require connector info
