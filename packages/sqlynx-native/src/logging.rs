@@ -16,5 +16,5 @@ pub mod config {
     use tauri_plugin_log::TargetKind as LogTargetKind;
 
     pub const LOG_TARGETS: [LogTarget; 2] = [LogTarget::new(LogTargetKind::Webview), LogTarget::new(LogTargetKind::LogDir { file_name: None })];
-    pub const LOG_LEVEL: LevelFilter = LevelFilter::Info;
+    pub const LOG_LEVEL: LevelFilter = LevelFilter::Debug;
 }
