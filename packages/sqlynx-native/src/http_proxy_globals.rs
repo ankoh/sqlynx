@@ -35,11 +35,17 @@ pub async fn read_http_server_stream(stream_id: usize, req: Request<Vec<u8>>) ->
             for message in batches.body_chunks.iter() {
                 buffer.write(&message).unwrap();
             }
-            Response::builder()
+            let mut response = Response::builder()
                 .status(200)
                 .header(HEADER_NAME_STREAM_ID, stream_id)
                 .header(HEADER_NAME_BATCH_EVENT, batches.event.to_str())
-                .header(HEADER_NAME_BATCH_BYTES, batches.total_body_bytes)
+                .header(HEADER_NAME_BATCH_BYTES, batches.total_body_bytes);
+            log::debug!("{:?}", batches.headers);
+            let headers = &mut response.headers_mut().unwrap();
+            for (key, value) in batches.headers.iter() {
+                headers.insert(key, value.clone());
+            }
+            response
                 .body(buffer)
                 .unwrap()
         },
