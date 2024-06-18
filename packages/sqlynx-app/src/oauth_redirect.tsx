@@ -206,8 +206,10 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
             } else {
                 flowContinuation = (
                     <div className={styles.card_section}>
-                        <div className={styles.section_description}>
-                            Your browser should prompt you to open the native app. You can retry until the code expires.
+                        <div className={styles.section_entries}>
+                            <div className={styles.section_description}>
+                                Your browser should prompt you to open the native app. You can retry until the code expires.
+                            </div>
                         </div>
                         <div className={styles.card_actions}>
                             <div className={styles.card_actions_right}>
