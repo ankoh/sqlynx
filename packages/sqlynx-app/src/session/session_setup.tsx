@@ -2,18 +2,16 @@ import * as proto from '@ankoh/sqlynx-pb';
 import * as React from 'react';
 
 import { SessionSetupPage } from './session_setup_page.js';
-import {
-    CONNECTOR_INFOS,
-    ConnectorInfo,
-    ConnectorType,
-    getConnectorInfoForParams,
-} from '../connectors/connector_info.js';
+import { ConnectorInfo, getConnectorInfoForParams } from '../connectors/connector_info.js';
 import { useServerlessSessionSetup } from './setup_serverless_session.js';
 import { useAppEventListener } from '../platform/event_listener_provider.js';
 import { useSalesforceSessionSetup } from './setup_salesforce_session.js';
 import { useHyperSessionSetup } from './setup_hyper_session.js';
 import { useCurrentSessionSelector } from './current_session.js';
 import { useLogger } from '../platform/logger_provider.js';
+import { useDynamicConnectionDispatch } from '../connectors/connection_registry.js';
+import { useSessionRegistry } from './session_state_registry.js';
+import { RESET } from '../connectors/connection_state.js';
 
 /// For now, we just set up one session per connector.
 /// Our abstractions would allow for a more dynamic session management, but we don't have the UI for that.
@@ -49,6 +47,8 @@ export const SessionSetup: React.FC<{ children: React.ReactElement }> = (props: 
     const setupSalesforceSession = useSalesforceSessionSetup();
     const selectCurrentSession = useCurrentSessionSelector();
     const [defaultSessions, setDefaultSessions] = React.useState<DefaultSessions | null>(null);
+    const sessionReg = useSessionRegistry();
+    const [connReg, connDispatch] = useDynamicConnectionDispatch();
 
     const appEvents = useAppEventListener();
     const abortDefaultSessionSwitch = React.useRef(new AbortController());
@@ -91,6 +91,8 @@ export const SessionSetup: React.FC<{ children: React.ReactElement }> = (props: 
             }
             switch (data.connectorParams?.connector.case) {
                 case "hyper": {
+                    const session = sessionReg.sessionMap.get(defaultSessions.hyper)!;
+                    connDispatch(session.connectionId, { type: RESET, value: null });
                     selectCurrentSession(defaultSessions.hyper);
                     setState({
                         decision: SessionSetupDecision.SHOW_SETUP_PAGE,
@@ -103,6 +105,8 @@ export const SessionSetup: React.FC<{ children: React.ReactElement }> = (props: 
                     break;
                 }
                 case "salesforce": {
+                    const session = sessionReg.sessionMap.get(defaultSessions.salesforce)!;
+                    connDispatch(session.connectionId, { type: RESET, value: null });
                     selectCurrentSession(defaultSessions.salesforce);
                     setState({
                         decision: SessionSetupDecision.SHOW_SETUP_PAGE,
@@ -115,6 +119,8 @@ export const SessionSetup: React.FC<{ children: React.ReactElement }> = (props: 
                     break;
                 }
                 case "serverless": {
+                    const session = sessionReg.sessionMap.get(defaultSessions.serverless)!;
+                    connDispatch(session.connectionId, { type: RESET, value: null });
                     selectCurrentSession(defaultSessions.serverless);
                     setState({
                         decision: SessionSetupDecision.SKIP_SETUP_PAGE,
