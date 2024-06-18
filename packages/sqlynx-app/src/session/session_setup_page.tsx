@@ -347,7 +347,6 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
         // Get the indicator status
         const indicatorStatus: IndicatorStatus = getConnectionHealthIndicator(connection.connectionHealth);
 
-
         sections.push(
             <div key={sections.length} className={baseStyles.card_actions}>
                 <div className={baseStyles.card_actions_left}>
@@ -375,7 +374,6 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
         );
     } else {
         // We can stay here, render normal action bar
-        // TODO Actually load the script here...?
         sections.push(
             <div key={sections.length} className={baseStyles.card_actions}>
                 <div className={baseStyles.card_actions_right}>
