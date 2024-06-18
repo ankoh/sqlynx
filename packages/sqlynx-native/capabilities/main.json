@@ -9,6 +9,7 @@
     "permissions": [
         "app:default",
         "deep-link:default",
+        "deep-link:allow-get-current",
         "event:default",
         "log:allow-log",
         "log:default",
