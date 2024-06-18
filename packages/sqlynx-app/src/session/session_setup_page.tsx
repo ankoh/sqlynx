@@ -33,8 +33,7 @@ import {
 } from '../view/connectors/salesforce_connector_settings.js';
 
 const LOG_CTX = "session_setup";
-// const AUTOTRIGGER_DELAY = 2000;
-const AUTOTRIGGER_DELAY = 10000;
+const AUTOTRIGGER_DELAY = 4000;
 const AUTOTRIGGER_COUNTER_INTERVAL = 800;
 
 const ConnectorParamsSection: React.FC<{ params: proto.sqlynx_session.pb.ConnectorParams }> = (props: { params: proto.sqlynx_session.pb.ConnectorParams }) => {
@@ -149,6 +148,15 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
         canExecuteHere = true;
     }
 
+    // Generate the session setup url
+    const sessionSetupURL = React.useMemo(() => {
+        if (canExecuteHere) {
+            return null;
+        } else {
+            return encodeSessionSetupUrl(props.setupProto, SessionLinkTarget.NATIVE);
+        }
+    }, []);
+
     // Helper to configure the session
     const [configStarted, setConfigStarted] = React.useState<boolean>(false);
     const configInProgressOrDone = React.useRef<boolean>(false);
@@ -158,6 +166,16 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
             return;
         }
         configInProgressOrDone.current = true;
+
+        // Cannot execute here? Then redirect the user
+        if (!canExecuteHere) {
+            const link = document.createElement('a');
+            link.href = sessionSetupURL!.toString();
+            logger.info(`opening deep link: ${link.href}`);
+            link.click();
+        }
+
+        // Otherwise configure the session
         try {
             // Check which connector configuring
             const connectorParams = props.setupProto.connectorParams?.connector;
@@ -201,11 +219,6 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     const autoTriggersAt = React.useMemo(() => new Date(now.getTime() + AUTOTRIGGER_DELAY), []);
     const [remainingUntilAutoTrigger, setRemainingUntilAutoTrigger] = React.useState<number>(() => Math.max(autoTriggersAt.getTime(), now.getTime()) - now.getTime());
     React.useEffect(() => {
-        // Skip if the connector can't be used here
-        if (!canExecuteHere) {
-            logger.info("connector cannot be used here, skipping setup trigger", "session_setup");
-            return () => { };
-        }
         // Otherwise setup an autotrigger for the setup
         logger.info(`setup config auto-trigger in ${formatHHMMSS(remainingUntilAutoTrigger / 1000)}`, "session_setup");
         const timeoutId = setTimeout(configure, remainingUntilAutoTrigger);
@@ -270,15 +283,6 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
         sections.push(<ConnectorParamsSection key={sections.length} params={props?.setupProto?.connectorParams} />);
     }
 
-    // Generate the session setup url
-    const sessionSetupURL = React.useMemo(() => {
-        if (canExecuteHere) {
-            return null;
-        } else {
-            return encodeSessionSetupUrl(props.setupProto, SessionLinkTarget.NATIVE);
-        }
-    }, []);
-
     // Do we need to switch to native?
     // Render a warning, information where to get the app and a button to switch.
     if (!canExecuteHere && sessionSetupURL != null) {
@@ -329,6 +333,8 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                         <Button
                             variant={ButtonVariant.Primary}
                             leadingVisual={DesktopDownloadIcon}
+                            trailingVisual={!configStarted ? () =>
+                                <div>{Math.floor(remainingUntilAutoTrigger / 1000)}</div> : undefined}
                             onClick={() => {
                                 const link = document.createElement('a');
                                 link.href = sessionSetupURL.toString();
