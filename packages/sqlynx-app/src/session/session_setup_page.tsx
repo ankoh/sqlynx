@@ -33,8 +33,8 @@ import {
 } from '../view/connectors/salesforce_connector_settings.js';
 
 const LOG_CTX = "session_setup";
-const AUTOTRIGGER_DELAY = 4000;
-const AUTOTRIGGER_COUNTER_INTERVAL = 800;
+const AUTO_TRIGGER_DELAY = 4000;
+const AUTO_TRIGGER_COUNTER_INTERVAL = 500;
 
 const ConnectorParamsSection: React.FC<{ params: proto.sqlynx_session.pb.ConnectorParams }> = (props: { params: proto.sqlynx_session.pb.ConnectorParams }) => {
     switch (props.params.connector.case) {
@@ -216,7 +216,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     }, [salesforceSetup]);
 
     // Setup config auto-trigger
-    const autoTriggersAt = React.useMemo(() => new Date(now.getTime() + AUTOTRIGGER_DELAY), []);
+    const autoTriggersAt = React.useMemo(() => new Date(now.getTime() + AUTO_TRIGGER_DELAY), []);
     const [remainingUntilAutoTrigger, setRemainingUntilAutoTrigger] = React.useState<number>(() => Math.max(autoTriggersAt.getTime(), now.getTime()) - now.getTime());
     React.useEffect(() => {
         // Otherwise setup an autotrigger for the setup
@@ -228,11 +228,11 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
             const now = new Date();
             const remainder = Math.max(autoTriggersAt.getTime(), now.getTime()) - now.getTime();
             setRemainingUntilAutoTrigger(remainder);
-            if (remainder > AUTOTRIGGER_COUNTER_INTERVAL) {
-                updaterId.current = setTimeout(updateRemaining, AUTOTRIGGER_COUNTER_INTERVAL);
+            if (remainder > AUTO_TRIGGER_COUNTER_INTERVAL) {
+                updaterId.current = setTimeout(updateRemaining, AUTO_TRIGGER_COUNTER_INTERVAL);
             }
         };
-        updaterId.current = setTimeout(updateRemaining, AUTOTRIGGER_COUNTER_INTERVAL);
+        updaterId.current = setTimeout(updateRemaining, AUTO_TRIGGER_COUNTER_INTERVAL);
 
         return () => {
             clearTimeout(timeoutId);
