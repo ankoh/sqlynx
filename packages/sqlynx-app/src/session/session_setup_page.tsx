@@ -132,21 +132,20 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     const [maybeConnection,  dispatchConnection]= useConnectionState(session!.connectionId);
     const connection = maybeConnection!;
 
-
-    // Resolve the connector info
-    let connectionSetupCheck: ConnectionSetupCheck | null = null;
-    switch (props.setupProto.connectorParams?.connector.case) {
-        case "salesforce": {
-            connectionSetupCheck = checkSalesforceConnectionSetup(connection, props.setupProto.connectorParams.connector.value);
-            break;
-        }
-        case "hyper": {
-            connectionSetupCheck = checkHyperConnectionSetup(connection, props.setupProto.connectorParams.connector.value);
-            break;
-        }
-        default:
-            break;
-    }
+    // // Resolve the connector info
+    // let connectionSetupCheck: ConnectionSetupCheck | null = null;
+    // switch (props.setupProto.connectorParams?.connector.case) {
+    //     case "salesforce": {
+    //         connectionSetupCheck = checkSalesforceConnectionSetup(connection, props// .setupProto.connectorParams.connector.value);
+    //         break;
+    //     }
+    //     case "hyper": {
+    //         connectionSetupCheck = checkHyperConnectionSetup(connection, props.setupProto// .connectorParams.connector.value);
+    //         break;
+    //     }
+    //     default:
+    //         break;
+    // }
 
     // Need to switch to native?
     // Some connectors only run in the native app.
