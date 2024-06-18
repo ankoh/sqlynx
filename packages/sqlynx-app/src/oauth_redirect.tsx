@@ -25,7 +25,8 @@ import { OverlaySize } from './view/foundations/overlay.js';
 import * as page_styles from './view/banner_page.module.css';
 import { CopyToClipboardButton } from './utils/clipboard.js';
 
-const AUTOTRIGGER_DELAY = 2000;
+const AUTO_TRIGGER_DELAY = 2000;
+const AUTO_TRIGGER_COUNTER_INTERVAL = 500;
 
 const LOG_CTX = "oauth_redirect";
 
@@ -81,8 +82,9 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
 
     // Setup autotrigger
     const skipAutoTrigger = props.state.flowVariant == proto.sqlynx_oauth.pb.OAuthFlowVariant.NATIVE_LINK_FLOW && props.state.debugMode;
-    const autoTriggersAt = React.useMemo(() => new Date(now.getTime() + AUTOTRIGGER_DELAY), []);
-    const remainingUntilAutoTrigger = Math.max(autoTriggersAt.getTime(), now.getTime()) - now.getTime();
+    const autoTriggersAt = React.useMemo(() => new Date(now.getTime() + AUTO_TRIGGER_DELAY), []);
+    const [remainingUntilAutoTrigger, setRemainingUntilAutoTrigger] = React.useState<number>(() => Math.max(autoTriggersAt.getTime(), now.getTime()) - now.getTime());
+
     React.useEffect(() => {
         // Skip auto trigger for native apps in debug mode
         if (skipAutoTrigger) {
@@ -91,7 +93,24 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
         } else {
             logger.info(`setup auto-trigger in ${formatHHMMSS(remainingUntilAutoTrigger / 1000)}`, LOG_CTX);
             const timeoutId = setTimeout(() => triggerFlow(props.state, eventBase64, deepLink, logger), remainingUntilAutoTrigger);
-            return () => clearTimeout(timeoutId);
+            const updaterId: { current: unknown | null } = { current: null };
+
+            const updateRemaining = () => {
+                const now = new Date();
+                const remainder = Math.max(autoTriggersAt.getTime(), now.getTime()) - now.getTime();
+                setRemainingUntilAutoTrigger(remainder);
+                if (remainder > AUTO_TRIGGER_COUNTER_INTERVAL) {
+                    updaterId.current = setTimeout(updateRemaining, AUTO_TRIGGER_COUNTER_INTERVAL);
+                }
+            };
+            updaterId.current = setTimeout(updateRemaining, AUTO_TRIGGER_COUNTER_INTERVAL);
+
+            return () => {
+                clearTimeout(timeoutId);
+                if (updaterId.current != null) {
+                    clearTimeout(updaterId.current as any);
+                }
+            }
         }
     }, [props.state, code]);
 
@@ -192,30 +211,30 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                         </div>
                         <div className={styles.card_actions}>
                             <div className={styles.card_actions_right}>
-                            <CopyToClipboardButton
-                                variant={ButtonVariant.Primary}
-                                size={ButtonSize.Medium}
-                                logContext={LOG_CTX}
-                                value={deepLink}
-                                aria-label="copy-deeplink"
-                                aria-labelledby=""
-                            />
-                            {
-                                remainingUntilAutoTrigger == 0
-                                    ? <Button
-                                        variant={ButtonVariant.Primary}
-                                        onClick={() => triggerFlow(props.state, eventBase64, deepLink, logger)}
-                                    >
-                                        Open in App
-                                    </Button>
-                                    : <Button
-                                        variant={ButtonVariant.Primary}
-                                        onClick={() => triggerFlow(props.state, eventBase64, deepLink, logger)}
-                                        trailingVisual={() => <div>{Math.ceil(remainingUntilAutoTrigger / 1000)}</div>}
-                                    >
-                                        Open in App
-                                    </Button>
-                            }
+                                <CopyToClipboardButton
+                                    variant={ButtonVariant.Primary}
+                                    size={ButtonSize.Medium}
+                                    logContext={LOG_CTX}
+                                    value={deepLink}
+                                    aria-label="copy-deeplink"
+                                    aria-labelledby=""
+                                />
+                                {
+                                    remainingUntilAutoTrigger == 0
+                                        ? <Button
+                                            variant={ButtonVariant.Primary}
+                                            onClick={() => triggerFlow(props.state, eventBase64, deepLink, logger)}
+                                        >
+                                            Open in App
+                                        </Button>
+                                        : <Button
+                                            variant={ButtonVariant.Primary}
+                                            onClick={() => triggerFlow(props.state, eventBase64, deepLink, logger)}
+                                            trailingVisual={() => <div>{Math.ceil(remainingUntilAutoTrigger / 1000)}</div>}
+                                        >
+                                            Open in App
+                                        </Button>
+                                }
                             </div>
                         </div>
                     </div>
