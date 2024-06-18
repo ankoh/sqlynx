@@ -322,8 +322,8 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
                             keyAriaLabel='mTLS Client Key'
                             valueAriaLabel='mTLS Client Certificate'
                             logContext={LOG_CTX}
-                            disabled={freezeInput}
-                            readOnly={freezeInput}
+                            disabled={true}
+                            readOnly={true}
                         />
                         <TextField
                             name="mTLS CA certificates"
@@ -333,8 +333,8 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
                             leadingVisual={ChecklistIcon}
                             onChange={(e) => setMTLSCaPath(e.target.value)}
                             logContext={LOG_CTX}
-                            disabled={freezeInput}
-                            readOnly={freezeInput}
+                            disabled={true}
+                            readOnly={true}
                         />
                     </div>
                 </div>
