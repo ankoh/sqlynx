@@ -43,7 +43,7 @@ pub fn process_deep_link(event: tauri::Event, handle: AppHandle) {
     log::info!("emitting app event from deep link");
 
     // Forward the event to the PWA
-    match handle.emit("sqlynx:event", link_data.to_string()) {
+    match handle.emit("sqlynx:event", vec![link_data.to_string()]) {
         Ok(_) => {},
         Err(e) => {
             log::error!("failed to emit app event for deep link: {}", e);

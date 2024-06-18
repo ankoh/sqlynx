@@ -160,12 +160,12 @@ export abstract class AppEventListener {
     public readAppEvent(dataBase64: any, fromWhat: string) {
         // Make sure everything arriving here is a valid base64 string
         if (!dataBase64 || typeof dataBase64 !== 'string') {
-            this.logger.info("skipping app event with non-string data");
+            this.logger.info("skipping app event with non-string data", LOG_CTX);
             return null;
         }
         // Is a valid base64?
         if (!BASE64_CODEC.isValidBase64(dataBase64)) {
-            this.logger.info("skipping app event with invalid base64 data");
+            this.logger.info("skipping app event with invalid base64 data", LOG_CTX);
             return null;
         }
         // Try to parse as app event data
