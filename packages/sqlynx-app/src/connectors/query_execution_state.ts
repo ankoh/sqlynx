@@ -1,7 +1,6 @@
 import * as arrow from 'apache-arrow';
 
 import { VariantKind } from '../utils/index.js';
-import { SalesforceAPIClientInterface, SalesforceDataCloudAccessToken } from './salesforce_api_client.js';
 import { HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR } from './connector_info.js';
 import {
     ConnectionState,
@@ -54,6 +53,8 @@ export interface QueryExecutionResponseStreamMetrics {
 }
 
 export interface QueryExecutionResponseStream {
+    /// Get the result metadata (after completion)
+    getMetadata(): Map<string, string>;
     /// Get the stream metrics
     getMetrics(): QueryExecutionResponseStreamMetrics;
     /// Get the current query status
@@ -110,6 +111,8 @@ export interface QueryExecutionState {
     resultSchema: arrow.Schema | null;
     /// The number of record batches that are already buffered
     resultBatches: arrow.RecordBatch[];
+    /// The result metadata
+    resultMetadata: Map<string, string> | null;
     /// The result query_result iff the query succeeded
     resultTable: arrow.Table | null;
 }
@@ -202,11 +205,12 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
                 }
                 metrics.batchesReceived += 1;
                 metrics.rowsReceived += batch.numRows;
-                metrics.dataBytesReceived = action.value[2].dataBytes;
+                metrics.dataBytesReceived = action.value[3].dataBytes;
                 query.resultBatches.push(batch);
             }
             query = {
                 ...query,
+                resultMetadata: action.value[2],
                 resultTable: new arrow.Table(query.resultSchema!, query.resultBatches!),
                 status: QueryExecutionStatus.SUCCEEDED,
                 metrics: metrics,

@@ -137,7 +137,7 @@ export type QueryExecutionAction =
     | VariantKind<typeof QUERY_EXECUTION_PROGRESS_UPDATED, [number, QueryExecutionProgress]>
     | VariantKind<typeof QUERY_EXECUTION_RECEIVED_SCHEMA, [number, arrow.Schema]>
     | VariantKind<typeof QUERY_EXECUTION_RECEIVED_BATCH, [number, arrow.RecordBatch, QueryExecutionResponseStreamMetrics]>
-    | VariantKind<typeof QUERY_EXECUTION_SUCCEEDED, [number, arrow.RecordBatch | null, QueryExecutionResponseStreamMetrics]>
+    | VariantKind<typeof QUERY_EXECUTION_SUCCEEDED, [number, arrow.RecordBatch | null, Map<string, string>, QueryExecutionResponseStreamMetrics]>
     | VariantKind<typeof QUERY_EXECUTION_FAILED, [number, Error, QueryExecutionResponseStreamMetrics | null]>
     | VariantKind<typeof QUERY_EXECUTION_CANCELLED, [number, Error, QueryExecutionResponseStreamMetrics | null]>
     ;
