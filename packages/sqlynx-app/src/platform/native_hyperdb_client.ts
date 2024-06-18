@@ -45,6 +45,8 @@ export class QueryResultReader implements AsyncIterator<Uint8Array>, AsyncIterab
         this.dataBytes = 0;
     }
 
+    /// Get the result metadata (if any)
+    get metadata() { return this.messageIterator.metadata; }
     /// Get the next binary result chunk
     async next(): Promise<IteratorResult<Uint8Array>> {
         while (true) {
@@ -92,6 +94,10 @@ export class NativeHyperQueryResultStream implements QueryExecutionResponseStrea
     protected async setupArrowReader(): Promise<void> {
         this.arrowReader = await arrow.AsyncRecordBatchStreamReader.from(this.resultReader);
         await this.arrowReader.open();
+    }
+    /// Get the metadata
+    getMetadata(): Map<string, string> {
+        return this.resultReader.metadata;
     }
     /// Get the metrics
     getMetrics(): QueryExecutionResponseStreamMetrics {

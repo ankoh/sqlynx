@@ -69,6 +69,11 @@ export class WebHyperQueryResultStream implements QueryExecutionResponseStream {
         this.arrowReader = await arrow.AsyncRecordBatchStreamReader.from(this.resultReader);
         await this.arrowReader.open();
     }
+    /// Get the metadata
+    getMetadata(): Map<string, string> {
+        // XXX Remember trailers
+        return new Map();
+    }
     /// Get the metrics
     getMetrics(): QueryExecutionResponseStreamMetrics {
         return {
