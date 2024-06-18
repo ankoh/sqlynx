@@ -244,3 +244,9 @@
 .github_link_text {
     text-decoration: none;
 }
+
+.connection_status {
+    display: flex;
+    flex-direction: row;
+    column-gap: 8px;
+}

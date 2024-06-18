@@ -35,7 +35,7 @@ interface PageState {
 type PageStateSetter = Dispatch<React.SetStateAction<PageState>>;
 const PAGE_STATE_CTX = React.createContext<[PageState, PageStateSetter] | null>(null);
 
-function getConnectionStatusText(status: ConnectionStatus | undefined, logger: Logger) {
+export function getConnectionStatusText(status: ConnectionStatus | undefined, logger: Logger) {
     switch (status) {
         case ConnectionStatus.NOT_STARTED:
             return "Disconnected";
@@ -88,6 +88,21 @@ function getConnectionStatusText(status: ConnectionStatus | undefined, logger: L
             logger.warn(`unexpected connection status: ${status}`);
     }
     return "";
+}
+
+export function getConnectionHealthIndicator(health: ConnectionHealth | null) {
+    switch (health) {
+        case ConnectionHealth.NOT_STARTED:
+            return IndicatorStatus.None;
+        case ConnectionHealth.ONLINE:
+            return IndicatorStatus.Succeeded;
+        case ConnectionHealth.FAILED:
+            return IndicatorStatus.Failed;
+        case ConnectionHealth.CONNECTING:
+            return IndicatorStatus.Running;
+        default:
+            return IndicatorStatus.None;
+    }
 }
 
 export const SalesforceConnectorSettings: React.FC<object> = (_props: object) => {
@@ -186,23 +201,8 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
 
     // Get the connection status
     const statusText = getConnectionStatusText(connectionState?.connectionStatus, logger);
-
     // Get the indicator status
-    let indicatorStatus: IndicatorStatus = IndicatorStatus.None;
-    switch (connectionState?.connectionHealth) {
-        case ConnectionHealth.NOT_STARTED:
-            indicatorStatus = IndicatorStatus.None;
-            break;
-        case ConnectionHealth.ONLINE:
-            indicatorStatus = IndicatorStatus.Succeeded;
-            break;
-        case ConnectionHealth.FAILED:
-            indicatorStatus = IndicatorStatus.Failed;
-            break;
-        case ConnectionHealth.CONNECTING:
-            indicatorStatus = IndicatorStatus.Running;
-            break;
-    }
+    const indicatorStatus: IndicatorStatus = getConnectionHealthIndicator(connectionState?.connectionHealth ?? null);
 
     // Get the action button
     let connectButton: React.ReactElement = <div />;
