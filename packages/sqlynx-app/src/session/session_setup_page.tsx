@@ -34,7 +34,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 const LOG_CTX = "session_setup";
-const AUTO_TRIGGER_DELAY = 4000;
+const AUTO_TRIGGER_DELAY = 3000;
 const AUTO_TRIGGER_COUNTER_INTERVAL = 500;
 
 const ConnectorParamsSection: React.FC<{ params: proto.sqlynx_session.pb.ConnectorParams }> = (props: { params: proto.sqlynx_session.pb.ConnectorParams }) => {
@@ -125,7 +125,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     const [showVersionOverlay, setShowVersionOverlay] = React.useState<boolean>(false);
     const [maybeSession, dispatchSession] = useSessionState(props.sessionId);
     const session = maybeSession!;
-    const [maybeConnection,  dispatchConnection]= useConnectionState(session!.connectionId);
+    const [maybeConnection, dispatchConnection] = useConnectionState(session!.connectionId);
     const connection = maybeConnection!;
 
     // // Resolve the connector info
@@ -215,7 +215,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
 
             // We're done, return close the session setup page
             props.onDone();
-        } catch(e: any) {
+        } catch (e: any) {
             configInProgressOrDone.current = false;
         }
     }, [salesforceSetup]);
@@ -302,7 +302,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                         </svg>
                         &nbsp;
                         <a className={baseStyles.github_link_text} href="https://github.com/ankoh/sqlynx/issues/738"
-                           target="_blank">
+                            target="_blank">
                             Web connectors for Hyper and Data Cloud
                         </a>
                     </div>
@@ -364,7 +364,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                     <div className={baseStyles.connection_status}>
                         <div className={connStyles.status_indicator}>
                             <StatusIndicator className={connStyles.status_indicator_spinner} status={indicatorStatus}
-                                             fill="black" />
+                                fill="black" />
                         </div>
                         <div className={connStyles.status_text}>
                             {statusText}
@@ -402,7 +402,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     // Render the page
     return (
         <div className={baseStyles.page}
-                 data-tauri-drag-region="true">
+            data-tauri-drag-region="true">
             <div className={baseStyles.banner_and_content_container}>
                 <div className={baseStyles.banner_container}>
                     <div className={baseStyles.banner_logo}>
