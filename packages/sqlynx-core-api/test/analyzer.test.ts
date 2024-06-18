@@ -21,7 +21,7 @@ beforeAll(async () => {
 describe('SQLynx Analyzer', () => {
     it('external identifier collision', () => {
         const schemaScript = lnx!.createScript(null, 1);
-        schemaScript.insertTextAt(0, 'create query_result foo(a int);');
+        schemaScript.insertTextAt(0, 'create table foo(a int);');
         schemaScript.scan().delete();
         schemaScript.parse().delete();
         schemaScript.analyze().delete();
@@ -44,7 +44,7 @@ describe('SQLynx Analyzer', () => {
 
     it(`external ref`, () => {
         const extScript = lnx!.createScript(null, 1);
-        extScript.insertTextAt(0, 'create query_result foo(a int);');
+        extScript.insertTextAt(0, 'create table foo(a int);');
 
         const extScannerRes = extScript.scan();
         const extParserRes = extScript.parse();
