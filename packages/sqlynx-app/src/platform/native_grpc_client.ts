@@ -156,12 +156,15 @@ export class NativeGrpcServerStreamMessageIterator implements AsyncIterator<Uint
     protected currentBatch: NativeGrpcServerStreamBatch | null;
     /// The next index in the current batch
     protected nextInCurrentBatch: number;
+    /// The combined metadata
+    public metadata: Map<string, string>;
 
     constructor(batchIterator: AsyncIterator<NativeGrpcServerStreamBatch>, logger: Logger) {
         this.logger = logger;
         this.batchIterator = batchIterator;
         this.currentBatch = null;
         this.nextInCurrentBatch = 0;
+        this.metadata = new Map();
     }
 
     /// Get the bytes from the next message in the gRPC stream
@@ -183,6 +186,11 @@ export class NativeGrpcServerStreamMessageIterator implements AsyncIterator<Uint
             } else {
                 this.currentBatch = result.value;
                 this.nextInCurrentBatch = 0;
+                if (result.value.metadata) {
+                    for (const key in result.value.metadata) {
+                        this.metadata.set(key, result.value.metadata[key]);
+                    }
+                }
             }
         }
     }

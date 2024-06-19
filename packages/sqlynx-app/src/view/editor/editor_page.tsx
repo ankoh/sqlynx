@@ -5,13 +5,7 @@ import * as theme from '../../github_theme.module.css';
 import * as icons from '../../../static/svg/symbols.generated.svg';
 
 import { ButtonGroup, IconButton } from '@primer/react';
-import {
-    DownloadIcon,
-    LinkIcon,
-    PaperAirplaneIcon,
-    SyncIcon,
-    ThreeBarsIcon,
-} from '@primer/octicons-react';
+import { DownloadIcon, LinkIcon, PaperAirplaneIcon, SyncIcon, ThreeBarsIcon } from '@primer/octicons-react';
 
 import { ConnectorInfo } from '../../connectors/connector_info.js';
 import { QueryExecutionStatus } from '../../connectors/query_execution_state.js';
@@ -28,12 +22,17 @@ import { DragSizing, DragSizingBorder } from '../foundations/drag_sizing.js';
 import { useQueryState } from '../../connectors/query_executor.js';
 import { QueryStatusView } from '../query_status/query_status_view.js';
 import { QueryResultView } from '../query_result/query_result_view.js';
+import { SessionCommandType, useSessionCommandDispatch } from '../../session/session_commands.js';
 
 const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
     const config = useAppConfig();
+    const sessionCommand = useSessionCommandDispatch();
     return (
         <>
-            <ActionList.ListItem disabled={!props.connector?.features.executeQueryAction}>
+            <ActionList.ListItem
+                disabled={!props.connector?.features.executeQueryAction}
+                onClick={() => sessionCommand(SessionCommandType.ExecuteEditorQuery)}
+            >
                 <ActionList.Leading>
                     <PaperAirplaneIcon />
                 </ActionList.Leading>
@@ -170,6 +169,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
         prevStatus.current = [editorQuery, status];
     }, [editorQuery, queryState?.status]);
 
+    const sessionCommand = useSessionCommandDispatch();
     return (
         <div className={styles.page}>
             <div className={styles.header_container}>
@@ -180,7 +180,11 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                 <div className={styles.header_action_container}>
                     <div>
                         <ButtonGroup className={theme.button_group}>
-                            <IconButton icon={PaperAirplaneIcon} aria-labelledby="execute-query" />
+                            <IconButton
+                                icon={PaperAirplaneIcon}
+                                aria-labelledby="execute-query"
+                                onClick={() => sessionCommand(SessionCommandType.ExecuteEditorQuery)}
+                            />
                             <IconButton icon={SyncIcon} aria-labelledby="refresh-schema" />
                             <IconButton
                                 icon={LinkIcon}

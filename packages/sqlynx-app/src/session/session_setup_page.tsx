@@ -3,7 +3,7 @@ import * as React from 'react';
 import * as symbols from '../../static/svg/symbols.generated.svg';
 import * as icons from '../../static/svg/symbols.generated.svg';
 import * as baseStyles from '../view/banner_page.module.css';
-import * as style from '../view/connectors/connector_settings.module.css';
+import * as connStyles from '../view/connectors/connector_settings.module.css';
 
 import { IconButton } from '@primer/react';
 import { ChecklistIcon, DesktopDownloadIcon, FileBadgeIcon, KeyIcon, PackageIcon } from '@primer/octicons-react';
@@ -20,19 +20,22 @@ import { KeyValueTextField, TextField } from '../view/foundations/text_field.js'
 import { VersionViewerOverlay } from '../view/version_viewer.js';
 import { AnchorAlignment, AnchorSide } from '../view/foundations/anchored_position.js';
 import { Button, ButtonSize, ButtonVariant } from '../view/foundations/button.js';
-import {
-    checkHyperConnectionSetup,
-    checkSalesforceConnectionSetup,
-    ConnectionSetupCheck,
-} from '../connectors/connector_setup_check.js';
 import { useSessionState } from './session_state_registry.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
 import { LogViewerOverlay } from '../view/log_viewer.js';
 import { OverlaySize } from '../view/foundations/overlay.js';
 import { CopyToClipboardButton } from '../utils/clipboard.js';
+import { ConnectionHealth } from '../connectors/connection_state.js';
+import { IndicatorStatus, StatusIndicator } from '../view/foundations/status_indicator.js';
+import {
+    getConnectionHealthIndicator,
+    getConnectionStatusText,
+} from '../view/connectors/salesforce_connector_settings.js';
+import { useNavigate } from 'react-router-dom';
 
 const LOG_CTX = "session_setup";
-const AUTOTRIGGER_DELAY = 2000;
+const AUTO_TRIGGER_DELAY = 3000;
+const AUTO_TRIGGER_COUNTER_INTERVAL = 500;
 
 const ConnectorParamsSection: React.FC<{ params: proto.sqlynx_session.pb.ConnectorParams }> = (props: { params: proto.sqlynx_session.pb.ConnectorParams }) => {
     switch (props.params.connector.case) {
@@ -73,7 +76,7 @@ const ConnectorParamsSection: React.FC<{ params: proto.sqlynx_session.pb.Connect
                             disabled
                         />
                         <KeyValueTextField
-                            className={style.grid_column_1}
+                            className={connStyles.grid_column_1}
                             name="mTLS Client Key"
                             k={props.params.connector.value.tls?.clientKeyPath ?? ""}
                             v={props.params.connector.value.tls?.clientCertPath ?? ""}
@@ -115,30 +118,30 @@ interface Props {
 
 export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     const now = new Date();
+    const navigate = useNavigate();
     const logger = useLogger();
-    const salesforceAuthFlow = useSalesforceSetup();
+    const salesforceSetup = useSalesforceSetup();
     const [showLogs, setShowLogs] = React.useState<boolean>(false);
     const [showVersionOverlay, setShowVersionOverlay] = React.useState<boolean>(false);
     const [maybeSession, dispatchSession] = useSessionState(props.sessionId);
     const session = maybeSession!;
-    const [maybeConnection,  dispatchConnection]= useConnectionState(session!.connectionId);
+    const [maybeConnection, dispatchConnection] = useConnectionState(session!.connectionId);
     const connection = maybeConnection!;
 
-
-    // Resolve the connector info
-    let connectionSetupCheck: ConnectionSetupCheck | null = null;
-    switch (props.setupProto.connectorParams?.connector.case) {
-        case "salesforce": {
-            connectionSetupCheck = checkSalesforceConnectionSetup(connection, props.setupProto.connectorParams.connector.value);
-            break;
-        }
-        case "hyper": {
-            connectionSetupCheck = checkHyperConnectionSetup(connection, props.setupProto.connectorParams.connector.value);
-            break;
-        }
-        default:
-            break;
-    }
+    // // Resolve the connector info
+    // let connectionSetupCheck: ConnectionSetupCheck | null = null;
+    // switch (props.setupProto.connectorParams?.connector.case) {
+    //     case "salesforce": {
+    //         connectionSetupCheck = checkSalesforceConnectionSetup(connection, props// .setupProto.connectorParams.connector.value);
+    //         break;
+    //     }
+    //     case "hyper": {
+    //         connectionSetupCheck = checkHyperConnectionSetup(connection, props.setupProto// .connectorParams.connector.value);
+    //         break;
+    //     }
+    //     default:
+    //         break;
+    // }
 
     // Need to switch to native?
     // Some connectors only run in the native app.
@@ -147,60 +150,100 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
         canExecuteHere = true;
     }
 
+    // Generate the session setup url
+    const sessionSetupURL = React.useMemo(() => {
+        if (canExecuteHere) {
+            return null;
+        } else {
+            return encodeSessionSetupUrl(props.setupProto, SessionLinkTarget.NATIVE);
+        }
+    }, []);
+
     // Helper to configure the session
+    const [configStarted, setConfigStarted] = React.useState<boolean>(false);
+    const configInProgressOrDone = React.useRef<boolean>(false);
     const configure = React.useCallback(async () => {
-        console.log("---------------- configure");
-        // Check which connector configuring
-        const connectorParams = props.setupProto.connectorParams?.connector;
-        switch (connectorParams?.case) {
-            case "salesforce": {
-                // Salesforce auth flow not yet ready?
-                if (!salesforceAuthFlow) {
-                    return;
+        setConfigStarted(true);
+        if (configInProgressOrDone.current) {
+            return;
+        }
+        configInProgressOrDone.current = true;
+
+        // Cannot execute here? Then redirect the user
+        if (!canExecuteHere) {
+            const link = document.createElement('a');
+            link.href = sessionSetupURL!.toString();
+            logger.info(`opening deep link: ${link.href}`);
+            link.click();
+        }
+
+        // Otherwise configure the session
+        try {
+            // Check which connector configuring
+            const connectorParams = props.setupProto.connectorParams?.connector;
+            switch (connectorParams?.case) {
+                case "salesforce": {
+                    // Salesforce auth flow not yet ready?
+                    if (!salesforceSetup) {
+                        return;
+                    }
+                    // Authorize the client
+                    const abortController = new AbortController();
+                    const authParams: SalesforceAuthParams = {
+                        instanceUrl: connectorParams.value.instanceUrl,
+                        appConsumerKey: connectorParams.value.appConsumerKey,
+                        appConsumerSecret: null,
+                    };
+                    await salesforceSetup.authorize(dispatchConnection, authParams, abortController.signal);
+                    break;
                 }
-                // Authorize the client
-                const abortController = new AbortController();
-                const authParams: SalesforceAuthParams = {
-                    instanceUrl: connectorParams.value.instanceUrl,
-                    appConsumerKey: connectorParams.value.appConsumerKey,
-                    appConsumerSecret: null,
-                };
-                await salesforceAuthFlow.authorize(dispatchConnection, authParams, abortController.signal);
-
-                break;
             }
+
+            // Does the proto specify scripts?
+            // Load them asynchronously then after setting up the session.
+            //
+            // XXX This is the first time we're modifying the attached session....
+            //     We should make sure this is sane, ideally we would get the connector info from there.
+            const update: Record<number, string> = {};
+            for (const script of props.setupProto.scripts) {
+                update[script.scriptId] = script.scriptText;
+            }
+            dispatchSession({ type: REPLACE_SCRIPT_CONTENT, value: update });
+
+            // Navigate to the app root
+            navigate("/");
+
+            // We're done, return close the session setup page
+            props.onDone();
+        } catch (e: any) {
+            configInProgressOrDone.current = false;
         }
-
-        // Does the proto specify scripts?
-        // Load them asynchronously then after setting up the session.
-        //
-        // XXX This is the first time we're modifying the attached session....
-        //     We should make sure this is sane, ideally we would get the connector info from there.
-        const update: Record<number, string> = {};
-        for (const script of props.setupProto.scripts) {
-            update[script.scriptId] = script.scriptText;
-        }
-        dispatchSession({ type: REPLACE_SCRIPT_CONTENT, value: update });
-
-        // We're done, return close the session setup page
-        props.onDone();
-
-    }, [salesforceAuthFlow]);
+    }, [salesforceSetup]);
 
     // Setup config auto-trigger
-    const autoTriggersAt = React.useMemo(() => new Date(now.getTime() + AUTOTRIGGER_DELAY), []);
-    const remainingUntilAutoTrigger = Math.max(autoTriggersAt.getTime(), now.getTime()) - now.getTime();
+    const autoTriggersAt = React.useMemo(() => new Date(now.getTime() + AUTO_TRIGGER_DELAY), []);
+    const [remainingUntilAutoTrigger, setRemainingUntilAutoTrigger] = React.useState<number>(() => Math.max(autoTriggersAt.getTime(), now.getTime()) - now.getTime());
     React.useEffect(() => {
-        // Skip if the connector can't be used here
-        if (!canExecuteHere) {
-            logger.info("connector cannot be used here, skipping setup trigger", "session_setup");
-            return () => { };
-        }
         // Otherwise setup an autotrigger for the setup
         logger.info(`setup config auto-trigger in ${formatHHMMSS(remainingUntilAutoTrigger / 1000)}`, "session_setup");
         const timeoutId = setTimeout(configure, remainingUntilAutoTrigger);
+        const updaterId: { current: unknown | null } = { current: null };
+
+        const updateRemaining = () => {
+            const now = new Date();
+            const remainder = Math.max(autoTriggersAt.getTime(), now.getTime()) - now.getTime();
+            setRemainingUntilAutoTrigger(remainder);
+            if (remainder > AUTO_TRIGGER_COUNTER_INTERVAL) {
+                updaterId.current = setTimeout(updateRemaining, AUTO_TRIGGER_COUNTER_INTERVAL);
+            }
+        };
+        updaterId.current = setTimeout(updateRemaining, AUTO_TRIGGER_COUNTER_INTERVAL);
+
         return () => {
             clearTimeout(timeoutId);
+            if (updaterId.current != null) {
+                clearTimeout(updaterId.current as any);
+            }
         }
     }, [props.setupProto]);
     const sections: React.ReactElement[] = [];
@@ -245,15 +288,6 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
         sections.push(<ConnectorParamsSection key={sections.length} params={props?.setupProto?.connectorParams} />);
     }
 
-    // Generate the session setup url
-    const sessionSetupURL = React.useMemo(() => {
-        if (canExecuteHere) {
-            return null;
-        } else {
-            return encodeSessionSetupUrl(props.setupProto, SessionLinkTarget.NATIVE);
-        }
-    }, []);
-
     // Do we need to switch to native?
     // Render a warning, information where to get the app and a button to switch.
     if (!canExecuteHere && sessionSetupURL != null) {
@@ -268,7 +302,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                         </svg>
                         &nbsp;
                         <a className={baseStyles.github_link_text} href="https://github.com/ankoh/sqlynx/issues/738"
-                           target="_blank">
+                            target="_blank">
                             Web connectors for Hyper and Data Cloud
                         </a>
                     </div>
@@ -304,6 +338,8 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                         <Button
                             variant={ButtonVariant.Primary}
                             leadingVisual={DesktopDownloadIcon}
+                            trailingVisual={!configStarted ? () =>
+                                <div>{Math.floor(remainingUntilAutoTrigger / 1000)}</div> : undefined}
                             onClick={() => {
                                 const link = document.createElement('a');
                                 link.href = sessionSetupURL.toString();
@@ -316,16 +352,46 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                 </div>
             </div>
         );
+    } else if (connection.connectionHealth != ConnectionHealth.ONLINE) {
+        // Get the connection status
+        const statusText: string = getConnectionStatusText(connection.connectionStatus, logger);
+        // Get the indicator status
+        const indicatorStatus: IndicatorStatus = getConnectionHealthIndicator(connection.connectionHealth);
 
+        sections.push(
+            <div key={sections.length} className={baseStyles.card_actions}>
+                <div className={baseStyles.card_actions_left}>
+                    <div className={baseStyles.connection_status}>
+                        <div className={connStyles.status_indicator}>
+                            <StatusIndicator className={connStyles.status_indicator_spinner} status={indicatorStatus}
+                                fill="black" />
+                        </div>
+                        <div className={connStyles.status_text}>
+                            {statusText}
+                        </div>
+                    </div>
+                </div>
+                <div className={baseStyles.card_actions_right}>
+                    <Button
+                        variant={ButtonVariant.Primary}
+                        onClick={configure}
+                        trailingVisual={!configStarted ? () =>
+                            <div>{Math.floor(remainingUntilAutoTrigger / 1000)}</div> : undefined}
+                    >
+                        Configure
+                    </Button>
+                </div>
+            </div>,
+        );
     } else {
         // We can stay here, render normal action bar
-        // TODO Actually load the script here...?
         sections.push(
             <div key={sections.length} className={baseStyles.card_actions}>
                 <div className={baseStyles.card_actions_right}>
                     <Button
                         variant={ButtonVariant.Primary}
-                        onClick={() => props.onDone()}>
+                        onClick={() => props.onDone()}
+                    >
                         Continue
                     </Button>
                 </div>
@@ -336,7 +402,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     // Render the page
     return (
         <div className={baseStyles.page}
-                 data-tauri-drag-region="true">
+            data-tauri-drag-region="true">
             <div className={baseStyles.banner_and_content_container}>
                 <div className={baseStyles.banner_container}>
                     <div className={baseStyles.banner_logo}>

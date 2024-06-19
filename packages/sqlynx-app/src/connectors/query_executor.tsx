@@ -116,6 +116,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                 queryDurationMs: null,
             },
             latestProgressUpdate: null,
+            resultMetadata: null,
             resultSchema: null,
             resultBatches: [],
             resultTable: null,
@@ -189,9 +190,12 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                 const progress = progressUpdater(resultStream);
                 const results = resultReader(resultStream);
                 await Promise.all([results, progress]);
+
+                // Is there any metadata?
+                const metadata = resultStream.getMetadata();
                 connDispatch(connectionId, {
                     type: QUERY_EXECUTION_SUCCEEDED,
-                    value: [queryId, null, resultStream!.getMetrics()],
+                    value: [queryId, null, metadata, resultStream!.getMetrics()],
                 });
             }
         } catch (e: any) {

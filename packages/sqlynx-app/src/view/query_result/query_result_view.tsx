@@ -34,7 +34,7 @@ function MetricEntry(props: MetricEntryProps) {
                             aria-labelledby="" />
                     </div>
                     : <div className={styles.metric_value}>
-                            {props.value}
+                        {props.value}
                     </div>
             }
         </>
@@ -57,6 +57,12 @@ export function QueryResultView(props: Props) {
     const untilSchema = (metrics.durationUntilSchemaMs == null) ? "-" : formatMilliseconds(metrics.durationUntilSchemaMs);
     const untilFirstRow = (metrics.durationUntilFirstBatchMs == null) ? "-" : formatMilliseconds(metrics.durationUntilFirstBatchMs);
     const queryDuration = (metrics.queryDurationMs == null) ? "-" : formatMilliseconds(metrics.queryDurationMs);
+
+    const b3TraceId = props.query.resultMetadata?.get("x-b3-traceid") ?? null;
+    const b3SpanId = props.query.resultMetadata?.get("x-b3-spanid") ?? null;
+    const b3ParentSpanId = props.query.resultMetadata?.get("x-b3-parentspanid") ?? null;
+    const anyB3 = b3TraceId != null || b3SpanId != null || b3ParentSpanId != null;
+
     return (
         <div className={styles.root}>
             <DataTable className={styles.data_table} data={props.query.resultTable} />
@@ -72,11 +78,13 @@ export function QueryResultView(props: Props) {
                         <MetricEntry name="First Batch At" value={untilFirstRow} />
                         <MetricEntry name="Finished At" value={queryDuration} />
                     </div>
-                    <div className={styles.metrics_group}>
-                        <MetricEntry name="TraceId" value="foo" clipboard />
-                        <MetricEntry name="SpanId" value="foo" clipboard />
-                        <MetricEntry name="ParentSpanId" value="foo" clipboard />
-                    </div>
+                    {anyB3 && (
+                        <div className={styles.metrics_group}>
+                            {b3TraceId && <MetricEntry name="TraceId" value={b3TraceId} clipboard />}
+                            {b3SpanId && <MetricEntry name="SpanId" value={b3SpanId} clipboard />}
+                            {b3ParentSpanId && <MetricEntry name="ParentSpanId" value={b3ParentSpanId} clipboard />}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

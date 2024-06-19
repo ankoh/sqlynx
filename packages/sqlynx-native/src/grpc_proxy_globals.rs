@@ -1,4 +1,5 @@
 use std::io::Write;
+use std::str::FromStr;
 
 use byteorder::LittleEndian;
 use byteorder::WriteBytesExt;
@@ -7,6 +8,7 @@ use tauri::http::HeaderName;
 use tauri::http::HeaderValue;
 use tauri::http::Request;
 use tauri::http::Response;
+use tonic::metadata::KeyAndValueRef;
 use tonic::metadata::MetadataMap;
 use tonic::metadata::KeyAndMutValueRef;
 use lazy_static::lazy_static;
@@ -119,13 +121,28 @@ pub async fn read_grpc_server_stream(channel_id: usize, stream_id: usize, mut re
                 buffer.write_u32::<LittleEndian>(message.len() as u32).unwrap();
                 buffer.write(&message).unwrap();
             }
-            Response::builder()
+            let mut response = Response::builder()
                 .status(200)
                 .header(HEADER_NAME_CHANNEL_ID, channel_id)
                 .header(HEADER_NAME_STREAM_ID, stream_id)
                 .header(HEADER_NAME_BATCH_EVENT, batches.event.to_str())
                 .header(HEADER_NAME_BATCH_MESSAGES, batches.messages.len())
-                .header(HEADER_NAME_BATCH_BYTES, batches.total_message_bytes)
+                .header(HEADER_NAME_BATCH_BYTES, batches.total_message_bytes);
+            if let Some(trailers) = batches.trailers {
+                log::debug!("{:?}", trailers);
+                let headers = &mut response.headers_mut().unwrap();
+                for entry in trailers.iter() {
+                    if let KeyAndValueRef::Ascii(ref key, ref value) = entry {
+                        let key = key.to_string();
+                        let key = HeaderName::from_str(&key);
+                        let value = HeaderValue::from_str(value.to_str().unwrap_or_default());
+                        if let (Ok(key), Ok(value)) = (key, value) {
+                            headers.insert(key, value);
+                        }
+                    }
+                }
+            }
+            response
                 .body(buffer)
                 .unwrap()
         },

@@ -9,7 +9,7 @@ import { ConnectionHealth } from '../connectors/connection_state.js';
 import { useLogger } from '../platform/logger_provider.js';
 import { REGISTER_EDITOR_QUERY, ScriptKey } from './session_state.js';
 
-export enum ScriptCommandType {
+export enum SessionCommandType {
     ExecuteEditorQuery = 1,
     RefreshSchema = 2,
     SaveQueryAsSql = 3,
@@ -17,13 +17,14 @@ export enum ScriptCommandType {
     SaveQueryResultsAsArrow = 5,
 }
 
-export type ScriptCommandDispatch = (command: ScriptCommandType) => void;
+export type ScriptCommandDispatch = (command: SessionCommandType) => void;
 
 interface Props {
     children?: React.ReactElement | React.ReactElement[];
 }
 
 const COMMAND_DISPATCH_CTX = React.createContext<ScriptCommandDispatch | null>(null);
+export const useSessionCommandDispatch = () => React.useContext(COMMAND_DISPATCH_CTX)!;
 
 export const SessionCommands: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
@@ -33,14 +34,14 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
 
     // Setup command dispatch logic
     const commandDispatch = React.useCallback(
-        async (command: ScriptCommandType) => {
+        async (command: SessionCommandType) => {
             if (session == null) {
                 logger.error("session is null");
                 return;
             }
             switch (command) {
                 // Execute the query script in the current session
-                case ScriptCommandType.ExecuteEditorQuery:
+                case SessionCommandType.ExecuteEditorQuery:
                     if (connection!.connectionHealth != ConnectionHealth.ONLINE) {
                         logger.error("cannot execute query command with an unhealthy connection");
                     } else {
@@ -55,7 +56,7 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
                         })
                     }
                     break;
-                case ScriptCommandType.RefreshSchema:
+                case SessionCommandType.RefreshSchema:
                     // XXX
                     // modifySession({
                     //     type: UPDATE_CATALOG,
@@ -65,18 +66,18 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
                     //     },
                     // });
                     break;
-                case ScriptCommandType.SaveQueryAsSql:
+                case SessionCommandType.SaveQueryAsSql:
                     console.log('save query as sql command');
                     break;
-                case ScriptCommandType.SaveQueryAsLink:
+                case SessionCommandType.SaveQueryAsLink:
                     console.log('save query as sql link');
                     break;
-                case ScriptCommandType.SaveQueryResultsAsArrow:
+                case SessionCommandType.SaveQueryResultsAsArrow:
                     console.log('save query results as arrow');
                     break;
             }
         },
-        [session?.connectorInfo],
+        [connection, session, session?.connectorInfo],
     );
 
     // Helper to require connector info
@@ -102,7 +103,7 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
                 callback: requireConnector(c =>
                     !c.features.executeQueryAction
                         ? () => commandNotImplemented(c, 'EXECUTE_QUERY')
-                        : () => commandDispatch(ScriptCommandType.ExecuteEditorQuery),
+                        : () => commandDispatch(SessionCommandType.ExecuteEditorQuery),
                 ),
             },
             {
@@ -111,18 +112,18 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
                 callback: requireConnector(c =>
                     !c.features.executeQueryAction
                         ? () => commandNotImplemented(c, 'REFRESH_SCHEMA')
-                        : () => commandDispatch(ScriptCommandType.RefreshSchema),
+                        : () => commandDispatch(SessionCommandType.RefreshSchema),
                 ),
             },
             {
                 key: 'u',
                 ctrlKey: true,
-                callback: () => commandDispatch(ScriptCommandType.SaveQueryAsLink),
+                callback: () => commandDispatch(SessionCommandType.SaveQueryAsLink),
             },
             {
                 key: 's',
                 ctrlKey: true,
-                callback: () => commandDispatch(ScriptCommandType.SaveQueryAsSql),
+                callback: () => commandDispatch(SessionCommandType.SaveQueryAsSql),
             },
             {
                 key: 'a',
@@ -130,7 +131,7 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
                 callback: requireConnector(c =>
                     !c.features.executeQueryAction
                         ? () => commandNotImplemented(c, 'SAVE_QUERY_RESULTS_AS_ARROW')
-                        : () => commandDispatch(ScriptCommandType.SaveQueryResultsAsArrow),
+                        : () => commandDispatch(SessionCommandType.SaveQueryResultsAsArrow),
                 ),
             },
         ],

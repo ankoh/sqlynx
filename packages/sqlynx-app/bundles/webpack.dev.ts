@@ -13,7 +13,7 @@ const base = configure({
     relocatable: false,
     extractCss: false,
     cssIdentifier: '[local]_[hash:base64]',
-    appURL: process.env.SQLYNX_APP_URL ?? 'http://localhost:9002',
+    appURL: process.env.SQLYNX_APP_URL ?? 'https://sqlynx.app',
 });
 
 const config: Configuration = {

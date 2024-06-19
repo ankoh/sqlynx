@@ -213,6 +213,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                         scriptVersion: ++schema.scriptVersion,
                         processed: analyzed,
                         statistics: rotateStatistics(schema.statistics, schema.script!.getStatistics() ?? null),
+                        cursor: null,
                     };
                 }
                 // Replace the main script
@@ -227,6 +228,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                         scriptVersion: ++main.scriptVersion,
                         processed: analysis,
                         statistics: rotateStatistics(main.statistics, main.script!.getStatistics() ?? null),
+                        cursor: null,
                     };
                 }
             } catch (e: any) {

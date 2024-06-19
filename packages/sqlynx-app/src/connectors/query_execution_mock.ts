@@ -22,6 +22,10 @@ export class QueryExecutorMock implements QueryExecutionResponseStream {
     }
 
     /// Get the metrics
+    getMetadata(): Map<string, string> {
+        return new Map();
+    }
+    /// Get the metrics
     getMetrics(): QueryExecutionResponseStreamMetrics {
         return {
             dataBytes: 42
