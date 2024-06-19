@@ -87,7 +87,7 @@ const ScannerDecorationField: StateField<ScannerDecorationState> = StateField.de
                 scanned: null,
                 parsed: null,
                 analyzed: null,
-                destroy: () => {},
+                destroy: () => { },
             },
         };
         return config;
@@ -253,7 +253,7 @@ const FocusDecorationField: StateField<FocusDecorationState> = StateField.define
                 scanned: null,
                 parsed: null,
                 analyzed: null,
-                destroy: () => {},
+                destroy: () => { },
             },
             scriptCursor: null,
             focusedColumnRefs: null,

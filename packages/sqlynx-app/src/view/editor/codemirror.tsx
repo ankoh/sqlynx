@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { EditorState, EditorStateConfig, Extension, Annotation, StateEffect } from '@codemirror/state';
+
+import { EditorState, EditorStateConfig, Extension } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 
 import { useLogger } from '../../platform/logger_provider.js';
@@ -72,7 +73,9 @@ export const CodeMirror: React.FC<CodeMirrorProps> = (props: CodeMirrorProps) =>
 
         // The DOM node has changed, create a new view
         mount.current.view = new EditorView({
-            state: EditorState.create({ extensions: mount.current.extensions }),
+            state: EditorState.create({
+                extensions: mount.current.extensions
+            }),
             parent: node,
             root: props.root,
         });
