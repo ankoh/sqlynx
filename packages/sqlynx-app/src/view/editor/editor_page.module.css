@@ -120,8 +120,7 @@
 }
 
 .output_container {
-    height: 35%;
-    flex-shrink: 0;
+    height: 36%;
 }
 
 .output_card {
@@ -131,6 +130,7 @@
 
 .editor_container {
     flex: 1;
+    overflow: hidden;
 }
 
 .editor_card {
