@@ -232,7 +232,7 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                                         : <Button
                                             variant={ButtonVariant.Primary}
                                             onClick={() => triggerFlow(props.state, eventBase64, deepLink, logger)}
-                                            trailingVisual={() => (remainingUntilAutoTrigger == 0) ? <div>{Math.ceil(remainingUntilAutoTrigger / 1000)}</div> : undefined}
+                                            trailingVisual={(remainingUntilAutoTrigger == 0) ? undefined : (() =>  <div>{Math.ceil(remainingUntilAutoTrigger / 1000)}</div>)}
                                         >
                                             Open in App
                                         </Button>
