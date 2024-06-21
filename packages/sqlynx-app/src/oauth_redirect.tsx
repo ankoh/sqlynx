@@ -26,7 +26,7 @@ import * as page_styles from './view/banner_page.module.css';
 import { CopyToClipboardButton } from './utils/clipboard.js';
 
 const AUTO_TRIGGER_DELAY = 2000;
-const AUTO_TRIGGER_COUNTER_INTERVAL = 500;
+const AUTO_TRIGGER_COUNTER_INTERVAL = 200;
 
 const LOG_CTX = "oauth_redirect";
 
