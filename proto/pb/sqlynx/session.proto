@@ -30,6 +30,8 @@ message SalesforceConnectorParams {
     string instanceUrl = 1;
     /// The key of the connected app
     string appConsumerKey = 2;
+    /// The login hint
+    string loginHint = 3;
 }
 
 message ServerlessParams {}

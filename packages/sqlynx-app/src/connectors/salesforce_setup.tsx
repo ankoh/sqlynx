@@ -1,5 +1,5 @@
 import * as React from 'react';
-
+import * as shell from '@tauri-apps/plugin-shell';
 import * as proto from '@ankoh/sqlynx-pb';
 
 import {
@@ -8,9 +8,6 @@ import {
     AUTH_STARTED,
     CHANNEL_SETUP_STARTED,
     CHANNEL_READY,
-    CHANNEL_SETUP_CANCELLED,
-    CHANNEL_SETUP_FAILED,
-    HEALTH_CHECK_CANCELLED,
     HEALTH_CHECK_FAILED,
     HEALTH_CHECK_STARTED,
     HEALTH_CHECK_SUCCEEDED,
@@ -42,12 +39,9 @@ import { useAppEventListener } from '../platform/event_listener_provider.js';
 import { useLogger } from '../platform/logger_provider.js';
 import { isNativePlatform } from '../platform/native_globals.js';
 import { isDebugBuild } from '../globals.js';
-
-import * as shell from '@tauri-apps/plugin-shell';
 import { RESET } from './connection_state.js';
 import {
     AttachedDatabase,
-    HyperDatabaseChannel,
     HyperDatabaseClient,
     HyperDatabaseConnectionContext,
 } from '../platform/hyperdb_client.js';
@@ -143,8 +137,11 @@ export async function setupSalesforceConnection(dispatch: Dispatch<SalesforceCon
             `code_challange_method=S256`,
             `response_type=code`,
             `state=${authStateBase64}`
-        ].join('&');
-        const url = `${params.instanceUrl}/services/oauth2/authorize?${paramParts}`;
+        ];
+        if (params.loginHint != null) {
+            paramParts.push(`login_hint=${params.loginHint}`);
+        }
+        const url = `${params.instanceUrl}/services/oauth2/authorize?${paramParts.join('&')}`;
 
         // Either start request the oauth flow through a browser popup or by opening a url using the shell plugin
         if (flowVariant == proto.sqlynx_oauth.pb.OAuthFlowVariant.WEB_OPENER_FLOW) {

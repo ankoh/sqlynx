@@ -172,6 +172,7 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
             instanceUrl: pageState.instanceUrl,
             appConsumerKey: pageState.appConsumerKey,
             appConsumerSecret: null,
+            loginHint: null,
         };
         await salesforceAuthFlow.authorize(dispatchConnectionState, authParams, authAbortController.current.signal);
         authAbortController.current = null;
