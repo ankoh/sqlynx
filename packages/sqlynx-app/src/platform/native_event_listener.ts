@@ -20,6 +20,7 @@ export class NativeAppEventListener extends AppEventListener {
     protected async readInitialDeepLinkEvents() {
         try {
             const currentLinks: string[] = await invoke("plugin:deep-link|get_current");
+            this.logger.info(`reading initial deep links, received ${currentLinks.length}`, LOG_CTX);
             for (const currentLink of currentLinks) {
                 const url = new URL(currentLink);
                 const search = url.searchParams;
@@ -27,6 +28,7 @@ export class NativeAppEventListener extends AppEventListener {
                 if (data) {
                     const event = this.readAppEvent(data, "initial deep link");
                     if (event != null) {
+                        this.logger.info(`initial deep link is an app event of type ${event?.data.case}`, LOG_CTX);
                         super.dispatchAppEvent(event);
                     }
                 }
