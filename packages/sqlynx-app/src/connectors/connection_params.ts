@@ -22,6 +22,8 @@ export interface SalesforceAuthParams {
     appConsumerKey: string;
     /// The client secret
     appConsumerSecret: string | null;
+    /// The login hint (if any)
+    loginHint: string | null;
 }
 
 export function buildSalesforceConnectorParams(params: SalesforceAuthParams | null): proto.sqlynx_session.pb.ConnectorParams {
@@ -30,7 +32,8 @@ export function buildSalesforceConnectorParams(params: SalesforceAuthParams | nu
             case: "salesforce",
             value: new proto.sqlynx_session.pb.SalesforceConnectorParams({
                 instanceUrl: params?.instanceUrl ?? "",
-                appConsumerKey: params?.appConsumerKey ?? ""
+                appConsumerKey: params?.appConsumerKey ?? "",
+                loginHint: params?.loginHint ?? undefined,
             })
         }
     });

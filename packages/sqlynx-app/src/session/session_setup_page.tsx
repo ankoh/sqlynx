@@ -193,6 +193,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                         instanceUrl: connectorParams.value.instanceUrl,
                         appConsumerKey: connectorParams.value.appConsumerKey,
                         appConsumerSecret: null,
+                        loginHint: null,
                     };
                     await salesforceSetup.authorize(dispatchConnection, authParams, abortController.signal);
                     break;
