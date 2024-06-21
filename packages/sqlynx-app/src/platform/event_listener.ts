@@ -173,7 +173,7 @@ export abstract class AppEventListener {
             const dataBuffer = BASE64_CODEC.decode(dataBase64);
             const dataBytes = new Uint8Array(dataBuffer);
             const event = proto.sqlynx_app_event.pb.AppEventData.fromBinary(dataBytes);
-            this.logger.info(`parsed app event of type ${event.data.case}`);
+            this.logger.info(`parsed app event of type ${event.data.case}`, LOG_CTX);
             return event;
 
         } catch (error: any) {
