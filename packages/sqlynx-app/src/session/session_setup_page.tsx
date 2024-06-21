@@ -34,8 +34,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 const LOG_CTX = "session_setup";
-const AUTO_TRIGGER_DELAY = 3000;
-const AUTO_TRIGGER_COUNTER_INTERVAL = 500;
+const AUTO_TRIGGER_DELAY = 2000;
+const AUTO_TRIGGER_COUNTER_INTERVAL = 200;
 
 const ConnectorParamsSection: React.FC<{ params: proto.sqlynx_session.pb.ConnectorParams }> = (props: { params: proto.sqlynx_session.pb.ConnectorParams }) => {
     switch (props.params.connector.case) {
