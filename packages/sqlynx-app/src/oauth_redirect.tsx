@@ -84,6 +84,7 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
     const skipAutoTrigger = props.state.flowVariant == proto.sqlynx_oauth.pb.OAuthFlowVariant.NATIVE_LINK_FLOW && props.state.debugMode;
     const autoTriggersAt = React.useMemo(() => new Date(now.getTime() + AUTO_TRIGGER_DELAY), []);
     const [remainingUntilAutoTrigger, setRemainingUntilAutoTrigger] = React.useState<number>(() => Math.max(autoTriggersAt.getTime(), now.getTime()) - now.getTime());
+    const autoTriggerInThePast = now.getTime() >= autoTriggersAt.getTime()
 
     React.useEffect(() => {
         // Skip auto trigger for native apps in debug mode
@@ -222,7 +223,7 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                                     aria-labelledby=""
                                 />
                                 {
-                                    remainingUntilAutoTrigger == 0
+                                    autoTriggerInThePast
                                         ? <Button
                                             variant={ButtonVariant.Primary}
                                             onClick={() => triggerFlow(props.state, eventBase64, deepLink, logger)}
@@ -232,7 +233,7 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                                         : <Button
                                             variant={ButtonVariant.Primary}
                                             onClick={() => triggerFlow(props.state, eventBase64, deepLink, logger)}
-                                            trailingVisual={(remainingUntilAutoTrigger == 0) ? undefined : (() =>  <div>{Math.ceil(remainingUntilAutoTrigger / 1000)}</div>)}
+                                            trailingVisual={() =>  <div>{Math.ceil(remainingUntilAutoTrigger / 1000)}</div>}
                                         >
                                             Open in App
                                         </Button>
