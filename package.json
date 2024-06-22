@@ -25,7 +25,7 @@
         "last 1 version",
         "> 1%"
     ],
-    "packageManager": "yarn@4.3.0",
+    "packageManager": "yarn@4.3.1",
     "resolutions": {
         "@primer/octicons-react@npm:^19.8.0": "patch:@primer/octicons-react@npm%3A19.9.0#~/.yarn/patches/@primer-octicons-react-npm-19.9.0-65341cfa23.patch"
     }
