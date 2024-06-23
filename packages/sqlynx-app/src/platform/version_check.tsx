@@ -5,9 +5,6 @@ import { NativeVersionCheck } from './native_version_check.js';
 import { ReleaseManifest, WebVersionCheck } from './web_version_check.js';
 import { Result } from '../utils/result.js';
 
-import * as styles from './version_check.module.css';
-import * as symbols from '../../static/svg/symbols.generated.svg';
-
 export enum VersionCheckStatus {
     Unknown = 0,
     Disabled = 1,
@@ -63,84 +60,3 @@ export const VersionCheck: React.FC<VersionCheckProps> = (props: VersionCheckPro
         return <WebVersionCheck {...props} />;
     }
 };
-
-interface VersionCheckIndicatorProps {
-    status: VersionCheckStatus;
-}
-
-export function VersionCheckIndicator(props: VersionCheckIndicatorProps) {
-    switch (props.status) {
-        case VersionCheckStatus.Unknown:
-        case VersionCheckStatus.Disabled:
-        case VersionCheckStatus.UpToDate:
-            return (
-                <div className={styles.version_check_container}>
-                    <div className={styles.version_check_icon}>
-                        <svg width="16px" height="16px">
-                            <use xlinkHref={`${symbols}#package`} />
-                        </svg>
-                    </div>
-                </div>
-            );
-        case VersionCheckStatus.UpdateAvailable:
-            return (
-                <div className={styles.version_check_container_with_indicator}>
-                    <div className={styles.version_check_icon}>
-                        <svg width="16px" height="16px">
-                            <use xlinkHref={`${symbols}#package_cut_24`} />
-                        </svg>
-                    </div>
-                    <div className={styles.version_check_indicator}>
-                        <svg width="10px" height="10px">
-                            <use xlinkHref={`${symbols}#alert_fill_12`} />
-                        </svg>
-                    </div>
-                </div>
-            );
-        case VersionCheckStatus.UpdateInstalling:
-            return (
-                <div className={styles.version_check_container_with_indicator}>
-                    <div className={styles.version_check_icon}>
-                        <svg width="16px" height="16px">
-                            <use xlinkHref={`${symbols}#package_cut_24`} />
-                        </svg>
-                    </div>
-                    <div className={styles.version_check_indicator}>
-                        <svg width="10px" height="10px">
-                            <use xlinkHref={`${symbols}#refresh`} />
-                        </svg>
-                    </div>
-                </div>
-            );
-        case VersionCheckStatus.RestartPending:
-            return (
-                <div className={styles.version_check_container_with_indicator}>
-                    <div className={styles.version_check_icon}>
-                        <svg width="16px" height="16px">
-                            <use xlinkHref={`${symbols}#package_cut_24`} />
-                        </svg>
-                    </div>
-                    <div className={styles.version_check_indicator}>
-                        <svg width="10px" height="10px">
-                            <use xlinkHref={`${symbols}#rocket_circle_16`} />
-                        </svg>
-                    </div>
-                </div>
-            );
-        case VersionCheckStatus.UpdateFailed:
-            return (
-                <div className={styles.version_check_container_with_indicator}>
-                    <div className={styles.version_check_icon}>
-                        <svg width="16px" height="16px">
-                            <use xlinkHref={`${symbols}#package_cut_24`} />
-                        </svg>
-                    </div>
-                    <div className={styles.version_check_indicator}>
-                        <svg width="10px" height="10px">
-                            <use xlinkHref={`${symbols}#x_circle_16`} />
-                        </svg>
-                    </div>
-                </div>
-            );
-    }
-}
