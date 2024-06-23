@@ -6,7 +6,17 @@ import { XIcon } from '@primer/octicons-react';
 import { IconButton, ProgressBar } from '@primer/react';
 
 import { SQLYNX_GIT_COMMIT, SQLYNX_VERSION } from '../globals.js';
-import { InstallableUpdate, InstallationState, InstallationStatus, useCanaryReleaseManifest, useCanaryUpdateManifest, useInstallationStatus, useStableReleaseManifest, useStableUpdateManifest } from '../platform/version_check.js';
+import {
+    InstallableUpdate,
+    InstallationState,
+    InstallationStatus,
+    useCanaryReleaseManifest,
+    useCanaryUpdateManifest,
+    useInstallationStatus,
+    useStableReleaseManifest,
+    useStableUpdateManifest,
+    VersionCheckStatus,
+} from '../platform/version_check.js';
 import { Button } from './foundations/button.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 import { ReleaseManifest } from '../platform/web_version_check.js';
@@ -192,4 +202,85 @@ export function VersionInfoOverlay(props: VersionInfoOverlayProps) {
             <VersionInfo onClose={props.onClose} />
         </AnchoredOverlay>
     );
+}
+
+interface VersionCheckIndicatorProps {
+    status: VersionCheckStatus;
+}
+
+export function VersionCheckIndicator(props: VersionCheckIndicatorProps) {
+    switch (props.status) {
+        case VersionCheckStatus.Unknown:
+        case VersionCheckStatus.Disabled:
+        case VersionCheckStatus.UpToDate:
+            return (
+                <div className={styles.version_check_container}>
+                    <div className={styles.version_check_icon}>
+                        <svg width="16px" height="16px">
+                            <use xlinkHref={`${symbols}#package`} />
+                        </svg>
+                    </div>
+                </div>
+            );
+        case VersionCheckStatus.UpdateAvailable:
+            return (
+                <div className={styles.version_check_container_with_indicator}>
+                    <div className={styles.version_check_icon}>
+                        <svg width="16px" height="16px">
+                            <use xlinkHref={`${symbols}#package_cut_24`} />
+                        </svg>
+                    </div>
+                    <div className={styles.version_check_indicator}>
+                        <svg width="10px" height="10px">
+                            <use xlinkHref={`${symbols}#alert_fill_12`} />
+                        </svg>
+                    </div>
+                </div>
+            );
+        case VersionCheckStatus.UpdateInstalling:
+            return (
+                <div className={styles.version_check_container_with_indicator}>
+                    <div className={styles.version_check_icon}>
+                        <svg width="16px" height="16px">
+                            <use xlinkHref={`${symbols}#package_cut_24`} />
+                        </svg>
+                    </div>
+                    <div className={styles.version_check_indicator}>
+                        <svg width="10px" height="10px">
+                            <use xlinkHref={`${symbols}#refresh`} />
+                        </svg>
+                    </div>
+                </div>
+            );
+        case VersionCheckStatus.RestartPending:
+            return (
+                <div className={styles.version_check_container_with_indicator}>
+                    <div className={styles.version_check_icon}>
+                        <svg width="16px" height="16px">
+                            <use xlinkHref={`${symbols}#package_cut_24`} />
+                        </svg>
+                    </div>
+                    <div className={styles.version_check_indicator}>
+                        <svg width="10px" height="10px">
+                            <use xlinkHref={`${symbols}#rocket_circle_16`} />
+                        </svg>
+                    </div>
+                </div>
+            );
+        case VersionCheckStatus.UpdateFailed:
+            return (
+                <div className={styles.version_check_container_with_indicator}>
+                    <div className={styles.version_check_icon}>
+                        <svg width="16px" height="16px">
+                            <use xlinkHref={`${symbols}#package_cut_24`} />
+                        </svg>
+                    </div>
+                    <div className={styles.version_check_indicator}>
+                        <svg width="10px" height="10px">
+                            <use xlinkHref={`${symbols}#x_circle_16`} />
+                        </svg>
+                    </div>
+                </div>
+            );
+    }
 }
