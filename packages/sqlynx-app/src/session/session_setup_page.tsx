@@ -17,7 +17,7 @@ import { SalesforceAuthParams } from '../connectors/connection_params.js';
 import { SQLYNX_VERSION } from '../globals.js';
 import { REPLACE_SCRIPT_CONTENT } from './session_state.js';
 import { KeyValueTextField, TextField } from '../view/foundations/text_field.js';
-import { VersionViewerOverlay } from '../view/version_viewer.js';
+import { VersionInfoOverlay } from '../view/version_viewer.js';
 import { AnchorAlignment, AnchorSide } from '../view/foundations/anchored_position.js';
 import { Button, ButtonSize, ButtonVariant } from '../view/foundations/button.js';
 import { useSessionState } from './session_state_registry.js';
@@ -310,7 +310,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                 </div>
                 <div className={baseStyles.card_actions}>
                     <div className={baseStyles.card_actions_left}>
-                        <VersionViewerOverlay
+                        <VersionInfoOverlay
                             isOpen={showVersionOverlay}
                             onClose={() => setShowVersionOverlay(false)}
                             renderAnchor={(p: object) => (

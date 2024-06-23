@@ -1,0 +1,103 @@
+:root {
+    --base_color_neutral_0: #f6f8fa;
+    --base_color_neutral_1: #eaeef2;
+    --base_color_neutral_2: #d0d7de;
+    --base_color_neutral_3: #afb8c1;
+    --base_color_neutral_4: #8c959f;
+    --base_color_neutral_5: #6e7781;
+    --base_color_neutral_6: #57606a;
+    --base_color_neutral_7: #424a53;
+    --base_color_neutral_8: #32383f;
+    --base_color_neutral_9: #24292f;
+
+    --base_color_blue_0: #ddf4ff;
+    --base_color_blue_1: #b6e3ff;
+    --base_color_blue_2: #80ccff;
+    --base_color_blue_3: #54aeff;
+    --base_color_blue_4: #218bff;
+    --base_color_blue_5: #0969da;
+    --base_color_blue_6: #0550ae;
+    --base_color_blue_7: #033d8b;
+    --base_color_blue_8: #0a3069;
+    --base_color_blue_9: #002155;
+
+    --base_color_green_0: #dafbe1;
+    --base_color_green_1: #aceebb;
+    --base_color_green_2: #6fdd8b;
+    --base_color_green_3: #4ac26b;
+    --base_color_green_4: #2da44e;
+    --base_color_green_5: #1a7f37;
+    --base_color_green_6: #116329;
+    --base_color_green_7: #044f1e;
+    --base_color_green_8: #003d16;
+    --base_color_green_9: #002d11;
+
+    --base_color_yellow_0: #fff8c5;
+    --base_color_yellow_1: #fae17d;
+    --base_color_yellow_2: #eac54f;
+    --base_color_yellow_3: #d4a72c;
+    --base_color_yellow_4: #bf8700;
+    --base_color_yellow_5: #9a6700;
+    --base_color_yellow_6: #7d4e00;
+    --base_color_yellow_7: #633c01;
+    --base_color_yellow_8: #4d2d00;
+    --base_color_yellow_9: #3b2300;
+
+    --base_color_orange_0: #fff1e5;
+    --base_color_orange_1: #ffd8b5;
+    --base_color_orange_2: #ffb77c;
+    --base_color_orange_3: #fb8f44;
+    --base_color_orange_4: #e16f24;
+    --base_color_orange_5: #bc4c00;
+    --base_color_orange_6: #953800;
+    --base_color_orange_7: #762c00;
+    --base_color_orange_8: #5c2200;
+    --base_color_orange_9: #471700;
+
+    --base_color_red_0: #ffebe9;
+    --base_color_red_1: #ffcecb;
+    --base_color_red_2: #ffaba8;
+    --base_color_red_3: #ff8182;
+    --base_color_red_4: #fa4549;
+    --base_color_red_5: #cf222e;
+    --base_color_red_6: #a40e26;
+    --base_color_red_7: #82071e;
+    --base_color_red_8: #660018;
+    --base_color_red_9: #4c0014;
+
+    --base_color_purple_0: #fbefff;
+    --base_color_purple_1: #ecd8ff;
+    --base_color_purple_2: #d8b9ff;
+    --base_color_purple_3: #c297ff;
+    --base_color_purple_4: #a475f9;
+    --base_color_purple_5: #8250df;
+    --base_color_purple_6: #6639ba;
+    --base_color_purple_7: #512a97;
+    --base_color_purple_8: #3e1f79;
+    --base_color_purple_9: #2e1461;
+
+    --base_color_pink_0: #ffeff7;
+    --base_color_pink_1: #ffd3eb;
+    --base_color_pink_2: #ffadda;
+    --base_color_pink_3: #ff80c8;
+    --base_color_pink_4: #e85aad;
+    --base_color_pink_5: #bf3989;
+    --base_color_pink_6: #99286e;
+    --base_color_pink_7: #772057;
+    --base_color_pink_8: #611347;
+    --base_color_pink_9: #4d0336;
+
+    --base_color_coral_0: #fff0eb;
+    --base_color_coral_1: #ffd6cc;
+    --base_color_coral_2: #ffb4a1;
+    --base_color_coral_3: #fd8c73;
+    --base_color_coral_4: #ec6547;
+    --base_color_coral_5: #c4432b;
+    --base_color_coral_6: #9e2f1c;
+    --base_color_coral_7: #801f0f;
+    --base_color_coral_8: #691105;
+    --base_color_coral_9: #510901;
+
+    --base_color_black: #1f2328;
+    --base_color_white: #ffffff;
+}

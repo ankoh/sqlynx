@@ -28,6 +28,7 @@ import { SessionStateRegistry } from './session/session_state_registry.js';
 import { VersionCheck } from './platform/version_check.js';
 
 import './../static/fonts/fonts.css';
+import './colors.css';
 import './globals.css';
 import { isDebugBuild } from './globals.js';
 import { NavBarContainer } from './view/navbar.js';

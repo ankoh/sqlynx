@@ -16,7 +16,6 @@ import { ReleaseBundles } from './release_bundle.js';
 import { AnchoredOverlay } from './foundations/anchored_overlay.js';
 import { AnchorAlignment, AnchorSide } from './foundations/anchored_position.js';
 
-
 interface UpdateChannelProps {
     name: string;
     releaseManifest: Result<ReleaseManifest | null> | null;
@@ -108,7 +107,7 @@ interface VersionViewerProps {
     onClose: () => void;
 }
 
-export const VersionViewer: React.FC<VersionViewerProps> = (props: VersionViewerProps) => {
+export const VersionInfo: React.FC<VersionViewerProps> = (props: VersionViewerProps) => {
     const platformType = usePlatformType();
     const isWebPlatform = platformType == PlatformType.WEB;
     const stableReleaseManifest = useStableReleaseManifest();
@@ -172,7 +171,7 @@ export const VersionViewer: React.FC<VersionViewerProps> = (props: VersionViewer
     );
 }
 
-type VersionViewerOverlayProps = {
+type VersionInfoOverlayProps = {
     isOpen: boolean;
     onClose: () => void;
     renderAnchor: (p: object) => React.ReactElement;
@@ -180,7 +179,7 @@ type VersionViewerOverlayProps = {
     align?: AnchorAlignment;
     anchorOffset?: number;
 }
-export function VersionViewerOverlay(props: VersionViewerOverlayProps) {
+export function VersionInfoOverlay(props: VersionInfoOverlayProps) {
     return (
         <AnchoredOverlay
             open={props.isOpen}
@@ -190,7 +189,7 @@ export function VersionViewerOverlay(props: VersionViewerOverlayProps) {
             align={props.align}
             anchorOffset={props.anchorOffset}
         >
-            <VersionViewer onClose={props.onClose} />
+            <VersionInfo onClose={props.onClose} />
         </AnchoredOverlay>
     );
 }
