@@ -13,9 +13,12 @@ import { generateSessionSetupUrl, SessionLinkTarget } from '../session/session_s
 import { useCurrentSessionState } from '../session/current_session.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
 import { useAppConfig } from '../app_config.js';
+import { useLogger } from '../platform/logger_provider.js';
 import { AnchorAlignment, AnchorSide } from './foundations/anchored_position.js';
 import { LogViewerOverlay } from './log_viewer.js';
 import { OverlaySize } from './foundations/overlay.js';
+
+const LOG_CTX = "navbar";
 
 const PageTab = (props: { route: string; alt?: string; location: string; icon: string; label: string | null }) => (
     <div
@@ -111,6 +114,7 @@ const VersionButton = (_props: {}) => {
 };
 
 export const NavBar = (): React.ReactElement => {
+    const logger = useLogger();
     const location = useLocation();
     const platformType = usePlatformType();
     const [sessionState, _modifySessionState] = useCurrentSessionState();
@@ -126,6 +130,10 @@ export const NavBar = (): React.ReactElement => {
         }
         return generateSessionSetupUrl(sessionState, connectionState, setupLinkTarget);
     }, [sessionState, connectionState, setupLinkTarget]);
+
+    React.useEffect(() => {
+        logger.info(`navigated to path ${location.pathname}`, LOG_CTX);
+    }, [location.pathname]);
 
     return (
         <div className={isMac ? styles.navbar_mac : styles.navbar_default}
@@ -151,7 +159,7 @@ export const NavBar = (): React.ReactElement => {
     );
 };
 
-export function NavBarContainer(props: { children: React.ReactElement }){
+export function NavBarContainer(props: { children: React.ReactElement }) {
     return (
         <div className={styles.container}>
             <NavBar key={0} />
