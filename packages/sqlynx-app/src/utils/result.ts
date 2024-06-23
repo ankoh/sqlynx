@@ -3,4 +3,4 @@ export const RESULT_ERROR = Symbol();
 
 export type Result<ValueType> =
     | { type: typeof RESULT_OK; value: ValueType }
-    | { type: typeof RESULT_ERROR; error: Error };
+    | { type: typeof RESULT_ERROR; error: any };

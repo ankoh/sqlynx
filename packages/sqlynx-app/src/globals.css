@@ -2,9 +2,6 @@
     --background_color_primary: hsl(208.5deg 24.69% 31.76%);
     --border_color_primary: rgb(208, 215, 222);
     --border_radius: 8px;
-    --color_icon: hsl(212, 8%, 23%);
-    --color_primary: hsl(212, 8%, 23%);
-    --color_version: rgb(160, 160, 160);
 
     --button_fg: hsl(210, 24%, 22%);
     --button_fg_inverted: rgb(255, 255, 255);
@@ -98,7 +95,7 @@
 
 :root {
     font-family: 'Roboto';
-    color: var(--color_primary);
+    color: var(--base_color_black);
 }
 
 * {

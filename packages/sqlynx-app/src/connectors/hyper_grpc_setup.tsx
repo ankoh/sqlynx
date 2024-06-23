@@ -14,6 +14,7 @@ import {
 import { Logger } from '../platform/logger.js';
 import { HyperGrpcConnectionParams } from './connection_params.js';
 import { HyperGrpcConnectorConfig } from './connector_configs.js';
+import { RESULT_ERROR } from '../utils/result.js';
 import { Dispatch } from '../utils/index.js';
 import {
     AttachedDatabase,
@@ -26,7 +27,7 @@ import { useAppConfig } from '../app_config.js';
 import { useHyperDatabaseClient } from '../platform/hyperdb_client_provider.js';
 import { RESET } from './connection_state.js';
 
-export async function setupHyperGrpcConnection(dispatch: Dispatch<HyperGrpcConnectorAction>, logger: Logger, params: HyperGrpcConnectionParams, _config: HyperGrpcConnectorConfig, client: HyperDatabaseClient, abortSignal: AbortSignal): Promise<void> {
+export async function setupHyperGrpcConnection(dispatch: Dispatch<HyperGrpcConnectorAction>, logger: Logger, params: HyperGrpcConnectionParams, _config: HyperGrpcConnectorConfig, client: HyperDatabaseClient, abortSignal: AbortSignal): Promise<HyperDatabaseChannel | null> {
     // First prepare the channel
     let channel: HyperDatabaseChannel;
     try {
@@ -81,7 +82,7 @@ export async function setupHyperGrpcConnection(dispatch: Dispatch<HyperGrpcConne
                 value: error.message,
             });
         }
-        return;
+        return null;
     }
 
     // Then perform an initial health check
@@ -102,13 +103,12 @@ export async function setupHyperGrpcConnection(dispatch: Dispatch<HyperGrpcConne
                 type: HEALTH_CHECK_SUCCEEDED,
                 value: null,
             });
-            return;
         } else {
             dispatch({
                 type: HEALTH_CHECK_FAILED,
                 value: health.errorMessage!,
             });
-            return;
+            return null;
         }
     } catch (error: any) {
         if (error.name === 'AbortError') {
@@ -124,8 +124,9 @@ export async function setupHyperGrpcConnection(dispatch: Dispatch<HyperGrpcConne
                 value: error.message,
             });
         }
-        return;
+        return null;
     }
+    return channel;
 }
 export interface HyperGrpcSetupApi {
     setup(dispatch: Dispatch<HyperGrpcConnectorAction>, params: HyperGrpcConnectionParams, abortSignal: AbortSignal): Promise<void>
@@ -151,7 +152,7 @@ export const HyperGrpcSetupProvider: React.FC<Props> = (props: Props) => {
             return null;
         }
         const setup = async (dispatch: Dispatch<HyperGrpcConnectorAction>, params: HyperGrpcConnectionParams, abort: AbortSignal) => {
-            return setupHyperGrpcConnection(dispatch, logger, params, connectorConfig, hyperClient, abort);
+            await setupHyperGrpcConnection(dispatch, logger, params, connectorConfig, hyperClient, abort);
         };
         const reset = async (dispatch: Dispatch<HyperGrpcConnectorAction>) => {
             dispatch({

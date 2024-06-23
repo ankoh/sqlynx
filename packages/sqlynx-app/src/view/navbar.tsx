@@ -8,12 +8,13 @@ import { SQLYNX_VERSION } from '../globals.js';
 import { classNames } from '../utils/classnames.js';
 import { HoverMode, NavBarButtonWithRef, NavBarLink } from './navbar_button.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
-import { VersionViewerOverlay } from './version_viewer.js';
+import { VersionInfoOverlay } from './version_viewer.js';
 import { generateSessionSetupUrl, SessionLinkTarget } from '../session/session_setup_url.js';
 import { useCurrentSessionState } from '../session/current_session.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
 import { useAppConfig } from '../app_config.js';
 import { useLogger } from '../platform/logger_provider.js';
+import { VersionCheckIndicator, useVersionCheck, VersionCheckStatus } from '../platform/version_check.js';
 import { AnchorAlignment, AnchorSide } from './foundations/anchored_position.js';
 import { LogViewerOverlay } from './log_viewer.js';
 import { OverlaySize } from './foundations/overlay.js';
@@ -38,7 +39,7 @@ const PageTab = (props: { route: string; alt?: string; location: string; icon: s
     </div>
 );
 
-const ExternalLink = (props: { url?: string | null; alt?: string; icon?: string; label: string, newWindow?: boolean }) => (
+const OpenIn = (props: { url?: string | null; alt?: string; icon?: string; label: string, newWindow?: boolean }) => (
     <div className={styles.tab}>
         <NavBarLink className={styles.tab_button} to={props.url ?? ""} hover={HoverMode.Darken} newWindow={props.newWindow}>
             <>
@@ -53,7 +54,7 @@ const ExternalLink = (props: { url?: string | null; alt?: string; icon?: string;
     </div>
 );
 
-const LogButton = (_props: {}) => {
+const LogButton = () => {
     const [showLogOverlay, setShowLogOverlay] = React.useState<boolean>(false);
     return (
         <div className={styles.tab}>
@@ -87,9 +88,11 @@ const LogButton = (_props: {}) => {
 
 const VersionButton = (_props: {}) => {
     const [showVersionOverlay, setShowVersionOverlay] = React.useState<boolean>(false);
+    const versionCheck = useVersionCheck();
+
     return (
         <div className={styles.tab}>
-            <VersionViewerOverlay
+            <VersionInfoOverlay
                 isOpen={showVersionOverlay}
                 onClose={() => setShowVersionOverlay(false)}
                 renderAnchor={(p: object) => (
@@ -98,9 +101,7 @@ const VersionButton = (_props: {}) => {
                         className={styles.tab_button} hover={HoverMode.Darken} onClick={() => setShowVersionOverlay(true)}
                     >
                         <>
-                            <svg width="14px" height="14px">
-                                <use xlinkHref={`${symbols}#package`} />
-                            </svg>
+                            <VersionCheckIndicator status={versionCheck} />
                             <span className={styles.tab_button_text}>{SQLYNX_VERSION}</span>
                         </>
                     </NavBarButtonWithRef>
@@ -151,8 +152,8 @@ export const NavBar = (): React.ReactElement => {
                 <LogButton />
                 <VersionButton />
                 {isBrowser
-                    ? <ExternalLink label="Open in App" url={setupUrl?.toString()} icon={`${symbols}#download_desktop`} newWindow={false} />
-                    : <ExternalLink label="Open in Browser" url={setupUrl?.toString()} icon={`${symbols}#upload_browser`} newWindow={true} />
+                    ? <OpenIn label="Open in App" url={setupUrl?.toString()} icon={`${symbols}#download_desktop`} newWindow={false} />
+                    : <OpenIn label="Open in Browser" url={setupUrl?.toString()} icon={`${symbols}#upload_browser`} newWindow={true} />
                 }
             </div>
         </div>

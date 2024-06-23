@@ -7,7 +7,7 @@ import { Result, RESULT_ERROR, RESULT_OK } from '../utils/result.js';
 import { Logger } from './logger.js';
 import { loadReleaseManifest, ReleaseChannel, ReleaseManifest } from './web_version_check.js';
 import { SQLYNX_CANARY_RELEASE_MANIFEST, SQLYNX_STABLE_RELEASE_MANIFEST } from '../globals.js';
-import { STABLE_RELEASE_MANIFEST_CTX, STABLE_UPDATE_MANIFEST_CTX, CANARY_RELEASE_MANIFEST_CTX, CANARY_UPDATE_MANIFEST_CTX, UPDATE_STATUS_CTX, UpdateStatus, InstallableUpdate, InstallationStatusSetter, InstallationState, InstallationStatus, INSTALLATION_STATUS_CTX } from './version_check.js';
+import { STABLE_RELEASE_MANIFEST_CTX, STABLE_UPDATE_MANIFEST_CTX, CANARY_RELEASE_MANIFEST_CTX, CANARY_UPDATE_MANIFEST_CTX, VERSION_CHECK_CTX, VersionCheckStatus, InstallableUpdate, InstallationStatusSetter, InstallationState, InstallationStatus, INSTALLATION_STATUS_CTX } from './version_check.js';
 
 class InstallableTauriUpdate implements InstallableUpdate {
     /// The logger
@@ -122,16 +122,16 @@ export const NativeVersionCheck: React.FC<Props> = (props: Props) => {
         updateFetched = true;
         updateAvailable ||= canaryUpdate.value != null;
     }
-    let status = UpdateStatus.Unknown;
+    let status = VersionCheckStatus.Unknown;
     if (updateFetched) {
         if (updateAvailable) {
-            status = UpdateStatus.UpdateAvailable;
+            status = VersionCheckStatus.UpdateAvailable;
         } else {
-            status = UpdateStatus.UpToDate;
+            status = VersionCheckStatus.UpToDate;
         }
     }
     return (
-        <UPDATE_STATUS_CTX.Provider value={status}>
+        <VERSION_CHECK_CTX.Provider value={status}>
             <INSTALLATION_STATUS_CTX.Provider value={installationStatus}>
                 <STABLE_RELEASE_MANIFEST_CTX.Provider value={stableRelease}>
                     <STABLE_UPDATE_MANIFEST_CTX.Provider value={stableUpdate}>
@@ -143,7 +143,7 @@ export const NativeVersionCheck: React.FC<Props> = (props: Props) => {
                     </STABLE_UPDATE_MANIFEST_CTX.Provider>
                 </STABLE_RELEASE_MANIFEST_CTX.Provider>
             </INSTALLATION_STATUS_CTX.Provider>
-        </UPDATE_STATUS_CTX.Provider>
+        </VERSION_CHECK_CTX.Provider>
     );
 };
 

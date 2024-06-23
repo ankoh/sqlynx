@@ -5,7 +5,7 @@ import { ReleaseBundles } from '../release_bundle.js';
 
 import * as styles from './platform_check.module.css';
 import * as icons from '../../../static/svg/symbols.generated.svg';
-import { VersionViewerOverlay } from '../version_viewer.js';
+import { VersionInfoOverlay } from '../version_viewer.js';
 import { HoverMode, NavBarButtonWithRef } from '../navbar_button.js';
 import * as symbols from '../../../static/svg/symbols.generated.svg';
 import { SQLYNX_VERSION } from '../../globals.js';
@@ -33,7 +33,7 @@ export const PlatformCheck: React.FC<{ connectorType: ConnectorType, children: R
                         </a>
                     </div>
                     <div className={styles.actions}>
-                        <VersionViewerOverlay
+                        <VersionInfoOverlay
                             isOpen={showVersionOverlay}
                             onClose={() => setShowVersionOverlay(false)}
                             renderAnchor={(p: object) => (
