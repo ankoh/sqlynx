@@ -17,11 +17,22 @@ import {
     createConnectionState,
     RESET,
 } from './connection_state.js';
+import {
+    CHANNEL_READY,
+    CHANNEL_SETUP_CANCELLED,
+    CHANNEL_SETUP_FAILED,
+    CHANNEL_SETUP_STARTED,
+    HEALTH_CHECK_CANCELLED,
+    HEALTH_CHECK_FAILED,
+    HEALTH_CHECK_STARTED,
+    HEALTH_CHECK_SUCCEEDED,
+    HyperGrpcConnectorAction,
+    HyperGrpcSetupTimings
+} from './hyper_grpc_connection_state.js';
 import { updateDataCloudCatalog } from './salesforce_catalog_update.js';
 import { HyperDatabaseChannel } from '../platform/hyperdb_client.js';
-import { GrpcChannelArgs } from '../platform/grpc_common.js';
 
-export interface SalesforceSetupTimings {
+export interface SalesforceSetupTimings extends HyperGrpcSetupTimings {
     /// The time when the auth started
     authStartedAt: Date | null;
     /// The time when the auth got cancelled
@@ -54,23 +65,6 @@ export interface SalesforceSetupTimings {
     dataCloudMetadataRequestedAt: Date | null;
     /// The time when we received the data cloud metadata
     dataCloudMetadataReceivedAt: Date | null;
-
-    /// The time when the channel setup started
-    channelSetupStartedAt: Date | null;
-    /// The time when the channel setup got cancelled
-    channelSetupCancelledAt: Date | null;
-    /// The time when the channel setup failed
-    channelSetupFailedAt: Date | null;
-    /// The time when the channel was marked ready
-    channelReadyAt: Date | null;
-    /// The time when the health check started
-    healthCheckStartedAt: Date | null;
-    /// The time when the health check got cancelled
-    healthCheckCancelledAt: Date | null;
-    /// The time when the health check failed
-    healthCheckFailedAt: Date | null;
-    /// The time when the health check succeeded
-    healthCheckSucceededAt: Date | null;
 }
 
 export function createSalesforceSetupTimings(): SalesforceSetupTimings {
@@ -178,15 +172,6 @@ export const RECEIVED_DATA_CLOUD_ACCESS_TOKEN = Symbol('RECEIVED_DATA_CLOUD_ACCE
 export const REQUESTING_DATA_CLOUD_METADATA = Symbol('REQUESTING_DATA_CLOUD_METADATA');
 export const RECEIVED_DATA_CLOUD_METADATA = Symbol('RECEIVED_DATA_CLOUD_METADATA');
 
-export const CHANNEL_SETUP_CANCELLED = Symbol('CHANNEL_SETUP_CANCELLED');
-export const CHANNEL_SETUP_FAILED = Symbol('CHANNEL_SETUP_FAILED');
-export const CHANNEL_SETUP_STARTED = Symbol('CHANNEL_SETUP_STARTED');
-export const CHANNEL_READY = Symbol('CHANNEL_READY');
-export const HEALTH_CHECK_STARTED = Symbol('HEALTH_CHECK_STARTED');
-export const HEALTH_CHECK_CANCELLED = Symbol('HEALTH_CHECK_CANCELLED');
-export const HEALTH_CHECK_SUCCEEDED = Symbol('HEALTH_CHECK_SUCCEEDED');
-export const HEALTH_CHECK_FAILED = Symbol('HEALTH_CHECK_FAILED');
-
 export type SalesforceConnectionStateAction =
     | VariantKind<typeof RESET, null>
     | VariantKind<typeof AUTH_STARTED, SalesforceAuthParams>
@@ -204,14 +189,7 @@ export type SalesforceConnectionStateAction =
     | VariantKind<typeof RECEIVED_DATA_CLOUD_ACCESS_TOKEN, SalesforceDataCloudAccessToken>
     | VariantKind<typeof REQUESTING_DATA_CLOUD_METADATA, null>
     | VariantKind<typeof RECEIVED_DATA_CLOUD_METADATA, SalesforceMetadata>
-    | VariantKind<typeof CHANNEL_SETUP_STARTED, GrpcChannelArgs>
-    | VariantKind<typeof CHANNEL_SETUP_CANCELLED, string>
-    | VariantKind<typeof CHANNEL_SETUP_FAILED, string>
-    | VariantKind<typeof CHANNEL_READY, HyperDatabaseChannel>
-    | VariantKind<typeof HEALTH_CHECK_STARTED, null>
-    | VariantKind<typeof HEALTH_CHECK_CANCELLED, null>
-    | VariantKind<typeof HEALTH_CHECK_FAILED, string>
-    | VariantKind<typeof HEALTH_CHECK_SUCCEEDED, null>
+    | HyperGrpcConnectorAction
     ;
 
 export function reduceSalesforceConnectionState(state: ConnectionState, action: SalesforceConnectionStateAction): ConnectionState | null {

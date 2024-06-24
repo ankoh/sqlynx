@@ -1,5 +1,4 @@
 import * as React from 'react';
-import * as Immutable from 'immutable';
 import * as symbols from '../../../static/svg/symbols.generated.svg';
 import * as style from './connector_settings.module.css';
 
@@ -50,8 +49,8 @@ interface PageState {
     mTlsKeyPath: string;
     mTlsPubPath: string;
     mTlsCaPath: string;
-    attachedDatabases: Immutable.List<KeyValueListElement>;
-    gRPCMetadata: Immutable.List<KeyValueListElement>;
+    attachedDatabases: KeyValueListElement[];
+    gRPCMetadata: KeyValueListElement[];
 };
 type PageStateSetter = Dispatch<React.SetStateAction<PageState>>;
 const PAGE_STATE_CTX = React.createContext<[PageState, PageStateSetter] | null>(null);
@@ -331,8 +330,8 @@ export const HyperGrpcConnectorSettingsStateProvider: React.FC<ProviderProps> = 
         mTlsKeyPath: "",
         mTlsPubPath: "",
         mTlsCaPath: "",
-        attachedDatabases: Immutable.List(),
-        gRPCMetadata: Immutable.List(),
+        attachedDatabases: [],
+        gRPCMetadata: [],
     });
     return (
         <PAGE_STATE_CTX.Provider value={state}>

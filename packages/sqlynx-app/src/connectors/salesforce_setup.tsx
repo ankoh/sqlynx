@@ -6,11 +6,6 @@ import {
     AUTH_CANCELLED,
     AUTH_FAILED,
     AUTH_STARTED,
-    CHANNEL_SETUP_STARTED,
-    CHANNEL_READY,
-    HEALTH_CHECK_FAILED,
-    HEALTH_CHECK_STARTED,
-    HEALTH_CHECK_SUCCEEDED,
     GENERATED_PKCE_CHALLENGE,
     GENERATING_PKCE_CHALLENGE,
     OAUTH_NATIVE_LINK_OPENED,
@@ -30,7 +25,7 @@ import { generatePKCEChallenge } from '../utils/pkce.js';
 import { BASE64_CODEC } from '../utils/base64.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 import { SalesforceConnectorConfig } from './connector_configs.js';
-import { SalesforceAuthParams } from './connection_params.js';
+import { HyperGrpcConnectionParams, SalesforceAuthParams } from './connection_params.js';
 import { SalesforceAPIClientInterface } from './salesforce_api_client.js';
 import { Dispatch } from '../utils/variant.js';
 import { Logger } from '../platform/logger.js';
@@ -40,13 +35,16 @@ import { useLogger } from '../platform/logger_provider.js';
 import { isNativePlatform } from '../platform/native_globals.js';
 import { isDebugBuild } from '../globals.js';
 import { RESET } from './connection_state.js';
-import {
-    AttachedDatabase,
-    HyperDatabaseClient,
-    HyperDatabaseConnectionContext,
-} from '../platform/hyperdb_client.js';
+import { AttachedDatabase, HyperDatabaseClient, HyperDatabaseConnectionContext } from '../platform/hyperdb_client.js';
 import { GrpcChannelArgs } from '../platform/grpc_common.js';
 import { useHyperDatabaseClient } from '../platform/hyperdb_client_provider.js';
+import {
+    CHANNEL_READY,
+    CHANNEL_SETUP_STARTED,
+    HEALTH_CHECK_FAILED,
+    HEALTH_CHECK_STARTED,
+    HEALTH_CHECK_SUCCEEDED,
+} from './hyper_grpc_connection_state.js';
 
 // By default, a Salesforce OAuth Access Token expires after 2 hours = 7200 seconds
 const DEFAULT_EXPIRATION_TIME_MS = 2 * 60 * 60 * 1000;
@@ -222,13 +220,17 @@ export async function setupSalesforceConnection(dispatch: Dispatch<SalesforceCon
         abortSignal.throwIfAborted();
 
         // Start the channel setup
-        const channelArgs: GrpcChannelArgs = {
-            endpoint: dcToken.instanceUrl.toString(),
-            tls: {},
+        const connParams: HyperGrpcConnectionParams = {
+            channel: {
+                endpoint: dcToken.instanceUrl.toString(),
+                tls: {},
+            },
+            attachedDatabases: [],
+            gRPCMetadata: []
         };
         dispatch({
             type: CHANNEL_SETUP_STARTED,
-            value: channelArgs,
+            value: connParams,
         });
         abortSignal.throwIfAborted()
 
@@ -249,7 +251,7 @@ export async function setupSalesforceConnection(dispatch: Dispatch<SalesforceCon
         };
 
         // Create the channel
-        const channel = await hyperClient.connect(channelArgs, connectionContext);
+        const channel = await hyperClient.connect(connParams.channel, connectionContext);
         abortSignal.throwIfAborted();
 
         // Mark the channel as ready
