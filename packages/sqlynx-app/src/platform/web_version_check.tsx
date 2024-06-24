@@ -6,6 +6,8 @@ import { Logger } from './logger.js';
 import { SQLYNX_CANARY_RELEASE_MANIFEST, SQLYNX_STABLE_RELEASE_MANIFEST } from '../globals.js';
 import { CANARY_RELEASE_MANIFEST_CTX, CANARY_UPDATE_MANIFEST_CTX, INSTALLATION_STATUS_CTX, STABLE_RELEASE_MANIFEST_CTX, STABLE_UPDATE_MANIFEST_CTX, VERSION_CHECK_CTX, VersionCheckStatus } from './version_check.js';
 
+const LOG_CTX = "version_check";
+
 type Props = {
     children: React.ReactElement;
 };
@@ -46,7 +48,7 @@ export type ReleaseChannel = "stable" | "canary";
 /// Load the release manifest
 export async function loadReleaseManifest(channel: ReleaseChannel, url: URL, setResult: (result: Result<ReleaseManifest>) => void, logger: Logger) {
     const start = performance.now();
-    logger.info(`fetching ${channel} release manifest`, "version_check");
+    logger.info(`fetching ${channel} release manifest`, LOG_CTX);
     try {
         // Fetch the release manifest
         const manifestRequest = await fetch(url);
@@ -54,14 +56,14 @@ export async function loadReleaseManifest(channel: ReleaseChannel, url: URL, set
         const manifest = parseReleaseManifest(manifestRaw);
         // Set release manifest
         const end = performance.now();
-        logger.info(`fetched ${channel} release manifest in ${Math.floor(end - start)} ms`, "version_check");
+        logger.info(`fetched ${channel} release manifest in ${Math.floor(end - start)} ms`, LOG_CTX);
         setResult({
             type: RESULT_OK,
             value: manifest
         });
     } catch (e: any) {
         const end = performance.now();
-        logger.error(`failed to fetch ${channel} release manifest after ${Math.floor(end - start)} ms: ${e.toString()}`, "version_check");
+        logger.error(`failed to fetch ${channel} release manifest after ${Math.floor(end - start)} ms: ${e.toString()}`, LOG_CTX);
         setResult({
             type: RESULT_ERROR,
             error: new Error(e.toString())
