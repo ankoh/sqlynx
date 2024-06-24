@@ -8,8 +8,8 @@
     ],
     "permissions": [
         "app:default",
-        "deep-link:default",
         "deep-link:allow-get-current",
+        "deep-link:default",
         "event:default",
         "log:allow-log",
         "log:default",
@@ -17,6 +17,8 @@
         "os:allow-arch",
         "os:allow-hostname",
         "os:allow-os-type",
+        "process:allow-exit",
+        "process:allow-restart",
         "resources:default",
         "shell:allow-open",
         "tray:default",
