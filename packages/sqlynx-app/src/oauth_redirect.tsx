@@ -80,11 +80,11 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
         }
     }, [code, props.state]);
 
-    // Setup autotrigger
+    // Setup auto-trigger
     const skipAutoTrigger = props.state.flowVariant == proto.sqlynx_oauth.pb.OAuthFlowVariant.NATIVE_LINK_FLOW && props.state.debugMode;
     const autoTriggersAt = React.useMemo(() => new Date(now.getTime() + AUTO_TRIGGER_DELAY), []);
     const [remainingUntilAutoTrigger, setRemainingUntilAutoTrigger] = React.useState<number>(() => Math.max(autoTriggersAt.getTime(), now.getTime()) - now.getTime());
-    const autoTriggerInThePast = now.getTime() >= autoTriggersAt.getTime()
+    const [wasTriggered, setWasTriggered] = React.useState<boolean>(false);
 
     React.useEffect(() => {
         // Skip auto trigger for native apps in debug mode
@@ -93,7 +93,10 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
             return () => { };
         } else {
             logger.info(`setup auto-trigger in ${formatHHMMSS(remainingUntilAutoTrigger / 1000)}`, LOG_CTX);
-            const timeoutId = setTimeout(() => triggerFlow(props.state, eventBase64, deepLink, logger), remainingUntilAutoTrigger);
+            const timeoutId = setTimeout(() => {
+                triggerFlow(props.state, eventBase64, deepLink, logger);
+                setWasTriggered(true);
+            }, remainingUntilAutoTrigger);
             const updaterId: { current: unknown | null } = { current: null };
 
             const updateRemaining = () => {
@@ -223,7 +226,7 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                                     aria-labelledby=""
                                 />
                                 {
-                                    autoTriggerInThePast
+                                    wasTriggered
                                         ? <Button
                                             variant={ButtonVariant.Primary}
                                             onClick={() => triggerFlow(props.state, eventBase64, deepLink, logger)}
