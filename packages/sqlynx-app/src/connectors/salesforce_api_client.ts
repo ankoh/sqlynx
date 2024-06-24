@@ -321,6 +321,7 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
             grant_type: 'urn:salesforce:grant-type:external:cdp',
             subject_token: access.accessToken!,
             subject_token_type: 'urn:ietf:params:oauth:token-type:access_token',
+            // dataspace: 'default'
         };
         const body = new URLSearchParams(params);
         // Get the data cloud access token
@@ -348,6 +349,7 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
         const response = await this.httpClient.fetch(new URL(`${access.instanceUrl}/services/oauth2/userinfo?${params.toString()}`), {
             headers: {
                 authorization: `Bearer ${access.accessToken}`,
+                accept: 'application/json',
             },
             signal: cancel,
         });
@@ -359,12 +361,10 @@ export class SalesforceAPIClient implements SalesforceAPIClientInterface {
         access: SalesforceDataCloudAccessToken,
         cancel: AbortSignal,
     ): Promise<SalesforceMetadata> {
-        console.log(access);
-        console.log(access.instanceUrl);
-        console.log(`${access.instanceUrl.toString()}api/v1/metadata`);
         const response = await this.httpClient.fetch(new URL(`${access.instanceUrl.toString()}api/v1/metadata`), {
             headers: {
-                authorization: `Bearer ${access.jwt}`,
+                authorization: `Bearer ${access.jwt.raw}`,
+                accept: 'application/json',
             },
             signal: cancel,
         });

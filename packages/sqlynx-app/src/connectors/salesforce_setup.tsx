@@ -212,6 +212,7 @@ export async function setupSalesforceConnection(dispatch: Dispatch<SalesforceCon
             value: null,
         });
         const metadata = await apiClient.getDataCloudMetadata(dcToken, abortSignal);
+        console.log(metadata);
         logger.debug(`received data cloud metadata`);
         dispatch({
             type: RECEIVED_DATA_CLOUD_METADATA,

@@ -64,6 +64,8 @@ fn read_request_params(headers: &mut HeaderMap) -> Result<HttpRequestParams, Sta
             }
         }
     }
+    // Remove some headers set by the webviews fetch call
+    extra_metadata.remove("origin");
 
     let url_text = format!("{}{}", &endpoint, &path_and_query);
     let url = url::Url::parse(&url_text)
