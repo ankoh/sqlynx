@@ -10,9 +10,9 @@ export interface HyperGrpcConnectionParams {
     /// The gRPC endpoint
     channel: GrpcChannelArgs;
     /// The attached databases
-    attachedDatabases: Immutable.List<KeyValueListElement>;
+    attachedDatabases: KeyValueListElement[];
     /// The gRPC metadata
-    gRPCMetadata: Immutable.List<KeyValueListElement>;
+    gRPCMetadata: KeyValueListElement[];
 }
 
 export interface SalesforceAuthParams {

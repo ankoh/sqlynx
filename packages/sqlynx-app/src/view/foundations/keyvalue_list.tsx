@@ -1,5 +1,4 @@
 import * as React from 'react';
-import * as Immutable from 'immutable';
 
 import { Dispatch } from '../../utils/variant.js';
 import { PlusIcon, XIcon } from '@primer/octicons-react';
@@ -11,12 +10,11 @@ import { IconButton } from '@primer/react';
 import { TextInputAction } from './text_input_action.js';
 
 export interface KeyValueListElement {
-    index: number;
     key: string;
     value: string;
 }
 
-export type UpdateKeyValueList = (prev: Immutable.List<KeyValueListElement>) => Immutable.List<KeyValueListElement>;
+export type UpdateKeyValueList = (prev: KeyValueListElement[]) => KeyValueListElement[];
 
 interface Props {
     className?: string;
@@ -25,24 +23,31 @@ interface Props {
     keyIcon: React.ElementType;
     valueIcon: React.ElementType;
     addButtonLabel: string;
-    elements: Immutable.List<KeyValueListElement>;
+    elements: KeyValueListElement[];
     modifyElements: Dispatch<UpdateKeyValueList>;
     disabled?: boolean;
     readOnly?: boolean;
 }
 
 export const KeyValueListBuilder: React.FC<Props> = (props: Props) => {
-    const appendElement = () => props.modifyElements(list => list.push({
-        index: list.size,
-        key: "",
-        value: "",
-    }));
-    const deleteIndex = (index: number) => props.modifyElements(list => list.delete(index));
-    const modifyElement = (index: number, key: string, value: string) => props.modifyElements(list => list.set(index, {
-        index: index,
-        key,
-        value,
-    }));
+    const appendElement = () => props.modifyElements(list => {
+        const copy = [...list];
+        copy.push({
+            key: "",
+            value: "",
+        });
+        return copy;
+    });
+    const deleteIndex = (index: number) => props.modifyElements(list => {
+        const copy = [...list];
+        copy.splice(index, 1);
+        return copy;
+    });
+    const modifyElement = (index: number, key: string, value: string) => props.modifyElements(list => {
+        const copy = [...list];
+        copy[index] = { key, value };
+        return copy;
+    });
 
     return (
         <div className={classNames(props.className, styles.list)}>
