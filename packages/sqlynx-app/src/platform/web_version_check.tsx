@@ -4,7 +4,7 @@ import { useLogger } from './logger_provider.js';
 import { Result, RESULT_ERROR, RESULT_OK } from '../utils/result.js';
 import { Logger } from './logger.js';
 import { SQLYNX_CANARY_RELEASE_MANIFEST, SQLYNX_STABLE_RELEASE_MANIFEST } from '../globals.js';
-import { CANARY_RELEASE_MANIFEST_CTX, CANARY_UPDATE_MANIFEST_CTX, INSTALLATION_STATUS_CTX, STABLE_RELEASE_MANIFEST_CTX, STABLE_UPDATE_MANIFEST_CTX, VERSION_CHECK_CTX, VersionCheckStatus } from './version_check.js';
+import { CANARY_RELEASE_MANIFEST_CTX, CANARY_UPDATE_MANIFEST_CTX, INSTALLATION_STATUS_CTX, STABLE_RELEASE_MANIFEST_CTX, STABLE_UPDATE_MANIFEST_CTX, VERSION_CHECK_CTX, VersionCheckStatusCode } from './version_check.js';
 
 const LOG_CTX = "version_check";
 
@@ -83,7 +83,7 @@ export const WebVersionCheck: React.FC<Props> = (props: Props) => {
     }, []);
 
     return (
-        <VERSION_CHECK_CTX.Provider value={VersionCheckStatus.Disabled}>
+        <VERSION_CHECK_CTX.Provider value={VersionCheckStatusCode.Disabled}>
             <INSTALLATION_STATUS_CTX.Provider value={null}>
                 <STABLE_RELEASE_MANIFEST_CTX.Provider value={stableRelease}>
                     <STABLE_UPDATE_MANIFEST_CTX.Provider value={null}>

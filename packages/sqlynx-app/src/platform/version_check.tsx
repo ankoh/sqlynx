@@ -5,7 +5,7 @@ import { NativeVersionCheck } from './native_version_check.js';
 import { ReleaseManifest, WebVersionCheck } from './web_version_check.js';
 import { Result } from '../utils/result.js';
 
-export enum VersionCheckStatus {
+export enum VersionCheckStatusCode {
     Unknown = 0,
     Disabled = 1,
     UpToDate = 2,
@@ -15,28 +15,30 @@ export enum VersionCheckStatus {
     UpdateFailed = 6,
 }
 
-export enum InstallationState {
+export enum InstallationStatusCode {
     Started,
     InProgress,
-    Finished
+    RestartPending,
+    Failed
 }
 
-export interface InstallationStatus {
+export interface InstallationState {
     update: InstallableUpdate;
-    state: InstallationState;
+    statusCode: InstallationStatusCode;
     totalBytes: number | null;
     loadedBytes: number;
     inProgressBytes: number;
+    error: Error | null;
 }
 
-export type InstallationStatusSetter = React.SetStateAction<InstallationStatus | null>;
+export type InstallationStatusSetter = React.SetStateAction<InstallationState | null>;
 
 export interface InstallableUpdate {
     download(): Promise<void>
 }
 
-export const VERSION_CHECK_CTX = React.createContext<VersionCheckStatus>(VersionCheckStatus.Unknown);
-export const INSTALLATION_STATUS_CTX = React.createContext<InstallationStatus | null>(null);
+export const VERSION_CHECK_CTX = React.createContext<VersionCheckStatusCode>(VersionCheckStatusCode.Unknown);
+export const INSTALLATION_STATUS_CTX = React.createContext<InstallationState | null>(null);
 export const STABLE_RELEASE_MANIFEST_CTX = React.createContext<Result<ReleaseManifest> | null>(null);
 export const STABLE_UPDATE_MANIFEST_CTX = React.createContext<Result<InstallableUpdate | null> | null>(null);
 export const CANARY_RELEASE_MANIFEST_CTX = React.createContext<Result<ReleaseManifest> | null>(null);
@@ -55,8 +57,8 @@ interface VersionCheckProps {
 
 export const VersionCheck: React.FC<VersionCheckProps> = (props: VersionCheckProps) => {
     if (isNativePlatform()) {
-        return <NativeVersionCheck {...props} />;
+        return <NativeVersionCheck>{props.children}</NativeVersionCheck>;
     } else {
-        return <WebVersionCheck {...props} />;
+        return <WebVersionCheck>{props.children}</WebVersionCheck>;
     }
 };

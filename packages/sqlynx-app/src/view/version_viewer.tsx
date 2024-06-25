@@ -8,15 +8,15 @@ import { IconButton, ProgressBar } from '@primer/react';
 import { SQLYNX_GIT_COMMIT, SQLYNX_VERSION } from '../globals.js';
 import {
     InstallableUpdate,
+    InstallationStatusCode,
     InstallationState,
-    InstallationStatus,
     useCanaryReleaseManifest,
     useCanaryUpdateManifest,
     useInstallationStatus,
     useStableReleaseManifest,
     useStableUpdateManifest,
     useVersionCheck,
-    VersionCheckStatus,
+    VersionCheckStatusCode,
 } from '../platform/version_check.js';
 import { Button } from './foundations/button.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
@@ -32,7 +32,7 @@ interface UpdateChannelProps {
     name: string;
     releaseManifest: Result<ReleaseManifest | null> | null;
     updateManifest: Result<InstallableUpdate | null> | null;
-    installationStatus: InstallationStatus | null;
+    installationStatus: InstallationState | null;
 }
 
 const UpdateChannel: React.FC<UpdateChannelProps> = (props: UpdateChannelProps) => {
@@ -73,7 +73,7 @@ const UpdateChannel: React.FC<UpdateChannelProps> = (props: UpdateChannelProps) 
                     // Do we know the total bytes already?
                     // Render a query_status bar then.
                     if (props.installationStatus.totalBytes != null && props.installationStatus.totalBytes > 0) {
-                        if (props.installationStatus.state == InstallationState.InProgress) {
+                        if (props.installationStatus.statusCode == InstallationStatusCode.InProgress) {
                             const progress = props.installationStatus.loadedBytes / props.installationStatus.totalBytes;
                             console.log(progress * 100);
                             status = <ProgressBar className={styles.update_channel_action_progress} progress={progress * 100} />;
@@ -130,7 +130,7 @@ export const VersionInfo: React.FC<VersionViewerProps> = (props: VersionViewerPr
     const versionCheck = useVersionCheck();
     const process = useProcess();
 
-    if (versionCheck == VersionCheckStatus.RestartPending) {
+    if (versionCheck == VersionCheckStatusCode.RestartPending) {
         return (
             <div className={styles.overlay}>
                 <Button onClick={() => process.relaunch()}>Relaunch</Button>
@@ -217,14 +217,14 @@ export function VersionInfoOverlay(props: VersionInfoOverlayProps) {
 }
 
 interface VersionCheckIndicatorProps {
-    status: VersionCheckStatus;
+    status: VersionCheckStatusCode;
 }
 
 export function VersionCheckIndicator(props: VersionCheckIndicatorProps) {
     switch (props.status) {
-        case VersionCheckStatus.Unknown:
-        case VersionCheckStatus.Disabled:
-        case VersionCheckStatus.UpToDate:
+        case VersionCheckStatusCode.Unknown:
+        case VersionCheckStatusCode.Disabled:
+        case VersionCheckStatusCode.UpToDate:
             return (
                 <div className={styles.version_check_container}>
                     <div className={styles.version_check_icon}>
@@ -234,7 +234,7 @@ export function VersionCheckIndicator(props: VersionCheckIndicatorProps) {
                     </div>
                 </div>
             );
-        case VersionCheckStatus.UpdateAvailable:
+        case VersionCheckStatusCode.UpdateAvailable:
             return (
                 <div className={styles.version_check_container_with_indicator}>
                     <div className={styles.version_check_icon}>
@@ -249,7 +249,7 @@ export function VersionCheckIndicator(props: VersionCheckIndicatorProps) {
                     </div>
                 </div>
             );
-        case VersionCheckStatus.UpdateInstalling:
+        case VersionCheckStatusCode.UpdateInstalling:
             return (
                 <div className={styles.version_check_container_with_indicator}>
                     <div className={styles.version_check_icon}>
@@ -264,7 +264,7 @@ export function VersionCheckIndicator(props: VersionCheckIndicatorProps) {
                     </div>
                 </div>
             );
-        case VersionCheckStatus.RestartPending:
+        case VersionCheckStatusCode.RestartPending:
             return (
                 <div className={styles.version_check_container_with_indicator}>
                     <div className={styles.version_check_icon}>
@@ -279,7 +279,7 @@ export function VersionCheckIndicator(props: VersionCheckIndicatorProps) {
                     </div>
                 </div>
             );
-        case VersionCheckStatus.UpdateFailed:
+        case VersionCheckStatusCode.UpdateFailed:
             return (
                 <div className={styles.version_check_container_with_indicator}>
                     <div className={styles.version_check_icon}>
