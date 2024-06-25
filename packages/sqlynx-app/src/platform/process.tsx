@@ -25,9 +25,12 @@ class WebProcess implements ProcessApi {
         this.logger = logger;
     }
     async relaunch(): Promise<void> {
-        // XXX Refresh the entire page
+        window.location.reload();
     }
 }
+
+const PROCESS_CTX = React.createContext<ProcessApi | null>(null);
+export const useProcess = () => React.useContext(PROCESS_CTX)!;
 
 interface ProcessProviderProps {
     children: React.ReactElement;
@@ -35,7 +38,10 @@ interface ProcessProviderProps {
 
 export const ProcessProvider: React.FC<ProcessProviderProps> = (props: ProcessProviderProps) => {
     const logger = useLogger();
-    // const process = isNativePlatform() ? new NativeProcess(logger) : new WebProcess(logger);
-
-    return <div />;
+    const process = isNativePlatform() ? new NativeProcess(logger) : new WebProcess(logger);
+    return (
+        <PROCESS_CTX.Provider value={process}>
+            {props.children}
+        </PROCESS_CTX.Provider>
+    );
 };
