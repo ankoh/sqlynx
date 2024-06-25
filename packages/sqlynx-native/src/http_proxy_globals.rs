@@ -35,8 +35,12 @@ pub async fn read_http_server_stream(stream_id: usize, req: Request<Vec<u8>>) ->
             for message in batches.body_chunks.iter() {
                 buffer.write(&message).unwrap();
             }
+            let status_code = match batches.status {
+                Some(status) => status.as_u16(),
+                None => 200,
+            };
             let mut response = Response::builder()
-                .status(200)
+                .status(status_code)
                 .header(HEADER_NAME_STREAM_ID, stream_id)
                 .header(HEADER_NAME_BATCH_EVENT, batches.event.to_str())
                 .header(HEADER_NAME_BATCH_BYTES, batches.total_body_bytes);

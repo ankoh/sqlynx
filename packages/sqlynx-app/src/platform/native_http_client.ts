@@ -49,7 +49,6 @@ export class NativeHttpServerStream implements HttpFetchResult {
             this.logger.debug(`response body is empty`);
             return {};
         } else {
-            this.logger.debug(`parsing json response body: ${text}`);
             return JSON.parse(text);
         }
     }
