@@ -135,8 +135,8 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
     });
 
     // Helper to start the authorization
-    const authAbortController = React.useRef<AbortController | null>(null);
-    const startAuth = async () => {
+    const setupAbortController = React.useRef<AbortController | null>(null);
+    const startSetup = async () => {
         let validationSucceeded = true;
         if (pageState.instanceUrl == "") {
             validationSucceeded = false;
@@ -167,26 +167,26 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
         }
 
         // Authorize the client
-        authAbortController.current = new AbortController();
+        setupAbortController.current = new AbortController();
         const authParams: SalesforceAuthParams = {
             instanceUrl: pageState.instanceUrl,
             appConsumerKey: pageState.appConsumerKey,
             appConsumerSecret: null,
             loginHint: null,
         };
-        await salesforceAuthFlow.authorize(dispatchConnectionState, authParams, authAbortController.current.signal);
-        authAbortController.current = null;
+        await salesforceAuthFlow.authorize(dispatchConnectionState, authParams, setupAbortController.current.signal);
+        setupAbortController.current = null;
     };
 
-    // Helper to cancel the authorization
-    const cancelAuth = () => {
-        if (authAbortController.current) {
-            authAbortController.current.abort("abort the authorization flow");
-            authAbortController.current = null;
+    // Helper to cancel the setup
+    const cancelSetup = () => {
+        if (setupAbortController.current) {
+            setupAbortController.current.abort("abort the authorization flow");
+            setupAbortController.current = null;
         }
     };
-    // Helper to reset the authorization
-    const resetAuth = () => {
+    // Helper to reset the setup
+    const resetSetup = () => {
         dispatchConnectionState({ type: RESET, value: null });
     };
 
@@ -212,14 +212,14 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
         case ConnectionHealth.NOT_STARTED:
         case ConnectionHealth.FAILED:
         case ConnectionHealth.CANCELLED:
-            connectButton = <Button variant={ButtonVariant.Primary} leadingVisual={PlugIcon} onClick={startAuth}>Connect</Button>;
+            connectButton = <Button variant={ButtonVariant.Primary} leadingVisual={PlugIcon} onClick={startSetup}>Connect</Button>;
             break;
         case ConnectionHealth.CONNECTING:
-            connectButton = <Button variant={ButtonVariant.Danger} leadingVisual={XIcon} onClick={cancelAuth}>Cancel</Button>;
+            connectButton = <Button variant={ButtonVariant.Danger} leadingVisual={XIcon} onClick={cancelSetup}>Cancel</Button>;
             freezeInput = true;
             break;
         case ConnectionHealth.ONLINE:
-            connectButton = <Button variant={ButtonVariant.Danger} leadingVisual={XIcon} onClick={resetAuth}>Disconnect</Button>;
+            connectButton = <Button variant={ButtonVariant.Danger} leadingVisual={XIcon} onClick={resetSetup}>Disconnect</Button>;
             freezeInput = true;
             break;
     }

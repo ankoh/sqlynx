@@ -6,7 +6,7 @@ import * as baseStyles from '../view/banner_page.module.css';
 import * as connStyles from '../view/connectors/connector_settings.module.css';
 
 import { IconButton } from '@primer/react';
-import { ChecklistIcon, DesktopDownloadIcon, FileBadgeIcon, KeyIcon, PackageIcon } from '@primer/octicons-react';
+import { ChecklistIcon, DesktopDownloadIcon, FileBadgeIcon, KeyIcon, PackageIcon, PlugIcon, XIcon } from '@primer/octicons-react';
 
 import { formatHHMMSS } from '../utils/format.js';
 import { useLogger } from '../platform/logger_provider.js';
@@ -160,14 +160,15 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     }, []);
 
     // Helper to configure the session
-    const [configStarted, setConfigStarted] = React.useState<boolean>(false);
-    const configInProgressOrDone = React.useRef<boolean>(false);
-    const configure = React.useCallback(async () => {
-        setConfigStarted(true);
-        if (configInProgressOrDone.current) {
+    const [setupStarted, setSetupStarted] = React.useState<boolean>(false);
+    const setupInProgressOrDone = React.useRef<boolean>(false);
+    const setupAbortController = React.useRef<AbortController | null>(null);
+    const startSetup = React.useCallback(async () => {
+        setSetupStarted(true);
+        if (setupInProgressOrDone.current) {
             return;
         }
-        configInProgressOrDone.current = true;
+        setupInProgressOrDone.current = true;
 
         // Cannot execute here? Then redirect the user
         if (!canExecuteHere) {
@@ -188,14 +189,16 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                         return;
                     }
                     // Authorize the client
-                    const abortController = new AbortController();
+                    setupAbortController.current = new AbortController();
                     const authParams: SalesforceAuthParams = {
                         instanceUrl: connectorParams.value.instanceUrl,
                         appConsumerKey: connectorParams.value.appConsumerKey,
                         appConsumerSecret: null,
                         loginHint: null,
                     };
-                    await salesforceSetup.authorize(dispatchConnection, authParams, abortController.signal);
+                    await salesforceSetup.authorize(dispatchConnection, authParams, setupAbortController.current.signal);
+                    setupAbortController.current.signal.throwIfAborted();
+                    setupAbortController.current = null;
                     break;
                 }
             }
@@ -217,9 +220,17 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
             // We're done, return close the session setup page
             props.onDone();
         } catch (e: any) {
-            configInProgressOrDone.current = false;
+            setupInProgressOrDone.current = false;
         }
     }, [salesforceSetup]);
+
+    // Helper to cancel the setup
+    const cancelSetup = () => {
+        if (setupAbortController.current) {
+            setupAbortController.current.abort("abort the connection setup");
+            setupAbortController.current = null;
+        }
+    };
 
     // Setup config auto-trigger
     const autoTriggersAt = React.useMemo(() => new Date(now.getTime() + AUTO_TRIGGER_DELAY), []);
@@ -227,7 +238,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     React.useEffect(() => {
         // Otherwise setup an autotrigger for the setup
         logger.info(`setup config auto-trigger in ${formatHHMMSS(remainingUntilAutoTrigger / 1000)}`, "session_setup");
-        const timeoutId = setTimeout(configure, remainingUntilAutoTrigger);
+        const timeoutId = setTimeout(startSetup, remainingUntilAutoTrigger);
         const updaterId: { current: unknown | null } = { current: null };
 
         const updateRemaining = () => {
@@ -339,7 +350,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                         <Button
                             variant={ButtonVariant.Primary}
                             leadingVisual={DesktopDownloadIcon}
-                            trailingVisual={!configStarted ? () =>
+                            trailingVisual={!setupStarted ? () =>
                                 <div>{Math.floor(remainingUntilAutoTrigger / 1000)}</div> : undefined}
                             onClick={() => {
                                 const link = document.createElement('a');
@@ -358,6 +369,29 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
         const statusText: string = getConnectionStatusText(connection.connectionStatus, logger);
         // Get the indicator status
         const indicatorStatus: IndicatorStatus = getConnectionHealthIndicator(connection.connectionHealth);
+        // Resolve the connect button
+        let connectButton: React.ReactElement = <div />;
+        switch (connection.connectionHealth) {
+            case ConnectionHealth.NOT_STARTED:
+                connectButton = (
+                    <Button
+                        variant={ButtonVariant.Primary}
+                        onClick={startSetup}
+                        trailingVisual={!setupStarted ? () =>
+                            <div>{Math.floor(remainingUntilAutoTrigger / 1000)}</div> : undefined}
+                    >
+                        Connect
+                    </Button>
+                )
+                break;
+            case ConnectionHealth.FAILED:
+            case ConnectionHealth.CANCELLED:
+                connectButton = <Button variant={ButtonVariant.Primary} leadingVisual={PlugIcon} onClick={startSetup}>Connect</Button>;
+                break;
+            case ConnectionHealth.CONNECTING:
+                connectButton = <Button variant={ButtonVariant.Danger} leadingVisual={XIcon} onClick={cancelSetup}>Cancel</Button>;
+                break;
+        }
 
         sections.push(
             <div key={sections.length} className={baseStyles.card_actions}>
@@ -373,14 +407,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                     </div>
                 </div>
                 <div className={baseStyles.card_actions_right}>
-                    <Button
-                        variant={ButtonVariant.Primary}
-                        onClick={configure}
-                        trailingVisual={!configStarted ? () =>
-                            <div>{Math.floor(remainingUntilAutoTrigger / 1000)}</div> : undefined}
-                    >
-                        Configure
-                    </Button>
+                    {connectButton}
                 </div>
             </div>,
         );
