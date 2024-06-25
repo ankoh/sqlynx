@@ -15,16 +15,18 @@ import {
     useInstallationStatus,
     useStableReleaseManifest,
     useStableUpdateManifest,
+    useVersionCheck,
     VersionCheckStatus,
 } from '../platform/version_check.js';
 import { Button } from './foundations/button.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 import { ReleaseManifest } from '../platform/web_version_check.js';
-import { RESULT_ERROR, RESULT_OK, Result } from '../utils/result.js';
-import { StatusIndicator, IndicatorStatus } from './foundations/status_indicator.js';
+import { Result, RESULT_ERROR, RESULT_OK } from '../utils/result.js';
+import { IndicatorStatus, StatusIndicator } from './foundations/status_indicator.js';
 import { ReleaseBundles } from './release_bundle.js';
 import { AnchoredOverlay } from './foundations/anchored_overlay.js';
 import { AnchorAlignment, AnchorSide } from './foundations/anchored_position.js';
+import { useProcess } from '../platform/process.js';
 
 interface UpdateChannelProps {
     name: string;
@@ -125,6 +127,16 @@ export const VersionInfo: React.FC<VersionViewerProps> = (props: VersionViewerPr
     const canaryReleaseManifest = useCanaryReleaseManifest();
     const canaryUpdateManifest = useCanaryUpdateManifest();
     const installationStatus = useInstallationStatus();
+    const versionCheck = useVersionCheck();
+    const process = useProcess();
+
+    if (versionCheck == VersionCheckStatus.RestartPending) {
+        return (
+            <div className={styles.overlay}>
+                <Button onClick={() => process.relaunch()}>Relaunch</Button>
+            </div>
+        );
+    }
 
     return (
         <div className={styles.overlay}>

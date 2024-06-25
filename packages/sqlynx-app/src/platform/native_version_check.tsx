@@ -112,22 +112,43 @@ export const NativeVersionCheck: React.FC<Props> = (props: Props) => {
         checkChannelUpdates("canary", setCanaryUpdate, setInstallationStatus, logger);
     }, []);
 
-    let updateFetched = false;
-    let updateAvailable = false;
+
+    // Find any updates
+    let checkedForUpdates = false;
+    let updates = [];
     if (stableUpdate != null && stableUpdate.type == RESULT_OK) {
-        updateFetched = true;
-        updateAvailable ||= stableUpdate.value != null;
+        checkedForUpdates = true;
+        if (stableUpdate.value != null) {
+            updates.push(stableUpdate.value);
+        }
     }
     if (canaryUpdate != null && canaryUpdate.type == RESULT_OK) {
-        updateFetched = true;
-        updateAvailable ||= canaryUpdate.value != null;
+        checkedForUpdates = true;
+        if (canaryUpdate.value != null) {
+            updates.push(canaryUpdate.value);
+        }
     }
+
+    // Derive the version check status
     let status = VersionCheckStatus.Unknown;
-    if (updateFetched) {
-        if (updateAvailable) {
+    if (checkedForUpdates) {
+        status = VersionCheckStatus.UpToDate;
+        if (updates.length > 0) {
             status = VersionCheckStatus.UpdateAvailable;
-        } else {
-            status = VersionCheckStatus.UpToDate;
+        }
+        // TODO consolidate error handling for updates
+        for (const update of updates) {
+            if (update === installationStatus?.update) {
+                switch (installationStatus.state) {
+                    case InstallationState.Started:
+                    case InstallationState.InProgress:
+                        status = VersionCheckStatus.UpdateInstalling;
+                        break;
+                    case InstallationState.Finished:
+                        status = VersionCheckStatus.RestartPending;
+                        break;
+                }
+            }
         }
     }
     return (
