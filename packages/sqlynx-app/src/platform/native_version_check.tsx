@@ -7,7 +7,7 @@ import { Result, RESULT_ERROR, RESULT_OK } from '../utils/result.js';
 import { Logger } from './logger.js';
 import { loadReleaseManifest, ReleaseChannel, ReleaseManifest } from './web_version_check.js';
 import { SQLYNX_CANARY_RELEASE_MANIFEST, SQLYNX_STABLE_RELEASE_MANIFEST } from '../globals.js';
-import { STABLE_RELEASE_MANIFEST_CTX, STABLE_UPDATE_MANIFEST_CTX, CANARY_RELEASE_MANIFEST_CTX, CANARY_UPDATE_MANIFEST_CTX, VERSION_CHECK_CTX, VersionCheckStatus, InstallableUpdate, InstallationStatusSetter, InstallationState, InstallationStatus, INSTALLATION_STATUS_CTX } from './version_check.js';
+import { STABLE_RELEASE_MANIFEST_CTX, STABLE_UPDATE_MANIFEST_CTX, CANARY_RELEASE_MANIFEST_CTX, CANARY_UPDATE_MANIFEST_CTX, VERSION_CHECK_CTX, VersionCheckStatusCode, InstallableUpdate, InstallationStatusSetter, InstallationStatusCode, InstallationState, INSTALLATION_STATUS_CTX } from './version_check.js';
 
 class InstallableTauriUpdate implements InstallableUpdate {
     /// The logger
@@ -24,41 +24,58 @@ class InstallableTauriUpdate implements InstallableUpdate {
     }
     /// Download and install
     public async download() {
-        await this.update.downloadAndInstall((progress: DownloadEvent) => {
-            switch (progress.event) {
-                case "Started":
-                    this.setInstallationState(_ => ({
-                        update: this,
-                        state: InstallationState.Started,
-                        totalBytes: progress.data.contentLength ?? null,
-                        loadedBytes: 0,
-                        inProgressBytes: 0,
-                    }));
-                    break;
-                case "Progress":
-                    this.setInstallationState(s => ({
-                        update: this,
-                        state: InstallationState.InProgress,
-                        totalBytes: s?.totalBytes ?? 0,
-                        loadedBytes: (s?.loadedBytes ?? 0) + (s?.inProgressBytes ?? 0),
-                        inProgressBytes: progress.data.chunkLength,
-                    }));
-                    break;
-                case "Finished": {
-                    this.setInstallationState(s => {
-                        const totalBytes = s?.totalBytes ?? 0;
-                        return {
+        try {
+            await this.update.downloadAndInstall((progress: DownloadEvent) => {
+                switch (progress.event) {
+                    case "Started":
+                        this.setInstallationState(_ => ({
                             update: this,
-                            state: InstallationState.Finished,
-                            totalBytes: totalBytes,
-                            loadedBytes: (totalBytes > 0) ? totalBytes : (s?.loadedBytes ?? 0 + (s?.inProgressBytes ?? 0)),
+                            statusCode: InstallationStatusCode.Started,
+                            totalBytes: progress.data.contentLength ?? null,
+                            loadedBytes: 0,
                             inProgressBytes: 0,
-                        };
-                    });
-                    break;
+                            error: null,
+                        }));
+                        break;
+                    case "Progress":
+                        this.setInstallationState(s => ({
+                            update: this,
+                            statusCode: InstallationStatusCode.InProgress,
+                            totalBytes: s?.totalBytes ?? 0,
+                            loadedBytes: (s?.loadedBytes ?? 0) + (s?.inProgressBytes ?? 0),
+                            inProgressBytes: progress.data.chunkLength,
+                            error: null,
+                        }));
+                        break;
+                    case "Finished": {
+                        this.setInstallationState(s => {
+                            const totalBytes = s?.totalBytes ?? 0;
+                            return {
+                                update: this,
+                                statusCode: InstallationStatusCode.RestartPending,
+                                totalBytes: totalBytes,
+                                loadedBytes: (totalBytes > 0) ? totalBytes : (s?.loadedBytes ?? (s?.inProgressBytes ?? 0)),
+                                inProgressBytes: 0,
+                                error: null,
+                            };
+                        });
+                        break;
+                    }
                 }
-            }
-        });
+            });
+        } catch(e: unknown) {
+            const err = e instanceof Error ? e : new Error(e?.toString());
+            this.setInstallationState(s => {
+                return {
+                    update: this,
+                    statusCode: InstallationStatusCode.Failed,
+                    totalBytes: s?.totalBytes ?? 0,
+                    loadedBytes: s?.loadedBytes ?? 0,
+                    inProgressBytes: s?.inProgressBytes ?? 0,
+                    error: err,
+                };
+            });
+        }
     }
 }
 
@@ -78,12 +95,13 @@ async function checkChannelUpdates(channel: ReleaseChannel, setResult: (result: 
             type: RESULT_OK,
             value: update == null ? null : new InstallableTauriUpdate(update, setInstallationStatus, logger),
         });
-    } catch (e: any) {
+    } catch (e: unknown) {
+        const err = e instanceof Error ? e : new Error(e?.toString());
         const end = performance.now();
-        logger.error(`checking for ${channel} updates failed after ${Math.floor(end - start)} ms with error: ${e.toString()}`, "version_check");
+        logger.error(`checking for ${channel} updates failed after ${Math.floor(end - start)} ms with error: ${err.toString()}`, "version_check");
         setResult({
             type: RESULT_ERROR,
-            error: new Error(e.toString())
+            error: new Error(err.toString())
         });
     }
 }
@@ -103,7 +121,7 @@ export const NativeVersionCheck: React.FC<Props> = (props: Props) => {
     const [stableUpdate, setStableUpdate] = React.useState<Result<InstallableTauriUpdate | null> | null>(null);
     const [canaryRelease, setCanaryRelease] = React.useState<Result<ReleaseManifest> | null>(null);
     const [canaryUpdate, setCanaryUpdate] = React.useState<Result<InstallableTauriUpdate | null> | null>(null);
-    const [installationStatus, setInstallationStatus] = React.useState<InstallationStatus | null>(null);
+    const [installationStatus, setInstallationStatus] = React.useState<InstallationState | null>(null);
 
     React.useEffect(() => {
         loadReleaseManifest("stable", SQLYNX_STABLE_RELEASE_MANIFEST, setStableRelease, logger);
@@ -115,7 +133,7 @@ export const NativeVersionCheck: React.FC<Props> = (props: Props) => {
 
     // Find any updates
     let checkedForUpdates = false;
-    let updates = [];
+    const updates: InstallableUpdate[] = [];
     if (stableUpdate != null && stableUpdate.type == RESULT_OK) {
         checkedForUpdates = true;
         if (stableUpdate.value != null) {
@@ -130,22 +148,25 @@ export const NativeVersionCheck: React.FC<Props> = (props: Props) => {
     }
 
     // Derive the version check status
-    let status = VersionCheckStatus.Unknown;
+    let status = VersionCheckStatusCode.Unknown;
     if (checkedForUpdates) {
-        status = VersionCheckStatus.UpToDate;
+        status = VersionCheckStatusCode.UpToDate;
         if (updates.length > 0) {
-            status = VersionCheckStatus.UpdateAvailable;
+            status = VersionCheckStatusCode.UpdateAvailable;
         }
         // TODO consolidate error handling for updates
         for (const update of updates) {
             if (update === installationStatus?.update) {
-                switch (installationStatus.state) {
-                    case InstallationState.Started:
-                    case InstallationState.InProgress:
-                        status = VersionCheckStatus.UpdateInstalling;
+                switch (installationStatus.statusCode) {
+                    case InstallationStatusCode.Started:
+                    case InstallationStatusCode.InProgress:
+                        status = VersionCheckStatusCode.UpdateInstalling;
                         break;
-                    case InstallationState.Finished:
-                        status = VersionCheckStatus.RestartPending;
+                    case InstallationStatusCode.RestartPending:
+                        status = VersionCheckStatusCode.RestartPending;
+                        break;
+                    case InstallationStatusCode.Failed:
+                        status = VersionCheckStatusCode.UpdateFailed;
                         break;
                 }
             }
