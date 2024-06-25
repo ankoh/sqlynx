@@ -429,23 +429,22 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
 
     // Render the page
     return (
-        <div className={baseStyles.page}
-            data-tauri-drag-region="true">
-            <div className={baseStyles.banner_and_content_container}>
-                <div className={baseStyles.banner_container}>
-                    <div className={baseStyles.banner_logo}>
+        <div className={baseStyles.page}>
+            <div className={baseStyles.banner_and_content_container} data-tauri-drag-region>
+                <div className={baseStyles.banner_container} data-tauri-drag-region>
+                    <div className={baseStyles.banner_logo} data-tauri-drag-region>
                         <svg width="100%" height="100%">
                             <use xlinkHref={`${symbols}#sqlynx-inverted`} />
                         </svg>
                     </div>
-                    <div className={baseStyles.banner_text_container}>
-                        <div className={baseStyles.banner_title}>sqlynx</div>
-                        <div className={baseStyles.app_version}>version {SQLYNX_VERSION}</div>
+                    <div className={baseStyles.banner_text_container} data-tauri-drag-region>
+                        <div className={baseStyles.banner_title} data-tauri-drag-region>sqlynx</div>
+                        <div className={baseStyles.app_version} data-tauri-drag-region>version {SQLYNX_VERSION}</div>
                     </div>
                 </div>
-                <div className={baseStyles.content_container}>
+                <div className={baseStyles.content_container} data-tauri-drag-region>
                     <div className={baseStyles.card}>
-                        <div className={baseStyles.card_header}>
+                        <div className={baseStyles.card_header} data-tauri-drag-region>
                             <div className={baseStyles.card_header_left_container}>
                                 Setup {connection.connectionInfo.displayName.long}
                             </div>
