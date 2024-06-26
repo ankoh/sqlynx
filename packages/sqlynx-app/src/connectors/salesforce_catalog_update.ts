@@ -8,8 +8,10 @@ export function updateDataCloudCatalog(catalog: sqlynx.SQLynxCatalog, metadata: 
         for (const entry of metadata.metadata) {
             const table = new sqlynx.proto.SchemaTableT();
             table.tableName = entry.name;
-            for (const field of entry.fields) {
-                table.columns.push(new sqlynx.proto.SchemaTableColumnT(field.name));
+            if (entry.fields) {
+                for (const field of entry.fields) {
+                    table.columns.push(new sqlynx.proto.SchemaTableColumnT(field.name));
+                }
             }
             tables.push(table);
         }
