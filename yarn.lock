@@ -51,7 +51,7 @@ __metadata:
     "@octokit/graphql": "npm:^8.1.1"
     "@primer/behaviors": "npm:^1.6.0"
     "@primer/octicons-react": "patch:@primer/octicons-react@npm%3A19.9.0#~/.yarn/patches/@primer-octicons-react-npm-19.9.0-65341cfa23.patch"
-    "@primer/react": "npm:^36.22.0"
+    "@primer/react": "npm:^36.23.0"
     "@primer/react-brand": "npm:^0.34.1"
     "@react-hook/resize-observer": "npm:^2.0.1"
     "@tauri-apps/api": "npm:^2.0.0-beta.13"
@@ -1627,12 +1627,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@primer/live-region-element@npm:^0.6.1":
-  version: 0.6.1
-  resolution: "@primer/live-region-element@npm:0.6.1"
+"@primer/live-region-element@npm:^0.7.0":
+  version: 0.7.0
+  resolution: "@primer/live-region-element@npm:0.7.0"
   dependencies:
     "@lit-labs/ssr-dom-shim": "npm:^1.2.0"
-  checksum: 10c0/3ad709d31087a4dc3e5f40538b1ac38deb17805497ed20a34a2746851bf845dac65de51bbace099326b38394acf54e6ac73281f8cf528e1f687c7b02549f08f7
+  checksum: 10c0/93436bfdac91ba12a33ce77cc70b4713309db120900bba9a238ba0cc06fd31b52b2ce16d75fa444edfecc1d52842d982df97051ba10cb4da217eda69de570256
   languageName: node
   linkType: hard
 
@@ -1675,9 +1675,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@primer/react@npm:^36.22.0":
-  version: 36.22.0
-  resolution: "@primer/react@npm:36.22.0"
+"@primer/react@npm:^36.23.0":
+  version: 36.23.0
+  resolution: "@primer/react@npm:36.23.0"
   dependencies:
     "@github/combobox-nav": "npm:^2.1.5"
     "@github/markdown-toolbar-element": "npm:^2.1.0"
@@ -1687,7 +1687,7 @@ __metadata:
     "@lit-labs/react": "npm:1.2.1"
     "@oddbird/popover-polyfill": "npm:^0.3.1"
     "@primer/behaviors": "npm:^1.5.1"
-    "@primer/live-region-element": "npm:^0.6.1"
+    "@primer/live-region-element": "npm:^0.7.0"
     "@primer/octicons-react": "npm:^19.9.0"
     "@primer/primitives": "npm:^7.16.0"
     "@styled-system/css": "npm:^5.1.5"
@@ -1723,7 +1723,7 @@ __metadata:
       optional: true
     "@types/styled-components":
       optional: true
-  checksum: 10c0/5c2fae65c8c27e90537e30d3ba73054125986c372ed26148410ced8d38384062a892c43abf74aac88e17d5a4722b8f311035ac40533e1571564380d7fc6d62d9
+  checksum: 10c0/1ed9215bd5265fd2fbb43b42ba23f8d1147e2c5cd8117d2ec7a0fe99c454e95e89fb5e40decb60990cbac0d3a334c1e6c4de0a75f84648b70b40e72581b2a4c5
   languageName: node
   linkType: hard
 
