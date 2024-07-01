@@ -89,14 +89,6 @@ export function computeGraphViewModel(state: SessionState): GraphViewModel {
     const nodesByTable = new Map<sqlynx.ExternalObjectID.Value, NodeViewModel>();
     const edges = new Map<GraphConnectionId.Value, EdgeViewModel>();
 
-    // Collect parsed and analyzed scripts
-    const mainProcessed = state.scripts[ScriptKey.MAIN_SCRIPT]?.processed;
-    const schemaProcessed = state.scripts[ScriptKey.SCHEMA_SCRIPT]?.processed;
-    const analyzedScripts: { [key: number]: sqlynx.proto.AnalyzedScript | null } = {
-        [ScriptKey.MAIN_SCRIPT]: mainProcessed?.analyzed?.read(new sqlynx.proto.AnalyzedScript()) ?? null,
-        [ScriptKey.SCHEMA_SCRIPT]: schemaProcessed?.analyzed?.read(new sqlynx.proto.AnalyzedScript()) ?? null,
-    };
-
     if (!state.graphLayout || !state.connectionCatalog) {
         return {
             nodes: [],
