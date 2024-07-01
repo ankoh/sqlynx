@@ -10,7 +10,7 @@ import {
     PaperAirplaneIcon,
     TriangleDownIcon,
 } from '@primer/octicons-react';
-import { ActionList as GHAL, Button as GHButton } from '@primer/react';
+import { Button as GHButton } from '@primer/react';
 
 import { TextInput, TextInputValidationStatus } from '../foundations/text_input.js';
 import { TextInputAction } from '../foundations/text_input_action.js';
@@ -28,12 +28,12 @@ export function UIInternalsPage(): React.ReactElement {
                 </div>
                 <div className={styles.component_variants}>
                     <TextInput />
-                    <TextInput value="some value" onChange={() => {}} />
-                    <TextInput value="looooooooooooooooooooooooooooooooooooooooooong" onChange={() => {}} />
+                    <TextInput value="some value" onChange={() => { }} />
+                    <TextInput value="looooooooooooooooooooooooooooooooooooooooooong" onChange={() => { }} />
                     <TextInput placeholder="some placeholder" />
                     <TextInput disabled />
                     <TextInput disabled placeholder="some placeholder" />
-                    <TextInput validationStatus={TextInputValidationStatus.Success} value="abc" onChange={() => {}} />
+                    <TextInput validationStatus={TextInputValidationStatus.Success} value="abc" onChange={() => { }} />
                     <TextInput validationStatus={TextInputValidationStatus.Error} />
                     <TextInput block />
                     <TextInput
@@ -52,7 +52,7 @@ export function UIInternalsPage(): React.ReactElement {
                     <TextInput
                         trailingAction={
                             <TextInputAction
-                                onClick={() => {}}
+                                onClick={() => { }}
                                 icon={CopyIcon}
                                 aria-label="action"
                                 aria-labelledby=""
@@ -64,7 +64,7 @@ export function UIInternalsPage(): React.ReactElement {
                         trailingVisual={ChecklistIcon}
                         trailingAction={
                             <TextInputAction
-                                onClick={() => {}}
+                                onClick={() => { }}
                                 icon={CopyIcon}
                                 aria-label="action"
                                 aria-labelledby=""
@@ -117,22 +117,6 @@ export function UIInternalsPage(): React.ReactElement {
                     </div>
                     <div className={styles.component_variants}>
                         <div className={styles.actionlist_component}>
-                            <GHAL aria-label="Sessions">
-                                <GHAL.GroupHeading as="h2">Sessions</GHAL.GroupHeading>
-                                <GHAL.Item>
-                                    <GHAL.LeadingVisual><PaperAirplaneIcon /></GHAL.LeadingVisual>
-                                    Execute Query
-                                    <GHAL.TrailingVisual>Ctrl + E</GHAL.TrailingVisual>
-                                </GHAL.Item>
-                                <GHAL.Item>
-                                    <GHAL.LeadingVisual><EyeIcon /></GHAL.LeadingVisual>
-                                    Execute Query
-                                    <GHAL.TrailingVisual>Ctrl + E</GHAL.TrailingVisual>
-                                </GHAL.Item>
-                            </GHAL>
-                        </div>
-                        <div className={styles.component_variant_delimiter}></div>
-                        <div className={styles.actionlist_component}>
                             <ActionList.List aria-label="Sessions" leading trailing>
                                 <ActionList.GroupHeading>
                                     Sessions
@@ -153,7 +137,7 @@ export function UIInternalsPage(): React.ReactElement {
                                         <EyeIcon />
                                     </ActionList.Leading>
                                     <ActionList.ItemText>
-                                    Execute Query
+                                        Execute Query
                                     </ActionList.ItemText>
                                     <ActionList.Trailing>
                                         Ctrl + E
