@@ -14,7 +14,6 @@ import {
 import { Logger } from '../platform/logger.js';
 import { HyperGrpcConnectionParams } from './connection_params.js';
 import { HyperGrpcConnectorConfig } from './connector_configs.js';
-import { RESULT_ERROR } from '../utils/result.js';
 import { Dispatch } from '../utils/index.js';
 import {
     AttachedDatabase,
