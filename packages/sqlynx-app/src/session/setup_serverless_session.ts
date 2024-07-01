@@ -37,7 +37,7 @@ export function useServerlessSessionSetup(): SessionSetupFn {
             scriptKey: ScriptKey.MAIN_SCRIPT,
             scriptVersion: 1,
             script: mainScript,
-            metadata:  EXAMPLES.TPCH.queries[1],
+            metadata: EXAMPLES.TPCH.queries[1],
             loading: {
                 status: ScriptLoadingStatus.PENDING,
                 error: null,
@@ -57,7 +57,7 @@ export function useServerlessSessionSetup(): SessionSetupFn {
             scriptKey: ScriptKey.SCHEMA_SCRIPT,
             scriptVersion: 1,
             script: schemaScript,
-            metadata:  EXAMPLES.TPCH.schema,
+            metadata: EXAMPLES.TPCH.schema,
             loading: {
                 status: ScriptLoadingStatus.PENDING,
                 error: null,
