@@ -39,10 +39,10 @@ __metadata:
     "@ankoh/sqlynx-core": "link:../sqlynx-core-api"
     "@ankoh/sqlynx-pb": "link:../sqlynx-pb"
     "@bufbuild/protobuf": "npm:^1.10.0"
-    "@codemirror/autocomplete": "npm:^6.16.2"
+    "@codemirror/autocomplete": "npm:^6.16.3"
     "@codemirror/language": "npm:^6.10.2"
     "@codemirror/state": "npm:^6.4.1"
-    "@codemirror/view": "npm:6.28.0"
+    "@codemirror/view": "npm:6.28.3"
     "@connectrpc/connect": "npm:^1.4.0"
     "@connectrpc/connect-web": "npm:^1.4.0"
     "@emotion/is-prop-valid": "npm:^1.2.2"
@@ -670,9 +670,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/autocomplete@npm:^6.16.2":
-  version: 6.16.2
-  resolution: "@codemirror/autocomplete@npm:6.16.2"
+"@codemirror/autocomplete@npm:^6.16.3":
+  version: 6.16.3
+  resolution: "@codemirror/autocomplete@npm:6.16.3"
   dependencies:
     "@codemirror/language": "npm:^6.0.0"
     "@codemirror/state": "npm:^6.0.0"
@@ -683,7 +683,7 @@ __metadata:
     "@codemirror/state": ^6.0.0
     "@codemirror/view": ^6.0.0
     "@lezer/common": ^1.0.0
-  checksum: 10c0/3e9a2673efcec7667637941685c31afdc41350643e82088f539add27dea72f82f814c0d55059a41a4a68e9537e0a9807570a1ec37c8b27431dbbdb1d5c6123d5
+  checksum: 10c0/9b79dc2791c7881e2189279630b935b394a78159e4478cfcd628abbeecca63e3f6df67c044563fa83c670bcbac4d42dd75aeea91bffb37eb526ff6c2a3019134
   languageName: node
   linkType: hard
 
@@ -708,7 +708,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/view@npm:6.28.0, @codemirror/view@npm:^6.0.0, @codemirror/view@npm:^6.17.0, @codemirror/view@npm:^6.23.0":
+"@codemirror/view@npm:6.28.3":
+  version: 6.28.3
+  resolution: "@codemirror/view@npm:6.28.3"
+  dependencies:
+    "@codemirror/state": "npm:^6.4.0"
+    style-mod: "npm:^4.1.0"
+    w3c-keyname: "npm:^2.2.4"
+  checksum: 10c0/32c4c33035c7edaaa88e4fea2f9e82ddf7d31316048bf1bb6ec5d545b72b42474cfac05a65f98de484b81e594030f245a35ece5e7da89886335efe0f88e1a78b
+  languageName: node
+  linkType: hard
+
+"@codemirror/view@npm:^6.0.0, @codemirror/view@npm:^6.17.0, @codemirror/view@npm:^6.23.0":
   version: 6.28.0
   resolution: "@codemirror/view@npm:6.28.0"
   dependencies:
