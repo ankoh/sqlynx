@@ -12,7 +12,7 @@
         "@connectrpc/connect": "^1.4.0",
         "@types/node": "^20.14.9",
         "esbuild": "^0.23.0",
-        "typescript": "^5.5.2"
+        "typescript": "^5.5.3"
     },
     "scripts": {
         "build": "tsc --emitDeclarationOnly --declaration && node --loader ts-node/esm bundle.ts"
