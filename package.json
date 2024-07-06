@@ -13,7 +13,7 @@
         "@bufbuild/protoc-gen-es": "^1.10.0",
         "@connectrpc/protoc-gen-connect-es": "^1.4.0",
         "@eslint/js": "^9.6.0",
-        "@tauri-apps/cli": "^2.0.0-beta.20",
+        "@tauri-apps/cli": "^2.0.0-beta.21",
         "@types/node": "^20.14.10",
         "eslint": "^9.6.0",
         "prettier": "^3.3.2",
