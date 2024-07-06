@@ -5,7 +5,7 @@ import {
     createScriptMetadata,
 } from './script_metadata.js';
 
-function example(scriptType: ScriptType, name: string, url: URL, schemaId: string | null): ScriptMetadata {
+function md(scriptType: ScriptType, name: string, url: URL, schemaId: string | null): ScriptMetadata {
     return createScriptMetadata({
         scriptType,
         name,
@@ -160,181 +160,182 @@ const ssb_q41 = new URL('../../static/examples/ssb/q41.sql', import.meta.url);
 const ssb_q42 = new URL('../../static/examples/ssb/q42.sql', import.meta.url);
 const ssb_q43 = new URL('../../static/examples/ssb/q43.sql', import.meta.url);
 
-const stress_schema_1_1_40 = new URL('../../static/examples/stress/schema_1_1_40.sql', import.meta.url);
-const stress_query_default = new URL('../../static/examples/stress/query_default.sql', import.meta.url);
+export const TPCH_SCHEMA = md(ScriptType.SCHEMA, 'tpch_schema.sql', tpch_schema, null);
+export const TPCH_QUERIES = [
+    md(ScriptType.QUERY, 'tpch_q1.sql', tpch_q1, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpch_q2.sql', tpch_q2, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpch_q3.sql', tpch_q3, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpch_q4.sql', tpch_q4, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpch_q5.sql', tpch_q5, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpch_q6.sql', tpch_q6, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpch_q7.sql', tpch_q7, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpch_q8.sql', tpch_q8, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpch_q9.sql', tpch_q9, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpch_q10.sql', tpch_q10, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpch_q11.sql', tpch_q11, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpch_q12.sql', tpch_q12, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpch_q13.sql', tpch_q13, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpch_q14.sql', tpch_q14, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpch_q15.sql', tpch_q15, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpch_q16.sql', tpch_q16, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpch_q16.sql', tpch_q17, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpch_q18.sql', tpch_q18, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpch_q19.sql', tpch_q19, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpch_q20.sql', tpch_q20, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpch_q21.sql', tpch_q21, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpch_q22.sql', tpch_q22, TPCH_SCHEMA.scriptId),
+];
 
-export const TPCH_SCHEMA = example(ScriptType.SCHEMA, 'tpch_schema.sql', tpch_schema, null);
-export const TPCDS_SCHEMA = example(ScriptType.SCHEMA, 'tpcds_schema.sql', tpcds_schema, null);
-export const SSB_SCHEMA = example(ScriptType.SCHEMA, 'ssb_schema.sql', ssb_schema, null);
-export const STRESS_SCHEMA_1_1_40 = example(ScriptType.SCHEMA, 'stress_schema_1_1_40.sql', stress_schema_1_1_40, null)
+export const TPCDS_SCHEMA = md(ScriptType.SCHEMA, 'tpcds_schema.sql', tpcds_schema, null);
+export const TPCDS_QUERIES = [
+    md(ScriptType.QUERY, 'tpcds_q1.sql', tpcds_q1, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q2.sql', tpcds_q2, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q3.sql', tpcds_q3, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q4.sql', tpcds_q4, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q5.sql', tpcds_q5, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q6.sql', tpcds_q6, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q7.sql', tpcds_q7, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q8.sql', tpcds_q8, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q9.sql', tpcds_q9, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q10.sql', tpcds_q10, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q11.sql', tpcds_q11, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q12.sql', tpcds_q12, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q13.sql', tpcds_q13, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q14a.sql', tpcds_q14a, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q14b.sql', tpcds_q14b, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q15.sql', tpcds_q15, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q16.sql', tpcds_q16, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q17.sql', tpcds_q17, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q18.sql', tpcds_q18, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q19.sql', tpcds_q19, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q20.sql', tpcds_q20, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q21.sql', tpcds_q21, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q22.sql', tpcds_q22, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q23a.sql', tpcds_q23a, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q23b.sql', tpcds_q23b, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q24a.sql', tpcds_q24a, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q24b.sql', tpcds_q24b, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q25.sql', tpcds_q25, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q26.sql', tpcds_q26, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q27.sql', tpcds_q27, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q28.sql', tpcds_q28, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q29.sql', tpcds_q29, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q30.sql', tpcds_q30, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q31.sql', tpcds_q31, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q32.sql', tpcds_q32, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q33.sql', tpcds_q33, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q34.sql', tpcds_q34, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q35.sql', tpcds_q35, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q36.sql', tpcds_q36, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q37.sql', tpcds_q37, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q38.sql', tpcds_q38, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q39a.sql', tpcds_q39a, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q39b.sql', tpcds_q39b, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q40.sql', tpcds_q40, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q41.sql', tpcds_q41, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q42.sql', tpcds_q42, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q43.sql', tpcds_q43, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q44.sql', tpcds_q44, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q45.sql', tpcds_q45, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q46.sql', tpcds_q46, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q47.sql', tpcds_q47, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q48.sql', tpcds_q48, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q49.sql', tpcds_q49, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q50.sql', tpcds_q50, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q51.sql', tpcds_q51, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q52.sql', tpcds_q52, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q53.sql', tpcds_q53, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q54.sql', tpcds_q54, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q55.sql', tpcds_q55, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q56.sql', tpcds_q56, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q57.sql', tpcds_q57, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q58.sql', tpcds_q58, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q59.sql', tpcds_q59, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q60.sql', tpcds_q60, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q61.sql', tpcds_q61, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q62.sql', tpcds_q62, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q63.sql', tpcds_q63, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q64.sql', tpcds_q64, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q65.sql', tpcds_q65, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q66.sql', tpcds_q66, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q67.sql', tpcds_q67, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q68.sql', tpcds_q68, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q69.sql', tpcds_q69, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q70.sql', tpcds_q70, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q71.sql', tpcds_q71, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q72.sql', tpcds_q72, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q73.sql', tpcds_q73, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q74.sql', tpcds_q74, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q75.sql', tpcds_q75, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q76.sql', tpcds_q76, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q77.sql', tpcds_q77, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q78.sql', tpcds_q78, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q79.sql', tpcds_q79, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q80.sql', tpcds_q80, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q81.sql', tpcds_q81, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q82.sql', tpcds_q82, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q83.sql', tpcds_q83, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q84.sql', tpcds_q84, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q85.sql', tpcds_q85, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q86.sql', tpcds_q86, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q87.sql', tpcds_q87, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q88.sql', tpcds_q88, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q89.sql', tpcds_q89, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q90.sql', tpcds_q90, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q91.sql', tpcds_q91, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q92.sql', tpcds_q92, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q93.sql', tpcds_q93, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q94.sql', tpcds_q94, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q95.sql', tpcds_q95, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q96.sql', tpcds_q96, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q97.sql', tpcds_q97, TPCH_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'tpcds_q98.sql', tpcds_q98, TPCH_SCHEMA.scriptId),
+];
 
-export interface ExampleSchema {
+export const SSB_SCHEMA = md(ScriptType.SCHEMA, 'ssb_schema.sql', ssb_schema, null);
+export const SSB_QUERIES = [
+    md(ScriptType.QUERY, 'ssb_q11.sql', ssb_q11, SSB_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'ssb_q12.sql', ssb_q12, SSB_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'ssb_q13.sql', ssb_q13, SSB_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'ssb_q21.sql', ssb_q21, SSB_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'ssb_q22.sql', ssb_q22, SSB_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'ssb_q23.sql', ssb_q23, SSB_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'ssb_q31.sql', ssb_q31, SSB_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'ssb_q32.sql', ssb_q32, SSB_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'ssb_q33.sql', ssb_q33, SSB_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'ssb_q34.sql', ssb_q34, SSB_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'ssb_q41.sql', ssb_q41, SSB_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'ssb_q42.sql', ssb_q42, SSB_SCHEMA.scriptId),
+    md(ScriptType.QUERY, 'ssb_q43.sql', ssb_q43, SSB_SCHEMA.scriptId),
+];
+
+export interface SchemaScriptCollection {
     name: string;
     schema: ScriptMetadata;
     queries: ScriptMetadata[];
 }
 
 interface ExampleSchemas {
-    TPCH: ExampleSchema;
-    TPCDS: ExampleSchema;
-    SSB: ExampleSchema;
+    TPCH: SchemaScriptCollection;
+    TPCDS: SchemaScriptCollection;
+    SSB: SchemaScriptCollection;
 }
 
 export const EXAMPLES: ExampleSchemas = {
     TPCH: {
         name: "TPC-H",
         schema: TPCH_SCHEMA,
-        queries: [
-            example(ScriptType.QUERY, 'tpch_q1.sql', tpch_q1, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpch_q2.sql', tpch_q2, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpch_q3.sql', tpch_q3, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpch_q4.sql', tpch_q4, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpch_q5.sql', tpch_q5, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpch_q6.sql', tpch_q6, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpch_q7.sql', tpch_q7, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpch_q8.sql', tpch_q8, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpch_q9.sql', tpch_q9, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpch_q10.sql', tpch_q10, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpch_q11.sql', tpch_q11, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpch_q12.sql', tpch_q12, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpch_q13.sql', tpch_q13, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpch_q14.sql', tpch_q14, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpch_q15.sql', tpch_q15, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpch_q16.sql', tpch_q16, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpch_q16.sql', tpch_q17, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpch_q18.sql', tpch_q18, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpch_q19.sql', tpch_q19, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpch_q20.sql', tpch_q20, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpch_q21.sql', tpch_q21, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpch_q22.sql', tpch_q22, TPCH_SCHEMA.scriptId),
-        ]
+        queries: TPCH_QUERIES,
     },
     TPCDS: {
         name: "TPC-DS",
         schema: TPCDS_SCHEMA,
-        queries: [
-            example(ScriptType.QUERY, 'tpcds_q1.sql', tpcds_q1, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q2.sql', tpcds_q2, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q3.sql', tpcds_q3, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q4.sql', tpcds_q4, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q5.sql', tpcds_q5, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q6.sql', tpcds_q6, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q7.sql', tpcds_q7, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q8.sql', tpcds_q8, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q9.sql', tpcds_q9, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q10.sql', tpcds_q10, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q11.sql', tpcds_q11, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q12.sql', tpcds_q12, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q13.sql', tpcds_q13, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q14a.sql', tpcds_q14a, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q14b.sql', tpcds_q14b, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q15.sql', tpcds_q15, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q16.sql', tpcds_q16, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q17.sql', tpcds_q17, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q18.sql', tpcds_q18, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q19.sql', tpcds_q19, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q20.sql', tpcds_q20, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q21.sql', tpcds_q21, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q22.sql', tpcds_q22, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q23a.sql', tpcds_q23a, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q23b.sql', tpcds_q23b, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q24a.sql', tpcds_q24a, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q24b.sql', tpcds_q24b, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q25.sql', tpcds_q25, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q26.sql', tpcds_q26, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q27.sql', tpcds_q27, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q28.sql', tpcds_q28, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q29.sql', tpcds_q29, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q30.sql', tpcds_q30, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q31.sql', tpcds_q31, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q32.sql', tpcds_q32, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q33.sql', tpcds_q33, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q34.sql', tpcds_q34, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q35.sql', tpcds_q35, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q36.sql', tpcds_q36, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q37.sql', tpcds_q37, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q38.sql', tpcds_q38, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q39a.sql', tpcds_q39a, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q39b.sql', tpcds_q39b, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q40.sql', tpcds_q40, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q41.sql', tpcds_q41, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q42.sql', tpcds_q42, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q43.sql', tpcds_q43, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q44.sql', tpcds_q44, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q45.sql', tpcds_q45, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q46.sql', tpcds_q46, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q47.sql', tpcds_q47, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q48.sql', tpcds_q48, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q49.sql', tpcds_q49, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q50.sql', tpcds_q50, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q51.sql', tpcds_q51, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q52.sql', tpcds_q52, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q53.sql', tpcds_q53, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q54.sql', tpcds_q54, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q55.sql', tpcds_q55, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q56.sql', tpcds_q56, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q57.sql', tpcds_q57, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q58.sql', tpcds_q58, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q59.sql', tpcds_q59, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q60.sql', tpcds_q60, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q61.sql', tpcds_q61, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q62.sql', tpcds_q62, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q63.sql', tpcds_q63, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q64.sql', tpcds_q64, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q65.sql', tpcds_q65, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q66.sql', tpcds_q66, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q67.sql', tpcds_q67, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q68.sql', tpcds_q68, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q69.sql', tpcds_q69, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q70.sql', tpcds_q70, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q71.sql', tpcds_q71, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q72.sql', tpcds_q72, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q73.sql', tpcds_q73, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q74.sql', tpcds_q74, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q75.sql', tpcds_q75, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q76.sql', tpcds_q76, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q77.sql', tpcds_q77, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q78.sql', tpcds_q78, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q79.sql', tpcds_q79, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q80.sql', tpcds_q80, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q81.sql', tpcds_q81, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q82.sql', tpcds_q82, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q83.sql', tpcds_q83, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q84.sql', tpcds_q84, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q85.sql', tpcds_q85, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q86.sql', tpcds_q86, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q87.sql', tpcds_q87, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q88.sql', tpcds_q88, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q89.sql', tpcds_q89, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q90.sql', tpcds_q90, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q91.sql', tpcds_q91, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q92.sql', tpcds_q92, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q93.sql', tpcds_q93, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q94.sql', tpcds_q94, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q95.sql', tpcds_q95, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q96.sql', tpcds_q96, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q97.sql', tpcds_q97, TPCH_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'tpcds_q98.sql', tpcds_q98, TPCH_SCHEMA.scriptId),
-        ]
+        queries: TPCDS_QUERIES
     },
     SSB: {
         name: "SSB",
         schema: SSB_SCHEMA,
-        queries: [
-            example(ScriptType.QUERY, 'ssb_q11.sql', ssb_q11, SSB_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'ssb_q12.sql', ssb_q12, SSB_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'ssb_q13.sql', ssb_q13, SSB_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'ssb_q21.sql', ssb_q21, SSB_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'ssb_q22.sql', ssb_q22, SSB_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'ssb_q23.sql', ssb_q23, SSB_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'ssb_q31.sql', ssb_q31, SSB_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'ssb_q32.sql', ssb_q32, SSB_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'ssb_q33.sql', ssb_q33, SSB_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'ssb_q34.sql', ssb_q34, SSB_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'ssb_q41.sql', ssb_q41, SSB_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'ssb_q42.sql', ssb_q42, SSB_SCHEMA.scriptId),
-            example(ScriptType.QUERY, 'ssb_q43.sql', ssb_q43, SSB_SCHEMA.scriptId),
-        ]
+        queries: SSB_QUERIES
     }
 };
 
@@ -342,4 +343,18 @@ export const EXAMPLE_SCHEMAS = [
     EXAMPLES.TPCH,
     EXAMPLES.TPCDS,
     EXAMPLES.SSB,
+];
+
+const stress_catalog_1_1_40 = new URL('../../static/examples/stress/catalog_1_1_40_schema.sql', import.meta.url);
+const stress_catalog_1_1_40_query = new URL('../../static/examples/stress/catalog_1_1_40_query.sql', import.meta.url);
+
+export const STRESS_CATALOG_1_1_40_SCHEMA = md(ScriptType.SCHEMA, 'stress_catalog_1_1_40_schema.sql', stress_catalog_1_1_40, null);
+export const STRESS_CATALOG_1_1_40_QUERY = md(ScriptType.QUERY, 'stress_catalog_1_1_40_query.sql', stress_catalog_1_1_40_query, STRESS_CATALOG_1_1_40_SCHEMA.scriptId);
+
+export const STRESS_TESTS: SchemaScriptCollection[] = [
+    {
+        name: "Catalog 1_1_40",
+        schema: STRESS_CATALOG_1_1_40_SCHEMA,
+        queries: [STRESS_CATALOG_1_1_40_QUERY]
+    }
 ];
