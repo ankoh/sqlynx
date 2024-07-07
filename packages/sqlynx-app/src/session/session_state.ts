@@ -10,6 +10,7 @@ import {
     GraphNodeDescriptor,
     GraphViewModel,
 } from '../view/schema/graph_view_model.js';
+import { CatalogViewModel, computeCatalogViewModel } from '../view/catalog/catalog_view_model.js';
 import { ScriptLoadingInfo } from './script_loader.js';
 import { deriveScriptFocusFromCursor, focusGraphEdge, focusGraphNode, FocusInfo } from './focus.js';
 import { ConnectorInfo } from '../connectors/connector_info.js';
@@ -41,6 +42,13 @@ export interface SessionState {
     finishedQueries: number[];
     /// The editor query
     editorQuery: number | null;
+    /// The catalog view model
+    catalogViewModel: CatalogViewModel;
+    /// The user focus info
+    userFocus: FocusInfo | null;
+
+    /// DEPRECATED
+
     /// The graph
     graph: sqlynx.SQLynxQueryGraphLayout | null;
     /// The graph config
@@ -49,8 +57,6 @@ export interface SessionState {
     graphLayout: sqlynx.FlatBufferPtr<sqlynx.proto.QueryGraphLayout> | null;
     /// The graph view model
     graphViewModel: GraphViewModel;
-    /// The user focus info
-    userFocus: FocusInfo | null;
 }
 
 /// The script data
@@ -166,7 +172,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                 newMain.statistics = rotateStatistics(newMain.statistics, mainData.script!.getStatistics());
                 next.scripts[ScriptKey.MAIN_SCRIPT] = newMain;
             }
-            return computeSchemaGraph(next);
+            return withUpdatedGraphViewModel(next);
         }
         case UPDATE_SCRIPT_CURSOR: {
             // Destroy previous cursor
@@ -235,7 +241,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                 console.warn(e);
             }
             // Update the schema graph
-            return computeSchemaGraph(next);
+            return withUpdatedGraphViewModel(next);
         }
 
         case LOAD_SCRIPTS: {
@@ -393,7 +399,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                     },
                 };
             }
-            return computeSchemaGraph(next);
+            return withUpdatedGraphViewModel(next);
         }
 
         case REGISTER_EDITOR_QUERY:
@@ -406,7 +412,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
         case FOCUS_QUERY_GRAPH_EDGE:
             return focusGraphEdge(state, action.value);
         case RESIZE_QUERY_GRAPH:
-            return computeSchemaGraph({
+            return withUpdatedGraphViewModel({
                 ...state,
                 graphConfig: {
                     ...state.graphConfig,
@@ -418,7 +424,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
 }
 
 /// Compute a schema graph
-function computeSchemaGraph(state: SessionState, debug?: boolean): SessionState {
+function withUpdatedGraphViewModel(state: SessionState, debug?: boolean): SessionState {
     const main = state.scripts[ScriptKey.MAIN_SCRIPT] ?? null;
     if (main == null || main.script == null || main.processed.analyzed == null) {
         return state;
@@ -427,6 +433,7 @@ function computeSchemaGraph(state: SessionState, debug?: boolean): SessionState 
     state.graphLayout?.delete();
     state.graphLayout = state.graph!.loadScript(main.script);
     state.graphViewModel = computeGraphViewModel(state);
+    state.catalogViewModel = computeCatalogViewModel(state.connectionCatalog);
     return state;
 }
 
