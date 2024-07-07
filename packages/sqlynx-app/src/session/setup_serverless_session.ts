@@ -109,6 +109,29 @@ export function useServerlessSessionSetup(): SessionSetupFn {
                     totalHeight: 0,
                 },
             },
+            catalogViewModel: {
+                databases: [],
+                schemas: [],
+                tables: [],
+                columns: [],
+                boundaries: {
+                    minX: 0,
+                    maxX: 0,
+                    minY: 0,
+                    maxY: 0,
+                    totalWidth: 0,
+                    totalHeight: 0,
+                },
+                databaseByName: new Map(),
+                tableByObject: new Map(),
+                queryEdges: new Map(),
+                focus: {
+                    databases: new Map(),
+                    schemas: new Map(),
+                    tables: new Map(),
+                    columns: new Map(),
+                }
+            },
             userFocus: null,
         });
 
