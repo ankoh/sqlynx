@@ -321,6 +321,15 @@ extern "C" FFIResult* sqlynx_catalog_describe_entries_of(sqlynx::Catalog* catalo
     auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
     return packBuffer(std::move(detached));
 }
+/// Flatten the catalog
+extern "C" FFIResult* sqlynx_catalog_flatten(sqlynx::Catalog* catalog) {
+    flatbuffers::FlatBufferBuilder fb;
+    auto entries = catalog->Flatten(fb);
+    fb.Finish(entries);
+
+    auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
+    return packBuffer(std::move(detached));
+}
 /// Add a script in the catalog
 extern "C" FFIResult* sqlynx_catalog_load_script(sqlynx::Catalog* catalog, sqlynx::Script* script, size_t rank) {
     auto status = catalog->LoadScript(*script, rank);

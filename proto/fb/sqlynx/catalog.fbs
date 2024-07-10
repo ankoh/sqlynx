@@ -1,10 +1,16 @@
 namespace sqlynx.proto;
 
+// ----------------------------------------------------------------------------
+
+/// The type of an entry in the catalog.
+/// The user either inserted a schema script or a descriptor flatbuffer.
 enum CatalogEntryType: uint8 {
     SCRIPT = 0,
     DESCRIPTOR_POOL = 1,
 }
 
+/// A catalog entry.
+/// Catlaog entries are ordered by rank and contain an external id.
 table CatalogEntry {
     external_id: uint32;
     entry_type: CatalogEntryType;
@@ -12,22 +18,89 @@ table CatalogEntry {
     schemas: [SchemaDescriptor];
 }
 
+/// A collection of catalog entries
 table CatalogEntries {
     entries: [CatalogEntry];
 }
 
+/// A descriptor for a single schema
 table SchemaDescriptor {
     database_name: string;
     schema_name: string;
     tables: [SchemaTable];
 }
 
+/// A descriptor for a table within a schema
 table SchemaTable {
     table_id: uint32;
     table_name: string;
     columns: [SchemaTableColumn];
 }
 
+/// A descriptor for a column within a table
 table SchemaTableColumn {
     column_name: string;
+}
+
+// ----------------------------------------------------------------------------
+
+/// Our API supports returning a "flattened" catalog where entries from the same schema are merged.
+/// The data is structured in a way that enables an efficient "virtualized" hierarchical schema tree renderer.
+/// - A renderer can determine the virtual boundaries in logarithmic time.
+/// - A renderer can lazily decode utf8 strings through the dictionary.
+table FlatCatalog {
+    /// The version indicates if the frontend has to refresh the UI due to a catalog change.
+    catalog_version: uint64;
+    /// The name dictionary allows us to implement flat catalog entries as structs
+    name_dictionary: [string];
+
+    /// The flattened database array
+    databases: [FlatCatalogDatabase];
+    /// The flattened schema array
+    schemas: [FlatCatalogSchema];
+    /// The flattened table array
+    tables: [FlatCatalogTable];
+    /// The flattened column array
+    columns: [FlatCatalogColumn];
+}
+
+
+/// A descriptor for a database in a flat catalog
+struct FlatCatalogDatabase {
+    database_id: uint32;
+    name: uint32;
+    schemas_begin: uint32;
+    schema_count: uint32;
+
+    total_table_count: uint32;
+    total_table_count_prefixsum: uint32;
+    total_column_count: uint32;
+    total_column_count_prefixsum: uint32;
+    capped_column_count: uint32;
+    capped_column_count_prefixsum: uint32;
+}
+
+/// A descriptor for a schema in a flat database
+struct FlatCatalogSchema {
+    name: uint32;
+    tables_begin: uint32;
+    table_count: uint32;
+
+    total_table_count_prefixsum: uint32;
+    total_column_count: uint32;
+    total_column_count_prefixsum: uint32;
+    capped_column_count: uint32;
+    capped_column_count_prefixsum: uint32;
+}
+
+/// A descriptor for a table in a flat schema
+struct FlatCatalogTable {
+    name: uint32;
+    columns_begin: uint32;
+    column_count: uint32;
+}
+
+/// A descriptor for a column in a flat table
+struct FlatCatalogColumn {
+    name: uint32;
 }

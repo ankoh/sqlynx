@@ -32,8 +32,6 @@ export interface SessionState {
     connectorInfo: ConnectorInfo;
     /// The connector state
     connectionId: number;
-    /// THe connection catalog
-    connectionCatalog: sqlynx.SQLynxCatalog;
     /// The scripts (main or external)j
     scripts: { [id: number]: ScriptData };
     /// The running queries of this session
@@ -42,8 +40,6 @@ export interface SessionState {
     finishedQueries: number[];
     /// The editor query
     editorQuery: number | null;
-    /// The catalog view model
-    catalogViewModel: CatalogViewModel;
     /// The user focus info
     userFocus: FocusInfo | null;
 
@@ -433,7 +429,6 @@ function withUpdatedGraphViewModel(state: SessionState, debug?: boolean): Sessio
     state.graphLayout?.delete();
     state.graphLayout = state.graph!.loadScript(main.script);
     state.graphViewModel = computeGraphViewModel(state);
-    state.catalogViewModel = computeCatalogViewModel(state.connectionCatalog);
     return state;
 }
 
