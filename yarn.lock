@@ -51,7 +51,7 @@ __metadata:
     "@octokit/graphql": "npm:^8.1.1"
     "@primer/behaviors": "npm:^1.6.0"
     "@primer/octicons-react": "patch:@primer/octicons-react@npm%3A19.9.0#~/.yarn/patches/@primer-octicons-react-npm-19.9.0-65341cfa23.patch"
-    "@primer/react": "npm:^36.24.0"
+    "@primer/react": "npm:^36.25.0"
     "@primer/react-brand": "npm:^0.34.3"
     "@react-hook/resize-observer": "npm:^2.0.1"
     "@tauri-apps/api": "npm:^2.0.0-beta.14"
@@ -104,7 +104,7 @@ __metadata:
     style-mod: "npm:^4.1.2"
     styled-components: "npm:^6.1.11"
     stylis: "npm:^4.3.2"
-    ts-jest: "npm:^29.1.5"
+    ts-jest: "npm:^29.2.0"
     ts-loader: "npm:^9.5.1"
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.5.3"
@@ -132,7 +132,7 @@ __metadata:
     esbuild: "npm:^0.23.0"
     flatbuffers: "npm:^24.3.25"
     jest: "npm:^29.7.0"
-    ts-jest: "npm:^29.1.5"
+    ts-jest: "npm:^29.2.0"
     typescript: "npm:^5.5.3"
   languageName: unknown
   linkType: soft
@@ -1682,9 +1682,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@primer/react@npm:^36.24.0":
-  version: 36.24.0
-  resolution: "@primer/react@npm:36.24.0"
+"@primer/react@npm:^36.25.0":
+  version: 36.25.0
+  resolution: "@primer/react@npm:36.25.0"
   dependencies:
     "@github/combobox-nav": "npm:^2.1.5"
     "@github/markdown-toolbar-element": "npm:^2.1.0"
@@ -1730,7 +1730,7 @@ __metadata:
       optional: true
     "@types/styled-components":
       optional: true
-  checksum: 10c0/f81ef5b352befc59f5b8f9aee9b801ea0afb582e6e7f955c2b870592f36c7ed5e9fdd8e46d8b3e95599d4b76198869e6b74b95b9e672505c75eda428d75db7ca
+  checksum: 10c0/a4f0fd0fc8838cd05fdaf3fd651ef827a1b80914e24443835f91e8841b1fad3007a1a268bc815629dd156ce169273f1aebe78fb2d253c9feb795538f73350318
   languageName: node
   linkType: hard
 
@@ -9988,9 +9988,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ts-jest@npm:^29.1.5":
-  version: 29.1.5
-  resolution: "ts-jest@npm:29.1.5"
+"ts-jest@npm:^29.2.0":
+  version: 29.2.0
+  resolution: "ts-jest@npm:29.2.0"
   dependencies:
     bs-logger: "npm:0.x"
     fast-json-stable-stringify: "npm:2.x"
@@ -10020,7 +10020,7 @@ __metadata:
       optional: true
   bin:
     ts-jest: cli.js
-  checksum: 10c0/5c1baf4d23342e138745d6283ae530b07957b779b103abc99fd6713e1fd7fc65d4a4638695d5a76e177f78c46c80ec53598b365f245997db5d3d00617940bf87
+  checksum: 10c0/a20fb23f1b54cbdb3d793bf527df81fa212c4a9e0dbad00f73923f94c199eea7d3b6f88de208ecaf5ddd52c781119a958af045fc807e10f0d37f5a1c4fcee7fb
   languageName: node
   linkType: hard
 
