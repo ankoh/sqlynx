@@ -11,7 +11,7 @@ import { ConnectorInfo } from '../../connectors/connector_info.js';
 import { QueryExecutionStatus } from '../../connectors/query_execution_state.js';
 import { useCurrentSessionState } from '../../session/current_session.js';
 import { ScriptEditor } from './editor.js';
-import { CatalogViewer } from '../catalog/catalog_viewer.js';
+// import { CatalogViewer } from '../catalog/catalog_viewer.js';
 import { KeyEventHandler, useKeyEvents } from '../../utils/key_events.js';
 import { VerticalTabs, VerticalTabVariant } from '../foundations/vertical_tabs.js';
 import { ScriptFileSaveOverlay } from './script_filesave_overlay.js';
@@ -23,6 +23,7 @@ import { useQueryState } from '../../connectors/query_executor.js';
 import { QueryStatusView } from '../query_status/query_status_view.js';
 import { QueryResultView } from '../query_result/query_result_view.js';
 import { SessionCommandType, useSessionCommandDispatch } from '../../session/session_commands.js';
+import { SchemaGraph } from '../../view/schema/schema_graph.js';
 
 const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
     const config = useAppConfig();
@@ -221,7 +222,8 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                         }}
                         tabKeys={[TabKey.CatalogView, TabKey.QueryStatusView, TabKey.QueryResultView]}
                         tabRenderers={{
-                            [TabKey.CatalogView]: _props => <CatalogViewer />,
+                            [TabKey.CatalogView]: _props => <SchemaGraph />,
+                            // [TabKey.CatalogView]: _props => <CatalogViewer />,
                             [TabKey.QueryStatusView]: _props => (
                                 <QueryStatusView query={queryState} />
                             ),
