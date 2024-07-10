@@ -551,9 +551,17 @@ export class SQLynxScript {
 
 export class SQLynxCatalog {
     public readonly ptr: Ptr<typeof CATALOG_TYPE> | null;
+    protected snapshot: FlatBufferPtr<proto.FlatCatalog> | null;
 
     public constructor(ptr: Ptr<typeof CATALOG_TYPE>) {
         this.ptr = ptr;
+    }
+    /// Delete the snapshot if there is one
+    protected deleteSnapshot() {
+        if (this.snapshot != null) {
+            this.snapshot.delete();
+            this.snapshot = null;
+        }
     }
     /// Delete the graph
     public delete() {
@@ -561,6 +569,7 @@ export class SQLynxCatalog {
     }
     /// Reset a catalog
     public clear(): void {
+        this.deleteSnapshot();
         const catalogPtr = this.ptr.assertNotNull();
         this.ptr.api.instanceExports.sqlynx_catalog_clear(catalogPtr);
     }
@@ -576,14 +585,19 @@ export class SQLynxCatalog {
         const result = this.ptr.api.instanceExports.sqlynx_catalog_describe_entries_of(catalogPtr, id);
         return this.ptr.api.readFlatBufferResult<proto.CatalogEntries>(result);
     }
-    /// Describe catalog entries
-    public flatten(): FlatBufferPtr<proto.FlatCatalog> {
+    /// Export a catalog snapshot
+    public exportSnapshot(): FlatBufferPtr<proto.FlatCatalog> {
+        if (this.snapshot != null) {
+            return this.snapshot;
+        }
         const catalogPtr = this.ptr.assertNotNull();
         const result = this.ptr.api.instanceExports.sqlynx_catalog_flatten(catalogPtr);
-        return this.ptr.api.readFlatBufferResult<proto.FlatCatalog>(result);
+        this.snapshot = this.ptr.api.readFlatBufferResult<proto.FlatCatalog>(result);
+        return this.snapshot;
     }
     /// Add a script in the registry
     public loadScript(script: SQLynxScript, rank: number) {
+        this.deleteSnapshot();
         const catalogPtr = this.ptr.assertNotNull();
         const scriptPtr = script.ptr.assertNotNull();
         const result = this.ptr.api.instanceExports.sqlynx_catalog_load_script(catalogPtr, scriptPtr, rank);
@@ -591,23 +605,27 @@ export class SQLynxCatalog {
     }
     /// Update a script from the registry
     public dropScript(script: SQLynxScript) {
+        this.deleteSnapshot();
         const catalogPtr = this.ptr.assertNotNull();
         const scriptPtr = script.ptr.assertNotNull();
         this.ptr.api.instanceExports.sqlynx_catalog_drop_script(catalogPtr, scriptPtr);
     }
     /// Add an external schema
     public addDescriptorPool(id: number, rank: number) {
+        this.deleteSnapshot();
         const catalogPtr = this.ptr.assertNotNull();
         const result = this.ptr.api.instanceExports.sqlynx_catalog_add_descriptor_pool(catalogPtr, id, rank);
         this.ptr.api.readStatusResult(result);
     }
     /// Drop an external schema
     public dropDescriptorPool(id: number) {
+        this.deleteSnapshot();
         const catalogPtr = this.ptr.assertNotNull();
         this.ptr.api.instanceExports.sqlynx_catalog_drop_script(catalogPtr, id);
     }
     /// Add a schema descriptor to a descriptor pool
     public addSchemaDescriptor(id: number, buffer: Uint8Array) {
+        this.deleteSnapshot();
         const catalogPtr = this.ptr.assertNotNull();
         const [bufferPtr, bufferLength] = this.ptr.api.copyBuffer(buffer);
         const result = this.ptr.api.instanceExports.sqlynx_catalog_add_schema_descriptor(
@@ -620,6 +638,7 @@ export class SQLynxCatalog {
     }
     /// Add a schema descriptor to a descriptor pool
     public addSchemaDescriptorT(id: number, descriptor: proto.SchemaDescriptorT) {
+        this.deleteSnapshot();
         const builder = new flatbuffers.Builder();
         const descriptorOffset = descriptor.pack(builder);
         builder.finish(descriptorOffset);

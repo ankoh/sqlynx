@@ -10,7 +10,6 @@ import {
     GraphNodeDescriptor,
     GraphViewModel,
 } from '../view/schema/graph_view_model.js';
-import { CatalogViewModel, computeCatalogViewModel } from '../view/catalog/catalog_view_model.js';
 import { ScriptLoadingInfo } from './script_loader.js';
 import { deriveScriptFocusFromCursor, focusGraphEdge, focusGraphNode, FocusInfo } from './focus.js';
 import { ConnectorInfo } from '../connectors/connector_info.js';
@@ -32,6 +31,8 @@ export interface SessionState {
     connectorInfo: ConnectorInfo;
     /// The connector state
     connectionId: number;
+    /// The connection catalog
+    connectionCatalog: sqlynx.SQLynxCatalog;
     /// The scripts (main or external)j
     scripts: { [id: number]: ScriptData };
     /// The running queries of this session
