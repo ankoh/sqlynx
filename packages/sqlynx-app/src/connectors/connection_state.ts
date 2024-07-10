@@ -47,8 +47,6 @@ export interface ConnectionState {
 
     /// The catalog
     catalog: sqlynx.SQLynxCatalog;
-    /// The latest catalog snapshot (if any)
-    catalogSnapshot: sqlynx.FlatBufferPtr<sqlynx.proto.FlatCatalog>;
     /// The catalog updates that are currently running
     catalogUpdatesRunning: Map<number, CatalogUpdateTaskState>;
     /// The catalog updates that are currently running
