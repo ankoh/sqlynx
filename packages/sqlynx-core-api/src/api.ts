@@ -32,6 +32,7 @@ interface SQLynxModuleExports {
     sqlynx_catalog_clear: (catalog_ptr: number) => void;
     sqlynx_catalog_describe_entries: (catalog_ptr: number) => number;
     sqlynx_catalog_describe_entries_of: (catalog_ptr: number, external_id: number) => number;
+    sqlynx_catalog_flatten: (catalog_ptr: number) => number;
     sqlynx_catalog_load_script: (catalog_ptr: number, script_ptr: number, rank: number) => number;
     sqlynx_catalog_update_script: (catalog_ptr: number, script_ptr: number) => number;
     sqlynx_catalog_drop_script: (catalog_ptr: number, script_ptr: number) => void;
@@ -137,6 +138,9 @@ export class SQLynx {
             sqlynx_catalog_describe_entries_of: instance.exports['sqlynx_catalog_describe_entries_of'] as (
                 catalog_ptr: number,
                 entry_id: number,
+            ) => number,
+            sqlynx_catalog_flatten: instance.exports['sqlynx_catalog_flatten'] as (
+                catalog_ptr: number,
             ) => number,
             sqlynx_catalog_load_script: instance.exports['sqlynx_catalog_load_script'] as (
                 catalog_ptr: number,
@@ -571,6 +575,12 @@ export class SQLynxCatalog {
         const catalogPtr = this.ptr.assertNotNull();
         const result = this.ptr.api.instanceExports.sqlynx_catalog_describe_entries_of(catalogPtr, id);
         return this.ptr.api.readFlatBufferResult<proto.CatalogEntries>(result);
+    }
+    /// Describe catalog entries
+    public flatten(): FlatBufferPtr<proto.FlatCatalog> {
+        const catalogPtr = this.ptr.assertNotNull();
+        const result = this.ptr.api.instanceExports.sqlynx_catalog_flatten(catalogPtr);
+        return this.ptr.api.readFlatBufferResult<proto.FlatCatalog>(result);
     }
     /// Add a script in the registry
     public loadScript(script: SQLynxScript, rank: number) {
