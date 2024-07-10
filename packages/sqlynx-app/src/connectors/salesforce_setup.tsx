@@ -300,6 +300,7 @@ export async function setupSalesforceConnection(dispatch: Dispatch<SalesforceCon
                 value: error.message,
             });
         }
+        throw error;
     }
 
 }

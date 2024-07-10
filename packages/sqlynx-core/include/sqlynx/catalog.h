@@ -316,6 +316,9 @@ class Catalog {
     /// Describe catalog entries
     flatbuffers::Offset<proto::CatalogEntries> DescribeEntriesOf(flatbuffers::FlatBufferBuilder& builder,
                                                                  size_t external_id) const;
+    /// Flatten the catalog
+    flatbuffers::Offset<proto::FlatCatalog> Flatten(flatbuffers::FlatBufferBuilder& builder) const;
+
     /// Add a script
     proto::StatusCode LoadScript(Script& script, CatalogEntry::Rank rank);
     /// Drop a script

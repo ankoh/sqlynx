@@ -23,6 +23,7 @@ import { QueryExecutorProvider } from './connectors/query_executor.js';
 import { SQLynxLoader } from './sqlynx_loader.js';
 import { SalesforceConnector } from './connectors/salesforce_connector.js';
 import { SalesforceConnectorSettingsStateProvider } from './view/connectors/salesforce_connector_settings.js';
+import { SchemaGraphDemoPage } from './view/internals/schema_graph_demo.js';
 import { ScriptLoader } from './session/script_loader.js';
 import { SessionCommands } from './session/session_commands.js';
 import { SessionSetup } from './session/session_setup.js';
@@ -64,7 +65,7 @@ const Connectors = (props: { children: React.ReactElement }) => (
             <HyperGrpcConnector>
                 <CatalogUpdaterProvider>
                     <QueryExecutorProvider>
-                            {props.children}
+                        {props.children}
                     </QueryExecutorProvider>
                 </CatalogUpdaterProvider>
             </HyperGrpcConnector>
@@ -117,6 +118,7 @@ root.render(
                     {isDebugBuild() && (
                         <>
                             <Route path="/internals/ui" Component={UIInternalsPage} />
+                            <Route path="/internals/schema" Component={SchemaGraphDemoPage} />
                         </>
                     )}
                     <Route path="*" element={<Navigate to="/" />} />

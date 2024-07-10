@@ -286,6 +286,13 @@ flatbuffers::Offset<proto::CatalogEntries> Catalog::DescribeEntriesOf(flatbuffer
     }
 }
 
+/// Flatten the catalog
+flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBufferBuilder& builder) const {
+    proto::FlatCatalogBuilder catalogBuilder{builder};
+    // XXX
+    return catalogBuilder.Finish();
+}
+
 proto::StatusCode Catalog::LoadScript(Script& script, CatalogEntry::Rank rank) {
     if (!script.analyzed_script) {
         return proto::StatusCode::CATALOG_SCRIPT_NOT_ANALYZED;

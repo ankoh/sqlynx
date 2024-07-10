@@ -42,13 +42,14 @@ export function createConnectionMetrics(): ConnectionMetrics {
 }
 
 export function createConnectionState(lnx: sqlynx.SQLynx, info: ConnectorInfo, details: ConnectionDetailsVariant): ConnectionStateWithoutId {
+    const catalog = lnx.createCatalog();
     return {
         connectionStatus: ConnectionStatus.NOT_STARTED,
         connectionHealth: ConnectionHealth.NOT_STARTED,
         connectionInfo: info,
         metrics: createConnectionMetrics(),
         details,
-        catalog: lnx.createCatalog(),
+        catalog,
         catalogUpdatesRunning: new Map(),
         catalogUpdatesFinished: new Map(),
         queriesRunning: new Map(),
