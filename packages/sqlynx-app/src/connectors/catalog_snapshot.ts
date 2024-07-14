@@ -28,7 +28,7 @@ export class CatalogSnapshot {
         this.nameDictionary = [];
     }
 
-    public read() {
+    public read(): CatalogSnapshotReader {
         const reader = this.snapshot.read(new sqlynx.proto.FlatCatalog());
         return new CatalogSnapshotReader(reader, this.nameDictionary);
 
