@@ -1,85 +1,10 @@
-
-.column_default {
-
+.node_default {
 }
-
-.column_focus_catalog_indirect {
-
+.node_pinned {
 }
-
-.column_focus_catalog_direct {
-
+.node_focus_catalog {
 }
-
-.column_focus_script_indirect {
-
+.node_focus_script {
 }
-
-.column_focus_script_direct {
-
-}
-
-
-
-.table_default {
-
-}
-
-.table_focus_catalog_indirect {
-
-}
-
-.table_focus_catalog_direct {
-
-}
-
-.table_focus_script_indirect {
-
-}
-
-.table_focus_script_direct {
-
-}
-
-
-.schema_default {
-
-}
-
-.schema_focus_catalog_indirect {
-
-}
-
-.schema_focus_catalog_direct {
-
-}
-
-.schema_focus_script_indirect {
-
-}
-
-.schema_focus_script_direct {
-
-}
-
-
-
-.database_default {
-
-}
-
-.database_focus_catalog_indirect {
-
-}
-
-.database_focus_catalog_direct {
-
-}
-
-.database_focus_script_indirect {
-
-}
-
-.database_focus_script_direct {
-
+.node_focus_direct {
 }
