@@ -13,7 +13,7 @@ export interface CatalogLevelRenderingSettings {
     /// The height of a node
     nodeHeight: number;
     /// The maximum children at this level
-    maxChildren: number;
+    maxUnpinnedChildren: number;
     /// The row gap
     rowGap: number;
     /// The column gap left of this entry
@@ -159,16 +159,61 @@ interface CatalogRenderingState {
     currentLevelStack: CatalogRenderingStack;
 }
 
-/// A function to render entries
+/// Layout unpinned entries and assign them NodeFlags
+function layoutEntries(state: CatalogRenderingState, snapshot: CatalogSnapshotReader, level: number, entries: CatalogEntrySpan) {
+    const scratchBuffer = state.levelScratchBuffers[level];
+    const flags = state.levelNodeFlags[level];
+    const settings = state.levelSettings[level];
+    const childIter = new CatalogEntryChildSpan(state.levelBuffers, level + 1);
+
+    let unpinnedChildCount = 0;
+    let overflowChildCount = 0;
+
+    for (let entryId = 0; entryId < entries.length(); ++entryId) {
+        const entry = entries.read(entryId, scratchBuffer)!;
+        const entryFlags = readNodeFlags(flags, entryId);
+
+        // PINNED and DEFAULT entries have the same height, so it doesn't matter that we're accounting for them here in the "wrong" order.
+
+        // Skip the node if the node is UNPINNED and the child count hit the limit
+        if ((entryFlags & NodeFlags.PINNED) == 0 && unpinnedChildCount > settings.maxUnpinnedChildren) {
+            ++overflowChildCount;
+            writeNodeFlags(flags, entryId, NodeFlags.OVERFLOW);
+            continue;
+        }
+
+        // Update level stack
+        state.currentLevelStack.select(level, entryId);
+        const isFirstEntry = state.currentLevelStack.isFirst[level];
+        // Add row gap when first
+        state.currentWriterY += isFirstEntry ? 0 : settings.rowGap;
+        // Remember own position
+        const thisPosY = state.currentWriterY;
+        // Render child columns
+        childIter.configureParent(entry);
+        layoutEntries(state, snapshot, level, childIter);
+        // Bump writer if the columns didn't already
+        state.currentWriterY = Math.max(state.currentWriterY, thisPosY + settings.nodeHeight);
+        state.currentLevelStack.truncate(level);
+    }
+
+    // Add space for the overflow node
+    if (overflowChildCount > 0) {
+        state.currentWriterY += settings.rowGap;
+        state.currentWriterY += settings.nodeHeight;
+    }
+}
+
+/// Render unpinned entries and emit ReactElements if they are within the virtual scroll window
 function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: CatalogSnapshotReader, level: number, entries: CatalogEntrySpan, out: React.ReactElement[]) {
     const scratchBuffer = state.levelScratchBuffers[level];
-    const flagsArray = state.levelNodeFlags[level];
+    const flags = state.levelNodeFlags[level];
     const childIter = new CatalogEntryChildSpan(state.levelBuffers, level + 1);
 
     for (let entryId = 0; entryId < entries.length(); ++entryId) {
         // Resolve table
         const entry = entries.read(entryId, scratchBuffer)!;
-        const entryFlags = readNodeFlags(flagsArray, entryId);
+        const entryFlags = readNodeFlags(flags, entryId);
         // Skip pinned and overflow entries
         if ((entryFlags & (NodeFlags.PINNED | NodeFlags.OVERFLOW)) != 0) {
             continue;
@@ -180,13 +225,15 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: CatalogSn
         const settings = state.levelSettings[level];
         state.currentWriterY += isFirstEntry ? 0 : settings.rowGap;
         // Remember own position
-        const thisPosY = state.currentWriterY;
+        let thisPosY = state.currentWriterY;
         // Render child columns
         childIter.configureParent(entry);
         renderUnpinnedEntries(state, snapshot, level, childIter, out);
         // Bump writer if the columns didn't already
         state.currentWriterY = Math.max(state.currentWriterY, thisPosY + settings.nodeHeight);
         state.currentLevelStack.truncate(level);
+        // Vertically center the node over all child nodes
+        thisPosY += (state.currentWriterY - thisPosY) / 2 - settings.nodeHeight / 2;
         // Break if lower bound is larger than virtual window
         if (thisPosY >= state.virtualWindowEnd) {
             break;
@@ -241,7 +288,7 @@ function renderPinnedEntries(state: CatalogRenderingState, snapshot: CatalogSnap
         const settings = state.levelSettings[level];
         state.currentWriterY += isFirstEntry ? 0 : settings.rowGap;
         // Remember own position
-        const thisPosY = state.currentWriterY;
+        let thisPosY = state.currentWriterY;
         // First render all pinned children
         renderPinnedEntries(state, snapshot, level + 1, pinnedEntry.pinnedChildren, out);
         // Then render all unpinned entries
@@ -250,6 +297,8 @@ function renderPinnedEntries(state: CatalogRenderingState, snapshot: CatalogSnap
         // Bump writer if the columns didn't already
         state.currentWriterY = Math.max(state.currentWriterY, thisPosY + settings.nodeHeight);
         state.currentLevelStack.truncate(level);
+        // Vertically center the node over all child nodes
+        thisPosY += (state.currentWriterY - thisPosY) / 2 - settings.nodeHeight / 2;
         // Break if lower bound is larger than virtual window
         if (thisPosY >= state.virtualWindowEnd) {
             break;
@@ -283,6 +332,12 @@ function renderPinnedEntries(state: CatalogRenderingState, snapshot: CatalogSnap
             </motion.div>
         );
     }
+}
+
+/// Layout the catalog
+export function layoutCatalog(state: CatalogRenderingState, catalog: CatalogSnapshot) {
+    const snapshot = catalog.read();
+    layoutEntries(state, snapshot, 0, state.levelBuffers[0]);
 }
 
 /// A function to render a catalog
