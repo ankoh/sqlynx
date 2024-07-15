@@ -20,6 +20,13 @@ export interface CatalogLevelRenderingSettings {
     columnGap: number;
 }
 
+export interface CatalogRenderingSettings {
+    databases: CatalogLevelRenderingSettings;
+    schemas: CatalogLevelRenderingSettings;
+    tables: CatalogLevelRenderingSettings;
+    columns: CatalogLevelRenderingSettings;
+}
+
 /// The node rendering mode
 enum NodeFlags {
     DEFAULT = 0,
@@ -111,12 +118,7 @@ class PinnedCatalogEntry {
     }
 }
 /// A catalog rendering state
-interface CatalogRenderingState {
-    /// The offset of the virtual window
-    virtualWindowBegin: number;
-    /// The offset of the virtual window
-    virtualWindowEnd: number;
-
+class CatalogRenderingState {
     /// The level rendering settings
     levelSettings: CatalogLevelRenderingSettings[];
     /// The level buffers
@@ -131,10 +133,70 @@ interface CatalogRenderingState {
     /// The pinned databases
     pinnedDatabases: PinnedCatalogEntry[];
 
+    /// The offset of the virtual window
+    virtualWindowBegin: number;
+    /// The offset of the virtual window
+    virtualWindowEnd: number;
+
     /// The current writer
     currentWriterY: number;
     /// The current rendering path
     currentLevelStack: CatalogRenderingStack;
+
+    constructor(snapshot: CatalogSnapshotReader, settings: CatalogRenderingSettings) {
+        this.levelSettings = [
+            settings.databases,
+            settings.schemas,
+            settings.tables,
+            settings.columns,
+        ]
+        this.levelBuffers = [
+            {
+                read: (index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snapshot.catalogReader.databases(index, obj),
+                length: () => snapshot.catalogReader.databasesLength(),
+            },
+            {
+                read: (index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snapshot.catalogReader.schemas(index, obj),
+                length: () => snapshot.catalogReader.schemasLength(),
+            },
+            {
+                read: (index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snapshot.catalogReader.tables(index, obj),
+                length: () => snapshot.catalogReader.tablesLength(),
+            },
+            {
+                read: (index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snapshot.catalogReader.columns(index, obj),
+                length: () => snapshot.catalogReader.columnsLength(),
+            },
+        ];
+        this.levelScratchBuffers = [
+            new sqlynx.proto.FlatCatalogEntry(),
+            new sqlynx.proto.FlatCatalogEntry(),
+            new sqlynx.proto.FlatCatalogEntry(),
+            new sqlynx.proto.FlatCatalogEntry(),
+            new sqlynx.proto.FlatCatalogEntry(),
+        ];
+        this.levelNodeFlags = [
+            new Uint8Array(snapshot.catalogReader.databasesLength()),
+            new Uint8Array(snapshot.catalogReader.schemasLength()),
+            new Uint8Array(snapshot.catalogReader.tablesLength()),
+            new Uint8Array(snapshot.catalogReader.columnsLength()),
+        ];
+        this.levelOffsetsX = [
+            0, 0, 0, 0
+        ];
+        this.levelOffsetsX[1] = settings.databases.nodeWidth + settings.databases.columnGap;
+        this.levelOffsetsX[2] = this.levelOffsetsX[1] + settings.schemas.nodeWidth + settings.schemas.columnGap;
+        this.levelOffsetsX[3] = this.levelOffsetsX[2] + settings.tables.nodeWidth + settings.tables.columnGap;
+
+        this.pinnedDatabases = [];
+
+        this.virtualWindowBegin = 0;
+        this.virtualWindowEnd = 0;
+        this.virtualWindowEnd = 0;
+
+        this.currentWriterY = 0;
+        this.currentLevelStack = new CatalogRenderingStack();
+    }
 }
 
 /// Layout unpinned entries and assign them NodeFlags
