@@ -400,6 +400,8 @@ export function renderCatalog(state: CatalogRenderingState, catalog: CatalogSnap
     const snapshot = catalog.read();
     const out: React.ReactElement[] = [];
 
+    // Reset the rendering
+    state.resetWriter();
     // First, render the pinned databases
     renderPinnedEntries(state, snapshot, 0, state.pinnedDatabases, out);
     // Then render the unpinned databases
