@@ -95,28 +95,6 @@ interface CatalogEntrySpan {
     read(index: number, obj?: sqlynx.proto.FlatCatalogEntry): sqlynx.proto.FlatCatalogEntry | null;
     length(): number;
 }
-/// A span of catalog entry children
-class CatalogEntryChildSpan implements CatalogEntrySpan {
-    levelBuffers: CatalogEntrySpan[];
-    childLevel: number;
-    parent: sqlynx.proto.FlatCatalogEntry | null;
-
-    constructor(levelBuffers: CatalogEntrySpan[], childLevel: number) {
-        this.levelBuffers = levelBuffers;
-        this.childLevel = childLevel;
-        this.parent = null;
-    }
-    public configureParent(parent: sqlynx.proto.FlatCatalogEntry) {
-        this.parent = parent;
-    }
-
-    public read(index: number, obj?: sqlynx.proto.FlatCatalogEntry) {
-        return this.levelBuffers[this.childLevel].read(this.parent!.childBegin() + index, obj)
-    }
-    public length() {
-        return this.parent!.childCount();
-    }
-}
 /// A pinned catalog entry
 class PinnedCatalogEntry {
     /// The id in the backing FlatBuffer
@@ -160,16 +138,17 @@ interface CatalogRenderingState {
 }
 
 /// Layout unpinned entries and assign them NodeFlags
-function layoutEntries(state: CatalogRenderingState, snapshot: CatalogSnapshotReader, level: number, entries: CatalogEntrySpan) {
+function layoutEntries(state: CatalogRenderingState, snapshot: CatalogSnapshotReader, level: number, entriesBegin: number, entriesCount: number) {
+    const entries = state.levelBuffers[level];
     const scratchBuffer = state.levelScratchBuffers[level];
     const flags = state.levelNodeFlags[level];
     const settings = state.levelSettings[level];
-    const childIter = new CatalogEntryChildSpan(state.levelBuffers, level + 1);
 
     let unpinnedChildCount = 0;
     let overflowChildCount = 0;
 
-    for (let entryId = 0; entryId < entries.length(); ++entryId) {
+    for (let i = 0; i < entriesCount; ++i) {
+        const entryId = entriesBegin + i;
         const entry = entries.read(entryId, scratchBuffer)!;
         const entryFlags = readNodeFlags(flags, entryId);
 
@@ -190,8 +169,7 @@ function layoutEntries(state: CatalogRenderingState, snapshot: CatalogSnapshotRe
         // Remember own position
         const thisPosY = state.currentWriterY;
         // Render child columns
-        childIter.configureParent(entry);
-        layoutEntries(state, snapshot, level, childIter);
+        layoutEntries(state, snapshot, level + 1, entry.childBegin(), entry.childCount());
         // Bump writer if the columns didn't already
         state.currentWriterY = Math.max(state.currentWriterY, thisPosY + settings.nodeHeight);
         state.currentLevelStack.truncate(level);
@@ -205,14 +183,15 @@ function layoutEntries(state: CatalogRenderingState, snapshot: CatalogSnapshotRe
 }
 
 /// Render unpinned entries and emit ReactElements if they are within the virtual scroll window
-function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: CatalogSnapshotReader, level: number, entries: CatalogEntrySpan, out: React.ReactElement[]) {
-    const scratchBuffer = state.levelScratchBuffers[level];
+function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: CatalogSnapshotReader, level: number, entriesBegin: number, entriesCount: number, out: React.ReactElement[]) {
+    const entries = state.levelBuffers[level];
+    const scratch = state.levelScratchBuffers[level];
     const flags = state.levelNodeFlags[level];
-    const childIter = new CatalogEntryChildSpan(state.levelBuffers, level + 1);
 
-    for (let entryId = 0; entryId < entries.length(); ++entryId) {
+    for (let i = 0; i < entriesCount; ++i) {
+        const entryId = entriesBegin + i;
         // Resolve table
-        const entry = entries.read(entryId, scratchBuffer)!;
+        const entry = entries.read(entryId, scratch)!;
         const entryFlags = readNodeFlags(flags, entryId);
         // Skip pinned and overflow entries
         if ((entryFlags & (NodeFlags.PINNED | NodeFlags.OVERFLOW)) != 0) {
@@ -227,8 +206,7 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: CatalogSn
         // Remember own position
         let thisPosY = state.currentWriterY;
         // Render child columns
-        childIter.configureParent(entry);
-        renderUnpinnedEntries(state, snapshot, level, childIter, out);
+        renderUnpinnedEntries(state, snapshot, level, entry.childBegin(), entry.childCount(), out);
         // Bump writer if the columns didn't already
         state.currentWriterY = Math.max(state.currentWriterY, thisPosY + settings.nodeHeight);
         state.currentLevelStack.truncate(level);
@@ -272,15 +250,14 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: CatalogSn
 /// A function to render entries
 function renderPinnedEntries(state: CatalogRenderingState, snapshot: CatalogSnapshotReader, level: number, pinnedEntries: PinnedCatalogEntry[], out: React.ReactElement[]) {
     const entries = state.levelBuffers[level];
-    const scratchBuffer = state.levelScratchBuffers[level];
-    const flagsArray = state.levelNodeFlags[level];
-    const childIter = new CatalogEntryChildSpan(state.levelBuffers, level + 1);
+    const scratch = state.levelScratchBuffers[level];
+    const flags = state.levelNodeFlags[level];
 
     for (const pinnedEntry of pinnedEntries) {
         // Resolve table
         const entryId = pinnedEntry.entryId;
-        const entry = entries.read(pinnedEntry.entryId, scratchBuffer)!;
-        const entryFlags = readNodeFlags(flagsArray, entryId);
+        const entry = entries.read(pinnedEntry.entryId, scratch)!;
+        const entryFlags = readNodeFlags(flags, entryId);
         // Update level stack
         state.currentLevelStack.select(level, entryId);
         const isFirstEntry = state.currentLevelStack.isFirst[level];
@@ -292,8 +269,7 @@ function renderPinnedEntries(state: CatalogRenderingState, snapshot: CatalogSnap
         // First render all pinned children
         renderPinnedEntries(state, snapshot, level + 1, pinnedEntry.pinnedChildren, out);
         // Then render all unpinned entries
-        childIter.configureParent(entry);
-        renderUnpinnedEntries(state, snapshot, level, childIter, out);
+        renderUnpinnedEntries(state, snapshot, level, entry.childBegin(), entry.childCount(), out);
         // Bump writer if the columns didn't already
         state.currentWriterY = Math.max(state.currentWriterY, thisPosY + settings.nodeHeight);
         state.currentLevelStack.truncate(level);
