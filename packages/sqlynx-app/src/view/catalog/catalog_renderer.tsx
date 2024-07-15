@@ -155,10 +155,13 @@ function layoutEntries(state: CatalogRenderingState, snapshot: CatalogSnapshotRe
         // PINNED and DEFAULT entries have the same height, so it doesn't matter that we're accounting for them here in the "wrong" order.
 
         // Skip the node if the node is UNPINNED and the child count hit the limit
-        if ((entryFlags & NodeFlags.PINNED) == 0 && unpinnedChildCount > settings.maxUnpinnedChildren) {
-            ++overflowChildCount;
-            writeNodeFlags(flags, entryId, NodeFlags.OVERFLOW);
-            continue;
+        if ((entryFlags & NodeFlags.PINNED) == 0) {
+            ++unpinnedChildCount;
+            if (unpinnedChildCount > settings.maxUnpinnedChildren) {
+                ++overflowChildCount;
+                writeNodeFlags(flags, entryId, NodeFlags.OVERFLOW);
+                continue;
+            }
         }
 
         // Update level stack
@@ -206,7 +209,7 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: CatalogSn
         // Remember own position
         let thisPosY = state.currentWriterY;
         // Render child columns
-        renderUnpinnedEntries(state, snapshot, level, entry.childBegin(), entry.childCount(), out);
+        renderUnpinnedEntries(state, snapshot, level + 1, entry.childBegin(), entry.childCount(), out);
         // Bump writer if the columns didn't already
         state.currentWriterY = Math.max(state.currentWriterY, thisPosY + settings.nodeHeight);
         state.currentLevelStack.truncate(level);
@@ -269,7 +272,7 @@ function renderPinnedEntries(state: CatalogRenderingState, snapshot: CatalogSnap
         // First render all pinned children
         renderPinnedEntries(state, snapshot, level + 1, pinnedEntry.pinnedChildren, out);
         // Then render all unpinned entries
-        renderUnpinnedEntries(state, snapshot, level, entry.childBegin(), entry.childCount(), out);
+        renderUnpinnedEntries(state, snapshot, level + 1, entry.childBegin(), entry.childCount(), out);
         // Bump writer if the columns didn't already
         state.currentWriterY = Math.max(state.currentWriterY, thisPosY + settings.nodeHeight);
         state.currentLevelStack.truncate(level);
@@ -313,17 +316,17 @@ function renderPinnedEntries(state: CatalogRenderingState, snapshot: CatalogSnap
 /// Layout the catalog
 export function layoutCatalog(state: CatalogRenderingState, catalog: CatalogSnapshot) {
     const snapshot = catalog.read();
-    layoutEntries(state, snapshot, 0, state.levelBuffers[0]);
+    layoutEntries(state, snapshot, 0, 0, state.levelBuffers[0].length());
 }
 
 /// A function to render a catalog
 export function renderCatalog(state: CatalogRenderingState, catalog: CatalogSnapshot): React.ReactElement[] {
-    const out: React.ReactElement[] = [];
     const snapshot = catalog.read();
+    const out: React.ReactElement[] = [];
 
     // First, render the pinned databases
     renderPinnedEntries(state, snapshot, 0, state.pinnedDatabases, out);
     // Then render the unpinned databases
-    renderUnpinnedEntries(state, snapshot, 0, state.levelBuffers[0], out);
+    renderUnpinnedEntries(state, snapshot, 0, 0, state.levelBuffers[0].length(), out);
     return out;
 }
