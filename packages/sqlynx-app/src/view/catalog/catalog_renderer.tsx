@@ -60,6 +60,11 @@ class CatalogRenderingStack {
         this.entryIdStrings = [null, null, null, null];
         this.isFirst = [true, true, true, true];
     }
+    public reset() {
+        this.entryIds = [null, null, null, null];
+        this.entryIdStrings = [null, null, null, null];
+        this.isFirst = [true, true, true, true];
+    }
     public truncate(level: number) {
         for (let i = level + 1; i < 4; ++i) {
             this.entryIdStrings[i] = null;
@@ -196,6 +201,15 @@ class CatalogRenderingState {
 
         this.currentWriterY = 0;
         this.currentLevelStack = new CatalogRenderingStack();
+    }
+
+    resetWriter() {
+        this.currentWriterY = 0;
+        this.currentLevelStack.reset();
+    }
+    moveVirtualWindow(windowBegin: number, windowSize: number) {
+        this.virtualWindowBegin = windowBegin;
+        this.virtualWindowEnd = windowBegin + windowSize;
     }
 }
 
