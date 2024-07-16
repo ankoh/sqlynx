@@ -104,24 +104,22 @@ export function selectEdgeTypeFromAngle(angle: number): EdgeType {
 }
 
 /// Select edge type using node dimensions
-export function selectEdgeType2(
+export function selectEdgeType(
     fromX: number,
     fromY: number,
     toX: number,
     toY: number,
-    widthX: number,
-    widthY: number,
-    heightX: number,
-    heightY: number,
+    width: number,
+    height: number,
 ): EdgeType {
     const dx = toX - fromX;
     const dy = toY - fromY;
     const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
     let orientation = selectEdgeTypeFromAngle(angle);
-    const boxWidth = (widthX + widthY) / 2;
-    const boxHeight = (heightX + heightY) / 2;
-    const boxDx = Math.max(Math.abs(dx), boxWidth) - boxWidth;
-    const boxDy = Math.max(Math.abs(dy), boxHeight) - boxHeight;
+    // const boxWidth = (widthX + widthY) / 2;
+    // const boxHeight = (heightX + heightY) / 2;
+    const boxDx = Math.max(Math.abs(dx), width) - width;
+    const boxDy = Math.max(Math.abs(dy), height) - height;
     if (orientation >= 4) {
         // Is the horizontal distance larger than vertical?
         // Horizontal -> East/West first
@@ -137,7 +135,7 @@ export function selectEdgeType2(
             //     |
             //     +--
             //
-            if (Math.abs(dy) < boxHeight) {
+            if (Math.abs(dy) < height) {
                 orientation += 8; // [16, 20[
             }
         } else {
@@ -149,7 +147,7 @@ export function selectEdgeType2(
             //     +-+
             //       |
             //
-            if (Math.abs(dx) < boxWidth) {
+            if (Math.abs(dx) < width) {
                 orientation += 8; // [12, 16[
             }
         }
@@ -157,33 +155,19 @@ export function selectEdgeType2(
     return orientation;
 }
 
-export function selectEdgeType(
+export function selectEdgeType2(
     fromX: number,
     fromY: number,
     toX: number,
     toY: number,
-    width: number,
-    height: number,
+    widthX: number,
+    widthY: number,
+    heightX: number,
+    heightY: number,
 ): EdgeType {
-    const dx = toX - fromX;
-    const dy = toY - fromY;
-    const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
-    let orientation = selectEdgeTypeFromAngle(angle);
-    const dxBox = Math.max(Math.abs(dx), width) - width;
-    const dyBox = Math.max(Math.abs(dy), height) - height;
-    if (orientation >= 4) {
-        if (dxBox > dyBox) {
-            orientation += 4; // [8, 12[
-            if (Math.abs(dy) < height / 2) {
-                orientation += 8; // [16, 20[
-            }
-        } else {
-            if (Math.abs(dx) < width / 2) {
-                orientation += 8; // [12, 16[
-            }
-        }
-    }
-    return orientation;
+    const width = (widthX + widthY) / 2;
+    const height = (heightX + heightY) / 2;
+    return selectEdgeType(fromX, fromY, toX, toY, width, height);
 }
 
 export class EdgePathBuilder {
@@ -440,4 +424,24 @@ export function buildEdgePath(
             builder.push(toX, toY - height / 2);
             return builder.build2Turns();
     }
+}
+
+export function buildEdgePath2(
+    builder: EdgePathBuilder,
+    type: EdgeType,
+    fromX: number,
+    fromY: number,
+    toX: number,
+    toY: number,
+    widthX: number,
+    widthY: number,
+    heightX: number,
+    heightY: number,
+    gridCellWidth: number,
+    gridCellHeight: number,
+    cornerRadius: number,
+): string {
+    const width = (widthX + widthY) / 2;
+    const height = (heightX + heightY) / 2;
+    return buildEdgePath(builder, type, fromX, fromY, toX, toY, width, height, gridCellWidth, gridCellHeight, cornerRadius);
 }
