@@ -79,13 +79,82 @@ export const PORTS_TO = new Uint8Array([
     NodePort.East,
 ]);
 
+/// Atan2 circle https://commons.wikimedia.org/wiki/File:Atan2_circle.svg
 export function selectEdgeTypeFromAngle(angle: number): EdgeType {
     const sector = angle / 90; // [-2, 2[
     if (sector == Math.floor(sector)) {
+        // One of [-2, -1, 0, 1, 2]
+        //
+        // Becomes:
+        //   West = 0,
+        //   South = 1,
+        //   East = 2,
+        //   North = 3,
         return (sector + 2) as EdgeType; // [0, 4[
     } else {
+        // We round the value, use the subsequent sector
+        //
+        // Becomes:
+        //   SouthWest = 4,
+        //   SouthEast = 5,
+        //   NorthEast = 6,
+        //   NorthWest = 7,
         return (Math.floor(sector) + 2 + 4) as EdgeType; // [4, 8[
     }
+}
+
+/// Select edge type using node dimensions
+export function selectEdgeType2(
+    fromX: number,
+    fromY: number,
+    toX: number,
+    toY: number,
+    widthX: number,
+    widthY: number,
+    heightX: number,
+    heightY: number,
+): EdgeType {
+    const dx = toX - fromX;
+    const dy = toY - fromY;
+    const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+    let orientation = selectEdgeTypeFromAngle(angle);
+    const boxWidth = (widthX + widthY) / 2;
+    const boxHeight = (heightX + heightY) / 2;
+    const boxDx = Math.max(Math.abs(dx), boxWidth) - boxWidth;
+    const boxDy = Math.max(Math.abs(dy), boxHeight) - boxHeight;
+    if (orientation >= 4) {
+        // Is the horizontal distance larger than vertical?
+        // Horizontal -> East/West first
+        // Vertical   -> North/South first
+        if (boxDx > boxDy) {
+            orientation += 4; // [8, 12[
+
+            // If dy < boxHeight, we cannot render like:
+            //   |
+            //   +--
+            // but have to render like:
+            //   --+
+            //     |
+            //     +--
+            //
+            if (Math.abs(dy) < boxHeight) {
+                orientation += 8; // [16, 20[
+            }
+        } else {
+            // If dx < boxWidth, we cannot render like:
+            //   --+
+            //     |
+            // but have to render like:
+            //     |
+            //     +-+
+            //       |
+            //
+            if (Math.abs(dx) < boxWidth) {
+                orientation += 8; // [12, 16[
+            }
+        }
+    }
+    return orientation;
 }
 
 export function selectEdgeType(
