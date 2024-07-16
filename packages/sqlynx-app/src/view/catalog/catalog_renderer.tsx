@@ -230,6 +230,9 @@ class CatalogRenderingState {
     resetWriter() {
         this.currentWriterY = 0;
         this.currentLevelStack.reset();
+        for (const level of this.levels) {
+            level.scratchPositionsY.fill(NaN);
+        }
     }
     moveVirtualWindow(windowBegin: number, windowSize: number) {
         this.virtualWindowBegin = windowBegin;
@@ -286,7 +289,7 @@ function layoutEntries(state: CatalogRenderingState, snapshot: CatalogSnapshotRe
 }
 
 /// Render unpinned entries and emit ReactElements if they are within the virtual scroll window
-function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: CatalogSnapshotReader, level: number, entriesBegin: number, entriesCount: number, out: React.ReactElement[]) {
+function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: CatalogSnapshotReader, level: number, entriesBegin: number, entriesCount: number, outNodes: React.ReactElement[]) {
     const settings = state.levels[level].settings;
     const entries = state.levels[level].entries;
     const scratchPositions = state.levels[level].scratchPositionsY;
@@ -311,7 +314,7 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: CatalogSn
         // Remember own position
         let thisPosY = state.currentWriterY;
         // Render child columns
-        renderUnpinnedEntries(state, snapshot, level + 1, entry.childBegin(), entry.childCount(), out);
+        renderUnpinnedEntries(state, snapshot, level + 1, entry.childBegin(), entry.childCount(), outNodes);
         // Bump writer if the columns didn't already
         state.currentWriterY = Math.max(state.currentWriterY, thisPosY + settings.nodeHeight);
         state.currentLevelStack.truncate(level);
@@ -325,11 +328,12 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: CatalogSn
         if (state.currentWriterY < state.virtualWindowBegin) {
             continue;
         }
+        // When emitting the node, also remember the node position so that the parent can draw an edge
         scratchPositions[entryId] = thisPosY;
         // Output column node
         const tableName = snapshot.readName(entry.nameId());
         const tableKey = state.currentLevelStack.getKey(level);
-        return (
+        outNodes.push(
             <motion.div
                 key={tableKey}
                 layoutId={tableKey}
@@ -354,7 +358,7 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: CatalogSn
 }
 
 /// A function to render entries
-function renderPinnedEntries(state: CatalogRenderingState, snapshot: CatalogSnapshotReader, level: number, pinnedEntries: PinnedCatalogEntry[], out: React.ReactElement[]) {
+function renderPinnedEntries(state: CatalogRenderingState, snapshot: CatalogSnapshotReader, level: number, pinnedEntries: PinnedCatalogEntry[], outNodes: React.ReactElement[]) {
     const settings = state.levels[level].settings;
     const entries = state.levels[level].entries;
     const scratchEntry = state.levels[level].scratchEntry;
@@ -375,9 +379,9 @@ function renderPinnedEntries(state: CatalogRenderingState, snapshot: CatalogSnap
         // Remember own position
         let thisPosY = state.currentWriterY;
         // First render all pinned children
-        renderPinnedEntries(state, snapshot, level + 1, pinnedEntry.pinnedChildren, out);
+        renderPinnedEntries(state, snapshot, level + 1, pinnedEntry.pinnedChildren, outNodes);
         // Then render all unpinned entries
-        renderUnpinnedEntries(state, snapshot, level + 1, entry.childBegin(), entry.childCount(), out);
+        renderUnpinnedEntries(state, snapshot, level + 1, entry.childBegin(), entry.childCount(), outNodes);
         // Bump writer if the columns didn't already
         state.currentWriterY = Math.max(state.currentWriterY, thisPosY + settings.nodeHeight);
         state.currentLevelStack.truncate(level);
@@ -395,7 +399,7 @@ function renderPinnedEntries(state: CatalogRenderingState, snapshot: CatalogSnap
         // Output column node
         const tableName = snapshot.readName(entry.nameId());
         const tableKey = state.currentLevelStack.getKey(level);
-        return (
+        outNodes.push(
             <motion.div
                 key={tableKey}
                 layoutId={tableKey}
