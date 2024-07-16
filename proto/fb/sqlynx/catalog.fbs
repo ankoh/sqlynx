@@ -69,6 +69,7 @@ table FlatCatalog {
 struct FlatCatalogEntry {
     entry_id: uint32;
     name_id: uint32;
+    parent_id: uint32;
     child_begin: uint32;
     child_count: uint32;
 }
