@@ -245,6 +245,7 @@ function layoutEntries(state: CatalogRenderingState, snapshot: CatalogSnapshotRe
     const settings = state.levels[level].settings;
     const entries = state.levels[level].entries;
     const scratchEntry = state.levels[level].scratchEntry;
+    const subtreeHeights = state.levels[level].subtreeHeights;
     const flags = state.levels[level].flags;
 
     let unpinnedChildCount = 0;
@@ -270,6 +271,8 @@ function layoutEntries(state: CatalogRenderingState, snapshot: CatalogSnapshotRe
         // Update level stack
         state.currentLevelStack.select(level, entryId);
         const isFirstEntry = state.currentLevelStack.isFirst[level];
+        // The begin of the subtree
+        let subtreeBegin = state.currentWriterY;
         // Add row gap when first
         state.currentWriterY += isFirstEntry ? 0 : settings.rowGap;
         // Remember own position
@@ -278,7 +281,10 @@ function layoutEntries(state: CatalogRenderingState, snapshot: CatalogSnapshotRe
         layoutEntries(state, snapshot, level + 1, entry.childBegin(), entry.childCount());
         // Bump writer if the columns didn't already
         state.currentWriterY = Math.max(state.currentWriterY, thisPosY + settings.nodeHeight);
+        // Truncate any stack items that children added
         state.currentLevelStack.truncate(level);
+        // Store the subtree height
+        subtreeHeights[entryId] = state.currentWriterY - subtreeBegin;
     }
 
     // Add space for the overflow node
@@ -317,6 +323,7 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: CatalogSn
         renderUnpinnedEntries(state, snapshot, level + 1, entry.childBegin(), entry.childCount(), outNodes);
         // Bump writer if the columns didn't already
         state.currentWriterY = Math.max(state.currentWriterY, thisPosY + settings.nodeHeight);
+        // Truncate any stack items that children added
         state.currentLevelStack.truncate(level);
         // Vertically center the node over all child nodes
         thisPosY += (state.currentWriterY - thisPosY) / 2 - settings.nodeHeight / 2;
@@ -384,6 +391,7 @@ function renderPinnedEntries(state: CatalogRenderingState, snapshot: CatalogSnap
         renderUnpinnedEntries(state, snapshot, level + 1, entry.childBegin(), entry.childCount(), outNodes);
         // Bump writer if the columns didn't already
         state.currentWriterY = Math.max(state.currentWriterY, thisPosY + settings.nodeHeight);
+        // Truncate any stack items that children added
         state.currentLevelStack.truncate(level);
         // Vertically center the node over all child nodes
         thisPosY += (state.currentWriterY - thisPosY) / 2 - settings.nodeHeight / 2;
