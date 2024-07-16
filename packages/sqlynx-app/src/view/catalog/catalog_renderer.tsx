@@ -21,9 +21,13 @@ export interface CatalogLevelRenderingSettings {
 }
 
 export interface CatalogRenderingSettings {
+    /// The database settings
     databases: CatalogLevelRenderingSettings;
+    /// The schema settings
     schemas: CatalogLevelRenderingSettings;
+    /// The table settings
     tables: CatalogLevelRenderingSettings;
+    /// The column settings
     columns: CatalogLevelRenderingSettings;
 }
 
@@ -122,18 +126,28 @@ class PinnedCatalogEntry {
         this.pinnedChildren = [];
     }
 }
+
+interface CatalogLevelRenderingState {
+    /// The rendering settings
+    settings: CatalogLevelRenderingSettings;
+    /// The buffers
+    entries: CatalogEntrySpan;
+    /// The rendering flags
+    flags: Uint8Array;
+    /// The subtree heights
+    subtreeHeights: Float32Array;
+    /// The x offset
+    positionX: number;
+    /// The scratch element
+    scratchEntry: sqlynx.proto.FlatCatalogEntry;
+    /// The y positions as written during rendering
+    scratchPositionsY: Float32Array;
+}
+
 /// A catalog rendering state
 class CatalogRenderingState {
-    /// The level rendering settings
-    levelSettings: CatalogLevelRenderingSettings[];
-    /// The level buffers
-    levelBuffers: CatalogEntrySpan[];
-    /// The level scratch buffers
-    levelScratchBuffers: sqlynx.proto.FlatCatalogEntry[];
-    /// The level node flags
-    levelNodeFlags: Uint8Array[];
-    /// The level offsets
-    levelOffsetsX: number[];
+    /// The levels
+    levels: CatalogLevelRenderingState[];
 
     /// The pinned databases
     pinnedDatabases: PinnedCatalogEntry[];
@@ -149,49 +163,59 @@ class CatalogRenderingState {
     currentLevelStack: CatalogRenderingStack;
 
     constructor(snapshot: CatalogSnapshotReader, settings: CatalogRenderingSettings) {
-        this.levelSettings = [
-            settings.databases,
-            settings.schemas,
-            settings.tables,
-            settings.columns,
-        ]
-        this.levelBuffers = [
+        this.levels = [
             {
-                read: (index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snapshot.catalogReader.databases(index, obj),
-                length: () => snapshot.catalogReader.databasesLength(),
+                settings: settings.databases,
+                entries: {
+                    read: (index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snapshot.catalogReader.databases(index, obj),
+                    length: () => snapshot.catalogReader.databasesLength(),
+                },
+                flags: new Uint8Array(snapshot.catalogReader.databasesLength()),
+                subtreeHeights: new Float32Array(snapshot.catalogReader.databasesLength()),
+                positionX: 0,
+                scratchEntry: new sqlynx.proto.FlatCatalogEntry(),
+                scratchPositionsY: new Float32Array(snapshot.catalogReader.databasesLength()),
             },
             {
-                read: (index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snapshot.catalogReader.schemas(index, obj),
-                length: () => snapshot.catalogReader.schemasLength(),
+                settings: settings.schemas,
+                entries: {
+                    read: (index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snapshot.catalogReader.schemas(index, obj),
+                    length: () => snapshot.catalogReader.schemasLength(),
+                },
+                flags: new Uint8Array(snapshot.catalogReader.schemasLength()),
+                subtreeHeights: new Float32Array(snapshot.catalogReader.schemasLength()),
+                positionX: 0,
+                scratchEntry: new sqlynx.proto.FlatCatalogEntry(),
+                scratchPositionsY: new Float32Array(snapshot.catalogReader.schemasLength()),
             },
             {
-                read: (index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snapshot.catalogReader.tables(index, obj),
-                length: () => snapshot.catalogReader.tablesLength(),
+                settings: settings.tables,
+                entries: {
+                    read: (index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snapshot.catalogReader.tables(index, obj),
+                    length: () => snapshot.catalogReader.tablesLength(),
+                },
+                flags: new Uint8Array(snapshot.catalogReader.tablesLength()),
+                subtreeHeights: new Float32Array(snapshot.catalogReader.tablesLength()),
+                positionX: 0,
+                scratchEntry: new sqlynx.proto.FlatCatalogEntry(),
+                scratchPositionsY: new Float32Array(snapshot.catalogReader.tablesLength()),
             },
             {
-                read: (index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snapshot.catalogReader.columns(index, obj),
-                length: () => snapshot.catalogReader.columnsLength(),
-            },
+                settings: settings.columns,
+                entries: {
+                    read: (index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snapshot.catalogReader.columns(index, obj),
+                    length: () => snapshot.catalogReader.columnsLength(),
+                },
+                flags: new Uint8Array(snapshot.catalogReader.columnsLength()),
+                subtreeHeights: new Float32Array(snapshot.catalogReader.columnsLength()),
+                positionX: 0,
+                scratchEntry: new sqlynx.proto.FlatCatalogEntry(),
+                scratchPositionsY: new Float32Array(snapshot.catalogReader.columnsLength()),
+            }
         ];
-        this.levelScratchBuffers = [
-            new sqlynx.proto.FlatCatalogEntry(),
-            new sqlynx.proto.FlatCatalogEntry(),
-            new sqlynx.proto.FlatCatalogEntry(),
-            new sqlynx.proto.FlatCatalogEntry(),
-            new sqlynx.proto.FlatCatalogEntry(),
-        ];
-        this.levelNodeFlags = [
-            new Uint8Array(snapshot.catalogReader.databasesLength()),
-            new Uint8Array(snapshot.catalogReader.schemasLength()),
-            new Uint8Array(snapshot.catalogReader.tablesLength()),
-            new Uint8Array(snapshot.catalogReader.columnsLength()),
-        ];
-        this.levelOffsetsX = [
-            0, 0, 0, 0
-        ];
-        this.levelOffsetsX[1] = settings.databases.nodeWidth + settings.databases.columnGap;
-        this.levelOffsetsX[2] = this.levelOffsetsX[1] + settings.schemas.nodeWidth + settings.schemas.columnGap;
-        this.levelOffsetsX[3] = this.levelOffsetsX[2] + settings.tables.nodeWidth + settings.tables.columnGap;
+        this.levels[1].positionX = settings.databases.nodeWidth + settings.databases.columnGap;
+        this.levels[2].positionX = this.levels[1].positionX + settings.schemas.nodeWidth + settings.schemas.columnGap;
+        this.levels[3].positionX = this.levels[2].positionX + settings.tables.nodeWidth + settings.tables.columnGap;
 
         this.pinnedDatabases = [];
 
@@ -215,17 +239,17 @@ class CatalogRenderingState {
 
 /// Layout unpinned entries and assign them NodeFlags
 function layoutEntries(state: CatalogRenderingState, snapshot: CatalogSnapshotReader, level: number, entriesBegin: number, entriesCount: number) {
-    const entries = state.levelBuffers[level];
-    const scratchBuffer = state.levelScratchBuffers[level];
-    const flags = state.levelNodeFlags[level];
-    const settings = state.levelSettings[level];
+    const settings = state.levels[level].settings;
+    const entries = state.levels[level].entries;
+    const scratchEntry = state.levels[level].scratchEntry;
+    const flags = state.levels[level].flags;
 
     let unpinnedChildCount = 0;
     let overflowChildCount = 0;
 
     for (let i = 0; i < entriesCount; ++i) {
         const entryId = entriesBegin + i;
-        const entry = entries.read(entryId, scratchBuffer)!;
+        const entry = entries.read(entryId, scratchEntry)!;
         const entryFlags = readNodeFlags(flags, entryId);
 
         // PINNED and DEFAULT entries have the same height, so it doesn't matter that we're accounting for them here in the "wrong" order.
@@ -246,7 +270,7 @@ function layoutEntries(state: CatalogRenderingState, snapshot: CatalogSnapshotRe
         // Add row gap when first
         state.currentWriterY += isFirstEntry ? 0 : settings.rowGap;
         // Remember own position
-        const thisPosY = state.currentWriterY;
+        let thisPosY = state.currentWriterY;
         // Render child columns
         layoutEntries(state, snapshot, level + 1, entry.childBegin(), entry.childCount());
         // Bump writer if the columns didn't already
@@ -263,14 +287,17 @@ function layoutEntries(state: CatalogRenderingState, snapshot: CatalogSnapshotRe
 
 /// Render unpinned entries and emit ReactElements if they are within the virtual scroll window
 function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: CatalogSnapshotReader, level: number, entriesBegin: number, entriesCount: number, out: React.ReactElement[]) {
-    const entries = state.levelBuffers[level];
-    const scratch = state.levelScratchBuffers[level];
-    const flags = state.levelNodeFlags[level];
+    const settings = state.levels[level].settings;
+    const entries = state.levels[level].entries;
+    const scratchPositions = state.levels[level].scratchPositionsY;
+    const scratchEntry = state.levels[level].scratchEntry;
+    const flags = state.levels[level].flags;
+    const positionX = state.levels[level].positionX;
 
     for (let i = 0; i < entriesCount; ++i) {
         const entryId = entriesBegin + i;
         // Resolve table
-        const entry = entries.read(entryId, scratch)!;
+        const entry = entries.read(entryId, scratchEntry)!;
         const entryFlags = readNodeFlags(flags, entryId);
         // Skip pinned and overflow entries
         if ((entryFlags & (NodeFlags.PINNED | NodeFlags.OVERFLOW)) != 0) {
@@ -280,7 +307,6 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: CatalogSn
         state.currentLevelStack.select(level, entryId);
         const isFirstEntry = state.currentLevelStack.isFirst[level];
         // Add row gap when first
-        const settings = state.levelSettings[level];
         state.currentWriterY += isFirstEntry ? 0 : settings.rowGap;
         // Remember own position
         let thisPosY = state.currentWriterY;
@@ -299,6 +325,7 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: CatalogSn
         if (state.currentWriterY < state.virtualWindowBegin) {
             continue;
         }
+        scratchPositions[entryId] = thisPosY;
         // Output column node
         const tableName = snapshot.readName(entry.nameId());
         const tableKey = state.currentLevelStack.getKey(level);
@@ -314,7 +341,7 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: CatalogSn
                 })}
                 style={{
                     top: thisPosY,
-                    left: state.levelOffsetsX[level],
+                    left: positionX,
                     width: settings.nodeWidth,
                     height: settings.nodeHeight,
                 }}
@@ -328,20 +355,22 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: CatalogSn
 
 /// A function to render entries
 function renderPinnedEntries(state: CatalogRenderingState, snapshot: CatalogSnapshotReader, level: number, pinnedEntries: PinnedCatalogEntry[], out: React.ReactElement[]) {
-    const entries = state.levelBuffers[level];
-    const scratch = state.levelScratchBuffers[level];
-    const flags = state.levelNodeFlags[level];
+    const settings = state.levels[level].settings;
+    const entries = state.levels[level].entries;
+    const scratchEntry = state.levels[level].scratchEntry;
+    const scratchPositions = state.levels[level].scratchPositionsY;
+    const flags = state.levels[level].flags;
+    const positionX = state.levels[level].positionX;
 
     for (const pinnedEntry of pinnedEntries) {
         // Resolve table
         const entryId = pinnedEntry.entryId;
-        const entry = entries.read(pinnedEntry.entryId, scratch)!;
+        const entry = entries.read(pinnedEntry.entryId, scratchEntry)!;
         const entryFlags = readNodeFlags(flags, entryId);
         // Update level stack
         state.currentLevelStack.select(level, entryId);
         const isFirstEntry = state.currentLevelStack.isFirst[level];
         // Add row gap when first
-        const settings = state.levelSettings[level];
         state.currentWriterY += isFirstEntry ? 0 : settings.rowGap;
         // Remember own position
         let thisPosY = state.currentWriterY;
@@ -362,6 +391,7 @@ function renderPinnedEntries(state: CatalogRenderingState, snapshot: CatalogSnap
         if (state.currentWriterY < state.virtualWindowBegin) {
             continue;
         }
+        scratchPositions[entryId] = thisPosY;
         // Output column node
         const tableName = snapshot.readName(entry.nameId());
         const tableKey = state.currentLevelStack.getKey(level);
@@ -377,7 +407,7 @@ function renderPinnedEntries(state: CatalogRenderingState, snapshot: CatalogSnap
                 })}
                 style={{
                     top: thisPosY,
-                    left: state.levelOffsetsX[level],
+                    left: positionX,
                     width: settings.nodeWidth,
                     height: settings.nodeHeight,
                 }}
@@ -392,7 +422,7 @@ function renderPinnedEntries(state: CatalogRenderingState, snapshot: CatalogSnap
 /// Layout the catalog
 export function layoutCatalog(state: CatalogRenderingState, catalog: CatalogSnapshot) {
     const snapshot = catalog.read();
-    layoutEntries(state, snapshot, 0, 0, state.levelBuffers[0].length());
+    layoutEntries(state, snapshot, 0, 0, state.levels[0].entries.length());
 }
 
 /// A function to render a catalog
@@ -405,6 +435,6 @@ export function renderCatalog(state: CatalogRenderingState, catalog: CatalogSnap
     // First, render the pinned databases
     renderPinnedEntries(state, snapshot, 0, state.pinnedDatabases, out);
     // Then render the unpinned databases
-    renderUnpinnedEntries(state, snapshot, 0, 0, state.levelBuffers[0].length(), out);
+    renderUnpinnedEntries(state, snapshot, 0, 0, state.levels[0].entries.length(), out);
     return out;
 }
