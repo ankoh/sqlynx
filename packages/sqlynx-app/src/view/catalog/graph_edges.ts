@@ -155,19 +155,22 @@ export function selectEdgeType(
     return orientation;
 }
 
-export function selectEdgeType2(
+/// Select horizontal edge type using node dimensions
+export function selectHorizontalEdgeType(
     fromX: number,
     fromY: number,
     toX: number,
     toY: number,
-    widthX: number,
-    widthY: number,
-    heightX: number,
-    heightY: number,
 ): EdgeType {
-    const width = (widthX + widthY) / 2;
-    const height = (heightX + heightY) / 2;
-    return selectEdgeType(fromX, fromY, toX, toY, width, height);
+    const dx = toX - fromX;
+    const dy = toY - fromY;
+    const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+    let orientation = selectEdgeTypeFromAngle(angle);
+    if (orientation >= 4) {
+        return orientation + 12; // [16, 20[
+    } else {
+        return orientation;
+    }
 }
 
 export class EdgePathBuilder {
