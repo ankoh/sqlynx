@@ -146,4 +146,46 @@ TEST(CatalogTest, DescriptorPoolIDCollision) {
     ASSERT_EQ(catalog.AddDescriptorPool(1, 10), proto::StatusCode::EXTERNAL_ID_COLLISION);
 }
 
+TEST(CatalogTest, FlattenEmpty) {
+    Catalog catalog;
+    flatbuffers::FlatBufferBuilder fb;
+    fb.Finish(catalog.Flatten(fb));
+    auto flat = flatbuffers::GetRoot<proto::FlatCatalog>(fb.GetBufferPointer());
+    ASSERT_EQ(flat->catalog_version(), catalog.GetVersion());
+}
+
+TEST(CatalogTest, FlattenSingleDescriptorPool) {
+    Catalog catalog;
+    ASSERT_EQ(catalog.AddDescriptorPool(1, 10), proto::StatusCode::OK);
+
+    auto [descriptor, descriptor_buffer] = PackSchema(Schema{
+        .database_name = "db1",
+        .schema_name = "schema1",
+        .tables = {SchemaTable{.table_name = "table1",
+                               .table_columns = {SchemaTableColumn{.column_name = "column1"},
+                                                 SchemaTableColumn{.column_name = "column2"},
+                                                 SchemaTableColumn{.column_name = "column3"}}
+
+                   },
+                   SchemaTable{.table_name = "table2",
+                               .table_columns = {SchemaTableColumn{.column_name = "column1"},
+                                                 SchemaTableColumn{.column_name = "column2"},
+                                                 SchemaTableColumn{.column_name = "column4"}}
+
+                   }},
+    });
+    auto status = catalog.AddSchemaDescriptor(1, descriptor, std::move(descriptor_buffer));
+    ASSERT_EQ(status, proto::StatusCode::OK);
+
+    flatbuffers::FlatBufferBuilder fb;
+    fb.Finish(catalog.Flatten(fb));
+    auto flat = flatbuffers::GetRoot<proto::FlatCatalog>(fb.GetBufferPointer());
+    ASSERT_EQ(flat->catalog_version(), catalog.GetVersion());
+    ASSERT_EQ(flat->databases()->size(), 1);
+    ASSERT_EQ(flat->schemas()->size(), 1);
+    ASSERT_EQ(flat->tables()->size(), 2);
+    ASSERT_EQ(flat->columns()->size(), 6);
+    ASSERT_EQ(flat->name_dictionary()->size(), 8);
+}
+
 }  // namespace

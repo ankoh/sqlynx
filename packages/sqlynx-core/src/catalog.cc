@@ -348,7 +348,7 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
                 for (auto& column : entry.table_columns) {
                     auto column_name_id = add_name(column.column_name);
                     auto [column_node, new_column] =
-                        table_node->second.children.insert({database_name, Node{column_name_id}});
+                        table_node->second.children.insert({column.column_name, Node{column_name_id}});
                     column_count += new_column;
                 }
             }
