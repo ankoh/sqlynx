@@ -288,8 +288,126 @@ flatbuffers::Offset<proto::CatalogEntries> Catalog::DescribeEntriesOf(flatbuffer
 
 /// Flatten the catalog
 flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBufferBuilder& builder) const {
+    // We build a name dictionary so that JS can save unnecessary utf8->utf16 conversions.
+    // The JS renderers are virtualized which means that they only need to convert catalog entry names that are visible.
+    std::unordered_map<std::string_view, size_t> name_dictionary_index;
+    std::vector<std::string_view> name_dictionary;
+
+    // Helper to add a name to the dictionary
+    auto add_name = [&](std::string_view name) {
+        auto iter = name_dictionary_index.find(name);
+        if (iter != name_dictionary_index.end()) {
+            return iter->second;
+        } else {
+            auto name_id = name_dictionary_index.size();
+            name_dictionary_index.insert({name, name_id});
+            name_dictionary.push_back(name);
+            return name_id;
+        }
+    };
+
+    // Collect all table entries in sorted trees.
+    // This is not very efficient at the moment but will do the job.
+    // Our catalog entries are not ordered which means that we'll have to sort here.
+    // Maybe we want to add smarter partitioning and explicit sorting later if this becomes a bottleneck for large
+    // catalogs.
+    //
+    // And in any case: It's better to do this here than in JS.
+
+    struct Node {
+        size_t name_id;
+        std::map<std::string_view, Node> children;
+        Node(size_t name_id) : children() {}
+    };
+    Node root{0};
+
+    size_t database_count = 0;
+    size_t schema_count = 0;
+    size_t table_count = 0;
+    size_t column_count = 0;
+    for (auto& [catalog_entry_id, catalog_entry] : entries) {
+        for (auto& chunk : catalog_entry->tables.GetChunks()) {
+            for (auto& entry : chunk) {
+                auto database_name = entry.table_name.database_name;
+                auto schema_name = entry.table_name.schema_name;
+                auto table_name = entry.table_name.table_name;
+
+                auto database_name_id = add_name(database_name);
+                auto schema_name_id = add_name(schema_name);
+                auto table_name_id = add_name(table_name);
+
+                auto [database_node, new_database] = root.children.insert({database_name, Node{database_name_id}});
+                auto [schema_node, new_schema] =
+                    database_node->second.children.insert({schema_name, Node{schema_name_id}});
+                auto [table_node, new_table] = schema_node->second.children.insert({table_name, Node{table_name_id}});
+
+                database_count += new_database;
+                schema_count += new_schema;
+                table_count += new_table;
+
+                for (auto& column : entry.table_columns) {
+                    auto column_name_id = add_name(column.column_name);
+                    auto [column_node, new_column] =
+                        table_node->second.children.insert({database_name, Node{column_name_id}});
+                    column_count += new_column;
+                }
+            }
+        }
+    }
+
+    // Write the dictionary vector
+    auto dictionary = builder.CreateVectorOfStrings(name_dictionary);
+
+    // Allocate the entry node vectors
+    sqlynx::proto::FlatCatalogEntry* databases_buffer = nullptr;
+    sqlynx::proto::FlatCatalogEntry* schemas_buffer = nullptr;
+    sqlynx::proto::FlatCatalogEntry* tables_buffer = nullptr;
+    sqlynx::proto::FlatCatalogEntry* columns_buffer = nullptr;
+    auto databases_ofs = builder.CreateUninitializedVectorOfStructs(database_count, &databases_buffer);
+    auto schemas_ofs = builder.CreateUninitializedVectorOfStructs(schema_count, &schemas_buffer);
+    auto tables_ofs = builder.CreateUninitializedVectorOfStructs(table_count, &tables_buffer);
+    auto columns_ofs = builder.CreateUninitializedVectorOfStructs(column_count, &columns_buffer);
+
+    size_t next_database = 0;
+    size_t next_schema = 0;
+    size_t next_table = 0;
+    size_t next_column = 0;
+
+    // Write all catalog entries to the buffers
+    for (auto [database_name, database_node] : root.children) {
+        databases_buffer[next_database] = sqlynx::proto::FlatCatalogEntry(next_database, database_node.name_id, 0,
+                                                                          next_schema, database_node.children.size());
+        for (auto [schema_name, schema_node] : database_node.children) {
+            schemas_buffer[next_schema] = sqlynx::proto::FlatCatalogEntry(
+                next_schema, schema_node.name_id, next_database, next_table, schema_node.children.size());
+            for (auto [table_name, table_node] : schema_node.children) {
+                tables_buffer[next_table] = sqlynx::proto::FlatCatalogEntry(next_table, table_node.name_id, next_schema,
+                                                                            next_column, table_node.children.size());
+                for (auto [column_name, column_node] : table_node.children) {
+                    columns_buffer[next_column] =
+                        sqlynx::proto::FlatCatalogEntry(next_column, column_node.name_id, next_table, 0, 0);
+                    ++next_column;
+                }
+                ++next_table;
+            }
+            ++next_schema;
+        }
+        ++next_database;
+    }
+
+    assert(next_database == database_count);
+    assert(next_schema == schema_count);
+    assert(next_table == table_count);
+    assert(next_column == column_count);
+
+    // Build the flat catalog
     proto::FlatCatalogBuilder catalogBuilder{builder};
-    // XXX
+    catalogBuilder.add_catalog_version(version);
+    catalogBuilder.add_name_dictionary(dictionary);
+    catalogBuilder.add_databases(databases_ofs);
+    catalogBuilder.add_schemas(schemas_ofs);
+    catalogBuilder.add_tables(tables_ofs);
+    catalogBuilder.add_columns(columns_ofs);
     return catalogBuilder.Finish();
 }
 
