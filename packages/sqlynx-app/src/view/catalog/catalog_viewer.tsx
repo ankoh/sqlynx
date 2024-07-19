@@ -1,9 +1,9 @@
 import * as React from 'react';
+import * as sqlynx from '@ankoh/sqlynx-core';
 
 import { CatalogRenderingSettings, CatalogRenderingState } from './catalog_renderer.js';
-import { CatalogSnapshotReader } from '../../connectors/catalog_snapshot.js';
+import { CatalogSnapshot } from '../../connectors/catalog_snapshot.js';
 import { useCurrentSessionState } from '../../session/current_session.js';
-import { useConnectionState } from 'connectors/connection_registry.js';
 
 const RENDERING_SETTINGS: CatalogRenderingSettings = {
     databases: {
@@ -37,12 +37,26 @@ const RENDERING_SETTINGS: CatalogRenderingSettings = {
 };
 
 interface Props {
-    catalog: CatalogSnapshotReader;
 }
 
 export function CatalogViewer(props: Props) {
     const [sessionState, dispatchSession] = useCurrentSessionState();
-    const [connState, dispatchConn] = useConnectionState(sessionState?.connectionId ?? null);
+
+    // Maintain a catalog snapshot of the session
+    const [snapshot, setSnapshot] = React.useState<null | CatalogSnapshot>(null);
+    React.useEffect(() => {
+        const newSnapshot = sessionState?.connectionCatalog.createSnapshot() ?? null;
+        setSnapshot(newSnapshot);
+    }, [sessionState?.connectionCatalog.snapshot]);
+
+    // Create a rendering state
+    React.useEffect(() => {
+        if (snapshot == null) {
+            return;
+        }
+        const snapshotReader = snapshot.read();
+        const _renderingState = new CatalogRenderingState(snapshotReader, RENDERING_SETTINGS);
+    }, [snapshot]);
 
     // const state = React.useRef<CatalogRenderingState | null>(null);
     // React.useEffect(() => {

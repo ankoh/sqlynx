@@ -549,9 +549,49 @@ export class SQLynxScript {
     }
 }
 
+export class SQLynxCatalogSnapshotReader {
+    catalogReader: proto.FlatCatalog;
+    nameDictionary: (string | null)[];
+
+    /// Construct a snapshot reader with a name dictionary
+    constructor(catalog: proto.FlatCatalog, nameDictionary: (string | null)[]) {
+        this.catalogReader = catalog;
+        this.nameDictionary = nameDictionary;
+    }
+    /// Read a name
+    public readName(nameId: number): string {
+        let name = this.nameDictionary[nameId];
+        if (name == null) {
+            name = this.catalogReader.nameDictionary(nameId);
+            this.nameDictionary[nameId] = name;
+        }
+        return name;
+    }
+}
+
+export class SQLynxCatalogSnapshot {
+    snapshot: FlatBufferPtr<proto.FlatCatalog>;
+    nameDictionary: (string | null)[];
+
+    constructor(snapshot: FlatBufferPtr<proto.FlatCatalog>) {
+        this.snapshot = snapshot;
+        this.nameDictionary = [];
+    }
+    /// Delete a snapshot
+    public delete() {
+        this.snapshot.delete();
+    }
+    /// Read a snapshot
+    public read(): SQLynxCatalogSnapshotReader {
+        const reader = this.snapshot.read(new proto.FlatCatalog());
+        return new SQLynxCatalogSnapshotReader(reader, this.nameDictionary);
+
+    }
+}
+
 export class SQLynxCatalog {
     public readonly ptr: Ptr<typeof CATALOG_TYPE> | null;
-    protected snapshot: FlatBufferPtr<proto.FlatCatalog> | null;
+    public snapshot: SQLynxCatalogSnapshot | null;
 
     public constructor(ptr: Ptr<typeof CATALOG_TYPE>) {
         this.ptr = ptr;
@@ -586,13 +626,14 @@ export class SQLynxCatalog {
         return this.ptr.api.readFlatBufferResult<proto.CatalogEntries>(result);
     }
     /// Export a catalog snapshot
-    public exportSnapshot(): FlatBufferPtr<proto.FlatCatalog> {
+    public createSnapshot(): SQLynxCatalogSnapshot {
         if (this.snapshot != null) {
             return this.snapshot;
         }
         const catalogPtr = this.ptr.assertNotNull();
         const result = this.ptr.api.instanceExports.sqlynx_catalog_flatten(catalogPtr);
-        this.snapshot = this.ptr.api.readFlatBufferResult<proto.FlatCatalog>(result);
+        const snapshot = this.ptr.api.readFlatBufferResult<proto.FlatCatalog>(result);
+        this.snapshot = new SQLynxCatalogSnapshot(snapshot);
         return this.snapshot;
     }
     /// Add a script in the registry
