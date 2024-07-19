@@ -4,7 +4,7 @@ import * as styles from './catalog_renderer.module.css';
 
 import { motion } from "framer-motion";
 import { classNames } from '../../utils/classnames.js';
-import { CatalogSnapshot, CatalogSnapshotReader } from '../../connectors/catalog_snapshot.js';
+import { CatalogSnapshotReader } from '../../connectors/catalog_snapshot.js';
 
 /// The rendering settings for a catalog level
 export interface CatalogLevelRenderingSettings {
@@ -145,7 +145,7 @@ interface CatalogLevelRenderingState {
 }
 
 /// A catalog rendering state
-class CatalogRenderingState {
+export class CatalogRenderingState {
     /// The levels
     levels: CatalogLevelRenderingState[];
 
@@ -432,14 +432,12 @@ function renderPinnedEntries(state: CatalogRenderingState, snapshot: CatalogSnap
 }
 
 /// Layout the catalog
-export function layoutCatalog(state: CatalogRenderingState, catalog: CatalogSnapshot) {
-    const snapshot = catalog.read();
+export function layoutCatalog(state: CatalogRenderingState, snapshot: CatalogSnapshotReader) {
     layoutEntries(state, snapshot, 0, 0, state.levels[0].entries.length());
 }
 
 /// A function to render a catalog
-export function renderCatalog(state: CatalogRenderingState, catalog: CatalogSnapshot): React.ReactElement[] {
-    const snapshot = catalog.read();
+export function renderCatalog(state: CatalogRenderingState, snapshot: CatalogSnapshotReader): React.ReactElement[] {
     const out: React.ReactElement[] = [];
 
     // Reset the rendering
