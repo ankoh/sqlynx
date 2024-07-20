@@ -75,7 +75,7 @@ class CatalogRenderingStack {
         }
     }
     public select(level: number, id: number) {
-        this.isFirst[level] = this.entryIds[level] != null;
+        this.isFirst[level] = this.entryIds[level] == null;
         this.entryIds[level] = id;
         this.truncate(level);
     }
