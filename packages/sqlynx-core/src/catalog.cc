@@ -317,7 +317,7 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
     struct Node {
         size_t name_id;
         std::map<std::string_view, Node> children;
-        Node(size_t name_id) : children() {}
+        Node(size_t name_id) : name_id(name_id), children() {}
     };
     Node root{0};
 
@@ -359,14 +359,14 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
     auto dictionary = builder.CreateVectorOfStrings(name_dictionary);
 
     // Allocate the entry node vectors
-    sqlynx::proto::FlatCatalogEntry* databases_buffer = nullptr;
-    sqlynx::proto::FlatCatalogEntry* schemas_buffer = nullptr;
-    sqlynx::proto::FlatCatalogEntry* tables_buffer = nullptr;
-    sqlynx::proto::FlatCatalogEntry* columns_buffer = nullptr;
-    auto databases_ofs = builder.CreateUninitializedVectorOfStructs(database_count, &databases_buffer);
-    auto schemas_ofs = builder.CreateUninitializedVectorOfStructs(schema_count, &schemas_buffer);
-    auto tables_ofs = builder.CreateUninitializedVectorOfStructs(table_count, &tables_buffer);
-    auto columns_ofs = builder.CreateUninitializedVectorOfStructs(column_count, &columns_buffer);
+    std::vector<sqlynx::proto::FlatCatalogEntry> databases_buffer;
+    std::vector<sqlynx::proto::FlatCatalogEntry> schemas_buffer;
+    std::vector<sqlynx::proto::FlatCatalogEntry> tables_buffer;
+    std::vector<sqlynx::proto::FlatCatalogEntry> columns_buffer;
+    databases_buffer.resize(database_count);
+    schemas_buffer.resize(schema_count);
+    tables_buffer.resize(table_count);
+    columns_buffer.resize(column_count);
 
     size_t next_database = 0;
     size_t next_schema = 0;
@@ -399,6 +399,12 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
     assert(next_schema == schema_count);
     assert(next_table == table_count);
     assert(next_column == column_count);
+
+    // Write the entry arrays
+    auto databases_ofs = builder.CreateVectorOfStructs(databases_buffer);
+    auto schemas_ofs = builder.CreateVectorOfStructs(schemas_buffer);
+    auto tables_ofs = builder.CreateVectorOfStructs(tables_buffer);
+    auto columns_ofs = builder.CreateVectorOfStructs(columns_buffer);
 
     // Build the flat catalog
     proto::FlatCatalogBuilder catalogBuilder{builder};
