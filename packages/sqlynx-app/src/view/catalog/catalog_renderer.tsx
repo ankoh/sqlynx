@@ -19,15 +19,27 @@ export interface CatalogLevelRenderingSettings {
     columnGap: number;
 }
 
+
+
 export interface CatalogRenderingSettings {
-    /// The database settings
-    databases: CatalogLevelRenderingSettings;
-    /// The schema settings
-    schemas: CatalogLevelRenderingSettings;
-    /// The table settings
-    tables: CatalogLevelRenderingSettings;
-    /// The column settings
-    columns: CatalogLevelRenderingSettings;
+    /// The virtualization settings
+    virtual: {
+        /// The number of prerendered pixels
+        prerenderSize: number,
+        /// The step size
+        stepSize: number,
+    },
+    /// The rendering levels
+    levels: {
+        /// The database settings
+        databases: CatalogLevelRenderingSettings;
+        /// The schema settings
+        schemas: CatalogLevelRenderingSettings;
+        /// The table settings
+        tables: CatalogLevelRenderingSettings;
+        /// The column settings
+        columns: CatalogLevelRenderingSettings;
+    }
 }
 
 /// The node rendering mode
@@ -114,12 +126,6 @@ class CatalogRenderingStack {
         }
         return out;
     }
-    public log() {
-        console.log({
-            entryIds: [...this.entryIds],
-            isFirst: [...this.isFirst],
-        });
-    }
 }
 
 /// A span of catalog entries
@@ -193,7 +199,7 @@ export class CatalogRenderingState {
         const snap = snapshot.read();
         this.levels = [
             {
-                settings: settings.databases,
+                settings: settings.levels.databases,
                 entries: {
                     read: (snap: sqlynx.SQLynxCatalogSnapshotReader, index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snap.catalogReader.databases(index, obj),
                     length: (snap: sqlynx.SQLynxCatalogSnapshotReader) => snap.catalogReader.databasesLength(),
@@ -205,7 +211,7 @@ export class CatalogRenderingState {
                 scratchPositionsY: new Float32Array(snap.catalogReader.databasesLength()),
             },
             {
-                settings: settings.schemas,
+                settings: settings.levels.schemas,
                 entries: {
                     read: (snap: sqlynx.SQLynxCatalogSnapshotReader, index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snap.catalogReader.schemas(index, obj),
                     length: (snap: sqlynx.SQLynxCatalogSnapshotReader) => snap.catalogReader.schemasLength(),
@@ -217,7 +223,7 @@ export class CatalogRenderingState {
                 scratchPositionsY: new Float32Array(snap.catalogReader.schemasLength()),
             },
             {
-                settings: settings.tables,
+                settings: settings.levels.tables,
                 entries: {
                     read: (snap: sqlynx.SQLynxCatalogSnapshotReader, index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snap.catalogReader.tables(index, obj),
                     length: (snap: sqlynx.SQLynxCatalogSnapshotReader) => snap.catalogReader.tablesLength(),
@@ -229,7 +235,7 @@ export class CatalogRenderingState {
                 scratchPositionsY: new Float32Array(snap.catalogReader.tablesLength()),
             },
             {
-                settings: settings.columns,
+                settings: settings.levels.columns,
                 entries: {
                     read: (snap: sqlynx.SQLynxCatalogSnapshotReader, index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snap.catalogReader.columns(index, obj),
                     length: (snap: sqlynx.SQLynxCatalogSnapshotReader) => snap.catalogReader.columnsLength(),
@@ -241,9 +247,9 @@ export class CatalogRenderingState {
                 scratchPositionsY: new Float32Array(snap.catalogReader.columnsLength()),
             }
         ];
-        this.levels[1].positionX = settings.databases.nodeWidth + settings.databases.columnGap;
-        this.levels[2].positionX = this.levels[1].positionX + settings.schemas.nodeWidth + settings.schemas.columnGap;
-        this.levels[3].positionX = this.levels[2].positionX + settings.tables.nodeWidth + settings.tables.columnGap;
+        this.levels[1].positionX = settings.levels.databases.nodeWidth + settings.levels.databases.columnGap;
+        this.levels[2].positionX = this.levels[1].positionX + settings.levels.schemas.nodeWidth + settings.levels.schemas.columnGap;
+        this.levels[3].positionX = this.levels[2].positionX + settings.levels.tables.nodeWidth + settings.levels.tables.columnGap;
 
         this.pinnedDatabases = [];
 
@@ -267,7 +273,7 @@ export class CatalogRenderingState {
         const databaseCount = this.levels[0].entries.length(snap);
         layoutEntries(this, snap, 0, 0, databaseCount);
         this.totalHeight = this.currentWriterY;
-        this.totalWidth = this.levels[3].positionX + this.settings.columns.nodeWidth + this.settings.columns.columnGap;
+        this.totalWidth = this.levels[3].positionX + this.settings.levels.columns.nodeWidth + this.settings.levels.columns.columnGap;
     }
 
     resetWriter() {
@@ -314,7 +320,6 @@ function layoutEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLynxCata
         // Update level stack
         state.currentLevelStack.select(level, entryId);
         const isFirstEntry = state.currentLevelStack.isFirst[level];
-        state.currentLevelStack.log();
         // The begin of the subtree
         let subtreeBegin = state.currentWriterY;
         // Add row gap when first
@@ -354,7 +359,6 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
     let lastOverflowEntryId = 0;
 
     for (let i = 0; i < entriesCount; ++i) {
-        console.log({ entriesBegin, entriesCount });
         const entryId = entriesBegin + i;
         // Resolve table
         const entry = entries.read(snapshot, entryId, scratchEntry)!;
@@ -424,30 +428,32 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
     }
 
     // Render overflow entry
-    if (overflowChildCount > 0 && state.currentWriterY >= state.virtualWindowBegin && state.currentWriterY < state.virtualWindowEnd) {
+    if (overflowChildCount > 0) {
         state.currentWriterY += settings.rowGap;
         const thisPosY = state.currentWriterY;
-        scratchPositions[lastOverflowEntryId] = state.currentWriterY;
         state.currentWriterY += settings.nodeHeight;
 
-        const overflowKey = `${state.currentLevelStack.getKeyPrefix(level)}-overflow`;
-        outNodes.push(
-            <motion.div
-                key={overflowKey}
-                layoutId={overflowKey}
-                className={classNames(styles.node_default, styles.node_overflow)}
-                style={{
-                    position: 'absolute',
-                    top: thisPosY,
-                    left: positionX,
-                    width: settings.nodeWidth,
-                    height: settings.nodeHeight,
-                }}
-                {...state.currentLevelStack.asAttributes()}
-            >
-                {overflowChildCount}
-            </motion.div>
-        );
+        if (state.currentWriterY >= state.virtualWindowBegin && state.currentWriterY < state.virtualWindowEnd) {
+            scratchPositions[lastOverflowEntryId] = thisPosY;
+            const overflowKey = `${state.currentLevelStack.getKeyPrefix(level)}-overflow`;
+            outNodes.push(
+                <motion.div
+                    key={overflowKey}
+                    layoutId={overflowKey}
+                    className={classNames(styles.node_default, styles.node_overflow)}
+                    style={{
+                        position: 'absolute',
+                        top: thisPosY,
+                        left: positionX,
+                        width: settings.nodeWidth,
+                        height: settings.nodeHeight,
+                    }}
+                    {...state.currentLevelStack.asAttributes()}
+                >
+                    {overflowChildCount}
+                </motion.div>
+            );
+        }
     }
 }
 
