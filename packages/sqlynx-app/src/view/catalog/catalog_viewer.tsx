@@ -77,7 +77,13 @@ export function CatalogViewer(props: Props) {
         <div className={styles.root}>
             <div className={styles.board_container} ref={containerElement}>
                 <div className={styles.board_container} ref={containerElement}>
-                    <div className={styles.node_layer}>
+                    <div
+                        className={styles.node_layer}
+                        style={{
+                            width: state?.totalWidth,
+                            height: state?.totalHeight,
+                        }}
+                    >
                         {nodes}
                     </div>
                 </div>

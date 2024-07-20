@@ -154,11 +154,17 @@ export class CatalogRenderingState {
     /// The snapshot.
     /// We have to recreate the state for every new snapshot.
     snapshot: sqlynx.SQLynxCatalogSnapshot;
+    /// The rendering settings
+    settings: CatalogRenderingSettings;
 
     /// The levels
     levels: CatalogLevelRenderingState[];
     /// The pinned databases
     pinnedDatabases: PinnedCatalogEntry[];
+    /// The total height of all nodes
+    totalHeight: number;
+    /// The total width of all nodes
+    totalWidth: number;
 
     /// The begin offset of the virtual window
     virtualWindowBegin: number;
@@ -172,6 +178,7 @@ export class CatalogRenderingState {
 
     constructor(snapshot: sqlynx.SQLynxCatalogSnapshot, settings: CatalogRenderingSettings) {
         this.snapshot = snapshot;
+        this.settings = settings;
         const snap = snapshot.read();
         this.levels = [
             {
@@ -229,6 +236,9 @@ export class CatalogRenderingState {
 
         this.pinnedDatabases = [];
 
+        this.totalWidth = 0;
+        this.totalHeight = 0;
+
         this.virtualWindowBegin = 0;
         this.virtualWindowEnd = 0;
         this.virtualWindowEnd = 0;
@@ -236,10 +246,17 @@ export class CatalogRenderingState {
         this.currentWriterY = 0;
         this.currentLevelStack = new CatalogRenderingStack();
 
-        // Layout all entries once.
+        // Layout all entries.
         // This means users don't have to special-case the states without layout.
+        this.layoutEntries();
+    }
+
+    layoutEntries() {
+        const snap = this.snapshot.read();
         const databaseCount = this.levels[0].entries.length(snap);
         layoutEntries(this, snap, 0, 0, databaseCount);
+        this.totalHeight = this.currentWriterY;
+        this.totalWidth = this.levels[3].positionX + this.settings.columns.nodeWidth + this.settings.columns.columnGap;
     }
 
     resetWriter() {
