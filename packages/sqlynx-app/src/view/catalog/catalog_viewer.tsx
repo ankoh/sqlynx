@@ -12,28 +12,28 @@ const RENDERING_SETTINGS: CatalogRenderingSettings = {
         nodeHeight: 24,
         maxUnpinnedChildren: 3,
         rowGap: 8,
-        columnGap: 8,
+        columnGap: 48,
     },
     schemas: {
         nodeWidth: 120,
         nodeHeight: 24,
         maxUnpinnedChildren: 3,
         rowGap: 8,
-        columnGap: 8,
+        columnGap: 48,
     },
     tables: {
         nodeWidth: 120,
         nodeHeight: 24,
         maxUnpinnedChildren: 3,
         rowGap: 8,
-        columnGap: 8,
+        columnGap: 48,
     },
     columns: {
         nodeWidth: 120,
         nodeHeight: 24,
         maxUnpinnedChildren: 3,
         rowGap: 8,
-        columnGap: 8,
+        columnGap: 48,
     },
 };
 
