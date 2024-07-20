@@ -85,9 +85,20 @@ class CatalogRenderingStack {
         }
         return this.entryIdStrings[level];
     }
+    public getKeyPrefix(level: number) {
+        if (level == 0) {
+            return '';
+        } else {
+            let out = this.entryIds[0]!.toString();
+            for (let i = 1; i < level; ++i) {
+                out += '-';
+                out += this.entryIds[i]!.toString();
+            }
+            return out;
+        }
+    }
     public getKey(level: number) {
-        let out = '';
-        out += this.entryIds[0]!.toString();
+        let out = this.entryIds[0]!.toString();
         for (let i = 1; i < (level + 1); ++i) {
             out += '-';
             out += this.entryIds[i]!.toString();
@@ -413,10 +424,30 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
     }
 
     // Render overflow entry
-    if (overflowChildCount > 0) {
+    if (overflowChildCount > 0 && state.currentWriterY >= state.virtualWindowBegin && state.currentWriterY < state.virtualWindowEnd) {
         state.currentWriterY += settings.rowGap;
+        const thisPosY = state.currentWriterY;
         scratchPositions[lastOverflowEntryId] = state.currentWriterY;
         state.currentWriterY += settings.nodeHeight;
+
+        const overflowKey = `${state.currentLevelStack.getKeyPrefix(level)}-overflow`;
+        outNodes.push(
+            <motion.div
+                key={overflowKey}
+                layoutId={overflowKey}
+                className={classNames(styles.node_default, styles.node_overflow)}
+                style={{
+                    position: 'absolute',
+                    top: thisPosY,
+                    left: positionX,
+                    width: settings.nodeWidth,
+                    height: settings.nodeHeight,
+                }}
+                {...state.currentLevelStack.asAttributes()}
+            >
+                {overflowChildCount}
+            </motion.div>
+        );
     }
 }
 
