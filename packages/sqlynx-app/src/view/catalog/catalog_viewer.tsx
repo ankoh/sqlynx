@@ -76,7 +76,11 @@ export function CatalogViewer(props: Props) {
     return (
         <div className={styles.root}>
             <div className={styles.board_container} ref={containerElement}>
-                {nodes}
+                <div className={styles.board_container} ref={containerElement}>
+                    <div className={styles.node_layer}>
+                        {nodes}
+                    </div>
+                </div>
             </div>
             <div className={styles.overlay_title}>Schema</div>
         </div>
