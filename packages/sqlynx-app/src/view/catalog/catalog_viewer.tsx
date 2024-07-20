@@ -1,35 +1,36 @@
 import * as React from 'react';
 import * as sqlynx from '@ankoh/sqlynx-core';
+import * as styles from './catalog_viewer.module.css'
 
-import { CatalogRenderingSettings, CatalogRenderingState } from './catalog_renderer.js';
-import { CatalogSnapshot } from '../../connectors/catalog_snapshot.js';
+import { CatalogRenderingSettings, CatalogRenderingState, layoutCatalog, renderCatalog } from './catalog_renderer.js';
 import { useCurrentSessionState } from '../../session/current_session.js';
+import { observeSize } from '../foundations/size_observer.js';
 
 const RENDERING_SETTINGS: CatalogRenderingSettings = {
     databases: {
-        nodeWidth: 320,
-        nodeHeight: 48,
+        nodeWidth: 120,
+        nodeHeight: 24,
         maxUnpinnedChildren: 3,
         rowGap: 8,
         columnGap: 8,
     },
     schemas: {
-        nodeWidth: 320,
-        nodeHeight: 48,
+        nodeWidth: 120,
+        nodeHeight: 24,
         maxUnpinnedChildren: 3,
         rowGap: 8,
         columnGap: 8,
     },
     tables: {
-        nodeWidth: 320,
-        nodeHeight: 48,
+        nodeWidth: 120,
+        nodeHeight: 24,
         maxUnpinnedChildren: 3,
         rowGap: 8,
         columnGap: 8,
     },
     columns: {
-        nodeWidth: 320,
-        nodeHeight: 48,
+        nodeWidth: 120,
+        nodeHeight: 24,
         maxUnpinnedChildren: 3,
         rowGap: 8,
         columnGap: 8,
@@ -40,28 +41,44 @@ interface Props {
 }
 
 export function CatalogViewer(props: Props) {
-    const [sessionState, dispatchSession] = useCurrentSessionState();
+    const [sessionState, _dispatchSession] = useCurrentSessionState();
 
     // Maintain a catalog snapshot of the session
-    const [snapshot, setSnapshot] = React.useState<null | CatalogSnapshot>(null);
+    const [state, setState] = React.useState<CatalogRenderingState | null>(null);
     React.useEffect(() => {
-        const newSnapshot = sessionState?.connectionCatalog.createSnapshot() ?? null;
-        setSnapshot(newSnapshot);
+        const snapshot = sessionState?.connectionCatalog.createSnapshot() ?? null;
+        if (snapshot) {
+            const state = new CatalogRenderingState(snapshot, RENDERING_SETTINGS);
+            setState(state);
+        }
     }, [sessionState?.connectionCatalog.snapshot]);
 
-    // Create a rendering state
-    React.useEffect(() => {
-        if (snapshot == null) {
-            return;
+
+    // Watch the container size
+    const containerElement = React.useRef(null);
+    const containerSize = observeSize(containerElement);
+
+    // Memo must depend on scroll window and window size
+    const nodes = React.useMemo(() => {
+        // No state or measured container size?
+        if (!state || !containerSize) {
+            return null;
         }
-        const snapshotReader = snapshot.read();
-        const _renderingState = new CatalogRenderingState(snapshotReader, RENDERING_SETTINGS);
-    }, [snapshot]);
+        // Update the virtual window
+        const windowBegin = 0;
+        const windowEnd = containerSize.height;
+        state.updateVirtualWindow(windowBegin, windowEnd);
+        // Render the catalog
+        return renderCatalog(state);
 
-    // const state = React.useRef<CatalogRenderingState | null>(null);
-    // React.useEffect(() => {
-    //     state.current = new CatalogRenderingState(props.catalog, RENDERING_SETTINGS);
-    // }, [props.catalog.catalogReader.catalogVersion()]);
+    }, [state, containerSize?.height]);
 
-    return <div />;
+    return (
+        <div className={styles.root}>
+            <div className={styles.board_container} ref={containerElement}>
+                {nodes}
+            </div>
+            <div className={styles.overlay_title}>Schema</div>
+        </div>
+    );
 }

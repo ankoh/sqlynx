@@ -4,7 +4,6 @@ import * as styles from './catalog_renderer.module.css';
 
 import { motion } from "framer-motion";
 import { classNames } from '../../utils/classnames.js';
-import { CatalogSnapshotReader } from '../../connectors/catalog_snapshot.js';
 
 /// The rendering settings for a catalog level
 export interface CatalogLevelRenderingSettings {
@@ -99,7 +98,7 @@ class CatalogRenderingStack {
         const out: Record<string, string> = {};
         for (let i = 0; i < 4; ++i) {
             if (this.entryIds[i] != null) {
-                out[`data-l${i}`] = this.idToString(i);
+                out[`data-level-${i}`] = this.idToString(i);
             }
         }
         return out;
@@ -108,8 +107,8 @@ class CatalogRenderingStack {
 
 /// A span of catalog entries
 interface CatalogEntrySpan {
-    read(index: number, obj?: sqlynx.proto.FlatCatalogEntry): sqlynx.proto.FlatCatalogEntry | null;
-    length(): number;
+    read(snap: sqlynx.SQLynxCatalogSnapshotReader, index: number, obj?: sqlynx.proto.FlatCatalogEntry): sqlynx.proto.FlatCatalogEntry | null;
+    length(snap: sqlynx.SQLynxCatalogSnapshotReader): number;
 }
 /// A pinned catalog entry
 class PinnedCatalogEntry {
@@ -146,15 +145,18 @@ interface CatalogLevelRenderingState {
 
 /// A catalog rendering state
 export class CatalogRenderingState {
+    /// The snapshot.
+    /// We have to recreate the state for every new snapshot.
+    snapshot: sqlynx.SQLynxCatalogSnapshot;
+
     /// The levels
     levels: CatalogLevelRenderingState[];
-
     /// The pinned databases
     pinnedDatabases: PinnedCatalogEntry[];
 
-    /// The offset of the virtual window
+    /// The begin offset of the virtual window
     virtualWindowBegin: number;
-    /// The offset of the virtual window
+    /// The end offset of the virtual window
     virtualWindowEnd: number;
 
     /// The current writer
@@ -162,55 +164,57 @@ export class CatalogRenderingState {
     /// The current rendering path
     currentLevelStack: CatalogRenderingStack;
 
-    constructor(snapshot: CatalogSnapshotReader, settings: CatalogRenderingSettings) {
+    constructor(snapshot: sqlynx.SQLynxCatalogSnapshot, settings: CatalogRenderingSettings) {
+        this.snapshot = snapshot;
+        const snap = snapshot.read();
         this.levels = [
             {
                 settings: settings.databases,
                 entries: {
-                    read: (index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snapshot.catalogReader.databases(index, obj),
-                    length: () => snapshot.catalogReader.databasesLength(),
+                    read: (snap: sqlynx.SQLynxCatalogSnapshotReader, index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snap.catalogReader.databases(index, obj),
+                    length: (snap: sqlynx.SQLynxCatalogSnapshotReader) => snap.catalogReader.databasesLength(),
                 },
-                flags: new Uint8Array(snapshot.catalogReader.databasesLength()),
-                subtreeHeights: new Float32Array(snapshot.catalogReader.databasesLength()),
+                flags: new Uint8Array(snap.catalogReader.databasesLength()),
+                subtreeHeights: new Float32Array(snap.catalogReader.databasesLength()),
                 positionX: 0,
                 scratchEntry: new sqlynx.proto.FlatCatalogEntry(),
-                scratchPositionsY: new Float32Array(snapshot.catalogReader.databasesLength()),
+                scratchPositionsY: new Float32Array(snap.catalogReader.databasesLength()),
             },
             {
                 settings: settings.schemas,
                 entries: {
-                    read: (index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snapshot.catalogReader.schemas(index, obj),
-                    length: () => snapshot.catalogReader.schemasLength(),
+                    read: (snap: sqlynx.SQLynxCatalogSnapshotReader, index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snap.catalogReader.schemas(index, obj),
+                    length: (snap: sqlynx.SQLynxCatalogSnapshotReader) => snap.catalogReader.schemasLength(),
                 },
-                flags: new Uint8Array(snapshot.catalogReader.schemasLength()),
-                subtreeHeights: new Float32Array(snapshot.catalogReader.schemasLength()),
+                flags: new Uint8Array(snap.catalogReader.schemasLength()),
+                subtreeHeights: new Float32Array(snap.catalogReader.schemasLength()),
                 positionX: 0,
                 scratchEntry: new sqlynx.proto.FlatCatalogEntry(),
-                scratchPositionsY: new Float32Array(snapshot.catalogReader.schemasLength()),
+                scratchPositionsY: new Float32Array(snap.catalogReader.schemasLength()),
             },
             {
                 settings: settings.tables,
                 entries: {
-                    read: (index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snapshot.catalogReader.tables(index, obj),
-                    length: () => snapshot.catalogReader.tablesLength(),
+                    read: (snap: sqlynx.SQLynxCatalogSnapshotReader, index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snap.catalogReader.tables(index, obj),
+                    length: (snap: sqlynx.SQLynxCatalogSnapshotReader) => snap.catalogReader.tablesLength(),
                 },
-                flags: new Uint8Array(snapshot.catalogReader.tablesLength()),
-                subtreeHeights: new Float32Array(snapshot.catalogReader.tablesLength()),
+                flags: new Uint8Array(snap.catalogReader.tablesLength()),
+                subtreeHeights: new Float32Array(snap.catalogReader.tablesLength()),
                 positionX: 0,
                 scratchEntry: new sqlynx.proto.FlatCatalogEntry(),
-                scratchPositionsY: new Float32Array(snapshot.catalogReader.tablesLength()),
+                scratchPositionsY: new Float32Array(snap.catalogReader.tablesLength()),
             },
             {
                 settings: settings.columns,
                 entries: {
-                    read: (index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snapshot.catalogReader.columns(index, obj),
-                    length: () => snapshot.catalogReader.columnsLength(),
+                    read: (snap: sqlynx.SQLynxCatalogSnapshotReader, index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snap.catalogReader.columns(index, obj),
+                    length: (snap: sqlynx.SQLynxCatalogSnapshotReader) => snap.catalogReader.columnsLength(),
                 },
-                flags: new Uint8Array(snapshot.catalogReader.columnsLength()),
-                subtreeHeights: new Float32Array(snapshot.catalogReader.columnsLength()),
+                flags: new Uint8Array(snap.catalogReader.columnsLength()),
+                subtreeHeights: new Float32Array(snap.catalogReader.columnsLength()),
                 positionX: 0,
                 scratchEntry: new sqlynx.proto.FlatCatalogEntry(),
-                scratchPositionsY: new Float32Array(snapshot.catalogReader.columnsLength()),
+                scratchPositionsY: new Float32Array(snap.catalogReader.columnsLength()),
             }
         ];
         this.levels[1].positionX = settings.databases.nodeWidth + settings.databases.columnGap;
@@ -225,6 +229,11 @@ export class CatalogRenderingState {
 
         this.currentWriterY = 0;
         this.currentLevelStack = new CatalogRenderingStack();
+
+        // Layout all entries once.
+        // This means users don't have to special-case the states without layout.
+        const databaseCount = this.levels[0].entries.length(snap);
+        layoutEntries(this, snap, 0, 0, databaseCount);
     }
 
     resetWriter() {
@@ -234,14 +243,14 @@ export class CatalogRenderingState {
             level.scratchPositionsY.fill(NaN);
         }
     }
-    moveVirtualWindow(windowBegin: number, windowSize: number) {
+    updateVirtualWindow(windowBegin: number, windowSize: number) {
         this.virtualWindowBegin = windowBegin;
         this.virtualWindowEnd = windowBegin + windowSize;
     }
 }
 
 /// Layout unpinned entries and assign them NodeFlags
-function layoutEntries(state: CatalogRenderingState, snapshot: CatalogSnapshotReader, level: number, entriesBegin: number, entriesCount: number) {
+function layoutEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLynxCatalogSnapshotReader, level: number, entriesBegin: number, entriesCount: number) {
     const settings = state.levels[level].settings;
     const entries = state.levels[level].entries;
     const scratchEntry = state.levels[level].scratchEntry;
@@ -253,7 +262,7 @@ function layoutEntries(state: CatalogRenderingState, snapshot: CatalogSnapshotRe
 
     for (let i = 0; i < entriesCount; ++i) {
         const entryId = entriesBegin + i;
-        const entry = entries.read(entryId, scratchEntry)!;
+        const entry = entries.read(snapshot, entryId, scratchEntry)!;
         const entryFlags = readNodeFlags(flags, entryId);
 
         // PINNED and DEFAULT entries have the same height, so it doesn't matter that we're accounting for them here in the "wrong" order.
@@ -295,7 +304,7 @@ function layoutEntries(state: CatalogRenderingState, snapshot: CatalogSnapshotRe
 }
 
 /// Render unpinned entries and emit ReactElements if they are within the virtual scroll window
-function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: CatalogSnapshotReader, level: number, entriesBegin: number, entriesCount: number, outNodes: React.ReactElement[]) {
+function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLynxCatalogSnapshotReader, level: number, entriesBegin: number, entriesCount: number, outNodes: React.ReactElement[]) {
     const settings = state.levels[level].settings;
     const entries = state.levels[level].entries;
     const scratchPositions = state.levels[level].scratchPositionsY;
@@ -306,7 +315,7 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: CatalogSn
     for (let i = 0; i < entriesCount; ++i) {
         const entryId = entriesBegin + i;
         // Resolve table
-        const entry = entries.read(entryId, scratchEntry)!;
+        const entry = entries.read(snapshot, entryId, scratchEntry)!;
         const entryFlags = readNodeFlags(flags, entryId);
         // Skip pinned and overflow entries
         if ((entryFlags & (NodeFlags.PINNED | NodeFlags.OVERFLOW)) != 0) {
@@ -365,7 +374,7 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: CatalogSn
 }
 
 /// A function to render entries
-function renderPinnedEntries(state: CatalogRenderingState, snapshot: CatalogSnapshotReader, level: number, pinnedEntries: PinnedCatalogEntry[], outNodes: React.ReactElement[]) {
+function renderPinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLynxCatalogSnapshotReader, level: number, pinnedEntries: PinnedCatalogEntry[], outNodes: React.ReactElement[]) {
     const settings = state.levels[level].settings;
     const entries = state.levels[level].entries;
     const scratchEntry = state.levels[level].scratchEntry;
@@ -376,7 +385,7 @@ function renderPinnedEntries(state: CatalogRenderingState, snapshot: CatalogSnap
     for (const pinnedEntry of pinnedEntries) {
         // Resolve table
         const entryId = pinnedEntry.entryId;
-        const entry = entries.read(pinnedEntry.entryId, scratchEntry)!;
+        const entry = entries.read(snapshot, pinnedEntry.entryId, scratchEntry)!;
         const entryFlags = readNodeFlags(flags, entryId);
         // Update level stack
         state.currentLevelStack.select(level, entryId);
@@ -432,19 +441,21 @@ function renderPinnedEntries(state: CatalogRenderingState, snapshot: CatalogSnap
 }
 
 /// Layout the catalog
-export function layoutCatalog(state: CatalogRenderingState, snapshot: CatalogSnapshotReader) {
-    layoutEntries(state, snapshot, 0, 0, state.levels[0].entries.length());
+export function layoutCatalog(state: CatalogRenderingState) {
+    const snap = state.snapshot.read();
+    layoutEntries(state, snap, 0, 0, state.levels[0].entries.length(snap));
 }
 
 /// A function to render a catalog
-export function renderCatalog(state: CatalogRenderingState, snapshot: CatalogSnapshotReader): React.ReactElement[] {
+export function renderCatalog(state: CatalogRenderingState): React.ReactElement[] {
     const out: React.ReactElement[] = [];
+    const snap = state.snapshot.read();
 
     // Reset the rendering
     state.resetWriter();
     // First, render the pinned databases
-    renderPinnedEntries(state, snapshot, 0, state.pinnedDatabases, out);
+    renderPinnedEntries(state, snap, 0, state.pinnedDatabases, out);
     // Then render the unpinned databases
-    renderUnpinnedEntries(state, snapshot, 0, 0, state.levels[0].entries.length(), out);
+    renderUnpinnedEntries(state, snap, 0, 0, state.levels[0].entries.length(snap), out);
     return out;
 }
