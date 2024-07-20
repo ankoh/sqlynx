@@ -23,7 +23,8 @@ import { useQueryState } from '../../connectors/query_executor.js';
 import { QueryStatusView } from '../query_status/query_status_view.js';
 import { QueryResultView } from '../query_result/query_result_view.js';
 import { SessionCommandType, useSessionCommandDispatch } from '../../session/session_commands.js';
-import { SchemaGraph } from '../../view/schema/schema_graph.js';
+// import { SchemaGraph } from '../../view/schema/schema_graph.js';
+import { CatalogViewer } from '../../view/catalog/catalog_viewer.js';
 
 const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
     const config = useAppConfig();
@@ -222,8 +223,8 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                         }}
                         tabKeys={[TabKey.CatalogView, TabKey.QueryStatusView, TabKey.QueryResultView]}
                         tabRenderers={{
-                            [TabKey.CatalogView]: _props => <SchemaGraph />,
-                            // [TabKey.CatalogView]: _props => <CatalogViewer />,
+                            // [TabKey.CatalogView]: _props => <SchemaGraph />,
+                            [TabKey.CatalogView]: _props => <CatalogViewer />,
                             [TabKey.QueryStatusView]: _props => (
                                 <QueryStatusView query={queryState} />
                             ),
