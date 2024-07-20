@@ -338,14 +338,24 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
     const flags = state.levels[level].flags;
     const positionX = state.levels[level].positionX;
 
+    // Track overflows
+    let overflowChildCount = 0;
+    let lastOverflowEntryId = 0;
+
     for (let i = 0; i < entriesCount; ++i) {
         console.log({ entriesBegin, entriesCount });
         const entryId = entriesBegin + i;
         // Resolve table
         const entry = entries.read(snapshot, entryId, scratchEntry)!;
         const entryFlags = readNodeFlags(flags, entryId);
-        // Skip pinned and overflow entries
-        if ((entryFlags & (NodeFlags.PINNED | NodeFlags.OVERFLOW)) != 0) {
+        // Skip pinned entries
+        if ((entryFlags & NodeFlags.PINNED) != 0) {
+            continue;
+        }
+        // Skip overflow entries
+        if ((entryFlags & NodeFlags.OVERFLOW) != 0) {
+            ++overflowChildCount;
+            lastOverflowEntryId = entryId;
             continue;
         }
         // Update level stack
@@ -400,6 +410,13 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
                 {tableName}
             </motion.div>
         );
+    }
+
+    // Render overflow entry
+    if (overflowChildCount > 0) {
+        state.currentWriterY += settings.rowGap;
+        scratchPositions[lastOverflowEntryId] = state.currentWriterY;
+        state.currentWriterY += settings.nodeHeight;
     }
 }
 
