@@ -103,6 +103,12 @@ class CatalogRenderingStack {
         }
         return out;
     }
+    public log() {
+        console.log({
+            entryIds: [...this.entryIds],
+            isFirst: [...this.isFirst],
+        });
+    }
 }
 
 /// A span of catalog entries
@@ -280,6 +286,7 @@ function layoutEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLynxCata
         // Update level stack
         state.currentLevelStack.select(level, entryId);
         const isFirstEntry = state.currentLevelStack.isFirst[level];
+        state.currentLevelStack.log();
         // The begin of the subtree
         let subtreeBegin = state.currentWriterY;
         // Add row gap when first
@@ -287,7 +294,9 @@ function layoutEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLynxCata
         // Remember own position
         let thisPosY = state.currentWriterY;
         // Render child columns
-        layoutEntries(state, snapshot, level + 1, entry.childBegin(), entry.childCount());
+        if (entry.childCount() > 0) {
+            layoutEntries(state, snapshot, level + 1, entry.childBegin(), entry.childCount());
+        }
         // Bump writer if the columns didn't already
         state.currentWriterY = Math.max(state.currentWriterY, thisPosY + settings.nodeHeight);
         // Truncate any stack items that children added
@@ -313,6 +322,7 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
     const positionX = state.levels[level].positionX;
 
     for (let i = 0; i < entriesCount; ++i) {
+        console.log({ entriesBegin, entriesCount });
         const entryId = entriesBegin + i;
         // Resolve table
         const entry = entries.read(snapshot, entryId, scratchEntry)!;
@@ -329,7 +339,9 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
         // Remember own position
         let thisPosY = state.currentWriterY;
         // Render child columns
-        renderUnpinnedEntries(state, snapshot, level + 1, entry.childBegin(), entry.childCount(), outNodes);
+        if (entry.childCount() > 0) {
+            renderUnpinnedEntries(state, snapshot, level + 1, entry.childBegin(), entry.childCount(), outNodes);
+        }
         // Bump writer if the columns didn't already
         state.currentWriterY = Math.max(state.currentWriterY, thisPosY + settings.nodeHeight);
         // Truncate any stack items that children added
@@ -360,6 +372,7 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
                     [styles.node_pinned]: (entryFlags & NodeFlags.PINNED) != 0,
                 })}
                 style={{
+                    position: 'absolute',
                     top: thisPosY,
                     left: positionX,
                     width: settings.nodeWidth,
@@ -395,9 +408,13 @@ function renderPinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLy
         // Remember own position
         let thisPosY = state.currentWriterY;
         // First render all pinned children
-        renderPinnedEntries(state, snapshot, level + 1, pinnedEntry.pinnedChildren, outNodes);
+        if (pinnedEntry.pinnedChildren.length > 0) {
+            renderPinnedEntries(state, snapshot, level + 1, pinnedEntry.pinnedChildren, outNodes);
+        }
         // Then render all unpinned entries
-        renderUnpinnedEntries(state, snapshot, level + 1, entry.childBegin(), entry.childCount(), outNodes);
+        if (entry.childCount() > 0) {
+            renderUnpinnedEntries(state, snapshot, level + 1, entry.childBegin(), entry.childCount(), outNodes);
+        }
         // Bump writer if the columns didn't already
         state.currentWriterY = Math.max(state.currentWriterY, thisPosY + settings.nodeHeight);
         // Truncate any stack items that children added
@@ -427,6 +444,7 @@ function renderPinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLy
                     [styles.node_pinned]: (entryFlags & NodeFlags.PINNED) != 0,
                 })}
                 style={{
+                    position: 'absolute',
                     top: thisPosY,
                     left: positionX,
                     width: settings.nodeWidth,

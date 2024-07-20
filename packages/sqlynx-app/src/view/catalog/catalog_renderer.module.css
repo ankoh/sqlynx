@@ -1,4 +1,5 @@
 .node_default {
+    border: 1px solid red;
 }
 .node_pinned {
 }
