@@ -6,6 +6,7 @@ import { useCurrentSessionState } from '../../session/current_session.js';
 import { observeSize } from '../foundations/size_observer.js';
 import { EdgeLayer } from './edge_layer.js';
 import { NodeLayer } from './node_layer.js';
+import { useThrottledMemo } from '../../utils/throttle.js';
 
 const RENDERING_SETTINGS: CatalogRenderingSettings = {
     virtual: {
@@ -75,11 +76,12 @@ export function CatalogViewer(props: Props) {
         scroll: Range;
         virtual: Range;
     };
-    const [scrollTop, setScrollTop] = React.useState<number | null>(null);
+    const [scrollTopRaw, setScrollTop] = React.useState<number | null>(null);
     const handleScroll = (e: React.UIEvent<HTMLDivElement, UIEvent>) => {
         const scrollTop = (e.target as HTMLDivElement).scrollTop;
         setScrollTop(Math.max(scrollTop, padding) - padding);
     };
+    const scrollTop = useThrottledMemo(scrollTopRaw, [scrollTopRaw], 30);
 
     // Derive a virtual window from the scroll position and container size
     const [renderingWindow, setRenderingWindow] = React.useState<RenderingWindow | null>(null);
