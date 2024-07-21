@@ -5,6 +5,7 @@ import { CatalogRenderingSettings, CatalogRenderingState, renderCatalog } from '
 import { useCurrentSessionState } from '../../session/current_session.js';
 import { observeSize } from '../foundations/size_observer.js';
 import { EdgeLayer } from './edge_layer.js';
+import { NodeLayer } from './node_layer.js';
 
 const RENDERING_SETTINGS: CatalogRenderingSettings = {
     virtual: {
@@ -63,6 +64,7 @@ export function CatalogViewer(props: Props) {
     // Watch the container size
     const containerElement = React.useRef(null);
     const containerSize = observeSize(containerElement);
+    const padding = 20;
 
     // Subscribe to scroll events
     interface Range {
@@ -73,13 +75,10 @@ export function CatalogViewer(props: Props) {
         scroll: Range;
         virtual: Range;
     };
-    const [scrollPos, setScrollPos] = React.useState<Range | null>(null);
+    const [scrollTop, setScrollTop] = React.useState<number | null>(null);
     const handleScroll = (e: React.UIEvent<HTMLDivElement, UIEvent>) => {
-        const { scrollTop, scrollHeight } = e.target as HTMLDivElement;
-        setScrollPos({
-            top: scrollTop,
-            height: scrollHeight,
-        });
+        const scrollTop = (e.target as HTMLDivElement).scrollTop;
+        setScrollTop(Math.max(scrollTop, padding) - padding);
     };
 
     // Derive a virtual window from the scroll position and container size
@@ -91,15 +90,17 @@ export function CatalogViewer(props: Props) {
         }
 
         // Did the user scroll?
-        if (scrollPos) {
-            let lb = Math.floor((scrollPos.top - RENDERING_SETTINGS.virtual.prerenderSize) / RENDERING_SETTINGS.virtual.stepSize) * RENDERING_SETTINGS.virtual.stepSize;
-            let ub = Math.ceil((scrollPos.top + containerSize.height + RENDERING_SETTINGS.virtual.prerenderSize) / RENDERING_SETTINGS.virtual.stepSize) * RENDERING_SETTINGS.virtual.stepSize;
+        if (scrollTop) {
+            let lb = Math.floor((scrollTop - RENDERING_SETTINGS.virtual.prerenderSize) / RENDERING_SETTINGS.virtual.stepSize) * RENDERING_SETTINGS.virtual.stepSize;
+            let ub = Math.ceil((scrollTop + containerSize.height + RENDERING_SETTINGS.virtual.prerenderSize) / RENDERING_SETTINGS.virtual.stepSize) * RENDERING_SETTINGS.virtual.stepSize;
             lb = Math.max(lb, 0);
             ub = Math.min(ub, state.totalHeight);
             setRenderingWindow({
                 scroll: {
-                    top: scrollPos.top,
-                    height: containerSize.height,
+                    top: scrollTop,
+                    // Make sure we respect the top padding when computing the scroll window.
+                    // When we're on the "first page", we have to subtract the top padding from the container height.
+                    height: Math.max(containerSize.height - padding + Math.min(scrollTop, padding), 0)
                 },
                 virtual: {
                     top: lb,
@@ -113,7 +114,7 @@ export function CatalogViewer(props: Props) {
             setRenderingWindow({
                 scroll: {
                     top: 0,
-                    height: containerSize.height
+                    height: Math.max(containerSize.height, padding) - padding
                 },
                 virtual: {
                     top: 0,
@@ -121,7 +122,7 @@ export function CatalogViewer(props: Props) {
                 }
             })
         }
-    }, [state, scrollPos, containerSize]);
+    }, [state, scrollTop, containerSize]);
 
     // Memo must depend on scroll window and window size
     const [nodes, edges] = React.useMemo(() => {
@@ -148,28 +149,19 @@ export function CatalogViewer(props: Props) {
         <div className={styles.root}>
             <div className={styles.board_container} ref={containerElement}>
                 <div className={styles.board_container} ref={containerElement} onScroll={handleScroll}>
-                    <div
-                        className={styles.board}
-                        style={{
-                            width: state?.totalWidth,
-                            height: state?.totalHeight,
-                        }}
-                    >
+                    <div className={styles.board}>
                         <EdgeLayer
-                            className={styles.edge_layer}
-                            paths={edges ?? []}
                             width={state?.totalWidth ?? 0}
                             height={state?.totalHeight ?? 0}
+                            padding={padding}
+                            paths={edges ?? []}
                         />
-                        <div
-                            className={styles.node_layer}
-                            style={{
-                                width: state?.totalWidth,
-                                height: state?.totalHeight,
-                            }}
-                        >
-                            {nodes}
-                        </div>
+                        <NodeLayer
+                            width={state?.totalWidth ?? 0}
+                            height={state?.totalHeight ?? 0}
+                            padding={padding}
+                            nodes={nodes ?? []}
+                        />
                     </div>
                 </div>
             </div>
