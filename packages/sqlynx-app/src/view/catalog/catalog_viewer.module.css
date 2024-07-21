@@ -13,14 +13,25 @@
 
 .board {
     position: relative;
+    width: 100%;
 }
 
 .node_layer {
-    position: absolute;
+    display: flex;
+    width: 100%;
+    height: auto;
+    flex-direction: column;
+    align-items: center;
+}
+.node_layout {
+    position: relative;
 }
 
 .edge_layer {
     position: absolute;
-    top: 0;
-    left: 0;
+    display: flex;
+    width: 100%;
+    height: auto;
+    flex-direction: column;
+    align-items: center;
 }

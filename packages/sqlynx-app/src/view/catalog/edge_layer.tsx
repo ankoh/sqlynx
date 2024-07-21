@@ -1,13 +1,14 @@
 import * as React from 'react';
+import * as styles from './catalog_viewer.module.css';
 
-interface HighlightingProps {
-    className?: string;
+interface EdgeLayerProps {
     width: number;
     height: number;
+    padding: number;
     paths: string[];
 }
 
-export function EdgeLayer(props: HighlightingProps) {
+export function EdgeLayer(props: EdgeLayerProps) {
     const paths = [];
     for (let i = 0; i < props.paths.length; ++i) {
         paths.push(
@@ -21,13 +22,19 @@ export function EdgeLayer(props: HighlightingProps) {
         );
     }
     return (
-        <svg
-            className={props.className}
-            viewBox={`0 0 ${props.width} ${props.height}`}
-            width={props.width}
-            height={props.height}
+        <div
+            className={styles.edge_layer}
+            style={{
+                padding: props.padding,
+            }}
         >
-            {paths}
-        </svg>
+            <svg
+                viewBox={`0 0 ${props.width} ${props.height}`}
+                width={props.width}
+                height={props.height}
+            >
+                {paths}
+            </svg>
+        </div>
     );
 }
