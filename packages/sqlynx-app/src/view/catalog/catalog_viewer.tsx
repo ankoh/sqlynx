@@ -29,7 +29,7 @@ const RENDERING_SETTINGS: CatalogRenderingSettings = {
             nodeWidth: 120,
             nodeHeight: 24,
             maxUnpinnedChildren: 5,
-            rowGap: 8,
+            rowGap: 16,
             columnGap: 48,
         },
         columns: {
