@@ -430,21 +430,3 @@ export function buildEdgePath(
             return builder.build2Turns();
     }
 }
-
-export function buildEdgePath2(
-    builder: EdgePathBuilder,
-    type: EdgeType,
-    fromX: number,
-    fromY: number,
-    toX: number,
-    toY: number,
-    fromWidth: number,
-    fromHeight: number,
-    toWidth: number,
-    toHeight: number,
-    gridCellWidth: number,
-    gridCellHeight: number,
-    cornerRadius: number,
-): string {
-    return buildEdgePath(builder, type, fromX, fromY, toX, toY, fromWidth, fromHeight, toWidth, toHeight, gridCellWidth, gridCellHeight, cornerRadius);
-}

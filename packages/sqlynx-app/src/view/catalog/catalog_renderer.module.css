@@ -1,5 +1,6 @@
 .node_default {
     border: 1px solid red;
+    border-radius: 6px;
 }
 .node_pinned {
 }

@@ -501,16 +501,16 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
         );
         // Output edge
         if (entry.childCount() > 0) {
-            const childPositionsY = state.levels[level + 1].scratchPositionsY;
-            const fromX = positionX + settings.nodeWidth;
-            const fromY = thisPosY;
-            const toX = state.levels[level + 1].positionX;
+            const fromX = positionX + settings.nodeWidth / 2;
+            const fromY = thisPosY + settings.nodeHeight / 2;
             const toSettings = state.levels[level + 1].settings;
+            const toPositionsY = state.levels[level + 1].scratchPositionsY;
+            const toX = state.levels[level + 1].positionX + toSettings.nodeWidth / 2;
 
             for (let i = 0; i < entry.childCount(); ++i) {
                 const entryId = entry.childBegin() + i;
-                const toY = childPositionsY[entryId];
-                const edgeType = selectHorizontalEdgeType(fromX, toX, fromY, toY);
+                const toY = toPositionsY[entryId] + toSettings.nodeHeight / 2;
+                const edgeType = selectHorizontalEdgeType(fromX, fromY, toX, toY);
                 const edgePath = buildEdgePath(state.edgeBuilder, edgeType, fromX, fromY, toX, toY, settings.nodeWidth, settings.nodeHeight, toSettings.nodeWidth, toSettings.nodeHeight, 10, 10, 4);
                 outEdges.push(edgePath);
             }
@@ -634,9 +634,7 @@ export function layoutCatalog(state: CatalogRenderingState) {
 }
 
 /// A function to render a catalog
-export function renderCatalog(state: CatalogRenderingState): React.ReactElement[] {
-    const outNodes: React.ReactElement[] = [];
-    const outEdges: string[] = [];
+export function renderCatalog(state: CatalogRenderingState, outNodes: React.ReactElement[], outEdges: string[]) {
     const snap = state.snapshot.read();
 
     // Reset the rendering
