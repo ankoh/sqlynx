@@ -4,6 +4,7 @@ import * as styles from './catalog_viewer.module.css'
 import { CatalogRenderingSettings, CatalogRenderingState, renderCatalog } from './catalog_renderer.js';
 import { useCurrentSessionState } from '../../session/current_session.js';
 import { observeSize } from '../foundations/size_observer.js';
+import { EdgeLayer } from './edge_layer.js';
 
 const RENDERING_SETTINGS: CatalogRenderingSettings = {
     virtual: {
@@ -123,10 +124,10 @@ export function CatalogViewer(props: Props) {
     }, [state, scrollPos, containerSize]);
 
     // Memo must depend on scroll window and window size
-    const nodes = React.useMemo(() => {
+    const [nodes, edges] = React.useMemo(() => {
         // No state or measured container size?
         if (!state || !renderingWindow) {
-            return null;
+            return [null, null];
         }
         // Update the virtual window
         state.currentRenderingWindow.updateWindow(
@@ -136,7 +137,10 @@ export function CatalogViewer(props: Props) {
             renderingWindow.virtual.top + renderingWindow.virtual.height
         );
         // Render the catalog
-        return renderCatalog(state);
+        const outNodes: React.ReactElement[] = [];
+        const outEdges: string[] = [];
+        renderCatalog(state, outNodes, outEdges);
+        return [outNodes, outEdges];
 
     }, [state, renderingWindow]);
 
@@ -145,13 +149,27 @@ export function CatalogViewer(props: Props) {
             <div className={styles.board_container} ref={containerElement}>
                 <div className={styles.board_container} ref={containerElement} onScroll={handleScroll}>
                     <div
-                        className={styles.node_layer}
+                        className={styles.board}
                         style={{
                             width: state?.totalWidth,
                             height: state?.totalHeight,
                         }}
                     >
-                        {nodes}
+                        <EdgeLayer
+                            className={styles.edge_layer}
+                            paths={edges ?? []}
+                            width={state?.totalWidth ?? 0}
+                            height={state?.totalHeight ?? 0}
+                        />
+                        <div
+                            className={styles.node_layer}
+                            style={{
+                                width: state?.totalWidth,
+                                height: state?.totalHeight,
+                            }}
+                        >
+                            {nodes}
+                        </div>
                     </div>
                 </div>
             </div>
