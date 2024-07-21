@@ -1,14 +1,14 @@
 import * as React from 'react';
 import * as styles from './catalog_viewer.module.css'
 
-import { CatalogRenderingSettings, CatalogRenderingState, layoutCatalog, renderCatalog } from './catalog_renderer.js';
+import { CatalogRenderingSettings, CatalogRenderingState, renderCatalog } from './catalog_renderer.js';
 import { useCurrentSessionState } from '../../session/current_session.js';
 import { observeSize } from '../foundations/size_observer.js';
 
 const RENDERING_SETTINGS: CatalogRenderingSettings = {
     virtual: {
         prerenderSize: 100,
-        stepSize: 20,
+        stepSize: 10,
     },
     levels: {
         databases: {
@@ -64,11 +64,15 @@ export function CatalogViewer(props: Props) {
     const containerSize = observeSize(containerElement);
 
     // Subscribe to scroll events
-    interface VirtualWindow {
+    interface Range {
         top: number;
         height: number;
     };
-    const [scrollPos, setScrollPos] = React.useState<VirtualWindow | null>(null);
+    interface RenderingWindow {
+        scroll: Range;
+        virtual: Range;
+    };
+    const [scrollPos, setScrollPos] = React.useState<Range | null>(null);
     const handleScroll = (e: React.UIEvent<HTMLDivElement, UIEvent>) => {
         const { scrollTop, scrollHeight } = e.target as HTMLDivElement;
         setScrollPos({
@@ -78,7 +82,7 @@ export function CatalogViewer(props: Props) {
     };
 
     // Derive a virtual window from the scroll position and container size
-    const [virtualWindow, setVirtualWindow] = React.useState<VirtualWindow | null>(null);
+    const [renderingWindow, setRenderingWindow] = React.useState<RenderingWindow | null>(null);
     React.useEffect(() => {
         // Skip if we don't know the container size yet
         if (!containerSize || !state) {
@@ -91,17 +95,29 @@ export function CatalogViewer(props: Props) {
             let ub = Math.ceil((scrollPos.top + containerSize.height + RENDERING_SETTINGS.virtual.prerenderSize) / RENDERING_SETTINGS.virtual.stepSize) * RENDERING_SETTINGS.virtual.stepSize;
             lb = Math.max(lb, 0);
             ub = Math.min(ub, state.totalHeight);
-            setVirtualWindow({
-                top: lb,
-                height: ub - lb
-            })
+            setRenderingWindow({
+                scroll: {
+                    top: scrollPos.top,
+                    height: containerSize.height,
+                },
+                virtual: {
+                    top: lb,
+                    height: ub - lb
+                }
+            });
         } else {
             // The user didn't scoll, just render the container
             let ub = Math.ceil((containerSize.height + RENDERING_SETTINGS.virtual.prerenderSize) / RENDERING_SETTINGS.virtual.stepSize) * RENDERING_SETTINGS.virtual.stepSize;
             ub = Math.min(ub, state.totalHeight);
-            setVirtualWindow({
-                top: 0,
-                height: ub
+            setRenderingWindow({
+                scroll: {
+                    top: 0,
+                    height: containerSize.height
+                },
+                virtual: {
+                    top: 0,
+                    height: ub
+                }
             })
         }
     }, [state, scrollPos, containerSize]);
@@ -109,15 +125,20 @@ export function CatalogViewer(props: Props) {
     // Memo must depend on scroll window and window size
     const nodes = React.useMemo(() => {
         // No state or measured container size?
-        if (!state || !virtualWindow) {
+        if (!state || !renderingWindow) {
             return null;
         }
         // Update the virtual window
-        state.updateVirtualWindow(virtualWindow.top, virtualWindow.height);
+        state.currentRenderingWindow.updateWindow(
+            renderingWindow.scroll.top,
+            renderingWindow.scroll.top + renderingWindow.scroll.height,
+            renderingWindow.virtual.top,
+            renderingWindow.virtual.top + renderingWindow.virtual.height
+        );
         // Render the catalog
         return renderCatalog(state);
 
-    }, [state, virtualWindow]);
+    }, [state, renderingWindow]);
 
     return (
         <div className={styles.root}>
