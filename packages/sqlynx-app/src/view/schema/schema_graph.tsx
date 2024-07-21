@@ -96,6 +96,7 @@ const SchemaGraphBoard: React.FC<SchemaGraphBoardProps> = (props: SchemaGraphBoa
             centerZoomedOut={true}
             panning={{
                 disabled: false,
+
             }}
             pinch={{
                 disabled: false,
