@@ -217,8 +217,10 @@ export function buildEdgePath(
     fromY: number,
     toX: number,
     toY: number,
-    width: number,
-    height: number,
+    fromWidth: number,
+    fromHeight: number,
+    toWidth: number,
+    toHeight: number,
     gridCellWidth: number,
     gridCellHeight: number,
     cornerRadius: number,
@@ -252,179 +254,179 @@ export function buildEdgePath(
         // DIRECT
 
         case EdgeType.North:
-            builder.begin(fromX, fromY + height / 2);
-            builder.push(toX, toY - height / 2);
+            builder.begin(fromX, fromY + fromHeight / 2);
+            builder.push(toX, toY - toHeight / 2);
             return builder.buildDirect();
 
         case EdgeType.South:
-            builder.begin(fromX, fromY - height / 2);
-            builder.push(toX, toY + height / 2);
+            builder.begin(fromX, fromY - fromHeight / 2);
+            builder.push(toX, toY + toHeight / 2);
             return builder.buildDirect();
 
         case EdgeType.East:
-            builder.begin(fromX + width / 2, fromY);
-            builder.push(toX - width / 2, toY);
+            builder.begin(fromX + fromWidth / 2, fromY);
+            builder.push(toX - toWidth / 2, toY);
             return builder.buildDirect();
 
         case EdgeType.West:
-            builder.begin(fromX - width / 2, fromY);
-            builder.push(toX + width / 2, toY);
+            builder.begin(fromX - fromWidth / 2, fromY);
+            builder.push(toX + toWidth / 2, toY);
             return builder.buildDirect();
 
         // 1 TURN
 
         case EdgeType.NorthEast:
-            builder.begin(fromX, fromY + height / 2);
+            builder.begin(fromX, fromY + fromHeight / 2);
             builder.push(fromX, toYMinusR() - r);
             builder.push(fromX, toY);
             builder.push(fromXPlusR(), toY);
-            builder.push(toX - width / 2, toY);
+            builder.push(toX - toWidth / 2, toY);
             return builder.build1Turn();
 
         case EdgeType.NorthWest:
-            builder.begin(fromX, fromY + height / 2);
+            builder.begin(fromX, fromY + fromHeight / 2);
             builder.push(fromX, toYMinusR());
             builder.push(fromX, toY);
             builder.push(fromXMinusR(), toY);
-            builder.push(toX + width / 2, toY);
+            builder.push(toX + toWidth / 2, toY);
             return builder.build1Turn();
 
         case EdgeType.SouthEast:
-            builder.begin(fromX, fromY - height / 2);
+            builder.begin(fromX, fromY - fromHeight / 2);
             builder.push(fromX, toYPlusR());
             builder.push(fromX, toY);
             builder.push(fromXPlusR(), toY);
-            builder.push(toX - width / 2, toY);
+            builder.push(toX - toWidth / 2, toY);
             return builder.build1Turn();
 
         case EdgeType.SouthWest:
-            builder.begin(fromX, fromY - height / 2);
+            builder.begin(fromX, fromY - fromHeight / 2);
             builder.push(fromX, toYPlusR());
             builder.push(fromX, toY);
             builder.push(fromXMinusR(), toY);
-            builder.push(toX + width / 2, toY);
+            builder.push(toX + toWidth / 2, toY);
             return builder.build1Turn();
 
         case EdgeType.EastNorth:
-            builder.begin(fromX + width / 2, fromY);
+            builder.begin(fromX + fromWidth / 2, fromY);
             builder.push(toXMinusR(), fromY);
             builder.push(toX, fromY);
             builder.push(toX, fromYPlusR());
-            builder.push(toX, toY - height / 2);
+            builder.push(toX, toY - toHeight / 2);
             return builder.build1Turn();
 
         case EdgeType.EastSouth:
-            builder.begin(fromX + width / 2, fromY);
+            builder.begin(fromX + fromWidth / 2, fromY);
             builder.push(toXMinusR(), fromY);
             builder.push(toX, fromY);
             builder.push(toX, fromYMinusR());
-            builder.push(toX, toY + height / 2);
+            builder.push(toX, toY + toHeight / 2);
             return builder.build1Turn();
 
         case EdgeType.WestNorth:
-            builder.begin(fromX - width / 2, fromY);
+            builder.begin(fromX - fromWidth / 2, fromY);
             builder.push(toXPlusR(), fromY);
             builder.push(toX, fromY);
             builder.push(toX, fromYPlusR());
-            builder.push(toX, toY - height / 2);
+            builder.push(toX, toY - toHeight / 2);
             return builder.build1Turn();
 
         case EdgeType.WestSouth:
-            builder.begin(fromX - width / 2, fromY);
+            builder.begin(fromX - fromWidth / 2, fromY);
             builder.push(toXPlusR(), fromY);
             builder.push(toX, fromY);
             builder.push(toX, fromYMinusR());
-            builder.push(toX, toY + height / 2);
+            builder.push(toX, toY + toHeight / 2);
             return builder.build1Turn();
 
         // 2 TURNS
 
         case EdgeType.EastNorthEast:
-            builder.begin(fromX + width / 2, fromY);
+            builder.begin(fromX + fromWidth / 2, fromY);
             builder.push(midXMinusR(), fromY);
             builder.push(midX, fromY);
             builder.push(midX, fromYPlusR());
             builder.push(midX, toYMinusR());
             builder.push(midX, toY);
             builder.push(midXPlusR(), toY);
-            builder.push(toX - width / 2, toY);
+            builder.push(toX - toWidth / 2, toY);
             return builder.build2Turns();
 
         case EdgeType.EastSouthEast:
-            builder.begin(fromX + width / 2, fromY);
+            builder.begin(fromX + fromWidth / 2, fromY);
             builder.push(midXMinusR(), fromY);
             builder.push(midX, fromY);
             builder.push(midX, fromYMinusR());
             builder.push(midX, toYPlusR());
             builder.push(midX, toY);
             builder.push(midXPlusR(), toY);
-            builder.push(toX - width / 2, toY);
+            builder.push(toX - toWidth / 2, toY);
             return builder.build2Turns();
 
         case EdgeType.SouthEastSouth:
-            builder.begin(fromX, fromY - height / 2);
+            builder.begin(fromX, fromY - fromHeight / 2);
             builder.push(fromX, midYPlusR());
             builder.push(fromX, midY);
             builder.push(fromXPlusR(), midY);
             builder.push(toXMinusR(), midY);
             builder.push(toX, midY);
             builder.push(toX, midYMinusR());
-            builder.push(toX, toY + height / 2);
+            builder.push(toX, toY + toHeight / 2);
             return builder.build2Turns();
 
         case EdgeType.SouthWestSouth:
-            builder.begin(fromX, fromY - height / 2);
+            builder.begin(fromX, fromY - fromHeight / 2);
             builder.push(fromX, midYPlusR());
             builder.push(fromX, midY);
             builder.push(fromXMinusR(), midY);
             builder.push(toXPlusR(), midY);
             builder.push(toX, midY);
             builder.push(toX, midYMinusR());
-            builder.push(toX, toY + height / 2);
+            builder.push(toX, toY + toHeight / 2);
             return builder.build2Turns();
 
         case EdgeType.WestNorthWest:
-            builder.begin(fromX - width / 2, fromY);
+            builder.begin(fromX - fromWidth / 2, fromY);
             builder.push(midXPlusR(), fromY);
             builder.push(midX, fromY);
             builder.push(midX, fromYPlusR());
             builder.push(midX, toYMinusR());
             builder.push(midX, toY);
             builder.push(midXMinusR(), toY);
-            builder.push(toX + width / 2, toY);
+            builder.push(toX + toWidth / 2, toY);
             return builder.build2Turns();
 
         case EdgeType.WestSouthWest:
-            builder.begin(fromX - width / 2, fromY);
+            builder.begin(fromX - fromWidth / 2, fromY);
             builder.push(midXPlusR(), fromY);
             builder.push(midX, fromY);
             builder.push(midX, fromYMinusR());
             builder.push(midX, toYPlusR());
             builder.push(midX, toY);
             builder.push(midXMinusR(), toY);
-            builder.push(toX + width / 2, toY);
+            builder.push(toX + toWidth / 2, toY);
             return builder.build2Turns();
 
         case EdgeType.NorthEastNorth:
-            builder.begin(fromX, fromY + height / 2);
+            builder.begin(fromX, fromY + fromHeight / 2);
             builder.push(fromX, midYMinusR());
             builder.push(fromX, midY);
             builder.push(fromXPlusR(), midY);
             builder.push(toXMinusR(), midY);
             builder.push(toX, midY);
             builder.push(toX, midYPlusR());
-            builder.push(toX, toY - height / 2);
+            builder.push(toX, toY - toHeight / 2);
             return builder.build2Turns();
 
         case EdgeType.NorthWestNorth:
-            builder.begin(fromX, fromY + height / 2);
+            builder.begin(fromX, fromY + fromHeight / 2);
             builder.push(fromX, midYMinusR());
             builder.push(fromX, midY);
             builder.push(fromXMinusR(), midY);
             builder.push(toXPlusR(), midY);
             builder.push(toX, midY);
             builder.push(toX, midYPlusR());
-            builder.push(toX, toY - height / 2);
+            builder.push(toX, toY - toHeight / 2);
             return builder.build2Turns();
     }
 }
@@ -436,15 +438,13 @@ export function buildEdgePath2(
     fromY: number,
     toX: number,
     toY: number,
-    widthX: number,
-    widthY: number,
-    heightX: number,
-    heightY: number,
+    fromWidth: number,
+    fromHeight: number,
+    toWidth: number,
+    toHeight: number,
     gridCellWidth: number,
     gridCellHeight: number,
     cornerRadius: number,
 ): string {
-    const width = (widthX + widthY) / 2;
-    const height = (heightX + heightY) / 2;
-    return buildEdgePath(builder, type, fromX, fromY, toX, toY, width, height, gridCellWidth, gridCellHeight, cornerRadius);
+    return buildEdgePath(builder, type, fromX, fromY, toX, toY, fromWidth, fromHeight, toWidth, toHeight, gridCellWidth, gridCellHeight, cornerRadius);
 }

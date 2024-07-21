@@ -4,6 +4,7 @@ import * as styles from './catalog_renderer.module.css';
 
 // import { motion } from "framer-motion";
 import { classNames } from '../../utils/classnames.js';
+import { buildEdgePath, EdgePathBuilder, selectHorizontalEdgeType } from './graph_edges.js';
 
 /// The rendering settings for a catalog level
 export interface CatalogLevelRenderingSettings {
@@ -188,6 +189,9 @@ export class CatalogRenderingState {
     /// The current virtual rendering stack
     currentRenderingWindow: ScrollRenderingWindow;
 
+    /// The edge builder
+    edgeBuilder: EdgePathBuilder;
+
     constructor(snapshot: sqlynx.SQLynxCatalogSnapshot, settings: CatalogRenderingSettings) {
         this.snapshot = snapshot;
         this.settings = settings;
@@ -252,6 +256,7 @@ export class CatalogRenderingState {
         this.currentWriterY = 0;
         this.currentRenderingPath = new RenderingKey();
         this.currentRenderingWindow = new ScrollRenderingWindow();
+        this.edgeBuilder = new EdgePathBuilder();
 
         // Layout all entries.
         // This means users don't have to special-case the states without layout.
@@ -410,7 +415,7 @@ class ScrollRenderingWindow {
 }
 
 /// Render unpinned entries and emit ReactElements if they are within the virtual scroll window
-function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLynxCatalogSnapshotReader, level: number, entriesBegin: number, entriesCount: number, outNodes: React.ReactElement[]) {
+function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLynxCatalogSnapshotReader, level: number, entriesBegin: number, entriesCount: number, outNodes: React.ReactElement[], outEdges: string[]) {
     const settings = state.levels[level].settings;
     const entries = state.levels[level].entries;
     const scratchPositions = state.levels[level].scratchPositionsY;
@@ -448,7 +453,7 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
         let centerInScrollWindow: number | null = null;
         if (entry.childCount() > 0) {
             state.currentRenderingWindow.startRenderingChildren();
-            renderUnpinnedEntries(state, snapshot, level + 1, entry.childBegin(), entry.childCount(), outNodes);
+            renderUnpinnedEntries(state, snapshot, level + 1, entry.childBegin(), entry.childCount(), outNodes, outEdges);
             const stats = state.currentRenderingWindow.stopRenderingChildren();
             centerInScrollWindow = stats.centerInScrollWindow();
         }
@@ -494,6 +499,22 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
                 {tableName}
             </div>
         );
+        // Output edge
+        if (entry.childCount() > 0) {
+            const childPositionsY = state.levels[level + 1].scratchPositionsY;
+            const fromX = positionX + settings.nodeWidth;
+            const fromY = thisPosY;
+            const toX = state.levels[level + 1].positionX;
+            const toSettings = state.levels[level + 1].settings;
+
+            for (let i = 0; i < entry.childCount(); ++i) {
+                const entryId = entry.childBegin() + i;
+                const toY = childPositionsY[entryId];
+                const edgeType = selectHorizontalEdgeType(fromX, toX, fromY, toY);
+                const edgePath = buildEdgePath(state.edgeBuilder, edgeType, fromX, fromY, toX, toY, settings.nodeWidth, settings.nodeHeight, toSettings.nodeWidth, toSettings.nodeHeight, 10, 10, 4);
+                outEdges.push(edgePath);
+            }
+        }
     }
 
     // Render overflow entry
@@ -528,7 +549,7 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
 }
 
 /// A function to render entries
-function renderPinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLynxCatalogSnapshotReader, level: number, pinnedEntries: PinnedCatalogEntry[], outNodes: React.ReactElement[]) {
+function renderPinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLynxCatalogSnapshotReader, level: number, pinnedEntries: PinnedCatalogEntry[], outNodes: React.ReactElement[], outEdges: string[]) {
     const settings = state.levels[level].settings;
     const entries = state.levels[level].entries;
     const scratchEntry = state.levels[level].scratchEntry;
@@ -552,11 +573,11 @@ function renderPinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLy
         state.currentRenderingWindow.startRenderingChildren();
         // First render all pinned children
         if (pinnedEntry.pinnedChildren.length > 0) {
-            renderPinnedEntries(state, snapshot, level + 1, pinnedEntry.pinnedChildren, outNodes);
+            renderPinnedEntries(state, snapshot, level + 1, pinnedEntry.pinnedChildren, outNodes, outEdges);
         }
         // Then render all unpinned entries
         if (entry.childCount() > 0) {
-            renderUnpinnedEntries(state, snapshot, level + 1, entry.childBegin(), entry.childCount(), outNodes);
+            renderUnpinnedEntries(state, snapshot, level + 1, entry.childBegin(), entry.childCount(), outNodes, outEdges);
         }
         // Get the child statistics
         const childStatistics = state.currentRenderingWindow.stopRenderingChildren();
@@ -614,14 +635,15 @@ export function layoutCatalog(state: CatalogRenderingState) {
 
 /// A function to render a catalog
 export function renderCatalog(state: CatalogRenderingState): React.ReactElement[] {
-    const out: React.ReactElement[] = [];
+    const outNodes: React.ReactElement[] = [];
+    const outEdges: string[] = [];
     const snap = state.snapshot.read();
 
     // Reset the rendering
     state.resetWriter();
     // First, render the pinned databases
-    renderPinnedEntries(state, snap, 0, state.pinnedDatabases, out);
+    renderPinnedEntries(state, snap, 0, state.pinnedDatabases, outNodes, outEdges);
     // Then render the unpinned databases
-    renderUnpinnedEntries(state, snap, 0, 0, state.levels[0].entries.length(snap), out);
-    return out;
+    renderUnpinnedEntries(state, snap, 0, 0, state.levels[0].entries.length(snap), outNodes, outEdges);
+    return outNodes;
 }
