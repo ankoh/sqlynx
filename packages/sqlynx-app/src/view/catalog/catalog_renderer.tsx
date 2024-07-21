@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as sqlynx from '@ankoh/sqlynx-core';
 import * as styles from './catalog_renderer.module.css';
 
-import { motion } from "framer-motion";
+// import { motion } from "framer-motion";
 import { classNames } from '../../utils/classnames.js';
 
 /// The rendering settings for a catalog level
@@ -18,8 +18,6 @@ export interface CatalogLevelRenderingSettings {
     /// The column gap left of this entry
     columnGap: number;
 }
-
-
 
 export interface CatalogRenderingSettings {
     /// The virtualization settings
@@ -61,8 +59,8 @@ function writeNodeFlags(modes: Uint8Array, index: number, node: NodeFlags) {
     modes[index] = node;
 }
 
-/// A rendering stack
-class CatalogRenderingStack {
+/// A rendering key
+class RenderingKey {
     /// The entries ids
     public entryIds: (number | null)[];
     /// The entry ids string
@@ -183,15 +181,12 @@ export class CatalogRenderingState {
     /// The total width of all nodes
     totalWidth: number;
 
-    /// The begin offset of the virtual window
-    virtualWindowBegin: number;
-    /// The end offset of the virtual window
-    virtualWindowEnd: number;
-
     /// The current writer
     currentWriterY: number;
-    /// The current rendering path
-    currentLevelStack: CatalogRenderingStack;
+    /// The current rendering key
+    currentRenderingPath: RenderingKey;
+    /// The current virtual rendering stack
+    currentRenderingWindow: ScrollRenderingWindow;
 
     constructor(snapshot: sqlynx.SQLynxCatalogSnapshot, settings: CatalogRenderingSettings) {
         this.snapshot = snapshot;
@@ -252,16 +247,11 @@ export class CatalogRenderingState {
         this.levels[3].positionX = this.levels[2].positionX + settings.levels.tables.nodeWidth + settings.levels.tables.columnGap;
 
         this.pinnedDatabases = [];
-
         this.totalWidth = 0;
         this.totalHeight = 0;
-
-        this.virtualWindowBegin = 0;
-        this.virtualWindowEnd = 0;
-        this.virtualWindowEnd = 0;
-
         this.currentWriterY = 0;
-        this.currentLevelStack = new CatalogRenderingStack();
+        this.currentRenderingPath = new RenderingKey();
+        this.currentRenderingWindow = new ScrollRenderingWindow();
 
         // Layout all entries.
         // This means users don't have to special-case the states without layout.
@@ -278,14 +268,13 @@ export class CatalogRenderingState {
 
     resetWriter() {
         this.currentWriterY = 0;
-        this.currentLevelStack.reset();
+        this.currentRenderingPath.reset();
         for (const level of this.levels) {
             level.scratchPositionsY.fill(NaN);
         }
     }
-    updateVirtualWindow(windowBegin: number, windowSize: number) {
-        this.virtualWindowBegin = windowBegin;
-        this.virtualWindowEnd = windowBegin + windowSize;
+    updateWindow(begin: number, end: number, virtualBegin: number, virtualEnd: number) {
+        this.currentRenderingWindow.updateWindow(begin, end, virtualBegin, virtualEnd);
     }
 }
 
@@ -318,8 +307,8 @@ function layoutEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLynxCata
         }
 
         // Update level stack
-        state.currentLevelStack.select(level, entryId);
-        const isFirstEntry = state.currentLevelStack.isFirst[level];
+        state.currentRenderingPath.select(level, entryId);
+        const isFirstEntry = state.currentRenderingPath.isFirst[level];
         // The begin of the subtree
         let subtreeBegin = state.currentWriterY;
         // Add row gap when first
@@ -332,8 +321,8 @@ function layoutEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLynxCata
         }
         // Bump writer if the columns didn't already
         state.currentWriterY = Math.max(state.currentWriterY, thisPosY + settings.nodeHeight);
-        // Truncate any stack items that children added
-        state.currentLevelStack.truncate(level);
+        // Truncate the rendering path
+        state.currentRenderingPath.truncate(level);
         // Store the subtree height
         subtreeHeights[entryId] = state.currentWriterY - subtreeBegin;
     }
@@ -342,6 +331,81 @@ function layoutEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLynxCata
     if (overflowChildCount > 0) {
         state.currentWriterY += settings.rowGap;
         state.currentWriterY += settings.nodeHeight;
+    }
+}
+
+class ScrollRenderingStatistics {
+    /// Minimum position in the scroll window
+    minInScrollWindow: number;
+    /// Maximum position in the scroll window
+    maxInScrollWindow: number;
+
+    constructor(tracker: ScrollRenderingWindow) {
+        this.minInScrollWindow = tracker.scrollWindowEnd;
+        this.maxInScrollWindow = tracker.scrollWindowBegin;
+    }
+    reset(tracker: ScrollRenderingWindow) {
+        this.minInScrollWindow = tracker.scrollWindowEnd;
+        this.maxInScrollWindow = tracker.scrollWindowBegin;
+    }
+    centerInScrollWindow(): number | null {
+        if (this.minInScrollWindow <= this.maxInScrollWindow) {
+            return this.minInScrollWindow + (this.maxInScrollWindow - this.minInScrollWindow) / 2;
+        } else {
+            return null;
+        }
+    }
+}
+
+class ScrollRenderingWindow {
+    /// The begin offset of the actual scroll window
+    scrollWindowBegin: number;
+    /// The end offset of the actual scroll window
+    scrollWindowEnd: number;
+    /// The begin offset of the virtual scroll window
+    virtualScrollWindowBegin: number;
+    /// The end offset of the virtual scroll window
+    virtualScrollWindowEnd: number;
+    /// The statistics count
+    statisticsCount: number;
+    /// The rendering boundaries
+    statistics: ScrollRenderingStatistics[]
+
+    constructor() {
+        this.scrollWindowBegin = 0;
+        this.scrollWindowEnd = 0;
+        this.virtualScrollWindowBegin = 0;
+        this.virtualScrollWindowEnd = 0;
+        this.statisticsCount = 1;
+        this.statistics = [
+            new ScrollRenderingStatistics(this),
+            new ScrollRenderingStatistics(this),
+            new ScrollRenderingStatistics(this),
+            new ScrollRenderingStatistics(this),
+            new ScrollRenderingStatistics(this),
+        ];
+    }
+    updateWindow(begin: number, end: number, virtualBegin: number, virtualEnd: number) {
+        this.scrollWindowBegin = begin;
+        this.scrollWindowEnd = end;
+        this.virtualScrollWindowBegin = virtualBegin;
+        this.virtualScrollWindowEnd = virtualEnd;
+    }
+    startRenderingChildren() {
+        this.statistics[this.statisticsCount].reset(this);
+        ++this.statisticsCount;
+    }
+    stopRenderingChildren(): ScrollRenderingStatistics {
+        return this.statistics[--this.statisticsCount];
+    }
+    addNode(pos: number, height: number) {
+        const stats = this.statistics[this.statisticsCount - 1];
+        const begin = pos;
+        const end = pos + height;
+        if (end > this.scrollWindowBegin && begin < this.scrollWindowEnd) {
+            stats.minInScrollWindow = Math.min(stats.minInScrollWindow, begin);
+            stats.maxInScrollWindow = Math.max(stats.maxInScrollWindow, end);
+        }
     }
 }
 
@@ -354,13 +418,13 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
     const flags = state.levels[level].flags;
     const positionX = state.levels[level].positionX;
 
-    // Track overflows
+    // Track overflow nodes
     let overflowChildCount = 0;
     let lastOverflowEntryId = 0;
 
     for (let i = 0; i < entriesCount; ++i) {
-        const entryId = entriesBegin + i;
         // Resolve table
+        const entryId = entriesBegin + i;
         const entry = entries.read(snapshot, entryId, scratchEntry)!;
         const entryFlags = readNodeFlags(flags, entryId);
         // Skip pinned entries
@@ -374,39 +438,44 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
             continue;
         }
         // Update level stack
-        state.currentLevelStack.select(level, entryId);
-        const isFirstEntry = state.currentLevelStack.isFirst[level];
+        state.currentRenderingPath.select(level, entryId);
+        const isFirstEntry = state.currentRenderingPath.isFirst[level];
         // Add row gap when first
         state.currentWriterY += isFirstEntry ? 0 : settings.rowGap;
         // Remember own position
         let thisPosY = state.currentWriterY;
-        // Render child columns
+        // Render children
+        let centerInScrollWindow: number | null = null;
         if (entry.childCount() > 0) {
+            state.currentRenderingWindow.startRenderingChildren();
             renderUnpinnedEntries(state, snapshot, level + 1, entry.childBegin(), entry.childCount(), outNodes);
+            const stats = state.currentRenderingWindow.stopRenderingChildren();
+            centerInScrollWindow = stats.centerInScrollWindow();
         }
         // Bump writer if the columns didn't already
         state.currentWriterY = Math.max(state.currentWriterY, thisPosY + settings.nodeHeight);
         // Truncate any stack items that children added
-        state.currentLevelStack.truncate(level);
+        state.currentRenderingPath.truncate(level);
         // Vertically center the node over all child nodes
-        thisPosY += (state.currentWriterY - thisPosY) / 2 - settings.nodeHeight / 2;
+        thisPosY = centerInScrollWindow == null ? thisPosY : (centerInScrollWindow - settings.nodeHeight / 2);
         // Break if lower bound is larger than virtual window
-        if (thisPosY >= state.virtualWindowEnd) {
+        if (thisPosY >= state.currentRenderingWindow.virtualScrollWindowEnd) {
             break;
         }
         // Skip if upper bound is smaller than virtual window
-        if (state.currentWriterY < state.virtualWindowBegin) {
+        if (state.currentWriterY < state.currentRenderingWindow.virtualScrollWindowBegin) {
             continue;
         }
-        // When emitting the node, also remember the node position so that the parent can draw an edge
+        // Remember the node position
+        state.currentRenderingWindow.addNode(thisPosY, settings.nodeHeight);
         scratchPositions[entryId] = thisPosY;
         // Output column node
+        const tableKey = state.currentRenderingPath.getKey(level);
         const tableName = snapshot.readName(entry.nameId());
-        const tableKey = state.currentLevelStack.getKey(level);
         outNodes.push(
-            <motion.div
+            <div
                 key={tableKey}
-                layoutId={tableKey}
+                // layoutId={tableKey}
                 className={classNames(styles.node_default, {
                     [styles.node_focus_script]: (entryFlags & NodeFlags.SCRIPT_FOCUS) != 0,
                     [styles.node_focus_catalog]: (entryFlags & NodeFlags.CATALOG_FOCUS) != 0,
@@ -420,10 +489,10 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
                     width: settings.nodeWidth,
                     height: settings.nodeHeight,
                 }}
-                {...state.currentLevelStack.asAttributes()}
+                {...state.currentRenderingPath.asAttributes()}
             >
                 {tableName}
-            </motion.div>
+            </div>
         );
     }
 
@@ -433,13 +502,14 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
         const thisPosY = state.currentWriterY;
         state.currentWriterY += settings.nodeHeight;
 
-        if (state.currentWriterY >= state.virtualWindowBegin && state.currentWriterY < state.virtualWindowEnd) {
+        if (state.currentWriterY > state.currentRenderingWindow.virtualScrollWindowBegin && thisPosY < state.currentRenderingWindow.virtualScrollWindowEnd) {
+            state.currentRenderingWindow.addNode(thisPosY, settings.nodeHeight);
             scratchPositions[lastOverflowEntryId] = thisPosY;
-            const overflowKey = `${state.currentLevelStack.getKeyPrefix(level)}-overflow`;
+            const overflowKey = `${state.currentRenderingPath.getKeyPrefix(level)}-overflow`;
             outNodes.push(
-                <motion.div
+                <div
                     key={overflowKey}
-                    layoutId={overflowKey}
+                    // layoutId={overflowKey}
                     className={classNames(styles.node_default, styles.node_overflow)}
                     style={{
                         position: 'absolute',
@@ -448,10 +518,10 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
                         width: settings.nodeWidth,
                         height: settings.nodeHeight,
                     }}
-                    {...state.currentLevelStack.asAttributes()}
+                    {...state.currentRenderingPath.asAttributes()}
                 >
                     {overflowChildCount}
-                </motion.div>
+                </div>
             );
         }
     }
@@ -472,12 +542,14 @@ function renderPinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLy
         const entry = entries.read(snapshot, pinnedEntry.entryId, scratchEntry)!;
         const entryFlags = readNodeFlags(flags, entryId);
         // Update level stack
-        state.currentLevelStack.select(level, entryId);
-        const isFirstEntry = state.currentLevelStack.isFirst[level];
+        state.currentRenderingPath.select(level, entryId);
+        const isFirstEntry = state.currentRenderingPath.isFirst[level];
         // Add row gap when first
         state.currentWriterY += isFirstEntry ? 0 : settings.rowGap;
         // Remember own position
         let thisPosY = state.currentWriterY;
+        // Add a new scrope for the virtual boundaries
+        state.currentRenderingWindow.startRenderingChildren();
         // First render all pinned children
         if (pinnedEntry.pinnedChildren.length > 0) {
             renderPinnedEntries(state, snapshot, level + 1, pinnedEntry.pinnedChildren, outNodes);
@@ -486,28 +558,33 @@ function renderPinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLy
         if (entry.childCount() > 0) {
             renderUnpinnedEntries(state, snapshot, level + 1, entry.childBegin(), entry.childCount(), outNodes);
         }
+        // Get the child statistics
+        const childStatistics = state.currentRenderingWindow.stopRenderingChildren();
         // Bump writer if the columns didn't already
         state.currentWriterY = Math.max(state.currentWriterY, thisPosY + settings.nodeHeight);
-        // Truncate any stack items that children added
-        state.currentLevelStack.truncate(level);
+        // Truncate the rendering path
+        state.currentRenderingPath.truncate(level);
         // Vertically center the node over all child nodes
-        thisPosY += (state.currentWriterY - thisPosY) / 2 - settings.nodeHeight / 2;
+        const centerInScrollWindow = childStatistics.centerInScrollWindow();
+        thisPosY = centerInScrollWindow == null ? thisPosY : (centerInScrollWindow - settings.nodeHeight / 2);
         // Break if lower bound is larger than virtual window
-        if (thisPosY >= state.virtualWindowEnd) {
+        if (thisPosY >= state.currentRenderingWindow.virtualScrollWindowEnd) {
             break;
         }
         // Skip if upper bound is smaller than virtual window
-        if (state.currentWriterY < state.virtualWindowBegin) {
+        if (state.currentWriterY < state.currentRenderingWindow.virtualScrollWindowBegin) {
             continue;
         }
+        // Remember rendered position
+        state.currentRenderingWindow.addNode(thisPosY, settings.nodeHeight);
         scratchPositions[entryId] = thisPosY;
         // Output column node
+        const tableKey = state.currentRenderingPath.getKey(level);
         const tableName = snapshot.readName(entry.nameId());
-        const tableKey = state.currentLevelStack.getKey(level);
         outNodes.push(
-            <motion.div
+            <div
                 key={tableKey}
-                layoutId={tableKey}
+                // layoutId={tableKey}
                 className={classNames(styles.node_default, {
                     [styles.node_focus_script]: (entryFlags & NodeFlags.SCRIPT_FOCUS) != 0,
                     [styles.node_focus_catalog]: (entryFlags & NodeFlags.CATALOG_FOCUS) != 0,
@@ -521,10 +598,10 @@ function renderPinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLy
                     width: settings.nodeWidth,
                     height: settings.nodeHeight,
                 }}
-                {...state.currentLevelStack.asAttributes()}
+                {...state.currentRenderingPath.asAttributes()}
             >
                 {tableName}
-            </motion.div>
+            </div>
         );
     }
 }
