@@ -11,6 +11,16 @@
     overflow: auto;
 }
 
-.node_layer {
+.board {
     position: relative;
+}
+
+.node_layer {
+    position: absolute;
+}
+
+.edge_layer {
+    position: absolute;
+    top: 0;
+    left: 0;
 }
