@@ -317,7 +317,8 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
     struct Node {
         size_t name_id;
         std::map<std::string_view, Node> children;
-        Node(size_t name_id) : name_id(name_id), children() {}
+        ExternalObjectID external_object_id;
+        Node(size_t name_id) : name_id(name_id), children(), external_object_id() {}
     };
     Node root{0};
 
@@ -340,6 +341,7 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
                 auto [schema_node, new_schema] =
                     database_node->second.children.insert({schema_name, Node{schema_name_id}});
                 auto [table_node, new_table] = schema_node->second.children.insert({table_name, Node{table_name_id}});
+                table_node->second.external_object_id = entry.table_id;
 
                 database_count += new_database;
                 schema_count += new_schema;
@@ -375,17 +377,19 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
 
     // Write all catalog entries to the buffers
     for (auto [database_name, database_node] : root.children) {
-        databases_buffer[next_database] = sqlynx::proto::FlatCatalogEntry(next_database, database_node.name_id, 0,
-                                                                          next_schema, database_node.children.size());
+        databases_buffer[next_database] = sqlynx::proto::FlatCatalogEntry(
+            next_database, 0, ExternalObjectID().Pack(), database_node.name_id, 0, database_node.children.size());
         for (auto [schema_name, schema_node] : database_node.children) {
-            schemas_buffer[next_schema] = sqlynx::proto::FlatCatalogEntry(
-                next_schema, schema_node.name_id, next_database, next_table, schema_node.children.size());
+            schemas_buffer[next_schema] =
+                sqlynx::proto::FlatCatalogEntry(next_schema, next_database, ExternalObjectID().Pack(),
+                                                schema_node.name_id, next_table, schema_node.children.size());
             for (auto [table_name, table_node] : schema_node.children) {
-                tables_buffer[next_table] = sqlynx::proto::FlatCatalogEntry(next_table, table_node.name_id, next_schema,
-                                                                            next_column, table_node.children.size());
+                tables_buffer[next_table] =
+                    sqlynx::proto::FlatCatalogEntry(next_table, next_schema, ExternalObjectID().Pack(),
+                                                    table_node.name_id, next_column, table_node.children.size());
                 for (auto [column_name, column_node] : table_node.children) {
-                    columns_buffer[next_column] =
-                        sqlynx::proto::FlatCatalogEntry(next_column, column_node.name_id, next_table, 0, 0);
+                    columns_buffer[next_column] = sqlynx::proto::FlatCatalogEntry(
+                        next_column, next_table, ExternalObjectID().Pack(), column_node.name_id, 0, 0);
                     ++next_column;
                 }
                 ++next_table;
