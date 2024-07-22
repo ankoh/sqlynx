@@ -141,7 +141,7 @@ export function CatalogViewer(props: Props) {
         );
         // Render the catalog
         const outNodes: React.ReactElement[] = [];
-        const outEdges: string[] = [];
+        const outEdges: React.ReactElement[] = [];
         renderCatalog(state, outNodes, outEdges);
         return [outNodes, outEdges];
 
