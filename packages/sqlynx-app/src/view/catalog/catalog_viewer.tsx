@@ -11,7 +11,7 @@ import { useThrottledMemo } from '../../utils/throttle.js';
 const RENDERING_SETTINGS: CatalogRenderingSettings = {
     virtual: {
         prerenderSize: 100,
-        stepSize: 10,
+        stepSize: 1,
     },
     levels: {
         databases: {
