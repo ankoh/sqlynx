@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as sqlynx from '@ankoh/sqlynx-core';
 import * as styles from './catalog_renderer.module.css';
 
-// import { motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { classNames } from '../../utils/classnames.js';
 import { buildEdgePath, EdgePathBuilder, selectHorizontalEdgeType } from './graph_edges.js';
 
@@ -414,8 +414,20 @@ class ScrollRenderingWindow {
     }
 }
 
+const MOTION_EDGE_VARIANT_INITIAL = {
+    pathLength: 0,
+};
+const MOTION_EDGE_VARIANT_ANIMATE = {
+    pathLength: 1,
+    transition: {
+        pathLength: { type: "spring", duration: 0.5, bounce: 0 },
+        opacity: { duration: 0.01 }
+    }
+};
+
+
 /// Render unpinned entries and emit ReactElements if they are within the virtual scroll window
-function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLynxCatalogSnapshotReader, level: number, entriesBegin: number, entriesCount: number, outNodes: React.ReactElement[], outEdges: string[]) {
+function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLynxCatalogSnapshotReader, level: number, entriesBegin: number, entriesCount: number, outNodes: React.ReactElement[], outEdges: React.ReactElement[]) {
     const settings = state.levels[level].settings;
     const entries = state.levels[level].entries;
     const scratchPositions = state.levels[level].scratchPositionsY;
@@ -475,12 +487,12 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
         state.currentRenderingWindow.addNode(thisPosY, settings.nodeHeight);
         scratchPositions[entryId] = thisPosY;
         // Output column node
-        const tableKey = state.currentRenderingPath.getKey(level);
-        const tableName = snapshot.readName(entry.nameId());
+        const thisKey = state.currentRenderingPath.getKey(level);
+        const thisName = snapshot.readName(entry.nameId());
         outNodes.push(
             <div
-                key={tableKey}
-                // layoutId={tableKey}
+                key={thisKey}
+
                 className={classNames(styles.node_default, {
                     [styles.node_focus_script]: (entryFlags & NodeFlags.SCRIPT_FOCUS) != 0,
                     [styles.node_focus_catalog]: (entryFlags & NodeFlags.CATALOG_FOCUS) != 0,
@@ -496,7 +508,7 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
                 }}
                 {...state.currentRenderingPath.asAttributes()}
             >
-                {tableName}
+                {thisName}
             </div>
         );
         // Output edge
@@ -512,7 +524,21 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
                 const toY = toPositionsY[entryId] + toSettings.nodeHeight / 2;
                 const edgeType = selectHorizontalEdgeType(fromX, fromY, toX, toY);
                 const edgePath = buildEdgePath(state.edgeBuilder, edgeType, fromX, fromY, toX, toY, settings.nodeWidth, settings.nodeHeight, toSettings.nodeWidth, toSettings.nodeHeight, 10, 10, 4);
-                outEdges.push(edgePath);
+                const edgeKey = `${thisKey}-${entryId}`;
+                outEdges.push(
+                    <motion.path
+                        key={edgeKey}
+
+                        initial={MOTION_EDGE_VARIANT_INITIAL}
+                        animate={MOTION_EDGE_VARIANT_ANIMATE}
+
+                        d={edgePath}
+                        strokeWidth="2px"
+                        stroke="black"
+                        fill="transparent"
+                    />,
+
+                );
             }
         }
     }
@@ -530,7 +556,7 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
             outNodes.push(
                 <div
                     key={overflowKey}
-                    // layoutId={overflowKey}
+
                     className={classNames(styles.node_default, styles.node_overflow)}
                     style={{
                         position: 'absolute',
@@ -549,7 +575,7 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
 }
 
 /// A function to render entries
-function renderPinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLynxCatalogSnapshotReader, level: number, pinnedEntries: PinnedCatalogEntry[], outNodes: React.ReactElement[], outEdges: string[]) {
+function renderPinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLynxCatalogSnapshotReader, level: number, pinnedEntries: PinnedCatalogEntry[], outNodes: React.ReactElement[], outEdges: React.ReactElement[]) {
     const settings = state.levels[level].settings;
     const entries = state.levels[level].entries;
     const scratchEntry = state.levels[level].scratchEntry;
@@ -600,12 +626,12 @@ function renderPinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLy
         state.currentRenderingWindow.addNode(thisPosY, settings.nodeHeight);
         scratchPositions[entryId] = thisPosY;
         // Output column node
-        const tableKey = state.currentRenderingPath.getKey(level);
-        const tableName = snapshot.readName(entry.nameId());
+        const thisKey = state.currentRenderingPath.getKey(level);
+        const thisName = snapshot.readName(entry.nameId());
         outNodes.push(
             <div
-                key={tableKey}
-                // layoutId={tableKey}
+                key={thisKey}
+
                 className={classNames(styles.node_default, {
                     [styles.node_focus_script]: (entryFlags & NodeFlags.SCRIPT_FOCUS) != 0,
                     [styles.node_focus_catalog]: (entryFlags & NodeFlags.CATALOG_FOCUS) != 0,
@@ -621,7 +647,7 @@ function renderPinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLy
                 }}
                 {...state.currentRenderingPath.asAttributes()}
             >
-                {tableName}
+                {thisName}
             </div>
         );
     }
@@ -634,7 +660,7 @@ export function layoutCatalog(state: CatalogRenderingState) {
 }
 
 /// A function to render a catalog
-export function renderCatalog(state: CatalogRenderingState, outNodes: React.ReactElement[], outEdges: string[]) {
+export function renderCatalog(state: CatalogRenderingState, outNodes: React.ReactElement[], outEdges: React.ReactElement[]) {
     const snap = state.snapshot.read();
 
     // Reset the rendering
