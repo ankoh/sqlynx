@@ -2,7 +2,6 @@ import * as React from 'react';
 import * as sqlynx from '@ankoh/sqlynx-core';
 import * as styles from './catalog_renderer.module.css';
 
-import { motion } from "framer-motion";
 import { classNames } from '../../utils/classnames.js';
 import { buildEdgePath, EdgePathBuilder, selectHorizontalEdgeType } from './graph_edges.js';
 
@@ -414,17 +413,6 @@ class ScrollRenderingWindow {
     }
 }
 
-const MOTION_EDGE_VARIANT_INITIAL = {
-    pathLength: 0,
-};
-const MOTION_EDGE_VARIANT_ANIMATE = {
-    pathLength: 1,
-    transition: {
-        pathLength: { type: "spring", duration: 0.5, bounce: 0 },
-        opacity: { duration: 0.01 }
-    }
-};
-
 
 /// Render unpinned entries and emit ReactElements if they are within the virtual scroll window
 function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLynxCatalogSnapshotReader, level: number, entriesBegin: number, entriesCount: number, outNodes: React.ReactElement[], outEdges: React.ReactElement[]) {
@@ -526,11 +514,8 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
                 const edgePath = buildEdgePath(state.edgeBuilder, edgeType, fromX, fromY, toX, toY, settings.nodeWidth, settings.nodeHeight, toSettings.nodeWidth, toSettings.nodeHeight, 10, 10, 4);
                 const edgeKey = `${thisKey}-${entryId}`;
                 outEdges.push(
-                    <motion.path
+                    <path
                         key={edgeKey}
-
-                        initial={MOTION_EDGE_VARIANT_INITIAL}
-                        animate={MOTION_EDGE_VARIANT_ANIMATE}
 
                         d={edgePath}
                         strokeWidth="2px"
