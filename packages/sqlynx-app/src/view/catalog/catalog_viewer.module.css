@@ -34,4 +34,5 @@
     height: auto;
     flex-direction: column;
     align-items: center;
+    color: var(--graph_edges_bg);
 }

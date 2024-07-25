@@ -1,6 +1,17 @@
 .node_default {
-    border: 1px solid black;
-    border-radius: 6px;
+    position: relative;
+    border-radius: var(--border_radius);
+    border: 1px solid var(--border_color_primary);
+    background-color: var(--graph_node_bg);
+
+    display: grid;
+    grid-template-rows: 100%;
+    grid-template-columns: max-content 1fr;
+    align-items: center;
+    justify-items: center;
+
+    padding: 0px 8px;
+    font-size: 0.9rem;
 }
 .node_pinned {
 }

@@ -519,8 +519,9 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
 
                         d={edgePath}
                         strokeWidth="2px"
-                        stroke="black"
+                        stroke="currentcolor"
                         fill="transparent"
+                        pointerEvents="stroke"
                     />,
 
                 );
