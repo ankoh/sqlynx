@@ -161,9 +161,9 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
     std::string_view schema_name = descriptor.schema_name() == nullptr ? "" : descriptor.schema_name()->string_view();
 
     // Read tables
-    uint32_t table_id = 0;
+    uint32_t next_table_id = tables.GetSize();
     for (auto* table : *descriptor.tables()) {
-        ExternalObjectID table_object_id{external_id, table_id++};
+        ExternalObjectID table_object_id{external_id, next_table_id};
         // Get the table name
         auto table_name_ptr = table->table_name();
         if (!table_name_ptr || table_name_ptr->size() == 0) {
@@ -188,6 +188,7 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
         // Create the table
         tables.Append(Table{table_object_id, std::nullopt, std::nullopt, std::nullopt,
                             QualifiedTableName{qualified_table_name}, std::move(columns)});
+        ++next_table_id;
     }
 
     // Build table index
