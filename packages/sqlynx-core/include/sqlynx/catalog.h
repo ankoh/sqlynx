@@ -156,7 +156,7 @@ class CatalogEntry {
     /// A database name reference.
     /// Databases are not tracked as explicit catalog entities like tables.
     /// We just track referenced database names to identify them through IDs.
-    struct DatabaseDeclaration {
+    struct DatabaseReference {
         /// The database id
         ExternalObjectID database_id;
         /// The database name
@@ -164,7 +164,7 @@ class CatalogEntry {
         /// The database alias (if any)
         std::string database_alias;
         /// Constructor
-        DatabaseDeclaration(ExternalObjectID database_id, std::string database_name, std::string database_alias)
+        DatabaseReference(ExternalObjectID database_id, std::string database_name, std::string database_alias)
             : database_id(database_id),
               database_name(std::move(database_name)),
               database_alias(std::move(database_alias)) {}
@@ -174,7 +174,7 @@ class CatalogEntry {
     /// A schema name reference
     /// Schemas are not tracked as explicit catalog entities like tables.
     /// We just track referenced schema names to identify them through IDs.
-    struct SchemaDeclaration {
+    struct SchemaReference {
         /// The database id
         ExternalObjectID database_id;
         /// The schema id
@@ -182,7 +182,7 @@ class CatalogEntry {
         /// The database name
         std::string schema_name;
         /// Constructor
-        SchemaDeclaration(ExternalObjectID database_id, ExternalObjectID schema_id, std::string schema_name)
+        SchemaReference(ExternalObjectID database_id, ExternalObjectID schema_id, std::string schema_name)
             : database_id(database_id), schema_id(schema_id), schema_name(std::move(schema_name)) {}
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::SchemaReference> Pack(flatbuffers::FlatBufferBuilder& builder) const;
@@ -196,15 +196,15 @@ class CatalogEntry {
     /// The default schema name
     const std::string_view default_schema_name;
     /// The referenced databases
-    ChunkBuffer<DatabaseDeclaration, 16> database_declarations;
+    ChunkBuffer<DatabaseReference, 16> database_references;
     /// The referenced schemas
-    ChunkBuffer<SchemaDeclaration, 16> schema_declarations;
+    ChunkBuffer<SchemaReference, 16> schema_references;
     /// The table definitions
     ChunkBuffer<TableDeclaration, 16> table_declarations;
     /// The databases, indexed by name
-    std::unordered_map<std::string_view, std::reference_wrapper<const DatabaseDeclaration>> databases_by_name;
+    std::unordered_map<std::string_view, std::reference_wrapper<const DatabaseReference>> databases_by_name;
     /// The schema, indexed by name
-    std::unordered_map<std::tuple<std::string_view, std::string_view>, std::reference_wrapper<const SchemaDeclaration>,
+    std::unordered_map<std::tuple<std::string_view, std::string_view>, std::reference_wrapper<const SchemaReference>,
                        TupleHasher>
         schemas_by_name;
     /// The tables, indexed by name
@@ -226,7 +226,11 @@ class CatalogEntry {
     auto& GetDefaultDatabaseName() const { return default_database_name; }
     /// Get the default schema name
     auto& GetDefaultSchemaName() const { return default_schema_name; }
-    /// Get the tables
+    /// Get the database declarations
+    auto& GetDatabases() const { return database_references; }
+    /// Get the schema declarations
+    auto& GetSchemas() const { return schema_references; }
+    /// Get the table declarations
     auto& GetTables() const { return table_declarations; }
     /// Get the qualified name
     QualifiedTableName QualifyTableName(QualifiedTableName name) const {
@@ -309,6 +313,10 @@ class Catalog {
     /// The catalog version.
     /// Every modification bumps the version counter, the analyzer reads the version counter which protects all refs.
     Version version = 1;
+    /// The default database name
+    std::string default_database_name = "sqlynx";
+    /// The default schema name
+    std::string default_schema_name = "public";
     /// The database names names
     std::unordered_map<std::string_view, ExternalID> database_names;
     /// The schema names
@@ -337,6 +345,10 @@ class Catalog {
 
     /// Get the current version of the registry
     uint64_t GetVersion() const { return version; }
+    /// Get the default database name
+    std::string_view GetDefaultDatabaseName() const { return default_database_name; }
+    /// Get the default schema name
+    std::string_view GetDefaultSchemaName() const { return default_schema_name; }
 
     /// Contains and external id?
     bool Contains(ExternalID id) const { return entries.contains(id); }

@@ -132,6 +132,26 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
 
     out.prepend_attribute("id").set_value(script.GetExternalID());
 
+    // Write databases
+    if (script.GetDatabases().GetSize() > 0) {
+        auto dbs_node = out.append_child("database-references");
+        for (auto& db : script.GetDatabases()) {
+            auto db_node = dbs_node.append_child("database");
+            std::string db_name{db.database_name};
+            db_node.append_attribute("name").set_value(db_name.c_str());
+        }
+    }
+
+    // Write schemas
+    if (script.GetSchemas().GetSize() > 0) {
+        auto schemas_node = out.append_child("schema-references");
+        for (auto& schema : script.GetSchemas()) {
+            auto schema_node = schemas_node.append_child("schema");
+            std::string schema_name{schema.schema_name};
+            schema_node.append_attribute("name").set_value(schema_name.c_str());
+        }
+    }
+
     // Write local declarations
     if (script.GetTables().GetSize() > 0) {
         auto tables_node = out.append_child("tables");
