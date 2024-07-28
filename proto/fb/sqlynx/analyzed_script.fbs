@@ -54,6 +54,7 @@ table TableReference {
     // The alias name
     alias_name: string;
     // The id of the table that is referenced
+    // <uint32, uint32> that may point into the catalog.
     resolved_table_id: uint64;
 }
 
@@ -66,11 +67,11 @@ table ColumnReference {
     ast_scope_root: uint32;
     // The column name
     column_name: QualifiedColumnName;
-    // The id of the table that is referenced
-    resolved_table_reference_id: uint64;
-    // The id of the table that is referenced
+    // The external object id of the table that is referenced.
+    // <uint32, uint32> that may point into the catalog.
     resolved_table_id: uint64;
-    // The id of the column that is referenced
+    // The id of the column that is referenced.
+    // This is a flat index in the that just references the column.
     resolved_column_id: uint32;
 }
 
