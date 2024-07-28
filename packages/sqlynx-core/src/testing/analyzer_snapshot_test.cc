@@ -1,8 +1,6 @@
 #include "sqlynx/testing/analyzer_snapshot_test.h"
 
-#include <algorithm>
 #include <fstream>
-#include <limits>
 
 #include "gtest/gtest.h"
 #include "sqlynx/analyzer/analyzer.h"
