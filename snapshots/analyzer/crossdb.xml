@@ -8,7 +8,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..44" text="db1.schema1.A" />
@@ -63,7 +63,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..44" text="db1.schema1.A" />
@@ -116,7 +116,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..44" text="db1.schema1.A" />
@@ -179,7 +179,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..44" text="db1.schema1.A" />
@@ -206,7 +206,7 @@
                     <database name="db1" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                     <schema name="schema1" />
                 </schema-references>
                 <tables>
@@ -225,7 +225,7 @@
                     <database name="db2" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                     <schema name="schema2" />
                 </schema-references>
                 <tables>
@@ -247,7 +247,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..44" text="db1.schema1.A" />

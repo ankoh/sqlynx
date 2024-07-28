@@ -15,7 +15,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <tables>
                 <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -152,7 +152,7 @@ limit
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="2" stmt="0" loc="610..618" text="partsupp" />
@@ -252,7 +252,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -368,7 +368,7 @@ limit
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="145..153" text="customer" />
@@ -416,7 +416,7 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="customer" loc="1..293" text="create tab.._custkey))">
@@ -491,7 +491,7 @@ order by
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="291..299" text="lineitem" />
@@ -529,7 +529,7 @@ create table orders (o_orderkey integer not null, o_custkey integer not null, o_
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="lineitem" loc="1..559" text="create tab..nenumber))">
@@ -597,7 +597,7 @@ order by
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="3" stmt="0" loc="96..104" text="customer" />
@@ -672,7 +672,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -773,7 +773,7 @@ where
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="74..82" text="lineitem" />
@@ -796,7 +796,7 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="lineitem" loc="1..559" text="create tab..nenumber))">
@@ -868,7 +868,7 @@ order by
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="1" stmt="0" loc="414..422" text="supplier" />
@@ -949,7 +949,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -1078,7 +1078,7 @@ order by
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="418..422" text="part" />
@@ -1166,7 +1166,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -1290,7 +1290,7 @@ order by
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="363..367" text="part" />
@@ -1371,7 +1371,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -1496,7 +1496,7 @@ limit
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="3" stmt="0" loc="205..213" text="customer" />
@@ -1563,7 +1563,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -1682,7 +1682,7 @@ order by
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="1" stmt="0" loc="496..504" text="partsupp" />
@@ -1743,7 +1743,7 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="supplier" loc="1..258" text="create tab.._suppkey))">
@@ -1808,7 +1808,7 @@ order by
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="4" stmt="0" loc="458..464" text="orders" />
@@ -1863,7 +1863,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -1975,7 +1975,7 @@ order by
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="222..230" text="customer" />
@@ -2010,7 +2010,7 @@ create table orders (o_orderkey integer not null, o_custkey integer not null, o_
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="customer" loc="1..293" text="create tab.._custkey))">
@@ -2059,7 +2059,7 @@ where
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="5" stmt="0" loc="248..256" text="lineitem" />
@@ -2099,7 +2099,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -2221,7 +2221,7 @@ order by
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="5" stmt="0" loc="122..130" text="lineitem" />
@@ -2270,7 +2270,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -2392,7 +2392,7 @@ order by
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="1" stmt="0" loc="449..457" text="supplier" />
@@ -2443,7 +2443,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -2552,7 +2552,7 @@ where
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="1" stmt="0" loc="339..347" text="lineitem" />
@@ -2591,7 +2591,7 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -2669,7 +2669,7 @@ limit
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="5" stmt="0" loc="319..327" text="lineitem" />
@@ -2727,7 +2727,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -2854,7 +2854,7 @@ where
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="5" stmt="0" loc="79..87" text="lineitem" />
@@ -2922,7 +2922,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -3051,7 +3051,7 @@ order by
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="449..453" text="part" />
@@ -3112,7 +3112,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -3245,7 +3245,7 @@ limit
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="5" stmt="0" loc="399..410" text="lineitem l2" />
@@ -3336,7 +3336,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -3465,7 +3465,7 @@ order by
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="3" stmt="0" loc="658..666" text="customer" />
@@ -3510,7 +3510,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
