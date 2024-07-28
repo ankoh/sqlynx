@@ -102,9 +102,9 @@ class NameResolutionPass : public PassManager::LTRPass {
     ChunkBuffer<OverlayList<AnalyzedScript::ColumnReference>::Node, 16> column_references;
 
     /// The database references
-    decltype(AnalyzedScript::database_declarations) database_declarations;
+    decltype(AnalyzedScript::database_references) database_references;
     /// The database references
-    decltype(AnalyzedScript::schema_declarations) schema_declarations;
+    decltype(AnalyzedScript::schema_references) schema_references;
     /// The tables
     decltype(AnalyzedScript::table_declarations) table_declarations;
     /// The join edges

@@ -1,13 +1,8 @@
 #include "gtest/gtest.h"
 #include "pugixml.hpp"
-#include "sqlynx/analyzer/analyzer.h"
 #include "sqlynx/catalog.h"
-#include "sqlynx/parser/parser.h"
-#include "sqlynx/parser/scanner.h"
-#include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
 #include "sqlynx/testing/analyzer_snapshot_test.h"
-#include "sqlynx/testing/xml_tests.h"
 
 using namespace sqlynx;
 using namespace sqlynx::testing;
