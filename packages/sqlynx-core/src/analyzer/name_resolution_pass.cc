@@ -2,7 +2,6 @@
 
 #include <functional>
 #include <iterator>
-#include <limits>
 #include <optional>
 #include <stack>
 
@@ -41,18 +40,28 @@ void NameResolutionPass::NodeState::Clear() {
 }
 
 /// Constructor
-NameResolutionPass::NameResolutionPass(ParsedScript& parser, std::string_view database_name,
-                                       std::string_view schema_name, const Catalog& catalog,
+NameResolutionPass::NameResolutionPass(ParsedScript& parser, std::string_view default_database_name,
+                                       std::string_view default_schema_name, const Catalog& catalog,
                                        AttributeIndex& attribute_index)
     : scanned_program(*parser.scanned_script),
       parsed_program(parser),
       external_id(parser.external_id),
-      database_name(database_name),
-      schema_name(schema_name),
+      default_database_name(default_database_name),
+      default_schema_name(default_schema_name),
       catalog(catalog),
       attribute_index(attribute_index),
       nodes(parsed_program.nodes) {
     node_states.resize(nodes.size());
+
+    // Register default database
+    auto& db = database_declarations.Append(
+        CatalogEntry::DatabaseDeclaration{ExternalObjectID{external_id, 0}, std::string{default_database_name}, ""});
+    databases_by_name.insert({db.database_name, db});
+
+    // Register default schema
+    auto& schema = schema_declarations.Append(CatalogEntry::SchemaDeclaration{
+        ExternalObjectID{external_id, 0}, ExternalObjectID{external_id, 0}, std::string{default_schema_name}});
+    schemas_by_name.insert({{db.database_name, schema.schema_name}, schema});
 }
 
 std::span<std::reference_wrapper<CatalogEntry::NameInfo>> NameResolutionPass::ReadNamePath(const sx::Node& node) {
@@ -132,10 +141,43 @@ AnalyzedScript::QualifiedColumnName NameResolutionPass::ReadQualifiedColumnName(
     return name;
 }
 
-AnalyzedScript::QualifiedTableName NameResolutionPass::QualifyTableName(AnalyzedScript::QualifiedTableName name) const {
-    name.database_name = name.database_name.empty() ? database_name : name.database_name;
-    name.schema_name = name.schema_name.empty() ? schema_name : name.schema_name;
+AnalyzedScript::QualifiedTableName NameResolutionPass::NormalizeTableName(
+    AnalyzedScript::QualifiedTableName name) const {
+    name.database_name = name.database_name.empty() ? default_database_name : name.database_name;
+    name.schema_name = name.schema_name.empty() ? default_schema_name : name.schema_name;
     return name;
+}
+
+void NameResolutionPass::RegisterDatabaseAndSchemaNames(AnalyzedScript::QualifiedTableName name) {
+    // Register the database ref
+    ExternalObjectID db_id;
+    std::string_view db_name;
+    auto db_iter = databases_by_name.find(name.database_name);
+    if (db_iter != databases_by_name.end()) {
+        db_id = db_iter->second.get().database_id;
+        db_name = db_iter->second.get().database_name;
+    } else {
+        db_id = ExternalObjectID{external_id, static_cast<uint32_t>(database_declarations.GetSize())};
+        auto& db_ref =
+            database_declarations.Append(CatalogEntry::DatabaseDeclaration{db_id, std::string{name.database_name}, ""});
+        databases_by_name.insert({name.database_name, db_ref});
+        db_name = db_ref.database_name;
+    }
+
+    // Register the schema ref
+    ExternalObjectID schema_id;
+    std::string_view schema_name;
+    auto schema_iter = schemas_by_name.find({name.database_name, name.schema_name});
+    if (schema_iter != schemas_by_name.end()) {
+        schema_id = schema_iter->second.get().schema_id;
+        schema_name = schema_iter->second.get().schema_name;
+    } else {
+        schema_id = ExternalObjectID{external_id, static_cast<uint32_t>(schema_declarations.GetSize())};
+        auto& schema_ref = schema_declarations.Append(
+            CatalogEntry::SchemaDeclaration{db_id, schema_id, std::string{name.schema_name}});
+        schemas_by_name.insert({{name.database_name, name.schema_name}, schema_ref});
+        schema_name = schema_ref.schema_name;
+    }
 }
 
 void NameResolutionPass::MergeChildStates(NodeState& dst, std::initializer_list<const proto::Node*> children) {
@@ -181,7 +223,8 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
         // TODO Matches a view or CTE?
 
         // Table ref points to own table?
-        auto iter = tables_by_name.find(QualifyTableName(table_ref.table_name));
+        auto table_name = NormalizeTableName(table_ref.table_name);
+        auto iter = tables_by_name.find(table_name);
         if (iter != tables_by_name.end()) {
             auto& table = iter->second.get();
 
@@ -206,10 +249,10 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
         // Qualify table name for search path lookup
         CatalogEntry::QualifiedTableName qualified_table_name = table_ref.table_name;
         if (qualified_table_name.database_name.empty()) {
-            qualified_table_name.database_name = database_name;
+            qualified_table_name.database_name = default_database_name;
         }
         if (qualified_table_name.schema_name.empty()) {
-            qualified_table_name.schema_name = schema_name;
+            qualified_table_name.schema_name = default_schema_name;
         }
 
         // Otherwise consult the external search path
@@ -500,7 +543,9 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 const proto::Node* elements_node = attrs[proto::AttributeKey::SQL_CREATE_TABLE_ELEMENTS];
                 // Read the name
                 auto table_name = ReadQualifiedTableName(name_node);
-                table_name = QualifyTableName(table_name);
+                table_name = NormalizeTableName(table_name);
+                // Register the qualified name of the schema
+                RegisterDatabaseAndSchemaNames(table_name);
                 // Merge child states
                 MergeChildStates(node_state, {elements_node});
                 // Collect all columns
@@ -513,8 +558,8 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 // Create the scope
                 CreateScope(node_state, node_id);
                 // Build the table
-                auto& n = tables.Append(AnalyzedScript::Table());
-                n.table_id = ExternalObjectID{external_id, static_cast<uint32_t>(tables.GetSize() - 1)};
+                auto& n = table_declarations.Append(AnalyzedScript::TableDeclaration());
+                n.table_id = ExternalObjectID{external_id, static_cast<uint32_t>(table_declarations.GetSize() - 1)};
                 n.ast_node_id = node_id;
                 n.ast_statement_id = std::nullopt;
                 n.ast_scope_root = std::nullopt;
@@ -553,8 +598,8 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
 
 /// Finish the analysis pass
 void NameResolutionPass::Finish() {
-    tables_by_name.reserve(tables.GetSize());
-    for (auto& table_chunk : tables.GetChunks()) {
+    tables_by_name.reserve(table_declarations.GetSize());
+    for (auto& table_chunk : table_declarations.GetChunks()) {
         for (auto& table : table_chunk) {
             tables_by_name.insert({table.table_name, table});
         }
@@ -604,7 +649,11 @@ void NameResolutionPass::Finish() {
 
 /// Export an analyzed program
 void NameResolutionPass::Export(AnalyzedScript& program) {
-    program.tables = std::move(tables);
+    program.database_declarations = std::move(database_declarations);
+    program.databases_by_name = std::move(databases_by_name);
+    program.schema_declarations = std::move(schema_declarations);
+    program.schemas_by_name = std::move(schemas_by_name);
+    program.table_declarations = std::move(table_declarations);
     program.tables_by_name = std::move(tables_by_name);
     program.graph_edges = graph_edges.Flatten();
     program.graph_edge_nodes = graph_edge_nodes.Flatten();
@@ -621,7 +670,7 @@ void NameResolutionPass::Export(AnalyzedScript& program) {
             program.column_references.push_back(std::move(ref.value));
         }
     }
-    for (auto& table : program.tables) {
+    for (auto& table : program.table_declarations) {
         for (size_t i = 0; i < table.table_columns.size(); ++i) {
             auto& column = table.table_columns[i];
             program.table_columns_by_name.insert({column.column_name, {table, i}});
