@@ -2,6 +2,18 @@ include "sqlynx/sql_enums.fbs";
 
 namespace sqlynx.proto;
 
+table DatabaseReference {
+    // The column name
+    database_name: string;
+}
+
+table SchemaReference {
+    // The local database id
+    database_id: uint32;
+    // The schema name
+    schema_name: string;
+}
+
 table QualifiedTableName {
     // The node id
     ast_node_id: uint32;
@@ -30,6 +42,10 @@ table TableColumn {
 }
 
 table Table {
+    // The local database id
+    database_id: uint32;
+    // The local schema id
+    schema_id: uint32;
     // The id of the AST node that created this table declaration.
     ast_node_id: uint32;
     // The id of the statement that created the table declaration
@@ -53,8 +69,9 @@ table TableReference {
     table_name: QualifiedTableName;
     // The alias name
     alias_name: string;
-    // The id of the table that is referenced
+    // The id of the table that is referenced.
     // <uint32, uint32> that may point into the catalog.
+    // Referencing a local table only if the upper u32 equals the scripts external id.
     resolved_table_id: uint64;
 }
 
@@ -94,12 +111,16 @@ struct QueryGraphEdgeNode {
 }
 
 table AnalyzedScript {
-    // The origin id
+    // The catalog entry id
     external_id: uint32;
     // The default database name, if tables are not qualified fully
     default_database_name: string;
     // The schema name, if tables are not qualified fully
     default_schema_name: string;
+    // The databases
+    databases: [DatabaseReference];
+    // The schemas
+    schemas: [SchemaReference];
     // The local tables
     tables: [Table];
     // The table references in the statement
