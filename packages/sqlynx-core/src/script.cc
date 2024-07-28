@@ -10,15 +10,12 @@
 
 #include "sqlynx/analyzer/analyzer.h"
 #include "sqlynx/analyzer/completion.h"
-#include "sqlynx/api.h"
 #include "sqlynx/catalog.h"
 #include "sqlynx/external.h"
 #include "sqlynx/parser/parse_context.h"
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/parser/scanner.h"
 #include "sqlynx/proto/proto_generated.h"
-#include "sqlynx/utils/string_conversion.h"
-#include "sqlynx/utils/suffix_trie.h"
 
 namespace sqlynx {
 
@@ -392,9 +389,9 @@ flatbuffers::Offset<proto::CatalogEntry> AnalyzedScript::DescribeEntry(flatbuffe
     auto schema_name = builder.CreateString(GetDefaultSchemaName());
 
     std::vector<flatbuffers::Offset<proto::SchemaTable>> table_offsets;
-    table_offsets.reserve(tables.GetSize());
+    table_offsets.reserve(table_declarations.GetSize());
     uint32_t table_id = 0;
-    for (auto& table_chunk : tables.GetChunks()) {
+    for (auto& table_chunk : table_declarations.GetChunks()) {
         for (auto& table : table_chunk) {
             auto table_name = builder.CreateString(table.table_name.table_name);
 
@@ -471,8 +468,8 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
         default_schema_name_ofs = builder.CreateString(default_schema_name);
     }
     std::vector<flatbuffers::Offset<proto::Table>> table_offsets;
-    table_offsets.reserve(tables.GetSize());
-    for (auto& table_chunk : tables.GetChunks()) {
+    table_offsets.reserve(table_declarations.GetSize());
+    for (auto& table_chunk : table_declarations.GetChunks()) {
         for (auto& table : table_chunk) {
             table_offsets.push_back(table.Pack(builder));
         }
@@ -565,13 +562,13 @@ std::unique_ptr<proto::ScriptMemoryStatistics> Script::GetMemoryStatistics() {
         // Added analyzed before?
         if (registered_analyzed.contains(analyzed)) return;
         size_t table_column_bytes = 0;
-        for (auto& table_chunk : analyzed->tables.GetChunks()) {
+        for (auto& table_chunk : analyzed->table_declarations.GetChunks()) {
             for (auto& table : table_chunk) {
                 table_column_bytes += table.table_columns.size() * sizeof(CatalogEntry::TableColumn);
             }
         }
         size_t analyzer_description_bytes =
-            analyzed->tables.GetSize() * sizeof(CatalogEntry::Table) + table_column_bytes +
+            analyzed->table_declarations.GetSize() * sizeof(CatalogEntry::TableDeclaration) + table_column_bytes +
             analyzed->table_references.size() * sizeof(decltype(analyzed->table_references)::value_type) +
             analyzed->column_references.size() * sizeof(decltype(analyzed->column_references)::value_type) +
             analyzed->graph_edges.size() * sizeof(decltype(analyzed->graph_edges)::value_type) +
@@ -733,7 +730,7 @@ std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Create
             // Analyzed and analyzed is same version?
             if (analyzed && analyzed->parsed_script == script.parsed_script) {
                 // Part of a table node?
-                for (auto& table : analyzed->tables) {
+                for (auto& table : analyzed->table_declarations) {
                     if (table.ast_node_id.has_value() && cursor_path_nodes.contains(*table.ast_node_id)) {
                         cursor->table_id = table.ast_node_id;
                         break;

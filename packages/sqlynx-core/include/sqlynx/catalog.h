@@ -5,27 +5,23 @@
 
 #include <functional>
 #include <limits>
-#include <map>
 #include <optional>
 #include <string_view>
 #include <tuple>
 #include <unordered_set>
 
-#include "ankerl/unordered_dense.h"
 #include "sqlynx/external.h"
 #include "sqlynx/parser/names.h"
-#include "sqlynx/parser/parser.h"
 #include "sqlynx/proto/proto_generated.h"
-#include "sqlynx/text/rope.h"
-#include "sqlynx/utils/bits.h"
 #include "sqlynx/utils/btree/map.h"
 #include "sqlynx/utils/btree/set.h"
 #include "sqlynx/utils/chunk_buffer.h"
 #include "sqlynx/utils/hash.h"
 #include "sqlynx/utils/string_conversion.h"
-#include "sqlynx/utils/string_pool.h"
 
 namespace sqlynx {
+
+namespace sx = sqlynx::proto;
 
 constexpr uint32_t PROTO_NULL_U32 = std::numeric_limits<uint32_t>::max();
 
@@ -124,7 +120,7 @@ class CatalogEntry {
         flatbuffers::Offset<proto::TableColumn> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
     /// A table
-    struct Table {
+    struct TableDeclaration {
         /// The table id
         ExternalObjectID table_id;
         /// The AST node id in the target script
@@ -138,9 +134,9 @@ class CatalogEntry {
         /// The begin of the column
         std::vector<TableColumn> table_columns;
         /// Constructor
-        Table(ExternalObjectID table_id = {}, std::optional<uint32_t> ast_node_id = std::nullopt,
-              std::optional<uint32_t> ast_statement_id = {}, std::optional<uint32_t> ast_scope_root = {},
-              QualifiedTableName table_name = {}, std::vector<TableColumn> columns = {})
+        TableDeclaration(ExternalObjectID table_id = {}, std::optional<uint32_t> ast_node_id = std::nullopt,
+                         std::optional<uint32_t> ast_statement_id = {}, std::optional<uint32_t> ast_scope_root = {},
+                         QualifiedTableName table_name = {}, std::vector<TableColumn> columns = {})
             : table_id(table_id),
               ast_node_id(ast_node_id),
               ast_statement_id(ast_statement_id),
@@ -153,9 +149,43 @@ class CatalogEntry {
     /// A resolved table column
     struct ResolvedTableColumn {
         /// The table
-        const Table& table;
+        const TableDeclaration& table;
         /// The index in the table
         size_t table_column_index;
+    };
+    /// A database name reference.
+    /// Databases are not tracked as explicit catalog entities like tables.
+    /// We just track referenced database names to identify them through IDs.
+    struct DatabaseDeclaration {
+        /// The database id
+        ExternalObjectID database_id;
+        /// The database name
+        std::string database_name;
+        /// The database alias (if any)
+        std::string database_alias;
+        /// Constructor
+        DatabaseDeclaration(ExternalObjectID database_id, std::string database_name, std::string database_alias)
+            : database_id(database_id),
+              database_name(std::move(database_name)),
+              database_alias(std::move(database_alias)) {}
+        /// Pack as FlatBuffer
+        flatbuffers::Offset<proto::DatabaseReference> Pack(flatbuffers::FlatBufferBuilder& builder) const;
+    };
+    /// A schema name reference
+    /// Schemas are not tracked as explicit catalog entities like tables.
+    /// We just track referenced schema names to identify them through IDs.
+    struct SchemaDeclaration {
+        /// The database id
+        ExternalObjectID database_id;
+        /// The schema id
+        ExternalObjectID schema_id;
+        /// The database name
+        std::string schema_name;
+        /// Constructor
+        SchemaDeclaration(ExternalObjectID database_id, ExternalObjectID schema_id, std::string schema_name)
+            : database_id(database_id), schema_id(schema_id), schema_name(std::move(schema_name)) {}
+        /// Pack as FlatBuffer
+        flatbuffers::Offset<proto::SchemaReference> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
 
    protected:
@@ -165,12 +195,23 @@ class CatalogEntry {
     const std::string_view default_database_name;
     /// The default schema name
     const std::string_view default_schema_name;
-    /// The local tables
-    ChunkBuffer<Table, 16> tables;
+    /// The referenced databases
+    ChunkBuffer<DatabaseDeclaration, 16> database_declarations;
+    /// The referenced schemas
+    ChunkBuffer<SchemaDeclaration, 16> schema_declarations;
+    /// The table definitions
+    ChunkBuffer<TableDeclaration, 16> table_declarations;
+    /// The databases, indexed by name
+    std::unordered_map<std::string_view, std::reference_wrapper<const DatabaseDeclaration>> databases_by_name;
+    /// The schema, indexed by name
+    std::unordered_map<std::tuple<std::string_view, std::string_view>, std::reference_wrapper<const SchemaDeclaration>,
+                       TupleHasher>
+        schemas_by_name;
     /// The tables, indexed by name
-    std::unordered_map<QualifiedTableName::Key, std::reference_wrapper<const Table>, TupleHasher> tables_by_name;
+    std::unordered_map<QualifiedTableName::Key, std::reference_wrapper<const TableDeclaration>, TupleHasher>
+        tables_by_name;
     /// The table columns, indexed by the name
-    std::unordered_multimap<std::string_view, std::pair<std::reference_wrapper<const Table>, size_t>>
+    std::unordered_multimap<std::string_view, std::pair<std::reference_wrapper<const TableDeclaration>, size_t>>
         table_columns_by_name;
     /// The name search index
     std::optional<CatalogEntry::NameSearchIndex> name_search_index;
@@ -186,7 +227,7 @@ class CatalogEntry {
     /// Get the default schema name
     auto& GetDefaultSchemaName() const { return default_schema_name; }
     /// Get the tables
-    auto& GetTables() const { return tables; }
+    auto& GetTables() const { return table_declarations; }
     /// Get the qualified name
     QualifiedTableName QualifyTableName(QualifiedTableName name) const {
         name.database_name = name.database_name.empty() ? default_database_name : name.database_name;
@@ -199,13 +240,13 @@ class CatalogEntry {
     virtual const NameSearchIndex& GetNameSearchIndex() = 0;
 
     /// Resolve a table by id
-    const Table* ResolveTable(ExternalObjectID table_id) const;
+    const TableDeclaration* ResolveTable(ExternalObjectID table_id) const;
     /// Resolve a table by id
-    const Table* ResolveTable(ExternalObjectID table_id, const Catalog& catalog) const;
+    const TableDeclaration* ResolveTable(ExternalObjectID table_id, const Catalog& catalog) const;
     /// Resolve a table by name
-    const Table* ResolveTable(QualifiedTableName table_name) const;
+    const TableDeclaration* ResolveTable(QualifiedTableName table_name) const;
     /// Resolve a table by name
-    const Table* ResolveTable(QualifiedTableName table_name, const Catalog& catalog) const;
+    const TableDeclaration* ResolveTable(QualifiedTableName table_name, const Catalog& catalog) const;
     /// Find table columns by name
     void ResolveTableColumn(std::string_view table_column, std::vector<ResolvedTableColumn>& out) const;
     /// Find table columns by name
@@ -336,9 +377,10 @@ class Catalog {
                                           std::unique_ptr<const std::byte[]> descriptor_buffer);
 
     /// Resolve a table by id
-    const CatalogEntry::Table* ResolveTable(ExternalObjectID table_id) const;
+    const CatalogEntry::TableDeclaration* ResolveTable(ExternalObjectID table_id) const;
     /// Resolve a table by id
-    const CatalogEntry::Table* ResolveTable(CatalogEntry::QualifiedTableName table_name, ExternalID ignore_entry) const;
+    const CatalogEntry::TableDeclaration* ResolveTable(CatalogEntry::QualifiedTableName table_name,
+                                                       ExternalID ignore_entry) const;
     /// Find table columns by name
     void ResolveTableColumn(std::string_view table_column, std::vector<CatalogEntry::ResolvedTableColumn>& out) const;
 };

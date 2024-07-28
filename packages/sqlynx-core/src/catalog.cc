@@ -4,6 +4,8 @@
 #include <flatbuffers/flatbuffer_builder.h>
 #include <flatbuffers/verifier.h>
 
+#include <map>
+
 #include "sqlynx/external.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
@@ -23,7 +25,7 @@ flatbuffers::Offset<proto::TableColumn> CatalogEntry::TableColumn::Pack(flatbuff
     return out.Finish();
 }
 
-flatbuffers::Offset<proto::Table> CatalogEntry::Table::Pack(flatbuffers::FlatBufferBuilder& builder) const {
+flatbuffers::Offset<proto::Table> CatalogEntry::TableDeclaration::Pack(flatbuffers::FlatBufferBuilder& builder) const {
     auto table_name_ofs = table_name.Pack(builder);
 
     // Pack table columns
@@ -48,24 +50,35 @@ flatbuffers::Offset<proto::Table> CatalogEntry::Table::Pack(flatbuffers::FlatBuf
 }
 
 CatalogEntry::CatalogEntry(ExternalID external_id, std::string_view database_name, std::string_view schema_name)
-    : external_id(external_id), default_database_name(database_name), default_schema_name(schema_name) {}
+    : external_id(external_id),
+      default_database_name(database_name),
+      default_schema_name(schema_name),
+      database_declarations(),
+      schema_declarations(),
+      table_declarations(),
+      databases_by_name(),
+      schemas_by_name(),
+      tables_by_name(),
+      table_columns_by_name(),
+      name_search_index() {}
 
-const CatalogEntry::Table* CatalogEntry::ResolveTable(ExternalObjectID table_id) const {
+const CatalogEntry::TableDeclaration* CatalogEntry::ResolveTable(ExternalObjectID table_id) const {
     if (table_id.GetExternalId() == external_id) {
-        return &tables[table_id.GetIndex()];
+        return &table_declarations[table_id.GetIndex()];
     }
     return nullptr;
 }
 
-const CatalogEntry::Table* CatalogEntry::ResolveTable(ExternalObjectID table_id, const Catalog& catalog) const {
+const CatalogEntry::TableDeclaration* CatalogEntry::ResolveTable(ExternalObjectID table_id,
+                                                                 const Catalog& catalog) const {
     if (external_id == table_id.GetExternalId()) {
-        return &tables[table_id.GetIndex()];
+        return &table_declarations[table_id.GetIndex()];
     } else {
         return catalog.ResolveTable(table_id);
     }
 }
 
-const CatalogEntry::Table* CatalogEntry::ResolveTable(QualifiedTableName name) const {
+const CatalogEntry::TableDeclaration* CatalogEntry::ResolveTable(QualifiedTableName name) const {
     auto iter = tables_by_name.find(name);
     if (iter == tables_by_name.end()) {
         return nullptr;
@@ -73,7 +86,8 @@ const CatalogEntry::Table* CatalogEntry::ResolveTable(QualifiedTableName name) c
     return &iter->second.get();
 }
 
-const CatalogEntry::Table* CatalogEntry::ResolveTable(QualifiedTableName name, const Catalog& catalog) const {
+const CatalogEntry::TableDeclaration* CatalogEntry::ResolveTable(QualifiedTableName name,
+                                                                 const Catalog& catalog) const {
     name = QualifyTableName(name);
     if (auto resolved = ResolveTable(name)) {
         return resolved;
@@ -161,7 +175,7 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
     std::string_view schema_name = descriptor.schema_name() == nullptr ? "" : descriptor.schema_name()->string_view();
 
     // Read tables
-    uint32_t next_table_id = tables.GetSize();
+    uint32_t next_table_id = table_declarations.GetSize();
     for (auto* table : *descriptor.tables()) {
         ExternalObjectID table_object_id{external_id, next_table_id};
         // Get the table name
@@ -186,14 +200,14 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
             }
         }
         // Create the table
-        tables.Append(Table{table_object_id, std::nullopt, std::nullopt, std::nullopt,
-                            QualifiedTableName{qualified_table_name}, std::move(columns)});
+        table_declarations.Append(TableDeclaration{table_object_id, std::nullopt, std::nullopt, std::nullopt,
+                                                   QualifiedTableName{qualified_table_name}, std::move(columns)});
         ++next_table_id;
     }
 
     // Build table index
-    tables_by_name.reserve(tables.GetSize());
-    for (auto& table_chunk : tables.GetChunks()) {
+    tables_by_name.reserve(table_declarations.GetSize());
+    for (auto& table_chunk : table_declarations.GetChunks()) {
         for (auto& table : table_chunk) {
             tables_by_name.insert({table.table_name, table});
             for (size_t i = 0; i < table.table_columns.size(); ++i) {
@@ -230,7 +244,7 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
     };
     register_name(database_name, proto::NameTag::DATABASE_NAME);
     register_name(schema_name, proto::NameTag::SCHEMA_NAME);
-    for (auto& table_chunk : tables.GetChunks()) {
+    for (auto& table_chunk : table_declarations.GetChunks()) {
         for (auto& table : table_chunk) {
             register_name(table.table_name.database_name, proto::NameTag::DATABASE_NAME);
             register_name(table.table_name.schema_name, proto::NameTag::SCHEMA_NAME);
@@ -328,7 +342,7 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
     size_t table_count = 0;
     size_t column_count = 0;
     for (auto& [catalog_entry_id, catalog_entry] : entries) {
-        for (auto& chunk : catalog_entry->tables.GetChunks()) {
+        for (auto& chunk : catalog_entry->table_declarations.GetChunks()) {
             for (auto& entry : chunk) {
                 auto database_name = entry.table_name.database_name;
                 auto schema_name = entry.table_name.schema_name;
@@ -440,7 +454,7 @@ proto::StatusCode Catalog::LoadScript(Script& script, CatalogEntry::Rank rank) {
     // Collect all schema names
     CatalogEntry& entry = *script.analyzed_script;
     std::unordered_set<std::pair<std::string_view, std::string_view>, TupleHasher> schema_names;
-    for (auto& table : entry.tables) {
+    for (auto& table : entry.table_declarations) {
         auto name = entry.QualifyTableName(table.table_name);
         schema_names.insert({name.database_name, name.schema_name});
     }
@@ -470,7 +484,7 @@ proto::StatusCode Catalog::UpdateScript(ScriptEntry& entry) {
     }
     // Collect all new names
     std::unordered_map<std::pair<std::string_view, std::string_view>, bool, TupleHasher> new_names;
-    for (auto& table : script.analyzed_script->tables) {
+    for (auto& table : script.analyzed_script->table_declarations) {
         auto name = script.analyzed_script->QualifyTableName(table.table_name);
         new_names.insert({{name.database_name, name.schema_name}, false});
     }
@@ -564,14 +578,14 @@ proto::StatusCode Catalog::AddSchemaDescriptor(ExternalID external_id, std::span
     return proto::StatusCode::OK;
 }
 
-const CatalogEntry::Table* Catalog::ResolveTable(ExternalObjectID table_id) const {
+const CatalogEntry::TableDeclaration* Catalog::ResolveTable(ExternalObjectID table_id) const {
     if (auto iter = entries.find(table_id.GetExternalId()); iter != entries.end()) {
         return iter->second->ResolveTable(table_id);
     }
     return nullptr;
 }
-const CatalogEntry::Table* Catalog::ResolveTable(CatalogEntry::QualifiedTableName table_name,
-                                                 ExternalID ignore_entry) const {
+const CatalogEntry::TableDeclaration* Catalog::ResolveTable(CatalogEntry::QualifiedTableName table_name,
+                                                            ExternalID ignore_entry) const {
     for (auto iter = entry_names_ranked.lower_bound({table_name.database_name, table_name.schema_name, 0, 0});
          iter != entry_names_ranked.end(); ++iter) {
         auto& [db_name, schema_name, rank, candidate] = *iter;

@@ -26,7 +26,7 @@ class NameResolutionPass : public PassManager::LTRPass {
         /// The column name
         std::string_view column_name;
         /// The table
-        const CatalogEntry::Table& table;
+        const CatalogEntry::TableDeclaration& table;
         /// The column id
         size_t column_id;
         /// The table reference id
@@ -45,7 +45,8 @@ class NameResolutionPass : public PassManager::LTRPass {
         /// The table references in scope
         OverlayList<AnalyzedScript::TableReference> table_references;
         /// The resolved table references
-        std::unordered_map<const AnalyzedScript::TableReference*, std::reference_wrapper<const CatalogEntry::Table>>
+        std::unordered_map<const AnalyzedScript::TableReference*,
+                           std::reference_wrapper<const CatalogEntry::TableDeclaration>>
             resolved_table_references;
         /// The resolved table columns
         std::unordered_map<CatalogEntry::QualifiedColumnName::Key, ResolvedTableColumn, TupleHasher>
@@ -75,15 +76,15 @@ class NameResolutionPass : public PassManager::LTRPass {
     ScannedScript& scanned_program;
     /// The parsed program
     ParsedScript& parsed_program;
-    /// The context id
+    /// The external id of the current script
     const ExternalID external_id;
-    /// The database name
-    const std::string_view database_name;
-    /// The schema name
-    const std::string_view schema_name;
+    /// The default database name
+    const std::string_view default_database_name;
+    /// The default schema name
+    const std::string_view default_schema_name;
     /// The catalog
     const Catalog& catalog;
-    /// The attribute index.
+    /// The attribute index
     AttributeIndex& attribute_index;
     /// The program nodes
     std::span<const proto::Node> nodes;
@@ -100,17 +101,23 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// The column references
     ChunkBuffer<OverlayList<AnalyzedScript::ColumnReference>::Node, 16> column_references;
 
+    /// The database references
+    decltype(AnalyzedScript::database_declarations) database_declarations;
+    /// The database references
+    decltype(AnalyzedScript::schema_declarations) schema_declarations;
     /// The tables
-    ChunkBuffer<AnalyzedScript::Table, 16> tables;
+    decltype(AnalyzedScript::table_declarations) table_declarations;
     /// The join edges
     ChunkBuffer<AnalyzedScript::QueryGraphEdge, 16> graph_edges;
     /// The join edge nodes
     ChunkBuffer<AnalyzedScript::QueryGraphEdgeNode, 16> graph_edge_nodes;
 
-    /// The tables by name
-    std::unordered_map<CatalogEntry::QualifiedTableName::Key, std::reference_wrapper<const AnalyzedScript::Table>,
-                       TupleHasher>
-        tables_by_name;
+    /// The databases, indexed by name
+    decltype(AnalyzedScript::databases_by_name) databases_by_name;
+    /// The schema, indexed by name
+    decltype(AnalyzedScript::schemas_by_name) schemas_by_name;
+    /// The tables, indexed by name
+    decltype(AnalyzedScript::tables_by_name) tables_by_name;
 
     /// The temporary name path buffer
     std::vector<std::reference_wrapper<CatalogEntry::NameInfo>> name_path_buffer;
@@ -129,7 +136,11 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// Merge child states into a destination state
     AnalyzedScript::QualifiedColumnName ReadQualifiedColumnName(const sx::Node* column);
     /// Qualify a table name
-    AnalyzedScript::QualifiedTableName QualifyTableName(AnalyzedScript::QualifiedTableName name) const;
+    AnalyzedScript::QualifiedTableName NormalizeTableName(AnalyzedScript::QualifiedTableName name) const;
+
+    /// Register a qualified schema name.
+    /// We create database and schema references here.
+    void RegisterDatabaseAndSchemaNames(AnalyzedScript::QualifiedTableName name);
 
     /// Merge child states into a destination state
     void MergeChildStates(NodeState& dst, const sx::Node& parent);
@@ -152,8 +163,8 @@ class NameResolutionPass : public PassManager::LTRPass {
 
    public:
     /// Constructor
-    NameResolutionPass(ParsedScript& parser, std::string_view database_name, std::string_view schema_name,
-                       const Catalog& registry, AttributeIndex& attribute_index);
+    NameResolutionPass(ParsedScript& parser, std::string_view default_database_name,
+                       std::string_view default_schema_name, const Catalog& registry, AttributeIndex& attribute_index);
 
     /// Prepare the analysis pass
     void Prepare() override;
