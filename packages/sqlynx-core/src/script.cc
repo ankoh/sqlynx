@@ -512,13 +512,17 @@ Script::Script(uint32_t external_id, std::string_view database_name, std::string
     : catalog(EMPTY_CATALOG),
       external_id(external_id),
       text(1024),
-      database_name(database_name),
-      schema_name(schema_name) {
+      database_name(database_name.empty() ? EMPTY_CATALOG.GetDefaultDatabaseName() : database_name),
+      schema_name(schema_name.empty() ? EMPTY_CATALOG.GetDefaultSchemaName() : schema_name) {
     assert(!catalog.Contains(external_id));
 }
 
 Script::Script(Catalog& catalog, uint32_t external_id, std::string_view database_name, std::string_view schema_name)
-    : catalog(catalog), external_id(external_id), text(1024), database_name(database_name), schema_name(schema_name) {
+    : catalog(catalog),
+      external_id(external_id),
+      text(1024),
+      database_name(database_name.empty() ? catalog.GetDefaultDatabaseName() : database_name),
+      schema_name(schema_name.empty() ? catalog.GetDefaultSchemaName() : schema_name) {
     assert(!catalog.Contains(external_id));
 }
 

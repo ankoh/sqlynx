@@ -54,12 +54,12 @@ NameResolutionPass::NameResolutionPass(ParsedScript& parser, std::string_view de
     node_states.resize(nodes.size());
 
     // Register default database
-    auto& db = database_declarations.Append(
-        CatalogEntry::DatabaseDeclaration{ExternalObjectID{external_id, 0}, std::string{default_database_name}, ""});
+    auto& db = database_references.Append(
+        CatalogEntry::DatabaseReference{ExternalObjectID{external_id, 0}, std::string{default_database_name}, ""});
     databases_by_name.insert({db.database_name, db});
 
     // Register default schema
-    auto& schema = schema_declarations.Append(CatalogEntry::SchemaDeclaration{
+    auto& schema = schema_references.Append(CatalogEntry::SchemaReference{
         ExternalObjectID{external_id, 0}, ExternalObjectID{external_id, 0}, std::string{default_schema_name}});
     schemas_by_name.insert({{db.database_name, schema.schema_name}, schema});
 }
@@ -157,9 +157,9 @@ void NameResolutionPass::RegisterDatabaseAndSchemaNames(AnalyzedScript::Qualifie
         db_id = db_iter->second.get().database_id;
         db_name = db_iter->second.get().database_name;
     } else {
-        db_id = ExternalObjectID{external_id, static_cast<uint32_t>(database_declarations.GetSize())};
+        db_id = ExternalObjectID{external_id, static_cast<uint32_t>(database_references.GetSize())};
         auto& db_ref =
-            database_declarations.Append(CatalogEntry::DatabaseDeclaration{db_id, std::string{name.database_name}, ""});
+            database_references.Append(CatalogEntry::DatabaseReference{db_id, std::string{name.database_name}, ""});
         databases_by_name.insert({name.database_name, db_ref});
         db_name = db_ref.database_name;
     }
@@ -172,9 +172,9 @@ void NameResolutionPass::RegisterDatabaseAndSchemaNames(AnalyzedScript::Qualifie
         schema_id = schema_iter->second.get().schema_id;
         schema_name = schema_iter->second.get().schema_name;
     } else {
-        schema_id = ExternalObjectID{external_id, static_cast<uint32_t>(schema_declarations.GetSize())};
-        auto& schema_ref = schema_declarations.Append(
-            CatalogEntry::SchemaDeclaration{db_id, schema_id, std::string{name.schema_name}});
+        schema_id = ExternalObjectID{external_id, static_cast<uint32_t>(schema_references.GetSize())};
+        auto& schema_ref =
+            schema_references.Append(CatalogEntry::SchemaReference{db_id, schema_id, std::string{name.schema_name}});
         schemas_by_name.insert({{name.database_name, name.schema_name}, schema_ref});
         schema_name = schema_ref.schema_name;
     }
@@ -649,9 +649,9 @@ void NameResolutionPass::Finish() {
 
 /// Export an analyzed program
 void NameResolutionPass::Export(AnalyzedScript& program) {
-    program.database_declarations = std::move(database_declarations);
+    program.database_references = std::move(database_references);
     program.databases_by_name = std::move(databases_by_name);
-    program.schema_declarations = std::move(schema_declarations);
+    program.schema_references = std::move(schema_references);
     program.schemas_by_name = std::move(schemas_by_name);
     program.table_declarations = std::move(table_declarations);
     program.tables_by_name = std::move(tables_by_name);
