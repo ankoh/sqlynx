@@ -2,6 +2,12 @@
     <analyzer-snapshot name="empty">
         <script id="0">
             <input />
+            <database-references>
+                <database name="sqlynx" />
+            </database-references>
+            <schema-references>
+                <schema name="public" />
+            </schema-references>
         </script>
         <catalog />
     </analyzer-snapshot>
@@ -10,6 +16,12 @@
             <input>
                 select * from A, B where a = b;
             </input>
+            <database-references>
+                <database name="sqlynx" />
+            </database-references>
+            <schema-references>
+                <schema name="public" />
+            </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
                 <external schema="1" table="1" stmt="0" loc="34..35" text="B" />
@@ -31,6 +43,12 @@
                     create table A (a int, b int);
                     create table B (d int, e int);
                 </input>
+                <database-references>
+                    <database name="sqlynx" />
+                </database-references>
+                <schema-references>
+                    <schema name="public" />
+                </schema-references>
                 <tables>
                     <table name="a" loc="21..50" text="create tab..nt, b int)">
                         <column name="a" loc="37..42" text="a int" />
@@ -49,6 +67,12 @@
             <input>
                 select * from A, B where a + d = e;
             </input>
+            <database-references>
+                <database name="sqlynx" />
+            </database-references>
+            <schema-references>
+                <schema name="public" />
+            </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
                 <external schema="1" table="1" stmt="0" loc="34..35" text="B" />
@@ -72,6 +96,12 @@
                     create table A (a int, b int);
                     create table B (d int, e int);
                 </input>
+                <database-references>
+                    <database name="sqlynx" />
+                </database-references>
+                <schema-references>
+                    <schema name="public" />
+                </schema-references>
                 <tables>
                     <table name="a" loc="21..50" text="create tab..nt, b int)">
                         <column name="a" loc="37..42" text="a int" />
@@ -90,6 +120,12 @@
             <input>
                 select * from A, B where a = d and b = e;
             </input>
+            <database-references>
+                <database name="sqlynx" />
+            </database-references>
+            <schema-references>
+                <schema name="public" />
+            </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
                 <external schema="1" table="1" stmt="0" loc="34..35" text="B" />
@@ -117,6 +153,12 @@
                     create table A (a int, b int);
                     create table B (d int, e int);
                 </input>
+                <database-references>
+                    <database name="sqlynx" />
+                </database-references>
+                <schema-references>
+                    <schema name="public" />
+                </schema-references>
                 <tables>
                     <table name="a" loc="21..50" text="create tab..nt, b int)">
                         <column name="a" loc="37..42" text="a int" />
@@ -135,6 +177,12 @@
             <input>
                 select * from A, B where (a = d and b = e) or (a = d and d = 42);
             </input>
+            <database-references>
+                <database name="sqlynx" />
+            </database-references>
+            <schema-references>
+                <schema name="public" />
+            </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
                 <external schema="1" table="1" stmt="0" loc="34..35" text="B" />
@@ -169,6 +217,12 @@
                     create table A (a int, b int);
                     create table B (d int, e int);
                 </input>
+                <database-references>
+                    <database name="sqlynx" />
+                </database-references>
+                <schema-references>
+                    <schema name="public" />
+                </schema-references>
                 <tables>
                     <table name="a" loc="21..50" text="create tab..nt, b int)">
                         <column name="a" loc="37..42" text="a int" />
@@ -187,6 +241,12 @@
             <input>
                 select * from A, B where a = (d + 42);
             </input>
+            <database-references>
+                <database name="sqlynx" />
+            </database-references>
+            <schema-references>
+                <schema name="public" />
+            </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
                 <external schema="1" table="1" stmt="0" loc="34..35" text="B" />
@@ -208,6 +268,12 @@
                     create table A (a int, b int);
                     create table B (d int, e int);
                 </input>
+                <database-references>
+                    <database name="sqlynx" />
+                </database-references>
+                <schema-references>
+                    <schema name="public" />
+                </schema-references>
                 <tables>
                     <table name="a" loc="21..50" text="create tab..nt, b int)">
                         <column name="a" loc="37..42" text="a int" />
@@ -226,6 +292,12 @@
             <input>
                 select * from A join B on (a = b);
             </input>
+            <database-references>
+                <database name="sqlynx" />
+            </database-references>
+            <schema-references>
+                <schema name="public" />
+            </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
                 <external schema="1" table="1" stmt="0" loc="38..39" text="B" />
@@ -247,6 +319,12 @@
                     create table A (a int, b int);
                     create table B (d int, e int);
                 </input>
+                <database-references>
+                    <database name="sqlynx" />
+                </database-references>
+                <schema-references>
+                    <schema name="public" />
+                </schema-references>
                 <tables>
                     <table name="a" loc="21..50" text="create tab..nt, b int)">
                         <column name="a" loc="37..42" text="a int" />
@@ -265,6 +343,12 @@
             <input>
                 select * from A, C where a = c;
             </input>
+            <database-references>
+                <database name="sqlynx" />
+            </database-references>
+            <schema-references>
+                <schema name="public" />
+            </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
                 <unresolved stmt="0" loc="34..35" text="C" />
@@ -286,6 +370,12 @@
                     create table A (a int, b int);
                     create table B (d int, e int);
                 </input>
+                <database-references>
+                    <database name="sqlynx" />
+                </database-references>
+                <schema-references>
+                    <schema name="public" />
+                </schema-references>
                 <tables>
                     <table name="a" loc="21..50" text="create tab..nt, b int)">
                         <column name="a" loc="37..42" text="a int" />
@@ -304,6 +394,12 @@
             <input>
                 select * from A, B where a = c;
             </input>
+            <database-references>
+                <database name="sqlynx" />
+            </database-references>
+            <schema-references>
+                <schema name="public" />
+            </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
                 <external schema="1" table="1" stmt="0" loc="34..35" text="B" />
@@ -325,6 +421,12 @@
                     create table A (a int, b int);
                     create table B (d int, e int);
                 </input>
+                <database-references>
+                    <database name="sqlynx" />
+                </database-references>
+                <schema-references>
+                    <schema name="public" />
+                </schema-references>
                 <tables>
                     <table name="a" loc="21..50" text="create tab..nt, b int)">
                         <column name="a" loc="37..42" text="a int" />
@@ -343,6 +445,12 @@
             <input>
                 select * from A;
             </input>
+            <database-references>
+                <database name="sqlynx" />
+            </database-references>
+            <schema-references>
+                <schema name="public" />
+            </schema-references>
             <table-references>
                 <unresolved stmt="0" loc="31..32" text="A" />
             </table-references>
@@ -350,6 +458,12 @@
         <catalog>
             <script id="1">
                 <input />
+                <database-references>
+                    <database name="sqlynx" />
+                </database-references>
+                <schema-references>
+                    <schema name="public" />
+                </schema-references>
             </script>
         </catalog>
     </analyzer-snapshot>
@@ -358,6 +472,12 @@
             <input>
                 select * from A, B where c = d;
             </input>
+            <database-references>
+                <database name="sqlynx" />
+            </database-references>
+            <schema-references>
+                <schema name="public" />
+            </schema-references>
             <table-references>
                 <unresolved stmt="0" loc="31..32" text="A" />
                 <unresolved stmt="0" loc="34..35" text="B" />
@@ -376,6 +496,12 @@
         <catalog>
             <script id="1">
                 <input />
+                <database-references>
+                    <database name="sqlynx" />
+                </database-references>
+                <schema-references>
+                    <schema name="public" />
+                </schema-references>
             </script>
         </catalog>
     </analyzer-snapshot>
@@ -384,6 +510,12 @@
             <input>
                 select * from A where not exists (select * from B where a = d);
             </input>
+            <database-references>
+                <database name="sqlynx" />
+            </database-references>
+            <schema-references>
+                <schema name="public" />
+            </schema-references>
             <table-references>
                 <external schema="1" table="1" stmt="0" loc="65..66" text="B" />
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
@@ -405,6 +537,12 @@
                     create table A (a int, b int);
                     create table B (d int, e int);
                 </input>
+                <database-references>
+                    <database name="sqlynx" />
+                </database-references>
+                <schema-references>
+                    <schema name="public" />
+                </schema-references>
                 <tables>
                     <table name="a" loc="21..50" text="create tab..nt, b int)">
                         <column name="a" loc="37..42" text="a int" />
@@ -423,6 +561,12 @@
             <input>
                 select * from A where not exists (select * from A, B where a = d);
             </input>
+            <database-references>
+                <database name="sqlynx" />
+            </database-references>
+            <schema-references>
+                <schema name="public" />
+            </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="65..66" text="A" />
                 <external schema="1" table="1" stmt="0" loc="68..69" text="B" />
@@ -445,6 +589,12 @@
                     create table A (a int, b int);
                     create table B (d int, e int);
                 </input>
+                <database-references>
+                    <database name="sqlynx" />
+                </database-references>
+                <schema-references>
+                    <schema name="public" />
+                </schema-references>
                 <tables>
                     <table name="a" loc="21..50" text="create tab..nt, b int)">
                         <column name="a" loc="37..42" text="a int" />
