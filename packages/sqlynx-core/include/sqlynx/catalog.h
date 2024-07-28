@@ -268,15 +268,19 @@ class Catalog {
     /// The catalog version.
     /// Every modification bumps the version counter, the analyzer reads the version counter which protects all refs.
     Version version = 1;
-    /// The schemas
+    /// The database names names
+    std::unordered_map<std::string_view, ExternalID> database_names;
+    /// The schema names
+    std::unordered_map<std::pair<std::string_view, std::string_view>, ExternalID, TupleHasher> schema_names;
+    /// The catalog entries
     std::unordered_map<ExternalID, CatalogEntry*> entries;
     /// The script entries
     std::unordered_map<Script*, ScriptEntry> script_entries;
     /// The descriptor pool entries
     std::unordered_map<ExternalID, std::unique_ptr<DescriptorPool>> descriptor_pool_entries;
-    /// The schemas ordered by <rank>
+    /// The entris ordered by <rank>
     btree::set<std::tuple<CatalogEntry::Rank, ExternalID>> entries_ranked;
-    /// The schemas ordered by <database, schema, rank>
+    /// The entries ordered by <database, schema, rank>
     btree::set<std::tuple<std::string_view, std::string_view, CatalogEntry::Rank, ExternalID>> entry_names_ranked;
 
     /// Update a script entry
