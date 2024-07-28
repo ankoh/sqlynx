@@ -8,7 +8,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="5" stmt="0" loc="31..39" text="lineitem" />
@@ -33,7 +33,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">

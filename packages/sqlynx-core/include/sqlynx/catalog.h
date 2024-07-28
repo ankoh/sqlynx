@@ -316,7 +316,7 @@ class Catalog {
     /// The default database name
     std::string default_database_name = "sqlynx";
     /// The default schema name
-    std::string default_schema_name = "public";
+    std::string default_schema_name = "default";
     /// The database names names
     std::unordered_map<std::string_view, ExternalID> database_names;
     /// The schema names

@@ -6,7 +6,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
         </script>
         <catalog />
@@ -20,7 +20,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
@@ -47,7 +47,7 @@
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="a" loc="21..50" text="create tab..nt, b int)">
@@ -71,7 +71,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
@@ -100,7 +100,7 @@
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="a" loc="21..50" text="create tab..nt, b int)">
@@ -124,7 +124,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
@@ -157,7 +157,7 @@
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="a" loc="21..50" text="create tab..nt, b int)">
@@ -181,7 +181,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
@@ -221,7 +221,7 @@
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="a" loc="21..50" text="create tab..nt, b int)">
@@ -245,7 +245,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
@@ -272,7 +272,7 @@
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="a" loc="21..50" text="create tab..nt, b int)">
@@ -296,7 +296,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
@@ -323,7 +323,7 @@
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="a" loc="21..50" text="create tab..nt, b int)">
@@ -347,7 +347,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
@@ -374,7 +374,7 @@
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="a" loc="21..50" text="create tab..nt, b int)">
@@ -398,7 +398,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
@@ -425,7 +425,7 @@
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="a" loc="21..50" text="create tab..nt, b int)">
@@ -449,7 +449,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <unresolved stmt="0" loc="31..32" text="A" />
@@ -462,7 +462,7 @@
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
             </script>
         </catalog>
@@ -476,7 +476,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <unresolved stmt="0" loc="31..32" text="A" />
@@ -500,7 +500,7 @@
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
             </script>
         </catalog>
@@ -514,7 +514,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="1" stmt="0" loc="65..66" text="B" />
@@ -541,7 +541,7 @@
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="a" loc="21..50" text="create tab..nt, b int)">
@@ -565,7 +565,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="65..66" text="A" />
@@ -593,7 +593,7 @@
                     <database name="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="public" />
+                    <schema name="default" />
                 </schema-references>
                 <tables>
                     <table name="a" loc="21..50" text="create tab..nt, b int)">
