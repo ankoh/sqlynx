@@ -5,6 +5,12 @@
                 select * from A, B where a = b;
                 select * from B, C where d = c;
             </input>
+            <database-references>
+                <database name="sqlynx" />
+            </database-references>
+            <schema-references>
+                <schema name="public" />
+            </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
                 <external schema="1" table="1" stmt="0" loc="34..35" text="B" />
@@ -34,6 +40,12 @@
                     create table A (a int, b int);
                     create table B (d int, e int);
                 </input>
+                <database-references>
+                    <database name="sqlynx" />
+                </database-references>
+                <schema-references>
+                    <schema name="public" />
+                </schema-references>
                 <tables>
                     <table name="a" loc="21..50" text="create tab..nt, b int)">
                         <column name="a" loc="37..42" text="a int" />
@@ -54,6 +66,12 @@
                 selec;
                 select * from B, C where d = c;
             </input>
+            <database-references>
+                <database name="sqlynx" />
+            </database-references>
+            <schema-references>
+                <schema name="public" />
+            </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
                 <external schema="1" table="1" stmt="0" loc="34..35" text="B" />
@@ -83,6 +101,12 @@
                     create table A (a int, b int);
                     create table B (d int, e int);
                 </input>
+                <database-references>
+                    <database name="sqlynx" />
+                </database-references>
+                <schema-references>
+                    <schema name="public" />
+                </schema-references>
                 <tables>
                     <table name="a" loc="21..50" text="create tab..nt, b int)">
                         <column name="a" loc="37..42" text="a int" />
