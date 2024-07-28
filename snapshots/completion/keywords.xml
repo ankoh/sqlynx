@@ -8,7 +8,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
         </script>
         <cursor>
@@ -29,7 +29,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
         </script>
         <cursor>
@@ -50,7 +50,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
         </script>
         <cursor>
@@ -71,7 +71,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
         </script>
         <cursor>
@@ -88,7 +88,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
         </script>
         <cursor>
@@ -109,7 +109,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
         </script>
         <cursor>
@@ -130,7 +130,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
         </script>
         <cursor>
@@ -151,7 +151,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <unresolved stmt="0" loc="31..35" text="a xx" />
@@ -175,7 +175,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <unresolved stmt="0" loc="31..34" text="a w" />
@@ -199,7 +199,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <unresolved stmt="0" loc="31..35" text="a wh" />
@@ -223,7 +223,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
         </script>
         <cursor>
@@ -244,7 +244,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <unresolved stmt="0" loc="31..37" text="foo gr" />
@@ -268,7 +268,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
         </script>
         <cursor>
@@ -289,7 +289,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
         </script>
         <cursor>
@@ -308,7 +308,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
         </script>
         <cursor>
@@ -327,7 +327,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <unresolved stmt="0" loc="31..36" text="foo o" />
@@ -351,7 +351,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
         </script>
         <cursor>
@@ -372,7 +372,7 @@
                 <database name="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="public" />
+                <schema name="default" />
             </schema-references>
             <table-references>
                 <unresolved loc="31..34" text="foo" />
