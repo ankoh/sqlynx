@@ -388,8 +388,8 @@ AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, const Catal
 
 /// Get the name search index
 flatbuffers::Offset<proto::CatalogEntry> AnalyzedScript::DescribeEntry(flatbuffers::FlatBufferBuilder& builder) const {
-    auto database_name = builder.CreateString(GetDatabaseName());
-    auto schema_name = builder.CreateString(GetSchemaName());
+    auto database_name = builder.CreateString(GetDefaultDatabaseName());
+    auto schema_name = builder.CreateString(GetDefaultSchemaName());
 
     std::vector<flatbuffers::Offset<proto::SchemaTable>> table_offsets;
     table_offsets.reserve(tables.GetSize());
@@ -462,13 +462,13 @@ static flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Out>>> PackVe
 
 // Pack an analyzed script
 flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {
-    flatbuffers::Offset<flatbuffers::String> database_name_ofs;
-    if (!database_name.empty()) {
-        database_name_ofs = builder.CreateString(database_name);
+    flatbuffers::Offset<flatbuffers::String> default_database_name_ofs;
+    if (!default_database_name.empty()) {
+        default_database_name_ofs = builder.CreateString(default_database_name);
     }
-    flatbuffers::Offset<flatbuffers::String> schema_name_ofs;
-    if (!schema_name.empty()) {
-        schema_name_ofs = builder.CreateString(schema_name);
+    flatbuffers::Offset<flatbuffers::String> default_schema_name_ofs;
+    if (!default_schema_name.empty()) {
+        default_schema_name_ofs = builder.CreateString(default_schema_name);
     }
     std::vector<flatbuffers::Offset<proto::Table>> table_offsets;
     table_offsets.reserve(tables.GetSize());
@@ -494,8 +494,13 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
         graph_edge_nodes_ofs_writer[i] = graph_edge_nodes[i];
     }
 
+    auto database_name = builder.CreateString(GetDefaultDatabaseName());
+    auto schema_name = builder.CreateString(GetDefaultSchemaName());
+
     proto::AnalyzedScriptBuilder out{builder};
     out.add_external_id(external_id);
+    out.add_default_database_name(database_name);
+    out.add_default_schema_name(schema_name);
     out.add_tables(tables_ofs);
     out.add_table_references(table_references_ofs);
     out.add_column_references(column_references_ofs);

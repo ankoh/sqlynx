@@ -48,7 +48,7 @@ flatbuffers::Offset<proto::Table> CatalogEntry::Table::Pack(flatbuffers::FlatBuf
 }
 
 CatalogEntry::CatalogEntry(ExternalID external_id, std::string_view database_name, std::string_view schema_name)
-    : external_id(external_id), database_name(database_name), schema_name(schema_name) {}
+    : external_id(external_id), default_database_name(database_name), default_schema_name(schema_name) {}
 
 const CatalogEntry::Table* CatalogEntry::ResolveTable(ExternalObjectID table_id) const {
     if (table_id.GetExternalId() == external_id) {

@@ -162,9 +162,9 @@ class CatalogEntry {
     /// The external id
     const ExternalID external_id;
     /// The default database name
-    const std::string_view database_name;
+    const std::string_view default_database_name;
     /// The default schema name
-    const std::string_view schema_name;
+    const std::string_view default_schema_name;
     /// The local tables
     ChunkBuffer<Table, 16> tables;
     /// The tables, indexed by name
@@ -181,16 +181,16 @@ class CatalogEntry {
 
     /// Get the external id
     ExternalID GetExternalID() const { return external_id; }
-    /// Get the database name
-    auto& GetDatabaseName() const { return database_name; }
-    /// Get the schema name
-    auto& GetSchemaName() const { return schema_name; }
+    /// Get the default database name
+    auto& GetDefaultDatabaseName() const { return default_database_name; }
+    /// Get the default schema name
+    auto& GetDefaultSchemaName() const { return default_schema_name; }
     /// Get the tables
     auto& GetTables() const { return tables; }
     /// Get the qualified name
     QualifiedTableName QualifyTableName(QualifiedTableName name) const {
-        name.database_name = name.database_name.empty() ? database_name : name.database_name;
-        name.schema_name = name.schema_name.empty() ? database_name : name.schema_name;
+        name.database_name = name.database_name.empty() ? default_database_name : name.database_name;
+        name.schema_name = name.schema_name.empty() ? default_database_name : name.schema_name;
         return name;
     }
     /// Describe the catalog entry
