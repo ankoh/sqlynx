@@ -5,9 +5,9 @@ namespace sqlynx.proto;
 table QualifiedTableName {
     // The node id
     ast_node_id: uint32;
-    // The name of the database that owns the table 
+    // The name of the database that owns the table (if any)
     database_name: string;
-    // The name of the schema that holds the table
+    // The name of the schema that holds the table (if any)
     schema_name: string;
     // The table name, always a table for now
     table_name: string;
@@ -96,10 +96,10 @@ struct QueryGraphEdgeNode {
 table AnalyzedScript {
     // The origin id
     external_id: uint32;
-    // The database name
-    database_name: string;
-    // The schema name
-    schema_name: string;
+    // The default database name, if tables are not qualified fully
+    default_database_name: string;
+    // The schema name, if tables are not qualified fully
+    default_schema_name: string;
     // The local tables
     tables: [Table];
     // The table references in the statement
