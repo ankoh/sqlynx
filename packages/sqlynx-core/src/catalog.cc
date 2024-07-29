@@ -356,7 +356,7 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
                 auto [schema_node, new_schema] =
                     database_node->second.children.insert({schema_name, Node{schema_name_id}});
                 auto [table_node, new_table] = schema_node->second.children.insert({table_name, Node{table_name_id}});
-                table_node->second.external_object_id = entry.table_id;
+                table_node->second.external_object_id = entry.external_id;
 
                 database_count += new_database;
                 schema_count += new_schema;
