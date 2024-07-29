@@ -67,10 +67,17 @@ table FlatCatalog {
 
 /// A descriptor for a catalog element
 struct FlatCatalogEntry {
+    /// The index of the catalog entry
     entry_id: uint32;
+    /// The index of the parent catalog entry
     parent_id: uint32;
+    /// The external object id.
+    /// uint32 max if not set
     external_object_id: uint32;
+    /// The name id
     name_id: uint32;
+    /// The index of the first child entry
     child_begin: uint32;
+    /// The child entry count
     child_count: uint32;
 }
