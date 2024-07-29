@@ -55,14 +55,14 @@ void QueryGraphLayout::PrepareLayout(const AnalyzedScript& analyzed) {
     // Load internal tables
     std::unordered_map<ExternalObjectID, size_t, ExternalObjectID::Hasher> nodes_by_table_id;
     for (auto& table : analyzed.GetTables()) {
-        nodes_by_table_id.insert({table.table_id, nodes.size()});
-        nodes.emplace_back(nodes.size(), table.table_id, table.table_name, 0);
+        nodes_by_table_id.insert({table.external_id, nodes.size()});
+        nodes.emplace_back(nodes.size(), table.external_id, table.table_name, 0);
     }
     // Add external tables
     script->GetCatalog().Iterate([&](auto entry_id, CatalogEntry& entry) {
         for (auto& table : entry.GetTables()) {
-            nodes_by_table_id.insert({table.table_id, nodes.size()});
-            nodes.emplace_back(nodes.size(), table.table_id, table.table_name, 0);
+            nodes_by_table_id.insert({table.external_id, nodes.size()});
+            nodes.emplace_back(nodes.size(), table.external_id, table.table_name, 0);
         }
     });
     for (auto& ref : analyzed.table_references) {
