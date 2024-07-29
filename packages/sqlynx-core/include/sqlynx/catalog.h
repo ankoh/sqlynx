@@ -121,8 +121,8 @@ class CatalogEntry {
     };
     /// A table
     struct TableDeclaration {
-        /// The table id
-        ExternalObjectID table_id;
+        /// The external id
+        ExternalObjectID external_id;
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
         /// The AST statement id in the target script
@@ -134,10 +134,10 @@ class CatalogEntry {
         /// The begin of the column
         std::vector<TableColumn> table_columns;
         /// Constructor
-        TableDeclaration(ExternalObjectID table_id = {}, std::optional<uint32_t> ast_node_id = std::nullopt,
+        TableDeclaration(ExternalObjectID external_id = {}, std::optional<uint32_t> ast_node_id = std::nullopt,
                          std::optional<uint32_t> ast_statement_id = {}, std::optional<uint32_t> ast_scope_root = {},
                          QualifiedTableName table_name = {}, std::vector<TableColumn> columns = {})
-            : table_id(table_id),
+            : external_id(external_id),
               ast_node_id(ast_node_id),
               ast_statement_id(ast_statement_id),
               ast_scope_root(ast_scope_root),
