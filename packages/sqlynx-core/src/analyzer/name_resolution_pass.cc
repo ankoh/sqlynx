@@ -565,8 +565,6 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 n.schema_id = schema_id;
                 n.table_id = ExternalObjectID{external_id, static_cast<uint32_t>(table_declarations.GetSize() - 1)};
                 n.ast_node_id = node_id;
-                n.ast_statement_id = std::nullopt;
-                n.ast_scope_root = std::nullopt;
                 n.table_name = table_name;
                 n.table_columns = std::move(table_columns);
                 break;
