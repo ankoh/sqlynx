@@ -9,14 +9,14 @@ import { expectTables, table } from './matchers.js';
 const distPath = path.resolve(fileURLToPath(new URL('../dist', import.meta.url)));
 const wasmPath = path.resolve(distPath, './sqlynx.wasm');
 
-let fsql: sqlynx.SQLynx | null = null;
+let lnx: sqlynx.SQLynx | null = null;
 
 beforeAll(async () => {
-    fsql = await sqlynx.SQLynx.create(async (imports: WebAssembly.Imports) => {
+    lnx = await sqlynx.SQLynx.create(async (imports: WebAssembly.Imports) => {
         const buf = await fs.promises.readFile(wasmPath);
         return await WebAssembly.instantiate(buf, imports);
     });
-    expect(fsql).not.toBeNull();
+    expect(lnx).not.toBeNull();
 });
 
 const TPCH_SCHEMA = `
@@ -31,8 +31,9 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
 
 describe('SQLynx TPCH Parsing', () => {
     it(`Schema`, () => {
+        const catalog = lnx!.createCatalog();
         const text = TPCH_SCHEMA;
-        const script = fsql!.createScript(null, 1);
+        const script = lnx!.createScript(catalog, 1);
         script.insertTextAt(0, text);
 
         // Parse the script
@@ -160,7 +161,8 @@ order by
     p_partkey
 limit 100
         `;
-        const script = fsql!.createScript(null, 2);
+        const catalog = lnx!.createCatalog();
+        const script = lnx!.createScript(catalog, 2);
         script.insertTextAt(0, text);
 
         // Parse the script

@@ -122,7 +122,8 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
         auto dbs_node = out.append_child("database-references");
         for (auto& db : script.GetDatabases()) {
             auto db_node = dbs_node.append_child("entry");
-            db_node.append_attribute("db").set_value(db.database_name.c_str());
+            std::string db_name{db.database_name};
+            db_node.append_attribute("db").set_value(db_name.c_str());
         }
     }
 
@@ -131,8 +132,10 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
         auto schemas_node = out.append_child("schema-references");
         for (auto& schema : script.GetSchemas()) {
             auto schema_node = schemas_node.append_child("entry");
-            schema_node.append_attribute("db").set_value(schema.database_name.c_str());
-            schema_node.append_attribute("schema").set_value(schema.schema_name.c_str());
+            std::string db_name{schema.database_name};
+            std::string schema_name{schema.schema_name};
+            schema_node.append_attribute("db").set_value(db_name.c_str());
+            schema_node.append_attribute("schema").set_value(schema_name.c_str());
         }
     }
 

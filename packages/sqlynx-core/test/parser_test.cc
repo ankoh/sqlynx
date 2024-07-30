@@ -1,15 +1,12 @@
 #include "sqlynx/parser/parser.h"
 
-#include <initializer_list>
 #include <optional>
-#include <sstream>
 
-#include "sqlynx/api.h"
+#include "gtest/gtest.h"
 #include "sqlynx/parser/parse_context.h"
 #include "sqlynx/parser/scanner.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
-#include "gtest/gtest.h"
 
 using namespace sqlynx;
 using namespace sqlynx::parser;

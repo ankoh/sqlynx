@@ -24,13 +24,13 @@ TEST(CompletionTest, TPCH_Q2) {
 SELECT s_co
     )SQL";
 
-    Script external_script{1};
+    Catalog catalog;
+    Script external_script{catalog, 1};
     external_script.InsertTextAt(0, TPCH_SCHEMA);
     ASSERT_EQ(external_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(external_script.Parse().second, proto::StatusCode::OK);
     ASSERT_EQ(external_script.Analyze().second, proto::StatusCode::OK);
 
-    Catalog catalog;
     catalog.LoadScript(external_script, 0);
 
     Script main_script{catalog, 2};

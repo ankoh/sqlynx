@@ -65,6 +65,12 @@ static FFIResult* packBuffer(std::unique_ptr<flatbuffers::DetachedBuffer> detach
 static FFIResult* packError(proto::StatusCode status) {
     std::string_view message;
     switch (status) {
+        case proto::StatusCode::CATALOG_NULL:
+            message = "Catalog is null";
+            break;
+        case proto::StatusCode::CATALOG_MISMATCH:
+            message = "Catalog is not matching";
+            break;
         case proto::StatusCode::PARSER_INPUT_NOT_SCANNED:
             message = "Parser input is not scanned";
             break;
@@ -132,16 +138,14 @@ extern "C" void sqlynx_delete_result(FFIResult* result) {
 
 /// Create a script
 extern "C" FFIResult* sqlynx_script_new(sqlynx::Catalog* catalog, uint32_t external_id) {
+    if (!catalog) {
+        return packError(proto::StatusCode::CATALOG_NULL);
+    }
     if (catalog && catalog->Contains(external_id)) {
         return packError(proto::StatusCode::EXTERNAL_ID_COLLISION);
     }
     // Construct the script
-    std::unique_ptr<Script> script;
-    if (catalog == nullptr) {
-        script = std::make_unique<Script>(external_id);
-    } else {
-        script = std::make_unique<Script>(*catalog, external_id);
-    }
+    auto script = std::make_unique<Script>(*catalog, external_id);
     return packPtr(std::move(script));
 }
 /// Insert char at a position

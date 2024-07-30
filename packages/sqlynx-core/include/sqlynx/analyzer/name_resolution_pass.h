@@ -76,7 +76,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// The external id of the current script
     const ExternalID catalog_entry_id;
     /// The catalog
-    const Catalog& catalog;
+    Catalog& catalog;
     /// The attribute index
     AttributeIndex& attribute_index;
     /// The program nodes
@@ -131,11 +131,6 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// Qualify a table name
     AnalyzedScript::QualifiedTableName NormalizeTableName(AnalyzedScript::QualifiedTableName name) const;
 
-    /// Register a qualified schema name.
-    /// We create database and schema references here.
-    std::pair<ExternalObjectID, ExternalObjectID> RegisterDatabaseAndSchemaNames(
-        AnalyzedScript::QualifiedTableName name);
-
     /// Merge child states into a destination state
     void MergeChildStates(NodeState& dst, const sx::Node& parent);
     /// Merge child states into a destination state
@@ -157,7 +152,7 @@ class NameResolutionPass : public PassManager::LTRPass {
 
    public:
     /// Constructor
-    NameResolutionPass(ParsedScript& parser, const Catalog& registry, AttributeIndex& attribute_index);
+    NameResolutionPass(ParsedScript& parser, Catalog& registry, AttributeIndex& attribute_index);
 
     /// Prepare the analysis pass
     void Prepare() override;

@@ -146,7 +146,8 @@ TEST_P(FormatTestSuite, Test) {
     std::string fileContent = readFile(filePath);
     TestCase test = TestCase::parse(fileContent);
 
-    Script s;
+    Catalog catalog;
+    Script s{catalog};
     s.InsertTextAt(0, test.input);
     ASSERT_EQ(s.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(s.Parse().second, proto::StatusCode::OK);

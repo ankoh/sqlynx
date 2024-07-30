@@ -31,8 +31,9 @@ interface ExpectedCursor {
 
 describe('SQLynx Cursor', () => {
     it('simple script', () => {
+        const catalog = lnx!.createCatalog();
         const scriptText = 'select * from A b, C d where b.x = d.y';
-        const script = lnx!.createScript(null, 1);
+        const script = lnx!.createScript(catalog, 1);
         script.insertTextAt(0, scriptText);
 
         const scannedBuffer = script.scan();
@@ -76,5 +77,8 @@ describe('SQLynx Cursor', () => {
             graphFrom: null,
             graphTo: null,
         });
+
+        script.delete();
+        catalog.delete();
     });
 });
