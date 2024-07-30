@@ -8,7 +8,6 @@
 #include <optional>
 #include <string_view>
 #include <tuple>
-#include <unordered_set>
 
 #include "sqlynx/external.h"
 #include "sqlynx/parser/names.h"
@@ -187,21 +186,25 @@ class CatalogEntry {
         /// The schema id
         ExternalObjectID external_schema_id;
         /// The database name
+        std::string database_name;
+        /// The schema name
         std::string schema_name;
         /// Constructor
-        SchemaReference(ExternalObjectID database_id, ExternalObjectID schema_id, std::string schema_name)
-            : external_database_id(database_id), external_schema_id(schema_id), schema_name(std::move(schema_name)) {}
+        SchemaReference(ExternalObjectID database_id, ExternalObjectID schema_id, std::string database_name,
+                        std::string schema_name)
+            : external_database_id(database_id),
+              external_schema_id(schema_id),
+              database_name(std::move(database_name)),
+              schema_name(std::move(schema_name)) {}
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::SchemaReference> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
 
    protected:
+    /// The catalog
+    const Catalog& catalog;
     /// The catalog entry id
     const ExternalID external_entry_id;
-    /// The default database name
-    const std::string_view default_database_name;
-    /// The default schema name
-    const std::string_view default_schema_name;
     /// The referenced databases
     ChunkBuffer<DatabaseReference, 16> database_references;
     /// The referenced schemas
@@ -225,14 +228,10 @@ class CatalogEntry {
 
    public:
     /// Construcutor
-    CatalogEntry(ExternalID external_id, std::string_view database_name, std::string_view schema_name);
+    CatalogEntry(const Catalog& catalog, ExternalID external_id);
 
     /// Get the external id
     ExternalID GetCatalogEntryId() const { return external_entry_id; }
-    /// Get the default database name
-    auto& GetDefaultDatabaseName() const { return default_database_name; }
-    /// Get the default schema name
-    auto& GetDefaultSchemaName() const { return default_schema_name; }
     /// Get the database declarations
     auto& GetDatabases() const { return database_references; }
     /// Get the schema declarations
@@ -240,11 +239,7 @@ class CatalogEntry {
     /// Get the table declarations
     auto& GetTables() const { return table_declarations; }
     /// Get the qualified name
-    QualifiedTableName QualifyTableName(QualifiedTableName name) const {
-        name.database_name = name.database_name.empty() ? default_database_name : name.database_name;
-        name.schema_name = name.schema_name.empty() ? default_database_name : name.schema_name;
-        return name;
-    }
+    QualifiedTableName QualifyTableName(QualifiedTableName name) const;
     /// Register database name
     std::pair<ExternalObjectID, std::string_view> RegisterDatabaseName(std::string_view name);
     /// Register schema name
@@ -293,7 +288,7 @@ class DescriptorPool : public CatalogEntry {
 
    public:
     /// Construcutor
-    DescriptorPool(ExternalID external_id, Rank rank);
+    DescriptorPool(const Catalog& catalog, ExternalID external_id, Rank rank);
     /// Get the rank
     auto GetRank() const { return rank; }
 
@@ -334,9 +329,9 @@ class Catalog {
     /// Every modification bumps the version counter, the analyzer reads the version counter which protects all refs.
     Version version = 1;
     /// The default database name
-    std::string default_database_name = "sqlynx";
+    const std::string default_database_name;
     /// The default schema name
-    std::string default_schema_name = "default";
+    const std::string default_schema_name;
     /// The catalog entries
     std::unordered_map<ExternalID, CatalogEntry*> entries;
     /// The script entries
@@ -354,7 +349,7 @@ class Catalog {
 
    public:
     /// Explicit constructor needed due to deleted copy constructor
-    Catalog() = default;
+    Catalog(std::string_view default_database_name = "", std::string_view default_schema_name = "");
     /// Catalogs must not be copied
     Catalog(const Catalog& other) = delete;
     /// Catalogs must not be copy-assigned

@@ -262,8 +262,7 @@ class AnalyzedScript : public CatalogEntry {
 
    public:
     /// Constructor
-    AnalyzedScript(std::shared_ptr<ParsedScript> parsed, const Catalog& catalog, std::string_view database_name,
-                   std::string_view schema_name);
+    AnalyzedScript(std::shared_ptr<ParsedScript> parsed, const Catalog& catalog);
 
     /// Describe the catalog entry
     virtual flatbuffers::Offset<proto::CatalogEntry> DescribeEntry(
@@ -313,10 +312,6 @@ class Script {
     Catalog& catalog;
     /// The origin id
     const ExternalID external_id;
-    /// The database name
-    const std::string database_name;
-    /// The schema name
-    const std::string schema_name;
 
     /// The underlying rope
     rope::Rope text;
@@ -338,10 +333,9 @@ class Script {
 
    public:
     /// Constructor
-    Script(ExternalID external_id = 1, std::string_view database_name = "", std::string_view schema_name = "");
+    Script(ExternalID external_id = 1);
     /// Constructor
-    Script(Catalog& catalog, ExternalID external_id = 1, std::string_view database_name = "",
-           std::string_view schema_name = "");
+    Script(Catalog& catalog, ExternalID external_id = 1);
     /// Destructor
     ~Script();
     /// Scripts must not be copied

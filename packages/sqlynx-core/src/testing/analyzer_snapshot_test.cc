@@ -66,7 +66,7 @@ void AnalyzerSnapshotTest::TestRegistrySnapshot(const std::vector<ScriptAnalysis
     for (size_t i = 0; i < snaps.size(); ++i) {
         auto& entry = snaps[i];
         auto entry_id = entry_ids++;
-        catalog_scripts.push_back(std::make_unique<Script>(entry_id, entry.database_name, entry.schema_name));
+        catalog_scripts.push_back(std::make_unique<Script>(catalog, entry_id));
 
         auto& script = *catalog_scripts.back();
         script.InsertTextAt(0, entry.input);
@@ -121,9 +121,8 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
     if (script.GetDatabases().GetSize() > 0) {
         auto dbs_node = out.append_child("database-references");
         for (auto& db : script.GetDatabases()) {
-            auto db_node = dbs_node.append_child("database");
-            std::string db_name{db.database_name};
-            db_node.append_attribute("name").set_value(db_name.c_str());
+            auto db_node = dbs_node.append_child("entry");
+            db_node.append_attribute("db").set_value(db.database_name.c_str());
         }
     }
 
@@ -131,9 +130,9 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
     if (script.GetSchemas().GetSize() > 0) {
         auto schemas_node = out.append_child("schema-references");
         for (auto& schema : script.GetSchemas()) {
-            auto schema_node = schemas_node.append_child("schema");
-            std::string schema_name{schema.schema_name};
-            schema_node.append_attribute("name").set_value(schema_name.c_str());
+            auto schema_node = schemas_node.append_child("entry");
+            schema_node.append_attribute("db").set_value(schema.database_name.c_str());
+            schema_node.append_attribute("schema").set_value(schema.schema_name.c_str());
         }
     }
 
@@ -250,15 +249,14 @@ void AnalyzerSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
             auto& test = tests.back();
             test.name = test_node.attribute("name").as_string();
 
+            // Read catalog
+            auto catalog_node = test_node.child("catalog");
+            test.catalog_default_database = catalog_node.attribute("database").as_string();
+            test.catalog_default_schema = catalog_node.attribute("schema").as_string();
+
             // Read main script
             {
                 auto main_node = test_node.child("script");
-                if (auto db = main_node.attribute("database")) {
-                    test.script.database_name = db.value();
-                }
-                if (auto schema = main_node.attribute("schema")) {
-                    test.script.schema_name = schema.value();
-                }
                 test.script.input = main_node.child("input").last_child().value();
                 test.script.tables.append_copy(main_node.child("tables"));
                 test.script.table_references.append_copy(main_node.child("table-references"));
@@ -266,18 +264,12 @@ void AnalyzerSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
                 test.script.graph_edges.append_copy(main_node.child("query-graph"));
             }
 
-            // Read catalog
-            for (auto entry_node : test_node.child("catalog").children()) {
-                test.catalog.emplace_back();
-                auto& entry = test.catalog.back();
+            // Read catalog entries
+            for (auto entry_node : catalog_node.children()) {
+                test.catalog_entries.emplace_back();
+                auto& entry = test.catalog_entries.back();
                 std::string entry_name = entry_node.name();
                 if (entry_name == "script") {
-                    if (auto db = entry_node.attribute("database")) {
-                        entry.database_name = db.value();
-                    }
-                    if (auto schema = entry_node.attribute("schema")) {
-                        entry.schema_name = schema.value();
-                    }
                     entry.input = entry_node.child("input").last_child().value();
                     entry.tables.append_copy(entry_node.child("tables"));
                     entry.table_references.append_copy(entry_node.child("table-references"));

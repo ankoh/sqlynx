@@ -131,29 +131,16 @@ extern "C" void sqlynx_delete_result(FFIResult* result) {
 }
 
 /// Create a script
-extern "C" FFIResult* sqlynx_script_new(sqlynx::Catalog* catalog, uint32_t external_id, const char* database_name_ptr,
-                                        size_t database_name_length, const char* schema_name_ptr,
-                                        size_t schema_name_length) {
+extern "C" FFIResult* sqlynx_script_new(sqlynx::Catalog* catalog, uint32_t external_id) {
     if (catalog && catalog->Contains(external_id)) {
         return packError(proto::StatusCode::EXTERNAL_ID_COLLISION);
     }
-    // Read database and schema names
-    std::string database_name, schema_name;
-    if (database_name_ptr != nullptr) {
-        database_name = {database_name_ptr, database_name_length};
-    }
-    if (schema_name_ptr != nullptr) {
-        schema_name = {schema_name_ptr, schema_name_length};
-    }
-    // Free argument buffers
-    sqlynx_free(database_name_ptr);
-    sqlynx_free(schema_name_ptr);
     // Construct the script
     std::unique_ptr<Script> script;
     if (catalog == nullptr) {
-        script = std::make_unique<Script>(external_id, std::move(database_name), std::move(schema_name));
+        script = std::make_unique<Script>(external_id);
     } else {
-        script = std::make_unique<Script>(*catalog, external_id, std::move(database_name), std::move(schema_name));
+        script = std::make_unique<Script>(*catalog, external_id);
     }
     return packPtr(std::move(script));
 }
@@ -296,7 +283,21 @@ extern "C" FFIResult* sqlynx_script_get_statistics(sqlynx::Script* script) {
 }
 
 /// Create a catalog
-extern "C" FFIResult* sqlynx_catalog_new() { return packPtr(std::make_unique<sqlynx::Catalog>()); }
+extern "C" FFIResult* sqlynx_catalog_new(const char* database_name_ptr, size_t database_name_length,
+                                         const char* schema_name_ptr, size_t schema_name_length) {
+    // Read database and schema names
+    std::string database_name, schema_name;
+    if (database_name_ptr != nullptr) {
+        database_name = {database_name_ptr, database_name_length};
+    }
+    if (schema_name_ptr != nullptr) {
+        schema_name = {schema_name_ptr, schema_name_length};
+    }
+    // Free argument buffers
+    sqlynx_free(database_name_ptr);
+    sqlynx_free(schema_name_ptr);
+    return packPtr(std::make_unique<sqlynx::Catalog>(database_name, schema_name));
+}
 /// Clear a catalog
 extern "C" void sqlynx_catalog_clear(sqlynx::Catalog* catalog) { catalog->Clear(); }
 /// Describe all entries

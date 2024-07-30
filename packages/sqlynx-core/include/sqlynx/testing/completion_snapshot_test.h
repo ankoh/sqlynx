@@ -2,12 +2,10 @@
 
 #include <filesystem>
 #include <string>
-#include <unordered_map>
 
 #include "gtest/gtest.h"
 #include "pugixml.hpp"
 #include "sqlynx/analyzer/completion.h"
-#include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
 #include "sqlynx/testing/analyzer_snapshot_test.h"
 
@@ -25,8 +23,12 @@ struct CompletionSnapshotTest {
     std::string name;
     /// The main script
     AnalyzerSnapshotTest::ScriptAnalysisSnapshot script;
+    /// The catalog default database
+    std::string catalog_default_database;
+    /// The catalog default schema
+    std::string catalog_default_schema;
     /// The catalog
-    std::vector<AnalyzerSnapshotTest::ScriptAnalysisSnapshot> catalog;
+    std::vector<AnalyzerSnapshotTest::ScriptAnalysisSnapshot> catalog_entries;
     /// The cursor script
     std::string cursor_script;
     /// The search string for the cursor

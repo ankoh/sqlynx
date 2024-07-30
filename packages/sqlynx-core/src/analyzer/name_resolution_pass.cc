@@ -40,28 +40,24 @@ void NameResolutionPass::NodeState::Clear() {
 }
 
 /// Constructor
-NameResolutionPass::NameResolutionPass(ParsedScript& parser, std::string_view default_database_name,
-                                       std::string_view default_schema_name, const Catalog& catalog,
-                                       AttributeIndex& attribute_index)
+NameResolutionPass::NameResolutionPass(ParsedScript& parser, const Catalog& catalog, AttributeIndex& attribute_index)
     : scanned_program(*parser.scanned_script),
       parsed_program(parser),
       catalog_entry_id(parser.external_id),
-      default_database_name(default_database_name),
-      default_schema_name(default_schema_name),
       catalog(catalog),
       attribute_index(attribute_index),
       nodes(parsed_program.nodes) {
     node_states.resize(nodes.size());
 
     // Register default database
-    auto& db = database_references.Append(
-        CatalogEntry::DatabaseReference{ExternalObjectID{catalog_entry_id, 0}, std::string{default_database_name}, ""});
+    auto& db = database_references.Append(CatalogEntry::DatabaseReference{
+        ExternalObjectID{catalog_entry_id, 0}, std::string{catalog.GetDefaultDatabaseName()}, ""});
     databases_by_name.insert({db.database_name, db});
 
     // Register default schema
-    auto& schema = schema_references.Append(CatalogEntry::SchemaReference{ExternalObjectID{catalog_entry_id, 0},
-                                                                          ExternalObjectID{catalog_entry_id, 0},
-                                                                          std::string{default_schema_name}});
+    auto& schema = schema_references.Append(CatalogEntry::SchemaReference{
+        ExternalObjectID{catalog_entry_id, 0}, ExternalObjectID{catalog_entry_id, 0},
+        std::string{catalog.GetDefaultDatabaseName()}, std::string{catalog.GetDefaultSchemaName()}});
     schemas_by_name.insert({{db.database_name, schema.schema_name}, schema});
 }
 
@@ -144,8 +140,8 @@ AnalyzedScript::QualifiedColumnName NameResolutionPass::ReadQualifiedColumnName(
 
 AnalyzedScript::QualifiedTableName NameResolutionPass::NormalizeTableName(
     AnalyzedScript::QualifiedTableName name) const {
-    name.database_name = name.database_name.empty() ? default_database_name : name.database_name;
-    name.schema_name = name.schema_name.empty() ? default_schema_name : name.schema_name;
+    name.database_name = name.database_name.empty() ? catalog.GetDefaultDatabaseName() : name.database_name;
+    name.schema_name = name.schema_name.empty() ? catalog.GetDefaultSchemaName() : name.schema_name;
     return name;
 }
 
@@ -175,8 +171,8 @@ std::pair<ExternalObjectID, ExternalObjectID> NameResolutionPass::RegisterDataba
         schema_name = schema_iter->second.get().schema_name;
     } else {
         schema_id = ExternalObjectID{catalog_entry_id, static_cast<uint32_t>(schema_references.GetSize())};
-        auto& schema_ref =
-            schema_references.Append(CatalogEntry::SchemaReference{db_id, schema_id, std::string{name.schema_name}});
+        auto& schema_ref = schema_references.Append(CatalogEntry::SchemaReference{
+            db_id, schema_id, std::string{name.database_name}, std::string{name.schema_name}});
         schemas_by_name.insert({{name.database_name, name.schema_name}, schema_ref});
         schema_name = schema_ref.schema_name;
     }
@@ -252,10 +248,10 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
         // Qualify table name for search path lookup
         CatalogEntry::QualifiedTableName qualified_table_name = table_ref.table_name;
         if (qualified_table_name.database_name.empty()) {
-            qualified_table_name.database_name = default_database_name;
+            qualified_table_name.database_name = catalog.GetDefaultDatabaseName();
         }
         if (qualified_table_name.schema_name.empty()) {
-            qualified_table_name.schema_name = default_schema_name;
+            qualified_table_name.schema_name = catalog.GetDefaultSchemaName();
         }
 
         // Otherwise consult the external search path
