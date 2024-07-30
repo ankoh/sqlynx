@@ -45,7 +45,7 @@ NameResolutionPass::NameResolutionPass(ParsedScript& parser, std::string_view de
                                        AttributeIndex& attribute_index)
     : scanned_program(*parser.scanned_script),
       parsed_program(parser),
-      external_id(parser.external_id),
+      catalog_entry_id(parser.external_id),
       default_database_name(default_database_name),
       default_schema_name(default_schema_name),
       catalog(catalog),
@@ -55,12 +55,13 @@ NameResolutionPass::NameResolutionPass(ParsedScript& parser, std::string_view de
 
     // Register default database
     auto& db = database_references.Append(
-        CatalogEntry::DatabaseReference{ExternalObjectID{external_id, 0}, std::string{default_database_name}, ""});
+        CatalogEntry::DatabaseReference{ExternalObjectID{catalog_entry_id, 0}, std::string{default_database_name}, ""});
     databases_by_name.insert({db.database_name, db});
 
     // Register default schema
-    auto& schema = schema_references.Append(CatalogEntry::SchemaReference{
-        ExternalObjectID{external_id, 0}, ExternalObjectID{external_id, 0}, std::string{default_schema_name}});
+    auto& schema = schema_references.Append(CatalogEntry::SchemaReference{ExternalObjectID{catalog_entry_id, 0},
+                                                                          ExternalObjectID{catalog_entry_id, 0},
+                                                                          std::string{default_schema_name}});
     schemas_by_name.insert({{db.database_name, schema.schema_name}, schema});
 }
 
@@ -155,10 +156,10 @@ std::pair<ExternalObjectID, ExternalObjectID> NameResolutionPass::RegisterDataba
     std::string_view db_name;
     auto db_iter = databases_by_name.find(name.database_name);
     if (db_iter != databases_by_name.end()) {
-        db_id = db_iter->second.get().database_id;
+        db_id = db_iter->second.get().external_database_id;
         db_name = db_iter->second.get().database_name;
     } else {
-        db_id = ExternalObjectID{external_id, static_cast<uint32_t>(database_references.GetSize())};
+        db_id = ExternalObjectID{catalog_entry_id, static_cast<uint32_t>(database_references.GetSize())};
         auto& db_ref =
             database_references.Append(CatalogEntry::DatabaseReference{db_id, std::string{name.database_name}, ""});
         databases_by_name.insert({name.database_name, db_ref});
@@ -170,10 +171,10 @@ std::pair<ExternalObjectID, ExternalObjectID> NameResolutionPass::RegisterDataba
     std::string_view schema_name;
     auto schema_iter = schemas_by_name.find({name.database_name, name.schema_name});
     if (schema_iter != schemas_by_name.end()) {
-        schema_id = schema_iter->second.get().schema_id;
+        schema_id = schema_iter->second.get().external_schema_id;
         schema_name = schema_iter->second.get().schema_name;
     } else {
-        schema_id = ExternalObjectID{external_id, static_cast<uint32_t>(schema_references.GetSize())};
+        schema_id = ExternalObjectID{catalog_entry_id, static_cast<uint32_t>(schema_references.GetSize())};
         auto& schema_ref =
             schema_references.Append(CatalogEntry::SchemaReference{db_id, schema_id, std::string{name.schema_name}});
         schemas_by_name.insert({{name.database_name, name.schema_name}, schema_ref});
@@ -232,7 +233,7 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
 
             // Remember resolved table
             scope.resolved_table_references.insert({&table_ref, table});
-            table_ref.resolved_table_id = table.table_id;
+            table_ref.resolved_table_id = table.external_table_id;
 
             // Remember all available columns
             for (size_t i = 0; i < table.table_columns.size(); ++i) {
@@ -258,10 +259,10 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
         }
 
         // Otherwise consult the external search path
-        if (auto resolved = catalog.ResolveTable(qualified_table_name, external_id)) {
+        if (auto resolved = catalog.ResolveTable(qualified_table_name, catalog_entry_id)) {
             // Remember resolved table
             scope.resolved_table_references.insert({&table_ref, *resolved});
-            table_ref.resolved_table_id = resolved->table_id;
+            table_ref.resolved_table_id = resolved->external_table_id;
 
             // Collect all available columns
             for (size_t i = 0; i < resolved->table_columns.size(); ++i) {
@@ -296,7 +297,7 @@ void NameResolutionPass::ResolveColumnRefsInScope(NameScope& scope, ColumnRefsBy
                 target_scope->resolved_table_columns.find({column_name.table_alias, column_name.column_name});
             if (resolved_iter != target_scope->resolved_table_columns.end()) {
                 auto& resolved = resolved_iter->second;
-                column_ref.resolved_table_id = resolved.table.table_id;
+                column_ref.resolved_table_id = resolved.table.external_table_id;
                 column_ref.resolved_column_id = resolved.column_id;
                 auto dead_iter = column_ref_iter++;
                 unresolved_columns.erase(dead_iter);
@@ -379,7 +380,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 auto& n = column_references.Append(AnalyzedScript::ColumnReference());
                 n.buffer_index = column_references.GetSize() - 1;
                 n.value.column_reference_id =
-                    ExternalObjectID{external_id, static_cast<uint32_t>(column_references.GetSize() - 1)};
+                    ExternalObjectID{catalog_entry_id, static_cast<uint32_t>(column_references.GetSize() - 1)};
                 n.value.ast_node_id = node_id;
                 n.value.ast_statement_id = std::nullopt;
                 n.value.ast_scope_root = std::nullopt;
@@ -412,7 +413,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                     auto& n = table_references.Append(AnalyzedScript::TableReference());
                     n.buffer_index = table_references.GetSize() - 1;
                     n.value.table_reference_id =
-                        ExternalObjectID{external_id, static_cast<uint32_t>(table_references.GetSize() - 1)};
+                        ExternalObjectID{catalog_entry_id, static_cast<uint32_t>(table_references.GetSize() - 1)};
                     n.value.ast_node_id = node_id;
                     n.value.ast_statement_id = std::nullopt;
                     n.value.ast_scope_root = std::nullopt;
@@ -561,9 +562,10 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 CreateScope(node_state, node_id);
                 // Build the table
                 auto& n = table_declarations.Append(AnalyzedScript::TableDeclaration());
-                n.database_id = db_id;
-                n.schema_id = schema_id;
-                n.table_id = ExternalObjectID{external_id, static_cast<uint32_t>(table_declarations.GetSize() - 1)};
+                n.external_database_id = db_id;
+                n.external_schema_id = schema_id;
+                n.external_table_id =
+                    ExternalObjectID{catalog_entry_id, static_cast<uint32_t>(table_declarations.GetSize() - 1)};
                 n.ast_node_id = node_id;
                 n.table_name = table_name;
                 n.table_columns = std::move(table_columns);

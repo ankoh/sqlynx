@@ -50,7 +50,7 @@ flatbuffers::Offset<proto::Table> CatalogEntry::TableDeclaration::Pack(flatbuffe
 }
 
 CatalogEntry::CatalogEntry(ExternalID external_id, std::string_view database_name, std::string_view schema_name)
-    : external_id(external_id),
+    : external_entry_id(external_id),
       default_database_name(database_name),
       default_schema_name(schema_name),
       database_references(),
@@ -67,13 +67,13 @@ std::pair<ExternalObjectID, std::string_view> CatalogEntry::RegisterDatabaseName
     ExternalObjectID db_id;
     if (db_iter == databases_by_name.end()) {
         auto& db_ref = database_references.Append(CatalogEntry::DatabaseReference{
-            ExternalObjectID{external_id, static_cast<uint32_t>(database_references.GetSize())}, std::string{name},
-            ""});
-        db_id = db_ref.database_id;
+            ExternalObjectID{external_entry_id, static_cast<uint32_t>(database_references.GetSize())},
+            std::string{name}, ""});
+        db_id = db_ref.external_database_id;
         name = db_ref.database_name;
         databases_by_name.insert({name, db_ref});
     } else {
-        db_id = db_iter->second.get().database_id;
+        db_id = db_iter->second.get().external_database_id;
         name = db_iter->second.get().database_name;
     }
     return {db_id, name};
@@ -87,20 +87,20 @@ std::pair<ExternalObjectID, std::string_view> CatalogEntry::RegisterSchemaName(E
     if (schema_iter == schemas_by_name.end()) {
         auto& schema_ref = schema_references.Append(CatalogEntry::SchemaReference{
             db_id,
-            ExternalObjectID{external_id, static_cast<uint32_t>(schema_references.GetSize())},
+            ExternalObjectID{external_entry_id, static_cast<uint32_t>(schema_references.GetSize())},
             std::string{name},
         });
-        schema_id = schema_ref.database_id;
+        schema_id = schema_ref.external_database_id;
         schemas_by_name.insert({{db_name, name}, schema_ref});
     } else {
-        schema_id = schema_iter->second.get().schema_id;
+        schema_id = schema_iter->second.get().external_schema_id;
         name = schema_iter->second.get().schema_name;
     }
     return {schema_id, name};
 }
 
 const CatalogEntry::TableDeclaration* CatalogEntry::ResolveTable(ExternalObjectID table_id) const {
-    if (table_id.GetExternalId() == external_id) {
+    if (table_id.GetExternalId() == external_entry_id) {
         return &table_declarations[table_id.GetIndex()];
     }
     return nullptr;
@@ -108,7 +108,7 @@ const CatalogEntry::TableDeclaration* CatalogEntry::ResolveTable(ExternalObjectI
 
 const CatalogEntry::TableDeclaration* CatalogEntry::ResolveTable(ExternalObjectID table_id,
                                                                  const Catalog& catalog) const {
-    if (external_id == table_id.GetExternalId()) {
+    if (external_entry_id == table_id.GetExternalId()) {
         return &table_declarations[table_id.GetIndex()];
     } else {
         return catalog.ResolveTable(table_id);
@@ -129,7 +129,7 @@ const CatalogEntry::TableDeclaration* CatalogEntry::ResolveTable(QualifiedTableN
     if (auto resolved = ResolveTable(name)) {
         return resolved;
     } else {
-        return catalog.ResolveTable(name, external_id);
+        return catalog.ResolveTable(name, external_entry_id);
     }
 }
 
@@ -192,7 +192,7 @@ flatbuffers::Offset<proto::CatalogEntry> DescriptorPool::DescribeEntry(flatbuffe
     auto schemas_offset = builder.CreateVector(schema_offsets);
 
     proto::CatalogEntryBuilder catalog{builder};
-    catalog.add_external_id(external_id);
+    catalog.add_external_id(external_entry_id);
     catalog.add_entry_type(proto::CatalogEntryType::DESCRIPTOR_POOL);
     catalog.add_rank(0);
     catalog.add_schemas(schemas_offset);
@@ -218,7 +218,7 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
     // Read tables
     uint32_t next_table_id = table_declarations.GetSize();
     for (auto* table : *descriptor.tables()) {
-        ExternalObjectID table_id{external_id, next_table_id};
+        ExternalObjectID table_id{external_entry_id, next_table_id};
         // Get the table name
         auto table_name_ptr = table->table_name();
         if (!table_name_ptr || table_name_ptr->size() == 0) {
@@ -242,9 +242,9 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
         }
         // Create the table
         auto& t = table_declarations.Append(AnalyzedScript::TableDeclaration());
-        t.database_id = db_id;
-        t.schema_id = schema_id;
-        t.table_id = table_id;
+        t.external_database_id = db_id;
+        t.external_schema_id = schema_id;
+        t.external_table_id = table_id;
         t.table_name = QualifiedTableName{qualified_table_name};
         t.table_columns = std::move(columns);
         ++next_table_id;
@@ -402,9 +402,9 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
                 auto& [db_name, schema_name] = schema_key;
                 auto name_id = add_name(schema_name);
                 ExternalObjectID repr =
-                    representative_by_schema_name.insert({name_id, schema_ref.get().schema_id}).first->second;
+                    representative_by_schema_name.insert({name_id, schema_ref.get().external_schema_id}).first->second;
                 auto [iter, ok] = representative_schemas.insert(
-                    {schema_ref.get().schema_id, Representative{repr, schema_name, name_id}});
+                    {schema_ref.get().external_schema_id, Representative{repr, schema_name, name_id}});
                 if (!ok && repr.Pack() < iter->second.representative_id.Pack()) {
                     iter->second.representative_id = repr;
                 }
@@ -416,9 +416,9 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
             for (auto& [db_name, db_ref] : catalog_entry->databases_by_name) {
                 auto name_id = add_name(db_name);
                 ExternalObjectID repr =
-                    representative_by_db_name.insert({name_id, db_ref.get().database_id}).first->second;
-                auto [iter, ok] =
-                    representative_databases.insert({db_ref.get().database_id, Representative{repr, db_name, name_id}});
+                    representative_by_db_name.insert({name_id, db_ref.get().external_database_id}).first->second;
+                auto [iter, ok] = representative_databases.insert(
+                    {db_ref.get().external_database_id, Representative{repr, db_name, name_id}});
                 if (!ok && repr.Pack() < iter->second.representative_id.Pack()) {
                     iter->second.representative_id = repr;
                 }
@@ -435,14 +435,14 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
         for (auto& chunk : catalog_entry->table_declarations.GetChunks()) {
             for (auto& entry : chunk) {
                 // Resolve the representative database
-                auto db_iter = representative_databases.find(entry.database_id);
+                auto db_iter = representative_databases.find(entry.external_database_id);
                 assert(db_iter != representative_databases.end());
                 auto db_name = db_iter->second.name;
                 auto db_name_id = db_iter->second.name_id;
                 auto db_repr = db_iter->second.representative_id;
 
                 // Resolve the representative schema
-                auto schema_iter = representative_schemas.find(entry.schema_id);
+                auto schema_iter = representative_schemas.find(entry.external_schema_id);
                 assert(schema_iter != representative_schemas.end());
                 auto schema_name = schema_iter->second.name;
                 auto schema_name_id = schema_iter->second.name_id;
@@ -460,7 +460,7 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
 
                 // Create the table node
                 auto [table_node, new_table] =
-                    schema_node->second.children.insert({table_name, Node{table_name_id, entry.table_id}});
+                    schema_node->second.children.insert({table_name, Node{table_name_id, entry.external_table_id}});
 
                 database_count += new_database;
                 schema_count += new_schema;
@@ -561,20 +561,20 @@ proto::StatusCode Catalog::LoadScript(Script& script, CatalogEntry::Rank rank) {
     for (auto& [schema_key, schema_ref] : entry.schemas_by_name) {
         auto& [db_name, schema_name] = schema_key;
         std::tuple<std::string_view, std::string_view, CatalogEntry::Rank, ExternalID> entry_key{
-            db_name, schema_name, rank, entry.GetExternalID()};
+            db_name, schema_name, rank, entry.GetCatalogEntryId()};
         CatalogSchemaEntryInfo entry_info{
-            .catalog_entry_id = entry.GetExternalID(),
-            .database_id = schema_ref.get().database_id,
-            .schema_id = schema_ref.get().schema_id,
+            .catalog_entry_id = entry.GetCatalogEntryId(),
+            .external_database_id = schema_ref.get().external_database_id,
+            .external_schema_id = schema_ref.get().external_schema_id,
         };
         entry_names_ranked.insert({entry_key, entry_info});
     }
     // Register as script entry
     script_entries.insert({&script, {.script = script, .analyzed = script.analyzed_script, .rank = rank}});
     // Register as catalog entry
-    entries.insert({entry.GetExternalID(), &entry});
+    entries.insert({entry.GetCatalogEntryId(), &entry});
     // Register rank
-    entries_ranked.insert({rank, entry.GetExternalID()});
+    entries_ranked.insert({rank, entry.GetCatalogEntryId()});
     ++version;
     return proto::StatusCode::OK;
 }
@@ -621,8 +621,8 @@ proto::StatusCode Catalog::UpdateScript(ScriptEntry& entry) {
             auto& [db_name, schema_name] = k;
             CatalogSchemaEntryInfo entry{
                 .catalog_entry_id = external_id,
-                .database_id = new_entry.schema_ref.database_id,
-                .schema_id = new_entry.schema_ref.schema_id,
+                .external_database_id = new_entry.schema_ref.external_database_id,
+                .external_schema_id = new_entry.schema_ref.external_schema_id,
             };
             std::tuple<std::string_view, std::string_view, CatalogEntry::Rank, ExternalID> entry_key{
                 db_name, schema_name, rank, external_id};
@@ -702,8 +702,8 @@ proto::StatusCode Catalog::AddSchemaDescriptor(ExternalID external_id, std::span
             db_name, schema_name, pool.GetRank(), external_id};
         CatalogSchemaEntryInfo entry{
             .catalog_entry_id = external_id,
-            .database_id = db_id,
-            .schema_id = schema_id,
+            .external_database_id = db_id,
+            .external_schema_id = schema_id,
         };
         entry_names_ranked.insert({entry_key, entry});
     }

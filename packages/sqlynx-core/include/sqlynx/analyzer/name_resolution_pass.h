@@ -1,10 +1,7 @@
 #pragma once
 
 #include <functional>
-#include <limits>
-#include <tuple>
 #include <unordered_map>
-#include <unordered_set>
 
 #include "sqlynx/analyzer/analyzer.h"
 #include "sqlynx/analyzer/pass_manager.h"
@@ -77,7 +74,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// The parsed program
     ParsedScript& parsed_program;
     /// The external id of the current script
-    const ExternalID external_id;
+    const ExternalID catalog_entry_id;
     /// The default database name
     const std::string_view default_database_name;
     /// The default schema name
