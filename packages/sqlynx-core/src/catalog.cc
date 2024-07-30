@@ -441,7 +441,7 @@ proto::StatusCode Catalog::LoadScript(Script& script, CatalogEntry::Rank rank) {
         return proto::StatusCode::CATALOG_SCRIPT_NOT_ANALYZED;
     }
 
-    // Script was  dded to catalog before?
+    // Script has been added to catalog before?
     auto script_iter = script_entries.find(&script);
     if (script_iter != script_entries.end()) {
         return UpdateScript(script_iter->second);
@@ -453,20 +453,19 @@ proto::StatusCode Catalog::LoadScript(Script& script, CatalogEntry::Rank rank) {
     }
     // Collect all schema names
     CatalogEntry& entry = *script.analyzed_script;
-    std::unordered_set<std::pair<std::string_view, std::string_view>, TupleHasher> schema_names;
-    for (auto& table : entry.table_declarations) {
-        auto name = entry.QualifyTableName(table.table_name);
-        schema_names.insert({name.database_name, name.schema_name});
-    }
-    for (auto& [db_name, schema_name] : schema_names) {
-        entry_names_ranked.insert({db_name, schema_name, rank, entry.GetExternalID()});
+    for (auto& [schema_key, schema_ref] : entry.schemas_by_name) {
+        auto& [db_name, schema_name] = schema_key;
+        std::tuple<std::string_view, std::string_view, CatalogEntry::Rank, ExternalID> entry_key{
+            db_name, schema_name, rank, entry.GetExternalID()};
+        CatalogSchemaEntryInfo entry_info{
+            .catalog_entry_id = entry.GetExternalID(),
+            .database_id = schema_ref.get().database_id,
+            .schema_id = schema_ref.get().schema_id,
+        };
+        entry_names_ranked.insert({entry_key, entry_info});
     }
     // Register as script entry
-    script_entries.insert({&script,
-                           {.script = script,
-                            .analyzed = script.analyzed_script,
-                            .rank = rank,
-                            .schema_names = std::move(schema_names)}});
+    script_entries.insert({&script, {.script = script, .analyzed = script.analyzed_script, .rank = rank}});
     // Register as catalog entry
     entries.insert({entry.GetExternalID(), &entry});
     // Register rank
@@ -482,34 +481,47 @@ proto::StatusCode Catalog::UpdateScript(ScriptEntry& entry) {
     if (entry.analyzed == script.analyzed_script) {
         return proto::StatusCode::OK;
     }
+    // New schema entry
+    struct NewSchemaEntry {
+        /// A Schema ref
+        const CatalogEntry::SchemaReference& schema_ref;
+        /// Already existed?
+        bool already_exists;
+    };
     // Collect all new names
-    std::unordered_map<std::pair<std::string_view, std::string_view>, bool, TupleHasher> new_names;
-    for (auto& table : script.analyzed_script->table_declarations) {
-        auto name = script.analyzed_script->QualifyTableName(table.table_name);
-        new_names.insert({{name.database_name, name.schema_name}, false});
+    std::unordered_map<std::pair<std::string_view, std::string_view>, NewSchemaEntry, TupleHasher> new_schema_entries;
+    for (auto& [key, ref] : script.analyzed_script->schemas_by_name) {
+        NewSchemaEntry new_entry{.schema_ref = ref, .already_exists = false};
+        new_schema_entries.insert({key, new_entry});
     }
-    // Scan previous names, mark those that already exist, erase those that no longer exist
+    // Scan previous names, mark new names that already exist, erase those that no longer exist
     auto external_id = script.GetExternalID();
     auto rank = entry.rank;
-    auto& names = entry.schema_names;
-    for (auto prev_name_iter = names.begin(); prev_name_iter != names.end();) {
-        auto& [db_name, schema_name] = *prev_name_iter;
-        auto new_name_iter = new_names.find({db_name, schema_name});
-        if (new_name_iter != new_names.end()) {
-            new_name_iter->second = true;
+    auto& prev_schemas = entry.analyzed->schemas_by_name;
+    for (auto prev_name_iter = prev_schemas.begin(); prev_name_iter != prev_schemas.end();) {
+        auto& [db_name, schema_name] = prev_name_iter->first;
+        auto new_name_iter = new_schema_entries.find({db_name, schema_name});
+        if (new_name_iter != new_schema_entries.end()) {
+            new_name_iter->second.already_exists = true;
         } else {
             entry_names_ranked.erase({db_name, schema_name, rank, external_id});
-            names.erase(prev_name_iter++);
+            prev_schemas.erase(prev_name_iter++);
             continue;
         }
         ++prev_name_iter;
     }
     // Scan new names and insert unmarked
-    for (auto& [k, already_exists] : new_names) {
-        if (!already_exists) {
+    for (auto& [k, new_entry] : new_schema_entries) {
+        if (!new_entry.already_exists) {
             auto& [db_name, schema_name] = k;
-            names.insert({db_name, schema_name});
-            entry_names_ranked.insert({db_name, schema_name, rank, external_id});
+            CatalogSchemaEntryInfo entry{
+                .catalog_entry_id = external_id,
+                .database_id = new_entry.schema_ref.database_id,
+                .schema_id = new_entry.schema_ref.schema_id,
+            };
+            std::tuple<std::string_view, std::string_view, CatalogEntry::Rank, ExternalID> entry_key{
+                db_name, schema_name, rank, external_id};
+            entry_names_ranked.insert({entry_key, entry});
         }
     }
     entry.analyzed = script.analyzed_script;
@@ -524,9 +536,12 @@ void Catalog::DropScript(Script& script) {
     auto iter = script_entries.find(&script);
     if (iter != script_entries.end()) {
         auto external_id = script.GetExternalID();
-        auto& names = iter->second.schema_names;
-        for (auto& [db_name, schema_name] : iter->second.schema_names) {
-            entry_names_ranked.erase({db_name, schema_name, iter->second.rank, external_id});
+        if (iter->second.analyzed) {
+            auto& analyzed = iter->second.analyzed;
+            for (auto& [schema_key, entry_info] : analyzed->schemas_by_name) {
+                auto& [db_name, schema_name] = schema_key;
+                entry_names_ranked.erase({db_name, schema_name, iter->second.rank, external_id});
+            }
         }
         entries_ranked.erase({iter->second.rank, external_id});
         entries.erase(external_id);
@@ -566,13 +581,53 @@ proto::StatusCode Catalog::AddSchemaDescriptor(ExternalID external_id, std::span
     auto& pool = *iter->second;
     auto& descriptor = *flatbuffers::GetRoot<proto::SchemaDescriptor>(descriptor_data.data());
     pool.AddSchemaDescriptor(descriptor, std::move(descriptor_buffer));
-    // Register schema name
+    // Register names
     {
-        std::string_view database_name =
+        std::string_view db_name =
             descriptor.database_name() == nullptr ? "" : descriptor.database_name()->string_view();
         std::string_view schema_name =
             descriptor.schema_name() == nullptr ? "" : descriptor.schema_name()->string_view();
-        entry_names_ranked.insert({database_name, schema_name, pool.GetRank(), external_id});
+
+        // Add the database name
+        auto db_iter = pool.databases_by_name.find(db_name);
+        ExternalObjectID db_id;
+        if (db_iter == pool.databases_by_name.end()) {
+            auto& db_ref = pool.database_references.Append(CatalogEntry::DatabaseReference{
+                ExternalObjectID{external_id, static_cast<uint32_t>(pool.database_references.GetSize())},
+                std::string{db_name}, ""});
+            db_id = db_ref.database_id;
+            db_name = db_ref.database_name;
+            pool.databases_by_name.insert({db_name, db_ref});
+        } else {
+            db_id = db_iter->second.get().database_id;
+            db_name = db_iter->second.get().database_name;
+        }
+
+        // Add the schema name
+        auto schema_iter = pool.schemas_by_name.find({db_name, schema_name});
+        ExternalObjectID schema_id;
+        if (schema_iter == pool.schemas_by_name.end()) {
+            auto& schema_ref = pool.schema_references.Append(CatalogEntry::SchemaReference{
+                db_id,
+                ExternalObjectID{external_id, static_cast<uint32_t>(pool.schema_references.GetSize())},
+                std::string{schema_name},
+            });
+            schema_id = schema_ref.database_id;
+            pool.schemas_by_name.insert({{db_name, schema_name}, schema_ref});
+        } else {
+            schema_id = schema_iter->second.get().schema_id;
+            schema_name = schema_iter->second.get().schema_name;
+        }
+
+        // Add the entry
+        std::tuple<std::string_view, std::string_view, CatalogEntry::Rank, ExternalID> entry_key{
+            db_name, schema_name, pool.GetRank(), external_id};
+        CatalogSchemaEntryInfo entry{
+            .catalog_entry_id = external_id,
+            .database_id = db_id,
+            .schema_id = schema_id,
+        };
+        entry_names_ranked.insert({entry_key, entry});
     }
     ++version;
     return proto::StatusCode::OK;
@@ -588,7 +643,7 @@ const CatalogEntry::TableDeclaration* Catalog::ResolveTable(CatalogEntry::Qualif
                                                             ExternalID ignore_entry) const {
     for (auto iter = entry_names_ranked.lower_bound({table_name.database_name, table_name.schema_name, 0, 0});
          iter != entry_names_ranked.end(); ++iter) {
-        auto& [db_name, schema_name, rank, candidate] = *iter;
+        auto& [db_name, schema_name, rank, candidate] = iter->first;
         if (db_name != table_name.database_name || schema_name != table_name.schema_name) {
             break;
         }
