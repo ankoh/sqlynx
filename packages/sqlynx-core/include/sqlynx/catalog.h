@@ -122,11 +122,11 @@ class CatalogEntry {
     /// A table declaration
     struct TableDeclaration {
         /// The database id
-        ExternalObjectID database_id;
+        ExternalObjectID external_database_id;
         /// The schema id
-        ExternalObjectID schema_id;
+        ExternalObjectID external_schema_id;
         /// The table id
-        ExternalObjectID table_id;
+        ExternalObjectID external_table_id;
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
         /// The AST statement id in the target script
@@ -142,9 +142,9 @@ class CatalogEntry {
                          ExternalObjectID table_id = {}, std::optional<uint32_t> ast_node_id = std::nullopt,
                          std::optional<uint32_t> ast_statement_id = {}, std::optional<uint32_t> ast_scope_root = {},
                          QualifiedTableName table_name = {}, std::vector<TableColumn> columns = {})
-            : database_id(database_id),
-              schema_id(schema_id),
-              table_id(table_id),
+            : external_database_id(database_id),
+              external_schema_id(schema_id),
+              external_table_id(table_id),
               ast_node_id(ast_node_id),
               ast_statement_id(ast_statement_id),
               ast_scope_root(ast_scope_root),
@@ -165,14 +165,14 @@ class CatalogEntry {
     /// We just track referenced database names to identify them through IDs.
     struct DatabaseReference {
         /// The database id
-        ExternalObjectID database_id;
+        ExternalObjectID external_database_id;
         /// The database name
         std::string database_name;
         /// The database alias (if any)
         std::string database_alias;
         /// Constructor
         DatabaseReference(ExternalObjectID database_id, std::string database_name, std::string database_alias)
-            : database_id(database_id),
+            : external_database_id(database_id),
               database_name(std::move(database_name)),
               database_alias(std::move(database_alias)) {}
         /// Pack as FlatBuffer
@@ -183,21 +183,21 @@ class CatalogEntry {
     /// We just track referenced schema names to identify them through IDs.
     struct SchemaReference {
         /// The database id
-        ExternalObjectID database_id;
+        ExternalObjectID external_database_id;
         /// The schema id
-        ExternalObjectID schema_id;
+        ExternalObjectID external_schema_id;
         /// The database name
         std::string schema_name;
         /// Constructor
         SchemaReference(ExternalObjectID database_id, ExternalObjectID schema_id, std::string schema_name)
-            : database_id(database_id), schema_id(schema_id), schema_name(std::move(schema_name)) {}
+            : external_database_id(database_id), external_schema_id(schema_id), schema_name(std::move(schema_name)) {}
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::SchemaReference> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
 
    protected:
-    /// The external id
-    const ExternalID external_id;
+    /// The catalog entry id
+    const ExternalID external_entry_id;
     /// The default database name
     const std::string_view default_database_name;
     /// The default schema name
@@ -228,7 +228,7 @@ class CatalogEntry {
     CatalogEntry(ExternalID external_id, std::string_view database_name, std::string_view schema_name);
 
     /// Get the external id
-    ExternalID GetExternalID() const { return external_id; }
+    ExternalID GetCatalogEntryId() const { return external_entry_id; }
     /// Get the default database name
     auto& GetDefaultDatabaseName() const { return default_database_name; }
     /// Get the default schema name
@@ -326,9 +326,9 @@ class Catalog {
         /// The id of the catalog entry
         ExternalID catalog_entry_id;
         /// The id of the database <catalog_entry_id, database_idx>
-        ExternalObjectID database_id;
+        ExternalObjectID external_database_id;
         /// The id of the schema <catalog_entry_id, schema_idx>
-        ExternalObjectID schema_id;
+        ExternalObjectID external_schema_id;
     };
     /// The catalog version.
     /// Every modification bumps the version counter, the analyzer reads the version counter which protects all refs.

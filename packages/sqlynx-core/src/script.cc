@@ -422,7 +422,7 @@ flatbuffers::Offset<proto::CatalogEntry> AnalyzedScript::DescribeEntry(flatbuffe
     auto schemas_offset = builder.CreateVector(schemas);
 
     proto::CatalogEntryBuilder catalog{builder};
-    catalog.add_external_id(external_id);
+    catalog.add_external_id(external_entry_id);
     catalog.add_entry_type(proto::CatalogEntryType::DESCRIPTOR_POOL);
     catalog.add_rank(0);
     catalog.add_schemas(schemas_offset);
@@ -495,7 +495,7 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
     auto schema_name = builder.CreateString(GetDefaultSchemaName());
 
     proto::AnalyzedScriptBuilder out{builder};
-    out.add_external_id(external_id);
+    out.add_external_id(external_entry_id);
     out.add_default_database_name(database_name);
     out.add_default_schema_name(schema_name);
     out.add_tables(tables_ofs);
