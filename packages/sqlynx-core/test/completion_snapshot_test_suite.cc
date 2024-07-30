@@ -1,10 +1,6 @@
 #include "gtest/gtest.h"
 #include "pugixml.hpp"
-#include "sqlynx/analyzer/analyzer.h"
-#include "sqlynx/analyzer/completion.h"
 #include "sqlynx/catalog.h"
-#include "sqlynx/parser/parser.h"
-#include "sqlynx/parser/scanner.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
 #include "sqlynx/testing/completion_snapshot_test.h"
@@ -22,17 +18,23 @@ TEST_P(CompletionSnapshotTestSuite, Test) {
 
     pugi::xml_document out;
     auto main_node = out.append_child("script");
+
+    // Write catalog node
     auto catalog_node = out.append_child("catalog");
+    std::string default_database{test->catalog_default_database};
+    std::string default_schema{test->catalog_default_schema};
+    catalog_node.append_attribute("database").set_value(default_database.c_str());
+    catalog_node.append_attribute("schema").set_value(default_schema.c_str());
 
     // Read catalog
-    Catalog catalog;
+    Catalog catalog{test->catalog_default_database, test->catalog_default_schema};
     std::vector<std::unique_ptr<Script>> catalog_scripts;
     size_t entry_id = 1;
-    ASSERT_NO_FATAL_FAILURE(
-        AnalyzerSnapshotTest::TestRegistrySnapshot(test->catalog, catalog_node, catalog, catalog_scripts, entry_id));
+    ASSERT_NO_FATAL_FAILURE(AnalyzerSnapshotTest::TestRegistrySnapshot(test->catalog_entries, catalog_node, catalog,
+                                                                       catalog_scripts, entry_id));
 
     // Read main script
-    Script main_script{catalog, 0, test->script.database_name, test->script.schema_name};
+    Script main_script{catalog, 0};
     ASSERT_NO_FATAL_FAILURE(AnalyzerSnapshotTest::TestMainScriptSnapshot(test->script, main_node, main_script, 0));
 
     // Determine cursor position

@@ -5,10 +5,10 @@
                 select * from db1.schema1.A, db2.schema2.A where a = c;
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="db3" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="db3" schema="schema3" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..44" text="db1.schema1.A" />
@@ -25,21 +25,21 @@
                 </edge>
             </query-graph>
         </script>
-        <catalog>
-            <script id="1" database="db3" schema="schema3">
+        <catalog database="db3" schema="schema3">
+            <script id="1">
                 <input>
                     create table db1.schema1.A (a int, b int);
                     create table db2.schema2.A (c int, d int);
                 </input>
                 <database-references>
-                    <database name="db3" />
-                    <database name="db1" />
-                    <database name="db2" />
+                    <entry db="db3" />
+                    <entry db="db1" />
+                    <entry db="db2" />
                 </database-references>
                 <schema-references>
-                    <schema name="schema3" />
-                    <schema name="schema1" />
-                    <schema name="schema2" />
+                    <entry db="db3" schema="schema3" />
+                    <entry db="db1" schema="schema1" />
+                    <entry db="db2" schema="schema2" />
                 </schema-references>
                 <tables>
                     <table name="a" loc="21..62" text="create tab..nt, b int)">
@@ -60,10 +60,10 @@
                 select * from db1.schema1.A, db2.schema2.A where a = c;
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="db1" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="db1" schema="schema1" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..44" text="db1.schema1.A" />
@@ -80,19 +80,19 @@
                 </edge>
             </query-graph>
         </script>
-        <catalog>
-            <script id="1" database="db1" schema="schema1">
+        <catalog database="db1" schema="schema1">
+            <script id="1">
                 <input>
                     create table A (a int, b int);
                     create table db2.schema2.A (c int, d int);
                 </input>
                 <database-references>
-                    <database name="db1" />
-                    <database name="db2" />
+                    <entry db="db1" />
+                    <entry db="db2" />
                 </database-references>
                 <schema-references>
-                    <schema name="schema1" />
-                    <schema name="schema2" />
+                    <entry db="db1" schema="schema1" />
+                    <entry db="db2" schema="schema2" />
                 </schema-references>
                 <tables>
                     <table name="a" loc="21..50" text="create tab..nt, b int)">
@@ -113,10 +113,10 @@
                 select * from db1.schema1.A, db2.schema2.B where a = c;
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="db1" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="db1" schema="schema1" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..44" text="db1.schema1.A" />
@@ -133,16 +133,16 @@
                 </edge>
             </query-graph>
         </script>
-        <catalog>
-            <script id="1" database="db1" schema="schema1">
+        <catalog database="db1" schema="schema1">
+            <script id="1">
                 <input>
                     create table A (a int, b int);
                 </input>
                 <database-references>
-                    <database name="db1" />
+                    <entry db="db1" />
                 </database-references>
                 <schema-references>
-                    <schema name="schema1" />
+                    <entry db="db1" schema="schema1" />
                 </schema-references>
                 <tables>
                     <table name="a" loc="21..50" text="create tab..nt, b int)">
@@ -151,20 +151,22 @@
                     </table>
                 </tables>
             </script>
-            <script id="2" database="db2" schema="schema2">
+            <script id="2">
                 <input>
-                    create table B (c int, d int);
+                    create table db2.schema2.B (c int, d int);
                 </input>
                 <database-references>
-                    <database name="db2" />
+                    <entry db="db1" />
+                    <entry db="db2" />
                 </database-references>
                 <schema-references>
-                    <schema name="schema2" />
+                    <entry db="db1" schema="schema1" />
+                    <entry db="db2" schema="schema2" />
                 </schema-references>
                 <tables>
-                    <table name="b" loc="21..50" text="create tab..nt, d int)">
-                        <column name="c" loc="37..42" text="c int" />
-                        <column name="d" loc="44..49" text="d int" />
+                    <table name="b" loc="21..62" text="create tab..nt, d int)">
+                        <column name="c" loc="49..54" text="c int" />
+                        <column name="d" loc="56..61" text="d int" />
                     </table>
                 </tables>
             </script>
@@ -176,10 +178,10 @@
                 select * from db1.schema1.A, db2.schema2.B where a = c;
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..44" text="db1.schema1.A" />
@@ -202,12 +204,12 @@
                     create table db1.schema1.A (a int, b int);
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
-                    <database name="db1" />
+                    <entry db="sqlynx" />
+                    <entry db="db1" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
-                    <schema name="schema1" />
+                    <entry db="sqlynx" schema="default" />
+                    <entry db="db1" schema="schema1" />
                 </schema-references>
                 <tables>
                     <table name="a" loc="21..62" text="create tab..nt, b int)">
@@ -221,12 +223,12 @@
                     create table db2.schema2.B (c int, d int);
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
-                    <database name="db2" />
+                    <entry db="sqlynx" />
+                    <entry db="db2" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
-                    <schema name="schema2" />
+                    <entry db="sqlynx" schema="default" />
+                    <entry db="db2" schema="schema2" />
                 </schema-references>
                 <tables>
                     <table name="b" loc="21..62" text="create tab..nt, d int)">
@@ -244,10 +246,10 @@
                 select * from db1.schema1.A where c = 1;
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..44" text="db1.schema1.A" />
@@ -259,37 +261,41 @@
             </column-references>
         </script>
         <catalog>
-            <script id="1" database="db1" schema="schema1">
+            <script id="1">
                 <input>
-                    create table A (a int, b int);
+                    create table db1.schema1.A (a int, b int);
                 </input>
                 <database-references>
-                    <database name="db1" />
+                    <entry db="sqlynx" />
+                    <entry db="db1" />
                 </database-references>
                 <schema-references>
-                    <schema name="schema1" />
+                    <entry db="sqlynx" schema="default" />
+                    <entry db="db1" schema="schema1" />
                 </schema-references>
                 <tables>
-                    <table name="a" loc="21..50" text="create tab..nt, b int)">
-                        <column name="a" loc="37..42" text="a int" />
-                        <column name="b" loc="44..49" text="b int" />
+                    <table name="a" loc="21..62" text="create tab..nt, b int)">
+                        <column name="a" loc="49..54" text="a int" />
+                        <column name="b" loc="56..61" text="b int" />
                     </table>
                 </tables>
             </script>
-            <script id="2" database="db1" schema="schema1">
+            <script id="2">
                 <input>
-                    create table A (c int, d int);
+                    create table db1.schema1.A (c int, d int);
                 </input>
                 <database-references>
-                    <database name="db1" />
+                    <entry db="sqlynx" />
+                    <entry db="db1" />
                 </database-references>
                 <schema-references>
-                    <schema name="schema1" />
+                    <entry db="sqlynx" schema="default" />
+                    <entry db="db1" schema="schema1" />
                 </schema-references>
                 <tables>
-                    <table name="a" loc="21..50" text="create tab..nt, d int)">
-                        <column name="c" loc="37..42" text="c int" />
-                        <column name="d" loc="44..49" text="d int" />
+                    <table name="a" loc="21..62" text="create tab..nt, d int)">
+                        <column name="c" loc="49..54" text="c int" />
+                        <column name="d" loc="56..61" text="d int" />
                     </table>
                 </tables>
             </script>

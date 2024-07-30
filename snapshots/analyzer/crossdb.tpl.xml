@@ -5,8 +5,8 @@
                 select * from db1.schema1.A, db2.schema2.A where a = c;
             </input>
         </script>  
-        <catalog>
-            <script database="db3" schema="schema3">
+        <catalog database="db3" schema="schema3">
+            <script>
                 <input>
                     create table db1.schema1.A (a int, b int);
                     create table db2.schema2.A (c int, d int);
@@ -20,8 +20,8 @@
                 select * from db1.schema1.A, db2.schema2.A where a = c;
             </input>
         </script>  
-        <catalog>
-            <script database="db1" schema="schema1">
+        <catalog database="db1" schema="schema1">
+            <script>
                 <input>
                     create table A (a int, b int);
                     create table db2.schema2.A (c int, d int);
@@ -35,15 +35,15 @@
                 select * from db1.schema1.A, db2.schema2.B where a = c;
             </input>
         </script>  
-        <catalog>
-            <script database="db1" schema="schema1">
+        <catalog database="db1" schema="schema1">
+            <script>
                 <input>
                     create table A (a int, b int);
                 </input>
             </script>  
-            <script database="db2" schema="schema2">
+            <script>
                 <input>
-                    create table B (c int, d int);
+                    create table db2.schema2.B (c int, d int);
                 </input>
             </script>  
         </catalog>
@@ -75,14 +75,14 @@
             </input>
         </script>  
         <catalog>
-            <script database="db1" schema="schema1">
+            <script>
                 <input>
-                    create table A (a int, b int);
+                    create table db1.schema1.A (a int, b int);
                 </input>
             </script>  
-            <script database="db1" schema="schema1">
+            <script>
                 <input>
-                    create table A (c int, d int);
+                    create table db1.schema1.A (c int, d int);
                 </input>
             </script>  
         </catalog>

@@ -16,17 +16,23 @@ TEST_P(AnalyzerSnapshotTestSuite, Test) {
 
     pugi::xml_document out;
     auto main_node = out.append_child("script");
+
+    // Write the catalog node
     auto catalog_node = out.append_child("catalog");
+    std::string default_database{test->catalog_default_database};
+    std::string default_schema{test->catalog_default_schema};
+    catalog_node.append_attribute("database").set_value(default_database.c_str());
+    catalog_node.append_attribute("schema").set_value(default_schema.c_str());
 
     // Read catalog
-    Catalog catalog;
+    Catalog catalog{test->catalog_default_database, test->catalog_default_schema};
     std::vector<std::unique_ptr<Script>> catalog_scripts;
     size_t entry_id = 1;
-    ASSERT_NO_FATAL_FAILURE(
-        AnalyzerSnapshotTest::TestRegistrySnapshot(test->catalog, catalog_node, catalog, catalog_scripts, entry_id));
+    ASSERT_NO_FATAL_FAILURE(AnalyzerSnapshotTest::TestRegistrySnapshot(test->catalog_entries, catalog_node, catalog,
+                                                                       catalog_scripts, entry_id));
 
     // Read main script
-    Script main_script{catalog, 0, test->script.database_name, test->script.schema_name};
+    Script main_script{catalog, 0};
     ASSERT_NO_FATAL_FAILURE(AnalyzerSnapshotTest::TestMainScriptSnapshot(test->script, main_node, main_script, 0));
 }
 

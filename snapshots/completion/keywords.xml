@@ -5,10 +5,10 @@
                 s
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
         </script>
         <cursor>
@@ -26,10 +26,10 @@
                 se
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
         </script>
         <cursor>
@@ -47,10 +47,10 @@
                 sel
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
         </script>
         <cursor>
@@ -68,10 +68,10 @@
                 select *
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
         </script>
         <cursor>
@@ -85,10 +85,10 @@
                 select * f
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
         </script>
         <cursor>
@@ -106,10 +106,10 @@
                 select * fr
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
         </script>
         <cursor>
@@ -127,10 +127,10 @@
                 select * from
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
         </script>
         <cursor>
@@ -148,10 +148,10 @@
                 select * from a xx
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <unresolved stmt="0" loc="31..35" text="a xx" />
@@ -172,10 +172,10 @@
                 select * from a w
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <unresolved stmt="0" loc="31..34" text="a w" />
@@ -196,10 +196,10 @@
                 select * from a wh
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <unresolved stmt="0" loc="31..35" text="a wh" />
@@ -220,10 +220,10 @@
                 selec
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
         </script>
         <cursor>
@@ -241,10 +241,10 @@
                 select * from foo gr
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <unresolved stmt="0" loc="31..37" text="foo gr" />
@@ -265,10 +265,10 @@
                 select * from foo group
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
         </script>
         <cursor>
@@ -286,10 +286,10 @@
                 select * from foo group b
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
         </script>
         <cursor>
@@ -305,10 +305,10 @@
                 select * from foo group xx
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
         </script>
         <cursor>
@@ -324,10 +324,10 @@
                 select * from foo o
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <unresolved stmt="0" loc="31..36" text="foo o" />
@@ -348,10 +348,10 @@
                 select * from foo or
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
         </script>
         <cursor>
@@ -369,10 +369,10 @@
                 select * from foo order
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <unresolved loc="31..34" text="foo" />
