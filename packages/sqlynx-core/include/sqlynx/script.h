@@ -262,7 +262,7 @@ class AnalyzedScript : public CatalogEntry {
 
    public:
     /// Constructor
-    AnalyzedScript(std::shared_ptr<ParsedScript> parsed, const Catalog& catalog);
+    AnalyzedScript(std::shared_ptr<ParsedScript> parsed, Catalog& catalog);
 
     /// Describe the catalog entry
     virtual flatbuffers::Offset<proto::CatalogEntry> DescribeEntry(
@@ -332,8 +332,6 @@ class Script {
     std::unique_ptr<proto::ScriptMemoryStatistics> GetMemoryStatistics();
 
    public:
-    /// Constructor
-    Script(ExternalID external_id = 1);
     /// Constructor
     Script(Catalog& catalog, ExternalID external_id = 1);
     /// Destructor

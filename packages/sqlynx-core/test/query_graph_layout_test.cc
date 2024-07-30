@@ -82,13 +82,13 @@ limit
     )SQL";
 
 TEST(SchemaGridTest, TPCHQ2) {
-    Script schema_script{1};
+    Catalog catalog;
+    Script schema_script{catalog, 1};
     schema_script.InsertTextAt(0, TPCH_SCHEMA);
     ASSERT_EQ(schema_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(schema_script.Parse().second, proto::StatusCode::OK);
     ASSERT_EQ(schema_script.Analyze().second, proto::StatusCode::OK);
 
-    Catalog catalog;
     catalog.LoadScript(schema_script, 0);
 
     Script query_script{catalog, 2};

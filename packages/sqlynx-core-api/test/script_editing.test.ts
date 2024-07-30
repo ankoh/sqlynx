@@ -9,14 +9,14 @@ import { fileURLToPath } from 'node:url';
 const distPath = path.resolve(fileURLToPath(new URL('../dist', import.meta.url)));
 const wasmPath = path.resolve(distPath, './sqlynx.wasm');
 
-let fsql: sqlynx.SQLynx | null = null;
+let lnx: sqlynx.SQLynx | null = null;
 
 beforeAll(async () => {
-    fsql = await sqlynx.SQLynx.create(async (imports: WebAssembly.Imports) => {
+    lnx = await sqlynx.SQLynx.create(async (imports: WebAssembly.Imports) => {
         const buf = await fs.promises.readFile(wasmPath);
         return await WebAssembly.instantiate(buf, imports);
     });
-    expect(fsql).not.toBeNull();
+    expect(lnx).not.toBeNull();
 });
 
 /// A type of an interaction
@@ -119,7 +119,8 @@ describe('SQLynx editing fuzzer', () => {
     for (let seed = 0; seed < 100; ++seed) {
         it(`script editing sequence, seed=${seed}`, () => {
             const [ops, dataSource] = ScriptInteractionGenerator.generateMany(seed, 100, 100);
-            const script = fsql!.createScript(null, 1);
+            const catalog = lnx!.createCatalog();
+            const script = lnx!.createScript(catalog, 1);
             let expected = '';
             for (let i = 0; i < ops.length; ++i) {
                 expected = ops[i].applyToText(expected, dataSource);
@@ -128,6 +129,7 @@ describe('SQLynx editing fuzzer', () => {
                 expect(have).toEqual(expected);
             }
             script.delete();
+            catalog.delete();
         });
     }
 });

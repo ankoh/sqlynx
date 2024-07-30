@@ -22,7 +22,8 @@ const Token = sqlynx.proto.ScannerTokenType;
 
 describe('SQLynx Scanner', () => {
     it(`Character Sequence`, () => {
-        const script = lnx!.createScript(null, 1);
+        const catalog = lnx!.createCatalog();
+        const script = lnx!.createScript(catalog, 1);
         const tmp = new sqlynx.proto.ScannedScript();
 
         let size = 0;
@@ -58,6 +59,7 @@ describe('SQLynx Scanner', () => {
         add('1', [0, 7], [6, 1], [Token.KEYWORD, Token.LITERAL_INTEGER], [1]);
 
         script.delete();
+        catalog.delete();
     });
 
     describe(`Utils`, () => {
@@ -70,7 +72,8 @@ describe('SQLynx Scanner', () => {
                 textRange: [number, number],
                 expectedFiltered: [number, number],
             ) => {
-                const script = lnx!.createScript(null, 1);
+                const catalog = lnx!.createCatalog();
+                const script = lnx!.createScript(catalog, 1);
                 script.insertTextAt(0, text);
                 const scanResult = script.scan();
                 const scannedScript = scanResult.read(new sqlynx.proto.ScannedScript());
@@ -90,6 +93,7 @@ describe('SQLynx Scanner', () => {
 
                 expect([tokenBegin, tokenEnd]).toEqual(expectedFiltered);
                 script.delete();
+                catalog.delete();
             };
 
             // Full text

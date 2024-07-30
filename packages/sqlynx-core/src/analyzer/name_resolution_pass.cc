@@ -40,7 +40,7 @@ void NameResolutionPass::NodeState::Clear() {
 }
 
 /// Constructor
-NameResolutionPass::NameResolutionPass(ParsedScript& parser, const Catalog& catalog, AttributeIndex& attribute_index)
+NameResolutionPass::NameResolutionPass(ParsedScript& parser, Catalog& catalog, AttributeIndex& attribute_index)
     : scanned_program(*parser.scanned_script),
       parsed_program(parser),
       catalog_entry_id(parser.external_id),
@@ -50,14 +50,14 @@ NameResolutionPass::NameResolutionPass(ParsedScript& parser, const Catalog& cata
     node_states.resize(nodes.size());
 
     // Register default database
-    auto& db = database_references.Append(CatalogEntry::DatabaseReference{
-        ExternalObjectID{catalog_entry_id, 0}, std::string{catalog.GetDefaultDatabaseName()}, ""});
+    auto db_id = catalog.AllocateDatabaseId(catalog.GetDefaultDatabaseName());
+    auto& db = database_references.Append(CatalogEntry::DatabaseReference{db_id, catalog.GetDefaultDatabaseName(), ""});
     databases_by_name.insert({db.database_name, db});
 
     // Register default schema
+    auto schema_id = catalog.AllocateSchemaId(catalog.GetDefaultDatabaseName(), catalog.GetDefaultSchemaName());
     auto& schema = schema_references.Append(CatalogEntry::SchemaReference{
-        ExternalObjectID{catalog_entry_id, 0}, ExternalObjectID{catalog_entry_id, 0},
-        std::string{catalog.GetDefaultDatabaseName()}, std::string{catalog.GetDefaultSchemaName()}});
+        db_id, schema_id, catalog.GetDefaultDatabaseName(), catalog.GetDefaultSchemaName()});
     schemas_by_name.insert({{db.database_name, schema.schema_name}, schema});
 }
 
@@ -143,40 +143,6 @@ AnalyzedScript::QualifiedTableName NameResolutionPass::NormalizeTableName(
     name.database_name = name.database_name.empty() ? catalog.GetDefaultDatabaseName() : name.database_name;
     name.schema_name = name.schema_name.empty() ? catalog.GetDefaultSchemaName() : name.schema_name;
     return name;
-}
-
-std::pair<ExternalObjectID, ExternalObjectID> NameResolutionPass::RegisterDatabaseAndSchemaNames(
-    AnalyzedScript::QualifiedTableName name) {
-    // Register the database ref
-    ExternalObjectID db_id;
-    std::string_view db_name;
-    auto db_iter = databases_by_name.find(name.database_name);
-    if (db_iter != databases_by_name.end()) {
-        db_id = db_iter->second.get().external_database_id;
-        db_name = db_iter->second.get().database_name;
-    } else {
-        db_id = ExternalObjectID{catalog_entry_id, static_cast<uint32_t>(database_references.GetSize())};
-        auto& db_ref =
-            database_references.Append(CatalogEntry::DatabaseReference{db_id, std::string{name.database_name}, ""});
-        databases_by_name.insert({name.database_name, db_ref});
-        db_name = db_ref.database_name;
-    }
-
-    // Register the schema ref
-    ExternalObjectID schema_id;
-    std::string_view schema_name;
-    auto schema_iter = schemas_by_name.find({name.database_name, name.schema_name});
-    if (schema_iter != schemas_by_name.end()) {
-        schema_id = schema_iter->second.get().external_schema_id;
-        schema_name = schema_iter->second.get().schema_name;
-    } else {
-        schema_id = ExternalObjectID{catalog_entry_id, static_cast<uint32_t>(schema_references.GetSize())};
-        auto& schema_ref = schema_references.Append(CatalogEntry::SchemaReference{
-            db_id, schema_id, std::string{name.database_name}, std::string{name.schema_name}});
-        schemas_by_name.insert({{name.database_name, name.schema_name}, schema_ref});
-        schema_name = schema_ref.schema_name;
-    }
-    return {db_id, schema_id};
 }
 
 void NameResolutionPass::MergeChildStates(NodeState& dst, std::initializer_list<const proto::Node*> children) {
@@ -543,8 +509,20 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 // Read the name
                 auto table_name = ReadQualifiedTableName(name_node);
                 table_name = NormalizeTableName(table_name);
-                // Register the qualified name of the schema
-                auto [db_id, schema_id] = RegisterDatabaseAndSchemaNames(table_name);
+                // Register the database
+                auto db_id = catalog.AllocateDatabaseId(table_name.database_name);
+                if (!databases_by_name.contains({table_name.database_name})) {
+                    auto& db = database_references.Append(
+                        CatalogEntry::DatabaseReference{db_id, table_name.database_name, ""});
+                    databases_by_name.insert({db.database_name, db});
+                }
+                // Register the schema
+                auto schema_id = catalog.AllocateSchemaId(table_name.database_name, table_name.schema_name);
+                if (!schemas_by_name.contains({table_name.database_name, table_name.schema_name})) {
+                    auto& schema = schema_references.Append(CatalogEntry::SchemaReference{
+                        db_id, schema_id, table_name.database_name, table_name.schema_name});
+                    schemas_by_name.insert({{table_name.database_name, table_name.schema_name}, schema});
+                }
                 // Merge child states
                 MergeChildStates(node_state, {elements_node});
                 // Collect all columns

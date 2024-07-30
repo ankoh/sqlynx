@@ -119,7 +119,8 @@ void test(Script& script, size_t text_offset, ExpectedScriptCursor expected) {
 }
 
 TEST(CursorTest, SimpleNoExternal) {
-    Script script{1};
+    Catalog catalog;
+    Script script{catalog, 1};
     script.InsertTextAt(0, "select * from A b, C d where b.x = d.y");
     auto [scanned, scan_status] = script.Scan();
     ASSERT_EQ(scan_status, proto::StatusCode::OK);
@@ -207,7 +208,8 @@ TEST(CursorTest, SimpleNoExternal) {
 }
 
 TEST(CursorTest, TableRef) {
-    Script script{1};
+    Catalog catalog;
+    Script script{catalog, 1};
     script.InsertTextAt(0, "select r_regionkey from region, n");
     auto [scanned, scan_status] = script.Scan();
     ASSERT_EQ(scan_status, proto::StatusCode::OK);

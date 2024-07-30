@@ -26,7 +26,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
     ASSERT_EQ(catalog_result->status_code, OK);
     auto catalog = catalog_result->CastOwnerPtr<Catalog>();
 
-    auto external_result = sqlynx_script_new(nullptr, 1);
+    auto external_result = sqlynx_script_new(catalog, 1);
     ASSERT_EQ(external_result->status_code, OK);
     auto external_script = external_result->CastOwnerPtr<Script>();
     auto [external_text, external_text_buffer] = copyText(external_script_text);
@@ -48,8 +48,8 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
     ASSERT_EQ(static_cast<proto::StatusCode>(main_result->status_code), proto::StatusCode::EXTERNAL_ID_COLLISION);
 
     sqlynx_delete_result(main_result);
-    sqlynx_delete_result(catalog_result);
     sqlynx_delete_result(external_result);
+    sqlynx_delete_result(catalog_result);
 }
 
 TEST(ApiTest, TPCH_Q2) {
@@ -116,7 +116,7 @@ limit 100
     ASSERT_EQ(catalog_result->status_code, OK);
     auto catalog = reinterpret_cast<Catalog*>(catalog_result->owner_ptr);
 
-    auto external_result = sqlynx_script_new(nullptr, 1);
+    auto external_result = sqlynx_script_new(catalog, 1);
     ASSERT_EQ(external_result->status_code, OK);
     auto external_script = reinterpret_cast<Script*>(external_result->owner_ptr);
     auto [external_text, external_text_buffer] = copyText(external_script_text);
