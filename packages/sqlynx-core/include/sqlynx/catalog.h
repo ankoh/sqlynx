@@ -119,10 +119,14 @@ class CatalogEntry {
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::TableColumn> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
-    /// A table
+    /// A table declaration
     struct TableDeclaration {
-        /// The external id
-        ExternalObjectID external_id;
+        /// The database id
+        ExternalObjectID database_id;
+        /// The schema id
+        ExternalObjectID schema_id;
+        /// The table id
+        ExternalObjectID table_id;
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
         /// The AST statement id in the target script
@@ -134,10 +138,13 @@ class CatalogEntry {
         /// The begin of the column
         std::vector<TableColumn> table_columns;
         /// Constructor
-        TableDeclaration(ExternalObjectID external_id = {}, std::optional<uint32_t> ast_node_id = std::nullopt,
+        TableDeclaration(ExternalObjectID database_id = {}, ExternalObjectID schema_id = {},
+                         ExternalObjectID table_id = {}, std::optional<uint32_t> ast_node_id = std::nullopt,
                          std::optional<uint32_t> ast_statement_id = {}, std::optional<uint32_t> ast_scope_root = {},
                          QualifiedTableName table_name = {}, std::vector<TableColumn> columns = {})
-            : external_id(external_id),
+            : database_id(database_id),
+              schema_id(schema_id),
+              table_id(table_id),
               ast_node_id(ast_node_id),
               ast_statement_id(ast_statement_id),
               ast_scope_root(ast_scope_root),
@@ -238,6 +245,12 @@ class CatalogEntry {
         name.schema_name = name.schema_name.empty() ? default_database_name : name.schema_name;
         return name;
     }
+    /// Register database name
+    std::pair<ExternalObjectID, std::string_view> RegisterDatabaseName(std::string_view name);
+    /// Register schema name
+    std::pair<ExternalObjectID, std::string_view> RegisterSchemaName(ExternalObjectID db_id, std::string_view db_name,
+                                                                     std::string_view schema_name);
+
     /// Describe the catalog entry
     virtual flatbuffers::Offset<proto::CatalogEntry> DescribeEntry(flatbuffers::FlatBufferBuilder& builder) const = 0;
     /// Get the name search index
