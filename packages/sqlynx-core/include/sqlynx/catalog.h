@@ -307,8 +307,15 @@ class Catalog {
         std::shared_ptr<AnalyzedScript> analyzed;
         /// The current rank
         CatalogEntry::Rank rank;
-        /// The registered schema names
-        std::unordered_set<std::pair<std::string_view, std::string_view>, TupleHasher> schema_names;
+    };
+    /// Information about a catalog entry referenced through the schema name
+    struct CatalogSchemaEntryInfo {
+        /// The id of the catalog entry
+        ExternalID catalog_entry_id;
+        /// The id of the database <catalog_entry_id, database_idx>
+        ExternalObjectID database_id;
+        /// The id of the schema <catalog_entry_id, schema_idx>
+        ExternalObjectID schema_id;
     };
     /// The catalog version.
     /// Every modification bumps the version counter, the analyzer reads the version counter which protects all refs.
@@ -317,20 +324,17 @@ class Catalog {
     std::string default_database_name = "sqlynx";
     /// The default schema name
     std::string default_schema_name = "default";
-    /// The database names names
-    std::unordered_map<std::string_view, ExternalID> database_names;
-    /// The schema names
-    std::unordered_map<std::pair<std::string_view, std::string_view>, ExternalID, TupleHasher> schema_names;
     /// The catalog entries
     std::unordered_map<ExternalID, CatalogEntry*> entries;
     /// The script entries
     std::unordered_map<Script*, ScriptEntry> script_entries;
     /// The descriptor pool entries
     std::unordered_map<ExternalID, std::unique_ptr<DescriptorPool>> descriptor_pool_entries;
-    /// The entris ordered by <rank>
+    /// The entries ordered by <rank>
     btree::set<std::tuple<CatalogEntry::Rank, ExternalID>> entries_ranked;
     /// The entries ordered by <database, schema, rank>
-    btree::set<std::tuple<std::string_view, std::string_view, CatalogEntry::Rank, ExternalID>> entry_names_ranked;
+    btree::map<std::tuple<std::string_view, std::string_view, CatalogEntry::Rank, ExternalID>, CatalogSchemaEntryInfo>
+        entry_names_ranked;
 
     /// Update a script entry
     proto::StatusCode UpdateScript(ScriptEntry& entry);
