@@ -25,7 +25,7 @@ interface SQLynxModuleExports {
         default_db_name_ptr: number,
         default_db_name_length: number,
         default_schema_name_ptr: number,
-        default_schema_name_length: number) => void;
+        default_schema_name_length: number) => number;
     sqlynx_catalog_clear: (catalog_ptr: number) => void;
     sqlynx_catalog_describe_entries: (catalog_ptr: number) => number;
     sqlynx_catalog_describe_entries_of: (catalog_ptr: number, external_id: number) => number;
@@ -83,14 +83,7 @@ export class SQLynx {
             sqlynx_free: instance.exports['sqlynx_free'] as (ptr: number) => void,
             sqlynx_delete_result: instance.exports['sqlynx_delete_result'] as (ptr: number) => void,
 
-            sqlynx_script_new: instance.exports['sqlynx_script_new'] as (
-                catalog: number,
-                id: number,
-                db_name_ptr: number,
-                db_name_length: number,
-                schema_name_ptr: number,
-                schema_name_length: number,
-            ) => number,
+            sqlynx_script_new: instance.exports['sqlynx_script_new'] as (catalog: number, id: number) => number,
             sqlynx_catalog_clear: instance.exports['sqlynx_catalog_clear'] as (ptr: number) => void,
             sqlynx_script_insert_text_at: instance.exports['sqlynx_script_insert_text_at'] as (
                 ptr: number,
@@ -128,7 +121,12 @@ export class SQLynx {
                 limit: number,
             ) => number,
 
-            sqlynx_catalog_new: instance.exports['sqlynx_catalog_new'] as () => number,
+            sqlynx_catalog_new: instance.exports['sqlynx_catalog_new'] as (
+                db_name_ptr: number,
+                db_name_length: number,
+                schema_name_ptr: number,
+                schema_name_length: number,
+            ) => number,
             sqlynx_catalog_describe_entries: instance.exports['sqlynx_catalog_describe_entries'] as (
                 catalog_ptr: number,
             ) => number,
@@ -283,20 +281,36 @@ export class SQLynx {
             }
         }
         const catalogPtr = catalog?.ptr.assertNotNull() ?? 0;
-        const result = this.instanceExports.sqlynx_script_new(
-            catalogPtr,
-            id,
+        const result = this.instanceExports.sqlynx_script_new(catalogPtr, id);
+        const scriptPtr = this.readPtrResult(SCRIPT_TYPE, result);
+        return new SQLynxScript(scriptPtr);
+    }
+
+    public createCatalog(
+        databaseName: string | null = null,
+        schemaName: string | null = null,
+    ): SQLynxCatalog {
+        let databaseNamePtr = 0,
+            databaseNameLength = 0,
+            schemaNamePtr = 0,
+            schemaNameLength = 0;
+        if (databaseName != null) {
+            [databaseNamePtr, databaseNameLength] = this.copyString(databaseName);
+        }
+        if (schemaName != null) {
+            try {
+                [schemaNamePtr, schemaNameLength] = this.copyString(schemaName);
+            } catch (e: any) {
+                this.instanceExports.sqlynx_free(databaseNamePtr);
+                throw e;
+            }
+        }
+        const result = this.instanceExports.sqlynx_catalog_new(
             databaseNamePtr, // pass ownership over buffer
             databaseNameLength,
             schemaNamePtr, // pass ownership over buffer
             schemaNameLength,
         );
-        const scriptPtr = this.readPtrResult(SCRIPT_TYPE, result);
-        return new SQLynxScript(scriptPtr);
-    }
-
-    public createCatalog(): SQLynxCatalog {
-        const result = this.instanceExports.sqlynx_catalog_new();
         const ptr = this.readPtrResult(CATALOG_TYPE, result);
         return new SQLynxCatalog(ptr);
     }
