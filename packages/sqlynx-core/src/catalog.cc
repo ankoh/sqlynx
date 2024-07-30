@@ -62,6 +62,43 @@ CatalogEntry::CatalogEntry(ExternalID external_id, std::string_view database_nam
       table_columns_by_name(),
       name_search_index() {}
 
+std::pair<ExternalObjectID, std::string_view> CatalogEntry::RegisterDatabaseName(std::string_view name) {
+    auto db_iter = databases_by_name.find(name);
+    ExternalObjectID db_id;
+    if (db_iter == databases_by_name.end()) {
+        auto& db_ref = database_references.Append(CatalogEntry::DatabaseReference{
+            ExternalObjectID{external_id, static_cast<uint32_t>(database_references.GetSize())}, std::string{name},
+            ""});
+        db_id = db_ref.database_id;
+        name = db_ref.database_name;
+        databases_by_name.insert({name, db_ref});
+    } else {
+        db_id = db_iter->second.get().database_id;
+        name = db_iter->second.get().database_name;
+    }
+    return {db_id, name};
+}
+
+std::pair<ExternalObjectID, std::string_view> CatalogEntry::RegisterSchemaName(ExternalObjectID db_id,
+                                                                               std::string_view db_name,
+                                                                               std::string_view name) {
+    auto schema_iter = schemas_by_name.find({db_name, name});
+    ExternalObjectID schema_id;
+    if (schema_iter == schemas_by_name.end()) {
+        auto& schema_ref = schema_references.Append(CatalogEntry::SchemaReference{
+            db_id,
+            ExternalObjectID{external_id, static_cast<uint32_t>(schema_references.GetSize())},
+            std::string{name},
+        });
+        schema_id = schema_ref.database_id;
+        schemas_by_name.insert({{db_name, name}, schema_ref});
+    } else {
+        schema_id = schema_iter->second.get().schema_id;
+        name = schema_iter->second.get().schema_name;
+    }
+    return {schema_id, name};
+}
+
 const CatalogEntry::TableDeclaration* CatalogEntry::ResolveTable(ExternalObjectID table_id) const {
     if (table_id.GetExternalId() == external_id) {
         return &table_declarations[table_id.GetIndex()];
@@ -170,21 +207,25 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
         return proto::StatusCode::CATALOG_DESCRIPTOR_TABLES_NULL;
     }
     descriptor_buffers.push_back({.descriptor = descriptor, .descriptor_buffer = std::move(descriptor_buffer)});
-    std::string_view database_name =
+
+    std::string_view raw_db_name =
         descriptor.database_name() == nullptr ? "" : descriptor.database_name()->string_view();
-    std::string_view schema_name = descriptor.schema_name() == nullptr ? "" : descriptor.schema_name()->string_view();
+    std::string_view raw_schema_name =
+        descriptor.schema_name() == nullptr ? "" : descriptor.schema_name()->string_view();
+    auto [db_id, db_name] = RegisterDatabaseName(raw_db_name);
+    auto [schema_id, schema_name] = RegisterSchemaName(db_id, db_name, raw_schema_name);
 
     // Read tables
     uint32_t next_table_id = table_declarations.GetSize();
     for (auto* table : *descriptor.tables()) {
-        ExternalObjectID table_object_id{external_id, next_table_id};
+        ExternalObjectID table_id{external_id, next_table_id};
         // Get the table name
         auto table_name_ptr = table->table_name();
         if (!table_name_ptr || table_name_ptr->size() == 0) {
             return proto::StatusCode::CATALOG_DESCRIPTOR_TABLE_NAME_EMPTY;
         }
         // Build the qualified table name
-        QualifiedTableName::Key qualified_table_name{database_name, schema_name, table_name_ptr->string_view()};
+        QualifiedTableName::Key qualified_table_name{db_name, schema_name, table_name_ptr->string_view()};
         if (tables_by_name.contains(qualified_table_name)) {
             return proto::StatusCode::CATALOG_DESCRIPTOR_TABLE_NAME_COLLISION;
         }
@@ -200,7 +241,7 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
             }
         }
         // Create the table
-        table_declarations.Append(TableDeclaration{table_object_id, std::nullopt, std::nullopt, std::nullopt,
+        table_declarations.Append(TableDeclaration{db_id, schema_id, table_id, std::nullopt, std::nullopt, std::nullopt,
                                                    QualifiedTableName{qualified_table_name}, std::move(columns)});
         ++next_table_id;
     }
@@ -242,7 +283,7 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
             }
         }
     };
-    register_name(database_name, proto::NameTag::DATABASE_NAME);
+    register_name(db_name, proto::NameTag::DATABASE_NAME);
     register_name(schema_name, proto::NameTag::SCHEMA_NAME);
     for (auto& table_chunk : table_declarations.GetChunks()) {
         for (auto& table : table_chunk) {
@@ -356,7 +397,7 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
                 auto [schema_node, new_schema] =
                     database_node->second.children.insert({schema_name, Node{schema_name_id}});
                 auto [table_node, new_table] = schema_node->second.children.insert({table_name, Node{table_name_id}});
-                table_node->second.external_object_id = entry.external_id;
+                table_node->second.external_object_id = entry.table_id;
 
                 database_count += new_database;
                 schema_count += new_schema;
@@ -583,42 +624,15 @@ proto::StatusCode Catalog::AddSchemaDescriptor(ExternalID external_id, std::span
     pool.AddSchemaDescriptor(descriptor, std::move(descriptor_buffer));
     // Register names
     {
-        std::string_view db_name =
+        std::string_view raw_db_name =
             descriptor.database_name() == nullptr ? "" : descriptor.database_name()->string_view();
-        std::string_view schema_name =
+        std::string_view raw_schema_name =
             descriptor.schema_name() == nullptr ? "" : descriptor.schema_name()->string_view();
 
-        // Add the database name
-        auto db_iter = pool.databases_by_name.find(db_name);
-        ExternalObjectID db_id;
-        if (db_iter == pool.databases_by_name.end()) {
-            auto& db_ref = pool.database_references.Append(CatalogEntry::DatabaseReference{
-                ExternalObjectID{external_id, static_cast<uint32_t>(pool.database_references.GetSize())},
-                std::string{db_name}, ""});
-            db_id = db_ref.database_id;
-            db_name = db_ref.database_name;
-            pool.databases_by_name.insert({db_name, db_ref});
-        } else {
-            db_id = db_iter->second.get().database_id;
-            db_name = db_iter->second.get().database_name;
-        }
-
-        // Add the schema name
-        auto schema_iter = pool.schemas_by_name.find({db_name, schema_name});
-        ExternalObjectID schema_id;
-        if (schema_iter == pool.schemas_by_name.end()) {
-            auto& schema_ref = pool.schema_references.Append(CatalogEntry::SchemaReference{
-                db_id,
-                ExternalObjectID{external_id, static_cast<uint32_t>(pool.schema_references.GetSize())},
-                std::string{schema_name},
-            });
-            schema_id = schema_ref.database_id;
-            pool.schemas_by_name.insert({{db_name, schema_name}, schema_ref});
-        } else {
-            schema_id = schema_iter->second.get().schema_id;
-            schema_name = schema_iter->second.get().schema_name;
-        }
-
+        // Register database name
+        auto [db_id, db_name] = pool.RegisterDatabaseName(raw_db_name);
+        // Register schema name
+        auto [schema_id, schema_name] = pool.RegisterSchemaName(db_id, db_name, raw_schema_name);
         // Add the entry
         std::tuple<std::string_view, std::string_view, CatalogEntry::Rank, ExternalID> entry_key{
             db_name, schema_name, pool.GetRank(), external_id};

@@ -148,7 +148,8 @@ AnalyzedScript::QualifiedTableName NameResolutionPass::NormalizeTableName(
     return name;
 }
 
-void NameResolutionPass::RegisterDatabaseAndSchemaNames(AnalyzedScript::QualifiedTableName name) {
+std::pair<ExternalObjectID, ExternalObjectID> NameResolutionPass::RegisterDatabaseAndSchemaNames(
+    AnalyzedScript::QualifiedTableName name) {
     // Register the database ref
     ExternalObjectID db_id;
     std::string_view db_name;
@@ -178,6 +179,7 @@ void NameResolutionPass::RegisterDatabaseAndSchemaNames(AnalyzedScript::Qualifie
         schemas_by_name.insert({{name.database_name, name.schema_name}, schema_ref});
         schema_name = schema_ref.schema_name;
     }
+    return {db_id, schema_id};
 }
 
 void NameResolutionPass::MergeChildStates(NodeState& dst, std::initializer_list<const proto::Node*> children) {
@@ -230,7 +232,7 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
 
             // Remember resolved table
             scope.resolved_table_references.insert({&table_ref, table});
-            table_ref.resolved_table_id = table.external_id;
+            table_ref.resolved_table_id = table.table_id;
 
             // Remember all available columns
             for (size_t i = 0; i < table.table_columns.size(); ++i) {
@@ -259,7 +261,7 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
         if (auto resolved = catalog.ResolveTable(qualified_table_name, external_id)) {
             // Remember resolved table
             scope.resolved_table_references.insert({&table_ref, *resolved});
-            table_ref.resolved_table_id = resolved->external_id;
+            table_ref.resolved_table_id = resolved->table_id;
 
             // Collect all available columns
             for (size_t i = 0; i < resolved->table_columns.size(); ++i) {
@@ -294,7 +296,7 @@ void NameResolutionPass::ResolveColumnRefsInScope(NameScope& scope, ColumnRefsBy
                 target_scope->resolved_table_columns.find({column_name.table_alias, column_name.column_name});
             if (resolved_iter != target_scope->resolved_table_columns.end()) {
                 auto& resolved = resolved_iter->second;
-                column_ref.resolved_table_id = resolved.table.external_id;
+                column_ref.resolved_table_id = resolved.table.table_id;
                 column_ref.resolved_column_id = resolved.column_id;
                 auto dead_iter = column_ref_iter++;
                 unresolved_columns.erase(dead_iter);
@@ -545,7 +547,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 auto table_name = ReadQualifiedTableName(name_node);
                 table_name = NormalizeTableName(table_name);
                 // Register the qualified name of the schema
-                RegisterDatabaseAndSchemaNames(table_name);
+                auto [db_id, schema_id] = RegisterDatabaseAndSchemaNames(table_name);
                 // Merge child states
                 MergeChildStates(node_state, {elements_node});
                 // Collect all columns
@@ -559,7 +561,9 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 CreateScope(node_state, node_id);
                 // Build the table
                 auto& n = table_declarations.Append(AnalyzedScript::TableDeclaration());
-                n.external_id = ExternalObjectID{external_id, static_cast<uint32_t>(table_declarations.GetSize() - 1)};
+                n.database_id = db_id;
+                n.schema_id = schema_id;
+                n.table_id = ExternalObjectID{external_id, static_cast<uint32_t>(table_declarations.GetSize() - 1)};
                 n.ast_node_id = node_id;
                 n.ast_statement_id = std::nullopt;
                 n.ast_scope_root = std::nullopt;

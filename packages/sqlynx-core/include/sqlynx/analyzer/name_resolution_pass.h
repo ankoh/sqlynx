@@ -140,7 +140,8 @@ class NameResolutionPass : public PassManager::LTRPass {
 
     /// Register a qualified schema name.
     /// We create database and schema references here.
-    void RegisterDatabaseAndSchemaNames(AnalyzedScript::QualifiedTableName name);
+    std::pair<ExternalObjectID, ExternalObjectID> RegisterDatabaseAndSchemaNames(
+        AnalyzedScript::QualifiedTableName name);
 
     /// Merge child states into a destination state
     void MergeChildStates(NodeState& dst, const sx::Node& parent);
