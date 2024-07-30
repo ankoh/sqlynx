@@ -241,8 +241,12 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
             }
         }
         // Create the table
-        table_declarations.Append(TableDeclaration{db_id, schema_id, table_id, std::nullopt, std::nullopt, std::nullopt,
-                                                   QualifiedTableName{qualified_table_name}, std::move(columns)});
+        auto& t = table_declarations.Append(AnalyzedScript::TableDeclaration());
+        t.database_id = db_id;
+        t.schema_id = schema_id;
+        t.table_id = table_id;
+        t.table_name = QualifiedTableName{qualified_table_name};
+        t.table_columns = std::move(columns);
         ++next_table_id;
     }
 
