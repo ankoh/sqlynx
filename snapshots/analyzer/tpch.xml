@@ -12,10 +12,10 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <tables>
                 <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -149,10 +149,10 @@ limit
 	100
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="2" stmt="0" loc="610..618" text="partsupp" />
@@ -249,10 +249,10 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -365,10 +365,10 @@ limit
 	10
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="145..153" text="customer" />
@@ -413,10 +413,10 @@ create table orders (o_orderkey integer not null, o_custkey integer not null, o_
 create table lineitem (l_orderkey integer not null, l_partkey integer not null, l_suppkey integer not null, l_linenumber integer not null, l_quantity decimal(12,2) not null, l_extendedprice decimal(12,2) not null, l_discount decimal(12,2) not null, l_tax decimal(12,2) not null, l_returnflag char(1) not null, l_linestatus char(1) not null, l_shipdate date not null, l_commitdate date not null, l_receiptdate date not null, l_shipinstruct char(25) not null, l_shipmode char(10) not null, l_comment varchar(44) not null, primary key (l_orderkey,l_linenumber));
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="customer" loc="1..293" text="create tab.._custkey))">
@@ -488,10 +488,10 @@ order by
         o_orderpriority
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="291..299" text="lineitem" />
@@ -526,10 +526,10 @@ create table lineitem (l_orderkey integer not null, l_partkey integer not null, 
 create table orders (o_orderkey integer not null, o_custkey integer not null, o_orderstatus char(1) not null, o_totalprice decimal(12,2) not null, o_orderdate date not null, o_orderpriority char(15) not null, o_clerk char(15) not null, o_shippriority integer not null, o_comment varchar(79) not null, primary key (o_orderkey));
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="lineitem" loc="1..559" text="create tab..nenumber))">
@@ -594,10 +594,10 @@ order by
         revenue desc
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="3" stmt="0" loc="96..104" text="customer" />
@@ -669,10 +669,10 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -770,10 +770,10 @@ where
         and l_quantity &lt; 24
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="74..82" text="lineitem" />
@@ -793,10 +793,10 @@ where
 create table lineitem (l_orderkey integer not null, l_partkey integer not null, l_suppkey integer not null, l_linenumber integer not null, l_quantity decimal(12,2) not null, l_extendedprice decimal(12,2) not null, l_discount decimal(12,2) not null, l_tax decimal(12,2) not null, l_returnflag char(1) not null, l_linestatus char(1) not null, l_shipdate date not null, l_commitdate date not null, l_receiptdate date not null, l_shipinstruct char(25) not null, l_shipmode char(10) not null, l_comment varchar(44) not null, primary key (l_orderkey,l_linenumber));
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="lineitem" loc="1..559" text="create tab..nenumber))">
@@ -865,10 +865,10 @@ order by
         l_year
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="1" stmt="0" loc="414..422" text="supplier" />
@@ -946,10 +946,10 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -1075,10 +1075,10 @@ order by
         o_year
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="418..422" text="part" />
@@ -1163,10 +1163,10 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -1287,10 +1287,10 @@ order by
         o_year desc
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="363..367" text="part" />
@@ -1368,10 +1368,10 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -1493,10 +1493,10 @@ limit
 	20
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="3" stmt="0" loc="205..213" text="customer" />
@@ -1560,10 +1560,10 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -1679,10 +1679,10 @@ order by
         "value" desc
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="1" stmt="0" loc="496..504" text="partsupp" />
@@ -1740,10 +1740,10 @@ create table partsupp (ps_partkey integer not null, ps_suppkey integer not null,
 create table nation (n_nationkey integer not null, n_name char(25) not null, n_regionkey integer not null, n_comment varchar(152) not null, primary key (n_nationkey));
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="supplier" loc="1..258" text="create tab.._suppkey))">
@@ -1805,10 +1805,10 @@ order by
         l_shipmode
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="4" stmt="0" loc="458..464" text="orders" />
@@ -1860,10 +1860,10 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -1972,10 +1972,10 @@ order by
         c_count desc
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="222..230" text="customer" />
@@ -2007,10 +2007,10 @@ create table customer (c_custkey integer not null, c_name varchar(25) not null, 
 create table orders (o_orderkey integer not null, o_custkey integer not null, o_orderstatus char(1) not null, o_totalprice decimal(12,2) not null, o_orderdate date not null, o_orderpriority char(15) not null, o_clerk char(15) not null, o_shippriority integer not null, o_comment varchar(79) not null, primary key (o_orderkey));
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="customer" loc="1..293" text="create tab.._custkey))">
@@ -2056,10 +2056,10 @@ where
         and l_shipdate &lt; date '1995-10-01'
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="5" stmt="0" loc="248..256" text="lineitem" />
@@ -2096,10 +2096,10 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -2218,10 +2218,10 @@ order by
 	s_suppkey
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="5" stmt="0" loc="122..130" text="lineitem" />
@@ -2267,10 +2267,10 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -2389,10 +2389,10 @@ order by
         p_size
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="1" stmt="0" loc="449..457" text="supplier" />
@@ -2440,10 +2440,10 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -2549,10 +2549,10 @@ where
         )
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="1" stmt="0" loc="339..347" text="lineitem" />
@@ -2588,10 +2588,10 @@ create table part (p_partkey integer not null, p_name varchar(55) not null, p_mf
 create table lineitem (l_orderkey integer not null, l_partkey integer not null, l_suppkey integer not null, l_linenumber integer not null, l_quantity decimal(12,2) not null, l_extendedprice decimal(12,2) not null, l_discount decimal(12,2) not null, l_tax decimal(12,2) not null, l_returnflag char(1) not null, l_linestatus char(1) not null, l_shipdate date not null, l_commitdate date not null, l_receiptdate date not null, l_shipinstruct char(25) not null, l_shipmode char(10) not null, l_comment varchar(44) not null, primary key (l_orderkey,l_linenumber));
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -2666,10 +2666,10 @@ limit
 	100
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="5" stmt="0" loc="319..327" text="lineitem" />
@@ -2724,10 +2724,10 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -2851,10 +2851,10 @@ where
         )
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="5" stmt="0" loc="79..87" text="lineitem" />
@@ -2919,10 +2919,10 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -3048,10 +3048,10 @@ order by
         s_name
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="449..453" text="part" />
@@ -3109,10 +3109,10 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -3242,10 +3242,10 @@ limit
 	100
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="5" stmt="0" loc="399..410" text="lineitem l2" />
@@ -3333,10 +3333,10 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">
@@ -3462,10 +3462,10 @@ order by
         cntrycode
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="3" stmt="0" loc="658..666" text="customer" />
@@ -3507,10 +3507,10 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">

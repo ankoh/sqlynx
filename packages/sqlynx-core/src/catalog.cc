@@ -49,10 +49,9 @@ flatbuffers::Offset<proto::Table> CatalogEntry::TableDeclaration::Pack(flatbuffe
     return out.Finish();
 }
 
-CatalogEntry::CatalogEntry(ExternalID external_id, std::string_view database_name, std::string_view schema_name)
-    : external_entry_id(external_id),
-      default_database_name(database_name),
-      default_schema_name(schema_name),
+CatalogEntry::CatalogEntry(const Catalog& catalog, ExternalID external_id)
+    : catalog(catalog),
+      external_entry_id(external_id),
       database_references(),
       schema_references(),
       table_declarations(),
@@ -62,7 +61,16 @@ CatalogEntry::CatalogEntry(ExternalID external_id, std::string_view database_nam
       table_columns_by_name(),
       name_search_index() {}
 
+CatalogEntry::QualifiedTableName CatalogEntry::QualifyTableName(CatalogEntry::QualifiedTableName name) const {
+    name.database_name = name.database_name.empty() ? catalog.GetDefaultDatabaseName() : name.database_name;
+    name.schema_name = name.schema_name.empty() ? catalog.GetDefaultSchemaName() : name.schema_name;
+    return name;
+}
+
 std::pair<ExternalObjectID, std::string_view> CatalogEntry::RegisterDatabaseName(std::string_view name) {
+    if (name.empty()) {
+        name = catalog.GetDefaultDatabaseName();
+    }
     auto db_iter = databases_by_name.find(name);
     ExternalObjectID db_id;
     if (db_iter == databases_by_name.end()) {
@@ -82,12 +90,16 @@ std::pair<ExternalObjectID, std::string_view> CatalogEntry::RegisterDatabaseName
 std::pair<ExternalObjectID, std::string_view> CatalogEntry::RegisterSchemaName(ExternalObjectID db_id,
                                                                                std::string_view db_name,
                                                                                std::string_view name) {
+    if (name.empty()) {
+        name = catalog.GetDefaultSchemaName();
+    }
     auto schema_iter = schemas_by_name.find({db_name, name});
     ExternalObjectID schema_id;
     if (schema_iter == schemas_by_name.end()) {
         auto& schema_ref = schema_references.Append(CatalogEntry::SchemaReference{
             db_id,
             ExternalObjectID{external_entry_id, static_cast<uint32_t>(schema_references.GetSize())},
+            std::string{db_name},
             std::string{name},
         });
         schema_id = schema_ref.external_database_id;
@@ -142,7 +154,8 @@ void CatalogEntry::ResolveTableColumn(std::string_view table_column,
     }
 }
 
-DescriptorPool::DescriptorPool(ExternalID external_id, uint32_t rank) : CatalogEntry(external_id, "", ""), rank(rank) {
+DescriptorPool::DescriptorPool(const Catalog& catalog, ExternalID external_id, uint32_t rank)
+    : CatalogEntry(catalog, external_id), rank(rank) {
     name_search_index.emplace(CatalogEntry::NameSearchIndex{});
 }
 
@@ -307,6 +320,10 @@ void CatalogEntry::ResolveTableColumn(std::string_view table_column, const Catal
     catalog.ResolveTableColumn(table_column, tmp);
     ResolveTableColumn(table_column, tmp);
 }
+
+Catalog::Catalog(std::string_view default_db, std::string_view default_schema)
+    : default_database_name(default_db.empty() ? "sqlynx" : default_db),
+      default_schema_name(default_schema.empty() ? "default" : default_schema) {}
 
 void Catalog::Clear() {
     entry_names_ranked.clear();
@@ -659,7 +676,7 @@ proto::StatusCode Catalog::AddDescriptorPool(ExternalID external_id, CatalogEntr
     if (entries.contains(external_id)) {
         return proto::StatusCode::EXTERNAL_ID_COLLISION;
     }
-    auto pool = std::make_unique<DescriptorPool>(external_id, rank);
+    auto pool = std::make_unique<DescriptorPool>(*this, external_id, rank);
     entries.insert({external_id, pool.get()});
     entries_ranked.insert({rank, external_id});
     descriptor_pool_entries.insert({external_id, std::move(pool)});

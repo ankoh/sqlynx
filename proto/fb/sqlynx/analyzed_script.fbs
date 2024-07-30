@@ -113,10 +113,6 @@ struct QueryGraphEdgeNode {
 table AnalyzedScript {
     // The catalog entry id
     external_id: uint32;
-    // The default database name, if tables are not qualified fully
-    default_database_name: string;
-    // The schema name, if tables are not qualified fully
-    default_schema_name: string;
     // The databases
     databases: [DatabaseReference];
     // The schemas

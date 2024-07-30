@@ -88,9 +88,9 @@ static std::unique_ptr<Script> read_script(pugi::xml_node node, size_t entry_id,
     }
     std::unique_ptr<Script> script;
     if (catalog == nullptr) {
-        script = std::make_unique<Script>(entry_id, std::move(database_name), std::move(schema_name));
+        script = std::make_unique<Script>(entry_id);
     } else {
-        script = std::make_unique<Script>(*catalog, entry_id, std::move(database_name), std::move(schema_name));
+        script = std::make_unique<Script>(*catalog, entry_id);
     }
     script->InsertTextAt(0, input);
     auto scanned = script->Scan();
@@ -113,13 +113,21 @@ static std::unique_ptr<Script> read_script(pugi::xml_node node, size_t entry_id,
 
 static std::unique_ptr<Catalog> read_catalog(pugi::xml_node catalog_node,
                                              std::vector<std::unique_ptr<Script>>& catalog_scripts, size_t& entry_id) {
-    auto catalog = std::make_unique<Catalog>();
+    std::string database_name, schema_name;
+    if (auto db = catalog_node.attribute("database")) {
+        database_name = db.value();
+    }
+    if (auto schema = catalog_node.attribute("schema")) {
+        schema_name = schema.value();
+    }
+
+    auto catalog = std::make_unique<Catalog>(std::move(database_name), std::move(schema_name));
     for (auto entry_node : catalog_node.children()) {
         std::string entry_name = entry_node.name();
 
         if (entry_name == "script") {
             auto external_id = entry_id++;
-            auto script = read_script(entry_node, external_id);
+            auto script = read_script(entry_node, external_id, catalog.get());
             catalog->LoadScript(*script, external_id);
             AnalyzerSnapshotTest::EncodeScript(entry_node, *script->analyzed_script, false);
             catalog_scripts.push_back(std::move(script));
@@ -161,9 +169,10 @@ static void generate_analyzer_snapshots(const std::filesystem::path& source_dir)
             auto name = test_node.attribute("name").as_string();
             std::cout << "  TEST " << name << std::endl;
 
+            std::unique_ptr<Catalog> catalog;
             std::vector<std::unique_ptr<Script>> catalog_scripts;
             size_t entry_id = 1;
-            auto catalog = read_catalog(test_node.child("catalog"), catalog_scripts, entry_id);
+            catalog = read_catalog(test_node.child("catalog"), catalog_scripts, entry_id);
             auto main_node = test_node.child("script");
             auto main_script = read_script(main_node, 0, catalog.get());
 
@@ -208,9 +217,10 @@ static void generate_completion_snapshots(const std::filesystem::path& source_di
             auto name = test.attribute("name").as_string();
             std::cout << "  TEST " << name << std::endl;
 
+            std::unique_ptr<Catalog> catalog;
             std::vector<std::unique_ptr<Script>> catalog_scripts;
             size_t entry_id = 1;
-            auto catalog = read_catalog(test.child("catalog"), catalog_scripts, entry_id);
+            catalog = read_catalog(test.child("catalog"), catalog_scripts, entry_id);
             auto main_node = test.child("script");
             auto main_script = read_script(main_node, 0, catalog.get());
             AnalyzerSnapshotTest::EncodeScript(main_node, *main_script->analyzed_script, true);

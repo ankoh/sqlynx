@@ -35,9 +35,7 @@ struct FFIResult {
 extern "C" void sqlynx_delete_result(FFIResult* result);
 
 /// Create a script
-extern "C" FFIResult* sqlynx_script_new(sqlynx::Catalog* catalog, uint32_t external_id,
-                                        const char* database_name_ptr = nullptr, size_t database_name_length = 0,
-                                        const char* schema_name_ptr = nullptr, size_t schema_name_length = 0);
+extern "C" FFIResult* sqlynx_script_new(sqlynx::Catalog* catalog, uint32_t external_id);
 /// Insert char at a position
 extern "C" void sqlynx_script_insert_char_at(sqlynx::Script* script, size_t offset, uint32_t unicode);
 /// Insert text at a position
@@ -65,7 +63,8 @@ extern "C" FFIResult* sqlynx_script_move_cursor(sqlynx::Script* script, size_t t
 extern "C" FFIResult* sqlynx_script_complete_at_cursor(sqlynx::Script* script, size_t limit);
 
 /// Create a catalog
-extern "C" FFIResult* sqlynx_catalog_new();
+extern "C" FFIResult* sqlynx_catalog_new(const char* database_name_ptr = nullptr, size_t database_name_length = 0,
+                                         const char* schema_name_ptr = nullptr, size_t schema_name_length = 0);
 /// Clear a catalog
 extern "C" void sqlynx_catalog_clear(sqlynx::Catalog* catalog);
 /// Describe all entries

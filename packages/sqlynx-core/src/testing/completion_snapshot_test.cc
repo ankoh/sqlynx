@@ -1,14 +1,9 @@
 #include "sqlynx/testing/completion_snapshot_test.h"
 
-#include <algorithm>
 #include <fstream>
-#include <limits>
 
-#include "gtest/gtest.h"
-#include "sqlynx/analyzer/analyzer.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
-#include "sqlynx/testing/xml_tests.h"
 
 namespace sqlynx {
 namespace testing {
@@ -92,15 +87,14 @@ void CompletionSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
             auto& test = tests.back();
             test.name = test_node.attribute("name").as_string();
 
+            // Read catalog
+            auto catalog_node = test_node.child("catalog");
+            test.catalog_default_database = catalog_node.attribute("database").as_string();
+            test.catalog_default_schema = catalog_node.attribute("schema").as_string();
+
             // Read main script
             {
                 auto main_node = test_node.child("script");
-                if (auto db = main_node.attribute("database")) {
-                    test.script.database_name = db.value();
-                }
-                if (auto schema = main_node.attribute("schema")) {
-                    test.script.schema_name = schema.value();
-                }
                 test.script.input = main_node.child("input").last_child().value();
                 test.script.tables.append_copy(main_node.child("tables"));
                 test.script.table_references.append_copy(main_node.child("table-references"));
@@ -109,17 +103,11 @@ void CompletionSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
             }
 
             // Read catalog
-            for (auto entry_node : test_node.child("catalog").children()) {
-                test.catalog.emplace_back();
-                auto& entry = test.catalog.back();
+            for (auto entry_node : catalog_node.children()) {
+                test.catalog_entries.emplace_back();
+                auto& entry = test.catalog_entries.back();
                 std::string entry_name = entry_node.name();
                 if (entry_name == "script") {
-                    if (auto db = entry_node.attribute("database")) {
-                        entry.database_name = db.value();
-                    }
-                    if (auto schema = entry_node.attribute("schema")) {
-                        entry.schema_name = schema.value();
-                    }
                     entry.input = entry_node.child("input").last_child().value();
                     entry.tables.append_copy(entry_node.child("tables"));
                     entry.table_references.append_copy(entry_node.child("table-references"));

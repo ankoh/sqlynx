@@ -6,10 +6,10 @@
                 select * from B, C where d = c;
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
@@ -41,10 +41,10 @@
                     create table B (d int, e int);
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="a" loc="21..50" text="create tab..nt, b int)">
@@ -67,10 +67,10 @@
                 select * from B, C where d = c;
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
@@ -102,10 +102,10 @@
                     create table B (d int, e int);
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="a" loc="21..50" text="create tab..nt, b int)">

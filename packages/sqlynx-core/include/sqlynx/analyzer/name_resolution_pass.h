@@ -75,10 +75,6 @@ class NameResolutionPass : public PassManager::LTRPass {
     ParsedScript& parsed_program;
     /// The external id of the current script
     const ExternalID catalog_entry_id;
-    /// The default database name
-    const std::string_view default_database_name;
-    /// The default schema name
-    const std::string_view default_schema_name;
     /// The catalog
     const Catalog& catalog;
     /// The attribute index
@@ -161,8 +157,7 @@ class NameResolutionPass : public PassManager::LTRPass {
 
    public:
     /// Constructor
-    NameResolutionPass(ParsedScript& parser, std::string_view default_database_name,
-                       std::string_view default_schema_name, const Catalog& registry, AttributeIndex& attribute_index);
+    NameResolutionPass(ParsedScript& parser, const Catalog& registry, AttributeIndex& attribute_index);
 
     /// Prepare the analysis pass
     void Prepare() override;

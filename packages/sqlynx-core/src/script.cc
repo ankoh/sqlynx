@@ -377,17 +377,13 @@ flatbuffers::Offset<proto::ColumnReference> AnalyzedScript::ColumnReference::Pac
 }
 
 /// Constructor
-AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, const Catalog& catalog,
-                               std::string_view database_name, std::string_view schema_name)
-    : CatalogEntry(parsed->external_id, database_name, schema_name),
+AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, const Catalog& catalog)
+    : CatalogEntry(catalog, parsed->external_id),
       parsed_script(std::move(parsed)),
       catalog_version(catalog.GetVersion()) {}
 
 /// Get the name search index
 flatbuffers::Offset<proto::CatalogEntry> AnalyzedScript::DescribeEntry(flatbuffers::FlatBufferBuilder& builder) const {
-    auto database_name = builder.CreateString(GetDefaultDatabaseName());
-    auto schema_name = builder.CreateString(GetDefaultSchemaName());
-
     std::vector<flatbuffers::Offset<proto::SchemaTable>> table_offsets;
     table_offsets.reserve(table_declarations.GetSize());
     uint32_t table_id = 0;
@@ -414,8 +410,6 @@ flatbuffers::Offset<proto::CatalogEntry> AnalyzedScript::DescribeEntry(flatbuffe
     auto tables_offset = builder.CreateVector(table_offsets);
 
     proto::SchemaDescriptorBuilder schemaBuilder{builder};
-    schemaBuilder.add_database_name(database_name);
-    schemaBuilder.add_schema_name(schema_name);
     schemaBuilder.add_tables(tables_offset);
     auto schema_offset = schemaBuilder.Finish();
     std::vector<flatbuffers::Offset<proto::SchemaDescriptor>> schemas{schema_offset};
@@ -459,14 +453,6 @@ static flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Out>>> PackVe
 
 // Pack an analyzed script
 flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {
-    flatbuffers::Offset<flatbuffers::String> default_database_name_ofs;
-    if (!default_database_name.empty()) {
-        default_database_name_ofs = builder.CreateString(default_database_name);
-    }
-    flatbuffers::Offset<flatbuffers::String> default_schema_name_ofs;
-    if (!default_schema_name.empty()) {
-        default_schema_name_ofs = builder.CreateString(default_schema_name);
-    }
     std::vector<flatbuffers::Offset<proto::Table>> table_offsets;
     table_offsets.reserve(table_declarations.GetSize());
     for (auto& table_chunk : table_declarations.GetChunks()) {
@@ -491,13 +477,8 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
         graph_edge_nodes_ofs_writer[i] = graph_edge_nodes[i];
     }
 
-    auto database_name = builder.CreateString(GetDefaultDatabaseName());
-    auto schema_name = builder.CreateString(GetDefaultSchemaName());
-
     proto::AnalyzedScriptBuilder out{builder};
     out.add_external_id(external_entry_id);
-    out.add_default_database_name(database_name);
-    out.add_default_schema_name(schema_name);
     out.add_tables(tables_ofs);
     out.add_table_references(table_references_ofs);
     out.add_column_references(column_references_ofs);
@@ -508,21 +489,11 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
 
 static Catalog EMPTY_CATALOG;
 
-Script::Script(uint32_t external_id, std::string_view database_name, std::string_view schema_name)
-    : catalog(EMPTY_CATALOG),
-      external_id(external_id),
-      text(1024),
-      database_name(database_name.empty() ? EMPTY_CATALOG.GetDefaultDatabaseName() : database_name),
-      schema_name(schema_name.empty() ? EMPTY_CATALOG.GetDefaultSchemaName() : schema_name) {
+Script::Script(uint32_t external_id) : catalog(EMPTY_CATALOG), external_id(external_id), text(1024) {
     assert(!catalog.Contains(external_id));
 }
 
-Script::Script(Catalog& catalog, uint32_t external_id, std::string_view database_name, std::string_view schema_name)
-    : catalog(catalog),
-      external_id(external_id),
-      text(1024),
-      database_name(database_name.empty() ? catalog.GetDefaultDatabaseName() : database_name),
-      schema_name(schema_name.empty() ? catalog.GetDefaultSchemaName() : schema_name) {
+Script::Script(Catalog& catalog, uint32_t external_id) : catalog(catalog), external_id(external_id), text(1024) {
     assert(!catalog.Contains(external_id));
 }
 
@@ -641,7 +612,7 @@ std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze() {
     auto time_start = std::chrono::steady_clock::now();
 
     // Analyze a script
-    auto [script, status] = Analyzer::Analyze(parsed_script, catalog, database_name, schema_name);
+    auto [script, status] = Analyzer::Analyze(parsed_script, catalog);
     if (status != proto::StatusCode::OK) {
         return {nullptr, status};
     }

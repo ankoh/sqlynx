@@ -5,10 +5,10 @@
                 select * from lineitem where ke
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="5" stmt="0" loc="31..39" text="lineitem" />
@@ -30,10 +30,10 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="part" loc="1..309" text="create tab.._partkey))">

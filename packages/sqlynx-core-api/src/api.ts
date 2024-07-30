@@ -7,14 +7,7 @@ interface SQLynxModuleExports {
     sqlynx_free: (ptr: number) => void;
     sqlynx_delete_result: (ptr: number) => void;
 
-    sqlynx_script_new: (
-        catalog: number,
-        id: number,
-        db_name_ptr: number,
-        db_name_length: number,
-        schema_name_ptr: number,
-        schema_name_length: number,
-    ) => number;
+    sqlynx_script_new: (catalog: number, id: number) => number;
     sqlynx_script_insert_text_at: (ptr: number, offset: number, text: number, textLength: number) => void;
     sqlynx_script_insert_char_at: (ptr: number, offset: number, unicode: number) => void;
     sqlynx_script_erase_text_range: (ptr: number, offset: number, length: number) => void;
@@ -28,7 +21,11 @@ interface SQLynxModuleExports {
     sqlynx_script_complete_at_cursor: (ptr: number, limit: number) => number;
     sqlynx_script_get_statistics: (ptr: number) => number;
 
-    sqlynx_catalog_new: () => number;
+    sqlynx_catalog_new: (
+        default_db_name_ptr: number,
+        default_db_name_length: number,
+        default_schema_name_ptr: number,
+        default_schema_name_length: number) => void;
     sqlynx_catalog_clear: (catalog_ptr: number) => void;
     sqlynx_catalog_describe_entries: (catalog_ptr: number) => number;
     sqlynx_catalog_describe_entries_of: (catalog_ptr: number, external_id: number) => number;

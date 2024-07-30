@@ -2,10 +2,10 @@
     <completion-snapshot name="empty">
         <script id="0">
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
         </script>
         <catalog />
@@ -24,10 +24,10 @@
                 select * from fo
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <unresolved stmt="0" loc="31..33" text="fo" />
@@ -39,10 +39,10 @@
                     create table foo(a int);
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="foo" loc="21..44" text="create tab..foo(a int)">
@@ -66,10 +66,10 @@
                 select * from ( foo );
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
         </script>
         <catalog>
@@ -78,10 +78,10 @@
                     create table foo(a int);
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="foo" loc="21..44" text="create tab..foo(a int)">
@@ -101,10 +101,10 @@
                 select attr2 from tab
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <unresolved stmt="0" loc="35..38" text="tab" />
@@ -121,10 +121,10 @@ create table table2(attr2 integer);
 create table table3(attr3 integer);
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="table1" loc="1..35" text="create tab..1 integer)">
@@ -154,10 +154,10 @@ create table table3(attr3 integer);
                 select external_name2 from external_name1 where external_
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="44..58" text="external_name1" />
@@ -173,10 +173,10 @@ create table table3(attr3 integer);
                     create table external_name1(external_name2 int);
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="external_name1" loc="21..68" text="create tab..name2 int)">
@@ -202,10 +202,10 @@ create table table3(attr3 integer);
                 select external_name2 from external_name1 where external_
             </input>
             <database-references>
-                <database name="sqlynx" />
+                <entry db="sqlynx" />
             </database-references>
             <schema-references>
-                <schema name="default" />
+                <entry db="sqlynx" schema="default" />
             </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="44..58" text="external_name1" />
@@ -221,10 +221,10 @@ create table table3(attr3 integer);
                     create table external_name1(external_name2 int);
                 </input>
                 <database-references>
-                    <database name="sqlynx" />
+                    <entry db="sqlynx" />
                 </database-references>
                 <schema-references>
-                    <schema name="default" />
+                    <entry db="sqlynx" schema="default" />
                 </schema-references>
                 <tables>
                     <table name="external_name1" loc="21..68" text="create tab..name2 int)">

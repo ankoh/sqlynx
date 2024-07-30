@@ -2,12 +2,10 @@
 
 #include <filesystem>
 #include <string>
-#include <unordered_map>
 
 #include "gtest/gtest.h"
 #include "pugixml.hpp"
 #include "sqlynx/external.h"
-#include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
 
 namespace sqlynx::testing {
@@ -23,10 +21,6 @@ struct AnalyzerSnapshotTest {
     struct ScriptAnalysisSnapshot {
         /// The origin id
         ExternalID external_id;
-        /// The database name
-        std::string database_name;
-        /// The schema name
-        std::string schema_name;
         /// The script
         std::string input;
         /// The tables
@@ -43,8 +37,12 @@ struct AnalyzerSnapshotTest {
     std::string name;
     /// The main script
     ScriptAnalysisSnapshot script;
+    /// The catalog default database
+    std::string catalog_default_database;
+    /// The catalog default schema
+    std::string catalog_default_schema;
     /// The entries
-    std::vector<ScriptAnalysisSnapshot> catalog;
+    std::vector<ScriptAnalysisSnapshot> catalog_entries;
 
     /// Read a registry
     static void TestRegistrySnapshot(const std::vector<ScriptAnalysisSnapshot>& snaps, pugi::xml_node& registry_node,
