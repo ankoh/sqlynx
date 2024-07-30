@@ -27,6 +27,10 @@ export function formatNanoseconds(value: number): string {
         value /= 1000 * 1000;
         return `${value.toFixed(2)} ms`;
     }
+    if (value >= 1000) {
+        value /= 1000;
+        return `${value.toFixed(0)} us`;
+    }
     return `${value.toFixed(1)} ${suffix}`;
 }
 
