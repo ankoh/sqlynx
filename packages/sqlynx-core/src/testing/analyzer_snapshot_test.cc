@@ -32,19 +32,6 @@ static void quoteIdentifier(std::string& buffer, std::string_view name) {
     }
 }
 
-// Resolve a name
-static std::string_view resolveName(const AnalyzedScript& main, const AnalyzedScript* external, ExternalObjectID name) {
-    if (name.IsNull()) {
-        return "null";
-    }
-    if (name.GetExternalId() != main.GetExternalID()) {
-        assert(external != nullptr);
-        return external->parsed_script->scanned_script->ReadName(name.GetIndex()).text;
-    } else {
-        return main.parsed_script->scanned_script->ReadName(name.GetIndex()).text;
-    }
-}
-
 /// Write all table declarations
 static void writeTables(pugi::xml_node root, const AnalyzedScript& target) {
     for (auto& table_decl : target.GetTables()) {
@@ -128,7 +115,7 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
     auto* stmt_type_tt = proto::StatementTypeTypeTable();
     auto* node_type_tt = proto::NodeTypeTypeTable();
 
-    out.prepend_attribute("id").set_value(script.GetExternalID());
+    out.prepend_attribute("id").set_value(script.GetCatalogEntryId());
 
     // Write databases
     if (script.GetDatabases().GetSize() > 0) {
@@ -160,9 +147,9 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
     if (!script.table_references.empty()) {
         auto table_refs_node = out.append_child("table-references");
         for (auto& ref : script.table_references) {
-            auto tag = ref.resolved_table_id.IsNull()                                                 ? "unresolved"
-                       : (is_main && ref.resolved_table_id.GetExternalId() == script.GetExternalID()) ? "internal"
-                                                                                                      : "external";
+            auto tag = ref.resolved_table_id.IsNull()                                                     ? "unresolved"
+                       : (is_main && ref.resolved_table_id.GetExternalId() == script.GetCatalogEntryId()) ? "internal"
+                                                                                                          : "external";
             auto xml_ref = table_refs_node.append_child(tag);
             if (!ref.resolved_table_id.IsNull()) {
                 xml_ref.append_attribute("schema").set_value(ref.resolved_table_id.GetExternalId());
@@ -181,9 +168,9 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
     if (!script.column_references.empty()) {
         auto col_refs_node = out.append_child("column-references");
         for (auto& ref : script.column_references) {
-            auto tag = ref.resolved_table_id.IsNull()                                                 ? "unresolved"
-                       : (is_main && ref.resolved_table_id.GetExternalId() == script.GetExternalID()) ? "internal"
-                                                                                                      : "external";
+            auto tag = ref.resolved_table_id.IsNull()                                                     ? "unresolved"
+                       : (is_main && ref.resolved_table_id.GetExternalId() == script.GetCatalogEntryId()) ? "internal"
+                                                                                                          : "external";
             auto xml_ref = col_refs_node.append_child(tag);
             if (!ref.resolved_table_id.IsNull()) {
                 xml_ref.append_attribute("schema").set_value(ref.resolved_table_id.GetExternalId());
@@ -218,7 +205,7 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
             }
             for (size_t i = 0; i < edge.node_count_right; ++i) {
                 auto& node = script.graph_edge_nodes[edge.nodes_begin + edge.node_count_left + i];
-                assert(!ExternalObjectID(script.GetExternalID(), node.column_reference_id).IsNull());
+                assert(!ExternalObjectID(script.GetCatalogEntryId(), node.column_reference_id).IsNull());
                 auto xml_node = xml_edge.append_child("node");
                 xml_node.append_attribute("side").set_value(1);
                 xml_node.append_attribute("ref").set_value(node.column_reference_id);

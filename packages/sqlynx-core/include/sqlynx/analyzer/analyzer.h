@@ -2,7 +2,6 @@
 
 #include "sqlynx/analyzer/pass_manager.h"
 #include "sqlynx/catalog.h"
-#include "sqlynx/external.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/utils/attribute_index.h"
 
@@ -68,9 +67,9 @@ struct Analyzer {
     /// The parsed program
     const std::shared_ptr<ParsedScript> parsed_program;
     /// The database name
-    const std::string_view database_name;
+    const std::string_view script_database_name;
     /// The database name
-    const std::string_view schema_name;
+    const std::string_view script_schema_name;
     /// The catalog
     const Catalog& catalog;
     /// The attribute index
@@ -82,14 +81,13 @@ struct Analyzer {
 
    public:
     /// Constructor
-    Analyzer(std::shared_ptr<ParsedScript> parsed, const Catalog& catalog, std::string_view database_name,
-             std::string_view schema_name);
+    Analyzer(std::shared_ptr<ParsedScript> parsed, const Catalog& catalog, std::string_view script_database_name,
+             std::string_view script_schema_name);
 
     /// Analyze a program
-    static std::pair<std::shared_ptr<AnalyzedScript>, proto::StatusCode> Analyze(std::shared_ptr<ParsedScript> parsed,
-                                                                                 const Catalog& catalog,
-                                                                                 std::string_view database_name = "",
-                                                                                 std::string_view schema_name = "");
+    static std::pair<std::shared_ptr<AnalyzedScript>, proto::StatusCode> Analyze(
+        std::shared_ptr<ParsedScript> parsed, const Catalog& catalog, std::string_view script_database_name = "",
+        std::string_view script_schema_name = "");
 };
 
 }  // namespace sqlynx
