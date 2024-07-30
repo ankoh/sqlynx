@@ -376,12 +376,57 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
 
     struct Node {
         size_t name_id;
-        std::map<std::string_view, Node> children;
         ExternalObjectID external_object_id;
-        Node(size_t name_id) : name_id(name_id), children(), external_object_id() {}
+        std::map<std::string_view, Node> children;
+        Node(size_t name_id, ExternalObjectID object_id = {})
+            : name_id(name_id), external_object_id(object_id), children() {}
     };
     Node root{0};
 
+    // Find representatives for databases and schemas.
+    // Schemas and databases can be populated from multiple catalog entries in SQLynx.
+    // We therefore have to find a "representative" id for a database that the user can refer to for events.
+    // The "representative" id is always the minimum across all object ids.
+    struct Representative {
+        ExternalObjectID representative_id;
+        std::string_view name;
+        size_t name_id;
+    };
+    std::unordered_map<ExternalObjectID, Representative, ExternalObjectID::Hasher> representative_databases;
+    std::unordered_map<ExternalObjectID, Representative, ExternalObjectID::Hasher> representative_schemas;
+    {
+        // Find representative schemas
+        std::unordered_map<size_t, ExternalObjectID> representative_by_schema_name;
+        for (auto& [catalog_entry_id, catalog_entry] : entries) {
+            for (auto& [schema_key, schema_ref] : catalog_entry->schemas_by_name) {
+                auto& [db_name, schema_name] = schema_key;
+                auto name_id = add_name(schema_name);
+                ExternalObjectID repr =
+                    representative_by_schema_name.insert({name_id, schema_ref.get().schema_id}).first->second;
+                auto [iter, ok] = representative_schemas.insert(
+                    {schema_ref.get().schema_id, Representative{repr, schema_name, name_id}});
+                if (!ok && repr.Pack() < iter->second.representative_id.Pack()) {
+                    iter->second.representative_id = repr;
+                }
+            }
+        }
+        // Find representative databases
+        std::unordered_map<size_t, ExternalObjectID> representative_by_db_name;
+        for (auto& [catalog_entry_id, catalog_entry] : entries) {
+            for (auto& [db_name, db_ref] : catalog_entry->databases_by_name) {
+                auto name_id = add_name(db_name);
+                ExternalObjectID repr =
+                    representative_by_db_name.insert({name_id, db_ref.get().database_id}).first->second;
+                auto [iter, ok] =
+                    representative_databases.insert({db_ref.get().database_id, Representative{repr, db_name, name_id}});
+                if (!ok && repr.Pack() < iter->second.representative_id.Pack()) {
+                    iter->second.representative_id = repr;
+                }
+            }
+        }
+    }
+
+    // Translate all table declarations
     size_t database_count = 0;
     size_t schema_count = 0;
     size_t table_count = 0;
@@ -389,24 +434,39 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
     for (auto& [catalog_entry_id, catalog_entry] : entries) {
         for (auto& chunk : catalog_entry->table_declarations.GetChunks()) {
             for (auto& entry : chunk) {
-                auto database_name = entry.table_name.database_name;
-                auto schema_name = entry.table_name.schema_name;
-                auto table_name = entry.table_name.table_name;
+                // Resolve the representative database
+                auto db_iter = representative_databases.find(entry.database_id);
+                assert(db_iter != representative_databases.end());
+                auto db_name = db_iter->second.name;
+                auto db_name_id = db_iter->second.name_id;
+                auto db_repr = db_iter->second.representative_id;
 
-                auto database_name_id = add_name(database_name);
-                auto schema_name_id = add_name(schema_name);
+                // Resolve the representative schema
+                auto schema_iter = representative_schemas.find(entry.schema_id);
+                assert(schema_iter != representative_schemas.end());
+                auto schema_name = schema_iter->second.name;
+                auto schema_name_id = schema_iter->second.name_id;
+                auto schema_repr = schema_iter->second.representative_id;
+
+                // Get the table declaration
+                auto table_name = entry.table_name.table_name;
                 auto table_name_id = add_name(table_name);
 
-                auto [database_node, new_database] = root.children.insert({database_name, Node{database_name_id}});
+                // Create database and schema nodes if they don't exist.
+                // XXX Could do that in between
+                auto [database_node, new_database] = root.children.insert({db_name, Node{db_name_id, db_repr}});
                 auto [schema_node, new_schema] =
-                    database_node->second.children.insert({schema_name, Node{schema_name_id}});
-                auto [table_node, new_table] = schema_node->second.children.insert({table_name, Node{table_name_id}});
-                table_node->second.external_object_id = entry.table_id;
+                    database_node->second.children.insert({schema_name, Node{schema_name_id, schema_repr}});
+
+                // Create the table node
+                auto [table_node, new_table] =
+                    schema_node->second.children.insert({table_name, Node{table_name_id, entry.table_id}});
 
                 database_count += new_database;
                 schema_count += new_schema;
                 table_count += new_table;
 
+                // Add all columns nodes
                 for (auto& column : entry.table_columns) {
                     auto column_name_id = add_name(column.column_name);
                     auto [column_node, new_column] =
