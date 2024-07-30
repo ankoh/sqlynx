@@ -122,9 +122,9 @@ class CatalogEntry {
     /// A table declaration
     struct TableDeclaration {
         /// The database id
-        ExternalObjectID external_database_id;
+        InternalObjectID external_database_id;
         /// The schema id
-        ExternalObjectID external_schema_id;
+        InternalObjectID external_schema_id;
         /// The table id
         ExternalObjectID external_table_id;
         /// The AST node id in the target script
@@ -138,7 +138,7 @@ class CatalogEntry {
         /// The begin of the column
         std::vector<TableColumn> table_columns;
         /// Constructor
-        TableDeclaration(ExternalObjectID database_id = {}, ExternalObjectID schema_id = {},
+        TableDeclaration(InternalObjectID database_id = {}, InternalObjectID schema_id = {},
                          ExternalObjectID table_id = {}, std::optional<uint32_t> ast_node_id = std::nullopt,
                          std::optional<uint32_t> ast_statement_id = {}, std::optional<uint32_t> ast_scope_root = {},
                          QualifiedTableName table_name = {}, std::vector<TableColumn> columns = {})
@@ -165,16 +165,14 @@ class CatalogEntry {
     /// We just track referenced database names to identify them through IDs.
     struct DatabaseReference {
         /// The database id
-        ExternalObjectID external_database_id;
+        InternalObjectID external_database_id;
         /// The database name
-        std::string database_name;
+        std::string_view database_name;
         /// The database alias (if any)
-        std::string database_alias;
+        std::string_view database_alias;
         /// Constructor
-        DatabaseReference(ExternalObjectID database_id, std::string database_name, std::string database_alias)
-            : external_database_id(database_id),
-              database_name(std::move(database_name)),
-              database_alias(std::move(database_alias)) {}
+        DatabaseReference(InternalObjectID database_id, std::string_view database_name, std::string_view database_alias)
+            : external_database_id(database_id), database_name(database_name), database_alias(database_alias) {}
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::DatabaseReference> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
@@ -183,27 +181,27 @@ class CatalogEntry {
     /// We just track referenced schema names to identify them through IDs.
     struct SchemaReference {
         /// The database id
-        ExternalObjectID external_database_id;
+        InternalObjectID external_database_id;
         /// The schema id
-        ExternalObjectID external_schema_id;
+        InternalObjectID external_schema_id;
         /// The database name
-        std::string database_name;
+        std::string_view database_name;
         /// The schema name
-        std::string schema_name;
+        std::string_view schema_name;
         /// Constructor
-        SchemaReference(ExternalObjectID database_id, ExternalObjectID schema_id, std::string database_name,
-                        std::string schema_name)
+        SchemaReference(InternalObjectID database_id, InternalObjectID schema_id, std::string_view database_name,
+                        std::string_view schema_name)
             : external_database_id(database_id),
               external_schema_id(schema_id),
-              database_name(std::move(database_name)),
-              schema_name(std::move(schema_name)) {}
+              database_name(database_name),
+              schema_name(schema_name) {}
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::SchemaReference> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
 
    protected:
     /// The catalog
-    const Catalog& catalog;
+    Catalog& catalog;
     /// The catalog entry id
     const ExternalID external_entry_id;
     /// The referenced databases
@@ -229,23 +227,30 @@ class CatalogEntry {
 
    public:
     /// Construcutor
-    CatalogEntry(const Catalog& catalog, ExternalID external_id);
+    CatalogEntry(Catalog& catalog, ExternalID external_id);
 
     /// Get the external id
     ExternalID GetCatalogEntryId() const { return external_entry_id; }
     /// Get the database declarations
     auto& GetDatabases() const { return database_references; }
+    /// Get the database declarations by name
+    auto& GetDatabasesByName() const { return databases_by_name; }
     /// Get the schema declarations
     auto& GetSchemas() const { return schema_references; }
+    /// Get the schema declarations by name
+    auto& GetSchemasByName() const { return schemas_by_name; }
     /// Get the table declarations
     auto& GetTables() const { return table_declarations; }
+    /// Get the table declarations by name
+    auto& GetTablesByName() const { return tables_by_name; }
+
     /// Get the qualified name
     QualifiedTableName QualifyTableName(QualifiedTableName name) const;
-    /// Register database name
-    std::pair<ExternalObjectID, std::string_view> RegisterDatabaseName(std::string_view name);
-    /// Register schema name
-    std::pair<ExternalObjectID, std::string_view> RegisterSchemaName(ExternalObjectID db_id, std::string_view db_name,
-                                                                     std::string_view schema_name);
+
+    /// Register a database name
+    InternalObjectID RegisterDatabaseName(std::string_view);
+    /// Register a schema name
+    InternalObjectID RegisterSchemaName(InternalObjectID db_id, std::string_view db_name, std::string_view schema_name);
 
     /// Describe the catalog entry
     virtual flatbuffers::Offset<proto::CatalogEntry> DescribeEntry(flatbuffers::FlatBufferBuilder& builder) const = 0;
@@ -289,7 +294,7 @@ class DescriptorPool : public CatalogEntry {
 
    public:
     /// Construcutor
-    DescriptorPool(const Catalog& catalog, ExternalID external_id, Rank rank);
+    DescriptorPool(Catalog& catalog, ExternalID external_id, Rank rank);
     /// Get the rank
     auto GetRank() const { return rank; }
 
@@ -322,9 +327,9 @@ class Catalog {
         /// The id of the catalog entry
         ExternalID catalog_entry_id;
         /// The id of the database <catalog_entry_id, database_idx>
-        ExternalObjectID external_database_id;
+        InternalObjectID external_database_id;
         /// The id of the schema <catalog_entry_id, schema_idx>
-        ExternalObjectID external_schema_id;
+        InternalObjectID external_schema_id;
     };
     /// The catalog version.
     /// Every modification bumps the version counter, the analyzer reads the version counter which protects all refs.
@@ -333,6 +338,10 @@ class Catalog {
     const std::string default_database_name;
     /// The default schema name
     const std::string default_schema_name;
+    /// The registered internal objects
+    std::unordered_map<std::pair<std::string, std::string>, InternalObjectID, StringPairHasher, StringPairEqual>
+        internal_object_ids;
+
     /// The catalog entries
     std::unordered_map<ExternalID, CatalogEntry*> entries;
     /// The script entries
@@ -343,7 +352,7 @@ class Catalog {
     btree::set<std::tuple<CatalogEntry::Rank, ExternalID>> entries_ranked;
     /// The entries ordered by <database, schema, rank>
     btree::map<std::tuple<std::string_view, std::string_view, CatalogEntry::Rank, ExternalID>, CatalogSchemaEntryInfo>
-        entry_names_ranked;
+        entries_by_name;
 
     /// Update a script entry
     proto::StatusCode UpdateScript(ScriptEntry& entry);
@@ -377,6 +386,23 @@ class Catalog {
             auto* schema = entries.at(id);
             f(id, *schema, rank);
         }
+    }
+
+    /// Register an internal object name
+    InternalObjectID RegisterInternalObjectId(std::string_view a, std::string_view b) {
+        if (auto iter = internal_object_ids.find(std::pair<std::string_view, std::string_view>{a, b});
+            iter != internal_object_ids.end()) {
+            return iter->second;
+        } else {
+            return internal_object_ids.insert({std::pair<std::string, std::string>{a, b}, internal_object_ids.size()})
+                .first->second;
+        }
+    }
+    /// Register a database name
+    InternalObjectID AllocateDatabaseId(std::string_view db_name) { return RegisterInternalObjectId(db_name, ""); }
+    /// Register a schema name
+    InternalObjectID AllocateSchemaId(std::string_view db_name, std::string_view schema_name) {
+        return RegisterInternalObjectId(db_name, schema_name);
     }
 
     /// Clear a catalog

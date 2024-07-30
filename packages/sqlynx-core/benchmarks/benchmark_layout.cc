@@ -1,12 +1,6 @@
 #include "benchmark/benchmark.h"
-#include "sqlynx/analyzer/analyzer.h"
 #include "sqlynx/catalog.h"
-#include "sqlynx/parser/names.h"
-#include "sqlynx/parser/parser.h"
-#include "sqlynx/parser/scanner.h"
 #include "sqlynx/script.h"
-#include "sqlynx/text/rope.h"
-#include "sqlynx/utils/suffix_trie.h"
 #include "sqlynx/vis/query_graph_layout.h"
 
 using namespace sqlynx;
@@ -594,7 +588,8 @@ limit 100;
 )SQL";
 
 static void layout_schema(benchmark::State& state) {
-    Script script;
+    Catalog catalog;
+    Script script{catalog};
     script.InsertTextAt(0, external_script);
     script.Scan();
     script.Parse();

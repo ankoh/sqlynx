@@ -1,7 +1,6 @@
 #include "sqlynx/script.h"
 
 #include "gtest/gtest.h"
-#include "sqlynx/analyzer/completion.h"
 #include "sqlynx/catalog.h"
 #include "sqlynx/proto/proto_generated.h"
 
@@ -10,14 +9,16 @@ using namespace sqlynx;
 namespace {
 
 TEST(ScriptTest, ParsingBeforeScanning) {
-    Script script{1};
+    Catalog catalog;
+    Script script{catalog, 1};
     auto [scanned, status] = script.Parse();
     ASSERT_EQ(scanned, nullptr);
     ASSERT_EQ(status, proto::StatusCode::PARSER_INPUT_NOT_SCANNED);
 }
 
 TEST(ScriptTest, AnalyzingBeforeParsing) {
-    Script script{1};
+    Catalog catalog;
+    Script script{catalog, 1};
     auto [analyzed, status] = script.Analyze();
     ASSERT_EQ(analyzed, nullptr);
     ASSERT_EQ(status, proto::StatusCode::ANALYZER_INPUT_NOT_PARSED);
@@ -82,23 +83,25 @@ order by
 limit 100
     )SQL";
 
-    Script external_script{1};
+    Catalog catalog;
+    Script external_script{catalog, 1};
     external_script.InsertTextAt(0, external_script_text);
     ASSERT_EQ(external_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(external_script.Parse().second, proto::StatusCode::OK);
     ASSERT_EQ(external_script.Analyze().second, proto::StatusCode::OK);
 
-    Script main_script{2};
+    Script main_script{catalog, 2};
     main_script.InsertTextAt(0, main_script_text);
     ASSERT_EQ(main_script.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(main_script.Parse().second, proto::StatusCode::OK);
-    Catalog catalog;
+
     catalog.LoadScript(external_script, 0);
     ASSERT_EQ(main_script.Analyze().second, proto::StatusCode::OK);
 }
 
 TEST(ScriptTest, ReplaceText) {
-    Script script{1};
+    Catalog catalog;
+    Script script{catalog, 1};
     script.InsertTextAt(0, "foo");
     ASSERT_EQ(script.ToString(), "foo");
     script.ReplaceText("bar");

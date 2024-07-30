@@ -596,7 +596,8 @@ limit 100;
 )SQL";
 
 static void scan_query(benchmark::State& state) {
-    Script main{1};
+    Catalog catalog;
+    Script main{catalog, 1};
     main.InsertTextAt(0, main_script);
 
     for (auto _ : state) {
@@ -606,7 +607,8 @@ static void scan_query(benchmark::State& state) {
 }
 
 static void parse_query(benchmark::State& state) {
-    Script main{1};
+    Catalog catalog;
+    Script main{catalog, 1};
     main.InsertTextAt(0, main_script);
     auto scan = main.Scan();
     assert(scan.second == proto::StatusCode::OK);
@@ -618,7 +620,8 @@ static void parse_query(benchmark::State& state) {
 }
 
 static void analyze_query(benchmark::State& state) {
-    Script external{2};
+    Catalog catalog;
+    Script external{catalog, 2};
     external.InsertTextAt(0, external_script);
 
     auto ext_scan = external.Scan();
@@ -628,7 +631,6 @@ static void analyze_query(benchmark::State& state) {
     assert(ext_parsed.second == proto::StatusCode::OK);
     assert(ext_analyzed.second == proto::StatusCode::OK);
 
-    Catalog catalog;
     catalog.LoadScript(external, 0);
 
     Script main{catalog, 1};
@@ -646,7 +648,8 @@ static void analyze_query(benchmark::State& state) {
 }
 
 static void move_cursor(benchmark::State& state) {
-    Script main;
+    Catalog catalog;
+    Script main{catalog};
     main.InsertTextAt(0, main_script);
 
     auto scanned = main.Scan();
@@ -670,7 +673,8 @@ static void move_cursor(benchmark::State& state) {
 }
 
 static void complete_cursor(benchmark::State& state) {
-    Script main;
+    Catalog catalog;
+    Script main{catalog};
 
     std::string_view text = ",customer";
     main.InsertTextAt(0, text);
@@ -698,7 +702,7 @@ static void complete_cursor(benchmark::State& state) {
 static void compute_layout(benchmark::State& state) {
     Catalog catalog;
 
-    Script script;
+    Script script{catalog};
     script.InsertTextAt(0, external_script);
     script.Scan();
     script.Parse();

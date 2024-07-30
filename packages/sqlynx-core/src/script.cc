@@ -377,7 +377,7 @@ flatbuffers::Offset<proto::ColumnReference> AnalyzedScript::ColumnReference::Pac
 }
 
 /// Constructor
-AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, const Catalog& catalog)
+AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, Catalog& catalog)
     : CatalogEntry(catalog, parsed->external_id),
       parsed_script(std::move(parsed)),
       catalog_version(catalog.GetVersion()) {}
@@ -485,12 +485,6 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
     out.add_graph_edges(graph_edges_ofs);
     out.add_graph_edge_nodes(graph_edge_nodes_ofs);
     return out.Finish();
-}
-
-static Catalog EMPTY_CATALOG;
-
-Script::Script(uint32_t external_id) : catalog(EMPTY_CATALOG), external_id(external_id), text(1024) {
-    assert(!catalog.Contains(external_id));
 }
 
 Script::Script(Catalog& catalog, uint32_t external_id) : catalog(catalog), external_id(external_id), text(1024) {

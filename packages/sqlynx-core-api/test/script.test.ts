@@ -20,41 +20,51 @@ beforeAll(async () => {
 
 describe('SQLynx scripts', () => {
     it('can be created', () => {
-        const script = lnx!.createScript(null, 1);
+        const catalog = lnx!.createCatalog();
+        const script = lnx!.createScript(catalog, 1);
         expect(script).not.toBeUndefined();
         script.delete();
+        catalog.delete();
     });
 
     it('are initially empty', () => {
-        const script = lnx!.createScript(null, 1);
+        const catalog = lnx!.createCatalog();
+        const script = lnx!.createScript(catalog, 1);
         expect(script).not.toBeUndefined();
         expect(script.toString()).toEqual('');
         script.delete();
+        catalog.delete();
     });
 
     it('should throw for accesses after deletion', () => {
-        const script = lnx!.createScript(null, 1);
+        const catalog = lnx!.createCatalog();
+        const script = lnx!.createScript(catalog, 1);
         script.delete();
+        catalog.delete();
         expect(() => script.toString()).toThrow(sqlynx.NULL_POINTER_EXCEPTION);
         expect(() => script.insertTextAt(0, 'foo')).toThrow(sqlynx.NULL_POINTER_EXCEPTION);
         expect(() => script.eraseTextRange(0, 1)).toThrow(sqlynx.NULL_POINTER_EXCEPTION);
     });
 
     it('can be deleted repeatedly', () => {
-        const script = lnx!.createScript(null, 1);
+        const catalog = lnx!.createCatalog();
+        const script = lnx!.createScript(catalog, 1);
         expect(script).not.toBeUndefined();
         expect(script.toString()).toEqual('');
         script.delete();
         script.delete();
         script.delete();
+        catalog.delete();
     });
 
     describe('text modifications', () => {
         it('inserting a single character', () => {
-            const script = lnx!.createScript(null, 1);
+            const catalog = lnx!.createCatalog();
+            const script = lnx!.createScript(catalog, 1);
             script.insertTextAt(0, 'a');
             expect(script.toString()).toEqual('a');
             script.delete();
+            catalog.delete();
         });
     });
 });

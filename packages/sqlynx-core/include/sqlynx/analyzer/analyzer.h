@@ -67,7 +67,7 @@ struct Analyzer {
     /// The parsed program
     const std::shared_ptr<ParsedScript> parsed_program;
     /// The catalog
-    const Catalog& catalog;
+    Catalog& catalog;
     /// The attribute index
     AttributeIndex attribute_index;
     /// The pass manager
@@ -77,11 +77,11 @@ struct Analyzer {
 
    public:
     /// Constructor
-    Analyzer(std::shared_ptr<ParsedScript> parsed, const Catalog& catalog);
+    Analyzer(std::shared_ptr<ParsedScript> parsed, Catalog& catalog);
 
     /// Analyze a program
     static std::pair<std::shared_ptr<AnalyzedScript>, proto::StatusCode> Analyze(std::shared_ptr<ParsedScript> parsed,
-                                                                                 const Catalog& catalog);
+                                                                                 Catalog& catalog);
 };
 
 }  // namespace sqlynx

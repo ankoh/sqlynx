@@ -257,7 +257,7 @@ export class SQLynx {
     }
 
     public createScript(
-        catalog: SQLynxCatalog | null,
+        catalog: SQLynxCatalog,
         id: number,
         databaseName: string | null = null,
         schemaName: string | null = null,

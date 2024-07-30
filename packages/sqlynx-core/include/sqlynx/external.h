@@ -8,6 +8,7 @@
 
 namespace sqlynx {
 
+using InternalObjectID = uint64_t;
 using ExternalID = uint32_t;
 
 /// An identifier annotated with an external id

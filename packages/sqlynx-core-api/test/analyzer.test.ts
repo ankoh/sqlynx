@@ -20,13 +20,13 @@ beforeAll(async () => {
 
 describe('SQLynx Analyzer', () => {
     it('external identifier collision', () => {
-        const schemaScript = lnx!.createScript(null, 1);
+        const catalog = lnx!.createCatalog();
+        const schemaScript = lnx!.createScript(catalog, 1);
         schemaScript.insertTextAt(0, 'create table foo(a int);');
         schemaScript.scan().delete();
         schemaScript.parse().delete();
         schemaScript.analyze().delete();
 
-        const catalog = lnx!.createCatalog();
         catalog.loadScript(schemaScript, 0);
 
         expect(() => {
@@ -43,7 +43,8 @@ describe('SQLynx Analyzer', () => {
     });
 
     it(`external ref`, () => {
-        const extScript = lnx!.createScript(null, 1);
+        const catalog = lnx!.createCatalog();
+        const extScript = lnx!.createScript(catalog, 1);
         extScript.insertTextAt(0, 'create table foo(a int);');
 
         const extScannerRes = extScript.scan();
@@ -57,7 +58,6 @@ describe('SQLynx Analyzer', () => {
         expect(extParser.nodesLength()).toBeGreaterThan(0);
         expect(extAnalyzer.tablesLength()).toEqual(1);
 
-        const catalog = lnx!.createCatalog();
         catalog.loadScript(extScript, 0);
 
         const mainScript = lnx!.createScript(catalog, 2);

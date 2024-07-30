@@ -8,14 +8,14 @@
 
 namespace sqlynx {
 
-Analyzer::Analyzer(std::shared_ptr<ParsedScript> parsed, const Catalog& catalog)
+Analyzer::Analyzer(std::shared_ptr<ParsedScript> parsed, Catalog& catalog)
     : parsed_program(parsed),
       catalog(catalog),
       pass_manager(*parsed),
-      name_resolution(std::make_unique<NameResolutionPass>(*parsed, this->catalog, attribute_index)) {}
+      name_resolution(std::make_unique<NameResolutionPass>(*parsed, catalog, attribute_index)) {}
 
 std::pair<std::shared_ptr<AnalyzedScript>, proto::StatusCode> Analyzer::Analyze(std::shared_ptr<ParsedScript> parsed,
-                                                                                const Catalog& catalog) {
+                                                                                Catalog& catalog) {
     if (parsed == nullptr) {
         return {nullptr, proto::StatusCode::ANALYZER_INPUT_NOT_PARSED};
     }

@@ -21,7 +21,8 @@ beforeAll(async () => {
 describe('SQLynx Completion', () => {
     describe('single script prefix', () => {
         const test = (text: string, cursor_offset: number, expected: string[]) => {
-            const script = lnx!.createScript(null, 1);
+            const catalog = lnx!.createCatalog();
+            const script = lnx!.createScript(catalog, 1);
             script.insertTextAt(0, text);
             script.scan().delete();
             script.parse().delete();
@@ -37,6 +38,9 @@ describe('SQLynx Completion', () => {
                 candidates.push(candidate.completionText()!);
             }
             expect(candidates).toEqual(expected);
+
+            script.delete();
+            catalog.delete();
         };
 
         it('s', () => test('s', 1, ['select', 'set', 'values', 'with', 'create', 'table']));
