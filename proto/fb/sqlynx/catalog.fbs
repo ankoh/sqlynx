@@ -41,7 +41,7 @@ table SchemaDescriptor {
 /// A descriptor for a table within a schema
 table SchemaTable {
     // The index of the table in the catalog entry
-    table_idx: uint32;
+    table_id: uint32;
     // The table name
     table_name: string;
     // The table columns
@@ -85,7 +85,7 @@ struct FlatCatalogEntry {
     /// The index of the parent catalog entry.
     /// This is the index in the FlatCatalog buffer.
     flat_parent_idx: uint32;
-    /// The external object id.
+    /// The object id.
     /// uint32 max if not set.
     object_id: uint64;
     /// The name id
