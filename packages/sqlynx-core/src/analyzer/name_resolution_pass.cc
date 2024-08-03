@@ -51,13 +51,14 @@ NameResolutionPass::NameResolutionPass(ParsedScript& parser, Catalog& catalog, A
 
     // Register default database
     auto db_id = catalog.AllocateDatabaseId(catalog.GetDefaultDatabaseName());
-    auto& db = database_references.Append(CatalogEntry::DatabaseReference{db_id, catalog.GetDefaultDatabaseName(), ""});
+    auto& db =
+        database_references.Append(CatalogEntry::DatabaseReference{0, db_id, catalog.GetDefaultDatabaseName(), ""});
     databases_by_name.insert({db.database_name, db});
 
     // Register default schema
     auto schema_id = catalog.AllocateSchemaId(catalog.GetDefaultDatabaseName(), catalog.GetDefaultSchemaName());
     auto& schema = schema_references.Append(CatalogEntry::SchemaReference{
-        db_id, schema_id, catalog.GetDefaultDatabaseName(), catalog.GetDefaultSchemaName()});
+        0, db_id, schema_id, catalog.GetDefaultDatabaseName(), catalog.GetDefaultSchemaName()});
     schemas_by_name.insert({{db.database_name, schema.schema_name}, schema});
 }
 
@@ -511,17 +512,27 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 table_name = NormalizeTableName(table_name);
                 // Register the database
                 auto db_id = catalog.AllocateDatabaseId(table_name.database_name);
-                if (!databases_by_name.contains({table_name.database_name})) {
+                auto db_ref_iter = databases_by_name.find(table_name.database_name);
+                size_t db_ref_id = 0;
+                if (db_ref_iter == databases_by_name.end()) {
+                    db_ref_id = database_references.GetSize();
                     auto& db = database_references.Append(
-                        CatalogEntry::DatabaseReference{db_id, table_name.database_name, ""});
+                        CatalogEntry::DatabaseReference{db_ref_id, db_id, table_name.database_name, ""});
                     databases_by_name.insert({db.database_name, db});
+                } else {
+                    db_ref_id = db_ref_iter->second.get().database_reference_id;
                 }
                 // Register the schema
                 auto schema_id = catalog.AllocateSchemaId(table_name.database_name, table_name.schema_name);
-                if (!schemas_by_name.contains({table_name.database_name, table_name.schema_name})) {
+                auto schema_ref_iter = schemas_by_name.find({table_name.database_name, table_name.schema_name});
+                size_t schema_ref_id = 0;
+                if (schema_ref_iter == schemas_by_name.end()) {
+                    schema_ref_id = schema_references.GetSize();
                     auto& schema = schema_references.Append(CatalogEntry::SchemaReference{
-                        db_id, schema_id, table_name.database_name, table_name.schema_name});
+                        schema_ref_id, db_id, schema_id, table_name.database_name, table_name.schema_name});
                     schemas_by_name.insert({{table_name.database_name, table_name.schema_name}, schema});
+                } else {
+                    schema_ref_id = schema_ref_iter->second.get().schema_reference_id;
                 }
                 // Merge child states
                 MergeChildStates(node_state, {elements_node});
@@ -536,10 +547,12 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 CreateScope(node_state, node_id);
                 // Build the table
                 auto& n = table_declarations.Append(AnalyzedScript::TableDeclaration());
-                n.internal_database_id = db_id;
-                n.internal_schema_id = schema_id;
                 n.external_table_id =
                     ExternalObjectID{catalog_entry_id, static_cast<uint32_t>(table_declarations.GetSize() - 1)};
+                n.database_reference_id = db_ref_id;
+                n.schema_reference_id = schema_ref_id;
+                n.unified_database_id = db_id;
+                n.unified_schema_id = schema_id;
                 n.ast_node_id = node_id;
                 n.table_name = table_name;
                 n.table_columns = std::move(table_columns);

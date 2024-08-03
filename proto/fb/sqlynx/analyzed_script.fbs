@@ -3,13 +3,19 @@ include "sqlynx/sql_enums.fbs";
 namespace sqlynx.proto;
 
 table DatabaseReference {
+    // The unified database id across all catalog entries
+    unified_database_id: uint32;
     // The column name
     database_name: string;
 }
 
 table SchemaReference {
-    // The local database id
-    database_id: uint32;
+    // The database reference id
+    database_reference_id: uint32;
+    // The unified database id across all catalog entries
+    unified_database_id: uint32;
+    // The unified schema id across all catalog entries
+    unified_schema_id: uint32;
     // The schema name
     schema_name: string;
 }
@@ -42,12 +48,16 @@ table TableColumn {
 }
 
 table Table {
-    // The local database id
-    database_id: uint32;
-    // The local schema id
-    schema_id: uint32;
+    // The index of the database reference
+    database_reference_id: uint32;
+    // The index of the schema reference
+    schema_reference_id: uint32;
+    // The unified database id across all catalog entries
+    unified_database_id: uint32;
+    // The unified schema id across all catalog entries
+    unified_schema_id: uint32;
     // The id of the AST node that created this table declaration.
-    ast_node_id: uint32;
+    ast_node_id: uint32 ;
     // The id of the statement that created the table declaration
     ast_statement_id: uint32;
     // The root of the scope where this table reference is live
@@ -69,6 +79,10 @@ table TableReference {
     table_name: QualifiedTableName;
     // The alias name
     alias_name: string;
+    // The unified database id across all catalog entries
+    unified_database_id: uint32;
+    // The unified schema id across all catalog entries
+    unified_schema_id: uint32;
     // The id of the table that is referenced.
     // <uint32, uint32> that may point into the catalog.
     // Referencing a local table only if the upper u32 equals the scripts external id.
@@ -88,7 +102,7 @@ table ColumnReference {
     // <uint32, uint32> that may point into the catalog.
     resolved_table_id: uint64;
     // The id of the column that is referenced.
-    // This is a flat index in the that just references the column.
+    // This is just the index in the resolved table.
     resolved_column_id: uint32;
 }
 
