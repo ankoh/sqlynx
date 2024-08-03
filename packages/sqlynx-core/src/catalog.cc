@@ -136,7 +136,7 @@ DescriptorPool::DescriptorPool(Catalog& catalog, ExternalID external_id, uint32_
 
 static flatbuffers::Offset<proto::SchemaDescriptor> describeEntrySchema(flatbuffers::FlatBufferBuilder& builder,
                                                                         const proto::SchemaDescriptor& descriptor,
-                                                                        uint32_t& table_id) {
+                                                                        uint32_t& table_idx) {
     auto database_name = builder.CreateString(descriptor.database_name());
     auto schema_name = builder.CreateString(descriptor.schema_name());
 
@@ -156,7 +156,7 @@ static flatbuffers::Offset<proto::SchemaDescriptor> describeEntrySchema(flatbuff
         auto columns_offset = builder.CreateVector(column_offsets);
 
         proto::SchemaTableBuilder table_builder{builder};
-        table_builder.add_table_id(table_id++);
+        table_builder.add_table_idx(table_idx++);
         table_builder.add_table_name(table_name);
         table_builder.add_columns(columns_offset);
         table_offsets.push_back(table_builder.Finish());
