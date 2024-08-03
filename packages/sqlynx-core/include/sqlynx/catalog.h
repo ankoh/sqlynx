@@ -121,11 +121,11 @@ class CatalogEntry {
     };
     /// A table declaration
     struct TableDeclaration {
-        /// The database id
-        InternalObjectID external_database_id;
-        /// The schema id
-        InternalObjectID external_schema_id;
-        /// The table id
+        /// The internal database id
+        InternalObjectID internal_database_id;
+        /// The internal schema id
+        InternalObjectID internal_schema_id;
+        /// The external table id
         ExternalObjectID external_table_id;
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
@@ -142,8 +142,8 @@ class CatalogEntry {
                          ExternalObjectID table_id = {}, std::optional<uint32_t> ast_node_id = std::nullopt,
                          std::optional<uint32_t> ast_statement_id = {}, std::optional<uint32_t> ast_scope_root = {},
                          QualifiedTableName table_name = {}, std::vector<TableColumn> columns = {})
-            : external_database_id(database_id),
-              external_schema_id(schema_id),
+            : internal_database_id(database_id),
+              internal_schema_id(schema_id),
               external_table_id(table_id),
               ast_node_id(ast_node_id),
               ast_statement_id(ast_statement_id),
@@ -164,15 +164,15 @@ class CatalogEntry {
     /// Databases are not tracked as explicit catalog entities like tables.
     /// We just track referenced database names to identify them through IDs.
     struct DatabaseReference {
-        /// The database id
-        InternalObjectID external_database_id;
+        /// The internal database id
+        InternalObjectID internal_database_id;
         /// The database name
         std::string_view database_name;
         /// The database alias (if any)
         std::string_view database_alias;
         /// Constructor
         DatabaseReference(InternalObjectID database_id, std::string_view database_name, std::string_view database_alias)
-            : external_database_id(database_id), database_name(database_name), database_alias(database_alias) {}
+            : internal_database_id(database_id), database_name(database_name), database_alias(database_alias) {}
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::DatabaseReference> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
@@ -181,9 +181,9 @@ class CatalogEntry {
     /// We just track referenced schema names to identify them through IDs.
     struct SchemaReference {
         /// The database id
-        InternalObjectID external_database_id;
+        InternalObjectID internal_database_id;
         /// The schema id
-        InternalObjectID external_schema_id;
+        InternalObjectID internal_schema_id;
         /// The database name
         std::string_view database_name;
         /// The schema name
@@ -191,8 +191,8 @@ class CatalogEntry {
         /// Constructor
         SchemaReference(InternalObjectID database_id, InternalObjectID schema_id, std::string_view database_name,
                         std::string_view schema_name)
-            : external_database_id(database_id),
-              external_schema_id(schema_id),
+            : internal_database_id(database_id),
+              internal_schema_id(schema_id),
               database_name(database_name),
               schema_name(schema_name) {}
         /// Pack as FlatBuffer
