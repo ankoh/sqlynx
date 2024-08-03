@@ -536,8 +536,8 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 CreateScope(node_state, node_id);
                 // Build the table
                 auto& n = table_declarations.Append(AnalyzedScript::TableDeclaration());
-                n.external_database_id = db_id;
-                n.external_schema_id = schema_id;
+                n.internal_database_id = db_id;
+                n.internal_schema_id = schema_id;
                 n.external_table_id =
                     ExternalObjectID{catalog_entry_id, static_cast<uint32_t>(table_declarations.GetSize() - 1)};
                 n.ast_node_id = node_id;
