@@ -386,7 +386,7 @@ AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, Catalog& ca
 flatbuffers::Offset<proto::CatalogEntry> AnalyzedScript::DescribeEntry(flatbuffers::FlatBufferBuilder& builder) const {
     std::vector<flatbuffers::Offset<proto::SchemaTable>> table_offsets;
     table_offsets.reserve(table_declarations.GetSize());
-    uint32_t table_idx = 0;
+    uint32_t table_id = 0;
     for (auto& table_chunk : table_declarations.GetChunks()) {
         for (auto& table : table_chunk) {
             auto table_name = builder.CreateString(table.table_name.table_name);
@@ -402,7 +402,7 @@ flatbuffers::Offset<proto::CatalogEntry> AnalyzedScript::DescribeEntry(flatbuffe
             auto columns_offset = builder.CreateVector(column_offsets);
 
             proto::SchemaTableBuilder table_builder{builder};
-            table_builder.add_table_idx(table_idx++);
+            table_builder.add_table_id(table_id++);
             table_builder.add_table_name(table_name);
             table_builder.add_columns(columns_offset);
         }
