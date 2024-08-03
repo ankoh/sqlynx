@@ -218,7 +218,7 @@ create table region (
         expect(snap.readName(db.nameId())).toEqual("sqlynx");
 
         const schema = snap.catalogReader.schemas(0)!;
-        expect(schema.parentId()).toEqual(0);
+        expect(schema.flatParentIdx()).toEqual(0);
         expect(schema.childBegin()).toEqual(0);
         expect(schema.childCount()).toEqual(8);
         expect(snap.readName(schema.nameId())).toEqual("default");
@@ -236,7 +236,7 @@ create table region (
 
         for (let i = 0; i < 8; ++i) {
             const table = snap.catalogReader.tables(i)!;
-            expect(table.parentId()).toEqual(0);
+            expect(table.flatParentIdx()).toEqual(0);
             expect(snap.readName(table.nameId())).toEqual(tableNames[i]);
         }
 

@@ -665,7 +665,7 @@ proto::StatusCode Catalog::AddSchemaDescriptor(ExternalID external_id, std::span
     auto& pool = *iter->second;
     auto& descriptor = *flatbuffers::GetRoot<proto::SchemaDescriptor>(descriptor_data.data());
     pool.AddSchemaDescriptor(descriptor, std::move(descriptor_buffer));
-    // Register names
+    // Register database and schema names
     {
         std::string_view db_name =
             descriptor.database_name() == nullptr ? "" : descriptor.database_name()->string_view();

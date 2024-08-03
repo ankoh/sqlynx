@@ -180,9 +180,9 @@ class CatalogEntry {
     /// Schemas are not tracked as explicit catalog entities like tables.
     /// We just track referenced schema names to identify them through IDs.
     struct SchemaReference {
-        /// The database id
+        /// The internal database id
         InternalObjectID internal_database_id;
-        /// The schema id
+        /// The internal schema id
         InternalObjectID internal_schema_id;
         /// The database name
         std::string_view database_name;
