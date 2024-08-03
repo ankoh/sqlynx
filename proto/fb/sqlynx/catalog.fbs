@@ -79,11 +79,9 @@ table FlatCatalog {
 
 /// A descriptor for a catalog element
 struct FlatCatalogEntry {
-    /// The id of the catalog entry.
-    /// This is specified by the user when creating the catalog entry.
-    catalog_entry_id: uint32;
-    /// The index of the parent catalog entry.
-    /// This is the index in the FlatCatalog buffer.
+    /// The index of the flat catalog entry.
+    flat_entry_idx: uint32;
+    /// The index of the parent flat catalog entry.
     flat_parent_idx: uint32;
     /// The object id.
     /// uint32 max if not set.
