@@ -10,35 +10,47 @@ enum CatalogEntryType: uint8 {
 }
 
 /// A catalog entry.
-/// Catlaog entries are ordered by rank and contain an external id.
+/// Catalaog entries are ordered by rank and contain an external id.
 table CatalogEntry {
+    // The external id that the user specified for this catalog entry
     external_id: uint32;
+    // The entry type
     entry_type: CatalogEntryType;
+    // The rank that the user assigned
     rank: uint32;
+    // The schemas contained in this catalog entry
     schemas: [SchemaDescriptor];
 }
 
 /// A collection of catalog entries
 table CatalogEntries {
+    // The catalog entries
     entries: [CatalogEntry];
 }
 
 /// A descriptor for a single schema
 table SchemaDescriptor {
+    // The name of the database
     database_name: string;
+    // The name of the schema
     schema_name: string;
+    // The tables
     tables: [SchemaTable];
 }
 
 /// A descriptor for a table within a schema
 table SchemaTable {
+    // The table index in the catalog entry
     table_id: uint32;
+    // The table name
     table_name: string;
+    // The table columns
     columns: [SchemaTableColumn];
 }
 
 /// A descriptor for a column within a table
 table SchemaTableColumn {
+    // The name of the column
     column_name: string;
 }
 
@@ -67,13 +79,15 @@ table FlatCatalog {
 
 /// A descriptor for a catalog element
 struct FlatCatalogEntry {
-    /// The index of the catalog entry
-    entry_id: uint32;
-    /// The index of the parent catalog entry
-    parent_id: uint32;
+    /// The id of the catalog entry.
+    /// This is specified by the user when creating the catalog entry.
+    catalog_entry_id: uint32;
+    /// The index of the parent catalog entry.
+    /// This is the index in the FlatCatalog buffer.
+    flat_parent_idx: uint32;
     /// The external object id.
-    /// uint32 max if not set
-    external_object_id: uint32;
+    /// uint32 max if not set.
+    object_id: uint32;
     /// The name id
     name_id: uint32;
     /// The index of the first child entry
