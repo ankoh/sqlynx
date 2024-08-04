@@ -13,9 +13,9 @@ enum CatalogEntryType: uint8 {
 /// Catalaog entries are ordered by rank and contain an external id.
 table CatalogEntry {
     // The external id that the user specified for this catalog entry
-    external_id: uint32;
+    catalog_entry_id: uint32;
     // The entry type
-    entry_type: CatalogEntryType;
+    catalog_entry_type: CatalogEntryType;
     // The rank that the user assigned
     rank: uint32;
     // The schemas contained in this catalog entry
@@ -40,7 +40,7 @@ table SchemaDescriptor {
 
 /// A descriptor for a table within a schema
 table SchemaTable {
-    // The index of the table in the catalog entry
+    // The table id in the catalog entry
     table_id: uint32;
     // The table name
     table_name: string;
@@ -83,8 +83,11 @@ struct FlatCatalogEntry {
     flat_entry_idx: uint32;
     /// The index of the parent flat catalog entry.
     flat_parent_idx: uint32;
-    /// The object id.
-    /// uint32 max if not set.
+    /// The object id:
+    /// - Databases store the unified database id
+    /// - Schemas store the unified schema id
+    /// - Tables store the external table id as pair of (external catalog entry id, table id)
+    /// - Columns store 0
     object_id: uint64;
     /// The name id
     name_id: uint32;
