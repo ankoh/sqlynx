@@ -310,8 +310,8 @@ class Script {
    public:
     /// The catalog
     Catalog& catalog;
-    /// The origin id
-    const ExternalID external_id;
+    /// The catalog entry id
+    const ExternalID catalog_entry_id;
 
     /// The underlying rope
     rope::Rope text;
@@ -341,8 +341,8 @@ class Script {
     /// Scripts must not be copy-assigned
     Script& operator=(const Script& other) = delete;
 
-    /// Get the external id
-    auto GetExternalID() const { return external_id; }
+    /// Get the catalog entry id
+    auto GetCatalogEntryId() const { return catalog_entry_id; }
     /// Get the catalog
     auto& GetCatalog() const { return catalog; }
 

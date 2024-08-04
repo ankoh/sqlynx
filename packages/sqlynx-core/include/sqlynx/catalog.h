@@ -123,7 +123,7 @@ class CatalogEntry {
     /// A table declaration
     struct TableDeclaration {
         /// The external table id
-        ExternalObjectID external_table_id;
+        ExternalObjectID catalog_table_id;
         /// The database reference id
         size_t database_reference_id;
         /// The schema reference id
@@ -205,7 +205,7 @@ class CatalogEntry {
     /// The catalog
     Catalog& catalog;
     /// The catalog entry id
-    const ExternalID external_entry_id;
+    const ExternalID catalog_entry_id;
     /// The referenced databases
     ChunkBuffer<DatabaseReference, 16> database_references;
     /// The referenced schemas
@@ -232,7 +232,7 @@ class CatalogEntry {
     CatalogEntry(Catalog& catalog, ExternalID external_id);
 
     /// Get the external id
-    ExternalID GetCatalogEntryId() const { return external_entry_id; }
+    ExternalID GetCatalogEntryId() const { return catalog_entry_id; }
     /// Get the database declarations
     auto& GetDatabases() const { return database_references; }
     /// Get the database declarations by name

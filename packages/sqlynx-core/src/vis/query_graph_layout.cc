@@ -54,14 +54,14 @@ void QueryGraphLayout::PrepareLayout(const AnalyzedScript& analyzed) {
     // Load internal tables
     std::unordered_map<ExternalObjectID, size_t, ExternalObjectID::Hasher> nodes_by_table_id;
     for (auto& table : analyzed.GetTables()) {
-        nodes_by_table_id.insert({table.external_table_id, nodes.size()});
-        nodes.emplace_back(nodes.size(), table.external_table_id, table.table_name, 0);
+        nodes_by_table_id.insert({table.catalog_table_id, nodes.size()});
+        nodes.emplace_back(nodes.size(), table.catalog_table_id, table.table_name, 0);
     }
     // Add external tables
     script->GetCatalog().Iterate([&](auto entry_id, CatalogEntry& entry) {
         for (auto& table : entry.GetTables()) {
-            nodes_by_table_id.insert({table.external_table_id, nodes.size()});
-            nodes.emplace_back(nodes.size(), table.external_table_id, table.table_name, 0);
+            nodes_by_table_id.insert({table.catalog_table_id, nodes.size()});
+            nodes.emplace_back(nodes.size(), table.catalog_table_id, table.table_name, 0);
         }
     });
     for (auto& ref : analyzed.table_references) {
@@ -74,10 +74,10 @@ void QueryGraphLayout::PrepareLayout(const AnalyzedScript& analyzed) {
     edge_nodes.resize(analyzed.graph_edge_nodes.size());
     for (size_t i = 0; i < analyzed.graph_edge_nodes.size(); ++i) {
         const AnalyzedScript::QueryGraphEdgeNode& node = analyzed.graph_edge_nodes[i];
-        ExternalObjectID column_reference_id{script->GetExternalID(), node.column_reference_id};
+        ExternalObjectID column_reference_id{script->GetCatalogEntryId(), node.column_reference_id};
         auto& col_ref = analyzed.column_references[node.column_reference_id];
         ExternalObjectID ast_node_id = col_ref.ast_node_id.has_value()
-                                           ? ExternalObjectID{script->GetExternalID(), *col_ref.ast_node_id}
+                                           ? ExternalObjectID{script->GetCatalogEntryId(), *col_ref.ast_node_id}
                                            : ExternalObjectID{};
         ExternalObjectID table_id = analyzed.column_references[node.column_reference_id].resolved_table_id;
         uint32_t node_id = std::numeric_limits<uint32_t>::max();
@@ -91,8 +91,8 @@ void QueryGraphLayout::PrepareLayout(const AnalyzedScript& analyzed) {
     edges.resize(analyzed.graph_edges.size());
     for (uint32_t i = 0; i < analyzed.graph_edges.size(); ++i) {
         const AnalyzedScript::QueryGraphEdge& edge = analyzed.graph_edges[i];
-        edges[i] = {ExternalObjectID{script->GetExternalID(), i},
-                    edge.ast_node_id.has_value() ? ExternalObjectID{script->GetExternalID(), *edge.ast_node_id}
+        edges[i] = {ExternalObjectID{script->GetCatalogEntryId(), i},
+                    edge.ast_node_id.has_value() ? ExternalObjectID{script->GetCatalogEntryId(), *edge.ast_node_id}
                                                  : ExternalObjectID{},
                     edge.nodes_begin,
                     edge.node_count_left,
