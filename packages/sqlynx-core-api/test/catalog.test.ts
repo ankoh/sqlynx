@@ -65,8 +65,12 @@ describe('Catalog Tests ', () => {
 
         // The analyzed script contains an unresolved query_result ref
         const tableRef = analyzed.tableReferences(0)!;
-        let resolved = tableRef.resolvedTableId();
-        expect(sqlynx.ExternalObjectID.isNull(resolved)).toBeTruthy();
+        let resolvedDatabaseId = tableRef.resolvedCatalogDatabaseId();
+        let resolvedSchemaId = tableRef.resolvedCatalogSchemaId();
+        let resolvedTableId = tableRef.resolvedCatalogTableId();
+        expect(resolvedDatabaseId).toEqual(0xFFFFFFFF);
+        expect(resolvedSchemaId).toEqual(0xFFFFFFFF);
+        expect(sqlynx.ExternalObjectID.isNull(resolvedTableId)).toBeTruthy();
 
         // Check the query_result name
         const tableName = tableRef.tableName(new sqlynx.proto.QualifiedTableName())!;
@@ -92,8 +96,12 @@ describe('Catalog Tests ', () => {
         analyzedBuffer = script.analyze();
         analyzed = analyzedBuffer.read(new sqlynx.proto.AnalyzedScript());
         expect(analyzed.tableReferencesLength()).toEqual(1);
-        resolved = tableRef.resolvedTableId();
-        expect(sqlynx.ExternalObjectID.isNull(resolved)).toBeFalsy();
+        resolvedDatabaseId = tableRef.resolvedCatalogDatabaseId();
+        resolvedSchemaId = tableRef.resolvedCatalogSchemaId();
+        resolvedTableId = tableRef.resolvedCatalogTableId();
+        expect(resolvedDatabaseId).not.toEqual(0xFFFFFFFF);
+        expect(resolvedSchemaId).not.toEqual(0xFFFFFFFF);
+        expect(sqlynx.ExternalObjectID.isNull(resolvedTableId)).toBeFalsy();
 
         // Delete all the memory
         analyzedBuffer.delete();
