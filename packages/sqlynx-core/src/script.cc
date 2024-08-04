@@ -416,8 +416,8 @@ flatbuffers::Offset<proto::CatalogEntry> AnalyzedScript::DescribeEntry(flatbuffe
     auto schemas_offset = builder.CreateVector(schemas);
 
     proto::CatalogEntryBuilder catalog{builder};
-    catalog.add_external_id(external_entry_id);
-    catalog.add_entry_type(proto::CatalogEntryType::DESCRIPTOR_POOL);
+    catalog.add_catalog_entry_id(catalog_entry_id);
+    catalog.add_catalog_entry_type(proto::CatalogEntryType::DESCRIPTOR_POOL);
     catalog.add_rank(0);
     catalog.add_schemas(schemas_offset);
     return catalog.Finish();
@@ -478,7 +478,7 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
     }
 
     proto::AnalyzedScriptBuilder out{builder};
-    out.add_external_id(external_entry_id);
+    out.add_catalog_entry_id(catalog_entry_id);
     out.add_tables(tables_ofs);
     out.add_table_references(table_references_ofs);
     out.add_column_references(column_references_ofs);
@@ -487,7 +487,7 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
     return out.Finish();
 }
 
-Script::Script(Catalog& catalog, uint32_t external_id) : catalog(catalog), external_id(external_id), text(1024) {
+Script::Script(Catalog& catalog, uint32_t external_id) : catalog(catalog), catalog_entry_id(external_id), text(1024) {
     assert(!catalog.Contains(external_id));
 }
 
@@ -585,7 +585,7 @@ std::unique_ptr<proto::ScriptStatisticsT> Script::GetStatistics() {
 /// Scan a script
 std::pair<ScannedScript*, proto::StatusCode> Script::Scan() {
     auto time_start = std::chrono::steady_clock::now();
-    auto [script, status] = parser::Scanner::Scan(text, external_id);
+    auto [script, status] = parser::Scanner::Scan(text, catalog_entry_id);
     scanned_script = std::move(script);
     timing_statistics.mutate_scanner_last_elapsed(
         std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - time_start).count());

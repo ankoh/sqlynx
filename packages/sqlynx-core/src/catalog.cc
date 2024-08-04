@@ -51,7 +51,7 @@ flatbuffers::Offset<proto::Table> CatalogEntry::TableDeclaration::Pack(flatbuffe
 
 CatalogEntry::CatalogEntry(Catalog& catalog, ExternalID external_id)
     : catalog(catalog),
-      external_entry_id(external_id),
+      catalog_entry_id(external_id),
       database_references(),
       schema_references(),
       table_declarations(),
@@ -89,7 +89,7 @@ UnifiedObjectID CatalogEntry::RegisterSchemaName(UnifiedObjectID db_id, std::str
 }
 
 const CatalogEntry::TableDeclaration* CatalogEntry::ResolveTable(ExternalObjectID table_id) const {
-    if (table_id.GetExternalId() == external_entry_id) {
+    if (table_id.GetExternalId() == catalog_entry_id) {
         return &table_declarations[table_id.GetIndex()];
     }
     return nullptr;
@@ -97,7 +97,7 @@ const CatalogEntry::TableDeclaration* CatalogEntry::ResolveTable(ExternalObjectI
 
 const CatalogEntry::TableDeclaration* CatalogEntry::ResolveTable(ExternalObjectID table_id,
                                                                  const Catalog& catalog) const {
-    if (external_entry_id == table_id.GetExternalId()) {
+    if (catalog_entry_id == table_id.GetExternalId()) {
         return &table_declarations[table_id.GetIndex()];
     } else {
         return catalog.ResolveTable(table_id);
@@ -118,7 +118,7 @@ const CatalogEntry::TableDeclaration* CatalogEntry::ResolveTable(QualifiedTableN
     if (auto resolved = ResolveTable(name)) {
         return resolved;
     } else {
-        return catalog.ResolveTable(name, external_entry_id);
+        return catalog.ResolveTable(name, catalog_entry_id);
     }
 }
 
@@ -182,8 +182,8 @@ flatbuffers::Offset<proto::CatalogEntry> DescriptorPool::DescribeEntry(flatbuffe
     auto schemas_offset = builder.CreateVector(schema_offsets);
 
     proto::CatalogEntryBuilder catalog{builder};
-    catalog.add_external_id(external_entry_id);
-    catalog.add_entry_type(proto::CatalogEntryType::DESCRIPTOR_POOL);
+    catalog.add_catalog_entry_id(catalog_entry_id);
+    catalog.add_catalog_entry_type(proto::CatalogEntryType::DESCRIPTOR_POOL);
     catalog.add_rank(0);
     catalog.add_schemas(schemas_offset);
     return catalog.Finish();
@@ -208,7 +208,7 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
     // Read tables
     uint32_t next_table_id = table_declarations.GetSize();
     for (auto* table : *descriptor.tables()) {
-        ExternalObjectID table_id{external_entry_id, next_table_id};
+        ExternalObjectID table_id{catalog_entry_id, next_table_id};
         // Get the table name
         auto table_name_ptr = table->table_name();
         if (!table_name_ptr || table_name_ptr->size() == 0) {
@@ -234,7 +234,7 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
         auto& t = table_declarations.Append(AnalyzedScript::TableDeclaration());
         t.unified_database_id = db_id;
         t.unified_schema_id = schema_id;
-        t.external_table_id = table_id;
+        t.catalog_table_id = table_id;
         t.table_name = QualifiedTableName{qualified_table_name};
         t.table_columns = std::move(columns);
         ++next_table_id;
@@ -427,7 +427,7 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
                 // Get the table declaration
                 auto table_name = entry.table_name.table_name;
                 auto table_name_id = add_name(table_name);
-                auto& table_node = nodes.Append(Node{entry.external_table_id.Pack(), table_name_id});
+                auto& table_node = nodes.Append(Node{entry.catalog_table_id.Pack(), table_name_id});
                 table_count += schema_node->children.insert({table_name, table_node}).second;
 
                 // Add all columns nodes
@@ -532,7 +532,7 @@ proto::StatusCode Catalog::LoadScript(Script& script, CatalogEntry::Rank rank) {
         return UpdateScript(script_iter->second);
     }
     // Is there another entry (!= the script) with the same external id?
-    auto entry_iter = entries.find(script.GetExternalID());
+    auto entry_iter = entries.find(script.GetCatalogEntryId());
     if (entry_iter != entries.end()) {
         return proto::StatusCode::EXTERNAL_ID_COLLISION;
     }
@@ -580,7 +580,7 @@ proto::StatusCode Catalog::UpdateScript(ScriptEntry& entry) {
         new_schema_entries.insert({key, new_entry});
     }
     // Scan previous names, mark new names that already exist, erase those that no longer exist
-    auto external_id = script.GetExternalID();
+    auto external_id = script.GetCatalogEntryId();
     auto rank = entry.rank;
     auto& prev_schemas = entry.analyzed->schemas_by_name;
     for (auto prev_name_iter = prev_schemas.begin(); prev_name_iter != prev_schemas.end();) {
@@ -610,7 +610,7 @@ proto::StatusCode Catalog::UpdateScript(ScriptEntry& entry) {
         }
     }
     entry.analyzed = script.analyzed_script;
-    auto entry_iter = entries.find(script.GetExternalID());
+    auto entry_iter = entries.find(script.GetCatalogEntryId());
     assert(entry_iter != entries.end());
     entry_iter->second = entry.analyzed.get();
     ++version;
@@ -620,7 +620,7 @@ proto::StatusCode Catalog::UpdateScript(ScriptEntry& entry) {
 void Catalog::DropScript(Script& script) {
     auto iter = script_entries.find(&script);
     if (iter != script_entries.end()) {
-        auto external_id = script.GetExternalID();
+        auto external_id = script.GetCatalogEntryId();
         if (iter->second.analyzed) {
             auto& analyzed = iter->second.analyzed;
             for (auto& [schema_key, entry_info] : analyzed->schemas_by_name) {

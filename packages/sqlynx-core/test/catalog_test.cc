@@ -82,8 +82,8 @@ TEST(CatalogTest, Clear) {
         fb.Finish(catalog.DescribeEntries(fb));
         auto description = flatbuffers::GetRoot<proto::CatalogEntries>(fb.GetBufferPointer());
         ASSERT_EQ(description->entries()->size(), 1);
-        ASSERT_EQ(description->entries()->Get(0)->external_id(), 1);
-        ASSERT_EQ(description->entries()->Get(0)->entry_type(), proto::CatalogEntryType::DESCRIPTOR_POOL);
+        ASSERT_EQ(description->entries()->Get(0)->catalog_entry_id(), 1);
+        ASSERT_EQ(description->entries()->Get(0)->catalog_entry_type(), proto::CatalogEntryType::DESCRIPTOR_POOL);
     }
     catalog.Clear();
     {
@@ -114,8 +114,8 @@ TEST(CatalogTest, SingleDescriptorPool) {
         fb.Finish(catalog.DescribeEntries(fb));
         auto description = flatbuffers::GetRoot<proto::CatalogEntries>(fb.GetBufferPointer());
         ASSERT_EQ(description->entries()->size(), 1);
-        ASSERT_EQ(description->entries()->Get(0)->external_id(), 1);
-        ASSERT_EQ(description->entries()->Get(0)->entry_type(), proto::CatalogEntryType::DESCRIPTOR_POOL);
+        ASSERT_EQ(description->entries()->Get(0)->catalog_entry_id(), 1);
+        ASSERT_EQ(description->entries()->Get(0)->catalog_entry_type(), proto::CatalogEntryType::DESCRIPTOR_POOL);
     }
 
     Script script{catalog, 2};
