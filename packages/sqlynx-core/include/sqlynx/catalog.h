@@ -153,12 +153,8 @@ class CatalogEntry {
         /// The index in the table
         size_t table_column_index;
     };
-    /// A database name reference.
-    /// Databases are not tracked as explicit catalog entities like tables.
-    /// We just track referenced database names to identify them through IDs.
-    struct DatabaseReference {
-        /// The database reference id
-        size_t database_reference_id;
+    /// A database name declaration
+    struct DatabaseDeclaration {
         /// The catalog database id
         UnifiedObjectID catalog_database_id;
         /// The database name
@@ -166,21 +162,14 @@ class CatalogEntry {
         /// The database alias (if any)
         std::string_view database_alias;
         /// Constructor
-        DatabaseReference(size_t db_reference_id, UnifiedObjectID database_id, std::string_view database_name,
-                          std::string_view database_alias)
-            : database_reference_id(db_reference_id),
-              catalog_database_id(database_id),
-              database_name(database_name),
-              database_alias(database_alias) {}
+        DatabaseDeclaration(UnifiedObjectID database_id, std::string_view database_name,
+                            std::string_view database_alias)
+            : catalog_database_id(database_id), database_name(database_name), database_alias(database_alias) {}
         /// Pack as FlatBuffer
-        flatbuffers::Offset<proto::DatabaseReference> Pack(flatbuffers::FlatBufferBuilder& builder) const;
+        flatbuffers::Offset<proto::DatabaseDeclaration> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
-    /// A schema name reference
-    /// Schemas are not tracked as explicit catalog entities like tables.
-    /// We just track referenced schema names to identify them through IDs.
-    struct SchemaReference {
-        /// The schema reference id
-        size_t schema_reference_id;
+    /// A schema name declaration
+    struct SchemaDeclaration {
         /// The catalog database id
         UnifiedObjectID catalog_database_id;
         /// The catalog schema id
@@ -190,15 +179,14 @@ class CatalogEntry {
         /// The schema name
         std::string_view schema_name;
         /// Constructor
-        SchemaReference(size_t schema_reference_id, UnifiedObjectID database_id, UnifiedObjectID schema_id,
-                        std::string_view database_name, std::string_view schema_name)
-            : schema_reference_id(schema_reference_id),
-              catalog_database_id(database_id),
+        SchemaDeclaration(UnifiedObjectID database_id, UnifiedObjectID schema_id, std::string_view database_name,
+                          std::string_view schema_name)
+            : catalog_database_id(database_id),
               catalog_schema_id(schema_id),
               database_name(database_name),
               schema_name(schema_name) {}
         /// Pack as FlatBuffer
-        flatbuffers::Offset<proto::SchemaReference> Pack(flatbuffers::FlatBufferBuilder& builder) const;
+        flatbuffers::Offset<proto::SchemaDeclaration> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
 
    protected:
@@ -207,15 +195,15 @@ class CatalogEntry {
     /// The catalog entry id
     const ExternalID catalog_entry_id;
     /// The referenced databases
-    ChunkBuffer<DatabaseReference, 16> database_references;
+    ChunkBuffer<DatabaseDeclaration, 16> database_declarations;
     /// The referenced schemas
-    ChunkBuffer<SchemaReference, 16> schema_references;
+    ChunkBuffer<SchemaDeclaration, 16> schema_declarations;
     /// The table definitions
     ChunkBuffer<TableDeclaration, 16> table_declarations;
     /// The databases, indexed by name
-    std::unordered_map<std::string_view, std::reference_wrapper<const DatabaseReference>> databases_by_name;
+    std::unordered_map<std::string_view, std::reference_wrapper<const DatabaseDeclaration>> databases_by_name;
     /// The schema, indexed by name
-    std::unordered_map<std::tuple<std::string_view, std::string_view>, std::reference_wrapper<const SchemaReference>,
+    std::unordered_map<std::tuple<std::string_view, std::string_view>, std::reference_wrapper<const SchemaDeclaration>,
                        TupleHasher>
         schemas_by_name;
     /// The tables, indexed by name
@@ -234,11 +222,11 @@ class CatalogEntry {
     /// Get the external id
     ExternalID GetCatalogEntryId() const { return catalog_entry_id; }
     /// Get the database declarations
-    auto& GetDatabases() const { return database_references; }
+    auto& GetDatabases() const { return database_declarations; }
     /// Get the database declarations by name
     auto& GetDatabasesByName() const { return databases_by_name; }
     /// Get the schema declarations
-    auto& GetSchemas() const { return schema_references; }
+    auto& GetSchemas() const { return schema_declarations; }
     /// Get the schema declarations by name
     auto& GetSchemasByName() const { return schemas_by_name; }
     /// Get the table declarations
@@ -329,9 +317,9 @@ class Catalog {
         /// The id of the catalog entry
         ExternalID catalog_entry_id;
         /// The id of the database <catalog_entry_id, database_idx>
-        UnifiedObjectID external_database_id;
+        UnifiedObjectID catalog_database_id;
         /// The id of the schema <catalog_entry_id, schema_idx>
-        UnifiedObjectID external_schema_id;
+        UnifiedObjectID catalog_schema_id;
     };
     /// The catalog version.
     /// Every modification bumps the version counter, the analyzer reads the version counter which protects all refs.

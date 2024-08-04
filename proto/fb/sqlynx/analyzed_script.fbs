@@ -2,16 +2,14 @@ include "sqlynx/sql_enums.fbs";
 
 namespace sqlynx.proto;
 
-table DatabaseReference {
+table DatabaseDeclaration {
     // The unified database id across all catalog entries
     catalog_database_id: uint32;
     // The column name
     database_name: string;
 }
 
-table SchemaReference {
-    // The reference id for the associated database
-    database_reference_id: uint32;
+table SchemaDeclaration {
     // The unified database id across all catalog entries
     catalog_database_id: uint32;
     // The unified schema id across all catalog entries
@@ -54,10 +52,6 @@ table Table {
     catalog_database_id: uint32;
     // The unified schema id across all catalog entries
     catalog_schema_id: uint32;
-    // The index of the database reference
-    database_reference_id: uint32;
-    // The index of the schema reference
-    schema_reference_id: uint32;
     // The id of the AST node that created this table declaration.
     ast_node_id: uint32 ;
     // The id of the statement that created the table declaration
@@ -134,9 +128,9 @@ table AnalyzedScript {
     // The external id that the user specified for this catalog entry
     catalog_entry_id: uint32;
     // The databases
-    databases: [DatabaseReference];
+    databases: [DatabaseDeclaration];
     // The schemas
-    schemas: [SchemaReference];
+    schemas: [SchemaDeclaration];
     // The local tables
     tables: [Table];
     // The table references in the statement
