@@ -511,26 +511,18 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 // Register the database
                 auto db_id = catalog.AllocateDatabaseId(table_name.database_name);
                 auto db_ref_iter = databases_by_name.find(table_name.database_name);
-                size_t db_ref_id = 0;
                 if (db_ref_iter == databases_by_name.end()) {
-                    db_ref_id = database_references.GetSize();
-                    auto& db = database_references.Append(
-                        CatalogEntry::DatabaseReference{db_ref_id, db_id, table_name.database_name, ""});
+                    auto& db = database_declarations.Append(
+                        CatalogEntry::DatabaseDeclaration{db_id, table_name.database_name, ""});
                     databases_by_name.insert({db.database_name, db});
-                } else {
-                    db_ref_id = db_ref_iter->second.get().database_reference_id;
                 }
                 // Register the schema
                 auto schema_id = catalog.AllocateSchemaId(table_name.database_name, table_name.schema_name);
                 auto schema_ref_iter = schemas_by_name.find({table_name.database_name, table_name.schema_name});
-                size_t schema_ref_id = 0;
                 if (schema_ref_iter == schemas_by_name.end()) {
-                    schema_ref_id = schema_references.GetSize();
-                    auto& schema = schema_references.Append(CatalogEntry::SchemaReference{
-                        schema_ref_id, db_id, schema_id, table_name.database_name, table_name.schema_name});
+                    auto& schema = schema_declarations.Append(CatalogEntry::SchemaDeclaration{
+                        db_id, schema_id, table_name.database_name, table_name.schema_name});
                     schemas_by_name.insert({{table_name.database_name, table_name.schema_name}, schema});
-                } else {
-                    schema_ref_id = schema_ref_iter->second.get().schema_reference_id;
                 }
                 // Merge child states
                 MergeChildStates(node_state, {elements_node});
@@ -549,8 +541,6 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                     ExternalObjectID{catalog_entry_id, static_cast<uint32_t>(table_declarations.GetSize() - 1)};
                 n.catalog_database_id = db_id;
                 n.catalog_schema_id = schema_id;
-                n.database_reference_id = db_ref_id;
-                n.schema_reference_id = schema_ref_id;
                 n.ast_node_id = node_id;
                 n.table_name = table_name;
                 n.table_columns = std::move(table_columns);
@@ -638,9 +628,9 @@ void NameResolutionPass::Finish() {
 
 /// Export an analyzed program
 void NameResolutionPass::Export(AnalyzedScript& program) {
-    program.database_references = std::move(database_references);
+    program.database_declarations = std::move(database_declarations);
     program.databases_by_name = std::move(databases_by_name);
-    program.schema_references = std::move(schema_references);
+    program.schema_declarations = std::move(schema_declarations);
     program.schemas_by_name = std::move(schemas_by_name);
     program.table_declarations = std::move(table_declarations);
     program.tables_by_name = std::move(tables_by_name);
