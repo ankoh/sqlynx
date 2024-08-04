@@ -171,7 +171,6 @@ TEST(UnificationTest, SimpleTableReference) {
 
     ASSERT_EQ(flat->name_dictionary()->Get(flat->databases()->Get(0)->name_id())->string_view(), "db1");
     ASSERT_EQ(flat->name_dictionary()->Get(flat->databases()->Get(1)->name_id())->string_view(), "db2");
-
     ASSERT_EQ(flat->name_dictionary()->Get(flat->schemas()->Get(0)->name_id())->string_view(), "schema1");
     ASSERT_EQ(flat->name_dictionary()->Get(flat->schemas()->Get(1)->name_id())->string_view(), "schema2");
 
@@ -183,7 +182,8 @@ TEST(UnificationTest, SimpleTableReference) {
     ASSERT_EQ(analyzed->table_references[0].resolved_catalog_database_id,
               flat->databases()->Get(1)->catalog_object_id());
     ASSERT_EQ(analyzed->table_references[0].resolved_catalog_schema_id, flat->schemas()->Get(1)->catalog_object_id());
-    ASSERT_EQ(analyzed->table_references[0].resolved_catalog_table_id, ExternalObjectID(42, 1));
+    ASSERT_EQ(analyzed->table_references[0].resolved_catalog_table_id.Pack(),
+              flat->tables()->Get(1)->catalog_object_id());
 }
 
 }  // namespace
