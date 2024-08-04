@@ -178,12 +178,16 @@ class AnalyzedScript : public CatalogEntry {
         std::optional<uint32_t> ast_statement_id;
         /// The AST scope root in the target script
         std::optional<uint32_t> ast_scope_root;
-        /// The table name, may refer to different context
+        /// The table name, may refer to different catalog entry
         QualifiedTableName table_name;
-        /// The alias name, may refer to different context
+        /// The alias name, may refer to different catalog entry
         std::string_view alias_name;
-        /// The table id, may refer to different context
-        ExternalObjectID resolved_table_id;
+        /// The resolved database id in the catalog
+        UnifiedObjectID resolved_catalog_database_id;
+        /// The resolved schema id in the catalog
+        UnifiedObjectID resolved_catalog_schema_id;
+        /// The resolved table id in the catalog
+        ExternalObjectID resolved_catalog_table_id;
 
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::TableReference> Pack(flatbuffers::FlatBufferBuilder& builder) const;
@@ -198,12 +202,16 @@ class AnalyzedScript : public CatalogEntry {
         std::optional<uint32_t> ast_statement_id;
         /// The AST scope root in the target script
         std::optional<uint32_t> ast_scope_root;
-        /// The column name, may refer to different context
+        /// The column name, may refer to different catalog entry
         QualifiedColumnName column_name;
         /// The resolved table reference id in the current context
         std::optional<uint32_t> resolved_table_reference_id;
-        /// The resolved table id, may refer to different context
-        ExternalObjectID resolved_table_id;
+        /// The resolved catalog database id
+        UnifiedObjectID resolved_catalog_database_id;
+        /// The resolved catalog schema id
+        UnifiedObjectID resolved_catalog_schema_id;
+        /// The resolved table id in the catalog
+        ExternalObjectID resolved_catalog_table_id;
         /// The resolved column index
         std::optional<uint32_t> resolved_column_id;
 

@@ -358,7 +358,9 @@ flatbuffers::Offset<proto::TableReference> AnalyzedScript::TableReference::Pack(
     out.add_ast_statement_id(ast_statement_id.value_or(std::numeric_limits<uint32_t>::max()));
     out.add_table_name(table_name_ofs);
     out.add_alias_name(alias_name_ofs);
-    out.add_resolved_table_id(resolved_table_id.Pack());
+    out.add_resolved_catalog_database_id(resolved_catalog_database_id);
+    out.add_resolved_catalog_schema_id(resolved_catalog_schema_id);
+    out.add_resolved_catalog_table_id(resolved_catalog_table_id.Pack());
     return out.Finish();
 }
 
@@ -371,7 +373,9 @@ flatbuffers::Offset<proto::ColumnReference> AnalyzedScript::ColumnReference::Pac
     out.add_ast_scope_root(ast_scope_root.value_or(std::numeric_limits<uint32_t>::max()));
     out.add_ast_statement_id(ast_statement_id.value_or(std::numeric_limits<uint32_t>::max()));
     out.add_column_name(column_name_ofs);
-    out.add_resolved_table_id(resolved_table_id.Pack());
+    out.add_resolved_catalog_database_id(resolved_catalog_database_id);
+    out.add_resolved_catalog_schema_id(resolved_catalog_schema_id);
+    out.add_resolved_catalog_table_id(resolved_catalog_table_id.Pack());
     out.add_resolved_column_id(resolved_column_id.value_or(std::numeric_limits<uint32_t>::max()));
     return out.Finish();
 }
