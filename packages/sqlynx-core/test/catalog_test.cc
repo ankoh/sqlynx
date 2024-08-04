@@ -126,9 +126,9 @@ TEST(CatalogTest, SingleDescriptorPool) {
         auto [analyzed, analysis_status] = script.Analyze();
         ASSERT_EQ(analysis_status, proto::StatusCode::OK);
         ASSERT_EQ(analyzed->table_references.size(), 1);
-        ASSERT_FALSE(analyzed->table_references[0].resolved_table_id.IsNull());
-        ASSERT_EQ(analyzed->table_references[0].resolved_table_id.GetExternalId(), 1);
-        ASSERT_EQ(analyzed->table_references[0].resolved_table_id.GetIndex(), 0);
+        ASSERT_FALSE(analyzed->table_references[0].resolved_catalog_table_id.IsNull());
+        ASSERT_EQ(analyzed->table_references[0].resolved_catalog_table_id.GetExternalId(), 1);
+        ASSERT_EQ(analyzed->table_references[0].resolved_catalog_table_id.GetIndex(), 0);
     }
     {
         script.ReplaceText("select * from db1.schema1.table2");
@@ -137,7 +137,7 @@ TEST(CatalogTest, SingleDescriptorPool) {
         auto [analyzed, analysis_status] = script.Analyze();
         ASSERT_EQ(analysis_status, proto::StatusCode::OK);
         ASSERT_EQ(analyzed->table_references.size(), 1);
-        ASSERT_TRUE(analyzed->table_references[0].resolved_table_id.IsNull());
+        ASSERT_TRUE(analyzed->table_references[0].resolved_catalog_table_id.IsNull());
     }
 }
 

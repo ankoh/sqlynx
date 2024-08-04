@@ -276,7 +276,7 @@ void Completion::FindTablesForUnresolvedColumns() {
     std::vector<CatalogEntry::ResolvedTableColumn> table_columns;
     for (auto& column_ref : analyzed_script.column_references) {
         // Is unresolved?
-        if (column_ref.resolved_table_id.IsNull()) {
+        if (column_ref.resolved_catalog_table_id.IsNull()) {
             auto& column_name = column_ref.column_name.column_name;
             cursor.script.analyzed_script->ResolveTableColumn(column_name, catalog, table_columns);
         }
@@ -326,7 +326,7 @@ void Completion::FindCandidatesInAST() {
         mark_as_near(table_ref.alias_name);
 
         // Add all column names of the table
-        if (auto resolved = analyzed->ResolveTable(table_ref.resolved_table_id, cursor.script.catalog)) {
+        if (auto resolved = analyzed->ResolveTable(table_ref.resolved_catalog_table_id, cursor.script.catalog)) {
             for (auto& table_column : resolved->table_columns) {
                 mark_as_near(table_column.column_name);
             }

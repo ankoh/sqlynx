@@ -122,16 +122,16 @@ class CatalogEntry {
     };
     /// A table declaration
     struct TableDeclaration {
-        /// The external table id
+        /// The id of the table in the catalog
         ExternalObjectID catalog_table_id;
+        /// The catalog database id
+        UnifiedObjectID catalog_database_id;
+        /// The catalog schema id
+        UnifiedObjectID catalog_schema_id;
         /// The database reference id
         size_t database_reference_id;
         /// The schema reference id
         size_t schema_reference_id;
-        /// The unified database id
-        UnifiedObjectID unified_database_id;
-        /// The unified schema id
-        UnifiedObjectID unified_schema_id;
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
         /// The AST statement id in the target script
@@ -159,8 +159,8 @@ class CatalogEntry {
     struct DatabaseReference {
         /// The database reference id
         size_t database_reference_id;
-        /// The unified database id
-        UnifiedObjectID unified_database_id;
+        /// The catalog database id
+        UnifiedObjectID catalog_database_id;
         /// The database name
         std::string_view database_name;
         /// The database alias (if any)
@@ -169,7 +169,7 @@ class CatalogEntry {
         DatabaseReference(size_t db_reference_id, UnifiedObjectID database_id, std::string_view database_name,
                           std::string_view database_alias)
             : database_reference_id(db_reference_id),
-              unified_database_id(database_id),
+              catalog_database_id(database_id),
               database_name(database_name),
               database_alias(database_alias) {}
         /// Pack as FlatBuffer
@@ -181,10 +181,10 @@ class CatalogEntry {
     struct SchemaReference {
         /// The schema reference id
         size_t schema_reference_id;
-        /// The unified database id
-        UnifiedObjectID unified_database_id;
-        /// The unified schema id
-        UnifiedObjectID unified_schema_id;
+        /// The catalog database id
+        UnifiedObjectID catalog_database_id;
+        /// The catalog schema id
+        UnifiedObjectID catalog_schema_id;
         /// The database name
         std::string_view database_name;
         /// The schema name
@@ -193,8 +193,8 @@ class CatalogEntry {
         SchemaReference(size_t schema_reference_id, UnifiedObjectID database_id, UnifiedObjectID schema_id,
                         std::string_view database_name, std::string_view schema_name)
             : schema_reference_id(schema_reference_id),
-              unified_database_id(database_id),
-              unified_schema_id(schema_id),
+              catalog_database_id(database_id),
+              catalog_schema_id(schema_id),
               database_name(database_name),
               schema_name(schema_name) {}
         /// Pack as FlatBuffer
