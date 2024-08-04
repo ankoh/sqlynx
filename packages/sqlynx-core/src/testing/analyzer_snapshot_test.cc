@@ -149,13 +149,14 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
     if (!script.table_references.empty()) {
         auto table_refs_node = out.append_child("table-references");
         for (auto& ref : script.table_references) {
-            auto tag = ref.resolved_table_id.IsNull()                                                     ? "unresolved"
-                       : (is_main && ref.resolved_table_id.GetExternalId() == script.GetCatalogEntryId()) ? "internal"
-                                                                                                          : "external";
+            auto tag = ref.resolved_catalog_table_id.IsNull() ? "unresolved"
+                       : (is_main && ref.resolved_catalog_table_id.GetExternalId() == script.GetCatalogEntryId())
+                           ? "internal"
+                           : "external";
             auto xml_ref = table_refs_node.append_child(tag);
-            if (!ref.resolved_table_id.IsNull()) {
-                xml_ref.append_attribute("schema").set_value(ref.resolved_table_id.GetExternalId());
-                xml_ref.append_attribute("table").set_value(ref.resolved_table_id.GetIndex());
+            if (!ref.resolved_catalog_table_id.IsNull()) {
+                xml_ref.append_attribute("schema").set_value(ref.resolved_catalog_table_id.GetExternalId());
+                xml_ref.append_attribute("table").set_value(ref.resolved_catalog_table_id.GetIndex());
             }
             if (ref.ast_statement_id.has_value()) {
                 xml_ref.append_attribute("stmt").set_value(*ref.ast_statement_id);
@@ -170,13 +171,14 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
     if (!script.column_references.empty()) {
         auto col_refs_node = out.append_child("column-references");
         for (auto& ref : script.column_references) {
-            auto tag = ref.resolved_table_id.IsNull()                                                     ? "unresolved"
-                       : (is_main && ref.resolved_table_id.GetExternalId() == script.GetCatalogEntryId()) ? "internal"
-                                                                                                          : "external";
+            auto tag = ref.resolved_catalog_table_id.IsNull() ? "unresolved"
+                       : (is_main && ref.resolved_catalog_table_id.GetExternalId() == script.GetCatalogEntryId())
+                           ? "internal"
+                           : "external";
             auto xml_ref = col_refs_node.append_child(tag);
-            if (!ref.resolved_table_id.IsNull()) {
-                xml_ref.append_attribute("schema").set_value(ref.resolved_table_id.GetExternalId());
-                xml_ref.append_attribute("table").set_value(ref.resolved_table_id.GetIndex());
+            if (!ref.resolved_catalog_table_id.IsNull()) {
+                xml_ref.append_attribute("schema").set_value(ref.resolved_catalog_table_id.GetExternalId());
+                xml_ref.append_attribute("table").set_value(ref.resolved_catalog_table_id.GetIndex());
             }
             if (ref.resolved_column_id.has_value()) {
                 xml_ref.append_attribute("column").set_value(*ref.resolved_column_id);

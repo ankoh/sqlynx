@@ -82,13 +82,14 @@ struct FlatCatalogEntry {
     /// The index of the flat catalog entry.
     flat_entry_idx: uint32;
     /// The index of the parent flat catalog entry.
+    /// Always 0 for level 0.
     flat_parent_idx: uint32;
     /// The object id:
     /// - Databases store the unified database id
     /// - Schemas store the unified schema id
     /// - Tables store the external table id as pair of (external catalog entry id, table id)
     /// - Columns store 0
-    object_id: uint64;
+    catalog_object_id: uint64;
     /// The name id
     name_id: uint32;
     /// The index of the first child entry

@@ -65,7 +65,7 @@ void QueryGraphLayout::PrepareLayout(const AnalyzedScript& analyzed) {
         }
     });
     for (auto& ref : analyzed.table_references) {
-        if (auto iter = nodes_by_table_id.find(ref.resolved_table_id); iter != nodes_by_table_id.end()) {
+        if (auto iter = nodes_by_table_id.find(ref.resolved_catalog_table_id); iter != nodes_by_table_id.end()) {
             nodes[iter->second].table_reference_id = ref.table_reference_id;
         }
     }
@@ -79,7 +79,7 @@ void QueryGraphLayout::PrepareLayout(const AnalyzedScript& analyzed) {
         ExternalObjectID ast_node_id = col_ref.ast_node_id.has_value()
                                            ? ExternalObjectID{script->GetCatalogEntryId(), *col_ref.ast_node_id}
                                            : ExternalObjectID{};
-        ExternalObjectID table_id = analyzed.column_references[node.column_reference_id].resolved_table_id;
+        ExternalObjectID table_id = analyzed.column_references[node.column_reference_id].resolved_catalog_table_id;
         uint32_t node_id = std::numeric_limits<uint32_t>::max();
         if (auto iter = nodes_by_table_id.find(table_id); iter != nodes_by_table_id.end()) {
             node_id = iter->second;
@@ -107,7 +107,7 @@ void QueryGraphLayout::PrepareLayout(const AnalyzedScript& analyzed) {
         // Emit nˆ2 adjacency pairs with patched node ids
         for (size_t l = 0; l < edge.node_count_left; ++l) {
             size_t lcol = analyzed.graph_edge_nodes[edge.nodes_begin + l].column_reference_id;
-            ExternalObjectID ltid = analyzed.column_references[lcol].resolved_table_id;
+            ExternalObjectID ltid = analyzed.column_references[lcol].resolved_catalog_table_id;
             auto iter = nodes_by_table_id.find(ltid);
             if (iter == nodes_by_table_id.end()) {
                 continue;
@@ -117,7 +117,7 @@ void QueryGraphLayout::PrepareLayout(const AnalyzedScript& analyzed) {
             for (size_t r = 0; r < edge.node_count_right; ++r) {
                 size_t rcol =
                     analyzed.graph_edge_nodes[edge.nodes_begin + edge.node_count_left + r].column_reference_id;
-                ExternalObjectID rtid = analyzed.column_references[rcol].resolved_table_id;
+                ExternalObjectID rtid = analyzed.column_references[rcol].resolved_catalog_table_id;
                 if (rtid.IsNull()) continue;
                 auto iter = nodes_by_table_id.find(rtid);
                 if (iter == nodes_by_table_id.end()) {

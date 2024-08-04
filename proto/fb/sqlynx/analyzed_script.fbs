@@ -4,7 +4,7 @@ namespace sqlynx.proto;
 
 table DatabaseReference {
     // The unified database id across all catalog entries
-    unified_database_id: uint32;
+    catalog_database_id: uint32;
     // The column name
     database_name: string;
 }
@@ -13,9 +13,9 @@ table SchemaReference {
     // The reference id for the associated database
     database_reference_id: uint32;
     // The unified database id across all catalog entries
-    unified_database_id: uint32;
+    catalog_database_id: uint32;
     // The unified schema id across all catalog entries
-    unified_schema_id: uint32;
+    catalog_schema_id: uint32;
     // The schema name
     schema_name: string;
 }
@@ -48,14 +48,16 @@ table TableColumn {
 }
 
 table Table {
+    // The id of the table in the catalog
+    catalog_table_id: uint64;
+    // The unified database id across all catalog entries
+    catalog_database_id: uint32;
+    // The unified schema id across all catalog entries
+    catalog_schema_id: uint32;
     // The index of the database reference
     database_reference_id: uint32;
     // The index of the schema reference
     schema_reference_id: uint32;
-    // The unified database id across all catalog entries
-    unified_database_id: uint32;
-    // The unified schema id across all catalog entries
-    unified_schema_id: uint32;
     // The id of the AST node that created this table declaration.
     ast_node_id: uint32 ;
     // The id of the statement that created the table declaration
@@ -80,13 +82,13 @@ table TableReference {
     // The alias name
     alias_name: string;
     // The resolved unified database id across all catalog entries
-    resolved_unified_database_id: uint32;
+    resolved_catalog_database_id: uint32;
     // The resolved unified schema id across all catalog entries
-    resolved_unified_schema_id: uint32;
+    resolved_catalog_schema_id: uint32;
     // The id of the table that is referenced.
     // <uint32, uint32> that may point into the catalog.
     // Referencing a local table only if the upper u32 equals the scripts external id.
-    resolved_table_id: uint64;
+    resolved_catalog_table_id: uint64;
 }
 
 table ColumnReference {
@@ -99,12 +101,12 @@ table ColumnReference {
     // The column name
     column_name: QualifiedColumnName;
     // The unified database id across all catalog entries
-    resolved_unified_database_id: uint32;
+    resolved_catalog_database_id: uint32;
     // The unified schema id across all catalog entries
-    resolved_unified_schema_id: uint32;
+    resolved_catalog_schema_id: uint32;
     // The external object id of the table that is referenced.
     // <uint32, uint32> that may point into the catalog.
-    resolved_table_id: uint64;
+    resolved_catalog_table_id: uint64;
     // The id of the column that is referenced.
     // This is just the index in the resolved table.
     resolved_column_id: uint32;
