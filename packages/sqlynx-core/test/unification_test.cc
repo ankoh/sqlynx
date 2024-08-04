@@ -140,4 +140,50 @@ TEST(UnificationTest, MultipleTablesInMultipleSchemas) {
     EXPECT_EQ(flat->tables()->Get(2)->flat_parent_idx(), 1);
 }
 
+TEST(UnificationTest, SimpleTableReference) {
+    Catalog catalog;
+
+    Script schema{catalog, 42};
+    Script query{catalog, 100};
+    schema.InsertTextAt(0, "create table db1.schema1.table1(a int);create table db2.schema2.table2(a int);");
+    query.InsertTextAt(0, "select * from db2.schema2.table2");
+
+    ASSERT_EQ(schema.Scan().second, proto::StatusCode::OK);
+    ASSERT_EQ(schema.Parse().second, proto::StatusCode::OK);
+    ASSERT_EQ(schema.Analyze().second, proto::StatusCode::OK);
+    ASSERT_EQ(catalog.LoadScript(schema, 1), proto::StatusCode::OK);
+
+    // Analyze query after loading the schema script in the catalog
+    ASSERT_EQ(query.Scan().second, proto::StatusCode::OK);
+    ASSERT_EQ(query.Parse().second, proto::StatusCode::OK);
+    auto [analyzed, analysis_status] = query.Analyze();
+    ASSERT_EQ(analysis_status, proto::StatusCode::OK);
+
+    // Check flattened catalog
+    flatbuffers::FlatBufferBuilder fb;
+    fb.Finish(catalog.Flatten(fb));
+    auto flat = flatbuffers::GetRoot<proto::FlatCatalog>(fb.GetBufferPointer());
+
+    ASSERT_EQ(flat->databases()->size(), 2);
+    ASSERT_EQ(flat->schemas()->size(), 2);
+    ASSERT_EQ(flat->tables()->size(), 2);
+    ASSERT_EQ(flat->columns()->size(), 2);
+
+    ASSERT_EQ(flat->name_dictionary()->Get(flat->databases()->Get(0)->name_id())->string_view(), "db1");
+    ASSERT_EQ(flat->name_dictionary()->Get(flat->databases()->Get(1)->name_id())->string_view(), "db2");
+
+    ASSERT_EQ(flat->name_dictionary()->Get(flat->schemas()->Get(0)->name_id())->string_view(), "schema1");
+    ASSERT_EQ(flat->name_dictionary()->Get(flat->schemas()->Get(1)->name_id())->string_view(), "schema2");
+
+    EXPECT_EQ(flat->tables()->Get(0)->catalog_object_id(), ExternalObjectID(42, 0).Pack());
+    EXPECT_EQ(flat->tables()->Get(1)->catalog_object_id(), ExternalObjectID(42, 1).Pack());
+
+    // Check table reference
+    ASSERT_EQ(analyzed->table_references.size(), 1);
+    ASSERT_EQ(analyzed->table_references[0].resolved_catalog_database_id,
+              flat->databases()->Get(1)->catalog_object_id());
+    ASSERT_EQ(analyzed->table_references[0].resolved_catalog_schema_id, flat->schemas()->Get(1)->catalog_object_id());
+    ASSERT_EQ(analyzed->table_references[0].resolved_catalog_table_id, ExternalObjectID(42, 1));
+}
+
 }  // namespace

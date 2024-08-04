@@ -48,18 +48,6 @@ NameResolutionPass::NameResolutionPass(ParsedScript& parser, Catalog& catalog, A
       attribute_index(attribute_index),
       nodes(parsed_program.nodes) {
     node_states.resize(nodes.size());
-
-    // Register default database
-    auto db_id = catalog.AllocateDatabaseId(catalog.GetDefaultDatabaseName());
-    auto& db =
-        database_references.Append(CatalogEntry::DatabaseReference{0, db_id, catalog.GetDefaultDatabaseName(), ""});
-    databases_by_name.insert({db.database_name, db});
-
-    // Register default schema
-    auto schema_id = catalog.AllocateSchemaId(catalog.GetDefaultDatabaseName(), catalog.GetDefaultSchemaName());
-    auto& schema = schema_references.Append(CatalogEntry::SchemaReference{
-        0, db_id, schema_id, catalog.GetDefaultDatabaseName(), catalog.GetDefaultSchemaName()});
-    schemas_by_name.insert({{db.database_name, schema.schema_name}, schema});
 }
 
 std::span<std::reference_wrapper<CatalogEntry::NameInfo>> NameResolutionPass::ReadNamePath(const sx::Node& node) {
