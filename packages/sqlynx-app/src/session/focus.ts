@@ -47,7 +47,7 @@ export function deriveScriptFocusFromCursor(
             for (let i = 0; i < countLeft; ++i) {
                 const edgeNodeLeft = ctxAnalyzed.graphEdgeNodes(queryEdge.nodesBegin() + i)!;
                 const columnRefLeft = ctxAnalyzed.columnReferences(edgeNodeLeft.columnReferenceId())!;
-                const tableIdLeft = columnRefLeft.resolvedTableId();
+                const tableIdLeft = columnRefLeft.resolvedCatalogTableId();
                 const nodeLeft = graphViewModel.nodesByTable.get(tableIdLeft);
                 if (nodeLeft === undefined) continue;
 
@@ -55,7 +55,7 @@ export function deriveScriptFocusFromCursor(
                 for (let j = 0; j < countRight; ++j) {
                     const edgeNodeRight = ctxAnalyzed.graphEdgeNodes(queryEdge.nodesBegin() + countLeft + j)!;
                     const columnRefRight = ctxAnalyzed.columnReferences(edgeNodeRight.columnReferenceId())!;
-                    const tableIdRight = columnRefRight.resolvedTableId();
+                    const tableIdRight = columnRefRight.resolvedCatalogTableId();
                     const nodeRight = graphViewModel.nodesByTable.get(tableIdRight);
                     if (nodeRight === undefined) continue;
 
@@ -88,13 +88,13 @@ export function deriveScriptFocusFromCursor(
                 if (!analyzed) continue;
                 for (let refId = 0; refId < analyzed.columnReferencesLength(); ++refId) {
                     const colRef = analyzed.columnReferences(refId, tmpColRef)!;
-                    if (colRef.resolvedTableId() == tableId) {
+                    if (colRef.resolvedCatalogTableId() == tableId) {
                         columnRefs.add(sqlynx.ExternalObjectID.create(key, refId));
                     }
                 }
                 for (let refId = 0; refId < analyzed.tableReferencesLength(); ++refId) {
                     const tblRef = analyzed.tableReferences(refId, tmpTblRef)!;
-                    if (tblRef.resolvedTableId() == tableId) {
+                    if (tblRef.resolvedCatalogTableId() == tableId) {
                         tableRefs.add(sqlynx.ExternalObjectID.create(key, refId));
                     }
                 }
@@ -115,7 +115,7 @@ export function deriveScriptFocusFromCursor(
         const analyzed = ctxData.processed.analyzed?.read(tmpAnalyzed);
         if (analyzed) {
             const tableRef = analyzed.tableReferences(cursor.tableReferenceId)!;
-            const tableId = tableRef.resolvedTableId();
+            const tableId = tableRef.resolvedCatalogTableId();
             const focus = deriveFocusFromTableId(tableId);
             focus.tableRefs.add(tableRefId);
             return focus;
@@ -129,7 +129,7 @@ export function deriveScriptFocusFromCursor(
         const analyzed = ctxData.processed.analyzed?.read(tmpAnalyzed);
         if (analyzed) {
             const colRef = analyzed.columnReferences(cursor.columnReferenceId)!;
-            const tableId = colRef.resolvedTableId();
+            const tableId = colRef.resolvedCatalogTableId();
             const focus = deriveFocusFromTableId(tableId);
             focus.columnRefs.add(columnRefId);
             return focus;
@@ -214,13 +214,13 @@ export function focusGraphNode(state: SessionState, target: GraphNodeDescriptor 
             if (!analyzed) continue;
             for (let refId = 0; refId < analyzed.columnReferencesLength(); ++refId) {
                 const colRef = analyzed.columnReferences(refId, tmpColRef)!;
-                if (colRef.resolvedTableId() == targetTableId) {
+                if (colRef.resolvedCatalogTableId() == targetTableId) {
                     columnRefs.add(sqlynx.ExternalObjectID.create(key, refId));
                 }
             }
             for (let refId = 0; refId < analyzed.tableReferencesLength(); ++refId) {
                 const tblRef = analyzed.tableReferences(refId, tmpTblRef)!;
-                if (tblRef.resolvedTableId() == targetTableId) {
+                if (tblRef.resolvedCatalogTableId() == targetTableId) {
                     tableRefs.add(sqlynx.ExternalObjectID.create(key, refId));
                 }
             }
