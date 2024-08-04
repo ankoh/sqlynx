@@ -172,10 +172,11 @@ export class CatalogRenderingState {
     /// The rendering settings
     settings: CatalogRenderingSettings;
 
-    /// The levels
-    levels: CatalogLevelRenderingState[];
     /// The pinned databases
     pinnedDatabases: PinnedCatalogEntry[];
+
+    /// The levels
+    levels: CatalogLevelRenderingState[];
     /// The total height of all nodes
     totalHeight: number;
     /// The total width of all nodes
@@ -194,6 +195,7 @@ export class CatalogRenderingState {
     constructor(snapshot: sqlynx.SQLynxCatalogSnapshot, settings: CatalogRenderingSettings) {
         this.snapshot = snapshot;
         this.settings = settings;
+        this.pinnedDatabases = [];
         const snap = snapshot.read();
         this.levels = [
             {
@@ -249,7 +251,6 @@ export class CatalogRenderingState {
         this.levels[2].positionX = this.levels[1].positionX + settings.levels.schemas.nodeWidth + settings.levels.schemas.columnGap;
         this.levels[3].positionX = this.levels[2].positionX + settings.levels.tables.nodeWidth + settings.levels.tables.columnGap;
 
-        this.pinnedDatabases = [];
         this.totalWidth = 0;
         this.totalHeight = 0;
         this.currentWriterY = 0;
@@ -260,6 +261,10 @@ export class CatalogRenderingState {
         // Layout all entries.
         // This means users don't have to special-case the states without layout.
         this.layoutEntries();
+    }
+
+    resetPins() {
+        this.pinnedDatabases = [];
     }
 
     layoutEntries() {
