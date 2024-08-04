@@ -702,6 +702,15 @@ std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Create
 
             // Analyzed and analyzed is same version?
             if (analyzed && analyzed->parsed_script == script.parsed_script) {
+                // The following section does the following:
+                //
+                // We create a cursor path hashmap that is tiny.
+                // We then scan all declarations and references in the script sequentially and probe that hash table.
+                // We only check if the numeric id of the AST node is contained.
+                // If it is, we know that the cursor is currently located in either a ref or a declaration.
+                //
+                // This probing should be fast enough, even for mega-byte sized SQL texts.
+
                 // Part of a table node?
                 for (auto& table : analyzed->table_declarations) {
                     if (table.ast_node_id.has_value() && cursor_path_nodes.contains(*table.ast_node_id)) {
