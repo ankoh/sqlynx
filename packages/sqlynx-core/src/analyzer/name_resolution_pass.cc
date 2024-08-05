@@ -134,6 +134,27 @@ AnalyzedScript::QualifiedTableName NameResolutionPass::NormalizeTableName(
     return name;
 }
 
+/// Register a schema
+std::pair<UnifiedObjectID, UnifiedObjectID> NameResolutionPass::RegisterSchema(std::string_view database_name,
+                                                                               std::string_view schema_name) {
+    // Register the database
+    auto db_id = catalog.AllocateDatabaseId(database_name);
+    auto db_ref_iter = databases_by_name.find(database_name);
+    if (db_ref_iter == databases_by_name.end()) {
+        auto& db = database_declarations.Append(CatalogEntry::DatabaseDeclaration{db_id, database_name, ""});
+        databases_by_name.insert({db.database_name, db});
+    }
+    // Register the schema
+    auto schema_id = catalog.AllocateSchemaId(database_name, schema_name);
+    auto schema_ref_iter = schemas_by_name.find({database_name, schema_name});
+    if (schema_ref_iter == schemas_by_name.end()) {
+        auto& schema =
+            schema_declarations.Append(CatalogEntry::SchemaDeclaration{db_id, schema_id, database_name, schema_name});
+        schemas_by_name.insert({{database_name, schema_name}, schema});
+    }
+    return {db_id, schema_id};
+}
+
 void NameResolutionPass::MergeChildStates(NodeState& dst, std::initializer_list<const proto::Node*> children) {
     for (const proto::Node* child : children) {
         if (!child) continue;
@@ -509,21 +530,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 auto table_name = ReadQualifiedTableName(name_node);
                 table_name = NormalizeTableName(table_name);
                 // Register the database
-                auto db_id = catalog.AllocateDatabaseId(table_name.database_name);
-                auto db_ref_iter = databases_by_name.find(table_name.database_name);
-                if (db_ref_iter == databases_by_name.end()) {
-                    auto& db = database_declarations.Append(
-                        CatalogEntry::DatabaseDeclaration{db_id, table_name.database_name, ""});
-                    databases_by_name.insert({db.database_name, db});
-                }
-                // Register the schema
-                auto schema_id = catalog.AllocateSchemaId(table_name.database_name, table_name.schema_name);
-                auto schema_ref_iter = schemas_by_name.find({table_name.database_name, table_name.schema_name});
-                if (schema_ref_iter == schemas_by_name.end()) {
-                    auto& schema = schema_declarations.Append(CatalogEntry::SchemaDeclaration{
-                        db_id, schema_id, table_name.database_name, table_name.schema_name});
-                    schemas_by_name.insert({{table_name.database_name, table_name.schema_name}, schema});
-                }
+                auto [db_id, schema_id] = RegisterSchema(table_name.database_name, table_name.schema_name);
                 // Merge child states
                 MergeChildStates(node_state, {elements_node});
                 // Collect all columns
