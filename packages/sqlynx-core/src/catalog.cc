@@ -308,7 +308,7 @@ Catalog::Catalog(std::string_view default_db, std::string_view default_schema)
 }
 
 void Catalog::Clear() {
-    entries_by_name.clear();
+    entries_by_schema.clear();
     entries_ranked.clear();
     entries.clear();
     script_entries.clear();
@@ -552,7 +552,7 @@ proto::StatusCode Catalog::LoadScript(Script& script, CatalogEntry::Rank rank) {
             .catalog_database_id = schema_ref.get().catalog_database_id,
             .catalog_schema_id = schema_ref.get().catalog_schema_id,
         };
-        entries_by_name.insert({entry_key, entry_info});
+        entries_by_schema.insert({entry_key, entry_info});
     }
     // Register as script entry
     script_entries.insert({&script, {.script = script, .analyzed = script.analyzed_script, .rank = rank}});
@@ -594,7 +594,7 @@ proto::StatusCode Catalog::UpdateScript(ScriptEntry& entry) {
         if (new_name_iter != new_schema_entries.end()) {
             new_name_iter->second.already_exists = true;
         } else {
-            entries_by_name.erase({db_name, schema_name, rank, external_id});
+            entries_by_schema.erase({db_name, schema_name, rank, external_id});
             prev_schemas.erase(prev_name_iter++);
             continue;
         }
@@ -611,7 +611,7 @@ proto::StatusCode Catalog::UpdateScript(ScriptEntry& entry) {
             };
             std::tuple<std::string_view, std::string_view, CatalogEntry::Rank, ExternalID> entry_key{
                 db_name, schema_name, rank, external_id};
-            entries_by_name.insert({entry_key, entry});
+            entries_by_schema.insert({entry_key, entry});
         }
     }
     entry.analyzed = script.analyzed_script;
@@ -630,7 +630,7 @@ void Catalog::DropScript(Script& script) {
             auto& analyzed = iter->second.analyzed;
             for (auto& [schema_key, entry_info] : analyzed->schemas_by_name) {
                 auto& [db_name, schema_name] = schema_key;
-                entries_by_name.erase({db_name, schema_name, iter->second.rank, external_id});
+                entries_by_schema.erase({db_name, schema_name, iter->second.rank, external_id});
             }
         }
         entries_ranked.erase({iter->second.rank, external_id});
@@ -689,7 +689,7 @@ proto::StatusCode Catalog::AddSchemaDescriptor(ExternalID external_id, std::span
             .catalog_database_id = db_id,
             .catalog_schema_id = schema_id,
         };
-        entries_by_name.insert({entry_key, entry});
+        entries_by_schema.insert({entry_key, entry});
     }
     ++version;
     return proto::StatusCode::OK;
@@ -703,8 +703,8 @@ const CatalogEntry::TableDeclaration* Catalog::ResolveTable(ExternalObjectID tab
 }
 const CatalogEntry::TableDeclaration* Catalog::ResolveTable(CatalogEntry::QualifiedTableName table_name,
                                                             ExternalID ignore_entry) const {
-    for (auto iter = entries_by_name.lower_bound({table_name.database_name, table_name.schema_name, 0, 0});
-         iter != entries_by_name.end(); ++iter) {
+    for (auto iter = entries_by_schema.lower_bound({table_name.database_name, table_name.schema_name, 0, 0});
+         iter != entries_by_schema.end(); ++iter) {
         auto& [db_name, schema_name, rank, candidate] = iter->first;
         if (db_name != table_name.database_name || schema_name != table_name.schema_name) {
             break;

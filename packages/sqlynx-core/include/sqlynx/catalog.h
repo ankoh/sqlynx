@@ -342,7 +342,7 @@ class Catalog {
     btree::set<std::tuple<CatalogEntry::Rank, ExternalID>> entries_ranked;
     /// The entries ordered by <database, schema, rank>
     btree::map<std::tuple<std::string_view, std::string_view, CatalogEntry::Rank, ExternalID>, CatalogSchemaEntryInfo>
-        entries_by_name;
+        entries_by_schema;
 
     /// Update a script entry
     proto::StatusCode UpdateScript(ScriptEntry& entry);
