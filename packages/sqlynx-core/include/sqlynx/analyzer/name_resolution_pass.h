@@ -131,6 +131,10 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// Qualify a table name
     AnalyzedScript::QualifiedTableName NormalizeTableName(AnalyzedScript::QualifiedTableName name) const;
 
+    /// Register a schema
+    std::pair<UnifiedObjectID, UnifiedObjectID> RegisterSchema(std::string_view database_name,
+                                                               std::string_view schema_name);
+
     /// Merge child states into a destination state
     void MergeChildStates(NodeState& dst, const sx::Node& parent);
     /// Merge child states into a destination state
