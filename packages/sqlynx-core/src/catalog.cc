@@ -55,8 +55,8 @@ flatbuffers::Offset<proto::Table> CatalogEntry::TableDeclaration::Pack(flatbuffe
 CatalogEntry::CatalogEntry(Catalog& catalog, ExternalID external_id)
     : catalog(catalog),
       catalog_entry_id(external_id),
-      database_declarations(),
-      schema_declarations(),
+      database_references(),
+      schema_references(),
       table_declarations(),
       databases_by_name(),
       schemas_by_name(),
@@ -70,21 +70,20 @@ CatalogEntry::QualifiedTableName CatalogEntry::QualifyTableName(CatalogEntry::Qu
     return name;
 }
 
-UnifiedObjectID CatalogEntry::RegisterDatabaseName(std::string_view name) {
+CatalogObjectID CatalogEntry::RegisterDatabaseName(std::string_view name) {
     auto db_id = catalog.AllocateDatabaseId(name);
     if (!databases_by_name.contains({name})) {
-        auto& db = database_declarations.Append(CatalogEntry::DatabaseDeclaration{db_id, name, ""});
+        auto& db = database_references.Append(CatalogEntry::DatabaseReference{db_id, name, ""});
         databases_by_name.insert({db.database_name, db});
     }
     return db_id;
 }
 
-UnifiedObjectID CatalogEntry::RegisterSchemaName(UnifiedObjectID db_id, std::string_view db_name,
+CatalogObjectID CatalogEntry::RegisterSchemaName(CatalogObjectID db_id, std::string_view db_name,
                                                  std::string_view schema_name) {
     auto schema_id = catalog.AllocateSchemaId(db_name, schema_name);
     if (!schemas_by_name.contains({db_name, schema_name})) {
-        auto& schema =
-            schema_declarations.Append(CatalogEntry::SchemaDeclaration{db_id, schema_id, db_name, schema_name});
+        auto& schema = schema_references.Append(CatalogEntry::SchemaReference{db_id, schema_id, db_name, schema_name});
         schemas_by_name.insert({{db_name, schema_name}, schema});
     }
     return schema_id;
@@ -381,9 +380,9 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
     // The node buffers
     ChunkBuffer<Node, 16> nodes;
     // The database nodes
-    std::unordered_map<UnifiedObjectID, Node*> database_nodes;
+    std::unordered_map<CatalogObjectID, Node*> database_nodes;
     // The schema nodes
-    std::unordered_map<UnifiedObjectID, Node*> schema_nodes;
+    std::unordered_map<CatalogObjectID, Node*> schema_nodes;
 
     size_t database_count = 0;
     size_t schema_count = 0;
@@ -574,7 +573,7 @@ proto::StatusCode Catalog::UpdateScript(ScriptEntry& entry) {
     // New schema entry
     struct NewSchemaEntry {
         /// A Schema ref
-        const CatalogEntry::SchemaDeclaration& schema_ref;
+        const CatalogEntry::SchemaReference& schema_ref;
         /// Already existed?
         bool already_exists;
     };

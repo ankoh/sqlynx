@@ -28,7 +28,7 @@ constexpr uint32_t PROTO_NULL_U32 = std::numeric_limits<uint32_t>::max();
 class Catalog;
 class Script;
 class AnalyzedScript;
-using UnifiedObjectID = uint32_t;
+using CatalogObjectID = uint32_t;
 
 /// A schema stores database metadata.
 /// It is used as a virtual container to expose table and column information to the analyzer.
@@ -125,9 +125,9 @@ class CatalogEntry {
         /// The id of the table in the catalog
         ExternalObjectID catalog_table_id;
         /// The catalog database id
-        UnifiedObjectID catalog_database_id;
+        CatalogObjectID catalog_database_id;
         /// The catalog schema id
-        UnifiedObjectID catalog_schema_id;
+        CatalogObjectID catalog_schema_id;
         /// The database reference id
         size_t database_reference_id;
         /// The schema reference id
@@ -154,33 +154,38 @@ class CatalogEntry {
         size_t table_column_index;
     };
     /// A database name declaration
-    struct DatabaseDeclaration {
-        /// The catalog database id
-        UnifiedObjectID catalog_database_id;
+    struct DatabaseReference {
+        /// The catalog database id.
+        /// This ID is only preliminary if the entry has not been added to the catalog yet.
+        /// Adding the entry to the catalog might fail if this id becomes invalid.
+        CatalogObjectID catalog_database_id;
         /// The database name
         std::string_view database_name;
         /// The database alias (if any)
         std::string_view database_alias;
         /// Constructor
-        DatabaseDeclaration(UnifiedObjectID database_id, std::string_view database_name,
-                            std::string_view database_alias)
+        DatabaseReference(CatalogObjectID database_id, std::string_view database_name, std::string_view database_alias)
             : catalog_database_id(database_id), database_name(database_name), database_alias(database_alias) {}
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::DatabaseDeclaration> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
     /// A schema name declaration
-    struct SchemaDeclaration {
+    struct SchemaReference {
         /// The catalog database id
-        UnifiedObjectID catalog_database_id;
-        /// The catalog schema id
-        UnifiedObjectID catalog_schema_id;
+        /// This ID is only preliminary if the entry has not been added to the catalog yet.
+        /// Adding the entry to the catalog might fail if this id becomes invalid.
+        CatalogObjectID catalog_database_id;
+        /// The catalog schema id.
+        /// This ID is only preliminary if the entry has not been added to the catalog yet.
+        /// Adding the entry to the catalog might fail if this id becomes invalid.
+        CatalogObjectID catalog_schema_id;
         /// The database name
         std::string_view database_name;
         /// The schema name
         std::string_view schema_name;
         /// Constructor
-        SchemaDeclaration(UnifiedObjectID database_id, UnifiedObjectID schema_id, std::string_view database_name,
-                          std::string_view schema_name)
+        SchemaReference(CatalogObjectID database_id, CatalogObjectID schema_id, std::string_view database_name,
+                        std::string_view schema_name)
             : catalog_database_id(database_id),
               catalog_schema_id(schema_id),
               database_name(database_name),
@@ -195,15 +200,15 @@ class CatalogEntry {
     /// The catalog entry id
     const ExternalID catalog_entry_id;
     /// The referenced databases
-    ChunkBuffer<DatabaseDeclaration, 16> database_declarations;
+    ChunkBuffer<DatabaseReference, 16> database_references;
     /// The referenced schemas
-    ChunkBuffer<SchemaDeclaration, 16> schema_declarations;
+    ChunkBuffer<SchemaReference, 16> schema_references;
     /// The table definitions
     ChunkBuffer<TableDeclaration, 16> table_declarations;
     /// The databases, indexed by name
-    std::unordered_map<std::string_view, std::reference_wrapper<const DatabaseDeclaration>> databases_by_name;
+    std::unordered_map<std::string_view, std::reference_wrapper<const DatabaseReference>> databases_by_name;
     /// The schema, indexed by name
-    std::unordered_map<std::tuple<std::string_view, std::string_view>, std::reference_wrapper<const SchemaDeclaration>,
+    std::unordered_map<std::tuple<std::string_view, std::string_view>, std::reference_wrapper<const SchemaReference>,
                        TupleHasher>
         schemas_by_name;
     /// The tables, indexed by name
@@ -222,11 +227,11 @@ class CatalogEntry {
     /// Get the external id
     ExternalID GetCatalogEntryId() const { return catalog_entry_id; }
     /// Get the database declarations
-    auto& GetDatabases() const { return database_declarations; }
+    auto& GetDatabases() const { return database_references; }
     /// Get the database declarations by name
     auto& GetDatabasesByName() const { return databases_by_name; }
     /// Get the schema declarations
-    auto& GetSchemas() const { return schema_declarations; }
+    auto& GetSchemas() const { return schema_references; }
     /// Get the schema declarations by name
     auto& GetSchemasByName() const { return schemas_by_name; }
     /// Get the table declarations
@@ -238,9 +243,9 @@ class CatalogEntry {
     QualifiedTableName QualifyTableName(QualifiedTableName name) const;
 
     /// Register a database name
-    UnifiedObjectID RegisterDatabaseName(std::string_view);
+    CatalogObjectID RegisterDatabaseName(std::string_view);
     /// Register a schema name
-    UnifiedObjectID RegisterSchemaName(UnifiedObjectID db_id, std::string_view db_name, std::string_view schema_name);
+    CatalogObjectID RegisterSchemaName(CatalogObjectID db_id, std::string_view db_name, std::string_view schema_name);
 
     /// Describe the catalog entry
     virtual flatbuffers::Offset<proto::CatalogEntry> DescribeEntry(flatbuffers::FlatBufferBuilder& builder) const = 0;
@@ -317,9 +322,9 @@ class Catalog {
         /// The id of the catalog entry
         ExternalID catalog_entry_id;
         /// The id of the database <catalog_entry_id, database_idx>
-        UnifiedObjectID catalog_database_id;
+        CatalogObjectID catalog_database_id;
         /// The id of the schema <catalog_entry_id, schema_idx>
-        UnifiedObjectID catalog_schema_id;
+        CatalogObjectID catalog_schema_id;
     };
     /// The catalog version.
     /// Every modification bumps the version counter, the analyzer reads the version counter which protects all refs.
@@ -328,9 +333,6 @@ class Catalog {
     const std::string default_database_name;
     /// The default schema name
     const std::string default_schema_name;
-    /// The registered unified objects
-    std::unordered_map<std::pair<std::string, std::string>, UnifiedObjectID, StringPairHasher, StringPairEqual>
-        unified_object_ids;
 
     /// The catalog entries
     std::unordered_map<ExternalID, CatalogEntry*> entries;
@@ -343,6 +345,15 @@ class Catalog {
     /// The entries ordered by <database, schema, rank>
     btree::map<std::tuple<std::string_view, std::string_view, CatalogEntry::Rank, ExternalID>, CatalogSchemaEntryInfo>
         entries_by_schema;
+
+    /// The next database id
+    CatalogObjectID next_database_id;
+    /// The next schema id
+    CatalogObjectID next_schema_id;
+    /// The databases
+    btree::map<std::string_view, CatalogEntry::DatabaseReference> databases;
+    /// The schemas
+    btree::map<std::pair<std::string_view, std::string_view>, CatalogEntry::SchemaReference> schemas;
 
     /// Update a script entry
     proto::StatusCode UpdateScript(ScriptEntry& entry);
@@ -377,22 +388,23 @@ class Catalog {
             f(id, *schema, rank);
         }
     }
-
-    /// Register a unified object name
-    UnifiedObjectID RegisterUnifiedObjectId(std::string_view a, std::string_view b) {
-        if (auto iter = unified_object_ids.find(std::pair<std::string_view, std::string_view>{a, b});
-            iter != unified_object_ids.end()) {
-            return iter->second;
+    /// Register a database name
+    CatalogObjectID AllocateDatabaseId(std::string_view database) {
+        auto iter = databases.find(database);
+        if (iter != databases.end()) {
+            return iter->second.catalog_database_id;
         } else {
-            return unified_object_ids.insert({std::pair<std::string, std::string>{a, b}, unified_object_ids.size()})
-                .first->second;
+            return next_database_id++;
         }
     }
-    /// Register a database name
-    UnifiedObjectID AllocateDatabaseId(std::string_view db_name) { return RegisterUnifiedObjectId(db_name, ""); }
     /// Register a schema name
-    UnifiedObjectID AllocateSchemaId(std::string_view db_name, std::string_view schema_name) {
-        return RegisterUnifiedObjectId(db_name, schema_name);
+    CatalogObjectID AllocateSchemaId(std::string_view database, std::string_view schema) {
+        auto iter = schemas.find({database, schema});
+        if (iter != schemas.end()) {
+            return iter->second.catalog_schema_id;
+        } else {
+            return next_schema_id++;
+        }
     }
 
     /// Clear a catalog
