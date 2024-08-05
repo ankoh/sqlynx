@@ -556,18 +556,39 @@ proto::StatusCode Catalog::LoadScript(Script& script, CatalogEntry::Rank rank) {
     // Rule of thumb:
     // When analysing a schema script, immediately add it to the catalog
     {
+        // Declare all databases
         for (auto& [key, ref] : script.analyzed_script->GetDatabasesByName()) {
             auto iter = databases.find(key);
-            if (iter != databases.end() && iter->second.catalog_database_id != ref.get().catalog_database_id) {
-                // Catalog id is out of sync
-                return proto::StatusCode::CATALOG_ID_OUT_OF_SYNC;
+            if (iter != databases.end()) {
+                if (iter->second.catalog_database_id != ref.get().catalog_database_id) {
+                    // Catalog id is out of sync
+                    return proto::StatusCode::CATALOG_ID_OUT_OF_SYNC;
+                }
+            } else {
+                // Copy strings and register the database
+                std::string db_name{ref.get().database_name};
+                std::string db_alias{ref.get().database_alias};
+                std::string_view db_key{db_name};
+                DatabaseDeclaration db(ref.get().catalog_database_id, std::move(db_name), std::move(db_alias));
+                databases.insert({db_key, db});
             }
         }
+        // Declare all schemas
         for (auto& [key, ref] : script.analyzed_script->GetSchemasByName()) {
             auto iter = schemas.find(key);
-            if (iter != schemas.end() && iter->second.catalog_schema_id != ref.get().catalog_schema_id) {
-                // Catalog id is out of sync
-                return proto::StatusCode::CATALOG_ID_OUT_OF_SYNC;
+            if (iter != schemas.end()) {
+                if (iter->second.catalog_schema_id != ref.get().catalog_schema_id) {
+                    // Catalog id is out of sync
+                    return proto::StatusCode::CATALOG_ID_OUT_OF_SYNC;
+                }
+            } else {
+                // Copy strings and register the schema
+                std::string db_name{ref.get().database_name};
+                std::string schema_name{ref.get().schema_name};
+                std::pair<std::string_view, std::string_view> schema_key{db_name, schema_name};
+                SchemaDeclaration schema(ref.get().catalog_database_id, ref.get().catalog_database_id,
+                                         std::move(db_name), std::move(schema_name));
+                schemas.insert({schema_key, schema});
             }
         }
     }
