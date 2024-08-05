@@ -2,12 +2,9 @@
 #include <fstream>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <vector>
 
-#include "flatbuffers/flatbuffers.h"
 #include "gflags/gflags.h"
-#include "sqlynx/analyzer/analyzer.h"
 #include "sqlynx/catalog.h"
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/parser/scanner.h"

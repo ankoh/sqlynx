@@ -4,12 +4,6 @@
             <input>
                 s
             </input>
-            <database-references>
-                <entry db="sqlynx" />
-            </database-references>
-            <schema-references>
-                <entry db="sqlynx" schema="default" />
-            </schema-references>
         </script>
         <cursor>
             <search text="s" index="1" />
@@ -25,12 +19,6 @@
             <input>
                 se
             </input>
-            <database-references>
-                <entry db="sqlynx" />
-            </database-references>
-            <schema-references>
-                <entry db="sqlynx" schema="default" />
-            </schema-references>
         </script>
         <cursor>
             <search text="se" index="2" />
@@ -46,12 +34,6 @@
             <input>
                 sel
             </input>
-            <database-references>
-                <entry db="sqlynx" />
-            </database-references>
-            <schema-references>
-                <entry db="sqlynx" schema="default" />
-            </schema-references>
         </script>
         <cursor>
             <search text="sel" index="3" />
@@ -67,12 +49,6 @@
             <input>
                 select *
             </input>
-            <database-references>
-                <entry db="sqlynx" />
-            </database-references>
-            <schema-references>
-                <entry db="sqlynx" schema="default" />
-            </schema-references>
         </script>
         <cursor>
             <search text="*" index="1" />
@@ -84,12 +60,6 @@
             <input>
                 select * f
             </input>
-            <database-references>
-                <entry db="sqlynx" />
-            </database-references>
-            <schema-references>
-                <entry db="sqlynx" schema="default" />
-            </schema-references>
         </script>
         <cursor>
             <search text="f" index="1" />
@@ -105,12 +75,6 @@
             <input>
                 select * fr
             </input>
-            <database-references>
-                <entry db="sqlynx" />
-            </database-references>
-            <schema-references>
-                <entry db="sqlynx" schema="default" />
-            </schema-references>
         </script>
         <cursor>
             <search text="fr" index="2" />
@@ -126,12 +90,6 @@
             <input>
                 select * from
             </input>
-            <database-references>
-                <entry db="sqlynx" />
-            </database-references>
-            <schema-references>
-                <entry db="sqlynx" schema="default" />
-            </schema-references>
         </script>
         <cursor>
             <search text="fr" index="4" />
@@ -147,12 +105,6 @@
             <input>
                 select * from a xx
             </input>
-            <database-references>
-                <entry db="sqlynx" />
-            </database-references>
-            <schema-references>
-                <entry db="sqlynx" schema="default" />
-            </schema-references>
             <table-references>
                 <unresolved stmt="0" loc="31..35" text="a xx" />
             </table-references>
@@ -171,12 +123,6 @@
             <input>
                 select * from a w
             </input>
-            <database-references>
-                <entry db="sqlynx" />
-            </database-references>
-            <schema-references>
-                <entry db="sqlynx" schema="default" />
-            </schema-references>
             <table-references>
                 <unresolved stmt="0" loc="31..34" text="a w" />
             </table-references>
@@ -195,12 +141,6 @@
             <input>
                 select * from a wh
             </input>
-            <database-references>
-                <entry db="sqlynx" />
-            </database-references>
-            <schema-references>
-                <entry db="sqlynx" schema="default" />
-            </schema-references>
             <table-references>
                 <unresolved stmt="0" loc="31..35" text="a wh" />
             </table-references>
@@ -219,12 +159,6 @@
             <input>
                 selec
             </input>
-            <database-references>
-                <entry db="sqlynx" />
-            </database-references>
-            <schema-references>
-                <entry db="sqlynx" schema="default" />
-            </schema-references>
         </script>
         <cursor>
             <search text="selec" index="5" />
@@ -240,12 +174,6 @@
             <input>
                 select * from foo gr
             </input>
-            <database-references>
-                <entry db="sqlynx" />
-            </database-references>
-            <schema-references>
-                <entry db="sqlynx" schema="default" />
-            </schema-references>
             <table-references>
                 <unresolved stmt="0" loc="31..37" text="foo gr" />
             </table-references>
@@ -264,12 +192,6 @@
             <input>
                 select * from foo group
             </input>
-            <database-references>
-                <entry db="sqlynx" />
-            </database-references>
-            <schema-references>
-                <entry db="sqlynx" schema="default" />
-            </schema-references>
         </script>
         <cursor>
             <search text="group" index="4" />
@@ -285,12 +207,6 @@
             <input>
                 select * from foo group b
             </input>
-            <database-references>
-                <entry db="sqlynx" />
-            </database-references>
-            <schema-references>
-                <entry db="sqlynx" schema="default" />
-            </schema-references>
         </script>
         <cursor>
             <search text="b" index="1" />
@@ -304,12 +220,6 @@
             <input>
                 select * from foo group xx
             </input>
-            <database-references>
-                <entry db="sqlynx" />
-            </database-references>
-            <schema-references>
-                <entry db="sqlynx" schema="default" />
-            </schema-references>
         </script>
         <cursor>
             <search text="xx" index="0" />
@@ -323,12 +233,6 @@
             <input>
                 select * from foo o
             </input>
-            <database-references>
-                <entry db="sqlynx" />
-            </database-references>
-            <schema-references>
-                <entry db="sqlynx" schema="default" />
-            </schema-references>
             <table-references>
                 <unresolved stmt="0" loc="31..36" text="foo o" />
             </table-references>
@@ -347,12 +251,6 @@
             <input>
                 select * from foo or
             </input>
-            <database-references>
-                <entry db="sqlynx" />
-            </database-references>
-            <schema-references>
-                <entry db="sqlynx" schema="default" />
-            </schema-references>
         </script>
         <cursor>
             <search text="or" index="1" />
@@ -368,12 +266,6 @@
             <input>
                 select * from foo order
             </input>
-            <database-references>
-                <entry db="sqlynx" />
-            </database-references>
-            <schema-references>
-                <entry db="sqlynx" schema="default" />
-            </schema-references>
             <table-references>
                 <unresolved loc="31..34" text="foo" />
             </table-references>
