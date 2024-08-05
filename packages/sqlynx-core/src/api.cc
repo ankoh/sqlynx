@@ -71,6 +71,9 @@ static FFIResult* packError(proto::StatusCode status) {
         case proto::StatusCode::CATALOG_MISMATCH:
             message = "Catalog is not matching";
             break;
+        case proto::StatusCode::CATALOG_ID_OUT_OF_SYNC:
+            message = "Catalog id is out of sync";
+            break;
         case proto::StatusCode::PARSER_INPUT_NOT_SCANNED:
             message = "Parser input is not scanned";
             break;

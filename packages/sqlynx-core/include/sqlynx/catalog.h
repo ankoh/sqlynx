@@ -326,6 +326,39 @@ class Catalog {
         /// The id of the schema <catalog_entry_id, schema_idx>
         CatalogObjectID catalog_schema_id;
     };
+    /// A database declaration
+    struct DatabaseDeclaration {
+        /// The catalog database id
+        CatalogObjectID catalog_database_id;
+        /// The database name
+        std::string database_name;
+        /// The database alias (if any)
+        std::string database_alias;
+        /// Constructor
+        DatabaseDeclaration(CatalogObjectID database_id, std::string database_name, std::string database_alias)
+            : catalog_database_id(database_id),
+              database_name(std::move(database_name)),
+              database_alias(std::move(database_alias)) {}
+    };
+    /// A schema declaration
+    struct SchemaDeclaration {
+        /// The catalog database id
+        CatalogObjectID catalog_database_id;
+        /// The catalog schema id
+        CatalogObjectID catalog_schema_id;
+        /// The database name (references the name of the database entry)
+        std::string_view database_name;
+        /// The schema name
+        std::string schema_name;
+        /// Constructor
+        SchemaDeclaration(CatalogObjectID database_id, CatalogObjectID schema_id, std::string_view database_name,
+                          std::string schema_name)
+            : catalog_database_id(database_id),
+              catalog_schema_id(schema_id),
+              database_name(database_name),
+              schema_name(std::move(schema_name)) {}
+    };
+
     /// The catalog version.
     /// Every modification bumps the version counter, the analyzer reads the version counter which protects all refs.
     Version version = 1;
@@ -350,10 +383,12 @@ class Catalog {
     CatalogObjectID next_database_id;
     /// The next schema id
     CatalogObjectID next_schema_id;
-    /// The databases
-    btree::map<std::string_view, CatalogEntry::DatabaseReference> databases;
-    /// The schemas
-    btree::map<std::pair<std::string_view, std::string_view>, CatalogEntry::SchemaReference> schemas;
+    /// The databases.
+    /// The btrees contain all the databases that are currently referenced by catalog entries.
+    btree::map<std::string_view, DatabaseDeclaration> databases;
+    /// The schemas.
+    /// These btrees contain all the schemas that are currently referenced by catalog entries.
+    btree::map<std::pair<std::string_view, std::string_view>, SchemaDeclaration> schemas;
 
     /// Update a script entry
     proto::StatusCode UpdateScript(ScriptEntry& entry);

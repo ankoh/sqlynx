@@ -540,6 +540,38 @@ proto::StatusCode Catalog::LoadScript(Script& script, CatalogEntry::Rank rank) {
     if (entry_iter != entries.end()) {
         return proto::StatusCode::EXTERNAL_ID_COLLISION;
     }
+    // Check if any of the containng schemas/databases are registered with a different id.
+    //
+    // That may happen in the following case:
+    //  - First the user create schema script and analyzes it.
+    //  - In the schema script, there are CREATE TABLE statements referencing a schema foo.bar
+    //  - During name-resolution, this schema foo.bar is registered IN THE SCRIPT with the schema id 42.
+    //  - This schema id is allocated by bumping the next_schema_id in the catalog.
+    //  - After analyzing the script, the user adds a schema descriptor to the catalog.
+    //  - This descriptor also contains a schema with name foo.bar.
+    //  - The catalog allocates the next schema id and registers foo.bar with id 43.
+    //  - The user then calls catalog.LoadScript() with the analyzed script.
+    //  - The loading MUST FAIL since otherwise we'd have the ids 42 and 43 referencing the same schema.
+    //
+    // Rule of thumb:
+    // When analysing a schema script, immediately add it to the catalog
+    {
+        for (auto& [key, ref] : script.analyzed_script->GetDatabasesByName()) {
+            auto iter = databases.find(key);
+            if (iter != databases.end() && iter->second.catalog_database_id != ref.get().catalog_database_id) {
+                // Catalog id is out of sync
+                return proto::StatusCode::CATALOG_ID_OUT_OF_SYNC;
+            }
+        }
+        for (auto& [key, ref] : script.analyzed_script->GetSchemasByName()) {
+            auto iter = schemas.find(key);
+            if (iter != schemas.end() && iter->second.catalog_schema_id != ref.get().catalog_schema_id) {
+                // Catalog id is out of sync
+                return proto::StatusCode::CATALOG_ID_OUT_OF_SYNC;
+            }
+        }
+    }
+
     // Collect all schema names
     CatalogEntry& entry = *script.analyzed_script;
     for (auto& [schema_key, schema_ref] : entry.schemas_by_name) {
