@@ -127,10 +127,6 @@ struct QueryGraphEdgeNode {
 table AnalyzedScript {
     // The external id that the user specified for this catalog entry
     catalog_entry_id: uint32;
-    // The databases
-    databases: [DatabaseDeclaration];
-    // The schemas
-    schemas: [SchemaDeclaration];
     // The local tables
     tables: [Table];
     // The table references in the statement
