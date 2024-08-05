@@ -135,13 +135,13 @@ AnalyzedScript::QualifiedTableName NameResolutionPass::NormalizeTableName(
 }
 
 /// Register a schema
-std::pair<UnifiedObjectID, UnifiedObjectID> NameResolutionPass::RegisterSchema(std::string_view database_name,
+std::pair<CatalogObjectID, CatalogObjectID> NameResolutionPass::RegisterSchema(std::string_view database_name,
                                                                                std::string_view schema_name) {
     // Register the database
     auto db_id = catalog.AllocateDatabaseId(database_name);
     auto db_ref_iter = databases_by_name.find(database_name);
     if (db_ref_iter == databases_by_name.end()) {
-        auto& db = database_declarations.Append(CatalogEntry::DatabaseDeclaration{db_id, database_name, ""});
+        auto& db = database_references.Append(CatalogEntry::DatabaseReference{db_id, database_name, ""});
         databases_by_name.insert({db.database_name, db});
     }
     // Register the schema
@@ -149,7 +149,7 @@ std::pair<UnifiedObjectID, UnifiedObjectID> NameResolutionPass::RegisterSchema(s
     auto schema_ref_iter = schemas_by_name.find({database_name, schema_name});
     if (schema_ref_iter == schemas_by_name.end()) {
         auto& schema =
-            schema_declarations.Append(CatalogEntry::SchemaDeclaration{db_id, schema_id, database_name, schema_name});
+            schema_references.Append(CatalogEntry::SchemaReference{db_id, schema_id, database_name, schema_name});
         schemas_by_name.insert({{database_name, schema_name}, schema});
     }
     return {db_id, schema_id};
@@ -635,9 +635,9 @@ void NameResolutionPass::Finish() {
 
 /// Export an analyzed program
 void NameResolutionPass::Export(AnalyzedScript& program) {
-    program.database_declarations = std::move(database_declarations);
+    program.database_references = std::move(database_references);
     program.databases_by_name = std::move(databases_by_name);
-    program.schema_declarations = std::move(schema_declarations);
+    program.schema_references = std::move(schema_references);
     program.schemas_by_name = std::move(schemas_by_name);
     program.table_declarations = std::move(table_declarations);
     program.tables_by_name = std::move(tables_by_name);

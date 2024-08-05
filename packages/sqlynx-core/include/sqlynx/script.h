@@ -183,9 +183,9 @@ class AnalyzedScript : public CatalogEntry {
         /// The alias name, may refer to different catalog entry
         std::string_view alias_name;
         /// The resolved database id in the catalog
-        UnifiedObjectID resolved_catalog_database_id;
+        CatalogObjectID resolved_catalog_database_id;
         /// The resolved schema id in the catalog
-        UnifiedObjectID resolved_catalog_schema_id;
+        CatalogObjectID resolved_catalog_schema_id;
         /// The resolved table id in the catalog
         ExternalObjectID resolved_catalog_table_id;
 
@@ -207,9 +207,9 @@ class AnalyzedScript : public CatalogEntry {
         /// The resolved table reference id in the current context
         std::optional<uint32_t> resolved_table_reference_id;
         /// The resolved catalog database id
-        UnifiedObjectID resolved_catalog_database_id;
+        CatalogObjectID resolved_catalog_database_id;
         /// The resolved catalog schema id
-        UnifiedObjectID resolved_catalog_schema_id;
+        CatalogObjectID resolved_catalog_schema_id;
         /// The resolved table id in the catalog
         ExternalObjectID resolved_catalog_table_id;
         /// The resolved column index

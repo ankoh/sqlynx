@@ -95,9 +95,9 @@ class NameResolutionPass : public PassManager::LTRPass {
     ChunkBuffer<OverlayList<AnalyzedScript::ColumnReference>::Node, 16> column_references;
 
     /// The database references
-    decltype(AnalyzedScript::database_declarations) database_declarations;
+    decltype(AnalyzedScript::database_references) database_references;
     /// The database references
-    decltype(AnalyzedScript::schema_declarations) schema_declarations;
+    decltype(AnalyzedScript::schema_references) schema_references;
     /// The tables
     decltype(AnalyzedScript::table_declarations) table_declarations;
     /// The join edges
@@ -132,7 +132,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     AnalyzedScript::QualifiedTableName NormalizeTableName(AnalyzedScript::QualifiedTableName name) const;
 
     /// Register a schema
-    std::pair<UnifiedObjectID, UnifiedObjectID> RegisterSchema(std::string_view database_name,
+    std::pair<CatalogObjectID, CatalogObjectID> RegisterSchema(std::string_view database_name,
                                                                std::string_view schema_name);
 
     /// Merge child states into a destination state
