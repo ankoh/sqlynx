@@ -4,12 +4,6 @@
             <input>
                 select * from db1.schema1.A, db2.schema2.A where a = c;
             </input>
-            <database-references>
-                <entry db="db3" />
-            </database-references>
-            <schema-references>
-                <entry db="db3" schema="schema3" />
-            </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..44" text="db1.schema1.A" />
                 <external schema="1" table="1" stmt="0" loc="46..59" text="db2.schema2.A" />
@@ -31,16 +25,6 @@
                     create table db1.schema1.A (a int, b int);
                     create table db2.schema2.A (c int, d int);
                 </input>
-                <database-references>
-                    <entry db="db3" />
-                    <entry db="db1" />
-                    <entry db="db2" />
-                </database-references>
-                <schema-references>
-                    <entry db="db3" schema="schema3" />
-                    <entry db="db1" schema="schema1" />
-                    <entry db="db2" schema="schema2" />
-                </schema-references>
                 <tables>
                     <table name="a" loc="21..62" text="create tab..nt, b int)">
                         <column name="a" loc="49..54" text="a int" />
@@ -59,12 +43,6 @@
             <input>
                 select * from db1.schema1.A, db2.schema2.A where a = c;
             </input>
-            <database-references>
-                <entry db="db1" />
-            </database-references>
-            <schema-references>
-                <entry db="db1" schema="schema1" />
-            </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..44" text="db1.schema1.A" />
                 <external schema="1" table="1" stmt="0" loc="46..59" text="db2.schema2.A" />
@@ -86,14 +64,6 @@
                     create table A (a int, b int);
                     create table db2.schema2.A (c int, d int);
                 </input>
-                <database-references>
-                    <entry db="db1" />
-                    <entry db="db2" />
-                </database-references>
-                <schema-references>
-                    <entry db="db1" schema="schema1" />
-                    <entry db="db2" schema="schema2" />
-                </schema-references>
                 <tables>
                     <table name="a" loc="21..50" text="create tab..nt, b int)">
                         <column name="a" loc="37..42" text="a int" />
@@ -112,12 +82,6 @@
             <input>
                 select * from db1.schema1.A, db2.schema2.B where a = c;
             </input>
-            <database-references>
-                <entry db="db1" />
-            </database-references>
-            <schema-references>
-                <entry db="db1" schema="schema1" />
-            </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..44" text="db1.schema1.A" />
                 <external schema="2" table="0" stmt="0" loc="46..59" text="db2.schema2.B" />
@@ -138,12 +102,6 @@
                 <input>
                     create table A (a int, b int);
                 </input>
-                <database-references>
-                    <entry db="db1" />
-                </database-references>
-                <schema-references>
-                    <entry db="db1" schema="schema1" />
-                </schema-references>
                 <tables>
                     <table name="a" loc="21..50" text="create tab..nt, b int)">
                         <column name="a" loc="37..42" text="a int" />
@@ -155,14 +113,6 @@
                 <input>
                     create table db2.schema2.B (c int, d int);
                 </input>
-                <database-references>
-                    <entry db="db1" />
-                    <entry db="db2" />
-                </database-references>
-                <schema-references>
-                    <entry db="db1" schema="schema1" />
-                    <entry db="db2" schema="schema2" />
-                </schema-references>
                 <tables>
                     <table name="b" loc="21..62" text="create tab..nt, d int)">
                         <column name="c" loc="49..54" text="c int" />
@@ -177,12 +127,6 @@
             <input>
                 select * from db1.schema1.A, db2.schema2.B where a = c;
             </input>
-            <database-references>
-                <entry db="sqlynx" />
-            </database-references>
-            <schema-references>
-                <entry db="sqlynx" schema="default" />
-            </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..44" text="db1.schema1.A" />
                 <external schema="2" table="0" stmt="0" loc="46..59" text="db2.schema2.B" />
@@ -203,14 +147,6 @@
                 <input>
                     create table db1.schema1.A (a int, b int);
                 </input>
-                <database-references>
-                    <entry db="sqlynx" />
-                    <entry db="db1" />
-                </database-references>
-                <schema-references>
-                    <entry db="sqlynx" schema="default" />
-                    <entry db="db1" schema="schema1" />
-                </schema-references>
                 <tables>
                     <table name="a" loc="21..62" text="create tab..nt, b int)">
                         <column name="a" loc="49..54" text="a int" />
@@ -222,14 +158,6 @@
                 <input>
                     create table db2.schema2.B (c int, d int);
                 </input>
-                <database-references>
-                    <entry db="sqlynx" />
-                    <entry db="db2" />
-                </database-references>
-                <schema-references>
-                    <entry db="sqlynx" schema="default" />
-                    <entry db="db2" schema="schema2" />
-                </schema-references>
                 <tables>
                     <table name="b" loc="21..62" text="create tab..nt, d int)">
                         <column name="c" loc="49..54" text="c int" />
@@ -245,12 +173,6 @@
                 select * from db1.schema1.A where a = 1;
                 select * from db1.schema1.A where c = 1;
             </input>
-            <database-references>
-                <entry db="sqlynx" />
-            </database-references>
-            <schema-references>
-                <entry db="sqlynx" schema="default" />
-            </schema-references>
             <table-references>
                 <external schema="1" table="0" stmt="0" loc="31..44" text="db1.schema1.A" />
                 <external schema="1" table="0" stmt="1" loc="88..101" text="db1.schema1.A" />
@@ -265,14 +187,6 @@
                 <input>
                     create table db1.schema1.A (a int, b int);
                 </input>
-                <database-references>
-                    <entry db="sqlynx" />
-                    <entry db="db1" />
-                </database-references>
-                <schema-references>
-                    <entry db="sqlynx" schema="default" />
-                    <entry db="db1" schema="schema1" />
-                </schema-references>
                 <tables>
                     <table name="a" loc="21..62" text="create tab..nt, b int)">
                         <column name="a" loc="49..54" text="a int" />
@@ -284,14 +198,6 @@
                 <input>
                     create table db1.schema1.A (c int, d int);
                 </input>
-                <database-references>
-                    <entry db="sqlynx" />
-                    <entry db="db1" />
-                </database-references>
-                <schema-references>
-                    <entry db="sqlynx" schema="default" />
-                    <entry db="db1" schema="schema1" />
-                </schema-references>
                 <tables>
                     <table name="a" loc="21..62" text="create tab..nt, d int)">
                         <column name="c" loc="49..54" text="c int" />
