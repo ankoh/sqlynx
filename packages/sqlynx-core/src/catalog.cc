@@ -301,10 +301,7 @@ void CatalogEntry::ResolveTableColumn(std::string_view table_column, const Catal
 
 Catalog::Catalog(std::string_view default_db, std::string_view default_schema)
     : default_database_name(default_db.empty() ? "sqlynx" : default_db),
-      default_schema_name(default_schema.empty() ? "default" : default_schema) {
-    AllocateDatabaseId(GetDefaultDatabaseName());
-    AllocateSchemaId(GetDefaultDatabaseName(), GetDefaultSchemaName());
-}
+      default_schema_name(default_schema.empty() ? "default" : default_schema) {}
 
 void Catalog::Clear() {
     entries_by_schema.clear();
@@ -560,35 +557,33 @@ proto::StatusCode Catalog::LoadScript(Script& script, CatalogEntry::Rank rank) {
         for (auto& [key, ref] : script.analyzed_script->GetDatabasesByName()) {
             auto iter = databases.find(key);
             if (iter != databases.end()) {
-                if (iter->second.catalog_database_id != ref.get().catalog_database_id) {
+                if (iter->second->catalog_database_id != ref.get().catalog_database_id) {
                     // Catalog id is out of sync
                     return proto::StatusCode::CATALOG_ID_OUT_OF_SYNC;
                 }
             } else {
-                // Copy strings and register the database
-                std::string db_name{ref.get().database_name};
-                std::string db_alias{ref.get().database_alias};
-                std::string_view db_key{db_name};
-                DatabaseDeclaration db(ref.get().catalog_database_id, std::move(db_name), std::move(db_alias));
-                databases.insert({db_key, db});
+                auto db = std::make_unique<DatabaseDeclaration>(ref.get().catalog_database_id, ref.get().database_name,
+                                                                ref.get().database_alias);
+                std::string_view db_key{db->database_name};
+                databases.insert({db_key, std::move(db)});
             }
         }
         // Declare all schemas
         for (auto& [key, ref] : script.analyzed_script->GetSchemasByName()) {
             auto iter = schemas.find(key);
             if (iter != schemas.end()) {
-                if (iter->second.catalog_schema_id != ref.get().catalog_schema_id) {
+                if (iter->second->catalog_database_id != ref.get().catalog_database_id ||
+                    iter->second->catalog_schema_id != ref.get().catalog_schema_id) {
                     // Catalog id is out of sync
                     return proto::StatusCode::CATALOG_ID_OUT_OF_SYNC;
                 }
             } else {
                 // Copy strings and register the schema
-                std::string db_name{ref.get().database_name};
-                std::string schema_name{ref.get().schema_name};
-                std::pair<std::string_view, std::string_view> schema_key{db_name, schema_name};
-                SchemaDeclaration schema(ref.get().catalog_database_id, ref.get().catalog_database_id,
-                                         std::move(db_name), std::move(schema_name));
-                schemas.insert({schema_key, schema});
+                auto schema =
+                    std::make_unique<SchemaDeclaration>(ref.get().catalog_database_id, ref.get().catalog_schema_id,
+                                                        ref.get().database_name, ref.get().schema_name);
+                std::pair<std::string_view, std::string_view> schema_key{schema->database_name, schema->schema_name};
+                schemas.insert({schema_key, std::move(schema)});
             }
         }
     }
@@ -619,10 +614,47 @@ proto::StatusCode Catalog::LoadScript(Script& script, CatalogEntry::Rank rank) {
 proto::StatusCode Catalog::UpdateScript(ScriptEntry& entry) {
     auto& script = entry.script;
     assert(script.analyzed_script);
+
     // Script stayed the same? Nothing to do then
     if (entry.analyzed == script.analyzed_script) {
         return proto::StatusCode::OK;
     }
+    auto external_id = script.GetCatalogEntryId();
+    auto rank = entry.rank;
+
+    // New database entry
+    struct NewDatabaseEntry {
+        /// A Schema ref
+        const CatalogEntry::DatabaseReference& database_ref;
+        /// Already existed?
+        bool already_exists;
+    };
+    // Collect all new database names
+    std::unordered_map<std::string_view, NewDatabaseEntry> new_dbs;
+    new_dbs.reserve(script.analyzed_script->databases_by_name.size());
+    for (auto& [key, ref] : script.analyzed_script->databases_by_name) {
+        NewDatabaseEntry new_entry{.database_ref = ref, .already_exists = false};
+        new_dbs.insert({key, new_entry});
+    }
+    // Scan previous database names, mark new names that already exist.
+    // We erase those later that no longer exist.
+    auto& prev_databases = entry.analyzed->databases_by_name;
+    for (auto iter = prev_databases.begin(); iter != prev_databases.end(); ++iter) {
+        auto db_name = iter->first;
+        // Check if the previous schema name is in the new schema entries.
+        auto new_name_iter = new_dbs.find(db_name);
+        if (new_name_iter != new_dbs.end()) {
+            new_name_iter->second.already_exists = true;
+        }
+    }
+    // Insert unmarked new database entries
+    for (auto& [k, new_entry] : new_dbs) {
+        if (!new_entry.already_exists) {
+            auto db = std::make_unique<DatabaseDeclaration>(new_entry.database_ref.catalog_database_id, k, "");
+            databases.insert({db->database_name, std::move(db)});
+        }
+    }
+
     // New schema entry
     struct NewSchemaEntry {
         /// A Schema ref
@@ -630,31 +662,38 @@ proto::StatusCode Catalog::UpdateScript(ScriptEntry& entry) {
         /// Already existed?
         bool already_exists;
     };
-    // Collect all new names
-    std::unordered_map<std::pair<std::string_view, std::string_view>, NewSchemaEntry, TupleHasher> new_schema_entries;
+    // Collect all new schema names
+    std::unordered_map<std::pair<std::string_view, std::string_view>, NewSchemaEntry, TupleHasher> new_schemas;
+    new_schemas.reserve(script.analyzed_script->schemas_by_name.size());
     for (auto& [key, ref] : script.analyzed_script->schemas_by_name) {
         NewSchemaEntry new_entry{.schema_ref = ref, .already_exists = false};
-        new_schema_entries.insert({key, new_entry});
+        new_schemas.insert({key, new_entry});
     }
-    // Scan previous names, mark new names that already exist, erase those that no longer exist
-    auto external_id = script.GetCatalogEntryId();
-    auto rank = entry.rank;
+    // Scan previous schema names, mark new names that already exist, erase those that no longer exist
     auto& prev_schemas = entry.analyzed->schemas_by_name;
-    for (auto prev_name_iter = prev_schemas.begin(); prev_name_iter != prev_schemas.end();) {
-        auto& [db_name, schema_name] = prev_name_iter->first;
-        auto new_name_iter = new_schema_entries.find({db_name, schema_name});
-        if (new_name_iter != new_schema_entries.end()) {
+    for (auto iter = prev_schemas.begin(); iter != prev_schemas.end(); ++iter) {
+        auto& [db_name, schema_name] = iter->first;
+        // Check if the previous schema name is in the new schema entries.
+        auto new_name_iter = new_schemas.find({db_name, schema_name});
+        if (new_name_iter != new_schemas.end()) {
             new_name_iter->second.already_exists = true;
         } else {
+            // Previous schema no longer exists in new schema.
+            // Drop the entry reference from the catalog for this schema.
             entries_by_schema.erase({db_name, schema_name, rank, external_id});
-            prev_schemas.erase(prev_name_iter++);
-            continue;
+            // Check if there's any remaining catalog entry with that schema name
+            auto iter = entries_by_schema.lower_bound({db_name, schema_name, 0, 0});
+            if (iter == entries_by_schema.end() || std::get<0>(iter->first) != db_name ||
+                std::get<1>(iter->first) != schema_name) {
+                // If not, remove the schema declaration from the catalog completely
+                schemas.erase({db_name, schema_name});
+            }
         }
-        ++prev_name_iter;
     }
-    // Scan new names and insert unmarked
-    for (auto& [k, new_entry] : new_schema_entries) {
+    // Insert unmarked new schema entries
+    for (auto& [k, new_entry] : new_schemas) {
         if (!new_entry.already_exists) {
+            // Add schema entries
             auto& [db_name, schema_name] = k;
             CatalogSchemaEntryInfo entry{
                 .catalog_entry_id = external_id,
@@ -664,8 +703,33 @@ proto::StatusCode Catalog::UpdateScript(ScriptEntry& entry) {
             std::tuple<std::string_view, std::string_view, CatalogEntry::Rank, ExternalID> entry_key{
                 db_name, schema_name, rank, external_id};
             entries_by_schema.insert({entry_key, entry});
+
+            // Add schema declaration
+            if (!schemas.contains({db_name, schema_name})) {
+                assert(databases.contains(db_name));
+                auto schema = std::make_unique<SchemaDeclaration>(new_entry.schema_ref.catalog_database_id,
+                                                                  new_entry.schema_ref.catalog_schema_id,
+                                                                  databases.find(db_name)->first, schema_name);
+                std::pair<std::string_view, std::string_view> key = {schema->database_name, schema->schema_name};
+                schemas.insert({key, std::move(schema)});
+            }
         }
     }
+
+    // Erase previous database that's no longer part of the new database.
+    for (auto iter = prev_databases.begin(); iter != prev_databases.end(); ++iter) {
+        auto db_name = iter->first;
+        // Check if the previous schema name is in the new schema entries.
+        auto new_name_iter = new_dbs.find(db_name);
+        if (new_name_iter == new_dbs.end()) {
+            // Check if there are other entries with that database name
+            auto other_iter = entries_by_schema.lower_bound({db_name, "", 0, 0});
+            if (other_iter == entries_by_schema.end() || std::get<0>(other_iter->first) != db_name) {
+                databases.erase(db_name);
+            }
+        }
+    }
+
     entry.analyzed = script.analyzed_script;
     auto entry_iter = entries.find(script.GetCatalogEntryId());
     assert(entry_iter != entries.end());
