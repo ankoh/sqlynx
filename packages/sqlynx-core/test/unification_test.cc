@@ -39,8 +39,8 @@ TEST(UnificationTest, SingleTableInDefaultSchema) {
     ASSERT_EQ(flat->schemas()->size(), 1);
     ASSERT_EQ(flat->tables()->size(), 1);
     ASSERT_EQ(flat->columns()->size(), 1);
-    ASSERT_EQ(flat->databases()->Get(0)->catalog_object_id(), 0);
-    ASSERT_EQ(flat->schemas()->Get(0)->catalog_object_id(), 1);
+    ASSERT_EQ(flat->databases()->Get(0)->catalog_object_id(), INITIAL_DATABASE_ID);
+    ASSERT_EQ(flat->schemas()->Get(0)->catalog_object_id(), INITIAL_SCHEMA_ID);
     ASSERT_EQ(flat->tables()->Get(0)->catalog_object_id(), ExternalObjectID(42, 0).Pack());
 
     // Check names
@@ -62,11 +62,11 @@ TEST(UnificationTest, MultipleTablesInDefaultSchema) {
     ASSERT_EQ(schema0.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(schema0.Parse().second, proto::StatusCode::OK);
     ASSERT_EQ(schema0.Analyze().second, proto::StatusCode::OK);
+    ASSERT_EQ(catalog.LoadScript(schema0, 1), proto::StatusCode::OK);
+
     ASSERT_EQ(schema1.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(schema1.Parse().second, proto::StatusCode::OK);
     ASSERT_EQ(schema1.Analyze().second, proto::StatusCode::OK);
-
-    ASSERT_EQ(catalog.LoadScript(schema0, 1), proto::StatusCode::OK);
     ASSERT_EQ(catalog.LoadScript(schema1, 2), proto::StatusCode::OK);
 
     flatbuffers::FlatBufferBuilder fb;
@@ -82,8 +82,8 @@ TEST(UnificationTest, MultipleTablesInDefaultSchema) {
     ASSERT_EQ(flat->tables()->size(), 2);
     ASSERT_EQ(flat->columns()->size(), 2);
 
-    EXPECT_EQ(flat->databases()->Get(0)->catalog_object_id(), 0);
-    EXPECT_EQ(flat->schemas()->Get(0)->catalog_object_id(), 1);
+    EXPECT_EQ(flat->databases()->Get(0)->catalog_object_id(), INITIAL_DATABASE_ID);
+    EXPECT_EQ(flat->schemas()->Get(0)->catalog_object_id(), INITIAL_SCHEMA_ID);
 
     // Tables names are ordered lexicographically in the flattend schema
     EXPECT_EQ(flat->tables()->Get(0)->catalog_object_id(), ExternalObjectID(100, 0).Pack());
@@ -105,11 +105,11 @@ TEST(UnificationTest, MultipleTablesInMultipleSchemas) {
     ASSERT_EQ(schema0.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(schema0.Parse().second, proto::StatusCode::OK);
     ASSERT_EQ(schema0.Analyze().second, proto::StatusCode::OK);
+    ASSERT_EQ(catalog.LoadScript(schema0, 1), proto::StatusCode::OK);
+
     ASSERT_EQ(schema1.Scan().second, proto::StatusCode::OK);
     ASSERT_EQ(schema1.Parse().second, proto::StatusCode::OK);
     ASSERT_EQ(schema1.Analyze().second, proto::StatusCode::OK);
-
-    ASSERT_EQ(catalog.LoadScript(schema0, 1), proto::StatusCode::OK);
     ASSERT_EQ(catalog.LoadScript(schema1, 2), proto::StatusCode::OK);
 
     flatbuffers::FlatBufferBuilder fb;
@@ -125,10 +125,10 @@ TEST(UnificationTest, MultipleTablesInMultipleSchemas) {
     ASSERT_EQ(flat->tables()->size(), 3);
     ASSERT_EQ(flat->columns()->size(), 3);
 
-    EXPECT_EQ(flat->databases()->Get(0)->catalog_object_id(), 2);  // "separate"
-    EXPECT_EQ(flat->databases()->Get(1)->catalog_object_id(), 0);  // "sqlynx"
-    EXPECT_EQ(flat->schemas()->Get(0)->catalog_object_id(), 3);    // "schema"
-    EXPECT_EQ(flat->schemas()->Get(1)->catalog_object_id(), 1);    // "default"
+    EXPECT_EQ(flat->databases()->Get(0)->catalog_object_id(), INITIAL_DATABASE_ID + 1);  // "separate"
+    EXPECT_EQ(flat->databases()->Get(1)->catalog_object_id(), INITIAL_DATABASE_ID);      // "sqlynx"
+    EXPECT_EQ(flat->schemas()->Get(0)->catalog_object_id(), INITIAL_SCHEMA_ID + 1);      // "schema"
+    EXPECT_EQ(flat->schemas()->Get(1)->catalog_object_id(), INITIAL_SCHEMA_ID);          // "default"
 
     // separate.schema.in_separate_0 is written first
     EXPECT_EQ(flat->tables()->Get(0)->catalog_object_id(), ExternalObjectID(100, 1).Pack());

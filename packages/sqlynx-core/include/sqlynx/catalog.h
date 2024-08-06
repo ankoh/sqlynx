@@ -23,12 +23,14 @@ namespace sqlynx {
 
 namespace sx = sqlynx::proto;
 
-constexpr uint32_t PROTO_NULL_U32 = std::numeric_limits<uint32_t>::max();
-
 class Catalog;
 class Script;
 class AnalyzedScript;
 using CatalogObjectID = uint32_t;
+
+constexpr uint32_t PROTO_NULL_U32 = std::numeric_limits<uint32_t>::max();
+constexpr CatalogObjectID INITIAL_DATABASE_ID = 1 << 8;
+constexpr CatalogObjectID INITIAL_SCHEMA_ID = 1 << 16;
 
 /// A schema stores database metadata.
 /// It is used as a virtual container to expose table and column information to the analyzer.
@@ -335,10 +337,15 @@ class Catalog {
         /// The database alias (if any)
         std::string database_alias;
         /// Constructor
-        DatabaseDeclaration(CatalogObjectID database_id, std::string database_name, std::string database_alias)
+        DatabaseDeclaration(CatalogObjectID database_id, std::string_view database_name,
+                            std::string_view database_alias)
             : catalog_database_id(database_id),
               database_name(std::move(database_name)),
               database_alias(std::move(database_alias)) {}
+        /// Move constructor
+        DatabaseDeclaration(DatabaseDeclaration&&) = default;
+        /// Move assignment
+        DatabaseDeclaration& operator=(DatabaseDeclaration&&) = default;
     };
     /// A schema declaration
     struct SchemaDeclaration {
@@ -352,11 +359,15 @@ class Catalog {
         std::string schema_name;
         /// Constructor
         SchemaDeclaration(CatalogObjectID database_id, CatalogObjectID schema_id, std::string_view database_name,
-                          std::string schema_name)
+                          std::string_view schema_name)
             : catalog_database_id(database_id),
               catalog_schema_id(schema_id),
               database_name(database_name),
               schema_name(std::move(schema_name)) {}
+        /// Move constructor
+        SchemaDeclaration(SchemaDeclaration&&) = default;
+        /// Move assignment
+        SchemaDeclaration& operator=(SchemaDeclaration&&) = default;
     };
 
     /// The catalog version.
@@ -380,15 +391,15 @@ class Catalog {
         entries_by_schema;
 
     /// The next database id
-    CatalogObjectID next_database_id;
+    CatalogObjectID next_database_id = INITIAL_DATABASE_ID;
     /// The next schema id
-    CatalogObjectID next_schema_id;
+    CatalogObjectID next_schema_id = INITIAL_SCHEMA_ID;
     /// The databases.
     /// The btrees contain all the databases that are currently referenced by catalog entries.
-    btree::map<std::string_view, DatabaseDeclaration> databases;
+    btree::map<std::string_view, std::unique_ptr<DatabaseDeclaration>> databases;
     /// The schemas.
     /// These btrees contain all the schemas that are currently referenced by catalog entries.
-    btree::map<std::pair<std::string_view, std::string_view>, SchemaDeclaration> schemas;
+    btree::map<std::pair<std::string_view, std::string_view>, std::unique_ptr<SchemaDeclaration>> schemas;
 
     /// Update a script entry
     proto::StatusCode UpdateScript(ScriptEntry& entry);
@@ -427,7 +438,7 @@ class Catalog {
     CatalogObjectID AllocateDatabaseId(std::string_view database) {
         auto iter = databases.find(database);
         if (iter != databases.end()) {
-            return iter->second.catalog_database_id;
+            return iter->second->catalog_database_id;
         } else {
             return next_database_id++;
         }
@@ -436,7 +447,7 @@ class Catalog {
     CatalogObjectID AllocateSchemaId(std::string_view database, std::string_view schema) {
         auto iter = schemas.find({database, schema});
         if (iter != schemas.end()) {
-            return iter->second.catalog_schema_id;
+            return iter->second->catalog_schema_id;
         } else {
             return next_schema_id++;
         }
