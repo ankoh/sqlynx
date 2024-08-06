@@ -138,19 +138,24 @@ AnalyzedScript::QualifiedTableName NameResolutionPass::NormalizeTableName(
 std::pair<CatalogObjectID, CatalogObjectID> NameResolutionPass::RegisterSchema(std::string_view database_name,
                                                                                std::string_view schema_name) {
     // Register the database
-    auto db_id = catalog.AllocateDatabaseId(database_name);
+    CatalogObjectID db_id = 0, schema_id = 0;
     auto db_ref_iter = databases_by_name.find(database_name);
     if (db_ref_iter == databases_by_name.end()) {
+        db_id = catalog.AllocateDatabaseId(database_name);
         auto& db = database_references.Append(CatalogEntry::DatabaseReference{db_id, database_name, ""});
         databases_by_name.insert({db.database_name, db});
+    } else {
+        db_id = db_ref_iter->second.get().catalog_database_id;
     }
     // Register the schema
-    auto schema_id = catalog.AllocateSchemaId(database_name, schema_name);
     auto schema_ref_iter = schemas_by_name.find({database_name, schema_name});
     if (schema_ref_iter == schemas_by_name.end()) {
+        schema_id = catalog.AllocateSchemaId(database_name, schema_name);
         auto& schema =
             schema_references.Append(CatalogEntry::SchemaReference{db_id, schema_id, database_name, schema_name});
         schemas_by_name.insert({{database_name, schema_name}, schema});
+    } else {
+        schema_id = schema_ref_iter->second.get().catalog_schema_id;
     }
     return {db_id, schema_id};
 }
