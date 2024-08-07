@@ -101,7 +101,7 @@ class RenderingKey {
         } else {
             let out = this.entryIds[0]!.toString();
             for (let i = 1; i < level; ++i) {
-                out += '-';
+                out += '/';
                 out += this.entryIds[i]!.toString();
             }
             return out;
@@ -110,17 +110,8 @@ class RenderingKey {
     public getKey(level: number) {
         let out = this.entryIds[0]!.toString();
         for (let i = 1; i < (level + 1); ++i) {
-            out += '-';
+            out += '/';
             out += this.entryIds[i]!.toString();
-        }
-        return out;
-    }
-    public asAttributes(): Record<string, string> {
-        const out: Record<string, string> = {};
-        for (let i = 0; i < 4; ++i) {
-            if (this.entryIds[i] != null) {
-                out[`data-level-${i}`] = this.idToString(i);
-            }
         }
         return out;
     }
@@ -499,7 +490,7 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
                     width: settings.nodeWidth,
                     height: settings.nodeHeight,
                 }}
-                {...state.currentRenderingPath.asAttributes()}
+                data-entry={thisKey}
             >
                 {thisName}
             </div>
@@ -543,7 +534,7 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
         if (state.currentWriterY > state.currentRenderingWindow.virtualScrollWindowBegin && thisPosY < state.currentRenderingWindow.virtualScrollWindowEnd) {
             state.currentRenderingWindow.addNode(thisPosY, settings.nodeHeight);
             scratchPositions[lastOverflowEntryId] = thisPosY;
-            const overflowKey = `${state.currentRenderingPath.getKeyPrefix(level)}-overflow`;
+            const overflowKey = `${state.currentRenderingPath.getKeyPrefix(level)}:overflow`;
             outNodes.push(
                 <div
                     key={overflowKey}
@@ -556,7 +547,7 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
                         width: settings.nodeWidth,
                         height: settings.nodeHeight,
                     }}
-                    {...state.currentRenderingPath.asAttributes()}
+                    data-entry={overflowKey}
                 >
                     {overflowChildCount}
                 </div>
@@ -636,7 +627,7 @@ function renderPinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLy
                     width: settings.nodeWidth,
                     height: settings.nodeHeight,
                 }}
-                {...state.currentRenderingPath.asAttributes()}
+                data-entry={thisKey}
             >
                 {thisName}
             </div>
