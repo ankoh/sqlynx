@@ -113,8 +113,8 @@ export const SQLynxProcessor: StateField<SQLynxEditorState> = StateField.define<
             scriptCursor: null,
             focusedColumnRefs: null,
             focusedTableRefs: null,
-            onUpdateScript: () => {},
-            onUpdateScriptCursor: () => {},
+            onUpdateScript: () => { },
+            onUpdateScriptCursor: () => { },
         };
         return config;
     },
@@ -151,7 +151,6 @@ export const SQLynxProcessor: StateField<SQLynxEditorState> = StateField.define<
             }
         }
 
-        // Did the document change?
         if (next.targetScript != null) {
             // Mirror all changes to the the SQLynx script, if the script is != null.
             if (transaction.docChanged) {
@@ -179,7 +178,8 @@ export const SQLynxProcessor: StateField<SQLynxEditorState> = StateField.define<
                 next.onUpdateScript(next.scriptKey, next.scriptBuffers, next.scriptCursor);
                 return next;
             }
-            // Update the script cursor
+            // Update the script cursor..
+            // This is the place where we handle events of normal cursor movements.
             if (cursorChanged) {
                 copyIfNotReplaced();
                 const cursorBuffer = next.targetScript!.moveCursor(selection ?? 0);

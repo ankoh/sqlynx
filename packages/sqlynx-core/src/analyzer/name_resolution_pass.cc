@@ -281,7 +281,7 @@ void NameResolutionPass::ResolveColumnRefsInScope(NameScope& scope, ColumnRefsBy
                 column_ref.resolved_catalog_database_id = resolved.table.catalog_database_id;
                 column_ref.resolved_catalog_schema_id = resolved.table.catalog_schema_id;
                 column_ref.resolved_catalog_table_id = resolved.table.catalog_table_id;
-                column_ref.resolved_column_id = resolved.column_id;
+                column_ref.resolved_table_column_id = resolved.column_id;
                 auto dead_iter = column_ref_iter++;
                 unresolved_columns.erase(dead_iter);
             } else {
@@ -370,7 +370,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 n.value.resolved_catalog_database_id = std::numeric_limits<uint32_t>::max();
                 n.value.resolved_catalog_schema_id = std::numeric_limits<uint32_t>::max();
                 n.value.resolved_catalog_table_id = ExternalObjectID();
-                n.value.resolved_column_id = std::nullopt;
+                n.value.resolved_table_column_id = std::nullopt;
                 n.value.column_name = column_name;
                 node_state.column_references.PushBack(n);
                 // Column refs may be recursive

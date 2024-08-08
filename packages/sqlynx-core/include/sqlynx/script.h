@@ -212,8 +212,8 @@ class AnalyzedScript : public CatalogEntry {
         CatalogObjectID resolved_catalog_schema_id;
         /// The resolved table id in the catalog
         ExternalObjectID resolved_catalog_table_id;
-        /// The resolved column index
-        std::optional<uint32_t> resolved_column_id;
+        /// The resolved table column id
+        std::optional<uint32_t> resolved_table_column_id;
 
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::ColumnReference> Pack(flatbuffers::FlatBufferBuilder& builder) const;
