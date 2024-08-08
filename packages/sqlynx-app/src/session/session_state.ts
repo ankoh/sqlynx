@@ -4,14 +4,8 @@ import Immutable from 'immutable';
 import { ScriptMetadata } from './script_metadata.js';
 import { ScriptLoadingStatus } from './script_loader.js';
 import { analyzeScript, parseAndAnalyzeScript, SQLynxScriptBuffers } from '../view/editor/sqlynx_processor.js';
-import {
-    computeGraphViewModel,
-    GraphConnectionId,
-    GraphNodeDescriptor,
-    GraphViewModel,
-} from '../view/schema/graph_view_model.js';
 import { ScriptLoadingInfo } from './script_loader.js';
-import { deriveScriptFocusFromCursor, focusGraphEdge, focusGraphNode, FocusInfo } from './focus.js';
+import { deriveScriptFocusFromCursor, FocusInfo } from './focus.js';
 import { ConnectorInfo } from '../connectors/connector_info.js';
 import { VariantKind } from '../utils/index.js';
 
@@ -43,17 +37,6 @@ export interface SessionState {
     editorQuery: number | null;
     /// The user focus info
     userFocus: FocusInfo | null;
-
-    /// DEPRECATED
-
-    /// The graph
-    graph: sqlynx.SQLynxQueryGraphLayout | null;
-    /// The graph config
-    graphConfig: sqlynx.SQLynxQueryGraphLayoutConfig;
-    /// The graph layout
-    graphLayout: sqlynx.FlatBufferPtr<sqlynx.proto.QueryGraphLayout> | null;
-    /// The graph view model
-    graphViewModel: GraphViewModel;
 }
 
 /// The script data
@@ -82,10 +65,6 @@ export function destroyState(state: SessionState): SessionState {
     const schema = state.scripts[ScriptKey.SCHEMA_SCRIPT];
     main.processed.destroy(main.processed);
     schema.processed.destroy(schema.processed);
-    if (state.graphLayout) {
-        state.graphLayout.delete();
-        state.graphLayout = null;
-    }
     for (const stats of main.statistics) {
         stats.delete();
     }
@@ -108,7 +87,6 @@ export const SCRIPT_LOADING_FAILED = Symbol('SCRIPT_LOADING_FAILED');
 
 export const FOCUS_QUERY_GRAPH_NODE = Symbol('FOCUS_GRAPH_NODE');
 export const FOCUS_QUERY_GRAPH_EDGE = Symbol('FOCUS_GRAPH_EDGE');
-export const RESIZE_QUERY_GRAPH = Symbol('RESIZE_EDITOR');
 
 export const REGISTER_EDITOR_QUERY = Symbol('REGISTER_EDITOR_QUERY');
 
@@ -121,9 +99,6 @@ export type SessionStateAction =
     | VariantKind<typeof SCRIPT_LOADING_STARTED, ScriptKey>
     | VariantKind<typeof SCRIPT_LOADING_SUCCEEDED, [ScriptKey, string]>
     | VariantKind<typeof SCRIPT_LOADING_FAILED, [ScriptKey, any]>
-    | VariantKind<typeof FOCUS_QUERY_GRAPH_NODE, GraphNodeDescriptor | null>
-    | VariantKind<typeof FOCUS_QUERY_GRAPH_EDGE, GraphConnectionId.Value | null>
-    | VariantKind<typeof RESIZE_QUERY_GRAPH, [number, number]> // width, height
     | VariantKind<typeof REGISTER_EDITOR_QUERY, number>;
 
 const SCHEMA_SCRIPT_CATALOG_RANK = 1e9;
@@ -157,7 +132,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                 userFocus: null,
             };
 
-            next.userFocus = deriveScriptFocusFromCursor(scriptKey, next.scripts, state.graphViewModel, cursor);
+            next.userFocus = deriveScriptFocusFromCursor(state.connectionCatalog, scriptKey, next.scripts, cursor);
             // Is schema script?
             if (scriptKey == ScriptKey.SCHEMA_SCRIPT) {
                 // Update the catalog since the schema might have changed
@@ -169,7 +144,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                 newMain.statistics = rotateStatistics(newMain.statistics, mainData.script!.getStatistics());
                 next.scripts[ScriptKey.MAIN_SCRIPT] = newMain;
             }
-            return withUpdatedGraphViewModel(next);
+            return next;
         }
         case UPDATE_SCRIPT_CURSOR: {
             // Destroy previous cursor
@@ -190,7 +165,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                 },
                 userFocus: null,
             };
-            newState.userFocus = deriveScriptFocusFromCursor(scriptKey, newState.scripts, state.graphViewModel, cursor);
+            newState.userFocus = deriveScriptFocusFromCursor(state.connectionCatalog, scriptKey, newState.scripts, cursor);
             return newState;
         }
 
@@ -238,7 +213,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                 console.warn(e);
             }
             // Update the schema graph
-            return withUpdatedGraphViewModel(next);
+            return next;
         }
 
         case LOAD_SCRIPTS: {
@@ -396,7 +371,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                     },
                 };
             }
-            return withUpdatedGraphViewModel(next);
+            return next;
         }
 
         case REGISTER_EDITOR_QUERY:
@@ -404,33 +379,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                 ...state,
                 editorQuery: action.value
             };
-        case FOCUS_QUERY_GRAPH_NODE:
-            return focusGraphNode(state, action.value);
-        case FOCUS_QUERY_GRAPH_EDGE:
-            return focusGraphEdge(state, action.value);
-        case RESIZE_QUERY_GRAPH:
-            return withUpdatedGraphViewModel({
-                ...state,
-                graphConfig: {
-                    ...state.graphConfig,
-                    boardWidth: action.value[0],
-                    boardHeight: action.value[1],
-                },
-            });
     }
-}
-
-/// Compute a schema graph
-function withUpdatedGraphViewModel(state: SessionState, debug?: boolean): SessionState {
-    const main = state.scripts[ScriptKey.MAIN_SCRIPT] ?? null;
-    if (main == null || main.script == null || main.processed.analyzed == null) {
-        return state;
-    }
-    state.graph!.configure(state.graphConfig);
-    state.graphLayout?.delete();
-    state.graphLayout = state.graph!.loadScript(main.script);
-    state.graphViewModel = computeGraphViewModel(state);
-    return state;
 }
 
 function rotateStatistics(
