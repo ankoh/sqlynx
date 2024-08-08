@@ -490,7 +490,9 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
                     width: settings.nodeWidth,
                     height: settings.nodeHeight,
                 }}
-                data-entry={thisKey}
+                data-snapshot-entry={thisKey}
+                data-snapshot-level={level.toString()}
+                data-catalog-object={entry.catalogObjectId()}
             >
                 {thisName}
             </div>
@@ -508,7 +510,7 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
                 const toY = toPositionsY[entryId] + toSettings.nodeHeight / 2;
                 const edgeType = selectHorizontalEdgeType(fromX, fromY, toX, toY);
                 const edgePath = buildEdgePath(state.edgeBuilder, edgeType, fromX, fromY, toX, toY, settings.nodeWidth, settings.nodeHeight, toSettings.nodeWidth, toSettings.nodeHeight, 10, 10, 4);
-                const edgeKey = `${thisKey}-${entryId}`;
+                const edgeKey = `${thisKey}:${i}`;
                 outEdges.push(
                     <path
                         key={edgeKey}
@@ -518,6 +520,7 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
                         stroke="currentcolor"
                         fill="transparent"
                         pointerEvents="stroke"
+                        data-edge={edgeKey}
                     />,
 
                 );
@@ -534,7 +537,8 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
         if (state.currentWriterY > state.currentRenderingWindow.virtualScrollWindowBegin && thisPosY < state.currentRenderingWindow.virtualScrollWindowEnd) {
             state.currentRenderingWindow.addNode(thisPosY, settings.nodeHeight);
             scratchPositions[lastOverflowEntryId] = thisPosY;
-            const overflowKey = `${state.currentRenderingPath.getKeyPrefix(level)}:overflow`;
+            const key = state.currentRenderingPath.getKeyPrefix(level);
+            const overflowKey = `${key}:overflow`;
             outNodes.push(
                 <div
                     key={overflowKey}
@@ -547,7 +551,8 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
                         width: settings.nodeWidth,
                         height: settings.nodeHeight,
                     }}
-                    data-entry={overflowKey}
+                    data-snapshot-entry={key}
+                    data-snapshot-level={level.toString()}
                 >
                     {overflowChildCount}
                 </div>
@@ -627,7 +632,8 @@ function renderPinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLy
                     width: settings.nodeWidth,
                     height: settings.nodeHeight,
                 }}
-                data-entry={thisKey}
+                data-snapshot-entry={thisKey}
+                data-snapshot-level={level.toString()}
             >
                 {thisName}
             </div>

@@ -69,9 +69,9 @@ export function deriveScriptFocusFromCursor(
         return focus;
     }
 
-    // Helper to derive focus from a query_result id
+    // Helper to derive focus from a table id
     const deriveFocusFromTableId = (tableId: sqlynx.ExternalObjectID.Value): FocusInfo => {
-        // Find all column and query_result refs that are referencing that query_result
+        // Find all column and table refs that are referencing that query_result
         const tableIds: Set<sqlynx.ExternalObjectID.Value> = new Set();
         const columnRefs: Set<sqlynx.ExternalObjectID.Value> = new Set();
         const tableRefs: Set<sqlynx.ExternalObjectID.Value> = new Set();
@@ -108,7 +108,7 @@ export function deriveScriptFocusFromCursor(
         };
     };
 
-    // Focus a query_result ref?
+    // Focus a table ref?
     const tableRefId = sqlynx.ExternalObjectID.create(scriptKey, cursor.tableReferenceId);
     if (!sqlynx.ExternalObjectID.isNull(tableRefId)) {
         const ctxData = scriptData[scriptKey];

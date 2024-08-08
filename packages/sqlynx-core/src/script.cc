@@ -376,7 +376,7 @@ flatbuffers::Offset<proto::ColumnReference> AnalyzedScript::ColumnReference::Pac
     out.add_resolved_catalog_database_id(resolved_catalog_database_id);
     out.add_resolved_catalog_schema_id(resolved_catalog_schema_id);
     out.add_resolved_catalog_table_id(resolved_catalog_table_id.Pack());
-    out.add_resolved_column_id(resolved_column_id.value_or(std::numeric_limits<uint32_t>::max()));
+    out.add_resolved_column_id(resolved_table_column_id.value_or(std::numeric_limits<uint32_t>::max()));
     return out.Finish();
 }
 
@@ -457,18 +457,26 @@ static flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Out>>> PackVe
 
 // Pack an analyzed script
 flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {
-    std::vector<flatbuffers::Offset<proto::Table>> table_offsets;
-    table_offsets.reserve(table_declarations.GetSize());
-    for (auto& table_chunk : table_declarations.GetChunks()) {
-        for (auto& table : table_chunk) {
-            table_offsets.push_back(table.Pack(builder));
+    // Pack tables
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<proto::Table>>> tables_ofs;
+    {
+        std::vector<flatbuffers::Offset<proto::Table>> table_offsets;
+        table_offsets.reserve(table_declarations.GetSize());
+        for (auto& table_chunk : table_declarations.GetChunks()) {
+            for (auto& table : table_chunk) {
+                table_offsets.push_back(table.Pack(builder));
+            }
         }
+        tables_ofs = builder.CreateVector(table_offsets);
     }
-    auto tables_ofs = builder.CreateVector(table_offsets);
+    // Pack table references
     auto table_references_ofs =
         PackVector<AnalyzedScript::TableReference, proto::TableReference>(builder, table_references);
+    // Pack column references
     auto column_references_ofs =
         PackVector<AnalyzedScript::ColumnReference, proto::ColumnReference>(builder, column_references);
+
+    // Pack the query graph
     proto::QueryGraphEdge* graph_edges_ofs_writer;
     proto::QueryGraphEdgeNode* graph_edge_nodes_ofs_writer;
     auto graph_edges_ofs = builder.CreateUninitializedVectorOfStructs(graph_edges.size(), &graph_edges_ofs_writer);
@@ -481,6 +489,56 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
         graph_edge_nodes_ofs_writer[i] = graph_edge_nodes[i];
     }
 
+    // Build index: (db_id, schema_id, table_id) -> table_ref*
+    flatbuffers::Offset<flatbuffers::Vector<const proto::IndexedTableReference*>> indexed_table_refs_ofs;
+    {
+        std::vector<proto::IndexedTableReference> indexed_table_refs;
+        indexed_table_refs.reserve(table_references.size());
+        for (size_t ref_id = 0; ref_id < table_references.size(); ++ref_id) {
+            auto& ref = table_references[ref_id];
+            if (!ref.resolved_catalog_table_id.IsNull()) {
+                assert(ref.resolved_catalog_database_id != std::numeric_limits<uint32_t>::max());
+                assert(ref.resolved_catalog_schema_id != std::numeric_limits<uint32_t>::max());
+                indexed_table_refs.emplace_back(ref.resolved_catalog_database_id, ref.resolved_catalog_schema_id,
+                                                ref.resolved_catalog_table_id.Pack(), ref_id);
+            }
+        }
+        std::sort(indexed_table_refs.begin(), indexed_table_refs.end(),
+                  [&](proto::IndexedTableReference& l, proto::IndexedTableReference& r) {
+                      auto a = std::make_tuple(l.catalog_database_id(), l.catalog_schema_id(), l.catalog_table_id());
+                      auto b = std::make_tuple(r.catalog_database_id(), r.catalog_schema_id(), r.catalog_table_id());
+                      return a < b;
+                  });
+        indexed_table_refs_ofs = builder.CreateVectorOfStructs(indexed_table_refs);
+    }
+
+    // Build index: (db_id, schema_id, table_id, column_id) -> column_ref*
+    flatbuffers::Offset<flatbuffers::Vector<const proto::IndexedColumnReference*>> indexed_column_refs_ofs;
+    {
+        std::vector<proto::IndexedColumnReference> indexed_column_refs;
+        indexed_column_refs.reserve(column_references.size());
+        for (size_t ref_id = 0; ref_id < column_references.size(); ++ref_id) {
+            auto& ref = column_references[ref_id];
+            if (!ref.resolved_catalog_table_id.IsNull()) {
+                assert(ref.resolved_catalog_database_id != std::numeric_limits<uint32_t>::max());
+                assert(ref.resolved_catalog_schema_id != std::numeric_limits<uint32_t>::max());
+                assert(ref.resolved_table_column_id.has_value());
+                indexed_column_refs.emplace_back(ref.resolved_catalog_database_id, ref.resolved_catalog_schema_id,
+                                                 ref.resolved_catalog_table_id.Pack(),
+                                                 ref.resolved_table_column_id.value(), ref_id);
+            }
+        }
+        std::sort(indexed_column_refs.begin(), indexed_column_refs.end(),
+                  [&](proto::IndexedColumnReference& l, proto::IndexedColumnReference& r) {
+                      auto a = std::make_tuple(l.catalog_database_id(), l.catalog_schema_id(), l.catalog_table_id(),
+                                               l.column_id());
+                      auto b = std::make_tuple(r.catalog_database_id(), r.catalog_schema_id(), r.catalog_table_id(),
+                                               r.column_id());
+                      return a < b;
+                  });
+        indexed_column_refs_ofs = builder.CreateVectorOfStructs(indexed_column_refs);
+    }
+
     proto::AnalyzedScriptBuilder out{builder};
     out.add_catalog_entry_id(catalog_entry_id);
     out.add_tables(tables_ofs);
@@ -488,6 +546,8 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
     out.add_column_references(column_references_ofs);
     out.add_graph_edges(graph_edges_ofs);
     out.add_graph_edge_nodes(graph_edge_nodes_ofs);
+    out.add_indexed_table_references(indexed_table_refs_ofs);
+    out.add_indexed_column_references(indexed_column_refs_ofs);
     return out.Finish();
 }
 

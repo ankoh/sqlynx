@@ -186,4 +186,44 @@ TEST(UnificationTest, SimpleTableReference) {
               flat->tables()->Get(1)->catalog_object_id());
 }
 
+TEST(UnificationTest, ParallelDatabaseRegistration) {
+    Catalog catalog;
+
+    Script schema0{catalog, 42};
+    Script schema1{catalog, 100};
+    schema0.InsertTextAt(0, "create table db1.schema1.table1(a int);");
+    schema1.InsertTextAt(0, "create table db1.schema2.table2(a int);");
+
+    ASSERT_EQ(schema0.Scan().second, proto::StatusCode::OK);
+    ASSERT_EQ(schema0.Parse().second, proto::StatusCode::OK);
+    ASSERT_EQ(schema0.Analyze().second, proto::StatusCode::OK);
+
+    ASSERT_EQ(schema1.Scan().second, proto::StatusCode::OK);
+    ASSERT_EQ(schema1.Parse().second, proto::StatusCode::OK);
+    ASSERT_EQ(schema1.Analyze().second, proto::StatusCode::OK);
+
+    ASSERT_EQ(catalog.LoadScript(schema0, 1), proto::StatusCode::OK);
+    ASSERT_EQ(catalog.LoadScript(schema1, 2), proto::StatusCode::CATALOG_ID_OUT_OF_SYNC);
+}
+
+TEST(UnificationTest, ParallelSchemaRegistration) {
+    Catalog catalog;
+
+    Script schema0{catalog, 42};
+    Script schema1{catalog, 100};
+    schema0.InsertTextAt(0, "create table schema1.table1(a int);");
+    schema1.InsertTextAt(0, "create table schema1.table2(a int);");
+
+    ASSERT_EQ(schema0.Scan().second, proto::StatusCode::OK);
+    ASSERT_EQ(schema0.Parse().second, proto::StatusCode::OK);
+    ASSERT_EQ(schema0.Analyze().second, proto::StatusCode::OK);
+
+    ASSERT_EQ(schema1.Scan().second, proto::StatusCode::OK);
+    ASSERT_EQ(schema1.Parse().second, proto::StatusCode::OK);
+    ASSERT_EQ(schema1.Analyze().second, proto::StatusCode::OK);
+
+    ASSERT_EQ(catalog.LoadScript(schema0, 1), proto::StatusCode::OK);
+    ASSERT_EQ(catalog.LoadScript(schema1, 2), proto::StatusCode::CATALOG_ID_OUT_OF_SYNC);
+}
+
 }  // namespace

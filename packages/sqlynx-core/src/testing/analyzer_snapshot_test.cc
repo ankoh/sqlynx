@@ -158,8 +158,8 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
                 xml_ref.append_attribute("schema").set_value(ref.resolved_catalog_table_id.GetExternalId());
                 xml_ref.append_attribute("table").set_value(ref.resolved_catalog_table_id.GetIndex());
             }
-            if (ref.resolved_column_id.has_value()) {
-                xml_ref.append_attribute("column").set_value(*ref.resolved_column_id);
+            if (ref.resolved_table_column_id.has_value()) {
+                xml_ref.append_attribute("column").set_value(*ref.resolved_table_column_id);
             }
             if (ref.ast_statement_id.has_value()) {
                 xml_ref.append_attribute("stmt").set_value(*ref.ast_statement_id);
