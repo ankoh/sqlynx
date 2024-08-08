@@ -531,9 +531,9 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
         std::sort(indexed_column_refs.begin(), indexed_column_refs.end(),
                   [&](proto::IndexedColumnReference& l, proto::IndexedColumnReference& r) {
                       auto a = std::make_tuple(l.catalog_database_id(), l.catalog_schema_id(), l.catalog_table_id(),
-                                               l.column_id());
+                                               l.table_column_id());
                       auto b = std::make_tuple(r.catalog_database_id(), r.catalog_schema_id(), r.catalog_table_id(),
-                                               r.column_id());
+                                               r.table_column_id());
                       return a < b;
                   });
         indexed_column_refs_ofs = builder.CreateVectorOfStructs(indexed_column_refs);
