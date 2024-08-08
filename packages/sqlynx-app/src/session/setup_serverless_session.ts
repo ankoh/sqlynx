@@ -88,29 +88,6 @@ export function useServerlessSessionSetup(): SessionSetupFn {
             runningQueries: new Set(),
             finishedQueries: [],
             editorQuery: null,
-            graph,
-            graphConfig: {
-                boardWidth: DEFAULT_BOARD_WIDTH,
-                boardHeight: DEFAULT_BOARD_HEIGHT,
-                cellWidth: 120,
-                cellHeight: 64,
-                tableWidth: 180,
-                tableHeight: 36,
-            },
-            graphLayout: null,
-            graphViewModel: {
-                nodes: [],
-                nodesByTable: new Map(),
-                edges: new Map(),
-                boundaries: {
-                    minX: 0,
-                    maxX: 0,
-                    minY: 0,
-                    maxY: 0,
-                    totalWidth: 0,
-                    totalHeight: 0,
-                },
-            },
             userFocus: null,
         });
 
