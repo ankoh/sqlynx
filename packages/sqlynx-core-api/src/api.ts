@@ -596,7 +596,6 @@ export class SQLynxCatalogSnapshot {
     public read(): SQLynxCatalogSnapshotReader {
         const reader = this.snapshot.read(new proto.FlatCatalog());
         return new SQLynxCatalogSnapshotReader(reader, this.nameDictionary);
-
     }
 }
 
