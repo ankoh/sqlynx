@@ -124,6 +124,30 @@ struct QueryGraphEdgeNode {
     column_reference_id: uint32;
 }
 
+struct IndexedTableReference {
+    /// The catalog database id
+    catalog_database_id: uint32;
+    /// The catalog schema id
+    catalog_schema_id: uint32;
+    /// The catalog table id
+    catalog_table_id: uint64;
+    /// The table reference id
+    table_reference_id: uint32;
+}
+
+struct IndexedColumnReference {
+    /// The catalog database id
+    catalog_database_id: uint32;
+    /// The catalog schema id
+    catalog_schema_id: uint32;
+    /// The catalog table id
+    catalog_table_id: uint64;
+    /// The column id
+    table_column_id: int32;
+    /// The table reference id
+    column_reference_id: uint32;
+}
+
 table AnalyzedScript {
     // The external id that the user specified for this catalog entry
     catalog_entry_id: uint32;
@@ -137,4 +161,8 @@ table AnalyzedScript {
     graph_edges: [QueryGraphEdge];
     /// The query graph edge nodes
     graph_edge_nodes: [QueryGraphEdgeNode];
+    /// The indexed table references
+    indexed_table_references: [IndexedTableReference];
+    /// The indexed column references
+    indexed_column_references: [IndexedColumnReference];
 }
