@@ -1,7 +1,7 @@
 import * as proto from '../gen/sqlynx/proto/index.js';
 
-// Find table ref lower bound for table id
-export function lowerBoundTableRefs(script: proto.AnalyzedScript, tmp: proto.IndexedTableReference, begin: number, end: number, targetDb: number, targetSchema: number, targetTable: bigint) {
+/// Find lower bound among table refs for table id
+export function tableRefsLowerBound(script: proto.AnalyzedScript, tmp: proto.IndexedTableReference, begin: number, end: number, targetDb: number, targetSchema: number, targetTable: bigint) {
     while (begin < end) {
         // Find the middle reference
         const m: number = begin + ((end - begin) >> 1);
@@ -11,9 +11,7 @@ export function lowerBoundTableRefs(script: proto.AnalyzedScript, tmp: proto.Ind
             // Check the schema id
             if (midRef.catalogSchemaId() == targetSchema) {
                 // Check the table id
-                if (midRef.catalogTableId() == targetTable) {
-                    return m;
-                } else if (midRef.catalogTableId() < targetTable) {
+                if (midRef.catalogTableId() < targetTable) {
                     begin = m + 1;
                 } else {
                     end = m;
@@ -30,4 +28,41 @@ export function lowerBoundTableRefs(script: proto.AnalyzedScript, tmp: proto.Ind
         }
     }
     return end;
+}
+
+/// Find upper bound among table refs for table id
+export function tableRefsUpperBound(script: proto.AnalyzedScript, tmp: proto.IndexedTableReference, begin: number, end: number, targetDb: number, targetSchema: number, targetTable: bigint) {
+    while (begin < end) {
+        // Find the middle reference
+        const m: number = begin + ((end - begin) >> 1);
+        const midRef = script.indexedTableReferences(m, tmp);
+        // Check the database id
+        if (midRef.catalogDatabaseId() == targetDb) {
+            // Check the schema id
+            if (midRef.catalogSchemaId() == targetSchema) {
+                // Check the table id
+                if (midRef.catalogTableId() <= targetTable) {
+                    begin = m + 1;
+                } else {
+                    end = m;
+                }
+            } else if (midRef.catalogSchemaId() < targetSchema) {
+                begin = m + 1;
+            } else {
+                end = m;
+            }
+        } else if (midRef.catalogDatabaseId() < targetDb) {
+            begin = m + 1;
+        } else {
+            end = m;
+        }
+    }
+    return end;
+}
+
+/// Find equal range among table refs for table id
+export function tableRefsEqualRange(script: proto.AnalyzedScript, tmp: proto.IndexedTableReference, begin: number, end: number, targetDb: number, targetSchema: number, targetTable: bigint): [number, number] {
+    const lb = tableRefsLowerBound(script, tmp, begin, end, targetDb, targetSchema, targetTable);
+    const ub = tableRefsUpperBound(script, tmp, lb, end, targetDb, targetSchema, targetTable);
+    return [lb, ub];
 }
