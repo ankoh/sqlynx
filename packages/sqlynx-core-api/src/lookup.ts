@@ -61,21 +61,9 @@ export function tableRefsUpperBound(script: proto.AnalyzedScript, tmp: proto.Ind
 }
 
 /// Find equal range among table refs for a table
-export function tableRefsEqualRange(script: proto.AnalyzedScript, tmp: proto.IndexedTableReference, begin: number, end: number, targetDb: number, targetSchema: number, targetTable: bigint): [number, number] {
-    const lb = tableRefsLowerBound(script, tmp, begin, end, targetDb, targetSchema, targetTable);
-    const ub = tableRefsUpperBound(script, tmp, lb, end, targetDb, targetSchema, targetTable);
-    return [lb, ub];
-}
-/// Find equal range among table refs for a schema
-export function tableRefsEqualRangeBySchema(script: proto.AnalyzedScript, tmp: proto.IndexedTableReference, begin: number, end: number, targetDb: number, targetSchema: number): [number, number] {
-    const lb = tableRefsLowerBound(script, tmp, begin, end, targetDb, targetSchema, 0n);
-    const ub = tableRefsUpperBound(script, tmp, lb, end, targetDb, targetSchema, 0xFFFFFFFFFFFFFFFFn);
-    return [lb, ub];
-}
-/// Find equal range among table refs for a database
-export function tableRefsEqualRangeByDatabase(script: proto.AnalyzedScript, tmp: proto.IndexedTableReference, begin: number, end: number, targetDb: number): [number, number] {
-    const lb = tableRefsLowerBound(script, tmp, begin, end, targetDb, 0, 0n);
-    const ub = tableRefsUpperBound(script, tmp, lb, end, targetDb, Number.MAX_SAFE_INTEGER, 0xFFFFFFFFFFFFFFFFn);
+export function tableRefsEqualRange(script: proto.AnalyzedScript, tmp: proto.IndexedTableReference, begin: number, end: number, targetDb: number, targetSchema: number | null = null, targetTable: bigint | null = null): [number, number] {
+    const lb = tableRefsLowerBound(script, tmp, begin, end, targetDb, targetSchema ?? 0, targetTable ?? 0n);
+    const ub = tableRefsUpperBound(script, tmp, lb, end, targetDb, targetSchema ?? Number.MAX_SAFE_INTEGER, targetTable ?? 0xFFFFFFFFFFFFFFFFn);
     return [lb, ub];
 }
 
@@ -154,28 +142,8 @@ export function columnRefsUpperBound(script: proto.AnalyzedScript, tmp: proto.In
 }
 
 /// Find equal range among table refs for a table column
-export function columnRefsEqualRange(script: proto.AnalyzedScript, tmp: proto.IndexedColumnReference, begin: number, end: number, targetDb: number, targetSchema: number, targetTable: bigint, columnId: number): [number, number] {
-    const lb = columnRefsLowerBound(script, tmp, begin, end, targetDb, targetSchema, targetTable, columnId);
-    const ub = columnRefsUpperBound(script, tmp, lb, end, targetDb, targetSchema, targetTable, columnId);
-    return [lb, ub];
-}
-
-/// Find equal range among table refs for a table
-export function columnRefsEqualRangeByTable(script: proto.AnalyzedScript, tmp: proto.IndexedColumnReference, begin: number, end: number, targetDb: number, targetSchema: number, targetTable: bigint): [number, number] {
-    const lb = columnRefsLowerBound(script, tmp, begin, end, targetDb, targetSchema, targetTable, 0);
-    const ub = columnRefsUpperBound(script, tmp, lb, end, targetDb, targetSchema, targetTable, Number.MAX_SAFE_INTEGER);
-    return [lb, ub];
-}
-/// Find equal range among table refs for a schema
-export function columnRefsEqualRangeBySchema(script: proto.AnalyzedScript, tmp: proto.IndexedColumnReference, begin: number, end: number, targetDb: number, targetSchema: number): [number, number] {
-    const lb = columnRefsLowerBound(script, tmp, begin, end, targetDb, targetSchema, 0n, 0);
-    const ub = columnRefsUpperBound(script, tmp, lb, end, targetDb, targetSchema, 0xFFFFFFFFFFFFFFFFn, Number.MAX_SAFE_INTEGER);
-    return [lb, ub];
-}
-
-/// Find equal range among table refs for a database
-export function columnRefsEqualRangeByDatabase(script: proto.AnalyzedScript, tmp: proto.IndexedColumnReference, begin: number, end: number, targetDb: number): [number, number] {
-    const lb = columnRefsLowerBound(script, tmp, begin, end, targetDb, 0, 0n, 0);
-    const ub = columnRefsUpperBound(script, tmp, lb, end, targetDb, Number.MAX_SAFE_INTEGER, 0xFFFFFFFFFFFFFFFFn, Number.MAX_SAFE_INTEGER);
+export function columnRefsEqualRange(script: proto.AnalyzedScript, tmp: proto.IndexedColumnReference, begin: number, end: number, targetDb: number, targetSchema: number | null = null, targetTable: bigint | null = null, columnId: number | null = null): [number, number] {
+    const lb = columnRefsLowerBound(script, tmp, begin, end, targetDb, targetSchema ?? 0, targetTable ?? 0n, columnId ?? 0);
+    const ub = columnRefsUpperBound(script, tmp, lb, end, targetDb, targetSchema ?? Number.MAX_SAFE_INTEGER, targetTable ?? 0xFFFFFFFFFFFFFFFFn, columnId ?? Number.MAX_SAFE_INTEGER);
     return [lb, ub];
 }
