@@ -246,6 +246,38 @@ describe('Lookup', () => {
                 const iter = sqlynx.tableRefsEqualRange(script, tmp, 0, tableRefs.length, DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3));
                 expect(iter).toEqual([200, 300]);
             });
+            it('100 equal, skip 200, trailing 400, schema prefix', () => {
+                const tableRefs: sqlynx.proto.IndexedTableReferenceT[] = [];
+                for (let i = 0; i < 200; ++i) {
+                    tableRefs.push(tableRef(DB_ID, SCHEMA_ID - 1, sqlynx.ExternalObjectID.create(41, 2), i))
+                }
+                for (let i = 0; i < 100; ++i) {
+                    tableRefs.push(tableRef(DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3), i));
+                }
+                for (let i = 0; i < 400; ++i) {
+                    tableRefs.push(tableRef(DB_ID, SCHEMA_ID + 1, sqlynx.ExternalObjectID.create(43, 4), i))
+                }
+                const script = packScript(tableRefs, []);
+                const tmp = new sqlynx.proto.IndexedTableReference();
+                const iter = sqlynx.tableRefsEqualRangeBySchema(script, tmp, 0, tableRefs.length, DB_ID, SCHEMA_ID);
+                expect(iter).toEqual([200, 300]);
+            });
+            it('100 equal, skip 200, trailing 400, db prefix', () => {
+                const tableRefs: sqlynx.proto.IndexedTableReferenceT[] = [];
+                for (let i = 0; i < 200; ++i) {
+                    tableRefs.push(tableRef(DB_ID - 1, 0, sqlynx.ExternalObjectID.create(41, 2), i))
+                }
+                for (let i = 0; i < 100; ++i) {
+                    tableRefs.push(tableRef(DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3), i));
+                }
+                for (let i = 0; i < 400; ++i) {
+                    tableRefs.push(tableRef(DB_ID + 1, 0, sqlynx.ExternalObjectID.create(43, 4), i))
+                }
+                const script = packScript(tableRefs, []);
+                const tmp = new sqlynx.proto.IndexedTableReference();
+                const iter = sqlynx.tableRefsEqualRangeByDatabase(script, tmp, 0, tableRefs.length, DB_ID);
+                expect(iter).toEqual([200, 300]);
+            });
         });
     });
 });
