@@ -762,12 +762,3 @@ export namespace ExternalObjectID {
         return ExternalObjectID.getObjectID(value) == 0xffffffff;
     }
 }
-
-export interface QualifiedTableID {
-    /// The database id
-    databaseId: number;
-    /// The schema id
-    schemaId: number;
-    /// The table
-    tableId: bigint;
-}

@@ -263,7 +263,7 @@ describe('Lookup', () => {
                 }
                 const script = packScript(tableRefs, []);
                 const tmp = new sqlynx.proto.IndexedTableReference();
-                const iter = sqlynx.tableRefsEqualRangeBySchema(script, tmp, 0, tableRefs.length, DB_ID, SCHEMA_ID);
+                const iter = sqlynx.tableRefsEqualRange(script, tmp, 0, tableRefs.length, DB_ID, SCHEMA_ID);
                 expect(iter).toEqual([200, 300]);
             });
             it('100 equal, skip 200, trailing 400, db prefix', () => {
@@ -279,7 +279,7 @@ describe('Lookup', () => {
                 }
                 const script = packScript(tableRefs, []);
                 const tmp = new sqlynx.proto.IndexedTableReference();
-                const iter = sqlynx.tableRefsEqualRangeByDatabase(script, tmp, 0, tableRefs.length, DB_ID);
+                const iter = sqlynx.tableRefsEqualRange(script, tmp, 0, tableRefs.length, DB_ID);
                 expect(iter).toEqual([200, 300]);
             });
         });
