@@ -5,7 +5,7 @@ import { ScriptMetadata } from './script_metadata.js';
 import { ScriptLoadingStatus } from './script_loader.js';
 import { analyzeScript, parseAndAnalyzeScript, SQLynxScriptBuffers } from '../view/editor/sqlynx_processor.js';
 import { ScriptLoadingInfo } from './script_loader.js';
-import { deriveScriptFocusFromCursor, DerivedFocus } from './focus.js';
+import { deriveFocusFromCursor, DerivedFocus } from './focus.js';
 import { ConnectorInfo } from '../connectors/connector_info.js';
 import { VariantKind } from '../utils/index.js';
 
@@ -132,7 +132,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                 userFocus: null,
             };
 
-            next.userFocus = deriveScriptFocusFromCursor(state.connectionCatalog, scriptKey, next.scripts, cursor);
+            next.userFocus = deriveFocusFromCursor(scriptKey, next.scripts, cursor);
             // Is schema script?
             if (scriptKey == ScriptKey.SCHEMA_SCRIPT) {
                 // Update the catalog since the schema might have changed
@@ -165,7 +165,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                 },
                 userFocus: null,
             };
-            newState.userFocus = deriveScriptFocusFromCursor(state.connectionCatalog, scriptKey, newState.scripts, cursor);
+            newState.userFocus = deriveFocusFromCursor(scriptKey, newState.scripts, cursor);
             return newState;
         }
 

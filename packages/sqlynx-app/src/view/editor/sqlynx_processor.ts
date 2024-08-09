@@ -1,5 +1,6 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
 import { StateField, StateEffect, StateEffectType, Text, Transaction } from '@codemirror/state';
+import { DerivedFocus } from '../../session/focus.js';
 
 /// The configuration of the SQLynx config
 export interface SQLynxProcessorConfig {
@@ -21,10 +22,8 @@ export interface SQLynxScriptUpdate {
     scriptBuffers: SQLynxScriptBuffers;
     /// The script cursor
     scriptCursor: sqlynx.proto.ScriptCursorInfoT | null;
-    /// The focused column references
-    focusedColumnRefs: Set<sqlynx.ExternalObjectID.Value> | null;
-    /// The focused query_result references
-    focusedTableRefs: Set<sqlynx.ExternalObjectID.Value> | null;
+    /// The derive focus info
+    derivedFocus: DerivedFocus | null;
     // This callback is called when the editor updates the script
     onUpdateScript: (
         scriptKey: SQLynxScriptKey,
@@ -111,8 +110,7 @@ export const SQLynxProcessor: StateField<SQLynxEditorState> = StateField.define<
                 destroy: destroyBuffers,
             },
             scriptCursor: null,
-            focusedColumnRefs: null,
-            focusedTableRefs: null,
+            derivedFocus: null,
             onUpdateScript: () => { },
             onUpdateScriptCursor: () => { },
         };

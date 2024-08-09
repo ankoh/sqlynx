@@ -7,6 +7,7 @@ import { tags as CODEMIRROR_TAGS, Tag } from '@lezer/highlight';
 import { SQLynxProcessor, SQLynxScriptBuffers, SQLynxScriptKey } from './sqlynx_processor.js';
 
 import './sqlynx_decorations.css';
+import { DerivedFocus } from 'session/focus.js';
 
 const PROTO_TAG_MAPPING: Map<sqlynx.proto.ScannerTokenType, Tag> = new Map([
     [sqlynx.proto.ScannerTokenType.KEYWORD, CODEMIRROR_TAGS.keyword],
@@ -119,8 +120,7 @@ function buildDecorationsFromCursor(
     scriptKey: SQLynxScriptKey | null,
     scriptBuffers: SQLynxScriptBuffers,
     scriptCursor: sqlynx.proto.ScriptCursorInfoT | null,
-    focusedColumnRefs: Set<sqlynx.ExternalObjectID.Value> | null,
-    focusedTableRefs: Set<sqlynx.ExternalObjectID.Value> | null,
+    derivedFocus: DerivedFocus | null,
 ): DecorationSet {
     const builder = new RangeSetBuilder<Decoration>();
     const scanned = scriptBuffers.scanned?.read(new sqlynx.proto.ScannedScript()) ?? null;
@@ -151,15 +151,39 @@ function buildDecorationsFromCursor(
     const tmpLoc = new sqlynx.proto.Location();
     const tmpError = new sqlynx.proto.Error();
 
-    // Build decorations for column refs
-    if (focusedColumnRefs !== null) {
-        for (const refId of focusedColumnRefs) {
+    // Build decorations for related column refs discovered through a table
+    if (derivedFocus?.columnRefsOfReferencedTable) {
+        for (const refId of derivedFocus.columnRefsOfReferencedTable) {
             const externalId = sqlynx.ExternalObjectID.getExternalID(refId);
             const objectId = sqlynx.ExternalObjectID.getObjectID(refId);
             if (externalId !== scriptKey) {
                 continue;
             }
-            // XXX invalidate focused query_result refs at write front
+            // XXX invalidate focused table refs at write front
+            if (objectId >= analyzed.columnReferencesLength()) {
+                continue;
+            }
+            const columnRef = analyzed.columnReferences(objectId, tmpColRef)!;
+            const astNodeId = columnRef.astNodeId()!;
+            const astNode = parsed.nodes(astNodeId, tmpNode)!;
+            const loc = astNode.location(tmpLoc)!;
+            decorations.push({
+                from: loc.offset(),
+                to: loc.offset() + loc.length(),
+                decoration: FocusedColumnReferenceDecoration, // XXX more specific
+            });
+        }
+    }
+
+    // Build decorations for related column refs discovered through a column
+    if (derivedFocus?.columnRefsOfReferencedColumn) {
+        for (const refId of derivedFocus.columnRefsOfReferencedColumn) {
+            const externalId = sqlynx.ExternalObjectID.getExternalID(refId);
+            const objectId = sqlynx.ExternalObjectID.getObjectID(refId);
+            if (externalId !== scriptKey) {
+                continue;
+            }
+            // XXX invalidate focused table refs at write front
             if (objectId >= analyzed.columnReferencesLength()) {
                 continue;
             }
@@ -176,14 +200,14 @@ function buildDecorationsFromCursor(
     }
 
     // Build decorations for query_result refs
-    if (focusedTableRefs !== null) {
-        for (const refId of focusedTableRefs) {
+    if (derivedFocus?.tableRefsOfReferencedTable) {
+        for (const refId of derivedFocus.tableRefsOfReferencedTable) {
             const externalId = sqlynx.ExternalObjectID.getExternalID(refId);
             const objectId = sqlynx.ExternalObjectID.getObjectID(refId);
             if (externalId !== scriptKey) {
                 continue;
             }
-            // XXX invalidate focused query_result refs at write front
+            // XXX invalidate focused table refs at write front
             if (objectId >= analyzed.tableReferencesLength()) {
                 continue;
             }
@@ -238,8 +262,7 @@ interface FocusDecorationState {
     decorations: DecorationSet;
     scriptBuffers: SQLynxScriptBuffers;
     scriptCursor: sqlynx.proto.ScriptCursorInfoT | null;
-    focusedColumnRefs: Set<sqlynx.ExternalObjectID.Value> | null;
-    focusedTableRefs: Set<sqlynx.ExternalObjectID.Value> | null;
+    derivedFocus: DerivedFocus | null;
 }
 
 /// Decorations derived from SQLynx cursor
@@ -256,8 +279,7 @@ const FocusDecorationField: StateField<FocusDecorationState> = StateField.define
                 destroy: () => { },
             },
             scriptCursor: null,
-            focusedColumnRefs: null,
-            focusedTableRefs: null,
+            derivedFocus: null,
         };
         return config;
     },
@@ -271,8 +293,7 @@ const FocusDecorationField: StateField<FocusDecorationState> = StateField.define
             processor.scriptBuffers.parsed === state.scriptBuffers.parsed &&
             processor.scriptBuffers.analyzed === state.scriptBuffers.analyzed &&
             processor.scriptCursor === state.scriptCursor &&
-            processor.focusedColumnRefs === state.focusedColumnRefs &&
-            processor.focusedTableRefs === state.focusedTableRefs
+            processor.derivedFocus === state.derivedFocus
         ) {
             return state;
         }
@@ -283,14 +304,12 @@ const FocusDecorationField: StateField<FocusDecorationState> = StateField.define
         s.scriptBuffers.parsed = processor.scriptBuffers.parsed;
         s.scriptBuffers.analyzed = processor.scriptBuffers.analyzed;
         s.scriptCursor = processor.scriptCursor;
-        s.focusedColumnRefs = processor.focusedColumnRefs;
-        s.focusedTableRefs = processor.focusedTableRefs;
+        s.derivedFocus = processor.derivedFocus;
         s.decorations = buildDecorationsFromCursor(
             s.scriptKey,
             s.scriptBuffers,
             s.scriptCursor,
-            s.focusedColumnRefs,
-            s.focusedTableRefs,
+            s.derivedFocus,
         );
         return s;
     },
