@@ -61,7 +61,9 @@ export function tableRefsUpperBound(script: proto.AnalyzedScript, tmp: proto.Ind
 }
 
 /// Find equal range among table refs for a table
-export function tableRefsEqualRange(script: proto.AnalyzedScript, tmp: proto.IndexedTableReference, begin: number, end: number, targetDb: number, targetSchema: number | null = null, targetTable: bigint | null = null): [number, number] {
+export function tableRefsEqualRange(script: proto.AnalyzedScript, targetDb: number, targetSchema: number | null = null, targetTable: bigint | null = null, tmp: proto.IndexedTableReference = new proto.IndexedTableReference()): [number, number] {
+    const begin = 0;
+    const end = script.tableReferencesByIdLength();
     const lb = tableRefsLowerBound(script, tmp, begin, end, targetDb, targetSchema ?? 0, targetTable ?? 0n);
     const ub = tableRefsUpperBound(script, tmp, lb, end, targetDb, targetSchema ?? Number.MAX_SAFE_INTEGER, targetTable ?? 0xFFFFFFFFFFFFFFFFn);
     return [lb, ub];
@@ -142,8 +144,32 @@ export function columnRefsUpperBound(script: proto.AnalyzedScript, tmp: proto.In
 }
 
 /// Find equal range among table refs for a table column
-export function columnRefsEqualRange(script: proto.AnalyzedScript, tmp: proto.IndexedColumnReference, begin: number, end: number, targetDb: number, targetSchema: number | null = null, targetTable: bigint | null = null, columnId: number | null = null): [number, number] {
+export function columnRefsEqualRange(script: proto.AnalyzedScript, targetDb: number, targetSchema: number | null = null, targetTable: bigint | null = null, columnId: number | null = null, tmp: proto.IndexedColumnReference = new proto.IndexedColumnReference()): [number, number] {
+    const begin = 0;
+    const end = script.columnReferencesByIdLength();
     const lb = columnRefsLowerBound(script, tmp, begin, end, targetDb, targetSchema ?? 0, targetTable ?? 0n, columnId ?? 0);
     const ub = columnRefsUpperBound(script, tmp, lb, end, targetDb, targetSchema ?? Number.MAX_SAFE_INTEGER, targetTable ?? 0xFFFFFFFFFFFFFFFFn, columnId ?? Number.MAX_SAFE_INTEGER);
     return [lb, ub];
+}
+
+
+/// Find table by id
+export function findCatalogDatabaseById(catalog: proto.FlatCatalog, databaseId: number, tmp: proto.IndexedFlatDatabaseEntry = new proto.IndexedFlatDatabaseEntry()) {
+    let begin = 0;
+    let end = catalog.databasesByIdLength();
+
+    while (begin < end) {
+        // Find the middle reference
+        const m: number = begin + ((end - begin) >> 1);
+        const midRef = catalog.databasesById(m, tmp);
+        // Check the database id
+        if (midRef.databaseId() == databaseId) {
+            return midRef.flatEntryIdx();
+        } else if (midRef.databaseId() < databaseId) {
+            begin = m + 1;
+        } else {
+            end = m;
+        }
+    }
+    return null;
 }
