@@ -5,7 +5,7 @@ export function tableRefsLowerBound(script: proto.AnalyzedScript, tmp: proto.Ind
     while (begin < end) {
         // Find the middle reference
         const m: number = begin + ((end - begin) >> 1);
-        const midRef = script.indexedTableReferences(m, tmp);
+        const midRef = script.tableReferencesById(m, tmp);
         // Check the database id
         if (midRef.catalogDatabaseId() == targetDb) {
             // Check the schema id
@@ -35,7 +35,7 @@ export function tableRefsUpperBound(script: proto.AnalyzedScript, tmp: proto.Ind
     while (begin < end) {
         // Find the middle reference
         const m: number = begin + ((end - begin) >> 1);
-        const midRef = script.indexedTableReferences(m, tmp);
+        const midRef = script.tableReferencesById(m, tmp);
         // Check the database id
         if (midRef.catalogDatabaseId() == targetDb) {
             // Check the schema id
@@ -72,7 +72,7 @@ export function columnRefsLowerBound(script: proto.AnalyzedScript, tmp: proto.In
     while (begin < end) {
         // Find the middle reference
         const m: number = begin + ((end - begin) >> 1);
-        const midRef = script.indexedColumnReferences(m, tmp);
+        const midRef = script.columnReferencesById(m, tmp);
         // Check the database id
         if (midRef.catalogDatabaseId() == targetDb) {
             // Check the schema id
@@ -109,7 +109,7 @@ export function columnRefsUpperBound(script: proto.AnalyzedScript, tmp: proto.In
     while (begin < end) {
         // Find the middle reference
         const m: number = begin + ((end - begin) >> 1);
-        const midRef = script.indexedColumnReferences(m, tmp);
+        const midRef = script.columnReferencesById(m, tmp);
         // Check the database id
         if (midRef.catalogDatabaseId() == targetDb) {
             // Check the schema id
