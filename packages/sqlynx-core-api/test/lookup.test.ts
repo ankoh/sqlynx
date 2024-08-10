@@ -345,6 +345,21 @@ describe('Lookup', () => {
             const iter = sqlynx.findCatalogDatabaseById(catalog, 21);
             expect(iter).toEqual(null);
         });
+        it('skip 100, 200 trailing', () => {
+            const databases: sqlynx.proto.IndexedFlatDatabaseEntryT[] = [];
+            let nextDb = 222;
+            let nextIdx = 0;
+            for (let i = 0; i < 100; ++i) {
+                databases.push(databaseEntryById(nextDb++, nextIdx++));
+            }
+            databases.push(databaseEntryById(nextDb++, nextIdx++));
+            for (let i = 0; i < 200; ++i) {
+                databases.push(databaseEntryById(nextDb++, nextIdx++));
+            }
+            const catalog = packCatalog(databases, [], []);
+            const iter = sqlynx.findCatalogDatabaseById(catalog, 322);
+            expect(iter).toEqual(100);
+        });
     });
 
     describe('catalog schema ids', () => {
@@ -366,6 +381,21 @@ describe('Lookup', () => {
             ], [])
             const iter = sqlynx.findCatalogSchemaById(catalog, 21);
             expect(iter).toEqual(null);
+        });
+        it('skip 100, 200 trailing', () => {
+            const schemas: sqlynx.proto.IndexedFlatSchemaEntryT[] = [];
+            let nextDb = 2222;
+            let nextIdx = 0;
+            for (let i = 0; i < 100; ++i) {
+                schemas.push(schemaEntryById(nextDb++, nextIdx++));
+            }
+            schemas.push(schemaEntryById(nextDb++, nextIdx++));
+            for (let i = 0; i < 200; ++i) {
+                schemas.push(schemaEntryById(nextDb++, nextIdx++));
+            }
+            const catalog = packCatalog([], schemas, []);
+            const iter = sqlynx.findCatalogSchemaById(catalog, 2322);
+            expect(iter).toEqual(100);
         });
     });
 
