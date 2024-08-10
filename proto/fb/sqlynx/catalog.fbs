@@ -74,6 +74,13 @@ table FlatCatalog {
     tables: [FlatCatalogEntry];
     /// The flattened column array
     columns: [FlatCatalogEntry];
+
+    /// The database entry indices ordered by database id
+    databases_by_id: [IndexedFlatDatabaseEntry];
+    /// The schema entry indices ordered by schema id
+    schemas_by_id: [IndexedFlatSchemaEntry];
+    /// The table entry indices ordered by table id
+    tables_by_id: [IndexedFlatTableEntry];
 }
 
 
@@ -96,4 +103,28 @@ struct FlatCatalogEntry {
     child_begin: uint32;
     /// The child entry count
     child_count: uint32;
+}
+
+/// An indexed flat database entry
+struct IndexedFlatDatabaseEntry {
+    // The database id
+    database_id: uint32;
+    /// The index of the flat catalog entry
+    flat_entry_idx: uint32;
+}
+
+/// An indexed flat schema entry
+struct IndexedFlatSchemaEntry {
+    // The schema id
+    schema_id: uint32;
+    /// The index of the flat catalog entry
+    flat_entry_idx: uint32;
+}
+
+/// An indexed flat table entry
+struct IndexedFlatTableEntry {
+    // The schema id
+    table_id: uint64;
+    /// The index of the flat catalog entry
+    flat_entry_idx: uint32;
 }

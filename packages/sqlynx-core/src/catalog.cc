@@ -445,14 +445,22 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
     auto dictionary = builder.CreateVectorOfStrings(name_dictionary);
 
     // Allocate the entry node vectors
-    std::vector<sqlynx::proto::FlatCatalogEntry> databases_buffer;
-    std::vector<sqlynx::proto::FlatCatalogEntry> schemas_buffer;
-    std::vector<sqlynx::proto::FlatCatalogEntry> tables_buffer;
-    std::vector<sqlynx::proto::FlatCatalogEntry> columns_buffer;
-    databases_buffer.resize(database_count);
-    schemas_buffer.resize(schema_count);
-    tables_buffer.resize(table_count);
-    columns_buffer.resize(column_count);
+    std::vector<sqlynx::proto::FlatCatalogEntry> database_entries;
+    std::vector<sqlynx::proto::FlatCatalogEntry> schema_entries;
+    std::vector<sqlynx::proto::FlatCatalogEntry> table_entries;
+    std::vector<sqlynx::proto::FlatCatalogEntry> column_entries;
+    database_entries.resize(database_count);
+    schema_entries.resize(schema_count);
+    table_entries.resize(table_count);
+    column_entries.resize(column_count);
+
+    // Allocate the index vectors
+    std::vector<proto::IndexedFlatDatabaseEntry> indexed_database_entries;
+    std::vector<proto::IndexedFlatSchemaEntry> indexed_schema_entries;
+    std::vector<proto::IndexedFlatTableEntry> indexed_table_entries;
+    indexed_database_entries.resize(database_count);
+    indexed_schema_entries.resize(schema_count);
+    indexed_table_entries.resize(table_count);
 
     size_t next_database = 0;
     size_t next_schema = 0;
@@ -463,30 +471,36 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
     for (auto& [database_name, database_node] : root.children) {
         // Write database node
         auto& db_node_ref = database_node.get();
-        databases_buffer[next_database] = sqlynx::proto::FlatCatalogEntry(
-            next_database, 0, db_node_ref.catalog_object_id, db_node_ref.name_id, 0, db_node_ref.children.size());
+        database_entries[next_database] = proto::FlatCatalogEntry(next_database, 0, db_node_ref.catalog_object_id,
+                                                                  db_node_ref.name_id, 0, db_node_ref.children.size());
+        indexed_database_entries[next_database] =
+            proto::IndexedFlatDatabaseEntry(next_database, db_node_ref.catalog_object_id);
 
         // Write schema nodes
         for (auto& [schema_name, schema_node] : database_node.get().children) {
             // Write schema node
             auto& schema_node_ref = schema_node.get();
-            schemas_buffer[next_schema] =
+            schema_entries[next_schema] =
                 sqlynx::proto::FlatCatalogEntry(next_schema, next_database, schema_node_ref.catalog_object_id,
                                                 schema_node_ref.name_id, next_table, schema_node_ref.children.size());
+            indexed_schema_entries[next_schema] =
+                proto::IndexedFlatSchemaEntry(next_schema, schema_node_ref.catalog_object_id);
 
             // Write table nodes
             for (auto& [table_name, table_node] : schema_node_ref.children) {
                 // Write table node
                 auto& table_node_ref = table_node.get();
-                tables_buffer[next_table] = sqlynx::proto::FlatCatalogEntry(
+                table_entries[next_table] = sqlynx::proto::FlatCatalogEntry(
                     next_table, next_schema, table_node_ref.catalog_object_id, table_node_ref.name_id, next_column,
                     table_node_ref.children.size());
+                indexed_table_entries[next_table] =
+                    proto::IndexedFlatTableEntry(next_table, table_node_ref.catalog_object_id);
 
                 // Write column nodes
                 for (auto& [column_name, column_node] : table_node_ref.children) {
                     // Write column node
                     auto& column_node_ref = column_node.get();
-                    columns_buffer[next_column] =
+                    column_entries[next_column] =
                         sqlynx::proto::FlatCatalogEntry(next_column, next_table, 0, column_node_ref.name_id, 0, 0);
                     ++next_column;
                 }
@@ -502,11 +516,24 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
     assert(next_table == table_count);
     assert(next_column == column_count);
 
+    // Sort indexes
+    std::sort(indexed_database_entries.begin(), indexed_database_entries.end(),
+              [](auto& l, auto& r) { return l.database_id() < r.database_id(); });
+    std::sort(indexed_schema_entries.begin(), indexed_schema_entries.end(),
+              [](auto& l, auto& r) { return l.schema_id() < r.schema_id(); });
+    std::sort(indexed_table_entries.begin(), indexed_table_entries.end(),
+              [](auto& l, auto& r) { return l.table_id() < r.table_id(); });
+
     // Write the entry arrays
-    auto databases_ofs = builder.CreateVectorOfStructs(databases_buffer);
-    auto schemas_ofs = builder.CreateVectorOfStructs(schemas_buffer);
-    auto tables_ofs = builder.CreateVectorOfStructs(tables_buffer);
-    auto columns_ofs = builder.CreateVectorOfStructs(columns_buffer);
+    auto databases_ofs = builder.CreateVectorOfStructs(database_entries);
+    auto schemas_ofs = builder.CreateVectorOfStructs(schema_entries);
+    auto tables_ofs = builder.CreateVectorOfStructs(table_entries);
+    auto columns_ofs = builder.CreateVectorOfStructs(column_entries);
+
+    // Write the index arrays
+    auto databases_by_id_ofs = builder.CreateVectorOfStructs(indexed_database_entries);
+    auto schemas_by_id_ofs = builder.CreateVectorOfStructs(indexed_schema_entries);
+    auto tables_by_id_ofs = builder.CreateVectorOfStructs(indexed_table_entries);
 
     // Build the flat catalog
     proto::FlatCatalogBuilder catalogBuilder{builder};
@@ -516,6 +543,9 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
     catalogBuilder.add_schemas(schemas_ofs);
     catalogBuilder.add_tables(tables_ofs);
     catalogBuilder.add_columns(columns_ofs);
+    catalogBuilder.add_databases_by_id(databases_by_id_ofs);
+    catalogBuilder.add_schemas_by_id(schemas_by_id_ofs);
+    catalogBuilder.add_tables_by_id(tables_by_id_ofs);
     return catalogBuilder.Finish();
 }
 
