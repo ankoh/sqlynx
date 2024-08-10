@@ -28,7 +28,7 @@ describe('Lookup', () => {
             it('empty', () => {
                 const script = packScript([], [])
                 const tmp = new sqlynx.proto.IndexedTableReference();
-                const iter = sqlynx.tableRefsLowerBound(script, tmp, 0, 0, 0, 0, 0n);
+                const iter = sqlynx.findScriptTableRefsLowerBound(script, tmp, 0, 0, 0, 0, 0n);
                 expect(iter).toEqual(0);
             });
             it('single hit', () => {
@@ -36,7 +36,7 @@ describe('Lookup', () => {
                     tableRef(DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3), 0)
                 ], [])
                 const tmp = new sqlynx.proto.IndexedTableReference();
-                const iter = sqlynx.tableRefsLowerBound(script, tmp, 0, 1, DB_ID, SCHEMA_ID, 0n);
+                const iter = sqlynx.findScriptTableRefsLowerBound(script, tmp, 0, 1, DB_ID, SCHEMA_ID, 0n);
                 expect(iter).toEqual(0);
             });
             it('single miss', () => {
@@ -44,7 +44,7 @@ describe('Lookup', () => {
                     tableRef(DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3), 0)
                 ], [])
                 const tmp = new sqlynx.proto.IndexedTableReference();
-                const iter = sqlynx.tableRefsLowerBound(script, tmp, 0, 1, DB_ID, SCHEMA_ID + 1, 0n);
+                const iter = sqlynx.findScriptTableRefsLowerBound(script, tmp, 0, 1, DB_ID, SCHEMA_ID + 1, 0n);
                 expect(iter).toEqual(1);
             });
             it('skip 1', () => {
@@ -53,7 +53,7 @@ describe('Lookup', () => {
                     tableRef(DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3), 0)
                 ], [])
                 const tmp = new sqlynx.proto.IndexedTableReference();
-                const iter = sqlynx.tableRefsLowerBound(script, tmp, 0, 2, DB_ID, SCHEMA_ID, 0n);
+                const iter = sqlynx.findScriptTableRefsLowerBound(script, tmp, 0, 2, DB_ID, SCHEMA_ID, 0n);
                 expect(iter).toEqual(1);
             });
             it('100 different, last', () => {
@@ -64,7 +64,7 @@ describe('Lookup', () => {
                 tableRefs.push(tableRef(DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(43, 1), 0))
                 const script = packScript(tableRefs, []);
                 const tmp = new sqlynx.proto.IndexedTableReference();
-                const iter = sqlynx.tableRefsLowerBound(script, tmp, 0, tableRefs.length, DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(43, 0));
+                const iter = sqlynx.findScriptTableRefsLowerBound(script, tmp, 0, tableRefs.length, DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(43, 0));
                 expect(iter).toEqual(100);
             });
             it('100 different, first', () => {
@@ -75,7 +75,7 @@ describe('Lookup', () => {
                 }
                 const script = packScript(tableRefs, []);
                 const tmp = new sqlynx.proto.IndexedTableReference();
-                const iter = sqlynx.tableRefsLowerBound(script, tmp, 0, tableRefs.length, DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(41, 0));
+                const iter = sqlynx.findScriptTableRefsLowerBound(script, tmp, 0, tableRefs.length, DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(41, 0));
                 expect(iter).toEqual(0);
             });
             it('100 different, mid', () => {
@@ -89,7 +89,7 @@ describe('Lookup', () => {
                 }
                 const script = packScript(tableRefs, []);
                 const tmp = new sqlynx.proto.IndexedTableReference();
-                const iter = sqlynx.tableRefsLowerBound(script, tmp, 0, tableRefs.length, DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(43, 0));
+                const iter = sqlynx.findScriptTableRefsLowerBound(script, tmp, 0, tableRefs.length, DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(43, 0));
                 expect(iter).toEqual(50);
             });
             it('100 equal, skip first', () => {
@@ -100,7 +100,7 @@ describe('Lookup', () => {
                 }
                 const script = packScript(tableRefs, []);
                 const tmp = new sqlynx.proto.IndexedTableReference();
-                const iter = sqlynx.tableRefsLowerBound(script, tmp, 0, tableRefs.length, DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(41, 3));
+                const iter = sqlynx.findScriptTableRefsLowerBound(script, tmp, 0, tableRefs.length, DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(41, 3));
                 expect(iter).toEqual(1);
             });
             it('100 equal, skip 100', () => {
@@ -116,7 +116,7 @@ describe('Lookup', () => {
                 }
                 const script = packScript(tableRefs, []);
                 const tmp = new sqlynx.proto.IndexedTableReference();
-                const iter = sqlynx.tableRefsLowerBound(script, tmp, 0, tableRefs.length, DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(41, 3));
+                const iter = sqlynx.findScriptTableRefsLowerBound(script, tmp, 0, tableRefs.length, DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(41, 3));
                 expect(iter).toEqual(100);
             });
         });
@@ -125,7 +125,7 @@ describe('Lookup', () => {
             it('empty', () => {
                 const script = packScript([], [])
                 const tmp = new sqlynx.proto.IndexedTableReference();
-                const iter = sqlynx.tableRefsUpperBound(script, tmp, 0, 0, 0, 0, 0n);
+                const iter = sqlynx.findScriptTableRefsUpperBound(script, tmp, 0, 0, 0, 0, 0n);
                 expect(iter).toEqual(0);
             });
             it('single hit', () => {
@@ -133,7 +133,7 @@ describe('Lookup', () => {
                     tableRef(DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3), 0)
                 ], [])
                 const tmp = new sqlynx.proto.IndexedTableReference();
-                const iter = sqlynx.tableRefsUpperBound(script, tmp, 0, 1, DB_ID, SCHEMA_ID - 1, 0n);
+                const iter = sqlynx.findScriptTableRefsUpperBound(script, tmp, 0, 1, DB_ID, SCHEMA_ID - 1, 0n);
                 expect(iter).toEqual(0);
             });
             it('single miss', () => {
@@ -141,7 +141,7 @@ describe('Lookup', () => {
                     tableRef(DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3), 0)
                 ], [])
                 const tmp = new sqlynx.proto.IndexedTableReference();
-                const iter = sqlynx.tableRefsUpperBound(script, tmp, 0, 1, DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3));
+                const iter = sqlynx.findScriptTableRefsUpperBound(script, tmp, 0, 1, DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3));
                 expect(iter).toEqual(1);
             });
             it('skip 1', () => {
@@ -150,7 +150,7 @@ describe('Lookup', () => {
                     tableRef(DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3), 0)
                 ], [])
                 const tmp = new sqlynx.proto.IndexedTableReference();
-                const iter = sqlynx.tableRefsUpperBound(script, tmp, 0, 2, DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 2));
+                const iter = sqlynx.findScriptTableRefsUpperBound(script, tmp, 0, 2, DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 2));
                 expect(iter).toEqual(1);
             });
             it('100 equal, skip 100', () => {
@@ -166,7 +166,7 @@ describe('Lookup', () => {
                 }
                 const script = packScript(tableRefs, []);
                 const tmp = new sqlynx.proto.IndexedTableReference();
-                const iter = sqlynx.tableRefsUpperBound(script, tmp, 0, tableRefs.length, DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3));
+                const iter = sqlynx.findScriptTableRefsUpperBound(script, tmp, 0, tableRefs.length, DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3));
                 expect(iter).toEqual(200);
             });
         });
@@ -174,28 +174,28 @@ describe('Lookup', () => {
         describe('equal range', () => {
             it('empty', () => {
                 const script = packScript([], [])
-                const iter = sqlynx.tableRefsEqualRange(script, 0, 0, 0n);
+                const iter = sqlynx.findScriptTableRefsEqualRange(script, 0, 0, 0n);
                 expect(iter).toEqual([0, 0]);
             });
             it('single hit', () => {
                 const script = packScript([
                     tableRef(DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3), 0)
                 ], [])
-                const iter = sqlynx.tableRefsEqualRange(script, DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3));
+                const iter = sqlynx.findScriptTableRefsEqualRange(script, DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3));
                 expect(iter).toEqual([0, 1]);
             });
             it('single miss, lower', () => {
                 const script = packScript([
                     tableRef(DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3), 0)
                 ], [])
-                const iter = sqlynx.tableRefsEqualRange(script, DB_ID, SCHEMA_ID - 1, sqlynx.ExternalObjectID.create(42, 3));
+                const iter = sqlynx.findScriptTableRefsEqualRange(script, DB_ID, SCHEMA_ID - 1, sqlynx.ExternalObjectID.create(42, 3));
                 expect(iter).toEqual([0, 0]);
             });
             it('single miss, upper', () => {
                 const script = packScript([
                     tableRef(DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3), 0)
                 ], [])
-                const iter = sqlynx.tableRefsEqualRange(script, DB_ID, SCHEMA_ID + 1, sqlynx.ExternalObjectID.create(42, 3));
+                const iter = sqlynx.findScriptTableRefsEqualRange(script, DB_ID, SCHEMA_ID + 1, sqlynx.ExternalObjectID.create(42, 3));
                 expect(iter).toEqual([1, 1]);
             });
             it('100 equal, skip 100', () => {
@@ -210,7 +210,7 @@ describe('Lookup', () => {
                     tableRefs.push(tableRef(DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 4), i))
                 }
                 const script = packScript(tableRefs, []);
-                const iter = sqlynx.tableRefsEqualRange(script, DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3));
+                const iter = sqlynx.findScriptTableRefsEqualRange(script, DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3));
                 expect(iter).toEqual([100, 200]);
             });
             it('100 equal, skip 200', () => {
@@ -225,7 +225,7 @@ describe('Lookup', () => {
                     tableRefs.push(tableRef(DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 4), i))
                 }
                 const script = packScript(tableRefs, []);
-                const iter = sqlynx.tableRefsEqualRange(script, DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3));
+                const iter = sqlynx.findScriptTableRefsEqualRange(script, DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3));
                 expect(iter).toEqual([200, 300]);
             });
             it('100 equal, skip 200, trailing 400', () => {
@@ -240,7 +240,7 @@ describe('Lookup', () => {
                     tableRefs.push(tableRef(DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(43, 4), i))
                 }
                 const script = packScript(tableRefs, []);
-                const iter = sqlynx.tableRefsEqualRange(script, DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3));
+                const iter = sqlynx.findScriptTableRefsEqualRange(script, DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3));
                 expect(iter).toEqual([200, 300]);
             });
             it('100 equal, skip 200, trailing 400, schema prefix', () => {
@@ -255,7 +255,7 @@ describe('Lookup', () => {
                     tableRefs.push(tableRef(DB_ID, SCHEMA_ID + 1, sqlynx.ExternalObjectID.create(43, 4), i))
                 }
                 const script = packScript(tableRefs, []);
-                const iter = sqlynx.tableRefsEqualRange(script, DB_ID, SCHEMA_ID);
+                const iter = sqlynx.findScriptTableRefsEqualRange(script, DB_ID, SCHEMA_ID);
                 expect(iter).toEqual([200, 300]);
             });
             it('100 equal, skip 200, trailing 400, db prefix', () => {
@@ -270,7 +270,7 @@ describe('Lookup', () => {
                     tableRefs.push(tableRef(DB_ID + 1, 0, sqlynx.ExternalObjectID.create(43, 4), i))
                 }
                 const script = packScript(tableRefs, []);
-                const iter = sqlynx.tableRefsEqualRange(script, DB_ID);
+                const iter = sqlynx.findScriptTableRefsEqualRange(script, DB_ID);
                 expect(iter).toEqual([200, 300]);
             });
         });
@@ -280,28 +280,28 @@ describe('Lookup', () => {
         describe('equal range', () => {
             it('empty', () => {
                 const script = packScript([], [])
-                const iter = sqlynx.columnRefsEqualRange(script, 0, 0, 0n, 0);
+                const iter = sqlynx.findScriptColumnRefsEqualRange(script, 0, 0, 0n, 0);
                 expect(iter).toEqual([0, 0]);
             });
             it('single hit', () => {
                 const script = packScript([], [
                     columnRef(DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3), 0, 0)
                 ]);
-                const iter = sqlynx.columnRefsEqualRange(script, DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3), 0);
+                const iter = sqlynx.findScriptColumnRefsEqualRange(script, DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3), 0);
                 expect(iter).toEqual([0, 1]);
             });
             it('single miss, lower', () => {
                 const script = packScript([], [
                     columnRef(DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3), 0, 0)
                 ])
-                const iter = sqlynx.columnRefsEqualRange(script, DB_ID, SCHEMA_ID - 1, sqlynx.ExternalObjectID.create(42, 3), 0);
+                const iter = sqlynx.findScriptColumnRefsEqualRange(script, DB_ID, SCHEMA_ID - 1, sqlynx.ExternalObjectID.create(42, 3), 0);
                 expect(iter).toEqual([0, 0]);
             });
             it('single miss, upper', () => {
                 const script = packScript([], [
                     columnRef(DB_ID, SCHEMA_ID, sqlynx.ExternalObjectID.create(42, 3), 0, 0)
                 ])
-                const iter = sqlynx.columnRefsEqualRange(script, DB_ID, SCHEMA_ID + 1, sqlynx.ExternalObjectID.create(42, 3), 0);
+                const iter = sqlynx.findScriptColumnRefsEqualRange(script, DB_ID, SCHEMA_ID + 1, sqlynx.ExternalObjectID.create(42, 3), 0);
                 expect(iter).toEqual([1, 1]);
             });
         });
