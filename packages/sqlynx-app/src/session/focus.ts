@@ -51,8 +51,6 @@ export function deriveFocusFromCursor(
 ): DerivedFocus {
     const tmpSourceAnalyzed = new sqlynx.proto.AnalyzedScript();
     const tmpTargetAnalyzed = new sqlynx.proto.AnalyzedScript();
-    const tmpIndexedTableRef = new sqlynx.proto.IndexedTableReference();
-    const tmpIndexedColumnRef = new sqlynx.proto.IndexedColumnReference();
 
     // The result focus
     const focus: DerivedFocus = {
@@ -104,9 +102,6 @@ export function deriveFocusFromCursor(
                 // Find table refs for table
                 const [begin0, end0] = sqlynx.tableRefsEqualRange(
                     targetAnalyzed,
-                    tmpIndexedTableRef,
-                    0,
-                    targetAnalyzed.tableReferencesLength(),
                     focus.resolvedTable.databaseId,
                     focus.resolvedTable.schemaId,
                     focus.resolvedTable.tableId
@@ -117,9 +112,6 @@ export function deriveFocusFromCursor(
                 // Find column refs for table
                 const [begin1, end1] = sqlynx.columnRefsEqualRange(
                     targetAnalyzed,
-                    tmpIndexedColumnRef,
-                    0,
-                    targetAnalyzed.columnReferencesLength(),
                     focus.resolvedTable.databaseId,
                     focus.resolvedTable.schemaId,
                     focus.resolvedTable.tableId
@@ -162,9 +154,6 @@ export function deriveFocusFromCursor(
                 // Find table refs for table
                 const [begin0, end0] = sqlynx.tableRefsEqualRange(
                     targetAnalyzed,
-                    tmpIndexedTableRef,
-                    0,
-                    targetAnalyzed.tableReferencesLength(),
                     focus.resolvedTable.databaseId,
                     focus.resolvedTable.schemaId,
                     focus.resolvedTable.tableId
@@ -175,9 +164,6 @@ export function deriveFocusFromCursor(
                 // Find column refs for table
                 const [begin1, end1] = sqlynx.columnRefsEqualRange(
                     targetAnalyzed,
-                    tmpIndexedColumnRef,
-                    0,
-                    targetAnalyzed.columnReferencesLength(),
                     focus.resolvedTable.databaseId,
                     focus.resolvedTable.schemaId,
                     focus.resolvedTable.tableId
@@ -188,9 +174,6 @@ export function deriveFocusFromCursor(
                 // Find column refs for table
                 const [begin2, end2] = sqlynx.columnRefsEqualRange(
                     targetAnalyzed,
-                    tmpIndexedColumnRef,
-                    0,
-                    targetAnalyzed.columnReferencesLength(),
                     focus.resolvedTable.databaseId,
                     focus.resolvedTable.schemaId,
                     focus.resolvedTable.tableId,
@@ -215,8 +198,6 @@ export function deriveFocusFromCatalog(
     target: CatalogFocus
 ): DerivedFocus {
     const tmpAnalyzed = new sqlynx.proto.AnalyzedScript();
-    const tmpIndexedTableRef = new sqlynx.proto.IndexedTableReference();
-    const tmpIndexedColumnRef = new sqlynx.proto.IndexedColumnReference();
 
     // The result focus
     const focus: DerivedFocus = {
@@ -265,9 +246,6 @@ export function deriveFocusFromCatalog(
         // Find table refs
         const [begin0, end0] = sqlynx.tableRefsEqualRange(
             targetAnalyzed,
-            tmpIndexedTableRef,
-            0,
-            targetAnalyzed.tableReferencesLength(),
             target.focusedDatabase,
             target.focusedSchema,
             target.focusedTable,
@@ -279,9 +257,6 @@ export function deriveFocusFromCatalog(
         // Find column refs
         const [begin1, end1] = sqlynx.columnRefsEqualRange(
             targetAnalyzed,
-            tmpIndexedColumnRef,
-            0,
-            targetAnalyzed.columnReferencesLength(),
             target.focusedDatabase,
             target.focusedSchema,
             target.focusedTable,
