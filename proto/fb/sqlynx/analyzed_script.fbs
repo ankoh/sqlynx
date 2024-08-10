@@ -162,7 +162,7 @@ table AnalyzedScript {
     /// The query graph edge nodes
     graph_edge_nodes: [QueryGraphEdgeNode];
     /// The indexed table references
-    indexed_table_references: [IndexedTableReference];
+    table_references_by_id: [IndexedTableReference];
     /// The indexed column references
-    indexed_column_references: [IndexedColumnReference];
+    column_references_by_id: [IndexedColumnReference];
 }
