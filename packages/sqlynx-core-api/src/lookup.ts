@@ -153,19 +153,52 @@ export function findScriptColumnRefsEqualRange(script: proto.AnalyzedScript, tar
 }
 
 
-/// Find table by id
-export function findCatalogDatabaseById(catalog: proto.FlatCatalog, databaseId: number, tmp: proto.IndexedFlatDatabaseEntry = new proto.IndexedFlatDatabaseEntry()) {
+/// Find database by id
+export function findCatalogDatabaseById(catalog: proto.FlatCatalog, databaseId: number, tmp: proto.IndexedFlatDatabaseEntry = new proto.IndexedFlatDatabaseEntry()): number | null {
     let begin = 0;
     let end = catalog.databasesByIdLength();
-
     while (begin < end) {
-        // Find the middle reference
         const m: number = begin + ((end - begin) >> 1);
         const midRef = catalog.databasesById(m, tmp);
-        // Check the database id
         if (midRef.databaseId() == databaseId) {
             return midRef.flatEntryIdx();
         } else if (midRef.databaseId() < databaseId) {
+            begin = m + 1;
+        } else {
+            end = m;
+        }
+    }
+    return null;
+}
+
+/// Find schema by id
+export function findCatalogSchemaById(catalog: proto.FlatCatalog, schemaId: number, tmp: proto.IndexedFlatSchemaEntry = new proto.IndexedFlatSchemaEntry()): number | null {
+    let begin = 0;
+    let end = catalog.schemasByIdLength();
+    while (begin < end) {
+        const m: number = begin + ((end - begin) >> 1);
+        const midRef = catalog.schemasById(m, tmp);
+        if (midRef.schemaId() == schemaId) {
+            return midRef.flatEntryIdx();
+        } else if (midRef.schemaId() < schemaId) {
+            begin = m + 1;
+        } else {
+            end = m;
+        }
+    }
+    return null;
+}
+
+/// Find table by id
+export function findCatalogTableById(catalog: proto.FlatCatalog, tableId: bigint, tmp: proto.IndexedFlatTableEntry = new proto.IndexedFlatTableEntry()): number | null {
+    let begin = 0;
+    let end = catalog.tablesByIdLength();
+    while (begin < end) {
+        const m: number = begin + ((end - begin) >> 1);
+        const midRef = catalog.tablesById(m, tmp);
+        if (midRef.tableId() == tableId) {
+            return midRef.flatEntryIdx();
+        } else if (midRef.tableId() < tableId) {
             begin = m + 1;
         } else {
             end = m;
