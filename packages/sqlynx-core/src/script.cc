@@ -490,45 +490,45 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
     }
 
     // Build index: (db_id, schema_id, table_id) -> table_ref*
-    flatbuffers::Offset<flatbuffers::Vector<const proto::IndexedTableReference*>> indexed_table_refs_ofs;
+    flatbuffers::Offset<flatbuffers::Vector<const proto::IndexedTableReference*>> table_refs_by_id_ofs;
     {
-        std::vector<proto::IndexedTableReference> indexed_table_refs;
-        indexed_table_refs.reserve(table_references.size());
+        std::vector<proto::IndexedTableReference> table_refs_by_id;
+        table_refs_by_id.reserve(table_references.size());
         for (size_t ref_id = 0; ref_id < table_references.size(); ++ref_id) {
             auto& ref = table_references[ref_id];
             if (!ref.resolved_catalog_table_id.IsNull()) {
                 assert(ref.resolved_catalog_database_id != std::numeric_limits<uint32_t>::max());
                 assert(ref.resolved_catalog_schema_id != std::numeric_limits<uint32_t>::max());
-                indexed_table_refs.emplace_back(ref.resolved_catalog_database_id, ref.resolved_catalog_schema_id,
-                                                ref.resolved_catalog_table_id.Pack(), ref_id);
+                table_refs_by_id.emplace_back(ref.resolved_catalog_database_id, ref.resolved_catalog_schema_id,
+                                              ref.resolved_catalog_table_id.Pack(), ref_id);
             }
         }
-        std::sort(indexed_table_refs.begin(), indexed_table_refs.end(),
+        std::sort(table_refs_by_id.begin(), table_refs_by_id.end(),
                   [&](proto::IndexedTableReference& l, proto::IndexedTableReference& r) {
                       auto a = std::make_tuple(l.catalog_database_id(), l.catalog_schema_id(), l.catalog_table_id());
                       auto b = std::make_tuple(r.catalog_database_id(), r.catalog_schema_id(), r.catalog_table_id());
                       return a < b;
                   });
-        indexed_table_refs_ofs = builder.CreateVectorOfStructs(indexed_table_refs);
+        table_refs_by_id_ofs = builder.CreateVectorOfStructs(table_refs_by_id);
     }
 
     // Build index: (db_id, schema_id, table_id, column_id) -> column_ref*
-    flatbuffers::Offset<flatbuffers::Vector<const proto::IndexedColumnReference*>> indexed_column_refs_ofs;
+    flatbuffers::Offset<flatbuffers::Vector<const proto::IndexedColumnReference*>> column_refs_by_id_ofs;
     {
-        std::vector<proto::IndexedColumnReference> indexed_column_refs;
-        indexed_column_refs.reserve(column_references.size());
+        std::vector<proto::IndexedColumnReference> column_refs_by_id;
+        column_refs_by_id.reserve(column_references.size());
         for (size_t ref_id = 0; ref_id < column_references.size(); ++ref_id) {
             auto& ref = column_references[ref_id];
             if (!ref.resolved_catalog_table_id.IsNull()) {
                 assert(ref.resolved_catalog_database_id != std::numeric_limits<uint32_t>::max());
                 assert(ref.resolved_catalog_schema_id != std::numeric_limits<uint32_t>::max());
                 assert(ref.resolved_table_column_id.has_value());
-                indexed_column_refs.emplace_back(ref.resolved_catalog_database_id, ref.resolved_catalog_schema_id,
-                                                 ref.resolved_catalog_table_id.Pack(),
-                                                 ref.resolved_table_column_id.value(), ref_id);
+                column_refs_by_id.emplace_back(ref.resolved_catalog_database_id, ref.resolved_catalog_schema_id,
+                                               ref.resolved_catalog_table_id.Pack(),
+                                               ref.resolved_table_column_id.value(), ref_id);
             }
         }
-        std::sort(indexed_column_refs.begin(), indexed_column_refs.end(),
+        std::sort(column_refs_by_id.begin(), column_refs_by_id.end(),
                   [&](proto::IndexedColumnReference& l, proto::IndexedColumnReference& r) {
                       auto a = std::make_tuple(l.catalog_database_id(), l.catalog_schema_id(), l.catalog_table_id(),
                                                l.table_column_id());
@@ -536,7 +536,7 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
                                                r.table_column_id());
                       return a < b;
                   });
-        indexed_column_refs_ofs = builder.CreateVectorOfStructs(indexed_column_refs);
+        column_refs_by_id_ofs = builder.CreateVectorOfStructs(column_refs_by_id);
     }
 
     proto::AnalyzedScriptBuilder out{builder};
@@ -546,8 +546,8 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
     out.add_column_references(column_references_ofs);
     out.add_graph_edges(graph_edges_ofs);
     out.add_graph_edge_nodes(graph_edge_nodes_ofs);
-    out.add_indexed_table_references(indexed_table_refs_ofs);
-    out.add_indexed_column_references(indexed_column_refs_ofs);
+    out.add_table_references_by_id(table_refs_by_id_ofs);
+    out.add_column_references_by_id(column_refs_by_id_ofs);
     return out.Finish();
 }
 
