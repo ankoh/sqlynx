@@ -9,6 +9,16 @@ function tableRef(db: number, schema: number, table: bigint, refId: number) {
 function columnRef(db: number, schema: number, table: bigint, column: number, refId: number) {
     return new sqlynx.proto.IndexedColumnReferenceT(db, schema, table, column, refId);
 }
+function databaseEntryById(db: number, index: number) {
+    return new sqlynx.proto.IndexedFlatDatabaseEntryT(db, index);
+}
+function schemaEntryById(schema: number, index: number) {
+    return new sqlynx.proto.IndexedFlatSchemaEntryT(schema, index);
+}
+function tableEntryById(table: bigint, index: number) {
+    return new sqlynx.proto.IndexedFlatTableEntryT(table, index);
+}
+
 function packScript(tableRefs: sqlynx.proto.IndexedTableReferenceT[], columnRefs: sqlynx.proto.IndexedColumnReferenceT[]) {
     const script = new sqlynx.proto.AnalyzedScriptT(0, [], [], [], [], [], tableRefs, columnRefs);
     const builder = new flatbuffers.Builder();
@@ -17,13 +27,21 @@ function packScript(tableRefs: sqlynx.proto.IndexedTableReferenceT[], columnRefs
     const buffer = builder.dataBuffer();
     return sqlynx.proto.AnalyzedScript.getRootAsAnalyzedScript(buffer);
 }
+function packCatalog(databasesById: sqlynx.proto.IndexedFlatDatabaseEntryT[], schemasById: sqlynx.proto.IndexedFlatSchemaEntryT[], tablesById: sqlynx.proto.IndexedFlatTableEntryT[]) {
+    const script = new sqlynx.proto.FlatCatalogT(0n, [], [], [], [], [], databasesById, schemasById, tablesById);
+    const builder = new flatbuffers.Builder();
+    const ofs = script.pack(builder);
+    builder.finish(ofs);
+    const buffer = builder.dataBuffer();
+    return sqlynx.proto.FlatCatalog.getRootAsFlatCatalog(buffer);
+}
 
 const DB_ID = 123;
 const SCHEMA_ID = 456;
 
 describe('Lookup', () => {
 
-    describe('table refs', () => {
+    describe('script table refs', () => {
         describe('lower bound', () => {
             it('empty', () => {
                 const script = packScript([], [])
@@ -276,7 +294,7 @@ describe('Lookup', () => {
         });
     });
 
-    describe('column refs', () => {
+    describe('script column refs', () => {
         describe('equal range', () => {
             it('empty', () => {
                 const script = packScript([], [])
@@ -305,7 +323,71 @@ describe('Lookup', () => {
                 expect(iter).toEqual([1, 1]);
             });
         });
+    });
 
+    describe('catalog database ids', () => {
+        it('empty', () => {
+            const catalog = packCatalog([], [], [])
+            const iter = sqlynx.findCatalogDatabaseById(catalog, 0);
+            expect(iter).toEqual(null);
+        });
+        it('single hit', () => {
+            const catalog = packCatalog([
+                databaseEntryById(42, 0)
+            ], [], [])
+            const iter = sqlynx.findCatalogDatabaseById(catalog, 42);
+            expect(iter).toEqual(0);
+        });
+        it('single miss', () => {
+            const catalog = packCatalog([
+                databaseEntryById(42, 0)
+            ], [], [])
+            const iter = sqlynx.findCatalogDatabaseById(catalog, 21);
+            expect(iter).toEqual(null);
+        });
+    });
 
+    describe('catalog schema ids', () => {
+        it('empty', () => {
+            const catalog = packCatalog([], [], [])
+            const iter = sqlynx.findCatalogDatabaseById(catalog, 0);
+            expect(iter).toEqual(null);
+        });
+        it('single hit', () => {
+            const catalog = packCatalog([], [
+                schemaEntryById(42, 0)
+            ], [])
+            const iter = sqlynx.findCatalogSchemaById(catalog, 42);
+            expect(iter).toEqual(0);
+        });
+        it('single miss', () => {
+            const catalog = packCatalog([], [
+                schemaEntryById(42, 0)
+            ], [])
+            const iter = sqlynx.findCatalogSchemaById(catalog, 21);
+            expect(iter).toEqual(null);
+        });
+    });
+
+    describe('catalog table ids', () => {
+        it('empty', () => {
+            const catalog = packCatalog([], [], [])
+            const iter = sqlynx.findCatalogDatabaseById(catalog, 0);
+            expect(iter).toEqual(null);
+        });
+        it('single hit', () => {
+            const catalog = packCatalog([], [], [
+                tableEntryById(sqlynx.ExternalObjectID.create(42, 43), 0)
+            ])
+            const iter = sqlynx.findCatalogTableById(catalog, sqlynx.ExternalObjectID.create(42, 43));
+            expect(iter).toEqual(0);
+        });
+        it('single miss', () => {
+            const catalog = packCatalog([], [], [
+                tableEntryById(sqlynx.ExternalObjectID.create(42, 43), 0)
+            ])
+            const iter = sqlynx.findCatalogTableById(catalog, sqlynx.ExternalObjectID.create(42, 44));
+            expect(iter).toEqual(null);
+        });
     });
 });
