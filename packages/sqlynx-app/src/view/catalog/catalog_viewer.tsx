@@ -1,12 +1,13 @@
 import * as React from 'react';
 import * as styles from './catalog_viewer.module.css'
 
-import { CatalogRenderingSettings, CatalogRenderingState, renderCatalog } from './catalog_renderer.js';
+import { renderCatalog } from './catalog_renderer.js';
 import { useCurrentSessionState } from '../../session/current_session.js';
 import { observeSize } from '../foundations/size_observer.js';
 import { EdgeLayer } from './edge_layer.js';
 import { NodeLayer } from './node_layer.js';
 import { useThrottledMemo } from '../../utils/throttle.js';
+import { CatalogRenderingSettings, CatalogRenderingState } from './catalog_view_model.js';
 
 const RENDERING_SETTINGS: CatalogRenderingSettings = {
     virtual: {
