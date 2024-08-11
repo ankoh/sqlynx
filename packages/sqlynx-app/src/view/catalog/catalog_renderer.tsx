@@ -4,7 +4,7 @@ import * as styles from './catalog_renderer.module.css';
 
 import { classNames } from '../../utils/classnames.js';
 import { buildEdgePath, selectHorizontalEdgeType } from './graph_edges.js';
-import { CatalogRenderingState, NodeFlags, PinnedCatalogEntry, readNodeFlags } from './catalog_view_model.js';
+import { CatalogRenderingState, NodeRenderingFlag, PinnedCatalogEntry, readNodeFlags } from './catalog_view_model.js';
 
 /// Render unpinned entries and emit ReactElements if they are within the virtual scroll window
 function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLynxCatalogSnapshotReader, level: number, entriesBegin: number, entriesCount: number, outNodes: React.ReactElement[], outEdges: React.ReactElement[]) {
@@ -25,11 +25,11 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
         const entry = entries.read(snapshot, entryId, scratchEntry)!;
         const entryFlags = readNodeFlags(flags, entryId);
         // Skip pinned entries
-        if ((entryFlags & NodeFlags.PINNED) != 0) {
+        if ((entryFlags & NodeRenderingFlag.PINNED) != 0) {
             continue;
         }
         // Skip overflow entries
-        if ((entryFlags & NodeFlags.OVERFLOW) != 0) {
+        if ((entryFlags & NodeRenderingFlag.OVERFLOW) != 0) {
             ++overflowChildCount;
             lastOverflowEntryId = entryId;
             continue;
@@ -74,10 +74,10 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
                 key={thisKey}
 
                 className={classNames(styles.node_default, {
-                    [styles.node_focus_script]: (entryFlags & NodeFlags.SCRIPT_FOCUS) != 0,
-                    [styles.node_focus_catalog]: (entryFlags & NodeFlags.CATALOG_FOCUS) != 0,
-                    [styles.node_focus_direct]: (entryFlags & NodeFlags.DIRECT_FOCUS) != 0,
-                    [styles.node_pinned]: (entryFlags & NodeFlags.PINNED) != 0,
+                    [styles.node_focus_script]: (entryFlags & NodeRenderingFlag.PINNED_BY_SCRIPT_REFS) != 0,
+                    [styles.node_focus_catalog]: (entryFlags & NodeRenderingFlag.PINNED_BY_SCRIPT_CURSOR) != 0,
+                    [styles.node_focus_direct]: (entryFlags & NodeRenderingFlag.PRIMARY_FOCUS) != 0,
+                    [styles.node_pinned]: (entryFlags & NodeRenderingFlag.PINNED) != 0,
                 })}
                 style={{
                     position: 'absolute',
@@ -216,10 +216,10 @@ function renderPinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLy
                 key={thisKey}
 
                 className={classNames(styles.node_default, {
-                    [styles.node_focus_script]: (entryFlags & NodeFlags.SCRIPT_FOCUS) != 0,
-                    [styles.node_focus_catalog]: (entryFlags & NodeFlags.CATALOG_FOCUS) != 0,
-                    [styles.node_focus_direct]: (entryFlags & NodeFlags.DIRECT_FOCUS) != 0,
-                    [styles.node_pinned]: (entryFlags & NodeFlags.PINNED) != 0,
+                    [styles.node_focus_script_refs]: (entryFlags & NodeRenderingFlag.PINNED_BY_SCRIPT_REFS) != 0,
+                    [styles.node_focus_script_cursor]: (entryFlags & NodeRenderingFlag.PINNED_BY_SCRIPT_CURSOR) != 0,
+                    [styles.node_focus_direct]: (entryFlags & NodeRenderingFlag.PRIMARY_FOCUS) != 0,
+                    [styles.node_pinned]: (entryFlags & NodeRenderingFlag.PINNED) != 0,
                 })}
                 style={{
                     position: 'absolute',
