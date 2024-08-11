@@ -396,8 +396,8 @@ export class CatalogRenderingState {
         epoch: bigint,
         reason: PinReason,
         dbId: number,
-        schemaId: number,
-        tableId: bigint,
+        schemaId: number | null,
+        tableId: bigint | null,
         columnId: number | null,
     ) {
         // Is the database already pinned?
@@ -414,6 +414,10 @@ export class CatalogRenderingState {
         }
         db.pin(epoch, reason);
 
+        if (!schemaId) {
+            return;
+        }
+
         // Is the schema already pinned?
         let schema = this.pinnedSchemas.get(schemaId);
         if (schema == null) {
@@ -428,6 +432,10 @@ export class CatalogRenderingState {
             db.pinnedChildren.set(BigInt(schemaId), schema);
         }
         schema.pin(epoch, reason);
+
+        if (!tableId) {
+            return;
+        }
 
         // Is the table already pinned?
         let table = this.pinnedTables.get(tableId);
@@ -444,7 +452,6 @@ export class CatalogRenderingState {
         }
         table.pin(epoch, reason);
 
-        // No column provided?
         if (columnId == null) {
             return;
         }
