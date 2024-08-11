@@ -168,8 +168,8 @@ function renderPinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLy
 
     for (const pinnedEntry of pinnedEntries) {
         // Resolve table
-        const entryId = pinnedEntry.entryId;
-        const entry = entries.read(snapshot, pinnedEntry.entryId, scratchEntry)!;
+        const entryId = pinnedEntry.catalogEntryId;
+        const entry = entries.read(snapshot, pinnedEntry.catalogEntryId, scratchEntry)!;
         const entryFlags = readNodeFlags(flags, entryId);
         // Update level stack
         state.currentRenderingPath.select(level, entryId);
@@ -181,7 +181,7 @@ function renderPinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLy
         // Add a new scrope for the virtual boundaries
         state.currentRenderingWindow.startRenderingChildren();
         // First render all pinned children
-        if (pinnedEntry.pinnedChildren.length > 0) {
+        if (pinnedEntry.pinnedChildren.size > 0) {
             renderPinnedEntries(state, snapshot, level + 1, pinnedEntry.pinnedChildren, outNodes, outEdges);
         }
         // Then render all unpinned entries
