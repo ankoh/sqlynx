@@ -74,8 +74,8 @@ function renderUnpinnedEntries(state: CatalogRenderingState, snapshot: sqlynx.SQ
                 key={thisKey}
 
                 className={classNames(styles.node_default, {
-                    [styles.node_focus_script]: (entryFlags & NodeRenderingFlag.PINNED_BY_SCRIPT_REFS) != 0,
-                    [styles.node_focus_catalog]: (entryFlags & NodeRenderingFlag.PINNED_BY_SCRIPT_CURSOR) != 0,
+                    [styles.node_focus_script_refs]: (entryFlags & NodeRenderingFlag.PINNED_BY_SCRIPT_REFS) != 0,
+                    [styles.node_focus_script_cursor]: (entryFlags & NodeRenderingFlag.PINNED_BY_SCRIPT_CURSOR) != 0,
                     [styles.node_focus_direct]: (entryFlags & NodeRenderingFlag.PRIMARY_FOCUS) != 0,
                     [styles.node_pinned]: (entryFlags & NodeRenderingFlag.PINNED) != 0,
                 })}
