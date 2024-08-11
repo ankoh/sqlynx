@@ -1,7 +1,5 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
 import { EdgePathBuilder } from './graph_edges.js';
-import { DerivedFocus } from 'session/focus.js';
-import { F64_MAX_INTEGER, I64_MAX } from '../../utils/numeric_limits.js';
 
 /// The rendering settings for a catalog level
 export interface CatalogLevelRenderingSettings {
@@ -38,22 +36,22 @@ export interface CatalogRenderingSettings {
     }
 }
 
-/// The node rendering mode
-export enum NodeFlags {
+/// The node flags
+export enum NodeRenderingFlag {
     DEFAULT = 0,
-    PINNED = 0b1,
-    OVERFLOW = 0b10,
-    SCRIPT_FOCUS = 0b100,
-    CATALOG_FOCUS = 0b1000,
-    DIRECT_FOCUS = 0b10000,
+    OVERFLOW = 0b1,
+    PINNED = 0b10,
+    PINNED_BY_SCRIPT_REFS = 0b100,
+    PINNED_BY_SCRIPT_CURSOR = 0b1000,
+    PRIMARY_FOCUS = 0b10000,
 }
 
 /// Helper to get the rendering mode.
-export function readNodeFlags(modes: Uint8Array, index: number): NodeFlags {
-    return (modes[index]) as NodeFlags;
+export function readNodeFlags(modes: Uint8Array, index: number): NodeRenderingFlag {
+    return (modes[index]) as NodeRenderingFlag;
 }
 /// Helper to set the rendering mode.
-export function writeNodeFlags(modes: Uint8Array, index: number, node: NodeFlags) {
+export function writeNodeFlags(modes: Uint8Array, index: number, node: NodeRenderingFlag) {
     modes[index] = node;
 }
 
@@ -136,9 +134,9 @@ export class PinnedCatalogEntry {
     parentObjectId: bigint | null;
 
     /// Was pinned by a user focus?
-    pinnedByFocusInEpoch: bigint;
-    /// Was pinned by a script ref?
-    pinnedByScriptRefsInEpoch: bigint;
+    pinnedInEpoch: bigint;
+    /// The pin flags
+    pinFlags: number;
     /// The pinned children
     pinnedChildren: Map<bigint, PinnedCatalogEntry>;
 
@@ -149,21 +147,10 @@ export class PinnedCatalogEntry {
         this.objectId = objectId;
         this.catalogEntryId = catalogEntryId;
         this.parentObjectId = parentObjectId;
-        this.pinnedByFocusInEpoch = 0n;
-        this.pinnedByScriptRefsInEpoch = 0n;
+        this.pinnedInEpoch = 0n;
+        this.pinFlags = 0;
         this.pinnedChildren = new Map();
         this.renderingHeight = 0;
-    }
-
-    pin(epoch: bigint, reason: PinReason) {
-        switch (reason) {
-            case PinReason.USER_FOCUS:
-                this.pinnedByFocusInEpoch = epoch;
-                break;
-            case PinReason.SCRIPT_REFS:
-                this.pinnedByScriptRefsInEpoch = epoch;
-                break;
-        }
     }
 }
 
@@ -229,11 +216,11 @@ export class CatalogRenderingState {
     edgeBuilder: EdgePathBuilder;
 
     /// A temporary database object
-    tmpDatabaseEntry: sqlynx.proto.IndexedFlatDatabaseEntry,
+    tmpDatabaseEntry: sqlynx.proto.IndexedFlatDatabaseEntry;
     /// A temporary schema object
-    tmpSchemaEntry: sqlynx.proto.IndexedFlatSchemaEntry,
+    tmpSchemaEntry: sqlynx.proto.IndexedFlatSchemaEntry;
     /// A temporary table object
-    tmpTableEntry: sqlynx.proto.IndexedFlatTableEntry
+    tmpTableEntry: sqlynx.proto.IndexedFlatTableEntry;
 
     constructor(snapshot: sqlynx.SQLynxCatalogSnapshot, settings: CatalogRenderingSettings) {
         this.snapshot = snapshot;
@@ -336,11 +323,11 @@ export class CatalogRenderingState {
             // PINNED and DEFAULT entries have the same height, so it doesn't matter that we're accounting for them here in the "wrong" order.
 
             // Skip the node if the node is UNPINNED and the child count hit the limit
-            if ((entryFlags & NodeFlags.PINNED) == 0) {
+            if ((entryFlags & NodeRenderingFlag.PINNED) == 0) {
                 ++unpinnedChildCount;
                 if (unpinnedChildCount > settings.maxUnpinnedChildren) {
                     ++overflowChildCount;
-                    writeNodeFlags(flags, entryId, NodeFlags.OVERFLOW);
+                    writeNodeFlags(flags, entryId, NodeRenderingFlag.OVERFLOW);
                     continue;
                 }
             }
@@ -394,7 +381,7 @@ export class CatalogRenderingState {
 
     pin(catalog: sqlynx.proto.FlatCatalog,
         epoch: bigint,
-        reason: PinReason,
+        pinFlags: number,
         dbId: number,
         schemaId: number | null,
         tableId: bigint | null,
@@ -412,7 +399,9 @@ export class CatalogRenderingState {
             }
             db = new PinnedCatalogEntry(BigInt(dbId), catalogDbId);
         }
-        db.pin(epoch, reason);
+        db.pinnedInEpoch = epoch;
+        db.pinFlags |= pinFlags;
+        db.pinFlags &= ~NodeRenderingFlag.OVERFLOW;
 
         if (!schemaId) {
             return;
@@ -431,7 +420,9 @@ export class CatalogRenderingState {
             schema = new PinnedCatalogEntry(BigInt(schemaId), catalogSchemaId, db.objectId);
             db.pinnedChildren.set(BigInt(schemaId), schema);
         }
-        schema.pin(epoch, reason);
+        schema.pinnedInEpoch = epoch;
+        schema.pinFlags |= pinFlags;
+        schema.pinFlags &= ~NodeRenderingFlag.OVERFLOW;
 
         if (!tableId) {
             return;
@@ -450,7 +441,9 @@ export class CatalogRenderingState {
             table = new PinnedCatalogEntry(BigInt(tableId), catalogTableId, schema.objectId);
             schema.pinnedChildren.set(BigInt(tableId), table);
         }
-        table.pin(epoch, reason);
+        table.pinnedInEpoch = epoch;
+        table.pinFlags |= pinFlags;
+        table.pinFlags &= ~NodeRenderingFlag.OVERFLOW;
 
         if (columnId == null) {
             return;
@@ -469,7 +462,9 @@ export class CatalogRenderingState {
             column = new PinnedCatalogEntry(combinedColumnId, catalogColumnId, table.objectId);
             table.pinnedChildren.set(combinedColumnId, column);
         }
-        column.pin(epoch, reason);
+        column.pinnedInEpoch = epoch;
+        column.pinFlags |= pinFlags;
+        column.pinFlags &= ~NodeRenderingFlag.OVERFLOW;
     }
 
     pinScriptRefs(script: sqlynx.proto.AnalyzedScript, reason: PinReason, epoch: bigint) {
