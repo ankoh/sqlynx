@@ -762,3 +762,20 @@ export namespace ExternalObjectID {
         return ExternalObjectID.getObjectID(value) == 0xffffffff;
     }
 }
+
+export namespace ExternalObjectChildID {
+    export type Value = bigint;
+
+    /// Create the external id
+    export function create(parent: bigint, child: number): bigint {
+        return (parent << 32n) | BigInt(child);
+    }
+    /// Get the context id
+    export function getParent(value: Value): bigint {
+        return value >> 32n;
+    }
+    /// Mask index
+    export function getChild(value: Value): number {
+        return Number(value & 0xffffffffn);
+    }
+}
