@@ -1,5 +1,7 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
 import { EdgePathBuilder } from './graph_edges.js';
+import { DerivedFocus } from 'session/focus.js';
+import { F64_MAX_INTEGER, I64_MAX } from '../../utils/numeric_limits.js';
 
 /// The rendering settings for a catalog level
 export interface CatalogLevelRenderingSettings {
@@ -118,19 +120,50 @@ interface CatalogEntrySpan {
     read(snap: sqlynx.SQLynxCatalogSnapshotReader, index: number, obj?: sqlynx.proto.FlatCatalogEntry): sqlynx.proto.FlatCatalogEntry | null;
     length(snap: sqlynx.SQLynxCatalogSnapshotReader): number;
 }
+
+enum PinReason {
+    USER_FOCUS = 0b1,
+    SCRIPT_REFS = 0b10
+}
+
 /// A pinned catalog entry
 export class PinnedCatalogEntry {
-    /// The id in the backing FlatBuffer
-    entryId: number;
+    /// The object id
+    objectId: bigint;
+    /// The entry id in the catalog
+    catalogEntryId: number;
+    /// The parent object id
+    parentObjectId: bigint | null;
+
+    /// Was pinned by a user focus?
+    pinnedByFocusInEpoch: bigint;
+    /// Was pinned by a script ref?
+    pinnedByScriptRefsInEpoch: bigint;
+    /// The pinned children
+    pinnedChildren: Map<bigint, PinnedCatalogEntry>;
+
     /// When rendering this node, what's the height of this subtree?
     renderingHeight: number;
-    /// The child pins
-    pinnedChildren: PinnedCatalogEntry[];
 
-    constructor(entryId: number) {
-        this.entryId = entryId;
+    constructor(objectId: bigint, catalogEntryId: number, parentObjectId: bigint | null = null) {
+        this.objectId = objectId;
+        this.catalogEntryId = catalogEntryId;
+        this.parentObjectId = parentObjectId;
+        this.pinnedByFocusInEpoch = 0n;
+        this.pinnedByScriptRefsInEpoch = 0n;
+        this.pinnedChildren = new Map();
         this.renderingHeight = 0;
-        this.pinnedChildren = [];
+    }
+
+    pin(epoch: bigint, reason: PinReason) {
+        switch (reason) {
+            case PinReason.USER_FOCUS:
+                this.pinnedByFocusInEpoch = epoch;
+                break;
+            case PinReason.SCRIPT_REFS:
+                this.pinnedByScriptRefsInEpoch = epoch;
+                break;
+        }
     }
 }
 
@@ -159,11 +192,27 @@ export class CatalogRenderingState {
     /// The rendering settings
     settings: CatalogRenderingSettings;
 
-    /// The pinned databases
-    pinnedDatabases: PinnedCatalogEntry[];
+    /// The database entries
+    databaseEntries: CatalogLevelRenderingState;
+    /// The schema entries
+    schemaEntries: CatalogLevelRenderingState;
+    /// The table entries
+    tableEntries: CatalogLevelRenderingState;
+    /// The column entries
+    columnEntries: CatalogLevelRenderingState;
 
-    /// The levels
-    levels: CatalogLevelRenderingState[];
+    /// The pin epoch
+    nextPinEpoch: bigint;
+    /// The pinned databases
+    pinnedDatabases: Map<number, PinnedCatalogEntry>;
+    /// The pinned schemas
+    pinnedSchemas: Map<number, PinnedCatalogEntry>;
+    /// The pinned tables
+    pinnedTables: Map<bigint, PinnedCatalogEntry>;
+    /// The pinned columns
+    pinnedTableColumns: Map<bigint, PinnedCatalogEntry>;
+
+
     /// The total height of all nodes
     totalHeight: number;
     /// The total width of all nodes
@@ -179,64 +228,73 @@ export class CatalogRenderingState {
     /// The edge builder
     edgeBuilder: EdgePathBuilder;
 
+    /// A temporary database object
+    tmpDatabaseEntry: sqlynx.proto.IndexedFlatDatabaseEntry,
+    /// A temporary schema object
+    tmpSchemaEntry: sqlynx.proto.IndexedFlatSchemaEntry,
+    /// A temporary table object
+    tmpTableEntry: sqlynx.proto.IndexedFlatTableEntry
+
     constructor(snapshot: sqlynx.SQLynxCatalogSnapshot, settings: CatalogRenderingSettings) {
         this.snapshot = snapshot;
         this.settings = settings;
-        this.pinnedDatabases = [];
+        this.nextPinEpoch = 0n;
+        this.pinnedDatabases = new Map();
+        this.pinnedSchemas = new Map();
+        this.pinnedTables = new Map();
+        this.pinnedTableColumns = new Map();
         const snap = snapshot.read();
-        this.levels = [
-            {
-                settings: settings.levels.databases,
-                entries: {
-                    read: (snap: sqlynx.SQLynxCatalogSnapshotReader, index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snap.catalogReader.databases(index, obj),
-                    length: (snap: sqlynx.SQLynxCatalogSnapshotReader) => snap.catalogReader.databasesLength(),
-                },
-                flags: new Uint8Array(snap.catalogReader.databasesLength()),
-                subtreeHeights: new Float32Array(snap.catalogReader.databasesLength()),
-                positionX: 0,
-                scratchEntry: new sqlynx.proto.FlatCatalogEntry(),
-                scratchPositionsY: new Float32Array(snap.catalogReader.databasesLength()),
+        this.databaseEntries = {
+            settings: settings.levels.databases,
+            entries: {
+                read: (snap: sqlynx.SQLynxCatalogSnapshotReader, index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snap.catalogReader.databases(index, obj),
+                length: (snap: sqlynx.SQLynxCatalogSnapshotReader) => snap.catalogReader.databasesLength(),
             },
-            {
-                settings: settings.levels.schemas,
-                entries: {
-                    read: (snap: sqlynx.SQLynxCatalogSnapshotReader, index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snap.catalogReader.schemas(index, obj),
-                    length: (snap: sqlynx.SQLynxCatalogSnapshotReader) => snap.catalogReader.schemasLength(),
-                },
-                flags: new Uint8Array(snap.catalogReader.schemasLength()),
-                subtreeHeights: new Float32Array(snap.catalogReader.schemasLength()),
-                positionX: 0,
-                scratchEntry: new sqlynx.proto.FlatCatalogEntry(),
-                scratchPositionsY: new Float32Array(snap.catalogReader.schemasLength()),
+            flags: new Uint8Array(snap.catalogReader.databasesLength()),
+            subtreeHeights: new Float32Array(snap.catalogReader.databasesLength()),
+            positionX: 0,
+            scratchEntry: new sqlynx.proto.FlatCatalogEntry(),
+            scratchPositionsY: new Float32Array(snap.catalogReader.databasesLength()),
+        };
+        this.schemaEntries = {
+            settings: settings.levels.schemas,
+            entries: {
+                read: (snap: sqlynx.SQLynxCatalogSnapshotReader, index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snap.catalogReader.schemas(index, obj),
+                length: (snap: sqlynx.SQLynxCatalogSnapshotReader) => snap.catalogReader.schemasLength(),
             },
-            {
-                settings: settings.levels.tables,
-                entries: {
-                    read: (snap: sqlynx.SQLynxCatalogSnapshotReader, index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snap.catalogReader.tables(index, obj),
-                    length: (snap: sqlynx.SQLynxCatalogSnapshotReader) => snap.catalogReader.tablesLength(),
-                },
-                flags: new Uint8Array(snap.catalogReader.tablesLength()),
-                subtreeHeights: new Float32Array(snap.catalogReader.tablesLength()),
-                positionX: 0,
-                scratchEntry: new sqlynx.proto.FlatCatalogEntry(),
-                scratchPositionsY: new Float32Array(snap.catalogReader.tablesLength()),
+            flags: new Uint8Array(snap.catalogReader.schemasLength()),
+            subtreeHeights: new Float32Array(snap.catalogReader.schemasLength()),
+            positionX: 0,
+            scratchEntry: new sqlynx.proto.FlatCatalogEntry(),
+            scratchPositionsY: new Float32Array(snap.catalogReader.schemasLength()),
+        };
+        this.tableEntries = {
+            settings: settings.levels.tables,
+            entries: {
+                read: (snap: sqlynx.SQLynxCatalogSnapshotReader, index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snap.catalogReader.tables(index, obj),
+                length: (snap: sqlynx.SQLynxCatalogSnapshotReader) => snap.catalogReader.tablesLength(),
             },
-            {
-                settings: settings.levels.columns,
-                entries: {
-                    read: (snap: sqlynx.SQLynxCatalogSnapshotReader, index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snap.catalogReader.columns(index, obj),
-                    length: (snap: sqlynx.SQLynxCatalogSnapshotReader) => snap.catalogReader.columnsLength(),
-                },
-                flags: new Uint8Array(snap.catalogReader.columnsLength()),
-                subtreeHeights: new Float32Array(snap.catalogReader.columnsLength()),
-                positionX: 0,
-                scratchEntry: new sqlynx.proto.FlatCatalogEntry(),
-                scratchPositionsY: new Float32Array(snap.catalogReader.columnsLength()),
-            }
-        ];
-        this.levels[1].positionX = settings.levels.databases.nodeWidth + settings.levels.databases.columnGap;
-        this.levels[2].positionX = this.levels[1].positionX + settings.levels.schemas.nodeWidth + settings.levels.schemas.columnGap;
-        this.levels[3].positionX = this.levels[2].positionX + settings.levels.tables.nodeWidth + settings.levels.tables.columnGap;
+            flags: new Uint8Array(snap.catalogReader.tablesLength()),
+            subtreeHeights: new Float32Array(snap.catalogReader.tablesLength()),
+            positionX: 0,
+            scratchEntry: new sqlynx.proto.FlatCatalogEntry(),
+            scratchPositionsY: new Float32Array(snap.catalogReader.tablesLength()),
+        };
+        this.columnEntries = {
+            settings: settings.levels.columns,
+            entries: {
+                read: (snap: sqlynx.SQLynxCatalogSnapshotReader, index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snap.catalogReader.columns(index, obj),
+                length: (snap: sqlynx.SQLynxCatalogSnapshotReader) => snap.catalogReader.columnsLength(),
+            },
+            flags: new Uint8Array(snap.catalogReader.columnsLength()),
+            subtreeHeights: new Float32Array(snap.catalogReader.columnsLength()),
+            positionX: 0,
+            scratchEntry: new sqlynx.proto.FlatCatalogEntry(),
+            scratchPositionsY: new Float32Array(snap.catalogReader.columnsLength()),
+        };
+        this.schemaEntries.positionX = settings.levels.databases.nodeWidth + settings.levels.databases.columnGap;
+        this.tableEntries.positionX = this.schemaEntries.positionX + settings.levels.schemas.nodeWidth + settings.levels.schemas.columnGap;
+        this.columnEntries.positionX = this.tableEntries.positionX + settings.levels.tables.nodeWidth + settings.levels.tables.columnGap;
 
         this.totalWidth = 0;
         this.totalHeight = 0;
@@ -245,21 +303,82 @@ export class CatalogRenderingState {
         this.currentRenderingWindow = new ScrollRenderingWindow();
         this.edgeBuilder = new EdgePathBuilder();
 
+        this.tmpDatabaseEntry = new sqlynx.proto.IndexedFlatDatabaseEntry();
+        this.tmpSchemaEntry = new sqlynx.proto.IndexedFlatSchemaEntry();
+        this.tmpTableEntry = new sqlynx.proto.IndexedFlatTableEntry();
+
         // Layout all entries.
         // This means users don't have to special-case the states without layout.
         this.layoutEntries();
     }
 
-    resetPins() {
-        this.pinnedDatabases = [];
+    get levels() {
+        return [this.databaseEntries, this.schemaEntries, this.tableEntries, this.columnEntries];
+    }
+
+    /// Layout unpinned entries and assign them NodeFlags
+    layoutEntriesAtLevel(snapshot: sqlynx.SQLynxCatalogSnapshotReader, levelId: number, entriesBegin: number, entriesCount: number) {
+        const level = this.levels[levelId];
+        const settings = level.settings;
+        const entries = level.entries;
+        const scratchEntry = level.scratchEntry;
+        const subtreeHeights = level.subtreeHeights;
+        const flags = level.flags;
+
+        let unpinnedChildCount = 0;
+        let overflowChildCount = 0;
+
+        for (let i = 0; i < entriesCount; ++i) {
+            const entryId = entriesBegin + i;
+            const entry = entries.read(snapshot, entryId, scratchEntry)!;
+            const entryFlags = readNodeFlags(flags, entryId);
+
+            // PINNED and DEFAULT entries have the same height, so it doesn't matter that we're accounting for them here in the "wrong" order.
+
+            // Skip the node if the node is UNPINNED and the child count hit the limit
+            if ((entryFlags & NodeFlags.PINNED) == 0) {
+                ++unpinnedChildCount;
+                if (unpinnedChildCount > settings.maxUnpinnedChildren) {
+                    ++overflowChildCount;
+                    writeNodeFlags(flags, entryId, NodeFlags.OVERFLOW);
+                    continue;
+                }
+            }
+
+            // Update level stack
+            this.currentRenderingPath.select(levelId, entryId);
+            const isFirstEntry = this.currentRenderingPath.isFirst[levelId];
+            // The begin of the subtree
+            let subtreeBegin = this.currentWriterY;
+            // Add row gap when first
+            this.currentWriterY += isFirstEntry ? 0 : settings.rowGap;
+            // Remember own position
+            let thisPosY = this.currentWriterY;
+            // Render child columns
+            if (entry.childCount() > 0) {
+                this.layoutEntriesAtLevel(snapshot, levelId + 1, entry.childBegin(), entry.childCount());
+            }
+            // Bump writer if the columns didn't already
+            this.currentWriterY = Math.max(this.currentWriterY, thisPosY + settings.nodeHeight);
+            // Truncate the rendering path
+            this.currentRenderingPath.truncate(levelId);
+            // Store the subtree height
+            subtreeHeights[entryId] = this.currentWriterY - subtreeBegin;
+        }
+
+        // Add space for the overflow node
+        if (overflowChildCount > 0) {
+            this.currentWriterY += settings.rowGap;
+            this.currentWriterY += settings.nodeHeight;
+        }
     }
 
     layoutEntries() {
         const snap = this.snapshot.read();
-        const databaseCount = this.levels[0].entries.length(snap);
-        layoutEntries(this, snap, 0, 0, databaseCount);
+        const databaseCount = this.databaseEntries.entries.length(snap);
+        this.layoutEntriesAtLevel(snap, 0, 0, databaseCount);
         this.totalHeight = this.currentWriterY;
-        this.totalWidth = this.levels[3].positionX + this.settings.levels.columns.nodeWidth + this.settings.levels.columns.columnGap;
+        this.totalWidth = this.columnEntries.positionX + this.settings.levels.columns.nodeWidth + this.settings.levels.columns.columnGap;
     }
 
     resetWriter() {
@@ -272,61 +391,107 @@ export class CatalogRenderingState {
     updateWindow(begin: number, end: number, virtualBegin: number, virtualEnd: number) {
         this.currentRenderingWindow.updateWindow(begin, end, virtualBegin, virtualEnd);
     }
-}
 
-/// Layout unpinned entries and assign them NodeFlags
-function layoutEntries(state: CatalogRenderingState, snapshot: sqlynx.SQLynxCatalogSnapshotReader, level: number, entriesBegin: number, entriesCount: number) {
-    const settings = state.levels[level].settings;
-    const entries = state.levels[level].entries;
-    const scratchEntry = state.levels[level].scratchEntry;
-    const subtreeHeights = state.levels[level].subtreeHeights;
-    const flags = state.levels[level].flags;
-
-    let unpinnedChildCount = 0;
-    let overflowChildCount = 0;
-
-    for (let i = 0; i < entriesCount; ++i) {
-        const entryId = entriesBegin + i;
-        const entry = entries.read(snapshot, entryId, scratchEntry)!;
-        const entryFlags = readNodeFlags(flags, entryId);
-
-        // PINNED and DEFAULT entries have the same height, so it doesn't matter that we're accounting for them here in the "wrong" order.
-
-        // Skip the node if the node is UNPINNED and the child count hit the limit
-        if ((entryFlags & NodeFlags.PINNED) == 0) {
-            ++unpinnedChildCount;
-            if (unpinnedChildCount > settings.maxUnpinnedChildren) {
-                ++overflowChildCount;
-                writeNodeFlags(flags, entryId, NodeFlags.OVERFLOW);
-                continue;
+    pin(catalog: sqlynx.proto.FlatCatalog,
+        epoch: bigint,
+        reason: PinReason,
+        dbId: number,
+        schemaId: number,
+        tableId: bigint,
+        columnId: number | null,
+    ) {
+        // Is the database already pinned?
+        let db = this.pinnedDatabases.get(dbId);
+        if (db == null) {
+            // Lookup the database id in the catalog
+            const catalogDbId = sqlynx.findCatalogDatabaseById(catalog, dbId, this.tmpDatabaseEntry);
+            if (catalogDbId == null) {
+                // Failed to locate database in the catalog?
+                // Skip this entry
+                return;
             }
+            db = new PinnedCatalogEntry(BigInt(dbId), catalogDbId);
+        }
+        db.pin(epoch, reason);
+
+        // Is the schema already pinned?
+        let schema = this.pinnedSchemas.get(schemaId);
+        if (schema == null) {
+            // Lookup the schema id in the catalog
+            const catalogSchemaId = sqlynx.findCatalogSchemaById(catalog, schemaId, this.tmpSchemaEntry);
+            if (catalogSchemaId == null) {
+                // Failed to locate schema in the catalog?
+                // Skip this entry
+                return;
+            }
+            schema = new PinnedCatalogEntry(BigInt(schemaId), catalogSchemaId, db.objectId);
+            db.pinnedChildren.set(BigInt(schemaId), schema);
+        }
+        schema.pin(epoch, reason);
+
+        // Is the table already pinned?
+        let table = this.pinnedTables.get(tableId);
+        if (table == null) {
+            // Lookup the table id in the catalog
+            const catalogTableId = sqlynx.findCatalogTableById(catalog, tableId, this.tmpTableEntry);
+            if (catalogTableId == null) {
+                // Failed to locate table in the catalog?
+                // Skip this entry
+                return;
+            }
+            table = new PinnedCatalogEntry(BigInt(tableId), catalogTableId, schema.objectId);
+            schema.pinnedChildren.set(BigInt(tableId), table);
+        }
+        table.pin(epoch, reason);
+
+        // No column provided?
+        if (columnId == null) {
+            return;
         }
 
-        // Update level stack
-        state.currentRenderingPath.select(level, entryId);
-        const isFirstEntry = state.currentRenderingPath.isFirst[level];
-        // The begin of the subtree
-        let subtreeBegin = state.currentWriterY;
-        // Add row gap when first
-        state.currentWriterY += isFirstEntry ? 0 : settings.rowGap;
-        // Remember own position
-        let thisPosY = state.currentWriterY;
-        // Render child columns
-        if (entry.childCount() > 0) {
-            layoutEntries(state, snapshot, level + 1, entry.childBegin(), entry.childCount());
+        // Columns are only ever accessed through the table in the catalog.
+        // But we can index them using a derived child id using (table id, column idx)
+        const combinedColumnId = sqlynx.ExternalObjectChildID.create(tableId, columnId);
+
+        // Is the column already pinned?
+        let column = this.pinnedTableColumns.get(combinedColumnId);
+        if (column == null) {
+            const tableProto = catalog.tables(table.catalogEntryId)!;
+            const tableChildrenBegin = tableProto.childBegin();
+            const catalogColumnId = tableChildrenBegin + columnId;
+            column = new PinnedCatalogEntry(combinedColumnId, catalogColumnId, table.objectId);
+            table.pinnedChildren.set(combinedColumnId, column);
         }
-        // Bump writer if the columns didn't already
-        state.currentWriterY = Math.max(state.currentWriterY, thisPosY + settings.nodeHeight);
-        // Truncate the rendering path
-        state.currentRenderingPath.truncate(level);
-        // Store the subtree height
-        subtreeHeights[entryId] = state.currentWriterY - subtreeBegin;
+        column.pin(epoch, reason);
     }
 
-    // Add space for the overflow node
-    if (overflowChildCount > 0) {
-        state.currentWriterY += settings.rowGap;
-        state.currentWriterY += settings.nodeHeight;
+    pinScriptRefs(script: sqlynx.proto.AnalyzedScript, reason: PinReason, epoch: bigint) {
+        const catalog = this.snapshot.read().catalogReader;
+        const tmpTableRef = new sqlynx.proto.TableReference();
+        const tmpColumnRef = new sqlynx.proto.ColumnReference();
+
+        // Pin table references
+        for (let i = 0; i < script.tableReferencesLength(); ++i) {
+            const tableRef = script.tableReferences(i, tmpTableRef)!;
+            const dbId = tableRef.resolvedCatalogDatabaseId();
+            const schemaId = tableRef.resolvedCatalogSchemaId();
+            const tableId = tableRef.resolvedCatalogTableId();
+            this.pin(catalog, epoch, reason, dbId, schemaId, tableId, null);
+        }
+
+        // Pin column references
+        for (let i = 0; i < script.columnReferencesLength(); ++i) {
+            const columnRef = script.columnReferences(i, tmpColumnRef)!;
+            const dbId = columnRef.resolvedCatalogDatabaseId();
+            const schemaId = columnRef.resolvedCatalogSchemaId();
+            const tableId = columnRef.resolvedCatalogTableId();
+            const columnId = columnRef.resolvedColumnId();
+            this.pin(catalog, epoch, reason, dbId, schemaId, tableId, columnId);
+        }
+    }
+
+    pinCursorRefs(cursor: sqlynx.proto.ScriptCursorInfo, epoch: bigint) {
+
     }
 }
 
@@ -405,8 +570,3 @@ class ScrollRenderingWindow {
     }
 }
 
-/// Layout the catalog
-export function layoutCatalog(state: CatalogRenderingState) {
-    const snap = state.snapshot.read();
-    layoutEntries(state, snap, 0, 0, state.levels[0].entries.length(snap));
-}
