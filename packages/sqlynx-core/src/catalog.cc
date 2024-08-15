@@ -474,7 +474,7 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
         database_entries[next_database] = proto::FlatCatalogEntry(next_database, 0, db_node_ref.catalog_object_id,
                                                                   db_node_ref.name_id, 0, db_node_ref.children.size());
         indexed_database_entries[next_database] =
-            proto::IndexedFlatDatabaseEntry(next_database, db_node_ref.catalog_object_id);
+            proto::IndexedFlatDatabaseEntry(db_node_ref.catalog_object_id, next_database);
 
         // Write schema nodes
         for (auto& [schema_name, schema_node] : database_node.get().children) {
@@ -484,7 +484,7 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
                 sqlynx::proto::FlatCatalogEntry(next_schema, next_database, schema_node_ref.catalog_object_id,
                                                 schema_node_ref.name_id, next_table, schema_node_ref.children.size());
             indexed_schema_entries[next_schema] =
-                proto::IndexedFlatSchemaEntry(next_schema, schema_node_ref.catalog_object_id);
+                proto::IndexedFlatSchemaEntry(schema_node_ref.catalog_object_id, next_schema);
 
             // Write table nodes
             for (auto& [table_name, table_node] : schema_node_ref.children) {
@@ -494,7 +494,7 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
                     next_table, next_schema, table_node_ref.catalog_object_id, table_node_ref.name_id, next_column,
                     table_node_ref.children.size());
                 indexed_table_entries[next_table] =
-                    proto::IndexedFlatTableEntry(next_table, table_node_ref.catalog_object_id);
+                    proto::IndexedFlatTableEntry(table_node_ref.catalog_object_id, next_table);
 
                 // Write column nodes
                 for (auto& [column_name, column_node] : table_node_ref.children) {

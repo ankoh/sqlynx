@@ -7,7 +7,8 @@ import { observeSize } from '../foundations/size_observer.js';
 import { EdgeLayer } from './edge_layer.js';
 import { NodeLayer } from './node_layer.js';
 import { useThrottledMemo } from '../../utils/throttle.js';
-import { CatalogRenderingSettings, CatalogRenderingState } from './catalog_view_model.js';
+import { CatalogRenderingSettings, CatalogViewModel } from './catalog_view_model.js';
+import { ScriptKey } from '../../session/session_state.js';
 
 const RENDERING_SETTINGS: CatalogRenderingSettings = {
     virtual: {
@@ -53,14 +54,24 @@ export function CatalogViewer(props: Props) {
     const [sessionState, _dispatchSession] = useCurrentSessionState();
 
     // Maintain a catalog snapshot of the session
-    const [state, setState] = React.useState<CatalogRenderingState | null>(null);
+    const [viewModel, setViewModel] = React.useState<CatalogViewModel | null>(null);
     React.useEffect(() => {
         const snapshot = sessionState?.connectionCatalog.createSnapshot() ?? null;
         if (snapshot) {
-            const state = new CatalogRenderingState(snapshot, RENDERING_SETTINGS);
-            setState(state);
+            const state = new CatalogViewModel(snapshot, RENDERING_SETTINGS);
+            setViewModel(state);
         }
     }, [sessionState?.connectionCatalog.snapshot]);
+
+    // Load script refs
+    React.useEffect(() => {
+        const script = sessionState?.scripts[ScriptKey.MAIN_SCRIPT] ?? null;
+        if (viewModel != null && script != null && script.processed.analyzed != null) {
+            const analyzed = script.processed.analyzed.read();
+            viewModel.pinScriptRefs(analyzed);
+        }
+
+    }, [viewModel, sessionState?.scripts[ScriptKey.MAIN_SCRIPT]]);
 
 
     // Watch the container size
@@ -88,7 +99,7 @@ export function CatalogViewer(props: Props) {
     const [renderingWindow, setRenderingWindow] = React.useState<RenderingWindow | null>(null);
     React.useEffect(() => {
         // Skip if we don't know the container size yet
-        if (!containerSize || !state) {
+        if (!containerSize || !viewModel) {
             return;
         }
 
@@ -97,7 +108,7 @@ export function CatalogViewer(props: Props) {
             let lb = Math.floor((scrollTop - RENDERING_SETTINGS.virtual.prerenderSize) / RENDERING_SETTINGS.virtual.stepSize) * RENDERING_SETTINGS.virtual.stepSize;
             let ub = Math.ceil((scrollTop + containerSize.height + RENDERING_SETTINGS.virtual.prerenderSize) / RENDERING_SETTINGS.virtual.stepSize) * RENDERING_SETTINGS.virtual.stepSize;
             lb = Math.max(lb, 0);
-            ub = Math.min(ub, state.totalHeight);
+            ub = Math.min(ub, viewModel.totalHeight);
             setRenderingWindow({
                 scroll: {
                     top: scrollTop,
@@ -113,7 +124,7 @@ export function CatalogViewer(props: Props) {
         } else {
             // The user didn't scoll, just render the container
             let ub = Math.ceil((containerSize.height + RENDERING_SETTINGS.virtual.prerenderSize) / RENDERING_SETTINGS.virtual.stepSize) * RENDERING_SETTINGS.virtual.stepSize;
-            ub = Math.min(ub, state.totalHeight);
+            ub = Math.min(ub, viewModel.totalHeight);
             setRenderingWindow({
                 scroll: {
                     top: 0,
@@ -125,16 +136,16 @@ export function CatalogViewer(props: Props) {
                 }
             })
         }
-    }, [state, scrollTop, containerSize]);
+    }, [viewModel, scrollTop, containerSize]);
 
     // Memo must depend on scroll window and window size
     const [nodes, edges] = React.useMemo(() => {
         // No state or measured container size?
-        if (!state || !renderingWindow) {
+        if (!viewModel || !renderingWindow) {
             return [null, null];
         }
         // Update the virtual window
-        state.currentRenderingWindow.updateWindow(
+        viewModel.updateWindow(
             renderingWindow.scroll.top,
             renderingWindow.scroll.top + renderingWindow.scroll.height,
             renderingWindow.virtual.top,
@@ -143,10 +154,10 @@ export function CatalogViewer(props: Props) {
         // Render the catalog
         const outNodes: React.ReactElement[] = [];
         const outEdges: React.ReactElement[] = [];
-        renderCatalog(state, outNodes, outEdges);
+        renderCatalog(viewModel, outNodes, outEdges);
         return [outNodes, outEdges];
 
-    }, [state, renderingWindow]);
+    }, [viewModel, renderingWindow]);
 
     return (
         <div className={styles.root}>
@@ -154,14 +165,14 @@ export function CatalogViewer(props: Props) {
                 <div className={styles.board_container} ref={containerElement} onScroll={handleScroll}>
                     <div className={styles.board}>
                         <EdgeLayer
-                            width={state?.totalWidth ?? 0}
-                            height={state?.totalHeight ?? 0}
+                            width={viewModel?.totalWidth ?? 0}
+                            height={viewModel?.totalHeight ?? 0}
                             padding={padding}
                             paths={edges ?? []}
                         />
                         <NodeLayer
-                            width={state?.totalWidth ?? 0}
-                            height={state?.totalHeight ?? 0}
+                            width={viewModel?.totalWidth ?? 0}
+                            height={viewModel?.totalHeight ?? 0}
                             padding={padding}
                             nodes={nodes ?? []}
                         />

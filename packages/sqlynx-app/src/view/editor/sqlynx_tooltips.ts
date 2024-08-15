@@ -27,7 +27,7 @@ function createCursorTooltip(state: EditorState, pos: number): Tooltip | null {
     };
 
     if (processor.scriptBuffers.scanned) {
-        const scanned = processor.scriptBuffers.scanned.read(new sqlynx.proto.ScannedScript());
+        const scanned = processor.scriptBuffers.scanned.read();
         const error = findErrorAtLocation(scanned, pos);
         if (error != null) {
             return {
@@ -43,7 +43,7 @@ function createCursorTooltip(state: EditorState, pos: number): Tooltip | null {
         }
     }
     if (processor.scriptBuffers.parsed) {
-        const parsed = processor.scriptBuffers.parsed.read(new sqlynx.proto.ParsedScript());
+        const parsed = processor.scriptBuffers.parsed.read();
         const error = findErrorAtLocation(parsed, pos);
         if (error != null) {
             return {

@@ -170,7 +170,7 @@ export const SQLynxProcessor: StateField<SQLynxEditorState> = StateField.define<
                 // Analyze the new script
                 next.scriptBuffers = parseAndAnalyzeScript(next.targetScript!);
                 const cursorBuffer = next.targetScript!.moveCursor(selection ?? 0);
-                next.scriptCursor = cursorBuffer.read(new sqlynx.proto.ScriptCursorInfo()).unpack();
+                next.scriptCursor = cursorBuffer.read().unpack();
                 cursorBuffer.delete();
                 // Watch out, this passes ownership over the script buffers
                 next.onUpdateScript(next.scriptKey, next.scriptBuffers, next.scriptCursor);
@@ -181,7 +181,7 @@ export const SQLynxProcessor: StateField<SQLynxEditorState> = StateField.define<
             if (cursorChanged) {
                 copyIfNotReplaced();
                 const cursorBuffer = next.targetScript!.moveCursor(selection ?? 0);
-                next.scriptCursor = cursorBuffer.read(new sqlynx.proto.ScriptCursorInfo()).unpack();
+                next.scriptCursor = cursorBuffer.read().unpack();
                 cursorBuffer.delete();
                 next.onUpdateScriptCursor(next.scriptKey, next.scriptCursor);
                 return next;

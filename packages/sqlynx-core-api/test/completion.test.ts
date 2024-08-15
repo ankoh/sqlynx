@@ -30,7 +30,7 @@ describe('SQLynx Completion', () => {
             script.moveCursor(cursor_offset).delete();
 
             const completionBuffer = script.completeAtCursor(10);
-            const completion = completionBuffer.read(new sqlynx.proto.Completion());
+            const completion = completionBuffer.read();
 
             const candidates: string[] = [];
             for (let i = 0; i < completion.candidatesLength(); ++i) {

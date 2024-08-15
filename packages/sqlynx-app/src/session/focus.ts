@@ -100,7 +100,7 @@ export function deriveFocusFromCursor(
                 if (!targetAnalyzed) continue;
 
                 // Find table refs for table
-                const [begin0, end0] = sqlynx.tableRefsEqualRange(
+                const [begin0, end0] = sqlynx.findScriptTableRefsEqualRange(
                     targetAnalyzed,
                     focus.resolvedTable.databaseId,
                     focus.resolvedTable.schemaId,
@@ -110,7 +110,7 @@ export function deriveFocusFromCursor(
                     focus.tableRefsOfReferencedTable.add(sqlynx.ExternalObjectID.create(targetKey, refId));
                 }
                 // Find column refs for table
-                const [begin1, end1] = sqlynx.columnRefsEqualRange(
+                const [begin1, end1] = sqlynx.findScriptColumnRefsEqualRange(
                     targetAnalyzed,
                     focus.resolvedTable.databaseId,
                     focus.resolvedTable.schemaId,
@@ -152,7 +152,7 @@ export function deriveFocusFromCursor(
                 if (!targetAnalyzed) continue;
 
                 // Find table refs for table
-                const [begin0, end0] = sqlynx.tableRefsEqualRange(
+                const [begin0, end0] = sqlynx.findScriptTableRefsEqualRange(
                     targetAnalyzed,
                     focus.resolvedTable.databaseId,
                     focus.resolvedTable.schemaId,
@@ -162,7 +162,7 @@ export function deriveFocusFromCursor(
                     focus.tableRefsOfReferencedTable.add(sqlynx.ExternalObjectID.create(targetKey, refId));
                 }
                 // Find column refs for table
-                const [begin1, end1] = sqlynx.columnRefsEqualRange(
+                const [begin1, end1] = sqlynx.findScriptColumnRefsEqualRange(
                     targetAnalyzed,
                     focus.resolvedTable.databaseId,
                     focus.resolvedTable.schemaId,
@@ -172,7 +172,7 @@ export function deriveFocusFromCursor(
                     focus.columnRefsOfReferencedTable.add(sqlynx.ExternalObjectID.create(targetKey, refId));
                 }
                 // Find column refs for table
-                const [begin2, end2] = sqlynx.columnRefsEqualRange(
+                const [begin2, end2] = sqlynx.findScriptColumnRefsEqualRange(
                     targetAnalyzed,
                     focus.resolvedTable.databaseId,
                     focus.resolvedTable.schemaId,
@@ -244,7 +244,7 @@ export function deriveFocusFromCatalog(
         if (!targetAnalyzed) continue;
 
         // Find table refs
-        const [begin0, end0] = sqlynx.tableRefsEqualRange(
+        const [begin0, end0] = sqlynx.findScriptTableRefsEqualRange(
             targetAnalyzed,
             target.focusedDatabase,
             target.focusedSchema,
@@ -255,7 +255,7 @@ export function deriveFocusFromCatalog(
         }
 
         // Find column refs
-        const [begin1, end1] = sqlynx.columnRefsEqualRange(
+        const [begin1, end1] = sqlynx.findScriptColumnRefsEqualRange(
             targetAnalyzed,
             target.focusedDatabase,
             target.focusedSchema,

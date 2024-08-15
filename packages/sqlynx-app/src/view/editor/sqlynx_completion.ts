@@ -28,7 +28,7 @@ export async function completeSQLynx(context: CompletionContext): Promise<Comple
             relativePos == sqlynx.proto.RelativeSymbolPosition.END_OF_SYMBOL;
         if (performCompletion) {
             const completionBuffer = processor.targetScript.completeAtCursor(32);
-            const completion = completionBuffer.read(new sqlynx.proto.Completion());
+            const completion = completionBuffer.read();
             const candidateObj = new sqlynx.proto.CompletionCandidate();
             for (let i = 0; i < completion.candidatesLength(); ++i) {
                 const candidate = completion.candidates(i, candidateObj)!;

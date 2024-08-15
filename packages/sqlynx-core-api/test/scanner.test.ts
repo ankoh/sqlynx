@@ -76,7 +76,7 @@ describe('SQLynx Scanner', () => {
                 const script = lnx!.createScript(catalog, 1);
                 script.insertTextAt(0, text);
                 const scanResult = script.scan();
-                const scannedScript = scanResult.read(new sqlynx.proto.ScannedScript());
+                const scannedScript = scanResult.read();
                 expect(scannedScript.tokens()).toBeTruthy();
 
                 const hl = scannedScript.tokens();

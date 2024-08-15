@@ -123,9 +123,9 @@ function buildDecorationsFromCursor(
     derivedFocus: DerivedFocus | null,
 ): DecorationSet {
     const builder = new RangeSetBuilder<Decoration>();
-    const scanned = scriptBuffers.scanned?.read(new sqlynx.proto.ScannedScript()) ?? null;
-    const parsed = scriptBuffers.parsed?.read(new sqlynx.proto.ParsedScript()) ?? null;
-    const analyzed = scriptBuffers.analyzed?.read(new sqlynx.proto.AnalyzedScript()) ?? null;
+    const scanned = scriptBuffers.scanned?.read() ?? null;
+    const parsed = scriptBuffers.parsed?.read() ?? null;
+    const analyzed = scriptBuffers.analyzed?.read() ?? null;
     const queryEdgeId = scriptCursor?.queryEdgeId ?? null;
     const decorations: DecorationInfo[] = [];
 

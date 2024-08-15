@@ -51,9 +51,9 @@ describe('SQLynx Analyzer', () => {
         const extParserRes = extScript.parse();
         const extAnalyzerRes = extScript.analyze();
 
-        const extScanner = extScannerRes.read(new sqlynx.proto.ScannedScript());
-        const extParser = extParserRes.read(new sqlynx.proto.ParsedScript());
-        const extAnalyzer = extAnalyzerRes.read(new sqlynx.proto.AnalyzedScript());
+        const extScanner = extScannerRes.read();
+        const extParser = extParserRes.read();
+        const extAnalyzer = extAnalyzerRes.read();
         expect(extScanner.tokens()?.tokenTypesArray()?.length).toBeGreaterThan(0);
         expect(extParser.nodesLength()).toBeGreaterThan(0);
         expect(extAnalyzer.tablesLength()).toEqual(1);
@@ -67,9 +67,9 @@ describe('SQLynx Analyzer', () => {
         const mainParserRes = mainScript.parse();
         const mainAnalyzerRes = mainScript.analyze();
 
-        const mainScanner = mainScannerRes.read(new sqlynx.proto.ScannedScript());
-        const mainParser = mainParserRes.read(new sqlynx.proto.ParsedScript());
-        const mainAnalyzer = mainAnalyzerRes.read(new sqlynx.proto.AnalyzedScript());
+        const mainScanner = mainScannerRes.read();
+        const mainParser = mainParserRes.read();
+        const mainAnalyzer = mainAnalyzerRes.read();
         expect(mainScanner.tokens()?.tokenTypesArray()?.length).toBeGreaterThan(0);
         expect(mainParser.nodesLength()).toBeGreaterThan(0);
         expect(mainAnalyzer.tableReferencesLength()).toEqual(1);

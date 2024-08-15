@@ -349,7 +349,7 @@ export class SQLynx {
         }
     }
 
-    public readFlatBufferResult<T extends FlatBufferObject<T>>(resultPtr: number) {
+    public readFlatBufferResult<T extends FlatBufferObject<T>>(resultPtr: number, factory: () => T) {
         const heapU8 = new Uint8Array(this.memory.buffer);
         const resultPtrU32 = resultPtr / 4;
         const heapU32 = new Uint32Array(this.memory.buffer);
@@ -357,7 +357,7 @@ export class SQLynx {
         const dataLength = heapU32[resultPtrU32 + 1];
         const dataPtr = heapU32[resultPtrU32 + 2];
         if (statusCode == proto.StatusCode.OK) {
-            return new FlatBufferPtr<T>(this, resultPtr, dataPtr, dataLength);
+            return new FlatBufferPtr<T>(this, resultPtr, dataPtr, dataLength, factory);
         } else {
             const dataArray = heapU8.subarray(dataPtr, dataPtr + dataLength);
             const error = this.decoder.decode(dataArray);
@@ -435,12 +435,15 @@ export class FlatBufferPtr<T extends FlatBufferObject<T>> {
     dataPtr: number | null;
     /// The data length
     dataLength: number;
+    /// The factory
+    factory: () => T;
 
-    public constructor(api: SQLynx, resultPtr: number, dataPtr: number, dataLength: number) {
+    public constructor(api: SQLynx, resultPtr: number, dataPtr: number, dataLength: number, factory: () => T) {
         this.api = api;
         this.resultPtr = resultPtr;
         this.dataPtr = dataPtr;
         this.dataLength = dataLength;
+        this.factory = factory;
     }
     /// Delete the buffer
     public delete() {
@@ -462,11 +465,28 @@ export class FlatBufferPtr<T extends FlatBufferObject<T>> {
     }
     // Get the flatbuffer object
     // C.f. getRootAsAnalyzedScript
-    public read(obj: T): T {
+    public read(obj: T | null = null): T {
+        obj = obj ?? this.factory();
         const bb = new flatbuffers.ByteBuffer(this.data);
         return obj.__init(bb.readInt32(bb.position()) + bb.position(), bb);
     }
 }
+
+export class ScannerError extends Error {
+    public scanned: FlatBufferPtr<proto.ScannedScript>;
+    constructor(scanned: FlatBufferPtr<proto.ScannedScript>, firstError: proto.Error) {
+        super(firstError.message());
+        this.scanned = scanned;
+    }
+}
+export class ParserError extends Error {
+    public parsed: FlatBufferPtr<proto.ParsedScript>;
+    constructor(parsed: FlatBufferPtr<proto.ParsedScript>, firstError: proto.Error) {
+        super(firstError.message());
+        this.parsed = parsed;
+    }
+}
+
 
 export class SQLynxScript {
     public readonly ptr: Ptr<typeof SCRIPT_TYPE>;
@@ -504,34 +524,50 @@ export class SQLynxScript {
     public toString(): string {
         const scriptPtr = this.ptr.assertNotNull();
         const result = this.ptr.api.instanceExports.sqlynx_script_to_string(scriptPtr);
-        const resultBuffer = this.ptr.api.readFlatBufferResult(result);
+        const resultBuffer = this.ptr.api.readFlatBufferResult(result, () => null);
         const text = this.ptr.api.decoder.decode(resultBuffer.data);
         resultBuffer.delete();
         return text;
     }
-    /// Parse the script
-    public scan(): FlatBufferPtr<proto.ScannedScript> {
+    /// Scan the script.
+    /// Use `throwOnError` with caution since you might leak other pointers!
+    public scan(throwOnError: boolean = false): FlatBufferPtr<proto.ScannedScript> {
         const scriptPtr = this.ptr.assertNotNull();
-        const resultPtr = this.ptr.api.instanceExports.sqlynx_script_scan(scriptPtr);
-        return this.ptr.api.readFlatBufferResult<proto.ScannedScript>(resultPtr);
+        const rawResultPtr = this.ptr.api.instanceExports.sqlynx_script_scan(scriptPtr);
+        const resultPtr = this.ptr.api.readFlatBufferResult<proto.ScannedScript>(rawResultPtr, () => new proto.ScannedScript());
+        if (throwOnError) {
+            const script = resultPtr.read();
+            if (script.errorsLength() > 0) {
+                throw new ScannerError(resultPtr, script.errors(0));
+            }
+        }
+        return resultPtr;
     }
-    /// Parse the script
-    public parse(): FlatBufferPtr<proto.ParsedScript> {
+    /// Parse the script.
+    /// Use `throwOnError` with caution since you might leak other pointers!
+    public parse(throwOnError: boolean = false): FlatBufferPtr<proto.ParsedScript> {
         const scriptPtr = this.ptr.assertNotNull();
-        const resultPtr = this.ptr.api.instanceExports.sqlynx_script_parse(scriptPtr);
-        return this.ptr.api.readFlatBufferResult<proto.ParsedScript>(resultPtr);
+        const rawResultPtr = this.ptr.api.instanceExports.sqlynx_script_parse(scriptPtr);
+        const resultPtr = this.ptr.api.readFlatBufferResult<proto.ParsedScript>(rawResultPtr, () => new proto.ParsedScript());
+        if (throwOnError) {
+            const script = resultPtr.read();
+            if (script.errorsLength() > 0) {
+                throw new ParserError(resultPtr, script.errors(0));
+            }
+        }
+        return resultPtr;
     }
     /// Analyze the script (optionally with an external script)
     public analyze(): FlatBufferPtr<proto.AnalyzedScript> {
         const scriptPtr = this.ptr.assertNotNull();
         const resultPtr = this.ptr.api.instanceExports.sqlynx_script_analyze(scriptPtr);
-        return this.ptr.api.readFlatBufferResult<proto.AnalyzedScript>(resultPtr);
+        return this.ptr.api.readFlatBufferResult<proto.AnalyzedScript>(resultPtr, () => new proto.AnalyzedScript());
     }
     /// Pretty print the SQL string
     public format(): string {
         const scriptPtr = this.ptr.assertNotNull();
         const result = this.ptr.api.instanceExports.sqlynx_script_format(scriptPtr);
-        const resultBuffer = this.ptr.api.readFlatBufferResult(result);
+        const resultBuffer = this.ptr.api.readFlatBufferResult(result, () => null);
         const text = this.ptr.api.decoder.decode(resultBuffer.data);
         resultBuffer.delete();
         return text;
@@ -540,13 +576,13 @@ export class SQLynxScript {
     public moveCursor(textOffset: number): FlatBufferPtr<proto.ScriptCursorInfo> {
         const scriptPtr = this.ptr.assertNotNull();
         const resultPtr = this.ptr.api.instanceExports.sqlynx_script_move_cursor(scriptPtr, textOffset);
-        return this.ptr.api.readFlatBufferResult<proto.ScriptCursorInfo>(resultPtr);
+        return this.ptr.api.readFlatBufferResult<proto.ScriptCursorInfo>(resultPtr, () => new proto.ScriptCursorInfo());
     }
     /// Complete at the cursor position
     public completeAtCursor(limit: number): FlatBufferPtr<proto.Completion> {
         const scriptPtr = this.ptr.assertNotNull();
         const resultPtr = this.ptr.api.instanceExports.sqlynx_script_complete_at_cursor(scriptPtr, limit);
-        return this.ptr.api.readFlatBufferResult<proto.Completion>(resultPtr);
+        return this.ptr.api.readFlatBufferResult<proto.Completion>(resultPtr, () => new proto.Completion());
     }
     /// Get the script statistics.
     /// Timings are useless in some browsers today.
@@ -556,7 +592,7 @@ export class SQLynxScript {
     public getStatistics(): FlatBufferPtr<proto.ScriptStatistics> {
         const scriptPtr = this.ptr.assertNotNull();
         const resultPtr = this.ptr.api.instanceExports.sqlynx_script_get_statistics(scriptPtr);
-        return this.ptr.api.readFlatBufferResult<proto.ScriptStatistics>(resultPtr);
+        return this.ptr.api.readFlatBufferResult<proto.ScriptStatistics>(resultPtr, () => new proto.ScriptStatistics());
     }
 }
 
@@ -594,7 +630,7 @@ export class SQLynxCatalogSnapshot {
     }
     /// Read a snapshot
     public read(): SQLynxCatalogSnapshotReader {
-        const reader = this.snapshot.read(new proto.FlatCatalog());
+        const reader = this.snapshot.read();
         return new SQLynxCatalogSnapshotReader(reader, this.nameDictionary);
     }
 }
@@ -627,13 +663,13 @@ export class SQLynxCatalog {
     public describeEntries(): FlatBufferPtr<proto.CatalogEntries> {
         const catalogPtr = this.ptr.assertNotNull();
         const result = this.ptr.api.instanceExports.sqlynx_catalog_describe_entries(catalogPtr);
-        return this.ptr.api.readFlatBufferResult<proto.CatalogEntries>(result);
+        return this.ptr.api.readFlatBufferResult<proto.CatalogEntries>(result, () => new proto.CatalogEntries());
     }
     /// Describe catalog entries
     public describeEntriesOf(id: number): FlatBufferPtr<proto.CatalogEntries> {
         const catalogPtr = this.ptr.assertNotNull();
         const result = this.ptr.api.instanceExports.sqlynx_catalog_describe_entries_of(catalogPtr, id);
-        return this.ptr.api.readFlatBufferResult<proto.CatalogEntries>(result);
+        return this.ptr.api.readFlatBufferResult<proto.CatalogEntries>(result, () => new proto.CatalogEntries());
     }
     /// Export a catalog snapshot
     public createSnapshot(): SQLynxCatalogSnapshot {
@@ -642,7 +678,7 @@ export class SQLynxCatalog {
         }
         const catalogPtr = this.ptr.assertNotNull();
         const result = this.ptr.api.instanceExports.sqlynx_catalog_flatten(catalogPtr);
-        const snapshot = this.ptr.api.readFlatBufferResult<proto.FlatCatalog>(result);
+        const snapshot = this.ptr.api.readFlatBufferResult<proto.FlatCatalog>(result, () => new proto.FlatCatalog());
         this.snapshot = new SQLynxCatalogSnapshot(snapshot);
         return this.snapshot;
     }
@@ -735,7 +771,7 @@ export class SQLynxQueryGraphLayout {
         const ptr = this.ptr.assertNotNull();
         const scriptPtr = script.ptr.assertNotNull();
         const resultPtr = this.ptr.api.instanceExports.sqlynx_query_graph_layout_load_script(ptr, scriptPtr);
-        return this.ptr.api.readFlatBufferResult<proto.QueryGraphLayout>(resultPtr);
+        return this.ptr.api.readFlatBufferResult<proto.QueryGraphLayout>(resultPtr, () => new proto.QueryGraphLayout());
     }
 }
 
