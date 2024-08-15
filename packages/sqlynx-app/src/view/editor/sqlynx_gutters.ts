@@ -64,11 +64,11 @@ const GutterState: StateField<State> = StateField.define<State>({
         };
         const errorLines: Set<number> = new Set();
         if (processor.scriptBuffers.scanned) {
-            const scanned = processor.scriptBuffers.scanned.read(new sqlynx.proto.ScannedScript());
+            const scanned = processor.scriptBuffers.scanned.read();
             collectGutters(scanned, errorLines);
         }
         if (processor.scriptBuffers.parsed) {
-            const parsed = processor.scriptBuffers.parsed.read(new sqlynx.proto.ParsedScript());
+            const parsed = processor.scriptBuffers.parsed.read();
             collectGutters(parsed, errorLines);
         }
         return {

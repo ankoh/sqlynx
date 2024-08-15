@@ -33,19 +33,19 @@ describe('Catalog Tests ', () => {
             ]),
         );
         let descriptionBuffer = catalog.describeEntries();
-        let description = descriptionBuffer.read(new sqlynx.proto.CatalogEntries());
+        let description = descriptionBuffer.read();
         expect(description.entriesLength()).toEqual(1);
         descriptionBuffer.delete();
 
         descriptionBuffer = catalog.describeEntriesOf(1);
-        description = descriptionBuffer.read(new sqlynx.proto.CatalogEntries());
+        description = descriptionBuffer.read();
         expect(description.entriesLength()).toEqual(1);
         descriptionBuffer.delete();
 
         catalog.clear();
 
         descriptionBuffer = catalog.describeEntries();
-        description = descriptionBuffer.read(new sqlynx.proto.CatalogEntries());
+        description = descriptionBuffer.read();
         expect(description.entriesLength()).toEqual(0);
         descriptionBuffer.delete();
     });
@@ -60,7 +60,7 @@ describe('Catalog Tests ', () => {
         script.scan().delete();
         script.parse().delete();
         let analyzedBuffer = script.analyze();
-        let analyzed = analyzedBuffer.read(new sqlynx.proto.AnalyzedScript());
+        let analyzed = analyzedBuffer.read();
         expect(analyzed.tableReferencesLength()).toEqual(1);
 
         // The analyzed script contains an unresolved query_result ref
@@ -94,7 +94,7 @@ describe('Catalog Tests ', () => {
         // Now analyze the script again
         script.parse().delete();
         analyzedBuffer = script.analyze();
-        analyzed = analyzedBuffer.read(new sqlynx.proto.AnalyzedScript());
+        analyzed = analyzedBuffer.read();
         expect(analyzed.tableReferencesLength()).toEqual(1);
         resolvedDatabaseId = tableRef.resolvedCatalogDatabaseId();
         resolvedSchemaId = tableRef.resolvedCatalogSchemaId();

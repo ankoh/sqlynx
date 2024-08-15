@@ -39,7 +39,7 @@ describe('SQLynx TPCH Parsing', () => {
         // Parse the script
         script.scan();
         const parserResult = script.parse();
-        const parsedScript = parserResult.read(new sqlynx.proto.ParsedScript());
+        const parsedScript = parserResult.read();
         expect(parsedScript.statementsLength()).toEqual(8);
         for (let i = 0; i < 8; ++i) {
             expect(parsedScript.statements(0)!.statementType()).toEqual(sqlynx.proto.StatementType.CREATE_TABLE);
@@ -48,7 +48,7 @@ describe('SQLynx TPCH Parsing', () => {
 
         // Analyze the script
         const analyzerResult = script.analyze();
-        const analyzedScript = analyzerResult.read(new sqlynx.proto.AnalyzedScript());
+        const analyzedScript = analyzerResult.read();
         expect(analyzedScript.tablesLength()).toEqual(8);
 
         // Test tables
@@ -168,14 +168,14 @@ limit 100
         // Parse the script
         script.scan();
         const parserResult = script.parse();
-        const parsedScript = parserResult.read(new sqlynx.proto.ParsedScript());
+        const parsedScript = parserResult.read();
         expect(parsedScript.statementsLength()).toEqual(1);
         expect(parsedScript.statements(0)!.statementType()).toEqual(sqlynx.proto.StatementType.SELECT);
         expect(parsedScript.errorsLength()).toEqual(0);
 
         // Analyze the script
         const analyzerResult = script.analyze();
-        const analyzedScript = analyzerResult.read(new sqlynx.proto.AnalyzedScript());
+        const analyzedScript = analyzerResult.read();
         expect(analyzedScript.tablesLength()).toEqual(0);
         expect(analyzedScript.tableReferencesLength()).toBeGreaterThan(0);
         expect(analyzedScript.columnReferencesLength()).toBeGreaterThan(0);

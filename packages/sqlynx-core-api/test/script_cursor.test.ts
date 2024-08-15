@@ -39,8 +39,8 @@ describe('SQLynx Cursor', () => {
         const scannedBuffer = script.scan();
         const parsedBuffer = script.parse();
         const analyzedBuffer = script.analyze();
-        const scanned = scannedBuffer.read(new sqlynx.proto.ScannedScript());
-        const parsed = parsedBuffer.read(new sqlynx.proto.ParsedScript());
+        const scanned = scannedBuffer.read();
+        const parsed = parsedBuffer.read();
         const tmpCursor = new sqlynx.proto.ScriptCursorInfo();
 
         const scannerTokens = scanned.tokens()!;
