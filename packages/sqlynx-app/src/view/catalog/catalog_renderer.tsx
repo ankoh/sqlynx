@@ -165,7 +165,7 @@ function renderEntriesAtLevel(ctx: RenderingContext, level: number, entriesBegin
             const entryFlags = flags[entryId];
             const isPinnedByAnything = (entryFlags & PINNED_BY_ANYTHING) != 0;
             // Quickly skip over irrelevant entries
-            if (isPinnedByAnything == renderPinned) {
+            if (isPinnedByAnything != renderPinned) {
                 continue;
             }
             // Skip overflow entries
@@ -320,6 +320,6 @@ export function renderCatalog(viewModel: CatalogViewModel, outNodes: React.React
         outNodes,
         outEdges,
     };
-    renderEntriesAtLevel(ctx, 0, 0, viewModel.levels[0].entries.length(ctx.snapshot));
+    renderEntriesAtLevel(ctx, 0, 0, viewModel.databaseEntries.entries.length(ctx.snapshot));
     return outNodes;
 }
