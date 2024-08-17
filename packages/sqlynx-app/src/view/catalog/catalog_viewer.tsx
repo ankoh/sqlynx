@@ -1,5 +1,6 @@
 import * as React from 'react';
 import * as styles from './catalog_viewer.module.css'
+import * as sqlynx from '@ankoh/sqlynx-core';
 
 import { renderCatalog } from './catalog_renderer.js';
 import { useCurrentSessionState } from '../../session/current_session.js';
@@ -55,6 +56,7 @@ export function CatalogViewer(props: Props) {
 
     // Maintain a catalog snapshot of the session
     const [viewModel, setViewModel] = React.useState<CatalogViewModel | null>(null);
+    const [viewModelVersion, setViewModelVersion] = React.useState<number>(0);
     React.useEffect(() => {
         const snapshot = sessionState?.connectionCatalog.createSnapshot() ?? null;
         if (snapshot) {
@@ -67,8 +69,10 @@ export function CatalogViewer(props: Props) {
     React.useEffect(() => {
         const script = sessionState?.scripts[ScriptKey.MAIN_SCRIPT] ?? null;
         if (viewModel != null && script != null && script.processed.analyzed != null) {
+            console.log("PIN SCRIPT REFS");
             const analyzed = script.processed.analyzed.read();
             viewModel.pinScriptRefs(analyzed);
+            setViewModelVersion(v => v + 1);
         }
 
     }, [viewModel, sessionState?.scripts[ScriptKey.MAIN_SCRIPT]]);
@@ -151,13 +155,14 @@ export function CatalogViewer(props: Props) {
             renderingWindow.virtual.top,
             renderingWindow.virtual.top + renderingWindow.virtual.height
         );
+        console.log("UPDATE")
         // Render the catalog
         const outNodes: React.ReactElement[] = [];
         const outEdges: React.ReactElement[] = [];
         renderCatalog(viewModel, outNodes, outEdges);
         return [outNodes, outEdges];
 
-    }, [viewModel, renderingWindow]);
+    }, [viewModelVersion, renderingWindow]);
 
     return (
         <div className={styles.root}>

@@ -143,14 +143,15 @@ interface RenderingContext {
 };
 
 /// Render entries and emit ReactElements if they are within the virtual scroll window
-function renderEntriesAtLevel(ctx: RenderingContext, level: number, entriesBegin: number, entriesCount: number) {
-    const settings = ctx.viewModel.levels[level].settings;
-    const entries = ctx.viewModel.levels[level].entries;
-    const scratchEntry = ctx.viewModel.levels[level].scratchEntry;
-    const flags = ctx.viewModel.levels[level].entryFlags;
-    const positionX = ctx.viewModel.levels[level].positionX;
-    const positionsY = ctx.viewModel.levels[level].positionsY;
-    const renderingEpochs = ctx.viewModel.levels[level].renderedInEpoch;
+function renderEntriesAtLevel(ctx: RenderingContext, levelId: number, entriesBegin: number, entriesCount: number) {
+    const level = ctx.viewModel.levels[levelId];
+    const settings = level.settings;
+    const entries = level.entries;
+    const scratchEntry = level.scratchEntry;
+    const flags = level.entryFlags;
+    const positionX = level.positionX;
+    const positionsY = level.positionsY;
+    const renderingEpochs = level.renderedInEpoch;
 
     // Track overflow nodes
     let overflowChildCount = 0;
@@ -159,6 +160,7 @@ function renderEntriesAtLevel(ctx: RenderingContext, level: number, entriesBegin
 
     // First render all pinned entries, then all unpinned
     for (const renderPinned of [true, false]) {
+        overflowChildCount = 0;
         for (let i = 0; i < entriesCount; ++i) {
             // Resolve table
             const entryId = entriesBegin + i;
@@ -175,7 +177,7 @@ function renderEntriesAtLevel(ctx: RenderingContext, level: number, entriesBegin
                 continue;
             }
             // Update rendering path
-            ctx.renderingPath.select(level, entryId);
+            ctx.renderingPath.select(levelId, entryId);
             // Add row gap when first
             ctx.currentWriterY += isFirst ? 0 : settings.rowGap;
             isFirst = false;
@@ -186,14 +188,14 @@ function renderEntriesAtLevel(ctx: RenderingContext, level: number, entriesBegin
             const entry = entries.read(ctx.snapshot, entryId, scratchEntry)!;
             if (entry.childCount() > 0) {
                 ctx.renderingWindow.startRenderingChildren();
-                renderEntriesAtLevel(ctx, level + 1, entry.childBegin(), entry.childCount());
+                renderEntriesAtLevel(ctx, levelId + 1, entry.childBegin(), entry.childCount());
                 const stats = ctx.renderingWindow.stopRenderingChildren();
                 centerInScrollWindow = stats.centerInScrollWindow();
             }
             // Bump writer if the columns didn't already
             ctx.currentWriterY = Math.max(ctx.currentWriterY, thisPosY + settings.nodeHeight);
             // Truncate any stack items that children added
-            ctx.renderingPath.truncate(level);
+            ctx.renderingPath.truncate(levelId);
             // Vertically center the node over all child nodes
             thisPosY = centerInScrollWindow == null ? thisPosY : (centerInScrollWindow - settings.nodeHeight / 2);
             // Break if lower bound is larger than virtual window
@@ -209,7 +211,7 @@ function renderEntriesAtLevel(ctx: RenderingContext, level: number, entriesBegin
             positionsY[entryId] = thisPosY;
             renderingEpochs[entryId] = ctx.renderingEpoch;
             // Output node
-            const thisKey = ctx.renderingPath.getKey(level);
+            const thisKey = ctx.renderingPath.getKey(levelId);
             const thisName = ctx.snapshot.readName(entry.nameId());
             ctx.outNodes.push(
                 <div
@@ -230,7 +232,7 @@ function renderEntriesAtLevel(ctx: RenderingContext, level: number, entriesBegin
                         height: settings.nodeHeight,
                     }}
                     data-snapshot-entry={thisKey}
-                    data-snapshot-level={level.toString()}
+                    data-snapshot-level={levelId.toString()}
                     data-catalog-object={entry.catalogObjectId()}
                 >
                     {thisName}
@@ -240,10 +242,10 @@ function renderEntriesAtLevel(ctx: RenderingContext, level: number, entriesBegin
             if (entry.childCount() > 0) {
                 const fromX = positionX + settings.nodeWidth / 2;
                 const fromY = thisPosY + settings.nodeHeight / 2;
-                const toSettings = ctx.viewModel.levels[level + 1].settings;
-                const toPositionsY = ctx.viewModel.levels[level + 1].positionsY;
-                const toX = ctx.viewModel.levels[level + 1].positionX + toSettings.nodeWidth / 2;
-                const toEpochs = ctx.viewModel.levels[level + 1].renderedInEpoch;
+                const toSettings = ctx.viewModel.levels[levelId + 1].settings;
+                const toPositionsY = ctx.viewModel.levels[levelId + 1].positionsY;
+                const toX = ctx.viewModel.levels[levelId + 1].positionX + toSettings.nodeWidth / 2;
+                const toEpochs = ctx.viewModel.levels[levelId + 1].renderedInEpoch;
 
                 for (let i = 0; i < entry.childCount(); ++i) {
                     const entryId = entry.childBegin() + i;
@@ -283,7 +285,7 @@ function renderEntriesAtLevel(ctx: RenderingContext, level: number, entriesBegin
             ctx.renderingWindow.addNode(thisPosY, settings.nodeHeight);
             positionsY[lastOverflowEntryId] = thisPosY;
             renderingEpochs[lastOverflowEntryId] = ctx.renderingEpoch;
-            const key = ctx.renderingPath.getKeyPrefix(level);
+            const key = ctx.renderingPath.getKeyPrefix(levelId);
             const overflowKey = `${key}:overflow`;
             ctx.outNodes.push(
                 <div
@@ -298,7 +300,7 @@ function renderEntriesAtLevel(ctx: RenderingContext, level: number, entriesBegin
                         height: settings.nodeHeight,
                     }}
                     data-snapshot-entry={key}
-                    data-snapshot-level={level.toString()}
+                    data-snapshot-level={levelId.toString()}
                 >
                     {overflowChildCount}
                 </div>
