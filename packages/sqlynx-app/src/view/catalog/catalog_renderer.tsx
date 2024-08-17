@@ -5,7 +5,7 @@ import * as styles from './catalog_renderer.module.css';
 import { EdgePathBuilder } from './graph_edges.js';
 import { classNames } from '../../utils/classnames.js';
 import { buildEdgePath, selectHorizontalEdgeType } from './graph_edges.js';
-import { CatalogViewModel, CatalogRenderingFlag, PinnedCatalogEntry } from './catalog_view_model.js';
+import { CatalogViewModel, CatalogRenderingFlag, PINNED_BY_ANYTHING } from './catalog_view_model.js';
 
 /// A rendering path.
 /// A cheap way to track the path of parent ids when rendering the catalog.
@@ -142,128 +142,133 @@ interface RenderingContext {
     outEdges: React.ReactElement[];
 };
 
-/// Render unpinned entries and emit ReactElements if they are within the virtual scroll window
-function renderUnpinnedEntries(ctx: RenderingContext, level: number, entriesBegin: number, entriesCount: number, isFirst: boolean) {
+/// Render entries and emit ReactElements if they are within the virtual scroll window
+function renderEntriesAtLevel(ctx: RenderingContext, level: number, entriesBegin: number, entriesCount: number) {
     const settings = ctx.viewModel.levels[level].settings;
     const entries = ctx.viewModel.levels[level].entries;
     const scratchEntry = ctx.viewModel.levels[level].scratchEntry;
     const flags = ctx.viewModel.levels[level].entryFlags;
     const positionX = ctx.viewModel.levels[level].positionX;
     const positionsY = ctx.viewModel.levels[level].positionsY;
-    const renderingEpochs = ctx.viewModel.levels[level].renderingEpochs;
+    const renderingEpochs = ctx.viewModel.levels[level].renderedInEpoch;
 
     // Track overflow nodes
     let overflowChildCount = 0;
     let lastOverflowEntryId = 0;
+    let isFirst = false;
 
-    for (let i = 0; i < entriesCount; ++i) {
-        // Resolve table
-        const entryId = entriesBegin + i;
-        const entry = entries.read(ctx.snapshot, entryId, scratchEntry)!;
-        const entryFlags = flags[entryId];
-        // Skip pinned entries
-        if ((entryFlags & CatalogRenderingFlag.PINNED) != 0) {
-            continue;
-        }
-        // Skip overflow entries
-        if ((entryFlags & CatalogRenderingFlag.OVERFLOW) != 0) {
-            ++overflowChildCount;
-            lastOverflowEntryId = entryId;
-            continue;
-        }
-        // Update level stack
-        ctx.renderingPath.select(level, entryId);
-        // Add row gap when first
-        ctx.currentWriterY += isFirst ? 0 : settings.rowGap;
-        isFirst = false;
-        // Remember own position
-        let thisPosY = ctx.currentWriterY;
-        // Render children
-        let centerInScrollWindow: number | null = null;
-        if (entry.childCount() > 0) {
-            ctx.renderingWindow.startRenderingChildren();
-            renderUnpinnedEntries(ctx, level + 1, entry.childBegin(), entry.childCount(), true);
-            const stats = ctx.renderingWindow.stopRenderingChildren();
-            centerInScrollWindow = stats.centerInScrollWindow();
-        }
-        // Bump writer if the columns didn't already
-        ctx.currentWriterY = Math.max(ctx.currentWriterY, thisPosY + settings.nodeHeight);
-        // Truncate any stack items that children added
-        ctx.renderingPath.truncate(level);
-        // Vertically center the node over all child nodes
-        thisPosY = centerInScrollWindow == null ? thisPosY : (centerInScrollWindow - settings.nodeHeight / 2);
-        // Break if lower bound is larger than virtual window
-        if (thisPosY >= ctx.renderingWindow.virtualScrollWindowEnd) {
-            break;
-        }
-        // Skip if upper bound is smaller than virtual window
-        if (ctx.currentWriterY < ctx.renderingWindow.virtualScrollWindowBegin) {
-            continue;
-        }
-        // Remember the node position
-        ctx.renderingWindow.addNode(thisPosY, settings.nodeHeight);
-        positionsY[entryId] = thisPosY;
-        renderingEpochs[entryId] = ctx.renderingEpoch;
-        // Output node
-        const thisKey = ctx.renderingPath.getKey(level);
-        const thisName = ctx.snapshot.readName(entry.nameId());
-        ctx.outNodes.push(
-            <div
-                key={thisKey}
+    // First render all pinned entries, then all unpinned
+    for (const renderPinned of [true, false]) {
+        for (let i = 0; i < entriesCount; ++i) {
+            // Resolve table
+            const entryId = entriesBegin + i;
+            const entryFlags = flags[entryId];
+            const isPinnedByAnything = (entryFlags & PINNED_BY_ANYTHING) != 0;
+            // Quickly skip over irrelevant entries
+            if (isPinnedByAnything == renderPinned) {
+                continue;
+            }
+            // Skip overflow entries
+            if ((entryFlags & CatalogRenderingFlag.OVERFLOW) != 0) {
+                ++overflowChildCount;
+                lastOverflowEntryId = entryId;
+                continue;
+            }
+            // Update rendering path
+            ctx.renderingPath.select(level, entryId);
+            // Add row gap when first
+            ctx.currentWriterY += isFirst ? 0 : settings.rowGap;
+            isFirst = false;
+            // Remember own position
+            let thisPosY = ctx.currentWriterY;
+            // Render children
+            let centerInScrollWindow: number | null = null;
+            const entry = entries.read(ctx.snapshot, entryId, scratchEntry)!;
+            if (entry.childCount() > 0) {
+                ctx.renderingWindow.startRenderingChildren();
+                renderEntriesAtLevel(ctx, level + 1, entry.childBegin(), entry.childCount());
+                const stats = ctx.renderingWindow.stopRenderingChildren();
+                centerInScrollWindow = stats.centerInScrollWindow();
+            }
+            // Bump writer if the columns didn't already
+            ctx.currentWriterY = Math.max(ctx.currentWriterY, thisPosY + settings.nodeHeight);
+            // Truncate any stack items that children added
+            ctx.renderingPath.truncate(level);
+            // Vertically center the node over all child nodes
+            thisPosY = centerInScrollWindow == null ? thisPosY : (centerInScrollWindow - settings.nodeHeight / 2);
+            // Break if lower bound is larger than virtual window
+            if (thisPosY >= ctx.renderingWindow.virtualScrollWindowEnd) {
+                break;
+            }
+            // Skip if upper bound is smaller than virtual window
+            if (ctx.currentWriterY < ctx.renderingWindow.virtualScrollWindowBegin) {
+                continue;
+            }
+            // Remember the node position
+            ctx.renderingWindow.addNode(thisPosY, settings.nodeHeight);
+            positionsY[entryId] = thisPosY;
+            renderingEpochs[entryId] = ctx.renderingEpoch;
+            // Output node
+            const thisKey = ctx.renderingPath.getKey(level);
+            const thisName = ctx.snapshot.readName(entry.nameId());
+            ctx.outNodes.push(
+                <div
+                    key={thisKey}
 
-                className={classNames(styles.node_default, {
-                    [styles.node_focus_script_table_refs]: (entryFlags & CatalogRenderingFlag.PINNED_BY_SCRIPT_TABLE_REFS) != 0,
-                    [styles.node_focus_script_column_refs]: (entryFlags & CatalogRenderingFlag.PINNED_BY_SCRIPT_COLUMN_REFS) != 0,
-                    [styles.node_focus_script_cursor]: (entryFlags & CatalogRenderingFlag.PINNED_BY_SCRIPT_CURSOR) != 0,
-                    [styles.node_focus_direct]: (entryFlags & CatalogRenderingFlag.PRIMARY_FOCUS) != 0,
-                    [styles.node_pinned]: (entryFlags & CatalogRenderingFlag.PINNED) != 0,
-                })}
-                style={{
-                    position: 'absolute',
-                    top: thisPosY,
-                    left: positionX,
-                    width: settings.nodeWidth,
-                    height: settings.nodeHeight,
-                }}
-                data-snapshot-entry={thisKey}
-                data-snapshot-level={level.toString()}
-                data-catalog-object={entry.catalogObjectId()}
-            >
-                {thisName}
-            </div>
-        );
-        // Output edge
-        if (entry.childCount() > 0) {
-            const fromX = positionX + settings.nodeWidth / 2;
-            const fromY = thisPosY + settings.nodeHeight / 2;
-            const toSettings = ctx.viewModel.levels[level + 1].settings;
-            const toPositionsY = ctx.viewModel.levels[level + 1].positionsY;
-            const toX = ctx.viewModel.levels[level + 1].positionX + toSettings.nodeWidth / 2;
-            const toEpochs = ctx.viewModel.levels[level + 1].renderingEpochs;
+                    className={classNames(styles.node_default, {
+                        [styles.node_focus_script_table_refs]: (entryFlags & CatalogRenderingFlag.PINNED_BY_SCRIPT_TABLE_REFS) != 0,
+                        [styles.node_focus_script_column_refs]: (entryFlags & CatalogRenderingFlag.PINNED_BY_SCRIPT_COLUMN_REFS) != 0,
+                        [styles.node_focus_script_cursor]: (entryFlags & CatalogRenderingFlag.PINNED_BY_SCRIPT_CURSOR) != 0,
+                        [styles.node_focus_direct]: (entryFlags & CatalogRenderingFlag.PRIMARY_FOCUS) != 0,
+                        [styles.node_pinned]: (entryFlags & PINNED_BY_ANYTHING) != 0,
+                    })}
+                    style={{
+                        position: 'absolute',
+                        top: thisPosY,
+                        left: positionX,
+                        width: settings.nodeWidth,
+                        height: settings.nodeHeight,
+                    }}
+                    data-snapshot-entry={thisKey}
+                    data-snapshot-level={level.toString()}
+                    data-catalog-object={entry.catalogObjectId()}
+                >
+                    {thisName}
+                </div>
+            );
+            // Draw edges to all children
+            if (entry.childCount() > 0) {
+                const fromX = positionX + settings.nodeWidth / 2;
+                const fromY = thisPosY + settings.nodeHeight / 2;
+                const toSettings = ctx.viewModel.levels[level + 1].settings;
+                const toPositionsY = ctx.viewModel.levels[level + 1].positionsY;
+                const toX = ctx.viewModel.levels[level + 1].positionX + toSettings.nodeWidth / 2;
+                const toEpochs = ctx.viewModel.levels[level + 1].renderedInEpoch;
 
-            for (let i = 0; i < entry.childCount(); ++i) {
-                const entryId = entry.childBegin() + i;
-                // Don't draw an edge to nodes that were not rendered this epoch
-                if (toEpochs[entryId] != ctx.renderingEpoch) {
-                    continue;;
+                for (let i = 0; i < entry.childCount(); ++i) {
+                    const entryId = entry.childBegin() + i;
+                    // Don't draw an edge to nodes that were not rendered this epoch
+                    if (toEpochs[entryId] != ctx.renderingEpoch) {
+                        continue;;
+                    }
+                    const toY = toPositionsY[entryId] + toSettings.nodeHeight / 2;
+                    const edgeType = selectHorizontalEdgeType(fromX, fromY, toX, toY);
+                    const edgePath = buildEdgePath(ctx.edgeBuilder, edgeType, fromX, fromY, toX, toY, settings.nodeWidth, settings.nodeHeight, toSettings.nodeWidth, toSettings.nodeHeight, 10, 10, 4);
+                    const edgeKey = `${thisKey}:${i}`;
+                    ctx.outEdges.push(
+                        <path
+                            key={edgeKey}
+
+                            d={edgePath}
+                            strokeWidth="2px"
+                            stroke="currentcolor"
+                            fill="transparent"
+                            pointerEvents="stroke"
+                            data-edge={edgeKey}
+                        />,
+
+                    );
                 }
-                const toY = toPositionsY[entryId] + toSettings.nodeHeight / 2;
-                const edgeType = selectHorizontalEdgeType(fromX, fromY, toX, toY);
-                const edgePath = buildEdgePath(ctx.edgeBuilder, edgeType, fromX, fromY, toX, toY, settings.nodeWidth, settings.nodeHeight, toSettings.nodeWidth, toSettings.nodeHeight, 10, 10, 4);
-                const edgeKey = `${thisKey}:${i}`;
-                ctx.outEdges.push(
-                    <path
-                        key={edgeKey}
-
-                        d={edgePath}
-                        strokeWidth="2px"
-                        stroke="currentcolor"
-                        fill="transparent"
-                        pointerEvents="stroke"
-                        data-edge={edgeKey}
-                    />,
-
-                );
             }
         }
     }
@@ -302,131 +307,11 @@ function renderUnpinnedEntries(ctx: RenderingContext, level: number, entriesBegi
     }
 }
 
-/// A function to render entries
-function renderPinnedEntries(ctx: RenderingContext, level: number, pinnedEntries: PinnedCatalogEntry[], isFirst: boolean) {
-    const settings = ctx.viewModel.levels[level].settings;
-    const entries = ctx.viewModel.levels[level].entries;
-    const scratchEntry = ctx.viewModel.levels[level].scratchEntry;
-    const flags = ctx.viewModel.levels[level].entryFlags;
-    const positionX = ctx.viewModel.levels[level].positionX;
-    const positionsY = ctx.viewModel.levels[level].positionsY;
-    const renderingEpochs = ctx.viewModel.levels[level].renderingEpochs;
-
-    for (const pinnedEntry of pinnedEntries) {
-        // Resolve table
-        const entryId = pinnedEntry.catalogEntryId;
-        const entry = entries.read(ctx.snapshot, pinnedEntry.catalogEntryId, scratchEntry)!;
-        const entryFlags = flags[entryId];
-        // Update level stack
-        ctx.renderingPath.select(level, entryId);
-        // Add row gap when first
-        ctx.currentWriterY += isFirst ? 0 : settings.rowGap;
-        isFirst = false;
-        // Remember own position
-        let thisPosY = ctx.currentWriterY;
-        // Add a new scrope for the virtual boundaries
-        ctx.renderingWindow.startRenderingChildren();
-        // First render all pinned children
-        let childIsFirst = true;
-        if (pinnedEntry.pinnedChildren.length > 0) {
-            renderPinnedEntries(ctx, level + 1, pinnedEntry.pinnedChildren, childIsFirst);
-            childIsFirst = false;
-        }
-        // Then render all unpinned entries
-        if (entry.childCount() > 0) {
-            renderUnpinnedEntries(ctx, level + 1, entry.childBegin(), entry.childCount(), childIsFirst);
-        }
-        // Get the child statistics
-        const childStatistics = ctx.renderingWindow.stopRenderingChildren();
-        // Bump writer if the columns didn't already
-        ctx.currentWriterY = Math.max(ctx.currentWriterY, thisPosY + settings.nodeHeight);
-        // Truncate the rendering path
-        ctx.renderingPath.truncate(level);
-        // Vertically center the node over all child nodes
-        const centerInScrollWindow = childStatistics.centerInScrollWindow();
-        thisPosY = centerInScrollWindow == null ? thisPosY : (centerInScrollWindow - settings.nodeHeight / 2);
-        // Break if lower bound is larger than virtual window
-        if (thisPosY >= ctx.renderingWindow.virtualScrollWindowEnd) {
-            break;
-        }
-        // Skip if upper bound is smaller than virtual window
-        if (ctx.currentWriterY < ctx.renderingWindow.virtualScrollWindowBegin) {
-            continue;
-        }
-        // Remember rendered position
-        ctx.renderingWindow.addNode(thisPosY, settings.nodeHeight);
-        positionsY[entryId] = thisPosY;
-        renderingEpochs[entryId] = ctx.renderingEpoch;
-        // Output column node
-        const thisKey = ctx.renderingPath.getKey(level);
-        const thisName = ctx.snapshot.readName(entry.nameId());
-        ctx.outNodes.push(
-            <div
-                key={thisKey}
-
-                className={classNames(styles.node_default, {
-                    [styles.node_focus_script_table_refs]: (entryFlags & CatalogRenderingFlag.PINNED_BY_SCRIPT_TABLE_REFS) != 0,
-                    [styles.node_focus_script_column_refs]: (entryFlags & CatalogRenderingFlag.PINNED_BY_SCRIPT_COLUMN_REFS) != 0,
-                    [styles.node_focus_script_cursor]: (entryFlags & CatalogRenderingFlag.PINNED_BY_SCRIPT_CURSOR) != 0,
-                    [styles.node_focus_direct]: (entryFlags & CatalogRenderingFlag.PRIMARY_FOCUS) != 0,
-                    [styles.node_pinned]: (entryFlags & CatalogRenderingFlag.PINNED) != 0,
-                })}
-                style={{
-                    position: 'absolute',
-                    top: thisPosY,
-                    left: positionX,
-                    width: settings.nodeWidth,
-                    height: settings.nodeHeight,
-                }}
-                data-snapshot-entry={thisKey}
-                data-snapshot-level={level.toString()}
-            >
-                {thisName}
-            </div>
-        );
-        // Output edge
-        if (entry.childCount() > 0) {
-            const fromX = positionX + settings.nodeWidth / 2;
-            const fromY = thisPosY + settings.nodeHeight / 2;
-            const toSettings = ctx.viewModel.levels[level + 1].settings;
-            const toPositionsY = ctx.viewModel.levels[level + 1].positionsY;
-            const toX = ctx.viewModel.levels[level + 1].positionX + toSettings.nodeWidth / 2;
-            const toEpochs = ctx.viewModel.levels[level + 1].renderingEpochs;
-
-            for (let i = 0; i < entry.childCount(); ++i) {
-                const entryId = entry.childBegin() + i;
-                // Don't draw an edge to nodes that were not rendered this epoch
-                if (toEpochs[entryId] != ctx.renderingEpoch) {
-                    continue;
-                }
-                const toY = toPositionsY[entryId] + toSettings.nodeHeight / 2;
-                const edgeType = selectHorizontalEdgeType(fromX, fromY, toX, toY);
-                const edgePath = buildEdgePath(ctx.edgeBuilder, edgeType, fromX, fromY, toX, toY, settings.nodeWidth, settings.nodeHeight, toSettings.nodeWidth, toSettings.nodeHeight, 10, 10, 4);
-                const edgeKey = `${thisKey}:${i}`;
-                ctx.outEdges.push(
-                    <path
-                        key={edgeKey}
-
-                        d={edgePath}
-                        strokeWidth="2px"
-                        stroke="currentcolor"
-                        fill="transparent"
-                        pointerEvents="stroke"
-                        data-edge={edgeKey}
-                    />,
-
-                );
-            }
-        }
-    }
-}
-
 /// A function to render a catalog
 export function renderCatalog(viewModel: CatalogViewModel, outNodes: React.ReactElement[], outEdges: React.ReactElement[]) {
-    const snap = viewModel.snapshot.read();
     const ctx: RenderingContext = {
         viewModel,
-        snapshot: snap,
+        snapshot: viewModel.snapshot.read(),
         renderingEpoch: viewModel.nextRenderingEpoch++,
         currentWriterY: 0,
         renderingPath: new RenderingPath(),
@@ -435,11 +320,6 @@ export function renderCatalog(viewModel: CatalogViewModel, outNodes: React.React
         outNodes,
         outEdges,
     };
-    // First, render the pinned databases
-    let isFirstChild = true;
-    renderPinnedEntries(ctx, 0, viewModel.pinnedEntriesAtRoot, true);
-    isFirstChild = viewModel.pinnedDatabasesMap.size > 0;
-    // Then render the unpinned databases
-    renderUnpinnedEntries(ctx, 0, 0, viewModel.levels[0].entries.length(snap), isFirstChild);
+    renderEntriesAtLevel(ctx, 0, 0, viewModel.levels[0].entries.length(ctx.snapshot));
     return outNodes;
 }
