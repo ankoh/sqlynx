@@ -40,12 +40,18 @@ export interface CatalogRenderingSettings {
 export enum CatalogRenderingFlag {
     DEFAULT = 0,
     OVERFLOW = 0b1,
-    PINNED = 0b10,
-    PINNED_BY_SCRIPT_TABLE_REFS = 0b100,
-    PINNED_BY_SCRIPT_COLUMN_REFS = 0b1000,
-    PINNED_BY_SCRIPT_CURSOR = 0b10000,
-    PRIMARY_FOCUS = 0b100000,
+    PINNED_BY_SCRIPT_TABLE_REFS = 0b10,
+    PINNED_BY_SCRIPT_COLUMN_REFS = 0b100,
+    PINNED_BY_SCRIPT_CURSOR = 0b1000,
+    PRIMARY_FOCUS = 0b10000,
 }
+
+/// Pinned by anything
+export const PINNED_BY_ANYTHING =
+    CatalogRenderingFlag.PINNED_BY_SCRIPT_TABLE_REFS |
+    CatalogRenderingFlag.PINNED_BY_SCRIPT_COLUMN_REFS |
+    CatalogRenderingFlag.PINNED_BY_SCRIPT_CURSOR;
+
 
 /// A span of catalog entries
 interface CatalogEntrySpan {
@@ -53,39 +59,28 @@ interface CatalogEntrySpan {
     length(snap: sqlynx.SQLynxCatalogSnapshotReader): number;
 }
 
-/// A pinned catalog entry
-export class PinnedCatalogEntry implements SortedElement {
-    /// The sort key
-    sortKey: number;
+class PendingLayoutUpdates {
+    root: boolean;
+    databases: Set<number>;
+    schemas: Set<number>;
+    tables: Set<number>;
+    columns: Set<number>;
 
-    /// The level id
-    levelId: number;
-
-    /// The object id
-    objectId: bigint;
-    /// The entry id in the catalog
-    catalogEntryId: number;
-    /// The parent object id
-    parentObjectId: bigint | null;
-    /// The entry id of the parent in the catalog
-    parentCatalogEntryId: number | null;
-
-    /// Was pinned by a user focus?
-    pinnedInEpoch: bigint;
-    /// The pinned children, ordered by catalog entry id
-    pinnedChildren: PinnedCatalogEntry[];
-
-    constructor(levelId: number, objectId: bigint, catalogEntryId: number, parentObjectId: bigint | null = null, parentCatalogEntryId: number | null = null) {
-        this.sortKey = catalogEntryId;
-        this.levelId = levelId;
-        this.objectId = objectId;
-        this.catalogEntryId = catalogEntryId;
-        this.parentObjectId = parentObjectId;
-        this.parentCatalogEntryId = parentCatalogEntryId;
-        this.pinnedInEpoch = 0n;
-        this.pinnedChildren = [];
+    constructor() {
+        this.root = false;
+        this.databases = new Set();
+        this.schemas = new Set();
+        this.tables = new Set();
+        this.columns = new Set();
     }
 }
+
+interface LayoutContext {
+    /// The snapshot
+    snapshot: sqlynx.SQLynxCatalogSnapshotReader;
+    /// The current writer
+    currentWriterY: number;
+};
 
 interface CatalogLevelViewModel {
     /// The rendering settings
@@ -96,26 +91,19 @@ interface CatalogLevelViewModel {
     entryFlags: Uint8Array;
     /// The subtree heights
     subtreeHeights: Float32Array;
-    /// The overflow child counts
-    overflowChildCounts: Uint32Array;
     /// The x offset
     positionX: number;
     /// The y positions as written during rendering (if visible)
     positionsY: Float32Array;
     /// The epochs in which this node was rendered
-    renderingEpochs: Uint32Array;
+    renderedInEpoch: Uint32Array;
+    /// The pinned entries
+    pinnedEntries: Set<number>;
+    /// The epochs in which this node was pinned
+    pinnedInEpoch: Uint32Array;
     /// The scratch catalog entry
     scratchEntry: sqlynx.proto.FlatCatalogEntry;
 }
-
-interface RenderingContext {
-    /// The snapshot
-    snapshot: sqlynx.SQLynxCatalogSnapshotReader;
-    /// The current writer
-    currentWriterY: number;
-    /// The number of overflowing children
-    overflowChildCount: number
-};
 
 /// A catalog rendering state
 export class CatalogViewModel {
@@ -134,29 +122,18 @@ export class CatalogViewModel {
     /// The column entries
     columnEntries: CatalogLevelViewModel;
 
-    /// The ordered pinned entries at the root;
-    pinnedEntriesAtRoot: PinnedCatalogEntry[];
-    /// The number of overflowing entries at the root level
-    overflowingEntriesAtRoot: number;
-
     /// The next rendering epoch
     nextRenderingEpoch: number;
     /// The pin epoch counter
-    nextPinEpoch: bigint;
-
-    /// The pinned databases
-    pinnedDatabasesMap: Map<number, PinnedCatalogEntry>;
-    /// The pinned schemas
-    pinnedSchemasMap: Map<number, PinnedCatalogEntry>;
-    /// The pinned tables
-    pinnedTablesMap: Map<bigint, PinnedCatalogEntry>;
-    /// The pinned columns
-    pinnedTableColumnsMap: Map<bigint, PinnedCatalogEntry>;
+    nextPinEpoch: number;
 
     /// The total height of all nodes
     totalHeight: number;
     /// The total width of all nodes
     totalWidth: number;
+
+    /// The pending layout updates
+    pendingLayoutUpdates: PendingLayoutUpdates;
 
     /// The begin of the scroll window
     scrollBegin: number;
@@ -178,11 +155,7 @@ export class CatalogViewModel {
         this.snapshot = snapshot;
         this.settings = settings;
         this.nextRenderingEpoch = 100;
-        this.nextPinEpoch = 1n;
-        this.pinnedDatabasesMap = new Map();
-        this.pinnedSchemasMap = new Map();
-        this.pinnedTablesMap = new Map();
-        this.pinnedTableColumnsMap = new Map();
+        this.nextPinEpoch = 1;
         const snap = snapshot.read();
         this.databaseEntries = {
             settings: settings.levels.databases,
@@ -192,11 +165,12 @@ export class CatalogViewModel {
             },
             entryFlags: new Uint8Array(snap.catalogReader.databasesLength()),
             subtreeHeights: new Float32Array(snap.catalogReader.databasesLength()),
-            overflowChildCounts: new Uint32Array(snap.catalogReader.databasesLength()),
             positionX: 0,
             scratchEntry: new sqlynx.proto.FlatCatalogEntry(),
             positionsY: new Float32Array(snap.catalogReader.databasesLength()),
-            renderingEpochs: new Uint32Array(snap.catalogReader.databasesLength()),
+            renderedInEpoch: new Uint32Array(snap.catalogReader.databasesLength()),
+            pinnedEntries: new Set(),
+            pinnedInEpoch: new Uint32Array(snap.catalogReader.databasesLength()),
         };
         this.schemaEntries = {
             settings: settings.levels.schemas,
@@ -206,11 +180,12 @@ export class CatalogViewModel {
             },
             entryFlags: new Uint8Array(snap.catalogReader.schemasLength()),
             subtreeHeights: new Float32Array(snap.catalogReader.schemasLength()),
-            overflowChildCounts: new Uint32Array(snap.catalogReader.schemasLength()),
             positionX: 0,
             scratchEntry: new sqlynx.proto.FlatCatalogEntry(),
             positionsY: new Float32Array(snap.catalogReader.schemasLength()),
-            renderingEpochs: new Uint32Array(snap.catalogReader.schemasLength()),
+            renderedInEpoch: new Uint32Array(snap.catalogReader.schemasLength()),
+            pinnedEntries: new Set(),
+            pinnedInEpoch: new Uint32Array(snap.catalogReader.schemasLength()),
         };
         this.tableEntries = {
             settings: settings.levels.tables,
@@ -220,11 +195,12 @@ export class CatalogViewModel {
             },
             entryFlags: new Uint8Array(snap.catalogReader.tablesLength()),
             subtreeHeights: new Float32Array(snap.catalogReader.tablesLength()),
-            overflowChildCounts: new Uint32Array(snap.catalogReader.tablesLength()),
             positionX: 0,
             scratchEntry: new sqlynx.proto.FlatCatalogEntry(),
             positionsY: new Float32Array(snap.catalogReader.tablesLength()),
-            renderingEpochs: new Uint32Array(snap.catalogReader.tablesLength()),
+            renderedInEpoch: new Uint32Array(snap.catalogReader.tablesLength()),
+            pinnedInEpoch: new Uint32Array(snap.catalogReader.tablesLength()),
+            pinnedEntries: new Set(),
         };
         this.columnEntries = {
             settings: settings.levels.columns,
@@ -234,22 +210,20 @@ export class CatalogViewModel {
             },
             entryFlags: new Uint8Array(snap.catalogReader.columnsLength()),
             subtreeHeights: new Float32Array(snap.catalogReader.columnsLength()),
-            overflowChildCounts: new Uint32Array(snap.catalogReader.columnsLength()),
             positionX: 0,
             scratchEntry: new sqlynx.proto.FlatCatalogEntry(),
             positionsY: new Float32Array(snap.catalogReader.columnsLength()),
-            renderingEpochs: new Uint32Array(snap.catalogReader.columnsLength()),
+            renderedInEpoch: new Uint32Array(snap.catalogReader.columnsLength()),
+            pinnedInEpoch: new Uint32Array(snap.catalogReader.columnsLength()),
+            pinnedEntries: new Set(),
         };
         this.schemaEntries.positionX = settings.levels.databases.nodeWidth + settings.levels.databases.columnGap;
         this.tableEntries.positionX = this.schemaEntries.positionX + settings.levels.schemas.nodeWidth + settings.levels.schemas.columnGap;
         this.columnEntries.positionX = this.tableEntries.positionX + settings.levels.tables.nodeWidth + settings.levels.tables.columnGap;
 
-
-        this.pinnedEntriesAtRoot = [];
-        this.overflowingEntriesAtRoot = 0;
-
         this.totalWidth = 0;
         this.totalHeight = 0;
+        this.pendingLayoutUpdates = new PendingLayoutUpdates();
 
         this.scrollBegin = 0;
         this.scrollEnd = 200;
@@ -269,24 +243,36 @@ export class CatalogViewModel {
         return [this.databaseEntries, this.schemaEntries, this.tableEntries, this.columnEntries];
     }
 
+    /// Update the scroll window
+    updateWindow(begin: number, end: number, virtualBegin: number, virtualEnd: number) {
+        this.scrollBegin = begin;
+        this.scrollEnd = end;
+        this.virtualScrollBegin = virtualBegin;
+        this.virtualScrollEnd = virtualEnd;
+    }
+
     /// Layout entries at a level
-    static layoutLevelEntries(ctx: RenderingContext, levels: CatalogLevelViewModel[], levelId: number, entriesBegin: number, entriesCount: number) {
+    static layoutEntriesAtLevel(ctx: LayoutContext, levels: CatalogLevelViewModel[], levelId: number, entriesBegin: number, entriesCount: number) {
         const level = levels[levelId];
         let unpinnedChildCount = 0;
         let overflowChildCount = 0;
         let isFirstEntry = true;
+
+        // Don't overflow children if we have maxUnPinnedChildren + 1 children.
+        // Adding the overflow node to reference a single overflow does not make sense.
+        const skipOverflow = entriesCount <= (level.settings.maxUnpinnedChildren + 1);
 
         for (let i = 0; i < entriesCount; ++i) {
             const entryId = entriesBegin + i;
             const entry = level.entries.read(ctx.snapshot, entryId, level.scratchEntry)!;
             const entryFlags = level.entryFlags[entryId];
 
-            // PINNED and DEFAULT entries have the same height, so it doesn't matter that we're accounting for them here in the "wrong" order.
+            // Pinned and unpinned entries have the same height, so it doesn't matter that we're accounting for them here in the "wrong" order.
 
             // Skip the node if the node is UNPINNED and the child count hit the limit
-            if ((entryFlags & CatalogRenderingFlag.PINNED) == 0) {
+            if ((entryFlags & PINNED_BY_ANYTHING) == 0) {
                 ++unpinnedChildCount;
-                if (unpinnedChildCount > level.settings.maxUnpinnedChildren) {
+                if (unpinnedChildCount > level.settings.maxUnpinnedChildren && !skipOverflow) {
                     ++overflowChildCount;
                     level.entryFlags[entryId] |= CatalogRenderingFlag.OVERFLOW;
                     continue;
@@ -303,7 +289,7 @@ export class CatalogViewModel {
             let thisPosY = ctx.currentWriterY;
             // Render child columns
             if (entry.childCount() > 0) {
-                this.layoutLevelEntries(ctx, levels, levelId + 1, entry.childBegin(), entry.childCount());
+                this.layoutEntriesAtLevel(ctx, levels, levelId + 1, entry.childBegin(), entry.childCount());
             }
             // Bump writer if the columns didn't already
             ctx.currentWriterY = Math.max(ctx.currentWriterY, thisPosY + level.settings.nodeHeight);
@@ -312,13 +298,7 @@ export class CatalogViewModel {
             // If we would, we couldn't update this easily from the children.
             // (We would have to know if our parent is the child)
             level.subtreeHeights[entryId] = ctx.currentWriterY - thisPosY;
-            // Store the number of overflowing children.
-            // Remembering the number of overflowing children allows us to update more easily after pinning/unpinning
-            level.overflowChildCounts[entryId] = ctx.overflowChildCount;
         }
-
-        // Store overflow child count
-        ctx.overflowChildCount = overflowChildCount;
 
         // Add space for the overflow node
         if (overflowChildCount > 0) {
@@ -331,226 +311,158 @@ export class CatalogViewModel {
     layoutEntries() {
         const snap = this.snapshot.read();
         const databaseCount = this.databaseEntries.entries.length(snap);
-        const ctx: RenderingContext = {
+        const ctx: LayoutContext = {
             snapshot: snap,
             currentWriterY: 0,
-            overflowChildCount: 0,
         };
-        CatalogViewModel.layoutLevelEntries(ctx, this.levels, 0, 0, databaseCount);
-        this.overflowingEntriesAtRoot = ctx.overflowChildCount;
+        CatalogViewModel.layoutEntriesAtLevel(ctx, this.levels, 0, 0, databaseCount);
         this.totalHeight = ctx.currentWriterY;
         this.totalWidth = this.columnEntries.positionX + this.settings.levels.columns.nodeWidth + this.settings.levels.columns.columnGap;
     }
 
-    /// Update the scroll window
-    updateWindow(begin: number, end: number, virtualBegin: number, virtualEnd: number) {
-        this.scrollBegin = begin;
-        this.scrollEnd = end;
-        this.virtualScrollBegin = virtualBegin;
-        this.virtualScrollEnd = virtualEnd;
+    /// Flush all pending layout updates
+    layoutPendingEntries() {
+        // XXX Shortcut
+        this.layoutEntries();
     }
 
     /// Pin an element
-    ///
-    /// When pinning, we're getting a column key prefix with up to 4 components.
-    /// That means we might pin:
-    ///  - A database
-    ///  - A database and a schema
-    ///  - A database, a schema and a table
-    ///  - A database, a schema, a table and a column
-    ///
-    /// We first have to collect all catalog entries for every pinned level.
-    /// Note that some, maybe even all, of the the entries might already be pinned or at least visible.
-    ///
-    /// Once we have collected all entries, we have to check which of the elements were previously visible.
-    /// An element was not visible if it was marked as OVERFLOW.
-    ///  - If an element IS NOT marked with OVERFLOW, we know it was already visible.
-    ///    Already visible elements had their children laid out, which means that PINNING such an element is not adding NEW children apart from pinned ones.
-    ///    This means that we do NOT need to layout the entire node subtree but are fine with only updating the parent subtree height, great!
-    ///  - If an element IS marked with OVERFLOW, it was hidden before.
-    ///    This means that we have to recursively layout all the children.
-    ///
-    /// Laying out a node is a recursive operation that will lay out all descending child nodes.
-    /// This means that we only have to find the FIRST component in the key path that was marked with OVERFLOW.
-    /// That node we then layout after explicitly marking all descending nodes in the path as pinned.
     pin(catalog: sqlynx.proto.FlatCatalog,
-        epoch: bigint,
+        epoch: number,
         flags: number,
         dbId: number,
         schemaId: number | null,
         tableId: bigint | null,
         columnId: number | null,
     ) {
-        // First collect (or create) all catalog entries
-        let db: PinnedCatalogEntry | null = null;
-        let schema: PinnedCatalogEntry | null = null;
-        let table: PinnedCatalogEntry | null = null;
-        let column: PinnedCatalogEntry | null = null;
+        // Remember catalog entry ids
+        let catalogDbId: number | null = null;
+        let catalogSchemaId: number | null = null;
+        let catalogTableId: number | null = null;
+        let catalogColumnId: number | null = null;
 
-        // Remember catalog entries that were previously visible and the first that was not
-        let pinnedThatWereVisible: PinnedCatalogEntry[] = [];
-        let pathLength = 1;
+        // Remember previous entry flags
+        let prevDbFlags: number | null = null;
+        let prevSchemaFlags: number | null = null;
+        let prevTableFlags: number | null = null;
+        let prevColumnFlags: number | null = null;
 
-        // Is the database already pinned?
-        db = this.pinnedDatabasesMap.get(dbId) ?? null;
-        if (db == null) {
-            // Lookup the database id in the catalog
-            const catalogDbId = sqlynx.findCatalogDatabaseById(catalog, dbId, this.tmpDatabaseEntry);
-            if (catalogDbId == null) {
-                // Failed to locate database in the catalog?
-                // Skip this entry
-                return;
-            }
-            db = new PinnedCatalogEntry(0, BigInt(dbId), catalogDbId);
-            db.pinnedInEpoch = epoch;
-            this.databaseEntries.entryFlags[db.catalogEntryId] |= CatalogRenderingFlag.PINNED | flags;
-            this.pinnedDatabasesMap.set(dbId, db);
-            insertSorted(this.pinnedEntriesAtRoot, db);
-        }
-
-        // Check if the database was overflowing before
-        const dbWasOverflowing = (this.databaseEntries.entryFlags[db.catalogEntryId] & CatalogRenderingFlag.OVERFLOW) != 0;
-        if (!dbWasOverflowing) {
-            pinnedThatWereVisible.push(db);
-        }
-        this.databaseEntries.entryFlags[db.catalogEntryId] &= ~CatalogRenderingFlag.OVERFLOW;
-
-        // Resolve schema
-        if (schemaId != null) {
-            ++pathLength;
-
-            // Is the schema already pinned?
-            schema = this.pinnedSchemasMap.get(schemaId) ?? null;
-            if (schema == null) {
-                // Lookup the schema id in the catalog
-                const catalogSchemaId = sqlynx.findCatalogSchemaById(catalog, schemaId, this.tmpSchemaEntry);
-                if (catalogSchemaId == null) {
-                    // Failed to locate schema in the catalog?
-                    // Skip this entry
-                    return;
-                }
-                schema = new PinnedCatalogEntry(1, BigInt(schemaId), catalogSchemaId, db.objectId, db.catalogEntryId);
-                schema.pinnedInEpoch = epoch;
-                this.schemaEntries.entryFlags[schema.catalogEntryId] |= CatalogRenderingFlag.PINNED | flags;
-                this.pinnedSchemasMap.set(schemaId, schema);
-                insertSorted(db.pinnedChildren, schema);
-            }
-
-            // Check if the schema was overflowing before
-            const schemaWasOverflowing = (this.schemaEntries.entryFlags[schema.catalogEntryId] & CatalogRenderingFlag.OVERFLOW) != 0;
-            if (!schemaWasOverflowing) {
-                pinnedThatWereVisible.push(schema);
-            }
-            this.schemaEntries.entryFlags[schema.catalogEntryId] &= ~CatalogRenderingFlag.OVERFLOW;
-
-            // Resolve the table
-            if (tableId != null) {
-                ++pathLength;
-
-                // Is the table already pinned?
-                table = this.pinnedTablesMap.get(tableId) ?? null;
-                if (table == null) {
-                    // Lookup the table id in the catalog
-                    const catalogTableId = sqlynx.findCatalogTableById(catalog, tableId, this.tmpTableEntry);
-                    if (catalogTableId == null) {
-                        // Failed to locate table in the catalog?
-                        // Skip this entry
-                        return;
-                    }
-                    table = new PinnedCatalogEntry(2, BigInt(tableId), catalogTableId, schema.objectId, schema.catalogEntryId);
-                    table.pinnedInEpoch = epoch;
-                    this.tableEntries.entryFlags[table.catalogEntryId] |= CatalogRenderingFlag.PINNED | flags;
-                    this.pinnedTablesMap.set(tableId, table);
-                    insertSorted(schema.pinnedChildren, table);
-                }
-
-                // Check if the table was overflowing before
-                const tableWasOverflowing = (this.tableEntries.entryFlags[table.catalogEntryId] & CatalogRenderingFlag.OVERFLOW) != 0;
-                if (!tableWasOverflowing) {
-                    pinnedThatWereVisible.push(table);
-                }
-                this.tableEntries.entryFlags[table.catalogEntryId] &= ~CatalogRenderingFlag.OVERFLOW;
-
-                // Resolve the column
-                if (columnId != null) {
-                    ++pathLength;
-
-                    // Columns are only ever accessed through the table in the catalog.
-                    // But we can index them using a derived child id using (table id, column idx)
-                    const combinedColumnId = sqlynx.ExternalObjectChildID.create(tableId, columnId);
-
-                    // Is the column already pinned?
-                    column = this.pinnedTableColumnsMap.get(combinedColumnId) ?? null;
-                    if (column == null) {
-                        const tableProto = catalog.tables(table.catalogEntryId)!;
-                        const tableChildrenBegin = tableProto.childBegin();
-                        const catalogColumnId = tableChildrenBegin + columnId;
-                        column = new PinnedCatalogEntry(3, combinedColumnId, catalogColumnId, table.objectId, table.catalogEntryId);
-                        column.pinnedInEpoch = epoch;
-                        this.columnEntries.entryFlags[column.catalogEntryId] |= CatalogRenderingFlag.PINNED | flags;
-                        this.pinnedTableColumnsMap.set(combinedColumnId, column);
-                        insertSorted(table.pinnedChildren, column);
-                    }
-
-                    // Check if the column was overflowing before
-                    const columnWasOverflowing = (this.columnEntries.entryFlags[column.catalogEntryId] & CatalogRenderingFlag.OVERFLOW) != 0;
-                    if (!columnWasOverflowing) {
-                        pinnedThatWereVisible.push(column);
-                    }
-                    this.columnEntries.entryFlags[column.catalogEntryId] &= ~CatalogRenderingFlag.OVERFLOW;
-                }
-            }
-        }
-
-        // Full visible? Nothing to do then
-        if (pinnedThatWereVisible.length == pathLength) {
+        // Lookup the database id in the catalog
+        catalogDbId = sqlynx.findCatalogDatabaseById(catalog, dbId, this.tmpDatabaseEntry);
+        if (catalogDbId == null) {
+            // Failed to locate database in the catalog?
+            // Return early, this won't work.
             return;
         }
 
-        // Were there any already visible elements along the path?
-        if (pinnedThatWereVisible.length > 0) {
-            const levels = this.levels;
-            // Re-layout the last visible node
-            const lastVisible = pinnedThatWereVisible[pinnedThatWereVisible.length - 1];
-            const snap = this.snapshot.read();
-            const ctx: RenderingContext = {
-                snapshot: snap,
-                currentWriterY: 0,
-                overflowChildCount: 0
-            };
-            const previousHeight = levels[lastVisible.levelId].subtreeHeights[lastVisible.catalogEntryId];
-            CatalogViewModel.layoutLevelEntries(ctx, levels, lastVisible.levelId, lastVisible.catalogEntryId, 1);
-            const newHeight = ctx.currentWriterY;
-            const heightDelta = newHeight - previousHeight;
+        // Mark the database pinned
+        prevDbFlags = this.databaseEntries.entryFlags[catalogDbId];
+        this.databaseEntries.entryFlags[catalogDbId] |= flags;
+        this.databaseEntries.pinnedInEpoch[catalogDbId] = epoch;
+        this.databaseEntries.pinnedEntries.add(catalogDbId);
 
-            // Propagate the height delta upwards
-            for (let i = pinnedThatWereVisible.length - 1; i > 0; --i) {
-                const entry = pinnedThatWereVisible[i - 1];
-                levels[entry.levelId].subtreeHeights[entry.catalogEntryId] += heightDelta;
+        // Lookup the schema id in the catalog
+        if (schemaId != null) {
+            catalogSchemaId = sqlynx.findCatalogSchemaById(catalog, schemaId, this.tmpSchemaEntry);
+            if (catalogSchemaId != null) {
+                prevSchemaFlags = this.schemaEntries.entryFlags[catalogSchemaId];
+                this.schemaEntries.entryFlags[catalogSchemaId] |= flags;
+                this.schemaEntries.pinnedInEpoch[catalogSchemaId] = epoch;
+                this.schemaEntries.pinnedEntries.add(catalogSchemaId);
+
+                // Lookup the table id in the catalog
+                if (tableId != null) {
+                    catalogTableId = sqlynx.findCatalogTableById(catalog, tableId, this.tmpTableEntry);
+                    if (catalogTableId != null) {
+                        prevTableFlags = this.tableEntries.entryFlags[catalogTableId];
+                        this.tableEntries.entryFlags[catalogTableId] |= flags;
+                        this.tableEntries.pinnedInEpoch[catalogTableId] = epoch;
+                        this.tableEntries.pinnedEntries.add(catalogTableId);
+
+                        // Lookup the column in the catalog
+                        if (columnId != null) {
+                            const tableProto = catalog.tables(catalogTableId)!;
+                            const tableChildrenBegin = tableProto.childBegin();
+                            catalogColumnId = tableChildrenBegin + columnId;
+
+                            prevColumnFlags = this.columnEntries.entryFlags[catalogColumnId];
+                            this.columnEntries.entryFlags[catalogColumnId] |= flags;
+                            this.columnEntries.pinnedInEpoch[catalogColumnId] = epoch;
+                            this.columnEntries.pinnedEntries.add(catalogColumnId);
+                        }
+                    }
+                }
             }
-            // Adjust the total tree height
-            this.totalHeight += heightDelta;
-            // Update the overflow count of the last visible node
-            --levels[lastVisible.levelId].overflowChildCounts[lastVisible.catalogEntryId];
+        }
 
-        } else {
-            // Otherwise re-layout everything
-            this.layoutEntries();
+        // Figure out the parent of the first overflowing node
+        if ((prevDbFlags & CatalogRenderingFlag.OVERFLOW) != 0) {
+            this.pendingLayoutUpdates.root = true;
+        } else if (prevSchemaFlags != null && (prevSchemaFlags & CatalogRenderingFlag.OVERFLOW) != 0) {
+            this.pendingLayoutUpdates.databases.add(catalogDbId);
+        } else if (prevTableFlags != null && (prevTableFlags & CatalogRenderingFlag.OVERFLOW) != 0) {
+            this.pendingLayoutUpdates.schemas.add(catalogSchemaId!);
+        } else if (prevColumnFlags != null && (prevColumnFlags & CatalogRenderingFlag.OVERFLOW) != 0) {
+            this.pendingLayoutUpdates.tables.add(catalogTableId!);
         }
     }
 
-    // Cleanup old pins.
-    //
-    // When pinning elements, we provide an increasing epoch counter.
-    // This epoch counter will be increased with every bulk update.
-    // For example, when updating elements that are pinned through script refs, we iterate through all refs and pin elements with the same epoch.
-    // Afterwards, we can then iterate over all currently pinned elements and collect those that were pinned with the same flags but an older epoch.
-    // We clear the flags and if there are no flags left, we'll remove the pin completely.
-    //
-    // By removing a pin, the node might start to overflow and disappear from the rendered catalog.
-    // In such a case we have to layout the unpinned parent.
-    unpinOld(flags: number, epoch: bigint) {
-        // XXX
+    // Unpin old entries.
+    unpin(pinFlags: number, currentEpoch: number) {
+        const snap = this.snapshot.read();
+
+        // Find databases that are no longer pinned
+        for (const catalogEntryId of this.databaseEntries.pinnedEntries) {
+            // Only check entries pinned with certain flags
+            let entryFlags = this.databaseEntries.entryFlags[catalogEntryId];
+            if ((entryFlags & pinFlags) != 0) {
+                // It was not pinned in this epoch?
+                let pinnedInEpoch = this.databaseEntries.pinnedInEpoch[catalogEntryId];
+                if (pinnedInEpoch != currentEpoch) {
+                    // Then we clear the pin flags and check the database is no longer pinned
+                    entryFlags &= ~pinFlags;
+                    this.databaseEntries.entryFlags[catalogEntryId] = entryFlags;
+                    // Is the entry no longer pinned?
+                    // For databases that means that we have to layout everything.
+                    if ((entryFlags & PINNED_BY_ANYTHING) == 0) {
+                        this.databaseEntries.pinnedEntries.delete(catalogEntryId);
+                        // Mark the root for updates
+                        this.pendingLayoutUpdates.root = true;
+                    }
+                }
+            }
+        }
+
+        // Check all other levels
+        const levels: [CatalogLevelViewModel, Set<number>][] = [
+            [this.schemaEntries, this.pendingLayoutUpdates.databases],
+            [this.tableEntries, this.pendingLayoutUpdates.schemas],
+            [this.columnEntries, this.pendingLayoutUpdates.tables],
+        ];
+        for (const [level, layoutUpdates] of levels) {
+            // Find entries that are no longer pinned
+            for (const catalogEntryId of level.pinnedEntries) {
+                // Only check entries pinned with certain flags
+                let entryFlags = level.entryFlags[catalogEntryId];
+                if ((entryFlags & pinFlags) != 0) {
+                    // It was not pinned in this epoch?
+                    let pinnedInEpoch = level.pinnedInEpoch[catalogEntryId];
+                    if (pinnedInEpoch != currentEpoch) {
+                        // Then we clear the pin flags and check the database is no longer pinned
+                        entryFlags &= ~pinFlags;
+                        level.entryFlags[catalogEntryId] = entryFlags;
+                        // Is the entry no longer pinned?
+                        if ((entryFlags & PINNED_BY_ANYTHING) == 0) {
+                            level.pinnedEntries.delete(catalogEntryId);
+                            // Mark the parent for updates
+                            const entry = level.entries.read(snap, catalogEntryId, level.scratchEntry)!;
+                            const parentCatalogEntryId = entry!.flatParentIdx();
+                            layoutUpdates.add(parentCatalogEntryId);
+                        }
+                    }
+                }
+            }
+        }
     }
 
 
@@ -583,7 +495,10 @@ export class CatalogViewModel {
         }
 
         // Unpin all entries were pinned with the same flags in a previous epoch
-        this.unpinOld(CatalogRenderingFlag.PINNED_BY_SCRIPT_TABLE_REFS | CatalogRenderingFlag.PINNED_BY_SCRIPT_COLUMN_REFS, epoch);
+        this.unpin(CatalogRenderingFlag.PINNED_BY_SCRIPT_TABLE_REFS | CatalogRenderingFlag.PINNED_BY_SCRIPT_COLUMN_REFS, epoch);
+
+        // Now run all necessary layout updates
+        this.layoutPendingEntries();
     }
 
 
@@ -592,6 +507,6 @@ export class CatalogViewModel {
         const epoch = this.nextPinEpoch++;
 
         // Unpin all cursor refs that were pinned in a previous epoch
-        this.unpinOld(CatalogRenderingFlag.PINNED_BY_SCRIPT_CURSOR, epoch);
+        this.unpin(CatalogRenderingFlag.PINNED_BY_SCRIPT_CURSOR, epoch);
     }
 }
