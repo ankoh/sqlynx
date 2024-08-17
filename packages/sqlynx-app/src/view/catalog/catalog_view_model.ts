@@ -1,5 +1,4 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
-import { insertSorted, SortedElement } from '../../utils/sorted.js';
 
 /// The rendering settings for a catalog level
 export interface CatalogLevelRenderingSettings {
