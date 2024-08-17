@@ -51,6 +51,8 @@ export function deriveFocusFromCursor(
 ): DerivedFocus {
     const tmpSourceAnalyzed = new sqlynx.proto.AnalyzedScript();
     const tmpTargetAnalyzed = new sqlynx.proto.AnalyzedScript();
+    const tmpIndexedTableRef = new sqlynx.proto.IndexedTableReference();
+    const tmpIndexedColumnRef = new sqlynx.proto.IndexedColumnReference();
 
     // The result focus
     const focus: DerivedFocus = {
@@ -106,8 +108,10 @@ export function deriveFocusFromCursor(
                     focus.resolvedTable.schemaId,
                     focus.resolvedTable.tableId
                 );
-                for (let refId = begin0; refId < end0; ++refId) {
-                    focus.tableRefsOfReferencedTable.add(sqlynx.ExternalObjectID.create(targetKey, refId));
+                for (let indexEntryId = begin0; indexEntryId < end0; ++indexEntryId) {
+                    const indexEntry = targetAnalyzed.tableReferencesById(indexEntryId, tmpIndexedTableRef)!;
+                    const tableRefId = indexEntry.tableReferenceId();
+                    focus.tableRefsOfReferencedTable.add(sqlynx.ExternalObjectID.create(targetKey, tableRefId));
                 }
                 // Find column refs for table
                 const [begin1, end1] = sqlynx.findScriptColumnRefsEqualRange(
@@ -116,8 +120,10 @@ export function deriveFocusFromCursor(
                     focus.resolvedTable.schemaId,
                     focus.resolvedTable.tableId
                 );
-                for (let refId = begin1; refId < end1; ++refId) {
-                    focus.columnRefsOfReferencedTable.add(sqlynx.ExternalObjectID.create(targetKey, refId));
+                for (let indexEntryId = begin1; indexEntryId < end1; ++indexEntryId) {
+                    const indexEntry = targetAnalyzed.columnReferencesById(indexEntryId, tmpIndexedColumnRef)!;
+                    const columnRefId = indexEntry.columnReferenceId();
+                    focus.columnRefsOfReferencedTable.add(sqlynx.ExternalObjectID.create(targetKey, columnRefId));
                 }
             }
         }
@@ -158,8 +164,10 @@ export function deriveFocusFromCursor(
                     focus.resolvedTable.schemaId,
                     focus.resolvedTable.tableId
                 );
-                for (let refId = begin0; refId < end0; ++refId) {
-                    focus.tableRefsOfReferencedTable.add(sqlynx.ExternalObjectID.create(targetKey, refId));
+                for (let indexEntryId = begin0; indexEntryId < end0; ++indexEntryId) {
+                    const indexEntry = targetAnalyzed.tableReferencesById(indexEntryId, tmpIndexedTableRef)!;
+                    const tableRefId = indexEntry.tableReferenceId();
+                    focus.tableRefsOfReferencedTable.add(sqlynx.ExternalObjectID.create(targetKey, tableRefId));
                 }
                 // Find column refs for table
                 const [begin1, end1] = sqlynx.findScriptColumnRefsEqualRange(
@@ -168,8 +176,10 @@ export function deriveFocusFromCursor(
                     focus.resolvedTable.schemaId,
                     focus.resolvedTable.tableId
                 );
-                for (let refId = begin1; refId < end1; ++refId) {
-                    focus.columnRefsOfReferencedTable.add(sqlynx.ExternalObjectID.create(targetKey, refId));
+                for (let indexEntryId = begin1; indexEntryId < end1; ++indexEntryId) {
+                    const indexEntry = targetAnalyzed.columnReferencesById(indexEntryId, tmpIndexedColumnRef)!;
+                    const columnRefId = indexEntry.columnReferenceId();
+                    focus.columnRefsOfReferencedTable.add(sqlynx.ExternalObjectID.create(targetKey, columnRefId));
                 }
                 // Find column refs for table
                 const [begin2, end2] = sqlynx.findScriptColumnRefsEqualRange(
@@ -179,8 +189,10 @@ export function deriveFocusFromCursor(
                     focus.resolvedTable.tableId,
                     focus.resolvedColumnId
                 );
-                for (let refId = begin2; refId < end2; ++refId) {
-                    focus.columnRefsOfReferencedColumn.add(sqlynx.ExternalObjectID.create(targetKey, refId));
+                for (let indexEntryId = begin2; indexEntryId < end2; ++indexEntryId) {
+                    const indexEntry = targetAnalyzed.columnReferencesById(indexEntryId, tmpIndexedColumnRef)!;
+                    const columnRefId = indexEntry.columnReferenceId();
+                    focus.columnRefsOfReferencedColumn.add(sqlynx.ExternalObjectID.create(targetKey, columnRefId));
                 }
             }
         }
@@ -198,6 +210,8 @@ export function deriveFocusFromCatalog(
     target: CatalogFocus
 ): DerivedFocus {
     const tmpAnalyzed = new sqlynx.proto.AnalyzedScript();
+    const tmpIndexedTableRef = new sqlynx.proto.IndexedTableReference();
+    const tmpIndexedColumnRef = new sqlynx.proto.IndexedColumnReference();
 
     // The result focus
     const focus: DerivedFocus = {
@@ -250,8 +264,10 @@ export function deriveFocusFromCatalog(
             target.focusedSchema,
             target.focusedTable,
         );
-        for (let refId = begin0; refId < end0; ++refId) {
-            focus.tableRefsOfReferencedTable.add(sqlynx.ExternalObjectID.create(targetKey, refId));
+        for (let indexEntryId = begin0; indexEntryId < end0; ++indexEntryId) {
+            const indexEntry = targetAnalyzed.tableReferencesById(indexEntryId, tmpIndexedTableRef)!;
+            const tableRefId = indexEntry.tableReferenceId();
+            focus.tableRefsOfReferencedTable.add(sqlynx.ExternalObjectID.create(targetKey, tableRefId));
         }
 
         // Find column refs
@@ -261,8 +277,10 @@ export function deriveFocusFromCatalog(
             target.focusedSchema,
             target.focusedTable,
         );
-        for (let refId = begin1; refId < end1; ++refId) {
-            focus.columnRefsOfReferencedTable.add(sqlynx.ExternalObjectID.create(targetKey, refId));
+        for (let indexEntryId = begin1; indexEntryId < end1; ++indexEntryId) {
+            const indexEntry = targetAnalyzed.columnReferencesById(indexEntryId, tmpIndexedColumnRef)!;
+            const tableRefId = indexEntry.columnReferenceId();
+            focus.columnRefsOfReferencedTable.add(sqlynx.ExternalObjectID.create(targetKey, tableRefId));
         }
     }
     return focus;

@@ -335,10 +335,10 @@ export class CatalogViewModel {
         columnId: number | null,
     ) {
         // Remember catalog entry ids
-        let catalogDbId: number | null = null;
-        let catalogSchemaId: number | null = null;
-        let catalogTableId: number | null = null;
-        let catalogColumnId: number | null = null;
+        let dbEntryId: number | null = null;
+        let schemaEntryId: number | null = null;
+        let tableEntryId: number | null = null;
+        let columnEntryId: number | null = null;
 
         // Remember previous entry flags
         let prevDbFlags: number | null = null;
@@ -347,47 +347,47 @@ export class CatalogViewModel {
         let prevColumnFlags: number | null = null;
 
         // Lookup the database id in the catalog
-        catalogDbId = sqlynx.findCatalogDatabaseById(catalog, dbId, this.tmpDatabaseEntry);
-        if (catalogDbId == null) {
+        dbEntryId = sqlynx.findCatalogDatabaseById(catalog, dbId, this.tmpDatabaseEntry);
+        if (dbEntryId == null) {
             // Failed to locate database in the catalog?
             // Return early, this won't work.
             return;
         }
 
         // Mark the database pinned
-        prevDbFlags = this.databaseEntries.entryFlags[catalogDbId];
-        this.databaseEntries.entryFlags[catalogDbId] |= flags;
-        this.databaseEntries.pinnedInEpoch[catalogDbId] = epoch;
-        this.databaseEntries.pinnedEntries.add(catalogDbId);
+        prevDbFlags = this.databaseEntries.entryFlags[dbEntryId];
+        this.databaseEntries.entryFlags[dbEntryId] |= flags;
+        this.databaseEntries.pinnedInEpoch[dbEntryId] = epoch;
+        this.databaseEntries.pinnedEntries.add(dbEntryId);
 
         // Lookup the schema id in the catalog
         if (schemaId != null) {
-            catalogSchemaId = sqlynx.findCatalogSchemaById(catalog, schemaId, this.tmpSchemaEntry);
-            if (catalogSchemaId != null) {
-                prevSchemaFlags = this.schemaEntries.entryFlags[catalogSchemaId];
-                this.schemaEntries.entryFlags[catalogSchemaId] |= flags;
-                this.schemaEntries.pinnedInEpoch[catalogSchemaId] = epoch;
-                this.schemaEntries.pinnedEntries.add(catalogSchemaId);
+            schemaEntryId = sqlynx.findCatalogSchemaById(catalog, schemaId, this.tmpSchemaEntry);
+            if (schemaEntryId != null) {
+                prevSchemaFlags = this.schemaEntries.entryFlags[schemaEntryId];
+                this.schemaEntries.entryFlags[schemaEntryId] |= flags;
+                this.schemaEntries.pinnedInEpoch[schemaEntryId] = epoch;
+                this.schemaEntries.pinnedEntries.add(schemaEntryId);
 
                 // Lookup the table id in the catalog
                 if (tableId != null) {
-                    catalogTableId = sqlynx.findCatalogTableById(catalog, tableId, this.tmpTableEntry);
-                    if (catalogTableId != null) {
-                        prevTableFlags = this.tableEntries.entryFlags[catalogTableId];
-                        this.tableEntries.entryFlags[catalogTableId] |= flags;
-                        this.tableEntries.pinnedInEpoch[catalogTableId] = epoch;
-                        this.tableEntries.pinnedEntries.add(catalogTableId);
+                    tableEntryId = sqlynx.findCatalogTableById(catalog, tableId, this.tmpTableEntry);
+                    if (tableEntryId != null) {
+                        prevTableFlags = this.tableEntries.entryFlags[tableEntryId];
+                        this.tableEntries.entryFlags[tableEntryId] |= flags;
+                        this.tableEntries.pinnedInEpoch[tableEntryId] = epoch;
+                        this.tableEntries.pinnedEntries.add(tableEntryId);
 
                         // Lookup the column in the catalog
                         if (columnId != null) {
-                            const tableProto = catalog.tables(catalogTableId)!;
+                            const tableProto = catalog.tables(tableEntryId)!;
                             const tableChildrenBegin = tableProto.childBegin();
-                            catalogColumnId = tableChildrenBegin + columnId;
+                            columnEntryId = tableChildrenBegin + columnId;
 
-                            prevColumnFlags = this.columnEntries.entryFlags[catalogColumnId];
-                            this.columnEntries.entryFlags[catalogColumnId] |= flags;
-                            this.columnEntries.pinnedInEpoch[catalogColumnId] = epoch;
-                            this.columnEntries.pinnedEntries.add(catalogColumnId);
+                            prevColumnFlags = this.columnEntries.entryFlags[columnEntryId];
+                            this.columnEntries.entryFlags[columnEntryId] |= flags;
+                            this.columnEntries.pinnedInEpoch[columnEntryId] = epoch;
+                            this.columnEntries.pinnedEntries.add(columnEntryId);
                         }
                     }
                 }
@@ -398,11 +398,11 @@ export class CatalogViewModel {
         if ((prevDbFlags & CatalogRenderingFlag.OVERFLOW) != 0) {
             this.pendingLayoutUpdates.root = true;
         } else if (prevSchemaFlags != null && (prevSchemaFlags & CatalogRenderingFlag.OVERFLOW) != 0) {
-            this.pendingLayoutUpdates.databases.add(catalogDbId);
+            this.pendingLayoutUpdates.databases.add(dbEntryId);
         } else if (prevTableFlags != null && (prevTableFlags & CatalogRenderingFlag.OVERFLOW) != 0) {
-            this.pendingLayoutUpdates.schemas.add(catalogSchemaId!);
+            this.pendingLayoutUpdates.schemas.add(schemaEntryId!);
         } else if (prevColumnFlags != null && (prevColumnFlags & CatalogRenderingFlag.OVERFLOW) != 0) {
-            this.pendingLayoutUpdates.tables.add(catalogTableId!);
+            this.pendingLayoutUpdates.tables.add(tableEntryId!);
         }
     }
 
