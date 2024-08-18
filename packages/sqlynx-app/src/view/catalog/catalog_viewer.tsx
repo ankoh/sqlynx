@@ -96,7 +96,7 @@ export function CatalogViewer(props: Props) {
         const scrollTop = (e.target as HTMLDivElement).scrollTop;
         setScrollTop(Math.max(scrollTop, padding) - padding);
     };
-    const scrollTop = useThrottledMemo(scrollTopRaw, [scrollTopRaw], 30);
+    const scrollTop = useThrottledMemo(scrollTopRaw, [scrollTopRaw], 10);
 
     // Derive a virtual window from the scroll position and container size
     const [renderingWindow, setRenderingWindow] = React.useState<RenderingWindow | null>(null);
