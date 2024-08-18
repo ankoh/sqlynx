@@ -4,6 +4,18 @@ import { CompletionContext, CompletionResult, Completion } from '@codemirror/aut
 import { SQLynxProcessor } from './sqlynx_processor.js';
 import { getNameTagName, unpackNameTags } from '../../utils/index.js';
 
+const COMPLETION_LIMIT = 32;
+
+/// A SQLynx completion storing the backing completion buffer and a candidate
+interface SQLynxCompletion extends Completion {
+    /// The completion buffer
+    /// XXX How do we clean this up after the completion ends?
+    buffer: sqlynx.FlatBufferPtr<sqlynx.proto.Completion>;
+    /// The candidate id
+    candidateId: number;
+}
+
+/// Update the completions
 function updateCompletions(
     _current: CompletionResult,
     _from: number,
@@ -13,11 +25,17 @@ function updateCompletions(
     return null;
 }
 
+/// Preview a completion candidate
+const previewCompletion = (completion: Completion) => {
+    console.log({ ...completion });
+    return null;
+};
+
 /// Derived from this example:
 /// https://codemirror.net/examples/autocompletion/
 export async function completeSQLynx(context: CompletionContext): Promise<CompletionResult> {
     const processor = context.state.field(SQLynxProcessor);
-    const options: Completion[] = [];
+    const completions: SQLynxCompletion[] = [];
 
     let offset = context.pos;
     if (processor.targetScript !== null && processor.scriptCursor !== null) {
@@ -27,7 +45,7 @@ export async function completeSQLynx(context: CompletionContext): Promise<Comple
             relativePos == sqlynx.proto.RelativeSymbolPosition.MID_OF_SYMBOL ||
             relativePos == sqlynx.proto.RelativeSymbolPosition.END_OF_SYMBOL;
         if (performCompletion) {
-            const completionBuffer = processor.targetScript.completeAtCursor(32);
+            const completionBuffer = processor.targetScript.completeAtCursor(COMPLETION_LIMIT);
             const completion = completionBuffer.read();
             const candidateObj = new sqlynx.proto.CompletionCandidate();
             for (let i = 0; i < completion.candidatesLength(); ++i) {
@@ -41,9 +59,12 @@ export async function completeSQLynx(context: CompletionContext): Promise<Comple
                 if (processor.config.showCompletionDetails) {
                     candidateDetail = `${candidateDetail}, score=${candidate.score()}, near=${candidate.nearCursor()}`;
                 }
-                options.push({
+                completions.push({
+                    buffer: completionBuffer,
+                    candidateId: i,
                     label: candidate.completionText() ?? '',
                     detail: candidateDetail,
+                    info: previewCompletion,
                 });
             }
             offset = processor.scriptCursor.scannerSymbolOffset;
@@ -52,7 +73,7 @@ export async function completeSQLynx(context: CompletionContext): Promise<Comple
 
     return {
         from: offset,
-        options,
+        options: completions,
         filter: false,
         update: updateCompletions,
     };
