@@ -73,7 +73,9 @@ class ScannedScript {
     /// Register a name
     NameID RegisterName(std::string_view s, sx::Location location, sx::NameTag tag = sx::NameTag::NONE);
     /// Register a keyword as name
-    NameID RegisterKeywordAsName(std::string_view s, sx::Location location, sx::NameTag tag = sx::NameTag::NONE);
+    NameID RegisterKeywordAsName(std::string_view s, sx::Location location, sx::NameTag tag = sx::NameTag::NONE) {
+        return RegisterName(s, location, tag);
+    }
     /// Read a name
     CatalogEntry::NameInfo& ReadName(NameID name);
     /// Read a text at a location
