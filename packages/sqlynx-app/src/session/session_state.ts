@@ -1,4 +1,5 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
+
 import Immutable from 'immutable';
 
 import { ScriptMetadata } from './script_metadata.js';

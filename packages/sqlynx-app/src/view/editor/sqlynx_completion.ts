@@ -1,16 +1,18 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
 
 import { CompletionContext, CompletionResult, Completion } from '@codemirror/autocomplete';
-import { SQLynxProcessor } from './sqlynx_processor.js';
 import { getNameTagName, unpackNameTags } from '../../utils/index.js';
+import { SQLynxEditorState, SQLynxProcessor } from './sqlynx_processor.js';
 
 const COMPLETION_LIMIT = 32;
 
 /// A SQLynx completion storing the backing completion buffer and a candidate
 interface SQLynxCompletion extends Completion {
+    /// The processor
+    state: SQLynxEditorState;
     /// The completion buffer
     /// XXX How do we clean this up after the completion ends?
-    buffer: sqlynx.FlatBufferPtr<sqlynx.proto.Completion>;
+    coreCompletion: sqlynx.proto.CompletionT;
     /// The candidate id
     candidateId: number;
 }
@@ -27,7 +29,8 @@ function updateCompletions(
 
 /// Preview a completion candidate
 const previewCompletion = (completion: Completion) => {
-    console.log({ ...completion });
+    const candidate = completion as SQLynxCompletion;
+    candidate.state.onCompletionPeek(candidate.coreCompletion, candidate.candidateId);
     return null;
 };
 
@@ -46,28 +49,32 @@ export async function completeSQLynx(context: CompletionContext): Promise<Comple
             relativePos == sqlynx.proto.RelativeSymbolPosition.END_OF_SYMBOL;
         if (performCompletion) {
             const completionBuffer = processor.targetScript.completeAtCursor(COMPLETION_LIMIT);
-            const completion = completionBuffer.read();
-            const candidateObj = new sqlynx.proto.CompletionCandidate();
-            for (let i = 0; i < completion.candidatesLength(); ++i) {
-                const candidate = completion.candidates(i, candidateObj)!;
+            const completion = completionBuffer.read().unpack();
+            completionBuffer.delete();
+            for (let i = 0; i < completion.candidates.length; ++i) {
+                const candidate = completion.candidates[i];
                 let tagName: string | undefined = undefined;
-                for (const tag of unpackNameTags(candidate.combinedTags())) {
+                for (const tag of unpackNameTags(candidate.combinedTags)) {
                     tagName = getNameTagName(tag);
                     break;
                 }
                 let candidateDetail = tagName;
                 if (processor.config.showCompletionDetails) {
-                    candidateDetail = `${candidateDetail}, score=${candidate.score()}, near=${candidate.nearCursor()}`;
+                    candidateDetail = `${candidateDetail}, score=${candidate.score}, near=${candidate.nearCursor}`;
                 }
                 completions.push({
-                    buffer: completionBuffer,
+                    state: processor,
+                    coreCompletion: completion,
                     candidateId: i,
-                    label: candidate.completionText() ?? '',
+                    label: candidate.completionText as string,
                     detail: candidateDetail,
                     info: previewCompletion,
                 });
             }
             offset = processor.scriptCursor.scannerSymbolOffset;
+            if (!processor.completionActive) {
+                processor.onCompletionStart(completion);
+            }
         }
     }
 
