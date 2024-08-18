@@ -121,6 +121,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
     }, []);
     // Helper to peek a completion candidate
     const peekCompletionCandidate = React.useCallback((_completion: sqlynx.proto.CompletionT, candidateId: number) => {
+
         console.log(`PEEK COMPLETION ${candidateId}`);
     }, []);
     // Helper to stop a completion
