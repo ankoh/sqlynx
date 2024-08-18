@@ -23,8 +23,18 @@ template <typename T, size_t InitialSize = 1024> struct ChunkBuffer {
         size_t local_value_id;
 
         /// Constructor
-        ConstTupleIterator(const ChunkBuffer<T, InitialSize>& buffer)
-            : buffer(buffer), chunk_id(0), local_value_id(0) {}
+        ConstTupleIterator(const ChunkBuffer<T, InitialSize>& buffer, size_t chunk_id = 0, size_t local_value_id = 0)
+            : buffer(buffer), chunk_id(chunk_id), local_value_id(local_value_id) {}
+        /// Copy constructor
+        ConstTupleIterator(const ConstTupleIterator& other)
+            : buffer(other.buffer), chunk_id(other.chunk_id), local_value_id(other.local_value_id) {}
+        /// Copy assignment
+        ConstTupleIterator& operator=(const ConstTupleIterator& other) {
+            assert(&buffer == &other.buffer);
+            chunk_id = other.chunk_id;
+            local_value_id = other.local_value_id;
+            return *this;
+        }
         /// Is at end?
         inline bool IsAtEnd() const { return local_value_id >= buffer.buffers[chunk_id].size(); }
         /// Increment operator
@@ -119,6 +129,12 @@ template <typename T, size_t InitialSize = 1024> struct ChunkBuffer {
     T& GetLast() {
         assert(total_value_count > 0);
         return buffers.back().back();
+    }
+    /// Get a const iterator pointing at the last element
+    ConstTupleIterator GetIteratorAtLast() const {
+        size_t chunk_id = buffers.size() - 1;
+        size_t local_value_id = buffers.back().size() - 1;
+        return ConstTupleIterator{*this, chunk_id, local_value_id};
     }
     /// Clear the buffer
     void Clear() {

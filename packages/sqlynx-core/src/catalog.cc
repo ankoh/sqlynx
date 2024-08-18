@@ -363,84 +363,134 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
         }
     };
 
-    struct Node {
+    struct ColumnNode {
+        // The column id
+        uint32_t column_id;
+        /// The name id
+        // A name id
+        size_t name_id;
+    };
+
+    struct TableNode {
         // The catalog object id
-        uint64_t catalog_object_id;
+        ExternalObjectID table_id;
         // A name id
         size_t name_id;
         // Child nodes
-        std::map<std::string_view, std::reference_wrapper<Node>> children;
-        /// Constructor
-        Node(uint64_t object_id, size_t name_id) : catalog_object_id(object_id), name_id(name_id), children() {}
+        ChunkBuffer<ColumnNode, 16>::ConstTupleIterator children_begin;
+        // Child count
+        size_t child_count;
     };
 
-    // The root node
-    Node root{0, 0};
-    // The node buffers
-    ChunkBuffer<Node, 16> nodes;
-    // The database nodes
-    std::unordered_map<CatalogObjectID, Node*> database_nodes;
-    // The schema nodes
-    std::unordered_map<CatalogObjectID, Node*> schema_nodes;
+    struct SchemaNode {
+        // The catalog object id
+        uint32_t schema_id;
+        // A name id
+        size_t name_id;
+        // Child nodes
+        std::map<std::string_view, std::reference_wrapper<TableNode>> children;
+    };
 
-    size_t database_count = 0;
-    size_t schema_count = 0;
-    size_t table_count = 0;
-    size_t column_count = 0;
+    struct DatabaseNode {
+        // The catalog object id
+        uint32_t database_id;
+        // A name id
+        size_t name_id;
+        // Child nodes
+        std::map<std::string_view, std::reference_wrapper<SchemaNode>> children;
+    };
+
+    // Allocate nodes in chunk buffers
+    ChunkBuffer<DatabaseNode, 16> database_nodes;
+    ChunkBuffer<SchemaNode, 16> schema_nodes;
+    ChunkBuffer<TableNode, 16> table_nodes;
+    ChunkBuffer<ColumnNode, 16> column_nodes;
+    // Track all root database nodes
+    std::map<std::string_view, std::reference_wrapper<DatabaseNode>> root;
+    // Track maps for database and schema nodes
+    std::unordered_map<CatalogObjectID, DatabaseNode*> database_node_map;
+    std::unordered_map<CatalogObjectID, SchemaNode*> schema_node_map;
 
     for (auto& [catalog_entry_id, catalog_entry] : entries) {
+        /// Register all databases
         for (auto& [db_key, db_ref_raw] : catalog_entry->databases_by_name) {
             auto& db_ref = db_ref_raw.get();
-            if (auto iter = database_nodes.find(db_ref.catalog_database_id); iter == database_nodes.end()) {
+            if (auto iter = database_node_map.find(db_ref.catalog_database_id); iter == database_node_map.end()) {
                 auto db_name = db_ref.database_name;
                 auto db_name_id = add_name(db_ref.database_name);
 
-                if (!database_nodes.contains(db_ref.catalog_database_id)) {
-                    auto& db_node = nodes.Append(Node{db_ref.catalog_database_id, db_name_id});
-                    database_count += database_nodes.insert({db_ref.catalog_database_id, &db_node}).second;
+                if (!database_node_map.contains(db_ref.catalog_database_id)) {
+                    auto& db_node = database_nodes.Append(DatabaseNode{db_ref.catalog_database_id, db_name_id});
+                    database_node_map.insert({db_ref.catalog_database_id, &db_node});
 
-                    root.children.insert({db_name, db_node});
+                    auto db_name_unique = root.insert({db_name, db_node}).second;
+                    assert(db_name_unique);
                 }
             }
         }
+
+        /// Register all schemas
         for (auto& [schema_key, schema_ref_raw] : catalog_entry->schemas_by_name) {
             auto& schema_ref = schema_ref_raw.get();
-            if (auto iter = schema_nodes.find(schema_ref.catalog_schema_id); iter == schema_nodes.end()) {
+            if (auto iter = schema_node_map.find(schema_ref.catalog_schema_id); iter == schema_node_map.end()) {
                 auto schema_name = schema_ref.schema_name;
                 auto schema_name_id = add_name(schema_ref.schema_name);
 
-                if (!schema_nodes.contains(schema_ref.catalog_schema_id)) {
-                    auto& schema_node = nodes.Append(Node{schema_ref.catalog_schema_id, schema_name_id});
-                    schema_count += schema_nodes.insert({schema_ref.catalog_schema_id, &schema_node}).second;
+                if (!schema_node_map.contains(schema_ref.catalog_schema_id)) {
+                    auto& schema_node = schema_nodes.Append(SchemaNode{schema_ref.catalog_schema_id, schema_name_id});
+                    schema_node_map.insert({schema_ref.catalog_schema_id, &schema_node});
 
-                    auto& db_node = database_nodes.at(schema_ref.catalog_database_id);
-                    db_node->children.insert({schema_ref.schema_name, schema_node});
+                    auto& db_node = database_node_map.at(schema_ref.catalog_database_id);
+                    auto schema_name_unique = db_node->children.insert({schema_ref.schema_name, schema_node}).second;
+                    assert(schema_name_unique);
                 }
             }
         }
     }
 
-    // Translate all table declarations
-    for (auto& [catalog_entry_id, catalog_entry] : entries) {
+    // Track the effective table count.
+    // Tables are not deduplicated among catalog entries and may override each other.
+    size_t effective_table_count = 0;
+
+    // Translate all table declarations.
+    // Iterate over entries in ranked order since there might be duplicate table declarations.
+    for (auto& [rank, catalog_entry_id] : entries_ranked) {
+        auto& catalog_entry = entries.at(catalog_entry_id);
         for (auto& chunk : catalog_entry->table_declarations.GetChunks()) {
             for (auto& entry : chunk) {
                 // Resolve the schema node
-                auto& schema_node = schema_nodes.at(entry.catalog_schema_id);
-
-                // Get the table declaration
+                auto& schema_node = schema_node_map.at(entry.catalog_schema_id);
                 auto table_name = entry.table_name.table_name;
-                auto table_name_id = add_name(table_name);
-                auto& table_node = nodes.Append(Node{entry.catalog_table_id.Pack(), table_name_id});
-                table_count += schema_node->children.insert({table_name, table_node}).second;
+
+                // Check if the schema node already contains a table.
+                // This may happen if a table is overwritten between catalog entries.
+                // Check which wins based on the catalog entry rank
+                if (schema_node->children.contains(table_name)) {
+                    continue;
+                }
 
                 // Add all columns nodes
-                for (auto& column : entry.table_columns) {
-                    auto column_name_id = add_name(column.column_name);
-                    auto& column_node = nodes.Append(Node{0, column_name_id});
-                    column_count += table_node.children.insert({column.column_name, column_node}).second;
-                    // XXX This is unnecessarily maintaining a map for column maps,
-                    //     Columns are already sorted...
+                auto columns_begin = column_nodes.GetIteratorAtLast();
+                if (entry.table_columns.size() > 0) {
+                    auto& first_column = entry.table_columns[0];
+                    auto first_column_name_id = add_name(first_column.column_name);
+                    auto& first_column_node = column_nodes.Append(ColumnNode{0, first_column_name_id});
+                    columns_begin = column_nodes.GetIteratorAtLast();
+
+                    for (uint32_t column_id = 1; column_id < entry.table_columns.size(); ++column_id) {
+                        auto& column = entry.table_columns[column_id];
+                        auto column_name_id = add_name(column.column_name);
+                        column_nodes.Append(ColumnNode{column_id, column_name_id});
+                    }
                 }
+                auto column_count = entry.table_columns.size();
+
+                // Get the table declaration
+                auto table_name_id = add_name(table_name);
+                auto& table_node =
+                    table_nodes.Append(TableNode{entry.catalog_table_id, table_name_id, columns_begin, column_count});
+                schema_node->children.insert({table_name, table_node});
+                ++effective_table_count;
             }
         }
     }
@@ -453,72 +503,75 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
     std::vector<sqlynx::proto::FlatCatalogEntry> schema_entries;
     std::vector<sqlynx::proto::FlatCatalogEntry> table_entries;
     std::vector<sqlynx::proto::FlatCatalogEntry> column_entries;
-    database_entries.resize(database_count);
-    schema_entries.resize(schema_count);
-    table_entries.resize(table_count);
-    column_entries.resize(column_count);
+    database_entries.resize(database_nodes.GetSize());
+    schema_entries.resize(schema_nodes.GetSize());
+    table_entries.resize(effective_table_count);
+    column_entries.resize(column_nodes.GetSize());
 
     // Allocate the index vectors
     std::vector<proto::IndexedFlatDatabaseEntry> indexed_database_entries;
     std::vector<proto::IndexedFlatSchemaEntry> indexed_schema_entries;
     std::vector<proto::IndexedFlatTableEntry> indexed_table_entries;
-    indexed_database_entries.resize(database_count);
-    indexed_schema_entries.resize(schema_count);
-    indexed_table_entries.resize(table_count);
+    indexed_database_entries.resize(database_nodes.GetSize());
+    indexed_schema_entries.resize(schema_nodes.GetSize());
+    indexed_table_entries.resize(effective_table_count);
 
-    size_t next_database = 0;
-    size_t next_schema = 0;
-    size_t next_table = 0;
-    size_t next_column = 0;
+    size_t next_database_idx = 0;
+    size_t next_schema_idx = 0;
+    size_t next_table_idx = 0;
+    size_t next_column_idx = 0;
 
     // Write all catalog entries to the buffers
-    for (auto& [database_name, database_node] : root.children) {
+    for (auto root_iter = root.begin(); root_iter != root.end(); ++root_iter, ++next_database_idx) {
+        auto& [database_name, database_node] = *root_iter;
         // Write database node
         auto& db_node_ref = database_node.get();
-        database_entries[next_database] = proto::FlatCatalogEntry(next_database, 0, db_node_ref.catalog_object_id,
-                                                                  db_node_ref.name_id, 0, db_node_ref.children.size());
-        indexed_database_entries[next_database] =
-            proto::IndexedFlatDatabaseEntry(db_node_ref.catalog_object_id, next_database);
+        database_entries[next_database_idx] = proto::FlatCatalogEntry(
+            next_database_idx, 0, db_node_ref.database_id, db_node_ref.name_id, 0, db_node_ref.children.size());
+        indexed_database_entries[next_database_idx] =
+            proto::IndexedFlatDatabaseEntry(db_node_ref.database_id, next_database_idx);
 
         // Write schema nodes
-        for (auto& [schema_name, schema_node] : database_node.get().children) {
+        for (auto db_child_iter = db_node_ref.children.begin(); db_child_iter != db_node_ref.children.end();
+             ++db_child_iter, ++next_schema_idx) {
+            auto& [schema_name, schema_node] = *db_child_iter;
             // Write schema node
             auto& schema_node_ref = schema_node.get();
-            schema_entries[next_schema] =
-                sqlynx::proto::FlatCatalogEntry(next_schema, next_database, schema_node_ref.catalog_object_id,
-                                                schema_node_ref.name_id, next_table, schema_node_ref.children.size());
-            indexed_schema_entries[next_schema] =
-                proto::IndexedFlatSchemaEntry(schema_node_ref.catalog_object_id, next_schema);
+            schema_entries[next_schema_idx] = sqlynx::proto::FlatCatalogEntry(
+                next_schema_idx, next_database_idx, schema_node_ref.schema_id, schema_node_ref.name_id, next_table_idx,
+                schema_node_ref.children.size());
+            indexed_schema_entries[next_schema_idx] =
+                proto::IndexedFlatSchemaEntry(schema_node_ref.schema_id, next_schema_idx);
 
             // Write table nodes
-            for (auto& [table_name, table_node] : schema_node_ref.children) {
+            for (auto schema_child_iter = schema_node_ref.children.begin();
+                 schema_child_iter != schema_node_ref.children.end(); ++schema_child_iter, ++next_table_idx) {
+                auto& [table_name, table_node] = *schema_child_iter;
                 // Write table node
                 auto& table_node_ref = table_node.get();
-                table_entries[next_table] = sqlynx::proto::FlatCatalogEntry(
-                    next_table, next_schema, table_node_ref.catalog_object_id, table_node_ref.name_id, next_column,
-                    table_node_ref.children.size());
-                indexed_table_entries[next_table] =
-                    proto::IndexedFlatTableEntry(table_node_ref.catalog_object_id, next_table);
+                table_entries[next_table_idx] = sqlynx::proto::FlatCatalogEntry(
+                    next_table_idx, next_schema_idx, table_node_ref.table_id.Pack(), table_node_ref.name_id,
+                    next_column_idx, table_node_ref.child_count);
+                indexed_table_entries[next_table_idx] =
+                    proto::IndexedFlatTableEntry(table_node_ref.table_id.Pack(), next_table_idx);
 
                 // Write column nodes
-                for (auto& [column_name, column_node] : table_node_ref.children) {
+                auto child_iter = table_node_ref.children_begin;
+                for (auto column_id = 0; column_id < table_node_ref.child_count;
+                     ++column_id, ++child_iter, ++next_column_idx) {
+                    auto& column_node = *child_iter;
                     // Write column node
-                    auto& column_node_ref = column_node.get();
-                    column_entries[next_column] =
-                        sqlynx::proto::FlatCatalogEntry(next_column, next_table, 0, column_node_ref.name_id, 0, 0);
-                    ++next_column;
+                    column_entries[next_column_idx] = sqlynx::proto::FlatCatalogEntry(
+                        next_column_idx, next_table_idx, column_id, column_node.name_id, 0, 0);
                 }
-                ++next_table;
             }
-            ++next_schema;
         }
-        ++next_database;
     }
 
-    assert(next_database == database_count);
-    assert(next_schema == schema_count);
-    assert(next_table == table_count);
-    assert(next_column == column_count);
+    assert(next_database_idx == database_nodes.GetSize());
+    assert(next_schema_idx == schema_nodes.GetSize());
+    assert(next_table_idx == effective_table_count);
+    assert(next_column_idx == column_nodes.GetSize());
 
     // Sort indexes
     std::sort(indexed_database_entries.begin(), indexed_database_entries.end(),
