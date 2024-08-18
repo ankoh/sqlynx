@@ -1,4 +1,7 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
+import { U32_MAX } from '../../utils/numeric_limits.js';
+import { SessionState } from '../../session/session_state.js';
+import { findTableById } from '../../session/script_lookup.js';
 
 /// The rendering settings for a catalog level
 export interface CatalogLevelRenderingSettings {
@@ -383,7 +386,6 @@ export class CatalogViewModel {
                             const tableProto = catalog.tables(tableEntryId)!;
                             const tableChildrenBegin = tableProto.childBegin();
                             columnEntryId = tableChildrenBegin + columnId;
-
                             prevColumnFlags = this.columnEntries.entryFlags[columnEntryId];
                             this.columnEntries.entryFlags[columnEntryId] |= flags;
                             this.columnEntries.pinnedInEpoch[columnEntryId] = epoch;
@@ -480,7 +482,9 @@ export class CatalogViewModel {
             const dbId = tableRef.resolvedCatalogDatabaseId();
             const schemaId = tableRef.resolvedCatalogSchemaId();
             const tableId = tableRef.resolvedCatalogTableId();
-            this.pin(catalog, epoch, CatalogRenderingFlag.PINNED_BY_SCRIPT_TABLE_REFS, dbId, schemaId, tableId, null);
+            if (dbId != U32_MAX) {
+                this.pin(catalog, epoch, CatalogRenderingFlag.PINNED_BY_SCRIPT_TABLE_REFS, dbId, schemaId, tableId, null);
+            }
         }
 
         // Pin column references
@@ -490,7 +494,9 @@ export class CatalogViewModel {
             const schemaId = columnRef.resolvedCatalogSchemaId();
             const tableId = columnRef.resolvedCatalogTableId();
             const columnId = columnRef.resolvedColumnId();
-            this.pin(catalog, epoch, CatalogRenderingFlag.PINNED_BY_SCRIPT_COLUMN_REFS, dbId, schemaId, tableId, columnId);
+            if (dbId != U32_MAX) {
+                this.pin(catalog, epoch, CatalogRenderingFlag.PINNED_BY_SCRIPT_COLUMN_REFS, dbId, schemaId, tableId, columnId);
+            }
         }
 
         // Unpin all entries were pinned with the same flags in a previous epoch
