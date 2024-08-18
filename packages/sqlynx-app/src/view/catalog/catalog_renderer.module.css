@@ -2,7 +2,7 @@
     position: relative;
     border-radius: var(--border_radius);
     border: 1px solid var(--border_color_primary);
-    background-color: var(--graph_node_inactive_bg);
+    background-color: var(--catalog_node_inactive_bg);
 
     display: grid;
     grid-template-rows: 100%;
@@ -14,7 +14,7 @@
     font-size: 0.9rem;
 }
 .node_pinned {
-    background-color: var(--graph_node_bg);
+    background-color: var(--catalog_node_bg);
 }
 .node_focus_catalog {
 }
