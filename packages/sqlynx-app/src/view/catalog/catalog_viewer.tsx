@@ -154,7 +154,6 @@ export function CatalogViewer(props: Props) {
             renderingWindow.virtual.top,
             renderingWindow.virtual.top + renderingWindow.virtual.height
         );
-        console.log("UPDATE")
         // Render the catalog
         const outNodes: React.ReactElement[] = [];
         const outEdges: React.ReactElement[] = [];

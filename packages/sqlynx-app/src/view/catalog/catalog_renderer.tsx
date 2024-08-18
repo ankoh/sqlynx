@@ -156,7 +156,7 @@ function renderEntriesAtLevel(ctx: RenderingContext, levelId: number, entriesBeg
     // Track overflow nodes
     let overflowChildCount = 0;
     let lastOverflowEntryId = 0;
-    let isFirst = false;
+    let isFirst = true;
 
     // First render all pinned entries, then all unpinned
     for (const renderPinned of [true, false]) {
