@@ -216,7 +216,6 @@ function renderEntriesAtLevel(ctx: RenderingContext, levelId: number, entriesBeg
             ctx.outNodes.push(
                 <div
                     key={thisKey}
-
                     className={classNames(styles.node_default, {
                         [styles.node_focus_script_table_refs]: (entryFlags & CatalogRenderingFlag.PINNED_BY_SCRIPT_TABLE_REFS) != 0,
                         [styles.node_focus_script_column_refs]: (entryFlags & CatalogRenderingFlag.PINNED_BY_SCRIPT_COLUMN_REFS) != 0,
@@ -260,7 +259,6 @@ function renderEntriesAtLevel(ctx: RenderingContext, levelId: number, entriesBeg
                     ctx.outEdges.push(
                         <path
                             key={edgeKey}
-
                             d={edgePath}
                             strokeWidth="2px"
                             stroke="currentcolor"

@@ -544,6 +544,10 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 for (auto& table_col : node_state.table_columns) {
                     table_columns.push_back(table_col);
                 }
+                std::sort(table_columns.begin(), table_columns.end(),
+                          [&](CatalogEntry::TableColumn& l, CatalogEntry::TableColumn& r) {
+                              return l.column_name < r.column_name;
+                          });
                 pending_columns_free_list.Append(std::move(node_state.table_columns));
                 // Create the scope
                 CreateScope(node_state, node_id);

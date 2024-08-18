@@ -231,6 +231,8 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
                 }
             }
         }
+        std::sort(columns.begin(), columns.end(),
+                  [&](TableColumn& l, TableColumn& r) { return l.column_name < r.column_name; });
         // Create the table
         auto& t = table_declarations.Append(AnalyzedScript::TableDeclaration());
         t.catalog_database_id = db_id;
@@ -436,6 +438,8 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
                     auto column_name_id = add_name(column.column_name);
                     auto& column_node = nodes.Append(Node{0, column_name_id});
                     column_count += table_node.children.insert({column.column_name, column_node}).second;
+                    // XXX This is unnecessarily maintaining a map for column maps,
+                    //     Columns are already sorted...
                 }
             }
         }

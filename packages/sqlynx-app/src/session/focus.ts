@@ -279,8 +279,8 @@ export function deriveFocusFromCatalog(
         );
         for (let indexEntryId = begin1; indexEntryId < end1; ++indexEntryId) {
             const indexEntry = targetAnalyzed.columnReferencesById(indexEntryId, tmpIndexedColumnRef)!;
-            const tableRefId = indexEntry.columnReferenceId();
-            focus.columnRefsOfReferencedTable.add(sqlynx.ExternalObjectID.create(targetKey, tableRefId));
+            const columnRefId = indexEntry.columnReferenceId();
+            focus.columnRefsOfReferencedTable.add(sqlynx.ExternalObjectID.create(targetKey, columnRefId));
         }
     }
     return focus;
