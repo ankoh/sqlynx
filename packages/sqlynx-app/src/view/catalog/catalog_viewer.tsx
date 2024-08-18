@@ -166,19 +166,21 @@ export function CatalogViewer(props: Props) {
         <div className={styles.root}>
             <div className={styles.board_container} ref={containerElement}>
                 <div className={styles.board_container} ref={containerElement} onScroll={handleScroll}>
-                    <div className={styles.board}>
-                        <EdgeLayer
-                            width={viewModel?.totalWidth ?? 0}
-                            height={viewModel?.totalHeight ?? 0}
-                            padding={padding}
-                            paths={edges ?? []}
-                        />
-                        <NodeLayer
-                            width={viewModel?.totalWidth ?? 0}
-                            height={viewModel?.totalHeight ?? 0}
-                            padding={padding}
-                            nodes={nodes ?? []}
-                        />
+                    <div className={styles.board_container_shadows}>
+                        <div className={styles.board}>
+                            <EdgeLayer
+                                width={viewModel?.totalWidth ?? 0}
+                                height={viewModel?.totalHeight ?? 0}
+                                padding={padding}
+                                paths={edges ?? []}
+                            />
+                            <NodeLayer
+                                width={viewModel?.totalWidth ?? 0}
+                                height={viewModel?.totalHeight ?? 0}
+                                padding={padding}
+                                nodes={nodes ?? []}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
