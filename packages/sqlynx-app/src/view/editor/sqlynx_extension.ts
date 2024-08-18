@@ -1,3 +1,4 @@
+import { EditorState } from '@codemirror/state';
 import { lineNumbers } from '@codemirror/view';
 import { autocompletion } from '@codemirror/autocomplete';
 

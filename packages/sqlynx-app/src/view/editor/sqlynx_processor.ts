@@ -1,5 +1,6 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
 import { StateField, StateEffect, StateEffectType, Text, Transaction } from '@codemirror/state';
+import { completionStatus } from '@codemirror/autocomplete';
 import { DerivedFocus } from '../../session/focus.js';
 
 /// The configuration of the SQLynx config
@@ -25,13 +26,19 @@ export interface SQLynxScriptUpdate {
     /// The derive focus info
     derivedFocus: DerivedFocus | null;
     // This callback is called when the editor updates the script
-    onUpdateScript: (
+    onScriptUpdate: (
         scriptKey: SQLynxScriptKey,
         script: SQLynxScriptBuffers,
         cursor: sqlynx.proto.ScriptCursorInfoT,
     ) => void;
     // This callback is called when the editor updates the cursor
-    onUpdateScriptCursor: (scriptKey: SQLynxScriptKey, cursor: sqlynx.proto.ScriptCursorInfoT) => void;
+    onCursorUpdate: (scriptKey: SQLynxScriptKey, cursor: sqlynx.proto.ScriptCursorInfoT) => void;
+    // This callback is called when the editor completion is starting
+    onCompletionStart: (completion: sqlynx.proto.CompletionT) => void;
+    // This callback is called when the user peeks a completion candidate
+    onCompletionPeek: (completion: sqlynx.proto.CompletionT, candidateId: number) => void;
+    // This callback is called when the editor completion is starting
+    onCompletionStop: () => void;
 }
 /// The SQLynx script buffers
 export interface SQLynxScriptBuffers {
@@ -47,7 +54,10 @@ export interface SQLynxScriptBuffers {
     destroy: (state: SQLynxScriptBuffers) => void;
 }
 /// The state of a SQLynx analyzer
-type SQLynxEditorState = SQLynxScriptUpdate;
+export type SQLynxEditorState = SQLynxScriptUpdate & {
+    completionStatus: null | "active" | "pending";
+    completionActive: boolean;
+};
 
 /// Analyze a new script
 export function parseAndAnalyzeScript(script: sqlynx.SQLynxScript): SQLynxScriptBuffers {
@@ -111,8 +121,13 @@ export const SQLynxProcessor: StateField<SQLynxEditorState> = StateField.define<
             },
             scriptCursor: null,
             derivedFocus: null,
-            onUpdateScript: () => { },
-            onUpdateScriptCursor: () => { },
+            completionStatus: null,
+            completionActive: false,
+            onScriptUpdate: () => { },
+            onCursorUpdate: () => { },
+            onCompletionStart: () => { },
+            onCompletionPeek: () => { },
+            onCompletionStop: () => { },
         };
         return config;
     },
@@ -125,9 +140,23 @@ export const SQLynxProcessor: StateField<SQLynxEditorState> = StateField.define<
         const selection: number | null = newSelection.main.to;
         let next: SQLynxEditorState = state;
 
+        // Helper to create a new state if it wasn't replaced
         const copyIfNotReplaced = () => {
             next = next === state ? { ...state } : next;
         };
+
+        // Did the completion status change?
+        const currentCompletionStatus = completionStatus(transaction.state);
+        if (currentCompletionStatus != state.completionStatus) {
+            copyIfNotReplaced();
+            next.completionStatus = currentCompletionStatus;
+            if (next.completionStatus == "active") {
+                next.completionActive = true;
+            } else if (next.completionStatus == null && state.completionActive) {
+                next.completionActive = false;
+                next.onCompletionStop();
+            }
+        }
 
         // Did the user provide us with a new SQLynx script?
         for (const effect of transaction.effects) {
@@ -173,7 +202,7 @@ export const SQLynxProcessor: StateField<SQLynxEditorState> = StateField.define<
                 next.scriptCursor = cursorBuffer.read().unpack();
                 cursorBuffer.delete();
                 // Watch out, this passes ownership over the script buffers
-                next.onUpdateScript(next.scriptKey, next.scriptBuffers, next.scriptCursor);
+                next.onScriptUpdate(next.scriptKey, next.scriptBuffers, next.scriptCursor);
                 return next;
             }
             // Update the script cursor..
@@ -183,7 +212,7 @@ export const SQLynxProcessor: StateField<SQLynxEditorState> = StateField.define<
                 const cursorBuffer = next.targetScript!.moveCursor(selection ?? 0);
                 next.scriptCursor = cursorBuffer.read().unpack();
                 cursorBuffer.delete();
-                next.onUpdateScriptCursor(next.scriptKey, next.scriptCursor);
+                next.onCursorUpdate(next.scriptKey, next.scriptCursor);
                 return next;
             }
         }

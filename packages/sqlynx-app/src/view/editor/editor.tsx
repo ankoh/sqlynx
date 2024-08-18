@@ -105,7 +105,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         [sessionDispatch],
     );
     // Helper to update a script cursor
-    const updateScriptCursor = React.useCallback(
+    const updateCursor = React.useCallback(
         (scriptKey: SQLynxScriptKey, cursor: sqlynx.proto.ScriptCursorInfoT) => {
             active.current.cursor = cursor;
             sessionDispatch({
@@ -115,6 +115,18 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         },
         [sessionDispatch],
     );
+    // Helper to start a completion
+    const startCompletion = React.useCallback((_completion: sqlynx.proto.CompletionT) => {
+        console.log("START COMPLETION")
+    }, []);
+    // Helper to peek a completion candidate
+    const peekCompletionCandidate = React.useCallback((_completion: sqlynx.proto.CompletionT, candidateId: number) => {
+        console.log(`PEEK COMPLETION ${candidateId}`);
+    }, []);
+    // Helper to stop a completion
+    const stopCompletion = React.useCallback(() => {
+        console.log(`STOP COMPLETION`);
+    }, []);
 
     // Effect to update the editor context whenever the script changes
     React.useEffect(() => {
@@ -180,8 +192,12 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                 scriptBuffers: targetScriptData.processed,
                 scriptCursor: targetScriptData.cursor,
                 derivedFocus: session?.userFocus ?? null,
-                onUpdateScript: updateScript,
-                onUpdateScriptCursor: updateScriptCursor,
+
+                onScriptUpdate: updateScript,
+                onCursorUpdate: updateCursor,
+                onCompletionStart: startCompletion,
+                onCompletionPeek: peekCompletionCandidate,
+                onCompletionStop: stopCompletion,
             }),
         );
         view.dispatch({ changes, effects, selection: selection ?? undefined });
