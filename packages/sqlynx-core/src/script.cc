@@ -54,23 +54,6 @@ CatalogEntry::NameInfo& ScannedScript::ReadName(NameID name) {
 }
 
 /// Register a name
-NameID ScannedScript::RegisterKeywordAsName(std::string_view s, sx::Location location, sx::NameTag tag) {
-    auto iter = names_by_text.find(s);
-    if (iter != names_by_text.end()) {
-        auto& name = iter->second.get();
-        name.tags |= tag;
-        name.occurrences += 1;
-        return name.name_id;
-    }
-    NameID name_id = names.GetSize();
-    auto& name = names.Append(
-        CatalogEntry::NameInfo{.name_id = name_id, .text = s, .location = location, .tags = tag, .occurrences = 1});
-    names_by_text.insert({s, name});
-    names_by_id.insert({name_id, name});
-    return name_id;
-}
-
-/// Register a name
 NameID ScannedScript::RegisterName(std::string_view s, sx::Location location, sx::NameTag tag) {
     auto iter = names_by_text.find(s);
     if (iter != names_by_text.end()) {

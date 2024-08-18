@@ -95,7 +95,7 @@ struct FlatCatalogEntry {
     /// - Databases store the unified database id
     /// - Schemas store the unified schema id
     /// - Tables store the external table id as pair of (external catalog entry id, table id)
-    /// - Columns store 0
+    /// - Columns store the column id
     catalog_object_id: uint64;
     /// The name id
     name_id: uint32;
