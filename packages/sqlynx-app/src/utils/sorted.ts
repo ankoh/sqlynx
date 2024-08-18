@@ -1,3 +1,5 @@
+// XXX No longer needed
+
 export interface SortedElement {
     sortKey: number;
 }

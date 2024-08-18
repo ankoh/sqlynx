@@ -1,6 +1,5 @@
 import * as React from 'react';
 import * as styles from './catalog_viewer.module.css'
-import * as sqlynx from '@ankoh/sqlynx-core';
 
 import { renderCatalog } from './catalog_renderer.js';
 import { useCurrentSessionState } from '../../session/current_session.js';
