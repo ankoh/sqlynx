@@ -49,11 +49,11 @@ class ScannedScript {
     /// The name pool
     StringPool<1024> name_pool;
     /// The name dictionary locations
-    ChunkBuffer<CatalogEntry::NameInfo, 32> names;
+    ChunkBuffer<CatalogEntry::IndexedName, 32> names;
     /// The name infos by name id
-    ankerl::unordered_dense::map<NameID, std::reference_wrapper<CatalogEntry::NameInfo>> names_by_id;
+    ankerl::unordered_dense::map<NameID, std::reference_wrapper<CatalogEntry::IndexedName>> names_by_id;
     /// The name infos by text
-    ankerl::unordered_dense::map<std::string_view, std::reference_wrapper<CatalogEntry::NameInfo>> names_by_text;
+    ankerl::unordered_dense::map<std::string_view, std::reference_wrapper<CatalogEntry::IndexedName>> names_by_text;
     /// All symbols
     ChunkBuffer<parser::Parser::symbol_type> symbols;
 
@@ -77,7 +77,7 @@ class ScannedScript {
         return RegisterName(s, location, tag);
     }
     /// Read a name
-    CatalogEntry::NameInfo& ReadName(NameID name);
+    CatalogEntry::IndexedName& ReadName(NameID name);
     /// Read a text at a location
     std::string_view ReadTextAtLocation(sx::Location loc) {
         return std::string_view{text_buffer}.substr(loc.offset(), loc.length());

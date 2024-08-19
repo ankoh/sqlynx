@@ -41,7 +41,7 @@ struct Completion {
     struct Candidate {
         /// The schema containing the candidate
         /// The name
-        CatalogEntry::NameInfo name;
+        CatalogEntry::IndexedName name;
         /// The name tags
         NameTags combined_tags;
         /// The name score
