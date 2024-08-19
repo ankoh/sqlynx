@@ -113,7 +113,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     decltype(AnalyzedScript::tables_by_name) tables_by_name;
 
     /// The temporary name path buffer
-    std::vector<std::reference_wrapper<CatalogEntry::NameInfo>> name_path_buffer;
+    std::vector<std::reference_wrapper<CatalogEntry::IndexedName>> name_path_buffer;
     /// The temporary pending table columns
     ChunkBuffer<OverlayList<AnalyzedScript::TableColumn>::Node, 16> pending_columns;
     /// The temporary free-list for pending table columns
@@ -123,7 +123,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     StagingOutput out;
 
     /// Merge child states into a destination state
-    std::span<std::reference_wrapper<CatalogEntry::NameInfo>> ReadNamePath(const sx::Node& node);
+    std::span<std::reference_wrapper<CatalogEntry::IndexedName>> ReadNamePath(const sx::Node& node);
     /// Merge child states into a destination state
     AnalyzedScript::QualifiedTableName ReadQualifiedTableName(const sx::Node* node);
     /// Merge child states into a destination state
