@@ -2,8 +2,6 @@
 
 #include <tuple>
 
-#include "sqlynx/utils/chunk_buffer.h"
-
 namespace sqlynx {
 
 /// A list of nodes allocated in a separate buffer

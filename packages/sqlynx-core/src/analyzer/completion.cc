@@ -174,7 +174,7 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
         auto name = parser::Keyword::GetKeywordName(expected);
         if (!name.empty()) {
             Candidate candidate{
-                .name = CatalogEntry::NameInfo{.name_id = static_cast<uint32_t>(expected),
+                .name = CatalogEntry::IndexedName{.name_id = static_cast<uint32_t>(expected),
                                                .text = name,
                                                .location = sx::Location(),
                                                .tags = {proto::NameTag::KEYWORD},
@@ -189,10 +189,7 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
     }
 }
 
-void findCandidatesInIndex(
-    Completion& completion,
-    const btree::multimap<fuzzy_ci_string_view, std::reference_wrapper<const CatalogEntry::NameInfo>>& index,
-    bool external) {
+void findCandidatesInIndex(Completion& completion, const CatalogEntry::NameSearchIndex& index, bool external) {
     using Relative = ScannedScript::LocationInfo::RelativePosition;
     auto& cursor = completion.GetCursor();
     auto& scoring_table = completion.GetScoringTable();
