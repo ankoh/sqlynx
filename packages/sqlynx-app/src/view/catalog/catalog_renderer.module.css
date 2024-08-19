@@ -12,6 +12,9 @@
 
     padding: 0px 8px;
     font-size: 0.9rem;
+
+    -moz-transition: all 0.1s linear;
+    transition: all 0.1s linear;
 }
 .node_pinned {
     background-color: var(--catalog_node_bg);
