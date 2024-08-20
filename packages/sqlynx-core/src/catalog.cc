@@ -256,27 +256,11 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
 
     // Collect all name infos
     auto register_name = [&](std::string_view name, NameTags tags) {
-        if (name.empty()) {
-            return;
-        }
-        auto iter = name_infos.find(name);
-        if (iter != name_infos.end()) {
-            auto& name_info = iter->second.get();
-            name_info.resolved_tags |= tags;
-            ++name_info.occurrences;
-        } else {
-            fuzzy_ci_string_view ci_name{name.data(), name.size()};
-            auto& name_info = names.Append(IndexedName{.name_id = static_cast<uint32_t>(names.GetSize()),
-                                                       .text = name,
-                                                       .location = sx::Location(),
-                                                       .resolved_tags = tags,
-                                                       .occurrences = 1,
-                                                       .resolved_objects = {}});
-            name_infos.insert({name, name_info});
-            for (size_t i = 1; i < ci_name.size(); ++i) {
-                auto suffix = ci_name.substr(ci_name.size() - 1 - i);
-                name_search_index->insert({suffix, name_info});
-            }
+        auto& registered = name_registry.Register(name, tags);
+        fuzzy_ci_string_view ci_name{registered.text.data(), registered.text.size()};
+        for (size_t i = 1; i < ci_name.size(); ++i) {
+            auto suffix = ci_name.substr(ci_name.size() - 1 - i);
+            name_search_index->insert({suffix, registered});
         }
     };
     register_name(db_name, proto::NameTag::DATABASE_NAME);

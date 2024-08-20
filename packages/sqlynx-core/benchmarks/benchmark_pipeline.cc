@@ -1,14 +1,8 @@
 #include "benchmark/benchmark.h"
-#include "sqlynx/analyzer/analyzer.h"
 #include "sqlynx/analyzer/completion.h"
 #include "sqlynx/catalog.h"
-#include "sqlynx/parser/names.h"
-#include "sqlynx/parser/parser.h"
-#include "sqlynx/parser/scanner.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
-#include "sqlynx/text/rope.h"
-#include "sqlynx/utils/suffix_trie.h"
 #include "sqlynx/vis/query_graph_layout.h"
 
 using namespace sqlynx;
