@@ -135,10 +135,11 @@ AnalyzedScript::QualifiedTableName NameResolutionPass::NormalizeTableName(
 }
 
 /// Register a schema
-std::pair<CatalogObjectID, CatalogObjectID> NameResolutionPass::RegisterSchema(std::string_view database_name,
-                                                                               std::string_view schema_name) {
+std::pair<CatalogDatabaseID, CatalogSchemaID> NameResolutionPass::RegisterSchema(std::string_view database_name,
+                                                                                 std::string_view schema_name) {
     // Register the database
-    CatalogObjectID db_id = 0, schema_id = 0;
+    CatalogDatabaseID db_id = 0;
+    CatalogSchemaID schema_id = 0;
     auto db_ref_iter = databases_by_name.find(database_name);
     if (db_ref_iter == databases_by_name.end()) {
         db_id = catalog.AllocateDatabaseId(database_name);

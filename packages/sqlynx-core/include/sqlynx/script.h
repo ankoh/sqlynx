@@ -35,7 +35,7 @@ class ScannedScript {
 
    public:
     /// The origin id
-    const ExternalID external_id;
+    const CatalogEntryID external_id;
     /// The copied text buffer
     std::string text_buffer;
 
@@ -57,9 +57,9 @@ class ScannedScript {
 
    public:
     /// Constructor
-    ScannedScript(const rope::Rope& text, ExternalID external_id = 1);
+    ScannedScript(const rope::Rope& text, CatalogEntryID external_id = 1);
     /// Constructor
-    ScannedScript(std::string text, ExternalID external_id = 1);
+    ScannedScript(std::string text, CatalogEntryID external_id = 1);
 
     /// Get the input
     auto& GetInput() const { return text_buffer; }
@@ -141,7 +141,7 @@ class ParsedScript {
     };
 
     /// The origin id
-    const ExternalID external_id;
+    const CatalogEntryID external_id;
     /// The scanned script
     std::shared_ptr<ScannedScript> scanned_script;
     /// The nodes
@@ -183,9 +183,9 @@ class AnalyzedScript : public CatalogEntry {
         /// The alias name, may refer to different catalog entry
         std::string_view alias_name;
         /// The resolved database id in the catalog
-        CatalogObjectID resolved_catalog_database_id;
+        CatalogDatabaseID resolved_catalog_database_id;
         /// The resolved schema id in the catalog
-        CatalogObjectID resolved_catalog_schema_id;
+        CatalogSchemaID resolved_catalog_schema_id;
         /// The resolved table id in the catalog
         ExternalObjectID resolved_catalog_table_id;
 
@@ -207,9 +207,9 @@ class AnalyzedScript : public CatalogEntry {
         /// The resolved table reference id in the current context
         std::optional<uint32_t> resolved_table_reference_id;
         /// The resolved catalog database id
-        CatalogObjectID resolved_catalog_database_id;
+        CatalogDatabaseID resolved_catalog_database_id;
         /// The resolved catalog schema id
-        CatalogObjectID resolved_catalog_schema_id;
+        CatalogSchemaID resolved_catalog_schema_id;
         /// The resolved table id in the catalog
         ExternalObjectID resolved_catalog_table_id;
         /// The resolved table column id
@@ -319,7 +319,7 @@ class Script {
     /// The catalog
     Catalog& catalog;
     /// The catalog entry id
-    const ExternalID catalog_entry_id;
+    const CatalogEntryID catalog_entry_id;
 
     /// The underlying rope
     rope::Rope text;
@@ -341,7 +341,7 @@ class Script {
 
    public:
     /// Constructor
-    Script(Catalog& catalog, ExternalID external_id = 1);
+    Script(Catalog& catalog, CatalogEntryID external_id = 1);
     /// Destructor
     ~Script();
     /// Scripts must not be copied
