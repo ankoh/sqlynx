@@ -50,8 +50,6 @@ class ScannedScript {
     StringPool<1024> name_pool;
     /// The name dictionary locations
     ChunkBuffer<CatalogEntry::IndexedName, 32> names;
-    /// The name infos by name id
-    ankerl::unordered_dense::map<NameID, std::reference_wrapper<CatalogEntry::IndexedName>> names_by_id;
     /// The name infos by text
     ankerl::unordered_dense::map<std::string_view, std::reference_wrapper<CatalogEntry::IndexedName>> names_by_text;
     /// All symbols
