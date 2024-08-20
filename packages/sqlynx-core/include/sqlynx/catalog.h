@@ -237,9 +237,9 @@ class CatalogEntry {
     QualifiedTableName QualifyTableName(QualifiedTableName name) const;
 
     /// Register a database name
-    CatalogDatabaseID RegisterDatabaseName(std::string_view);
+    CatalogDatabaseID RegisterDatabase(std::string_view);
     /// Register a schema name
-    CatalogSchemaID RegisterSchemaName(CatalogDatabaseID db_id, std::string_view db_name, std::string_view schema_name);
+    CatalogSchemaID RegisterSchema(CatalogDatabaseID db_id, std::string_view db_name, std::string_view schema_name);
 
     /// Describe the catalog entry
     virtual flatbuffers::Offset<proto::CatalogEntry> DescribeEntry(flatbuffers::FlatBufferBuilder& builder) const = 0;

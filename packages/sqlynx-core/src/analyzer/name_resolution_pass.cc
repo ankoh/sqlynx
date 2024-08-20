@@ -64,7 +64,7 @@ std::span<std::reference_wrapper<RegisteredName>> NameResolutionPass::ReadNamePa
             name_path_buffer.clear();
             break;
         }
-        auto& name = scanned_program.GetNameRegistry().At(child.children_begin_or_value());
+        auto& name = scanned_program.GetNames().At(child.children_begin_or_value());
         name_path_buffer.push_back(name);
     }
     return std::span{name_path_buffer};
@@ -339,7 +339,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 auto column_def_node = attrs[proto::AttributeKey::SQL_COLUMN_DEF_NAME];
                 std::string_view column_name_str;
                 if (column_def_node && column_def_node->node_type() == sx::NodeType::NAME) {
-                    auto& name = scanned_program.GetNameRegistry().At(column_def_node->children_begin_or_value());
+                    auto& name = scanned_program.GetNames().At(column_def_node->children_begin_or_value());
                     name.resolved_tags |= sx::NameTag::COLUMN_NAME;
                     column_name_str = name;
                 }
@@ -391,7 +391,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                     std::string_view alias_str;
                     auto alias_node = attrs[proto::AttributeKey::SQL_TABLEREF_ALIAS];
                     if (alias_node && alias_node->node_type() == sx::NodeType::NAME) {
-                        auto& alias = scanned_program.GetNameRegistry().At(alias_node->children_begin_or_value());
+                        auto& alias = scanned_program.GetNames().At(alias_node->children_begin_or_value());
                         alias.resolved_tags |= sx::NameTag::TABLE_ALIAS;
                         alias_str = alias;
                     }
