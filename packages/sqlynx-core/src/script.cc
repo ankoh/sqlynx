@@ -56,13 +56,13 @@ NameID ScannedScript::RegisterName(std::string_view s, sx::Location location, sx
     auto iter = names_by_text.find(s);
     if (iter != names_by_text.end()) {
         auto& name = iter->second.get();
-        name.tags |= tag;
+        name.resolved_tags |= tag;
         name.occurrences += 1;
         return name.name_id;
     }
     NameID name_id = names.GetSize();
-    auto& name = names.Append(
-        CatalogEntry::IndexedName{.name_id = name_id, .text = s, .location = location, .tags = tag, .occurrences = 1});
+    auto& name = names.Append(CatalogEntry::IndexedName{
+        .name_id = name_id, .text = s, .location = location, .resolved_tags = tag, .occurrences = 1});
     names_by_text.insert({s, name});
     return name_id;
 }
@@ -647,6 +647,17 @@ std::pair<ParsedScript*, proto::StatusCode> Script::Parse() {
 /// Analyze a script
 std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze() {
     auto time_start = std::chrono::steady_clock::now();
+
+    // Check if the script was already analyzed.
+    // In that case, we have to clean up anything that we "registered" in the scanned script before.
+    if (analyzed_script && scanned_script) {
+        for (auto& chunk : scanned_script->names.GetChunks()) {
+            for (auto& entry : chunk) {
+                entry.resolved_tags = 0;
+                entry.resolved_objects.Clear();
+            }
+        }
+    }
 
     // Analyze a script
     auto [script, status] = Analyzer::Analyze(parsed_script, catalog);
