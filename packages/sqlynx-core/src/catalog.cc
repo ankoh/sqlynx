@@ -52,7 +52,7 @@ flatbuffers::Offset<proto::Table> CatalogEntry::TableDeclaration::Pack(flatbuffe
     return out.Finish();
 }
 
-CatalogEntry::CatalogEntry(Catalog& catalog, ExternalID external_id)
+CatalogEntry::CatalogEntry(Catalog& catalog, CatalogEntryID external_id)
     : catalog(catalog),
       catalog_entry_id(external_id),
       database_references(),
@@ -70,7 +70,7 @@ CatalogEntry::QualifiedTableName CatalogEntry::QualifyTableName(CatalogEntry::Qu
     return name;
 }
 
-CatalogObjectID CatalogEntry::RegisterDatabaseName(std::string_view name) {
+CatalogDatabaseID CatalogEntry::RegisterDatabaseName(std::string_view name) {
     auto db_id = catalog.AllocateDatabaseId(name);
     if (!databases_by_name.contains({name})) {
         auto& db = database_references.Append(CatalogEntry::DatabaseReference{db_id, name, ""});
@@ -79,7 +79,7 @@ CatalogObjectID CatalogEntry::RegisterDatabaseName(std::string_view name) {
     return db_id;
 }
 
-CatalogObjectID CatalogEntry::RegisterSchemaName(CatalogObjectID db_id, std::string_view db_name,
+CatalogSchemaID CatalogEntry::RegisterSchemaName(CatalogDatabaseID db_id, std::string_view db_name,
                                                  std::string_view schema_name) {
     auto schema_id = catalog.AllocateSchemaId(db_name, schema_name);
     if (!schemas_by_name.contains({db_name, schema_name})) {
@@ -132,7 +132,7 @@ void CatalogEntry::ResolveTableColumn(std::string_view table_column,
     }
 }
 
-DescriptorPool::DescriptorPool(Catalog& catalog, ExternalID external_id, uint32_t rank)
+DescriptorPool::DescriptorPool(Catalog& catalog, CatalogEntryID external_id, uint32_t rank)
     : CatalogEntry(catalog, external_id), rank(rank) {
     name_search_index.emplace(CatalogEntry::NameSearchIndex{});
 }
@@ -406,8 +406,8 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
     // Track all root database nodes
     std::map<std::string_view, std::reference_wrapper<DatabaseNode>> root;
     // Track maps for database and schema nodes
-    std::unordered_map<CatalogObjectID, DatabaseNode*> database_node_map;
-    std::unordered_map<CatalogObjectID, SchemaNode*> schema_node_map;
+    std::unordered_map<CatalogDatabaseID, DatabaseNode*> database_node_map;
+    std::unordered_map<CatalogSchemaID, SchemaNode*> schema_node_map;
 
     for (auto& [catalog_entry_id, catalog_entry] : entries) {
         /// Register all databases
@@ -677,7 +677,7 @@ proto::StatusCode Catalog::LoadScript(Script& script, CatalogEntry::Rank rank) {
     CatalogEntry& entry = *script.analyzed_script;
     for (auto& [schema_key, schema_ref] : entry.schemas_by_name) {
         auto& [db_name, schema_name] = schema_key;
-        std::tuple<std::string_view, std::string_view, CatalogEntry::Rank, ExternalID> entry_key{
+        std::tuple<std::string_view, std::string_view, CatalogEntry::Rank, CatalogEntryID> entry_key{
             db_name, schema_name, rank, entry.GetCatalogEntryId()};
         CatalogSchemaEntryInfo entry_info{
             .catalog_entry_id = entry.GetCatalogEntryId(),
@@ -785,7 +785,7 @@ proto::StatusCode Catalog::UpdateScript(ScriptEntry& entry) {
                 .catalog_database_id = new_entry.schema_ref.catalog_database_id,
                 .catalog_schema_id = new_entry.schema_ref.catalog_schema_id,
             };
-            std::tuple<std::string_view, std::string_view, CatalogEntry::Rank, ExternalID> entry_key{
+            std::tuple<std::string_view, std::string_view, CatalogEntry::Rank, CatalogEntryID> entry_key{
                 db_name, schema_name, rank, external_id};
             entries_by_schema.insert({entry_key, entry});
 
@@ -841,7 +841,7 @@ void Catalog::DropScript(Script& script) {
     }
 }
 
-proto::StatusCode Catalog::AddDescriptorPool(ExternalID external_id, CatalogEntry::Rank rank) {
+proto::StatusCode Catalog::AddDescriptorPool(CatalogEntryID external_id, CatalogEntry::Rank rank) {
     if (entries.contains(external_id)) {
         return proto::StatusCode::EXTERNAL_ID_COLLISION;
     }
@@ -853,7 +853,7 @@ proto::StatusCode Catalog::AddDescriptorPool(ExternalID external_id, CatalogEntr
     return proto::StatusCode::OK;
 }
 
-proto::StatusCode Catalog::DropDescriptorPool(ExternalID external_id) {
+proto::StatusCode Catalog::DropDescriptorPool(CatalogEntryID external_id) {
     auto iter = descriptor_pool_entries.find(external_id);
     if (iter != descriptor_pool_entries.end()) {
         descriptor_pool_entries.erase(iter);
@@ -862,7 +862,7 @@ proto::StatusCode Catalog::DropDescriptorPool(ExternalID external_id) {
     return proto::StatusCode::OK;
 }
 
-proto::StatusCode Catalog::AddSchemaDescriptor(ExternalID external_id, std::span<const std::byte> descriptor_data,
+proto::StatusCode Catalog::AddSchemaDescriptor(CatalogEntryID external_id, std::span<const std::byte> descriptor_data,
                                                std::unique_ptr<const std::byte[]> descriptor_buffer) {
     auto iter = descriptor_pool_entries.find(external_id);
     if (iter == descriptor_pool_entries.end()) {
@@ -883,7 +883,7 @@ proto::StatusCode Catalog::AddSchemaDescriptor(ExternalID external_id, std::span
         auto db_id = pool.RegisterDatabaseName(db_name);
         auto schema_id = pool.RegisterSchemaName(db_id, db_name, schema_name);
         // Add the entry
-        std::tuple<std::string_view, std::string_view, CatalogEntry::Rank, ExternalID> entry_key{
+        std::tuple<std::string_view, std::string_view, CatalogEntry::Rank, CatalogEntryID> entry_key{
             db_name, schema_name, pool.GetRank(), external_id};
         CatalogSchemaEntryInfo entry{
             .catalog_entry_id = external_id,
@@ -903,7 +903,7 @@ const CatalogEntry::TableDeclaration* Catalog::ResolveTable(ExternalObjectID tab
     return nullptr;
 }
 const CatalogEntry::TableDeclaration* Catalog::ResolveTable(CatalogEntry::QualifiedTableName table_name,
-                                                            ExternalID ignore_entry) const {
+                                                            CatalogEntryID ignore_entry) const {
     for (auto iter = entries_by_schema.lower_bound({table_name.database_name, table_name.schema_name, 0, 0});
          iter != entries_by_schema.end(); ++iter) {
         auto& [db_name, schema_name, rank, candidate] = iter->first;

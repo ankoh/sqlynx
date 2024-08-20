@@ -71,7 +71,7 @@ class Scanner {
 
    protected:
     /// Constructor
-    Scanner(const rope::Rope& text, ExternalID external_id);
+    Scanner(const rope::Rope& text, CatalogEntryID external_id);
     /// Delete the copy constructor
     Scanner(const Scanner& other) = delete;
     /// Delete the copy assignment

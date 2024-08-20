@@ -105,7 +105,7 @@ Parser::symbol_type Scanner::ReadBitStringLiteral(proto::Location loc) {
 
 /// Scan input and produce all tokens
 std::pair<std::shared_ptr<ScannedScript>, proto::StatusCode> Scanner::Scan(const rope::Rope& text,
-                                                                           ExternalID external_id) {
+                                                                           CatalogEntryID external_id) {
     // Function to get next token
     auto next = [](void* scanner_state_ptr, std::optional<Parser::symbol_type>& lookahead_symbol) {
         // Have lookahead?
