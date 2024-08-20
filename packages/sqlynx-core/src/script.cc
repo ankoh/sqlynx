@@ -33,7 +33,6 @@ std::unique_ptr<proto::StatementT> ParsedScript::Statement::Pack() {
 ScannedScript::ScannedScript(const rope::Rope& text, uint32_t external_id)
     : external_id(external_id), text_buffer(text.ToString(true)) {
     names_by_text.reserve(64);
-    names_by_id.reserve(64);
 }
 /// Constructor
 ScannedScript::ScannedScript(std::string text, uint32_t external_id)
@@ -44,13 +43,12 @@ ScannedScript::ScannedScript(std::string text, uint32_t external_id)
     text_buffer[text_buffer.size() - 1] = 0;
     text_buffer[text_buffer.size() - 2] = 0;
     names_by_text.reserve(64);
-    names_by_id.reserve(64);
 }
 
 /// Read a name
 CatalogEntry::IndexedName& ScannedScript::ReadName(NameID name) {
-    assert(names_by_id.contains(name));
-    return names_by_id.at(name).get();
+    assert(name < names.GetSize());
+    return names[name];
 }
 
 /// Register a name
@@ -66,7 +64,6 @@ NameID ScannedScript::RegisterName(std::string_view s, sx::Location location, sx
     auto& name = names.Append(
         CatalogEntry::IndexedName{.name_id = name_id, .text = s, .location = location, .tags = tag, .occurrences = 1});
     names_by_text.insert({s, name});
-    names_by_id.insert({name_id, name});
     return name_id;
 }
 
@@ -611,7 +608,6 @@ std::unique_ptr<proto::ScriptMemoryStatistics> Script::GetMemoryStatistics() {
         size_t scanner_symbol_bytes = scanned->symbols.GetSize() + sizeof(parser::Parser::symbol_type);
         size_t scanner_dictionary_bytes = scanned->name_pool.GetSize() +
                                           scanned->names.GetSize() * sizeof(CatalogEntry::IndexedName) +
-                                          scanned->names_by_id.size() * sizeof(std::pair<NameID, void*>) +
                                           scanned->names_by_text.size() * sizeof(std::pair<std::string_view, void*>);
         stats.mutate_scanner_input_bytes(scanned->GetInput().size());
         stats.mutate_scanner_symbol_bytes(scanner_symbol_bytes);
