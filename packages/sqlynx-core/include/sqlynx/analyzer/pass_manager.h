@@ -1,12 +1,8 @@
 #pragma once
 
-#include <initializer_list>
-#include <string_view>
-
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
-#include "sqlynx/text/rope.h"
 
 namespace sqlynx {
 

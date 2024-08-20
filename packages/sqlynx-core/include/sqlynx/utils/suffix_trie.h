@@ -6,9 +6,7 @@
 #include <memory>
 #include <string_view>
 
-#include "sqlynx/parser/names.h"
-#include "sqlynx/proto/proto_generated.h"
-#include "sqlynx/text/rope.h"
+#include "sqlynx/text/names.h"
 #include "sqlynx/utils/chunk_buffer.h"
 #include "sqlynx/utils/string_conversion.h"
 

@@ -11,8 +11,8 @@
 #include <tuple>
 
 #include "sqlynx/external.h"
-#include "sqlynx/parser/names.h"
 #include "sqlynx/proto/proto_generated.h"
+#include "sqlynx/text/names.h"
 #include "sqlynx/utils/btree/map.h"
 #include "sqlynx/utils/btree/set.h"
 #include "sqlynx/utils/chunk_buffer.h"
@@ -34,22 +34,6 @@ constexpr uint32_t PROTO_NULL_U32 = std::numeric_limits<uint32_t>::max();
 constexpr CatalogDatabaseID INITIAL_DATABASE_ID = 1 << 8;
 constexpr CatalogSchemaID INITIAL_SCHEMA_ID = 1 << 16;
 
-/// A type of a catalog object
-enum CatalogObjectType {
-    Database = 1,
-    Schema = 2,
-    Table = 3,
-    Column = 4,
-};
-
-/// A catalog object
-struct CatalogObject {
-    /// The object type
-    CatalogObjectType object_type;
-    /// Constructor
-    CatalogObject(CatalogObjectType type) : object_type(type) {}
-};
-
 /// A schema stores database metadata.
 /// It is used as a virtual container to expose table and column information to the analyzer.
 class CatalogEntry {
@@ -61,27 +45,7 @@ class CatalogEntry {
     using NameID = uint32_t;
     using Rank = uint32_t;
 
-    /// The name entry
-    struct IndexedName {
-        /// The unique name id within the schema
-        NameID name_id;
-        /// The text
-        std::string_view text;
-        /// The location
-        sx::Location location;
-        /// The occurences
-        size_t occurrences;
-        /// The name tags resolved by the Analyzer.
-        /// These tags are only available when the script was analyzed and are cleaned up when re-analyzing.
-        NameTags resolved_tags;
-        /// The catalog objects resolved by the Analyzer.
-        /// These objects are only available when the script was analyzed and are cleaned up when re-analyzing.
-        OverlayList<CatalogObject> resolved_objects;
-        /// Return the name text
-        operator std::string_view() { return text; }
-    };
-    using NameSearchIndex =
-        btree::multimap<fuzzy_ci_string_view, std::reference_wrapper<const CatalogEntry::IndexedName>>;
+    using NameSearchIndex = btree::multimap<fuzzy_ci_string_view, std::reference_wrapper<const RegisteredName>>;
 
     /// A key for a qualified table name
     /// A qualified table name
@@ -132,19 +96,19 @@ class CatalogEntry {
         operator Key() { return {table_alias, column_name}; }
     };
     /// A table column
-    struct TableColumn : CatalogObject {
+    struct TableColumn : NamedObject {
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
         /// The column name
         std::string_view column_name;
         /// Constructor
         TableColumn(std::optional<uint32_t> ast_node_id = {}, std::string_view column_name = {})
-            : CatalogObject(CatalogObjectType::Table), ast_node_id(ast_node_id), column_name(column_name) {}
+            : NamedObject(NamedObjectType::Table), ast_node_id(ast_node_id), column_name(column_name) {}
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::TableColumn> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
     /// A table declaration
-    struct TableDeclaration : CatalogObject {
+    struct TableDeclaration : NamedObject {
         /// The id of the table in the catalog
         ExternalObjectID catalog_table_id;
         /// The catalog database id
@@ -167,7 +131,7 @@ class CatalogEntry {
         std::vector<TableColumn> table_columns;
 
         /// Constructor
-        TableDeclaration() : CatalogObject(CatalogObjectType::Table) {}
+        TableDeclaration() : NamedObject(NamedObjectType::Table) {}
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::Table> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
@@ -179,7 +143,7 @@ class CatalogEntry {
         size_t table_column_index;
     };
     /// A database name declaration
-    struct DatabaseReference : CatalogObject {
+    struct DatabaseReference : NamedObject {
         /// The catalog database id.
         /// This ID is only preliminary if the entry has not been added to the catalog yet.
         /// Adding the entry to the catalog might fail if this id becomes invalid.
@@ -191,7 +155,7 @@ class CatalogEntry {
         /// Constructor
         DatabaseReference(CatalogDatabaseID database_id, std::string_view database_name,
                           std::string_view database_alias)
-            : CatalogObject(CatalogObjectType::Database),
+            : NamedObject(NamedObjectType::Database),
               catalog_database_id(database_id),
               database_name(database_name),
               database_alias(database_alias) {}
@@ -199,7 +163,7 @@ class CatalogEntry {
         flatbuffers::Offset<proto::DatabaseDeclaration> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
     /// A schema name declaration
-    struct SchemaReference : CatalogObject {
+    struct SchemaReference : NamedObject {
         /// The catalog database id
         /// This ID is only preliminary if the entry has not been added to the catalog yet.
         /// Adding the entry to the catalog might fail if this id becomes invalid.
@@ -215,7 +179,7 @@ class CatalogEntry {
         /// Constructor
         SchemaReference(CatalogDatabaseID database_id, CatalogSchemaID schema_id, std::string_view database_name,
                         std::string_view schema_name)
-            : CatalogObject(CatalogObjectType::Schema),
+            : NamedObject(NamedObjectType::Schema),
               catalog_database_id(database_id),
               catalog_schema_id(schema_id),
               database_name(database_name),
@@ -312,10 +276,8 @@ class DescriptorPool : public CatalogEntry {
     Rank rank;
     /// The schema descriptors
     std::vector<Descriptor> descriptor_buffers;
-    /// The names
-    ChunkBuffer<CatalogEntry::IndexedName, 32> names;
-    /// The name infos
-    std::unordered_map<std::string_view, std::reference_wrapper<CatalogEntry::IndexedName>> name_infos;
+    /// The name registry
+    NameRegistry name_registry;
 
    public:
     /// Construcutor

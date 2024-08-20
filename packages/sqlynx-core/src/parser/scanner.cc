@@ -70,7 +70,7 @@ Parser::symbol_type Scanner::ReadIdentifier(proto::Location loc) {
     if (!all_lower) {
         owned = output->name_pool.AllocateCopy(temp_buffer);
     }
-    size_t id = output->RegisterName(owned, loc);
+    size_t id = output->name_registry.Register(owned, loc).name_id;
     return Parser::make_IDENT(id, loc);
 }
 /// Read a double quoted identifier
@@ -80,7 +80,7 @@ Parser::symbol_type Scanner::ReadDoubleQuotedIdentifier(proto::Location loc) {
     auto trimmed = trim_view_right(text, is_no_space);
     trimmed = trim_view(trimmed, is_no_double_quote);
     // Add string to dictionary
-    size_t id = output->RegisterName(trimmed, loc);
+    size_t id = output->name_registry.Register(trimmed, loc).name_id;
     return Parser::make_IDENT(id, loc);
 }
 

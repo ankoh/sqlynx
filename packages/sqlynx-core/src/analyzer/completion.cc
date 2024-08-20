@@ -2,17 +2,15 @@
 
 #include <flatbuffers/buffer.h>
 
-#include <unordered_map>
 #include <unordered_set>
 
 #include "sqlynx/external.h"
 #include "sqlynx/parser/grammar/keywords.h"
-#include "sqlynx/parser/names.h"
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
+#include "sqlynx/text/names.h"
 #include "sqlynx/utils/string_conversion.h"
-#include "sqlynx/utils/suffix_trie.h"
 
 namespace sqlynx {
 
@@ -174,12 +172,12 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
         auto name = parser::Keyword::GetKeywordName(expected);
         if (!name.empty()) {
             Candidate candidate{
-                .name = CatalogEntry::IndexedName{.name_id = static_cast<uint32_t>(expected),
-                                                  .text = name,
-                                                  .location = sx::Location(),
-                                                  .occurrences = 0,
-                                                  .resolved_tags = {proto::NameTag::KEYWORD},
-                                                  .resolved_objects = {}},
+                .name = RegisteredName{.name_id = static_cast<uint32_t>(expected),
+                                       .text = name,
+                                       .location = sx::Location(),
+                                       .occurrences = 0,
+                                       .resolved_tags = {proto::NameTag::KEYWORD},
+                                       .resolved_objects = {}},
                 .combined_tags = NameTags{proto::NameTag::KEYWORD},
                 .score = get_score(*location, expected, name),
                 .near_cursor = false,
