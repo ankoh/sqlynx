@@ -8,15 +8,15 @@
 
 namespace sqlynx {
 
-using ExternalID = uint32_t;
+using CatalogEntryID = uint32_t;
 
 /// An identifier annotated with an external id
 struct ExternalObjectID {
-    constexpr static ExternalID KEYWORD_EXTERNAL_ID = 0xFFFFFFFF;
+    constexpr static CatalogEntryID KEYWORD_EXTERNAL_ID = 0xFFFFFFFF;
 
    protected:
     /// The external id
-    ExternalID external_id;
+    CatalogEntryID external_id;
     /// The value
     uint32_t value;
 

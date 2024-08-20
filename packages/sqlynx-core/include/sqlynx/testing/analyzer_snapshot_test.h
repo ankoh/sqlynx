@@ -20,7 +20,7 @@ struct AnalyzerSnapshotTest {
     /// A snapshot of a script analysis
     struct ScriptAnalysisSnapshot {
         /// The origin id
-        ExternalID external_id;
+        CatalogEntryID external_id;
         /// The script
         std::string input;
         /// The tables

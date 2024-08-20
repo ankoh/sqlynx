@@ -74,7 +74,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// The parsed program
     ParsedScript& parsed_program;
     /// The external id of the current script
-    const ExternalID catalog_entry_id;
+    const CatalogEntryID catalog_entry_id;
     /// The catalog
     Catalog& catalog;
     /// The attribute index
@@ -132,8 +132,8 @@ class NameResolutionPass : public PassManager::LTRPass {
     AnalyzedScript::QualifiedTableName NormalizeTableName(AnalyzedScript::QualifiedTableName name) const;
 
     /// Register a schema
-    std::pair<CatalogObjectID, CatalogObjectID> RegisterSchema(std::string_view database_name,
-                                                               std::string_view schema_name);
+    std::pair<CatalogDatabaseID, CatalogSchemaID> RegisterSchema(std::string_view database_name,
+                                                                 std::string_view schema_name);
 
     /// Merge child states into a destination state
     void MergeChildStates(NodeState& dst, const sx::Node& parent);

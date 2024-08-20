@@ -64,7 +64,7 @@ TEST(ScannerTest, FindTokenAtOffset) {
     std::shared_ptr<ScannedScript> script;
 
     // Helper to scan a script
-    auto scan = [&](std::string_view text, ExternalID external_id) {
+    auto scan = [&](std::string_view text, CatalogEntryID external_id) {
         rope::Rope buffer{128};
         buffer.Insert(0, text);
         auto [scanned, status] = parser::Scanner::Scan(buffer, external_id);
