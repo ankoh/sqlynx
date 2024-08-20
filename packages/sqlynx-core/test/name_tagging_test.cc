@@ -2,19 +2,18 @@
 
 #include "gtest/gtest.h"
 #include "sqlynx/analyzer/analyzer.h"
-#include "sqlynx/api.h"
 #include "sqlynx/catalog.h"
-#include "sqlynx/parser/names.h"
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/parser/scanner.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
+#include "sqlynx/text/names.h"
 
 using namespace sqlynx;
 
 namespace {
 
-std::string snapshot(const decltype(ScannedScript::names)& names) {
+std::string snapshot(const decltype(ScannedScript::name_registry)& names) {
     std::stringstream out;
     size_t i = 0;
     out << "[";
@@ -63,12 +62,12 @@ TEST_P(TestNameTags, Test) {
     auto [analyzed, analyzer_status] = Analyzer::Analyze(parsed, catalog);
     ASSERT_EQ(analyzer_status, proto::StatusCode::OK);
 
-    ASSERT_EQ(scanned->names.GetSize(), GetParam().expected.size()) << snapshot(scanned->names);
+    ASSERT_EQ(scanned->name_registry.GetSize(), GetParam().expected.size()) << snapshot(scanned->name_registry);
     size_t i = 0;
     for (auto [name, tags] : GetParam().expected) {
         SCOPED_TRACE(i);
         size_t current = i++;
-        auto& have = scanned->ReadName(current);
+        auto& have = scanned->name_registry.At(current);
         ASSERT_EQ(have.text, name);
         ASSERT_EQ(static_cast<uint64_t>(have.resolved_tags), static_cast<uint64_t>(tags));
     }

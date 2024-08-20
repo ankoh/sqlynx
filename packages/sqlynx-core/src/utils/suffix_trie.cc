@@ -14,8 +14,7 @@ namespace sqlynx {
 size_t SuffixTrie::Node::Match(StringView prefix) {
     size_t limit = std::min<size_t>(key.size(), prefix.size());
     size_t i = 0;
-    for (; i < limit && tolower_fuzzy(key[i]) == tolower_fuzzy(prefix[i]); ++i)
-        ;
+    for (; i < limit && tolower_fuzzy(key[i]) == tolower_fuzzy(prefix[i]); ++i);
     return i;
 }
 
@@ -238,8 +237,7 @@ std::unique_ptr<SuffixTrie> SuffixTrie::BulkLoad(std::vector<Entry> entries) {
     auto common_prefix = [](StringView left, StringView right) {
         size_t limit = std::min(left.size(), right.size());
         size_t prefix_len = 0;
-        for (; prefix_len < limit && tolower_fuzzy(left[prefix_len]) == tolower_fuzzy(right[prefix_len]); ++prefix_len)
-            ;
+        for (; prefix_len < limit && tolower_fuzzy(left[prefix_len]) == tolower_fuzzy(right[prefix_len]); ++prefix_len);
         return left.substr(0, prefix_len);
     };
 

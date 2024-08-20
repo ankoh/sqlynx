@@ -31,9 +31,7 @@ std::unique_ptr<proto::StatementT> ParsedScript::Statement::Pack() {
 
 /// Constructor
 ScannedScript::ScannedScript(const rope::Rope& text, uint32_t external_id)
-    : external_id(external_id), text_buffer(text.ToString(true)) {
-    names_by_text.reserve(64);
-}
+    : external_id(external_id), text_buffer(text.ToString(true)) {}
 /// Constructor
 ScannedScript::ScannedScript(std::string text, uint32_t external_id)
     : external_id(external_id), text_buffer(std::move(text)) {
@@ -42,29 +40,6 @@ ScannedScript::ScannedScript(std::string text, uint32_t external_id)
     }
     text_buffer[text_buffer.size() - 1] = 0;
     text_buffer[text_buffer.size() - 2] = 0;
-    names_by_text.reserve(64);
-}
-
-/// Read a name
-CatalogEntry::IndexedName& ScannedScript::ReadName(NameID name) {
-    assert(name < names.GetSize());
-    return names[name];
-}
-
-/// Register a name
-NameID ScannedScript::RegisterName(std::string_view s, sx::Location location, sx::NameTag tag) {
-    auto iter = names_by_text.find(s);
-    if (iter != names_by_text.end()) {
-        auto& name = iter->second.get();
-        name.resolved_tags |= tag;
-        name.occurrences += 1;
-        return name.name_id;
-    }
-    NameID name_id = names.GetSize();
-    auto& name = names.Append(CatalogEntry::IndexedName{
-        .name_id = name_id, .text = s, .location = location, .resolved_tags = tag, .occurrences = 1});
-    names_by_text.insert({s, name});
-    return name_id;
 }
 
 /// Find a token at a text offset
@@ -411,8 +386,8 @@ flatbuffers::Offset<proto::CatalogEntry> AnalyzedScript::DescribeEntry(flatbuffe
 const CatalogEntry::NameSearchIndex& AnalyzedScript::GetNameSearchIndex() {
     if (!name_search_index.has_value()) {
         auto& index = name_search_index.emplace();
-        auto& names = parsed_script->scanned_script->names;
-        for (auto& names_chunk : names.GetChunks()) {
+        auto& names = parsed_script->scanned_script->name_registry.GetChunks();
+        for (auto& names_chunk : names) {
             for (auto& name : names_chunk) {
                 auto s = name.text;
                 for (size_t i = 1; i <= s.size(); ++i) {
@@ -606,9 +581,7 @@ std::unique_ptr<proto::ScriptMemoryStatistics> Script::GetMemoryStatistics() {
         ScannedScript* scanned = parsed->scanned_script.get();
         if (registered_scanned.contains(scanned)) return;
         size_t scanner_symbol_bytes = scanned->symbols.GetSize() + sizeof(parser::Parser::symbol_type);
-        size_t scanner_dictionary_bytes = scanned->name_pool.GetSize() +
-                                          scanned->names.GetSize() * sizeof(CatalogEntry::IndexedName) +
-                                          scanned->names_by_text.size() * sizeof(std::pair<std::string_view, void*>);
+        size_t scanner_dictionary_bytes = scanned->name_pool.GetSize() + scanned->name_registry.GetByteSize();
         stats.mutate_scanner_input_bytes(scanned->GetInput().size());
         stats.mutate_scanner_symbol_bytes(scanner_symbol_bytes);
         stats.mutate_scanner_name_dictionary_bytes(scanner_dictionary_bytes);
@@ -651,7 +624,7 @@ std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze() {
     // Check if the script was already analyzed.
     // In that case, we have to clean up anything that we "registered" in the scanned script before.
     if (analyzed_script && scanned_script) {
-        for (auto& chunk : scanned_script->names.GetChunks()) {
+        for (auto& chunk : scanned_script->name_registry.GetChunks()) {
             for (auto& entry : chunk) {
                 entry.resolved_tags = 0;
                 entry.resolved_objects.Clear();
