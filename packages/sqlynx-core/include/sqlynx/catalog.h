@@ -68,12 +68,14 @@ class CatalogEntry {
         std::string_view text;
         /// The location
         sx::Location location;
-        /// The tags
-        NameTags tags;
         /// The occurences
         size_t occurrences;
-        /// The catalog objects
-        OverlayList<CatalogObject> catalog_objects;
+        /// The name tags resolved by the Analyzer.
+        /// These tags are only available when the script was analyzed and are cleaned up when re-analyzing.
+        NameTags resolved_tags;
+        /// The catalog objects resolved by the Analyzer.
+        /// These objects are only available when the script was analyzed and are cleaned up when re-analyzing.
+        OverlayList<CatalogObject> resolved_objects;
         /// Return the name text
         operator std::string_view() { return text; }
     };
