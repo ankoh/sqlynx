@@ -262,16 +262,16 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
         auto iter = name_infos.find(name);
         if (iter != name_infos.end()) {
             auto& name_info = iter->second.get();
-            name_info.tags |= tags;
+            name_info.resolved_tags |= tags;
             ++name_info.occurrences;
         } else {
             fuzzy_ci_string_view ci_name{name.data(), name.size()};
             auto& name_info = names.Append(IndexedName{.name_id = static_cast<uint32_t>(names.GetSize()),
                                                        .text = name,
                                                        .location = sx::Location(),
-                                                       .tags = tags,
+                                                       .resolved_tags = tags,
                                                        .occurrences = 1,
-                                                       .catalog_objects = {}});
+                                                       .resolved_objects = {}});
             name_infos.insert({name, name_info});
             for (size_t i = 1; i < ci_name.size(); ++i) {
                 auto suffix = ci_name.substr(ci_name.size() - 1 - i);

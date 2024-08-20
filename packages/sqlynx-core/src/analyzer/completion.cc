@@ -175,10 +175,11 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
         if (!name.empty()) {
             Candidate candidate{
                 .name = CatalogEntry::IndexedName{.name_id = static_cast<uint32_t>(expected),
-                                               .text = name,
-                                               .location = sx::Location(),
-                                               .tags = {proto::NameTag::KEYWORD},
-                                               .occurrences = 0},
+                                                  .text = name,
+                                                  .location = sx::Location(),
+                                                  .occurrences = 0,
+                                                  .resolved_tags = {proto::NameTag::KEYWORD},
+                                                  .resolved_objects = {}},
                 .combined_tags = NameTags{proto::NameTag::KEYWORD},
                 .score = get_score(*location, expected, name),
                 .near_cursor = false,
@@ -215,7 +216,7 @@ void findCandidatesInIndex(Completion& completion, const CatalogEntry::NameSearc
         // Determine score
         Completion::ScoreValueType score = 0;
         for (auto [tag, tag_score] : scoring_table) {
-            score = std::max(score, name_info.tags.contains(tag) ? tag_score : 0);
+            score = std::max(score, name_info.resolved_tags.contains(tag) ? tag_score : 0);
         }
         // Is a prefix?
         switch (location->relative_pos) {
@@ -235,13 +236,13 @@ void findCandidatesInIndex(Completion& completion, const CatalogEntry::NameSearc
         if (auto iter = pending_candidates.find(name_info.text); iter != pending_candidates.end()) {
             // Update the score if it is higher
             iter->second.score = std::max(iter->second.score, score);
-            iter->second.combined_tags |= name_info.tags;
+            iter->second.combined_tags |= name_info.resolved_tags;
             iter->second.external |= external;
         } else {
             // Otherwise store as new candidate
             Completion::Candidate candidate{
                 .name = name_info,
-                .combined_tags = name_info.tags,
+                .combined_tags = name_info.resolved_tags,
                 .score = score,
                 .near_cursor = false,
                 .external = external,
