@@ -365,7 +365,6 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
     struct ColumnNode {
         // The column id
         uint32_t column_id;
-        /// The name id
         // A name id
         size_t name_id;
     };
