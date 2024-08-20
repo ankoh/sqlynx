@@ -70,7 +70,7 @@ CatalogEntry::QualifiedTableName CatalogEntry::QualifyTableName(CatalogEntry::Qu
     return name;
 }
 
-CatalogDatabaseID CatalogEntry::RegisterDatabaseName(std::string_view name) {
+CatalogDatabaseID CatalogEntry::RegisterDatabase(std::string_view name) {
     auto db_id = catalog.AllocateDatabaseId(name);
     if (!databases_by_name.contains({name})) {
         auto& db = database_references.Append(CatalogEntry::DatabaseReference{db_id, name, ""});
@@ -79,8 +79,8 @@ CatalogDatabaseID CatalogEntry::RegisterDatabaseName(std::string_view name) {
     return db_id;
 }
 
-CatalogSchemaID CatalogEntry::RegisterSchemaName(CatalogDatabaseID db_id, std::string_view db_name,
-                                                 std::string_view schema_name) {
+CatalogSchemaID CatalogEntry::RegisterSchema(CatalogDatabaseID db_id, std::string_view db_name,
+                                             std::string_view schema_name) {
     auto schema_id = catalog.AllocateSchemaId(db_name, schema_name);
     if (!schemas_by_name.contains({db_name, schema_name})) {
         auto& schema = schema_references.Append(CatalogEntry::SchemaReference{db_id, schema_id, db_name, schema_name});
@@ -203,8 +203,8 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
     std::string_view schema_name = descriptor.schema_name() == nullptr ? "" : descriptor.schema_name()->string_view();
 
     // Allocate ids
-    auto db_id = RegisterDatabaseName(db_name);
-    auto schema_id = RegisterSchemaName(db_id, db_name, schema_name);
+    auto db_id = RegisterDatabase(db_name);
+    auto schema_id = RegisterSchema(db_id, db_name, schema_name);
 
     // Read tables
     uint32_t next_table_id = table_declarations.GetSize();
@@ -864,8 +864,8 @@ proto::StatusCode Catalog::AddSchemaDescriptor(CatalogEntryID external_id, std::
             descriptor.schema_name() == nullptr ? "" : descriptor.schema_name()->string_view();
 
         // Allocate ids
-        auto db_id = pool.RegisterDatabaseName(db_name);
-        auto schema_id = pool.RegisterSchemaName(db_id, db_name, schema_name);
+        auto db_id = pool.RegisterDatabase(db_name);
+        auto schema_id = pool.RegisterSchema(db_id, db_name, schema_name);
         // Add the entry
         std::tuple<std::string_view, std::string_view, CatalogEntry::Rank, CatalogEntryID> entry_key{
             db_name, schema_name, pool.GetRank(), external_id};

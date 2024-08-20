@@ -7,7 +7,6 @@
 #include <optional>
 #include <string_view>
 
-#include "ankerl/unordered_dense.h"
 #include "sqlynx/catalog.h"
 #include "sqlynx/external.h"
 #include "sqlynx/parser/parser.h"
@@ -64,7 +63,7 @@ class ScannedScript {
     /// Get the tokens
     auto& GetSymbols() const { return symbols; }
     /// Get the name dictionary
-    auto& GetNameRegistry() { return name_registry; }
+    auto& GetNames() { return name_registry; }
 
     /// Register a keyword as name
     NameID RegisterKeywordAsName(std::string_view s, sx::Location location, sx::NameTag tag = sx::NameTag::NONE) {
