@@ -22,8 +22,8 @@ interface UseOverlayArgs {
 export function useOverlay(args: UseOverlayArgs): React.RefObject<HTMLDivElement> {
     const ownOverlayRef = React.useRef<HTMLDivElement>(null);
     const overlayRef = args.overlayRef ?? ownOverlayRef;
-    useOpenAndCloseFocus({containerRef: overlayRef, returnFocusRef: args.returnFocusRef, initialFocusRef: args.initialFocusRef, preventFocusOnOpen: args.preventFocusOnOpen});
-    useOnOutsideClick({containerRef: overlayRef, ignoreClickRefs: args.ignoreClickRefs, onClickOutside: args.onClickOutside})
+    useOpenAndCloseFocus({ containerRef: overlayRef, returnFocusRef: args.returnFocusRef, initialFocusRef: args.initialFocusRef, preventFocusOnOpen: args.preventFocusOnOpen });
+    useOnOutsideClick({ containerRef: overlayRef, ignoreClickRefs: args.ignoreClickRefs, onClickOutside: args.onClickOutside })
     useKeyEvents([
         {
             key: "Escape",
@@ -95,22 +95,22 @@ export enum OverlayVisibility {
     Visible
 }
 
-function getSlideAnimationStartingVector(anchorSide?: AnchorSide): {x: number; y: number} {
+function getSlideAnimationStartingVector(anchorSide?: AnchorSide): { x: number; y: number } {
     switch (anchorSide) {
         case AnchorSide.OutsideTop:
         case AnchorSide.InsideTop:
-            return {x: 0, y: 1};
+            return { x: 0, y: 1 };
         case AnchorSide.OutsideRight:
         case AnchorSide.InsideRight:
-            return {x: -1, y: 0};
+            return { x: -1, y: 0 };
         case AnchorSide.OutsideLeft:
         case AnchorSide.InsideLeft:
-            return {x: 1, y: 0};
+            return { x: 1, y: 0 };
         case AnchorSide.OutsideBottom:
         case AnchorSide.InsideBottom:
-            return {x: 0, y: -1};
+            return { x: 0, y: -1 };
     }
-    return {x: 0, y: 0}
+    return { x: 0, y: 0 }
 }
 
 export interface OverlayProps {
@@ -160,12 +160,12 @@ export const Overlay = React.forwardRef((props: OverlayProps, forwardedRef: Reac
 
     // JS animation is required because Safari does not allow css animations to start paused and then run
     React.useLayoutEffect(() => {
-        const {x, y} = getSlideAnimationStartingVector(props.anchorSide)
+        const { x, y } = getSlideAnimationStartingVector(props.anchorSide)
         if ((!x && !y) || !overlayRef.current?.animate || props.visibility === OverlayVisibility.Hidden) {
             return
         }
         overlayRef.current.animate(
-            {transform: [`translate(${SLIDE_ANIMATION_DISTANCE * x}px, ${SLIDE_ANIMATION_DISTANCE * y}px)`, `translate(0, 0)`]},
+            { transform: [`translate(${SLIDE_ANIMATION_DISTANCE * x}px, ${SLIDE_ANIMATION_DISTANCE * y}px)`, `translate(0, 0)`] },
             {
                 duration: 200,
                 easing: "cubic-bezier(0.33, 1, 0.68, 1)",
