@@ -14,6 +14,7 @@ const base = configure({
     extractCss: true,
     cssIdentifier: '[hash:base64]',
     appURL: process.env.SQLYNX_APP_URL ?? 'https://sqlynx.app',
+    logLevel: process.env.SQLYNX_LOG_LEVEL ?? 'info',
 });
 
 const config: Configuration = {
