@@ -5,7 +5,10 @@
     display: grid;
     grid-template-rows: 48px calc(100% - 48px);
     grid-template-columns: 100%;
+
     background-color: white;
+    border: 1px solid var(--log_border_color);
+    border-radius: var(--border_radius);
 }
 
 .page_title {
