@@ -46,8 +46,12 @@ NameResolutionPass::NameResolutionPass(ParsedScript& parser, Catalog& catalog, A
       catalog_entry_id(parser.external_id),
       catalog(catalog),
       attribute_index(attribute_index),
-      nodes(parsed_program.nodes) {
+      nodes(parsed_program.nodes),
+      default_database_name(parser.scanned_script->name_registry.Register(catalog.GetDefaultDatabaseName())),
+      default_schema_name(parser.scanned_script->name_registry.Register(catalog.GetDefaultSchemaName())) {
     node_states.resize(nodes.size());
+    default_database_name.resolved_tags |= proto::NameTag::DATABASE_NAME;
+    default_schema_name.resolved_tags |= proto::NameTag::SCHEMA_NAME;
 }
 
 std::span<std::reference_wrapper<RegisteredName>> NameResolutionPass::ReadNamePath(const sx::Node& node) {
@@ -70,73 +74,56 @@ std::span<std::reference_wrapper<RegisteredName>> NameResolutionPass::ReadNamePa
     return std::span{name_path_buffer};
 }
 
-AnalyzedScript::QualifiedTableName NameResolutionPass::ReadQualifiedTableName(const sx::Node* node) {
-    AnalyzedScript::QualifiedTableName name;
+std::optional<AnalyzedScript::QualifiedTableName> NameResolutionPass::ReadQualifiedTableName(const sx::Node* node) {
     if (!node) {
-        return name;
+        return std::nullopt;
     }
     auto name_path = ReadNamePath(*node);
-    name.ast_node_id = node - nodes.data();
+    auto ast_node_id = node - nodes.data();
     switch (name_path.size()) {
         case 3:
-            name.database_name = name_path[0].get();
-            name.schema_name = name_path[1].get();
-            name.table_name = name_path[2].get();
             name_path[0].get().resolved_tags |= sx::NameTag::DATABASE_NAME;
             name_path[1].get().resolved_tags |= sx::NameTag::SCHEMA_NAME;
             name_path[2].get().resolved_tags |= sx::NameTag::TABLE_NAME;
-            break;
-        case 2:
-            name.schema_name = name_path[0].get();
-            name.table_name = name_path[1].get();
+            return AnalyzedScript::QualifiedTableName{ast_node_id, name_path[0], name_path[1], name_path[2]};
+        case 2: {
             name_path[0].get().resolved_tags |= sx::NameTag::SCHEMA_NAME;
             name_path[1].get().resolved_tags |= sx::NameTag::TABLE_NAME;
-            break;
-        case 1:
-            name.table_name = name_path[0].get();
+            return AnalyzedScript::QualifiedTableName{ast_node_id, default_database_name, name_path[0], name_path[1]};
+        }
+        case 1: {
             name_path[0].get().resolved_tags |= sx::NameTag::TABLE_NAME;
-            break;
+            return AnalyzedScript::QualifiedTableName{ast_node_id, default_database_name, default_schema_name,
+                                                      name_path[0]};
+        }
         default:
-            break;
+            return std::nullopt;
     }
-    return name;
 }
 
-AnalyzedScript::QualifiedColumnName NameResolutionPass::ReadQualifiedColumnName(const sx::Node* node) {
-    AnalyzedScript::QualifiedColumnName name;
+std::optional<AnalyzedScript::QualifiedColumnName> NameResolutionPass::ReadQualifiedColumnName(const sx::Node* node) {
     if (!node) {
-        return name;
+        return std::nullopt;
     }
     auto name_path = ReadNamePath(*node);
-    name.ast_node_id = node - nodes.data();
+    auto ast_node_id = node - nodes.data();
     // Build the qualified column name
     switch (name_path.size()) {
         case 2:
-            name.table_alias = name_path[0].get();
-            name.column_name = name_path[1].get();
             name_path[0].get().resolved_tags |= sx::NameTag::TABLE_ALIAS;
             name_path[1].get().resolved_tags |= sx::NameTag::COLUMN_NAME;
-            break;
+            return AnalyzedScript::QualifiedColumnName{ast_node_id, name_path[0], name_path[1]};
         case 1:
-            name.column_name = name_path[0].get();
             name_path[0].get().resolved_tags |= sx::NameTag::COLUMN_NAME;
-            break;
+            return AnalyzedScript::QualifiedColumnName{ast_node_id, std::nullopt, name_path[0]};
         default:
-            break;
+            return std::nullopt;
     }
-    return name;
-}
-
-AnalyzedScript::QualifiedTableName NameResolutionPass::NormalizeTableName(
-    AnalyzedScript::QualifiedTableName name) const {
-    name.database_name = name.database_name.empty() ? catalog.GetDefaultDatabaseName() : name.database_name;
-    name.schema_name = name.schema_name.empty() ? catalog.GetDefaultSchemaName() : name.schema_name;
-    return name;
 }
 
 /// Register a schema
-std::pair<CatalogDatabaseID, CatalogSchemaID> NameResolutionPass::RegisterSchema(std::string_view database_name,
-                                                                                 std::string_view schema_name) {
+std::pair<CatalogDatabaseID, CatalogSchemaID> NameResolutionPass::RegisterSchema(RegisteredName& database_name,
+                                                                                 RegisteredName& schema_name) {
     // Register the database
     CatalogDatabaseID db_id = 0;
     CatalogSchemaID schema_id = 0;
@@ -204,8 +191,7 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
         // TODO Matches a view or CTE?
 
         // Table ref points to own table?
-        auto table_name = NormalizeTableName(table_ref.table_name);
-        auto iter = tables_by_name.find(table_name);
+        auto iter = tables_by_name.find(table_ref.table_name);
         if (iter != tables_by_name.end()) {
             auto& table = iter->second.get();
 
@@ -219,7 +205,9 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
             for (size_t i = 0; i < table.table_columns.size(); ++i) {
                 auto& column = table.table_columns[i];
                 scope.resolved_table_columns.insert(
-                    {CatalogEntry::QualifiedColumnName::Key{table_ref.alias_name, column.column_name},
+                    {CatalogEntry::QualifiedColumnName::Key{
+                         table_ref.alias_name.has_value() ? table_ref.alias_name.value().get().text : "",
+                         column.column_name.get().text},
                      ResolvedTableColumn{.alias_name = table_ref.alias_name,
                                          .column_name = column.column_name,
                                          .table = table,
@@ -231,13 +219,6 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
 
         // Qualify table name for search path lookup
         CatalogEntry::QualifiedTableName qualified_table_name = table_ref.table_name;
-        if (qualified_table_name.database_name.empty()) {
-            qualified_table_name.database_name = catalog.GetDefaultDatabaseName();
-        }
-        if (qualified_table_name.schema_name.empty()) {
-            qualified_table_name.schema_name = catalog.GetDefaultSchemaName();
-        }
-
         // Otherwise consult the external search path
         if (auto resolved = catalog.ResolveTable(qualified_table_name, catalog_entry_id)) {
             // Remember resolved table
@@ -250,7 +231,8 @@ void NameResolutionPass::ResolveTableRefsInScope(NameScope& scope) {
             for (size_t i = 0; i < resolved->table_columns.size(); ++i) {
                 auto& column = resolved->table_columns[i];
                 scope.resolved_table_columns.insert(
-                    {CatalogEntry::QualifiedColumnName::Key{table_ref.alias_name, column.column_name},
+                    {CatalogEntry::QualifiedColumnName::Key{
+                         table_ref.alias_name ? table_ref.alias_name->get().text : "", column.column_name.get()},
                      ResolvedTableColumn{.alias_name = table_ref.alias_name,
                                          .column_name = column.column_name,
                                          .table = *resolved,
@@ -275,8 +257,8 @@ void NameResolutionPass::ResolveColumnRefsInScope(NameScope& scope, ColumnRefsBy
         for (auto column_ref_iter = unresolved_columns.begin(); column_ref_iter != unresolved_columns.end();) {
             auto& column_ref = column_ref_iter->get();
             auto& column_name = column_ref.column_name;
-            auto resolved_iter =
-                target_scope->resolved_table_columns.find({column_name.table_alias, column_name.column_name});
+            auto resolved_iter = target_scope->resolved_table_columns.find(
+                {column_name.table_alias ? column_name.table_alias->get().text : "", column_name.column_name.get()});
             if (resolved_iter != target_scope->resolved_table_columns.end()) {
                 auto& resolved = resolved_iter->second;
                 column_ref.resolved_catalog_database_id = resolved.table.catalog_database_id;
@@ -337,18 +319,16 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 auto children = nodes.subspan(node.children_begin_or_value(), node.children_count());
                 auto attrs = attribute_index.Load(children);
                 auto column_def_node = attrs[proto::AttributeKey::SQL_COLUMN_DEF_NAME];
-                std::string_view column_name_str;
                 if (column_def_node && column_def_node->node_type() == sx::NodeType::NAME) {
                     auto& name = scanned_program.GetNames().At(column_def_node->children_begin_or_value());
                     name.resolved_tags |= sx::NameTag::COLUMN_NAME;
-                    column_name_str = name;
-                }
-                if (auto reused = pending_columns_free_list.PopFront()) {
-                    *reused = AnalyzedScript::TableColumn(node_id, column_name_str);
-                    node_state.table_columns.PushBack(*reused);
-                } else {
-                    auto& node = pending_columns.Append(AnalyzedScript::TableColumn(node_id, column_name_str));
-                    node_state.table_columns.PushBack(node);
+                    if (auto reused = pending_columns_free_list.PopFront()) {
+                        *reused = AnalyzedScript::TableColumn(node_id, name);
+                        node_state.table_columns.PushBack(*reused);
+                    } else {
+                        auto& node = pending_columns.Append(AnalyzedScript::TableColumn(node_id, name));
+                        node_state.table_columns.PushBack(node);
+                    }
                 }
                 break;
             }
@@ -360,20 +340,21 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 auto attrs = attribute_index.Load(children);
                 auto column_ref_node = attrs[proto::AttributeKey::SQL_COLUMN_REF_PATH];
                 auto column_name = ReadQualifiedColumnName(column_ref_node);
-                // Add column reference
-                auto& n = column_references.Append(AnalyzedScript::ColumnReference());
-                n.buffer_index = column_references.GetSize() - 1;
-                n.value.column_reference_id =
-                    ExternalObjectID{catalog_entry_id, static_cast<uint32_t>(column_references.GetSize() - 1)};
-                n.value.ast_node_id = node_id;
-                n.value.ast_statement_id = std::nullopt;
-                n.value.ast_scope_root = std::nullopt;
-                n.value.resolved_catalog_database_id = std::numeric_limits<uint32_t>::max();
-                n.value.resolved_catalog_schema_id = std::numeric_limits<uint32_t>::max();
-                n.value.resolved_catalog_table_id = ExternalObjectID();
-                n.value.resolved_table_column_id = std::nullopt;
-                n.value.column_name = column_name;
-                node_state.column_references.PushBack(n);
+                if (column_name.has_value()) {
+                    // Add column reference
+                    auto& n = column_references.Append(AnalyzedScript::ColumnReference(column_name.value()));
+                    n.buffer_index = column_references.GetSize() - 1;
+                    n.value.column_reference_id =
+                        ExternalObjectID{catalog_entry_id, static_cast<uint32_t>(column_references.GetSize() - 1)};
+                    n.value.ast_node_id = node_id;
+                    n.value.ast_statement_id = std::nullopt;
+                    n.value.ast_scope_root = std::nullopt;
+                    n.value.resolved_catalog_database_id = std::numeric_limits<uint32_t>::max();
+                    n.value.resolved_catalog_schema_id = std::numeric_limits<uint32_t>::max();
+                    n.value.resolved_catalog_table_id = ExternalObjectID();
+                    n.value.resolved_table_column_id = std::nullopt;
+                    node_state.column_references.PushBack(n);
+                }
                 // Column refs may be recursive
                 MergeChildStates(node_state, node);
                 break;
@@ -387,28 +368,30 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 // Only consider table refs with a name for now
                 if (auto name_node = attrs[proto::AttributeKey::SQL_TABLEREF_NAME]) {
                     auto name = ReadQualifiedTableName(name_node);
-                    // Read a table alias
-                    std::string_view alias_str;
-                    auto alias_node = attrs[proto::AttributeKey::SQL_TABLEREF_ALIAS];
-                    if (alias_node && alias_node->node_type() == sx::NodeType::NAME) {
-                        auto& alias = scanned_program.GetNames().At(alias_node->children_begin_or_value());
-                        alias.resolved_tags |= sx::NameTag::TABLE_ALIAS;
-                        alias_str = alias;
+                    if (name.has_value()) {
+                        // Read a table alias
+                        std::string_view alias_str;
+                        auto alias_node = attrs[proto::AttributeKey::SQL_TABLEREF_ALIAS];
+                        std::optional<std::reference_wrapper<RegisteredName>> alias_name = std::nullopt;
+                        if (alias_node && alias_node->node_type() == sx::NodeType::NAME) {
+                            auto& alias = scanned_program.GetNames().At(alias_node->children_begin_or_value());
+                            alias.resolved_tags |= sx::NameTag::TABLE_ALIAS;
+                            alias_str = alias;
+                            alias_name = alias;
+                        }
+                        // Add table reference
+                        auto& n = table_references.Append(AnalyzedScript::TableReference(name.value(), alias_name));
+                        n.buffer_index = table_references.GetSize() - 1;
+                        n.value.table_reference_id =
+                            ExternalObjectID{catalog_entry_id, static_cast<uint32_t>(table_references.GetSize() - 1)};
+                        n.value.ast_node_id = node_id;
+                        n.value.ast_statement_id = std::nullopt;
+                        n.value.ast_scope_root = std::nullopt;
+                        n.value.resolved_catalog_database_id = std::numeric_limits<uint32_t>::max();
+                        n.value.resolved_catalog_schema_id = std::numeric_limits<uint32_t>::max();
+                        n.value.resolved_catalog_table_id = ExternalObjectID();
+                        node_state.table_references.PushBack(n);
                     }
-                    // Add table reference
-                    auto& n = table_references.Append(AnalyzedScript::TableReference());
-                    n.buffer_index = table_references.GetSize() - 1;
-                    n.value.table_reference_id =
-                        ExternalObjectID{catalog_entry_id, static_cast<uint32_t>(table_references.GetSize() - 1)};
-                    n.value.ast_node_id = node_id;
-                    n.value.ast_statement_id = std::nullopt;
-                    n.value.ast_scope_root = std::nullopt;
-                    n.value.resolved_catalog_database_id = std::numeric_limits<uint32_t>::max();
-                    n.value.resolved_catalog_schema_id = std::numeric_limits<uint32_t>::max();
-                    n.value.resolved_catalog_table_id = ExternalObjectID();
-                    n.value.table_name = name;
-                    n.value.alias_name = alias_str;
-                    node_state.table_references.PushBack(n);
                 }
                 // Table refs may be recursive
                 MergeChildStates(node_state, node);
@@ -534,33 +517,33 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 const proto::Node* elements_node = attrs[proto::AttributeKey::SQL_CREATE_TABLE_ELEMENTS];
                 // Read the name
                 auto table_name = ReadQualifiedTableName(name_node);
-                table_name = NormalizeTableName(table_name);
-                // Register the database
-                auto [db_id, schema_id] = RegisterSchema(table_name.database_name, table_name.schema_name);
-                // Merge child states
-                MergeChildStates(node_state, {elements_node});
-                // Collect all columns
-                std::vector<CatalogEntry::TableColumn> table_columns;
-                table_columns.reserve(node_state.table_columns.GetSize());
-                for (auto& table_col : node_state.table_columns) {
-                    table_columns.push_back(table_col);
+                if (table_name.has_value()) {
+                    // Register the database
+                    auto [db_id, schema_id] = RegisterSchema(table_name->database_name, table_name->schema_name);
+                    // Merge child states
+                    MergeChildStates(node_state, {elements_node});
+                    // Collect all columns
+                    std::vector<CatalogEntry::TableColumn> table_columns;
+                    table_columns.reserve(node_state.table_columns.GetSize());
+                    for (auto& table_col : node_state.table_columns) {
+                        table_columns.push_back(table_col);
+                    }
+                    std::sort(table_columns.begin(), table_columns.end(),
+                              [&](CatalogEntry::TableColumn& l, CatalogEntry::TableColumn& r) {
+                                  return l.column_name.get().text < r.column_name.get().text;
+                              });
+                    pending_columns_free_list.Append(std::move(node_state.table_columns));
+                    // Create the scope
+                    CreateScope(node_state, node_id);
+                    // Build the table
+                    auto& n = table_declarations.Append(AnalyzedScript::TableDeclaration(table_name.value()));
+                    n.catalog_table_id =
+                        ExternalObjectID{catalog_entry_id, static_cast<uint32_t>(table_declarations.GetSize() - 1)};
+                    n.catalog_database_id = db_id;
+                    n.catalog_schema_id = schema_id;
+                    n.ast_node_id = node_id;
+                    n.table_columns = std::move(table_columns);
                 }
-                std::sort(table_columns.begin(), table_columns.end(),
-                          [&](CatalogEntry::TableColumn& l, CatalogEntry::TableColumn& r) {
-                              return l.column_name < r.column_name;
-                          });
-                pending_columns_free_list.Append(std::move(node_state.table_columns));
-                // Create the scope
-                CreateScope(node_state, node_id);
-                // Build the table
-                auto& n = table_declarations.Append(AnalyzedScript::TableDeclaration());
-                n.catalog_table_id =
-                    ExternalObjectID{catalog_entry_id, static_cast<uint32_t>(table_declarations.GetSize() - 1)};
-                n.catalog_database_id = db_id;
-                n.catalog_schema_id = schema_id;
-                n.ast_node_id = node_id;
-                n.table_name = table_name;
-                n.table_columns = std::move(table_columns);
                 break;
             }
 
@@ -669,7 +652,7 @@ void NameResolutionPass::Export(AnalyzedScript& program) {
     for (auto& table : program.table_declarations) {
         for (size_t i = 0; i < table.table_columns.size(); ++i) {
             auto& column = table.table_columns[i];
-            program.table_columns_by_name.insert({column.column_name, {table, i}});
+            program.table_columns_by_name.insert({column.column_name.get().text, {table, i}});
         }
     }
 }
