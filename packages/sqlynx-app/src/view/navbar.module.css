@@ -116,8 +116,6 @@
     margin: 0px 8px 8px 8px;
 
     box-sizing: border-box;
-    border: 1px solid var(--log_border_color);
-    border-radius: var(--border_radius);
     overflow: hidden;
 }
 
