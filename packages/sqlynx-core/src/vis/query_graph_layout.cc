@@ -307,7 +307,7 @@ flatbuffers::Offset<proto::QueryGraphLayout> QueryGraphLayout::Pack(flatbuffers:
         bool is_referenced = !nodes[i].table_reference_id.IsNull();
         auto proto_node = std::make_unique<proto::QueryGraphLayoutTableNodeT>();
         proto_node->table_id = nodes[i].table_id.Pack();
-        proto_node->table_name = nodes[i].table_name.table_name;
+        proto_node->table_name = nodes[i].table_name.table_name.get().text;
         proto_node->height = config.table_height;
         proto_node->width = config.table_width;
         proto_node->is_referenced = is_referenced;

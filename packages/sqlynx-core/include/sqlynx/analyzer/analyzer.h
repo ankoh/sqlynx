@@ -13,56 +13,6 @@ class AnalyzedScript;
 struct Analyzer {
     friend class AnalyzedScript;
 
-   public:
-    /// A table key
-    struct TableKey {
-        /// The name
-        CatalogEntry::QualifiedTableName name;
-        /// Constructor
-        TableKey(CatalogEntry::QualifiedTableName name) : name(name) {}
-        /// The derefence operator
-        const CatalogEntry::QualifiedTableName& operator*() { return name; }
-        /// Equality operator
-        bool operator==(const TableKey& other) const {
-            return name.database_name == other.name.database_name && name.schema_name == other.name.schema_name &&
-                   name.table_name == other.name.table_name;
-        }
-        /// A hasher
-        struct Hasher {
-            size_t operator()(const TableKey& key) const {
-                size_t hash = 0;
-                std::hash<std::string_view> hasher;
-                hash_combine(hash, hasher(key.name.database_name));
-                hash_combine(hash, hasher(key.name.schema_name));
-                hash_combine(hash, hasher(key.name.table_name));
-                return hash;
-            }
-        };
-    };
-    /// A column key
-    struct ColumnKey {
-        /// The name
-        CatalogEntry::QualifiedColumnName name;
-        /// Constructor
-        ColumnKey(CatalogEntry::QualifiedColumnName name) : name(name) {}
-        /// The derefence operator
-        const CatalogEntry::QualifiedColumnName& operator*() { return name; }
-        /// Equality operator
-        bool operator==(const ColumnKey& other) const {
-            return name.table_alias == other.name.table_alias && name.column_name == other.name.column_name;
-        }
-        /// A hasher
-        struct Hasher {
-            size_t operator()(const ColumnKey& key) const {
-                size_t hash = 0;
-                std::hash<std::string_view> hasher;
-                hash_combine(hash, hasher(key.name.table_alias));
-                hash_combine(hash, hasher(key.name.column_name));
-                return hash;
-            }
-        };
-    };
-
    protected:
     /// The parsed program
     const std::shared_ptr<ParsedScript> parsed_program;

@@ -8,6 +8,7 @@
 #include "sqlynx/external.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
+#include "sqlynx/text/names.h"
 #include "sqlynx/utils/attribute_index.h"
 #include "sqlynx/utils/hash.h"
 #include "sqlynx/utils/overlay_list.h"
@@ -19,9 +20,9 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// A resolved table column
     struct ResolvedTableColumn {
         /// The alias name
-        std::string_view alias_name;
+        std::optional<std::reference_wrapper<RegisteredName>> alias_name;
         /// The column name
-        std::string_view column_name;
+        RegisteredName& column_name;
         /// The table
         const CatalogEntry::TableDeclaration& table;
         /// The column id
@@ -105,6 +106,11 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// The join edge nodes
     ChunkBuffer<AnalyzedScript::QueryGraphEdgeNode, 16> graph_edge_nodes;
 
+    /// The default database name
+    RegisteredName& default_database_name;
+    /// The default schema name
+    RegisteredName& default_schema_name;
+
     /// The databases, indexed by name
     decltype(AnalyzedScript::databases_by_name) databases_by_name;
     /// The schema, indexed by name
@@ -125,15 +131,13 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// Merge child states into a destination state
     std::span<std::reference_wrapper<RegisteredName>> ReadNamePath(const sx::Node& node);
     /// Merge child states into a destination state
-    AnalyzedScript::QualifiedTableName ReadQualifiedTableName(const sx::Node* node);
+    std::optional<AnalyzedScript::QualifiedTableName> ReadQualifiedTableName(const sx::Node* node);
     /// Merge child states into a destination state
-    AnalyzedScript::QualifiedColumnName ReadQualifiedColumnName(const sx::Node* column);
-    /// Qualify a table name
-    AnalyzedScript::QualifiedTableName NormalizeTableName(AnalyzedScript::QualifiedTableName name) const;
+    std::optional<AnalyzedScript::QualifiedColumnName> ReadQualifiedColumnName(const sx::Node* column);
 
     /// Register a schema
-    std::pair<CatalogDatabaseID, CatalogSchemaID> RegisterSchema(std::string_view database_name,
-                                                                 std::string_view schema_name);
+    std::pair<CatalogDatabaseID, CatalogSchemaID> RegisterSchema(RegisteredName& database_name,
+                                                                 RegisteredName& schema_name);
 
     /// Merge child states into a destination state
     void MergeChildStates(NodeState& dst, const sx::Node& parent);
