@@ -145,6 +145,10 @@ pwa_reloc:
 pwa_dev:
 	yarn workspace @ankoh/sqlynx-app serve:dev
 
+.PHONY: pwa_dev_trace
+pwa_dev_trace:
+	SQLYNX_LOG_LEVEL=trace yarn workspace @ankoh/sqlynx-app serve:dev
+
 .PHONY: pwa_tests
 pwa_tests:
 	yarn workspace @ankoh/sqlynx-app test
