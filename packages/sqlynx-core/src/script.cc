@@ -268,14 +268,14 @@ flatbuffers::Offset<proto::QualifiedTableName> AnalyzedScript::QualifiedTableNam
     flatbuffers::Offset<flatbuffers::String> database_name_ofs;
     flatbuffers::Offset<flatbuffers::String> schema_name_ofs;
     flatbuffers::Offset<flatbuffers::String> table_name_ofs;
-    if (!database_name.empty()) {
-        database_name_ofs = builder.CreateString(database_name);
+    if (!database_name.get().text.empty()) {
+        database_name_ofs = builder.CreateString(database_name.get().text);
     }
-    if (!schema_name.empty()) {
-        schema_name_ofs = builder.CreateString(schema_name);
+    if (!schema_name.get().text.empty()) {
+        schema_name_ofs = builder.CreateString(schema_name.get().text);
     }
-    if (!table_name.empty()) {
-        table_name_ofs = builder.CreateString(table_name);
+    if (!table_name.get().text.empty()) {
+        table_name_ofs = builder.CreateString(table_name.get().text);
     }
     proto::QualifiedTableNameBuilder out{builder};
     out.add_ast_node_id(ast_node_id.value_or(PROTO_NULL_U32));
@@ -289,11 +289,11 @@ flatbuffers::Offset<proto::QualifiedColumnName> AnalyzedScript::QualifiedColumnN
     flatbuffers::FlatBufferBuilder& builder) const {
     flatbuffers::Offset<flatbuffers::String> table_alias_ofs;
     flatbuffers::Offset<flatbuffers::String> column_name_ofs;
-    if (!table_alias.empty()) {
-        table_alias_ofs = builder.CreateString(table_alias);
+    if (table_alias && !table_alias.value().get().text.empty()) {
+        table_alias_ofs = builder.CreateString(table_alias.value().get().text);
     }
-    if (!column_name.empty()) {
-        column_name_ofs = builder.CreateString(column_name);
+    if (!column_name.get().text.empty()) {
+        column_name_ofs = builder.CreateString(column_name.get().text);
     }
     proto::QualifiedColumnNameBuilder out{builder};
     out.add_ast_node_id(ast_node_id.value_or(PROTO_NULL_U32));
@@ -306,7 +306,10 @@ flatbuffers::Offset<proto::QualifiedColumnName> AnalyzedScript::QualifiedColumnN
 flatbuffers::Offset<proto::TableReference> AnalyzedScript::TableReference::Pack(
     flatbuffers::FlatBufferBuilder& builder) const {
     auto table_name_ofs = table_name.Pack(builder);
-    auto alias_name_ofs = builder.CreateString(alias_name);
+    flatbuffers::Offset<flatbuffers::String> alias_name_ofs;
+    if (alias_name.has_value()) {
+        alias_name_ofs = builder.CreateString(alias_name.value().get().text);
+    }
     proto::TableReferenceBuilder out{builder};
     out.add_ast_node_id(ast_node_id.value_or(std::numeric_limits<uint32_t>::max()));
     out.add_ast_scope_root(ast_scope_root.value_or(std::numeric_limits<uint32_t>::max()));
@@ -338,6 +341,8 @@ flatbuffers::Offset<proto::ColumnReference> AnalyzedScript::ColumnReference::Pac
 /// Constructor
 AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, Catalog& catalog)
     : CatalogEntry(catalog, parsed->external_id),
+      default_database_name(parsed->scanned_script->name_registry.Register(catalog.GetDefaultDatabaseName())),
+      default_schema_name(parsed->scanned_script->name_registry.Register(catalog.GetDefaultSchemaName())),
       parsed_script(std::move(parsed)),
       catalog_version(catalog.GetVersion()) {}
 
@@ -348,12 +353,12 @@ flatbuffers::Offset<proto::CatalogEntry> AnalyzedScript::DescribeEntry(flatbuffe
     uint32_t table_id = 0;
     for (auto& table_chunk : table_declarations.GetChunks()) {
         for (auto& table : table_chunk) {
-            auto table_name = builder.CreateString(table.table_name.table_name);
+            auto table_name = builder.CreateString(table.table_name.table_name.get().text);
 
             std::vector<flatbuffers::Offset<proto::SchemaTableColumn>> column_offsets;
             column_offsets.reserve(table.table_columns.size());
             for (auto& column : table.table_columns) {
-                auto column_name = builder.CreateString(column.column_name);
+                auto column_name = builder.CreateString(column.column_name.get().text);
                 proto::SchemaTableColumnBuilder column_builder{builder};
                 column_builder.add_column_name(column_name);
                 column_offsets.push_back(column_builder.Finish());

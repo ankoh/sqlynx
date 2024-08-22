@@ -16,8 +16,8 @@ using namespace sqlynx;
 
 flatbuffers::Offset<proto::TableColumn> CatalogEntry::TableColumn::Pack(flatbuffers::FlatBufferBuilder& builder) const {
     flatbuffers::Offset<flatbuffers::String> column_name_ofs;
-    if (!column_name.empty()) {
-        column_name_ofs = builder.CreateString(column_name);
+    if (!column_name.get().text.empty()) {
+        column_name_ofs = builder.CreateString(column_name.get().text);
     }
     proto::TableColumnBuilder out{builder};
     out.add_ast_node_id(ast_node_id.value_or(PROTO_NULL_U32));
@@ -32,7 +32,7 @@ flatbuffers::Offset<proto::Table> CatalogEntry::TableDeclaration::Pack(flatbuffe
     std::vector<flatbuffers::Offset<proto::TableColumn>> table_column_offsets;
     table_column_offsets.reserve(table_columns.size());
     for (auto& table_column : table_columns) {
-        auto column_name_ofs = builder.CreateString(table_column.column_name);
+        auto column_name_ofs = builder.CreateString(table_column.column_name.get().text);
         proto::TableColumnBuilder column_builder{builder};
         column_builder.add_column_name(column_name_ofs);
         table_column_offsets.push_back(column_builder.Finish());
@@ -64,13 +64,20 @@ CatalogEntry::CatalogEntry(Catalog& catalog, CatalogEntryID external_id)
       table_columns_by_name(),
       name_search_index() {}
 
-CatalogEntry::QualifiedTableName CatalogEntry::QualifyTableName(CatalogEntry::QualifiedTableName name) const {
-    name.database_name = name.database_name.empty() ? catalog.GetDefaultDatabaseName() : name.database_name;
-    name.schema_name = name.schema_name.empty() ? catalog.GetDefaultSchemaName() : name.schema_name;
+CatalogEntry::QualifiedTableName CatalogEntry::QualifyTableName(NameRegistry& name_registry,
+                                                                CatalogEntry::QualifiedTableName name) const {
+    if (name.database_name.get().text.empty()) {
+        name.database_name =
+            name_registry.Register(catalog.GetDefaultDatabaseName(), NameTags{proto::NameTag::DATABASE_NAME});
+    }
+    if (name.schema_name.get().text.empty()) {
+        name.schema_name =
+            name_registry.Register(catalog.GetDefaultSchemaName(), NameTags{proto::NameTag::SCHEMA_NAME});
+    }
     return name;
 }
 
-CatalogDatabaseID CatalogEntry::RegisterDatabase(std::string_view name) {
+CatalogDatabaseID CatalogEntry::RegisterDatabase(RegisteredName& name) {
     auto db_id = catalog.AllocateDatabaseId(name);
     if (!databases_by_name.contains({name})) {
         auto& db = database_references.Append(CatalogEntry::DatabaseReference{db_id, name, ""});
@@ -79,9 +86,9 @@ CatalogDatabaseID CatalogEntry::RegisterDatabase(std::string_view name) {
     return db_id;
 }
 
-CatalogSchemaID CatalogEntry::RegisterSchema(CatalogDatabaseID db_id, std::string_view db_name,
-                                             std::string_view schema_name) {
-    auto schema_id = catalog.AllocateSchemaId(db_name, schema_name);
+CatalogSchemaID CatalogEntry::RegisterSchema(CatalogDatabaseID db_id, RegisteredName& db_name,
+                                             RegisteredName& schema_name) {
+    auto schema_id = catalog.AllocateSchemaId(db_name.text, schema_name.text);
     if (!schemas_by_name.contains({db_name, schema_name})) {
         auto& schema = schema_references.Append(CatalogEntry::SchemaReference{db_id, schema_id, db_name, schema_name});
         schemas_by_name.insert({{db_name, schema_name}, schema});
@@ -115,7 +122,6 @@ const CatalogEntry::TableDeclaration* CatalogEntry::ResolveTable(QualifiedTableN
 
 const CatalogEntry::TableDeclaration* CatalogEntry::ResolveTable(QualifiedTableName name,
                                                                  const Catalog& catalog) const {
-    name = QualifyTableName(name);
     if (auto resolved = ResolveTable(name)) {
         return resolved;
     } else {
@@ -193,30 +199,59 @@ flatbuffers::Offset<proto::CatalogEntry> DescriptorPool::DescribeEntry(flatbuffe
 const CatalogEntry::NameSearchIndex& DescriptorPool::GetNameSearchIndex() { return name_search_index.value(); }
 
 proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescriptor& descriptor,
-                                                      std::unique_ptr<const std::byte[]> descriptor_buffer) {
+                                                      std::unique_ptr<const std::byte[]> descriptor_buffer,
+                                                      CatalogDatabaseID& db_id, CatalogSchemaID& schema_id) {
     if (!descriptor.tables()) {
         return proto::StatusCode::CATALOG_DESCRIPTOR_TABLES_NULL;
     }
     descriptor_buffers.push_back({.descriptor = descriptor, .descriptor_buffer = std::move(descriptor_buffer)});
 
-    std::string_view db_name = descriptor.database_name() == nullptr ? "" : descriptor.database_name()->string_view();
-    std::string_view schema_name = descriptor.schema_name() == nullptr ? "" : descriptor.schema_name()->string_view();
+    // Register the database name
+    auto db_name_text = descriptor.database_name() == nullptr ? "" : descriptor.database_name()->string_view();
+    auto& db_name = name_registry.Register(db_name_text, NameTags{proto::NameTag::DATABASE_NAME});
+    {
+        fuzzy_ci_string_view ci_name{db_name.text.data(), db_name.text.size()};
+        for (size_t i = 1; i < ci_name.size(); ++i) {
+            auto suffix = ci_name.substr(ci_name.size() - 1 - i);
+            name_search_index->insert({suffix, db_name});
+        }
+    }
+
+    // Register the schema name
+    auto schema_name_text = descriptor.schema_name() == nullptr ? "" : descriptor.schema_name()->string_view();
+    auto& schema_name = name_registry.Register(schema_name_text, NameTags{proto::NameTag::SCHEMA_NAME});
+    {
+        fuzzy_ci_string_view ci_name{schema_name.text.data(), schema_name.text.size()};
+        for (size_t i = 1; i < ci_name.size(); ++i) {
+            auto suffix = ci_name.substr(ci_name.size() - 1 - i);
+            name_search_index->insert({suffix, schema_name});
+        }
+    }
 
     // Allocate ids
-    auto db_id = RegisterDatabase(db_name);
-    auto schema_id = RegisterSchema(db_id, db_name, schema_name);
+    db_id = RegisterDatabase(db_name);
+    schema_id = RegisterSchema(db_id, db_name, schema_name);
 
     // Read tables
     uint32_t next_table_id = table_declarations.GetSize();
     for (auto* table : *descriptor.tables()) {
         ExternalObjectID table_id{catalog_entry_id, next_table_id};
-        // Get the table name
+
+        // Register the table name
         auto table_name_ptr = table->table_name();
         if (!table_name_ptr || table_name_ptr->size() == 0) {
             return proto::StatusCode::CATALOG_DESCRIPTOR_TABLE_NAME_EMPTY;
         }
+        auto& table_name = name_registry.Register(table_name_ptr->string_view(), NameTags{proto::NameTag::TABLE_NAME});
+        {
+            fuzzy_ci_string_view ci_name{table_name.text.data(), table_name.text.size()};
+            for (size_t i = 1; i < ci_name.size(); ++i) {
+                auto suffix = ci_name.substr(ci_name.size() - 1 - i);
+                name_search_index->insert({suffix, table_name});
+            }
+        }
         // Build the qualified table name
-        QualifiedTableName::Key qualified_table_name{db_name, schema_name, table_name_ptr->string_view()};
+        QualifiedTableName::HashKey qualified_table_name{db_name.text, schema_name.text, table_name.text};
         if (tables_by_name.contains(qualified_table_name)) {
             return proto::StatusCode::CATALOG_DESCRIPTOR_TABLE_NAME_COLLISION;
         }
@@ -226,21 +261,34 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
             auto column_count = table->columns()->size();
             columns.reserve(column_count);
             for (auto* column : *columns_ptr) {
-                if (auto column_name = column->column_name()) {
-                    columns.emplace_back(std::nullopt, column_name->string_view());
+                if (auto column_name_text = column->column_name()) {
+                    // Register the column name
+                    auto& column_name =
+                        name_registry.Register(column_name_text->string_view(), NameTags{proto::NameTag::COLUMN_NAME});
+                    columns.emplace_back(std::nullopt, column_name);
+
+                    // Ad the column name to the index
+                    fuzzy_ci_string_view ci_name{column_name.text.data(), column_name.text.size()};
+                    for (size_t i = 1; i < ci_name.size(); ++i) {
+                        auto suffix = ci_name.substr(ci_name.size() - 1 - i);
+                        name_search_index->insert({suffix, column_name});
+                    }
                 }
             }
         }
         std::sort(columns.begin(), columns.end(),
-                  [&](TableColumn& l, TableColumn& r) { return l.column_name < r.column_name; });
+                  [&](TableColumn& l, TableColumn& r) { return l.column_name.get().text < r.column_name.get().text; });
+
         // Create the table
-        auto& t = table_declarations.Append(AnalyzedScript::TableDeclaration());
+        auto& t = table_declarations.Append(
+            AnalyzedScript::TableDeclaration(QualifiedTableName{std::nullopt, db_name, schema_name, table_name}));
         t.catalog_database_id = db_id;
         t.catalog_schema_id = schema_id;
         t.catalog_table_id = table_id;
-        t.table_name = QualifiedTableName{qualified_table_name};
         t.table_columns = std::move(columns);
         ++next_table_id;
+        // Register the table for the table name
+        table_name.resolved_objects.PushBack(t);
     }
 
     // Build table index
@@ -249,29 +297,7 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
         for (auto& table : table_chunk) {
             tables_by_name.insert({table.table_name, table});
             for (size_t i = 0; i < table.table_columns.size(); ++i) {
-                table_columns_by_name.insert({table.table_columns[i].column_name, {table, i}});
-            }
-        }
-    }
-
-    // Collect all name infos
-    auto register_name = [&](std::string_view name, NameTags tags) {
-        auto& registered = name_registry.Register(name, tags);
-        fuzzy_ci_string_view ci_name{registered.text.data(), registered.text.size()};
-        for (size_t i = 1; i < ci_name.size(); ++i) {
-            auto suffix = ci_name.substr(ci_name.size() - 1 - i);
-            name_search_index->insert({suffix, registered});
-        }
-    };
-    register_name(db_name, proto::NameTag::DATABASE_NAME);
-    register_name(schema_name, proto::NameTag::SCHEMA_NAME);
-    for (auto& table_chunk : table_declarations.GetChunks()) {
-        for (auto& table : table_chunk) {
-            register_name(table.table_name.database_name, proto::NameTag::DATABASE_NAME);
-            register_name(table.table_name.schema_name, proto::NameTag::SCHEMA_NAME);
-            register_name(table.table_name.table_name, proto::NameTag::TABLE_NAME);
-            for (auto& column : table.table_columns) {
-                register_name(column.column_name, proto::NameTag::COLUMN_NAME);
+                table_columns_by_name.insert({table.table_columns[i].column_name.get().text, {table, i}});
             }
         }
     }
@@ -442,12 +468,12 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
             for (auto& entry : chunk) {
                 // Resolve the schema node
                 auto& schema_node = schema_node_map.at(entry.catalog_schema_id);
-                auto table_name = entry.table_name.table_name;
 
                 // Check if the schema node already contains a table.
                 // This may happen if a table is overwritten between catalog entries.
                 // Check which wins based on the catalog entry rank
-                if (schema_node->children.contains(table_name)) {
+                auto& table_name = entry.table_name.table_name;
+                if (schema_node->children.contains(table_name.get().text)) {
                     continue;
                 }
 
@@ -455,23 +481,23 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
                 auto columns_begin = column_nodes.GetIteratorAtLast();
                 if (entry.table_columns.size() > 0) {
                     auto& first_column = entry.table_columns[0];
-                    auto first_column_name_id = add_name(first_column.column_name);
+                    auto first_column_name_id = add_name(first_column.column_name.get().text);
                     auto& first_column_node = column_nodes.Append(ColumnNode{0, first_column_name_id});
                     columns_begin = column_nodes.GetIteratorAtLast();
 
                     for (uint32_t column_id = 1; column_id < entry.table_columns.size(); ++column_id) {
                         auto& column = entry.table_columns[column_id];
-                        auto column_name_id = add_name(column.column_name);
+                        auto column_name_id = add_name(column.column_name.get().text);
                         column_nodes.Append(ColumnNode{column_id, column_name_id});
                     }
                 }
                 auto column_count = entry.table_columns.size();
 
                 // Get the table declaration
-                auto table_name_id = add_name(table_name);
+                auto table_name_id = add_name(table_name.get().text);
                 auto& table_node =
                     table_nodes.Append(TableNode{entry.catalog_table_id, table_name_id, columns_begin, column_count});
-                schema_node->children.insert({table_name, table_node});
+                schema_node->children.insert({table_name.get().text, table_node});
                 ++effective_table_count;
             }
         }
@@ -855,7 +881,12 @@ proto::StatusCode Catalog::AddSchemaDescriptor(CatalogEntryID external_id, std::
     // Add schema descriptor
     auto& pool = *iter->second;
     auto& descriptor = *flatbuffers::GetRoot<proto::SchemaDescriptor>(descriptor_data.data());
-    pool.AddSchemaDescriptor(descriptor, std::move(descriptor_buffer));
+    CatalogDatabaseID db_id;
+    CatalogSchemaID schema_id;
+    auto status = pool.AddSchemaDescriptor(descriptor, std::move(descriptor_buffer), db_id, schema_id);
+    if (status != proto::StatusCode::OK) {
+        return status;
+    }
     // Register database and schema names
     {
         std::string_view db_name =
@@ -863,9 +894,6 @@ proto::StatusCode Catalog::AddSchemaDescriptor(CatalogEntryID external_id, std::
         std::string_view schema_name =
             descriptor.schema_name() == nullptr ? "" : descriptor.schema_name()->string_view();
 
-        // Allocate ids
-        auto db_id = pool.RegisterDatabase(db_name);
-        auto schema_id = pool.RegisterSchema(db_id, db_name, schema_name);
         // Add the entry
         std::tuple<std::string_view, std::string_view, CatalogEntry::Rank, CatalogEntryID> entry_key{
             db_name, schema_name, pool.GetRank(), external_id};
@@ -888,10 +916,11 @@ const CatalogEntry::TableDeclaration* Catalog::ResolveTable(ExternalObjectID tab
 }
 const CatalogEntry::TableDeclaration* Catalog::ResolveTable(CatalogEntry::QualifiedTableName table_name,
                                                             CatalogEntryID ignore_entry) const {
-    for (auto iter = entries_by_schema.lower_bound({table_name.database_name, table_name.schema_name, 0, 0});
+    for (auto iter = entries_by_schema.lower_bound(
+             {table_name.database_name.get().text, table_name.schema_name.get().text, 0, 0});
          iter != entries_by_schema.end(); ++iter) {
         auto& [db_name, schema_name, rank, candidate] = iter->first;
-        if (db_name != table_name.database_name || schema_name != table_name.schema_name) {
+        if (db_name != table_name.database_name.get().text || schema_name != table_name.schema_name.get().text) {
             break;
         }
         if (candidate == ignore_entry) {

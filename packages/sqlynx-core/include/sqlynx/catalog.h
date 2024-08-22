@@ -22,8 +22,6 @@
 
 namespace sqlynx {
 
-namespace sx = sqlynx::proto;
-
 class Catalog;
 class Script;
 class AnalyzedScript;
@@ -50,32 +48,34 @@ class CatalogEntry {
     /// A key for a qualified table name
     /// A qualified table name
     struct QualifiedTableName {
-        using Key = std::tuple<std::string_view, std::string_view, std::string_view>;
+        using HashKey = std::tuple<std::string_view, std::string_view, std::string_view>;
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
         /// The database name, may refer to different context
-        std::string_view database_name;
+        std::reference_wrapper<RegisteredName> database_name;
         /// The schema name, may refer to different context
-        std::string_view schema_name;
+        std::reference_wrapper<RegisteredName> schema_name;
         /// The table name, may refer to different context
-        std::string_view table_name;
+        std::reference_wrapper<RegisteredName> table_name;
         /// Constructor
-        QualifiedTableName(Key key)
-            : ast_node_id(std::nullopt),
-              database_name(std::get<0>(key)),
-              schema_name(std::get<1>(key)),
-              table_name(std::get<2>(key)) {}
-        /// Constructor
-        QualifiedTableName(std::optional<uint32_t> ast_node_id = std::nullopt, std::string_view database_name = {},
-                           std::string_view schema_name = {}, std::string_view table_name = {})
+        QualifiedTableName(std::optional<uint32_t> ast_node_id, RegisteredName& database_name,
+                           RegisteredName& schema_name, RegisteredName& table_name)
             : ast_node_id(ast_node_id),
               database_name(database_name),
               schema_name(schema_name),
               table_name(table_name) {}
+        /// Copy assignment
+        QualifiedTableName& operator=(const QualifiedTableName& other) {
+            ast_node_id = other.ast_node_id;
+            database_name = other.database_name;
+            schema_name = other.schema_name;
+            table_name = other.table_name;
+            return *this;
+        }
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::QualifiedTableName> Pack(flatbuffers::FlatBufferBuilder& builder) const;
         /// Construct a key
-        operator Key() { return {database_name, schema_name, table_name}; }
+        operator HashKey() { return {database_name.get().text, schema_name.get().text, table_name.get().text}; }
     };
     /// A qualified column name
     struct QualifiedColumnName {
@@ -83,42 +83,47 @@ class CatalogEntry {
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
         /// The table alias
-        std::string_view table_alias;
+        std::optional<std::reference_wrapper<RegisteredName>> table_alias;
         /// The column name
-        std::string_view column_name;
+        std::reference_wrapper<RegisteredName> column_name;
         /// Constructor
-        QualifiedColumnName(std::optional<uint32_t> ast_node_id = std::nullopt, std::string_view table_alias = {},
-                            std::string_view column_name = {})
+        QualifiedColumnName(std::optional<uint32_t> ast_node_id,
+                            std::optional<std::reference_wrapper<RegisteredName>> table_alias,
+                            RegisteredName& column_name)
             : ast_node_id(ast_node_id), table_alias(table_alias), column_name(column_name) {}
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::QualifiedColumnName> Pack(flatbuffers::FlatBufferBuilder& builder) const;
         /// Construct a key
-        operator Key() { return {table_alias, column_name}; }
+        operator Key() {
+            return {table_alias.has_value() ? table_alias.value().get().text : "", column_name.get().text};
+        }
     };
     /// A table column
-    struct TableColumn : NamedObject {
+    struct TableColumn : OverlayList<NamedObject>::Node {
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
         /// The column name
-        std::string_view column_name;
+        std::reference_wrapper<RegisteredName> column_name;
         /// Constructor
-        TableColumn(std::optional<uint32_t> ast_node_id = {}, std::string_view column_name = {})
-            : NamedObject(NamedObjectType::Table), ast_node_id(ast_node_id), column_name(column_name) {}
+        TableColumn(std::optional<uint32_t> ast_node_id, RegisteredName& column_name)
+            : OverlayList<NamedObject>::Node(NamedObjectType::Table),
+              ast_node_id(ast_node_id),
+              column_name(column_name) {}
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::TableColumn> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
     /// A table declaration
-    struct TableDeclaration : NamedObject {
+    struct TableDeclaration : OverlayList<NamedObject>::Node {
         /// The id of the table in the catalog
         ExternalObjectID catalog_table_id;
         /// The catalog database id
-        CatalogDatabaseID catalog_database_id;
+        CatalogDatabaseID catalog_database_id = 0;
         /// The catalog schema id
-        CatalogSchemaID catalog_schema_id;
+        CatalogSchemaID catalog_schema_id = 0;
         /// The database reference id
-        size_t database_reference_id;
+        size_t database_reference_id = 0;
         /// The schema reference id
-        size_t schema_reference_id;
+        size_t schema_reference_id = 0;
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
         /// The AST statement id in the target script
@@ -131,7 +136,8 @@ class CatalogEntry {
         std::vector<TableColumn> table_columns;
 
         /// Constructor
-        TableDeclaration() : NamedObject(NamedObjectType::Table) {}
+        TableDeclaration(QualifiedTableName table_name)
+            : OverlayList<NamedObject>::Node(NamedObjectType::Table), table_name(std::move(table_name)) {}
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::Table> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
@@ -143,7 +149,7 @@ class CatalogEntry {
         size_t table_column_index;
     };
     /// A database name declaration
-    struct DatabaseReference : NamedObject {
+    struct DatabaseReference : OverlayList<NamedObject>::Node {
         /// The catalog database id.
         /// This ID is only preliminary if the entry has not been added to the catalog yet.
         /// Adding the entry to the catalog might fail if this id becomes invalid.
@@ -155,7 +161,7 @@ class CatalogEntry {
         /// Constructor
         DatabaseReference(CatalogDatabaseID database_id, std::string_view database_name,
                           std::string_view database_alias)
-            : NamedObject(NamedObjectType::Database),
+            : OverlayList<NamedObject>::Node(NamedObjectType::Database),
               catalog_database_id(database_id),
               database_name(database_name),
               database_alias(database_alias) {}
@@ -206,7 +212,7 @@ class CatalogEntry {
                        TupleHasher>
         schemas_by_name;
     /// The tables, indexed by name
-    std::unordered_map<QualifiedTableName::Key, std::reference_wrapper<const TableDeclaration>, TupleHasher>
+    std::unordered_map<QualifiedTableName::HashKey, std::reference_wrapper<const TableDeclaration>, TupleHasher>
         tables_by_name;
     /// The table columns, indexed by the name
     std::unordered_multimap<std::string_view, std::pair<std::reference_wrapper<const TableDeclaration>, size_t>>
@@ -234,12 +240,12 @@ class CatalogEntry {
     auto& GetTablesByName() const { return tables_by_name; }
 
     /// Get the qualified name
-    QualifiedTableName QualifyTableName(QualifiedTableName name) const;
+    QualifiedTableName QualifyTableName(NameRegistry& name_registry, QualifiedTableName name) const;
 
     /// Register a database name
-    CatalogDatabaseID RegisterDatabase(std::string_view);
+    CatalogDatabaseID RegisterDatabase(RegisteredName& name);
     /// Register a schema name
-    CatalogSchemaID RegisterSchema(CatalogDatabaseID db_id, std::string_view db_name, std::string_view schema_name);
+    CatalogSchemaID RegisterSchema(CatalogDatabaseID db_id, RegisteredName& db_name, RegisteredName& schema_name);
 
     /// Describe the catalog entry
     virtual flatbuffers::Offset<proto::CatalogEntry> DescribeEntry(flatbuffers::FlatBufferBuilder& builder) const = 0;
@@ -292,7 +298,8 @@ class DescriptorPool : public CatalogEntry {
 
     /// Add a schema descriptor
     proto::StatusCode AddSchemaDescriptor(const proto::SchemaDescriptor& descriptor,
-                                          std::unique_ptr<const std::byte[]> descriptor_buffer);
+                                          std::unique_ptr<const std::byte[]> descriptor_buffer,
+                                          CatalogDatabaseID& db_id, CatalogSchemaID& schema_id);
 };
 
 class Catalog {

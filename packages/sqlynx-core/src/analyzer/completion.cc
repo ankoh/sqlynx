@@ -273,7 +273,7 @@ void Completion::FindTablesForUnresolvedColumns() {
     for (auto& column_ref : analyzed_script.column_references) {
         // Is unresolved?
         if (column_ref.resolved_catalog_table_id.IsNull()) {
-            auto& column_name = column_ref.column_name.column_name;
+            auto& column_name = column_ref.column_name.column_name.get();
             cursor.script.analyzed_script->ResolveTableColumn(column_name, catalog, table_columns);
         }
     }
@@ -281,8 +281,8 @@ void Completion::FindTablesForUnresolvedColumns() {
     // Now find the distinct table names that contain these columns
     std::unordered_set<std::string_view> visited;
     for (auto& table_col : table_columns) {
-        auto table_name = table_col.table.table_name.table_name;
-        if (auto iter = pending_candidates.find(table_name);
+        auto& table_name = table_col.table.table_name.table_name.get();
+        if (auto iter = pending_candidates.find(table_name.text);
             iter != pending_candidates.end() && !visited.contains(table_name)) {
             visited.insert(table_name);
             iter->second.score += RESOLVING_TABLE_SCORE_MODIFIER;
@@ -316,15 +316,17 @@ void Completion::FindCandidatesInAST() {
         if (!table_ref.ast_statement_id.has_value() || table_ref.ast_statement_id.value() != statement_id) {
             continue;
         }
-        mark_as_near(table_ref.table_name.database_name);
-        mark_as_near(table_ref.table_name.schema_name);
-        mark_as_near(table_ref.table_name.table_name);
-        mark_as_near(table_ref.alias_name);
+        mark_as_near(table_ref.table_name.database_name.get().text);
+        mark_as_near(table_ref.table_name.schema_name.get().text);
+        mark_as_near(table_ref.table_name.table_name.get().text);
+        if (table_ref.alias_name.has_value()) {
+            mark_as_near(table_ref.alias_name.value().get().text);
+        }
 
         // Add all column names of the table
         if (auto resolved = analyzed->ResolveTable(table_ref.resolved_catalog_table_id, cursor.script.catalog)) {
             for (auto& table_column : resolved->table_columns) {
-                mark_as_near(table_column.column_name);
+                mark_as_near(table_column.column_name.get().text);
             }
         }
     }
@@ -334,7 +336,7 @@ void Completion::FindCandidatesInAST() {
         if (!column_ref.ast_statement_id.has_value() || column_ref.ast_statement_id.value() != statement_id) {
             continue;
         }
-        mark_as_near(column_ref.column_name.column_name);
+        mark_as_near(column_ref.column_name.column_name.get().text);
     }
 
     // TODO: For unresolved columns, bump the score of tables that contain that column.

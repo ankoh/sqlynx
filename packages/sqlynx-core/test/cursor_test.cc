@@ -32,9 +32,9 @@ std::string print_name(const Script& script, const AnalyzedScript::QualifiedTabl
             out << name;
         }
     };
-    write(name.database_name);
-    write(name.schema_name);
-    write(name.table_name);
+    write(name.database_name.get());
+    write(name.schema_name.get());
+    write(name.table_name.get());
     return out.str();
 }
 
@@ -50,8 +50,8 @@ std::string print_name(const Script& script, const AnalyzedScript::QualifiedColu
             out << name;
         }
     };
-    write(name.table_alias);
-    write(name.column_name);
+    write(name.table_alias ? name.table_alias->get().text : "");
+    write(name.column_name.get());
     return out.str();
 }
 
@@ -149,7 +149,7 @@ TEST(CursorTest, SimpleNoExternal) {
              .statement_id = 0,
              .ast_attribute_key = proto::AttributeKey::NONE,
              .ast_node_type = proto::NodeType::NAME,
-             .table_ref_name = "a",
+             .table_ref_name = "sqlynx.default.a",
          });
     test(script, 16,
          {
@@ -157,7 +157,7 @@ TEST(CursorTest, SimpleNoExternal) {
              .statement_id = 0,
              .ast_attribute_key = proto::AttributeKey::SQL_TABLEREF_ALIAS,
              .ast_node_type = proto::NodeType::NAME,
-             .table_ref_name = "a",
+             .table_ref_name = "sqlynx.default.a",
          });
     test(script, 23,
          {
@@ -224,7 +224,7 @@ TEST(CursorTest, TableRef) {
              .statement_id = 0,
              .ast_attribute_key = proto::AttributeKey::NONE,
              .ast_node_type = proto::NodeType::NAME,
-             .table_ref_name = "n",
+             .table_ref_name = "sqlynx.default.n",
          });
 }
 

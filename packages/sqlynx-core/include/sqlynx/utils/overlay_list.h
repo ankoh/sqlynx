@@ -1,6 +1,7 @@
 #pragma once
 
-#include <tuple>
+#include <cstddef>
+#include <utility>
 
 namespace sqlynx {
 

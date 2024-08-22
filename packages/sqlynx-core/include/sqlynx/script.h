@@ -174,7 +174,7 @@ class AnalyzedScript : public CatalogEntry {
         /// The table name, may refer to different catalog entry
         QualifiedTableName table_name;
         /// The alias name, may refer to different catalog entry
-        std::string_view alias_name;
+        std::optional<std::reference_wrapper<RegisteredName>> alias_name;
         /// The resolved database id in the catalog
         CatalogDatabaseID resolved_catalog_database_id;
         /// The resolved schema id in the catalog
@@ -182,6 +182,9 @@ class AnalyzedScript : public CatalogEntry {
         /// The resolved table id in the catalog
         ExternalObjectID resolved_catalog_table_id;
 
+        /// Constructor
+        TableReference(QualifiedTableName table_name, std::optional<std::reference_wrapper<RegisteredName>> alias_name)
+            : table_name(table_name), alias_name(alias_name) {}
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::TableReference> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
@@ -200,14 +203,16 @@ class AnalyzedScript : public CatalogEntry {
         /// The resolved table reference id in the current context
         std::optional<uint32_t> resolved_table_reference_id;
         /// The resolved catalog database id
-        CatalogDatabaseID resolved_catalog_database_id;
+        CatalogDatabaseID resolved_catalog_database_id = 0;
         /// The resolved catalog schema id
-        CatalogSchemaID resolved_catalog_schema_id;
+        CatalogSchemaID resolved_catalog_schema_id = 0;
         /// The resolved table id in the catalog
         ExternalObjectID resolved_catalog_table_id;
         /// The resolved table column id
         std::optional<uint32_t> resolved_table_column_id;
 
+        /// Constructor
+        ColumnReference(QualifiedColumnName column_name) : column_name(column_name) {}
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::ColumnReference> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
@@ -247,6 +252,11 @@ class AnalyzedScript : public CatalogEntry {
         /// Create FlatBuffer
         operator proto::QueryGraphEdgeNode() { return proto::QueryGraphEdgeNode{column_reference_id}; }
     };
+
+    /// The defalt database name
+    const RegisteredName default_database_name;
+    /// The defalt schema name
+    const RegisteredName default_schema_name;
 
     /// The parsed script
     std::shared_ptr<ParsedScript> parsed_script;

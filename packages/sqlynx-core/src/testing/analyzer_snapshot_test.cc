@@ -36,7 +36,7 @@ static void quoteIdentifier(std::string& buffer, std::string_view name) {
 static void writeTables(pugi::xml_node root, const AnalyzedScript& target) {
     for (auto& table_decl : target.GetTables()) {
         auto xml_tbl = root.append_child("table");
-        std::string table_name{table_decl.table_name.table_name};
+        std::string table_name{table_decl.table_name.table_name.get().text};
         xml_tbl.append_attribute("name").set_value(table_name.c_str());
         assert(table_decl.ast_node_id.has_value());
         WriteLocation(xml_tbl, target.parsed_script->nodes[*table_decl.ast_node_id].location(),
@@ -44,8 +44,8 @@ static void writeTables(pugi::xml_node root, const AnalyzedScript& target) {
         // Write child columns
         for (auto& column_decl : table_decl.table_columns) {
             auto xml_col = xml_tbl.append_child("column");
-            if (!column_decl.column_name.empty()) {
-                std::string column_name{column_decl.column_name};
+            if (!column_decl.column_name.get().text.empty()) {
+                std::string column_name{column_decl.column_name.get().text};
                 xml_col.append_attribute("name").set_value(column_name.c_str());
             } else {
                 xml_col.append_attribute("name").set_value("?");
