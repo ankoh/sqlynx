@@ -1,3 +1,5 @@
+import { isDebugBuild, SQLYNX_LOG_LEVEL } from "../globals.js";
+
 export enum LogLevel {
     Trace = 1,
     Debug = 2,
@@ -13,6 +15,18 @@ export function getLogLevelName(level: LogLevel): string {
         case LogLevel.Info: return "info";
         case LogLevel.Warn: return "warn";
         case LogLevel.Error: return "error";
+    }
+}
+
+export function parseLogLevel(text: string): LogLevel | null {
+    switch (text) {
+        case "trace": return LogLevel.Trace;
+        case "debug": return LogLevel.Debug;
+        case "info": return LogLevel.Info;
+        case "warn": return LogLevel.Warn;
+        case "error": return LogLevel.Error;
+        default:
+            return null;
     }
 }
 
@@ -50,12 +64,15 @@ export class LogBuffer {
     protected frozenChunks_: FrozenLogChunk[];
     /// The log observers
     protected logObservers: Set<LogObserver>;
+    /// The minimum log level
+    protected minLogLevel: LogLevel;
 
     constructor() {
         this.version_ = 1;
         this.lastEntries_ = [];
         this.frozenChunks_ = [];
         this.logObservers = new Set();
+        this.minLogLevel = parseLogLevel(SQLYNX_LOG_LEVEL) ?? LogLevel.Info;
     }
 
     /// Get the current version
@@ -75,6 +92,12 @@ export class LogBuffer {
 
     /// Push an entry
     public push(entry: LogRecord) {
+        // Ignore the entry
+        if (entry.level < this.minLogLevel) {
+            return;
+        }
+
+        // Buffer entries before compacting
         this.lastEntries_.push(entry);
         // Freeze chunk if forced or above threshold
         if (this.lastEntries_.length > TARGET_CHUNK_SIZE) {

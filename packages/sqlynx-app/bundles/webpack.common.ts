@@ -20,6 +20,7 @@ interface ConfigParams {
     extractCss: boolean;
     cssIdentifier: string;
     appURL: string;
+    logLevel: string;
 }
 
 // Read package json
@@ -146,6 +147,7 @@ export function configure(params: ConfigParams): Partial<Configuration> {
                 'process.env.SQLYNX_VERSION': JSON.stringify(PACKAGE_JSON.version),
                 'process.env.SQLYNX_GIT_COMMIT': JSON.stringify(PACKAGE_JSON.gitCommit),
                 'process.env.SQLYNX_APP_URL': JSON.stringify(params.appURL),
+                'process.env.SQLYNX_LOG_LEVEL': JSON.stringify(params.logLevel),
                 'process.env.SQLYNX_RELATIVE_IMPORTS': params.relocatable,
             }),
             // Leave the public path at default, otherwise the css extraction will mess up urls:
