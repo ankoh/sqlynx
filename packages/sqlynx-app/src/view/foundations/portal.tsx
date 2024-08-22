@@ -54,11 +54,8 @@ export function Portal(props: PortalProps) {
     const elementRef = React.useRef<HTMLDivElement | null>(null)
     if (!elementRef.current) {
         const div = document.createElement('div')
-        // Portaled content should get their own stacking context so they don't interfere
-        // with each other in unexpected ways. One should never find themselves tempted
-        // to change the zIndex to a value other than "1".
-        div.style.position = 'relative'
-        div.style.zIndex = '1'
+        div.style.position = 'relative';
+        div.style.zIndex = '1000';
         elementRef.current = div
     }
     const element = elementRef.current;

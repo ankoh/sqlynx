@@ -83,7 +83,7 @@ struct RegisteredName {
     RegisteredNameID name_id;
     /// The text
     std::string_view text;
-    /// The location
+    /// The location (if any)
     sx::Location location;
     /// The occurences
     size_t occurrences;
