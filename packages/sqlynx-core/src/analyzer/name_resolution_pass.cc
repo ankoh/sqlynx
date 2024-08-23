@@ -522,25 +522,35 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 if (table_name.has_value()) {
                     // Register the database
                     auto [db_id, schema_id] = RegisterSchema(table_name->database_name, table_name->schema_name);
+                    // Determine the catalog table id
+                    ExternalObjectID catalog_table_id{catalog_entry_id,
+                                                      static_cast<uint32_t>(table_declarations.GetSize())};
                     // Merge child states
                     MergeChildStates(node_state, {elements_node});
                     // Collect all columns
-                    std::vector<CatalogEntry::TableColumn> table_columns;
-                    table_columns.reserve(node_state.table_columns.GetSize());
-                    for (auto& table_col : node_state.table_columns) {
-                        table_columns.push_back(table_col);
-                    }
+                    auto table_columns = node_state.table_columns.Flatten();
+                    pending_columns_free_list.Append(std::move(node_state.table_columns));
+
+                    // Sort the table columns
                     std::sort(table_columns.begin(), table_columns.end(),
                               [&](CatalogEntry::TableColumn& l, CatalogEntry::TableColumn& r) {
                                   return l.column_name.get().text < r.column_name.get().text;
                               });
-                    pending_columns_free_list.Append(std::move(node_state.table_columns));
+                    // Store the catalog ids in the table columns
+                    for (size_t column_index = 0; column_index != table_columns.size(); ++column_index) {
+                        auto& column = table_columns[column_index];
+                        column.catalog_database_id = db_id;
+                        column.catalog_schema_id = schema_id;
+                        column.catalog_table_id = catalog_table_id;
+                        column.column_index = column_index;
+                        column.column_name.get().resolved_objects.PushBack(column);
+                    }
+
                     // Create the scope
                     CreateScope(node_state, node_id);
                     // Build the table
                     auto& n = table_declarations.Append(AnalyzedScript::TableDeclaration(table_name.value()));
-                    n.catalog_table_id =
-                        ExternalObjectID{catalog_entry_id, static_cast<uint32_t>(table_declarations.GetSize() - 1)};
+                    n.catalog_table_id = catalog_table_id;
                     n.catalog_database_id = db_id;
                     n.catalog_schema_id = schema_id;
                     n.ast_node_id = node_id;
