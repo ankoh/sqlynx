@@ -85,7 +85,12 @@ void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Complet
                     }
                     case sqlynx::NamedObjectType::Column:
                         std::string type = "column";
+                        auto* t = static_cast<CatalogEntry::TableColumn*>(&obj);
                         xml_obj.append_attribute("type").set_value(type.c_str());
+                        std::string catalog_id =
+                            std::format("{}.{}.{}.{}", t->catalog_database_id, t->catalog_schema_id,
+                                        t->catalog_table_id.Pack(), t->column_index);
+                        xml_obj.append_attribute("id").set_value(catalog_id.c_str());
                         break;
                 }
             }

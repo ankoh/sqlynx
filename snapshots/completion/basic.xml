@@ -142,7 +142,9 @@ create table table3(attr3 integer);
             <search text="where external_" index="14" />
         </cursor>
         <completions limit="5" symbol="NAME" relative="MID_OF_SYMBOL" strategy="COLUMN_REF">
-            <entry value="external_name2" score="41" near="true" tags="COLUMN_NAME" />
+            <entry value="external_name2" score="41" near="true" tags="COLUMN_NAME">
+                <object type="column" id="256.65536.4294967296.0" />
+            </entry>
             <entry value="external_name1" score="31" near="true" tags="TABLE_NAME">
                 <object type="table" id="256.65536.4294967296" />
             </entry>
@@ -180,7 +182,9 @@ create table table3(attr3 integer);
             <search text="where external_" index="15" />
         </cursor>
         <completions limit="5" symbol="NAME" relative="END_OF_SYMBOL" strategy="COLUMN_REF">
-            <entry value="external_name2" score="41" near="true" tags="COLUMN_NAME" />
+            <entry value="external_name2" score="41" near="true" tags="COLUMN_NAME">
+                <object type="column" id="256.65536.4294967296.0" />
+            </entry>
             <entry value="external_name1" score="31" near="true" tags="TABLE_NAME">
                 <object type="table" id="256.65536.4294967296" />
             </entry>

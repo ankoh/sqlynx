@@ -100,13 +100,21 @@ class CatalogEntry {
     };
     /// A table column
     struct TableColumn : OverlayList<NamedObject>::Node {
+        /// The catalog database id
+        CatalogDatabaseID catalog_database_id = 0;
+        /// The catalog schema id
+        CatalogSchemaID catalog_schema_id = 0;
+        /// The catalog database id
+        ExternalObjectID catalog_table_id;
+        /// The catalog database id
+        uint32_t column_index = 0;
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
         /// The column name
         std::reference_wrapper<RegisteredName> column_name;
         /// Constructor
         TableColumn(std::optional<uint32_t> ast_node_id, RegisteredName& column_name)
-            : OverlayList<NamedObject>::Node(NamedObjectType::Table),
+            : OverlayList<NamedObject>::Node(NamedObjectType::Column),
               ast_node_id(ast_node_id),
               column_name(column_name) {}
         /// Pack as FlatBuffer
@@ -114,12 +122,12 @@ class CatalogEntry {
     };
     /// A table declaration
     struct TableDeclaration : OverlayList<NamedObject>::Node {
-        /// The id of the table in the catalog
-        ExternalObjectID catalog_table_id;
         /// The catalog database id
         CatalogDatabaseID catalog_database_id = 0;
         /// The catalog schema id
         CatalogSchemaID catalog_schema_id = 0;
+        /// The catalog database id
+        ExternalObjectID catalog_table_id;
         /// The database reference id
         size_t database_reference_id = 0;
         /// The schema reference id
