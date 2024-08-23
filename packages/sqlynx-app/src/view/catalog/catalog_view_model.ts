@@ -1,7 +1,5 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
 import { U32_MAX } from '../../utils/numeric_limits.js';
-import { SessionState } from '../../session/session_state.js';
-import { findTableById } from '../../session/script_lookup.js';
 
 /// The rendering settings for a catalog level
 export interface CatalogLevelRenderingSettings {

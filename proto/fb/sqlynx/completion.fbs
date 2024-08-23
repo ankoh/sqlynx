@@ -1,12 +1,34 @@
 namespace sqlynx.proto;
 
+enum CompletionCandidateObjectType: uint8 {
+    Database = 0,
+    Schema = 1,
+    Table = 2,
+    Column = 3
+}
+
+table CompletionCandidateObject {
+    /// The object type
+    object_type: CompletionCandidateObjectType;
+    /// The database id (unique in catalog)
+    catalog_database_id: uint32;
+    /// The schema id (unique in catalog)
+    catalog_schema_id: uint32;
+    /// The table id (unique in catalog)
+    catalog_table_id: uint64;
+    /// The column idx
+    table_column_id: uint64;
+}
+
 table CompletionCandidate {
     /// The display text
     display_text: string;
     /// The completion text
     completion_text: string;
     /// The combined tags
-    combined_tags: uint64;
+    tags: uint32;
+    /// The references
+    catalog_objects: [CompletionCandidateObject];
     /// The score
     score: uint32;
     /// Is near the cursor?

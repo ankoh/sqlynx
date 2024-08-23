@@ -42,9 +42,9 @@ struct Completion {
         /// The combined tags.
         /// We may hit the same name multiple times in multiple catalog entries.
         /// Each of these entries may have different name tags, so we have to merge them here.
-        NameTags combined_tags;
-        /// The combined objects
-        std::vector<OverlayList<NamedObject>> combined_objects;
+        NameTags tags;
+        /// The catalog objects
+        std::vector<OverlayList<NamedObject>> catalog_objects;
         /// The name score
         ScoreValueType score;
         /// Is a name located near the cursor (in the AST)?

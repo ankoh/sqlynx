@@ -178,7 +178,7 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
                                        .occurrences = 0,
                                        .resolved_tags = {proto::NameTag::KEYWORD},
                                        .resolved_objects = {}},
-                .combined_tags = NameTags{proto::NameTag::KEYWORD},
+                .tags = NameTags{proto::NameTag::KEYWORD},
                 .score = get_score(*location, expected, name),
                 .near_cursor = false,
                 .external = false,
@@ -234,15 +234,15 @@ void findCandidatesInIndex(Completion& completion, const CatalogEntry::NameSearc
         if (auto iter = pending_candidates.find(name_info.text); iter != pending_candidates.end()) {
             // Update the score if it is higher
             iter->second.score = std::max(iter->second.score, score);
-            iter->second.combined_tags |= name_info.resolved_tags;
-            iter->second.combined_objects.push_back(name_info.resolved_objects);
+            iter->second.tags |= name_info.resolved_tags;
+            iter->second.catalog_objects.push_back(name_info.resolved_objects);
             iter->second.external |= external;
         } else {
             // Otherwise store as new candidate
             Completion::Candidate candidate{
                 .name = name_info,
-                .combined_tags = name_info.resolved_tags,
-                .combined_objects = {name_info.resolved_objects},
+                .tags = name_info.resolved_tags,
+                .catalog_objects = {name_info.resolved_objects},
                 .score = score,
                 .near_cursor = false,
                 .external = external,
@@ -427,10 +427,10 @@ flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferB
     // Pack candidates
     std::vector<flatbuffers::Offset<proto::CompletionCandidate>> candidates;
     candidates.reserve(entries.size());
-    for (auto iter = entries.rbegin(); iter != entries.rend(); ++iter) {
-        auto display_text_offset = builder.CreateString(iter->name.text);
+    for (auto iter_entry = entries.rbegin(); iter_entry != entries.rend(); ++iter_entry) {
+        auto display_text_offset = builder.CreateString(iter_entry->name.text);
         std::string quoted;
-        std::string_view completion_text = iter->name.text;
+        std::string_view completion_text = iter_entry->name.text;
         if (anyupper_fuzzy(completion_text)) {
             quoted = completion_text;
             quoted.insert(0, "\"");
@@ -438,13 +438,56 @@ flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferB
             completion_text = quoted;
             // XXX Hack: Fewer copies
         }
-        auto completion_text_offset = builder.CreateString(completion_text);
+        size_t catalog_object_count = 0;
+        for (auto& objects : iter_entry->catalog_objects) {
+            catalog_object_count += objects.GetSize();
+        }
+        std::vector<flatbuffers::Offset<proto::CompletionCandidateObject>> catalog_objects;
+        catalog_objects.reserve(catalog_object_count);
+        for (auto& objects : iter_entry->catalog_objects) {
+            for (auto iter_obj = objects.begin(); iter_obj != objects.end(); ++iter_obj) {
+                proto::CompletionCandidateObjectBuilder obj{builder};
+                obj.add_object_type(static_cast<proto::CompletionCandidateObjectType>(iter_obj->object_type));
+                switch (iter_obj->object_type) {
+                    case NamedObjectType::Database: {
+                        auto* db = static_cast<CatalogEntry::DatabaseReference*>(&iter_obj.GetNode());
+                        obj.add_catalog_database_id(db->catalog_database_id);
+                        break;
+                    }
+                    case NamedObjectType::Schema: {
+                        auto* schema = static_cast<CatalogEntry::SchemaReference*>(&iter_obj.GetNode());
+                        obj.add_catalog_database_id(schema->catalog_database_id);
+                        obj.add_catalog_schema_id(schema->catalog_schema_id);
+                        break;
+                    }
+                    case NamedObjectType::Table: {
+                        auto* table = static_cast<CatalogEntry::TableDeclaration*>(&iter_obj.GetNode());
+                        obj.add_catalog_database_id(table->catalog_database_id);
+                        obj.add_catalog_schema_id(table->catalog_schema_id);
+                        obj.add_catalog_table_id(table->catalog_table_id.Pack());
+                        break;
+                    }
+                    case NamedObjectType::Column: {
+                        auto* column = static_cast<CatalogEntry::TableColumn*>(&iter_obj.GetNode());
+                        obj.add_catalog_database_id(column->catalog_database_id);
+                        obj.add_catalog_schema_id(column->catalog_schema_id);
+                        obj.add_catalog_table_id(column->catalog_table_id.Pack());
+                        obj.add_table_column_id(column->column_index);
+                        break;
+                    }
+                }
+                catalog_objects.push_back(obj.Finish());
+            }
+        }
+        auto catalog_objects_ofs = builder.CreateVector(catalog_objects);
+        auto completion_text_ofs = builder.CreateString(completion_text);
         proto::CompletionCandidateBuilder candidateBuilder{builder};
         candidateBuilder.add_display_text(display_text_offset);
-        candidateBuilder.add_completion_text(completion_text_offset);
-        candidateBuilder.add_combined_tags(iter->combined_tags);
-        candidateBuilder.add_score(iter->GetScore());
-        candidateBuilder.add_near_cursor(iter->near_cursor);
+        candidateBuilder.add_completion_text(completion_text_ofs);
+        candidateBuilder.add_tags(iter_entry->tags);
+        candidateBuilder.add_catalog_objects(catalog_objects_ofs);
+        candidateBuilder.add_score(iter_entry->GetScore());
+        candidateBuilder.add_near_cursor(iter_entry->near_cursor);
         candidates.push_back(candidateBuilder.Finish());
     }
     auto candidatesOfs = builder.CreateVector(candidates);
