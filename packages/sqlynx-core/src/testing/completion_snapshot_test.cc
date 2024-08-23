@@ -4,6 +4,7 @@
 
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
+#include "sqlynx/text/names.h"
 
 namespace sqlynx {
 namespace testing {
@@ -51,6 +52,42 @@ void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Complet
             tags << proto::EnumNameNameTag(tag);
         });
         xml_entry.append_attribute("tags").set_value(tags.str().c_str());
+        for (auto refs : iter->combined_objects) {
+            for (auto ref_iter = refs.begin(); ref_iter != refs.end(); ++ref_iter) {
+                auto& ref = ref_iter.GetNode();
+                auto xml_ref = xml_entry.append_child("ref");
+                switch (ref.value.object_type) {
+                    case sqlynx::NamedObjectType::Database: {
+                        std::string type = "database";
+                        auto* t = static_cast<CatalogEntry::DatabaseReference*>(&ref);
+                        xml_ref.append_attribute("type").set_value(type.c_str());
+                        xml_ref.append_attribute("db").set_value(t->catalog_database_id);
+                        break;
+                    }
+                    case sqlynx::NamedObjectType::Schema: {
+                        std::string type = "schema";
+                        auto* t = static_cast<CatalogEntry::SchemaReference*>(&ref);
+                        xml_ref.append_attribute("type").set_value(type.c_str());
+                        xml_ref.append_attribute("db").set_value(t->catalog_database_id);
+                        xml_ref.append_attribute("schema").set_value(t->catalog_schema_id);
+                        break;
+                    }
+                    case sqlynx::NamedObjectType::Table: {
+                        std::string type = "table";
+                        auto* t = static_cast<CatalogEntry::TableDeclaration*>(&ref);
+                        xml_ref.append_attribute("type").set_value(type.c_str());
+                        xml_ref.append_attribute("db").set_value(t->catalog_database_id);
+                        xml_ref.append_attribute("schema").set_value(t->catalog_schema_id);
+                        xml_ref.append_attribute("table").set_value(t->catalog_table_id.Pack());
+                        break;
+                    }
+                    case sqlynx::NamedObjectType::Column:
+                        std::string type = "column";
+                        xml_ref.append_attribute("type").set_value(type.c_str());
+                        break;
+                }
+            }
+        }
     }
 }
 

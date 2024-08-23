@@ -235,12 +235,14 @@ void findCandidatesInIndex(Completion& completion, const CatalogEntry::NameSearc
             // Update the score if it is higher
             iter->second.score = std::max(iter->second.score, score);
             iter->second.combined_tags |= name_info.resolved_tags;
+            iter->second.combined_objects.push_back(name_info.resolved_objects);
             iter->second.external |= external;
         } else {
             // Otherwise store as new candidate
             Completion::Candidate candidate{
                 .name = name_info,
                 .combined_tags = name_info.resolved_tags,
+                .combined_objects = {name_info.resolved_objects},
                 .score = score,
                 .near_cursor = false,
                 .external = external,

@@ -169,7 +169,7 @@ class CatalogEntry {
         flatbuffers::Offset<proto::DatabaseDeclaration> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
     /// A schema name declaration
-    struct SchemaReference : NamedObject {
+    struct SchemaReference : OverlayList<NamedObject>::Node {
         /// The catalog database id
         /// This ID is only preliminary if the entry has not been added to the catalog yet.
         /// Adding the entry to the catalog might fail if this id becomes invalid.
@@ -185,7 +185,7 @@ class CatalogEntry {
         /// Constructor
         SchemaReference(CatalogDatabaseID database_id, CatalogSchemaID schema_id, std::string_view database_name,
                         std::string_view schema_name)
-            : NamedObject(NamedObjectType::Schema),
+            : OverlayList<NamedObject>::Node(NamedObjectType::Schema),
               catalog_database_id(database_id),
               catalog_schema_id(schema_id),
               database_name(database_name),

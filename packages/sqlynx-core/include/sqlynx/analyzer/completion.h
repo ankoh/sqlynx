@@ -31,19 +31,27 @@ struct Completion {
     static_assert((TAG_UNLIKELY + SUBSTRING_SCORE_MODIFIER) > TAG_LIKELY,
                   "An unlikely name that is a substring outweighs a likely name");
     static_assert((TAG_UNLIKELY + KEYWORD_VERY_POPULAR) < TAG_LIKELY,
-                  "A very likely keyword prevalance doesn't outweighing a likely tag");
+                  "A very likely keyword prevalance doesn't outweigh a likely tag");
 
     /// The completion candidates
     struct Candidate {
-        /// The name
+        /// The name.
+        /// We deliberately copy here since expected parser keywords are not registered in the catalog.
+        /// String lifetime is not a problem for them so we can just fake-register them ad-hoc.
         RegisteredName name;
-        /// The combined tags
+        /// The combined tags.
+        /// We may hit the same name multiple times in multiple catalog entries.
+        /// Each of these entries may have different name tags, so we have to merge them here.
         NameTags combined_tags;
+        /// The combined objects
+        std::vector<OverlayList<NamedObject>> combined_objects;
         /// The name score
         ScoreValueType score;
         /// Is a name located near the cursor (in the AST)?
         bool near_cursor;
         /// Is external?
+        /// Differentiates between names in the own script and those in the catalog.
+        /// We only use it at the moment to special-case the candidate that is directly under the cursor.
         bool external;
 
         /// Get the score
