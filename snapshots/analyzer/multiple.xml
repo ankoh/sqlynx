@@ -6,15 +6,15 @@
                 select * from B, C where d = c;
             </input>
             <table-references>
-                <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
-                <external schema="1" table="1" stmt="0" loc="34..35" text="B" />
-                <external schema="1" table="1" stmt="1" loc="79..80" text="B" />
+                <external id="256.65536.4294967296" stmt="0" loc="31..32" text="A" />
+                <external id="256.65536.4294967297" stmt="0" loc="34..35" text="B" />
+                <external id="256.65536.4294967297" stmt="1" loc="79..80" text="B" />
                 <unresolved stmt="1" loc="82..83" text="C" />
             </table-references>
             <column-references>
-                <external schema="1" table="0" column="0" stmt="0" loc="42..43" text="a" />
-                <external schema="1" table="0" column="1" stmt="0" loc="46..47" text="b" />
-                <external schema="1" table="1" column="0" stmt="1" loc="90..91" text="d" />
+                <external id="256.65536.4294967296.0" stmt="0" loc="42..43" text="a" />
+                <external id="256.65536.4294967296.1" stmt="0" loc="46..47" text="b" />
+                <external id="256.65536.4294967297.0" stmt="1" loc="90..91" text="d" />
                 <unresolved stmt="1" loc="94..95" text="c" />
             </column-references>
             <query-graph>
@@ -35,13 +35,13 @@
                     create table B (d int, e int);
                 </input>
                 <tables>
-                    <table name="a" loc="21..50" text="create tab..nt, b int)">
-                        <column name="a" loc="37..42" text="a int" />
-                        <column name="b" loc="44..49" text="b int" />
+                    <table id="256.65536.4294967296" name="a" loc="21..50" text="create tab..nt, b int)">
+                        <column id="256.65536.4294967296.0" name="a" loc="37..42" text="a int" />
+                        <column id="256.65536.4294967296.1" name="b" loc="44..49" text="b int" />
                     </table>
-                    <table name="b" loc="72..101" text="create tab..nt, e int)">
-                        <column name="d" loc="88..93" text="d int" />
-                        <column name="e" loc="95..100" text="e int" />
+                    <table id="256.65536.4294967297" name="b" loc="72..101" text="create tab..nt, e int)">
+                        <column id="256.65536.4294967297.0" name="d" loc="88..93" text="d int" />
+                        <column id="256.65536.4294967297.1" name="e" loc="95..100" text="e int" />
                     </table>
                 </tables>
             </script>
@@ -55,15 +55,15 @@
                 select * from B, C where d = c;
             </input>
             <table-references>
-                <external schema="1" table="0" stmt="0" loc="31..32" text="A" />
-                <external schema="1" table="1" stmt="0" loc="34..35" text="B" />
-                <external schema="1" table="1" stmt="1" loc="102..103" text="B" />
+                <external id="256.65536.4294967296" stmt="0" loc="31..32" text="A" />
+                <external id="256.65536.4294967297" stmt="0" loc="34..35" text="B" />
+                <external id="256.65536.4294967297" stmt="1" loc="102..103" text="B" />
                 <unresolved stmt="1" loc="105..106" text="C" />
             </table-references>
             <column-references>
-                <external schema="1" table="0" column="0" stmt="0" loc="42..43" text="a" />
-                <external schema="1" table="0" column="1" stmt="0" loc="46..47" text="b" />
-                <external schema="1" table="1" column="0" stmt="1" loc="113..114" text="d" />
+                <external id="256.65536.4294967296.0" stmt="0" loc="42..43" text="a" />
+                <external id="256.65536.4294967296.1" stmt="0" loc="46..47" text="b" />
+                <external id="256.65536.4294967297.0" stmt="1" loc="113..114" text="d" />
                 <unresolved stmt="1" loc="117..118" text="c" />
             </column-references>
             <query-graph>
@@ -84,13 +84,13 @@
                     create table B (d int, e int);
                 </input>
                 <tables>
-                    <table name="a" loc="21..50" text="create tab..nt, b int)">
-                        <column name="a" loc="37..42" text="a int" />
-                        <column name="b" loc="44..49" text="b int" />
+                    <table id="256.65536.4294967296" name="a" loc="21..50" text="create tab..nt, b int)">
+                        <column id="256.65536.4294967296.0" name="a" loc="37..42" text="a int" />
+                        <column id="256.65536.4294967296.1" name="b" loc="44..49" text="b int" />
                     </table>
-                    <table name="b" loc="72..101" text="create tab..nt, e int)">
-                        <column name="d" loc="88..93" text="d int" />
-                        <column name="e" loc="95..100" text="e int" />
+                    <table id="256.65536.4294967297" name="b" loc="72..101" text="create tab..nt, e int)">
+                        <column id="256.65536.4294967297.0" name="d" loc="88..93" text="d int" />
+                        <column id="256.65536.4294967297.1" name="e" loc="95..100" text="e int" />
                     </table>
                 </tables>
             </script>
