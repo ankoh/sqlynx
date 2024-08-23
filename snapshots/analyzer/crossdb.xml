@@ -5,12 +5,12 @@
                 select * from db1.schema1.A, db2.schema2.A where a = c;
             </input>
             <table-references>
-                <external schema="1" table="0" stmt="0" loc="31..44" text="db1.schema1.A" />
-                <external schema="1" table="1" stmt="0" loc="46..59" text="db2.schema2.A" />
+                <external id="256.65536.4294967296" stmt="0" loc="31..44" text="db1.schema1.A" />
+                <external id="257.65537.4294967297" stmt="0" loc="46..59" text="db2.schema2.A" />
             </table-references>
             <column-references>
-                <external schema="1" table="0" column="0" stmt="0" loc="66..67" text="a" />
-                <external schema="1" table="1" column="0" stmt="0" loc="70..71" text="c" />
+                <external id="256.65536.4294967296.0" stmt="0" loc="66..67" text="a" />
+                <external id="257.65537.4294967297.0" stmt="0" loc="70..71" text="c" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="66..71" text="a = c">
@@ -26,13 +26,13 @@
                     create table db2.schema2.A (c int, d int);
                 </input>
                 <tables>
-                    <table name="a" loc="21..62" text="create tab..nt, b int)">
-                        <column name="a" loc="49..54" text="a int" />
-                        <column name="b" loc="56..61" text="b int" />
+                    <table id="256.65536.4294967296" name="a" loc="21..62" text="create tab..nt, b int)">
+                        <column id="256.65536.4294967296.0" name="a" loc="49..54" text="a int" />
+                        <column id="256.65536.4294967296.1" name="b" loc="56..61" text="b int" />
                     </table>
-                    <table name="a" loc="84..125" text="create tab..nt, d int)">
-                        <column name="c" loc="112..117" text="c int" />
-                        <column name="d" loc="119..124" text="d int" />
+                    <table id="257.65537.4294967297" name="a" loc="84..125" text="create tab..nt, d int)">
+                        <column id="257.65537.4294967297.0" name="c" loc="112..117" text="c int" />
+                        <column id="257.65537.4294967297.1" name="d" loc="119..124" text="d int" />
                     </table>
                 </tables>
             </script>
@@ -44,12 +44,12 @@
                 select * from db1.schema1.A, db2.schema2.A where a = c;
             </input>
             <table-references>
-                <external schema="1" table="0" stmt="0" loc="31..44" text="db1.schema1.A" />
-                <external schema="1" table="1" stmt="0" loc="46..59" text="db2.schema2.A" />
+                <external id="256.65536.4294967296" stmt="0" loc="31..44" text="db1.schema1.A" />
+                <external id="257.65537.4294967297" stmt="0" loc="46..59" text="db2.schema2.A" />
             </table-references>
             <column-references>
-                <external schema="1" table="0" column="0" stmt="0" loc="66..67" text="a" />
-                <external schema="1" table="1" column="0" stmt="0" loc="70..71" text="c" />
+                <external id="256.65536.4294967296.0" stmt="0" loc="66..67" text="a" />
+                <external id="257.65537.4294967297.0" stmt="0" loc="70..71" text="c" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="66..71" text="a = c">
@@ -65,13 +65,13 @@
                     create table db2.schema2.A (c int, d int);
                 </input>
                 <tables>
-                    <table name="a" loc="21..50" text="create tab..nt, b int)">
-                        <column name="a" loc="37..42" text="a int" />
-                        <column name="b" loc="44..49" text="b int" />
+                    <table id="256.65536.4294967296" name="a" loc="21..50" text="create tab..nt, b int)">
+                        <column id="256.65536.4294967296.0" name="a" loc="37..42" text="a int" />
+                        <column id="256.65536.4294967296.1" name="b" loc="44..49" text="b int" />
                     </table>
-                    <table name="a" loc="72..113" text="create tab..nt, d int)">
-                        <column name="c" loc="100..105" text="c int" />
-                        <column name="d" loc="107..112" text="d int" />
+                    <table id="257.65537.4294967297" name="a" loc="72..113" text="create tab..nt, d int)">
+                        <column id="257.65537.4294967297.0" name="c" loc="100..105" text="c int" />
+                        <column id="257.65537.4294967297.1" name="d" loc="107..112" text="d int" />
                     </table>
                 </tables>
             </script>
@@ -83,12 +83,12 @@
                 select * from db1.schema1.A, db2.schema2.B where a = c;
             </input>
             <table-references>
-                <external schema="1" table="0" stmt="0" loc="31..44" text="db1.schema1.A" />
-                <external schema="2" table="0" stmt="0" loc="46..59" text="db2.schema2.B" />
+                <external id="256.65536.4294967296" stmt="0" loc="31..44" text="db1.schema1.A" />
+                <external id="257.65537.8589934592" stmt="0" loc="46..59" text="db2.schema2.B" />
             </table-references>
             <column-references>
-                <external schema="1" table="0" column="0" stmt="0" loc="66..67" text="a" />
-                <external schema="2" table="0" column="0" stmt="0" loc="70..71" text="c" />
+                <external id="256.65536.4294967296.0" stmt="0" loc="66..67" text="a" />
+                <external id="257.65537.8589934592.0" stmt="0" loc="70..71" text="c" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="66..71" text="a = c">
@@ -103,9 +103,9 @@
                     create table A (a int, b int);
                 </input>
                 <tables>
-                    <table name="a" loc="21..50" text="create tab..nt, b int)">
-                        <column name="a" loc="37..42" text="a int" />
-                        <column name="b" loc="44..49" text="b int" />
+                    <table id="256.65536.4294967296" name="a" loc="21..50" text="create tab..nt, b int)">
+                        <column id="256.65536.4294967296.0" name="a" loc="37..42" text="a int" />
+                        <column id="256.65536.4294967296.1" name="b" loc="44..49" text="b int" />
                     </table>
                 </tables>
             </script>
@@ -114,9 +114,9 @@
                     create table db2.schema2.B (c int, d int);
                 </input>
                 <tables>
-                    <table name="b" loc="21..62" text="create tab..nt, d int)">
-                        <column name="c" loc="49..54" text="c int" />
-                        <column name="d" loc="56..61" text="d int" />
+                    <table id="257.65537.8589934592" name="b" loc="21..62" text="create tab..nt, d int)">
+                        <column id="257.65537.8589934592.0" name="c" loc="49..54" text="c int" />
+                        <column id="257.65537.8589934592.1" name="d" loc="56..61" text="d int" />
                     </table>
                 </tables>
             </script>
@@ -128,12 +128,12 @@
                 select * from db1.schema1.A, db2.schema2.B where a = c;
             </input>
             <table-references>
-                <external schema="1" table="0" stmt="0" loc="31..44" text="db1.schema1.A" />
-                <external schema="2" table="0" stmt="0" loc="46..59" text="db2.schema2.B" />
+                <external id="256.65536.4294967296" stmt="0" loc="31..44" text="db1.schema1.A" />
+                <external id="257.65537.8589934592" stmt="0" loc="46..59" text="db2.schema2.B" />
             </table-references>
             <column-references>
-                <external schema="1" table="0" column="0" stmt="0" loc="66..67" text="a" />
-                <external schema="2" table="0" column="0" stmt="0" loc="70..71" text="c" />
+                <external id="256.65536.4294967296.0" stmt="0" loc="66..67" text="a" />
+                <external id="257.65537.8589934592.0" stmt="0" loc="70..71" text="c" />
             </column-references>
             <query-graph>
                 <edge op="EQUAL" loc="66..71" text="a = c">
@@ -148,9 +148,9 @@
                     create table db1.schema1.A (a int, b int);
                 </input>
                 <tables>
-                    <table name="a" loc="21..62" text="create tab..nt, b int)">
-                        <column name="a" loc="49..54" text="a int" />
-                        <column name="b" loc="56..61" text="b int" />
+                    <table id="256.65536.4294967296" name="a" loc="21..62" text="create tab..nt, b int)">
+                        <column id="256.65536.4294967296.0" name="a" loc="49..54" text="a int" />
+                        <column id="256.65536.4294967296.1" name="b" loc="56..61" text="b int" />
                     </table>
                 </tables>
             </script>
@@ -159,9 +159,9 @@
                     create table db2.schema2.B (c int, d int);
                 </input>
                 <tables>
-                    <table name="b" loc="21..62" text="create tab..nt, d int)">
-                        <column name="c" loc="49..54" text="c int" />
-                        <column name="d" loc="56..61" text="d int" />
+                    <table id="257.65537.8589934592" name="b" loc="21..62" text="create tab..nt, d int)">
+                        <column id="257.65537.8589934592.0" name="c" loc="49..54" text="c int" />
+                        <column id="257.65537.8589934592.1" name="d" loc="56..61" text="d int" />
                     </table>
                 </tables>
             </script>
@@ -174,11 +174,11 @@
                 select * from db1.schema1.A where c = 1;
             </input>
             <table-references>
-                <external schema="1" table="0" stmt="0" loc="31..44" text="db1.schema1.A" />
-                <external schema="1" table="0" stmt="1" loc="88..101" text="db1.schema1.A" />
+                <external id="256.65536.4294967296" stmt="0" loc="31..44" text="db1.schema1.A" />
+                <external id="256.65536.4294967296" stmt="1" loc="88..101" text="db1.schema1.A" />
             </table-references>
             <column-references>
-                <external schema="1" table="0" column="0" stmt="0" loc="51..52" text="a" />
+                <external id="256.65536.4294967296.0" stmt="0" loc="51..52" text="a" />
                 <unresolved stmt="1" loc="108..109" text="c" />
             </column-references>
         </script>
@@ -188,9 +188,9 @@
                     create table db1.schema1.A (a int, b int);
                 </input>
                 <tables>
-                    <table name="a" loc="21..62" text="create tab..nt, b int)">
-                        <column name="a" loc="49..54" text="a int" />
-                        <column name="b" loc="56..61" text="b int" />
+                    <table id="256.65536.4294967296" name="a" loc="21..62" text="create tab..nt, b int)">
+                        <column id="256.65536.4294967296.0" name="a" loc="49..54" text="a int" />
+                        <column id="256.65536.4294967296.1" name="b" loc="56..61" text="b int" />
                     </table>
                 </tables>
             </script>
@@ -199,9 +199,9 @@
                     create table db1.schema1.A (c int, d int);
                 </input>
                 <tables>
-                    <table name="a" loc="21..62" text="create tab..nt, d int)">
-                        <column name="c" loc="49..54" text="c int" />
-                        <column name="d" loc="56..61" text="d int" />
+                    <table id="256.65536.8589934592" name="a" loc="21..62" text="create tab..nt, d int)">
+                        <column id="256.65536.8589934592.0" name="c" loc="49..54" text="c int" />
+                        <column id="256.65536.8589934592.1" name="d" loc="56..61" text="d int" />
                     </table>
                 </tables>
             </script>
