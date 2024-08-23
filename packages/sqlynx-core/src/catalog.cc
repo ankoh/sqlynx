@@ -276,8 +276,19 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
                 }
             }
         }
+
+        // Sort the table columns
         std::sort(columns.begin(), columns.end(),
                   [&](TableColumn& l, TableColumn& r) { return l.column_name.get().text < r.column_name.get().text; });
+        // Store the catalog ids in the table columns
+        for (size_t column_index = 0; column_index != columns.size(); ++column_index) {
+            auto& column = columns[column_index];
+            column.catalog_database_id = db_id;
+            column.catalog_schema_id = schema_id;
+            column.catalog_table_id = table_id;
+            column.column_index = column_index;
+            column.column_name.get().resolved_objects.PushBack(column);
+        }
 
         // Create the table
         auto& t = table_declarations.Append(
