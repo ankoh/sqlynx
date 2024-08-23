@@ -26,8 +26,8 @@
                     create table foo(a int);
                 </input>
                 <tables>
-                    <table name="foo" loc="21..44" text="create tab..foo(a int)">
-                        <column name="a" loc="38..43" text="a int" />
+                    <table id="256.65536.4294967296" name="foo" loc="21..44" text="create tab..foo(a int)">
+                        <column id="256.65536.4294967296.0" name="a" loc="38..43" text="a int" />
                     </table>
                 </tables>
             </script>
@@ -37,7 +37,7 @@
         </cursor>
         <completions limit="3" symbol="NAME" relative="END_OF_SYMBOL" strategy="TABLE_REF">
             <entry value="foo" score="40" near="false" tags="TABLE_NAME">
-                <ref type="table" db="256" schema="65536" table="4294967296" />
+                <object type="table" id="256.65536.4294967296" />
             </entry>
             <entry value="following" score="20" near="false" tags="KEYWORD" />
             <entry value="for" score="20" near="false" tags="KEYWORD" />
@@ -55,8 +55,8 @@
                     create table foo(a int);
                 </input>
                 <tables>
-                    <table name="foo" loc="21..44" text="create tab..foo(a int)">
-                        <column name="a" loc="38..43" text="a int" />
+                    <table id="256.65536.4294967296" name="foo" loc="21..44" text="create tab..foo(a int)">
+                        <column id="256.65536.4294967296.0" name="a" loc="38..43" text="a int" />
                     </table>
                 </tables>
             </script>
@@ -86,14 +86,14 @@ create table table2(attr2 integer);
 create table table3(attr3 integer);
                 </input>
                 <tables>
-                    <table name="table1" loc="1..35" text="create tab..1 integer)">
-                        <column name="attr1" loc="21..34" text="attr1 integer" />
+                    <table id="256.65536.4294967296" name="table1" loc="1..35" text="create tab..1 integer)">
+                        <column id="256.65536.4294967296.0" name="attr1" loc="21..34" text="attr1 integer" />
                     </table>
-                    <table name="table2" loc="37..71" text="create tab..2 integer)">
-                        <column name="attr2" loc="57..70" text="attr2 integer" />
+                    <table id="256.65536.4294967297" name="table2" loc="37..71" text="create tab..2 integer)">
+                        <column id="256.65536.4294967297.0" name="attr2" loc="57..70" text="attr2 integer" />
                     </table>
-                    <table name="table3" loc="73..107" text="create tab..3 integer)">
-                        <column name="attr3" loc="93..106" text="attr3 integer" />
+                    <table id="256.65536.4294967298" name="table3" loc="73..107" text="create tab..3 integer)">
+                        <column id="256.65536.4294967298.0" name="attr3" loc="93..106" text="attr3 integer" />
                     </table>
                 </tables>
             </script>
@@ -103,13 +103,13 @@ create table table3(attr3 integer);
         </cursor>
         <completions limit="3" symbol="NAME" relative="END_OF_SYMBOL" strategy="TABLE_REF">
             <entry value="table2" score="42" near="false" tags="TABLE_NAME">
-                <ref type="table" db="256" schema="65536" table="4294967297" />
+                <object type="table" id="256.65536.4294967297" />
             </entry>
             <entry value="table1" score="40" near="false" tags="TABLE_NAME">
-                <ref type="table" db="256" schema="65536" table="4294967296" />
+                <object type="table" id="256.65536.4294967296" />
             </entry>
             <entry value="table3" score="40" near="false" tags="TABLE_NAME">
-                <ref type="table" db="256" schema="65536" table="4294967298" />
+                <object type="table" id="256.65536.4294967298" />
             </entry>
         </completions>
     </completion-snapshot>
@@ -119,10 +119,10 @@ create table table3(attr3 integer);
                 select external_name2 from external_name1 where external_
             </input>
             <table-references>
-                <external schema="1" table="0" stmt="0" loc="44..58" text="external_name1" />
+                <external id="256.65536.4294967296" stmt="0" loc="44..58" text="external_name1" />
             </table-references>
             <column-references>
-                <external schema="1" table="0" column="0" stmt="0" loc="24..38" text="external_name2" />
+                <external id="256.65536.4294967296.0" stmt="0" loc="24..38" text="external_name2" />
                 <unresolved stmt="0" loc="65..74" text="external_" />
             </column-references>
         </script>
@@ -132,8 +132,8 @@ create table table3(attr3 integer);
                     create table external_name1(external_name2 int);
                 </input>
                 <tables>
-                    <table name="external_name1" loc="21..68" text="create tab..name2 int)">
-                        <column name="external_name2" loc="49..67" text="external_name2 int" />
+                    <table id="256.65536.4294967296" name="external_name1" loc="21..68" text="create tab..name2 int)">
+                        <column id="256.65536.4294967296.0" name="external_name2" loc="49..67" text="external_name2 int" />
                     </table>
                 </tables>
             </script>
@@ -144,7 +144,7 @@ create table table3(attr3 integer);
         <completions limit="5" symbol="NAME" relative="MID_OF_SYMBOL" strategy="COLUMN_REF">
             <entry value="external_name2" score="41" near="true" tags="COLUMN_NAME" />
             <entry value="external_name1" score="31" near="true" tags="TABLE_NAME">
-                <ref type="table" db="256" schema="65536" table="4294967296" />
+                <object type="table" id="256.65536.4294967296" />
             </entry>
             <entry value="external" score="20" near="false" tags="KEYWORD" />
             <entry value="group" score="3" near="false" tags="KEYWORD" />
@@ -157,10 +157,10 @@ create table table3(attr3 integer);
                 select external_name2 from external_name1 where external_
             </input>
             <table-references>
-                <external schema="1" table="0" stmt="0" loc="44..58" text="external_name1" />
+                <external id="256.65536.4294967296" stmt="0" loc="44..58" text="external_name1" />
             </table-references>
             <column-references>
-                <external schema="1" table="0" column="0" stmt="0" loc="24..38" text="external_name2" />
+                <external id="256.65536.4294967296.0" stmt="0" loc="24..38" text="external_name2" />
                 <unresolved stmt="0" loc="65..74" text="external_" />
             </column-references>
         </script>
@@ -170,8 +170,8 @@ create table table3(attr3 integer);
                     create table external_name1(external_name2 int);
                 </input>
                 <tables>
-                    <table name="external_name1" loc="21..68" text="create tab..name2 int)">
-                        <column name="external_name2" loc="49..67" text="external_name2 int" />
+                    <table id="256.65536.4294967296" name="external_name1" loc="21..68" text="create tab..name2 int)">
+                        <column id="256.65536.4294967296.0" name="external_name2" loc="49..67" text="external_name2 int" />
                     </table>
                 </tables>
             </script>
@@ -182,7 +182,7 @@ create table table3(attr3 integer);
         <completions limit="5" symbol="NAME" relative="END_OF_SYMBOL" strategy="COLUMN_REF">
             <entry value="external_name2" score="41" near="true" tags="COLUMN_NAME" />
             <entry value="external_name1" score="31" near="true" tags="TABLE_NAME">
-                <ref type="table" db="256" schema="65536" table="4294967296" />
+                <object type="table" id="256.65536.4294967296" />
             </entry>
             <entry value="group" score="3" near="false" tags="KEYWORD" />
             <entry value="order" score="3" near="false" tags="KEYWORD" />

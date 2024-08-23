@@ -5,7 +5,7 @@
                 select * from lineitem where ke
             </input>
             <table-references>
-                <external schema="1" table="5" stmt="0" loc="31..39" text="lineitem" />
+                <external id="256.65536.4294967301" stmt="0" loc="31..39" text="lineitem" />
             </table-references>
             <column-references>
                 <unresolved stmt="0" loc="46..48" text="ke" />
@@ -24,82 +24,82 @@ create table nation (n_nationkey integer not null, n_name char(25) not null, n_r
 create table region (r_regionkey integer not null, r_name char(25) not null, r_comment varchar(152) not null, primary key (r_regionkey));
                 </input>
                 <tables>
-                    <table name="part" loc="1..309" text="create tab.._partkey))">
-                        <column name="p_brand" loc="103..128" text="p_brand ch..) not null" />
-                        <column name="p_comment" loc="253..283" text="p_comment ..) not null" />
-                        <column name="p_container" loc="184..213" text="p_containe..) not null" />
-                        <column name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
-                        <column name="p_name" loc="48..75" text="p_name var..) not null" />
-                        <column name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
-                        <column name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
-                        <column name="p_size" loc="159..182" text="p_size int..r not null" />
-                        <column name="p_type" loc="130..157" text="p_type var..) not null" />
+                    <table id="256.65536.4294967296" name="part" loc="1..309" text="create tab.._partkey))">
+                        <column id="256.65536.4294967296.0" name="p_brand" loc="103..128" text="p_brand ch..) not null" />
+                        <column id="256.65536.4294967296.1" name="p_comment" loc="253..283" text="p_comment ..) not null" />
+                        <column id="256.65536.4294967296.2" name="p_container" loc="184..213" text="p_containe..) not null" />
+                        <column id="256.65536.4294967296.3" name="p_mfgr" loc="77..101" text="p_mfgr cha..) not null" />
+                        <column id="256.65536.4294967296.4" name="p_name" loc="48..75" text="p_name var..) not null" />
+                        <column id="256.65536.4294967296.5" name="p_partkey" loc="20..46" text="p_partkey ..r not null" />
+                        <column id="256.65536.4294967296.6" name="p_retailprice" loc="215..251" text="p_retailpr..) not null" />
+                        <column id="256.65536.4294967296.7" name="p_size" loc="159..182" text="p_size int..r not null" />
+                        <column id="256.65536.4294967296.8" name="p_type" loc="130..157" text="p_type var..) not null" />
                     </table>
-                    <table name="supplier" loc="311..568" text="create tab.._suppkey))">
-                        <column name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
-                        <column name="s_address" loc="388..418" text="s_address ..) not null" />
-                        <column name="s_comment" loc="511..542" text="s_comment ..) not null" />
-                        <column name="s_name" loc="362..386" text="s_name cha..) not null" />
-                        <column name="s_nationkey" loc="420..448" text="s_nationke..r not null" />
-                        <column name="s_phone" loc="450..475" text="s_phone ch..) not null" />
-                        <column name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
+                    <table id="256.65536.4294967297" name="supplier" loc="311..568" text="create tab.._suppkey))">
+                        <column id="256.65536.4294967297.0" name="s_acctbal" loc="477..509" text="s_acctbal ..) not null" />
+                        <column id="256.65536.4294967297.1" name="s_address" loc="388..418" text="s_address ..) not null" />
+                        <column id="256.65536.4294967297.2" name="s_comment" loc="511..542" text="s_comment ..) not null" />
+                        <column id="256.65536.4294967297.3" name="s_name" loc="362..386" text="s_name cha..) not null" />
+                        <column id="256.65536.4294967297.4" name="s_nationkey" loc="420..448" text="s_nationke..r not null" />
+                        <column id="256.65536.4294967297.5" name="s_phone" loc="450..475" text="s_phone ch..) not null" />
+                        <column id="256.65536.4294967297.6" name="s_suppkey" loc="334..360" text="s_suppkey ..r not null" />
                     </table>
-                    <table name="partsupp" loc="570..789" text="create tab.._suppkey))">
-                        <column name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
-                        <column name="ps_comment" loc="719..751" text="ps_comment..) not null" />
-                        <column name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
-                        <column name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
-                        <column name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
+                    <table id="256.65536.4294967298" name="partsupp" loc="570..789" text="create tab.._suppkey))">
+                        <column id="256.65536.4294967298.0" name="ps_availqty" loc="651..679" text="ps_availqt..r not null" />
+                        <column id="256.65536.4294967298.1" name="ps_comment" loc="719..751" text="ps_comment..) not null" />
+                        <column id="256.65536.4294967298.2" name="ps_partkey" loc="593..620" text="ps_partkey..r not null" />
+                        <column id="256.65536.4294967298.3" name="ps_suppkey" loc="622..649" text="ps_suppkey..r not null" />
+                        <column id="256.65536.4294967298.4" name="ps_supplycost" loc="681..717" text="ps_supplyc..) not null" />
                     </table>
-                    <table name="customer" loc="791..1083" text="create tab.._custkey))">
-                        <column name="c_acctbal" loc="960..992" text="c_acctbal ..) not null" />
-                        <column name="c_address" loc="871..901" text="c_address ..) not null" />
-                        <column name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
-                        <column name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
-                        <column name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
-                        <column name="c_name" loc="842..869" text="c_name var..) not null" />
-                        <column name="c_nationkey" loc="903..931" text="c_nationke..r not null" />
-                        <column name="c_phone" loc="933..958" text="c_phone ch..) not null" />
+                    <table id="256.65536.4294967299" name="customer" loc="791..1083" text="create tab.._custkey))">
+                        <column id="256.65536.4294967299.0" name="c_acctbal" loc="960..992" text="c_acctbal ..) not null" />
+                        <column id="256.65536.4294967299.1" name="c_address" loc="871..901" text="c_address ..) not null" />
+                        <column id="256.65536.4294967299.2" name="c_comment" loc="1026..1057" text="c_comment ..) not null" />
+                        <column id="256.65536.4294967299.3" name="c_custkey" loc="814..840" text="c_custkey ..r not null" />
+                        <column id="256.65536.4294967299.4" name="c_mktsegment" loc="994..1024" text="c_mktsegme..) not null" />
+                        <column id="256.65536.4294967299.5" name="c_name" loc="842..869" text="c_name var..) not null" />
+                        <column id="256.65536.4294967299.6" name="c_nationkey" loc="903..931" text="c_nationke..r not null" />
+                        <column id="256.65536.4294967299.7" name="c_phone" loc="933..958" text="c_phone ch..) not null" />
                     </table>
-                    <table name="orders" loc="1085..1411" text="create tab..orderkey))">
-                        <column name="o_clerk" loc="1294..1319" text="o_clerk ch..) not null" />
-                        <column name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
-                        <column name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
-                        <column name="o_orderdate" loc="1232..1257" text="o_orderdat..e not null" />
-                        <column name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
-                        <column name="o_orderpriority" loc="1259..1292" text="o_orderpri..) not null" />
-                        <column name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
-                        <column name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
-                        <column name="o_totalprice" loc="1195..1230" text="o_totalpri..) not null" />
+                    <table id="256.65536.4294967300" name="orders" loc="1085..1411" text="create tab..orderkey))">
+                        <column id="256.65536.4294967300.0" name="o_clerk" loc="1294..1319" text="o_clerk ch..) not null" />
+                        <column id="256.65536.4294967300.1" name="o_comment" loc="1354..1384" text="o_comment ..) not null" />
+                        <column id="256.65536.4294967300.2" name="o_custkey" loc="1135..1161" text="o_custkey ..r not null" />
+                        <column id="256.65536.4294967300.3" name="o_orderdate" loc="1232..1257" text="o_orderdat..e not null" />
+                        <column id="256.65536.4294967300.4" name="o_orderkey" loc="1106..1133" text="o_orderkey..r not null" />
+                        <column id="256.65536.4294967300.5" name="o_orderpriority" loc="1259..1292" text="o_orderpri..) not null" />
+                        <column id="256.65536.4294967300.6" name="o_orderstatus" loc="1163..1193" text="o_ordersta..) not null" />
+                        <column id="256.65536.4294967300.7" name="o_shippriority" loc="1321..1352" text="o_shipprio..r not null" />
+                        <column id="256.65536.4294967300.8" name="o_totalprice" loc="1195..1230" text="o_totalpri..) not null" />
                     </table>
-                    <table name="lineitem" loc="1413..1971" text="create tab..nenumber))">
-                        <column name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
-                        <column name="l_commitdate" loc="1780..1806" text="l_commitda..e not null" />
-                        <column name="l_discount" loc="1627..1660" text="l_discount..) not null" />
-                        <column name="l_extendedprice" loc="1587..1625" text="l_extended..) not null" />
-                        <column name="l_linenumber" loc="1521..1550" text="l_linenumb..r not null" />
-                        <column name="l_linestatus" loc="1723..1752" text="l_linestat..) not null" />
-                        <column name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
-                        <column name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
-                        <column name="l_quantity" loc="1552..1585" text="l_quantity..) not null" />
-                        <column name="l_receiptdate" loc="1808..1835" text="l_receiptd..e not null" />
-                        <column name="l_returnflag" loc="1692..1721" text="l_returnfl..) not null" />
-                        <column name="l_shipdate" loc="1754..1778" text="l_shipdate..e not null" />
-                        <column name="l_shipinstruct" loc="1837..1869" text="l_shipinst..) not null" />
-                        <column name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
-                        <column name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
-                        <column name="l_tax" loc="1662..1690" text="l_tax deci..) not null" />
+                    <table id="256.65536.4294967301" name="lineitem" loc="1413..1971" text="create tab..nenumber))">
+                        <column id="256.65536.4294967301.0" name="l_comment" loc="1901..1931" text="l_comment ..) not null" />
+                        <column id="256.65536.4294967301.1" name="l_commitdate" loc="1780..1806" text="l_commitda..e not null" />
+                        <column id="256.65536.4294967301.2" name="l_discount" loc="1627..1660" text="l_discount..) not null" />
+                        <column id="256.65536.4294967301.3" name="l_extendedprice" loc="1587..1625" text="l_extended..) not null" />
+                        <column id="256.65536.4294967301.4" name="l_linenumber" loc="1521..1550" text="l_linenumb..r not null" />
+                        <column id="256.65536.4294967301.5" name="l_linestatus" loc="1723..1752" text="l_linestat..) not null" />
+                        <column id="256.65536.4294967301.6" name="l_orderkey" loc="1436..1463" text="l_orderkey..r not null" />
+                        <column id="256.65536.4294967301.7" name="l_partkey" loc="1465..1491" text="l_partkey ..r not null" />
+                        <column id="256.65536.4294967301.8" name="l_quantity" loc="1552..1585" text="l_quantity..) not null" />
+                        <column id="256.65536.4294967301.9" name="l_receiptdate" loc="1808..1835" text="l_receiptd..e not null" />
+                        <column id="256.65536.4294967301.10" name="l_returnflag" loc="1692..1721" text="l_returnfl..) not null" />
+                        <column id="256.65536.4294967301.11" name="l_shipdate" loc="1754..1778" text="l_shipdate..e not null" />
+                        <column id="256.65536.4294967301.12" name="l_shipinstruct" loc="1837..1869" text="l_shipinst..) not null" />
+                        <column id="256.65536.4294967301.13" name="l_shipmode" loc="1871..1899" text="l_shipmode..) not null" />
+                        <column id="256.65536.4294967301.14" name="l_suppkey" loc="1493..1519" text="l_suppkey ..r not null" />
+                        <column id="256.65536.4294967301.15" name="l_tax" loc="1662..1690" text="l_tax deci..) not null" />
                     </table>
-                    <table name="nation" loc="1973..2139" text="create tab..ationkey))">
-                        <column name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
-                        <column name="n_name" loc="2024..2048" text="n_name cha..) not null" />
-                        <column name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
-                        <column name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
+                    <table id="256.65536.4294967302" name="nation" loc="1973..2139" text="create tab..ationkey))">
+                        <column id="256.65536.4294967302.0" name="n_comment" loc="2080..2111" text="n_comment ..) not null" />
+                        <column id="256.65536.4294967302.1" name="n_name" loc="2024..2048" text="n_name cha..) not null" />
+                        <column id="256.65536.4294967302.2" name="n_nationkey" loc="1994..2022" text="n_nationke..r not null" />
+                        <column id="256.65536.4294967302.3" name="n_regionkey" loc="2050..2078" text="n_regionke..r not null" />
                     </table>
-                    <table name="region" loc="2141..2277" text="create tab..egionkey))">
-                        <column name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
-                        <column name="r_name" loc="2192..2216" text="r_name cha..) not null" />
-                        <column name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
+                    <table id="256.65536.4294967303" name="region" loc="2141..2277" text="create tab..egionkey))">
+                        <column id="256.65536.4294967303.0" name="r_comment" loc="2218..2249" text="r_comment ..) not null" />
+                        <column id="256.65536.4294967303.1" name="r_name" loc="2192..2216" text="r_name cha..) not null" />
+                        <column id="256.65536.4294967303.2" name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     </table>
                 </tables>
             </script>

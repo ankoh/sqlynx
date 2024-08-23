@@ -1,5 +1,6 @@
 #include "sqlynx/testing/analyzer_snapshot_test.h"
 
+#include <format>
 #include <fstream>
 
 #include "gtest/gtest.h"
@@ -37,13 +38,19 @@ static void writeTables(pugi::xml_node root, const AnalyzedScript& target) {
     for (auto& table_decl : target.GetTables()) {
         auto xml_tbl = root.append_child("table");
         std::string table_name{table_decl.table_name.table_name.get().text};
+        std::string table_catalog_id = std::format("{}.{}.{}", table_decl.catalog_database_id,
+                                                   table_decl.catalog_schema_id, table_decl.catalog_table_id.Pack());
+        xml_tbl.append_attribute("id").set_value(table_catalog_id.c_str());
         xml_tbl.append_attribute("name").set_value(table_name.c_str());
         assert(table_decl.ast_node_id.has_value());
         WriteLocation(xml_tbl, target.parsed_script->nodes[*table_decl.ast_node_id].location(),
                       target.parsed_script->scanned_script->GetInput());
         // Write child columns
-        for (auto& column_decl : table_decl.table_columns) {
+        for (size_t i = 0; i < table_decl.table_columns.size(); ++i) {
+            auto& column_decl = table_decl.table_columns[i];
             auto xml_col = xml_tbl.append_child("column");
+            std::string column_catalog_id = std::format("{}.{}", table_catalog_id, i);
+            xml_col.append_attribute("id").set_value(column_catalog_id.c_str());
             if (!column_decl.column_name.get().text.empty()) {
                 std::string column_name{column_decl.column_name.get().text};
                 xml_col.append_attribute("name").set_value(column_name.c_str());
@@ -133,8 +140,10 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
                            : "external";
             auto xml_ref = table_refs_node.append_child(tag);
             if (!ref.resolved_catalog_table_id.IsNull()) {
-                xml_ref.append_attribute("schema").set_value(ref.resolved_catalog_table_id.GetExternalId());
-                xml_ref.append_attribute("table").set_value(ref.resolved_catalog_table_id.GetIndex());
+                std::string catalog_id =
+                    std::format("{}.{}.{}", ref.resolved_catalog_database_id, ref.resolved_catalog_schema_id,
+                                ref.resolved_catalog_table_id.Pack());
+                xml_ref.append_attribute("id").set_value(catalog_id.c_str());
             }
             if (ref.ast_statement_id.has_value()) {
                 xml_ref.append_attribute("stmt").set_value(*ref.ast_statement_id);
@@ -155,11 +164,10 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
                            : "external";
             auto xml_ref = col_refs_node.append_child(tag);
             if (!ref.resolved_catalog_table_id.IsNull()) {
-                xml_ref.append_attribute("schema").set_value(ref.resolved_catalog_table_id.GetExternalId());
-                xml_ref.append_attribute("table").set_value(ref.resolved_catalog_table_id.GetIndex());
-            }
-            if (ref.resolved_table_column_id.has_value()) {
-                xml_ref.append_attribute("column").set_value(*ref.resolved_table_column_id);
+                std::string catalog_id =
+                    std::format("{}.{}.{}.{}", ref.resolved_catalog_database_id, ref.resolved_catalog_schema_id,
+                                ref.resolved_catalog_table_id.Pack(), ref.resolved_table_column_id.value_or(-1));
+                xml_ref.append_attribute("id").set_value(catalog_id.c_str());
             }
             if (ref.ast_statement_id.has_value()) {
                 xml_ref.append_attribute("stmt").set_value(*ref.ast_statement_id);
