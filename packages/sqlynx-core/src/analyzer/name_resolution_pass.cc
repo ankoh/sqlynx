@@ -132,6 +132,7 @@ std::pair<CatalogDatabaseID, CatalogSchemaID> NameResolutionPass::RegisterSchema
         db_id = catalog.AllocateDatabaseId(database_name);
         auto& db = database_references.Append(CatalogEntry::DatabaseReference{db_id, database_name, ""});
         databases_by_name.insert({db.database_name, db});
+        database_name.resolved_objects.PushBack(db);
     } else {
         db_id = db_ref_iter->second.get().catalog_database_id;
     }
@@ -142,6 +143,7 @@ std::pair<CatalogDatabaseID, CatalogSchemaID> NameResolutionPass::RegisterSchema
         auto& schema =
             schema_references.Append(CatalogEntry::SchemaReference{db_id, schema_id, database_name, schema_name});
         schemas_by_name.insert({{database_name, schema_name}, schema});
+        schema_name.resolved_objects.PushBack(schema);
     } else {
         schema_id = schema_ref_iter->second.get().catalog_schema_id;
     }
@@ -543,6 +545,8 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                     n.catalog_schema_id = schema_id;
                     n.ast_node_id = node_id;
                     n.table_columns = std::move(table_columns);
+                    // Register the table declaration
+                    table_name->table_name.get().resolved_objects.PushBack(n);
                 }
                 break;
             }
