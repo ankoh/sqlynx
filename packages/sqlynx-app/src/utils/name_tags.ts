@@ -1,6 +1,6 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
 
-export function unpackNameTags(tags: bigint): sqlynx.proto.NameTag[] {
+export function unpackNameTags(tags: number): sqlynx.proto.NameTag[] {
     const out = [];
     for (const tag of [
         sqlynx.proto.NameTag.KEYWORD,
@@ -10,7 +10,7 @@ export function unpackNameTags(tags: bigint): sqlynx.proto.NameTag[] {
         sqlynx.proto.NameTag.TABLE_ALIAS,
         sqlynx.proto.NameTag.COLUMN_NAME,
     ]) {
-        if ((tags & BigInt(tag)) != BigInt(0)) {
+        if ((tags & tag) != 0) {
             out.push(Number(tag) as sqlynx.proto.NameTag);
         }
     }

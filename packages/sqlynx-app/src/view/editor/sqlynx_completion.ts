@@ -54,7 +54,7 @@ export async function completeSQLynx(context: CompletionContext): Promise<Comple
             for (let i = 0; i < completion.candidates.length; ++i) {
                 const candidate = completion.candidates[i];
                 let tagName: string | undefined = undefined;
-                for (const tag of unpackNameTags(candidate.combinedTags)) {
+                for (const tag of unpackNameTags(candidate.tags)) {
                     tagName = getNameTagName(tag);
                     break;
                 }
