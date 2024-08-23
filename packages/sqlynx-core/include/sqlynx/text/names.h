@@ -60,10 +60,10 @@ static_assert(sizeof(NameTags::ValueType) == sizeof(proto::NameTag));
 
 /// A type of a catalog object
 enum NamedObjectType {
-    Database = 1,
-    Schema = 2,
-    Table = 3,
-    Column = 4,
+    Database = 0,
+    Schema = 1,
+    Table = 2,
+    Column = 3,
 };
 
 /// A catalog object

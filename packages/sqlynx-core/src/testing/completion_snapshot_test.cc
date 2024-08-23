@@ -46,14 +46,14 @@ void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Complet
         xml_entry.append_attribute("near").set_value(iter->near_cursor);
         std::stringstream tags;
         size_t i = 0;
-        iter->combined_tags.ForEach([&](proto::NameTag tag) {
+        iter->tags.ForEach([&](proto::NameTag tag) {
             if (i++ > 0) {
                 tags << ",";
             }
             tags << proto::EnumNameNameTag(tag);
         });
         xml_entry.append_attribute("tags").set_value(tags.str().c_str());
-        for (auto objects : iter->combined_objects) {
+        for (auto objects : iter->catalog_objects) {
             for (auto obj_iter = objects.begin(); obj_iter != objects.end(); ++obj_iter) {
                 auto& obj = obj_iter.GetNode();
                 auto xml_obj = xml_entry.append_child("object");

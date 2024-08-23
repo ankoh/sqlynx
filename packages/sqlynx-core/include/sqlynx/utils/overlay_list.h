@@ -35,6 +35,8 @@ template <typename T> struct OverlayList {
         inline size_t GetBufferIndex() const { return node->buffer_index; }
         /// Get the node
         inline Node& GetNode() { return *node; }
+        /// Get the node
+        inline const Node& GetNode() const { return *node; }
         /// Compare with end iterator
         inline bool operator==(EndIterator&) const { return node == nullptr; }
         /// Compare with end iterator
@@ -72,8 +74,12 @@ template <typename T> struct OverlayList {
 
     /// Get the iterator
     Iterator begin() { return Iterator{first}; }
+    /// Get the iterator
+    Iterator begin() const { return Iterator{first}; }
     /// Get the end iterator
     EndIterator end() { return EndIterator{}; }
+    /// Get the end iterator
+    EndIterator end() const { return EndIterator{}; }
 
     /// Get the size of the list
     size_t GetSize() const { return size; }
