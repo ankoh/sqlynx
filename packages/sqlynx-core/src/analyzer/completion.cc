@@ -335,15 +335,10 @@ void Completion::PromoteNearCandidatesInAST() {
 
     // Collect column references in the statement
     cursor.script.analyzed_script->column_references.ForEach([&](size_t i, auto& column_ref) {
-        if (!column_ref->ast_statement_id.has_value() || column_ref->ast_statement_id.value() != statement_id) {
-            return;
+        if (column_ref->ast_statement_id.has_value() && column_ref->ast_statement_id.value() == statement_id) {
+            mark_as_near(column_ref->column_name.column_name.get().text);
         }
-        mark_as_near(column_ref->column_name.column_name.get().text);
     });
-
-    // TODO: For unresolved columns, bump the score of tables that contain that column.
-    //       Problem: We expose such an index from name resolution and building that index ad-hoc suffers from name id
-    //       mapping.
 }
 
 void Completion::FlushCandidatesAndFinish() {
