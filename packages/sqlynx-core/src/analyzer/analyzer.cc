@@ -9,10 +9,11 @@
 namespace sqlynx {
 
 Analyzer::Analyzer(std::shared_ptr<ParsedScript> parsed, Catalog& catalog)
-    : parsed_program(parsed),
+    : parsed(parsed),
+      analyzed(std::make_shared<AnalyzedScript>(parsed, catalog)),
       catalog(catalog),
       pass_manager(*parsed),
-      name_resolution(std::make_unique<NameResolutionPass>(*parsed, catalog, attribute_index)) {}
+      name_resolution(std::make_unique<NameResolutionPass>(*analyzed, catalog, attribute_index)) {}
 
 std::pair<std::shared_ptr<AnalyzedScript>, proto::StatusCode> Analyzer::Analyze(std::shared_ptr<ParsedScript> parsed,
                                                                                 Catalog& catalog) {
@@ -24,9 +25,7 @@ std::pair<std::shared_ptr<AnalyzedScript>, proto::StatusCode> Analyzer::Analyze(
     az.pass_manager.Execute(*az.name_resolution);
 
     // Build program
-    auto program = std::make_shared<AnalyzedScript>(parsed, catalog);
-    az.name_resolution->Export(*program);
-    return {program, proto::StatusCode::OK};
+    return {az.analyzed, proto::StatusCode::OK};
 }
 
 }  // namespace sqlynx

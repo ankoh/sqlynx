@@ -1,7 +1,6 @@
 #pragma once
 
 #include <functional>
-#include <unordered_map>
 
 #include "sqlynx/analyzer/analyzer.h"
 #include "sqlynx/analyzer/pass_manager.h"
@@ -10,7 +9,6 @@
 #include "sqlynx/script.h"
 #include "sqlynx/text/names.h"
 #include "sqlynx/utils/attribute_index.h"
-#include "sqlynx/utils/hash.h"
 #include "sqlynx/utils/overlay_list.h"
 
 namespace sqlynx {
@@ -36,9 +34,11 @@ class NameResolutionPass : public PassManager::LTRPass {
 
    protected:
     /// The scanned program
-    ScannedScript& scanned_program;
+    ScannedScript& scanned;
     /// The parsed program
-    ParsedScript& parsed_program;
+    ParsedScript& parsed;
+    /// The analyzed program
+    AnalyzedScript& analyzed;
     /// The external id of the current script
     const CatalogEntryID catalog_entry_id;
     /// The catalog
@@ -47,30 +47,6 @@ class NameResolutionPass : public PassManager::LTRPass {
     AttributeIndex& attribute_index;
     /// The ast
     std::span<const proto::Node> ast;
-
-    /// The database references
-    decltype(AnalyzedScript::database_references) database_references;
-    /// The schema references
-    decltype(AnalyzedScript::schema_references) schema_references;
-    /// The table declarations
-    decltype(AnalyzedScript::table_declarations) table_declarations;
-    /// The table references
-    decltype(AnalyzedScript::table_references) table_references;
-    /// The column references
-    decltype(AnalyzedScript::column_references) column_references;
-    /// The naming scopes
-    decltype(AnalyzedScript::name_scopes) name_scopes;
-    /// The query graph edges
-    decltype(AnalyzedScript::graph_edges) graph_edges;
-    /// The query graph edge nodes
-    decltype(AnalyzedScript::graph_edge_nodes) graph_edge_nodes;
-
-    /// The databases, indexed by name
-    decltype(AnalyzedScript::databases_by_name) databases_by_name;
-    /// The schema, indexed by name
-    decltype(AnalyzedScript::schemas_by_name) schemas_by_name;
-    /// The tables, indexed by name
-    decltype(AnalyzedScript::tables_by_name) tables_by_name;
 
     /// The default database name
     RegisteredName& default_database_name;
@@ -82,7 +58,6 @@ class NameResolutionPass : public PassManager::LTRPass {
 
     /// The root scopes
     ankerl::unordered_dense::set<AnalyzedScript::NameScope*> root_scopes;
-
     /// The temporary name path buffer
     std::vector<std::reference_wrapper<RegisteredName>> name_path_buffer;
     /// The temporary pending table columns
@@ -123,7 +98,7 @@ class NameResolutionPass : public PassManager::LTRPass {
 
    public:
     /// Constructor
-    NameResolutionPass(ParsedScript& parser, Catalog& registry, AttributeIndex& attribute_index);
+    NameResolutionPass(AnalyzedScript& script, Catalog& registry, AttributeIndex& attribute_index);
 
     /// Prepare the analysis pass
     void Prepare() override;
@@ -131,9 +106,6 @@ class NameResolutionPass : public PassManager::LTRPass {
     void Visit(std::span<proto::Node> morsel) override;
     /// Finish the analysis pass
     void Finish() override;
-
-    /// Export an analyzed program
-    void Export(AnalyzedScript& program);
 };
 
 }  // namespace sqlynx
