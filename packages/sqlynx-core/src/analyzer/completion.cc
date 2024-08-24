@@ -271,19 +271,19 @@ void Completion::PromoteTableNamesForUnresolvedColumns() {
     auto& catalog = cursor.script.catalog;
 
     // Collect all unresolved columns in the current script
-    std::vector<CatalogEntry::ResolvedTableColumn> table_columns;
+    std::vector<CatalogEntry::TableColumn> table_columns;
     for (auto& column_ref : analyzed_script.column_references) {
         // Is unresolved?
         if (column_ref.resolved_catalog_table_id.IsNull()) {
             auto& column_name = column_ref.column_name.column_name.get();
-            cursor.script.analyzed_script->ResolveTableColumn(column_name, catalog, table_columns);
+            cursor.script.analyzed_script->ResolveTableColumns(column_name, catalog, table_columns);
         }
     }
 
     // Now find the distinct table names that contain these columns
     std::unordered_set<std::string_view> visited;
     for (auto& table_col : table_columns) {
-        auto& table_name = table_col.table.table_name.table_name.get();
+        auto& table_name = table_col.table->get().table_name.table_name.get();
         if (auto iter = pending_candidates.find(table_name.text);
             iter != pending_candidates.end() && !visited.contains(table_name)) {
             visited.insert(table_name);

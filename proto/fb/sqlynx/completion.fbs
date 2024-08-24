@@ -22,8 +22,7 @@ table CompletionCandidateObject {
 
 enum CompletionCandidateOrigin {
     ExpectedParserSymbol,
-    NameIndex,
-    UnresolvedColumn
+    NameIndex
 }
 
 table CompletionCandidate {

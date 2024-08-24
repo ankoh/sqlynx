@@ -147,13 +147,6 @@ class CatalogEntry {
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::Table> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
-    /// A resolved table column
-    struct ResolvedTableColumn {
-        /// The table
-        const TableDeclaration& table;
-        /// The index in the table
-        size_t table_column_index;
-    };
     /// A database name declaration
     struct DatabaseReference : OverlayList<NamedObject>::Node {
         /// The catalog database id.
@@ -221,8 +214,7 @@ class CatalogEntry {
     std::unordered_map<QualifiedTableName::HashKey, std::reference_wrapper<const TableDeclaration>, TupleHasher>
         tables_by_name;
     /// The table columns, indexed by the name
-    std::unordered_multimap<std::string_view, std::pair<std::reference_wrapper<const TableDeclaration>, size_t>>
-        table_columns_by_name;
+    std::unordered_multimap<std::string_view, std::reference_wrapper<const TableColumn>> table_columns_by_name;
     /// The name search index
     std::optional<CatalogEntry::NameSearchIndex> name_search_index;
 
@@ -262,10 +254,10 @@ class CatalogEntry {
     /// Resolve a table by name
     const TableDeclaration* ResolveTable(QualifiedTableName table_name, const Catalog& catalog) const;
     /// Find table columns by name
-    void ResolveTableColumn(std::string_view table_column, std::vector<ResolvedTableColumn>& out) const;
+    void ResolveTableColumns(std::string_view table_column, std::vector<TableColumn>& out) const;
     /// Find table columns by name
-    void ResolveTableColumn(std::string_view table_column, const Catalog& catalog,
-                            std::vector<ResolvedTableColumn>& out) const;
+    void ResolveTableColumns(std::string_view table_column, const Catalog& catalog,
+                             std::vector<TableColumn>& out) const;
 };
 
 class DescriptorPool : public CatalogEntry {
@@ -480,7 +472,7 @@ class Catalog {
     const CatalogEntry::TableDeclaration* ResolveTable(CatalogEntry::QualifiedTableName table_name,
                                                        CatalogEntryID ignore_entry) const;
     /// Find table columns by name
-    void ResolveTableColumn(std::string_view table_column, std::vector<CatalogEntry::ResolvedTableColumn>& out) const;
+    void ResolveTableColumns(std::string_view table_column, std::vector<CatalogEntry::TableColumn>& out) const;
 };
 
 }  // namespace sqlynx
