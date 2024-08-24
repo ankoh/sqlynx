@@ -27,7 +27,6 @@ export function useSalesforceSessionSetup(): SessionSetupFn {
         const lnx = instance.value;
         const connectionState = createSalesforceConnectorState(lnx);
         const connectionId = allocateConnection(connectionState);
-        const graph = lnx.createQueryGraphLayout();
         const mainScript = lnx.createScript(connectionState.catalog, ScriptKey.MAIN_SCRIPT);
 
         const mainScriptData: ScriptData = {
