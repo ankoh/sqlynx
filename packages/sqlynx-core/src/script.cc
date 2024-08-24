@@ -407,7 +407,7 @@ const CatalogEntry::NameSearchIndex& AnalyzedScript::GetNameSearchIndex() {
 
 template <typename In, typename Out, size_t ChunkSize>
 static flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Out>>> PackVector(
-    flatbuffers::FlatBufferBuilder& builder, const ChunkBuffer<typename OverlayList<In>::Node, ChunkSize>& elems) {
+    flatbuffers::FlatBufferBuilder& builder, const ChunkBuffer<typename IntrusiveList<In>::Node, ChunkSize>& elems) {
     std::vector<flatbuffers::Offset<Out>> offsets;
     offsets.reserve(elems.GetSize());
     for (auto& chunk : elems.GetChunks()) {

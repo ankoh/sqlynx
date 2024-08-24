@@ -5,7 +5,7 @@
 #include "ankerl/unordered_dense.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/utils/chunk_buffer.h"
-#include "sqlynx/utils/overlay_list.h"
+#include "sqlynx/utils/intrusive_list.h"
 
 namespace sqlynx {
 
@@ -92,7 +92,7 @@ struct RegisteredName {
     NameTags resolved_tags;
     /// The catalog objects resolved by the Analyzer.
     /// These objects are only available when the script was analyzed and are cleaned up when re-analyzing.
-    OverlayList<NamedObject> resolved_objects;
+    IntrusiveList<NamedObject> resolved_objects;
     /// Return the name text
     operator std::string_view() { return text; }
 };
