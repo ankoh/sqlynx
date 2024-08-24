@@ -78,9 +78,9 @@ void test(Script& script, size_t text_offset, ExpectedScriptCursor expected) {
     // Check table reference
     if (expected.table_ref_name.has_value()) {
         ASSERT_TRUE(cursor->table_reference_id.has_value());
-        ASSERT_LT(*cursor->table_reference_id, script.analyzed_script->table_references.size());
+        ASSERT_LT(*cursor->table_reference_id, script.analyzed_script->table_references.GetSize());
         auto& table_ref = script.analyzed_script->table_references[*cursor->table_reference_id];
-        auto table_name = print_name(script, table_ref.table_name);
+        auto table_name = print_name(script, table_ref->table_name);
         ASSERT_EQ(table_name, expected.table_ref_name);
     } else {
         ASSERT_FALSE(cursor->table_reference_id.has_value());
@@ -88,9 +88,9 @@ void test(Script& script, size_t text_offset, ExpectedScriptCursor expected) {
     // Check column reference
     if (expected.column_ref_name.has_value()) {
         ASSERT_TRUE(cursor->column_reference_id.has_value());
-        ASSERT_LT(*cursor->column_reference_id, script.analyzed_script->column_references.size());
+        ASSERT_LT(*cursor->column_reference_id, script.analyzed_script->column_references.GetSize());
         auto& column_ref = script.analyzed_script->column_references[*cursor->column_reference_id];
-        auto column_name = print_name(script, column_ref.column_name);
+        auto column_name = print_name(script, column_ref->column_name);
         ASSERT_EQ(column_name, expected.column_ref_name);
     } else {
         ASSERT_FALSE(cursor->column_reference_id.has_value());
@@ -104,12 +104,12 @@ void test(Script& script, size_t text_offset, ExpectedScriptCursor expected) {
         for (size_t i = 0; i < edge.node_count_left; ++i) {
             auto graph_node = script.analyzed_script->graph_edge_nodes[edge.nodes_begin + i];
             auto& col_ref = script.analyzed_script->column_references[graph_node.column_reference_id];
-            from.push_back(print_name(script, col_ref.column_name));
+            from.push_back(print_name(script, col_ref->column_name));
         }
         for (size_t i = 0; i < edge.node_count_right; ++i) {
             auto graph_node = script.analyzed_script->graph_edge_nodes[edge.nodes_begin + edge.node_count_left + i];
             auto& col_ref = script.analyzed_script->column_references[graph_node.column_reference_id];
-            to.push_back(print_name(script, col_ref.column_name));
+            to.push_back(print_name(script, col_ref->column_name));
         }
         ASSERT_EQ(from, expected.graph_from);
         ASSERT_EQ(to, expected.graph_to);
