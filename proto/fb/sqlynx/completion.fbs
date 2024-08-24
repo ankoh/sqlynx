@@ -20,19 +20,21 @@ table CompletionCandidateObject {
     table_column_id: uint64;
 }
 
-enum CompletionCandidateOrigin {
+enum CompletionCandidateOrigin: uint8 {
     ExpectedParserSymbol,
     NameIndex
 }
 
 table CompletionCandidate {
+    /// The candidate origin flags
+    origin: uint8;
+    /// The candidate tags
+    tags: uint32;
     /// The display text
     display_text: string;
-    /// The completion text
+    /// The completion text, when selected
     completion_text: string;
-    /// The combined tags
-    tags: uint32;
-    /// The references
+    /// The objects that this candidate references
     catalog_objects: [CompletionCandidateObject];
     /// The score
     score: uint32;
