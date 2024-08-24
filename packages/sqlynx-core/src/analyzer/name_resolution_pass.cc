@@ -9,7 +9,7 @@
 #include "sqlynx/external.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
-#include "sqlynx/utils/overlay_list.h"
+#include "sqlynx/utils/intrusive_list.h"
 
 namespace sqlynx {
 
