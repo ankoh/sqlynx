@@ -110,12 +110,10 @@ const CatalogEntry::TableDeclaration* CatalogEntry::ResolveTable(QualifiedTableN
     }
 }
 
-void CatalogEntry::ResolveTableColumn(std::string_view table_column,
-                                      std::vector<CatalogEntry::ResolvedTableColumn>& out) const {
+void CatalogEntry::ResolveTableColumns(std::string_view table_column, std::vector<TableColumn>& out) const {
     auto [begin, end] = table_columns_by_name.equal_range(table_column);
     for (auto iter = begin; iter != end; ++iter) {
-        auto& [table, column_id] = iter->second;
-        out.push_back(ResolvedTableColumn{table, static_cast<size_t>(column_id)});
+        out.push_back(iter->second.get());
     }
 }
 
@@ -309,17 +307,17 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
         for (auto& table : table_chunk) {
             tables_by_name.insert({table.table_name, table});
             for (size_t i = 0; i < table.table_columns.size(); ++i) {
-                table_columns_by_name.insert({table.table_columns[i].column_name.get().text, {table, i}});
+                table_columns_by_name.insert({table.table_columns[i].column_name.get().text, table.table_columns[i]});
             }
         }
     }
     return proto::StatusCode::OK;
 }
 
-void CatalogEntry::ResolveTableColumn(std::string_view table_column, const Catalog& catalog,
-                                      std::vector<CatalogEntry::ResolvedTableColumn>& tmp) const {
-    catalog.ResolveTableColumn(table_column, tmp);
-    ResolveTableColumn(table_column, tmp);
+void CatalogEntry::ResolveTableColumns(std::string_view table_column, const Catalog& catalog,
+                                       std::vector<TableColumn>& tmp) const {
+    catalog.ResolveTableColumns(table_column, tmp);
+    ResolveTableColumns(table_column, tmp);
 }
 
 Catalog::Catalog(std::string_view default_db, std::string_view default_schema)
@@ -949,9 +947,8 @@ const CatalogEntry::TableDeclaration* Catalog::ResolveTable(CatalogEntry::Qualif
     return nullptr;
 }
 
-void Catalog::ResolveTableColumn(std::string_view table_column,
-                                 std::vector<CatalogEntry::ResolvedTableColumn>& out) const {
+void Catalog::ResolveTableColumns(std::string_view table_column, std::vector<CatalogEntry::TableColumn>& out) const {
     for (auto& [key, schema] : entries) {
-        schema->ResolveTableColumn(table_column, out);
+        schema->ResolveTableColumns(table_column, out);
     }
 }

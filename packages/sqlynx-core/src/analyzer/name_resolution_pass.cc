@@ -663,7 +663,7 @@ void NameResolutionPass::Export(AnalyzedScript& program) {
     for (auto& table : program.table_declarations) {
         for (size_t i = 0; i < table.table_columns.size(); ++i) {
             auto& column = table.table_columns[i];
-            program.table_columns_by_name.insert({column.column_name.get().text, {table, i}});
+            program.table_columns_by_name.insert({column.column_name.get().text, column});
         }
     }
 }
