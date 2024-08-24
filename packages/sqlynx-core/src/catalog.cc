@@ -823,6 +823,8 @@ proto::StatusCode Catalog::UpdateScript(ScriptEntry& entry) {
     }
 
     // Erase previous database that's no longer part of the new database.
+    // We deliberately cleanup the dead databases after cleaning up dead schemas.
+    // Otherwise we're keeping databases alive through schema references that are just to be deleted.
     for (auto iter = prev_databases.begin(); iter != prev_databases.end(); ++iter) {
         auto db_name = iter->first;
         // Check if the previous schema name is in the new schema entries.
