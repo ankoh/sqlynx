@@ -250,11 +250,6 @@ class CatalogEntry {
     /// Get the qualified name
     QualifiedTableName QualifyTableName(NameRegistry& name_registry, QualifiedTableName name) const;
 
-    /// Register a database name
-    CatalogDatabaseID RegisterDatabase(RegisteredName& name);
-    /// Register a schema name
-    CatalogSchemaID RegisterSchema(CatalogDatabaseID db_id, RegisteredName& db_name, RegisteredName& schema_name);
-
     /// Describe the catalog entry
     virtual flatbuffers::Offset<proto::CatalogEntry> DescribeEntry(flatbuffers::FlatBufferBuilder& builder) const = 0;
     /// Get the name search index

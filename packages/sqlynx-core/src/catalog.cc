@@ -77,25 +77,6 @@ CatalogEntry::QualifiedTableName CatalogEntry::QualifyTableName(NameRegistry& na
     return name;
 }
 
-CatalogDatabaseID CatalogEntry::RegisterDatabase(RegisteredName& name) {
-    auto db_id = catalog.AllocateDatabaseId(name);
-    if (!databases_by_name.contains({name})) {
-        auto& db = database_references.Append(CatalogEntry::DatabaseReference{db_id, name, ""});
-        databases_by_name.insert({db.database_name, db});
-    }
-    return db_id;
-}
-
-CatalogSchemaID CatalogEntry::RegisterSchema(CatalogDatabaseID db_id, RegisteredName& db_name,
-                                             RegisteredName& schema_name) {
-    auto schema_id = catalog.AllocateSchemaId(db_name.text, schema_name.text);
-    if (!schemas_by_name.contains({db_name, schema_name})) {
-        auto& schema = schema_references.Append(CatalogEntry::SchemaReference{db_id, schema_id, db_name, schema_name});
-        schemas_by_name.insert({{db_name, schema_name}, schema});
-    }
-    return schema_id;
-}
-
 const CatalogEntry::TableDeclaration* CatalogEntry::ResolveTable(ExternalObjectID table_id) const {
     if (table_id.GetExternalId() == catalog_entry_id) {
         return &table_declarations[table_id.GetIndex()];
@@ -228,9 +209,32 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
         }
     }
 
-    // Allocate ids
-    db_id = RegisterDatabase(db_name);
-    schema_id = RegisterSchema(db_id, db_name, schema_name);
+    // Allocate the descriptors database id
+    auto db_ref_iter = databases_by_name.find(db_name);
+    if (db_ref_iter == databases_by_name.end()) {
+        db_id = catalog.AllocateDatabaseId(db_name);
+        if (!databases_by_name.contains({db_name})) {
+            auto& db = database_references.Append(CatalogEntry::DatabaseReference{db_id, db_name, ""});
+            databases_by_name.insert({db.database_name, db});
+            db_name.resolved_objects.PushBack(db);
+        }
+    } else {
+        db_id = db_ref_iter->second.get().catalog_database_id;
+    }
+
+    // Allocate the descriptors schema id
+    auto schema_ref_iter = schemas_by_name.find({db_name, schema_name});
+    if (schema_ref_iter == schemas_by_name.end()) {
+        schema_id = catalog.AllocateSchemaId(db_name.text, schema_name.text);
+        if (!schemas_by_name.contains({db_name, schema_name})) {
+            auto& schema =
+                schema_references.Append(CatalogEntry::SchemaReference{db_id, schema_id, db_name, schema_name});
+            schemas_by_name.insert({{db_name, schema_name}, schema});
+            schema_name.resolved_objects.PushBack(schema);
+        }
+    } else {
+        schema_id = schema_ref_iter->second.get().catalog_schema_id;
+    }
 
     // Read tables
     uint32_t next_table_id = table_declarations.GetSize();
