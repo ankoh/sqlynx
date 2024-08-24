@@ -536,16 +536,6 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                               [&](CatalogEntry::TableColumn& l, CatalogEntry::TableColumn& r) {
                                   return l.column_name.get().text < r.column_name.get().text;
                               });
-                    // Store the catalog ids in the table columns
-                    for (size_t column_index = 0; column_index != table_columns.size(); ++column_index) {
-                        auto& column = table_columns[column_index];
-                        column.catalog_database_id = db_id;
-                        column.catalog_schema_id = schema_id;
-                        column.catalog_table_id = catalog_table_id;
-                        column.column_index = column_index;
-                        column.column_name.get().resolved_objects.PushBack(column);
-                    }
-
                     // Create the scope
                     CreateScope(node_state, node_id);
                     // Build the table
@@ -557,6 +547,13 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                     n.table_columns = std::move(table_columns);
                     // Register the table declaration
                     table_name->table_name.get().resolved_objects.PushBack(n);
+                    // Update the table ref and index of all columns
+                    for (size_t column_index = 0; column_index != n.table_columns.size(); ++column_index) {
+                        auto& column = n.table_columns[column_index];
+                        column.table = n;
+                        column.column_index = column_index;
+                        column.column_name.get().resolved_objects.PushBack(column);
+                    }
                 }
                 break;
             }

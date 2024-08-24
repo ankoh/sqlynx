@@ -11,6 +11,70 @@
             <entry value="with" score="2" near="false" tags="KEYWORD" />
         </completions>
     </completion-snapshot>
+    <completion-snapshot name="complete_database_name">
+        <script id="0">
+            <input>
+                select * from db
+            </input>
+            <table-references>
+                <unresolved stmt="0" loc="31..33" text="db" />
+            </table-references>
+        </script>
+        <catalog>
+            <script id="1">
+                <input>
+                    create table dbname.schemaname.foo(a int);
+                </input>
+                <tables>
+                    <table id="256.65536.4294967296" name="foo" loc="21..62" text="create tab..foo(a int)">
+                        <column id="256.65536.4294967296.0" name="a" loc="56..61" text="a int" />
+                    </table>
+                </tables>
+            </script>
+        </catalog>
+        <cursor>
+            <search text="db" index="2" />
+        </cursor>
+        <completions limit="3" symbol="NAME" relative="END_OF_SYMBOL" strategy="TABLE_REF">
+            <entry value="dbname" score="40" near="false" tags="DATABASE_NAME">
+                <object type="database" id="256" />
+            </entry>
+            <entry value="group" score="3" near="false" tags="KEYWORD" />
+            <entry value="order" score="3" near="false" tags="KEYWORD" />
+        </completions>
+    </completion-snapshot>
+    <completion-snapshot name="complete_schema_name">
+        <script id="0">
+            <input>
+                select * from sch
+            </input>
+            <table-references>
+                <unresolved stmt="0" loc="31..34" text="sch" />
+            </table-references>
+        </script>
+        <catalog>
+            <script id="1">
+                <input>
+                    create table dbname.schemaname.foo(a int);
+                </input>
+                <tables>
+                    <table id="256.65536.4294967296" name="foo" loc="21..62" text="create tab..foo(a int)">
+                        <column id="256.65536.4294967296.0" name="a" loc="56..61" text="a int" />
+                    </table>
+                </tables>
+            </script>
+        </catalog>
+        <cursor>
+            <search text="sch" index="3" />
+        </cursor>
+        <completions limit="3" symbol="NAME" relative="END_OF_SYMBOL" strategy="TABLE_REF">
+            <entry value="schemaname" score="40" near="false" tags="SCHEMA_NAME">
+                <object type="schema" id="256.65536" />
+            </entry>
+            <entry value="schema" score="20" near="false" tags="KEYWORD" />
+            <entry value="schemas" score="20" near="false" tags="KEYWORD" />
+        </completions>
+    </completion-snapshot>
     <completion-snapshot name="complete_table_name">
         <script id="0">
             <input>
