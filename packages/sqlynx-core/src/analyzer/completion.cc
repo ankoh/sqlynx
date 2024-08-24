@@ -272,13 +272,13 @@ void Completion::PromoteTableNamesForUnresolvedColumns() {
 
     // Collect all unresolved columns in the current script
     std::vector<CatalogEntry::TableColumn> table_columns;
-    for (auto& column_ref : analyzed_script.column_references) {
+    analyzed_script.column_references.ForEach([&](size_t i, auto& column_ref) {
         // Is unresolved?
-        if (column_ref.resolved_catalog_table_id.IsNull()) {
-            auto& column_name = column_ref.column_name.column_name.get();
+        if (column_ref->resolved_catalog_table_id.IsNull()) {
+            auto& column_name = column_ref->column_name.column_name.get();
             cursor.script.analyzed_script->ResolveTableColumns(column_name, catalog, table_columns);
         }
-    }
+    });
 
     // Now find the distinct table names that contain these columns
     std::unordered_set<std::string_view> visited;
@@ -311,35 +311,35 @@ void Completion::PromoteNearCandidatesInAST() {
     };
 
     auto& analyzed = cursor.script.analyzed_script;
-    for (auto& table_ref : analyzed->table_references) {
+    analyzed->table_references.ForEach([&](size_t i, auto& table_ref) {
         // The table ref is not part of a statement id?
         // Skip then, we're currently using the statement id as very coarse-granular alternative to naming scopes.
         // TODO: We should remember a fine-granular scope union-find as output of the name resolution pass.
-        if (!table_ref.ast_statement_id.has_value() || table_ref.ast_statement_id.value() != statement_id) {
-            continue;
+        if (!table_ref->ast_statement_id.has_value() || table_ref->ast_statement_id.value() != statement_id) {
+            return;
         }
-        mark_as_near(table_ref.table_name.database_name.get().text);
-        mark_as_near(table_ref.table_name.schema_name.get().text);
-        mark_as_near(table_ref.table_name.table_name.get().text);
-        if (table_ref.alias_name.has_value()) {
-            mark_as_near(table_ref.alias_name.value().get().text);
+        mark_as_near(table_ref->table_name.database_name.get().text);
+        mark_as_near(table_ref->table_name.schema_name.get().text);
+        mark_as_near(table_ref->table_name.table_name.get().text);
+        if (table_ref->alias_name.has_value()) {
+            mark_as_near(table_ref->alias_name.value().get().text);
         }
 
         // Add all column names of the table
-        if (auto resolved = analyzed->ResolveTable(table_ref.resolved_catalog_table_id, cursor.script.catalog)) {
+        if (auto resolved = analyzed->ResolveTable(table_ref->resolved_catalog_table_id, cursor.script.catalog)) {
             for (auto& table_column : resolved->table_columns) {
                 mark_as_near(table_column.column_name.get().text);
             }
         }
-    }
+    });
 
     // Collect column references in the statement
-    for (auto& column_ref : cursor.script.analyzed_script->column_references) {
-        if (!column_ref.ast_statement_id.has_value() || column_ref.ast_statement_id.value() != statement_id) {
-            continue;
+    cursor.script.analyzed_script->column_references.ForEach([&](size_t i, auto& column_ref) {
+        if (!column_ref->ast_statement_id.has_value() || column_ref->ast_statement_id.value() != statement_id) {
+            return;
         }
-        mark_as_near(column_ref.column_name.column_name.get().text);
-    }
+        mark_as_near(column_ref->column_name.column_name.get().text);
+    });
 
     // TODO: For unresolved columns, bump the score of tables that contain that column.
     //       Problem: We expose such an index from name resolution and building that index ad-hoc suffers from name id

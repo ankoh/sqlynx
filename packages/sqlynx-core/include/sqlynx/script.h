@@ -216,6 +216,27 @@ class AnalyzedScript : public CatalogEntry {
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::ColumnReference> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
+    /// A naming scope
+    struct NameScope {
+        /// The scope root
+        size_t ast_scope_root;
+        /// The parent scope
+        NameScope* parent_scope;
+        /// The child scopes
+        OverlayList<NameScope> child_scopes;
+        /// The column references in scope
+        OverlayList<AnalyzedScript::ColumnReference> column_references;
+        /// The table references in scope
+        OverlayList<AnalyzedScript::TableReference> table_references;
+        /// The resolved table references
+        std::unordered_map<const AnalyzedScript::TableReference*,
+                           std::reference_wrapper<const CatalogEntry::TableDeclaration>>
+            resolved_table_references;
+        /// The resolved table columns
+        std::unordered_map<CatalogEntry::QualifiedColumnName::Key, std::reference_wrapper<const TableColumn>,
+                           TupleHasher>
+            resolved_table_columns;
+    };
     /// A query graph edge
     struct QueryGraphEdge {
         /// The AST node id in the target script
@@ -238,7 +259,7 @@ class AnalyzedScript : public CatalogEntry {
               node_count_right(node_count_right),
               expression_operator(op) {}
         /// Create FlatBuffer
-        operator proto::QueryGraphEdge() {
+        operator proto::QueryGraphEdge() const {
             return proto::QueryGraphEdge{ast_node_id.value_or(PROTO_NULL_U32), nodes_begin, node_count_left,
                                          node_count_right, expression_operator};
         }
@@ -250,7 +271,7 @@ class AnalyzedScript : public CatalogEntry {
         /// Constructor
         QueryGraphEdgeNode(uint32_t column_ref_id = 0) : column_reference_id(column_ref_id) {}
         /// Create FlatBuffer
-        operator proto::QueryGraphEdgeNode() { return proto::QueryGraphEdgeNode{column_reference_id}; }
+        operator proto::QueryGraphEdgeNode() const { return proto::QueryGraphEdgeNode{column_reference_id}; }
     };
 
     /// The defalt database name
@@ -263,13 +284,15 @@ class AnalyzedScript : public CatalogEntry {
     /// The catalog version
     Catalog::Version catalog_version;
     /// The table references
-    std::vector<TableReference> table_references;
+    ChunkBuffer<OverlayList<TableReference>::Node, 16> table_references;
     /// The column references
-    std::vector<ColumnReference> column_references;
+    ChunkBuffer<OverlayList<ColumnReference>::Node, 16> column_references;
+    /// The name scopes
+    ChunkBuffer<OverlayList<NameScope>::Node, 16> name_scopes;
     /// The join edges
-    std::vector<QueryGraphEdge> graph_edges;
+    ChunkBuffer<QueryGraphEdge, 16> graph_edges;
     /// The join edge nodes
-    std::vector<QueryGraphEdgeNode> graph_edge_nodes;
+    ChunkBuffer<QueryGraphEdgeNode, 16> graph_edge_nodes;
 
    public:
     /// Constructor

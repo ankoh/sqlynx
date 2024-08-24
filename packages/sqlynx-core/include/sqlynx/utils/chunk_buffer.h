@@ -11,6 +11,8 @@ template <typename T, size_t InitialSize = 1024> struct ChunkBuffer {
     friend struct ConstForwardIterator;
 
    public:
+    using value_type = T;
+
     /// Pseudo end iterator
     struct EndIterator {};
     /// A forward iterator
@@ -97,7 +99,7 @@ template <typename T, size_t InitialSize = 1024> struct ChunkBuffer {
         grow();
     }
     /// Constructor
-    ChunkBuffer(std::vector<T> buffer) : ChunkBuffer() {
+    explicit ChunkBuffer(std::vector<T> buffer) : ChunkBuffer() {
         total_value_count = buffer.size();
         offsets.push_back(total_value_count);
         buffers.push_back(std::move(buffer));
@@ -105,6 +107,8 @@ template <typename T, size_t InitialSize = 1024> struct ChunkBuffer {
 
     /// Get the size
     size_t GetSize() const { return total_value_count; }
+    /// Is the buffer empty?
+    bool IsEmpty() const { return GetSize() == 0; }
     /// Subscript operator
     T& operator[](size_t offset) {
         auto [chunk_id, chunk_offset] = find(offset);
@@ -115,10 +119,6 @@ template <typename T, size_t InitialSize = 1024> struct ChunkBuffer {
         auto [chunk_id, chunk_offset] = find(offset);
         return buffers[chunk_id][offset - chunk_offset];
     }
-    /// Get the begin iterator
-    ConstTupleIterator begin() const { return ConstTupleIterator{*this}; }
-    /// Get the end iterator
-    EndIterator end() const { return EndIterator{}; }
     /// Get the chunks
     auto& GetChunks() { return buffers; }
     /// Get the chunks
@@ -171,6 +171,15 @@ template <typename T, size_t InitialSize = 1024> struct ChunkBuffer {
         for (auto& chunk : buffers) {
             for (auto& value : chunk) {
                 fn(value_id++, value);
+            }
+        }
+    }
+    /// Apply a function for each value
+    template <typename F> void ForEachWhile(F fn) const {
+        size_t value_id = 0;
+        for (auto& chunk : buffers) {
+            for (auto& value : chunk) {
+                if (!fn(value_id++, value)) return;
             }
         }
     }

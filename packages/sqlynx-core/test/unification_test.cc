@@ -178,11 +178,11 @@ TEST(UnificationTest, SimpleTableReference) {
     EXPECT_EQ(flat->tables()->Get(1)->catalog_object_id(), ExternalObjectID(42, 1).Pack());
 
     // Check table reference
-    ASSERT_EQ(analyzed->table_references.size(), 1);
-    ASSERT_EQ(analyzed->table_references[0].resolved_catalog_database_id,
+    ASSERT_EQ(analyzed->table_references.GetSize(), 1);
+    ASSERT_EQ(analyzed->table_references[0]->resolved_catalog_database_id,
               flat->databases()->Get(1)->catalog_object_id());
-    ASSERT_EQ(analyzed->table_references[0].resolved_catalog_schema_id, flat->schemas()->Get(1)->catalog_object_id());
-    ASSERT_EQ(analyzed->table_references[0].resolved_catalog_table_id.Pack(),
+    ASSERT_EQ(analyzed->table_references[0]->resolved_catalog_schema_id, flat->schemas()->Get(1)->catalog_object_id());
+    ASSERT_EQ(analyzed->table_references[0]->resolved_catalog_table_id.Pack(),
               flat->tables()->Get(1)->catalog_object_id());
 }
 

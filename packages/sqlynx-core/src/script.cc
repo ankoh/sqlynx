@@ -405,14 +405,30 @@ const CatalogEntry::NameSearchIndex& AnalyzedScript::GetNameSearchIndex() {
     return name_search_index.value();
 }
 
-template <typename In, typename Out>
+template <typename In, typename Out, size_t ChunkSize>
 static flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Out>>> PackVector(
-    flatbuffers::FlatBufferBuilder& builder, const std::vector<In>& elems) {
+    flatbuffers::FlatBufferBuilder& builder, const ChunkBuffer<typename OverlayList<In>::Node, ChunkSize>& elems) {
     std::vector<flatbuffers::Offset<Out>> offsets;
-    for (auto& elem : elems) {
-        offsets.push_back(elem.Pack(builder));
+    offsets.reserve(elems.GetSize());
+    for (auto& chunk : elems.GetChunks()) {
+        for (auto& elem : chunk) {
+            offsets.push_back(elem->Pack(builder));
+        }
     }
     return builder.CreateVector(offsets);
+};
+
+template <typename In, typename Out, size_t ChunkSize>
+static flatbuffers::Offset<flatbuffers::Vector<const Out*>> packStructVector(flatbuffers::FlatBufferBuilder& builder,
+                                                                             const ChunkBuffer<In, ChunkSize>& elems) {
+    Out* writer;
+    auto out = builder.CreateUninitializedVectorOfStructs(elems.GetSize(), &writer);
+    for (auto& chunk : elems.GetChunks()) {
+        for (auto& elem : chunk) {
+            *(writer++) = static_cast<const Out>(elem);
+        }
+    }
+    return out;
 };
 
 // Pack an analyzed script
@@ -435,34 +451,24 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
     // Pack column references
     auto column_references_ofs =
         PackVector<AnalyzedScript::ColumnReference, proto::ColumnReference>(builder, column_references);
-
     // Pack the query graph
-    proto::QueryGraphEdge* graph_edges_ofs_writer;
-    proto::QueryGraphEdgeNode* graph_edge_nodes_ofs_writer;
-    auto graph_edges_ofs = builder.CreateUninitializedVectorOfStructs(graph_edges.size(), &graph_edges_ofs_writer);
+    auto graph_edges_ofs = packStructVector<QueryGraphEdge, proto::QueryGraphEdge, 16>(builder, graph_edges);
     auto graph_edge_nodes_ofs =
-        builder.CreateUninitializedVectorOfStructs(graph_edge_nodes.size(), &graph_edge_nodes_ofs_writer);
-    for (size_t i = 0; i < graph_edges.size(); ++i) {
-        graph_edges_ofs_writer[i] = graph_edges[i];
-    }
-    for (size_t i = 0; i < graph_edge_nodes.size(); ++i) {
-        graph_edge_nodes_ofs_writer[i] = graph_edge_nodes[i];
-    }
+        packStructVector<QueryGraphEdgeNode, proto::QueryGraphEdgeNode, 16>(builder, graph_edge_nodes);
 
     // Build index: (db_id, schema_id, table_id) -> table_ref*
     flatbuffers::Offset<flatbuffers::Vector<const proto::IndexedTableReference*>> table_refs_by_id_ofs;
     {
         std::vector<proto::IndexedTableReference> table_refs_by_id;
-        table_refs_by_id.reserve(table_references.size());
-        for (size_t ref_id = 0; ref_id < table_references.size(); ++ref_id) {
-            auto& ref = table_references[ref_id];
-            if (!ref.resolved_catalog_table_id.IsNull()) {
-                assert(ref.resolved_catalog_database_id != std::numeric_limits<uint32_t>::max());
-                assert(ref.resolved_catalog_schema_id != std::numeric_limits<uint32_t>::max());
-                table_refs_by_id.emplace_back(ref.resolved_catalog_database_id, ref.resolved_catalog_schema_id,
-                                              ref.resolved_catalog_table_id.Pack(), ref_id);
+        table_refs_by_id.reserve(table_references.GetSize());
+        table_references.ForEach([&](size_t ref_id, auto& ref) {
+            if (!ref->resolved_catalog_table_id.IsNull()) {
+                assert(ref->resolved_catalog_database_id != std::numeric_limits<uint32_t>::max());
+                assert(ref->resolved_catalog_schema_id != std::numeric_limits<uint32_t>::max());
+                table_refs_by_id.emplace_back(ref->resolved_catalog_database_id, ref->resolved_catalog_schema_id,
+                                              ref->resolved_catalog_table_id.Pack(), ref_id);
             }
-        }
+        });
         std::sort(table_refs_by_id.begin(), table_refs_by_id.end(),
                   [&](proto::IndexedTableReference& l, proto::IndexedTableReference& r) {
                       auto a = std::make_tuple(l.catalog_database_id(), l.catalog_schema_id(), l.catalog_table_id());
@@ -476,18 +482,17 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
     flatbuffers::Offset<flatbuffers::Vector<const proto::IndexedColumnReference*>> column_refs_by_id_ofs;
     {
         std::vector<proto::IndexedColumnReference> column_refs_by_id;
-        column_refs_by_id.reserve(column_references.size());
-        for (size_t ref_id = 0; ref_id < column_references.size(); ++ref_id) {
-            auto& ref = column_references[ref_id];
-            if (!ref.resolved_catalog_table_id.IsNull()) {
-                assert(ref.resolved_catalog_database_id != std::numeric_limits<uint32_t>::max());
-                assert(ref.resolved_catalog_schema_id != std::numeric_limits<uint32_t>::max());
-                assert(ref.resolved_table_column_id.has_value());
-                column_refs_by_id.emplace_back(ref.resolved_catalog_database_id, ref.resolved_catalog_schema_id,
-                                               ref.resolved_catalog_table_id.Pack(),
-                                               ref.resolved_table_column_id.value(), ref_id);
+        column_refs_by_id.reserve(column_references.GetSize());
+        column_references.ForEach([&](size_t ref_id, auto& ref) {
+            if (!ref->resolved_catalog_table_id.IsNull()) {
+                assert(ref->resolved_catalog_database_id != std::numeric_limits<uint32_t>::max());
+                assert(ref->resolved_catalog_schema_id != std::numeric_limits<uint32_t>::max());
+                assert(ref->resolved_table_column_id.has_value());
+                column_refs_by_id.emplace_back(ref->resolved_catalog_database_id, ref->resolved_catalog_schema_id,
+                                               ref->resolved_catalog_table_id.Pack(),
+                                               ref->resolved_table_column_id.value(), ref_id);
             }
-        }
+        });
         std::sort(column_refs_by_id.begin(), column_refs_by_id.end(),
                   [&](proto::IndexedColumnReference& l, proto::IndexedColumnReference& r) {
                       auto a = std::make_tuple(l.catalog_database_id(), l.catalog_schema_id(), l.catalog_table_id(),
@@ -562,10 +567,10 @@ std::unique_ptr<proto::ScriptMemoryStatistics> Script::GetMemoryStatistics() {
         }
         size_t analyzer_description_bytes =
             analyzed->table_declarations.GetSize() * sizeof(CatalogEntry::TableDeclaration) + table_column_bytes +
-            analyzed->table_references.size() * sizeof(decltype(analyzed->table_references)::value_type) +
-            analyzed->column_references.size() * sizeof(decltype(analyzed->column_references)::value_type) +
-            analyzed->graph_edges.size() * sizeof(decltype(analyzed->graph_edges)::value_type) +
-            analyzed->graph_edge_nodes.size() * sizeof(decltype(analyzed->graph_edge_nodes)::value_type);
+            analyzed->table_references.GetSize() * sizeof(decltype(analyzed->table_references)::value_type) +
+            analyzed->column_references.GetSize() * sizeof(decltype(analyzed->column_references)::value_type) +
+            analyzed->graph_edges.GetSize() * sizeof(decltype(analyzed->graph_edges)::value_type) +
+            analyzed->graph_edge_nodes.GetSize() * sizeof(decltype(analyzed->graph_edge_nodes)::value_type);
         size_t analyzer_name_index_bytes = 0;
         size_t analyzer_name_search_index_size = 0;
         if (auto& index = analyzed->name_search_index) {
@@ -740,40 +745,44 @@ std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Create
                 // This probing should be fast enough, even for mega-byte sized SQL texts.
 
                 // Part of a table node?
-                for (auto& table : analyzed->table_declarations) {
+                analyzed->table_declarations.ForEachWhile([&](size_t i, auto& table) {
                     if (table.ast_node_id.has_value() && cursor_path_nodes.contains(*table.ast_node_id)) {
                         cursor->table_id = table.ast_node_id;
-                        break;
+                        return false;
                     }
-                }
+                    return true;
+                });
 
                 // Part of a table reference node?
-                for (size_t i = 0; i < analyzed->table_references.size(); ++i) {
-                    auto& table_ref = analyzed->table_references[i];
-                    if (table_ref.ast_node_id.has_value() && cursor_path_nodes.contains(*table_ref.ast_node_id)) {
+                analyzed->table_references.ForEach([&](size_t i, auto& table_ref) {
+                    if (table_ref->ast_node_id.has_value() && cursor_path_nodes.contains(*table_ref->ast_node_id)) {
                         cursor->table_reference_id = i;
-                        break;
+                        return false;
+                    } else {
+                        return true;
                     }
-                }
+                });
 
                 // Part of a column reference node?
-                for (size_t i = 0; i < analyzed->column_references.size(); ++i) {
-                    auto& column_ref = analyzed->column_references[i];
-                    if (column_ref.ast_node_id.has_value() && cursor_path_nodes.contains(*column_ref.ast_node_id)) {
+                analyzed->column_references.ForEachWhile([&](size_t i, auto& column_ref) {
+                    if (column_ref->ast_node_id.has_value() && cursor_path_nodes.contains(*column_ref->ast_node_id)) {
                         cursor->column_reference_id = i;
-                        break;
+                        return false;
+                    } else {
+                        return true;
                     }
-                }
+                });
 
                 // Part of a query edge?
-                for (size_t ei = 0; ei < analyzed->graph_edges.size(); ++ei) {
-                    auto& edge = analyzed->graph_edges[ei];
+                analyzed->graph_edges.ForEachWhile([&](size_t ei, auto& edge) {
                     auto nodes_begin = edge.nodes_begin;
                     if (edge.ast_node_id.has_value() && cursor_path_nodes.contains(*edge.ast_node_id)) {
                         cursor->query_edge_id = ei;
-                        break;
+                        return false;
+                    } else {
+                        return true;
                     }
-                }
+                });
             }
         }
     }
