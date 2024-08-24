@@ -41,18 +41,6 @@ interface SQLynxModuleExports {
         data_ptr: number,
         data_size: number,
     ) => number;
-
-    sqlynx_query_graph_layout_new: () => number;
-    sqlynx_query_graph_layout_configure: (
-        ptr: number,
-        boardWidth: number,
-        boardHeight: number,
-        cellWidth: number,
-        cellHeight: number,
-        tableWidth: number,
-        tableHeight: number,
-    ) => void;
-    sqlynx_query_graph_layout_load_script: (ptr: number, script: number) => number;
 }
 
 type InstantiateWasmCallback = (stubs: WebAssembly.Imports) => PromiseLike<WebAssembly.WebAssemblyInstantiatedSource>;
@@ -63,7 +51,6 @@ interface FlatBufferObject<T> {
 
 const SCRIPT_TYPE = Symbol('SCRIPT_TYPE');
 const CATALOG_TYPE = Symbol('CATALOG_TYPE');
-const GRAPH_LAYOUT_TYPE = Symbol('GRAPH_LAYOUT_TYPE');
 
 export class SQLynx {
     encoder: TextEncoder;
@@ -164,21 +151,6 @@ export class SQLynx {
                 external_id: number,
                 data_ptr: number,
                 data_size: number,
-            ) => number,
-
-            sqlynx_query_graph_layout_new: instance.exports['sqlynx_query_graph_layout_new'] as () => number,
-            sqlynx_query_graph_layout_configure: instance.exports['sqlynx_query_graph_layout_configure'] as (
-                ptr: number,
-                boardWidth: number,
-                boardHeight: number,
-                cellWidth: number,
-                cellHeight: number,
-                tableWidth: number,
-                tableHeight: number,
-            ) => void,
-            sqlynx_query_graph_layout_load_script: instance.exports['sqlynx_query_graph_layout_load_script'] as (
-                ptr: number,
-                script: number,
             ) => number,
         };
     }
@@ -313,12 +285,6 @@ export class SQLynx {
         );
         const ptr = this.readPtrResult(CATALOG_TYPE, result);
         return new SQLynxCatalog(ptr);
-    }
-
-    public createQueryGraphLayout(): SQLynxQueryGraphLayout {
-        const result = this.instanceExports.sqlynx_query_graph_layout_new();
-        const ptr = this.readPtrResult(GRAPH_LAYOUT_TYPE, result);
-        return new SQLynxQueryGraphLayout(ptr);
     }
 
     public getVersionText(): string {
@@ -741,38 +707,6 @@ export interface SQLynxQueryGraphLayoutConfig {
     cellHeight: number;
     tableWidth: number;
     tableHeight: number;
-}
-
-export class SQLynxQueryGraphLayout {
-    public readonly ptr: Ptr<typeof GRAPH_LAYOUT_TYPE>;
-
-    public constructor(ptr: Ptr<typeof GRAPH_LAYOUT_TYPE>) {
-        this.ptr = ptr;
-    }
-    /// Delete the graph
-    public delete() {
-        this.ptr.delete();
-    }
-    /// Configure the graph
-    public configure(config: SQLynxQueryGraphLayoutConfig) {
-        const ptr = this.ptr.assertNotNull();
-        this.ptr.api.instanceExports.sqlynx_query_graph_layout_configure(
-            ptr,
-            config.boardWidth,
-            config.boardHeight,
-            config.cellWidth,
-            config.cellHeight,
-            config.tableWidth,
-            config.tableHeight,
-        );
-    }
-    /// Load a script
-    public loadScript(script: SQLynxScript) {
-        const ptr = this.ptr.assertNotNull();
-        const scriptPtr = script.ptr.assertNotNull();
-        const resultPtr = this.ptr.api.instanceExports.sqlynx_query_graph_layout_load_script(ptr, scriptPtr);
-        return this.ptr.api.readFlatBufferResult<proto.QueryGraphLayout>(resultPtr, () => new proto.QueryGraphLayout());
-    }
 }
 
 export namespace ExternalObjectID {
