@@ -14,10 +14,12 @@ struct Analyzer {
     friend class AnalyzedScript;
 
    protected:
-    /// The parsed program
-    const std::shared_ptr<ParsedScript> parsed_program;
     /// The catalog
     Catalog& catalog;
+    /// The parsed program
+    const std::shared_ptr<ParsedScript> parsed;
+    /// The parsed program
+    std::shared_ptr<AnalyzedScript> analyzed;
     /// The attribute index
     AttributeIndex attribute_index;
     /// The pass manager
