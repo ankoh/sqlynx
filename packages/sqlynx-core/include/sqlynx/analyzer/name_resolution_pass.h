@@ -66,8 +66,6 @@ class NameResolutionPass : public PassManager::LTRPass {
         /// Merge two states
         void Merge(NodeState&& other);
     };
-    /// The staging output
-    struct StagingOutput {};
 
    protected:
     /// The scanned program
@@ -124,9 +122,6 @@ class NameResolutionPass : public PassManager::LTRPass {
     ChunkBuffer<OverlayList<AnalyzedScript::TableColumn>::Node, 16> pending_columns;
     /// The temporary free-list for pending table columns
     OverlayList<AnalyzedScript::TableColumn> pending_columns_free_list;
-
-    /// The output of the name resolution pass
-    StagingOutput out;
 
     /// Merge child states into a destination state
     std::span<std::reference_wrapper<RegisteredName>> ReadNamePath(const sx::Node& node);
