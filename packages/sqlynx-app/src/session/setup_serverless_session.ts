@@ -29,7 +29,6 @@ export function useServerlessSessionSetup(): SessionSetupFn {
         const lnx = instance.value;
         const connectionState = createServerlessConnectionState(lnx);
         const connectionId = allocateConnection(connectionState);
-        const graph = lnx.createQueryGraphLayout();
         const mainScript = lnx.createScript(connectionState.catalog, ScriptKey.MAIN_SCRIPT);
         const schemaScript = lnx.createScript(connectionState.catalog, ScriptKey.SCHEMA_SCRIPT);
 

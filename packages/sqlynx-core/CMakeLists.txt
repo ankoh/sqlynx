@@ -75,7 +75,7 @@ if(WASM)
         -Wl,--export=sqlynx_script_analyze \
         -Wl,--export=sqlynx_script_get_statistics \
         -Wl,--export=sqlynx_script_move_cursor \
-        -Wl,--export=sqlynx_script_complete_at_cursor
+        -Wl,--export=sqlynx_script_complete_at_cursor \
         -flto \
     ")
 endif()
