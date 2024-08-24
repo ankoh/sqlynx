@@ -148,21 +148,42 @@ struct IndexedColumnReference {
     column_reference_id: uint32;
 }
 
+table NamingScope {
+    /// The scope id
+    scope_id: uint32;
+    /// The ast scope root
+    ast_scope_root: uint32;
+    /// The child scopes
+    child_scopes: [uint32];
+    /// The column references in this scope
+    column_references: [uint32];
+    /// The table references in this scope
+    table_references: [uint32];
+}
+
 table AnalyzedScript {
-    // The external id that the user specified for this catalog entry
+    /// The external id that the user specified for this catalog entry
     catalog_entry_id: uint32;
-    // The local tables
+
+    /// The local tables
     tables: [Table];
-    // The table references in the statement
+    /// The table references in the statement
     table_references: [TableReference];
-    // The column references in the statement
+    /// The column references in the statement
     column_references: [ColumnReference];
+
+    /// The naming scopes
+    naming_scopes: [NamingScope];
+    /// The statement root scopes
+    statement_root_scopes: [uint32];
+
     /// The query graph edges
     graph_edges: [QueryGraphEdge];
     /// The query graph edge nodes
     graph_edge_nodes: [QueryGraphEdgeNode];
-    /// The indexed table references
+
+    /// The indexed table references, sorted by (database_id, schema_id, table_id)
     table_references_by_id: [IndexedTableReference];
-    /// The indexed column references
+    /// The indexed column references, sorted by (database_id, schema_id, table_id, column_id)
     column_references_by_id: [IndexedColumnReference];
 }
