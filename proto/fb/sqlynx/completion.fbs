@@ -20,6 +20,12 @@ table CompletionCandidateObject {
     table_column_id: uint64;
 }
 
+enum CompletionCandidateOrigin {
+    ExpectedParserSymbol,
+    NameIndex,
+    UnresolvedColumn
+}
+
 table CompletionCandidate {
     /// The display text
     display_text: string;

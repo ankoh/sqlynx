@@ -263,7 +263,7 @@ void Completion::FindCandidatesInIndexes() {
     }
 }
 
-void Completion::FindTablesForUnresolvedColumns() {
+void Completion::PromoteTableNamesForUnresolvedColumns() {
     if (!cursor.statement_id.has_value() || !cursor.script.analyzed_script) {
         return;
     }
@@ -292,7 +292,7 @@ void Completion::FindTablesForUnresolvedColumns() {
     }
 }
 
-void Completion::FindCandidatesInAST() {
+void Completion::PromoteNearCandidatesInAST() {
     // Right now, we're just collecting all table and column refs with the same statement id.
     // We could later make this scope-aware (s.t. table refs in CTEs dont bump the score of completions in the main
     // clauses)
@@ -414,8 +414,8 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
     completion->FindCandidatesInGrammar(expects_identifier);
     if (expects_identifier) {
         completion->FindCandidatesInIndexes();
-        completion->FindCandidatesInAST();
-        completion->FindTablesForUnresolvedColumns();
+        completion->PromoteNearCandidatesInAST();
+        completion->PromoteTableNamesForUnresolvedColumns();
     }
     completion->FlushCandidatesAndFinish();
     return {std::move(completion), proto::StatusCode::OK};
@@ -468,11 +468,12 @@ flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferB
                         break;
                     }
                     case NamedObjectType::Column: {
-                        auto* column = static_cast<CatalogEntry::TableColumn*>(&iter_obj.GetNode());
-                        obj.add_catalog_database_id(column->catalog_database_id);
-                        obj.add_catalog_schema_id(column->catalog_schema_id);
-                        obj.add_catalog_table_id(column->catalog_table_id.Pack());
-                        obj.add_table_column_id(column->column_index);
+                        auto& column = *static_cast<CatalogEntry::TableColumn*>(&iter_obj.GetNode());
+                        auto& table = column.table->get();
+                        obj.add_catalog_database_id(table.catalog_database_id);
+                        obj.add_catalog_schema_id(table.catalog_schema_id);
+                        obj.add_catalog_table_id(table.catalog_table_id.Pack());
+                        obj.add_table_column_id(column.column_index);
                         break;
                     }
                 }

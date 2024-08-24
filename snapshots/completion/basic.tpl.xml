@@ -7,6 +7,42 @@
         </cursor>
         <completions limit="3" />
     </completion-snapshot>
+    <completion-snapshot name="complete_database_name">
+        <script>
+            <input>
+                select * from db
+            </input>
+        </script>
+        <catalog>
+            <script>
+                <input>
+                    create table dbname.schemaname.foo(a int);
+                </input>
+            </script>
+        </catalog>
+        <cursor>
+            <search text="db" index="2" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+    <completion-snapshot name="complete_schema_name">
+        <script>
+            <input>
+                select * from sch
+            </input>
+        </script>
+        <catalog>
+            <script>
+                <input>
+                    create table dbname.schemaname.foo(a int);
+                </input>
+            </script>
+        </catalog>
+        <cursor>
+            <search text="sch" index="3" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
     <completion-snapshot name="complete_table_name">
         <script>
             <input>
