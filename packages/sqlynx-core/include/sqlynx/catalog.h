@@ -98,14 +98,12 @@ class CatalogEntry {
             return {table_alias.has_value() ? table_alias.value().get().text : "", column_name.get().text};
         }
     };
+    /// Forward declare the table
+    struct TableDeclaration;
     /// A table column
     struct TableColumn : OverlayList<NamedObject>::Node {
-        /// The catalog database id
-        CatalogDatabaseID catalog_database_id = 0;
-        /// The catalog schema id
-        CatalogSchemaID catalog_schema_id = 0;
-        /// The catalog database id
-        ExternalObjectID catalog_table_id;
+        /// The parent table
+        std::optional<std::reference_wrapper<TableDeclaration>> table;
         /// The catalog database id
         uint32_t column_index = 0;
         /// The AST node id in the target script

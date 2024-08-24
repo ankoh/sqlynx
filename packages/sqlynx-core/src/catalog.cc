@@ -284,16 +284,6 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
         // Sort the table columns
         std::sort(columns.begin(), columns.end(),
                   [&](TableColumn& l, TableColumn& r) { return l.column_name.get().text < r.column_name.get().text; });
-        // Store the catalog ids in the table columns
-        for (size_t column_index = 0; column_index != columns.size(); ++column_index) {
-            auto& column = columns[column_index];
-            column.catalog_database_id = db_id;
-            column.catalog_schema_id = schema_id;
-            column.catalog_table_id = table_id;
-            column.column_index = column_index;
-            column.column_name.get().resolved_objects.PushBack(column);
-        }
-
         // Create the table
         auto& t = table_declarations.Append(
             AnalyzedScript::TableDeclaration(QualifiedTableName{std::nullopt, db_name, schema_name, table_name}));
@@ -304,6 +294,13 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
         ++next_table_id;
         // Register the table for the table name
         table_name.resolved_objects.PushBack(t);
+        // Store the catalog ids in the table columns
+        for (size_t column_index = 0; column_index != t.table_columns.size(); ++column_index) {
+            auto& column = t.table_columns[column_index];
+            column.table = t;
+            column.column_index = column_index;
+            column.column_name.get().resolved_objects.PushBack(column);
+        }
     }
 
     // Build table index

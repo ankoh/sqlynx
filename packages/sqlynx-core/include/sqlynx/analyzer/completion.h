@@ -87,9 +87,9 @@ struct Completion {
     /// Find the candidates in completion indexes
     void FindCandidatesInIndexes();
     /// Find tables that contain column names that are still unresolved in the current statement
-    void FindTablesForUnresolvedColumns();
+    void PromoteTableNamesForUnresolvedColumns();
     /// Find candidates in the AST around the script cursor
-    void FindCandidatesInAST();
+    void PromoteNearCandidatesInAST();
     /// Flush pending candidates and finish the results
     void FlushCandidatesAndFinish();
 
