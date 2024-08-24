@@ -17,43 +17,10 @@ namespace sqlynx {
 
 class NameResolutionPass : public PassManager::LTRPass {
    protected:
-    /// A resolved table column
-    struct ResolvedTableColumn {
-        /// The alias name
-        std::optional<std::reference_wrapper<RegisteredName>> alias_name;
-        /// The column name
-        RegisteredName& column_name;
-        /// The table
-        const CatalogEntry::TableDeclaration& table;
-        /// The column id
-        size_t column_id;
-        /// The table reference id
-        ExternalObjectID table_reference_id;
-    };
-    /// A naming scope
-    struct NameScope {
-        /// The scope root
-        size_t ast_scope_root;
-        /// The parent scope
-        NameScope* parent_scope;
-        /// The child scopes
-        OverlayList<NameScope> child_scopes;
-        /// The column references in scope
-        OverlayList<AnalyzedScript::ColumnReference> column_references;
-        /// The table references in scope
-        OverlayList<AnalyzedScript::TableReference> table_references;
-        /// The resolved table references
-        std::unordered_map<const AnalyzedScript::TableReference*,
-                           std::reference_wrapper<const CatalogEntry::TableDeclaration>>
-            resolved_table_references;
-        /// The resolved table columns
-        std::unordered_map<CatalogEntry::QualifiedColumnName::Key, ResolvedTableColumn, TupleHasher>
-            resolved_table_columns;
-    };
     /// A node state during name resolution
     struct NodeState {
         /// The child scopes
-        OverlayList<NameScope> child_scopes;
+        OverlayList<AnalyzedScript::NameScope> child_scopes;
         /// The column definitions in the subtree
         OverlayList<AnalyzedScript::TableColumn> table_columns;
         /// The table references in scope
@@ -78,36 +45,25 @@ class NameResolutionPass : public PassManager::LTRPass {
     Catalog& catalog;
     /// The attribute index
     AttributeIndex& attribute_index;
-    /// The program nodes
-    std::span<const proto::Node> nodes;
-
-    /// The state of all nodes
-    std::vector<NodeState> node_states;
-
-    /// The naming scopes
-    ChunkBuffer<OverlayList<NameScope>::Node, 16> name_scopes;
-    /// The root scopes
-    ankerl::unordered_dense::set<NameScope*> root_scopes;
-    /// The table references
-    ChunkBuffer<OverlayList<AnalyzedScript::TableReference>::Node, 16> table_references;
-    /// The column references
-    ChunkBuffer<OverlayList<AnalyzedScript::ColumnReference>::Node, 16> column_references;
+    /// The ast
+    std::span<const proto::Node> ast;
 
     /// The database references
     decltype(AnalyzedScript::database_references) database_references;
-    /// The database references
+    /// The schema references
     decltype(AnalyzedScript::schema_references) schema_references;
-    /// The tables
+    /// The table declarations
     decltype(AnalyzedScript::table_declarations) table_declarations;
-    /// The join edges
-    ChunkBuffer<AnalyzedScript::QueryGraphEdge, 16> graph_edges;
-    /// The join edge nodes
-    ChunkBuffer<AnalyzedScript::QueryGraphEdgeNode, 16> graph_edge_nodes;
-
-    /// The default database name
-    RegisteredName& default_database_name;
-    /// The default schema name
-    RegisteredName& default_schema_name;
+    /// The table references
+    decltype(AnalyzedScript::table_references) table_references;
+    /// The column references
+    decltype(AnalyzedScript::column_references) column_references;
+    /// The naming scopes
+    decltype(AnalyzedScript::name_scopes) name_scopes;
+    /// The query graph edges
+    decltype(AnalyzedScript::graph_edges) graph_edges;
+    /// The query graph edge nodes
+    decltype(AnalyzedScript::graph_edge_nodes) graph_edge_nodes;
 
     /// The databases, indexed by name
     decltype(AnalyzedScript::databases_by_name) databases_by_name;
@@ -115,6 +71,17 @@ class NameResolutionPass : public PassManager::LTRPass {
     decltype(AnalyzedScript::schemas_by_name) schemas_by_name;
     /// The tables, indexed by name
     decltype(AnalyzedScript::tables_by_name) tables_by_name;
+
+    /// The default database name
+    RegisteredName& default_database_name;
+    /// The default schema name
+    RegisteredName& default_schema_name;
+
+    /// The state of all nodes
+    std::vector<NodeState> node_states;
+
+    /// The root scopes
+    ankerl::unordered_dense::set<AnalyzedScript::NameScope*> root_scopes;
 
     /// The temporary name path buffer
     std::vector<std::reference_wrapper<RegisteredName>> name_path_buffer;
@@ -139,7 +106,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// Merge child states into a destination state
     void MergeChildStates(NodeState& dst, std::initializer_list<const proto::Node*> children);
     /// Create a naming scope
-    NameScope& CreateScope(NodeState& target, uint32_t scope_root_node);
+    AnalyzedScript::NameScope& CreateScope(NodeState& target, uint32_t scope_root_node);
 
     using ColumnRefsByAlias =
         ankerl::unordered_dense::map<std::string_view, std::reference_wrapper<AnalyzedScript::ColumnReference>>;
@@ -147,9 +114,10 @@ class NameResolutionPass : public PassManager::LTRPass {
         ankerl::unordered_dense::map<std::string_view, std::reference_wrapper<AnalyzedScript::ColumnReference>>;
 
     /// Resolve all table refs in a scope
-    void ResolveTableRefsInScope(NameScope& scope);
+    void ResolveTableRefsInScope(AnalyzedScript::NameScope& scope);
     /// Resolve all column refs in a scope
-    void ResolveColumnRefsInScope(NameScope& scope, ColumnRefsByAlias& refs_by_alias, ColumnRefsByName& refs_by_name);
+    void ResolveColumnRefsInScope(AnalyzedScript::NameScope& scope, ColumnRefsByAlias& refs_by_alias,
+                                  ColumnRefsByName& refs_by_name);
     /// Resolve all names
     void ResolveNames();
 

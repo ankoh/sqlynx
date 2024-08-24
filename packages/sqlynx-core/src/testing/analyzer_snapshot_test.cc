@@ -35,7 +35,7 @@ static void quoteIdentifier(std::string& buffer, std::string_view name) {
 
 /// Write all table declarations
 static void writeTables(pugi::xml_node root, const AnalyzedScript& target) {
-    for (auto& table_decl : target.GetTables()) {
+    target.GetTables().ForEach([&](size_t ti, auto& table_decl) {
         auto xml_tbl = root.append_child("table");
         std::string table_name{table_decl.table_name.table_name.get().text};
         std::string table_catalog_id = std::format("{}.{}.{}", table_decl.catalog_database_id,
@@ -62,7 +62,7 @@ static void writeTables(pugi::xml_node root, const AnalyzedScript& target) {
                               target.parsed_script->scanned_script->GetInput());
             }
         }
-    }
+    });
 }
 
 namespace testing {
@@ -131,57 +131,57 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
     }
 
     // Write table references
-    if (!script.table_references.empty()) {
+    if (!script.table_references.IsEmpty()) {
         auto table_refs_node = out.append_child("table-references");
-        for (auto& ref : script.table_references) {
-            auto tag = ref.resolved_catalog_table_id.IsNull() ? "unresolved"
-                       : (is_main && ref.resolved_catalog_table_id.GetExternalId() == script.GetCatalogEntryId())
+        script.table_references.ForEach([&](size_t i, auto& ref) {
+            auto tag = ref->resolved_catalog_table_id.IsNull() ? "unresolved"
+                       : (is_main && ref->resolved_catalog_table_id.GetExternalId() == script.GetCatalogEntryId())
                            ? "internal"
                            : "external";
             auto xml_ref = table_refs_node.append_child(tag);
-            if (!ref.resolved_catalog_table_id.IsNull()) {
+            if (!ref->resolved_catalog_table_id.IsNull()) {
                 std::string catalog_id =
-                    std::format("{}.{}.{}", ref.resolved_catalog_database_id, ref.resolved_catalog_schema_id,
-                                ref.resolved_catalog_table_id.Pack());
+                    std::format("{}.{}.{}", ref->resolved_catalog_database_id, ref->resolved_catalog_schema_id,
+                                ref->resolved_catalog_table_id.Pack());
                 xml_ref.append_attribute("id").set_value(catalog_id.c_str());
             }
-            if (ref.ast_statement_id.has_value()) {
-                xml_ref.append_attribute("stmt").set_value(*ref.ast_statement_id);
+            if (ref->ast_statement_id.has_value()) {
+                xml_ref.append_attribute("stmt").set_value(*ref->ast_statement_id);
             }
-            assert(ref.ast_node_id.has_value());
-            WriteLocation(xml_ref, script.parsed_script->nodes[*ref.ast_node_id].location(),
+            assert(ref->ast_node_id.has_value());
+            WriteLocation(xml_ref, script.parsed_script->nodes[*ref->ast_node_id].location(),
                           script.parsed_script->scanned_script->GetInput());
-        }
+        });
     }
 
     // Write column references
-    if (!script.column_references.empty()) {
+    if (!script.column_references.IsEmpty()) {
         auto col_refs_node = out.append_child("column-references");
-        for (auto& ref : script.column_references) {
-            auto tag = ref.resolved_catalog_table_id.IsNull() ? "unresolved"
-                       : (is_main && ref.resolved_catalog_table_id.GetExternalId() == script.GetCatalogEntryId())
+        script.column_references.ForEach([&](size_t i, auto& ref) {
+            auto tag = ref->resolved_catalog_table_id.IsNull() ? "unresolved"
+                       : (is_main && ref->resolved_catalog_table_id.GetExternalId() == script.GetCatalogEntryId())
                            ? "internal"
                            : "external";
             auto xml_ref = col_refs_node.append_child(tag);
-            if (!ref.resolved_catalog_table_id.IsNull()) {
+            if (!ref->resolved_catalog_table_id.IsNull()) {
                 std::string catalog_id =
-                    std::format("{}.{}.{}.{}", ref.resolved_catalog_database_id, ref.resolved_catalog_schema_id,
-                                ref.resolved_catalog_table_id.Pack(), ref.resolved_table_column_id.value_or(-1));
+                    std::format("{}.{}.{}.{}", ref->resolved_catalog_database_id, ref->resolved_catalog_schema_id,
+                                ref->resolved_catalog_table_id.Pack(), ref->resolved_table_column_id.value_or(-1));
                 xml_ref.append_attribute("id").set_value(catalog_id.c_str());
             }
-            if (ref.ast_statement_id.has_value()) {
-                xml_ref.append_attribute("stmt").set_value(*ref.ast_statement_id);
+            if (ref->ast_statement_id.has_value()) {
+                xml_ref.append_attribute("stmt").set_value(*ref->ast_statement_id);
             }
-            assert(ref.ast_node_id.has_value());
-            WriteLocation(xml_ref, script.parsed_script->nodes[*ref.ast_node_id].location(),
+            assert(ref->ast_node_id.has_value());
+            WriteLocation(xml_ref, script.parsed_script->nodes[*ref->ast_node_id].location(),
                           script.parsed_script->scanned_script->GetInput());
-        }
+        });
     }
 
     // Write join edges
-    if (!script.graph_edges.empty()) {
+    if (!script.graph_edges.IsEmpty()) {
         auto query_graph_node = out.append_child("query-graph");
-        for (auto& edge : script.graph_edges) {
+        script.graph_edges.ForEach([&](size_t i, auto& edge) {
             auto xml_edge = query_graph_node.append_child("edge");
             xml_edge.append_attribute("op").set_value(proto::EnumNameExpressionOperator(edge.expression_operator));
             assert(edge.ast_node_id.has_value());
@@ -200,7 +200,7 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
                 xml_node.append_attribute("side").set_value(1);
                 xml_node.append_attribute("ref").set_value(node.column_reference_id);
             }
-        }
+        });
     }
 }
 

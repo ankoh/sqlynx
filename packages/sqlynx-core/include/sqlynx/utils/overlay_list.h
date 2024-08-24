@@ -18,6 +18,15 @@ template <typename T> struct OverlayList {
         T value;
         /// Constructor
         Node(T value) : value(std::move(value)) {}
+
+        /// Reference operator
+        inline T& operator*() { return value; }
+        /// Dereference operator
+        inline T* operator->() { return &value; }
+        /// Reference operator
+        inline const T& operator*() const { return value; }
+        /// Dereference operator
+        inline T const* operator->() const { return &value; }
     };
 
     /// An end marker
