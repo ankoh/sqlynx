@@ -17,7 +17,7 @@
 #include "sqlynx/utils/btree/set.h"
 #include "sqlynx/utils/chunk_buffer.h"
 #include "sqlynx/utils/hash.h"
-#include "sqlynx/utils/overlay_list.h"
+#include "sqlynx/utils/intrusive_list.h"
 #include "sqlynx/utils/string_conversion.h"
 
 namespace sqlynx {
@@ -101,7 +101,7 @@ class CatalogEntry {
     /// Forward declare the table
     struct TableDeclaration;
     /// A table column
-    struct TableColumn : OverlayList<NamedObject>::Node {
+    struct TableColumn : IntrusiveList<NamedObject>::Node {
         /// The parent table
         std::optional<std::reference_wrapper<TableDeclaration>> table;
         /// The catalog database id
@@ -112,14 +112,14 @@ class CatalogEntry {
         std::reference_wrapper<RegisteredName> column_name;
         /// Constructor
         TableColumn(std::optional<uint32_t> ast_node_id, RegisteredName& column_name)
-            : OverlayList<NamedObject>::Node(NamedObjectType::Column),
+            : IntrusiveList<NamedObject>::Node(NamedObjectType::Column),
               ast_node_id(ast_node_id),
               column_name(column_name) {}
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::TableColumn> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
     /// A table declaration
-    struct TableDeclaration : OverlayList<NamedObject>::Node {
+    struct TableDeclaration : IntrusiveList<NamedObject>::Node {
         /// The catalog database id
         CatalogDatabaseID catalog_database_id = 0;
         /// The catalog schema id
@@ -143,12 +143,12 @@ class CatalogEntry {
 
         /// Constructor
         TableDeclaration(QualifiedTableName table_name)
-            : OverlayList<NamedObject>::Node(NamedObjectType::Table), table_name(std::move(table_name)) {}
+            : IntrusiveList<NamedObject>::Node(NamedObjectType::Table), table_name(std::move(table_name)) {}
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::Table> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
     /// A database name declaration
-    struct DatabaseReference : OverlayList<NamedObject>::Node {
+    struct DatabaseReference : IntrusiveList<NamedObject>::Node {
         /// The catalog database id.
         /// This ID is only preliminary if the entry has not been added to the catalog yet.
         /// Adding the entry to the catalog might fail if this id becomes invalid.
@@ -160,7 +160,7 @@ class CatalogEntry {
         /// Constructor
         DatabaseReference(CatalogDatabaseID database_id, std::string_view database_name,
                           std::string_view database_alias)
-            : OverlayList<NamedObject>::Node(NamedObjectType::Database),
+            : IntrusiveList<NamedObject>::Node(NamedObjectType::Database),
               catalog_database_id(database_id),
               database_name(database_name),
               database_alias(database_alias) {}
@@ -168,7 +168,7 @@ class CatalogEntry {
         flatbuffers::Offset<proto::DatabaseDeclaration> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
     /// A schema name declaration
-    struct SchemaReference : OverlayList<NamedObject>::Node {
+    struct SchemaReference : IntrusiveList<NamedObject>::Node {
         /// The catalog database id
         /// This ID is only preliminary if the entry has not been added to the catalog yet.
         /// Adding the entry to the catalog might fail if this id becomes invalid.
@@ -184,7 +184,7 @@ class CatalogEntry {
         /// Constructor
         SchemaReference(CatalogDatabaseID database_id, CatalogSchemaID schema_id, std::string_view database_name,
                         std::string_view schema_name)
-            : OverlayList<NamedObject>::Node(NamedObjectType::Schema),
+            : IntrusiveList<NamedObject>::Node(NamedObjectType::Schema),
               catalog_database_id(database_id),
               catalog_schema_id(schema_id),
               database_name(database_name),

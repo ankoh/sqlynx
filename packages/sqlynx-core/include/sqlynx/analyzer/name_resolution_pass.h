@@ -9,7 +9,7 @@
 #include "sqlynx/script.h"
 #include "sqlynx/text/names.h"
 #include "sqlynx/utils/attribute_index.h"
-#include "sqlynx/utils/overlay_list.h"
+#include "sqlynx/utils/intrusive_list.h"
 
 namespace sqlynx {
 
@@ -18,13 +18,13 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// A node state during name resolution
     struct NodeState {
         /// The child scopes
-        OverlayList<AnalyzedScript::NameScope> child_scopes;
+        IntrusiveList<AnalyzedScript::NameScope> child_scopes;
         /// The column definitions in the subtree
-        OverlayList<AnalyzedScript::TableColumn> table_columns;
+        IntrusiveList<AnalyzedScript::TableColumn> table_columns;
         /// The table references in scope
-        OverlayList<AnalyzedScript::TableReference> table_references;
+        IntrusiveList<AnalyzedScript::TableReference> table_references;
         /// The column references in scope
-        OverlayList<AnalyzedScript::ColumnReference> column_references;
+        IntrusiveList<AnalyzedScript::ColumnReference> column_references;
 
         /// Clear a node state
         void Clear();
@@ -61,9 +61,9 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// The temporary name path buffer
     std::vector<std::reference_wrapper<RegisteredName>> name_path_buffer;
     /// The temporary pending table columns
-    ChunkBuffer<OverlayList<AnalyzedScript::TableColumn>::Node, 16> pending_columns;
+    ChunkBuffer<IntrusiveList<AnalyzedScript::TableColumn>::Node, 16> pending_columns;
     /// The temporary free-list for pending table columns
-    OverlayList<AnalyzedScript::TableColumn> pending_columns_free_list;
+    IntrusiveList<AnalyzedScript::TableColumn> pending_columns_free_list;
 
     /// Merge child states into a destination state
     std::span<std::reference_wrapper<RegisteredName>> ReadNamePath(const sx::Node& node);

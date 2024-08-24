@@ -6,7 +6,7 @@
 namespace sqlynx {
 
 /// A list of nodes allocated in a separate buffer
-template <typename T> struct OverlayList {
+template <typename T> struct IntrusiveList {
    public:
     /// A list node that is allocate in a separate buffer
     struct Node {
@@ -79,7 +79,7 @@ template <typename T> struct OverlayList {
 
    public:
     /// Constructor
-    OverlayList() = default;
+    IntrusiveList() = default;
 
     /// Get the iterator
     Iterator begin() { return Iterator{first}; }
@@ -93,7 +93,7 @@ template <typename T> struct OverlayList {
     /// Get the size of the list
     size_t GetSize() const { return size; }
     /// Append a list
-    void Append(OverlayList<T>&& other) {
+    void Append(IntrusiveList<T>&& other) {
         if (other.size == 0) {
             return;
         }

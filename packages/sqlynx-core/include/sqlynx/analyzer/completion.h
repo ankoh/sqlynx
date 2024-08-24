@@ -44,7 +44,7 @@ struct Completion {
         /// Each of these entries may have different name tags, so we have to merge them here.
         NameTags tags;
         /// The catalog objects
-        std::vector<OverlayList<NamedObject>> catalog_objects;
+        std::vector<IntrusiveList<NamedObject>> catalog_objects;
         /// The name score
         ScoreValueType score;
         /// Is a name located near the cursor (in the AST)?

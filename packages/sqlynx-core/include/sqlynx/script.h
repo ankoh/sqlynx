@@ -223,11 +223,11 @@ class AnalyzedScript : public CatalogEntry {
         /// The parent scope
         NameScope* parent_scope;
         /// The child scopes
-        OverlayList<NameScope> child_scopes;
+        IntrusiveList<NameScope> child_scopes;
         /// The column references in scope
-        OverlayList<AnalyzedScript::ColumnReference> column_references;
+        IntrusiveList<AnalyzedScript::ColumnReference> column_references;
         /// The table references in scope
-        OverlayList<AnalyzedScript::TableReference> table_references;
+        IntrusiveList<AnalyzedScript::TableReference> table_references;
         /// The resolved table references
         std::unordered_map<const AnalyzedScript::TableReference*,
                            std::reference_wrapper<const CatalogEntry::TableDeclaration>>
@@ -284,11 +284,11 @@ class AnalyzedScript : public CatalogEntry {
     /// The catalog version
     Catalog::Version catalog_version;
     /// The table references
-    ChunkBuffer<OverlayList<TableReference>::Node, 16> table_references;
+    ChunkBuffer<IntrusiveList<TableReference>::Node, 16> table_references;
     /// The column references
-    ChunkBuffer<OverlayList<ColumnReference>::Node, 16> column_references;
+    ChunkBuffer<IntrusiveList<ColumnReference>::Node, 16> column_references;
     /// The name scopes
-    ChunkBuffer<OverlayList<NameScope>::Node, 16> name_scopes;
+    ChunkBuffer<IntrusiveList<NameScope>::Node, 16> name_scopes;
     /// The join edges
     ChunkBuffer<QueryGraphEdge, 16> graph_edges;
     /// The join edge nodes
