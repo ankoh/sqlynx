@@ -3,7 +3,6 @@
 #include "sqlynx/catalog.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
-#include "sqlynx/vis/query_graph_layout.h"
 
 using namespace sqlynx;
 
@@ -693,35 +692,9 @@ static void complete_cursor(benchmark::State& state) {
     }
 }
 
-static void compute_layout(benchmark::State& state) {
-    Catalog catalog;
-
-    Script script{catalog};
-    script.InsertTextAt(0, external_script);
-    script.Scan();
-    script.Parse();
-    script.Analyze();
-
-    QueryGraphLayout graph;
-
-    QueryGraphLayout::Config config;
-    config.board_width = 1600;
-    config.board_height = 800;
-    config.cell_width = 120;
-    config.cell_height = 48;
-    config.table_width = 180;
-    config.table_height = 36;
-
-    for (auto _ : state) {
-        graph.Configure(config);
-        graph.LoadScript(script);
-    }
-}
-
 BENCHMARK(scan_query);
 BENCHMARK(parse_query);
 BENCHMARK(analyze_query);
 BENCHMARK(move_cursor);
 BENCHMARK(complete_cursor);
-BENCHMARK(compute_layout);
 BENCHMARK_MAIN();
