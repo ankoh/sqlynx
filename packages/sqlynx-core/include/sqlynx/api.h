@@ -6,7 +6,6 @@
 #include "sqlynx/catalog.h"
 #include "sqlynx/script.h"
 #include "sqlynx/version.h"
-#include "sqlynx/vis/query_graph_layout.h"
 
 namespace console {
 /// Log a text to the console
@@ -82,12 +81,3 @@ extern "C" void sqlynx_catalog_drop_descriptor_pool(sqlynx::Catalog* catalog, si
 /// Add schema descriptor to a catalog
 extern "C" FFIResult* sqlynx_catalog_add_schema_descriptor(sqlynx::Catalog* catalog, size_t external_id,
                                                            const void* data_ptr, size_t data_size);
-
-/// Create a query graph layout
-extern "C" FFIResult* sqlynx_query_graph_layout_new();
-/// Configure a query graph layout
-extern "C" void sqlynx_query_graph_layout_configure(sqlynx::QueryGraphLayout* graph, double board_width,
-                                                    double board_height, double cell_width, double cell_height,
-                                                    double table_width, double table_height);
-/// Update a query graph layout
-extern "C" FFIResult* sqlynx_query_graph_layout_load_script(sqlynx::QueryGraphLayout* graph, sqlynx::Script* script);

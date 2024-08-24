@@ -75,10 +75,7 @@ if(WASM)
         -Wl,--export=sqlynx_script_analyze \
         -Wl,--export=sqlynx_script_get_statistics \
         -Wl,--export=sqlynx_script_move_cursor \
-        -Wl,--export=sqlynx_script_complete_at_cursor \
-        -Wl,--export=sqlynx_query_graph_layout_new \
-        -Wl,--export=sqlynx_query_graph_layout_configure \
-        -Wl,--export=sqlynx_query_graph_layout_load_script \
+        -Wl,--export=sqlynx_script_complete_at_cursor
         -flto \
     ")
 endif()
@@ -259,7 +256,6 @@ set(LIB_SRC
   ${CMAKE_SOURCE_DIR}/src/utils/rope.cc
   ${CMAKE_SOURCE_DIR}/src/utils/string_conversion.cc
   ${CMAKE_SOURCE_DIR}/src/utils/suffix_trie.cc
-  ${CMAKE_SOURCE_DIR}/src/vis/query_graph_layout.cc
 )
 
 if(WASM)
@@ -296,7 +292,6 @@ if(NOT WASM)
     ${CMAKE_SOURCE_DIR}/test/parser_test.cc
     ${CMAKE_SOURCE_DIR}/test/rope_test.cc
     ${CMAKE_SOURCE_DIR}/test/scanner_test.cc
-    ${CMAKE_SOURCE_DIR}/test/query_graph_layout_test.cc
     ${CMAKE_SOURCE_DIR}/test/script_test.cc
     ${CMAKE_SOURCE_DIR}/test/suffix_trie_test.cc
     ${CMAKE_SOURCE_DIR}/test/topk_test.cc
@@ -307,9 +302,6 @@ if(NOT WASM)
 
   add_executable(benchmark_pipeline benchmarks/benchmark_pipeline.cc)
   target_link_libraries(benchmark_pipeline sqlynx_testutils benchmark gtest gflags Threads::Threads)
-
-  add_executable(benchmark_layout benchmarks/benchmark_layout.cc)
-  target_link_libraries(benchmark_layout sqlynx_testutils benchmark gtest gflags Threads::Threads)
 
   add_executable(snapshotter tools/snapshotter.cc)
   target_link_libraries(snapshotter sqlynx sqlynx_testutils pugixml gtest gflags Threads::Threads)

@@ -12,7 +12,6 @@
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
 #include "sqlynx/version.h"
-#include "sqlynx/vis/query_graph_layout.h"
 
 using namespace sqlynx;
 using namespace sqlynx::parser;
@@ -79,9 +78,6 @@ static FFIResult* packError(proto::StatusCode status) {
             break;
         case proto::StatusCode::ANALYZER_INPUT_NOT_PARSED:
             message = "Analyzer input is not parsed";
-            break;
-        case proto::StatusCode::GRAPH_INPUT_NOT_ANALYZED:
-            message = "Graph input is not analyzed";
             break;
         case proto::StatusCode::CATALOG_SCRIPT_NOT_ANALYZED:
             message = "Unanalyzed scripts cannot be added to the catalog";
@@ -368,37 +364,6 @@ extern "C" FFIResult* sqlynx_catalog_add_schema_descriptor(sqlynx::Catalog* cata
         return packError(status);
     }
     return packOK();
-}
-
-/// Create a schema graph
-extern "C" FFIResult* sqlynx_query_graph_layout_new() { return packPtr(std::make_unique<sqlynx::QueryGraphLayout>()); }
-/// Configure a schema graph
-extern "C" void sqlynx_query_graph_layout_configure(sqlynx::QueryGraphLayout* graph, double board_width,
-                                                    double board_height, double cell_width, double cell_height,
-                                                    double table_width, double table_height) {
-    QueryGraphLayout::Config config;
-    config.board_width = board_width;
-    config.board_height = board_height;
-    config.cell_width = cell_width;
-    config.cell_height = cell_height;
-    config.table_width = table_width;
-    config.table_height = table_height;
-    graph->Configure(config);
-}
-/// Update a schema graph
-extern "C" FFIResult* sqlynx_query_graph_layout_load_script(sqlynx::QueryGraphLayout* graph, sqlynx::Script* script) {
-    auto status = graph->LoadScript(*script);
-    if (status != proto::StatusCode::OK) {
-        return packError(status);
-    }
-
-    // Pack a schema graph
-    flatbuffers::FlatBufferBuilder fb;
-    fb.Finish(graph->Pack(fb));
-
-    // Store the buffer
-    auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
-    return packBuffer(std::move(detached));
 }
 
 #ifdef WASM
