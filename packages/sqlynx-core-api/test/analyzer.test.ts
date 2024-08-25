@@ -74,9 +74,10 @@ describe('SQLynx Analyzer', () => {
         expect(mainParser.nodesLength()).toBeGreaterThan(0);
         expect(mainAnalyzer.tableReferencesLength()).toEqual(1);
 
-        const tableRef = mainAnalyzer.tableReferences(0);
-        const tableName = tableRef?.tableName()!;
-        expect(tableName.tableName()).toEqual('foo');
+        const tableRef = mainAnalyzer.tableReferences(0)!;
+        expect(tableRef.innerType()).toEqual(sqlynx.proto.TableReferenceSubType.ResolvedRelationExpression);
+        const resolved = tableRef.inner(new sqlynx.proto.ResolvedRelationExpression()) as sqlynx.proto.ResolvedRelationExpression;
+        expect(resolved.tableName()!.tableName()!).toEqual('foo');
 
         mainScannerRes.delete();
         mainParserRes.delete();

@@ -54,7 +54,7 @@ describe('Catalog Tests ', () => {
         const catalog = lnx!.createCatalog();
         catalog.addDescriptorPool(1, 10);
 
-        // Create and analyze a script referencing an unknown query_result
+        // Create and analyze a script referencing an unknown table
         const script = lnx!.createScript(catalog, 2);
         script.replaceText('select * from db1.schema1.table1');
         script.scan().delete();
@@ -63,23 +63,19 @@ describe('Catalog Tests ', () => {
         let analyzed = analyzedBuffer.read();
         expect(analyzed.tableReferencesLength()).toEqual(1);
 
-        // The analyzed script contains an unresolved query_result ref
-        const tableRef = analyzed.tableReferences(0)!;
-        let resolvedDatabaseId = tableRef.resolvedCatalogDatabaseId();
-        let resolvedSchemaId = tableRef.resolvedCatalogSchemaId();
-        let resolvedTableId = tableRef.resolvedCatalogTableId();
-        expect(resolvedDatabaseId).toEqual(0xFFFFFFFF);
-        expect(resolvedSchemaId).toEqual(0xFFFFFFFF);
-        expect(sqlynx.ExternalObjectID.isNull(resolvedTableId)).toBeTruthy();
+        // The analyzed script contains an unresolved table ref
+        let tableRef = analyzed.tableReferences(0)!;
+        expect(tableRef.innerType()).toEqual(sqlynx.proto.TableReferenceSubType.UnresolvedRelationExpression);
 
-        // Check the query_result name
-        const tableName = tableRef.tableName(new sqlynx.proto.QualifiedTableName())!;
+        // Check the table name
+        const unresolved = tableRef.inner(new sqlynx.proto.UnresolvedRelationExpression());
+        const tableName = unresolved.tableName(new sqlynx.proto.QualifiedTableName())!;
         expect(tableName.databaseName()).toEqual('db1');
         expect(tableName.schemaName()).toEqual('schema1');
         expect(tableName.tableName()).toEqual('table1');
         analyzedBuffer.delete();
 
-        // Resolve the query_result declaration and add a schema descriptor to the descriptor pool
+        // Resolve the table declaration and add a schema descriptor to the descriptor pool
         catalog.addSchemaDescriptorT(
             1,
             new sqlynx.proto.SchemaDescriptorT('db1', 'schema1', [
@@ -96,12 +92,14 @@ describe('Catalog Tests ', () => {
         analyzedBuffer = script.analyze();
         analyzed = analyzedBuffer.read();
         expect(analyzed.tableReferencesLength()).toEqual(1);
-        resolvedDatabaseId = tableRef.resolvedCatalogDatabaseId();
-        resolvedSchemaId = tableRef.resolvedCatalogSchemaId();
-        resolvedTableId = tableRef.resolvedCatalogTableId();
-        expect(resolvedDatabaseId).not.toEqual(0xFFFFFFFF);
-        expect(resolvedSchemaId).not.toEqual(0xFFFFFFFF);
-        expect(sqlynx.ExternalObjectID.isNull(resolvedTableId)).toBeFalsy();
+        tableRef = analyzed.tableReferences(0)!;
+        expect(tableRef.innerType()).toEqual(sqlynx.proto.TableReferenceSubType.ResolvedRelationExpression);
+
+        // Make sure we set some values for the resolved table
+        const resolved = tableRef.inner(new sqlynx.proto.ResolvedRelationExpression());
+        expect(resolved.catalogDatabaseId()).not.toEqual(0xFFFFFFFF);
+        expect(resolved.catalogSchemaId()).not.toEqual(0xFFFFFFFF);
+        expect(sqlynx.ExternalObjectID.isNull(resolved.catalogTableId())).toBeFalsy();
 
         // Delete all the memory
         analyzedBuffer.delete();

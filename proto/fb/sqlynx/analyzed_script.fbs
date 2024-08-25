@@ -64,6 +64,29 @@ table Table {
     table_columns: [TableColumn];
 }
 
+table ResolvedRelationExpression {
+    // The name of the table that is referenced
+    table_name: QualifiedTableName;
+    // The resolved unified database id across all catalog entries
+    catalog_database_id: uint32;
+    // The resolved unified schema id across all catalog entries
+    catalog_schema_id: uint32;
+    // The id of the table that is referenced.
+    // <uint32, uint32> that may point into the catalog.
+    // Referencing a local table only if the upper u32 equals the scripts external id.
+    catalog_table_id: uint64;
+}
+
+table UnresolvedRelationExpression {
+    // The name of the table that is referenced
+    table_name: QualifiedTableName;
+}
+
+union TableReferenceSubType {
+    ResolvedRelationExpression,
+    UnresolvedRelationExpression
+}
+
 table TableReference {
     // The id of the AST node that created this table reference
     ast_node_id: uint32;
@@ -71,19 +94,10 @@ table TableReference {
     ast_statement_id: uint32;
     // The root of the scope where this table reference is live
     ast_scope_root: uint32;
+    /// The inner type
+    inner: TableReferenceSubType;
     // The alias name
     alias_name: string;
-
-    // The name of the table that is referenced
-    table_name: QualifiedTableName;
-    // The resolved unified database id across all catalog entries
-    resolved_catalog_database_id: uint32;
-    // The resolved unified schema id across all catalog entries
-    resolved_catalog_schema_id: uint32;
-    // The id of the table that is referenced.
-    // <uint32, uint32> that may point into the catalog.
-    // Referencing a local table only if the upper u32 equals the scripts external id.
-    resolved_catalog_table_id: uint64;
 }
 
 table ResolvedColumnRefExpression {
