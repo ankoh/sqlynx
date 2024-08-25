@@ -179,11 +179,13 @@ TEST(UnificationTest, SimpleTableReference) {
 
     // Check table reference
     ASSERT_EQ(analyzed->table_references.GetSize(), 1);
-    ASSERT_EQ(analyzed->table_references[0]->resolved_catalog_database_id,
-              flat->databases()->Get(1)->catalog_object_id());
-    ASSERT_EQ(analyzed->table_references[0]->resolved_catalog_schema_id, flat->schemas()->Get(1)->catalog_object_id());
-    ASSERT_EQ(analyzed->table_references[0]->resolved_catalog_table_id.Pack(),
-              flat->tables()->Get(1)->catalog_object_id());
+    ASSERT_TRUE(std::holds_alternative<AnalyzedScript::TableReference::ResolvedRelationExpression>(
+        analyzed->table_references[0]->inner));
+    auto& resolved =
+        std::get<AnalyzedScript::TableReference::ResolvedRelationExpression>(analyzed->table_references[0]->inner);
+    ASSERT_EQ(resolved.catalog_database_id, flat->databases()->Get(1)->catalog_object_id());
+    ASSERT_EQ(resolved.catalog_schema_id, flat->schemas()->Get(1)->catalog_object_id());
+    ASSERT_EQ(resolved.catalog_table_id.Pack(), flat->tables()->Get(1)->catalog_object_id());
 }
 
 TEST(UnificationTest, ParallelDatabaseRegistration) {

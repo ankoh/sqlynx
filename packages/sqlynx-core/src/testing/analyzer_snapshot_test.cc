@@ -133,16 +133,26 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
         auto table_refs_node = out.append_child("tablerefs");
         script.table_references.ForEach([&](size_t i, const IntrusiveList<AnalyzedScript::TableReference>::Node& ref) {
             auto xml_ref = table_refs_node.append_child("tableref");
-            auto type = ref->resolved_catalog_table_id.IsNull() ? "name/unresolved"
-                        : (is_main && ref->resolved_catalog_table_id.GetExternalId() == script.GetCatalogEntryId())
-                            ? "name/internal"
-                            : "name/external";
-            xml_ref.append_attribute("type").set_value(type);
-            if (!ref->resolved_catalog_table_id.IsNull()) {
-                std::string catalog_id =
-                    std::format("{}.{}.{}", ref->resolved_catalog_database_id, ref->resolved_catalog_schema_id,
-                                ref->resolved_catalog_table_id.Pack());
-                xml_ref.append_attribute("id").set_value(catalog_id.c_str());
+            switch (ref->inner.index()) {
+                case 0:
+                    break;
+                case 1: {
+                    auto& unresolved =
+                        std::get<AnalyzedScript::TableReference::UnresolvedRelationExpression>(ref->inner);
+                    xml_ref.append_attribute("type").set_value("name/unresolved");
+                    break;
+                }
+                case 2: {
+                    auto& resolved = std::get<AnalyzedScript::TableReference::ResolvedRelationExpression>(ref->inner);
+                    std::string catalog_id = std::format("{}.{}.{}", resolved.catalog_database_id,
+                                                         resolved.catalog_schema_id, resolved.catalog_table_id.Pack());
+                    auto type = is_main && resolved.catalog_table_id.GetExternalId() == script.GetCatalogEntryId()
+                                    ? "name/internal"
+                                    : "name/external";
+                    xml_ref.append_attribute("type").set_value(type);
+                    xml_ref.append_attribute("id").set_value(catalog_id.c_str());
+                    break;
+                }
             }
             if (ref->ast_statement_id.has_value()) {
                 xml_ref.append_attribute("stmt").set_value(*ref->ast_statement_id);

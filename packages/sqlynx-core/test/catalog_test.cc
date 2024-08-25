@@ -126,9 +126,13 @@ TEST(CatalogTest, SingleDescriptorPool) {
         auto [analyzed, analysis_status] = script.Analyze();
         ASSERT_EQ(analysis_status, proto::StatusCode::OK);
         ASSERT_EQ(analyzed->table_references.GetSize(), 1);
-        ASSERT_FALSE(analyzed->table_references[0]->resolved_catalog_table_id.IsNull());
-        ASSERT_EQ(analyzed->table_references[0]->resolved_catalog_table_id.GetExternalId(), 1);
-        ASSERT_EQ(analyzed->table_references[0]->resolved_catalog_table_id.GetIndex(), 0);
+        ASSERT_TRUE(std::holds_alternative<AnalyzedScript::TableReference::ResolvedRelationExpression>(
+            analyzed->table_references[0]->inner));
+        auto& resolved =
+            std::get<AnalyzedScript::TableReference::ResolvedRelationExpression>(analyzed->table_references[0]->inner);
+        ASSERT_FALSE(resolved.catalog_table_id.IsNull());
+        ASSERT_EQ(resolved.catalog_table_id.GetExternalId(), 1);
+        ASSERT_EQ(resolved.catalog_table_id.GetIndex(), 0);
     }
     {
         script.ReplaceText("select * from db1.schema1.table2");
@@ -137,7 +141,8 @@ TEST(CatalogTest, SingleDescriptorPool) {
         auto [analyzed, analysis_status] = script.Analyze();
         ASSERT_EQ(analysis_status, proto::StatusCode::OK);
         ASSERT_EQ(analyzed->table_references.GetSize(), 1);
-        ASSERT_TRUE(analyzed->table_references[0]->resolved_catalog_table_id.IsNull());
+        ASSERT_TRUE(std::holds_alternative<AnalyzedScript::TableReference::UnresolvedRelationExpression>(
+            analyzed->table_references[0]->inner));
     }
 }
 

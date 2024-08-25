@@ -94,10 +94,10 @@ table TableReference {
     ast_statement_id: uint32;
     // The root of the scope where this table reference is live
     ast_scope_root: uint32;
-    /// The inner type
-    inner: TableReferenceSubType;
     // The alias name
     alias_name: string;
+    /// The inner type
+    inner: TableReferenceSubType;
 }
 
 table ResolvedColumnRefExpression {

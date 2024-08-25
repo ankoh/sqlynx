@@ -193,16 +193,26 @@ void NameResolutionPass::ResolveTableRefsInScope(AnalyzedScript::NameScope& scop
     for (auto& table_ref : scope.table_references) {
         // TODO Matches a view or CTE?
 
+        auto* unresolved = std::get_if<AnalyzedScript::TableReference::UnresolvedRelationExpression>(&table_ref.inner);
+        if (!unresolved) {
+            continue;
+        }
+        // Copy table name so that we can override the unresolved expression
+        auto table_name = unresolved->table_name;
+
         // Table ref points to own table?
-        auto iter = analyzed.tables_by_name.find(table_ref.table_name);
+        auto iter = analyzed.tables_by_name.find(table_name);
         if (iter != analyzed.tables_by_name.end()) {
             auto& table = iter->second.get();
 
             // Remember resolved table
             scope.resolved_table_references.insert({&table_ref, table});
-            table_ref.resolved_catalog_database_id = table.catalog_database_id;
-            table_ref.resolved_catalog_schema_id = table.catalog_schema_id;
-            table_ref.resolved_catalog_table_id = table.catalog_table_id;
+            table_ref.inner = AnalyzedScript::TableReference::ResolvedRelationExpression{
+                .table_name = table_name,
+                .catalog_database_id = table.catalog_database_id,
+                .catalog_schema_id = table.catalog_schema_id,
+                .catalog_table_id = table.catalog_table_id,
+            };
 
             // Remember all available columns
             // XXX Don't load all columns into scope, we'll instead probe unnamed and aliased tables
@@ -217,14 +227,16 @@ void NameResolutionPass::ResolveTableRefsInScope(AnalyzedScript::NameScope& scop
             continue;
         }
 
-        CatalogEntry::QualifiedTableName qualified_table_name = table_ref.table_name;
         // Otherwise consult the external search path
-        if (auto resolved = catalog.ResolveTable(qualified_table_name, catalog_entry_id)) {
+        if (auto resolved = catalog.ResolveTable(table_name, catalog_entry_id)) {
             // Remember resolved table
             scope.resolved_table_references.insert({&table_ref, *resolved});
-            table_ref.resolved_catalog_database_id = resolved->catalog_database_id;
-            table_ref.resolved_catalog_schema_id = resolved->catalog_schema_id;
-            table_ref.resolved_catalog_table_id = resolved->catalog_table_id;
+            table_ref.inner = AnalyzedScript::TableReference::ResolvedRelationExpression{
+                .table_name = table_name,
+                .catalog_database_id = resolved->catalog_database_id,
+                .catalog_schema_id = resolved->catalog_schema_id,
+                .catalog_table_id = resolved->catalog_table_id,
+            };
 
             // Collect all available columns
             for (size_t i = 0; i < resolved->table_columns.size(); ++i) {
@@ -384,17 +396,15 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                             alias_name = alias;
                         }
                         // Add table reference
-                        auto& n =
-                            analyzed.table_references.Append(AnalyzedScript::TableReference(name.value(), alias_name));
+                        auto& n = analyzed.table_references.Append(AnalyzedScript::TableReference(alias_name));
                         n.buffer_index = analyzed.table_references.GetSize() - 1;
                         n.value.table_reference_id = ExternalObjectID{
                             catalog_entry_id, static_cast<uint32_t>(analyzed.table_references.GetSize() - 1)};
                         n.value.ast_node_id = node_id;
                         n.value.ast_statement_id = std::nullopt;
                         n.value.ast_scope_root = std::nullopt;
-                        n.value.resolved_catalog_database_id = std::numeric_limits<uint32_t>::max();
-                        n.value.resolved_catalog_schema_id = std::numeric_limits<uint32_t>::max();
-                        n.value.resolved_catalog_table_id = ExternalObjectID();
+                        n.value.inner =
+                            AnalyzedScript::TableReference::UnresolvedRelationExpression{.table_name = name.value()};
                         node_state.table_references.PushBack(n);
                     }
                 }

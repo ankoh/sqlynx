@@ -163,6 +163,23 @@ class AnalyzedScript : public CatalogEntry {
    public:
     /// A table reference
     struct TableReference {
+        /// An unresolved column reference
+        struct UnresolvedRelationExpression {
+            /// The table name, may refer to different catalog entry
+            QualifiedTableName table_name;
+        };
+        /// A resolved column reference
+        struct ResolvedRelationExpression {
+            /// The table name, may refer to different catalog entry
+            QualifiedTableName table_name;
+            /// The resolved database id in the catalog
+            CatalogDatabaseID catalog_database_id = 0;
+            /// The resolved schema id in the catalog
+            CatalogSchemaID catalog_schema_id = 0;
+            /// The resolved table id in the catalog
+            ExternalObjectID catalog_table_id;
+        };
+
         /// The table reference id
         ExternalObjectID table_reference_id;
         /// The AST node id in the target script
@@ -173,19 +190,11 @@ class AnalyzedScript : public CatalogEntry {
         std::optional<uint32_t> ast_scope_root;
         /// The alias name, may refer to different catalog entry
         std::optional<std::reference_wrapper<RegisteredName>> alias_name;
-
-        /// The table name, may refer to different catalog entry
-        QualifiedTableName table_name;
-        /// The resolved database id in the catalog
-        CatalogDatabaseID resolved_catalog_database_id = 0;
-        /// The resolved schema id in the catalog
-        CatalogSchemaID resolved_catalog_schema_id = 0;
-        /// The resolved table id in the catalog
-        ExternalObjectID resolved_catalog_table_id;
+        /// The inner relation type
+        std::variant<std::monostate, UnresolvedRelationExpression, ResolvedRelationExpression> inner;
 
         /// Constructor
-        TableReference(QualifiedTableName table_name, std::optional<std::reference_wrapper<RegisteredName>> alias_name)
-            : table_name(table_name), alias_name(alias_name) {}
+        TableReference(std::optional<std::reference_wrapper<RegisteredName>> alias_name) : alias_name(alias_name) {}
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::TableReference> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
