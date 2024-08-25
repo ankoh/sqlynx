@@ -307,22 +307,28 @@ flatbuffers::Offset<proto::TableReference> AnalyzedScript::TableReference::Pack(
     flatbuffers::FlatBufferBuilder& builder) const {
     std::optional<proto::TableReferenceSubType> inner_type;
     flatbuffers::Offset<void> inner_ofs;
-
-    if (resolved_catalog_table_id.IsNull()) {
-        auto table_name_ofs = table_name.Pack(builder);
-        proto::UnresolvedRelationExpressionBuilder out{builder};
-        out.add_table_name(table_name_ofs);
-        inner_ofs = out.Finish().Union();
-        inner_type = proto::TableReferenceSubType::UnresolvedRelationExpression;
-    } else {
-        auto table_name_ofs = table_name.Pack(builder);
-        proto::ResolvedRelationExpressionBuilder out{builder};
-        out.add_table_name(table_name_ofs);
-        out.add_catalog_database_id(resolved_catalog_database_id);
-        out.add_catalog_schema_id(resolved_catalog_schema_id);
-        out.add_catalog_table_id(resolved_catalog_table_id.Pack());
-        inner_ofs = out.Finish().Union();
-        inner_type = proto::TableReferenceSubType::ResolvedRelationExpression;
+    switch (inner.index()) {
+        case 1: {
+            auto& unresolved = std::get<AnalyzedScript::TableReference::UnresolvedRelationExpression>(inner);
+            auto table_name_ofs = unresolved.table_name.Pack(builder);
+            proto::UnresolvedRelationExpressionBuilder out{builder};
+            out.add_table_name(table_name_ofs);
+            inner_ofs = out.Finish().Union();
+            inner_type = proto::TableReferenceSubType::UnresolvedRelationExpression;
+            break;
+        }
+        case 2: {
+            auto& resolved = std::get<AnalyzedScript::TableReference::ResolvedRelationExpression>(inner);
+            auto table_name_ofs = resolved.table_name.Pack(builder);
+            proto::ResolvedRelationExpressionBuilder out{builder};
+            out.add_table_name(table_name_ofs);
+            out.add_catalog_database_id(resolved.catalog_database_id);
+            out.add_catalog_schema_id(resolved.catalog_schema_id);
+            out.add_catalog_table_id(resolved.catalog_table_id.Pack());
+            inner_ofs = out.Finish().Union();
+            inner_type = proto::TableReferenceSubType::ResolvedRelationExpression;
+            break;
+        }
     }
     flatbuffers::Offset<flatbuffers::String> alias_name_ofs;
     if (alias_name.has_value()) {
@@ -501,12 +507,12 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
     {
         std::vector<proto::IndexedTableReference> table_refs_by_id;
         table_refs_by_id.reserve(table_references.GetSize());
-        table_references.ForEach([&](size_t ref_id, auto& ref) {
-            if (!ref->resolved_catalog_table_id.IsNull()) {
-                assert(ref->resolved_catalog_database_id != std::numeric_limits<uint32_t>::max());
-                assert(ref->resolved_catalog_schema_id != std::numeric_limits<uint32_t>::max());
-                table_refs_by_id.emplace_back(ref->resolved_catalog_database_id, ref->resolved_catalog_schema_id,
-                                              ref->resolved_catalog_table_id.Pack(), ref_id);
+        table_references.ForEach([&](size_t ref_id, IntrusiveList<TableReference>::Node& ref) {
+            if (auto* resolved = std::get_if<TableReference::ResolvedRelationExpression>(&ref->inner)) {
+                assert(resolved->catalog_database_id != std::numeric_limits<uint32_t>::max());
+                assert(resolved->catalog_schema_id != std::numeric_limits<uint32_t>::max());
+                table_refs_by_id.emplace_back(resolved->catalog_database_id, resolved->catalog_schema_id,
+                                              resolved->catalog_table_id.Pack(), ref_id);
             }
         });
         std::sort(table_refs_by_id.begin(), table_refs_by_id.end(),

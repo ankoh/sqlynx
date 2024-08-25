@@ -80,8 +80,24 @@ void test(Script& script, size_t text_offset, ExpectedScriptCursor expected) {
         ASSERT_TRUE(cursor->table_reference_id.has_value());
         ASSERT_LT(*cursor->table_reference_id, script.analyzed_script->table_references.GetSize());
         auto& table_ref = script.analyzed_script->table_references[*cursor->table_reference_id];
-        auto table_name = print_name(script, table_ref->table_name);
-        ASSERT_EQ(table_name, expected.table_ref_name);
+        switch (table_ref->inner.index()) {
+            case 0:
+                FAIL();
+            case 1: {
+                auto& unresolved =
+                    std::get<AnalyzedScript::TableReference::UnresolvedRelationExpression>(table_ref->inner);
+                auto table_name = print_name(script, unresolved.table_name);
+                ASSERT_EQ(table_name, expected.table_ref_name);
+                break;
+            }
+            case 2: {
+                auto& resolved = std::get<AnalyzedScript::TableReference::ResolvedRelationExpression>(table_ref->inner);
+                auto table_name = print_name(script, resolved.table_name);
+                ASSERT_EQ(table_name, expected.table_ref_name);
+                break;
+            }
+        }
+
     } else {
         ASSERT_FALSE(cursor->table_reference_id.has_value());
     }
@@ -92,7 +108,7 @@ void test(Script& script, size_t text_offset, ExpectedScriptCursor expected) {
         auto& column_ref = script.analyzed_script->expressions[*cursor->expression_id];
         switch (column_ref->inner.index()) {
             case 0:
-                break;
+                FAIL();
             case 1: {
                 auto& unresolved = std::get<AnalyzedScript::Expression::UnresolvedColumnRef>(column_ref->inner);
                 auto column_name = print_name(script, unresolved.column_name);
