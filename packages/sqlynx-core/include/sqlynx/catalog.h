@@ -138,8 +138,11 @@ class CatalogEntry {
         std::optional<uint32_t> ast_scope_root;
         /// The table name
         QualifiedTableName table_name;
-        /// The begin of the column
+        /// The table columns
         std::vector<TableColumn> table_columns;
+        /// A mini hash map of all columns.
+        /// Maintaining this spares us from loading all table columns into a naming scope
+        ankerl::unordered_dense::map<std::string_view, std::reference_wrapper<TableColumn>> table_columns_by_name;
 
         /// Constructor
         TableDeclaration(QualifiedTableName table_name)

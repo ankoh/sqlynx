@@ -323,13 +323,14 @@ flatbuffers::Offset<proto::TableReference> AnalyzedScript::TableReference::Pack(
 }
 
 /// Pack as FlatBuffer
-flatbuffers::Offset<proto::ColumnReference> AnalyzedScript::ColumnReference::Pack(
+flatbuffers::Offset<proto::Expression> AnalyzedScript::Expression::Pack(
     flatbuffers::FlatBufferBuilder& builder) const {
     auto column_name_ofs = column_name.Pack(builder);
-    proto::ColumnReferenceBuilder out{builder};
+    proto::ExpressionBuilder out{builder};
     out.add_ast_node_id(ast_node_id.value_or(std::numeric_limits<uint32_t>::max()));
     out.add_ast_scope_root(ast_scope_root.value_or(std::numeric_limits<uint32_t>::max()));
     out.add_ast_statement_id(ast_statement_id.value_or(std::numeric_limits<uint32_t>::max()));
+
     out.add_column_name(column_name_ofs);
     out.add_resolved_catalog_database_id(resolved_catalog_database_id);
     out.add_resolved_catalog_schema_id(resolved_catalog_schema_id);
@@ -448,13 +449,9 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
     // Pack table references
     auto table_references_ofs =
         PackVector<AnalyzedScript::TableReference, proto::TableReference>(builder, table_references);
-    // Pack column references
-    auto column_references_ofs =
-        PackVector<AnalyzedScript::ColumnReference, proto::ColumnReference>(builder, column_references);
-    // Pack the query graph
-    auto graph_edges_ofs = packStructVector<QueryGraphEdge, proto::QueryGraphEdge, 16>(builder, graph_edges);
-    auto graph_edge_nodes_ofs =
-        packStructVector<QueryGraphEdgeNode, proto::QueryGraphEdgeNode, 16>(builder, graph_edge_nodes);
+    // Pack expressions
+    auto expressions_ofs =
+        PackVector<AnalyzedScript::Expression, proto::Expression>(builder, expressions);
 
     // Build index: (db_id, schema_id, table_id) -> table_ref*
     flatbuffers::Offset<flatbuffers::Vector<const proto::IndexedTableReference*>> table_refs_by_id_ofs;
@@ -482,8 +479,8 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
     flatbuffers::Offset<flatbuffers::Vector<const proto::IndexedColumnReference*>> column_refs_by_id_ofs;
     {
         std::vector<proto::IndexedColumnReference> column_refs_by_id;
-        column_refs_by_id.reserve(column_references.GetSize());
-        column_references.ForEach([&](size_t ref_id, auto& ref) {
+        column_refs_by_id.reserve(expressions.GetSize());
+        expressions.ForEach([&](size_t ref_id, auto& ref) {
             if (!ref->resolved_catalog_table_id.IsNull()) {
                 assert(ref->resolved_catalog_database_id != std::numeric_limits<uint32_t>::max());
                 assert(ref->resolved_catalog_schema_id != std::numeric_limits<uint32_t>::max());
@@ -508,9 +505,7 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
     out.add_catalog_entry_id(catalog_entry_id);
     out.add_tables(tables_ofs);
     out.add_table_references(table_references_ofs);
-    out.add_column_references(column_references_ofs);
-    out.add_graph_edges(graph_edges_ofs);
-    out.add_graph_edge_nodes(graph_edge_nodes_ofs);
+    out.add_expressions(expressions_ofs);
     out.add_table_references_by_id(table_refs_by_id_ofs);
     out.add_column_references_by_id(column_refs_by_id_ofs);
     return out.Finish();
@@ -568,9 +563,7 @@ std::unique_ptr<proto::ScriptMemoryStatistics> Script::GetMemoryStatistics() {
         size_t analyzer_description_bytes =
             analyzed->table_declarations.GetSize() * sizeof(CatalogEntry::TableDeclaration) + table_column_bytes +
             analyzed->table_references.GetSize() * sizeof(decltype(analyzed->table_references)::value_type) +
-            analyzed->column_references.GetSize() * sizeof(decltype(analyzed->column_references)::value_type) +
-            analyzed->graph_edges.GetSize() * sizeof(decltype(analyzed->graph_edges)::value_type) +
-            analyzed->graph_edge_nodes.GetSize() * sizeof(decltype(analyzed->graph_edge_nodes)::value_type);
+            analyzed->expressions.GetSize() * sizeof(decltype(analyzed->expressions)::value_type);
         size_t analyzer_name_index_bytes = 0;
         size_t analyzer_name_search_index_size = 0;
         if (auto& index = analyzed->name_search_index) {
@@ -764,20 +757,9 @@ std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Create
                 });
 
                 // Part of a column reference node?
-                analyzed->column_references.ForEachWhile([&](size_t i, auto& column_ref) {
+                analyzed->expressions.ForEachWhile([&](size_t i, auto& column_ref) {
                     if (column_ref->ast_node_id.has_value() && cursor_path_nodes.contains(*column_ref->ast_node_id)) {
-                        cursor->column_reference_id = i;
-                        return false;
-                    } else {
-                        return true;
-                    }
-                });
-
-                // Part of a query edge?
-                analyzed->graph_edges.ForEachWhile([&](size_t ei, auto& edge) {
-                    auto nodes_begin = edge.nodes_begin;
-                    if (edge.ast_node_id.has_value() && cursor_path_nodes.contains(*edge.ast_node_id)) {
-                        cursor->query_edge_id = ei;
+                        cursor->expression_id = i;
                         return false;
                     } else {
                         return true;
@@ -809,8 +791,7 @@ flatbuffers::Offset<proto::ScriptCursorInfo> ScriptCursor::Pack(flatbuffers::Fla
     out->ast_node_id = ast_node_id.value_or(std::numeric_limits<uint32_t>::max());
     out->table_id = table_id.value_or(std::numeric_limits<uint32_t>::max());
     out->table_reference_id = table_reference_id.value_or(std::numeric_limits<uint32_t>::max());
-    out->column_reference_id = column_reference_id.value_or(std::numeric_limits<uint32_t>::max());
-    out->query_edge_id = query_edge_id.value_or(std::numeric_limits<uint32_t>::max());
+    out->expression_id = expression_id.value_or(std::numeric_limits<uint32_t>::max());
     return proto::ScriptCursorInfo::Pack(builder, out.get());
 }
 

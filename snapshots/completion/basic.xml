@@ -138,9 +138,9 @@
             <table-references>
                 <unresolved stmt="0" loc="35..38" text="tab" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <unresolved stmt="0" loc="24..29" text="attr2" />
-            </column-references>
+            </named-expressions>
         </script>
         <catalog>
             <script id="1">
@@ -185,10 +185,10 @@ create table table3(attr3 integer);
             <table-references>
                 <external id="256.65536.4294967296" stmt="0" loc="44..58" text="external_name1" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <external id="256.65536.4294967296.0" stmt="0" loc="24..38" text="external_name2" />
                 <unresolved stmt="0" loc="65..74" text="external_" />
-            </column-references>
+            </named-expressions>
         </script>
         <catalog>
             <script id="1">
@@ -225,10 +225,10 @@ create table table3(attr3 integer);
             <table-references>
                 <external id="256.65536.4294967296" stmt="0" loc="44..58" text="external_name1" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <external id="256.65536.4294967296.0" stmt="0" loc="24..38" text="external_name2" />
                 <unresolved stmt="0" loc="65..74" text="external_" />
-            </column-references>
+            </named-expressions>
         </script>
         <catalog>
             <script id="1">

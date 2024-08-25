@@ -91,8 +91,7 @@ void AnalyzerSnapshotTest::TestRegistrySnapshot(const std::vector<ScriptAnalysis
 
         ASSERT_TRUE(Matches(script_node.child("tables"), entry.tables));
         ASSERT_TRUE(Matches(script_node.child("table-references"), entry.table_references));
-        ASSERT_TRUE(Matches(script_node.child("column-references"), entry.column_references));
-        ASSERT_TRUE(Matches(script_node.child("query-graph"), entry.graph_edges));
+        ASSERT_TRUE(Matches(script_node.child("named-expressions"), entry.expressions));
     }
 }
 
@@ -111,8 +110,7 @@ void AnalyzerSnapshotTest::TestMainScriptSnapshot(const ScriptAnalysisSnapshot& 
 
     ASSERT_TRUE(Matches(node.child("tables"), snap.tables));
     ASSERT_TRUE(Matches(node.child("table-references"), snap.table_references));
-    ASSERT_TRUE(Matches(node.child("column-references"), snap.column_references));
-    ASSERT_TRUE(Matches(node.child("query-graph"), snap.graph_edges));
+    ASSERT_TRUE(Matches(node.child("named-expressions"), snap.expressions));
 }
 
 void operator<<(std::ostream& out, const AnalyzerSnapshotTest& p) { out << p.name; }
@@ -154,10 +152,10 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
         });
     }
 
-    // Write column references
-    if (!script.column_references.IsEmpty()) {
-        auto col_refs_node = out.append_child("column-references");
-        script.column_references.ForEach([&](size_t i, auto& ref) {
+    // Write expressions
+    if (!script.expressions.IsEmpty()) {
+        auto col_refs_node = out.append_child("named-expressions");
+        script.expressions.ForEach([&](size_t i, auto& ref) {
             auto tag = ref->resolved_catalog_table_id.IsNull() ? "unresolved"
                        : (is_main && ref->resolved_catalog_table_id.GetExternalId() == script.GetCatalogEntryId())
                            ? "internal"
@@ -175,31 +173,6 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
             assert(ref->ast_node_id.has_value());
             WriteLocation(xml_ref, script.parsed_script->nodes[*ref->ast_node_id].location(),
                           script.parsed_script->scanned_script->GetInput());
-        });
-    }
-
-    // Write join edges
-    if (!script.graph_edges.IsEmpty()) {
-        auto query_graph_node = out.append_child("query-graph");
-        script.graph_edges.ForEach([&](size_t i, auto& edge) {
-            auto xml_edge = query_graph_node.append_child("edge");
-            xml_edge.append_attribute("op").set_value(proto::EnumNameExpressionOperator(edge.expression_operator));
-            assert(edge.ast_node_id.has_value());
-            WriteLocation(xml_edge, script.parsed_script->nodes[*edge.ast_node_id].location(),
-                          script.parsed_script->scanned_script->GetInput());
-            for (size_t i = 0; i < edge.node_count_left; ++i) {
-                auto& node = script.graph_edge_nodes[edge.nodes_begin + i];
-                auto xml_node = xml_edge.append_child("node");
-                xml_node.append_attribute("side").set_value(0);
-                xml_node.append_attribute("ref").set_value(node.column_reference_id);
-            }
-            for (size_t i = 0; i < edge.node_count_right; ++i) {
-                auto& node = script.graph_edge_nodes[edge.nodes_begin + edge.node_count_left + i];
-                assert(!ExternalObjectID(script.GetCatalogEntryId(), node.column_reference_id).IsNull());
-                auto xml_node = xml_edge.append_child("node");
-                xml_node.append_attribute("side").set_value(1);
-                xml_node.append_attribute("ref").set_value(node.column_reference_id);
-            }
         });
     }
 }
@@ -251,8 +224,7 @@ void AnalyzerSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
                 test.script.input = main_node.child("input").last_child().value();
                 test.script.tables.append_copy(main_node.child("tables"));
                 test.script.table_references.append_copy(main_node.child("table-references"));
-                test.script.column_references.append_copy(main_node.child("column-references"));
-                test.script.graph_edges.append_copy(main_node.child("query-graph"));
+                test.script.expressions.append_copy(main_node.child("named-expressions"));
             }
 
             // Read catalog entries
@@ -264,8 +236,7 @@ void AnalyzerSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
                     entry.input = entry_node.child("input").last_child().value();
                     entry.tables.append_copy(entry_node.child("tables"));
                     entry.table_references.append_copy(entry_node.child("table-references"));
-                    entry.column_references.append_copy(entry_node.child("column-references"));
-                    entry.graph_edges.append_copy(entry_node.child("query-graph"));
+                    entry.expressions.append_copy(entry_node.child("named-expressions"));
                 } else {
                     std::cout << "[    ERROR ] unknown test element " << entry_name << std::endl;
                 }

@@ -27,8 +27,8 @@ struct AnalyzerSnapshotTest {
         pugi::xml_document tables;
         /// The table references
         pugi::xml_document table_references;
-        /// The column references
-        pugi::xml_document column_references;
+        /// The expressions
+        pugi::xml_document expressions;
         /// The graph edges
         pugi::xml_document graph_edges;
     };

@@ -71,10 +71,11 @@ table TableReference {
     ast_statement_id: uint32;
     // The root of the scope where this table reference is live
     ast_scope_root: uint32;
-    // The name of the table that is referenced
-    table_name: QualifiedTableName;
     // The alias name
     alias_name: string;
+
+    // The name of the table that is referenced
+    table_name: QualifiedTableName;
     // The resolved unified database id across all catalog entries
     resolved_catalog_database_id: uint32;
     // The resolved unified schema id across all catalog entries
@@ -85,13 +86,14 @@ table TableReference {
     resolved_catalog_table_id: uint64;
 }
 
-table ColumnReference {
+table Expression {
     // The id of the AST node that created this column reference
     ast_node_id: uint32;
     // The id of the statement that contains the column reference
     ast_statement_id: uint32;
     // The root of the scope where this table reference is live
     ast_scope_root: uint32;
+
     // The column name
     column_name: QualifiedColumnName;
     // The unified database id across all catalog entries
@@ -104,24 +106,6 @@ table ColumnReference {
     // The id of the column that is referenced.
     // This is just the index in the resolved table.
     resolved_column_id: uint32;
-}
-
-struct QueryGraphEdge {
-    /// The id of the AST node that created this graph node
-    ast_node_id: uint32;
-    /// The begin of the nodes
-    nodes_begin: uint32;
-    /// The number of nodes on the left side
-    node_count_left: uint16;
-    /// The set id of nodes on the right side
-    node_count_right: uint16;
-    /// The expression operator
-    expression_operator: ExpressionOperator;
-}
-
-struct QueryGraphEdgeNode {
-    /// The id of the column reference
-    column_reference_id: uint32;
 }
 
 struct IndexedTableReference {
@@ -144,8 +128,8 @@ struct IndexedColumnReference {
     catalog_table_id: uint64;
     /// The column id
     table_column_id: uint32;
-    /// The table reference id
-    column_reference_id: uint32;
+    /// The expression id
+    expression_id: uint32;
 }
 
 table NamingScope {
@@ -156,7 +140,7 @@ table NamingScope {
     /// The child scopes
     child_scopes: [uint32];
     /// The column references in this scope
-    column_references: [uint32];
+    expressions: [uint32];
     /// The table references in this scope
     table_references: [uint32];
 }
@@ -169,18 +153,14 @@ table AnalyzedScript {
     tables: [Table];
     /// The table references in the statement
     table_references: [TableReference];
-    /// The column references in the statement
-    column_references: [ColumnReference];
+    /// The expressions in the statement.
+    /// We're not indexing all expressions here, only those that are relevant for name resolution.
+    expressions: [Expression];
 
     /// The naming scopes
     naming_scopes: [NamingScope];
     /// The statement root scopes
     statement_root_scopes: [uint32];
-
-    /// The query graph edges
-    graph_edges: [QueryGraphEdge];
-    /// The query graph edge nodes
-    graph_edge_nodes: [QueryGraphEdgeNode];
 
     /// The indexed table references, sorted by (database_id, schema_id, table_id)
     table_references_by_id: [IndexedTableReference];

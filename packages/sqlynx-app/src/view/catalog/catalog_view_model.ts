@@ -469,7 +469,7 @@ export class CatalogViewModel {
     pinScriptRefs(script: sqlynx.proto.AnalyzedScript) {
         const catalog = this.snapshot.read().catalogReader;
         const tmpTableRef = new sqlynx.proto.TableReference();
-        const tmpColumnRef = new sqlynx.proto.ColumnReference();
+        const tmpColumnRef = new sqlynx.proto.Expression();
 
         // Allocate an epoch
         const epoch = this.nextPinEpoch++;
@@ -486,12 +486,12 @@ export class CatalogViewModel {
         }
 
         // Pin column references
-        for (let i = 0; i < script.columnReferencesLength(); ++i) {
-            const columnRef = script.columnReferences(i, tmpColumnRef)!;
-            const dbId = columnRef.resolvedCatalogDatabaseId();
-            const schemaId = columnRef.resolvedCatalogSchemaId();
-            const tableId = columnRef.resolvedCatalogTableId();
-            const columnId = columnRef.resolvedColumnId();
+        for (let i = 0; i < script.expressionsLength(); ++i) {
+            const expr = script.expressions(i, tmpColumnRef)!;
+            const dbId = expr.resolvedCatalogDatabaseId();
+            const schemaId = expr.resolvedCatalogSchemaId();
+            const tableId = expr.resolvedCatalogTableId();
+            const columnId = expr.resolvedColumnId();
             if (dbId != U32_MAX) {
                 this.pin(catalog, epoch, CatalogRenderingFlag.PINNED_BY_SCRIPT_COLUMN_REFS, dbId, schemaId, tableId, columnId);
             }
@@ -505,7 +505,7 @@ export class CatalogViewModel {
     }
 
 
-    pinCursorRefs(cursor: sqlynx.proto.ScriptCursorInfo) {
+    pinCursorRefs(_cursor: sqlynx.proto.ScriptCursorInfo) {
         // Allocate an epoch
         const epoch = this.nextPinEpoch++;
 

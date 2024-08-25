@@ -111,7 +111,7 @@ describe('CatalogViewModel', () => {
         const analyzed = queryScript.analyze();
         const analyzedReader = analyzed.read();
         expect(analyzedReader.tableReferencesLength()).toEqual(1);
-        expect(analyzedReader.columnReferencesLength()).toEqual(1);
+        expect(analyzedReader.expressionsLength()).toEqual(1);
 
         catalogVM.pinScriptRefs(analyzedReader);
         expect(catalogVM.totalHeight).toEqual(
