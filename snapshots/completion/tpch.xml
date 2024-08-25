@@ -4,12 +4,12 @@
             <input>
                 select * from lineitem where ke
             </input>
-            <table-references>
-                <external id="256.65536.4294967301" stmt="0" loc="31..39" text="lineitem" />
-            </table-references>
-            <named-expressions>
-                <unresolved stmt="0" loc="46..48" text="ke" />
-            </named-expressions>
+            <tablerefs>
+                <tableref type="name/external" id="256.65536.4294967301" stmt="0" loc="31..39" text="lineitem" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/unresolved" stmt="0" loc="46..48" text="ke" />
+            </expressions>
         </script>
         <catalog>
             <script id="1">

@@ -174,8 +174,6 @@ class AnalyzedScript : public CatalogEntry {
         /// The alias name, may refer to different catalog entry
         std::optional<std::reference_wrapper<RegisteredName>> alias_name;
 
-        // Case 1: Relation expression
-
         /// The table name, may refer to different catalog entry
         QualifiedTableName table_name;
         /// The resolved database id in the catalog
@@ -193,6 +191,25 @@ class AnalyzedScript : public CatalogEntry {
     };
     /// An expression
     struct Expression {
+        /// An unresolved column reference
+        struct UnresolvedColumnRef {
+            /// The column name, may refer to different catalog entry
+            QualifiedColumnName column_name;
+        };
+        /// A resolved column reference
+        struct ResolvedColumnRef {
+            /// The column name, may refer to different catalog entry
+            QualifiedColumnName column_name;
+            /// The resolved catalog database id
+            CatalogDatabaseID catalog_database_id = 0;
+            /// The resolved catalog schema id
+            CatalogSchemaID catalog_schema_id = 0;
+            /// The resolved table id in the catalog
+            ExternalObjectID catalog_table_id;
+            /// The resolved table column id
+            uint32_t table_column_id;
+        };
+
         /// The expression id as (entry_id, reference_index)
         ExternalObjectID expression_id;
         /// The AST node id in the target script
@@ -201,24 +218,11 @@ class AnalyzedScript : public CatalogEntry {
         std::optional<uint32_t> ast_statement_id;
         /// The AST scope root in the target script
         std::optional<uint32_t> ast_scope_root;
-
-        // Case 1: Column ref
-
-        /// The column name, may refer to different catalog entry
-        QualifiedColumnName column_name;
-        /// The resolved table reference id in the current context
-        std::optional<uint32_t> resolved_table_reference_id;
-        /// The resolved catalog database id
-        CatalogDatabaseID resolved_catalog_database_id = 0;
-        /// The resolved catalog schema id
-        CatalogSchemaID resolved_catalog_schema_id = 0;
-        /// The resolved table id in the catalog
-        ExternalObjectID resolved_catalog_table_id;
-        /// The resolved table column id
-        std::optional<uint32_t> resolved_table_column_id;
+        /// The inner expression type
+        std::variant<std::monostate, UnresolvedColumnRef, ResolvedColumnRef> inner;
 
         /// Constructor
-        Expression(QualifiedColumnName column_name) : column_name(column_name) {}
+        Expression() : inner(std::monostate{}) {}
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::Expression> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
@@ -231,7 +235,7 @@ class AnalyzedScript : public CatalogEntry {
         /// The child scopes
         IntrusiveList<NameScope> child_scopes;
         /// The column references in scope
-        IntrusiveList<AnalyzedScript::Expression> column_references;
+        IntrusiveList<AnalyzedScript::Expression> expressions;
         /// The table references in scope
         IntrusiveList<AnalyzedScript::TableReference> table_references;
         /// The resolved table references
