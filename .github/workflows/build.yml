@@ -160,15 +160,6 @@ jobs:
               run: |
                   ${SQLYNX_BUILD_DIR}/benchmark_pipeline
 
-            - name: Run layout benchmarks
-              if: matrix.build_type == 'o2'
-              shell: bash
-              env:
-                  SQLYNX_SOURCE_DIR: ${{ github.workspace }}/packages/sqlynx
-                  SQLYNX_BUILD_DIR: ${{ github.workspace }}/packages/sqlynx-core/build/native/${{ matrix.build_type }}
-              run: |
-                  ${SQLYNX_BUILD_DIR}/benchmark_layout
-
             - name: Merge coverage data
               shell: bash
               env:
