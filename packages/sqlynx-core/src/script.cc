@@ -305,7 +305,25 @@ flatbuffers::Offset<proto::QualifiedColumnName> AnalyzedScript::QualifiedColumnN
 /// Pack as FlatBuffer
 flatbuffers::Offset<proto::TableReference> AnalyzedScript::TableReference::Pack(
     flatbuffers::FlatBufferBuilder& builder) const {
-    auto table_name_ofs = table_name.Pack(builder);
+    std::optional<proto::TableReferenceSubType> inner_type;
+    flatbuffers::Offset<void> inner_ofs;
+
+    if (resolved_catalog_table_id.IsNull()) {
+        auto table_name_ofs = table_name.Pack(builder);
+        proto::UnresolvedRelationExpressionBuilder out{builder};
+        out.add_table_name(table_name_ofs);
+        inner_ofs = out.Finish().Union();
+        inner_type = proto::TableReferenceSubType::UnresolvedRelationExpression;
+    } else {
+        auto table_name_ofs = table_name.Pack(builder);
+        proto::ResolvedRelationExpressionBuilder out{builder};
+        out.add_table_name(table_name_ofs);
+        out.add_catalog_database_id(resolved_catalog_database_id);
+        out.add_catalog_schema_id(resolved_catalog_schema_id);
+        out.add_catalog_table_id(resolved_catalog_table_id.Pack());
+        inner_ofs = out.Finish().Union();
+        inner_type = proto::TableReferenceSubType::ResolvedRelationExpression;
+    }
     flatbuffers::Offset<flatbuffers::String> alias_name_ofs;
     if (alias_name.has_value()) {
         alias_name_ofs = builder.CreateString(alias_name.value().get().text);
@@ -314,11 +332,13 @@ flatbuffers::Offset<proto::TableReference> AnalyzedScript::TableReference::Pack(
     out.add_ast_node_id(ast_node_id.value_or(std::numeric_limits<uint32_t>::max()));
     out.add_ast_scope_root(ast_scope_root.value_or(std::numeric_limits<uint32_t>::max()));
     out.add_ast_statement_id(ast_statement_id.value_or(std::numeric_limits<uint32_t>::max()));
-    out.add_table_name(table_name_ofs);
-    out.add_alias_name(alias_name_ofs);
-    out.add_resolved_catalog_database_id(resolved_catalog_database_id);
-    out.add_resolved_catalog_schema_id(resolved_catalog_schema_id);
-    out.add_resolved_catalog_table_id(resolved_catalog_table_id.Pack());
+    if (alias_name.has_value()) {
+        out.add_alias_name(alias_name_ofs);
+    }
+    if (inner_type.has_value()) {
+        out.add_inner_type(inner_type.value());
+        out.add_inner(inner_ofs);
+    }
     return out.Finish();
 }
 
@@ -332,8 +352,8 @@ flatbuffers::Offset<proto::Expression> AnalyzedScript::Expression::Pack(flatbuff
             auto column_name_ofs = unresolved.column_name.Pack(builder);
             proto::UnresolvedColumnRefExpressionBuilder out{builder};
             out.add_column_name(column_name_ofs);
-            inner_type = proto::ExpressionSubType::UnresolvedColumnRefExpression;
             inner_ofs = out.Finish().Union();
+            inner_type = proto::ExpressionSubType::UnresolvedColumnRefExpression;
             break;
         }
         case 2: {
@@ -345,8 +365,8 @@ flatbuffers::Offset<proto::Expression> AnalyzedScript::Expression::Pack(flatbuff
             out.add_catalog_schema_id(resolved.catalog_schema_id);
             out.add_catalog_table_id(resolved.catalog_table_id.Pack());
             out.add_column_id(resolved.table_column_id);
-            inner_type = proto::ExpressionSubType::ResolvedColumnRefExpression;
             inner_ofs = out.Finish().Union();
+            inner_type = proto::ExpressionSubType::ResolvedColumnRefExpression;
             break;
         }
         default:

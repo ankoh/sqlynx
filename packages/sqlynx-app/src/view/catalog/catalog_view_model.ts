@@ -471,6 +471,7 @@ export class CatalogViewModel {
         const tmpTableRef = new sqlynx.proto.TableReference();
         const tmpExpression = new sqlynx.proto.Expression();
         const tmpResolvedColumnRef = new sqlynx.proto.ResolvedColumnRefExpression();
+        const tmpResolvedRelationExpr = new sqlynx.proto.ResolvedRelationExpression();
 
         // Allocate an epoch
         const epoch = this.nextPinEpoch++;
@@ -478,10 +479,11 @@ export class CatalogViewModel {
         // Pin table references
         for (let i = 0; i < script.tableReferencesLength(); ++i) {
             const tableRef = script.tableReferences(i, tmpTableRef)!;
-            const dbId = tableRef.resolvedCatalogDatabaseId();
-            const schemaId = tableRef.resolvedCatalogSchemaId();
-            const tableId = tableRef.resolvedCatalogTableId();
-            if (dbId != U32_MAX) {
+            if (tableRef.innerType() == sqlynx.proto.TableReferenceSubType.ResolvedRelationExpression) {
+                const resolved = tableRef.inner(tmpResolvedRelationExpr) as sqlynx.proto.ResolvedRelationExpression;
+                const dbId = resolved.catalogDatabaseId();
+                const schemaId = resolved.catalogSchemaId();
+                const tableId = resolved.catalogTableId();
                 this.pin(catalog, epoch, CatalogRenderingFlag.PINNED_BY_SCRIPT_TABLE_REFS, dbId, schemaId, tableId, null);
             }
         }
@@ -490,7 +492,7 @@ export class CatalogViewModel {
         for (let i = 0; i < script.expressionsLength(); ++i) {
             const expr = script.expressions(i, tmpExpression)!;
             if (expr.innerType() == sqlynx.proto.ExpressionSubType.ResolvedColumnRefExpression) {
-                const columnRef = expr.inner(tmpResolvedColumnRef);
+                const columnRef = expr.inner(tmpResolvedColumnRef) as sqlynx.proto.ResolvedColumnRefExpression;
                 const dbId = columnRef.catalogDatabaseId();
                 const schemaId = columnRef.catalogSchemaId();
                 const tableId = columnRef.catalogTableId();
