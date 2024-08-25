@@ -1,23 +1,5 @@
 <analyzer-snapshots>
     <analyzer-snapshot name="multi_0">
-        <script id="0">
-            <input>
-                select * from A, B where a = b;
-                select * from B, C where d = c;
-            </input>
-            <tablerefs>
-                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..32" text="A" />
-                <tableref type="name/external" id="256.65536.4294967297" stmt="0" loc="34..35" text="B" />
-                <tableref type="name/external" id="256.65536.4294967297" stmt="1" loc="79..80" text="B" />
-                <tableref type="name/unresolved" stmt="1" loc="82..83" text="C" />
-            </tablerefs>
-            <expressions>
-                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="42..43" text="a" />
-                <expr type="colref/external" id="256.65536.4294967296.1" stmt="0" loc="46..47" text="b" />
-                <expr type="colref/external" id="256.65536.4294967297.0" stmt="1" loc="90..91" text="d" />
-                <expr type="colref/unresolved" stmt="1" loc="94..95" text="c" />
-            </expressions>
-        </script>
         <catalog>
             <script id="1">
                 <input>
@@ -36,8 +18,44 @@
                 </tables>
             </script>
         </catalog>
+        <script id="0">
+            <input>
+                select * from A, B where a = b;
+                select * from B, C where d = c;
+            </input>
+            <tablerefs>
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..32" text="A" />
+                <tableref type="name/external" id="256.65536.4294967297" stmt="0" loc="34..35" text="B" />
+                <tableref type="name/external" id="256.65536.4294967297" stmt="1" loc="79..80" text="B" />
+                <tableref type="name/unresolved" stmt="1" loc="82..83" text="C" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="42..43" text="a" />
+                <expr type="colref/external" id="256.65536.4294967296.1" stmt="0" loc="46..47" text="b" />
+                <expr type="colref/external" id="256.65536.4294967297.0" stmt="1" loc="90..91" text="d" />
+                <expr type="colref/unresolved" stmt="1" loc="94..95" text="c" />
+            </expressions>
+        </script>
     </analyzer-snapshot>
     <analyzer-snapshot name="multi_recovery_0">
+        <catalog>
+            <script id="1">
+                <input>
+                    create table A (a int, b int);
+                    create table B (d int, e int);
+                </input>
+                <tables>
+                    <table id="256.65536.4294967296" name="a" loc="21..50" text="create tab..nt, b int)">
+                        <column id="256.65536.4294967296.0" name="a" loc="37..42" text="a int" />
+                        <column id="256.65536.4294967296.1" name="b" loc="44..49" text="b int" />
+                    </table>
+                    <table id="256.65536.4294967297" name="b" loc="72..101" text="create tab..nt, e int)">
+                        <column id="256.65536.4294967297.0" name="d" loc="88..93" text="d int" />
+                        <column id="256.65536.4294967297.1" name="e" loc="95..100" text="e int" />
+                    </table>
+                </tables>
+            </script>
+        </catalog>
         <script id="0">
             <input>
                 select * from A, B where a = b;
@@ -57,23 +75,5 @@
                 <expr type="colref/unresolved" stmt="1" loc="117..118" text="c" />
             </expressions>
         </script>
-        <catalog>
-            <script id="1">
-                <input>
-                    create table A (a int, b int);
-                    create table B (d int, e int);
-                </input>
-                <tables>
-                    <table id="256.65536.4294967296" name="a" loc="21..50" text="create tab..nt, b int)">
-                        <column id="256.65536.4294967296.0" name="a" loc="37..42" text="a int" />
-                        <column id="256.65536.4294967296.1" name="b" loc="44..49" text="b int" />
-                    </table>
-                    <table id="256.65536.4294967297" name="b" loc="72..101" text="create tab..nt, e int)">
-                        <column id="256.65536.4294967297.0" name="d" loc="88..93" text="d int" />
-                        <column id="256.65536.4294967297.1" name="e" loc="95..100" text="e int" />
-                    </table>
-                </tables>
-            </script>
-        </catalog>
     </analyzer-snapshot>
 </analyzer-snapshots>

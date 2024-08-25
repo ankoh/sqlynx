@@ -15,6 +15,8 @@ TEST_P(AnalyzerSnapshotTestSuite, Test) {
     auto* test = GetParam();
 
     pugi::xml_document out;
+
+    // Write the script node
     auto main_node = out.append_child("script");
 
     // Write the catalog node
