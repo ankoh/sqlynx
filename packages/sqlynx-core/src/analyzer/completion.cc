@@ -319,39 +319,59 @@ void Completion::PromoteNearCandidatesInAST() {
         if (!table_ref->ast_statement_id.has_value() || table_ref->ast_statement_id.value() != statement_id) {
             return;
         }
-        mark_as_near(table_ref->table_name.database_name.get().text);
-        mark_as_near(table_ref->table_name.schema_name.get().text);
-        mark_as_near(table_ref->table_name.table_name.get().text);
+
+        // Mark alias near
         if (table_ref->alias_name.has_value()) {
             mark_as_near(table_ref->alias_name.value().get().text);
         }
 
-        // Add all column names of the table
-        if (auto resolved = analyzed->ResolveTable(table_ref->resolved_catalog_table_id, cursor.script.catalog)) {
-            for (auto& table_column : resolved->table_columns) {
-                mark_as_near(table_column.column_name.get().text);
+        switch (table_ref->inner.index()) {
+            case 1: {
+                auto& unresolved =
+                    std::get<AnalyzedScript::TableReference::UnresolvedRelationExpression>(table_ref->inner);
+                mark_as_near(unresolved.table_name.database_name.get().text);
+                mark_as_near(unresolved.table_name.schema_name.get().text);
+                mark_as_near(unresolved.table_name.table_name.get().text);
+                break;
             }
+            case 2: {
+                auto& resolved = std::get<AnalyzedScript::TableReference::ResolvedRelationExpression>(table_ref->inner);
+                mark_as_near(resolved.table_name.database_name.get().text);
+                mark_as_near(resolved.table_name.schema_name.get().text);
+                mark_as_near(resolved.table_name.table_name.get().text);
+
+                // Add all column names of the table
+                if (auto referenced = analyzed->ResolveTable(resolved.catalog_table_id, cursor.script.catalog)) {
+                    for (auto& table_column : referenced->table_columns) {
+                        mark_as_near(table_column.column_name.get().text);
+                    }
+                }
+                break;
+            }
+            default:
+                break;
         }
     });
 
     // Collect column references in the statement
     cursor.script.analyzed_script->expressions.ForEach(
         [&](size_t i, IntrusiveList<AnalyzedScript::Expression>::Node& expr) {
-            if (expr->ast_statement_id.has_value() && expr->ast_statement_id.value() == statement_id) {
-                switch (expr->inner.index()) {
-                    case 1: {
-                        auto& unresolved = std::get<AnalyzedScript::Expression::UnresolvedColumnRef>(expr->inner);
-                        mark_as_near(unresolved.column_name.column_name.get().text);
-                        break;
-                    }
-                    case 2: {
-                        auto& resolved = std::get<AnalyzedScript::Expression::ResolvedColumnRef>(expr->inner);
-                        mark_as_near(resolved.column_name.column_name.get().text);
-                        break;
-                    }
-                    default:
-                        break;
+            if (!expr->ast_statement_id.has_value() || expr->ast_statement_id.value() != statement_id) {
+                return;
+            }
+            switch (expr->inner.index()) {
+                case 1: {
+                    auto& unresolved = std::get<AnalyzedScript::Expression::UnresolvedColumnRef>(expr->inner);
+                    mark_as_near(unresolved.column_name.column_name.get().text);
+                    break;
                 }
+                case 2: {
+                    auto& resolved = std::get<AnalyzedScript::Expression::ResolvedColumnRef>(expr->inner);
+                    mark_as_near(resolved.column_name.column_name.get().text);
+                    break;
+                }
+                default:
+                    break;
             }
         });
 }
