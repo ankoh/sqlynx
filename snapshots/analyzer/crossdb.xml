@@ -1,18 +1,5 @@
 <analyzer-snapshots>
     <analyzer-snapshot name="cross_1_entry_explicit">
-        <script id="0">
-            <input>
-                select * from db1.schema1.A, db2.schema2.A where a = c;
-            </input>
-            <tablerefs>
-                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..44" text="db1.schema1.A" />
-                <tableref type="name/external" id="257.65537.4294967297" stmt="0" loc="46..59" text="db2.schema2.A" />
-            </tablerefs>
-            <expressions>
-                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="66..67" text="a" />
-                <expr type="colref/external" id="257.65537.4294967297.0" stmt="0" loc="70..71" text="c" />
-            </expressions>
-        </script>
         <catalog database="db3" schema="schema3">
             <script id="1">
                 <input>
@@ -31,8 +18,6 @@
                 </tables>
             </script>
         </catalog>
-    </analyzer-snapshot>
-    <analyzer-snapshot name="cross_1_entry_implicit">
         <script id="0">
             <input>
                 select * from db1.schema1.A, db2.schema2.A where a = c;
@@ -46,6 +31,8 @@
                 <expr type="colref/external" id="257.65537.4294967297.0" stmt="0" loc="70..71" text="c" />
             </expressions>
         </script>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="cross_1_entry_implicit">
         <catalog database="db1" schema="schema1">
             <script id="1">
                 <input>
@@ -64,21 +51,21 @@
                 </tables>
             </script>
         </catalog>
-    </analyzer-snapshot>
-    <analyzer-snapshot name="cross_2_entries_implicit">
         <script id="0">
             <input>
-                select * from db1.schema1.A, db2.schema2.B where a = c;
+                select * from db1.schema1.A, db2.schema2.A where a = c;
             </input>
             <tablerefs>
                 <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..44" text="db1.schema1.A" />
-                <tableref type="name/external" id="257.65537.8589934592" stmt="0" loc="46..59" text="db2.schema2.B" />
+                <tableref type="name/external" id="257.65537.4294967297" stmt="0" loc="46..59" text="db2.schema2.A" />
             </tablerefs>
             <expressions>
                 <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="66..67" text="a" />
-                <expr type="colref/external" id="257.65537.8589934592.0" stmt="0" loc="70..71" text="c" />
+                <expr type="colref/external" id="257.65537.4294967297.0" stmt="0" loc="70..71" text="c" />
             </expressions>
         </script>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="cross_2_entries_implicit">
         <catalog database="db1" schema="schema1">
             <script id="1">
                 <input>
@@ -103,8 +90,6 @@
                 </tables>
             </script>
         </catalog>
-    </analyzer-snapshot>
-    <analyzer-snapshot name="cross_2_entries_explicit">
         <script id="0">
             <input>
                 select * from db1.schema1.A, db2.schema2.B where a = c;
@@ -118,6 +103,8 @@
                 <expr type="colref/external" id="257.65537.8589934592.0" stmt="0" loc="70..71" text="c" />
             </expressions>
         </script>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="cross_2_entries_explicit">
         <catalog>
             <script id="1">
                 <input>
@@ -142,22 +129,21 @@
                 </tables>
             </script>
         </catalog>
-    </analyzer-snapshot>
-    <analyzer-snapshot name="cross_first_schema_wins">
         <script id="0">
             <input>
-                select * from db1.schema1.A where a = 1;
-                select * from db1.schema1.A where c = 1;
+                select * from db1.schema1.A, db2.schema2.B where a = c;
             </input>
             <tablerefs>
                 <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..44" text="db1.schema1.A" />
-                <tableref type="name/external" id="256.65536.4294967296" stmt="1" loc="88..101" text="db1.schema1.A" />
+                <tableref type="name/external" id="257.65537.8589934592" stmt="0" loc="46..59" text="db2.schema2.B" />
             </tablerefs>
             <expressions>
-                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="51..52" text="a" />
-                <expr type="colref/unresolved" stmt="1" loc="108..109" text="c" />
+                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="66..67" text="a" />
+                <expr type="colref/external" id="257.65537.8589934592.0" stmt="0" loc="70..71" text="c" />
             </expressions>
         </script>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="cross_first_schema_wins">
         <catalog>
             <script id="1">
                 <input>
@@ -182,5 +168,19 @@
                 </tables>
             </script>
         </catalog>
+        <script id="0">
+            <input>
+                select * from db1.schema1.A where a = 1;
+                select * from db1.schema1.A where c = 1;
+            </input>
+            <tablerefs>
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..44" text="db1.schema1.A" />
+                <tableref type="name/external" id="256.65536.4294967296" stmt="1" loc="88..101" text="db1.schema1.A" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="51..52" text="a" />
+                <expr type="colref/unresolved" stmt="1" loc="108..109" text="c" />
+            </expressions>
+        </script>
     </analyzer-snapshot>
 </analyzer-snapshots>
