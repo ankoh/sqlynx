@@ -205,6 +205,7 @@ void NameResolutionPass::ResolveTableRefsInScope(AnalyzedScript::NameScope& scop
             table_ref.resolved_catalog_table_id = table.catalog_table_id;
 
             // Remember all available columns
+            // XXX Don't load all columns into scope, we'll instead probe unnamed and aliased tables
             for (size_t i = 0; i < table.table_columns.size(); ++i) {
                 auto& column = table.table_columns[i];
                 scope.resolved_table_columns.insert(
@@ -216,7 +217,6 @@ void NameResolutionPass::ResolveTableRefsInScope(AnalyzedScript::NameScope& scop
             continue;
         }
 
-        // Qualify table name for search path lookup
         CatalogEntry::QualifiedTableName qualified_table_name = table_ref.table_name;
         // Otherwise consult the external search path
         if (auto resolved = catalog.ResolveTable(qualified_table_name, catalog_entry_id)) {
@@ -243,7 +243,7 @@ void NameResolutionPass::ResolveTableRefsInScope(AnalyzedScript::NameScope& scop
 
 void NameResolutionPass::ResolveColumnRefsInScope(AnalyzedScript::NameScope& scope, ColumnRefsByAlias& refs_by_alias,
                                                   ColumnRefsByName& refs_by_name) {
-    std::list<std::reference_wrapper<AnalyzedScript::ColumnReference>> unresolved_columns;
+    std::list<std::reference_wrapper<AnalyzedScript::Expression>> unresolved_columns;
     for (auto& column_ref : scope.column_references) {
         unresolved_columns.push_back(column_ref);
     }
@@ -274,8 +274,8 @@ void NameResolutionPass::ResolveNames() {
     // Create column ref maps
     ColumnRefsByAlias tmp_refs_by_alias;
     ColumnRefsByAlias tmp_refs_by_name;
-    tmp_refs_by_alias.reserve(analyzed.column_references.GetSize());
-    tmp_refs_by_name.reserve(analyzed.column_references.GetSize());
+    tmp_refs_by_alias.reserve(analyzed.expressions.GetSize());
+    tmp_refs_by_name.reserve(analyzed.expressions.GetSize());
 
     // Recursively traverse down the scopes
     std::stack<std::reference_wrapper<AnalyzedScript::NameScope>> pending_scopes;
@@ -297,8 +297,13 @@ void NameResolutionPass::ResolveNames() {
 
 /// Prepare the analysis pass
 void NameResolutionPass::Prepare() {}
+
 /// Visit a chunk of nodes
 void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
+    // XXX What about:
+    //  indirections? c_expr
+    //  subquery with alias
+
     // Scan nodes in morsel
     size_t morsel_offset = morsel.data() - ast.data();
     for (size_t i = 0; i < morsel.size(); ++i) {
@@ -338,10 +343,10 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 auto column_name = ReadQualifiedColumnName(column_ref_node);
                 if (column_name.has_value()) {
                     // Add column reference
-                    auto& n = analyzed.column_references.Append(AnalyzedScript::ColumnReference(column_name.value()));
-                    n.buffer_index = analyzed.column_references.GetSize() - 1;
-                    n.value.column_reference_id = ExternalObjectID{
-                        catalog_entry_id, static_cast<uint32_t>(analyzed.column_references.GetSize() - 1)};
+                    auto& n = analyzed.expressions.Append(AnalyzedScript::Expression(column_name.value()));
+                    n.buffer_index = analyzed.expressions.GetSize() - 1;
+                    n.value.expression_id = ExternalObjectID{
+                        catalog_entry_id, static_cast<uint32_t>(analyzed.expressions.GetSize() - 1)};
                     n.value.ast_node_id = node_id;
                     n.value.ast_statement_id = std::nullopt;
                     n.value.ast_scope_root = std::nullopt;
@@ -392,113 +397,6 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 }
                 // Table refs may be recursive
                 MergeChildStates(node_state, node);
-                break;
-            }
-
-            // Read an n-ary expression
-            case proto::NodeType::OBJECT_SQL_NARY_EXPRESSION: {
-                auto attrs = attribute_index.Load(ast.subspan(node.children_begin_or_value(), node.children_count()));
-                auto op_node = attrs[proto::AttributeKey::SQL_EXPRESSION_OPERATOR];
-
-                // Get arg nodes
-                auto args_node = attrs[proto::AttributeKey::SQL_EXPRESSION_ARGS];
-                size_t args_begin = 0;
-                size_t args_count = 0;
-                if (args_node && args_node->node_type() == sx::NodeType::ARRAY) {
-                    args_begin = args_node->children_begin_or_value();
-                    args_count = args_node->children_count();
-                }
-
-                // Has expression operator
-                if (op_node && op_node->node_type() == sx::NodeType::ENUM_SQL_EXPRESSION_OPERATOR) {
-                    auto func = static_cast<proto::ExpressionOperator>(op_node->children_begin_or_value());
-                    switch (func) {
-                        // And operator?
-                        case proto::ExpressionOperator::AND:
-                        case proto::ExpressionOperator::OR:
-                        case proto::ExpressionOperator::XOR:
-                            break;
-
-                        // Comparison operator? - Finish dependencies.
-                        case proto::ExpressionOperator::EQUAL:
-                        case proto::ExpressionOperator::GREATER_EQUAL:
-                        case proto::ExpressionOperator::GREATER_THAN:
-                        case proto::ExpressionOperator::LESS_EQUAL:
-                        case proto::ExpressionOperator::LESS_THAN:
-                        case proto::ExpressionOperator::NOT_EQUAL: {
-                            assert(args_count == 2);
-                            auto qualifies = [&](size_t idx) {
-                                // XXX Should we emit subselect hyperedges?
-                                // nodes[idx].node_type() != proto::NodeType::OBJECT_SQL_SELECT_EXPRESSION;
-                                return node_states[idx].column_references.GetSize() >= 1;
-                            };
-                            if (qualifies(args_begin) && qualifies(args_begin + 1)) {
-                                auto& l = node_states[args_begin];
-                                auto& r = node_states[args_begin + 1];
-                                analyzed.graph_edges.Append(AnalyzedScript::QueryGraphEdge(
-                                    node_id, analyzed.graph_edge_nodes.GetSize(), l.column_references.GetSize(),
-                                    r.column_references.GetSize(), func));
-                                for (auto iter = l.column_references.begin(); iter != l.column_references.end();
-                                     ++iter) {
-                                    analyzed.graph_edge_nodes.Append(
-                                        AnalyzedScript::QueryGraphEdgeNode(iter.GetBufferIndex()));
-                                }
-                                for (auto iter = r.column_references.begin(); iter != r.column_references.end();
-                                     ++iter) {
-                                    analyzed.graph_edge_nodes.Append(
-                                        AnalyzedScript::QueryGraphEdgeNode(iter.GetBufferIndex()));
-                                }
-                            }
-                            break;
-                        }
-
-                        // Other operators
-                        case proto::ExpressionOperator::AT_TIMEZONE:
-                        case proto::ExpressionOperator::BETWEEN_ASYMMETRIC:
-                        case proto::ExpressionOperator::BETWEEN_SYMMETRIC:
-                        case proto::ExpressionOperator::COLLATE:
-                        case proto::ExpressionOperator::DEFAULT:
-                        case proto::ExpressionOperator::DIVIDE:
-                        case proto::ExpressionOperator::GLOB:
-                        case proto::ExpressionOperator::ILIKE:
-                        case proto::ExpressionOperator::IN:
-                        case proto::ExpressionOperator::IS_DISTINCT_FROM:
-                        case proto::ExpressionOperator::IS_FALSE:
-                        case proto::ExpressionOperator::IS_NOT_DISTINCT_FROM:
-                        case proto::ExpressionOperator::IS_NOT_FALSE:
-                        case proto::ExpressionOperator::IS_NOT_OF:
-                        case proto::ExpressionOperator::IS_NOT_TRUE:
-                        case proto::ExpressionOperator::IS_NOT_UNKNOWN:
-                        case proto::ExpressionOperator::IS_NULL:
-                        case proto::ExpressionOperator::IS_OF:
-                        case proto::ExpressionOperator::IS_TRUE:
-                        case proto::ExpressionOperator::IS_UNKNOWN:
-                        case proto::ExpressionOperator::LIKE:
-                        case proto::ExpressionOperator::MINUS:
-                        case proto::ExpressionOperator::MODULUS:
-                        case proto::ExpressionOperator::MULTIPLY:
-                        case proto::ExpressionOperator::NEGATE:
-                        case proto::ExpressionOperator::NOT:
-                        case proto::ExpressionOperator::NOT_BETWEEN_ASYMMETRIC:
-                        case proto::ExpressionOperator::NOT_BETWEEN_SYMMETRIC:
-                        case proto::ExpressionOperator::NOT_GLOB:
-                        case proto::ExpressionOperator::NOT_ILIKE:
-                        case proto::ExpressionOperator::NOT_IN:
-                        case proto::ExpressionOperator::NOT_LIKE:
-                        case proto::ExpressionOperator::NOT_NULL:
-                        case proto::ExpressionOperator::NOT_SIMILAR_TO:
-                        case proto::ExpressionOperator::OVERLAPS:
-                        case proto::ExpressionOperator::PLUS:
-                        case proto::ExpressionOperator::SIMILAR_TO:
-                        case proto::ExpressionOperator::TYPECAST:
-                            break;
-                    }
-                }
-
-                // Merge all child states
-                if (args_node) {
-                    MergeChildStates(node_state, *args_node);
-                }
                 break;
             }
 
@@ -568,13 +466,6 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 break;
             }
 
-            // Preserve state of individual array elements for expression args.
-            case proto::NodeType::ARRAY: {
-                if (node.attribute_key() != proto::AttributeKey::SQL_EXPRESSION_ARGS) {
-                    MergeChildStates(node_state, node);
-                }
-                break;
-            }
             // By default, merge child states into the node state
             default:
                 MergeChildStates(node_state, node);
@@ -630,7 +521,7 @@ void NameResolutionPass::Finish() {
             }
         };
         assign_statment_ids(analyzed.table_references.GetChunks());
-        assign_statment_ids(analyzed.column_references.GetChunks());
+        assign_statment_ids(analyzed.expressions.GetChunks());
     }
 
     // Index the table declarations

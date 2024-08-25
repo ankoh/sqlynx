@@ -8,16 +8,10 @@
                 <external id="256.65536.4294967296" stmt="0" loc="31..44" text="db1.schema1.A" />
                 <external id="257.65537.4294967297" stmt="0" loc="46..59" text="db2.schema2.A" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <external id="256.65536.4294967296.0" stmt="0" loc="66..67" text="a" />
                 <external id="257.65537.4294967297.0" stmt="0" loc="70..71" text="c" />
-            </column-references>
-            <query-graph>
-                <edge op="EQUAL" loc="66..71" text="a = c">
-                    <node side="0" ref="0" />
-                    <node side="1" ref="1" />
-                </edge>
-            </query-graph>
+            </named-expressions>
         </script>
         <catalog database="db3" schema="schema3">
             <script id="1">
@@ -47,16 +41,10 @@
                 <external id="256.65536.4294967296" stmt="0" loc="31..44" text="db1.schema1.A" />
                 <external id="257.65537.4294967297" stmt="0" loc="46..59" text="db2.schema2.A" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <external id="256.65536.4294967296.0" stmt="0" loc="66..67" text="a" />
                 <external id="257.65537.4294967297.0" stmt="0" loc="70..71" text="c" />
-            </column-references>
-            <query-graph>
-                <edge op="EQUAL" loc="66..71" text="a = c">
-                    <node side="0" ref="0" />
-                    <node side="1" ref="1" />
-                </edge>
-            </query-graph>
+            </named-expressions>
         </script>
         <catalog database="db1" schema="schema1">
             <script id="1">
@@ -86,16 +74,10 @@
                 <external id="256.65536.4294967296" stmt="0" loc="31..44" text="db1.schema1.A" />
                 <external id="257.65537.8589934592" stmt="0" loc="46..59" text="db2.schema2.B" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <external id="256.65536.4294967296.0" stmt="0" loc="66..67" text="a" />
                 <external id="257.65537.8589934592.0" stmt="0" loc="70..71" text="c" />
-            </column-references>
-            <query-graph>
-                <edge op="EQUAL" loc="66..71" text="a = c">
-                    <node side="0" ref="0" />
-                    <node side="1" ref="1" />
-                </edge>
-            </query-graph>
+            </named-expressions>
         </script>
         <catalog database="db1" schema="schema1">
             <script id="1">
@@ -131,16 +113,10 @@
                 <external id="256.65536.4294967296" stmt="0" loc="31..44" text="db1.schema1.A" />
                 <external id="257.65537.8589934592" stmt="0" loc="46..59" text="db2.schema2.B" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <external id="256.65536.4294967296.0" stmt="0" loc="66..67" text="a" />
                 <external id="257.65537.8589934592.0" stmt="0" loc="70..71" text="c" />
-            </column-references>
-            <query-graph>
-                <edge op="EQUAL" loc="66..71" text="a = c">
-                    <node side="0" ref="0" />
-                    <node side="1" ref="1" />
-                </edge>
-            </query-graph>
+            </named-expressions>
         </script>
         <catalog>
             <script id="1">
@@ -177,10 +153,10 @@
                 <external id="256.65536.4294967296" stmt="0" loc="31..44" text="db1.schema1.A" />
                 <external id="256.65536.4294967296" stmt="1" loc="88..101" text="db1.schema1.A" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <external id="256.65536.4294967296.0" stmt="0" loc="51..52" text="a" />
                 <unresolved stmt="1" loc="108..109" text="c" />
-            </column-references>
+            </named-expressions>
         </script>
         <catalog>
             <script id="1">

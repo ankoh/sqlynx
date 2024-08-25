@@ -272,7 +272,7 @@ void Completion::PromoteTableNamesForUnresolvedColumns() {
 
     // Collect all unresolved columns in the current script
     std::vector<CatalogEntry::TableColumn> table_columns;
-    analyzed_script.column_references.ForEach([&](size_t i, auto& column_ref) {
+    analyzed_script.expressions.ForEach([&](size_t i, auto& column_ref) {
         // Is unresolved?
         if (column_ref->resolved_catalog_table_id.IsNull()) {
             auto& column_name = column_ref->column_name.column_name.get();
@@ -334,7 +334,7 @@ void Completion::PromoteNearCandidatesInAST() {
     });
 
     // Collect column references in the statement
-    cursor.script.analyzed_script->column_references.ForEach([&](size_t i, auto& column_ref) {
+    cursor.script.analyzed_script->expressions.ForEach([&](size_t i, auto& column_ref) {
         if (column_ref->ast_statement_id.has_value() && column_ref->ast_statement_id.value() == statement_id) {
             mark_as_near(column_ref->column_name.column_name.get().text);
         }
@@ -383,7 +383,7 @@ static proto::CompletionStrategy selectStrategy(const ScriptCursor& cursor) {
         return proto::CompletionStrategy::TABLE_REF;
     }
     // Is a column ref?
-    if (cursor.column_reference_id.has_value()) {
+    if (cursor.expression_id.has_value()) {
         return proto::CompletionStrategy::COLUMN_REF;
     }
     return proto::CompletionStrategy::DEFAULT;

@@ -153,7 +153,7 @@ limit
                 <external id="256.65536.4294967302" stmt="0" loc="211..217" text="nation" />
                 <external id="256.65536.4294967303" stmt="0" loc="227..233" text="region" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <external id="256.65536.4294967297.0" stmt="0" loc="16..25" text="s_acctbal" />
                 <external id="256.65536.4294967297.3" stmt="0" loc="35..41" text="s_name" />
                 <external id="256.65536.4294967302.1" stmt="0" loc="51..57" text="n_name" />
@@ -188,41 +188,7 @@ limit
                 <external id="256.65536.4294967302.1" stmt="0" loc="1042..1048" text="n_name" />
                 <external id="256.65536.4294967297.3" stmt="0" loc="1058..1064" text="s_name" />
                 <external id="256.65536.4294967296.5" stmt="0" loc="1074..1083" text="p_partkey" />
-            </column-references>
-            <query-graph>
-                <edge op="EQUAL" loc="763..785" text="p_partkey ..ps_partkey">
-                    <node side="0" ref="20" />
-                    <node side="1" ref="21" />
-                </edge>
-                <edge op="EQUAL" loc="814..836" text="s_suppkey ..ps_suppkey">
-                    <node side="0" ref="22" />
-                    <node side="1" ref="23" />
-                </edge>
-                <edge op="EQUAL" loc="865..890" text="s_nationke.._nationkey">
-                    <node side="0" ref="24" />
-                    <node side="1" ref="25" />
-                </edge>
-                <edge op="EQUAL" loc="919..944" text="n_regionke.._regionkey">
-                    <node side="0" ref="26" />
-                    <node side="1" ref="27" />
-                </edge>
-                <edge op="EQUAL" loc="248..270" text="p_partkey ..ps_partkey">
-                    <node side="0" ref="8" />
-                    <node side="1" ref="9" />
-                </edge>
-                <edge op="EQUAL" loc="283..305" text="s_suppkey ..ps_suppkey">
-                    <node side="0" ref="10" />
-                    <node side="1" ref="11" />
-                </edge>
-                <edge op="EQUAL" loc="375..400" text="s_nationke.._nationkey">
-                    <node side="0" ref="14" />
-                    <node side="1" ref="15" />
-                </edge>
-                <edge op="EQUAL" loc="413..438" text="n_regionke.._regionkey">
-                    <node side="0" ref="16" />
-                    <node side="1" ref="17" />
-                </edge>
-            </query-graph>
+            </named-expressions>
         </script>
         <catalog>
             <script id="1">
@@ -351,7 +317,7 @@ limit
                 <external id="256.65536.4294967297" stmt="0" loc="163..169" text="orders" />
                 <external id="256.65536.4294967298" stmt="0" loc="179..187" text="lineitem" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <external id="256.65536.4294967298.6" stmt="0" loc="16..26" text="l_orderkey" />
                 <external id="256.65536.4294967298.2" stmt="0" loc="63..73" text="l_discount" />
                 <external id="256.65536.4294967298.3" stmt="0" loc="40..55" text="l_extendedprice" />
@@ -369,17 +335,7 @@ limit
                 <external id="256.65536.4294967297.7" stmt="0" loc="443..457" text="o_shippriority" />
                 <unresolved stmt="0" loc="475..482" text="revenue" />
                 <external id="256.65536.4294967297.3" stmt="0" loc="497..508" text="o_orderdate" />
-            </column-references>
-            <query-graph>
-                <edge op="EQUAL" loc="240..261" text="c_custkey .. o_custkey">
-                    <node side="0" ref="6" />
-                    <node side="1" ref="7" />
-                </edge>
-                <edge op="EQUAL" loc="274..297" text="l_orderkey..o_orderkey">
-                    <node side="0" ref="8" />
-                    <node side="1" ref="9" />
-                </edge>
-            </query-graph>
+            </named-expressions>
         </script>
         <catalog>
             <script id="1">
@@ -461,7 +417,7 @@ order by
                 <external id="256.65536.4294967296" stmt="0" loc="291..299" text="lineitem" />
                 <external id="256.65536.4294967297" stmt="0" loc="78..84" text="orders" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <external id="256.65536.4294967297.5" stmt="0" loc="16..31" text="o_orderpriority" />
                 <external id="256.65536.4294967297.3" stmt="0" loc="99..110" text="o_orderdate" />
                 <external id="256.65536.4294967297.3" stmt="0" loc="144..155" text="o_orderdate" />
@@ -471,17 +427,7 @@ order by
                 <external id="256.65536.4294967296.9" stmt="0" loc="413..426" text="l_receiptdate" />
                 <external id="256.65536.4294967297.5" stmt="0" loc="454..469" text="o_orderpriority" />
                 <external id="256.65536.4294967297.5" stmt="0" loc="487..502" text="o_orderpriority" />
-            </column-references>
-            <query-graph>
-                <edge op="EQUAL" loc="346..369" text="l_orderkey..o_orderkey">
-                    <node side="0" ref="3" />
-                    <node side="1" ref="4" />
-                </edge>
-                <edge op="LESS_THAN" loc="398..426" text="l_commitda..eceiptdate">
-                    <node side="0" ref="5" />
-                    <node side="1" ref="6" />
-                </edge>
-            </query-graph>
+            </named-expressions>
         </script>
         <catalog>
             <script id="1">
@@ -559,7 +505,7 @@ order by
                 <external id="256.65536.4294967302" stmt="0" loc="166..172" text="nation" />
                 <external id="256.65536.4294967303" stmt="0" loc="182..188" text="region" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <external id="256.65536.4294967302.1" stmt="0" loc="16..22" text="n_name" />
                 <external id="256.65536.4294967301.2" stmt="0" loc="59..69" text="l_discount" />
                 <external id="256.65536.4294967301.3" stmt="0" loc="36..51" text="l_extendedprice" />
@@ -580,33 +526,7 @@ order by
                 <external id="256.65536.4294967300.3" stmt="0" loc="494..505" text="o_orderdate" />
                 <external id="256.65536.4294967302.1" stmt="0" loc="543..549" text="n_name" />
                 <unresolved stmt="0" loc="567..574" text="revenue" />
-            </column-references>
-            <query-graph>
-                <edge op="EQUAL" loc="203..224" text="c_custkey .. o_custkey">
-                    <node side="0" ref="3" />
-                    <node side="1" ref="4" />
-                </edge>
-                <edge op="EQUAL" loc="237..260" text="l_orderkey..o_orderkey">
-                    <node side="0" ref="5" />
-                    <node side="1" ref="6" />
-                </edge>
-                <edge op="EQUAL" loc="273..294" text="l_suppkey .. s_suppkey">
-                    <node side="0" ref="7" />
-                    <node side="1" ref="8" />
-                </edge>
-                <edge op="EQUAL" loc="307..332" text="c_nationke.._nationkey">
-                    <node side="0" ref="9" />
-                    <node side="1" ref="10" />
-                </edge>
-                <edge op="EQUAL" loc="345..370" text="s_nationke.._nationkey">
-                    <node side="0" ref="11" />
-                    <node side="1" ref="12" />
-                </edge>
-                <edge op="EQUAL" loc="383..408" text="n_regionke.._regionkey">
-                    <node side="0" ref="13" />
-                    <node side="1" ref="14" />
-                </edge>
-            </query-graph>
+            </named-expressions>
         </script>
         <catalog>
             <script id="1">
@@ -718,14 +638,14 @@ where
             <table-references>
                 <external id="256.65536.4294967296" stmt="0" loc="74..82" text="lineitem" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <external id="256.65536.4294967296.3" stmt="0" loc="20..35" text="l_extendedprice" />
                 <external id="256.65536.4294967296.2" stmt="0" loc="38..48" text="l_discount" />
                 <external id="256.65536.4294967296.11" stmt="0" loc="97..107" text="l_shipdate" />
                 <external id="256.65536.4294967296.11" stmt="0" loc="141..151" text="l_shipdate" />
                 <external id="256.65536.4294967296.2" stmt="0" loc="184..194" text="l_discount" />
                 <external id="256.65536.4294967296.8" stmt="0" loc="243..253" text="l_quantity" />
-            </column-references>
+            </named-expressions>
         </script>
         <catalog>
             <script id="1">
@@ -806,7 +726,7 @@ order by
                 <external id="256.65536.4294967302" stmt="0" loc="548..557" text="nation n1" />
                 <external id="256.65536.4294967302" stmt="0" loc="583..592" text="nation n2" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <unresolved stmt="0" loc="16..27" text="supp_nation" />
                 <unresolved stmt="0" loc="37..48" text="cust_nation" />
                 <unresolved stmt="0" loc="58..64" text="l_year" />
@@ -837,29 +757,7 @@ order by
                 <unresolved stmt="0" loc="1290..1301" text="supp_nation" />
                 <unresolved stmt="0" loc="1311..1322" text="cust_nation" />
                 <unresolved stmt="0" loc="1332..1338" text="l_year" />
-            </column-references>
-            <query-graph>
-                <edge op="EQUAL" loc="639..660" text="s_suppkey .. l_suppkey">
-                    <node side="0" ref="9" />
-                    <node side="1" ref="10" />
-                </edge>
-                <edge op="EQUAL" loc="689..712" text="o_orderkey..l_orderkey">
-                    <node side="0" ref="11" />
-                    <node side="1" ref="12" />
-                </edge>
-                <edge op="EQUAL" loc="741..762" text="c_custkey .. o_custkey">
-                    <node side="0" ref="13" />
-                    <node side="1" ref="14" />
-                </edge>
-                <edge op="EQUAL" loc="791..819" text="s_nationke.._nationkey">
-                    <node side="0" ref="15" />
-                    <node side="1" ref="16" />
-                </edge>
-                <edge op="EQUAL" loc="848..876" text="c_nationke.._nationkey">
-                    <node side="0" ref="17" />
-                    <node side="1" ref="18" />
-                </edge>
-            </query-graph>
+            </named-expressions>
         </script>
         <catalog>
             <script id="1">
@@ -1006,7 +904,7 @@ order by
                 <external id="256.65536.4294967302" stmt="0" loc="617..626" text="nation n2" />
                 <external id="256.65536.4294967303" stmt="0" loc="652..658" text="region" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <unresolved stmt="0" loc="16..22" text="o_year" />
                 <unresolved stmt="0" loc="62..68" text="nation" />
                 <unresolved stmt="0" loc="85..91" text="volume" />
@@ -1034,37 +932,7 @@ order by
                 <external id="256.65536.4294967296.8" stmt="0" loc="1213..1219" text="p_type" />
                 <unresolved stmt="0" loc="1289..1295" text="o_year" />
                 <unresolved stmt="0" loc="1313..1319" text="o_year" />
-            </column-references>
-            <query-graph>
-                <edge op="EQUAL" loc="705..726" text="p_partkey .. l_partkey">
-                    <node side="0" ref="8" />
-                    <node side="1" ref="9" />
-                </edge>
-                <edge op="EQUAL" loc="755..776" text="s_suppkey .. l_suppkey">
-                    <node side="0" ref="10" />
-                    <node side="1" ref="11" />
-                </edge>
-                <edge op="EQUAL" loc="805..828" text="l_orderkey..o_orderkey">
-                    <node side="0" ref="12" />
-                    <node side="1" ref="13" />
-                </edge>
-                <edge op="EQUAL" loc="857..878" text="o_custkey .. c_custkey">
-                    <node side="0" ref="14" />
-                    <node side="1" ref="15" />
-                </edge>
-                <edge op="EQUAL" loc="907..935" text="c_nationke.._nationkey">
-                    <node side="0" ref="16" />
-                    <node side="1" ref="17" />
-                </edge>
-                <edge op="EQUAL" loc="964..992" text="n1.n_regio.._regionkey">
-                    <node side="0" ref="18" />
-                    <node side="1" ref="19" />
-                </edge>
-                <edge op="EQUAL" loc="1068..1096" text="s_nationke.._nationkey">
-                    <node side="0" ref="21" />
-                    <node side="1" ref="22" />
-                </edge>
-            </query-graph>
+            </named-expressions>
         </script>
         <catalog>
             <script id="1">
@@ -1204,7 +1072,7 @@ order by
                 <external id="256.65536.4294967300" stmt="0" loc="495..501" text="orders" />
                 <external id="256.65536.4294967302" stmt="0" loc="527..533" text="nation" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <unresolved stmt="0" loc="16..22" text="nation" />
                 <unresolved stmt="0" loc="32..38" text="o_year" />
                 <unresolved stmt="0" loc="52..58" text="amount" />
@@ -1231,33 +1099,7 @@ order by
                 <unresolved stmt="0" loc="963..969" text="o_year" />
                 <unresolved stmt="0" loc="987..993" text="nation" />
                 <unresolved stmt="0" loc="1003..1009" text="o_year" />
-            </column-references>
-            <query-graph>
-                <edge op="EQUAL" loc="580..601" text="s_suppkey .. l_suppkey">
-                    <node side="0" ref="9" />
-                    <node side="1" ref="10" />
-                </edge>
-                <edge op="EQUAL" loc="630..652" text="ps_suppkey.. l_suppkey">
-                    <node side="0" ref="11" />
-                    <node side="1" ref="12" />
-                </edge>
-                <edge op="EQUAL" loc="681..703" text="ps_partkey.. l_partkey">
-                    <node side="0" ref="13" />
-                    <node side="1" ref="14" />
-                </edge>
-                <edge op="EQUAL" loc="732..753" text="p_partkey .. l_partkey">
-                    <node side="0" ref="15" />
-                    <node side="1" ref="16" />
-                </edge>
-                <edge op="EQUAL" loc="782..805" text="o_orderkey..l_orderkey">
-                    <node side="0" ref="17" />
-                    <node side="1" ref="18" />
-                </edge>
-                <edge op="EQUAL" loc="834..859" text="s_nationke.._nationkey">
-                    <node side="0" ref="19" />
-                    <node side="1" ref="20" />
-                </edge>
-            </query-graph>
+            </named-expressions>
         </script>
         <catalog>
             <script id="1">
@@ -1396,7 +1238,7 @@ limit
                 <external id="256.65536.4294967301" stmt="0" loc="239..247" text="lineitem" />
                 <external id="256.65536.4294967302" stmt="0" loc="257..263" text="nation" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <external id="256.65536.4294967299.3" stmt="0" loc="16..25" text="c_custkey" />
                 <external id="256.65536.4294967299.5" stmt="0" loc="35..41" text="c_name" />
                 <external id="256.65536.4294967301.2" stmt="0" loc="78..88" text="l_discount" />
@@ -1423,21 +1265,7 @@ limit
                 <external id="256.65536.4294967299.1" stmt="0" loc="598..607" text="c_address" />
                 <external id="256.65536.4294967299.2" stmt="0" loc="617..626" text="c_comment" />
                 <unresolved stmt="0" loc="644..651" text="revenue" />
-            </column-references>
-            <query-graph>
-                <edge op="EQUAL" loc="278..299" text="c_custkey .. o_custkey">
-                    <node side="0" ref="9" />
-                    <node side="1" ref="10" />
-                </edge>
-                <edge op="EQUAL" loc="312..335" text="l_orderkey..o_orderkey">
-                    <node side="0" ref="11" />
-                    <node side="1" ref="12" />
-                </edge>
-                <edge op="EQUAL" loc="468..493" text="c_nationke.._nationkey">
-                    <node side="0" ref="16" />
-                    <node side="1" ref="17" />
-                </edge>
-            </query-graph>
+            </named-expressions>
         </script>
         <catalog>
             <script id="1">
@@ -1572,7 +1400,7 @@ order by
                 <external id="256.65536.4294967296" stmt="0" loc="111..119" text="supplier" />
                 <external id="256.65536.4294967298" stmt="0" loc="129..135" text="nation" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <external id="256.65536.4294967297.2" stmt="0" loc="16..26" text="ps_partkey" />
                 <external id="256.65536.4294967297.4" stmt="0" loc="40..53" text="ps_supplycost" />
                 <external id="256.65536.4294967297.0" stmt="0" loc="56..67" text="ps_availqty" />
@@ -1592,25 +1420,7 @@ order by
                 <external id="256.65536.4294967298.2" stmt="0" loc="722..733" text="n_nationkey" />
                 <external id="256.65536.4294967298.1" stmt="0" loc="770..776" text="n_name" />
                 <unresolved stmt="0" loc="824..831" text="&quot;value&quot;" />
-            </column-references>
-            <query-graph>
-                <edge op="EQUAL" loc="150..172" text="ps_suppkey.. s_suppkey">
-                    <node side="0" ref="3" />
-                    <node side="1" ref="4" />
-                </edge>
-                <edge op="EQUAL" loc="185..210" text="s_nationke.._nationkey">
-                    <node side="0" ref="5" />
-                    <node side="1" ref="6" />
-                </edge>
-                <edge op="EQUAL" loc="649..671" text="ps_suppkey.. s_suppkey">
-                    <node side="0" ref="13" />
-                    <node side="1" ref="14" />
-                </edge>
-                <edge op="EQUAL" loc="708..733" text="s_nationke.._nationkey">
-                    <node side="0" ref="15" />
-                    <node side="1" ref="16" />
-                </edge>
-            </query-graph>
+            </named-expressions>
         </script>
         <catalog>
             <script id="1">
@@ -1682,7 +1492,7 @@ order by
                 <external id="256.65536.4294967300" stmt="0" loc="458..464" text="orders" />
                 <external id="256.65536.4294967301" stmt="0" loc="474..482" text="lineitem" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <external id="256.65536.4294967301.13" stmt="0" loc="16..26" text="l_shipmode" />
                 <external id="256.65536.4294967300.5" stmt="0" loc="66..81" text="o_orderpriority" />
                 <external id="256.65536.4294967300.5" stmt="0" loc="122..137" text="o_orderpriority" />
@@ -1699,21 +1509,7 @@ order by
                 <external id="256.65536.4294967301.9" stmt="0" loc="702..715" text="l_receiptdate" />
                 <external id="256.65536.4294967301.13" stmt="0" loc="753..763" text="l_shipmode" />
                 <external id="256.65536.4294967301.13" stmt="0" loc="781..791" text="l_shipmode" />
-            </column-references>
-            <query-graph>
-                <edge op="EQUAL" loc="497..520" text="o_orderkey..l_orderkey">
-                    <node side="0" ref="5" />
-                    <node side="1" ref="6" />
-                </edge>
-                <edge op="LESS_THAN" loc="576..604" text="l_commitda..eceiptdate">
-                    <node side="0" ref="8" />
-                    <node side="1" ref="9" />
-                </edge>
-                <edge op="LESS_THAN" loc="617..642" text="l_shipdate..commitdate">
-                    <node side="0" ref="10" />
-                    <node side="1" ref="11" />
-                </edge>
-            </query-graph>
+            </named-expressions>
         </script>
         <catalog>
             <script id="1">
@@ -1837,7 +1633,7 @@ order by
                 <external id="256.65536.4294967296" stmt="0" loc="222..230" text="customer" />
                 <external id="256.65536.4294967297" stmt="0" loc="247..253" text="orders" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <unresolved stmt="0" loc="16..23" text="c_count" />
                 <external id="256.65536.4294967296.3" stmt="0" loc="116..125" text="c_custkey" />
                 <external id="256.65536.4294967297.4" stmt="0" loc="157..167" text="o_orderkey" />
@@ -1848,13 +1644,7 @@ order by
                 <unresolved stmt="0" loc="485..492" text="c_count" />
                 <unresolved stmt="0" loc="510..518" text="custdist" />
                 <unresolved stmt="0" loc="533..540" text="c_count" />
-            </column-references>
-            <query-graph>
-                <edge op="EQUAL" loc="289..310" text="c_custkey .. o_custkey">
-                    <node side="0" ref="3" />
-                    <node side="1" ref="4" />
-                </edge>
-            </query-graph>
+            </named-expressions>
         </script>
         <catalog>
             <script id="1">
@@ -1909,7 +1699,7 @@ where
                 <external id="256.65536.4294967301" stmt="0" loc="248..256" text="lineitem" />
                 <external id="256.65536.4294967296" stmt="0" loc="266..270" text="part" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <external id="256.65536.4294967296.8" stmt="0" loc="55..61" text="p_type" />
                 <external id="256.65536.4294967301.2" stmt="0" loc="128..138" text="l_discount" />
                 <external id="256.65536.4294967301.3" stmt="0" loc="105..120" text="l_extendedprice" />
@@ -1919,13 +1709,7 @@ where
                 <external id="256.65536.4294967296.5" stmt="0" loc="297..306" text="p_partkey" />
                 <external id="256.65536.4294967301.11" stmt="0" loc="319..329" text="l_shipdate" />
                 <external id="256.65536.4294967301.11" stmt="0" loc="363..373" text="l_shipdate" />
-            </column-references>
-            <query-graph>
-                <edge op="EQUAL" loc="285..306" text="l_partkey .. p_partkey">
-                    <node side="0" ref="5" />
-                    <node side="1" ref="6" />
-                </edge>
-            </query-graph>
+            </named-expressions>
         </script>
         <catalog>
             <script id="1">
@@ -2061,7 +1845,7 @@ order by
                 <external id="256.65536.4294967297" stmt="0" loc="303..311" text="supplier" />
                 <unresolved stmt="0" loc="314..321" text="revenue" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <external id="256.65536.4294967301.14" stmt="0" loc="29..38" text="l_suppkey" />
                 <external id="256.65536.4294967301.2" stmt="0" loc="84..94" text="l_discount" />
                 <external id="256.65536.4294967301.3" stmt="0" loc="61..76" text="l_extendedprice" />
@@ -2078,13 +1862,7 @@ order by
                 <unresolved stmt="0" loc="392..405" text="total_revenue" />
                 <unresolved stmt="0" loc="358..371" text="total_revenue" />
                 <external id="256.65536.4294967297.6" stmt="0" loc="438..447" text="s_suppkey" />
-            </column-references>
-            <query-graph>
-                <edge op="EQUAL" loc="329..352" text="s_suppkey ..upplier_no">
-                    <node side="0" ref="11" />
-                    <node side="1" ref="12" />
-                </edge>
-            </query-graph>
+            </named-expressions>
         </script>
         <catalog>
             <script id="1">
@@ -2219,7 +1997,7 @@ order by
                 <external id="256.65536.4294967298" stmt="0" loc="121..129" text="partsupp" />
                 <external id="256.65536.4294967296" stmt="0" loc="139..143" text="part" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <external id="256.65536.4294967296.0" stmt="0" loc="16..23" text="p_brand" />
                 <external id="256.65536.4294967296.8" stmt="0" loc="33..39" text="p_type" />
                 <external id="256.65536.4294967296.7" stmt="0" loc="49..55" text="p_size" />
@@ -2239,13 +2017,7 @@ order by
                 <external id="256.65536.4294967296.0" stmt="0" loc="654..661" text="p_brand" />
                 <external id="256.65536.4294967296.8" stmt="0" loc="671..677" text="p_type" />
                 <external id="256.65536.4294967296.7" stmt="0" loc="687..693" text="p_size" />
-            </column-references>
-            <query-graph>
-                <edge op="EQUAL" loc="158..180" text="p_partkey ..ps_partkey">
-                    <node side="0" ref="4" />
-                    <node side="1" ref="5" />
-                </edge>
-            </query-graph>
+            </named-expressions>
         </script>
         <catalog>
             <script id="1">
@@ -2367,7 +2139,7 @@ where
                 <external id="256.65536.4294967297" stmt="0" loc="70..78" text="lineitem" />
                 <external id="256.65536.4294967296" stmt="0" loc="88..92" text="part" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <external id="256.65536.4294967297.3" stmt="0" loc="20..35" text="l_extendedprice" />
                 <external id="256.65536.4294967296.5" stmt="0" loc="107..116" text="p_partkey" />
                 <external id="256.65536.4294967297.7" stmt="0" loc="119..128" text="l_partkey" />
@@ -2377,17 +2149,7 @@ where
                 <external id="256.65536.4294967297.7" stmt="0" loc="394..403" text="l_partkey" />
                 <external id="256.65536.4294967296.5" stmt="0" loc="406..415" text="p_partkey" />
                 <external id="256.65536.4294967297.8" stmt="0" loc="210..220" text="l_quantity" />
-            </column-references>
-            <query-graph>
-                <edge op="EQUAL" loc="394..415" text="l_partkey .. p_partkey">
-                    <node side="0" ref="6" />
-                    <node side="1" ref="7" />
-                </edge>
-                <edge op="EQUAL" loc="107..128" text="p_partkey .. l_partkey">
-                    <node side="0" ref="1" />
-                    <node side="1" ref="2" />
-                </edge>
-            </query-graph>
+            </named-expressions>
         </script>
         <catalog>
             <script id="1">
@@ -2473,7 +2235,7 @@ limit
                 <external id="256.65536.4294967300" stmt="0" loc="161..167" text="orders" />
                 <external id="256.65536.4294967301" stmt="0" loc="177..185" text="lineitem" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <external id="256.65536.4294967299.5" stmt="0" loc="16..22" text="c_name" />
                 <external id="256.65536.4294967299.3" stmt="0" loc="32..41" text="c_custkey" />
                 <external id="256.65536.4294967300.4" stmt="0" loc="51..61" text="o_orderkey" />
@@ -2495,17 +2257,7 @@ limit
                 <external id="256.65536.4294967300.8" stmt="0" loc="622..634" text="o_totalprice" />
                 <external id="256.65536.4294967300.8" stmt="0" loc="652..664" text="o_totalprice" />
                 <external id="256.65536.4294967300.3" stmt="0" loc="679..690" text="o_orderdate" />
-            </column-references>
-            <query-graph>
-                <edge op="EQUAL" loc="471..492" text="c_custkey .. o_custkey">
-                    <node side="0" ref="10" />
-                    <node side="1" ref="11" />
-                </edge>
-                <edge op="EQUAL" loc="505..528" text="o_orderkey..l_orderkey">
-                    <node side="0" ref="12" />
-                    <node side="1" ref="13" />
-                </edge>
-            </query-graph>
+            </named-expressions>
         </script>
         <catalog>
             <script id="1">
@@ -2644,7 +2396,7 @@ where
                 <external id="256.65536.4294967301" stmt="0" loc="79..87" text="lineitem" />
                 <external id="256.65536.4294967296" stmt="0" loc="97..101" text="part" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <external id="256.65536.4294967301.2" stmt="0" loc="42..52" text="l_discount" />
                 <external id="256.65536.4294967301.3" stmt="0" loc="20..35" text="l_extendedprice" />
                 <external id="256.65536.4294967296.5" stmt="0" loc="134..143" text="p_partkey" />
@@ -2674,21 +2426,7 @@ where
                 <external id="256.65536.4294967296.7" stmt="0" loc="1168..1174" text="p_size" />
                 <external id="256.65536.4294967301.13" stmt="0" loc="1212..1222" text="l_shipmode" />
                 <external id="256.65536.4294967301.12" stmt="0" loc="1265..1279" text="l_shipinstruct" />
-            </column-references>
-            <query-graph>
-                <edge op="EQUAL" loc="134..155" text="p_partkey .. l_partkey">
-                    <node side="0" ref="2" />
-                    <node side="1" ref="3" />
-                </edge>
-                <edge op="EQUAL" loc="536..557" text="p_partkey .. l_partkey">
-                    <node side="0" ref="11" />
-                    <node side="1" ref="12" />
-                </edge>
-                <edge op="EQUAL" loc="944..965" text="p_partkey .. l_partkey">
-                    <node side="0" ref="20" />
-                    <node side="1" ref="21" />
-                </edge>
-            </query-graph>
+            </named-expressions>
         </script>
         <catalog>
             <script id="1">
@@ -2832,7 +2570,7 @@ order by
                 <external id="256.65536.4294967297" stmt="0" loc="55..63" text="supplier" />
                 <external id="256.65536.4294967302" stmt="0" loc="73..79" text="nation" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <external id="256.65536.4294967297.3" stmt="0" loc="16..22" text="s_name" />
                 <external id="256.65536.4294967297.1" stmt="0" loc="32..41" text="s_address" />
                 <external id="256.65536.4294967298.3" stmt="0" loc="156..166" text="ps_suppkey" />
@@ -2852,21 +2590,7 @@ order by
                 <external id="256.65536.4294967302.2" stmt="0" loc="1192..1203" text="n_nationkey" />
                 <external id="256.65536.4294967302.1" stmt="0" loc="1216..1222" text="n_name" />
                 <external id="256.65536.4294967297.3" stmt="0" loc="1251..1257" text="s_name" />
-            </column-references>
-            <query-graph>
-                <edge op="EQUAL" loc="889..911" text="l_partkey ..ps_partkey">
-                    <node side="0" ref="7" />
-                    <node side="1" ref="8" />
-                </edge>
-                <edge op="EQUAL" loc="956..978" text="l_suppkey ..ps_suppkey">
-                    <node side="0" ref="9" />
-                    <node side="1" ref="10" />
-                </edge>
-                <edge op="EQUAL" loc="1178..1203" text="s_nationke.._nationkey">
-                    <node side="0" ref="15" />
-                    <node side="1" ref="16" />
-                </edge>
-            </query-graph>
+            </named-expressions>
         </script>
         <catalog>
             <script id="1">
@@ -3015,7 +2739,7 @@ limit
                 <external id="256.65536.4294967300" stmt="0" loc="104..110" text="orders" />
                 <external id="256.65536.4294967302" stmt="0" loc="120..126" text="nation" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <external id="256.65536.4294967297.3" stmt="0" loc="16..22" text="s_name" />
                 <external id="256.65536.4294967297.6" stmt="0" loc="141..150" text="s_suppkey" />
                 <external id="256.65536.4294967301.14" stmt="0" loc="153..165" text="l1.l_suppkey" />
@@ -3040,45 +2764,7 @@ limit
                 <external id="256.65536.4294967297.3" stmt="0" loc="982..988" text="s_name" />
                 <unresolved stmt="0" loc="1006..1013" text="numwait" />
                 <external id="256.65536.4294967297.3" stmt="0" loc="1028..1034" text="s_name" />
-            </column-references>
-            <query-graph>
-                <edge op="EQUAL" loc="457..486" text="l2.l_order..l_orderkey">
-                    <node side="0" ref="8" />
-                    <node side="1" ref="9" />
-                </edge>
-                <edge op="NOT_EQUAL" loc="515..543" text="l2.l_suppk...l_suppkey">
-                    <node side="0" ref="10" />
-                    <node side="1" ref="11" />
-                </edge>
-                <edge op="EQUAL" loc="731..760" text="l3.l_order..l_orderkey">
-                    <node side="0" ref="12" />
-                    <node side="1" ref="13" />
-                </edge>
-                <edge op="NOT_EQUAL" loc="789..817" text="l3.l_suppk...l_suppkey">
-                    <node side="0" ref="14" />
-                    <node side="1" ref="15" />
-                </edge>
-                <edge op="GREATER_THAN" loc="846..880" text="l3.l_recei..commitdate">
-                    <node side="0" ref="16" />
-                    <node side="1" ref="17" />
-                </edge>
-                <edge op="EQUAL" loc="141..165" text="s_suppkey ...l_suppkey">
-                    <node side="0" ref="1" />
-                    <node side="1" ref="2" />
-                </edge>
-                <edge op="EQUAL" loc="178..204" text="o_orderkey..l_orderkey">
-                    <node side="0" ref="3" />
-                    <node side="1" ref="4" />
-                </edge>
-                <edge op="GREATER_THAN" loc="249..283" text="l1.l_recei..commitdate">
-                    <node side="0" ref="6" />
-                    <node side="1" ref="7" />
-                </edge>
-                <edge op="EQUAL" loc="903..928" text="s_nationke.._nationkey">
-                    <node side="0" ref="18" />
-                    <node side="1" ref="19" />
-                </edge>
-            </query-graph>
+            </named-expressions>
         </script>
         <catalog>
             <script id="1">
@@ -3220,7 +2906,7 @@ order by
                 <external id="256.65536.4294967300" stmt="0" loc="1157..1163" text="orders" />
                 <external id="256.65536.4294967299" stmt="0" loc="280..288" text="customer" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <unresolved stmt="0" loc="16..25" text="cntrycode" />
                 <unresolved stmt="0" loc="68..77" text="c_acctbal" />
                 <external id="256.65536.4294967299.7" stmt="0" loc="165..172" text="c_phone" />
@@ -3234,13 +2920,7 @@ order by
                 <external id="256.65536.4294967299.3" stmt="0" loc="1254..1263" text="c_custkey" />
                 <unresolved stmt="0" loc="1329..1338" text="cntrycode" />
                 <unresolved stmt="0" loc="1356..1365" text="cntrycode" />
-            </column-references>
-            <query-graph>
-                <edge op="EQUAL" loc="1242..1263" text="o_custkey .. c_custkey">
-                    <node side="0" ref="9" />
-                    <node side="1" ref="10" />
-                </edge>
-            </query-graph>
+            </named-expressions>
         </script>
         <catalog>
             <script id="1">

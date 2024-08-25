@@ -119,33 +119,19 @@ interface DecorationInfo {
 function buildDecorationsFromCursor(
     scriptKey: SQLynxScriptKey | null,
     scriptBuffers: SQLynxScriptBuffers,
-    scriptCursor: sqlynx.proto.ScriptCursorInfoT | null,
+    _scriptCursor: sqlynx.proto.ScriptCursorInfoT | null,
     derivedFocus: DerivedFocus | null,
 ): DecorationSet {
     const builder = new RangeSetBuilder<Decoration>();
     const scanned = scriptBuffers.scanned?.read() ?? null;
     const parsed = scriptBuffers.parsed?.read() ?? null;
     const analyzed = scriptBuffers.analyzed?.read() ?? null;
-    const queryEdgeId = scriptCursor?.queryEdgeId ?? null;
     const decorations: DecorationInfo[] = [];
 
     if (parsed === null || analyzed === null) {
         return builder.finish();
     }
-    if (queryEdgeId !== null && queryEdgeId < analyzed.graphEdgesLength()) {
-        const edge = analyzed.graphEdges(queryEdgeId)!;
-        const edgeAstNodeId = edge.astNodeId();
-        if (edgeAstNodeId < parsed.nodesLength()) {
-            const edgeAstNode = parsed.nodes(edgeAstNodeId)!;
-            const location = edgeAstNode?.location()!;
-            decorations.push({
-                from: location.offset(),
-                to: location.offset() + location.length(),
-                decoration: FocusedQueryGraphEdgeDecoration,
-            });
-        }
-    }
-    const tmpColRef = new sqlynx.proto.ColumnReference();
+    const tmpNamedExpr = new sqlynx.proto.Expression();
     const tmpTblRef = new sqlynx.proto.TableReference();
     const tmpNode = new sqlynx.proto.Node();
     const tmpLoc = new sqlynx.proto.Location();
@@ -160,11 +146,11 @@ function buildDecorationsFromCursor(
                 continue;
             }
             // XXX invalidate focused table refs at write front
-            if (objectId >= analyzed.columnReferencesLength()) {
+            if (objectId >= analyzed.expressionsLength()) {
                 continue;
             }
-            const columnRef = analyzed.columnReferences(objectId, tmpColRef)!;
-            const astNodeId = columnRef.astNodeId()!;
+            const expr = analyzed.expressions(objectId, tmpNamedExpr)!;
+            const astNodeId = expr.astNodeId()!;
             const astNode = parsed.nodes(astNodeId, tmpNode)!;
             const loc = astNode.location(tmpLoc)!;
             decorations.push({
@@ -184,11 +170,11 @@ function buildDecorationsFromCursor(
                 continue;
             }
             // XXX invalidate focused table refs at write front
-            if (objectId >= analyzed.columnReferencesLength()) {
+            if (objectId >= analyzed.expressionsLength()) {
                 continue;
             }
-            const columnRef = analyzed.columnReferences(objectId, tmpColRef)!;
-            const astNodeId = columnRef.astNodeId()!;
+            const expr = analyzed.expressions(objectId, tmpNamedExpr)!;
+            const astNodeId = expr.astNodeId()!;
             const astNode = parsed.nodes(astNodeId, tmpNode)!;
             const loc = astNode.location(tmpLoc)!;
             decorations.push({

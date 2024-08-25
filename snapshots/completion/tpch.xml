@@ -7,9 +7,9 @@
             <table-references>
                 <external id="256.65536.4294967301" stmt="0" loc="31..39" text="lineitem" />
             </table-references>
-            <column-references>
+            <named-expressions>
                 <unresolved stmt="0" loc="46..48" text="ke" />
-            </column-references>
+            </named-expressions>
         </script>
         <catalog>
             <script id="1">

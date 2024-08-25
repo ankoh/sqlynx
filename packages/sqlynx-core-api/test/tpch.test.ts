@@ -201,8 +201,7 @@ limit 100
         const analyzedScript = analyzerResult.read();
         expect(analyzedScript.tablesLength()).toEqual(0);
         expect(analyzedScript.tableReferencesLength()).toBeGreaterThan(0);
-        expect(analyzedScript.columnReferencesLength()).toBeGreaterThan(0);
-        expect(analyzedScript.graphEdgesLength()).toEqual(8);
+        expect(analyzedScript.expressionsLength()).toBeGreaterThan(0);
 
         analyzerResult.delete();
         parserResult.delete();

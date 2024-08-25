@@ -171,14 +171,17 @@ class AnalyzedScript : public CatalogEntry {
         std::optional<uint32_t> ast_statement_id;
         /// The AST scope root in the target script
         std::optional<uint32_t> ast_scope_root;
-        /// The table name, may refer to different catalog entry
-        QualifiedTableName table_name;
         /// The alias name, may refer to different catalog entry
         std::optional<std::reference_wrapper<RegisteredName>> alias_name;
+
+        // Case 1: Relation expression
+
+        /// The table name, may refer to different catalog entry
+        QualifiedTableName table_name;
         /// The resolved database id in the catalog
-        CatalogDatabaseID resolved_catalog_database_id;
+        CatalogDatabaseID resolved_catalog_database_id = 0;
         /// The resolved schema id in the catalog
-        CatalogSchemaID resolved_catalog_schema_id;
+        CatalogSchemaID resolved_catalog_schema_id = 0;
         /// The resolved table id in the catalog
         ExternalObjectID resolved_catalog_table_id;
 
@@ -188,16 +191,19 @@ class AnalyzedScript : public CatalogEntry {
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::TableReference> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
-    /// A column reference
-    struct ColumnReference {
-        /// The table reference id
-        ExternalObjectID column_reference_id;
+    /// An expression
+    struct Expression {
+        /// The expression id as (entry_id, reference_index)
+        ExternalObjectID expression_id;
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
         /// The AST statement id in the target script
         std::optional<uint32_t> ast_statement_id;
         /// The AST scope root in the target script
         std::optional<uint32_t> ast_scope_root;
+
+        // Case 1: Column ref
+
         /// The column name, may refer to different catalog entry
         QualifiedColumnName column_name;
         /// The resolved table reference id in the current context
@@ -212,9 +218,9 @@ class AnalyzedScript : public CatalogEntry {
         std::optional<uint32_t> resolved_table_column_id;
 
         /// Constructor
-        ColumnReference(QualifiedColumnName column_name) : column_name(column_name) {}
+        Expression(QualifiedColumnName column_name) : column_name(column_name) {}
         /// Pack as FlatBuffer
-        flatbuffers::Offset<proto::ColumnReference> Pack(flatbuffers::FlatBufferBuilder& builder) const;
+        flatbuffers::Offset<proto::Expression> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
     /// A naming scope
     struct NameScope {
@@ -225,58 +231,30 @@ class AnalyzedScript : public CatalogEntry {
         /// The child scopes
         IntrusiveList<NameScope> child_scopes;
         /// The column references in scope
-        IntrusiveList<AnalyzedScript::ColumnReference> column_references;
+        IntrusiveList<AnalyzedScript::Expression> column_references;
         /// The table references in scope
         IntrusiveList<AnalyzedScript::TableReference> table_references;
         /// The resolved table references
+        /// XXX Resolved named table references
+        /// XXX Resolved unnamed table references
+        /// XXX Should we add a "expression?"
+        ///     Wouldn't matter what the expression does, just sql_opt_indirection from OBJECT_SQL_INDIRECTION
+        /// XXX Should we add a "named subselect?" -> TABLEREF type?
+        /// XXX RESULT_TARGET
+        /// XXX TABLEREF -> JOINED_TABLE
         std::unordered_map<const AnalyzedScript::TableReference*,
                            std::reference_wrapper<const CatalogEntry::TableDeclaration>>
             resolved_table_references;
         /// The resolved table columns
+        /// XXX This can grow really large, we shouldn't do it through registered columns
         std::unordered_map<CatalogEntry::QualifiedColumnName::Key, std::reference_wrapper<const TableColumn>,
                            TupleHasher>
             resolved_table_columns;
     };
-    /// A query graph edge
-    struct QueryGraphEdge {
-        /// The AST node id in the target script
-        std::optional<uint32_t> ast_node_id;
-        /// The begin of the nodes
-        uint32_t nodes_begin;
-        /// The number of nodes on the left
-        uint16_t node_count_left;
-        /// The number of nodes on the right
-        uint16_t node_count_right;
-        /// The expression operator
-        proto::ExpressionOperator expression_operator;
-        /// Constructor
-        QueryGraphEdge(std::optional<uint32_t> ast_node_id = std::nullopt, uint32_t nodes_begin = 0,
-                       uint16_t node_count_left = 0, uint16_t node_count_right = 0,
-                       proto::ExpressionOperator op = proto::ExpressionOperator::DEFAULT)
-            : ast_node_id(ast_node_id),
-              nodes_begin(nodes_begin),
-              node_count_left(node_count_left),
-              node_count_right(node_count_right),
-              expression_operator(op) {}
-        /// Create FlatBuffer
-        operator proto::QueryGraphEdge() const {
-            return proto::QueryGraphEdge{ast_node_id.value_or(PROTO_NULL_U32), nodes_begin, node_count_left,
-                                         node_count_right, expression_operator};
-        }
-    };
-    /// A query graph edge node
-    struct QueryGraphEdgeNode {
-        /// The column reference id
-        uint32_t column_reference_id;
-        /// Constructor
-        QueryGraphEdgeNode(uint32_t column_ref_id = 0) : column_reference_id(column_ref_id) {}
-        /// Create FlatBuffer
-        operator proto::QueryGraphEdgeNode() const { return proto::QueryGraphEdgeNode{column_reference_id}; }
-    };
 
-    /// The defalt database name
+    /// The default database name
     const RegisteredName default_database_name;
-    /// The defalt schema name
+    /// The default schema name
     const RegisteredName default_schema_name;
 
     /// The parsed script
@@ -285,14 +263,10 @@ class AnalyzedScript : public CatalogEntry {
     Catalog::Version catalog_version;
     /// The table references
     ChunkBuffer<IntrusiveList<TableReference>::Node, 16> table_references;
-    /// The column references
-    ChunkBuffer<IntrusiveList<ColumnReference>::Node, 16> column_references;
+    /// The expressions
+    ChunkBuffer<IntrusiveList<Expression>::Node, 16> expressions;
     /// The name scopes
     ChunkBuffer<IntrusiveList<NameScope>::Node, 16> name_scopes;
-    /// The join edges
-    ChunkBuffer<QueryGraphEdge, 16> graph_edges;
-    /// The join edge nodes
-    ChunkBuffer<QueryGraphEdgeNode, 16> graph_edge_nodes;
 
    public:
     /// Constructor
@@ -326,10 +300,8 @@ struct ScriptCursor {
     std::optional<size_t> table_id;
     /// The current table reference_id (if any)
     std::optional<size_t> table_reference_id;
-    /// The current column reference_id (if any)
-    std::optional<size_t> column_reference_id;
-    /// The current query edge id (if any)
-    std::optional<size_t> query_edge_id;
+    /// The current expression id (if any)
+    std::optional<size_t> expression_id;
 
     /// Move the cursor to a script at a position
     ScriptCursor(const Script& script, size_t text_offset);

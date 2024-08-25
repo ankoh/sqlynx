@@ -1,9 +1,6 @@
 #pragma once
 
-#include <charconv>
-#include <optional>
 #include <string_view>
-#include <unordered_set>
 
 #include "sqlynx/external.h"
 #include "sqlynx/parser/parser.h"

@@ -87,34 +87,13 @@ void test(Script& script, size_t text_offset, ExpectedScriptCursor expected) {
     }
     // Check column reference
     if (expected.column_ref_name.has_value()) {
-        ASSERT_TRUE(cursor->column_reference_id.has_value());
-        ASSERT_LT(*cursor->column_reference_id, script.analyzed_script->column_references.GetSize());
-        auto& column_ref = script.analyzed_script->column_references[*cursor->column_reference_id];
+        ASSERT_TRUE(cursor->expression_id.has_value());
+        ASSERT_LT(*cursor->expression_id, script.analyzed_script->expressions.GetSize());
+        auto& column_ref = script.analyzed_script->expressions[*cursor->expression_id];
         auto column_name = print_name(script, column_ref->column_name);
         ASSERT_EQ(column_name, expected.column_ref_name);
     } else {
-        ASSERT_FALSE(cursor->column_reference_id.has_value());
-    }
-    // Check graph edge
-    if (!expected.graph_from.empty() || !expected.graph_to.empty()) {
-        ASSERT_TRUE(cursor->query_edge_id.has_value());
-        auto& edge = script.analyzed_script->graph_edges[*cursor->query_edge_id];
-        std::vector<std::string> from;
-        std::vector<std::string> to;
-        for (size_t i = 0; i < edge.node_count_left; ++i) {
-            auto graph_node = script.analyzed_script->graph_edge_nodes[edge.nodes_begin + i];
-            auto& col_ref = script.analyzed_script->column_references[graph_node.column_reference_id];
-            from.push_back(print_name(script, col_ref->column_name));
-        }
-        for (size_t i = 0; i < edge.node_count_right; ++i) {
-            auto graph_node = script.analyzed_script->graph_edge_nodes[edge.nodes_begin + edge.node_count_left + i];
-            auto& col_ref = script.analyzed_script->column_references[graph_node.column_reference_id];
-            to.push_back(print_name(script, col_ref->column_name));
-        }
-        ASSERT_EQ(from, expected.graph_from);
-        ASSERT_EQ(to, expected.graph_to);
-    } else {
-        ASSERT_FALSE(cursor->query_edge_id.has_value());
+        ASSERT_FALSE(cursor->expression_id.has_value());
     }
 }
 
