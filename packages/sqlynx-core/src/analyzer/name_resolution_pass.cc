@@ -349,7 +349,6 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
 
         // Check node type
         switch (node.node_type()) {
-            // Read a column definition
             case proto::NodeType::OBJECT_SQL_COLUMN_DEF: {
                 auto children = ast.subspan(node.children_begin_or_value(), node.children_count());
                 auto attrs = attribute_index.Load(children);
@@ -368,7 +367,6 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 break;
             }
 
-            // Read a column reference
             case proto::NodeType::OBJECT_SQL_COLUMN_REF: {
                 // Read column ref path
                 auto children = ast.subspan(node.children_begin_or_value(), node.children_count());
@@ -392,7 +390,6 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 break;
             }
 
-            // Read a table reference
             case proto::NodeType::OBJECT_SQL_TABLEREF: {
                 // Read a table ref name
                 auto children = ast.subspan(node.children_begin_or_value(), node.children_count());
@@ -429,14 +426,29 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 break;
             }
 
-            // Finish select statement
+            case proto::NodeType::OBJECT_SQL_RESULT_TARGET: {
+                // // Read result target
+                // auto children = ast.subspan(node.children_begin_or_value(), node.children_count());
+                // auto attrs = attribute_index.Load(children);
+                //
+                // if (auto star_node = attrs[proto::AttributeKey::SQL_RESULT_TARGET_STAR]) {
+                //
+                // }
+                // // Specifies a target name?
+                // if (auto name_node = attrs[proto::AttributeKey::SQL_RESULT_TARGET_NAME]) {
+                // }
+                //
+                // XXX Register result targets
+                MergeChildStates(node_state, node);
+                break;
+            }
+
             case proto::NodeType::OBJECT_SQL_SELECT: {
                 MergeChildStates(node_state, node);
                 CreateScope(node_state, node_id);
                 break;
             }
 
-            // Finish create table statement
             case proto::NodeType::OBJECT_SQL_CREATE: {
                 auto attrs = attribute_index.Load(ast.subspan(node.children_begin_or_value(), node.children_count()));
                 const proto::Node* name_node = attrs[proto::AttributeKey::SQL_CREATE_TABLE_NAME];
@@ -484,7 +496,6 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 break;
             }
 
-            // Finish create table statement
             case proto::NodeType::OBJECT_SQL_CREATE_AS: {
                 auto attrs = attribute_index.Load(ast.subspan(node.children_begin_or_value(), node.children_count()));
                 auto name_node = attrs[proto::AttributeKey::SQL_CREATE_TABLE_NAME];

@@ -235,6 +235,23 @@ class AnalyzedScript : public CatalogEntry {
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::Expression> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
+    /// A result target
+    struct ResultTarget {
+        /// A star result target
+        struct Star {};
+        /// An unnamed result target
+        struct Unnamed {
+            /// The expression
+            uint32_t expression_id;
+        };
+        /// A named result target
+        struct Named {
+            /// The expression
+            uint32_t expression_id;
+        };
+        /// An inner
+        std::variant<Star, Unnamed, Named> inner;
+    };
     /// A naming scope
     struct NameScope {
         /// The scope root
@@ -243,11 +260,13 @@ class AnalyzedScript : public CatalogEntry {
         NameScope* parent_scope;
         /// The child scopes
         IntrusiveList<NameScope> child_scopes;
-        /// The column references in scope
+        /// The column references in this scope
         IntrusiveList<Expression> expressions;
-        /// The table references in scope
+        /// The table references in this scope
         IntrusiveList<TableReference> table_references;
 
+        /// The result targets in this scope
+        std::vector<ResultTarget> result_targets;
         /// The named tables in scope
         std::unordered_map<std::string_view, std::reference_wrapper<const CatalogEntry::TableDeclaration>> named_tables;
         /// The unnamed tables in scope
