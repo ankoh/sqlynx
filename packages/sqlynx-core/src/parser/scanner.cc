@@ -1,6 +1,6 @@
 #include "sqlynx/parser/scanner.h"
 
-#include <regex>
+#include <charconv>
 
 #include "sqlynx/external.h"
 #include "sqlynx/parser/grammar/keywords.h"

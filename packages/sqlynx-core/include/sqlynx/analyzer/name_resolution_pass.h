@@ -24,7 +24,7 @@ class NameResolutionPass : public PassManager::LTRPass {
         /// The table references in scope
         IntrusiveList<AnalyzedScript::TableReference> table_references;
         /// The column references in scope
-        IntrusiveList<AnalyzedScript::ColumnReference> column_references;
+        IntrusiveList<AnalyzedScript::Expression> column_references;
 
         /// Clear a node state
         void Clear();
@@ -84,9 +84,9 @@ class NameResolutionPass : public PassManager::LTRPass {
     AnalyzedScript::NameScope& CreateScope(NodeState& target, uint32_t scope_root_node);
 
     using ColumnRefsByAlias =
-        ankerl::unordered_dense::map<std::string_view, std::reference_wrapper<AnalyzedScript::ColumnReference>>;
+        ankerl::unordered_dense::map<std::string_view, std::reference_wrapper<AnalyzedScript::Expression>>;
     using ColumnRefsByName =
-        ankerl::unordered_dense::map<std::string_view, std::reference_wrapper<AnalyzedScript::ColumnReference>>;
+        ankerl::unordered_dense::map<std::string_view, std::reference_wrapper<AnalyzedScript::Expression>>;
 
     /// Resolve all table refs in a scope
     void ResolveTableRefsInScope(AnalyzedScript::NameScope& scope);
