@@ -12,10 +12,10 @@ runs:
       with:
         path: |
           ./llvm
-        key: llvm-17
+        key: llvm-18
 
     - name: Install llvm
       uses: KyleMayes/install-llvm-action@v2
       with:
-        version: "17"
+        version: "18"
         cached: ${{ steps.cache-llvm.outputs.cache-hit }}
