@@ -324,44 +324,43 @@ flatbuffers::Offset<proto::TableReference> AnalyzedScript::TableReference::Pack(
 
 /// Pack as FlatBuffer
 flatbuffers::Offset<proto::Expression> AnalyzedScript::Expression::Pack(flatbuffers::FlatBufferBuilder& builder) const {
+    std::optional<proto::ExpressionSubType> inner_type;
+    flatbuffers::Offset<void> inner_ofs;
     switch (inner.index()) {
-        case 0: {
-            proto::ExpressionBuilder out{builder};
-            out.add_ast_node_id(ast_node_id.value_or(std::numeric_limits<uint32_t>::max()));
-            out.add_ast_scope_root(ast_scope_root.value_or(std::numeric_limits<uint32_t>::max()));
-            out.add_ast_statement_id(ast_statement_id.value_or(std::numeric_limits<uint32_t>::max()));
-            return out.Finish();
-        }
         case 1: {
             auto& unresolved = std::get<AnalyzedScript::Expression::UnresolvedColumnRef>(inner);
             auto column_name_ofs = unresolved.column_name.Pack(builder);
-
-            proto::ExpressionBuilder out{builder};
-            out.add_ast_node_id(ast_node_id.value_or(std::numeric_limits<uint32_t>::max()));
-            out.add_ast_scope_root(ast_scope_root.value_or(std::numeric_limits<uint32_t>::max()));
-            out.add_ast_statement_id(ast_statement_id.value_or(std::numeric_limits<uint32_t>::max()));
+            proto::UnresolvedColumnRefExpressionBuilder out{builder};
             out.add_column_name(column_name_ofs);
-            return out.Finish();
+            inner_type = proto::ExpressionSubType::UnresolvedColumnRefExpression;
+            inner_ofs = out.Finish().Union();
+            break;
         }
         case 2: {
             auto& resolved = std::get<AnalyzedScript::Expression::ResolvedColumnRef>(inner);
             auto column_name_ofs = resolved.column_name.Pack(builder);
-
-            proto::ExpressionBuilder out{builder};
-            out.add_ast_node_id(ast_node_id.value_or(std::numeric_limits<uint32_t>::max()));
-            out.add_ast_scope_root(ast_scope_root.value_or(std::numeric_limits<uint32_t>::max()));
-            out.add_ast_statement_id(ast_statement_id.value_or(std::numeric_limits<uint32_t>::max()));
+            proto::ResolvedColumnRefExpressionBuilder out{builder};
             out.add_column_name(column_name_ofs);
-            out.add_resolved_catalog_database_id(resolved.catalog_database_id);
-            out.add_resolved_catalog_schema_id(resolved.catalog_schema_id);
-            out.add_resolved_catalog_table_id(resolved.catalog_table_id.Pack());
-            out.add_resolved_column_id(resolved.table_column_id);
-            return out.Finish();
+            out.add_catalog_database_id(resolved.catalog_database_id);
+            out.add_catalog_schema_id(resolved.catalog_schema_id);
+            out.add_catalog_table_id(resolved.catalog_table_id.Pack());
+            out.add_column_id(resolved.table_column_id);
+            inner_type = proto::ExpressionSubType::ResolvedColumnRefExpression;
+            inner_ofs = out.Finish().Union();
+            break;
         }
         default:
-            assert(false);
-            return {};
+            break;
     }
+    proto::ExpressionBuilder out{builder};
+    out.add_ast_node_id(ast_node_id.value_or(std::numeric_limits<uint32_t>::max()));
+    out.add_ast_scope_root(ast_scope_root.value_or(std::numeric_limits<uint32_t>::max()));
+    out.add_ast_statement_id(ast_statement_id.value_or(std::numeric_limits<uint32_t>::max()));
+    if (inner_type.has_value()) {
+        out.add_inner_type(inner_type.value());
+        out.add_inner(inner_ofs);
+    }
+    return out.Finish();
 }
 
 /// Constructor
