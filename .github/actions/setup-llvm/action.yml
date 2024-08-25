@@ -1,6 +1,11 @@
 runs:
   using: "composite"
   steps:
+    - name: Install libtinfo
+      shell: bash
+      run: |
+        sudo apt install libtinfo-dev
+
     - name: Cache llvm
       id: cache-llvm
       uses: actions/cache@v4
