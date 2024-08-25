@@ -16,9 +16,9 @@
             <input>
                 select * from db
             </input>
-            <table-references>
-                <unresolved stmt="0" loc="31..33" text="db" />
-            </table-references>
+            <tablerefs>
+                <tableref type="name/unresolved" stmt="0" loc="31..33" text="db" />
+            </tablerefs>
         </script>
         <catalog>
             <script id="1">
@@ -48,9 +48,9 @@
             <input>
                 select * from sch
             </input>
-            <table-references>
-                <unresolved stmt="0" loc="31..34" text="sch" />
-            </table-references>
+            <tablerefs>
+                <tableref type="name/unresolved" stmt="0" loc="31..34" text="sch" />
+            </tablerefs>
         </script>
         <catalog>
             <script id="1">
@@ -80,9 +80,9 @@
             <input>
                 select * from fo
             </input>
-            <table-references>
-                <unresolved stmt="0" loc="31..33" text="fo" />
-            </table-references>
+            <tablerefs>
+                <tableref type="name/unresolved" stmt="0" loc="31..33" text="fo" />
+            </tablerefs>
         </script>
         <catalog>
             <script id="1">
@@ -135,12 +135,12 @@
             <input>
                 select attr2 from tab
             </input>
-            <table-references>
-                <unresolved stmt="0" loc="35..38" text="tab" />
-            </table-references>
-            <named-expressions>
-                <unresolved stmt="0" loc="24..29" text="attr2" />
-            </named-expressions>
+            <tablerefs>
+                <tableref type="name/unresolved" stmt="0" loc="35..38" text="tab" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/unresolved" stmt="0" loc="24..29" text="attr2" />
+            </expressions>
         </script>
         <catalog>
             <script id="1">
@@ -182,13 +182,13 @@ create table table3(attr3 integer);
             <input>
                 select external_name2 from external_name1 where external_
             </input>
-            <table-references>
-                <external id="256.65536.4294967296" stmt="0" loc="44..58" text="external_name1" />
-            </table-references>
-            <named-expressions>
-                <external id="256.65536.4294967296.0" stmt="0" loc="24..38" text="external_name2" />
-                <unresolved stmt="0" loc="65..74" text="external_" />
-            </named-expressions>
+            <tablerefs>
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="44..58" text="external_name1" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="24..38" text="external_name2" />
+                <expr type="colref/unresolved" stmt="0" loc="65..74" text="external_" />
+            </expressions>
         </script>
         <catalog>
             <script id="1">
@@ -222,13 +222,13 @@ create table table3(attr3 integer);
             <input>
                 select external_name2 from external_name1 where external_
             </input>
-            <table-references>
-                <external id="256.65536.4294967296" stmt="0" loc="44..58" text="external_name1" />
-            </table-references>
-            <named-expressions>
-                <external id="256.65536.4294967296.0" stmt="0" loc="24..38" text="external_name2" />
-                <unresolved stmt="0" loc="65..74" text="external_" />
-            </named-expressions>
+            <tablerefs>
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="44..58" text="external_name1" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="24..38" text="external_name2" />
+                <expr type="colref/unresolved" stmt="0" loc="65..74" text="external_" />
+            </expressions>
         </script>
         <catalog>
             <script id="1">

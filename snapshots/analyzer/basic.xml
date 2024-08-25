@@ -10,14 +10,14 @@
             <input>
                 select * from A, B where a = b;
             </input>
-            <table-references>
-                <external id="256.65536.4294967296" stmt="0" loc="31..32" text="A" />
-                <external id="256.65536.4294967297" stmt="0" loc="34..35" text="B" />
-            </table-references>
-            <named-expressions>
-                <external id="256.65536.4294967296.0" stmt="0" loc="42..43" text="a" />
-                <external id="256.65536.4294967296.1" stmt="0" loc="46..47" text="b" />
-            </named-expressions>
+            <tablerefs>
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..32" text="A" />
+                <tableref type="name/external" id="256.65536.4294967297" stmt="0" loc="34..35" text="B" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="42..43" text="a" />
+                <expr type="colref/external" id="256.65536.4294967296.1" stmt="0" loc="46..47" text="b" />
+            </expressions>
         </script>
         <catalog>
             <script id="1">
@@ -43,15 +43,15 @@
             <input>
                 select * from A, B where a + d = e;
             </input>
-            <table-references>
-                <external id="256.65536.4294967296" stmt="0" loc="31..32" text="A" />
-                <external id="256.65536.4294967297" stmt="0" loc="34..35" text="B" />
-            </table-references>
-            <named-expressions>
-                <external id="256.65536.4294967296.0" stmt="0" loc="42..43" text="a" />
-                <external id="256.65536.4294967297.0" stmt="0" loc="46..47" text="d" />
-                <external id="256.65536.4294967297.1" stmt="0" loc="50..51" text="e" />
-            </named-expressions>
+            <tablerefs>
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..32" text="A" />
+                <tableref type="name/external" id="256.65536.4294967297" stmt="0" loc="34..35" text="B" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="42..43" text="a" />
+                <expr type="colref/external" id="256.65536.4294967297.0" stmt="0" loc="46..47" text="d" />
+                <expr type="colref/external" id="256.65536.4294967297.1" stmt="0" loc="50..51" text="e" />
+            </expressions>
         </script>
         <catalog>
             <script id="1">
@@ -77,16 +77,16 @@
             <input>
                 select * from A, B where a = d and b = e;
             </input>
-            <table-references>
-                <external id="256.65536.4294967296" stmt="0" loc="31..32" text="A" />
-                <external id="256.65536.4294967297" stmt="0" loc="34..35" text="B" />
-            </table-references>
-            <named-expressions>
-                <external id="256.65536.4294967296.0" stmt="0" loc="42..43" text="a" />
-                <external id="256.65536.4294967297.0" stmt="0" loc="46..47" text="d" />
-                <external id="256.65536.4294967296.1" stmt="0" loc="52..53" text="b" />
-                <external id="256.65536.4294967297.1" stmt="0" loc="56..57" text="e" />
-            </named-expressions>
+            <tablerefs>
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..32" text="A" />
+                <tableref type="name/external" id="256.65536.4294967297" stmt="0" loc="34..35" text="B" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="42..43" text="a" />
+                <expr type="colref/external" id="256.65536.4294967297.0" stmt="0" loc="46..47" text="d" />
+                <expr type="colref/external" id="256.65536.4294967296.1" stmt="0" loc="52..53" text="b" />
+                <expr type="colref/external" id="256.65536.4294967297.1" stmt="0" loc="56..57" text="e" />
+            </expressions>
         </script>
         <catalog>
             <script id="1">
@@ -112,19 +112,19 @@
             <input>
                 select * from A, B where (a = d and b = e) or (a = d and d = 42);
             </input>
-            <table-references>
-                <external id="256.65536.4294967296" stmt="0" loc="31..32" text="A" />
-                <external id="256.65536.4294967297" stmt="0" loc="34..35" text="B" />
-            </table-references>
-            <named-expressions>
-                <external id="256.65536.4294967296.0" stmt="0" loc="43..44" text="a" />
-                <external id="256.65536.4294967297.0" stmt="0" loc="47..48" text="d" />
-                <external id="256.65536.4294967296.1" stmt="0" loc="53..54" text="b" />
-                <external id="256.65536.4294967297.1" stmt="0" loc="57..58" text="e" />
-                <external id="256.65536.4294967296.0" stmt="0" loc="64..65" text="a" />
-                <external id="256.65536.4294967297.0" stmt="0" loc="68..69" text="d" />
-                <external id="256.65536.4294967297.0" stmt="0" loc="74..75" text="d" />
-            </named-expressions>
+            <tablerefs>
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..32" text="A" />
+                <tableref type="name/external" id="256.65536.4294967297" stmt="0" loc="34..35" text="B" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="43..44" text="a" />
+                <expr type="colref/external" id="256.65536.4294967297.0" stmt="0" loc="47..48" text="d" />
+                <expr type="colref/external" id="256.65536.4294967296.1" stmt="0" loc="53..54" text="b" />
+                <expr type="colref/external" id="256.65536.4294967297.1" stmt="0" loc="57..58" text="e" />
+                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="64..65" text="a" />
+                <expr type="colref/external" id="256.65536.4294967297.0" stmt="0" loc="68..69" text="d" />
+                <expr type="colref/external" id="256.65536.4294967297.0" stmt="0" loc="74..75" text="d" />
+            </expressions>
         </script>
         <catalog>
             <script id="1">
@@ -150,14 +150,14 @@
             <input>
                 select * from A, B where a = (d + 42);
             </input>
-            <table-references>
-                <external id="256.65536.4294967296" stmt="0" loc="31..32" text="A" />
-                <external id="256.65536.4294967297" stmt="0" loc="34..35" text="B" />
-            </table-references>
-            <named-expressions>
-                <external id="256.65536.4294967297.0" stmt="0" loc="47..48" text="d" />
-                <external id="256.65536.4294967296.0" stmt="0" loc="42..43" text="a" />
-            </named-expressions>
+            <tablerefs>
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..32" text="A" />
+                <tableref type="name/external" id="256.65536.4294967297" stmt="0" loc="34..35" text="B" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/external" id="256.65536.4294967297.0" stmt="0" loc="47..48" text="d" />
+                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="42..43" text="a" />
+            </expressions>
         </script>
         <catalog>
             <script id="1">
@@ -183,14 +183,14 @@
             <input>
                 select * from A join B on (a = b);
             </input>
-            <table-references>
-                <external id="256.65536.4294967296" stmt="0" loc="31..32" text="A" />
-                <external id="256.65536.4294967297" stmt="0" loc="38..39" text="B" />
-            </table-references>
-            <named-expressions>
-                <external id="256.65536.4294967296.0" stmt="0" loc="44..45" text="a" />
-                <external id="256.65536.4294967296.1" stmt="0" loc="48..49" text="b" />
-            </named-expressions>
+            <tablerefs>
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..32" text="A" />
+                <tableref type="name/external" id="256.65536.4294967297" stmt="0" loc="38..39" text="B" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="44..45" text="a" />
+                <expr type="colref/external" id="256.65536.4294967296.1" stmt="0" loc="48..49" text="b" />
+            </expressions>
         </script>
         <catalog>
             <script id="1">
@@ -216,14 +216,14 @@
             <input>
                 select * from A, C where a = c;
             </input>
-            <table-references>
-                <external id="256.65536.4294967296" stmt="0" loc="31..32" text="A" />
-                <unresolved stmt="0" loc="34..35" text="C" />
-            </table-references>
-            <named-expressions>
-                <external id="256.65536.4294967296.0" stmt="0" loc="42..43" text="a" />
-                <unresolved stmt="0" loc="46..47" text="c" />
-            </named-expressions>
+            <tablerefs>
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..32" text="A" />
+                <tableref type="name/unresolved" stmt="0" loc="34..35" text="C" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="42..43" text="a" />
+                <expr type="colref/unresolved" stmt="0" loc="46..47" text="c" />
+            </expressions>
         </script>
         <catalog>
             <script id="1">
@@ -249,14 +249,14 @@
             <input>
                 select * from A, B where a = c;
             </input>
-            <table-references>
-                <external id="256.65536.4294967296" stmt="0" loc="31..32" text="A" />
-                <external id="256.65536.4294967297" stmt="0" loc="34..35" text="B" />
-            </table-references>
-            <named-expressions>
-                <external id="256.65536.4294967296.0" stmt="0" loc="42..43" text="a" />
-                <unresolved stmt="0" loc="46..47" text="c" />
-            </named-expressions>
+            <tablerefs>
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..32" text="A" />
+                <tableref type="name/external" id="256.65536.4294967297" stmt="0" loc="34..35" text="B" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="42..43" text="a" />
+                <expr type="colref/unresolved" stmt="0" loc="46..47" text="c" />
+            </expressions>
         </script>
         <catalog>
             <script id="1">
@@ -282,9 +282,9 @@
             <input>
                 select * from A;
             </input>
-            <table-references>
-                <unresolved stmt="0" loc="31..32" text="A" />
-            </table-references>
+            <tablerefs>
+                <tableref type="name/unresolved" stmt="0" loc="31..32" text="A" />
+            </tablerefs>
         </script>
         <catalog>
             <script id="1">
@@ -297,14 +297,14 @@
             <input>
                 select * from A, B where c = d;
             </input>
-            <table-references>
-                <unresolved stmt="0" loc="31..32" text="A" />
-                <unresolved stmt="0" loc="34..35" text="B" />
-            </table-references>
-            <named-expressions>
-                <unresolved stmt="0" loc="42..43" text="c" />
-                <unresolved stmt="0" loc="46..47" text="d" />
-            </named-expressions>
+            <tablerefs>
+                <tableref type="name/unresolved" stmt="0" loc="31..32" text="A" />
+                <tableref type="name/unresolved" stmt="0" loc="34..35" text="B" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/unresolved" stmt="0" loc="42..43" text="c" />
+                <expr type="colref/unresolved" stmt="0" loc="46..47" text="d" />
+            </expressions>
         </script>
         <catalog>
             <script id="1">
@@ -317,14 +317,14 @@
             <input>
                 select * from A where not exists (select * from B where a = d);
             </input>
-            <table-references>
-                <external id="256.65536.4294967297" stmt="0" loc="65..66" text="B" />
-                <external id="256.65536.4294967296" stmt="0" loc="31..32" text="A" />
-            </table-references>
-            <named-expressions>
-                <external id="256.65536.4294967296.0" stmt="0" loc="73..74" text="a" />
-                <external id="256.65536.4294967297.0" stmt="0" loc="77..78" text="d" />
-            </named-expressions>
+            <tablerefs>
+                <tableref type="name/external" id="256.65536.4294967297" stmt="0" loc="65..66" text="B" />
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..32" text="A" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="73..74" text="a" />
+                <expr type="colref/external" id="256.65536.4294967297.0" stmt="0" loc="77..78" text="d" />
+            </expressions>
         </script>
         <catalog>
             <script id="1">
@@ -350,15 +350,15 @@
             <input>
                 select * from A where not exists (select * from A, B where a = d);
             </input>
-            <table-references>
-                <external id="256.65536.4294967296" stmt="0" loc="65..66" text="A" />
-                <external id="256.65536.4294967297" stmt="0" loc="68..69" text="B" />
-                <external id="256.65536.4294967296" stmt="0" loc="31..32" text="A" />
-            </table-references>
-            <named-expressions>
-                <external id="256.65536.4294967296.0" stmt="0" loc="76..77" text="a" />
-                <external id="256.65536.4294967297.0" stmt="0" loc="80..81" text="d" />
-            </named-expressions>
+            <tablerefs>
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="65..66" text="A" />
+                <tableref type="name/external" id="256.65536.4294967297" stmt="0" loc="68..69" text="B" />
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..32" text="A" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="76..77" text="a" />
+                <expr type="colref/external" id="256.65536.4294967297.0" stmt="0" loc="80..81" text="d" />
+            </expressions>
         </script>
         <catalog>
             <script id="1">

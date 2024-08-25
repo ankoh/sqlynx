@@ -3,6 +3,7 @@
 #include <flatbuffers/buffer.h>
 
 #include <unordered_set>
+#include <variant>
 
 #include "sqlynx/external.h"
 #include "sqlynx/parser/grammar/keywords.h"
@@ -272,10 +273,10 @@ void Completion::PromoteTableNamesForUnresolvedColumns() {
 
     // Collect all unresolved columns in the current script
     std::vector<CatalogEntry::TableColumn> table_columns;
-    analyzed_script.expressions.ForEach([&](size_t i, auto& column_ref) {
+    analyzed_script.expressions.ForEach([&](size_t i, auto& expr) {
         // Is unresolved?
-        if (column_ref->resolved_catalog_table_id.IsNull()) {
-            auto& column_name = column_ref->column_name.column_name.get();
+        if (auto* unresolved = std::get_if<AnalyzedScript::Expression::UnresolvedColumnRef>(&expr->inner)) {
+            auto& column_name = unresolved->column_name.column_name.get();
             cursor.script.analyzed_script->ResolveTableColumns(column_name, catalog, table_columns);
         }
     });
@@ -311,7 +312,7 @@ void Completion::PromoteNearCandidatesInAST() {
     };
 
     auto& analyzed = cursor.script.analyzed_script;
-    analyzed->table_references.ForEach([&](size_t i, auto& table_ref) {
+    analyzed->table_references.ForEach([&](size_t i, IntrusiveList<AnalyzedScript::TableReference>::Node& table_ref) {
         // The table ref is not part of a statement id?
         // Skip then, we're currently using the statement id as very coarse-granular alternative to naming scopes.
         // TODO: We should remember a fine-granular scope union-find as output of the name resolution pass.
@@ -334,11 +335,25 @@ void Completion::PromoteNearCandidatesInAST() {
     });
 
     // Collect column references in the statement
-    cursor.script.analyzed_script->expressions.ForEach([&](size_t i, auto& column_ref) {
-        if (column_ref->ast_statement_id.has_value() && column_ref->ast_statement_id.value() == statement_id) {
-            mark_as_near(column_ref->column_name.column_name.get().text);
-        }
-    });
+    cursor.script.analyzed_script->expressions.ForEach(
+        [&](size_t i, IntrusiveList<AnalyzedScript::Expression>::Node& expr) {
+            if (expr->ast_statement_id.has_value() && expr->ast_statement_id.value() == statement_id) {
+                switch (expr->inner.index()) {
+                    case 1: {
+                        auto& unresolved = std::get<AnalyzedScript::Expression::UnresolvedColumnRef>(expr->inner);
+                        mark_as_near(unresolved.column_name.column_name.get().text);
+                        break;
+                    }
+                    case 2: {
+                        auto& resolved = std::get<AnalyzedScript::Expression::ResolvedColumnRef>(expr->inner);
+                        mark_as_near(resolved.column_name.column_name.get().text);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+            }
+        });
 }
 
 void Completion::FlushCandidatesAndFinish() {
