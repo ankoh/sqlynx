@@ -210,7 +210,7 @@ class CatalogEntry {
     /// The databases, indexed by name
     std::unordered_map<std::string_view, std::reference_wrapper<const DatabaseReference>> databases_by_name;
     /// The schema, indexed by name
-    std::unordered_map<std::tuple<std::string_view, std::string_view>, std::reference_wrapper<const SchemaReference>,
+    std::unordered_map<std::pair<std::string_view, std::string_view>, std::reference_wrapper<const SchemaReference>,
                        TupleHasher>
         schemas_by_name;
     /// The tables, indexed by name
