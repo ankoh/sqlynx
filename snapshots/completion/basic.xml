@@ -1,7 +1,7 @@
 <completion-snapshots>
     <completion-snapshot name="empty">
-        <script id="0" />
         <catalog />
+        <script id="0" />
         <cursor>
             <search text="" index="0" />
         </cursor>
@@ -12,14 +12,6 @@
         </completions>
     </completion-snapshot>
     <completion-snapshot name="complete_database_name">
-        <script id="0">
-            <input>
-                select * from db
-            </input>
-            <tablerefs>
-                <tableref type="name/unresolved" stmt="0" loc="31..33" text="db" />
-            </tablerefs>
-        </script>
         <catalog>
             <script id="1">
                 <input>
@@ -32,6 +24,14 @@
                 </tables>
             </script>
         </catalog>
+        <script id="0">
+            <input>
+                select * from db
+            </input>
+            <tablerefs>
+                <tableref type="name/unresolved" stmt="0" loc="31..33" text="db" />
+            </tablerefs>
+        </script>
         <cursor>
             <search text="db" index="2" />
         </cursor>
@@ -44,14 +44,6 @@
         </completions>
     </completion-snapshot>
     <completion-snapshot name="complete_schema_name">
-        <script id="0">
-            <input>
-                select * from sch
-            </input>
-            <tablerefs>
-                <tableref type="name/unresolved" stmt="0" loc="31..34" text="sch" />
-            </tablerefs>
-        </script>
         <catalog>
             <script id="1">
                 <input>
@@ -64,6 +56,14 @@
                 </tables>
             </script>
         </catalog>
+        <script id="0">
+            <input>
+                select * from sch
+            </input>
+            <tablerefs>
+                <tableref type="name/unresolved" stmt="0" loc="31..34" text="sch" />
+            </tablerefs>
+        </script>
         <cursor>
             <search text="sch" index="3" />
         </cursor>
@@ -76,14 +76,6 @@
         </completions>
     </completion-snapshot>
     <completion-snapshot name="complete_table_name">
-        <script id="0">
-            <input>
-                select * from fo
-            </input>
-            <tablerefs>
-                <tableref type="name/unresolved" stmt="0" loc="31..33" text="fo" />
-            </tablerefs>
-        </script>
         <catalog>
             <script id="1">
                 <input>
@@ -96,6 +88,14 @@
                 </tables>
             </script>
         </catalog>
+        <script id="0">
+            <input>
+                select * from fo
+            </input>
+            <tablerefs>
+                <tableref type="name/unresolved" stmt="0" loc="31..33" text="fo" />
+            </tablerefs>
+        </script>
         <cursor>
             <search text="fo" index="2" />
         </cursor>
@@ -108,11 +108,6 @@
         </completions>
     </completion-snapshot>
     <completion-snapshot name="dont_complete_at_lrb">
-        <script id="0">
-            <input>
-                select * from ( foo );
-            </input>
-        </script>
         <catalog>
             <script id="1">
                 <input>
@@ -125,23 +120,17 @@
                 </tables>
             </script>
         </catalog>
+        <script id="0">
+            <input>
+                select * from ( foo );
+            </input>
+        </script>
         <cursor>
             <search text="from (" index="6" />
         </cursor>
         <completions limit="3" relative="END_OF_SYMBOL" strategy="DEFAULT" />
     </completion-snapshot>
     <completion-snapshot name="table_name_resolving_column">
-        <script id="0">
-            <input>
-                select attr2 from tab
-            </input>
-            <tablerefs>
-                <tableref type="name/unresolved" stmt="0" loc="35..38" text="tab" />
-            </tablerefs>
-            <expressions>
-                <expr type="colref/unresolved" stmt="0" loc="24..29" text="attr2" />
-            </expressions>
-        </script>
         <catalog>
             <script id="1">
                 <input>
@@ -162,6 +151,17 @@ create table table3(attr3 integer);
                 </tables>
             </script>
         </catalog>
+        <script id="0">
+            <input>
+                select attr2 from tab
+            </input>
+            <tablerefs>
+                <tableref type="name/unresolved" stmt="0" loc="35..38" text="tab" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/unresolved" stmt="0" loc="24..29" text="attr2" />
+            </expressions>
+        </script>
         <cursor>
             <search text="tab" index="3" />
         </cursor>
@@ -178,18 +178,6 @@ create table table3(attr3 integer);
         </completions>
     </completion-snapshot>
     <completion-snapshot name="remap_external_names">
-        <script id="0">
-            <input>
-                select external_name2 from external_name1 where external_
-            </input>
-            <tablerefs>
-                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="44..58" text="external_name1" />
-            </tablerefs>
-            <expressions>
-                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="24..38" text="external_name2" />
-                <expr type="colref/unresolved" stmt="0" loc="65..74" text="external_" />
-            </expressions>
-        </script>
         <catalog>
             <script id="1">
                 <input>
@@ -202,6 +190,18 @@ create table table3(attr3 integer);
                 </tables>
             </script>
         </catalog>
+        <script id="0">
+            <input>
+                select external_name2 from external_name1 where external_
+            </input>
+            <tablerefs>
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="44..58" text="external_name1" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="24..38" text="external_name2" />
+                <expr type="colref/unresolved" stmt="0" loc="65..74" text="external_" />
+            </expressions>
+        </script>
         <cursor script="1">
             <search text="where external_" index="14" />
         </cursor>
@@ -218,18 +218,6 @@ create table table3(attr3 integer);
         </completions>
     </completion-snapshot>
     <completion-snapshot name="remap_external_names_eof">
-        <script id="0">
-            <input>
-                select external_name2 from external_name1 where external_
-            </input>
-            <tablerefs>
-                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="44..58" text="external_name1" />
-            </tablerefs>
-            <expressions>
-                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="24..38" text="external_name2" />
-                <expr type="colref/unresolved" stmt="0" loc="65..74" text="external_" />
-            </expressions>
-        </script>
         <catalog>
             <script id="1">
                 <input>
@@ -242,6 +230,18 @@ create table table3(attr3 integer);
                 </tables>
             </script>
         </catalog>
+        <script id="0">
+            <input>
+                select external_name2 from external_name1 where external_
+            </input>
+            <tablerefs>
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="44..58" text="external_name1" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="24..38" text="external_name2" />
+                <expr type="colref/unresolved" stmt="0" loc="65..74" text="external_" />
+            </expressions>
+        </script>
         <cursor>
             <search text="where external_" index="15" />
         </cursor>

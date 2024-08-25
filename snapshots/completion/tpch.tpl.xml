@@ -1,10 +1,5 @@
 <completion-snapshots>
     <completion-snapshot name="column_name_in_scope">
-        <script>
-            <input>
-                select * from lineitem where ke
-            </input>
-        </script>
         <catalog>
             <script>
                 <input>
@@ -19,6 +14,11 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                 </input>
             </script>
         </catalog>
+        <script>
+            <input>
+                select * from lineitem where ke
+            </input>
+        </script>
         <cursor>
             <search text="ke" index="2" />
         </cursor>

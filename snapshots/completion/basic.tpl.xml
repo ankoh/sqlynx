@@ -1,18 +1,13 @@
 <completion-snapshots>
     <completion-snapshot name="empty">
-        <script />
         <catalog />
+        <script />
         <cursor>
             <search text="" index="0" />
         </cursor>
         <completions limit="3" />
     </completion-snapshot>
     <completion-snapshot name="complete_database_name">
-        <script>
-            <input>
-                select * from db
-            </input>
-        </script>
         <catalog>
             <script>
                 <input>
@@ -20,17 +15,17 @@
                 </input>
             </script>
         </catalog>
+        <script>
+            <input>
+                select * from db
+            </input>
+        </script>
         <cursor>
             <search text="db" index="2" />
         </cursor>
         <completions limit="3" />
     </completion-snapshot>
     <completion-snapshot name="complete_schema_name">
-        <script>
-            <input>
-                select * from sch
-            </input>
-        </script>
         <catalog>
             <script>
                 <input>
@@ -38,17 +33,17 @@
                 </input>
             </script>
         </catalog>
+        <script>
+            <input>
+                select * from sch
+            </input>
+        </script>
         <cursor>
             <search text="sch" index="3" />
         </cursor>
         <completions limit="3" />
     </completion-snapshot>
     <completion-snapshot name="complete_table_name">
-        <script>
-            <input>
-                select * from fo
-            </input>
-        </script>
         <catalog>
             <script>
                 <input>
@@ -56,17 +51,17 @@
                 </input>
             </script>
         </catalog>
+        <script>
+            <input>
+                select * from fo
+            </input>
+        </script>
         <cursor>
             <search text="fo" index="2" />
         </cursor>
         <completions limit="3" />
     </completion-snapshot>
     <completion-snapshot name="dont_complete_at_lrb">
-        <script>
-            <input>
-                select * from ( foo );
-            </input>
-        </script>
         <catalog>
             <script>
                 <input>
@@ -74,17 +69,17 @@
                 </input>
             </script>
         </catalog>
+        <script>
+            <input>
+                select * from ( foo );
+            </input>
+        </script>
         <cursor>
             <search text="from (" index="6" />
         </cursor>
         <completions limit="3" />
     </completion-snapshot>
     <completion-snapshot name="table_name_resolving_column">
-        <script>
-            <input>
-                select attr2 from tab
-            </input>
-        </script>
         <catalog>
             <script>
                 <input>
@@ -94,17 +89,17 @@ create table table3(attr3 integer);
                 </input>
             </script>
         </catalog>
+        <script>
+            <input>
+                select attr2 from tab
+            </input>
+        </script>
         <cursor>
             <search text="tab" index="3" />
         </cursor>
         <completions limit="3" />
     </completion-snapshot>
     <completion-snapshot name="remap_external_names">
-        <script>
-            <input>
-                select external_name2 from external_name1 where external_
-            </input>
-        </script>
         <catalog>
             <script>
                 <input>
@@ -112,17 +107,17 @@ create table table3(attr3 integer);
                 </input>
             </script>
         </catalog>
+        <script>
+            <input>
+                select external_name2 from external_name1 where external_
+            </input>
+        </script>
         <cursor script="1">
             <search text="where external_" index="14" />
         </cursor>
         <completions limit="5" />
     </completion-snapshot>
     <completion-snapshot name="remap_external_names_eof">
-        <script>
-            <input>
-                select external_name2 from external_name1 where external_
-            </input>
-        </script>
         <catalog>
             <script>
                 <input>
@@ -130,6 +125,11 @@ create table table3(attr3 integer);
                 </input>
             </script>
         </catalog>
+        <script>
+            <input>
+                select external_name2 from external_name1 where external_
+            </input>
+        </script>
         <cursor>
             <search text="where external_" index="15" />
         </cursor>
