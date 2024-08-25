@@ -4,8 +4,13 @@ runs:
     - name: Install libtinfo6
       shell: bash
       run: |
-        sudo apt install libtinfo6
-        sudo ln -s /usr/lib/x86_64-linux-gnu/libtinfo.so.6 /usr/lib/libtinfo.so.5
+        wget http://archive.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.4-2_amd64.deb
+        sudo dpkg -i libtinfo5_6.4-2_amd64.deb
+        rm -f libtinfo5_6.4-2_amd64.deb
+
+        wget http://archive.ubuntu.com/ubuntu/pool/universe/n/ncurses/libncurses5_6.4-2_amd64.deb
+        sudo dpkg -i libncurses5_6.4-2_amd64.deb
+        rm -f libncurses5_6.4-2_amd64.deb
 
     - name: Cache llvm
       id: cache-llvm
