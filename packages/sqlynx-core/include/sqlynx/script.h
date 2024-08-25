@@ -244,25 +244,16 @@ class AnalyzedScript : public CatalogEntry {
         /// The child scopes
         IntrusiveList<NameScope> child_scopes;
         /// The column references in scope
-        IntrusiveList<AnalyzedScript::Expression> expressions;
+        IntrusiveList<Expression> expressions;
         /// The table references in scope
-        IntrusiveList<AnalyzedScript::TableReference> table_references;
-        /// The resolved table references
-        /// XXX Resolved named table references
-        /// XXX Resolved unnamed table references
-        /// XXX Should we add a "expression?"
-        ///     Wouldn't matter what the expression does, just sql_opt_indirection from OBJECT_SQL_INDIRECTION
-        /// XXX Should we add a "named subselect?" -> TABLEREF type?
-        /// XXX RESULT_TARGET
-        /// XXX TABLEREF -> JOINED_TABLE
-        std::unordered_map<const AnalyzedScript::TableReference*,
-                           std::reference_wrapper<const CatalogEntry::TableDeclaration>>
-            resolved_table_references;
-        /// The resolved table columns
-        /// XXX This can grow really large, we shouldn't do it through registered columns
-        std::unordered_map<CatalogEntry::QualifiedColumnName::Key, std::reference_wrapper<const TableColumn>,
-                           TupleHasher>
-            resolved_table_columns;
+        IntrusiveList<TableReference> table_references;
+
+        /// The named tables in scope
+        std::unordered_map<std::string_view, std::reference_wrapper<const CatalogEntry::TableDeclaration>> named_tables;
+        /// The unnamed tables in scope
+        std::unordered_map<ExternalObjectID, std::reference_wrapper<const CatalogEntry::TableDeclaration>,
+                           ExternalObjectID::Hasher>
+            unnamed_tables;
     };
 
     /// The default database name

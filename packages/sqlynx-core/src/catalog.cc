@@ -293,11 +293,13 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
         // Register the table for the table name
         table_name.resolved_objects.PushBack(t);
         // Store the catalog ids in the table columns
+        t.table_columns_by_name.reserve(t.table_columns.size());
         for (size_t column_index = 0; column_index != t.table_columns.size(); ++column_index) {
             auto& column = t.table_columns[column_index];
             column.table = t;
             column.column_index = column_index;
             column.column_name.get().resolved_objects.PushBack(column);
+            t.table_columns_by_name.insert({column.column_name.get().text, column});
         }
     }
 

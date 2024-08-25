@@ -199,38 +199,31 @@ void NameResolutionPass::ResolveTableRefsInScope(AnalyzedScript::NameScope& scop
         }
         // Copy table name so that we can override the unresolved expression
         auto table_name = unresolved->table_name;
-
         // Table ref points to own table?
         auto iter = analyzed.tables_by_name.find(table_name);
         if (iter != analyzed.tables_by_name.end()) {
+            // Store resolved relation expression
             auto& table = iter->second.get();
-
-            // Remember resolved table
-            scope.resolved_table_references.insert({&table_ref, table});
             table_ref.inner = AnalyzedScript::TableReference::ResolvedRelationExpression{
-                .table_name = table_name,
+                .table_name = table.table_name,
                 .catalog_database_id = table.catalog_database_id,
                 .catalog_schema_id = table.catalog_schema_id,
                 .catalog_table_id = table.catalog_table_id,
             };
 
-            // Remember all available columns
-            // XXX Don't load all columns into scope, we'll instead probe unnamed and aliased tables
-            for (size_t i = 0; i < table.table_columns.size(); ++i) {
-                auto& column = table.table_columns[i];
-                scope.resolved_table_columns.insert(
-                    {CatalogEntry::QualifiedColumnName::Key{
-                         table_ref.alias_name.has_value() ? table_ref.alias_name.value().get().text : "",
-                         column.column_name.get().text},
-                     column});
+            if (table_ref.alias_name.has_value()) {
+                // Register named table
+                scope.named_tables.insert({table_ref.alias_name->get().text, table});
+            } else {
+                // Register unnambed table
+                scope.unnamed_tables.insert({table.catalog_table_id, table});
             }
             continue;
         }
 
         // Otherwise consult the external search path
-        if (auto resolved = catalog.ResolveTable(table_name, catalog_entry_id)) {
+        if (auto* resolved = catalog.ResolveTable(table_name, catalog_entry_id)) {
             // Remember resolved table
-            scope.resolved_table_references.insert({&table_ref, *resolved});
             table_ref.inner = AnalyzedScript::TableReference::ResolvedRelationExpression{
                 .table_name = table_name,
                 .catalog_database_id = resolved->catalog_database_id,
@@ -238,13 +231,12 @@ void NameResolutionPass::ResolveTableRefsInScope(AnalyzedScript::NameScope& scop
                 .catalog_table_id = resolved->catalog_table_id,
             };
 
-            // Collect all available columns
-            for (size_t i = 0; i < resolved->table_columns.size(); ++i) {
-                auto& column = resolved->table_columns[i];
-                scope.resolved_table_columns.insert(
-                    {CatalogEntry::QualifiedColumnName::Key{
-                         table_ref.alias_name ? table_ref.alias_name->get().text : "", column.column_name.get()},
-                     column});
+            if (table_ref.alias_name.has_value()) {
+                // Register named table
+                scope.named_tables.insert({table_ref.alias_name->get().text, *resolved});
+            } else {
+                // Register unnambed table
+                scope.unnamed_tables.insert({resolved->catalog_table_id, *resolved});
             }
             continue;
         }
@@ -266,11 +258,35 @@ void NameResolutionPass::ResolveColumnRefsInScope(AnalyzedScript::NameScope& sco
         for (auto iter = unresolved_columns.begin(); iter != unresolved_columns.end();) {
             auto& expr = iter->get();
             auto unresolved = std::get<AnalyzedScript::Expression::UnresolvedColumnRef>(expr.inner);
-            auto resolved_iter = target_scope->resolved_table_columns.find(
-                {unresolved.column_name.table_alias ? unresolved.column_name.table_alias->get().text : "",
-                 unresolved.column_name.column_name.get()});
-            if (resolved_iter != target_scope->resolved_table_columns.end()) {
-                auto& resolved_column = resolved_iter->second.get();
+            auto column_name = unresolved.column_name.column_name.get().text;
+
+            // Try to resolve a table
+            std::optional<std::reference_wrapper<AnalyzedScript::TableColumn>> table_column;
+            if (unresolved.column_name.table_alias.has_value()) {
+                // Do we know the alias in this scope?
+                auto table_alias = unresolved.column_name.table_alias->get().text;
+                auto table_iter = target_scope->named_tables.find(table_alias);
+                if (table_iter != target_scope->named_tables.end()) {
+                    // Is the table known in that table?
+                    auto& table_columns_by_name = table_iter->second.get().table_columns_by_name;
+                    auto column_iter = table_columns_by_name.find(column_name);
+                    if (column_iter != table_columns_by_name.end()) {
+                        table_column = column_iter->second;
+                    }
+                }
+            } else {
+                for (auto& [table_id, table] : target_scope->unnamed_tables) {
+                    auto& table_columns_by_name = table.get().table_columns_by_name;
+                    auto column_iter = table_columns_by_name.find(column_name);
+                    if (column_iter != table_columns_by_name.end()) {
+                        table_column = column_iter->second;
+                        break;
+                    }
+                }
+            }
+            // Found a table column?
+            if (table_column.has_value()) {
+                auto& resolved_column = table_column.value().get();
                 auto& resolved_table = resolved_column.table->get();
                 expr.inner = AnalyzedScript::Expression::ResolvedColumnRef{
                     .column_name = unresolved.column_name,
@@ -456,11 +472,13 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                     // Register the table declaration
                     table_name->table_name.get().resolved_objects.PushBack(n);
                     // Update the table ref and index of all columns
+                    n.table_columns_by_name.reserve(n.table_columns.size());
                     for (size_t column_index = 0; column_index != n.table_columns.size(); ++column_index) {
                         auto& column = n.table_columns[column_index];
                         column.table = n;
                         column.column_index = column_index;
                         column.column_name.get().resolved_objects.PushBack(column);
+                        n.table_columns_by_name.insert({column.column_name.get().text, column});
                     }
                 }
                 break;
