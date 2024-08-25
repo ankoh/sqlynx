@@ -141,8 +141,8 @@ void CompletionSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
                 auto main_node = test_node.child("script");
                 test.script.input = main_node.child("input").last_child().value();
                 test.script.tables.append_copy(main_node.child("tables"));
-                test.script.table_references.append_copy(main_node.child("table-references"));
-                test.script.expressions.append_copy(main_node.child("named-expressions"));
+                test.script.table_references.append_copy(main_node.child("tablerefs"));
+                test.script.expressions.append_copy(main_node.child("expressions"));
             }
 
             // Read catalog
@@ -153,8 +153,8 @@ void CompletionSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
                 if (entry_name == "script") {
                     entry.input = entry_node.child("input").last_child().value();
                     entry.tables.append_copy(entry_node.child("tables"));
-                    entry.table_references.append_copy(entry_node.child("table-references"));
-                    entry.expressions.append_copy(entry_node.child("named-expressions"));
+                    entry.table_references.append_copy(entry_node.child("tablerefs"));
+                    entry.expressions.append_copy(entry_node.child("expressions"));
                 } else {
                     std::cout << "[    ERROR ] unknown test element " << entry_name << std::endl;
                 }

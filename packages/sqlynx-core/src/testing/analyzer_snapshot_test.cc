@@ -90,8 +90,8 @@ void AnalyzerSnapshotTest::TestRegistrySnapshot(const std::vector<ScriptAnalysis
         AnalyzerSnapshotTest::EncodeScript(script_node, *script.analyzed_script, false);
 
         ASSERT_TRUE(Matches(script_node.child("tables"), entry.tables));
-        ASSERT_TRUE(Matches(script_node.child("table-references"), entry.table_references));
-        ASSERT_TRUE(Matches(script_node.child("named-expressions"), entry.expressions));
+        ASSERT_TRUE(Matches(script_node.child("tablerefs"), entry.table_references));
+        ASSERT_TRUE(Matches(script_node.child("expressions"), entry.expressions));
     }
 }
 
@@ -109,8 +109,8 @@ void AnalyzerSnapshotTest::TestMainScriptSnapshot(const ScriptAnalysisSnapshot& 
     AnalyzerSnapshotTest::EncodeScript(node, *script.analyzed_script, true);
 
     ASSERT_TRUE(Matches(node.child("tables"), snap.tables));
-    ASSERT_TRUE(Matches(node.child("table-references"), snap.table_references));
-    ASSERT_TRUE(Matches(node.child("named-expressions"), snap.expressions));
+    ASSERT_TRUE(Matches(node.child("tablerefs"), snap.table_references));
+    ASSERT_TRUE(Matches(node.child("expressions"), snap.expressions));
 }
 
 void operator<<(std::ostream& out, const AnalyzerSnapshotTest& p) { out << p.name; }
@@ -130,13 +130,14 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
 
     // Write table references
     if (!script.table_references.IsEmpty()) {
-        auto table_refs_node = out.append_child("table-references");
-        script.table_references.ForEach([&](size_t i, auto& ref) {
-            auto tag = ref->resolved_catalog_table_id.IsNull() ? "unresolved"
-                       : (is_main && ref->resolved_catalog_table_id.GetExternalId() == script.GetCatalogEntryId())
-                           ? "internal"
-                           : "external";
-            auto xml_ref = table_refs_node.append_child(tag);
+        auto table_refs_node = out.append_child("tablerefs");
+        script.table_references.ForEach([&](size_t i, const IntrusiveList<AnalyzedScript::TableReference>::Node& ref) {
+            auto xml_ref = table_refs_node.append_child("tableref");
+            auto type = ref->resolved_catalog_table_id.IsNull() ? "name/unresolved"
+                        : (is_main && ref->resolved_catalog_table_id.GetExternalId() == script.GetCatalogEntryId())
+                            ? "name/internal"
+                            : "name/external";
+            xml_ref.append_attribute("type").set_value(type);
             if (!ref->resolved_catalog_table_id.IsNull()) {
                 std::string catalog_id =
                     std::format("{}.{}.{}", ref->resolved_catalog_database_id, ref->resolved_catalog_schema_id,
@@ -154,18 +155,29 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
 
     // Write expressions
     if (!script.expressions.IsEmpty()) {
-        auto col_refs_node = out.append_child("named-expressions");
-        script.expressions.ForEach([&](size_t i, auto& ref) {
-            auto tag = ref->resolved_catalog_table_id.IsNull() ? "unresolved"
-                       : (is_main && ref->resolved_catalog_table_id.GetExternalId() == script.GetCatalogEntryId())
-                           ? "internal"
-                           : "external";
-            auto xml_ref = col_refs_node.append_child(tag);
-            if (!ref->resolved_catalog_table_id.IsNull()) {
-                std::string catalog_id =
-                    std::format("{}.{}.{}.{}", ref->resolved_catalog_database_id, ref->resolved_catalog_schema_id,
-                                ref->resolved_catalog_table_id.Pack(), ref->resolved_table_column_id.value_or(-1));
-                xml_ref.append_attribute("id").set_value(catalog_id.c_str());
+        auto expr_node = out.append_child("expressions");
+        script.expressions.ForEach([&](size_t i, const IntrusiveList<AnalyzedScript::Expression>::Node& ref) {
+            auto xml_ref = expr_node.append_child("expr");
+            switch (ref->inner.index()) {
+                case 0:
+                    break;
+                case 1: {
+                    auto& unresolved = std::get<AnalyzedScript::Expression::UnresolvedColumnRef>(ref->inner);
+                    xml_ref.append_attribute("type").set_value("colref/unresolved");
+                    break;
+                }
+                case 2: {
+                    auto& resolved = std::get<AnalyzedScript::Expression::ResolvedColumnRef>(ref->inner);
+                    std::string catalog_id =
+                        std::format("{}.{}.{}.{}", resolved.catalog_database_id, resolved.catalog_schema_id,
+                                    resolved.catalog_table_id.Pack(), resolved.table_column_id);
+                    auto type = (is_main && resolved.catalog_table_id.GetExternalId() == script.GetCatalogEntryId())
+                                    ? "colref/internal"
+                                    : "colref/external";
+                    xml_ref.append_attribute("type").set_value(type);
+                    xml_ref.append_attribute("id").set_value(catalog_id.c_str());
+                    break;
+                }
             }
             if (ref->ast_statement_id.has_value()) {
                 xml_ref.append_attribute("stmt").set_value(*ref->ast_statement_id);
@@ -223,8 +235,8 @@ void AnalyzerSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
                 auto main_node = test_node.child("script");
                 test.script.input = main_node.child("input").last_child().value();
                 test.script.tables.append_copy(main_node.child("tables"));
-                test.script.table_references.append_copy(main_node.child("table-references"));
-                test.script.expressions.append_copy(main_node.child("named-expressions"));
+                test.script.table_references.append_copy(main_node.child("tablerefs"));
+                test.script.expressions.append_copy(main_node.child("expressions"));
             }
 
             // Read catalog entries
@@ -235,8 +247,8 @@ void AnalyzerSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
                 if (entry_name == "script") {
                     entry.input = entry_node.child("input").last_child().value();
                     entry.tables.append_copy(entry_node.child("tables"));
-                    entry.table_references.append_copy(entry_node.child("table-references"));
-                    entry.expressions.append_copy(entry_node.child("named-expressions"));
+                    entry.table_references.append_copy(entry_node.child("tablerefs"));
+                    entry.expressions.append_copy(entry_node.child("expressions"));
                 } else {
                     std::cout << "[    ERROR ] unknown test element " << entry_name << std::endl;
                 }

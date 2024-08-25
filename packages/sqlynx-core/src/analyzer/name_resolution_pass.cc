@@ -180,7 +180,7 @@ AnalyzedScript::NameScope& NameResolutionPass::CreateScope(NodeState& target, ui
         ref.ast_scope_root = scope_root;
     }
     scope.value.table_references = target.table_references;
-    scope.value.column_references = target.column_references;
+    scope.value.expressions = target.column_references;
     // Clear the target since we're starting a new scope now
     target.Clear();
     // Remember the child scope
@@ -244,27 +244,33 @@ void NameResolutionPass::ResolveTableRefsInScope(AnalyzedScript::NameScope& scop
 void NameResolutionPass::ResolveColumnRefsInScope(AnalyzedScript::NameScope& scope, ColumnRefsByAlias& refs_by_alias,
                                                   ColumnRefsByName& refs_by_name) {
     std::list<std::reference_wrapper<AnalyzedScript::Expression>> unresolved_columns;
-    for (auto& column_ref : scope.column_references) {
-        unresolved_columns.push_back(column_ref);
+    for (auto& expr : scope.expressions) {
+        if (std::holds_alternative<AnalyzedScript::Expression::UnresolvedColumnRef>(expr.inner)) {
+            unresolved_columns.push_back(expr);
+        }
     }
     // Resolve refs in the scope upwards
     for (auto target_scope = &scope; target_scope != nullptr; target_scope = target_scope->parent_scope) {
-        for (auto column_ref_iter = unresolved_columns.begin(); column_ref_iter != unresolved_columns.end();) {
-            auto& column_ref = column_ref_iter->get();
-            auto& column_name = column_ref.column_name;
+        for (auto iter = unresolved_columns.begin(); iter != unresolved_columns.end();) {
+            auto& expr = iter->get();
+            auto unresolved = std::get<AnalyzedScript::Expression::UnresolvedColumnRef>(expr.inner);
             auto resolved_iter = target_scope->resolved_table_columns.find(
-                {column_name.table_alias ? column_name.table_alias->get().text : "", column_name.column_name.get()});
+                {unresolved.column_name.table_alias ? unresolved.column_name.table_alias->get().text : "",
+                 unresolved.column_name.column_name.get()});
             if (resolved_iter != target_scope->resolved_table_columns.end()) {
                 auto& resolved_column = resolved_iter->second.get();
                 auto& resolved_table = resolved_column.table->get();
-                column_ref.resolved_catalog_database_id = resolved_table.catalog_database_id;
-                column_ref.resolved_catalog_schema_id = resolved_table.catalog_schema_id;
-                column_ref.resolved_catalog_table_id = resolved_table.catalog_table_id;
-                column_ref.resolved_table_column_id = resolved_column.column_index;
-                auto dead_iter = column_ref_iter++;
+                expr.inner = AnalyzedScript::Expression::ResolvedColumnRef{
+                    .column_name = unresolved.column_name,
+                    .catalog_database_id = resolved_table.catalog_database_id,
+                    .catalog_schema_id = resolved_table.catalog_schema_id,
+                    .catalog_table_id = resolved_table.catalog_table_id,
+                    .table_column_id = resolved_column.column_index,
+                };
+                auto dead_iter = iter++;
                 unresolved_columns.erase(dead_iter);
             } else {
-                ++column_ref_iter;
+                ++iter;
             }
         }
     }
@@ -343,17 +349,14 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 auto column_name = ReadQualifiedColumnName(column_ref_node);
                 if (column_name.has_value()) {
                     // Add column reference
-                    auto& n = analyzed.expressions.Append(AnalyzedScript::Expression(column_name.value()));
+                    auto& n = analyzed.expressions.Append(AnalyzedScript::Expression());
                     n.buffer_index = analyzed.expressions.GetSize() - 1;
-                    n.value.expression_id = ExternalObjectID{
-                        catalog_entry_id, static_cast<uint32_t>(analyzed.expressions.GetSize() - 1)};
+                    n.value.expression_id =
+                        ExternalObjectID{catalog_entry_id, static_cast<uint32_t>(analyzed.expressions.GetSize() - 1)};
                     n.value.ast_node_id = node_id;
                     n.value.ast_statement_id = std::nullopt;
                     n.value.ast_scope_root = std::nullopt;
-                    n.value.resolved_catalog_database_id = std::numeric_limits<uint32_t>::max();
-                    n.value.resolved_catalog_schema_id = std::numeric_limits<uint32_t>::max();
-                    n.value.resolved_catalog_table_id = ExternalObjectID();
-                    n.value.resolved_table_column_id = std::nullopt;
+                    n.value.inner = AnalyzedScript::Expression::UnresolvedColumnRef{.column_name = column_name.value()};
                     node_state.column_references.PushBack(n);
                 }
                 // Column refs may be recursive

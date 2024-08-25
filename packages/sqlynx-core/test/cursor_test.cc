@@ -85,13 +85,27 @@ void test(Script& script, size_t text_offset, ExpectedScriptCursor expected) {
     } else {
         ASSERT_FALSE(cursor->table_reference_id.has_value());
     }
-    // Check column reference
+    // Check expression
     if (expected.column_ref_name.has_value()) {
         ASSERT_TRUE(cursor->expression_id.has_value());
         ASSERT_LT(*cursor->expression_id, script.analyzed_script->expressions.GetSize());
         auto& column_ref = script.analyzed_script->expressions[*cursor->expression_id];
-        auto column_name = print_name(script, column_ref->column_name);
-        ASSERT_EQ(column_name, expected.column_ref_name);
+        switch (column_ref->inner.index()) {
+            case 0:
+                break;
+            case 1: {
+                auto& unresolved = std::get<AnalyzedScript::Expression::UnresolvedColumnRef>(column_ref->inner);
+                auto column_name = print_name(script, unresolved.column_name);
+                ASSERT_EQ(column_name, expected.column_ref_name);
+                break;
+            }
+            case 2: {
+                auto& resolved = std::get<AnalyzedScript::Expression::ResolvedColumnRef>(column_ref->inner);
+                auto column_name = print_name(script, resolved.column_name);
+                ASSERT_EQ(column_name, expected.column_ref_name);
+                break;
+            }
+        }
     } else {
         ASSERT_FALSE(cursor->expression_id.has_value());
     }
