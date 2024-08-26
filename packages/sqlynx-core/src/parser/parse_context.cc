@@ -154,6 +154,12 @@ proto::Node ParseContext::NameFromStringLiteral(proto::Location loc) {
     return proto::Node(loc, proto::NodeType::NAME, proto::AttributeKey::NONE, NO_PARENT, name.name_id, 0);
 }
 
+/// Mark a trailing dot
+proto::Node ParseContext::TrailingDot(proto::Location loc) {
+    AddError(loc, "name has a trailing dot");
+    return proto::Node(loc, proto::NodeType::OBJECT_EXT_TRAILING_DOT, proto::AttributeKey::NONE, NO_PARENT, 0, 0);
+}
+
 /// Read a float type
 proto::NumericType ParseContext::ReadFloatType(proto::Location bitsLoc) {
     auto text = program.ReadTextAtLocation(bitsLoc);
