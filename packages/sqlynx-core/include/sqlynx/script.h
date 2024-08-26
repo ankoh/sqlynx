@@ -332,7 +332,7 @@ struct ScriptCursor {
     flatbuffers::Offset<proto::ScriptCursorInfo> Pack(flatbuffers::FlatBufferBuilder& builder) const;
 
     /// Create a script cursor
-    static std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> Create(const Script& script, size_t text_offset);
+    static std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> Place(const Script& script, size_t text_offset);
 };
 
 class Script {

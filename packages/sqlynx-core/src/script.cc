@@ -698,7 +698,7 @@ std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze() {
 
 /// Move the cursor to a offset
 std::pair<const ScriptCursor*, proto::StatusCode> Script::MoveCursor(size_t text_offset) {
-    auto [maybe_cursor, status] = ScriptCursor::Create(*this, text_offset);
+    auto [maybe_cursor, status] = ScriptCursor::Place(*this, text_offset);
     if (status == proto::StatusCode::OK) {
         cursor = std::move(maybe_cursor);
     }
@@ -734,8 +734,8 @@ static bool endsCursorPath(proto::Node& n) {
 ScriptCursor::ScriptCursor(const Script& script, size_t text_offset) : script(script), text_offset(text_offset) {}
 
 /// Constructor
-std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Create(const Script& script,
-                                                                                 size_t text_offset) {
+std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Place(const Script& script,
+                                                                                size_t text_offset) {
     auto cursor = std::make_unique<ScriptCursor>(script, text_offset);
 
     // Did the parsed script change?
