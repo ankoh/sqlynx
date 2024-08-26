@@ -101,6 +101,8 @@ class ParseContext {
     proto::Node NameFromKeyword(proto::Location loc, std::string_view text);
     /// Create a name from a string literal
     proto::Node NameFromStringLiteral(proto::Location loc);
+    /// Mark a trailing dot
+    proto::Node TrailingDot(proto::Location loc);
 
     /// Read a float type
     proto::NumericType ReadFloatType(proto::Location bitsLoc);
