@@ -13,6 +13,7 @@
 #include "sqlynx/testing/analyzer_snapshot_test.h"
 #include "sqlynx/testing/completion_snapshot_test.h"
 #include "sqlynx/testing/parser_snapshot_test.h"
+#include "sqlynx/testing/xml_tests.h"
 
 using namespace sqlynx;
 using namespace sqlynx::testing;
@@ -245,8 +246,10 @@ static void generate_completion_snapshots(const std::filesystem::path& source_di
                 continue;
             }
 
-            // Encode the completion
             CompletionSnapshotTest::EncodeCompletion(completions_node, *completion);
+
+            auto& cursor = completion->GetCursor();
+            EncodeLocation(completions_node, cursor.scanner_location.value().symbol.location, target_text);
         }
 
         // Write xml document

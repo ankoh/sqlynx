@@ -87,14 +87,13 @@ static constexpr Completion::ScoreValueType GetKeywordPrevalenceScore(parser::Pa
     }
 }
 
-bool doNotCompleteAfter(parser::Parser::symbol_type& sym) {
+bool doNotCompleteSymbol(parser::Parser::symbol_type& sym) {
     switch (sym.kind_) {
         case parser::Parser::symbol_kind_type::S_COMMA:
         case parser::Parser::symbol_kind_type::S_LRB:
         case parser::Parser::symbol_kind_type::S_RRB:
         case parser::Parser::symbol_kind_type::S_LSB:
         case parser::Parser::symbol_kind_type::S_RSB:
-        case parser::Parser::symbol_kind_type::S_DOT:
         case parser::Parser::symbol_kind_type::S_SEMICOLON:
         case parser::Parser::symbol_kind_type::S_COLON:
         case parser::Parser::symbol_kind_type::S_PLUS:
@@ -122,10 +121,6 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
     }
     auto& scanned = *cursor.script.scanned_script;
 
-    // Stop completion?
-    if (doNotCompleteAfter(location->symbol)) {
-        return;
-    }
     // Do we try to complete the current symbol or the next one?
     std::vector<parser::Parser::ExpectedSymbol> expected_symbols;
     if (location->relative_pos == ScannedScript::LocationInfo::RelativePosition::NEW_SYMBOL_AFTER &&
@@ -440,9 +435,38 @@ Completion::Completion(const ScriptCursor& cursor, size_t k)
 
 std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(const ScriptCursor& cursor, size_t k) {
     auto completion = std::make_unique<Completion>(cursor, k);
+
+    // Is the previous symbol a dot?
+    // Then we're probably just pointing to a word that follows a dot.
+    if (cursor.scanner_location->previousSymbolIsDot()) {
+        std::cout << "PREVIOUS SYMBOL IS DOT" << std::endl;
+        // XXX
+    }
+
+    // Is the current symbol a dot?
+    if (cursor.scanner_location->currentSymbolIsDot()) {
+        std::cout << "CURRENT SYMBOL IS DOT" << std::endl;
+        // XXX
+    }
+
+    // Is a dot completion?
+    // Then we're pointing to trailing dot.
+    if (cursor.scanner_location->currentSymbolIsDotSpace()) {
+        std::cout << "CURRENT SYMBOL IS DOT_SPACE" << std::endl;
+        // XXX
+    }
+
+    std::cout << proto::EnumNameRelativeSymbolPosition(cursor.scanner_location->relative_pos) << std::endl;
+
+    // Stop completion?
+    if (doNotCompleteSymbol(cursor.scanner_location->symbol)) {
+        return {std::move(completion), proto::StatusCode::OK};
+    }
+
     bool expects_identifier = false;
     completion->FindCandidatesInGrammar(expects_identifier);
     if (expects_identifier) {
+        std::cout << "EXPECTS IDENTIFER" << std::endl;
         completion->FindCandidatesInIndexes();
         completion->PromoteNearCandidatesInAST();
         completion->PromoteTableNamesForUnresolvedColumns();
