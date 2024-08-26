@@ -1,0 +1,22 @@
+<parser-snapshots>
+    <parser-snapshot name="dot_test_space_ident">
+        <input>
+            select * from dbname. foo
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="dot_test_space_keyword">
+        <input>
+            select * from dbname.  where
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="dot_test_eof">
+        <input>
+            select * from dbname.
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="dot_where_recovery">
+        <input>
+            select * from dbname. where a = b
+        </input>
+    </parser-snapshot>
+</parser-snapshots>
