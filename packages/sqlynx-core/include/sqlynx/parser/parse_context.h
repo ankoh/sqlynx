@@ -87,7 +87,7 @@ class ParseContext {
     proto::Node Object(proto::Location loc, proto::NodeType type, WeakUniquePtr<NodeList>&& attrs,
                        bool null_if_empty = true, bool shrink_location = false);
     /// Add a an object
-    inline proto::Node Object(proto::Location loc, proto::NodeType type, std::initializer_list<proto::Node> values,
+    inline proto::Node Object(proto::Location loc, proto::NodeType type, std::initializer_list<proto::Node> values = {},
                               bool null_if_empty = true, bool shrink_location = false) {
         return Object(loc, type, List(std::move(values)), null_if_empty, shrink_location);
     }

@@ -1,0 +1,29 @@
+<completion-snapshots>
+    <completion-snapshot name="dot">
+        <catalog>
+            <script id="1">
+                <input>
+                    create table dbname.schemaname.foo(a int);
+                </input>
+                <tables>
+                    <table id="256.65536.4294967296" name="foo" loc="21..62" text="create tab..foo(a int)">
+                        <column id="256.65536.4294967296.0" name="a" loc="56..61" text="a int" />
+                    </table>
+                </tables>
+            </script>
+        </catalog>
+        <script id="0">
+            <input>
+                select * from dbname.
+            </input>
+        </script>
+        <cursor>
+            <search text="dbname." index="7" />
+        </cursor>
+        <completions limit="3" symbol="OBJECT_SQL_INDIRECTION_TRAILING_DOT" relative="MID_OF_SYMBOL" strategy="DEFAULT">
+            <entry value="group" score="3" near="false" tags="KEYWORD" />
+            <entry value="order" score="3" near="false" tags="KEYWORD" />
+            <entry value="where" score="3" near="false" tags="KEYWORD" />
+        </completions>
+    </completion-snapshot>
+</completion-snapshots>

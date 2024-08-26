@@ -2082,7 +2082,9 @@ sql_columnref:
 
 sql_indirection_el:
     DOT sql_attr_name       { $$ = $2; }
-  | DOT STAR                { $$ = Operator(@2); }
+  | DOT STAR                { $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_INDIRECTION_STAR, {}, false); }
+  | DOT EOF                 { $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_INDIRECTION_TRAILING_DOT, {}, false); }
+  | DOT_SPACE               { $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_INDIRECTION_TRAILING_DOT, {}, false); }
   | LSB sql_a_expr RSB      { $$ = IndirectionIndex(ctx, @$, ctx.Expression(std::move($2))); }
   | LSB sql_opt_slice_bound COLON sql_opt_slice_bound RSB     { $$ = IndirectionIndex(ctx, @$, $2, $4); }
     ;

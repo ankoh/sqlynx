@@ -10,11 +10,6 @@
             SELECT * FROM A WHERE x + (something invalid)
         </input>
     </parser-snapshot>
-    <parser-snapshot name="recovery_interactive_1">
-        <input>
-            SELECT a. FROM A
-        </input>
-    </parser-snapshot>
     <parser-snapshot name="recovery_interactive_2">
         <input>
             SELECT a FROM
