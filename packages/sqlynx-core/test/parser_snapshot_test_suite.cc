@@ -1,10 +1,9 @@
-#include "sqlynx/parser/parser.h"
-#include "sqlynx/parser/scanner.h"
-#include "sqlynx/script.h"
-#include "sqlynx/testing/parser_snapshot_test.h"
-#include "sqlynx/testing/xml_tests.h"
 #include "gtest/gtest.h"
 #include "pugixml.hpp"
+#include "sqlynx/parser/parser.h"
+#include "sqlynx/parser/scanner.h"
+#include "sqlynx/testing/parser_snapshot_test.h"
+#include "sqlynx/testing/xml_tests.h"
 
 using namespace sqlynx;
 using namespace sqlynx::testing;
@@ -30,6 +29,7 @@ TEST_P(ParserSnapshotTestSuite, Test) {
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(Bugs, ParserSnapshotTestSuite, ::testing::ValuesIn(ParserSnapshotTest::GetTests("bugs.xml")), ParserSnapshotTest::TestPrinter());
 INSTANTIATE_TEST_SUITE_P(Regression, ParserSnapshotTestSuite, ::testing::ValuesIn(ParserSnapshotTest::GetTests("regression.xml")), ParserSnapshotTest::TestPrinter());
+INSTANTIATE_TEST_SUITE_P(Dots, ParserSnapshotTestSuite, ::testing::ValuesIn(ParserSnapshotTest::GetTests("dots.xml")), ParserSnapshotTest::TestPrinter());
 INSTANTIATE_TEST_SUITE_P(Set, ParserSnapshotTestSuite, ::testing::ValuesIn(ParserSnapshotTest::GetTests("ext_set.xml")), ParserSnapshotTest::TestPrinter());
 INSTANTIATE_TEST_SUITE_P(ErrorReporting, ParserSnapshotTestSuite, ::testing::ValuesIn(ParserSnapshotTest::GetTests("error_reporting.xml")), ParserSnapshotTest::TestPrinter());
 INSTANTIATE_TEST_SUITE_P(Create, ParserSnapshotTestSuite, ::testing::ValuesIn(ParserSnapshotTest::GetTests("sql_create.xml")), ParserSnapshotTest::TestPrinter());
