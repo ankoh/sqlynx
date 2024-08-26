@@ -107,7 +107,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
         <cursor>
             <search text="ke" index="2" />
         </cursor>
-        <completions limit="3" symbol="NAME" relative="END_OF_SYMBOL" strategy="COLUMN_REF">
+        <completions limit="3" strategy="COLUMN_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="46..48" text="ke">
             <entry value="l_orderkey" score="36" near="true" tags="COLUMN_NAME">
                 <object type="column" id="256.65536.4294967301.6" />
             </entry>

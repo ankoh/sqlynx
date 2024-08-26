@@ -5,7 +5,7 @@
         <cursor>
             <search text="" index="0" />
         </cursor>
-        <completions limit="3" relative="NEW_SYMBOL_BEFORE" strategy="DEFAULT">
+        <completions limit="3" strategy="DEFAULT" loc="0..1" text="">
             <entry value="select" score="3" near="false" tags="KEYWORD" />
             <entry value="set" score="2" near="false" tags="KEYWORD" />
             <entry value="with" score="2" near="false" tags="KEYWORD" />
@@ -35,7 +35,7 @@
         <cursor>
             <search text="db" index="2" />
         </cursor>
-        <completions limit="3" symbol="NAME" relative="END_OF_SYMBOL" strategy="TABLE_REF">
+        <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="31..33" text="db">
             <entry value="dbname" score="40" near="false" tags="DATABASE_NAME">
                 <object type="database" id="256" />
             </entry>
@@ -67,7 +67,7 @@
         <cursor>
             <search text="sch" index="3" />
         </cursor>
-        <completions limit="3" symbol="NAME" relative="END_OF_SYMBOL" strategy="TABLE_REF">
+        <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="31..34" text="sch">
             <entry value="schemaname" score="40" near="false" tags="SCHEMA_NAME">
                 <object type="schema" id="256.65536" />
             </entry>
@@ -99,7 +99,7 @@
         <cursor>
             <search text="fo" index="2" />
         </cursor>
-        <completions limit="3" symbol="NAME" relative="END_OF_SYMBOL" strategy="TABLE_REF">
+        <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="31..33" text="fo">
             <entry value="foo" score="40" near="false" tags="TABLE_NAME">
                 <object type="table" id="256.65536.4294967296" />
             </entry>
@@ -128,7 +128,7 @@
         <cursor>
             <search text="from (" index="6" />
         </cursor>
-        <completions limit="3" relative="END_OF_SYMBOL" strategy="DEFAULT" />
+        <completions limit="3" strategy="DEFAULT" loc="31..32" text="(" />
     </completion-snapshot>
     <completion-snapshot name="table_name_resolving_column">
         <catalog>
@@ -165,7 +165,7 @@ create table table3(attr3 integer);
         <cursor>
             <search text="tab" index="3" />
         </cursor>
-        <completions limit="3" symbol="NAME" relative="END_OF_SYMBOL" strategy="TABLE_REF">
+        <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="35..38" text="tab">
             <entry value="table2" score="42" near="false" tags="TABLE_NAME">
                 <object type="table" id="256.65536.4294967297" />
             </entry>
@@ -205,7 +205,7 @@ create table table3(attr3 integer);
         <cursor script="1">
             <search text="where external_" index="14" />
         </cursor>
-        <completions limit="5" symbol="NAME" relative="MID_OF_SYMBOL" strategy="COLUMN_REF">
+        <completions limit="5" strategy="COLUMN_REF" symbol="NAME" relative="MID_OF_SYMBOL" loc="65..74" text="external_">
             <entry value="external_name2" score="41" near="true" tags="COLUMN_NAME">
                 <object type="column" id="256.65536.4294967296.0" />
             </entry>
@@ -245,7 +245,7 @@ create table table3(attr3 integer);
         <cursor>
             <search text="where external_" index="15" />
         </cursor>
-        <completions limit="5" symbol="NAME" relative="END_OF_SYMBOL" strategy="COLUMN_REF">
+        <completions limit="5" strategy="COLUMN_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="65..74" text="external_">
             <entry value="external_name2" score="41" near="true" tags="COLUMN_NAME">
                 <object type="column" id="256.65536.4294967296.0" />
             </entry>
