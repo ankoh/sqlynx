@@ -387,6 +387,8 @@ enum ScannerTokenType: uint8 {
     OPERATOR,
     IDENTIFIER,
     COMMENT,
+    DOT,
+    DOT_TRAILING,
 }
 
 table ScannerTokens {

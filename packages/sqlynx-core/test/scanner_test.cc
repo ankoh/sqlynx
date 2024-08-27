@@ -170,6 +170,31 @@ TEST(ScannerTest, FindTokenAtOffset) {
         test_symbol(11, 1, Relative::NEW_SYMBOL_AFTER);
         test_symbol(12, 1, Relative::NEW_SYMBOL_AFTER);
     }
+    {
+        SCOPED_TRACE("select   foo.bar.  ");
+        scan("select   foo.bar.  ", 1);
+        test_tokens({ScannerToken::KEYWORD, ScannerToken::IDENTIFIER, ScannerToken::DOT, ScannerToken::IDENTIFIER,
+                     ScannerToken::DOT_TRAILING});
+        test_symbol(0, 0, Relative::BEGIN_OF_SYMBOL);
+        test_symbol(1, 0, Relative::MID_OF_SYMBOL);
+        test_symbol(2, 0, Relative::MID_OF_SYMBOL);
+        test_symbol(3, 0, Relative::MID_OF_SYMBOL);
+        test_symbol(4, 0, Relative::MID_OF_SYMBOL);
+        test_symbol(5, 0, Relative::MID_OF_SYMBOL);
+        test_symbol(6, 0, Relative::END_OF_SYMBOL);
+        test_symbol(7, 0, Relative::NEW_SYMBOL_AFTER);
+        test_symbol(8, 0, Relative::NEW_SYMBOL_AFTER);
+        test_symbol(9, 1, Relative::BEGIN_OF_SYMBOL);
+        test_symbol(10, 1, Relative::MID_OF_SYMBOL);
+        test_symbol(11, 1, Relative::MID_OF_SYMBOL);
+        test_symbol(12, 2, Relative::BEGIN_OF_SYMBOL);
+        test_symbol(13, 3, Relative::BEGIN_OF_SYMBOL);
+        test_symbol(14, 3, Relative::MID_OF_SYMBOL);
+        test_symbol(15, 3, Relative::MID_OF_SYMBOL);
+        test_symbol(16, 4, Relative::BEGIN_OF_SYMBOL);
+        test_symbol(17, 4, Relative::END_OF_SYMBOL);
+        test_symbol(18, 4, Relative::NEW_SYMBOL_AFTER);
+    }
 }
 
 TEST(ScannerTest, FindTokenInterleaved) {
