@@ -114,6 +114,8 @@ bool doNotCompleteSymbol(parser::Parser::symbol_type& sym) {
 
 }  // namespace
 
+proto::StatusCode Completion::CompleteAfterDot() { return proto::StatusCode::OK; }
+
 void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
     auto& location = cursor.scanner_location;
     if (!location.has_value()) {
@@ -435,24 +437,76 @@ Completion::Completion(const ScriptCursor& cursor, size_t k)
 
 std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(const ScriptCursor& cursor, size_t k) {
     auto completion = std::make_unique<Completion>(cursor, k);
+    proto::StatusCode status = proto::StatusCode::OK;
+
+    // Is the current symbol an inner dot?
+    if (cursor.scanner_location->currentSymbolIsDot()) {
+        std::cout << "CURRENT SYMBOL IS DOT" << std::endl;
+
+        // XXX
+        using RelativePosition = ScannedScript::LocationInfo::RelativePosition;
+        switch (cursor.scanner_location->relative_pos) {
+            case RelativePosition::NEW_SYMBOL_AFTER:
+            case RelativePosition::END_OF_SYMBOL:
+                std::cout << "COMPLETE AFTER DOT" << std::endl;
+                status = completion->CompleteAfterDot();
+                return {std::move(completion), status};
+
+            case RelativePosition::BEGIN_OF_SYMBOL:
+            case RelativePosition::MID_OF_SYMBOL:
+            case RelativePosition::NEW_SYMBOL_BEFORE:
+                std::cout << "DONT COMPLETE DOT ITSELF" << std::endl;
+                // Don't complete the dot itself
+                return {std::move(completion), status};
+        }
+    }
+
+    // Is the current symbol a trailing dot?
+    else if (cursor.scanner_location->currentSymbolIsTrailingDot()) {
+        std::cout << "CURRENT SYMBOL IS DOT_TRAILING" << std::endl;
+
+        // XXX
+        using RelativePosition = ScannedScript::LocationInfo::RelativePosition;
+        switch (cursor.scanner_location->relative_pos) {
+            case RelativePosition::NEW_SYMBOL_AFTER:
+            case RelativePosition::END_OF_SYMBOL:
+                std::cout << "COMPLETE AFTER TRAILING DOT" << std::endl;
+                status = completion->CompleteAfterDot();
+                return {std::move(completion), status};
+
+            case RelativePosition::BEGIN_OF_SYMBOL:
+            case RelativePosition::MID_OF_SYMBOL:
+            case RelativePosition::NEW_SYMBOL_BEFORE:
+                std::cout << "DONT COMPLETE DOT ITSELF" << std::endl;
+                // Don't complete the dot itself
+                return {std::move(completion), status};
+        }
+    }
 
     // Is the previous symbol a dot?
     // Then we're probably just pointing to a word that follows a dot.
     if (cursor.scanner_location->previousSymbolIsDot()) {
         std::cout << "PREVIOUS SYMBOL IS DOT" << std::endl;
-        // XXX
-    }
 
-    // Is the current symbol a trailing dot?
-    if (cursor.scanner_location->currentSymbolIsTrailingDot()) {
-        std::cout << "CURRENT SYMBOL IS DOT_TRAILING" << std::endl;
         // XXX
-    }
+        using RelativePosition = ScannedScript::LocationInfo::RelativePosition;
+        switch (cursor.scanner_location->relative_pos) {
+            case RelativePosition::END_OF_SYMBOL:
+            case RelativePosition::BEGIN_OF_SYMBOL:
+            case RelativePosition::MID_OF_SYMBOL:
+                std::cout << "COMPLETE AFTER TRAILING DOT" << std::endl;
+                status = completion->CompleteAfterDot();
+                return {std::move(completion), status};
 
-    // Is the current symbol an inner dot?
-    if (cursor.scanner_location->currentSymbolIsDot()) {
-        std::cout << "CURRENT SYMBOL IS DOT" << std::endl;
-        // XXX
+            case RelativePosition::NEW_SYMBOL_AFTER:
+            case RelativePosition::NEW_SYMBOL_BEFORE:
+                std::cout << "CONTINUE WITH NORMAL COMPLETION" << std::endl;
+                // NEW_SYMBOL_BEFORE should be unreachable
+                // NEW_SYMBOL_AFTER is not qualifying for dot completion
+
+                // Proceed with normal completion...
+                break;
+        }
     }
 
     std::cout << proto::EnumNameRelativeSymbolPosition(cursor.scanner_location->relative_pos) << std::endl;
