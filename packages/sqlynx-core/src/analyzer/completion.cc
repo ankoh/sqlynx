@@ -443,16 +443,15 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
         // XXX
     }
 
-    // Is the current symbol a dot?
-    if (cursor.scanner_location->currentSymbolIsDot()) {
-        std::cout << "CURRENT SYMBOL IS DOT" << std::endl;
+    // Is the current symbol a trailing dot?
+    if (cursor.scanner_location->currentSymbolIsTrailingDot()) {
+        std::cout << "CURRENT SYMBOL IS DOT_TRAILING" << std::endl;
         // XXX
     }
 
-    // Is a dot completion?
-    // Then we're pointing to trailing dot.
-    if (cursor.scanner_location->currentSymbolIsDotSpace()) {
-        std::cout << "CURRENT SYMBOL IS DOT_SPACE" << std::endl;
+    // Is the current symbol an inner dot?
+    if (cursor.scanner_location->currentSymbolIsDot()) {
+        std::cout << "CURRENT SYMBOL IS DOT" << std::endl;
         // XXX
     }
 

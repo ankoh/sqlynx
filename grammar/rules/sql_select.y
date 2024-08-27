@@ -2080,12 +2080,12 @@ sql_columnref:
   | sql_col_id sql_indirection  { $2->push_front($1); $$ = ColumnRef(ctx, @$, std::move($2)); }
     ;
 
-ext_dot_space: DOT_SPACE | DOT EOF
+ext_dot_trailing: DOT_TRAILING | DOT EOF
 
 sql_indirection_el:
     DOT sql_attr_name       { $$ = $2; }
   | DOT STAR                { $$ = ctx.Object(@$, proto::NodeType::OBJECT_SQL_INDIRECTION_STAR, {}, false); }
-  | ext_dot_space           { $$ = ctx.TrailingDot(@$); }
+  | ext_dot_trailing           { $$ = ctx.TrailingDot(@$); }
   | LSB sql_a_expr RSB      { $$ = IndirectionIndex(ctx, @$, ctx.Expression(std::move($2))); }
   | LSB sql_opt_slice_bound COLON sql_opt_slice_bound RSB     { $$ = IndirectionIndex(ctx, @$, $2, $4); }
     ;
@@ -2308,10 +2308,10 @@ sql_any_name:
     ;
 
 sql_attrs:
-    ext_dot_space               { $$ = ctx.List({ ctx.TrailingDot(@$) }); }
-  | DOT sql_attr_name           { $$ = ctx.List({ $2 }); }
-  | sql_attrs DOT sql_attr_name { $1->push_back($3); $$ = std::move($1); }
-  | sql_attrs ext_dot_space     { $1->push_back(ctx.TrailingDot(@$)); $$ = std::move($1); }
+    ext_dot_trailing                { $$ = ctx.List({ ctx.TrailingDot(@$) }); }
+  | DOT sql_attr_name               { $$ = ctx.List({ $2 }); }
+  | sql_attrs DOT sql_attr_name     { $1->push_back($3); $$ = std::move($1); }
+  | sql_attrs ext_dot_trailing      { $1->push_back(ctx.TrailingDot(@$)); $$ = std::move($1); }
     ;
 
 sql_opt_name_list:
