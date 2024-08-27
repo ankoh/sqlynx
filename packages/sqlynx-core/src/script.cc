@@ -70,6 +70,8 @@ ScannedScript::LocationInfo ScannedScript::FindSymbol(size_t text_offset) {
 
     // Helper to determine the insert mode
     auto get_relative_position = [&](size_t text_offset, size_t chunk_id, size_t chunk_symbol_id) -> RelativePosition {
+        // Should actually never happen.
+        // We're never pointing one past the last chunk after searching the symbol.
         if (chunk_id >= chunks.size()) {
             return RelativePosition::NEW_SYMBOL_AFTER;
         }
@@ -79,6 +81,7 @@ ScannedScript::LocationInfo ScannedScript::FindSymbol(size_t text_offset) {
         auto symbol_end = symbol.location.offset() + symbol.location.length();
 
         // Before the symbol?
+        // Can happen wen the offset points at the beginning of the text
         if (text_offset < symbol_begin) {
             return RelativePosition::NEW_SYMBOL_BEFORE;
         }
@@ -94,6 +97,8 @@ ScannedScript::LocationInfo ScannedScript::FindSymbol(size_t text_offset) {
         if (text_offset > symbol_begin && (text_offset < symbol_end)) {
             return RelativePosition::MID_OF_SYMBOL;
         }
+        // This happens when we're pointing at white-space after a symbol.
+        // (end + 1), since end emits END_OF_SYMBOL
         return RelativePosition::NEW_SYMBOL_AFTER;
     };
 
