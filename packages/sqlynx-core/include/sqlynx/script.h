@@ -104,7 +104,9 @@ class ScannedScript {
         /// Is the current symbol a dot?
         bool currentSymbolIsDot() const { return symbol.kind_ == parser::Parser::symbol_kind_type::S_DOT; }
         /// Is the current symbol a dot + space?
-        bool currentSymbolIsDotSpace() const { return symbol.kind_ == parser::Parser::symbol_kind_type::S_DOT_SPACE; }
+        bool currentSymbolIsTrailingDot() const {
+            return symbol.kind_ == parser::Parser::symbol_kind_type::S_DOT_TRAILING;
+        }
         /// Is the previous symbol a dot?
         bool previousSymbolIsDot() const {
             if (!previous_symbol.has_value()) {

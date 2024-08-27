@@ -20,7 +20,7 @@
         <cursor>
             <search text="dbname." index="7" />
         </cursor>
-        <completions limit="3" strategy="DEFAULT" symbol="OBJECT_EXT_TRAILING_DOT" relative="MID_OF_SYMBOL" loc="37..39" text=".&#10;">
+        <completions limit="3" strategy="DEFAULT" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="37..38" text=".">
             <entry value="group" score="3" near="false" tags="KEYWORD" />
             <entry value="order" score="3" near="false" tags="KEYWORD" />
             <entry value="where" score="3" near="false" tags="KEYWORD" />

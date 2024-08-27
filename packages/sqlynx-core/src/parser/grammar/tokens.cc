@@ -34,6 +34,10 @@ static const proto::ScannerTokenType MapToken(Parser::symbol_type symbol, std::s
         case Parser::symbol_kind_type::S_LESS_EQUALS:
         case Parser::symbol_kind_type::S_NOT_EQUALS:
             return proto::ScannerTokenType::OPERATOR;
+        case Parser::symbol_kind_type::S_DOT:
+            return proto::ScannerTokenType::DOT;
+        case Parser::symbol_kind_type::S_DOT_TRAILING:
+            return proto::ScannerTokenType::DOT_TRAILING;
         default: {
             auto loc = symbol.location;
             if (loc.length() == 1) {
