@@ -82,6 +82,9 @@ struct Completion {
     /// The result heap, holding up to k entries
     TopKHeap<Candidate> result_heap;
 
+    /// Complete after a dot
+    proto::StatusCode CompleteAfterDot();
+
     /// Resolve the expected symbols
     void FindCandidatesInGrammar(bool& expects_identifier);
     /// Find the candidates in completion indexes
