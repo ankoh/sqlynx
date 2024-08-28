@@ -114,23 +114,12 @@ bool doNotCompleteSymbol(parser::Parser::symbol_type& sym) {
 
 }  // namespace
 
-proto::StatusCode Completion::CompleteAfterDot() { return proto::StatusCode::OK; }
+proto::StatusCode Completion::TryCompleteAtDot() { return proto::StatusCode::OK; }
 
-void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
+proto::StatusCode Completion::TryCompleteAfterDot() { return proto::StatusCode::OK; }
+
+void Completion::PromoteExpectedGrammarSymbols(std::span<parser::Parser::ExpectedSymbol> symbols) {
     auto& location = cursor.scanner_location;
-    if (!location.has_value()) {
-        return;
-    }
-    auto& scanned = *cursor.script.scanned_script;
-
-    // Do we try to complete the current symbol or the next one?
-    std::vector<parser::Parser::ExpectedSymbol> expected_symbols;
-    if (location->relative_pos == ScannedScript::LocationInfo::RelativePosition::NEW_SYMBOL_AFTER &&
-        !location->at_eof) {
-        expected_symbols = parser::Parser::ParseUntil(scanned, location->symbol_id + 1);
-    } else {
-        expected_symbols = parser::Parser::ParseUntil(scanned, location->symbol_id);
-    }
 
     // Helper to determine the score of a cursor symbol
     auto get_score = [&](const ScannedScript::LocationInfo& loc, parser::Parser::ExpectedSymbol expected,
@@ -163,10 +152,7 @@ void Completion::FindCandidatesInGrammar(bool& expects_identifier) {
     };
 
     // Add all expected symbols to the result heap
-    for (auto& expected : expected_symbols) {
-        if (expected == parser::Parser::symbol_kind_type::S_IDENT) {
-            expects_identifier = true;
-        }
+    for (auto& expected : symbols) {
         auto name = parser::Keyword::GetKeywordName(expected);
         if (!name.empty()) {
             Candidate candidate{
@@ -437,27 +423,32 @@ Completion::Completion(const ScriptCursor& cursor, size_t k)
 
 std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(const ScriptCursor& cursor, size_t k) {
     auto completion = std::make_unique<Completion>(cursor, k);
-    proto::StatusCode status = proto::StatusCode::OK;
+
+    // Skip completion for the current symbol?
+    if (doNotCompleteSymbol(cursor.scanner_location->symbol)) {
+        return {std::move(completion), proto::StatusCode::OK};
+    }
+    std::cout << proto::EnumNameRelativeSymbolPosition(cursor.scanner_location->relative_pos) << std::endl;
 
     // Is the current symbol an inner dot?
     if (cursor.scanner_location->currentSymbolIsDot()) {
         std::cout << "CURRENT SYMBOL IS DOT" << std::endl;
 
-        // XXX
         using RelativePosition = ScannedScript::LocationInfo::RelativePosition;
         switch (cursor.scanner_location->relative_pos) {
             case RelativePosition::NEW_SYMBOL_AFTER:
-            case RelativePosition::END_OF_SYMBOL:
+            case RelativePosition::END_OF_SYMBOL: {
                 std::cout << "COMPLETE AFTER DOT" << std::endl;
-                status = completion->CompleteAfterDot();
+                auto status = completion->TryCompleteAtDot();
                 return {std::move(completion), status};
+            }
 
             case RelativePosition::BEGIN_OF_SYMBOL:
             case RelativePosition::MID_OF_SYMBOL:
             case RelativePosition::NEW_SYMBOL_BEFORE:
                 std::cout << "DONT COMPLETE DOT ITSELF" << std::endl;
                 // Don't complete the dot itself
-                return {std::move(completion), status};
+                return {std::move(completion), proto::StatusCode::OK};
         }
     }
 
@@ -465,61 +456,74 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
     else if (cursor.scanner_location->currentSymbolIsTrailingDot()) {
         std::cout << "CURRENT SYMBOL IS DOT_TRAILING" << std::endl;
 
-        // XXX
         using RelativePosition = ScannedScript::LocationInfo::RelativePosition;
         switch (cursor.scanner_location->relative_pos) {
             case RelativePosition::NEW_SYMBOL_AFTER:
-            case RelativePosition::END_OF_SYMBOL:
+            case RelativePosition::END_OF_SYMBOL: {
                 std::cout << "COMPLETE AFTER TRAILING DOT" << std::endl;
-                status = completion->CompleteAfterDot();
+                auto status = completion->TryCompleteAtDot();
                 return {std::move(completion), status};
-
+            }
             case RelativePosition::BEGIN_OF_SYMBOL:
             case RelativePosition::MID_OF_SYMBOL:
-            case RelativePosition::NEW_SYMBOL_BEFORE:
+            case RelativePosition::NEW_SYMBOL_BEFORE: {
                 std::cout << "DONT COMPLETE DOT ITSELF" << std::endl;
                 // Don't complete the dot itself
-                return {std::move(completion), status};
+                return {std::move(completion), proto::StatusCode::OK};
+            }
+        }
+    }
+
+    // Find the expected symbols at this location
+    std::vector<parser::Parser::ExpectedSymbol> expected_symbols;
+    if (cursor.scanner_location->relative_pos == ScannedScript::LocationInfo::RelativePosition::NEW_SYMBOL_AFTER &&
+        !cursor.scanner_location->at_eof) {
+        expected_symbols =
+            parser::Parser::ParseUntil(*cursor.script.scanned_script, cursor.scanner_location->symbol_id + 1);
+    } else {
+        expected_symbols =
+            parser::Parser::ParseUntil(*cursor.script.scanned_script, cursor.scanner_location->symbol_id);
+    }
+    bool expects_identifier = false;
+    for (auto& expected : expected_symbols) {
+        if (expected == parser::Parser::symbol_kind_type::S_IDENT) {
+            std::cout << "EXPECTING IDENTIFIER" << std::endl;
+            expects_identifier = true;
+            break;
         }
     }
 
     // Is the previous symbol a dot?
-    // Then we're probably just pointing to a word that follows a dot.
-    if (cursor.scanner_location->previousSymbolIsDot()) {
+    // Then check if we accept an identifier.
+    // When we do, we're actually dot completing...
+    if (cursor.scanner_location->previousSymbolIsDot() && expects_identifier) {
         std::cout << "PREVIOUS SYMBOL IS DOT" << std::endl;
 
-        // XXX
         using RelativePosition = ScannedScript::LocationInfo::RelativePosition;
         switch (cursor.scanner_location->relative_pos) {
             case RelativePosition::END_OF_SYMBOL:
             case RelativePosition::BEGIN_OF_SYMBOL:
-            case RelativePosition::MID_OF_SYMBOL:
+            case RelativePosition::MID_OF_SYMBOL: {
                 std::cout << "COMPLETE AFTER TRAILING DOT" << std::endl;
-                status = completion->CompleteAfterDot();
+                auto status = completion->TryCompleteAfterDot();
                 return {std::move(completion), status};
-
+            }
             case RelativePosition::NEW_SYMBOL_AFTER:
             case RelativePosition::NEW_SYMBOL_BEFORE:
                 std::cout << "CONTINUE WITH NORMAL COMPLETION" << std::endl;
-                // NEW_SYMBOL_BEFORE should be unreachable
-                // NEW_SYMBOL_AFTER is not qualifying for dot completion
+                /// NEW_SYMBOL_BEFORE should be unreachable, the previous symbol would have been a trailing dot...
+                /// NEW_SYMBOL_AFTER is not qualifying for dot completion
 
                 // Proceed with normal completion...
                 break;
         }
     }
 
-    std::cout << proto::EnumNameRelativeSymbolPosition(cursor.scanner_location->relative_pos) << std::endl;
+    // Add expected grammar symbols to the heap and score them
+    completion->PromoteExpectedGrammarSymbols(expected_symbols);
 
-    // Stop completion?
-    if (doNotCompleteSymbol(cursor.scanner_location->symbol)) {
-        return {std::move(completion), proto::StatusCode::OK};
-    }
-
-    bool expects_identifier = false;
-    completion->FindCandidatesInGrammar(expects_identifier);
+    // Also check the name indexes when expecting an identifier
     if (expects_identifier) {
-        std::cout << "EXPECTS IDENTIFER" << std::endl;
         completion->FindCandidatesInIndexes();
         completion->PromoteNearCandidatesInAST();
         completion->PromoteTableNamesForUnresolvedColumns();

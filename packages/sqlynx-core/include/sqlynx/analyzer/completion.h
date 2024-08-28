@@ -83,12 +83,14 @@ struct Completion {
     TopKHeap<Candidate> result_heap;
 
     /// Complete after a dot
-    proto::StatusCode CompleteAfterDot();
+    proto::StatusCode TryCompleteAtDot();
+    /// Complete after a dot
+    proto::StatusCode TryCompleteAfterDot();
 
-    /// Resolve the expected symbols
-    void FindCandidatesInGrammar(bool& expects_identifier);
     /// Find the candidates in completion indexes
     void FindCandidatesInIndexes();
+    /// Promote expected symbols in the grammar
+    void PromoteExpectedGrammarSymbols(std::span<parser::Parser::ExpectedSymbol> symbols);
     /// Find tables that contain column names that are still unresolved in the current statement
     void PromoteTableNamesForUnresolvedColumns();
     /// Find candidates in the AST around the script cursor
