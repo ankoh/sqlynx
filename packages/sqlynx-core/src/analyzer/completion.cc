@@ -114,9 +114,121 @@ bool doNotCompleteSymbol(parser::Parser::symbol_type& sym) {
 
 }  // namespace
 
-proto::StatusCode Completion::TryCompleteAtDot() { return proto::StatusCode::OK; }
+std::vector<Completion::NameComponent> Completion::ReadNamePathAroundDot(size_t node_id) {
+    auto& nodes = cursor.script.parsed_script->nodes;
 
-proto::StatusCode Completion::TryCompleteAfterDot() { return proto::StatusCode::OK; }
+    while (true) {
+        // Check node type
+        auto& node = nodes[node_id];
+        if (node.node_type() == proto::NodeType::ARRAY) {
+            bool is_name_path = false;
+            switch (node.attribute_key()) {
+                case Key::SQL_COLUMN_REF_PATH:
+                case Key::SQL_TABLEREF_NAME:
+                case Key::SQL_TEMP_NAME:
+                case Key::SQL_ROW_LOCKING_OF:
+                case Key::SQL_INDIRECTION_PATH:
+                    // (expr).indirection
+                    // XXX find a few cases for this kind of indirection
+                    is_name_path = true;
+                    break;
+                default:
+                    break;
+            }
+            // Found a name path?
+            if (is_name_path) {
+                break;
+            }
+        }
+        // Reached end?
+        if (node.parent() == node_id) {
+            return {};
+        } else {
+            node_id = node.parent();
+        }
+    }
+
+    // Get the child nodes
+    auto& node = nodes[node_id];
+    auto children = std::span<proto::Node>{nodes}.subspan(node.children_begin_or_value(), node.children_count());
+
+    // Collect the name path
+    std::vector<NameComponent> components;
+    for (size_t i = 0; i != children.size(); ++i) {
+        // A child is either a name, an index or a *.
+        auto& child = children[i];
+        switch (child.node_type()) {
+            case proto::NodeType::NAME: {
+                auto& name = cursor.script.scanned_script->GetNames().At(child.children_begin_or_value());
+                components.push_back(NameComponent{
+                    .type = NameComponentType::Name,
+                    .name = name,
+                });
+                break;
+            }
+            case proto::NodeType::OBJECT_SQL_INDIRECTION_STAR:
+                components.push_back(NameComponent{
+                    .type = NameComponentType::Star,
+                    .name = std::nullopt,
+                });
+                break;
+            case proto::NodeType::OBJECT_SQL_INDIRECTION_INDEX:
+                components.push_back(NameComponent{
+                    .type = NameComponentType::Index,
+                    .name = std::nullopt,
+                });
+                break;
+            case proto::NodeType::OBJECT_EXT_TRAILING_DOT:
+                return components;
+            default:
+                // XXX Bail out
+                return {};
+        }
+    }
+    return components;
+}
+
+proto::StatusCode Completion::CompleteAtDot() {
+    // No AST node?
+    // Then we skip the completion
+    if (!cursor.ast_node_id.has_value()) {
+        std::cout << "DONT KNOW AST NODE" << std::endl;
+        return proto::StatusCode::OK;
+    }
+    // Read the name path
+    auto node_id = cursor.ast_node_id.value();
+    auto name_path = ReadNamePathAroundDot(node_id);
+
+    // Print name path
+    for (size_t i = 0; i < name_path.size(); ++i) {
+        if (name_path[i].name.has_value()) {
+            std::cout << "PATH[" << i << "] " << name_path[i].name.value().get().text << std::endl;
+        }
+    }
+    return proto::StatusCode::OK;
+}
+
+proto::StatusCode Completion::CompleteAfterDot() {
+    // The previous symbol is a dot.
+    // We first need to resolve the ast node for the dot
+    assert(cursor.scanner_location->previous_symbol.has_value());
+    auto& prev_symbol = cursor.scanner_location->previous_symbol.value();
+    auto prev_node = cursor.script.parsed_script->FindNodeAtOffset(prev_symbol.get().location.offset());
+    if (!prev_node.has_value()) {
+        return proto::StatusCode::OK;
+    }
+    auto [_statement_id, node_id] = *prev_node;
+
+    // Print name path
+    auto name_path = ReadNamePathAroundDot(node_id);
+    for (size_t i = 0; i < name_path.size(); ++i) {
+        if (name_path[i].name.has_value()) {
+            std::cout << "PATH[" << i << "] " << name_path[i].name.value().get().text << std::endl;
+        }
+    }
+
+    return proto::StatusCode::OK;
+}
 
 void Completion::PromoteExpectedGrammarSymbols(std::span<parser::Parser::ExpectedSymbol> symbols) {
     auto& location = cursor.scanner_location;
@@ -439,7 +551,7 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
             case RelativePosition::NEW_SYMBOL_AFTER:
             case RelativePosition::END_OF_SYMBOL: {
                 std::cout << "COMPLETE AFTER DOT" << std::endl;
-                auto status = completion->TryCompleteAtDot();
+                auto status = completion->CompleteAtDot();
                 return {std::move(completion), status};
             }
 
@@ -460,8 +572,8 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
         switch (cursor.scanner_location->relative_pos) {
             case RelativePosition::NEW_SYMBOL_AFTER:
             case RelativePosition::END_OF_SYMBOL: {
-                std::cout << "COMPLETE AFTER TRAILING DOT" << std::endl;
-                auto status = completion->TryCompleteAtDot();
+                std::cout << "COMPLETE AT TRAILING DOT" << std::endl;
+                auto status = completion->CompleteAtDot();
                 return {std::move(completion), status};
             }
             case RelativePosition::BEGIN_OF_SYMBOL:
@@ -504,8 +616,8 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
             case RelativePosition::END_OF_SYMBOL:
             case RelativePosition::BEGIN_OF_SYMBOL:
             case RelativePosition::MID_OF_SYMBOL: {
-                std::cout << "COMPLETE AFTER TRAILING DOT" << std::endl;
-                auto status = completion->TryCompleteAfterDot();
+                std::cout << "COMPLETE AFTER DOT" << std::endl;
+                auto status = completion->CompleteAfterDot();
                 return {std::move(completion), status};
             }
             case RelativePosition::NEW_SYMBOL_AFTER:
