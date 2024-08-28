@@ -70,6 +70,16 @@ struct Completion {
     /// A hash-map for candidates
     using CandidateMap = ankerl::unordered_dense::map<std::string_view, Candidate>;
 
+    /// A name component type
+    enum NameComponentType { Name, Star, Index };
+    /// A name component
+    struct NameComponent {
+        /// The component type
+        NameComponentType type;
+        /// The name (if any)
+        std::optional<std::reference_wrapper<RegisteredName>> name;
+    };
+
    protected:
     /// The script cursor
     const ScriptCursor& cursor;
@@ -83,9 +93,11 @@ struct Completion {
     TopKHeap<Candidate> result_heap;
 
     /// Complete after a dot
-    proto::StatusCode TryCompleteAtDot();
+    std::vector<NameComponent> ReadNamePathAroundDot(size_t node_id);
     /// Complete after a dot
-    proto::StatusCode TryCompleteAfterDot();
+    proto::StatusCode CompleteAtDot();
+    /// Complete after a dot
+    proto::StatusCode CompleteAfterDot();
 
     /// Find the candidates in completion indexes
     void FindCandidatesInIndexes();
