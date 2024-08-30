@@ -1,10 +1,10 @@
 namespace sqlynx.proto;
 
 enum CompletionCandidateObjectType: uint8 {
-    Database = 0,
-    Schema = 1,
-    Table = 2,
-    Column = 3
+    DATABASE = 0,
+    SCHEMA = 1,
+    TABLE = 2,
+    COLUMN = 3
 }
 
 table CompletionCandidateObject {
@@ -48,11 +48,21 @@ enum CompletionStrategy: uint8 {
     COLUMN_REF
 }
 
+enum CompletionAction: uint8 {
+    SKIP_COMPLETION,
+    SKIP_COMPLETION_AT_DOT,
+    COMPLETE_SYMBOL,
+    COMPLETE_AT_DOT,
+    COMPLETE_AFTER_DOT,
+}
+
 table Completion {
-    /// The strategy
-    strategy: CompletionStrategy;
     /// The text offset
     text_offset: uint32;
+    /// The strategy
+    strategy: CompletionStrategy;
+    /// The completion action type
+    action: CompletionAction;
     /// The completion candidates
     candidates: [CompletionCandidate];
 }

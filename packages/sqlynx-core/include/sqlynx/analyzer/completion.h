@@ -91,6 +91,8 @@ struct Completion {
     CandidateMap pending_candidates;
     /// The result heap, holding up to k entries
     TopKHeap<Candidate> result_heap;
+    /// The completion action
+    proto::CompletionAction completion_action;
 
     /// Complete after a dot
     std::vector<NameComponent> ReadNamePathAroundDot(size_t node_id);

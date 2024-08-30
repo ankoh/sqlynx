@@ -772,6 +772,7 @@ std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Place(
                 if (endsCursorPath(node)) {
                     break;
                 }
+                std::cout << "CURSOR PATH " << iter << std::endl;
                 cursor_path_nodes.insert(iter);
                 if (iter == node.parent()) {
                     break;
@@ -799,20 +800,21 @@ std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Place(
                     return true;
                 });
 
-                // Part of a table reference node?
-                analyzed->table_references.ForEach([&](size_t i, auto& table_ref) {
-                    if (table_ref->ast_node_id.has_value() && cursor_path_nodes.contains(*table_ref->ast_node_id)) {
-                        cursor->table_reference_id = i;
+                // Part of a column reference node?
+                analyzed->expressions.ForEachWhile([&](size_t i, auto& column_ref) {
+                    if (column_ref->ast_node_id.has_value() && cursor_path_nodes.contains(*column_ref->ast_node_id)) {
+                        cursor->expression_id = i;
                         return false;
                     } else {
                         return true;
                     }
                 });
 
-                // Part of a column reference node?
-                analyzed->expressions.ForEachWhile([&](size_t i, auto& column_ref) {
-                    if (column_ref->ast_node_id.has_value() && cursor_path_nodes.contains(*column_ref->ast_node_id)) {
-                        cursor->expression_id = i;
+                // Part of a table reference node?
+                analyzed->table_references.ForEach([&](size_t i, auto& table_ref) {
+                    std::cout << "TABLE REF " << table_ref->ast_node_id.value() << std::endl;
+                    if (table_ref->ast_node_id.has_value() && cursor_path_nodes.contains(*table_ref->ast_node_id)) {
+                        cursor->table_reference_id = i;
                         return false;
                     } else {
                         return true;
