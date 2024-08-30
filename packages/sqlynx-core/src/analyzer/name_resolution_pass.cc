@@ -65,6 +65,11 @@ std::span<std::reference_wrapper<RegisteredName>> NameResolutionPass::ReadNamePa
         // A child is either a name, an indirection or an operator (*).
         // We only consider plan name paths for now and extend later.
         auto& child = children[i];
+        // Skip over trailing dots
+        if (child.node_type() == proto::NodeType::OBJECT_EXT_TRAILING_DOT) {
+            continue;
+        }
+        // Not a name?
         if (child.node_type() != proto::NodeType::NAME) {
             name_path_buffer.clear();
             break;
