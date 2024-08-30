@@ -192,7 +192,6 @@ proto::StatusCode Completion::CompleteAtDot() {
     // No AST node?
     // Then we skip the completion
     if (!cursor.ast_node_id.has_value()) {
-        std::cout << "DONT KNOW AST NODE" << std::endl;
         return proto::StatusCode::OK;
     }
     // Read the name path
@@ -205,6 +204,10 @@ proto::StatusCode Completion::CompleteAtDot() {
             std::cout << "PATH[" << i << "] " << name_path[i].name.value().get().text << std::endl;
         }
     }
+
+    // XXX
+
+    completion_action = proto::CompletionAction::COMPLETE_AT_DOT;
     return proto::StatusCode::OK;
 }
 
@@ -227,6 +230,9 @@ proto::StatusCode Completion::CompleteAfterDot() {
         }
     }
 
+    // XXX
+
+    completion_action = proto::CompletionAction::COMPLETE_AFTER_DOT;
     return proto::StatusCode::OK;
 }
 
@@ -512,7 +518,7 @@ static proto::CompletionStrategy selectStrategy(const ScriptCursor& cursor) {
     if (cursor.table_reference_id.has_value()) {
         return proto::CompletionStrategy::TABLE_REF;
     }
-    // Is a column ref?
+    // Is an expression?
     if (cursor.expression_id.has_value()) {
         return proto::CompletionStrategy::COLUMN_REF;
     }
@@ -531,26 +537,27 @@ static const Completion::ScoringTable& selectScoringTable(proto::CompletionStrat
 }
 
 Completion::Completion(const ScriptCursor& cursor, size_t k)
-    : cursor(cursor), strategy(selectStrategy(cursor)), scoring_table(selectScoringTable(strategy)), result_heap(k) {}
+    : cursor(cursor),
+      strategy(selectStrategy(cursor)),
+      completion_action(proto::CompletionAction::SKIP_COMPLETION),
+      scoring_table(selectScoringTable(strategy)),
+      result_heap(k) {}
 
 std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(const ScriptCursor& cursor, size_t k) {
     auto completion = std::make_unique<Completion>(cursor, k);
 
     // Skip completion for the current symbol?
     if (doNotCompleteSymbol(cursor.scanner_location->symbol)) {
+        completion->completion_action = proto::CompletionAction::SKIP_COMPLETION;
         return {std::move(completion), proto::StatusCode::OK};
     }
-    std::cout << proto::EnumNameRelativeSymbolPosition(cursor.scanner_location->relative_pos) << std::endl;
 
     // Is the current symbol an inner dot?
     if (cursor.scanner_location->currentSymbolIsDot()) {
-        std::cout << "CURRENT SYMBOL IS DOT" << std::endl;
-
         using RelativePosition = ScannedScript::LocationInfo::RelativePosition;
         switch (cursor.scanner_location->relative_pos) {
             case RelativePosition::NEW_SYMBOL_AFTER:
             case RelativePosition::END_OF_SYMBOL: {
-                std::cout << "COMPLETE AFTER DOT" << std::endl;
                 auto status = completion->CompleteAtDot();
                 return {std::move(completion), status};
             }
@@ -558,29 +565,26 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
             case RelativePosition::BEGIN_OF_SYMBOL:
             case RelativePosition::MID_OF_SYMBOL:
             case RelativePosition::NEW_SYMBOL_BEFORE:
-                std::cout << "DONT COMPLETE DOT ITSELF" << std::endl;
                 // Don't complete the dot itself
+                completion->completion_action = proto::CompletionAction::SKIP_COMPLETION_AT_DOT;
                 return {std::move(completion), proto::StatusCode::OK};
         }
     }
 
     // Is the current symbol a trailing dot?
     else if (cursor.scanner_location->currentSymbolIsTrailingDot()) {
-        std::cout << "CURRENT SYMBOL IS DOT_TRAILING" << std::endl;
-
         using RelativePosition = ScannedScript::LocationInfo::RelativePosition;
         switch (cursor.scanner_location->relative_pos) {
             case RelativePosition::NEW_SYMBOL_AFTER:
             case RelativePosition::END_OF_SYMBOL: {
-                std::cout << "COMPLETE AT TRAILING DOT" << std::endl;
                 auto status = completion->CompleteAtDot();
                 return {std::move(completion), status};
             }
             case RelativePosition::BEGIN_OF_SYMBOL:
             case RelativePosition::MID_OF_SYMBOL:
             case RelativePosition::NEW_SYMBOL_BEFORE: {
-                std::cout << "DONT COMPLETE DOT ITSELF" << std::endl;
                 // Don't complete the dot itself
+                completion->completion_action = proto::CompletionAction::SKIP_COMPLETION_AT_DOT;
                 return {std::move(completion), proto::StatusCode::OK};
             }
         }
@@ -599,30 +603,25 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
     bool expects_identifier = false;
     for (auto& expected : expected_symbols) {
         if (expected == parser::Parser::symbol_kind_type::S_IDENT) {
-            std::cout << "EXPECTING IDENTIFIER" << std::endl;
             expects_identifier = true;
             break;
         }
     }
 
-    // Is the previous symbol a dot?
-    // Then check if we accept an identifier.
-    // When we do, we're actually dot completing...
+    // Is the previous symbol an inner dot?
+    // Then we check if we're currently pointing at the successort symbol.
+    // If we do, we do a normal dot completion.
     if (cursor.scanner_location->previousSymbolIsDot() && expects_identifier) {
-        std::cout << "PREVIOUS SYMBOL IS DOT" << std::endl;
-
         using RelativePosition = ScannedScript::LocationInfo::RelativePosition;
         switch (cursor.scanner_location->relative_pos) {
             case RelativePosition::END_OF_SYMBOL:
             case RelativePosition::BEGIN_OF_SYMBOL:
             case RelativePosition::MID_OF_SYMBOL: {
-                std::cout << "COMPLETE AFTER DOT" << std::endl;
                 auto status = completion->CompleteAfterDot();
                 return {std::move(completion), status};
             }
             case RelativePosition::NEW_SYMBOL_AFTER:
             case RelativePosition::NEW_SYMBOL_BEFORE:
-                std::cout << "CONTINUE WITH NORMAL COMPLETION" << std::endl;
                 /// NEW_SYMBOL_BEFORE should be unreachable, the previous symbol would have been a trailing dot...
                 /// NEW_SYMBOL_AFTER is not qualifying for dot completion
 
@@ -641,6 +640,9 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
         completion->PromoteTableNamesForUnresolvedColumns();
     }
     completion->FlushCandidatesAndFinish();
+
+    // Register as normal completion
+    completion->completion_action = proto::CompletionAction::COMPLETE_SYMBOL;
     return {std::move(completion), proto::StatusCode::OK};
 }
 
@@ -718,8 +720,9 @@ flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferB
 
     // Pack completion table
     proto::CompletionBuilder completionBuilder{builder};
-    completionBuilder.add_strategy(strategy);
     completionBuilder.add_text_offset(cursor.text_offset);
+    completionBuilder.add_strategy(strategy);
+    completionBuilder.add_action(completion_action);
     completionBuilder.add_candidates(candidatesOfs);
     return completionBuilder.Finish();
 }

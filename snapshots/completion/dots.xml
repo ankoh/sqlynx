@@ -16,11 +16,14 @@
             <input>
                 select * from dbname.
             </input>
+            <tablerefs>
+                <tableref type="name/unresolved" stmt="0" loc="31..38" text="dbname." />
+            </tablerefs>
         </script>
         <cursor>
             <search text="dbname." index="7" />
         </cursor>
-        <completions limit="3" strategy="DEFAULT" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="37..38" text="." />
+        <completions limit="3" strategy="TABLE_REF" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="37..38" text="." />
     </completion-snapshot>
     <completion-snapshot name="complete_at_dot">
         <catalog>
