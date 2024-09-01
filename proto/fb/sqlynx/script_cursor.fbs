@@ -8,7 +8,22 @@ enum RelativeSymbolPosition: uint8 {
     END_OF_SYMBOL = 4,
 }
 
-table ScriptCursorInfo {
+table ScriptCursorTableRefContext {
+    /// The index of the table reference
+    table_reference_id: uint32;
+}
+
+table ScriptCursorColumnRefContext {
+    /// The index of the expression
+    expression_id: uint32;
+}
+
+union ScriptCursorContext {
+    ScriptCursorTableRefContext,
+    ScriptCursorColumnRefContext
+}
+
+table ScriptCursor {
     /// The text offset
     text_offset: uint32;
     /// The scanner symbol id
@@ -19,14 +34,14 @@ table ScriptCursorInfo {
     scanner_symbol_kind: uint32;
     /// The relative position
     scanner_relative_position: RelativeSymbolPosition;
-    /// The AST node id
-    ast_node_id: uint32;
     /// The statement id
     statement_id: uint32;
-    /// The table declaration id
-    table_id: uint32;
-    /// The table reference id
-    table_reference_id: uint32;
-    /// The expression id
-    expression_id: uint32;
+    /// The AST node id
+    ast_node_id: uint32;
+    /// The AST path to the root
+    ast_path_to_root: [uint32];
+    /// The name scopes
+    name_scopes: [uint32];
+    /// The script cursor context
+    context: ScriptCursorContext;
 }
