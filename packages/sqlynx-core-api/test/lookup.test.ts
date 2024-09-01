@@ -20,7 +20,7 @@ function tableEntryById(table: bigint, index: number) {
 }
 
 function packScript(tableRefs: sqlynx.proto.IndexedTableReferenceT[], columnRefs: sqlynx.proto.IndexedColumnReferenceT[]) {
-    const script = new sqlynx.proto.AnalyzedScriptT(0, [], [], [], [], [], tableRefs, columnRefs);
+    const script = new sqlynx.proto.AnalyzedScriptT(0, [], [], [], [], [], [], tableRefs, columnRefs);
     const builder = new flatbuffers.Builder();
     const ofs = script.pack(builder);
     builder.finish(ofs);
