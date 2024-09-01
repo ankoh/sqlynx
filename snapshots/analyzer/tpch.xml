@@ -90,6 +90,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                     <column id="256.65536.7.2" name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                 </table>
             </tables>
+            <errors />
         </script>
         <catalog />
     </analyzer-snapshot>
@@ -185,6 +186,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column id="256.65536.4294967303.2" name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
@@ -235,6 +237,7 @@ order by
 limit
 	100
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/external" id="256.65536.4294967298" stmt="0" loc="610..618" text="partsupp" />
                 <tableref type="name/external" id="256.65536.4294967297" stmt="0" loc="644..652" text="supplier" />
@@ -376,6 +379,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column id="256.65536.4294967303.2" name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
@@ -405,6 +409,7 @@ order by
 limit
 	10
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/external" id="256.65536.4294967299" stmt="0" loc="145..153" text="customer" />
                 <tableref type="name/external" id="256.65536.4294967300" stmt="0" loc="163..169" text="orders" />
@@ -523,6 +528,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column id="256.65536.4294967303.2" name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
@@ -549,6 +555,7 @@ group by
 order by
         o_orderpriority
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/external" id="256.65536.4294967301" stmt="0" loc="291..299" text="lineitem" />
                 <tableref type="name/external" id="256.65536.4294967300" stmt="0" loc="78..84" text="orders" />
@@ -658,6 +665,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column id="256.65536.4294967303.2" name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
@@ -687,6 +695,7 @@ group by
 order by
         revenue desc
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/external" id="256.65536.4294967299" stmt="0" loc="96..104" text="customer" />
                 <tableref type="name/external" id="256.65536.4294967300" stmt="0" loc="114..120" text="orders" />
@@ -811,6 +820,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column id="256.65536.4294967303.2" name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
@@ -825,6 +835,7 @@ where
         and l_discount between 0.06 - 0.01 and 0.06 + 0.01
         and l_quantity &lt; 24
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/external" id="256.65536.4294967301" stmt="0" loc="74..82" text="lineitem" />
             </tablerefs>
@@ -930,6 +941,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column id="256.65536.4294967303.2" name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
@@ -974,6 +986,7 @@ order by
         cust_nation,
         l_year
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/external" id="256.65536.4294967297" stmt="0" loc="414..422" text="supplier" />
                 <tableref type="name/external" id="256.65536.4294967301" stmt="0" loc="448..456" text="lineitem" />
@@ -1108,6 +1121,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column id="256.65536.4294967303.2" name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
@@ -1150,6 +1164,7 @@ group by
 order by
         o_year
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="418..422" text="part" />
                 <tableref type="name/external" id="256.65536.4294967297" stmt="0" loc="448..456" text="supplier" />
@@ -1283,6 +1298,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column id="256.65536.4294967303.2" name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
@@ -1320,6 +1336,7 @@ order by
         nation,
         o_year desc
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="363..367" text="part" />
                 <tableref type="name/external" id="256.65536.4294967297" stmt="0" loc="393..401" text="supplier" />
@@ -1450,6 +1467,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column id="256.65536.4294967303.2" name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
@@ -1488,6 +1506,7 @@ order by
 limit
 	20
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/external" id="256.65536.4294967299" stmt="0" loc="205..213" text="customer" />
                 <tableref type="name/external" id="256.65536.4294967300" stmt="0" loc="223..229" text="orders" />
@@ -1616,6 +1635,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column id="256.65536.4294967303.2" name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
@@ -1648,6 +1668,7 @@ group by
 order by
         "value" desc
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/external" id="256.65536.4294967298" stmt="0" loc="496..504" text="partsupp" />
                 <tableref type="name/external" id="256.65536.4294967297" stmt="0" loc="538..546" text="supplier" />
@@ -1771,6 +1792,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column id="256.65536.4294967303.2" name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
@@ -1804,6 +1826,7 @@ group by
 order by
         l_shipmode
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/external" id="256.65536.4294967300" stmt="0" loc="458..464" text="orders" />
                 <tableref type="name/external" id="256.65536.4294967301" stmt="0" loc="474..482" text="lineitem" />
@@ -1920,6 +1943,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column id="256.65536.4294967303.2" name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
@@ -1945,6 +1969,7 @@ order by
         custdist desc,
         c_count desc
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/external" id="256.65536.4294967299" stmt="0" loc="222..230" text="customer" />
                 <tableref type="name/external" id="256.65536.4294967300" stmt="0" loc="247..253" text="orders" />
@@ -2055,6 +2080,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column id="256.65536.4294967303.2" name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
@@ -2073,6 +2099,7 @@ where
         and l_shipdate &gt;= date '1995-09-01'
         and l_shipdate &lt; date '1995-10-01'
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/external" id="256.65536.4294967301" stmt="0" loc="248..256" text="lineitem" />
                 <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="266..270" text="part" />
@@ -2182,6 +2209,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column id="256.65536.4294967303.2" name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
@@ -2217,6 +2245,7 @@ where
 order by
 	s_suppkey
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/external" id="256.65536.4294967301" stmt="0" loc="122..130" text="lineitem" />
                 <tableref type="name/unresolved" stmt="0" loc="417..424" text="revenue" />
@@ -2335,6 +2364,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column id="256.65536.4294967303.2" name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
@@ -2370,6 +2400,7 @@ order by
         p_type,
         p_size
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/external" id="256.65536.4294967297" stmt="0" loc="449..457" text="supplier" />
                 <tableref type="name/external" id="256.65536.4294967298" stmt="0" loc="121..129" text="partsupp" />
@@ -2490,6 +2521,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column id="256.65536.4294967303.2" name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
@@ -2512,6 +2544,7 @@ where
                         l_partkey = p_partkey
         )
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/external" id="256.65536.4294967301" stmt="0" loc="339..347" text="lineitem" />
                 <tableref type="name/external" id="256.65536.4294967301" stmt="0" loc="70..78" text="lineitem" />
@@ -2622,6 +2655,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column id="256.65536.4294967303.2" name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
@@ -2661,6 +2695,7 @@ order by
 limit
 	100
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/external" id="256.65536.4294967301" stmt="0" loc="319..327" text="lineitem" />
                 <tableref type="name/external" id="256.65536.4294967299" stmt="0" loc="143..151" text="customer" />
@@ -2784,6 +2819,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column id="256.65536.4294967303.2" name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
@@ -2824,6 +2860,7 @@ where
                 and l_shipinstruct = 'DELIVER IN PERSON'
         )
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/external" id="256.65536.4294967301" stmt="0" loc="79..87" text="lineitem" />
                 <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="97..101" text="part" />
@@ -2953,6 +2990,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column id="256.65536.4294967303.2" name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
@@ -2995,6 +3033,7 @@ where
 order by
         s_name
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="449..453" text="part" />
                 <tableref type="name/external" id="256.65536.4294967301" stmt="0" loc="802..810" text="lineitem" />
@@ -3117,6 +3156,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column id="256.65536.4294967303.2" name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
@@ -3163,6 +3203,7 @@ order by
 limit
 	100
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/external" id="256.65536.4294967301" stmt="0" loc="399..410" text="lineitem l2" />
                 <tableref type="name/external" id="256.65536.4294967301" stmt="0" loc="673..684" text="lineitem l3" />
@@ -3291,6 +3332,7 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
                         <column id="256.65536.4294967303.2" name="r_regionkey" loc="2162..2190" text="r_regionke..r not null" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
@@ -3333,6 +3375,7 @@ group by
 order by
         cntrycode
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/external" id="256.65536.4294967299" stmt="0" loc="658..666" text="customer" />
                 <tableref type="name/external" id="256.65536.4294967300" stmt="0" loc="1157..1163" text="orders" />

@@ -1,4 +1,4 @@
-#include "sqlynx/utils/suffix_trie.h"
+#include "sqlynx/utils/string_conversion.h"
 
 namespace sqlynx {
 

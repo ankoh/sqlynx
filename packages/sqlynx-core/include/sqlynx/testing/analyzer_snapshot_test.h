@@ -23,14 +23,14 @@ struct AnalyzerSnapshotTest {
         CatalogEntryID external_id;
         /// The script
         std::string input;
+        /// The errors
+        pugi::xml_document errors;
         /// The tables
         pugi::xml_document tables;
         /// The table references
         pugi::xml_document table_references;
         /// The expressions
         pugi::xml_document expressions;
-        /// The graph edges
-        pugi::xml_document graph_edges;
     };
 
     /// The name

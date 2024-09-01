@@ -1,8 +1,10 @@
 #include "sqlynx/analyzer/name_resolution_pass.h"
 
+#include <format>
 #include <functional>
 #include <iterator>
 #include <optional>
+#include <sstream>
 #include <stack>
 
 #include "sqlynx/catalog.h"
@@ -174,6 +176,7 @@ void NameResolutionPass::MergeChildStates(NodeState& dst, const proto::Node& par
 AnalyzedScript::NameScope& NameResolutionPass::CreateScope(NodeState& target, uint32_t scope_root) {
     auto& scope = analyzed.name_scopes.Append(AnalyzedScript::NameScope{
         .ast_scope_root = scope_root, .parent_scope = nullptr, .child_scopes = target.child_scopes});
+    analyzed.name_scopes_by_root_node.insert({scope_root, scope.value});
     for (auto& child_scope : target.child_scopes) {
         child_scope.parent_scope = &scope.value;
         root_scopes.erase(&child_scope);
@@ -204,6 +207,26 @@ void NameResolutionPass::ResolveTableRefsInScope(AnalyzedScript::NameScope& scop
         }
         // Copy table name so that we can override the unresolved expression
         auto table_name = unresolved->table_name;
+        // Helper to register a name
+        auto register_name = [&](std::string_view alias, const AnalyzedScript::TableDeclaration& table) {
+            // Already exists in this scope?
+            auto resolved_iter = scope.resolved_tables_by_name.find(alias);
+            if (resolved_iter != scope.resolved_tables_by_name.end()) {
+                // Register an error
+                auto& error = analyzed.errors.emplace_back();
+                error.error_type = proto::AnalyzerErrorType::DUPLICATE_TABLE_ALIAS;
+                error.ast_node_id = table_ref.ast_node_id;
+                error.location = std::make_unique<proto::Location>(parsed.nodes[table_ref.ast_node_id].location());
+
+                std::string tmp;
+                std::string_view alias_text = alias;
+                alias_text = quote_anyupper_fuzzy(alias_text, tmp);
+                error.message = std::format("duplicate table alias {}", alias_text);
+            } else {
+                scope.resolved_tables_by_name.insert({alias, table});
+            }
+        };
+
         // Table ref points to own table?
         auto iter = analyzed.tables_by_name.find(table_name);
         if (iter != analyzed.tables_by_name.end()) {
@@ -215,14 +238,10 @@ void NameResolutionPass::ResolveTableRefsInScope(AnalyzedScript::NameScope& scop
                 .catalog_schema_id = table.catalog_schema_id,
                 .catalog_table_id = table.catalog_table_id,
             };
-
-            if (table_ref.alias_name.has_value()) {
-                // Register named table
-                scope.named_tables.insert({table_ref.alias_name->get().text, table});
-            } else {
-                // Register unnambed table
-                scope.unnamed_tables.insert({table.catalog_table_id, table});
-            }
+            // Register the table either using the alias or the table name
+            std::string_view alias = table_ref.alias_name.has_value() ? table_ref.alias_name->get().text
+                                                                      : table.table_name.table_name.get().text;
+            register_name(alias, table);
             continue;
         }
 
@@ -235,14 +254,10 @@ void NameResolutionPass::ResolveTableRefsInScope(AnalyzedScript::NameScope& scop
                 .catalog_schema_id = resolved->catalog_schema_id,
                 .catalog_table_id = resolved->catalog_table_id,
             };
-
-            if (table_ref.alias_name.has_value()) {
-                // Register named table
-                scope.named_tables.insert({table_ref.alias_name->get().text, *resolved});
-            } else {
-                // Register unnambed table
-                scope.unnamed_tables.insert({resolved->catalog_table_id, *resolved});
-            }
+            // Register the table either using the alias or the table name
+            auto alias = table_ref.alias_name.has_value() ? table_ref.alias_name->get().text
+                                                          : resolved->table_name.table_name.get().text;
+            register_name(alias, *resolved);
             continue;
         }
 
@@ -268,10 +283,10 @@ void NameResolutionPass::ResolveColumnRefsInScope(AnalyzedScript::NameScope& sco
             // Try to resolve a table
             std::optional<std::reference_wrapper<AnalyzedScript::TableColumn>> table_column;
             if (unresolved.column_name.table_alias.has_value()) {
-                // Do we know the alias in this scope?
+                // Do we know the name in this scope?
                 auto table_alias = unresolved.column_name.table_alias->get().text;
-                auto table_iter = target_scope->named_tables.find(table_alias);
-                if (table_iter != target_scope->named_tables.end()) {
+                auto table_iter = target_scope->resolved_tables_by_name.find(table_alias);
+                if (table_iter != target_scope->resolved_tables_by_name.end()) {
                     // Is the table known in that table?
                     auto& table_columns_by_name = table_iter->second.get().table_columns_by_name;
                     auto column_iter = table_columns_by_name.find(column_name);
@@ -280,13 +295,46 @@ void NameResolutionPass::ResolveColumnRefsInScope(AnalyzedScript::NameScope& sco
                     }
                 }
             } else {
-                for (auto& [table_id, table] : target_scope->unnamed_tables) {
+                // Otherwise we check all table declarations and find all tables with the column name
+                std::vector<std::tuple<std::string_view, std::reference_wrapper<const CatalogEntry::TableDeclaration>,
+                                       std::reference_wrapper<AnalyzedScript::TableColumn>>>
+                    candidates;
+                for (auto& [table_name, table] : target_scope->resolved_tables_by_name) {
                     auto& table_columns_by_name = table.get().table_columns_by_name;
                     auto column_iter = table_columns_by_name.find(column_name);
                     if (column_iter != table_columns_by_name.end()) {
-                        table_column = column_iter->second;
-                        break;
+                        candidates.emplace_back(table_name, table, column_iter->second);
                     }
+                }
+                // Is the column ref ambiguous?
+                if (candidates.size() > 1) {
+                    analyzed.errors.emplace_back();
+                    auto& error = analyzed.errors.back();
+                    error.error_type = proto::AnalyzerErrorType::COLUMN_REF_AMBIGUOUS;
+                    error.ast_node_id = expr.ast_node_id;
+                    error.location = std::make_unique<proto::Location>(parsed.nodes[expr.ast_node_id].location());
+
+                    // Construct the error message
+                    std::stringstream out;
+                    out << "column reference is ambiguous, candidates: ";
+                    std::string tmp;
+                    for (size_t i = 0; i < candidates.size(); ++i) {
+                        if (i > 0) {
+                            out << ", ";
+                        }
+                        auto& [table_alias, table_decl, table_column] = candidates[i];
+                        std::string_view tbl = table_alias;
+                        tbl = quote_anyupper_fuzzy(tbl, tmp);
+                        out << tbl;
+                        out << ".";
+                        std::string_view col = column_name;
+                        col = quote_anyupper_fuzzy(col, tmp);
+                        out << col;
+                    }
+                    error.message = out.str();
+
+                } else if (candidates.size() == 1) {
+                    table_column = std::get<2>(candidates.front());
                 }
             }
             // Found a table column?
@@ -542,13 +590,8 @@ void NameResolutionPass::Finish() {
             size_t statement_end = statement_begin + parsed.statements[0].node_count;
             for (auto& chunk : chunks) {
                 for (auto& ref : chunk) {
-                    // Node ids should only be missing for external tables.
-                    // Assert that we only store table_refs of internal tables.
-                    assert(ref.value.ast_node_id.has_value());
-                    // Get the location
-                    auto ast_node_id = ref.value.ast_node_id.value();
                     // Search first statement that might include the node
-                    while (statement_end <= ast_node_id && statement_id < parsed.statements.size()) {
+                    while (statement_end <= ref.value.ast_node_id && statement_id < parsed.statements.size()) {
                         ++statement_id;
                         statement_begin = parsed.statements[statement_id].nodes_begin;
                         statement_end = statement_begin + parsed.statements[statement_id].node_count;
@@ -559,7 +602,7 @@ void NameResolutionPass::Finish() {
                         break;
                     }
                     // The statement includes the node?
-                    if (statement_begin <= ast_node_id) {
+                    if (statement_begin <= ref.value.ast_node_id) {
                         ref.value.ast_statement_id = statement_id;
                         continue;
                     }

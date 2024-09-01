@@ -16,19 +16,21 @@
                         <column id="257.65537.4294967297.1" name="d" loc="119..124" text="d int" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
             <input>
-                select * from db1.schema1.A, db2.schema2.A where a = c;
+                select * from db1.schema1.A x, db2.schema2.A y where x.a = c;
             </input>
+            <errors />
             <tablerefs>
-                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..44" text="db1.schema1.A" />
-                <tableref type="name/external" id="257.65537.4294967297" stmt="0" loc="46..59" text="db2.schema2.A" />
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..46" text="db1.schema1.A x" />
+                <tableref type="name/external" id="257.65537.4294967297" stmt="0" loc="48..63" text="db2.schema2.A y" />
             </tablerefs>
             <expressions>
-                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="66..67" text="a" />
-                <expr type="colref/external" id="257.65537.4294967297.0" stmt="0" loc="70..71" text="c" />
+                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="70..73" text="x.a" />
+                <expr type="colref/external" id="257.65537.4294967297.0" stmt="0" loc="76..77" text="c" />
             </expressions>
         </script>
     </analyzer-snapshot>
@@ -49,19 +51,21 @@
                         <column id="257.65537.4294967297.1" name="d" loc="107..112" text="d int" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
             <input>
-                select * from db1.schema1.A, db2.schema2.A where a = c;
+                select * from db1.schema1.A x, db2.schema2.A where x.a = c;
             </input>
+            <errors />
             <tablerefs>
-                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..44" text="db1.schema1.A" />
-                <tableref type="name/external" id="257.65537.4294967297" stmt="0" loc="46..59" text="db2.schema2.A" />
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..46" text="db1.schema1.A x" />
+                <tableref type="name/external" id="257.65537.4294967297" stmt="0" loc="48..61" text="db2.schema2.A" />
             </tablerefs>
             <expressions>
-                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="66..67" text="a" />
-                <expr type="colref/external" id="257.65537.4294967297.0" stmt="0" loc="70..71" text="c" />
+                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="68..71" text="x.a" />
+                <expr type="colref/external" id="257.65537.4294967297.0" stmt="0" loc="74..75" text="c" />
             </expressions>
         </script>
     </analyzer-snapshot>
@@ -77,6 +81,7 @@
                         <column id="256.65536.4294967296.1" name="b" loc="44..49" text="b int" />
                     </table>
                 </tables>
+                <errors />
             </script>
             <script id="2">
                 <input>
@@ -88,12 +93,14 @@
                         <column id="257.65537.8589934592.1" name="d" loc="56..61" text="d int" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
             <input>
                 select * from db1.schema1.A, db2.schema2.B where a = c;
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..44" text="db1.schema1.A" />
                 <tableref type="name/external" id="257.65537.8589934592" stmt="0" loc="46..59" text="db2.schema2.B" />
@@ -116,6 +123,7 @@
                         <column id="256.65536.4294967296.1" name="b" loc="56..61" text="b int" />
                     </table>
                 </tables>
+                <errors />
             </script>
             <script id="2">
                 <input>
@@ -127,12 +135,14 @@
                         <column id="257.65537.8589934592.1" name="d" loc="56..61" text="d int" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
             <input>
                 select * from db1.schema1.A, db2.schema2.B where a = c;
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..44" text="db1.schema1.A" />
                 <tableref type="name/external" id="257.65537.8589934592" stmt="0" loc="46..59" text="db2.schema2.B" />
@@ -155,6 +165,7 @@
                         <column id="256.65536.4294967296.1" name="b" loc="56..61" text="b int" />
                     </table>
                 </tables>
+                <errors />
             </script>
             <script id="2">
                 <input>
@@ -166,6 +177,7 @@
                         <column id="256.65536.8589934592.1" name="d" loc="56..61" text="d int" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
@@ -173,6 +185,7 @@
                 select * from db1.schema1.A where a = 1;
                 select * from db1.schema1.A where c = 1;
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..44" text="db1.schema1.A" />
                 <tableref type="name/external" id="256.65536.4294967296" stmt="1" loc="88..101" text="db1.schema1.A" />

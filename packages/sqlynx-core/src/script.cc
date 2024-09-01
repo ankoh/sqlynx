@@ -340,7 +340,7 @@ flatbuffers::Offset<proto::TableReference> AnalyzedScript::TableReference::Pack(
         alias_name_ofs = builder.CreateString(alias_name.value().get().text);
     }
     proto::TableReferenceBuilder out{builder};
-    out.add_ast_node_id(ast_node_id.value_or(std::numeric_limits<uint32_t>::max()));
+    out.add_ast_node_id(ast_node_id);
     out.add_ast_scope_root(ast_scope_root.value_or(std::numeric_limits<uint32_t>::max()));
     out.add_ast_statement_id(ast_statement_id.value_or(std::numeric_limits<uint32_t>::max()));
     if (alias_name.has_value()) {
@@ -384,7 +384,7 @@ flatbuffers::Offset<proto::Expression> AnalyzedScript::Expression::Pack(flatbuff
             break;
     }
     proto::ExpressionBuilder out{builder};
-    out.add_ast_node_id(ast_node_id.value_or(std::numeric_limits<uint32_t>::max()));
+    out.add_ast_node_id(ast_node_id);
     out.add_ast_scope_root(ast_scope_root.value_or(std::numeric_limits<uint32_t>::max()));
     out.add_ast_statement_id(ast_statement_id.value_or(std::numeric_limits<uint32_t>::max()));
     if (inner_type.has_value()) {
@@ -772,7 +772,6 @@ std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Place(
                 if (endsCursorPath(node)) {
                     break;
                 }
-                std::cout << "CURSOR PATH " << iter << std::endl;
                 cursor_path_nodes.insert(iter);
                 if (iter == node.parent()) {
                     break;
@@ -802,7 +801,7 @@ std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Place(
 
                 // Part of a column reference node?
                 analyzed->expressions.ForEachWhile([&](size_t i, auto& column_ref) {
-                    if (column_ref->ast_node_id.has_value() && cursor_path_nodes.contains(*column_ref->ast_node_id)) {
+                    if (cursor_path_nodes.contains(column_ref->ast_node_id)) {
                         cursor->expression_id = i;
                         return false;
                     } else {
@@ -812,8 +811,7 @@ std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Place(
 
                 // Part of a table reference node?
                 analyzed->table_references.ForEach([&](size_t i, auto& table_ref) {
-                    std::cout << "TABLE REF " << table_ref->ast_node_id.value() << std::endl;
-                    if (table_ref->ast_node_id.has_value() && cursor_path_nodes.contains(*table_ref->ast_node_id)) {
+                    if (cursor_path_nodes.contains(table_ref->ast_node_id)) {
                         cursor->table_reference_id = i;
                         return false;
                     } else {
