@@ -6,6 +6,7 @@
 #include <functional>
 #include <optional>
 #include <string_view>
+#include <variant>
 
 #include "sqlynx/catalog.h"
 #include "sqlynx/external.h"
@@ -158,7 +159,7 @@ class ParsedScript {
     /// Get the nodes
     auto& GetNodes() const { return nodes; }
     /// Resolve statement and ast node at a text offset
-    std::optional<std::pair<size_t, size_t>> FindNodeAtOffset(size_t text_offset);
+    std::optional<std::pair<size_t, size_t>> FindNodeAtOffset(size_t text_offset) const;
     /// Build the script
     flatbuffers::Offset<proto::ParsedScript> Pack(flatbuffers::FlatBufferBuilder& builder);
 };
@@ -172,11 +173,15 @@ class AnalyzedScript : public CatalogEntry {
     struct TableReference {
         /// An unresolved column reference
         struct UnresolvedRelationExpression {
+            /// The AST node id of the name path
+            uint32_t table_name_ast_node_id;
             /// The table name, may refer to different catalog entry
             QualifiedTableName table_name;
         };
         /// A resolved column reference
         struct ResolvedRelationExpression {
+            /// The AST node id of the name path
+            uint32_t table_name_ast_node_id;
             /// The table name, may refer to different catalog entry
             QualifiedTableName table_name;
             /// The resolved database id in the catalog
@@ -239,6 +244,11 @@ class AnalyzedScript : public CatalogEntry {
 
         /// Constructor
         Expression() : inner(std::monostate{}) {}
+        // Check if the expression is a column ref
+        inline bool IsColumnRef() {
+            return std::holds_alternative<UnresolvedColumnRef>(inner) ||
+                   std::holds_alternative<ResolvedColumnRef>(inner);
+        }
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::Expression> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
@@ -261,6 +271,8 @@ class AnalyzedScript : public CatalogEntry {
     };
     /// A naming scope
     struct NameScope {
+        /// The id of the scope (== scope index in the script)
+        size_t name_scope_id;
         /// The scope root
         size_t ast_scope_root;
         /// The parent scope
@@ -276,7 +288,7 @@ class AnalyzedScript : public CatalogEntry {
         std::vector<ResultTarget> result_targets;
         /// The named tables in scope
         std::unordered_map<std::string_view, std::reference_wrapper<const CatalogEntry::TableDeclaration>>
-            resolved_tables_by_name;
+            referenced_tables_by_name;
     };
 
     /// The default database name
@@ -299,6 +311,10 @@ class AnalyzedScript : public CatalogEntry {
     /// The name scopes by scope root
     std::unordered_map<size_t, std::reference_wrapper<NameScope>> name_scopes_by_root_node;
 
+    /// Traverse the name scopes for a given ast node id
+    void FollowPathUpwards(uint32_t ast_node_id, std::vector<uint32_t>& ast_node_path,
+                           std::vector<std::reference_wrapper<AnalyzedScript::NameScope>>& scopes) const;
+
    public:
     /// Constructor
     AnalyzedScript(std::shared_ptr<ParsedScript> parsed, Catalog& catalog);
@@ -315,6 +331,17 @@ class AnalyzedScript : public CatalogEntry {
 class Script;
 
 struct ScriptCursor {
+    /// Cursor is pointing at a table reference
+    struct TableRefContext {
+        /// The table ref that the cursor is pointing into
+        uint32_t table_reference_id;
+    };
+    /// Cursor is pointing at a column reference
+    struct ColumnRefContext {
+        /// The table ref that the cursor is pointing into
+        uint32_t expression_id;
+    };
+
     /// The script
     const Script& script;
     /// The text offset
@@ -323,21 +350,22 @@ struct ScriptCursor {
     std::string_view text;
     /// The current scanner location (if any)
     std::optional<ScannedScript::LocationInfo> scanner_location;
-    /// The current ast node id (if any)
-    std::optional<size_t> ast_node_id;
     /// The current statement id (if any)
-    std::optional<size_t> statement_id;
-    /// The current table id (if any)
-    std::optional<size_t> table_id;
-    /// The current table reference_id (if any)
-    std::optional<size_t> table_reference_id;
-    /// The current expression id (if any)
-    std::optional<size_t> expression_id;
+    std::optional<uint32_t> statement_id;
+    /// The current ast node id (if any)
+    std::optional<uint32_t> ast_node_id;
+    /// The ast node path to the root
+    std::vector<uint32_t> ast_path_to_root;
+    /// The name scopes of that the cursor is in (if any).
+    /// Left-to-right == innermost-to-outermost
+    std::vector<std::reference_wrapper<AnalyzedScript::NameScope>> name_scopes;
+    /// The inner cursor type based on what we're pointing at
+    std::variant<std::monostate, TableRefContext, ColumnRefContext> context;
 
     /// Move the cursor to a script at a position
     ScriptCursor(const Script& script, size_t text_offset);
     /// Pack the cursor info
-    flatbuffers::Offset<proto::ScriptCursorInfo> Pack(flatbuffers::FlatBufferBuilder& builder) const;
+    flatbuffers::Offset<proto::ScriptCursor> Pack(flatbuffers::FlatBufferBuilder& builder) const;
 
     /// Create a script cursor
     static std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> Place(const Script& script, size_t text_offset);
