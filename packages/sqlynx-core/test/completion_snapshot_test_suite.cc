@@ -52,8 +52,9 @@ TEST_P(CompletionSnapshotTestSuite, Test) {
 
     auto completions = out.append_child("completions");
     completions.append_attribute("limit").set_value(test->completion_limit);
-    auto& cursor = completion->GetCursor();
     CompletionSnapshotTest::EncodeCompletion(completions, *completion);
+
+    auto& cursor = completion->GetCursor();
     EncodeLocation(completions, cursor.scanner_location.value().symbol.location, target_text);
 
     ASSERT_TRUE(Matches(out.child("completions"), test->completions));

@@ -117,11 +117,14 @@ bool doNotCompleteSymbol(parser::Parser::symbol_type& sym) {
 std::vector<Completion::NameComponent> Completion::ReadNamePathAroundDot(size_t node_id) {
     auto& nodes = cursor.script.parsed_script->nodes;
 
-    while (true) {
-        // Check node type
-        auto& node = nodes[node_id];
+    // Find the name path node
+    std::optional<size_t> name_path_array;
+    for (std::optional<size_t> node_iter = node_id; !name_path_array.has_value() && node_iter.has_value();
+         node_iter = nodes[node_iter.value()].parent() != node_iter.value()
+                         ? std::optional{nodes[node_iter.value()].parent()}
+                         : std::nullopt) {
+        auto& node = nodes[*node_iter];
         if (node.node_type() == proto::NodeType::ARRAY) {
-            bool is_name_path = false;
             switch (node.attribute_key()) {
                 case Key::SQL_COLUMN_REF_PATH:
                 case Key::SQL_TABLEREF_NAME:
@@ -130,26 +133,20 @@ std::vector<Completion::NameComponent> Completion::ReadNamePathAroundDot(size_t 
                 case Key::SQL_INDIRECTION_PATH:
                     // (expr).indirection
                     // XXX find a few cases for this kind of indirection
-                    is_name_path = true;
+                    name_path_array = *node_iter;
                     break;
                 default:
                     break;
             }
-            // Found a name path?
-            if (is_name_path) {
-                break;
-            }
         }
-        // Reached end?
-        if (node.parent() == node_id) {
-            return {};
-        } else {
-            node_id = node.parent();
-        }
+    }
+    // Couldn't find a name path?
+    if (!name_path_array) {
+        return {};
     }
 
     // Get the child nodes
-    auto& node = nodes[node_id];
+    auto& node = nodes[*name_path_array];
     auto children = std::span<proto::Node>{nodes}.subspan(node.children_begin_or_value(), node.children_count());
 
     // Collect the name path
@@ -188,6 +185,68 @@ std::vector<Completion::NameComponent> Completion::ReadNamePathAroundDot(size_t 
     return components;
 }
 
+std::vector<std::reference_wrapper<AnalyzedScript::NameScope>> Completion::CollectNameScopes(size_t node_id) {
+    assert(cursor.script.parsed_script != nullptr);
+    assert(cursor.script.analyzed_script != nullptr);
+    std::vector<std::reference_wrapper<AnalyzedScript::NameScope>> out;
+
+    // Traverse all parent ids of the node
+    auto& nodes = cursor.script.parsed_script->nodes;
+    for (std::optional<size_t> node_iter = node_id; node_iter.has_value();
+         node_iter = nodes[node_iter.value()].parent() != node_iter.value()
+                         ? std::optional{nodes[node_iter.value()].parent()}
+                         : std::nullopt) {
+        // Probe the name scopes
+        auto scope_iter = cursor.script.analyzed_script->name_scopes_by_root_node.find(node_iter.value());
+        if (scope_iter != cursor.script.analyzed_script->name_scopes_by_root_node.end()) {
+            out.push_back(scope_iter->second);
+        }
+    }
+    return out;
+}
+
+proto::StatusCode Completion::CompleteNamePath(std::span<Completion::NameComponent> path) {
+    assert(cursor.ast_node_id.has_value());
+    auto& nodes = cursor.script.parsed_script->nodes;
+    auto node_id = cursor.ast_node_id.value();
+    auto& node = nodes[node_id];
+
+    // Filter all name components in the path.
+    // A name path could also contain an index indirection or a star.
+    // We're only interested in the names here.
+    // If the user completes a name with index or star, we'll just truncate everything.
+    size_t name_prefix = 0;
+    for (; name_prefix < path.size(); ++name_prefix) {
+        if (path[name_prefix].type != NameComponentType::Name) {
+            break;
+        }
+    }
+    path = path.subspan(0, name_prefix);
+
+    // Is the path empty?
+    // Nothing to complete then.
+    if (path.size() == 0) {
+        return proto::StatusCode::OK;
+    }
+
+    // First we resolve the root name to figure out what we're completing here
+    auto& root = path[0].name.value().get();
+
+    // Check the naming scopes first
+    auto name_scopes = CollectNameScopes(node_id);
+    // We collect the name scopes by traversing parent refs.
+    // This means that the name scopes are naturally ordered by the distance to the deepest ast node of the cursor.
+    // We can just traverse the scopes from left to right and go from innermost to outermost.
+    for (auto& name_scope : name_scopes) {
+        // Does the name refer to a resolved named table in the scope?
+        // This means we're dot-completing a table alias here.
+        auto table_iter = name_scope.get().resolved_tables_by_name.find(root);
+
+        // XXX
+    }
+    return proto::StatusCode::OK;
+}
+
 proto::StatusCode Completion::CompleteAtDot() {
     // No AST node?
     // Then we skip the completion
@@ -201,7 +260,7 @@ proto::StatusCode Completion::CompleteAtDot() {
     // Print name path
     for (size_t i = 0; i < name_path.size(); ++i) {
         if (name_path[i].name.has_value()) {
-            std::cout << "PATH[" << i << "] " << name_path[i].name.value().get().text << std::endl;
+            // std::cout << "PATH[" << i << "] " << name_path[i].name.value().get().text << std::endl;
         }
     }
 
@@ -226,7 +285,7 @@ proto::StatusCode Completion::CompleteAfterDot() {
     auto name_path = ReadNamePathAroundDot(node_id);
     for (size_t i = 0; i < name_path.size(); ++i) {
         if (name_path[i].name.has_value()) {
-            std::cout << "PATH[" << i << "] " << name_path[i].name.value().get().text << std::endl;
+            // std::cout << "PATH[" << i << "] " << name_path[i].name.value().get().text << std::endl;
         }
     }
 
@@ -656,13 +715,7 @@ flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferB
         auto display_text_offset = builder.CreateString(iter_entry->name.text);
         std::string quoted;
         std::string_view completion_text = iter_entry->name.text;
-        if (anyupper_fuzzy(completion_text)) {
-            quoted = completion_text;
-            quoted.insert(0, "\"");
-            quoted.push_back('\"');
-            completion_text = quoted;
-            // XXX Hack: Fewer copies
-        }
+        completion_text = quote_anyupper_fuzzy(completion_text, quoted);
         size_t catalog_object_count = 0;
         for (auto& objects : iter_entry->catalog_objects) {
             catalog_object_count += objects.GetSize();

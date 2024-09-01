@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <string>
 #include <string_view>
 
 namespace sqlynx {
@@ -43,5 +44,19 @@ struct fuzzy_ci_char_traits : public std::char_traits<char> {
     }
 };
 using fuzzy_ci_string_view = std::basic_string_view<char, fuzzy_ci_char_traits>;
+
+/// Helper to quote a name if it's case sensitive
+inline std::string_view quote_anyupper_fuzzy(std::string_view text, std::string &tmp) {
+    if (anyupper_fuzzy(text)) {
+        tmp.clear();
+        tmp.reserve(text.size() + 2);
+        tmp.push_back('\"');
+        tmp.insert(1, text);
+        tmp.push_back('\"');
+        return tmp;
+    } else {
+        return text;
+    }
+}
 
 }  // namespace sqlynx

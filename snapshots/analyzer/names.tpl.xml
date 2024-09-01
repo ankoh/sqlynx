@@ -1,0 +1,146 @@
+<analyzer-snapshots>
+    <analyzer-snapshot name="names_columnref_ambiguous">
+        <catalog database="somedb" schema="someschema">
+            <script>
+                <input>
+                    create table A (a int);
+                    create table B (a int);
+                </input>
+            </script>  
+        </catalog>
+        <script>  
+            <input>
+                select * from A, B where a = 2;
+            </input>
+        </script>  
+    </analyzer-snapshot>
+    <analyzer-snapshot name="names_columnref_ambiguous_scope_overrules">
+        <catalog database="somedb" schema="someschema">
+            <script>
+                <input>
+                    create table A (a int);
+                    create table B (a int);
+                </input>
+            </script>  
+        </catalog>
+        <script>  
+            <input>
+                select * from A, (select * from B where a = 2);
+            </input>
+        </script>  
+    </analyzer-snapshot>
+    <analyzer-snapshot name="names_columnref_ambiguous_correctly_scoped">
+        <catalog database="somedb" schema="someschema">
+            <script>
+                <input>
+                    create table A (a int);
+                    create table B (a int);
+                </input>
+            </script>  
+        </catalog>
+        <script>  
+            <input>
+                select * from A, (select * from B where a = 2) c where a = 3;
+            </input>
+        </script>  
+    </analyzer-snapshot>
+    <analyzer-snapshot name="names_duplicate_tableref">
+        <catalog database="somedb" schema="someschema">
+            <script>
+                <input>
+                    create table A (a int);
+                </input>
+            </script>  
+        </catalog>
+        <script>  
+            <input>
+                select * from A, A;
+            </input>
+        </script>  
+    </analyzer-snapshot>
+    <analyzer-snapshot name="names_duplicate_tableref_different_casing">
+        <catalog database="somedb" schema="someschema">
+            <script>
+                <input>
+                    create table A (a int);
+                    create table "A" (a int);
+                </input>
+            </script>  
+        </catalog>
+        <script>  
+            <input>
+                select * from "A", A;
+            </input>
+        </script>  
+    </analyzer-snapshot>
+    <analyzer-snapshot name="names_duplicate_tableref_colliding_with_quotes">
+        <catalog database="somedb" schema="someschema">
+            <script>
+                <input>
+                    create table "a" (a int);
+                </input>
+            </script>  
+        </catalog>
+        <script>  
+            <input>
+                select * from "a", A;
+            </input>
+        </script>  
+    </analyzer-snapshot>
+    <analyzer-snapshot name="names_tablename_as_alias">
+        <catalog database="somedb" schema="someschema">
+            <script>
+                <input>
+                    create table foo(a int);
+                </input>
+            </script>  
+        </catalog>
+        <script>  
+            <input>
+                select * from foo where foo.a = 1;
+            </input>
+        </script>  
+    </analyzer-snapshot>
+    <analyzer-snapshot name="names_tablename_as_alias_with_cross_join">
+        <catalog database="somedb" schema="someschema">
+            <script>
+                <input>
+                    create table foo(a int);
+                </input>
+            </script>  
+        </catalog>
+        <script>  
+            <input>
+                select * from foo a, foo where foo.a = 1;
+            </input>
+        </script>  
+    </analyzer-snapshot>
+    <analyzer-snapshot name="names_tablename_as_alias_but_duplicate">
+        <catalog database="somedb" schema="someschema">
+            <script>
+                <input>
+                    create table foo(a int);
+                </input>
+            </script>  
+        </catalog>
+        <script>  
+            <input>
+                select * from foo x, foo, foo where foo.a = 1;
+            </input>
+        </script>  
+    </analyzer-snapshot>
+    <analyzer-snapshot name="names_unresolved_tablename_as_alias_with_tableref_alias">
+        <catalog database="somedb" schema="someschema">
+            <script>
+                <input>
+                    create table foo(a int);
+                </input>
+            </script>  
+        </catalog>
+        <script>  
+            <input>
+                select * from foo x where foo.a = 1;
+            </input>
+        </script>  
+    </analyzer-snapshot>
+</analyzer-snapshots>

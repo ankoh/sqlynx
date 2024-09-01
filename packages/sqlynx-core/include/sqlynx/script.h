@@ -148,7 +148,7 @@ class ParsedScript {
     std::vector<proto::Node> nodes;
     /// The statements
     std::vector<Statement> statements;
-    /// The errors
+    /// The parser errors
     std::vector<std::pair<proto::Location, std::string>> errors;
 
    public:
@@ -190,7 +190,7 @@ class AnalyzedScript : public CatalogEntry {
         /// The table reference id
         ExternalObjectID table_reference_id;
         /// The AST node id in the target script
-        std::optional<uint32_t> ast_node_id;
+        uint32_t ast_node_id;
         /// The AST statement id in the target script
         std::optional<uint32_t> ast_statement_id;
         /// The AST scope root in the target script
@@ -229,7 +229,7 @@ class AnalyzedScript : public CatalogEntry {
         /// The expression id as (entry_id, reference_index)
         ExternalObjectID expression_id;
         /// The AST node id in the target script
-        std::optional<uint32_t> ast_node_id;
+        uint32_t ast_node_id;
         /// The AST statement id in the target script
         std::optional<uint32_t> ast_statement_id;
         /// The AST scope root in the target script
@@ -275,11 +275,8 @@ class AnalyzedScript : public CatalogEntry {
         /// The result targets in this scope
         std::vector<ResultTarget> result_targets;
         /// The named tables in scope
-        std::unordered_map<std::string_view, std::reference_wrapper<const CatalogEntry::TableDeclaration>> named_tables;
-        /// The unnamed tables in scope
-        std::unordered_map<ExternalObjectID, std::reference_wrapper<const CatalogEntry::TableDeclaration>,
-                           ExternalObjectID::Hasher>
-            unnamed_tables;
+        std::unordered_map<std::string_view, std::reference_wrapper<const CatalogEntry::TableDeclaration>>
+            resolved_tables_by_name;
     };
 
     /// The default database name
@@ -291,12 +288,16 @@ class AnalyzedScript : public CatalogEntry {
     std::shared_ptr<ParsedScript> parsed_script;
     /// The catalog version
     Catalog::Version catalog_version;
+    /// The analyzer errors
+    std::vector<proto::AnalyzerErrorT> errors;
     /// The table references
     ChunkBuffer<IntrusiveList<TableReference>::Node, 16> table_references;
     /// The expressions
     ChunkBuffer<IntrusiveList<Expression>::Node, 16> expressions;
     /// The name scopes
     ChunkBuffer<IntrusiveList<NameScope>::Node, 16> name_scopes;
+    /// The name scopes by scope root
+    std::unordered_map<size_t, std::reference_wrapper<NameScope>> name_scopes_by_root_node;
 
    public:
     /// Constructor

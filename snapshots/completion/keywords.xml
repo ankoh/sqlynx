@@ -4,6 +4,7 @@
             <input>
                 s
             </input>
+            <errors />
         </script>
         <cursor>
             <search text="s" index="1" />
@@ -19,6 +20,7 @@
             <input>
                 se
             </input>
+            <errors />
         </script>
         <cursor>
             <search text="se" index="2" />
@@ -34,6 +36,7 @@
             <input>
                 sel
             </input>
+            <errors />
         </script>
         <cursor>
             <search text="sel" index="3" />
@@ -49,6 +52,7 @@
             <input>
                 select *
             </input>
+            <errors />
         </script>
         <cursor>
             <search text="*" index="1" />
@@ -60,6 +64,7 @@
             <input>
                 select * f
             </input>
+            <errors />
         </script>
         <cursor>
             <search text="f" index="1" />
@@ -75,6 +80,7 @@
             <input>
                 select * fr
             </input>
+            <errors />
         </script>
         <cursor>
             <search text="fr" index="2" />
@@ -90,6 +96,7 @@
             <input>
                 select * from
             </input>
+            <errors />
         </script>
         <cursor>
             <search text="fr" index="4" />
@@ -105,6 +112,7 @@
             <input>
                 select * from a xx
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/unresolved" stmt="0" loc="31..35" text="a xx" />
             </tablerefs>
@@ -123,6 +131,7 @@
             <input>
                 select * from a w
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/unresolved" stmt="0" loc="31..34" text="a w" />
             </tablerefs>
@@ -141,6 +150,7 @@
             <input>
                 select * from a wh
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/unresolved" stmt="0" loc="31..35" text="a wh" />
             </tablerefs>
@@ -159,6 +169,7 @@
             <input>
                 selec
             </input>
+            <errors />
         </script>
         <cursor>
             <search text="selec" index="5" />
@@ -174,6 +185,7 @@
             <input>
                 select * from foo gr
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/unresolved" stmt="0" loc="31..37" text="foo gr" />
             </tablerefs>
@@ -192,6 +204,7 @@
             <input>
                 select * from foo group
             </input>
+            <errors />
         </script>
         <cursor>
             <search text="group" index="4" />
@@ -207,6 +220,7 @@
             <input>
                 select * from foo group b
             </input>
+            <errors />
         </script>
         <cursor>
             <search text="b" index="1" />
@@ -220,6 +234,7 @@
             <input>
                 select * from foo group xx
             </input>
+            <errors />
         </script>
         <cursor>
             <search text="xx" index="0" />
@@ -233,6 +248,7 @@
             <input>
                 select * from foo o
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/unresolved" stmt="0" loc="31..36" text="foo o" />
             </tablerefs>
@@ -251,6 +267,7 @@
             <input>
                 select * from foo or
             </input>
+            <errors />
         </script>
         <cursor>
             <search text="or" index="1" />
@@ -266,6 +283,7 @@
             <input>
                 select * from foo order
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/unresolved" loc="31..34" text="foo" />
             </tablerefs>

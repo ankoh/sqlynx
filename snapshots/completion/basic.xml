@@ -1,7 +1,9 @@
 <completion-snapshots>
     <completion-snapshot name="empty">
         <catalog />
-        <script id="0" />
+        <script id="0">
+            <errors />
+        </script>
         <cursor>
             <search text="" index="0" />
         </cursor>
@@ -22,12 +24,14 @@
                         <column id="256.65536.4294967296.0" name="a" loc="56..61" text="a int" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
             <input>
                 select * from db
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/unresolved" stmt="0" loc="31..33" text="db" />
             </tablerefs>
@@ -54,12 +58,14 @@
                         <column id="256.65536.4294967296.0" name="a" loc="56..61" text="a int" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
             <input>
                 select * from sch
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/unresolved" stmt="0" loc="31..34" text="sch" />
             </tablerefs>
@@ -86,12 +92,14 @@
                         <column id="256.65536.4294967296.0" name="a" loc="38..43" text="a int" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
             <input>
                 select * from fo
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/unresolved" stmt="0" loc="31..33" text="fo" />
             </tablerefs>
@@ -118,12 +126,14 @@
                         <column id="256.65536.4294967296.0" name="a" loc="38..43" text="a int" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
             <input>
                 select * from ( foo );
             </input>
+            <errors />
         </script>
         <cursor>
             <search text="from (" index="6" />
@@ -149,12 +159,14 @@ create table table3(attr3 integer);
                         <column id="256.65536.4294967298.0" name="attr3" loc="93..106" text="attr3 integer" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
             <input>
                 select attr2 from tab
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/unresolved" stmt="0" loc="35..38" text="tab" />
             </tablerefs>
@@ -188,12 +200,14 @@ create table table3(attr3 integer);
                         <column id="256.65536.4294967296.0" name="external_name2" loc="49..67" text="external_name2 int" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
             <input>
                 select external_name2 from external_name1 where external_
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="44..58" text="external_name1" />
             </tablerefs>
@@ -228,12 +242,14 @@ create table table3(attr3 integer);
                         <column id="256.65536.4294967296.0" name="external_name2" loc="49..67" text="external_name2 int" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
             <input>
                 select external_name2 from external_name1 where external_
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="44..58" text="external_name1" />
             </tablerefs>

@@ -1,0 +1,297 @@
+<analyzer-snapshots>
+    <analyzer-snapshot name="names_columnref_ambiguous">
+        <catalog database="somedb" schema="someschema">
+            <script id="1">
+                <input>
+                    create table A (a int);
+                    create table B (a int);
+                </input>
+                <tables>
+                    <table id="256.65536.4294967296" name="a" loc="21..43" text="create tab.. A (a int)">
+                        <column id="256.65536.4294967296.0" name="a" loc="37..42" text="a int" />
+                    </table>
+                    <table id="256.65536.4294967297" name="b" loc="65..87" text="create tab.. B (a int)">
+                        <column id="256.65536.4294967297.0" name="a" loc="81..86" text="a int" />
+                    </table>
+                </tables>
+                <errors />
+            </script>
+        </catalog>
+        <script id="0">
+            <input>
+                select * from A, B where a = 2;
+            </input>
+            <errors>
+                <error type="COLUMN_REF_AMBIGUOUS" message="column reference is ambiguous, candidates: b.a, a.a" loc="42..43" text="a" />
+            </errors>
+            <tablerefs>
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..32" text="A" />
+                <tableref type="name/external" id="256.65536.4294967297" stmt="0" loc="34..35" text="B" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/unresolved" stmt="0" loc="42..43" text="a" />
+            </expressions>
+        </script>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="names_columnref_ambiguous_scope_overrules">
+        <catalog database="somedb" schema="someschema">
+            <script id="1">
+                <input>
+                    create table A (a int);
+                    create table B (a int);
+                </input>
+                <tables>
+                    <table id="256.65536.4294967296" name="a" loc="21..43" text="create tab.. A (a int)">
+                        <column id="256.65536.4294967296.0" name="a" loc="37..42" text="a int" />
+                    </table>
+                    <table id="256.65536.4294967297" name="b" loc="65..87" text="create tab.. B (a int)">
+                        <column id="256.65536.4294967297.0" name="a" loc="81..86" text="a int" />
+                    </table>
+                </tables>
+                <errors />
+            </script>
+        </catalog>
+        <script id="0">
+            <input>
+                select * from A, (select * from B where a = 2);
+            </input>
+            <errors />
+            <tablerefs>
+                <tableref type="name/external" id="256.65536.4294967297" stmt="0" loc="49..50" text="B" />
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..32" text="A" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/external" id="256.65536.4294967297.0" stmt="0" loc="57..58" text="a" />
+            </expressions>
+        </script>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="names_columnref_ambiguous_correctly_scoped">
+        <catalog database="somedb" schema="someschema">
+            <script id="1">
+                <input>
+                    create table A (a int);
+                    create table B (a int);
+                </input>
+                <tables>
+                    <table id="256.65536.4294967296" name="a" loc="21..43" text="create tab.. A (a int)">
+                        <column id="256.65536.4294967296.0" name="a" loc="37..42" text="a int" />
+                    </table>
+                    <table id="256.65536.4294967297" name="b" loc="65..87" text="create tab.. B (a int)">
+                        <column id="256.65536.4294967297.0" name="a" loc="81..86" text="a int" />
+                    </table>
+                </tables>
+                <errors />
+            </script>
+        </catalog>
+        <script id="0">
+            <input>
+                select * from A, (select * from B where a = 2) c where a = 3;
+            </input>
+            <errors />
+            <tablerefs>
+                <tableref type="name/external" id="256.65536.4294967297" stmt="0" loc="49..50" text="B" />
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..32" text="A" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/external" id="256.65536.4294967297.0" stmt="0" loc="57..58" text="a" />
+                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="72..73" text="a" />
+            </expressions>
+        </script>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="names_duplicate_tableref">
+        <catalog database="somedb" schema="someschema">
+            <script id="1">
+                <input>
+                    create table A (a int);
+                </input>
+                <tables>
+                    <table id="256.65536.4294967296" name="a" loc="21..43" text="create tab.. A (a int)">
+                        <column id="256.65536.4294967296.0" name="a" loc="37..42" text="a int" />
+                    </table>
+                </tables>
+                <errors />
+            </script>
+        </catalog>
+        <script id="0">
+            <input>
+                select * from A, A;
+            </input>
+            <errors>
+                <error type="DUPLICATE_TABLE_ALIAS" message="duplicate table alias a" loc="34..35" text="A" />
+            </errors>
+            <tablerefs>
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..32" text="A" />
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="34..35" text="A" />
+            </tablerefs>
+        </script>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="names_duplicate_tableref_different_casing">
+        <catalog database="somedb" schema="someschema">
+            <script id="1">
+                <input>
+                    create table A (a int);
+                    create table "A" (a int);
+                </input>
+                <tables>
+                    <table id="256.65536.4294967296" name="a" loc="21..43" text="create tab.. A (a int)">
+                        <column id="256.65536.4294967296.0" name="a" loc="37..42" text="a int" />
+                    </table>
+                    <table id="256.65536.4294967297" name="A" loc="65..89" text="create tab..A&quot; (a int)">
+                        <column id="256.65536.4294967297.0" name="a" loc="83..88" text="a int" />
+                    </table>
+                </tables>
+                <errors />
+            </script>
+        </catalog>
+        <script id="0">
+            <input>
+                select * from "A", A;
+            </input>
+            <errors />
+            <tablerefs>
+                <tableref type="name/external" id="256.65536.4294967297" stmt="0" loc="31..34" text="&quot;A&quot;" />
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="36..37" text="A" />
+            </tablerefs>
+        </script>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="names_duplicate_tableref_colliding_with_quotes">
+        <catalog database="somedb" schema="someschema">
+            <script id="1">
+                <input>
+                    create table "a" (a int);
+                </input>
+                <tables>
+                    <table id="256.65536.4294967296" name="a" loc="21..45" text="create tab..a&quot; (a int)">
+                        <column id="256.65536.4294967296.0" name="a" loc="39..44" text="a int" />
+                    </table>
+                </tables>
+                <errors />
+            </script>
+        </catalog>
+        <script id="0">
+            <input>
+                select * from "a", A;
+            </input>
+            <errors>
+                <error type="DUPLICATE_TABLE_ALIAS" message="duplicate table alias a" loc="36..37" text="A" />
+            </errors>
+            <tablerefs>
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..34" text="&quot;a&quot;" />
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="36..37" text="A" />
+            </tablerefs>
+        </script>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="names_tablename_as_alias">
+        <catalog database="somedb" schema="someschema">
+            <script id="1">
+                <input>
+                    create table foo(a int);
+                </input>
+                <tables>
+                    <table id="256.65536.4294967296" name="foo" loc="21..44" text="create tab..foo(a int)">
+                        <column id="256.65536.4294967296.0" name="a" loc="38..43" text="a int" />
+                    </table>
+                </tables>
+                <errors />
+            </script>
+        </catalog>
+        <script id="0">
+            <input>
+                select * from foo where foo.a = 1;
+            </input>
+            <errors />
+            <tablerefs>
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..34" text="foo" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="41..46" text="foo.a" />
+            </expressions>
+        </script>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="names_tablename_as_alias_with_cross_join">
+        <catalog database="somedb" schema="someschema">
+            <script id="1">
+                <input>
+                    create table foo(a int);
+                </input>
+                <tables>
+                    <table id="256.65536.4294967296" name="foo" loc="21..44" text="create tab..foo(a int)">
+                        <column id="256.65536.4294967296.0" name="a" loc="38..43" text="a int" />
+                    </table>
+                </tables>
+                <errors />
+            </script>
+        </catalog>
+        <script id="0">
+            <input>
+                select * from foo a, foo where foo.a = 1;
+            </input>
+            <errors />
+            <tablerefs>
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..36" text="foo a" />
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="38..41" text="foo" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="48..53" text="foo.a" />
+            </expressions>
+        </script>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="names_tablename_as_alias_but_duplicate">
+        <catalog database="somedb" schema="someschema">
+            <script id="1">
+                <input>
+                    create table foo(a int);
+                </input>
+                <tables>
+                    <table id="256.65536.4294967296" name="foo" loc="21..44" text="create tab..foo(a int)">
+                        <column id="256.65536.4294967296.0" name="a" loc="38..43" text="a int" />
+                    </table>
+                </tables>
+                <errors />
+            </script>
+        </catalog>
+        <script id="0">
+            <input>
+                select * from foo x, foo, foo where foo.a = 1;
+            </input>
+            <errors>
+                <error type="DUPLICATE_TABLE_ALIAS" message="duplicate table alias foo" loc="43..46" text="foo" />
+            </errors>
+            <tablerefs>
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..36" text="foo x" />
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="38..41" text="foo" />
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="43..46" text="foo" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/external" id="256.65536.4294967296.0" stmt="0" loc="53..58" text="foo.a" />
+            </expressions>
+        </script>
+    </analyzer-snapshot>
+    <analyzer-snapshot name="names_unresolved_tablename_as_alias_with_tableref_alias">
+        <catalog database="somedb" schema="someschema">
+            <script id="1">
+                <input>
+                    create table foo(a int);
+                </input>
+                <tables>
+                    <table id="256.65536.4294967296" name="foo" loc="21..44" text="create tab..foo(a int)">
+                        <column id="256.65536.4294967296.0" name="a" loc="38..43" text="a int" />
+                    </table>
+                </tables>
+                <errors />
+            </script>
+        </catalog>
+        <script id="0">
+            <input>
+                select * from foo x where foo.a = 1;
+            </input>
+            <errors />
+            <tablerefs>
+                <tableref type="name/external" id="256.65536.4294967296" stmt="0" loc="31..36" text="foo x" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/unresolved" stmt="0" loc="43..48" text="foo.a" />
+            </expressions>
+        </script>
+    </analyzer-snapshot>
+</analyzer-snapshots>

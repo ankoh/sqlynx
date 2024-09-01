@@ -173,16 +173,36 @@ table NamingScope {
     table_references: [uint32];
 }
 
+enum AnalyzerErrorType: uint8 {
+    COLUMN_REF_AMBIGUOUS,
+    DUPLICATE_TABLE_ALIAS,
+}
+
+table AnalyzerError {
+    /// The error type
+    error_type: AnalyzerErrorType;
+    /// The ast node id
+    ast_node_id: uint32;
+    /// The text location, in case the user doesn't want to carry around the ast
+    location: Location;
+    /// The error message
+    message: string;
+}
+
 table AnalyzedScript {
     /// The external id that the user specified for this catalog entry
     catalog_entry_id: uint32;
 
-    /// The local tables
+    /// The errors
+    errors: [AnalyzerError];
+
+    /// The tables
     tables: [Table];
     /// The table references in the statement
     table_references: [TableReference];
     /// The expressions in the statement.
-    /// We're not indexing all expressions here, only those that are relevant for name resolution.
+    /// We're not indexing all expressions here, only those that are relevant for the analysis passes.
+    /// (Currently only name resolution)
     expressions: [Expression];
 
     /// The naming scopes

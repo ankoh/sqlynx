@@ -10,12 +10,14 @@
                         <column id="256.65536.4294967296.0" name="a" loc="56..61" text="a int" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
             <input>
                 select * from dbname.
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/unresolved" stmt="0" loc="31..38" text="dbname." />
             </tablerefs>
@@ -36,12 +38,14 @@
                         <column id="256.65536.4294967296.0" name="a" loc="56..61" text="a int" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
             <input>
                 select * from dbname.sch
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/unresolved" stmt="0" loc="31..41" text="dbname.sch" />
             </tablerefs>
@@ -62,12 +66,14 @@
                         <column id="256.65536.4294967296.0" name="a" loc="56..61" text="a int" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
             <input>
                 select * from dbname.sch
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/unresolved" stmt="0" loc="31..41" text="dbname.sch" />
             </tablerefs>
@@ -88,12 +94,14 @@
                         <column id="256.65536.4294967296.0" name="a" loc="56..61" text="a int" />
                     </table>
                 </tables>
+                <errors />
             </script>
         </catalog>
         <script id="0">
             <input>
                 select * from dbname."sch"
             </input>
+            <errors />
             <tablerefs>
                 <tableref type="name/unresolved" stmt="0" loc="31..43" text="dbname.&quot;sch&quot;" />
             </tablerefs>
