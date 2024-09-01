@@ -20,7 +20,9 @@ function tableEntryById(table: bigint, index: number) {
 }
 
 function packScript(tableRefs: sqlynx.proto.IndexedTableReferenceT[], columnRefs: sqlynx.proto.IndexedColumnReferenceT[]) {
-    const script = new sqlynx.proto.AnalyzedScriptT(0, [], [], [], [], [], [], tableRefs, columnRefs);
+    const script = new sqlynx.proto.AnalyzedScriptT();
+    script.tableReferencesById = tableRefs;
+    script.columnReferencesById = columnRefs;
     const builder = new flatbuffers.Builder();
     const ofs = script.pack(builder);
     builder.finish(ofs);
@@ -28,7 +30,10 @@ function packScript(tableRefs: sqlynx.proto.IndexedTableReferenceT[], columnRefs
     return sqlynx.proto.AnalyzedScript.getRootAsAnalyzedScript(buffer);
 }
 function packCatalog(databasesById: sqlynx.proto.IndexedFlatDatabaseEntryT[], schemasById: sqlynx.proto.IndexedFlatSchemaEntryT[], tablesById: sqlynx.proto.IndexedFlatTableEntryT[]) {
-    const script = new sqlynx.proto.FlatCatalogT(0n, [], [], [], [], [], databasesById, schemasById, tablesById);
+    const script = new sqlynx.proto.FlatCatalogT();
+    script.databasesById = databasesById;
+    script.schemasById = schemasById;
+    script.tablesById = tablesById;
     const builder = new flatbuffers.Builder();
     const ofs = script.pack(builder);
     builder.finish(ofs);
