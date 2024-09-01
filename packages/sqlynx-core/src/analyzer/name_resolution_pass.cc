@@ -4,7 +4,6 @@
 #include <functional>
 #include <iterator>
 #include <optional>
-#include <sstream>
 #include <stack>
 
 #include "sqlynx/catalog.h"
@@ -315,23 +314,24 @@ void NameResolutionPass::ResolveColumnRefsInScope(AnalyzedScript::NameScope& sco
                     error.location = std::make_unique<proto::Location>(parsed.nodes[expr.ast_node_id].location());
 
                     // Construct the error message
-                    std::stringstream out;
-                    out << "column reference is ambiguous, candidates: ";
+                    // Note that we deliberately do not use std::stringstream here since clang is then baking in fd
+                    // dependencies: Import #5 module="wasi_snapshot_preview1" function="fd_prestat_get"
+                    std::string out = "column reference is ambiguous, candidates: ";
                     std::string tmp;
                     for (size_t i = 0; i < candidates.size(); ++i) {
                         if (i > 0) {
-                            out << ", ";
+                            out += ", ";
                         }
                         auto& [table_alias, table_decl, table_column] = candidates[i];
                         std::string_view tbl = table_alias;
                         tbl = quote_anyupper_fuzzy(tbl, tmp);
-                        out << tbl;
-                        out << ".";
+                        out += tbl;
+                        out += ".";
                         std::string_view col = column_name;
                         col = quote_anyupper_fuzzy(col, tmp);
-                        out << col;
+                        out += col;
                     }
-                    error.message = out.str();
+                    error.message = std::move(out);
 
                 } else if (candidates.size() == 1) {
                     table_column = std::get<2>(candidates.front());
