@@ -89,6 +89,7 @@ void AnalyzerSnapshotTest::TestRegistrySnapshot(const std::vector<ScriptAnalysis
         auto script_node = node.append_child("script");
         AnalyzerSnapshotTest::EncodeScript(script_node, *script.analyzed_script, false);
 
+        ASSERT_TRUE(Matches(script_node.child("errors"), entry.errors));
         ASSERT_TRUE(Matches(script_node.child("tables"), entry.tables));
         ASSERT_TRUE(Matches(script_node.child("tablerefs"), entry.table_references));
         ASSERT_TRUE(Matches(script_node.child("expressions"), entry.expressions));
@@ -108,6 +109,7 @@ void AnalyzerSnapshotTest::TestMainScriptSnapshot(const ScriptAnalysisSnapshot& 
 
     AnalyzerSnapshotTest::EncodeScript(node, *script.analyzed_script, true);
 
+    ASSERT_TRUE(Matches(node.child("errors"), snap.errors));
     ASSERT_TRUE(Matches(node.child("tables"), snap.tables));
     ASSERT_TRUE(Matches(node.child("tablerefs"), snap.table_references));
     ASSERT_TRUE(Matches(node.child("expressions"), snap.expressions));
@@ -127,7 +129,14 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
         auto tables_node = out.append_child("tables");
         writeTables(tables_node, script);
     }
-
+    // Encode errors
+    auto errors_node = out.append_child("errors");
+    for (auto& error : script.errors) {
+        auto error_node = errors_node.append_child("error");
+        error_node.append_attribute("type").set_value(proto::EnumNameAnalyzerErrorType(error.error_type));
+        error_node.append_attribute("message").set_value(error.message.c_str());
+        WriteLocation(error_node, *error.location, script.parsed_script->scanned_script->GetInput());
+    }
     // Write table references
     if (!script.table_references.IsEmpty()) {
         auto table_refs_node = out.append_child("tablerefs");
@@ -157,8 +166,7 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
             if (ref->ast_statement_id.has_value()) {
                 xml_ref.append_attribute("stmt").set_value(*ref->ast_statement_id);
             }
-            assert(ref->ast_node_id.has_value());
-            WriteLocation(xml_ref, script.parsed_script->nodes[*ref->ast_node_id].location(),
+            WriteLocation(xml_ref, script.parsed_script->nodes[ref->ast_node_id].location(),
                           script.parsed_script->scanned_script->GetInput());
         });
     }
@@ -192,8 +200,7 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
             if (ref->ast_statement_id.has_value()) {
                 xml_ref.append_attribute("stmt").set_value(*ref->ast_statement_id);
             }
-            assert(ref->ast_node_id.has_value());
-            WriteLocation(xml_ref, script.parsed_script->nodes[*ref->ast_node_id].location(),
+            WriteLocation(xml_ref, script.parsed_script->nodes[ref->ast_node_id].location(),
                           script.parsed_script->scanned_script->GetInput());
         });
     }
@@ -244,6 +251,7 @@ void AnalyzerSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
             {
                 auto main_node = test_node.child("script");
                 test.script.input = main_node.child("input").last_child().value();
+                test.script.errors.append_copy(main_node.child("errors"));
                 test.script.tables.append_copy(main_node.child("tables"));
                 test.script.table_references.append_copy(main_node.child("tablerefs"));
                 test.script.expressions.append_copy(main_node.child("expressions"));
@@ -256,6 +264,7 @@ void AnalyzerSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
                 std::string entry_name = entry_node.name();
                 if (entry_name == "script") {
                     entry.input = entry_node.child("input").last_child().value();
+                    entry.errors.append_copy(entry_node.child("errors"));
                     entry.tables.append_copy(entry_node.child("tables"));
                     entry.table_references.append_copy(entry_node.child("tablerefs"));
                     entry.expressions.append_copy(entry_node.child("expressions"));

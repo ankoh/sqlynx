@@ -10,7 +10,7 @@
         </catalog>
         <script>  
             <input>
-                select * from db1.schema1.A, db2.schema2.A where a = c;
+                select * from db1.schema1.A x, db2.schema2.A y where x.a = c;
             </input>
         </script>  
     </analyzer-snapshot>
@@ -25,7 +25,7 @@
         </catalog>
         <script>  
             <input>
-                select * from db1.schema1.A, db2.schema2.A where a = c;
+                select * from db1.schema1.A x, db2.schema2.A where x.a = c;
             </input>
         </script>  
     </analyzer-snapshot>

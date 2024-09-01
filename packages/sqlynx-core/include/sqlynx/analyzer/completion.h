@@ -96,6 +96,10 @@ struct Completion {
 
     /// Complete after a dot
     std::vector<NameComponent> ReadNamePathAroundDot(size_t node_id);
+    /// Collect the name scopes
+    std::vector<std::reference_wrapper<AnalyzedScript::NameScope>> CollectNameScopes(size_t node_id);
+    /// Complete after a dot
+    proto::StatusCode CompleteNamePath(std::span<NameComponent> span);
     /// Complete after a dot
     proto::StatusCode CompleteAtDot();
     /// Complete after a dot
