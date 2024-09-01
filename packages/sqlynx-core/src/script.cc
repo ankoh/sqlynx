@@ -189,7 +189,7 @@ ParsedScript::ParsedScript(std::shared_ptr<ScannedScript> scan, parser::ParseCon
 }
 
 /// Resolve an ast node
-std::optional<std::pair<size_t, size_t>> ParsedScript::FindNodeAtOffset(size_t text_offset) {
+std::optional<std::pair<size_t, size_t>> ParsedScript::FindNodeAtOffset(size_t text_offset) const {
     if (statements.empty()) {
         return std::nullopt;
     }
@@ -723,30 +723,38 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Script::CompleteAtCurs
     return Completion::Compute(*cursor, limit);
 }
 
-static bool endsCursorPath(proto::Node& n) {
-    switch (n.node_type()) {
-        case proto::NodeType::OBJECT_SQL_SELECT:
-        case proto::NodeType::OBJECT_SQL_CREATE:
-        case proto::NodeType::OBJECT_SQL_CREATE_AS:
-        case proto::NodeType::OBJECT_SQL_SELECT_EXPRESSION:
-            return true;
-        default:
-            break;
+void AnalyzedScript::FollowPathUpwards(uint32_t ast_node_id, std::vector<uint32_t>& ast_node_path,
+                                       std::vector<std::reference_wrapper<AnalyzedScript::NameScope>>& scopes) const {
+    assert(parsed_script != nullptr);
+
+    ast_node_path.clear();
+    scopes.clear();
+
+    // Traverse all parent ids of the node
+    auto& nodes = parsed_script->nodes;
+    for (std::optional<size_t> node_iter = ast_node_id; node_iter.has_value();
+         node_iter = nodes[node_iter.value()].parent() != node_iter.value()
+                         ? std::optional{nodes[node_iter.value()].parent()}
+                         : std::nullopt) {
+        // Remember the node path
+        ast_node_path.push_back(*node_iter);
+        // Probe the name scopes
+        auto scope_iter = name_scopes_by_root_node.find(node_iter.value());
+        if (scope_iter != name_scopes_by_root_node.end()) {
+            scopes.push_back(scope_iter->second);
+        }
     }
-    return false;
 }
 
-ScriptCursor::ScriptCursor(const Script& script, size_t text_offset) : script(script), text_offset(text_offset) {}
+ScriptCursor::ScriptCursor(const Script& script, size_t text_offset)
+    : script(script), text_offset(text_offset), context(std::monostate{}) {}
 
 /// Constructor
 std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Place(const Script& script,
                                                                                 size_t text_offset) {
     auto cursor = std::make_unique<ScriptCursor>(script, text_offset);
 
-    // Did the parsed script change?
-    auto& analyzed = script.analyzed_script;
-
-    // Read scanner token
+    // Has the script been scanned?
     if (script.scanned_script) {
         cursor->scanner_location.emplace(script.scanned_script->FindSymbol(text_offset));
         if (cursor->scanner_location) {
@@ -755,69 +763,67 @@ std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Place(
         }
     }
 
-    // Read AST node
+    // Has the script been parsed?
     if (script.parsed_script) {
-        auto maybe_ast_node = script.parsed_script->FindNodeAtOffset(text_offset);
-        if (!maybe_ast_node.has_value()) {
-            cursor->statement_id = std::nullopt;
-            cursor->ast_node_id = std::nullopt;
-        } else {
-            cursor->statement_id = std::get<0>(*maybe_ast_node);
-            cursor->ast_node_id = std::get<1>(*maybe_ast_node);
+        // Try to find the ast node the cursor is pointing at
+        if (auto ast_node = script.parsed_script->FindNodeAtOffset(text_offset)) {
+            // Try to find the ast node the cursor is pointing at
+            cursor->statement_id = std::get<0>(*ast_node);
+            cursor->ast_node_id = std::get<1>(*ast_node);
 
-            // Collect nodes to root
-            std::unordered_set<uint32_t> cursor_path_nodes;
-            for (auto iter = *cursor->ast_node_id;;) {
-                auto& node = script.parsed_script->nodes[iter];
-                if (endsCursorPath(node)) {
-                    break;
-                }
-                cursor_path_nodes.insert(iter);
-                if (iter == node.parent()) {
-                    break;
-                }
-                iter = node.parent();
-            }
-
-            // Analyzed and analyzed is same version?
+            // Analyzed and analyzed is same version as the parsed script?
+            // Note that the user may re-parse and re-analyze a script after changes.
+            // This ensures that we're consistent when building the cursor.
+            auto& analyzed = script.analyzed_script;
             if (analyzed && analyzed->parsed_script == script.parsed_script) {
-                // The following section does the following:
-                //
-                // We create a cursor path hashmap that is tiny.
-                // We then scan all declarations and references in the script sequentially and probe that hash table.
-                // We only check if the numeric id of the AST node is contained.
-                // If it is, we know that the cursor is currently located in either a ref or a declaration.
-                //
-                // This probing should be fast enough, even for mega-byte sized SQL texts.
+                // First find all name scopes that the ast node points into.
+                script.analyzed_script->FollowPathUpwards(*cursor->ast_node_id, cursor->ast_path_to_root,
+                                                          cursor->name_scopes);
 
-                // Part of a table node?
-                analyzed->table_declarations.ForEachWhile([&](size_t i, auto& table) {
-                    if (table.ast_node_id.has_value() && cursor_path_nodes.contains(*table.ast_node_id)) {
-                        cursor->table_id = table.ast_node_id;
-                        return false;
-                    }
-                    return true;
-                });
+                // Check if there's a table or column ref in the innermost scope containing the node
+                if (cursor->name_scopes.size() != 0) {
+                    auto& innermost_scope = cursor->name_scopes.front().get();
+                    auto& nodes = script.parsed_script->nodes;
 
-                // Part of a column reference node?
-                analyzed->expressions.ForEachWhile([&](size_t i, auto& column_ref) {
-                    if (cursor_path_nodes.contains(column_ref->ast_node_id)) {
-                        cursor->expression_id = i;
-                        return false;
-                    } else {
-                        return true;
+                    // Find first node that is a table or column ref
+                    for (auto node_id : cursor->ast_path_to_root) {
+                        bool matched = false;
+                        switch (nodes[node_id].node_type()) {
+                            // Node is a column ref?
+                            // Then we check all expressions in the innermost scope.
+                            case proto::NodeType::OBJECT_SQL_COLUMN_REF: {
+                                matched = true;
+                                for (auto& expression : innermost_scope.expressions) {
+                                    if (node_id == expression.ast_node_id && expression.IsColumnRef()) {
+                                        assert(expression.expression_id.GetExternalId() ==
+                                               analyzed->GetCatalogEntryId());
+                                        cursor->context = ColumnRefContext{expression.expression_id.GetIndex()};
+                                    }
+                                }
+                                break;
+                            }
+                            // Node is a table ref?
+                            // Then we check all table refs in the innermost scope.
+                            case proto::NodeType::OBJECT_SQL_TABLEREF: {
+                                matched = true;
+                                for (auto& table_ref : innermost_scope.table_references) {
+                                    if (node_id == table_ref.ast_node_id) {
+                                        assert(table_ref.table_reference_id.GetExternalId() ==
+                                               analyzed->GetCatalogEntryId());
+                                        cursor->context = TableRefContext{table_ref.table_reference_id.GetIndex()};
+                                    }
+                                }
+                                break;
+                            }
+                            default:
+                                break;
+                        }
+                        // Stop when we reached the root of the innermost name scope.
+                        if (matched || node_id == innermost_scope.ast_scope_root) {
+                            break;
+                        }
                     }
-                });
-
-                // Part of a table reference node?
-                analyzed->table_references.ForEach([&](size_t i, auto& table_ref) {
-                    if (cursor_path_nodes.contains(table_ref->ast_node_id)) {
-                        cursor->table_reference_id = i;
-                        return false;
-                    } else {
-                        return true;
-                    }
-                });
+                }
             }
         }
     }
@@ -825,13 +831,9 @@ std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Place(
 }
 
 /// Pack the cursor info
-flatbuffers::Offset<proto::ScriptCursorInfo> ScriptCursor::Pack(flatbuffers::FlatBufferBuilder& builder) const {
-    auto out = std::make_unique<proto::ScriptCursorInfoT>();
+flatbuffers::Offset<proto::ScriptCursor> ScriptCursor::Pack(flatbuffers::FlatBufferBuilder& builder) const {
+    auto out = std::make_unique<proto::ScriptCursorT>();
     out->text_offset = text_offset;
-    out->scanner_symbol_id = std::numeric_limits<uint32_t>::max();
-    out->scanner_relative_position = proto::RelativeSymbolPosition::NEW_SYMBOL_AFTER;
-    out->scanner_symbol_offset = 0;
-    out->scanner_symbol_kind = 0;
     if (scanner_location) {
         auto& symbol = script.scanned_script->symbols[scanner_location->symbol_id];
         auto symbol_offset = symbol.location.offset();
@@ -839,13 +841,36 @@ flatbuffers::Offset<proto::ScriptCursorInfo> ScriptCursor::Pack(flatbuffers::Fla
         out->scanner_relative_position = static_cast<proto::RelativeSymbolPosition>(scanner_location->relative_pos);
         out->scanner_symbol_offset = symbol_offset;
         out->scanner_symbol_kind = static_cast<uint32_t>(symbol.kind_);
+    } else {
+        out->scanner_symbol_id = std::numeric_limits<uint32_t>::max();
+        out->scanner_relative_position = proto::RelativeSymbolPosition::NEW_SYMBOL_AFTER;
+        out->scanner_symbol_offset = 0;
+        out->scanner_symbol_kind = 0;
     }
     out->statement_id = statement_id.value_or(std::numeric_limits<uint32_t>::max());
     out->ast_node_id = ast_node_id.value_or(std::numeric_limits<uint32_t>::max());
-    out->table_id = table_id.value_or(std::numeric_limits<uint32_t>::max());
-    out->table_reference_id = table_reference_id.value_or(std::numeric_limits<uint32_t>::max());
-    out->expression_id = expression_id.value_or(std::numeric_limits<uint32_t>::max());
-    return proto::ScriptCursorInfo::Pack(builder, out.get());
+    out->ast_path_to_root = ast_path_to_root;
+    out->name_scopes.reserve(name_scopes.size());
+    for (auto& name_scope : name_scopes) {
+        out->name_scopes.push_back(name_scope.get().name_scope_id);
+    }
+    switch (context.index()) {
+        case 0:
+            break;
+        case 1: {
+            auto& table_ref = std::get<ScriptCursor::TableRefContext>(context);
+            auto ctx = std::make_unique<proto::ScriptCursorTableRefContextT>();
+            ctx->table_reference_id = table_ref.table_reference_id;
+            break;
+        }
+        case 2: {
+            auto& column_ref = std::get<ScriptCursor::ColumnRefContext>(context);
+            auto ctx = std::make_unique<proto::ScriptCursorColumnRefContextT>();
+            ctx->expression_id = column_ref.expression_id;
+            break;
+        }
+    }
+    return proto::ScriptCursor::Pack(builder, out.get());
 }
 
 }  // namespace sqlynx

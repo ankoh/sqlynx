@@ -1,7 +1,5 @@
 #include "gtest/gtest.h"
 #include "sqlynx/analyzer/analyzer.h"
-#include "sqlynx/analyzer/completion.h"
-#include "sqlynx/parser/parser.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
 
@@ -77,9 +75,10 @@ void test(Script& script, size_t text_offset, ExpectedScriptCursor expected) {
     ASSERT_EQ(ast_node.node_type(), expected.ast_node_type) << proto::EnumNameNodeType(ast_node.node_type());
     // Check table reference
     if (expected.table_ref_name.has_value()) {
-        ASSERT_TRUE(cursor->table_reference_id.has_value());
-        ASSERT_LT(*cursor->table_reference_id, script.analyzed_script->table_references.GetSize());
-        auto& table_ref = script.analyzed_script->table_references[*cursor->table_reference_id];
+        ASSERT_TRUE(std::holds_alternative<ScriptCursor::TableRefContext>(cursor->context));
+        auto& ctx = std::get<ScriptCursor::TableRefContext>(cursor->context);
+        ASSERT_LT(ctx.table_reference_id, script.analyzed_script->table_references.GetSize());
+        auto& table_ref = script.analyzed_script->table_references[ctx.table_reference_id];
         switch (table_ref->inner.index()) {
             case 0:
                 FAIL();
@@ -99,13 +98,14 @@ void test(Script& script, size_t text_offset, ExpectedScriptCursor expected) {
         }
 
     } else {
-        ASSERT_FALSE(cursor->table_reference_id.has_value());
+        ASSERT_FALSE(std::holds_alternative<ScriptCursor::TableRefContext>(cursor->context));
     }
     // Check expression
     if (expected.column_ref_name.has_value()) {
-        ASSERT_TRUE(cursor->expression_id.has_value());
-        ASSERT_LT(*cursor->expression_id, script.analyzed_script->expressions.GetSize());
-        auto& column_ref = script.analyzed_script->expressions[*cursor->expression_id];
+        ASSERT_TRUE(std::holds_alternative<ScriptCursor::ColumnRefContext>(cursor->context));
+        auto& ctx = std::get<ScriptCursor::ColumnRefContext>(cursor->context);
+        ASSERT_LT(ctx.expression_id, script.analyzed_script->expressions.GetSize());
+        auto& column_ref = script.analyzed_script->expressions[ctx.expression_id];
         switch (column_ref->inner.index()) {
             case 0:
                 FAIL();
@@ -123,7 +123,7 @@ void test(Script& script, size_t text_offset, ExpectedScriptCursor expected) {
             }
         }
     } else {
-        ASSERT_FALSE(cursor->expression_id.has_value());
+        ASSERT_FALSE(std::holds_alternative<ScriptCursor::ColumnRefContext>(cursor->context));
     }
 }
 

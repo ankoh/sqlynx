@@ -173,8 +173,10 @@ void NameResolutionPass::MergeChildStates(NodeState& dst, const proto::Node& par
 }
 
 AnalyzedScript::NameScope& NameResolutionPass::CreateScope(NodeState& target, uint32_t scope_root) {
-    auto& scope = analyzed.name_scopes.Append(AnalyzedScript::NameScope{
-        .ast_scope_root = scope_root, .parent_scope = nullptr, .child_scopes = target.child_scopes});
+    auto& scope = analyzed.name_scopes.Append(AnalyzedScript::NameScope{.name_scope_id = analyzed.name_scopes.GetSize(),
+                                                                        .ast_scope_root = scope_root,
+                                                                        .parent_scope = nullptr,
+                                                                        .child_scopes = target.child_scopes});
     analyzed.name_scopes_by_root_node.insert({scope_root, scope.value});
     for (auto& child_scope : target.child_scopes) {
         child_scope.parent_scope = &scope.value;
@@ -209,8 +211,8 @@ void NameResolutionPass::ResolveTableRefsInScope(AnalyzedScript::NameScope& scop
         // Helper to register a name
         auto register_name = [&](std::string_view alias, const AnalyzedScript::TableDeclaration& table) {
             // Already exists in this scope?
-            auto resolved_iter = scope.resolved_tables_by_name.find(alias);
-            if (resolved_iter != scope.resolved_tables_by_name.end()) {
+            auto resolved_iter = scope.referenced_tables_by_name.find(alias);
+            if (resolved_iter != scope.referenced_tables_by_name.end()) {
                 // Register an error
                 auto& error = analyzed.errors.emplace_back();
                 error.error_type = proto::AnalyzerErrorType::DUPLICATE_TABLE_ALIAS;
@@ -222,7 +224,7 @@ void NameResolutionPass::ResolveTableRefsInScope(AnalyzedScript::NameScope& scop
                 alias_text = quote_anyupper_fuzzy(alias_text, tmp);
                 error.message = std::format("duplicate table alias {}", alias_text);
             } else {
-                scope.resolved_tables_by_name.insert({alias, table});
+                scope.referenced_tables_by_name.insert({alias, table});
             }
         };
 
@@ -232,6 +234,7 @@ void NameResolutionPass::ResolveTableRefsInScope(AnalyzedScript::NameScope& scop
             // Store resolved relation expression
             auto& table = iter->second.get();
             table_ref.inner = AnalyzedScript::TableReference::ResolvedRelationExpression{
+                .table_name_ast_node_id = unresolved->table_name_ast_node_id,
                 .table_name = table.table_name,
                 .catalog_database_id = table.catalog_database_id,
                 .catalog_schema_id = table.catalog_schema_id,
@@ -284,8 +287,8 @@ void NameResolutionPass::ResolveColumnRefsInScope(AnalyzedScript::NameScope& sco
             if (unresolved.column_name.table_alias.has_value()) {
                 // Do we know the name in this scope?
                 auto table_alias = unresolved.column_name.table_alias->get().text;
-                auto table_iter = target_scope->resolved_tables_by_name.find(table_alias);
-                if (table_iter != target_scope->resolved_tables_by_name.end()) {
+                auto table_iter = target_scope->referenced_tables_by_name.find(table_alias);
+                if (table_iter != target_scope->referenced_tables_by_name.end()) {
                     // Is the table known in that table?
                     auto& table_columns_by_name = table_iter->second.get().table_columns_by_name;
                     auto column_iter = table_columns_by_name.find(column_name);
@@ -298,7 +301,7 @@ void NameResolutionPass::ResolveColumnRefsInScope(AnalyzedScript::NameScope& sco
                 std::vector<std::tuple<std::string_view, std::reference_wrapper<const CatalogEntry::TableDeclaration>,
                                        std::reference_wrapper<AnalyzedScript::TableColumn>>>
                     candidates;
-                for (auto& [table_name, table] : target_scope->resolved_tables_by_name) {
+                for (auto& [table_name, table] : target_scope->referenced_tables_by_name) {
                     auto& table_columns_by_name = table.get().table_columns_by_name;
                     auto column_iter = table_columns_by_name.find(column_name);
                     if (column_iter != table_columns_by_name.end()) {
@@ -449,6 +452,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 auto attrs = attribute_index.Load(children);
                 // Only consider table refs with a name for now
                 if (auto name_node = attrs[proto::AttributeKey::SQL_TABLEREF_NAME]) {
+                    auto name_node_id = static_cast<uint32_t>(name_node - parsed.nodes.data());
                     auto name = ReadQualifiedTableName(name_node);
                     if (name.has_value()) {
                         // Read a table alias
@@ -469,8 +473,8 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                         n.value.ast_node_id = node_id;
                         n.value.ast_statement_id = std::nullopt;
                         n.value.ast_scope_root = std::nullopt;
-                        n.value.inner =
-                            AnalyzedScript::TableReference::UnresolvedRelationExpression{.table_name = name.value()};
+                        n.value.inner = AnalyzedScript::TableReference::UnresolvedRelationExpression{
+                            .table_name_ast_node_id = name_node_id, .table_name = name.value()};
                         node_state.table_references.PushBack(n);
                     }
                 }

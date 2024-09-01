@@ -239,10 +239,8 @@ proto::StatusCode Completion::CompleteNamePath(std::span<Completion::NameCompone
     // We can just traverse the scopes from left to right and go from innermost to outermost.
     for (auto& name_scope : name_scopes) {
         // Does the name refer to a resolved named table in the scope?
-        // This means we're dot-completing a table alias here.
-        auto table_iter = name_scope.get().resolved_tables_by_name.find(root);
-
-        // XXX
+        // This means we're dot-completing a known table alias here.
+        auto table_iter = name_scope.get().referenced_tables_by_name.find(root);
     }
     return proto::StatusCode::OK;
 }
@@ -573,15 +571,16 @@ void Completion::FlushCandidatesAndFinish() {
 }
 
 static proto::CompletionStrategy selectStrategy(const ScriptCursor& cursor) {
-    // Is a table ref?
-    if (cursor.table_reference_id.has_value()) {
-        return proto::CompletionStrategy::TABLE_REF;
+    switch (cursor.context.index()) {
+        case 1:
+            assert(std::holds_alternative<ScriptCursor::TableRefContext>(cursor.context));
+            return proto::CompletionStrategy::TABLE_REF;
+        case 2:
+            assert(std::holds_alternative<ScriptCursor::ColumnRefContext>(cursor.context));
+            return proto::CompletionStrategy::COLUMN_REF;
+        default:
+            return proto::CompletionStrategy::DEFAULT;
     }
-    // Is an expression?
-    if (cursor.expression_id.has_value()) {
-        return proto::CompletionStrategy::COLUMN_REF;
-    }
-    return proto::CompletionStrategy::DEFAULT;
 }
 
 static const Completion::ScoringTable& selectScoringTable(proto::CompletionStrategy strategy) {
