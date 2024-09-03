@@ -48,7 +48,7 @@ class CatalogEntry {
     /// A key for a qualified table name
     /// A qualified table name
     struct QualifiedTableName {
-        using HashKey = std::tuple<std::string_view, std::string_view, std::string_view>;
+        using Key = std::tuple<std::string_view, std::string_view, std::string_view>;
         /// The AST node id in the target script
         std::optional<uint32_t> ast_node_id;
         /// The database name, may refer to different context
@@ -75,7 +75,7 @@ class CatalogEntry {
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::QualifiedTableName> Pack(flatbuffers::FlatBufferBuilder& builder) const;
         /// Construct a key
-        operator HashKey() { return {database_name.get().text, schema_name.get().text, table_name.get().text}; }
+        operator Key() { return {database_name.get().text, schema_name.get().text, table_name.get().text}; }
     };
     /// A qualified column name
     struct QualifiedColumnName {
@@ -214,8 +214,7 @@ class CatalogEntry {
                        TupleHasher>
         schemas_by_name;
     /// The tables, indexed by name
-    std::unordered_map<QualifiedTableName::HashKey, std::reference_wrapper<const TableDeclaration>, TupleHasher>
-        tables_by_name;
+    btree::map<QualifiedTableName::Key, std::reference_wrapper<const TableDeclaration>> tables_by_name;
     /// The table columns, indexed by the name
     std::unordered_multimap<std::string_view, std::reference_wrapper<const TableColumn>> table_columns_by_name;
     /// The name search index
@@ -395,9 +394,6 @@ class Catalog {
     /// These btrees contain all the schemas that are currently referenced by catalog entries.
     /// Ordered by <database, schema>
     btree::map<std::pair<std::string_view, std::string_view>, std::unique_ptr<SchemaDeclaration>> schemas;
-    /// The schemas by schema name <schema, database>
-    btree::map<std::pair<std::string_view, std::string_view>, std::reference_wrapper<SchemaDeclaration>>
-        schemas_inverted;
 
     /// Update a script entry
     proto::StatusCode UpdateScript(ScriptEntry& entry);
@@ -420,8 +416,6 @@ class Catalog {
     auto& GetDatabases() const { return databases; }
     /// Get the schemas ordered by <database, schema>
     auto& GetSchemas() const { return schemas; }
-    /// Get the schemas ordered by <schema, database>
-    auto& GetSchemasInverted() const { return schemas_inverted; }
 
     /// Contains an entry id?
     bool Contains(CatalogEntryID id) const { return entries.contains(id); }
@@ -484,7 +478,10 @@ class Catalog {
     /// Resolve a table by id
     const CatalogEntry::TableDeclaration* ResolveTable(CatalogEntry::QualifiedTableName table_name,
                                                        CatalogEntryID ignore_entry) const;
-    /// Find table columns by name
+    /// Resolve all schema tables
+    void ResolveSchemaTables(std::string_view database_name, std::string_view schema_name,
+                             std::vector<std::reference_wrapper<const CatalogEntry::TableDeclaration>>& out) const;
+    /// Resolve table columns by name
     void ResolveTableColumns(std::string_view table_column, std::vector<CatalogEntry::TableColumn>& out) const;
 };
 

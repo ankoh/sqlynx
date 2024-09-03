@@ -2,7 +2,6 @@
 
 #include <flatbuffers/buffer.h>
 
-#include <unordered_set>
 #include <variant>
 
 #include "sqlynx/external.h"
@@ -12,6 +11,7 @@
 #include "sqlynx/script.h"
 #include "sqlynx/text/names.h"
 #include "sqlynx/utils/string_conversion.h"
+#include "sqlynx/utils/string_trimming.h"
 
 namespace sqlynx {
 
@@ -228,19 +228,37 @@ proto::StatusCode Completion::CompleteCursorNamePath() {
     // A name path could also contain an index indirection or a star.
     // We're only interested in the names here.
     // If the user completes a name with index or star, we'll just truncate everything.
-    size_t name_prefix = 0;
+    size_t name_count = 0;
     // Additionally find the sealed prefix.
     // If we're completing after a dot, the word before the dot is not meant to be completed.
-    size_t sealed_prefix = 0;
-    for (; name_prefix < name_path.size(); ++name_prefix) {
-        if (name_path[name_prefix].type != NameComponentType::Name) {
+    size_t sealed = 0;
+    // Last text prefix
+    std::string_view last_text_prefix;
+    for (; name_count < name_path.size(); ++name_count) {
+        if (name_path[name_count].type != NameComponentType::Name) {
             break;
         }
-        if ((name_path[name_prefix].loc.offset() + name_path[name_prefix].loc.length()) < cursor_location) {
-            ++sealed_prefix;
+        if ((name_path[name_count].loc.offset() + name_path[name_count].loc.length()) <= cursor_location) {
+            ++sealed;
+        } else {
+            // The cursor points into a name?
+
+            // Determine the substring left of the cursor.
+            // The user may write:
+            //  foo.bar.something
+            //              ^ if the cursor points to t, we'll complete "some"
+            //
+            auto last_loc = name_path[name_count].loc;
+            auto last_text = cursor.script.scanned_script->ReadTextAtLocation(last_loc);
+            auto last_content =
+                std::find_if(last_text.begin(), last_text.end(), is_no_double_quote) - last_text.begin();
+            auto last_content_ofs = last_loc.offset() + last_content;
+            auto last_prefix_length = std::max<size_t>(cursor_location, last_content_ofs) - last_content_ofs;
+            last_text_prefix = last_text.substr(last_content, last_prefix_length);
+            break;
         }
     }
-    name_path = name_path.subspan(0, name_prefix);
+    name_path = name_path.subspan(0, name_count);
 
     // Is the path empty?
     // Nothing to complete then.
@@ -248,8 +266,8 @@ proto::StatusCode Completion::CompleteCursorNamePath() {
         return proto::StatusCode::OK;
     }
 
-    // First we resolve the root name to figure out what we're completing here
-    auto& root = name_path[0].name.value().get();
+    // Collect all candidate strings
+    std::vector<std::string_view> candidates;
 
     // Are we completing a table ref?
     if (auto* ctx = std::get_if<ScriptCursor::TableRefContext>(&cursor.context)) {
@@ -257,36 +275,103 @@ proto::StatusCode Completion::CompleteCursorNamePath() {
         auto& dbs = catalog.GetDatabases();
         auto& schemas = catalog.GetSchemas();
 
-        // Is the root referring to a known database name?
-        if (auto iter = dbs.find(root); iter != dbs.end()) {
-            // XXX Schema next
+        switch (sealed) {
+            case 0:
+                break;
+            case 1: {
+                // User gave us a._
+                // "a" might be a database name or a schema name
+
+                // Is referring to a schema in the default database?
+                auto& a_text = name_path[0].name.value().get().text;
+                auto schemas_iter = schemas.find({catalog.GetDefaultDatabaseName(), a_text});
+                if (schemas_iter != schemas.end()) {
+                    // Find all schema tables
+                    std::vector<std::reference_wrapper<const CatalogEntry::TableDeclaration>> tables;
+                    catalog.ResolveSchemaTables(catalog.GetDefaultDatabaseName(), a_text, tables);
+                    for (auto& table : tables) {
+                        // Add the table name as candidate
+                        auto& name = table.get().table_name.table_name.get();
+                        candidates.push_back(name.text);
+                    }
+                }
+
+                // Is referring to a database?
+                auto dbs_iter = dbs.find(a_text);
+                if (dbs_iter != dbs.end()) {
+                    // Find database schemas
+                    char ub_text = 0x7F;
+                    auto lb = schemas.lower_bound({a_text, "\0"});
+                    auto ub = schemas.upper_bound({a_text, std::string_view{&ub_text, 1}});
+                    for (auto iter = lb; iter != ub; ++iter) {
+                        auto& schema_decl = *iter->second;
+                        // Add the schema name as candidate
+                        auto& name = schema_decl.schema_name;
+                        candidates.push_back(name);
+                    }
+                }
+                break;
+            }
+            case 2: {
+                // User gave us a.b._
+                // "a" must be a database name, "b" must be a schema name.
+                auto& a_text = name_path[0].name.value().get().text;
+                auto& b_text = name_path[1].name.value().get().text;
+
+                // Is a known?
+                auto schemas_iter = schemas.find({a_text, b_text});
+                if (schemas_iter != schemas.end()) {
+                    // Find all schema tables
+                    std::vector<std::reference_wrapper<const CatalogEntry::TableDeclaration>> tables;
+                    catalog.ResolveSchemaTables(a_text, b_text, tables);
+                    for (auto& table : tables) {
+                        // Add the table name as candidate
+                        auto& name = table.get().table_name.table_name.get();
+                        candidates.push_back(name);
+                    }
+                }
+                break;
+            }
+            case 3:
+                // User gave us a.b.c._ ?
+                // Don't resolve any candidates, not supported.
+                break;
         }
-
-        // Try to find a schema name with the prefix
-        auto lb = schemas.lower_bound({root, "\0"});
-        auto ub = schemas.upper_bound({root, ""});
-        // XXX
-
-        // Is the root referring to a known table name?
-        // XXX
-
-        // Is the name referring to a known database name?
     }
 
     // Are we completing a column ref?
-    if (auto* ctx = std::get_if<ScriptCursor::ColumnRefContext>(&cursor.context)) {
-        // Is the root referring to known table alias?
-        // Check all naming scopes for tables that are in scope.
-        for (auto& name_scope : cursor.name_scopes) {
-            // Does the name refer to a resolved named table in the scope?
-            // This means we're dot-completing a known table alias from here on.
-            auto table_iter = name_scope.get().referenced_tables_by_name.find(root);
-            if (table_iter != name_scope.get().referenced_tables_by_name.end()) {
-                auto& table_decl = table_iter->second.get();
-                // XXX Complete the column names
+    else if (auto* ctx = std::get_if<ScriptCursor::ColumnRefContext>(&cursor.context)) {
+        switch (sealed) {
+            case 0:
+                break;
+            case 1: {
+                // User gave us a._
+                // "a" might be a table alias
+                auto& a_text = name_path[0].name.value().get().text;
+
+                // Check all naming scopes for tables that are in scope.
+                for (auto& name_scope : cursor.name_scopes) {
+                    // Does the name refer to a resolved named table in the scope?
+                    // This means we're dot-completing a known table alias from here on.
+                    auto table_iter = name_scope.get().referenced_tables_by_name.find(a_text);
+                    if (table_iter != name_scope.get().referenced_tables_by_name.end()) {
+                        // Found a table declaration with that alias
+                        auto& table_decl = table_iter->second.get();
+                        // Register all column names as alias
+                        for (auto& column : table_decl.table_columns) {
+                            auto& name = column.column_name.get();
+                            candidates.push_back(name.text);
+                        }
+                        break;
+                    }
+                }
+                break;
             }
         }
     }
+
+    // Now we need to score the candidates based on the cursor prefix (if there is any)
+    // XXX
 
     return proto::StatusCode::OK;
 }
@@ -347,8 +432,6 @@ void Completion::PromoteExpectedGrammarSymbols(std::span<parser::Parser::Expecte
                                        .resolved_objects = {}},
                 .tags = NameTags{proto::NameTag::KEYWORD},
                 .score = get_score(*location, expected, name),
-                .near_cursor = false,
-                .external = false,
             };
             result_heap.Insert(candidate);
         }
@@ -403,7 +486,6 @@ void findCandidatesInIndex(Completion& completion, const CatalogEntry::NameSearc
             iter->second.score = std::max(iter->second.score, score);
             iter->second.tags |= name_info.resolved_tags;
             iter->second.catalog_objects.push_back(name_info.resolved_objects);
-            iter->second.external |= external;
         } else {
             // Otherwise store as new candidate
             Completion::Candidate candidate{
@@ -411,8 +493,6 @@ void findCandidatesInIndex(Completion& completion, const CatalogEntry::NameSearc
                 .tags = name_info.resolved_tags,
                 .catalog_objects = {name_info.resolved_objects},
                 .score = score,
-                .near_cursor = false,
-                .external = external,
             };
             pending_candidates.insert({name_info.text, candidate});
         }
@@ -430,116 +510,45 @@ void Completion::FindCandidatesInIndexes() {
     }
 }
 
-void Completion::PromoteTableNamesForUnresolvedColumns() {
+void Completion::PromoteTablesAndPeersForUnresolvedColumns() {
     if (!cursor.statement_id.has_value() || !cursor.script.analyzed_script) {
         return;
     }
     auto& analyzed_script = *cursor.script.analyzed_script;
     auto& catalog = cursor.script.catalog;
+    std::vector<CatalogEntry::TableColumn> tmp_columns;
 
-    // Collect all unresolved columns in the current script
-    std::vector<CatalogEntry::TableColumn> table_columns;
+    // Iterate all unresolved columns in the current script
+    // XXX Don't search all unresolved expressions but only the unresolved ones in the current statement
     analyzed_script.expressions.ForEach([&](size_t i, auto& expr) {
         // Is unresolved?
         if (auto* unresolved = std::get_if<AnalyzedScript::Expression::UnresolvedColumnRef>(&expr->inner)) {
             auto& column_name = unresolved->column_name.column_name.get();
-            cursor.script.analyzed_script->ResolveTableColumns(column_name, catalog, table_columns);
-        }
-    });
-
-    // Now find the distinct table names that contain these columns
-    std::unordered_set<std::string_view> visited;
-    for (auto& table_col : table_columns) {
-        auto& table_name = table_col.table->get().table_name.table_name.get();
-        if (auto iter = pending_candidates.find(table_name.text);
-            iter != pending_candidates.end() && !visited.contains(table_name)) {
-            visited.insert(table_name);
-            iter->second.score += RESOLVING_TABLE_SCORE_MODIFIER;
-        }
-    }
-}
-
-void Completion::PromoteNearCandidatesInAST() {
-    // Right now, we're just collecting all table and column refs with the same statement id.
-    // We could later make this scope-aware (s.t. table refs in CTEs dont bump the score of completions in the main
-    // clauses)
-
-    // Bail out if there's no statement id
-    if (!cursor.statement_id.has_value()) {
-        return;
-    }
-    auto statement_id = *cursor.statement_id;
-
-    // Helper to mark a name as in-scope
-    auto mark_as_near = [this](std::string_view name) {
-        if (auto iter = pending_candidates.find(name); iter != pending_candidates.end()) {
-            iter->second.near_cursor = true;
-        }
-    };
-
-    auto& analyzed = cursor.script.analyzed_script;
-    analyzed->table_references.ForEach([&](size_t i, IntrusiveList<AnalyzedScript::TableReference>::Node& table_ref) {
-        // The table ref is not part of a statement id?
-        // Skip then, we're currently using the statement id as very coarse-granular alternative to naming scopes.
-        // TODO: We should remember a fine-granular scope union-find as output of the name resolution pass.
-        if (!table_ref->ast_statement_id.has_value() || table_ref->ast_statement_id.value() != statement_id) {
-            return;
-        }
-
-        // Mark alias near
-        if (table_ref->alias_name.has_value()) {
-            mark_as_near(table_ref->alias_name.value().get().text);
-        }
-
-        switch (table_ref->inner.index()) {
-            case 1: {
-                auto& unresolved =
-                    std::get<AnalyzedScript::TableReference::UnresolvedRelationExpression>(table_ref->inner);
-                mark_as_near(unresolved.table_name.database_name.get().text);
-                mark_as_near(unresolved.table_name.schema_name.get().text);
-                mark_as_near(unresolved.table_name.table_name.get().text);
-                break;
-            }
-            case 2: {
-                auto& resolved = std::get<AnalyzedScript::TableReference::ResolvedRelationExpression>(table_ref->inner);
-                mark_as_near(resolved.table_name.database_name.get().text);
-                mark_as_near(resolved.table_name.schema_name.get().text);
-                mark_as_near(resolved.table_name.table_name.get().text);
-
-                // Add all column names of the table
-                if (auto referenced = analyzed->ResolveTable(resolved.catalog_table_id, cursor.script.catalog)) {
-                    for (auto& table_column : referenced->table_columns) {
-                        mark_as_near(table_column.column_name.get().text);
+            tmp_columns.clear();
+            // Resolve all table columns that would match the unresolved name?
+            cursor.script.analyzed_script->ResolveTableColumns(column_name, catalog, tmp_columns);
+            // Register the table name
+            for (auto& table_col : tmp_columns) {
+                auto& table = table_col.table->get();
+                auto& table_name = table.table_name.table_name.get();
+                // Boost the table name as candidate (if any)
+                if (auto pending_iter = pending_candidates.find(table_name.text);
+                    pending_iter != pending_candidates.end() && !pending_iter->second.promoted_as_resolving_table) {
+                    pending_iter->second.promoted_as_resolving_table = true;
+                    pending_iter->second.score += RESOLVING_TABLE_SCORE_MODIFIER;
+                }
+                // Promote column names in these tables
+                for (auto& peer_col : table.table_columns) {
+                    // Boost the peer name as candidate (if any)
+                    if (auto pending_iter = pending_candidates.find(peer_col.column_name.get().text);
+                        pending_iter != pending_candidates.end() && !pending_iter->second.promoted_as_unresolved_peer) {
+                        pending_iter->second.promoted_as_unresolved_peer = true;
+                        pending_iter->second.score += UNRESOLVED_PEER_SCORE_MODIFIER;
                     }
                 }
-                break;
             }
-            default:
-                break;
         }
     });
-
-    // Collect column references in the statement
-    cursor.script.analyzed_script->expressions.ForEach(
-        [&](size_t i, IntrusiveList<AnalyzedScript::Expression>::Node& expr) {
-            if (!expr->ast_statement_id.has_value() || expr->ast_statement_id.value() != statement_id) {
-                return;
-            }
-            switch (expr->inner.index()) {
-                case 1: {
-                    auto& unresolved = std::get<AnalyzedScript::Expression::UnresolvedColumnRef>(expr->inner);
-                    mark_as_near(unresolved.column_name.column_name.get().text);
-                    break;
-                }
-                case 2: {
-                    auto& resolved = std::get<AnalyzedScript::Expression::ResolvedColumnRef>(expr->inner);
-                    mark_as_near(resolved.column_name.column_name.get().text);
-                    break;
-                }
-                default:
-                    break;
-            }
-        });
 }
 
 void Completion::FlushCandidatesAndFinish() {
@@ -566,10 +575,11 @@ void Completion::FlushCandidatesAndFinish() {
     // Insert all pending candidates into the heap
     for (auto& [key, candidate] : pending_candidates) {
         // Omit candidate if it occurs only once and is located under the cursor
-        if (candidate.name.occurrences == 1 && !candidate.external &&
-            intersects(candidate.name.location, current_symbol_location)) {
-            continue;
-        }
+        // if (candidate.name.occurrences == 1 && !candidate.external &&
+        //     intersects(candidate.name.location, current_symbol_location)) {
+        //     continue;
+        // }
+        // XXXX
         result_heap.Insert(candidate);
     }
     pending_candidates.clear();
@@ -706,9 +716,10 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
 
     // Also check the name indexes when expecting an identifier
     if (expects_identifier) {
+        // Just find all candidates in the name index
         completion->FindCandidatesInIndexes();
-        completion->PromoteNearCandidatesInAST();
-        completion->PromoteTableNamesForUnresolvedColumns();
+        // Promote names of all tables that could resolve an unresolved column
+        completion->PromoteTablesAndPeersForUnresolvedColumns();
     }
     completion->FlushCandidatesAndFinish();
 
@@ -778,7 +789,6 @@ flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferB
         candidateBuilder.add_tags(iter_entry->tags);
         candidateBuilder.add_catalog_objects(catalog_objects_ofs);
         candidateBuilder.add_score(iter_entry->GetScore());
-        candidateBuilder.add_near_cursor(iter_entry->near_cursor);
         candidates.push_back(candidateBuilder.Finish());
     }
     auto candidatesOfs = builder.CreateVector(candidates);

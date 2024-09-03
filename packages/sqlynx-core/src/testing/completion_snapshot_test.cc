@@ -43,7 +43,7 @@ void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Complet
         std::string text{iter->name.text.data(), iter->name.text.size()};
         xml_entry.append_attribute("value").set_value(text.c_str());
         xml_entry.append_attribute("score").set_value(iter->GetScore());
-        xml_entry.append_attribute("near").set_value(iter->near_cursor);
+        // xml_entry.append_attribute("near").set_value(iter->near_cursor); XXX
         std::stringstream tags;
         size_t i = 0;
         iter->tags.ForEach([&](proto::NameTag tag) {
