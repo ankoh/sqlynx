@@ -1,5 +1,7 @@
 #pragma once
 
+#include <unordered_set>
+
 #include "ankerl/unordered_dense.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
@@ -20,14 +22,13 @@ struct Completion {
 
     static constexpr ScoreValueType SUBSTRING_SCORE_MODIFIER = 15;
     static constexpr ScoreValueType PREFIX_SCORE_MODIFIER = 20;
-    static constexpr ScoreValueType NEAR_CURSOR_SCORE_MODIFIER = 1;
     static constexpr ScoreValueType RESOLVING_TABLE_SCORE_MODIFIER = 2;
+    static constexpr ScoreValueType UNRESOLVED_PEER_SCORE_MODIFIER = 2;
+    static constexpr ScoreValueType DOT_SCHEMA_SCORE_MODIFIER = 2;
+    static constexpr ScoreValueType DOT_TABLE_SCORE_MODIFIER = 2;
 
     static_assert(PREFIX_SCORE_MODIFIER > SUBSTRING_SCORE_MODIFIER,
                   "Begin a prefix weighs more than being a substring");
-    static_assert(NEAR_CURSOR_SCORE_MODIFIER < KEYWORD_POPULAR,
-                  "Being in the same statement doesn't outweigh a popular keyword of similar likelyhood without also "
-                  "being a substring");
     static_assert((TAG_UNLIKELY + SUBSTRING_SCORE_MODIFIER) > TAG_LIKELY,
                   "An unlikely name that is a substring outweighs a likely name");
     static_assert((TAG_UNLIKELY + KEYWORD_VERY_POPULAR) < TAG_LIKELY,
@@ -47,15 +48,13 @@ struct Completion {
         std::vector<IntrusiveList<NamedObject>> catalog_objects;
         /// The name score
         ScoreValueType score;
-        /// Is a name located near the cursor (in the AST)?
-        bool near_cursor;
-        /// Is external?
-        /// Differentiates between names in the own script and those in the catalog.
-        /// We only use it at the moment to special-case the candidate that is directly under the cursor.
-        bool external;
+        /// Promoted for as resolving table?
+        bool promoted_as_resolving_table;
+        /// Promoted for as unresolved peer?
+        bool promoted_as_unresolved_peer;
 
         /// Get the score
-        inline ScoreValueType GetScore() const { return score + (near_cursor ? NEAR_CURSOR_SCORE_MODIFIER : 0); }
+        inline ScoreValueType GetScore() const { return score; }
         /// Is less in the min-heap?
         /// We want to kick a candidate A before candidate B if
         ///     1) the score of A is less than the score of B
@@ -109,10 +108,8 @@ struct Completion {
     void FindCandidatesInIndexes();
     /// Promote expected symbols in the grammar
     void PromoteExpectedGrammarSymbols(std::span<parser::Parser::ExpectedSymbol> symbols);
-    /// Find tables that contain column names that are still unresolved in the current statement
-    void PromoteTableNamesForUnresolvedColumns();
-    /// Find candidates in the AST around the script cursor
-    void PromoteNearCandidatesInAST();
+    /// Promote tables that contain column names that are still unresolved in the current statement
+    void PromoteTablesAndPeersForUnresolvedColumns();
     /// Flush pending candidates and finish the results
     void FlushCandidatesAndFinish();
 

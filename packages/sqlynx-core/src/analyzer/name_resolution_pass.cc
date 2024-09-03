@@ -578,7 +578,6 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
 
 /// Finish the analysis pass
 void NameResolutionPass::Finish() {
-    analyzed.tables_by_name.reserve(analyzed.table_declarations.GetSize());
     for (auto& table_chunk : analyzed.table_declarations.GetChunks()) {
         for (auto& table : table_chunk) {
             analyzed.tables_by_name.insert({table.table_name, table});

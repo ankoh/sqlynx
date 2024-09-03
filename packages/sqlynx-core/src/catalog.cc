@@ -253,7 +253,7 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
             }
         }
         // Build the qualified table name
-        QualifiedTableName::HashKey qualified_table_name{db_name.text, schema_name.text, table_name.text};
+        QualifiedTableName::Key qualified_table_name{db_name.text, schema_name.text, table_name.text};
         if (tables_by_name.contains(qualified_table_name)) {
             return proto::StatusCode::CATALOG_DESCRIPTOR_TABLE_NAME_COLLISION;
         }
@@ -304,7 +304,6 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
     }
 
     // Build table index
-    tables_by_name.reserve(table_declarations.GetSize());
     for (auto& table_chunk : table_declarations.GetChunks()) {
         for (auto& table : table_chunk) {
             tables_by_name.insert({table.table_name, table});
@@ -689,9 +688,6 @@ proto::StatusCode Catalog::LoadScript(Script& script, CatalogEntry::Rank rank) {
                 auto schema =
                     std::make_unique<SchemaDeclaration>(ref.get().catalog_database_id, ref.get().catalog_schema_id,
                                                         ref.get().database_name, ref.get().schema_name);
-                schemas_inverted.insert(
-                    {std::pair<std::string_view, std::string_view>{schema->schema_name, schema->database_name},
-                     *schema});
                 schemas.insert(
                     {std::pair<std::string_view, std::string_view>{schema->database_name, schema->schema_name},
                      std::move(schema)});
@@ -798,7 +794,6 @@ proto::StatusCode Catalog::UpdateScript(ScriptEntry& entry) {
                 std::get<1>(rem_iter->first) != schema_name) {
                 // If not, remove the schema declaration from the catalog completely
                 schemas.erase({db_name, schema_name});
-                schemas_inverted.erase({schema_name, db_name});
             }
         }
     }
@@ -822,9 +817,6 @@ proto::StatusCode Catalog::UpdateScript(ScriptEntry& entry) {
                 auto schema = std::make_unique<SchemaDeclaration>(new_entry.schema_ref.catalog_database_id,
                                                                   new_entry.schema_ref.catalog_schema_id,
                                                                   databases.find(db_name)->first, schema_name);
-                schemas_inverted.insert(
-                    {std::pair<std::string_view, std::string_view>{schema->schema_name, schema->database_name},
-                     *schema});
                 schemas.insert(
                     {std::pair<std::string_view, std::string_view>{schema->database_name, schema->schema_name},
                      std::move(schema)});
@@ -956,6 +948,30 @@ const CatalogEntry::TableDeclaration* Catalog::ResolveTable(CatalogEntry::Qualif
         }
     };
     return nullptr;
+}
+
+/// Resolve all schema tables
+void Catalog::ResolveSchemaTables(
+    std::string_view database_name, std::string_view schema_name,
+    std::vector<std::reference_wrapper<const CatalogEntry::TableDeclaration>>& out) const {
+    auto entries_lb = entries_by_schema.lower_bound({database_name, schema_name, 0, 0});
+    auto entries_ub =
+        entries_by_schema.upper_bound({database_name, schema_name, std::numeric_limits<CatalogEntry::Rank>::max(),
+                                       std::numeric_limits<CatalogEntryID>::max()});
+    for (auto entry_iter = entries_lb; entry_iter != entries_ub; ++entry_iter) {
+        CatalogEntryID entry_id = entry_iter->second.catalog_entry_id;
+        CatalogEntry* entry = entries.at(entry_id);
+
+        auto& tables_by_name = entry->GetTablesByName();
+        char tables_ub_text = 0x7F;
+        auto tables_lb = tables_by_name.lower_bound({database_name, schema_name, "\0"});
+        auto tables_ub = tables_by_name.upper_bound({database_name, schema_name, std::string_view{&tables_ub_text, 1}});
+
+        for (auto table_iter = tables_lb; table_iter != tables_ub; ++table_iter) {
+            auto& table_decl = table_iter->second.get();
+            out.push_back(table_decl);
+        }
+    }
 }
 
 void Catalog::ResolveTableColumns(std::string_view table_column, std::vector<CatalogEntry::TableColumn>& out) const {
