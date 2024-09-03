@@ -393,7 +393,11 @@ class Catalog {
     btree::map<std::string_view, std::unique_ptr<DatabaseDeclaration>> databases;
     /// The schemas.
     /// These btrees contain all the schemas that are currently referenced by catalog entries.
+    /// Ordered by <database, schema>
     btree::map<std::pair<std::string_view, std::string_view>, std::unique_ptr<SchemaDeclaration>> schemas;
+    /// The schemas by schema name <schema, database>
+    btree::map<std::pair<std::string_view, std::string_view>, std::reference_wrapper<SchemaDeclaration>>
+        schemas_inverted;
 
     /// Update a script entry
     proto::StatusCode UpdateScript(ScriptEntry& entry);
@@ -412,6 +416,12 @@ class Catalog {
     std::string_view GetDefaultDatabaseName() const { return default_database_name; }
     /// Get the default schema name
     std::string_view GetDefaultSchemaName() const { return default_schema_name; }
+    /// Get the databases
+    auto& GetDatabases() const { return databases; }
+    /// Get the schemas ordered by <database, schema>
+    auto& GetSchemas() const { return schemas; }
+    /// Get the schemas ordered by <schema, database>
+    auto& GetSchemasInverted() const { return schemas_inverted; }
 
     /// Contains an entry id?
     bool Contains(CatalogEntryID id) const { return entries.contains(id); }

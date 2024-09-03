@@ -114,39 +114,68 @@ bool doNotCompleteSymbol(parser::Parser::symbol_type& sym) {
 
 }  // namespace
 
-std::vector<Completion::NameComponent> Completion::ReadNamePathAroundDot(size_t node_id) {
+std::vector<Completion::NameComponent> Completion::ReadCursorNamePath() const {
     auto& nodes = cursor.script.parsed_script->nodes;
 
-    // Find the name path node
-    std::optional<size_t> name_path_array;
-    for (std::optional<size_t> node_iter = node_id; !name_path_array.has_value() && node_iter.has_value();
-         node_iter = nodes[node_iter.value()].parent() != node_iter.value()
-                         ? std::optional{nodes[node_iter.value()].parent()}
-                         : std::nullopt) {
-        auto& node = nodes[*node_iter];
-        if (node.node_type() == proto::NodeType::ARRAY) {
-            switch (node.attribute_key()) {
-                case Key::SQL_COLUMN_REF_PATH:
-                case Key::SQL_TABLEREF_NAME:
-                case Key::SQL_TEMP_NAME:
-                case Key::SQL_ROW_LOCKING_OF:
-                case Key::SQL_INDIRECTION_PATH:
-                    // (expr).indirection
-                    // XXX find a few cases for this kind of indirection
-                    name_path_array = *node_iter;
+    std::optional<uint32_t> name_ast_node_id;
+    switch (cursor.context.index()) {
+        case 1: {
+            assert(std::holds_alternative<ScriptCursor::TableRefContext>(cursor.context));
+            auto& ctx = std::get<ScriptCursor::TableRefContext>(cursor.context);
+            auto& tableref = cursor.script.analyzed_script->table_references[ctx.table_reference_id];
+            switch (tableref->inner.index()) {
+                case 1: {
+                    assert(std::holds_alternative<AnalyzedScript::TableReference::UnresolvedRelationExpression>(
+                        tableref->inner));
+                    auto& unresolved =
+                        std::get<AnalyzedScript::TableReference::UnresolvedRelationExpression>(tableref->inner);
+                    name_ast_node_id = unresolved.table_name_ast_node_id;
                     break;
-                default:
+                }
+                case 2: {
+                    assert(std::holds_alternative<AnalyzedScript::TableReference::ResolvedRelationExpression>(
+                        tableref->inner));
+                    auto& resolved =
+                        std::get<AnalyzedScript::TableReference::ResolvedRelationExpression>(tableref->inner);
+                    name_ast_node_id = resolved.table_name_ast_node_id;
                     break;
+                }
             }
+            break;
+        }
+        case 2: {
+            assert(std::holds_alternative<ScriptCursor::ColumnRefContext>(cursor.context));
+            auto& ctx = std::get<ScriptCursor::ColumnRefContext>(cursor.context);
+            auto& expr = cursor.script.analyzed_script->expressions[ctx.expression_id];
+            switch (expr->inner.index()) {
+                case 1: {
+                    assert(std::holds_alternative<AnalyzedScript::Expression::UnresolvedColumnRef>(expr->inner));
+                    auto& unresolved = std::get<AnalyzedScript::Expression::UnresolvedColumnRef>(expr->inner);
+                    name_ast_node_id = unresolved.column_name_ast_node_id;
+                    break;
+                }
+                case 2: {
+                    assert(std::holds_alternative<AnalyzedScript::Expression::ResolvedColumnRef>(expr->inner));
+                    auto& resolved = std::get<AnalyzedScript::Expression::ResolvedColumnRef>(expr->inner);
+                    name_ast_node_id = resolved.column_name_ast_node_id;
+                    break;
+                }
+            }
+            break;
         }
     }
-    // Couldn't find a name path?
-    if (!name_path_array) {
+
+    // Couldn't find an ast name path?
+    if (!name_ast_node_id.has_value()) {
+        return {};
+    }
+    // Is not an array?
+    auto& node = nodes[*name_ast_node_id];
+    if (node.node_type() != proto::NodeType::ARRAY) {
         return {};
     }
 
     // Get the child nodes
-    auto& node = nodes[*name_path_array];
     auto children = std::span<proto::Node>{nodes}.subspan(node.children_begin_or_value(), node.children_count());
 
     // Collect the name path
@@ -158,6 +187,7 @@ std::vector<Completion::NameComponent> Completion::ReadNamePathAroundDot(size_t 
             case proto::NodeType::NAME: {
                 auto& name = cursor.script.scanned_script->GetNames().At(child.children_begin_or_value());
                 components.push_back(NameComponent{
+                    .loc = node.location(),
                     .type = NameComponentType::Name,
                     .name = name,
                 });
@@ -165,12 +195,14 @@ std::vector<Completion::NameComponent> Completion::ReadNamePathAroundDot(size_t 
             }
             case proto::NodeType::OBJECT_SQL_INDIRECTION_STAR:
                 components.push_back(NameComponent{
+                    .loc = node.location(),
                     .type = NameComponentType::Star,
                     .name = std::nullopt,
                 });
                 break;
             case proto::NodeType::OBJECT_SQL_INDIRECTION_INDEX:
                 components.push_back(NameComponent{
+                    .loc = node.location(),
                     .type = NameComponentType::Index,
                     .name = std::nullopt,
                 });
@@ -185,112 +217,88 @@ std::vector<Completion::NameComponent> Completion::ReadNamePathAroundDot(size_t 
     return components;
 }
 
-std::vector<std::reference_wrapper<AnalyzedScript::NameScope>> Completion::CollectNameScopes(size_t node_id) {
-    assert(cursor.script.parsed_script != nullptr);
-    assert(cursor.script.analyzed_script != nullptr);
-    std::vector<std::reference_wrapper<AnalyzedScript::NameScope>> out;
-
-    // Traverse all parent ids of the node
-    auto& nodes = cursor.script.parsed_script->nodes;
-    for (std::optional<size_t> node_iter = node_id; node_iter.has_value();
-         node_iter = nodes[node_iter.value()].parent() != node_iter.value()
-                         ? std::optional{nodes[node_iter.value()].parent()}
-                         : std::nullopt) {
-        // Probe the name scopes
-        auto scope_iter = cursor.script.analyzed_script->name_scopes_by_root_node.find(node_iter.value());
-        if (scope_iter != cursor.script.analyzed_script->name_scopes_by_root_node.end()) {
-            out.push_back(scope_iter->second);
-        }
-    }
-    return out;
-}
-
-proto::StatusCode Completion::CompleteNamePath(std::span<Completion::NameComponent> path) {
-    assert(cursor.ast_node_id.has_value());
-    auto& nodes = cursor.script.parsed_script->nodes;
-    auto node_id = cursor.ast_node_id.value();
-    auto& node = nodes[node_id];
+proto::StatusCode Completion::CompleteCursorNamePath() {
+    // The cursor location
+    auto cursor_location = cursor.scanner_location->text_offset;
+    // Read the name path
+    auto name_path_buffer = ReadCursorNamePath();
+    std::span<Completion::NameComponent> name_path = name_path_buffer;
 
     // Filter all name components in the path.
     // A name path could also contain an index indirection or a star.
     // We're only interested in the names here.
     // If the user completes a name with index or star, we'll just truncate everything.
     size_t name_prefix = 0;
-    for (; name_prefix < path.size(); ++name_prefix) {
-        if (path[name_prefix].type != NameComponentType::Name) {
+    // Additionally find the sealed prefix.
+    // If we're completing after a dot, the word before the dot is not meant to be completed.
+    size_t sealed_prefix = 0;
+    for (; name_prefix < name_path.size(); ++name_prefix) {
+        if (name_path[name_prefix].type != NameComponentType::Name) {
             break;
         }
+        if ((name_path[name_prefix].loc.offset() + name_path[name_prefix].loc.length()) < cursor_location) {
+            ++sealed_prefix;
+        }
     }
-    path = path.subspan(0, name_prefix);
+    name_path = name_path.subspan(0, name_prefix);
 
     // Is the path empty?
     // Nothing to complete then.
-    if (path.size() == 0) {
+    if (name_path.size() == 0) {
         return proto::StatusCode::OK;
     }
 
     // First we resolve the root name to figure out what we're completing here
-    auto& root = path[0].name.value().get();
+    auto& root = name_path[0].name.value().get();
 
-    // Check the naming scopes first
-    auto name_scopes = CollectNameScopes(node_id);
-    // We collect the name scopes by traversing parent refs.
-    // This means that the name scopes are naturally ordered by the distance to the deepest ast node of the cursor.
-    // We can just traverse the scopes from left to right and go from innermost to outermost.
-    for (auto& name_scope : name_scopes) {
-        // Does the name refer to a resolved named table in the scope?
-        // This means we're dot-completing a known table alias here.
-        auto table_iter = name_scope.get().referenced_tables_by_name.find(root);
+    // Are we completing a table ref?
+    if (auto* ctx = std::get_if<ScriptCursor::TableRefContext>(&cursor.context)) {
+        auto& catalog = cursor.script.catalog;
+        auto& dbs = catalog.GetDatabases();
+        auto& schemas = catalog.GetSchemas();
+
+        // Is the root referring to a known database name?
+        if (auto iter = dbs.find(root); iter != dbs.end()) {
+            // XXX Schema next
+        }
+
+        // Try to find a schema name with the prefix
+        auto lb = schemas.lower_bound({root, "\0"});
+        auto ub = schemas.upper_bound({root, ""});
+        // XXX
+
+        // Is the root referring to a known table name?
+        // XXX
+
+        // Is the name referring to a known database name?
     }
+
+    // Are we completing a column ref?
+    if (auto* ctx = std::get_if<ScriptCursor::ColumnRefContext>(&cursor.context)) {
+        // Is the root referring to known table alias?
+        // Check all naming scopes for tables that are in scope.
+        for (auto& name_scope : cursor.name_scopes) {
+            // Does the name refer to a resolved named table in the scope?
+            // This means we're dot-completing a known table alias from here on.
+            auto table_iter = name_scope.get().referenced_tables_by_name.find(root);
+            if (table_iter != name_scope.get().referenced_tables_by_name.end()) {
+                auto& table_decl = table_iter->second.get();
+                // XXX Complete the column names
+            }
+        }
+    }
+
     return proto::StatusCode::OK;
 }
 
 proto::StatusCode Completion::CompleteAtDot() {
-    // No AST node?
-    // Then we skip the completion
-    if (!cursor.ast_node_id.has_value()) {
-        return proto::StatusCode::OK;
-    }
-    // Read the name path
-    auto node_id = cursor.ast_node_id.value();
-    auto name_path = ReadNamePathAroundDot(node_id);
-
-    // Print name path
-    for (size_t i = 0; i < name_path.size(); ++i) {
-        if (name_path[i].name.has_value()) {
-            // std::cout << "PATH[" << i << "] " << name_path[i].name.value().get().text << std::endl;
-        }
-    }
-
-    // XXX
-
     completion_action = proto::CompletionAction::COMPLETE_AT_DOT;
-    return proto::StatusCode::OK;
+    return CompleteCursorNamePath();
 }
 
-proto::StatusCode Completion::CompleteAfterDot() {
-    // The previous symbol is a dot.
-    // We first need to resolve the ast node for the dot
-    assert(cursor.scanner_location->previous_symbol.has_value());
-    auto& prev_symbol = cursor.scanner_location->previous_symbol.value();
-    auto prev_node = cursor.script.parsed_script->FindNodeAtOffset(prev_symbol.get().location.offset());
-    if (!prev_node.has_value()) {
-        return proto::StatusCode::OK;
-    }
-    auto [_statement_id, node_id] = *prev_node;
-
-    // Print name path
-    auto name_path = ReadNamePathAroundDot(node_id);
-    for (size_t i = 0; i < name_path.size(); ++i) {
-        if (name_path[i].name.has_value()) {
-            // std::cout << "PATH[" << i << "] " << name_path[i].name.value().get().text << std::endl;
-        }
-    }
-
-    // XXX
-
+proto::StatusCode Completion::CompleteNameAfterDot() {
     completion_action = proto::CompletionAction::COMPLETE_AFTER_DOT;
-    return proto::StatusCode::OK;
+    return CompleteCursorNamePath();
 }
 
 void Completion::PromoteExpectedGrammarSymbols(std::span<parser::Parser::ExpectedSymbol> symbols) {
@@ -667,15 +675,20 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
     }
 
     // Is the previous symbol an inner dot?
-    // Then we check if we're currently pointing at the successort symbol.
+    // Then we check if we're currently pointing at the successor symbol.
     // If we do, we do a normal dot completion.
+    //
+    // Note that this is building around the existence of the trailing dot.
+    // We're checking here if the previous symbol is an inner dot.
+    // If there was a whitespace after the previous dot, we'd mark as at trailing.
+    // Since the previous symbol is a normal dot, it must be an inner.
     if (cursor.scanner_location->previousSymbolIsDot() && expects_identifier) {
         using RelativePosition = ScannedScript::LocationInfo::RelativePosition;
         switch (cursor.scanner_location->relative_pos) {
             case RelativePosition::END_OF_SYMBOL:
             case RelativePosition::BEGIN_OF_SYMBOL:
             case RelativePosition::MID_OF_SYMBOL: {
-                auto status = completion->CompleteAfterDot();
+                auto status = completion->CompleteNameAfterDot();
                 return {std::move(completion), status};
             }
             case RelativePosition::NEW_SYMBOL_AFTER:
