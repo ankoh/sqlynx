@@ -345,6 +345,7 @@ void NameResolutionPass::ResolveColumnRefsInScope(AnalyzedScript::NameScope& sco
                 auto& resolved_column = table_column.value().get();
                 auto& resolved_table = resolved_column.table->get();
                 expr.inner = AnalyzedScript::Expression::ResolvedColumnRef{
+                    .column_name_ast_node_id = unresolved.column_name_ast_node_id,
                     .column_name = unresolved.column_name,
                     .catalog_database_id = resolved_table.catalog_database_id,
                     .catalog_schema_id = resolved_table.catalog_schema_id,
@@ -428,6 +429,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 auto children = ast.subspan(node.children_begin_or_value(), node.children_count());
                 auto attrs = attribute_index.Load(children);
                 auto column_ref_node = attrs[proto::AttributeKey::SQL_COLUMN_REF_PATH];
+                auto column_name_node_id = static_cast<uint32_t>(column_ref_node - parsed.nodes.data());
                 auto column_name = ReadQualifiedColumnName(column_ref_node);
                 if (column_name.has_value()) {
                     // Add column reference
@@ -438,7 +440,8 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                     n.value.ast_node_id = node_id;
                     n.value.ast_statement_id = std::nullopt;
                     n.value.ast_scope_root = std::nullopt;
-                    n.value.inner = AnalyzedScript::Expression::UnresolvedColumnRef{.column_name = column_name.value()};
+                    n.value.inner = AnalyzedScript::Expression::UnresolvedColumnRef{
+                        .column_name_ast_node_id = column_name_node_id, .column_name = column_name.value()};
                     node_state.column_references.PushBack(n);
                 }
                 // Column refs may be recursive

@@ -74,6 +74,8 @@ struct Completion {
     enum NameComponentType { Name, Star, Index };
     /// A name component
     struct NameComponent {
+        /// The location
+        sx::Location loc;
         /// The component type
         NameComponentType type;
         /// The name (if any)
@@ -94,16 +96,14 @@ struct Completion {
     /// The completion action
     proto::CompletionAction completion_action;
 
+    /// Read the name path of the current cursor
+    std::vector<Completion::NameComponent> ReadCursorNamePath() const;
     /// Complete after a dot
-    std::vector<NameComponent> ReadNamePathAroundDot(size_t node_id);
-    /// Collect the name scopes
-    std::vector<std::reference_wrapper<AnalyzedScript::NameScope>> CollectNameScopes(size_t node_id);
-    /// Complete after a dot
-    proto::StatusCode CompleteNamePath(std::span<NameComponent> span);
+    proto::StatusCode CompleteCursorNamePath();
     /// Complete after a dot
     proto::StatusCode CompleteAtDot();
     /// Complete after a dot
-    proto::StatusCode CompleteAfterDot();
+    proto::StatusCode CompleteNameAfterDot();
 
     /// Find the candidates in completion indexes
     void FindCandidatesInIndexes();

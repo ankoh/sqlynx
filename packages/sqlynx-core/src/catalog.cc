@@ -689,8 +689,12 @@ proto::StatusCode Catalog::LoadScript(Script& script, CatalogEntry::Rank rank) {
                 auto schema =
                     std::make_unique<SchemaDeclaration>(ref.get().catalog_database_id, ref.get().catalog_schema_id,
                                                         ref.get().database_name, ref.get().schema_name);
-                std::pair<std::string_view, std::string_view> schema_key{schema->database_name, schema->schema_name};
-                schemas.insert({schema_key, std::move(schema)});
+                schemas_inverted.insert(
+                    {std::pair<std::string_view, std::string_view>{schema->schema_name, schema->database_name},
+                     *schema});
+                schemas.insert(
+                    {std::pair<std::string_view, std::string_view>{schema->database_name, schema->schema_name},
+                     std::move(schema)});
             }
         }
     }
@@ -789,11 +793,12 @@ proto::StatusCode Catalog::UpdateScript(ScriptEntry& entry) {
             // Drop the entry reference from the catalog for this schema.
             entries_by_schema.erase({db_name, schema_name, rank, external_id});
             // Check if there's any remaining catalog entry with that schema name
-            auto iter = entries_by_schema.lower_bound({db_name, schema_name, 0, 0});
-            if (iter == entries_by_schema.end() || std::get<0>(iter->first) != db_name ||
-                std::get<1>(iter->first) != schema_name) {
+            auto rem_iter = entries_by_schema.lower_bound({db_name, schema_name, 0, 0});
+            if (rem_iter == entries_by_schema.end() || std::get<0>(rem_iter->first) != db_name ||
+                std::get<1>(rem_iter->first) != schema_name) {
                 // If not, remove the schema declaration from the catalog completely
                 schemas.erase({db_name, schema_name});
+                schemas_inverted.erase({schema_name, db_name});
             }
         }
     }
@@ -817,8 +822,12 @@ proto::StatusCode Catalog::UpdateScript(ScriptEntry& entry) {
                 auto schema = std::make_unique<SchemaDeclaration>(new_entry.schema_ref.catalog_database_id,
                                                                   new_entry.schema_ref.catalog_schema_id,
                                                                   databases.find(db_name)->first, schema_name);
-                std::pair<std::string_view, std::string_view> key = {schema->database_name, schema->schema_name};
-                schemas.insert({key, std::move(schema)});
+                schemas_inverted.insert(
+                    {std::pair<std::string_view, std::string_view>{schema->schema_name, schema->database_name},
+                     *schema});
+                schemas.insert(
+                    {std::pair<std::string_view, std::string_view>{schema->database_name, schema->schema_name},
+                     std::move(schema)});
             }
         }
     }

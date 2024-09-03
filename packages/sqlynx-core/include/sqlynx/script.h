@@ -214,11 +214,15 @@ class AnalyzedScript : public CatalogEntry {
     struct Expression {
         /// An unresolved column reference
         struct UnresolvedColumnRef {
+            /// The AST node id of the name path
+            uint32_t column_name_ast_node_id;
             /// The column name, may refer to different catalog entry
             QualifiedColumnName column_name;
         };
         /// A resolved column reference
         struct ResolvedColumnRef {
+            /// The AST node id of the name path
+            uint32_t column_name_ast_node_id;
             /// The column name, may refer to different catalog entry
             QualifiedColumnName column_name;
             /// The resolved catalog database id
