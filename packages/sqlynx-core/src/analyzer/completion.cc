@@ -267,7 +267,7 @@ proto::StatusCode Completion::CompleteCursorNamePath() {
     }
 
     // Collect all candidate strings
-    std::vector<std::string_view> candidates;
+    std::vector<std::pair<std::string_view, NamedObjectType>> candidates;
 
     // Are we completing a table ref?
     if (auto* ctx = std::get_if<ScriptCursor::TableRefContext>(&cursor.context)) {
@@ -292,7 +292,7 @@ proto::StatusCode Completion::CompleteCursorNamePath() {
                     for (auto& table : tables) {
                         // Add the table name as candidate
                         auto& name = table.get().table_name.table_name.get();
-                        candidates.push_back(name.text);
+                        candidates.push_back({name.text, NamedObjectType::Table});
                     }
                 }
 
@@ -307,7 +307,7 @@ proto::StatusCode Completion::CompleteCursorNamePath() {
                         auto& schema_decl = *iter->second;
                         // Add the schema name as candidate
                         auto& name = schema_decl.schema_name;
-                        candidates.push_back(name);
+                        candidates.push_back({name, NamedObjectType::Schema});
                     }
                 }
                 break;
@@ -327,7 +327,7 @@ proto::StatusCode Completion::CompleteCursorNamePath() {
                     for (auto& table : tables) {
                         // Add the table name as candidate
                         auto& name = table.get().table_name.table_name.get();
-                        candidates.push_back(name);
+                        candidates.push_back({name, NamedObjectType::Table});
                     }
                 }
                 break;
@@ -360,7 +360,7 @@ proto::StatusCode Completion::CompleteCursorNamePath() {
                         // Register all column names as alias
                         for (auto& column : table_decl.table_columns) {
                             auto& name = column.column_name.get();
-                            candidates.push_back(name.text);
+                            candidates.push_back({name.text, NamedObjectType::Column});
                         }
                         break;
                     }
@@ -371,6 +371,17 @@ proto::StatusCode Completion::CompleteCursorNamePath() {
     }
 
     // Now we need to score the candidates based on the cursor prefix (if there is any)
+    for (auto& candidate : candidates) {
+        auto& [name, type] = candidate;
+        auto iter = pending_candidates.find(name);
+        if (iter != pending_candidates.end()) {
+            auto& existing = iter->second;
+            // XXX
+        } else {
+            // XXX
+        }
+    }
+
     // XXX
 
     return proto::StatusCode::OK;
@@ -489,7 +500,7 @@ void findCandidatesInIndex(Completion& completion, const CatalogEntry::NameSearc
         } else {
             // Otherwise store as new candidate
             Completion::Candidate candidate{
-                .name = name_info,
+                .name = name_info.text,
                 .tags = name_info.resolved_tags,
                 .catalog_objects = {name_info.resolved_objects},
                 .score = score,
@@ -735,9 +746,9 @@ flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferB
     std::vector<flatbuffers::Offset<proto::CompletionCandidate>> candidates;
     candidates.reserve(entries.size());
     for (auto iter_entry = entries.rbegin(); iter_entry != entries.rend(); ++iter_entry) {
-        auto display_text_offset = builder.CreateString(iter_entry->name.text);
+        auto display_text_offset = builder.CreateString(iter_entry->name);
         std::string quoted;
-        std::string_view completion_text = iter_entry->name.text;
+        std::string_view completion_text = iter_entry->name;
         completion_text = quote_anyupper_fuzzy(completion_text, quoted);
         size_t catalog_object_count = 0;
         for (auto& objects : iter_entry->catalog_objects) {

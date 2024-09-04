@@ -37,9 +37,7 @@ struct Completion {
     /// The completion candidates
     struct Candidate {
         /// The name.
-        /// We deliberately copy here since expected parser keywords are not registered in the catalog.
-        /// String lifetime is not a problem for them so we can just fake-register them ad-hoc.
-        RegisteredName name;
+        std::string_view name;
         /// The combined tags.
         /// We may hit the same name multiple times in multiple catalog entries.
         /// Each of these entries may have different name tags, so we have to merge them here.
@@ -62,8 +60,8 @@ struct Completion {
         bool operator<(const Candidate& other) const {
             auto l = GetScore();
             auto r = other.GetScore();
-            return (l < r) || (l == r && (fuzzy_ci_string_view{name.text.data(), name.text.size()} >
-                                          fuzzy_ci_string_view{other.name.text.data(), other.name.text.size()}));
+            return (l < r) || (l == r && (fuzzy_ci_string_view{name.data(), name.size()} >
+                                          fuzzy_ci_string_view{other.name.data(), other.name.size()}));
         }
     };
     /// A hash-map for candidates
