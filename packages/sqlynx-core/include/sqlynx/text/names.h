@@ -3,6 +3,7 @@
 #include <type_traits>
 
 #include "ankerl/unordered_dense.h"
+#include "sqlynx/catalog_object.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/utils/chunk_buffer.h"
 #include "sqlynx/utils/intrusive_list.h"
@@ -58,22 +59,6 @@ static_assert(std::is_trivially_copyable<NameTags::ValueType>::value);
 static_assert(sizeof(NameTags::ValueType) == sizeof(NameTags));
 static_assert(sizeof(NameTags::ValueType) == sizeof(proto::NameTag));
 
-/// A type of a catalog object
-enum NamedObjectType {
-    Database = 0,
-    Schema = 1,
-    Table = 2,
-    Column = 3,
-};
-
-/// A catalog object
-struct NamedObject {
-    /// The object type
-    NamedObjectType object_type;
-    /// Constructor
-    NamedObject(NamedObjectType type) : object_type(type) {}
-};
-
 /// An indexed name id
 using RegisteredNameID = uint32_t;
 
@@ -92,7 +77,7 @@ struct RegisteredName {
     NameTags resolved_tags;
     /// The catalog objects resolved by the Analyzer.
     /// These objects are only available when the script was analyzed and are cleaned up when re-analyzing.
-    IntrusiveList<NamedObject> resolved_objects;
+    IntrusiveList<CatalogObject> resolved_objects;
     /// Return the name text
     operator std::string_view() { return text; }
 };

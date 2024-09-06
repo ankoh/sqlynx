@@ -1,8 +1,7 @@
 #pragma once
 
-#include <unordered_set>
-
 #include "ankerl/unordered_dense.h"
+#include "sqlynx/catalog_object.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
 #include "sqlynx/utils/topk.h"
@@ -43,7 +42,7 @@ struct Completion {
         /// Each of these entries may have different name tags, so we have to merge them here.
         NameTags tags;
         /// The catalog objects
-        std::vector<IntrusiveList<NamedObject>> catalog_objects;
+        std::vector<std::reference_wrapper<CatalogObject>> catalog_objects;
         /// The name score
         ScoreValueType score;
         /// Promoted for as resolving table?

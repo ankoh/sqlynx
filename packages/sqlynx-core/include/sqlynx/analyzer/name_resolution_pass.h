@@ -61,7 +61,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// The temporary name path buffer
     std::vector<std::reference_wrapper<RegisteredName>> name_path_buffer;
     /// The temporary pending table columns
-    ChunkBuffer<IntrusiveList<AnalyzedScript::TableColumn>::Node, 16> pending_columns;
+    ChunkBuffer<AnalyzedScript::TableColumn, 16> pending_columns;
     /// The temporary free-list for pending table columns
     IntrusiveList<AnalyzedScript::TableColumn> pending_columns_free_list;
 
