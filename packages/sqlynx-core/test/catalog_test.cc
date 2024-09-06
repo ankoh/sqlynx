@@ -127,9 +127,9 @@ TEST(CatalogTest, SingleDescriptorPool) {
         ASSERT_EQ(analysis_status, proto::StatusCode::OK);
         ASSERT_EQ(analyzed->table_references.GetSize(), 1);
         ASSERT_TRUE(std::holds_alternative<AnalyzedScript::TableReference::ResolvedRelationExpression>(
-            analyzed->table_references[0]->inner));
+            analyzed->table_references[0].inner));
         auto& resolved =
-            std::get<AnalyzedScript::TableReference::ResolvedRelationExpression>(analyzed->table_references[0]->inner);
+            std::get<AnalyzedScript::TableReference::ResolvedRelationExpression>(analyzed->table_references[0].inner);
         ASSERT_FALSE(resolved.catalog_table_id.IsNull());
         ASSERT_EQ(resolved.catalog_table_id.GetExternalId(), 1);
         ASSERT_EQ(resolved.catalog_table_id.GetIndex(), 0);
@@ -142,7 +142,7 @@ TEST(CatalogTest, SingleDescriptorPool) {
         ASSERT_EQ(analysis_status, proto::StatusCode::OK);
         ASSERT_EQ(analyzed->table_references.GetSize(), 1);
         ASSERT_TRUE(std::holds_alternative<AnalyzedScript::TableReference::UnresolvedRelationExpression>(
-            analyzed->table_references[0]->inner));
+            analyzed->table_references[0].inner));
     }
 }
 

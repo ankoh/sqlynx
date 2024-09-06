@@ -13,6 +13,7 @@
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/text/rope.h"
+#include "sqlynx/utils/intrusive_list.h"
 #include "sqlynx/utils/string_pool.h"
 
 namespace sqlynx {
@@ -170,7 +171,7 @@ class AnalyzedScript : public CatalogEntry {
 
    public:
     /// A table reference
-    struct TableReference {
+    struct TableReference : public IntrusiveListNode {
         /// An unresolved column reference
         struct UnresolvedRelationExpression {
             /// The AST node id of the name path
@@ -211,7 +212,7 @@ class AnalyzedScript : public CatalogEntry {
         flatbuffers::Offset<proto::TableReference> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
     /// An expression
-    struct Expression {
+    struct Expression : public IntrusiveListNode {
         /// An unresolved column reference
         struct UnresolvedColumnRef {
             /// The AST node id of the name path
@@ -274,7 +275,7 @@ class AnalyzedScript : public CatalogEntry {
         std::variant<Star, Unnamed, Named> inner;
     };
     /// A naming scope
-    struct NameScope {
+    struct NameScope : public IntrusiveListNode {
         /// The id of the scope (== scope index in the script)
         size_t name_scope_id;
         /// The scope root
@@ -282,7 +283,7 @@ class AnalyzedScript : public CatalogEntry {
         /// The parent scope
         NameScope* parent_scope;
         /// The child scopes
-        IntrusiveList<NameScope> child_scopes;
+        IntrusiveList<IntrusiveListNode> child_scopes;
         /// The column references in this scope
         IntrusiveList<Expression> expressions;
         /// The table references in this scope
@@ -307,11 +308,11 @@ class AnalyzedScript : public CatalogEntry {
     /// The analyzer errors
     std::vector<proto::AnalyzerErrorT> errors;
     /// The table references
-    ChunkBuffer<IntrusiveList<TableReference>::Node, 16> table_references;
+    ChunkBuffer<TableReference, 16> table_references;
     /// The expressions
-    ChunkBuffer<IntrusiveList<Expression>::Node, 16> expressions;
+    ChunkBuffer<Expression, 16> expressions;
     /// The name scopes
-    ChunkBuffer<IntrusiveList<NameScope>::Node, 16> name_scopes;
+    ChunkBuffer<NameScope, 16> name_scopes;
     /// The name scopes by scope root
     std::unordered_map<size_t, std::reference_wrapper<NameScope>> name_scopes_by_root_node;
 

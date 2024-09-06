@@ -123,20 +123,20 @@ std::vector<Completion::NameComponent> Completion::ReadCursorNamePath() const {
             assert(std::holds_alternative<ScriptCursor::TableRefContext>(cursor.context));
             auto& ctx = std::get<ScriptCursor::TableRefContext>(cursor.context);
             auto& tableref = cursor.script.analyzed_script->table_references[ctx.table_reference_id];
-            switch (tableref->inner.index()) {
+            switch (tableref.inner.index()) {
                 case 1: {
                     assert(std::holds_alternative<AnalyzedScript::TableReference::UnresolvedRelationExpression>(
-                        tableref->inner));
+                        tableref.inner));
                     auto& unresolved =
-                        std::get<AnalyzedScript::TableReference::UnresolvedRelationExpression>(tableref->inner);
+                        std::get<AnalyzedScript::TableReference::UnresolvedRelationExpression>(tableref.inner);
                     name_ast_node_id = unresolved.table_name_ast_node_id;
                     break;
                 }
                 case 2: {
                     assert(std::holds_alternative<AnalyzedScript::TableReference::ResolvedRelationExpression>(
-                        tableref->inner));
+                        tableref.inner));
                     auto& resolved =
-                        std::get<AnalyzedScript::TableReference::ResolvedRelationExpression>(tableref->inner);
+                        std::get<AnalyzedScript::TableReference::ResolvedRelationExpression>(tableref.inner);
                     name_ast_node_id = resolved.table_name_ast_node_id;
                     break;
                 }
@@ -147,16 +147,16 @@ std::vector<Completion::NameComponent> Completion::ReadCursorNamePath() const {
             assert(std::holds_alternative<ScriptCursor::ColumnRefContext>(cursor.context));
             auto& ctx = std::get<ScriptCursor::ColumnRefContext>(cursor.context);
             auto& expr = cursor.script.analyzed_script->expressions[ctx.expression_id];
-            switch (expr->inner.index()) {
+            switch (expr.inner.index()) {
                 case 1: {
-                    assert(std::holds_alternative<AnalyzedScript::Expression::UnresolvedColumnRef>(expr->inner));
-                    auto& unresolved = std::get<AnalyzedScript::Expression::UnresolvedColumnRef>(expr->inner);
+                    assert(std::holds_alternative<AnalyzedScript::Expression::UnresolvedColumnRef>(expr.inner));
+                    auto& unresolved = std::get<AnalyzedScript::Expression::UnresolvedColumnRef>(expr.inner);
                     name_ast_node_id = unresolved.column_name_ast_node_id;
                     break;
                 }
                 case 2: {
-                    assert(std::holds_alternative<AnalyzedScript::Expression::ResolvedColumnRef>(expr->inner));
-                    auto& resolved = std::get<AnalyzedScript::Expression::ResolvedColumnRef>(expr->inner);
+                    assert(std::holds_alternative<AnalyzedScript::Expression::ResolvedColumnRef>(expr.inner));
+                    auto& resolved = std::get<AnalyzedScript::Expression::ResolvedColumnRef>(expr.inner);
                     name_ast_node_id = resolved.column_name_ast_node_id;
                     break;
                 }
@@ -266,8 +266,15 @@ proto::StatusCode Completion::CompleteCursorNamePath() {
         return proto::StatusCode::OK;
     }
 
+    struct DotCandidate {
+        // The name
+        std::string_view name;
+        /// The object ref (if table or column)
+        const CatalogObject& object;
+    };
+
     // Collect all candidate strings
-    std::vector<std::pair<std::string_view, NamedObjectType>> candidates;
+    std::vector<DotCandidate> candidates;
 
     // Are we completing a table ref?
     if (auto* ctx = std::get_if<ScriptCursor::TableRefContext>(&cursor.context)) {
@@ -292,7 +299,7 @@ proto::StatusCode Completion::CompleteCursorNamePath() {
                     for (auto& table : tables) {
                         // Add the table name as candidate
                         auto& name = table.get().table_name.table_name.get();
-                        candidates.push_back({name.text, NamedObjectType::Table});
+                        candidates.push_back(DotCandidate{name.text, table.get().CastToBase()});
                     }
                 }
 
@@ -307,7 +314,7 @@ proto::StatusCode Completion::CompleteCursorNamePath() {
                         auto& schema_decl = *iter->second;
                         // Add the schema name as candidate
                         auto& name = schema_decl.schema_name;
-                        candidates.push_back({name, NamedObjectType::Schema});
+                        candidates.push_back(DotCandidate{name, schema_decl.CastToBase()});
                     }
                 }
                 break;
@@ -327,7 +334,7 @@ proto::StatusCode Completion::CompleteCursorNamePath() {
                     for (auto& table : tables) {
                         // Add the table name as candidate
                         auto& name = table.get().table_name.table_name.get();
-                        candidates.push_back({name, NamedObjectType::Table});
+                        candidates.push_back({name, table.get().CastToBase()});
                     }
                 }
                 break;
@@ -360,7 +367,7 @@ proto::StatusCode Completion::CompleteCursorNamePath() {
                         // Register all column names as alias
                         for (auto& column : table_decl.table_columns) {
                             auto& name = column.column_name.get();
-                            candidates.push_back({name.text, NamedObjectType::Column});
+                            candidates.push_back({name.text, column.CastToBase()});
                         }
                         break;
                     }
@@ -371,19 +378,20 @@ proto::StatusCode Completion::CompleteCursorNamePath() {
     }
 
     // Now we need to score the candidates based on the cursor prefix (if there is any)
-    for (auto& candidate : candidates) {
-        auto& [name, type] = candidate;
-        auto iter = pending_candidates.find(name);
-        if (iter != pending_candidates.end()) {
-            auto& existing = iter->second;
-            // XXX
-        } else {
-            // XXX
+    if (last_text_prefix.empty()) {
+        for (auto& candidate : candidates) {
+            auto& [name, type] = candidate;
+            auto iter = pending_candidates.find(name);
+            if (iter != pending_candidates.end()) {
+                auto& existing = iter->second;
+                // XXX
+            } else {
+                // XXX
+            }
         }
+    } else {
+        // XXX
     }
-
-    // XXX
-
     return proto::StatusCode::OK;
 }
 
@@ -496,15 +504,23 @@ void findCandidatesInIndex(Completion& completion, const CatalogEntry::NameSearc
             // Update the score if it is higher
             iter->second.score = std::max(iter->second.score, score);
             iter->second.tags |= name_info.resolved_tags;
-            iter->second.catalog_objects.push_back(name_info.resolved_objects);
+            iter->second.catalog_objects.reserve(iter->second.catalog_objects.size() +
+                                                 name_info.resolved_objects.GetSize());
+            for (auto& o : name_info.resolved_objects) {
+                iter->second.catalog_objects.push_back(o);
+            }
         } else {
             // Otherwise store as new candidate
             Completion::Candidate candidate{
                 .name = name_info.text,
                 .tags = name_info.resolved_tags,
-                .catalog_objects = {name_info.resolved_objects},
+                .catalog_objects = {},
                 .score = score,
             };
+            candidate.catalog_objects.reserve(name_info.resolved_objects.GetSize());
+            for (auto& o : name_info.resolved_objects) {
+                candidate.catalog_objects.push_back(o);
+            }
             pending_candidates.insert({name_info.text, candidate});
         }
     }
@@ -531,9 +547,9 @@ void Completion::PromoteTablesAndPeersForUnresolvedColumns() {
 
     // Iterate all unresolved columns in the current script
     // XXX Don't search all unresolved expressions but only the unresolved ones in the current statement
-    analyzed_script.expressions.ForEach([&](size_t i, auto& expr) {
+    analyzed_script.expressions.ForEach([&](size_t i, AnalyzedScript::Expression& expr) {
         // Is unresolved?
-        if (auto* unresolved = std::get_if<AnalyzedScript::Expression::UnresolvedColumnRef>(&expr->inner)) {
+        if (auto* unresolved = std::get_if<AnalyzedScript::Expression::UnresolvedColumnRef>(&expr.inner)) {
             auto& column_name = unresolved->column_name.column_name.get();
             tmp_columns.clear();
             // Resolve all table columns that would match the unresolved name?
@@ -750,47 +766,55 @@ flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferB
         std::string quoted;
         std::string_view completion_text = iter_entry->name;
         completion_text = quote_anyupper_fuzzy(completion_text, quoted);
-        size_t catalog_object_count = 0;
-        for (auto& objects : iter_entry->catalog_objects) {
-            catalog_object_count += objects.GetSize();
-        }
+        size_t catalog_object_count = iter_entry->catalog_objects.size();
         std::vector<flatbuffers::Offset<proto::CompletionCandidateObject>> catalog_objects;
         catalog_objects.reserve(catalog_object_count);
-        for (auto& objects : iter_entry->catalog_objects) {
-            for (auto iter_obj = objects.begin(); iter_obj != objects.end(); ++iter_obj) {
-                proto::CompletionCandidateObjectBuilder obj{builder};
-                obj.add_object_type(static_cast<proto::CompletionCandidateObjectType>(iter_obj->object_type));
-                switch (iter_obj->object_type) {
-                    case NamedObjectType::Database: {
-                        auto* db = static_cast<CatalogEntry::DatabaseReference*>(&iter_obj.GetNode());
-                        obj.add_catalog_database_id(db->catalog_database_id);
-                        break;
-                    }
-                    case NamedObjectType::Schema: {
-                        auto* schema = static_cast<CatalogEntry::SchemaReference*>(&iter_obj.GetNode());
-                        obj.add_catalog_database_id(schema->catalog_database_id);
-                        obj.add_catalog_schema_id(schema->catalog_schema_id);
-                        break;
-                    }
-                    case NamedObjectType::Table: {
-                        auto* table = static_cast<CatalogEntry::TableDeclaration*>(&iter_obj.GetNode());
-                        obj.add_catalog_database_id(table->catalog_database_id);
-                        obj.add_catalog_schema_id(table->catalog_schema_id);
-                        obj.add_catalog_table_id(table->catalog_table_id.Pack());
-                        break;
-                    }
-                    case NamedObjectType::Column: {
-                        auto& column = *static_cast<CatalogEntry::TableColumn*>(&iter_obj.GetNode());
-                        auto& table = column.table->get();
-                        obj.add_catalog_database_id(table.catalog_database_id);
-                        obj.add_catalog_schema_id(table.catalog_schema_id);
-                        obj.add_catalog_table_id(table.catalog_table_id.Pack());
-                        obj.add_table_column_id(column.column_index);
-                        break;
-                    }
+        for (auto iter_obj = iter_entry->catalog_objects.begin(); iter_obj != iter_entry->catalog_objects.end();
+             ++iter_obj) {
+            auto& o = iter_obj->get();
+            proto::CompletionCandidateObjectBuilder obj{builder};
+            obj.add_object_type(static_cast<proto::CompletionCandidateObjectType>(o.object_type));
+            switch (o.object_type) {
+                case CatalogObjectType::DatabaseDeclaration: {
+                    auto& db = o.CastUnsafe<Catalog::DatabaseDeclaration>();
+                    obj.add_catalog_database_id(db.catalog_database_id);
+                    break;
                 }
-                catalog_objects.push_back(obj.Finish());
+                case CatalogObjectType::SchemaDeclaration: {
+                    auto& schema = o.CastUnsafe<Catalog::SchemaDeclaration>();
+                    obj.add_catalog_database_id(schema.catalog_database_id);
+                    obj.add_catalog_schema_id(schema.catalog_schema_id);
+                    break;
+                }
+                case CatalogObjectType::DatabaseReference: {
+                    auto& db = o.CastUnsafe<CatalogEntry::DatabaseReference>();
+                    obj.add_catalog_database_id(db.catalog_database_id);
+                    break;
+                }
+                case CatalogObjectType::SchemaReference: {
+                    auto& schema = o.CastUnsafe<CatalogEntry::SchemaReference>();
+                    obj.add_catalog_database_id(schema.catalog_database_id);
+                    obj.add_catalog_schema_id(schema.catalog_schema_id);
+                    break;
+                }
+                case CatalogObjectType::TableDeclaration: {
+                    auto& table = o.CastUnsafe<CatalogEntry::TableDeclaration>();
+                    obj.add_catalog_database_id(table.catalog_database_id);
+                    obj.add_catalog_schema_id(table.catalog_schema_id);
+                    obj.add_catalog_table_id(table.catalog_table_id.Pack());
+                    break;
+                }
+                case CatalogObjectType::ColumnDeclaration: {
+                    auto& column = o.CastUnsafe<CatalogEntry::TableColumn>();
+                    auto& table = column.table->get();
+                    obj.add_catalog_database_id(table.catalog_database_id);
+                    obj.add_catalog_schema_id(table.catalog_schema_id);
+                    obj.add_catalog_table_id(table.catalog_table_id.Pack());
+                    obj.add_table_column_id(column.column_index);
+                    break;
+                }
             }
+            catalog_objects.push_back(obj.Finish());
         }
         auto catalog_objects_ofs = builder.CreateVector(catalog_objects);
         auto completion_text_ofs = builder.CreateString(completion_text);

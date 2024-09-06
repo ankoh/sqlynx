@@ -10,6 +10,7 @@
 #include <string_view>
 #include <tuple>
 
+#include "sqlynx/catalog_object.h"
 #include "sqlynx/external.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/text/names.h"
@@ -17,7 +18,6 @@
 #include "sqlynx/utils/btree/set.h"
 #include "sqlynx/utils/chunk_buffer.h"
 #include "sqlynx/utils/hash.h"
-#include "sqlynx/utils/intrusive_list.h"
 #include "sqlynx/utils/string_conversion.h"
 
 namespace sqlynx {
@@ -101,7 +101,7 @@ class CatalogEntry {
     /// Forward declare the table
     struct TableDeclaration;
     /// A table column
-    struct TableColumn : IntrusiveList<NamedObject>::Node {
+    struct TableColumn : public CatalogObject {
         /// The parent table
         std::optional<std::reference_wrapper<TableDeclaration>> table;
         /// The catalog database id
@@ -112,14 +112,12 @@ class CatalogEntry {
         std::reference_wrapper<RegisteredName> column_name;
         /// Constructor
         TableColumn(std::optional<uint32_t> ast_node_id, RegisteredName& column_name)
-            : IntrusiveList<NamedObject>::Node(NamedObjectType::Column),
-              ast_node_id(ast_node_id),
-              column_name(column_name) {}
+            : CatalogObject(CatalogObjectType::ColumnDeclaration), ast_node_id(ast_node_id), column_name(column_name) {}
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::TableColumn> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
     /// A table declaration
-    struct TableDeclaration : IntrusiveList<NamedObject>::Node {
+    struct TableDeclaration : public CatalogObject {
         /// The catalog database id
         CatalogDatabaseID catalog_database_id = 0;
         /// The catalog schema id
@@ -146,12 +144,12 @@ class CatalogEntry {
 
         /// Constructor
         TableDeclaration(QualifiedTableName table_name)
-            : IntrusiveList<NamedObject>::Node(NamedObjectType::Table), table_name(std::move(table_name)) {}
+            : CatalogObject(CatalogObjectType::TableDeclaration), table_name(std::move(table_name)) {}
         /// Pack as FlatBuffer
         flatbuffers::Offset<proto::Table> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
     /// A database name declaration
-    struct DatabaseReference : IntrusiveList<NamedObject>::Node {
+    struct DatabaseReference : public CatalogObject {
         /// The catalog database id.
         /// This ID is only preliminary if the entry has not been added to the catalog yet.
         /// Adding the entry to the catalog might fail if this id becomes invalid.
@@ -163,7 +161,7 @@ class CatalogEntry {
         /// Constructor
         DatabaseReference(CatalogDatabaseID database_id, std::string_view database_name,
                           std::string_view database_alias)
-            : IntrusiveList<NamedObject>::Node(NamedObjectType::Database),
+            : CatalogObject(CatalogObjectType::DatabaseReference),
               catalog_database_id(database_id),
               database_name(database_name),
               database_alias(database_alias) {}
@@ -171,7 +169,7 @@ class CatalogEntry {
         flatbuffers::Offset<proto::DatabaseDeclaration> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
     /// A schema name declaration
-    struct SchemaReference : IntrusiveList<NamedObject>::Node {
+    struct SchemaReference : public CatalogObject {
         /// The catalog database id
         /// This ID is only preliminary if the entry has not been added to the catalog yet.
         /// Adding the entry to the catalog might fail if this id becomes invalid.
@@ -187,7 +185,7 @@ class CatalogEntry {
         /// Constructor
         SchemaReference(CatalogDatabaseID database_id, CatalogSchemaID schema_id, std::string_view database_name,
                         std::string_view schema_name)
-            : IntrusiveList<NamedObject>::Node(NamedObjectType::Schema),
+            : CatalogObject(CatalogObjectType::SchemaReference),
               catalog_database_id(database_id),
               catalog_schema_id(schema_id),
               database_name(database_name),
@@ -320,8 +318,10 @@ class Catalog {
         /// The id of the schema <catalog_entry_id, schema_idx>
         CatalogSchemaID catalog_schema_id;
     };
+
+   public:
     /// A database declaration
-    struct DatabaseDeclaration {
+    struct DatabaseDeclaration : public CatalogObject {
         /// The catalog database id
         CatalogDatabaseID catalog_database_id;
         /// The database name
@@ -331,7 +331,8 @@ class Catalog {
         /// Constructor
         DatabaseDeclaration(CatalogDatabaseID database_id, std::string_view database_name,
                             std::string_view database_alias)
-            : catalog_database_id(database_id),
+            : CatalogObject(CatalogObjectType::DatabaseDeclaration),
+              catalog_database_id(database_id),
               database_name(std::move(database_name)),
               database_alias(std::move(database_alias)) {}
         /// Move constructor
@@ -340,7 +341,7 @@ class Catalog {
         DatabaseDeclaration& operator=(DatabaseDeclaration&&) = default;
     };
     /// A schema declaration
-    struct SchemaDeclaration {
+    struct SchemaDeclaration : public CatalogObject {
         /// The catalog database id
         CatalogDatabaseID catalog_database_id;
         /// The catalog schema id
@@ -352,7 +353,8 @@ class Catalog {
         /// Constructor
         SchemaDeclaration(CatalogDatabaseID database_id, CatalogSchemaID schema_id, std::string_view database_name,
                           std::string_view schema_name)
-            : catalog_database_id(database_id),
+            : CatalogObject(CatalogObjectType::SchemaDeclaration),
+              catalog_database_id(database_id),
               catalog_schema_id(schema_id),
               database_name(database_name),
               schema_name(std::move(schema_name)) {}
@@ -362,6 +364,7 @@ class Catalog {
         SchemaDeclaration& operator=(SchemaDeclaration&&) = default;
     };
 
+   protected:
     /// The catalog version.
     /// Every modification bumps the version counter, the analyzer reads the version counter which protects all refs.
     Version version = 1;

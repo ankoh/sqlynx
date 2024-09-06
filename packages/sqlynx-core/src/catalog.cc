@@ -214,7 +214,7 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
         if (!databases_by_name.contains({db_name})) {
             auto& db = database_references.Append(CatalogEntry::DatabaseReference{db_id, db_name, ""});
             databases_by_name.insert({db.database_name, db});
-            db_name.resolved_objects.PushBack(db);
+            db_name.resolved_objects.PushBack(db.CastToBase());
         }
     } else {
         db_id = db_ref_iter->second.get().catalog_database_id;
@@ -228,7 +228,7 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
             auto& schema =
                 schema_references.Append(CatalogEntry::SchemaReference{db_id, schema_id, db_name, schema_name});
             schemas_by_name.insert({{db_name, schema_name}, schema});
-            schema_name.resolved_objects.PushBack(schema);
+            schema_name.resolved_objects.PushBack(schema.CastToBase());
         }
     } else {
         schema_id = schema_ref_iter->second.get().catalog_schema_id;
@@ -291,14 +291,14 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
         t.table_columns = std::move(columns);
         ++next_table_id;
         // Register the table for the table name
-        table_name.resolved_objects.PushBack(t);
+        table_name.resolved_objects.PushBack(t.CastToBase());
         // Store the catalog ids in the table columns
         t.table_columns_by_name.reserve(t.table_columns.size());
         for (size_t column_index = 0; column_index != t.table_columns.size(); ++column_index) {
             auto& column = t.table_columns[column_index];
             column.table = t;
             column.column_index = column_index;
-            column.column_name.get().resolved_objects.PushBack(column);
+            column.column_name.get().resolved_objects.PushBack(column.CastToBase());
             t.table_columns_by_name.insert({column.column_name.get().text, column});
         }
     }
