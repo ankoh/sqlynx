@@ -53,46 +53,47 @@ void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Complet
             tags << proto::EnumNameNameTag(tag);
         });
         xml_entry.append_attribute("tags").set_value(tags.str().c_str());
-        for (auto objects : iter->catalog_objects) {
-            for (auto obj_iter = objects.begin(); obj_iter != objects.end(); ++obj_iter) {
-                auto& obj = obj_iter.GetNode();
-                auto xml_obj = xml_entry.append_child("object");
-                switch (obj.value.object_type) {
-                    case sqlynx::NamedObjectType::Database: {
-                        std::string type = "database";
-                        auto* t = static_cast<CatalogEntry::DatabaseReference*>(&obj);
-                        xml_obj.append_attribute("type").set_value(type.c_str());
-                        std::string catalog_id = std::format("{}", t->catalog_database_id);
-                        xml_obj.append_attribute("id").set_value(catalog_id.c_str());
-                        break;
-                    }
-                    case sqlynx::NamedObjectType::Schema: {
-                        std::string type = "schema";
-                        auto* t = static_cast<CatalogEntry::SchemaReference*>(&obj);
-                        xml_obj.append_attribute("type").set_value(type.c_str());
-                        std::string catalog_id = std::format("{}.{}", t->catalog_database_id, t->catalog_schema_id);
-                        xml_obj.append_attribute("id").set_value(catalog_id.c_str());
-                        break;
-                    }
-                    case sqlynx::NamedObjectType::Table: {
-                        std::string type = "table";
-                        auto* t = static_cast<CatalogEntry::TableDeclaration*>(&obj);
-                        xml_obj.append_attribute("type").set_value(type.c_str());
-                        std::string catalog_id = std::format("{}.{}.{}", t->catalog_database_id, t->catalog_schema_id,
-                                                             t->catalog_table_id.Pack());
-                        xml_obj.append_attribute("id").set_value(catalog_id.c_str());
-                        break;
-                    }
-                    case sqlynx::NamedObjectType::Column:
-                        std::string type = "column";
-                        auto& c = *static_cast<CatalogEntry::TableColumn*>(&obj);
-                        auto& t = c.table->get();
-                        xml_obj.append_attribute("type").set_value(type.c_str());
-                        std::string catalog_id = std::format("{}.{}.{}.{}", t.catalog_database_id, t.catalog_schema_id,
-                                                             t.catalog_table_id.Pack(), c.column_index);
-                        xml_obj.append_attribute("id").set_value(catalog_id.c_str());
-                        break;
+        for (auto& obj_ref : iter->catalog_objects) {
+            auto& obj = obj_ref.get();
+            auto xml_obj = xml_entry.append_child("object");
+            switch (obj.object_type) {
+                case sqlynx::CatalogObjectType::DatabaseReference: {
+                    std::string type = "database";
+                    auto* t = static_cast<CatalogEntry::DatabaseReference*>(&obj);
+                    xml_obj.append_attribute("type").set_value(type.c_str());
+                    std::string catalog_id = std::format("{}", t->catalog_database_id);
+                    xml_obj.append_attribute("id").set_value(catalog_id.c_str());
+                    break;
                 }
+                case sqlynx::CatalogObjectType::SchemaReference: {
+                    std::string type = "schema";
+                    auto* t = static_cast<CatalogEntry::SchemaReference*>(&obj);
+                    xml_obj.append_attribute("type").set_value(type.c_str());
+                    std::string catalog_id = std::format("{}.{}", t->catalog_database_id, t->catalog_schema_id);
+                    xml_obj.append_attribute("id").set_value(catalog_id.c_str());
+                    break;
+                }
+                case sqlynx::CatalogObjectType::TableDeclaration: {
+                    std::string type = "table";
+                    auto* t = static_cast<CatalogEntry::TableDeclaration*>(&obj);
+                    xml_obj.append_attribute("type").set_value(type.c_str());
+                    std::string catalog_id = std::format("{}.{}.{}", t->catalog_database_id, t->catalog_schema_id,
+                                                         t->catalog_table_id.Pack());
+                    xml_obj.append_attribute("id").set_value(catalog_id.c_str());
+                    break;
+                }
+                case sqlynx::CatalogObjectType::ColumnDeclaration: {
+                    std::string type = "column";
+                    auto& c = *static_cast<CatalogEntry::TableColumn*>(&obj);
+                    auto& t = c.table->get();
+                    xml_obj.append_attribute("type").set_value(type.c_str());
+                    std::string catalog_id = std::format("{}.{}.{}.{}", t.catalog_database_id, t.catalog_schema_id,
+                                                         t.catalog_table_id.Pack(), c.column_index);
+                    xml_obj.append_attribute("id").set_value(catalog_id.c_str());
+                    break;
+                }
+                default:
+                    assert(false);
             }
         }
     }

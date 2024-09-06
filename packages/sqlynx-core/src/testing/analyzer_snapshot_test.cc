@@ -140,19 +140,19 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
     // Write table references
     if (!script.table_references.IsEmpty()) {
         auto table_refs_node = out.append_child("tablerefs");
-        script.table_references.ForEach([&](size_t i, const IntrusiveList<AnalyzedScript::TableReference>::Node& ref) {
+        script.table_references.ForEach([&](size_t i, const AnalyzedScript::TableReference& ref) {
             auto xml_ref = table_refs_node.append_child("tableref");
-            switch (ref->inner.index()) {
+            switch (ref.inner.index()) {
                 case 0:
                     break;
                 case 1: {
                     auto& unresolved =
-                        std::get<AnalyzedScript::TableReference::UnresolvedRelationExpression>(ref->inner);
+                        std::get<AnalyzedScript::TableReference::UnresolvedRelationExpression>(ref.inner);
                     xml_ref.append_attribute("type").set_value("name/unresolved");
                     break;
                 }
                 case 2: {
-                    auto& resolved = std::get<AnalyzedScript::TableReference::ResolvedRelationExpression>(ref->inner);
+                    auto& resolved = std::get<AnalyzedScript::TableReference::ResolvedRelationExpression>(ref.inner);
                     std::string catalog_id = std::format("{}.{}.{}", resolved.catalog_database_id,
                                                          resolved.catalog_schema_id, resolved.catalog_table_id.Pack());
                     auto type = is_main && resolved.catalog_table_id.GetExternalId() == script.GetCatalogEntryId()
@@ -163,10 +163,10 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
                     break;
                 }
             }
-            if (ref->ast_statement_id.has_value()) {
-                xml_ref.append_attribute("stmt").set_value(*ref->ast_statement_id);
+            if (ref.ast_statement_id.has_value()) {
+                xml_ref.append_attribute("stmt").set_value(*ref.ast_statement_id);
             }
-            WriteLocation(xml_ref, script.parsed_script->nodes[ref->ast_node_id].location(),
+            WriteLocation(xml_ref, script.parsed_script->nodes[ref.ast_node_id].location(),
                           script.parsed_script->scanned_script->GetInput());
         });
     }
@@ -174,18 +174,18 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
     // Write expressions
     if (!script.expressions.IsEmpty()) {
         auto expr_node = out.append_child("expressions");
-        script.expressions.ForEach([&](size_t i, const IntrusiveList<AnalyzedScript::Expression>::Node& ref) {
+        script.expressions.ForEach([&](size_t i, const AnalyzedScript::Expression& ref) {
             auto xml_ref = expr_node.append_child("expr");
-            switch (ref->inner.index()) {
+            switch (ref.inner.index()) {
                 case 0:
                     break;
                 case 1: {
-                    auto& unresolved = std::get<AnalyzedScript::Expression::UnresolvedColumnRef>(ref->inner);
+                    auto& unresolved = std::get<AnalyzedScript::Expression::UnresolvedColumnRef>(ref.inner);
                     xml_ref.append_attribute("type").set_value("colref/unresolved");
                     break;
                 }
                 case 2: {
-                    auto& resolved = std::get<AnalyzedScript::Expression::ResolvedColumnRef>(ref->inner);
+                    auto& resolved = std::get<AnalyzedScript::Expression::ResolvedColumnRef>(ref.inner);
                     std::string catalog_id =
                         std::format("{}.{}.{}.{}", resolved.catalog_database_id, resolved.catalog_schema_id,
                                     resolved.catalog_table_id.Pack(), resolved.table_column_id);
@@ -197,10 +197,10 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
                     break;
                 }
             }
-            if (ref->ast_statement_id.has_value()) {
-                xml_ref.append_attribute("stmt").set_value(*ref->ast_statement_id);
+            if (ref.ast_statement_id.has_value()) {
+                xml_ref.append_attribute("stmt").set_value(*ref.ast_statement_id);
             }
-            WriteLocation(xml_ref, script.parsed_script->nodes[ref->ast_node_id].location(),
+            WriteLocation(xml_ref, script.parsed_script->nodes[ref.ast_node_id].location(),
                           script.parsed_script->scanned_script->GetInput());
         });
     }

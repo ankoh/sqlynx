@@ -1,69 +1,82 @@
 #pragma once
 
+#include <cassert>
 #include <cstddef>
 #include <utility>
 
 namespace sqlynx {
 
+/// A list node that is allocate in a separate buffer
+struct IntrusiveListNode {
+    /// The next node in the list
+    IntrusiveListNode* next = nullptr;
+    /// The index in the underlying buffer, only used for debugging
+    size_t buffer_index = 0;
+    /// Constructor
+    IntrusiveListNode() {}
+
+    /// Reference operator
+    template <typename T, typename std::enable_if<std::is_base_of<IntrusiveListNode, T>::value>::type* = nullptr>
+    inline T& operator*() {
+        return *static_cast<T*>(this);
+    }
+    /// Dereference operator
+    template <typename T, typename std::enable_if<std::is_base_of<IntrusiveListNode, T>::value>::type* = nullptr>
+    inline T* operator->() {
+        return static_cast<T*>(this);
+    }
+    /// Reference operator
+    template <typename T, typename std::enable_if<std::is_base_of<IntrusiveListNode, T>::value>::type* = nullptr>
+    inline const T& operator*() const {
+        return *static_cast<const T*>(this);
+    }
+    /// Dereference operator
+    template <typename T, typename std::enable_if<std::is_base_of<IntrusiveListNode, T>::value>::type* = nullptr>
+    inline T const* operator->() const {
+        return static_cast<T*>(this);
+    }
+};
+
 /// A list of nodes allocated in a separate buffer
-template <typename T> struct IntrusiveList {
+template <typename DerivedType = IntrusiveListNode,
+          typename std::enable_if<std::is_base_of<IntrusiveListNode, DerivedType>::value>::type* = nullptr>
+struct IntrusiveList {
    public:
-    /// A list node that is allocate in a separate buffer
-    struct Node {
-        /// The next node in the list
-        Node* next = nullptr;
-        /// The index in the underlying buffer, only used for debugging
-        size_t buffer_index = 0;
-        /// The value
-        T value;
-        /// Constructor
-        Node(T value) : value(std::move(value)) {}
-
-        /// Reference operator
-        inline T& operator*() { return value; }
-        /// Dereference operator
-        inline T* operator->() { return &value; }
-        /// Reference operator
-        inline const T& operator*() const { return value; }
-        /// Dereference operator
-        inline T const* operator->() const { return &value; }
-    };
-
     /// An end marker
     struct EndIterator {};
     /// An iterator
     struct Iterator {
        protected:
         /// The current node
-        Node* node;
+        DerivedType* node;
 
        public:
         /// Constructor
-        Iterator(Node* node) : node(node) {}
+        Iterator(DerivedType* node) : node(node) {}
         /// Get the index in the underlying buffer
         inline size_t GetBufferIndex() const { return node->buffer_index; }
         /// Get the node
-        inline Node& GetNode() { return *node; }
+        inline DerivedType& GetNode() { return *node; }
         /// Get the node
-        inline const Node& GetNode() const { return *node; }
+        inline const DerivedType& GetNode() const { return *node; }
         /// Compare with end iterator
         inline bool operator==(EndIterator&) const { return node == nullptr; }
         /// Compare with end iterator
         inline bool operator==(const EndIterator&) const { return node == nullptr; }
         /// Reference operator
-        inline T& operator*() {
+        inline DerivedType& operator*() {
             assert(node != nullptr);
-            return node->value;
+            return *static_cast<DerivedType*>(node);
         }
         /// Dereference operator
-        inline T* operator->() {
+        inline DerivedType* operator->() {
             assert(node != nullptr);
-            return &node->value;
+            return static_cast<DerivedType*>(node);
         }
         /// Increment operator
         inline Iterator& operator++() {
             if (node) {
-                node = node->next;
+                node = static_cast<DerivedType*>(node->next);
             }
             return *this;
         }
@@ -71,15 +84,24 @@ template <typename T> struct IntrusiveList {
 
    protected:
     /// The first node in the list
-    Node* first = nullptr;
+    DerivedType* first = nullptr;
     /// The last node in the list
-    Node* last = nullptr;
+    DerivedType* last = nullptr;
     /// The number of nodes in the list
     size_t size = 0;
 
    public:
     /// Constructor
     IntrusiveList() = default;
+
+    /// Cast to base
+    IntrusiveList<IntrusiveListNode>& CastAsBase() {
+        return *reinterpret_cast<IntrusiveList<IntrusiveListNode>*>(this);
+    }
+    /// Cast to base
+    const IntrusiveList<IntrusiveListNode>& CastAsBase() const {
+        return *reinterpret_cast<const IntrusiveList<IntrusiveListNode>*>(this);
+    }
 
     /// Get the iterator
     Iterator begin() { return Iterator{first}; }
@@ -93,7 +115,7 @@ template <typename T> struct IntrusiveList {
     /// Get the size of the list
     size_t GetSize() const { return size; }
     /// Append a list
-    void Append(IntrusiveList<T>&& other) {
+    void Append(IntrusiveList<DerivedType>&& other) {
         if (other.size == 0) {
             return;
         }
@@ -113,7 +135,7 @@ template <typename T> struct IntrusiveList {
         other.size = 0;
     }
     /// Push back a node
-    void PushBack(Node& node) {
+    void PushBack(DerivedType& node) {
         if (size == 0) {
             first = &node;
             last = &node;
@@ -128,12 +150,12 @@ template <typename T> struct IntrusiveList {
         }
     }
     /// Pop a node from the front
-    Node* PopFront() {
+    DerivedType* PopFront() {
         if (size == 0) {
             return nullptr;
         } else {
-            Node* out = first;
-            first = out->next;
+            DerivedType* out = first;
+            first = static_cast<DerivedType*>(out->next);
             last = (out == last) ? first : last;
             --size;
             return out;
@@ -146,11 +168,13 @@ template <typename T> struct IntrusiveList {
         size = 0;
     }
     /// Flatten the list into a vector
-    std::vector<T> Flatten() {
-        std::vector<T> buffer;
+    std::vector<DerivedType> Flatten() {
+        std::vector<DerivedType> buffer;
         buffer.reserve(size);
-        for (auto tuple : *this) {
-            buffer.push_back(std::move(tuple));
+        for (auto& tuple : *this) {
+            buffer.push_back(tuple);
+            buffer.back().next = nullptr;
+            buffer.back().buffer_index = -1;
         }
         return buffer;
     }

@@ -139,7 +139,7 @@ std::pair<CatalogDatabaseID, CatalogSchemaID> NameResolutionPass::RegisterSchema
         db_id = catalog.AllocateDatabaseId(database_name);
         auto& db = analyzed.database_references.Append(CatalogEntry::DatabaseReference{db_id, database_name, ""});
         analyzed.databases_by_name.insert({db.database_name, db});
-        database_name.resolved_objects.PushBack(db);
+        database_name.resolved_objects.PushBack(db.CastToBase());
     } else {
         db_id = db_ref_iter->second.get().catalog_database_id;
     }
@@ -150,7 +150,7 @@ std::pair<CatalogDatabaseID, CatalogSchemaID> NameResolutionPass::RegisterSchema
         auto& schema = analyzed.schema_references.Append(
             CatalogEntry::SchemaReference{db_id, schema_id, database_name, schema_name});
         analyzed.schemas_by_name.insert({{database_name, schema_name}, schema});
-        schema_name.resolved_objects.PushBack(schema);
+        schema_name.resolved_objects.PushBack(schema.CastToBase());
     } else {
         schema_id = schema_ref_iter->second.get().catalog_schema_id;
     }
@@ -173,13 +173,14 @@ void NameResolutionPass::MergeChildStates(NodeState& dst, const proto::Node& par
 }
 
 AnalyzedScript::NameScope& NameResolutionPass::CreateScope(NodeState& target, uint32_t scope_root) {
-    auto& scope = analyzed.name_scopes.Append(AnalyzedScript::NameScope{.name_scope_id = analyzed.name_scopes.GetSize(),
-                                                                        .ast_scope_root = scope_root,
-                                                                        .parent_scope = nullptr,
-                                                                        .child_scopes = target.child_scopes});
-    analyzed.name_scopes_by_root_node.insert({scope_root, scope.value});
+    auto& scope =
+        analyzed.name_scopes.Append(AnalyzedScript::NameScope{.name_scope_id = analyzed.name_scopes.GetSize(),
+                                                              .ast_scope_root = scope_root,
+                                                              .parent_scope = nullptr,
+                                                              .child_scopes = target.child_scopes.CastAsBase()});
+    analyzed.name_scopes_by_root_node.insert({scope_root, scope});
     for (auto& child_scope : target.child_scopes) {
-        child_scope.parent_scope = &scope.value;
+        child_scope.parent_scope = &scope;
         root_scopes.erase(&child_scope);
     }
     for (auto& ref : target.column_references) {
@@ -188,14 +189,14 @@ AnalyzedScript::NameScope& NameResolutionPass::CreateScope(NodeState& target, ui
     for (auto& ref : target.table_references) {
         ref.ast_scope_root = scope_root;
     }
-    scope.value.table_references = target.table_references;
-    scope.value.expressions = target.column_references;
+    scope.table_references = target.table_references;
+    scope.expressions = target.column_references;
     // Clear the target since we're starting a new scope now
     target.Clear();
     // Remember the child scope
     target.child_scopes.PushBack(scope);
-    root_scopes.insert(&scope.value);
-    return scope.value;
+    root_scopes.insert(&scope);
+    return scope;
 }
 
 void NameResolutionPass::ResolveTableRefsInScope(AnalyzedScript::NameScope& scope) {
@@ -381,7 +382,7 @@ void NameResolutionPass::ResolveNames() {
         tmp_refs_by_name.clear();
         ResolveColumnRefsInScope(top, tmp_refs_by_alias, tmp_refs_by_name);
         for (auto& child_scope : top.get().child_scopes) {
-            pending_scopes.push(child_scope);
+            pending_scopes.push(*static_cast<AnalyzedScript::NameScope*>(&child_scope));
         }
     }
 }
@@ -435,12 +436,12 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                     // Add column reference
                     auto& n = analyzed.expressions.Append(AnalyzedScript::Expression());
                     n.buffer_index = analyzed.expressions.GetSize() - 1;
-                    n.value.expression_id =
+                    n.expression_id =
                         ExternalObjectID{catalog_entry_id, static_cast<uint32_t>(analyzed.expressions.GetSize() - 1)};
-                    n.value.ast_node_id = node_id;
-                    n.value.ast_statement_id = std::nullopt;
-                    n.value.ast_scope_root = std::nullopt;
-                    n.value.inner = AnalyzedScript::Expression::UnresolvedColumnRef{
+                    n.ast_node_id = node_id;
+                    n.ast_statement_id = std::nullopt;
+                    n.ast_scope_root = std::nullopt;
+                    n.inner = AnalyzedScript::Expression::UnresolvedColumnRef{
                         .column_name_ast_node_id = column_name_node_id, .column_name = column_name.value()};
                     node_state.column_references.PushBack(n);
                 }
@@ -471,12 +472,12 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                         // Add table reference
                         auto& n = analyzed.table_references.Append(AnalyzedScript::TableReference(alias_name));
                         n.buffer_index = analyzed.table_references.GetSize() - 1;
-                        n.value.table_reference_id = ExternalObjectID{
+                        n.table_reference_id = ExternalObjectID{
                             catalog_entry_id, static_cast<uint32_t>(analyzed.table_references.GetSize() - 1)};
-                        n.value.ast_node_id = node_id;
-                        n.value.ast_statement_id = std::nullopt;
-                        n.value.ast_scope_root = std::nullopt;
-                        n.value.inner = AnalyzedScript::TableReference::UnresolvedRelationExpression{
+                        n.ast_node_id = node_id;
+                        n.ast_statement_id = std::nullopt;
+                        n.ast_scope_root = std::nullopt;
+                        n.inner = AnalyzedScript::TableReference::UnresolvedRelationExpression{
                             .table_name_ast_node_id = name_node_id, .table_name = name.value()};
                         node_state.table_references.PushBack(n);
                     }
@@ -597,7 +598,7 @@ void NameResolutionPass::Finish() {
             for (auto& chunk : chunks) {
                 for (auto& ref : chunk) {
                     // Search first statement that might include the node
-                    while (statement_end <= ref.value.ast_node_id && statement_id < parsed.statements.size()) {
+                    while (statement_end <= ref.ast_node_id && statement_id < parsed.statements.size()) {
                         ++statement_id;
                         statement_begin = parsed.statements[statement_id].nodes_begin;
                         statement_end = statement_begin + parsed.statements[statement_id].node_count;
@@ -608,8 +609,8 @@ void NameResolutionPass::Finish() {
                         break;
                     }
                     // The statement includes the node?
-                    if (statement_begin <= ref.value.ast_node_id) {
-                        ref.value.ast_statement_id = statement_id;
+                    if (statement_begin <= ref.ast_node_id) {
+                        ref.ast_statement_id = statement_id;
                         continue;
                     }
                     // Otherwise lthe ast_node does not belong to a statement, check next one

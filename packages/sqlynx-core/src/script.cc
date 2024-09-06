@@ -463,12 +463,12 @@ const CatalogEntry::NameSearchIndex& AnalyzedScript::GetNameSearchIndex() {
 
 template <typename In, typename Out, size_t ChunkSize>
 static flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Out>>> PackVector(
-    flatbuffers::FlatBufferBuilder& builder, const ChunkBuffer<typename IntrusiveList<In>::Node, ChunkSize>& elems) {
+    flatbuffers::FlatBufferBuilder& builder, const ChunkBuffer<In, ChunkSize>& elems) {
     std::vector<flatbuffers::Offset<Out>> offsets;
     offsets.reserve(elems.GetSize());
     for (auto& chunk : elems.GetChunks()) {
         for (auto& elem : chunk) {
-            offsets.push_back(elem->Pack(builder));
+            offsets.push_back(elem.Pack(builder));
         }
     }
     return builder.CreateVector(offsets);
@@ -512,8 +512,8 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
     {
         std::vector<proto::IndexedTableReference> table_refs_by_id;
         table_refs_by_id.reserve(table_references.GetSize());
-        table_references.ForEach([&](size_t ref_id, IntrusiveList<TableReference>::Node& ref) {
-            if (auto* resolved = std::get_if<TableReference::ResolvedRelationExpression>(&ref->inner)) {
+        table_references.ForEach([&](size_t ref_id, TableReference& ref) {
+            if (auto* resolved = std::get_if<TableReference::ResolvedRelationExpression>(&ref.inner)) {
                 assert(resolved->catalog_database_id != std::numeric_limits<uint32_t>::max());
                 assert(resolved->catalog_schema_id != std::numeric_limits<uint32_t>::max());
                 table_refs_by_id.emplace_back(resolved->catalog_database_id, resolved->catalog_schema_id,
@@ -534,8 +534,8 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
     {
         std::vector<proto::IndexedColumnReference> column_refs_by_id;
         column_refs_by_id.reserve(expressions.GetSize());
-        expressions.ForEach([&](size_t ref_id, IntrusiveList<Expression>::Node& ref) {
-            if (auto* resolved = std::get_if<AnalyzedScript::Expression::ResolvedColumnRef>(&ref->inner)) {
+        expressions.ForEach([&](size_t ref_id, Expression& ref) {
+            if (auto* resolved = std::get_if<AnalyzedScript::Expression::ResolvedColumnRef>(&ref.inner)) {
                 assert(resolved->catalog_database_id != std::numeric_limits<uint32_t>::max());
                 assert(resolved->catalog_schema_id != std::numeric_limits<uint32_t>::max());
                 assert(resolved->table_column_id);
