@@ -158,7 +158,7 @@ TEST(CursorTest, SimpleNoExternal) {
              .statement_id = 0,
              .ast_attribute_key = proto::AttributeKey::NONE,
              .ast_node_type = proto::NodeType::NAME,
-             .table_ref_name = "sqlynx.default.a",
+             .table_ref_name = "sqlynx.public.a",
          });
     test(script, 16,
          {
@@ -166,7 +166,7 @@ TEST(CursorTest, SimpleNoExternal) {
              .statement_id = 0,
              .ast_attribute_key = proto::AttributeKey::SQL_TABLEREF_ALIAS,
              .ast_node_type = proto::NodeType::NAME,
-             .table_ref_name = "sqlynx.default.a",
+             .table_ref_name = "sqlynx.public.a",
          });
     test(script, 23,
          {
@@ -233,7 +233,7 @@ TEST(CursorTest, TableRef) {
              .statement_id = 0,
              .ast_attribute_key = proto::AttributeKey::NONE,
              .ast_node_type = proto::NodeType::NAME,
-             .table_ref_name = "sqlynx.default.n",
+             .table_ref_name = "sqlynx.public.n",
          });
 }
 

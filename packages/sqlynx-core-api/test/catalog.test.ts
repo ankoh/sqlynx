@@ -227,7 +227,7 @@ create table region (
         expect(schema.flatParentIdx()).toEqual(0);
         expect(schema.childBegin()).toEqual(0);
         expect(schema.childCount()).toEqual(8);
-        expect(snap.readName(schema.nameId())).toEqual("default");
+        expect(snap.readName(schema.nameId())).toEqual("public");
 
         const tableNames = [
             "customer",

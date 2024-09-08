@@ -62,8 +62,8 @@
         </cursor>
         <completions limit="3" strategy="DEFAULT" symbol="NAME" relative="END_OF_SYMBOL" loc="28..29" text="f">
             <entry value="foo" score="40" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH" />
-            <entry value="default" score="35" ntags="SCHEMA_NAME" ctags="NAME_INDEX|SUBSTRING_MATCH" />
             <entry value="from" score="23" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
+            <entry value="fetch" score="20" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
         </completions>
     </completion-snapshot>
 </completion-snapshots>

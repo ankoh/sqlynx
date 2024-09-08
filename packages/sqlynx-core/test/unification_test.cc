@@ -45,8 +45,10 @@ TEST(UnificationTest, SingleTableInDefaultSchema) {
 
     // Check names
     EXPECT_EQ(flat->name_dictionary()->size(), 4);
-    EXPECT_EQ(flat->name_dictionary()->Get(flat->databases()->Get(0)->name_id())->string_view(), "sqlynx");
-    EXPECT_EQ(flat->name_dictionary()->Get(flat->schemas()->Get(0)->name_id())->string_view(), "default");
+    EXPECT_EQ(flat->name_dictionary()->Get(flat->databases()->Get(0)->name_id())->string_view(),
+              Catalog::DEFAULT_DATABASE_NAME);
+    EXPECT_EQ(flat->name_dictionary()->Get(flat->schemas()->Get(0)->name_id())->string_view(),
+              Catalog::DEFAULT_SCHEMA_NAME);
     EXPECT_EQ(flat->name_dictionary()->Get(flat->tables()->Get(0)->name_id())->string_view(), "foo");
     EXPECT_EQ(flat->name_dictionary()->Get(flat->columns()->Get(0)->name_id())->string_view(), "a");
 }
