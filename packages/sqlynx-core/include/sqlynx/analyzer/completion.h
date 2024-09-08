@@ -41,14 +41,14 @@ struct Completion {
         /// We may hit the same name multiple times in multiple catalog entries.
         /// Each of these entries may have different name tags, so we have to merge them here.
         NameTags tags;
-        /// The catalog objects
-        std::vector<std::reference_wrapper<CatalogObject>> catalog_objects;
         /// The name score
-        ScoreValueType score;
+        ScoreValueType score = 0;
+        /// The catalog objects
+        std::vector<std::reference_wrapper<const CatalogObject>> catalog_objects;
         /// Promoted for as resolving table?
-        bool promoted_as_resolving_table;
+        bool promoted_as_resolving_table = false;
         /// Promoted for as unresolved peer?
-        bool promoted_as_unresolved_peer;
+        bool promoted_as_unresolved_peer = false;
 
         /// Get the score
         inline ScoreValueType GetScore() const { return score; }

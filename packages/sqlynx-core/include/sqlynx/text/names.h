@@ -21,6 +21,12 @@ struct NameTags {
     NameTags(ValueType value = 0) : value(value) {}
     /// Constructor
     NameTags(proto::NameTag value) : value(static_cast<ValueType>(value)) {}
+    /// Constructor
+    NameTags(std::initializer_list<proto::NameTag> values) : value(0) {
+        for (auto v : values) {
+            value |= static_cast<ValueType>(v);
+        }
+    }
     /// Contains a name tag
     bool contains(proto::NameTag tag) const { return (value & static_cast<ValueType>(tag)) != 0; }
     /// Get the value
