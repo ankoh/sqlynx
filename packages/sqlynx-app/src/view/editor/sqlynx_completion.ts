@@ -54,13 +54,13 @@ export async function completeSQLynx(context: CompletionContext): Promise<Comple
             for (let i = 0; i < completion.candidates.length; ++i) {
                 const candidate = completion.candidates[i];
                 let tagName: string | undefined = undefined;
-                for (const tag of unpackNameTags(candidate.tags)) {
+                for (const tag of unpackNameTags(candidate.nameTags)) {
                     tagName = getNameTagName(tag);
                     break;
                 }
                 let candidateDetail = tagName;
                 if (processor.config.showCompletionDetails) {
-                    candidateDetail = `${candidateDetail}, score=${candidate.score}, near=${candidate.nearCursor}`;
+                    candidateDetail = `${candidateDetail}, score=${candidate.score}`;
                 }
                 completions.push({
                     state: processor,

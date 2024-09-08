@@ -57,7 +57,7 @@ export interface ScriptData {
     /// The statistics
     statistics: Immutable.List<sqlynx.FlatBufferPtr<sqlynx.proto.ScriptStatistics>>;
     /// The cursor
-    cursor: sqlynx.proto.ScriptCursorInfoT | null;
+    cursor: sqlynx.proto.ScriptCursorT | null;
 }
 
 /// Destroy a state
@@ -93,8 +93,8 @@ export const REGISTER_EDITOR_QUERY = Symbol('REGISTER_EDITOR_QUERY');
 
 export type SessionStateAction =
     | VariantKind<typeof DESTROY, null>
-    | VariantKind<typeof UPDATE_SCRIPT_ANALYSIS, [ScriptKey, SQLynxScriptBuffers, sqlynx.proto.ScriptCursorInfoT]>
-    | VariantKind<typeof UPDATE_SCRIPT_CURSOR, [ScriptKey, sqlynx.proto.ScriptCursorInfoT]>
+    | VariantKind<typeof UPDATE_SCRIPT_ANALYSIS, [ScriptKey, SQLynxScriptBuffers, sqlynx.proto.ScriptCursorT]>
+    | VariantKind<typeof UPDATE_SCRIPT_CURSOR, [ScriptKey, sqlynx.proto.ScriptCursorT]>
     | VariantKind<typeof REPLACE_SCRIPT_CONTENT, { [key: number]: string }>
     | VariantKind<typeof LOAD_SCRIPTS, { [key: number]: ScriptMetadata }>
     | VariantKind<typeof SCRIPT_LOADING_STARTED, ScriptKey>
