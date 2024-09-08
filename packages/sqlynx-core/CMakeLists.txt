@@ -252,6 +252,7 @@ set(LIB_SRC
   ${CMAKE_SOURCE_DIR}/src/parser/parser.cc
   ${CMAKE_SOURCE_DIR}/src/parser/scanner.cc
   ${CMAKE_SOURCE_DIR}/src/script.cc
+  ${CMAKE_SOURCE_DIR}/src/script_cursor.cc
   ${CMAKE_SOURCE_DIR}/src/text/names.cc
   ${CMAKE_SOURCE_DIR}/src/utils/rope.cc
   ${CMAKE_SOURCE_DIR}/src/utils/string_conversion.cc
