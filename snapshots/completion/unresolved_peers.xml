@@ -26,13 +26,13 @@
             <search text="apple, ju" index="9" />
         </cursor>
         <completions limit="3" strategy="COLUMN_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="135..137" text="ju">
-            <entry value="juice0" score="42" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH|UNRESOLVED_PEER">
+            <entry value="juice0" score="42" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH|UNRESOLVED_PEER" loc="135..137" text="ju">
                 <object type="column" id="256.65536.0.1" />
             </entry>
-            <entry value="juice1" score="40" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH">
+            <entry value="juice1" score="40" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH" loc="135..137" text="ju">
                 <object type="column" id="256.65536.1.0" />
             </entry>
-            <entry value="by" score="2" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL" />
+            <entry value="by" score="2" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL" loc="135..137" text="ju" />
         </completions>
     </completion-snapshot>
 </completion-snapshots>
