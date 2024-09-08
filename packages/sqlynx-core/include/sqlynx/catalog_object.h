@@ -27,8 +27,8 @@ struct CatalogObject : public IntrusiveListNode {
     CatalogObject& CastToBase() { return *reinterpret_cast<CatalogObject*>(this); }
     /// Cast unsafely to specific child object
     template <typename T, typename std::enable_if<std::is_base_of<CatalogObject, T>::value>::type* = nullptr>
-    T& CastUnsafe() {
-        return *reinterpret_cast<T*>(this);
+    const T& CastUnsafe() const {
+        return *reinterpret_cast<const T*>(this);
     }
 };
 
