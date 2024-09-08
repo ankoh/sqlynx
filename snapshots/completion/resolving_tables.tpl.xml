@@ -1,0 +1,16 @@
+<completion-snapshots>
+    <completion-snapshot name="resolving_0" what="score table name higher if it resolves an unresolved column ref">
+        <script>
+            <input>
+                create table similar_name_0(apple int, juice0 int);
+                create table similar_name_1(juice1 int);
+
+                select juice0 from s
+            </input>
+        </script>
+        <cursor>
+            <search text="from s" index="6" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+</completion-snapshots>

@@ -1,0 +1,40 @@
+<completion-snapshots>
+    <completion-snapshot name="resolving_0" what="score table name higher if it resolves an unresolved column ref">
+        <script id="0">
+            <input>
+                create table similar_name_0(apple int, juice0 int);
+                create table similar_name_1(juice1 int);
+
+                select juice0 from s
+            </input>
+            <tables>
+                <table id="256.65536.0" name="similar_name_0" loc="17..67" text="create tab..uice0 int)">
+                    <column id="256.65536.0.0" name="apple" loc="45..54" text="apple int" />
+                    <column id="256.65536.0.1" name="juice0" loc="56..66" text="juice0 int" />
+                </table>
+                <table id="256.65536.1" name="similar_name_1" loc="85..124" text="create tab..uice1 int)">
+                    <column id="256.65536.1.0" name="juice1" loc="113..123" text="juice1 int" />
+                </table>
+            </tables>
+            <errors />
+            <tablerefs>
+                <tableref type="name/unresolved" stmt="2" loc="162..163" text="s" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/unresolved" stmt="2" loc="150..156" text="juice0" />
+            </expressions>
+        </script>
+        <cursor>
+            <search text="from s" index="6" />
+        </cursor>
+        <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="162..163" text="s">
+            <entry value="similar_name_0" score="42" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH|RESOLVING_TABLE">
+                <object type="table" id="256.65536.0" />
+            </entry>
+            <entry value="s" score="40" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH" />
+            <entry value="similar_name_1" score="40" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH">
+                <object type="table" id="256.65536.1" />
+            </entry>
+        </completions>
+    </completion-snapshot>
+</completion-snapshots>
