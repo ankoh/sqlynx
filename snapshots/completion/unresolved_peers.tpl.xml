@@ -1,0 +1,16 @@
+<completion-snapshots>
+    <completion-snapshot name="peers_0" what="score column names higher if they have an unresolved peer">
+        <script>
+            <input>
+                create table foo(apple int, juice0 int);
+                create table bar(juice1 int);
+
+                select apple, ju
+            </input>
+        </script>
+        <cursor>
+            <search text=", ju" index="4" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+</completion-snapshots>
