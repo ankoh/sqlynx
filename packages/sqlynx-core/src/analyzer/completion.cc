@@ -525,6 +525,11 @@ void findCandidatesInIndex(Completion& completion, const CatalogEntry::NameSearc
     for (auto iter = index.lower_bound(search_text); iter != index.end() && iter->first.starts_with(search_text);
          ++iter) {
         auto& name_info = iter->second.get();
+        // Check if it's the cursor symbol
+        if (!through_catalog && name_info.occurrences == 1 && location->text_offset >= name_info.location.offset() &&
+            location->text_offset <= (name_info.location.offset() + name_info.location.length())) {
+            continue;
+        }
         // Determine the candidate tags
         Completion::CandidateTags candidate_tags{proto::CandidateTag::NAME_INDEX};
         // Added through catalog?
@@ -658,12 +663,6 @@ void Completion::FlushCandidatesAndFinish() {
 
     // Insert all pending candidates into the heap
     for (auto& [key, candidate] : pending_candidates) {
-        // Omit candidate if it occurs only once and is located under the cursor
-        // if (candidate.name.occurrences == 1 && !candidate.external &&
-        //     intersects(candidate.name.location, current_symbol_location)) {
-        //     continue;
-        // }
-        // XXXX
         result_heap.Insert(candidate);
     }
     pending_candidates.clear();
