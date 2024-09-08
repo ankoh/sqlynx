@@ -726,18 +726,13 @@ static const Completion::ScoringTable& selectScoringTable(proto::CompletionStrat
 }
 
 Completion::Completion(const ScriptCursor& cursor, size_t k)
-    : cursor(cursor),
-      strategy(selectStrategy(cursor)),
-      completion_action(proto::CompletionAction::SKIP_COMPLETION),
-      scoring_table(selectScoringTable(strategy)),
-      result_heap(k) {}
+    : cursor(cursor), strategy(selectStrategy(cursor)), scoring_table(selectScoringTable(strategy)), result_heap(k) {}
 
 std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(const ScriptCursor& cursor, size_t k) {
     auto completion = std::make_unique<Completion>(cursor, k);
 
     // Skip completion for the current symbol?
     if (doNotCompleteSymbol(cursor.scanner_location->symbol)) {
-        completion->completion_action = proto::CompletionAction::SKIP_COMPLETION;
         return {std::move(completion), proto::StatusCode::OK};
     }
 
@@ -747,7 +742,6 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
         switch (cursor.scanner_location->relative_pos) {
             case RelativePosition::NEW_SYMBOL_AFTER:
             case RelativePosition::END_OF_SYMBOL: {
-                completion->completion_action = proto::CompletionAction::COMPLETE_AT_DOT;
                 completion->FindCandidatesForNamePath();
                 completion->FlushCandidatesAndFinish();
                 return {std::move(completion), proto::StatusCode::OK};
@@ -757,7 +751,6 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
             case RelativePosition::MID_OF_SYMBOL:
             case RelativePosition::NEW_SYMBOL_BEFORE:
                 // Don't complete the dot itself
-                completion->completion_action = proto::CompletionAction::SKIP_COMPLETION_AT_DOT;
                 return {std::move(completion), proto::StatusCode::OK};
         }
     }
@@ -768,7 +761,6 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
         switch (cursor.scanner_location->relative_pos) {
             case RelativePosition::NEW_SYMBOL_AFTER:
             case RelativePosition::END_OF_SYMBOL: {
-                completion->completion_action = proto::CompletionAction::COMPLETE_AT_DOT;
                 completion->FindCandidatesForNamePath();
                 completion->FlushCandidatesAndFinish();
                 return {std::move(completion), proto::StatusCode::OK};
@@ -777,7 +769,6 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
             case RelativePosition::MID_OF_SYMBOL:
             case RelativePosition::NEW_SYMBOL_BEFORE: {
                 // Don't complete the dot itself
-                completion->completion_action = proto::CompletionAction::SKIP_COMPLETION_AT_DOT;
                 return {std::move(completion), proto::StatusCode::OK};
             }
         }
@@ -815,7 +806,6 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
             case RelativePosition::END_OF_SYMBOL:
             case RelativePosition::BEGIN_OF_SYMBOL:
             case RelativePosition::MID_OF_SYMBOL: {
-                completion->completion_action = proto::CompletionAction::COMPLETE_AFTER_DOT;
                 completion->FindCandidatesForNamePath();
                 completion->FlushCandidatesAndFinish();
                 return {std::move(completion), proto::StatusCode::OK};
@@ -843,7 +833,6 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
     completion->FlushCandidatesAndFinish();
 
     // Register as normal completion
-    completion->completion_action = proto::CompletionAction::COMPLETE_SYMBOL;
     return {std::move(completion), proto::StatusCode::OK};
 }
 
@@ -915,7 +904,6 @@ flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferB
     proto::CompletionBuilder completionBuilder{builder};
     completionBuilder.add_text_offset(cursor.text_offset);
     completionBuilder.add_strategy(strategy);
-    completionBuilder.add_action(completion_action);
     completionBuilder.add_candidates(candidatesOfs);
     return completionBuilder.Finish();
 }
