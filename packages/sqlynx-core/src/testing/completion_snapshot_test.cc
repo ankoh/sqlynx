@@ -57,11 +57,27 @@ void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Complet
             auto& obj = obj_ref.get();
             auto xml_obj = xml_entry.append_child("object");
             switch (obj.object_type) {
+                case sqlynx::CatalogObjectType::DatabaseDeclaration: {
+                    std::string type = "database";
+                    auto* t = static_cast<const Catalog::DatabaseDeclaration*>(&obj);
+                    xml_obj.append_attribute("type").set_value(type.c_str());
+                    std::string catalog_id = std::format("{}", t->catalog_database_id);
+                    xml_obj.append_attribute("id").set_value(catalog_id.c_str());
+                    break;
+                }
                 case sqlynx::CatalogObjectType::DatabaseReference: {
                     std::string type = "database";
                     auto* t = static_cast<const CatalogEntry::DatabaseReference*>(&obj);
                     xml_obj.append_attribute("type").set_value(type.c_str());
                     std::string catalog_id = std::format("{}", t->catalog_database_id);
+                    xml_obj.append_attribute("id").set_value(catalog_id.c_str());
+                    break;
+                }
+                case sqlynx::CatalogObjectType::SchemaDeclaration: {
+                    std::string type = "schema";
+                    auto* t = static_cast<const Catalog::SchemaDeclaration*>(&obj);
+                    xml_obj.append_attribute("type").set_value(type.c_str());
+                    std::string catalog_id = std::format("{}.{}", t->catalog_database_id, t->catalog_schema_id);
                     xml_obj.append_attribute("id").set_value(catalog_id.c_str());
                     break;
                 }

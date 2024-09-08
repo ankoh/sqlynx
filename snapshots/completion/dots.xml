@@ -25,7 +25,11 @@
         <cursor>
             <search text="dbname." index="7" />
         </cursor>
-        <completions limit="3" strategy="TABLE_REF" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="37..38" text="." />
+        <completions limit="3" strategy="TABLE_REF" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="37..38" text=".">
+            <entry value="schemaname" score="22" tags="TABLE_NAME">
+                <object type="schema" id="256.65536" />
+            </entry>
+        </completions>
     </completion-snapshot>
     <completion-snapshot name="complete_at_dot">
         <catalog>
