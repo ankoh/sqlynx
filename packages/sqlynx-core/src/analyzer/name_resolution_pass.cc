@@ -175,7 +175,7 @@ void NameResolutionPass::MergeChildStates(NodeState& dst, const proto::Node& par
 AnalyzedScript::NameScope& NameResolutionPass::CreateScope(NodeState& target, uint32_t scope_root) {
     auto& scope =
         analyzed.name_scopes.Append(AnalyzedScript::NameScope{.name_scope_id = analyzed.name_scopes.GetSize(),
-                                                              .ast_scope_root = scope_root,
+                                                              .ast_node_id = scope_root,
                                                               .parent_scope = nullptr,
                                                               .child_scopes = target.child_scopes.CastAsBase()});
     analyzed.name_scopes_by_root_node.insert({scope_root, scope});
@@ -619,6 +619,7 @@ void NameResolutionPass::Finish() {
         };
         assign_statment_ids(analyzed.table_references.GetChunks());
         assign_statment_ids(analyzed.expressions.GetChunks());
+        assign_statment_ids(analyzed.name_scopes.GetChunks());
     }
 
     // Index the table declarations
