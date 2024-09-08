@@ -5,6 +5,7 @@
 
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
+#include "sqlynx/testing/xml_tests.h"
 #include "sqlynx/text/names.h"
 
 namespace sqlynx {
@@ -65,6 +66,7 @@ void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Complet
         }
         xml_entry.append_attribute("ntags").set_value(name_tags.str().c_str());
         xml_entry.append_attribute("ctags").set_value(candidate_tags.str().c_str());
+        EncodeLocation(xml_entry, iter->replace_text_at, completion.GetCursor().script.scanned_script->text_buffer);
         for (auto& obj_ref : iter->catalog_objects) {
             auto& obj = obj_ref.get();
             auto xml_obj = xml_entry.append_child("object");

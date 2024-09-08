@@ -26,7 +26,7 @@
             <search text="dbname." index="7" />
         </cursor>
         <completions limit="3" strategy="TABLE_REF" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="37..38" text=".">
-            <entry value="schemaname" score="2" ntags="SCHEMA_NAME" ctags="DOT_RESOLUTION|THROUGH_CATALOG">
+            <entry value="schemaname" score="2" ntags="SCHEMA_NAME" ctags="DOT_RESOLUTION|THROUGH_CATALOG" loc="38..38" text="">
                 <object type="schema" id="256.65536" />
             </entry>
         </completions>
@@ -86,7 +86,7 @@
             <search text=".sch" index="1" />
         </cursor>
         <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="BEGIN_OF_SYMBOL" loc="38..41" text="sch">
-            <entry value="schemaname" score="2" ntags="SCHEMA_NAME" ctags="DOT_RESOLUTION|THROUGH_CATALOG">
+            <entry value="schemaname" score="2" ntags="SCHEMA_NAME" ctags="DOT_RESOLUTION|THROUGH_CATALOG" loc="38..41" text="sch">
                 <object type="schema" id="256.65536" />
             </entry>
         </completions>
@@ -118,7 +118,7 @@
             <search text="name." index="5" />
         </cursor>
         <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="BEGIN_OF_SYMBOL" loc="38..43" text="&quot;sch&quot;">
-            <entry value="schemaname" score="2" ntags="SCHEMA_NAME" ctags="DOT_RESOLUTION|THROUGH_CATALOG">
+            <entry value="schemaname" score="2" ntags="SCHEMA_NAME" ctags="DOT_RESOLUTION|THROUGH_CATALOG" loc="38..43" text="&quot;sch&quot;">
                 <object type="schema" id="256.65536" />
             </entry>
         </completions>
@@ -143,7 +143,7 @@
             <search text="from dbname." index="12" />
         </cursor>
         <completions limit="3" strategy="TABLE_REF" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="96..97" text=".">
-            <entry value="schemaname" score="2" ntags="SCHEMA_NAME" ctags="DOT_RESOLUTION">
+            <entry value="schemaname" score="2" ntags="SCHEMA_NAME" ctags="DOT_RESOLUTION" loc="97..97" text="">
                 <object type="schema" id="256.65536" />
             </entry>
         </completions>
