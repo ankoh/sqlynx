@@ -1,133 +1,9 @@
 <completion-snapshots>
-    <completion-snapshot name="complete_trailing_dot">
-        <catalog>
-            <script id="1">
-                <input>
-                    create table dbname.schemaname.foo(a int);
-                </input>
-                <tables>
-                    <table id="256.65536.4294967296" name="foo" loc="21..62" text="create tab..foo(a int)">
-                        <column id="256.65536.4294967296.0" name="a" loc="56..61" text="a int" />
-                    </table>
-                </tables>
-                <errors />
-            </script>
-        </catalog>
-        <script id="0">
-            <input>
-                select * from dbname.
-            </input>
-            <errors />
-            <tablerefs>
-                <tableref type="name/unresolved" stmt="0" loc="31..38" text="dbname." />
-            </tablerefs>
-        </script>
-        <cursor>
-            <search text="dbname." index="7" />
-        </cursor>
-        <completions limit="3" strategy="TABLE_REF" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="37..38" text=".">
-            <entry value="schemaname" score="22" tags="SCHEMA_NAME">
-                <object type="schema" id="256.65536" />
-            </entry>
-        </completions>
-    </completion-snapshot>
-    <completion-snapshot name="complete_at_dot">
-        <catalog>
-            <script id="1">
-                <input>
-                    create table dbname.schemaname.foo(a int);
-                </input>
-                <tables>
-                    <table id="256.65536.4294967296" name="foo" loc="21..62" text="create tab..foo(a int)">
-                        <column id="256.65536.4294967296.0" name="a" loc="56..61" text="a int" />
-                    </table>
-                </tables>
-                <errors />
-            </script>
-        </catalog>
-        <script id="0">
-            <input>
-                select * from dbname.sch
-            </input>
-            <errors />
-            <tablerefs>
-                <tableref type="name/unresolved" stmt="0" loc="31..41" text="dbname.sch" />
-            </tablerefs>
-        </script>
-        <cursor>
-            <search text=".sch" index="0" />
-        </cursor>
-        <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="BEGIN_OF_SYMBOL" loc="37..38" text="." />
-    </completion-snapshot>
-    <completion-snapshot name="complete_previous_dot">
-        <catalog>
-            <script id="1">
-                <input>
-                    create table dbname.schemaname.foo(a int);
-                </input>
-                <tables>
-                    <table id="256.65536.4294967296" name="foo" loc="21..62" text="create tab..foo(a int)">
-                        <column id="256.65536.4294967296.0" name="a" loc="56..61" text="a int" />
-                    </table>
-                </tables>
-                <errors />
-            </script>
-        </catalog>
-        <script id="0">
-            <input>
-                select * from dbname.sch
-            </input>
-            <errors />
-            <tablerefs>
-                <tableref type="name/unresolved" stmt="0" loc="31..41" text="dbname.sch" />
-            </tablerefs>
-        </script>
-        <cursor>
-            <search text=".sch" index="1" />
-        </cursor>
-        <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="BEGIN_OF_SYMBOL" loc="38..41" text="sch">
-            <entry value="schemaname" score="22" tags="SCHEMA_NAME">
-                <object type="schema" id="256.65536" />
-            </entry>
-        </completions>
-    </completion-snapshot>
-    <completion-snapshot name="complete_previous_dot_quotes">
-        <catalog>
-            <script id="1">
-                <input>
-                    create table dbname.schemaname.foo(a int);
-                </input>
-                <tables>
-                    <table id="256.65536.4294967296" name="foo" loc="21..62" text="create tab..foo(a int)">
-                        <column id="256.65536.4294967296.0" name="a" loc="56..61" text="a int" />
-                    </table>
-                </tables>
-                <errors />
-            </script>
-        </catalog>
-        <script id="0">
-            <input>
-                select * from dbname."sch"
-            </input>
-            <errors />
-            <tablerefs>
-                <tableref type="name/unresolved" stmt="0" loc="31..43" text="dbname.&quot;sch&quot;" />
-            </tablerefs>
-        </script>
-        <cursor>
-            <search text="name." index="5" />
-        </cursor>
-        <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="BEGIN_OF_SYMBOL" loc="38..43" text="&quot;sch&quot;">
-            <entry value="schemaname" score="22" tags="SCHEMA_NAME">
-                <object type="schema" id="256.65536" />
-            </entry>
-        </completions>
-    </completion-snapshot>
-    <completion-snapshot name="same_script_complete_trailing_dot">
+    <completion-snapshot name="dots_qualified_table" what="complete a qualified table">
         <script id="0">
             <input>
                 create table dbname.schemaname.foo(a int);
-                select * from dbname.
+                select * from dbname.schemaname.
             </input>
             <tables>
                 <table id="256.65536.0" name="foo" loc="17..58" text="create tab..foo(a int)">
@@ -136,15 +12,265 @@
             </tables>
             <errors />
             <tablerefs>
-                <tableref type="name/unresolved" stmt="1" loc="90..97" text="dbname." />
+                <tableref type="name/unresolved" stmt="1" loc="90..108" text="dbname.schemaname." />
             </tablerefs>
         </script>
         <cursor>
-            <search text="from dbname." index="12" />
+            <search text="from dbname.schemaname." index="23" />
         </cursor>
-        <completions limit="3" strategy="TABLE_REF" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="96..97" text=".">
-            <entry value="schemaname" score="22" tags="SCHEMA_NAME">
-                <object type="schema" id="256.65536" />
+        <completions limit="3" strategy="TABLE_REF" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="107..108" text=".">
+            <entry value="foo" score="22" tags="TABLE_NAME">
+                <object type="table" id="256.65536.0" />
+            </entry>
+        </completions>
+    </completion-snapshot>
+    <completion-snapshot name="dots_column_0" what="complete an alias with qualified table">
+        <script id="0">
+            <input>
+                create table dbname.schemaname.foo(a int);
+                select from dbname.schemaname.foo f where f.
+            </input>
+            <tables>
+                <table id="256.65536.0" name="foo" loc="17..58" text="create tab..foo(a int)">
+                    <column id="256.65536.0.0" name="a" loc="52..57" text="a int" />
+                </table>
+            </tables>
+            <errors />
+            <tablerefs>
+                <tableref type="name/internal" id="256.65536.0" stmt="1" loc="88..111" text="dbname.sch..name.foo f" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/unresolved" stmt="1" loc="118..120" text="f." />
+            </expressions>
+        </script>
+        <cursor>
+            <search text="f." index="2" />
+        </cursor>
+        <completions limit="3" strategy="COLUMN_REF" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="119..120" text=".">
+            <entry value="a" score="22" tags="TABLE_NAME">
+                <object type="column" id="256.65536.0.0" />
+            </entry>
+        </completions>
+    </completion-snapshot>
+    <completion-snapshot name="dots_column_1" what="complete an alias with qualified table but default db">
+        <script id="0">
+            <input>
+                create table schemaname.foo(a int);
+                select from schemaname.foo f where f.
+            </input>
+            <tables>
+                <table id="256.65536.0" name="foo" loc="17..51" text="create tab..foo(a int)">
+                    <column id="256.65536.0.0" name="a" loc="45..50" text="a int" />
+                </table>
+            </tables>
+            <errors />
+            <tablerefs>
+                <tableref type="name/internal" id="256.65536.0" stmt="1" loc="81..97" text="schemaname.foo f" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/unresolved" stmt="1" loc="104..106" text="f." />
+            </expressions>
+        </script>
+        <cursor>
+            <search text="f." index="2" />
+        </cursor>
+        <completions limit="3" strategy="COLUMN_REF" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="105..106" text=".">
+            <entry value="a" score="22" tags="TABLE_NAME">
+                <object type="column" id="256.65536.0.0" />
+            </entry>
+        </completions>
+    </completion-snapshot>
+    <completion-snapshot name="dots_column_2" what="complete an alias with unqualified table">
+        <script id="0">
+            <input>
+                create table foo(a int);
+                select from foo f where f.
+            </input>
+            <tables>
+                <table id="256.65536.0" name="foo" loc="17..40" text="create tab..foo(a int)">
+                    <column id="256.65536.0.0" name="a" loc="34..39" text="a int" />
+                </table>
+            </tables>
+            <errors />
+            <tablerefs>
+                <tableref type="name/internal" id="256.65536.0" stmt="1" loc="70..75" text="foo f" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/unresolved" stmt="1" loc="82..84" text="f." />
+            </expressions>
+        </script>
+        <cursor>
+            <search text="f." index="2" />
+        </cursor>
+        <completions limit="3" strategy="COLUMN_REF" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="83..84" text=".">
+            <entry value="a" score="22" tags="TABLE_NAME">
+                <object type="column" id="256.65536.0.0" />
+            </entry>
+        </completions>
+    </completion-snapshot>
+    <completion-snapshot name="dots_multiple_columns_0" what="complete multiple columns">
+        <script id="0">
+            <input>
+                create table foo(a int, b int, c int);
+                create table bar(d int, e int, f int);
+                select from foo alias where alias.
+            </input>
+            <tables>
+                <table id="256.65536.0" name="foo" loc="17..54" text="create tab..nt, c int)">
+                    <column id="256.65536.0.0" name="a" loc="34..39" text="a int" />
+                    <column id="256.65536.0.1" name="b" loc="41..46" text="b int" />
+                    <column id="256.65536.0.2" name="c" loc="48..53" text="c int" />
+                </table>
+                <table id="256.65536.1" name="bar" loc="72..109" text="create tab..nt, f int)">
+                    <column id="256.65536.1.0" name="d" loc="89..94" text="d int" />
+                    <column id="256.65536.1.1" name="e" loc="96..101" text="e int" />
+                    <column id="256.65536.1.2" name="f" loc="103..108" text="f int" />
+                </table>
+            </tables>
+            <errors />
+            <tablerefs>
+                <tableref type="name/internal" id="256.65536.0" stmt="2" loc="139..148" text="foo alias" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/unresolved" stmt="2" loc="155..161" text="alias." />
+            </expressions>
+        </script>
+        <cursor>
+            <search text="alias." index="6" />
+        </cursor>
+        <completions limit="3" strategy="COLUMN_REF" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="160..161" text=".">
+            <entry value="a" score="22" tags="TABLE_NAME">
+                <object type="column" id="256.65536.0.0" />
+            </entry>
+            <entry value="b" score="22" tags="TABLE_NAME">
+                <object type="column" id="256.65536.0.1" />
+            </entry>
+            <entry value="c" score="22" tags="TABLE_NAME">
+                <object type="column" id="256.65536.0.2" />
+            </entry>
+        </completions>
+    </completion-snapshot>
+    <completion-snapshot name="dots_multiple_columns_1" what="complete multiple columns, multiple froms">
+        <script id="0">
+            <input>
+                create table foo(a int, b int, c int);
+                create table bar(d int, e int, f int);
+                select from foo f, bar b where f.
+            </input>
+            <tables>
+                <table id="256.65536.0" name="foo" loc="17..54" text="create tab..nt, c int)">
+                    <column id="256.65536.0.0" name="a" loc="34..39" text="a int" />
+                    <column id="256.65536.0.1" name="b" loc="41..46" text="b int" />
+                    <column id="256.65536.0.2" name="c" loc="48..53" text="c int" />
+                </table>
+                <table id="256.65536.1" name="bar" loc="72..109" text="create tab..nt, f int)">
+                    <column id="256.65536.1.0" name="d" loc="89..94" text="d int" />
+                    <column id="256.65536.1.1" name="e" loc="96..101" text="e int" />
+                    <column id="256.65536.1.2" name="f" loc="103..108" text="f int" />
+                </table>
+            </tables>
+            <errors />
+            <tablerefs>
+                <tableref type="name/internal" id="256.65536.0" stmt="2" loc="139..144" text="foo f" />
+                <tableref type="name/internal" id="256.65536.1" stmt="2" loc="146..151" text="bar b" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/internal" id="256.65536.1.2" stmt="2" loc="158..160" text="f." />
+            </expressions>
+        </script>
+        <cursor>
+            <search text="f." index="2" />
+        </cursor>
+        <completions limit="3" strategy="COLUMN_REF" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="159..160" text=".">
+            <entry value="a" score="22" tags="TABLE_NAME">
+                <object type="column" id="256.65536.0.0" />
+            </entry>
+            <entry value="b" score="22" tags="TABLE_NAME">
+                <object type="column" id="256.65536.0.1" />
+            </entry>
+            <entry value="c" score="22" tags="TABLE_NAME">
+                <object type="column" id="256.65536.0.2" />
+            </entry>
+        </completions>
+    </completion-snapshot>
+    <completion-snapshot name="dots_multiple_columns_2" what="complete multiple columns, multiple froms, other table">
+        <script id="0">
+            <input>
+                create table foo(a int, b int, c int);
+                create table bar(d int, e int, f int);
+                select from foo f, bar b where b.
+            </input>
+            <tables>
+                <table id="256.65536.0" name="foo" loc="17..54" text="create tab..nt, c int)">
+                    <column id="256.65536.0.0" name="a" loc="34..39" text="a int" />
+                    <column id="256.65536.0.1" name="b" loc="41..46" text="b int" />
+                    <column id="256.65536.0.2" name="c" loc="48..53" text="c int" />
+                </table>
+                <table id="256.65536.1" name="bar" loc="72..109" text="create tab..nt, f int)">
+                    <column id="256.65536.1.0" name="d" loc="89..94" text="d int" />
+                    <column id="256.65536.1.1" name="e" loc="96..101" text="e int" />
+                    <column id="256.65536.1.2" name="f" loc="103..108" text="f int" />
+                </table>
+            </tables>
+            <errors />
+            <tablerefs>
+                <tableref type="name/internal" id="256.65536.0" stmt="2" loc="139..144" text="foo f" />
+                <tableref type="name/internal" id="256.65536.1" stmt="2" loc="146..151" text="bar b" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/internal" id="256.65536.0.1" stmt="2" loc="158..160" text="b." />
+            </expressions>
+        </script>
+        <cursor>
+            <search text="b." index="2" />
+        </cursor>
+        <completions limit="3" strategy="COLUMN_REF" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="159..160" text=".">
+            <entry value="d" score="22" tags="TABLE_NAME">
+                <object type="column" id="256.65536.1.0" />
+            </entry>
+            <entry value="e" score="22" tags="TABLE_NAME">
+                <object type="column" id="256.65536.1.1" />
+            </entry>
+            <entry value="f" score="22" tags="TABLE_NAME">
+                <object type="column" id="256.65536.1.2" />
+            </entry>
+        </completions>
+    </completion-snapshot>
+    <completion-snapshot name="dots_limit" what="more table columns than limit">
+        <script id="0">
+            <input>
+                create table foo(a int, b int, c int, d int, e int);
+                select from foo f where f.
+            </input>
+            <tables>
+                <table id="256.65536.0" name="foo" loc="17..68" text="create tab..nt, e int)">
+                    <column id="256.65536.0.0" name="a" loc="34..39" text="a int" />
+                    <column id="256.65536.0.1" name="b" loc="41..46" text="b int" />
+                    <column id="256.65536.0.2" name="c" loc="48..53" text="c int" />
+                    <column id="256.65536.0.3" name="d" loc="55..60" text="d int" />
+                    <column id="256.65536.0.4" name="e" loc="62..67" text="e int" />
+                </table>
+            </tables>
+            <errors />
+            <tablerefs>
+                <tableref type="name/internal" id="256.65536.0" stmt="1" loc="98..103" text="foo f" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/unresolved" stmt="1" loc="110..112" text="f." />
+            </expressions>
+        </script>
+        <cursor>
+            <search text="f." index="2" />
+        </cursor>
+        <completions limit="3" strategy="COLUMN_REF" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="111..112" text=".">
+            <entry value="a" score="22" tags="TABLE_NAME">
+                <object type="column" id="256.65536.0.0" />
+            </entry>
+            <entry value="b" score="22" tags="TABLE_NAME">
+                <object type="column" id="256.65536.0.1" />
+            </entry>
+            <entry value="c" score="22" tags="TABLE_NAME">
+                <object type="column" id="256.65536.0.2" />
             </entry>
         </completions>
     </completion-snapshot>

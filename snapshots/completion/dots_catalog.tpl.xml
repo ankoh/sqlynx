@@ -1,0 +1,87 @@
+<completion-snapshots>
+    <completion-snapshot name="dots_catalog_complete_trailing_dot">
+        <catalog>
+            <script>
+                <input>
+                    create table dbname.schemaname.foo(a int);
+                </input>
+            </script>
+        </catalog>
+        <script>
+            <input>
+                select * from dbname.
+            </input>
+        </script>
+        <cursor>
+            <search text="dbname." index="7" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+    <completion-snapshot name="dots_catalog_complete_at_dot">
+        <catalog>
+            <script>
+                <input>
+                    create table dbname.schemaname.foo(a int);
+                </input>
+            </script>
+        </catalog>
+        <script>
+            <input>
+                select * from dbname.sch
+            </input>
+        </script>
+        <cursor>
+            <search text=".sch" index="0" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+    <completion-snapshot name="dots_catalog_complete_previous_dot">
+        <catalog>
+            <script>
+                <input>
+                    create table dbname.schemaname.foo(a int);
+                </input>
+            </script>
+        </catalog>
+        <script>
+            <input>
+                select * from dbname.sch
+            </input>
+        </script>
+        <cursor>
+            <search text=".sch" index="1" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+    <completion-snapshot name="dots_catalog_complete_previous_dot_quotes">
+        <catalog>
+            <script>
+                <input>
+                    create table dbname.schemaname.foo(a int);
+                </input>
+            </script>
+        </catalog>
+        <script>
+            <input>
+                select * from dbname."sch"
+            </input>
+        </script>
+        <cursor>
+            <search text="name." index="5" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+
+    <completion-snapshot name="dots_catalog_same_script_complete_schema">
+        <script>
+            <input>
+                create table dbname.schemaname.foo(a int);
+                select * from dbname.
+            </input>
+        </script>
+        <cursor>
+            <search text="from dbname." index="12" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+</completion>
