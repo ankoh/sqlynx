@@ -239,7 +239,7 @@ void Completion::FindCandidatesForNamePath() {
         if (name_path[name_count].type != NameComponentType::Name) {
             break;
         }
-        if ((name_path[name_count].loc.offset() + name_path[name_count].loc.length()) <= cursor_location) {
+        if ((name_path[name_count].loc.offset() + name_path[name_count].loc.length()) < cursor_location) {
             ++sealed;
         } else {
             // The cursor points into a name?
@@ -387,7 +387,7 @@ void Completion::FindCandidatesForNamePath() {
     }
 
     // Now we need to score the candidates based on the cursor prefix (if there is any)
-    if (last_text_prefix.empty()) {
+    if (!last_text_prefix.empty()) {
         for (auto& candidate : candidates) {
             auto iter = pending_candidates.find(candidate.name);
             if (iter != pending_candidates.end()) {

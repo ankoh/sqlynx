@@ -19,7 +19,7 @@
             <search text="from dbname.schemaname." index="23" />
         </cursor>
         <completions limit="3" strategy="TABLE_REF" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="107..108" text=".">
-            <entry value="foo" score="22" tags="TABLE_NAME">
+            <entry value="foo" score="2" tags="TABLE_NAME">
                 <object type="table" id="256.65536.0" />
             </entry>
         </completions>
@@ -47,7 +47,7 @@
             <search text="f." index="2" />
         </cursor>
         <completions limit="3" strategy="COLUMN_REF" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="119..120" text=".">
-            <entry value="a" score="22" tags="TABLE_NAME">
+            <entry value="a" score="2" tags="TABLE_NAME">
                 <object type="column" id="256.65536.0.0" />
             </entry>
         </completions>
@@ -75,7 +75,7 @@
             <search text="f." index="2" />
         </cursor>
         <completions limit="3" strategy="COLUMN_REF" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="105..106" text=".">
-            <entry value="a" score="22" tags="TABLE_NAME">
+            <entry value="a" score="2" tags="TABLE_NAME">
                 <object type="column" id="256.65536.0.0" />
             </entry>
         </completions>
@@ -103,7 +103,7 @@
             <search text="f." index="2" />
         </cursor>
         <completions limit="3" strategy="COLUMN_REF" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="83..84" text=".">
-            <entry value="a" score="22" tags="TABLE_NAME">
+            <entry value="a" score="2" tags="TABLE_NAME">
                 <object type="column" id="256.65536.0.0" />
             </entry>
         </completions>
@@ -139,13 +139,13 @@
             <search text="alias." index="6" />
         </cursor>
         <completions limit="3" strategy="COLUMN_REF" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="160..161" text=".">
-            <entry value="a" score="22" tags="TABLE_NAME">
+            <entry value="a" score="2" tags="TABLE_NAME">
                 <object type="column" id="256.65536.0.0" />
             </entry>
-            <entry value="b" score="22" tags="TABLE_NAME">
+            <entry value="b" score="2" tags="TABLE_NAME">
                 <object type="column" id="256.65536.0.1" />
             </entry>
-            <entry value="c" score="22" tags="TABLE_NAME">
+            <entry value="c" score="2" tags="TABLE_NAME">
                 <object type="column" id="256.65536.0.2" />
             </entry>
         </completions>
@@ -182,13 +182,13 @@
             <search text="f." index="2" />
         </cursor>
         <completions limit="3" strategy="COLUMN_REF" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="159..160" text=".">
-            <entry value="a" score="22" tags="TABLE_NAME">
+            <entry value="a" score="2" tags="TABLE_NAME">
                 <object type="column" id="256.65536.0.0" />
             </entry>
-            <entry value="b" score="22" tags="TABLE_NAME">
+            <entry value="b" score="2" tags="TABLE_NAME">
                 <object type="column" id="256.65536.0.1" />
             </entry>
-            <entry value="c" score="22" tags="TABLE_NAME">
+            <entry value="c" score="2" tags="TABLE_NAME">
                 <object type="column" id="256.65536.0.2" />
             </entry>
         </completions>
@@ -225,13 +225,13 @@
             <search text="b." index="2" />
         </cursor>
         <completions limit="3" strategy="COLUMN_REF" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="159..160" text=".">
-            <entry value="d" score="22" tags="TABLE_NAME">
+            <entry value="d" score="2" tags="TABLE_NAME">
                 <object type="column" id="256.65536.1.0" />
             </entry>
-            <entry value="e" score="22" tags="TABLE_NAME">
+            <entry value="e" score="2" tags="TABLE_NAME">
                 <object type="column" id="256.65536.1.1" />
             </entry>
-            <entry value="f" score="22" tags="TABLE_NAME">
+            <entry value="f" score="2" tags="TABLE_NAME">
                 <object type="column" id="256.65536.1.2" />
             </entry>
         </completions>
@@ -263,14 +263,46 @@
             <search text="f." index="2" />
         </cursor>
         <completions limit="3" strategy="COLUMN_REF" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="111..112" text=".">
-            <entry value="a" score="22" tags="TABLE_NAME">
+            <entry value="a" score="2" tags="TABLE_NAME">
                 <object type="column" id="256.65536.0.0" />
             </entry>
-            <entry value="b" score="22" tags="TABLE_NAME">
+            <entry value="b" score="2" tags="TABLE_NAME">
                 <object type="column" id="256.65536.0.1" />
             </entry>
-            <entry value="c" score="22" tags="TABLE_NAME">
+            <entry value="c" score="2" tags="TABLE_NAME">
                 <object type="column" id="256.65536.0.2" />
+            </entry>
+        </completions>
+    </completion-snapshot>
+    <completion-snapshot name="dots_score_column_prefix_0" what="column names with matching prefix should score higher">
+        <script id="0">
+            <input>
+                create table foo(apple int, juice int);
+                select from foo f where f.ap
+            </input>
+            <tables>
+                <table id="256.65536.0" name="foo" loc="17..55" text="create tab..juice int)">
+                    <column id="256.65536.0.0" name="apple" loc="34..43" text="apple int" />
+                    <column id="256.65536.0.1" name="juice" loc="45..54" text="juice int" />
+                </table>
+            </tables>
+            <errors />
+            <tablerefs>
+                <tableref type="name/internal" id="256.65536.0" stmt="1" loc="85..90" text="foo f" />
+            </tablerefs>
+            <expressions>
+                <expr type="colref/unresolved" stmt="1" loc="97..101" text="f.ap" />
+            </expressions>
+        </script>
+        <cursor>
+            <search text="f.ap" index="4" />
+        </cursor>
+        <completions limit="3" strategy="COLUMN_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="99..101" text="ap">
+            <entry value="apple" score="22" tags="TABLE_NAME">
+                <object type="column" id="256.65536.0.0" />
+            </entry>
+            <entry value="juice" score="2" tags="TABLE_NAME">
+                <object type="column" id="256.65536.0.1" />
             </entry>
         </completions>
     </completion-snapshot>
