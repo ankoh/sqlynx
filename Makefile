@@ -97,10 +97,6 @@ core_native_coverage:
 benchmark_pipeline:
 	${LIB_RELWITHDEBINFO_DIR}/benchmark_pipeline
 
-.PHONY: benchmark_layout
-benchmark_layout:
-	${LIB_RELWITHDEBINFO_DIR}/benchmark_layout
-
 .PHONY: core_wasm_o0
 core_wasm_o0:
 	./scripts/build_parser_wasm.sh o0

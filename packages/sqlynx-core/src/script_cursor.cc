@@ -1,3 +1,4 @@
+#include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
 
 namespace sqlynx {
@@ -73,7 +74,7 @@ std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Place(
                                 break;
                         }
                         // Stop when we reached the root of the innermost name scope.
-                        if (matched || node_id == innermost_scope.ast_scope_root) {
+                        if (matched || node_id == innermost_scope.ast_node_id) {
                             break;
                         }
                     }

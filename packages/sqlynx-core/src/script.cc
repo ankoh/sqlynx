@@ -554,6 +554,48 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
         column_refs_by_id_ofs = builder.CreateVectorOfStructs(column_refs_by_id);
     }
 
+    // Pack name scopes
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<proto::NameScope>>> name_scopes_ofs;
+    {
+        std::vector<flatbuffers::Offset<proto::NameScope>> name_scope_offsets;
+        name_scopes.ForEach([&](size_t scope_id, const NameScope& scope) {
+            // Encode child scopes
+            builder.StartVector<uint32_t>(scope.child_scopes.GetSize());
+            for (auto& child_scope : scope.child_scopes) {
+                builder.PushElement(child_scope.buffer_index);
+            }
+            flatbuffers::Offset<flatbuffers::Vector<uint32_t>> child_scopes_ofs{
+                builder.EndVector(scope.child_scopes.GetSize())};
+
+            // Encode expressions
+            builder.StartVector<uint32_t>(scope.child_scopes.GetSize());
+            for (auto& expr : scope.expressions) {
+                builder.PushElement(expr.buffer_index);
+            }
+            flatbuffers::Offset<flatbuffers::Vector<uint32_t>> expressions_ofs{
+                builder.EndVector(scope.expressions.GetSize())};
+
+            // Encode table references
+            builder.StartVector<uint32_t>(scope.table_references.GetSize());
+            for (auto& ref : scope.table_references) {
+                builder.PushElement(ref.buffer_index);
+            }
+            flatbuffers::Offset<flatbuffers::Vector<uint32_t>> table_refs_ofs{
+                builder.EndVector(scope.table_references.GetSize())};
+
+            proto::NameScopeBuilder scope_builder{builder};
+            scope_builder.add_scope_id(scope_id);
+            scope_builder.add_ast_node_id(scope.ast_node_id);
+            scope_builder.add_ast_statement_id(scope.ast_statement_id);
+            scope_builder.add_child_scopes(child_scopes_ofs);
+            scope_builder.add_expressions(expressions_ofs);
+            scope_builder.add_table_references(table_refs_ofs);
+
+            name_scope_offsets.push_back(scope_builder.Finish());
+        });
+        name_scopes_ofs = builder.CreateVector(name_scope_offsets);
+    }
+
     proto::AnalyzedScriptBuilder out{builder};
     out.add_catalog_entry_id(catalog_entry_id);
     out.add_tables(tables_ofs);
@@ -561,6 +603,7 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
     out.add_expressions(expressions_ofs);
     out.add_table_references_by_id(table_refs_by_id_ofs);
     out.add_column_references_by_id(column_refs_by_id_ofs);
+    out.add_name_scopes(name_scopes_ofs);
     return out.Finish();
 }
 

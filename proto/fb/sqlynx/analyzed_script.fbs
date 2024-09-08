@@ -160,11 +160,13 @@ struct IndexedColumnReference {
     expression_id: uint32;
 }
 
-table NamingScope {
+table NameScope {
     /// The scope id
     scope_id: uint32;
-    /// The ast scope root
-    ast_scope_root: uint32;
+    /// The ast node id
+    ast_node_id: uint32;
+    /// The ast statement id
+    ast_statement_id: uint32;
     /// The child scopes
     child_scopes: [uint32];
     /// The column references in this scope
@@ -205,8 +207,8 @@ table AnalyzedScript {
     /// (Currently only name resolution)
     expressions: [Expression];
 
-    /// The naming scopes
-    naming_scopes: [NamingScope];
+    /// The name scopes
+    name_scopes: [NameScope];
     /// The statement root scopes
     statement_root_scopes: [uint32];
 

@@ -278,8 +278,10 @@ class AnalyzedScript : public CatalogEntry {
     struct NameScope : public IntrusiveListNode {
         /// The id of the scope (== scope index in the script)
         size_t name_scope_id;
-        /// The scope root
-        size_t ast_scope_root;
+        /// The AST scope root
+        size_t ast_node_id;
+        /// The AST statement id
+        size_t ast_statement_id;
         /// The parent scope
         NameScope* parent_scope;
         /// The child scopes
