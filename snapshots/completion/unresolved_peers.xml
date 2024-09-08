@@ -1,0 +1,38 @@
+<completion-snapshots>
+    <completion-snapshot name="peers_0" what="score column names higher if they have an unresolved peer">
+        <script id="0">
+            <input>
+                create table foo(apple int, juice0 int);
+                create table bar(juice1 int);
+
+                select apple, ju
+            </input>
+            <tables>
+                <table id="256.65536.0" name="foo" loc="17..56" text="create tab..uice0 int)">
+                    <column id="256.65536.0.0" name="apple" loc="34..43" text="apple int" />
+                    <column id="256.65536.0.1" name="juice0" loc="45..55" text="juice0 int" />
+                </table>
+                <table id="256.65536.1" name="bar" loc="74..102" text="create tab..uice1 int)">
+                    <column id="256.65536.1.0" name="juice1" loc="91..101" text="juice1 int" />
+                </table>
+            </tables>
+            <errors />
+            <expressions>
+                <expr type="colref/unresolved" stmt="2" loc="128..133" text="apple" />
+                <expr type="colref/unresolved" stmt="2" loc="135..137" text="ju" />
+            </expressions>
+        </script>
+        <cursor>
+            <search text=", ju" index="4" />
+        </cursor>
+        <completions limit="3" strategy="DEFAULT" symbol="NAME" relative="MID_OF_SYMBOL" loc="45..51" text="juice0">
+            <entry value="juice0" score="42" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH|UNRESOLVED_PEER">
+                <object type="column" id="256.65536.0.1" />
+            </entry>
+            <entry value="ju" score="40" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH" />
+            <entry value="juice1" score="40" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH">
+                <object type="column" id="256.65536.1.0" />
+            </entry>
+        </completions>
+    </completion-snapshot>
+</completion-snapshots>
