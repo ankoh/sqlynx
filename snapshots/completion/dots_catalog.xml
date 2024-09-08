@@ -1,0 +1,151 @@
+<completion-snapshots>
+    <completion-snapshot name="dots_catalog_complete_trailing_dot">
+        <catalog>
+            <script id="1">
+                <input>
+                    create table dbname.schemaname.foo(a int);
+                </input>
+                <tables>
+                    <table id="256.65536.4294967296" name="foo" loc="21..62" text="create tab..foo(a int)">
+                        <column id="256.65536.4294967296.0" name="a" loc="56..61" text="a int" />
+                    </table>
+                </tables>
+                <errors />
+            </script>
+        </catalog>
+        <script id="0">
+            <input>
+                select * from dbname.
+            </input>
+            <errors />
+            <tablerefs>
+                <tableref type="name/unresolved" stmt="0" loc="31..38" text="dbname." />
+            </tablerefs>
+        </script>
+        <cursor>
+            <search text="dbname." index="7" />
+        </cursor>
+        <completions limit="3" strategy="TABLE_REF" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="37..38" text=".">
+            <entry value="schemaname" score="22" tags="SCHEMA_NAME">
+                <object type="schema" id="256.65536" />
+            </entry>
+        </completions>
+    </completion-snapshot>
+    <completion-snapshot name="dots_catalog_complete_at_dot">
+        <catalog>
+            <script id="1">
+                <input>
+                    create table dbname.schemaname.foo(a int);
+                </input>
+                <tables>
+                    <table id="256.65536.4294967296" name="foo" loc="21..62" text="create tab..foo(a int)">
+                        <column id="256.65536.4294967296.0" name="a" loc="56..61" text="a int" />
+                    </table>
+                </tables>
+                <errors />
+            </script>
+        </catalog>
+        <script id="0">
+            <input>
+                select * from dbname.sch
+            </input>
+            <errors />
+            <tablerefs>
+                <tableref type="name/unresolved" stmt="0" loc="31..41" text="dbname.sch" />
+            </tablerefs>
+        </script>
+        <cursor>
+            <search text=".sch" index="0" />
+        </cursor>
+        <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="BEGIN_OF_SYMBOL" loc="37..38" text="." />
+    </completion-snapshot>
+    <completion-snapshot name="dots_catalog_complete_previous_dot">
+        <catalog>
+            <script id="1">
+                <input>
+                    create table dbname.schemaname.foo(a int);
+                </input>
+                <tables>
+                    <table id="256.65536.4294967296" name="foo" loc="21..62" text="create tab..foo(a int)">
+                        <column id="256.65536.4294967296.0" name="a" loc="56..61" text="a int" />
+                    </table>
+                </tables>
+                <errors />
+            </script>
+        </catalog>
+        <script id="0">
+            <input>
+                select * from dbname.sch
+            </input>
+            <errors />
+            <tablerefs>
+                <tableref type="name/unresolved" stmt="0" loc="31..41" text="dbname.sch" />
+            </tablerefs>
+        </script>
+        <cursor>
+            <search text=".sch" index="1" />
+        </cursor>
+        <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="BEGIN_OF_SYMBOL" loc="38..41" text="sch">
+            <entry value="schemaname" score="22" tags="SCHEMA_NAME">
+                <object type="schema" id="256.65536" />
+            </entry>
+        </completions>
+    </completion-snapshot>
+    <completion-snapshot name="dots_catalog_complete_previous_dot_quotes">
+        <catalog>
+            <script id="1">
+                <input>
+                    create table dbname.schemaname.foo(a int);
+                </input>
+                <tables>
+                    <table id="256.65536.4294967296" name="foo" loc="21..62" text="create tab..foo(a int)">
+                        <column id="256.65536.4294967296.0" name="a" loc="56..61" text="a int" />
+                    </table>
+                </tables>
+                <errors />
+            </script>
+        </catalog>
+        <script id="0">
+            <input>
+                select * from dbname."sch"
+            </input>
+            <errors />
+            <tablerefs>
+                <tableref type="name/unresolved" stmt="0" loc="31..43" text="dbname.&quot;sch&quot;" />
+            </tablerefs>
+        </script>
+        <cursor>
+            <search text="name." index="5" />
+        </cursor>
+        <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="BEGIN_OF_SYMBOL" loc="38..43" text="&quot;sch&quot;">
+            <entry value="schemaname" score="22" tags="SCHEMA_NAME">
+                <object type="schema" id="256.65536" />
+            </entry>
+        </completions>
+    </completion-snapshot>
+    <completion-snapshot name="dots_catalog_same_script_complete_schema">
+        <script id="0">
+            <input>
+                create table dbname.schemaname.foo(a int);
+                select * from dbname.
+            </input>
+            <tables>
+                <table id="256.65536.0" name="foo" loc="17..58" text="create tab..foo(a int)">
+                    <column id="256.65536.0.0" name="a" loc="52..57" text="a int" />
+                </table>
+            </tables>
+            <errors />
+            <tablerefs>
+                <tableref type="name/unresolved" stmt="1" loc="90..97" text="dbname." />
+            </tablerefs>
+        </script>
+        <cursor>
+            <search text="from dbname." index="12" />
+        </cursor>
+        <completions limit="3" strategy="TABLE_REF" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="96..97" text=".">
+            <entry value="schemaname" score="22" tags="SCHEMA_NAME">
+                <object type="schema" id="256.65536" />
+            </entry>
+        </completions>
+    </completion-snapshot>
+</completion-snapshots>
