@@ -266,13 +266,13 @@ proto::StatusCode Completion::CompleteCursorNamePath() {
         return proto::StatusCode::OK;
     }
 
+    /// A dot candidate
     struct DotCandidate {
-        // The name
         std::string_view name;
-        /// The object ref (if table or column)
+        NameTags tags;
         const CatalogObject& object;
+        ScoreValueType score;
     };
-
     // Collect all candidate strings
     std::vector<DotCandidate> candidates;
 
@@ -299,7 +299,11 @@ proto::StatusCode Completion::CompleteCursorNamePath() {
                     for (auto& table : tables) {
                         // Add the table name as candidate
                         auto& name = table.get().table_name.table_name.get();
-                        candidates.push_back(DotCandidate{name.text, table.get().CastToBase()});
+                        DotCandidate candidate{.name = name.text,
+                                               .tags = NameTags{proto::NameTag::TABLE_NAME},
+                                               .object = table.get().CastToBase(),
+                                               .score = DOT_TABLE_SCORE_MODIFIER};
+                        candidates.push_back(std::move(candidate));
                     }
                 }
 
@@ -314,7 +318,11 @@ proto::StatusCode Completion::CompleteCursorNamePath() {
                         auto& schema_decl = *iter->second;
                         // Add the schema name as candidate
                         auto& name = schema_decl.schema_name;
-                        candidates.push_back(DotCandidate{name, schema_decl.CastToBase()});
+                        DotCandidate candidate{.name = name,
+                                               .tags = NameTags{proto::NameTag::TABLE_NAME},
+                                               .object = schema_decl.CastToBase(),
+                                               .score = DOT_SCHEMA_SCORE_MODIFIER};
+                        candidates.push_back(std::move(candidate));
                     }
                 }
                 break;
@@ -334,7 +342,11 @@ proto::StatusCode Completion::CompleteCursorNamePath() {
                     for (auto& table : tables) {
                         // Add the table name as candidate
                         auto& name = table.get().table_name.table_name.get();
-                        candidates.push_back({name, table.get().CastToBase()});
+                        DotCandidate candidate{.name = name,
+                                               .tags = NameTags{proto::NameTag::TABLE_NAME},
+                                               .object = {table.get().CastToBase()},
+                                               .score = DOT_TABLE_SCORE_MODIFIER};
+                        candidates.push_back(std::move(candidate));
                     }
                 }
                 break;
@@ -367,7 +379,11 @@ proto::StatusCode Completion::CompleteCursorNamePath() {
                         // Register all column names as alias
                         for (auto& column : table_decl.table_columns) {
                             auto& name = column.column_name.get();
-                            candidates.push_back({name.text, column.CastToBase()});
+                            DotCandidate candidate{.name = name,
+                                                   .tags = NameTags{proto::NameTag::TABLE_NAME},
+                                                   .object = {column.CastToBase()},
+                                                   .score = DOT_TABLE_SCORE_MODIFIER};
+                            candidates.push_back(std::move(candidate));
                         }
                         break;
                     }
@@ -380,17 +396,46 @@ proto::StatusCode Completion::CompleteCursorNamePath() {
     // Now we need to score the candidates based on the cursor prefix (if there is any)
     if (last_text_prefix.empty()) {
         for (auto& candidate : candidates) {
-            auto& [name, type] = candidate;
-            auto iter = pending_candidates.find(name);
+            auto iter = pending_candidates.find(candidate.name);
             if (iter != pending_candidates.end()) {
                 auto& existing = iter->second;
-                // XXX
+                existing.score += candidate.score;
+                existing.catalog_objects.push_back(candidate.object);
             } else {
-                // XXX
+                ScoreValueType score = candidate.score;
+                fuzzy_ci_string_view ci_name{candidate.name.data(), candidate.name.size()};
+                if (ci_name.starts_with(fuzzy_ci_string_view{last_text_prefix.data(), last_text_prefix.size()})) {
+                    score += PREFIX_SCORE_MODIFIER;
+                } else if (ci_name.find(fuzzy_ci_string_view{last_text_prefix.data(), last_text_prefix.size()}) !=
+                           fuzzy_ci_string_view::npos) {
+                    score += SUBSTRING_SCORE_MODIFIER;
+                }
+                Candidate c{
+                    .name = candidate.name,
+                    .tags = candidate.tags,
+                    .score = score,
+                    .catalog_objects = {candidate.object},
+                };
+                pending_candidates.insert({candidate.name, std::move(c)});
             }
         }
     } else {
-        // XXX
+        for (auto& candidate : candidates) {
+            auto iter = pending_candidates.find(candidate.name);
+            if (iter != pending_candidates.end()) {
+                auto& existing = iter->second;
+                existing.score += candidate.score;
+                existing.catalog_objects.push_back(candidate.object);
+            } else {
+                Candidate c{
+                    .name = candidate.name,
+                    .tags = candidate.tags,
+                    .score = candidate.score,
+                    .catalog_objects = {candidate.object},
+                };
+                pending_candidates.insert({candidate.name, std::move(c)});
+            }
+        }
     }
     return proto::StatusCode::OK;
 }
@@ -443,12 +488,7 @@ void Completion::PromoteExpectedGrammarSymbols(std::span<parser::Parser::Expecte
         auto name = parser::Keyword::GetKeywordName(expected);
         if (!name.empty()) {
             Candidate candidate{
-                .name = RegisteredName{.name_id = static_cast<uint32_t>(expected),
-                                       .text = name,
-                                       .location = sx::Location(),
-                                       .occurrences = 0,
-                                       .resolved_tags = {proto::NameTag::KEYWORD},
-                                       .resolved_objects = {}},
+                .name = name,
                 .tags = NameTags{proto::NameTag::KEYWORD},
                 .score = get_score(*location, expected, name),
             };

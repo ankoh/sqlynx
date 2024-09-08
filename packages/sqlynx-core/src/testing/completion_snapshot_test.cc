@@ -59,7 +59,7 @@ void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Complet
             switch (obj.object_type) {
                 case sqlynx::CatalogObjectType::DatabaseReference: {
                     std::string type = "database";
-                    auto* t = static_cast<CatalogEntry::DatabaseReference*>(&obj);
+                    auto* t = static_cast<const CatalogEntry::DatabaseReference*>(&obj);
                     xml_obj.append_attribute("type").set_value(type.c_str());
                     std::string catalog_id = std::format("{}", t->catalog_database_id);
                     xml_obj.append_attribute("id").set_value(catalog_id.c_str());
@@ -67,7 +67,7 @@ void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Complet
                 }
                 case sqlynx::CatalogObjectType::SchemaReference: {
                     std::string type = "schema";
-                    auto* t = static_cast<CatalogEntry::SchemaReference*>(&obj);
+                    auto* t = static_cast<const CatalogEntry::SchemaReference*>(&obj);
                     xml_obj.append_attribute("type").set_value(type.c_str());
                     std::string catalog_id = std::format("{}.{}", t->catalog_database_id, t->catalog_schema_id);
                     xml_obj.append_attribute("id").set_value(catalog_id.c_str());
@@ -75,7 +75,7 @@ void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Complet
                 }
                 case sqlynx::CatalogObjectType::TableDeclaration: {
                     std::string type = "table";
-                    auto* t = static_cast<CatalogEntry::TableDeclaration*>(&obj);
+                    auto* t = static_cast<const CatalogEntry::TableDeclaration*>(&obj);
                     xml_obj.append_attribute("type").set_value(type.c_str());
                     std::string catalog_id = std::format("{}.{}.{}", t->catalog_database_id, t->catalog_schema_id,
                                                          t->catalog_table_id.Pack());
@@ -84,7 +84,7 @@ void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Complet
                 }
                 case sqlynx::CatalogObjectType::ColumnDeclaration: {
                     std::string type = "column";
-                    auto& c = *static_cast<CatalogEntry::TableColumn*>(&obj);
+                    auto& c = *static_cast<const CatalogEntry::TableColumn*>(&obj);
                     auto& t = c.table->get();
                     xml_obj.append_attribute("type").set_value(type.c_str());
                     std::string catalog_id = std::format("{}.{}.{}.{}", t.catalog_database_id, t.catalog_schema_id,
