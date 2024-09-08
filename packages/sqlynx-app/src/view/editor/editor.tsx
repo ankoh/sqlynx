@@ -39,7 +39,7 @@ interface ActiveScriptState {
     editorScript: sqlynx.SQLynxScript | null;
     schemaScript: sqlynx.SQLynxScript | null;
     decorations: DecorationSet | null;
-    cursor: sqlynx.proto.ScriptCursorInfoT | null;
+    cursor: sqlynx.proto.ScriptCursorT | null;
 }
 
 const FileSelector = (props: { className?: string; variant: 'default' | 'invisible'; script: ScriptMetadata }) => {
@@ -95,7 +95,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
 
     // Helper to update a script
     const updateScript = React.useCallback(
-        (scriptKey: SQLynxScriptKey, buffers: SQLynxScriptBuffers, cursor: sqlynx.proto.ScriptCursorInfoT) => {
+        (scriptKey: SQLynxScriptKey, buffers: SQLynxScriptBuffers, cursor: sqlynx.proto.ScriptCursorT) => {
             active.current.cursor = cursor;
             sessionDispatch({
                 type: UPDATE_SCRIPT_ANALYSIS,
@@ -106,7 +106,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
     );
     // Helper to update a script cursor
     const updateCursor = React.useCallback(
-        (scriptKey: SQLynxScriptKey, cursor: sqlynx.proto.ScriptCursorInfoT) => {
+        (scriptKey: SQLynxScriptKey, cursor: sqlynx.proto.ScriptCursorT) => {
             active.current.cursor = cursor;
             sessionDispatch({
                 type: UPDATE_SCRIPT_CURSOR,
