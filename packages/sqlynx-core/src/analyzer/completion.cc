@@ -539,6 +539,7 @@ void findCandidatesInIndex(Completion& completion, const CatalogEntry::NameSearc
         for (auto [tag, tag_score] : scoring_table) {
             score = std::max(score, name_info.resolved_tags.contains(tag) ? tag_score : 0);
         }
+
         // Is a prefix?
         switch (location->relative_pos) {
             case Relative::BEGIN_OF_SYMBOL:

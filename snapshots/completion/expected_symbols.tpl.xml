@@ -1,0 +1,46 @@
+<completion-snapshots>
+    <completion-snapshot name="expected_select_0">
+        <script>
+            <input>
+                s
+            </input>
+        </script>
+        <cursor>
+            <search text="s" index="1" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+    <completion-snapshot name="expected_select_1">
+        <script>
+            <input>
+                se
+            </input>
+        </script>
+        <cursor>
+            <search text="s" index="1" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+    <completion-snapshot name="expected_select_from_0">
+        <script>
+            <input>
+                select * f
+            </input>
+        </script>
+        <cursor>
+            <search text="f" index="1" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+    <completion-snapshot name="expected_select_from_1">
+        <script>
+            <input>
+                select foo f
+            </input>
+        </script>
+        <cursor>
+            <search text="foo f" index="5" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+</completion-snapshots>
