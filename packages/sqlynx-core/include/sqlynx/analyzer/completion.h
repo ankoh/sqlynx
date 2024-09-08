@@ -95,12 +95,7 @@ struct Completion {
     /// Read the name path of the current cursor
     std::vector<Completion::NameComponent> ReadCursorNamePath() const;
     /// Complete after a dot
-    proto::StatusCode CompleteCursorNamePath();
-    /// Complete after a dot
-    proto::StatusCode CompleteAtDot();
-    /// Complete after a dot
-    proto::StatusCode CompleteNameAfterDot();
-
+    void FindCandidatesForNamePath();
     /// Find the candidates in completion indexes
     void FindCandidatesInIndexes();
     /// Promote expected symbols in the grammar
