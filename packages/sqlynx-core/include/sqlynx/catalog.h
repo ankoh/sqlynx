@@ -306,6 +306,11 @@ class Catalog {
    public:
     using Version = uint64_t;
 
+    /// The default database name
+    constexpr static std::string_view DEFAULT_DATABASE_NAME = "sqlynx";
+    /// The default schema name
+    constexpr static std::string_view DEFAULT_SCHEMA_NAME = "public";
+
    protected:
     /// A catalog entry backed by an analyzed script
     struct ScriptEntry {
@@ -403,7 +408,8 @@ class Catalog {
 
    public:
     /// Explicit constructor needed due to deleted copy constructor
-    Catalog(std::string_view default_database_name = "", std::string_view default_schema_name = "");
+    Catalog(std::string_view default_database_name = DEFAULT_DATABASE_NAME,
+            std::string_view default_schema_name = DEFAULT_SCHEMA_NAME);
     /// Catalogs must not be copied
     Catalog(const Catalog& other) = delete;
     /// Catalogs must not be copy-assigned
