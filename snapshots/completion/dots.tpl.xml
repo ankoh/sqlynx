@@ -98,4 +98,16 @@
         </cursor>
         <completions limit="3" />
     </completion-snapshot>
+    <completion-snapshot name="dots_score_column_prefix_0" what="column names with matching prefix should score higher">
+        <script>
+            <input>
+                create table foo(apple int, juice int);
+                select from foo f where f.ap
+            </input>
+        </script>
+        <cursor>
+            <search text="f.ap" index="4" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
 </completion-snapshots>
