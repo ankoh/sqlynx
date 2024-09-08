@@ -1,86 +1,100 @@
 <completion-snapshots>
-    <completion-snapshot name="complete_trailing_dot">
-        <catalog>
-            <script>
-                <input>
-                    create table dbname.schemaname.foo(a int);
-                </input>
-            </script>
-        </catalog>
-        <script>
-            <input>
-                select * from dbname.
-            </input>
-        </script>
-        <cursor>
-            <search text="dbname." index="7" />
-        </cursor>
-        <completions limit="3" />
-    </completion-snapshot>
-    <completion-snapshot name="complete_at_dot">
-        <catalog>
-            <script>
-                <input>
-                    create table dbname.schemaname.foo(a int);
-                </input>
-            </script>
-        </catalog>
-        <script>
-            <input>
-                select * from dbname.sch
-            </input>
-        </script>
-        <cursor>
-            <search text=".sch" index="0" />
-        </cursor>
-        <completions limit="3" />
-    </completion-snapshot>
-    <completion-snapshot name="complete_previous_dot">
-        <catalog>
-            <script>
-                <input>
-                    create table dbname.schemaname.foo(a int);
-                </input>
-            </script>
-        </catalog>
-        <script>
-            <input>
-                select * from dbname.sch
-            </input>
-        </script>
-        <cursor>
-            <search text=".sch" index="1" />
-        </cursor>
-        <completions limit="3" />
-    </completion-snapshot>
-    <completion-snapshot name="complete_previous_dot_quotes">
-        <catalog>
-            <script>
-                <input>
-                    create table dbname.schemaname.foo(a int);
-                </input>
-            </script>
-        </catalog>
-        <script>
-            <input>
-                select * from dbname."sch"
-            </input>
-        </script>
-        <cursor>
-            <search text="name." index="5" />
-        </cursor>
-        <completions limit="3" />
-    </completion-snapshot>
-
-    <completion-snapshot name="same_script_complete_trailing_dot">
+    <completion-snapshot name="dots_qualified_table" what="complete a qualified table">
         <script>
             <input>
                 create table dbname.schemaname.foo(a int);
-                select * from dbname.
+                select * from dbname.schemaname.
             </input>
         </script>
         <cursor>
-            <search text="from dbname." index="12" />
+            <search text="from dbname.schemaname." index="23" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+    <completion-snapshot name="dots_column_0" what="complete an alias with qualified table">
+        <script>
+            <input>
+                create table dbname.schemaname.foo(a int);
+                select from dbname.schemaname.foo f where f.
+            </input>
+        </script>
+        <cursor>
+            <search text="f." index="2" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+    <completion-snapshot name="dots_column_1" what="complete an alias with qualified table but default db">
+        <script>
+            <input>
+                create table schemaname.foo(a int);
+                select from schemaname.foo f where f.
+            </input>
+        </script>
+        <cursor>
+            <search text="f." index="2" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+    <completion-snapshot name="dots_column_2" what="complete an alias with unqualified table">
+        <script>
+            <input>
+                create table foo(a int);
+                select from foo f where f.
+            </input>
+        </script>
+        <cursor>
+            <search text="f." index="2" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+    <completion-snapshot name="dots_multiple_columns_0" what="complete multiple columns">
+        <script>
+            <input>
+                create table foo(a int, b int, c int);
+                create table bar(d int, e int, f int);
+                select from foo alias where alias.
+            </input>
+        </script>
+        <cursor>
+            <search text="alias." index="6" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+    <completion-snapshot name="dots_multiple_columns_1" what="complete multiple columns, multiple froms">
+        <script>
+            <input>
+                create table foo(a int, b int, c int);
+                create table bar(d int, e int, f int);
+                select from foo f, bar b where f.
+            </input>
+        </script>
+        <cursor>
+            <search text="f." index="2" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+    <completion-snapshot name="dots_multiple_columns_2" what="complete multiple columns, multiple froms, other table">
+        <script>
+            <input>
+                create table foo(a int, b int, c int);
+                create table bar(d int, e int, f int);
+                select from foo f, bar b where b.
+            </input>
+        </script>
+        <cursor>
+            <search text="b." index="2" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
+    <completion-snapshot name="dots_limit" what="more table columns than limit">
+        <script>
+            <input>
+                create table foo(a int, b int, c int, d int, e int);
+                select from foo f where f.
+            </input>
+        </script>
+        <cursor>
+            <search text="f." index="2" />
         </cursor>
         <completions limit="3" />
     </completion-snapshot>
