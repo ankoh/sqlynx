@@ -217,7 +217,7 @@ std::vector<Completion::NameComponent> Completion::ReadCursorNamePath() const {
     return components;
 }
 
-proto::StatusCode Completion::CompleteCursorNamePath() {
+void Completion::FindCandidatesForNamePath() {
     // The cursor location
     auto cursor_location = cursor.scanner_location->text_offset;
     // Read the name path
@@ -263,7 +263,7 @@ proto::StatusCode Completion::CompleteCursorNamePath() {
     // Is the path empty?
     // Nothing to complete then.
     if (name_path.size() == 0) {
-        return proto::StatusCode::OK;
+        return;
     }
 
     /// A dot candidate
@@ -437,17 +437,6 @@ proto::StatusCode Completion::CompleteCursorNamePath() {
             }
         }
     }
-    return proto::StatusCode::OK;
-}
-
-proto::StatusCode Completion::CompleteAtDot() {
-    completion_action = proto::CompletionAction::COMPLETE_AT_DOT;
-    return CompleteCursorNamePath();
-}
-
-proto::StatusCode Completion::CompleteNameAfterDot() {
-    completion_action = proto::CompletionAction::COMPLETE_AFTER_DOT;
-    return CompleteCursorNamePath();
 }
 
 void Completion::PromoteExpectedGrammarSymbols(std::span<parser::Parser::ExpectedSymbol> symbols) {
@@ -554,8 +543,8 @@ void findCandidatesInIndex(Completion& completion, const CatalogEntry::NameSearc
             Completion::Candidate candidate{
                 .name = name_info.text,
                 .tags = name_info.resolved_tags,
-                .catalog_objects = {},
                 .score = score,
+                .catalog_objects = {},
             };
             candidate.catalog_objects.reserve(name_info.resolved_objects.GetSize());
             for (auto& o : name_info.resolved_objects) {
@@ -701,8 +690,10 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
         switch (cursor.scanner_location->relative_pos) {
             case RelativePosition::NEW_SYMBOL_AFTER:
             case RelativePosition::END_OF_SYMBOL: {
-                auto status = completion->CompleteAtDot();
-                return {std::move(completion), status};
+                completion->completion_action = proto::CompletionAction::COMPLETE_AT_DOT;
+                completion->FindCandidatesForNamePath();
+                completion->FlushCandidatesAndFinish();
+                return {std::move(completion), proto::StatusCode::OK};
             }
 
             case RelativePosition::BEGIN_OF_SYMBOL:
@@ -720,8 +711,10 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
         switch (cursor.scanner_location->relative_pos) {
             case RelativePosition::NEW_SYMBOL_AFTER:
             case RelativePosition::END_OF_SYMBOL: {
-                auto status = completion->CompleteAtDot();
-                return {std::move(completion), status};
+                completion->completion_action = proto::CompletionAction::COMPLETE_AT_DOT;
+                completion->FindCandidatesForNamePath();
+                completion->FlushCandidatesAndFinish();
+                return {std::move(completion), proto::StatusCode::OK};
             }
             case RelativePosition::BEGIN_OF_SYMBOL:
             case RelativePosition::MID_OF_SYMBOL:
@@ -765,8 +758,10 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
             case RelativePosition::END_OF_SYMBOL:
             case RelativePosition::BEGIN_OF_SYMBOL:
             case RelativePosition::MID_OF_SYMBOL: {
-                auto status = completion->CompleteNameAfterDot();
-                return {std::move(completion), status};
+                completion->completion_action = proto::CompletionAction::COMPLETE_AFTER_DOT;
+                completion->FindCandidatesForNamePath();
+                completion->FlushCandidatesAndFinish();
+                return {std::move(completion), proto::StatusCode::OK};
             }
             case RelativePosition::NEW_SYMBOL_AFTER:
             case RelativePosition::NEW_SYMBOL_BEFORE:
