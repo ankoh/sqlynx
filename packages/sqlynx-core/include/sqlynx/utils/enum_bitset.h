@@ -47,6 +47,11 @@ struct EnumBitset {
         value &= ~static_cast<ValueType>(tag);
         return *this;
     }
+    /// Tag a name
+    EnumBitset& AddIf(EnumType tag, bool condition) {
+        value |= condition ? static_cast<ValueType>(tag) : 0;
+        return *this;
+    }
 
     template <typename Fn> void ForEach(Fn f) const {
         for (ValueType tag = 1; tag <= static_cast<ValueType>(MaxEnum); tag = static_cast<ValueType>(tag) << 1) {

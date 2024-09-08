@@ -41,7 +41,7 @@
         </cursor>
         <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="31..33" text="db">
             <entry value="db" score="40" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH" />
-            <entry value="dbname" score="40" ntags="DATABASE_NAME" ctags="NAME_INDEX|PREFIX_MATCH">
+            <entry value="dbname" score="40" ntags="DATABASE_NAME" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG">
                 <object type="database" id="256" />
             </entry>
             <entry value="group" score="3" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL" />
@@ -75,7 +75,7 @@
         </cursor>
         <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="31..34" text="sch">
             <entry value="sch" score="40" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH" />
-            <entry value="schemaname" score="40" ntags="SCHEMA_NAME" ctags="NAME_INDEX|PREFIX_MATCH">
+            <entry value="schemaname" score="40" ntags="SCHEMA_NAME" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG">
                 <object type="schema" id="256.65536" />
             </entry>
             <entry value="schema" score="20" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
@@ -109,7 +109,7 @@
         </cursor>
         <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="31..33" text="fo">
             <entry value="fo" score="40" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH" />
-            <entry value="foo" score="40" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH">
+            <entry value="foo" score="40" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG">
                 <object type="table" id="256.65536.4294967296" />
             </entry>
             <entry value="following" score="20" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
@@ -178,11 +178,11 @@ create table table3(attr3 integer);
             <search text="tab" index="3" />
         </cursor>
         <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="35..38" text="tab">
-            <entry value="table2" score="42" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH|RESOLVING_TABLE">
+            <entry value="table2" score="42" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH|RESOLVING_TABLE|THROUGH_CATALOG">
                 <object type="table" id="256.65536.4294967297" />
             </entry>
             <entry value="tab" score="40" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH" />
-            <entry value="table1" score="40" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH">
+            <entry value="table1" score="40" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG">
                 <object type="table" id="256.65536.4294967296" />
             </entry>
         </completions>
@@ -219,10 +219,10 @@ create table table3(attr3 integer);
         </cursor>
         <completions limit="5" strategy="COLUMN_REF" symbol="NAME" relative="MID_OF_SYMBOL" loc="65..74" text="external_">
             <entry value="external_" score="40" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH" />
-            <entry value="external_name2" score="40" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH">
+            <entry value="external_name2" score="40" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG">
                 <object type="column" id="256.65536.4294967296.0" />
             </entry>
-            <entry value="external_name1" score="30" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH">
+            <entry value="external_name1" score="30" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG">
                 <object type="table" id="256.65536.4294967296" />
             </entry>
             <entry value="external" score="20" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
@@ -261,10 +261,10 @@ create table table3(attr3 integer);
         </cursor>
         <completions limit="5" strategy="COLUMN_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="65..74" text="external_">
             <entry value="external_" score="40" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH" />
-            <entry value="external_name2" score="40" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH">
+            <entry value="external_name2" score="40" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG">
                 <object type="column" id="256.65536.4294967296.0" />
             </entry>
-            <entry value="external_name1" score="30" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH">
+            <entry value="external_name1" score="30" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG">
                 <object type="table" id="256.65536.4294967296" />
             </entry>
             <entry value="group" score="3" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL" />

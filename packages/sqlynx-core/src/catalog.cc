@@ -78,7 +78,8 @@ CatalogEntry::QualifiedTableName CatalogEntry::QualifyTableName(NameRegistry& na
 }
 
 void CatalogEntry::ResolveDatabaseSchemasWithCatalog(
-    std::string_view database_name, std::vector<std::reference_wrapper<const SchemaReference>>& out) const {
+    std::string_view database_name,
+    std::vector<std::pair<std::reference_wrapper<const SchemaReference>, bool>>& out) const {
     char ub_text = 0x7F;
 
     // First search in our own script.
@@ -88,7 +89,7 @@ void CatalogEntry::ResolveDatabaseSchemasWithCatalog(
         auto lb = schemas_by_name.lower_bound({database_name, "\0"});
         auto ub = schemas_by_name.upper_bound({database_name, std::string_view{&ub_text, 1}});
         for (auto iter = lb; iter != ub; ++iter) {
-            out.push_back(iter->second);
+            out.push_back({iter->second, false});
         }
     }
 
@@ -97,14 +98,14 @@ void CatalogEntry::ResolveDatabaseSchemasWithCatalog(
         auto lb = catalog.schemas.lower_bound({database_name, "\0"});
         auto ub = catalog.schemas.upper_bound({database_name, std::string_view{&ub_text, 1}});
         for (auto iter = lb; iter != ub; ++iter) {
-            out.push_back(*iter->second);
+            out.push_back({*iter->second, true});
         }
     }
 }
 
 void CatalogEntry::ResolveSchemaTablesWithCatalog(
     std::string_view database_name, std::string_view schema_name,
-    std::vector<std::reference_wrapper<const CatalogEntry::TableDeclaration>>& out) const {
+    std::vector<std::pair<std::reference_wrapper<const CatalogEntry::TableDeclaration>, bool>>& out) const {
     char ub_text = 0x7F;
 
     // First search in our own script.
@@ -114,7 +115,7 @@ void CatalogEntry::ResolveSchemaTablesWithCatalog(
         auto lb = tables_by_name.lower_bound({database_name, schema_name, "\0"});
         auto ub = tables_by_name.upper_bound({database_name, schema_name, std::string_view{&ub_text, 1}});
         for (auto iter = lb; iter != ub; ++iter) {
-            out.push_back(iter->second);
+            out.push_back({iter->second, false});
         }
     }
 
@@ -133,7 +134,7 @@ void CatalogEntry::ResolveSchemaTablesWithCatalog(
             auto table_lb = tables_by_name.lower_bound({database_name, schema_name, "\0"});
             auto table_ub = tables_by_name.upper_bound({database_name, schema_name, std::string_view{&ub_text, 1}});
             for (auto table_iter = table_lb; table_iter != table_ub; ++table_iter) {
-                out.push_back(table_iter->second);
+                out.push_back({table_iter->second, true});
             }
         }
     }
