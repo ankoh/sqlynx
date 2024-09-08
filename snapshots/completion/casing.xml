@@ -1,0 +1,70 @@
+<completion-snapshots>
+    <completion-snapshot name="casing_0" what="discover table names with different casing">
+        <script id="0">
+            <input>
+                create table "CaSeSeNsItIvE_TaBlE"(a int);
+                create table casesensitive_table(a int);
+
+                select * from cas
+            </input>
+            <tables>
+                <table id="256.65536.0" name="CaSeSeNsItIvE_TaBlE" loc="17..58" text="create tab..lE&quot;(a int)">
+                    <column id="256.65536.0.0" name="a" loc="52..57" text="a int" />
+                </table>
+                <table id="256.65536.1" name="casesensitive_table" loc="76..115" text="create tab..ble(a int)">
+                    <column id="256.65536.1.0" name="a" loc="109..114" text="a int" />
+                </table>
+            </tables>
+            <errors />
+            <tablerefs>
+                <tableref type="name/unresolved" stmt="2" loc="148..151" text="cas" />
+            </tablerefs>
+        </script>
+        <cursor>
+            <search text="from cas" index="8" />
+        </cursor>
+        <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="148..151" text="cas">
+            <entry value="cas" score="40" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH" />
+            <entry value="CaSeSeNsItIvE_TaBlE" score="40" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH">
+                <object type="table" id="256.65536.0" />
+            </entry>
+            <entry value="casesensitive_table" score="40" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH">
+                <object type="table" id="256.65536.1" />
+            </entry>
+        </completions>
+    </completion-snapshot>
+    <completion-snapshot name="casing_1" what="discover column names with different casing">
+        <script id="0">
+            <input>
+                create table foo0("Casesensitive" int);
+                create table foo1(casesensitive int);
+
+                select cas
+            </input>
+            <tables>
+                <table id="256.65536.0" name="foo0" loc="17..55" text="create tab..tive&quot; int)">
+                    <column id="256.65536.0.0" name="Casesensitive" loc="35..54" text="&quot;Casesensitive&quot; int" />
+                </table>
+                <table id="256.65536.1" name="foo1" loc="73..109" text="create tab..itive int)">
+                    <column id="256.65536.1.0" name="casesensitive" loc="91..108" text="casesensitive int" />
+                </table>
+            </tables>
+            <errors />
+            <expressions>
+                <expr type="colref/unresolved" stmt="2" loc="135..138" text="cas" />
+            </expressions>
+        </script>
+        <cursor>
+            <search text="select cas" index="10" />
+        </cursor>
+        <completions limit="3" strategy="COLUMN_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="135..138" text="cas">
+            <entry value="cas" score="40" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH" />
+            <entry value="Casesensitive" score="40" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH">
+                <object type="column" id="256.65536.0.0" />
+            </entry>
+            <entry value="casesensitive" score="40" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH">
+                <object type="column" id="256.65536.1.0" />
+            </entry>
+        </completions>
+    </completion-snapshot>
+</completion-snapshots>

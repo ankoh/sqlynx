@@ -68,5 +68,6 @@ INSTANTIATE_TEST_SUITE_P(TPCH, CompletionSnapshotTestSuite, ::testing::ValuesIn(
 INSTANTIATE_TEST_SUITE_P(Keywords, CompletionSnapshotTestSuite, ::testing::ValuesIn(CompletionSnapshotTest::GetTests("keywords.xml")), CompletionSnapshotTest::TestPrinter());
 INSTANTIATE_TEST_SUITE_P(UnresolvedPeers, CompletionSnapshotTestSuite, ::testing::ValuesIn(CompletionSnapshotTest::GetTests("unresolved_peers.xml")), CompletionSnapshotTest::TestPrinter());
 INSTANTIATE_TEST_SUITE_P(ResolvingTables, CompletionSnapshotTestSuite, ::testing::ValuesIn(CompletionSnapshotTest::GetTests("resolving_tables.xml")), CompletionSnapshotTest::TestPrinter());
+INSTANTIATE_TEST_SUITE_P(Casing, CompletionSnapshotTestSuite, ::testing::ValuesIn(CompletionSnapshotTest::GetTests("casing.xml")), CompletionSnapshotTest::TestPrinter());
 
 }
