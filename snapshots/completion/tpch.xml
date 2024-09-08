@@ -110,13 +110,13 @@ create table region (r_regionkey integer not null, r_name char(25) not null, r_c
             <search text="ke" index="2" />
         </cursor>
         <completions limit="3" strategy="COLUMN_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="46..48" text="ke">
-            <entry value="c_custkey" score="35" ntags="COLUMN_NAME" ctags="NAME_INDEX|SUBSTRING_MATCH|THROUGH_CATALOG">
+            <entry value="c_custkey" score="35" ntags="COLUMN_NAME" ctags="NAME_INDEX|SUBSTRING_MATCH|THROUGH_CATALOG" loc="46..48" text="ke">
                 <object type="column" id="256.65536.4294967299.3" />
             </entry>
-            <entry value="c_nationkey" score="35" ntags="COLUMN_NAME" ctags="NAME_INDEX|SUBSTRING_MATCH|THROUGH_CATALOG">
+            <entry value="c_nationkey" score="35" ntags="COLUMN_NAME" ctags="NAME_INDEX|SUBSTRING_MATCH|THROUGH_CATALOG" loc="46..48" text="ke">
                 <object type="column" id="256.65536.4294967299.6" />
             </entry>
-            <entry value="l_orderkey" score="35" ntags="COLUMN_NAME" ctags="NAME_INDEX|SUBSTRING_MATCH|THROUGH_CATALOG">
+            <entry value="l_orderkey" score="35" ntags="COLUMN_NAME" ctags="NAME_INDEX|SUBSTRING_MATCH|THROUGH_CATALOG" loc="46..48" text="ke">
                 <object type="column" id="256.65536.4294967301.6" />
             </entry>
         </completions>

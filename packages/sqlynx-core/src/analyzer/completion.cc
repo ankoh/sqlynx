@@ -114,7 +114,7 @@ bool doNotCompleteSymbol(parser::Parser::symbol_type& sym) {
 
 }  // namespace
 
-std::vector<Completion::NameComponent> Completion::ReadCursorNamePath() const {
+std::vector<Completion::NameComponent> Completion::ReadCursorNamePath(sx::Location& name_path_loc) const {
     auto& nodes = cursor.script.parsed_script->nodes;
 
     std::optional<uint32_t> name_ast_node_id;
@@ -174,6 +174,7 @@ std::vector<Completion::NameComponent> Completion::ReadCursorNamePath() const {
     if (node.node_type() != proto::NodeType::ARRAY) {
         return {};
     }
+    name_path_loc = node.location();
 
     // Get the child nodes
     auto children = std::span<proto::Node>{nodes}.subspan(node.children_begin_or_value(), node.children_count());
@@ -208,6 +209,11 @@ std::vector<Completion::NameComponent> Completion::ReadCursorNamePath() const {
                 });
                 break;
             case proto::NodeType::OBJECT_EXT_TRAILING_DOT:
+                components.push_back(NameComponent{
+                    .loc = child.location(),
+                    .type = NameComponentType::TrailingDot,
+                    .name = std::nullopt,
+                });
                 return components;
             default:
                 // XXX Bail out
@@ -221,7 +227,8 @@ void Completion::FindCandidatesForNamePath() {
     // The cursor location
     auto cursor_location = cursor.scanner_location->text_offset;
     // Read the name path
-    auto name_path_buffer = ReadCursorNamePath();
+    sx::Location name_path_loc;
+    auto name_path_buffer = ReadCursorNamePath(name_path_loc);
     std::span<Completion::NameComponent> name_path = name_path_buffer;
 
     // Filter all name components in the path.
@@ -235,8 +242,14 @@ void Completion::FindCandidatesForNamePath() {
 
     // Last text prefix
     std::string_view last_text_prefix;
+    uint32_t truncate_at = name_path_loc.offset() + name_path_loc.length();
     for (; name_count < name_path.size(); ++name_count) {
+        if (name_path[name_count].type == NameComponentType::TrailingDot) {
+            truncate_at = name_path[name_count].loc.offset() + 1;
+            break;
+        }
         if (name_path[name_count].type != NameComponentType::Name) {
+            truncate_at = name_path[name_count].loc.offset();
             break;
         }
         if ((name_path[name_count].loc.offset() + name_path[name_count].loc.length()) < cursor_location) {
@@ -256,10 +269,17 @@ void Completion::FindCandidatesForNamePath() {
             auto last_content_ofs = last_loc.offset() + last_content;
             auto last_prefix_length = std::max<size_t>(cursor_location, last_content_ofs) - last_content_ofs;
             last_text_prefix = last_text.substr(last_content, last_prefix_length);
+
+            // Truncate whn replacing
+            truncate_at = last_loc.offset();
             break;
         }
     }
     name_path = name_path.subspan(0, name_count);
+
+    // Determine text to replace
+    sx::Location replace_text_at{
+        truncate_at, std::max<uint32_t>(name_path_loc.offset() + name_path_loc.length(), truncate_at) - truncate_at};
 
     // Is the path empty?
     // Nothing to complete then.
@@ -274,6 +294,7 @@ void Completion::FindCandidatesForNamePath() {
         NameTags name_tags;
         const CatalogObject& object;
         ScoreValueType score;
+        sx::Location replace_text_at;
     };
     // Collect all candidate strings
     std::vector<DotCandidate> candidates;
@@ -304,7 +325,8 @@ void Completion::FindCandidatesForNamePath() {
                                                .candidate_tags = {proto::CandidateTag::DOT_RESOLUTION},
                                                .name_tags = {proto::NameTag::TABLE_NAME},
                                                .object = table.get().CastToBase(),
-                                               .score = DOT_TABLE_SCORE_MODIFIER};
+                                               .score = DOT_TABLE_SCORE_MODIFIER,
+                                               .replace_text_at = replace_text_at};
                         candidate.candidate_tags.AddIf(proto::CandidateTag::THROUGH_CATALOG, through_catalog);
                         candidates.push_back(std::move(candidate));
                     }
@@ -322,7 +344,8 @@ void Completion::FindCandidatesForNamePath() {
                                                .candidate_tags = {proto::CandidateTag::DOT_RESOLUTION},
                                                .name_tags = NameTags{proto::NameTag::SCHEMA_NAME},
                                                .object = schema.get().CastToBase(),
-                                               .score = DOT_SCHEMA_SCORE_MODIFIER};
+                                               .score = DOT_SCHEMA_SCORE_MODIFIER,
+                                               .replace_text_at = replace_text_at};
                         candidate.candidate_tags.AddIf(proto::CandidateTag::THROUGH_CATALOG, through_catalog);
                         candidates.push_back(std::move(candidate));
                     }
@@ -346,7 +369,8 @@ void Completion::FindCandidatesForNamePath() {
                                                .candidate_tags = {proto::CandidateTag::DOT_RESOLUTION},
                                                .name_tags = NameTags{proto::NameTag::TABLE_NAME},
                                                .object = {table.get().CastToBase()},
-                                               .score = DOT_TABLE_SCORE_MODIFIER};
+                                               .score = DOT_TABLE_SCORE_MODIFIER,
+                                               .replace_text_at = replace_text_at};
                         candidate.candidate_tags.AddIf(proto::CandidateTag::THROUGH_CATALOG, through_catalog);
                         candidates.push_back(std::move(candidate));
                     }
@@ -386,7 +410,8 @@ void Completion::FindCandidatesForNamePath() {
                                                    .candidate_tags = {proto::CandidateTag::DOT_RESOLUTION},
                                                    .name_tags = NameTags{proto::NameTag::TABLE_NAME},
                                                    .object = {column.CastToBase()},
-                                                   .score = DOT_TABLE_SCORE_MODIFIER};
+                                                   .score = DOT_TABLE_SCORE_MODIFIER,
+                                                   .replace_text_at = replace_text_at};
                             candidate.candidate_tags.AddIf(
                                 proto::CandidateTag::THROUGH_CATALOG,
                                 table_decl.catalog_table_id.GetExternalId() != script.GetCatalogEntryId());
@@ -407,6 +432,7 @@ void Completion::FindCandidatesForNamePath() {
             if (iter != pending_candidates.end()) {
                 auto& existing = iter->second;
                 existing.score += candidate.score;
+                existing.replace_text_at = replace_text_at;
                 existing.catalog_objects.push_back(candidate.object);
             } else {
                 ScoreValueType score = candidate.score;
@@ -425,6 +451,7 @@ void Completion::FindCandidatesForNamePath() {
                     .candidate_tags = candidate.candidate_tags,
                     .score = score,
                     .catalog_objects = {candidate.object},
+                    .replace_text_at = replace_text_at,
                 };
                 pending_candidates.insert({candidate.name, std::move(c)});
             }
@@ -435,6 +462,7 @@ void Completion::FindCandidatesForNamePath() {
             if (iter != pending_candidates.end()) {
                 auto& existing = iter->second;
                 existing.score += candidate.score;
+                existing.replace_text_at = replace_text_at;
                 existing.catalog_objects.push_back(candidate.object);
             } else {
                 Candidate c{
@@ -443,6 +471,7 @@ void Completion::FindCandidatesForNamePath() {
                     .candidate_tags = candidate.candidate_tags,
                     .score = candidate.score,
                     .catalog_objects = {candidate.object},
+                    .replace_text_at = replace_text_at,
                 };
                 pending_candidates.insert({candidate.name, std::move(c)});
             }
@@ -496,6 +525,7 @@ void Completion::PromoteExpectedGrammarSymbols(std::span<parser::Parser::Expecte
                 .name_tags = {proto::NameTag::KEYWORD},
                 .candidate_tags = tags,
                 .score = score,
+                .replace_text_at = location->symbol.location,
             };
             result_heap.Insert(candidate);
         }
@@ -569,13 +599,12 @@ void findCandidatesInIndex(Completion& completion, const CatalogEntry::NameSearc
             }
         } else {
             // Otherwise store as new candidate
-            Completion::Candidate candidate{
-                .name = name_info.text,
-                .name_tags = name_info.resolved_tags,
-                .candidate_tags = candidate_tags,
-                .score = score,
-                .catalog_objects = {},
-            };
+            Completion::Candidate candidate{.name = name_info.text,
+                                            .name_tags = name_info.resolved_tags,
+                                            .candidate_tags = candidate_tags,
+                                            .score = score,
+                                            .catalog_objects = {},
+                                            .replace_text_at = location->symbol.location};
             candidate.catalog_objects.reserve(name_info.resolved_objects.GetSize());
             for (auto& o : name_info.resolved_objects) {
                 candidate.catalog_objects.push_back(o);
@@ -877,6 +906,7 @@ flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferB
         candidateBuilder.add_name_tags(iter_entry->name_tags);
         candidateBuilder.add_catalog_objects(catalog_objects_ofs);
         candidateBuilder.add_score(iter_entry->GetScore());
+        candidateBuilder.add_replace_text_at(&iter_entry->replace_text_at);
         candidates.push_back(candidateBuilder.Finish());
     }
     auto candidatesOfs = builder.CreateVector(candidates);

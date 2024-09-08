@@ -50,6 +50,8 @@ struct Completion {
         ScoreValueType score = 0;
         /// The catalog objects
         std::vector<std::reference_wrapper<const CatalogObject>> catalog_objects;
+        /// Replace text at a location
+        sx::Location replace_text_at;
 
         /// Get the score
         inline ScoreValueType GetScore() const { return score; }
@@ -68,7 +70,7 @@ struct Completion {
     using CandidateMap = ankerl::unordered_dense::map<std::string_view, Candidate>;
 
     /// A name component type
-    enum NameComponentType { Name, Star, Index };
+    enum NameComponentType { Name, Star, TrailingDot, Index };
     /// A name component
     struct NameComponent {
         /// The location
@@ -94,7 +96,7 @@ struct Completion {
     proto::CompletionAction completion_action;
 
     /// Read the name path of the current cursor
-    std::vector<Completion::NameComponent> ReadCursorNamePath() const;
+    std::vector<Completion::NameComponent> ReadCursorNamePath(sx::Location& name_path_loc) const;
     /// Complete after a dot
     void FindCandidatesForNamePath();
     /// Find the candidates in completion indexes

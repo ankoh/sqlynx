@@ -1,3 +1,5 @@
+include "sqlynx/parsed_script.fbs";
+
 namespace sqlynx.proto;
 
 enum CompletionCandidateObjectType: uint8 {
@@ -42,6 +44,8 @@ table CompletionCandidate {
     display_text: string;
     /// The completion text, when selected
     completion_text: string;
+    /// The text to replace when completing
+    replace_text_at: Location;
     /// The objects that this candidate references
     catalog_objects: [CompletionCandidateObject];
     /// The score
