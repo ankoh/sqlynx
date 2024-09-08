@@ -8,9 +8,9 @@
             <search text="" index="0" />
         </cursor>
         <completions limit="3" strategy="DEFAULT" loc="0..1" text="">
-            <entry value="select" score="3" tags="KEYWORD" />
-            <entry value="set" score="2" tags="KEYWORD" />
-            <entry value="with" score="2" tags="KEYWORD" />
+            <entry value="select" score="3" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL" />
+            <entry value="set" score="2" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL" />
+            <entry value="with" score="2" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="complete_database_name">
@@ -40,11 +40,11 @@
             <search text="db" index="2" />
         </cursor>
         <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="31..33" text="db">
-            <entry value="db" score="40" tags="TABLE_NAME" />
-            <entry value="dbname" score="40" tags="DATABASE_NAME">
+            <entry value="db" score="40" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH" />
+            <entry value="dbname" score="40" ntags="DATABASE_NAME" ctags="NAME_INDEX|PREFIX_MATCH">
                 <object type="database" id="256" />
             </entry>
-            <entry value="group" score="3" tags="KEYWORD" />
+            <entry value="group" score="3" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="complete_schema_name">
@@ -74,11 +74,11 @@
             <search text="sch" index="3" />
         </cursor>
         <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="31..34" text="sch">
-            <entry value="sch" score="40" tags="TABLE_NAME" />
-            <entry value="schemaname" score="40" tags="SCHEMA_NAME">
+            <entry value="sch" score="40" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH" />
+            <entry value="schemaname" score="40" ntags="SCHEMA_NAME" ctags="NAME_INDEX|PREFIX_MATCH">
                 <object type="schema" id="256.65536" />
             </entry>
-            <entry value="schema" score="20" tags="KEYWORD" />
+            <entry value="schema" score="20" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="complete_table_name">
@@ -108,11 +108,11 @@
             <search text="fo" index="2" />
         </cursor>
         <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="31..33" text="fo">
-            <entry value="fo" score="40" tags="TABLE_NAME" />
-            <entry value="foo" score="40" tags="TABLE_NAME">
+            <entry value="fo" score="40" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH" />
+            <entry value="foo" score="40" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH">
                 <object type="table" id="256.65536.4294967296" />
             </entry>
-            <entry value="following" score="20" tags="KEYWORD" />
+            <entry value="following" score="20" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="dont_complete_at_lrb">
@@ -178,11 +178,11 @@ create table table3(attr3 integer);
             <search text="tab" index="3" />
         </cursor>
         <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="35..38" text="tab">
-            <entry value="table2" score="42" tags="TABLE_NAME">
+            <entry value="table2" score="42" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH|RESOLVING_TABLE">
                 <object type="table" id="256.65536.4294967297" />
             </entry>
-            <entry value="tab" score="40" tags="TABLE_NAME" />
-            <entry value="table1" score="40" tags="TABLE_NAME">
+            <entry value="tab" score="40" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH" />
+            <entry value="table1" score="40" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH">
                 <object type="table" id="256.65536.4294967296" />
             </entry>
         </completions>
@@ -218,15 +218,15 @@ create table table3(attr3 integer);
             <search text="where external_" index="14" />
         </cursor>
         <completions limit="5" strategy="COLUMN_REF" symbol="NAME" relative="MID_OF_SYMBOL" loc="65..74" text="external_">
-            <entry value="external_" score="40" tags="COLUMN_NAME" />
-            <entry value="external_name2" score="40" tags="COLUMN_NAME">
+            <entry value="external_" score="40" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH" />
+            <entry value="external_name2" score="40" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH">
                 <object type="column" id="256.65536.4294967296.0" />
             </entry>
-            <entry value="external_name1" score="30" tags="TABLE_NAME">
+            <entry value="external_name1" score="30" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH">
                 <object type="table" id="256.65536.4294967296" />
             </entry>
-            <entry value="external" score="20" tags="KEYWORD" />
-            <entry value="group" score="3" tags="KEYWORD" />
+            <entry value="external" score="20" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
+            <entry value="group" score="3" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="remap_external_names_eof">
@@ -260,15 +260,15 @@ create table table3(attr3 integer);
             <search text="where external_" index="15" />
         </cursor>
         <completions limit="5" strategy="COLUMN_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="65..74" text="external_">
-            <entry value="external_" score="40" tags="COLUMN_NAME" />
-            <entry value="external_name2" score="40" tags="COLUMN_NAME">
+            <entry value="external_" score="40" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH" />
+            <entry value="external_name2" score="40" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH">
                 <object type="column" id="256.65536.4294967296.0" />
             </entry>
-            <entry value="external_name1" score="30" tags="TABLE_NAME">
+            <entry value="external_name1" score="30" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH">
                 <object type="table" id="256.65536.4294967296" />
             </entry>
-            <entry value="group" score="3" tags="KEYWORD" />
-            <entry value="order" score="3" tags="KEYWORD" />
+            <entry value="group" score="3" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL" />
+            <entry value="order" score="3" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL" />
         </completions>
     </completion-snapshot>
 </completion-snapshots>

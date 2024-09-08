@@ -43,16 +43,28 @@ void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Complet
         std::string text{iter->name.data(), iter->name.size()};
         xml_entry.append_attribute("value").set_value(text.c_str());
         xml_entry.append_attribute("score").set_value(iter->GetScore());
-        // xml_entry.append_attribute("near").set_value(iter->near_cursor); XXX
-        std::stringstream tags;
-        size_t i = 0;
-        iter->tags.ForEach([&](proto::NameTag tag) {
-            if (i++ > 0) {
-                tags << ",";
-            }
-            tags << proto::EnumNameNameTag(tag);
-        });
-        xml_entry.append_attribute("tags").set_value(tags.str().c_str());
+        std::stringstream candidate_tags;
+        {
+            size_t i = 0;
+            iter->candidate_tags.ForEach([&](proto::CandidateTag tag) {
+                if (i++ > 0) {
+                    candidate_tags << "|";
+                }
+                candidate_tags << proto::EnumNameCandidateTag(tag);
+            });
+        }
+        std::stringstream name_tags;
+        {
+            size_t i = 0;
+            iter->name_tags.ForEach([&](proto::NameTag tag) {
+                if (i++ > 0) {
+                    name_tags << "|";
+                }
+                name_tags << proto::EnumNameNameTag(tag);
+            });
+        }
+        xml_entry.append_attribute("ntags").set_value(name_tags.str().c_str());
+        xml_entry.append_attribute("ctags").set_value(candidate_tags.str().c_str());
         for (auto& obj_ref : iter->catalog_objects) {
             auto& obj = obj_ref.get();
             auto xml_obj = xml_entry.append_child("object");
