@@ -187,7 +187,7 @@ std::vector<Completion::NameComponent> Completion::ReadCursorNamePath() const {
             case proto::NodeType::NAME: {
                 auto& name = cursor.script.scanned_script->GetNames().At(child.children_begin_or_value());
                 components.push_back(NameComponent{
-                    .loc = node.location(),
+                    .loc = child.location(),
                     .type = NameComponentType::Name,
                     .name = name,
                 });
@@ -195,14 +195,14 @@ std::vector<Completion::NameComponent> Completion::ReadCursorNamePath() const {
             }
             case proto::NodeType::OBJECT_SQL_INDIRECTION_STAR:
                 components.push_back(NameComponent{
-                    .loc = node.location(),
+                    .loc = child.location(),
                     .type = NameComponentType::Star,
                     .name = std::nullopt,
                 });
                 break;
             case proto::NodeType::OBJECT_SQL_INDIRECTION_INDEX:
                 components.push_back(NameComponent{
-                    .loc = node.location(),
+                    .loc = child.location(),
                     .type = NameComponentType::Index,
                     .name = std::nullopt,
                 });
@@ -232,6 +232,7 @@ void Completion::FindCandidatesForNamePath() {
     // Additionally find the sealed prefix.
     // If we're completing after a dot, the word before the dot is not meant to be completed.
     size_t sealed = 0;
+
     // Last text prefix
     std::string_view last_text_prefix;
     for (; name_count < name_path.size(); ++name_count) {
@@ -319,7 +320,7 @@ void Completion::FindCandidatesForNamePath() {
                         // Add the schema name as candidate
                         auto& name = schema_decl.schema_name;
                         DotCandidate candidate{.name = name,
-                                               .tags = NameTags{proto::NameTag::TABLE_NAME},
+                                               .tags = NameTags{proto::NameTag::SCHEMA_NAME},
                                                .object = schema_decl.CastToBase(),
                                                .score = DOT_SCHEMA_SCORE_MODIFIER};
                         candidates.push_back(std::move(candidate));
