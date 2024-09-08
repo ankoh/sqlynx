@@ -71,4 +71,17 @@
         </cursor>
         <completions limit="3" />
     </completion-snapshot>
+
+    <completion-snapshot name="same_script_complete_trailing_dot">
+        <script>
+            <input>
+                create table dbname.schemaname.foo(a int);
+                select * from dbname.
+            </input>
+        </script>
+        <cursor>
+            <search text="from dbname." index="12" />
+        </cursor>
+        <completions limit="3" />
+    </completion-snapshot>
 </completion-snapshots>

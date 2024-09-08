@@ -6,12 +6,10 @@ namespace sqlynx {
 
 /// A type of a catalog object
 enum CatalogObjectType {
-    DatabaseDeclaration = 1,
-    DatabaseReference = 2,
-    SchemaDeclaration = 3,
-    SchemaReference = 4,
-    TableDeclaration = 5,
-    ColumnDeclaration = 6,
+    DatabaseReference = 0,
+    SchemaReference = 1,
+    TableDeclaration = 2,
+    ColumnDeclaration = 3,
 };
 
 /// A catalog object

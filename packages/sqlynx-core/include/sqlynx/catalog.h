@@ -208,8 +208,7 @@ class CatalogEntry {
     /// The databases, indexed by name
     std::unordered_map<std::string_view, std::reference_wrapper<const DatabaseReference>> databases_by_name;
     /// The schema, indexed by name
-    std::unordered_map<std::pair<std::string_view, std::string_view>, std::reference_wrapper<const SchemaReference>,
-                       TupleHasher>
+    btree::map<std::pair<std::string_view, std::string_view>, std::reference_wrapper<const SchemaReference>>
         schemas_by_name;
     /// The tables, indexed by name
     btree::map<QualifiedTableName::Key, std::reference_wrapper<const TableDeclaration>> tables_by_name;
@@ -245,19 +244,25 @@ class CatalogEntry {
     /// Get the name search index
     virtual const NameSearchIndex& GetNameSearchIndex() = 0;
 
+    /// Resolve a database reference
+    void ResolveDatabaseSchemasWithCatalog(std::string_view database_name,
+                                           std::vector<std::reference_wrapper<const SchemaReference>>& out) const;
+    /// Find table columns by name
+    void ResolveSchemaTablesWithCatalog(
+        std::string_view database_name, std::string_view schema_name,
+        std::vector<std::reference_wrapper<const CatalogEntry::TableDeclaration>>& out) const;
     /// Resolve a table by id
     const TableDeclaration* ResolveTable(ExternalObjectID table_id) const;
     /// Resolve a table by id
-    const TableDeclaration* ResolveTable(ExternalObjectID table_id, const Catalog& catalog) const;
+    const TableDeclaration* ResolveTableWithCatalog(ExternalObjectID table_id) const;
     /// Resolve a table by name
     const TableDeclaration* ResolveTable(QualifiedTableName table_name) const;
     /// Resolve a table by name
-    const TableDeclaration* ResolveTable(QualifiedTableName table_name, const Catalog& catalog) const;
+    const TableDeclaration* ResolveTableWithCatalog(QualifiedTableName table_name) const;
     /// Find table columns by name
     void ResolveTableColumns(std::string_view table_column, std::vector<TableColumn>& out) const;
     /// Find table columns by name
-    void ResolveTableColumns(std::string_view table_column, const Catalog& catalog,
-                             std::vector<TableColumn>& out) const;
+    void ResolveTableColumnsWithCatalog(std::string_view table_column, std::vector<TableColumn>& out) const;
 };
 
 class DescriptorPool : public CatalogEntry {
@@ -296,6 +301,8 @@ class DescriptorPool : public CatalogEntry {
 };
 
 class Catalog {
+    friend class CatalogEntry;
+
    public:
     using Version = uint64_t;
 
@@ -321,43 +328,36 @@ class Catalog {
 
    public:
     /// A database declaration
-    struct DatabaseDeclaration : public CatalogObject {
-        /// The catalog database id
-        CatalogDatabaseID catalog_database_id;
+    struct DatabaseDeclaration : public CatalogEntry::DatabaseReference {
         /// The database name
-        std::string database_name;
+        std::string database_name_buffer;
         /// The database alias (if any)
-        std::string database_alias;
+        std::string database_alias_buffer;
         /// Constructor
         DatabaseDeclaration(CatalogDatabaseID database_id, std::string_view database_name,
                             std::string_view database_alias)
-            : CatalogObject(CatalogObjectType::DatabaseDeclaration),
-              catalog_database_id(database_id),
-              database_name(std::move(database_name)),
-              database_alias(std::move(database_alias)) {}
+            : CatalogEntry::DatabaseReference(database_id, "", ""),
+              database_name_buffer(std::move(database_name)),
+              database_alias_buffer(std::move(database_alias)) {
+            this->database_name = database_name_buffer;
+            this->database_alias = database_alias_buffer;
+        }
         /// Move constructor
         DatabaseDeclaration(DatabaseDeclaration&&) = default;
         /// Move assignment
         DatabaseDeclaration& operator=(DatabaseDeclaration&&) = default;
     };
     /// A schema declaration
-    struct SchemaDeclaration : public CatalogObject {
-        /// The catalog database id
-        CatalogDatabaseID catalog_database_id;
-        /// The catalog schema id
-        CatalogSchemaID catalog_schema_id;
-        /// The database name (references the name of the database entry)
-        std::string_view database_name;
+    struct SchemaDeclaration : public CatalogEntry::SchemaReference {
         /// The schema name
-        std::string schema_name;
+        std::string schema_name_buffer;
         /// Constructor
         SchemaDeclaration(CatalogDatabaseID database_id, CatalogSchemaID schema_id, std::string_view database_name,
                           std::string_view schema_name)
-            : CatalogObject(CatalogObjectType::SchemaDeclaration),
-              catalog_database_id(database_id),
-              catalog_schema_id(schema_id),
-              database_name(database_name),
-              schema_name(std::move(schema_name)) {}
+            : CatalogEntry::SchemaReference(database_id, schema_id, database_name, ""),
+              schema_name_buffer(std::move(schema_name)) {
+            this->schema_name = schema_name_buffer;
+        }
         /// Move constructor
         SchemaDeclaration(SchemaDeclaration&&) = default;
         /// Move assignment
@@ -484,8 +484,6 @@ class Catalog {
     /// Resolve all schema tables
     void ResolveSchemaTables(std::string_view database_name, std::string_view schema_name,
                              std::vector<std::reference_wrapper<const CatalogEntry::TableDeclaration>>& out) const;
-    /// Resolve table columns by name
-    void ResolveTableColumns(std::string_view table_column, std::vector<CatalogEntry::TableColumn>& out) const;
 };
 
 }  // namespace sqlynx

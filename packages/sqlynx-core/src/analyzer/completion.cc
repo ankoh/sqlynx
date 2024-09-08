@@ -279,9 +279,8 @@ void Completion::FindCandidatesForNamePath() {
 
     // Are we completing a table ref?
     if (auto* ctx = std::get_if<ScriptCursor::TableRefContext>(&cursor.context)) {
+        auto& script = cursor.script;
         auto& catalog = cursor.script.catalog;
-        auto& dbs = catalog.GetDatabases();
-        auto& schemas = catalog.GetSchemas();
 
         switch (sealed) {
             case 0:
@@ -292,13 +291,12 @@ void Completion::FindCandidatesForNamePath() {
 
                 // Is referring to a schema in the default database?
                 auto& a_text = name_path[0].name.value().get().text;
-                auto schemas_iter = schemas.find({catalog.GetDefaultDatabaseName(), a_text});
-                if (schemas_iter != schemas.end()) {
-                    // Find all schema tables
-                    std::vector<std::reference_wrapper<const CatalogEntry::TableDeclaration>> tables;
-                    catalog.ResolveSchemaTables(catalog.GetDefaultDatabaseName(), a_text, tables);
+                std::vector<std::reference_wrapper<const CatalogEntry::TableDeclaration>> tables;
+                script.analyzed_script->ResolveSchemaTablesWithCatalog(catalog.GetDefaultDatabaseName(), a_text,
+                                                                       tables);
+                if (!tables.empty()) {
+                    // Add the tables as candidates
                     for (auto& table : tables) {
-                        // Add the table name as candidate
                         auto& name = table.get().table_name.table_name.get();
                         DotCandidate candidate{.name = name.text,
                                                .tags = NameTags{proto::NameTag::TABLE_NAME},
@@ -309,19 +307,15 @@ void Completion::FindCandidatesForNamePath() {
                 }
 
                 // Is referring to a database?
-                auto dbs_iter = dbs.find(a_text);
-                if (dbs_iter != dbs.end()) {
-                    // Find database schemas
-                    char ub_text = 0x7F;
-                    auto lb = schemas.lower_bound({a_text, "\0"});
-                    auto ub = schemas.upper_bound({a_text, std::string_view{&ub_text, 1}});
-                    for (auto iter = lb; iter != ub; ++iter) {
-                        auto& schema_decl = *iter->second;
-                        // Add the schema name as candidate
-                        auto& name = schema_decl.schema_name;
+                std::vector<std::reference_wrapper<const CatalogEntry::SchemaReference>> schemas;
+                script.analyzed_script->ResolveDatabaseSchemasWithCatalog(a_text, schemas);
+                if (!schemas.empty()) {
+                    // Add the schemas name as candidates
+                    for (auto& schema : schemas) {
+                        auto& name = schema.get().schema_name;
                         DotCandidate candidate{.name = name,
                                                .tags = NameTags{proto::NameTag::SCHEMA_NAME},
-                                               .object = schema_decl.CastToBase(),
+                                               .object = schema.get().CastToBase(),
                                                .score = DOT_SCHEMA_SCORE_MODIFIER};
                         candidates.push_back(std::move(candidate));
                     }
@@ -335,13 +329,11 @@ void Completion::FindCandidatesForNamePath() {
                 auto& b_text = name_path[1].name.value().get().text;
 
                 // Is a known?
-                auto schemas_iter = schemas.find({a_text, b_text});
-                if (schemas_iter != schemas.end()) {
-                    // Find all schema tables
-                    std::vector<std::reference_wrapper<const CatalogEntry::TableDeclaration>> tables;
-                    catalog.ResolveSchemaTables(a_text, b_text, tables);
+                std::vector<std::reference_wrapper<const CatalogEntry::TableDeclaration>> tables;
+                script.analyzed_script->ResolveSchemaTablesWithCatalog(a_text, b_text, tables);
+                if (!tables.empty()) {
+                    // Add the tables as candidates
                     for (auto& table : tables) {
-                        // Add the table name as candidate
                         auto& name = table.get().table_name.table_name.get();
                         DotCandidate candidate{.name = name,
                                                .tags = NameTags{proto::NameTag::TABLE_NAME},
@@ -583,7 +575,7 @@ void Completion::PromoteTablesAndPeersForUnresolvedColumns() {
             auto& column_name = unresolved->column_name.column_name.get();
             tmp_columns.clear();
             // Resolve all table columns that would match the unresolved name?
-            cursor.script.analyzed_script->ResolveTableColumns(column_name, catalog, tmp_columns);
+            cursor.script.analyzed_script->ResolveTableColumnsWithCatalog(column_name, tmp_columns);
             // Register the table name
             for (auto& table_col : tmp_columns) {
                 auto& table = table_col.table->get();
@@ -811,17 +803,6 @@ flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferB
             proto::CompletionCandidateObjectBuilder obj{builder};
             obj.add_object_type(static_cast<proto::CompletionCandidateObjectType>(o.object_type));
             switch (o.object_type) {
-                case CatalogObjectType::DatabaseDeclaration: {
-                    auto& db = o.CastUnsafe<Catalog::DatabaseDeclaration>();
-                    obj.add_catalog_database_id(db.catalog_database_id);
-                    break;
-                }
-                case CatalogObjectType::SchemaDeclaration: {
-                    auto& schema = o.CastUnsafe<Catalog::SchemaDeclaration>();
-                    obj.add_catalog_database_id(schema.catalog_database_id);
-                    obj.add_catalog_schema_id(schema.catalog_schema_id);
-                    break;
-                }
                 case CatalogObjectType::DatabaseReference: {
                     auto& db = o.CastUnsafe<CatalogEntry::DatabaseReference>();
                     obj.add_catalog_database_id(db.catalog_database_id);
