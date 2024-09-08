@@ -386,8 +386,8 @@ void CatalogEntry::ResolveTableColumnsWithCatalog(std::string_view table_column,
 }
 
 Catalog::Catalog(std::string_view default_db, std::string_view default_schema)
-    : default_database_name(default_db.empty() ? "sqlynx" : default_db),
-      default_schema_name(default_schema.empty() ? "default" : default_schema) {}
+    : default_database_name(default_db.empty() ? DEFAULT_DATABASE_NAME : default_db),
+      default_schema_name(default_schema.empty() ? DEFAULT_SCHEMA_NAME : default_schema) {}
 
 void Catalog::Clear() {
     entries_by_schema.clear();
