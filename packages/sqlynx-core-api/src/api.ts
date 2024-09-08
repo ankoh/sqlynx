@@ -539,10 +539,10 @@ export class SQLynxScript {
         return text;
     }
     /// Move the cursor
-    public moveCursor(textOffset: number): FlatBufferPtr<proto.ScriptCursorInfo> {
+    public moveCursor(textOffset: number): FlatBufferPtr<proto.ScriptCursor> {
         const scriptPtr = this.ptr.assertNotNull();
         const resultPtr = this.ptr.api.instanceExports.sqlynx_script_move_cursor(scriptPtr, textOffset);
-        return this.ptr.api.readFlatBufferResult<proto.ScriptCursorInfo>(resultPtr, () => new proto.ScriptCursorInfo());
+        return this.ptr.api.readFlatBufferResult<proto.ScriptCursor>(resultPtr, () => new proto.ScriptCursor());
     }
     /// Complete at the cursor position
     public completeAtCursor(limit: number): FlatBufferPtr<proto.Completion> {

@@ -22,17 +22,17 @@ export interface SQLynxScriptUpdate {
     /// The previous processed script buffers (if any)
     scriptBuffers: SQLynxScriptBuffers;
     /// The script cursor
-    scriptCursor: sqlynx.proto.ScriptCursorInfoT | null;
+    scriptCursor: sqlynx.proto.ScriptCursorT | null;
     /// The derive focus info
     derivedFocus: DerivedFocus | null;
     // This callback is called when the editor updates the script
     onScriptUpdate: (
         scriptKey: SQLynxScriptKey,
         script: SQLynxScriptBuffers,
-        cursor: sqlynx.proto.ScriptCursorInfoT,
+        cursor: sqlynx.proto.ScriptCursorT,
     ) => void;
     // This callback is called when the editor updates the cursor
-    onCursorUpdate: (scriptKey: SQLynxScriptKey, cursor: sqlynx.proto.ScriptCursorInfoT) => void;
+    onCursorUpdate: (scriptKey: SQLynxScriptKey, cursor: sqlynx.proto.ScriptCursorT) => void;
     // This callback is called when the editor completion is starting
     onCompletionStart: (completion: sqlynx.proto.CompletionT) => void;
     // This callback is called when the user peeks a completion candidate

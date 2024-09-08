@@ -119,7 +119,7 @@ interface DecorationInfo {
 function buildDecorationsFromCursor(
     scriptKey: SQLynxScriptKey | null,
     scriptBuffers: SQLynxScriptBuffers,
-    _scriptCursor: sqlynx.proto.ScriptCursorInfoT | null,
+    _scriptCursor: sqlynx.proto.ScriptCursorT | null,
     derivedFocus: DerivedFocus | null,
 ): DecorationSet {
     const builder = new RangeSetBuilder<Decoration>();
@@ -247,7 +247,7 @@ interface FocusDecorationState {
     scriptKey: SQLynxScriptKey | null;
     decorations: DecorationSet;
     scriptBuffers: SQLynxScriptBuffers;
-    scriptCursor: sqlynx.proto.ScriptCursorInfoT | null;
+    scriptCursor: sqlynx.proto.ScriptCursorT | null;
     derivedFocus: DerivedFocus | null;
 }
 

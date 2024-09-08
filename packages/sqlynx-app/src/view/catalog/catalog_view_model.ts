@@ -509,7 +509,7 @@ export class CatalogViewModel {
     }
 
 
-    pinCursorRefs(_cursor: sqlynx.proto.ScriptCursorInfo) {
+    pinCursorRefs(_cursor: sqlynx.proto.ScriptCursor) {
         // Allocate an epoch
         const epoch = this.nextPinEpoch++;
 

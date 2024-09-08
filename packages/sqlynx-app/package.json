@@ -8,9 +8,9 @@
     "type": "module",
     "scripts": {
         "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.json",
-        "build:pages": "cross-env NODE_OPTIONS=--import=./bundles/tsnode-esm.js webpack --config ./bundles/webpack.pages.ts",
-        "build:reloc": "cross-env NODE_OPTIONS=--import=./bundles/tsnode-esm.js webpack --config ./bundles/webpack.reloc.ts",
-        "serve:dev": "cross-env NODE_OPTIONS=--import=./bundles/tsnode-esm.js webpack serve --config ./bundles/webpack.dev.ts",
+        "build:pages": "cross-env NODE_OPTIONS=--import=../../scripts/tsnode-esm.js webpack --config ./bundles/webpack.pages.ts",
+        "build:reloc": "cross-env NODE_OPTIONS=--import=../../scripts/tsnode-esm.js webpack --config ./bundles/webpack.reloc.ts",
+        "serve:dev": "cross-env NODE_OPTIONS=--import=../../scripts/tsnode-esm.js webpack serve --config ./bundles/webpack.dev.ts",
         "lint": "eslint"
     },
     "devDependencies": {

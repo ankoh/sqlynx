@@ -47,7 +47,7 @@ export function deriveFocusFromCursor(
     scriptData: {
         [context: number]: ScriptData;
     },
-    cursor: sqlynx.proto.ScriptCursorInfoT,
+    cursor: sqlynx.proto.ScriptCursorT,
 ): DerivedFocus {
     const tmpSourceAnalyzed = new sqlynx.proto.AnalyzedScript();
     const tmpTargetAnalyzed = new sqlynx.proto.AnalyzedScript();
@@ -78,10 +78,10 @@ export function deriveFocusFromCursor(
     const sourceAnalyzed = sourceData.processed.analyzed?.read(tmpSourceAnalyzed);
 
     // User focused on a table reference?
-    const tableRefId = sqlynx.ExternalObjectID.create(scriptKey, cursor.tableReferenceId);
-    if (!sqlynx.ExternalObjectID.isNull(tableRefId)) {
-        focus.focusedTableRef = tableRefId;
-        const sourceRef = sourceAnalyzed.tableReferences(cursor.tableReferenceId)!;
+    if (cursor.contextType == sqlynx.proto.ScriptCursorContext.ScriptCursorTableRefContext) {
+        const context = cursor.context as sqlynx.proto.ScriptCursorTableRefContextT;
+        focus.focusedTableRef = sqlynx.ExternalObjectID.create(scriptKey, context.tableReferenceId);
+        const sourceRef = sourceAnalyzed.tableReferences(context.tableReferenceId)!;
         // Is resolved?
         if (sourceRef.innerType() == sqlynx.proto.TableReferenceSubType.ResolvedRelationExpression) {
             const resolved = sourceRef.inner(tmpResolvedRelationExpr) as sqlynx.proto.ResolvedRelationExpression;
@@ -135,10 +135,10 @@ export function deriveFocusFromCursor(
     }
 
     // User focused on a column reference?
-    const exprId = sqlynx.ExternalObjectID.create(scriptKey, cursor.expressionId);
-    if (!sqlynx.ExternalObjectID.isNull(exprId)) {
-        focus.focusedExpression = exprId;
-        const sourceRef = sourceAnalyzed.expressions(cursor.expressionId)!;
+    if (cursor.contextType == sqlynx.proto.ScriptCursorContext.ScriptCursorColumnRefContext) {
+        const context = cursor.context as sqlynx.proto.ScriptCursorColumnRefContextT;
+        focus.focusedExpression = sqlynx.ExternalObjectID.create(scriptKey, context.expressionId);
+        const sourceRef = sourceAnalyzed.expressions(context.expressionId)!;
         // Is resolved?
         if (sourceRef.innerType() == sqlynx.proto.ExpressionSubType.ResolvedColumnRefExpression) {
             const resolved = sourceRef.inner(tmpResolvedColumnRef);
