@@ -92,8 +92,6 @@ struct Completion {
     CandidateMap pending_candidates;
     /// The result heap, holding up to k entries
     TopKHeap<Candidate> result_heap;
-    /// The completion action
-    proto::CompletionAction completion_action;
 
     /// Read the name path of the current cursor
     std::vector<Completion::NameComponent> ReadCursorNamePath(sx::Location& name_path_loc) const;

@@ -58,21 +58,11 @@ enum CompletionStrategy: uint8 {
     COLUMN_REF
 }
 
-enum CompletionAction: uint8 {
-    SKIP_COMPLETION,
-    SKIP_COMPLETION_AT_DOT,
-    COMPLETE_SYMBOL,
-    COMPLETE_AT_DOT,
-    COMPLETE_AFTER_DOT,
-}
-
 table Completion {
     /// The text offset
     text_offset: uint32;
     /// The strategy
     strategy: CompletionStrategy;
-    /// The completion action type
-    action: CompletionAction;
     /// The completion candidates
     candidates: [CompletionCandidate];
 }
