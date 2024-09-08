@@ -13,10 +13,8 @@ std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Place(
     // Has the script been scanned?
     if (script.scanned_script) {
         cursor->scanner_location.emplace(script.scanned_script->FindSymbol(text_offset));
-        if (cursor->scanner_location) {
-            auto& token = script.scanned_script->GetSymbols()[cursor->scanner_location->symbol_id];
-            cursor->text = script.scanned_script->ReadTextAtLocation(token.location);
-        }
+        auto& token = script.scanned_script->GetSymbols()[cursor->scanner_location->symbol_id];
+        cursor->text = script.scanned_script->ReadTextAtLocation(token.location);
     }
 
     // Has the script been parsed?
