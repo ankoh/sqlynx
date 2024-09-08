@@ -31,9 +31,11 @@
             <entry value="similar_name_0" score="42" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH|RESOLVING_TABLE">
                 <object type="table" id="256.65536.0" />
             </entry>
-            <entry value="s" score="40" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH" />
             <entry value="similar_name_1" score="40" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH">
                 <object type="table" id="256.65536.1" />
+            </entry>
+            <entry value="sqlynx" score="40" ntags="DATABASE_NAME" ctags="NAME_INDEX|PREFIX_MATCH">
+                <object type="database" id="256" />
             </entry>
         </completions>
     </completion-snapshot>
