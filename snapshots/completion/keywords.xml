@@ -121,9 +121,9 @@
             <search text="xx" index="0" />
         </cursor>
         <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="BEGIN_OF_SYMBOL" loc="33..35" text="xx">
-            <entry value="xx" score="30" ntags="TABLE_ALIAS" ctags="NAME_INDEX|PREFIX_MATCH" />
             <entry value="group" score="23" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
             <entry value="order" score="23" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
+            <entry value="where" score="23" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="select_from_w">
@@ -140,9 +140,9 @@
             <search text="w" index="1" />
         </cursor>
         <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="33..34" text="w">
-            <entry value="w" score="30" ntags="TABLE_ALIAS" ctags="NAME_INDEX|PREFIX_MATCH" />
             <entry value="where" score="23" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
             <entry value="whitespace" score="20" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
+            <entry value="window" score="20" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="select_from_wh">
@@ -159,9 +159,9 @@
             <search text="wh" index="2" />
         </cursor>
         <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="33..35" text="wh">
-            <entry value="wh" score="30" ntags="TABLE_ALIAS" ctags="NAME_INDEX|PREFIX_MATCH" />
             <entry value="where" score="23" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
             <entry value="whitespace" score="20" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
+            <entry value="group" score="3" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="selec">
@@ -194,9 +194,9 @@
             <search text="gr" index="1" />
         </cursor>
         <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="MID_OF_SYMBOL" loc="35..37" text="gr">
-            <entry value="gr" score="30" ntags="TABLE_ALIAS" ctags="NAME_INDEX|PREFIX_MATCH" />
             <entry value="group" score="23" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
             <entry value="generated" score="20" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
+            <entry value="global" score="20" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="group">
@@ -258,8 +258,8 @@
         </cursor>
         <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="35..36" text="o">
             <entry value="foo" score="35" ntags="TABLE_NAME" ctags="NAME_INDEX|SUBSTRING_MATCH" />
-            <entry value="o" score="30" ntags="TABLE_ALIAS" ctags="NAME_INDEX|PREFIX_MATCH" />
             <entry value="order" score="23" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
+            <entry value="offset" score="22" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="from_or">
