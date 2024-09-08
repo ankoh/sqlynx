@@ -4,6 +4,7 @@
 #include "sqlynx/catalog_object.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
+#include "sqlynx/utils/enum_bitset.h"
 #include "sqlynx/utils/topk.h"
 
 namespace sqlynx {
@@ -33,22 +34,22 @@ struct Completion {
     static_assert((TAG_UNLIKELY + KEYWORD_VERY_POPULAR) < TAG_LIKELY,
                   "A very likely keyword prevalance doesn't outweigh a likely tag");
 
+    /// A bitset for candidate tags
+    using CandidateTags = EnumBitset<uint8_t, proto::CandidateTag, proto::CandidateTag::MAX>;
     /// The completion candidates
     struct Candidate {
-        /// The name.
+        /// The name
         std::string_view name;
-        /// The combined tags.
+        /// The combined name tags.
         /// We may hit the same name multiple times in multiple catalog entries.
         /// Each of these entries may have different name tags, so we have to merge them here.
-        NameTags tags;
+        NameTags name_tags;
+        /// The combined candidate tags
+        CandidateTags candidate_tags;
         /// The name score
         ScoreValueType score = 0;
         /// The catalog objects
         std::vector<std::reference_wrapper<const CatalogObject>> catalog_objects;
-        /// Promoted for as resolving table?
-        bool promoted_as_resolving_table = false;
-        /// Promoted for as unresolved peer?
-        bool promoted_as_unresolved_peer = false;
 
         /// Get the score
         inline ScoreValueType GetScore() const { return score; }

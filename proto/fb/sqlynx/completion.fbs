@@ -1,10 +1,10 @@
 namespace sqlynx.proto;
 
 enum CompletionCandidateObjectType: uint8 {
-    DATABASE = 0,
-    SCHEMA = 1,
-    TABLE = 2,
-    COLUMN = 3
+    DATABASE = 1,
+    SCHEMA = 2,
+    TABLE = 3,
+    COLUMN = 4
 }
 
 table CompletionCandidateObject {
@@ -26,12 +26,14 @@ enum CandidateTag: uint8 {
     DOT_RESOLUTION = 4,
     PREFIX_MATCH = 8,
     SUBSTRING_MATCH = 16,
+    RESOLVING_TABLE = 32,
+    UNRESOLVED_PEER = 64,
 }
 
 table CompletionCandidate {
     /// The candidate tags
-    completion_tags: uint8;
-    /// The candidate tags
+    candidate_tags: uint8;
+    /// The name tags
     name_tags: uint8;
     /// The display text
     display_text: string;
