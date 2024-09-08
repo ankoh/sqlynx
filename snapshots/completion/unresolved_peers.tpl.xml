@@ -9,7 +9,7 @@
             </input>
         </script>
         <cursor>
-            <search text=", ju" index="4" />
+            <search text="apple, ju" index="9" />
         </cursor>
         <completions limit="3" />
     </completion-snapshot>

@@ -23,10 +23,12 @@
             </expressions>
         </script>
         <cursor>
-            <search text=", ju" index="4" />
+            <search text="apple, ju" index="9" />
         </cursor>
-        <completions limit="3" strategy="DEFAULT" symbol="NAME" relative="MID_OF_SYMBOL" loc="45..51" text="juice0">
-            <entry value="ju" score="40" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH" />
+        <completions limit="3" strategy="COLUMN_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="135..137" text="ju">
+            <entry value="juice0" score="42" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH|UNRESOLVED_PEER">
+                <object type="column" id="256.65536.0.1" />
+            </entry>
             <entry value="juice1" score="40" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH">
                 <object type="column" id="256.65536.1.0" />
             </entry>
