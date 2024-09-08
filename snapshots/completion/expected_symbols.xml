@@ -1,0 +1,69 @@
+<completion-snapshots>
+    <completion-snapshot name="expected_select_0">
+        <script id="0">
+            <input>
+                s
+            </input>
+            <errors />
+        </script>
+        <cursor>
+            <search text="s" index="1" />
+        </cursor>
+        <completions limit="3" strategy="DEFAULT" loc="17..18" text="s">
+            <entry value="select" score="23" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
+            <entry value="set" score="22" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
+            <entry value="values" score="15" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|SUBSTRING_MATCH" />
+        </completions>
+    </completion-snapshot>
+    <completion-snapshot name="expected_select_1">
+        <script id="0">
+            <input>
+                se
+            </input>
+            <errors />
+        </script>
+        <cursor>
+            <search text="s" index="1" />
+        </cursor>
+        <completions limit="3" strategy="DEFAULT" loc="17..19" text="se">
+            <entry value="select" score="23" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
+            <entry value="set" score="22" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
+            <entry value="values" score="15" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|SUBSTRING_MATCH" />
+        </completions>
+    </completion-snapshot>
+    <completion-snapshot name="expected_select_from_0">
+        <script id="0">
+            <input>
+                select * f
+            </input>
+            <errors />
+        </script>
+        <cursor>
+            <search text="f" index="1" />
+        </cursor>
+        <completions limit="3" strategy="DEFAULT" loc="26..27" text="f">
+            <entry value="from" score="23" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
+            <entry value="fetch" score="20" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
+            <entry value="for" score="20" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
+        </completions>
+    </completion-snapshot>
+    <completion-snapshot name="expected_select_from_1">
+        <script id="0">
+            <input>
+                select foo f
+            </input>
+            <errors />
+            <expressions>
+                <expr type="colref/unresolved" stmt="0" loc="24..27" text="foo" />
+            </expressions>
+        </script>
+        <cursor>
+            <search text="foo f" index="5" />
+        </cursor>
+        <completions limit="3" strategy="DEFAULT" symbol="NAME" relative="END_OF_SYMBOL" loc="28..29" text="f">
+            <entry value="foo" score="40" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH" />
+            <entry value="default" score="35" ntags="SCHEMA_NAME" ctags="NAME_INDEX|SUBSTRING_MATCH" />
+            <entry value="from" score="23" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" />
+        </completions>
+    </completion-snapshot>
+</completion-snapshots>
