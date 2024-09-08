@@ -17,7 +17,6 @@
 #include "sqlynx/utils/btree/map.h"
 #include "sqlynx/utils/btree/set.h"
 #include "sqlynx/utils/chunk_buffer.h"
-#include "sqlynx/utils/hash.h"
 #include "sqlynx/utils/string_conversion.h"
 
 namespace sqlynx {
@@ -245,12 +244,13 @@ class CatalogEntry {
     virtual const NameSearchIndex& GetNameSearchIndex() = 0;
 
     /// Resolve a database reference
-    void ResolveDatabaseSchemasWithCatalog(std::string_view database_name,
-                                           std::vector<std::reference_wrapper<const SchemaReference>>& out) const;
+    void ResolveDatabaseSchemasWithCatalog(
+        std::string_view database_name,
+        std::vector<std::pair<std::reference_wrapper<const SchemaReference>, bool>>& out) const;
     /// Find table columns by name
     void ResolveSchemaTablesWithCatalog(
         std::string_view database_name, std::string_view schema_name,
-        std::vector<std::reference_wrapper<const CatalogEntry::TableDeclaration>>& out) const;
+        std::vector<std::pair<std::reference_wrapper<const CatalogEntry::TableDeclaration>, bool>>& out) const;
     /// Resolve a table by id
     const TableDeclaration* ResolveTable(ExternalObjectID table_id) const;
     /// Resolve a table by id

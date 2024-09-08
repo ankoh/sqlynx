@@ -35,7 +35,7 @@ struct Completion {
                   "A very likely keyword prevalance doesn't outweigh a likely tag");
 
     /// A bitset for candidate tags
-    using CandidateTags = EnumBitset<uint8_t, proto::CandidateTag, proto::CandidateTag::MAX>;
+    using CandidateTags = EnumBitset<uint16_t, proto::CandidateTag, proto::CandidateTag::MAX>;
     /// The completion candidates
     struct Candidate {
         /// The name

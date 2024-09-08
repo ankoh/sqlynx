@@ -292,34 +292,38 @@ void Completion::FindCandidatesForNamePath() {
 
                 // Is referring to a schema in the default database?
                 auto& a_text = name_path[0].name.value().get().text;
-                std::vector<std::reference_wrapper<const CatalogEntry::TableDeclaration>> tables;
+                std::vector<std::pair<std::reference_wrapper<const CatalogEntry::TableDeclaration>, bool>> tables;
                 script.analyzed_script->ResolveSchemaTablesWithCatalog(catalog.GetDefaultDatabaseName(), a_text,
                                                                        tables);
                 if (!tables.empty()) {
                     // Add the tables as candidates
-                    for (auto& table : tables) {
+                    for (auto& [table, through_catalog] : tables) {
+                        // Store the candidate
                         auto& name = table.get().table_name.table_name.get();
                         DotCandidate candidate{.name = name.text,
                                                .candidate_tags = {proto::CandidateTag::DOT_RESOLUTION},
                                                .name_tags = {proto::NameTag::TABLE_NAME},
                                                .object = table.get().CastToBase(),
                                                .score = DOT_TABLE_SCORE_MODIFIER};
+                        candidate.candidate_tags.AddIf(proto::CandidateTag::THROUGH_CATALOG, through_catalog);
                         candidates.push_back(std::move(candidate));
                     }
                 }
 
                 // Is referring to a database?
-                std::vector<std::reference_wrapper<const CatalogEntry::SchemaReference>> schemas;
+                std::vector<std::pair<std::reference_wrapper<const CatalogEntry::SchemaReference>, bool>> schemas;
                 script.analyzed_script->ResolveDatabaseSchemasWithCatalog(a_text, schemas);
                 if (!schemas.empty()) {
                     // Add the schemas name as candidates
-                    for (auto& schema : schemas) {
+                    for (auto& [schema, through_catalog] : schemas) {
+                        // Store the candidate
                         auto& name = schema.get().schema_name;
                         DotCandidate candidate{.name = name,
                                                .candidate_tags = {proto::CandidateTag::DOT_RESOLUTION},
                                                .name_tags = NameTags{proto::NameTag::SCHEMA_NAME},
                                                .object = schema.get().CastToBase(),
                                                .score = DOT_SCHEMA_SCORE_MODIFIER};
+                        candidate.candidate_tags.AddIf(proto::CandidateTag::THROUGH_CATALOG, through_catalog);
                         candidates.push_back(std::move(candidate));
                     }
                 }
@@ -332,17 +336,18 @@ void Completion::FindCandidatesForNamePath() {
                 auto& b_text = name_path[1].name.value().get().text;
 
                 // Is a known?
-                std::vector<std::reference_wrapper<const CatalogEntry::TableDeclaration>> tables;
+                std::vector<std::pair<std::reference_wrapper<const CatalogEntry::TableDeclaration>, bool>> tables;
                 script.analyzed_script->ResolveSchemaTablesWithCatalog(a_text, b_text, tables);
                 if (!tables.empty()) {
                     // Add the tables as candidates
-                    for (auto& table : tables) {
+                    for (auto& [table, through_catalog] : tables) {
                         auto& name = table.get().table_name.table_name.get();
                         DotCandidate candidate{.name = name,
                                                .candidate_tags = {proto::CandidateTag::DOT_RESOLUTION},
                                                .name_tags = NameTags{proto::NameTag::TABLE_NAME},
                                                .object = {table.get().CastToBase()},
                                                .score = DOT_TABLE_SCORE_MODIFIER};
+                        candidate.candidate_tags.AddIf(proto::CandidateTag::THROUGH_CATALOG, through_catalog);
                         candidates.push_back(std::move(candidate));
                     }
                 }
@@ -357,6 +362,7 @@ void Completion::FindCandidatesForNamePath() {
 
     // Are we completing a column ref?
     else if (auto* ctx = std::get_if<ScriptCursor::ColumnRefContext>(&cursor.context)) {
+        auto& script = cursor.script;
         switch (sealed) {
             case 0:
                 break;
@@ -381,6 +387,9 @@ void Completion::FindCandidatesForNamePath() {
                                                    .name_tags = NameTags{proto::NameTag::TABLE_NAME},
                                                    .object = {column.CastToBase()},
                                                    .score = DOT_TABLE_SCORE_MODIFIER};
+                            candidate.candidate_tags.AddIf(
+                                proto::CandidateTag::THROUGH_CATALOG,
+                                table_decl.catalog_table_id.GetExternalId() != script.GetCatalogEntryId());
                             candidates.push_back(std::move(candidate));
                         }
                         break;
@@ -493,7 +502,7 @@ void Completion::PromoteExpectedGrammarSymbols(std::span<parser::Parser::Expecte
     }
 }
 
-void findCandidatesInIndex(Completion& completion, const CatalogEntry::NameSearchIndex& index, bool external) {
+void findCandidatesInIndex(Completion& completion, const CatalogEntry::NameSearchIndex& index, bool through_catalog) {
     using Relative = ScannedScript::LocationInfo::RelativePosition;
     auto& cursor = completion.GetCursor();
     auto& scoring_table = completion.GetScoringTable();
@@ -518,6 +527,8 @@ void findCandidatesInIndex(Completion& completion, const CatalogEntry::NameSearc
         auto& name_info = iter->second.get();
         // Determine the candidate tags
         Completion::CandidateTags candidate_tags{proto::CandidateTag::NAME_INDEX};
+        // Added through catalog?
+        candidate_tags.AddIf(proto::CandidateTag::THROUGH_CATALOG, through_catalog);
         // Determine score
         Completion::ScoreValueType score = 0;
         for (auto [tag, tag_score] : scoring_table) {
