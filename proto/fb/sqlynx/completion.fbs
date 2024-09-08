@@ -21,7 +21,7 @@ table CompletionCandidateObject {
     table_column_id: uint64;
 }
 
-enum CandidateTag: uint8 {
+enum CandidateTag: uint16 {
     NONE = 0,
     EXPECTED_PARSER_SYMBOL = 1,
     NAME_INDEX = 2,
@@ -29,7 +29,8 @@ enum CandidateTag: uint8 {
     PREFIX_MATCH = 8,
     SUBSTRING_MATCH = 16,
     RESOLVING_TABLE = 32,
-    UNRESOLVED_PEER = 64
+    UNRESOLVED_PEER = 64,
+    THROUGH_CATALOG = 128,
 }
 
 table CompletionCandidate {
