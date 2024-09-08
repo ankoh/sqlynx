@@ -431,8 +431,8 @@ class Catalog {
     /// Iterate entries in ranked order
     template <typename Fn> void IterateRanked(Fn f) const {
         for (auto& [rank, id] : entries_ranked) {
-            auto* schema = entries.at(id);
-            f(id, *schema, rank);
+            auto* entry = entries.at(id);
+            f(id, *entry, rank);
         }
     }
     /// Register a database name

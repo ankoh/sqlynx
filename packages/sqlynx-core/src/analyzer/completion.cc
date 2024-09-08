@@ -553,8 +553,10 @@ void Completion::FindCandidatesInIndexes() {
         // Find candidates in name dictionary of main script
         findCandidatesInIndex(*this, analyzed->GetNameSearchIndex(), false);
         // Find candidates in name dictionary of external script
-        cursor.script.catalog.IterateRanked([this](auto entry_id, auto& schema, size_t rank) {
-            findCandidatesInIndex(*this, schema.GetNameSearchIndex(), true);
+        cursor.script.catalog.IterateRanked([this, &analyzed](auto entry_id, auto& entry, size_t rank) {
+            if (&entry != analyzed.get()) {
+                findCandidatesInIndex(*this, entry.GetNameSearchIndex(), true);
+            }
         });
     }
 }
