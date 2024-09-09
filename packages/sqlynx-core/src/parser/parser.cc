@@ -304,6 +304,16 @@ std::pair<std::shared_ptr<ParsedScript>, proto::StatusCode> Parser::Parse(std::s
         return {nullptr, proto::StatusCode::PARSER_INPUT_NOT_SCANNED};
     }
 
+#ifndef NDEBUG
+    if (debug) {
+        std::cout << "--- SYMBOLS ---" << std::endl;
+        scanned->symbols.ForEach([&](size_t i, parser::Parser::symbol_type token) {
+            std::cout << token.location.offset() << " " << Parser::symbol_name(token.kind()) << std::endl;
+        });
+        std::cout << "--- PARSER ---" << std::endl;
+    }
+#endif
+
     // Parse the tokens
     ParseContext ctx{*scanned};
     sqlynx::parser::Parser parser(ctx);

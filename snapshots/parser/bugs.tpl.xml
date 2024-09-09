@@ -6,7 +6,7 @@
     </parser-snapshot>
     <parser-snapshot name="regr_minus_interval_1" debug="1">
         <input>
-            select date '1998-12-01' - 1
+            select 1 + date '1998-12-01' - 1
         </input>
     </parser-snapshot>
 </parser-snapshots>
