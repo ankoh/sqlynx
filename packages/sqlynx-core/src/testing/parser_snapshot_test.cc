@@ -3,10 +3,6 @@
 #include <cstdint>
 #include <fstream>
 #include <iostream>
-#include <regex>
-#include <sstream>
-#include <stack>
-#include <unordered_set>
 
 #include "pugixml.hpp"
 #include "sqlynx/parser/grammar/enums.h"
@@ -166,6 +162,7 @@ void ParserSnapshotTest::LoadTests(std::filesystem::path& source_dir) {
             tests.emplace_back();
             auto& t = tests.back();
             t.name = test.attribute("name").as_string();
+            t.debug = test.attribute("debug").as_bool();
             t.input = test.child("input").last_child().value();
 
             pugi::xml_document expected;

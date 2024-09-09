@@ -299,7 +299,7 @@ std::vector<Parser::ExpectedSymbol> Parser::ParseUntil(ScannedScript& scanned, s
 }
 
 std::pair<std::shared_ptr<ParsedScript>, proto::StatusCode> Parser::Parse(std::shared_ptr<ScannedScript> scanned,
-                                                                          bool trace_scanning, bool trace_parsing) {
+                                                                          bool debug) {
     if (scanned == nullptr) {
         return {nullptr, proto::StatusCode::PARSER_INPUT_NOT_SCANNED};
     }
@@ -307,6 +307,9 @@ std::pair<std::shared_ptr<ParsedScript>, proto::StatusCode> Parser::Parse(std::s
     // Parse the tokens
     ParseContext ctx{*scanned};
     sqlynx::parser::Parser parser(ctx);
+#ifndef NDEBUG
+    parser.yydebug_ = debug;
+#endif
     parser.parse();
 
     // Make sure we didn't leak into our temp allocators.

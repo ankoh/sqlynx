@@ -1,11 +1,16 @@
 #pragma once
 
-#include <charconv>
+#include <iostream>
 
 #include "sqlynx/proto/proto_generated.h"
 
 namespace sqlynx {
 namespace parser {
+
+inline std::ostream& operator<<(std::ostream& out, const sqlynx::proto::Location& loc) {
+    out << "(" << loc.offset() << "+" << loc.length() << ")";
+    return out;
+}
 
 inline proto::Location Loc(std::initializer_list<proto::Location> locs) {
     assert(locs.size() > 1);

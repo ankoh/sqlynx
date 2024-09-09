@@ -1,7 +1,12 @@
 <parser-snapshots>
-    <parser-snapshot name="regr_minus_interval">
+    <parser-snapshot name="regr_minus_interval_0">
         <input>
             select date '1998-12-01' - interval '90' day
+        </input>
+    </parser-snapshot>
+    <parser-snapshot name="regr_minus_interval_1" debug="1">
+        <input>
+            select date '1998-12-01' - 1
         </input>
     </parser-snapshot>
 </parser-snapshots>
