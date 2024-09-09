@@ -18,17 +18,32 @@
     </parser-snapshot>
     <parser-snapshot name="regr_minus_interval_1" debug="1">
         <input>
-            select date '1998-12-01' - 1
+            select 1 + date '1998-12-01' - 1
         </input>
         <expected>
-            <statements />
+            <statements>
+                <statement type="SELECT" begin="0" count="10">
+                    <node type="OBJECT_SQL_SELECT" loc="13..45" text="select 1 +..12-01' - 1">
+                        <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="20..45" text="1 + date '..12-01' - 1">
+                            <node type="OBJECT_SQL_RESULT_TARGET" loc="20..45" text="1 + date '..12-01' - 1">
+                                <node key="SQL_RESULT_TARGET_VALUE" type="OBJECT_SQL_NARY_EXPRESSION" loc="20..45" text="1 + date '..12-01' - 1">
+                                    <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="PLUS" />
+                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="20..45" text="1 + date '..12-01' - 1">
+                                        <node type="LITERAL_INTEGER" loc="20..21" text="1" />
+                                    </node>
+                                </node>
+                            </node>
+                        </node>
+                    </node>
+                </statement>
+            </statements>
             <scanner-errors />
             <parser-errors>
-                <error message="syntax error, unexpected ICONST" loc="40..41" text="1" />
+                <error message="syntax error, unexpected ICONST" loc="44..45" text="1" />
             </parser-errors>
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
-                <line-break loc="41..42" text="&#10;" />
+                <line-break loc="45..46" text="&#10;" />
             </line-breaks>
             <comments />
         </expected>
