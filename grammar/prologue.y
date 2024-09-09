@@ -19,10 +19,16 @@
 // HEADER
 
 %code requires {
+
+#ifndef NDEBUG
+#define YYDEBUG 1
+#endif
+
 #include <string>
 #include <cstdlib>
 #include <utility>
 #include "sqlynx/parser/grammar/state.h"
+#include "sqlynx/parser/grammar/location.h"
 #include "sqlynx/proto/proto_generated.h"
 
 namespace sx = sqlynx::proto;
@@ -41,6 +47,7 @@ namespace sqlynx { namespace parser { class ParseContext;  }}
         (Cur) = proto::Location(o, l); \
     } \
 }
+
 }
 
 // ---------------------------------------------------------------------------

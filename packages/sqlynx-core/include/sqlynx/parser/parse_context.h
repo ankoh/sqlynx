@@ -1,21 +1,14 @@
 #pragma once
 
 #include <initializer_list>
-#include <iostream>
-#include <map>
-#include <memory>
 #include <span>
-#include <stack>
 #include <string>
-#include <tuple>
 #include <utility>
-#include <variant>
 #include <vector>
 
 #include "sqlynx/parser/parser.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
-#include "sqlynx/text/rope.h"
 #include "sqlynx/utils/chunk_buffer.h"
 #include "sqlynx/utils/temp_allocator.h"
 

@@ -235,6 +235,7 @@ add_custom_command(
 
 # ---------------------------------------------------------------------------
 # Module
+
 set(LIB_SRC
   ${SCANNER_OUT}
   ${PARSER_OUT}

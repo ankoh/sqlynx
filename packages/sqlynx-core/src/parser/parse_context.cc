@@ -1,12 +1,7 @@
 #include "sqlynx/parser/parse_context.h"
 
-#include <iostream>
-#include <regex>
-#include <sstream>
-
 #include "sqlynx/parser/grammar/nodes.h"
 #include "sqlynx/parser/parser.h"
-#include "sqlynx/parser/scanner.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/utils/string_trimming.h"
 

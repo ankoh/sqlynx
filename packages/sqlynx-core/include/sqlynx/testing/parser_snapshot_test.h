@@ -2,12 +2,10 @@
 
 #include <filesystem>
 #include <string>
-#include <unordered_map>
 
-#include "sqlynx/proto/proto_generated.h"
-#include "sqlynx/script.h"
 #include "gtest/gtest.h"
 #include "pugixml.hpp"
+#include "sqlynx/script.h"
 
 namespace sqlynx::testing {
 
@@ -23,6 +21,8 @@ struct ParserSnapshotTest {
     std::string name;
     /// The input
     std::string input;
+    /// Debug the parser?
+    bool debug = false;
     /// The expected output
     pugi::xml_document expected;
 
