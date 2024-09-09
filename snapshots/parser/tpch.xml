@@ -25,7 +25,7 @@ order by
         </input>
         <expected>
             <statements>
-                <statement type="SELECT" begin="0" count="150">
+                <statement type="SELECT" begin="0" count="158">
                     <node type="OBJECT_SQL_SELECT" loc="1..555" text="select&#10;   ..linestatus">
                         <node key="SQL_SELECT_TARGETS" type="ARRAY" loc="12..387" text="l_returnfl..ount_order">
                             <node type="OBJECT_SQL_RESULT_TARGET" loc="12..24" text="l_returnflag">
@@ -236,6 +236,23 @@ order by
                                         <node type="NAME" loc="416..426" text="l_shipdate" />
                                     </node>
                                 </node>
+                                <node type="OBJECT_SQL_NARY_EXPRESSION" loc="430..467" text="date '1998..l '90' day">
+                                    <node key="SQL_EXPRESSION_OPERATOR" type="ENUM_SQL_EXPRESSION_OPERATOR" value="MINUS" />
+                                    <node key="SQL_EXPRESSION_ARGS" type="ARRAY" loc="430..467" text="date '1998..l '90' day">
+                                        <node type="OBJECT_SQL_CONST_FUNCTION_CAST" loc="430..446" text="date '1998-12-01">
+                                            <node key="SQL_CONST_CAST_FUNC_NAME" type="ARRAY" loc="430..434" text="date">
+                                                <node type="NAME" loc="430..434" text="date" />
+                                            </node>
+                                            <node key="SQL_CONST_CAST_VALUE" type="LITERAL_STRING" loc="435..446" text="'1998-12-01" />
+                                        </node>
+                                        <node type="OBJECT_SQL_CONST_INTERVAL_CAST" loc="450..467" text="interval '90' day">
+                                            <node key="SQL_CONST_CAST_VALUE" type="LITERAL_STRING" loc="459..463" text="'90'" />
+                                            <node key="SQL_CONST_CAST_INTERVAL" type="OBJECT_SQL_INTERVAL_TYPE" loc="464..467" text="day">
+                                                <node key="SQL_INTERVAL_TYPE" type="ENUM_SQL_INTERVAL_TYPE" value="DAY" />
+                                            </node>
+                                        </node>
+                                    </node>
+                                </node>
                             </node>
                         </node>
                         <node key="SQL_SELECT_GROUPS" type="ARRAY" loc="468..511" text="group by&#10; ..linestatus">
@@ -276,9 +293,7 @@ order by
                 </statement>
             </statements>
             <scanner-errors />
-            <parser-errors>
-                <error message="syntax error, unexpected INTERVAL" loc="450..458" text="interval" />
-            </parser-errors>
+            <parser-errors />
             <line-breaks>
                 <line-break loc="0..1" text="&#10;" />
                 <line-break loc="7..8" text="&#10;" />

@@ -337,22 +337,22 @@ std::string_view input = ctx.GetInputData();
 
 
 {xbstart}       { ext_begin = loc; BEGIN(xb); }
-<xb>{quotestop} |
-<xb>{quotefail} { BEGIN(INITIAL); return ctx.ReadBitStringLiteral(Loc({ext_begin, loc})); }
+<xb>{quotestop} { BEGIN(INITIAL); return ctx.ReadBitStringLiteral(Loc({ext_begin, loc})); }
+<xb>{quotefail} { yyless(1); BEGIN(INITIAL); return ctx.ReadBitStringLiteral(Loc({ext_begin, proto::Location(loc.offset(), loc.length() - 1)})); }
 <xh>{xhinside}  |
 <xb>{xbinside} 
 <xh>{quotecontinue} |
 <xb>{quotecontinue}
 <xb><<EOF>>     { ctx.AddError(Loc({ext_begin, loc}), "unterminated bit string literal"); BEGIN(INITIAL); }
 {xhstart}       { ext_begin = loc; BEGIN(xh); }
-<xh>{quotestop} |
-<xh>{quotefail} { BEGIN(INITIAL); return ctx.ReadHexStringLiteral(Loc({ext_begin, loc})); }
+<xh>{quotestop} { BEGIN(INITIAL); return ctx.ReadHexStringLiteral(Loc({ext_begin, loc})); }
+<xh>{quotefail} { yyless(1); BEGIN(INITIAL); return ctx.ReadHexStringLiteral(Loc({ext_begin, proto::Location(loc.offset(), loc.length() - 1)})); }
 <xh><<EOF>>     { ctx.AddError(Loc({ext_begin, loc}), "unterminated hexadecimal bit string literal"); BEGIN(INITIAL); }
 
 
 {xqstart}       { ext_begin = loc; BEGIN(xq); }
-<xq>{quotestop} |
-<xq>{quotefail} { BEGIN(INITIAL); return ctx.ReadStringLiteral(Loc({ext_begin, loc})); }
+<xq>{quotestop} { BEGIN(INITIAL); return ctx.ReadStringLiteral(Loc({ext_begin, loc})); }
+<xq>{quotefail} { yyless(1); BEGIN(INITIAL); return ctx.ReadStringLiteral(Loc({ext_begin, proto::Location(loc.offset(), loc.length() - 1)})); }
 <xq>{xqdouble}
 <xq>{xqinside}
 <xq><<EOF>>     { ctx.AddError(Loc({ext_begin, loc}), "unterminated quoted string"); BEGIN(INITIAL); }
