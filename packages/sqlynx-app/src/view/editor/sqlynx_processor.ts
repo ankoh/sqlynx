@@ -34,11 +34,11 @@ export interface SQLynxScriptUpdate {
     // This callback is called when the editor updates the cursor
     onCursorUpdate: (scriptKey: SQLynxScriptKey, cursor: sqlynx.proto.ScriptCursorT) => void;
     // This callback is called when the editor completion is starting
-    onCompletionStart: (completion: sqlynx.proto.CompletionT) => void;
+    onCompletionStart: (scriptKey: SQLynxScriptKey, completion: sqlynx.proto.CompletionT) => void;
     // This callback is called when the user peeks a completion candidate
-    onCompletionPeek: (completion: sqlynx.proto.CompletionT, candidateId: number) => void;
+    onCompletionPeek: (scriptKey: SQLynxScriptKey, completion: sqlynx.proto.CompletionT, candidateId: number) => void;
     // This callback is called when the editor completion is starting
-    onCompletionStop: () => void;
+    onCompletionStop: (scriptKey: SQLynxScriptKey) => void;
 }
 /// The SQLynx script buffers
 export interface SQLynxScriptBuffers {
@@ -154,7 +154,7 @@ export const SQLynxProcessor: StateField<SQLynxEditorState> = StateField.define<
                 next.completionActive = true;
             } else if (next.completionStatus == null && state.completionActive) {
                 next.completionActive = false;
-                next.onCompletionStop();
+                next.onCompletionStop(next.scriptKey);
             }
         }
 
