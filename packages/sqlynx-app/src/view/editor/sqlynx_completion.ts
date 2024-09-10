@@ -30,7 +30,7 @@ function updateCompletions(
 /// Preview a completion candidate
 const previewCompletion = (completion: Completion) => {
     const candidate = completion as SQLynxCompletion;
-    candidate.state.onCompletionPeek(candidate.coreCompletion, candidate.candidateId);
+    candidate.state.onCompletionPeek(candidate.state.scriptKey, candidate.coreCompletion, candidate.candidateId);
     return null;
 };
 
@@ -73,7 +73,7 @@ export async function completeSQLynx(context: CompletionContext): Promise<Comple
             }
             offset = processor.scriptCursor.scannerSymbolOffset;
             if (!processor.completionActive) {
-                processor.onCompletionStart(completion);
+                processor.onCompletionStart(processor.scriptKey, completion);
             }
         }
     }

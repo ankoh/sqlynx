@@ -52,6 +52,8 @@ export function useServerlessSessionSetup(): SessionSetupFn {
             },
             statistics: Immutable.List(),
             cursor: null,
+            completion: null,
+            selectedCompletionCandidate: null,
         };
         const schemaScriptData: ScriptData = {
             scriptKey: ScriptKey.SCHEMA_SCRIPT,
@@ -73,6 +75,8 @@ export function useServerlessSessionSetup(): SessionSetupFn {
             },
             statistics: Immutable.List(),
             cursor: null,
+            completion: null,
+            selectedCompletionCandidate: null,
         };
 
         return allocateSessionState({

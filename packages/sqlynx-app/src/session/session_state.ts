@@ -28,13 +28,13 @@ export interface SessionState {
     connectionId: number;
     /// The connection catalog
     connectionCatalog: sqlynx.SQLynxCatalog;
-    /// The scripts (main or external)j
+    /// The scripts (main or external)
     scripts: { [id: number]: ScriptData };
     /// The running queries of this session
     runningQueries: Set<number>;
     /// The finished queries of this session
     finishedQueries: number[];
-    /// The editor query
+    /// The id of the latest query fired through the editor
     editorQuery: number | null;
     /// The user focus info
     userFocus: DerivedFocus | null;
@@ -58,6 +58,10 @@ export interface ScriptData {
     statistics: Immutable.List<sqlynx.FlatBufferPtr<sqlynx.proto.ScriptStatistics>>;
     /// The cursor
     cursor: sqlynx.proto.ScriptCursorT | null;
+    /// The completion
+    completion: sqlynx.proto.CompletionT | null;
+    /// The selected completion candidate
+    selectedCompletionCandidate: number | null;
 }
 
 /// Destroy a state
@@ -81,13 +85,14 @@ export const UPDATE_SCRIPT_ANALYSIS = Symbol('UPDATE_SCRIPT_ANALYSIS');
 export const UPDATE_SCRIPT_CURSOR = Symbol('UPDATE_SCRIPT_CURSOR');
 export const REPLACE_SCRIPT_CONTENT = Symbol('REPLACE_SCRIPT_CONTENT');
 
+export const COMPLETION_STARTED = Symbol('SCRIPT_COMPLETION_STARTED')
+export const COMPLETION_CHANGED = Symbol('COMPLETION_CHANGED')
+export const COMPLETION_STOPPED = Symbol('COMPLETION_STOPPED')
+
 export const LOAD_SCRIPTS = Symbol('LOAD_SCRIPTS');
 export const SCRIPT_LOADING_STARTED = Symbol('SCRIPT_LOADING_STARTED');
 export const SCRIPT_LOADING_SUCCEEDED = Symbol('SCRIPT_LOADING_SUCCEEDED');
 export const SCRIPT_LOADING_FAILED = Symbol('SCRIPT_LOADING_FAILED');
-
-export const FOCUS_QUERY_GRAPH_NODE = Symbol('FOCUS_GRAPH_NODE');
-export const FOCUS_QUERY_GRAPH_EDGE = Symbol('FOCUS_GRAPH_EDGE');
 
 export const REGISTER_EDITOR_QUERY = Symbol('REGISTER_EDITOR_QUERY');
 
@@ -96,6 +101,9 @@ export type SessionStateAction =
     | VariantKind<typeof UPDATE_SCRIPT_ANALYSIS, [ScriptKey, SQLynxScriptBuffers, sqlynx.proto.ScriptCursorT]>
     | VariantKind<typeof UPDATE_SCRIPT_CURSOR, [ScriptKey, sqlynx.proto.ScriptCursorT]>
     | VariantKind<typeof REPLACE_SCRIPT_CONTENT, { [key: number]: string }>
+    | VariantKind<typeof COMPLETION_STARTED, [ScriptKey, sqlynx.proto.CompletionT]>
+    | VariantKind<typeof COMPLETION_CHANGED, [ScriptKey, sqlynx.proto.CompletionT, number]>
+    | VariantKind<typeof COMPLETION_STOPPED, ScriptKey>
     | VariantKind<typeof LOAD_SCRIPTS, { [key: number]: ScriptMetadata }>
     | VariantKind<typeof SCRIPT_LOADING_STARTED, ScriptKey>
     | VariantKind<typeof SCRIPT_LOADING_SUCCEEDED, [ScriptKey, string]>
@@ -245,6 +253,8 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                     },
                     cursor: null,
                     statistics: Immutable.List(),
+                    completion: null,
+                    selectedCompletionCandidate: null,
                 };
             }
             return next;
@@ -266,7 +276,8 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                 },
             };
         case SCRIPT_LOADING_FAILED: {
-            const prevScript = state.scripts[action.value[0]];
+            const [scriptKey, error] = action.value;
+            const prevScript = state.scripts[scriptKey];
             if (!prevScript) {
                 return state;
             }
@@ -274,13 +285,13 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                 ...state,
                 scripts: {
                     ...state.scripts,
-                    [action.value[0]]: {
+                    [scriptKey]: {
                         ...prevScript,
                         loading: {
                             status: ScriptLoadingStatus.FAILED,
                             startedAt: prevScript.loading.startedAt,
                             finishedAt: new Date(),
-                            error: action.value[1],
+                            error,
                         },
                     },
                 },
@@ -380,6 +391,60 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                 ...state,
                 editorQuery: action.value
             };
+
+        case COMPLETION_STARTED: {
+            const [thisKey, completion] = action.value;
+            const scripts = { ...state.scripts };
+            for (const key of [ScriptKey.MAIN_SCRIPT, ScriptKey.SCHEMA_SCRIPT]) {
+                const data = scripts[key];
+                if (data) {
+                    if (key == thisKey) {
+                        scripts[key] = {
+                            ...data,
+                            completion: completion,
+                            selectedCompletionCandidate: 0
+                        };
+                    } else if (data.completion != null) {
+                        scripts[key] = {
+                            ...data,
+                            completion: null,
+                            selectedCompletionCandidate: null
+                        };
+                    }
+                }
+            }
+            return { ...state, scripts };
+        }
+        case COMPLETION_CHANGED: {
+            const [key, completion, index] = action.value;
+            return {
+                ...state,
+                scripts: {
+                    ...state.scripts,
+                    [key]: {
+                        ...state.scripts[key],
+                        completion: completion,
+                        selectedCompletionCandidate: index
+                    },
+                },
+            };
+        }
+        case COMPLETION_STOPPED: {
+            const scripts = { ...state.scripts };
+            for (const key of [ScriptKey.MAIN_SCRIPT, ScriptKey.SCHEMA_SCRIPT]) {
+                const data = scripts[key];
+                if (data) {
+                    if (key == action.value || data.completion != null) {
+                        scripts[key] = {
+                            ...data,
+                            completion: null,
+                            selectedCompletionCandidate: null
+                        };
+                    }
+                }
+            }
+            return { ...state, scripts };
+        }
     }
 }
 
