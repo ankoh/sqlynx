@@ -116,16 +116,16 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         [sessionDispatch],
     );
     // Helper to start a completion
-    const startCompletion = React.useCallback((_completion: sqlynx.proto.CompletionT) => {
+    const startCompletion = React.useCallback((scriptKey: SQLynxScriptKey, _completion: sqlynx.proto.CompletionT) => {
         console.log("START COMPLETION")
     }, []);
     // Helper to peek a completion candidate
-    const peekCompletionCandidate = React.useCallback((_completion: sqlynx.proto.CompletionT, candidateId: number) => {
+    const peekCompletionCandidate = React.useCallback((scriptKey: SQLynxScriptKey, _completion: sqlynx.proto.CompletionT, candidateId: number) => {
 
         console.log(`PEEK COMPLETION ${candidateId}`);
     }, []);
     // Helper to stop a completion
-    const stopCompletion = React.useCallback(() => {
+    const stopCompletion = React.useCallback((scriptKey: SQLynxScriptKey) => {
         console.log(`STOP COMPLETION`);
     }, []);
 

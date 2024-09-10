@@ -48,6 +48,8 @@ export function useHyperSessionSetup(): SessionSetupFn {
             },
             statistics: Immutable.List(),
             cursor: null,
+            completion: null,
+            selectedCompletionCandidate: null,
         };
 
         return allocateSessionState({
