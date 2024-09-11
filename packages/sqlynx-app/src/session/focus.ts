@@ -1,13 +1,16 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
 import { ScriptData, ScriptKey } from './session_state.js';
 
-export interface CatalogFocus {
-    /// The focused database
-    focusedDatabase: number | null;
-    /// The focused schema
-    focusedSchema: number | null;
-    /// The focused table
-    focusedTable: sqlynx.ExternalObjectID.Value | null;
+/// A qualified catalog entry
+export interface QualifiedCatalogEntry {
+    /// The database
+    database: number | null;
+    /// The schema
+    schema: number | null;
+    /// The table
+    table: sqlynx.ExternalObjectID.Value | null;
+    /// The column id
+    column: number | null;
 }
 
 export interface DerivedFocus {
@@ -42,7 +45,7 @@ export interface DerivedFocus {
 }
 
 /// Derive focus from script cursor
-export function deriveFocusFromCursor(
+export function deriveFocusFromScriptCursor(
     scriptKey: ScriptKey,
     scriptData: {
         [context: number]: ScriptData;
@@ -91,7 +94,7 @@ export function deriveFocusFromCursor(
                 tableId: resolved.catalogTableId(),
             };
 
-            // Cout we resolve the ref?
+            // Could we resolve the ref?
             if (!sqlynx.ExternalObjectID.isNull(focus.resolvedTable.tableId)) {
                 // Check the main and schema script for associated table and column refs
                 for (const targetKey of [ScriptKey.MAIN_SCRIPT, ScriptKey.SCHEMA_SCRIPT]) {
@@ -206,11 +209,11 @@ export function deriveFocusFromCursor(
 }
 
 /// Derive focus from catalog
-export function deriveFocusFromCatalog(
+export function deriveFocusFromCatalogSelection(
     scriptData: {
         [context: number]: ScriptData;
     },
-    target: CatalogFocus
+    target: QualifiedCatalogEntry
 ): DerivedFocus {
     const tmpAnalyzed = new sqlynx.proto.AnalyzedScript();
     const tmpIndexedTableRef = new sqlynx.proto.IndexedTableReference();
@@ -233,15 +236,15 @@ export function deriveFocusFromCatalog(
     // No focused database?
     // There must be at least the database focused.
     // (If the user focuses a table, the database has to be specified in the focus info)
-    if (target.focusedDatabase == null) {
+    if (target.database == null) {
         return focus;
     }
 
     // Store focused databases and the referenced table
-    focus.focusedDatabase = target.focusedDatabase;
-    focus.focusedSchema = target.focusedSchema;
-    focus.focusedTable = target.focusedTable;
-    if (target.focusedTable) {
+    focus.focusedDatabase = target.database;
+    focus.focusedSchema = target.schema;
+    focus.focusedTable = target.table;
+    if (target.table) {
         focus.resolvedTable = {
             databaseId: focus.focusedDatabase!,
             schemaId: focus.focusedSchema!,
@@ -263,9 +266,9 @@ export function deriveFocusFromCatalog(
         // Find table refs
         const [begin0, end0] = sqlynx.findScriptTableRefsEqualRange(
             targetAnalyzed,
-            target.focusedDatabase,
-            target.focusedSchema,
-            target.focusedTable,
+            target.database,
+            target.schema,
+            target.table,
         );
         for (let indexEntryId = begin0; indexEntryId < end0; ++indexEntryId) {
             const indexEntry = targetAnalyzed.tableReferencesById(indexEntryId, tmpIndexedTableRef)!;
@@ -276,9 +279,9 @@ export function deriveFocusFromCatalog(
         // Find column refs
         const [begin1, end1] = sqlynx.findScriptColumnRefsEqualRange(
             targetAnalyzed,
-            target.focusedDatabase,
-            target.focusedSchema,
-            target.focusedTable,
+            target.database,
+            target.schema,
+            target.table,
         );
         for (let indexEntryId = begin1; indexEntryId < end1; ++indexEntryId) {
             const indexEntry = targetAnalyzed.columnReferencesById(indexEntryId, tmpIndexedColumnRef)!;
@@ -287,4 +290,18 @@ export function deriveFocusFromCatalog(
         }
     }
     return focus;
+}
+
+/// Derive focus from script completion
+export function deriveFocusFromCompletionCandidates(
+    scriptKey: ScriptKey,
+    scriptData: {
+        [context: number]: ScriptData;
+    }
+) {
+    const data = scriptData[scriptKey];
+    if (data.completion == null) {
+        return;
+    }
+    console.log(data.completion.candidates);
 }

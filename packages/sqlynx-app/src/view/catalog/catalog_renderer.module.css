@@ -17,14 +17,12 @@
 .node_pinned {
     background-color: var(--catalog_node_bg);
 }
-.node_focus_catalog {
+.node_pinned_by_script_table_refs {
 }
-.node_focus_script_cursor {
+.node_pinned_script_column_refs {
 }
-.node_focus_script_table_refs {
+.node_user_focus {
 }
-.node_focus_script_column_refs {
-}
-.node_focus_direct {
+.node_user_focus_primary {
 }
 .node_overflow {}

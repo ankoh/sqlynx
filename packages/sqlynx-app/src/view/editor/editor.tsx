@@ -9,7 +9,7 @@ import { Button, ButtonVariant } from '../foundations/button.js';
 import { CodeMirror } from './codemirror.js';
 import { SQLynxExtensions } from './sqlynx_extension.js';
 import { SQLynxScriptBuffers, SQLynxScriptKey, UpdateSQLynxScript } from './sqlynx_processor.js';
-import { ScriptKey, UPDATE_SCRIPT_ANALYSIS, UPDATE_SCRIPT_CURSOR } from '../../session/session_state.js';
+import { COMPLETION_CHANGED, COMPLETION_STARTED, COMPLETION_STOPPED, ScriptKey, UPDATE_SCRIPT_ANALYSIS, UPDATE_SCRIPT_CURSOR } from '../../session/session_state.js';
 import { ScriptMetadata } from '../../session/script_metadata.js';
 import { ScriptStatisticsBar } from './script_statistics_bar.js';
 import { TriangleDownIcon } from '@primer/octicons-react';
@@ -116,17 +116,25 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         [sessionDispatch],
     );
     // Helper to start a completion
-    const startCompletion = React.useCallback((scriptKey: SQLynxScriptKey, _completion: sqlynx.proto.CompletionT) => {
-        console.log("START COMPLETION")
+    const startCompletion = React.useCallback((scriptKey: SQLynxScriptKey, completion: sqlynx.proto.CompletionT) => {
+        sessionDispatch({
+            type: COMPLETION_STARTED,
+            value: [scriptKey, completion],
+        });
     }, []);
     // Helper to peek a completion candidate
-    const peekCompletionCandidate = React.useCallback((scriptKey: SQLynxScriptKey, _completion: sqlynx.proto.CompletionT, candidateId: number) => {
-
-        console.log(`PEEK COMPLETION ${candidateId}`);
+    const peekCompletionCandidate = React.useCallback((scriptKey: SQLynxScriptKey, completion: sqlynx.proto.CompletionT, candidateId: number) => {
+        sessionDispatch({
+            type: COMPLETION_CHANGED,
+            value: [scriptKey, completion, candidateId],
+        });
     }, []);
     // Helper to stop a completion
     const stopCompletion = React.useCallback((scriptKey: SQLynxScriptKey) => {
-        console.log(`STOP COMPLETION`);
+        sessionDispatch({
+            type: COMPLETION_STOPPED,
+            value: scriptKey,
+        });
     }, []);
 
     // Effect to update the editor context whenever the script changes

@@ -217,10 +217,10 @@ function renderEntriesAtLevel(ctx: RenderingContext, levelId: number, entriesBeg
                 <div
                     key={thisKey}
                     className={classNames(styles.node_default, {
-                        [styles.node_focus_script_table_refs]: (entryFlags & CatalogRenderingFlag.PINNED_BY_SCRIPT_TABLE_REFS) != 0,
-                        [styles.node_focus_script_column_refs]: (entryFlags & CatalogRenderingFlag.PINNED_BY_SCRIPT_COLUMN_REFS) != 0,
-                        [styles.node_focus_script_cursor]: (entryFlags & CatalogRenderingFlag.PINNED_BY_SCRIPT_CURSOR) != 0,
-                        [styles.node_focus_direct]: (entryFlags & CatalogRenderingFlag.PRIMARY_FOCUS) != 0,
+                        [styles.node_pinned_by_script_table_refs]: (entryFlags & CatalogRenderingFlag.PINNED_BY_SCRIPT_TABLE_REFS) != 0,
+                        [styles.node_pinned_script_column_refs]: (entryFlags & CatalogRenderingFlag.PINNED_BY_SCRIPT_COLUMN_REFS) != 0,
+                        [styles.node_user_focus]: (entryFlags & CatalogRenderingFlag.PINNED_BY_USER_FOCUS) != 0,
+                        [styles.node_user_focus_primary]: (entryFlags & CatalogRenderingFlag.PRIMARY_FOCUS) != 0,
                         [styles.node_pinned]: (entryFlags & PINNED_BY_ANYTHING) != 0,
                     })}
                     style={{
