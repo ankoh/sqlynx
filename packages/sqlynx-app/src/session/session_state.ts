@@ -6,7 +6,7 @@ import { ScriptMetadata } from './script_metadata.js';
 import { ScriptLoadingStatus } from './script_loader.js';
 import { analyzeScript, parseAndAnalyzeScript, SQLynxScriptBuffers } from '../view/editor/sqlynx_processor.js';
 import { ScriptLoadingInfo } from './script_loader.js';
-import { deriveFocusFromCursor, DerivedFocus } from './focus.js';
+import { deriveFocusFromScriptCursor, DerivedFocus } from './focus.js';
 import { ConnectorInfo } from '../connectors/connector_info.js';
 import { VariantKind } from '../utils/index.js';
 
@@ -141,7 +141,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                 userFocus: null,
             };
 
-            next.userFocus = deriveFocusFromCursor(scriptKey, next.scripts, cursor);
+            next.userFocus = deriveFocusFromScriptCursor(scriptKey, next.scripts, cursor);
             // Is schema script?
             if (scriptKey == ScriptKey.SCHEMA_SCRIPT) {
                 // Update the catalog since the schema might have changed
@@ -174,7 +174,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                 },
                 userFocus: null,
             };
-            newState.userFocus = deriveFocusFromCursor(scriptKey, newState.scripts, cursor);
+            newState.userFocus = deriveFocusFromScriptCursor(scriptKey, newState.scripts, cursor);
             return newState;
         }
 
@@ -394,6 +394,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
 
         case COMPLETION_STARTED: {
             const [thisKey, completion] = action.value;
+            console.log(completion);
             const scripts = { ...state.scripts };
             for (const key of [ScriptKey.MAIN_SCRIPT, ScriptKey.SCHEMA_SCRIPT]) {
                 const data = scripts[key];
@@ -417,6 +418,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
         }
         case COMPLETION_CHANGED: {
             const [key, completion, index] = action.value;
+            console.log({ completion, index });
             return {
                 ...state,
                 scripts: {

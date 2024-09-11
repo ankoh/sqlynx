@@ -1,5 +1,6 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
-import { U32_MAX } from '../../utils/numeric_limits.js';
+
+import { DerivedFocus } from '../../session/focus.js';
 
 /// The rendering settings for a catalog level
 export interface CatalogLevelRenderingSettings {
@@ -42,15 +43,16 @@ export enum CatalogRenderingFlag {
     OVERFLOW = 0b1,
     PINNED_BY_SCRIPT_TABLE_REFS = 0b10,
     PINNED_BY_SCRIPT_COLUMN_REFS = 0b100,
-    PINNED_BY_SCRIPT_CURSOR = 0b1000,
-    PRIMARY_FOCUS = 0b10000,
+    PINNED_BY_USER_FOCUS = 0b1000,
+    PRIMARY_FOCUS = 0b1000,
 }
 
 /// Pinned by anything
 export const PINNED_BY_ANYTHING =
     CatalogRenderingFlag.PINNED_BY_SCRIPT_TABLE_REFS |
     CatalogRenderingFlag.PINNED_BY_SCRIPT_COLUMN_REFS |
-    CatalogRenderingFlag.PINNED_BY_SCRIPT_CURSOR;
+    CatalogRenderingFlag.PINNED_BY_USER_FOCUS
+    ;
 
 
 /// A span of catalog entries
@@ -509,11 +511,11 @@ export class CatalogViewModel {
     }
 
 
-    pinCursorRefs(_cursor: sqlynx.proto.ScriptCursor) {
+    pinFocusedByUser(_focus: DerivedFocus) {
         // Allocate an epoch
         const epoch = this.nextPinEpoch++;
 
         // Unpin all cursor refs that were pinned in a previous epoch
-        this.unpin(CatalogRenderingFlag.PINNED_BY_SCRIPT_CURSOR, epoch);
+        this.unpin(CatalogRenderingFlag.PINNED_BY_USER_FOCUS, epoch);
     }
 }
