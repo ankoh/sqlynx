@@ -26,9 +26,6 @@ for (const [_token, tag] of PROTO_TAG_MAPPING) {
     CODEMIRROR_TAGS_USED.add(tag);
 }
 
-const FocusedQueryGraphEdgeDecoration = Decoration.mark({
-    class: 'sqlynx-queryedge-focus',
-});
 const FocusedTableReferenceDecoration = Decoration.mark({
     class: 'sqlynx-tableref-focus',
 });
@@ -138,8 +135,8 @@ function buildDecorationsFromCursor(
     const tmpError = new sqlynx.proto.Error();
 
     // Build decorations for related column refs discovered through a table
-    if (derivedFocus?.columnRefsOfReferencedTable) {
-        for (const refId of derivedFocus.columnRefsOfReferencedTable) {
+    if (derivedFocus?.columnRefsOfFocusedTable) {
+        for (const refId of derivedFocus.columnRefsOfFocusedTable) {
             const externalId = sqlynx.ExternalObjectID.getExternalID(refId);
             const objectId = sqlynx.ExternalObjectID.getObjectID(refId);
             if (externalId !== scriptKey) {
@@ -162,8 +159,8 @@ function buildDecorationsFromCursor(
     }
 
     // Build decorations for related column refs discovered through a column
-    if (derivedFocus?.columnRefsOfReferencedColumn) {
-        for (const refId of derivedFocus.columnRefsOfReferencedColumn) {
+    if (derivedFocus?.columnRefsOfFocusedColumn) {
+        for (const refId of derivedFocus.columnRefsOfFocusedColumn) {
             const externalId = sqlynx.ExternalObjectID.getExternalID(refId);
             const objectId = sqlynx.ExternalObjectID.getObjectID(refId);
             if (externalId !== scriptKey) {
@@ -186,8 +183,8 @@ function buildDecorationsFromCursor(
     }
 
     // Build decorations for query_result refs
-    if (derivedFocus?.tableRefsOfReferencedTable) {
-        for (const refId of derivedFocus.tableRefsOfReferencedTable) {
+    if (derivedFocus?.tableRefsOfFocusedTable) {
+        for (const refId of derivedFocus.tableRefsOfFocusedTable) {
             const externalId = sqlynx.ExternalObjectID.getExternalID(refId);
             const objectId = sqlynx.ExternalObjectID.getObjectID(refId);
             if (externalId !== scriptKey) {

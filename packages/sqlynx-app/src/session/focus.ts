@@ -1,47 +1,39 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
-import { ScriptData, ScriptKey } from './session_state.js';
 
-/// A qualified catalog entry
-export interface QualifiedCatalogEntry {
-    /// The database
-    database: number | null;
-    /// The schema
-    schema: number | null;
-    /// The table
-    table: sqlynx.ExternalObjectID.Value | null;
-    /// The column id
-    column: number | null;
+import { ScriptData, ScriptKey } from './session_state.js';
+import { VariantKind } from '../utils/variant.js';
+import { QUALIFIED_DATABASE_ID, QUALIFIED_SCHEMA_ID, QUALIFIED_TABLE_COLUMN_ID, QUALIFIED_TABLE_ID, QualifiedCatalogObjectID } from './catalog_object_id.js';
+
+export interface FocusedExpression {
+    /// The expression id
+    expression: sqlynx.ExternalObjectID.Value;
+}
+export interface FocusedTableRef {
+    /// The table ref
+    table_reference: sqlynx.ExternalObjectID.Value;
 }
 
+export const FOCUSED_TABLE_REF_ID = Symbol('FOCUSED_TABLE_REF_ID');
+export const FOCUSED_EXPRESSION_ID = Symbol('FOCUSED_EXPRESSION_ID');
+
+export type FocusTarget =
+    QualifiedCatalogObjectID
+    | VariantKind<typeof FOCUSED_TABLE_REF_ID, FocusedTableRef>
+    | VariantKind<typeof FOCUSED_EXPRESSION_ID, FocusedExpression>
+    ;
+
 export interface DerivedFocus {
-    /// The focused database
-    focusedDatabase: number | null;
-    /// The focused schema
-    focusedSchema: number | null;
-    /// The focused table
-    focusedTable: sqlynx.ExternalObjectID.Value | null;
-    /// The focused column references
-    focusedExpression: sqlynx.ExternalObjectID.Value | null;
-    /// The focused table references
-    focusedTableRef: sqlynx.ExternalObjectID.Value | null;
+    /// The input focus target
+    focusTarget: FocusTarget;
 
-    /// The resolved table.
-    /// Only missing if the user explicitly focused on either the schema or the database.
-    resolvedTable: null | {
-        databaseId: number;
-        schemaId: number;
-        tableId: sqlynx.ExternalObjectID.Value;
-    };
-    /// The resolved column id.
-    /// Specified if the user focused a column ref.
-    resolvedColumnId: number | null;
-
+    /// The focused catalog object
+    focusedCatalogObject: QualifiedCatalogObjectID | null;
     /// The column references of the focused table
-    columnRefsOfReferencedTable: Set<sqlynx.ExternalObjectID.Value>;
+    columnRefsOfFocusedTable: Set<sqlynx.ExternalObjectID.Value>;
     /// The table references of focused table
-    tableRefsOfReferencedTable: Set<sqlynx.ExternalObjectID.Value>;
+    tableRefsOfFocusedTable: Set<sqlynx.ExternalObjectID.Value>;
     /// The column references of the focused column
-    columnRefsOfReferencedColumn: Set<sqlynx.ExternalObjectID.Value>;
+    columnRefsOfFocusedColumn: Set<sqlynx.ExternalObjectID.Value>;
 }
 
 /// Derive focus from script cursor
@@ -51,7 +43,7 @@ export function deriveFocusFromScriptCursor(
         [context: number]: ScriptData;
     },
     cursor: sqlynx.proto.ScriptCursorT,
-): DerivedFocus {
+): DerivedFocus | null {
     const tmpSourceAnalyzed = new sqlynx.proto.AnalyzedScript();
     const tmpTargetAnalyzed = new sqlynx.proto.AnalyzedScript();
     const tmpIndexedTableRef = new sqlynx.proto.IndexedTableReference();
@@ -59,99 +51,203 @@ export function deriveFocusFromScriptCursor(
     const tmpResolvedColumnRef = new sqlynx.proto.ResolvedColumnRefExpression();
     const tmpResolvedRelationExpr = new sqlynx.proto.ResolvedRelationExpression();
 
-    // The result focus
-    const focus: DerivedFocus = {
-        focusedDatabase: null,
-        focusedSchema: null,
-        focusedTable: null,
-        focusedExpression: null,
-        focusedTableRef: null,
-        resolvedTable: null,
-        resolvedColumnId: null,
-        columnRefsOfReferencedTable: new Set(),
-        tableRefsOfReferencedTable: new Set(),
-        columnRefsOfReferencedColumn: new Set(),
-    };
-
-    // Script is not analyzed?
-    const sourceData = scriptData[scriptKey];
-    if (!sourceData || sourceData.processed.analyzed === null) {
-        return focus;
+    const source = scriptData[scriptKey];
+    let sourceAnalyzed = source.processed.analyzed?.read(tmpSourceAnalyzed);
+    if (sourceAnalyzed == null) {
+        return null;
     }
-    const sourceAnalyzed = sourceData.processed.analyzed?.read(tmpSourceAnalyzed);
 
-    // User focused on a table reference?
-    if (cursor.contextType == sqlynx.proto.ScriptCursorContext.ScriptCursorTableRefContext) {
-        const context = cursor.context as sqlynx.proto.ScriptCursorTableRefContextT;
-        focus.focusedTableRef = sqlynx.ExternalObjectID.create(scriptKey, context.tableReferenceId);
-        const sourceRef = sourceAnalyzed.tableReferences(context.tableReferenceId)!;
-        // Is resolved?
-        if (sourceRef.innerType() == sqlynx.proto.TableReferenceSubType.ResolvedRelationExpression) {
-            const resolved = sourceRef.inner(tmpResolvedRelationExpr) as sqlynx.proto.ResolvedRelationExpression;
-            focus.resolvedTable = {
-                databaseId: resolved.catalogDatabaseId(),
-                schemaId: resolved.catalogSchemaId(),
-                tableId: resolved.catalogTableId(),
+    switch (cursor.contextType) {
+        case sqlynx.proto.ScriptCursorContext.ScriptCursorTableRefContext: {
+            const context = cursor.context as sqlynx.proto.ScriptCursorTableRefContextT;
+            const focusTarget: FocusTarget = {
+                type: FOCUSED_TABLE_REF_ID,
+                value: {
+                    table_reference: sqlynx.ExternalObjectID.create(scriptKey, context.tableReferenceId)
+                }
             };
-
-            // Could we resolve the ref?
-            if (!sqlynx.ExternalObjectID.isNull(focus.resolvedTable.tableId)) {
-                // Check the main and schema script for associated table and column refs
-                for (const targetKey of [ScriptKey.MAIN_SCRIPT, ScriptKey.SCHEMA_SCRIPT]) {
-                    // Is there data for the script key?
-                    const targetData = scriptData[targetKey];
-                    if (!targetData) {
-                        continue;
+            const focus: DerivedFocus = {
+                focusTarget,
+                focusedCatalogObject: null,
+                columnRefsOfFocusedTable: new Set(),
+                tableRefsOfFocusedTable: new Set(),
+                columnRefsOfFocusedColumn: new Set(),
+            };
+            // Is resolved?
+            const sourceRef = sourceAnalyzed.tableReferences(context.tableReferenceId)!;
+            if (sourceRef.innerType() == sqlynx.proto.TableReferenceSubType.ResolvedRelationExpression) {
+                const resolved = sourceRef.inner(tmpResolvedRelationExpr) as sqlynx.proto.ResolvedRelationExpression;
+                focus.focusedCatalogObject = {
+                    type: QUALIFIED_TABLE_ID,
+                    value: {
+                        database: resolved.catalogDatabaseId(),
+                        schema: resolved.catalogSchemaId(),
+                        table: resolved.catalogTableId(),
                     }
-                    // Read the analyzed script
-                    const targetAnalyzed = scriptData[targetKey].processed.analyzed?.read(tmpTargetAnalyzed);
-                    if (!targetAnalyzed) continue;
+                };
 
-                    // Find table refs for table
-                    const [begin0, end0] = sqlynx.findScriptTableRefsEqualRange(
-                        targetAnalyzed,
-                        focus.resolvedTable.databaseId,
-                        focus.resolvedTable.schemaId,
-                        focus.resolvedTable.tableId
-                    );
-                    for (let indexEntryId = begin0; indexEntryId < end0; ++indexEntryId) {
-                        const indexEntry = targetAnalyzed.tableReferencesById(indexEntryId, tmpIndexedTableRef)!;
-                        const tableRefId = indexEntry.tableReferenceId();
-                        focus.tableRefsOfReferencedTable.add(sqlynx.ExternalObjectID.create(targetKey, tableRefId));
-                    }
-                    // Find column refs for table
-                    const [begin1, end1] = sqlynx.findScriptColumnRefsEqualRange(
-                        targetAnalyzed,
-                        focus.resolvedTable.databaseId,
-                        focus.resolvedTable.schemaId,
-                        focus.resolvedTable.tableId
-                    );
-                    for (let indexEntryId = begin1; indexEntryId < end1; ++indexEntryId) {
-                        const indexEntry = targetAnalyzed.columnReferencesById(indexEntryId, tmpIndexedColumnRef)!;
-                        const expressionId = indexEntry.expressionId();
-                        focus.columnRefsOfReferencedTable.add(sqlynx.ExternalObjectID.create(targetKey, expressionId));
+                // Could we resolve the ref?
+                if (!sqlynx.ExternalObjectID.isNull(resolved.catalogTableId())) {
+                    // Check the main and schema script for associated table and column refs
+                    for (const targetKey of [ScriptKey.MAIN_SCRIPT, ScriptKey.SCHEMA_SCRIPT]) {
+                        // Is there data for the script key?
+                        const targetData = scriptData[targetKey];
+                        if (!targetData) {
+                            continue;
+                        }
+                        // Read the analyzed script
+                        const targetAnalyzed = scriptData[targetKey].processed.analyzed?.read(tmpTargetAnalyzed);
+                        if (!targetAnalyzed) continue;
+
+                        // Find table refs for table
+                        const [begin0, end0] = sqlynx.findScriptTableRefsEqualRange(
+                            targetAnalyzed,
+                            resolved.catalogDatabaseId(),
+                            resolved.catalogSchemaId(),
+                            resolved.catalogTableId()
+                        );
+                        for (let indexEntryId = begin0; indexEntryId < end0; ++indexEntryId) {
+                            const indexEntry = targetAnalyzed.tableReferencesById(indexEntryId, tmpIndexedTableRef)!;
+                            const tableRefId = indexEntry.tableReferenceId();
+                            focus.tableRefsOfFocusedTable.add(sqlynx.ExternalObjectID.create(targetKey, tableRefId));
+                        }
+                        // Find column refs for table
+                        const [begin1, end1] = sqlynx.findScriptColumnRefsEqualRange(
+                            targetAnalyzed,
+                            resolved.catalogDatabaseId(),
+                            resolved.catalogSchemaId(),
+                            resolved.catalogTableId()
+                        );
+                        for (let indexEntryId = begin1; indexEntryId < end1; ++indexEntryId) {
+                            const indexEntry = targetAnalyzed.columnReferencesById(indexEntryId, tmpIndexedColumnRef)!;
+                            const expressionId = indexEntry.expressionId();
+                            focus.columnRefsOfFocusedTable.add(sqlynx.ExternalObjectID.create(targetKey, expressionId));
+                        }
                     }
                 }
             }
+            return focus;
         }
-        return focus;
-    }
-
-    // User focused on a column reference?
-    if (cursor.contextType == sqlynx.proto.ScriptCursorContext.ScriptCursorColumnRefContext) {
-        const context = cursor.context as sqlynx.proto.ScriptCursorColumnRefContextT;
-        focus.focusedExpression = sqlynx.ExternalObjectID.create(scriptKey, context.expressionId);
-        const sourceRef = sourceAnalyzed.expressions(context.expressionId)!;
-        // Is resolved?
-        if (sourceRef.innerType() == sqlynx.proto.ExpressionSubType.ResolvedColumnRefExpression) {
-            const resolved = sourceRef.inner(tmpResolvedColumnRef);
-            focus.resolvedTable = {
-                databaseId: resolved.catalogDatabaseId(),
-                schemaId: resolved.catalogSchemaId(),
-                tableId: resolved.catalogTableId(),
+        case sqlynx.proto.ScriptCursorContext.ScriptCursorColumnRefContext: {
+            const context = cursor.context as sqlynx.proto.ScriptCursorColumnRefContextT;
+            const focusTarget: FocusTarget = {
+                type: FOCUSED_EXPRESSION_ID,
+                value: {
+                    expression: sqlynx.ExternalObjectID.create(scriptKey, context.expressionId)
+                }
             };
-            focus.resolvedColumnId = resolved.columnId();
+            const focus: DerivedFocus = {
+                focusTarget,
+                focusedCatalogObject: null,
+                columnRefsOfFocusedTable: new Set(),
+                tableRefsOfFocusedTable: new Set(),
+                columnRefsOfFocusedColumn: new Set(),
+            };
+            // Is resolved?
+            const sourceRef = sourceAnalyzed.expressions(context.expressionId)!;
+            if (sourceRef.innerType() == sqlynx.proto.ExpressionSubType.ResolvedColumnRefExpression) {
+                const resolved = sourceRef.inner(tmpResolvedColumnRef) as sqlynx.proto.ResolvedColumnRefExpression;
+                focus.focusedCatalogObject = {
+                    type: QUALIFIED_TABLE_COLUMN_ID,
+                    value: {
+                        database: resolved.catalogDatabaseId(),
+                        schema: resolved.catalogSchemaId(),
+                        table: resolved.catalogTableId(),
+                        column: resolved.columnId(),
+                    }
+                };
 
+                // Could we resolve the ref?
+                if (!sqlynx.ExternalObjectID.isNull(resolved.catalogTableId())) {
+                    // Check the main and schema script for associated table and column refs
+                    for (const targetKey of [ScriptKey.MAIN_SCRIPT, ScriptKey.SCHEMA_SCRIPT]) {
+                        // Is there data for the script key?
+                        const targetData = scriptData[targetKey];
+                        if (!targetData) {
+                            continue;
+                        }
+                        // Read the analyzed script
+                        const targetAnalyzed = scriptData[targetKey].processed.analyzed?.read(tmpTargetAnalyzed);
+                        if (!targetAnalyzed) continue;
+
+                        // Find table refs for table
+                        const [begin0, end0] = sqlynx.findScriptTableRefsEqualRange(
+                            targetAnalyzed,
+                            resolved.catalogDatabaseId(),
+                            resolved.catalogSchemaId(),
+                            resolved.catalogTableId(),
+                        );
+                        for (let indexEntryId = begin0; indexEntryId < end0; ++indexEntryId) {
+                            const indexEntry = targetAnalyzed.tableReferencesById(indexEntryId, tmpIndexedTableRef)!;
+                            const tableRefId = indexEntry.tableReferenceId();
+                            focus.tableRefsOfFocusedTable.add(sqlynx.ExternalObjectID.create(targetKey, tableRefId));
+                        }
+                        // Find column refs for table
+                        const [begin1, end1] = sqlynx.findScriptColumnRefsEqualRange(
+                            targetAnalyzed,
+                            resolved.catalogDatabaseId(),
+                            resolved.catalogSchemaId(),
+                            resolved.catalogTableId(),
+                        );
+                        for (let indexEntryId = begin1; indexEntryId < end1; ++indexEntryId) {
+                            const indexEntry = targetAnalyzed.columnReferencesById(indexEntryId, tmpIndexedColumnRef)!;
+                            const columnRefId = indexEntry.expressionId();
+                            focus.columnRefsOfFocusedTable.add(sqlynx.ExternalObjectID.create(targetKey, columnRefId));
+                        }
+                        // Find column refs for table
+                        const [begin2, end2] = sqlynx.findScriptColumnRefsEqualRange(
+                            targetAnalyzed,
+                            resolved.catalogDatabaseId(),
+                            resolved.catalogSchemaId(),
+                            resolved.catalogTableId(),
+                            resolved.columnId(),
+                        );
+                        for (let indexEntryId = begin2; indexEntryId < end2; ++indexEntryId) {
+                            const indexEntry = targetAnalyzed.columnReferencesById(indexEntryId, tmpIndexedColumnRef)!;
+                            const columnRefId = indexEntry.expressionId();
+                            focus.columnRefsOfFocusedColumn.add(sqlynx.ExternalObjectID.create(targetKey, columnRefId));
+                        }
+                    }
+                }
+            }
+            return focus;
+        }
+
+        case sqlynx.proto.ScriptCursorContext.NONE:
+            break;
+    }
+    return null;
+}
+
+/// Derive focus from catalog
+export function deriveFocusFromCatalogSelection(
+    scriptData: {
+        [context: number]: ScriptData;
+    },
+    target: QualifiedCatalogObjectID
+): DerivedFocus | null {
+    const tmpAnalyzed = new sqlynx.proto.AnalyzedScript();
+    const tmpIndexedTableRef = new sqlynx.proto.IndexedTableReference();
+    const tmpIndexedColumnRef = new sqlynx.proto.IndexedColumnReference();
+
+    switch (target.type) {
+        case QUALIFIED_DATABASE_ID:
+        case QUALIFIED_SCHEMA_ID:
+            return {
+                focusTarget: target,
+                focusedCatalogObject: target,
+                columnRefsOfFocusedTable: new Set(),
+                tableRefsOfFocusedTable: new Set(),
+                columnRefsOfFocusedColumn: new Set(),
+            };
+        case QUALIFIED_TABLE_ID: {
+            const focus: DerivedFocus = {
+                focusTarget: target,
+                focusedCatalogObject: target,
+                columnRefsOfFocusedTable: new Set(),
+                tableRefsOfFocusedTable: new Set(),
+                columnRefsOfFocusedColumn: new Set(),
+            };
             // Check the main and schema script for associated table and column refs
             for (const targetKey of [ScriptKey.MAIN_SCRIPT, ScriptKey.SCHEMA_SCRIPT]) {
                 // Is there data for the script key?
@@ -160,136 +256,48 @@ export function deriveFocusFromScriptCursor(
                     continue;
                 }
                 // Read the analyzed script
-                const targetAnalyzed = scriptData[targetKey].processed.analyzed?.read(tmpTargetAnalyzed);
+                const targetAnalyzed = scriptData[targetKey].processed.analyzed?.read(tmpAnalyzed);
                 if (!targetAnalyzed) continue;
 
-                // Find table refs for table
+                // Find table refs
                 const [begin0, end0] = sqlynx.findScriptTableRefsEqualRange(
                     targetAnalyzed,
-                    focus.resolvedTable.databaseId,
-                    focus.resolvedTable.schemaId,
-                    focus.resolvedTable.tableId
+                    target.value.database,
+                    target.value.schema,
+                    target.value.table,
                 );
                 for (let indexEntryId = begin0; indexEntryId < end0; ++indexEntryId) {
                     const indexEntry = targetAnalyzed.tableReferencesById(indexEntryId, tmpIndexedTableRef)!;
                     const tableRefId = indexEntry.tableReferenceId();
-                    focus.tableRefsOfReferencedTable.add(sqlynx.ExternalObjectID.create(targetKey, tableRefId));
+                    focus.tableRefsOfFocusedTable.add(sqlynx.ExternalObjectID.create(targetKey, tableRefId));
                 }
-                // Find column refs for table
+
+                // Find column refs
                 const [begin1, end1] = sqlynx.findScriptColumnRefsEqualRange(
                     targetAnalyzed,
-                    focus.resolvedTable.databaseId,
-                    focus.resolvedTable.schemaId,
-                    focus.resolvedTable.tableId
+                    target.value.database,
+                    target.value.schema,
+                    target.value.table,
                 );
                 for (let indexEntryId = begin1; indexEntryId < end1; ++indexEntryId) {
                     const indexEntry = targetAnalyzed.columnReferencesById(indexEntryId, tmpIndexedColumnRef)!;
-                    const columnRefId = indexEntry.expressionId();
-                    focus.columnRefsOfReferencedTable.add(sqlynx.ExternalObjectID.create(targetKey, columnRefId));
-                }
-                // Find column refs for table
-                const [begin2, end2] = sqlynx.findScriptColumnRefsEqualRange(
-                    targetAnalyzed,
-                    focus.resolvedTable.databaseId,
-                    focus.resolvedTable.schemaId,
-                    focus.resolvedTable.tableId,
-                    focus.resolvedColumnId
-                );
-                for (let indexEntryId = begin2; indexEntryId < end2; ++indexEntryId) {
-                    const indexEntry = targetAnalyzed.columnReferencesById(indexEntryId, tmpIndexedColumnRef)!;
-                    const columnRefId = indexEntry.expressionId();
-                    focus.columnRefsOfReferencedColumn.add(sqlynx.ExternalObjectID.create(targetKey, columnRefId));
+                    const expressionId = indexEntry.expressionId();
+                    focus.columnRefsOfFocusedTable.add(sqlynx.ExternalObjectID.create(targetKey, expressionId));
                 }
             }
+            return focus;
         }
-        return focus;
+        case QUALIFIED_TABLE_COLUMN_ID:
+            // XXX Focus on peer columns?
+            return {
+                focusTarget: target,
+                focusedCatalogObject: target,
+                columnRefsOfFocusedTable: new Set(),
+                tableRefsOfFocusedTable: new Set(),
+                columnRefsOfFocusedColumn: new Set(),
+            };
+
     }
-
-    return focus;
-}
-
-/// Derive focus from catalog
-export function deriveFocusFromCatalogSelection(
-    scriptData: {
-        [context: number]: ScriptData;
-    },
-    target: QualifiedCatalogEntry
-): DerivedFocus {
-    const tmpAnalyzed = new sqlynx.proto.AnalyzedScript();
-    const tmpIndexedTableRef = new sqlynx.proto.IndexedTableReference();
-    const tmpIndexedColumnRef = new sqlynx.proto.IndexedColumnReference();
-
-    // The result focus
-    const focus: DerivedFocus = {
-        focusedDatabase: null,
-        focusedSchema: null,
-        focusedTable: null,
-        focusedExpression: null,
-        focusedTableRef: null,
-        resolvedTable: null,
-        resolvedColumnId: null,
-        columnRefsOfReferencedTable: new Set(),
-        tableRefsOfReferencedTable: new Set(),
-        columnRefsOfReferencedColumn: new Set(),
-    };
-
-    // No focused database?
-    // There must be at least the database focused.
-    // (If the user focuses a table, the database has to be specified in the focus info)
-    if (target.database == null) {
-        return focus;
-    }
-
-    // Store focused databases and the referenced table
-    focus.focusedDatabase = target.database;
-    focus.focusedSchema = target.schema;
-    focus.focusedTable = target.table;
-    if (target.table) {
-        focus.resolvedTable = {
-            databaseId: focus.focusedDatabase!,
-            schemaId: focus.focusedSchema!,
-            tableId: focus.focusedTable!,
-        };
-    }
-
-    // Check the main and schema script for associated table and column refs
-    for (const targetKey of [ScriptKey.MAIN_SCRIPT, ScriptKey.SCHEMA_SCRIPT]) {
-        // Is there data for the script key?
-        const targetData = scriptData[targetKey];
-        if (!targetData) {
-            continue;
-        }
-        // Read the analyzed script
-        const targetAnalyzed = scriptData[targetKey].processed.analyzed?.read(tmpAnalyzed);
-        if (!targetAnalyzed) continue;
-
-        // Find table refs
-        const [begin0, end0] = sqlynx.findScriptTableRefsEqualRange(
-            targetAnalyzed,
-            target.database,
-            target.schema,
-            target.table,
-        );
-        for (let indexEntryId = begin0; indexEntryId < end0; ++indexEntryId) {
-            const indexEntry = targetAnalyzed.tableReferencesById(indexEntryId, tmpIndexedTableRef)!;
-            const tableRefId = indexEntry.tableReferenceId();
-            focus.tableRefsOfReferencedTable.add(sqlynx.ExternalObjectID.create(targetKey, tableRefId));
-        }
-
-        // Find column refs
-        const [begin1, end1] = sqlynx.findScriptColumnRefsEqualRange(
-            targetAnalyzed,
-            target.database,
-            target.schema,
-            target.table,
-        );
-        for (let indexEntryId = begin1; indexEntryId < end1; ++indexEntryId) {
-            const indexEntry = targetAnalyzed.columnReferencesById(indexEntryId, tmpIndexedColumnRef)!;
-            const expressionId = indexEntry.expressionId();
-            focus.columnRefsOfReferencedTable.add(sqlynx.ExternalObjectID.create(targetKey, expressionId));
-        }
-    }
-    return focus;
 }
 
 /// Derive focus from script completion
