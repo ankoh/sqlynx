@@ -140,6 +140,7 @@ struct IntrusiveList {
         if (size == 0) {
             first = &node;
             last = &node;
+            last->next = nullptr;
             size = 1;
         } else {
             assert(first != nullptr);
@@ -156,6 +157,7 @@ struct IntrusiveList {
         if (size == 0) {
             first = &node;
             last = &node;
+            last->next = nullptr;
             size = 1;
         } else {
             assert(first != nullptr);
