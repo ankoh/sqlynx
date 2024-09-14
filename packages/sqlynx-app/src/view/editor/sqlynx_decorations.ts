@@ -135,75 +135,47 @@ function buildDecorationsFromCursor(
     const tmpError = new sqlynx.proto.Error();
 
     // Build decorations for column refs of targeting the primary table
-    if (derivedFocus?.columnRefsOfPrimaryTable) {
-        for (const refId of derivedFocus.columnRefsOfPrimaryTable) {
-            const externalId = sqlynx.ExternalObjectID.getExternalID(refId);
-            const objectId = sqlynx.ExternalObjectID.getObjectID(refId);
-            if (externalId !== scriptKey) {
-                continue;
-            }
-            // XXX invalidate focused table refs at write front
-            if (objectId >= analyzed.expressionsLength()) {
-                continue;
-            }
-            const expr = analyzed.expressions(objectId, tmpNamedExpr)!;
-            const astNodeId = expr.astNodeId()!;
-            const astNode = parsed.nodes(astNodeId, tmpNode)!;
-            const loc = astNode.location(tmpLoc)!;
-            decorations.push({
-                from: loc.offset(),
-                to: loc.offset() + loc.length(),
-                decoration: FocusedColumnReferenceDecoration, // XXX more specific
-            });
+    for (const [refId, focusType] of derivedFocus?.scriptColumnRefs ?? []) {
+        const externalId = sqlynx.ExternalObjectID.getExternalID(refId);
+        const objectId = sqlynx.ExternalObjectID.getObjectID(refId);
+        if (externalId !== scriptKey) {
+            continue;
         }
-    }
-
-    // Build decorations for column refs targeting a primary column
-    if (derivedFocus?.columnRefsOfPrimaryColumn) {
-        for (const refId of derivedFocus.columnRefsOfPrimaryColumn) {
-            const externalId = sqlynx.ExternalObjectID.getExternalID(refId);
-            const objectId = sqlynx.ExternalObjectID.getObjectID(refId);
-            if (externalId !== scriptKey) {
-                continue;
-            }
-            // XXX invalidate focused table refs at write front
-            if (objectId >= analyzed.expressionsLength()) {
-                continue;
-            }
-            const expr = analyzed.expressions(objectId, tmpNamedExpr)!;
-            const astNodeId = expr.astNodeId()!;
-            const astNode = parsed.nodes(astNodeId, tmpNode)!;
-            const loc = astNode.location(tmpLoc)!;
-            decorations.push({
-                from: loc.offset(),
-                to: loc.offset() + loc.length(),
-                decoration: FocusedColumnReferenceDecoration,
-            });
+        // XXX invalidate focused table refs at write front
+        if (objectId >= analyzed.expressionsLength()) {
+            continue;
         }
+        const expr = analyzed.expressions(objectId, tmpNamedExpr)!;
+        const astNodeId = expr.astNodeId()!;
+        const astNode = parsed.nodes(astNodeId, tmpNode)!;
+        const loc = astNode.location(tmpLoc)!;
+        decorations.push({
+            from: loc.offset(),
+            to: loc.offset() + loc.length(),
+            decoration: FocusedColumnReferenceDecoration, // XXX more specific
+        });
     }
 
     // Build decorations for table refs targeting the primary table
-    if (derivedFocus?.tableRefsOfPrimaryTable) {
-        for (const refId of derivedFocus.tableRefsOfPrimaryTable) {
-            const externalId = sqlynx.ExternalObjectID.getExternalID(refId);
-            const objectId = sqlynx.ExternalObjectID.getObjectID(refId);
-            if (externalId !== scriptKey) {
-                continue;
-            }
-            // XXX invalidate focused table refs at write front
-            if (objectId >= analyzed.tableReferencesLength()) {
-                continue;
-            }
-            const columnRef = analyzed.tableReferences(objectId, tmpTblRef)!;
-            const astNodeId = columnRef.astNodeId()!;
-            const astNode = parsed.nodes(astNodeId, tmpNode)!;
-            const loc = astNode.location(tmpLoc)!;
-            decorations.push({
-                from: loc.offset(),
-                to: loc.offset() + loc.length(),
-                decoration: FocusedTableReferenceDecoration,
-            });
+    for (const [refId, focusType] of derivedFocus?.scriptTableRefs ?? []) {
+        const externalId = sqlynx.ExternalObjectID.getExternalID(refId);
+        const objectId = sqlynx.ExternalObjectID.getObjectID(refId);
+        if (externalId !== scriptKey) {
+            continue;
         }
+        // XXX invalidate focused table refs at write front
+        if (objectId >= analyzed.tableReferencesLength()) {
+            continue;
+        }
+        const columnRef = analyzed.tableReferences(objectId, tmpTblRef)!;
+        const astNodeId = columnRef.astNodeId()!;
+        const astNode = parsed.nodes(astNodeId, tmpNode)!;
+        const loc = astNode.location(tmpLoc)!;
+        decorations.push({
+            from: loc.offset(),
+            to: loc.offset() + loc.length(),
+            decoration: FocusedTableReferenceDecoration,
+        });
     }
 
     // Are there any scanner errors?
