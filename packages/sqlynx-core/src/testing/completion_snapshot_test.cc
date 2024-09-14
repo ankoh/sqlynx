@@ -71,8 +71,8 @@ void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Complet
             }
         }
         EncodeLocation(xml_entry, iter->replace_text_at, completion.GetCursor().script.scanned_script->text_buffer);
-        for (auto& obj_ref : iter->catalog_objects) {
-            auto& obj = obj_ref.get();
+        for (auto& co : iter->catalog_objects) {
+            auto& obj = co.catalog_object;
             auto xml_obj = xml_entry.append_child("object");
             switch (obj.object_type) {
                 case sqlynx::CatalogObjectType::DatabaseReference: {
