@@ -2,7 +2,8 @@
 
 #include <cassert>
 #include <cstddef>
-#include <utility>
+#include <type_traits>
+#include <vector>
 
 namespace sqlynx {
 

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "ankerl/unordered_dense.h"
 #include "sqlynx/catalog_object.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
@@ -14,6 +13,17 @@ struct Completion {
     using ScoreValueType = uint32_t;
     /// A bitset for candidate tags
     using CandidateTags = EnumBitset<uint16_t, proto::CandidateTag, proto::CandidateTag::MAX>;
+
+    struct Candidate;
+    /// The candidate catalog objects
+    struct CandidateCatalogObject : public IntrusiveListNode {
+        /// The candidate
+        Candidate& candidate;
+        /// The candidate tags of this object
+        CandidateTags candidate_tags;
+        /// The catalog object
+        const CatalogObject& catalog_object;
+    };
     /// The completion candidates
     struct Candidate {
         /// The name
@@ -22,12 +32,12 @@ struct Completion {
         /// We may hit the same name multiple times in multiple catalog entries.
         /// Each of these entries may have different name tags, so we have to merge them here.
         NameTags coarse_name_tags;
-        /// The more fine-granular candidate tags
+        /// The combined more fine-granular candidate tags
         CandidateTags candidate_tags;
-        /// The catalog objects
-        std::vector<std::reference_wrapper<const CatalogObject>> catalog_objects;
         /// Replace text at a location
         sx::Location replace_text_at;
+        /// The catalog objects
+        IntrusiveList<CandidateCatalogObject> catalog_objects;
     };
 
     struct CandidateWithScore : public Candidate {
@@ -48,9 +58,6 @@ struct Completion {
         }
     };
 
-    /// A hash-map for candidates
-    using CandidateMap = ankerl::unordered_dense::map<std::string_view, Candidate>;
-
     /// A name component type
     enum NameComponentType { Name, Star, TrailingDot, Index };
     /// A name component
@@ -63,13 +70,27 @@ struct Completion {
         std::optional<std::reference_wrapper<RegisteredName>> name;
     };
 
+    /// Helper to find candidates in an index
+    void findCandidatesInIndex(const CatalogEntry::NameSearchIndex& index, bool through_catalog);
+
    protected:
     /// The script cursor
     const ScriptCursor& cursor;
     /// The completion strategy
     const proto::CompletionStrategy strategy;
-    /// The hash-map to deduplicate names found in the completion indexes
-    CandidateMap pending_candidates;
+
+    /// The candidate buffer
+    ChunkBuffer<Candidate, 16> candidates;
+    /// The candidate object buffer
+    ChunkBuffer<CandidateCatalogObject, 16> candidate_objects;
+    /// The candidates by name
+    std::unordered_map<std::string_view, std::reference_wrapper<Candidate>> candidates_by_name;
+    /// The candidate objects by object.
+    /// We use this for promoting individual candidates.
+    /// Note that this assumes that a catalog object can be added to at most a single candidate.
+    std::unordered_map<const CatalogObject*, std::reference_wrapper<CandidateCatalogObject>>
+        candidate_objects_by_object;
+
     /// The result heap, holding up to k entries
     TopKHeap<CandidateWithScore> result_heap;
 
@@ -81,9 +102,10 @@ struct Completion {
     void FindCandidatesInIndexes();
     /// Promote tables that contain column names that are still unresolved in the current statement
     void PromoteTablesAndPeersForUnresolvedColumns();
-    /// Add expected keywords in the grammar as completion candidates.
-    /// We deliberately do not register them in the pending candidates map to not inflate the results.
-    /// We accept that they may occur twice in the completion list since and mark them explictly as grammar matches.
+    /// Add expected keywords in the grammar directly to the result heap.
+    /// We deliberately do not register them as candidates to not inflate the results.
+    /// We accept that they may occur twice in the completion list and we mark them explictly as grammar matches in the
+    /// UI.
     void AddExpectedKeywordsAsCandidates(std::span<parser::Parser::ExpectedSymbol> symbols);
     /// Flush pending candidates and finish the results
     void FlushCandidatesAndFinish();
@@ -96,8 +118,6 @@ struct Completion {
     auto& GetCursor() const { return cursor; }
     /// Get the completion strategy
     auto& GetStrategy() const { return strategy; }
-    /// Get the pending candidates
-    auto& GetPendingCandidates() { return pending_candidates; }
     /// Get the result heap
     auto& GetHeap() const { return result_heap; }
 
