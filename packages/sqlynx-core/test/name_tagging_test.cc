@@ -69,7 +69,7 @@ TEST_P(TestNameTags, Test) {
         size_t current = i++;
         auto& have = scanned->name_registry.At(current);
         ASSERT_EQ(have.text, name);
-        ASSERT_EQ(static_cast<uint64_t>(have.resolved_tags), static_cast<uint64_t>(tags));
+        ASSERT_EQ(static_cast<uint64_t>(have.coarse_analyzer_tags), static_cast<uint64_t>(tags));
     }
 }
 

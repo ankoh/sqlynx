@@ -17,36 +17,33 @@ namespace sqlynx {
 
 namespace {
 
-using ScoringTable = std::array<std::pair<proto::NameTag, Completion::ScoreValueType>, 8>;
+using NameScoringTable = std::array<std::pair<proto::NameTag, Completion::ScoreValueType>, 8>;
 
-static constexpr ScoringTable NAME_SCORE_DEFAULTS{{
-    {proto::NameTag::NONE, Completion::TAG_IGNORE},
-    {proto::NameTag::KEYWORD, Completion::TAG_UNLIKELY},
-    {proto::NameTag::SCHEMA_NAME, Completion::TAG_LIKELY},
-    {proto::NameTag::DATABASE_NAME, Completion::TAG_LIKELY},
-    {proto::NameTag::TABLE_NAME, Completion::TAG_LIKELY},
-    {proto::NameTag::TABLE_ALIAS, Completion::TAG_LIKELY},
-    {proto::NameTag::COLUMN_NAME, Completion::TAG_LIKELY},
+static constexpr NameScoringTable NAME_SCORE_DEFAULTS{{
+    {proto::NameTag::NONE, Completion::NAME_TAG_IGNORE},
+    {proto::NameTag::SCHEMA_NAME, Completion::NAME_TAG_LIKELY},
+    {proto::NameTag::DATABASE_NAME, Completion::NAME_TAG_LIKELY},
+    {proto::NameTag::TABLE_NAME, Completion::NAME_TAG_LIKELY},
+    {proto::NameTag::TABLE_ALIAS, Completion::NAME_TAG_LIKELY},
+    {proto::NameTag::COLUMN_NAME, Completion::NAME_TAG_LIKELY},
 }};
 
-static constexpr ScoringTable NAME_SCORE_TABLE_REF{{
-    {proto::NameTag::NONE, Completion::TAG_IGNORE},
-    {proto::NameTag::KEYWORD, Completion::TAG_UNLIKELY},
-    {proto::NameTag::SCHEMA_NAME, Completion::TAG_LIKELY},
-    {proto::NameTag::DATABASE_NAME, Completion::TAG_LIKELY},
-    {proto::NameTag::TABLE_NAME, Completion::TAG_LIKELY},
-    {proto::NameTag::TABLE_ALIAS, Completion::TAG_UNLIKELY},
-    {proto::NameTag::COLUMN_NAME, Completion::TAG_UNLIKELY},
+static constexpr NameScoringTable NAME_SCORE_TABLE_REF{{
+    {proto::NameTag::NONE, Completion::NAME_TAG_IGNORE},
+    {proto::NameTag::SCHEMA_NAME, Completion::NAME_TAG_LIKELY},
+    {proto::NameTag::DATABASE_NAME, Completion::NAME_TAG_LIKELY},
+    {proto::NameTag::TABLE_NAME, Completion::NAME_TAG_LIKELY},
+    {proto::NameTag::TABLE_ALIAS, Completion::NAME_TAG_UNLIKELY},
+    {proto::NameTag::COLUMN_NAME, Completion::NAME_TAG_UNLIKELY},
 }};
 
-static constexpr ScoringTable NAME_SCORE_COLUMN_REF{{
-    {proto::NameTag::NONE, Completion::TAG_IGNORE},
-    {proto::NameTag::KEYWORD, Completion::TAG_LIKELY},
-    {proto::NameTag::SCHEMA_NAME, Completion::TAG_UNLIKELY},
-    {proto::NameTag::DATABASE_NAME, Completion::TAG_UNLIKELY},
-    {proto::NameTag::TABLE_NAME, Completion::TAG_UNLIKELY},
-    {proto::NameTag::TABLE_ALIAS, Completion::TAG_LIKELY},
-    {proto::NameTag::COLUMN_NAME, Completion::TAG_LIKELY},
+static constexpr NameScoringTable NAME_SCORE_COLUMN_REF{{
+    {proto::NameTag::NONE, Completion::NAME_TAG_IGNORE},
+    {proto::NameTag::SCHEMA_NAME, Completion::NAME_TAG_UNLIKELY},
+    {proto::NameTag::DATABASE_NAME, Completion::NAME_TAG_UNLIKELY},
+    {proto::NameTag::TABLE_NAME, Completion::NAME_TAG_UNLIKELY},
+    {proto::NameTag::TABLE_ALIAS, Completion::NAME_TAG_LIKELY},
+    {proto::NameTag::COLUMN_NAME, Completion::NAME_TAG_LIKELY},
 }};
 
 /// We use a prevalence score to rank keywords by popularity.
@@ -293,7 +290,6 @@ void Completion::FindCandidatesForNamePath() {
         CandidateTags candidate_tags;
         NameTags name_tags;
         const CatalogObject& object;
-        ScoreValueType score;
         sx::Location replace_text_at;
     };
     // Collect all candidate strings
@@ -322,10 +318,9 @@ void Completion::FindCandidatesForNamePath() {
                         // Store the candidate
                         auto& name = table.get().table_name.table_name.get();
                         DotCandidate candidate{.name = name.text,
-                                               .candidate_tags = {proto::CandidateTag::DOT_RESOLUTION},
+                                               .candidate_tags = {proto::CandidateTag::DOT_RESOLUTION_TABLE},
                                                .name_tags = {proto::NameTag::TABLE_NAME},
                                                .object = table.get().CastToBase(),
-                                               .score = DOT_TABLE_SCORE_MODIFIER,
                                                .replace_text_at = replace_text_at};
                         candidate.candidate_tags.AddIf(proto::CandidateTag::THROUGH_CATALOG, through_catalog);
                         candidates.push_back(std::move(candidate));
@@ -341,10 +336,9 @@ void Completion::FindCandidatesForNamePath() {
                         // Store the candidate
                         auto& name = schema.get().schema_name;
                         DotCandidate candidate{.name = name,
-                                               .candidate_tags = {proto::CandidateTag::DOT_RESOLUTION},
+                                               .candidate_tags = {proto::CandidateTag::DOT_RESOLUTION_SCHEMA},
                                                .name_tags = NameTags{proto::NameTag::SCHEMA_NAME},
                                                .object = schema.get().CastToBase(),
-                                               .score = DOT_SCHEMA_SCORE_MODIFIER,
                                                .replace_text_at = replace_text_at};
                         candidate.candidate_tags.AddIf(proto::CandidateTag::THROUGH_CATALOG, through_catalog);
                         candidates.push_back(std::move(candidate));
@@ -366,10 +360,9 @@ void Completion::FindCandidatesForNamePath() {
                     for (auto& [table, through_catalog] : tables) {
                         auto& name = table.get().table_name.table_name.get();
                         DotCandidate candidate{.name = name,
-                                               .candidate_tags = {proto::CandidateTag::DOT_RESOLUTION},
+                                               .candidate_tags = {proto::CandidateTag::DOT_RESOLUTION_TABLE},
                                                .name_tags = NameTags{proto::NameTag::TABLE_NAME},
                                                .object = {table.get().CastToBase()},
-                                               .score = DOT_TABLE_SCORE_MODIFIER,
                                                .replace_text_at = replace_text_at};
                         candidate.candidate_tags.AddIf(proto::CandidateTag::THROUGH_CATALOG, through_catalog);
                         candidates.push_back(std::move(candidate));
@@ -407,10 +400,9 @@ void Completion::FindCandidatesForNamePath() {
                         for (auto& column : table_decl.table_columns) {
                             auto& name = column.column_name.get();
                             DotCandidate candidate{.name = name,
-                                                   .candidate_tags = {proto::CandidateTag::DOT_RESOLUTION},
-                                                   .name_tags = NameTags{proto::NameTag::TABLE_NAME},
+                                                   .candidate_tags = {proto::CandidateTag::DOT_RESOLUTION_COLUMN},
+                                                   .name_tags = NameTags{proto::NameTag::COLUMN_NAME},
                                                    .object = {column.CastToBase()},
-                                                   .score = DOT_TABLE_SCORE_MODIFIER,
                                                    .replace_text_at = replace_text_at};
                             candidate.candidate_tags.AddIf(
                                 proto::CandidateTag::THROUGH_CATALOG,
@@ -431,25 +423,20 @@ void Completion::FindCandidatesForNamePath() {
             auto iter = pending_candidates.find(candidate.name);
             if (iter != pending_candidates.end()) {
                 auto& existing = iter->second;
-                existing.score += candidate.score;
                 existing.replace_text_at = replace_text_at;
                 existing.catalog_objects.push_back(candidate.object);
             } else {
-                ScoreValueType score = candidate.score;
                 fuzzy_ci_string_view ci_name{candidate.name.data(), candidate.name.size()};
                 if (ci_name.starts_with(fuzzy_ci_string_view{last_text_prefix.data(), last_text_prefix.size()})) {
-                    score += PREFIX_SCORE_MODIFIER;
                     candidate.candidate_tags |= proto::CandidateTag::PREFIX_MATCH;
                 } else if (ci_name.find(fuzzy_ci_string_view{last_text_prefix.data(), last_text_prefix.size()}) !=
                            fuzzy_ci_string_view::npos) {
-                    score += SUBSTRING_SCORE_MODIFIER;
                     candidate.candidate_tags |= proto::CandidateTag::SUBSTRING_MATCH;
                 }
                 Candidate c{
                     .name = candidate.name,
-                    .name_tags = candidate.name_tags,
+                    .coarse_name_tags = candidate.name_tags,
                     .candidate_tags = candidate.candidate_tags,
-                    .score = score,
                     .catalog_objects = {candidate.object},
                     .replace_text_at = replace_text_at,
                 };
@@ -461,15 +448,13 @@ void Completion::FindCandidatesForNamePath() {
             auto iter = pending_candidates.find(candidate.name);
             if (iter != pending_candidates.end()) {
                 auto& existing = iter->second;
-                existing.score += candidate.score;
                 existing.replace_text_at = replace_text_at;
                 existing.catalog_objects.push_back(candidate.object);
             } else {
                 Candidate c{
                     .name = candidate.name,
-                    .name_tags = candidate.name_tags,
+                    .coarse_name_tags = candidate.name_tags,
                     .candidate_tags = candidate.candidate_tags,
-                    .score = candidate.score,
                     .catalog_objects = {candidate.object},
                     .replace_text_at = replace_text_at,
                 };
@@ -479,7 +464,7 @@ void Completion::FindCandidatesForNamePath() {
     }
 }
 
-void Completion::PromoteExpectedGrammarSymbols(std::span<parser::Parser::ExpectedSymbol> symbols) {
+void Completion::AddExpectedKeywordsAsCandidates(std::span<parser::Parser::ExpectedSymbol> symbols) {
     auto& location = cursor.scanner_location;
 
     // Helper to determine the score of a cursor symbol
@@ -488,8 +473,9 @@ void Completion::PromoteExpectedGrammarSymbols(std::span<parser::Parser::Expecte
         fuzzy_ci_string_view ci_keyword_text{keyword_text.data(), keyword_text.size()};
         using Relative = ScannedScript::LocationInfo::RelativePosition;
         CandidateTags tags = proto::CandidateTag::EXPECTED_PARSER_SYMBOL;
-        auto score = scoring_table[static_cast<size_t>(proto::NameTag::NONE)].second;
-        score += GetKeywordPrevalenceScore(expected);
+
+        auto score = GetKeywordPrevalenceScore(expected);
+
         switch (location->relative_pos) {
             case Relative::NEW_SYMBOL_AFTER:
             case Relative::NEW_SYMBOL_BEFORE:
@@ -520,14 +506,16 @@ void Completion::PromoteExpectedGrammarSymbols(std::span<parser::Parser::Expecte
         auto name = parser::Keyword::GetKeywordName(expected);
         if (!name.empty()) {
             auto [tags, score] = get_score(*location, expected, name);
-            Candidate candidate{
-                .name = name,
-                .name_tags = {proto::NameTag::KEYWORD},
-                .candidate_tags = tags,
-                .score = score,
-                .replace_text_at = location->symbol.location,
+            CandidateWithScore scored_candidate{
+                Candidate{
+                    .name = name,
+                    .coarse_name_tags = {},
+                    .candidate_tags = tags,
+                    .replace_text_at = location->symbol.location,
+                },
+                score,
             };
-            result_heap.Insert(candidate);
+            result_heap.Insert(scored_candidate);
         }
     }
 }
@@ -535,7 +523,6 @@ void Completion::PromoteExpectedGrammarSymbols(std::span<parser::Parser::Expecte
 void findCandidatesInIndex(Completion& completion, const CatalogEntry::NameSearchIndex& index, bool through_catalog) {
     using Relative = ScannedScript::LocationInfo::RelativePosition;
     auto& cursor = completion.GetCursor();
-    auto& scoring_table = completion.GetScoringTable();
     auto& pending_candidates = completion.GetPendingCandidates();
 
     // Get the current cursor prefix
@@ -564,11 +551,6 @@ void findCandidatesInIndex(Completion& completion, const CatalogEntry::NameSearc
         Completion::CandidateTags candidate_tags{proto::CandidateTag::NAME_INDEX};
         // Added through catalog?
         candidate_tags.AddIf(proto::CandidateTag::THROUGH_CATALOG, through_catalog);
-        // Determine score
-        Completion::ScoreValueType score = 0;
-        for (auto [tag, tag_score] : scoring_table) {
-            score = std::max(score, name_info.resolved_tags.contains(tag) ? tag_score : 0);
-        }
 
         // Is a prefix?
         switch (location->relative_pos) {
@@ -576,10 +558,8 @@ void findCandidatesInIndex(Completion& completion, const CatalogEntry::NameSearc
             case Relative::MID_OF_SYMBOL:
             case Relative::END_OF_SYMBOL:
                 if (fuzzy_ci_string_view{name_info.text.data(), name_info.text.size()}.starts_with(ci_prefix_text)) {
-                    score += Completion::PREFIX_SCORE_MODIFIER;
                     candidate_tags |= proto::CandidateTag::PREFIX_MATCH;
                 } else {
-                    score += Completion::SUBSTRING_SCORE_MODIFIER;
                     candidate_tags |= proto::CandidateTag::SUBSTRING_MATCH;
                 }
                 break;
@@ -589,9 +569,8 @@ void findCandidatesInIndex(Completion& completion, const CatalogEntry::NameSearc
         // Do we know the candidate already?
         if (auto iter = pending_candidates.find(name_info.text); iter != pending_candidates.end()) {
             // Update the score if it is higher
-            iter->second.score = std::max(iter->second.score, score);
             iter->second.candidate_tags |= candidate_tags;
-            iter->second.name_tags |= name_info.resolved_tags;
+            iter->second.coarse_name_tags |= name_info.coarse_analyzer_tags;
             iter->second.catalog_objects.reserve(iter->second.catalog_objects.size() +
                                                  name_info.resolved_objects.GetSize());
             for (auto& o : name_info.resolved_objects) {
@@ -600,9 +579,8 @@ void findCandidatesInIndex(Completion& completion, const CatalogEntry::NameSearc
         } else {
             // Otherwise store as new candidate
             Completion::Candidate candidate{.name = name_info.text,
-                                            .name_tags = name_info.resolved_tags,
+                                            .coarse_name_tags = name_info.coarse_analyzer_tags,
                                             .candidate_tags = candidate_tags,
-                                            .score = score,
                                             .catalog_objects = {},
                                             .replace_text_at = location->symbol.location};
             candidate.catalog_objects.reserve(name_info.resolved_objects.GetSize());
@@ -653,7 +631,6 @@ void Completion::PromoteTablesAndPeersForUnresolvedColumns() {
                     pending_iter != pending_candidates.end() &&
                     !pending_iter->second.candidate_tags.contains(proto::CandidateTag::RESOLVING_TABLE)) {
                     pending_iter->second.candidate_tags |= proto::CandidateTag::RESOLVING_TABLE;
-                    pending_iter->second.score += RESOLVING_TABLE_SCORE_MODIFIER;
                 }
                 // Promote column names in these tables
                 for (auto& peer_col : table.table_columns) {
@@ -662,12 +639,22 @@ void Completion::PromoteTablesAndPeersForUnresolvedColumns() {
                         pending_iter != pending_candidates.end() &&
                         !pending_iter->second.candidate_tags.contains(proto::CandidateTag::UNRESOLVED_PEER)) {
                         pending_iter->second.candidate_tags |= proto::CandidateTag::UNRESOLVED_PEER;
-                        pending_iter->second.score += UNRESOLVED_PEER_SCORE_MODIFIER;
                     }
                 }
             }
         }
     });
+}
+
+static const NameScoringTable& selectScoringTable(proto::CompletionStrategy strategy) {
+    switch (strategy) {
+        case proto::CompletionStrategy::DEFAULT:
+            return NAME_SCORE_DEFAULTS;
+        case proto::CompletionStrategy::TABLE_REF:
+            return NAME_SCORE_TABLE_REF;
+        case proto::CompletionStrategy::COLUMN_REF:
+            return NAME_SCORE_COLUMN_REF;
+    }
 }
 
 void Completion::FlushCandidatesAndFinish() {
@@ -691,9 +678,33 @@ void Completion::FlushCandidatesAndFinish() {
         current_symbol_location = location->symbol.location;
     }
 
+    // Resolve the scoring table
+    auto& base_scoring_table = selectScoringTable(strategy);
+
     // Insert all pending candidates into the heap
     for (auto& [key, candidate] : pending_candidates) {
-        result_heap.Insert(candidate);
+        // Score the candidate
+        Completion::ScoreValueType score = 0;
+        // Derive the base score as maximum among the name tags
+        for (auto [tag, tag_score] : base_scoring_table) {
+            score = std::max(score, candidate.coarse_name_tags.contains(tag) ? tag_score : 0);
+        }
+        // Apply all score modifiers
+        score += ((candidate.candidate_tags & proto::CandidateTag::SUBSTRING_MATCH) != 0) * SUBSTRING_SCORE_MODIFIER;
+        score += ((candidate.candidate_tags & proto::CandidateTag::PREFIX_MATCH) != 0) * PREFIX_SCORE_MODIFIER;
+        score +=
+            ((candidate.candidate_tags & proto::CandidateTag::RESOLVING_TABLE) != 0) * RESOLVING_TABLE_SCORE_MODIFIER;
+        score +=
+            ((candidate.candidate_tags & proto::CandidateTag::UNRESOLVED_PEER) != 0) * UNRESOLVED_PEER_SCORE_MODIFIER;
+        score +=
+            ((candidate.candidate_tags & proto::CandidateTag::DOT_RESOLUTION_TABLE) != 0) * DOT_TABLE_SCORE_MODIFIER;
+        score +=
+            ((candidate.candidate_tags & proto::CandidateTag::DOT_RESOLUTION_SCHEMA) != 0) * DOT_SCHEMA_SCORE_MODIFIER;
+        score +=
+            ((candidate.candidate_tags & proto::CandidateTag::DOT_RESOLUTION_COLUMN) != 0) * DOT_COLUMN_SCORE_MODIFIER;
+
+        // Add the scored candidate
+        result_heap.Insert(CandidateWithScore{std::move(candidate), score});
     }
     pending_candidates.clear();
 
@@ -714,19 +725,8 @@ static proto::CompletionStrategy selectStrategy(const ScriptCursor& cursor) {
     }
 }
 
-static const Completion::ScoringTable& selectScoringTable(proto::CompletionStrategy strategy) {
-    switch (strategy) {
-        case proto::CompletionStrategy::DEFAULT:
-            return NAME_SCORE_DEFAULTS;
-        case proto::CompletionStrategy::TABLE_REF:
-            return NAME_SCORE_TABLE_REF;
-        case proto::CompletionStrategy::COLUMN_REF:
-            return NAME_SCORE_COLUMN_REF;
-    }
-}
-
 Completion::Completion(const ScriptCursor& cursor, size_t k)
-    : cursor(cursor), strategy(selectStrategy(cursor)), scoring_table(selectScoringTable(strategy)), result_heap(k) {}
+    : cursor(cursor), strategy(selectStrategy(cursor)), result_heap(k) {}
 
 std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(const ScriptCursor& cursor, size_t k) {
     auto completion = std::make_unique<Completion>(cursor, k);
@@ -821,8 +821,7 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
     }
 
     // Add expected grammar symbols to the heap and score them
-    completion->PromoteExpectedGrammarSymbols(expected_symbols);
-
+    completion->AddExpectedKeywordsAsCandidates(expected_symbols);
     // Also check the name indexes when expecting an identifier
     if (expects_identifier) {
         // Just find all candidates in the name index
@@ -892,9 +891,9 @@ flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferB
         candidateBuilder.add_display_text(display_text_offset);
         candidateBuilder.add_completion_text(completion_text_ofs);
         candidateBuilder.add_candidate_tags(iter_entry->candidate_tags);
-        candidateBuilder.add_name_tags(iter_entry->name_tags);
+        candidateBuilder.add_name_tags(iter_entry->coarse_name_tags);
         candidateBuilder.add_catalog_objects(catalog_objects_ofs);
-        candidateBuilder.add_score(iter_entry->GetScore());
+        candidateBuilder.add_score(iter_entry->score);
         candidateBuilder.add_replace_text_at(&iter_entry->replace_text_at);
         candidates.push_back(candidateBuilder.Finish());
     }

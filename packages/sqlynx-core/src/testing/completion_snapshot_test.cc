@@ -43,9 +43,22 @@ void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Complet
         auto xml_entry = root.append_child("entry");
         std::string text{iter->name.data(), iter->name.size()};
         xml_entry.append_attribute("value").set_value(text.c_str());
-        xml_entry.append_attribute("score").set_value(iter->GetScore());
-        std::stringstream candidate_tags;
+        xml_entry.append_attribute("score").set_value(iter->score);
         {
+            std::stringstream name_tags;
+            size_t i = 0;
+            iter->coarse_name_tags.ForEach([&](proto::NameTag tag) {
+                if (i++ > 0) {
+                    name_tags << "|";
+                }
+                name_tags << proto::EnumNameNameTag(tag);
+            });
+            if (i > 0) {
+                xml_entry.append_attribute("ntags").set_value(name_tags.str().c_str());
+            }
+        }
+        {
+            std::stringstream candidate_tags;
             size_t i = 0;
             iter->candidate_tags.ForEach([&](proto::CandidateTag tag) {
                 if (i++ > 0) {
@@ -53,19 +66,10 @@ void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Complet
                 }
                 candidate_tags << proto::EnumNameCandidateTag(tag);
             });
+            if (i > 0) {
+                xml_entry.append_attribute("ctags").set_value(candidate_tags.str().c_str());
+            }
         }
-        std::stringstream name_tags;
-        {
-            size_t i = 0;
-            iter->name_tags.ForEach([&](proto::NameTag tag) {
-                if (i++ > 0) {
-                    name_tags << "|";
-                }
-                name_tags << proto::EnumNameNameTag(tag);
-            });
-        }
-        xml_entry.append_attribute("ntags").set_value(name_tags.str().c_str());
-        xml_entry.append_attribute("ctags").set_value(candidate_tags.str().c_str());
         EncodeLocation(xml_entry, iter->replace_text_at, completion.GetCursor().script.scanned_script->text_buffer);
         for (auto& obj_ref : iter->catalog_objects) {
             auto& obj = obj_ref.get();

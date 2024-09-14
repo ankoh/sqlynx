@@ -21,13 +21,13 @@ RegisteredName& NameRegistry::Register(std::string_view s, sx::Location location
     auto iter = names_by_text.find(s);
     if (iter != names_by_text.end()) {
         auto& name = iter->second.get();
-        name.resolved_tags |= tag;
+        name.coarse_analyzer_tags |= tag;
         name.occurrences += 1;
         return name;
     }
     RegisteredNameID name_id = names.GetSize();
-    auto& name = names.Append(
-        RegisteredName{.name_id = name_id, .text = s, .location = location, .occurrences = 1, .resolved_tags = tag});
+    auto& name = names.Append(RegisteredName{
+        .name_id = name_id, .text = s, .location = location, .occurrences = 1, .coarse_analyzer_tags = tag});
     names_by_text.insert({s, name});
     return name;
 }
@@ -37,7 +37,7 @@ RegisteredName& NameRegistry::Register(std::string_view text, NameTags tags) {
     auto iter = names_by_text.find(text);
     if (iter != names_by_text.end()) {
         auto& name = iter->second.get();
-        name.resolved_tags |= tags;
+        name.coarse_analyzer_tags |= tags;
         ++name.occurrences;
         return name;
     } else {
@@ -46,7 +46,7 @@ RegisteredName& NameRegistry::Register(std::string_view text, NameTags tags) {
                                                  .text = text,
                                                  .location = sx::Location(),
                                                  .occurrences = 1,
-                                                 .resolved_tags = tags,
+                                                 .coarse_analyzer_tags = tags,
                                                  .resolved_objects = {}});
         names_by_text.insert({name, name});
         return name;

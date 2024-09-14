@@ -68,8 +68,8 @@ class ScannedScript {
     auto& GetNames() { return name_registry; }
 
     /// Register a keyword as name
-    NameID RegisterKeywordAsName(std::string_view s, sx::Location location, sx::NameTag tag = sx::NameTag::NONE) {
-        return name_registry.Register(s, location, tag).name_id;
+    NameID RegisterKeywordAsName(std::string_view s, sx::Location location) {
+        return name_registry.Register(s, location).name_id;
     }
     /// Read a text at a location
     std::string_view ReadTextAtLocation(sx::Location loc) {
