@@ -17,33 +17,59 @@ namespace sqlynx {
 
 namespace {
 
+// Coarse base score of a registered name
+static constexpr Completion::ScoreValueType NAME_TAG_IGNORE = 0;
+static constexpr Completion::ScoreValueType NAME_TAG_UNLIKELY = 10;
+static constexpr Completion::ScoreValueType NAME_TAG_LIKELY = 20;
+
+// Keywork prevalence modifiers
+// Users write some keywords much more likely than others, and we hardcode some prevalence scores.
+static constexpr Completion::ScoreValueType KEYWORD_VERY_POPULAR = 3;
+static constexpr Completion::ScoreValueType KEYWORD_POPULAR = 2;
+static constexpr Completion::ScoreValueType KEYWORD_DEFAULT = 0;
+
+// Fine-granular score modifiers
+static constexpr Completion::ScoreValueType SUBSTRING_SCORE_MODIFIER = 15;
+static constexpr Completion::ScoreValueType PREFIX_SCORE_MODIFIER = 20;
+static constexpr Completion::ScoreValueType RESOLVING_TABLE_SCORE_MODIFIER = 2;
+static constexpr Completion::ScoreValueType UNRESOLVED_PEER_SCORE_MODIFIER = 2;
+static constexpr Completion::ScoreValueType DOT_SCHEMA_SCORE_MODIFIER = 2;
+static constexpr Completion::ScoreValueType DOT_TABLE_SCORE_MODIFIER = 2;
+static constexpr Completion::ScoreValueType DOT_COLUMN_SCORE_MODIFIER = 2;
+
+static_assert(PREFIX_SCORE_MODIFIER > SUBSTRING_SCORE_MODIFIER, "Begin a prefix weighs more than being a substring");
+static_assert((NAME_TAG_UNLIKELY + SUBSTRING_SCORE_MODIFIER) > NAME_TAG_LIKELY,
+              "An unlikely name that is a substring outweighs a likely name");
+static_assert((NAME_TAG_UNLIKELY + KEYWORD_VERY_POPULAR) < NAME_TAG_LIKELY,
+              "A very likely keyword prevalance doesn't outweigh a likely tag");
+
 using NameScoringTable = std::array<std::pair<proto::NameTag, Completion::ScoreValueType>, 8>;
 
 static constexpr NameScoringTable NAME_SCORE_DEFAULTS{{
-    {proto::NameTag::NONE, Completion::NAME_TAG_IGNORE},
-    {proto::NameTag::SCHEMA_NAME, Completion::NAME_TAG_LIKELY},
-    {proto::NameTag::DATABASE_NAME, Completion::NAME_TAG_LIKELY},
-    {proto::NameTag::TABLE_NAME, Completion::NAME_TAG_LIKELY},
-    {proto::NameTag::TABLE_ALIAS, Completion::NAME_TAG_LIKELY},
-    {proto::NameTag::COLUMN_NAME, Completion::NAME_TAG_LIKELY},
+    {proto::NameTag::NONE, NAME_TAG_IGNORE},
+    {proto::NameTag::SCHEMA_NAME, NAME_TAG_LIKELY},
+    {proto::NameTag::DATABASE_NAME, NAME_TAG_LIKELY},
+    {proto::NameTag::TABLE_NAME, NAME_TAG_LIKELY},
+    {proto::NameTag::TABLE_ALIAS, NAME_TAG_LIKELY},
+    {proto::NameTag::COLUMN_NAME, NAME_TAG_LIKELY},
 }};
 
 static constexpr NameScoringTable NAME_SCORE_TABLE_REF{{
-    {proto::NameTag::NONE, Completion::NAME_TAG_IGNORE},
-    {proto::NameTag::SCHEMA_NAME, Completion::NAME_TAG_LIKELY},
-    {proto::NameTag::DATABASE_NAME, Completion::NAME_TAG_LIKELY},
-    {proto::NameTag::TABLE_NAME, Completion::NAME_TAG_LIKELY},
-    {proto::NameTag::TABLE_ALIAS, Completion::NAME_TAG_UNLIKELY},
-    {proto::NameTag::COLUMN_NAME, Completion::NAME_TAG_UNLIKELY},
+    {proto::NameTag::NONE, NAME_TAG_IGNORE},
+    {proto::NameTag::SCHEMA_NAME, NAME_TAG_LIKELY},
+    {proto::NameTag::DATABASE_NAME, NAME_TAG_LIKELY},
+    {proto::NameTag::TABLE_NAME, NAME_TAG_LIKELY},
+    {proto::NameTag::TABLE_ALIAS, NAME_TAG_UNLIKELY},
+    {proto::NameTag::COLUMN_NAME, NAME_TAG_UNLIKELY},
 }};
 
 static constexpr NameScoringTable NAME_SCORE_COLUMN_REF{{
-    {proto::NameTag::NONE, Completion::NAME_TAG_IGNORE},
-    {proto::NameTag::SCHEMA_NAME, Completion::NAME_TAG_UNLIKELY},
-    {proto::NameTag::DATABASE_NAME, Completion::NAME_TAG_UNLIKELY},
-    {proto::NameTag::TABLE_NAME, Completion::NAME_TAG_UNLIKELY},
-    {proto::NameTag::TABLE_ALIAS, Completion::NAME_TAG_LIKELY},
-    {proto::NameTag::COLUMN_NAME, Completion::NAME_TAG_LIKELY},
+    {proto::NameTag::NONE, NAME_TAG_IGNORE},
+    {proto::NameTag::SCHEMA_NAME, NAME_TAG_UNLIKELY},
+    {proto::NameTag::DATABASE_NAME, NAME_TAG_UNLIKELY},
+    {proto::NameTag::TABLE_NAME, NAME_TAG_UNLIKELY},
+    {proto::NameTag::TABLE_ALIAS, NAME_TAG_LIKELY},
+    {proto::NameTag::COLUMN_NAME, NAME_TAG_LIKELY},
 }};
 
 /// We use a prevalence score to rank keywords by popularity.
@@ -58,7 +84,7 @@ static constexpr Completion::ScoreValueType GetKeywordPrevalenceScore(parser::Pa
         case parser::Parser::symbol_kind_type::S_ORDER:
         case parser::Parser::symbol_kind_type::S_SELECT:
         case parser::Parser::symbol_kind_type::S_WHERE:
-            return Completion::KEYWORD_VERY_POPULAR;
+            return KEYWORD_VERY_POPULAR;
         case parser::Parser::symbol_kind_type::S_AS:
         case parser::Parser::symbol_kind_type::S_ASC_P:
         case parser::Parser::symbol_kind_type::S_BY:
@@ -74,13 +100,13 @@ static constexpr Completion::ScoreValueType GetKeywordPrevalenceScore(parser::Pa
         case parser::Parser::symbol_kind_type::S_THEN:
         case parser::Parser::symbol_kind_type::S_WHEN:
         case parser::Parser::symbol_kind_type::S_WITH:
-            return Completion::KEYWORD_POPULAR;
+            return KEYWORD_POPULAR;
         case parser::Parser::symbol_kind_type::S_BETWEEN:
         case parser::Parser::symbol_kind_type::S_DAY_P:
         case parser::Parser::symbol_kind_type::S_PARTITION:
         case parser::Parser::symbol_kind_type::S_SETOF:
         default:
-            return Completion::KEYWORD_DEFAULT;
+            return KEYWORD_DEFAULT;
     }
 }
 
@@ -628,16 +654,14 @@ void Completion::PromoteTablesAndPeersForUnresolvedColumns() {
                 auto& table_name = table.table_name.table_name.get();
                 // Boost the table name as candidate (if any)
                 if (auto pending_iter = pending_candidates.find(table_name.text);
-                    pending_iter != pending_candidates.end() &&
-                    !pending_iter->second.candidate_tags.contains(proto::CandidateTag::RESOLVING_TABLE)) {
+                    pending_iter != pending_candidates.end()) {
                     pending_iter->second.candidate_tags |= proto::CandidateTag::RESOLVING_TABLE;
                 }
                 // Promote column names in these tables
                 for (auto& peer_col : table.table_columns) {
                     // Boost the peer name as candidate (if any)
                     if (auto pending_iter = pending_candidates.find(peer_col.column_name.get().text);
-                        pending_iter != pending_candidates.end() &&
-                        !pending_iter->second.candidate_tags.contains(proto::CandidateTag::UNRESOLVED_PEER)) {
+                        pending_iter != pending_candidates.end()) {
                         pending_iter->second.candidate_tags |= proto::CandidateTag::UNRESOLVED_PEER;
                     }
                 }
