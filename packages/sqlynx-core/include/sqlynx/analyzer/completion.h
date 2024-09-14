@@ -15,7 +15,7 @@ struct Completion {
     using CandidateTags = EnumBitset<uint16_t, proto::CandidateTag, proto::CandidateTag::MAX>;
 
     struct Candidate;
-    /// The candidate catalog objects
+    /// A catalog object referenced by a completion candidate
     struct CandidateCatalogObject : public IntrusiveListNode {
         /// The candidate
         Candidate& candidate;
@@ -23,8 +23,10 @@ struct Completion {
         CandidateTags candidate_tags;
         /// The catalog object
         const CatalogObject& catalog_object;
+        /// The score (if computed)
+        ScoreValueType score = 0;
     };
-    /// The completion candidates
+    /// A completion candidate
     struct Candidate {
         /// The name
         std::string_view name;
@@ -38,19 +40,13 @@ struct Completion {
         sx::Location replace_text_at;
         /// The catalog objects
         IntrusiveList<CandidateCatalogObject> catalog_objects;
-    };
-
-    struct CandidateWithScore : public Candidate {
-        /// The computed score for the candidate
-        ScoreValueType score;
-        /// The constructor
-        CandidateWithScore(Candidate c, ScoreValueType score) : Candidate(std::move(c)), score(score) {}
-
+        /// The score (if computed)
+        ScoreValueType score = 0;
         /// Is less in the min-heap?
         /// We want to kick a candidate A before candidate B if
         ///     1) the score of A is less than the score of B
         ///     2) the name of A is lexicographically larger than B
-        bool operator<(const CandidateWithScore& other) const {
+        bool operator<(const Candidate& other) const {
             auto l = score;
             auto r = other.score;
             return (l < r) || (l == r && (fuzzy_ci_string_view{name.data(), name.size()} >
@@ -92,7 +88,7 @@ struct Completion {
         candidate_objects_by_object;
 
     /// The result heap, holding up to k entries
-    TopKHeap<CandidateWithScore> result_heap;
+    TopKHeap<Candidate> result_heap;
 
     /// Read the name path of the current cursor
     std::vector<Completion::NameComponent> ReadCursorNamePath(sx::Location& name_path_loc) const;

@@ -454,6 +454,17 @@ void Completion::FindCandidatesForNamePath() {
             assert(candidate_object.candidate.name == dot_candidate.name);
 
         } else {
+            // If the user gave us a text, determine the substring match
+            if (!last_text_prefix.empty()) {
+                // Check if we have a prefix
+                fuzzy_ci_string_view ci_name{dot_candidate.name.data(), dot_candidate.name.size()};
+                if (ci_name.starts_with(fuzzy_ci_string_view{last_text_prefix.data(), last_text_prefix.size()})) {
+                    dot_candidate.candidate_tags |= proto::CandidateTag::PREFIX_MATCH;
+                } else if (ci_name.find(fuzzy_ci_string_view{last_text_prefix.data(), last_text_prefix.size()}) !=
+                           fuzzy_ci_string_view::npos) {
+                    dot_candidate.candidate_tags |= proto::CandidateTag::SUBSTRING_MATCH;
+                }
+            }
             // No, do we know the candidate name already?
             if (auto iter = candidates_by_name.find(dot_candidate.name); iter != candidates_by_name.end()) {
                 // Name is there, just not the object
@@ -467,22 +478,12 @@ void Completion::FindCandidatesForNamePath() {
                     .catalog_object = dot_candidate.object,
                 });
                 existing.catalog_objects.PushBack(co);
+                existing.candidate_tags |= dot_candidate.candidate_tags;
+
                 assert(!candidate_objects_by_object.contains(&dot_candidate.object));
                 candidate_objects_by_object.insert({&dot_candidate.object, co});
 
             } else {
-                // If the user gave us a text, determine the substring match
-                if (!last_text_prefix.empty()) {
-                    // Check if we have a prefix
-                    fuzzy_ci_string_view ci_name{dot_candidate.name.data(), dot_candidate.name.size()};
-                    if (ci_name.starts_with(fuzzy_ci_string_view{last_text_prefix.data(), last_text_prefix.size()})) {
-                        dot_candidate.candidate_tags |= proto::CandidateTag::PREFIX_MATCH;
-                    } else if (ci_name.find(fuzzy_ci_string_view{last_text_prefix.data(), last_text_prefix.size()}) !=
-                               fuzzy_ci_string_view::npos) {
-                        dot_candidate.candidate_tags |= proto::CandidateTag::SUBSTRING_MATCH;
-                    }
-                }
-
                 // Allocate the candidate
                 auto& c = candidates.Append(Candidate{
                     .name = dot_candidate.name,
@@ -500,6 +501,7 @@ void Completion::FindCandidatesForNamePath() {
                     .catalog_object = dot_candidate.object,
                 });
                 c.catalog_objects.PushBack(co);
+
                 assert(!candidate_objects_by_object.contains(&dot_candidate.object));
                 candidate_objects_by_object.insert({&dot_candidate.object, co});
             }
@@ -549,16 +551,14 @@ void Completion::AddExpectedKeywordsAsCandidates(std::span<parser::Parser::Expec
         auto name = parser::Keyword::GetKeywordName(expected);
         if (!name.empty()) {
             auto [tags, score] = get_score(*location, expected, name);
-            CandidateWithScore scored_candidate{
-                Candidate{
-                    .name = name,
-                    .coarse_name_tags = {},
-                    .candidate_tags = tags,
-                    .replace_text_at = location->symbol.location,
-                },
-                score,
+            Candidate candidate{
+                .name = name,
+                .coarse_name_tags = {},
+                .candidate_tags = tags,
+                .replace_text_at = location->symbol.location,
+                .score = score,
             };
-            result_heap.Insert(scored_candidate);
+            result_heap.Insert(std::move(candidate));
         }
     }
 }
@@ -592,29 +592,28 @@ void Completion::findCandidatesInIndex(const CatalogEntry::NameSearchIndex& inde
         Completion::CandidateTags candidate_tags{proto::CandidateTag::NAME_INDEX};
         // Added through catalog?
         candidate_tags.AddIf(proto::CandidateTag::THROUGH_CATALOG, through_catalog);
+        // Is a prefix?
+        switch (location->relative_pos) {
+            case Relative::BEGIN_OF_SYMBOL:
+            case Relative::MID_OF_SYMBOL:
+            case Relative::END_OF_SYMBOL:
+                if (fuzzy_ci_string_view{name_info.text.data(), name_info.text.size()}.starts_with(ci_prefix_text)) {
+                    candidate_tags |= proto::CandidateTag::PREFIX_MATCH;
+                } else {
+                    candidate_tags |= proto::CandidateTag::SUBSTRING_MATCH;
+                }
+                break;
+            default:
+                break;
+        }
 
         // Do we know the candidate already?
         Candidate* candidate;
         if (auto iter = candidates_by_name.find(name_info.text); iter != candidates_by_name.end()) {
             candidate = &iter->second.get();
-            candidate->candidate_tags |= candidate_tags;
             candidate->coarse_name_tags |= name_info.coarse_analyzer_tags;
+            candidate->candidate_tags |= candidate_tags;
         } else {
-            // Is a prefix?
-            switch (location->relative_pos) {
-                case Relative::BEGIN_OF_SYMBOL:
-                case Relative::MID_OF_SYMBOL:
-                case Relative::END_OF_SYMBOL:
-                    if (fuzzy_ci_string_view{name_info.text.data(), name_info.text.size()}.starts_with(
-                            ci_prefix_text)) {
-                        candidate_tags |= proto::CandidateTag::PREFIX_MATCH;
-                    } else {
-                        candidate_tags |= proto::CandidateTag::SUBSTRING_MATCH;
-                    }
-                    break;
-                default:
-                    break;
-            }
             candidate = &candidates.Append(Candidate{
                 .name = name_info.text,
                 .coarse_name_tags = name_info.coarse_analyzer_tags,
@@ -641,6 +640,7 @@ void Completion::findCandidatesInIndex(const CatalogEntry::NameSearchIndex& inde
                     .catalog_object = o,
                 });
                 candidate->catalog_objects.PushBack(co);
+
                 assert(!candidate_objects_by_object.contains(&o));
                 candidate_objects_by_object.insert({&o, co});
             }
@@ -750,18 +750,46 @@ void Completion::FlushCandidatesAndFinish() {
     // Resolve the scoring table
     auto& base_scoring_table = selectNameScoringTable(strategy);
 
+    /// Helper to sort catalog objects
+    struct CandidateObjectRef {
+        std::reference_wrapper<CandidateCatalogObject> candidate_object;
+        ScoreValueType score;
+        CandidateObjectRef(CandidateCatalogObject& c) : candidate_object(c), score(c.score) {}
+        bool operator<(const CandidateObjectRef& other) const { return score < other.score; }
+    };
+    // Use a heap to collect the top catalog objects for a candidate
+    TopKHeap<CandidateObjectRef> catalog_object_heap{5};
+
     // Insert all pending candidates into the heap
     candidates.ForEach([&](size_t i, Candidate& candidate) {
-        // Score the candidate
-        Completion::ScoreValueType score = 0;
         // Derive the base score as maximum among the name tags
+        Completion::ScoreValueType name_score = 0;
         for (auto [tag, tag_score] : base_scoring_table) {
-            score = std::max(score, candidate.coarse_name_tags.contains(tag) ? tag_score : 0);
+            name_score = std::max(name_score, candidate.coarse_name_tags.contains(tag) ? tag_score : 0);
         }
+        // Then find the top n best candidate objects.
+        // Splitting off the base score ensures that we're not depending on resolving catalog objects too much.
+        catalog_object_heap.Clear();
+        for (auto& o : candidate.catalog_objects) {
+            o.score = computeCandidateScore(o.candidate_tags);
+            catalog_object_heap.Insert(CandidateObjectRef(o));
+        }
+        auto& candidate_objects = catalog_object_heap.Finish();
+
+        // Store as new list
+        candidate.catalog_objects.Clear();
+        for (auto& co : candidate_objects) {
+            candidate.catalog_objects.PushBackUnsafe(co.candidate_object.get());
+        }
+
+        // Determine overall candidate score
+        Completion::ScoreValueType object_score = !candidate_objects.empty() ? candidate_objects.back().score : 0;
+        Completion::ScoreValueType candidate_score = name_score + object_score;
+        candidate.score = candidate_score;
+
         // Apply all score modifiers
-        score += computeCandidateScore(candidate.candidate_tags);
         // Add the scored candidate
-        result_heap.Insert(CandidateWithScore{std::move(candidate), score});
+        result_heap.Insert(std::move(candidate));
     });
 
     // Finish the heap
@@ -916,6 +944,8 @@ flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferB
             auto& o = co.catalog_object;
             proto::CompletionCandidateObjectBuilder obj{builder};
             obj.add_object_type(static_cast<proto::CompletionCandidateObjectType>(o.object_type));
+            obj.add_candidate_tags(co.candidate_tags);
+            obj.add_score(co.score);
             switch (o.object_type) {
                 case CatalogObjectType::DatabaseReference: {
                     auto& db = o.CastUnsafe<CatalogEntry::DatabaseReference>();

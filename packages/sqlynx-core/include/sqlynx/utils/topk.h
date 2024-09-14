@@ -52,6 +52,8 @@ template <typename ValueType> struct TopKHeap {
             }
         }
     }
+    /// Clear the heap
+    void Clear() { entries.clear(); }
     /// Finish the entries
     std::vector<ValueType>& Finish() {
         std::sort(entries.begin(), entries.end());
