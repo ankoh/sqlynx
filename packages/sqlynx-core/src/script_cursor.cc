@@ -114,14 +114,16 @@ flatbuffers::Offset<proto::ScriptCursor> ScriptCursor::Pack(flatbuffers::FlatBuf
             break;
         case 1: {
             auto& table_ref = std::get<ScriptCursor::TableRefContext>(context);
-            auto ctx = std::make_unique<proto::ScriptCursorTableRefContextT>();
-            ctx->table_reference_id = table_ref.table_reference_id;
+            proto::ScriptCursorTableRefContextT ctx;
+            ctx.table_reference_id = table_ref.table_reference_id;
+            out->context.Set(std::move(ctx));
             break;
         }
         case 2: {
             auto& column_ref = std::get<ScriptCursor::ColumnRefContext>(context);
-            auto ctx = std::make_unique<proto::ScriptCursorColumnRefContextT>();
-            ctx->expression_id = column_ref.expression_id;
+            proto::ScriptCursorColumnRefContextT ctx;
+            ctx.expression_id = column_ref.expression_id;
+            out->context.Set(std::move(ctx));
             break;
         }
     }
