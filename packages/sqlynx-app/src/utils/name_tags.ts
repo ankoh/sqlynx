@@ -3,7 +3,6 @@ import * as sqlynx from '@ankoh/sqlynx-core';
 export function unpackNameTags(tags: number): sqlynx.proto.NameTag[] {
     const out = [];
     for (const tag of [
-        sqlynx.proto.NameTag.KEYWORD,
         sqlynx.proto.NameTag.SCHEMA_NAME,
         sqlynx.proto.NameTag.DATABASE_NAME,
         sqlynx.proto.NameTag.TABLE_NAME,
@@ -19,8 +18,6 @@ export function unpackNameTags(tags: number): sqlynx.proto.NameTag[] {
 
 export function getNameTagName(tag: sqlynx.proto.NameTag): string {
     switch (tag) {
-        case sqlynx.proto.NameTag.KEYWORD:
-            return 'keyword';
         case sqlynx.proto.NameTag.SCHEMA_NAME:
             return 'schema';
         case sqlynx.proto.NameTag.DATABASE_NAME:
