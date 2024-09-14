@@ -30,7 +30,7 @@
             <entry value="casesensitive_table" score="40" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH" loc="148..151" text="cas">
                 <object type="table" id="256.65536.1" />
             </entry>
-            <entry value="cast" score="22" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" loc="148..151" text="cas" />
+            <entry value="cast" score="22" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" loc="148..151" text="cas" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="casing_1" what="discover column names with different casing">
@@ -64,7 +64,7 @@
             <entry value="Casesensitive" score="40" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH" loc="135..138" text="cas">
                 <object type="column" id="256.65536.0.0" />
             </entry>
-            <entry value="case" score="22" ntags="KEYWORD" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" loc="135..138" text="cas" />
+            <entry value="case" score="22" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" loc="135..138" text="cas" />
         </completions>
     </completion-snapshot>
 </completion-snapshots>

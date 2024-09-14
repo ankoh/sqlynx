@@ -27,18 +27,21 @@ enum CandidateTag: uint16 {
     NONE = 0,
     EXPECTED_PARSER_SYMBOL = 1,
     NAME_INDEX = 2,
-    DOT_RESOLUTION = 4,
-    PREFIX_MATCH = 8,
-    SUBSTRING_MATCH = 16,
-    RESOLVING_TABLE = 32,
-    UNRESOLVED_PEER = 64,
-    THROUGH_CATALOG = 128,
+    DOT_RESOLUTION_DATABASE = 4,
+    DOT_RESOLUTION_SCHEMA = 8,
+    DOT_RESOLUTION_TABLE = 16,
+    DOT_RESOLUTION_COLUMN = 32,
+    PREFIX_MATCH = 64,
+    SUBSTRING_MATCH = 128,
+    RESOLVING_TABLE = 256,
+    UNRESOLVED_PEER = 512,
+    THROUGH_CATALOG = 1024,
 }
 
 table CompletionCandidate {
-    /// The candidate tags
+    /// The fine-granular candidate tags
     candidate_tags: uint8;
-    /// The name tags
+    /// The coarse-granular analyzer tags
     name_tags: uint8;
     /// The display text
     display_text: string;

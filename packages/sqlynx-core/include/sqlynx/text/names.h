@@ -26,9 +26,10 @@ struct RegisteredName {
     sx::Location location;
     /// The occurences
     size_t occurrences;
-    /// The name tags resolved by the Analyzer.
+    /// The coarse name tags resolved by the Analyzer.
     /// These tags are only available when the script was analyzed and are cleaned up when re-analyzing.
-    NameTags resolved_tags;
+    /// Note that a name may occur in multiple situations so these tags only really provide a semantic hint.
+    NameTags coarse_analyzer_tags;
     /// The catalog objects resolved by the Analyzer.
     /// These objects are only available when the script was analyzed and are cleaned up when re-analyzing.
     IntrusiveList<CatalogObject> resolved_objects;

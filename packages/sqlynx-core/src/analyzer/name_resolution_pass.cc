@@ -52,8 +52,8 @@ NameResolutionPass::NameResolutionPass(AnalyzedScript& analyzed, Catalog& catalo
       default_database_name(parsed.scanned_script->name_registry.Register(catalog.GetDefaultDatabaseName())),
       default_schema_name(parsed.scanned_script->name_registry.Register(catalog.GetDefaultSchemaName())) {
     node_states.resize(ast.size());
-    default_database_name.resolved_tags |= proto::NameTag::DATABASE_NAME;
-    default_schema_name.resolved_tags |= proto::NameTag::SCHEMA_NAME;
+    default_database_name.coarse_analyzer_tags |= proto::NameTag::DATABASE_NAME;
+    default_schema_name.coarse_analyzer_tags |= proto::NameTag::SCHEMA_NAME;
 }
 
 std::span<std::reference_wrapper<RegisteredName>> NameResolutionPass::ReadNamePath(const sx::Node& node) {
@@ -89,17 +89,17 @@ std::optional<AnalyzedScript::QualifiedTableName> NameResolutionPass::ReadQualif
     auto ast_node_id = node - ast.data();
     switch (name_path.size()) {
         case 3:
-            name_path[0].get().resolved_tags |= sx::NameTag::DATABASE_NAME;
-            name_path[1].get().resolved_tags |= sx::NameTag::SCHEMA_NAME;
-            name_path[2].get().resolved_tags |= sx::NameTag::TABLE_NAME;
+            name_path[0].get().coarse_analyzer_tags |= sx::NameTag::DATABASE_NAME;
+            name_path[1].get().coarse_analyzer_tags |= sx::NameTag::SCHEMA_NAME;
+            name_path[2].get().coarse_analyzer_tags |= sx::NameTag::TABLE_NAME;
             return AnalyzedScript::QualifiedTableName{ast_node_id, name_path[0], name_path[1], name_path[2]};
         case 2: {
-            name_path[0].get().resolved_tags |= sx::NameTag::SCHEMA_NAME;
-            name_path[1].get().resolved_tags |= sx::NameTag::TABLE_NAME;
+            name_path[0].get().coarse_analyzer_tags |= sx::NameTag::SCHEMA_NAME;
+            name_path[1].get().coarse_analyzer_tags |= sx::NameTag::TABLE_NAME;
             return AnalyzedScript::QualifiedTableName{ast_node_id, default_database_name, name_path[0], name_path[1]};
         }
         case 1: {
-            name_path[0].get().resolved_tags |= sx::NameTag::TABLE_NAME;
+            name_path[0].get().coarse_analyzer_tags |= sx::NameTag::TABLE_NAME;
             return AnalyzedScript::QualifiedTableName{ast_node_id, default_database_name, default_schema_name,
                                                       name_path[0]};
         }
@@ -117,11 +117,11 @@ std::optional<AnalyzedScript::QualifiedColumnName> NameResolutionPass::ReadQuali
     // Build the qualified column name
     switch (name_path.size()) {
         case 2:
-            name_path[0].get().resolved_tags |= sx::NameTag::TABLE_ALIAS;
-            name_path[1].get().resolved_tags |= sx::NameTag::COLUMN_NAME;
+            name_path[0].get().coarse_analyzer_tags |= sx::NameTag::TABLE_ALIAS;
+            name_path[1].get().coarse_analyzer_tags |= sx::NameTag::COLUMN_NAME;
             return AnalyzedScript::QualifiedColumnName{ast_node_id, name_path[0], name_path[1]};
         case 1:
-            name_path[0].get().resolved_tags |= sx::NameTag::COLUMN_NAME;
+            name_path[0].get().coarse_analyzer_tags |= sx::NameTag::COLUMN_NAME;
             return AnalyzedScript::QualifiedColumnName{ast_node_id, std::nullopt, name_path[0]};
         default:
             return std::nullopt;
@@ -413,7 +413,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 auto column_def_node = attrs[proto::AttributeKey::SQL_COLUMN_DEF_NAME];
                 if (column_def_node && column_def_node->node_type() == sx::NodeType::NAME) {
                     auto& name = scanned.GetNames().At(column_def_node->children_begin_or_value());
-                    name.resolved_tags |= sx::NameTag::COLUMN_NAME;
+                    name.coarse_analyzer_tags |= sx::NameTag::COLUMN_NAME;
                     if (auto reused = pending_columns_free_list.PopFront()) {
                         *reused = AnalyzedScript::TableColumn(node_id, name);
                         node_state.table_columns.PushBack(*reused);
@@ -465,7 +465,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                         std::optional<std::reference_wrapper<RegisteredName>> alias_name = std::nullopt;
                         if (alias_node && alias_node->node_type() == sx::NodeType::NAME) {
                             auto& alias = scanned.GetNames().At(alias_node->children_begin_or_value());
-                            alias.resolved_tags |= sx::NameTag::TABLE_ALIAS;
+                            alias.coarse_analyzer_tags |= sx::NameTag::TABLE_ALIAS;
                             alias_str = alias;
                             alias_name = alias;
                         }
