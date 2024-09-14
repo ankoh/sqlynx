@@ -1,7 +1,7 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
 import { StateField, StateEffect, StateEffectType, Text, Transaction } from '@codemirror/state';
 import { completionStatus } from '@codemirror/autocomplete';
-import { DerivedFocus } from '../../session/focus.js';
+import { UserFocus } from '../../session/focus.js';
 
 /// The configuration of the SQLynx config
 export interface SQLynxProcessorConfig {
@@ -24,7 +24,7 @@ export interface SQLynxScriptUpdate {
     /// The script cursor
     scriptCursor: sqlynx.proto.ScriptCursorT | null;
     /// The derive focus info
-    derivedFocus: DerivedFocus | null;
+    derivedFocus: UserFocus | null;
     // This callback is called when the editor updates the script
     onScriptUpdate: (
         scriptKey: SQLynxScriptKey,
