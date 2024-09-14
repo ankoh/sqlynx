@@ -47,7 +47,7 @@ export enum FocusType {
     TABLE_REF_OF_TARGET_COLUMN,
 }
 
-export interface DerivedFocus {
+export interface UserFocus {
     /// The input focus target
     focusTarget: FocusTarget;
 
@@ -73,7 +73,7 @@ export function deriveFocusFromScriptCursor(
         [context: number]: ScriptData;
     },
     cursor: sqlynx.proto.ScriptCursorT,
-): DerivedFocus | null {
+): UserFocus | null {
     const tmpSourceAnalyzed = new sqlynx.proto.AnalyzedScript();
     const tmpTargetAnalyzed = new sqlynx.proto.AnalyzedScript();
     const tmpIndexedTableRef = new sqlynx.proto.IndexedTableReference();
@@ -96,7 +96,7 @@ export function deriveFocusFromScriptCursor(
                     tableReference: sqlynx.ExternalObjectID.create(scriptKey, context.tableReferenceId)
                 }
             };
-            const focus: DerivedFocus = {
+            const focus: UserFocus = {
                 focusTarget,
                 catalogDatabases: new Map(),
                 catalogSchemas: new Map(),
@@ -165,7 +165,7 @@ export function deriveFocusFromScriptCursor(
                     expression: sqlynx.ExternalObjectID.create(scriptKey, context.expressionId)
                 }
             };
-            const focus: DerivedFocus = {
+            const focus: UserFocus = {
                 focusTarget,
                 catalogDatabases: new Map(),
                 catalogSchemas: new Map(),
@@ -253,7 +253,7 @@ export function deriveFocusFromCatalogSelection(
         [context: number]: ScriptData;
     },
     target: QualifiedCatalogObjectID
-): DerivedFocus | null {
+): UserFocus | null {
     const tmpAnalyzed = new sqlynx.proto.AnalyzedScript();
     const tmpIndexedTableRef = new sqlynx.proto.IndexedTableReference();
     const tmpIndexedColumnRef = new sqlynx.proto.IndexedColumnReference();
@@ -286,7 +286,7 @@ export function deriveFocusFromCatalogSelection(
                 scriptColumnRefs: new Map(),
             };
         case QUALIFIED_TABLE_ID: {
-            const focus: DerivedFocus = {
+            const focus: UserFocus = {
                 focusTarget: target,
                 catalogDatabases: new Map([
                     [target.value.database, FocusType.TARGET_PATH_IN_CATALOG],
@@ -341,7 +341,7 @@ export function deriveFocusFromCatalogSelection(
             return focus;
         }
         case QUALIFIED_TABLE_COLUMN_ID: {
-            const focus: DerivedFocus = {
+            const focus: UserFocus = {
                 focusTarget: target,
                 catalogDatabases: new Map([
                     [target.value.database, FocusType.TARGET_PATH_IN_CATALOG],

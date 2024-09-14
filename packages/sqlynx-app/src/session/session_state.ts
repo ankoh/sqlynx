@@ -6,7 +6,7 @@ import { ScriptMetadata } from './script_metadata.js';
 import { ScriptLoadingStatus } from './script_loader.js';
 import { analyzeScript, parseAndAnalyzeScript, SQLynxScriptBuffers } from '../view/editor/sqlynx_processor.js';
 import { ScriptLoadingInfo } from './script_loader.js';
-import { deriveFocusFromScriptCursor, DerivedFocus } from './focus.js';
+import { deriveFocusFromScriptCursor, UserFocus } from './focus.js';
 import { ConnectorInfo } from '../connectors/connector_info.js';
 import { VariantKind } from '../utils/index.js';
 
@@ -37,7 +37,7 @@ export interface SessionState {
     /// The id of the latest query fired through the editor
     editorQuery: number | null;
     /// The user focus info
-    userFocus: DerivedFocus | null;
+    userFocus: UserFocus | null;
 }
 
 /// The script data
