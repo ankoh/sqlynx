@@ -42,8 +42,8 @@ void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Complet
     for (auto iter = entries.rbegin(); iter != entries.rend(); ++iter) {
         auto xml_entry = root.append_child("entry");
         std::string text{iter->name.data(), iter->name.size()};
-        xml_entry.append_attribute("value").set_value(text.c_str());
         xml_entry.append_attribute("score").set_value(iter->score);
+        xml_entry.append_attribute("value").set_value(text.c_str());
         {
             std::stringstream name_tags;
             size_t i = 0;
@@ -70,10 +70,12 @@ void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Complet
                 xml_entry.append_attribute("ctags").set_value(candidate_tags.str().c_str());
             }
         }
-        EncodeLocation(xml_entry, iter->replace_text_at, completion.GetCursor().script.scanned_script->text_buffer);
+        EncodeLocation(xml_entry, iter->replace_text_at, completion.GetCursor().script.scanned_script->text_buffer,
+                       "replace_loc", "replace_text");
         for (auto& co : iter->catalog_objects) {
             auto& obj = co.catalog_object;
             auto xml_obj = xml_entry.append_child("object");
+            xml_obj.append_attribute("score").set_value(co.score);
             switch (obj.object_type) {
                 case sqlynx::CatalogObjectType::DatabaseReference: {
                     std::string type = "database";
@@ -112,6 +114,19 @@ void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Complet
                 }
                 default:
                     assert(false);
+            }
+            {
+                std::stringstream candidate_tags;
+                size_t i = 0;
+                co.candidate_tags.ForEach([&](proto::CandidateTag tag) {
+                    if (i++ > 0) {
+                        candidate_tags << "|";
+                    }
+                    candidate_tags << proto::EnumNameCandidateTag(tag);
+                });
+                if (i > 0) {
+                    xml_obj.append_attribute("ctags").set_value(candidate_tags.str().c_str());
+                }
             }
         }
     }

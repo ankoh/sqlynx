@@ -8,9 +8,9 @@
             <search text="" index="0" />
         </cursor>
         <completions limit="3" strategy="DEFAULT" loc="0..1" text="">
-            <entry value="select" score="3" ctags="EXPECTED_PARSER_SYMBOL" loc="0..1" text="" />
-            <entry value="set" score="2" ctags="EXPECTED_PARSER_SYMBOL" loc="0..1" text="" />
-            <entry value="with" score="2" ctags="EXPECTED_PARSER_SYMBOL" loc="0..1" text="" />
+            <entry score="3" value="select" ctags="EXPECTED_PARSER_SYMBOL" replace_loc="0..1" replace_text="" />
+            <entry score="2" value="set" ctags="EXPECTED_PARSER_SYMBOL" replace_loc="0..1" replace_text="" />
+            <entry score="2" value="with" ctags="EXPECTED_PARSER_SYMBOL" replace_loc="0..1" replace_text="" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="complete_database_name">
@@ -40,11 +40,11 @@
             <search text="db" index="2" />
         </cursor>
         <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="31..33" text="db">
-            <entry value="dbname" score="40" ntags="DATABASE_NAME" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG" loc="31..33" text="db">
-                <object type="database" id="256" />
+            <entry score="40" value="dbname" ntags="DATABASE_NAME" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG" replace_loc="31..33" replace_text="db">
+                <object score="20" type="database" id="256" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG" />
             </entry>
-            <entry value="group" score="3" ctags="EXPECTED_PARSER_SYMBOL" loc="31..33" text="db" />
-            <entry value="order" score="3" ctags="EXPECTED_PARSER_SYMBOL" loc="31..33" text="db" />
+            <entry score="3" value="group" ctags="EXPECTED_PARSER_SYMBOL" replace_loc="31..33" replace_text="db" />
+            <entry score="3" value="order" ctags="EXPECTED_PARSER_SYMBOL" replace_loc="31..33" replace_text="db" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="complete_schema_name">
@@ -74,11 +74,11 @@
             <search text="sch" index="3" />
         </cursor>
         <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="31..34" text="sch">
-            <entry value="schemaname" score="40" ntags="SCHEMA_NAME" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG" loc="31..34" text="sch">
-                <object type="schema" id="256.65536" />
+            <entry score="40" value="schemaname" ntags="SCHEMA_NAME" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG" replace_loc="31..34" replace_text="sch">
+                <object score="20" type="schema" id="256.65536" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG" />
             </entry>
-            <entry value="schema" score="20" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" loc="31..34" text="sch" />
-            <entry value="schemas" score="20" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" loc="31..34" text="sch" />
+            <entry score="20" value="schema" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" replace_loc="31..34" replace_text="sch" />
+            <entry score="20" value="schemas" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" replace_loc="31..34" replace_text="sch" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="complete_table_name">
@@ -108,11 +108,11 @@
             <search text="fo" index="2" />
         </cursor>
         <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="31..33" text="fo">
-            <entry value="foo" score="40" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG" loc="31..33" text="fo">
-                <object type="table" id="256.65536.4294967296" />
+            <entry score="40" value="foo" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG" replace_loc="31..33" replace_text="fo">
+                <object score="20" type="table" id="256.65536.4294967296" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG" />
             </entry>
-            <entry value="following" score="20" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" loc="31..33" text="fo" />
-            <entry value="for" score="20" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" loc="31..33" text="fo" />
+            <entry score="20" value="following" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" replace_loc="31..33" replace_text="fo" />
+            <entry score="20" value="for" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" replace_loc="31..33" replace_text="fo" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="dont_complete_at_lrb">
@@ -178,14 +178,14 @@ create table table3(attr3 integer);
             <search text="tab" index="3" />
         </cursor>
         <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="35..38" text="tab">
-            <entry value="table2" score="42" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH|RESOLVING_TABLE|THROUGH_CATALOG" loc="35..38" text="tab">
-                <object type="table" id="256.65536.4294967297" />
+            <entry score="42" value="table2" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH|RESOLVING_TABLE|THROUGH_CATALOG" replace_loc="35..38" replace_text="tab">
+                <object score="22" type="table" id="256.65536.4294967297" ctags="NAME_INDEX|PREFIX_MATCH|RESOLVING_TABLE|THROUGH_CATALOG" />
             </entry>
-            <entry value="table1" score="40" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG" loc="35..38" text="tab">
-                <object type="table" id="256.65536.4294967296" />
+            <entry score="40" value="table1" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG" replace_loc="35..38" replace_text="tab">
+                <object score="20" type="table" id="256.65536.4294967296" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG" />
             </entry>
-            <entry value="table3" score="40" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG" loc="35..38" text="tab">
-                <object type="table" id="256.65536.4294967298" />
+            <entry score="40" value="table3" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG" replace_loc="35..38" replace_text="tab">
+                <object score="20" type="table" id="256.65536.4294967298" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG" />
             </entry>
         </completions>
     </completion-snapshot>
@@ -220,15 +220,15 @@ create table table3(attr3 integer);
             <search text="where external_" index="14" />
         </cursor>
         <completions limit="5" strategy="COLUMN_REF" symbol="NAME" relative="MID_OF_SYMBOL" loc="65..74" text="external_">
-            <entry value="external_name2" score="40" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG" loc="65..74" text="external_">
-                <object type="column" id="256.65536.4294967296.0" />
+            <entry score="40" value="external_name2" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG" replace_loc="65..74" replace_text="external_">
+                <object score="20" type="column" id="256.65536.4294967296.0" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG" />
             </entry>
-            <entry value="external_name1" score="30" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG" loc="65..74" text="external_">
-                <object type="table" id="256.65536.4294967296" />
+            <entry score="30" value="external_name1" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG" replace_loc="65..74" replace_text="external_">
+                <object score="20" type="table" id="256.65536.4294967296" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG" />
             </entry>
-            <entry value="external" score="20" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" loc="65..74" text="external_" />
-            <entry value="group" score="3" ctags="EXPECTED_PARSER_SYMBOL" loc="65..74" text="external_" />
-            <entry value="order" score="3" ctags="EXPECTED_PARSER_SYMBOL" loc="65..74" text="external_" />
+            <entry score="20" value="external" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" replace_loc="65..74" replace_text="external_" />
+            <entry score="3" value="group" ctags="EXPECTED_PARSER_SYMBOL" replace_loc="65..74" replace_text="external_" />
+            <entry score="3" value="order" ctags="EXPECTED_PARSER_SYMBOL" replace_loc="65..74" replace_text="external_" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="remap_external_names_eof">
@@ -262,15 +262,15 @@ create table table3(attr3 integer);
             <search text="where external_" index="15" />
         </cursor>
         <completions limit="5" strategy="COLUMN_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="65..74" text="external_">
-            <entry value="external_name2" score="40" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG" loc="65..74" text="external_">
-                <object type="column" id="256.65536.4294967296.0" />
+            <entry score="40" value="external_name2" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG" replace_loc="65..74" replace_text="external_">
+                <object score="20" type="column" id="256.65536.4294967296.0" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG" />
             </entry>
-            <entry value="external_name1" score="30" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG" loc="65..74" text="external_">
-                <object type="table" id="256.65536.4294967296" />
+            <entry score="30" value="external_name1" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG" replace_loc="65..74" replace_text="external_">
+                <object score="20" type="table" id="256.65536.4294967296" ctags="NAME_INDEX|PREFIX_MATCH|THROUGH_CATALOG" />
             </entry>
-            <entry value="group" score="3" ctags="EXPECTED_PARSER_SYMBOL" loc="65..74" text="external_" />
-            <entry value="order" score="3" ctags="EXPECTED_PARSER_SYMBOL" loc="65..74" text="external_" />
-            <entry value="by" score="2" ctags="EXPECTED_PARSER_SYMBOL" loc="65..74" text="external_" />
+            <entry score="3" value="group" ctags="EXPECTED_PARSER_SYMBOL" replace_loc="65..74" replace_text="external_" />
+            <entry score="3" value="order" ctags="EXPECTED_PARSER_SYMBOL" replace_loc="65..74" replace_text="external_" />
+            <entry score="2" value="by" ctags="EXPECTED_PARSER_SYMBOL" replace_loc="65..74" replace_text="external_" />
         </completions>
     </completion-snapshot>
 </completion-snapshots>

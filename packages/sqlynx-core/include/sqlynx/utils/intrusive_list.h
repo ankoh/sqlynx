@@ -150,6 +150,21 @@ struct IntrusiveList {
             ++size;
         }
     }
+    /// Push back a node without asserting that the node has it's next pointer set.
+    /// Only use this if you want to throw away the original list anyway.
+    void PushBackUnsafe(DerivedType& node) {
+        if (size == 0) {
+            first = &node;
+            last = &node;
+            size = 1;
+        } else {
+            assert(first != nullptr);
+            assert(last != nullptr);
+            last->next = &node;
+            last = &node;
+            ++size;
+        }
+    }
     /// Pop a node from the front
     DerivedType* PopFront() {
         if (size == 0) {

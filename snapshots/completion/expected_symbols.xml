@@ -10,9 +10,9 @@
             <search text="s" index="1" />
         </cursor>
         <completions limit="3" strategy="DEFAULT" loc="17..18" text="s">
-            <entry value="select" score="23" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" loc="17..18" text="s" />
-            <entry value="set" score="22" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" loc="17..18" text="s" />
-            <entry value="values" score="15" ctags="EXPECTED_PARSER_SYMBOL|SUBSTRING_MATCH" loc="17..18" text="s" />
+            <entry score="23" value="select" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" replace_loc="17..18" replace_text="s" />
+            <entry score="22" value="set" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" replace_loc="17..18" replace_text="s" />
+            <entry score="15" value="values" ctags="EXPECTED_PARSER_SYMBOL|SUBSTRING_MATCH" replace_loc="17..18" replace_text="s" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="expected_select_1">
@@ -26,9 +26,9 @@
             <search text="s" index="1" />
         </cursor>
         <completions limit="3" strategy="DEFAULT" loc="17..19" text="se">
-            <entry value="select" score="23" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" loc="17..19" text="se" />
-            <entry value="set" score="22" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" loc="17..19" text="se" />
-            <entry value="values" score="15" ctags="EXPECTED_PARSER_SYMBOL|SUBSTRING_MATCH" loc="17..19" text="se" />
+            <entry score="23" value="select" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" replace_loc="17..19" replace_text="se" />
+            <entry score="22" value="set" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" replace_loc="17..19" replace_text="se" />
+            <entry score="15" value="values" ctags="EXPECTED_PARSER_SYMBOL|SUBSTRING_MATCH" replace_loc="17..19" replace_text="se" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="expected_select_from_0">
@@ -42,9 +42,9 @@
             <search text="f" index="1" />
         </cursor>
         <completions limit="3" strategy="DEFAULT" loc="26..27" text="f">
-            <entry value="from" score="23" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" loc="26..27" text="f" />
-            <entry value="fetch" score="20" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" loc="26..27" text="f" />
-            <entry value="for" score="20" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" loc="26..27" text="f" />
+            <entry score="23" value="from" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" replace_loc="26..27" replace_text="f" />
+            <entry score="20" value="fetch" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" replace_loc="26..27" replace_text="f" />
+            <entry score="20" value="for" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" replace_loc="26..27" replace_text="f" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="expected_select_from_1">
@@ -61,9 +61,9 @@
             <search text="foo f" index="5" />
         </cursor>
         <completions limit="3" strategy="DEFAULT" symbol="NAME" relative="END_OF_SYMBOL" loc="28..29" text="f">
-            <entry value="foo" score="40" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH" loc="28..29" text="f" />
-            <entry value="from" score="23" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" loc="28..29" text="f" />
-            <entry value="fetch" score="20" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" loc="28..29" text="f" />
+            <entry score="23" value="from" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" replace_loc="28..29" replace_text="f" />
+            <entry score="20" value="fetch" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" replace_loc="28..29" replace_text="f" />
+            <entry score="20" value="foo" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH" replace_loc="28..29" replace_text="f" />
         </completions>
     </completion-snapshot>
 </completion-snapshots>
