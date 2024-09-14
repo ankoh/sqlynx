@@ -134,9 +134,9 @@ function buildDecorationsFromCursor(
     const tmpLoc = new sqlynx.proto.Location();
     const tmpError = new sqlynx.proto.Error();
 
-    // Build decorations for related column refs discovered through a table
-    if (derivedFocus?.columnRefsOfFocusedTable) {
-        for (const refId of derivedFocus.columnRefsOfFocusedTable) {
+    // Build decorations for column refs of targeting the primary table
+    if (derivedFocus?.columnRefsOfPrimaryTable) {
+        for (const refId of derivedFocus.columnRefsOfPrimaryTable) {
             const externalId = sqlynx.ExternalObjectID.getExternalID(refId);
             const objectId = sqlynx.ExternalObjectID.getObjectID(refId);
             if (externalId !== scriptKey) {
@@ -158,9 +158,9 @@ function buildDecorationsFromCursor(
         }
     }
 
-    // Build decorations for related column refs discovered through a column
-    if (derivedFocus?.columnRefsOfFocusedColumn) {
-        for (const refId of derivedFocus.columnRefsOfFocusedColumn) {
+    // Build decorations for column refs targeting a primary column
+    if (derivedFocus?.columnRefsOfPrimaryColumn) {
+        for (const refId of derivedFocus.columnRefsOfPrimaryColumn) {
             const externalId = sqlynx.ExternalObjectID.getExternalID(refId);
             const objectId = sqlynx.ExternalObjectID.getObjectID(refId);
             if (externalId !== scriptKey) {
@@ -182,9 +182,9 @@ function buildDecorationsFromCursor(
         }
     }
 
-    // Build decorations for query_result refs
-    if (derivedFocus?.tableRefsOfFocusedTable) {
-        for (const refId of derivedFocus.tableRefsOfFocusedTable) {
+    // Build decorations for table refs targeting the primary table
+    if (derivedFocus?.tableRefsOfPrimaryTable) {
+        for (const refId of derivedFocus.tableRefsOfPrimaryTable) {
             const externalId = sqlynx.ExternalObjectID.getExternalID(refId);
             const objectId = sqlynx.ExternalObjectID.getObjectID(refId);
             if (externalId !== scriptKey) {
