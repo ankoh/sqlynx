@@ -175,6 +175,15 @@ table NameScope {
     table_references: [uint32];
 }
 
+enum NameTag: uint8 {
+    NONE = 0,
+    SCHEMA_NAME = 1,
+    DATABASE_NAME = 2,
+    TABLE_NAME = 4,
+    TABLE_ALIAS = 8,
+    COLUMN_NAME = 16,
+}
+
 enum AnalyzerErrorType: uint8 {
     COLUMN_REF_AMBIGUOUS,
     DUPLICATE_TABLE_ALIAS,

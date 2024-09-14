@@ -11,61 +11,71 @@ namespace sqlynx {
 
 struct Completion {
     using ScoreValueType = uint32_t;
-    using ScoringTable = std::array<std::pair<proto::NameTag, ScoreValueType>, 8>;
 
-    static constexpr ScoreValueType TAG_IGNORE = 0;
-    static constexpr ScoreValueType TAG_UNLIKELY = 10;
-    static constexpr ScoreValueType TAG_LIKELY = 20;
+    // Coarse base score of a registered name
+    static constexpr ScoreValueType NAME_TAG_IGNORE = 0;
+    static constexpr ScoreValueType NAME_TAG_UNLIKELY = 10;
+    static constexpr ScoreValueType NAME_TAG_LIKELY = 20;
+
+    // Keywork prevalence modifiers
+    // Users write some keywords much more likely than others, and we hardcode some prevalence scores.
     static constexpr ScoreValueType KEYWORD_VERY_POPULAR = 3;
     static constexpr ScoreValueType KEYWORD_POPULAR = 2;
     static constexpr ScoreValueType KEYWORD_DEFAULT = 0;
 
+    // Fine-granular score modifiers
     static constexpr ScoreValueType SUBSTRING_SCORE_MODIFIER = 15;
     static constexpr ScoreValueType PREFIX_SCORE_MODIFIER = 20;
     static constexpr ScoreValueType RESOLVING_TABLE_SCORE_MODIFIER = 2;
     static constexpr ScoreValueType UNRESOLVED_PEER_SCORE_MODIFIER = 2;
     static constexpr ScoreValueType DOT_SCHEMA_SCORE_MODIFIER = 2;
     static constexpr ScoreValueType DOT_TABLE_SCORE_MODIFIER = 2;
+    static constexpr ScoreValueType DOT_COLUMN_SCORE_MODIFIER = 2;
 
     static_assert(PREFIX_SCORE_MODIFIER > SUBSTRING_SCORE_MODIFIER,
                   "Begin a prefix weighs more than being a substring");
-    static_assert((TAG_UNLIKELY + SUBSTRING_SCORE_MODIFIER) > TAG_LIKELY,
+    static_assert((NAME_TAG_UNLIKELY + SUBSTRING_SCORE_MODIFIER) > NAME_TAG_LIKELY,
                   "An unlikely name that is a substring outweighs a likely name");
-    static_assert((TAG_UNLIKELY + KEYWORD_VERY_POPULAR) < TAG_LIKELY,
+    static_assert((NAME_TAG_UNLIKELY + KEYWORD_VERY_POPULAR) < NAME_TAG_LIKELY,
                   "A very likely keyword prevalance doesn't outweigh a likely tag");
 
     /// A bitset for candidate tags
     using CandidateTags = EnumBitset<uint16_t, proto::CandidateTag, proto::CandidateTag::MAX>;
+
     /// The completion candidates
     struct Candidate {
         /// The name
         std::string_view name;
-        /// The combined name tags.
+        /// The combined coarse-granular analyzer tags.
         /// We may hit the same name multiple times in multiple catalog entries.
         /// Each of these entries may have different name tags, so we have to merge them here.
-        NameTags name_tags;
-        /// The combined candidate tags
+        NameTags coarse_name_tags;
+        /// The more fine-granular candidate tags
         CandidateTags candidate_tags;
-        /// The name score
-        ScoreValueType score = 0;
         /// The catalog objects
         std::vector<std::reference_wrapper<const CatalogObject>> catalog_objects;
         /// Replace text at a location
         sx::Location replace_text_at;
+    };
 
-        /// Get the score
-        inline ScoreValueType GetScore() const { return score; }
+    struct CandidateWithScore : public Candidate {
+        /// The computed score for the candidate
+        ScoreValueType score;
+        /// The constructor
+        CandidateWithScore(Candidate c, ScoreValueType score) : Candidate(std::move(c)), score(score) {}
+
         /// Is less in the min-heap?
         /// We want to kick a candidate A before candidate B if
         ///     1) the score of A is less than the score of B
         ///     2) the name of A is lexicographically larger than B
-        bool operator<(const Candidate& other) const {
-            auto l = GetScore();
-            auto r = other.GetScore();
+        bool operator<(const CandidateWithScore& other) const {
+            auto l = score;
+            auto r = other.score;
             return (l < r) || (l == r && (fuzzy_ci_string_view{name.data(), name.size()} >
                                           fuzzy_ci_string_view{other.name.data(), other.name.size()}));
         }
     };
+
     /// A hash-map for candidates
     using CandidateMap = ankerl::unordered_dense::map<std::string_view, Candidate>;
 
@@ -86,12 +96,10 @@ struct Completion {
     const ScriptCursor& cursor;
     /// The completion strategy
     const proto::CompletionStrategy strategy;
-    /// The scoring table
-    const ScoringTable& scoring_table;
     /// The hash-map to deduplicate names found in the completion indexes
     CandidateMap pending_candidates;
     /// The result heap, holding up to k entries
-    TopKHeap<Candidate> result_heap;
+    TopKHeap<CandidateWithScore> result_heap;
 
     /// Read the name path of the current cursor
     std::vector<Completion::NameComponent> ReadCursorNamePath(sx::Location& name_path_loc) const;
@@ -99,10 +107,12 @@ struct Completion {
     void FindCandidatesForNamePath();
     /// Find the candidates in completion indexes
     void FindCandidatesInIndexes();
-    /// Promote expected symbols in the grammar
-    void PromoteExpectedGrammarSymbols(std::span<parser::Parser::ExpectedSymbol> symbols);
     /// Promote tables that contain column names that are still unresolved in the current statement
     void PromoteTablesAndPeersForUnresolvedColumns();
+    /// Add expected keywords in the grammar as completion candidates.
+    /// We deliberately do not register them in the pending candidates map to not inflate the results.
+    /// We accept that they may occur twice in the completion list since and mark them explictly as grammar matches.
+    void AddExpectedKeywordsAsCandidates(std::span<parser::Parser::ExpectedSymbol> symbols);
     /// Flush pending candidates and finish the results
     void FlushCandidatesAndFinish();
 
@@ -114,8 +124,6 @@ struct Completion {
     auto& GetCursor() const { return cursor; }
     /// Get the completion strategy
     auto& GetStrategy() const { return strategy; }
-    /// Get the scoring table
-    auto& GetScoringTable() const { return scoring_table; }
     /// Get the pending candidates
     auto& GetPendingCandidates() { return pending_candidates; }
     /// Get the result heap

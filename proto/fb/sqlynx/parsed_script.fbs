@@ -406,16 +406,6 @@ table ScannedScript {
     comments: [Location];
 }
 
-enum NameTag: uint8 {
-    NONE = 0,
-    KEYWORD = 1,
-    SCHEMA_NAME = 2,
-    DATABASE_NAME = 4,
-    TABLE_NAME = 8,
-    TABLE_ALIAS = 16,
-    COLUMN_NAME = 32,
-}
-
 table ParsedScript {
     external_id: uint32;
     nodes: [Node];

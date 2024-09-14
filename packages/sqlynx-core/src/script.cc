@@ -725,7 +725,7 @@ std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze() {
     if (analyzed_script && scanned_script) {
         for (auto& chunk : scanned_script->name_registry.GetChunks()) {
             for (auto& entry : chunk) {
-                entry.resolved_tags = 0;
+                entry.coarse_analyzer_tags = 0;
                 entry.resolved_objects.Clear();
             }
         }
