@@ -10,38 +10,10 @@
 namespace sqlynx {
 
 struct Completion {
+    /// A score value
     using ScoreValueType = uint32_t;
-
-    // Coarse base score of a registered name
-    static constexpr ScoreValueType NAME_TAG_IGNORE = 0;
-    static constexpr ScoreValueType NAME_TAG_UNLIKELY = 10;
-    static constexpr ScoreValueType NAME_TAG_LIKELY = 20;
-
-    // Keywork prevalence modifiers
-    // Users write some keywords much more likely than others, and we hardcode some prevalence scores.
-    static constexpr ScoreValueType KEYWORD_VERY_POPULAR = 3;
-    static constexpr ScoreValueType KEYWORD_POPULAR = 2;
-    static constexpr ScoreValueType KEYWORD_DEFAULT = 0;
-
-    // Fine-granular score modifiers
-    static constexpr ScoreValueType SUBSTRING_SCORE_MODIFIER = 15;
-    static constexpr ScoreValueType PREFIX_SCORE_MODIFIER = 20;
-    static constexpr ScoreValueType RESOLVING_TABLE_SCORE_MODIFIER = 2;
-    static constexpr ScoreValueType UNRESOLVED_PEER_SCORE_MODIFIER = 2;
-    static constexpr ScoreValueType DOT_SCHEMA_SCORE_MODIFIER = 2;
-    static constexpr ScoreValueType DOT_TABLE_SCORE_MODIFIER = 2;
-    static constexpr ScoreValueType DOT_COLUMN_SCORE_MODIFIER = 2;
-
-    static_assert(PREFIX_SCORE_MODIFIER > SUBSTRING_SCORE_MODIFIER,
-                  "Begin a prefix weighs more than being a substring");
-    static_assert((NAME_TAG_UNLIKELY + SUBSTRING_SCORE_MODIFIER) > NAME_TAG_LIKELY,
-                  "An unlikely name that is a substring outweighs a likely name");
-    static_assert((NAME_TAG_UNLIKELY + KEYWORD_VERY_POPULAR) < NAME_TAG_LIKELY,
-                  "A very likely keyword prevalance doesn't outweigh a likely tag");
-
     /// A bitset for candidate tags
     using CandidateTags = EnumBitset<uint16_t, proto::CandidateTag, proto::CandidateTag::MAX>;
-
     /// The completion candidates
     struct Candidate {
         /// The name
