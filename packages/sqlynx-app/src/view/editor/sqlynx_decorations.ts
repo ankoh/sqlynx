@@ -7,7 +7,7 @@ import { tags as CODEMIRROR_TAGS, Tag } from '@lezer/highlight';
 import { SQLynxProcessor, SQLynxScriptBuffers, SQLynxScriptKey } from './sqlynx_processor.js';
 
 import './sqlynx_decorations.css';
-import { DerivedFocus } from 'session/focus.js';
+import { UserFocus } from 'session/focus.js';
 
 const PROTO_TAG_MAPPING: Map<sqlynx.proto.ScannerTokenType, Tag> = new Map([
     [sqlynx.proto.ScannerTokenType.KEYWORD, CODEMIRROR_TAGS.keyword],
@@ -117,7 +117,7 @@ function buildDecorationsFromCursor(
     scriptKey: SQLynxScriptKey | null,
     scriptBuffers: SQLynxScriptBuffers,
     _scriptCursor: sqlynx.proto.ScriptCursorT | null,
-    derivedFocus: DerivedFocus | null,
+    derivedFocus: UserFocus | null,
 ): DecorationSet {
     const builder = new RangeSetBuilder<Decoration>();
     const scanned = scriptBuffers.scanned?.read() ?? null;
@@ -217,7 +217,7 @@ interface FocusDecorationState {
     decorations: DecorationSet;
     scriptBuffers: SQLynxScriptBuffers;
     scriptCursor: sqlynx.proto.ScriptCursorT | null;
-    derivedFocus: DerivedFocus | null;
+    derivedFocus: UserFocus | null;
 }
 
 /// Decorations derived from SQLynx cursor

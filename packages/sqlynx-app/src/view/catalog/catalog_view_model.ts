@@ -1,6 +1,6 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
 
-import { DerivedFocus } from '../../session/focus.js';
+import { UserFocus } from '../../session/focus.js';
 
 /// The rendering settings for a catalog level
 export interface CatalogLevelRenderingSettings {
@@ -511,7 +511,7 @@ export class CatalogViewModel {
     }
 
 
-    pinFocusedByUser(_focus: DerivedFocus) {
+    pinFocusedByUser(_focus: UserFocus) {
         // Allocate an epoch
         const epoch = this.nextPinEpoch++;
 
