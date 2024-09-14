@@ -37,24 +37,25 @@ constexpr size_t LOCATION_HINT_LENGTH = 10;
     return ::testing::AssertionFailure() << err.str();
 }
 
-void EncodeLocation(pugi::xml_node n, proto::Location loc, std::string_view text) {
+void EncodeLocation(pugi::xml_node n, proto::Location loc, std::string_view text, const char* loc_key,
+                    const char* text_key) {
     auto begin = loc.offset();
     auto end = loc.offset() + loc.length();
     {
         std::stringstream ss;
         ss << begin << ".." << end;
-        n.append_attribute("loc") = ss.str().c_str();
+        n.append_attribute(loc_key) = ss.str().c_str();
     }
     {
         std::stringstream ss;
         if (loc.length() < INLINE_LOCATION_CAP) {
             ss << text.substr(loc.offset(), loc.length());
         } else {
-            auto prefix = text.substr(loc.offset(), LOCATION_HINT_LENGTH);
-            auto suffix = text.substr(loc.offset() + loc.length() - LOCATION_HINT_LENGTH, LOCATION_HINT_LENGTH);
-            ss << prefix << ".." << suffix;
+            auto loc_prefix = text.substr(loc.offset(), LOCATION_HINT_LENGTH);
+            auto loc_suffix = text.substr(loc.offset() + loc.length() - LOCATION_HINT_LENGTH, LOCATION_HINT_LENGTH);
+            ss << loc_prefix << ".." << loc_suffix;
         }
-        n.append_attribute("text") = ss.str().c_str();
+        n.append_attribute(text_key) = ss.str().c_str();
     }
 }
 

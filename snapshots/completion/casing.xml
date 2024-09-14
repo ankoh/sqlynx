@@ -24,13 +24,13 @@
             <search text="from cas" index="8" />
         </cursor>
         <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="148..151" text="cas">
-            <entry value="CaSeSeNsItIvE_TaBlE" score="40" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH" loc="148..151" text="cas">
-                <object type="table" id="256.65536.0" />
+            <entry score="40" value="CaSeSeNsItIvE_TaBlE" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH" replace_loc="148..151" replace_text="cas">
+                <object score="20" type="table" id="256.65536.0" ctags="NAME_INDEX|PREFIX_MATCH" />
             </entry>
-            <entry value="casesensitive_table" score="40" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH" loc="148..151" text="cas">
-                <object type="table" id="256.65536.1" />
+            <entry score="40" value="casesensitive_table" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH" replace_loc="148..151" replace_text="cas">
+                <object score="20" type="table" id="256.65536.1" ctags="NAME_INDEX|PREFIX_MATCH" />
             </entry>
-            <entry value="cast" score="22" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" loc="148..151" text="cas" />
+            <entry score="22" value="cast" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" replace_loc="148..151" replace_text="cas" />
         </completions>
     </completion-snapshot>
     <completion-snapshot name="casing_1" what="discover column names with different casing">
@@ -58,13 +58,13 @@
             <search text="select cas" index="10" />
         </cursor>
         <completions limit="3" strategy="COLUMN_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="135..138" text="cas">
-            <entry value="casesensitive" score="40" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH" loc="135..138" text="cas">
-                <object type="column" id="256.65536.1.0" />
+            <entry score="40" value="casesensitive" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH" replace_loc="135..138" replace_text="cas">
+                <object score="20" type="column" id="256.65536.1.0" ctags="NAME_INDEX|PREFIX_MATCH" />
             </entry>
-            <entry value="Casesensitive" score="40" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH" loc="135..138" text="cas">
-                <object type="column" id="256.65536.0.0" />
+            <entry score="40" value="Casesensitive" ntags="COLUMN_NAME" ctags="NAME_INDEX|PREFIX_MATCH" replace_loc="135..138" replace_text="cas">
+                <object score="20" type="column" id="256.65536.0.0" ctags="NAME_INDEX|PREFIX_MATCH" />
             </entry>
-            <entry value="case" score="22" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" loc="135..138" text="cas" />
+            <entry score="22" value="case" ctags="EXPECTED_PARSER_SYMBOL|PREFIX_MATCH" replace_loc="135..138" replace_text="cas" />
         </completions>
     </completion-snapshot>
 </completion-snapshots>

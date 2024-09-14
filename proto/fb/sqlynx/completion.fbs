@@ -21,6 +21,11 @@ table CompletionCandidateObject {
     catalog_table_id: uint64;
     /// The column idx
     table_column_id: uint64;
+    /// The candidate tags
+    candidate_tags: uint8;
+    /// The score
+    score: uint32;
+
 }
 
 enum CandidateTag: uint16 {

@@ -28,14 +28,14 @@
             <search text="from s" index="6" />
         </cursor>
         <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="END_OF_SYMBOL" loc="162..163" text="s">
-            <entry value="similar_name_0" score="42" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH|RESOLVING_TABLE" loc="162..163" text="s">
-                <object type="table" id="256.65536.0" />
+            <entry score="42" value="similar_name_0" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH|RESOLVING_TABLE" replace_loc="162..163" replace_text="s">
+                <object score="22" type="table" id="256.65536.0" ctags="NAME_INDEX|PREFIX_MATCH|RESOLVING_TABLE" />
             </entry>
-            <entry value="similar_name_1" score="40" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH" loc="162..163" text="s">
-                <object type="table" id="256.65536.1" />
+            <entry score="40" value="similar_name_1" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH" replace_loc="162..163" replace_text="s">
+                <object score="20" type="table" id="256.65536.1" ctags="NAME_INDEX|PREFIX_MATCH" />
             </entry>
-            <entry value="sqlynx" score="40" ntags="DATABASE_NAME" ctags="NAME_INDEX|PREFIX_MATCH" loc="162..163" text="s">
-                <object type="database" id="256" />
+            <entry score="40" value="sqlynx" ntags="DATABASE_NAME" ctags="NAME_INDEX|PREFIX_MATCH" replace_loc="162..163" replace_text="s">
+                <object score="20" type="database" id="256" ctags="NAME_INDEX|PREFIX_MATCH" />
             </entry>
         </completions>
     </completion-snapshot>

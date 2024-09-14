@@ -26,8 +26,8 @@
             <search text="dbname." index="7" />
         </cursor>
         <completions limit="3" strategy="TABLE_REF" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="37..38" text=".">
-            <entry value="schemaname" score="22" ntags="SCHEMA_NAME" ctags="DOT_RESOLUTION_SCHEMA|THROUGH_CATALOG" loc="38..38" text="">
-                <object type="schema" id="256.65536" />
+            <entry score="22" value="schemaname" ntags="SCHEMA_NAME" ctags="DOT_RESOLUTION_SCHEMA|THROUGH_CATALOG" replace_loc="38..38" replace_text="">
+                <object score="2" type="schema" id="256.65536" ctags="DOT_RESOLUTION_SCHEMA|THROUGH_CATALOG" />
             </entry>
         </completions>
     </completion-snapshot>
@@ -86,8 +86,8 @@
             <search text=".sch" index="1" />
         </cursor>
         <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="BEGIN_OF_SYMBOL" loc="38..41" text="sch">
-            <entry value="schemaname" score="22" ntags="SCHEMA_NAME" ctags="DOT_RESOLUTION_SCHEMA|THROUGH_CATALOG" loc="38..41" text="sch">
-                <object type="schema" id="256.65536" />
+            <entry score="22" value="schemaname" ntags="SCHEMA_NAME" ctags="DOT_RESOLUTION_SCHEMA|THROUGH_CATALOG" replace_loc="38..41" replace_text="sch">
+                <object score="2" type="schema" id="256.65536" ctags="DOT_RESOLUTION_SCHEMA|THROUGH_CATALOG" />
             </entry>
         </completions>
     </completion-snapshot>
@@ -118,8 +118,8 @@
             <search text="name." index="5" />
         </cursor>
         <completions limit="3" strategy="TABLE_REF" symbol="NAME" relative="BEGIN_OF_SYMBOL" loc="38..43" text="&quot;sch&quot;">
-            <entry value="schemaname" score="22" ntags="SCHEMA_NAME" ctags="DOT_RESOLUTION_SCHEMA|THROUGH_CATALOG" loc="38..43" text="&quot;sch&quot;">
-                <object type="schema" id="256.65536" />
+            <entry score="22" value="schemaname" ntags="SCHEMA_NAME" ctags="DOT_RESOLUTION_SCHEMA|THROUGH_CATALOG" replace_loc="38..43" replace_text="&quot;sch&quot;">
+                <object score="2" type="schema" id="256.65536" ctags="DOT_RESOLUTION_SCHEMA|THROUGH_CATALOG" />
             </entry>
         </completions>
     </completion-snapshot>
@@ -143,8 +143,8 @@
             <search text="from dbname." index="12" />
         </cursor>
         <completions limit="3" strategy="TABLE_REF" symbol="OBJECT_EXT_TRAILING_DOT" relative="END_OF_SYMBOL" loc="96..97" text=".">
-            <entry value="schemaname" score="22" ntags="SCHEMA_NAME" ctags="DOT_RESOLUTION_SCHEMA" loc="97..97" text="">
-                <object type="schema" id="256.65536" />
+            <entry score="22" value="schemaname" ntags="SCHEMA_NAME" ctags="DOT_RESOLUTION_SCHEMA" replace_loc="97..97" replace_text="">
+                <object score="2" type="schema" id="256.65536" ctags="DOT_RESOLUTION_SCHEMA" />
             </entry>
         </completions>
     </completion-snapshot>
