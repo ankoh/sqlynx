@@ -319,7 +319,7 @@ void Completion::FindCandidatesForNamePath() {
         sx::Location replace_text_at;
     };
     // Collect all candidate strings
-    std::vector<DotCandidate> candidates;
+    std::vector<DotCandidate> dot_candidates;
 
     // Are we completing a table ref?
     if (auto* ctx = std::get_if<ScriptCursor::TableRefContext>(&cursor.context)) {
@@ -349,7 +349,7 @@ void Completion::FindCandidatesForNamePath() {
                                                .object = table.get().CastToBase(),
                                                .replace_text_at = replace_text_at};
                         candidate.candidate_tags.AddIf(proto::CandidateTag::THROUGH_CATALOG, through_catalog);
-                        candidates.push_back(std::move(candidate));
+                        dot_candidates.push_back(std::move(candidate));
                     }
                 }
 
@@ -367,7 +367,7 @@ void Completion::FindCandidatesForNamePath() {
                                                .object = schema.get().CastToBase(),
                                                .replace_text_at = replace_text_at};
                         candidate.candidate_tags.AddIf(proto::CandidateTag::THROUGH_CATALOG, through_catalog);
-                        candidates.push_back(std::move(candidate));
+                        dot_candidates.push_back(std::move(candidate));
                     }
                 }
                 break;
@@ -391,7 +391,7 @@ void Completion::FindCandidatesForNamePath() {
                                                .object = {table.get().CastToBase()},
                                                .replace_text_at = replace_text_at};
                         candidate.candidate_tags.AddIf(proto::CandidateTag::THROUGH_CATALOG, through_catalog);
-                        candidates.push_back(std::move(candidate));
+                        dot_candidates.push_back(std::move(candidate));
                     }
                 }
                 break;
@@ -433,7 +433,7 @@ void Completion::FindCandidatesForNamePath() {
                             candidate.candidate_tags.AddIf(
                                 proto::CandidateTag::THROUGH_CATALOG,
                                 table_decl.catalog_table_id.GetExternalId() != script.GetCatalogEntryId());
-                            candidates.push_back(std::move(candidate));
+                            dot_candidates.push_back(std::move(candidate));
                         }
                         break;
                     }
@@ -443,48 +443,65 @@ void Completion::FindCandidatesForNamePath() {
         }
     }
 
-    // Now we need to score the candidates based on the cursor prefix (if there is any)
-    if (!last_text_prefix.empty()) {
-        for (auto& candidate : candidates) {
-            auto iter = pending_candidates.find(candidate.name);
-            if (iter != pending_candidates.end()) {
-                auto& existing = iter->second;
+    for (auto& dot_candidate : dot_candidates) {
+        // Did we already add the dot candidate?
+        if (auto iter = candidate_objects_by_object.find(&dot_candidate.object);
+            iter != candidate_objects_by_object.end()) {
+            // Update candidate tags and replacement target
+            auto& candidate_object = iter->second.get();
+            candidate_object.candidate_tags |= dot_candidate.candidate_tags;
+            candidate_object.candidate.replace_text_at = replace_text_at;
+            assert(candidate_object.candidate.name == dot_candidate.name);
+
+        } else {
+            // No, do we know the candidate name already?
+            if (auto iter = candidates_by_name.find(dot_candidate.name); iter != candidates_by_name.end()) {
+                // Name is there, just not the object
+                auto& existing = iter->second.get();
+                // Fix text replacement
                 existing.replace_text_at = replace_text_at;
-                existing.catalog_objects.push_back(candidate.object);
+                // Allocate the candidate object
+                auto& co = candidate_objects.Append(CandidateCatalogObject{
+                    .candidate = existing,
+                    .candidate_tags = dot_candidate.candidate_tags,
+                    .catalog_object = dot_candidate.object,
+                });
+                existing.catalog_objects.PushBack(co);
+                assert(!candidate_objects_by_object.contains(&dot_candidate.object));
+                candidate_objects_by_object.insert({&dot_candidate.object, co});
+
             } else {
-                fuzzy_ci_string_view ci_name{candidate.name.data(), candidate.name.size()};
-                if (ci_name.starts_with(fuzzy_ci_string_view{last_text_prefix.data(), last_text_prefix.size()})) {
-                    candidate.candidate_tags |= proto::CandidateTag::PREFIX_MATCH;
-                } else if (ci_name.find(fuzzy_ci_string_view{last_text_prefix.data(), last_text_prefix.size()}) !=
-                           fuzzy_ci_string_view::npos) {
-                    candidate.candidate_tags |= proto::CandidateTag::SUBSTRING_MATCH;
+                // If the user gave us a text, determine the substring match
+                if (!last_text_prefix.empty()) {
+                    // Check if we have a prefix
+                    fuzzy_ci_string_view ci_name{dot_candidate.name.data(), dot_candidate.name.size()};
+                    if (ci_name.starts_with(fuzzy_ci_string_view{last_text_prefix.data(), last_text_prefix.size()})) {
+                        dot_candidate.candidate_tags |= proto::CandidateTag::PREFIX_MATCH;
+                    } else if (ci_name.find(fuzzy_ci_string_view{last_text_prefix.data(), last_text_prefix.size()}) !=
+                               fuzzy_ci_string_view::npos) {
+                        dot_candidate.candidate_tags |= proto::CandidateTag::SUBSTRING_MATCH;
+                    }
                 }
-                Candidate c{
-                    .name = candidate.name,
-                    .coarse_name_tags = candidate.name_tags,
-                    .candidate_tags = candidate.candidate_tags,
-                    .catalog_objects = {candidate.object},
+
+                // Allocate the candidate
+                auto& c = candidates.Append(Candidate{
+                    .name = dot_candidate.name,
+                    .coarse_name_tags = dot_candidate.name_tags,
+                    .candidate_tags = dot_candidate.candidate_tags,
                     .replace_text_at = replace_text_at,
-                };
-                pending_candidates.insert({candidate.name, std::move(c)});
-            }
-        }
-    } else {
-        for (auto& candidate : candidates) {
-            auto iter = pending_candidates.find(candidate.name);
-            if (iter != pending_candidates.end()) {
-                auto& existing = iter->second;
-                existing.replace_text_at = replace_text_at;
-                existing.catalog_objects.push_back(candidate.object);
-            } else {
-                Candidate c{
-                    .name = candidate.name,
-                    .coarse_name_tags = candidate.name_tags,
-                    .candidate_tags = candidate.candidate_tags,
-                    .catalog_objects = {candidate.object},
-                    .replace_text_at = replace_text_at,
-                };
-                pending_candidates.insert({candidate.name, std::move(c)});
+                    .catalog_objects = {},
+                });
+                candidates_by_name.insert({c.name, c});
+
+                // Allocate the candidate object
+                auto& co = candidate_objects.Append(CandidateCatalogObject{
+                    .candidate = c,
+                    .candidate_tags = dot_candidate.candidate_tags,
+                    .catalog_object = dot_candidate.object,
+                });
+                c.catalog_objects.PushBack(co);
+                assert(!candidate_objects_by_object.contains(&dot_candidate.object));
+                candidate_objects_by_object.insert({&dot_candidate.object, co});
             }
         }
     }
@@ -546,10 +563,8 @@ void Completion::AddExpectedKeywordsAsCandidates(std::span<parser::Parser::Expec
     }
 }
 
-void findCandidatesInIndex(Completion& completion, const CatalogEntry::NameSearchIndex& index, bool through_catalog) {
+void Completion::findCandidatesInIndex(const CatalogEntry::NameSearchIndex& index, bool through_catalog) {
     using Relative = ScannedScript::LocationInfo::RelativePosition;
-    auto& cursor = completion.GetCursor();
-    auto& pending_candidates = completion.GetPendingCandidates();
 
     // Get the current cursor prefix
     auto& location = cursor.scanner_location;
@@ -578,42 +593,57 @@ void findCandidatesInIndex(Completion& completion, const CatalogEntry::NameSearc
         // Added through catalog?
         candidate_tags.AddIf(proto::CandidateTag::THROUGH_CATALOG, through_catalog);
 
-        // Is a prefix?
-        switch (location->relative_pos) {
-            case Relative::BEGIN_OF_SYMBOL:
-            case Relative::MID_OF_SYMBOL:
-            case Relative::END_OF_SYMBOL:
-                if (fuzzy_ci_string_view{name_info.text.data(), name_info.text.size()}.starts_with(ci_prefix_text)) {
-                    candidate_tags |= proto::CandidateTag::PREFIX_MATCH;
-                } else {
-                    candidate_tags |= proto::CandidateTag::SUBSTRING_MATCH;
-                }
-                break;
-            default:
-                break;
-        }
         // Do we know the candidate already?
-        if (auto iter = pending_candidates.find(name_info.text); iter != pending_candidates.end()) {
-            // Update the score if it is higher
-            iter->second.candidate_tags |= candidate_tags;
-            iter->second.coarse_name_tags |= name_info.coarse_analyzer_tags;
-            iter->second.catalog_objects.reserve(iter->second.catalog_objects.size() +
-                                                 name_info.resolved_objects.GetSize());
-            for (auto& o : name_info.resolved_objects) {
-                iter->second.catalog_objects.push_back(o);
-            }
+        Candidate* candidate;
+        if (auto iter = candidates_by_name.find(name_info.text); iter != candidates_by_name.end()) {
+            candidate = &iter->second.get();
+            candidate->candidate_tags |= candidate_tags;
+            candidate->coarse_name_tags |= name_info.coarse_analyzer_tags;
         } else {
-            // Otherwise store as new candidate
-            Completion::Candidate candidate{.name = name_info.text,
-                                            .coarse_name_tags = name_info.coarse_analyzer_tags,
-                                            .candidate_tags = candidate_tags,
-                                            .catalog_objects = {},
-                                            .replace_text_at = location->symbol.location};
-            candidate.catalog_objects.reserve(name_info.resolved_objects.GetSize());
-            for (auto& o : name_info.resolved_objects) {
-                candidate.catalog_objects.push_back(o);
+            // Is a prefix?
+            switch (location->relative_pos) {
+                case Relative::BEGIN_OF_SYMBOL:
+                case Relative::MID_OF_SYMBOL:
+                case Relative::END_OF_SYMBOL:
+                    if (fuzzy_ci_string_view{name_info.text.data(), name_info.text.size()}.starts_with(
+                            ci_prefix_text)) {
+                        candidate_tags |= proto::CandidateTag::PREFIX_MATCH;
+                    } else {
+                        candidate_tags |= proto::CandidateTag::SUBSTRING_MATCH;
+                    }
+                    break;
+                default:
+                    break;
             }
-            pending_candidates.insert({name_info.text, candidate});
+            candidate = &candidates.Append(Candidate{
+                .name = name_info.text,
+                .coarse_name_tags = name_info.coarse_analyzer_tags,
+                .candidate_tags = candidate_tags,
+                .replace_text_at = location->symbol.location,
+                .catalog_objects = {},
+            });
+            candidates_by_name.insert({name_info.text, *candidate});
+        }
+
+        // Add the resolved objects
+        for (auto& o : name_info.resolved_objects) {
+            // Already registered?
+            if (auto iter = candidate_objects_by_object.find(&o); iter != candidate_objects_by_object.end()) {
+                // Note that this assumes that a catalog object can be added to at most a single candidate.
+                assert(&iter->second.get().candidate == candidate);
+                iter->second.get().candidate_tags |= candidate_tags;
+                continue;
+            } else {
+                // Allocate the catalog object
+                auto& co = candidate_objects.Append(CandidateCatalogObject{
+                    .candidate = *candidate,
+                    .candidate_tags = candidate_tags,
+                    .catalog_object = o,
+                });
+                candidate->catalog_objects.PushBack(co);
+                assert(!candidate_objects_by_object.contains(&o));
+                candidate_objects_by_object.insert({&o, co});
+            }
         }
     }
 }
@@ -621,11 +651,11 @@ void findCandidatesInIndex(Completion& completion, const CatalogEntry::NameSearc
 void Completion::FindCandidatesInIndexes() {
     if (auto& analyzed = cursor.script.analyzed_script) {
         // Find candidates in name dictionary of main script
-        findCandidatesInIndex(*this, analyzed->GetNameSearchIndex(), false);
+        findCandidatesInIndex(analyzed->GetNameSearchIndex(), false);
         // Find candidates in name dictionary of external script
         cursor.script.catalog.IterateRanked([this, &analyzed](auto entry_id, auto& entry, size_t rank) {
             if (&entry != analyzed.get()) {
-                findCandidatesInIndex(*this, entry.GetNameSearchIndex(), true);
+                findCandidatesInIndex(entry.GetNameSearchIndex(), true);
             }
         });
     }
@@ -653,16 +683,19 @@ void Completion::PromoteTablesAndPeersForUnresolvedColumns() {
                 auto& table = table_col.table->get();
                 auto& table_name = table.table_name.table_name.get();
                 // Boost the table name as candidate (if any)
-                if (auto pending_iter = pending_candidates.find(table_name.text);
-                    pending_iter != pending_candidates.end()) {
-                    pending_iter->second.candidate_tags |= proto::CandidateTag::RESOLVING_TABLE;
+                if (auto iter = candidate_objects_by_object.find(&table); iter != candidate_objects_by_object.end()) {
+                    auto& co = iter->second.get();
+                    co.candidate_tags |= proto::CandidateTag::RESOLVING_TABLE;
+                    co.candidate.candidate_tags |= proto::CandidateTag::RESOLVING_TABLE;
                 }
                 // Promote column names in these tables
                 for (auto& peer_col : table.table_columns) {
                     // Boost the peer name as candidate (if any)
-                    if (auto pending_iter = pending_candidates.find(peer_col.column_name.get().text);
-                        pending_iter != pending_candidates.end()) {
-                        pending_iter->second.candidate_tags |= proto::CandidateTag::UNRESOLVED_PEER;
+                    if (auto iter = candidate_objects_by_object.find(&peer_col);
+                        iter != candidate_objects_by_object.end()) {
+                        auto& co = iter->second.get();
+                        co.candidate_tags |= proto::CandidateTag::UNRESOLVED_PEER;
+                        co.candidate.candidate_tags |= proto::CandidateTag::UNRESOLVED_PEER;
                     }
                 }
             }
@@ -670,7 +703,7 @@ void Completion::PromoteTablesAndPeersForUnresolvedColumns() {
     });
 }
 
-static const NameScoringTable& selectScoringTable(proto::CompletionStrategy strategy) {
+static const NameScoringTable& selectNameScoringTable(proto::CompletionStrategy strategy) {
     switch (strategy) {
         case proto::CompletionStrategy::DEFAULT:
             return NAME_SCORE_DEFAULTS;
@@ -679,6 +712,18 @@ static const NameScoringTable& selectScoringTable(proto::CompletionStrategy stra
         case proto::CompletionStrategy::COLUMN_REF:
             return NAME_SCORE_COLUMN_REF;
     }
+}
+
+Completion::ScoreValueType computeCandidateScore(Completion::CandidateTags tags) {
+    Completion::ScoreValueType score = 0;
+    score += ((tags & proto::CandidateTag::SUBSTRING_MATCH) != 0) * SUBSTRING_SCORE_MODIFIER;
+    score += ((tags & proto::CandidateTag::PREFIX_MATCH) != 0) * PREFIX_SCORE_MODIFIER;
+    score += ((tags & proto::CandidateTag::RESOLVING_TABLE) != 0) * RESOLVING_TABLE_SCORE_MODIFIER;
+    score += ((tags & proto::CandidateTag::UNRESOLVED_PEER) != 0) * UNRESOLVED_PEER_SCORE_MODIFIER;
+    score += ((tags & proto::CandidateTag::DOT_RESOLUTION_TABLE) != 0) * DOT_TABLE_SCORE_MODIFIER;
+    score += ((tags & proto::CandidateTag::DOT_RESOLUTION_SCHEMA) != 0) * DOT_SCHEMA_SCORE_MODIFIER;
+    score += ((tags & proto::CandidateTag::DOT_RESOLUTION_COLUMN) != 0) * DOT_COLUMN_SCORE_MODIFIER;
+    return score;
 }
 
 void Completion::FlushCandidatesAndFinish() {
@@ -703,10 +748,10 @@ void Completion::FlushCandidatesAndFinish() {
     }
 
     // Resolve the scoring table
-    auto& base_scoring_table = selectScoringTable(strategy);
+    auto& base_scoring_table = selectNameScoringTable(strategy);
 
     // Insert all pending candidates into the heap
-    for (auto& [key, candidate] : pending_candidates) {
+    candidates.ForEach([&](size_t i, Candidate& candidate) {
         // Score the candidate
         Completion::ScoreValueType score = 0;
         // Derive the base score as maximum among the name tags
@@ -714,23 +759,10 @@ void Completion::FlushCandidatesAndFinish() {
             score = std::max(score, candidate.coarse_name_tags.contains(tag) ? tag_score : 0);
         }
         // Apply all score modifiers
-        score += ((candidate.candidate_tags & proto::CandidateTag::SUBSTRING_MATCH) != 0) * SUBSTRING_SCORE_MODIFIER;
-        score += ((candidate.candidate_tags & proto::CandidateTag::PREFIX_MATCH) != 0) * PREFIX_SCORE_MODIFIER;
-        score +=
-            ((candidate.candidate_tags & proto::CandidateTag::RESOLVING_TABLE) != 0) * RESOLVING_TABLE_SCORE_MODIFIER;
-        score +=
-            ((candidate.candidate_tags & proto::CandidateTag::UNRESOLVED_PEER) != 0) * UNRESOLVED_PEER_SCORE_MODIFIER;
-        score +=
-            ((candidate.candidate_tags & proto::CandidateTag::DOT_RESOLUTION_TABLE) != 0) * DOT_TABLE_SCORE_MODIFIER;
-        score +=
-            ((candidate.candidate_tags & proto::CandidateTag::DOT_RESOLUTION_SCHEMA) != 0) * DOT_SCHEMA_SCORE_MODIFIER;
-        score +=
-            ((candidate.candidate_tags & proto::CandidateTag::DOT_RESOLUTION_COLUMN) != 0) * DOT_COLUMN_SCORE_MODIFIER;
-
+        score += computeCandidateScore(candidate.candidate_tags);
         // Add the scored candidate
         result_heap.Insert(CandidateWithScore{std::move(candidate), score});
-    }
-    pending_candidates.clear();
+    });
 
     // Finish the heap
     result_heap.Finish();
@@ -862,20 +894,26 @@ std::pair<std::unique_ptr<Completion>, proto::StatusCode> Completion::Compute(co
 flatbuffers::Offset<proto::Completion> Completion::Pack(flatbuffers::FlatBufferBuilder& builder) {
     auto& entries = result_heap.GetEntries();
 
-    // Pack candidates
+    // Reservie for packed candidates
     std::vector<flatbuffers::Offset<proto::CompletionCandidate>> candidates;
     candidates.reserve(entries.size());
+
+    // Pack candidates
     for (auto iter_entry = entries.rbegin(); iter_entry != entries.rend(); ++iter_entry) {
+        // Do we have to quote the completion text?
         auto display_text_offset = builder.CreateString(iter_entry->name);
         std::string quoted;
         std::string_view completion_text = iter_entry->name;
         completion_text = quote_anyupper_fuzzy(completion_text, quoted);
-        size_t catalog_object_count = iter_entry->catalog_objects.size();
+
+        // Resolve the catalog objects
+        size_t catalog_object_count = iter_entry->catalog_objects.GetSize();
         std::vector<flatbuffers::Offset<proto::CompletionCandidateObject>> catalog_objects;
         catalog_objects.reserve(catalog_object_count);
-        for (auto iter_obj = iter_entry->catalog_objects.begin(); iter_obj != iter_entry->catalog_objects.end();
-             ++iter_obj) {
-            auto& o = iter_obj->get();
+
+        // Pack the catalog objects
+        for (auto& co : iter_entry->catalog_objects) {
+            auto& o = co.catalog_object;
             proto::CompletionCandidateObjectBuilder obj{builder};
             obj.add_object_type(static_cast<proto::CompletionCandidateObjectType>(o.object_type));
             switch (o.object_type) {
