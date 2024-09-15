@@ -412,5 +412,52 @@ export function deriveFocusFromCompletionCandidates(
     if (data.completion == null) {
         return;
     }
+    if (data.completion.candidates.length == 0 || data.selectedCompletionCandidate == null) {
+        return;
+    }
     console.log(data.completion.candidates);
+
+    const focusTarget: FocusTarget = {
+        type: FOCUSED_COMPLETION,
+        value: {
+            completion: data.completion,
+            completionCandidateIndex: data.selectedCompletionCandidate ?? 0
+        }
+    };
+    const focus: UserFocus = {
+        focusTarget,
+        catalogDatabases: new Map(),
+        catalogSchemas: new Map(),
+        catalogTables: new Map(),
+        catalogColumns: new Map(),
+        scriptTableRefs: new Map(),
+        scriptColumnRefs: new Map(),
+    };
+
+    // Highlight only the selected completion candidate for now
+    const candidate = data.completion.candidates[data.selectedCompletionCandidate ?? 0];
+    for (const candidateObject of candidate.catalogObjects) {
+        switch (candidateObject.objectType) {
+            case sqlynx.proto.CompletionCandidateObjectType.DATABASE:
+                focus.catalogDatabases.set(candidateObject.catalogDatabaseId, FocusType.COMPLETION_CANDIDATE_SELECTED);
+                break;
+            case sqlynx.proto.CompletionCandidateObjectType.SCHEMA:
+                focus.catalogDatabases.set(candidateObject.catalogDatabaseId, FocusType.COMPLETION_CANDIDATE_SELECTED_PATH);
+                focus.catalogSchemas.set(candidateObject.catalogSchemaId, FocusType.COMPLETION_CANDIDATE_SELECTED);
+                break;
+            case sqlynx.proto.CompletionCandidateObjectType.TABLE:
+                focus.catalogDatabases.set(candidateObject.catalogDatabaseId, FocusType.COMPLETION_CANDIDATE_SELECTED_PATH);
+                focus.catalogSchemas.set(candidateObject.catalogSchemaId, FocusType.COMPLETION_CANDIDATE_SELECTED_PATH);
+                focus.catalogTables.set(candidateObject.catalogTableId, FocusType.COMPLETION_CANDIDATE_SELECTED);
+                break;
+            case sqlynx.proto.CompletionCandidateObjectType.COLUMN:
+                focus.catalogDatabases.set(candidateObject.catalogDatabaseId, FocusType.COMPLETION_CANDIDATE_SELECTED_PATH);
+                focus.catalogSchemas.set(candidateObject.catalogSchemaId, FocusType.COMPLETION_CANDIDATE_SELECTED_PATH);
+                focus.catalogTables.set(candidateObject.catalogTableId, FocusType.COMPLETION_CANDIDATE_SELECTED_PATH);
+                focus.catalogColumns.set(sqlynx.ExternalObjectChildID.create(candidateObject.catalogTableId, candidateObject.tableColumnId), FocusType.COMPLETION_CANDIDATE_SELECTED);
+                break;
+        }
+    }
+
+
 }
