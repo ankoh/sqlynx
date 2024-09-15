@@ -1,6 +1,6 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
-
 import { UserFocus } from '../../session/focus.js';
+import { QUALIFIED_DATABASE_ID, QUALIFIED_SCHEMA_ID, QUALIFIED_TABLE_COLUMN_ID, QUALIFIED_TABLE_ID, QualifiedCatalogObjectID } from '../../session/catalog_object_id.js';
 
 /// The rendering settings for a catalog level
 export interface CatalogLevelRenderingSettings {
@@ -41,18 +41,42 @@ export interface CatalogRenderingSettings {
 export enum CatalogRenderingFlag {
     DEFAULT = 0,
     OVERFLOW = 0b1,
-    PINNED_BY_SCRIPT_TABLE_REFS = 0b10,
-    PINNED_BY_SCRIPT_COLUMN_REFS = 0b100,
-    PINNED_BY_USER_FOCUS = 0b1000,
-    PRIMARY_FOCUS = 0b1000,
+
+    SCRIPT_TABLE_REF = 0b1 << 1,
+    SCRIPT_TABLE_REF_PATH = 0b1 << 2,
+    SCRIPT_COLUMN_REF = 0b1 << 3,
+    SCRIPT_COLUMN_REF_PATH = 0b1 << 4,
+
+    FOCUS_TABLE_REF = 0b1 << 5,
+    FOCUS_TABLE_REF_PATH = 0b1 << 6,
+    FOCUS_COLUMN_REF = 0b1 << 7,
+    FOCUS_COLUMN_REF_PATH = 0b1 << 8,
+    FOCUS_COMPLETION_CANDIDATE = 0b1 << 9,
+    FOCUS_COMPLETION_CANDIDATE_PATH = 0b1 << 10,
+    FOCUS_CATALOG_ENTRY = 0b1 << 11,
+    FOCUS_CATALOG_ENTRY_PATH = 0b1 << 12,
 }
 
-/// Pinned by anything
-export const PINNED_BY_ANYTHING =
-    CatalogRenderingFlag.PINNED_BY_SCRIPT_TABLE_REFS |
-    CatalogRenderingFlag.PINNED_BY_SCRIPT_COLUMN_REFS |
-    CatalogRenderingFlag.PINNED_BY_USER_FOCUS
+export const PINNED_BY_SCRIPT =
+    CatalogRenderingFlag.SCRIPT_TABLE_REF |
+    CatalogRenderingFlag.SCRIPT_TABLE_REF_PATH |
+    CatalogRenderingFlag.SCRIPT_COLUMN_REF |
+    CatalogRenderingFlag.SCRIPT_COLUMN_REF_PATH
     ;
+
+export const PINNED_BY_FOCUS =
+    CatalogRenderingFlag.FOCUS_TABLE_REF |
+    CatalogRenderingFlag.FOCUS_TABLE_REF_PATH |
+    CatalogRenderingFlag.FOCUS_COLUMN_REF |
+    CatalogRenderingFlag.FOCUS_COLUMN_REF_PATH |
+    CatalogRenderingFlag.FOCUS_COMPLETION_CANDIDATE |
+    CatalogRenderingFlag.FOCUS_COMPLETION_CANDIDATE_PATH |
+    CatalogRenderingFlag.FOCUS_CATALOG_ENTRY |
+    CatalogRenderingFlag.FOCUS_CATALOG_ENTRY_PATH
+    ;
+
+/// Pinned by anything
+export const PINNED_BY_ANYTHING = PINNED_BY_SCRIPT | PINNED_BY_FOCUS;
 
 
 /// A span of catalog entries
@@ -90,7 +114,7 @@ interface CatalogLevelViewModel {
     /// The buffers
     entries: CatalogEntrySpan;
     /// The rendering flags
-    entryFlags: Uint8Array;
+    entryFlags: Uint16Array;
     /// The subtree heights
     subtreeHeights: Float32Array;
     /// The x offset
@@ -165,7 +189,7 @@ export class CatalogViewModel {
                 read: (snap: sqlynx.SQLynxCatalogSnapshotReader, index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snap.catalogReader.databases(index, obj),
                 length: (snap: sqlynx.SQLynxCatalogSnapshotReader) => snap.catalogReader.databasesLength(),
             },
-            entryFlags: new Uint8Array(snap.catalogReader.databasesLength()),
+            entryFlags: new Uint16Array(snap.catalogReader.databasesLength()),
             subtreeHeights: new Float32Array(snap.catalogReader.databasesLength()),
             positionX: 0,
             scratchEntry: new sqlynx.proto.FlatCatalogEntry(),
@@ -180,7 +204,7 @@ export class CatalogViewModel {
                 read: (snap: sqlynx.SQLynxCatalogSnapshotReader, index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snap.catalogReader.schemas(index, obj),
                 length: (snap: sqlynx.SQLynxCatalogSnapshotReader) => snap.catalogReader.schemasLength(),
             },
-            entryFlags: new Uint8Array(snap.catalogReader.schemasLength()),
+            entryFlags: new Uint16Array(snap.catalogReader.schemasLength()),
             subtreeHeights: new Float32Array(snap.catalogReader.schemasLength()),
             positionX: 0,
             scratchEntry: new sqlynx.proto.FlatCatalogEntry(),
@@ -195,7 +219,7 @@ export class CatalogViewModel {
                 read: (snap: sqlynx.SQLynxCatalogSnapshotReader, index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snap.catalogReader.tables(index, obj),
                 length: (snap: sqlynx.SQLynxCatalogSnapshotReader) => snap.catalogReader.tablesLength(),
             },
-            entryFlags: new Uint8Array(snap.catalogReader.tablesLength()),
+            entryFlags: new Uint16Array(snap.catalogReader.tablesLength()),
             subtreeHeights: new Float32Array(snap.catalogReader.tablesLength()),
             positionX: 0,
             scratchEntry: new sqlynx.proto.FlatCatalogEntry(),
@@ -210,7 +234,7 @@ export class CatalogViewModel {
                 read: (snap: sqlynx.SQLynxCatalogSnapshotReader, index: number, obj?: sqlynx.proto.FlatCatalogEntry) => snap.catalogReader.columns(index, obj),
                 length: (snap: sqlynx.SQLynxCatalogSnapshotReader) => snap.catalogReader.columnsLength(),
             },
-            entryFlags: new Uint8Array(snap.catalogReader.columnsLength()),
+            entryFlags: new Uint16Array(snap.catalogReader.columnsLength()),
             subtreeHeights: new Float32Array(snap.catalogReader.columnsLength()),
             positionX: 0,
             scratchEntry: new sqlynx.proto.FlatCatalogEntry(),
@@ -329,82 +353,73 @@ export class CatalogViewModel {
     }
 
     /// Pin an element
-    pin(catalog: sqlynx.proto.FlatCatalog,
+    pinPath(catalog: sqlynx.proto.FlatCatalog,
         epoch: number,
-        flags: number,
-        dbId: number,
-        schemaId: number | null,
-        tableId: bigint | null,
-        columnId: number | null,
+        flagsTarget: number,
+        flagsPath: number,
+        objectId: QualifiedCatalogObjectID
     ) {
-        // Remember catalog entry ids
-        let dbEntryId: number | null = null;
-        let schemaEntryId: number | null = null;
-        let tableEntryId: number | null = null;
-        let columnEntryId: number | null = null;
-
-        // Remember previous entry flags
-        let prevDbFlags: number | null = null;
-        let prevSchemaFlags: number | null = null;
-        let prevTableFlags: number | null = null;
-        let prevColumnFlags: number | null = null;
-
-        // Lookup the database id in the catalog
-        dbEntryId = sqlynx.findCatalogDatabaseById(catalog, dbId, this.tmpDatabaseEntry);
-        if (dbEntryId == null) {
-            // Failed to locate database in the catalog?
-            // Return early, this won't work.
-            return;
-        }
-
-        // Mark the database pinned
-        prevDbFlags = this.databaseEntries.entryFlags[dbEntryId];
-        this.databaseEntries.entryFlags[dbEntryId] |= flags;
-        this.databaseEntries.pinnedInEpoch[dbEntryId] = epoch;
-        this.databaseEntries.pinnedEntries.add(dbEntryId);
-
-        // Lookup the schema id in the catalog
-        if (schemaId != null) {
-            schemaEntryId = sqlynx.findCatalogSchemaById(catalog, schemaId, this.tmpSchemaEntry);
-            if (schemaEntryId != null) {
-                prevSchemaFlags = this.schemaEntries.entryFlags[schemaEntryId];
-                this.schemaEntries.entryFlags[schemaEntryId] |= flags;
-                this.schemaEntries.pinnedInEpoch[schemaEntryId] = epoch;
-                this.schemaEntries.pinnedEntries.add(schemaEntryId);
-
-                // Lookup the table id in the catalog
-                if (tableId != null) {
-                    tableEntryId = sqlynx.findCatalogTableById(catalog, tableId, this.tmpTableEntry);
-                    if (tableEntryId != null) {
-                        prevTableFlags = this.tableEntries.entryFlags[tableEntryId];
-                        this.tableEntries.entryFlags[tableEntryId] |= flags;
-                        this.tableEntries.pinnedInEpoch[tableEntryId] = epoch;
-                        this.tableEntries.pinnedEntries.add(tableEntryId);
-
-                        // Lookup the column in the catalog
-                        if (columnId != null) {
-                            const tableProto = catalog.tables(tableEntryId)!;
-                            const tableChildrenBegin = tableProto.childBegin();
-                            columnEntryId = tableChildrenBegin + columnId;
-                            prevColumnFlags = this.columnEntries.entryFlags[columnEntryId];
-                            this.columnEntries.entryFlags[columnEntryId] |= flags;
-                            this.columnEntries.pinnedInEpoch[columnEntryId] = epoch;
-                            this.columnEntries.pinnedEntries.add(columnEntryId);
-                        }
-                    }
+        // Resolve entry ids
+        const entryIds: (number | null)[] = [null, null, null, null];
+        switch (objectId.type) {
+            case QUALIFIED_DATABASE_ID:
+                entryIds[0] = sqlynx.findCatalogDatabaseById(catalog, objectId.value.database, this.tmpDatabaseEntry);
+                break;
+            case QUALIFIED_SCHEMA_ID:
+                entryIds[0] = sqlynx.findCatalogDatabaseById(catalog, objectId.value.database, this.tmpDatabaseEntry);
+                entryIds[1] = sqlynx.findCatalogSchemaById(catalog, objectId.value.schema, this.tmpSchemaEntry);
+                break;
+            case QUALIFIED_TABLE_ID:
+                entryIds[0] = sqlynx.findCatalogDatabaseById(catalog, objectId.value.database, this.tmpDatabaseEntry);
+                entryIds[1] = sqlynx.findCatalogSchemaById(catalog, objectId.value.schema, this.tmpSchemaEntry);
+                entryIds[2] = sqlynx.findCatalogTableById(catalog, objectId.value.table, this.tmpTableEntry);
+                break;
+            case QUALIFIED_TABLE_COLUMN_ID:
+                entryIds[0] = sqlynx.findCatalogDatabaseById(catalog, objectId.value.database, this.tmpDatabaseEntry);
+                entryIds[1] = sqlynx.findCatalogSchemaById(catalog, objectId.value.schema, this.tmpSchemaEntry);
+                entryIds[2] = sqlynx.findCatalogTableById(catalog, objectId.value.table, this.tmpTableEntry);
+                if (entryIds[2] != null) {
+                    const tableProto = catalog.tables(entryIds[2])!;
+                    const tableChildrenBegin = tableProto.childBegin();
+                    entryIds[3] = tableChildrenBegin + objectId.value.column;
                 }
-            }
+                break;
         }
 
-        // Figure out the parent of the first overflowing node
-        if ((prevDbFlags & CatalogRenderingFlag.OVERFLOW) != 0) {
-            this.pendingLayoutUpdates.root = true;
-        } else if (prevSchemaFlags != null && (prevSchemaFlags & CatalogRenderingFlag.OVERFLOW) != 0) {
-            this.pendingLayoutUpdates.databases.add(dbEntryId);
-        } else if (prevTableFlags != null && (prevTableFlags & CatalogRenderingFlag.OVERFLOW) != 0) {
-            this.pendingLayoutUpdates.schemas.add(schemaEntryId!);
-        } else if (prevColumnFlags != null && (prevColumnFlags & CatalogRenderingFlag.OVERFLOW) != 0) {
-            this.pendingLayoutUpdates.tables.add(tableEntryId!);
+        // Truncate nulls
+        let notNullEntries = 0;
+        for (; notNullEntries < entryIds.length && entryIds[notNullEntries] != null; ++notNullEntries);
+
+        if (notNullEntries > 0) {
+            // Update epoch and pin entries
+            let wasOverflowing = [false, false, false, false];
+            const levels = this.levels;
+            for (let i = 0; i < notNullEntries - 1; ++i) {
+                const entryId = entryIds[i]!;
+                wasOverflowing[i] = (levels[i].entryFlags[entryId] & CatalogRenderingFlag.OVERFLOW) != 0;
+                levels[i].pinnedEntries.add(entryId);
+                levels[i].pinnedInEpoch[entryId] = epoch;
+                levels[i].entryFlags[entryId] |= flagsPath;
+            }
+
+            // Pin last entry
+            const lastLevel = notNullEntries - 1;
+            const lastEntryId = entryIds[lastLevel]!;
+            wasOverflowing[lastLevel] = (levels[lastLevel].entryFlags[lastEntryId] & CatalogRenderingFlag.OVERFLOW) != 0;
+            levels[lastLevel].pinnedEntries.add(lastEntryId);
+            levels[lastLevel].pinnedInEpoch[lastEntryId] = epoch;
+            levels[lastLevel].entryFlags[lastEntryId] |= flagsTarget;
+
+            // Determine the parent of the first overflowing node
+            if (wasOverflowing[0]) {
+                this.pendingLayoutUpdates.root = true;
+            } else if (wasOverflowing[1]) {
+                this.pendingLayoutUpdates.databases.add(entryIds[0]!);
+            } else if (wasOverflowing[2]) {
+                this.pendingLayoutUpdates.schemas.add(entryIds[1]!);
+            } else if (wasOverflowing[3]) {
+                this.pendingLayoutUpdates.tables.add(entryIds[2]!);
+            }
         }
     }
 
@@ -483,10 +498,15 @@ export class CatalogViewModel {
             const tableRef = script.tableReferences(i, tmpTableRef)!;
             if (tableRef.innerType() == sqlynx.proto.TableReferenceSubType.ResolvedRelationExpression) {
                 const resolved = tableRef.inner(tmpResolvedRelationExpr) as sqlynx.proto.ResolvedRelationExpression;
-                const dbId = resolved.catalogDatabaseId();
-                const schemaId = resolved.catalogSchemaId();
-                const tableId = resolved.catalogTableId();
-                this.pin(catalog, epoch, CatalogRenderingFlag.PINNED_BY_SCRIPT_TABLE_REFS, dbId, schemaId, tableId, null);
+                const objectId: QualifiedCatalogObjectID = {
+                    type: QUALIFIED_TABLE_ID,
+                    value: {
+                        database: resolved.catalogDatabaseId(),
+                        schema: resolved.catalogSchemaId(),
+                        table: resolved.catalogTableId(),
+                    }
+                };
+                this.pinPath(catalog, epoch, CatalogRenderingFlag.SCRIPT_TABLE_REF, CatalogRenderingFlag.SCRIPT_TABLE_REF_PATH, objectId);
             }
         }
 
@@ -494,17 +514,22 @@ export class CatalogViewModel {
         for (let i = 0; i < script.expressionsLength(); ++i) {
             const expr = script.expressions(i, tmpExpression)!;
             if (expr.innerType() == sqlynx.proto.ExpressionSubType.ResolvedColumnRefExpression) {
-                const columnRef = expr.inner(tmpResolvedColumnRef) as sqlynx.proto.ResolvedColumnRefExpression;
-                const dbId = columnRef.catalogDatabaseId();
-                const schemaId = columnRef.catalogSchemaId();
-                const tableId = columnRef.catalogTableId();
-                const columnId = columnRef.columnId();
-                this.pin(catalog, epoch, CatalogRenderingFlag.PINNED_BY_SCRIPT_COLUMN_REFS, dbId, schemaId, tableId, columnId);
+                const resolved = expr.inner(tmpResolvedColumnRef) as sqlynx.proto.ResolvedColumnRefExpression;
+                const objectId: QualifiedCatalogObjectID = {
+                    type: QUALIFIED_TABLE_COLUMN_ID,
+                    value: {
+                        database: resolved.catalogDatabaseId(),
+                        schema: resolved.catalogSchemaId(),
+                        table: resolved.catalogTableId(),
+                        column: resolved.columnId(),
+                    }
+                };
+                this.pinPath(catalog, epoch, CatalogRenderingFlag.SCRIPT_COLUMN_REF, CatalogRenderingFlag.SCRIPT_COLUMN_REF_PATH, objectId);
             }
         }
 
         // Unpin all entries were pinned with the same flags in a previous epoch
-        this.unpin(CatalogRenderingFlag.PINNED_BY_SCRIPT_TABLE_REFS | CatalogRenderingFlag.PINNED_BY_SCRIPT_COLUMN_REFS, epoch);
+        this.unpin(CatalogRenderingFlag.SCRIPT_TABLE_REF | CatalogRenderingFlag.SCRIPT_COLUMN_REF, epoch);
 
         // Now run all necessary layout updates
         this.layoutPendingEntries();
@@ -516,6 +541,6 @@ export class CatalogViewModel {
         const epoch = this.nextPinEpoch++;
 
         // Unpin all cursor refs that were pinned in a previous epoch
-        this.unpin(CatalogRenderingFlag.PINNED_BY_USER_FOCUS, epoch);
+        this.unpin(CatalogRenderingFlag.FOCUS_COMPLETION_CANDIDATE | CatalogRenderingFlag.FOCUS_COMPLETION_CANDIDATE_PATH, epoch);
     }
 }
