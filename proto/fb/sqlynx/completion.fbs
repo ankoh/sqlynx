@@ -20,7 +20,7 @@ table CompletionCandidateObject {
     /// The table id (unique in catalog)
     catalog_table_id: uint64;
     /// The column idx
-    table_column_id: uint64;
+    table_column_id: uint32;
     /// The candidate tags
     candidate_tags: uint8;
     /// The score
