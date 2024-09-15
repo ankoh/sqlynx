@@ -1,5 +1,5 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
-import { UserFocus } from '../../session/focus.js';
+import { FocusType, UserFocus } from '../../session/focus.js';
 import { QUALIFIED_DATABASE_ID, QUALIFIED_SCHEMA_ID, QUALIFIED_TABLE_COLUMN_ID, QUALIFIED_TABLE_ID, QualifiedCatalogObjectID } from '../../session/catalog_object_id.js';
 
 /// The rendering settings for a catalog level
@@ -529,18 +529,42 @@ export class CatalogViewModel {
         }
 
         // Unpin all entries were pinned with the same flags in a previous epoch
-        this.unpin(CatalogRenderingFlag.SCRIPT_TABLE_REF | CatalogRenderingFlag.SCRIPT_COLUMN_REF, epoch);
+        this.unpin(PINNED_BY_SCRIPT, epoch);
 
         // Now run all necessary layout updates
         this.layoutPendingEntries();
     }
 
 
-    pinFocusedByUser(_focus: UserFocus) {
-        // Allocate an epoch
+    pinFocusedByUser(focus: UserFocus) {
+        const catalog = this.snapshot.read().catalogReader;
         const epoch = this.nextPinEpoch++;
 
-        // Unpin all cursor refs that were pinned in a previous epoch
-        this.unpin(CatalogRenderingFlag.FOCUS_COMPLETION_CANDIDATE | CatalogRenderingFlag.FOCUS_COMPLETION_CANDIDATE_PATH, epoch);
+        // Pin focused catalog objects
+        for (const o of focus.catalogObjects) {
+            let flagsTarget = 0;
+            let flagsPath = 0;
+            switch (o.focus) {
+                case FocusType.COMPLETION_CANDIDATE:
+                    flagsTarget = CatalogRenderingFlag.FOCUS_COMPLETION_CANDIDATE;
+                    flagsPath = CatalogRenderingFlag.FOCUS_COMPLETION_CANDIDATE_PATH;
+                    break;
+                case FocusType.CATALOG_ENTRY:
+                    flagsTarget = CatalogRenderingFlag.FOCUS_CATALOG_ENTRY;
+                    flagsPath = CatalogRenderingFlag.FOCUS_CATALOG_ENTRY_PATH;
+                    break;
+                case FocusType.TABLE_REF:
+                    flagsTarget = CatalogRenderingFlag.FOCUS_TABLE_REF;
+                    flagsPath = CatalogRenderingFlag.FOCUS_TABLE_REF_PATH;
+                    break;
+                case FocusType.COLUMN_REF:
+                    flagsTarget = CatalogRenderingFlag.FOCUS_COLUMN_REF;
+                    flagsPath = CatalogRenderingFlag.FOCUS_COLUMN_REF_PATH;
+                    break;
+            }
+            this.pinPath(catalog, epoch, flagsTarget, flagsPath, o);
+        }
+        // Unpin previous catalog objects
+        this.unpin(PINNED_BY_FOCUS, epoch);
     }
 }
