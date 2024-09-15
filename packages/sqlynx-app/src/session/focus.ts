@@ -32,17 +32,13 @@ export type FocusTarget =
     ;
 
 export enum FocusType {
-    COMPLETION_CANDIDATE_SELECTED,
-    COMPLETION_CANDIDATE_SELECTED_PATH,
-    COMPLETION_CANDIDATE_ALTERNATIVE,
-    COMPLETION_CANDIDATE_ALTERNATIVE_PATH,
-    TARGET_IN_CATALOG,
-    TARGET_PATH_IN_CATALOG,
-    TARGET_TABLE_REF,
-    TARGET_COLUMN_REF,
+    COMPLETION_CANDIDATE,
+    CATALOG_ENTRY,
+    COLUMN_REF,
     COLUMN_REF_OF_TARGET_TABLE,
     COLUMN_REF_OF_TARGET_COLUMN,
     COLUMN_REF_OF_PEER_COLUMN,
+    TABLE_REF,
     TABLE_REF_OF_TARGET_TABLE,
     TABLE_REF_OF_TARGET_COLUMN,
 }
@@ -51,15 +47,8 @@ export interface UserFocus {
     /// The input focus target
     focusTarget: FocusTarget;
 
-    /// The databases
-    catalogDatabases: Map<number, FocusType>;
-    /// The schemas
-    catalogSchemas: Map<number, FocusType>;
-    /// The tables
-    catalogTables: Map<sqlynx.ExternalObjectID.Value, FocusType>;
-    /// The table columns
-    catalogColumns: Map<sqlynx.ExternalObjectChildID.Value, FocusType>;
-
+    /// The focused catalog objects
+    catalogObjects: (QualifiedCatalogObjectID & { focus: FocusType })[];
     /// The column references
     scriptColumnRefs: Map<sqlynx.ExternalObjectID.Value, FocusType>;
     /// The table references
@@ -98,10 +87,7 @@ export function deriveFocusFromScriptCursor(
             };
             const focus: UserFocus = {
                 focusTarget,
-                catalogDatabases: new Map(),
-                catalogSchemas: new Map(),
-                catalogTables: new Map(),
-                catalogColumns: new Map(),
+                catalogObjects: [],
                 scriptTableRefs: new Map(),
                 scriptColumnRefs: new Map(),
             };
@@ -111,9 +97,15 @@ export function deriveFocusFromScriptCursor(
                 const resolved = sourceRef.inner(tmpResolvedRelationExpr) as sqlynx.proto.ResolvedRelationExpression;
 
                 // Focus in catalog
-                focus.catalogDatabases.set(resolved.catalogDatabaseId(), FocusType.TARGET_PATH_IN_CATALOG);
-                focus.catalogSchemas.set(resolved.catalogSchemaId(), FocusType.TARGET_PATH_IN_CATALOG);
-                focus.catalogTables.set(resolved.catalogTableId(), FocusType.TARGET_IN_CATALOG);
+                focus.catalogObjects = [{
+                    type: QUALIFIED_TABLE_ID,
+                    value: {
+                        database: resolved.catalogDatabaseId(),
+                        schema: resolved.catalogSchemaId(),
+                        table: resolved.catalogTableId(),
+                    },
+                    focus: FocusType.TABLE_REF
+                }];
 
                 // Could we resolve the ref?
                 if (!sqlynx.ExternalObjectID.isNull(resolved.catalogTableId())) {
@@ -167,10 +159,7 @@ export function deriveFocusFromScriptCursor(
             };
             const focus: UserFocus = {
                 focusTarget,
-                catalogDatabases: new Map(),
-                catalogSchemas: new Map(),
-                catalogTables: new Map(),
-                catalogColumns: new Map(),
+                catalogObjects: [],
                 scriptTableRefs: new Map(),
                 scriptColumnRefs: new Map(),
             };
@@ -180,10 +169,16 @@ export function deriveFocusFromScriptCursor(
                 const resolved = sourceRef.inner(tmpResolvedColumnRef) as sqlynx.proto.ResolvedColumnRefExpression;
 
                 // Focus in catalog
-                focus.catalogDatabases.set(resolved.catalogDatabaseId(), FocusType.TARGET_PATH_IN_CATALOG);
-                focus.catalogSchemas.set(resolved.catalogSchemaId(), FocusType.TARGET_PATH_IN_CATALOG);
-                focus.catalogTables.set(resolved.catalogTableId(), FocusType.TARGET_IN_CATALOG);
-                focus.catalogColumns.set(resolved.catalogTableId(), FocusType.TARGET_IN_CATALOG);
+                focus.catalogObjects = [{
+                    type: QUALIFIED_TABLE_COLUMN_ID,
+                    value: {
+                        database: resolved.catalogDatabaseId(),
+                        schema: resolved.catalogSchemaId(),
+                        table: resolved.catalogTableId(),
+                        column: resolved.columnId(),
+                    },
+                    focus: FocusType.COLUMN_REF
+                }];
 
                 // Could we resolve the ref?
                 if (!sqlynx.ExternalObjectID.isNull(resolved.catalogTableId())) {
@@ -260,44 +255,23 @@ export function deriveFocusFromCatalogSelection(
 
     switch (target.type) {
         case QUALIFIED_DATABASE_ID:
-            return {
-                focusTarget: target,
-                catalogDatabases: new Map([
-                    [target.value.database, FocusType.TARGET_IN_CATALOG],
-                ]),
-                catalogSchemas: new Map(),
-                catalogTables: new Map(),
-                catalogColumns: new Map(),
-                scriptTableRefs: new Map(),
-                scriptColumnRefs: new Map(),
-            };
         case QUALIFIED_SCHEMA_ID:
             return {
                 focusTarget: target,
-                catalogDatabases: new Map([
-                    [target.value.database, FocusType.TARGET_PATH_IN_CATALOG],
-                ]),
-                catalogSchemas: new Map([
-                    [target.value.schema, FocusType.TARGET_IN_CATALOG],
-                ]),
-                catalogTables: new Map(),
-                catalogColumns: new Map(),
+                catalogObjects: [{
+                    ...target,
+                    focus: FocusType.CATALOG_ENTRY
+                }],
                 scriptTableRefs: new Map(),
                 scriptColumnRefs: new Map(),
             };
         case QUALIFIED_TABLE_ID: {
             const focus: UserFocus = {
                 focusTarget: target,
-                catalogDatabases: new Map([
-                    [target.value.database, FocusType.TARGET_PATH_IN_CATALOG],
-                ]),
-                catalogSchemas: new Map([
-                    [target.value.schema, FocusType.TARGET_PATH_IN_CATALOG],
-                ]),
-                catalogTables: new Map([
-                    [target.value.table, FocusType.TARGET_IN_CATALOG],
-                ]),
-                catalogColumns: new Map(),
+                catalogObjects: [{
+                    ...target,
+                    focus: FocusType.CATALOG_ENTRY
+                }],
                 scriptTableRefs: new Map(),
                 scriptColumnRefs: new Map(),
             };
@@ -343,18 +317,10 @@ export function deriveFocusFromCatalogSelection(
         case QUALIFIED_TABLE_COLUMN_ID: {
             const focus: UserFocus = {
                 focusTarget: target,
-                catalogDatabases: new Map([
-                    [target.value.database, FocusType.TARGET_PATH_IN_CATALOG],
-                ]),
-                catalogSchemas: new Map([
-                    [target.value.schema, FocusType.TARGET_PATH_IN_CATALOG],
-                ]),
-                catalogTables: new Map([
-                    [target.value.table, FocusType.TARGET_PATH_IN_CATALOG],
-                ]),
-                catalogColumns: new Map([
-                    [sqlynx.ExternalObjectChildID.create(target.value.table, target.value.column), FocusType.TARGET_IN_CATALOG],
-                ]),
+                catalogObjects: [{
+                    ...target,
+                    focus: FocusType.CATALOG_ENTRY
+                }],
                 scriptTableRefs: new Map(),
                 scriptColumnRefs: new Map(),
             };
@@ -426,10 +392,7 @@ export function deriveFocusFromCompletionCandidates(
     };
     const focus: UserFocus = {
         focusTarget,
-        catalogDatabases: new Map(),
-        catalogSchemas: new Map(),
-        catalogTables: new Map(),
-        catalogColumns: new Map(),
+        catalogObjects: [],
         scriptTableRefs: new Map(),
         scriptColumnRefs: new Map(),
     };
@@ -439,22 +402,46 @@ export function deriveFocusFromCompletionCandidates(
     for (const candidateObject of candidate.catalogObjects) {
         switch (candidateObject.objectType) {
             case sqlynx.proto.CompletionCandidateObjectType.DATABASE:
-                focus.catalogDatabases.set(candidateObject.catalogDatabaseId, FocusType.COMPLETION_CANDIDATE_SELECTED);
+                focus.catalogObjects.push({
+                    type: QUALIFIED_DATABASE_ID,
+                    value: {
+                        database: candidateObject.catalogDatabaseId
+                    },
+                    focus: FocusType.COMPLETION_CANDIDATE
+                });
                 break;
             case sqlynx.proto.CompletionCandidateObjectType.SCHEMA:
-                focus.catalogDatabases.set(candidateObject.catalogDatabaseId, FocusType.COMPLETION_CANDIDATE_SELECTED_PATH);
-                focus.catalogSchemas.set(candidateObject.catalogSchemaId, FocusType.COMPLETION_CANDIDATE_SELECTED);
+                focus.catalogObjects.push({
+                    type: QUALIFIED_SCHEMA_ID,
+                    value: {
+                        database: candidateObject.catalogDatabaseId,
+                        schema: candidateObject.catalogSchemaId
+                    },
+                    focus: FocusType.COMPLETION_CANDIDATE
+                });
                 break;
             case sqlynx.proto.CompletionCandidateObjectType.TABLE:
-                focus.catalogDatabases.set(candidateObject.catalogDatabaseId, FocusType.COMPLETION_CANDIDATE_SELECTED_PATH);
-                focus.catalogSchemas.set(candidateObject.catalogSchemaId, FocusType.COMPLETION_CANDIDATE_SELECTED_PATH);
-                focus.catalogTables.set(candidateObject.catalogTableId, FocusType.COMPLETION_CANDIDATE_SELECTED);
+                focus.catalogObjects.push({
+                    type: QUALIFIED_TABLE_ID,
+                    value: {
+                        database: candidateObject.catalogDatabaseId,
+                        schema: candidateObject.catalogSchemaId,
+                        table: candidateObject.catalogTableId
+                    },
+                    focus: FocusType.COMPLETION_CANDIDATE
+                });
                 break;
             case sqlynx.proto.CompletionCandidateObjectType.COLUMN:
-                focus.catalogDatabases.set(candidateObject.catalogDatabaseId, FocusType.COMPLETION_CANDIDATE_SELECTED_PATH);
-                focus.catalogSchemas.set(candidateObject.catalogSchemaId, FocusType.COMPLETION_CANDIDATE_SELECTED_PATH);
-                focus.catalogTables.set(candidateObject.catalogTableId, FocusType.COMPLETION_CANDIDATE_SELECTED_PATH);
-                focus.catalogColumns.set(sqlynx.ExternalObjectChildID.create(candidateObject.catalogTableId, candidateObject.tableColumnId), FocusType.COMPLETION_CANDIDATE_SELECTED);
+                focus.catalogObjects.push({
+                    type: QUALIFIED_TABLE_COLUMN_ID,
+                    value: {
+                        database: candidateObject.catalogDatabaseId,
+                        schema: candidateObject.catalogSchemaId,
+                        table: candidateObject.catalogTableId,
+                        column: candidateObject.tableColumnId
+                    },
+                    focus: FocusType.COMPLETION_CANDIDATE
+                });
                 break;
         }
     }
