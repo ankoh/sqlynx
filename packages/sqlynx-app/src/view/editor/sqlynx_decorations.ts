@@ -70,57 +70,96 @@ function buildDecorationsFromTokens(
     }
     return builder.finish();
 }
-interface ScannerDecorationState {
-    decorations: DecorationSet;
-    scriptBuffers: SQLynxScriptBuffers;
+
+function buildDecorationsFromErrors(
+    _state: EditorState,
+    scriptBuffers: SQLynxScriptBuffers,
+): DecorationSet {
+    const builder = new RangeSetBuilder<Decoration>();
+    const decorations: DecorationInfo[] = [];
+
+    const scanned = scriptBuffers.scanned?.read() ?? null;
+    const parsed = scriptBuffers.parsed?.read() ?? null;
+    const analyzed = scriptBuffers.analyzed?.read() ?? null;
+
+    const tmpLoc = new sqlynx.proto.Location();
+    const tmpError = new sqlynx.proto.Error();
+    const tmpAnalyzerError = new sqlynx.proto.AnalyzerError();
+
+    // Are there any scanner errors?
+    if (scanned != null) {
+        for (let i = 0; i < scanned.errorsLength(); ++i) {
+            const error = scanned.errors(i, tmpError)!;
+            const loc = error.location(tmpLoc)!;
+            decorations.push({
+                from: loc.offset(),
+                to: loc.offset() + loc.length(),
+                decoration: ErrorDecoration,
+            });
+        }
+    }
+    // Are there any parser errors?
+    if (parsed !== null) {
+        for (let i = 0; i < parsed.errorsLength(); ++i) {
+            const error = parsed.errors(i, tmpError)!;
+            const loc = error.location(tmpLoc)!;
+            decorations.push({
+                from: loc.offset(),
+                to: loc.offset() + loc.length(),
+                decoration: ErrorDecoration,
+            });
+        }
+    }
+    if (analyzed !== null) {
+        // Are there any analyzer errors?
+        for (let i = 0; i < analyzed.errorsLength(); ++i) {
+            const error = analyzed.errors(i, tmpAnalyzerError)!;
+            const loc = error.location(tmpLoc)!;
+            decorations.push({
+                from: loc.offset(),
+                to: loc.offset() + loc.length(),
+                decoration: ErrorDecoration,
+            });
+        }
+    }
+
+    decorations.sort((l: DecorationInfo, r: DecorationInfo) => {
+        return l.from - r.from;
+    });
+    for (const deco of decorations) {
+        builder.add(deco.from, deco.to, deco.decoration);
+    }
+    return builder.finish();
 }
 
-/// Decorations derived from SQLynx scanner tokens
-const ScannerDecorationField: StateField<ScannerDecorationState> = StateField.define<ScannerDecorationState>({
-    // Create the initial state
-    create: () => {
-        const config: ScannerDecorationState = {
-            decorations: new RangeSetBuilder<Decoration>().finish(),
-            scriptBuffers: {
-                scanned: null,
-                parsed: null,
-                analyzed: null,
-                destroy: () => { },
-            },
-        };
-        return config;
-    },
-    // Mirror the SQLynx state
-    update: (state: ScannerDecorationState, transaction: Transaction) => {
-        // Scanned program untouched?
-        const processor = transaction.state.field(SQLynxProcessor);
-        if (processor.scriptBuffers.scanned === state.scriptBuffers.scanned) {
-            return state;
-        }
-        // Rebuild decorations
-        const s = { ...state };
-        s.scriptBuffers.scanned = processor.scriptBuffers.scanned;
-        if (s.scriptBuffers.scanned) {
-            s.decorations = buildDecorationsFromTokens(transaction.state, s.scriptBuffers.scanned);
-        }
-        return s;
-    },
-});
+function buildDecorationsFromAnalysis(
+    _state: EditorState,
+    scriptBuffers: SQLynxScriptBuffers,
+): DecorationSet {
+    const builder = new RangeSetBuilder<Decoration>();
 
-interface DecorationInfo {
-    from: number;
-    to: number;
-    decoration: Decoration;
+    const analyzed = scriptBuffers.analyzed?.read() ?? null;
+
+    if (analyzed !== null) {
+        // Decorate unresolved tables
+        // for (let i = 0; i < analyzed.tableReferencesLength(); ++i) {
+        //     const tableRef = analyzed.tableReferences(i)!;
+        //     if (tableRef.innerType() == sqlynx.proto.TableReferenceSubType.UnresolvedRelationExpression) {
+        //         const tableRefNode = tableRef.astNodeId();
+        //         XXX
+        //     }
+        // }
+    }
+
+    return builder.finish();
 }
 
-function buildDecorationsFromCursor(
+function buildDecorationsFromFocus(
     scriptKey: SQLynxScriptKey | null,
     scriptBuffers: SQLynxScriptBuffers,
-    _scriptCursor: sqlynx.proto.ScriptCursorT | null,
     derivedFocus: UserFocus | null,
 ): DecorationSet {
     const builder = new RangeSetBuilder<Decoration>();
-    const scanned = scriptBuffers.scanned?.read() ?? null;
     const parsed = scriptBuffers.parsed?.read() ?? null;
     const analyzed = scriptBuffers.analyzed?.read() ?? null;
     const decorations: DecorationInfo[] = [];
@@ -132,7 +171,6 @@ function buildDecorationsFromCursor(
     const tmpTblRef = new sqlynx.proto.TableReference();
     const tmpNode = new sqlynx.proto.Node();
     const tmpLoc = new sqlynx.proto.Location();
-    const tmpError = new sqlynx.proto.Error();
 
     // Build decorations for column refs of targeting the primary table
     for (const [refId, focusType] of derivedFocus?.scriptColumnRefs ?? []) {
@@ -177,32 +215,6 @@ function buildDecorationsFromCursor(
             decoration: FocusedTableReferenceDecoration,
         });
     }
-
-    // Are there any scanner errors?
-    if (scanned != null) {
-        for (let i = 0; i < scanned.errorsLength(); ++i) {
-            const error = scanned.errors(i, tmpError)!;
-            const loc = error.location(tmpLoc)!;
-            decorations.push({
-                from: loc.offset(),
-                to: loc.offset() + loc.length(),
-                decoration: ErrorDecoration,
-            });
-        }
-    }
-    // Are there any parser errors?
-    if (parsed !== null) {
-        for (let i = 0; i < parsed.errorsLength(); ++i) {
-            const error = parsed.errors(i, tmpError)!;
-            const loc = error.location(tmpLoc)!;
-            decorations.push({
-                from: loc.offset(),
-                to: loc.offset() + loc.length(),
-                decoration: ErrorDecoration,
-            });
-        }
-    }
-
     decorations.sort((l: DecorationInfo, r: DecorationInfo) => {
         return l.from - r.from;
     });
@@ -212,6 +224,79 @@ function buildDecorationsFromCursor(
     return builder.finish();
 }
 
+
+interface DecorationInfo {
+    from: number;
+    to: number;
+    decoration: Decoration;
+}
+
+
+interface ScriptDecorationState {
+    decorations: DecorationSet;
+    scriptBuffers: SQLynxScriptBuffers;
+}
+
+/// Decorations derived from SQLynx scanner tokens
+const ScannerDecorationField: StateField<ScriptDecorationState> = StateField.define<ScriptDecorationState>({
+    // Create the initial state
+    create: () => {
+        const config: ScriptDecorationState = {
+            decorations: new RangeSetBuilder<Decoration>().finish(),
+            scriptBuffers: {
+                scanned: null,
+                parsed: null,
+                analyzed: null,
+                destroy: () => { },
+            },
+        };
+        return config;
+    },
+    // Mirror the SQLynx state
+    update: (state: ScriptDecorationState, transaction: Transaction) => {
+        // Scanned program untouched?
+        const processor = transaction.state.field(SQLynxProcessor);
+        if (processor.scriptBuffers.scanned === state.scriptBuffers.scanned) {
+            return state;
+        }
+        // Rebuild decorations
+        const s = { ...state };
+        s.scriptBuffers.scanned = processor.scriptBuffers.scanned;
+        if (s.scriptBuffers.scanned) {
+            s.decorations = buildDecorationsFromTokens(transaction.state, s.scriptBuffers.scanned);
+        }
+        return s;
+    },
+});
+
+/// Decorations for scanner, parser or analyzer errors in the SQLynx script
+const ErrorDecorationField: StateField<ScriptDecorationState> = StateField.define<ScriptDecorationState>({
+    create: () => {
+        const config: ScriptDecorationState = {
+            decorations: new RangeSetBuilder<Decoration>().finish(),
+            scriptBuffers: {
+                scanned: null,
+                parsed: null,
+                analyzed: null,
+                destroy: () => { },
+            },
+        };
+        return config;
+    },
+    update: (state: ScriptDecorationState, transaction: Transaction) => {
+        // Scanned program untouched?
+        const processor = transaction.state.field(SQLynxProcessor);
+        if (processor.scriptBuffers === state.scriptBuffers) {
+            return state;
+        }
+        // Rebuild decorations
+        const s = { ...state };
+        s.scriptBuffers = processor.scriptBuffers;
+        s.decorations = buildDecorationsFromErrors(transaction.state, s.scriptBuffers);
+        return s;
+    },
+});
+
 interface FocusDecorationState {
     scriptKey: SQLynxScriptKey | null;
     decorations: DecorationSet;
@@ -220,7 +305,7 @@ interface FocusDecorationState {
     derivedFocus: UserFocus | null;
 }
 
-/// Decorations derived from SQLynx cursor
+/// Decorations derived from the user focus
 const FocusDecorationField: StateField<FocusDecorationState> = StateField.define<FocusDecorationState>({
     // Create the initial state
     create: () => {
@@ -260,10 +345,9 @@ const FocusDecorationField: StateField<FocusDecorationState> = StateField.define
         s.scriptBuffers.analyzed = processor.scriptBuffers.analyzed;
         s.scriptCursor = processor.scriptCursor;
         s.derivedFocus = processor.derivedFocus;
-        s.decorations = buildDecorationsFromCursor(
+        s.decorations = buildDecorationsFromFocus(
             s.scriptKey,
             s.scriptBuffers,
-            s.scriptCursor,
             s.derivedFocus,
         );
         return s;
@@ -271,7 +355,8 @@ const FocusDecorationField: StateField<FocusDecorationState> = StateField.define
 });
 
 const ScannerDecorations = EditorView.decorations.from(ScannerDecorationField, state => state.decorations);
+const ErrorDecorations = EditorView.decorations.from(ErrorDecorationField, state => state.decorations);
 const FocusDecorations = EditorView.decorations.from(FocusDecorationField, state => state.decorations);
 
 /// Bundle the decoration extensions
-export const SQLynxDecorations = [ScannerDecorationField, ScannerDecorations, FocusDecorationField, FocusDecorations];
+export const SQLynxDecorations = [ScannerDecorationField, ScannerDecorations, ErrorDecorationField, ErrorDecorations, FocusDecorationField, FocusDecorations];
