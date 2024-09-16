@@ -197,6 +197,8 @@ class AnalyzedScript : public CatalogEntry {
         ExternalObjectID table_reference_id;
         /// The AST node id in the target script
         uint32_t ast_node_id;
+        /// The location in the target script
+        std::optional<sx::Location> location;
         /// The AST statement id in the target script
         std::optional<uint32_t> ast_statement_id;
         /// The AST scope root in the target script
@@ -240,6 +242,8 @@ class AnalyzedScript : public CatalogEntry {
         ExternalObjectID expression_id;
         /// The AST node id in the target script
         uint32_t ast_node_id;
+        /// The location in the target script
+        std::optional<sx::Location> location;
         /// The AST statement id in the target script
         std::optional<uint32_t> ast_statement_id;
         /// The AST scope root in the target script
