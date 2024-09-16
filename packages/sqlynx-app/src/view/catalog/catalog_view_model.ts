@@ -64,15 +64,23 @@ export const PINNED_BY_SCRIPT =
     CatalogRenderingFlag.SCRIPT_COLUMN_REF_PATH
     ;
 
-export const PINNED_BY_FOCUS =
+export const PINNED_BY_FOCUS_TARGET =
     CatalogRenderingFlag.FOCUS_TABLE_REF |
-    CatalogRenderingFlag.FOCUS_TABLE_REF_PATH |
     CatalogRenderingFlag.FOCUS_COLUMN_REF |
-    CatalogRenderingFlag.FOCUS_COLUMN_REF_PATH |
     CatalogRenderingFlag.FOCUS_COMPLETION_CANDIDATE |
+    CatalogRenderingFlag.FOCUS_CATALOG_ENTRY
+    ;
+
+export const PINNED_BY_FOCUS_PATH =
+    CatalogRenderingFlag.FOCUS_TABLE_REF_PATH |
+    CatalogRenderingFlag.FOCUS_COLUMN_REF_PATH |
     CatalogRenderingFlag.FOCUS_COMPLETION_CANDIDATE_PATH |
-    CatalogRenderingFlag.FOCUS_CATALOG_ENTRY |
     CatalogRenderingFlag.FOCUS_CATALOG_ENTRY_PATH
+    ;
+
+export const PINNED_BY_FOCUS =
+    PINNED_BY_FOCUS_TARGET |
+    PINNED_BY_FOCUS_PATH
     ;
 
 /// Pinned by anything

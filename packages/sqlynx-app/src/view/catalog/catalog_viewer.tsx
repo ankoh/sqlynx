@@ -160,10 +160,10 @@ export function CatalogViewer(_props: Props) {
     }, [viewModel, scrollTop, containerSize]);
 
     // Memo must depend on scroll window and window size
-    const [nodes, edges] = React.useMemo(() => {
+    const [nodes, edges, edgesFocused] = React.useMemo(() => {
         // No state or measured container size?
         if (!viewModel || !renderingWindow) {
-            return [null, null];
+            return [null, null, null];
         }
         // Update the virtual window
         viewModel.updateWindow(
@@ -175,8 +175,9 @@ export function CatalogViewer(_props: Props) {
         // Render the catalog
         const outNodes: React.ReactElement[] = [];
         const outEdges: React.ReactElement[] = [];
-        renderCatalog(viewModel, outNodes, outEdges);
-        return [outNodes, outEdges];
+        const outEdgesFocused: React.ReactElement[] = [];
+        renderCatalog(viewModel, outNodes, outEdges, outEdgesFocused);
+        return [outNodes, outEdges, outEdgesFocused];
 
     }, [viewModelVersion, renderingWindow]);
 
@@ -190,6 +191,14 @@ export function CatalogViewer(_props: Props) {
                             height={viewModel?.totalHeight ?? 0}
                             padding={padding}
                             paths={edges ?? []}
+                            className={styles.edge_layer}
+                        />
+                        <EdgeLayer
+                            width={viewModel?.totalWidth ?? 0}
+                            height={viewModel?.totalHeight ?? 0}
+                            padding={padding}
+                            paths={edgesFocused ?? []}
+                            className={styles.edge_layer_focused}
                         />
                         <NodeLayer
                             width={viewModel?.totalWidth ?? 0}
