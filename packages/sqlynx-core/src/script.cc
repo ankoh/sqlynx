@@ -343,6 +343,9 @@ flatbuffers::Offset<proto::TableReference> AnalyzedScript::TableReference::Pack(
     out.add_ast_node_id(ast_node_id);
     out.add_ast_scope_root(ast_scope_root.value_or(std::numeric_limits<uint32_t>::max()));
     out.add_ast_statement_id(ast_statement_id.value_or(std::numeric_limits<uint32_t>::max()));
+    if (location.has_value()) {
+        out.add_location(&location.value());
+    }
     if (alias_name.has_value()) {
         out.add_alias_name(alias_name_ofs);
     }
@@ -387,6 +390,9 @@ flatbuffers::Offset<proto::Expression> AnalyzedScript::Expression::Pack(flatbuff
     out.add_ast_node_id(ast_node_id);
     out.add_ast_scope_root(ast_scope_root.value_or(std::numeric_limits<uint32_t>::max()));
     out.add_ast_statement_id(ast_statement_id.value_or(std::numeric_limits<uint32_t>::max()));
+    if (location.has_value()) {
+        out.add_location(&location.value());
+    }
     if (inner_type.has_value()) {
         out.add_inner_type(inner_type.value());
         out.add_inner(inner_ofs);

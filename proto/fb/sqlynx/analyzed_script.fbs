@@ -94,6 +94,8 @@ table TableReference {
     ast_statement_id: uint32;
     // The root of the scope where this table reference is live
     ast_scope_root: uint32;
+    // The location
+    location: Location;
     // The alias name
     alias_name: string;
     /// The inner type
@@ -132,6 +134,8 @@ table Expression {
     ast_statement_id: uint32;
     // The root of the scope where this table reference is live
     ast_scope_root: uint32;
+    // The location
+    location: Location;
     /// The inner type
     inner: ExpressionSubType;
 }

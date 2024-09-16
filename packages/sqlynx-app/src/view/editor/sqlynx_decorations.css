@@ -1,17 +1,3 @@
-.sqlynx-queryedge-focus {
-    position: relative;
-}
-.sqlynx-queryedge-focus::before {
-    position: absolute;
-    content: '';
-    width: calc(100% + 8px);
-    height: calc(100% + 4px);
-    top: -2px;
-    left: -4px;
-    background-color: var(--editor_queryedge_bg);
-    z-index: -1;
-}
-
 .sqlynx-tableref-focus {
     position: relative;
 }
@@ -23,6 +9,7 @@
     top: -2px;
     left: -4px;
     background-color: var(--editor_queryedge_bg);
+    border-radius: 4px;
     z-index: -1;
 }
 
@@ -37,10 +24,42 @@
     top: -2px;
     left: -4px;
     background-color: var(--editor_colref_bg);
+    border-radius: 4px;
     z-index: -1;
 }
 .sqlynx-error {
     position: relative;
     text-decoration: underline 1px red;
     text-decoration-style: wavy;
+}
+
+
+.sqlynx-tableref-unresolved {
+    position: relative;
+}
+.sqlynx-tableref-unresolved::before {
+    position: absolute;
+    content: '';
+    width: calc(100% + 8px);
+    height: calc(100% + 4px);
+    top: -2px;
+    left: -4px;
+    background-color: hsl(340, 29%, 80%);
+    border-radius: 4px;
+    z-index: -1;
+}
+
+.sqlynx-colref-unresolved {
+    position: relative;
+}
+.sqlynx-colref-unresolved::before {
+    position: absolute;
+    content: '';
+    width: calc(100% + 8px);
+    height: calc(100% + 4px);
+    top: -2px;
+    left: -4px;
+    background-color: hsl(340, 29%, 80%);
+    border-radius: 4px;
+    z-index: -1;
 }

@@ -439,6 +439,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                     n.expression_id =
                         ExternalObjectID{catalog_entry_id, static_cast<uint32_t>(analyzed.expressions.GetSize() - 1)};
                     n.ast_node_id = node_id;
+                    n.location = parsed.nodes[node_id].location();
                     n.ast_statement_id = std::nullopt;
                     n.ast_scope_root = std::nullopt;
                     n.inner = AnalyzedScript::Expression::UnresolvedColumnRef{
@@ -475,6 +476,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                         n.table_reference_id = ExternalObjectID{
                             catalog_entry_id, static_cast<uint32_t>(analyzed.table_references.GetSize() - 1)};
                         n.ast_node_id = node_id;
+                        n.location = parsed.nodes[node_id].location();
                         n.ast_statement_id = std::nullopt;
                         n.ast_scope_root = std::nullopt;
                         n.inner = AnalyzedScript::TableReference::UnresolvedRelationExpression{

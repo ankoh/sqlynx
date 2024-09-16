@@ -88,9 +88,12 @@ export function CatalogViewer(_props: Props) {
 
             // Scroll to first focused entry
             let scrollToFocus = viewModel.getOffsetOfFirstFocused();
-            if (scrollToFocus != null && containerElement.current != null) {
-                scrollToFocus = Math.max(scrollToFocus, padding) - padding;
-                (containerElement.current as HTMLDivElement).scrollTop = scrollToFocus;
+            if (scrollToFocus != null && containerElement.current != null && containerSize != null) {
+                const divElem = containerElement.current as HTMLDivElement;
+                const clientVerticalCenter = containerSize.height / 2;
+                scrollToFocus = Math.max(scrollToFocus, clientVerticalCenter) - clientVerticalCenter; // XXX Padding
+
+                divElem.scrollTop = scrollToFocus;
             }
 
             setViewModelVersion(v => v + 1);

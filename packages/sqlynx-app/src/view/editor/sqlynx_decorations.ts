@@ -35,6 +35,12 @@ const FocusedColumnReferenceDecoration = Decoration.mark({
 const ErrorDecoration = Decoration.mark({
     class: 'sqlynx-error',
 });
+const UnresolvedTableReferenceDecoration = Decoration.mark({
+    class: 'sqlynx-tableref-unresolved',
+});
+const UnresolvedColumnReferenceDecoration = Decoration.mark({
+    class: 'sqlynx-colref-unresolved',
+});
 
 function buildDecorationsFromTokens(
     state: EditorState,
@@ -137,20 +143,41 @@ function buildDecorationsFromAnalysis(
     scriptBuffers: SQLynxScriptBuffers,
 ): DecorationSet {
     const builder = new RangeSetBuilder<Decoration>();
-
     const analyzed = scriptBuffers.analyzed?.read() ?? null;
+    const decorations: DecorationInfo[] = [];
 
     if (analyzed !== null) {
         // Decorate unresolved tables
-        // for (let i = 0; i < analyzed.tableReferencesLength(); ++i) {
-        //     const tableRef = analyzed.tableReferences(i)!;
-        //     if (tableRef.innerType() == sqlynx.proto.TableReferenceSubType.UnresolvedRelationExpression) {
-        //         const tableRefNode = tableRef.astNodeId();
-        //         XXX
-        //     }
-        // }
+        for (let i = 0; i < analyzed.tableReferencesLength(); ++i) {
+            const tableRef = analyzed.tableReferences(i)!;
+            if (tableRef.innerType() == sqlynx.proto.TableReferenceSubType.UnresolvedRelationExpression) {
+                const loc = tableRef.location()!;
+                decorations.push({
+                    from: loc.offset(),
+                    to: loc.offset() + loc.length(),
+                    decoration: UnresolvedTableReferenceDecoration,
+                });
+            }
+        }
+        // Decorate unresolved columns
+        for (let i = 0; i < analyzed.expressionsLength(); ++i) {
+            const expr = analyzed.expressions(i)!;
+            if (expr.innerType() == sqlynx.proto.ExpressionSubType.UnresolvedColumnRefExpression) {
+                const loc = expr.location()!;
+                decorations.push({
+                    from: loc.offset(),
+                    to: loc.offset() + loc.length(),
+                    decoration: UnresolvedColumnReferenceDecoration,
+                });
+            }
+        }
     }
-
+    decorations.sort((l: DecorationInfo, r: DecorationInfo) => {
+        return l.from - r.from;
+    });
+    for (const deco of decorations) {
+        builder.add(deco.from, deco.to, deco.decoration);
+    }
     return builder.finish();
 }
 
@@ -297,6 +324,33 @@ const ErrorDecorationField: StateField<ScriptDecorationState> = StateField.defin
     },
 });
 
+const AnalyzerDecorationsField: StateField<ScriptDecorationState> = StateField.define<ScriptDecorationState>({
+    create: () => {
+        const config: ScriptDecorationState = {
+            decorations: new RangeSetBuilder<Decoration>().finish(),
+            scriptBuffers: {
+                scanned: null,
+                parsed: null,
+                analyzed: null,
+                destroy: () => { },
+            },
+        };
+        return config;
+    },
+    update: (state: ScriptDecorationState, transaction: Transaction) => {
+        // Scanned program untouched?
+        const processor = transaction.state.field(SQLynxProcessor);
+        if (processor.scriptBuffers === state.scriptBuffers) {
+            return state;
+        }
+        // Rebuild decorations
+        const s = { ...state };
+        s.scriptBuffers = processor.scriptBuffers;
+        s.decorations = buildDecorationsFromAnalysis(transaction.state, s.scriptBuffers);
+        return s;
+    },
+});
+
 interface FocusDecorationState {
     scriptKey: SQLynxScriptKey | null;
     decorations: DecorationSet;
@@ -356,7 +410,8 @@ const FocusDecorationField: StateField<FocusDecorationState> = StateField.define
 
 const ScannerDecorations = EditorView.decorations.from(ScannerDecorationField, state => state.decorations);
 const ErrorDecorations = EditorView.decorations.from(ErrorDecorationField, state => state.decorations);
+const AnalyzerDecorations = EditorView.decorations.from(AnalyzerDecorationsField, state => state.decorations);
 const FocusDecorations = EditorView.decorations.from(FocusDecorationField, state => state.decorations);
 
 /// Bundle the decoration extensions
-export const SQLynxDecorations = [ScannerDecorationField, ScannerDecorations, ErrorDecorationField, ErrorDecorations, FocusDecorationField, FocusDecorations];
+export const SQLynxDecorations = [ScannerDecorationField, ScannerDecorations, ErrorDecorationField, ErrorDecorations, AnalyzerDecorationsField, AnalyzerDecorations, FocusDecorationField, FocusDecorations];
