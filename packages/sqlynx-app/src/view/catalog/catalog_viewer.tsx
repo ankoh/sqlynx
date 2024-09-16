@@ -53,6 +53,11 @@ interface Props {
 export function CatalogViewer(_props: Props) {
     const [sessionState, _dispatchSession] = useCurrentSessionState();
 
+    // Watch the container size
+    const containerElement = React.useRef(null);
+    const containerSize = observeSize(containerElement);
+    const padding = 20;
+
     // Maintain a catalog snapshot of the session
     const [viewModel, setViewModel] = React.useState<CatalogViewModel | null>(null);
     const [viewModelVersion, setViewModelVersion] = React.useState<number>(0);
@@ -78,16 +83,19 @@ export function CatalogViewer(_props: Props) {
     // Update user focus
     React.useEffect(() => {
         if (viewModel != null && sessionState?.userFocus) {
+            // Pin focused elements
             viewModel.pinFocusedByUser(sessionState.userFocus);
+
+            // Scroll to first focused entry
+            let scrollToFocus = viewModel.getOffsetOfFirstFocused();
+            if (scrollToFocus != null && containerElement.current != null) {
+                scrollToFocus = Math.max(scrollToFocus, padding) - padding;
+                (containerElement.current as HTMLDivElement).scrollTop = scrollToFocus;
+            }
+
             setViewModelVersion(v => v + 1);
         }
     }, [viewModel, sessionState?.userFocus]);
-
-
-    // Watch the container size
-    const containerElement = React.useRef(null);
-    const containerSize = observeSize(containerElement);
-    const padding = 20;
 
     // Subscribe to scroll events
     interface Range {
@@ -171,23 +179,21 @@ export function CatalogViewer(_props: Props) {
 
     return (
         <div className={styles.root}>
-            <div className={styles.board_container} ref={containerElement}>
-                <div className={styles.board_container} ref={containerElement} onScroll={handleScroll}>
-                    <div className={styles.board_container_shadows}>
-                        <div className={styles.board}>
-                            <EdgeLayer
-                                width={viewModel?.totalWidth ?? 0}
-                                height={viewModel?.totalHeight ?? 0}
-                                padding={padding}
-                                paths={edges ?? []}
-                            />
-                            <NodeLayer
-                                width={viewModel?.totalWidth ?? 0}
-                                height={viewModel?.totalHeight ?? 0}
-                                padding={padding}
-                                nodes={nodes ?? []}
-                            />
-                        </div>
+            <div className={styles.board_container} ref={containerElement} onScroll={handleScroll}>
+                <div className={styles.board_container_shadows}>
+                    <div className={styles.board}>
+                        <EdgeLayer
+                            width={viewModel?.totalWidth ?? 0}
+                            height={viewModel?.totalHeight ?? 0}
+                            padding={padding}
+                            paths={edges ?? []}
+                        />
+                        <NodeLayer
+                            width={viewModel?.totalWidth ?? 0}
+                            height={viewModel?.totalHeight ?? 0}
+                            padding={padding}
+                            nodes={nodes ?? []}
+                        />
                     </div>
                 </div>
             </div>

@@ -129,6 +129,8 @@ interface CatalogLevelViewModel {
     pinnedInEpoch: Uint32Array;
     /// The scratch catalog entry
     scratchEntry: sqlynx.proto.FlatCatalogEntry;
+    /// The first focused element
+    firstFocusedEntry: { epoch: number, entryId: number } | null;
 }
 
 /// A catalog rendering state
@@ -197,6 +199,7 @@ export class CatalogViewModel {
             renderedInEpoch: new Uint32Array(snap.catalogReader.databasesLength()),
             pinnedEntries: new Set(),
             pinnedInEpoch: new Uint32Array(snap.catalogReader.databasesLength()),
+            firstFocusedEntry: null,
         };
         this.schemaEntries = {
             settings: settings.levels.schemas,
@@ -212,6 +215,7 @@ export class CatalogViewModel {
             renderedInEpoch: new Uint32Array(snap.catalogReader.schemasLength()),
             pinnedEntries: new Set(),
             pinnedInEpoch: new Uint32Array(snap.catalogReader.schemasLength()),
+            firstFocusedEntry: null,
         };
         this.tableEntries = {
             settings: settings.levels.tables,
@@ -227,6 +231,7 @@ export class CatalogViewModel {
             renderedInEpoch: new Uint32Array(snap.catalogReader.tablesLength()),
             pinnedInEpoch: new Uint32Array(snap.catalogReader.tablesLength()),
             pinnedEntries: new Set(),
+            firstFocusedEntry: null,
         };
         this.columnEntries = {
             settings: settings.levels.columns,
@@ -242,6 +247,7 @@ export class CatalogViewModel {
             renderedInEpoch: new Uint32Array(snap.catalogReader.columnsLength()),
             pinnedInEpoch: new Uint32Array(snap.catalogReader.columnsLength()),
             pinnedEntries: new Set(),
+            firstFocusedEntry: null,
         };
         this.schemaEntries.positionX = settings.levels.databases.nodeWidth + settings.levels.databases.columnGap;
         this.tableEntries.positionX = this.schemaEntries.positionX + settings.levels.schemas.nodeWidth + settings.levels.schemas.columnGap;
@@ -358,7 +364,7 @@ export class CatalogViewModel {
         flagsTarget: number,
         flagsPath: number,
         objectId: QualifiedCatalogObjectID
-    ) {
+    ): void {
         // Resolve entry ids
         const entryIds: (number | null)[] = [null, null, null, null];
         switch (objectId.type) {
@@ -396,10 +402,21 @@ export class CatalogViewModel {
             const levels = this.levels;
             for (let i = 0; i < notNullEntries - 1; ++i) {
                 const entryId = entryIds[i]!;
+
+                // Ping the entry
                 wasOverflowing[i] = (levels[i].entryFlags[entryId] & CatalogRenderingFlag.OVERFLOW) != 0;
                 levels[i].pinnedEntries.add(entryId);
                 levels[i].pinnedInEpoch[entryId] = epoch;
                 levels[i].entryFlags[entryId] |= flagsPath;
+
+                // Update first focused (if appropriate)
+                const firstFocusedEntry = levels[i].firstFocusedEntry;
+                if ((flagsPath & PINNED_BY_FOCUS) != 0 && (firstFocusedEntry == null || firstFocusedEntry.epoch != epoch || entryId < firstFocusedEntry.entryId)) {
+                    levels[i].firstFocusedEntry = {
+                        epoch,
+                        entryId: entryId,
+                    };
+                }
             }
 
             // Pin last entry
@@ -409,6 +426,15 @@ export class CatalogViewModel {
             levels[lastLevel].pinnedEntries.add(lastEntryId);
             levels[lastLevel].pinnedInEpoch[lastEntryId] = epoch;
             levels[lastLevel].entryFlags[lastEntryId] |= flagsTarget;
+
+            // Update first focused (if appropriate)
+            const firstFocusedEntry = levels[lastLevel].firstFocusedEntry;
+            if ((flagsPath & PINNED_BY_FOCUS) != 0 && (firstFocusedEntry == null || firstFocusedEntry.epoch != epoch || lastEntryId < firstFocusedEntry.entryId)) {
+                levels[lastLevel].firstFocusedEntry = {
+                    epoch,
+                    entryId: lastEntryId,
+                };
+            }
 
             // Determine the parent of the first overflowing node
             if (wasOverflowing[0]) {
@@ -424,7 +450,7 @@ export class CatalogViewModel {
     }
 
     // Unpin old entries.
-    unpin(pinFlags: number, currentEpoch: number) {
+    unpin(pinFlags: number, currentEpoch: number): void {
         const snap = this.snapshot.read();
 
         // Find databases that are no longer pinned
@@ -483,7 +509,7 @@ export class CatalogViewModel {
 
 
     // Pin all script refs
-    pinScriptRefs(script: sqlynx.proto.AnalyzedScript) {
+    pinScriptRefs(script: sqlynx.proto.AnalyzedScript): void {
         const catalog = this.snapshot.read().catalogReader;
         const tmpTableRef = new sqlynx.proto.TableReference();
         const tmpExpression = new sqlynx.proto.Expression();
@@ -530,13 +556,12 @@ export class CatalogViewModel {
 
         // Unpin all entries were pinned with the same flags in a previous epoch
         this.unpin(PINNED_BY_SCRIPT, epoch);
-
         // Now run all necessary layout updates
         this.layoutPendingEntries();
     }
 
 
-    pinFocusedByUser(focus: UserFocus) {
+    pinFocusedByUser(focus: UserFocus): void {
         const catalog = this.snapshot.read().catalogReader;
         const epoch = this.nextPinEpoch++;
 
@@ -566,5 +591,23 @@ export class CatalogViewModel {
         }
         // Unpin previous catalog objects
         this.unpin(PINNED_BY_FOCUS, epoch);
+        // Now run all necessary layout updates
+        this.layoutPendingEntries();
+    }
+
+    /// Determine the offset of the first focused element
+    getOffsetOfFirstFocused(): number | null {
+        const levels = this.levels;
+        let minFocusedPosition: number | null = null;
+        for (let i = 0; i < levels.length; ++i) {
+            const firstFocusedEntry = levels[i].firstFocusedEntry;
+            if (firstFocusedEntry != null) {
+                const positionY = levels[i].positionsY[firstFocusedEntry.entryId];
+                if (minFocusedPosition == null || positionY < minFocusedPosition) {
+                    minFocusedPosition = positionY;
+                }
+            }
+        }
+        return minFocusedPosition;
     }
 }
