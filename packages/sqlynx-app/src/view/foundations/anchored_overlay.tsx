@@ -87,14 +87,14 @@ export function AnchoredOverlay(args: AnchoredOverlayProps) {
         [args.open, args.onOpen, args.onClose],
     )
 
-    const {position} = useAnchoredPosition({
-            anchorElementRef: anchorRef,
-            floatingElementRef: overlayRef,
-            side: args.side,
-            align: args.align,
-            alignmentOffset: args.alignmentOffset,
-            anchorOffset: args.anchorOffset,
-        }, [overlayRef.current])
+    const { position } = useAnchoredPosition({
+        anchorElementRef: anchorRef,
+        floatingElementRef: overlayRef,
+        side: args.side,
+        align: args.align,
+        alignmentOffset: args.alignmentOffset,
+        anchorOffset: args.anchorOffset,
+    }, [overlayRef.current])
 
     React.useEffect(() => {
         // ensure overlay ref gets cleared when closed, so position can reset between closing/re-opening
@@ -108,7 +108,7 @@ export function AnchoredOverlay(args: AnchoredOverlayProps) {
         disabled: !args.open || !position,
         ...args.focusZoneSettings,
     })
-    useFocusTrap({containerRef: overlayRef, disabled: !args.open || !position, ...args.focusTrapSettings})
+    useFocusTrap({ containerRef: overlayRef, disabled: !args.open || !position, ...args.focusTrapSettings })
 
     return (
         <>
