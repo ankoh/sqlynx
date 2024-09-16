@@ -1,3 +1,17 @@
+:root {
+    --nav_bar_bg: hsl(208.5deg 24.69% 31.76%);
+    --nav_bar_button_margin: 4px;
+    --nav_bar_width: 48px;
+    --nav_bar_height: 40px;
+    --nav_bar_border: 1px solid var(--border_color_primary);
+    --nav_tab_bg: transparent;
+    --nav_tab_bg_active: hsl(208.5deg 24.69% 40.76%);
+    --nav_tab_fg: white;
+    --nav_tab_fg_active: white;
+    --nav_tab_border: 1px solid black;
+    --nav_border_active: 1px solid hsl(208.5deg 24.69% 28.76%);
+}
+
 .container {
     display: grid;
     grid-template-rows: var(--nav_bar_height) calc(100% - var(--nav_bar_height));

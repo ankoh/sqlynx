@@ -1,3 +1,7 @@
+:root {
+    --loader_card_header_background: hsl(210, 29%, 97%);
+}
+
 @media only screen and (max-width: 800px) {
     .page {
         background: var(--background);
