@@ -155,6 +155,7 @@ function renderEntriesAtLevel(ctx: RenderingContext, levelId: number, entriesBeg
     const positionX = thisLevel.positionX;
     const positionsY = thisLevel.positionsY;
     const renderingEpochs = thisLevel.renderedInEpoch;
+    const subtreeHeights = thisLevel.subtreeHeights;
 
     // Track overflow nodes
     let overflowChildCount = 0;
@@ -187,14 +188,24 @@ function renderEntriesAtLevel(ctx: RenderingContext, levelId: number, entriesBeg
             isFirst = false;
             // Remember own position
             let thisPosY = ctx.currentWriterY;
-            // Render children
-            let centerInScrollWindow: number | null = null;
+            // Read the entry
             const entry = entries.read(ctx.snapshot, entryId, scratchEntry)!;
-            if (entry.childCount() > 0) {
-                ctx.renderingWindow.startRenderingChildren();
-                renderEntriesAtLevel(ctx, levelId + 1, entry.childBegin(), entry.childCount(), entryId, entryIsFocused);
-                const stats = ctx.renderingWindow.stopRenderingChildren();
-                centerInScrollWindow = stats.centerInScrollWindow();
+            // Track the center in the scroll window above the children.
+            // This position is the center above all rendered children.
+            let centerInScrollWindow: number | null = null;
+            // Is the subtree entirely below the virtual window?
+            // Then we just skip rendering completely.
+            if ((thisPosY + subtreeHeights[entryId]) <= ctx.renderingWindow.virtualScrollWindowBegin) {
+                ctx.currentWriterY += subtreeHeights[entryId];
+                centerInScrollWindow = thisPosY;
+            } else {
+                // Render children
+                if (entry.childCount() > 0) {
+                    ctx.renderingWindow.startRenderingChildren();
+                    renderEntriesAtLevel(ctx, levelId + 1, entry.childBegin(), entry.childCount(), entryId, entryIsFocused);
+                    const stats = ctx.renderingWindow.stopRenderingChildren();
+                    centerInScrollWindow = stats.centerInScrollWindow();
+                }
             }
             // Bump writer if the columns didn't already
             ctx.currentWriterY = Math.max(ctx.currentWriterY, thisPosY + settings.nodeHeight);
