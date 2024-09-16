@@ -1,3 +1,9 @@
+:root {
+    --stats_bar_fg: hsl(210, 24%, 92%);
+    --stats_bg: hsl(210deg, 28.57%, 97.25%);
+    --stats_value_fg: rgb(140, 140, 140);
+}
+
 .container {
     height: 100%;
     display: flex;

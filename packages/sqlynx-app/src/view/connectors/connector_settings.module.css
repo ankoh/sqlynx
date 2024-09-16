@@ -1,3 +1,9 @@
+:root {
+    --connector_header_background: hsl(210, 29%, 97%);
+    --connector_status_background: hsl(210, 24%, 92%);
+    --connector_status_foreground: hsl(212, 8%, 23%);
+}
+
 .layout {
     width: 100%;
     height: 100%;
