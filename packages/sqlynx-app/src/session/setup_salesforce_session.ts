@@ -31,7 +31,6 @@ export function useSalesforceSessionSetup(): SessionSetupFn {
 
         const mainScriptData: ScriptData = {
             scriptKey: ScriptKey.MAIN_SCRIPT,
-            scriptVersion: 1,
             script: mainScript,
             metadata: generateBlankScript(),
             loading: {
