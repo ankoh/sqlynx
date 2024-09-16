@@ -26,12 +26,16 @@
 .node_pinned_script_column_ref_path {
 }
 .node_pinned_focus_table_ref {
+    border: 1px solid red;
 }
 .node_pinned_focus_table_ref_path {
+    border: 1px solid blue;
 }
 .node_pinned_focus_column_ref {
+    border: 1px solid red;
 }
 .node_pinned_focus_column_ref_path {
+    border: 1px solid blue;
 }
 .node_pinned_focus_completion_candidate {
     border: 1px solid red;
@@ -40,7 +44,9 @@
     border: 1px solid blue;
 }
 .node_pinned_focus_catalog_entry {
+    border: 1px solid red;
 }
 .node_pinned_focus_catalog_entry_path {
+    border: 1px solid blue;
 }
 .node_overflow {}
