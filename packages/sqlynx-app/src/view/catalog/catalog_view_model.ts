@@ -598,16 +598,15 @@ export class CatalogViewModel {
     /// Determine the offset of the first focused element
     getOffsetOfFirstFocused(): number | null {
         const levels = this.levels;
-        let minFocusedPosition: number | null = null;
+        let maxEpoch = 0;
+        let positionYFocused = null;
         for (let i = 0; i < levels.length; ++i) {
             const firstFocusedEntry = levels[i].firstFocusedEntry;
-            if (firstFocusedEntry != null) {
-                const positionY = levels[i].positionsY[firstFocusedEntry.entryId];
-                if (minFocusedPosition == null || positionY < minFocusedPosition) {
-                    minFocusedPosition = positionY;
-                }
+            if (firstFocusedEntry != null && firstFocusedEntry.epoch >= maxEpoch) {
+                maxEpoch = firstFocusedEntry.epoch;
+                positionYFocused = levels[i].positionsY[firstFocusedEntry.entryId];
             }
         }
-        return minFocusedPosition;
+        return positionYFocused;
     }
 }
