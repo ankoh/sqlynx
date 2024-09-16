@@ -17,8 +17,30 @@
 .node_pinned {
     background-color: var(--catalog_node_bg);
 }
-.node_pinned_by_script_table_refs {
+.node_pinned_script_table_ref {
 }
-.node_pinned_script_column_refs {
+.node_pinned_script_table_ref_path {
+}
+.node_pinned_script_column_ref {
+}
+.node_pinned_script_column_ref_path {
+}
+.node_pinned_focus_table_ref {
+}
+.node_pinned_focus_table_ref_path {
+}
+.node_pinned_focus_column_ref {
+}
+.node_pinned_focus_column_ref_path {
+}
+.node_pinned_focus_completion_candidate {
+    border: 1px solid red;
+}
+.node_pinned_focus_completion_candidate_path {
+    border: 1px solid blue;
+}
+.node_pinned_focus_catalog_entry {
+}
+.node_pinned_focus_catalog_entry_path {
 }
 .node_overflow {}

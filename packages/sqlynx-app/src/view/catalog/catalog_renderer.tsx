@@ -217,8 +217,18 @@ function renderEntriesAtLevel(ctx: RenderingContext, levelId: number, entriesBeg
                 <div
                     key={thisKey}
                     className={classNames(styles.node_default, {
-                        [styles.node_pinned_by_script_table_refs]: (entryFlags & CatalogRenderingFlag.SCRIPT_TABLE_REF) != 0,
-                        [styles.node_pinned_script_column_refs]: (entryFlags & CatalogRenderingFlag.SCRIPT_COLUMN_REF) != 0,
+                        [styles.node_pinned_script_table_ref]: (entryFlags & CatalogRenderingFlag.SCRIPT_TABLE_REF) != 0,
+                        [styles.node_pinned_script_table_ref_path]: (entryFlags & CatalogRenderingFlag.SCRIPT_TABLE_REF_PATH) != 0,
+                        [styles.node_pinned_script_column_ref]: (entryFlags & CatalogRenderingFlag.SCRIPT_COLUMN_REF) != 0,
+                        [styles.node_pinned_script_column_ref_path]: (entryFlags & CatalogRenderingFlag.SCRIPT_COLUMN_REF_PATH) != 0,
+                        [styles.node_pinned_focus_table_ref]: (entryFlags & CatalogRenderingFlag.FOCUS_TABLE_REF) != 0,
+                        [styles.node_pinned_focus_table_ref_path]: (entryFlags & CatalogRenderingFlag.FOCUS_TABLE_REF_PATH) != 0,
+                        [styles.node_pinned_focus_column_ref]: (entryFlags & CatalogRenderingFlag.FOCUS_COLUMN_REF) != 0,
+                        [styles.node_pinned_focus_column_ref_path]: (entryFlags & CatalogRenderingFlag.FOCUS_COLUMN_REF_PATH) != 0,
+                        [styles.node_pinned_focus_completion_candidate]: (entryFlags & CatalogRenderingFlag.FOCUS_COMPLETION_CANDIDATE) != 0,
+                        [styles.node_pinned_focus_completion_candidate_path]: (entryFlags & CatalogRenderingFlag.FOCUS_COMPLETION_CANDIDATE_PATH) != 0,
+                        [styles.node_pinned_focus_catalog_entry]: (entryFlags & CatalogRenderingFlag.FOCUS_CATALOG_ENTRY) != 0,
+                        [styles.node_pinned_focus_catalog_entry_path]: (entryFlags & CatalogRenderingFlag.FOCUS_CATALOG_ENTRY_PATH) != 0,
                         [styles.node_pinned]: (entryFlags & PINNED_BY_ANYTHING) != 0,
                     })}
                     style={{
