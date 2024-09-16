@@ -1,3 +1,10 @@
+:root {
+    --skeleton_base_color: hsl(210, 29%, 97%);
+    --skeleton_highlight_color: hsl(210, 29%, 94%);
+    --skeleton_animation_duration: 1.5s;
+    --skeleton_animation_direction: normal;
+}
+
 @keyframes react_loading_skeleton_animation {
     100% {
         transform: translateX(100%);

@@ -1,3 +1,10 @@
+:root {
+    --drag_resizing_handler_bg: hsl(210deg 17.5% 92.31%);
+    --drag_resizing_handler_structure_bg: hsl(208.5deg, 24.69%, 31.76%);
+    --drag_handler_size: 8px;
+}
+
+
 .handler {
     position: relative;
     background-color: var(--drag_resizing_handler_bg);

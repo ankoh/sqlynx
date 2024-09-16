@@ -1,3 +1,19 @@
+:root {
+    --catalog_edge_focus_color: hsl(212.44deg, 92.07%, 44.51%);
+    --catalog_title_fg: rgb(0, 0, 0);
+    --catalog_bg: hsl(210, 29%, 97%);
+    --catalog_node_bg: white;
+    --catalog_node_inactive_bg: hsl(210, 24%, 94%);
+    --catalog_edges_bg: hsl(210deg, 12.68%, 84.16%);
+    --catalog_card_port_bg: hsl(210deg, 12.68%, 84.16%);
+    --catalog_card_column_count_bg: rgb(0, 0, 0, 0.05);
+    --catalog_card_bg: rgb(255, 255, 255);
+    --catalog_card_focus_fg: hsl(212.44deg, 92.07%, 44.51%);
+    --catalog_port_size: 14px;
+    --catalog_control_hover_bg: rgba(208, 215, 222, 0.32);
+    --catalog_shadow_height: 6px;
+}
+
 .node_default {
     position: relative;
     border-radius: var(--border_radius);
