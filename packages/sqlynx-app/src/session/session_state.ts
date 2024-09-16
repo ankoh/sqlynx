@@ -6,7 +6,7 @@ import { ScriptMetadata } from './script_metadata.js';
 import { ScriptLoadingStatus } from './script_loader.js';
 import { analyzeScript, parseAndAnalyzeScript, SQLynxScriptBuffers } from '../view/editor/sqlynx_processor.js';
 import { ScriptLoadingInfo } from './script_loader.js';
-import { deriveFocusFromScriptCursor, UserFocus } from './focus.js';
+import { deriveFocusFromCompletionCandidates, deriveFocusFromScriptCursor, UserFocus } from './focus.js';
 import { ConnectorInfo } from '../connectors/connector_info.js';
 import { VariantKind } from '../utils/index.js';
 
@@ -44,8 +44,6 @@ export interface SessionState {
 export interface ScriptData {
     /// The script key
     scriptKey: ScriptKey;
-    /// The version, changes trigger reloads in the editor
-    scriptVersion: number;
     /// The script
     script: sqlynx.SQLynxScript | null;
     /// The metadata
@@ -141,7 +139,10 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                 userFocus: null,
             };
 
-            next.userFocus = deriveFocusFromScriptCursor(scriptKey, next.scripts, cursor);
+            let scriptData = next.scripts[scriptKey];
+            if (scriptData != null) {
+                next.userFocus = deriveFocusFromScriptCursor(scriptKey, scriptData, cursor);
+            }
             // Is schema script?
             if (scriptKey == ScriptKey.SCHEMA_SCRIPT) {
                 // Update the catalog since the schema might have changed
@@ -163,18 +164,19 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                 return state;
             }
             // Store new cursor
+            const newScriptData: ScriptData = {
+                ...prevScript,
+                cursor,
+            };
             const newState: SessionState = {
                 ...state,
                 scripts: {
                     ...state.scripts,
-                    [scriptKey]: {
-                        ...prevScript,
-                        cursor,
-                    },
+                    [scriptKey]: newScriptData,
                 },
                 userFocus: null,
             };
-            newState.userFocus = deriveFocusFromScriptCursor(scriptKey, newState.scripts, cursor);
+            newState.userFocus = deriveFocusFromScriptCursor(scriptKey, newScriptData, cursor);
             return newState;
         }
 
@@ -197,7 +199,6 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                     // Update the state
                     next.scripts[ScriptKey.SCHEMA_SCRIPT] = {
                         ...next.scripts[ScriptKey.SCHEMA_SCRIPT],
-                        scriptVersion: ++schema.scriptVersion,
                         processed: analyzed,
                         statistics: rotateStatistics(schema.statistics, schema.script!.getStatistics() ?? null),
                         cursor: null,
@@ -212,7 +213,6 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                     // Update the state
                     next.scripts[ScriptKey.MAIN_SCRIPT] = {
                         ...main,
-                        scriptVersion: ++main.scriptVersion,
                         processed: analysis,
                         statistics: rotateStatistics(main.statistics, main.script!.getStatistics() ?? null),
                         cursor: null,
@@ -236,7 +236,6 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                 const metadata = action.value[key];
                 next.scripts[key] = {
                     scriptKey: key,
-                    scriptVersion: ++prev.scriptVersion,
                     script: prev.script,
                     metadata: metadata,
                     loading: {
@@ -333,7 +332,6 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                         // Update the state
                         next.scripts[ScriptKey.MAIN_SCRIPT] = {
                             ...prev,
-                            scriptVersion: ++prev.scriptVersion,
                             processed: analysis,
                             statistics: rotateStatistics(prev.statistics, script.getStatistics() ?? null),
                         };
@@ -357,14 +355,12 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                             // Store the new main script
                             next.scripts[ScriptKey.MAIN_SCRIPT] = {
                                 ...main,
-                                scriptVersion: ++prev.scriptVersion,
                                 processed: mainAnalyzed,
                                 statistics: rotateStatistics(main.statistics, main.script.getStatistics() ?? null),
                             };
                         }
                         next.scripts[ScriptKey.SCHEMA_SCRIPT] = {
                             ...next.scripts[ScriptKey.SCHEMA_SCRIPT],
-                            scriptVersion: ++prev.scriptVersion,
                             processed: schemaAnalyzed,
                             statistics: rotateStatistics(prev.statistics, script.getStatistics() ?? null),
                         };
@@ -393,18 +389,20 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
             };
 
         case COMPLETION_STARTED: {
-            const [thisKey, completion] = action.value;
-            console.log(completion);
+            const [targetKey, completion] = action.value;
             const scripts = { ...state.scripts };
+            let userFocus: UserFocus | null = null;
             for (const key of [ScriptKey.MAIN_SCRIPT, ScriptKey.SCHEMA_SCRIPT]) {
                 const data = scripts[key];
                 if (data) {
-                    if (key == thisKey) {
-                        scripts[key] = {
+                    if (key == targetKey) {
+                        let scriptData = {
                             ...data,
                             completion: completion,
                             selectedCompletionCandidate: 0
                         };
+                        userFocus = deriveFocusFromCompletionCandidates(targetKey, scriptData);
+                        scripts[key] = scriptData;
                     } else if (data.completion != null) {
                         scripts[key] = {
                             ...data,
@@ -414,21 +412,26 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                     }
                 }
             }
-            return { ...state, scripts };
+            return {
+                ...state,
+                scripts,
+                userFocus
+            };
         }
         case COMPLETION_CHANGED: {
             const [key, completion, index] = action.value;
-            console.log({ completion, index });
+            const scriptData: ScriptData = {
+                ...state.scripts[key],
+                completion: completion,
+                selectedCompletionCandidate: index
+            };
             return {
                 ...state,
                 scripts: {
                     ...state.scripts,
-                    [key]: {
-                        ...state.scripts[key],
-                        completion: completion,
-                        selectedCompletionCandidate: index
-                    },
+                    [key]: scriptData,
                 },
+                userFocus: deriveFocusFromCompletionCandidates(key, scriptData),
             };
         }
         case COMPLETION_STOPPED: {
@@ -445,7 +448,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                     }
                 }
             }
-            return { ...state, scripts };
+            return { ...state, scripts, userFocus: null };
         }
     }
 }

@@ -35,8 +35,8 @@ interface Props {
 }
 
 interface ActiveScriptState {
-    editorScriptVersion: number;
     editorScript: sqlynx.SQLynxScript | null;
+    editorScriptBuffers: SQLynxScriptBuffers | null;
     schemaScript: sqlynx.SQLynxScript | null;
     decorations: DecorationSet | null;
     cursor: sqlynx.proto.ScriptCursorT | null;
@@ -83,8 +83,8 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
     const viewWasCreated = React.useCallback((view: EditorView) => setView(view), [setView]);
     const viewWillBeDestroyed = React.useCallback((_view: EditorView) => setView(null), [setView]);
     const active = React.useRef<ActiveScriptState>({
-        editorScriptVersion: 0,
         editorScript: null,
+        editorScriptBuffers: null,
         schemaScript: null,
         decorations: null,
         cursor: null,
@@ -97,6 +97,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
     const updateScript = React.useCallback(
         (scriptKey: SQLynxScriptKey, buffers: SQLynxScriptBuffers, cursor: sqlynx.proto.ScriptCursorT) => {
             active.current.cursor = cursor;
+            active.current.editorScriptBuffers = buffers;
             sessionDispatch({
                 type: UPDATE_SCRIPT_ANALYSIS,
                 value: [scriptKey, buffers, cursor],
@@ -167,11 +168,11 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         const effects: StateEffect<any>[] = [];
         if (
             active.current.editorScript !== targetScriptData.script ||
-            active.current.editorScriptVersion !== targetScriptData.scriptVersion
+            active.current.editorScriptBuffers !== targetScriptData.processed
         ) {
             logger.info("loading new script", "editor");
-            active.current.editorScriptVersion = targetScriptData.scriptVersion;
             active.current.editorScript = targetScriptData.script;
+            active.current.editorScriptBuffers = targetScriptData.processed;
             active.current.schemaScript = schemaScript;
             changes.push({
                 from: 0,
@@ -181,8 +182,8 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         } else if (active.current.schemaScript !== schemaScriptData?.script) {
             logger.info("skipping schema script update", "editor");
             // Only the external script changed, no need for text changes
-            active.current.editorScriptVersion = targetScriptData.scriptVersion;
             active.current.editorScript = targetScriptData.script;
+            active.current.editorScriptBuffers = targetScriptData.processed;
             active.current.schemaScript = schemaScript;
         }
         let selection: EditorSelection | null = null;
@@ -196,7 +197,6 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                     showCompletionDetails: config?.value?.features?.completionDetails ?? false,
                 },
                 scriptKey: targetKey,
-                targetScriptVersion: targetScriptData.scriptVersion,
                 targetScript: targetScriptData.script,
                 scriptBuffers: targetScriptData.processed,
                 scriptCursor: targetScriptData.cursor,

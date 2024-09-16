@@ -1,16 +1,23 @@
 #pragma once
 
+#include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/utils/intrusive_list.h"
 
 namespace sqlynx {
 
 /// A type of a catalog object
 enum CatalogObjectType {
-    DatabaseReference = 0,
-    SchemaReference = 1,
-    TableDeclaration = 2,
-    ColumnDeclaration = 3,
+    DatabaseReference = 1,
+    SchemaReference = 2,
+    TableDeclaration = 3,
+    ColumnDeclaration = 4,
 };
+static_assert(static_cast<uint8_t>(proto::CompletionCandidateObjectType::COLUMN) ==
+              CatalogObjectType::ColumnDeclaration);
+static_assert(static_cast<uint8_t>(proto::CompletionCandidateObjectType::DATABASE) ==
+              CatalogObjectType::DatabaseReference);
+static_assert(static_cast<uint8_t>(proto::CompletionCandidateObjectType::SCHEMA) == CatalogObjectType::SchemaReference);
+static_assert(static_cast<uint8_t>(proto::CompletionCandidateObjectType::TABLE) == CatalogObjectType::TableDeclaration);
 
 /// A catalog object
 struct CatalogObject : public IntrusiveListNode {

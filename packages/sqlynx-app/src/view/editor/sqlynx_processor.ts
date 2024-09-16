@@ -16,8 +16,6 @@ export interface SQLynxScriptUpdate {
     // The key of the currently active script
     scriptKey: SQLynxScriptKey;
     // The currently active script in the editor
-    targetScriptVersion: number;
-    // The currently active script in the editor
     targetScript: sqlynx.SQLynxScript | null;
     /// The previous processed script buffers (if any)
     scriptBuffers: SQLynxScriptBuffers;
@@ -111,7 +109,6 @@ export const SQLynxProcessor: StateField<SQLynxEditorState> = StateField.define<
                 showCompletionDetails: false,
             },
             scriptKey: 0,
-            targetScriptVersion: 1,
             targetScript: null,
             scriptBuffers: {
                 scanned: null,
@@ -163,15 +160,15 @@ export const SQLynxProcessor: StateField<SQLynxEditorState> = StateField.define<
             // SQLynx update effect?
             if (effect.is(UpdateSQLynxScript)) {
                 next = {
-                    ...state,
+                    ...next,
                     ...effect.value,
                 };
 
-                // Entire script changed?
-                // Signaled either through a completely new script or through a new script version
+                // Script changed?
+                // Signaled either through a completely new script or through a new script buffer
                 if (
                     state.targetScript !== next.targetScript ||
-                    state.targetScriptVersion !== next.targetScriptVersion
+                    state.scriptBuffers !== next.scriptBuffers
                 ) {
                     return next;
                 }

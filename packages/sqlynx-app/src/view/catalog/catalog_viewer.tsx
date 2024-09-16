@@ -50,7 +50,7 @@ const RENDERING_SETTINGS: CatalogRenderingSettings = {
 interface Props {
 }
 
-export function CatalogViewer(props: Props) {
+export function CatalogViewer(_props: Props) {
     const [sessionState, _dispatchSession] = useCurrentSessionState();
 
     // Maintain a catalog snapshot of the session
@@ -68,13 +68,20 @@ export function CatalogViewer(props: Props) {
     React.useEffect(() => {
         const script = sessionState?.scripts[ScriptKey.MAIN_SCRIPT] ?? null;
         if (viewModel != null && script != null && script.processed.analyzed != null) {
-            console.log("PIN SCRIPT REFS");
             const analyzed = script.processed.analyzed.read();
             viewModel.pinScriptRefs(analyzed);
             setViewModelVersion(v => v + 1);
         }
 
-    }, [viewModel, sessionState?.scripts[ScriptKey.MAIN_SCRIPT]]);
+    }, [viewModel, sessionState?.scripts[ScriptKey.MAIN_SCRIPT].processed]);
+
+    // Update user focus
+    React.useEffect(() => {
+        if (viewModel != null && sessionState?.userFocus) {
+            viewModel.pinFocusedByUser(sessionState.userFocus);
+            setViewModelVersion(v => v + 1);
+        }
+    }, [viewModel, sessionState?.userFocus]);
 
 
     // Watch the container size

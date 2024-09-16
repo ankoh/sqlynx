@@ -58,9 +58,7 @@ export interface UserFocus {
 /// Derive focus from script cursor
 export function deriveFocusFromScriptCursor(
     scriptKey: ScriptKey,
-    scriptData: {
-        [context: number]: ScriptData;
-    },
+    scriptData: ScriptData,
     cursor: sqlynx.proto.ScriptCursorT,
 ): UserFocus | null {
     const tmpSourceAnalyzed = new sqlynx.proto.AnalyzedScript();
@@ -70,8 +68,7 @@ export function deriveFocusFromScriptCursor(
     const tmpResolvedColumnRef = new sqlynx.proto.ResolvedColumnRefExpression();
     const tmpResolvedRelationExpr = new sqlynx.proto.ResolvedRelationExpression();
 
-    const source = scriptData[scriptKey];
-    let sourceAnalyzed = source.processed.analyzed?.read(tmpSourceAnalyzed);
+    let sourceAnalyzed = scriptData.processed.analyzed?.read(tmpSourceAnalyzed);
     if (sourceAnalyzed == null) {
         return null;
     }
@@ -109,17 +106,9 @@ export function deriveFocusFromScriptCursor(
 
                 // Could we resolve the ref?
                 if (!sqlynx.ExternalObjectID.isNull(resolved.catalogTableId())) {
-                    // Check the main and schema script for associated table and column refs
-                    for (const targetKey of [ScriptKey.MAIN_SCRIPT, ScriptKey.SCHEMA_SCRIPT]) {
-                        // Is there data for the script key?
-                        const targetData = scriptData[targetKey];
-                        if (!targetData) {
-                            continue;
-                        }
-                        // Read the analyzed script
-                        const targetAnalyzed = scriptData[targetKey].processed.analyzed?.read(tmpTargetAnalyzed);
-                        if (!targetAnalyzed) continue;
-
+                    // Read the analyzed script
+                    const targetAnalyzed = scriptData.processed.analyzed?.read(tmpTargetAnalyzed);
+                    if (targetAnalyzed != null) {
                         // Find table refs for table
                         const [begin0, end0] = sqlynx.findScriptTableRefsEqualRange(
                             targetAnalyzed,
@@ -130,7 +119,7 @@ export function deriveFocusFromScriptCursor(
                         for (let indexEntryId = begin0; indexEntryId < end0; ++indexEntryId) {
                             const indexEntry = targetAnalyzed.tableReferencesById(indexEntryId, tmpIndexedTableRef)!;
                             const tableRefId = indexEntry.tableReferenceId();
-                            focus.scriptTableRefs.set(sqlynx.ExternalObjectID.create(targetKey, tableRefId), FocusType.TABLE_REF_OF_TARGET_TABLE);
+                            focus.scriptTableRefs.set(sqlynx.ExternalObjectID.create(scriptKey, tableRefId), FocusType.TABLE_REF_OF_TARGET_TABLE);
                         }
                         // Find column refs for table
                         const [begin1, end1] = sqlynx.findScriptColumnRefsEqualRange(
@@ -142,7 +131,7 @@ export function deriveFocusFromScriptCursor(
                         for (let indexEntryId = begin1; indexEntryId < end1; ++indexEntryId) {
                             const indexEntry = targetAnalyzed.columnReferencesById(indexEntryId, tmpIndexedColumnRef)!;
                             const expressionId = indexEntry.expressionId();
-                            focus.scriptColumnRefs.set(sqlynx.ExternalObjectID.create(targetKey, expressionId), FocusType.COLUMN_REF_OF_TARGET_TABLE);
+                            focus.scriptColumnRefs.set(sqlynx.ExternalObjectID.create(scriptKey, expressionId), FocusType.COLUMN_REF_OF_TARGET_TABLE);
                         }
                     }
                 }
@@ -182,17 +171,9 @@ export function deriveFocusFromScriptCursor(
 
                 // Could we resolve the ref?
                 if (!sqlynx.ExternalObjectID.isNull(resolved.catalogTableId())) {
-                    // Check the main and schema script for associated table and column refs
-                    for (const targetKey of [ScriptKey.MAIN_SCRIPT, ScriptKey.SCHEMA_SCRIPT]) {
-                        // Is there data for the script key?
-                        const targetData = scriptData[targetKey];
-                        if (!targetData) {
-                            continue;
-                        }
-                        // Read the analyzed script
-                        const targetAnalyzed = scriptData[targetKey].processed.analyzed?.read(tmpTargetAnalyzed);
-                        if (!targetAnalyzed) continue;
-
+                    // Read the analyzed script
+                    const targetAnalyzed = scriptData.processed.analyzed?.read(tmpTargetAnalyzed);
+                    if (targetAnalyzed != null) {
                         // Find table refs for table
                         const [begin0, end0] = sqlynx.findScriptTableRefsEqualRange(
                             targetAnalyzed,
@@ -203,7 +184,7 @@ export function deriveFocusFromScriptCursor(
                         for (let indexEntryId = begin0; indexEntryId < end0; ++indexEntryId) {
                             const indexEntry = targetAnalyzed.tableReferencesById(indexEntryId, tmpIndexedTableRef)!;
                             const tableRefId = indexEntry.tableReferenceId();
-                            focus.scriptTableRefs.set(sqlynx.ExternalObjectID.create(targetKey, tableRefId), FocusType.TABLE_REF_OF_TARGET_COLUMN);
+                            focus.scriptTableRefs.set(sqlynx.ExternalObjectID.create(scriptKey, tableRefId), FocusType.TABLE_REF_OF_TARGET_COLUMN);
                         }
                         // Find column refs for table
                         const [begin1, end1] = sqlynx.findScriptColumnRefsEqualRange(
@@ -215,7 +196,7 @@ export function deriveFocusFromScriptCursor(
                         for (let indexEntryId = begin1; indexEntryId < end1; ++indexEntryId) {
                             const indexEntry = targetAnalyzed.columnReferencesById(indexEntryId, tmpIndexedColumnRef)!;
                             const columnRefId = indexEntry.expressionId();
-                            focus.scriptColumnRefs.set(sqlynx.ExternalObjectID.create(targetKey, columnRefId), FocusType.COLUMN_REF_OF_TARGET_TABLE);
+                            focus.scriptColumnRefs.set(sqlynx.ExternalObjectID.create(scriptKey, columnRefId), FocusType.COLUMN_REF_OF_TARGET_TABLE);
                         }
                         // Find column refs for table
                         const [begin2, end2] = sqlynx.findScriptColumnRefsEqualRange(
@@ -228,7 +209,7 @@ export function deriveFocusFromScriptCursor(
                         for (let indexEntryId = begin2; indexEntryId < end2; ++indexEntryId) {
                             const indexEntry = targetAnalyzed.columnReferencesById(indexEntryId, tmpIndexedColumnRef)!;
                             const columnRefId = indexEntry.expressionId();
-                            focus.scriptColumnRefs.set(sqlynx.ExternalObjectID.create(targetKey, columnRefId), FocusType.COLUMN_REF_OF_TARGET_COLUMN);
+                            focus.scriptColumnRefs.set(sqlynx.ExternalObjectID.create(scriptKey, columnRefId), FocusType.COLUMN_REF_OF_TARGET_COLUMN);
                         }
                     }
                 }
@@ -369,25 +350,21 @@ export function deriveFocusFromCatalogSelection(
 
 /// Derive focus from script completion
 export function deriveFocusFromCompletionCandidates(
-    scriptKey: ScriptKey,
-    scriptData: {
-        [context: number]: ScriptData;
+    _scriptKey: ScriptKey,
+    scriptData: ScriptData,
+): UserFocus | null {
+    if (scriptData.completion == null) {
+        return null;
     }
-) {
-    const data = scriptData[scriptKey];
-    if (data.completion == null) {
-        return;
+    if (scriptData.completion.candidates.length == 0 || scriptData.selectedCompletionCandidate == null) {
+        return null;
     }
-    if (data.completion.candidates.length == 0 || data.selectedCompletionCandidate == null) {
-        return;
-    }
-    console.log(data.completion.candidates);
 
     const focusTarget: FocusTarget = {
         type: FOCUSED_COMPLETION,
         value: {
-            completion: data.completion,
-            completionCandidateIndex: data.selectedCompletionCandidate ?? 0
+            completion: scriptData.completion,
+            completionCandidateIndex: scriptData.selectedCompletionCandidate ?? 0
         }
     };
     const focus: UserFocus = {
@@ -398,7 +375,7 @@ export function deriveFocusFromCompletionCandidates(
     };
 
     // Highlight only the selected completion candidate for now
-    const candidate = data.completion.candidates[data.selectedCompletionCandidate ?? 0];
+    const candidate = scriptData.completion.candidates[scriptData.selectedCompletionCandidate ?? 0];
     for (const candidateObject of candidate.catalogObjects) {
         switch (candidateObject.objectType) {
             case sqlynx.proto.CompletionCandidateObjectType.DATABASE:
@@ -445,6 +422,5 @@ export function deriveFocusFromCompletionCandidates(
                 break;
         }
     }
-
-
+    return focus;
 }
