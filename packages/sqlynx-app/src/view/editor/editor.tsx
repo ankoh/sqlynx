@@ -2,7 +2,8 @@ import * as React from 'react';
 import * as sqlynx from '@ankoh/sqlynx-core';
 import * as ActionList from '../foundations/action_list.js';
 
-import { DecorationSet, EditorView } from '@codemirror/view';
+import { defaultKeymap } from "@codemirror/commands"
+import { DecorationSet, EditorView, keymap } from '@codemirror/view';
 import { ChangeSpec, EditorSelection, StateEffect } from '@codemirror/state';
 
 import { Button, ButtonVariant } from '../foundations/button.js';
@@ -233,6 +234,12 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
             break;
     }
 
+    const extensions = React.useMemo(() => {
+        /* XXX ANY CAST IS A HACK. Need to update @codemirror/view */
+        const keymapExtension = keymap.of(defaultKeymap as any)
+        return [keymapExtension, ...SQLynxExtensions];
+    }, []);
+
     const EditorPage = (
         <div className={styles.editor_with_header}>
             <div className={styles.headerbar}>
@@ -242,7 +249,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
             <div className={styles.editor_with_loader}>
                 <div className={styles.editor}>
                     <CodeMirror
-                        extensions={SQLynxExtensions}
+                        extensions={extensions}
                         viewWasCreated={viewWasCreated}
                         viewWillBeDestroyed={viewWillBeDestroyed}
                     />
