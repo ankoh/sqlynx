@@ -1,8 +1,11 @@
 import * as React from 'react';
 import * as sqlynx from '@ankoh/sqlynx-core';
 import * as ActionList from '../foundations/action_list.js';
+import * as themes from './themes/index.js';
 
-import { defaultKeymap } from "@codemirror/commands"
+import { lineNumbers } from '@codemirror/view';
+
+import { defaultKeymap, history, historyKeymap } from "@codemirror/commands"
 import { DecorationSet, EditorView, keymap } from '@codemirror/view';
 import { ChangeSpec, EditorSelection, StateEffect } from '@codemirror/state';
 
@@ -234,10 +237,21 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
             break;
     }
 
+    // See: https://github.com/codemirror/basic-setup/blob/main/src/codemirror.ts
+    // We might want to add other plugins later.
     const extensions = React.useMemo(() => {
         /* XXX ANY CAST IS A HACK. Need to update @codemirror/view */
-        const keymapExtension = keymap.of(defaultKeymap as any)
-        return [keymapExtension, ...SQLynxExtensions];
+        const keymapExtension = keymap.of([
+            ...defaultKeymap as any,
+            ...historyKeymap
+        ]);
+        return [
+            themes.xcode.xcodeLight,
+            lineNumbers(),
+            history(),
+            ...SQLynxExtensions,
+            keymapExtension
+        ];
     }, []);
 
     const EditorPage = (
