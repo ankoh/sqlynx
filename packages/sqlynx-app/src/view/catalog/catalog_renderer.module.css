@@ -9,9 +9,9 @@
     --catalog_card_focus_fg: hsl(212.44deg, 92.07%, 44.51%);
     --catalog_control_hover_bg: rgba(208, 215, 222, 0.32);
 
-    --catalog_node_focus_border_color: hsl(212.44deg, 92.07%, 44.51%);
-    --catalog_node_focus_port_color: red;
-    --catalog_edge_focus_color: hsl(212.44deg, 92.07%, 44.51%);
+    --catalog_node_focus_border_color: hsl(210deg, 17.5%, 54.31%);
+    --catalog_node_focus_port_color: hsl(208.5deg 24.69% 31.76%);
+    --catalog_edge_focus_color: hsl(208.5deg 24.69% 31.76%);
 
     --catalog_default_border_width: 1px;
     --catalog_focus_border_width: 2px;
@@ -155,7 +155,7 @@
     transition: background-color ease-out 0.12s;
 }
 .node_port_focused::after {
-    background-color: var(--catalog_card_focus_fg) !important;
+    background-color: var(--catalog_node_focus_port_color) !important;
 }
 .node_port_border_focused.node_port_north {
     position: absolute;
