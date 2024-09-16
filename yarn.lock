@@ -40,6 +40,7 @@ __metadata:
     "@ankoh/sqlynx-pb": "link:../sqlynx-pb"
     "@bufbuild/protobuf": "npm:^1.10.0"
     "@codemirror/autocomplete": "npm:^6.16.2"
+    "@codemirror/commands": "npm:^6.6.1"
     "@codemirror/language": "npm:^6.10.2"
     "@codemirror/state": "npm:^6.4.1"
     "@codemirror/view": "npm:6.28.0"
@@ -687,6 +688,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@codemirror/commands@npm:^6.6.1":
+  version: 6.6.1
+  resolution: "@codemirror/commands@npm:6.6.1"
+  dependencies:
+    "@codemirror/language": "npm:^6.0.0"
+    "@codemirror/state": "npm:^6.4.0"
+    "@codemirror/view": "npm:^6.27.0"
+    "@lezer/common": "npm:^1.1.0"
+  checksum: 10c0/94cdd70db4ff43f2e43ef0898a16cbb29ec26f35798eee6d56bd3802563b0ae242ca1a8d8ac52e5573077aaec27cd20ecb77b1f1ea6be5b5224439b3cb94601b
+  languageName: node
+  linkType: hard
+
 "@codemirror/language@npm:^6.0.0, @codemirror/language@npm:^6.10.2":
   version: 6.10.2
   resolution: "@codemirror/language@npm:6.10.2"
@@ -716,6 +729,17 @@ __metadata:
     style-mod: "npm:^4.1.0"
     w3c-keyname: "npm:^2.2.4"
   checksum: 10c0/8930d42c5732359549aa4bf4f0d24c559a203df387487779e5e4ee7dd9723ee7398170e3bfffd5d72fd86ef0bff3bd3ae525ef2f75ae4888aa5a88149c11e7d4
+  languageName: node
+  linkType: hard
+
+"@codemirror/view@npm:^6.27.0":
+  version: 6.33.0
+  resolution: "@codemirror/view@npm:6.33.0"
+  dependencies:
+    "@codemirror/state": "npm:^6.4.0"
+    style-mod: "npm:^4.1.0"
+    w3c-keyname: "npm:^2.2.4"
+  checksum: 10c0/d5811048d84ff4682354ac6e59e42ea008e5a425746ecf7c6dca2f6df675b548c25e339040f1da038b318a306cbd90fb279f15b4f694fadc721f0d8d31a68ff8
   languageName: node
   linkType: hard
 
