@@ -5,7 +5,7 @@ import * as styles from './catalog_renderer.module.css';
 import { EdgePathBuilder } from './graph_edges.js';
 import { classNames } from '../../utils/classnames.js';
 import { buildEdgePath, selectHorizontalEdgeType } from './graph_edges.js';
-import { CatalogViewModel, CatalogRenderingFlag, PINNED_BY_ANYTHING } from './catalog_view_model.js';
+import { CatalogViewModel, CatalogRenderingFlag, PINNED_BY_ANYTHING, PINNED_BY_FOCUS_PATH, PINNED_BY_FOCUS } from './catalog_view_model.js';
 
 /// A rendering path.
 /// A cheap way to track the path of parent ids when rendering the catalog.
@@ -140,6 +140,8 @@ interface RenderingContext {
     outNodes: React.ReactElement[];
     /// The output edges
     outEdges: React.ReactElement[];
+    /// The output edges that are focused
+    outEdgesFocused: React.ReactElement[];
 };
 
 /// Render entries and emit ReactElements if they are within the virtual scroll window
@@ -221,14 +223,8 @@ function renderEntriesAtLevel(ctx: RenderingContext, levelId: number, entriesBeg
                         [styles.node_pinned_script_table_ref_path]: (entryFlags & CatalogRenderingFlag.SCRIPT_TABLE_REF_PATH) != 0,
                         [styles.node_pinned_script_column_ref]: (entryFlags & CatalogRenderingFlag.SCRIPT_COLUMN_REF) != 0,
                         [styles.node_pinned_script_column_ref_path]: (entryFlags & CatalogRenderingFlag.SCRIPT_COLUMN_REF_PATH) != 0,
-                        [styles.node_pinned_focus_table_ref]: (entryFlags & CatalogRenderingFlag.FOCUS_TABLE_REF) != 0,
-                        [styles.node_pinned_focus_table_ref_path]: (entryFlags & CatalogRenderingFlag.FOCUS_TABLE_REF_PATH) != 0,
-                        [styles.node_pinned_focus_column_ref]: (entryFlags & CatalogRenderingFlag.FOCUS_COLUMN_REF) != 0,
-                        [styles.node_pinned_focus_column_ref_path]: (entryFlags & CatalogRenderingFlag.FOCUS_COLUMN_REF_PATH) != 0,
-                        [styles.node_pinned_focus_completion_candidate]: (entryFlags & CatalogRenderingFlag.FOCUS_COMPLETION_CANDIDATE) != 0,
-                        [styles.node_pinned_focus_completion_candidate_path]: (entryFlags & CatalogRenderingFlag.FOCUS_COMPLETION_CANDIDATE_PATH) != 0,
-                        [styles.node_pinned_focus_catalog_entry]: (entryFlags & CatalogRenderingFlag.FOCUS_CATALOG_ENTRY) != 0,
-                        [styles.node_pinned_focus_catalog_entry_path]: (entryFlags & CatalogRenderingFlag.FOCUS_CATALOG_ENTRY_PATH) != 0,
+                        [styles.node_pinned_focus_target]: (entryFlags & PINNED_BY_FOCUS) != 0,
+                        [styles.node_pinned_focus_path]: (entryFlags & PINNED_BY_FOCUS_PATH) != 0,
                         [styles.node_pinned]: (entryFlags & PINNED_BY_ANYTHING) != 0,
                     })}
                     style={{
@@ -253,29 +249,47 @@ function renderEntriesAtLevel(ctx: RenderingContext, levelId: number, entriesBeg
                 const toPositionsY = ctx.viewModel.levels[levelId + 1].positionsY;
                 const toX = ctx.viewModel.levels[levelId + 1].positionX + toSettings.nodeWidth / 2;
                 const toEpochs = ctx.viewModel.levels[levelId + 1].renderedInEpoch;
+                const toFlags = ctx.viewModel.levels[levelId + 1].entryFlags;
 
                 for (let i = 0; i < entry.childCount(); ++i) {
-                    const entryId = entry.childBegin() + i;
+                    const toEntryId = entry.childBegin() + i;
                     // Don't draw an edge to nodes that were not rendered this epoch
-                    if (toEpochs[entryId] != ctx.renderingEpoch) {
+                    if (toEpochs[toEntryId] != ctx.renderingEpoch) {
                         continue;;
                     }
-                    const toY = toPositionsY[entryId] + toSettings.nodeHeight / 2;
+                    const toY = toPositionsY[toEntryId] + toSettings.nodeHeight / 2;
                     const edgeType = selectHorizontalEdgeType(fromX, fromY, toX, toY);
                     const edgePath = buildEdgePath(ctx.edgeBuilder, edgeType, fromX, fromY, toX, toY, settings.nodeWidth, settings.nodeHeight, toSettings.nodeWidth, toSettings.nodeHeight, 10, 10, 4);
                     const edgeKey = `${thisKey}:${i}`;
-                    ctx.outEdges.push(
-                        <path
-                            key={edgeKey}
-                            d={edgePath}
-                            strokeWidth="2px"
-                            stroke="currentcolor"
-                            fill="transparent"
-                            pointerEvents="stroke"
-                            data-edge={edgeKey}
-                        />,
 
-                    );
+                    // Is his a focused edge?
+                    const toEntryFlags = toFlags[toEntryId];
+                    const focusedEdge = ((entryFlags & PINNED_BY_FOCUS) != 0) && ((toEntryFlags & PINNED_BY_FOCUS) != 0);
+                    if (focusedEdge) {
+                        ctx.outEdgesFocused.push(
+                            <path
+                                key={edgeKey}
+                                d={edgePath}
+                                strokeWidth="2px"
+                                stroke="currentcolor"
+                                fill="transparent"
+                                pointerEvents="stroke"
+                                data-edge={edgeKey}
+                            />,
+                        );
+                    } else {
+                        ctx.outEdges.push(
+                            <path
+                                key={edgeKey}
+                                d={edgePath}
+                                strokeWidth="2px"
+                                stroke="currentcolor"
+                                fill="transparent"
+                                pointerEvents="stroke"
+                                data-edge={edgeKey}
+                            />,
+                        );
+                    }
                 }
             }
         }
@@ -316,7 +330,7 @@ function renderEntriesAtLevel(ctx: RenderingContext, levelId: number, entriesBeg
 }
 
 /// A function to render a catalog
-export function renderCatalog(viewModel: CatalogViewModel, outNodes: React.ReactElement[], outEdges: React.ReactElement[]) {
+export function renderCatalog(viewModel: CatalogViewModel, outNodes: React.ReactElement[], outEdges: React.ReactElement[], outEdgesFocused: React.ReactElement[]) {
     const ctx: RenderingContext = {
         viewModel,
         snapshot: viewModel.snapshot.read(),
@@ -327,6 +341,7 @@ export function renderCatalog(viewModel: CatalogViewModel, outNodes: React.React
         edgeBuilder: new EdgePathBuilder(),
         outNodes,
         outEdges,
+        outEdgesFocused,
     };
     renderEntriesAtLevel(ctx, 0, 0, viewModel.databaseEntries.entries.length(ctx.snapshot));
     return outNodes;

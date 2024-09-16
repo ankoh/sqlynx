@@ -1,3 +1,9 @@
+:root {
+    --catalog_edges_bg: hsl(210deg, 12.68%, 84.16%);
+    --catalog_shadow_height: 6px;
+    --catalog_edge_focus_color: hsl(212.44deg, 92.07%, 44.51%);
+}
+
 .root {
     width: 100%;
     height: 100%;
@@ -78,4 +84,14 @@
     flex-direction: column;
     align-items: center;
     color: var(--catalog_edges_bg);
+}
+
+.edge_layer_focused {
+    position: absolute;
+    display: flex;
+    width: 100%;
+    height: auto;
+    flex-direction: column;
+    align-items: center;
+    color: var(--catalog_edge_focus_color);
 }
