@@ -116,6 +116,15 @@ interface LayoutContext {
     currentWriterY: number;
 };
 
+interface SearchContext {
+    /// The snapshot
+    snapshot: sqlynx.SQLynxCatalogSnapshotReader;
+    /// The current writer
+    currentWriterY: number;
+    /// The current writer
+    entryPath: number[];
+};
+
 interface CatalogLevelViewModel {
     /// The rendering settings
     settings: CatalogLevelRenderingSettings;
@@ -603,18 +612,115 @@ export class CatalogViewModel {
         this.layoutPendingEntries();
     }
 
+    static searchEntryOffsetAtLevel(ctx: SearchContext, levels: CatalogLevelViewModel[], levelId: number, entriesBegin: number, entriesCount: number): [number, boolean] {
+        const level = levels[levelId];
+        const flags = level.entryFlags;
+        const targetEntryId = ctx.entryPath[levelId];
+        let isFirstEntry = true;
+
+        for (const renderPinned of [true, false]) {
+            for (let i = 0; i < entriesCount; ++i) {
+                // Resolve table
+                const entryId = entriesBegin + i;
+                const entryFlags = flags[entryId];
+                const entryIsPinned = (entryFlags & PINNED_BY_ANYTHING) != 0;
+
+                // Not the right pass?
+                if (entryIsPinned != renderPinned) {
+                    continue;
+                }
+                // Is overflowing?
+                if ((entryFlags & CatalogRenderingFlag.OVERFLOW) != 0) {
+                    continue;
+                }
+
+                // Add row gap when first
+                // We could also account for that in the end
+                ctx.currentWriterY += isFirstEntry ? 0 : level.settings.rowGap;
+                isFirstEntry = false;
+
+                // Not there yet?
+                // Just add the subtree height
+                if (entryId < targetEntryId) {
+                    ctx.currentWriterY += level.subtreeHeights[entryId];
+                    continue;
+                }
+                // Went past it?
+                // Maybe the other pass (pinned vs !pinned)
+                if (entryId > targetEntryId) {
+                    break;
+                }
+                // Did we reach the end of the path?
+                if ((levelId + 1) >= ctx.entryPath.length) {
+                    // We found our entry id!
+                    // Return the current writer as result
+                    return [ctx.currentWriterY, true];
+                }
+
+                // Read entry
+                const entry = level.entries.read(ctx.snapshot, entryId, level.scratchEntry)!;
+                // Do we have children?
+                if (entry.childCount() > 0) {
+                    // Then traverse down and search there
+                    return CatalogViewModel.searchEntryOffsetAtLevel(ctx, levels, levelId + 1, entry.childBegin(), entry.childCount());
+                } else {
+                    return [ctx.currentWriterY, false];
+                }
+            }
+        }
+        return [ctx.currentWriterY, false];
+    }
+
+    /// Search an entry offset
+    searchEntryOffset(snap: sqlynx.SQLynxCatalogSnapshotReader, entryPath: number[]): [number, boolean] {
+        const databaseCount = this.databaseEntries.entries.length(snap);
+        const ctx: SearchContext = {
+            snapshot: snap,
+            currentWriterY: 0,
+            entryPath: entryPath
+        };
+        return CatalogViewModel.searchEntryOffsetAtLevel(ctx, this.levels, 0, 0, databaseCount);
+    }
+
     /// Determine the offset of the first focused element
-    getOffsetOfFirstFocused(): number | null {
+    getOffsetOfFirstFocused(): [number, boolean] {
+        const snap = this.snapshot.read();
         const levels = this.levels;
         let maxEpoch = 0;
-        let positionYFocused = null;
+        let targetEntry = null;
+        let targetLevel = null;
         for (let i = 0; i < levels.length; ++i) {
             const firstFocusedEntry = levels[i].firstFocusedEntry;
             if (firstFocusedEntry != null && firstFocusedEntry.epoch >= maxEpoch) {
                 maxEpoch = firstFocusedEntry.epoch;
-                positionYFocused = levels[i].positionsY[firstFocusedEntry.entryId];
+                targetEntry = firstFocusedEntry.entryId;
+                targetLevel = i;
             }
         }
-        return positionYFocused;
+        // None focused?
+        if (targetEntry == null) {
+            return [0, false];
+        }
+        // Reconstruct entry path by following parent indices
+        let entryPath: number[] = [];
+        let childEntryIdx = targetEntry;
+        for (let levelId = targetLevel!; levelId >= 0; --levelId) {
+            entryPath.push(childEntryIdx);
+            const level = levels[levelId];
+            const childEntry = level.entries.read(snap, childEntryIdx, level.scratchEntry)!;
+            const parentEntryIdx = childEntry.flatParentIdx();
+            childEntryIdx = parentEntryIdx;
+        }
+        entryPath.reverse();
+
+        // Construct the search context
+        const databaseCount = this.databaseEntries.entries.length(snap);
+        const ctx: SearchContext = {
+            snapshot: snap,
+            currentWriterY: 0,
+            entryPath: entryPath
+        };
+        // Search the offset
+        return CatalogViewModel.searchEntryOffsetAtLevel(ctx, this.levels, 0, 0, databaseCount);
     }
 }
