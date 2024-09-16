@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as sqlynx from '@ankoh/sqlynx-core';
 import * as styles from './catalog_renderer.module.css';
 
-import { EdgePathBuilder } from './graph_edges.js';
+import { EdgePathBuilder, NodePort } from './graph_edges.js';
 import { classNames } from '../../utils/classnames.js';
 import { buildEdgePath, selectHorizontalEdgeType } from './graph_edges.js';
 import { CatalogViewModel, CatalogRenderingFlag, PINNED_BY_ANYTHING, PINNED_BY_FOCUS_PATH, PINNED_BY_FOCUS } from './catalog_view_model.js';
@@ -145,15 +145,16 @@ interface RenderingContext {
 };
 
 /// Render entries and emit ReactElements if they are within the virtual scroll window
-function renderEntriesAtLevel(ctx: RenderingContext, levelId: number, entriesBegin: number, entriesCount: number) {
-    const level = ctx.viewModel.levels[levelId];
-    const settings = level.settings;
-    const entries = level.entries;
-    const scratchEntry = level.scratchEntry;
-    const flags = level.entryFlags;
-    const positionX = level.positionX;
-    const positionsY = level.positionsY;
-    const renderingEpochs = level.renderedInEpoch;
+function renderEntriesAtLevel(ctx: RenderingContext, levelId: number, entriesBegin: number, entriesCount: number, parentEntryId: number | null, parentIsFocused: boolean) {
+    const levels = ctx.viewModel.levels;
+    const thisLevel = levels[levelId];
+    const settings = thisLevel.settings;
+    const entries = thisLevel.entries;
+    const scratchEntry = thisLevel.scratchEntry;
+    const flags = thisLevel.entryFlags;
+    const positionX = thisLevel.positionX;
+    const positionsY = thisLevel.positionsY;
+    const renderingEpochs = thisLevel.renderedInEpoch;
 
     // Track overflow nodes
     let overflowChildCount = 0;
@@ -167,9 +168,10 @@ function renderEntriesAtLevel(ctx: RenderingContext, levelId: number, entriesBeg
             // Resolve table
             const entryId = entriesBegin + i;
             const entryFlags = flags[entryId];
-            const isPinnedByAnything = (entryFlags & PINNED_BY_ANYTHING) != 0;
+            const entryIsPinned = (entryFlags & PINNED_BY_ANYTHING) != 0;
+            const entryIsFocused = (entryFlags & PINNED_BY_FOCUS) != 0;
             // Quickly skip over irrelevant entries
-            if (isPinnedByAnything != renderPinned) {
+            if (entryIsPinned != renderPinned) {
                 continue;
             }
             // Skip overflow entries
@@ -190,7 +192,7 @@ function renderEntriesAtLevel(ctx: RenderingContext, levelId: number, entriesBeg
             const entry = entries.read(ctx.snapshot, entryId, scratchEntry)!;
             if (entry.childCount() > 0) {
                 ctx.renderingWindow.startRenderingChildren();
-                renderEntriesAtLevel(ctx, levelId + 1, entry.childBegin(), entry.childCount());
+                renderEntriesAtLevel(ctx, levelId + 1, entry.childBegin(), entry.childCount(), entryId, entryIsFocused);
                 const stats = ctx.renderingWindow.stopRenderingChildren();
                 centerInScrollWindow = stats.centerInScrollWindow();
             }
@@ -212,20 +214,28 @@ function renderEntriesAtLevel(ctx: RenderingContext, levelId: number, entriesBeg
             ctx.renderingWindow.addNode(thisPosY, settings.nodeHeight);
             positionsY[entryId] = thisPosY;
             renderingEpochs[entryId] = ctx.renderingEpoch;
+            // Determine if any child is focused
+            let anyChildIsFocused = false;
+            if (entry.childCount() > 0) {
+                for (let i = 0; i < entry.childCount(); ++i) {
+                    const level = levels[levelId + 1];
+                    anyChildIsFocused ||= (level.entryFlags[entry.childBegin() + i] & PINNED_BY_FOCUS) != 0;
+                }
+            }
             // Output node
             const thisKey = ctx.renderingPath.getKey(levelId);
             const thisName = ctx.snapshot.readName(entry.nameId());
             ctx.outNodes.push(
                 <div
                     key={thisKey}
-                    className={classNames(styles.node_default, {
+                    className={classNames(styles.node, {
                         [styles.node_pinned_script_table_ref]: (entryFlags & CatalogRenderingFlag.SCRIPT_TABLE_REF) != 0,
                         [styles.node_pinned_script_table_ref_path]: (entryFlags & CatalogRenderingFlag.SCRIPT_TABLE_REF_PATH) != 0,
                         [styles.node_pinned_script_column_ref]: (entryFlags & CatalogRenderingFlag.SCRIPT_COLUMN_REF) != 0,
                         [styles.node_pinned_script_column_ref_path]: (entryFlags & CatalogRenderingFlag.SCRIPT_COLUMN_REF_PATH) != 0,
                         [styles.node_pinned_focus_target]: (entryFlags & PINNED_BY_FOCUS) != 0,
                         [styles.node_pinned_focus_path]: (entryFlags & PINNED_BY_FOCUS_PATH) != 0,
-                        [styles.node_pinned]: (entryFlags & PINNED_BY_ANYTHING) != 0,
+                        [styles.node_pinned]: (entryFlags & PINNED_BY_ANYTHING) != 0
                     })}
                     style={{
                         position: 'absolute',
@@ -238,7 +248,31 @@ function renderEntriesAtLevel(ctx: RenderingContext, levelId: number, entriesBeg
                     data-snapshot-level={levelId.toString()}
                     data-catalog-object={entry.catalogObjectId()}
                 >
-                    {thisName}
+                    <div className={styles.node_label}>
+                        {thisName}
+                    </div>
+                    <div className={styles.node_ports}>
+                        {(parentEntryId != null) && (
+                            <div
+                                className={classNames(styles.node_port_west, {
+                                    [styles.node_port_border_default]: !entryIsFocused,
+                                    [styles.node_port_border_focused]: entryIsFocused,
+                                    [styles.node_port_focused]: parentIsFocused && entryIsFocused,
+                                })}
+                                data-port={NodePort.West}
+                            />
+                        )}
+                        {(entry.childCount() > 0) && (
+                            <div
+                                className={classNames(styles.node_port_east, {
+                                    [styles.node_port_border_default]: !entryIsFocused,
+                                    [styles.node_port_border_focused]: entryIsFocused,
+                                    [styles.node_port_focused]: anyChildIsFocused,
+                                })}
+                                data-port={NodePort.East}
+                            />
+                        )}
+                    </div>
                 </div>
             );
             // Draw edges to all children
@@ -311,7 +345,7 @@ function renderEntriesAtLevel(ctx: RenderingContext, levelId: number, entriesBeg
                 <div
                     key={overflowKey}
 
-                    className={classNames(styles.node_default, styles.node_overflow)}
+                    className={classNames(styles.node, styles.node_overflow)}
                     style={{
                         position: 'absolute',
                         top: thisPosY,
@@ -343,6 +377,6 @@ export function renderCatalog(viewModel: CatalogViewModel, outNodes: React.React
         outEdges,
         outEdgesFocused,
     };
-    renderEntriesAtLevel(ctx, 0, 0, viewModel.databaseEntries.entries.length(ctx.snapshot));
+    renderEntriesAtLevel(ctx, 0, 0, viewModel.databaseEntries.entries.length(ctx.snapshot), null, false);
     return outNodes;
 }
