@@ -1,0 +1,68 @@
+namespace sqlynx.proto;
+
+table QueryPlan {
+    /// The name dictionary allows us to implement flat catalog entries as flat structs
+    name_dictionary: [string];
+    /// The plan nodes
+    nodes: [QueryPlanNode];
+    /// The attributes
+    attributes: [QueryPlanAttribute];
+    /// The total width
+    total_width: uint32;
+    /// The total height
+    total_height: uint32;
+}
+
+enum QueryPlanOperatorType: uint8 {
+    UNKNOWN = 0,
+}
+
+struct QueryPlanNode {
+    /// The node id.
+    /// May differ from the node index.
+    node_id: uint32;
+    /// The operator name
+    operator_name: uint32;
+    /// The operator type (if known)
+    operator_type: QueryPlanOperatorType;
+
+    /// The begin of the children
+    children_begin: uint32;
+    /// The children count
+    children_count: uint32;
+    /// The begin of the attributes
+    attributes_begin: uint32;
+    /// The attribute count
+    attribute_count: uint32;
+
+    /// The x position of the node
+    position_x: uint32;
+    /// The y position of the node
+    position_y: uint32;
+    /// The width of the node
+    node_width: uint32;
+    /// The height of the node
+    node_height: uint32;
+}
+
+enum QueryPlanAttributeType: uint8 {
+    UNKNOWN = 0,
+}
+
+struct QueryPlanAttribute {
+    /// The node id.
+    /// May differ from the node index.
+    attribute_id: uint32;
+    /// The attribute type
+    attribute_type: QueryPlanAttributeType;
+    /// The attribute name
+    attribute_name: uint32;
+    /// The value text (uint32 max if null)
+    value_text: uint32;
+    /// The children attributes
+    children_begin: uint32;
+    /// The children count
+    children_count: uint32;
+}
+
+
