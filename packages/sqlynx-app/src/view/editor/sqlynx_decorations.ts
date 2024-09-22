@@ -5,9 +5,9 @@ import { highlightingFor } from '@codemirror/language';
 import { tags as CODEMIRROR_TAGS, Tag } from '@lezer/highlight';
 
 import { SQLynxProcessor, SQLynxScriptBuffers, SQLynxScriptKey } from './sqlynx_processor.js';
+import { FocusType, UserFocus } from '../../session/focus.js';
 
 import './sqlynx_decorations.css';
-import { UserFocus } from 'session/focus.js';
 
 const PROTO_TAG_MAPPING: Map<sqlynx.proto.ScannerTokenType, Tag> = new Map([
     [sqlynx.proto.ScannerTokenType.KEYWORD, CODEMIRROR_TAGS.keyword],
@@ -26,20 +26,26 @@ for (const [_token, tag] of PROTO_TAG_MAPPING) {
     CODEMIRROR_TAGS_USED.add(tag);
 }
 
+const CursorTableReference = Decoration.mark({
+    class: 'sqlynx-tableref-cursor',
+});
 const FocusedTableReferenceDecoration = Decoration.mark({
     class: 'sqlynx-tableref-focus',
-});
-const FocusedColumnReferenceDecoration = Decoration.mark({
-    class: 'sqlynx-colref-focus',
-});
-const ErrorDecoration = Decoration.mark({
-    class: 'sqlynx-error',
 });
 const UnresolvedTableReferenceDecoration = Decoration.mark({
     class: 'sqlynx-tableref-unresolved',
 });
+const CursorColumnReference = Decoration.mark({
+    class: 'sqlynx-colref-cursor',
+});
+const FocusedColumnReferenceDecoration = Decoration.mark({
+    class: 'sqlynx-colref-focus',
+});
 const UnresolvedColumnReferenceDecoration = Decoration.mark({
     class: 'sqlynx-colref-unresolved',
+});
+const ErrorDecoration = Decoration.mark({
+    class: 'sqlynx-error',
 });
 
 function buildDecorationsFromTokens(
@@ -214,10 +220,21 @@ function buildDecorationsFromFocus(
         const astNodeId = expr.astNodeId()!;
         const astNode = parsed.nodes(astNodeId, tmpNode)!;
         const loc = astNode.location(tmpLoc)!;
+
+        // Get decoration
+        let decoration: Decoration;
+        switch (focusType) {
+            case FocusType.COLUMN_REF_UNDER_CURSOR:
+                decoration = CursorColumnReference;
+                break;
+            default:
+                decoration = FocusedColumnReferenceDecoration;
+                break;
+        }
         decorations.push({
             from: loc.offset(),
             to: loc.offset() + loc.length(),
-            decoration: FocusedColumnReferenceDecoration, // XXX more specific
+            decoration: decoration, // XXX more specific
         });
     }
 
@@ -236,10 +253,21 @@ function buildDecorationsFromFocus(
         const astNodeId = columnRef.astNodeId()!;
         const astNode = parsed.nodes(astNodeId, tmpNode)!;
         const loc = astNode.location(tmpLoc)!;
+
+        // Get decoration
+        let decoration: Decoration;
+        switch (focusType) {
+            case FocusType.TABLE_REF_UNDER_CURSOR:
+                decoration = CursorTableReference;
+                break;
+            default:
+                decoration = FocusedTableReferenceDecoration;
+                break;
+        }
         decorations.push({
             from: loc.offset(),
             to: loc.offset() + loc.length(),
-            decoration: FocusedTableReferenceDecoration,
+            decoration: decoration,
         });
     }
     decorations.sort((l: DecorationInfo, r: DecorationInfo) => {

@@ -35,10 +35,12 @@ export enum FocusType {
     COMPLETION_CANDIDATE,
     CATALOG_ENTRY,
     COLUMN_REF,
+    COLUMN_REF_UNDER_CURSOR,
     COLUMN_REF_OF_TARGET_TABLE,
     COLUMN_REF_OF_TARGET_COLUMN,
     COLUMN_REF_OF_PEER_COLUMN,
     TABLE_REF,
+    TABLE_REF_UNDER_CURSOR,
     TABLE_REF_OF_TARGET_TABLE,
     TABLE_REF_OF_TARGET_COLUMN,
 }
@@ -119,7 +121,8 @@ export function deriveFocusFromScriptCursor(
                         for (let indexEntryId = begin0; indexEntryId < end0; ++indexEntryId) {
                             const indexEntry = targetAnalyzed.tableReferencesById(indexEntryId, tmpIndexedTableRef)!;
                             const tableRefId = indexEntry.tableReferenceId();
-                            focus.scriptTableRefs.set(sqlynx.ExternalObjectID.create(scriptKey, tableRefId), FocusType.TABLE_REF_OF_TARGET_TABLE);
+                            const focusType = (tableRefId == context.tableReferenceId) ? FocusType.TABLE_REF_UNDER_CURSOR : FocusType.TABLE_REF_OF_TARGET_TABLE;
+                            focus.scriptTableRefs.set(sqlynx.ExternalObjectID.create(scriptKey, tableRefId), focusType);
                         }
                         // Find column refs for table
                         const [begin1, end1] = sqlynx.findScriptColumnRefsEqualRange(
@@ -131,7 +134,8 @@ export function deriveFocusFromScriptCursor(
                         for (let indexEntryId = begin1; indexEntryId < end1; ++indexEntryId) {
                             const indexEntry = targetAnalyzed.columnReferencesById(indexEntryId, tmpIndexedColumnRef)!;
                             const expressionId = indexEntry.expressionId();
-                            focus.scriptColumnRefs.set(sqlynx.ExternalObjectID.create(scriptKey, expressionId), FocusType.COLUMN_REF_OF_TARGET_TABLE);
+                            const focusType = FocusType.COLUMN_REF_OF_TARGET_TABLE;
+                            focus.scriptColumnRefs.set(sqlynx.ExternalObjectID.create(scriptKey, expressionId), focusType);
                         }
                     }
                 }
@@ -209,7 +213,8 @@ export function deriveFocusFromScriptCursor(
                         for (let indexEntryId = begin2; indexEntryId < end2; ++indexEntryId) {
                             const indexEntry = targetAnalyzed.columnReferencesById(indexEntryId, tmpIndexedColumnRef)!;
                             const columnRefId = indexEntry.expressionId();
-                            focus.scriptColumnRefs.set(sqlynx.ExternalObjectID.create(scriptKey, columnRefId), FocusType.COLUMN_REF_OF_TARGET_COLUMN);
+                            const focusType = (columnRefId == context.expressionId) ? FocusType.COLUMN_REF_UNDER_CURSOR : FocusType.COLUMN_REF_OF_TARGET_COLUMN;
+                            focus.scriptColumnRefs.set(sqlynx.ExternalObjectID.create(scriptKey, columnRefId), focusType);
                         }
                     }
                 }
