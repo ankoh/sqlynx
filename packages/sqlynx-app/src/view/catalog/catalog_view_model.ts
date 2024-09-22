@@ -424,6 +424,7 @@ export class CatalogViewModel {
                 wasOverflowing[i] = (levels[i].entryFlags[entryId] & CatalogRenderingFlag.OVERFLOW) != 0;
                 levels[i].pinnedEntries.add(entryId);
                 levels[i].pinnedInEpoch[entryId] = epoch;
+                levels[i].entryFlags[entryId] &= ~PINNED_BY_ANYTHING;
                 levels[i].entryFlags[entryId] |= flagsPath;
 
                 // Update first focused (if appropriate)
@@ -442,6 +443,7 @@ export class CatalogViewModel {
             wasOverflowing[lastLevel] = (levels[lastLevel].entryFlags[lastEntryId] & CatalogRenderingFlag.OVERFLOW) != 0;
             levels[lastLevel].pinnedEntries.add(lastEntryId);
             levels[lastLevel].pinnedInEpoch[lastEntryId] = epoch;
+            levels[lastLevel].entryFlags[lastEntryId] &= ~PINNED_BY_ANYTHING;
             levels[lastLevel].entryFlags[lastEntryId] |= flagsTarget;
 
             // Update first focused (if appropriate)

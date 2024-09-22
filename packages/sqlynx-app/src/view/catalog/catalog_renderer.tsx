@@ -309,8 +309,29 @@ function renderEntriesAtLevel(ctx: RenderingContext, levelId: number, entriesBeg
 
                     // Is his a focused edge?
                     const toEntryFlags = toFlags[toEntryId];
-                    const focusedEdge = ((entryFlags & PINNED_BY_FOCUS) != 0) && ((toEntryFlags & PINNED_BY_FOCUS) != 0);
-                    if (focusedEdge) {
+                    const pinnedByCompletion = CatalogRenderingFlag.FOCUS_COMPLETION_CANDIDATE_PATH | CatalogRenderingFlag.FOCUS_COMPLETION_CANDIDATE;
+                    if (((entryFlags & pinnedByCompletion) != 0) && ((toEntryFlags & pinnedByCompletion) != 0)) {
+                        ctx.outEdgesFocused.push(
+                            <path
+                                key={edgeKey}
+                                d={edgePath}
+                                strokeWidth="2px"
+                                stroke="currentcolor"
+                                fill="transparent"
+                                pointerEvents="stroke"
+                                strokeDasharray="10"
+                                strokeDashoffset="1"
+                                data-edge={edgeKey}
+                            >
+                                <animate
+                                    attributeName="stroke-dashoffset"
+                                    values="100;0"
+                                    dur="3s"
+                                    calcMode="linear"
+                                    repeatCount="indefinite" />
+                            </path>,
+                        );
+                    } else if (((entryFlags & PINNED_BY_FOCUS) != 0) && ((toEntryFlags & PINNED_BY_FOCUS) != 0)) {
                         ctx.outEdgesFocused.push(
                             <path
                                 key={edgeKey}
