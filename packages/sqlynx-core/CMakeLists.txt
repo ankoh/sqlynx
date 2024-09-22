@@ -88,6 +88,7 @@ include(${CMAKE_SOURCE_DIR}/cmake/flatbuffers.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/frozen.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/ankerl.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/phmap.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/rapidjson.cmake)
 add_subdirectory(${CMAKE_SOURCE_DIR}/vendor/utf8proc)
 
 if(NOT WASM)
