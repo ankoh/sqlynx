@@ -2,7 +2,8 @@
     --editor_header_bg: hsl(210, 29%, 97%);
     --editor_gutter_bg: rgb(246, 248, 250);
     --editor_colref_bg: hsl(210, 24%, 88%);
-    --editor_queryedge_bg: hsl(210, 24%, 88%);
+    --editor_deco_focused_bg: hsl(210, 24%, 90%);
+    --editor_deco_cursor_bg: hsl(210, 24%, 80%);
 }
 
 .container {
