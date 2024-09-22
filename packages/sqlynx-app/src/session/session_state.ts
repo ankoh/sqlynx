@@ -448,7 +448,12 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                     }
                 }
             }
-            return { ...state, scripts, userFocus: null };
+            const next: SessionState = { ...state, scripts, userFocus: null };
+            let scriptData = next.scripts[action.value];
+            if (scriptData != null && scriptData.cursor) {
+                next.userFocus = deriveFocusFromScriptCursor(action.value, scriptData, scriptData.cursor);
+            }
+            return next;
         }
     }
 }
