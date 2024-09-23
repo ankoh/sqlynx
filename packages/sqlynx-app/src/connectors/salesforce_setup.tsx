@@ -36,7 +36,6 @@ import { isNativePlatform } from '../platform/native_globals.js';
 import { isDebugBuild } from '../globals.js';
 import { RESET } from './connection_state.js';
 import { AttachedDatabase, HyperDatabaseClient, HyperDatabaseConnectionContext } from '../platform/hyperdb_client.js';
-import { GrpcChannelArgs } from '../platform/grpc_common.js';
 import { useHyperDatabaseClient } from '../platform/hyperdb_client_provider.js';
 import {
     CHANNEL_READY,
