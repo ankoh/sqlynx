@@ -291,16 +291,6 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
                 <div className={style.section}>
                     <div className={classNames(style.section_layout, style.body_section_layout)}>
                         <TextField
-                            name="Instance API URL"
-                            caption="URL of the Salesforce API"
-                            value={salesforceConnection?.coreAccessToken?.apiInstanceUrl ?? ''}
-                            placeholder=""
-                            leadingVisual={() => <div>URL</div>}
-                            readOnly
-                            disabled
-                            logContext={LOG_CTX}
-                        />
-                        <TextField
                             name="Core Access Token"
                             caption="Access Token for Salesforce Core"
                             value={salesforceConnection?.coreAccessToken?.accessToken ?? ''}
