@@ -13,7 +13,7 @@ tauri-plugin-updater = "2.0.0-beta"
 [dependencies]
 futures = "0.3.30"
 chrono = "0.4.38"
-anyhow = "1.0.86"
+anyhow = "1.0.89"
 semver = "1.0.23"
 aws-sdk-s3 = "1.42.0"
 aws-credential-types = "1.2.0"
