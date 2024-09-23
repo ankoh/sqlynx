@@ -1299,6 +1299,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "ct-codecs"
+version = "1.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "026ac6ceace6298d2c557ef5ed798894962296469ec7842288ea64674201a2d1"
+
+[[package]]
 name = "ctor"
 version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3050,10 +3056,11 @@ checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 
 [[package]]
 name = "minisign"
-version = "0.7.6"
+version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4225fad231f4cfb67990de1750bb53f10ff1d5b42b91beb2a49e6ebd36c9ab4a"
+checksum = "04ca8307d42371a74bca6693cd4e73a55f355f62f7f0367c3a0858712f29f389"
 dependencies = [
+ "ct-codecs",
  "getrandom 0.2.12",
  "rpassword",
  "scrypt",
