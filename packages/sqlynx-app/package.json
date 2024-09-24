@@ -26,7 +26,7 @@
         "@connectrpc/connect-web": "^1.4.0",
         "@emotion/is-prop-valid": "^1.2.2",
         "@lezer/common": "^1.2.1",
-        "@lezer/highlight": "^1.2.0",
+        "@lezer/highlight": "^1.2.1",
         "@octokit/graphql": "^8.1.1",
         "@primer/behaviors": "^1.6.0",
         "@primer/octicons-react": "patch:@primer/octicons-react@npm%3A19.9.0#~/.yarn/patches/@primer-octicons-react-npm-19.9.0-65341cfa23.patch",
