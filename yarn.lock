@@ -48,7 +48,7 @@ __metadata:
     "@connectrpc/connect-web": "npm:^1.4.0"
     "@emotion/is-prop-valid": "npm:^1.2.2"
     "@lezer/common": "npm:^1.2.1"
-    "@lezer/highlight": "npm:^1.2.0"
+    "@lezer/highlight": "npm:^1.2.1"
     "@octokit/graphql": "npm:^8.1.1"
     "@primer/behaviors": "npm:^1.6.0"
     "@primer/octicons-react": "patch:@primer/octicons-react@npm%3A19.9.0#~/.yarn/patches/@primer-octicons-react-npm-19.9.0-65341cfa23.patch"
@@ -1484,12 +1484,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/highlight@npm:^1.0.0, @lezer/highlight@npm:^1.2.0":
+"@lezer/highlight@npm:^1.0.0":
   version: 1.2.0
   resolution: "@lezer/highlight@npm:1.2.0"
   dependencies:
     "@lezer/common": "npm:^1.0.0"
   checksum: 10c0/d4312f95b78e4b6f10833b1cf99601c6381c22b755bbf60fd61d6fe9b4cf7780650e2e2dadf75beb8d94824dcb5ec81da5cfc9ca54122688a482e488103105aa
+  languageName: node
+  linkType: hard
+
+"@lezer/highlight@npm:^1.2.1":
+  version: 1.2.1
+  resolution: "@lezer/highlight@npm:1.2.1"
+  dependencies:
+    "@lezer/common": "npm:^1.0.0"
+  checksum: 10c0/51b4c08596a0dfeec6a7b7ed90a7f2743ab42e7e8ff8b89707fd042860e4e133dbd8243639fcaf077305ae6c303aa74e69794015eb16cb34741f5ac6721f283c
   languageName: node
   linkType: hard
 
