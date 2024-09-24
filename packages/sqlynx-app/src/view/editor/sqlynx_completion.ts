@@ -1,5 +1,7 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
 
+import { EditorView } from '@codemirror/view';
+import { ChangeSpec } from '@codemirror/state';
 import { CompletionContext, CompletionResult, Completion } from '@codemirror/autocomplete';
 import { getNameTagName, unpackNameTags } from '../../utils/index.js';
 import { SQLynxEditorState, SQLynxProcessor } from './sqlynx_processor.js';
@@ -33,6 +35,27 @@ const previewCompletion = (completion: Completion) => {
     candidate.state.onCompletionPeek(candidate.state.scriptKey, candidate.coreCompletion, candidate.candidateId);
     return null;
 };
+
+const applyCompletion = (view: EditorView, completion: Completion, from: number, to: number) => {
+    const c = completion as SQLynxCompletion;
+    const candidate = c.coreCompletion.candidates[c.candidateId];
+    if (!candidate.replaceTextAt) {
+        console.warn("candidate replaceTextAt is null");
+        return;
+    }
+    const changes: ChangeSpec[] = [];
+    // XXX The location of the trailing to might include eof?
+    //     We shouldn't need to clamp here but should rather fix it on the wasm side
+    const replaceFrom = Math.min(candidate.replaceTextAt.offset, view.state.doc.length);
+    const replaceTo = Math.min(replaceFrom + candidate.replaceTextAt.length, view.state.doc.length);
+    changes.push({
+        from: replaceFrom,
+        to: replaceTo,
+        insert: candidate.completionText as string,
+    });
+    const newCursor = replaceFrom + (candidate.completionText as string).length;
+    view.dispatch({ changes, selection: { anchor: newCursor } });
+}
 
 /// Derived from this example:
 /// https://codemirror.net/examples/autocompletion/
@@ -69,6 +92,7 @@ export async function completeSQLynx(context: CompletionContext): Promise<Comple
                     label: candidate.completionText as string,
                     detail: candidateDetail,
                     info: previewCompletion,
+                    apply: applyCompletion,
                 });
             }
             offset = processor.scriptCursor.scannerSymbolOffset;
