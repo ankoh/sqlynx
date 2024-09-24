@@ -380,6 +380,7 @@ export class CatalogViewModel {
         epoch: number,
         flagsTarget: number,
         flagsPath: number,
+        clearFlags: number,
         objectId: QualifiedCatalogObjectID
     ): void {
         // Resolve entry ids
@@ -424,7 +425,7 @@ export class CatalogViewModel {
                 wasOverflowing[i] = (levels[i].entryFlags[entryId] & CatalogRenderingFlag.OVERFLOW) != 0;
                 levels[i].pinnedEntries.add(entryId);
                 levels[i].pinnedInEpoch[entryId] = epoch;
-                levels[i].entryFlags[entryId] &= ~PINNED_BY_ANYTHING;
+                levels[i].entryFlags[entryId] &= ~clearFlags;
                 levels[i].entryFlags[entryId] |= flagsPath;
 
                 // Update first focused (if appropriate)
@@ -443,7 +444,7 @@ export class CatalogViewModel {
             wasOverflowing[lastLevel] = (levels[lastLevel].entryFlags[lastEntryId] & CatalogRenderingFlag.OVERFLOW) != 0;
             levels[lastLevel].pinnedEntries.add(lastEntryId);
             levels[lastLevel].pinnedInEpoch[lastEntryId] = epoch;
-            levels[lastLevel].entryFlags[lastEntryId] &= ~PINNED_BY_ANYTHING;
+            levels[lastLevel].entryFlags[lastEntryId] &= ~clearFlags;
             levels[lastLevel].entryFlags[lastEntryId] |= flagsTarget;
 
             // Update first focused (if appropriate)
@@ -551,7 +552,7 @@ export class CatalogViewModel {
                         table: resolved.catalogTableId(),
                     }
                 };
-                this.pinPath(catalog, epoch, CatalogRenderingFlag.SCRIPT_TABLE_REF, CatalogRenderingFlag.SCRIPT_TABLE_REF_PATH, objectId);
+                this.pinPath(catalog, epoch, CatalogRenderingFlag.SCRIPT_TABLE_REF, CatalogRenderingFlag.SCRIPT_TABLE_REF_PATH, PINNED_BY_SCRIPT, objectId);
             }
         }
 
@@ -569,7 +570,7 @@ export class CatalogViewModel {
                         column: resolved.columnId(),
                     }
                 };
-                this.pinPath(catalog, epoch, CatalogRenderingFlag.SCRIPT_COLUMN_REF, CatalogRenderingFlag.SCRIPT_COLUMN_REF_PATH, objectId);
+                this.pinPath(catalog, epoch, CatalogRenderingFlag.SCRIPT_COLUMN_REF, CatalogRenderingFlag.SCRIPT_COLUMN_REF_PATH, PINNED_BY_SCRIPT, objectId);
             }
         }
 
@@ -606,7 +607,7 @@ export class CatalogViewModel {
                     flagsPath = CatalogRenderingFlag.FOCUS_COLUMN_REF_PATH;
                     break;
             }
-            this.pinPath(catalog, epoch, flagsTarget, flagsPath, o);
+            this.pinPath(catalog, epoch, flagsTarget, flagsPath, PINNED_BY_FOCUS, o);
         }
         // Unpin previous catalog objects
         this.unpin(PINNED_BY_FOCUS, epoch);
