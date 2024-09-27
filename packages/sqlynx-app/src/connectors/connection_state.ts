@@ -17,6 +17,7 @@ import {
     CONNECTOR_INFOS,
     ConnectorInfo,
     ConnectorType,
+    DEMO_CONNECTOR,
     HYPER_GRPC_CONNECTOR,
     SALESFORCE_DATA_CLOUD_CONNECTOR,
     SERVERLESS_CONNECTOR,
@@ -29,6 +30,7 @@ import {
 } from './query_execution_state.js';
 import { ConnectionMetrics, createConnectionMetrics } from './connection_statistics.js';
 import { reduceQueryAction } from './query_execution_state.js';
+import { DemoConnectionDetails } from './demo_connection_state.js';
 
 export interface ConnectionState {
     /// The connection id
@@ -103,6 +105,7 @@ export enum ConnectionHealth {
 export type ConnectionDetailsVariant =
     | VariantKind<typeof SALESFORCE_DATA_CLOUD_CONNECTOR, SalesforceConnectionDetails>
     | VariantKind<typeof SERVERLESS_CONNECTOR, unknown>
+    | VariantKind<typeof DEMO_CONNECTOR, DemoConnectionDetails>
     | VariantKind<typeof HYPER_GRPC_CONNECTOR, HyperGrpcConnectionDetails>
     ;
 
@@ -196,6 +199,7 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
                     details = reduceHyperGrpcConnectorState(cleaned, action as HyperGrpcConnectorAction);
                     break;
                 case SERVERLESS_CONNECTOR:
+                case DEMO_CONNECTOR:
                     break;
             }
 
@@ -213,6 +217,7 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
                     next = reduceHyperGrpcConnectorState(state, action as HyperGrpcConnectorAction);
                     break;
                 case SERVERLESS_CONNECTOR:
+                case DEMO_CONNECTOR:
                     break;
             }
             if (next == null) {

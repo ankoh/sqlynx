@@ -4,7 +4,7 @@ import Immutable from 'immutable';
 import { KeyValueListElement } from '../view/foundations/keyvalue_list.js';
 import { GrpcChannelArgs } from '../platform/grpc_common.js';
 import { ConnectionDetailsVariant } from './connection_state.js';
-import { HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, SERVERLESS_CONNECTOR } from './connector_info.js';
+import { DEMO_CONNECTOR, HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, SERVERLESS_CONNECTOR } from './connector_info.js';
 
 export interface HyperGrpcConnectionParams {
     /// The gRPC endpoint
@@ -65,10 +65,22 @@ export function buildServerlessConnectorParams(): proto.sqlynx_session.pb.Connec
     });
 }
 
+export function buildDemoConnectorParams(): proto.sqlynx_session.pb.ConnectorParams {
+    return new proto.sqlynx_session.pb.ConnectorParams({
+        connector: {
+            case: "demo",
+            value: new proto.sqlynx_session.pb.DemoParams()
+        }
+    });
+}
+
+
 export function buildConnectorParams(state: ConnectionDetailsVariant) {
     switch (state.type) {
         case SERVERLESS_CONNECTOR:
             return buildServerlessConnectorParams();
+        case DEMO_CONNECTOR:
+            return buildDemoConnectorParams();
         case HYPER_GRPC_CONNECTOR: {
             if (state.value.channelSetupParams == null) {
                 return null;

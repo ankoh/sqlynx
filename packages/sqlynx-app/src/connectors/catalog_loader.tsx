@@ -3,7 +3,7 @@ import * as React from 'react';
 import { useDynamicConnectionDispatch } from './connection_registry.js';
 import { CatalogTaskVariant, CatalogUpdateTaskState, CatalogUpdateTaskStatus } from './catalog_update_state.js';
 import { useSalesforceAPI } from './salesforce_connector.js';
-import { HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, SERVERLESS_CONNECTOR } from './connector_info.js';
+import { DEMO_CONNECTOR, HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, SERVERLESS_CONNECTOR } from './connector_info.js';
 import {
     CATALOG_UPDATE_CANCELLED,
     CATALOG_UPDATE_FAILED,
@@ -70,6 +70,8 @@ export function CatalogUpdaterProvider(props: { children?: React.ReactElement })
                 }
                 break;
             }
+            case DEMO_CONNECTOR:
+            // XXX
             case SERVERLESS_CONNECTOR:
                 throw new Error(
                     `catalog updater does not support connector ${conn.connectionInfo.connectorType} yet`,

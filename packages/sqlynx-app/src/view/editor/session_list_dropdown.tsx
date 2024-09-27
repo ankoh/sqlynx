@@ -10,6 +10,7 @@ import {
     HYPER_GRPC_CONNECTOR,
     SALESFORCE_DATA_CLOUD_CONNECTOR,
     SERVERLESS_CONNECTOR,
+    DEMO_CONNECTOR,
 } from '../../connectors/connector_info.js';
 import { SessionState } from '../../session/session_state.js';
 import { useConnectionRegistry } from '../../connectors/connection_registry.js';
@@ -45,8 +46,8 @@ export function SessionListDropdown(props: { className?: string; short: boolean 
             onClick={() => setIsOpen(true)}
             variant={ButtonVariant.Invisible}
             leadingVisual={() => (!sessionState?.connectorInfo
-                    ? <div />
-                    : <ConnectorIcon connector={sessionState?.connectorInfo} variant={ConnectorIconVariant.OUTLINES} />
+                ? <div />
+                : <ConnectorIcon connector={sessionState?.connectorInfo} variant={ConnectorIconVariant.OUTLINES} />
             )}
         >
             {connectorName}
@@ -96,6 +97,7 @@ export function SessionListDropdown(props: { className?: string; short: boolean 
                 break;
             }
             case SERVERLESS_CONNECTOR:
+            case DEMO_CONNECTOR:
                 break;
         }
         return (
