@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as arrow from 'apache-arrow';
-import { VariableSizeGrid as Grid, GridChildComponentProps } from 'react-window';
+import { VariableSizeGrid as Grid, GridChildComponentProps, GridOnScrollProps } from 'react-window';
 
 import { classNames } from '../../utils/classnames.js';
 
@@ -76,11 +76,23 @@ export const DataTable: React.FC<Props> = (props: Props) => {
     if (props.data == null) {
         return <div />;
     }
+
+    const headerGrid = React.useRef<Grid>(null);
+    const dataGrid = React.useRef<Grid>(null);
+
+    const onDataScroll = React.useCallback((event: GridOnScrollProps) => {
+        if (event.scrollUpdateWasRequested === false) {
+            headerGrid.current && headerGrid.current.scrollTo({ scrollLeft: event.scrollLeft });
+        }
+    }, []);
+
     return (
         <div className={classNames(styles.root, props.className)} ref={gridContainerElement}>
             <div className={styles.header_background} />
             <div className={styles.header_grid}>
                 <Grid
+                    ref={headerGrid}
+                    style={{ overflowX: 'hidden' }}
                     columnCount={gridColumns}
                     columnWidth={getColumnWidth}
                     height={COLUMN_HEADER_HEIGHT}
@@ -93,12 +105,14 @@ export const DataTable: React.FC<Props> = (props: Props) => {
             </div>
             <div className={styles.data_grid}>
                 <Grid
+                    ref={dataGrid}
                     columnCount={gridColumns}
                     columnWidth={getColumnWidth}
                     rowCount={gridRows}
                     rowHeight={() => ROW_HEIGHT}
                     height={gridContainerHeight}
                     width={gridContainerWidth}
+                    onScroll={onDataScroll}
                 >
                     {DataCell}
                 </Grid>
