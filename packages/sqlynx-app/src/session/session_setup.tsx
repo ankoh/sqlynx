@@ -6,6 +6,7 @@ import { ConnectorInfo, getConnectorInfoForParams } from '../connectors/connecto
 import { useServerlessSessionSetup } from './setup_serverless_session.js';
 import { useAppEventListener } from '../platform/event_listener_provider.js';
 import { useSalesforceSessionSetup } from './setup_salesforce_session.js';
+import { useDemoSessionSetup } from './setup_demo_session.js';
 import { useHyperSessionSetup } from './setup_hyper_session.js';
 import { useCurrentSessionSelector } from './current_session.js';
 import { useLogger } from '../platform/logger_provider.js';
@@ -19,6 +20,7 @@ interface DefaultSessions {
     salesforce: number;
     hyper: number;
     serverless: number;
+    demo: number;
 }
 const DEFAULT_SESSIONS = React.createContext<DefaultSessions | null>(null);
 export const useDefaultSessions = () => React.useContext(DEFAULT_SESSIONS);
@@ -45,6 +47,7 @@ export const SessionSetup: React.FC<{ children: React.ReactElement }> = (props: 
     const setupServerlessSession = useServerlessSessionSetup();
     const setupHyperSession = useHyperSessionSetup();
     const setupSalesforceSession = useSalesforceSessionSetup();
+    const setupDemoSession = useDemoSessionSetup();
     const selectCurrentSession = useCurrentSessionSelector();
     const [defaultSessions, setDefaultSessions] = React.useState<DefaultSessions | null>(null);
     const sessionReg = useSessionRegistry();
@@ -54,15 +57,17 @@ export const SessionSetup: React.FC<{ children: React.ReactElement }> = (props: 
     const abortDefaultSessionSwitch = React.useRef(new AbortController());
 
     const setupDefaultSessions = React.useMemo(async () => {
-        const [sf, hyper, serverless] = await Promise.all([
+        const [sf, hyper, serverless, demo] = await Promise.all([
             setupSalesforceSession(),
             setupHyperSession(),
             setupServerlessSession(),
+            setupDemoSession(),
         ]);
         const defaultSessions: DefaultSessions = {
             salesforce: sf,
             hyper: hyper,
             serverless: serverless,
+            demo: demo,
         };
         setDefaultSessions(defaultSessions);
         return defaultSessions;
@@ -122,6 +127,16 @@ export const SessionSetup: React.FC<{ children: React.ReactElement }> = (props: 
                     const session = sessionReg.sessionMap.get(defaultSessions.serverless)!;
                     connDispatch(session.connectionId, { type: RESET, value: null });
                     selectCurrentSession(defaultSessions.serverless);
+                    setState({
+                        decision: SessionSetupDecision.SKIP_SETUP_PAGE,
+                        args: null,
+                    });
+                    return;
+                }
+                case "demo": {
+                    const session = sessionReg.sessionMap.get(defaultSessions.demo)!;
+                    connDispatch(session.connectionId, { type: RESET, value: null });
+                    selectCurrentSession(defaultSessions.demo);
                     setState({
                         decision: SessionSetupDecision.SKIP_SETUP_PAGE,
                         args: null,

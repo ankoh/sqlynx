@@ -103,11 +103,11 @@ export const ScriptLoader: React.FC<Props> = (props: Props) => {
 
     React.useEffect(
         () => loadIfNeeded(session?.scripts[ScriptKey.MAIN_SCRIPT] ?? null),
-        [session?.scripts[ScriptKey.MAIN_SCRIPT]?.metadata],
+        [session?.scripts[ScriptKey.MAIN_SCRIPT]?.metadata, session?.connectorInfo],
     );
     React.useEffect(
         () => loadIfNeeded(session?.scripts[ScriptKey.SCHEMA_SCRIPT] ?? null),
-        [session?.scripts[ScriptKey.SCHEMA_SCRIPT]?.metadata],
+        [session?.scripts[ScriptKey.SCHEMA_SCRIPT]?.metadata, session?.connectorInfo],
     );
     return props.children;
 };

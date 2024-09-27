@@ -9,7 +9,7 @@ import {
     QueryExecutionTaskVariant,
 } from './query_execution_state.js';
 import { useSalesforceAPI } from './salesforce_connector.js';
-import { HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, SERVERLESS_CONNECTOR } from './connector_info.js';
+import { DEMO_CONNECTOR, HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, SERVERLESS_CONNECTOR } from './connector_info.js';
 import {
     EXECUTE_QUERY,
     QUERY_EXECUTION_CANCELLED,
@@ -89,6 +89,16 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                 }
                 break;
             }
+            case DEMO_CONNECTOR: {
+                task = {
+                    type: DEMO_CONNECTOR,
+                    value: {
+                        scriptText: args.query
+                    }
+                }
+                break;
+            }
+            // XXX
             case SERVERLESS_CONNECTOR:
                 throw new Error(
                     `script query executor does not support connector ${conn.connectionInfo.connectorType} yet`,

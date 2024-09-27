@@ -1,7 +1,7 @@
 import * as arrow from 'apache-arrow';
 
 import { VariantKind } from '../utils/index.js';
-import { HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR } from './connector_info.js';
+import { DEMO_CONNECTOR, HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR } from './connector_info.js';
 import {
     ConnectionState,
     EXECUTE_QUERY,
@@ -18,8 +18,14 @@ import { ConnectionQueryMetrics } from './connection_statistics.js';
 import { HyperDatabaseChannel } from '../platform/hyperdb_client.js';
 
 export type QueryExecutionTaskVariant =
+    | VariantKind<typeof DEMO_CONNECTOR, ExecuteDemoQueryTask>
     | VariantKind<typeof SALESFORCE_DATA_CLOUD_CONNECTOR, ExecuteDataCloudQueryTask>
     | VariantKind<typeof HYPER_GRPC_CONNECTOR, HyperGrpcQueryTask>;
+
+export interface ExecuteDemoQueryTask {
+    /// The script text
+    scriptText: string;
+}
 
 export interface ExecuteDataCloudQueryTask {
     /// The script text
@@ -122,7 +128,7 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
     const queryId = action.value[0];
 
     // Initial setup?
-    if (action.type == EXECUTE_QUERY)  {
+    if (action.type == EXECUTE_QUERY) {
         state.queriesRunning.set(queryId, action.value[1]);
         return { ...state };
     }
@@ -274,7 +280,7 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
     }
 }
 
-function mergeQueryMetrics(metrics: ConnectionQueryMetrics, query: QueryMetrics) : ConnectionQueryMetrics {
+function mergeQueryMetrics(metrics: ConnectionQueryMetrics, query: QueryMetrics): ConnectionQueryMetrics {
     return {
         totalQueries: metrics.totalQueries + BigInt(1),
         totalBatchesReceived: metrics.totalBatchesReceived + BigInt(query.batchesReceived),
