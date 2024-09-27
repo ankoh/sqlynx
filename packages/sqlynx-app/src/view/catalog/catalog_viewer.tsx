@@ -207,6 +207,18 @@ export function CatalogViewer(_props: Props) {
                             nodes={nodes ?? []}
                         />
                     </div>
+                    <div className={styles.summary_container}>
+                        <div className={styles.summary_script_status}>
+                        </div>
+                        <div className={styles.summary_script_metrics}>
+                            <div className={styles.summary_script_metric}>
+                            </div>
+                            <div className={styles.summary_script_metric}>
+                            </div>
+                            <div className={styles.summary_script_metric}>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div className={styles.overlay_title}>Schema</div>
