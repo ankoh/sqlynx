@@ -44,8 +44,8 @@ __metadata:
     "@codemirror/language": "npm:^6.10.2"
     "@codemirror/state": "npm:^6.4.1"
     "@codemirror/view": "npm:6.28.0"
-    "@connectrpc/connect": "npm:^1.4.0"
-    "@connectrpc/connect-web": "npm:^1.4.0"
+    "@connectrpc/connect": "npm:^1.5.0"
+    "@connectrpc/connect-web": "npm:^1.5.0"
     "@emotion/is-prop-valid": "npm:^1.2.2"
     "@lezer/common": "npm:^1.2.1"
     "@lezer/highlight": "npm:^1.2.1"
@@ -149,8 +149,8 @@ __metadata:
   resolution: "@ankoh/sqlynx-pb@workspace:packages/sqlynx-pb"
   dependencies:
     "@bufbuild/protobuf": "npm:^1.10.0"
-    "@connectrpc/connect": "npm:^1.4.0"
-    "@connectrpc/connect-web": "npm:^1.4.0"
+    "@connectrpc/connect": "npm:^1.5.0"
+    "@connectrpc/connect-web": "npm:^1.5.0"
     "@types/node": "npm:^20.16.9"
     esbuild: "npm:^0.23.0"
     typescript: "npm:^5.6.2"
@@ -636,7 +636,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@bufbuild/protobuf@npm:1.10.0, @bufbuild/protobuf@npm:^1.10.0, @bufbuild/protobuf@npm:^1.7.2":
+"@bufbuild/protobuf@npm:1.10.0, @bufbuild/protobuf@npm:^1.10.0":
   version: 1.10.0
   resolution: "@bufbuild/protobuf@npm:1.10.0"
   checksum: 10c0/5487b9c2e63846d0e3bde4d025cc77ae44a22166a5d6c184df0da5581e1ab6d66dd115af0ccad814576dcd011bb1b93989fb0ac1eb4ae452979bb8b186693ba0
@@ -660,7 +660,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@bufbuild/protoplugin@npm:1.10.0, @bufbuild/protoplugin@npm:^1.7.2":
+"@bufbuild/protoplugin@npm:1.10.0, @bufbuild/protoplugin@npm:^1.10.0":
   version: 1.10.0
   resolution: "@bufbuild/protoplugin@npm:1.10.0"
   dependencies:
@@ -743,34 +743,34 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@connectrpc/connect-web@npm:^1.4.0":
-  version: 1.4.0
-  resolution: "@connectrpc/connect-web@npm:1.4.0"
+"@connectrpc/connect-web@npm:^1.5.0":
+  version: 1.5.0
+  resolution: "@connectrpc/connect-web@npm:1.5.0"
   peerDependencies:
-    "@bufbuild/protobuf": ^1.4.2
-    "@connectrpc/connect": 1.4.0
-  checksum: 10c0/8f636ebda5b2707416c94aff72d285972e85eba15cae57eb6126b1d0da6f9dcdc7452ab3bd5d527cd987eb527e2f5cdc453ccb43098ac20ea2e2c3604c69c366
+    "@bufbuild/protobuf": ^1.10.0
+    "@connectrpc/connect": 1.5.0
+  checksum: 10c0/5cfdaf318af8208385895b5ef0c176264a913df5500b3ecd59532e073d671744e1de30a97dde95d33d59bc3d7abdc42a290948167fbd5324fcaf7c3dbea95662
   languageName: node
   linkType: hard
 
-"@connectrpc/connect@npm:^1.4.0":
-  version: 1.4.0
-  resolution: "@connectrpc/connect@npm:1.4.0"
+"@connectrpc/connect@npm:^1.5.0":
+  version: 1.5.0
+  resolution: "@connectrpc/connect@npm:1.5.0"
   peerDependencies:
-    "@bufbuild/protobuf": ^1.4.2
-  checksum: 10c0/6006e4aef6908a786ffbda6f7c9c92fe0906e031e891c7ce28de9d1b8e3feb9115d924ec6fc38131a5b9936b537594b0a828711e3e0544f760c78e010eda1ea1
+    "@bufbuild/protobuf": ^1.10.0
+  checksum: 10c0/8a9a37366b7c5373d689e43cf30c059960daf601a7aade4262b2a6eec35763ea972c5350a609126e69c138e9559796cea7795cd1a276bee7fb342588339864f0
   languageName: node
   linkType: hard
 
-"@connectrpc/protoc-gen-connect-es@npm:^1.4.0":
-  version: 1.4.0
-  resolution: "@connectrpc/protoc-gen-connect-es@npm:1.4.0"
+"@connectrpc/protoc-gen-connect-es@npm:^1.5.0":
+  version: 1.5.0
+  resolution: "@connectrpc/protoc-gen-connect-es@npm:1.5.0"
   dependencies:
-    "@bufbuild/protobuf": "npm:^1.7.2"
-    "@bufbuild/protoplugin": "npm:^1.7.2"
+    "@bufbuild/protobuf": "npm:^1.10.0"
+    "@bufbuild/protoplugin": "npm:^1.10.0"
   peerDependencies:
-    "@bufbuild/protoc-gen-es": ^1.7.2
-    "@connectrpc/connect": 1.4.0
+    "@bufbuild/protoc-gen-es": ^1.10.0
+    "@connectrpc/connect": 1.5.0
   peerDependenciesMeta:
     "@bufbuild/protoc-gen-es":
       optional: true
@@ -778,7 +778,7 @@ __metadata:
       optional: true
   bin:
     protoc-gen-connect-es: bin/protoc-gen-connect-es
-  checksum: 10c0/6a547cc7dd558accc1f5bfd9ae6491a8e3bbca9e37e89aaff639477a12854a13aee295873ecbd399716536ceea2c0a5de44a43a8a4e8bad7689f64b81a274fec
+  checksum: 10c0/6a6921296fac857697fffe0e3adef3a739a69c1ef0457967d9cc5851ec24ca3525bcb088ea6c717f756e389731e1691948564e7c9979958d05720249e6b97849
   languageName: node
   linkType: hard
 
@@ -9142,7 +9142,7 @@ __metadata:
   dependencies:
     "@bufbuild/buf": "npm:^1.42.0"
     "@bufbuild/protoc-gen-es": "npm:^1.10.0"
-    "@connectrpc/protoc-gen-connect-es": "npm:^1.4.0"
+    "@connectrpc/protoc-gen-connect-es": "npm:^1.5.0"
     "@eslint/js": "npm:^9.8.0"
     "@tauri-apps/cli": "npm:^2.0.0-beta.21"
     "@types/node": "npm:^20.16.9"
