@@ -4,11 +4,13 @@ import { isNativePlatform } from "../platform/native_globals.js";
 export const SERVERLESS_CONNECTOR = Symbol('SERVERLESS_CONNECTOR');
 export const SALESFORCE_DATA_CLOUD_CONNECTOR = Symbol('SALESFORCE_DATA_CLOUD_CONNECTOR');
 export const HYPER_GRPC_CONNECTOR = Symbol('HYPER_GRPC_CONNECTOR');
+export const DEMO_CONNECTOR = Symbol('DEMO_CONNECTOR');
 
 export enum ConnectorType {
     SERVERLESS = 0,
     SALESFORCE_DATA_CLOUD = 1,
     HYPER_GRPC = 2,
+    DEMO = 3,
 }
 
 export interface ConnectorInfo {
@@ -111,6 +113,27 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
             native: true,
         },
     },
+    {
+        connectorType: ConnectorType.DEMO,
+        displayName: {
+            short: 'Demo',
+            long: 'Demo',
+        },
+        icons: {
+            colored: "code",
+            uncolored: "code",
+            outlines: "code",
+        },
+        features: {
+            schemaScript: true,
+            executeQueryAction: true,
+            refreshSchemaAction: true,
+        },
+        platforms: {
+            browser: true,
+            native: true,
+        },
+    },
 ];
 
 export function getConnectorInfoForParams(params: proto.sqlynx_session.pb.ConnectorParams): ConnectorInfo | null {
@@ -118,6 +141,7 @@ export function getConnectorInfoForParams(params: proto.sqlynx_session.pb.Connec
         case "hyper": return CONNECTOR_INFOS[ConnectorType.HYPER_GRPC];
         case "salesforce": return CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD];
         case "serverless": return CONNECTOR_INFOS[ConnectorType.SERVERLESS];
+        case "demo": return CONNECTOR_INFOS[ConnectorType.DEMO];
         default: return null;
     }
 }
