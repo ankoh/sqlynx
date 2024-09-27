@@ -2,7 +2,6 @@ import * as React from 'react';
 import Immutable from 'immutable';
 
 import { CONNECTOR_INFOS, ConnectorType } from '../connectors/connector_info.js';
-import { DEFAULT_BOARD_HEIGHT, DEFAULT_BOARD_WIDTH } from './setup_serverless_session.js';
 import { RESULT_OK } from '../utils/result.js';
 import { ScriptData, ScriptKey } from './session_state.js';
 import { ScriptLoadingStatus } from './script_loader.js';

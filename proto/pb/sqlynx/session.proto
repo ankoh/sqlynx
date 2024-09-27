@@ -36,6 +36,8 @@ message SalesforceConnectorParams {
 
 message ServerlessParams {}
 
+message DemoParams {}
+
 message ConnectorParams {
     oneof connector {
         /// Parameters for Serverless sessions
@@ -44,6 +46,8 @@ message ConnectorParams {
         SalesforceConnectorParams salesforce = 2;
         /// Parameters for direct-to-Hyper connections
         HyperConnectorParams hyper = 3;
+        /// Parameters for demo sessions
+        DemoParams demo = 4;
     }
 }
 
