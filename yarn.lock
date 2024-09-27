@@ -104,7 +104,7 @@ __metadata:
     style-loader: "npm:^4.0.0"
     style-mod: "npm:^4.1.2"
     styled-components: "npm:^6.1.13"
-    stylis: "npm:^4.3.2"
+    stylis: "npm:^4.3.4"
     ts-jest: "npm:^29.2.5"
     ts-loader: "npm:^9.5.1"
     ts-node: "npm:^10.9.2"
@@ -9853,10 +9853,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"stylis@npm:4.3.2, stylis@npm:^4.3.2":
+"stylis@npm:4.3.2":
   version: 4.3.2
   resolution: "stylis@npm:4.3.2"
   checksum: 10c0/0410e1404cbeee3388a9e17587875211ce2f014c8379af0d1e24ca55878867c9f1ccc7b0ce9a156ca53f5d6e301391a82b0645522a604674a378b3189a4a1994
+  languageName: node
+  linkType: hard
+
+"stylis@npm:^4.3.4":
+  version: 4.3.4
+  resolution: "stylis@npm:4.3.4"
+  checksum: 10c0/4899c2674cd2538e314257abd1ba7ea3c2176439659ddac6593c78192cfd4a06f814a0a4fc69bc7f8fcc6b997e13d383dd9b578b71074746a0fb86045a83e42d
   languageName: node
   linkType: hard
 
