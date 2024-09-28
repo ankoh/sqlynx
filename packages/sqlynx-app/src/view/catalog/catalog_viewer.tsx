@@ -18,28 +18,28 @@ const RENDERING_SETTINGS: CatalogRenderingSettings = {
     levels: {
         databases: {
             nodeWidth: 160,
-            nodeHeight: 30,
+            nodeHeight: 32,
             maxUnpinnedChildren: 3,
             rowGap: 8,
             columnGap: 48,
         },
         schemas: {
             nodeWidth: 160,
-            nodeHeight: 30,
+            nodeHeight: 32,
             maxUnpinnedChildren: 3,
             rowGap: 8,
             columnGap: 48,
         },
         tables: {
             nodeWidth: 160,
-            nodeHeight: 30,
+            nodeHeight: 32,
             maxUnpinnedChildren: 5,
             rowGap: 16,
             columnGap: 48,
         },
         columns: {
             nodeWidth: 160,
-            nodeHeight: 30,
+            nodeHeight: 32,
             maxUnpinnedChildren: 3,
             rowGap: 8,
             columnGap: 48,
