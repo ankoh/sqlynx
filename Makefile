@@ -155,6 +155,8 @@ pwa_dev:
 pwa_dev_trace:
 	SQLYNX_LOG_LEVEL=trace yarn workspace @ankoh/sqlynx-app serve:dev
 
+# Run specific pwa tests with:
+# yarn workspace @ankoh/sqlynx-app test random_data.test.ts
 .PHONY: pwa_tests
 pwa_tests:
 	yarn workspace @ankoh/sqlynx-app test

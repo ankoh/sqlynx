@@ -1,10 +1,10 @@
 import * as proto from '@ankoh/sqlynx-pb';
 import { isNativePlatform } from "../platform/native_globals.js";
 
+export const DEMO_CONNECTOR = Symbol('DEMO_CONNECTOR');
 export const SERVERLESS_CONNECTOR = Symbol('SERVERLESS_CONNECTOR');
 export const SALESFORCE_DATA_CLOUD_CONNECTOR = Symbol('SALESFORCE_DATA_CLOUD_CONNECTOR');
 export const HYPER_GRPC_CONNECTOR = Symbol('HYPER_GRPC_CONNECTOR');
-export const DEMO_CONNECTOR = Symbol('DEMO_CONNECTOR');
 
 export enum ConnectorType {
     SERVERLESS = 0,
