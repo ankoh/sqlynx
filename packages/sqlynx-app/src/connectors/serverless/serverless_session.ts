@@ -1,15 +1,15 @@
 import * as React from 'react';
 import Immutable from 'immutable';
 
-import { CONNECTOR_INFOS, ConnectorType } from '../connectors/connector_info.js';
-import { EXAMPLES } from './example_scripts.js';
-import { RESULT_OK } from '../utils/result.js';
-import { ScriptData, ScriptKey } from './session_state.js';
-import { ScriptLoadingStatus } from './script_loader.js';
-import { useConnectionStateAllocator } from '../connectors/connection_registry.js';
-import { useSQLynxSetup } from '../sqlynx_loader.js';
-import { useSessionStateAllocator } from './session_state_registry.js';
-import { createServerlessConnectionState } from '../connectors/connection_state.js';
+import { CONNECTOR_INFOS, ConnectorType } from '../connector_info.js';
+import { EXAMPLES } from '../../session/example_scripts.js';
+import { RESULT_OK } from '../../utils/result.js';
+import { ScriptData, ScriptKey } from '../../session/session_state.js';
+import { ScriptLoadingStatus } from '../../session/script_loader.js';
+import { useConnectionStateAllocator } from '../connection_registry.js';
+import { useSQLynxSetup } from '../../sqlynx_loader.js';
+import { useSessionStateAllocator } from '../../session/session_state_registry.js';
+import { createServerlessConnectionState } from '../connection_state.js';
 
 export const DEFAULT_BOARD_WIDTH = 800;
 export const DEFAULT_BOARD_HEIGHT = 600;

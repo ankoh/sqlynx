@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { useDynamicConnectionDispatch } from './connection_registry.js';
 import { CatalogTaskVariant, CatalogUpdateTaskState, CatalogUpdateTaskStatus } from './catalog_update_state.js';
-import { useSalesforceAPI } from './salesforce_connector.js';
+import { useSalesforceAPI } from './salesforce/salesforce_connector.js';
 import { DEMO_CONNECTOR, HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, SERVERLESS_CONNECTOR } from './connector_info.js';
 import {
     CATALOG_UPDATE_CANCELLED,
@@ -10,7 +10,7 @@ import {
     CATALOG_UPDATE_SUCCEEDED,
     UPDATE_CATALOG,
 } from './connection_state.js';
-import { updateDataCloudCatalog } from './salesforce_catalog_update.js';
+import { updateDataCloudCatalog } from './salesforce/salesforce_catalog_update.js';
 
 let NEXT_CATALOG_UPDATE_ID = 1;
 

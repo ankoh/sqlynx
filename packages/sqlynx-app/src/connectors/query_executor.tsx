@@ -8,7 +8,7 @@ import {
     QueryExecutionStatus,
     QueryExecutionTaskVariant,
 } from './query_execution_state.js';
-import { useSalesforceAPI } from './salesforce_connector.js';
+import { useSalesforceAPI } from './salesforce/salesforce_connector.js';
 import { DEMO_CONNECTOR, HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, SERVERLESS_CONNECTOR } from './connector_info.js';
 import {
     EXECUTE_QUERY,

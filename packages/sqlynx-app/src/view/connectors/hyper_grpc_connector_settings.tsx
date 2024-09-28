@@ -34,8 +34,8 @@ import {
     HEALTH_CHECK_FAILED,
     HEALTH_CHECK_STARTED,
     HEALTH_CHECK_SUCCEEDED,
-} from '../../connectors/hyper_grpc_connection_state.js';
-import { HyperGrpcConnectionParams } from '../../connectors/connection_params.js';
+} from '../../connectors/hyper/hyper_connection_state.js';
+import { HyperGrpcConnectionParams } from '../../connectors/hyper/hyper_connection_params.js';
 import { useSessionState } from '../../session/session_state_registry.js';
 import { useCurrentSessionSelector } from '../../session/current_session.js';
 import { useNavigate } from 'react-router-dom';

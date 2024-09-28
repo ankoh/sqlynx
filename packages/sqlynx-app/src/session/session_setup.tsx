@@ -3,11 +3,11 @@ import * as React from 'react';
 
 import { SessionSetupPage } from './session_setup_page.js';
 import { ConnectorInfo, getConnectorInfoForParams } from '../connectors/connector_info.js';
-import { useServerlessSessionSetup } from './setup_serverless_session.js';
+import { useServerlessSessionSetup } from '../connectors/serverless/serverless_session.js';
 import { useAppEventListener } from '../platform/event_listener_provider.js';
-import { useSalesforceSessionSetup } from './setup_salesforce_session.js';
-import { useDemoSessionSetup } from './setup_demo_session.js';
-import { useHyperSessionSetup } from './setup_hyper_session.js';
+import { useSalesforceSessionSetup } from '../connectors/salesforce/salesforce_session.js';
+import { useDemoSessionSetup } from '../connectors/demo/demo_session.js';
+import { useHyperSessionSetup } from '../connectors/hyper/hyper_session.js';
 import { useCurrentSessionSelector } from './current_session.js';
 import { useLogger } from '../platform/logger_provider.js';
 import { useDynamicConnectionDispatch } from '../connectors/connection_registry.js';

@@ -1,15 +1,15 @@
 import * as React from 'react';
 import Immutable from 'immutable';
 
-import { CONNECTOR_INFOS, ConnectorType } from '../connectors/connector_info.js';
-import { RESULT_OK } from '../utils/result.js';
-import { ScriptData, ScriptKey } from './session_state.js';
-import { ScriptLoadingStatus } from './script_loader.js';
-import { generateBlankScript } from './script_metadata.js';
-import { useSQLynxSetup } from '../sqlynx_loader.js';
-import { useSessionStateAllocator } from './session_state_registry.js';
-import { createSalesforceConnectorState } from '../connectors/salesforce_connection_state.js';
-import { useConnectionStateAllocator } from '../connectors/connection_registry.js';
+import { CONNECTOR_INFOS, ConnectorType } from '../../connectors/connector_info.js';
+import { RESULT_OK } from '../../utils/result.js';
+import { ScriptData, ScriptKey } from '../../session/session_state.js';
+import { ScriptLoadingStatus } from '../../session/script_loader.js';
+import { generateBlankScript } from '../../session/script_metadata.js';
+import { useSQLynxSetup } from '../../sqlynx_loader.js';
+import { useSessionStateAllocator } from '../../session/session_state_registry.js';
+import { createSalesforceConnectorState } from './salesforce_connection_state.js';
+import { useConnectionStateAllocator } from '../../connectors/connection_registry.js';
 
 type SessionSetupFn = (abort?: AbortSignal) => Promise<number>;
 

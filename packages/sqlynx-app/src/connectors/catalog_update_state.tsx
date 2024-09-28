@@ -2,7 +2,7 @@ import * as sqlynx from '@ankoh/sqlynx-core';
 
 import { VariantKind } from '../utils/index.js';
 import { HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR } from './connector_info.js';
-import { SalesforceAPIClientInterface, SalesforceDataCloudAccessToken } from './salesforce_api_client.js';
+import { SalesforceAPIClientInterface, SalesforceDataCloudAccessToken } from './salesforce/salesforce_api_client.js';
 import {
     CATALOG_UPDATE_CANCELLED,
     CATALOG_UPDATE_FAILED,
@@ -64,10 +64,10 @@ export interface CatalogUpdateTaskState {
 export function reduceCatalogAction(state: ConnectionState, action: CatalogAction): ConnectionState {
     const now = new Date();
 
-    if (action.type == UPDATE_CATALOG)  {
+    if (action.type == UPDATE_CATALOG) {
         const [updateId, update] = action.value;
         state.catalogUpdatesRunning.set(updateId, update);
-        return {...state };
+        return { ...state };
     }
     const updateId = action.value[0];
     let update = state.catalogUpdatesRunning.get(updateId);

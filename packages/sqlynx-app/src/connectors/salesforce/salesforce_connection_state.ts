@@ -1,14 +1,14 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
 
-import { PKCEChallenge } from '../utils/pkce.js';
-import { VariantKind } from '../utils/variant.js';
+import { PKCEChallenge } from '../../utils/pkce.js';
+import { VariantKind } from '../../utils/variant.js';
 import {
     SalesforceCoreAccessToken,
     SalesforceDataCloudAccessToken,
     SalesforceMetadata,
 } from './salesforce_api_client.js';
-import { SalesforceAuthParams } from './connection_params.js';
-import { CONNECTOR_INFOS, ConnectorType, SALESFORCE_DATA_CLOUD_CONNECTOR } from './connector_info.js';
+import { SalesforceAuthParams } from './salesforce_connection_params.js';
+import { CONNECTOR_INFOS, ConnectorType, SALESFORCE_DATA_CLOUD_CONNECTOR } from '../connector_info.js';
 import {
     ConnectionHealth,
     ConnectionState,
@@ -16,7 +16,7 @@ import {
     ConnectionStatus,
     createConnectionState,
     RESET,
-} from './connection_state.js';
+} from '../connection_state.js';
 import {
     CHANNEL_READY,
     CHANNEL_SETUP_CANCELLED,
@@ -28,9 +28,9 @@ import {
     HEALTH_CHECK_SUCCEEDED,
     HyperGrpcConnectorAction,
     HyperGrpcSetupTimings
-} from './hyper_grpc_connection_state.js';
+} from '../hyper/hyper_connection_state.js';
 import { updateDataCloudCatalog } from './salesforce_catalog_update.js';
-import { HyperDatabaseChannel } from '../platform/hyperdb_client.js';
+import { HyperDatabaseChannel } from '../../platform/hyperdb_client.js';
 
 export interface SalesforceSetupTimings extends HyperGrpcSetupTimings {
     /// The time when the auth started
