@@ -85,7 +85,7 @@ export class NativeHyperQueryResultStream implements QueryExecutionResponseStrea
     /// An arrow reader
     arrowReader: arrow.RecordBatchReader | null;
 
-    constructor(stream: NativeGrpcServerStream, connection: HyperDatabaseConnectionContext, logger: Logger) {
+    constructor(stream: NativeGrpcServerStream, _connection: HyperDatabaseConnectionContext, logger: Logger) {
         this.resultReader = new QueryResultReader(stream, logger);
         this.arrowReader = null;
     }

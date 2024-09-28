@@ -3,8 +3,14 @@ import * as proto from "@ankoh/sqlynx-pb";
 
 import { QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionResponseStreamMetrics, QueryExecutionStatus } from "./query_execution_state.js";
 import { generateRandomData, RandomDataConfig } from '../utils/random_data.js';
+import { sleep } from '../utils/sleep.js';
 
-export interface DemoDatabaseConfig extends RandomDataConfig { }
+export interface DemoDatabaseConfig extends RandomDataConfig {
+    /// Time in milliseconds until the first batch
+    timeMsUntilFirstBatch: number;
+    /// Time in milliseconds between two batches
+    timeMsBetweenBatches: number;
+}
 
 class DemoQueryExecutionResponseStream implements QueryExecutionResponseStream {
     /// The config
@@ -49,6 +55,11 @@ class DemoQueryExecutionResponseStream implements QueryExecutionResponseStream {
     async nextRecordBatch(): Promise<arrow.RecordBatch | null> {
         const batchId = this.nextBatchId++;
         if (batchId < this.batches.length) {
+            if (batchId == 0) {
+                await sleep(this.config.timeMsUntilFirstBatch);
+            } else {
+                await sleep(this.config.timeMsBetweenBatches);
+            }
             return this.batches[batchId];
         } else {
             return null;
