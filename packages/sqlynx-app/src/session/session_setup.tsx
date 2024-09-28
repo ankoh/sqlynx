@@ -13,6 +13,7 @@ import { useLogger } from '../platform/logger_provider.js';
 import { useDynamicConnectionDispatch } from '../connectors/connection_registry.js';
 import { useSessionRegistry } from './session_state_registry.js';
 import { RESET } from '../connectors/connection_state.js';
+import { isDebugBuild } from '../globals.js';
 
 /// For now, we just set up one session per connector.
 /// Our abstractions would allow for a more dynamic session management, but we don't have the UI for that.
@@ -154,7 +155,7 @@ export const SessionSetup: React.FC<{ children: React.ReactElement }> = (props: 
         };
     }, [appEvents]);
 
-    // Effect to switch to default serverless session after setup
+    // Effect to switch to default session after setup
     React.useEffect(() => {
         const selectDefaultSession = async () => {
             // Await the setup of the static sessions
@@ -165,7 +166,8 @@ export const SessionSetup: React.FC<{ children: React.ReactElement }> = (props: 
                 return;
             }
             // Be extra careful not to override a selected session
-            selectCurrentSession(s => (s == null) ? defaultSessions.serverless : s);
+            const d = isDebugBuild() ? defaultSessions.demo : defaultSessions.serverless;
+            selectCurrentSession(s => (s == null) ? d : s);
             // Skip the setup
             setState({
                 decision: SessionSetupDecision.SKIP_SETUP_PAGE,
