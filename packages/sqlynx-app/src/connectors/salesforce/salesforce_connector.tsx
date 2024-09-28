@@ -2,11 +2,11 @@ import * as React from 'react';
 
 import { SalesforceAPIClient, SalesforceAPIClientInterface } from './salesforce_api_client.js';
 import { SalesforceAPIClientMock } from './salesforce_api_client_mock.js';
-import { SalesforceAuthFlowMockProvider } from './salesforce_setup_mock.js';
-import { SalesforceSetupProvider } from './salesforce_setup.js';
-import { useAppConfig } from '../app_config.js';
-import { useHttpClient } from '../platform/http_client_provider.js';
-import { useLogger } from '../platform/logger_provider.js';
+import { SalesforceAuthFlowMockProvider } from './salesforce_connection_setup_mock.js';
+import { SalesforceSetupProvider } from './salesforce_connection_setup.js';
+import { useAppConfig } from '../../app_config.js';
+import { useHttpClient } from '../../platform/http_client_provider.js';
+import { useLogger } from '../../platform/logger_provider.js';
 
 const API_CTX = React.createContext<SalesforceAPIClientInterface | null>(null);
 

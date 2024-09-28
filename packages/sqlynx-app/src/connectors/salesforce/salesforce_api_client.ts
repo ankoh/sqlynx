@@ -1,9 +1,9 @@
-import { Logger } from '../platform/logger.js';
-import { HttpClient } from '../platform/http_client.js';
-import { SalesforceAuthParams } from './connection_params.js';
-import { SalesforceAuthConfig } from './connector_configs.js';
-import { QueryExecutionResponseStream } from './query_execution_state.js';
-import { Base64Codec } from '../utils/base64.js';
+import { Logger } from '../../platform/logger.js';
+import { HttpClient } from '../../platform/http_client.js';
+import { SalesforceAuthParams } from './salesforce_connection_params.js';
+import { SalesforceAuthConfig } from '../connector_configs.js';
+import { QueryExecutionResponseStream } from '../query_execution_state.js';
+import { Base64Codec } from '../../utils/base64.js';
 
 export interface SalesforceCoreAccessToken {
     /// The OAuth token

@@ -1,6 +1,6 @@
-import { PKCEChallenge } from '../utils/pkce.js';
-import { sleep } from '../utils/sleep.js';
-import { QueryExecutionResponseStream } from './query_execution_state.js';
+import { PKCEChallenge } from '../../utils/pkce.js';
+import { sleep } from '../../utils/sleep.js';
+import { QueryExecutionResponseStream } from '../query_execution_state.js';
 import {
     SalesforceAPIClientInterface,
     SalesforceCoreAccessToken,
@@ -8,9 +8,9 @@ import {
     SalesforceMetadata,
     SalesforceUserInfo,
 } from './salesforce_api_client.js';
-import { QueryExecutorMock } from './query_execution_mock.js';
-import { SalesforceAuthConfig } from './connector_configs.js';
-import { SalesforceAuthParams } from './connection_params.js';
+import { QueryExecutorMock } from '../query_execution_mock.js';
+import { SalesforceAuthConfig } from '../connector_configs.js';
+import { SalesforceAuthParams } from './salesforce_connection_params.js';
 
 export interface SalesforceConnectorMockConfig {
     enabled: boolean;

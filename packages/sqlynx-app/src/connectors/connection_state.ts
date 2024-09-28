@@ -5,12 +5,12 @@ import {
     HyperGrpcConnectionDetails,
     HyperGrpcConnectorAction,
     reduceHyperGrpcConnectorState,
-} from './hyper_grpc_connection_state.js';
+} from './hyper/hyper_connection_state.js';
 import {
     reduceSalesforceConnectionState,
     SalesforceConnectionDetails,
     SalesforceConnectionStateAction,
-} from './salesforce_connection_state.js';
+} from './salesforce/salesforce_connection_state.js';
 import { CatalogUpdateTaskState, reduceCatalogAction } from './catalog_update_state.js';
 import { VariantKind } from '../utils/variant.js';
 import {
@@ -30,7 +30,7 @@ import {
 } from './query_execution_state.js';
 import { ConnectionMetrics, createConnectionMetrics } from './connection_statistics.js';
 import { reduceQueryAction } from './query_execution_state.js';
-import { DemoConnectionDetails } from './demo_connection_state.js';
+import { DemoConnectionParams as DemoConnectionDetails } from './demo/demo_connection_state.js';
 
 export interface ConnectionState {
     /// The connection id

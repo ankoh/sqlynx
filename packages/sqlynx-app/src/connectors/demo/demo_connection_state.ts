@@ -1,10 +1,11 @@
 import * as arrow from 'apache-arrow';
 import * as sqlynx from "@ankoh/sqlynx-core";
 
-import { ConnectionStateWithoutId } from "./connection_state.js";
-import { CONNECTOR_INFOS, ConnectorType, DEMO_CONNECTOR } from "./connector_info.js";
-import { createConnectionState } from "./connection_statistics.js";
+import { ConnectionState, ConnectionStateWithoutId, RESET } from "../connection_state.js";
+import { CONNECTOR_INFOS, ConnectorType, DEMO_CONNECTOR } from "../connector_info.js";
+import { createConnectionState } from "../connection_statistics.js";
 import { DemoDatabaseChannel, DemoDatabaseConfig } from "./demo_database.js";
+import { VariantKind } from 'utils/variant.js';
 
 const DEFAULT_DATA_FIRST_EVENT = (new Date()).getTime() - 1000 * 60 * 60 * 24 * 10;
 const DEFAULT_DEMO_CONFIG: DemoDatabaseConfig = {
@@ -34,7 +35,7 @@ const DEFAULT_DEMO_CONFIG: DemoDatabaseConfig = {
     timeMsBetweenBatches: 50,
 };
 
-export interface DemoConnectionDetails {
+export interface DemoConnectionParams {
     channel: DemoDatabaseChannel;
 }
 
@@ -45,4 +46,18 @@ export function createDemoConnectionState(lnx: sqlynx.SQLynx): ConnectionStateWi
             channel: new DemoDatabaseChannel(DEFAULT_DEMO_CONFIG)
         }
     });
+}
+
+export type DemoConnectorAction =
+    | VariantKind<typeof RESET, null>
+    ;
+
+export function reduceDemoConnectorState(state: ConnectionState, action: DemoConnectorAction): ConnectionState | null {
+    const details = state.details.value as DemoConnectionParams;
+    let next: ConnectionState | null = null;
+    switch (action.type) {
+        case RESET:
+            break;
+    }
+    return next;
 }

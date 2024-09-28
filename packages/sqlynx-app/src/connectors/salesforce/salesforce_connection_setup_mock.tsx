@@ -14,17 +14,17 @@ import {
     SalesforceConnectionStateAction,
 } from './salesforce_connection_state.js';
 import { useSalesforceAPI } from './salesforce_connector.js';
-import { useAppConfig } from '../app_config.js';
-import { useLogger } from '../platform/logger_provider.js';
-import { generatePKCEChallenge } from '../utils/pkce.js';
-import { sleep } from '../utils/sleep.js';
-import { Dispatch } from '../utils/variant.js';
-import { Logger } from '../platform/logger.js';
+import { useAppConfig } from '../../app_config.js';
+import { useLogger } from '../../platform/logger_provider.js';
+import { generatePKCEChallenge } from '../../utils/pkce.js';
+import { sleep } from '../../utils/sleep.js';
+import { Dispatch } from '../../utils/variant.js';
+import { Logger } from '../../platform/logger.js';
 import { SalesforceAPIClientInterface } from './salesforce_api_client.js';
-import { SalesforceSetupApi, SETUP_CTX } from './salesforce_setup.js';
-import { SalesforceAuthParams } from './connection_params.js';
-import { SalesforceConnectorConfig } from './connector_configs.js';
-import { RESET } from './connection_state.js';
+import { SalesforceSetupApi, SETUP_CTX } from './salesforce_connection_setup.js';
+import { SalesforceAuthParams } from './salesforce_connection_params.js';
+import { SalesforceConnectorConfig } from '../connector_configs.js';
+import { RESET } from '../connection_state.js';
 
 interface Props {
     children: React.ReactElement;

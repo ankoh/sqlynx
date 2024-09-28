@@ -10,10 +10,10 @@ import { ChecklistIcon, DesktopDownloadIcon, FileBadgeIcon, KeyIcon, PackageIcon
 
 import { formatHHMMSS } from '../utils/format.js';
 import { useLogger } from '../platform/logger_provider.js';
-import { useSalesforceSetup } from '../connectors/salesforce_setup.js';
+import { useSalesforceSetup } from '../connectors/salesforce/salesforce_connection_setup.js';
 import { ConnectorInfo, requiresSwitchingToNative } from '../connectors/connector_info.js';
 import { encodeSessionSetupUrl, SessionLinkTarget } from './session_setup_url.js';
-import { SalesforceAuthParams } from '../connectors/connection_params.js';
+import { SalesforceAuthParams } from '../connectors/salesforce/salesforce_connection_params.js';
 import { SQLYNX_VERSION } from '../globals.js';
 import { REPLACE_SCRIPT_CONTENT } from './session_state.js';
 import { KeyValueTextField, TextField } from '../view/foundations/text_field.js';

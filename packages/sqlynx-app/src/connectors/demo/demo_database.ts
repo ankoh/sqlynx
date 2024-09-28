@@ -1,9 +1,9 @@
 import * as arrow from 'apache-arrow';
 import * as proto from "@ankoh/sqlynx-pb";
 
-import { QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionResponseStreamMetrics, QueryExecutionStatus } from "./query_execution_state.js";
-import { generateRandomData, RandomDataConfig } from '../utils/random_data.js';
-import { sleep } from '../utils/sleep.js';
+import { QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionResponseStreamMetrics, QueryExecutionStatus } from "../query_execution_state.js";
+import { generateRandomData, RandomDataConfig } from '../../utils/random_data.js';
+import { sleep } from '../../utils/sleep.js';
 
 export interface DemoDatabaseConfig extends RandomDataConfig {
     /// Time in milliseconds until the first batch

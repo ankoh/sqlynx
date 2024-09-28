@@ -10,21 +10,21 @@ import {
     HEALTH_CHECK_STARTED,
     HEALTH_CHECK_SUCCEEDED,
     HyperGrpcConnectorAction,
-} from './hyper_grpc_connection_state.js';
-import { Logger } from '../platform/logger.js';
-import { HyperGrpcConnectionParams } from './connection_params.js';
-import { HyperGrpcConnectorConfig } from './connector_configs.js';
-import { Dispatch } from '../utils/index.js';
+} from './hyper_connection_state.js';
+import { Logger } from '../../platform/logger.js';
+import { HyperGrpcConnectionParams } from './hyper_connection_params.js';
+import { HyperGrpcConnectorConfig } from '../connector_configs.js';
+import { Dispatch } from '../../utils/index.js';
 import {
     AttachedDatabase,
     HyperDatabaseChannel,
     HyperDatabaseClient,
     HyperDatabaseConnectionContext,
-} from '../platform/hyperdb_client.js';
-import { useLogger } from '../platform/logger_provider.js';
-import { useAppConfig } from '../app_config.js';
-import { useHyperDatabaseClient } from '../platform/hyperdb_client_provider.js';
-import { RESET } from './connection_state.js';
+} from '../../platform/hyperdb_client.js';
+import { useLogger } from '../../platform/logger_provider.js';
+import { useAppConfig } from '../../app_config.js';
+import { useHyperDatabaseClient } from '../../platform/hyperdb_client_provider.js';
+import { RESET } from '../connection_state.js';
 
 export async function setupHyperGrpcConnection(dispatch: Dispatch<HyperGrpcConnectorAction>, logger: Logger, params: HyperGrpcConnectionParams, _config: HyperGrpcConnectorConfig, client: HyperDatabaseClient, abortSignal: AbortSignal): Promise<HyperDatabaseChannel | null> {
     // First prepare the channel
