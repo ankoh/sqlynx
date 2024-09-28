@@ -1,0 +1,77 @@
+import * as arrow from 'apache-arrow';
+import * as proto from "@ankoh/sqlynx-pb";
+
+import { QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionResponseStreamMetrics, QueryExecutionStatus } from "./query_execution_state.js";
+import { generateRandomData, RandomDataConfig } from '../utils/random_data.js';
+
+export interface DemoDatabaseConfig extends RandomDataConfig { }
+
+class DemoQueryExecutionResponseStream implements QueryExecutionResponseStream {
+    /// The config
+    config: DemoDatabaseConfig;
+    /// The schema
+    schema: arrow.Schema;
+    /// The batch
+    batches: arrow.RecordBatch[];
+    /// The next stream batch
+    nextBatchId: number;
+
+    /// Constructor
+    constructor(config: DemoDatabaseConfig, schema: arrow.Schema, batches: arrow.RecordBatch[]) {
+        this.config = config;
+        this.schema = schema;
+        this.batches = batches;
+        this.nextBatchId = 0;
+    }
+    /// Get the result metadata (after completion)
+    getMetadata(): Map<string, string> {
+        return new Map();
+    }
+    /// Get the stream metrics
+    getMetrics(): QueryExecutionResponseStreamMetrics {
+        return {
+            dataBytes: 0
+        };
+    }
+    /// Get the current query status
+    getStatus(): QueryExecutionStatus {
+        return QueryExecutionStatus.SUCCEEDED;
+    }
+    /// Await the schema message
+    async getSchema(): Promise<arrow.Schema | null> {
+        return this.schema;
+    }
+    /// Await the next query_status update
+    async nextProgressUpdate(): Promise<QueryExecutionProgress | null> {
+        return {};
+    }
+    /// Await the next record batch
+    async nextRecordBatch(): Promise<arrow.RecordBatch | null> {
+        const batchId = this.nextBatchId++;
+        if (batchId < this.batches.length) {
+            return this.batches[batchId];
+        } else {
+            return null;
+        }
+    }
+}
+
+export class DemoDatabaseChannel {
+    /// The demo database config
+    config: DemoDatabaseConfig;
+
+    /// Constructor
+    constructor(config: DemoDatabaseConfig) {
+        this.config = config;
+    }
+
+    /// Execute Query
+    async executeQuery(_param: proto.salesforce_hyperdb_grpc_v1.pb.QueryParam): Promise<QueryExecutionResponseStream> {
+        const [schema, batches] = generateRandomData(this.config);
+        return new DemoQueryExecutionResponseStream(this.config, schema, batches);
+    }
+    /// Destroy the connection
+    async close(): Promise<void> { }
+}
+
+
