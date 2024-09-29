@@ -1,13 +1,13 @@
 import * as arrow from 'apache-arrow';
 import * as sqlynx from "@ankoh/sqlynx-core";
 
-import { ConnectionState, ConnectionStateWithoutId, RESET } from "../connection_state.js";
+import { ConnectionHealth, ConnectionState, ConnectionStateWithoutId, ConnectionStatus, RESET } from "../connection_state.js";
 import { CONNECTOR_INFOS, ConnectorType, DEMO_CONNECTOR } from "../connector_info.js";
 import { createConnectionState } from "../connection_statistics.js";
-import { DemoDatabaseChannel, DemoDatabaseConfig } from "./demo_database.js";
+import { DemoDatabaseChannel, DemoDatabaseConfig } from "./demo_database_channel.js";
 import { VariantKind } from 'utils/variant.js';
 
-const DEFAULT_DATA_FIRST_EVENT = (new Date()).getTime() - 1000 * 60 * 60 * 24 * 10;
+const DEFAULT_DATA_FIRST_EVENT = Math.floor((new Date()).getTime() - 1000 * 60 * 60 * 24 * 10);
 const DEFAULT_DEMO_CONFIG: DemoDatabaseConfig = {
     fields: [
         {
@@ -26,7 +26,7 @@ const DEFAULT_DEMO_CONFIG: DemoDatabaseConfig = {
             name: "EventTime",
             type: new arrow.TimestampMillisecond(),
             nullable: true,
-            generateScalarValue: (_row: number) => DEFAULT_DATA_FIRST_EVENT + (Math.random() * 1000 * 60 * 60)
+            generateScalarValue: (_row: number) => BigInt(DEFAULT_DATA_FIRST_EVENT + Math.floor(Math.random() * 1000 * 60 * 60))
         },
     ],
     resultBatches: 3,
@@ -40,23 +40,35 @@ export interface DemoConnectionParams {
 }
 
 export function createDemoConnectionState(lnx: sqlynx.SQLynx): ConnectionStateWithoutId {
-    return createConnectionState(lnx, CONNECTOR_INFOS[ConnectorType.DEMO], {
+    const state = createConnectionState(lnx, CONNECTOR_INFOS[ConnectorType.DEMO], {
         type: DEMO_CONNECTOR,
         value: {
             channel: new DemoDatabaseChannel(DEFAULT_DEMO_CONFIG)
         }
     });
+    state.connectionHealth = ConnectionHealth.ONLINE;
+    state.connectionStatus = ConnectionStatus.HEALTH_CHECK_SUCCEEDED;
+    return state;
 }
 
 export type DemoConnectorAction =
     | VariantKind<typeof RESET, null>
     ;
 
+/// XXX Preparing for a setting page for the demo connector
 export function reduceDemoConnectorState(state: ConnectionState, action: DemoConnectorAction): ConnectionState | null {
-    const details = state.details.value as DemoConnectionParams;
     let next: ConnectionState | null = null;
     switch (action.type) {
         case RESET:
+            next = {
+                ...state,
+                details: {
+                    type: DEMO_CONNECTOR,
+                    value: {
+                        channel: new DemoDatabaseChannel(DEFAULT_DEMO_CONFIG)
+                    }
+                }
+            };
             break;
     }
     return next;

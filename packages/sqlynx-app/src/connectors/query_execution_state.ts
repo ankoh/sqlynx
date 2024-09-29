@@ -16,6 +16,7 @@ import {
 } from './connection_state.js';
 import { ConnectionQueryMetrics } from './connection_statistics.js';
 import { HyperDatabaseChannel } from '../platform/hyperdb_client.js';
+import { DemoDatabaseChannel } from './demo/demo_database_channel.js';
 
 export type QueryExecutionTaskVariant =
     | VariantKind<typeof DEMO_CONNECTOR, ExecuteDemoQueryTask>
@@ -25,6 +26,8 @@ export type QueryExecutionTaskVariant =
 export interface ExecuteDemoQueryTask {
     /// The script text
     scriptText: string;
+    /// The channel
+    demoChannel: DemoDatabaseChannel;
 }
 
 export interface ExecuteDataCloudQueryTask {

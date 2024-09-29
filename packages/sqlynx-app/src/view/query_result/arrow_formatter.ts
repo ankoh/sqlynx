@@ -33,7 +33,7 @@ export class ArrowTextColumnFormatter implements ArrowColumnFormatter {
         this.columnName = schema.fields[columnId].name;
         this.valueClassName = styles.data_value_text;
         this.batches = batches;
-        this.batchValues = Array.from({length: batches.length}, () => null);
+        this.batchValues = Array.from({ length: batches.length }, () => null);
         this.formattedRowCount = 0;
         this.formattedLengthMax = 0;
         this.formattedLengthSum = 0;
@@ -72,12 +72,14 @@ export class ArrowTextColumnFormatter implements ArrowColumnFormatter {
                     case arrow.TimeUnit.SECOND:
                         this.formatter = (v: number) => (v == null ? null : fmt.format(new Date(v * 1000)));
                         break;
-                    case arrow.TimeUnit.MICROSECOND:
+                    case arrow.TimeUnit.MILLISECOND:
                         this.formatter = (v: number) => (v == null ? null : fmt.format(new Date(v)));
                         break;
-                    case arrow.TimeUnit.MILLISECOND:
+                    case arrow.TimeUnit.MICROSECOND:
+                        this.formatter = (v: number) => (v == null ? null : fmt.format(new Date(v / 1000)));
+                        break;
                     case arrow.TimeUnit.NANOSECOND:
-                        console.warn('not implemented: arrow formatting Timestamp');
+                        this.formatter = (v: number) => (v == null ? null : fmt.format(new Date(v / 1000 / 1000)));
                         break;
                 }
                 break;
