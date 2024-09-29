@@ -100,6 +100,36 @@ function generateRandomNumericData(type: arrow.DataType, nullable: boolean, offs
     ]);
 }
 
+function generateRandomDecimal128Data(type: arrow.DataType, nullable: boolean, offset: number, n: number, generateValue: (row: number) => any): arrow.Data {
+    const valueBuffer = new Uint32Array(n * 4);
+    let validityBitmap: Uint8Array = new Uint8Array();
+    let nullCount = 0;
+    if (nullable) {
+        const validityBytes = ((n + 63) & ~63) >> 3;
+        validityBitmap = new Uint8Array(validityBytes).fill(255, 0, validityBytes);
+        for (let i = 0; i < n; ++i) {
+            const value = generateValue(offset + i);
+            if (value == null) {
+                let validityByte = i >> 3;
+                let validityBit = i & 7;
+                let validityMask = 1 << validityBit;
+                validityBitmap[validityByte] &= ~validityMask;
+                ++nullCount;
+            } else {
+                valueBuffer.set(value!, i * 4);
+            }
+        }
+    } else {
+        for (let i = 0; i < n; ++i) {
+            const value = generateValue(offset + i);
+            valueBuffer.set(value!, i * 4);
+        }
+    }
+    return new arrow.Data(type, 0, n, nullCount, [
+        undefined, valueBuffer, validityBitmap
+    ]);
+}
+
 function generateRandomBooleanData(type: arrow.DataType, nullable: boolean, offset: number, n: number, generateValue: (row: number) => any) {
     const ValueArrayType = type.ArrayType;
     const valueBuffer = new ValueArrayType(((n + 63) & ~63) >> 3);
@@ -167,7 +197,6 @@ function generateRandomFieldData(fieldSpec: FieldSpec, offset: number, n: number
         case arrow.Type.Float16:
         case arrow.Type.Float32:
         case arrow.Type.Float64:
-        case arrow.Type.Decimal:
         case arrow.Type.Date:
         case arrow.Type.Time:
         case arrow.Type.Timestamp:
@@ -196,6 +225,19 @@ function generateRandomFieldData(fieldSpec: FieldSpec, offset: number, n: number
                 n,
                 fieldSpec.generateScalarValue!
             );
+        case arrow.Type.Decimal: {
+            const decimalType = fieldSpec.type as arrow.Decimal;
+            if (decimalType.bitWidth != 128) {
+                throw new Error(`cannot generate random data for decimals with bit width != 128`);
+            }
+            return generateRandomDecimal128Data(
+                fieldSpec.type,
+                fieldSpec.nullable,
+                offset,
+                n,
+                fieldSpec.generateScalarValue!
+            );
+        }
         case arrow.Type.Bool:
             return generateRandomBooleanData(
                 fieldSpec.type,
