@@ -41,6 +41,7 @@ import { useCurrentSessionSelector } from '../../session/current_session.js';
 import { useNavigate } from 'react-router-dom';
 import { useDefaultSessions } from '../../session/session_setup.js';
 import { getConnectionHealthIndicator, getConnectionStatusText } from './salesforce_connector_settings.js';
+import { useHyperGrpcSetup } from '../../connectors/hyper/hyper_connection_setup.js';
 
 const LOG_CTX = "hyper_connector";
 
@@ -58,6 +59,7 @@ const PAGE_STATE_CTX = React.createContext<[PageState, PageStateSetter] | null>(
 export const HyperGrpcConnectorSettings: React.FC = () => {
     const logger = useLogger();
     const hyperClient = useHyperDatabaseClient();
+    const hyperSetup = useHyperGrpcSetup();
 
     // Get Hyper connection from default session
     const defaultSessions = useDefaultSessions();
@@ -77,11 +79,13 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
     const modifyAttachedDbs: Dispatch<UpdateKeyValueList> = (action: UpdateKeyValueList) => setPageState(s => ({ ...s, attachedDatabases: action(s.attachedDatabases) }));
     const modifyGrpcMetadata: Dispatch<UpdateKeyValueList> = (action: UpdateKeyValueList) => setPageState(s => ({ ...s, gRPCMetadata: action(s.gRPCMetadata) }));
 
+    const setupAbortController = React.useRef<AbortController | null>(null);
+
     // Helper to setup the connection
     const setupConnection = async () => {
         // Is there a Hyper client?
-        if (hyperClient == null) {
-            logger.error("Hyper client is unavailable", LOG_CTX);
+        if (hyperClient == null || hyperSetup == null) {
+            logger.error("Hyper connector is unavailable", LOG_CTX);
             return;
         }
         // Is there a connection id?
@@ -90,7 +94,8 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
             return;
         }
 
-        // Collect the connection params
+        // Setupt the Hyper connection
+        setupAbortController.current = new AbortController();
         const connectionParams: HyperGrpcConnectionParams = {
             channel: {
                 endpoint: pageState.endpoint
@@ -99,66 +104,8 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
             gRPCMetadata: pageState.gRPCMetadata,
         };
 
-        // Mark the setup as started
-        dispatchConnectionState({
-            type: CHANNEL_SETUP_STARTED,
-            value: connectionParams
-        });
-        let channel: HyperDatabaseChannel;
-        try {
-            logger.debug(`connecting to endpoint: ${pageState.endpoint}`, LOG_CTX);
-
-            // Save the current gRPC metadata
-            const metadata = pageState.gRPCMetadata;
-            // Set up an ad-hoc connection for now
-            const fakeConnection: HyperDatabaseConnectionContext = {
-                getAttachedDatabases(): AttachedDatabase[] {
-                    return [];
-                },
-                getRequestMetadata(): Promise<Record<string, string>> {
-                    const headers: Record<string, string> = {};
-                    for (const entry of metadata) {
-                        headers[entry.key] = entry.value;
-                    }
-                    return Promise.resolve(headers);
-                }
-            };
-            // Create a channel
-            channel = await hyperClient.connect({
-                endpoint: pageState.endpoint
-            }, fakeConnection);
-            dispatchConnectionState({
-                type: CHANNEL_READY,
-                value: channel
-            });
-        } catch (e: any) {
-            console.error(e);
-            dispatchConnectionState({
-                type: CHANNEL_SETUP_FAILED,
-                value: e.toString()!
-            });
-            logger.error(`channel setup failed with error: ${e.toString()}`, LOG_CTX);
-            return;
-        }
-
-        // Check the channel health
-        dispatchConnectionState({
-            type: HEALTH_CHECK_STARTED,
-            value: null
-        });
-        const healthCheck = await channel.checkHealth();
-        if (!healthCheck.ok) {
-            dispatchConnectionState({
-                type: HEALTH_CHECK_FAILED,
-                value: healthCheck.errorMessage!
-            });
-            logger.error(healthCheck.errorMessage!, LOG_CTX);
-            return;
-        }
-        dispatchConnectionState({
-            type: HEALTH_CHECK_SUCCEEDED,
-            value: null
-        });
+        await hyperSetup.setup(dispatchConnectionState, connectionParams, setupAbortController.current.signal);
+        setupAbortController.current = null;
 
         // Close the channel
         // XXX Remove
@@ -167,15 +114,16 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
 
     // Helper to cancel the authorization
     const cancelAuth = () => {
-        // XXX
-        // if (authAbortController.current) {
-        //     authAbortController.current.abort("abort the authorization flow");
-        //     authAbortController.current = null;
-        // }
+        if (setupAbortController.current) {
+            setupAbortController.current.abort("abort the Hyper setup");
+            setupAbortController.current = null;
+        }
     };
     // Helper to reset the authorization
-    const resetAuth = () => {
-        dispatchConnectionState({ type: RESET, value: null });
+    const resetAuth = async () => {
+        if (hyperSetup) {
+            await hyperSetup.reset(dispatchConnectionState);
+        }
     };
 
     // Helper to switch to the editor

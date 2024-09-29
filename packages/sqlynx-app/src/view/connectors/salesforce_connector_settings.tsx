@@ -186,8 +186,10 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
         }
     };
     // Helper to reset the setup
-    const resetSetup = () => {
-        dispatchConnectionState({ type: RESET, value: null });
+    const resetSetup = async () => {
+        if (salesforceAuthFlow) {
+            await salesforceAuthFlow.reset(dispatchConnectionState);
+        }
     };
 
     // Helper to switch to the editor
