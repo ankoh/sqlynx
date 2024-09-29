@@ -31,7 +31,7 @@ const DEFAULT_DEMO_CONFIG: DemoDatabaseConfig = {
     ],
     resultBatches: 3,
     resultRowsPerBatch: 200,
-    timeMsUntilFirstBatch: 1000,
+    timeMsUntilFirstBatch: 500,
     timeMsBetweenBatches: 50,
 };
 

@@ -73,9 +73,6 @@ export const DataTable: React.FC<Props> = (props: Props) => {
             }
         }
     };
-    if (props.data == null) {
-        return <div />;
-    }
 
     const headerGrid = React.useRef<Grid>(null);
     const dataGrid = React.useRef<Grid>(null);
@@ -85,6 +82,10 @@ export const DataTable: React.FC<Props> = (props: Props) => {
             headerGrid.current && headerGrid.current.scrollTo({ scrollLeft: event.scrollLeft });
         }
     }, []);
+
+    if (props.data == null) {
+        return <div />;
+    }
 
     return (
         <div className={classNames(styles.root, props.className)} ref={gridContainerElement}>
