@@ -1,5 +1,6 @@
 import * as arrow from 'apache-arrow';
 import * as styles from './arrow_formatter.module.css';
+import { Int128, Decimal128 } from '../../utils/int128.js';
 
 export interface ColumnLayoutInfo {
     headerWidth: number;
@@ -52,6 +53,15 @@ export class ArrowTextColumnFormatter implements ArrowColumnFormatter {
                 this.valueClassName = styles.data_value_number;
                 const fmt = Intl.NumberFormat('en-US');
                 this.formatter = (v: number) => (v == null ? null : fmt.format(v));
+                break;
+            }
+            case arrow.Type.Decimal: {
+                this.valueClassName = styles.data_value_number;
+                const decimalType = schema.fields[columnId].type as arrow.Decimal;
+                this.formatter = (v: any) => {
+                    const i = Int128.decodeLE(v);
+                    return Decimal128.format(i, decimalType.scale);
+                }
                 break;
             }
             case arrow.Type.Utf8:
