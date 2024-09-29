@@ -49,7 +49,7 @@ class DemoQueryExecutionResponseStream implements QueryExecutionResponseStream {
     }
     /// Await the next query_status update
     async nextProgressUpdate(): Promise<QueryExecutionProgress | null> {
-        return {};
+        return null;
     }
     /// Await the next record batch
     async nextRecordBatch(): Promise<arrow.RecordBatch | null> {

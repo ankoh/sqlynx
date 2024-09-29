@@ -90,10 +90,16 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                 break;
             }
             case DEMO_CONNECTOR: {
+                const c = conn.details.value;
+                const channel = c.channel;
+                if (!channel) {
+                    throw new Error(`demo channel is not set up`);
+                }
                 task = {
                     type: DEMO_CONNECTOR,
                     value: {
-                        scriptText: args.query
+                        scriptText: args.query,
+                        demoChannel: channel
                     }
                 }
                 break;
@@ -189,6 +195,15 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                         query: req.scriptText
                     });
                     resultStream = await req.hyperChannel.executeQuery(param);
+                    break;
+                }
+                case DEMO_CONNECTOR: {
+                    const req = task.value;
+                    const param = new proto.salesforce_hyperdb_grpc_v1.pb.QueryParam({
+                        query: req.scriptText
+                    });
+                    resultStream = await req.demoChannel.executeQuery(param);
+                    break;
                 }
             }
             if (resultStream != null) {
