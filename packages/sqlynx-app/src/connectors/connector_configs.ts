@@ -25,13 +25,18 @@ export interface ConnectorConfigs {
     /// The config for the Salesforce Data Cloud connector
     salesforce?: SalesforceConnectorConfig;
     /// The config for the Hyper gRPC connector
-    hyperGrpc?: HyperGrpcConnectorConfig;
+    hyper?: HyperGrpcConnectorConfig;
 }
 
 export function readConnectorConfigs(configs: any): ConnectorConfigs {
     const out: ConnectorConfigs = {};
     if (configs.salesforce) {
         out.salesforce = configs.salesforce;
+    }
+    if (configs.hyper) {
+        out.hyper = configs.hyper;
+    } else {
+        out.hyper = {};
     }
     return out;
 }
