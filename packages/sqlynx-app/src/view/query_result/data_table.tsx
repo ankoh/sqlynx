@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as arrow from 'apache-arrow';
-import { VariableSizeGrid as Grid, GridChildComponentProps, GridOnScrollProps } from 'react-window';
+import { VariableSizeGrid as Grid, GridChildComponentProps, GridOnItemsRenderedProps, GridOnScrollProps } from 'react-window';
 
 import { classNames } from '../../utils/classnames.js';
 
@@ -19,6 +19,37 @@ const MIN_COLUMN_WIDTH = 120;
 const COLUMN_HEADER_HEIGHT = 24;
 const ROW_HEIGHT = 24;
 const ROW_HEADER_WIDTH = 48;
+const FORMATTER_PIXEL_SCALING = 10;
+
+function computeColumnWidths(formatter: ArrowTableFormatter, columns: number): Float64Array {
+    const widths = new Float64Array(columns);
+    for (let i = 0; i < columns; ++i) {
+        if (i == 0) {
+            widths[i] = ROW_HEADER_WIDTH;
+        } else if ((i - 1) < (formatter.columns.length ?? 0)) {
+            const column = formatter.columns[i - 1];
+            const columnAvgWidth = column.getLayoutInfo().valueAvgWidth;
+            const columnWidth = columnAvgWidth * FORMATTER_PIXEL_SCALING;
+            widths[i] = Math.max(columnWidth, MIN_COLUMN_WIDTH);
+        } else {
+            widths[i] = MIN_COLUMN_WIDTH;
+        }
+    }
+    return widths;
+}
+
+function columnWidthsAreEqual(oldWidths: Float64Array, newWidths: Float64Array) {
+    if (oldWidths.length != newWidths.length) {
+        return false;
+    }
+    for (let i = 0; i < oldWidths.length; ++i) {
+        const delta = newWidths[i] - oldWidths[i];
+        if (delta > 0.01) {
+            return false;
+        }
+    }
+    return true;
+}
 
 export const DataTable: React.FC<Props> = (props: Props) => {
     const gridContainerElement = React.useRef(null);
@@ -26,9 +57,8 @@ export const DataTable: React.FC<Props> = (props: Props) => {
     const gridContainerHeight = Math.max(gridContainerSize?.height ?? 0, MIN_GRID_HEIGHT) - COLUMN_HEADER_HEIGHT;
     const gridContainerWidth = Math.max(gridContainerSize?.width ?? 0, MIN_GRID_WIDTH);
 
-    const gridRows = props.data?.numRows ?? 0;
-    const gridColumns = 1 + (props.data?.numCols ?? 0);
-    const getColumnWidth = (i: number) => (i == 0 ? ROW_HEADER_WIDTH : MIN_COLUMN_WIDTH);
+    const headerGrid = React.useRef<Grid>(null);
+    const dataGrid = React.useRef<Grid>(null);
 
     /// Construct the arrow formatter
     const tableFormatter = React.useMemo(() => {
@@ -38,6 +68,27 @@ export const DataTable: React.FC<Props> = (props: Props) => {
         return new ArrowTableFormatter(props.data.schema, props.data.batches);
     }, [props.data]);
 
+    // Determine grid dimensions and column widths
+    const gridRows = props.data?.numRows ?? 0;
+    const gridColumns = 1 + (props.data?.numCols ?? 0);
+    const [gridColumnWidths, setGridColumnWidths] = React.useState<Float64Array>(() => {
+        if (tableFormatter?.columns) {
+            return computeColumnWidths(tableFormatter, gridColumns);
+        } else {
+            return new Float64Array();
+        }
+    });
+    const getColumnWidth = (i: number) => gridColumnWidths[i];
+
+    // Rerender grids when the column widths change
+    React.useEffect(() => {
+        if (headerGrid.current && dataGrid.current) {
+            headerGrid.current.resetAfterColumnIndex(0);
+            dataGrid.current.resetAfterColumnIndex(0);
+        }
+    }, [gridColumnWidths]);
+
+    // Helper to render a header cell
     const HeaderCell = (cellProps: GridChildComponentProps) => {
         if (cellProps.columnIndex == 0) {
             return <div className={styles.header_zero_cell} style={cellProps.style}></div>;
@@ -50,6 +101,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
             );
         }
     };
+    // Helper to render a data cell
     const DataCell = (cellProps: GridChildComponentProps) => {
         if (cellProps.columnIndex == 0) {
             return (
@@ -74,15 +126,24 @@ export const DataTable: React.FC<Props> = (props: Props) => {
         }
     };
 
-    const headerGrid = React.useRef<Grid>(null);
-    const dataGrid = React.useRef<Grid>(null);
-
+    // Listen to scroll events to synchronize scrolling of the locked header bar
     const onDataScroll = React.useCallback((event: GridOnScrollProps) => {
         if (event.scrollUpdateWasRequested === false) {
             headerGrid.current && headerGrid.current.scrollTo({ scrollLeft: event.scrollLeft });
         }
     }, []);
+    // Listen to rendering events to check if the column widths changed.
+    // Table elements are formatted lazily so we do not know upfront how wide a column will be.
+    const onItemsRendered = React.useCallback((_event: GridOnItemsRenderedProps) => {
+        if (headerGrid.current && dataGrid.current && tableFormatter) {
+            const newWidths = computeColumnWidths(tableFormatter, gridColumns);
+            if (!columnWidthsAreEqual(gridColumnWidths, newWidths)) {
+                setGridColumnWidths(newWidths);
+            }
+        }
+    }, [tableFormatter]);
 
+    // Render an empty div if there's no data
     if (props.data == null) {
         return <div />;
     }
@@ -114,6 +175,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                     height={gridContainerHeight}
                     width={gridContainerWidth}
                     onScroll={onDataScroll}
+                    onItemsRendered={onItemsRendered}
                 >
                     {DataCell}
                 </Grid>
