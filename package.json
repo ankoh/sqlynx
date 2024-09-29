@@ -20,7 +20,8 @@
         "prettier": "^3.3.3",
         "ts-node": "^10.9.2",
         "typescript": "^5.6.2",
-        "typescript-eslint": "^7.18.0"
+        "typescript-eslint": "^7.18.0",
+        "wasm-pack": "^0.13.0"
     },
     "browserslist": [
         "last 1 version",
@@ -29,5 +30,9 @@
     "packageManager": "yarn@4.5.0",
     "resolutions": {
         "@primer/octicons-react@npm:^19.8.0": "patch:@primer/octicons-react@npm%3A19.9.0#~/.yarn/patches/@primer-octicons-react-npm-19.9.0-65341cfa23.patch"
+    },
+    "scripts": {
+        "compute:wasm:o0": "wasm-pack build --target web --debug --out-name sqlynx_compute --out-dir ./pkg ./packages/sqlynx-compute/",
+        "compute:wasm:o3": "wasm-pack build --target web --release --out-name sqlynx_compute --out-dir ./pkg ./packages/sqlynx-compute/"
     }
 }

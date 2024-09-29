@@ -2,6 +2,7 @@
 resolver = "2"
 
 members = [
+    "packages/sqlynx-compute",
     "packages/sqlynx-native",
     "packages/sqlynx-pack",
 ]
