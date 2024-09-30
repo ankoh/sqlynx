@@ -1,6 +1,8 @@
 use wasm_bindgen::prelude::*;
 
 mod console;
+#[cfg(test)]
+mod datafusion_tests;
 
 use console::DEFAULT_LOGGER;
 

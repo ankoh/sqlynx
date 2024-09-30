@@ -5847,6 +5847,8 @@ dependencies = [
 name = "sqlynx-compute"
 version = "0.0.2-dev.17"
 dependencies = [
+ "anyhow",
+ "arrow",
  "chrono",
  "console_error_panic_hook",
  "datafusion",
@@ -5857,6 +5859,7 @@ dependencies = [
  "datafusion-physical-plan",
  "getrandom 0.2.12",
  "log",
+ "tokio",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "wasm-bindgen-test",
