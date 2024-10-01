@@ -21,6 +21,7 @@ const COLUMN_HEADER_HEIGHT = 24;
 const ROW_HEIGHT = 24;
 const ROW_HEADER_WIDTH = 48;
 const FORMATTER_PIXEL_SCALING = 10;
+const OVERSCAN_ROW_COUNT = 30;
 
 function computeColumnOffsets(formatter: ArrowTableFormatter, columns: number): Float64Array {
     const offsets = new Float64Array(columns + 1);
@@ -165,6 +166,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                 width={gridContainerWidth}
                 onItemsRendered={onItemsRendered}
                 innerElementType={innerGridElementType}
+                overscanRowCount={OVERSCAN_ROW_COUNT}
             >
                 {Cell}
             </Grid>
