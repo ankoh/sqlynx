@@ -11,7 +11,7 @@ version = "2.0.0-beta"
 features = []
 
 [build-dependencies.tonic-build]
-version = "0.11"
+version = "0.12.3"
 features = []
 
 [dependencies]
@@ -50,7 +50,7 @@ version = "^0.12.7"
 features = ["stream"]
 
 [dependencies.tonic]
-version = "^0.11.0"
+version = "^0.12.3"
 features = ["tls"]
 
 [dependencies.serde]
