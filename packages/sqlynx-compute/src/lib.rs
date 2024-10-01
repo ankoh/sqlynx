@@ -1,8 +1,12 @@
 use wasm_bindgen::prelude::*;
 
+mod arrow_ingest;
 mod console;
+mod data_frame;
 #[cfg(test)]
-mod datafusion_tests;
+mod data_frame_tests;
+#[cfg(test)]
+mod fusion_tests;
 
 use console::DEFAULT_LOGGER;
 
