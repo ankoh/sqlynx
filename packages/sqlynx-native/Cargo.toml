@@ -50,7 +50,7 @@ version = "^0.12.8"
 features = ["stream"]
 
 [dependencies.tonic]
-version = "^0.11.0"
+version = "^0.12.0"
 features = ["tls"]
 
 [dependencies.serde]
