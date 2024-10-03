@@ -245,7 +245,7 @@ jobs:
             matrix:
                 build:
                     - name: o0
-                      profile: debug
+                      profile: dev
                     - name: o3
                       profile: release
 
