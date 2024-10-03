@@ -290,7 +290,7 @@ jobs:
               shell: bash
               run: |
                     ./node_modules/.bin/buf generate
-                    yarn workspace @ankoh/sqlynx-pb build
+                    yarn workspace @ankoh/sqlynx-protobuf build
 
             - name: Run tests
               shell: bash

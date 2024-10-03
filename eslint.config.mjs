@@ -30,8 +30,8 @@ const config = ts.config(
             "packages/sqlynx-pack",
             "packages/sqlynx-core-bindings/dist",
             "packages/sqlynx-core-bindings/gen",
-            "packages/sqlynx-pb/dist",
-            "packages/sqlynx-pb/gen",
+            "packages/sqlynx-protobuf/dist",
+            "packages/sqlynx-protobuf/gen",
         ],
     }
 );
