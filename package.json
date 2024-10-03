@@ -32,7 +32,7 @@
         "@primer/octicons-react@npm:^19.8.0": "patch:@primer/octicons-react@npm%3A19.9.0#~/.yarn/patches/@primer-octicons-react-npm-19.9.0-65341cfa23.patch"
     },
     "scripts": {
-        "compute:wasm:o0": "wasm-pack build --target web --debug --out-name sqlynx_compute --out-dir ./pkg ./packages/sqlynx-compute/",
-        "compute:wasm:o3": "wasm-pack build --target web --release --out-name sqlynx_compute --out-dir ./pkg ./packages/sqlynx-compute/"
+        "compute:wasm:o0": "wasm-pack build --target web --debug --out-name sqlynx_compute --out-dir ./dist ./packages/sqlynx-compute/",
+        "compute:wasm:o3": "wasm-pack build --target web --release --out-name sqlynx_compute --out-dir ./dist ./packages/sqlynx-compute/"
     }
 }

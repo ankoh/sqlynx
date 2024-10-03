@@ -14,7 +14,7 @@
         "lint": "eslint"
     },
     "devDependencies": {
-        "@ankoh/sqlynx-compute": "link:../sqlynx-compute/pkg/",
+        "@ankoh/sqlynx-compute": "link:../sqlynx-compute/dist/",
         "@ankoh/sqlynx-core": "link:../sqlynx-core-api",
         "@ankoh/sqlynx-pb": "link:../sqlynx-pb",
         "@bufbuild/protobuf": "^1.10.0",

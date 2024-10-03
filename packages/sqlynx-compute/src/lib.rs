@@ -7,6 +7,7 @@ mod data_frame;
 mod data_frame_tests;
 #[cfg(test)]
 mod fusion_tests;
+mod version;
 
 use console::DEFAULT_LOGGER;
 
