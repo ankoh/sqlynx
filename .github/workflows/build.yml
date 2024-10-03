@@ -240,6 +240,59 @@ jobs:
                   path: ${{ github.workspace }}/packages/sqlynx-core-bindings/coverage/lcov.info
                   retention-days: 1
 
+    compute_wasm:
+        name: Compute / WASM / O3
+        runs-on: ubuntu-24.04
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  submodules: 'recursive'
+                  fetch-depth: 0
+                  ref: ${{ github.event.inputs.commit || github.sha }}
+
+            - name: Setup cargo cache
+              uses: actions/cache@v4
+              with:
+                  path: |
+                    ~/.cargo/bin/
+                    ~/.cargo/registry/index/
+                    ~/.cargo/registry/cache/
+                    ~/.cargo/git/db/
+                    target/
+                  key: cargo-wasm-${{ hashFiles('Cargo.lock') }}
+                  restore-keys: |
+                    cargo-wasm-${{ hashFiles('Cargo.lock') }}
+                    cargo-wasm-
+
+            - name: Setup protoc
+              uses: ./.github/actions/setup-protoc
+              with:
+                os: macos-14
+            - name: Setup rust
+              uses: ./.github/actions/setup-rust
+              with:
+                os: macos-14
+
+            - name: Install npm dependencies
+              shell: bash
+              run: |
+                  yarn install --frozen-lockfile
+
+            - name: Build @ankoh/sqlynx-compute
+              shell: bash
+              run: |
+                  wasm-pack build \
+                    --target web --release \
+                    --out-name sqlynx_compute \
+                    --out-dir ./dist \
+                    ./packages/sqlynx-compute/
+
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: sqlynx_compute_wasm_o3
+                  path: ${{ github.workspace }}/packages/sqlynx-compute/dist
+                  retention-days: 1
+
     pwa:
         name: App / Web / ${{ matrix.build.name }}
         runs-on: ubuntu-24.04
@@ -275,6 +328,11 @@ jobs:
                   name: sqlynx_core
                   path: ${{ github.workspace }}/packages/sqlynx-core-bindings/dist
 
+            - uses: actions/download-artifact@v4
+              with:
+                  name: sqlynx_compute_wasm_o3
+                  path: ${{ github.workspace }}/packages/sqlynx-compute/dist
+
             - name: Freeze SQLynx version
               shell: bash
               run: |
@@ -286,7 +344,7 @@ jobs:
               run: |
                   yarn install --frozen-lockfile
 
-            - name: Build Hyper Service protobuf library
+            - name: Build Protobuf library
               shell: bash
               run: |
                     ./node_modules/.bin/buf generate
