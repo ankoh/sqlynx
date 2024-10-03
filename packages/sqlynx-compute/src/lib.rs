@@ -3,6 +3,7 @@ use wasm_bindgen::prelude::*;
 mod arrow_ingest;
 mod console;
 mod data_frame;
+mod data_frame_ipc;
 #[cfg(test)]
 mod data_frame_tests;
 #[cfg(test)]

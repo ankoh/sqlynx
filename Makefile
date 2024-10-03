@@ -161,6 +161,10 @@ pwa_dev_trace:
 pwa_tests:
 	yarn workspace @ankoh/sqlynx-app test
 
+.PHONY: pwa_tests_verbose
+pwa_tests_verbose:
+	yarn workspace @ankoh/sqlynx-app test --verbose=true
+
 .PHONY: lint
 lint:
 	DEBUG=eslint:cli-engine yarn run eslint

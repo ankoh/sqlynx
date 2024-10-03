@@ -6,10 +6,12 @@ use datafusion_physical_expr::{expressions::col, PhysicalSortExpr};
 use datafusion_physical_plan::{collect, memory::MemoryExec, sorts::sort::SortExec};
 use wasm_bindgen::prelude::*;
 
+use crate::data_frame_ipc::DataFrameIpcStream;
+
 #[wasm_bindgen]
 pub struct DataFrame {
-    schema: Arc<Schema>,
-    batches: Vec<Vec<RecordBatch>>,
+    pub(crate) schema: Arc<Schema>,
+    pub(crate) partitions: Vec<Vec<RecordBatch>>,
 }
 
 #[wasm_bindgen]
@@ -17,18 +19,19 @@ impl DataFrame {
     /// Construct a data frame
     pub(crate) fn new(schema: Arc<Schema>, batches: Vec<RecordBatch>) -> DataFrame {
         Self {
-            schema, batches: vec![batches]
+            schema, partitions: vec![batches]
         }
     }
 
     /// Reorder the frame by a single column
+    #[wasm_bindgen(js_name="orderByColumn")]
     pub async fn order_by_column(&self, column_id: usize, _ascending: bool, _nulls_first: bool) -> Result<DataFrame, JsError> {
         // Is the column id referring to a valid column?
         if column_id >= self.schema.fields().len() {
             return Err(JsError::new("column does not refer to a schema field"));
         }
         let input = Arc::new(
-            MemoryExec::try_new(&self.batches, self.schema.clone(), None).unwrap(),
+            MemoryExec::try_new(&self.partitions, self.schema.clone(), None).unwrap(),
         );
 
         // Construct the new sort order
@@ -48,5 +51,10 @@ impl DataFrame {
 
         let sorted = DataFrame::new(self.schema.clone(), result);
         return Ok(sorted);
+    }
+
+    #[wasm_bindgen(js_name="createIpcStream")]
+    pub fn create_ipc_stream(&self) -> Result<DataFrameIpcStream, JsError> {
+        DataFrameIpcStream::new(self.schema.clone())
     }
 }

@@ -7,7 +7,7 @@ import { RESULT_OK } from '../../utils/result.js';
 import { ScriptData, ScriptKey } from '../../session/session_state.js';
 import { ScriptLoadingStatus } from '../../session/script_loader.js';
 import { useConnectionStateAllocator } from '../connection_registry.js';
-import { useSQLynxCoreSetup } from '../../sqlynx_core.js';
+import { useSQLynxCoreSetup } from '../../sqlynx_core_provider.js';
 import { useSessionStateAllocator } from '../../session/session_state_registry.js';
 import { createServerlessConnectionState } from '../connection_state.js';
 
