@@ -6,7 +6,7 @@ use datafusion_physical_expr::{expressions::col, PhysicalSortExpr};
 use datafusion_physical_plan::{collect, memory::MemoryExec, sorts::sort::SortExec};
 use wasm_bindgen::prelude::*;
 
-use crate::data_frame_ipc::DataFrameIpcStream;
+use crate::arrow_out::DataFrameIpcStream;
 
 #[wasm_bindgen]
 pub struct DataFrame {

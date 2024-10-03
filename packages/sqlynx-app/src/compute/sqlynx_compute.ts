@@ -1,4 +1,25 @@
+import * as arrow from 'apache-arrow';
 import * as sqlynx_compute from "@ankoh/sqlynx-compute";
+
+// XXX Exceptions
+
+export function dataFrameFromTable(t: arrow.Table): sqlynx_compute.DataFrame {
+    const ingest = new sqlynx_compute.ArrowIngest();
+    const tableBuffer = arrow.tableToIPC(t, 'stream');
+    ingest.read(tableBuffer);
+    const dataFrame = ingest.finish();
+    ingest.free();
+    return dataFrame;
+}
+
+export function readDataFrame<T extends arrow.TypeMap = any>(frame: sqlynx_compute.DataFrame): arrow.Table<T> {
+    const ipcStream = frame.createIpcStream();
+    const ipcStreamIterable = new DataFrameIpcStreamIterable(frame, ipcStream);
+    const batchReader = arrow.RecordBatchReader.from(ipcStreamIterable);
+    const table = new arrow.Table<T>(batchReader);
+    ipcStream.free();
+    return table;
+}
 
 export class DataFrameIpcStreamIterable implements Iterable<Uint8Array> {
     frame: sqlynx_compute.DataFrame;
