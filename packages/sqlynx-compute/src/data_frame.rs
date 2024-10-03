@@ -25,7 +25,7 @@ impl DataFrame {
 
     /// Reorder the frame by a single column
     #[wasm_bindgen(js_name="orderByColumn")]
-    pub async fn order_by_column(&self, column_name: String, _ascending: bool, _nulls_first: bool) -> Result<DataFrame, JsError> {
+    pub async fn order_by_column(&self, column_name: String, ascending: bool, nulls_first: bool, limit: Option<usize>) -> Result<DataFrame, JsError> {
         // Find the column id
         let column_id = match self.schema.index_of(&column_name) {
             Ok(cid) => cid,
@@ -37,14 +37,17 @@ impl DataFrame {
 
         // Construct the new sort order
         let column_name = self.schema.fields()[column_id].name();
+        let sort_options = arrow::compute::SortOptions {
+            descending: !ascending,
+            nulls_first,
+        };
         let sort_exec = Arc::new(SortExec::new(
             vec![PhysicalSortExpr {
                 expr: col(column_name, &self.schema)?,
-                options: arrow::compute::SortOptions::default(),
+                options: sort_options,
             }],
             input,
-        ));
-
+        ).with_fetch(limit));
 
         // Construct the new memtable
         let task_ctx = Arc::new(TaskContext::default());
