@@ -57,9 +57,9 @@ describe('SQLynxCompute Arrow IO', () => {
     })
 });
 
-const testOrderByColumn = async (inTable: arrow.Table, columnId: number, asc: boolean, nullsFirst: boolean, mapper: (o: any) => any, expected: any[]) => {
+const testOrderByColumn = async (inTable: arrow.Table, columnName: string, asc: boolean, nullsFirst: boolean, mapper: (o: any) => any, expected: any[]) => {
     const dataFrame = createDataFrameFromTable(inTable);
-    const orderedFrame = await dataFrame.orderByColumn(columnId, asc, nullsFirst);
+    const orderedFrame = await dataFrame.orderByColumn(columnName, asc, nullsFirst);
     dataFrame.free();
 
     const table = readDataFrame(orderedFrame);
@@ -70,12 +70,12 @@ const testOrderByColumn = async (inTable: arrow.Table, columnId: number, asc: bo
 };
 
 describe('SQLynxCompute OrderBy', () => {
-    it('Sort Float64', async () => {
+    it('Float64', async () => {
         const t = arrow.tableFromArrays({
             id: new Int32Array([1, 2, 3, 4]),
             score: new Float64Array([42.0, 10.2, 10.1, 30.005])
         });
-        testOrderByColumn(t, 1, true, false, o => ({ id: o.id, score: o.score }), [
+        testOrderByColumn(t, "score", true, false, o => ({ id: o.id, score: o.score }), [
             { id: 3, score: 10.1 },
             { id: 2, score: 10.2 },
             { id: 4, score: 30.005 },
