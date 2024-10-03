@@ -300,8 +300,6 @@ jobs:
     compute_wasm:
         name: Compute / WASM / O3
         runs-on: ubuntu-24.04
-        needs:
-            - compute_native
         steps:
             - uses: actions/checkout@v4
               with:
