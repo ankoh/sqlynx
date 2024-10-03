@@ -21,8 +21,7 @@ describe('SQLynx setup', () => {
         expect(instance).not.toBeUndefined();
         const version = instance.getVersionText();
         expect(version).not.toBeFalsy();
-        expect(version).not.toEqual('');
-        console.log(version);
+        expect(version).toMatch(/^[0-9]+.[0-9]+.[0-9]+(\-dev\.[0-9]+)?$/);
     });
 });
 
