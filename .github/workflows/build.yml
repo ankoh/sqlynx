@@ -267,11 +267,11 @@ jobs:
             - name: Setup protoc
               uses: ./.github/actions/setup-protoc
               with:
-                os: macos-14
+                os: ubuntu-24.04 
             - name: Setup rust
               uses: ./.github/actions/setup-rust
               with:
-                os: macos-14
+                os: ubuntu-24.04 
 
             - name: Install npm dependencies
               shell: bash
