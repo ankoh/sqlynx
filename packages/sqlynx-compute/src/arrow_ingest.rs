@@ -38,7 +38,7 @@ impl ArrowIngest {
     }
 
     /// Finish reading from the arrow ipc stream
-    pub fn finish(self) -> Result<DataFrame, JsError> {
+    pub fn finish(&mut self) -> Result<DataFrame, JsError> {
         // Construct a mem table
         let schema: Arc<Schema>;
         if self.batches.len() == 0 {
@@ -48,7 +48,7 @@ impl ArrowIngest {
         }
 
         // Create a new data frame
-        let data_frame = DataFrame::new(schema.clone(), self.batches);
+        let data_frame = DataFrame::new(schema.clone(), std::mem::take(&mut self.batches));
         Ok(data_frame)
     }
 }

@@ -21,7 +21,7 @@ getrandom = { version = "0.2.8", features = ["js"] }
 anyhow = "1.0.89"
 
 tokio = { version = "1.36", features = ["macros", "rt", "sync"] }
-arrow = { version = "53.0", default-features = false, features = ["csv", "ipc"] }
+arrow = { version = "53.0", default-features = false, features = ["ipc"] }
 
 datafusion-common = { version = "42.0.0", default-features = false }
 datafusion-expr = { version = "42.0.0", default-features = false }
