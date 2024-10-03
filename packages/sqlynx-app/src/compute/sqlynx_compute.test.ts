@@ -2,6 +2,7 @@ import '@jest/globals';
 
 import * as arrow from 'apache-arrow';
 import * as sqlynx_compute from '@ankoh/sqlynx-compute';
+import * as pb from '@ankoh/sqlynx-protobuf';
 import * as path from 'path';
 import * as fs from 'fs';
 import { fileURLToPath } from 'node:url';
@@ -59,7 +60,13 @@ describe('SQLynxCompute Arrow IO', () => {
 
 const testOrderByColumn = async (inTable: arrow.Table, columnName: string, asc: boolean, nullsFirst: boolean, mapper: (o: any) => any, expected: any[]) => {
     const dataFrame = createDataFrameFromTable(inTable);
-    const orderedFrame = await dataFrame.orderByColumn(columnName, asc, nullsFirst);
+    const orderByConfig = new pb.sqlynx_compute.pb.OrderByConfig({
+        fieldName: columnName,
+        ascending: asc,
+        nullsFirst
+    });
+    const orderByConfigBytes = orderByConfig.toBinary();
+    const orderedFrame = await dataFrame.orderBy(orderByConfigBytes);
     dataFrame.free();
 
     const table = readDataFrame(orderedFrame);
