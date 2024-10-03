@@ -7,6 +7,7 @@ struct SemVer {
     minor: u32,
     patch: u32,
     dev: u32,
+    commit: String,
 }
 
 impl fmt::Display for SemVer {
@@ -20,6 +21,10 @@ impl fmt::Display for SemVer {
 }
 
 fn resolve_git_semver() -> anyhow::Result<SemVer> {
+    let raw_git_commit_hash = std::process::Command::new("git")
+        .args(&["log", "-1", "--format=%h"])
+        .output()?
+        .stdout;
     let raw_git_last_tag = std::process::Command::new("git")
         .args(&["describe", "--tags", "--abbrev=0"])
         .output()?
@@ -28,6 +33,9 @@ fn resolve_git_semver() -> anyhow::Result<SemVer> {
         .args(&["describe", "--tags", "--long"])
         .output()?
         .stdout;
+    let git_commit = std::str::from_utf8(&raw_git_commit_hash)?
+        .trim()
+        .to_string();
     let git_last_tag = std::str::from_utf8(&raw_git_last_tag)?
         .trim()
         .to_string();
@@ -50,6 +58,8 @@ fn resolve_git_semver() -> anyhow::Result<SemVer> {
         None => anyhow::bail!("failed to parse git iteration"),
     };
     out.dev = parsed_iteration.get(1).unwrap().as_str().parse()?;
+
+    out.commit = git_commit;
     Ok(out)
 }
 
@@ -61,6 +71,7 @@ fn main() -> anyhow::Result<()> {
     println!("cargo:rustc-env=SQLYNX_VERSION_MINOR={}", semver.minor);
     println!("cargo:rustc-env=SQLYNX_VERSION_PATCH={}", semver.patch);
     println!("cargo:rustc-env=SQLYNX_VERSION_DEV={}", semver.dev);
-    println!("cargo:rustc-env=SQLYNX_VERSION={}", semver);
+    println!("cargo:rustc-env=SQLYNX_VERSION_COMMIT={}", semver.commit);
+    println!("cargo:rustc-env=SQLYNX_VERSION_TEXT={}", semver);
     Ok(())
 }
