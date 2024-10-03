@@ -3,7 +3,7 @@
     "type": "module",
     "workspaces": [
         "packages/sqlynx-app",
-        "packages/sqlynx-core-api",
+        "packages/sqlynx-core-bindings",
         "packages/sqlynx-protobuf"
     ],
     "packages": {
