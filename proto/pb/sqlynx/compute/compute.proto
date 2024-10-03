@@ -10,7 +10,7 @@ message OrderByConfig {
     /// Sort nulls first?
     bool nulls_first = 3;
     /// Limit results?
-    bool limit = 4;
+    optional uint32 limit = 4;
 }
 
 enum AggregationFunction {
