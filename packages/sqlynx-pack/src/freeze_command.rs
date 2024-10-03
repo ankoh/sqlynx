@@ -83,7 +83,7 @@ pub fn freeze() -> Result<()> {
         .join("package.json");
     let core_api_package_json = source_dir
         .join("packages")
-        .join("sqlynx-core-api")
+        .join("sqlynx-core-bindings")
         .join("package.json");
     let hyper_service_package_json = source_dir
         .join("packages")
@@ -108,7 +108,7 @@ pub fn freeze() -> Result<()> {
     log::info!("version: {}", &version);
     log::info!("patching @ankoh/sqlynx-app package.json");
     update_package_json(&app_package_json, &version, &git_repo.version.short_hash)?;
-    log::info!("patching @ankoh/sqlynx-core-api package.json");
+    log::info!("patching @ankoh/sqlynx-core package.json");
     update_package_json(
         &core_api_package_json,
         &version,

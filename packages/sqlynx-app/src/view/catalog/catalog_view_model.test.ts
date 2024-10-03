@@ -6,7 +6,7 @@ import * as fs from 'fs';
 import { fileURLToPath } from 'node:url';
 import { CatalogRenderingSettings, CatalogViewModel } from './catalog_view_model.js';
 
-const coreDistPath = path.resolve(fileURLToPath(new URL('../../../../sqlynx-core-api/dist', import.meta.url)));
+const coreDistPath = path.resolve(fileURLToPath(new URL('../../../../sqlynx-core-bindings/dist', import.meta.url)));
 const wasmPath = path.resolve(coreDistPath, './sqlynx.wasm');
 
 let lnx: sqlynx.SQLynx | null = null;

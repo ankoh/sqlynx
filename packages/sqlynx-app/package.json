@@ -15,7 +15,7 @@
     },
     "devDependencies": {
         "@ankoh/sqlynx-compute": "link:../sqlynx-compute/dist/",
-        "@ankoh/sqlynx-core": "link:../sqlynx-core-api",
+        "@ankoh/sqlynx-core": "link:../sqlynx-core-bindings",
         "@ankoh/sqlynx-protobuf": "link:../sqlynx-protobuf",
         "@bufbuild/protobuf": "^1.10.0",
         "@codemirror/autocomplete": "^6.16.2",

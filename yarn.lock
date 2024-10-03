@@ -37,7 +37,7 @@ __metadata:
   resolution: "@ankoh/sqlynx-app@workspace:packages/sqlynx-app"
   dependencies:
     "@ankoh/sqlynx-compute": "link:../sqlynx-compute/dist/"
-    "@ankoh/sqlynx-core": "link:../sqlynx-core-api"
+    "@ankoh/sqlynx-core": "link:../sqlynx-core-bindings"
     "@ankoh/sqlynx-protobuf": "link:../sqlynx-protobuf"
     "@bufbuild/protobuf": "npm:^1.10.0"
     "@codemirror/autocomplete": "npm:^6.16.2"
@@ -126,12 +126,13 @@ __metadata:
   languageName: node
   linkType: soft
 
-"@ankoh/sqlynx-core@link:../sqlynx-core-api::locator=%40ankoh%2Fsqlynx-app%40workspace%3Apackages%2Fsqlynx-app":
+"@ankoh/sqlynx-core@link:../sqlynx-core-bindings::locator=%40ankoh%2Fsqlynx-app%40workspace%3Apackages%2Fsqlynx-app":
   version: 0.0.0-use.local
-  resolution: "@ankoh/sqlynx-core@link:../sqlynx-core-api::locator=%40ankoh%2Fsqlynx-app%40workspace%3Apackages%2Fsqlynx-app"
+  resolution: "@ankoh/sqlynx-core@link:../sqlynx-core-bindings::locator=%40ankoh%2Fsqlynx-app%40workspace%3Apackages%2Fsqlynx-app"
   languageName: node
   linkType: soft
 
+<<<<<<< HEAD
 "@ankoh/sqlynx-core@workspace:packages/sqlynx-core-api":
   version: 0.0.0-use.local
   resolution: "@ankoh/sqlynx-core@workspace:packages/sqlynx-core-api"
@@ -146,6 +147,8 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+=======
+>>>>>>> 4cc52ce0 (Rename sqlynx-core-api to sqlynx-core-bindings)
 "@ankoh/sqlynx-protobuf@link:../sqlynx-protobuf::locator=%40ankoh%2Fsqlynx-app%40workspace%3Apackages%2Fsqlynx-app":
   version: 0.0.0-use.local
   resolution: "@ankoh/sqlynx-protobuf@link:../sqlynx-protobuf::locator=%40ankoh%2Fsqlynx-app%40workspace%3Apackages%2Fsqlynx-app"
