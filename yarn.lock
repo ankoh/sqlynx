@@ -36,7 +36,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@ankoh/sqlynx-app@workspace:packages/sqlynx-app"
   dependencies:
-    "@ankoh/sqlynx-compute": "link:../sqlynx-compute"
+    "@ankoh/sqlynx-compute": "link:../sqlynx-compute/pkg/"
     "@ankoh/sqlynx-core": "link:../sqlynx-core-api"
     "@ankoh/sqlynx-pb": "link:../sqlynx-pb"
     "@bufbuild/protobuf": "npm:^1.10.0"
@@ -120,9 +120,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@ankoh/sqlynx-compute@link:../sqlynx-compute::locator=%40ankoh%2Fsqlynx-app%40workspace%3Apackages%2Fsqlynx-app":
+"@ankoh/sqlynx-compute@link:../sqlynx-compute/pkg/::locator=%40ankoh%2Fsqlynx-app%40workspace%3Apackages%2Fsqlynx-app":
   version: 0.0.0-use.local
-  resolution: "@ankoh/sqlynx-compute@link:../sqlynx-compute::locator=%40ankoh%2Fsqlynx-app%40workspace%3Apackages%2Fsqlynx-app"
+  resolution: "@ankoh/sqlynx-compute@link:../sqlynx-compute/pkg/::locator=%40ankoh%2Fsqlynx-app%40workspace%3Apackages%2Fsqlynx-app"
   languageName: node
   linkType: soft
 

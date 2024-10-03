@@ -21,7 +21,7 @@ interface Props {
     children: JSX.Element;
 }
 
-export const SQLynxLoader: React.FC<Props> = (props: Props) => {
+export const SQLynxCoreProvider: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
     const instantiation = React.useRef<Promise<Result<sqlynx.SQLynx>> | null>(null);
     const [mod, setModule] = React.useState<Result<sqlynx.SQLynx> | null>(null);
@@ -116,9 +116,9 @@ export const SQLynxLoader: React.FC<Props> = (props: Props) => {
     );
 };
 
-export const useSQLynxSetupProgress = (): InstantiationProgress | null => React.useContext(PROGRESS_CONTEXT);
+export const useSQLynxCoreSetupProgress = (): InstantiationProgress | null => React.useContext(PROGRESS_CONTEXT);
 export type SQLynxSetupFn = (context: string) => Promise<Result<sqlynx.SQLynx>>;
-export function useSQLynxSetup(): SQLynxSetupFn {
+export function useSQLynxCoreSetup(): SQLynxSetupFn {
     // Get the module
     const mod = React.useContext(MODULE_CONTEXT);
     // Resolve function to instantiate the module
