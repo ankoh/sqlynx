@@ -5778,7 +5778,7 @@ dependencies = [
  "log",
  "mime",
  "once_cell",
- "prost",
+ "prost 0.12.6",
  "regex-automata 0.4.8",
  "reqwest",
  "serde",
