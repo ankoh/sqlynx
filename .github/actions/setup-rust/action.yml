@@ -22,7 +22,7 @@ runs:
             rustup show
 
         - name: Install Rust toolchain on Linux
-          if: ${{ inputs.os == 'ubuntu-22.04' }}
+          if: ${{ inputs.os == 'ubuntu-24.04' }}
           shell: bash
           run: |
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > rustup-init.sh
