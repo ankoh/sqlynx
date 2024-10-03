@@ -1,5 +1,5 @@
 import * as arrow from 'apache-arrow';
-import * as proto from "@ankoh/sqlynx-pb";
+import * as proto from "@ankoh/sqlynx-protobuf";
 
 import { QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionResponseStreamMetrics, QueryExecutionStatus } from "../query_execution_state.js";
 import { generateRandomData, RandomDataConfig } from '../../utils/random_data.js';

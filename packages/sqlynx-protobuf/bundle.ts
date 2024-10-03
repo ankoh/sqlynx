@@ -22,4 +22,4 @@ esbuild.build({
     external: ['@bufbuild/protobuf', '@connectrpc/connect-web'],
 });
 
-fs.writeFile(path.join(dist, 'sqlynx-proto.module.d.ts'), "export * from './index';", printErr);
+fs.writeFile(path.join(dist, 'sqlynx-proto.module.d.ts'), "export * from './index.js';", printErr);

@@ -1,4 +1,4 @@
-import * as proto from '@ankoh/sqlynx-pb';
+import * as proto from '@ankoh/sqlynx-protobuf';
 import * as React from 'react';
 import * as symbols from '../../static/svg/symbols.generated.svg';
 import * as icons from '../../static/svg/symbols.generated.svg';

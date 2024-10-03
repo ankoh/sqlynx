@@ -1,4 +1,4 @@
-import * as proto from '@ankoh/sqlynx-pb';
+import * as proto from '@ankoh/sqlynx-protobuf';
 
 import { SessionState, ScriptData, ScriptKey } from './session_state.js';
 import { ConnectionState } from '../connectors/connection_state.js';

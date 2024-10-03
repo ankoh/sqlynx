@@ -26,25 +26,6 @@ pub struct ConsoleLogger {
     log_level: Level,
 }
 
-impl ConsoleLogger {
-    /// Constructs a new `ConsoleLogger`
-    ///
-    /// The given function will be used to format the logged messages.
-    pub fn new(formatter: &'static RecordFormatter, log_level: Level) -> Self {
-        ConsoleLogger {
-            formatter,
-            log_level,
-        }
-    }
-
-    /// Constructs a `ConsoleLogger` with the given maximum log level
-    ///
-    /// A default log formatter will be used.
-    pub fn with_level(level: Level) -> Self {
-        ConsoleLogger::new(&format_message, level)
-    }
-}
-
 impl Default for ConsoleLogger {
     fn default() -> Self {
         DEFAULT_LOGGER

@@ -1,4 +1,4 @@
-import * as proto from '@ankoh/sqlynx-pb';
+import * as proto from '@ankoh/sqlynx-protobuf';
 
 import { ConnectionState } from './connection_state.js';
 import { SALESFORCE_DATA_CLOUD_CONNECTOR } from './connector_info.js';

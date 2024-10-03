@@ -25,9 +25,9 @@ impl DataFrame {
 
     /// Reorder the frame by a single column
     #[wasm_bindgen(js_name="orderByColumn")]
-    pub async fn order_by_column(&self, column_name: String, ascending: bool, nulls_first: bool, limit: Option<usize>) -> Result<DataFrame, JsError> {
+    pub async fn order_by_column(&self, field_name: String, ascending: bool, nulls_first: bool, limit: Option<usize>) -> Result<DataFrame, JsError> {
         // Find the column id
-        let column_id = match self.schema.index_of(&column_name) {
+        let column_id = match self.schema.index_of(&field_name) {
             Ok(cid) => cid,
             Err(_) => return Err(JsError::new("column does not refer to a schema field")),
         };

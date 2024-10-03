@@ -1,4 +1,4 @@
-import * as proto from '@ankoh/sqlynx-pb';
+import * as proto from '@ankoh/sqlynx-protobuf';
 import * as React from 'react';
 
 import { SessionSetupPage } from './session_setup_page.js';
