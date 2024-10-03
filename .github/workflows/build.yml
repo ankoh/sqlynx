@@ -267,10 +267,10 @@ jobs:
                     ~/.cargo/registry/cache/
                     ~/.cargo/git/db/
                     target/
-                  key: cargo-native-${{ hashFiles('Cargo.lock') }}
+                  key: cargo-linux-${{ hashFiles('Cargo.lock') }}
                   restore-keys: |
-                    cargo-native-${{ hashFiles('Cargo.lock') }}
-                    cargo-native-
+                    cargo-linux-${{ hashFiles('Cargo.lock') }}
+                    cargo-linux-
 
             - name: Setup protoc
               uses: ./.github/actions/setup-protoc
