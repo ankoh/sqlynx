@@ -1,29 +1,66 @@
-use std::process::Command;
+use core::fmt;
+use regex::Regex;
 
-fn get_git_hash() -> String {
-    let git_hash = {
-        let output = Command::new("git")
-            .args(["describe", "--always", "--dirty", "--abbrev=64"])
-            .output()
-            .expect("failed to execute git rev-parse to read the current git hash");
+#[derive(Default)]
+struct SemVer {
+    major: u32,
+    minor: u32,
+    patch: u32,
+    dev: u32,
+}
 
-        String::from_utf8(output.stdout).expect("non-utf8 found in git hash")
+impl fmt::Display for SemVer {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if self.dev == 0 {
+            write!(f, "{}.{}.{}", self.major, self.minor, self.patch)
+        } else {
+            write!(f, "{}.{}.{}-dev.{}", self.major, self.minor, self.patch, self.dev)
+        }
+    }
+}
+
+fn resolve_git_semver() -> anyhow::Result<SemVer> {
+    let raw_git_last_tag = std::process::Command::new("git")
+        .args(&["describe", "--tags", "--abbrev=0"])
+        .output()?
+        .stdout;
+    let raw_git_iteration = std::process::Command::new("git")
+        .args(&["describe", "--tags", "--long"])
+        .output()?
+        .stdout;
+    let git_last_tag = std::str::from_utf8(&raw_git_last_tag)?
+        .trim()
+        .to_string();
+    let git_iteration = std::str::from_utf8(&raw_git_iteration)?
+        .trim()
+        .to_string();
+
+    let mut out = SemVer::default();
+
+    let parsed_last_tag = match Regex::new("v([0-9]+).([0-9]+).([0-9]+)")?.captures(&git_last_tag) {
+        Some(v) => v,
+        None => anyhow::bail!("failed to parse git commit hash"),
     };
+    out.major = parsed_last_tag.get(1).unwrap().as_str().parse()?;
+    out.minor = parsed_last_tag.get(2).unwrap().as_str().parse()?;
+    out.patch = parsed_last_tag.get(3).unwrap().as_str().parse()?;
 
-    assert!(!git_hash.is_empty(), "attempting to embed empty git hash");
-    git_hash
+    let parsed_iteration = match Regex::new(".*-([0-9]+)-.*")?.captures(&git_iteration) {
+        Some(v) => v,
+        None => anyhow::bail!("failed to parse git iteration"),
+    };
+    out.dev = parsed_iteration.get(1).unwrap().as_str().parse()?;
+    Ok(out)
 }
 
-fn get_git_hash_short() -> String {
-    let output = Command::new("git")
-        .args(["rev-parse", "--short", "HEAD"])
-        .output()
-        .expect("failed to execute git rev-parse to read the current git hash");
-    String::from_utf8(output.stdout).expect("non-utf8 found in git hash")
-}
+fn main() -> anyhow::Result<()> {
+    let semver = resolve_git_semver()?;
 
-fn main() {
-    println!("cargo:rerun-if-env-changed=GIT_HASH");
-    println!("cargo:rustc-env=GIT_HASH={}", get_git_hash());
-    println!("cargo:rustc-env=GIT_HASH_SHORT={}", get_git_hash_short());
+    println!("cargo:rerun-if-env-changed=SQLYNX_VERSION");
+    println!("cargo:rustc-env=SQLYNX_VERSION_MAJOR={}", semver.major);
+    println!("cargo:rustc-env=SQLYNX_VERSION_MINOR={}", semver.minor);
+    println!("cargo:rustc-env=SQLYNX_VERSION_PATCH={}", semver.patch);
+    println!("cargo:rustc-env=SQLYNX_VERSION_DEV={}", semver.dev);
+    println!("cargo:rustc-env=SQLYNX_VERSION={}", semver);
+    Ok(())
 }

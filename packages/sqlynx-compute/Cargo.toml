@@ -38,6 +38,10 @@ features = [
 [dev-dependencies]
 wasm-bindgen-test = "0.3"
 
+[build-dependencies]
+anyhow = "1.0.89"
+regex = "1.5"
+
 [profile.release]
 strip = true
 lto = true

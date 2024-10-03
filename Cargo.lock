@@ -5697,6 +5697,7 @@ dependencies = [
  "datafusion-physical-plan",
  "getrandom 0.2.12",
  "log",
+ "regex",
  "tokio",
  "wasm-bindgen",
  "wasm-bindgen-futures",
