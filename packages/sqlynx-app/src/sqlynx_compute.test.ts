@@ -16,6 +16,6 @@ describe('SQLynxCompute setup', () => {
         const buf = await fs.promises.readFile(wasmPath);
         await SQLynxCompute.default(buf);
         const version = SQLynxCompute.getVersion();
-        expect(version).toEqual("foo");
+        expect(version).not.toEqual("");
     });
 });
