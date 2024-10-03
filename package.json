@@ -4,7 +4,7 @@
     "workspaces": [
         "packages/sqlynx-app",
         "packages/sqlynx-core-api",
-        "packages/sqlynx-pb"
+        "packages/sqlynx-protobuf"
     ],
     "packages": {
         "ts-node": "^10.9.1"

@@ -1,4 +1,4 @@
-import * as proto from "@ankoh/sqlynx-pb";
+import * as proto from "@ankoh/sqlynx-protobuf";
 
 import { NativeGrpcServerStreamBatchEvent } from "./native_grpc_client.js";
 import { NativeHttpServerStreamBatchEvent } from "./native_http_client.js";

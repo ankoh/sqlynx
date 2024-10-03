@@ -73,5 +73,12 @@ fn main() -> anyhow::Result<()> {
     println!("cargo:rustc-env=SQLYNX_VERSION_DEV={}", semver.dev);
     println!("cargo:rustc-env=SQLYNX_VERSION_COMMIT={}", semver.commit);
     println!("cargo:rustc-env=SQLYNX_VERSION_TEXT={}", semver);
+
+    prost_build::compile_protos(
+        &[
+            "../../proto/pb/sqlynx/compute/compute.proto",
+        ],
+        &["../../proto/pb/"],
+    )?;
     Ok(())
 }

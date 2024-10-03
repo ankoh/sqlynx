@@ -1,6 +1,6 @@
 import { jest } from '@jest/globals';
 
-import * as proto from "@ankoh/sqlynx-pb";
+import * as proto from "@ankoh/sqlynx-protobuf";
 
 import { GrpcServerStream, NativeAPIMock } from './native_api_mock.js';
 import { NativeGrpcClient, NativeGrpcServerStreamBatchEvent } from './native_grpc_client.js';

@@ -1,4 +1,4 @@
-import * as proto from '@ankoh/sqlynx-pb';
+import * as proto from '@ankoh/sqlynx-protobuf';
 
 export function buildServerlessConnectorParams(): proto.sqlynx_session.pb.ConnectorParams {
     return new proto.sqlynx_session.pb.ConnectorParams({

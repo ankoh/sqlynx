@@ -1,4 +1,4 @@
-import * as proto from "@ankoh/sqlynx-pb";
+import * as proto from "@ankoh/sqlynx-protobuf";
 
 import { jest } from '@jest/globals';
 

@@ -38,7 +38,7 @@ __metadata:
   dependencies:
     "@ankoh/sqlynx-compute": "link:../sqlynx-compute/dist/"
     "@ankoh/sqlynx-core": "link:../sqlynx-core-api"
-    "@ankoh/sqlynx-pb": "link:../sqlynx-pb"
+    "@ankoh/sqlynx-protobuf": "link:../sqlynx-protobuf"
     "@bufbuild/protobuf": "npm:^1.10.0"
     "@codemirror/autocomplete": "npm:^6.16.2"
     "@codemirror/commands": "npm:^6.6.1"
@@ -146,15 +146,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@ankoh/sqlynx-pb@link:../sqlynx-pb::locator=%40ankoh%2Fsqlynx-app%40workspace%3Apackages%2Fsqlynx-app":
+"@ankoh/sqlynx-protobuf@link:../sqlynx-protobuf::locator=%40ankoh%2Fsqlynx-app%40workspace%3Apackages%2Fsqlynx-app":
   version: 0.0.0-use.local
-  resolution: "@ankoh/sqlynx-pb@link:../sqlynx-pb::locator=%40ankoh%2Fsqlynx-app%40workspace%3Apackages%2Fsqlynx-app"
+  resolution: "@ankoh/sqlynx-protobuf@link:../sqlynx-protobuf::locator=%40ankoh%2Fsqlynx-app%40workspace%3Apackages%2Fsqlynx-app"
   languageName: node
   linkType: soft
 
-"@ankoh/sqlynx-pb@workspace:packages/sqlynx-pb":
+"@ankoh/sqlynx-protobuf@workspace:packages/sqlynx-protobuf":
   version: 0.0.0-use.local
-  resolution: "@ankoh/sqlynx-pb@workspace:packages/sqlynx-pb"
+  resolution: "@ankoh/sqlynx-protobuf@workspace:packages/sqlynx-protobuf"
   dependencies:
     "@bufbuild/protobuf": "npm:^1.10.0"
     "@connectrpc/connect": "npm:^1.5.0"

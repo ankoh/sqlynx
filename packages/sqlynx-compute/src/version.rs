@@ -1,5 +1,4 @@
 use wasm_bindgen::prelude::*;
-use web_sys::js_sys::JsString;
 
 pub static SQLYNX_VERSION_MAJOR: &str = env!(
     "SQLYNX_VERSION_MAJOR",

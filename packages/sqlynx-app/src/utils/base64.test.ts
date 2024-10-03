@@ -1,4 +1,4 @@
-import * as proto from '@ankoh/sqlynx-pb';
+import * as proto from '@ankoh/sqlynx-protobuf';
 
 import { BASE64_CODEC } from "./base64.js";
 import { cyrb128, randomBuffer32, sfc32T } from "./prng.js";

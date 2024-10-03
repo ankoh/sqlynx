@@ -1,5 +1,5 @@
 {
-    "name": "@ankoh/sqlynx-pb",
+    "name": "@ankoh/sqlynx-protobuf",
     "private": true,
     "version": "0.0.2-dev.17",
     "gitCommit": "453866d",
@@ -15,7 +15,7 @@
         "typescript": "^5.6.2"
     },
     "scripts": {
-        "build": "tsc --emitDeclarationOnly --declaration && node --loader ts-node/esm bundle.ts"
+        "build": "tsc --emitDeclarationOnly --declaration && NODE_OPTIONS=--import=../../scripts/tsnode-esm.js node bundle.ts"
     },
     "include": [
         "./gen/"
@@ -23,9 +23,9 @@
     "files": [
         "dist/gen/",
         "dist/index.*",
-        "dist/sqlynx-pb.module.*"
+        "dist/*.module.*"
     ],
     "type": "module",
-    "module": "./dist/sqlynx-pb.module.js",
-    "types": "./dist/sqlynx-pb.module.d.ts"
+    "module": "./dist/sqlynx-proto.module.js",
+    "types": "./dist/sqlynx-proto.module.d.ts"
 }

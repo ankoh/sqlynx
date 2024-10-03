@@ -1,4 +1,4 @@
-import * as proto from "@ankoh/sqlynx-pb";
+import * as proto from "@ankoh/sqlynx-protobuf";
 
 import { GrpcChannelArgs, GrpcMetadataProvider } from './grpc_common.js';
 import { QueryExecutionProgress, QueryExecutionResponseStream } from "../connectors/query_execution_state.js";
@@ -13,9 +13,9 @@ export interface HyperDatabaseConnectionContext extends GrpcMetadataProvider {
     getAttachedDatabases(): AttachedDatabase[];
 }
 
-export interface HyperQueryExecutionProgress extends QueryExecutionProgress {}
+export interface HyperQueryExecutionProgress extends QueryExecutionProgress { }
 
-export interface HyperQueryResultStream extends QueryExecutionResponseStream {}
+export interface HyperQueryResultStream extends QueryExecutionResponseStream { }
 
 export interface HealthCheckResult {
     ok: boolean;

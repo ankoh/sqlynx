@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as proto from '@ankoh/sqlynx-pb';
+import * as proto from '@ankoh/sqlynx-protobuf';
 
 import { useConnectionState, useDynamicConnectionDispatch } from './connection_registry.js';
 import {

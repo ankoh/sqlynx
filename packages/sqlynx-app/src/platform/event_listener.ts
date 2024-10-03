@@ -1,4 +1,4 @@
-import * as proto from '@ankoh/sqlynx-pb';
+import * as proto from '@ankoh/sqlynx-protobuf';
 
 import { BASE64_CODEC } from '../utils/base64.js';
 import { Logger } from './logger.js';

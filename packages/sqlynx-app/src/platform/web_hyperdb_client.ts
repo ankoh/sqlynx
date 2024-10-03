@@ -1,4 +1,4 @@
-import * as hyper from '@ankoh/sqlynx-pb';
+import * as hyper from '@ankoh/sqlynx-protobuf';
 import * as arrow from 'apache-arrow';
 import * as bufconnect from '@connectrpc/connect-web';
 

@@ -1,4 +1,4 @@
-import * as proto from '@ankoh/sqlynx-pb';
+import * as proto from '@ankoh/sqlynx-protobuf';
 import { isNativePlatform } from "../platform/native_globals.js";
 
 export const DEMO_CONNECTOR = Symbol('DEMO_CONNECTOR');

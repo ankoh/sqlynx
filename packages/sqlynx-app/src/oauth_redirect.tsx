@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as proto from '@ankoh/sqlynx-pb';
+import * as proto from '@ankoh/sqlynx-protobuf';
 import * as styles from './view/banner_page.module.css';
 import * as symbols from '../static/svg/symbols.generated.svg';
 
@@ -236,7 +236,7 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                                         : <Button
                                             variant={ButtonVariant.Primary}
                                             onClick={() => triggerFlow(props.state, eventBase64, deepLink, logger)}
-                                            trailingVisual={() =>  <div>{Math.ceil(remainingUntilAutoTrigger / 1000)}</div>}
+                                            trailingVisual={() => <div>{Math.ceil(remainingUntilAutoTrigger / 1000)}</div>}
                                         >
                                             Open in App
                                         </Button>
