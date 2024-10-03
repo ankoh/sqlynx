@@ -87,7 +87,7 @@ pub fn freeze() -> Result<()> {
         .join("package.json");
     let hyper_service_package_json = source_dir
         .join("packages")
-        .join("sqlynx-pb")
+        .join("sqlynx-protobuf")
         .join("package.json");
     let tauri_config_json = source_dir
         .join("packages")
@@ -114,7 +114,7 @@ pub fn freeze() -> Result<()> {
         &version,
         &git_repo.version.short_hash,
     )?;
-    log::info!("patching @ankoh/sqlynx-pb package.json");
+    log::info!("patching @ankoh/sqlynx-protobuf package.json");
     update_package_json(
         &hyper_service_package_json,
         &version,
