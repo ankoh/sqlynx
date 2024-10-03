@@ -7,7 +7,7 @@ import { RESULT_OK } from '../../utils/result.js';
 import { ScriptData, ScriptKey } from '../../session/session_state.js';
 import { ScriptLoadingStatus } from '../../session/script_loader.js';
 import { useConnectionStateAllocator } from '../../connectors/connection_registry.js';
-import { useSQLynxSetup } from '../../sqlynx_loader.js';
+import { useSQLynxCoreSetup } from '../../sqlynx_core.js';
 import { useSessionStateAllocator } from '../../session/session_state_registry.js';
 import { createDemoConnectionState } from '../demo/demo_connection_state.js';
 
@@ -17,7 +17,7 @@ export const DEFAULT_BOARD_HEIGHT = 600;
 type SessionSetupFn = (abort?: AbortSignal) => Promise<number>;
 
 export function useDemoSessionSetup(): SessionSetupFn {
-    const setupSQLynx = useSQLynxSetup();
+    const setupSQLynx = useSQLynxCoreSetup();
     const allocateConnection = useConnectionStateAllocator();
     const allocateSessionState = useSessionStateAllocator();
 

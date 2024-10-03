@@ -21,7 +21,7 @@ import { NavBarContainer } from './view/navbar.js';
 import { PlatformTypeProvider } from './platform/platform_type.js';
 import { ProcessProvider } from './platform/process.js';
 import { QueryExecutorProvider } from './connectors/query_executor.js';
-import { SQLynxLoader } from './sqlynx_loader.js';
+import { SQLynxCoreProvider } from './sqlynx_core.js';
 import { SalesforceConnector } from './connectors/salesforce/salesforce_connector.js';
 import { SalesforceConnectorSettingsStateProvider } from './view/connectors/salesforce_connector_settings.js';
 import { SchemaGraphDemoPage } from './view/internals/schema_graph_demo.js';
@@ -84,7 +84,7 @@ const AppProviders = (props: { children: React.ReactElement }) => (
                             <VersionCheck>
                                 <HttpClientProvider>
                                     <HyperDatabaseClientProvider>
-                                        <SQLynxLoader>
+                                        <SQLynxCoreProvider>
                                             <Connectors>
                                                 <SessionProviders>
                                                     <PageStateProviders>
@@ -92,7 +92,7 @@ const AppProviders = (props: { children: React.ReactElement }) => (
                                                     </PageStateProviders>
                                                 </SessionProviders>
                                             </Connectors>
-                                        </SQLynxLoader>
+                                        </SQLynxCoreProvider>
                                     </HyperDatabaseClientProvider>
                                 </HttpClientProvider>
                             </VersionCheck>
