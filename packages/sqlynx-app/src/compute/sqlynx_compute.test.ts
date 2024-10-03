@@ -10,16 +10,12 @@ import { DataFrameIpcStreamIterable } from './sqlynx_compute.js';
 const distPath = path.resolve(fileURLToPath(new URL('../../../sqlynx-compute/dist/', import.meta.url)));
 const wasmPath = path.resolve(distPath, './sqlynx_compute_bg.wasm');
 
-describe('SQLynxCompute setup', () => {
-    it('WebAssembly file exists', () => {
-        expect(async () => await fs.promises.access(wasmPath)).resolves;
-    });
-    it('instantiates WebAssembly module', async () => {
-        const buf = await fs.promises.readFile(wasmPath);
-        await sqlynx_compute.default(buf);
-        const version = sqlynx_compute.getVersion();
-        expect(version.text).toMatch(/^[0-9]+.[0-9]+.[0-9]+(\-dev\.[0-9]+)?$/);
-    });
+beforeAll(async () => {
+    expect(async () => await fs.promises.access(wasmPath)).resolves;
+    const buf = await fs.promises.readFile(wasmPath);
+    await sqlynx_compute.default(buf);
+    const version = sqlynx_compute.getVersion();
+    expect(version.text).toMatch(/^[0-9]+.[0-9]+.[0-9]+(\-dev\.[0-9]+)?$/);
 });
 
 describe('SQLynxCompute Arrow IO', () => {
@@ -31,9 +27,6 @@ describe('SQLynxCompute Arrow IO', () => {
     });
 
     it('Ingest', async () => {
-        const buf = await fs.promises.readFile(wasmPath);
-        await sqlynx_compute.default(buf);
-
         const ingest = new sqlynx_compute.ArrowIngest();
         const tableBuffer = arrow.tableToIPC(inTable0, 'stream');
         ingest.read(tableBuffer);
@@ -44,9 +37,6 @@ describe('SQLynxCompute Arrow IO', () => {
     });
 
     it('Ipc stream', async () => {
-        const buf = await fs.promises.readFile(wasmPath);
-        await sqlynx_compute.default(buf);
-
         const ingest = new sqlynx_compute.ArrowIngest();
         const tableBuffer = arrow.tableToIPC(inTable0, 'stream');
         ingest.read(tableBuffer);
