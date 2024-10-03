@@ -39,7 +39,7 @@ flatbuf:
 
 .PHONY: protobuf
 protobuf:
-	./node_modules/.bin/buf generate && yarn workspace @ankoh/sqlynx-protobuf build
+	node ./node_modules/.bin/buf generate && yarn workspace @ankoh/sqlynx-protobuf build
 
 .PHONY: core_native_o0
 core_native_o0:
