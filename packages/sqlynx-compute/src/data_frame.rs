@@ -1,51 +1,52 @@
 use std::sync::Arc;
 
-use datafusion::catalog::TableProvider;
-use datafusion::datasource::MemTable;
-use datafusion::prelude::*;
-
+use arrow::{array::RecordBatch, datatypes::Schema};
+use datafusion_execution::TaskContext;
+use datafusion_physical_expr::{expressions::col, PhysicalSortExpr};
+use datafusion_physical_plan::{collect, memory::MemoryExec, sorts::sort::SortExec};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 pub struct DataFrame {
-    /// The input stream
-    table: Arc<MemTable>,
+    schema: Arc<Schema>,
+    batches: Vec<Vec<RecordBatch>>,
 }
 
 #[wasm_bindgen]
 impl DataFrame {
     /// Construct a data frame
-    pub(crate) fn new(table: Arc<MemTable>) -> DataFrame {
+    pub(crate) fn new(schema: Arc<Schema>, batches: Vec<RecordBatch>) -> DataFrame {
         Self {
-            table
+            schema, batches: vec![batches]
         }
     }
 
     /// Reorder the frame by a single column
-    pub async fn order_by_column(&self, column_id: usize, ascending: bool, nulls_first: bool) -> Result<DataFrame, JsError> {
-        let ctx = SessionContext::new();
-        let table_provider = self.table.clone() as Arc<dyn TableProvider>;
-        let schema = table_provider.schema().clone();
-
+    pub async fn order_by_column(&self, column_id: usize, _ascending: bool, _nulls_first: bool) -> Result<DataFrame, JsError> {
         // Is the column id referring to a valid column?
-        if column_id >= schema.fields().len() {
+        if column_id >= self.schema.fields().len() {
             return Err(JsError::new("column does not refer to a schema field"));
         }
+        let input = Arc::new(
+            MemoryExec::try_new(&self.batches, self.schema.clone(), None).unwrap(),
+        );
 
         // Construct the new sort order
-        let column_name = schema.fields()[column_id].name();
-        let column = Column::from_name(column_name);
-        let sort_order = vec![col(column).sort(ascending, nulls_first)];
+        let column_name = self.schema.fields()[column_id].name();
+        let sort_exec = Arc::new(SortExec::new(
+            vec![PhysicalSortExpr {
+                expr: col(column_name, &self.schema)?,
+                options: arrow::compute::SortOptions::default(),
+            }],
+            input,
+        ));
 
-        // Sort the table
-        let batches = ctx.read_table(table_provider)?
-            .sort(sort_order.clone())?
-            .collect().await?;
 
         // Construct the new memtable
-        let mut mem_table = MemTable::try_new(schema, vec![batches])?;
-        mem_table = mem_table.with_sort_order(vec![sort_order]);
-        let sorted = DataFrame::new(Arc::new(mem_table));
+        let task_ctx = Arc::new(TaskContext::default());
+        let result = collect(sort_exec, Arc::clone(&task_ctx)).await?;
+
+        let sorted = DataFrame::new(self.schema.clone(), result);
         return Ok(sorted);
     }
 }

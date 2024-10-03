@@ -1,10 +1,9 @@
 use std::sync::Arc;
 
 use arrow::array::RecordBatch;
+use arrow::datatypes::Schema;
 use arrow::ipc::reader::StreamDecoder;
 use arrow::buffer::Buffer;
-use arrow::datatypes::Schema;
-use datafusion::datasource::MemTable;
 use wasm_bindgen::prelude::*;
 
 use crate::data_frame::DataFrame;
@@ -41,17 +40,15 @@ impl ArrowIngest {
     /// Finish reading from the arrow ipc stream
     pub fn finish(self) -> Result<DataFrame, JsError> {
         // Construct a mem table
-        let mem_table: MemTable;
+        let schema: Arc<Schema>;
         if self.batches.len() == 0 {
-            let schema = Arc::new(Schema::empty());
-            mem_table = MemTable::try_new(schema, vec![])?;
+            schema = Arc::new(Schema::empty());
         } else {
-            let schema = self.batches[0].schema().clone();
-            mem_table = MemTable::try_new(schema, vec![self.batches])?;
+            schema = self.batches[0].schema().clone();
         }
 
         // Create a new data frame
-        let data_frame = DataFrame::new(Arc::new(mem_table));
+        let data_frame = DataFrame::new(schema.clone(), self.batches);
         Ok(data_frame)
     }
 }

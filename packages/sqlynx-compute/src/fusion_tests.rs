@@ -1,7 +1,10 @@
 use std::sync::Arc;
 
 use arrow::{array::{ArrayData, ArrayRef, Decimal128Array, Int32Array, RecordBatch}, buffer::Buffer, datatypes::{Field, SchemaBuilder}};
-use datafusion::{prelude::*, scalar::ScalarValue};
+use datafusion_common::scalar::ScalarValue;
+use datafusion_execution::TaskContext;
+use datafusion_physical_expr::{expressions::{col, Column, Literal, BinaryExpr}, PhysicalSortExpr};
+use datafusion_physical_plan::{collect, filter::FilterExec, memory::MemoryExec, sorts::sort::SortExec, ExecutionPlan};
 
 
 #[tokio::test]
@@ -10,13 +13,19 @@ async fn test_filter_sort() -> anyhow::Result<()> {
         ("id", Arc::new(Int32Array::from(vec![1, 2, 3])) as ArrayRef),
         ("bank_account", Arc::new(Int32Array::from(vec![9000, 8000, 7000]))),
     ])?;
-    let ctx = SessionContext::new();
-    let df = ctx
-        .read_batch(data)?
-        .filter(col("bank_account").gt_eq(lit(8000)))?
-        .sort(vec![col("bank_account").sort(false, true)])?;
+    let input = Arc::new(
+        MemoryExec::try_new(&[vec![data.clone()]], data.schema(), None).unwrap(),
+    );
+    let sort_exec = Arc::new(SortExec::new(
+        vec![PhysicalSortExpr {
+            expr: col("bank_account", &data.schema())?,
+            options: arrow::compute::SortOptions::default(),
+        }],
+        input,
+    ));
+    let task_ctx = Arc::new(TaskContext::default());
+    let result = collect(sort_exec, Arc::clone(&task_ctx)).await?;
 
-    let result = df.collect().await?;
     assert_eq!(result.len(), 1);
     Ok(())
 }
@@ -47,15 +56,29 @@ async fn test_decimal_literal_filter() -> anyhow::Result<()> {
     let boundary = 42_i128 * 10_i128.pow(18) + 4_i128 * 10_i128.pow(17);
     let literal_value = ScalarValue::Decimal128(Some(boundary), 38, 18);
 
-    let ctx = SessionContext::new();
-    let df = ctx
-        .read_batch(record_batch)?
-        .filter(col("score").lt(lit(literal_value)))?
-        .sort(vec![col("score").sort(true, true)])?;
+    let predicate = Arc::new(BinaryExpr::new(
+            Arc::new(Column::new("score", 1)),
+            datafusion_expr::Operator::Lt,
+            Arc::new(Literal::new(literal_value)),
+        ));
 
-    let result = df.collect().await?;
+    let input = Arc::new(
+        MemoryExec::try_new(&[vec![record_batch.clone()]], record_batch.schema(), None).unwrap(),
+    );
+    let sort_exec = Arc::new(SortExec::new(
+        vec![PhysicalSortExpr {
+            expr: col("score", &record_batch.schema())?,
+            options: arrow::compute::SortOptions::default(),
+        }],
+        input,
+    ));
+    let filter_exec: Arc<dyn ExecutionPlan> =
+        Arc::new(FilterExec::try_new(predicate, sort_exec)?);
+
+    let task_ctx = Arc::new(TaskContext::default());
+    let result = collect(filter_exec, Arc::clone(&task_ctx)).await?;
+
     assert_eq!(result.len(), 1);
     assert_eq!(result[0].num_rows(), 2);
-
     Ok(())
 }
