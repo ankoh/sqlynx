@@ -240,9 +240,68 @@ jobs:
                   path: ${{ github.workspace }}/packages/sqlynx-core-bindings/coverage/lcov.info
                   retention-days: 1
 
+    compute_native:
+        strategy:
+            matrix:
+                build:
+                    - name: o0
+                      profile: debug
+                    - name: o3
+                      profile: release
+
+        name: Compute / Native / ${{ matrix.build.name }}
+        runs-on: ubuntu-24.04
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  submodules: 'recursive'
+                  fetch-depth: 0
+                  ref: ${{ github.event.inputs.commit || github.sha }}
+
+            - name: Setup cargo cache
+              uses: actions/cache@v4
+              with:
+                  path: |
+                    ~/.cargo/bin/
+                    ~/.cargo/registry/index/
+                    ~/.cargo/registry/cache/
+                    ~/.cargo/git/db/
+                    target/
+                  key: cargo-native-${{ hashFiles('Cargo.lock') }}
+                  restore-keys: |
+                    cargo-native-${{ hashFiles('Cargo.lock') }}
+                    cargo-native-
+
+            - name: Setup protoc
+              uses: ./.github/actions/setup-protoc
+              with:
+                os: ubuntu-24.04 
+            - name: Setup rust
+              uses: ./.github/actions/setup-rust
+              with:
+                os: ubuntu-24.04 
+
+            - name: Build sqlynx-compute
+              shell: bash
+              run: |
+                    cargo build -p sqlynx-compute --profile=${{ matrix.build.profile }} 
+
+            - name: Test sqlynx-compute
+              shell: bash
+              run: |
+                    cargo test -p sqlynx-compute --profile=${{ matrix.build.profile }} 
+
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: sqlynx_compute_wasm_o3
+                  path: ${{ github.workspace }}/packages/sqlynx-compute/dist
+                  retention-days: 1
+
     compute_wasm:
         name: Compute / WASM / O3
         runs-on: ubuntu-24.04
+        needs:
+            - compute_native
         steps:
             - uses: actions/checkout@v4
               with:
@@ -435,7 +494,7 @@ jobs:
 
             - name: Run tests
               run: |
-                    cargo test
+                    cargo test -p sqlynx-native
 
             - name: Build native app for macOS without code signing
               if: ${{ !inputs.signed }}
