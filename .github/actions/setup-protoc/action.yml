@@ -11,7 +11,17 @@ runs:
       shell: bash
       run: |
         rm -rf ${{ runner.temp }}/protoc.zip ${{ runner.temp }}/protoc
-        curl -Lo ${{ runner.temp }}/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v25.3/protoc-25.3-osx-aarch_64.zip
+        curl -Lo ${{ runner.temp }}/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v28.8/protoc-28.2-osx-aarch_64.zip
+        7z x ${{ runner.temp }}/protoc.zip -o${{ runner.temp }}/protoc
+        cp ${{ runner.temp }}/protoc/bin/protoc /usr/local/bin/protoc
+
+    - name: Download Protoc
+      if: ${{ inputs.os == 'ubuntu-24.04' }}
+      shell: bash
+      run: |
+        rm -rf ${{ runner.temp }}/protoc.zip ${{ runner.temp }}/protoc
+        curl -Lo ${{ runner.temp }}/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v28.2/protoc-28.2-linux-x86_64.zip
+
         7z x ${{ runner.temp }}/protoc.zip -o${{ runner.temp }}/protoc
         cp ${{ runner.temp }}/protoc/bin/protoc /usr/local/bin/protoc
 
