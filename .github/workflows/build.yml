@@ -281,7 +281,7 @@ jobs:
             - name: Build @ankoh/sqlynx-compute
               shell: bash
               run: |
-                  wasm-pack build \
+                  ./node_modules/.bin/wasm-pack build \
                     --target web --release \
                     --out-name sqlynx_compute \
                     --out-dir ./dist \
