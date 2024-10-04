@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
-use arrow::{array::{ArrayData, ArrayRef, Decimal128Array, Int32Array, RecordBatch}, buffer::Buffer, datatypes::{Field, SchemaBuilder}, util::pretty::pretty_format_batches};
+use arrow::{array::{ArrayData, ArrayRef, Decimal128Array, Int32Array, RecordBatch, StringArray}, buffer::Buffer, datatypes::{Field, SchemaBuilder}, util::pretty::pretty_format_batches};
+use arrow::datatypes::DataType;
 use datafusion_common::scalar::ScalarValue;
 use datafusion_execution::TaskContext;
 use datafusion_expr::AggregateUDF;
@@ -122,10 +123,6 @@ async fn test_group_by_1phase_1key() -> anyhow::Result<()> {
         vec![vec![false]]
     );
 
-    let input = Arc::new(
-        MemoryExec::try_new(&[vec![data.clone()]], data.schema(), None)?,
-    );
-
     let udaf_min = Arc::new(AggregateUDF::new_from_impl(Min::new()));
     let udaf_max = Arc::new(AggregateUDF::new_from_impl(Max::new()));
     let udaf_count = count_udaf();
@@ -143,6 +140,9 @@ async fn test_group_by_1phase_1key() -> anyhow::Result<()> {
         .alias("count")
         .build()?;
 
+    let input = Arc::new(
+        MemoryExec::try_new(&[vec![data.clone()]], data.schema(), None)?,
+    );
     let groupby_exec = Arc::new(AggregateExec::try_new(
         AggregateMode::Single,
         grouping.clone(),
@@ -183,5 +183,128 @@ async fn test_group_by_1phase_1key() -> anyhow::Result<()> {
         +-----+-----+-----+-------+
     "}.trim());
 
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_string_array() -> anyhow::Result<()> {
+    let mut schema_builder = SchemaBuilder::with_capacity(2);
+    schema_builder.push(Field::new("id", DataType::Utf8, false));
+    schema_builder.push(Field::new("value", DataType::Utf8, false));
+    let schema = schema_builder.finish();
+    let data = RecordBatch::try_new(schema.into(), vec![
+        Arc::new(StringArray::from(vec![
+            "860f346a-5e02-4f32-93db-6c54378e31bb/0",
+            "860f346a-5e02-4f32-93db-6c54378e31bb/3",
+            "860f346a-5e02-4f32-93db-6c54378e31bb/1",
+        ])) as ArrayRef,
+        Arc::new(StringArray::from(vec![
+            "5f20bedd-6ee4-4df9-8cac-2d4907900011/0",
+            "5f20bedd-6ee4-4df9-8cac-2d4907900011/1",
+            "5f20bedd-6ee4-4df9-8cac-2d4907900011/2",
+        ])) as ArrayRef,
+    ])?;
+    let input = Arc::new(
+        MemoryExec::try_new(&[vec![data.clone()]], data.schema(), None).unwrap(),
+    );
+    let task_ctx = Arc::new(TaskContext::default());
+    let result = collect(input, Arc::clone(&task_ctx)).await?;
+
+    assert_eq!(result.len(), 1);
+    assert_eq!(format!("{}", pretty_format_batches(&result)?), indoc! {"
+        +----------------------------------------+----------------------------------------+
+        | id                                     | value                                  |
+        +----------------------------------------+----------------------------------------+
+        | 860f346a-5e02-4f32-93db-6c54378e31bb/0 | 5f20bedd-6ee4-4df9-8cac-2d4907900011/0 |
+        | 860f346a-5e02-4f32-93db-6c54378e31bb/3 | 5f20bedd-6ee4-4df9-8cac-2d4907900011/1 |
+        | 860f346a-5e02-4f32-93db-6c54378e31bb/1 | 5f20bedd-6ee4-4df9-8cac-2d4907900011/2 |
+        +----------------------------------------+----------------------------------------+
+    "}.trim());
+    Ok(())
+}
+
+
+#[tokio::test]
+async fn test_group_by_1phase_1key_distinct() -> anyhow::Result<()> {
+    let mut schema_builder = SchemaBuilder::with_capacity(2);
+    schema_builder.push(Field::new("id", DataType::Utf8, false));
+    schema_builder.push(Field::new("value", DataType::Utf8, false));
+    let schema = schema_builder.finish();
+    let data = RecordBatch::try_new(schema.into(), vec![
+        Arc::new(StringArray::from(vec![
+            "860f346a-5e02-4f32-93db-6c54378e31bb/0",
+            "860f346a-5e02-4f32-93db-6c54378e31bb/3",
+            "860f346a-5e02-4f32-93db-6c54378e31bb/1",
+            "860f346a-5e02-4f32-93db-6c54378e31bb/1",
+            "860f346a-5e02-4f32-93db-6c54378e31bb/1",
+            "860f346a-5e02-4f32-93db-6c54378e31bb/2",
+            "860f346a-5e02-4f32-93db-6c54378e31bb/3",
+            "860f346a-5e02-4f32-93db-6c54378e31bb/5",
+            "860f346a-5e02-4f32-93db-6c54378e31bb/5",
+        ])) as ArrayRef,
+        Arc::new(StringArray::from(vec![
+            "5f20bedd-6ee4-4df9-8cac-2d4907900011/0",
+            "5f20bedd-6ee4-4df9-8cac-2d4907900011/1",
+            "5f20bedd-6ee4-4df9-8cac-2d4907900011/2",
+            "5f20bedd-6ee4-4df9-8cac-2d4907900011/2",
+            "5f20bedd-6ee4-4df9-8cac-2d4907900011/4",
+            "5f20bedd-6ee4-4df9-8cac-2d4907900011/5",
+            "5f20bedd-6ee4-4df9-8cac-2d4907900011/1",
+            "5f20bedd-6ee4-4df9-8cac-2d4907900011/7",
+            "5f20bedd-6ee4-4df9-8cac-2d4907900011/8",
+        ])) as ArrayRef,
+    ])?;
+
+    let col_value = col("value", data.schema_ref())?;
+    let grouping = PhysicalGroupBy::new(
+        vec![(col("id", data.schema_ref())?, "key".to_string())],
+        vec![(lit(ScalarValue::Utf8(None)), "id".to_string())],
+        vec![vec![false]]
+    );
+
+    let udaf_count = count_udaf();
+    let value_count = AggregateExprBuilder::new(udaf_count.clone(), vec![col_value.clone()])
+        .schema(data.schema())
+        .alias("count")
+        .build()?;
+    let value_count_distinct = AggregateExprBuilder::new(udaf_count.clone(), vec![col_value.clone()])
+        .schema(data.schema())
+        .alias("count_distinct")
+        .distinct()
+        .build()?;
+
+    let input = Arc::new(
+        MemoryExec::try_new(&[vec![data.clone()]], data.schema(), None)?,
+    );
+    let groupby_exec = Arc::new(AggregateExec::try_new(
+        AggregateMode::Single,
+        grouping.clone(),
+        vec![value_count, value_count_distinct],
+        vec![None, None],
+        input.clone(),
+        data.schema()
+    )?);
+    let sort_exec = Arc::new(SortExec::new(
+        vec![PhysicalSortExpr {
+            expr: col("key", &groupby_exec.schema())?,
+            options: arrow::compute::SortOptions::default(),
+        }],
+        groupby_exec.clone(),
+    ));
+    let task_ctx = Arc::new(TaskContext::default());
+    let result = collect(sort_exec, task_ctx.clone()).await?;
+
+    assert_eq!(result.len(), 1);
+    assert_eq!(format!("{}", pretty_format_batches(&result)?), indoc! {"
+        +----------------------------------------+-------+----------------+
+        | key                                    | count | count_distinct |
+        +----------------------------------------+-------+----------------+
+        | 860f346a-5e02-4f32-93db-6c54378e31bb/0 | 1     | 1              |
+        | 860f346a-5e02-4f32-93db-6c54378e31bb/1 | 3     | 2              |
+        | 860f346a-5e02-4f32-93db-6c54378e31bb/2 | 1     | 1              |
+        | 860f346a-5e02-4f32-93db-6c54378e31bb/3 | 2     | 1              |
+        | 860f346a-5e02-4f32-93db-6c54378e31bb/5 | 2     | 2              |
+        +----------------------------------------+-------+----------------+
+    "}.trim());
     Ok(())
 }
