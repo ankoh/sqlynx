@@ -1,5 +1,5 @@
-use arrow::array::{ArrayRef, Int32Array, RecordBatch, TimestampMillisecondArray};
-use arrow::datatypes::{Field, SchemaBuilder};
+use arrow::array::{ArrayRef, AsArray, Int32Array, RecordBatch, TimestampMillisecondArray};
+use arrow::datatypes::{Field, SchemaBuilder, TimestampMillisecondType};
 use arrow::datatypes::DataType;
 use arrow::datatypes::TimeUnit;
 use arrow::util::pretty::pretty_format_batches;
@@ -81,5 +81,9 @@ async fn test_minmax_timestamp() -> anyhow::Result<()> {
         +---------------------+---------------------+
     "}.trim());
 
+    let min_col = result[0].column(0).as_primitive::<TimestampMillisecondType>();
+    let max_col = result[0].column(1).as_primitive::<TimestampMillisecondType>();
+    assert_eq!(min_col.value_as_datetime(0).unwrap().to_string(), "2024-04-01 12:00:00");
+    assert_eq!(max_col.value_as_datetime(0).unwrap().to_string(), "2024-04-03 12:00:00");
     Ok(())
 }
