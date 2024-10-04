@@ -11,7 +11,7 @@ mod data_frame;
 #[cfg(test)]
 mod data_frame_tests;
 #[cfg(test)]
-mod fusion_tests;
+mod datafusion_tests;
 mod version;
 
 use console::DEFAULT_LOGGER;
