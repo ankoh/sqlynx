@@ -112,6 +112,16 @@
                 "^@bufbuild/.*"
             ],
             "automerge": false
+        },
+        {
+            "groupName": "datafusion",
+            "matchPackageNames": [
+                "datafusion"
+            ],
+            "matchPackagePatterns": [
+                "^datafusion-*"
+            ],
+            "automerge": true
         }
     ]
 }
