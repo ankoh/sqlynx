@@ -12,6 +12,8 @@ mod data_frame;
 mod data_frame_tests;
 #[cfg(test)]
 mod datafusion_tests;
+#[cfg(test)]
+mod datafusion_binning_tests;
 mod version;
 
 use console::DEFAULT_LOGGER;
