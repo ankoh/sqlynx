@@ -258,7 +258,7 @@ async fn test_group_by_1phase_1key_distinct() -> anyhow::Result<()> {
     let col_value = col("value", data.schema_ref())?;
     let grouping = PhysicalGroupBy::new(
         vec![(col("id", data.schema_ref())?, "key".to_string())],
-        vec![(lit(ScalarValue::Utf8(None)), "id".to_string())],
+        vec![],
         vec![vec![false]]
     );
 
@@ -305,6 +305,78 @@ async fn test_group_by_1phase_1key_distinct() -> anyhow::Result<()> {
         | 860f346a-5e02-4f32-93db-6c54378e31bb/3 | 2     | 1              |
         | 860f346a-5e02-4f32-93db-6c54378e31bb/5 | 2     | 2              |
         +----------------------------------------+-------+----------------+
+    "}.trim());
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_group_by_1phase_static_distinct() -> anyhow::Result<()> {
+    let mut schema_builder = SchemaBuilder::with_capacity(2);
+    schema_builder.push(Field::new("id", DataType::Utf8, false));
+    schema_builder.push(Field::new("value", DataType::Utf8, false));
+    let schema = schema_builder.finish();
+    let data = RecordBatch::try_new(schema.into(), vec![
+        Arc::new(StringArray::from(vec![
+            "860f346a-5e02-4f32-93db-6c54378e31bb/0",
+            "860f346a-5e02-4f32-93db-6c54378e31bb/3",
+            "860f346a-5e02-4f32-93db-6c54378e31bb/1",
+            "860f346a-5e02-4f32-93db-6c54378e31bb/1",
+            "860f346a-5e02-4f32-93db-6c54378e31bb/1",
+            "860f346a-5e02-4f32-93db-6c54378e31bb/2",
+            "860f346a-5e02-4f32-93db-6c54378e31bb/3",
+            "860f346a-5e02-4f32-93db-6c54378e31bb/5",
+            "860f346a-5e02-4f32-93db-6c54378e31bb/5",
+        ])) as ArrayRef,
+        Arc::new(StringArray::from(vec![
+            "5f20bedd-6ee4-4df9-8cac-2d4907900011/0",
+            "5f20bedd-6ee4-4df9-8cac-2d4907900011/1",
+            "5f20bedd-6ee4-4df9-8cac-2d4907900011/2",
+            "5f20bedd-6ee4-4df9-8cac-2d4907900011/2",
+            "5f20bedd-6ee4-4df9-8cac-2d4907900011/4",
+            "5f20bedd-6ee4-4df9-8cac-2d4907900011/5",
+            "5f20bedd-6ee4-4df9-8cac-2d4907900011/1",
+            "5f20bedd-6ee4-4df9-8cac-2d4907900011/7",
+            "5f20bedd-6ee4-4df9-8cac-2d4907900011/8",
+        ])) as ArrayRef,
+    ])?;
+
+    let col_id = col("id", data.schema_ref())?;
+    let col_value = col("value", data.schema_ref())?;
+    let grouping = PhysicalGroupBy::new(vec![], vec![], vec![]);
+
+    let udaf_count = count_udaf();
+    let cd_id = AggregateExprBuilder::new(udaf_count.clone(), vec![col_id.clone()])
+        .schema(data.schema())
+        .alias("cd_id")
+        .distinct()
+        .build()?;
+    let cd_val = AggregateExprBuilder::new(udaf_count.clone(), vec![col_value.clone()])
+        .schema(data.schema())
+        .alias("cd_value")
+        .distinct()
+        .build()?;
+
+    let input = Arc::new(
+        MemoryExec::try_new(&[vec![data.clone()]], data.schema(), None)?,
+    );
+    let groupby_exec = Arc::new(AggregateExec::try_new(
+        AggregateMode::Single,
+        grouping.clone(),
+        vec![cd_id.clone(), cd_val.clone()],
+        vec![None, None],
+        input.clone(),
+        data.schema()
+    )?);
+    let task_ctx = Arc::new(TaskContext::default());
+    let result = collect(groupby_exec, task_ctx.clone()).await?;
+
+    assert_eq!(result.len(), 1);
+    assert_eq!(format!("{}", pretty_format_batches(&result)?), indoc! {"
+        +-------+----------+
+        | cd_id | cd_value |
+        +-------+----------+
+        | 5     | 7        |
+        +-------+----------+
     "}.trim());
     Ok(())
 }
