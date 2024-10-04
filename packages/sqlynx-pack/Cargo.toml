@@ -7,8 +7,8 @@ rust-version = "1.70"
 workspace = "../../"
 
 [dev-dependencies]
-tauri-build = "2.0.0-beta"
-tauri-plugin-updater = "2.0.0-beta"
+tauri-build = "2.0.1"
+tauri-plugin-updater = "2.0.2"
 
 [dependencies]
 futures = "0.3.30"

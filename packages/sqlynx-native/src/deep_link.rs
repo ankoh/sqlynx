@@ -1,4 +1,5 @@
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
+use tauri::Emitter;
 use url::Url;
 use std::borrow::Cow;
 
