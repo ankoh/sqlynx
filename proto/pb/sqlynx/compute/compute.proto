@@ -2,15 +2,20 @@ syntax = "proto3";
 
 package sqlynx.compute;
 
-message OrderByConfig {
+message OrderByConstraint {
     /// The field name
     string field_name = 1;
     /// Sort ascending?
     bool ascending = 2;
     /// Sort nulls first?
     bool nulls_first = 3;
+}
+
+message OrderByConfig {
+    /// The field name
+    repeated OrderByConstraint constraints = 1;
     /// Limit results?
-    optional uint32 limit = 4;
+    optional uint32 limit = 2;
 }
 
 enum AggregationFunction {
@@ -22,14 +27,14 @@ enum AggregationFunction {
     CountDistinct = 5;
 }
 
-message FieldKey {
+message GroupByKey {
     /// The field name
     string field_name = 1;
     /// The output alias
     string output_alias = 2;
 }
 
-message FieldAggregation {
+message GroupByAggregate {
     /// The field name
     string field_name = 1;
     /// The output alias
@@ -42,7 +47,7 @@ message FieldAggregation {
 
 message GroupByConfig {
     /// The group by keys
-    repeated FieldKey keys = 1;
+    repeated GroupByKey keys = 1;
     /// The aggregates
-    repeated FieldAggregation aggregates = 2;
+    repeated GroupByAggregate aggregates = 2;
 }
