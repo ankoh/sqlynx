@@ -291,12 +291,6 @@ jobs:
               run: |
                     cargo test -p sqlynx-compute --profile=${{ matrix.build.profile }} 
 
-            - uses: actions/upload-artifact@v4
-              with:
-                  name: sqlynx_compute_wasm_o3
-                  path: ${{ github.workspace }}/packages/sqlynx-compute/dist
-                  retention-days: 1
-
     compute_wasm:
         name: Compute / WASM / O3
         runs-on: ubuntu-24.04
