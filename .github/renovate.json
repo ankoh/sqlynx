@@ -122,6 +122,14 @@
                 "^datafusion-*"
             ],
             "automerge": true
+        },
+        {
+            "groupName": "protobuf",
+            "matchPackageNames": [
+                "prost",
+                "tonic"
+            ],
+            "automerge": false
         }
     ]
 }
