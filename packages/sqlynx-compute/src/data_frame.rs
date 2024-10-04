@@ -61,6 +61,12 @@ impl DataFrame {
         return Ok(sorted);
     }
 
+    /// Reorder the frame by a single column
+    #[wasm_bindgen(js_name="groupBy")]
+    pub async fn group_by(&self, _proto: &[u8]) -> Result<DataFrame, JsError> {
+        return Err(JsError::new("not implemented"));
+    }
+
     #[wasm_bindgen(js_name="createIpcStream")]
     pub fn create_ipc_stream(&self) -> Result<DataFrameIpcStream, JsError> {
         DataFrameIpcStream::new(self.schema.clone())
