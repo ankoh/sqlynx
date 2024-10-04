@@ -24,6 +24,7 @@ mod status;
 mod logging;
 
 use std::time::{SystemTime, UNIX_EPOCH};
+use tauri::Listener;
 
 use ipc_router::process_ipc_request;
 
