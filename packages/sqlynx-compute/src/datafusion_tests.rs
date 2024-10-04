@@ -9,7 +9,7 @@ use datafusion_expr::AggregateUDF;
 use datafusion_functions_aggregate::{count::count_udaf, min_max::{Max, Min}};
 use datafusion_physical_expr::PhysicalSortExpr;
 use datafusion_physical_expr::aggregate::AggregateExprBuilder;
-use datafusion_physical_expr::expressions::{col, lit, BinaryExpr, Column, Literal};
+use datafusion_physical_expr::expressions::{col, BinaryExpr, Column, Literal};
 use datafusion_physical_plan::ExecutionPlan;
 use datafusion_physical_plan::aggregates::{AggregateMode, AggregateExec, PhysicalGroupBy};
 use datafusion_physical_plan::collect;
@@ -128,7 +128,7 @@ async fn test_group_by_1phase_1key() -> anyhow::Result<()> {
     let col_value = col("value", data.schema_ref())?;
     let grouping = PhysicalGroupBy::new(
         vec![(col("id", data.schema_ref())?, "key".to_string())],
-        vec![(lit(ScalarValue::UInt32(None)), "id".to_string())],
+        vec![],
         vec![vec![false]]
     );
 
