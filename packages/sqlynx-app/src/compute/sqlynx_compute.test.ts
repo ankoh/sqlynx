@@ -61,9 +61,11 @@ describe('SQLynxCompute Arrow IO', () => {
 const testOrderByColumn = async (inTable: arrow.Table, columnName: string, asc: boolean, nullsFirst: boolean, mapper: (o: any) => any, expected: any[]) => {
     const dataFrame = createDataFrameFromTable(inTable);
     const orderByConfig = new pb.sqlynx_compute.pb.OrderByConfig({
-        fieldName: columnName,
-        ascending: asc,
-        nullsFirst
+        constraints: [{
+            fieldName: columnName,
+            ascending: asc,
+            nullsFirst
+        }]
     });
     const orderByConfigBytes = orderByConfig.toBinary();
     const orderedFrame = await dataFrame.orderBy(orderByConfigBytes);

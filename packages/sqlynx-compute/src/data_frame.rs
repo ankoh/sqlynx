@@ -29,27 +29,24 @@ impl DataFrame {
     pub async fn order_by(&self, proto: &[u8]) -> Result<DataFrame, JsError> {
         let config = OrderByConfig::decode(proto)?;
 
-        // Find the column id
-        let column_id = match self.schema.index_of(&config.field_name) {
-            Ok(cid) => cid,
-            Err(_) => return Err(JsError::new("column does not refer to a schema field")),
-        };
+        let mut sort_exprs: Vec<PhysicalSortExpr> = Vec::new();
+        for constraint in config.constraints.iter() {
+            // Construct the new sort order
+            let sort_options = arrow::compute::SortOptions {
+                descending: !constraint.ascending,
+                nulls_first: constraint.nulls_first,
+            };
+            sort_exprs.push(PhysicalSortExpr {
+                expr: col(&constraint.field_name, &self.schema)?,
+                options: sort_options,
+            });
+        }
         let input = Arc::new(
             MemoryExec::try_new(&self.partitions, self.schema.clone(), None).unwrap(),
         );
-
-        // Construct the new sort order
-        let column_name = self.schema.fields()[column_id].name();
-        let sort_options = arrow::compute::SortOptions {
-            descending: !config.ascending,
-            nulls_first: config.nulls_first,
-        };
         let sort_limit = config.limit.map(|l| l as usize);
         let sort_exec = Arc::new(SortExec::new(
-            vec![PhysicalSortExpr {
-                expr: col(column_name, &self.schema)?,
-                options: sort_options,
-            }],
+            sort_exprs,
             input,
         ).with_fetch(sort_limit));
 
