@@ -16,7 +16,7 @@ wasm-bindgen-futures = "0.4"
 console_error_panic_hook = "0.1"
 
 log = "0.4"
-chrono = { version = "0.4", features = ["wasmbind"] }
+chrono = { version = "0.4.38", features = ["wasmbind"] }
 getrandom = { version = "0.2.8", features = ["js"] }
 anyhow = "1.0.89"
 
