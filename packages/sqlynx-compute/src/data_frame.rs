@@ -7,7 +7,7 @@ use datafusion_physical_plan::{collect, memory::MemoryExec, sorts::sort::SortExe
 use prost::Message;
 use wasm_bindgen::prelude::*;
 
-use crate::{arrow_out::DataFrameIpcStream, proto::OrderByConfig};
+use crate::{arrow_out::DataFrameIpcStream, proto::OrderByConfig, proto::GroupByConfig};
 
 #[wasm_bindgen]
 pub struct DataFrame {
@@ -60,7 +60,10 @@ impl DataFrame {
 
     /// Reorder the frame by a single column
     #[wasm_bindgen(js_name="groupBy")]
-    pub async fn group_by(&self, _proto: &[u8]) -> Result<DataFrame, JsError> {
+    pub async fn group_by(&self, proto: &[u8]) -> Result<DataFrame, JsError> {
+        let _config = GroupByConfig::decode(proto)?;
+
+
         return Err(JsError::new("not implemented"));
     }
 
