@@ -1,15 +1,24 @@
-use std::sync::Arc;
-
-use arrow::{array::{ArrayData, ArrayRef, Decimal128Array, Int32Array, RecordBatch, StringArray}, buffer::Buffer, datatypes::{Field, SchemaBuilder}, util::pretty::pretty_format_batches};
+use arrow::array::{ArrayData, ArrayRef, Decimal128Array, Int32Array, RecordBatch, StringArray};
+use arrow::buffer::Buffer;
 use arrow::datatypes::DataType;
+use arrow::datatypes::{Field, SchemaBuilder};
+use arrow::util::pretty::pretty_format_batches;
 use datafusion_common::scalar::ScalarValue;
 use datafusion_execution::TaskContext;
 use datafusion_expr::AggregateUDF;
-use datafusion_physical_expr::{aggregate::AggregateExprBuilder, expressions::{col, lit, BinaryExpr, Column, Literal}, PhysicalSortExpr};
-use datafusion_physical_plan::{aggregates::{AggregateMode, AggregateExec, PhysicalGroupBy}, collect, filter::FilterExec, memory::MemoryExec, sorts::sort::SortExec, ExecutionPlan};
 use datafusion_functions_aggregate::{count::count_udaf, min_max::{Max, Min}};
-use pretty_assertions::assert_eq;
+use datafusion_physical_expr::PhysicalSortExpr;
+use datafusion_physical_expr::aggregate::AggregateExprBuilder;
+use datafusion_physical_expr::expressions::{col, lit, BinaryExpr, Column, Literal};
+use datafusion_physical_plan::ExecutionPlan;
+use datafusion_physical_plan::aggregates::{AggregateMode, AggregateExec, PhysicalGroupBy};
+use datafusion_physical_plan::collect;
+use datafusion_physical_plan::filter::FilterExec;
+use datafusion_physical_plan::memory::MemoryExec;
+use datafusion_physical_plan::sorts::sort::SortExec;
 use indoc::indoc;
+use pretty_assertions::assert_eq;
+use std::sync::Arc;
 
 #[tokio::test]
 async fn test_filter_sort() -> anyhow::Result<()> {
