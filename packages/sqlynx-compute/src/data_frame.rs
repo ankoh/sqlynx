@@ -1,10 +1,9 @@
 use std::{collections::HashSet, sync::Arc};
 
-use arrow::array::Array;
-use arrow::array::AsArray;
+use arrow::array::ArrowNativeTypeOp;
 use arrow::array::RecordBatch;
+use arrow::datatypes::i256;
 use arrow::datatypes::DataType;
-use arrow::datatypes::Int64Type;
 use arrow::datatypes::Schema;
 use datafusion_common::ScalarValue;
 use datafusion_execution::TaskContext;
@@ -39,23 +38,6 @@ use crate::proto::sqlynx_compute::{DataFrameTransform, GroupByTransform, OrderBy
 pub struct DataFrame {
     pub(crate) schema: Arc<Schema>,
     pub(crate) partitions: Vec<Vec<RecordBatch>>,
-}
-
-/// Get a scalar value
-fn read_scalar_value(batch: &RecordBatch, field_id: usize, row_id: usize) -> Result<ScalarValue, JsError> {
-    let schema = batch.schema_ref();
-    match &schema.fields()[field_id].data_type() {
-        DataType::Int64 => {
-            let values = batch.column(field_id).as_primitive::<Int64Type>();
-            let value = if values.is_nullable() && values.is_null(row_id) {
-                ScalarValue::Int64(None)
-            } else {
-                ScalarValue::Int64(Some(values.value(row_id)))
-            };
-            Ok(value)
-        },
-        _ => Err(JsError::new("unsupported min value type"))
-    }
 }
 
 #[wasm_bindgen]
@@ -94,7 +76,7 @@ impl DataFrame {
     }
 
     /// Compute bin
-    fn bin_key(&self, key: &GroupByKey, key_binning: &GroupByKeyBinning, stats: &DataFrame, input: Arc<dyn ExecutionPlan>) -> Result<Arc<dyn PhysicalExpr>, JsError> {
+    fn compute_binned_key(&self, key: &GroupByKey, key_binning: &GroupByKeyBinning, stats: &DataFrame, input: Arc<dyn ExecutionPlan>) -> Result<Arc<dyn PhysicalExpr>, JsError> {
         // Unexpected schema for statistics frame?
         if self.partitions.is_empty() || self.partitions[0].is_empty() || self.partitions[0][0].num_rows() != 1 {
             return Err(JsError::new("statistics data must have exactly 1 row"));
@@ -119,32 +101,100 @@ impl DataFrame {
         let min_field = &stats_schema.fields()[min_field_id];
         let min_field_type = &min_field.data_type();
 
-        // Resolve field storing the binning width
-        let binning_width_field_id = match stats_schema.index_of(&key_binning.stats_bin_width_field_name) {
+        // Resolve field storing the binning minimum
+        let max_field_id = match stats_schema.index_of(&key_binning.stats_maximum_field_name) {
             Ok(field_id) => field_id,
-            Err(_) => return Err(JsError::new(&format!("statistics data does not contain the field storing the binning width `{}`", &key_binning.stats_minimum_field_name)))
+            Err(_) => return Err(JsError::new(&format!("statistics data does not contain the field storing the binning minimum `{}`", &key_binning.stats_minimum_field_name)))
         };
-        let binning_width_field = &stats_schema.fields()[binning_width_field_id];
-        let binning_width_type = binning_width_field.data_type();
+        let max_field = &stats_schema.fields()[max_field_id];
+        let max_field_type = &max_field.data_type();
 
         // Make sure the minimum field has the same type as the key column
         if min_field.data_type() != *key_field_type {
             return Err(JsError::new(&format!("types of key field `{}` and minimum field `{}` do not match: {} != {}", key_field.name(), min_field.name(), key_field_type, min_field_type)));
         }
+        // Make sure the maximum field has the same type as the key column
+        if max_field.data_type() != *key_field_type {
+            return Err(JsError::new(&format!("types of key field `{}` and maximum field `{}` do not match: {} != {}", key_field.name(), max_field.name(), key_field_type, max_field_type)));
+        }
+        // Read maximum value
+        let max_value = ScalarValue::try_from_array(&stats_batch.columns()[max_field_id], 0)?;
+        // Read the minimum value
+        let min_value = ScalarValue::try_from_array(&stats_batch.columns()[min_field_id], 0)?;
 
-        // Read minimum value
-        let min_value = read_scalar_value(stats_batch, min_field_id, 0)?;
-        // Read binning width
-        let binning_width_value = read_scalar_value(stats_batch, binning_width_field_id, 0)?;
-        // Compute difference to minimum
-        let delta = binary(col(key_field.name(), &input.schema())?, Operator::Minus, lit(min_value), &input.schema())?;
-        // Cast to binning width type
-        let delta_casted = Arc::new(CastExpr::new(delta, binning_width_type.clone(), None));
-        // Divide by binning width
-        // XXX Div by zero
-        let binned_key = binary(delta_casted, Operator::Divide, lit(binning_width_value), &input.schema())?;
-        // Return binning key
-        return Ok(binned_key);
+        // Compute the key difference to minimum
+        let key_delta = binary(col(key_field.name(), &input.schema())?, Operator::Minus, lit(min_value.clone()), &input.schema())?;
+        // Bin the key field
+        let key_binned: Arc<dyn PhysicalExpr> = match key_field_type {
+            DataType::Float16 | DataType::Float32 | DataType::Float64 => {
+                let mut bin_width = max_value
+                    .sub(min_value.clone())?
+                    .cast_to(&DataType::Float64)?
+                    .div(ScalarValue::Float64(Some(key_binning.bin_count as f64)))?;
+                if let ScalarValue::Float64(Some(0.0)) = bin_width {
+                    bin_width = ScalarValue::Float64(None);
+                }
+                let key_delta_casted = Arc::new(CastExpr::new(key_delta, DataType::Float64, None));
+                let key_binned = binary(key_delta_casted, Operator::Divide, lit(bin_width), &input.schema())?;
+                Arc::new(CastExpr::new(key_binned, DataType::UInt32, None))
+            },
+            DataType::UInt8
+                | DataType::UInt16
+                | DataType::UInt32
+                | DataType::UInt64
+                | DataType::Timestamp(_, _)
+                | DataType::Date32
+                | DataType::Date64
+                | DataType::Time32(_)
+                | DataType::Time64(_)
+            => {
+                let mut bin_width = max_value
+                    .sub(min_value.clone())?
+                    .cast_to(&DataType::UInt64)?
+                    .div(ScalarValue::UInt64(Some(key_binning.bin_count as u64)))?;
+                if let ScalarValue::UInt64(Some(0)) = bin_width {
+                    bin_width = ScalarValue::UInt64(None);
+                }
+                let key_delta_casted = Arc::new(CastExpr::new(key_delta, DataType::UInt64, None));
+                let key_binned = binary(key_delta_casted, Operator::Divide, lit(bin_width), &input.schema())?;
+                Arc::new(CastExpr::new(key_binned, DataType::UInt32, None))
+            },
+            DataType::Int8 | DataType::Int16 | DataType::Int32 | DataType::Int64 => {
+                let mut bin_width = max_value
+                    .sub(min_value.clone())?
+                    .cast_to(&DataType::Int64)?
+                    .div(ScalarValue::Int64(Some(key_binning.bin_count as i64)))?;
+                if let ScalarValue::Int64(Some(0)) = bin_width {
+                    bin_width = ScalarValue::Int64(None);
+                }
+                let key_delta_casted = Arc::new(CastExpr::new(key_delta, DataType::Int64, None));
+                let key_binned = binary(key_delta_casted, Operator::Divide, lit(bin_width), &input.schema())?;
+                Arc::new(CastExpr::new(key_binned, DataType::Int32, None))
+            },
+            DataType::Decimal128(precision, scale) => {
+                let mut bin_width = max_value
+                    .sub(min_value.clone())?
+                    .div(ScalarValue::Decimal128(Some(2 * 10_i128.pow(*scale as u32)), *precision, *scale))?;
+                if bin_width == ScalarValue::Decimal128(Some(0), *precision, *scale) {
+                    bin_width = ScalarValue::Decimal128(None, *precision, *scale);
+                }
+                let key_binned = binary(key_delta, Operator::Divide, lit(bin_width), &input.schema())?;
+                Arc::new(CastExpr::new(key_binned, DataType::Int32, None))
+            },
+            DataType::Decimal256(precision, scale) => {
+                let mut bin_width = max_value
+                    .sub(min_value.clone())?
+                    .div(ScalarValue::Decimal256(Some(i256::from(2) * i256::from(10).pow_wrapping(*scale as u32)), *precision, *scale))?;
+                if bin_width == ScalarValue::Decimal256(Some(i256::from(0)), *precision, *scale) {
+                    bin_width = ScalarValue::Decimal256(None, *precision, *scale);
+                }
+                let key_binned = binary(key_delta, Operator::Divide, lit(bin_width), &input.schema())?;
+                Arc::new(CastExpr::new(key_binned, DataType::Int32, None))
+            },
+            _ => return Err(JsError::new(&format!("key binning is not implemented for data type: {}", key_field_type)))
+        };
+        // Return binned key
+        return Ok(key_binned);
     }
 
     /// Group a data frame
@@ -162,7 +212,7 @@ impl DataFrame {
             // Check if any key requires statistics
             let key_expr = if let Some(key_binning) = &key.binning  {
                 if let Some(stats) = &stats {
-                    self.bin_key(key, key_binning, stats, input.clone())?
+                    self.compute_binned_key(key, key_binning, stats, input.clone())?
                 } else {
                     return Err(JsError::new(&format!("binning for key `{}` requires precomputed statistics, use transformWithStats", key.output_alias.as_str())))
                 }
