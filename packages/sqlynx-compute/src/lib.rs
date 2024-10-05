@@ -1,9 +1,6 @@
 use wasm_bindgen::prelude::*;
 
-pub mod proto {
-    include!(concat!(env!("OUT_DIR"), "/sqlynx.compute.rs"));
-}
-
+mod proto;
 mod arrow_in;
 mod arrow_out;
 mod console;

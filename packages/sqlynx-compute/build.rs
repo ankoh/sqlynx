@@ -1,4 +1,5 @@
 use core::fmt;
+use prost_build::Config;
 use regex::Regex;
 
 #[derive(Default)]
@@ -75,11 +76,12 @@ fn main() -> anyhow::Result<()> {
     println!("cargo:rustc-env=SQLYNX_VERSION_TEXT={}", semver);
 
     println!("cargo:rerun-if-changed=../../proto/pb/sqlynx/compute/compute.proto");
-    prost_build::compile_protos(
-        &[
-            "../../proto/pb/sqlynx/compute/compute.proto",
-        ],
-        &["../../proto/pb/"],
-    )?;
+    Config::new()
+        .out_dir("src/proto/")
+        .compile_protos(
+            &[
+                "../../proto/pb/sqlynx/compute/compute.proto",
+            ],
+            &["../../proto/pb/"])?;
     Ok(())
 }

@@ -7,7 +7,7 @@ use datafusion_physical_plan::{collect, memory::MemoryExec, sorts::sort::SortExe
 use prost::Message;
 use wasm_bindgen::prelude::*;
 
-use crate::{arrow_out::DataFrameIpcStream, proto::OrderByConfig, proto::GroupByConfig};
+use crate::{arrow_out::DataFrameIpcStream, proto::sqlynx_compute::OrderByConfig, proto::sqlynx_compute::GroupByConfig};
 
 #[wasm_bindgen]
 pub struct DataFrame {
