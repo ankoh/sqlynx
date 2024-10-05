@@ -1,15 +1,23 @@
 use std::{collections::HashSet, sync::Arc};
 
+use arrow::array::Array;
+use arrow::array::AsArray;
 use arrow::array::RecordBatch;
+use arrow::datatypes::DataType;
+use arrow::datatypes::Int64Type;
 use arrow::datatypes::Schema;
+use datafusion_common::ScalarValue;
 use datafusion_execution::TaskContext;
 use datafusion_expr::test::function_stub::Avg;
 use datafusion_expr::test::function_stub::Max;
 use datafusion_expr::test::function_stub::Min;
 use datafusion_expr::AggregateUDF;
+use datafusion_expr::Operator;
 use datafusion_functions_aggregate::count::count_udaf;
 use datafusion_physical_expr::aggregate::AggregateExprBuilder;
+use datafusion_physical_expr::expressions::binary;
 use datafusion_physical_expr::expressions::lit;
+use datafusion_physical_expr::expressions::CastExpr;
 use datafusion_physical_expr::PhysicalExpr;
 use datafusion_physical_expr::PhysicalSortExpr;
 use datafusion_physical_expr::aggregate::AggregateFunctionExpr;
@@ -23,12 +31,31 @@ use prost::Message;
 use wasm_bindgen::prelude::*;
 
 use crate::arrow_out::DataFrameIpcStream;
+use crate::proto::sqlynx_compute::GroupByKey;
+use crate::proto::sqlynx_compute::GroupByKeyBinning;
 use crate::proto::sqlynx_compute::{DataFrameTransform, GroupByTransform, OrderByTransform, AggregationFunction};
 
 #[wasm_bindgen]
 pub struct DataFrame {
     pub(crate) schema: Arc<Schema>,
     pub(crate) partitions: Vec<Vec<RecordBatch>>,
+}
+
+/// Get a scalar value
+fn read_scalar_value(batch: &RecordBatch, field_id: usize, row_id: usize) -> Result<ScalarValue, JsError> {
+    let schema = batch.schema_ref();
+    match &schema.fields()[field_id].data_type() {
+        DataType::Int64 => {
+            let values = batch.column(field_id).as_primitive::<Int64Type>();
+            let value = if values.is_nullable() && values.is_null(row_id) {
+                ScalarValue::Int64(None)
+            } else {
+                ScalarValue::Int64(Some(values.value(row_id)))
+            };
+            Ok(value)
+        },
+        _ => Err(JsError::new("unsupported min value type"))
+    }
 }
 
 #[wasm_bindgen]
@@ -45,7 +72,7 @@ impl DataFrame {
         DataFrameIpcStream::new(self.schema.clone())
     }
 
-    /// Reorder the frame by a single column
+    /// Order a data frame
     async fn order_by(&self, config: &OrderByTransform, input: Arc<dyn ExecutionPlan>) -> Result<SortExec, JsError> {
         let mut sort_exprs: Vec<PhysicalSortExpr> = Vec::new();
         for constraint in config.constraints.iter() {
@@ -66,10 +93,66 @@ impl DataFrame {
         return Ok(sort_exec);
     }
 
+    /// Compute bin
+    fn bin_key(&self, key: &GroupByKey, key_binning: &GroupByKeyBinning, stats: &DataFrame, input: Arc<dyn ExecutionPlan>) -> Result<Arc<dyn PhysicalExpr>, JsError> {
+        // Unexpected schema for statistics frame?
+        if self.partitions.is_empty() || self.partitions[0].is_empty() || self.partitions[0][0].num_rows() != 1 {
+            return Err(JsError::new("statistics data must have exactly 1 row"));
+        }
+        let stats_batch = &stats.partitions[0][0];
+        let stats_schema = stats_batch.schema_ref();
+        let input_schema = input.schema();
+
+        // Resolve key field
+        let key_field_id = match input.schema().index_of(&key.field_name) {
+            Ok(field_id) => field_id,
+            Err(_) => return Err(JsError::new(&format!("input data does not contain the key field `{}`", &key.field_name)))
+        };
+        let key_field = &input_schema.fields()[key_field_id];
+        let key_field_type = &key_field.data_type();
+
+        // Resolve field storing the binning minimum
+        let min_field_id = match stats_schema.index_of(&key_binning.stats_minimum_field_name) {
+            Ok(field_id) => field_id,
+            Err(_) => return Err(JsError::new(&format!("statistics data does not contain the field storing the binning minimum `{}`", &key_binning.stats_minimum_field_name)))
+        };
+        let min_field = &stats_schema.fields()[min_field_id];
+        let min_field_type = &min_field.data_type();
+
+        // Resolve field storing the binning width
+        let binning_width_field_id = match stats_schema.index_of(&key_binning.stats_bin_width_field_name) {
+            Ok(field_id) => field_id,
+            Err(_) => return Err(JsError::new(&format!("statistics data does not contain the field storing the binning width `{}`", &key_binning.stats_minimum_field_name)))
+        };
+        let binning_width_field = &stats_schema.fields()[binning_width_field_id];
+        let binning_width_type = binning_width_field.data_type();
+
+        // Make sure the minimum field has the same type as the key column
+        if min_field.data_type() != *key_field_type {
+            return Err(JsError::new(&format!("types of key field `{}` and minimum field `{}` do not match: {} != {}", key_field.name(), min_field.name(), key_field_type, min_field_type)));
+        }
+
+        // Read minimum value
+        let min_value = read_scalar_value(stats_batch, min_field_id, 0)?;
+        // Read binning width
+        let binning_width_value = read_scalar_value(stats_batch, binning_width_field_id, 0)?;
+        // Compute difference to minimum
+        let delta = binary(col(key_field.name(), &input.schema())?, Operator::Minus, lit(min_value), &input.schema())?;
+        // Cast to binning width type
+        let delta_casted = Arc::new(CastExpr::new(delta, binning_width_type.clone(), None));
+        // Divide by binning width
+        // XXX Div by zero
+        let binned_key = binary(delta_casted, Operator::Divide, lit(binning_width_value), &input.schema())?;
+        // Return binning key
+        return Ok(binned_key);
+    }
+
+    /// Group a data frame
     async fn group_by(&self, config: &GroupByTransform, stats: Option<&DataFrame>, input: Arc<dyn ExecutionPlan>) -> Result<AggregateExec, JsError> {
         // Detect collisions among output aliases
         let mut output_field_names: HashSet<&str> = HashSet::new();
 
+        // Collect grouping expressions
         let mut grouping_exprs: Vec<(Arc<dyn PhysicalExpr>, String)> = Vec::new();
         for key in config.keys.iter() {
             // Key name collision?
@@ -77,16 +160,18 @@ impl DataFrame {
                 return Err(JsError::new(&format!("duplicate key name `{}`", key.output_alias.as_str())))
             }
             // Check if any key requires statistics
-            if let Some(_binning) = &key.binning  {
-                if let Some(_stats) = &stats {
-                    // Bin the key column
+            let key_expr = if let Some(key_binning) = &key.binning  {
+                if let Some(stats) = &stats {
+                    self.bin_key(key, key_binning, stats, input.clone())?
                 } else {
                     return Err(JsError::new(&format!("binning for key `{}` requires precomputed statistics, use transformWithStats", key.output_alias.as_str())))
                 }
             } else {
-                grouping_exprs.push((col(&key.field_name, &self.schema)?, key.output_alias.clone()));
-                output_field_names.insert(&key.output_alias);
-            }
+                col(&key.field_name, &self.schema)?
+            };
+            // Create key expression
+            grouping_exprs.push((key_expr, key.output_alias.clone()));
+            output_field_names.insert(&key.output_alias);
         }
 
         // Create the grouping
