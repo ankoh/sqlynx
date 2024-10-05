@@ -14,7 +14,9 @@ const wasmPath = path.resolve(distPath, './sqlynx_compute_bg.wasm');
 beforeAll(async () => {
     expect(async () => await fs.promises.access(wasmPath)).resolves;
     const buf = await fs.promises.readFile(wasmPath);
-    await sqlynx_compute.default(buf);
+    await sqlynx_compute.default({
+        module_or_path: buf
+    });
     const version = sqlynx_compute.getVersion();
     expect(version.text).toMatch(/^[0-9]+.[0-9]+.[0-9]+(\-dev\.[0-9]+)?$/);
 });
@@ -60,15 +62,17 @@ describe('SQLynxCompute Arrow IO', () => {
 
 const testOrderByColumn = async (inTable: arrow.Table, columnName: string, asc: boolean, nullsFirst: boolean, mapper: (o: any) => any, expected: any[]) => {
     const dataFrame = createDataFrameFromTable(inTable);
-    const orderByConfig = new pb.sqlynx_compute.pb.OrderByConfig({
-        constraints: [{
-            fieldName: columnName,
-            ascending: asc,
-            nullsFirst
-        }]
+    const dataFrameTransform = new pb.sqlynx_compute.pb.DataFrameTransform({
+        orderBy: new pb.sqlynx_compute.pb.OrderByTransform({
+            constraints: [{
+                fieldName: columnName,
+                ascending: asc,
+                nullsFirst
+            }]
+        })
     });
-    const orderByConfigBytes = orderByConfig.toBinary();
-    const orderedFrame = await dataFrame.orderBy(orderByConfigBytes);
+    const orderByConfigBytes = dataFrameTransform.toBinary();
+    const orderedFrame = await dataFrame.transform(orderByConfigBytes);
     dataFrame.free();
 
     const table = readDataFrame(orderedFrame);
