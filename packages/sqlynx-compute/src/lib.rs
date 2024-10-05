@@ -6,8 +6,6 @@ mod arrow_out;
 mod console;
 mod data_frame;
 #[cfg(test)]
-mod data_frame_tests;
-#[cfg(test)]
 mod datafusion_tests;
 #[cfg(test)]
 mod datafusion_binning_tests;

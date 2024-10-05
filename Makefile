@@ -139,6 +139,14 @@ core_js_tests:
 core_js_tests_debug:
 	yarn workspace @ankoh/sqlynx-core test:debug
 
+.PHONY: compute_wasm_o0
+compute_wasm_o0:
+	yarn run compute:wasm:o0
+
+.PHONY: compute_wasm_o3
+compute_wasm_o3:
+	yarn run compute:wasm:o3
+
 .PHONY: pwa_pages
 pwa_pages:
 	yarn workspace @ankoh/sqlynx-app build:pages

@@ -11,7 +11,7 @@ message OrderByConstraint {
     bool nulls_first = 3;
 }
 
-message OrderByConfig {
+message OrderByTransform {
     /// The field name
     repeated OrderByConstraint constraints = 1;
     /// Limit results?
@@ -27,17 +27,21 @@ enum AggregationFunction {
     CountDistinct = 5;
 }
 
+message GroupByKeyBinning {
+    /// The field containing the precomputed minimum of the field
+    string stats_minimum_field_name = 1;
+    /// The field containing the precomputed binning width.
+    string stats_bin_width_field_name = 2;
+}
+
 message GroupByKey {
     /// The field name
     string field_name = 1;
     /// The output alias
     string output_alias = 2;
-
-    /// The field containing the precomputed minimum of the field
-    string stats_minimum_field_name = 3;
-    /// The field containing the precomputed binning width.
-    /// Bins are computed as: (data[field_name] - stats[binning_min_field_name]) / stats[binning_width_field_name])
-    string stats_bin_width_field_name = 4;
+    /// The field binning
+    /// Bins are computed as: (data[field_name] - stats[stats_minimum_field_name]) / stats[stats_bin_width_field_name])
+    optional GroupByKeyBinning binning = 3;
 }
 
 message GroupByAggregate {
@@ -51,9 +55,16 @@ message GroupByAggregate {
     bool aggregate_lengths = 4;
 }
 
-message GroupByConfig {
+message GroupByTransform {
     /// The group by keys
     repeated GroupByKey keys = 1;
     /// The aggregates
     repeated GroupByAggregate aggregates = 2;
+}
+
+message DataFrameTransform {
+    /// The group by transform (if any)
+    optional GroupByTransform group_by = 1;
+    /// The order by transform (if any)
+    optional OrderByTransform order_by = 2;
 }
