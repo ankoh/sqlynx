@@ -127,7 +127,9 @@
             "groupName": "protobuf",
             "matchPackageNames": [
                 "prost",
-                "tonic"
+                "prost-build",
+                "tonic",
+                "tonic-build"
             ],
             "automerge": false
         }
