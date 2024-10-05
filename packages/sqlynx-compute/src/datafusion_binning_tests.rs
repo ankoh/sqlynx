@@ -77,13 +77,19 @@ async fn test_bin_timestamps() -> anyhow::Result<()> {
         col("min", &groupby_exec.schema())?,
         &groupby_exec.schema())?;
     let minmax_ms = Arc::new(CastExpr::new(minmax_diff.clone(), DataType::Int64, None));
+    let minmax_bin_width = binary(
+        minmax_ms.clone(),
+        Operator::Divide,
+        lit(ScalarValue::Int64(Some(64))),
+        data.schema_ref())?;
 
     let projection_exec = Arc::new(ProjectionExec::try_new(
         vec![
             (col("min", &groupby_exec.schema())?, "min".to_string()),
             (col("max", &groupby_exec.schema())?, "max".to_string()),
             (minmax_diff, "diff".to_string()),
-            (minmax_ms, "diff_ms".to_string())
+            (minmax_ms, "diff_ms".to_string()),
+            (minmax_bin_width, "diff_bin_width".to_string())
         ],
         groupby_exec
     )?);
@@ -93,22 +99,21 @@ async fn test_bin_timestamps() -> anyhow::Result<()> {
 
     assert_eq!(minmax_result.len(), 1);
     assert_eq!(format!("{}", pretty_format_batches(&minmax_result)?), indoc! {"
-        +---------------------+---------------------+-----------+-----------+
-        | min                 | max                 | diff      | diff_ms   |
-        +---------------------+---------------------+-----------+-----------+
-        | 2024-04-01T12:00:00 | 2024-04-03T12:00:00 | PT172800S | 172800000 |
-        +---------------------+---------------------+-----------+-----------+
+        +---------------------+---------------------+-----------+-----------+----------------+
+        | min                 | max                 | diff      | diff_ms   | diff_bin_width |
+        +---------------------+---------------------+-----------+-----------+----------------+
+        | 2024-04-01T12:00:00 | 2024-04-03T12:00:00 | PT172800S | 172800000 | 2700000        |
+        +---------------------+---------------------+-----------+-----------+----------------+
     "}.trim());
 
     let min_col = minmax_result[0].column(0).as_primitive::<TimestampMillisecondType>();
     let max_col = minmax_result[0].column(1).as_primitive::<TimestampMillisecondType>();
     let diff_ms_col = minmax_result[0].column(3).as_primitive::<Int64Type>();
+    let bin_width_col = minmax_result[0].column(4).as_primitive::<Int64Type>();
     assert_eq!(min_col.value_as_datetime(0).unwrap().to_string(), "2024-04-01 12:00:00");
     assert_eq!(max_col.value_as_datetime(0).unwrap().to_string(), "2024-04-03 12:00:00");
     assert_eq!(diff_ms_col.value(0), 172800000);
-
-    let range_millis = diff_ms_col.value(0);
-    let bin_millis = range_millis / 100;
+    assert_eq!(bin_width_col.value(0), 2700000);
 
     // Maybe we get around date_part here for now by just casting to milliseconds.
     // Otherwise, we can fall back to:
@@ -125,7 +130,7 @@ async fn test_bin_timestamps() -> anyhow::Result<()> {
     let when_diff_bin = binary(
         when_diff_ms,
         Operator::Divide,
-        lit(ScalarValue::Int64(Some(bin_millis))),
+        lit(ScalarValue::Int64(Some(bin_width_col.value(0)))),
         data.schema_ref())?;
 
     let data_scan = Arc::new(
@@ -149,8 +154,8 @@ async fn test_bin_timestamps() -> anyhow::Result<()> {
         | id | bin |
         +----+-----+
         | 1  | 0   |
-        | 2  | 50  |
-        | 3  | 100 |
+        | 2  | 32  |
+        | 3  | 64  |
         +----+-----+
     "}.trim());
 
