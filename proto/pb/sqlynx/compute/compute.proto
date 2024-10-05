@@ -29,8 +29,10 @@ enum AggregationFunction {
 message GroupByKeyBinning {
     /// The field containing the precomputed minimum of the field
     string stats_minimum_field_name = 1;
-    /// The field containing the precomputed binning width.
-    string stats_bin_width_field_name = 2;
+    /// The field containing the precomputed maximum of the field
+    string stats_maximum_field_name = 2;
+    /// The number of bins
+    uint32 bin_count = 3;
 }
 
 message GroupByKey {
