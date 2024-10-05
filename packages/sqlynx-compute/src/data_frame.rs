@@ -3,6 +3,13 @@ use std::{collections::HashSet, sync::Arc};
 use arrow::array::RecordBatch;
 use arrow::datatypes::Schema;
 use datafusion_execution::TaskContext;
+use datafusion_expr::test::function_stub::Avg;
+use datafusion_expr::test::function_stub::Max;
+use datafusion_expr::test::function_stub::Min;
+use datafusion_expr::AggregateUDF;
+use datafusion_functions_aggregate::count::count_udaf;
+use datafusion_physical_expr::aggregate::AggregateExprBuilder;
+use datafusion_physical_expr::expressions::lit;
 use datafusion_physical_expr::PhysicalExpr;
 use datafusion_physical_expr::PhysicalSortExpr;
 use datafusion_physical_expr::aggregate::AggregateFunctionExpr;
@@ -15,7 +22,8 @@ use datafusion_physical_plan::sorts::sort::SortExec;
 use prost::Message;
 use wasm_bindgen::prelude::*;
 
-use crate::{arrow_out::DataFrameIpcStream, proto::sqlynx_compute::{DataFrameTransform, GroupByTransform, OrderByTransform}};
+use crate::arrow_out::DataFrameIpcStream;
+use crate::proto::sqlynx_compute::{DataFrameTransform, GroupByTransform, OrderByTransform, AggregationFunction};
 
 #[wasm_bindgen]
 pub struct DataFrame {
@@ -66,14 +74,14 @@ impl DataFrame {
         for key in config.keys.iter() {
             // Key name collision?
             if output_field_names.contains(key.output_alias.as_str()) {
-                return Err(JsError::new("duplicate key names"))
+                return Err(JsError::new(&format!("duplicate key name `{}`", key.output_alias.as_str())))
             }
             // Check if any key requires statistics
             if let Some(_binning) = &key.binning  {
                 if let Some(_stats) = &stats {
                     // Bin the key column
                 } else {
-                    return Err(JsError::new("key binning requires precomputed statistics, use transformWithStats"))
+                    return Err(JsError::new(&format!("binning for key `{}` requires precomputed statistics, use transformWithStats", key.output_alias.as_str())))
                 }
             } else {
                 grouping_exprs.push((col(&key.field_name, &self.schema)?, key.output_alias.clone()));
@@ -86,9 +94,69 @@ impl DataFrame {
         grouping_set.resize(grouping_exprs.len(), false);
         let grouping = PhysicalGroupBy::new(grouping_exprs, Vec::new(), vec![grouping_set]);
 
-        let aggregate_exprs: Vec<AggregateFunctionExpr> = Vec::new();
-        for _aggr in config.aggregates.iter() {
-            // XXX
+        // Collect aggregate expressions
+        let mut aggregate_exprs: Vec<AggregateFunctionExpr> = Vec::new();
+        for aggr in config.aggregates.iter() {
+            // Get aggregation function
+            let aggr_func = aggr.aggregation_function.try_into()?;
+            // Check proto settings
+            match aggr_func {
+                AggregationFunction::Min | AggregationFunction::Max | AggregationFunction::Average => {
+                    if aggr.aggregate_distinct {
+                        return Err(JsError::new(&format!("function '{}' does not support distinct aggregation", aggr_func.as_str_name())));
+                    }
+                }
+                AggregationFunction::Count | AggregationFunction::CountStar => {
+                    if aggr.aggregate_lengths {
+                        return Err(JsError::new(&format!("function '{}' does not support length aggregation", aggr_func.as_str_name())));
+                    }
+                }
+            }
+            // Get the aggregate expression
+            let aggr_expr = match aggr.aggregation_function.try_into()? {
+                AggregationFunction::Min => {
+                    AggregateExprBuilder::new(
+                        Arc::new(AggregateUDF::new_from_impl(Min::new())),
+                        vec![col(&aggr.field_name, &input.schema())?]
+                    )
+                        .schema(input.schema())
+                        .alias(&aggr.output_alias)
+                        .build()?
+                },
+                AggregationFunction::Max => {
+                    AggregateExprBuilder::new(
+                        Arc::new(AggregateUDF::new_from_impl(Max::new())),
+                        vec![col(&aggr.field_name, &input.schema())?]
+                    )
+                        .schema(input.schema())
+                        .alias(&aggr.output_alias)
+                        .build()?
+                },
+                AggregationFunction::Average => {
+                    AggregateExprBuilder::new(
+                        Arc::new(AggregateUDF::new_from_impl(Avg::new())),
+                        vec![col(&aggr.field_name, &input.schema())?]
+                    )
+                        .schema(input.schema())
+                        .alias(&aggr.output_alias)
+                        .build()?
+                },
+                AggregationFunction::CountStar => {
+                     AggregateExprBuilder::new(count_udaf(), vec![lit(1)])
+                        .schema(input.schema())
+                        .alias(&aggr.output_alias)
+                        .with_distinct(aggr.aggregate_distinct)
+                        .build()?
+                },
+                AggregationFunction::Count => {
+                     AggregateExprBuilder::new(count_udaf(), vec![col(&aggr.field_name, &input.schema())?])
+                        .schema(input.schema())
+                        .alias(&aggr.output_alias)
+                        .with_distinct(aggr.aggregate_distinct)
+                        .build()?
+                },
+            };
+            aggregate_exprs.push(aggr_expr);
         }
 
         // Construct null expressions

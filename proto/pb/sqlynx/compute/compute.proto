@@ -24,7 +24,6 @@ enum AggregationFunction {
     Average = 2;
     Count = 3;
     CountStar = 4;
-    CountDistinct = 5;
 }
 
 message GroupByKeyBinning {
@@ -51,8 +50,10 @@ message GroupByAggregate {
     string output_alias = 2;
     /// The aggregation function
     AggregationFunction aggregation_function = 3;
+    /// Aggregate distinct values?
+    bool aggregate_distinct = 4;
     /// Instead of aggregating the value, we're aggregating the value lengths (list & string)
-    bool aggregate_lengths = 4;
+    bool aggregate_lengths = 5;
 }
 
 message GroupByTransform {
