@@ -23,6 +23,11 @@ impl DataFrame {
             schema, partitions: vec![batches]
         }
     }
+    /// Scan the data frame
+    #[wasm_bindgen(js_name="createIpcStream")]
+    pub fn create_ipc_stream(&self) -> Result<DataFrameIpcStream, JsError> {
+        DataFrameIpcStream::new(self.schema.clone())
+    }
 
     /// Reorder the frame by a single column
     #[wasm_bindgen(js_name="orderBy")]
@@ -58,7 +63,7 @@ impl DataFrame {
         return Ok(sorted);
     }
 
-    /// Reorder the frame by a single column
+    /// Group a data frame
     #[wasm_bindgen(js_name="groupBy")]
     pub async fn group_by(&self, proto: &[u8]) -> Result<DataFrame, JsError> {
         let _config = GroupByConfig::decode(proto)?;
@@ -67,8 +72,12 @@ impl DataFrame {
         return Err(JsError::new("not implemented"));
     }
 
-    #[wasm_bindgen(js_name="createIpcStream")]
-    pub fn create_ipc_stream(&self) -> Result<DataFrameIpcStream, JsError> {
-        DataFrameIpcStream::new(self.schema.clone())
+    /// Group a data frame with precomputed statistics (for example needed for binning)
+    #[wasm_bindgen(js_name="groupByWithStats")]
+    pub async fn group_by_with_stats(&self, proto: &[u8], _stats: &DataFrame) -> Result<DataFrame, JsError> {
+        let _config = GroupByConfig::decode(proto)?;
+
+
+        return Err(JsError::new("not implemented"));
     }
 }

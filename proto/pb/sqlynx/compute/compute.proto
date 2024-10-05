@@ -32,6 +32,12 @@ message GroupByKey {
     string field_name = 1;
     /// The output alias
     string output_alias = 2;
+
+    /// The field containing the precomputed minimum of the field
+    string stats_minimum_field_name = 3;
+    /// The field containing the precomputed binning width.
+    /// Bins are computed as: (data[field_name] - stats[binning_min_field_name]) / stats[binning_width_field_name])
+    string stats_bin_width_field_name = 4;
 }
 
 message GroupByAggregate {
