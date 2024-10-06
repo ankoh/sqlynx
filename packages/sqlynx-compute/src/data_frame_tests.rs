@@ -1,4 +1,4 @@
-use arrow::array::{ArrayRef, Int32Array, Int64Array, RecordBatch, StringArray};
+use arrow::array::{ArrayRef, Float32Builder, Int32Array, Int64Array, ListBuilder, RecordBatch, StringArray};
 use arrow::datatypes::{Field, SchemaBuilder, DataType};
 use arrow::util::pretty::pretty_format_batches;
 use std::sync::Arc;
@@ -155,6 +155,65 @@ async fn test_minmax_string() -> anyhow::Result<()> {
         +----------------------------------------+----------------------------------------+--------------+--------------+
         | 860f346a-5e02-4f32-93db-6c54378e31bb/0 | 860f346a-5e02-4f32-93db-6c54378e31bb/8 | 8            | 36           |
         +----------------------------------------+----------------------------------------+--------------+--------------+
+    "}.trim());
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_minmax_embeddings() -> anyhow::Result<()> {
+    let mut schema_builder = SchemaBuilder::with_capacity(1);
+    let list_item_type = Arc::new(Field::new("item", DataType::Float32, true));
+    let list_type = DataType::List(list_item_type.clone());
+    schema_builder.push(Field::new("v1", list_type, true));
+    let schema = schema_builder.finish();
+
+    let float_builder = Float32Builder::with_capacity(5);
+    let mut embeddings = ListBuilder::new(float_builder);
+
+    embeddings.values().append_value(1.0);
+    embeddings.values().append_value(2.0);
+    embeddings.values().append_value(5.0);
+    embeddings.append(true);
+    embeddings.values().append_value(6.0);
+    embeddings.values().append_value(7.0);
+    embeddings.values().append_value(8.0);
+    embeddings.values().append_value(9.0);
+    embeddings.values().append_value(10.0);
+    embeddings.append(true);
+
+    let data = RecordBatch::try_new(schema.into(), vec![
+        Arc::new(embeddings.finish()) as ArrayRef,
+    ])?;
+    let data_frame = DataFrame::new(data.schema(), vec![data]);
+    let transform = DataFrameTransform {
+        order_by: None,
+        group_by: Some(GroupByTransform {
+            keys: vec![],
+            aggregates: vec![
+                GroupByAggregate {
+                    field_name: "v1".into(),
+                    output_alias: "v1_len_min".into(),
+                    aggregation_function: AggregationFunction::Min.into(),
+                    aggregate_distinct: false,
+                    aggregate_lengths: true
+                },
+                GroupByAggregate {
+                    field_name: "v1".into(),
+                    output_alias: "v1_len_max".into(),
+                    aggregation_function: AggregationFunction::Max.into(),
+                    aggregate_distinct: false,
+                    aggregate_lengths: true
+                }
+            ]
+        }),
+    };
+    let transformed = data_frame.transform(&transform, None).await?;
+    assert_eq!(format!("{}", pretty_format_batches(&transformed.partitions[0])?), indoc! {"
+        +------------+------------+
+        | v1_len_min | v1_len_max |
+        +------------+------------+
+        | 3          | 5          |
+        +------------+------------+
     "}.trim());
     Ok(())
 }
