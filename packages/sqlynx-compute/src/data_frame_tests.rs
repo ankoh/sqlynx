@@ -1,4 +1,4 @@
-use arrow::array::{ArrayRef, Date64Array, Date64BufferBuilder, Float32Builder, Int32Array, Int64Array, ListBuilder, RecordBatch, StringArray, Time64MicrosecondArray, Time64MicrosecondBufferBuilder, TimestampMillisecondArray, TimestampMillisecondBufferBuilder};
+use arrow::array::{ArrayRef, Date32Array, Date32BufferBuilder, Date64Array, Date64BufferBuilder, Float32Builder, Int32Array, Int64Array, ListBuilder, RecordBatch, StringArray, Time32MillisecondArray, Time32MillisecondBufferBuilder, Time64MicrosecondArray, Time64MicrosecondBufferBuilder, TimestampMillisecondArray, TimestampMillisecondBufferBuilder};
 use arrow::datatypes::{Field, SchemaBuilder, DataType, TimeUnit};
 use arrow::util::pretty::pretty_format_batches;
 use chrono::{DateTime, Duration};
@@ -384,6 +384,113 @@ async fn test_transform_bin_timestamps() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
+async fn test_transform_bin_date32() -> anyhow::Result<()> {
+    let mut schema_builder = SchemaBuilder::with_capacity(2);
+    schema_builder.push(Field::new("ts", DataType::Date32, false));
+    let schema = schema_builder.finish();
+
+    let mut ts_buf = Date32BufferBuilder::new(10);
+    let mut next_ts = 0;
+    for _ in 0..7 {
+        next_ts += 1;
+        ts_buf.append(next_ts);
+    }
+    ts_buf.append(3);
+    ts_buf.append(3);
+    ts_buf.append(5);
+    let ts_array = Arc::new(Date32Array::new(ts_buf.finish().into(), None));
+
+    let data = RecordBatch::try_new(schema.into(), vec![ts_array])?;
+    let data_frame = DataFrame::new(data.schema(), vec![data]);
+
+    // Compute statistics
+    let stats_transform = DataFrameTransform {
+        group_by: Some(GroupByTransform {
+            keys: vec![],
+            aggregates: vec![
+                GroupByAggregate {
+                    field_name: "ts".into(),
+                    output_alias: "ts_min".into(),
+                    aggregation_function: AggregationFunction::Min.into(),
+                    aggregate_distinct: false,
+                    aggregate_lengths: true
+                },
+                GroupByAggregate {
+                    field_name: "ts".into(),
+                    output_alias: "ts_max".into(),
+                    aggregation_function: AggregationFunction::Max.into(),
+                    aggregate_distinct: false,
+                    aggregate_lengths: true
+                },
+            ]
+        }),
+        order_by: None,
+    };
+    let stats = data_frame.transform(&stats_transform, None).await?;
+    assert_eq!(format!("{}", pretty_format_batches(&stats.partitions[0])?), indoc! {"
+        +------------+------------+
+        | ts_min     | ts_max     |
+        +------------+------------+
+        | 1970-01-02 | 1970-01-08 |
+        +------------+------------+
+    "}.trim());
+
+    // Bin into 8 bins
+    let bin_transform = DataFrameTransform {
+        group_by: Some(GroupByTransform {
+            keys: vec![
+                GroupByKey {
+                    field_name: "ts".into(),
+                    output_alias: "ts_bin".into(),
+                    binning: Some(GroupByKeyBinning {
+                        stats_minimum_field_name: "ts_min".into(),
+                        stats_maximum_field_name: "ts_max".into(),
+                        bin_count: 8,
+                        output_bin_width_alias: "bin_width".into(),
+                        output_bin_lb_alias: "bin_lb".into(),
+                        output_bin_ub_alias: "bin_ub".into(),
+                    })
+                }
+            ],
+            aggregates: vec![
+                GroupByAggregate {
+                    field_name: "ts".into(),
+                    output_alias: "ts_count".into(),
+                    aggregation_function: AggregationFunction::CountStar.into(),
+                    aggregate_distinct: false,
+                    aggregate_lengths: false
+                },
+            ]
+        }),
+        order_by: Some(OrderByTransform {
+            constraints: vec![
+                OrderByConstraint {
+                    field_name: "ts_bin".into(),
+                    ascending: true,
+                    nulls_first: false
+                }
+            ],
+            limit: None
+        })
+    };
+    let binned = data_frame.transform(&bin_transform, Some(&stats)).await?;
+    assert_eq!(format!("{}", pretty_format_batches(&binned.partitions[0])?), indoc! {"
+        +--------+----------+-----------+------------+------------+
+        | ts_bin | ts_count | bin_width | bin_lb     | bin_ub     |
+        +--------+----------+-----------+------------+------------+
+        | 0      | 1        | PT64800S  | 1970-01-02 | 1970-01-02 |
+        | 1      | 1        | PT64800S  | 1970-01-02 | 1970-01-03 |
+        | 2      | 3        | PT64800S  | 1970-01-03 | 1970-01-04 |
+        | 4      | 1        | PT64800S  | 1970-01-05 | 1970-01-05 |
+        | 5      | 2        | PT64800S  | 1970-01-05 | 1970-01-06 |
+        | 6      | 1        | PT64800S  | 1970-01-06 | 1970-01-07 |
+        | 8      | 1        | PT64800S  | 1970-01-08 | 1970-01-08 |
+        +--------+----------+-----------+------------+------------+
+    "}.trim());
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_transform_bin_date64() -> anyhow::Result<()> {
     let mut schema_builder = SchemaBuilder::with_capacity(2);
     schema_builder.push(Field::new("ts", DataType::Date64, false));
@@ -595,6 +702,113 @@ async fn test_transform_bin_time64() -> anyhow::Result<()> {
         | 6     | 2        | 2700000000 | 04:30:00 | 05:15:00 |
         | 8     | 1        | 2700000000 | 06:00:00 | 06:45:00 |
         +-------+----------+------------+----------+----------+
+    "}.trim());
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_transform_bin_time32() -> anyhow::Result<()> {
+    let mut schema_builder = SchemaBuilder::with_capacity(2);
+    schema_builder.push(Field::new("t", DataType::Time32(TimeUnit::Millisecond), false));
+    let schema = schema_builder.finish();
+
+    let mut ts_buf = Time32MillisecondBufferBuilder::new(10);
+    let mut next_ts = 0;
+    for _ in 0..7 {
+        ts_buf.append(next_ts);
+        next_ts += 1000 * 60 * 60;
+    }
+    ts_buf.append(1000 * 60 * 60 * 3);
+    ts_buf.append(1000 * 60 * 60 * 3);
+    ts_buf.append(1000 * 60 * 60 * 5);
+    let ts_array = Arc::new(Time32MillisecondArray::new(ts_buf.finish().into(), None));
+
+    let data = RecordBatch::try_new(schema.into(), vec![ts_array])?;
+    let data_frame = DataFrame::new(data.schema(), vec![data]);
+
+    // Compute statistics
+    let stats_transform = DataFrameTransform {
+        group_by: Some(GroupByTransform {
+            keys: vec![],
+            aggregates: vec![
+                GroupByAggregate {
+                    field_name: "t".into(),
+                    output_alias: "t_min".into(),
+                    aggregation_function: AggregationFunction::Min.into(),
+                    aggregate_distinct: false,
+                    aggregate_lengths: true
+                },
+                GroupByAggregate {
+                    field_name: "t".into(),
+                    output_alias: "t_max".into(),
+                    aggregation_function: AggregationFunction::Max.into(),
+                    aggregate_distinct: false,
+                    aggregate_lengths: true
+                },
+            ]
+        }),
+        order_by: None,
+    };
+    let stats = data_frame.transform(&stats_transform, None).await?;
+    assert_eq!(format!("{}", pretty_format_batches(&stats.partitions[0])?), indoc! {"
+        +----------+----------+
+        | t_min    | t_max    |
+        +----------+----------+
+        | 00:00:00 | 06:00:00 |
+        +----------+----------+
+    "}.trim());
+
+    // Bin into 8 bins
+    let bin_transform = DataFrameTransform {
+        group_by: Some(GroupByTransform {
+            keys: vec![
+                GroupByKey {
+                    field_name: "t".into(),
+                    output_alias: "t_bin".into(),
+                    binning: Some(GroupByKeyBinning {
+                        stats_minimum_field_name: "t_min".into(),
+                        stats_maximum_field_name: "t_max".into(),
+                        bin_count: 8,
+                        output_bin_width_alias: "bin_width".into(),
+                        output_bin_lb_alias: "bin_lb".into(),
+                        output_bin_ub_alias: "bin_ub".into(),
+                    })
+                }
+            ],
+            aggregates: vec![
+                GroupByAggregate {
+                    field_name: "t".into(),
+                    output_alias: "ts_count".into(),
+                    aggregation_function: AggregationFunction::CountStar.into(),
+                    aggregate_distinct: false,
+                    aggregate_lengths: false
+                },
+            ]
+        }),
+        order_by: Some(OrderByTransform {
+            constraints: vec![
+                OrderByConstraint {
+                    field_name: "t_bin".into(),
+                    ascending: true,
+                    nulls_first: false
+                }
+            ],
+            limit: None
+        })
+    };
+    let binned = data_frame.transform(&bin_transform, Some(&stats)).await?;
+    assert_eq!(format!("{}", pretty_format_batches(&binned.partitions[0])?), indoc! {"
+        +-------+----------+-----------+----------+----------+
+        | t_bin | ts_count | bin_width | bin_lb   | bin_ub   |
+        +-------+----------+-----------+----------+----------+
+        | 0     | 1        | 2700000   | 00:00:00 | 00:45:00 |
+        | 1     | 1        | 2700000   | 00:45:00 | 01:30:00 |
+        | 2     | 1        | 2700000   | 01:30:00 | 02:15:00 |
+        | 4     | 3        | 2700000   | 03:00:00 | 03:45:00 |
+        | 5     | 1        | 2700000   | 03:45:00 | 04:30:00 |
+        | 6     | 2        | 2700000   | 04:30:00 | 05:15:00 |
+        | 8     | 1        | 2700000   | 06:00:00 | 06:45:00 |
+        +-------+----------+-----------+----------+----------+
     "}.trim());
     Ok(())
 }

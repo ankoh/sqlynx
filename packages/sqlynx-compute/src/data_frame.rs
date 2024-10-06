@@ -227,7 +227,30 @@ impl DataFrame {
                 }
             }
 
-            DataType::Time32(_) | DataType::Time64(_) => {
+            DataType::Time32(_) => {
+                let max_value = max_value.cast_to(&DataType::Int32)?;
+                let min_value = min_value.cast_to(&DataType::Int32)?;
+                let mut numeric_bin_width = max_value
+                    .sub(min_value.clone())?
+                    .div(ScalarValue::Int32(Some(key_binning.bin_count as i32)))?;
+                if numeric_bin_width == ScalarValue::Int32(Some(0)) {
+                    numeric_bin_width = ScalarValue::Int32(None);
+                }
+                let key_field = Arc::new(CastExpr::new(col(key_field.name(), &input.schema())?, DataType::Int32, None));
+                let key_delta = binary(key_field, Operator::Minus, lit(min_value.clone()), &input.schema())?;
+                let key_binned = binary(key_delta, Operator::Divide, lit(numeric_bin_width.clone()), &input.schema())?;
+                BinnedExpression {
+                    binning_config: key_binning.clone(),
+                    binning_expr: Arc::new(CastExpr::new(key_binned, DataType::UInt32, None)),
+                    output_alias: key.output_alias.clone(),
+                    min_value,
+                    numeric_bin_width,
+                    output_type_bin_width: DataType::Int32,
+                    output_type_bin_bounds: key_field_type.clone(),
+                }
+            }
+
+            DataType::Time64(_) => {
                 let max_value = max_value.cast_to(&DataType::Int64)?;
                 let min_value = min_value.cast_to(&DataType::Int64)?;
                 let mut numeric_bin_width = max_value
