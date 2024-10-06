@@ -7,12 +7,12 @@ use arrow::datatypes::DataType;
 use arrow::datatypes::Schema;
 use datafusion_common::ScalarValue;
 use datafusion_execution::TaskContext;
-use datafusion_expr::test::function_stub::Avg;
-use datafusion_expr::test::function_stub::Max;
-use datafusion_expr::test::function_stub::Min;
 use datafusion_expr::AggregateUDF;
 use datafusion_expr::Operator;
+use datafusion_functions_aggregate::average::Avg;
 use datafusion_functions_aggregate::count::count_udaf;
+use datafusion_functions_aggregate::min_max::Max;
+use datafusion_functions_aggregate::min_max::Min;
 use datafusion_physical_expr::aggregate::AggregateExprBuilder;
 use datafusion_physical_expr::expressions::binary;
 use datafusion_physical_expr::expressions::lit;
@@ -55,7 +55,7 @@ impl DataFrame {
     }
 
     /// Order a data frame
-    async fn order_by(&self, config: &OrderByTransform, input: Arc<dyn ExecutionPlan>) -> Result<SortExec, JsError> {
+    async fn order_by(&self, config: &OrderByTransform, input: Arc<dyn ExecutionPlan>) -> anyhow::Result<SortExec> {
         let mut sort_exprs: Vec<PhysicalSortExpr> = Vec::new();
         for constraint in config.constraints.iter() {
             let sort_options = arrow::compute::SortOptions {
@@ -76,10 +76,10 @@ impl DataFrame {
     }
 
     /// Compute bin
-    fn compute_binned_key(&self, key: &GroupByKey, key_binning: &GroupByKeyBinning, stats: &DataFrame, input: Arc<dyn ExecutionPlan>) -> Result<Arc<dyn PhysicalExpr>, JsError> {
+    fn compute_binned_key(&self, key: &GroupByKey, key_binning: &GroupByKeyBinning, stats: &DataFrame, input: Arc<dyn ExecutionPlan>) -> anyhow::Result<Arc<dyn PhysicalExpr>> {
         // Unexpected schema for statistics frame?
         if self.partitions.is_empty() || self.partitions[0].is_empty() || self.partitions[0][0].num_rows() != 1 {
-            return Err(JsError::new("statistics data must have exactly 1 row"));
+            return Err(anyhow::anyhow!("statistics data must have exactly 1 row"));
         }
         let stats_batch = &stats.partitions[0][0];
         let stats_schema = stats_batch.schema_ref();
@@ -88,7 +88,7 @@ impl DataFrame {
         // Resolve key field
         let key_field_id = match input.schema().index_of(&key.field_name) {
             Ok(field_id) => field_id,
-            Err(_) => return Err(JsError::new(&format!("input data does not contain the key field `{}`", &key.field_name)))
+            Err(_) => return Err(anyhow::anyhow!("input data does not contain the key field `{}`", &key.field_name))
         };
         let key_field = &input_schema.fields()[key_field_id];
         let key_field_type = &key_field.data_type();
@@ -96,7 +96,7 @@ impl DataFrame {
         // Resolve field storing the binning minimum
         let min_field_id = match stats_schema.index_of(&key_binning.stats_minimum_field_name) {
             Ok(field_id) => field_id,
-            Err(_) => return Err(JsError::new(&format!("statistics data does not contain the field storing the binning minimum `{}`", &key_binning.stats_minimum_field_name)))
+            Err(_) => return Err(anyhow::anyhow!("statistics data does not contain the field storing the binning minimum `{}`", &key_binning.stats_minimum_field_name))
         };
         let min_field = &stats_schema.fields()[min_field_id];
         let min_field_type = &min_field.data_type();
@@ -104,18 +104,18 @@ impl DataFrame {
         // Resolve field storing the binning minimum
         let max_field_id = match stats_schema.index_of(&key_binning.stats_maximum_field_name) {
             Ok(field_id) => field_id,
-            Err(_) => return Err(JsError::new(&format!("statistics data does not contain the field storing the binning minimum `{}`", &key_binning.stats_minimum_field_name)))
+            Err(_) => return Err(anyhow::anyhow!("statistics data does not contain the field storing the binning minimum `{}`", &key_binning.stats_minimum_field_name))
         };
         let max_field = &stats_schema.fields()[max_field_id];
         let max_field_type = &max_field.data_type();
 
         // Make sure the minimum field has the same type as the key column
         if min_field.data_type() != *key_field_type {
-            return Err(JsError::new(&format!("types of key field `{}` and minimum field `{}` do not match: {} != {}", key_field.name(), min_field.name(), key_field_type, min_field_type)));
+            return Err(anyhow::anyhow!("types of key field `{}` and minimum field `{}` do not match: {} != {}", key_field.name(), min_field.name(), key_field_type, min_field_type));
         }
         // Make sure the maximum field has the same type as the key column
         if max_field.data_type() != *key_field_type {
-            return Err(JsError::new(&format!("types of key field `{}` and maximum field `{}` do not match: {} != {}", key_field.name(), max_field.name(), key_field_type, max_field_type)));
+            return Err(anyhow::anyhow!("types of key field `{}` and maximum field `{}` do not match: {} != {}", key_field.name(), max_field.name(), key_field_type, max_field_type));
         }
         // Read maximum value
         let max_value = ScalarValue::try_from_array(&stats_batch.columns()[max_field_id], 0)?;
@@ -191,14 +191,14 @@ impl DataFrame {
                 let key_binned = binary(key_delta, Operator::Divide, lit(bin_width), &input.schema())?;
                 Arc::new(CastExpr::new(key_binned, DataType::Int32, None))
             },
-            _ => return Err(JsError::new(&format!("key binning is not implemented for data type: {}", key_field_type)))
+            _ => return Err(anyhow::anyhow!("key binning is not implemented for data type: {}", key_field_type))
         };
         // Return binned key
         return Ok(key_binned);
     }
 
     /// Group a data frame
-    async fn group_by(&self, config: &GroupByTransform, stats: Option<&DataFrame>, input: Arc<dyn ExecutionPlan>) -> Result<AggregateExec, JsError> {
+    async fn group_by(&self, config: &GroupByTransform, stats: Option<&DataFrame>, input: Arc<dyn ExecutionPlan>) -> anyhow::Result<AggregateExec> {
         // Detect collisions among output aliases
         let mut output_field_names: HashSet<&str> = HashSet::new();
 
@@ -207,14 +207,14 @@ impl DataFrame {
         for key in config.keys.iter() {
             // Key name collision?
             if output_field_names.contains(key.output_alias.as_str()) {
-                return Err(JsError::new(&format!("duplicate key name `{}`", key.output_alias.as_str())))
+                return Err(anyhow::anyhow!("duplicate key name `{}`", key.output_alias.as_str()))
             }
             // Check if any key requires statistics
             let key_expr = if let Some(key_binning) = &key.binning  {
                 if let Some(stats) = &stats {
                     self.compute_binned_key(key, key_binning, stats, input.clone())?
                 } else {
-                    return Err(JsError::new(&format!("binning for key `{}` requires precomputed statistics, use transformWithStats", key.output_alias.as_str())))
+                    return Err(anyhow::anyhow!("binning for key `{}` requires precomputed statistics, use transformWithStats", key.output_alias.as_str()))
                 }
             } else {
                 col(&key.field_name, &self.schema)?
@@ -238,12 +238,12 @@ impl DataFrame {
             match aggr_func {
                 AggregationFunction::Min | AggregationFunction::Max | AggregationFunction::Average => {
                     if aggr.aggregate_distinct {
-                        return Err(JsError::new(&format!("function '{}' does not support distinct aggregation", aggr_func.as_str_name())));
+                        return Err(anyhow::anyhow!("function '{}' does not support distinct aggregation", aggr_func.as_str_name()));
                     }
                 }
                 AggregationFunction::Count | AggregationFunction::CountStar => {
                     if aggr.aggregate_lengths {
-                        return Err(JsError::new(&format!("function '{}' does not support length aggregation", aggr_func.as_str_name())));
+                        return Err(anyhow::anyhow!("function '{}' does not support length aggregation", aggr_func.as_str_name()));
                     }
                 }
             }
@@ -310,7 +310,8 @@ impl DataFrame {
         return Ok(groupby_exec);
     }
 
-    async fn transform(&self, transform: &DataFrameTransform, stats: Option<&DataFrame>) -> Result<DataFrame, JsError> {
+    /// Transform a data frame
+    pub(crate) async fn transform(&self, transform: &DataFrameTransform, stats: Option<&DataFrame>) -> anyhow::Result<DataFrame> {
         let mut input: Arc<dyn ExecutionPlan> = Arc::new(
             MemoryExec::try_new(&self.partitions, self.schema.clone(), None).unwrap(),
         );
@@ -328,15 +329,15 @@ impl DataFrame {
 
     /// Transform a data frame
     #[wasm_bindgen(js_name="transform")]
-    pub async fn transform_without_stats(&self, proto: &[u8]) -> Result<DataFrame, JsError> {
-        let transform = DataFrameTransform::decode(proto)?;
-        self.transform(&transform, None).await
+    pub async fn transform_pb(&self, proto: &[u8]) -> Result<DataFrame, JsError> {
+        let transform = DataFrameTransform::decode(proto).map_err(|e| JsError::new(&e.to_string()))?;
+        self.transform(&transform, None).await.map_err(|e| JsError::new(&e.to_string()))
     }
 
     /// Transform a data frame with precomputed statistics (for example needed for binning)
     #[wasm_bindgen(js_name="transformWithStats")]
-    pub async fn transform_with_stats(&self, proto: &[u8], stats: &DataFrame) -> Result<DataFrame, JsError> {
-        let transform = DataFrameTransform::decode(proto)?;
-        self.transform(&transform, Some(&stats)).await
+    pub async fn transform_pb_with_stats(&self, proto: &[u8], stats: &DataFrame) -> Result<DataFrame, JsError> {
+        let transform = DataFrameTransform::decode(proto).map_err(|e| JsError::new(&e.to_string()))?;
+        self.transform(&transform, Some(&stats)).await.map_err(|e| JsError::new(&e.to_string()))
     }
 }
