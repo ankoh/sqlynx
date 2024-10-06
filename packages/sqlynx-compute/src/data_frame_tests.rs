@@ -243,6 +243,7 @@ async fn test_transform_bin_timestamps() -> anyhow::Result<()> {
     let data = RecordBatch::try_new(schema.into(), vec![ts_array])?;
     let data_frame = DataFrame::new(data.schema(), vec![data]);
 
+    // Compute statistics
     let stats_transform = DataFrameTransform {
         group_by: Some(GroupByTransform {
             keys: vec![],
@@ -274,6 +275,7 @@ async fn test_transform_bin_timestamps() -> anyhow::Result<()> {
         +---------------------+---------------------+
     "}.trim());
 
+    // Bin into 64 bins
     let bin_transform = DataFrameTransform {
         group_by: Some(GroupByTransform {
             keys: vec![
@@ -283,7 +285,10 @@ async fn test_transform_bin_timestamps() -> anyhow::Result<()> {
                     binning: Some(GroupByKeyBinning {
                         stats_minimum_field_name: "ts_min".into(),
                         stats_maximum_field_name: "ts_max".into(),
-                        bin_count: 64
+                        bin_count: 64,
+                        output_bin_ub_alias: "bin_ub".into(),
+                        output_bin_lb_alias: "bin_lb".into(),
+                        output_bin_width_alias: "bin_width".into(),
                     })
                 }
             ],
@@ -310,17 +315,70 @@ async fn test_transform_bin_timestamps() -> anyhow::Result<()> {
     };
     let binned = data_frame.transform(&bin_transform, Some(&stats)).await?;
     assert_eq!(format!("{}", pretty_format_batches(&binned.partitions[0])?), indoc! {"
-        +--------+----------+
-        | ts_bin | ts_count |
-        +--------+----------+
-        | 0      | 1        |
-        | 10     | 3        |
-        | 21     | 1        |
-        | 32     | 1        |
-        | 42     | 2        |
-        | 53     | 1        |
-        | 64     | 1        |
-        +--------+----------+
+        +--------+----------+-----------+-------------------------+-------------------------+
+        | ts_bin | ts_count | bin_width | bin_lb                  | bin_ub                  |
+        +--------+----------+-----------+-------------------------+-------------------------+
+        | 0      | 1        | PT337.5S  | 2024-04-01T13:00:00     | 2024-04-01T13:05:37.500 |
+        | 10     | 3        | PT337.5S  | 2024-04-01T13:56:15     | 2024-04-01T14:01:52.500 |
+        | 21     | 1        | PT337.5S  | 2024-04-01T14:58:07.500 | 2024-04-01T15:03:45     |
+        | 32     | 1        | PT337.5S  | 2024-04-01T16:00:00     | 2024-04-01T16:05:37.500 |
+        | 42     | 2        | PT337.5S  | 2024-04-01T16:56:15     | 2024-04-01T17:01:52.500 |
+        | 53     | 1        | PT337.5S  | 2024-04-01T17:58:07.500 | 2024-04-01T18:03:45     |
+        | 64     | 1        | PT337.5S  | 2024-04-01T19:00:00     | 2024-04-01T19:05:37.500 |
+        +--------+----------+-----------+-------------------------+-------------------------+
+    "}.trim());
+
+    // Bin into 8 bins
+    let bin_transform = DataFrameTransform {
+        group_by: Some(GroupByTransform {
+            keys: vec![
+                GroupByKey {
+                    field_name: "ts".into(),
+                    output_alias: "ts_bin".into(),
+                    binning: Some(GroupByKeyBinning {
+                        stats_minimum_field_name: "ts_min".into(),
+                        stats_maximum_field_name: "ts_max".into(),
+                        bin_count: 8,
+                        output_bin_width_alias: "bin_width".into(),
+                        output_bin_lb_alias: "bin_lb".into(),
+                        output_bin_ub_alias: "bin_ub".into(),
+                    })
+                }
+            ],
+            aggregates: vec![
+                GroupByAggregate {
+                    field_name: "ts".into(),
+                    output_alias: "ts_count".into(),
+                    aggregation_function: AggregationFunction::CountStar.into(),
+                    aggregate_distinct: false,
+                    aggregate_lengths: false
+                },
+            ]
+        }),
+        order_by: Some(OrderByTransform {
+            constraints: vec![
+                OrderByConstraint {
+                    field_name: "ts_bin".into(),
+                    ascending: true,
+                    nulls_first: false
+                }
+            ],
+            limit: None
+        })
+    };
+    let binned = data_frame.transform(&bin_transform, Some(&stats)).await?;
+    assert_eq!(format!("{}", pretty_format_batches(&binned.partitions[0])?), indoc! {"
+        +--------+----------+-----------+---------------------+---------------------+
+        | ts_bin | ts_count | bin_width | bin_lb              | bin_ub              |
+        +--------+----------+-----------+---------------------+---------------------+
+        | 0      | 1        | PT2700S   | 2024-04-01T13:00:00 | 2024-04-01T13:45:00 |
+        | 1      | 3        | PT2700S   | 2024-04-01T13:45:00 | 2024-04-01T14:30:00 |
+        | 2      | 1        | PT2700S   | 2024-04-01T14:30:00 | 2024-04-01T15:15:00 |
+        | 4      | 1        | PT2700S   | 2024-04-01T16:00:00 | 2024-04-01T16:45:00 |
+        | 5      | 2        | PT2700S   | 2024-04-01T16:45:00 | 2024-04-01T17:30:00 |
+        | 6      | 1        | PT2700S   | 2024-04-01T17:30:00 | 2024-04-01T18:15:00 |
+        | 8      | 1        | PT2700S   | 2024-04-01T19:00:00 | 2024-04-01T19:45:00 |
+        +--------+----------+-----------+---------------------+---------------------+
     "}.trim());
     Ok(())
 }

@@ -5,10 +5,12 @@ use arrow::array::RecordBatch;
 use arrow::datatypes::i256;
 use arrow::datatypes::DataType;
 use arrow::datatypes::Schema;
+use arrow::datatypes::TimeUnit;
 use datafusion_common::ScalarValue;
 use datafusion_execution::TaskContext;
 use datafusion_expr::AggregateUDF;
 use datafusion_expr::Operator;
+use datafusion_functions::math::floor;
 use datafusion_functions::unicode::character_length;
 use datafusion_functions_aggregate::average::Avg;
 use datafusion_functions_aggregate::count::count_udaf;
@@ -24,6 +26,7 @@ use datafusion_physical_expr::expressions::binary;
 use datafusion_physical_expr::expressions::col;
 use datafusion_physical_expr::expressions::lit;
 use datafusion_physical_expr::ScalarFunctionExpr;
+use datafusion_physical_plan::projection::ProjectionExec;
 use datafusion_physical_plan::ExecutionPlan;
 use datafusion_physical_plan::aggregates::{AggregateMode, AggregateExec, PhysicalGroupBy};
 use datafusion_physical_plan::collect;
@@ -79,7 +82,7 @@ impl DataFrame {
     }
 
     /// Compute bin
-    fn compute_binned_key(&self, key: &GroupByKey, key_binning: &GroupByKeyBinning, stats: &DataFrame, input: Arc<dyn ExecutionPlan>) -> anyhow::Result<Arc<dyn PhysicalExpr>> {
+    fn compute_bin(&self, key: &GroupByKey, key_binning: &GroupByKeyBinning, stats: &DataFrame, input: Arc<dyn ExecutionPlan>) -> anyhow::Result<BinnedExpression> {
         // Unexpected schema for statistics frame?
         if stats.partitions.is_empty() || stats.partitions[0].is_empty() || stats.partitions[0][0].num_rows() != 1 {
             return Err(anyhow::anyhow!("statistics data must have exactly 1 row"));
@@ -94,7 +97,7 @@ impl DataFrame {
             Err(_) => return Err(anyhow::anyhow!("input data does not contain the key field `{}`", &key.field_name))
         };
         let key_field = &input_schema.fields()[key_field_id];
-        let key_field_type = &key_field.data_type();
+        let key_field_type = key_field.data_type();
 
         // Resolve field storing the binning minimum
         let min_field_id = match stats_schema.index_of(&key_binning.stats_minimum_field_name) {
@@ -102,7 +105,7 @@ impl DataFrame {
             Err(_) => return Err(anyhow::anyhow!("statistics data does not contain the field storing the binning minimum `{}`", &key_binning.stats_minimum_field_name))
         };
         let min_field = &stats_schema.fields()[min_field_id];
-        let min_field_type = &min_field.data_type();
+        let min_field_type = min_field.data_type();
 
         // Resolve field storing the binning minimum
         let max_field_id = match stats_schema.index_of(&key_binning.stats_maximum_field_name) {
@@ -110,14 +113,14 @@ impl DataFrame {
             Err(_) => return Err(anyhow::anyhow!("statistics data does not contain the field storing the binning minimum `{}`", &key_binning.stats_minimum_field_name))
         };
         let max_field = &stats_schema.fields()[max_field_id];
-        let max_field_type = &max_field.data_type();
+        let max_field_type = max_field.data_type();
 
         // Make sure the minimum field has the same type as the key column
-        if min_field.data_type() != *key_field_type {
+        if min_field.data_type() != key_field_type {
             return Err(anyhow::anyhow!("types of key field `{}` and minimum field `{}` do not match: {} != {}", key_field.name(), min_field.name(), key_field_type, min_field_type));
         }
         // Make sure the maximum field has the same type as the key column
-        if max_field.data_type() != *key_field_type {
+        if max_field.data_type() != key_field_type {
             return Err(anyhow::anyhow!("types of key field `{}` and maximum field `{}` do not match: {} != {}", key_field.name(), max_field.name(), key_field_type, max_field_type));
         }
         // Read maximum value
@@ -128,7 +131,7 @@ impl DataFrame {
         // Compute the key difference to minimum
         let key_delta = binary(col(key_field.name(), &input.schema())?, Operator::Minus, lit(min_value.clone()), &input.schema())?;
         // Bin the key field
-        let key_binned: Arc<dyn PhysicalExpr> = match key_field_type {
+        let key_binned: BinnedExpression = match &key_field_type {
             DataType::Float16 | DataType::Float32 | DataType::Float64 => {
                 let mut bin_width = max_value
                     .sub(min_value.clone())?
@@ -138,8 +141,22 @@ impl DataFrame {
                     bin_width = ScalarValue::Float64(None);
                 }
                 let key_delta_casted = Arc::new(CastExpr::new(key_delta, DataType::Float64, None));
-                let key_binned = binary(key_delta_casted, Operator::Divide, lit(bin_width), &input.schema())?;
-                Arc::new(CastExpr::new(key_binned, DataType::UInt32, None))
+                let key_binned = binary(key_delta_casted, Operator::Divide, lit(bin_width.clone()), &input.schema())?;
+                let floor_udf = floor();
+                let key_binned = Arc::new(ScalarFunctionExpr::new(
+                    floor_udf.name(),
+                    floor_udf.clone(),
+                    vec![key_binned],
+                    DataType::Float64,
+                ));
+                BinnedExpression {
+                    binning_config: key_binning.clone(),
+                    binning_expr: Arc::new(CastExpr::new(key_binned, DataType::UInt32, None)),
+                    output_alias: key.output_alias.clone(),
+                    min_value: min_value.clone(),
+                    bin_width,
+                    diff_type: DataType::Float64,
+                }
             },
             DataType::UInt8
                 | DataType::UInt16
@@ -154,18 +171,20 @@ impl DataFrame {
                     bin_width = ScalarValue::UInt64(None);
                 }
                 let key_delta_casted = Arc::new(CastExpr::new(key_delta, DataType::UInt64, None));
-                let key_binned = binary(key_delta_casted, Operator::Divide, lit(bin_width), &input.schema())?;
-                Arc::new(CastExpr::new(key_binned, DataType::UInt32, None))
+                let key_binned = binary(key_delta_casted, Operator::Divide, lit(bin_width.clone()), &input.schema())?;
+                BinnedExpression {
+                    binning_config: key_binning.clone(),
+                    binning_expr: Arc::new(CastExpr::new(key_binned, DataType::UInt32, None)),
+                    output_alias: key.output_alias.clone(),
+                    min_value: min_value.clone(),
+                    bin_width,
+                    diff_type: DataType::UInt64
+                }
             },
             DataType::Int8
                 | DataType::Int16
                 | DataType::Int32
                 | DataType::Int64 
-                | DataType::Date32
-                | DataType::Date64
-                | DataType::Time32(_)
-                | DataType::Time64(_)
-                | DataType::Timestamp(_, _)
             => {
                 let mut bin_width = max_value
                     .sub(min_value.clone())?
@@ -175,8 +194,40 @@ impl DataFrame {
                     bin_width = ScalarValue::Int64(None);
                 }
                 let key_delta_casted = Arc::new(CastExpr::new(key_delta, DataType::Int64, None));
-                let key_binned = binary(key_delta_casted, Operator::Divide, lit(bin_width), &input.schema())?;
-                Arc::new(CastExpr::new(key_binned, DataType::Int32, None))
+                let key_binned = binary(key_delta_casted, Operator::Divide, lit(bin_width.clone()), &input.schema())?;
+                BinnedExpression {
+                    binning_config: key_binning.clone(),
+                    binning_expr: Arc::new(CastExpr::new(key_binned, DataType::UInt32, None)),
+                    output_alias: key.output_alias.clone(),
+                    min_value: min_value.clone(),
+                    bin_width,
+                    diff_type: DataType::UInt64
+                }
+            },
+            DataType::Date32
+                | DataType::Date64
+                | DataType::Time32(_)
+                | DataType::Time64(_)
+                | DataType::Timestamp(_, _)
+            => {
+                let mut bin_width = max_value
+                    .sub(min_value.clone())?
+                    .cast_to(&DataType::Duration(TimeUnit::Millisecond))?
+                    .cast_to(&DataType::Int64)?
+                    .div(ScalarValue::Int64(Some(key_binning.bin_count as i64)))?;
+                if bin_width == ScalarValue::Int64(Some(0)) {
+                    bin_width = ScalarValue::Int64(None);
+                }
+                let key_delta_casted = Arc::new(CastExpr::new(key_delta, DataType::Int64, None));
+                let key_binned = binary(key_delta_casted, Operator::Divide, lit(bin_width.clone()), &input.schema())?;
+                BinnedExpression {
+                    binning_config: key_binning.clone(),
+                    binning_expr: Arc::new(CastExpr::new(key_binned, DataType::UInt32, None)),
+                    output_alias: key.output_alias.clone(),
+                    min_value: min_value.clone(),
+                    bin_width,
+                    diff_type: DataType::Duration(TimeUnit::Millisecond),
+                }
             },
             DataType::Decimal128(precision, scale) => {
                 let mut bin_width = max_value
@@ -185,8 +236,22 @@ impl DataFrame {
                 if bin_width == ScalarValue::Decimal128(Some(0), *precision, *scale) {
                     bin_width = ScalarValue::Decimal128(None, *precision, *scale);
                 }
-                let key_binned = binary(key_delta, Operator::Divide, lit(bin_width), &input.schema())?;
-                Arc::new(CastExpr::new(key_binned, DataType::Int32, None))
+                let key_binned = binary(key_delta, Operator::Divide, lit(bin_width.clone()), &input.schema())?;
+                let floor_udf = floor();
+                let key_binned = Arc::new(ScalarFunctionExpr::new(
+                    floor_udf.name(),
+                    floor_udf.clone(),
+                    vec![key_binned],
+                    DataType::Decimal128(*precision, *scale),
+                ));
+                BinnedExpression {
+                    binning_config: key_binning.clone(),
+                    binning_expr: Arc::new(CastExpr::new(key_binned, DataType::UInt32, None)),
+                    output_alias: key.output_alias.clone(),
+                    min_value: min_value.clone(),
+                    bin_width,
+                    diff_type: DataType::Decimal128(*precision, *scale),
+                }
             },
             DataType::Decimal256(precision, scale) => {
                 let mut bin_width = max_value
@@ -195,8 +260,22 @@ impl DataFrame {
                 if bin_width == ScalarValue::Decimal256(Some(i256::from(0)), *precision, *scale) {
                     bin_width = ScalarValue::Decimal256(None, *precision, *scale);
                 }
-                let key_binned = binary(key_delta, Operator::Divide, lit(bin_width), &input.schema())?;
-                Arc::new(CastExpr::new(key_binned, DataType::Int32, None))
+                let key_binned = binary(key_delta, Operator::Divide, lit(bin_width.clone()), &input.schema())?;
+                let floor_udf = floor();
+                let key_binned = Arc::new(ScalarFunctionExpr::new(
+                    floor_udf.name(),
+                    floor_udf.clone(),
+                    vec![key_binned],
+                    DataType::Decimal256(*precision, *scale),
+                ));
+                BinnedExpression {
+                    binning_config: key_binning.clone(),
+                    binning_expr: Arc::new(CastExpr::new(key_binned, DataType::UInt32, None)),
+                    output_alias: key.output_alias.clone(),
+                    min_value: min_value.clone(),
+                    bin_width,
+                    diff_type: DataType::Decimal256(*precision, *scale),
+                }
             },
             _ => return Err(anyhow::anyhow!("key binning is not implemented for data type: {}", key_field_type))
         };
@@ -205,21 +284,25 @@ impl DataFrame {
     }
 
     /// Group a data frame
-    async fn group_by(&self, config: &GroupByTransform, stats: Option<&DataFrame>, input: Arc<dyn ExecutionPlan>) -> anyhow::Result<AggregateExec> {
+    async fn group_by(&self, config: &GroupByTransform, stats: Option<&DataFrame>, input: Arc<dyn ExecutionPlan>) -> anyhow::Result<Arc<dyn ExecutionPlan>> {
         // Detect collisions among output aliases
         let mut output_field_names: HashSet<&str> = HashSet::new();
 
         // Collect grouping expressions
         let mut grouping_exprs: Vec<(Arc<dyn PhysicalExpr>, String)> = Vec::new();
+        let mut binned_exprs: Vec<BinnedExpression> = Vec::new();
         for key in config.keys.iter() {
-            // Key name collision?
+            // Output name collision?
             if output_field_names.contains(key.output_alias.as_str()) {
-                return Err(anyhow::anyhow!("duplicate key name `{}`", key.output_alias.as_str()))
+                return Err(anyhow::anyhow!("duplicate output name `{}`", key.output_alias.as_str()))
             }
             // Check if any key requires statistics
             let key_expr = if let Some(key_binning) = &key.binning  {
                 if let Some(stats) = &stats {
-                    self.compute_binned_key(key, key_binning, stats, input.clone())?
+                    let binned = self.compute_bin(key, key_binning, stats, input.clone())?;
+                    let binning_expr = binned.binning_expr.clone();
+                    binned_exprs.push(binned);
+                    binning_expr
                 } else {
                     return Err(anyhow::anyhow!("binning for key `{}` requires precomputed statistics, use transformWithStats", key.output_alias.as_str()))
                 }
@@ -239,6 +322,10 @@ impl DataFrame {
         // Collect aggregate expressions
         let mut aggregate_exprs: Vec<AggregateFunctionExpr> = Vec::new();
         for aggr in config.aggregates.iter() {
+            // Output name collision?
+            if output_field_names.contains(aggr.output_alias.as_str()) {
+                return Err(anyhow::anyhow!("duplicate output name `{}`", aggr.output_alias.as_str()))
+            }
             // Get aggregation function
             let aggr_func = aggr.aggregation_function.try_into()?;
             // Check proto settings
@@ -355,7 +442,24 @@ impl DataFrame {
             input.clone(),
             input.schema()
         )?;
-        return Ok(groupby_exec);
+        let mut output: Arc<dyn ExecutionPlan> = Arc::new(groupby_exec);
+
+        if !binned_exprs.is_empty() {
+            // Copy over all current fields
+            let mut fields: Vec<(Arc<dyn PhysicalExpr>, String)> = Vec::new();
+            for field in output.schema().fields().iter() {
+                fields.push((col(&field.name(), &output.schema())?, field.name().clone()));
+            }
+            // Construct the binning fields
+            for binned in binned_exprs.iter() {
+                let mut binning_fields = binned.get_output_fields(&output)?;
+                fields.append(&mut binning_fields);
+            }
+            // Construct the projection
+            let projection_exec = ProjectionExec::try_new(fields, output)?;
+            output = Arc::new(projection_exec);
+        }
+        return Ok(output);
     }
 
     /// Transform a data frame
@@ -364,7 +468,7 @@ impl DataFrame {
             MemoryExec::try_new(&self.partitions, self.schema.clone(), None).unwrap(),
         );
         if let Some(group_by) = &transform.group_by {
-            input = Arc::new(self.group_by(group_by, stats, input).await?);
+            input = self.group_by(group_by, stats, input).await?;
         }
         if let Some(order_by) = &transform.order_by {
             input = Arc::new(self.order_by(order_by, input).await?);
@@ -387,5 +491,39 @@ impl DataFrame {
     pub async fn transform_pb_with_stats(&self, proto: &[u8], stats: &DataFrame) -> Result<DataFrame, JsError> {
         let transform = DataFrameTransform::decode(proto).map_err(|e| JsError::new(&e.to_string()))?;
         self.transform(&transform, Some(&stats)).await.map_err(|e| JsError::new(&e.to_string()))
+    }
+}
+
+struct BinnedExpression {
+    binning_config: GroupByKeyBinning,
+    binning_expr: Arc<dyn PhysicalExpr>,
+    output_alias: String,
+    min_value: ScalarValue,
+    bin_width: ScalarValue,
+    diff_type: DataType,
+}
+impl BinnedExpression {
+    fn get_output_fields(&self, input: &Arc<dyn ExecutionPlan>) -> anyhow::Result<Vec<(Arc<dyn PhysicalExpr>, String)>> {
+        // Compute the bin value
+        let bin_value = col(&self.output_alias, &input.schema())?;
+        // Cast the bin value to the bin width datatype for offset arithmetics
+        let bin_value_casted = Arc::new(CastExpr::new(bin_value, self.bin_width.data_type(), None));
+        // Compute the offset of the lower bound
+        let bin_width = lit(self.bin_width.clone());
+        let offset_lb = binary(bin_value_casted.clone(), Operator::Multiply, bin_width.clone(), &input.schema())?;
+        // Compute the offset of the upper bound
+        let offset_ub = binary(offset_lb.clone(), Operator::Plus, bin_width.clone(), &input.schema())?;
+        // Compute bin width
+        let bin_width_casted = Arc::new(CastExpr::new(bin_width.clone(), self.diff_type.clone(), None));
+        // Compute lower bound
+        let min_value = lit(self.min_value.clone());
+        let bin_lb_casted = binary(min_value.clone(), Operator::Plus, Arc::new(CastExpr::new(offset_lb.clone(), self.diff_type.clone(), None)), &input.schema())?;
+        // Compute upper bound bound
+        let bin_ub_casted = binary(min_value.clone(), Operator::Plus, Arc::new(CastExpr::new(offset_ub.clone(), self.diff_type.clone(), None)), &input.schema())?;
+        Ok(vec![
+            (bin_width_casted, self.binning_config.output_bin_width_alias.clone()),
+            (bin_lb_casted, self.binning_config.output_bin_lb_alias.clone()),
+            (bin_ub_casted, self.binning_config.output_bin_ub_alias.clone()),
+        ])
     }
 }
