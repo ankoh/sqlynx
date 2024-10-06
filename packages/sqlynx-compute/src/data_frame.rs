@@ -595,7 +595,7 @@ impl BinnedExpression {
         let min_value = lit(self.min_value.clone());
         let mut bin_lb_casted = binary(min_value.clone(), Operator::Plus, Arc::new(CastExpr::new(offset_lb.clone(), self.output_type_bin_width.clone(), None)), &input.schema())?;
         bin_lb_casted = Arc::new(CastExpr::new(bin_lb_casted.clone(), self.output_type_bin_bounds.clone(), None));
-        // Compute upper bound bound
+        // Compute upper bound
         let mut bin_ub_casted = binary(min_value.clone(), Operator::Plus, Arc::new(CastExpr::new(offset_ub.clone(), self.output_type_bin_width.clone(), None)), &input.schema())?;
         bin_ub_casted = Arc::new(CastExpr::new(bin_ub_casted.clone(), self.output_type_bin_bounds.clone(), None));
 
