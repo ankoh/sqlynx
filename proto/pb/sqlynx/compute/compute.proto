@@ -26,6 +26,8 @@ enum AggregationFunction {
     CountStar = 4;
 }
 
+/// The key binning.
+/// Bins are computed as: (data[field_name] - stats[stats_minimum_field_name]) / stats[stats_bin_width_field_name])
 message GroupByKeyBinning {
     /// The field containing the precomputed minimum of the field
     string stats_minimum_field_name = 1;
@@ -33,6 +35,12 @@ message GroupByKeyBinning {
     string stats_maximum_field_name = 2;
     /// The number of bins
     uint32 bin_count = 3;
+    /// The output bin minimum field name
+    string output_bin_lb_alias = 4;
+    /// The output bin minimum field name
+    string output_bin_ub_alias = 5;
+    /// The output bin width field name
+    string output_bin_width_alias = 6;
 }
 
 message GroupByKey {
@@ -41,7 +49,6 @@ message GroupByKey {
     /// The output alias
     string output_alias = 2;
     /// The field binning
-    /// Bins are computed as: (data[field_name] - stats[stats_minimum_field_name]) / stats[stats_bin_width_field_name])
     optional GroupByKeyBinning binning = 3;
 }
 
