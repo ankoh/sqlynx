@@ -1,12 +1,15 @@
-use arrow::array::{ArrayRef, Float32Builder, Int32Array, Int64Array, ListBuilder, RecordBatch, StringArray};
+use arrow::array::{ArrayRef, Float32Builder, Int32Array, Int64Array, ListBuilder, RecordBatch, StringArray, TimestampMillisecondArray, TimestampMillisecondBufferBuilder};
 use arrow::datatypes::{Field, SchemaBuilder, DataType};
 use arrow::util::pretty::pretty_format_batches;
+use chrono::{DateTime, Duration};
 use std::sync::Arc;
+use std::time::{SystemTime, UNIX_EPOCH};
 use indoc::indoc;
 use pretty_assertions::assert_eq;
 
-use crate::proto::sqlynx_compute::{AggregationFunction, GroupByAggregate};
-use crate::{data_frame::DataFrame, proto::sqlynx_compute::{DataFrameTransform, OrderByConstraint, OrderByTransform, GroupByTransform}};
+use crate::proto::sqlynx_compute::{AggregationFunction, GroupByAggregate, GroupByKey, GroupByKeyBinning};
+use crate::proto::sqlynx_compute::{DataFrameTransform, OrderByConstraint, OrderByTransform, GroupByTransform};
+use crate::data_frame::DataFrame;
 
 #[tokio::test]
 async fn test_transform_orderby() -> anyhow::Result<()> {
@@ -16,6 +19,7 @@ async fn test_transform_orderby() -> anyhow::Result<()> {
     ])?;
     let data_frame = DataFrame::new(data.schema(), vec![data]);
     let transform = DataFrameTransform {
+        group_by: None,
         order_by: Some(OrderByTransform {
             constraints: vec![
                 OrderByConstraint {
@@ -26,7 +30,6 @@ async fn test_transform_orderby() -> anyhow::Result<()> {
             ],
             limit: None
         }),
-        group_by: None,
     };
     let transformed = data_frame.transform(&transform, None).await?;
     assert_eq!(format!("{}", pretty_format_batches(&transformed.partitions[0])?), indoc! {"
@@ -49,7 +52,6 @@ async fn test_minmax_int64() -> anyhow::Result<()> {
     ])?;
     let data_frame = DataFrame::new(data.schema(), vec![data]);
     let transform = DataFrameTransform {
-        order_by: None,
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -69,6 +71,7 @@ async fn test_minmax_int64() -> anyhow::Result<()> {
                 }
             ]
         }),
+        order_by: None,
     };
     let transformed = data_frame.transform(&transform, None).await?;
     assert_eq!(format!("{}", pretty_format_batches(&transformed.partitions[0])?), indoc! {"
@@ -82,7 +85,7 @@ async fn test_minmax_int64() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-async fn test_minmax_string() -> anyhow::Result<()> {
+async fn test_transform_minmax_string() -> anyhow::Result<()> {
     let mut schema_builder = SchemaBuilder::with_capacity(2);
     schema_builder.push(Field::new("v1", DataType::Utf8, false));
     schema_builder.push(Field::new("v2", DataType::Utf8, false));
@@ -113,7 +116,6 @@ async fn test_minmax_string() -> anyhow::Result<()> {
     ])?;
     let data_frame = DataFrame::new(data.schema(), vec![data]);
     let transform = DataFrameTransform {
-        order_by: None,
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -147,6 +149,7 @@ async fn test_minmax_string() -> anyhow::Result<()> {
                 }
             ]
         }),
+        order_by: None,
     };
     let transformed = data_frame.transform(&transform, None).await?;
     assert_eq!(format!("{}", pretty_format_batches(&transformed.partitions[0])?), indoc! {"
@@ -160,7 +163,7 @@ async fn test_minmax_string() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-async fn test_minmax_embeddings() -> anyhow::Result<()> {
+async fn test_transform_minmax_embeddings() -> anyhow::Result<()> {
     let mut schema_builder = SchemaBuilder::with_capacity(1);
     let list_item_type = Arc::new(Field::new("item", DataType::Float32, true));
     let list_type = DataType::List(list_item_type.clone());
@@ -186,7 +189,6 @@ async fn test_minmax_embeddings() -> anyhow::Result<()> {
     ])?;
     let data_frame = DataFrame::new(data.schema(), vec![data]);
     let transform = DataFrameTransform {
-        order_by: None,
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -206,6 +208,7 @@ async fn test_minmax_embeddings() -> anyhow::Result<()> {
                 }
             ]
         }),
+        order_by: None,
     };
     let transformed = data_frame.transform(&transform, None).await?;
     assert_eq!(format!("{}", pretty_format_batches(&transformed.partitions[0])?), indoc! {"
@@ -214,6 +217,110 @@ async fn test_minmax_embeddings() -> anyhow::Result<()> {
         +------------+------------+
         | 3          | 5          |
         +------------+------------+
+    "}.trim());
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_transform_bin_timestamps() -> anyhow::Result<()> {
+    let mut schema_builder = SchemaBuilder::with_capacity(2);
+    schema_builder.push(Field::new("ts", DataType::Timestamp(arrow::datatypes::TimeUnit::Millisecond, None), false));
+    let schema = schema_builder.finish();
+
+    let mut ts_buf = TimestampMillisecondBufferBuilder::new(10);
+    let ts_base = DateTime::parse_from_rfc3339("2024-04-01T12:00:00-00:00")?;
+    let mut next_ts = ts_base.clone();
+    for _ in 0..7 {
+        next_ts += Duration::hours(1);
+        let ms = SystemTime::from(next_ts).duration_since(UNIX_EPOCH).unwrap().as_millis() as i64;
+        ts_buf.append(ms);
+    }
+    ts_buf.append(SystemTime::from(ts_base + Duration::hours(2)).duration_since(UNIX_EPOCH).unwrap().as_millis() as i64);
+    ts_buf.append(SystemTime::from(ts_base + Duration::hours(2)).duration_since(UNIX_EPOCH).unwrap().as_millis() as i64);
+    ts_buf.append(SystemTime::from(ts_base + Duration::hours(5)).duration_since(UNIX_EPOCH).unwrap().as_millis() as i64);
+    let ts_array = Arc::new(TimestampMillisecondArray::new(ts_buf.finish().into(), None));
+
+    let data = RecordBatch::try_new(schema.into(), vec![ts_array])?;
+    let data_frame = DataFrame::new(data.schema(), vec![data]);
+
+    let stats_transform = DataFrameTransform {
+        group_by: Some(GroupByTransform {
+            keys: vec![],
+            aggregates: vec![
+                GroupByAggregate {
+                    field_name: "ts".into(),
+                    output_alias: "ts_min".into(),
+                    aggregation_function: AggregationFunction::Min.into(),
+                    aggregate_distinct: false,
+                    aggregate_lengths: true
+                },
+                GroupByAggregate {
+                    field_name: "ts".into(),
+                    output_alias: "ts_max".into(),
+                    aggregation_function: AggregationFunction::Max.into(),
+                    aggregate_distinct: false,
+                    aggregate_lengths: true
+                },
+            ]
+        }),
+        order_by: None,
+    };
+    let stats = data_frame.transform(&stats_transform, None).await?;
+    assert_eq!(format!("{}", pretty_format_batches(&stats.partitions[0])?), indoc! {"
+        +---------------------+---------------------+
+        | ts_min              | ts_max              |
+        +---------------------+---------------------+
+        | 2024-04-01T13:00:00 | 2024-04-01T19:00:00 |
+        +---------------------+---------------------+
+    "}.trim());
+
+    let bin_transform = DataFrameTransform {
+        group_by: Some(GroupByTransform {
+            keys: vec![
+                GroupByKey {
+                    field_name: "ts".into(),
+                    output_alias: "ts_bin".into(),
+                    binning: Some(GroupByKeyBinning {
+                        stats_minimum_field_name: "ts_min".into(),
+                        stats_maximum_field_name: "ts_max".into(),
+                        bin_count: 64
+                    })
+                }
+            ],
+            aggregates: vec![
+                GroupByAggregate {
+                    field_name: "ts".into(),
+                    output_alias: "ts_count".into(),
+                    aggregation_function: AggregationFunction::CountStar.into(),
+                    aggregate_distinct: false,
+                    aggregate_lengths: false
+                },
+            ]
+        }),
+        order_by: Some(OrderByTransform {
+            constraints: vec![
+                OrderByConstraint {
+                    field_name: "ts_bin".into(),
+                    ascending: true,
+                    nulls_first: false
+                }
+            ],
+            limit: None
+        })
+    };
+    let binned = data_frame.transform(&bin_transform, Some(&stats)).await?;
+    assert_eq!(format!("{}", pretty_format_batches(&binned.partitions[0])?), indoc! {"
+        +--------+----------+
+        | ts_bin | ts_count |
+        +--------+----------+
+        | 0      | 1        |
+        | 10     | 3        |
+        | 21     | 1        |
+        | 32     | 1        |
+        | 42     | 2        |
+        | 53     | 1        |
+        | 64     | 1        |
+        +--------+----------+
     "}.trim());
     Ok(())
 }

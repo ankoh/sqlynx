@@ -66,7 +66,7 @@ impl DataFrame {
                 nulls_first: constraint.nulls_first,
             };
             sort_exprs.push(PhysicalSortExpr {
-                expr: col(&constraint.field_name, &self.schema)?,
+                expr: col(&constraint.field_name, &input.schema())?,
                 options: sort_options,
             });
         }
@@ -81,7 +81,7 @@ impl DataFrame {
     /// Compute bin
     fn compute_binned_key(&self, key: &GroupByKey, key_binning: &GroupByKeyBinning, stats: &DataFrame, input: Arc<dyn ExecutionPlan>) -> anyhow::Result<Arc<dyn PhysicalExpr>> {
         // Unexpected schema for statistics frame?
-        if self.partitions.is_empty() || self.partitions[0].is_empty() || self.partitions[0][0].num_rows() != 1 {
+        if stats.partitions.is_empty() || stats.partitions[0].is_empty() || stats.partitions[0][0].num_rows() != 1 {
             return Err(anyhow::anyhow!("statistics data must have exactly 1 row"));
         }
         let stats_batch = &stats.partitions[0][0];
@@ -145,11 +145,6 @@ impl DataFrame {
                 | DataType::UInt16
                 | DataType::UInt32
                 | DataType::UInt64
-                | DataType::Timestamp(_, _)
-                | DataType::Date32
-                | DataType::Date64
-                | DataType::Time32(_)
-                | DataType::Time64(_)
             => {
                 let mut bin_width = max_value
                     .sub(min_value.clone())?
@@ -162,7 +157,16 @@ impl DataFrame {
                 let key_binned = binary(key_delta_casted, Operator::Divide, lit(bin_width), &input.schema())?;
                 Arc::new(CastExpr::new(key_binned, DataType::UInt32, None))
             },
-            DataType::Int8 | DataType::Int16 | DataType::Int32 | DataType::Int64 => {
+            DataType::Int8
+                | DataType::Int16
+                | DataType::Int32
+                | DataType::Int64 
+                | DataType::Date32
+                | DataType::Date64
+                | DataType::Time32(_)
+                | DataType::Time64(_)
+                | DataType::Timestamp(_, _)
+            => {
                 let mut bin_width = max_value
                     .sub(min_value.clone())?
                     .cast_to(&DataType::Int64)?
