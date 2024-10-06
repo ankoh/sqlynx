@@ -14,7 +14,7 @@ async fn test_transform_orderby() -> anyhow::Result<()> {
         ("score", Arc::new(Int32Array::from(vec![9000, 8000, 7000]))),
     ])?;
     let data_frame = DataFrame::new(data.schema(), vec![data]);
-    let order_by = DataFrameTransform {
+    let transform = DataFrameTransform {
         order_by: Some(OrderByTransform {
             constraints: vec![
                 OrderByConstraint {
@@ -27,8 +27,8 @@ async fn test_transform_orderby() -> anyhow::Result<()> {
         }),
         group_by: None,
     };
-    let ordered = data_frame.transform(&order_by, None).await?;
-    assert_eq!(format!("{}", pretty_format_batches(&ordered.partitions[0])?), indoc! {"
+    let transformed = data_frame.transform(&transform, None).await?;
+    assert_eq!(format!("{}", pretty_format_batches(&transformed.partitions[0])?), indoc! {"
         +----+-------+
         | id | score |
         +----+-------+
@@ -47,7 +47,7 @@ async fn test_minmax_int64() -> anyhow::Result<()> {
         ("score", Arc::new(Int64Array::from(vec![9000, 8000, 7000]))),
     ])?;
     let data_frame = DataFrame::new(data.schema(), vec![data]);
-    let order_by = DataFrameTransform {
+    let transform = DataFrameTransform {
         order_by: None,
         group_by: Some(GroupByTransform {
             keys: vec![],
@@ -69,8 +69,8 @@ async fn test_minmax_int64() -> anyhow::Result<()> {
             ]
         }),
     };
-    let ordered = data_frame.transform(&order_by, None).await?;
-    assert_eq!(format!("{}", pretty_format_batches(&ordered.partitions[0])?), indoc! {"
+    let transformed = data_frame.transform(&transform, None).await?;
+    assert_eq!(format!("{}", pretty_format_batches(&transformed.partitions[0])?), indoc! {"
         +-----------+-----------+
         | score_min | score_max |
         +-----------+-----------+

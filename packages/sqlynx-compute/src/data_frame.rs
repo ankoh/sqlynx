@@ -9,18 +9,21 @@ use datafusion_common::ScalarValue;
 use datafusion_execution::TaskContext;
 use datafusion_expr::AggregateUDF;
 use datafusion_expr::Operator;
+use datafusion_functions::unicode::character_length;
 use datafusion_functions_aggregate::average::Avg;
 use datafusion_functions_aggregate::count::count_udaf;
 use datafusion_functions_aggregate::min_max::Max;
 use datafusion_functions_aggregate::min_max::Min;
-use datafusion_physical_expr::aggregate::AggregateExprBuilder;
-use datafusion_physical_expr::expressions::binary;
-use datafusion_physical_expr::expressions::lit;
-use datafusion_physical_expr::expressions::CastExpr;
+use datafusion_functions_nested::length::array_length_udf;
 use datafusion_physical_expr::PhysicalExpr;
 use datafusion_physical_expr::PhysicalSortExpr;
+use datafusion_physical_expr::aggregate::AggregateExprBuilder;
 use datafusion_physical_expr::aggregate::AggregateFunctionExpr;
+use datafusion_physical_expr::expressions::CastExpr;
+use datafusion_physical_expr::expressions::binary;
 use datafusion_physical_expr::expressions::col;
+use datafusion_physical_expr::expressions::lit;
+use datafusion_physical_expr::ScalarFunctionExpr;
 use datafusion_physical_plan::ExecutionPlan;
 use datafusion_physical_plan::aggregates::{AggregateMode, AggregateExec, PhysicalGroupBy};
 use datafusion_physical_plan::collect;
@@ -247,12 +250,53 @@ impl DataFrame {
                     }
                 }
             }
+            // The input value
+            let mut input_value = col(&aggr.field_name, &input.schema())?;
+            let input_schema = input.schema();
+            let input_field_id = input_schema.index_of(&aggr.field_name)?;
+            let input_field = input_schema.field(input_field_id);
+            if aggr.aggregate_lengths {
+                match &input_field.data_type() {
+                    DataType::List(_) | DataType::FixedSizeList(..) | DataType::LargeList(_) => {
+                        let udf = array_length_udf();
+                        let udf_expr = ScalarFunctionExpr::new(
+                            udf.name(),
+                            udf.clone(),
+                            vec![input_value],
+                            DataType::UInt64,
+                        );
+                        input_value = Arc::new(udf_expr);
+                    },
+                    DataType::Utf8 => {
+                        let udf = character_length();
+                        let udf_expr = ScalarFunctionExpr::new(
+                            udf.name(),
+                            udf.clone(),
+                            vec![input_value],
+                            DataType::Int32,
+                        );
+                        input_value = Arc::new(udf_expr);
+                    }
+                    DataType::LargeUtf8 => {
+                        let udf = character_length();
+                        let udf_expr = ScalarFunctionExpr::new(
+                            udf.name(),
+                            udf.clone(),
+                            vec![input_value],
+                            DataType::Int64,
+                        );
+                        input_value = Arc::new(udf_expr);
+                    }
+                    _ => ()
+                }
+            }
+
             // Get the aggregate expression
             let aggr_expr = match aggr.aggregation_function.try_into()? {
                 AggregationFunction::Min => {
                     AggregateExprBuilder::new(
                         Arc::new(AggregateUDF::new_from_impl(Min::new())),
-                        vec![col(&aggr.field_name, &input.schema())?]
+                        vec![input_value]
                     )
                         .schema(input.schema())
                         .alias(&aggr.output_alias)
@@ -261,7 +305,7 @@ impl DataFrame {
                 AggregationFunction::Max => {
                     AggregateExprBuilder::new(
                         Arc::new(AggregateUDF::new_from_impl(Max::new())),
-                        vec![col(&aggr.field_name, &input.schema())?]
+                        vec![input_value]
                     )
                         .schema(input.schema())
                         .alias(&aggr.output_alias)
@@ -270,21 +314,21 @@ impl DataFrame {
                 AggregationFunction::Average => {
                     AggregateExprBuilder::new(
                         Arc::new(AggregateUDF::new_from_impl(Avg::new())),
-                        vec![col(&aggr.field_name, &input.schema())?]
+                        vec![input_value]
                     )
                         .schema(input.schema())
                         .alias(&aggr.output_alias)
                         .build()?
                 },
-                AggregationFunction::CountStar => {
-                     AggregateExprBuilder::new(count_udaf(), vec![lit(1)])
+                AggregationFunction::Count => {
+                     AggregateExprBuilder::new(count_udaf(), vec![input_value])
                         .schema(input.schema())
                         .alias(&aggr.output_alias)
                         .with_distinct(aggr.aggregate_distinct)
                         .build()?
                 },
-                AggregationFunction::Count => {
-                     AggregateExprBuilder::new(count_udaf(), vec![col(&aggr.field_name, &input.schema())?])
+                AggregationFunction::CountStar => {
+                     AggregateExprBuilder::new(count_udaf(), vec![lit(1)])
                         .schema(input.schema())
                         .alias(&aggr.output_alias)
                         .with_distinct(aggr.aggregate_distinct)

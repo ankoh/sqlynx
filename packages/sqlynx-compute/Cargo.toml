@@ -28,7 +28,9 @@ arrow = { version = "53.0", default-features = false, features = ["ipc"] }
 datafusion-common = { version = "42.0.0", default-features = false }
 datafusion-expr = { version = "42.0.0", default-features = false }
 datafusion-execution = { version = "42.0.0", default-features = false }
+datafusion-functions = { version = "42.0.0", default-features = false }
 datafusion-functions-aggregate = { version = "42.0.0", default-features = false }
+datafusion-functions-nested = { version = "42.0.0", default-features = false }
 datafusion-physical-expr = { version = "42.0.0", default-features = false }
 datafusion-physical-plan = { version = "42.0.0", default-features = false }
 
