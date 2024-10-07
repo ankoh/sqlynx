@@ -102,10 +102,10 @@ __metadata:
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.6.2"
     typescript-plugin-css-modules: "npm:^5.1.0"
-    webpack: "npm:^5.93.0"
+    webpack: "npm:^5.95.0"
     webpack-bundle-analyzer: "npm:^4.10.2"
     webpack-cli: "npm:^5.1.4"
-    webpack-dev-server: "npm:^5.0.4"
+    webpack-dev-server: "npm:^5.1.0"
     webpackbar: "npm:^6.0.1"
   languageName: unknown
   linkType: soft
@@ -10765,7 +10765,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack-dev-server@npm:^5.0.4":
+"webpack-dev-server@npm:^5.1.0":
   version: 5.1.0
   resolution: "webpack-dev-server@npm:5.1.0"
   dependencies:
@@ -10828,7 +10828,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack@npm:^5.93.0":
+"webpack@npm:^5.95.0":
   version: 5.95.0
   resolution: "webpack@npm:5.95.0"
   dependencies:
