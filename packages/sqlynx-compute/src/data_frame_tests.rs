@@ -1,5 +1,5 @@
-use arrow::array::{ArrayRef, Date32Array, Date32BufferBuilder, Date64Array, Date64BufferBuilder, Decimal128Array, Decimal128BufferBuilder, Float32Builder, Int32Array, Int64Array, Int64BufferBuilder, ListBuilder, RecordBatch, StringArray, Time32MillisecondArray, Time32MillisecondBufferBuilder, Time64MicrosecondArray, Time64MicrosecondBufferBuilder, TimestampMillisecondArray, TimestampMillisecondBufferBuilder};
-use arrow::datatypes::{Field, SchemaBuilder, DataType, TimeUnit};
+use arrow::array::{ArrayRef, ArrowNativeTypeOp, Date32Array, Date32BufferBuilder, Date64Array, Date64BufferBuilder, Decimal128Array, Decimal128BufferBuilder, Decimal256Array, Decimal256BufferBuilder, Float32Builder, Int32Array, Int64Array, Int64BufferBuilder, ListBuilder, RecordBatch, StringArray, Time32MillisecondArray, Time32MillisecondBufferBuilder, Time64MicrosecondArray, Time64MicrosecondBufferBuilder, TimestampMillisecondArray, TimestampMillisecondBufferBuilder};
+use arrow::datatypes::{i256, DataType, Field, SchemaBuilder, TimeUnit};
 use arrow::util::pretty::pretty_format_batches;
 use chrono::{DateTime, Duration};
 use std::sync::Arc;
@@ -921,7 +921,7 @@ async fn test_transform_bin_int64() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-async fn test_transform_bin_decimal_38_18() -> anyhow::Result<()> {
+async fn test_transform_bin_decimal128() -> anyhow::Result<()> {
     let mut schema_builder = SchemaBuilder::with_capacity(2);
     schema_builder.push(Field::new("v", DataType::Decimal128(38, 18), false));
     let schema = schema_builder.finish();
@@ -937,6 +937,114 @@ async fn test_transform_bin_decimal_38_18() -> anyhow::Result<()> {
     buf.append(2 * e17);
     buf.append(5 * e17);
     let array = Arc::new(Decimal128Array::new(buf.finish().into(), None).with_precision_and_scale(38, 18)?);
+
+    let data = RecordBatch::try_new(schema.into(), vec![array])?;
+    let data_frame = DataFrame::new(data.schema(), vec![data]);
+
+    // Compute statistics
+    let stats_transform = DataFrameTransform {
+        group_by: Some(GroupByTransform {
+            keys: vec![],
+            aggregates: vec![
+                GroupByAggregate {
+                    field_name: "v".into(),
+                    output_alias: "v_min".into(),
+                    aggregation_function: AggregationFunction::Min.into(),
+                    aggregate_distinct: false,
+                    aggregate_lengths: true
+                },
+                GroupByAggregate {
+                    field_name: "v".into(),
+                    output_alias: "v_max".into(),
+                    aggregation_function: AggregationFunction::Max.into(),
+                    aggregate_distinct: false,
+                    aggregate_lengths: true
+                },
+            ]
+        }),
+        order_by: None,
+    };
+    let stats = data_frame.transform(&stats_transform, None).await?;
+    assert_eq!(format!("{}", pretty_format_batches(&stats.partitions[0])?), indoc! {"
+        +----------------------+----------------------+
+        | v_min                | v_max                |
+        +----------------------+----------------------+
+        | 0.500000000000000000 | 3.500000000000000000 |
+        +----------------------+----------------------+
+    "}.trim());
+
+    // Bin into 8 bins
+    let bin_transform = DataFrameTransform {
+        group_by: Some(GroupByTransform {
+            keys: vec![
+                GroupByKey {
+                    field_name: "v".into(),
+                    output_alias: "v_bin".into(),
+                    binning: Some(GroupByKeyBinning {
+                        stats_minimum_field_name: "v_min".into(),
+                        stats_maximum_field_name: "v_max".into(),
+                        bin_count: 8,
+                        output_bin_width_alias: "bin_width".into(),
+                        output_bin_lb_alias: "bin_lb".into(),
+                        output_bin_ub_alias: "bin_ub".into(),
+                    })
+                }
+            ],
+            aggregates: vec![
+                GroupByAggregate {
+                    field_name: "v".into(),
+                    output_alias: "count".into(),
+                    aggregation_function: AggregationFunction::CountStar.into(),
+                    aggregate_distinct: false,
+                    aggregate_lengths: false
+                },
+            ]
+        }),
+        order_by: Some(OrderByTransform {
+            constraints: vec![
+                OrderByConstraint {
+                    field_name: "v_bin".into(),
+                    ascending: true,
+                    nulls_first: false
+                }
+            ],
+            limit: None
+        })
+    };
+    let binned = data_frame.transform(&bin_transform, Some(&stats)).await?;
+    assert_eq!(format!("{}", pretty_format_batches(&binned.partitions[0])?), indoc! {"
+        +-------+-------+----------------------+----------------------+----------------------+
+        | v_bin | count | bin_width            | bin_lb               | bin_ub               |
+        +-------+-------+----------------------+----------------------+----------------------+
+        | 0     | 1     | 0.375000000000000000 | 0.500000000000000000 | 0.875000000000000000 |
+        | 1     | 3     | 0.375000000000000000 | 0.875000000000000000 | 1.250000000000000000 |
+        | 3     | 1     | 0.375000000000000000 | 1.625000000000000000 | 2.000000000000000000 |
+        | 4     | 1     | 0.375000000000000000 | 2.000000000000000000 | 2.375000000000000000 |
+        | 5     | 2     | 0.375000000000000000 | 2.375000000000000000 | 2.750000000000000000 |
+        | 7     | 1     | 0.375000000000000000 | 3.125000000000000000 | 3.500000000000000000 |
+        | 8     | 1     | 0.375000000000000000 | 3.500000000000000000 | 3.875000000000000000 |
+        +-------+-------+----------------------+----------------------+----------------------+
+    "}.trim());
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_transform_bin_decimal256() -> anyhow::Result<()> {
+    let mut schema_builder = SchemaBuilder::with_capacity(2);
+    schema_builder.push(Field::new("v", DataType::Decimal256(38, 18), false));
+    let schema = schema_builder.finish();
+
+    let mut buf = Decimal256BufferBuilder::new(10);
+    let e17 = i256::from(5) * i256::from(10).pow_wrapping(17);
+    let mut next_v = e17;
+    for _ in 0..7 {
+        buf.append(next_v);
+        next_v += e17;
+    }
+    buf.append(i256::from(2) * e17);
+    buf.append(i256::from(2) * e17);
+    buf.append(i256::from(5) * e17);
+    let array = Arc::new(Decimal256Array::new(buf.finish().into(), None).with_precision_and_scale(38, 18)?);
 
     let data = RecordBatch::try_new(schema.into(), vec![array])?;
     let data_frame = DataFrame::new(data.schema(), vec![data]);
