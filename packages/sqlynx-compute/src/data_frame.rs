@@ -299,36 +299,34 @@ impl DataFrame {
             }
 
             DataType::Decimal128(precision, scale) => {
+                let max_value = max_value.cast_to(&DataType::Decimal256(38, 18))?;
+                let min_value = min_value.cast_to(&DataType::Decimal256(38, 18))?;
                 let mut numeric_bin_width = max_value
                     .sub(min_value.clone())?
-                    .div(ScalarValue::Decimal128(Some(2 * 10_i128.pow(*scale as u32)), *precision, *scale))?;
-                if numeric_bin_width == ScalarValue::Decimal128(Some(0), *precision, *scale) {
-                    numeric_bin_width = ScalarValue::Decimal128(None, *precision, *scale);
+                    .div(ScalarValue::Decimal256(Some(i256::from(key_binning.bin_count as i64) * i256::from(10).pow_wrapping(*scale as u32)), *precision, *scale))?;
+                if numeric_bin_width == ScalarValue::Decimal256(Some(i256::from(0)), *precision, *scale) {
+                    numeric_bin_width = ScalarValue::Decimal256(None, *precision, *scale);
                 }
-                let key_delta = binary(col(key_field.name(), &input.schema())?, Operator::Minus, lit(min_value.clone()), &input.schema())?;
+                let key_field = Arc::new(CastExpr::new(col(key_field.name(), &input.schema())?, DataType::Decimal256(38, 18), None));
+                let key_delta = binary(key_field, Operator::Minus, lit(min_value.clone()), &input.schema())?;
                 let key_binned = binary(key_delta, Operator::Divide, lit(numeric_bin_width.clone()), &input.schema())?;
-                let floor_udf = floor();
-                let key_binned = Arc::new(ScalarFunctionExpr::new(
-                    floor_udf.name(),
-                    floor_udf.clone(),
-                    vec![key_binned],
-                    DataType::Decimal128(*precision, *scale),
-                ));
+                let key_binned = Arc::new(CastExpr::new(key_binned, DataType::Decimal256(38, 0), None));
+                let key_binned = Arc::new(CastExpr::new(key_binned, DataType::Decimal256(38, 18), None));
                 BinnedExpression {
                     binning_config: key_binning.clone(),
                     binning_expr: Arc::new(CastExpr::new(key_binned, DataType::UInt32, None)),
                     output_alias: key.output_alias.clone(),
-                    min_value: min_value.clone(),
+                    min_value: min_value.cast_to(&DataType::Decimal128(38, 18))?,
                     numeric_bin_width,
                     output_type_bin_width: DataType::Decimal128(*precision, *scale),
-                    output_type_bin_bounds: key_field_type.clone(),
+                    output_type_bin_bounds: DataType::Decimal128(*precision, *scale),
                 }
             }
 
             DataType::Decimal256(precision, scale) => {
                 let mut numeric_bin_width = max_value
                     .sub(min_value.clone())?
-                    .div(ScalarValue::Decimal256(Some(i256::from(2) * i256::from(10).pow_wrapping(*scale as u32)), *precision, *scale))?;
+                    .div(ScalarValue::Decimal256(Some(i256::from(key_binning.bin_count as i64) * i256::from(10).pow_wrapping(*scale as u32)), *precision, *scale))?;
                 if numeric_bin_width == ScalarValue::Decimal256(Some(i256::from(0)), *precision, *scale) {
                     numeric_bin_width = ScalarValue::Decimal256(None, *precision, *scale);
                 }
@@ -348,7 +346,7 @@ impl DataFrame {
                     min_value: min_value.clone(),
                     numeric_bin_width,
                     output_type_bin_width: DataType::Decimal256(*precision, *scale),
-                    output_type_bin_bounds: key_field_type.clone(),
+                    output_type_bin_bounds: DataType::Decimal256(*precision, *scale),
                 }
             }
 
