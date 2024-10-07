@@ -8,7 +8,7 @@ const TABLE_ORDERING_TASK = Symbol("TABLE_ORDERING_TASK");
 const COLUMN_SUMMARY_TASK = Symbol("COLUMN_STATS_TASK");
 const TASK_PROGRESS = Symbol("TASK_PROGRESS");
 const TASK_ERROR = Symbol("TASK_ERROR");
-const NUMERIC_COLUMN = Symbol("NUMERIC_COLUMN");
+const ORDINAL_COLUMN = Symbol("ORDINAL_COLUMN");
 const STRING_COLUMN = Symbol("STRING_COLUMN");
 const LIST_COLUMN = Symbol("LIST_COLUMN");
 
@@ -54,12 +54,12 @@ export interface TaskError {
 // ------------------------------------------------------------
 
 type ColumnEntryVariant =
-    VariantKind<typeof NUMERIC_COLUMN, NumericColumnEntry>
+    VariantKind<typeof ORDINAL_COLUMN, OrdinalColumnEntry>
     | VariantKind<typeof STRING_COLUMN, StringColumnEntry>
     | VariantKind<typeof LIST_COLUMN, ListColumnEntry>
     ;
 
-interface NumericColumnEntry {
+interface OrdinalColumnEntry {
     /// The input field name
     inputFieldName: string;
     /// Entry count (!= null)
@@ -95,14 +95,14 @@ interface ListColumnEntry {
 // ------------------------------------------------------------
 
 export type ColumnStatsVariant =
-    VariantKind<typeof NUMERIC_COLUMN, NumericColumnStats>
+    VariantKind<typeof ORDINAL_COLUMN, OrdinalColumnStats>
     | VariantKind<typeof STRING_COLUMN, StringColumnStats>
     | VariantKind<typeof LIST_COLUMN, ListColumnStats>
     ;
 
-interface NumericColumnStats {
+interface OrdinalColumnStats {
     /// The numeric column entry
-    columnEntry: NumericColumnEntry;
+    columnEntry: OrdinalColumnEntry;
     /// The binned values
     binnedValues: BinnedValuesTable;
 }
@@ -139,20 +139,98 @@ type FrequentValuesTable<KeyType extends arrow.DataType = arrow.DataType> = arro
 
 // ------------------------------------------------------------
 
-export function createTableStatsTransform(task: TableSummaryTask): proto.sqlynx_compute.pb.DataFrameTransform {
+export function createTableSummaryTransform(task: TableSummaryTask): proto.sqlynx_compute.pb.DataFrameTransform {
     const out = new proto.sqlynx_compute.pb.DataFrameTransform();
 
     return out;
 }
 
-export function createColumnStatsTransform(task: ColumnSummaryTask): proto.sqlynx_compute.pb.DataFrameTransform {
-    const out = new proto.sqlynx_compute.pb.DataFrameTransform();
-
+export function createColumnSummaryTransform(task: ColumnSummaryTask, input: arrow.Table): proto.sqlynx_compute.pb.DataFrameTransform {
+    let fieldName = task.columnEntry.value.inputFieldName;
+    let out: proto.sqlynx_compute.pb.DataFrameTransform;
+    switch (task.columnEntry.type) {
+        case ORDINAL_COLUMN: {
+            const minField = input.schema.fields[task.columnEntry.value.statsMaxAggregateField].name;
+            const maxField = input.schema.fields[task.columnEntry.value.statsMinAggregateField].name;
+            out = new proto.sqlynx_compute.pb.DataFrameTransform({
+                groupBy: new proto.sqlynx_compute.pb.GroupByTransform({
+                    keys: [
+                        new proto.sqlynx_compute.pb.GroupByKey({
+                            fieldName,
+                            outputAlias: "bin",
+                            binning: new proto.sqlynx_compute.pb.GroupByKeyBinning({
+                                statsMinimumFieldName: minField,
+                                statsMaximumFieldName: maxField,
+                                binCount: 8,
+                                outputBinWidthAlias: "binWidth",
+                                outputBinLbAlias: "binLowerBound",
+                                outputBinUbAlias: "binUpperBound",
+                            })
+                        })
+                    ],
+                    aggregates: [
+                        new proto.sqlynx_compute.pb.GroupByAggregate({
+                            fieldName,
+                            outputAlias: "count",
+                            aggregationFunction: proto.sqlynx_compute.pb.AggregationFunction.CountStar,
+                        })
+                    ]
+                }),
+                orderBy: new proto.sqlynx_compute.pb.OrderByTransform({
+                    constraints: [
+                        new proto.sqlynx_compute.pb.OrderByConstraint({
+                            fieldName: "bin",
+                            ascending: true,
+                            nullsFirst: false,
+                        })
+                    ],
+                })
+            });
+            break;
+        }
+        case LIST_COLUMN: {
+            throw new Error("length binning not yet implemented");
+        }
+        case STRING_COLUMN: {
+            out = new proto.sqlynx_compute.pb.DataFrameTransform({
+                groupBy: new proto.sqlynx_compute.pb.GroupByTransform({
+                    keys: [
+                        new proto.sqlynx_compute.pb.GroupByKey({
+                            fieldName,
+                            outputAlias: "value",
+                        })
+                    ],
+                    aggregates: [
+                        new proto.sqlynx_compute.pb.GroupByAggregate({
+                            fieldName,
+                            outputAlias: "count",
+                            aggregationFunction: proto.sqlynx_compute.pb.AggregationFunction.CountStar,
+                        })
+                    ]
+                }),
+                orderBy: new proto.sqlynx_compute.pb.OrderByTransform({
+                    constraints: [
+                        new proto.sqlynx_compute.pb.OrderByConstraint({
+                            fieldName: "count",
+                            ascending: false,
+                            nullsFirst: false,
+                        })
+                    ],
+                    limit: 100
+                })
+            });
+            break;
+        }
+    }
     return out;
 }
 
-export function createOrderByTransform(): proto.sqlynx_compute.pb.DataFrameTransform {
-    const out = new proto.sqlynx_compute.pb.DataFrameTransform();
-
+export function createOrderByTransform(constraints: proto.sqlynx_compute.pb.OrderByConstraint[], limit: number): proto.sqlynx_compute.pb.DataFrameTransform {
+    const out = new proto.sqlynx_compute.pb.DataFrameTransform({
+        orderBy: new proto.sqlynx_compute.pb.OrderByTransform({
+            constraints,
+            limit
+        })
+    });
     return out;
 }
