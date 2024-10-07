@@ -11,7 +11,7 @@ tauri-build = "2.0.1"
 tauri-plugin-updater = "2.0.2"
 
 [dependencies]
-futures = "0.3.30"
+futures = "0.3.31"
 chrono = "0.4.38"
 anyhow = "1.0.89"
 semver = "1.0.23"
