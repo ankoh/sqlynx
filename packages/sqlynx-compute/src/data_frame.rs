@@ -332,13 +332,8 @@ impl DataFrame {
                 }
                 let key_delta = binary(col(key_field.name(), &input.schema())?, Operator::Minus, lit(min_value.clone()), &input.schema())?;
                 let key_binned = binary(key_delta, Operator::Divide, lit(numeric_bin_width.clone()), &input.schema())?;
-                let floor_udf = floor();
-                let key_binned = Arc::new(ScalarFunctionExpr::new(
-                    floor_udf.name(),
-                    floor_udf.clone(),
-                    vec![key_binned],
-                    DataType::Decimal256(*precision, *scale),
-                ));
+                let key_binned = Arc::new(CastExpr::new(key_binned, DataType::Decimal256(38, 0), None));
+                let key_binned = Arc::new(CastExpr::new(key_binned, DataType::Decimal256(38, 18), None));
                 BinnedExpression {
                     binning_config: key_binning.clone(),
                     binning_expr: Arc::new(CastExpr::new(key_binned, DataType::UInt32, None)),
