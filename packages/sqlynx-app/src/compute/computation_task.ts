@@ -189,7 +189,44 @@ export function createColumnSummaryTransform(task: ColumnSummaryTask, input: arr
             break;
         }
         case LIST_COLUMN: {
-            throw new Error("length binning not yet implemented");
+            const minField = input.schema.fields[task.columnEntry.value.statsMaxLengthAggregateField].name;
+            const maxField = input.schema.fields[task.columnEntry.value.statsMinLengthAggregateField].name;
+            out = new proto.sqlynx_compute.pb.DataFrameTransform({
+                groupBy: new proto.sqlynx_compute.pb.GroupByTransform({
+                    keys: [
+                        new proto.sqlynx_compute.pb.GroupByKey({
+                            fieldName,
+                            outputAlias: "bin",
+                            binning: new proto.sqlynx_compute.pb.GroupByKeyBinning({
+                                statsMinimumFieldName: minField,
+                                statsMaximumFieldName: maxField,
+                                binCount: 8,
+                                outputBinWidthAlias: "binWidth",
+                                outputBinLbAlias: "binLowerBound",
+                                outputBinUbAlias: "binUpperBound",
+                            }),
+                            groupLengths: true
+                        })
+                    ],
+                    aggregates: [
+                        new proto.sqlynx_compute.pb.GroupByAggregate({
+                            fieldName,
+                            outputAlias: "count",
+                            aggregationFunction: proto.sqlynx_compute.pb.AggregationFunction.CountStar,
+                        })
+                    ]
+                }),
+                orderBy: new proto.sqlynx_compute.pb.OrderByTransform({
+                    constraints: [
+                        new proto.sqlynx_compute.pb.OrderByConstraint({
+                            fieldName: "bin",
+                            ascending: true,
+                            nullsFirst: false,
+                        })
+                    ],
+                })
+            });
+            break;
         }
         case STRING_COLUMN: {
             out = new proto.sqlynx_compute.pb.DataFrameTransform({
