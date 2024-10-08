@@ -253,14 +253,14 @@ async fn test_transform_bin_timestamps() -> anyhow::Result<()> {
                     output_alias: "ts_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: Some(true)
+                    aggregate_lengths: None
                 },
                 GroupByAggregate {
                     field_name: "ts".into(),
                     output_alias: "ts_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: Some(true)
+                    aggregate_lengths: None
                 },
             ]
         }),
@@ -415,14 +415,14 @@ async fn test_transform_bin_date32() -> anyhow::Result<()> {
                     output_alias: "ts_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: Some(true)
+                    aggregate_lengths: None
                 },
                 GroupByAggregate {
                     field_name: "ts".into(),
                     output_alias: "ts_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: Some(true)
+                    aggregate_lengths: None
                 },
             ]
         }),
@@ -525,14 +525,14 @@ async fn test_transform_bin_date64() -> anyhow::Result<()> {
                     output_alias: "ts_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: Some(true)
+                    aggregate_lengths: None
                 },
                 GroupByAggregate {
                     field_name: "ts".into(),
                     output_alias: "ts_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: Some(true)
+                    aggregate_lengths: None
                 },
             ]
         }),
@@ -633,14 +633,14 @@ async fn test_transform_bin_time32() -> anyhow::Result<()> {
                     output_alias: "t_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: Some(true)
+                    aggregate_lengths: None
                 },
                 GroupByAggregate {
                     field_name: "t".into(),
                     output_alias: "t_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: Some(true)
+                    aggregate_lengths: None
                 },
             ]
         }),
@@ -741,14 +741,14 @@ async fn test_transform_bin_time64() -> anyhow::Result<()> {
                     output_alias: "t_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: Some(true)
+                    aggregate_lengths: None
                 },
                 GroupByAggregate {
                     field_name: "t".into(),
                     output_alias: "t_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: Some(true)
+                    aggregate_lengths: None
                 },
             ]
         }),
@@ -849,14 +849,14 @@ async fn test_transform_bin_int64() -> anyhow::Result<()> {
                     output_alias: "v_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: Some(true)
+                    aggregate_lengths: None
                 },
                 GroupByAggregate {
                     field_name: "v".into(),
                     output_alias: "v_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: Some(true)
+                    aggregate_lengths: None
                 },
             ]
         }),
@@ -958,14 +958,14 @@ async fn test_transform_bin_decimal128() -> anyhow::Result<()> {
                     output_alias: "v_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: Some(true)
+                    aggregate_lengths: None
                 },
                 GroupByAggregate {
                     field_name: "v".into(),
                     output_alias: "v_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: Some(true)
+                    aggregate_lengths: None
                 },
             ]
         }),
@@ -1067,14 +1067,14 @@ async fn test_transform_bin_decimal256() -> anyhow::Result<()> {
                     output_alias: "v_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: Some(true)
+                    aggregate_lengths: None
                 },
                 GroupByAggregate {
                     field_name: "v".into(),
                     output_alias: "v_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: Some(true)
+                    aggregate_lengths: None
                 },
             ]
         }),
