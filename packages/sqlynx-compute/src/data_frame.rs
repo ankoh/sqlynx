@@ -418,9 +418,13 @@ impl DataFrame {
                 }
             }
             // The input value
-            let mut input_value = col(&aggr.field_name, &input.schema())?;
+            let aggr_field_name = match &aggr.field_name {
+                Some(n) => n.as_str(),
+                None => ""
+            };
+            let mut input_value = col(&aggr_field_name, &input.schema())?;
             let input_schema = input.schema();
-            let input_field_id = input_schema.index_of(&aggr.field_name)?;
+            let input_field_id = input_schema.index_of(&aggr_field_name)?;
             let input_field = input_schema.field(input_field_id);
             if aggr.aggregate_lengths.unwrap_or_default() {
                 input_value = compute_length(&input_field.data_type(), input_value)?;

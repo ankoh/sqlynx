@@ -1,7 +1,7 @@
 import * as arrow from 'apache-arrow';
 import * as sqlynx_compute from '@ankoh/sqlynx-compute';
 
-import { ColumnStatsVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, TableOrderingTask } from './computation_task.js';
+import { ColumnSummaryVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary } from './computation_task.js';
 
 /// The computation state
 interface ComputationState {
@@ -25,14 +25,14 @@ interface ComputationState {
     /// The table stats task
     tableSummaryTask: TableSummaryTask | null;
     /// The table stats
-    tableSummary: arrow.Table | null;
+    tableSummary: TableSummary | null;
 
     /// The pending column tasks
     columnSummariesPending: Map<number, ColumnSummaryTask>;
     /// The running column tasks
     columnSummariesRunning: Map<number, ColumnSummaryTask>;
     /// The column stats
-    columnSummaries: (ColumnStatsVariant | TaskStatus | null)[];
+    columnSummaries: (ColumnSummaryVariant | TaskStatus | null)[];
 }
 
 /// The computation registry

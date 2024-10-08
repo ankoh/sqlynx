@@ -56,14 +56,14 @@ async fn test_minmax_int64() -> anyhow::Result<()> {
             keys: vec![],
             aggregates: vec![
                 GroupByAggregate {
-                    field_name: "score".into(),
+                    field_name: Some("score".into()),
                     output_alias: "score_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
                     aggregate_lengths: None
                 },
                 GroupByAggregate {
-                    field_name: "score".into(),
+                    field_name: Some("score".into()),
                     output_alias: "score_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
@@ -120,28 +120,28 @@ async fn test_transform_minmax_string() -> anyhow::Result<()> {
             keys: vec![],
             aggregates: vec![
                 GroupByAggregate {
-                    field_name: "v1".into(),
+                    field_name: Some("v1".into()),
                     output_alias: "v1_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
                     aggregate_lengths: None
                 },
                 GroupByAggregate {
-                    field_name: "v1".into(),
+                    field_name: Some("v1".into()),
                     output_alias: "v1_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
                     aggregate_lengths: None
                 },
                 GroupByAggregate {
-                    field_name: "v2".into(),
+                    field_name: Some("v2".into()),
                     output_alias: "v2_chars_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
                     aggregate_lengths: Some(true)
                 },
                 GroupByAggregate {
-                    field_name: "v2".into(),
+                    field_name: Some("v2".into()),
                     output_alias: "v2_chars_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
@@ -193,14 +193,14 @@ async fn test_transform_minmax_embeddings() -> anyhow::Result<()> {
             keys: vec![],
             aggregates: vec![
                 GroupByAggregate {
-                    field_name: "v1".into(),
+                    field_name: Some("v1".into()),
                     output_alias: "v1_len_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
                     aggregate_lengths: Some(true)
                 },
                 GroupByAggregate {
-                    field_name: "v1".into(),
+                    field_name: Some("v1".into()),
                     output_alias: "v1_len_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
@@ -249,14 +249,14 @@ async fn test_transform_bin_timestamps() -> anyhow::Result<()> {
             keys: vec![],
             aggregates: vec![
                 GroupByAggregate {
-                    field_name: "ts".into(),
+                    field_name: Some("ts".into()),
                     output_alias: "ts_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
                     aggregate_lengths: None
                 },
                 GroupByAggregate {
-                    field_name: "ts".into(),
+                    field_name: Some("ts".into()),
                     output_alias: "ts_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
@@ -295,7 +295,7 @@ async fn test_transform_bin_timestamps() -> anyhow::Result<()> {
             ],
             aggregates: vec![
                 GroupByAggregate {
-                    field_name: "ts".into(),
+                    field_name: Some("ts".into()),
                     output_alias: "ts_count".into(),
                     aggregation_function: AggregationFunction::CountStar.into(),
                     aggregate_distinct: None,
@@ -349,7 +349,7 @@ async fn test_transform_bin_timestamps() -> anyhow::Result<()> {
             ],
             aggregates: vec![
                 GroupByAggregate {
-                    field_name: "ts".into(),
+                    field_name: Some("ts".into()),
                     output_alias: "ts_count".into(),
                     aggregation_function: AggregationFunction::CountStar.into(),
                     aggregate_distinct: None,
@@ -411,14 +411,14 @@ async fn test_transform_bin_date32() -> anyhow::Result<()> {
             keys: vec![],
             aggregates: vec![
                 GroupByAggregate {
-                    field_name: "ts".into(),
+                    field_name: Some("ts".into()),
                     output_alias: "ts_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
                     aggregate_lengths: None
                 },
                 GroupByAggregate {
-                    field_name: "ts".into(),
+                    field_name: Some("ts".into()),
                     output_alias: "ts_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
@@ -457,7 +457,7 @@ async fn test_transform_bin_date32() -> anyhow::Result<()> {
             ],
             aggregates: vec![
                 GroupByAggregate {
-                    field_name: "ts".into(),
+                    field_name: Some("ts".into()),
                     output_alias: "ts_count".into(),
                     aggregation_function: AggregationFunction::CountStar.into(),
                     aggregate_distinct: None,
@@ -521,14 +521,14 @@ async fn test_transform_bin_date64() -> anyhow::Result<()> {
             keys: vec![],
             aggregates: vec![
                 GroupByAggregate {
-                    field_name: "ts".into(),
+                    field_name: Some("ts".into()),
                     output_alias: "ts_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
                     aggregate_lengths: None
                 },
                 GroupByAggregate {
-                    field_name: "ts".into(),
+                    field_name: Some("ts".into()),
                     output_alias: "ts_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
@@ -567,7 +567,7 @@ async fn test_transform_bin_date64() -> anyhow::Result<()> {
             ],
             aggregates: vec![
                 GroupByAggregate {
-                    field_name: "ts".into(),
+                    field_name: Some("ts".into()),
                     output_alias: "ts_count".into(),
                     aggregation_function: AggregationFunction::CountStar.into(),
                     aggregate_distinct: None,
@@ -629,14 +629,14 @@ async fn test_transform_bin_time32() -> anyhow::Result<()> {
             keys: vec![],
             aggregates: vec![
                 GroupByAggregate {
-                    field_name: "t".into(),
+                    field_name: Some("t".into()),
                     output_alias: "t_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
                     aggregate_lengths: None
                 },
                 GroupByAggregate {
-                    field_name: "t".into(),
+                    field_name: Some("t".into()),
                     output_alias: "t_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
@@ -675,7 +675,7 @@ async fn test_transform_bin_time32() -> anyhow::Result<()> {
             ],
             aggregates: vec![
                 GroupByAggregate {
-                    field_name: "t".into(),
+                    field_name: Some("t".into()),
                     output_alias: "ts_count".into(),
                     aggregation_function: AggregationFunction::CountStar.into(),
                     aggregate_distinct: None,
@@ -737,14 +737,14 @@ async fn test_transform_bin_time64() -> anyhow::Result<()> {
             keys: vec![],
             aggregates: vec![
                 GroupByAggregate {
-                    field_name: "t".into(),
+                    field_name: Some("t".into()),
                     output_alias: "t_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
                     aggregate_lengths: None
                 },
                 GroupByAggregate {
-                    field_name: "t".into(),
+                    field_name: Some("t".into()),
                     output_alias: "t_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
@@ -783,7 +783,7 @@ async fn test_transform_bin_time64() -> anyhow::Result<()> {
             ],
             aggregates: vec![
                 GroupByAggregate {
-                    field_name: "t".into(),
+                    field_name: Some("t".into()),
                     output_alias: "ts_count".into(),
                     aggregation_function: AggregationFunction::CountStar.into(),
                     aggregate_distinct: None,
@@ -845,14 +845,14 @@ async fn test_transform_bin_int64() -> anyhow::Result<()> {
             keys: vec![],
             aggregates: vec![
                 GroupByAggregate {
-                    field_name: "v".into(),
+                    field_name: Some("v".into()),
                     output_alias: "v_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
                     aggregate_lengths: None
                 },
                 GroupByAggregate {
-                    field_name: "v".into(),
+                    field_name: Some("v".into()),
                     output_alias: "v_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
@@ -891,7 +891,7 @@ async fn test_transform_bin_int64() -> anyhow::Result<()> {
             ],
             aggregates: vec![
                 GroupByAggregate {
-                    field_name: "v".into(),
+                    field_name: Some("v".into()),
                     output_alias: "count".into(),
                     aggregation_function: AggregationFunction::CountStar.into(),
                     aggregate_distinct: None,
@@ -954,14 +954,14 @@ async fn test_transform_bin_decimal128() -> anyhow::Result<()> {
             keys: vec![],
             aggregates: vec![
                 GroupByAggregate {
-                    field_name: "v".into(),
+                    field_name: Some("v".into()),
                     output_alias: "v_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
                     aggregate_lengths: None
                 },
                 GroupByAggregate {
-                    field_name: "v".into(),
+                    field_name: Some("v".into()),
                     output_alias: "v_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
@@ -1000,7 +1000,7 @@ async fn test_transform_bin_decimal128() -> anyhow::Result<()> {
             ],
             aggregates: vec![
                 GroupByAggregate {
-                    field_name: "v".into(),
+                    field_name: Some("v".into()),
                     output_alias: "count".into(),
                     aggregation_function: AggregationFunction::CountStar.into(),
                     aggregate_distinct: None,
@@ -1063,14 +1063,14 @@ async fn test_transform_bin_decimal256() -> anyhow::Result<()> {
             keys: vec![],
             aggregates: vec![
                 GroupByAggregate {
-                    field_name: "v".into(),
+                    field_name: Some("v".into()),
                     output_alias: "v_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
                     aggregate_lengths: None
                 },
                 GroupByAggregate {
-                    field_name: "v".into(),
+                    field_name: Some("v".into()),
                     output_alias: "v_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
@@ -1109,7 +1109,7 @@ async fn test_transform_bin_decimal256() -> anyhow::Result<()> {
             ],
             aggregates: vec![
                 GroupByAggregate {
-                    field_name: "v".into(),
+                    field_name: Some("v".into()),
                     output_alias: "count".into(),
                     aggregation_function: AggregationFunction::CountStar.into(),
                     aggregate_distinct: None,
