@@ -6,7 +6,7 @@ import * as pb from '@ankoh/sqlynx-protobuf';
 import * as path from 'path';
 import * as fs from 'fs';
 import { fileURLToPath } from 'node:url';
-import { DataFrameIpcStreamIterable, dataFrameFromTable as createDataFrameFromTable, readDataFrame } from './sqlynx_compute.js';
+import { DataFrameIpcStreamIterable, dataFrameFromTable as createDataFrameFromTable, readDataFrame } from './compute_bindings.js';
 
 const distPath = path.resolve(fileURLToPath(new URL('../../../sqlynx-compute/dist/', import.meta.url)));
 const wasmPath = path.resolve(distPath, './sqlynx_compute_bg.wasm');
