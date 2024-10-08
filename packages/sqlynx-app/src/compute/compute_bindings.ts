@@ -1,8 +1,6 @@
 import * as arrow from 'apache-arrow';
 import * as sqlynx_compute from "@ankoh/sqlynx-compute";
 
-// XXX Exceptions
-
 export function dataFrameFromTable(t: arrow.Table): sqlynx_compute.DataFrame {
     const ingest = new sqlynx_compute.ArrowIngest();
     const tableBuffer = arrow.tableToIPC(t, 'stream');
