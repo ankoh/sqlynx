@@ -33,7 +33,7 @@ version = "1.0.128"
 features = ["preserve_order"]
 
 [dependencies.serde_with]
-version = "3.10.0"
+version = "3.11.0"
 features = ["json"]
 
 [dependencies.aws-config]
