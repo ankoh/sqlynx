@@ -50,6 +50,8 @@ message GroupByKey {
     string output_alias = 2;
     /// The field binning
     optional GroupByKeyBinning binning = 3;
+    /// Instead of grouping by the value, we're grouping by the value lengths (list & string)
+    optional bool group_lengths = 4;
 }
 
 message GroupByAggregate {
@@ -60,9 +62,9 @@ message GroupByAggregate {
     /// The aggregation function
     AggregationFunction aggregation_function = 3;
     /// Aggregate distinct values?
-    bool aggregate_distinct = 4;
+    optional bool aggregate_distinct = 4;
     /// Instead of aggregating the value, we're aggregating the value lengths (list & string)
-    bool aggregate_lengths = 5;
+    optional bool aggregate_lengths = 5;
 }
 
 message GroupByTransform {

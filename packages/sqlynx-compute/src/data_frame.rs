@@ -399,12 +399,12 @@ impl DataFrame {
             // Check proto settings
             match aggr_func {
                 AggregationFunction::Min | AggregationFunction::Max | AggregationFunction::Average => {
-                    if aggr.aggregate_distinct {
+                    if aggr.aggregate_distinct.unwrap_or_default() {
                         return Err(anyhow::anyhow!("function '{}' does not support distinct aggregation", aggr_func.as_str_name()));
                     }
                 }
                 AggregationFunction::Count | AggregationFunction::CountStar => {
-                    if aggr.aggregate_lengths {
+                    if aggr.aggregate_lengths.unwrap_or_default() {
                         return Err(anyhow::anyhow!("function '{}' does not support length aggregation", aggr_func.as_str_name()));
                     }
                 }
@@ -414,7 +414,7 @@ impl DataFrame {
             let input_schema = input.schema();
             let input_field_id = input_schema.index_of(&aggr.field_name)?;
             let input_field = input_schema.field(input_field_id);
-            if aggr.aggregate_lengths {
+            if aggr.aggregate_lengths.unwrap_or_default() {
                 match &input_field.data_type() {
                     DataType::List(_) | DataType::FixedSizeList(..) | DataType::LargeList(_) => {
                         let udf = array_length_udf();
@@ -483,14 +483,14 @@ impl DataFrame {
                      AggregateExprBuilder::new(count_udaf(), vec![input_value])
                         .schema(input.schema())
                         .alias(&aggr.output_alias)
-                        .with_distinct(aggr.aggregate_distinct)
+                        .with_distinct(aggr.aggregate_distinct.unwrap_or_default())
                         .build()?
                 },
                 AggregationFunction::CountStar => {
                      AggregateExprBuilder::new(count_udaf(), vec![lit(1)])
                         .schema(input.schema())
                         .alias(&aggr.output_alias)
-                        .with_distinct(aggr.aggregate_distinct)
+                        .with_distinct(aggr.aggregate_distinct.unwrap_or_default())
                         .build()?
                 },
             };
