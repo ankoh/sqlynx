@@ -1,11 +1,14 @@
+import * as arrow from 'apache-arrow';
+import * as pb from '@ankoh/sqlynx-protobuf';
+
 import { Logger } from "../platform/logger.js";
-import { ComputeWorkerRequestType, ComputeWorkerResponseType, ComputeWorkerResponseVariant, ComputeWorkerTaskReturnType, ComputeWorkerTaskVariant } from "./compute_worker_request.js";
+import { ComputeWorkerRequestType, ComputeWorkerResponseType, ComputeWorkerResponseVariant, ComputeWorkerTask, ComputeWorkerTaskReturnType, ComputeWorkerTaskVariant } from "./compute_worker_request.js";
 
 export class ComputeWorkerBindings {
     /// The logger
     protected readonly logger: Logger;
     /// The worker
-    protected worker: Worker | null;
+    public worker: Worker | null;
     /// The promise for the worker shutdown
     protected workerShutdownPromise: Promise<null> | null = null;
     /// Make the worker as terminated
@@ -25,7 +28,6 @@ export class ComputeWorkerBindings {
     /** The pending requests */
     protected pendingRequests: Map<number, ComputeWorkerTaskVariant> = new Map();
 
-
     constructor(logger: Logger, worker: Worker | null = null) {
         this.logger = logger;
         this.worker = null;
@@ -36,11 +38,8 @@ export class ComputeWorkerBindings {
         if (worker != null) this.attach(worker);
     }
 
-    async instantiate() {
-
-    }
-
-    protected attach(worker: Worker): void {
+    /// Attach the worker
+    public attach(worker: Worker): void {
         this.worker = worker;
         this.worker.addEventListener('message', this.onMessageHandler);
         this.worker.addEventListener('error', this.onErrorHandler);
@@ -52,7 +51,7 @@ export class ComputeWorkerBindings {
         );
     }
 
-    /// Detacht from the worker
+    /// Detach from the worker
     public detach(): void {
         if (!this.worker) return;
         this.worker.removeEventListener('message', this.onMessageHandler);
@@ -75,7 +74,7 @@ export class ComputeWorkerBindings {
     }
 
     /// Post a task
-    protected async postTask<W extends ComputeWorkerTaskVariant>(
+    public async postTask<W extends ComputeWorkerTaskVariant>(
         task: W,
         transfer: ArrayBuffer[] = [],
     ): Promise<ComputeWorkerTaskReturnType<W>> {
@@ -174,4 +173,77 @@ export class ComputeWorkerBindings {
         this.pendingRequests.clear();
     }
 
+
+    /// Instantiate the worker
+    public async instantiate(url: URL) {
+        if (!this.worker) return;
+        const task = new ComputeWorkerTask<ComputeWorkerRequestType.INSTANTIATE, { url: string }, null>(ComputeWorkerRequestType.INSTANTIATE, { url: url.toString() });
+        await this.postTask(task);
+    }
+    /// Create an arrow ingest
+    public async createArrowIngest() {
+        if (!this.worker) return;
+        const task = new ComputeWorkerTask<ComputeWorkerRequestType.DATAFRAME_FROM_INGEST, null, { frameId: number }>(ComputeWorkerRequestType.DATAFRAME_FROM_INGEST, null);
+        await this.postTask(task);
+    }
+}
+
+/// An async data frame
+export class AsyncDataFrame {
+    /// The worker
+    workerBindings: ComputeWorkerBindings;
+    /// The frame id
+    frameId: number;
+
+    constructor(worker: ComputeWorkerBindings, frameId: number) {
+        this.workerBindings = worker;
+        this.frameId = frameId;
+    }
+
+    async transform(transform: pb.sqlynx_compute.pb.DataFrameTransform): Promise<AsyncDataFrame> {
+        const bytes = transform.toBinary();
+        const task = new ComputeWorkerTask<
+            ComputeWorkerRequestType.DATAFRAME_TRANSFORM,
+            { frameId: number, buffer: Uint8Array },
+            { frameId: number }>(
+                ComputeWorkerRequestType.DATAFRAME_TRANSFORM, { frameId: this.frameId, buffer: bytes }
+            );
+        const result = await this.workerBindings.postTask(task);
+        return new AsyncDataFrame(this.workerBindings, result.frameId);
+    }
+}
+
+/// Async Arrow ingest
+export class AsyncArrowIngest {
+    /// The worker
+    workerBindings: ComputeWorkerBindings;
+    /// The frame id
+    frameId: number;
+
+    constructor(worker: ComputeWorkerBindings, frameId: number) {
+        this.workerBindings = worker;
+        this.frameId = frameId;
+    }
+
+    /// Read stream data
+    async readStream(buffer: Uint8Array) {
+        if (!this.workerBindings.worker) return;
+        const task = new ComputeWorkerTask<ComputeWorkerRequestType.DATAFRAME_INGEST_READ, { frameId: number, buffer: Uint8Array }, null>(ComputeWorkerRequestType.DATAFRAME_INGEST_READ, { frameId: this.frameId, buffer });
+        await this.workerBindings.postTask(task);
+    }
+    /// Insert an arrow table 
+    async readTable(table: arrow.Table) {
+        if (!this.workerBindings.worker) return;
+        let data = arrow.tableToIPC(table, "stream");
+        const task = new ComputeWorkerTask<ComputeWorkerRequestType.DATAFRAME_INGEST_READ, { frameId: number, buffer: Uint8Array }, null>(ComputeWorkerRequestType.DATAFRAME_INGEST_READ, { frameId: this.frameId, buffer: data });
+        await this.workerBindings.postTask(task, [data.buffer]);
+    }
+    /// Finish the arrow ingest
+    async finish() {
+        if (!this.workerBindings.worker) return;
+        const task = new ComputeWorkerTask<ComputeWorkerRequestType.DATAFRAME_INGEST_FINISH, { frameId: number }, null>(ComputeWorkerRequestType.DATAFRAME_INGEST_FINISH, { frameId: this.frameId });
+        await this.workerBindings.postTask(task, []);
+        return new AsyncDataFrame(this.workerBindings, this.frameId);
+
+    }
 }
