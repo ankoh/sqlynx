@@ -1,4 +1,4 @@
-import { isDebugBuild, SQLYNX_LOG_LEVEL } from "../globals.js";
+import { SQLYNX_LOG_LEVEL } from "../globals.js";
 
 export enum LogLevel {
     Trace = 1,

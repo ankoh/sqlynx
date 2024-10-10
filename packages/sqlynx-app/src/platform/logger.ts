@@ -45,6 +45,12 @@ export abstract class Logger {
     /// Access the log statistics
     public get statistics() { return this.logStatistics; }
 
+    /// Push a log record
+    public push(entry: LogRecord): void {
+        this.pendingRecords.push(entry);
+        this.logStatistics.push(entry);
+        this.flushPendingRecords();
+    }
     /// Log a trace message
     public trace(message: string, target?: string): void {
         const entry = {
