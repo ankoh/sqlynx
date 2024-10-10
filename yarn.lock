@@ -31,7 +31,7 @@ __metadata:
     "@ankoh/sqlynx-protobuf": "link:../sqlynx-protobuf"
     "@bufbuild/protobuf": "npm:^1.10.0"
     "@codemirror/autocomplete": "npm:^6.18.1"
-    "@codemirror/commands": "npm:^6.6.2"
+    "@codemirror/commands": "npm:^6.7.0"
     "@codemirror/language": "npm:^6.10.3"
     "@codemirror/state": "npm:^6.4.1"
     "@codemirror/view": "npm:^6.34.1"
@@ -680,15 +680,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/commands@npm:^6.6.2":
-  version: 6.6.2
-  resolution: "@codemirror/commands@npm:6.6.2"
+"@codemirror/commands@npm:^6.7.0":
+  version: 6.7.0
+  resolution: "@codemirror/commands@npm:6.7.0"
   dependencies:
     "@codemirror/language": "npm:^6.0.0"
     "@codemirror/state": "npm:^6.4.0"
     "@codemirror/view": "npm:^6.27.0"
     "@lezer/common": "npm:^1.1.0"
-  checksum: 10c0/e2e5e40c9776087bba3d951b8f20077a5382e80e178c069253e786f297af8ab136a18d57964364d2d3c362900e3a1e6a0ab5dfff50f0791fc59bd93ad530eb9d
+  checksum: 10c0/a69b89c2c3a99c547dac93fe39e2fe6214a2cec10265ed7a16cb7d9f3117147974c509367261913ce8c80bbb7f78a94468d2c6b6dd919b9065a80136e4c7149a
   languageName: node
   linkType: hard
 
