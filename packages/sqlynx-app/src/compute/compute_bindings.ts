@@ -1,8 +1,8 @@
 import * as arrow from 'apache-arrow';
-import * as sqlynx_compute from "@ankoh/sqlynx-compute";
+import * as compute from "@ankoh/sqlynx-compute";
 
-export function dataFrameFromTable(t: arrow.Table): sqlynx_compute.DataFrame {
-    const ingest = new sqlynx_compute.ArrowIngest();
+export function dataFrameFromTable(t: arrow.Table): compute.DataFrame {
+    const ingest = new compute.ArrowIngest();
     const tableBuffer = arrow.tableToIPC(t, 'stream');
     ingest.read(tableBuffer);
     const dataFrame = ingest.finish();
@@ -10,7 +10,7 @@ export function dataFrameFromTable(t: arrow.Table): sqlynx_compute.DataFrame {
     return dataFrame;
 }
 
-export function readDataFrame<T extends arrow.TypeMap = any>(frame: sqlynx_compute.DataFrame): arrow.Table<T> {
+export function readDataFrame<T extends arrow.TypeMap = any>(frame: compute.DataFrame): arrow.Table<T> {
     const ipcStream = frame.createIpcStream();
     const ipcStreamIterable = new DataFrameIpcStreamIterable(frame, ipcStream);
     const batchReader = arrow.RecordBatchReader.from(ipcStreamIterable);
@@ -20,10 +20,10 @@ export function readDataFrame<T extends arrow.TypeMap = any>(frame: sqlynx_compu
 }
 
 export class DataFrameIpcStreamIterable implements Iterable<Uint8Array> {
-    frame: sqlynx_compute.DataFrame;
-    stream: sqlynx_compute.DataFrameIpcStream;
+    frame: compute.DataFrame;
+    stream: compute.DataFrameIpcStream;
 
-    constructor(frame: sqlynx_compute.DataFrame, stream: sqlynx_compute.DataFrameIpcStream) {
+    constructor(frame: compute.DataFrame, stream: compute.DataFrameIpcStream) {
         this.frame = frame;
         this.stream = stream;
     }
@@ -34,10 +34,10 @@ export class DataFrameIpcStreamIterable implements Iterable<Uint8Array> {
 }
 
 export class DataFrameIpcStreamIterator implements Iterator<Uint8Array> {
-    frame: sqlynx_compute.DataFrame;
-    stream: sqlynx_compute.DataFrameIpcStream;
+    frame: compute.DataFrame;
+    stream: compute.DataFrameIpcStream;
 
-    constructor(frame: sqlynx_compute.DataFrame, stream: sqlynx_compute.DataFrameIpcStream) {
+    constructor(frame: compute.DataFrame, stream: compute.DataFrameIpcStream) {
         this.frame = frame;
         this.stream = stream;
     }

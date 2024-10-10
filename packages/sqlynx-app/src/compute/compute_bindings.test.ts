@@ -1,10 +1,11 @@
 import '@jest/globals';
 
 import * as arrow from 'apache-arrow';
-import * as sqlynx_compute from '@ankoh/sqlynx-compute';
+import * as compute from '@ankoh/sqlynx-compute';
 import * as pb from '@ankoh/sqlynx-protobuf';
 import * as path from 'path';
 import * as fs from 'fs';
+
 import { fileURLToPath } from 'node:url';
 import { DataFrameIpcStreamIterable, dataFrameFromTable as createDataFrameFromTable, readDataFrame } from './compute_bindings.js';
 
@@ -14,10 +15,10 @@ const wasmPath = path.resolve(distPath, './sqlynx_compute_bg.wasm');
 beforeAll(async () => {
     expect(async () => await fs.promises.access(wasmPath)).resolves;
     const buf = await fs.promises.readFile(wasmPath);
-    await sqlynx_compute.default({
+    await compute.default({
         module_or_path: buf
     });
-    const version = sqlynx_compute.getVersion();
+    const version = compute.getVersion();
     expect(version.text).toMatch(/^[0-9]+.[0-9]+.[0-9]+(\-dev\.[0-9]+)?$/);
 });
 
