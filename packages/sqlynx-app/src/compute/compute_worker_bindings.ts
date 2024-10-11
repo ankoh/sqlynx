@@ -6,11 +6,24 @@ import { ComputeWorkerRequestType, ComputeWorkerResponseType, ComputeWorkerRespo
 
 const LOG_CTX = "compute_worker";
 
+export type WorkerEventChannel = "message" | "error" | "close";
+
+export interface WorkerLike {
+    /// Terminate a worker
+    terminate(): void;
+    /// Post a message to the worker
+    postMessage(message: any, transfer: Transferable[]): void;
+    /// Register an event listener for the worker
+    addEventListener(channel: WorkerEventChannel, handler: (event: MessageEvent) => void): void;
+    /// Remove an event listener from the worker
+    removeEventListener(channel: WorkerEventChannel, handler: (event: MessageEvent) => void): void;
+}
+
 export class ComputeWorkerBindings {
     /// The logger
     protected readonly logger: Logger;
     /// The worker
-    public worker: Worker | null;
+    public worker: WorkerLike | null;
     /// The promise for the worker shutdown
     protected workerShutdownPromise: Promise<null> | null = null;
     /// Make the worker as terminated
@@ -19,7 +32,7 @@ export class ComputeWorkerBindings {
     /// The message handler
     protected readonly onMessageHandler: (event: MessageEvent) => void;
     /// The error handler
-    protected readonly onErrorHandler: (event: ErrorEvent) => void;
+    protected readonly onErrorHandler: (event: MessageEvent) => void;
     /// The close handler
     protected readonly onCloseHandler: () => void;
     /// Instantiate the module
@@ -200,8 +213,8 @@ export class ComputeWorkerBindings {
     }
 
     /// Received an error from the worker
-    protected onError(event: ErrorEvent): void {
-        this.logger.error(`error in compute worker: ${event.message}`, LOG_CTX);
+    protected onError(event: MessageEvent): void {
+        this.logger.error(`error in compute worker: ${event.data}`, LOG_CTX);
         this.pendingRequests.clear();
     }
 
