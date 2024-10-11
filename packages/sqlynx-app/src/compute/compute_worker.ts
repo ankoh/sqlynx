@@ -2,7 +2,18 @@ import * as compute from '@ankoh/sqlynx-compute';
 
 import { ComputeWorkerRequestType, ComputeWorkerRequestVariant, ComputeWorkerResponseType, ComputeWorkerResponseVariant } from "./compute_worker_request.js";
 
+export interface WorkerGlobalsLike {
+    /// Post a message to the worker
+    postMessage(message: any, transfer: Transferable[]): void;
+    /// Register an event listener for the worker
+    addEventListener(channel: "message", handler: (event: MessageEvent) => void): void;
+    /// Remove an event listener from the worker
+    removeEventListener(channel: "message", handler: (event: MessageEvent) => void): void;
+}
+
 export abstract class ComputeWorker {
+    /// The worker globals
+    protected workerGlobals: WorkerGlobalsLike;
     /// The next message id
     protected nextMessageId = 0;
     /// The next frame id
@@ -12,7 +23,8 @@ export abstract class ComputeWorker {
     /// The frames
     protected frames: Map<number, compute.DataFrame>;
 
-    constructor() {
+    constructor(workerGlobals: WorkerGlobalsLike) {
+        this.workerGlobals = workerGlobals;
         this.nextMessageId = 0;
         this.nextFrameId = 0;
         this.frameBuilders = new Map();
@@ -21,7 +33,7 @@ export abstract class ComputeWorker {
 
     /// Post a response to the main thread
     protected postMessage(response: ComputeWorkerResponseVariant, transfer: any[]): void {
-        globalThis.postMessage(response, "", transfer);
+        this.workerGlobals.postMessage(response, transfer);
     }
 
     /// Send plain OK without further data
@@ -85,7 +97,7 @@ export abstract class ComputeWorker {
                     this.sendOK(request);
                     break;
                 }
-                case ComputeWorkerRequestType.DATAFRAME_INGEST_READ: {
+                case ComputeWorkerRequestType.DATAFRAME_INGEST_WRITE: {
                     const ingest = this.frameBuilders.get(request.data.frameId);
                     if (!ingest) {
                         this.failWith(request, new Error(`unknown dataframe id ${request.data.frameId}`));
@@ -131,7 +143,7 @@ export abstract class ComputeWorker {
                                     messageId: this.nextMessageId++,
                                     requestId: request.messageId,
                                     type: ComputeWorkerResponseType.DATAFRAME_SCAN_FINISH,
-                                    data: null,
+                                    data: { scanId: request.data.scanId },
                                 }, []);
                                 break;
                             } else {
@@ -139,7 +151,10 @@ export abstract class ComputeWorker {
                                     messageId: this.nextMessageId++,
                                     requestId: request.messageId,
                                     type: ComputeWorkerResponseType.DATAFRAME_SCAN_MESSAGE,
-                                    data: data,
+                                    data: {
+                                        scanId: request.data.scanId,
+                                        buffer: data
+                                    },
                                 }, [data.buffer]);
                             }
                         }
