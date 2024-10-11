@@ -1,5 +1,6 @@
 import '@jest/globals';
 
+import * as arrow from 'apache-arrow';
 import * as compute from '@ankoh/sqlynx-compute';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -74,7 +75,7 @@ function createInlineWorker(): [InlinedWorker, InlinedWorkerGlobals] {
 
 
 describe('SQLynxCompute Worker', () => {
-    it('Dummy', async () => {
+    it('read simple', async () => {
         const [worker, workerGlobals] = createInlineWorker();
         const logger = new TestLogger();
 
@@ -85,8 +86,27 @@ describe('SQLynxCompute Worker', () => {
         // Instantiate the worker
         await computeWorkerBindings.instantiate(wasmPath);
 
+        const t = arrow.tableFromArrays({
+            id: new Int32Array([
+                1, 2, 3, 4,
+            ]),
+            score: new Float64Array([
+                42, 10, 10, 30,
+            ])
+        });
+
         // Create the arrow ingest
         const arrowIngest = await computeWorkerBindings.createArrowIngest();
-        expect(arrowIngest);
+        await arrowIngest.writeTable(t);
+        const dataFrame = await arrowIngest.finish();
+
+        const tableScan = await dataFrame.readTable();
+        const results = tableScan.toArray().map(o => ({ id: o.id, score: o.score }));
+        expect(results).toEqual([
+            { id: 1, score: 42 },
+            { id: 2, score: 10 },
+            { id: 3, score: 10 },
+            { id: 4, score: 30 },
+        ]);
     });
 });

@@ -246,11 +246,19 @@ export class ComputeWorkerBindings {
         const task = new ComputeWorkerTask<ComputeWorkerRequestType.INSTANTIATE, { url: string }, null>(ComputeWorkerRequestType.INSTANTIATE, { url: url });
         await this.postTask(task);
     }
+    /// Require a worker
+    protected requireWorker() {
+        if (!this.worker) {
+            throw new Error(`worker is null`);
+        };
+    }
     /// Create an arrow ingest
-    public async createArrowIngest() {
-        if (!this.worker) return;
+    public async createArrowIngest(): Promise<AsyncArrowIngest> {
+        this.requireWorker();
         const task = new ComputeWorkerTask<ComputeWorkerRequestType.DATAFRAME_FROM_INGEST, null, { frameId: number }>(ComputeWorkerRequestType.DATAFRAME_FROM_INGEST, null);
-        await this.postTask(task);
+        const result = await this.postTask(task);
+        const ingest = new AsyncArrowIngest(this, result.frameId);
+        return ingest;
     }
 }
 
@@ -353,22 +361,28 @@ export class AsyncArrowIngest {
         this.frameId = frameId;
     }
 
+    /// Require a worker
+    protected requireWorker() {
+        if (!this.workerBindings.worker) {
+            throw new Error(`worker is null`);
+        };
+    }
     /// Read stream data
     async writeStreamBytes(buffer: Uint8Array) {
-        if (!this.workerBindings.worker) return;
+        this.requireWorker();
         const task = new ComputeWorkerTask<ComputeWorkerRequestType.DATAFRAME_INGEST_WRITE, { frameId: number, buffer: Uint8Array }, null>(ComputeWorkerRequestType.DATAFRAME_INGEST_WRITE, { frameId: this.frameId, buffer });
         await this.workerBindings.postTask(task);
     }
     /// Insert an arrow table 
     async writeTable(table: arrow.Table) {
-        if (!this.workerBindings.worker) return;
+        this.requireWorker();
         let data = arrow.tableToIPC(table, "stream");
         const task = new ComputeWorkerTask<ComputeWorkerRequestType.DATAFRAME_INGEST_WRITE, { frameId: number, buffer: Uint8Array }, null>(ComputeWorkerRequestType.DATAFRAME_INGEST_WRITE, { frameId: this.frameId, buffer: data });
         await this.workerBindings.postTask(task, [data.buffer]);
     }
     /// Finish the arrow ingest
     async finish() {
-        if (!this.workerBindings.worker) return;
+        this.requireWorker();
         const task = new ComputeWorkerTask<ComputeWorkerRequestType.DATAFRAME_INGEST_FINISH, { frameId: number }, null>(ComputeWorkerRequestType.DATAFRAME_INGEST_FINISH, { frameId: this.frameId });
         await this.workerBindings.postTask(task, []);
         return new AsyncDataFrame(this.workerBindings, this.frameId);
