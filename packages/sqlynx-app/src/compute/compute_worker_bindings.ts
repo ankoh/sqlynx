@@ -4,6 +4,8 @@ import * as pb from '@ankoh/sqlynx-protobuf';
 import { Logger } from "../platform/logger.js";
 import { ComputeWorkerRequestType, ComputeWorkerResponseType, ComputeWorkerResponseVariant, ComputeWorkerTask, ComputeWorkerTaskReturnType, ComputeWorkerTaskVariant } from "./compute_worker_request.js";
 
+const LOG_CTX = "compute_worker";
+
 export class ComputeWorkerBindings {
     /// The logger
     protected readonly logger: Logger;
@@ -23,10 +25,14 @@ export class ComputeWorkerBindings {
     /// Instantiate the module
     protected onInstantiationProgress: ((p: any) => void)[] = [];
 
-    /** The next message id */
+    /// The next message id
     protected nextMessageId = 0;
-    /** The pending requests */
+    /// The pending requests
     protected pendingRequests: Map<number, ComputeWorkerTaskVariant> = new Map();
+    /// The next scan id
+    public nextScanId = 0;
+    /// The active scans
+    public activeScans: Map<number, AsyncDataFrameScan> = new Map();
 
     constructor(logger: Logger, worker: Worker | null = null) {
         this.logger = logger;
@@ -97,7 +103,7 @@ export class ComputeWorkerBindings {
 
     /// Received a message
     protected onMessage(event: MessageEvent): void {
-        // Unassociated responses?
+        // First process those response type that don't have a registered task
         const response = event.data as ComputeWorkerResponseVariant;
         switch (response.type) {
             // Request failed?
@@ -112,11 +118,48 @@ export class ComputeWorkerBindings {
                 }
                 return;
             }
+            // A message of the dataframe scan
+            case ComputeWorkerResponseType.DATAFRAME_SCAN_MESSAGE: {
+                const scan = this.activeScans.get(response.data.scanId);
+                if (!scan) {
+                    this.logger.error(`DATAFRAME_SCAN_MESSAGE referred to unknown scan ${response.data.scanId}`, LOG_CTX);
+                    return;
+                }
+                scan.messageData.push(response.data.buffer);
+                return;
+            }
+            // Finish the dataframe scan
+            case ComputeWorkerResponseType.DATAFRAME_SCAN_FINISH: {
+                const scan = this.activeScans.get(response.data.scanId);
+                if (!scan) {
+                    this.logger.error(`DATAFRAME_SCAN_FINISH referred to unknown scan ${response.data.scanId}`, LOG_CTX);
+                    return;
+                }
+                this.activeScans.delete(response.data.scanId);
+                try {
+                    scan.finish();
+                } catch (e: any) {
+                    scan.finishWithError(e);
+                }
+                return;
+            }
+            // Finish the dataframe scan with an error
+            case ComputeWorkerResponseType.DATAFRAME_SCAN_FINISH_WITH_ERROR: {
+                const scan = this.activeScans.get(response.data.scanId);
+                if (!scan) {
+                    this.logger.error(`DATAFRAME_SCAN_FINISH_WITH_ERROR referred to unknown scan ${response.data.scanId}`, LOG_CTX);
+                    return;
+                }
+                this.activeScans.delete(response.data.scanId);
+                scan.finishWithError(response.data.error);
+                return;
+            }
         }
-        // Get associated task
+
+        // Get registered task
         const task = this.pendingRequests.get(response.requestId);
         if (!task) {
-            console.warn(`unassociated response: [${response.requestId}, ${response.type.toString()}]`);
+            this.logger.error(`unassociated response: [${response.requestId}, ${response.type.toString()}]`, LOG_CTX);
             return;
         }
         this.pendingRequests.delete(response.requestId);
@@ -144,7 +187,7 @@ export class ComputeWorkerBindings {
                 }
                 break;
             case ComputeWorkerRequestType.DATAFRAME_DELETE:
-            case ComputeWorkerRequestType.DATAFRAME_INGEST_READ:
+            case ComputeWorkerRequestType.DATAFRAME_INGEST_WRITE:
             case ComputeWorkerRequestType.DATAFRAME_INGEST_FINISH:
             case ComputeWorkerRequestType.DATAFRAME_SCAN:
                 if (response.type == ComputeWorkerResponseType.OK) {
@@ -158,8 +201,7 @@ export class ComputeWorkerBindings {
 
     /// Received an error from the worker
     protected onError(event: ErrorEvent): void {
-        console.error(event);
-        console.error(`error in duckdb worker: ${event.message}`);
+        this.logger.error(`error in compute worker: ${event.message}`, LOG_CTX);
         this.pendingRequests.clear();
     }
 
@@ -167,7 +209,7 @@ export class ComputeWorkerBindings {
     protected onClose(): void {
         this.workerShutdownResolver(null);
         if (this.pendingRequests.size != 0) {
-            console.warn(`worker terminated with ${this.pendingRequests.size} pending requests`);
+            this.logger.warn(`compute worker terminated with ${this.pendingRequests.size} pending requests`, LOG_CTX);
             return;
         }
         this.pendingRequests.clear();
@@ -188,6 +230,39 @@ export class ComputeWorkerBindings {
     }
 }
 
+export class AsyncDataFrameScan {
+    /// The frame id
+    frameId: number;
+    /// The scan id
+    scanId: number;
+    /// The message bytes
+    messageData: Uint8Array[];
+    /// The functin to resolve the finish promise
+    promiseResolver: (value: Uint8Array[]) => void;
+    /// The functin to reject the finish promise
+    promiseRejecter: (value: any) => void;
+
+    constructor(frameId: number, scanId: number, resolve: (value: Uint8Array[]) => void, reject: (value: any) => void) {
+        this.frameId = frameId;
+        this.scanId = scanId;
+        this.messageData = [];
+        this.promiseResolver = resolve;
+        this.promiseRejecter = reject;
+    }
+    /// Push message to the scan
+    push(data: Uint8Array) {
+        this.messageData.push(data);
+    }
+    /// Finish a data frame scan
+    finish() {
+        this.promiseResolver(this.messageData);
+    }
+    /// Finish a data frame scan with an error
+    finishWithError(e: any) {
+        this.promiseResolver(e);
+    }
+}
+
 /// An async data frame
 export class AsyncDataFrame {
     /// The worker
@@ -200,6 +275,7 @@ export class AsyncDataFrame {
         this.frameId = frameId;
     }
 
+    /// Transform a data frame
     async transform(transform: pb.sqlynx_compute.pb.DataFrameTransform): Promise<AsyncDataFrame> {
         const bytes = transform.toBinary();
         const task = new ComputeWorkerTask<
@@ -210,6 +286,34 @@ export class AsyncDataFrame {
             );
         const result = await this.workerBindings.postTask(task);
         return new AsyncDataFrame(this.workerBindings, result.frameId);
+    }
+
+    /// Scan a data frame
+    async readTable(): Promise<arrow.Table> {
+        const scanId = this.workerBindings.nextScanId++;
+        let promiseResolver: ((value: Uint8Array[]) => void) | null = null;
+        let promiseRejecter: ((value: any) => void) | null = null;
+        const promise = new Promise<Uint8Array[]>((resolve, reject) => {
+            promiseResolver = resolve;
+            promiseRejecter = reject
+        });
+        // Setup the dataframe scan
+        const scan = new AsyncDataFrameScan(this.frameId, scanId, promiseResolver!, promiseRejecter!)
+        this.workerBindings.activeScans.set(scanId, scan);
+        try {
+            const task = new ComputeWorkerTask<ComputeWorkerRequestType.DATAFRAME_SCAN, { frameId: number, scanId: number }, null>(
+                ComputeWorkerRequestType.DATAFRAME_SCAN, { frameId: this.frameId, scanId }
+            );
+            await this.workerBindings.postTask(task);
+        } catch (e: any) {
+            this.workerBindings.activeScans.delete(scanId);
+        }
+        // After this point we posted the task and are now waiting for all the DATAFRAME_SCAN_MESSAGEs to arrive.
+        // DATAFRAME_SCAN_FINISH or DATAFRAME_SCAN_FINISH_WITH_ERROR will then resolve the promise through the AsyncDataFrameScan.
+        const data = await promise;
+        // Parse the Arrow IPC stream
+        const table = arrow.tableFromIPC(data);
+        return table;
     }
 }
 
@@ -226,16 +330,16 @@ export class AsyncArrowIngest {
     }
 
     /// Read stream data
-    async readStream(buffer: Uint8Array) {
+    async writeStreamBytes(buffer: Uint8Array) {
         if (!this.workerBindings.worker) return;
-        const task = new ComputeWorkerTask<ComputeWorkerRequestType.DATAFRAME_INGEST_READ, { frameId: number, buffer: Uint8Array }, null>(ComputeWorkerRequestType.DATAFRAME_INGEST_READ, { frameId: this.frameId, buffer });
+        const task = new ComputeWorkerTask<ComputeWorkerRequestType.DATAFRAME_INGEST_WRITE, { frameId: number, buffer: Uint8Array }, null>(ComputeWorkerRequestType.DATAFRAME_INGEST_WRITE, { frameId: this.frameId, buffer });
         await this.workerBindings.postTask(task);
     }
     /// Insert an arrow table 
-    async readTable(table: arrow.Table) {
+    async writeTable(table: arrow.Table) {
         if (!this.workerBindings.worker) return;
         let data = arrow.tableToIPC(table, "stream");
-        const task = new ComputeWorkerTask<ComputeWorkerRequestType.DATAFRAME_INGEST_READ, { frameId: number, buffer: Uint8Array }, null>(ComputeWorkerRequestType.DATAFRAME_INGEST_READ, { frameId: this.frameId, buffer: data });
+        const task = new ComputeWorkerTask<ComputeWorkerRequestType.DATAFRAME_INGEST_WRITE, { frameId: number, buffer: Uint8Array }, null>(ComputeWorkerRequestType.DATAFRAME_INGEST_WRITE, { frameId: this.frameId, buffer: data });
         await this.workerBindings.postTask(task, [data.buffer]);
     }
     /// Finish the arrow ingest

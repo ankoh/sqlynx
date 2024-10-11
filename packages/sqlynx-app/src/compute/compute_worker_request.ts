@@ -5,7 +5,7 @@ export enum ComputeWorkerRequestType {
     INSTANTIATE = 'INSTANTIATE',
     DATAFRAME_DELETE = 'DATAFRAME_DELETE',
     DATAFRAME_FROM_INGEST = 'DATAFRAME_FROM_INGEST',
-    DATAFRAME_INGEST_READ = 'DATAFRAME_INGEST_READ',
+    DATAFRAME_INGEST_WRITE = 'DATAFRAME_INGEST_WRITE',
     DATAFRAME_INGEST_FINISH = 'DATAFRAME_INGEST_FINISH',
     DATAFRAME_TRANSFORM = 'DATAFRAME_TRANSFORM',
     DATAFRAME_SCAN = 'DATAFRAME_SCAN',
@@ -18,7 +18,8 @@ export enum ComputeWorkerResponseType {
     INSTANTIATE_PROGRESS = 'INSTANTIATE_PROGRESS',
     DATAFRAME_ID = 'DATAFRAME_ID',
     DATAFRAME_SCAN_MESSAGE = 'DATAFRAME_SCAN_MESSAGE',
-    DATAFRAME_SCAN_FINISH = 'DATAFRAME_SCAN_MESSAGE',
+    DATAFRAME_SCAN_FINISH = 'DATAFRAME_SCAN_FINISH',
+    DATAFRAME_SCAN_FINISH_WITH_ERROR = 'DATAFRAME_SCAN_FINISH_WITH_ERROR',
 }
 
 export type ComputeWorkerRequest<T, P> = {
@@ -58,9 +59,9 @@ export type ComputeWorkerRequestVariant =
     | ComputeWorkerRequest<ComputeWorkerRequestType.INSTANTIATE, { url: string }>
     | ComputeWorkerRequest<ComputeWorkerRequestType.DATAFRAME_DELETE, { frameId: number }>
     | ComputeWorkerRequest<ComputeWorkerRequestType.DATAFRAME_FROM_INGEST, null>
-    | ComputeWorkerRequest<ComputeWorkerRequestType.DATAFRAME_INGEST_READ, { frameId: number, buffer: Uint8Array }>
+    | ComputeWorkerRequest<ComputeWorkerRequestType.DATAFRAME_INGEST_WRITE, { frameId: number, buffer: Uint8Array }>
     | ComputeWorkerRequest<ComputeWorkerRequestType.DATAFRAME_INGEST_FINISH, { frameId: number }>
-    | ComputeWorkerRequest<ComputeWorkerRequestType.DATAFRAME_SCAN, { frameId: number }>
+    | ComputeWorkerRequest<ComputeWorkerRequestType.DATAFRAME_SCAN, { frameId: number, scanId: number }>
     ;
 
 export type ComputeWorkerResponseVariant =
@@ -69,8 +70,9 @@ export type ComputeWorkerResponseVariant =
     | ComputeWorkerResponse<ComputeWorkerResponseType.LOG, LogRecord>
     | ComputeWorkerResponse<ComputeWorkerResponseType.INSTANTIATE_PROGRESS, null>
     | ComputeWorkerResponse<ComputeWorkerResponseType.DATAFRAME_ID, { frameId: number }>
-    | ComputeWorkerResponse<ComputeWorkerResponseType.DATAFRAME_SCAN_MESSAGE, Uint8Array>
-    | ComputeWorkerResponse<ComputeWorkerResponseType.DATAFRAME_SCAN_FINISH, null>
+    | ComputeWorkerResponse<ComputeWorkerResponseType.DATAFRAME_SCAN_MESSAGE, { scanId: number, buffer: Uint8Array }>
+    | ComputeWorkerResponse<ComputeWorkerResponseType.DATAFRAME_SCAN_FINISH, { scanId: number }>
+    | ComputeWorkerResponse<ComputeWorkerResponseType.DATAFRAME_SCAN_FINISH_WITH_ERROR, { scanId: number, error: any }>
     ;
 
 export type ComputeWorkerTaskVariant =
@@ -78,10 +80,10 @@ export type ComputeWorkerTaskVariant =
     | ComputeWorkerTask<ComputeWorkerRequestType.INSTANTIATE, { url: string }, null>
     | ComputeWorkerTask<ComputeWorkerRequestType.DATAFRAME_DELETE, { frameId: number }, null>
     | ComputeWorkerTask<ComputeWorkerRequestType.DATAFRAME_FROM_INGEST, null, { frameId: number }>
-    | ComputeWorkerTask<ComputeWorkerRequestType.DATAFRAME_INGEST_READ, { frameId: number }, null>
+    | ComputeWorkerTask<ComputeWorkerRequestType.DATAFRAME_INGEST_WRITE, { frameId: number }, null>
     | ComputeWorkerTask<ComputeWorkerRequestType.DATAFRAME_INGEST_FINISH, { frameId: number }, null>
     | ComputeWorkerTask<ComputeWorkerRequestType.DATAFRAME_TRANSFORM, { frameId: number, buffer: Uint8Array }, { frameId: number }>
-    | ComputeWorkerTask<ComputeWorkerRequestType.DATAFRAME_SCAN, { frameId: number }, null>
+    | ComputeWorkerTask<ComputeWorkerRequestType.DATAFRAME_SCAN, { frameId: number, scanId: number }, null>
     ;
 
 export type ComputeWorkerTaskReturnType<T extends ComputeWorkerTaskVariant> = T extends ComputeWorkerTask<any, any, infer P> ? P : never;
