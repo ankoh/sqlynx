@@ -8,15 +8,19 @@ const LOG_CTX = "compute_worker";
 
 export type WorkerEventChannel = "message" | "error" | "close";
 
+export interface MessageEventLike<T = any> {
+    data: T
+}
+
 export interface WorkerLike {
     /// Terminate a worker
     terminate(): void;
     /// Post a message to the worker
     postMessage(message: any, transfer: Transferable[]): void;
     /// Register an event listener for the worker
-    addEventListener(channel: WorkerEventChannel, handler: (event: MessageEvent) => void): void;
+    addEventListener(channel: WorkerEventChannel, handler: (event: MessageEventLike) => void): void;
     /// Remove an event listener from the worker
-    removeEventListener(channel: WorkerEventChannel, handler: (event: MessageEvent) => void): void;
+    removeEventListener(channel: WorkerEventChannel, handler: (event: MessageEventLike) => void): void;
 }
 
 export class ComputeWorkerBindings {
@@ -30,9 +34,9 @@ export class ComputeWorkerBindings {
     protected workerShutdownResolver: (value: PromiseLike<null> | null) => void = () => { };
 
     /// The message handler
-    protected readonly onMessageHandler: (event: MessageEvent) => void;
+    protected readonly onMessageHandler: (event: MessageEventLike) => void;
     /// The error handler
-    protected readonly onErrorHandler: (event: MessageEvent) => void;
+    protected readonly onErrorHandler: (event: MessageEventLike) => void;
     /// The close handler
     protected readonly onCloseHandler: () => void;
     /// Instantiate the module
@@ -47,7 +51,7 @@ export class ComputeWorkerBindings {
     /// The active scans
     public activeScans: Map<number, AsyncDataFrameScan> = new Map();
 
-    constructor(logger: Logger, worker: Worker | null = null) {
+    constructor(logger: Logger, worker: WorkerLike | null = null) {
         this.logger = logger;
         this.worker = null;
         this.onMessageHandler = this.onMessage.bind(this);
@@ -58,7 +62,7 @@ export class ComputeWorkerBindings {
     }
 
     /// Attach the worker
-    public attach(worker: Worker): void {
+    public attach(worker: WorkerLike): void {
         this.worker = worker;
         this.worker.addEventListener('message', this.onMessageHandler);
         this.worker.addEventListener('error', this.onErrorHandler);
@@ -115,7 +119,7 @@ export class ComputeWorkerBindings {
     }
 
     /// Received a message
-    protected onMessage(event: MessageEvent): void {
+    protected onMessage(event: MessageEventLike): void {
         // First process those response type that don't have a registered task
         const response = event.data as ComputeWorkerResponseVariant;
         switch (response.type) {
@@ -199,6 +203,13 @@ export class ComputeWorkerBindings {
                     return;
                 }
                 break;
+            case ComputeWorkerRequestType.DATAFRAME_FROM_INGEST: {
+                if (response.type == ComputeWorkerResponseType.DATAFRAME_ID) {
+                    task.promiseResolver(response.data);
+                    return;
+                }
+                break;
+            }
             case ComputeWorkerRequestType.DATAFRAME_DELETE:
             case ComputeWorkerRequestType.DATAFRAME_INGEST_WRITE:
             case ComputeWorkerRequestType.DATAFRAME_INGEST_FINISH:
@@ -213,7 +224,7 @@ export class ComputeWorkerBindings {
     }
 
     /// Received an error from the worker
-    protected onError(event: MessageEvent): void {
+    protected onError(event: MessageEventLike): void {
         this.logger.error(`error in compute worker: ${event.data}`, LOG_CTX);
         this.pendingRequests.clear();
     }
@@ -230,9 +241,9 @@ export class ComputeWorkerBindings {
 
 
     /// Instantiate the worker
-    public async instantiate(url: URL) {
+    public async instantiate(url: string) {
         if (!this.worker) return;
-        const task = new ComputeWorkerTask<ComputeWorkerRequestType.INSTANTIATE, { url: string }, null>(ComputeWorkerRequestType.INSTANTIATE, { url: url.toString() });
+        const task = new ComputeWorkerTask<ComputeWorkerRequestType.INSTANTIATE, { url: string }, null>(ComputeWorkerRequestType.INSTANTIATE, { url: url });
         await this.postTask(task);
     }
     /// Create an arrow ingest

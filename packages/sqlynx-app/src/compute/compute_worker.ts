@@ -2,18 +2,25 @@ import * as compute from '@ankoh/sqlynx-compute';
 
 import { ComputeWorkerRequestType, ComputeWorkerRequestVariant, ComputeWorkerResponseType, ComputeWorkerResponseVariant } from "./compute_worker_request.js";
 
+export interface MessageEventLike<T = any> {
+    data: T
+}
+
 export interface WorkerGlobalsLike {
     /// Post a message to the worker
     postMessage(message: any, transfer: Transferable[]): void;
     /// Register an event listener for the worker
-    addEventListener(channel: "message", handler: (event: MessageEvent) => void): void;
+    addEventListener(channel: "message", handler: (event: MessageEventLike) => void): void;
     /// Remove an event listener from the worker
-    removeEventListener(channel: "message", handler: (event: MessageEvent) => void): void;
+    removeEventListener(channel: "message", handler: (event: MessageEventLike) => void): void;
 }
 
-export abstract class ComputeWorker {
+export class ComputeWorker {
     /// The worker globals
     protected workerGlobals: WorkerGlobalsLike;
+    /// The message handler
+    protected readonly onMessageHandler: (event: MessageEventLike) => void;
+
     /// The next message id
     protected nextMessageId = 0;
     /// The next frame id
@@ -29,6 +36,17 @@ export abstract class ComputeWorker {
         this.nextFrameId = 0;
         this.frameBuilders = new Map();
         this.frames = new Map();
+
+        this.onMessageHandler = this.onMessageEvent.bind(this);
+    }
+
+    /// Attach the worker
+    public attach(): void {
+        this.workerGlobals.addEventListener('message', this.onMessageHandler);
+    }
+    /// Detach the worker
+    public detach(): void {
+        this.workerGlobals.removeEventListener('message', this.onMessageHandler);
     }
 
     /// Post a response to the main thread
@@ -68,8 +86,13 @@ export abstract class ComputeWorker {
         );
         return;
     }
+
+    /// Process a message event
+    public onMessageEvent(event: MessageEventLike) {
+        this.onMessage(event.data);
+    }
     /// Process a request from the main thread
-    public async onMessage(request: ComputeWorkerRequestVariant): Promise<void> {
+    public onMessage(request: ComputeWorkerRequestVariant): void {
         // Instantiate the module
         switch (request.type) {
             case ComputeWorkerRequestType.PING:
@@ -94,7 +117,12 @@ export abstract class ComputeWorker {
                     const frameId = this.nextFrameId++;
                     const frameBuilder = new compute.ArrowIngest();
                     this.frameBuilders.set(frameId, frameBuilder);
-                    this.sendOK(request);
+                    this.postMessage({
+                        messageId: this.nextMessageId++,
+                        requestId: request.messageId,
+                        type: ComputeWorkerResponseType.DATAFRAME_ID,
+                        data: { frameId },
+                    }, []);
                     break;
                 }
                 case ComputeWorkerRequestType.DATAFRAME_INGEST_WRITE: {
