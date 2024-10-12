@@ -3,10 +3,10 @@ import * as proto from '@ankoh/sqlynx-protobuf';
 
 import { VariantKind } from '../utils/variant.js';
 
+export const TASK_RUNNING = Symbol("TASK_PROGRESS");
 const TABLE_SUMMARY_TASK = Symbol("TABLE_STATS_TASK");
 const TABLE_ORDERING_TASK = Symbol("TABLE_ORDERING_TASK");
 const COLUMN_SUMMARY_TASK = Symbol("COLUMN_STATS_TASK");
-const TASK_PROGRESS = Symbol("TASK_PROGRESS");
 const TASK_ERROR = Symbol("TASK_ERROR");
 const ORDINAL_COLUMN = Symbol("ORDINAL_COLUMN");
 const STRING_COLUMN = Symbol("STRING_COLUMN");
@@ -14,32 +14,39 @@ const LIST_COLUMN = Symbol("LIST_COLUMN");
 
 // ------------------------------------------------------------
 
-export type OrderingTaskSlot =
+export type TaskVariant =
     VariantKind<typeof TABLE_ORDERING_TASK, TableOrderingTask>
     | VariantKind<typeof TABLE_SUMMARY_TASK, TableSummaryTask>
     | VariantKind<typeof COLUMN_SUMMARY_TASK, ColumnSummaryTask>
-    | TaskStatus
     ;
 
+export interface TableOrderingTask {
+    /// The table id
+    tableId: number;
+    /// The ordering constraints
+    orderingConstraints: proto.sqlynx_compute.pb.OrderByConstraint[];
+}
+
 export interface TableSummaryTask {
+    /// The table id
+    tableId: number;
     /// The column entries
     columnEntries: ColumnEntryVariant[];
 }
 
 export interface ColumnSummaryTask {
+    /// The table id
+    tableId: number;
+    /// The task id
+    taskId: number;
     /// The column entry
     columnEntry: ColumnEntryVariant;
-}
-
-export interface TableOrderingTask {
-    /// The ordering constraints
-    orderingConstraints: proto.sqlynx_compute.pb.OrderByConstraint[];
 }
 
 // ------------------------------------------------------------
 
 export type TaskStatus =
-    VariantKind<typeof TASK_PROGRESS, TaskProgress>
+    VariantKind<typeof TASK_RUNNING, TaskProgress>
     | VariantKind<typeof TASK_ERROR, TaskError>
     ;
 
@@ -104,11 +111,11 @@ interface ListColumnEntry {
 
 // ------------------------------------------------------------
 
-export interface TableOrdering {
+export interface OrderedTable {
     /// The ordering constraints
     orderingConstraints: proto.sqlynx_compute.pb.OrderByConstraint[];
-    /// The statistics
-    stats: arrow.Table;
+    /// The table
+    table: arrow.Table;
 }
 
 // ------------------------------------------------------------
