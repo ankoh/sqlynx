@@ -26,14 +26,14 @@ export interface TableSummaryTask {
     columnEntries: ColumnEntryVariant[];
 }
 
-export interface TableOrderingTask {
-    /// The ordering constraints
-    orderingConstraints: proto.sqlynx_compute.pb.OrderByConstraint[];
-}
-
 export interface ColumnSummaryTask {
     /// The column entry
     columnEntry: ColumnEntryVariant;
+}
+
+export interface TableOrderingTask {
+    /// The ordering constraints
+    orderingConstraints: proto.sqlynx_compute.pb.OrderByConstraint[];
 }
 
 // ------------------------------------------------------------
@@ -100,6 +100,15 @@ interface ListColumnEntry {
     statsMinLengthAggregateField: number;
     /// Minimum value
     statsMaxLengthAggregateField: number;
+}
+
+// ------------------------------------------------------------
+
+export interface TableOrdering {
+    /// The ordering constraints
+    orderingConstraints: proto.sqlynx_compute.pb.OrderByConstraint[];
+    /// The statistics
+    stats: arrow.Table;
 }
 
 // ------------------------------------------------------------
