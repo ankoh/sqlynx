@@ -11,7 +11,7 @@ version = "2.0.1"
 features = []
 
 [build-dependencies.tonic-build]
-version = "0.11"
+version = "0.12.3"
 features = []
 
 [dependencies]
@@ -30,7 +30,7 @@ http-body-util = "0.1.2"
 http = "1.1.0"
 tower-service = "0.3.3"
 bytes = "1.7.2"
-prost = "^0.12.6"
+prost = "^0.13.3"
 once_cell = "1.20.2"
 lazy_static = "1.5.0"
 log = "0.4.22"
@@ -50,7 +50,7 @@ version = "^0.12.8"
 features = ["stream"]
 
 [dependencies.tonic]
-version = "^0.11.0"
+version = "^0.12.3"
 features = ["tls"]
 
 [dependencies.serde]
