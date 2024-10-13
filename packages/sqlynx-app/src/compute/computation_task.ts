@@ -2,6 +2,7 @@ import * as arrow from 'apache-arrow';
 import * as proto from '@ankoh/sqlynx-protobuf';
 
 import { VariantKind } from '../utils/variant.js';
+import { AsyncDataFrame } from './compute_worker_bindings.js';
 
 export const COLUMN_SUMMARY_TASK = Symbol("COLUMN_STATS_TASK");
 export const TABLE_ORDERING_TASK = Symbol("TABLE_ORDERING_TASK");
@@ -9,9 +10,9 @@ export const TABLE_SUMMARY_TASK = Symbol("TABLE_STATS_TASK");
 export const TASK_FAILED = Symbol("TASK_FAILED");
 export const TASK_RUNNING = Symbol("TASK_RUNNING");
 export const TASK_SUCCEDED = Symbol("TASK_SUCCEDED");
-const ORDINAL_COLUMN = Symbol("ORDINAL_COLUMN");
-const STRING_COLUMN = Symbol("STRING_COLUMN");
-const LIST_COLUMN = Symbol("LIST_COLUMN");
+export const ORDINAL_COLUMN = Symbol("ORDINAL_COLUMN");
+export const STRING_COLUMN = Symbol("STRING_COLUMN");
+export const LIST_COLUMN = Symbol("LIST_COLUMN");
 
 // ------------------------------------------------------------
 
@@ -33,13 +34,15 @@ export interface TableSummaryTask {
     tableId: number;
     /// The column entries
     columnEntries: ColumnEntryVariant[];
+    /// Count(*) field
+    statsCountStarField: number;
 }
 
 export interface ColumnSummaryTask {
     /// The table id
     tableId: number;
     /// The task id
-    taskId: number;
+    columnId: number;
     /// The column entry
     columnEntry: ColumnEntryVariant;
 }
@@ -47,7 +50,6 @@ export interface ColumnSummaryTask {
 // ------------------------------------------------------------
 
 export enum TaskStatus {
-    TASK_PICKED,
     TASK_RUNNING,
     TASK_SUCCEEDED,
     TASK_FAILED,
@@ -75,6 +77,8 @@ type ColumnEntryVariant =
     ;
 
 interface OrdinalColumnEntry {
+    /// The input column id
+    inputFieldId: number;
     /// The input field name
     inputFieldName: string;
     /// Entry count (!= null)
@@ -86,6 +90,8 @@ interface OrdinalColumnEntry {
 }
 
 interface StringColumnEntry {
+    /// The input column id
+    inputFieldId: number;
     /// The input field name
     inputFieldName: string;
     /// Entry count (!= null)
@@ -97,6 +103,8 @@ interface StringColumnEntry {
 }
 
 interface ListColumnEntry {
+    /// The input column id
+    inputFieldId: number;
     /// The input field name
     inputFieldName: string;
     /// Entry count (!= null)
@@ -128,7 +136,9 @@ export interface TableSummary {
     /// The entries
     columnEntries: ColumnEntryVariant[];
     /// The statistics
-    stats: arrow.Table;
+    transformedDataFrame: AsyncDataFrame;
+    /// The statistics
+    transformedTable: arrow.Table;
     /// Maximum value
     statsCountStarField: number;
 }
@@ -187,12 +197,17 @@ export function createTableSummaryTransform(task: TableSummaryTask): proto.sqlyn
     for (const entry of task.columnEntries) {
         switch (entry.type) {
             case ORDINAL_COLUMN: {
+                const countAggregateColumn = nextOutputColumn++;
                 const minAggregateColumn = nextOutputColumn++;
                 const maxAggregateColumn = nextOutputColumn++;
-                const countAggregateColumn = nextOutputColumn++;
+                entry.value.statsCountField = countAggregateColumn;
                 entry.value.statsMinAggregateField = minAggregateColumn;
                 entry.value.statsMaxAggregateField = maxAggregateColumn;
-                entry.value.statsCountField = countAggregateColumn;
+                aggregates.push(new proto.sqlynx_compute.pb.GroupByAggregate({
+                    fieldName: entry.value.inputFieldName,
+                    outputAlias: `c${countAggregateColumn}`,
+                    aggregationFunction: proto.sqlynx_compute.pb.AggregationFunction.Count,
+                }));
                 aggregates.push(new proto.sqlynx_compute.pb.GroupByAggregate({
                     fieldName: entry.value.inputFieldName,
                     outputAlias: `c${minAggregateColumn}`,
@@ -203,20 +218,20 @@ export function createTableSummaryTransform(task: TableSummaryTask): proto.sqlyn
                     outputAlias: `c${maxAggregateColumn}`,
                     aggregationFunction: proto.sqlynx_compute.pb.AggregationFunction.Max,
                 }));
+                break;
+            }
+            case STRING_COLUMN: {
+                const countAggregateColumn = nextOutputColumn++;
+                const minLengthAggregateColumn = nextOutputColumn++;
+                const maxLengthAggregateColumn = nextOutputColumn++;
+                entry.value.statsCountField = countAggregateColumn;
+                entry.value.statsMinLengthAggregateField = minLengthAggregateColumn;
+                entry.value.statsMaxLengthAggregateField = maxLengthAggregateColumn;
                 aggregates.push(new proto.sqlynx_compute.pb.GroupByAggregate({
                     fieldName: entry.value.inputFieldName,
                     outputAlias: `c${countAggregateColumn}`,
                     aggregationFunction: proto.sqlynx_compute.pb.AggregationFunction.Count,
                 }));
-                break;
-            }
-            case STRING_COLUMN: {
-                const minLengthAggregateColumn = nextOutputColumn++;
-                const maxLengthAggregateColumn = nextOutputColumn++;
-                const countAggregateColumn = nextOutputColumn++;
-                entry.value.statsMinLengthAggregateField = minLengthAggregateColumn;
-                entry.value.statsMaxLengthAggregateField = maxLengthAggregateColumn;
-                entry.value.statsCountField = countAggregateColumn;
                 aggregates.push(new proto.sqlynx_compute.pb.GroupByAggregate({
                     fieldName: entry.value.inputFieldName,
                     outputAlias: `c${minLengthAggregateColumn}`,
@@ -228,21 +243,21 @@ export function createTableSummaryTransform(task: TableSummaryTask): proto.sqlyn
                     outputAlias: `c${maxLengthAggregateColumn}`,
                     aggregationFunction: proto.sqlynx_compute.pb.AggregationFunction.Max,
                     aggregateLengths: true,
-                }));
-                aggregates.push(new proto.sqlynx_compute.pb.GroupByAggregate({
-                    fieldName: entry.value.inputFieldName,
-                    outputAlias: `c${countAggregateColumn}`,
-                    aggregationFunction: proto.sqlynx_compute.pb.AggregationFunction.Count,
                 }));
                 break;
             }
             case LIST_COLUMN: {
+                const countAggregateColumn = nextOutputColumn++;
                 const minLengthAggregateColumn = nextOutputColumn++;
                 const maxLengthAggregateColumn = nextOutputColumn++;
-                const countAggregateColumn = nextOutputColumn++;
+                entry.value.statsCountField = countAggregateColumn;
                 entry.value.statsMinLengthAggregateField = minLengthAggregateColumn;
                 entry.value.statsMaxLengthAggregateField = maxLengthAggregateColumn;
-                entry.value.statsCountField = countAggregateColumn;
+                aggregates.push(new proto.sqlynx_compute.pb.GroupByAggregate({
+                    fieldName: entry.value.inputFieldName,
+                    outputAlias: `c${countAggregateColumn}`,
+                    aggregationFunction: proto.sqlynx_compute.pb.AggregationFunction.Count,
+                }));
                 aggregates.push(new proto.sqlynx_compute.pb.GroupByAggregate({
                     fieldName: entry.value.inputFieldName,
                     outputAlias: `c${minLengthAggregateColumn}`,
@@ -254,11 +269,6 @@ export function createTableSummaryTransform(task: TableSummaryTask): proto.sqlyn
                     outputAlias: `c${maxLengthAggregateColumn}`,
                     aggregationFunction: proto.sqlynx_compute.pb.AggregationFunction.Max,
                     aggregateLengths: true,
-                }));
-                aggregates.push(new proto.sqlynx_compute.pb.GroupByAggregate({
-                    fieldName: entry.value.inputFieldName,
-                    outputAlias: `c${countAggregateColumn}`,
-                    aggregationFunction: proto.sqlynx_compute.pb.AggregationFunction.Count,
                 }));
                 break;
             }
@@ -273,13 +283,14 @@ export function createTableSummaryTransform(task: TableSummaryTask): proto.sqlyn
     return out;
 }
 
-export function createColumnSummaryTransform(task: ColumnSummaryTask, input: arrow.Table): proto.sqlynx_compute.pb.DataFrameTransform {
+export function createColumnSummaryTransform(task: ColumnSummaryTask, tableSummary: TableSummary): proto.sqlynx_compute.pb.DataFrameTransform {
     let fieldName = task.columnEntry.value.inputFieldName;
     let out: proto.sqlynx_compute.pb.DataFrameTransform;
+    let tableSummarySchema = tableSummary.transformedTable.schema;
     switch (task.columnEntry.type) {
         case ORDINAL_COLUMN: {
-            const minField = input.schema.fields[task.columnEntry.value.statsMaxAggregateField].name;
-            const maxField = input.schema.fields[task.columnEntry.value.statsMinAggregateField].name;
+            const minField = tableSummarySchema.fields[task.columnEntry.value.statsMaxAggregateField].name;
+            const maxField = tableSummarySchema.fields[task.columnEntry.value.statsMinAggregateField].name;
             out = new proto.sqlynx_compute.pb.DataFrameTransform({
                 groupBy: new proto.sqlynx_compute.pb.GroupByTransform({
                     keys: [
@@ -317,8 +328,8 @@ export function createColumnSummaryTransform(task: ColumnSummaryTask, input: arr
             break;
         }
         case LIST_COLUMN: {
-            const minField = input.schema.fields[task.columnEntry.value.statsMaxLengthAggregateField].name;
-            const maxField = input.schema.fields[task.columnEntry.value.statsMinLengthAggregateField].name;
+            const minField = tableSummarySchema.fields[task.columnEntry.value.statsMaxLengthAggregateField].name;
+            const maxField = tableSummarySchema.fields[task.columnEntry.value.statsMinLengthAggregateField].name;
             out = new proto.sqlynx_compute.pb.DataFrameTransform({
                 groupBy: new proto.sqlynx_compute.pb.GroupByTransform({
                     keys: [
@@ -390,7 +401,7 @@ export function createColumnSummaryTransform(task: ColumnSummaryTask, input: arr
     return out;
 }
 
-export function createOrderByTransform(constraints: proto.sqlynx_compute.pb.OrderByConstraint[], limit: number): proto.sqlynx_compute.pb.DataFrameTransform {
+export function createOrderByTransform(constraints: proto.sqlynx_compute.pb.OrderByConstraint[], limit?: number): proto.sqlynx_compute.pb.DataFrameTransform {
     const out = new proto.sqlynx_compute.pb.DataFrameTransform({
         orderBy: new proto.sqlynx_compute.pb.OrderByTransform({
             constraints,
