@@ -3,11 +3,12 @@ import * as proto from '@ankoh/sqlynx-protobuf';
 
 import { VariantKind } from '../utils/variant.js';
 
-export const TASK_RUNNING = Symbol("TASK_PROGRESS");
-const TABLE_SUMMARY_TASK = Symbol("TABLE_STATS_TASK");
-const TABLE_ORDERING_TASK = Symbol("TABLE_ORDERING_TASK");
-const COLUMN_SUMMARY_TASK = Symbol("COLUMN_STATS_TASK");
-const TASK_ERROR = Symbol("TASK_ERROR");
+export const COLUMN_SUMMARY_TASK = Symbol("COLUMN_STATS_TASK");
+export const TABLE_ORDERING_TASK = Symbol("TABLE_ORDERING_TASK");
+export const TABLE_SUMMARY_TASK = Symbol("TABLE_STATS_TASK");
+export const TASK_FAILED = Symbol("TASK_FAILED");
+export const TASK_RUNNING = Symbol("TASK_RUNNING");
+export const TASK_SUCCEDED = Symbol("TASK_SUCCEDED");
 const ORDINAL_COLUMN = Symbol("ORDINAL_COLUMN");
 const STRING_COLUMN = Symbol("STRING_COLUMN");
 const LIST_COLUMN = Symbol("LIST_COLUMN");
@@ -45,27 +46,24 @@ export interface ColumnSummaryTask {
 
 // ------------------------------------------------------------
 
-export type TaskStatus =
-    VariantKind<typeof TASK_RUNNING, TaskProgress>
-    | VariantKind<typeof TASK_ERROR, TaskError>
-    ;
+export enum TaskStatus {
+    TASK_PICKED,
+    TASK_RUNNING,
+    TASK_SUCCEEDED,
+    TASK_FAILED,
+};
 
 export interface TaskProgress {
-    /// Task was queued at timestamp
-    queuedAt: Date;
-    /// Task started after duration
-    startedAfterMs: number | null;
-    /// Task completed after duration
-    completedAfterMs: number | null;
-    /// Task finished after duration
-    finishedAfterMs: number | null;
-}
-
-export interface TaskError {
-    /// The task progress after
-    progress: TaskProgress;
-    /// The error
-    error: Error;
+    /// Task status
+    status: TaskStatus;
+    /// Task started at timestamp
+    startedAt: Date | null;
+    /// Task completed at timestamp
+    completedAt: Date | null;
+    /// Task failed at timestamp
+    failedAt: Date | null;
+    /// Task failed with error
+    failedWithError: any;
 }
 
 // ------------------------------------------------------------
@@ -114,8 +112,8 @@ interface ListColumnEntry {
 export interface OrderedTable {
     /// The ordering constraints
     orderingConstraints: proto.sqlynx_compute.pb.OrderByConstraint[];
-    /// The table
-    table: arrow.Table;
+    /// The ordered table
+    orderedTable: arrow.Table;
 }
 
 // ------------------------------------------------------------

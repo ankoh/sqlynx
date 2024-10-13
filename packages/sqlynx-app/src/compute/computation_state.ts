@@ -1,11 +1,14 @@
 import * as arrow from 'apache-arrow';
 import * as compute from '@ankoh/sqlynx-compute';
+import * as pb from '@ankoh/sqlynx-protobuf';
 
-import { ColumnSummaryVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskVariant, TASK_RUNNING } from './computation_task.js';
+import { ColumnSummaryVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskVariant, TASK_RUNNING, TABLE_ORDERING_TASK, TASK_PICKED, TASK_SUCCEDED, TASK_FAILED, TaskProgress } from './computation_task.js';
 
 import { Dispatch, VariantKind } from '../utils/variant.js';
-import { ComputeWorkerBindings } from './compute_worker_bindings.js';
+import { AsyncDataFrame, ComputeWorkerBindings } from './compute_worker_bindings.js';
 import { Logger } from '../platform/logger.js';
+
+const LOG_CTX = "computation_state";
 
 /// The table computation state
 interface TableComputationState {
@@ -17,7 +20,7 @@ interface TableComputationState {
     localEpoch: number;
 
     /// The data frame in the compute module
-    dataFrame: compute.DataFrame | null;
+    dataFrame: AsyncDataFrame | null;
 
     /// The ordering task
     orderingTask: TableOrderingTask | null;
@@ -80,17 +83,17 @@ export type ComputationAction =
     | VariantKind<typeof SUMMARIZE_TABLE, [number]>
     | VariantKind<typeof SORT_TABLE, [number, TableOrderingTask]>
 
-    | VariantKind<typeof TABLE_ORDERING_TASK_RUNNING, [number, TaskStatus]>
-    | VariantKind<typeof TABLE_ORDERING_TASK_FAILED, [number, TaskStatus]>
-    | VariantKind<typeof TABLE_ORDERING_TASK_SUCCEEDED, [number, TaskStatus, OrderedTable]>
+    | VariantKind<typeof TABLE_ORDERING_TASK_RUNNING, [number, TaskProgress]>
+    | VariantKind<typeof TABLE_ORDERING_TASK_FAILED, [number, TaskProgress, any]>
+    | VariantKind<typeof TABLE_ORDERING_TASK_SUCCEEDED, [number, TaskProgress, OrderedTable]>
 
-    | VariantKind<typeof TABLE_SUMMARY_TASK_RUNNING, [number, TaskStatus]>
-    | VariantKind<typeof TABLE_SUMMARY_TASK_FAILED, [number, TaskStatus]>
-    | VariantKind<typeof TABLE_SUMMARY_TASK_SUCCEEDED, [number, TaskStatus, TableSummary]>
+    | VariantKind<typeof TABLE_SUMMARY_TASK_RUNNING, [number, TaskProgress]>
+    | VariantKind<typeof TABLE_SUMMARY_TASK_FAILED, [number, TaskProgress]>
+    | VariantKind<typeof TABLE_SUMMARY_TASK_SUCCEEDED, [number, TaskProgress, TableSummary]>
 
-    | VariantKind<typeof COLUMN_SUMMARY_TASK_RUNNING, [number, number, TaskStatus]>
-    | VariantKind<typeof COLUMN_SUMMARY_TASK_FAILED, [number, number, TaskStatus]>
-    | VariantKind<typeof COLUMN_SUMMARY_TASK_SUCCEEDED, [number, number, TaskStatus, ColumnSummaryVariant]>
+    | VariantKind<typeof COLUMN_SUMMARY_TASK_RUNNING, [number, number, TaskProgress]>
+    | VariantKind<typeof COLUMN_SUMMARY_TASK_FAILED, [number, number, TaskProgress, any]>
+    | VariantKind<typeof COLUMN_SUMMARY_TASK_SUCCEEDED, [number, number, TaskProgress, ColumnSummaryVariant]>
     ;
 
 export function reduceComputationState(state: ComputationState, action: ComputationAction, _dispatch: Dispatch<ComputationAction>): ComputationState {
@@ -119,6 +122,10 @@ export async function scheduleNextComputation(state: ComputationState, dispatch:
     }
 
     for (const tableState of state.tableComputations.values()) {
+        // Data frame not ready yet?
+        if (tableState.dataFrame == null) {
+            continue;
+        }
         // Pending ordering task?
         if (tableState.orderingTask != null && tableState.orderingTaskStatus == null) {
             // Reorder the table
@@ -144,13 +151,70 @@ export async function scheduleNextComputation(state: ComputationState, dispatch:
 }
 
 /// Helper to sort a table
-async function sortTable(state: ComputationState, tableState: TableComputationState, task: TableOrderingTask, _dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<void> {
+async function sortTable(state: ComputationState, tableState: TableComputationState, task: TableOrderingTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<void> {
+    const transform = new pb.sqlynx_compute.pb.DataFrameTransform({
+        orderBy: new pb.sqlynx_compute.pb.OrderByTransform({
+            constraints: task.orderingConstraints
+        })
+    });
+    // Mark task as running
+    let startedAt = new Date();
+    let taskProgress: TaskProgress = {
+        status: TaskStatus.TASK_PICKED,
+        startedAt,
+        completedAt: null,
+        failedAt: null,
+        failedWithError: null,
+    }
+
+    try {
+        dispatch({
+            type: TABLE_ORDERING_TASK_RUNNING,
+            value: [tableState.tableId, taskProgress]
+        });
+        // Order the data frame
+        const ordered = await tableState.dataFrame!.transform(transform);
+        logger.info(`sorting table ${tableState.tableId} succeded, scanning result`, LOG_CTX);
+        // Read the result
+        const orderedTable = await ordered.readTable();
+        logger.info(`scanning table ${tableState.tableId} suceeded`, LOG_CTX);
+        // Delete the data frame
+        await ordered.delete();
+        // The output table
+        const out: OrderedTable = {
+            orderingConstraints: task.orderingConstraints,
+            orderedTable,
+        };
+        // Mark the task as running
+        taskProgress = {
+            status: TaskStatus.TASK_SUCCEEDED,
+            startedAt,
+            completedAt: new Date(),
+            failedAt: null,
+            failedWithError: null,
+        };
+        dispatch({
+            type: TABLE_ORDERING_TASK_SUCCEEDED,
+            value: [tableState.tableId, taskProgress, out],
+        });
+    } catch (error: any) {
+        logger.error(`ordering table ${tableState.tableId} failed with error: ${error.toString()}`);
+        taskProgress = {
+            status: TaskStatus.TASK_FAILED,
+            startedAt,
+            completedAt: null,
+            failedAt: new Date(),
+            failedWithError: error,
+        };
+        dispatch({
+            type: TABLE_ORDERING_TASK_FAILED,
+            value: [tableState.tableId, taskProgress, error],
+        });
+    }
 }
 
 /// Helper to summarize a table
-async function summarizeTable(state: ComputationState, tableState: TableComputationState, task: TableSummaryTask, _dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<void> {
+async function summarizeTable(_state: ComputationState, _tableState: TableComputationState, _task: TableSummaryTask, _dispatch: Dispatch<ComputationAction>, _logger: Logger): Promise<void> { }
 
-}
-
-async function summarizeColumn(state: ComputationState, tableState: TableComputationState, task: ColumnSummaryTask, _dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<void> { }
+async function summarizeColumn(_state: ComputationState, _tableState: TableComputationState, _task: ColumnSummaryTask, _dispatch: Dispatch<ComputationAction>, _logger: Logger): Promise<void> { }
 

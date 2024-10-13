@@ -307,6 +307,14 @@ export class AsyncDataFrame {
         this.frameId = frameId;
     }
 
+    /// Delete the data frame
+    async delete(): Promise<void> {
+        const task = new ComputeWorkerTask<ComputeWorkerRequestType.DATAFRAME_DELETE, { frameId: number }, null>(
+            ComputeWorkerRequestType.DATAFRAME_DELETE, { frameId: this.frameId }
+        );
+        await this.workerBindings.postTask(task);
+    }
+
     /// Transform a data frame
     async transform(transform: pb.sqlynx_compute.pb.DataFrameTransform): Promise<AsyncDataFrame> {
         const bytes = transform.toBinary();
