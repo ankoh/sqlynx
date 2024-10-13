@@ -1,8 +1,7 @@
 import * as arrow from 'apache-arrow';
 import * as compute from '@ankoh/sqlynx-compute';
-import * as pb from '@ankoh/sqlynx-protobuf';
 
-import { ColumnSummaryVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskVariant, TASK_RUNNING, TABLE_ORDERING_TASK, TASK_PICKED, TASK_SUCCEDED, TASK_FAILED, TaskProgress } from './computation_task.js';
+import { ColumnSummaryVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskVariant, TaskProgress, ORDINAL_COLUMN, STRING_COLUMN, LIST_COLUMN, createOrderByTransform, createTableSummaryTransform, createColumnSummaryTransform } from './computation_task.js';
 
 import { Dispatch, VariantKind } from '../utils/variant.js';
 import { AsyncDataFrame, ComputeWorkerBindings } from './compute_worker_bindings.js';
@@ -37,7 +36,7 @@ interface TableComputationState {
     tableSummary: TableSummary | null;
 
     /// The pending column tasks
-    columnSummariesPending: Map<number, ColumnSummaryTask>;
+    columnSummariesPending: ColumnSummaryTask[];
     /// The running column tasks
     columnSummariesStatus: Map<number, TaskStatus>;
     /// The column stats
@@ -88,7 +87,7 @@ export type ComputationAction =
     | VariantKind<typeof TABLE_ORDERING_TASK_SUCCEEDED, [number, TaskProgress, OrderedTable]>
 
     | VariantKind<typeof TABLE_SUMMARY_TASK_RUNNING, [number, TaskProgress]>
-    | VariantKind<typeof TABLE_SUMMARY_TASK_FAILED, [number, TaskProgress]>
+    | VariantKind<typeof TABLE_SUMMARY_TASK_FAILED, [number, TaskProgress, any]>
     | VariantKind<typeof TABLE_SUMMARY_TASK_SUCCEEDED, [number, TaskProgress, TableSummary]>
 
     | VariantKind<typeof COLUMN_SUMMARY_TASK_RUNNING, [number, number, TaskProgress]>
@@ -117,7 +116,7 @@ export function reduceComputationState(state: ComputationState, action: Computat
 /// Schedule the next computation
 export async function scheduleNextComputation(state: ComputationState, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<void> {
     // Has a task running?
-    if (state.currentTaskStatus != null && state.currentTaskStatus.type == TASK_RUNNING) {
+    if (state.currentTaskStatus != null && state.currentTaskStatus == TaskStatus.TASK_RUNNING) {
         return;
     }
 
@@ -129,38 +128,41 @@ export async function scheduleNextComputation(state: ComputationState, dispatch:
         // Pending ordering task?
         if (tableState.orderingTask != null && tableState.orderingTaskStatus == null) {
             // Reorder the table
-            await sortTable(state, tableState, tableState.orderingTask, dispatch, logger);
+            await sortTable(tableState, tableState.orderingTask, dispatch, logger);
             return;
         }
         // Pending table summary task?
         if (tableState.tableSummaryTask != null && tableState.tableSummaryTaskStatus == null) {
             // Compute table summary
-            await summarizeTable(state, tableState, tableState.tableSummaryTask, dispatch, logger);
+            await summarizeTable(tableState, tableState.tableSummaryTask, dispatch, logger);
             return;
         }
-        // Pending column summary task
-        if (tableState.columnSummariesPending.size > 0) {
+
+        // Pending column summary task?
+        if (tableState.columnSummariesPending.length > 0 && tableState.tableSummary != null) {
             // Delete task from pending
-            const [k, v] = tableState.columnSummariesPending.entries().next().value!;
-            tableState.columnSummariesPending.delete(k);
+            const task = tableState.columnSummariesPending[0];
+            tableState.columnSummariesPending.shift();
+            // Table summary is empty?
+            if (tableState.tableSummary == null) {
+                continue
+            }
             // Compute column summary
-            await summarizeColumn(state, tableState, v, dispatch, logger);
+            await summarizeColumn(tableState, task, tableState.tableSummary, dispatch, logger);
             return;
         }
     }
 }
 
 /// Helper to sort a table
-async function sortTable(state: ComputationState, tableState: TableComputationState, task: TableOrderingTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<void> {
-    const transform = new pb.sqlynx_compute.pb.DataFrameTransform({
-        orderBy: new pb.sqlynx_compute.pb.OrderByTransform({
-            constraints: task.orderingConstraints
-        })
-    });
+async function sortTable(tableState: TableComputationState, task: TableOrderingTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<void> {
+    // Create the transform
+    const transform = createOrderByTransform(task.orderingConstraints);
+
     // Mark task as running
     let startedAt = new Date();
     let taskProgress: TaskProgress = {
-        status: TaskStatus.TASK_PICKED,
+        status: TaskStatus.TASK_RUNNING,
         startedAt,
         completedAt: null,
         failedAt: null,
@@ -173,13 +175,13 @@ async function sortTable(state: ComputationState, tableState: TableComputationSt
             value: [tableState.tableId, taskProgress]
         });
         // Order the data frame
-        const ordered = await tableState.dataFrame!.transform(transform);
+        const transformed = await tableState.dataFrame!.transform(transform);
         logger.info(`sorting table ${tableState.tableId} succeded, scanning result`, LOG_CTX);
         // Read the result
-        const orderedTable = await ordered.readTable();
-        logger.info(`scanning table ${tableState.tableId} suceeded`, LOG_CTX);
-        // Delete the data frame
-        await ordered.delete();
+        const orderedTable = await transformed.readTable();
+        logger.info(`scanning sorted table ${tableState.tableId} suceeded`, LOG_CTX);
+        // Delete the data frame after reordering
+        await transformed.delete();
         // The output table
         const out: OrderedTable = {
             orderingConstraints: task.orderingConstraints,
@@ -197,6 +199,7 @@ async function sortTable(state: ComputationState, tableState: TableComputationSt
             type: TABLE_ORDERING_TASK_SUCCEEDED,
             value: [tableState.tableId, taskProgress, out],
         });
+
     } catch (error: any) {
         logger.error(`ordering table ${tableState.tableId} failed with error: ${error.toString()}`);
         taskProgress = {
@@ -214,7 +217,152 @@ async function sortTable(state: ComputationState, tableState: TableComputationSt
 }
 
 /// Helper to summarize a table
-async function summarizeTable(_state: ComputationState, _tableState: TableComputationState, _task: TableSummaryTask, _dispatch: Dispatch<ComputationAction>, _logger: Logger): Promise<void> { }
+async function summarizeTable(tableState: TableComputationState, task: TableSummaryTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<void> {
+    // Create the transform
+    const transform = createTableSummaryTransform(task);
 
-async function summarizeColumn(_state: ComputationState, _tableState: TableComputationState, _task: ColumnSummaryTask, _dispatch: Dispatch<ComputationAction>, _logger: Logger): Promise<void> { }
+    // Mark task as running
+    let startedAt = new Date();
+    let taskProgress: TaskProgress = {
+        status: TaskStatus.TASK_RUNNING,
+        startedAt,
+        completedAt: null,
+        failedAt: null,
+        failedWithError: null,
+    }
+
+    try {
+        dispatch({
+            type: TABLE_SUMMARY_TASK_RUNNING,
+            value: [tableState.tableId, taskProgress]
+        });
+        // Order the data frame
+        const transformedDataFrame = await tableState.dataFrame!.transform(transform);
+        logger.info(`summarizing table ${tableState.tableId} succeded, scanning result`, LOG_CTX);
+        // Read the result
+        const transformedTable = await transformedDataFrame.readTable();
+        logger.info(`scanning summary for table ${tableState.tableId} suceeded`, LOG_CTX);
+        // The output table
+        const out: TableSummary = {
+            columnEntries: task.columnEntries,
+            transformedTable,
+            transformedDataFrame,
+            statsCountStarField: task.statsCountStarField
+        };
+        // Mark the task as succeeded
+        taskProgress = {
+            status: TaskStatus.TASK_SUCCEEDED,
+            startedAt,
+            completedAt: new Date(),
+            failedAt: null,
+            failedWithError: null,
+        };
+        dispatch({
+            type: TABLE_SUMMARY_TASK_SUCCEEDED,
+            value: [tableState.tableId, taskProgress, out],
+        });
+
+    } catch (error: any) {
+        logger.error(`ordering table ${tableState.tableId} failed with error: ${error.toString()}`);
+        taskProgress = {
+            status: TaskStatus.TASK_FAILED,
+            startedAt,
+            completedAt: null,
+            failedAt: new Date(),
+            failedWithError: error,
+        };
+        dispatch({
+            type: TABLE_SUMMARY_TASK_FAILED,
+            value: [tableState.tableId, taskProgress, error],
+        });
+    }
+}
+
+async function summarizeColumn(tableState: TableComputationState, task: ColumnSummaryTask, tableSummary: TableSummary, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<void> {
+    // Create the transform
+    const transform = createColumnSummaryTransform(task, tableSummary);
+
+    // Mark task as running
+    let startedAt = new Date();
+    let taskProgress: TaskProgress = {
+        status: TaskStatus.TASK_RUNNING,
+        startedAt,
+        completedAt: null,
+        failedAt: null,
+        failedWithError: null,
+    }
+
+    try {
+        dispatch({
+            type: COLUMN_SUMMARY_TASK_RUNNING,
+            value: [task.tableId, task.columnId, taskProgress]
+        });
+        // Order the data frame
+        const transformedDataFrame = await tableState.dataFrame!.transform(transform);
+        logger.info(`summarizing column ${task.tableId} succeded, scanning result`, LOG_CTX);
+        // Read the result
+        const transformedTable = await transformedDataFrame.readTable();
+        logger.info(`scanning summary for column ${task.tableId}[${task.columnId}] suceeded`, LOG_CTX);
+        // Delete the data frame after reordering
+        transformedDataFrame.delete();
+        // Create the summary variant
+        let summary: ColumnSummaryVariant;
+        switch (task.columnEntry.type) {
+            case ORDINAL_COLUMN:
+                summary = {
+                    type: ORDINAL_COLUMN,
+                    value: {
+                        columnEntry: task.columnEntry.value,
+                        binnedValues: transformedTable,
+                    }
+                };
+                break;
+            case STRING_COLUMN:
+                summary = {
+                    type: STRING_COLUMN,
+                    value: {
+                        columnEntry: task.columnEntry.value,
+                        frequentValues: transformedTable,
+                    }
+                };
+                break;
+            case LIST_COLUMN:
+                summary = {
+                    type: LIST_COLUMN,
+                    value: {
+                        columnEntry: task.columnEntry.value,
+                        binnedLengths: transformedTable,
+                    }
+                };
+                break;
+        }
+        // Mark the task as succeeded
+        taskProgress = {
+            status: TaskStatus.TASK_SUCCEEDED,
+            startedAt,
+            completedAt: new Date(),
+            failedAt: null,
+            failedWithError: null,
+        };
+        dispatch({
+            type: COLUMN_SUMMARY_TASK_SUCCEEDED,
+            value: [task.tableId, task.columnId, taskProgress, summary],
+        });
+
+
+    } catch (error: any) {
+        logger.error(`ordering table ${tableState.tableId} failed with error: ${error.toString()}`);
+        taskProgress = {
+            status: TaskStatus.TASK_FAILED,
+            startedAt,
+            completedAt: null,
+            failedAt: new Date(),
+            failedWithError: error,
+        };
+        dispatch({
+            type: COLUMN_SUMMARY_TASK_FAILED,
+            value: [task.tableId, task.columnId, taskProgress, error],
+        });
+    }
+}
 
