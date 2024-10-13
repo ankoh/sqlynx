@@ -77,7 +77,7 @@ jobs:
                     ./.bin/sqlynx-pack vacuum --keep-stable 100 --keep-canary 10
 
             - name: Publish release metadata through Slack Webhook
-              uses: slackapi/slack-github-action@v1.26.0
+              uses: slackapi/slack-github-action@v1.27.0
               with:
                 payload-file-path: "./release.json"
               env:
