@@ -41,15 +41,11 @@ function MetricEntry(props: MetricEntryProps) {
     );
 }
 
-interface Props {
-    query: QueryExecutionState | null;
+interface ResultInfoProps {
+    query: QueryExecutionState;
 }
 
-export function QueryResultView(props: Props) {
-    if (props.query == null) {
-        return <div />
-    }
-
+function ResultInfo(props: ResultInfoProps) {
     const metrics = props.query.metrics;
     const rowsReceived = (metrics.rowsReceived == null) ? '-' : formatThousands(metrics.rowsReceived);
     const batchesReceived = (metrics.batchesReceived == null) ? '-' : formatThousands(metrics.batchesReceived);
@@ -64,29 +60,48 @@ export function QueryResultView(props: Props) {
     const anyB3 = b3TraceId != null || b3SpanId != null || b3ParentSpanId != null;
 
     return (
+        <div className={styles.info_container}>
+            <div className={styles.metrics_container}>
+                <div className={styles.metrics_group}>
+                    <MetricEntry name="Records" value={rowsReceived} />
+                    <MetricEntry name="Record Batches" value={batchesReceived} />
+                    <MetricEntry name="Data Bytes" value={dataBytes.toString()} />
+                </div>
+                <div className={styles.metrics_group}>
+                    <MetricEntry name="Schema At" value={untilSchema} />
+                    <MetricEntry name="First Batch At" value={untilFirstRow} />
+                    <MetricEntry name="Finished At" value={queryDuration} />
+                </div>
+                {anyB3 && (
+                    <div className={styles.metrics_group}>
+                        {b3TraceId && <MetricEntry name="TraceId" value={b3TraceId} clipboard />}
+                        {b3SpanId && <MetricEntry name="SpanId" value={b3SpanId} clipboard />}
+                        {b3ParentSpanId && <MetricEntry name="ParentSpanId" value={b3ParentSpanId} clipboard />}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+interface Props {
+    query: QueryExecutionState | null;
+}
+
+export function QueryResultView(props: Props) {
+    const [infoExpanded, setInfoExpanded] = React.useState(false);
+
+    if (props.query == null) {
+        return <div />
+    }
+
+    const toggleInfo = () => setInfoExpanded(e => !e);
+
+    return (
         <div className={styles.root}>
             <DataTable className={styles.data_table} data={props.query.resultTable} />
-            <div className={styles.info_container}>
-                <div className={styles.metrics_container}>
-                    <div className={styles.metrics_group}>
-                        <MetricEntry name="Records" value={rowsReceived} />
-                        <MetricEntry name="Record Batches" value={batchesReceived} />
-                        <MetricEntry name="Data Bytes" value={dataBytes.toString()} />
-                    </div>
-                    <div className={styles.metrics_group}>
-                        <MetricEntry name="Schema At" value={untilSchema} />
-                        <MetricEntry name="First Batch At" value={untilFirstRow} />
-                        <MetricEntry name="Finished At" value={queryDuration} />
-                    </div>
-                    {anyB3 && (
-                        <div className={styles.metrics_group}>
-                            {b3TraceId && <MetricEntry name="TraceId" value={b3TraceId} clipboard />}
-                            {b3SpanId && <MetricEntry name="SpanId" value={b3SpanId} clipboard />}
-                            {b3ParentSpanId && <MetricEntry name="ParentSpanId" value={b3ParentSpanId} clipboard />}
-                        </div>
-                    )}
-                </div>
-            </div>
+            <div className={styles.info_toggle} onClick={toggleInfo} />
+            {infoExpanded && <ResultInfo query={props.query} />}
         </div>
     );
 }
