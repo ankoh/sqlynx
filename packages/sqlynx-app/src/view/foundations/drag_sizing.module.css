@@ -28,7 +28,7 @@
     position: absolute;
     top: calc(50% - 16px);
     left: calc(50% - 1px);
-    height: 32px;
+    height: 24px;
     width: 2px;
     background-color: var(--drag_resizing_handler_structure_bg);
     border-radius: 8px;
