@@ -6,6 +6,7 @@ import { ColumnSummaryVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, 
 import { Dispatch, VariantKind } from '../utils/variant.js';
 import { AsyncDataFrame, ComputeWorkerBindings } from './compute_worker_bindings.js';
 import { Logger } from '../platform/logger.js';
+import { ColumnMapping } from './column_mapping.js';
 
 const LOG_CTX = "computation_state";
 
@@ -13,13 +14,15 @@ const LOG_CTX = "computation_state";
 interface TableComputationState {
     /// The table id
     tableId: number;
-    /// The table on the main thread
-    table: arrow.Table;
     /// The epoch number
     localEpoch: number;
 
+    /// The table on the main thread
+    dataTable: arrow.Table;
     /// The data frame in the compute module
     dataFrame: AsyncDataFrame | null;
+    /// The column mapping (if mapped)
+    dataColumnMappings: ColumnMapping[] | null;
 
     /// The ordering task
     orderingTask: TableOrderingTask | null;

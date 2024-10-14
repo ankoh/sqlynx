@@ -70,13 +70,13 @@ export interface TaskProgress {
 
 // ------------------------------------------------------------
 
-type ColumnEntryVariant =
+export type ColumnEntryVariant =
     VariantKind<typeof ORDINAL_COLUMN, OrdinalColumnEntry>
     | VariantKind<typeof STRING_COLUMN, StringColumnEntry>
     | VariantKind<typeof LIST_COLUMN, ListColumnEntry>
     ;
 
-interface OrdinalColumnEntry {
+export interface OrdinalColumnEntry {
     /// The input column id
     inputFieldId: number;
     /// The input field name
@@ -89,7 +89,7 @@ interface OrdinalColumnEntry {
     statsMaxAggregateField: number;
 }
 
-interface StringColumnEntry {
+export interface StringColumnEntry {
     /// The input column id
     inputFieldId: number;
     /// The input field name
@@ -102,7 +102,7 @@ interface StringColumnEntry {
     statsMaxLengthAggregateField: number;
 }
 
-interface ListColumnEntry {
+export interface ListColumnEntry {
     /// The input column id
     inputFieldId: number;
     /// The input field name
