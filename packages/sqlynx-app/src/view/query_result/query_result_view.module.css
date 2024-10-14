@@ -13,9 +13,21 @@
 .info_toggle {
     display: flex;
     flex-direction: column;
-    width: 8px;
-    background-color: hsl(210deg 17.5% 92.31%);
+    width: 12px;
+    background-color: hsl(210, 29%, 98%);
     border-left: 1px solid var(--border_color_primary);
+    position: relative;
+}
+
+.info_toggle::after {
+    content: "";
+    position: absolute;
+    top: calc(50% - 16px);
+    left: calc(50% - 1px);
+    height: 24px;
+    width: 2px;
+    background-color: hsl(208.5deg, 24.69%, 31.76%);
+    border-radius: 8px;
 }
 
 .info_container {
