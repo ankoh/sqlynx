@@ -18,6 +18,8 @@ const MIN_GRID_HEIGHT = 200;
 const MIN_GRID_WIDTH = 100;
 const MIN_COLUMN_WIDTH = 120;
 const COLUMN_HEADER_HEIGHT = 24;
+const COLUMN_HEADER_METRICS_HEIGHT = 24;
+const COLUMN_HEADER_PLOTS_HEIGHT = 32;
 const ROW_HEIGHT = 24;
 const ROW_HEADER_WIDTH = 48;
 const FORMATTER_PIXEL_SCALING = 10;
@@ -56,14 +58,64 @@ function columnOffsetsAreEqual(oldWidths: Float64Array, newWidths: Float64Array)
     return true;
 }
 
+enum DataTableColumnHeader {
+    OnlyColumnName = 0,
+    WithColumnMetrics = 1,
+    WithColumnPlots = 2
+}
+var columnHeader: DataTableColumnHeader = DataTableColumnHeader.WithColumnPlots;
+
 export const DataTable: React.FC<Props> = (props: Props) => {
+
+    const dataGrid = React.useRef<Grid>(null);
     const gridContainerElement = React.useRef(null);
     const gridContainerSize = observeSize(gridContainerElement);
     const gridContainerHeight = Math.max(gridContainerSize?.height ?? 0, MIN_GRID_HEIGHT);
     const gridContainerWidth = Math.max(gridContainerSize?.width ?? 0, MIN_GRID_WIDTH);
-    const gridRows = 1 + (props.data?.numRows ?? 0);
     const gridColumns = 1 + (props.data?.numCols ?? 0);
-    const dataGrid = React.useRef<Grid>(null);
+    let gridRows = 1 + (props.data?.numRows ?? 0);
+
+    // Adjust based on the column header visibility
+    let getRowHeight: (_row: number) => number;
+    let getRowOffset: (row: number) => number;
+    let headerRowCount: number;
+    switch (columnHeader) {
+        case DataTableColumnHeader.OnlyColumnName:
+            headerRowCount = 1;
+            getRowHeight = (row: number) => (row == 0) ? COLUMN_HEADER_HEIGHT : ROW_HEIGHT;
+            getRowOffset = (row: number) => (row > 0 ? COLUMN_HEADER_HEIGHT : 0) + (Math.max(row, 1) - 1) * ROW_HEIGHT;
+            break;
+        case DataTableColumnHeader.WithColumnMetrics:
+            headerRowCount = 2;
+            gridRows += 1;
+            getRowHeight = (row: number) => {
+                switch (row) {
+                    case 0: return COLUMN_HEADER_HEIGHT;
+                    case 1: return COLUMN_HEADER_METRICS_HEIGHT;
+                    default: return ROW_HEIGHT
+                }
+            }
+            getRowOffset = (row: number) =>
+                (row > 0 ? COLUMN_HEADER_HEIGHT : 0)
+                + (row > 1 ? COLUMN_HEADER_METRICS_HEIGHT : 0)
+                + (Math.max(row, 2) - 2) * ROW_HEIGHT;
+            break;
+        case DataTableColumnHeader.WithColumnPlots:
+            headerRowCount = 2;
+            gridRows += 1;
+            getRowHeight = (row: number) => {
+                switch (row) {
+                    case 0: return COLUMN_HEADER_HEIGHT;
+                    case 1: return COLUMN_HEADER_PLOTS_HEIGHT;
+                    default: return ROW_HEIGHT
+                }
+            }
+            getRowOffset = (row: number) =>
+                (row > 0 ? COLUMN_HEADER_HEIGHT : 0)
+                + (row > 1 ? COLUMN_HEADER_PLOTS_HEIGHT : 0)
+                + (Math.max(row, 2) - 2) * ROW_HEIGHT;
+            break;
+    }
 
     /// Construct the arrow formatter
     const tableFormatter = React.useMemo(() => {
@@ -81,10 +133,11 @@ export const DataTable: React.FC<Props> = (props: Props) => {
             return new Float64Array();
         }
     });
+
     // Compute helper to resolve a cell location
     const gridCellLocation = React.useMemo<GridCellLocation>(() => ({
-        getRowHeight: (_row: number) => ROW_HEIGHT,
-        getRowOffset: (row: number) => row * ROW_HEIGHT,
+        getRowHeight,
+        getRowOffset,
         getColumnWidth: (column: number) => gridColumnOffsets[column + 1] - gridColumnOffsets[column],
         getColumnOffset: (column: number) => gridColumnOffsets[column],
     }), [gridColumnOffsets]);
@@ -109,11 +162,27 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                     </div>
                 );
             }
+        } else if (cellProps.rowIndex == 1 && columnHeader == DataTableColumnHeader.WithColumnMetrics) {
+            if (cellProps.columnIndex == 0) {
+                return <div className={styles.metrics_zero_cell} style={cellProps.style}></div>;
+            } else {
+                return (
+                    <div className={styles.metrics_cell} style={cellProps.style} />
+                );
+            }
+        } else if (cellProps.rowIndex == 1 && columnHeader == DataTableColumnHeader.WithColumnPlots) {
+            if (cellProps.columnIndex == 0) {
+                return <div className={styles.plots_zero_cell} style={cellProps.style}></div>;
+            } else {
+                return (
+                    <div className={styles.plots_cell} style={cellProps.style} />
+                );
+            }
         } else {
             if (cellProps.columnIndex == 0) {
                 return (
                     <div className={styles.row_zero_cell} style={cellProps.style}>
-                        {cellProps.rowIndex - 1}
+                        {cellProps.rowIndex - headerRowCount}
                     </div>
                 );
             } else {
@@ -123,7 +192,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                     )
                 } else {
                     const dataColumn = cellProps.columnIndex - 1;
-                    const dataRow = cellProps.rowIndex - 1;
+                    const dataRow = cellProps.rowIndex - headerRowCount;
                     const formatted = tableFormatter.getValue(dataRow, dataColumn);
                     return (
                         <div className={styles.data_cell} style={cellProps.style}>
