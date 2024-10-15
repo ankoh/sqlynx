@@ -205,7 +205,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
     };
 
     // Inner grid element type to render sticky row and column headers
-    const innerGridElementType = useStickyRowAndColumnHeaders(Cell, gridCellLocation, styles.data_grid_cells);
+    const innerGridElementType = useStickyRowAndColumnHeaders(Cell, gridCellLocation, styles.data_grid_cells, headerRowCount);
 
     // Listen to rendering events to check if the column widths changed.
     // Table elements are formatted lazily so we do not know upfront how wide a column will be.

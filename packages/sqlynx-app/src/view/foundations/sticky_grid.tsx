@@ -11,7 +11,7 @@ type InnerElementProps = {
     children?: React.ReactElement[]
 }
 
-export function useStickyRowAndColumnHeaders(Cell: React.ElementType, cellLocation: GridCellLocation, className: string) {
+export function useStickyRowAndColumnHeaders(Cell: React.ElementType, cellLocation: GridCellLocation, className: string, headerRowCount: number = 1) {
     return React.useMemo(
         () =>
             React.forwardRef<HTMLDivElement>((props: InnerElementProps, ref: React.ForwardedRef<HTMLDivElement>) => {
@@ -33,55 +33,66 @@ export function useStickyRowAndColumnHeaders(Cell: React.ElementType, cellLocati
                 const newChildren = React.Children.map(props.children!, (child) => {
                     const row = child?.props.rowIndex;
                     const column = child?.props.columnIndex;
-                    if (column === 0 || row === 0) {
+                    if (column === 0 || row < headerRowCount) {
                         return null;
                     }
                     return child;
                 });
 
-                // Add node for top-left corner
-                newChildren.push(
-                    React.createElement(Cell, {
-                        key: "0:0",
-                        rowIndex: 0,
-                        columnIndex: 0,
-                        style: {
-                            display: "inline-flex",
-                            width: cellLocation.getColumnWidth(0),
-                            height: cellLocation.getRowHeight(0),
-                            position: "sticky",
-                            top: 0,
-                            left: 0,
-                            zIndex: 4
-                        }
-                    })
-                );
+                // Add sticky rows
+                for (let i = 0; i < headerRowCount; ++i) {
+                    const rowIndex = i;
+                    const rowOffset = cellLocation.getRowOffset(rowIndex);
+                    const rowHeight = cellLocation.getRowHeight(rowIndex);
 
-                // Add sticky header nodes
-                for (let i = 1; i < (maxColumn - minColumn + 1); ++i) {
-                    const rowIndex = 0;
-                    const columnIndex = minColumn + i;
-
+                    // Add sticky corner cell
                     newChildren.push(
                         React.createElement(Cell, {
-                            key: `${rowIndex}:${columnIndex}`,
+                            key: `${rowIndex}:0`,
                             rowIndex,
-                            columnIndex,
+                            columnIndex: 0,
                             style: {
                                 display: "inline-flex",
-                                width: cellLocation.getColumnWidth(columnIndex),
-                                height: cellLocation.getRowHeight(rowIndex),
+                                width: cellLocation.getColumnWidth(0),
+                                height: rowHeight,
                                 position: "sticky",
-                                top: 0,
-                                marginLeft: (i === 1) ? (cellLocation.getColumnOffset(columnIndex) - cellLocation.getColumnWidth(0)) : undefined,
-                                zIndex: 3
+                                left: 0,
+                                top: rowOffset,
+                                zIndex: 4
                             }
                         })
                     );
+                    // Add sticky header cells
+                    for (let j = 1; j < (maxColumn - minColumn + 1); ++j) {
+                        const columnIndex = minColumn + j;
+
+                        newChildren.push(
+                            React.createElement(Cell, {
+                                key: `${rowIndex}:${columnIndex}`,
+                                rowIndex,
+                                columnIndex,
+                                style: {
+                                    display: "inline-flex",
+                                    width: cellLocation.getColumnWidth(columnIndex),
+                                    height: rowHeight,
+                                    position: "sticky",
+                                    top: rowOffset,
+                                    marginLeft: (j === 1) ? (cellLocation.getColumnOffset(columnIndex) - cellLocation.getColumnWidth(0)) : undefined,
+                                    zIndex: 3
+                                }
+                            })
+                        );
+                    }
                 }
 
-                // Add sticky row nodes
-                for (let i = 1; i < (maxRow - minRow + 1); ++i) {
+                // Get the offset of the first sticky row
+                let firstStickyRowOffset = 0;
+                for (let i = 0; i < headerRowCount; ++i) {
+                    firstStickyRowOffset += cellLocation.getRowHeight(i);
+                }
+
+                // Add sticky row numbers
+                for (let i = headerRowCount; i < (maxRow - minRow + 1); ++i) {
                     const rowIndex = minRow + i;
                     const columnIndex = 0;
 
@@ -95,7 +106,7 @@ export function useStickyRowAndColumnHeaders(Cell: React.ElementType, cellLocati
                                 height: cellLocation.getRowHeight(rowIndex),
                                 position: "sticky",
                                 left: 0,
-                                marginTop: (i === 1) ? (cellLocation.getRowOffset(rowIndex) - cellLocation.getRowHeight(0)) : undefined,
+                                marginTop: (i === headerRowCount) ? (cellLocation.getRowOffset(rowIndex) - firstStickyRowOffset) : undefined,
                                 zIndex: 2
                             }
                         })
