@@ -2,11 +2,7 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-}
-
-.data_grid {
-    width: 100%;
-    height: 100%;
+    font-size: 0.95rem;
 }
 
 .data_grid_cells {
@@ -20,7 +16,7 @@
     box-sizing: border-box;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: start;
     padding-left: 8px;
     padding-right: 8px;
     font-weight: 500;

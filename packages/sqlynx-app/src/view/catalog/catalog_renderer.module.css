@@ -34,8 +34,8 @@
     align-items: center;
     justify-items: center;
 
-    padding: 0px 8px;
-    font-size: 0.9rem;
+    padding: 0px 12px;
+    font-size: 0.95rem;
 }
 
 .node_overflow {}
