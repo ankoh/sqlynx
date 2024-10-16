@@ -18,11 +18,19 @@
     align-items: center;
     justify-content: start;
     padding-left: 8px;
-    padding-right: 8px;
+    padding-right: 2px;
     font-weight: 500;
 
     /* Needed for inline-flex alignment */
     vertical-align: top;
+}
+
+.header_cell_name {
+    flex: 1;
+}
+
+.header_cell_actions {
+
 }
 
 .header_zero_cell {
