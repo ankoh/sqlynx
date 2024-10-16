@@ -1,11 +1,13 @@
 import * as React from 'react';
 import * as arrow from 'apache-arrow';
+import * as styles from './data_table.module.css';
+import * as symbols from '../../../static/svg/symbols.generated.svg';
+
 import { VariableSizeGrid as Grid, GridChildComponentProps, GridOnItemsRenderedProps } from 'react-window';
 
 import { classNames } from '../../utils/classnames.js';
-
-import * as styles from './data_table.module.css';
 import { observeSize } from '../foundations/size_observer.js';
+import { ButtonSize, ButtonVariant, IconButton } from '../../view/foundations/button.js';
 import { ArrowTableFormatter } from './arrow_formatter.js';
 import { GridCellLocation, useStickyRowAndColumnHeaders } from '../foundations/sticky_grid.js';
 
@@ -158,7 +160,20 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                 const fieldId = cellProps.columnIndex - 1;
                 return (
                     <div className={styles.header_cell} style={cellProps.style}>
-                        {props.data!.schema.fields[fieldId].name}
+                        <span className={styles.header_cell_name}>
+                            {props.data!.schema.fields[fieldId].name}
+                        </span>
+                        <span className={styles.header_cell_actions}>
+                            <IconButton
+                                variant={ButtonVariant.Invisible}
+                                size={ButtonSize.Small}
+                                aria-label="sort-column"
+                            >
+                                <svg width="16px" height="16px">
+                                    <use xlinkHref={`${symbols}#sort_desc_16`} />
+                                </svg>
+                            </IconButton>
+                        </span>
                     </div>
                 );
             }
