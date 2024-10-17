@@ -38,7 +38,7 @@ __metadata:
     "@connectrpc/connect": "npm:^1.6.1"
     "@connectrpc/connect-web": "npm:^1.6.1"
     "@emotion/is-prop-valid": "npm:^1.3.1"
-    "@lezer/common": "npm:^1.2.2"
+    "@lezer/common": "npm:^1.2.3"
     "@lezer/highlight": "npm:^1.2.1"
     "@octokit/graphql": "npm:^8.1.1"
     "@primer/behaviors": "npm:^1.7.2"
@@ -1493,10 +1493,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/common@npm:^1.0.0, @lezer/common@npm:^1.1.0, @lezer/common@npm:^1.2.2":
+"@lezer/common@npm:^1.0.0, @lezer/common@npm:^1.1.0":
   version: 1.2.2
   resolution: "@lezer/common@npm:1.2.2"
   checksum: 10c0/8dac6afded15606a94fadbdbbc3b3115489c4fc0580ac103efdbe6b3dae7f3ef4d82250a45e80c7530240b9c9b09f1389975bf288651eb6d3236ee962c060e35
+  languageName: node
+  linkType: hard
+
+"@lezer/common@npm:^1.2.3":
+  version: 1.2.3
+  resolution: "@lezer/common@npm:1.2.3"
+  checksum: 10c0/fe9f8e111080ef94037a34ca2af1221c8d01c1763ba5ecf708a286185c76119509a5d19d924c8842172716716ddce22d7834394670c4a9432f0ba9f3b7c0f50d
   languageName: node
   linkType: hard
 
