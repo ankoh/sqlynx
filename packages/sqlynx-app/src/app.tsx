@@ -30,6 +30,7 @@ import { SessionCommands } from './session/session_commands.js';
 import { SessionSetup } from './session/session_setup.js';
 import { SessionStateRegistry } from './session/session_state_registry.js';
 import { UIInternalsPage } from './view/internals/ui_internals_page.js';
+import { PlotInternalsPage } from './view/internals/plot_internals_page.js';
 import { VersionCheck } from './platform/version_check.js';
 import { isDebugBuild } from './globals.js';
 
@@ -120,6 +121,7 @@ root.render(
                     {isDebugBuild() && (
                         <>
                             <Route path="/internals/ui" Component={UIInternalsPage} />
+                            <Route path="/internals/plot" Component={PlotInternalsPage} />
                             <Route path="/internals/schema" Component={SchemaGraphDemoPage} />
                         </>
                     )}
