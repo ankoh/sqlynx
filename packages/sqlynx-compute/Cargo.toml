@@ -25,14 +25,14 @@ prost = "0.13.3"
 tokio = { version = "1.40.0", features = ["macros", "rt", "sync"] }
 arrow = { version = "53.1.0", default-features = false, features = ["ipc"] }
 
-datafusion-common = { version = "42.0.0", default-features = false }
-datafusion-expr = { version = "42.0.0", default-features = false }
-datafusion-execution = { version = "42.0.0", default-features = false }
-datafusion-functions = { version = "42.0.0", default-features = false }
-datafusion-functions-aggregate = { version = "42.0.0", default-features = false }
-datafusion-functions-nested = { version = "42.0.0", default-features = false }
-datafusion-physical-expr = { version = "42.0.0", default-features = false }
-datafusion-physical-plan = { version = "42.0.0", default-features = false }
+datafusion-common = { version = "42.1.0", default-features = false }
+datafusion-expr = { version = "42.1.0", default-features = false }
+datafusion-execution = { version = "42.1.0", default-features = false }
+datafusion-functions = { version = "42.1.0", default-features = false }
+datafusion-functions-aggregate = { version = "42.1.0", default-features = false }
+datafusion-functions-nested = { version = "42.1.0", default-features = false }
+datafusion-physical-expr = { version = "42.1.0", default-features = false }
+datafusion-physical-plan = { version = "42.1.0", default-features = false }
 
 [dependencies.web-sys]
 version = "0.3.71"
