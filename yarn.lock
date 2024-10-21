@@ -46,14 +46,14 @@ __metadata:
     "@primer/react": "npm:^36.27.0"
     "@primer/react-brand": "npm:^0.40.1"
     "@react-hook/resize-observer": "npm:^2.0.2"
-    "@tauri-apps/api": "npm:^2.0.2"
+    "@tauri-apps/api": "npm:^2.0.3"
     "@tauri-apps/cli": "npm:^2.0.3"
     "@tauri-apps/plugin-deep-link": "npm:^2.0.0"
-    "@tauri-apps/plugin-http": "npm:^2.0.0"
+    "@tauri-apps/plugin-http": "npm:^2.0.1"
     "@tauri-apps/plugin-log": "npm:^2.0.0"
     "@tauri-apps/plugin-os": "npm:^2.0.0"
     "@tauri-apps/plugin-process": "npm:^2.0.0"
-    "@tauri-apps/plugin-shell": "npm:^2.0.0"
+    "@tauri-apps/plugin-shell": "npm:^2.0.1"
     "@tauri-apps/plugin-updater": "npm:^2.0.0"
     "@testing-library/react": "npm:^16.0.1"
     "@types/flatbuffers": "npm:^1.10.3"
@@ -2009,10 +2009,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tauri-apps/api@npm:^2.0.2":
-  version: 2.0.2
-  resolution: "@tauri-apps/api@npm:2.0.2"
-  checksum: 10c0/6647cc00cf521bcfaf83e4f397b15aca6fd03db27e2afd883ee9e9ea6b14bc3b90c3df0756aaa0636bd9be791799320e44e99a2e83f2865916b0447879d00682
+"@tauri-apps/api@npm:^2.0.3":
+  version: 2.0.3
+  resolution: "@tauri-apps/api@npm:2.0.3"
+  checksum: 10c0/9bbf0a94be5b07a8be880fb6f2d78f3fb48e9d83a42e2adfabff7a8cefb9147ad199bddb2c2cec72407389cde24ecdd6729a8d972410b8237571c39609f5d6a1
   languageName: node
   linkType: hard
 
@@ -2136,12 +2136,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tauri-apps/plugin-http@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "@tauri-apps/plugin-http@npm:2.0.0"
+"@tauri-apps/plugin-http@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "@tauri-apps/plugin-http@npm:2.0.1"
   dependencies:
     "@tauri-apps/api": "npm:^2.0.0"
-  checksum: 10c0/d98609f63ad3a59b2acf5081142bc61e51820f4ace6e01ccc20bf7911b206935c1f50c7e54ca67a61905f62d6cc75a7df7a0716e11d5b65727e4cc920bb7f43b
+  checksum: 10c0/0184994f3243639098af4ea7654604282ff71952f449755a00f18b091f6aecc15006d27c3a49be74638a48fe5b0075b60e970acac0ec3323effcca6e52150bb0
   languageName: node
   linkType: hard
 
@@ -2172,12 +2172,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tauri-apps/plugin-shell@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "@tauri-apps/plugin-shell@npm:2.0.0"
+"@tauri-apps/plugin-shell@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "@tauri-apps/plugin-shell@npm:2.0.1"
   dependencies:
     "@tauri-apps/api": "npm:^2.0.0"
-  checksum: 10c0/4246553a4ef9c6b7ae089f2fdf0c6e5a989b1949e30471bb8d29ed9227819822a3d9c00176c28ad293ab99e9b6d9b37dcac2ef02bb93ee768db0885fb35ae8f3
+  checksum: 10c0/78e3fb1118f77a71abe477b65b31af9b584613347bf5237426ea4a80a0c0bb38ce13fc7d66adbcd45e5171d67aa43863ba22ef26891ae7fdb718a8f82ea0d98d
   languageName: node
   linkType: hard
 
