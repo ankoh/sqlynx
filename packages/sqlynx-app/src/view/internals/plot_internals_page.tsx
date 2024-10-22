@@ -79,7 +79,6 @@ function filterTable(input: arrow.Table<testSchemaType>, selectBegin: number, se
 }
 
 function Example(): React.ReactElement {
-    const containerRef = React.useRef<HTMLDivElement>(null);
     const rows = React.useMemo(() => testTable.toArray(), [testTable]);
 
     const [rangeSelection, setRangeSelection] = React.useState<[number, number] | null>(null);
@@ -106,24 +105,18 @@ function Example(): React.ReactElement {
             .range([height, 0])
     ]), []);
 
+    const dataBarsContainer = React.useRef<SVGGElement>(null);
+    const selectionBarContainer = React.useRef<SVGGElement>(null);
+    const defsContainer = React.useRef<SVGDefsElement>(null);
+    const brushContainer = React.useRef<SVGGElement>(null);
+    const xAxisContainer = React.useRef<SVGGElement>(null);
+
     React.useLayoutEffect(() => {
-        d3.select(containerRef.current).selectChildren().remove();
-
-        const svg = d3
-            .select(containerRef.current)
-            .append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", `translate(${margin.left},${margin.top})`);
-
-        // Add a group fro the bars
-        const defaultBars = svg.append('g').attr('class', 'bars');
-        // Add a group for the brush clips
-        const clippedBars = svg.append('g').attr('class', 'clips');
-
         // Define the clipping area for the brush
-        svg.append('defs')
+        d3.select(defsContainer.current)
+            .selectChildren()
+            .remove();
+        d3.select(defsContainer.current)
             .append('clipPath')
             .attr('id', 'brush_clip')
             .append('rect')
@@ -133,7 +126,11 @@ function Example(): React.ReactElement {
             .attr('height', height - margin.bottom);
 
         // Draw the default bars
-        defaultBars.selectAll("rect")
+        d3.select(dataBarsContainer.current)
+            .selectChildren()
+            .remove();
+        d3.select(dataBarsContainer.current)
+            .selectAll("rect")
             .data(rows)
             .enter()
             .append("rect")
@@ -144,7 +141,11 @@ function Example(): React.ReactElement {
             .attr("fill", "gray");
 
         // Draw the clipped bars
-        clippedBars.selectAll('rect')
+        d3.select(selectionBarContainer.current)
+            .selectChildren()
+            .remove();
+        d3.select(selectionBarContainer.current)
+            .selectAll('rect')
             .data(rows)
             .enter()
             .append('rect')
@@ -157,7 +158,7 @@ function Example(): React.ReactElement {
         const onBrushEnd = (e: d3.D3BrushEvent<unknown>) => {
             if (!e.selection || !e.selection.length) {
                 // Span the entire chart area with the clip
-                svg.select('#brush_clip>rect')
+                d3.select('#brush_clip>rect')
                     .attr('x', margin.left)
                     .attr('width', width);
                 onRangeSelectionEnd();
@@ -166,7 +167,7 @@ function Example(): React.ReactElement {
         const onBrush = (e: d3.D3BrushEvent<unknown>) => {
             // Update the clipping rect using the selection
             const sel = e.selection as [number, number];
-            svg.select('#brush_clip>rect')
+            d3.select('#brush_clip>rect')
                 .attr('x', sel[0])
                 .attr('width', sel[1] - sel[0]);
 
@@ -184,22 +185,35 @@ function Example(): React.ReactElement {
             .on('end', onBrushEnd);
 
         // Add the brush overlay
-        svg.append('g')
+        d3.select(brushContainer.current!)
             .call(brush)
             .selectAll('rect')
             .attr("transform", `translate(${margin.left}, ${margin.top})`)
-            .attr('height', height)
+            .attr('height', height);
 
         // Add the x-axis
-        svg.append("g")
-            .attr("transform", `translate(${margin.left}, ${margin.top + height})`)
-            .call(d3.axisBottom(xScale).ticks(2).tickSize(0))
+        d3.select(xAxisContainer.current!)
+            .call(d3.axisBottom(xScale).ticks(2).tickSize(0));
 
     }, []);
 
     return (
         <div className={styles.histogram_container}>
-            <div className={styles.histogram_plot} ref={containerRef} />
+            <div className={styles.histogram_plot}>
+                <svg
+                    width={width + margin.left + margin.right}
+                    height={height + margin.top + margin.bottom}
+                >
+                    <g transform={`translate(${margin.left},${margin.top})`}>
+                        <g ref={dataBarsContainer} />
+                        <g ref={selectionBarContainer} />
+                        <defs ref={defsContainer} />
+                        <g ref={brushContainer} />
+                        <g ref={xAxisContainer} transform={`translate(${margin.left}, ${margin.top + height})`} />
+                    </g>
+
+                </svg>
+            </div>
             <div className={styles.histogram_axis_x}>
                 <div className={styles.histogram_axis_x_lb}>
                     {xDomain[0]}
@@ -211,7 +225,6 @@ function Example(): React.ReactElement {
         </div>
     );
 }
-
 
 export function PlotInternalsPage(): React.ReactElement {
     return (
