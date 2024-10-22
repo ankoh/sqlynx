@@ -33,7 +33,7 @@ function filterTable(input: arrow.Table<testSchemaType>, selectBegin: number, se
 
     // Get boundaries
     const beginFloored = Math.floor(selectBegin);
-    const beginFrac = (selectBegin + 1) - beginFloored;
+    const beginFrac = (beginFloored + 1) - selectBegin;
     const endFloored = Math.floor(selectEnd);
     const endFrac = selectEnd - endFloored;
 
@@ -42,15 +42,15 @@ function filterTable(input: arrow.Table<testSchemaType>, selectBegin: number, se
     for (let i = 0; i < batch.numRows; ++i) {
         let value = valueVec.get(i)!;
         if (i < beginFloored) {
-            value = 0;
-        } else if (i < selectBegin) {
-            value = Math.floor(value * beginFrac);
+            filteredValues[i] = 0;
+        } else if (i == beginFloored) {
+            filteredValues[i] = Math.floor(value * beginFrac);
         } else if (i < endFloored) {
             filteredValues[i] = value;
         } else if (i < selectEnd) {
             filteredValues[i] = value * endFrac;
         } else {
-            value = 0;
+            filteredValues[i] = 0;
         }
     }
 
@@ -97,7 +97,6 @@ function Example(): React.ReactElement {
 
     const dataBarsContainer = React.useRef<SVGGElement>(null);
     const selectionBarContainer = React.useRef<SVGGElement>(null);
-    const defsContainer = React.useRef<SVGDefsElement>(null);
     const brushContainer = React.useRef<SVGGElement>(null);
     const xAxisContainer = React.useRef<SVGGElement>(null);
 
@@ -106,7 +105,6 @@ function Example(): React.ReactElement {
         const table = filterTable(testTable, selBegin, selEnd);
         const rows = table.toArray();
 
-        // Draw the clipped bars
         d3.select(selectionBarContainer.current)
             .selectChildren()
             .remove();
@@ -125,19 +123,6 @@ function Example(): React.ReactElement {
     }, []);
 
     React.useLayoutEffect(() => {
-        // Define the clipping area for the brush
-        d3.select(defsContainer.current)
-            .selectChildren()
-            .remove();
-        d3.select(defsContainer.current)
-            .append('clipPath')
-            .attr('id', 'brush_clip')
-            .append('rect')
-            .attr('x', margin.left)
-            .attr('y', margin.top)
-            .attr('width', width - margin.right)
-            .attr('height', height - margin.bottom);
-
         // Draw the default bars
         d3.select(dataBarsContainer.current)
             .selectChildren()
@@ -155,20 +140,11 @@ function Example(): React.ReactElement {
 
         const onBrushEnd = (e: d3.D3BrushEvent<unknown>) => {
             if (!e.selection || !e.selection.length) {
-                // Span the entire chart area with the clip
-                d3.select('#brush_clip>rect')
-                    .attr('x', margin.left)
-                    .attr('width', width);
                 onRangeSelectionEnd();
             }
         }
         const onBrush = (e: d3.D3BrushEvent<unknown>) => {
-            // Update the clipping rect using the selection
             const sel = e.selection as [number, number];
-            d3.select('#brush_clip>rect')
-                .attr('x', sel[0])
-                .attr('width', sel[1] - sel[0]);
-
             var eachBand = xScale.step();
             onRangeSelection(sel[0] / eachBand, sel[1] / eachBand);
         }
@@ -205,7 +181,6 @@ function Example(): React.ReactElement {
                     <g transform={`translate(${margin.left},${margin.top})`}>
                         <g ref={dataBarsContainer} />
                         <g ref={selectionBarContainer} />
-                        <defs ref={defsContainer} />
                         <g ref={brushContainer} />
                         <g ref={xAxisContainer} transform={`translate(${margin.left}, ${margin.top + height})`} />
                     </g>
