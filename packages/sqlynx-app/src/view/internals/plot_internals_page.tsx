@@ -27,9 +27,8 @@ const [testSchema, testBatches] = generateRandomData(config);
 type testSchemaType = { binField: arrow.Int32, countField: arrow.Int32 };
 const testTable = new arrow.Table<testSchemaType>(testSchema, testBatches);
 
-function filterTable(input: arrow.Table<testSchemaType>, selectBegin: number, selectEnd: number) {
+function filterTable(input: arrow.Table<testSchemaType>, selectBegin: number, selectEnd: number): arrow.Table {
     const batch = input.batches[0];
-    const binVec = batch.getChildAt(0) as arrow.Vector<arrow.Int32>;
     const valueVec = batch.getChildAt(1) as arrow.Vector<arrow.Int32>;
 
     // Get boundaries
@@ -81,15 +80,6 @@ function filterTable(input: arrow.Table<testSchemaType>, selectBegin: number, se
 function Example(): React.ReactElement {
     const rows = React.useMemo(() => testTable.toArray(), [testTable]);
 
-    const [rangeSelection, setRangeSelection] = React.useState<[number, number] | null>(null);
-    const onRangeSelection = React.useCallback((selBegin: number, selEnd: number) => {
-        setRangeSelection([selBegin, selEnd]);
-        filterTable(testTable, selBegin, selEnd);
-    }, []);
-    const onRangeSelectionEnd = React.useCallback(() => {
-        setRangeSelection(null);
-    }, []);
-
     var margin = { top: 0, right: 0, bottom: 0, left: 0 },
         width = 130 - margin.left - margin.right,
         height = 30 - margin.top - margin.bottom;
@@ -110,6 +100,29 @@ function Example(): React.ReactElement {
     const defsContainer = React.useRef<SVGDefsElement>(null);
     const brushContainer = React.useRef<SVGGElement>(null);
     const xAxisContainer = React.useRef<SVGGElement>(null);
+
+    const [rangeSelection, setRangeSelection] = React.useState<[number, number] | null>(null);
+    const onRangeSelection = React.useCallback((selBegin: number, selEnd: number) => {
+        const table = filterTable(testTable, selBegin, selEnd);
+        const rows = table.toArray();
+
+        // Draw the clipped bars
+        d3.select(selectionBarContainer.current)
+            .selectChildren()
+            .remove();
+        d3.select(selectionBarContainer.current)
+            .selectAll('rect')
+            .data(rows)
+            .enter()
+            .append('rect')
+            .attr("x", d => xScale(d.binField)!)
+            .attr("y", d => yScale(d.countField)!)
+            .attr("width", xScale.bandwidth())
+            .attr("height", d => (height - yScale(d.countField)!));
+    }, []);
+    const onRangeSelectionEnd = React.useCallback(() => {
+        setRangeSelection(null);
+    }, []);
 
     React.useLayoutEffect(() => {
         // Define the clipping area for the brush
@@ -139,21 +152,6 @@ function Example(): React.ReactElement {
             .attr("width", xScale.bandwidth())
             .attr("height", d => (height - yScale(d.countField)!))
             .attr("fill", "gray");
-
-        // Draw the clipped bars
-        d3.select(selectionBarContainer.current)
-            .selectChildren()
-            .remove();
-        d3.select(selectionBarContainer.current)
-            .selectAll('rect')
-            .data(rows)
-            .enter()
-            .append('rect')
-            .attr("x", d => xScale(d.binField)!)
-            .attr("y", d => yScale(d.countField)!)
-            .attr("width", xScale.bandwidth())
-            .attr("height", d => (height - yScale(d.countField)!))
-            .attr('clip-path', 'url(#brush_clip)');
 
         const onBrushEnd = (e: d3.D3BrushEvent<unknown>) => {
             if (!e.selection || !e.selection.length) {
