@@ -17,6 +17,7 @@ use datafusion_functions_aggregate::count::count_udaf;
 use datafusion_functions_aggregate::min_max::Max;
 use datafusion_functions_aggregate::min_max::Min;
 use datafusion_functions_nested::length::array_length_udf;
+use datafusion_physical_expr::ConstExpr;
 use datafusion_physical_expr::PhysicalExpr;
 use datafusion_physical_expr::PhysicalSortExpr;
 use datafusion_physical_expr::aggregate::AggregateExprBuilder;
@@ -26,6 +27,7 @@ use datafusion_physical_expr::expressions::binary;
 use datafusion_physical_expr::expressions::col;
 use datafusion_physical_expr::expressions::lit;
 use datafusion_physical_expr::ScalarFunctionExpr;
+use datafusion_physical_plan::filter::FilterExec;
 use datafusion_physical_plan::projection::ProjectionExec;
 use datafusion_physical_plan::ExecutionPlan;
 use datafusion_physical_plan::aggregates::{AggregateMode, AggregateExec, PhysicalGroupBy};
@@ -38,7 +40,7 @@ use wasm_bindgen::prelude::*;
 use crate::arrow_out::DataFrameIpcStream;
 use crate::proto::sqlynx_compute::GroupByKey;
 use crate::proto::sqlynx_compute::GroupByKeyBinning;
-use crate::proto::sqlynx_compute::{DataFrameTransform, GroupByTransform, OrderByTransform, AggregationFunction};
+use crate::proto::sqlynx_compute::{DataFrameTransform, GroupByTransform, OrderByTransform, AggregationFunction, FilterByBinRangeTransform};
 
 #[wasm_bindgen]
 pub struct DataFrame {
@@ -510,11 +512,20 @@ impl DataFrame {
         return Ok(output);
     }
 
+    /// Filter by a bin range
+    async fn filter_by_bin_range(&self, _config: &FilterByBinRangeTransform, _stats: Option<&DataFrame>, input: Arc<dyn ExecutionPlan>) -> anyhow::Result<FilterExec> {
+        let filter = FilterExec::try_new(ConstExpr::new(lit(true)).owned_expr(), input)?;
+        Ok(filter)
+    }
+
     /// Transform a data frame
     pub(crate) async fn transform(&self, transform: &DataFrameTransform, stats: Option<&DataFrame>) -> anyhow::Result<DataFrame> {
         let mut input: Arc<dyn ExecutionPlan> = Arc::new(
             MemoryExec::try_new(&self.partitions, self.schema.clone(), None).unwrap(),
         );
+        if let Some(filter_by) = &transform.filter_by_bin_range {
+            input = Arc::new(self.filter_by_bin_range(filter_by, stats, input).await?);
+        }
         if let Some(group_by) = &transform.group_by {
             input = self.group_by(group_by, stats, input).await?;
         }
