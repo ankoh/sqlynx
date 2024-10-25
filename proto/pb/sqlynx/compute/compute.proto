@@ -74,9 +74,24 @@ message GroupByTransform {
     repeated GroupByAggregate aggregates = 2;
 }
 
+message FilterByBinRangeTransform {
+    /// The field containing the precomputed minimum of the field
+    string stats_minimum_field_name = 1;
+    /// The field containing the precomputed maximum of the field
+    string stats_maximum_field_name = 2;
+    /// The number of bins
+    uint32 bin_count = 3;
+    /// The begin of the range
+    double range_begin = 4;
+    /// The end of the range
+    double range_end = 5;
+}
+
 message DataFrameTransform {
     /// The group by transform (if any)
     optional GroupByTransform group_by = 1;
     /// The order by transform (if any)
     optional OrderByTransform order_by = 2;
+    /// The filtering transform (if any)
+    optional FilterByBinRangeTransform filter_by_bin_range = 3;
 }
