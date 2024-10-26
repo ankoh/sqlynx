@@ -1,4 +1,4 @@
-use arrow::array::{ArrayRef, ArrowNativeTypeOp, Date32Array, Date32BufferBuilder, Date64Array, Date64BufferBuilder, Decimal128Array, Decimal128BufferBuilder, Decimal256Array, Decimal256BufferBuilder, Float32Builder, Int32Array, Int64Array, Int64BufferBuilder, ListBuilder, RecordBatch, StringArray, Time32MillisecondArray, Time32MillisecondBufferBuilder, Time64MicrosecondArray, Time64MicrosecondBufferBuilder, TimestampMillisecondArray, TimestampMillisecondBufferBuilder};
+use arrow::array::{ArrayRef, ArrowNativeTypeOp, Date32Array, Date32BufferBuilder, Date64Array, Date64BufferBuilder, Decimal128Array, Decimal128BufferBuilder, Decimal256Array, Decimal256BufferBuilder, Int32Array, Int64Array, Int64BufferBuilder, RecordBatch, StringArray, Time32MillisecondArray, Time32MillisecondBufferBuilder, Time64MicrosecondArray, Time64MicrosecondBufferBuilder, TimestampMillisecondArray, TimestampMillisecondBufferBuilder};
 use arrow::datatypes::{i256, DataType, Field, SchemaBuilder, TimeUnit};
 use arrow::util::pretty::pretty_format_batches;
 use chrono::{DateTime, Duration};
@@ -19,7 +19,8 @@ async fn test_transform_orderby() -> anyhow::Result<()> {
     ])?;
     let data_frame = DataFrame::new(data.schema(), vec![data]);
     let transform = DataFrameTransform {
-        filter_by_bin_range: None,
+        bin_fields: None,
+        filter_bin_range: None,
         group_by: None,
         order_by: Some(OrderByTransform {
             constraints: vec![
@@ -53,7 +54,8 @@ async fn test_minmax_int64() -> anyhow::Result<()> {
     ])?;
     let data_frame = DataFrame::new(data.schema(), vec![data]);
     let transform = DataFrameTransform {
-        filter_by_bin_range: None,
+        bin_fields: None,
+        filter_bin_range: None,
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -116,7 +118,8 @@ async fn test_transform_minmax_string() -> anyhow::Result<()> {
     ])?;
     let data_frame = DataFrame::new(data.schema(), vec![data]);
     let transform = DataFrameTransform {
-        filter_by_bin_range: None,
+        bin_fields: None,
+        filter_bin_range: None,
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -183,7 +186,8 @@ async fn test_transform_bin_timestamps() -> anyhow::Result<()> {
 
     // Compute statistics
     let stats_transform = DataFrameTransform {
-        filter_by_bin_range: None,
+        bin_fields: None,
+        filter_bin_range: None,
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -214,13 +218,15 @@ async fn test_transform_bin_timestamps() -> anyhow::Result<()> {
 
     // Bin into 64 bins
     let bin_transform = DataFrameTransform {
-        filter_by_bin_range: None,
+        bin_fields: None,
+        filter_bin_range: None,
         group_by: Some(GroupByTransform {
             keys: vec![
                 GroupByKey {
                     field_name: "ts".into(),
                     output_alias: "ts_bin".into(),
                     binning: Some(GroupByKeyBinning {
+                        pre_binned_field_name: None,
                         stats_minimum_field_name: "ts_min".into(),
                         stats_maximum_field_name: "ts_max".into(),
                         bin_count: 64,
@@ -267,13 +273,15 @@ async fn test_transform_bin_timestamps() -> anyhow::Result<()> {
 
     // Bin into 8 bins
     let bin_transform = DataFrameTransform {
-        filter_by_bin_range: None,
+        bin_fields: None,
+        filter_bin_range: None,
         group_by: Some(GroupByTransform {
             keys: vec![
                 GroupByKey {
                     field_name: "ts".into(),
                     output_alias: "ts_bin".into(),
                     binning: Some(GroupByKeyBinning {
+                        pre_binned_field_name: None,
                         stats_minimum_field_name: "ts_min".into(),
                         stats_maximum_field_name: "ts_max".into(),
                         bin_count: 8,
@@ -342,7 +350,8 @@ async fn test_transform_bin_date32() -> anyhow::Result<()> {
 
     // Compute statistics
     let stats_transform = DataFrameTransform {
-        filter_by_bin_range: None,
+        bin_fields: None,
+        filter_bin_range: None,
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -373,13 +382,15 @@ async fn test_transform_bin_date32() -> anyhow::Result<()> {
 
     // Bin into 8 bins
     let bin_transform = DataFrameTransform {
-        filter_by_bin_range: None,
+        bin_fields: None,
+        filter_bin_range: None,
         group_by: Some(GroupByTransform {
             keys: vec![
                 GroupByKey {
                     field_name: "ts".into(),
                     output_alias: "ts_bin".into(),
                     binning: Some(GroupByKeyBinning {
+                        pre_binned_field_name: None,
                         stats_minimum_field_name: "ts_min".into(),
                         stats_maximum_field_name: "ts_max".into(),
                         bin_count: 8,
@@ -450,7 +461,8 @@ async fn test_transform_bin_date64() -> anyhow::Result<()> {
 
     // Compute statistics
     let stats_transform = DataFrameTransform {
-        filter_by_bin_range: None,
+        bin_fields: None,
+        filter_bin_range: None,
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -481,13 +493,15 @@ async fn test_transform_bin_date64() -> anyhow::Result<()> {
 
     // Bin into 8 bins
     let bin_transform = DataFrameTransform {
-        filter_by_bin_range: None,
+        bin_fields: None,
+        filter_bin_range: None,
         group_by: Some(GroupByTransform {
             keys: vec![
                 GroupByKey {
                     field_name: "ts".into(),
                     output_alias: "ts_bin".into(),
                     binning: Some(GroupByKeyBinning {
+                        pre_binned_field_name: None,
                         stats_minimum_field_name: "ts_min".into(),
                         stats_maximum_field_name: "ts_max".into(),
                         bin_count: 8,
@@ -556,7 +570,8 @@ async fn test_transform_bin_time32() -> anyhow::Result<()> {
 
     // Compute statistics
     let stats_transform = DataFrameTransform {
-        filter_by_bin_range: None,
+        bin_fields: None,
+        filter_bin_range: None,
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -587,13 +602,15 @@ async fn test_transform_bin_time32() -> anyhow::Result<()> {
 
     // Bin into 8 bins
     let bin_transform = DataFrameTransform {
-        filter_by_bin_range: None,
+        bin_fields: None,
+        filter_bin_range: None,
         group_by: Some(GroupByTransform {
             keys: vec![
                 GroupByKey {
                     field_name: "t".into(),
                     output_alias: "t_bin".into(),
                     binning: Some(GroupByKeyBinning {
+                        pre_binned_field_name: None,
                         stats_minimum_field_name: "t_min".into(),
                         stats_maximum_field_name: "t_max".into(),
                         bin_count: 8,
@@ -662,7 +679,8 @@ async fn test_transform_bin_time64() -> anyhow::Result<()> {
 
     // Compute statistics
     let stats_transform = DataFrameTransform {
-        filter_by_bin_range: None,
+        bin_fields: None,
+        filter_bin_range: None,
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -693,13 +711,15 @@ async fn test_transform_bin_time64() -> anyhow::Result<()> {
 
     // Bin into 8 bins
     let bin_transform = DataFrameTransform {
-        filter_by_bin_range: None,
+        bin_fields: None,
+        filter_bin_range: None,
         group_by: Some(GroupByTransform {
             keys: vec![
                 GroupByKey {
                     field_name: "t".into(),
                     output_alias: "t_bin".into(),
                     binning: Some(GroupByKeyBinning {
+                        pre_binned_field_name: None,
                         stats_minimum_field_name: "t_min".into(),
                         stats_maximum_field_name: "t_max".into(),
                         bin_count: 8,
@@ -768,7 +788,8 @@ async fn test_transform_bin_int64() -> anyhow::Result<()> {
 
     // Compute statistics
     let stats_transform = DataFrameTransform {
-        filter_by_bin_range: None,
+        bin_fields: None,
+        filter_bin_range: None,
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -799,13 +820,15 @@ async fn test_transform_bin_int64() -> anyhow::Result<()> {
 
     // Bin into 8 bins
     let bin_transform = DataFrameTransform {
-        filter_by_bin_range: None,
+        bin_fields: None,
+        filter_bin_range: None,
         group_by: Some(GroupByTransform {
             keys: vec![
                 GroupByKey {
                     field_name: "v".into(),
                     output_alias: "v_bin".into(),
                     binning: Some(GroupByKeyBinning {
+                        pre_binned_field_name: None,
                         stats_minimum_field_name: "v_min".into(),
                         stats_maximum_field_name: "v_max".into(),
                         bin_count: 8,
@@ -875,7 +898,8 @@ async fn test_transform_bin_decimal128() -> anyhow::Result<()> {
 
     // Compute statistics
     let stats_transform = DataFrameTransform {
-        filter_by_bin_range: None,
+        bin_fields: None,
+        filter_bin_range: None,
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -906,13 +930,15 @@ async fn test_transform_bin_decimal128() -> anyhow::Result<()> {
 
     // Bin into 8 bins
     let bin_transform = DataFrameTransform {
-        filter_by_bin_range: None,
+        bin_fields: None,
+        filter_bin_range: None,
         group_by: Some(GroupByTransform {
             keys: vec![
                 GroupByKey {
                     field_name: "v".into(),
                     output_alias: "v_bin".into(),
                     binning: Some(GroupByKeyBinning {
+                        pre_binned_field_name: None,
                         stats_minimum_field_name: "v_min".into(),
                         stats_maximum_field_name: "v_max".into(),
                         bin_count: 8,
@@ -982,7 +1008,8 @@ async fn test_transform_bin_decimal256() -> anyhow::Result<()> {
 
     // Compute statistics
     let stats_transform = DataFrameTransform {
-        filter_by_bin_range: None,
+        bin_fields: None,
+        filter_bin_range: None,
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -1013,13 +1040,15 @@ async fn test_transform_bin_decimal256() -> anyhow::Result<()> {
 
     // Bin into 8 bins
     let bin_transform = DataFrameTransform {
-        filter_by_bin_range: None,
+        bin_fields: None,
+        filter_bin_range: None,
         group_by: Some(GroupByTransform {
             keys: vec![
                 GroupByKey {
                     field_name: "v".into(),
                     output_alias: "v_bin".into(),
                     binning: Some(GroupByKeyBinning {
+                        pre_binned_field_name: None,
                         stats_minimum_field_name: "v_min".into(),
                         stats_maximum_field_name: "v_max".into(),
                         bin_count: 8,

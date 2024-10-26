@@ -2,6 +2,33 @@ syntax = "proto3";
 
 package sqlynx.compute;
 
+/// Bins are computed as: `(data[field_name] - stats[stats_minimum_field_name]) / stats[stats_bin_width_field_name])`
+/// Requires precomputed min/max statistics of the field `field_name`.
+message BinFieldTransform {
+    /// The field name
+    string field_name = 1;
+    /// The field containing the precomputed minimum of the field
+    string stats_minimum_field_name = 2;
+    /// The field containing the precomputed maximum of the field
+    string stats_maximum_field_name = 3;
+    /// The number of bins
+    uint32 bin_count = 4;
+    /// The output alias
+    string output_alias = 5;
+}
+
+/// Filters the data frame by a bin range.
+/// `bin_field_name` should be computed using the `BinFieldTransform`
+message FilterBinRangeTransform {
+    /// The field name
+    string bin_field_name = 1;
+    /// The begin of the range
+    double range_begin = 2;
+    /// The end of the range
+    double range_end = 3;
+}
+
+/// An ordering constraint
 message OrderByConstraint {
     /// The field name
     string field_name = 1;
@@ -11,6 +38,7 @@ message OrderByConstraint {
     bool nulls_first = 3;
 }
 
+/// Order a data frame by constraints
 message OrderByTransform {
     /// The field name
     repeated OrderByConstraint constraints = 1;
@@ -18,6 +46,7 @@ message OrderByTransform {
     optional uint32 limit = 2;
 }
 
+/// An aggregate function
 enum AggregationFunction {
     Min = 0;
     Max = 1;
@@ -26,21 +55,23 @@ enum AggregationFunction {
     CountStar = 4;
 }
 
-/// The key binning.
-/// Bins are computed as: (data[field_name] - stats[stats_minimum_field_name]) / stats[stats_bin_width_field_name])
+/// The binning metadata.
+/// Requires precomputed min/max statistics.
 message GroupByKeyBinning {
-    /// The field containing the precomputed minimum of the field
-    string stats_minimum_field_name = 1;
-    /// The field containing the precomputed maximum of the field
-    string stats_maximum_field_name = 2;
+    /// The pre-binned field name.
+    optional string pre_binned_field_name = 1;
     /// The number of bins
-    uint32 bin_count = 3;
+    uint32 bin_count = 2;
+    /// The field containing the precomputed minimum of the field
+    string stats_minimum_field_name = 3;
+    /// The field containing the precomputed maximum of the field
+    string stats_maximum_field_name = 4;
     /// The output bin minimum field name
-    string output_bin_lb_alias = 4;
+    string output_bin_lb_alias = 5;
     /// The output bin minimum field name
-    string output_bin_ub_alias = 5;
+    string output_bin_ub_alias = 6;
     /// The output bin width field name
-    string output_bin_width_alias = 6;
+    string output_bin_width_alias = 7;
 }
 
 message GroupByKey {
@@ -48,7 +79,7 @@ message GroupByKey {
     string field_name = 1;
     /// The output alias
     string output_alias = 2;
-    /// The field binning
+    /// The binning of the grouping key
     optional GroupByKeyBinning binning = 3;
 }
 
@@ -70,24 +101,13 @@ message GroupByTransform {
     repeated GroupByAggregate aggregates = 2;
 }
 
-message FilterByBinRangeTransform {
-    /// The field containing the precomputed minimum of the field
-    string stats_minimum_field_name = 1;
-    /// The field containing the precomputed maximum of the field
-    string stats_maximum_field_name = 2;
-    /// The number of bins
-    uint32 bin_count = 3;
-    /// The begin of the range
-    double range_begin = 4;
-    /// The end of the range
-    double range_end = 5;
-}
-
 message DataFrameTransform {
-    /// The group by transform (if any)
-    optional GroupByTransform group_by = 1;
-    /// The order by transform (if any)
-    optional OrderByTransform order_by = 2;
+    /// The binning transform (if any)
+    optional BinFieldTransform bin_fields = 1;
     /// The filtering transform (if any)
-    optional FilterByBinRangeTransform filter_by_bin_range = 3;
+    optional FilterBinRangeTransform filter_bin_range = 2;
+    /// The group by transform (if any)
+    optional GroupByTransform group_by = 3;
+    /// The order by transform (if any)
+    optional OrderByTransform order_by = 4;
 }
