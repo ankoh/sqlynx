@@ -62,14 +62,12 @@ async fn test_minmax_int64() -> anyhow::Result<()> {
                     output_alias: "score_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 },
                 GroupByAggregate {
                     field_name: Some("score".into()),
                     output_alias: "score_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 }
             ]
         }),
@@ -127,28 +125,24 @@ async fn test_transform_minmax_string() -> anyhow::Result<()> {
                     output_alias: "v1_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 },
                 GroupByAggregate {
                     field_name: Some("v1".into()),
                     output_alias: "v1_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 },
                 GroupByAggregate {
                     field_name: Some("v2".into()),
-                    output_alias: "v2_chars_min".into(),
+                    output_alias: "v2_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: Some(true)
                 },
                 GroupByAggregate {
                     field_name: Some("v2".into()),
-                    output_alias: "v2_chars_max".into(),
+                    output_alias: "v2_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: Some(true)
                 }
             ]
         }),
@@ -156,71 +150,11 @@ async fn test_transform_minmax_string() -> anyhow::Result<()> {
     };
     let transformed = data_frame.transform(&transform, None).await?;
     assert_eq!(format!("{}", pretty_format_batches(&transformed.partitions[0])?), indoc! {"
-        +----------------------------------------+----------------------------------------+--------------+--------------+
-        | v1_min                                 | v1_max                                 | v2_chars_min | v2_chars_max |
-        +----------------------------------------+----------------------------------------+--------------+--------------+
-        | 860f346a-5e02-4f32-93db-6c54378e31bb/0 | 860f346a-5e02-4f32-93db-6c54378e31bb/8 | 8            | 36           |
-        +----------------------------------------+----------------------------------------+--------------+--------------+
-    "}.trim());
-    Ok(())
-}
-
-#[tokio::test]
-async fn test_transform_minmax_embeddings() -> anyhow::Result<()> {
-    let mut schema_builder = SchemaBuilder::with_capacity(1);
-    let list_item_type = Arc::new(Field::new("item", DataType::Float32, true));
-    let list_type = DataType::List(list_item_type.clone());
-    schema_builder.push(Field::new("v1", list_type, true));
-    let schema = schema_builder.finish();
-
-    let float_builder = Float32Builder::with_capacity(5);
-    let mut embeddings = ListBuilder::new(float_builder);
-
-    embeddings.values().append_value(1.0);
-    embeddings.values().append_value(2.0);
-    embeddings.values().append_value(5.0);
-    embeddings.append(true);
-    embeddings.values().append_value(6.0);
-    embeddings.values().append_value(7.0);
-    embeddings.values().append_value(8.0);
-    embeddings.values().append_value(9.0);
-    embeddings.values().append_value(10.0);
-    embeddings.append(true);
-
-    let data = RecordBatch::try_new(schema.into(), vec![
-        Arc::new(embeddings.finish()) as ArrayRef,
-    ])?;
-    let data_frame = DataFrame::new(data.schema(), vec![data]);
-    let transform = DataFrameTransform {
-        filter_by_bin_range: None,
-        group_by: Some(GroupByTransform {
-            keys: vec![],
-            aggregates: vec![
-                GroupByAggregate {
-                    field_name: Some("v1".into()),
-                    output_alias: "v1_len_min".into(),
-                    aggregation_function: AggregationFunction::Min.into(),
-                    aggregate_distinct: None,
-                    aggregate_lengths: Some(true)
-                },
-                GroupByAggregate {
-                    field_name: Some("v1".into()),
-                    output_alias: "v1_len_max".into(),
-                    aggregation_function: AggregationFunction::Max.into(),
-                    aggregate_distinct: None,
-                    aggregate_lengths: Some(true)
-                }
-            ]
-        }),
-        order_by: None,
-    };
-    let transformed = data_frame.transform(&transform, None).await?;
-    assert_eq!(format!("{}", pretty_format_batches(&transformed.partitions[0])?), indoc! {"
-        +------------+------------+
-        | v1_len_min | v1_len_max |
-        +------------+------------+
-        | 3          | 5          |
-        +------------+------------+
+        +----------------------------------------+----------------------------------------+----------+--------------------------------------+
+        | v1_min                                 | v1_max                                 | v2_min   | v2_max                               |
+        +----------------------------------------+----------------------------------------+----------+--------------------------------------+
+        | 860f346a-5e02-4f32-93db-6c54378e31bb/0 | 860f346a-5e02-4f32-93db-6c54378e31bb/8 | 5f20bedd | 5f20bedd-6ee4-4df9-8cac-2d4907900012 |
+        +----------------------------------------+----------------------------------------+----------+--------------------------------------+
     "}.trim());
     Ok(())
 }
@@ -258,14 +192,12 @@ async fn test_transform_bin_timestamps() -> anyhow::Result<()> {
                     output_alias: "ts_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 },
                 GroupByAggregate {
                     field_name: Some("ts".into()),
                     output_alias: "ts_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 },
             ]
         }),
@@ -296,7 +228,6 @@ async fn test_transform_bin_timestamps() -> anyhow::Result<()> {
                         output_bin_lb_alias: "bin_lb".into(),
                         output_bin_width_alias: "bin_width".into(),
                     }),
-                    group_lengths: None,
                 }
             ],
             aggregates: vec![
@@ -305,7 +236,6 @@ async fn test_transform_bin_timestamps() -> anyhow::Result<()> {
                     output_alias: "ts_count".into(),
                     aggregation_function: AggregationFunction::CountStar.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 },
             ]
         }),
@@ -351,7 +281,6 @@ async fn test_transform_bin_timestamps() -> anyhow::Result<()> {
                         output_bin_lb_alias: "bin_lb".into(),
                         output_bin_ub_alias: "bin_ub".into(),
                     }),
-                    group_lengths: None,
                 }
             ],
             aggregates: vec![
@@ -360,7 +289,6 @@ async fn test_transform_bin_timestamps() -> anyhow::Result<()> {
                     output_alias: "ts_count".into(),
                     aggregation_function: AggregationFunction::CountStar.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 },
             ]
         }),
@@ -423,14 +351,12 @@ async fn test_transform_bin_date32() -> anyhow::Result<()> {
                     output_alias: "ts_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 },
                 GroupByAggregate {
                     field_name: Some("ts".into()),
                     output_alias: "ts_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 },
             ]
         }),
@@ -461,7 +387,6 @@ async fn test_transform_bin_date32() -> anyhow::Result<()> {
                         output_bin_lb_alias: "bin_lb".into(),
                         output_bin_ub_alias: "bin_ub".into(),
                     }),
-                    group_lengths: None,
                 }
             ],
             aggregates: vec![
@@ -470,7 +395,6 @@ async fn test_transform_bin_date32() -> anyhow::Result<()> {
                     output_alias: "ts_count".into(),
                     aggregation_function: AggregationFunction::CountStar.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 },
             ]
         }),
@@ -535,14 +459,12 @@ async fn test_transform_bin_date64() -> anyhow::Result<()> {
                     output_alias: "ts_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 },
                 GroupByAggregate {
                     field_name: Some("ts".into()),
                     output_alias: "ts_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 },
             ]
         }),
@@ -573,7 +495,6 @@ async fn test_transform_bin_date64() -> anyhow::Result<()> {
                         output_bin_lb_alias: "bin_lb".into(),
                         output_bin_ub_alias: "bin_ub".into(),
                     }),
-                    group_lengths: None,
                 }
             ],
             aggregates: vec![
@@ -582,7 +503,6 @@ async fn test_transform_bin_date64() -> anyhow::Result<()> {
                     output_alias: "ts_count".into(),
                     aggregation_function: AggregationFunction::CountStar.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 },
             ]
         }),
@@ -645,14 +565,12 @@ async fn test_transform_bin_time32() -> anyhow::Result<()> {
                     output_alias: "t_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 },
                 GroupByAggregate {
                     field_name: Some("t".into()),
                     output_alias: "t_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 },
             ]
         }),
@@ -683,7 +601,6 @@ async fn test_transform_bin_time32() -> anyhow::Result<()> {
                         output_bin_lb_alias: "bin_lb".into(),
                         output_bin_ub_alias: "bin_ub".into(),
                     }),
-                    group_lengths: None,
                 }
             ],
             aggregates: vec![
@@ -692,7 +609,6 @@ async fn test_transform_bin_time32() -> anyhow::Result<()> {
                     output_alias: "ts_count".into(),
                     aggregation_function: AggregationFunction::CountStar.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 },
             ]
         }),
@@ -755,14 +671,12 @@ async fn test_transform_bin_time64() -> anyhow::Result<()> {
                     output_alias: "t_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 },
                 GroupByAggregate {
                     field_name: Some("t".into()),
                     output_alias: "t_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 },
             ]
         }),
@@ -793,7 +707,6 @@ async fn test_transform_bin_time64() -> anyhow::Result<()> {
                         output_bin_lb_alias: "bin_lb".into(),
                         output_bin_ub_alias: "bin_ub".into(),
                     }),
-                    group_lengths: None,
                 }
             ],
             aggregates: vec![
@@ -802,7 +715,6 @@ async fn test_transform_bin_time64() -> anyhow::Result<()> {
                     output_alias: "ts_count".into(),
                     aggregation_function: AggregationFunction::CountStar.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 },
             ]
         }),
@@ -865,14 +777,12 @@ async fn test_transform_bin_int64() -> anyhow::Result<()> {
                     output_alias: "v_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 },
                 GroupByAggregate {
                     field_name: Some("v".into()),
                     output_alias: "v_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 },
             ]
         }),
@@ -903,7 +813,6 @@ async fn test_transform_bin_int64() -> anyhow::Result<()> {
                         output_bin_lb_alias: "bin_lb".into(),
                         output_bin_ub_alias: "bin_ub".into(),
                     }),
-                    group_lengths: None,
                 }
             ],
             aggregates: vec![
@@ -912,7 +821,6 @@ async fn test_transform_bin_int64() -> anyhow::Result<()> {
                     output_alias: "count".into(),
                     aggregation_function: AggregationFunction::CountStar.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 },
             ]
         }),
@@ -976,14 +884,12 @@ async fn test_transform_bin_decimal128() -> anyhow::Result<()> {
                     output_alias: "v_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 },
                 GroupByAggregate {
                     field_name: Some("v".into()),
                     output_alias: "v_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 },
             ]
         }),
@@ -1014,7 +920,6 @@ async fn test_transform_bin_decimal128() -> anyhow::Result<()> {
                         output_bin_lb_alias: "bin_lb".into(),
                         output_bin_ub_alias: "bin_ub".into(),
                     }),
-                    group_lengths: None,
                 }
             ],
             aggregates: vec![
@@ -1023,7 +928,6 @@ async fn test_transform_bin_decimal128() -> anyhow::Result<()> {
                     output_alias: "count".into(),
                     aggregation_function: AggregationFunction::CountStar.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 },
             ]
         }),
@@ -1087,14 +991,12 @@ async fn test_transform_bin_decimal256() -> anyhow::Result<()> {
                     output_alias: "v_min".into(),
                     aggregation_function: AggregationFunction::Min.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 },
                 GroupByAggregate {
                     field_name: Some("v".into()),
                     output_alias: "v_max".into(),
                     aggregation_function: AggregationFunction::Max.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 },
             ]
         }),
@@ -1125,7 +1027,6 @@ async fn test_transform_bin_decimal256() -> anyhow::Result<()> {
                         output_bin_lb_alias: "bin_lb".into(),
                         output_bin_ub_alias: "bin_ub".into(),
                     }),
-                    group_lengths: None,
                 }
             ],
             aggregates: vec![
@@ -1134,7 +1035,6 @@ async fn test_transform_bin_decimal256() -> anyhow::Result<()> {
                     output_alias: "count".into(),
                     aggregation_function: AggregationFunction::CountStar.into(),
                     aggregate_distinct: None,
-                    aggregate_lengths: None
                 },
             ]
         }),

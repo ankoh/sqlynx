@@ -11,12 +11,10 @@ use datafusion_execution::TaskContext;
 use datafusion_expr::AggregateUDF;
 use datafusion_expr::Operator;
 use datafusion_functions::math::floor;
-use datafusion_functions::unicode::character_length;
 use datafusion_functions_aggregate::average::Avg;
 use datafusion_functions_aggregate::count::count_udaf;
 use datafusion_functions_aggregate::min_max::Max;
 use datafusion_functions_aggregate::min_max::Min;
-use datafusion_functions_nested::length::array_length_udf;
 use datafusion_physical_expr::ConstExpr;
 use datafusion_physical_expr::PhysicalExpr;
 use datafusion_physical_expr::PhysicalSortExpr;
@@ -99,15 +97,8 @@ impl DataFrame {
             Err(_) => return Err(anyhow::anyhow!("input data does not contain the key field `{}`", &key.field_name))
         };
         let key_field = &input_schema.fields()[key_field_id];
-        let mut key_value_type = key_field.data_type().clone();
-        let mut key_value = col(key_field.name(), &input.schema())?;
-
-        // Do we need to bin the key lengths?
-        // Note that this is only sound if the minimum and maximum stats are also aggregated on lengths.
-        if let Some(true) = key.group_lengths {
-            key_value = compute_length(&key_value_type, key_value)?;
-            key_value_type = key_value.data_type(&input_schema)?;
-        }
+        let key_value_type = key_field.data_type().clone();
+        let key_value = col(key_field.name(), &input.schema())?;
 
         // Resolve field storing the binning minimum
         let min_field_id = match stats_schema.index_of(&key_binning.stats_minimum_field_name) {
@@ -413,24 +404,14 @@ impl DataFrame {
                         return Err(anyhow::anyhow!("function '{}' does not support distinct aggregation", aggr_func.as_str_name()));
                     }
                 }
-                AggregationFunction::Count | AggregationFunction::CountStar => {
-                    if aggr.aggregate_lengths.unwrap_or_default() {
-                        return Err(anyhow::anyhow!("function '{}' does not support length aggregation", aggr_func.as_str_name()));
-                    }
-                }
+                AggregationFunction::Count | AggregationFunction::CountStar => {}
             }
             // The input value
             let aggr_field_name = match &aggr.field_name {
                 Some(n) => n.as_str(),
                 None => ""
             };
-            let mut input_value = col(&aggr_field_name, &input.schema())?;
-            let input_schema = input.schema();
-            let input_field_id = input_schema.index_of(&aggr_field_name)?;
-            let input_field = input_schema.field(input_field_id);
-            if aggr.aggregate_lengths.unwrap_or_default() {
-                input_value = compute_length(&input_field.data_type(), input_value)?;
-            }
+            let input_value = col(&aggr_field_name, &input.schema())?;
 
             // Get the aggregate expression
             let aggr_expr = match aggr.aggregation_function.try_into()? {
@@ -589,41 +570,4 @@ impl BinnedExpression {
             (bin_ub_casted, self.binning_config.output_bin_ub_alias.clone()),
         ])
     }
-}
-
-fn compute_length(data_type: &arrow::datatypes::DataType, value: Arc<dyn PhysicalExpr>) -> anyhow::Result<Arc<dyn PhysicalExpr>> {
-    let expr = match &data_type {
-        DataType::List(_) | DataType::FixedSizeList(..) | DataType::LargeList(_) => {
-            let udf = array_length_udf();
-            let udf_expr = ScalarFunctionExpr::new(
-                udf.name(),
-                udf.clone(),
-                vec![value],
-                DataType::UInt64,
-            );
-            udf_expr
-        },
-        DataType::Utf8 => {
-            let udf = character_length();
-            let udf_expr = ScalarFunctionExpr::new(
-                udf.name(),
-                udf.clone(),
-                vec![value],
-                DataType::Int32,
-            );
-            udf_expr
-        }
-        DataType::LargeUtf8 => {
-            let udf = character_length();
-            let udf_expr = ScalarFunctionExpr::new(
-                udf.name(),
-                udf.clone(),
-                vec![value],
-                DataType::Int64,
-            );
-            udf_expr
-        }
-        _ => return Err(anyhow::anyhow!("cannot compute length for type: {}", &data_type)),
-    };
-    return Ok(Arc::new(expr));
 }
