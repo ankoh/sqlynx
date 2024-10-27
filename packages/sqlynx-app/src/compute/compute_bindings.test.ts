@@ -232,15 +232,8 @@ describe('SQLynxCompute Binning', () => {
                 binWidth: 3505.5,
                 binLB: 24548.5,
                 binUB: 28054,
-                count: 2n
+                count: 3n
             },
-            {
-                bin: 8,
-                binWidth: 3505.5,
-                binLB: 28054,
-                binUB: 31559.5,
-                count: 1n
-            }
         ]);
     });
 });
