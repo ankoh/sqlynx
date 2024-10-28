@@ -2,7 +2,7 @@ import * as arrow from 'apache-arrow';
 import * as compute from '@ankoh/sqlynx-compute';
 import * as proto from '@ankoh/sqlynx-protobuf';
 
-import { ColumnSummaryVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskVariant, TaskProgress, ORDINAL_COLUMN, STRING_COLUMN, LIST_COLUMN, createOrderByTransform, createTableSummaryTransform, createColumnSummaryTransform, ColumnEntryVariant } from './computation_task.js';
+import { ColumnSummaryVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskVariant, TaskProgress, ORDINAL_COLUMN, STRING_COLUMN, LIST_COLUMN, createOrderByTransform, createTableSummaryTransform, createColumnSummaryTransform, ColumnEntryVariant, TablePrecomputationTask } from './computation_task.js';
 
 import { Dispatch, VariantKind } from '../utils/variant.js';
 import { AsyncDataFrame, ComputeWorkerBindings } from './compute_worker_bindings.js';
@@ -37,6 +37,11 @@ interface TableComputationState {
     tableSummaryTaskStatus: TaskStatus | null;
     /// The table stats
     tableSummary: TableSummary | null;
+
+    /// The table precomputation task
+    tablePrecomputationTask: TablePrecomputationTask | null;
+    /// The task tatus
+    tablePrecomputationStatus: TaskStatus | null;
 
     /// The pending column tasks
     columnSummariesPending: ColumnSummaryTask[];

@@ -38,7 +38,7 @@ export interface TableSummaryTask {
     statsCountStarField: number;
 }
 
-export interface TablePreparationTask {
+export interface TablePrecomputationTask {
     /// The table id
     tableId: number;
     /// The column entries
