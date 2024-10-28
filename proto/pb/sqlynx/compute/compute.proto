@@ -14,7 +14,9 @@ message BinFieldTransform {
     /// The number of bins
     uint32 bin_count = 4;
     /// The output alias
-    string output_alias = 5;
+    string bin_output_alias = 5;
+    /// The output alias of the fractional bin
+    string fractional_bin_output_alias = 6;
 }
 
 /// Filters the data frame by a bin range.

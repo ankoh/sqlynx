@@ -1,12 +1,12 @@
 import * as arrow from 'apache-arrow';
 import * as compute from '@ankoh/sqlynx-compute';
+import * as proto from '@ankoh/sqlynx-protobuf';
 
-import { ColumnSummaryVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskVariant, TaskProgress, ORDINAL_COLUMN, STRING_COLUMN, LIST_COLUMN, createOrderByTransform, createTableSummaryTransform, createColumnSummaryTransform } from './computation_task.js';
+import { ColumnSummaryVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskVariant, TaskProgress, ORDINAL_COLUMN, STRING_COLUMN, LIST_COLUMN, createOrderByTransform, createTableSummaryTransform, createColumnSummaryTransform, ColumnEntryVariant } from './computation_task.js';
 
 import { Dispatch, VariantKind } from '../utils/variant.js';
 import { AsyncDataFrame, ComputeWorkerBindings } from './compute_worker_bindings.js';
 import { Logger } from '../platform/logger.js';
-import { ColumnMapping } from './column_mapping.js';
 
 const LOG_CTX = "computation_state";
 
@@ -21,15 +21,15 @@ interface TableComputationState {
     dataTable: arrow.Table;
     /// The data frame in the compute module
     dataFrame: AsyncDataFrame | null;
-    /// The column mapping (if mapped)
-    dataColumnMappings: ColumnMapping[] | null;
+    /// The data frame column information (if mapped)
+    dataFrameColumns: ColumnEntryVariant[] | null;
+    /// The current data frame ordering
+    dataFrameOrdering: proto.sqlynx_compute.pb.OrderByConstraint[];
 
     /// The ordering task
     orderingTask: TableOrderingTask | null;
     /// The ordering task status
     orderingTaskStatus: TaskStatus | null;
-    /// The ordered table
-    orderedTable: OrderedTable | null;
 
     /// The table stats task
     tableSummaryTask: TableSummaryTask | null;
@@ -222,7 +222,7 @@ async function sortTable(tableState: TableComputationState, task: TableOrderingT
 /// Helper to summarize a table
 async function summarizeTable(tableState: TableComputationState, task: TableSummaryTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<void> {
     // Create the transform
-    const transform = createTableSummaryTransform(task);
+    const [transform, columnEntries] = createTableSummaryTransform(task);
 
     // Mark task as running
     let startedAt = new Date();
@@ -246,8 +246,8 @@ async function summarizeTable(tableState: TableComputationState, task: TableSumm
         const transformedTable = await transformedDataFrame.readTable();
         logger.info(`scanning summary for table ${tableState.tableId} suceeded`, LOG_CTX);
         // The output table
-        const out: TableSummary = {
-            columnEntries: task.columnEntries,
+        const summary: TableSummary = {
+            columnEntries,
             transformedTable,
             transformedDataFrame,
             statsCountStarField: task.statsCountStarField
@@ -262,7 +262,7 @@ async function summarizeTable(tableState: TableComputationState, task: TableSumm
         };
         dispatch({
             type: TABLE_SUMMARY_TASK_SUCCEEDED,
-            value: [tableState.tableId, taskProgress, out],
+            value: [tableState.tableId, taskProgress, summary],
         });
 
     } catch (error: any) {
