@@ -47,7 +47,7 @@ indoc = "2.0.5"
 
 [build-dependencies]
 anyhow = "1.0.91"
-regex = "1.11.0"
+regex = "1.11.1"
 prost-build = "0.13.3"
 
 [profile.release]
