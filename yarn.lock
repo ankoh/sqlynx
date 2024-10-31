@@ -44,7 +44,7 @@ __metadata:
     "@primer/behaviors": "npm:^1.8.0"
     "@primer/octicons-react": "patch:@primer/octicons-react@npm%3A19.9.0#~/.yarn/patches/@primer-octicons-react-npm-19.9.0-65341cfa23.patch"
     "@primer/react": "npm:^37.0.1"
-    "@primer/react-brand": "npm:^0.40.1"
+    "@primer/react-brand": "npm:^0.41.0"
     "@react-hook/resize-observer": "npm:^2.0.2"
     "@tauri-apps/api": "npm:^2.0.3"
     "@tauri-apps/cli": "npm:^2.0.4"
@@ -1724,9 +1724,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@primer/react-brand@npm:^0.40.1":
-  version: 0.40.1
-  resolution: "@primer/react-brand@npm:0.40.1"
+"@primer/react-brand@npm:^0.41.0":
+  version: 0.41.0
+  resolution: "@primer/react-brand@npm:0.41.0"
   dependencies:
     "@oddbird/popover-polyfill": "npm:0.4.3"
     "@primer/behaviors": "npm:^1.3.4"
@@ -1734,7 +1734,7 @@ __metadata:
   peerDependencies:
     react: ">=17 <20"
     react-dom: ">=17 <20"
-  checksum: 10c0/d1553a06f0f2c4f9b59186c0a9f98366438e9f94509f1aafd98835fb72dca8d077e6cc887ec6867289576d3ffffe81412c3a4dee4be7a7a35f08c99df0f54edd
+  checksum: 10c0/d4441b8e3a510778a15ded3ef97fd651900f57e04b565ad4c16a163b3f660699b686f06e5cef908048ba5bbd2c770fb6be75c77be77c03b68c4b25d5756f3218
   languageName: node
   linkType: hard
 
