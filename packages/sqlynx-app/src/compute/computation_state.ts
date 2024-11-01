@@ -1,8 +1,7 @@
 import * as arrow from 'apache-arrow';
-import * as compute from '@ankoh/sqlynx-compute';
 import * as proto from '@ankoh/sqlynx-protobuf';
 
-import { ColumnSummaryVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskVariant, TaskProgress, ORDINAL_COLUMN, STRING_COLUMN, LIST_COLUMN, createOrderByTransform, createTableSummaryTransform, createColumnSummaryTransform, ColumnEntryVariant, TablePrecomputationTask } from './computation_task.js';
+import { ColumnSummaryVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskProgress, ORDINAL_COLUMN, STRING_COLUMN, LIST_COLUMN, createOrderByTransform, createTableSummaryTransform, createColumnSummaryTransform, ColumnEntryVariant, TablePrecomputationTask, SKIPPED_COLUMN } from './computation_task.js';
 
 import { Dispatch, VariantKind } from '../utils/variant.js';
 import { AsyncDataFrame, ComputeWorkerBindings } from './compute_worker_bindings.js';
@@ -19,12 +18,14 @@ interface TableComputationState {
 
     /// The table on the main thread
     dataTable: arrow.Table;
+    /// The data frame column information (if mapped)
+    dataTableColumns: ColumnEntryVariant[];
+    /// The abort controller
+    dataTableLifetime: AbortController;
+    /// The current ordering
+    dataTableOrdering: proto.sqlynx_compute.pb.OrderByConstraint[];
     /// The data frame in the compute module
     dataFrame: AsyncDataFrame | null;
-    /// The data frame column information (if mapped)
-    dataFrameColumns: ColumnEntryVariant[] | null;
-    /// The current data frame ordering
-    dataFrameOrdering: proto.sqlynx_compute.pb.OrderByConstraint[];
 
     /// The ordering task
     orderingTask: TableOrderingTask | null;
@@ -57,19 +58,50 @@ export interface ComputationState {
     globalEpoch: number;
     /// The computation worker
     computationWorker: ComputeWorkerBindings | null;
+    /// The computation worker error
+    computationWorkerSetupError: Error | null;
     /// The computations
     tableComputations: Map<number, TableComputationState>;
-    /// The current task
-    currentTask: TaskVariant | null;
-    /// The current task status
-    currentTaskStatus: TaskStatus | null;
 }
 
-export const DELETE_COMPUTATION = Symbol('DELETE_COMPUTATION');
+/// Create the computation state
+export function createComputationState(): ComputationState {
+    return {
+        globalEpoch: 0,
+        computationWorker: null,
+        computationWorkerSetupError: null,
+        tableComputations: new Map(),
+    };
+}
+/// Create the table computation state
+function createTableComputationState(tableId: number, table: arrow.Table, tableColumns: ColumnEntryVariant[], tableLifetime: AbortController): TableComputationState {
+    return {
+        tableId,
+        localEpoch: 0,
+        dataTable: table,
+        dataTableColumns: tableColumns,
+        dataTableLifetime: tableLifetime,
+        dataTableOrdering: [],
+        dataFrame: null,
+        orderingTask: null,
+        orderingTaskStatus: null,
+        tableSummaryTask: null,
+        tableSummaryTaskStatus: null,
+        tableSummary: null,
+        tablePrecomputationTask: null,
+        tablePrecomputationStatus: null,
+        columnSummariesPending: [],
+        columnSummariesStatus: new Map(),
+        columnSummaries: []
+    };
+}
+
+export const COMPUTATION_WORKER_CONFIGURED = Symbol('REGISTER_COMPUTATION');
+export const COMPUTATION_WORKER_CONFIGURATION_FAILED = Symbol('COMPUTATION_WORKER_SETUP_FAILED');
+
 export const REGISTER_COMPUTATION = Symbol('REGISTER_COMPUTATION');
+export const DELETE_COMPUTATION = Symbol('DELETE_COMPUTATION');
 export const CREATED_DATA_FRAME = Symbol('CREATED_DATA_FRAME');
-export const SUMMARIZE_TABLE = Symbol('SUMMARIZE_TABLE');
-export const SORT_TABLE = Symbol('SORT_TABLE');
 
 export const TABLE_ORDERING_TASK_RUNNING = Symbol('TABLE_ORDERING_TASK_RUNNING');
 export const TABLE_ORDERING_TASK_FAILED = Symbol('TABLE_ORDERING_TASK_FAILED');
@@ -84,11 +116,12 @@ export const COLUMN_SUMMARY_TASK_FAILED = Symbol('COLUMN_SUMMARY_TASK_FAILED');
 export const COLUMN_SUMMARY_TASK_SUCCEEDED = Symbol('COLUMN_SUMMARY_TASK_SUCCEEDED');
 
 export type ComputationAction =
+    | VariantKind<typeof COMPUTATION_WORKER_CONFIGURED, ComputeWorkerBindings>
+    | VariantKind<typeof COMPUTATION_WORKER_CONFIGURATION_FAILED, Error | null>
+
+    | VariantKind<typeof REGISTER_COMPUTATION, [number, arrow.Table, AbortController]>
     | VariantKind<typeof DELETE_COMPUTATION, [number]>
-    | VariantKind<typeof REGISTER_COMPUTATION, [number, arrow.Table]>
-    | VariantKind<typeof CREATED_DATA_FRAME, [number, compute.DataFrame]>
-    | VariantKind<typeof SUMMARIZE_TABLE, [number]>
-    | VariantKind<typeof SORT_TABLE, [number, TableOrderingTask]>
+    | VariantKind<typeof CREATED_DATA_FRAME, [number, AsyncDataFrame]>
 
     | VariantKind<typeof TABLE_ORDERING_TASK_RUNNING, [number, TaskProgress]>
     | VariantKind<typeof TABLE_ORDERING_TASK_FAILED, [number, TaskProgress, any]>
@@ -103,67 +136,134 @@ export type ComputationAction =
     | VariantKind<typeof COLUMN_SUMMARY_TASK_SUCCEEDED, [number, number, TaskProgress, ColumnSummaryVariant]>
     ;
 
-export function reduceComputationState(state: ComputationState, action: ComputationAction, _dispatch: Dispatch<ComputationAction>): ComputationState {
-    const tableId = action.value[0];
-    const computation = state.tableComputations.get(tableId);
 
-    // Couldn't find computation state?
-    if (!computation) {
-        // If the intent is to register a new computation do so.
-        if (action.type == REGISTER_COMPUTATION) {
+export function reduceComputationState(state: ComputationState, action: ComputationAction): ComputationState {
+    switch (action.type) {
+        case COMPUTATION_WORKER_CONFIGURED:
+            return {
+                ...state,
+                computationWorker: action.value,
+            };
+        case COMPUTATION_WORKER_CONFIGURATION_FAILED:
+            return {
+                ...state,
+                computationWorkerSetupError: action.value,
+            };
+        case REGISTER_COMPUTATION: {
+            const [tableId, table, tableLifetime] = action.value;
+            const tableColumns: ColumnEntryVariant[] = [];
+            for (let i = 0; i < table.schema.fields.length; ++i) {
+                const field = table.schema.fields[i];
+                switch (field.typeId) {
+                    case arrow.Type.Int:
+                    case arrow.Type.Int8:
+                    case arrow.Type.Int16:
+                    case arrow.Type.Int32:
+                    case arrow.Type.Int64:
+                    case arrow.Type.Uint8:
+                    case arrow.Type.Uint16:
+                    case arrow.Type.Uint32:
+                    case arrow.Type.Uint64:
+                    case arrow.Type.Float:
+                    case arrow.Type.Float16:
+                    case arrow.Type.Float32:
+                    case arrow.Type.Float64:
+                    case arrow.Type.Bool:
+                    case arrow.Type.Decimal:
+                    case arrow.Type.Date:
+                    case arrow.Type.DateDay:
+                    case arrow.Type.DateMillisecond:
+                    case arrow.Type.Time:
+                    case arrow.Type.TimeSecond:
+                    case arrow.Type.TimeMillisecond:
+                    case arrow.Type.TimeMicrosecond:
+                    case arrow.Type.TimeNanosecond:
+                    case arrow.Type.Timestamp:
+                    case arrow.Type.TimestampSecond:
+                    case arrow.Type.TimestampMillisecond:
+                    case arrow.Type.TimestampMicrosecond:
+                    case arrow.Type.TimestampNanosecond:
+                    case arrow.Type.DurationSecond:
+                    case arrow.Type.DurationMillisecond:
+                    case arrow.Type.DurationMicrosecond:
+                    case arrow.Type.DurationNanosecond:
+                        tableColumns.push({
+                            type: ORDINAL_COLUMN,
+                            value: {
+                                inputFieldId: i,
+                                inputFieldName: field.name,
+                                binningFields: null,
+                                statsFields: null
+                            }
+                        });
+                        break;
+                    case arrow.Type.Utf8:
+                    case arrow.Type.LargeUtf8:
+                        tableColumns.push({
+                            type: STRING_COLUMN,
+                            value: {
+                                inputFieldId: i,
+                                inputFieldName: field.name,
+                                binningFields: null,
+                                statsFields: null
+                            }
+                        });
+                        break;
+                    case arrow.Type.List:
+                    case arrow.Type.FixedSizeList:
+                        tableColumns.push({
+                            type: LIST_COLUMN,
+                            value: {
+                                inputFieldId: i,
+                                inputFieldName: field.name,
+                                binningFields: null,
+                                statsFields: null
+                            }
+                        });
+                        break;
+                    default:
+                        tableColumns.push({
+                            type: SKIPPED_COLUMN,
+                            value: {
+                                inputFieldId: i,
+                                inputFieldName: field.name,
+                            }
+                        });
+                        break;
+                }
+            }
+            const tableState = createTableComputationState(tableId, table, tableColumns, tableLifetime);
+            state.tableComputations.set(tableId, tableState);
+            return {
+                ...state,
+                tableComputations: state.tableComputations
+            };
+        }
+        case DELETE_COMPUTATION: {
+            const [tableId] = action.value;
+            const tableState = state.tableComputations.get(tableId);
+            if (tableState !== undefined) {
 
-        } else {
-            // Otherwise ignore the action
-            return state;
+            }
+            state.tableComputations.delete(tableId);
+            return { ...state };
+        }
+        case CREATED_DATA_FRAME: {
+            const [tableId, dataFrame] = action.value;
+            const prevTableState = state.tableComputations.get(tableId)!;
+            const nextTableState: TableComputationState = {
+                ...prevTableState,
+                dataFrame,
+            };
+            state.tableComputations.set(tableId, nextTableState);
+            return { ...state };
         }
     }
-
     return state;
 }
 
-/// Schedule the next computation
-export async function scheduleNextComputation(state: ComputationState, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<void> {
-    // Has a task running?
-    if (state.currentTaskStatus != null && state.currentTaskStatus == TaskStatus.TASK_RUNNING) {
-        return;
-    }
-
-    for (const tableState of state.tableComputations.values()) {
-        // Data frame not ready yet?
-        if (tableState.dataFrame == null) {
-            continue;
-        }
-        // Pending ordering task?
-        if (tableState.orderingTask != null && tableState.orderingTaskStatus == null) {
-            // Reorder the table
-            await sortTable(tableState, tableState.orderingTask, dispatch, logger);
-            return;
-        }
-        // Pending table summary task?
-        if (tableState.tableSummaryTask != null && tableState.tableSummaryTaskStatus == null) {
-            // Compute table summary
-            await summarizeTable(tableState, tableState.tableSummaryTask, dispatch, logger);
-            return;
-        }
-
-        // Pending column summary task?
-        if (tableState.columnSummariesPending.length > 0 && tableState.tableSummary != null) {
-            // Delete task from pending
-            const task = tableState.columnSummariesPending[0];
-            tableState.columnSummariesPending.shift();
-            // Table summary is empty?
-            if (tableState.tableSummary == null) {
-                continue
-            }
-            // Compute column summary
-            await summarizeColumn(tableState, task, tableState.tableSummary, dispatch, logger);
-            return;
-        }
-    }
-}
-
 /// Helper to sort a table
-async function sortTable(tableState: TableComputationState, task: TableOrderingTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<void> {
+export async function sortTable(tableState: TableComputationState, task: TableOrderingTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<void> {
     // Create the transform
     const transform = createOrderByTransform(task.orderingConstraints);
 
@@ -180,14 +280,14 @@ async function sortTable(tableState: TableComputationState, task: TableOrderingT
     try {
         dispatch({
             type: TABLE_ORDERING_TASK_RUNNING,
-            value: [tableState.tableId, taskProgress]
+            value: [task.tableId, taskProgress]
         });
         // Order the data frame
         const transformed = await tableState.dataFrame!.transform(transform);
-        logger.info(`sorting table ${tableState.tableId} succeded, scanning result`, LOG_CTX);
+        logger.info(`sorting table ${task.tableId} succeded, scanning result`, LOG_CTX);
         // Read the result
         const orderedTable = await transformed.readTable();
-        logger.info(`scanning sorted table ${tableState.tableId} suceeded`, LOG_CTX);
+        logger.info(`scanning sorted table ${task.tableId} suceeded`, LOG_CTX);
         // Delete the data frame after reordering
         await transformed.delete();
         // The output table
@@ -205,11 +305,11 @@ async function sortTable(tableState: TableComputationState, task: TableOrderingT
         };
         dispatch({
             type: TABLE_ORDERING_TASK_SUCCEEDED,
-            value: [tableState.tableId, taskProgress, out],
+            value: [task.tableId, taskProgress, out],
         });
 
     } catch (error: any) {
-        logger.error(`ordering table ${tableState.tableId} failed with error: ${error.toString()}`);
+        logger.error(`ordering table ${task.tableId} failed with error: ${error.toString()}`);
         taskProgress = {
             status: TaskStatus.TASK_FAILED,
             startedAt,
@@ -219,13 +319,13 @@ async function sortTable(tableState: TableComputationState, task: TableOrderingT
         };
         dispatch({
             type: TABLE_ORDERING_TASK_FAILED,
-            value: [tableState.tableId, taskProgress, error],
+            value: [task.tableId, taskProgress, error],
         });
     }
 }
 
 /// Helper to summarize a table
-async function summarizeTable(tableState: TableComputationState, task: TableSummaryTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<void> {
+export async function summarizeTable(tableState: TableComputationState, task: TableSummaryTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<void> {
     // Create the transform
     const [transform, columnEntries] = createTableSummaryTransform(task);
 
@@ -286,7 +386,7 @@ async function summarizeTable(tableState: TableComputationState, task: TableSumm
     }
 }
 
-async function summarizeColumn(tableState: TableComputationState, task: ColumnSummaryTask, tableSummary: TableSummary, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<void> {
+export async function summarizeColumn(tableState: TableComputationState, task: ColumnSummaryTask, tableSummary: TableSummary, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<void> {
     // Create the transform
     const transform = createColumnSummaryTransform(task, tableSummary);
 
@@ -341,6 +441,12 @@ async function summarizeColumn(tableState: TableComputationState, task: ColumnSu
                         columnEntry: task.columnEntry.value,
                         binnedLengths: transformedTable,
                     }
+                };
+                break;
+            case SKIPPED_COLUMN:
+                summary = {
+                    type: SKIPPED_COLUMN,
+                    value: null
                 };
                 break;
         }
