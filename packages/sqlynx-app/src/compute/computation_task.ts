@@ -13,6 +13,7 @@ export const TASK_SUCCEDED = Symbol("TASK_SUCCEDED");
 export const ORDINAL_COLUMN = Symbol("ORDINAL_COLUMN");
 export const STRING_COLUMN = Symbol("STRING_COLUMN");
 export const LIST_COLUMN = Symbol("LIST_COLUMN");
+export const SKIPPED_COLUMN = Symbol("SKIPPED_COLUMN");
 
 // ------------------------------------------------------------
 
@@ -81,6 +82,7 @@ export type ColumnEntryVariant =
     VariantKind<typeof ORDINAL_COLUMN, OrdinalColumnEntry>
     | VariantKind<typeof STRING_COLUMN, StringColumnEntry>
     | VariantKind<typeof LIST_COLUMN, ListColumnEntry>
+    | VariantKind<typeof SKIPPED_COLUMN, SkippedColumnEntry>
     ;
 
 export interface ColumnStatsFields {
@@ -132,6 +134,13 @@ export interface ListColumnEntry {
     binningFields: ColumnBinningFields | null;
 }
 
+export interface SkippedColumnEntry {
+    /// The input column id
+    inputFieldId: number;
+    /// The input field name
+    inputFieldName: string;
+}
+
 // ------------------------------------------------------------
 
 export interface OrderedTable {
@@ -147,6 +156,7 @@ export type ColumnSummaryVariant =
     VariantKind<typeof ORDINAL_COLUMN, OrdinalColumnSummary>
     | VariantKind<typeof STRING_COLUMN, StringColumnSummary>
     | VariantKind<typeof LIST_COLUMN, ListColumnSummary>
+    | VariantKind<typeof SKIPPED_COLUMN, null>
     ;
 
 export interface TableSummary {
