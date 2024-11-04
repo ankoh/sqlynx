@@ -65,7 +65,7 @@ __metadata:
     "@types/react-window": "npm:^1.8.8"
     "@types/stylis": "npm:^4.2.6"
     "@uiw/codemirror-themes-all": "npm:^4.23.5"
-    apache-arrow: "npm:^17.0.0"
+    apache-arrow: "npm:^18.0.0"
     arquero: "npm:^7.1.0"
     cm6-theme-basic-light: "npm:^0.2.0"
     cm6-theme-nord: "npm:^0.2.0"
@@ -3660,9 +3660,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"apache-arrow@npm:^17.0.0":
-  version: 17.0.0
-  resolution: "apache-arrow@npm:17.0.0"
+"apache-arrow@npm:^18.0.0":
+  version: 18.0.0
+  resolution: "apache-arrow@npm:18.0.0"
   dependencies:
     "@swc/helpers": "npm:^0.5.11"
     "@types/command-line-args": "npm:^5.2.3"
@@ -3674,8 +3674,8 @@ __metadata:
     json-bignum: "npm:^0.0.3"
     tslib: "npm:^2.6.2"
   bin:
-    arrow2csv: bin/arrow2csv.cjs
-  checksum: 10c0/fa705b88a5d76c05122414bf7ba8a46c93f3509584de332eb045c736384cdfe53fc140135abbdeaa6036dfe422d145598b461b89f0b710cdeebbb732e9fb7f58
+    arrow2csv: bin/arrow2csv.js
+  checksum: 10c0/037c3c390b4917e6fe7a594f275b07485068697a46ca8b0ec043b1ceac9be91ac615106f8912d20a574fc28b255253f4eae8c700749881c1afebb4bea39217da
   languageName: node
   linkType: hard
 
