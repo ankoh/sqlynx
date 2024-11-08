@@ -8,7 +8,7 @@ import { AsyncDataFrame, ComputeWorkerBindings } from './compute_worker_bindings
 
 /// The table computation state
 export interface TableComputationState {
-    /// The computation id.
+    /// The computation id
     /// (Equals the query id)
     computationId: number;
     /// The epoch number
