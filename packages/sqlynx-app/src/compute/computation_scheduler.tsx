@@ -6,6 +6,9 @@ const CTX = React.createContext<ComputationState | null>(null);
 interface ComputationSchedulerProps {
 }
 
+function useComputationScheduler() {
+
+}
 
 function ComputationScheduler(props: ComputationSchedulerProps) {
     const [state, dispatch] = React.useReducer(reduceComputationState, null, createComputationState);
