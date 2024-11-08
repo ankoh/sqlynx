@@ -21,6 +21,9 @@ import {
     QUERY_EXECUTION_STARTED,
     QUERY_EXECUTION_SUCCEEDED,
 } from './connection_state.js';
+import { useComputationRegistry } from '../compute/computation_registry.js';
+import { COMPUTATION_FROM_QUERY_RESULT } from '../compute/computation_state.js';
+import { mapComputationColumnsEntries } from '../compute/computation_actions.js';
 
 let NEXT_QUERY_ID = 1;
 
@@ -48,6 +51,9 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
     // This executor will depend on the map directly since it can resolve everything ad-hoc.
     const [connReg, connDispatch] = useDynamicConnectionDispatch();
     const connMap = connReg.connectionMap;
+
+    // We auto-register each successfull query result with the sqlynx-compute worker
+    const [_, computeDispatch] = useComputationRegistry();
 
     // Execute a query with pre-allocated query id
     const executeWithId = React.useCallback(async (connectionId: number, args: QueryExecutionArgs, queryId: number): Promise<void> => {
@@ -220,6 +226,14 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                 const progressUpdater = readAllProgressUpdates(resultStream);
                 const tableReader = readAllBatches(resultStream);
                 const [table, _]: [arrow.Table | undefined, null] = await Promise.all([tableReader, progressUpdater]);
+
+                // Register the table with compute
+                const computeColumns = mapComputationColumnsEntries(table!);
+                const computeAbortCtrl = new AbortController();
+                computeDispatch({
+                    type: COMPUTATION_FROM_QUERY_RESULT,
+                    value: [queryId, table!, computeColumns, computeAbortCtrl]
+                })
 
                 // Is there any metadata?
                 const metadata = resultStream.getMetadata();

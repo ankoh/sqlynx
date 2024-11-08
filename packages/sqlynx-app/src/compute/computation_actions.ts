@@ -173,14 +173,14 @@ export async function summarizeTable(tableState: TableComputationState, task: Ta
     try {
         dispatch({
             type: TABLE_SUMMARY_TASK_RUNNING,
-            value: [tableState.tableId, taskProgress]
+            value: [tableState.computationId, taskProgress]
         });
         // Order the data frame
         const transformedDataFrame = await tableState.dataFrame!.transform(transform);
-        logger.info(`summarizing table ${tableState.tableId} succeded, scanning result`, LOG_CTX);
+        logger.info(`summarizing table ${tableState.computationId} succeded, scanning result`, LOG_CTX);
         // Read the result
         const transformedTable = await transformedDataFrame.readTable();
-        logger.info(`scanning summary for table ${tableState.tableId} suceeded`, LOG_CTX);
+        logger.info(`scanning summary for table ${tableState.computationId} suceeded`, LOG_CTX);
         // The output table
         const summary: TableSummary = {
             columnEntries,
@@ -198,11 +198,11 @@ export async function summarizeTable(tableState: TableComputationState, task: Ta
         };
         dispatch({
             type: TABLE_SUMMARY_TASK_SUCCEEDED,
-            value: [tableState.tableId, taskProgress, summary],
+            value: [tableState.computationId, taskProgress, summary],
         });
 
     } catch (error: any) {
-        logger.error(`ordering table ${tableState.tableId} failed with error: ${error.toString()}`);
+        logger.error(`ordering table ${tableState.computationId} failed with error: ${error.toString()}`);
         taskProgress = {
             status: TaskStatus.TASK_FAILED,
             startedAt,
@@ -212,7 +212,7 @@ export async function summarizeTable(tableState: TableComputationState, task: Ta
         };
         dispatch({
             type: TABLE_SUMMARY_TASK_FAILED,
-            value: [tableState.tableId, taskProgress, error],
+            value: [tableState.computationId, taskProgress, error],
         });
     }
 }
@@ -296,7 +296,7 @@ export async function summarizeColumn(tableState: TableComputationState, task: C
 
 
     } catch (error: any) {
-        logger.error(`ordering table ${tableState.tableId} failed with error: ${error.toString()}`);
+        logger.error(`ordering table ${tableState.computationId} failed with error: ${error.toString()}`);
         taskProgress = {
             status: TaskStatus.TASK_FAILED,
             startedAt,
