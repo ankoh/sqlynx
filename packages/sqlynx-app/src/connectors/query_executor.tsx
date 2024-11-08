@@ -1,3 +1,4 @@
+import * as arrow from 'apache-arrow';
 import * as React from 'react';
 import * as proto from '@ankoh/sqlynx-protobuf';
 
@@ -143,7 +144,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
         });
 
         // Helper to subscribe to query_status updates
-        const progressUpdater = async (resultStream: QueryExecutionResponseStream) => {
+        const readAllProgressUpdates = async (resultStream: QueryExecutionResponseStream) => {
             while (true) {
                 const update = await resultStream.nextProgressUpdate();
                 if (update == null) {
@@ -154,9 +155,10 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                     value: [queryId, update],
                 });
             }
+            return null;
         };
         // Helper to subscribe to result batches
-        const resultReader = async (resultStream: QueryExecutionResponseStream) => {
+        const readAllBatches = async (resultStream: QueryExecutionResponseStream) => {
             const schema = await resultStream.getSchema();
             if (schema == null) {
                 return;
@@ -165,16 +167,19 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                 type: QUERY_EXECUTION_RECEIVED_SCHEMA,
                 value: [queryId, schema],
             });
+            const batches: arrow.RecordBatch[] = [];
             while (true) {
                 const batch = await resultStream.nextRecordBatch();
                 if (batch == null) {
                     break;
                 }
+                batches.push(batch);
                 connDispatch(connectionId, {
                     type: QUERY_EXECUTION_RECEIVED_BATCH,
                     value: [queryId, batch, resultStream.getMetrics()],
                 });
             }
+            return new arrow.Table(schema, batches);
         };
         // Execute the query and consume the results
         let resultStream: QueryExecutionResponseStream | null = null;
@@ -212,15 +217,15 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                     value: [queryId, resultStream],
                 });
                 // Subscribe to query_status and result messages
-                const progress = progressUpdater(resultStream);
-                const results = resultReader(resultStream);
-                await Promise.all([results, progress]);
+                const progressUpdater = readAllProgressUpdates(resultStream);
+                const tableReader = readAllBatches(resultStream);
+                const [table, _]: [arrow.Table | undefined, null] = await Promise.all([tableReader, progressUpdater]);
 
                 // Is there any metadata?
                 const metadata = resultStream.getMetadata();
                 connDispatch(connectionId, {
                     type: QUERY_EXECUTION_SUCCEEDED,
-                    value: [queryId, null, metadata, resultStream!.getMetrics()],
+                    value: [queryId, table!, metadata, resultStream!.getMetrics()],
                 });
             }
         } catch (e: any) {

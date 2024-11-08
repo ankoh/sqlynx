@@ -8,8 +8,9 @@ import { AsyncDataFrame, ComputeWorkerBindings } from './compute_worker_bindings
 
 /// The table computation state
 export interface TableComputationState {
-    /// The table id
-    tableId: number;
+    /// The computation id.
+    /// (Equals the query id)
+    computationId: number;
     /// The epoch number
     localEpoch: number;
 
@@ -71,9 +72,9 @@ export function createComputationState(): ComputationState {
     };
 }
 /// Create the table computation state
-function createTableComputationState(tableId: number, table: arrow.Table, tableColumns: ColumnEntryVariant[], tableLifetime: AbortController): TableComputationState {
+function createTableComputationState(computationId: number, table: arrow.Table, tableColumns: ColumnEntryVariant[], tableLifetime: AbortController): TableComputationState {
     return {
-        tableId,
+        computationId: computationId,
         localEpoch: 0,
         dataTable: table,
         dataTableColumns: tableColumns,
@@ -96,7 +97,7 @@ function createTableComputationState(tableId: number, table: arrow.Table, tableC
 export const COMPUTATION_WORKER_CONFIGURED = Symbol('REGISTER_COMPUTATION');
 export const COMPUTATION_WORKER_CONFIGURATION_FAILED = Symbol('COMPUTATION_WORKER_SETUP_FAILED');
 
-export const REGISTER_COMPUTATION = Symbol('REGISTER_COMPUTATION');
+export const COMPUTATION_FROM_QUERY_RESULT = Symbol('COMPUTATION_FROM_QUERY_RESULT');
 export const DELETE_COMPUTATION = Symbol('DELETE_COMPUTATION');
 export const CREATED_DATA_FRAME = Symbol('CREATED_DATA_FRAME');
 
@@ -116,7 +117,7 @@ export type ComputationAction =
     | VariantKind<typeof COMPUTATION_WORKER_CONFIGURED, ComputeWorkerBindings>
     | VariantKind<typeof COMPUTATION_WORKER_CONFIGURATION_FAILED, Error | null>
 
-    | VariantKind<typeof REGISTER_COMPUTATION, [number, arrow.Table, ColumnEntryVariant[], AbortController]>
+    | VariantKind<typeof COMPUTATION_FROM_QUERY_RESULT, [number, arrow.Table, ColumnEntryVariant[], AbortController]>
     | VariantKind<typeof DELETE_COMPUTATION, [number]>
     | VariantKind<typeof CREATED_DATA_FRAME, [number, AsyncDataFrame]>
 
@@ -145,32 +146,32 @@ export function reduceComputationState(state: ComputationState, action: Computat
                 ...state,
                 computationWorkerSetupError: action.value,
             };
-        case REGISTER_COMPUTATION: {
-            const [tableId, table, tableColumns, tableLifetime] = action.value;
-            const tableState = createTableComputationState(tableId, table, tableColumns, tableLifetime);
-            state.tableComputations.set(tableId, tableState);
+        case COMPUTATION_FROM_QUERY_RESULT: {
+            const [computationId, table, tableColumns, tableLifetime] = action.value;
+            const tableState = createTableComputationState(computationId, table, tableColumns, tableLifetime);
+            state.tableComputations.set(computationId, tableState);
             return {
                 ...state,
                 tableComputations: state.tableComputations
             };
         }
         case DELETE_COMPUTATION: {
-            const [tableId] = action.value;
-            const tableState = state.tableComputations.get(tableId);
+            const [computationId] = action.value;
+            const tableState = state.tableComputations.get(computationId);
             if (tableState !== undefined) {
 
             }
-            state.tableComputations.delete(tableId);
+            state.tableComputations.delete(computationId);
             return { ...state };
         }
         case CREATED_DATA_FRAME: {
-            const [tableId, dataFrame] = action.value;
-            const prevTableState = state.tableComputations.get(tableId)!;
+            const [computationId, dataFrame] = action.value;
+            const prevTableState = state.tableComputations.get(computationId)!;
             const nextTableState: TableComputationState = {
                 ...prevTableState,
                 dataFrame,
             };
-            state.tableComputations.set(tableId, nextTableState);
+            state.tableComputations.set(computationId, nextTableState);
             return { ...state };
         }
     }
