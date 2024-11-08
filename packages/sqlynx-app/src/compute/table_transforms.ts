@@ -335,7 +335,7 @@ export function createTableSummaryTransform(task: TableSummaryTask): [proto.sqly
 }
 
 export function createColumnSummaryTransform(task: ColumnSummaryTask, tableSummary: TableSummary): proto.sqlynx_compute.pb.DataFrameTransform {
-    if (task.columnEntry.value.statsFields == null) {
+    if (task.columnEntry.type == SKIPPED_COLUMN || task.columnEntry.value.statsFields == null) {
         throw new Error("column summary requires precomputed table summary");
     }
     let fieldName = task.columnEntry.value.inputFieldName;
