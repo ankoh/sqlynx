@@ -202,25 +202,15 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
             return { ...state };
         }
         case QUERY_EXECUTION_SUCCEEDED: {
-            const batch = action.value[1];
             const metrics = { ...query.metrics };
             const untilNow = now.getTime() - (query.metrics.startedAt ?? now).getTime();
             metrics.lastUpdatedAt = now;
             metrics.finishedAt = now;
             metrics.queryDurationMs = untilNow;
-            if (batch != null) {
-                if (metrics.batchesReceived == 0) {
-                    metrics.durationUntilFirstBatchMs = untilNow;
-                }
-                metrics.batchesReceived += 1;
-                metrics.rowsReceived += batch.numRows;
-                metrics.dataBytesReceived = action.value[3].dataBytes;
-                query.resultBatches.push(batch);
-            }
             query = {
                 ...query,
                 resultMetadata: action.value[2],
-                resultTable: new arrow.Table(query.resultSchema!, query.resultBatches!),
+                resultTable: action.value[1],
                 status: QueryExecutionStatus.SUCCEEDED,
                 metrics: metrics,
             };
