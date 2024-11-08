@@ -5,6 +5,7 @@ import { Route, Routes, Navigate, BrowserRouter, HashRouter } from 'react-router
 import { AppConfigProvider } from './app_config.js';
 import { AppEventListenerProvider } from './platform/event_listener_provider.js';
 import { CatalogUpdaterProvider } from './connectors/catalog_loader.js';
+import { ComputationRegistry } from './compute/computation_registry.js';
 import { ConnectionRegistry } from './connectors/connection_registry.js';
 import { ConnectorsPage, ConnectorsPageStateProvider } from './view/connectors/connectors_page.js';
 import { CurrentSessionStateProvider } from './session/current_session.js';
@@ -66,13 +67,21 @@ const Connectors = (props: { children: React.ReactElement }) => (
         <SalesforceConnector>
             <HyperGrpcConnector>
                 <CatalogUpdaterProvider>
-                    <QueryExecutorProvider>
-                        {props.children}
-                    </QueryExecutorProvider>
+                    <Compute>
+                        <QueryExecutorProvider>
+                            {props.children}
+                        </QueryExecutorProvider>
+                    </Compute>
                 </CatalogUpdaterProvider>
             </HyperGrpcConnector>
         </SalesforceConnector>
     </ConnectionRegistry>
+);
+
+const Compute = (props: { children: React.ReactElement }) => (
+    <ComputationRegistry>
+        {props.children}
+    </ComputationRegistry>
 );
 
 const AppProviders = (props: { children: React.ReactElement }) => (
