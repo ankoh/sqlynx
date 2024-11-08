@@ -10,10 +10,11 @@ import { observeSize } from '../foundations/size_observer.js';
 import { ButtonSize, ButtonVariant, IconButton } from '../../view/foundations/button.js';
 import { ArrowTableFormatter } from './arrow_formatter.js';
 import { GridCellLocation, useStickyRowAndColumnHeaders } from '../foundations/sticky_grid.js';
+import { TableComputationState } from '../../compute/computation_state.js';
 
 interface Props {
     className?: string;
-    data: arrow.Table | null;
+    table: TableComputationState;
 }
 
 const MIN_GRID_HEIGHT = 200;
@@ -68,14 +69,14 @@ enum DataTableColumnHeader {
 var columnHeader: DataTableColumnHeader = DataTableColumnHeader.WithColumnPlots;
 
 export const DataTable: React.FC<Props> = (props: Props) => {
-
+    const table = props.table.dataTable;
     const dataGrid = React.useRef<Grid>(null);
     const gridContainerElement = React.useRef(null);
     const gridContainerSize = observeSize(gridContainerElement);
     const gridContainerHeight = Math.max(gridContainerSize?.height ?? 0, MIN_GRID_HEIGHT);
     const gridContainerWidth = Math.max(gridContainerSize?.width ?? 0, MIN_GRID_WIDTH);
-    const gridColumns = 1 + (props.data?.numCols ?? 0);
-    let gridRows = 1 + (props.data?.numRows ?? 0);
+    const gridColumns = 1 + (table.numCols ?? 0);
+    let gridRows = 1 + (table.numRows ?? 0);
 
     // Adjust based on the column header visibility
     let getRowHeight: (_row: number) => number;
@@ -121,11 +122,8 @@ export const DataTable: React.FC<Props> = (props: Props) => {
 
     /// Construct the arrow formatter
     const tableFormatter = React.useMemo(() => {
-        if (props.data == null) {
-            return;
-        }
-        return new ArrowTableFormatter(props.data.schema, props.data.batches);
-    }, [props.data]);
+        return new ArrowTableFormatter(table.schema, table.batches);
+    }, [table]);
 
     // Determine grid dimensions and column widths
     const [gridColumnOffsets, setGridColumnOffsets] = React.useState<Float64Array>(() => {
@@ -161,7 +159,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                 return (
                     <div className={styles.header_cell} style={cellProps.style}>
                         <span className={styles.header_cell_name}>
-                            {props.data!.schema.fields[fieldId].name}
+                            {table.schema.fields[fieldId].name}
                         </span>
                         <span className={styles.header_cell_actions}>
                             <IconButton
@@ -232,11 +230,6 @@ export const DataTable: React.FC<Props> = (props: Props) => {
             }
         }
     }, [tableFormatter]);
-
-    // Render an empty div if there's no data
-    if (props.data == null) {
-        return <div />;
-    }
 
     return (
         <div className={classNames(styles.root, props.className)} ref={gridContainerElement}>

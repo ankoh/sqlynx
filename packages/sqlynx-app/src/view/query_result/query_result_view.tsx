@@ -7,6 +7,7 @@ import { ByteFormat, formatMilliseconds, formatThousands } from '../../utils/ind
 import { formatBytes } from '../../utils/format.js';
 import { CopyToClipboardButton } from '../../utils/clipboard.js';
 import { ButtonSize, ButtonVariant } from '../foundations/button.js';
+import { useComputationRegistry } from '../../compute/computation_registry.js';
 
 const LOG_CTX = "query_result_viewer"
 
@@ -89,17 +90,23 @@ interface Props {
 }
 
 export function QueryResultView(props: Props) {
+    const [computationState, _computationDispatch] = useComputationRegistry();
     const [infoExpanded, setInfoExpanded] = React.useState(false);
 
+    // Query is null?
     if (props.query == null) {
-        return <div />
+        return <div />;
     }
-
+    // Resolve the table computation
+    const tableComputation = computationState.tableComputations.get(props.query.queryId) ?? null;
+    if (tableComputation == null) {
+        return <div />;
+    }
+    // Toggle data info
     const toggleInfo = () => setInfoExpanded(e => !e);
-
     return (
         <div className={styles.root}>
-            <DataTable className={styles.data_table} data={props.query.resultTable} />
+            <DataTable className={styles.data_table} table={tableComputation} />
             <div className={styles.info_toggle} onClick={toggleInfo} />
             {infoExpanded && <ResultInfo query={props.query} />}
         </div>
