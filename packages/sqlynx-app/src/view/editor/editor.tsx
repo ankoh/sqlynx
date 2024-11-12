@@ -49,9 +49,6 @@ interface ActiveScriptState {
 const FileSelector = (props: { className?: string; variant: 'default' | 'invisible'; script: ScriptMetadata }) => {
     const [isOpen, setIsOpen] = React.useState<boolean>(false);
 
-    const selectFile = React.useCallback((e: React.MouseEvent<HTMLLIElement, MouseEvent>) => {
-        e.stopPropagation();
-    }, []);
     return (
         <AnchoredOverlay
             open={isOpen}

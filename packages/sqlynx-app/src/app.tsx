@@ -11,7 +11,6 @@ import { ConnectorsPage, ConnectorsPageStateProvider } from './view/connectors/c
 import { CurrentSessionStateProvider } from './session/current_session.js';
 import { EditorPage } from './view/editor/editor_page.js';
 import { FilesPage } from './view/files/files_page.js';
-import { ShellPage } from './view/shell/shell_page.js';
 import { GitHubTheme } from './github_theme.js';
 import { HttpClientProvider } from './platform/http_client_provider.js';
 import { HyperDatabaseClientProvider } from './platform/hyperdb_client_provider.js';
@@ -20,9 +19,11 @@ import { HyperGrpcConnectorSettingsStateProvider } from './view/connectors/hyper
 import { LoggerProvider } from './platform/logger_provider.js';
 import { NavBarContainer } from './view/navbar.js';
 import { PlatformTypeProvider } from './platform/platform_type.js';
+import { PlotInternalsPage } from './view/internals/plot_internals_page.js';
 import { ProcessProvider } from './platform/process.js';
 import { QueryExecutorProvider } from './connectors/query_executor.js';
-import { SQLynxCoreProvider } from './sqlynx_core_provider.js';
+import { SQLynxComputeProvider } from './compute/compute_provider.js';
+import { SQLynxCoreProvider } from './core_provider.js';
 import { SalesforceConnector } from './connectors/salesforce/salesforce_connector.js';
 import { SalesforceConnectorSettingsStateProvider } from './view/connectors/salesforce_connector_settings.js';
 import { SchemaGraphDemoPage } from './view/internals/schema_graph_demo.js';
@@ -30,8 +31,8 @@ import { ScriptLoader } from './session/script_loader.js';
 import { SessionCommands } from './session/session_commands.js';
 import { SessionSetup } from './session/session_setup.js';
 import { SessionStateRegistry } from './session/session_state_registry.js';
+import { ShellPage } from './view/shell/shell_page.js';
 import { UIInternalsPage } from './view/internals/ui_internals_page.js';
-import { PlotInternalsPage } from './view/internals/plot_internals_page.js';
 import { VersionCheck } from './platform/version_check.js';
 import { isDebugBuild } from './globals.js';
 
@@ -95,13 +96,15 @@ const AppProviders = (props: { children: React.ReactElement }) => (
                                 <HttpClientProvider>
                                     <HyperDatabaseClientProvider>
                                         <SQLynxCoreProvider>
-                                            <Connectors>
-                                                <SessionProviders>
-                                                    <PageStateProviders>
-                                                        {props.children}
-                                                    </PageStateProviders>
-                                                </SessionProviders>
-                                            </Connectors>
+                                            <SQLynxComputeProvider>
+                                                <Connectors>
+                                                    <SessionProviders>
+                                                        <PageStateProviders>
+                                                            {props.children}
+                                                        </PageStateProviders>
+                                                    </SessionProviders>
+                                                </Connectors>
+                                            </SQLynxComputeProvider>
                                         </SQLynxCoreProvider>
                                     </HyperDatabaseClientProvider>
                                 </HttpClientProvider>

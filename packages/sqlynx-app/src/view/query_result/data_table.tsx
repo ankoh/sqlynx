@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as arrow from 'apache-arrow';
+import * as proto from '@ankoh/sqlynx-protobuf';
 import * as styles from './data_table.module.css';
 import * as symbols from '../../../static/svg/symbols.generated.svg';
 
@@ -10,11 +10,16 @@ import { observeSize } from '../foundations/size_observer.js';
 import { ButtonSize, ButtonVariant, IconButton } from '../../view/foundations/button.js';
 import { ArrowTableFormatter } from './arrow_formatter.js';
 import { GridCellLocation, useStickyRowAndColumnHeaders } from '../foundations/sticky_grid.js';
-import { TableComputationState } from '../../compute/computation_state.js';
+import { ComputationAction, TableComputationState } from '../../compute/computation_state.js';
+import { Dispatch } from '../../utils/variant.js';
+import { TableOrderingTask } from '../../compute/table_transforms.js';
+import { sortTable } from '../../compute/computation_actions.js';
+import { useLogger } from '../../platform/logger_provider.js';
 
 interface Props {
     className?: string;
     table: TableComputationState;
+    dispatchComputation: Dispatch<ComputationAction>;
 }
 
 const MIN_GRID_HEIGHT = 200;
@@ -69,7 +74,9 @@ enum DataTableColumnHeader {
 var columnHeader: DataTableColumnHeader = DataTableColumnHeader.WithColumnPlots;
 
 export const DataTable: React.FC<Props> = (props: Props) => {
-    const table = props.table.dataTable;
+    const logger = useLogger();
+    const computationState = props.table;
+    const table = computationState.dataTable;
     const dataGrid = React.useRef<Grid>(null);
     const gridContainerElement = React.useRef(null);
     const gridContainerSize = observeSize(gridContainerElement);
@@ -149,6 +156,24 @@ export const DataTable: React.FC<Props> = (props: Props) => {
         }
     }, [gridCellLocation]);
 
+    // Order by a column
+    const dispatchComputation = props.dispatchComputation;
+    const orderByColumn = React.useCallback((fieldId: number) => {
+        const fieldName = table.schema.fields[fieldId].name;
+        const orderingConstraints: proto.sqlynx_compute.pb.OrderByConstraint[] = [
+            new proto.sqlynx_compute.pb.OrderByConstraint({
+                fieldName: fieldName,
+                ascending: true,
+                nullsFirst: false,
+            })
+        ];
+        const orderingTask: TableOrderingTask = {
+            computationId: computationState.computationId,
+            orderingConstraints
+        };
+        sortTable(computationState, orderingTask, dispatchComputation, logger);
+    }, [computationState, dispatchComputation, logger]);
+
     // Helper to render a data cell
     const Cell = (cellProps: GridChildComponentProps) => {
         if (cellProps.rowIndex == 0) {
@@ -166,6 +191,8 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                                 variant={ButtonVariant.Invisible}
                                 size={ButtonSize.Small}
                                 aria-label="sort-column"
+                                onClick={() => orderByColumn(fieldId)}
+                                disabled={computationState.dataFrame == null}
                             >
                                 <svg width="16px" height="16px">
                                     <use xlinkHref={`${symbols}#sort_desc_16`} />

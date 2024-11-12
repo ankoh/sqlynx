@@ -22,8 +22,8 @@ import {
     QUERY_EXECUTION_SUCCEEDED,
 } from './connection_state.js';
 import { useComputationRegistry } from '../compute/computation_registry.js';
-import { COMPUTATION_FROM_QUERY_RESULT } from '../compute/computation_state.js';
-import { mapComputationColumnsEntries } from '../compute/computation_actions.js';
+import { storeTableAsComputation } from '../compute/computation_actions.js';
+import { useSQLynxComputeWorker } from '../compute/compute_provider.js';
 
 let NEXT_QUERY_ID = 1;
 
@@ -54,9 +54,15 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
 
     // We auto-register each successfull query result with the sqlynx-compute worker
     const [_, computeDispatch] = useComputationRegistry();
+    // Use the compute worker
+    const computeWorker = useSQLynxComputeWorker();
 
     // Execute a query with pre-allocated query id
     const executeWithId = React.useCallback(async (connectionId: number, args: QueryExecutionArgs, queryId: number): Promise<void> => {
+        // Make sure the compute worker is available
+        if (!computeWorker) {
+            throw new Error(`compute worker is not yet ready`);
+        }
         // Check if we know the connection id.
         const conn = connMap.get(connectionId);
         if (!conn) {
@@ -189,6 +195,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
         };
         // Execute the query and consume the results
         let resultStream: QueryExecutionResponseStream | null = null;
+        let table: arrow.Table | null = null;
         try {
             // Start the query
             switch (task.type) {
@@ -225,15 +232,8 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                 // Subscribe to query_status and result messages
                 const progressUpdater = readAllProgressUpdates(resultStream);
                 const tableReader = readAllBatches(resultStream);
-                const [table, _]: [arrow.Table | undefined, null] = await Promise.all([tableReader, progressUpdater]);
-
-                // Register the table with compute
-                const computeColumns = mapComputationColumnsEntries(table!);
-                const computeAbortCtrl = new AbortController();
-                computeDispatch({
-                    type: COMPUTATION_FROM_QUERY_RESULT,
-                    value: [queryId, table!, computeColumns, computeAbortCtrl]
-                })
+                const result = await Promise.all([tableReader, progressUpdater]);
+                table = result[0]!;
 
                 // Is there any metadata?
                 const metadata = resultStream.getMetadata();
@@ -256,6 +256,13 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                 });
             }
         }
+
+
+        // Make the table ready for computations
+        if (table) {
+            storeTableAsComputation(queryId, table!, computeDispatch, computeWorker);
+        }
+
     }, [connMap, sfApi]);
 
     // Allocate the next query id and start the execution

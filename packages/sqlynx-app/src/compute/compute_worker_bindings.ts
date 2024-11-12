@@ -260,6 +260,13 @@ export class ComputeWorkerBindings {
         const ingest = new AsyncArrowIngest(this, result.frameId);
         return ingest;
     }
+    /// Create a data frame from a table
+    public async createDataFrameFromTable(t: arrow.Table): Promise<AsyncDataFrame> {
+        const ingest = await this.createArrowIngest();
+        await ingest.writeTable(t);
+        const dataFrame = await ingest.finish();
+        return dataFrame;
+    }
 }
 
 export class AsyncDataFrameScan {
@@ -382,14 +389,14 @@ export class AsyncArrowIngest {
         await this.workerBindings.postTask(task);
     }
     /// Insert an arrow table 
-    async writeTable(table: arrow.Table) {
+    async writeTable(table: arrow.Table): Promise<void> {
         this.requireWorker();
         let data = arrow.tableToIPC(table, "stream");
         const task = new ComputeWorkerTask<ComputeWorkerRequestType.DATAFRAME_INGEST_WRITE, { frameId: number, buffer: Uint8Array }, null>(ComputeWorkerRequestType.DATAFRAME_INGEST_WRITE, { frameId: this.frameId, buffer: data });
         await this.workerBindings.postTask(task, [data.buffer]);
     }
     /// Finish the arrow ingest
-    async finish() {
+    async finish(): Promise<AsyncDataFrame> {
         this.requireWorker();
         const task = new ComputeWorkerTask<ComputeWorkerRequestType.DATAFRAME_INGEST_FINISH, { frameId: number }, null>(ComputeWorkerRequestType.DATAFRAME_INGEST_FINISH, { frameId: this.frameId });
         await this.workerBindings.postTask(task, []);
