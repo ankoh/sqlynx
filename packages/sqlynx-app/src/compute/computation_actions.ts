@@ -2,13 +2,32 @@ import * as arrow from 'apache-arrow';
 
 import { Dispatch } from '../utils/variant.js';
 import { Logger } from '../platform/logger.js';
-import { COLUMN_SUMMARY_TASK_FAILED, COLUMN_SUMMARY_TASK_RUNNING, COLUMN_SUMMARY_TASK_SUCCEEDED, ComputationAction, TABLE_ORDERING_TASK_FAILED, TABLE_ORDERING_TASK_RUNNING, TABLE_ORDERING_TASK_SUCCEEDED, TABLE_SUMMARY_TASK_FAILED, TABLE_SUMMARY_TASK_RUNNING, TABLE_SUMMARY_TASK_SUCCEEDED, TableComputationState } from './computation_state.js';
+import { COLUMN_SUMMARY_TASK_FAILED, COLUMN_SUMMARY_TASK_RUNNING, COLUMN_SUMMARY_TASK_SUCCEEDED, COMPUTATION_FROM_QUERY_RESULT, ComputationAction, CREATED_DATA_FRAME, TABLE_ORDERING_TASK_FAILED, TABLE_ORDERING_TASK_RUNNING, TABLE_ORDERING_TASK_SUCCEEDED, TABLE_SUMMARY_TASK_FAILED, TABLE_SUMMARY_TASK_RUNNING, TABLE_SUMMARY_TASK_SUCCEEDED, TableComputationState } from './computation_state.js';
 import { ColumnSummaryVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskProgress, ORDINAL_COLUMN, STRING_COLUMN, LIST_COLUMN, createOrderByTransform, createTableSummaryTransform, createColumnSummaryTransform, ColumnEntryVariant, SKIPPED_COLUMN } from './table_transforms.js';
+import { ComputeWorkerBindings } from './compute_worker_bindings.js';
 
 const LOG_CTX = "computation_actions";
 
+/// Store table as computaiton
+export async function storeTableAsComputation(computationId: number, table: arrow.Table, dispatch: Dispatch<ComputationAction>, worker: ComputeWorkerBindings): Promise<void> {
+    // Register the table with compute
+    const computeColumns = mapComputationColumnsEntries(table!);
+    const computeAbortCtrl = new AbortController();
+    dispatch({
+        type: COMPUTATION_FROM_QUERY_RESULT,
+        value: [computationId, table!, computeColumns, computeAbortCtrl]
+    });
+
+    // Create a Data Frame from a table
+    const dataFrame = await worker.createDataFrameFromTable(table);
+    dispatch({
+        type: CREATED_DATA_FRAME,
+        value: [computationId, dataFrame]
+    });
+}
+
 /// Helper to derive column entry variants from an arrow table
-export function mapComputationColumnsEntries(table: arrow.Table): ColumnEntryVariant[] {
+function mapComputationColumnsEntries(table: arrow.Table): ColumnEntryVariant[] {
     const tableColumns: ColumnEntryVariant[] = [];
     for (let i = 0; i < table.schema.fields.length; ++i) {
         const field = table.schema.fields[i];
@@ -111,14 +130,14 @@ export async function sortTable(tableState: TableComputationState, task: TableOr
     try {
         dispatch({
             type: TABLE_ORDERING_TASK_RUNNING,
-            value: [task.tableId, taskProgress]
+            value: [task.computationId, taskProgress]
         });
         // Order the data frame
         const transformed = await tableState.dataFrame!.transform(transform);
-        logger.info(`sorting table ${task.tableId} succeded, scanning result`, LOG_CTX);
+        logger.info(`sorting table ${task.computationId} succeded, scanning result`, LOG_CTX);
         // Read the result
         const orderedTable = await transformed.readTable();
-        logger.info(`scanning sorted table ${task.tableId} suceeded`, LOG_CTX);
+        logger.info(`scanning sorted table ${task.computationId} suceeded`, LOG_CTX);
         // Delete the data frame after reordering
         await transformed.delete();
         // The output table
@@ -136,11 +155,11 @@ export async function sortTable(tableState: TableComputationState, task: TableOr
         };
         dispatch({
             type: TABLE_ORDERING_TASK_SUCCEEDED,
-            value: [task.tableId, taskProgress, out],
+            value: [task.computationId, taskProgress, out],
         });
 
     } catch (error: any) {
-        logger.error(`ordering table ${task.tableId} failed with error: ${error.toString()}`);
+        logger.error(`ordering table ${task.computationId} failed with error: ${error.toString()}`);
         taskProgress = {
             status: TaskStatus.TASK_FAILED,
             startedAt,
@@ -150,7 +169,7 @@ export async function sortTable(tableState: TableComputationState, task: TableOr
         };
         dispatch({
             type: TABLE_ORDERING_TASK_FAILED,
-            value: [task.tableId, taskProgress, error],
+            value: [task.computationId, taskProgress, error],
         });
     }
 }
@@ -234,14 +253,14 @@ export async function summarizeColumn(tableState: TableComputationState, task: C
     try {
         dispatch({
             type: COLUMN_SUMMARY_TASK_RUNNING,
-            value: [task.tableId, task.columnId, taskProgress]
+            value: [task.computationId, task.columnId, taskProgress]
         });
         // Order the data frame
         const transformedDataFrame = await tableState.dataFrame!.transform(transform);
-        logger.info(`summarizing column ${task.tableId} succeded, scanning result`, LOG_CTX);
+        logger.info(`summarizing column ${task.computationId} succeded, scanning result`, LOG_CTX);
         // Read the result
         const transformedTable = await transformedDataFrame.readTable();
-        logger.info(`scanning summary for column ${task.tableId}[${task.columnId}] suceeded`, LOG_CTX);
+        logger.info(`scanning summary for column ${task.computationId}[${task.columnId}] suceeded`, LOG_CTX);
         // Delete the data frame after reordering
         transformedDataFrame.delete();
         // Create the summary variant
@@ -291,7 +310,7 @@ export async function summarizeColumn(tableState: TableComputationState, task: C
         };
         dispatch({
             type: COLUMN_SUMMARY_TASK_SUCCEEDED,
-            value: [task.tableId, task.columnId, taskProgress, summary],
+            value: [task.computationId, task.columnId, taskProgress, summary],
         });
 
 
@@ -306,7 +325,7 @@ export async function summarizeColumn(tableState: TableComputationState, task: C
         };
         dispatch({
             type: COLUMN_SUMMARY_TASK_FAILED,
-            value: [task.tableId, task.columnId, taskProgress, error],
+            value: [task.computationId, task.columnId, taskProgress, error],
         });
     }
 }

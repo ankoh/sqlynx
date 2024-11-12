@@ -24,15 +24,15 @@ export type TaskVariant =
     ;
 
 export interface TableOrderingTask {
-    /// The table id
-    tableId: number;
+    /// The computation id
+    computationId: number;
     /// The ordering constraints
     orderingConstraints: proto.sqlynx_compute.pb.OrderByConstraint[];
 }
 
 export interface TableSummaryTask {
-    /// The table id
-    tableId: number;
+    /// The computation id
+    computationId: number;
     /// The column entries
     columnEntries: ColumnEntryVariant[];
     /// Count(*) field
@@ -40,15 +40,15 @@ export interface TableSummaryTask {
 }
 
 export interface TablePrecomputationTask {
-    /// The table id
-    tableId: number;
+    /// The computation id
+    computationId: number;
     /// The column entries
     columnEntries: ColumnEntryVariant[];
 }
 
 export interface ColumnSummaryTask {
-    /// The table id
-    tableId: number;
+    /// The computation id
+    computationId: number;
     /// The task id
     columnId: number;
     /// The column entry
