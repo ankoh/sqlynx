@@ -99,13 +99,16 @@ export class ComputeWorker {
                 this.sendOK(request);
                 return;
             case ComputeWorkerRequestType.INSTANTIATE:
-                try {
-                    compute.default(request.data.url);
-                    this.sendOK(request);
-                } catch (e: any) {
-                    this.failWith(request, e);
-                    return;
-                }
+                const init = async () => {
+                    try {
+                        await compute.default(request.data.url);
+                        this.sendOK(request);
+                    } catch (e: any) {
+                        this.failWith(request, e);
+                        return;
+                    }
+                };
+                init();
             default:
                 break;
         }
@@ -210,5 +213,12 @@ export class ComputeWorker {
             console.log(e);
             return this.failWith(request, e);
         }
+    }
+
+    static register(): void {
+        const worker = new ComputeWorker(globalThis as WorkerGlobalsLike);
+        globalThis.onmessage = async (event: MessageEvent<ComputeWorkerRequestVariant>) => {
+            worker.onMessage(event.data);
+        };
     }
 }
