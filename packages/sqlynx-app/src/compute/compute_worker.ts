@@ -109,6 +109,7 @@ export class ComputeWorker {
                     }
                 };
                 init();
+                return;
             default:
                 break;
         }
@@ -205,8 +206,11 @@ export class ComputeWorker {
                     this.sendOK(request);
                     return;
                 }
-                default:
+                default: {
+                    const unknownType = (request as any).type;
+                    this.failWith(request, new Error(`unknown request type ${unknownType}`));
                     break;
+                }
             }
 
         } catch (e: any) {

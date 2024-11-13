@@ -261,7 +261,7 @@ export class ComputeWorkerBindings {
         this.requireWorker();
         const task = new ComputeWorkerTask<ComputeWorkerRequestType.DATAFRAME_FROM_INGEST, null, { frameId: number }>(ComputeWorkerRequestType.DATAFRAME_FROM_INGEST, null);
         const result = await this.postTask(task);
-        const ingest = new AsyncArrowIngest(this, result.frameId);
+        const ingest = new AsyncArrowIngest(this.logger, this, result.frameId);
         return ingest;
     }
     /// Create a data frame from a table
@@ -308,12 +308,15 @@ export class AsyncDataFrameScan {
 
 /// An async data frame
 export class AsyncDataFrame {
+    /// The logger
+    logger: Logger;
     /// The worker
     workerBindings: ComputeWorkerBindings;
     /// The frame id
     frameId: number;
 
-    constructor(worker: ComputeWorkerBindings, frameId: number) {
+    constructor(logger: Logger, worker: ComputeWorkerBindings, frameId: number) {
+        this.logger = logger;
         this.workerBindings = worker;
         this.frameId = frameId;
     }
@@ -336,7 +339,7 @@ export class AsyncDataFrame {
                 ComputeWorkerRequestType.DATAFRAME_TRANSFORM, { frameId: this.frameId, buffer: bytes }
             );
         const result = await this.workerBindings.postTask(task);
-        return new AsyncDataFrame(this.workerBindings, result.frameId);
+        return new AsyncDataFrame(this.logger, this.workerBindings, result.frameId);
     }
 
     /// Scan a data frame
@@ -370,12 +373,15 @@ export class AsyncDataFrame {
 
 /// Async Arrow ingest
 export class AsyncArrowIngest {
+    /// The logger
+    logger: Logger;
     /// The worker
     workerBindings: ComputeWorkerBindings;
     /// The frame id
     frameId: number;
 
-    constructor(worker: ComputeWorkerBindings, frameId: number) {
+    constructor(logger: Logger, worker: ComputeWorkerBindings, frameId: number) {
+        this.logger = logger;
         this.workerBindings = worker;
         this.frameId = frameId;
     }
@@ -404,7 +410,7 @@ export class AsyncArrowIngest {
         this.requireWorker();
         const task = new ComputeWorkerTask<ComputeWorkerRequestType.DATAFRAME_INGEST_FINISH, { frameId: number }, null>(ComputeWorkerRequestType.DATAFRAME_INGEST_FINISH, { frameId: this.frameId });
         await this.workerBindings.postTask(task, []);
-        return new AsyncDataFrame(this.workerBindings, this.frameId);
+        return new AsyncDataFrame(this.logger, this.workerBindings, this.frameId);
 
     }
 }

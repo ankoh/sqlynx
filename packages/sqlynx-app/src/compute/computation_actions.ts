@@ -125,6 +125,12 @@ export async function sortTable(tableState: TableComputationState, task: TableOr
         completedAt: null,
         failedAt: null,
         failedWithError: null,
+    };
+
+    if (task.orderingConstraints.length == 1) {
+        logger.info(`sorting table ${task.computationId} by field "${task.orderingConstraints[0].fieldName}"`, LOG_CTX);
+    } else {
+        logger.info(`sorting table ${task.computationId} by multiple fields`, LOG_CTX);
     }
 
     try {
