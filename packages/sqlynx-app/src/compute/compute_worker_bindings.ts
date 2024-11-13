@@ -210,6 +210,13 @@ export class ComputeWorkerBindings {
                 }
                 break;
             }
+            case ComputeWorkerRequestType.DATAFRAME_TRANSFORM: {
+                if (response.type == ComputeWorkerResponseType.DATAFRAME_ID) {
+                    task.promiseResolver(response.data);
+                    return;
+                }
+                break;
+            }
             case ComputeWorkerRequestType.DATAFRAME_DELETE:
             case ComputeWorkerRequestType.DATAFRAME_INGEST_WRITE:
             case ComputeWorkerRequestType.DATAFRAME_INGEST_FINISH:
@@ -220,7 +227,7 @@ export class ComputeWorkerBindings {
                 }
                 break;
         }
-        task.promiseRejecter(new Error(`unexpected response type: ${response.type.toString()}`));
+        task.promiseRejecter(new Error(`unexpected response type ${response.type.toString()} for request of type ${task.type.toString()}`));
     }
 
     /// Received an error from the worker

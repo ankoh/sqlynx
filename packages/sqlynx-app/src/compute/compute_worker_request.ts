@@ -62,6 +62,7 @@ export type ComputeWorkerRequestVariant =
     | ComputeWorkerRequest<ComputeWorkerRequestType.DATAFRAME_INGEST_WRITE, { frameId: number, buffer: Uint8Array }>
     | ComputeWorkerRequest<ComputeWorkerRequestType.DATAFRAME_INGEST_FINISH, { frameId: number }>
     | ComputeWorkerRequest<ComputeWorkerRequestType.DATAFRAME_SCAN, { frameId: number, scanId: number }>
+    | ComputeWorkerRequest<ComputeWorkerRequestType.DATAFRAME_TRANSFORM, { frameId: number, buffer: Uint8Array }>
     ;
 
 export type ComputeWorkerResponseVariant =
