@@ -226,6 +226,7 @@ export class ComputeWorkerBindings {
     /// Received an error from the worker
     protected onError(event: MessageEventLike): void {
         this.logger.error(`error in compute worker: ${event.data}`, LOG_CTX);
+        console.error(event);
         this.pendingRequests.clear();
     }
 
@@ -243,8 +244,11 @@ export class ComputeWorkerBindings {
     /// Instantiate the worker
     public async instantiate(url: string) {
         if (!this.worker) return;
+        const initStart = performance.now();
         const task = new ComputeWorkerTask<ComputeWorkerRequestType.INSTANTIATE, { url: string }, null>(ComputeWorkerRequestType.INSTANTIATE, { url: url });
         await this.postTask(task);
+        const initEnd = performance.now();
+        this.logger.info(`instantiated compute in ${Math.floor(initEnd - initStart)} ms`, "compute");
     }
     /// Require a worker
     protected requireWorker() {

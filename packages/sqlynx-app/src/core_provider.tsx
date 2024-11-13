@@ -43,7 +43,7 @@ export const SQLynxCoreProvider: React.FC<Props> = (props: Props) => {
         };
         // Fetch an url with query_status tracking
         const fetchWithProgress = async (url: URL) => {
-            logger.info(`instantiating core for ${context}`, "sqlynx_loader");
+            logger.info(`instantiating core for ${context}`, "core");
 
             // Try to determine file size
             const request = new Request(url);
@@ -77,7 +77,7 @@ export const SQLynxCoreProvider: React.FC<Props> = (props: Props) => {
                     return await WebAssembly.instantiateStreaming(fetchWithProgress(SQLYNX_MODULE_URL), imports);
                 });
                 const initEnd = performance.now();
-                logger.info(`instantiated core in ${Math.floor(initEnd - initStart)} ms`, "sqlynx_loader");
+                logger.info(`instantiated core in ${Math.floor(initEnd - initStart)} ms`, "core");
                 setProgress(_ => ({
                     ...internal,
                     updatedAt: new Date(),
