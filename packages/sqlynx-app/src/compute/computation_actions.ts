@@ -6,7 +6,7 @@ import { COLUMN_SUMMARY_TASK_FAILED, COLUMN_SUMMARY_TASK_RUNNING, COLUMN_SUMMARY
 import { ColumnSummaryVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskProgress, ORDINAL_COLUMN, STRING_COLUMN, LIST_COLUMN, createOrderByTransform, createTableSummaryTransform, createColumnSummaryTransform, ColumnEntryVariant, SKIPPED_COLUMN } from './table_transforms.js';
 import { ComputeWorkerBindings } from './compute_worker_bindings.js';
 
-const LOG_CTX = "computation_actions";
+const LOG_CTX = "compute";
 
 /// Store table as computaiton
 export async function storeTableAsComputation(computationId: number, table: arrow.Table, dispatch: Dispatch<ComputationAction>, worker: ComputeWorkerBindings): Promise<void> {

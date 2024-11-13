@@ -1,4 +1,5 @@
 import * as compute from '@ankoh/sqlynx-compute';
+import * as pb from '@ankoh/sqlynx-protobuf';
 
 import { ComputeWorkerRequestType, ComputeWorkerRequestVariant, ComputeWorkerResponseType, ComputeWorkerResponseVariant } from "./compute_worker_request.js";
 
@@ -92,23 +93,20 @@ export class ComputeWorker {
         this.onMessage(event.data);
     }
     /// Process a request from the main thread
-    public onMessage(request: ComputeWorkerRequestVariant): void {
+    public async onMessage(request: ComputeWorkerRequestVariant): Promise<void> {
         // Instantiate the module
         switch (request.type) {
             case ComputeWorkerRequestType.PING:
                 this.sendOK(request);
                 return;
             case ComputeWorkerRequestType.INSTANTIATE:
-                const init = async () => {
-                    try {
-                        await compute.default(request.data.url);
-                        this.sendOK(request);
-                    } catch (e: any) {
-                        this.failWith(request, e);
-                        return;
-                    }
-                };
-                init();
+                try {
+                    await compute.default(request.data.url);
+                    this.sendOK(request);
+                } catch (e: any) {
+                    this.failWith(request, e);
+                    return;
+                }
                 return;
             default:
                 break;
@@ -204,6 +202,23 @@ export class ComputeWorker {
                         frame.free();
                     }
                     this.sendOK(request);
+                    return;
+                }
+                case ComputeWorkerRequestType.DATAFRAME_TRANSFORM: {
+                    const frame = this.frames.get(request.data.frameId);
+                    if (!frame) {
+                        this.failWith(request, new Error(`unknown dataframe id ${request.data.frameId}`));
+                        return;
+                    }
+                    const frameId = this.nextFrameId;
+                    const transformed = await frame.transform(request.data.buffer);
+                    this.frames.set(frameId, transformed);
+                    this.postMessage({
+                        messageId: this.nextMessageId++,
+                        requestId: request.messageId,
+                        type: ComputeWorkerResponseType.DATAFRAME_ID,
+                        data: { frameId },
+                    }, []);
                     return;
                 }
                 default: {
