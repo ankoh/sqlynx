@@ -146,8 +146,10 @@ export interface SkippedColumnEntry {
 export interface OrderedTable {
     /// The ordering constraints
     orderingConstraints: proto.sqlynx_compute.pb.OrderByConstraint[];
-    /// The ordered table
-    orderedTable: arrow.Table;
+    /// The arrow table
+    dataTable: arrow.Table;
+    /// The data frame
+    dataFrame: AsyncDataFrame;
 }
 
 // ------------------------------------------------------------

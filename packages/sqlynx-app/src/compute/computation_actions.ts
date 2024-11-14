@@ -144,12 +144,11 @@ export async function sortTable(tableState: TableComputationState, task: TableOr
         // Read the result
         const orderedTable = await transformed.readTable();
         logger.info(`scanning sorted table ${task.computationId} suceeded`, LOG_CTX);
-        // Delete the data frame after reordering
-        await transformed.delete();
         // The output table
         const out: OrderedTable = {
             orderingConstraints: task.orderingConstraints,
-            orderedTable,
+            dataTable: orderedTable,
+            dataFrame: transformed,
         };
         // Mark the task as running
         taskProgress = {
