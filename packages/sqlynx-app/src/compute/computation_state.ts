@@ -1,4 +1,5 @@
 import * as arrow from 'apache-arrow';
+import * as proto from '@ankoh/sqlynx-protobuf';
 
 import { ColumnSummaryVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskProgress, ColumnEntryVariant, TablePrecomputationTask } from './table_transforms.js';
 
@@ -21,9 +22,9 @@ export interface TableComputationState {
     dataTableLifetime: AbortController;
     /// The data frame in the compute module
     dataFrame: AsyncDataFrame | null;
+    /// The ordering constraints
+    dataTableOrdering: proto.sqlynx_compute.pb.OrderByConstraint[];
 
-    /// The ordered table
-    orderedTable: OrderedTable | null;
     /// The ordering task
     orderingTask: TableOrderingTask | null;
     /// The ordering task status
@@ -78,8 +79,8 @@ function createTableComputationState(computationId: number, table: arrow.Table, 
         dataTable: table,
         dataTableColumns: tableColumns,
         dataTableLifetime: tableLifetime,
+        dataTableOrdering: [],
         dataFrame: null,
-        orderedTable: null,
         orderingTask: null,
         orderingTaskStatus: null,
         tableSummaryTask: null,
@@ -157,9 +158,10 @@ export function reduceComputationState(state: ComputationState, action: Computat
         case DELETE_COMPUTATION: {
             const [computationId] = action.value;
             const tableState = state.tableComputations.get(computationId);
-            if (tableState !== undefined) {
-                state.tableComputations.delete(computationId);
+            if (tableState === undefined) {
+                return state;
             }
+            state.tableComputations.delete(computationId);
             return { ...state };
         }
         case CREATED_DATA_FRAME: {
@@ -175,16 +177,19 @@ export function reduceComputationState(state: ComputationState, action: Computat
         case TABLE_ORDERING_TASK_SUCCEEDED: {
             const [computationId, taskProgress, orderedTable] = action.value;
             const tableState = state.tableComputations.get(computationId);
-            if (tableState !== undefined) {
-                if (tableState.orderedTable != null) {
-                    tableState.orderedTable.dataFrame.delete();
-                }
-                state.tableComputations.set(computationId, {
-                    ...tableState,
-                    orderingTaskStatus: taskProgress.status,
-                    orderedTable: orderedTable,
-                });
+            if (tableState === undefined) {
+                return state;
             }
+            if (tableState.dataFrame != null) {
+                tableState.dataFrame.delete();
+            }
+            state.tableComputations.set(computationId, {
+                ...tableState,
+                dataFrame: orderedTable.dataFrame,
+                dataTable: orderedTable.dataTable,
+                dataTableOrdering: orderedTable.orderingConstraints,
+                orderingTaskStatus: taskProgress.status,
+            });
             return { ...state };
         }
     }
