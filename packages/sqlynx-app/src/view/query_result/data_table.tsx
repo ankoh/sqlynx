@@ -76,7 +76,7 @@ var columnHeader: DataTableColumnHeader = DataTableColumnHeader.WithColumnPlots;
 export const DataTable: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
     const computationState = props.table;
-    const table = computationState.orderedTable?.dataTable ?? computationState.dataTable;
+    const table = computationState.dataTable;
     const dataGrid = React.useRef<Grid>(null);
     const gridContainerElement = React.useRef(null);
     const gridContainerSize = observeSize(gridContainerElement);
