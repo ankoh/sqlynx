@@ -210,7 +210,7 @@ export class ComputeWorker {
                         this.failWith(request, new Error(`unknown dataframe id ${request.data.frameId}`));
                         return;
                     }
-                    const frameId = this.nextFrameId;
+                    const frameId = this.nextFrameId++;
                     const transformed = await frame.transform(request.data.buffer);
                     this.frames.set(frameId, transformed);
                     this.postMessage({
