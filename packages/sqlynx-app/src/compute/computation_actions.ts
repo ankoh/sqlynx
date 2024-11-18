@@ -128,9 +128,9 @@ export async function sortTable(tableState: TableComputationState, task: TableOr
     };
 
     if (task.orderingConstraints.length == 1) {
-        logger.info(`sorting table ${task.computationId} by field "${task.orderingConstraints[0].fieldName}"`, LOG_CTX);
+        logger.info(`sorting table by field "${task.orderingConstraints[0].fieldName}"`, LOG_CTX);
     } else {
-        logger.info(`sorting table ${task.computationId} by multiple fields`, LOG_CTX);
+        logger.info(`sorting table by multiple fields`, LOG_CTX);
     }
 
     try {
@@ -139,11 +139,16 @@ export async function sortTable(tableState: TableComputationState, task: TableOr
             value: [task.computationId, taskProgress]
         });
         // Order the data frame
+        const sortStart = performance.now();
         const transformed = await tableState.dataFrame!.transform(transform);
-        logger.info(`sorting table ${task.computationId} succeded, scanning result`, LOG_CTX);
+        const sortEnd = performance.now();
+        logger.info(`sorted table in ${Math.floor(sortEnd - sortStart)} ms, scanning result`, LOG_CTX);
         // Read the result
+        const scanStart = performance.now();
         const orderedTable = await transformed.readTable();
-        logger.info(`scanning sorted table ${task.computationId} suceeded`, LOG_CTX);
+        const scanEnd = performance.now();
+        logger.info(`scanned sorted table in ${Math.floor(scanEnd - scanStart)}`, LOG_CTX);
+
         // The output table
         const out: OrderedTable = {
             orderingConstraints: task.orderingConstraints,
@@ -164,7 +169,7 @@ export async function sortTable(tableState: TableComputationState, task: TableOr
         });
 
     } catch (error: any) {
-        logger.error(`ordering table ${task.computationId} failed with error: ${error.toString()}`);
+        logger.error(`sorting table failed with error: ${error.toString()}`);
         taskProgress = {
             status: TaskStatus.TASK_FAILED,
             startedAt,
