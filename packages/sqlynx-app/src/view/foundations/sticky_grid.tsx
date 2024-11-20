@@ -44,7 +44,8 @@ export function useStickyRowAndColumnHeaders(Cell: React.ElementType, cellLocati
                     const rowIndex = i;
                     const rowOffset = cellLocation.getRowOffset(rowIndex);
                     const rowHeight = cellLocation.getRowHeight(rowIndex);
-
+                    // Add dummy block cell to reset inline-flex
+                    newChildren.push(<div key={`${i}:reset`} />);
                     // Add sticky corner cell
                     newChildren.push(
                         React.createElement(Cell, {
