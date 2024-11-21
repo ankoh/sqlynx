@@ -4,6 +4,7 @@ import * as d3 from 'd3';
 import * as arrow from 'apache-arrow';
 
 import { generateRandomData, RandomDataConfig } from '../../utils/random_data.js';
+import { observeSize } from '../../view/foundations/size_observer.js';
 
 const config: RandomDataConfig = {
     fields: [
@@ -80,11 +81,19 @@ function filterTable(input: arrow.Table<testSchemaType>, selectBegin: number, se
 export function ExampleHistogram(): React.ReactElement {
     const rows = React.useMemo(() => testTable.toArray(), [testTable]);
 
-    var margin = { top: 0, right: 0, bottom: 0, left: 0 },
-        width = 130 - margin.left - margin.right,
-        height = 30 - margin.top - margin.bottom;
+    const dataBarsContainer = React.useRef<SVGGElement>(null);
+    const selectionBarContainer = React.useRef<SVGGElement>(null);
+    const brushContainer = React.useRef<SVGGElement>(null);
+    const xAxisContainer = React.useRef<SVGGElement>(null);
 
-    const xDomain = [rows[0].binField, rows[rows.length - 1].binField];
+    const rootContainer = React.useRef<HTMLDivElement>(null);
+    const rootSize = observeSize(rootContainer);
+
+    var margin = { top: 8, right: 8, bottom: 16, left: 8 },
+        width = (rootSize?.width ?? 130) - margin.left - margin.right,
+        height = (rootSize?.height ?? 50) - margin.top - margin.bottom;
+
+    // const xDomain = [rows[0].binField, rows[rows.length - 1].binField];
     const [xScale, yScale] = React.useMemo(() => ([
         d3.scaleBand()
             .range([0, width])
@@ -93,12 +102,7 @@ export function ExampleHistogram(): React.ReactElement {
         d3.scaleLinear()
             .domain([0, 100])
             .range([height, 0])
-    ]), []);
-
-    const dataBarsContainer = React.useRef<SVGGElement>(null);
-    const selectionBarContainer = React.useRef<SVGGElement>(null);
-    const brushContainer = React.useRef<SVGGElement>(null);
-    const xAxisContainer = React.useRef<SVGGElement>(null);
+    ]), [width, height]);
 
     const [rangeSelection, setRangeSelection] = React.useState<[number, number] | null>(null);
     const onRangeSelection = React.useCallback((selBegin: number, selEnd: number) => {
@@ -117,7 +121,7 @@ export function ExampleHistogram(): React.ReactElement {
             .attr("y", d => yScale(d.countField)!)
             .attr("width", xScale.bandwidth())
             .attr("height", d => (height - yScale(d.countField)!));
-    }, []);
+    }, [xScale, yScale]);
     const onRangeSelectionEnd = React.useCallback(() => {
         setRangeSelection(null);
     }, []);
@@ -151,7 +155,7 @@ export function ExampleHistogram(): React.ReactElement {
         // Define the brush
         const brush = d3.brushX()
             .extent([
-                [xScale.range()[0], margin.top],
+                [xScale.range()[0], 0],
                 [xScale.range()[1], height]
             ])
             .on('start', onBrush)
@@ -162,39 +166,31 @@ export function ExampleHistogram(): React.ReactElement {
         d3.select(brushContainer.current!)
             .call(brush)
             .selectAll('rect')
-            .attr("transform", `translate(${margin.left}, ${margin.top})`)
+            .attr("y", 0)
+            // .attr("transform", `translate(${margin.left}, ${margin.top})`)
             .attr('height', height);
 
         // Add the x-axis
         d3.select(xAxisContainer.current!)
             .call(d3.axisBottom(xScale).ticks(2).tickSize(0));
 
-    }, []);
+    }, [xScale, yScale]);
 
     return (
-        <div className={styles.histogram_container}>
-            <div className={styles.histogram_plot}>
-                <svg
-                    width={width + margin.left + margin.right}
-                    height={height + margin.top + margin.bottom}
-                >
-                    <g transform={`translate(${margin.left},${margin.top})`}>
-                        <g ref={dataBarsContainer} />
-                        <g ref={selectionBarContainer} />
-                        <g ref={brushContainer} />
-                        <g ref={xAxisContainer} transform={`translate(${margin.left}, ${margin.top + height})`} />
-                    </g>
+        <div className={styles.histogram_container} ref={rootContainer}>
+            <svg
+                className={styles.histogram_plot_svg}
+                width={width + margin.left + margin.right}
+                height={height + margin.top + margin.bottom}
+            >
+                <g transform={`translate(${margin.left},${margin.top})`}>
+                    <g ref={dataBarsContainer} />
+                    <g ref={selectionBarContainer} />
+                    <g ref={brushContainer} />
+                    <g ref={xAxisContainer} transform={`translate(0, ${height})`} />
+                </g>
 
-                </svg>
-            </div>
-            <div className={styles.histogram_axis_x}>
-                <div className={styles.histogram_axis_x_lb}>
-                    {xDomain[0]}
-                </div>
-                <div className={styles.histogram_axis_x_ub}>
-                    {xDomain[1]}
-                </div>
-            </div>
+            </svg>
         </div>
     );
 }
