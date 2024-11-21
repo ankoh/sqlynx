@@ -46,12 +46,19 @@
 
 
 .histogram_container {
+    display: grid;
+    grid-template-rows: 1fr max-content;
+    width: 100%;
+    padding: 8px;
 }
 
 .histogram_plot {
+    grid-row: 1;
 }
 
 .histogram_axis_x {
+    grid-row: 2;
+
     width: 100%;
     display: grid;
     grid-template-columns: max-content 1fr max-content;

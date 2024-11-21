@@ -49,38 +49,6 @@
     vertical-align: top;
 }
 
-.metrics_cell {
-    background-color: hsl(210, 29%, 98%);
-    border-right: 1px solid rgb(210, 210, 210);
-    border-bottom: 1px solid rgb(210, 210, 210);
-    box-sizing: border-box;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding-left: 8px;
-    padding-right: 8px;
-    font-weight: 500;
-
-    /* Needed for inline-flex alignment */
-    vertical-align: top;
-}
-
-.metrics_zero_cell {
-    background-color: hsl(210, 29%, 98%);
-    border-right: 1px solid rgb(210, 210, 210);
-    border-bottom: 1px solid rgb(210, 210, 210);
-    box-sizing: border-box;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding-left: 8px;
-    padding-right: 8px;
-    font-weight: 500;
-
-    /* Needed for inline-flex alignment */
-    vertical-align: top;
-}
-
 .plots_cell {
     background-color: hsl(210, 29%, 98%);
     border-right: 1px solid rgb(210, 210, 210);
@@ -89,8 +57,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding-left: 8px;
-    padding-right: 8px;
     font-weight: 500;
 
     /* Needed for inline-flex alignment */
