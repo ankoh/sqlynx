@@ -15,6 +15,7 @@ import { Dispatch } from '../../utils/variant.js';
 import { TableOrderingTask } from '../../compute/table_transforms.js';
 import { sortTable } from '../../compute/computation_actions.js';
 import { useLogger } from '../../platform/logger_provider.js';
+import { ExampleHistogram } from '../../view/internals/plot_internals_page.js';
 
 interface Props {
     className?: string;
@@ -26,7 +27,6 @@ const MIN_GRID_HEIGHT = 200;
 const MIN_GRID_WIDTH = 100;
 const MIN_COLUMN_WIDTH = 120;
 const COLUMN_HEADER_HEIGHT = 32;
-const COLUMN_HEADER_METRICS_HEIGHT = 24;
 const COLUMN_HEADER_PLOTS_HEIGHT = 56;
 const ROW_HEIGHT = 26;
 const ROW_HEADER_WIDTH = 48;
@@ -68,8 +68,7 @@ function columnOffsetsAreEqual(oldWidths: Float64Array, newWidths: Float64Array)
 
 enum DataTableColumnHeader {
     OnlyColumnName = 0,
-    WithColumnMetrics = 1,
-    WithColumnPlots = 2
+    WithColumnPlots = 1
 }
 var columnHeader: DataTableColumnHeader = DataTableColumnHeader.WithColumnPlots;
 
@@ -94,21 +93,6 @@ export const DataTable: React.FC<Props> = (props: Props) => {
             headerRowCount = 1;
             getRowHeight = (row: number) => (row == 0) ? COLUMN_HEADER_HEIGHT : ROW_HEIGHT;
             getRowOffset = (row: number) => (row > 0 ? COLUMN_HEADER_HEIGHT : 0) + (Math.max(row, 1) - 1) * ROW_HEIGHT;
-            break;
-        case DataTableColumnHeader.WithColumnMetrics:
-            headerRowCount = 2;
-            gridRows += 1;
-            getRowHeight = (row: number) => {
-                switch (row) {
-                    case 0: return COLUMN_HEADER_HEIGHT;
-                    case 1: return COLUMN_HEADER_METRICS_HEIGHT;
-                    default: return ROW_HEIGHT
-                }
-            }
-            getRowOffset = (row: number) =>
-                (row > 0 ? COLUMN_HEADER_HEIGHT : 0)
-                + (row > 1 ? COLUMN_HEADER_METRICS_HEIGHT : 0)
-                + (Math.max(row, 2) - 2) * ROW_HEIGHT;
             break;
         case DataTableColumnHeader.WithColumnPlots:
             headerRowCount = 2;
@@ -202,20 +186,14 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                     </div>
                 );
             }
-        } else if (cellProps.rowIndex == 1 && columnHeader == DataTableColumnHeader.WithColumnMetrics) {
-            if (cellProps.columnIndex == 0) {
-                return <div className={styles.metrics_zero_cell} style={cellProps.style}></div>;
-            } else {
-                return (
-                    <div className={styles.metrics_cell} style={cellProps.style} />
-                );
-            }
         } else if (cellProps.rowIndex == 1 && columnHeader == DataTableColumnHeader.WithColumnPlots) {
             if (cellProps.columnIndex == 0) {
                 return <div className={styles.plots_zero_cell} style={cellProps.style}></div>;
             } else {
                 return (
-                    <div className={styles.plots_cell} style={cellProps.style} />
+                    <div className={styles.plots_cell} style={cellProps.style}>
+                        <ExampleHistogram />
+                    </div>
                 );
             }
         } else {
