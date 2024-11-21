@@ -77,7 +77,7 @@ function filterTable(input: arrow.Table<testSchemaType>, selectBegin: number, se
     return filteredTable;
 }
 
-function Example(): React.ReactElement {
+export function ExampleHistogram(): React.ReactElement {
     const rows = React.useMemo(() => testTable.toArray(), [testTable]);
 
     var margin = { top: 0, right: 0, bottom: 0, left: 0 },
@@ -211,7 +211,7 @@ export function PlotInternalsPage(): React.ReactElement {
                         Histogram
                     </div>
                     <div className={styles.component_variants}>
-                        <Example />
+                        <ExampleHistogram />
                     </div>
                 </div>
             </div>

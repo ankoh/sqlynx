@@ -46,20 +46,22 @@
 
 
 .histogram_container {
-
 }
 
 .histogram_plot {
-
 }
 
 .histogram_axis_x {
-
+    width: 100%;
+    display: grid;
+    grid-template-columns: max-content 1fr max-content;
+    font-size: 0.88rem;
 }
 
 .histogram_axis_x_lb {
+    grid-column: 1;
 
 }
 .histogram_axis_x_ub {
-
+    grid-column: 3;
 }
