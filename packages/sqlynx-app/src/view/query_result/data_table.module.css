@@ -56,7 +56,7 @@
     box-sizing: border-box;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: start;
     font-weight: 500;
 
     /* Needed for inline-flex alignment */
