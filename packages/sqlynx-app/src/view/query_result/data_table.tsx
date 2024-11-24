@@ -25,7 +25,7 @@ interface Props {
 
 const MIN_GRID_HEIGHT = 200;
 const MIN_GRID_WIDTH = 100;
-const MIN_COLUMN_WIDTH = 120;
+const MIN_COLUMN_WIDTH = 140;
 const COLUMN_HEADER_HEIGHT = 32;
 const COLUMN_HEADER_PLOTS_HEIGHT = 56;
 const ROW_HEIGHT = 26;
