@@ -97,27 +97,29 @@ export function ExampleHistogram(): React.ReactElement {
         width = (rootSize?.width ?? 130) - margin.left - margin.right,
         height = (rootSize?.height ?? 50) - margin.top - margin.bottom;
 
-    const nullsWidth = 16;
+    const nullsWidth = 12;
     const nullsPadding = 2;
     const histWidth = width - nullsWidth - nullsPadding;
 
-    const [histXScale, histYScale, nullsXScale, nullsYScale] = React.useMemo(() => ([
-        d3.scaleBand()
+    const [histXScale, histYScale, nullsXScale, nullsYScale] = React.useMemo(() => {
+        const histXScale = d3.scaleBand()
             .range([0, histWidth])
             .domain(rows.map(d => d.binField))
-            .padding(0.1),
-        d3.scaleLinear()
+            .padding(0.1);
+        const histYScale = d3.scaleLinear()
             .range([height, 0])
-            .domain([0, 100]),
-        d3.scaleBand()
-            .range([0, nullsWidth])
+            .domain([0, 100]);
+        // The x-scale of the null plot consists of a single band + padding
+        const nullsXScale = d3.scaleBand()
+            .range([0, histXScale.bandwidth() + 2 * histXScale.paddingOuter()])
             .domain([NULL_SYMBOL])
-            .padding(0.1),
-        d3.scaleLinear()
+            .padding(0.1);
+        const nullsYScale = d3.scaleLinear()
             .range([height, 0])
-            .domain([0, 100])
+            .domain([0, 100]);
 
-    ]), [histWidth, height]);
+        return [histXScale, histYScale, nullsXScale, nullsYScale];
+    }, [histWidth, height]);
 
     const [rangeSelection, setRangeSelection] = React.useState<[number, number] | null>(null);
     const onRangeSelection = React.useCallback((selBegin: number, selEnd: number) => {
@@ -171,7 +173,7 @@ export function ExampleHistogram(): React.ReactElement {
             .append("rect")
             .attr("x", d => d.x)
             .attr("y", d => d.y)
-            .attr("width", histXScale.bandwidth())
+            .attr("width", nullsXScale.bandwidth())
             .attr("height", d => (height - d.y))
             .attr("fill", "orange");
 
