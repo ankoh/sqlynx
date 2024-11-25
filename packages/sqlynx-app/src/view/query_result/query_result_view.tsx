@@ -106,7 +106,11 @@ export function QueryResultView(props: Props) {
     const toggleInfo = () => setInfoExpanded(e => !e);
     return (
         <div className={styles.root}>
-            <DataTable className={styles.data_table} table={tableComputation} dispatchComputation={computationDispatch} />
+            <DataTable
+                className={styles.data_table}
+                table={tableComputation}
+                dispatchComputation={computationDispatch}
+            />
             <div className={styles.info_toggle} onClick={toggleInfo} />
             {infoExpanded && <ResultInfo query={props.query} />}
         </div>

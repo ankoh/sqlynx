@@ -334,6 +334,8 @@ export function createTableSummaryTransform(task: TableSummaryTask): [proto.sqly
     return [transform, newEntries, countStarColumn];
 }
 
+const BIN_COUNT = 16;
+
 export function createColumnSummaryTransform(task: ColumnSummaryTask, tableSummary: TableSummary): proto.sqlynx_compute.pb.DataFrameTransform {
     if (task.columnEntry.type == SKIPPED_COLUMN || task.columnEntry.value.statsFields == null) {
         throw new Error("column summary requires precomputed table summary");
@@ -354,7 +356,7 @@ export function createColumnSummaryTransform(task: ColumnSummaryTask, tableSumma
                             binning: new proto.sqlynx_compute.pb.GroupByKeyBinning({
                                 statsMinimumFieldName: minField,
                                 statsMaximumFieldName: maxField,
-                                binCount: 8,
+                                binCount: BIN_COUNT,
                                 outputBinWidthAlias: "binWidth",
                                 outputBinLbAlias: "binLowerBound",
                                 outputBinUbAlias: "binUpperBound",
