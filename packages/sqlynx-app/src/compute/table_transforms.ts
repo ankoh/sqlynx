@@ -277,7 +277,7 @@ export function createTableSummaryTransform(task: TableSummaryTask): [proto.sqly
                     aggregationFunction: proto.sqlynx_compute.pb.AggregationFunction.Max,
                 }));
                 const newEntry: ColumnEntryVariant = {
-                    type: ORDINAL_COLUMN,
+                    type: STRING_COLUMN,
                     value: {
                         ...entry.value,
                         statsFields: {
@@ -343,8 +343,8 @@ export function createColumnSummaryTransform(task: ColumnSummaryTask, tableSumma
     let tableSummarySchema = tableSummary.transformedTable.schema;
     switch (task.columnEntry.type) {
         case ORDINAL_COLUMN: {
-            const minField = tableSummarySchema.fields[task.columnEntry.value.statsFields.maxAggregateField].name;
-            const maxField = tableSummarySchema.fields[task.columnEntry.value.statsFields.minAggregateField].name;
+            const minField = tableSummarySchema.fields[task.columnEntry.value.statsFields.minAggregateField].name;
+            const maxField = tableSummarySchema.fields[task.columnEntry.value.statsFields.maxAggregateField].name;
             out = new proto.sqlynx_compute.pb.DataFrameTransform({
                 groupBy: new proto.sqlynx_compute.pb.GroupByTransform({
                     keys: [

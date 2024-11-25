@@ -30,16 +30,17 @@ export async function analyzeTable(computationId: number, table: arrow.Table, di
         computationId,
         columnEntries: mappedColumns,
     };
-    await summarizeTable(computationId, dataFrame, tableSummaryTask, dispatch, logger);
+    const tableSummary = await summarizeTable(computationId, dataFrame, tableSummaryTask, dispatch, logger);
 
-    // // Summarize the columns
-    // for (let i = 0; i < table.schema.fields.length; ++i) {
-    //     // XXX
-    //     const columnSummaryTask: ColumnSummaryTask = {
-    //         computationId,
-    //     };
-    //     await summarizeColumn(computationId, dataFrame, columnSummaryTask, tableSummary, dispatch, logger);
-    // }
+    // Summarize the columns
+    for (let columnId = 0; columnId < tableSummary.columnEntries.length; ++columnId) {
+        const columnSummaryTask: ColumnSummaryTask = {
+            computationId,
+            columnId,
+            columnEntry: tableSummary.columnEntries[columnId]
+        };
+        await summarizeColumn(computationId, dataFrame, columnSummaryTask, tableSummary, dispatch, logger);
+    }
 }
 
 /// Helper to derive column entry variants from an arrow table
@@ -158,12 +159,9 @@ export async function sortTable(computationId: number, dataFrame: AsyncDataFrame
         const sortStart = performance.now();
         const transformed = await dataFrame!.transform(transform);
         const sortEnd = performance.now();
-        logger.info(`sorted table in ${Math.floor(sortEnd - sortStart)} ms, scanning result`, LOG_CTX);
+        logger.info(`sorted table in ${Math.floor(sortEnd - sortStart)} ms`, LOG_CTX);
         // Read the result
-        const scanStart = performance.now();
         const orderedTable = await transformed.readTable();
-        const scanEnd = performance.now();
-        logger.info(`scanned sorted table in ${Math.floor(scanEnd - scanStart)}`, LOG_CTX);
 
         // The output table
         const out: OrderedTable = {
@@ -224,12 +222,9 @@ export async function summarizeTable(computationId: number, dataFrame: AsyncData
         const summaryStart = performance.now();
         const transformedDataFrame = await dataFrame!.transform(transform);
         const summaryEnd = performance.now();
-        logger.info(`summarized table ${computationId} in ${Math.floor(summaryEnd - summaryStart)} ms, scanning result`, LOG_CTX);
+        logger.info(`aggregated table ${computationId} in ${Math.floor(summaryEnd - summaryStart)} ms`, LOG_CTX);
         // Read the result
-        const scanStart = performance.now();
         const transformedTable = await transformedDataFrame.readTable();
-        const scanEnd = performance.now();
-        logger.info(`scanned summary table in ${Math.floor(scanEnd - scanStart)}`, LOG_CTX);
         // The output table
         const summary: TableSummary = {
             columnEntries,
@@ -288,11 +283,12 @@ export async function summarizeColumn(computationId: number, dataFrame: AsyncDat
             value: [task.computationId, task.columnId, taskProgress]
         });
         // Order the data frame
-        const transformedDataFrame = await dataFrame!.transform(transform);
-        logger.info(`summarizing column ${task.computationId} succeded, scanning result`, LOG_CTX);
+        const summaryStart = performance.now();
+        const transformedDataFrame = await dataFrame!.transform(transform, tableSummary.transformedDataFrame);
+        const summaryEnd = performance.now();
+        logger.info(`aggregated table column ${task.computationId}[${task.columnId}] in ${Math.floor(summaryEnd - summaryStart)} ms`, LOG_CTX);
         // Read the result
         const transformedTable = await transformedDataFrame.readTable();
-        logger.info(`scanning summary for column ${task.computationId}[${task.columnId}] suceeded`, LOG_CTX);
         // Delete the data frame after reordering
         transformedDataFrame.delete();
         // Create the summary variant

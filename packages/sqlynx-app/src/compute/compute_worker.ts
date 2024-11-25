@@ -1,5 +1,4 @@
 import * as compute from '@ankoh/sqlynx-compute';
-import * as pb from '@ankoh/sqlynx-protobuf';
 
 import { ComputeWorkerRequestType, ComputeWorkerRequestVariant, ComputeWorkerResponseType, ComputeWorkerResponseVariant } from "./compute_worker_request.js";
 
@@ -205,19 +204,34 @@ export class ComputeWorker {
                     return;
                 }
                 case ComputeWorkerRequestType.DATAFRAME_TRANSFORM: {
+                    // Get the target data frame
                     const frame = this.frames.get(request.data.frameId);
                     if (!frame) {
                         this.failWith(request, new Error(`unknown dataframe id ${request.data.frameId}`));
                         return;
                     }
-                    const frameId = this.nextFrameId++;
-                    const transformed = await frame.transform(request.data.buffer);
-                    this.frames.set(frameId, transformed);
+                    const transformedFrameId = this.nextFrameId++;
+
+                    // Transform with or without stats
+                    let transformed: compute.DataFrame;
+                    if (request.data.statsFrameId == null) {
+                        transformed = await frame.transform(request.data.buffer);
+                    } else {
+                        const statsFrame = this.frames.get(request.data.statsFrameId);
+                        if (!statsFrame) {
+                            this.failWith(request, new Error(`unknown stats dataframe id ${request.data.statsFrameId}`));
+                            return;
+                        }
+                        transformed = await frame.transformWithStats(request.data.buffer, statsFrame);
+                    }
+
+                    // Set transformed frame
+                    this.frames.set(transformedFrameId, transformed);
                     this.postMessage({
                         messageId: this.nextMessageId++,
                         requestId: request.messageId,
                         type: ComputeWorkerResponseType.DATAFRAME_ID,
-                        data: { frameId },
+                        data: { frameId: transformedFrameId },
                     }, []);
                     return;
                 }

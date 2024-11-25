@@ -337,13 +337,13 @@ export class AsyncDataFrame {
     }
 
     /// Transform a data frame
-    async transform(transform: pb.sqlynx_compute.pb.DataFrameTransform): Promise<AsyncDataFrame> {
+    async transform(transform: pb.sqlynx_compute.pb.DataFrameTransform, stats: AsyncDataFrame | null = null): Promise<AsyncDataFrame> {
         const bytes = transform.toBinary();
         const task = new ComputeWorkerTask<
             ComputeWorkerRequestType.DATAFRAME_TRANSFORM,
-            { frameId: number, buffer: Uint8Array },
+            { frameId: number, buffer: Uint8Array, statsFrameId: number | null },
             { frameId: number }>(
-                ComputeWorkerRequestType.DATAFRAME_TRANSFORM, { frameId: this.frameId, buffer: bytes }
+                ComputeWorkerRequestType.DATAFRAME_TRANSFORM, { frameId: this.frameId, buffer: bytes, statsFrameId: stats?.frameId ?? null }
             );
         const result = await this.workerBindings.postTask(task);
         return new AsyncDataFrame(this.logger, this.workerBindings, result.frameId);
