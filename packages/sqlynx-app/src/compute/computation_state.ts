@@ -42,10 +42,8 @@ export interface TableComputationState {
     /// The task tatus
     tablePrecomputationStatus: TaskStatus | null;
 
-    /// The pending column tasks
-    columnSummariesPending: ColumnSummaryTask[];
     /// The running column tasks
-    columnSummariesStatus: Map<number, TaskStatus>;
+    columnSummariesStatus: (TaskStatus | null)[];
     /// The column stats
     columnSummaries: (ColumnSummaryVariant | null)[];
 }
@@ -88,9 +86,8 @@ function createTableComputationState(computationId: number, table: arrow.Table, 
         tableSummary: null,
         tablePrecomputationTask: null,
         tablePrecomputationStatus: null,
-        columnSummariesPending: [],
-        columnSummariesStatus: new Map(),
-        columnSummaries: []
+        columnSummariesStatus: Array.from({ length: tableColumns.length }, () => null),
+        columnSummaries: Array.from({ length: tableColumns.length }, () => null)
     };
 }
 
@@ -189,6 +186,64 @@ export function reduceComputationState(state: ComputationState, action: Computat
                 dataTable: orderedTable.dataTable,
                 dataTableOrdering: orderedTable.orderingConstraints,
                 orderingTaskStatus: taskProgress.status,
+            });
+            return { ...state };
+        }
+        case TABLE_SUMMARY_TASK_RUNNING:
+        case TABLE_SUMMARY_TASK_FAILED: {
+            const [computationId, taskProgress] = action.value;
+            const tableState = state.tableComputations.get(computationId);
+            if (tableState === undefined) {
+                return state;
+            }
+            state.tableComputations.set(computationId, {
+                ...tableState,
+                tableSummaryTaskStatus: taskProgress.status,
+            });
+            return { ...state };
+        }
+        case TABLE_SUMMARY_TASK_SUCCEEDED: {
+            const [computationId, taskProgress, tableSummary] = action.value;
+            const tableState = state.tableComputations.get(computationId);
+            if (tableState === undefined) {
+                return state;
+            }
+            state.tableComputations.set(computationId, {
+                ...tableState,
+                tableSummaryTaskStatus: taskProgress.status,
+                tableSummary: tableSummary
+            });
+            return { ...state };
+        }
+        case COLUMN_SUMMARY_TASK_RUNNING:
+        case COLUMN_SUMMARY_TASK_FAILED: {
+            const [computationId, columnId, taskProgress] = action.value;
+            const tableState = state.tableComputations.get(computationId);
+            if (tableState === undefined) {
+                return state;
+            }
+            const status = [...tableState.columnSummariesStatus];
+            status[columnId] = taskProgress.status;
+            state.tableComputations.set(computationId, {
+                ...tableState,
+                columnSummariesStatus: status,
+            });
+            return { ...state };
+        }
+        case COLUMN_SUMMARY_TASK_SUCCEEDED: {
+            const [computationId, columnId, taskProgress, columnSummary] = action.value;
+            const tableState = state.tableComputations.get(computationId);
+            if (tableState === undefined) {
+                return state;
+            }
+            const status = [...tableState.columnSummariesStatus];
+            const summaries = [...tableState.columnSummaries];
+            status[columnId] = taskProgress.status;
+            summaries[columnId] = columnSummary;
+            state.tableComputations.set(computationId, {
+                ...tableState,
+                columnSummariesStatus: status,
+                columnSummaries: summaries
             });
             return { ...state };
         }

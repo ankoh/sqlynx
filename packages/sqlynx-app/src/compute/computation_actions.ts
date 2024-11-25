@@ -222,7 +222,7 @@ export async function summarizeTable(computationId: number, dataFrame: AsyncData
         const summaryStart = performance.now();
         const transformedDataFrame = await dataFrame!.transform(transform);
         const summaryEnd = performance.now();
-        logger.info(`aggregated table ${computationId} in ${Math.floor(summaryEnd - summaryStart)} ms`, LOG_CTX);
+        logger.info(`summarized table ${computationId} in ${Math.floor(summaryEnd - summaryStart)} ms`, LOG_CTX);
         // Read the result
         const transformedTable = await transformedDataFrame.readTable();
         // The output table
@@ -286,7 +286,7 @@ export async function summarizeColumn(computationId: number, dataFrame: AsyncDat
         const summaryStart = performance.now();
         const transformedDataFrame = await dataFrame!.transform(transform, tableSummary.transformedDataFrame);
         const summaryEnd = performance.now();
-        logger.info(`aggregated table column ${task.computationId}[${task.columnId}] in ${Math.floor(summaryEnd - summaryStart)} ms`, LOG_CTX);
+        logger.info(`summarized table ${task.computationId} column ${task.columnId} in ${Math.floor(summaryEnd - summaryStart)} ms`, LOG_CTX);
         // Read the result
         const transformedTable = await transformedDataFrame.readTable();
         // Delete the data frame after reordering

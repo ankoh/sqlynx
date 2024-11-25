@@ -12,10 +12,11 @@ import { ArrowTableFormatter } from './arrow_formatter.js';
 import { GridCellLocation, useStickyRowAndColumnHeaders } from '../foundations/sticky_grid.js';
 import { ComputationAction, TableComputationState } from '../../compute/computation_state.js';
 import { Dispatch } from '../../utils/variant.js';
-import { TableOrderingTask } from '../../compute/table_transforms.js';
+import { TableOrderingTask, TaskStatus } from '../../compute/table_transforms.js';
 import { sortTable } from '../../compute/computation_actions.js';
 import { useLogger } from '../../platform/logger_provider.js';
 import { ExampleHistogram } from '../../view/internals/plot_internals_page.js';
+import { RectangleWaveSpinner } from '../../view/foundations/spinners.js';
 
 interface Props {
     className?: string;
@@ -192,11 +193,32 @@ export const DataTable: React.FC<Props> = (props: Props) => {
             if (cellProps.columnIndex == 0) {
                 return <div className={styles.plots_zero_cell} style={cellProps.style}></div>;
             } else {
-                return (
-                    <div className={styles.plots_cell} style={cellProps.style}>
-                        <ExampleHistogram />
-                    </div>
-                );
+                const fieldId = cellProps.columnIndex - 1;
+                const columnStatus = computationState.columnSummariesStatus[fieldId];
+                switch (columnStatus) {
+                    case TaskStatus.TASK_RUNNING:
+                        return (
+                            <div className={classNames(styles.plots_cell, styles.plots_progress)} style={cellProps.style}>
+                                <RectangleWaveSpinner
+                                    className={styles.plots_progress_spinner}
+                                    active={true}
+                                    color={"rgb(208, 215, 222)"}
+                                />
+                            </div>
+                        );
+                    case TaskStatus.TASK_FAILED:
+                        return (
+                            <div className={styles.plots_cell} style={cellProps.style}>
+                                Failed
+                            </div>
+                        );
+                    case TaskStatus.TASK_SUCCEEDED:
+                        return (
+                            <div className={styles.plots_cell} style={cellProps.style}>
+                                <ExampleHistogram />
+                            </div>
+                        );
+                }
             }
         } else {
             if (cellProps.columnIndex == 0) {
