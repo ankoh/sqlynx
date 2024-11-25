@@ -4,7 +4,7 @@ import { Dispatch } from '../utils/variant.js';
 import { Logger } from '../platform/logger.js';
 import { COLUMN_SUMMARY_TASK_FAILED, COLUMN_SUMMARY_TASK_RUNNING, COLUMN_SUMMARY_TASK_SUCCEEDED, COMPUTATION_FROM_QUERY_RESULT, ComputationAction, CREATED_DATA_FRAME, TABLE_ORDERING_TASK_FAILED, TABLE_ORDERING_TASK_RUNNING, TABLE_ORDERING_TASK_SUCCEEDED, TABLE_SUMMARY_TASK_FAILED, TABLE_SUMMARY_TASK_RUNNING, TABLE_SUMMARY_TASK_SUCCEEDED, TableComputationState } from './computation_state.js';
 import { ColumnSummaryVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskProgress, ORDINAL_COLUMN, STRING_COLUMN, LIST_COLUMN, createOrderByTransform, createTableSummaryTransform, createColumnSummaryTransform, ColumnEntryVariant, SKIPPED_COLUMN } from './table_transforms.js';
-import { ComputeWorkerBindings } from './compute_worker_bindings.js';
+import { AsyncDataFrame, ComputeWorkerBindings } from './compute_worker_bindings.js';
 
 const LOG_CTX = "compute";
 
@@ -113,7 +113,7 @@ function mapComputationColumnsEntries(table: arrow.Table): ColumnEntryVariant[] 
 }
 
 /// Helper to sort a table
-export async function sortTable(tableState: TableComputationState, task: TableOrderingTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<void> {
+export async function sortTable(computationId: number, dataFrame: AsyncDataFrame, task: TableOrderingTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<void> {
     // Create the transform
     const transform = createOrderByTransform(task.orderingConstraints);
 
@@ -140,7 +140,7 @@ export async function sortTable(tableState: TableComputationState, task: TableOr
         });
         // Order the data frame
         const sortStart = performance.now();
-        const transformed = await tableState.dataFrame!.transform(transform);
+        const transformed = await dataFrame!.transform(transform);
         const sortEnd = performance.now();
         logger.info(`sorted table in ${Math.floor(sortEnd - sortStart)} ms, scanning result`, LOG_CTX);
         // Read the result
@@ -185,7 +185,7 @@ export async function sortTable(tableState: TableComputationState, task: TableOr
 }
 
 /// Helper to summarize a table
-export async function summarizeTable(tableState: TableComputationState, task: TableSummaryTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<void> {
+export async function summarizeTable(computationId: number, dataFrame: AsyncDataFrame, task: TableSummaryTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<void> {
     // Create the transform
     const [transform, columnEntries] = createTableSummaryTransform(task);
 
@@ -202,14 +202,14 @@ export async function summarizeTable(tableState: TableComputationState, task: Ta
     try {
         dispatch({
             type: TABLE_SUMMARY_TASK_RUNNING,
-            value: [tableState.computationId, taskProgress]
+            value: [computationId, taskProgress]
         });
         // Order the data frame
-        const transformedDataFrame = await tableState.dataFrame!.transform(transform);
-        logger.info(`summarizing table ${tableState.computationId} succeded, scanning result`, LOG_CTX);
+        const transformedDataFrame = await dataFrame!.transform(transform);
+        logger.info(`summarizing table ${computationId} succeded, scanning result`, LOG_CTX);
         // Read the result
         const transformedTable = await transformedDataFrame.readTable();
-        logger.info(`scanning summary for table ${tableState.computationId} suceeded`, LOG_CTX);
+        logger.info(`scanning summary for table ${computationId} suceeded`, LOG_CTX);
         // The output table
         const summary: TableSummary = {
             columnEntries,
@@ -227,11 +227,11 @@ export async function summarizeTable(tableState: TableComputationState, task: Ta
         };
         dispatch({
             type: TABLE_SUMMARY_TASK_SUCCEEDED,
-            value: [tableState.computationId, taskProgress, summary],
+            value: [computationId, taskProgress, summary],
         });
 
     } catch (error: any) {
-        logger.error(`ordering table ${tableState.computationId} failed with error: ${error.toString()}`);
+        logger.error(`ordering table ${computationId} failed with error: ${error.toString()}`);
         taskProgress = {
             status: TaskStatus.TASK_FAILED,
             startedAt,
@@ -241,12 +241,12 @@ export async function summarizeTable(tableState: TableComputationState, task: Ta
         };
         dispatch({
             type: TABLE_SUMMARY_TASK_FAILED,
-            value: [tableState.computationId, taskProgress, error],
+            value: [computationId, taskProgress, error],
         });
     }
 }
 
-export async function summarizeColumn(tableState: TableComputationState, task: ColumnSummaryTask, tableSummary: TableSummary, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<void> {
+export async function summarizeColumn(computationId: number, dataFrame: AsyncDataFrame, task: ColumnSummaryTask, tableSummary: TableSummary, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<void> {
     // Create the transform
     const transform = createColumnSummaryTransform(task, tableSummary);
 
@@ -266,7 +266,7 @@ export async function summarizeColumn(tableState: TableComputationState, task: C
             value: [task.computationId, task.columnId, taskProgress]
         });
         // Order the data frame
-        const transformedDataFrame = await tableState.dataFrame!.transform(transform);
+        const transformedDataFrame = await dataFrame!.transform(transform);
         logger.info(`summarizing column ${task.computationId} succeded, scanning result`, LOG_CTX);
         // Read the result
         const transformedTable = await transformedDataFrame.readTable();
@@ -325,7 +325,7 @@ export async function summarizeColumn(tableState: TableComputationState, task: C
 
 
     } catch (error: any) {
-        logger.error(`ordering table ${tableState.computationId} failed with error: ${error.toString()}`);
+        logger.error(`ordering table ${computationId} failed with error: ${error.toString()}`);
         taskProgress = {
             status: TaskStatus.TASK_FAILED,
             startedAt,

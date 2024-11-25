@@ -155,7 +155,9 @@ export const DataTable: React.FC<Props> = (props: Props) => {
             computationId: computationState.computationId,
             orderingConstraints
         };
-        sortTable(computationState, orderingTask, dispatchComputation, logger);
+        if (computationState.dataFrame) {
+            sortTable(computationState.computationId, computationState.dataFrame, orderingTask, dispatchComputation, logger);
+        }
     }, [computationState, dispatchComputation, logger]);
 
     // Helper to render a data cell
