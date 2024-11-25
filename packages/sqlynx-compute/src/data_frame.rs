@@ -523,14 +523,13 @@ impl DataFrame {
                 Some(n) => n.as_str(),
                 None => ""
             };
-            let input_value = col(&aggr_field_name, &input.schema())?;
 
             // Get the aggregate expression
             let aggr_expr = match aggr.aggregation_function.try_into()? {
                 AggregationFunction::Min => {
                     AggregateExprBuilder::new(
                         Arc::new(AggregateUDF::new_from_impl(Min::new())),
-                        vec![input_value]
+                        vec![col(&aggr_field_name, &input.schema())?]
                     )
                         .schema(input.schema())
                         .alias(&aggr.output_alias)
@@ -539,7 +538,7 @@ impl DataFrame {
                 AggregationFunction::Max => {
                     AggregateExprBuilder::new(
                         Arc::new(AggregateUDF::new_from_impl(Max::new())),
-                        vec![input_value]
+                        vec![col(&aggr_field_name, &input.schema())?]
                     )
                         .schema(input.schema())
                         .alias(&aggr.output_alias)
@@ -548,14 +547,14 @@ impl DataFrame {
                 AggregationFunction::Average => {
                     AggregateExprBuilder::new(
                         Arc::new(AggregateUDF::new_from_impl(Avg::new())),
-                        vec![input_value]
+                        vec![col(&aggr_field_name, &input.schema())?]
                     )
                         .schema(input.schema())
                         .alias(&aggr.output_alias)
                         .build()?
                 },
                 AggregationFunction::Count => {
-                     AggregateExprBuilder::new(count_udaf(), vec![input_value])
+                     AggregateExprBuilder::new(count_udaf(), vec![col(&aggr_field_name, &input.schema())?])
                         .schema(input.schema())
                         .alias(&aggr.output_alias)
                         .with_distinct(aggr.aggregate_distinct.unwrap_or_default())
