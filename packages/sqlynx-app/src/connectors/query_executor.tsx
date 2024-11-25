@@ -22,8 +22,9 @@ import {
     QUERY_EXECUTION_SUCCEEDED,
 } from './connection_state.js';
 import { useComputationRegistry } from '../compute/computation_registry.js';
-import { storeTableAsComputation } from '../compute/computation_actions.js';
+import { analyzeTable } from '../compute/computation_actions.js';
 import { useSQLynxComputeWorker } from '../compute/compute_provider.js';
+import { useLogger } from '../platform/logger_provider.js';
 
 let NEXT_QUERY_ID = 1;
 
@@ -45,6 +46,7 @@ export function useQueryState(connectionId: number | null, queryId: number | nul
 }
 
 export function QueryExecutorProvider(props: { children?: React.ReactElement }) {
+    const logger = useLogger();
     const sfApi = useSalesforceAPI();
 
     // The connection registry changes frequently, the connection map is stable.
@@ -258,9 +260,9 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
         }
 
 
-        // Make the table ready for computations
+        // Compute all table summaries of the result
         if (table) {
-            storeTableAsComputation(queryId, table!, computeDispatch, computeWorker);
+            analyzeTable(queryId, table!, computeDispatch, computeWorker, logger);
         }
 
     }, [connMap, sfApi]);

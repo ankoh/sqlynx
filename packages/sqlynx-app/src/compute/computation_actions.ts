@@ -2,20 +2,20 @@ import * as arrow from 'apache-arrow';
 
 import { Dispatch } from '../utils/variant.js';
 import { Logger } from '../platform/logger.js';
-import { COLUMN_SUMMARY_TASK_FAILED, COLUMN_SUMMARY_TASK_RUNNING, COLUMN_SUMMARY_TASK_SUCCEEDED, COMPUTATION_FROM_QUERY_RESULT, ComputationAction, CREATED_DATA_FRAME, TABLE_ORDERING_TASK_FAILED, TABLE_ORDERING_TASK_RUNNING, TABLE_ORDERING_TASK_SUCCEEDED, TABLE_SUMMARY_TASK_FAILED, TABLE_SUMMARY_TASK_RUNNING, TABLE_SUMMARY_TASK_SUCCEEDED, TableComputationState } from './computation_state.js';
+import { COLUMN_SUMMARY_TASK_FAILED, COLUMN_SUMMARY_TASK_RUNNING, COLUMN_SUMMARY_TASK_SUCCEEDED, COMPUTATION_FROM_QUERY_RESULT, ComputationAction, CREATED_DATA_FRAME, TABLE_ORDERING_TASK_FAILED, TABLE_ORDERING_TASK_RUNNING, TABLE_ORDERING_TASK_SUCCEEDED, TABLE_SUMMARY_TASK_FAILED, TABLE_SUMMARY_TASK_RUNNING, TABLE_SUMMARY_TASK_SUCCEEDED } from './computation_state.js';
 import { ColumnSummaryVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskProgress, ORDINAL_COLUMN, STRING_COLUMN, LIST_COLUMN, createOrderByTransform, createTableSummaryTransform, createColumnSummaryTransform, ColumnEntryVariant, SKIPPED_COLUMN } from './table_transforms.js';
 import { AsyncDataFrame, ComputeWorkerBindings } from './compute_worker_bindings.js';
 
 const LOG_CTX = "compute";
 
-/// Store table as computaiton
-export async function storeTableAsComputation(computationId: number, table: arrow.Table, dispatch: Dispatch<ComputationAction>, worker: ComputeWorkerBindings): Promise<void> {
+/// Compute all table summaries
+export async function analyzeTable(computationId: number, table: arrow.Table, dispatch: Dispatch<ComputationAction>, worker: ComputeWorkerBindings, logger: Logger): Promise<void> {
     // Register the table with compute
-    const computeColumns = mapComputationColumnsEntries(table!);
+    const mappedColumns = mapComputationColumnsEntries(table!);
     const computeAbortCtrl = new AbortController();
     dispatch({
         type: COMPUTATION_FROM_QUERY_RESULT,
-        value: [computationId, table!, computeColumns, computeAbortCtrl]
+        value: [computationId, table!, mappedColumns, computeAbortCtrl]
     });
 
     // Create a Data Frame from a table
@@ -24,6 +24,22 @@ export async function storeTableAsComputation(computationId: number, table: arro
         type: CREATED_DATA_FRAME,
         value: [computationId, dataFrame]
     });
+
+    // Summarize the table
+    const tableSummaryTask: TableSummaryTask = {
+        computationId,
+        columnEntries: mappedColumns,
+    };
+    await summarizeTable(computationId, dataFrame, tableSummaryTask, dispatch, logger);
+
+    // // Summarize the columns
+    // for (let i = 0; i < table.schema.fields.length; ++i) {
+    //     // XXX
+    //     const columnSummaryTask: ColumnSummaryTask = {
+    //         computationId,
+    //     };
+    //     await summarizeColumn(computationId, dataFrame, columnSummaryTask, tableSummary, dispatch, logger);
+    // }
 }
 
 /// Helper to derive column entry variants from an arrow table
@@ -185,9 +201,9 @@ export async function sortTable(computationId: number, dataFrame: AsyncDataFrame
 }
 
 /// Helper to summarize a table
-export async function summarizeTable(computationId: number, dataFrame: AsyncDataFrame, task: TableSummaryTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<void> {
+export async function summarizeTable(computationId: number, dataFrame: AsyncDataFrame, task: TableSummaryTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<TableSummary> {
     // Create the transform
-    const [transform, columnEntries] = createTableSummaryTransform(task);
+    const [transform, columnEntries, countStarColumn] = createTableSummaryTransform(task);
 
     // Mark task as running
     let startedAt = new Date();
@@ -205,17 +221,21 @@ export async function summarizeTable(computationId: number, dataFrame: AsyncData
             value: [computationId, taskProgress]
         });
         // Order the data frame
+        const summaryStart = performance.now();
         const transformedDataFrame = await dataFrame!.transform(transform);
-        logger.info(`summarizing table ${computationId} succeded, scanning result`, LOG_CTX);
+        const summaryEnd = performance.now();
+        logger.info(`summarized table ${computationId} in ${Math.floor(summaryEnd - summaryStart)} ms, scanning result`, LOG_CTX);
         // Read the result
+        const scanStart = performance.now();
         const transformedTable = await transformedDataFrame.readTable();
-        logger.info(`scanning summary for table ${computationId} suceeded`, LOG_CTX);
+        const scanEnd = performance.now();
+        logger.info(`scanned summary table in ${Math.floor(scanEnd - scanStart)}`, LOG_CTX);
         // The output table
         const summary: TableSummary = {
             columnEntries,
             transformedTable,
             transformedDataFrame,
-            statsCountStarField: task.statsCountStarField
+            statsCountStarField: countStarColumn,
         };
         // Mark the task as succeeded
         taskProgress = {
@@ -229,6 +249,7 @@ export async function summarizeTable(computationId: number, dataFrame: AsyncData
             type: TABLE_SUMMARY_TASK_SUCCEEDED,
             value: [computationId, taskProgress, summary],
         });
+        return summary;
 
     } catch (error: any) {
         logger.error(`ordering table ${computationId} failed with error: ${error.toString()}`);
@@ -243,10 +264,11 @@ export async function summarizeTable(computationId: number, dataFrame: AsyncData
             type: TABLE_SUMMARY_TASK_FAILED,
             value: [computationId, taskProgress, error],
         });
+        throw error;
     }
 }
 
-export async function summarizeColumn(computationId: number, dataFrame: AsyncDataFrame, task: ColumnSummaryTask, tableSummary: TableSummary, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<void> {
+export async function summarizeColumn(computationId: number, dataFrame: AsyncDataFrame, task: ColumnSummaryTask, tableSummary: TableSummary, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<ColumnSummaryVariant> {
     // Create the transform
     const transform = createColumnSummaryTransform(task, tableSummary);
 
@@ -323,6 +345,7 @@ export async function summarizeColumn(computationId: number, dataFrame: AsyncDat
             value: [task.computationId, task.columnId, taskProgress, summary],
         });
 
+        return summary;
 
     } catch (error: any) {
         logger.error(`ordering table ${computationId} failed with error: ${error.toString()}`);
@@ -337,6 +360,8 @@ export async function summarizeColumn(computationId: number, dataFrame: AsyncDat
             type: COLUMN_SUMMARY_TASK_FAILED,
             value: [task.computationId, task.columnId, taskProgress, error],
         });
+
+        throw error;
     }
 }
 

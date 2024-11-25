@@ -35,8 +35,6 @@ export interface TableSummaryTask {
     computationId: number;
     /// The column entries
     columnEntries: ColumnEntryVariant[];
-    /// Count(*) field
-    statsCountStarField: number;
 }
 
 export interface TablePrecomputationTask {
@@ -169,7 +167,7 @@ export interface TableSummary {
     /// The statistics
     transformedTable: arrow.Table;
     /// Maximum value
-    statsCountStarField: number;
+    statsCountStarField: number | null;
 }
 
 interface OrdinalColumnSummary {
@@ -211,7 +209,7 @@ type FrequentValuesTable<KeyType extends arrow.DataType = arrow.DataType> = arro
 
 // ------------------------------------------------------------
 
-export function createTableSummaryTransform(task: TableSummaryTask): [proto.sqlynx_compute.pb.DataFrameTransform, ColumnEntryVariant[]] {
+export function createTableSummaryTransform(task: TableSummaryTask): [proto.sqlynx_compute.pb.DataFrameTransform, ColumnEntryVariant[], number] {
     let aggregates: proto.sqlynx_compute.pb.GroupByAggregate[] = [];
     let nextOutputColumn = 0;
 
@@ -333,7 +331,7 @@ export function createTableSummaryTransform(task: TableSummaryTask): [proto.sqly
             aggregates
         })
     });
-    return [transform, newEntries];
+    return [transform, newEntries, countStarColumn];
 }
 
 export function createColumnSummaryTransform(task: ColumnSummaryTask, tableSummary: TableSummary): proto.sqlynx_compute.pb.DataFrameTransform {
