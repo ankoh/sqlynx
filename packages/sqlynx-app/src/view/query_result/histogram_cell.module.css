@@ -1,0 +1,34 @@
+
+.histogram_container {
+    max-width: 200px;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-rows: 1fr max-content;
+    grid-template-columns: 1fr;
+}
+
+.histogram_plot {
+    grid-row: 1;
+    position: relative;
+}
+.histogram_plot_svg {
+    position: absolute;
+}
+
+.histogram_axis_x {
+    grid-row: 2;
+
+    width: 100%;
+    display: grid;
+    grid-template-columns: max-content 1fr max-content;
+    font-size: 0.88rem;
+}
+
+.histogram_axis_x_lb {
+    grid-column: 1;
+
+}
+.histogram_axis_x_ub {
+    grid-column: 3;
+}

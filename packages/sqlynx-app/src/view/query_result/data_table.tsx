@@ -15,8 +15,9 @@ import { Dispatch } from '../../utils/variant.js';
 import { TableOrderingTask, TaskStatus } from '../../compute/table_transforms.js';
 import { sortTable } from '../../compute/computation_actions.js';
 import { useLogger } from '../../platform/logger_provider.js';
-import { ExampleHistogram } from '../../view/internals/plot_internals_page.js';
 import { RectangleWaveSpinner } from '../../view/foundations/spinners.js';
+import { HistogramCell } from './histogram_cell.js';
+// import { ExampleHistogram } from '../../view/internals/plot_internals_page.js';
 
 interface Props {
     className?: string;
@@ -194,6 +195,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                 return <div className={styles.plots_zero_cell} style={cellProps.style}></div>;
             } else {
                 const fieldId = cellProps.columnIndex - 1;
+                const columnSummary = computationState.columnSummaries[fieldId];
                 const columnStatus = computationState.columnSummariesStatus[fieldId];
                 switch (columnStatus) {
                     case TaskStatus.TASK_RUNNING:
@@ -215,9 +217,10 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                     case TaskStatus.TASK_SUCCEEDED:
                         return (
                             <div className={styles.plots_cell} style={cellProps.style}>
-                                <ExampleHistogram />
+                                {columnSummary && <HistogramCell columnSummary={columnSummary} />}
                             </div>
                         );
+                    // <ExampleHistogram />
                 }
             }
         } else {

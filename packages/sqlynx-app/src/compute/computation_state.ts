@@ -1,7 +1,7 @@
 import * as arrow from 'apache-arrow';
 import * as proto from '@ankoh/sqlynx-protobuf';
 
-import { ColumnSummaryVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskProgress, ColumnEntryVariant, TablePrecomputationTask } from './table_transforms.js';
+import { ColumnSummaryVariant, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskProgress, ColumnEntryVariant, TablePrecomputationTask } from './table_transforms.js';
 
 import { VariantKind } from '../utils/variant.js';
 import { AsyncDataFrame, ComputeWorkerBindings } from './compute_worker_bindings.js';
