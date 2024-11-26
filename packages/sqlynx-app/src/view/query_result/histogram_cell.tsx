@@ -3,7 +3,7 @@ import * as d3 from 'd3';
 import * as styles from './histogram_cell.module.css';
 
 import { observeSize } from '../../view/foundations/size_observer.js';
-import { ColumnSummaryVariant, LIST_COLUMN, ORDINAL_COLUMN, SKIPPED_COLUMN, STRING_COLUMN } from '../../compute/table_transforms.js';
+import { BIN_COUNT, ColumnSummaryVariant, LIST_COLUMN, ORDINAL_COLUMN, SKIPPED_COLUMN, STRING_COLUMN } from '../../compute/table_transforms.js';
 
 const NULL_SYMBOL = "∅";
 
@@ -45,7 +45,10 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
     const histWidth = width - nullsWidth - nullsPadding;
 
     const [histXScale, histYScale, nullsXScale, nullsYScale] = React.useMemo(() => {
-        const xValues = [...bins].map(i => i.toString());
+        const xValues: string[] = [];
+        for (let i = 0; i < BIN_COUNT; ++i) {
+            xValues.push(i.toString());
+        }
         let yMin = BigInt(0);
         let yMax = BigInt(0);
         for (let i = 0; i < binCounts.length; ++i) {
