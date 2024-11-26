@@ -89,7 +89,7 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
             .attr("y", i => histYScale(Number(binCounts[i])))
             .attr("width", histXScale.bandwidth())
             .attr("height", i => (height - histYScale(Number(binCounts[i]))!))
-            .attr("fill", "gray");
+            .attr("fill", "hsl(208.5deg 20.69% 50.76%)");
 
         // Draw null bar
         d3.select(nullBarContainer.current)
@@ -107,7 +107,7 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
             .attr("y", d => d.y)
             .attr("width", nullsXScale.bandwidth())
             .attr("height", d => (height - d.y))
-            .attr("fill", "orange");
+            .attr("fill", "hsl(210deg 17.5% 74.31%)");
 
         const onBrushEnd = (_e: d3.D3BrushEvent<unknown>) => { };
         const onBrush = (_e: d3.D3BrushEvent<unknown>) => { };
