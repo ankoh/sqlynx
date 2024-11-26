@@ -334,7 +334,7 @@ export function createTableSummaryTransform(task: TableSummaryTask): [proto.sqly
     return [transform, newEntries, countStarColumn];
 }
 
-const BIN_COUNT = 16;
+export const BIN_COUNT = 16;
 
 export function createColumnSummaryTransform(task: ColumnSummaryTask, tableSummary: TableSummary): proto.sqlynx_compute.pb.DataFrameTransform {
     if (task.columnEntry.type == SKIPPED_COLUMN || task.columnEntry.value.statsFields == null) {
