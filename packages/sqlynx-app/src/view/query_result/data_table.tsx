@@ -12,12 +12,12 @@ import { ArrowTableFormatter } from './arrow_formatter.js';
 import { GridCellLocation, useStickyRowAndColumnHeaders } from '../foundations/sticky_grid.js';
 import { ComputationAction, TableComputationState } from '../../compute/computation_state.js';
 import { Dispatch } from '../../utils/variant.js';
-import { TableOrderingTask, TaskStatus } from '../../compute/table_transforms.js';
+import { LIST_COLUMN, ORDINAL_COLUMN, SKIPPED_COLUMN, STRING_COLUMN, TableOrderingTask, TaskStatus } from '../../compute/table_transforms.js';
 import { sortTable } from '../../compute/computation_actions.js';
 import { useLogger } from '../../platform/logger_provider.js';
 import { RectangleWaveSpinner } from '../../view/foundations/spinners.js';
 import { HistogramCell } from './histogram_cell.js';
-// import { ExampleHistogram } from '../../view/internals/plot_internals_page.js';
+import { MostFrequentCell } from './mostfrequent_cell.js';
 
 interface Props {
     className?: string;
@@ -29,7 +29,7 @@ const MIN_GRID_HEIGHT = 200;
 const MIN_GRID_WIDTH = 100;
 const MIN_COLUMN_WIDTH = 140;
 const COLUMN_HEADER_HEIGHT = 32;
-const COLUMN_HEADER_PLOTS_HEIGHT = 56;
+const COLUMN_HEADER_PLOTS_HEIGHT = 72;
 const ROW_HEIGHT = 26;
 const ROW_HEADER_WIDTH = 48;
 const FORMATTER_PIXEL_SCALING = 10;
@@ -215,12 +215,22 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                             </div>
                         );
                     case TaskStatus.TASK_SUCCEEDED:
-                        return (
-                            <div className={styles.plots_cell} style={cellProps.style}>
-                                {columnSummary && <HistogramCell columnSummary={columnSummary} />}
-                            </div>
-                        );
-                    // <ExampleHistogram />
+                        switch (columnSummary?.type) {
+                            case ORDINAL_COLUMN:
+                                return (
+                                    <div className={styles.plots_cell} style={cellProps.style}>
+                                        {<HistogramCell columnSummary={columnSummary} />}
+                                    </div>
+                                );
+                            case LIST_COLUMN:
+                            case STRING_COLUMN:
+                                return (
+                                    <div className={styles.plots_cell} style={cellProps.style}>
+                                        {<MostFrequentCell columnSummary={columnSummary} />}
+                                    </div>
+                                );
+                            case SKIPPED_COLUMN: break;
+                        }
                 }
             }
         } else {

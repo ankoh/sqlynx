@@ -83,6 +83,15 @@ export type ColumnEntryVariant =
     | VariantKind<typeof SKIPPED_COLUMN, SkippedColumnEntry>
     ;
 
+export function getColumnEntryTypeScript(variant: ColumnEntryVariant) {
+    switch (variant.type) {
+        case ORDINAL_COLUMN: return "ORDINAL";
+        case STRING_COLUMN: return "STRING";
+        case LIST_COLUMN: return "LIST";
+        case SKIPPED_COLUMN: return "SKIPPED";
+    }
+}
+
 export interface ColumnStatsFields {
     /// Entry count (!= null)
     countField: number;
@@ -409,7 +418,7 @@ export function createColumnSummaryTransform(task: ColumnSummaryTask, tableSumma
                             nullsFirst: false,
                         })
                     ],
-                    limit: 100
+                    limit: 32
                 })
             });
             break;

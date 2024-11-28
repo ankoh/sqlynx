@@ -28,7 +28,8 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
     }
 
     const rootContainer = React.useRef<HTMLDivElement>(null);
-    const rootSize = observeSize(rootContainer);
+    const svgContainer = React.useRef<HTMLDivElement>(null);
+    const svgContainerSize = observeSize(svgContainer);
     const histBarContainer = React.useRef<SVGGElement>(null);
     const nullBarContainer = React.useRef<SVGGElement>(null);
     const selectionBarContainer = React.useRef<SVGGElement>(null);
@@ -37,8 +38,8 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
     const nullAxisContainer = React.useRef<SVGGElement>(null);
 
     const margin = { top: 8, right: 8, bottom: 16, left: 8 },
-        width = (rootSize?.width ?? 130) - margin.left - margin.right,
-        height = (rootSize?.height ?? 50) - margin.top - margin.bottom;
+        width = (svgContainerSize?.width ?? 130) - margin.left - margin.right,
+        height = (svgContainerSize?.height ?? 50) - margin.top - margin.bottom;
 
     const nullsWidth = 12;
     const nullsPadding = 2;
@@ -139,22 +140,27 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
     }, [histXScale, histYScale]);
 
     return (
-        <div className={styles.histogram_container} ref={rootContainer}>
-            <svg
-                className={styles.histogram_plot_svg}
-                width={width + margin.left + margin.right}
-                height={height + margin.top + margin.bottom}
-            >
-                <g transform={`translate(${margin.left},${margin.top})`}>
-                    <g ref={histBarContainer} />
-                    <g ref={selectionBarContainer} />
-                    <g ref={brushContainer} />
-                    <g ref={histAxisContainer} transform={`translate(0, ${height})`} />
-                    <g ref={nullBarContainer} transform={`translate(${histWidth + nullsPadding}, 0)`} />
-                    <g ref={nullAxisContainer} transform={`translate(${histWidth + nullsPadding}, ${height})`} />
-                </g>
+        <div className={styles.root} ref={rootContainer}>
+            <div className={styles.header_container}>
+                XXX rows (XX %)
+            </div>
+            <div className={styles.plot_container} ref={svgContainer}>
+                <svg
+                    className={styles.plot_svg}
+                    width={width + margin.left + margin.right}
+                    height={height + margin.top + margin.bottom}
+                >
+                    <g transform={`translate(${margin.left},${margin.top})`}>
+                        <g ref={histBarContainer} />
+                        <g ref={selectionBarContainer} />
+                        <g ref={brushContainer} />
+                        <g ref={histAxisContainer} transform={`translate(0, ${height})`} />
+                        <g ref={nullBarContainer} transform={`translate(${histWidth + nullsPadding}, 0)`} />
+                        <g ref={nullAxisContainer} transform={`translate(${histWidth + nullsPadding}, ${height})`} />
+                    </g>
 
-            </svg>
+                </svg>
+            </div>
         </div>
     );
 }
