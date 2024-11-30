@@ -82,7 +82,7 @@ const OutputCommandList = (props: { connector: ConnectorInfo | null }) => {
                     Save Query Text
                     <ScriptFileSaveOverlay isOpen={saveSqlIsOpen} setIsOpen={openSaveSql} />
                 </ActionList.ItemText>
-                <ActionList.Trailing>Ctrl + Q</ActionList.Trailing>
+                <ActionList.Trailing>Ctrl + T</ActionList.Trailing>
             </ActionList.ListItem>
             <ActionList.ListItem
                 disabled={!props.connector?.features.executeQueryAction || !config.value?.features?.saveResultsAsArrow}
@@ -90,7 +90,7 @@ const OutputCommandList = (props: { connector: ConnectorInfo | null }) => {
                 <ActionList.Leading>
                     <DownloadIcon />
                 </ActionList.Leading>
-                <ActionList.ItemText>Save Result Data</ActionList.ItemText>
+                <ActionList.ItemText>Save Query</ActionList.ItemText>
                 <ActionList.Trailing>Ctrl + S</ActionList.Trailing>
             </ActionList.ListItem>
         </>
