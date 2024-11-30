@@ -3,11 +3,12 @@ import * as d3 from 'd3';
 import * as styles from './histogram_cell.module.css';
 
 import { observeSize } from '../../view/foundations/size_observer.js';
-import { BIN_COUNT, ColumnSummaryVariant, LIST_COLUMN, ORDINAL_COLUMN, SKIPPED_COLUMN, STRING_COLUMN } from '../../compute/table_transforms.js';
+import { BIN_COUNT, ColumnSummaryVariant, LIST_COLUMN, ORDINAL_COLUMN, SKIPPED_COLUMN, STRING_COLUMN, TableSummary } from '../../compute/table_transforms.js';
 
 const NULL_SYMBOL = "∅";
 
 interface HistogramCellProps {
+    tableSummary: TableSummary;
     columnSummary: ColumnSummaryVariant;
 }
 

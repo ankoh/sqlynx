@@ -195,8 +195,16 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                 return <div className={styles.plots_zero_cell} style={cellProps.style}></div>;
             } else {
                 const fieldId = cellProps.columnIndex - 1;
+                const tableSummary = computationState.tableSummary;
                 const columnSummary = computationState.columnSummaries[fieldId];
                 const columnStatus = computationState.columnSummariesStatus[fieldId];
+                if (tableSummary == null) {
+                    return (
+                        <div className={classNames(styles.plots_cell)} style={cellProps.style}>
+                            Table summary is null
+                        </div>
+                    );
+                }
                 switch (columnStatus) {
                     case TaskStatus.TASK_RUNNING:
                         return (
@@ -219,14 +227,14 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                             case ORDINAL_COLUMN:
                                 return (
                                     <div className={styles.plots_cell} style={cellProps.style}>
-                                        {<HistogramCell columnSummary={columnSummary} />}
+                                        {<HistogramCell tableSummary={tableSummary} columnSummary={columnSummary} />}
                                     </div>
                                 );
                             case LIST_COLUMN:
                             case STRING_COLUMN:
                                 return (
                                     <div className={styles.plots_cell} style={cellProps.style}>
-                                        {<MostFrequentCell columnSummary={columnSummary} />}
+                                        {<MostFrequentCell tableSummary={tableSummary} columnSummary={columnSummary} />}
                                     </div>
                                 );
                             case SKIPPED_COLUMN: break;

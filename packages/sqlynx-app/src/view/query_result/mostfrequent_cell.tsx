@@ -1,10 +1,11 @@
 import * as React from 'react';
 import * as styles from './mostfrequent_cell.module.css';
 
-import { ColumnSummaryVariant } from '../../compute/table_transforms.js';
+import { ColumnSummaryVariant, TableSummary } from '../../compute/table_transforms.js';
 import { observeSize } from '../../view/foundations/size_observer.js';
 
 interface MostFrequentCellProps {
+    tableSummary: TableSummary;
     columnSummary: ColumnSummaryVariant;
 }
 
