@@ -55,7 +55,6 @@
         "@types/stylis": "^4.2.6",
         "@uiw/codemirror-themes-all": "^4.23.5",
         "apache-arrow": "^16.1.0",
-        "arquero": "^7.1.0",
         "cm6-theme-basic-light": "^0.2.0",
         "cm6-theme-nord": "^0.2.0",
         "copy-webpack-plugin": "^12.0.2",
