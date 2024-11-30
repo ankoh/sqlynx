@@ -95,6 +95,8 @@ export function getColumnEntryTypeScript(variant: ColumnEntryVariant) {
 export interface ColumnStatsFields {
     /// Entry count (!= null)
     countField: number;
+    /// Distinct entry count (only for strings and lists)
+    distinctCountField: number | null;
     /// Maximum value
     minAggregateField: number;
     /// Minimum value
@@ -126,8 +128,6 @@ export interface StringColumnEntry {
     inputFieldName: string;
     /// The column stats
     statsFields: ColumnStatsFields | null;
-    /// The binning fields
-    binningFields: ColumnBinningFields | null;
 }
 
 export interface ListColumnEntry {
@@ -137,8 +137,6 @@ export interface ListColumnEntry {
     inputFieldName: string;
     /// The column stats
     statsFields: ColumnStatsFields | null;
-    /// The binning fields
-    binningFields: ColumnBinningFields | null;
 }
 
 export interface SkippedColumnEntry {
@@ -172,38 +170,101 @@ export interface TableSummary {
     /// The entries
     columnEntries: ColumnEntryVariant[];
     /// The statistics
-    transformedDataFrame: AsyncDataFrame;
+    statsDataFrame: AsyncDataFrame;
     /// The statistics
-    transformedTable: arrow.Table;
+    statsTable: arrow.Table;
     /// Maximum value
     statsCountStarField: number | null;
 }
 
-interface OrdinalColumnSummary {
+export interface OrdinalColumnSummary {
     /// The numeric column entry
     columnEntry: OrdinalColumnEntry;
     /// The binned values
     binnedValues: BinnedValuesTable;
+    /// The analyzed information for a string column
+    analysis: OrdinalColumnAnalysis;
 }
 
-interface StringColumnSummary {
+export interface OrdinalColumnAnalysis {
+    /// The value count
+    countNotNull: number;
+    /// The null count
+    countNull: number;
+    /// The minimum value
+    minValue: string;
+    /// The maximum value
+    maxValue: string;
+    /// The bin count
+    binCount: number;
+    /// The bin percentages
+    binPercentages: number[];
+    /// The bin lower bounds
+    binLowerBounds: string[];
+    /// The bin upper bounds
+    binUpperBounds: string[]
+}
+
+export interface StringColumnSummary {
     /// The string column entry
     columnEntry: StringColumnEntry;
     /// The frequent values
     frequentValues: FrequentValuesTable;
+    /// The analyzed column information
+    analysis: StringColumnAnalysis;
 }
 
-interface ListColumnSummary {
+export interface StringColumnAnalysis {
+    /// The value count
+    countNotNull: number;
+    /// The null count
+    countNull: number;
+    /// The distinct count
+    countDistinct: number;
+    /// The minimum value
+    minValue: string;
+    /// The maximum value
+    maxValue: string;
+    /// Is unique?
+    isUnique: boolean;
+    /// The frequent value percentages
+    frequentValuePercentages: number[];
+    /// The frequent values
+    frequentValues: string[];
+}
+
+export interface ListColumnSummary {
     /// The list column entry
     /// The string column entry
     columnEntry: ListColumnEntry;
     /// The binned lengths
     binnedLengths: BinnedValuesTable;
+    /// The analyzed information for a list column
+    analysis: ListColumnAnalysis;
+}
+
+export interface ListColumnAnalysis {
+    /// The value count
+    countNotNull: number;
+    /// The null count
+    countNull: number;
+    /// The distinct count
+    countDistinct: number;
+    /// The minimum value
+    minValue: string;
+    /// The maximum value
+    maxValue: string;
+    /// Is unique?
+    isUnique: boolean;
+    /// The frequent value percentages
+    frequentValuePercentages: number[];
+    /// The frequent values
+    frequentValues: string[];
 }
 
 // ------------------------------------------------------------
 
-type BinnedValuesTable<WidthType extends arrow.DataType = arrow.DataType, BoundType extends arrow.DataType = arrow.DataType> = arrow.Table<{
+export type BinnedValuesTable<WidthType extends arrow.DataType = arrow.DataType, BoundType extends arrow.DataType = arrow.DataType> = arrow.Table<{
     bin: arrow.Int32,
     binWidth: WidthType,
     binLowerBound: BoundType,
@@ -211,7 +272,7 @@ type BinnedValuesTable<WidthType extends arrow.DataType = arrow.DataType, BoundT
     count: arrow.Int64,
 }>;
 
-type FrequentValuesTable<KeyType extends arrow.DataType = arrow.DataType> = arrow.Table<{
+export type FrequentValuesTable<KeyType extends arrow.DataType = arrow.DataType> = arrow.Table<{
     key: KeyType,
     count: arrow.Int64,
 }>
@@ -258,6 +319,7 @@ export function createTableSummaryTransform(task: TableSummaryTask): [proto.sqly
                         ...entry.value,
                         statsFields: {
                             countField: countAggregateColumn,
+                            distinctCountField: null,
                             minAggregateField: minAggregateColumn,
                             maxAggregateField: maxAggregateColumn,
                         }
@@ -268,12 +330,19 @@ export function createTableSummaryTransform(task: TableSummaryTask): [proto.sqly
             }
             case STRING_COLUMN: {
                 const countAggregateColumn = nextOutputColumn++;
+                const countDistinctAggregateColumn = nextOutputColumn++;
                 const minAggregateColumn = nextOutputColumn++;
                 const maxAggregateColumn = nextOutputColumn++;
                 aggregates.push(new proto.sqlynx_compute.pb.GroupByAggregate({
                     fieldName: entry.value.inputFieldName,
                     outputAlias: `c${countAggregateColumn}`,
                     aggregationFunction: proto.sqlynx_compute.pb.AggregationFunction.Count,
+                }));
+                aggregates.push(new proto.sqlynx_compute.pb.GroupByAggregate({
+                    fieldName: entry.value.inputFieldName,
+                    outputAlias: `c${countDistinctAggregateColumn}`,
+                    aggregationFunction: proto.sqlynx_compute.pb.AggregationFunction.Count,
+                    aggregateDistinct: true,
                 }));
                 aggregates.push(new proto.sqlynx_compute.pb.GroupByAggregate({
                     fieldName: entry.value.inputFieldName,
@@ -291,6 +360,7 @@ export function createTableSummaryTransform(task: TableSummaryTask): [proto.sqly
                         ...entry.value,
                         statsFields: {
                             countField: countAggregateColumn,
+                            distinctCountField: countDistinctAggregateColumn,
                             minAggregateField: minAggregateColumn,
                             maxAggregateField: maxAggregateColumn,
                         }
@@ -301,12 +371,19 @@ export function createTableSummaryTransform(task: TableSummaryTask): [proto.sqly
             }
             case LIST_COLUMN: {
                 const countAggregateColumn = nextOutputColumn++;
+                const countDistinctAggregateColumn = nextOutputColumn++;
                 const minAggregateColumn = nextOutputColumn++;
                 const maxAggregateColumn = nextOutputColumn++;
                 aggregates.push(new proto.sqlynx_compute.pb.GroupByAggregate({
                     fieldName: entry.value.inputFieldName,
                     outputAlias: `c${countAggregateColumn}`,
                     aggregationFunction: proto.sqlynx_compute.pb.AggregationFunction.Count,
+                }));
+                aggregates.push(new proto.sqlynx_compute.pb.GroupByAggregate({
+                    fieldName: entry.value.inputFieldName,
+                    outputAlias: `c${countDistinctAggregateColumn}`,
+                    aggregationFunction: proto.sqlynx_compute.pb.AggregationFunction.Count,
+                    aggregateDistinct: true,
                 }));
                 aggregates.push(new proto.sqlynx_compute.pb.GroupByAggregate({
                     fieldName: entry.value.inputFieldName,
@@ -319,11 +396,12 @@ export function createTableSummaryTransform(task: TableSummaryTask): [proto.sqly
                     aggregationFunction: proto.sqlynx_compute.pb.AggregationFunction.Max,
                 }));
                 const newEntry: ColumnEntryVariant = {
-                    type: ORDINAL_COLUMN,
+                    type: LIST_COLUMN,
                     value: {
                         ...entry.value,
                         statsFields: {
                             countField: countAggregateColumn,
+                            distinctCountField: countDistinctAggregateColumn,
                             minAggregateField: minAggregateColumn,
                             maxAggregateField: maxAggregateColumn,
                         }
@@ -351,7 +429,7 @@ export function createColumnSummaryTransform(task: ColumnSummaryTask, tableSumma
     }
     let fieldName = task.columnEntry.value.inputFieldName;
     let out: proto.sqlynx_compute.pb.DataFrameTransform;
-    let tableSummarySchema = tableSummary.transformedTable.schema;
+    let tableSummarySchema = tableSummary.statsTable.schema;
     switch (task.columnEntry.type) {
         case ORDINAL_COLUMN: {
             const minField = tableSummarySchema.fields[task.columnEntry.value.statsFields.minAggregateField].name;
