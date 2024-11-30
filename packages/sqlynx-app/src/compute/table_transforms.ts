@@ -3,6 +3,7 @@ import * as proto from '@ankoh/sqlynx-protobuf';
 
 import { VariantKind } from '../utils/variant.js';
 import { AsyncDataFrame } from './compute_worker_bindings.js';
+import { ArrowTableFormatter } from 'view/query_result/arrow_formatter.js';
 
 export const COLUMN_SUMMARY_TASK = Symbol("COLUMN_STATS_TASK");
 export const TABLE_ORDERING_TASK = Symbol("TABLE_ORDERING_TASK");
@@ -173,8 +174,10 @@ export interface TableSummary {
     statsDataFrame: AsyncDataFrame;
     /// The statistics
     statsTable: arrow.Table;
+    /// The formatter for the stats table
+    statsTableFormatter: ArrowTableFormatter;
     /// Maximum value
-    statsCountStarField: number | null;
+    statsCountStarField: number;
 }
 
 export interface OrdinalColumnSummary {
@@ -182,6 +185,8 @@ export interface OrdinalColumnSummary {
     columnEntry: OrdinalColumnEntry;
     /// The binned values
     binnedValues: BinnedValuesTable;
+    /// The formatter for the binned values
+    binnedValuesFormatter: ArrowTableFormatter;
     /// The analyzed information for a string column
     analysis: OrdinalColumnAnalysis;
 }
@@ -210,6 +215,8 @@ export interface StringColumnSummary {
     columnEntry: StringColumnEntry;
     /// The frequent values
     frequentValues: FrequentValuesTable;
+    /// The formatter for the frequent values
+    frequentValuesFormatter: ArrowTableFormatter;
     /// The analyzed column information
     analysis: StringColumnAnalysis;
 }
@@ -237,8 +244,10 @@ export interface ListColumnSummary {
     /// The list column entry
     /// The string column entry
     columnEntry: ListColumnEntry;
-    /// The binned lengths
-    binnedLengths: BinnedValuesTable;
+    /// The frequent values
+    frequentValues: FrequentValuesTable;
+    /// The formatter for the frequent values
+    frequentValuesFormatter: ArrowTableFormatter;
     /// The analyzed information for a list column
     analysis: ListColumnAnalysis;
 }
