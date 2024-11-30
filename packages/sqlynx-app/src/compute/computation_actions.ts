@@ -5,6 +5,7 @@ import { Logger } from '../platform/logger.js';
 import { COLUMN_SUMMARY_TASK_FAILED, COLUMN_SUMMARY_TASK_RUNNING, COLUMN_SUMMARY_TASK_SUCCEEDED, COMPUTATION_FROM_QUERY_RESULT, ComputationAction, CREATED_DATA_FRAME, TABLE_ORDERING_TASK_FAILED, TABLE_ORDERING_TASK_RUNNING, TABLE_ORDERING_TASK_SUCCEEDED, TABLE_SUMMARY_TASK_FAILED, TABLE_SUMMARY_TASK_RUNNING, TABLE_SUMMARY_TASK_SUCCEEDED } from './computation_state.js';
 import { ColumnSummaryVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskProgress, ORDINAL_COLUMN, STRING_COLUMN, LIST_COLUMN, createOrderByTransform, createTableSummaryTransform, createColumnSummaryTransform, ColumnEntryVariant, SKIPPED_COLUMN, getColumnEntryTypeScript, OrdinalColumnAnalysis, StringColumnAnalysis, ListColumnAnalysis, ListColumnEntry, StringColumnEntry, OrdinalColumnEntry, BinnedValuesTable, FrequentValuesTable } from './table_transforms.js';
 import { AsyncDataFrame, ComputeWorkerBindings } from './compute_worker_bindings.js';
+import { ArrowTableFormatter } from '../view/query_result/arrow_formatter.js';
 
 const LOG_CTX = "compute";
 
@@ -222,11 +223,13 @@ export async function computeTableSummary(computationId: number, dataFrame: Asyn
         const summaryEnd = performance.now();
         logger.info(`summarized table ${computationId} in ${Math.floor(summaryEnd - summaryStart)} ms`, LOG_CTX);
         // Read the result
-        const transformedTable = await transformedDataFrame.readTable();
+        const statsTable = await transformedDataFrame.readTable();
+        const statsTableFormatter = new ArrowTableFormatter(statsTable.schema, statsTable.batches);
         // The output table
         const summary: TableSummary = {
             columnEntries,
-            statsTable: transformedTable,
+            statsTable,
+            statsTableFormatter,
             statsDataFrame: transformedDataFrame,
             statsCountStarField: countStarColumn,
         };
@@ -261,16 +264,14 @@ export async function computeTableSummary(computationId: number, dataFrame: Asyn
     }
 }
 
-function analyzeOrdinalColumn(tableSummary: TableSummary, columnEntry: OrdinalColumnEntry, binnedValues: BinnedValuesTable): OrdinalColumnAnalysis {
+function analyzeOrdinalColumn(tableSummary: TableSummary, columnEntry: OrdinalColumnEntry): OrdinalColumnAnalysis {
     const totalCountVector = tableSummary.statsTable.getChildAt(tableSummary.statsCountStarField!) as arrow.Vector<arrow.Int64>;
     const notNullCountVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.countField) as arrow.Vector<arrow.Int64>;
-    const minVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.minAggregateField) as arrow.Vector;
-    const maxVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.maxAggregateField) as arrow.Vector;
 
     const totalCount = totalCountVector.get(0) ?? BigInt(0);
     const notNullCount = notNullCountVector.get(0) ?? BigInt(0);
-    const minValue = minVector.get(0)?.toString() ?? "";
-    const maxValue = maxVector.get(0)?.toString() ?? "";
+    const minValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.minAggregateField);
+    const maxValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.maxAggregateField);
 
     return {
         countNotNull: Number(notNullCount),
@@ -284,18 +285,16 @@ function analyzeOrdinalColumn(tableSummary: TableSummary, columnEntry: OrdinalCo
     };
 }
 
-function analyzeStringColumn(tableSummary: TableSummary, columnEntry: StringColumnEntry, frequentValues: FrequentValuesTable): StringColumnAnalysis {
+function analyzeStringColumn(tableSummary: TableSummary, columnEntry: StringColumnEntry): StringColumnAnalysis {
     const totalCountVector = tableSummary.statsTable.getChildAt(tableSummary.statsCountStarField!) as arrow.Vector<arrow.Int64>;
     const notNullCountVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.countField) as arrow.Vector<arrow.Int64>;
     const distinctCountVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.distinctCountField!) as arrow.Vector<arrow.Int64>;
-    const minVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.minAggregateField) as arrow.Vector<arrow.Utf8>;
-    const maxVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.maxAggregateField) as arrow.Vector<arrow.Utf8>;
 
     const totalCount = totalCountVector.get(0) ?? BigInt(0);
     const notNullCount = notNullCountVector.get(0) ?? BigInt(0);
     const distinctCount = distinctCountVector.get(0) ?? BigInt(0);
-    const minValue = minVector.get(0) ?? "";
-    const maxValue = maxVector.get(0) ?? "";
+    const minValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.minAggregateField);
+    const maxValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.maxAggregateField);
 
     return {
         countNotNull: Number(notNullCount),
@@ -309,18 +308,16 @@ function analyzeStringColumn(tableSummary: TableSummary, columnEntry: StringColu
     };
 }
 
-function analyzeListColumn(tableSummary: TableSummary, columnEntry: ListColumnEntry, frequentValues: FrequentValuesTable): ListColumnAnalysis {
+function analyzeListColumn(tableSummary: TableSummary, columnEntry: ListColumnEntry): ListColumnAnalysis {
     const totalCountVector = tableSummary.statsTable.getChildAt(tableSummary.statsCountStarField!) as arrow.Vector<arrow.Int64>;
     const notNullCountVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.countField) as arrow.Vector<arrow.Int64>;
     const distinctCountVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.distinctCountField!) as arrow.Vector<arrow.Int64>;
-    const minVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.minAggregateField) as arrow.Vector<arrow.List>;
-    const maxVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.maxAggregateField) as arrow.Vector<arrow.List>;
 
     const totalCount = totalCountVector.get(0) ?? BigInt(0);
     const notNullCount = notNullCountVector.get(0) ?? BigInt(0);
     const distinctCount = distinctCountVector.get(0) ?? BigInt(0);
-    const minValue = minVector.get(0)?.toString() ?? "";
-    const maxValue = maxVector.get(0)?.toString() ?? "";
+    const minValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.minAggregateField);
+    const maxValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.maxAggregateField);
 
     return {
         countNotNull: Number(notNullCount),
@@ -360,43 +357,47 @@ export async function computeColumnSummary(computationId: number, dataFrame: Asy
         logger.info(`summarized table ${task.computationId} column ${task.columnId} (${getColumnEntryTypeScript(task.columnEntry)}) in ${Math.floor(summaryEnd - summaryStart)} ms`, LOG_CTX);
         // Read the result
         const columnSummaryTable = await columnSummaryDataFrame.readTable();
+        const columnSummaryTableFormatter = new ArrowTableFormatter(columnSummaryTable.schema, columnSummaryTable.batches);
         // Delete the data frame after reordering
         columnSummaryDataFrame.delete();
         // Create the summary variant
         let summary: ColumnSummaryVariant;
         switch (task.columnEntry.type) {
             case ORDINAL_COLUMN: {
-                const analysis = analyzeOrdinalColumn(tableSummary, task.columnEntry.value, columnSummaryTable);
+                const analysis = analyzeOrdinalColumn(tableSummary, task.columnEntry.value);
                 console.log(analysis);
                 summary = {
                     type: ORDINAL_COLUMN,
                     value: {
                         columnEntry: task.columnEntry.value,
                         binnedValues: columnSummaryTable,
+                        binnedValuesFormatter: columnSummaryTableFormatter,
                         analysis,
                     }
                 };
                 break;
             }
             case STRING_COLUMN: {
-                const analysis = analyzeStringColumn(tableSummary, task.columnEntry.value, columnSummaryTable);
+                const analysis = analyzeStringColumn(tableSummary, task.columnEntry.value);
                 summary = {
                     type: STRING_COLUMN,
                     value: {
                         columnEntry: task.columnEntry.value,
                         frequentValues: columnSummaryTable,
+                        frequentValuesFormatter: columnSummaryTableFormatter,
                         analysis,
                     }
                 };
                 break;
             }
             case LIST_COLUMN: {
-                const analysis = analyzeListColumn(tableSummary, task.columnEntry.value, columnSummaryTable);
+                const analysis = analyzeListColumn(tableSummary, task.columnEntry.value);
                 summary = {
                     type: LIST_COLUMN,
                     value: {
                         columnEntry: task.columnEntry.value,
-                        binnedLengths: columnSummaryTable,
+                        frequentValues: columnSummaryTable,
+                        frequentValuesFormatter: columnSummaryTableFormatter,
                         analysis,
                     }
                 };
