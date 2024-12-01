@@ -202,12 +202,12 @@ export interface OrdinalColumnAnalysis {
     maxValue: string;
     /// The bin count
     binCount: number;
+    /// The bin counts
+    binValueCounts: BigInt64Array;
     /// The bin percentages
-    binPercentages: number[];
+    binPercentages: Float64Array;
     /// The bin lower bounds
     binLowerBounds: string[];
-    /// The bin upper bounds
-    binUpperBounds: string[]
 }
 
 export interface StringColumnSummary {
@@ -234,10 +234,12 @@ export interface StringColumnAnalysis {
     maxValue: string;
     /// Is unique?
     isUnique: boolean;
-    /// The frequent value percentages
-    frequentValuePercentages: number[];
     /// The frequent values
     frequentValues: string[];
+    /// The frequent value counts
+    frequentValueCounts: BigInt64Array;
+    /// The frequent value percentages
+    frequentValuePercentages: Float64Array;
 }
 
 export interface ListColumnSummary {
@@ -265,10 +267,12 @@ export interface ListColumnAnalysis {
     maxValue: string;
     /// Is unique?
     isUnique: boolean;
-    /// The frequent value percentages
-    frequentValuePercentages: number[];
     /// The frequent values
     frequentValues: string[];
+    /// The frequent value counts
+    frequentValueCounts: BigInt64Array;
+    /// The frequent value percentages
+    frequentValuePercentages: Float64Array;
 }
 
 // ------------------------------------------------------------
