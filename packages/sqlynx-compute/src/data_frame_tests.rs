@@ -7,7 +7,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use indoc::indoc;
 use pretty_assertions::assert_eq;
 
-use crate::proto::sqlynx_compute::{AggregationFunction, GroupByAggregate, GroupByKey, GroupByKeyBinning};
+use crate::proto::sqlynx_compute::{AggregationFunction, BinFieldTransform, GroupByAggregate, GroupByKey, GroupByKeyBinning};
 use crate::proto::sqlynx_compute::{DataFrameTransform, OrderByConstraint, OrderByTransform, GroupByTransform};
 use crate::data_frame::DataFrame;
 
@@ -995,6 +995,93 @@ async fn test_transform_bin_decimal128() -> anyhow::Result<()> {
         | 6     |       | 0.375000000000000000 | 2.750000000000000000 | 3.125000000000000000 |
         | 7     | 2     | 0.375000000000000000 | 3.125000000000000000 | 3.500000000000000000 |
         +-------+-------+----------------------+----------------------+----------------------+
+    "}.trim());
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_transform_bin_decimal128_precomputed() -> anyhow::Result<()> {
+    let mut schema_builder = SchemaBuilder::with_capacity(2);
+    schema_builder.push(Field::new("v", DataType::Decimal128(38, 18), false));
+    let schema = schema_builder.finish();
+
+    let mut buf = Decimal128BufferBuilder::new(10);
+    let e17 = 5 * 10_i128.pow(17);
+    let mut next_v = e17;
+    for _ in 0..7 {
+        buf.append(next_v);
+        next_v += e17;
+    }
+    buf.append(2 * e17);
+    buf.append(2 * e17);
+    buf.append(5 * e17);
+    let array = Arc::new(Decimal128Array::new(buf.finish().into(), None).with_precision_and_scale(38, 18)?);
+
+    let data = RecordBatch::try_new(schema.into(), vec![array])?;
+    let data_frame = DataFrame::new(data.schema(), vec![data]);
+
+    // Compute statistics
+    let stats_transform = DataFrameTransform {
+        bin_fields: vec![],
+        group_by: Some(GroupByTransform {
+            keys: vec![],
+            aggregates: vec![
+                GroupByAggregate {
+                    field_name: Some("v".into()),
+                    output_alias: "v_min".into(),
+                    aggregation_function: AggregationFunction::Min.into(),
+                    aggregate_distinct: None,
+                },
+                GroupByAggregate {
+                    field_name: Some("v".into()),
+                    output_alias: "v_max".into(),
+                    aggregation_function: AggregationFunction::Max.into(),
+                    aggregate_distinct: None,
+                },
+            ]
+        }),
+        order_by: None,
+    };
+    let stats = data_frame.transform(&stats_transform, None).await?;
+    assert_eq!(format!("{}", pretty_format_batches(&stats.partitions[0])?), indoc! {"
+        +----------------------+----------------------+
+        | v_min                | v_max                |
+        +----------------------+----------------------+
+        | 0.500000000000000000 | 3.500000000000000000 |
+        +----------------------+----------------------+
+    "}.trim());
+
+    // Bin into 8 bins
+    let bin_transform = DataFrameTransform {
+        bin_fields: vec![
+            BinFieldTransform {
+                field_name: "v".to_string(),
+                stats_minimum_field_name: "v_min".to_string(),
+                stats_maximum_field_name: "v_max".to_string(),
+                bin_count: 8,
+                bin_output_alias: "v_bin".to_string(),
+                fractional_bin_output_alias: "v_bin_fractional".to_string(),
+            }
+        ],
+        group_by: None,
+        order_by: None,
+    };
+    let binned = data_frame.transform(&bin_transform, Some(&stats)).await?;
+    assert_eq!(format!("{}", pretty_format_batches(&binned.partitions[0])?), indoc! {"
+        +----------------------+-------+--------------------+
+        | v                    | v_bin | v_bin_fractional   |
+        +----------------------+-------+--------------------+
+        | 0.500000000000000000 | 0     | 0.0                |
+        | 1.000000000000000000 | 1     | 1.3333333333333333 |
+        | 1.500000000000000000 | 3     | 2.6666666666666665 |
+        | 2.000000000000000000 | 4     | 4.0                |
+        | 2.500000000000000000 | 5     | 5.333333333333333  |
+        | 3.000000000000000000 | 7     | 6.666666666666667  |
+        | 3.500000000000000000 | 7     | 8.0                |
+        | 1.000000000000000000 | 1     | 1.3333333333333333 |
+        | 1.000000000000000000 | 1     | 1.3333333333333333 |
+        | 2.500000000000000000 | 5     | 5.333333333333333  |
+        +----------------------+-------+--------------------+
     "}.trim());
     Ok(())
 }
