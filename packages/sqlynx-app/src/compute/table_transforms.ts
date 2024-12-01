@@ -27,6 +27,8 @@ export type TaskVariant =
 export interface TableOrderingTask {
     /// The computation id
     computationId: number;
+    /// The data frame
+    inputDataFrame: AsyncDataFrame;
     /// The ordering constraints
     orderingConstraints: proto.sqlynx_compute.pb.OrderByConstraint[];
 }
@@ -36,13 +38,21 @@ export interface TableSummaryTask {
     computationId: number;
     /// The column entries
     columnEntries: ColumnEntryVariant[];
+    /// The data frame
+    inputDataFrame: AsyncDataFrame;
 }
 
-export interface TablePrecomputationTask {
+export interface ColumnPrecomputationTask {
     /// The computation id
     computationId: number;
     /// The column entries
     columnEntries: ColumnEntryVariant[];
+    /// The input table
+    inputTable: arrow.Table;
+    /// The input data frame
+    inputDataFrame: AsyncDataFrame;
+    /// The stats table
+    tableSummary: TableSummary;
 }
 
 export interface ColumnSummaryTask {
@@ -52,6 +62,10 @@ export interface ColumnSummaryTask {
     columnId: number;
     /// The column entry
     columnEntry: ColumnEntryVariant;
+    /// The input data frame
+    inputDataFrame: AsyncDataFrame;
+    /// The table summary
+    tableSummary: TableSummary;
 }
 
 // ------------------------------------------------------------
@@ -120,6 +134,8 @@ export interface OrdinalColumnEntry {
     statsFields: ColumnStatsFields | null;
     /// The binning fields
     binningFields: ColumnBinningFields | null;
+    /// The bin count
+    binCount: number;
 }
 
 export interface StringColumnEntry {
@@ -168,8 +184,6 @@ export type ColumnSummaryVariant =
     ;
 
 export interface TableSummary {
-    /// The entries
-    columnEntries: ColumnEntryVariant[];
     /// The statistics
     statsDataFrame: AsyncDataFrame;
     /// The statistics
@@ -181,7 +195,7 @@ export interface TableSummary {
 }
 
 export interface OrdinalColumnSummary {
-    /// The numeric column entry
+    /// The column entry
     columnEntry: OrdinalColumnEntry;
     /// The binned values
     binnedValues: BinnedValuesTable;
@@ -436,13 +450,13 @@ export function createTableSummaryTransform(task: TableSummaryTask): [proto.sqly
 
 export const BIN_COUNT = 16;
 
-export function createColumnSummaryTransform(task: ColumnSummaryTask, tableSummary: TableSummary): proto.sqlynx_compute.pb.DataFrameTransform {
+export function createColumnSummaryTransform(task: ColumnSummaryTask): proto.sqlynx_compute.pb.DataFrameTransform {
     if (task.columnEntry.type == SKIPPED_COLUMN || task.columnEntry.value.statsFields == null) {
         throw new Error("column summary requires precomputed table summary");
     }
     let fieldName = task.columnEntry.value.inputFieldName;
     let out: proto.sqlynx_compute.pb.DataFrameTransform;
-    let tableSummarySchema = tableSummary.statsTable.schema;
+    let tableSummarySchema = task.tableSummary.statsTable.schema;
     switch (task.columnEntry.type) {
         case ORDINAL_COLUMN: {
             const minField = tableSummarySchema.fields[task.columnEntry.value.statsFields.minAggregateField].name;
@@ -526,4 +540,66 @@ export function createOrderByTransform(constraints: proto.sqlynx_compute.pb.Orde
         })
     });
     return out;
+}
+
+function createUniqueColumnName(prefix: string, fieldNames: Set<string>) {
+    let name = prefix;
+    while (true) {
+        if (fieldNames.has(name)) {
+            name = `_${name}`;
+        } else {
+            fieldNames.add(name);
+            return name;
+        }
+    }
+}
+
+export function createPrecomputationTransform(schema: arrow.Schema, columns: ColumnEntryVariant[], stats: arrow.Table): [proto.sqlynx_compute.pb.DataFrameTransform, ColumnEntryVariant[]] {
+    let nextOutputColumn = schema.fields.length;
+    let binningTransforms = [];
+
+    let fieldNames = new Set<string>();
+    for (const field of schema.fields) {
+        fieldNames.add(field.name);
+    }
+    let columnEntries = [...columns];
+    for (let i = 0; i < columns.length; ++i) {
+        let column = columnEntries[i];
+        switch (column.type) {
+            case ORDINAL_COLUMN: {
+                const binFieldId = nextOutputColumn++;
+                const binFieldName = createUniqueColumnName(`_${i}_bin`, fieldNames);
+                const fractionalBinFieldId = nextOutputColumn++;
+                const fractionalBinFieldName = createUniqueColumnName(`_${i}_bin_frac`, fieldNames);
+                binningTransforms.push(new proto.sqlynx_compute.pb.BinFieldTransform({
+                    fieldName: column.value.inputFieldName,
+                    statsMaximumFieldName: stats.schema.fields[column.value.statsFields!.maxAggregateField].name,
+                    statsMinimumFieldName: stats.schema.fields[column.value.statsFields!.minAggregateField].name,
+                    binCount: column.value.binCount,
+                    binOutputAlias: binFieldName,
+                    fractionalBinOutputAlias: fractionalBinFieldName
+                }));
+                columnEntries[i] = {
+                    type: ORDINAL_COLUMN,
+                    value: {
+                        ...column.value,
+                        binningFields: {
+                            binField: binFieldId,
+                            fractionalBinField: fractionalBinFieldId
+                        }
+                    }
+                };
+                break;
+            }
+            case STRING_COLUMN:
+            case LIST_COLUMN:
+            case SKIPPED_COLUMN:
+                break;
+        }
+    }
+
+    const transform = new proto.sqlynx_compute.pb.DataFrameTransform({
+        binFields: binningTransforms
+    });
+    return [transform, columnEntries];
 }
