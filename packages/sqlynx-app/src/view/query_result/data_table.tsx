@@ -194,6 +194,8 @@ export const DataTable: React.FC<Props> = (props: Props) => {
         } else if (cellProps.rowIndex == 1 && columnHeader == DataTableColumnHeader.WithColumnPlots) {
             if (cellProps.columnIndex == 0) {
                 return <div className={styles.plots_zero_cell} style={cellProps.style}></div>;
+            } else if (cellProps.columnIndex >= (computationState.columnSummaries.length + 1)) {
+                return <div className={styles.plots_precomputed_cell} style={cellProps.style}></div>;
             } else {
                 const fieldId = cellProps.columnIndex - 1;
                 const tableSummary = computationState.tableSummary;

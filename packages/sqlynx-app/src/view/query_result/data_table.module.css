@@ -93,6 +93,16 @@
     vertical-align: top;
 }
 
+.plots_precomputed_cell {
+    background-color: hsl(210, 29%, 98%);
+    border-right: 1px solid rgb(210, 210, 210);
+    border-bottom: 1px solid rgb(210, 210, 210);
+    box-sizing: border-box;
+
+    /* Needed for inline-flex alignment */
+    vertical-align: top;
+}
+
 .row_zero_cell {
     background-color: hsl(210, 29%, 98%);
     border-right: 1px solid rgb(210, 210, 210);

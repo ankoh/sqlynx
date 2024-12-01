@@ -406,7 +406,10 @@ impl DataFrame {
                 let value_d256 = Arc::new(CastExpr::new(value.clone(), DataType::Decimal256(*precision, *scale), None));
                 let min_delta = binary(value_d256, Operator::Minus, lit(min_value.clone()), &input.schema())?;
                 let bin_d256 = binary(min_delta, Operator::Divide, lit(bin_width.clone()), &input.schema())?;
-                let bin_f64: Arc<dyn PhysicalExpr> = Arc::new(CastExpr::new(bin_d256.clone(), DataType::Float64, None));
+
+                // XXX Downcasting to 128bit is necessary as the (d256 -> f64) seems missing
+                let bin_d128: Arc<dyn PhysicalExpr> = Arc::new(CastExpr::new(bin_d256.clone(), DataType::Decimal128(*precision, *scale), None));
+                let bin_f64: Arc<dyn PhysicalExpr> = Arc::new(CastExpr::new(bin_d128.clone(), DataType::Float64, None));
 
                 // Compute integer bin
                 let bin_d256_trunc = Arc::new(CastExpr::new(bin_d256.clone(), DataType::Decimal256(*precision, 0), None));
@@ -435,7 +438,10 @@ impl DataFrame {
                 // Compute fractional bin
                 let min_delta = binary(value.clone(), Operator::Minus, lit(min_value.clone()), &input.schema())?;
                 let bin_d256 = binary(min_delta, Operator::Divide, lit(bin_width.clone()), &input.schema())?;
-                let bin_f64: Arc<dyn PhysicalExpr> = Arc::new(CastExpr::new(bin_d256.clone(), DataType::Float64, None));
+
+                // XXX Downcasting to 128bit is necessary as the (d256 -> f64) seems missing
+                let bin_d128: Arc<dyn PhysicalExpr> = Arc::new(CastExpr::new(bin_d256.clone(), DataType::Decimal128(*precision, *scale), None));
+                let bin_f64: Arc<dyn PhysicalExpr> = Arc::new(CastExpr::new(bin_d128.clone(), DataType::Float64, None));
 
                 // Compute integer bin
                 let bin_d256_trunc = Arc::new(CastExpr::new(bin_d256.clone(), DataType::Decimal256(*precision, 0), None));
