@@ -74,16 +74,6 @@ const OutputCommandList = (props: { connector: ConnectorInfo | null }) => {
                 </ActionList.ItemText>
                 <ActionList.Trailing>Ctrl + U</ActionList.Trailing>
             </ActionList.ListItem>
-            <ActionList.ListItem onClick={() => openSaveSql(s => !s)} disabled={!config.value?.features?.saveQueryAsSql}>
-                <ActionList.Leading>
-                    <DownloadIcon />
-                </ActionList.Leading>
-                <ActionList.ItemText>
-                    Save Query Text
-                    <ScriptFileSaveOverlay isOpen={saveSqlIsOpen} setIsOpen={openSaveSql} />
-                </ActionList.ItemText>
-                <ActionList.Trailing>Ctrl + T</ActionList.Trailing>
-            </ActionList.ListItem>
             <ActionList.ListItem
                 disabled={!props.connector?.features.executeQueryAction || !config.value?.features?.saveResultsAsArrow}
             >
