@@ -1,8 +1,7 @@
 import * as arrow from 'apache-arrow';
 import * as proto from '@ankoh/sqlynx-protobuf';
 
-import { ColumnSummaryVariant, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskProgress, ColumnEntryVariant, TablePrecomputationTask } from './table_transforms.js';
-
+import { ColumnSummaryVariant, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskProgress, ColumnEntryVariant, ColumnPrecomputationTask } from './table_transforms.js';
 import { VariantKind } from '../utils/variant.js';
 import { AsyncDataFrame, ComputeWorkerBindings } from './compute_worker_bindings.js';
 
@@ -38,9 +37,9 @@ export interface TableComputationState {
     tableSummary: TableSummary | null;
 
     /// The table precomputation task
-    tablePrecomputationTask: TablePrecomputationTask | null;
+    columnPrecomputationTask: ColumnPrecomputationTask | null;
     /// The task tatus
-    tablePrecomputationStatus: TaskStatus | null;
+    columnPrecomputationStatus: TaskStatus | null;
 
     /// The running column tasks
     columnSummariesStatus: (TaskStatus | null)[];
@@ -84,8 +83,8 @@ function createTableComputationState(computationId: number, table: arrow.Table, 
         tableSummaryTask: null,
         tableSummaryTaskStatus: null,
         tableSummary: null,
-        tablePrecomputationTask: null,
-        tablePrecomputationStatus: null,
+        columnPrecomputationTask: null,
+        columnPrecomputationStatus: null,
         columnSummariesStatus: Array.from({ length: tableColumns.length }, () => null),
         columnSummaries: Array.from({ length: tableColumns.length }, () => null)
     };
@@ -97,6 +96,10 @@ export const COMPUTATION_WORKER_CONFIGURATION_FAILED = Symbol('COMPUTATION_WORKE
 export const COMPUTATION_FROM_QUERY_RESULT = Symbol('COMPUTATION_FROM_QUERY_RESULT');
 export const DELETE_COMPUTATION = Symbol('DELETE_COMPUTATION');
 export const CREATED_DATA_FRAME = Symbol('CREATED_DATA_FRAME');
+
+export const PRECOMPUTATION_TASK_RUNNING = Symbol('PRECOMPUTATION_TASK_RUNNING');
+export const PRECOMPUTATION_TASK_FAILED = Symbol('PRECOMPUTATION_TASK_FAILED');
+export const PRECOMPUTATION_TASK_SUCCEEDED = Symbol('PRECOMPUTATION_TASK_SUCCEEDED');
 
 export const TABLE_ORDERING_TASK_RUNNING = Symbol('TABLE_ORDERING_TASK_RUNNING');
 export const TABLE_ORDERING_TASK_FAILED = Symbol('TABLE_ORDERING_TASK_FAILED');
@@ -125,6 +128,11 @@ export type ComputationAction =
     | VariantKind<typeof TABLE_SUMMARY_TASK_RUNNING, [number, TaskProgress]>
     | VariantKind<typeof TABLE_SUMMARY_TASK_FAILED, [number, TaskProgress, any]>
     | VariantKind<typeof TABLE_SUMMARY_TASK_SUCCEEDED, [number, TaskProgress, TableSummary]>
+
+
+    | VariantKind<typeof PRECOMPUTATION_TASK_RUNNING, [number, TaskProgress]>
+    | VariantKind<typeof PRECOMPUTATION_TASK_FAILED, [number, TaskProgress, any]>
+    | VariantKind<typeof PRECOMPUTATION_TASK_SUCCEEDED, [number, TaskProgress, arrow.Table, AsyncDataFrame, ColumnEntryVariant[]]>
 
     | VariantKind<typeof COLUMN_SUMMARY_TASK_RUNNING, [number, number, TaskProgress]>
     | VariantKind<typeof COLUMN_SUMMARY_TASK_FAILED, [number, number, TaskProgress, any]>
@@ -212,6 +220,35 @@ export function reduceComputationState(state: ComputationState, action: Computat
                 ...tableState,
                 tableSummaryTaskStatus: taskProgress.status,
                 tableSummary: tableSummary
+            });
+            return { ...state };
+        }
+        case PRECOMPUTATION_TASK_RUNNING:
+        case PRECOMPUTATION_TASK_FAILED: {
+            const [computationId, taskProgress] = action.value;
+            const tableState = state.tableComputations.get(computationId);
+            if (tableState === undefined) {
+                return state;
+            }
+            state.tableComputations.set(computationId, {
+                ...tableState,
+                columnPrecomputationStatus: taskProgress.status,
+            });
+            return { ...state };
+        }
+        case PRECOMPUTATION_TASK_SUCCEEDED: {
+            const [computationId, taskProgress, dataTable, dataFrame, columnEntries] = action.value;
+            const tableState = state.tableComputations.get(computationId);
+            if (tableState === undefined) {
+                return state;
+            }
+            state.tableComputations.set(computationId, {
+                ...tableState,
+                dataTable,
+                dataFrame,
+                dataTableColumns: columnEntries,
+                tableSummaryTaskStatus: taskProgress.status,
+
             });
             return { ...state };
         }

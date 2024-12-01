@@ -17,7 +17,6 @@ use datafusion_functions_aggregate::count::count_udaf;
 use datafusion_functions_aggregate::min_max::Max;
 use datafusion_functions_aggregate::min_max::Min;
 use datafusion_physical_expr::expressions::CaseExpr;
-use datafusion_physical_expr::ConstExpr;
 use datafusion_physical_expr::PhysicalExpr;
 use datafusion_physical_expr::PhysicalSortExpr;
 use datafusion_physical_expr::aggregate::AggregateExprBuilder;
@@ -27,7 +26,6 @@ use datafusion_physical_expr::expressions::binary;
 use datafusion_physical_expr::expressions::col;
 use datafusion_physical_expr::expressions::lit;
 use datafusion_physical_expr::ScalarFunctionExpr;
-use datafusion_physical_plan::filter::FilterExec;
 use datafusion_physical_plan::joins::{HashJoinExec, PartitionMode};
 use datafusion_physical_plan::projection::ProjectionExec;
 use datafusion_physical_plan::ExecutionPlan;
@@ -39,7 +37,7 @@ use prost::Message;
 use wasm_bindgen::prelude::*;
 
 use crate::arrow_out::DataFrameIpcStream;
-use crate::proto::sqlynx_compute::{DataFrameTransform, GroupByTransform, OrderByTransform, AggregationFunction, FilterBinRangeTransform, GroupByKeyBinning};
+use crate::proto::sqlynx_compute::{AggregationFunction, BinFieldTransform, DataFrameTransform, GroupByKeyBinning, GroupByTransform, OrderByTransform};
 
 #[wasm_bindgen]
 pub struct DataFrame {
@@ -62,7 +60,7 @@ impl DataFrame {
     }
 
     /// Order a data frame
-    async fn order_by(&self, config: &OrderByTransform, input: Arc<dyn ExecutionPlan>) -> anyhow::Result<SortExec> {
+    fn order_by(&self, config: &OrderByTransform, input: Arc<dyn ExecutionPlan>) -> anyhow::Result<SortExec> {
         let mut sort_exprs: Vec<PhysicalSortExpr> = Vec::new();
         for constraint in config.constraints.iter() {
             let sort_options = arrow::compute::SortOptions {
@@ -80,6 +78,24 @@ impl DataFrame {
             input,
         ).with_fetch(sort_limit);
         return Ok(sort_exec);
+    }
+
+    // Pre-bin fields
+    fn bin_fields(&self, bin_fields: &[BinFieldTransform], stats: &DataFrame, input: Arc<dyn ExecutionPlan>) -> anyhow::Result<Arc<dyn ExecutionPlan>> {
+        let mut fields: Vec<(Arc<dyn PhysicalExpr>, String)> = Vec::new();
+        for field in input.schema().fields().iter() {
+            fields.push((col(&field.name(), &input.schema())?, field.name().clone()));
+        }
+        for binning in bin_fields.iter() {
+            let (integer_bin, fractional_bin, _binning_metadata) = self.bin_field(&binning.field_name, binning.bin_count, stats, &binning.stats_minimum_field_name, &binning.stats_maximum_field_name, &input)?;
+            fields.push((integer_bin, binning.bin_output_alias.clone()));
+            fields.push((fractional_bin, binning.fractional_bin_output_alias.clone()));
+        }
+
+        // Construct the projection
+        let projection_exec = ProjectionExec::try_new(fields, input)?;
+        let output: Arc<dyn ExecutionPlan> = Arc::new(projection_exec);
+        return Ok(output);
     }
 
     /// Bin a field value
@@ -441,7 +457,7 @@ impl DataFrame {
     }
 
     /// Group a data frame
-    async fn group_by<'a>(&self, config: &'a GroupByTransform, stats: Option<&DataFrame>, input: Arc<dyn ExecutionPlan>) -> anyhow::Result<Arc<dyn ExecutionPlan>> {
+    fn group_by<'a>(&self, config: &'a GroupByTransform, stats: Option<&DataFrame>, input: Arc<dyn ExecutionPlan>) -> anyhow::Result<Arc<dyn ExecutionPlan>> {
         // Detect collisions among output aliases
         let mut output_field_names: HashSet<&str> = HashSet::new();
 
@@ -616,25 +632,23 @@ impl DataFrame {
         return Ok(output);
     }
 
-    /// Filter by a bin range
-    async fn filter_bin_range(&self, _config: &FilterBinRangeTransform, _stats: Option<&DataFrame>, input: Arc<dyn ExecutionPlan>) -> anyhow::Result<FilterExec> {
-        let filter = FilterExec::try_new(ConstExpr::new(lit(true)).owned_expr(), input)?;
-        Ok(filter)
-    }
-
     /// Transform a data frame
     pub(crate) async fn transform(&self, transform: &DataFrameTransform, stats: Option<&DataFrame>) -> anyhow::Result<DataFrame> {
         let mut input: Arc<dyn ExecutionPlan> = Arc::new(
             MemoryExec::try_new(&self.partitions, self.schema.clone(), None).unwrap(),
         );
-        if let Some(filter_by) = &transform.filter_bin_range {
-            input = Arc::new(self.filter_bin_range(filter_by, stats, input).await?);
+        if !transform.bin_fields.is_empty() {
+            if let Some(stats) = stats {
+                input = self.bin_fields(&transform.bin_fields, stats, input)?;
+            } else {
+                return Err(anyhow::anyhow!("field binning requires precomputed statistics, use transformWithStats"));
+            }
         }
         if let Some(group_by) = &transform.group_by {
-            input = self.group_by(group_by, stats, input).await?;
+            input = self.group_by(group_by, stats, input)?;
         }
         if let Some(order_by) = &transform.order_by {
-            input = Arc::new(self.order_by(order_by, input).await?);
+            input = Arc::new(self.order_by(order_by, input)?);
         }
         let task_ctx = Arc::new(TaskContext::default());
         let result_schema = input.schema().clone();

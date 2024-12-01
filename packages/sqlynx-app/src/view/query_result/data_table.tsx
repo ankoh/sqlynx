@@ -153,12 +153,13 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                 nullsFirst: false,
             })
         ];
-        const orderingTask: TableOrderingTask = {
-            computationId: computationState.computationId,
-            orderingConstraints
-        };
         if (computationState.dataFrame) {
-            sortTable(computationState.computationId, computationState.dataFrame, orderingTask, dispatchComputation, logger);
+            const orderingTask: TableOrderingTask = {
+                computationId: computationState.computationId,
+                inputDataFrame: computationState.dataFrame,
+                orderingConstraints
+            };
+            sortTable(orderingTask, dispatchComputation, logger);
         }
     }, [computationState, dispatchComputation, logger]);
 

@@ -2,8 +2,8 @@ import * as arrow from 'apache-arrow';
 
 import { Dispatch } from '../utils/variant.js';
 import { Logger } from '../platform/logger.js';
-import { COLUMN_SUMMARY_TASK_FAILED, COLUMN_SUMMARY_TASK_RUNNING, COLUMN_SUMMARY_TASK_SUCCEEDED, COMPUTATION_FROM_QUERY_RESULT, ComputationAction, CREATED_DATA_FRAME, TABLE_ORDERING_TASK_FAILED, TABLE_ORDERING_TASK_RUNNING, TABLE_ORDERING_TASK_SUCCEEDED, TABLE_SUMMARY_TASK_FAILED, TABLE_SUMMARY_TASK_RUNNING, TABLE_SUMMARY_TASK_SUCCEEDED } from './computation_state.js';
-import { ColumnSummaryVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskProgress, ORDINAL_COLUMN, STRING_COLUMN, LIST_COLUMN, createOrderByTransform, createTableSummaryTransform, createColumnSummaryTransform, ColumnEntryVariant, SKIPPED_COLUMN, getColumnEntryTypeScript, OrdinalColumnAnalysis, StringColumnAnalysis, ListColumnAnalysis, ListColumnEntry, StringColumnEntry, OrdinalColumnEntry, BinnedValuesTable, FrequentValuesTable } from './table_transforms.js';
+import { COLUMN_SUMMARY_TASK_FAILED, COLUMN_SUMMARY_TASK_RUNNING, COLUMN_SUMMARY_TASK_SUCCEEDED, COMPUTATION_FROM_QUERY_RESULT, ComputationAction, CREATED_DATA_FRAME, PRECOMPUTATION_TASK_FAILED, PRECOMPUTATION_TASK_RUNNING, PRECOMPUTATION_TASK_SUCCEEDED, TABLE_ORDERING_TASK_FAILED, TABLE_ORDERING_TASK_RUNNING, TABLE_ORDERING_TASK_SUCCEEDED, TABLE_SUMMARY_TASK_FAILED, TABLE_SUMMARY_TASK_RUNNING, TABLE_SUMMARY_TASK_SUCCEEDED } from './computation_state.js';
+import { ColumnSummaryVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskProgress, ORDINAL_COLUMN, STRING_COLUMN, LIST_COLUMN, createOrderByTransform, createTableSummaryTransform, createColumnSummaryTransform, ColumnEntryVariant, SKIPPED_COLUMN, getColumnEntryTypeScript, OrdinalColumnAnalysis, StringColumnAnalysis, ListColumnAnalysis, ListColumnEntry, StringColumnEntry, OrdinalColumnEntry, BinnedValuesTable, FrequentValuesTable, createPrecomputationTransform, ColumnPrecomputationTask, BIN_COUNT } from './table_transforms.js';
 import { AsyncDataFrame, ComputeWorkerBindings } from './compute_worker_bindings.js';
 import { ArrowTableFormatter } from '../view/query_result/arrow_formatter.js';
 import { assert } from '../utils/assert.js';
@@ -13,15 +13,15 @@ const LOG_CTX = "compute";
 /// Compute all table summaries
 export async function analyzeTable(computationId: number, table: arrow.Table, dispatch: Dispatch<ComputationAction>, worker: ComputeWorkerBindings, logger: Logger): Promise<void> {
     // Register the table with compute
-    const mappedColumns = mapComputationColumnsEntries(table!);
+    let columns = mapComputationColumnsEntries(table!);
     const computeAbortCtrl = new AbortController();
     dispatch({
         type: COMPUTATION_FROM_QUERY_RESULT,
-        value: [computationId, table!, mappedColumns, computeAbortCtrl]
+        value: [computationId, table!, columns, computeAbortCtrl]
     });
 
     // Create a Data Frame from a table
-    const dataFrame = await worker.createDataFrameFromTable(table);
+    let dataFrame = await worker.createDataFrameFromTable(table);
     dispatch({
         type: CREATED_DATA_FRAME,
         value: [computationId, dataFrame]
@@ -30,18 +30,78 @@ export async function analyzeTable(computationId: number, table: arrow.Table, di
     // Summarize the table
     const tableSummaryTask: TableSummaryTask = {
         computationId,
-        columnEntries: mappedColumns,
+        columnEntries: columns,
+        inputDataFrame: dataFrame
     };
-    const tableSummary = await computeTableSummary(computationId, dataFrame, tableSummaryTask, dispatch, logger);
+    const [tableSummary, columnEntries] = await computeTableSummary(tableSummaryTask, dispatch, logger);
+    columns = columnEntries;
+
+    // Precompute column expressions
+    const precomputationTask: ColumnPrecomputationTask = {
+        computationId,
+        columnEntries: columns,
+        inputTable: table,
+        inputDataFrame: dataFrame,
+        tableSummary
+    };
+    const [newDataFrame, newColumnEntries] = await precomputeColumnExpressions(precomputationTask, dispatch, logger);
+    columns = newColumnEntries;
 
     // Summarize the columns
-    for (let columnId = 0; columnId < tableSummary.columnEntries.length; ++columnId) {
+    for (let columnId = 0; columnId < columnEntries.length; ++columnId) {
         const columnSummaryTask: ColumnSummaryTask = {
             computationId,
             columnId,
-            columnEntry: tableSummary.columnEntries[columnId]
+            tableSummary: tableSummary,
+            columnEntry: newColumnEntries[columnId],
+            inputDataFrame: newDataFrame,
         };
-        await computeColumnSummary(computationId, dataFrame, columnSummaryTask, tableSummary, dispatch, logger);
+        await computeColumnSummary(computationId, columnSummaryTask, dispatch, logger);
+    }
+}
+
+/// Precompute expressions for column summaries
+async function precomputeColumnExpressions(task: ColumnPrecomputationTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<[AsyncDataFrame, ColumnEntryVariant[]]> {
+    let startedAt = new Date();
+    let taskProgress: TaskProgress = {
+        status: TaskStatus.TASK_RUNNING,
+        startedAt,
+        completedAt: null,
+        failedAt: null,
+        failedWithError: null,
+    };
+    try {
+        dispatch({
+            type: PRECOMPUTATION_TASK_RUNNING,
+            value: [task.computationId, taskProgress]
+        });
+        const [transform, newColumns] = createPrecomputationTransform(task.inputTable.schema, task.columnEntries, task.tableSummary.statsTable);
+
+        const transformStart = performance.now();
+        const transformed = await task.inputDataFrame.transform(transform, task.tableSummary.statsDataFrame);
+        const transformEnd = performance.now();
+        const transformedTable = await transformed.readTable();
+        logger.info(`precomputed columns in ${Math.floor(transformEnd - transformStart)} ms`, LOG_CTX);
+
+        dispatch({
+            type: PRECOMPUTATION_TASK_SUCCEEDED,
+            value: [task.computationId, taskProgress, transformedTable, transformed, newColumns],
+        });
+        return [transformed, newColumns];
+    } catch (error: any) {
+        logger.error(`column precomputation failed with error: ${error.toString()}`);
+        taskProgress = {
+            status: TaskStatus.TASK_FAILED,
+            startedAt,
+            completedAt: null,
+            failedAt: new Date(),
+            failedWithError: error,
+        };
+        dispatch({
+            type: PRECOMPUTATION_TASK_FAILED,
+            value: [task.computationId, taskProgress, error],
+        });
+        throw error;
     }
 }
 
@@ -90,6 +150,7 @@ function mapComputationColumnsEntries(table: arrow.Table): ColumnEntryVariant[] 
                         inputFieldName: field.name,
                         binningFields: null,
                         statsFields: null,
+                        binCount: BIN_COUNT
                     }
                 });
                 break;
@@ -130,7 +191,7 @@ function mapComputationColumnsEntries(table: arrow.Table): ColumnEntryVariant[] 
 }
 
 /// Helper to sort a table
-export async function sortTable(computationId: number, dataFrame: AsyncDataFrame, task: TableOrderingTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<void> {
+export async function sortTable(task: TableOrderingTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<void> {
     // Create the transform
     const transform = createOrderByTransform(task.orderingConstraints);
 
@@ -157,7 +218,7 @@ export async function sortTable(computationId: number, dataFrame: AsyncDataFrame
         });
         // Order the data frame
         const sortStart = performance.now();
-        const transformed = await dataFrame!.transform(transform);
+        const transformed = await task.inputDataFrame!.transform(transform);
         const sortEnd = performance.now();
         logger.info(`sorted table in ${Math.floor(sortEnd - sortStart)} ms`, LOG_CTX);
         // Read the result
@@ -199,7 +260,7 @@ export async function sortTable(computationId: number, dataFrame: AsyncDataFrame
 }
 
 /// Helper to summarize a table
-export async function computeTableSummary(computationId: number, dataFrame: AsyncDataFrame, task: TableSummaryTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<TableSummary> {
+export async function computeTableSummary(task: TableSummaryTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<[TableSummary, ColumnEntryVariant[]]> {
     // Create the transform
     const [transform, columnEntries, countStarColumn] = createTableSummaryTransform(task);
 
@@ -216,19 +277,18 @@ export async function computeTableSummary(computationId: number, dataFrame: Asyn
     try {
         dispatch({
             type: TABLE_SUMMARY_TASK_RUNNING,
-            value: [computationId, taskProgress]
+            value: [task.computationId, taskProgress]
         });
         // Order the data frame
         const summaryStart = performance.now();
-        const transformedDataFrame = await dataFrame!.transform(transform);
+        const transformedDataFrame = await task.inputDataFrame!.transform(transform);
         const summaryEnd = performance.now();
-        logger.info(`summarized table ${computationId} in ${Math.floor(summaryEnd - summaryStart)} ms`, LOG_CTX);
+        logger.info(`aggregated table ${task.computationId} in ${Math.floor(summaryEnd - summaryStart)} ms`, LOG_CTX);
         // Read the result
         const statsTable = await transformedDataFrame.readTable();
         const statsTableFormatter = new ArrowTableFormatter(statsTable.schema, statsTable.batches);
         // The output table
         const summary: TableSummary = {
-            columnEntries,
             statsTable,
             statsTableFormatter,
             statsDataFrame: transformedDataFrame,
@@ -244,12 +304,12 @@ export async function computeTableSummary(computationId: number, dataFrame: Asyn
         };
         dispatch({
             type: TABLE_SUMMARY_TASK_SUCCEEDED,
-            value: [computationId, taskProgress, summary],
+            value: [task.computationId, taskProgress, summary],
         });
-        return summary;
+        return [summary, columnEntries];
 
     } catch (error: any) {
-        logger.error(`ordering table ${computationId} failed with error: ${error.toString()}`);
+        logger.error(`ordering table ${task.computationId} failed with error: ${error.toString()}`);
         taskProgress = {
             status: TaskStatus.TASK_FAILED,
             startedAt,
@@ -259,7 +319,7 @@ export async function computeTableSummary(computationId: number, dataFrame: Asyn
         };
         dispatch({
             type: TABLE_SUMMARY_TASK_FAILED,
-            value: [computationId, taskProgress, error],
+            value: [task.computationId, taskProgress, error],
         });
         throw error;
     }
@@ -368,9 +428,9 @@ function analyzeListColumn(tableSummary: TableSummary, columnEntry: ListColumnEn
     };
 }
 
-export async function computeColumnSummary(computationId: number, dataFrame: AsyncDataFrame, task: ColumnSummaryTask, tableSummary: TableSummary, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<ColumnSummaryVariant> {
+export async function computeColumnSummary(computationId: number, task: ColumnSummaryTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<ColumnSummaryVariant> {
     // Create the transform
-    const columnSummaryTransform = createColumnSummaryTransform(task, tableSummary);
+    const columnSummaryTransform = createColumnSummaryTransform(task);
 
     // Mark task as running
     let startedAt = new Date();
@@ -389,9 +449,9 @@ export async function computeColumnSummary(computationId: number, dataFrame: Asy
         });
         // Order the data frame
         const summaryStart = performance.now();
-        const columnSummaryDataFrame = await dataFrame!.transform(columnSummaryTransform, tableSummary.statsDataFrame);
+        const columnSummaryDataFrame = await task.inputDataFrame!.transform(columnSummaryTransform, task.tableSummary.statsDataFrame);
         const summaryEnd = performance.now();
-        logger.info(`summarized table ${task.computationId} column ${task.columnId} (${getColumnEntryTypeScript(task.columnEntry)}) in ${Math.floor(summaryEnd - summaryStart)} ms`, LOG_CTX);
+        logger.info(`aggregated table ${task.computationId} column ${task.columnId} in ${Math.floor(summaryEnd - summaryStart)} ms`, LOG_CTX);
         // Read the result
         const columnSummaryTable = await columnSummaryDataFrame.readTable();
         const columnSummaryTableFormatter = new ArrowTableFormatter(columnSummaryTable.schema, columnSummaryTable.batches);
@@ -401,7 +461,7 @@ export async function computeColumnSummary(computationId: number, dataFrame: Asy
         let summary: ColumnSummaryVariant;
         switch (task.columnEntry.type) {
             case ORDINAL_COLUMN: {
-                const analysis = analyzeOrdinalColumn(tableSummary, task.columnEntry.value, columnSummaryTable, columnSummaryTableFormatter);
+                const analysis = analyzeOrdinalColumn(task.tableSummary, task.columnEntry.value, columnSummaryTable, columnSummaryTableFormatter);
                 console.log(analysis);
                 summary = {
                     type: ORDINAL_COLUMN,
@@ -415,7 +475,7 @@ export async function computeColumnSummary(computationId: number, dataFrame: Asy
                 break;
             }
             case STRING_COLUMN: {
-                const analysis = analyzeStringColumn(tableSummary, task.columnEntry.value, columnSummaryTable, columnSummaryTableFormatter);
+                const analysis = analyzeStringColumn(task.tableSummary, task.columnEntry.value, columnSummaryTable, columnSummaryTableFormatter);
                 console.log(analysis);
                 summary = {
                     type: STRING_COLUMN,
@@ -429,7 +489,7 @@ export async function computeColumnSummary(computationId: number, dataFrame: Asy
                 break;
             }
             case LIST_COLUMN: {
-                const analysis = analyzeListColumn(tableSummary, task.columnEntry.value, columnSummaryTable, columnSummaryTableFormatter);
+                const analysis = analyzeListColumn(task.tableSummary, task.columnEntry.value, columnSummaryTable, columnSummaryTableFormatter);
                 summary = {
                     type: LIST_COLUMN,
                     value: {
