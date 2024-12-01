@@ -1,6 +1,6 @@
 use std::{collections::HashSet, sync::Arc};
 
-use arrow::array::ArrowNativeTypeOp;
+use arrow::array::{ArrayRef, ArrowNativeTypeOp, UInt32Array};
 use arrow::array::RecordBatch;
 use arrow::datatypes::i256;
 use arrow::datatypes::DataType;
@@ -28,6 +28,7 @@ use datafusion_physical_expr::expressions::col;
 use datafusion_physical_expr::expressions::lit;
 use datafusion_physical_expr::ScalarFunctionExpr;
 use datafusion_physical_plan::filter::FilterExec;
+use datafusion_physical_plan::joins::{HashJoinExec, PartitionMode};
 use datafusion_physical_plan::projection::ProjectionExec;
 use datafusion_physical_plan::ExecutionPlan;
 use datafusion_physical_plan::aggregates::{AggregateMode, AggregateExec, PhysicalGroupBy};
@@ -455,6 +456,9 @@ impl DataFrame {
             // Get the key field
             // Check if we should emit any binning metadata
             let key_expr: Arc<dyn PhysicalExpr> = if let Some(binning) = &key.binning  {
+                if !binned_groups.is_empty() {
+                    return Err(anyhow::anyhow!("cannot bin more than one key"));
+                }
                 if let Some(stats) = &stats {
                     // Compute the field bin
                     let (integer_bin, _fractional_bin, binning_metadata) = self.bin_field(&key.field_name, binning.bin_count, stats, &binning.stats_minimum_field_name, &binning.stats_maximum_field_name, &input)?;
@@ -589,16 +593,22 @@ impl DataFrame {
         // Are there any binned groups?
         // Then we compute additional metadata fields after grouping
         if !binned_groups.is_empty() {
+            assert_eq!(binned_groups.len(), 1);
+            let (bin_field_name, key_binning, binned_metadata) = &binned_groups[0];
+
+            // Left join all bin keys in the range
+            output = create_missing_bins(&output, bin_field_name, key_binning.bin_count)?;
+
+            // Construct the binning fields
+            let mut binning_fields = binned_metadata.compute_group_metadata_fields(bin_field_name, key_binning, &output)?;
+
             // Copy over all current fields
             let mut fields: Vec<(Arc<dyn PhysicalExpr>, String)> = Vec::new();
             for field in output.schema().fields().iter() {
                 fields.push((col(&field.name(), &output.schema())?, field.name().clone()));
             }
-            // Construct the binning fields
-            for (bin_field_name, key_binning, binned_metadata) in binned_groups.iter() {
-                let mut binning_fields = binned_metadata.compute_group_metadata_fields(bin_field_name, key_binning, &output)?;
-                fields.append(&mut binning_fields);
-            }
+            fields.append(&mut binning_fields);
+
             // Construct the projection
             let projection_exec = ProjectionExec::try_new(fields, output)?;
             output = Arc::new(projection_exec);
@@ -698,4 +708,24 @@ impl BinningMetadata {
             (bin_ub_casted, key_binning.output_bin_ub_alias.clone()),
         ])
     }
+}
+
+fn create_missing_bins(input: &Arc<dyn ExecutionPlan>, bin_field: &str, bin_count: u32) -> anyhow::Result<Arc<dyn ExecutionPlan>> {
+    let all_bins = RecordBatch::try_from_iter(vec![
+        (bin_field, Arc::new(UInt32Array::from((0..bin_count).collect::<Vec<u32>>())) as ArrayRef),
+    ])?;
+    let scan_all_bins = Arc::new(
+        MemoryExec::try_new(&[vec![all_bins.clone()]], all_bins.schema(), None)?,
+    );
+    let mut join_projection: Vec<usize> = vec![0];
+    join_projection.reserve(input.schema().fields().len());
+    for i in 2..=input.schema().fields().len() {
+        join_projection.push(i);
+    }
+    let join = HashJoinExec::try_new(scan_all_bins.clone(), input.clone(), vec![(
+        col(bin_field, &scan_all_bins.schema())?,
+        col(bin_field, &input.schema())?
+    )], None, &datafusion_expr::JoinType::Left, Some(join_projection), PartitionMode::CollectLeft, false)?;
+    let output: Arc<dyn ExecutionPlan> = Arc::new(join);
+    Ok(output)
 }
