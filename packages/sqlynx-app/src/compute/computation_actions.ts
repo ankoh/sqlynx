@@ -148,6 +148,7 @@ function mapComputationColumnsEntries(table: arrow.Table): ColumnEntryVariant[] 
                     value: {
                         inputFieldId: i,
                         inputFieldName: field.name,
+                        inputFieldType: field.type,
                         binningFields: null,
                         statsFields: null,
                         binCount: BIN_COUNT
@@ -161,6 +162,7 @@ function mapComputationColumnsEntries(table: arrow.Table): ColumnEntryVariant[] 
                     value: {
                         inputFieldId: i,
                         inputFieldName: field.name,
+                        inputFieldType: field.type,
                         statsFields: null,
                     }
                 });
@@ -172,6 +174,7 @@ function mapComputationColumnsEntries(table: arrow.Table): ColumnEntryVariant[] 
                     value: {
                         inputFieldId: i,
                         inputFieldName: field.name,
+                        inputFieldType: field.type,
                         statsFields: null,
                     }
                 });
