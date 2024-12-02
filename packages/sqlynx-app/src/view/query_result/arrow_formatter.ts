@@ -11,14 +11,14 @@ export interface ColumnLayoutInfo {
 export interface ArrowColumnFormatter {
     getColumnName(): string;
     getLayoutInfo(): ColumnLayoutInfo;
-    getValue(batch: number, row: number): string;
+    getValue(batch: number, row: number): (string | null);
 }
 
 export class ArrowTextColumnFormatter implements ArrowColumnFormatter {
     readonly columnId: number;
     readonly columnName: string;
     readonly batches: arrow.RecordBatch[];
-    readonly batchValues: (string[] | null)[];
+    readonly batchValues: ((string | null)[] | null)[];
     readonly valueClassName: string;
     formattedRowCount: number;
     formattedLengthMax: number;
@@ -123,7 +123,7 @@ export class ArrowTextColumnFormatter implements ArrowColumnFormatter {
                 break;
         }
     }
-    public ensureBatchIsLoaded(index: number): string[] {
+    public ensureBatchIsLoaded(index: number): (string | null)[] {
         if (this.batchValues[index] != null) {
             return this.batchValues[index]!;
         }
@@ -134,10 +134,14 @@ export class ArrowTextColumnFormatter implements ArrowColumnFormatter {
         let valueLengthSum = 0;
         let valueLengthMax = 0;
         for (const value of column) {
-            const text = this.formatter(value) || '';
-            values.push(text);
-            valueLengthSum += text.length;
-            valueLengthMax = Math.max(valueLengthMax, text.length);
+            if (value == null) {
+                values.push(null);
+            } else {
+                const text = this.formatter(value) || '';
+                values.push(text);
+                valueLengthSum += text.length;
+                valueLengthMax = Math.max(valueLengthMax, text.length);
+            }
         }
         this.formattedLengthMax = Math.max(this.formattedLengthMax, valueLengthMax)
         this.formattedLengthSum += valueLengthSum;
@@ -149,7 +153,7 @@ export class ArrowTextColumnFormatter implements ArrowColumnFormatter {
     public getBatchValues(batch: number) {
         return this.ensureBatchIsLoaded(batch);
     }
-    public getValue(batch: number, row: number): string {
+    public getValue(batch: number, row: number): string | null {
         return this.getBatchValues(batch)[row];
     }
     public getColumnName(): string {
@@ -193,7 +197,7 @@ export class ArrowTableFormatter {
         this.rowIndex = rowIndex;
     }
 
-    public getValue(row: number, column: number): string {
+    public getValue(row: number, column: number): (string | null) {
         const batch = this.rowIndex[row];
         const indexInBatch = row - this.batchOffsets[batch];
         return this.columns[column].getValue(batch, indexInBatch);

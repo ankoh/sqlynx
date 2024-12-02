@@ -149,6 +149,7 @@ function mapComputationColumnsEntries(table: arrow.Table): ColumnEntryVariant[] 
                         inputFieldId: i,
                         inputFieldName: field.name,
                         inputFieldType: field.type,
+                        inputFieldNullable: field.nullable,
                         binningFields: null,
                         statsFields: null,
                         binCount: BIN_COUNT
@@ -163,6 +164,7 @@ function mapComputationColumnsEntries(table: arrow.Table): ColumnEntryVariant[] 
                         inputFieldId: i,
                         inputFieldName: field.name,
                         inputFieldType: field.type,
+                        inputFieldNullable: field.nullable,
                         statsFields: null,
                     }
                 });
@@ -175,6 +177,7 @@ function mapComputationColumnsEntries(table: arrow.Table): ColumnEntryVariant[] 
                         inputFieldId: i,
                         inputFieldName: field.name,
                         inputFieldType: field.type,
+                        inputFieldNullable: field.nullable,
                         statsFields: null,
                     }
                 });
@@ -185,6 +188,8 @@ function mapComputationColumnsEntries(table: arrow.Table): ColumnEntryVariant[] 
                     value: {
                         inputFieldId: i,
                         inputFieldName: field.name,
+                        inputFieldType: field.type,
+                        inputFieldNullable: field.nullable,
                     }
                 });
                 break;
@@ -334,8 +339,8 @@ function analyzeOrdinalColumn(tableSummary: TableSummary, columnEntry: OrdinalCo
 
     const totalCount = Number(totalCountVector.get(0) ?? BigInt(0));
     const notNullCount = Number(notNullCountVector.get(0) ?? BigInt(0));
-    const minValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.minAggregateField);
-    const maxValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.maxAggregateField);
+    const minValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.minAggregateField) ?? "";
+    const maxValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.maxAggregateField) ?? "";
 
     assert(binnedValues.schema.fields[1].name == "count");
     assert(binnedValues.schema.fields[3].name == "binLowerBound");
@@ -344,7 +349,7 @@ function analyzeOrdinalColumn(tableSummary: TableSummary, columnEntry: OrdinalCo
     const binPercentages = new Float64Array(binnedValues.numRows);
     for (let i = 0; i < binnedValues.numRows; ++i) {
         const binCount = binCountVector.get(i) ?? BigInt(0);
-        const binLB = binnedValuesFormatter.getValue(i, 3);
+        const binLB = binnedValuesFormatter.getValue(i, 3) ?? "";
         const binPercentage = (totalCount == 0) ? 0 : (Number(binCount) / totalCount);
         binLowerBounds.push(binLB);
         binPercentages[i] = binPercentage;
@@ -369,8 +374,8 @@ function analyzeStringColumn(tableSummary: TableSummary, columnEntry: StringColu
     const totalCount = Number(totalCountVector.get(0) ?? BigInt(0));
     const notNullCount = Number(notNullCountVector.get(0) ?? BigInt(0));
     const distinctCount = Number(distinctCountVector.get(0) ?? BigInt(0));
-    const minValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.minAggregateField);
-    const maxValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.maxAggregateField);
+    const minValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.minAggregateField) ?? "";
+    const maxValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.maxAggregateField) ?? "";
 
     assert(frequentValues.schema.fields[0].name == "value");
     assert(frequentValues.schema.fields[1].name == "count");
@@ -380,7 +385,7 @@ function analyzeStringColumn(tableSummary: TableSummary, columnEntry: StringColu
     const frequentValuePercentages = new Float64Array(frequentValues.numRows);
     for (let i = 0; i < frequentValues.numRows; ++i) {
         frequentValuePercentages[i] = totalCount == 0 ? 0 : (Number(frequentValueCounts[i]) / totalCount);
-        frequentValueStrings.push(frequentValuesFormatter.getValue(i, 0));
+        frequentValueStrings.push(frequentValuesFormatter.getValue(i, 0) ?? "");
     }
 
     return {
@@ -404,8 +409,8 @@ function analyzeListColumn(tableSummary: TableSummary, columnEntry: ListColumnEn
     const totalCount = Number(totalCountVector.get(0) ?? BigInt(0));
     const notNullCount = Number(notNullCountVector.get(0) ?? BigInt(0));
     const distinctCount = Number(distinctCountVector.get(0) ?? BigInt(0));
-    const minValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.minAggregateField);
-    const maxValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.maxAggregateField);
+    const minValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.minAggregateField) ?? "";
+    const maxValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.maxAggregateField) ?? "";
 
     assert(frequentValues.schema.fields[0].name == "value");
     assert(frequentValues.schema.fields[1].name == "count");
@@ -415,7 +420,7 @@ function analyzeListColumn(tableSummary: TableSummary, columnEntry: ListColumnEn
     const frequentValuePercentages = new Float64Array(frequentValues.numRows);
     for (let i = 0; i < frequentValues.numRows; ++i) {
         frequentValuePercentages[i] = totalCount == 0 ? 0 : (Number(frequentValueCounts[i]) / totalCount);
-        frequentValueStrings.push(frequentValuesFormatter.getValue(i, 0));
+        frequentValueStrings.push(frequentValuesFormatter.getValue(i, 0) ?? "");
     }
 
     return {

@@ -15,11 +15,13 @@ interface HistogramCellProps {
 export function HistogramCell(props: HistogramCellProps): React.ReactElement {
     let bins: Int32Array;
     let binCounts: BigInt64Array;
+    let inputNullable: boolean = false;
     switch (props.columnSummary.type) {
         case ORDINAL_COLUMN: {
             const table = props.columnSummary.value.binnedValues;
             bins = table.getChild("bin")!.toArray();
             binCounts = table.getChild("count")!.toArray();
+            inputNullable = props.columnSummary.value.columnEntry.inputFieldNullable;
             break;
         }
         case STRING_COLUMN:
@@ -42,9 +44,12 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
         width = (svgContainerSize?.width ?? 130) - margin.left - margin.right,
         height = (svgContainerSize?.height ?? 50) - margin.top - margin.bottom;
 
+    let histWidth = width;
     const nullsWidth = 12;
     const nullsPadding = 2;
-    const histWidth = width - nullsWidth - nullsPadding;
+    if (inputNullable) {
+        histWidth -= nullsWidth + nullsPadding;
+    }
 
     const [histXScale, histYScale, nullsXScale, nullsYScale] = React.useMemo(() => {
         const xValues: string[] = [];
@@ -52,7 +57,7 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
             xValues.push(i.toString());
         }
         let yMin = BigInt(0);
-        let yMax = BigInt(0);
+        let yMax = BigInt(props.columnSummary.value?.analysis.countNull ?? 0);
         for (let i = 0; i < binCounts.length; ++i) {
             yMax = binCounts[i] > yMax ? binCounts[i] : yMax;
         }
@@ -93,23 +98,25 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
             .attr("height", i => (height - histYScale(Number(binCounts[i]))!))
             .attr("fill", "hsl(208.5deg 20.69% 50.76%)");
 
-        // Draw null bar
-        d3.select(nullBarContainer.current)
-            .selectChildren()
-            .remove();
-        d3.select(nullBarContainer.current)
-            .selectAll("rect")
-            .data([{
-                x: nullsXScale(NULL_SYMBOL)!,
-                y: nullsYScale(10)!
-            }])
-            .enter()
-            .append("rect")
-            .attr("x", d => d.x)
-            .attr("y", d => d.y)
-            .attr("width", nullsXScale.bandwidth())
-            .attr("height", d => (height - d.y))
-            .attr("fill", "hsl(210deg 17.5% 74.31%)");
+        // Draw null bar if nullable
+        if (inputNullable) {
+            d3.select(nullBarContainer.current)
+                .selectChildren()
+                .remove();
+            d3.select(nullBarContainer.current)
+                .selectAll("rect")
+                .data([{
+                    x: nullsXScale(NULL_SYMBOL)!,
+                    y: nullsYScale(props.columnSummary.value?.analysis.countNull ?? 0)!
+                }])
+                .enter()
+                .append("rect")
+                .attr("x", d => d.x)
+                .attr("y", d => d.y)
+                .attr("width", nullsXScale.bandwidth())
+                .attr("height", d => (height - d.y))
+                .attr("fill", "hsl(210deg 17.5% 74.31%)");
+        }
 
         const onBrushEnd = (_e: d3.D3BrushEvent<unknown>) => { };
         const onBrush = (_e: d3.D3BrushEvent<unknown>) => { };
@@ -156,8 +163,12 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
                         <g ref={selectionBarContainer} />
                         <g ref={brushContainer} />
                         <g ref={histAxisContainer} transform={`translate(0, ${height})`} />
-                        <g ref={nullBarContainer} transform={`translate(${histWidth + nullsPadding}, 0)`} />
-                        <g ref={nullAxisContainer} transform={`translate(${histWidth + nullsPadding}, ${height})`} />
+                        {inputNullable &&
+                            <>
+                                <g ref={nullBarContainer} transform={`translate(${histWidth + nullsPadding}, 0)`} />
+                                <g ref={nullAxisContainer} transform={`translate(${histWidth + nullsPadding}, ${height})`} />
+                            </>
+                        }
                     </g>
 
                 </svg>

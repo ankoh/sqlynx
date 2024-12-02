@@ -44,15 +44,19 @@ const DEFAULT_DEMO_CONFIG: DemoDatabaseConfig = {
             type: new arrow.Decimal(18, 38, 128),
             nullable: true,
             generateScalarValue: (_row: number) => {
-                const intPart = BigInt(Math.floor(Math.random() * 1e4)) * BigInt(1e18);
-                const fractionPart = BigInt(Math.floor(Math.random() * 1e4)) * BigInt(1e14);
-                return Int128.encodeLE(intPart + fractionPart);
+                if (Math.random() < 0.2) {
+                    return null;
+                } else {
+                    const intPart = BigInt(Math.floor(Math.random() * 1e4)) * BigInt(1e18);
+                    const fractionPart = BigInt(Math.floor(Math.random() * 1e4)) * BigInt(1e14);
+                    return Int128.encodeLE(intPart + fractionPart);
+                }
             }
         },
         {
             name: "Score3",
             type: new arrow.Decimal(18, 38, 128),
-            nullable: true,
+            nullable: false,
             generateScalarValue: (_row: number) => {
                 const intPart = BigInt(Math.floor(Math.random() * 1e4)) * BigInt(1e18);
                 return Int128.encodeLE(intPart);
