@@ -132,6 +132,8 @@ export interface OrdinalColumnEntry {
     inputFieldName: string;
     /// The input field type
     inputFieldType: arrow.DataType;
+    /// Is the input nullable?
+    inputFieldNullable: boolean;
     /// The column stats
     statsFields: ColumnStatsFields | null;
     /// The binning fields
@@ -147,6 +149,8 @@ export interface StringColumnEntry {
     inputFieldName: string;
     /// The input field type
     inputFieldType: arrow.DataType;
+    /// Is the input nullable?
+    inputFieldNullable: boolean;
     /// The column stats
     statsFields: ColumnStatsFields | null;
 }
@@ -158,6 +162,8 @@ export interface ListColumnEntry {
     inputFieldName: string;
     /// The input field type
     inputFieldType: arrow.DataType;
+    /// Is the input nullable?
+    inputFieldNullable: boolean;
     /// The column stats
     statsFields: ColumnStatsFields | null;
 }
@@ -167,6 +173,10 @@ export interface SkippedColumnEntry {
     inputFieldId: number;
     /// The input field name
     inputFieldName: string;
+    /// The input field type
+    inputFieldType: arrow.DataType;
+    /// Is the input nullable?
+    inputFieldNullable: boolean;
 }
 
 // ------------------------------------------------------------

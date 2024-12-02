@@ -262,7 +262,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                     const formatted = tableFormatter.getValue(dataRow, dataColumn);
                     return (
                         <div className={styles.data_cell} style={cellProps.style}>
-                            {formatted}
+                            {formatted ?? "NULL"}
                         </div>
                     );
                 }
