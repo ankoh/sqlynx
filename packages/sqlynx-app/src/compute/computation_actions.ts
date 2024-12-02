@@ -44,7 +44,7 @@ export async function analyzeTable(computationId: number, table: arrow.Table, di
         inputDataFrame: dataFrame,
         tableSummary
     };
-    const [newDataFrame, newColumnEntries] = await precomputeColumnExpressions(precomputationTask, dispatch, logger);
+    const [newDataFrame, newColumnEntries] = await precomputeSystemColumnExpressions(precomputationTask, dispatch, logger);
     columns = newColumnEntries;
 
     // Summarize the columns
@@ -61,7 +61,7 @@ export async function analyzeTable(computationId: number, table: arrow.Table, di
 }
 
 /// Precompute expressions for column summaries
-async function precomputeColumnExpressions(task: ColumnPrecomputationTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<[AsyncDataFrame, ColumnEntryVariant[]]> {
+async function precomputeSystemColumnExpressions(task: ColumnPrecomputationTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<[AsyncDataFrame, ColumnEntryVariant[]]> {
     let startedAt = new Date();
     let taskProgress: TaskProgress = {
         status: TaskStatus.TASK_RUNNING,
@@ -81,7 +81,7 @@ async function precomputeColumnExpressions(task: ColumnPrecomputationTask, dispa
         const transformed = await task.inputDataFrame.transform(transform, task.tableSummary.statsDataFrame);
         const transformEnd = performance.now();
         const transformedTable = await transformed.readTable();
-        logger.info(`precomputed columns in ${Math.floor(transformEnd - transformStart)} ms`, LOG_CTX);
+        logger.info(`precomputed system columns in ${Math.floor(transformEnd - transformStart)} ms`, LOG_CTX);
 
         dispatch({
             type: PRECOMPUTATION_TASK_SUCCEEDED,
