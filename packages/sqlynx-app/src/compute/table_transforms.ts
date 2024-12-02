@@ -130,6 +130,8 @@ export interface OrdinalColumnEntry {
     inputFieldId: number;
     /// The input field name
     inputFieldName: string;
+    /// The input field type
+    inputFieldType: arrow.DataType;
     /// The column stats
     statsFields: ColumnStatsFields | null;
     /// The binning fields
@@ -143,6 +145,8 @@ export interface StringColumnEntry {
     inputFieldId: number;
     /// The input field name
     inputFieldName: string;
+    /// The input field type
+    inputFieldType: arrow.DataType;
     /// The column stats
     statsFields: ColumnStatsFields | null;
 }
@@ -152,6 +156,8 @@ export interface ListColumnEntry {
     inputFieldId: number;
     /// The input field name
     inputFieldName: string;
+    /// The input field type
+    inputFieldType: arrow.DataType;
     /// The column stats
     statsFields: ColumnStatsFields | null;
 }
