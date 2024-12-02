@@ -132,3 +132,19 @@
     /* Needed for inline-flex alignment */
     vertical-align: top;
 }
+
+.data_cell_null {
+    background-color: white;
+    border-right: 1px solid rgb(210, 210, 210);
+    border-bottom: 1px solid rgb(210, 210, 210);
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    padding-left: 8px;
+    padding-right: 8px;
+
+    /* Needed for inline-flex alignment */
+    vertical-align: top;
+
+    color: hsl(208.5deg, 14.69%, 78.76%);
+}
