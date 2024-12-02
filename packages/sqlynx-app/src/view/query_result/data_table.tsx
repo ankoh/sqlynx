@@ -260,11 +260,19 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                     const dataColumn = cellProps.columnIndex - 1;
                     const dataRow = cellProps.rowIndex - headerRowCount;
                     const formatted = tableFormatter.getValue(dataRow, dataColumn);
-                    return (
-                        <div className={styles.data_cell} style={cellProps.style}>
-                            {formatted ?? "NULL"}
-                        </div>
-                    );
+                    if (formatted == null) {
+                        return (
+                            <div className={styles.data_cell_null} style={cellProps.style}>
+                                NULL
+                            </div>
+                        );
+                    } else {
+                        return (
+                            <div className={styles.data_cell} style={cellProps.style}>
+                                {formatted}
+                            </div>
+                        );
+                    }
                 }
             }
         }
