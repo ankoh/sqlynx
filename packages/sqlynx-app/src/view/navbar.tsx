@@ -19,7 +19,7 @@ import { VersionCheckIndicator } from './version_viewer.js';
 import { AnchorAlignment, AnchorSide } from './foundations/anchored_position.js';
 import { LogViewerOverlay } from './log_viewer.js';
 import { OverlaySize } from './foundations/overlay.js';
-import { MonitorOverlay } from './monitor_viewer.js';
+import { InternalsViewerOverlay } from './internals_viewer.js';
 
 const LOG_CTX = "navbar";
 
@@ -88,24 +88,24 @@ const LogButton = () => {
     );
 }
 
-const MonitorButton = (_props: {}) => {
-    const [showMonitorOverlay, setMonitorOverlay] = React.useState<boolean>(false);
+const InternalsButton = (_props: {}) => {
+    const [showInternalsViewerOverlay, setInternalsViewerOverlay] = React.useState<boolean>(false);
 
     return (
         <div className={styles.tab}>
-            <MonitorOverlay
-                isOpen={showMonitorOverlay}
-                onClose={() => setMonitorOverlay(false)}
+            <InternalsViewerOverlay
+                isOpen={showInternalsViewerOverlay}
+                onClose={() => setInternalsViewerOverlay(false)}
                 renderAnchor={(p: object) => (
                     <NavBarButtonWithRef
                         {...p}
-                        className={styles.tab_button} hover={HoverMode.Darken} onClick={() => setMonitorOverlay(true)}
+                        className={styles.tab_button} hover={HoverMode.Darken} onClick={() => setInternalsViewerOverlay(true)}
                     >
                         <>
                             <svg width="14px" height="14px">
                                 <use xlinkHref={`${symbols}#processor`} />
                             </svg>
-                            <span className={styles.tab_button_text}>Monitor</span>
+                            <span className={styles.tab_button_text}>Internals</span>
                         </>
                     </NavBarButtonWithRef>
                 )}
@@ -181,7 +181,7 @@ export const NavBar = (): React.ReactElement => {
             </div>
             <div className={styles.version_container}>
                 <LogButton />
-                <MonitorButton />
+                <InternalsButton />
                 <VersionButton />
                 {isBrowser
                     ? <OpenIn label="Open in App" url={setupUrl?.toString()} icon={`${symbols}#download_desktop`} newWindow={false} />
