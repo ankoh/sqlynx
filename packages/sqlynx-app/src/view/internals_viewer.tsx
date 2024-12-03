@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as styles from './monitor_viewer.module.css';
+import * as styles from './internals_viewer.module.css';
 
 import { XIcon } from '@primer/octicons-react';
 import { IconButton } from '@primer/react';
@@ -11,12 +11,12 @@ interface VersionViewerProps {
     onClose: () => void;
 }
 
-export const Monitor: React.FC<VersionViewerProps> = (props: VersionViewerProps) => {
+export const InternalsViewer: React.FC<VersionViewerProps> = (props: VersionViewerProps) => {
     return (
         <div className={styles.overlay}>
             <div className={styles.header_container}>
                 <div className={styles.header_left_container}>
-                    <div className={styles.title}>Monitor</div>
+                    <div className={styles.title}>Internals</div>
                 </div>
                 <div className={styles.header_right_container}>
                     <IconButton
@@ -27,13 +27,13 @@ export const Monitor: React.FC<VersionViewerProps> = (props: VersionViewerProps)
                     />
                 </div>
             </div>
-            <div className={styles.monitor_viewer_container}>
+            <div className={styles.internals_container}>
             </div>
         </div>
     );
 }
 
-type MonitorOverlayProps = {
+type InternalsViewerOverlayProps = {
     isOpen: boolean;
     onClose: () => void;
     renderAnchor: (p: object) => React.ReactElement;
@@ -41,7 +41,7 @@ type MonitorOverlayProps = {
     align?: AnchorAlignment;
     anchorOffset?: number;
 }
-export function MonitorOverlay(props: MonitorOverlayProps) {
+export function InternalsViewerOverlay(props: InternalsViewerOverlayProps) {
     return (
         <AnchoredOverlay
             open={props.isOpen}
@@ -51,7 +51,7 @@ export function MonitorOverlay(props: MonitorOverlayProps) {
             align={props.align}
             anchorOffset={props.anchorOffset}
         >
-            <Monitor onClose={props.onClose} />
+            <InternalsViewer onClose={props.onClose} />
         </AnchoredOverlay>
     );
 }

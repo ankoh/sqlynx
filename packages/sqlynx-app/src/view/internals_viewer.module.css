@@ -1,20 +1,4 @@
 
-.engine_container {
-    position: relative;
-    display: inline-flex;
-    flex-direction: row;
-}
-.engine_container_with_indicator {
-    position: relative;
-    display: inline-flex;
-    flex-direction: row;
-    margin-right: 4px;
-}
-
-.engine_icon {
-    display: inline-flex;
-}
-
 .overlay {
     display: grid;
     grid-template-rows: 48px max-content max-content max-content;
@@ -59,7 +43,7 @@
     font-size: 1rem;
 }
 
-.monitor_viewer_container {
+.internals_container {
     display: grid;
     grid-template-columns: max-content 1fr;
     grid-column-gap: 40px;
