@@ -4,6 +4,7 @@ import * as styles from './histogram_cell.module.css';
 
 import { observeSize } from '../../view/foundations/size_observer.js';
 import { BIN_COUNT, ColumnSummaryVariant, LIST_COLUMN, ORDINAL_COLUMN, SKIPPED_COLUMN, STRING_COLUMN, TableSummary } from '../../compute/table_transforms.js';
+import { dataTypeToString } from './arrow_formatter.js';
 
 const NULL_SYMBOL = "∅";
 
@@ -150,7 +151,7 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
     return (
         <div className={styles.root} ref={rootContainer}>
             <div className={styles.header_container}>
-                XXX rows (XX %)
+                {dataTypeToString(props.columnSummary.value.columnEntry.inputFieldType)}
             </div>
             <div className={styles.plot_container} ref={svgContainer}>
                 <svg

@@ -203,3 +203,14 @@ export class ArrowTableFormatter {
         return this.columns[column].getValue(batch, indexInBatch);
     }
 }
+
+export function dataTypeToString(t: arrow.DataType): string {
+    switch (t.typeId) {
+        case arrow.Type.Decimal: {
+            const d = t as arrow.Decimal;
+            return `Decimal(${d.precision},${d.scale})`;
+        }
+        default:
+            return t.toString();
+    }
+}
