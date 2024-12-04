@@ -3,12 +3,26 @@
     width: 100%;
     height: 100%;
     display: grid;
-    grid-template-rows: 1fr max-content;
+    grid-template-rows: max-content 1fr;
     grid-template-columns: 1fr;
 }
 
-.plot {
+.header_container {
     grid-row: 1;
+    font-size: 0.8rem;
+    font-weight: 400;
+    display: flex;
+
+    padding: 4px 8px 0px 8px;
+    justify-content: begin;
+    align-items: center;
+}
+
+.plot_container {
+    grid-row: 2;
+}
+
+.plot {
     position: relative;
 }
 .plot_svg {

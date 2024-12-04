@@ -210,6 +210,27 @@ export function dataTypeToString(t: arrow.DataType): string {
             const d = t as arrow.Decimal;
             return `Decimal(${d.precision},${d.scale})`;
         }
+        case arrow.Type.Timestamp: {
+            const ts = t as arrow.Timestamp;
+            let unit = "";
+            switch (ts.unit) {
+                case arrow.TimeUnit.SECOND:
+                    unit = "s";
+                    break;
+                case arrow.TimeUnit.MILLISECOND:
+                    unit = "ms";
+                    break;
+                case arrow.TimeUnit.MICROSECOND:
+                    unit = "us";
+                    break;
+                case arrow.TimeUnit.NANOSECOND:
+                    unit = "ns";
+                    break;
+            }
+            return `Timestamp(${unit})`;
+        }
+        case arrow.Type.Utf8:
+            return `Text`;
         default:
             return t.toString();
     }
