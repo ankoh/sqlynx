@@ -16,9 +16,9 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
     const rootContainer = React.useRef<HTMLDivElement>(null);
     const svgContainer = React.useRef<HTMLDivElement>(null);
     const svgContainerSize = observeSize(svgContainer);
-    const mostFrequentBarContainer = React.useRef<SVGGElement>(null);
+    const barContainer = React.useRef<SVGGElement>(null);
 
-    const margin = { top: 8, right: 8, bottom: 16, left: 8 },
+    const margin = { top: 8, right: 8, bottom: 12, left: 8 },
         width = (svgContainerSize?.width ?? 130) - margin.left - margin.right,
         height = (svgContainerSize?.height ?? 50) - margin.top - margin.bottom;
 
@@ -56,6 +56,26 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
         return [xScale, xOffsets, xCounts];
     }, [frequentValues, width]);
 
+    React.useLayoutEffect(() => {
+        if (xOffsets == null) {
+            return;
+        }
+
+        // Draw the bars
+        d3.select(barContainer.current)
+            .selectChildren()
+            .remove();
+        d3.select(barContainer.current)
+            .selectAll("rect")
+            .data(xOffsets.keys())
+            .enter()
+            .append("rect")
+            .attr("x", i => xScale(Number(xOffsets[i])))
+            .attr("width", i => xScale(Number(xCounts[i])))
+            .attr("height", _ => height)
+            .attr("fill", "black");
+    }, [xOffsets]);
+
     if (props.columnSummary.value == null) {
         return <div />;
     }
@@ -72,7 +92,7 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
                     height={height + margin.top + margin.bottom}
                 >
                     <g transform={`translate(${margin.left},${margin.top})`}>
-                        <g ref={mostFrequentBarContainer} />
+                        <g ref={barContainer} />
                     </g>
 
                 </svg>
