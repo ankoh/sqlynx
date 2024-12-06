@@ -18,7 +18,7 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
     const svgContainerSize = observeSize(svgContainer);
     const barContainer = React.useRef<SVGGElement>(null);
 
-    const margin = { top: 8, right: 8, bottom: 12, left: 8 },
+    const margin = { top: 8, right: 8, bottom: 8, left: 8 },
         width = (svgContainerSize?.width ?? 130) - margin.left - margin.right,
         height = (svgContainerSize?.height ?? 50) - margin.top - margin.bottom;
 
@@ -36,7 +36,7 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
     }
 
     // Compute x-scale and offsets
-    const [xScale, xOffsets, xCounts] = React.useMemo(() => {
+    const [xScale, xOffsets, xCounts, xSum] = React.useMemo(() => {
         if (frequentValues == null) {
             return [null, null, null];
         }
@@ -53,13 +53,18 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
             .range([0, width])
             .domain([0, Number(xSum)]);
 
-        return [xScale, xOffsets, xCounts];
+        return [xScale, xOffsets, xCounts, Number(xSum)];
     }, [frequentValues, width]);
 
     React.useLayoutEffect(() => {
         if (xOffsets == null) {
             return;
         }
+
+        const padding = xScale(0.1);
+        const xUB = xScale(xSum);
+        const getX = (i: number) => Math.min(xScale(Number(xOffsets[i])) + padding, xUB);
+        const getWidth = (i: number) => Math.max(xScale(Number(xCounts[i])) - 2 * padding, 0);
 
         // Draw the bars
         d3.select(barContainer.current)
@@ -70,8 +75,8 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
             .data(xOffsets.keys())
             .enter()
             .append("rect")
-            .attr("x", i => xScale(Number(xOffsets[i])))
-            .attr("width", i => xScale(Number(xCounts[i])))
+            .attr("x", i => getX(i))
+            .attr("width", i => getWidth(i))
             .attr("height", _ => height)
             .attr("fill", "black");
     }, [xOffsets]);
