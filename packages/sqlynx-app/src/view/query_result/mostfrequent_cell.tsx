@@ -18,7 +18,7 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
     const svgContainerSize = observeSize(svgContainer);
     const barContainer = React.useRef<SVGGElement>(null);
 
-    const margin = { top: 8, right: 8, bottom: 8, left: 8 },
+    const margin = { top: 4, right: 8, bottom: 12, left: 8 },
         width = (svgContainerSize?.width ?? 130) - margin.left - margin.right,
         height = (svgContainerSize?.height ?? 50) - margin.top - margin.bottom;
 
@@ -78,7 +78,7 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
             .attr("x", i => getX(i))
             .attr("width", i => getWidth(i))
             .attr("height", _ => height)
-            .attr("fill", "black");
+            .attr("fill", "hsl(208.5deg 20.69% 40.76%)");
     }, [xOffsets]);
 
     if (props.columnSummary.value == null) {
@@ -96,7 +96,12 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
                     width={width + margin.left + margin.right}
                     height={height + margin.top + margin.bottom}
                 >
-                    <g transform={`translate(${margin.left},${margin.top})`}>
+                    <defs>
+                        <clipPath id="rounded-bar">
+                            <rect x={0} y={0} width={width} height={height} rx={4} ry={4} />
+                        </clipPath>
+                    </defs>
+                    <g transform={`translate(${margin.left},${margin.top})`} clip-path="url(#rounded-bar)">
                         <g ref={barContainer} />
                     </g>
 
