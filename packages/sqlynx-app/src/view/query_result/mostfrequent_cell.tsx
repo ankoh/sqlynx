@@ -24,25 +24,41 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
 
     // Resolve the frequent values
     let frequentValues: FrequentValuesTable | null = null;
+    let frequentValueCounts: BigInt64Array | null = null;
+    let frequentValuePercentages: Float64Array | null = null;
     let frequentValuesFormatter: ArrowTableFormatter | null = null;
+    let isUnique = false;
+    let distinctCount = 0;
+    let nullCount = 0;
     switch (props.columnSummary.type) {
         case STRING_COLUMN:
         case LIST_COLUMN:
             frequentValues = props.columnSummary.value.frequentValues;
+            frequentValueCounts = props.columnSummary.value.analysis.frequentValueCounts;
+            frequentValuePercentages = props.columnSummary.value.analysis.frequentValuePercentages;
             frequentValuesFormatter = props.columnSummary.value.frequentValuesFormatter;
+            isUnique = props.columnSummary.value.analysis.isUnique;
+            distinctCount = props.columnSummary.value.analysis.countDistinct;
+            nullCount = props.columnSummary.value.analysis.countNull;
             break;
         default:
             break;
     }
 
+    let barWidth = width;
+    const moreButtonWidth = 8;
+    if (isUnique) {
+        barWidth = Math.max(barWidth) - moreButtonWidth;
+    }
+
     // Compute x-scale and offsets
     const [xScale, xOffsets, xCounts, xSum] = React.useMemo(() => {
-        if (frequentValues == null) {
+        if (frequentValues == null || frequentValueCounts == null) {
             return [null, null, null];
         }
         assert(frequentValues.schema.fields[1].name == "count");
 
-        const xCounts: BigInt64Array = frequentValues.getChild("count")!.toArray();
+        const xCounts: BigInt64Array = frequentValueCounts;
         const xOffsets: BigInt64Array = new BigInt64Array(xCounts.length);
         let xSum = BigInt(0);
         for (let i = 0; i < xCounts.length; ++i) {
@@ -50,11 +66,11 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
             xSum += xCounts[i];
         }
         const xScale = d3.scaleLinear()
-            .range([0, width])
+            .range([0, barWidth])
             .domain([0, Number(xSum)]);
 
         return [xScale, xOffsets, xCounts, Number(xSum)];
-    }, [frequentValues, width]);
+    }, [frequentValues, barWidth]);
 
     React.useLayoutEffect(() => {
         if (xOffsets == null) {
@@ -78,7 +94,15 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
             .attr("x", i => getX(i))
             .attr("width", i => getWidth(i))
             .attr("height", _ => height)
-            .attr("fill", "hsl(208.5deg 20.69% 40.76%)");
+            .attr("fill", "hsl(208.5deg 20.69% 55.76%)")
+            .on("mouseover", function (this: SVGRectElement, _event: any, _i: number) {
+                d3.select(this)
+                    .attr("fill", "hsl(208.5deg 20.69% 20.76%)");
+            })
+            .on("mouseout", function (this: SVGRectElement, _event: any, _i: number) {
+                d3.select(this)
+                    .attr("fill", "hsl(208.5deg 20.69% 50.76%)");
+            });
     }, [xOffsets]);
 
     if (props.columnSummary.value == null) {
@@ -98,13 +122,15 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
                 >
                     <defs>
                         <clipPath id="rounded-bar">
-                            <rect x={0} y={0} width={width} height={height} rx={4} ry={4} />
+                            <rect x={0} y={0} width={width} height={height} rx={3} ry={3} />
                         </clipPath>
                     </defs>
-                    <g transform={`translate(${margin.left},${margin.top})`} clip-path="url(#rounded-bar)">
+                    <g transform={`translate(${margin.left},${margin.top})`}>
+                        <rect x={0} y={0} width={width} height={height} rx={3} ry={3} stroke="hsl(208.5deg 20.69% 40.76%)" strokeWidth={2} fill="transparent" />
+                    </g>
+                    <g transform={`translate(${margin.left},${margin.top})`} clipPath="url(#rounded-bar)">
                         <g ref={barContainer} />
                     </g>
-
                 </svg>
             </div>
         </div>
