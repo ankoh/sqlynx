@@ -30,6 +30,12 @@ const DEFAULT_DEMO_CONFIG: DemoDatabaseConfig = {
             generateScalarValue: (_row: number) => `BinaryText/${Math.floor(Math.random() * 2)}`
         },
         {
+            name: "Text/2/Nulls",
+            type: new arrow.Utf8(),
+            nullable: true,
+            generateScalarValue: (_row: number) => Math.random() < 0.3 ? null : `NullableText/${Math.floor(Math.random() * 2)}`
+        },
+        {
             name: "EventTime",
             type: new arrow.TimestampMillisecond(),
             nullable: true,
