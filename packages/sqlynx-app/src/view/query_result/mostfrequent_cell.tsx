@@ -17,6 +17,7 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
     const svgContainer = React.useRef<HTMLDivElement>(null);
     const svgContainerSize = observeSize(svgContainer);
     const barContainer = React.useRef<SVGGElement>(null);
+    const barMoreContainer = React.useRef<SVGGElement>(null);
 
     const margin = { top: 4, right: 8, bottom: 12, left: 8 },
         width = (svgContainerSize?.width ?? 130) - margin.left - margin.right,
@@ -103,6 +104,30 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
                 d3.select(this)
                     .attr("fill", "hsl(208.5deg 20.69% 50.76%)");
             });
+
+        // Draw "more" button
+        d3.select(barMoreContainer.current)
+            .selectChildren()
+            .remove();
+        d3.select(barMoreContainer.current)
+            .append("rect")
+            .attr("x", barWidth + padding)
+            .attr("width", moreButtonWidth - padding)
+            .attr("height", height)
+            .attr("fill", "hsl(208.5deg 20.69% 40.76%)");
+        const dotOffset = height / 4;
+        const dotSpacing = (height / 2) / 3;
+        let nextDotPos = dotOffset;
+        for (let i = 0; i < 3; ++i) {
+            d3.select(barMoreContainer.current)
+                .append("circle")
+                .attr("cx", barWidth + padding + moreButtonWidth / 2)
+                .attr("cy", nextDotPos + dotSpacing / 2)
+                .attr("r", 1.2)
+                .attr("fill", "white");
+            nextDotPos += dotSpacing;
+        }
+
     }, [xOffsets]);
 
     if (props.columnSummary.value == null) {
@@ -130,6 +155,7 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
                     </g>
                     <g transform={`translate(${margin.left},${margin.top})`} clipPath="url(#rounded-bar)">
                         <g ref={barContainer} />
+                        <g ref={barMoreContainer} />
                     </g>
                 </svg>
             </div>
