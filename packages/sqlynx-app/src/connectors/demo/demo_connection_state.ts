@@ -12,16 +12,22 @@ const DEFAULT_DATA_FIRST_EVENT = Math.floor((new Date()).getTime() - 1000 * 60 *
 const DEFAULT_DEMO_CONFIG: DemoDatabaseConfig = {
     fields: [
         {
-            name: "RecordId__c",
+            name: "Text/Random",
             type: new arrow.Utf8(),
             nullable: true,
             generateScalarValue: (_row: number) => crypto.randomUUID()
         },
         {
-            name: "SourceRecordId__c",
+            name: "Text/10",
             type: new arrow.Utf8(),
             nullable: true,
-            generateScalarValue: (_row: number) => crypto.randomUUID()
+            generateScalarValue: (_row: number) => `LongRandomText/${Math.floor(Math.random() * 10)}`
+        },
+        {
+            name: "Text/2",
+            type: new arrow.Utf8(),
+            nullable: true,
+            generateScalarValue: (_row: number) => `BinaryText/${Math.floor(Math.random() * 2)}`
         },
         {
             name: "EventTime",

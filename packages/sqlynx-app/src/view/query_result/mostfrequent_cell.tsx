@@ -78,7 +78,7 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
             return;
         }
 
-        const padding = xScale(0.1);
+        const padding = 0.5;
         const xUB = xScale(xSum);
         const getX = (i: number) => Math.min(xScale(Number(xOffsets[i])) + padding, xUB);
         const getWidth = (i: number) => Math.max(xScale(Number(xCounts[i])) - 2 * padding, 0);
@@ -105,27 +105,29 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
                     .attr("fill", "hsl(208.5deg 20.69% 50.76%)");
             });
 
-        // Draw "more" button
-        d3.select(barMoreContainer.current)
-            .selectChildren()
-            .remove();
-        d3.select(barMoreContainer.current)
-            .append("rect")
-            .attr("x", barWidth + padding)
-            .attr("width", moreButtonWidth - padding)
-            .attr("height", height)
-            .attr("fill", "hsl(208.5deg 20.69% 40.76%)");
-        const dotOffset = height / 4;
-        const dotSpacing = (height / 2) / 3;
-        let nextDotPos = dotOffset;
-        for (let i = 0; i < 3; ++i) {
+        if (isUnique) {
+            // Draw "more" button
             d3.select(barMoreContainer.current)
-                .append("circle")
-                .attr("cx", barWidth + padding + moreButtonWidth / 2)
-                .attr("cy", nextDotPos + dotSpacing / 2)
-                .attr("r", 1.2)
-                .attr("fill", "white");
-            nextDotPos += dotSpacing;
+                .selectChildren()
+                .remove();
+            d3.select(barMoreContainer.current)
+                .append("rect")
+                .attr("x", barWidth + padding)
+                .attr("width", moreButtonWidth - padding)
+                .attr("height", height)
+                .attr("fill", "hsl(208.5deg 20.69% 40.76%)");
+            const dotOffset = height / 4;
+            const dotSpacing = (height / 2) / 3;
+            let nextDotPos = dotOffset;
+            for (let i = 0; i < 3; ++i) {
+                d3.select(barMoreContainer.current)
+                    .append("circle")
+                    .attr("cx", barWidth + padding + moreButtonWidth / 2)
+                    .attr("cy", nextDotPos + dotSpacing / 2)
+                    .attr("r", 1.2)
+                    .attr("fill", "white");
+                nextDotPos += dotSpacing;
+            }
         }
 
     }, [xOffsets]);
