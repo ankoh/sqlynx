@@ -44,8 +44,7 @@ function computeColumnOffsets(formatter: ArrowTableFormatter, columns: number): 
             nextColumnOffset += ROW_HEADER_WIDTH;
         } else if ((i - 1) < (formatter.columns.length ?? 0)) {
             const column = formatter.columns[i - 1];
-            const columnAvgWidth = column.getLayoutInfo().valueAvgWidth;
-            const columnWidth = columnAvgWidth * FORMATTER_PIXEL_SCALING;
+            const columnWidth = Math.max(column.getLayoutInfo().valueAvgWidth, column.getColumnName().length) * FORMATTER_PIXEL_SCALING;
             nextColumnOffset += Math.max(columnWidth, MIN_COLUMN_WIDTH);
         } else {
             nextColumnOffset += MIN_COLUMN_WIDTH;
