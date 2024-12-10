@@ -17,7 +17,7 @@
         "@ankoh/sqlynx-compute": "link:../sqlynx-compute/dist/",
         "@ankoh/sqlynx-core": "link:../sqlynx-core-bindings",
         "@ankoh/sqlynx-protobuf": "link:../sqlynx-protobuf",
-        "@bufbuild/protobuf": "^1.10.0",
+        "@bufbuild/protobuf": "^2.2.3",
         "@codemirror/autocomplete": "^6.18.1",
         "@codemirror/commands": "^6.7.0",
         "@codemirror/language": "^6.10.3",
