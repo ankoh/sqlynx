@@ -25,6 +25,7 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
 
     // Resolve the frequent values
     let frequentValues: FrequentValuesTable | null = null;
+    let frequentValueIsNull: Uint8Array | null = null;
     let frequentValueCounts: BigInt64Array | null = null;
     let frequentValuePercentages: Float64Array | null = null;
     let frequentValuesFormatter: ArrowTableFormatter | null = null;
@@ -33,8 +34,9 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
     let nullCount = 0;
     switch (props.columnSummary.type) {
         case STRING_COLUMN:
-        case LIST_COLUMN:
+        case LIST_COLUMN: {
             frequentValues = props.columnSummary.value.frequentValues;
+            frequentValueIsNull = props.columnSummary.value.analysis.frequentValueIsNull;
             frequentValueCounts = props.columnSummary.value.analysis.frequentValueCounts;
             frequentValuePercentages = props.columnSummary.value.analysis.frequentValuePercentages;
             frequentValuesFormatter = props.columnSummary.value.frequentValuesFormatter;
@@ -42,6 +44,7 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
             distinctCount = props.columnSummary.value.analysis.countDistinct;
             nullCount = props.columnSummary.value.analysis.countNull;
             break;
+        }
         default:
             break;
     }
@@ -83,6 +86,10 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
         const getX = (i: number) => Math.min(xScale(Number(xOffsets[i])) + padding, xUB);
         const getWidth = (i: number) => Math.max(xScale(Number(xCounts[i])) - 2 * padding, 0);
 
+        const barFill = frequentValueIsNull
+            ? ((i: number) => frequentValueIsNull[i] ? "hsl(210deg 17.5% 74.31%)" : "hsl(208.5deg 20.69% 55.76%)")
+            : ((_i: number) => "hsl(208.5deg 20.69% 55.76%)");
+
         // Draw the bars
         d3.select(barContainer.current)
             .selectChildren()
@@ -95,7 +102,7 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
             .attr("x", i => getX(i))
             .attr("width", i => getWidth(i))
             .attr("height", _ => height)
-            .attr("fill", "hsl(208.5deg 20.69% 55.76%)")
+            .attr("fill", barFill)
             .on("mouseover", function (this: SVGRectElement, _event: any, _i: number) {
                 d3.select(this)
                     .attr("fill", "hsl(208.5deg 20.69% 20.76%)");
@@ -152,12 +159,12 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
                             <rect x={0} y={0} width={width} height={height} rx={3} ry={3} />
                         </clipPath>
                     </defs>
-                    <g transform={`translate(${margin.left},${margin.top})`}>
-                        <rect x={0} y={0} width={width} height={height} rx={3} ry={3} stroke="hsl(208.5deg 20.69% 40.76%)" strokeWidth={2} fill="transparent" />
-                    </g>
                     <g transform={`translate(${margin.left},${margin.top})`} clipPath="url(#rounded-bar)">
                         <g ref={barContainer} />
                         <g ref={barMoreContainer} />
+                    </g>
+                    <g transform={`translate(${margin.left},${margin.top})`}>
+                        <rect x={0} y={0} width={width} height={height} rx={3} ry={3} stroke="hsl(208.5deg 20.69% 40.76%)" strokeWidth={2} fill="transparent" />
                     </g>
                 </svg>
             </div>
