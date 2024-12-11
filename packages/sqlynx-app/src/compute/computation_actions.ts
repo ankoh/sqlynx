@@ -3,7 +3,7 @@ import * as arrow from 'apache-arrow';
 import { Dispatch } from '../utils/variant.js';
 import { Logger } from '../platform/logger.js';
 import { COLUMN_SUMMARY_TASK_FAILED, COLUMN_SUMMARY_TASK_RUNNING, COLUMN_SUMMARY_TASK_SUCCEEDED, COMPUTATION_FROM_QUERY_RESULT, ComputationAction, CREATED_DATA_FRAME, PRECOMPUTATION_TASK_FAILED, PRECOMPUTATION_TASK_RUNNING, PRECOMPUTATION_TASK_SUCCEEDED, TABLE_ORDERING_TASK_FAILED, TABLE_ORDERING_TASK_RUNNING, TABLE_ORDERING_TASK_SUCCEEDED, TABLE_SUMMARY_TASK_FAILED, TABLE_SUMMARY_TASK_RUNNING, TABLE_SUMMARY_TASK_SUCCEEDED } from './computation_state.js';
-import { ColumnSummaryVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskProgress, ORDINAL_COLUMN, STRING_COLUMN, LIST_COLUMN, createOrderByTransform, createTableSummaryTransform, createColumnSummaryTransform, ColumnEntryVariant, SKIPPED_COLUMN, getColumnEntryTypeScript, OrdinalColumnAnalysis, StringColumnAnalysis, ListColumnAnalysis, ListColumnEntry, StringColumnEntry, OrdinalColumnEntry, BinnedValuesTable, FrequentValuesTable, createPrecomputationTransform, ColumnPrecomputationTask, BIN_COUNT } from './table_transforms.js';
+import { ColumnSummaryVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskProgress, ORDINAL_COLUMN, STRING_COLUMN, LIST_COLUMN, createOrderByTransform, createTableSummaryTransform, createColumnSummaryTransform, ColumnEntryVariant, SKIPPED_COLUMN, OrdinalColumnAnalysis, StringColumnAnalysis, ListColumnAnalysis, ListColumnEntry, StringColumnEntry, OrdinalColumnEntry, BinnedValuesTable, FrequentValuesTable, createPrecomputationTransform, ColumnPrecomputationTask, BIN_COUNT } from './table_transforms.js';
 import { AsyncDataFrame, ComputeWorkerBindings } from './compute_worker_bindings.js';
 import { ArrowTableFormatter } from '../view/query_result/arrow_formatter.js';
 import { assert } from '../utils/assert.js';
@@ -366,7 +366,7 @@ function analyzeOrdinalColumn(tableSummary: TableSummary, columnEntry: OrdinalCo
     };
 }
 
-function analyzeStringColumn(tableSummary: TableSummary, columnEntry: StringColumnEntry, frequentValues: FrequentValuesTable, frequentValuesFormatter: ArrowTableFormatter): StringColumnAnalysis {
+function analyzeStringColumn(tableSummary: TableSummary, columnEntry: StringColumnEntry, frequentValueTable: FrequentValuesTable): StringColumnAnalysis {
     const totalCountVector = tableSummary.statsTable.getChildAt(tableSummary.statsCountStarField!) as arrow.Vector<arrow.Int64>;
     const notNullCountVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.countField) as arrow.Vector<arrow.Int64>;
     const distinctCountVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.distinctCountField!) as arrow.Vector<arrow.Int64>;
@@ -377,15 +377,20 @@ function analyzeStringColumn(tableSummary: TableSummary, columnEntry: StringColu
     const minValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.minAggregateField) ?? "";
     const maxValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.maxAggregateField) ?? "";
 
-    assert(frequentValues.schema.fields[0].name == "value");
-    assert(frequentValues.schema.fields[1].name == "count");
+    assert(frequentValueTable.schema.fields[0].name == "key");
+    assert(frequentValueTable.schema.fields[1].name == "count");
 
-    const frequentValueStrings: string[] = [];
-    const frequentValueCounts = frequentValues.getChild("count")!.toArray();
-    const frequentValuePercentages = new Float64Array(frequentValues.numRows);
-    for (let i = 0; i < frequentValues.numRows; ++i) {
+    const frequentValueIsNull = new Uint8Array(frequentValueTable.numRows);
+    const frequentValueKeys = frequentValueTable.getChild("key")!;
+    const frequentValueCounts = frequentValueTable.getChild("count")!.toArray();
+    const frequentValuePercentages = new Float64Array(frequentValueTable.numRows);
+    for (let i = 0; i < frequentValueTable.numRows; ++i) {
         frequentValuePercentages[i] = totalCount == 0 ? 0 : (Number(frequentValueCounts[i]) / totalCount);
-        frequentValueStrings.push(frequentValuesFormatter.getValue(i, 0) ?? "");
+        if (frequentValueKeys.nullable) {
+            for (let i = 0; i < frequentValueTable.numRows; ++i) {
+                frequentValueIsNull[i] = frequentValueKeys.isValid(i) ? 0 : 1;
+            }
+        }
     }
 
     return {
@@ -395,13 +400,13 @@ function analyzeStringColumn(tableSummary: TableSummary, columnEntry: StringColu
         minValue: minValue,
         maxValue: maxValue,
         isUnique: notNullCount == distinctCount,
-        frequentValues: frequentValueStrings,
+        frequentValueIsNull: frequentValueIsNull,
         frequentValueCounts: frequentValueCounts,
         frequentValuePercentages: frequentValuePercentages,
     };
 }
 
-function analyzeListColumn(tableSummary: TableSummary, columnEntry: ListColumnEntry, frequentValues: FrequentValuesTable, frequentValuesFormatter: ArrowTableFormatter): ListColumnAnalysis {
+function analyzeListColumn(tableSummary: TableSummary, columnEntry: ListColumnEntry, frequentValueTable: FrequentValuesTable): ListColumnAnalysis {
     const totalCountVector = tableSummary.statsTable.getChildAt(tableSummary.statsCountStarField!) as arrow.Vector<arrow.Int64>;
     const notNullCountVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.countField) as arrow.Vector<arrow.Int64>;
     const distinctCountVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.distinctCountField!) as arrow.Vector<arrow.Int64>;
@@ -412,15 +417,20 @@ function analyzeListColumn(tableSummary: TableSummary, columnEntry: ListColumnEn
     const minValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.minAggregateField) ?? "";
     const maxValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.maxAggregateField) ?? "";
 
-    assert(frequentValues.schema.fields[0].name == "value");
-    assert(frequentValues.schema.fields[1].name == "count");
+    assert(frequentValueTable.schema.fields[0].name == "key");
+    assert(frequentValueTable.schema.fields[1].name == "count");
 
-    const frequentValueStrings: string[] = [];
-    const frequentValueCounts = frequentValues.getChild("count")!.toArray();
-    const frequentValuePercentages = new Float64Array(frequentValues.numRows);
-    for (let i = 0; i < frequentValues.numRows; ++i) {
+    const frequentValueIsNull = new Uint8Array(frequentValueTable.numRows);
+    const frequentValueKeys = frequentValueTable.getChild("key")!;
+    const frequentValueCounts = frequentValueTable.getChild("count")!.toArray();
+    const frequentValuePercentages = new Float64Array(frequentValueTable.numRows);
+    for (let i = 0; i < frequentValueTable.numRows; ++i) {
         frequentValuePercentages[i] = totalCount == 0 ? 0 : (Number(frequentValueCounts[i]) / totalCount);
-        frequentValueStrings.push(frequentValuesFormatter.getValue(i, 0) ?? "");
+        if (frequentValueKeys.nullable) {
+            for (let i = 0; i < frequentValueTable.numRows; ++i) {
+                frequentValueIsNull[i] = frequentValueKeys.isValid(i) ? 0 : 1;
+            }
+        }
     }
 
     return {
@@ -430,7 +440,7 @@ function analyzeListColumn(tableSummary: TableSummary, columnEntry: ListColumnEn
         minValue: minValue,
         maxValue: maxValue,
         isUnique: notNullCount == distinctCount,
-        frequentValues: frequentValueStrings,
+        frequentValueIsNull: frequentValueIsNull,
         frequentValueCounts: frequentValueCounts,
         frequentValuePercentages: frequentValuePercentages,
     };
@@ -470,7 +480,6 @@ export async function computeColumnSummary(computationId: number, task: ColumnSu
         switch (task.columnEntry.type) {
             case ORDINAL_COLUMN: {
                 const analysis = analyzeOrdinalColumn(task.tableSummary, task.columnEntry.value, columnSummaryTable, columnSummaryTableFormatter);
-                console.log(analysis);
                 summary = {
                     type: ORDINAL_COLUMN,
                     value: {
@@ -483,8 +492,7 @@ export async function computeColumnSummary(computationId: number, task: ColumnSu
                 break;
             }
             case STRING_COLUMN: {
-                const analysis = analyzeStringColumn(task.tableSummary, task.columnEntry.value, columnSummaryTable, columnSummaryTableFormatter);
-                console.log(analysis);
+                const analysis = analyzeStringColumn(task.tableSummary, task.columnEntry.value, columnSummaryTable);
                 summary = {
                     type: STRING_COLUMN,
                     value: {
@@ -497,7 +505,7 @@ export async function computeColumnSummary(computationId: number, task: ColumnSu
                 break;
             }
             case LIST_COLUMN: {
-                const analysis = analyzeListColumn(task.tableSummary, task.columnEntry.value, columnSummaryTable, columnSummaryTableFormatter);
+                const analysis = analyzeListColumn(task.tableSummary, task.columnEntry.value, columnSummaryTable);
                 summary = {
                     type: LIST_COLUMN,
                     value: {

@@ -264,8 +264,8 @@ export interface StringColumnAnalysis {
     maxValue: string;
     /// Is unique?
     isUnique: boolean;
-    /// The frequent values
-    frequentValues: string[];
+    /// The frequent value is null
+    frequentValueIsNull: Uint8Array;
     /// The frequent value counts
     frequentValueCounts: BigInt64Array;
     /// The frequent value percentages
@@ -297,8 +297,8 @@ export interface ListColumnAnalysis {
     maxValue: string;
     /// Is unique?
     isUnique: boolean;
-    /// The frequent values
-    frequentValues: string[];
+    /// The frequent value is null
+    frequentValueIsNull: Uint8Array;
     /// The frequent value counts
     frequentValueCounts: BigInt64Array;
     /// The frequent value percentages
@@ -523,7 +523,7 @@ export function createColumnSummaryTransform(task: ColumnSummaryTask): proto.sql
                     keys: [
                         new proto.sqlynx_compute.pb.GroupByKey({
                             fieldName,
-                            outputAlias: "value",
+                            outputAlias: "key",
                         })
                     ],
                     aggregates: [
