@@ -164,7 +164,7 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
                         <g ref={barMoreContainer} />
                     </g>
                     <g transform={`translate(${margin.left},${margin.top})`}>
-                        <rect x={0} y={0} width={width} height={height} rx={3} ry={3} stroke="hsl(208.5deg 20.69% 40.76%)" strokeWidth={2} fill="transparent" />
+                        <rect x={0} y={0} width={width} height={height} rx={3} ry={3} stroke="hsl(208.5deg 20.69% 40.76%)" strokeWidth={1} fill="transparent" />
                     </g>
                 </svg>
             </div>
