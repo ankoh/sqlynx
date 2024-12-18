@@ -101,6 +101,8 @@
 
     /* Needed for inline-flex alignment */
     vertical-align: top;
+
+    z-index: 2;
 }
 
 .row_zero_cell {
@@ -117,12 +119,16 @@
 
     /* Needed for inline-flex alignment */
     vertical-align: top;
+
+    z-index: 2;
 }
 
 .data_cell {
     background-color: white;
     border-right: 1px solid rgb(210, 210, 210);
     border-bottom: 1px solid rgb(210, 210, 210);
+    border-left: 1px solid transparent;
+    border-top: 1px solid transparent;
     box-sizing: border-box;
     display: flex;
     align-items: center;
@@ -134,17 +140,15 @@
 }
 
 .data_cell_null {
-    background-color: white;
-    border-right: 1px solid rgb(210, 210, 210);
-    border-bottom: 1px solid rgb(210, 210, 210);
-    box-sizing: border-box;
-    display: flex;
-    align-items: center;
-    padding-left: 8px;
-    padding-right: 8px;
-
-    /* Needed for inline-flex alignment */
-    vertical-align: top;
-
     color: hsl(208.5deg, 14.69%, 78.76%);
+}
+
+.data_cell_focused_primary {
+    background-color: hsl(208.5deg, 14.69%, 90.76%);
+    border: 1px solid hsl(208.5deg 20.69% 50.76%);
+    z-index: 1;
+}
+
+.data_cell_focused_secondary {
+    background-color: hsl(208.5deg, 14.69%, 95.76%);
 }
