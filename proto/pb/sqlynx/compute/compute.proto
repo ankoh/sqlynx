@@ -19,6 +19,20 @@ message BinFieldTransform {
     string fractional_bin_output_alias = 6;
 }
 
+/// Rank field transform
+message RankFieldTransform {
+    /// The field name
+    string field_name = 1;
+    /// The output alias
+    string output_alias = 2;
+    /// Order ascending first, before ranking
+    bool order_ascending = 3;
+    /// Order nulls first, before ranking?
+    bool order_nulls_first = 4;
+    /// Rank densly?
+    bool dense = 5;
+}
+
 /// An ordering constraint
 message OrderByConstraint {
     /// The field name
@@ -93,8 +107,10 @@ message GroupByTransform {
 }
 
 message DataFrameTransform {
-    /// The binning transform (if any)
+    /// The binning transforms (if any)
     repeated BinFieldTransform bin_fields = 1;
+    /// The ranking transforms (if any)
+    repeated RankFieldTransform rank_fields = 5;
     /// The group by transform (if any)
     optional GroupByTransform group_by = 3;
     /// The order by transform (if any)
