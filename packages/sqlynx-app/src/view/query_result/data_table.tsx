@@ -3,7 +3,7 @@ import * as proto from '@ankoh/sqlynx-protobuf';
 import * as styles from './data_table.module.css';
 import * as symbols from '../../../static/svg/symbols.generated.svg';
 
-import { VariableSizeGrid as Grid, GridChildComponentProps, GridOnItemsRenderedProps } from 'react-window';
+import { VariableSizeGrid as Grid, GridChildComponentProps, GridOnItemsRenderedProps, GridOnScrollProps } from 'react-window';
 
 import { classNames } from '../../utils/classnames.js';
 import { observeSize } from '../foundations/size_observer.js';
@@ -162,8 +162,23 @@ export const DataTable: React.FC<Props> = (props: Props) => {
         }
     }, [computationState, dispatchComputation, logger]);
 
+    const focusedCells = React.useRef<{ row: number | null, col: number | null }>();
+
+    const onMouseEnterCell: React.PointerEventHandler<HTMLDivElement> = React.useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+        const tableRow = Number.parseInt(event.currentTarget.dataset["tableRow"]!);
+        const tableCol = Number.parseInt(event.currentTarget.dataset["tableCol"]!);
+        focusedCells.current = { row: tableRow, col: tableCol };
+        dataGrid.current?.resetAfterColumnIndex(0);
+    }, []);
+    const onMouseLeaveCell: React.PointerEventHandler<HTMLDivElement> = React.useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+        const tableRow = Number.parseInt(event.currentTarget.dataset["tableRow"]!);
+        const tableCol = Number.parseInt(event.currentTarget.dataset["tableCol"]!);
+        focusedCells.current = { row: tableRow, col: tableCol };
+        dataGrid.current?.resetAfterColumnIndex(0);
+    }, []);
+
     // Helper to render a data cell
-    const Cell = (cellProps: GridChildComponentProps) => {
+    const Cell = React.useCallback((cellProps: GridChildComponentProps) => {
         if (cellProps.rowIndex == 0) {
             if (cellProps.columnIndex == 0) {
                 return <div className={styles.header_zero_cell} style={cellProps.style}></div>;
@@ -251,23 +266,53 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                     </div>
                 );
             } else {
+                const dataColumn = cellProps.columnIndex - 1;
+                const dataRow = cellProps.rowIndex - headerRowCount;
+
                 if (!tableFormatter) {
                     return (
-                        <div className={styles.data_cell} style={cellProps.style} />
+                        <div
+                            className={styles.data_cell}
+                            style={cellProps.style}
+                            data-table-col={dataColumn}
+                            data-table-row={dataRow}
+                            onMouseEnter={onMouseEnterCell}
+                            onMouseLeave={onMouseLeaveCell}
+                        />
                     )
                 } else {
-                    const dataColumn = cellProps.columnIndex - 1;
-                    const dataRow = cellProps.rowIndex - headerRowCount;
+                    let focusClass: undefined | string = undefined;
+                    if (dataRow == focusedCells.current?.row) {
+                        if (dataRow == focusedCells.current?.row && dataColumn == focusedCells.current?.col) {
+                            focusClass = styles.data_cell_focused_primary;
+                        } else {
+                            focusClass = styles.data_cell_focused_secondary;
+                        }
+                    }
                     const formatted = tableFormatter.getValue(dataRow, dataColumn);
                     if (formatted == null) {
                         return (
-                            <div className={styles.data_cell_null} style={cellProps.style}>
+                            <div
+                                className={classNames(styles.data_cell, styles.data_cell_null, focusClass)}
+                                style={cellProps.style}
+                                data-table-col={dataColumn}
+                                data-table-row={dataRow}
+                                onMouseEnter={onMouseEnterCell}
+                                onMouseLeave={onMouseLeaveCell}
+                            >
                                 NULL
                             </div>
                         );
                     } else {
                         return (
-                            <div className={styles.data_cell} style={cellProps.style}>
+                            <div
+                                className={classNames(styles.data_cell, focusClass)}
+                                style={cellProps.style}
+                                data-table-col={dataColumn}
+                                data-table-row={dataRow}
+                                onMouseEnter={onMouseEnterCell}
+                                onMouseLeave={onMouseLeaveCell}
+                            >
                                 {formatted}
                             </div>
                         );
@@ -275,7 +320,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                 }
             }
         }
-    };
+    }, [computationState]);
 
     // Inner grid element type to render sticky row and column headers
     const innerGridElementType = useStickyRowAndColumnHeaders(Cell, gridCellLocation, styles.data_grid_cells, headerRowCount);
