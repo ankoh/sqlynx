@@ -20,6 +20,7 @@ async fn test_transform_orderby() -> anyhow::Result<()> {
     let data_frame = DataFrame::new(data.schema(), vec![data]);
     let transform = DataFrameTransform {
         bin_fields: vec![],
+        rank_fields: vec![],
         group_by: None,
         order_by: Some(OrderByTransform {
             constraints: vec![
@@ -54,6 +55,7 @@ async fn test_minmax_int64() -> anyhow::Result<()> {
     let data_frame = DataFrame::new(data.schema(), vec![data]);
     let transform = DataFrameTransform {
         bin_fields: vec![],
+        rank_fields: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -117,6 +119,7 @@ async fn test_transform_minmax_string() -> anyhow::Result<()> {
     let data_frame = DataFrame::new(data.schema(), vec![data]);
     let transform = DataFrameTransform {
         bin_fields: vec![],
+        rank_fields: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -184,6 +187,7 @@ async fn test_transform_bin_timestamps() -> anyhow::Result<()> {
     // Compute statistics
     let stats_transform = DataFrameTransform {
         bin_fields: vec![],
+        rank_fields: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -215,6 +219,7 @@ async fn test_transform_bin_timestamps() -> anyhow::Result<()> {
     // Bin into 64 bins
     let bin_transform = DataFrameTransform {
         bin_fields: vec![],
+        rank_fields: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![
                 GroupByKey {
@@ -294,6 +299,7 @@ async fn test_transform_bin_timestamps() -> anyhow::Result<()> {
     // Bin into 8 bins
     let bin_transform = DataFrameTransform {
         bin_fields: vec![],
+        rank_fields: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![
                 GroupByKey {
@@ -371,6 +377,7 @@ async fn test_transform_bin_date32() -> anyhow::Result<()> {
     // Compute statistics
     let stats_transform = DataFrameTransform {
         bin_fields: vec![],
+        rank_fields: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -402,6 +409,7 @@ async fn test_transform_bin_date32() -> anyhow::Result<()> {
     // Bin into 8 bins
     let bin_transform = DataFrameTransform {
         bin_fields: vec![],
+        rank_fields: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![
                 GroupByKey {
@@ -481,6 +489,7 @@ async fn test_transform_bin_date64() -> anyhow::Result<()> {
     // Compute statistics
     let stats_transform = DataFrameTransform {
         bin_fields: vec![],
+        rank_fields: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -512,6 +521,7 @@ async fn test_transform_bin_date64() -> anyhow::Result<()> {
     // Bin into 8 bins
     let bin_transform = DataFrameTransform {
         bin_fields: vec![],
+        rank_fields: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![
                 GroupByKey {
@@ -589,6 +599,7 @@ async fn test_transform_bin_time32() -> anyhow::Result<()> {
     // Compute statistics
     let stats_transform = DataFrameTransform {
         bin_fields: vec![],
+        rank_fields: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -620,6 +631,7 @@ async fn test_transform_bin_time32() -> anyhow::Result<()> {
     // Bin into 8 bins
     let bin_transform = DataFrameTransform {
         bin_fields: vec![],
+        rank_fields: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![
                 GroupByKey {
@@ -697,6 +709,7 @@ async fn test_transform_bin_time64() -> anyhow::Result<()> {
     // Compute statistics
     let stats_transform = DataFrameTransform {
         bin_fields: vec![],
+        rank_fields: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -728,6 +741,7 @@ async fn test_transform_bin_time64() -> anyhow::Result<()> {
     // Bin into 8 bins
     let bin_transform = DataFrameTransform {
         bin_fields: vec![],
+        rank_fields: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![
                 GroupByKey {
@@ -805,6 +819,7 @@ async fn test_transform_bin_int64() -> anyhow::Result<()> {
     // Compute statistics
     let stats_transform = DataFrameTransform {
         bin_fields: vec![],
+        rank_fields: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -836,6 +851,7 @@ async fn test_transform_bin_int64() -> anyhow::Result<()> {
     // Bin into 8 bins
     let bin_transform = DataFrameTransform {
         bin_fields: vec![],
+        rank_fields: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![
                 GroupByKey {
@@ -914,6 +930,7 @@ async fn test_transform_bin_decimal128() -> anyhow::Result<()> {
     // Compute statistics
     let stats_transform = DataFrameTransform {
         bin_fields: vec![],
+        rank_fields: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -945,6 +962,7 @@ async fn test_transform_bin_decimal128() -> anyhow::Result<()> {
     // Bin into 8 bins
     let bin_transform = DataFrameTransform {
         bin_fields: vec![],
+        rank_fields: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![
                 GroupByKey {
@@ -1023,6 +1041,7 @@ async fn test_transform_bin_decimal128_precomputed() -> anyhow::Result<()> {
     // Compute statistics
     let stats_transform = DataFrameTransform {
         bin_fields: vec![],
+        rank_fields: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -1063,6 +1082,7 @@ async fn test_transform_bin_decimal128_precomputed() -> anyhow::Result<()> {
                 fractional_bin_output_alias: "v_bin_fractional".to_string(),
             }
         ],
+        rank_fields: vec![],
         group_by: None,
         order_by: None,
     };
@@ -1110,6 +1130,7 @@ async fn test_transform_bin_decimal256() -> anyhow::Result<()> {
     // Compute statistics
     let stats_transform = DataFrameTransform {
         bin_fields: vec![],
+        rank_fields: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -1141,6 +1162,7 @@ async fn test_transform_bin_decimal256() -> anyhow::Result<()> {
     // Bin into 8 bins
     let bin_transform = DataFrameTransform {
         bin_fields: vec![],
+        rank_fields: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![
                 GroupByKey {
