@@ -1099,7 +1099,7 @@ async fn test_transform_bin_decimal128_precomputed() -> anyhow::Result<()> {
                 stats_minimum_field_name: "v_min".to_string(),
                 stats_maximum_field_name: "v_max".to_string(),
                 bin_count: 8,
-                fractional_bin_output_alias: "v_bin".to_string(),
+                output_alias: "v_bin".to_string(),
             }
         ],
         group_by: None,

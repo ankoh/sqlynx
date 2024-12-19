@@ -133,7 +133,7 @@ impl DataFrame {
         }
         for binning in bin_fields.iter() {
             let (fractional_bin, _binning_metadata) = self.bin_field(&binning.field_name, binning.bin_count, stats, &binning.stats_minimum_field_name, &binning.stats_maximum_field_name, &input)?;
-            fields.push((fractional_bin, binning.fractional_bin_output_alias.clone()));
+            fields.push((fractional_bin, binning.output_alias.clone()));
         }
 
         // Construct the projection
