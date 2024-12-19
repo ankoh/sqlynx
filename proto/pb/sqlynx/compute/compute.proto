@@ -33,6 +33,12 @@ message RankFieldTransform {
     bool dense = 5;
 }
 
+/// The row number transform
+message RowNumberTransform {
+    /// The output alias
+    string output_alias = 1;
+}
+
 /// An ordering constraint
 message OrderByConstraint {
     /// The field name
@@ -107,10 +113,12 @@ message GroupByTransform {
 }
 
 message DataFrameTransform {
-    /// The binning transforms (if any)
-    repeated BinFieldTransform bin_fields = 1;
+    /// The row number transform (if any)
+    optional RowNumberTransform row_number = 6;
     /// The ranking transforms (if any)
     repeated RankFieldTransform rank_fields = 5;
+    /// The binning transforms (if any)
+    repeated BinFieldTransform bin_fields = 1;
     /// The group by transform (if any)
     optional GroupByTransform group_by = 3;
     /// The order by transform (if any)
