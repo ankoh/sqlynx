@@ -590,14 +590,12 @@ export function createPrecomputationTransform(schema: arrow.Schema, columns: Col
                 const binFieldId = nextOutputColumn++;
                 const binFieldName = createUniqueColumnName(`_${i}_bin`, fieldNames);
                 const fractionalBinFieldId = nextOutputColumn++;
-                const fractionalBinFieldName = createUniqueColumnName(`_${i}_bin_frac`, fieldNames);
-                binningTransforms.push(new proto.sqlynx_compute.pb.BinFieldTransform({
+                binningTransforms.push(new proto.sqlynx_compute.pb.BinningTransform({
                     fieldName: column.value.inputFieldName,
                     statsMaximumFieldName: stats.schema.fields[column.value.statsFields!.maxAggregateField].name,
                     statsMinimumFieldName: stats.schema.fields[column.value.statsFields!.minAggregateField].name,
                     binCount: column.value.binCount,
-                    binOutputAlias: binFieldName,
-                    fractionalBinOutputAlias: fractionalBinFieldName
+                    fractionalBinOutputAlias: binFieldName
                 }));
                 columnEntries[i] = {
                     type: ORDINAL_COLUMN,
@@ -619,7 +617,7 @@ export function createPrecomputationTransform(schema: arrow.Schema, columns: Col
     }
 
     const transform = new proto.sqlynx_compute.pb.DataFrameTransform({
-        binFields: binningTransforms
+        binning: binningTransforms
     });
     return [transform, columnEntries];
 }

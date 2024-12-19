@@ -221,6 +221,13 @@ describe('SQLynxCompute Binning', () => {
                 count: 1n
             },
             {
+                bin: 5,
+                binLB: 17537.5,
+                binUB: 21043,
+                binWidth: 3505.5,
+                count: null,
+            },
+            {
                 bin: 6,
                 binWidth: 3505.5,
                 binLB: 21043,
