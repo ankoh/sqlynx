@@ -16,6 +16,7 @@ use datafusion_functions_aggregate::average::Avg;
 use datafusion_functions_aggregate::count::count_udaf;
 use datafusion_functions_aggregate::min_max::Max;
 use datafusion_functions_aggregate::min_max::Min;
+use datafusion_functions_window::row_number::RowNumber;
 use datafusion_physical_expr::expressions::CaseExpr;
 use datafusion_physical_expr::window::{BuiltInWindowExpr, BuiltInWindowFunctionExpr};
 use datafusion_physical_expr::PhysicalExpr;
@@ -26,7 +27,6 @@ use datafusion_physical_expr::expressions::CastExpr;
 use datafusion_physical_expr::expressions::binary;
 use datafusion_physical_expr::expressions::col;
 use datafusion_physical_expr::expressions::lit;
-use datafusion_physical_expr::expressions::rank;
 use datafusion_physical_expr::expressions::dense_rank;
 use datafusion_physical_expr::ScalarFunctionExpr;
 use datafusion_physical_plan::joins::{HashJoinExec, PartitionMode};
@@ -41,7 +41,7 @@ use prost::Message;
 use wasm_bindgen::prelude::*;
 
 use crate::arrow_out::DataFrameIpcStream;
-use crate::proto::sqlynx_compute::{AggregationFunction, BinFieldTransform, DataFrameTransform, GroupByKeyBinning, GroupByTransform, OrderByTransform, RankFieldTransform, RowNumberTransform};
+use crate::proto::sqlynx_compute::{AggregationFunction, BinningTransform, DataFrameTransform, GroupByKeyBinning, GroupByTransform, OrderByTransform, ValueIdentifierTransform, RowNumberTransform};
 
 #[wasm_bindgen]
 pub struct DataFrame {
@@ -85,14 +85,15 @@ impl DataFrame {
     }
 
     /// Compute a row number
-    fn row_number(&self, rownum: &RowNumberTransform, input: Arc<dyn ExecutionPlan>) -> anyhow::Result<Arc<dyn ExecutionPlan>> {
+    fn row_number(&self, _rownum: &RowNumberTransform, _input: Arc<dyn ExecutionPlan>) -> anyhow::Result<Arc<dyn ExecutionPlan>> {
+        RowNumber::new();
 
         Err(anyhow::anyhow!("not implemented"))
     }
 
     /// Rank by a field
-    fn rank_fields(&self, rankings: &[RankFieldTransform], mut input: Arc<dyn ExecutionPlan>) -> anyhow::Result<Arc<dyn ExecutionPlan>> {
-        for ranking in rankings.iter() {
+    fn value_identifiers(&self, ids: &[ValueIdentifierTransform], mut input: Arc<dyn ExecutionPlan>) -> anyhow::Result<Arc<dyn ExecutionPlan>> {
+        for ranking in ids.iter() {
             let input_col = col(&ranking.field_name, &input.schema())?;
 
             // Sort by the ranking column 
@@ -100,8 +101,8 @@ impl DataFrame {
                 PhysicalSortExpr {
                     expr: input_col,
                     options: arrow::compute::SortOptions {
-                        descending: !ranking.order_ascending,
-                        nulls_first: ranking.order_nulls_first
+                        descending: false,
+                        nulls_first: false
                     },
                 }
             ];
@@ -110,17 +111,10 @@ impl DataFrame {
                 sort_exprs,
                 input,
             ));
-            
 
             // Rows between unbounded preceding and current row
             let frame = Arc::new(WindowFrame::new(Some(true)));
-            // Dense rank or rank?
-            let rank_fn = if ranking.dense {
-                dense_rank
-            } else {
-                rank
-            };
-            let rank_fn_expr: Arc<dyn BuiltInWindowFunctionExpr> = Arc::new(rank_fn(ranking.output_alias.clone(), &DataType::UInt64));
+            let rank_fn_expr: Arc<dyn BuiltInWindowFunctionExpr> = Arc::new(dense_rank(ranking.output_alias.clone(), &DataType::UInt64));
             let rank_expr: Arc<dyn WindowExpr> = Arc::new(BuiltInWindowExpr::new(rank_fn_expr, &[], sort_exec.expr(), frame));
 
             // Create the window aggregate
@@ -132,14 +126,13 @@ impl DataFrame {
     }
 
     // Pre-bin fields
-    fn bin_fields(&self, bin_fields: &[BinFieldTransform], stats: &DataFrame, input: Arc<dyn ExecutionPlan>) -> anyhow::Result<Arc<dyn ExecutionPlan>> {
+    fn bin_fields(&self, bin_fields: &[BinningTransform], stats: &DataFrame, input: Arc<dyn ExecutionPlan>) -> anyhow::Result<Arc<dyn ExecutionPlan>> {
         let mut fields: Vec<(Arc<dyn PhysicalExpr>, String)> = Vec::new();
         for field in input.schema().fields().iter() {
             fields.push((col(&field.name(), &input.schema())?, field.name().clone()));
         }
         for binning in bin_fields.iter() {
-            let (integer_bin, fractional_bin, _binning_metadata) = self.bin_field(&binning.field_name, binning.bin_count, stats, &binning.stats_minimum_field_name, &binning.stats_maximum_field_name, &input)?;
-            fields.push((integer_bin, binning.bin_output_alias.clone()));
+            let (fractional_bin, _binning_metadata) = self.bin_field(&binning.field_name, binning.bin_count, stats, &binning.stats_minimum_field_name, &binning.stats_maximum_field_name, &input)?;
             fields.push((fractional_bin, binning.fractional_bin_output_alias.clone()));
         }
 
@@ -150,7 +143,7 @@ impl DataFrame {
     }
 
     /// Bin a field value
-    fn bin_field(&self, field_name: &str, mut bin_count: u32, stats: &DataFrame, stats_minimum_field_name: &str, stats_maximum_field_name: &str, input: &Arc<dyn ExecutionPlan>) -> anyhow::Result<(Arc<dyn PhysicalExpr>, Arc<dyn PhysicalExpr>, BinningMetadata)> {
+    fn bin_field(&self, field_name: &str, mut bin_count: u32, stats: &DataFrame, stats_minimum_field_name: &str, stats_maximum_field_name: &str, input: &Arc<dyn ExecutionPlan>) -> anyhow::Result<(Arc<dyn PhysicalExpr>, BinningMetadata)> {
         // Unexpected schema for statistics frame?
         if stats.partitions.is_empty() || stats.partitions[0].is_empty() || stats.partitions[0][0].num_rows() != 1 {
             return Err(anyhow::anyhow!("statistics data must have exactly 1 row"));
@@ -197,11 +190,9 @@ impl DataFrame {
         let max_value = ScalarValue::try_from_array(&stats_batch.columns()[max_field_id], 0)?;
         // Read the minimum value
         let min_value = ScalarValue::try_from_array(&stats_batch.columns()[min_field_id], 0)?;
-        // The floor udf
-        let floor_udf = floor();
 
         // Bin the key field
-        let (bin_u32, bin_f64, binning_metadata): (Arc<dyn PhysicalExpr>, Arc<dyn PhysicalExpr>, BinningMetadata) = match &value_type {
+        let (bin_f64, binning_metadata): (Arc<dyn PhysicalExpr>, BinningMetadata) = match &value_type {
             DataType::Float16 | DataType::Float32 | DataType::Float64 => {
                 let bin_width = match max_value
                     .sub(min_value.clone())?
@@ -219,17 +210,7 @@ impl DataFrame {
                 let min_offset = Arc::new(CastExpr::new(min_delta, DataType::Float64, None));
                 let bin_f64 = binary(min_offset, Operator::Divide, lit(bin_width.clone()), &input.schema())?;
 
-                // Compute integer bin
-                let bin_f64_floored = Arc::new(ScalarFunctionExpr::new(
-                    floor_udf.name(),
-                    floor_udf.clone(),
-                    vec![bin_f64.clone()],
-                    DataType::Float64,
-                ));
-                let bin_u32 = Arc::new(CastExpr::new(bin_f64_floored, DataType::UInt32, None));
-                let bin_u32_clamped = Arc::new(clamp_bin(bin_u32, bin_count, input.schema())?);
-
-                (bin_u32_clamped, bin_f64, BinningMetadata {
+                (bin_f64, BinningMetadata {
                     min_value,
                     bin_width,
                     cast_bin_width_type: DataType::Float64,
@@ -250,19 +231,14 @@ impl DataFrame {
                     _ => unreachable!(),
                 };
 
-                // Compute integer bin
-                let min_delta = binary(value.clone(), Operator::Minus, lit(min_value.clone()), &input.schema())?;
-                let bin_u64 = binary(min_delta.clone(), Operator::Divide, lit(bin_width.clone()), &input.schema())?;
-                let bin_u32 = Arc::new(CastExpr::new(bin_u64, DataType::UInt32, None));
-                let bin_u32_clamped = Arc::new(clamp_bin(bin_u32, bin_count, input.schema())?);
-
                 // Compute fractional bin
+                let min_delta = binary(value.clone(), Operator::Minus, lit(min_value.clone()), &input.schema())?;
                 let bin_f64 = binary(
                     Arc::new(CastExpr::new(min_delta, DataType::Float64, None)),
                     Operator::Divide,
                     lit(bin_width.cast_to(&DataType::Float64)?), &input.schema())?;
 
-                (bin_u32_clamped, bin_f64, BinningMetadata {
+                (bin_f64, BinningMetadata {
                     min_value,
                     bin_width,
                     cast_bin_width_type: DataType::UInt64,
@@ -283,19 +259,14 @@ impl DataFrame {
                     _ => unreachable!(),
                 };
 
-                // Compute integer bin
-                let min_delta = binary(value.clone(), Operator::Minus, lit(min_value.clone()), &input.schema())?;
-                let bin_i64 = binary(min_delta.clone(), Operator::Divide, lit(bin_width.clone()), &input.schema())?;
-                let bin_u32 = Arc::new(CastExpr::new(bin_i64, DataType::UInt32, None));
-                let bin_u32_clamped = Arc::new(clamp_bin(bin_u32, bin_count, input.schema())?);
-
                 // Compute fractional bin
+                let min_delta = binary(value.clone(), Operator::Minus, lit(min_value.clone()), &input.schema())?;
                 let bin_f64 = binary(
                     Arc::new(CastExpr::new(min_delta, DataType::Float64, None)),
                     Operator::Divide,
                     lit(bin_width.cast_to(&DataType::Float64)?), &input.schema())?;
 
-                (bin_u32_clamped, bin_f64, BinningMetadata {
+                (bin_f64, BinningMetadata {
                     min_value,
                     bin_width,
                     cast_bin_width_type: DataType::Int64,
@@ -315,20 +286,15 @@ impl DataFrame {
                     _ => unreachable!(),
                 };
 
-                // Compute integer bin
+                // Compute bin
                 let min_delta = binary(value.clone(), Operator::Minus, lit(min_value.clone()), &input.schema())?;
                 let min_delta = Arc::new(CastExpr::new(min_delta, DataType::Int64, None));
-                let bin_i64 = binary(min_delta.clone(), Operator::Divide, lit(bin_width.clone()), &input.schema())?;
-                let bin_u32 = Arc::new(CastExpr::new(bin_i64, DataType::UInt32, None));
-                let bin_u32_clamped = Arc::new(clamp_bin(bin_u32, bin_count, input.schema())?);
-
-                // Compute fractional bin
                 let bin_f64 = binary(
                     Arc::new(CastExpr::new(min_delta, DataType::Float64, None)),
                     Operator::Divide,
                     lit(bin_width.cast_to(&DataType::Float64)?), &input.schema())?;
 
-                (bin_u32_clamped, bin_f64, BinningMetadata {
+                (bin_f64, BinningMetadata {
                     min_value,
                     bin_width,
                     cast_bin_width_type: DataType::Duration(TimeUnit::Millisecond),
@@ -349,20 +315,15 @@ impl DataFrame {
                     _ => unreachable!(),
                 };
 
-                // Compute integer bin
+                // Compute bin
                 let value = Arc::new(CastExpr::new(value.clone(), DataType::Int32, None));
                 let min_delta = binary(value, Operator::Minus, lit(min_value.clone()), &input.schema())?;
-                let bin_i32 = binary(min_delta.clone(), Operator::Divide, lit(bin_width.clone()), &input.schema())?;
-                let bin_u32 = Arc::new(CastExpr::new(bin_i32, DataType::UInt32, None));
-                let bin_u32_clamped = Arc::new(clamp_bin(bin_u32, bin_count, input.schema())?);
-
-                // Compute fractional bin
                 let bin_f64 = binary(
                     Arc::new(CastExpr::new(min_delta, DataType::Float64, None)),
                     Operator::Divide,
                     lit(bin_width.cast_to(&DataType::Float64)?), &input.schema())?;
 
-                (bin_u32_clamped, bin_f64, BinningMetadata {
+                (bin_f64, BinningMetadata {
                     min_value,
                     bin_width,
                     cast_bin_width_type: DataType::Int32,
@@ -383,20 +344,15 @@ impl DataFrame {
                     _ => unreachable!(),
                 };
 
-                // Compute integer bin
+                // Compute bin
                 let value = Arc::new(CastExpr::new(value.clone(), DataType::Int64, None));
                 let min_delta = binary(value, Operator::Minus, lit(min_value.clone()), &input.schema())?;
-                let bin_i64 = binary(min_delta.clone(), Operator::Divide, lit(bin_width.clone()), &input.schema())?;
-                let bin_u32 = Arc::new(CastExpr::new(bin_i64, DataType::UInt32, None));
-                let bin_u32_clamped = Arc::new(clamp_bin(bin_u32, bin_count, input.schema())?);
-
-                // Compute fractional bin
                 let bin_f64 = binary(
                     Arc::new(CastExpr::new(min_delta, DataType::Float64, None)),
                     Operator::Divide,
                     lit(bin_width.cast_to(&DataType::Float64)?), &input.schema())?;
 
-                (bin_u32_clamped, bin_f64, BinningMetadata {
+                (bin_f64, BinningMetadata {
                     min_value,
                     bin_width,
                     cast_bin_width_type: DataType::Int64,
@@ -418,21 +374,16 @@ impl DataFrame {
                     _ => unreachable!(),
                 };
 
-                // Compute integer bin
+                // Compute bin
                 let value = Arc::new(CastExpr::new(value.clone(), DataType::Timestamp(TimeUnit::Millisecond, None), None));
                 let min_delta = binary(value, Operator::Minus, lit(min_value.clone()), &input.schema())?;
                 let min_delta = Arc::new(CastExpr::new(min_delta, DataType::Int64, None));
-                let bin_i64 = binary(min_delta.clone(), Operator::Divide, lit(bin_width.clone()), &input.schema())?;
-                let bin_u32 = Arc::new(CastExpr::new(bin_i64, DataType::UInt32, None));
-                let bin_u32_clamped = Arc::new(clamp_bin(bin_u32, bin_count, input.schema())?);
-
-                // Compute fractional bin
                 let bin_f64 = binary(
                     Arc::new(CastExpr::new(min_delta, DataType::Float64, None)),
                     Operator::Divide,
                     lit(bin_width.cast_to(&DataType::Float64)?), &input.schema())?;
 
-                (bin_u32_clamped, bin_f64, BinningMetadata {
+                (bin_f64, BinningMetadata {
                     min_value,
                     bin_width,
                     cast_bin_width_type: DataType::Duration(TimeUnit::Millisecond),
@@ -453,7 +404,7 @@ impl DataFrame {
                     _ => unreachable!(),
                 };
 
-                // Compute fractional bin
+                // Compute bin
                 let value_d256 = Arc::new(CastExpr::new(value.clone(), DataType::Decimal256(*precision, *scale), None));
                 let min_delta = binary(value_d256, Operator::Minus, lit(min_value.clone()), &input.schema())?;
                 let bin_d256 = binary(min_delta, Operator::Divide, lit(bin_width.clone()), &input.schema())?;
@@ -462,12 +413,7 @@ impl DataFrame {
                 let bin_d128: Arc<dyn PhysicalExpr> = Arc::new(CastExpr::new(bin_d256.clone(), DataType::Decimal128(*precision, *scale), None));
                 let bin_f64: Arc<dyn PhysicalExpr> = Arc::new(CastExpr::new(bin_d128.clone(), DataType::Float64, None));
 
-                // Compute integer bin
-                let bin_d256_trunc = Arc::new(CastExpr::new(bin_d256.clone(), DataType::Decimal256(*precision, 0), None));
-                let bin_u32 = Arc::new(CastExpr::new(bin_d256_trunc, DataType::UInt32, None));
-                let bin_u32_clamped = Arc::new(clamp_bin(bin_u32, bin_count, input.schema())?);
-
-                (bin_u32_clamped, bin_f64, BinningMetadata {
+                (bin_f64, BinningMetadata {
                     min_value: min_value.cast_to(&DataType::Decimal128(*precision, *scale))?,
                     bin_width,
                     cast_bin_width_type: DataType::Decimal128(*precision, *scale),
@@ -486,7 +432,7 @@ impl DataFrame {
                     _ => unreachable!(),
                 };
 
-                // Compute fractional bin
+                // Compute bin
                 let min_delta = binary(value.clone(), Operator::Minus, lit(min_value.clone()), &input.schema())?;
                 let bin_d256 = binary(min_delta, Operator::Divide, lit(bin_width.clone()), &input.schema())?;
 
@@ -494,12 +440,7 @@ impl DataFrame {
                 let bin_d128: Arc<dyn PhysicalExpr> = Arc::new(CastExpr::new(bin_d256.clone(), DataType::Decimal128(*precision, *scale), None));
                 let bin_f64: Arc<dyn PhysicalExpr> = Arc::new(CastExpr::new(bin_d128.clone(), DataType::Float64, None));
 
-                // Compute integer bin
-                let bin_d256_trunc = Arc::new(CastExpr::new(bin_d256.clone(), DataType::Decimal256(*precision, 0), None));
-                let bin_u32 = Arc::new(CastExpr::new(bin_d256_trunc.clone(), DataType::UInt32, None));
-                let bin_u32_clamped = Arc::new(clamp_bin(bin_u32, bin_count, input.schema())?);
-
-                (bin_u32_clamped, bin_f64, BinningMetadata {
+                (bin_f64, BinningMetadata {
                     min_value,
                     bin_width,
                     cast_bin_width_type: DataType::Decimal256(*precision, *scale),
@@ -510,7 +451,7 @@ impl DataFrame {
             _ => return Err(anyhow::anyhow!("key binning is not implemented for data type: {}", value_type))
         };
         // Return binned key
-        return Ok((bin_u32, bin_f64, binning_metadata));
+        return Ok((bin_f64, binning_metadata));
     }
 
     /// Group a data frame
@@ -533,13 +474,13 @@ impl DataFrame {
                     return Err(anyhow::anyhow!("cannot bin more than one key"));
                 }
                 if let Some(stats) = &stats {
-                    // Compute the field bin
-                    let (integer_bin, _fractional_bin, binning_metadata) = self.bin_field(&key.field_name, binning.bin_count, stats, &binning.stats_minimum_field_name, &binning.stats_maximum_field_name, &input)?;
+                    // Compute the bin
+                    let (bin_f64, binning_metadata) = self.bin_field(&key.field_name, binning.bin_count, stats, &binning.stats_minimum_field_name, &binning.stats_maximum_field_name, &input)?;
 
                     // Has the field already been explicitly binned?
                     // Then we just ignore the fractional bin expression and use the precomputed field.
                     // This allows the application to materialize the fractional bin value and filter tables on the main thread directly.
-                    let key_expr = if let Some(pre_binned_name) = &binning.pre_binned_field_name {
+                    let bin_f64 = if let Some(pre_binned_name) = &binning.pre_binned_field_name {
                         // Check if pre-binned field exists
                         let input_schema = &input.schema();
                         let pre_binned_field_id = match input_schema.index_of(&pre_binned_name) {
@@ -548,19 +489,30 @@ impl DataFrame {
                         };
                         // Make sure pre-binned field is a uint32
                         let pre_binned_field = &input_schema.field(pre_binned_field_id);
-                        if pre_binned_field.data_type() != &DataType::UInt32 {
+                        if pre_binned_field.data_type() != &DataType::Float64 {
                             return Err(anyhow::anyhow!("input contains a pre-computed bin field `{}`, but with wrong type: {} != {}", &pre_binned_name, pre_binned_field.data_type(), &DataType::UInt32))
                         }
                         // Seems ok, return column ref
                         col(&pre_binned_name, &self.schema)?
                     } else {
-                        integer_bin
+                        bin_f64
                     };
+
+                    // Floor the fractional bin
+                    let floor_udf = floor();
+                    let bin_f64_floored = Arc::new(ScalarFunctionExpr::new(
+                        floor_udf.name(),
+                        floor_udf.clone(),
+                        vec![bin_f64.clone()],
+                        DataType::Float64,
+                    ));
+                    let bin_u32 = Arc::new(CastExpr::new(bin_f64_floored, DataType::UInt32, None));
+                    let bin_key = Arc::new(clamp_bin(bin_u32, binning.bin_count, input.schema())?);
 
                     // Remember that the key is binned
                     binned_groups.push((&key.output_alias, binning, binning_metadata));
                     // Return the key expression
-                    key_expr
+                    bin_key
                 } else {
                     return Err(anyhow::anyhow!("binning for key `{}` requires precomputed statistics, use transformWithStats", key.output_alias.as_str()))
                 }
@@ -698,14 +650,14 @@ impl DataFrame {
         if let Some(row_number) = &transform.row_number {
             input = self.row_number(&row_number, input)?;
         }
-        // Compute the rankings
-        if !transform.rank_fields.is_empty() {
-            input = self.rank_fields(&transform.rank_fields, input)?;
+        // Compute the value identifiers
+        if !transform.value_identifiers.is_empty() {
+            input = self.value_identifiers(&transform.value_identifiers, input)?;
         }
         // Compute the binnings
-        if !transform.bin_fields.is_empty() {
+        if !transform.binning.is_empty() {
             if let Some(stats) = stats {
-                input = self.bin_fields(&transform.bin_fields, stats, input)?;
+                input = self.bin_fields(&transform.binning, stats, input)?;
             } else {
                 return Err(anyhow::anyhow!("field binning requires precomputed statistics, use transformWithStats"));
             }

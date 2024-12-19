@@ -7,7 +7,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use indoc::indoc;
 use pretty_assertions::assert_eq;
 
-use crate::proto::sqlynx_compute::{AggregationFunction, BinFieldTransform, GroupByAggregate, GroupByKey, GroupByKeyBinning};
+use crate::proto::sqlynx_compute::{AggregationFunction, BinningTransform, GroupByAggregate, GroupByKey, GroupByKeyBinning};
 use crate::proto::sqlynx_compute::{DataFrameTransform, OrderByConstraint, OrderByTransform, GroupByTransform};
 use crate::data_frame::DataFrame;
 
@@ -20,8 +20,8 @@ async fn test_transform_orderby() -> anyhow::Result<()> {
     let data_frame = DataFrame::new(data.schema(), vec![data]);
     let transform = DataFrameTransform {
         row_number: None,
-        rank_fields: vec![],
-        bin_fields: vec![],
+        value_identifiers: vec![],
+        binning: vec![],
         group_by: None,
         order_by: Some(OrderByTransform {
             constraints: vec![
@@ -56,8 +56,8 @@ async fn test_minmax_int64() -> anyhow::Result<()> {
     let data_frame = DataFrame::new(data.schema(), vec![data]);
     let transform = DataFrameTransform {
         row_number: None,
-        rank_fields: vec![],
-        bin_fields: vec![],
+        value_identifiers: vec![],
+        binning: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -121,8 +121,8 @@ async fn test_transform_minmax_string() -> anyhow::Result<()> {
     let data_frame = DataFrame::new(data.schema(), vec![data]);
     let transform = DataFrameTransform {
         row_number: None,
-        rank_fields: vec![],
-        bin_fields: vec![],
+        value_identifiers: vec![],
+        binning: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -190,8 +190,8 @@ async fn test_transform_bin_timestamps() -> anyhow::Result<()> {
     // Compute statistics
     let stats_transform = DataFrameTransform {
         row_number: None,
-        rank_fields: vec![],
-        bin_fields: vec![],
+        value_identifiers: vec![],
+        binning: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -223,8 +223,8 @@ async fn test_transform_bin_timestamps() -> anyhow::Result<()> {
     // Bin into 64 bins
     let bin_transform = DataFrameTransform {
         row_number: None,
-        rank_fields: vec![],
-        bin_fields: vec![],
+        value_identifiers: vec![],
+        binning: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![
                 GroupByKey {
@@ -304,8 +304,8 @@ async fn test_transform_bin_timestamps() -> anyhow::Result<()> {
     // Bin into 8 bins
     let bin_transform = DataFrameTransform {
         row_number: None,
-        rank_fields: vec![],
-        bin_fields: vec![],
+        value_identifiers: vec![],
+        binning: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![
                 GroupByKey {
@@ -383,8 +383,8 @@ async fn test_transform_bin_date32() -> anyhow::Result<()> {
     // Compute statistics
     let stats_transform = DataFrameTransform {
         row_number: None,
-        rank_fields: vec![],
-        bin_fields: vec![],
+        value_identifiers: vec![],
+        binning: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -416,8 +416,8 @@ async fn test_transform_bin_date32() -> anyhow::Result<()> {
     // Bin into 8 bins
     let bin_transform = DataFrameTransform {
         row_number: None,
-        rank_fields: vec![],
-        bin_fields: vec![],
+        value_identifiers: vec![],
+        binning: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![
                 GroupByKey {
@@ -497,8 +497,8 @@ async fn test_transform_bin_date64() -> anyhow::Result<()> {
     // Compute statistics
     let stats_transform = DataFrameTransform {
         row_number: None,
-        rank_fields: vec![],
-        bin_fields: vec![],
+        value_identifiers: vec![],
+        binning: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -530,8 +530,8 @@ async fn test_transform_bin_date64() -> anyhow::Result<()> {
     // Bin into 8 bins
     let bin_transform = DataFrameTransform {
         row_number: None,
-        rank_fields: vec![],
-        bin_fields: vec![],
+        value_identifiers: vec![],
+        binning: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![
                 GroupByKey {
@@ -609,8 +609,8 @@ async fn test_transform_bin_time32() -> anyhow::Result<()> {
     // Compute statistics
     let stats_transform = DataFrameTransform {
         row_number: None,
-        rank_fields: vec![],
-        bin_fields: vec![],
+        value_identifiers: vec![],
+        binning: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -642,8 +642,8 @@ async fn test_transform_bin_time32() -> anyhow::Result<()> {
     // Bin into 8 bins
     let bin_transform = DataFrameTransform {
         row_number: None,
-        rank_fields: vec![],
-        bin_fields: vec![],
+        value_identifiers: vec![],
+        binning: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![
                 GroupByKey {
@@ -721,8 +721,8 @@ async fn test_transform_bin_time64() -> anyhow::Result<()> {
     // Compute statistics
     let stats_transform = DataFrameTransform {
         row_number: None,
-        rank_fields: vec![],
-        bin_fields: vec![],
+        value_identifiers: vec![],
+        binning: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -754,8 +754,8 @@ async fn test_transform_bin_time64() -> anyhow::Result<()> {
     // Bin into 8 bins
     let bin_transform = DataFrameTransform {
         row_number: None,
-        rank_fields: vec![],
-        bin_fields: vec![],
+        value_identifiers: vec![],
+        binning: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![
                 GroupByKey {
@@ -833,8 +833,8 @@ async fn test_transform_bin_int64() -> anyhow::Result<()> {
     // Compute statistics
     let stats_transform = DataFrameTransform {
         row_number: None,
-        rank_fields: vec![],
-        bin_fields: vec![],
+        value_identifiers: vec![],
+        binning: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -866,8 +866,8 @@ async fn test_transform_bin_int64() -> anyhow::Result<()> {
     // Bin into 8 bins
     let bin_transform = DataFrameTransform {
         row_number: None,
-        rank_fields: vec![],
-        bin_fields: vec![],
+        value_identifiers: vec![],
+        binning: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![
                 GroupByKey {
@@ -946,8 +946,8 @@ async fn test_transform_bin_decimal128() -> anyhow::Result<()> {
     // Compute statistics
     let stats_transform = DataFrameTransform {
         row_number: None,
-        rank_fields: vec![],
-        bin_fields: vec![],
+        value_identifiers: vec![],
+        binning: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -979,8 +979,8 @@ async fn test_transform_bin_decimal128() -> anyhow::Result<()> {
     // Bin into 8 bins
     let bin_transform = DataFrameTransform {
         row_number: None,
-        rank_fields: vec![],
-        bin_fields: vec![],
+        value_identifiers: vec![],
+        binning: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![
                 GroupByKey {
@@ -1024,12 +1024,12 @@ async fn test_transform_bin_decimal128() -> anyhow::Result<()> {
         +-------+-------+----------------------+----------------------+----------------------+
         | 0     | 1     | 0.375000000000000000 | 0.500000000000000000 | 0.875000000000000000 |
         | 1     | 3     | 0.375000000000000000 | 0.875000000000000000 | 1.250000000000000000 |
-        | 2     |       | 0.375000000000000000 | 1.250000000000000000 | 1.625000000000000000 |
-        | 3     | 1     | 0.375000000000000000 | 1.625000000000000000 | 2.000000000000000000 |
+        | 2     | 1     | 0.375000000000000000 | 1.250000000000000000 | 1.625000000000000000 |
+        | 3     |       | 0.375000000000000000 | 1.625000000000000000 | 2.000000000000000000 |
         | 4     | 1     | 0.375000000000000000 | 2.000000000000000000 | 2.375000000000000000 |
         | 5     | 2     | 0.375000000000000000 | 2.375000000000000000 | 2.750000000000000000 |
-        | 6     |       | 0.375000000000000000 | 2.750000000000000000 | 3.125000000000000000 |
-        | 7     | 2     | 0.375000000000000000 | 3.125000000000000000 | 3.500000000000000000 |
+        | 6     | 1     | 0.375000000000000000 | 2.750000000000000000 | 3.125000000000000000 |
+        | 7     | 1     | 0.375000000000000000 | 3.125000000000000000 | 3.500000000000000000 |
         +-------+-------+----------------------+----------------------+----------------------+
     "}.trim());
     Ok(())
@@ -1059,8 +1059,8 @@ async fn test_transform_bin_decimal128_precomputed() -> anyhow::Result<()> {
     // Compute statistics
     let stats_transform = DataFrameTransform {
         row_number: None,
-        rank_fields: vec![],
-        bin_fields: vec![],
+        value_identifiers: vec![],
+        binning: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -1092,15 +1092,14 @@ async fn test_transform_bin_decimal128_precomputed() -> anyhow::Result<()> {
     // Bin into 8 bins
     let bin_transform = DataFrameTransform {
         row_number: None,
-        rank_fields: vec![],
-        bin_fields: vec![
-            BinFieldTransform {
+        value_identifiers: vec![],
+        binning: vec![
+            BinningTransform {
                 field_name: "v".to_string(),
                 stats_minimum_field_name: "v_min".to_string(),
                 stats_maximum_field_name: "v_max".to_string(),
                 bin_count: 8,
-                bin_output_alias: "v_bin".to_string(),
-                fractional_bin_output_alias: "v_bin_fractional".to_string(),
+                fractional_bin_output_alias: "v_bin".to_string(),
             }
         ],
         group_by: None,
@@ -1108,20 +1107,20 @@ async fn test_transform_bin_decimal128_precomputed() -> anyhow::Result<()> {
     };
     let binned = data_frame.transform(&bin_transform, Some(&stats)).await?;
     assert_eq!(format!("{}", pretty_format_batches(&binned.partitions[0])?), indoc! {"
-        +----------------------+-------+--------------------+
-        | v                    | v_bin | v_bin_fractional   |
-        +----------------------+-------+--------------------+
-        | 0.500000000000000000 | 0     | 0.0                |
-        | 1.000000000000000000 | 1     | 1.3333333333333333 |
-        | 1.500000000000000000 | 3     | 2.6666666666666665 |
-        | 2.000000000000000000 | 4     | 4.0                |
-        | 2.500000000000000000 | 5     | 5.333333333333333  |
-        | 3.000000000000000000 | 7     | 6.666666666666667  |
-        | 3.500000000000000000 | 7     | 8.0                |
-        | 1.000000000000000000 | 1     | 1.3333333333333333 |
-        | 1.000000000000000000 | 1     | 1.3333333333333333 |
-        | 2.500000000000000000 | 5     | 5.333333333333333  |
-        +----------------------+-------+--------------------+
+        +----------------------+--------------------+
+        | v                    | v_bin              |
+        +----------------------+--------------------+
+        | 0.500000000000000000 | 0.0                |
+        | 1.000000000000000000 | 1.3333333333333333 |
+        | 1.500000000000000000 | 2.6666666666666665 |
+        | 2.000000000000000000 | 4.0                |
+        | 2.500000000000000000 | 5.333333333333333  |
+        | 3.000000000000000000 | 6.666666666666667  |
+        | 3.500000000000000000 | 8.0                |
+        | 1.000000000000000000 | 1.3333333333333333 |
+        | 1.000000000000000000 | 1.3333333333333333 |
+        | 2.500000000000000000 | 5.333333333333333  |
+        +----------------------+--------------------+
     "}.trim());
     Ok(())
 }
@@ -1150,8 +1149,8 @@ async fn test_transform_bin_decimal256() -> anyhow::Result<()> {
     // Compute statistics
     let stats_transform = DataFrameTransform {
         row_number: None,
-        rank_fields: vec![],
-        bin_fields: vec![],
+        value_identifiers: vec![],
+        binning: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![],
             aggregates: vec![
@@ -1183,8 +1182,8 @@ async fn test_transform_bin_decimal256() -> anyhow::Result<()> {
     // Bin into 8 bins
     let bin_transform = DataFrameTransform {
         row_number: None,
-        rank_fields: vec![],
-        bin_fields: vec![],
+        value_identifiers: vec![],
+        binning: vec![],
         group_by: Some(GroupByTransform {
             keys: vec![
                 GroupByKey {
@@ -1228,12 +1227,12 @@ async fn test_transform_bin_decimal256() -> anyhow::Result<()> {
         +-------+-------+----------------------+----------------------+----------------------+
         | 0     | 1     | 0.375000000000000000 | 0.500000000000000000 | 0.875000000000000000 |
         | 1     | 3     | 0.375000000000000000 | 0.875000000000000000 | 1.250000000000000000 |
-        | 2     |       | 0.375000000000000000 | 1.250000000000000000 | 1.625000000000000000 |
-        | 3     | 1     | 0.375000000000000000 | 1.625000000000000000 | 2.000000000000000000 |
+        | 2     | 1     | 0.375000000000000000 | 1.250000000000000000 | 1.625000000000000000 |
+        | 3     |       | 0.375000000000000000 | 1.625000000000000000 | 2.000000000000000000 |
         | 4     | 1     | 0.375000000000000000 | 2.000000000000000000 | 2.375000000000000000 |
         | 5     | 2     | 0.375000000000000000 | 2.375000000000000000 | 2.750000000000000000 |
-        | 6     |       | 0.375000000000000000 | 2.750000000000000000 | 3.125000000000000000 |
-        | 7     | 2     | 0.375000000000000000 | 3.125000000000000000 | 3.500000000000000000 |
+        | 6     | 1     | 0.375000000000000000 | 2.750000000000000000 | 3.125000000000000000 |
+        | 7     | 1     | 0.375000000000000000 | 3.125000000000000000 | 3.500000000000000000 |
         +-------+-------+----------------------+----------------------+----------------------+
     "}.trim());
     Ok(())
