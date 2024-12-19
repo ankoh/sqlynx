@@ -9,7 +9,7 @@ use arrow::datatypes::SchemaRef;
 use arrow::datatypes::TimeUnit;
 use datafusion_common::ScalarValue;
 use datafusion_execution::TaskContext;
-use datafusion_expr::AggregateUDF;
+use datafusion_expr::{AggregateUDF, WindowFrame};
 use datafusion_expr::Operator;
 use datafusion_functions::math::floor;
 use datafusion_functions_aggregate::average::Avg;
@@ -17,6 +17,7 @@ use datafusion_functions_aggregate::count::count_udaf;
 use datafusion_functions_aggregate::min_max::Max;
 use datafusion_functions_aggregate::min_max::Min;
 use datafusion_physical_expr::expressions::CaseExpr;
+use datafusion_physical_expr::window::{BuiltInWindowExpr, BuiltInWindowFunctionExpr};
 use datafusion_physical_expr::PhysicalExpr;
 use datafusion_physical_expr::PhysicalSortExpr;
 use datafusion_physical_expr::aggregate::AggregateExprBuilder;
@@ -25,10 +26,13 @@ use datafusion_physical_expr::expressions::CastExpr;
 use datafusion_physical_expr::expressions::binary;
 use datafusion_physical_expr::expressions::col;
 use datafusion_physical_expr::expressions::lit;
+use datafusion_physical_expr::expressions::rank;
+use datafusion_physical_expr::expressions::dense_rank;
 use datafusion_physical_expr::ScalarFunctionExpr;
 use datafusion_physical_plan::joins::{HashJoinExec, PartitionMode};
 use datafusion_physical_plan::projection::ProjectionExec;
-use datafusion_physical_plan::ExecutionPlan;
+use datafusion_physical_plan::windows::BoundedWindowAggExec;
+use datafusion_physical_plan::{ExecutionPlan, InputOrderMode, WindowExpr};
 use datafusion_physical_plan::aggregates::{AggregateMode, AggregateExec, PhysicalGroupBy};
 use datafusion_physical_plan::collect;
 use datafusion_physical_plan::memory::MemoryExec;
@@ -37,7 +41,7 @@ use prost::Message;
 use wasm_bindgen::prelude::*;
 
 use crate::arrow_out::DataFrameIpcStream;
-use crate::proto::sqlynx_compute::{AggregationFunction, BinFieldTransform, DataFrameTransform, GroupByKeyBinning, GroupByTransform, OrderByTransform};
+use crate::proto::sqlynx_compute::{AggregationFunction, BinFieldTransform, DataFrameTransform, GroupByKeyBinning, GroupByTransform, OrderByTransform, RankFieldTransform, RowNumberTransform};
 
 #[wasm_bindgen]
 pub struct DataFrame {
@@ -78,6 +82,53 @@ impl DataFrame {
             input,
         ).with_fetch(sort_limit);
         return Ok(sort_exec);
+    }
+
+    /// Compute a row number
+    fn row_number(&self, rownum: &RowNumberTransform, input: Arc<dyn ExecutionPlan>) -> anyhow::Result<Arc<dyn ExecutionPlan>> {
+
+        Err(anyhow::anyhow!("not implemented"))
+    }
+
+    /// Rank by a field
+    fn rank_fields(&self, rankings: &[RankFieldTransform], mut input: Arc<dyn ExecutionPlan>) -> anyhow::Result<Arc<dyn ExecutionPlan>> {
+        for ranking in rankings.iter() {
+            let input_col = col(&ranking.field_name, &input.schema())?;
+
+            // Sort by the ranking column 
+            let sort_exprs: Vec<PhysicalSortExpr> = vec![
+                PhysicalSortExpr {
+                    expr: input_col,
+                    options: arrow::compute::SortOptions {
+                        descending: !ranking.order_ascending,
+                        nulls_first: ranking.order_nulls_first
+                    },
+                }
+            ];
+            // Create the sort operator
+            let sort_exec = Arc::new(SortExec::new(
+                sort_exprs,
+                input,
+            ));
+            
+
+            // Rows between unbounded preceding and current row
+            let frame = Arc::new(WindowFrame::new(Some(true)));
+            // Dense rank or rank?
+            let rank_fn = if ranking.dense {
+                dense_rank
+            } else {
+                rank
+            };
+            let rank_fn_expr: Arc<dyn BuiltInWindowFunctionExpr> = Arc::new(rank_fn(ranking.output_alias.clone(), &DataType::UInt64));
+            let rank_expr: Arc<dyn WindowExpr> = Arc::new(BuiltInWindowExpr::new(rank_fn_expr, &[], sort_exec.expr(), frame));
+
+            // Create the window aggregate
+            let window_agg = BoundedWindowAggExec::try_new(vec![rank_expr], sort_exec, vec![], InputOrderMode::Linear)?;
+            // Use the window aggregate as new input
+            input = Arc::new(window_agg);
+        }
+        Err(anyhow::anyhow!("not implemented"))
     }
 
     // Pre-bin fields
@@ -643,6 +694,15 @@ impl DataFrame {
         let mut input: Arc<dyn ExecutionPlan> = Arc::new(
             MemoryExec::try_new(&self.partitions, self.schema.clone(), None).unwrap(),
         );
+        // Compute the row number
+        if let Some(row_number) = &transform.row_number {
+            input = self.row_number(&row_number, input)?;
+        }
+        // Compute the rankings
+        if !transform.rank_fields.is_empty() {
+            input = self.rank_fields(&transform.rank_fields, input)?;
+        }
+        // Compute the binnings
         if !transform.bin_fields.is_empty() {
             if let Some(stats) = stats {
                 input = self.bin_fields(&transform.bin_fields, stats, input)?;
@@ -650,9 +710,11 @@ impl DataFrame {
                 return Err(anyhow::anyhow!("field binning requires precomputed statistics, use transformWithStats"));
             }
         }
+        // Compute the groupings
         if let Some(group_by) = &transform.group_by {
             input = self.group_by(group_by, stats, input)?;
         }
+        // Order the table (/ topk)
         if let Some(order_by) = &transform.order_by {
             input = Arc::new(self.order_by(order_by, input)?);
         }

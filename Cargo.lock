@@ -1850,6 +1850,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "datafusion-functions-window"
+version = "42.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "98a354ce96df3ca6d025093adac9fd55ca09931c9b6f2630140721a95873fde4"
+dependencies = [
+ "datafusion-common",
+ "datafusion-expr",
+ "datafusion-physical-expr-common",
+ "log",
+]
+
+[[package]]
 name = "datafusion-physical-expr"
 version = "42.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5825,6 +5837,7 @@ dependencies = [
  "datafusion-functions",
  "datafusion-functions-aggregate",
  "datafusion-functions-nested",
+ "datafusion-functions-window",
  "datafusion-physical-expr",
  "datafusion-physical-plan",
  "getrandom 0.2.15",
@@ -7423,7 +7436,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
