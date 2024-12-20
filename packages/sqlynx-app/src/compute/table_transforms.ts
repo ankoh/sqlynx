@@ -595,7 +595,7 @@ export function createPrecomputationTransform(schema: arrow.Schema, columns: Col
                     statsMaximumFieldName: stats.schema.fields[column.value.statsFields!.maxAggregateField].name,
                     statsMinimumFieldName: stats.schema.fields[column.value.statsFields!.minAggregateField].name,
                     binCount: column.value.binCount,
-                    fractionalBinOutputAlias: binFieldName
+                    outputAlias: binFieldName
                 }));
                 columnEntries[i] = {
                     type: ORDINAL_COLUMN,
