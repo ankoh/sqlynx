@@ -3,7 +3,7 @@ import * as proto from '@ankoh/sqlynx-protobuf';
 import * as styles from './data_table.module.css';
 import * as symbols from '../../../static/svg/symbols.generated.svg';
 
-import { VariableSizeGrid as Grid, GridChildComponentProps, GridOnItemsRenderedProps, GridOnScrollProps } from 'react-window';
+import { VariableSizeGrid as Grid, GridChildComponentProps, GridOnItemsRenderedProps } from 'react-window';
 
 import { classNames } from '../../utils/classnames.js';
 import { observeSize } from '../foundations/size_observer.js';

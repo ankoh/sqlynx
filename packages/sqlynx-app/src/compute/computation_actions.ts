@@ -13,7 +13,7 @@ const LOG_CTX = "compute";
 /// Compute all table summaries
 export async function analyzeTable(computationId: number, table: arrow.Table, dispatch: Dispatch<ComputationAction>, worker: ComputeWorkerBindings, logger: Logger): Promise<void> {
     // Register the table with compute
-    let columns = mapComputationColumnsEntries(table!);
+    let columns = buildColumnEntryVariants(table!);
     const computeAbortCtrl = new AbortController();
     dispatch({
         type: COMPUTATION_FROM_QUERY_RESULT,
@@ -44,7 +44,7 @@ export async function analyzeTable(computationId: number, table: arrow.Table, di
         inputDataFrame: dataFrame,
         tableSummary
     };
-    const [newDataFrame, newColumnEntries] = await precomputeSystemColumnExpressions(precomputationTask, dispatch, logger);
+    const [newDataFrame, newColumnEntries] = await precomputeMetadataColumns(precomputationTask, dispatch, logger);
     columns = newColumnEntries;
 
     // Summarize the columns
@@ -61,7 +61,7 @@ export async function analyzeTable(computationId: number, table: arrow.Table, di
 }
 
 /// Precompute expressions for column summaries
-async function precomputeSystemColumnExpressions(task: ColumnPrecomputationTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<[AsyncDataFrame, ColumnEntryVariant[]]> {
+async function precomputeMetadataColumns(task: ColumnPrecomputationTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<[AsyncDataFrame, ColumnEntryVariant[]]> {
     let startedAt = new Date();
     let taskProgress: TaskProgress = {
         status: TaskStatus.TASK_RUNNING,
@@ -106,7 +106,7 @@ async function precomputeSystemColumnExpressions(task: ColumnPrecomputationTask,
 }
 
 /// Helper to derive column entry variants from an arrow table
-function mapComputationColumnsEntries(table: arrow.Table): ColumnEntryVariant[] {
+function buildColumnEntryVariants(table: arrow.Table): ColumnEntryVariant[] {
     const tableColumns: ColumnEntryVariant[] = [];
     for (let i = 0; i < table.schema.fields.length; ++i) {
         const field = table.schema.fields[i];
@@ -150,8 +150,8 @@ function mapComputationColumnsEntries(table: arrow.Table): ColumnEntryVariant[] 
                         inputFieldName: field.name,
                         inputFieldType: field.type,
                         inputFieldNullable: field.nullable,
-                        binningFields: null,
                         statsFields: null,
+                        binField: null,
                         binCount: BIN_COUNT
                     }
                 });
@@ -166,6 +166,7 @@ function mapComputationColumnsEntries(table: arrow.Table): ColumnEntryVariant[] 
                         inputFieldType: field.type,
                         inputFieldNullable: field.nullable,
                         statsFields: null,
+                        valueIdField: null,
                     }
                 });
                 break;
@@ -179,6 +180,7 @@ function mapComputationColumnsEntries(table: arrow.Table): ColumnEntryVariant[] 
                         inputFieldType: field.type,
                         inputFieldNullable: field.nullable,
                         statsFields: null,
+                        valueIdField: null,
                     }
                 });
                 break;
