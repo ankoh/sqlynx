@@ -7,7 +7,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use indoc::indoc;
 use pretty_assertions::assert_eq;
 
-use crate::proto::sqlynx_compute::{AggregationFunction, BinningTransform, GroupByAggregate, GroupByKey, GroupByKeyBinning};
+use crate::proto::sqlynx_compute::{AggregationFunction, BinningTransform, GroupByAggregate, GroupByKey, GroupByKeyBinning, RowNumberTransform, ValueIdentifierTransform};
 use crate::proto::sqlynx_compute::{DataFrameTransform, OrderByConstraint, OrderByTransform, GroupByTransform};
 use crate::data_frame::DataFrame;
 
@@ -43,6 +43,114 @@ async fn test_transform_orderby() -> anyhow::Result<()> {
         | 2  | 8000  |
         | 1  | 9000  |
         +----+-------+
+    "}.trim());
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_transform_rownumber() -> anyhow::Result<()> {
+    let data = RecordBatch::try_from_iter(vec![
+        ("id", Arc::new(Int32Array::from(vec![3, 2, 1])) as ArrayRef),
+        ("score", Arc::new(Int32Array::from(vec![9000, 8000, 7000]))),
+    ])?;
+    let data_frame = DataFrame::new(data.schema(), vec![data]);
+    let transform = DataFrameTransform {
+        row_number: Some(RowNumberTransform {
+            output_alias: "rownum".to_string(),
+        }),
+        value_identifiers: vec![],
+        binning: vec![],
+        group_by: None,
+        order_by: None,
+    };
+    let transformed = data_frame.transform(&transform, None).await?;
+    assert_eq!(format!("{}", pretty_format_batches(&transformed.partitions[0])?), indoc! {"
+        +----+-------+--------+
+        | id | score | rownum |
+        +----+-------+--------+
+        | 3  | 9000  | 1      |
+        | 2  | 8000  | 2      |
+        | 1  | 7000  | 3      |
+        +----+-------+--------+
+    "}.trim());
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_transform_value_ids() -> anyhow::Result<()> {
+    let mut schema_builder = SchemaBuilder::with_capacity(2);
+    schema_builder.push(Field::new("v1", DataType::Utf8, false));
+    schema_builder.push(Field::new("v2", DataType::Utf8, false));
+    let schema = schema_builder.finish();
+    let data = RecordBatch::try_new(schema.into(), vec![
+        Arc::new(StringArray::from(vec![
+            "a1",
+            "a2",
+            "a3",
+            "a1",
+            "a2",
+            "a1",
+            "a4",
+            "a6",
+            "a0",
+        ])) as ArrayRef,
+        Arc::new(StringArray::from(vec![
+            "b5",
+            "b8",
+            "b2",
+            "b3",
+            "b3",
+            "b1",
+            "b9",
+            "b4",
+            "b8",
+        ])) as ArrayRef,
+    ])?;
+    let data_frame = DataFrame::new(data.schema(), vec![data]);
+    let transform = DataFrameTransform {
+        row_number: Some(
+            RowNumberTransform{
+                output_alias: "rownum".to_string(),
+            },
+        ),
+        value_identifiers: vec![
+            ValueIdentifierTransform{
+                field_name: "v1".to_string(),
+                output_alias: "v1_id".to_string(),
+            },
+            ValueIdentifierTransform{
+                field_name: "v2".to_string(),
+                output_alias: "v2_id".to_string(),
+            }
+        ],
+        binning: vec![],
+        group_by: None,
+        order_by: Some(OrderByTransform {
+            constraints: vec![
+                OrderByConstraint{
+                    field_name: "rownum".into(),
+                    ascending: true,
+                    nulls_first: false
+                }
+            ],
+            limit: None
+        }),
+    };
+    let transformed = data_frame.transform(&transform, None).await?;
+    assert_eq!(format!("{}", pretty_format_batches(&transformed.partitions[0])?), indoc! {"
+        +----+----+--------+-------+-------+
+        | v1 | v2 | rownum | v1_id | v2_id |
+        +----+----+--------+-------+-------+
+        | a1 | b5 | 1      | 2     | 5     |
+        | a2 | b8 | 2      | 3     | 6     |
+        | a3 | b2 | 3      | 4     | 2     |
+        | a1 | b3 | 4      | 2     | 3     |
+        | a2 | b3 | 5      | 3     | 3     |
+        | a1 | b1 | 6      | 2     | 1     |
+        | a4 | b9 | 7      | 5     | 7     |
+        | a6 | b4 | 8      | 6     | 4     |
+        | a0 | b8 | 9      | 1     | 6     |
+        +----+----+--------+-------+-------+
     "}.trim());
     Ok(())
 }
