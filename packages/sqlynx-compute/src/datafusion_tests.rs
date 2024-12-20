@@ -10,7 +10,7 @@ use datafusion_execution::TaskContext;
 use datafusion_expr::AggregateUDF;
 use datafusion_expr::Operator;
 use datafusion_functions_aggregate::{count::count_udaf, min_max::{Max, Min}};
-use datafusion_physical_expr::PhysicalSortExpr;
+use datafusion_physical_expr::{LexOrdering, PhysicalSortExpr};
 use datafusion_physical_expr::aggregate::AggregateExprBuilder;
 use datafusion_physical_expr::expressions::{binary, col, lit, BinaryExpr, Column, Literal, CastExpr};
 use datafusion_physical_plan::ExecutionPlan;
@@ -35,10 +35,10 @@ async fn test_filter_sort() -> anyhow::Result<()> {
         MemoryExec::try_new(&[vec![data.clone()]], data.schema(), None).unwrap(),
     );
     let sort_exec = Arc::new(SortExec::new(
-        vec![PhysicalSortExpr {
+        LexOrdering::new(vec![PhysicalSortExpr {
             expr: col("score", &data.schema())?,
             options: arrow::compute::SortOptions::default(),
-        }],
+        }]),
         input,
     ));
     let task_ctx = Arc::new(TaskContext::default());
@@ -93,10 +93,10 @@ async fn test_decimal_literal_filter() -> anyhow::Result<()> {
         MemoryExec::try_new(&[vec![record_batch.clone()]], record_batch.schema(), None).unwrap(),
     );
     let sort_exec = Arc::new(SortExec::new(
-        vec![PhysicalSortExpr {
+        LexOrdering::new(vec![PhysicalSortExpr {
             expr: col("score", &record_batch.schema())?,
             options: arrow::compute::SortOptions::default(),
-        }],
+        }]),
         input,
     ));
     let filter_exec: Arc<dyn ExecutionPlan> =
@@ -161,9 +161,9 @@ async fn test_group_by_1phase_1key() -> anyhow::Result<()> {
         AggregateMode::Single,
         grouping.clone(),
         vec![
-            value_min,
-            value_max,
-            value_count,
+            value_min.into(),
+            value_max.into(),
+            value_count.into(),
         ],
         vec![
             None,
@@ -174,10 +174,10 @@ async fn test_group_by_1phase_1key() -> anyhow::Result<()> {
         data.schema()
     )?);
     let sort_exec = Arc::new(SortExec::new(
-        vec![PhysicalSortExpr {
+        LexOrdering::new(vec![PhysicalSortExpr {
             expr: col("key", &groupby_exec.schema())?,
             options: arrow::compute::SortOptions::default(),
-        }],
+        }]),
         groupby_exec.clone(),
     ));
     let task_ctx = Arc::new(TaskContext::default());
@@ -293,16 +293,16 @@ async fn test_group_by_1phase_1key_distinct() -> anyhow::Result<()> {
     let groupby_exec = Arc::new(AggregateExec::try_new(
         AggregateMode::Single,
         grouping.clone(),
-        vec![value_count, value_count_distinct],
+        vec![value_count.into(), value_count_distinct.into()],
         vec![None, None],
         input.clone(),
         data.schema()
     )?);
     let sort_exec = Arc::new(SortExec::new(
-        vec![PhysicalSortExpr {
+        LexOrdering::new(vec![PhysicalSortExpr {
             expr: col("key", &groupby_exec.schema())?,
             options: arrow::compute::SortOptions::default(),
-        }],
+        }]),
         groupby_exec.clone(),
     ));
     let task_ctx = Arc::new(TaskContext::default());
@@ -376,7 +376,7 @@ async fn test_group_by_1phase_static_distinct() -> anyhow::Result<()> {
     let groupby_exec = Arc::new(AggregateExec::try_new(
         AggregateMode::Single,
         grouping.clone(),
-        vec![cd_id.clone(), cd_val.clone()],
+        vec![cd_id.clone().into(), cd_val.clone().into()],
         vec![None, None],
         input.clone(),
         data.schema()
@@ -439,7 +439,7 @@ async fn test_bin_timestamps() -> anyhow::Result<()> {
     let groupby_exec = Arc::new(AggregateExec::try_new(
         AggregateMode::Single,
         grouping.clone(),
-        vec![when_min, when_max],
+        vec![Arc::new(when_min), Arc::new(when_max)],
         vec![None, None],
         data_scan.clone(),
         data.schema()
