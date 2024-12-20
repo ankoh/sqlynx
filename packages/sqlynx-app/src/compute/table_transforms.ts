@@ -121,8 +121,6 @@ export interface ColumnStatsFields {
 export interface ColumnBinningFields {
     /// The bin field
     binField: number;
-    /// The fractional bin field
-    fractionalBinField: number;
 }
 
 export interface OrdinalColumnEntry {
@@ -136,8 +134,8 @@ export interface OrdinalColumnEntry {
     inputFieldNullable: boolean;
     /// The column stats
     statsFields: ColumnStatsFields | null;
-    /// The binning fields
-    binningFields: ColumnBinningFields | null;
+    /// The bin field
+    binField: number | null;
     /// The bin count
     binCount: number;
 }
@@ -153,6 +151,8 @@ export interface StringColumnEntry {
     inputFieldNullable: boolean;
     /// The column stats
     statsFields: ColumnStatsFields | null;
+    /// The identifier field
+    valueIdField: number | null;
 }
 
 export interface ListColumnEntry {
@@ -166,6 +166,8 @@ export interface ListColumnEntry {
     inputFieldNullable: boolean;
     /// The column stats
     statsFields: ColumnStatsFields | null;
+    /// The identifier field
+    valueIdField: number | null;
 }
 
 export interface SkippedColumnEntry {
@@ -577,6 +579,7 @@ function createUniqueColumnName(prefix: string, fieldNames: Set<string>) {
 export function createPrecomputationTransform(schema: arrow.Schema, columns: ColumnEntryVariant[], stats: arrow.Table): [proto.sqlynx_compute.pb.DataFrameTransform, ColumnEntryVariant[]] {
     let nextOutputColumn = schema.fields.length;
     let binningTransforms = [];
+    let identifierTransforms = [];
 
     let fieldNames = new Set<string>();
     for (const field of schema.fields) {
@@ -589,7 +592,6 @@ export function createPrecomputationTransform(schema: arrow.Schema, columns: Col
             case ORDINAL_COLUMN: {
                 const binFieldId = nextOutputColumn++;
                 const binFieldName = createUniqueColumnName(`_${i}_bin`, fieldNames);
-                const fractionalBinFieldId = nextOutputColumn++;
                 binningTransforms.push(new proto.sqlynx_compute.pb.BinningTransform({
                     fieldName: column.value.inputFieldName,
                     statsMaximumFieldName: stats.schema.fields[column.value.statsFields!.maxAggregateField].name,
@@ -601,22 +603,35 @@ export function createPrecomputationTransform(schema: arrow.Schema, columns: Col
                     type: ORDINAL_COLUMN,
                     value: {
                         ...column.value,
-                        binningFields: {
-                            binField: binFieldId,
-                            fractionalBinField: fractionalBinFieldId
-                        }
+                        binField: binFieldId,
                     }
                 };
                 break;
             }
             case STRING_COLUMN:
-            case LIST_COLUMN:
+            case LIST_COLUMN: {
+                const valueFieldId = nextOutputColumn++;
+                const valueFieldName = createUniqueColumnName(`_${i}_id`, fieldNames);
+                identifierTransforms.push(new proto.sqlynx_compute.pb.ValueIdentifierTransform({
+                    fieldName: column.value.inputFieldName,
+                    outputAlias: valueFieldName
+                }));
+                columnEntries[i] = {
+                    type: STRING_COLUMN,
+                    value: {
+                        ...column.value,
+                        valueIdField: valueFieldId
+                    }
+                };
+                break;
+            }
             case SKIPPED_COLUMN:
                 break;
         }
     }
 
     const transform = new proto.sqlynx_compute.pb.DataFrameTransform({
+        valueIdentifiers: identifierTransforms,
         binning: binningTransforms
     });
     return [transform, columnEntries];
