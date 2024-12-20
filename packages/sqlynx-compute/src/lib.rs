@@ -10,6 +10,7 @@ mod data_frame_tests;
 #[cfg(test)]
 mod datafusion_tests;
 mod version;
+mod udwf;
 
 use console::DEFAULT_LOGGER;
 

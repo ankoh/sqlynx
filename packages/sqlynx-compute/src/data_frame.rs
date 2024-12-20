@@ -16,10 +16,11 @@ use datafusion_functions_aggregate::average::Avg;
 use datafusion_functions_aggregate::count::count_udaf;
 use datafusion_functions_aggregate::min_max::Max;
 use datafusion_functions_aggregate::min_max::Min;
-use datafusion_functions_window::row_number::RowNumber;
+use datafusion_functions_window::rank::dense_rank_udwf;
+use datafusion_functions_window::row_number::row_number_udwf;
 use datafusion_physical_expr::expressions::CaseExpr;
-use datafusion_physical_expr::window::{BuiltInWindowExpr, BuiltInWindowFunctionExpr};
-use datafusion_physical_expr::PhysicalExpr;
+use datafusion_physical_expr::window::BuiltInWindowExpr;
+use datafusion_physical_expr::{LexOrdering, PhysicalExpr};
 use datafusion_physical_expr::PhysicalSortExpr;
 use datafusion_physical_expr::aggregate::AggregateExprBuilder;
 use datafusion_physical_expr::aggregate::AggregateFunctionExpr;
@@ -27,7 +28,6 @@ use datafusion_physical_expr::expressions::CastExpr;
 use datafusion_physical_expr::expressions::binary;
 use datafusion_physical_expr::expressions::col;
 use datafusion_physical_expr::expressions::lit;
-use datafusion_physical_expr::expressions::dense_rank;
 use datafusion_physical_expr::ScalarFunctionExpr;
 use datafusion_physical_plan::joins::{HashJoinExec, PartitionMode};
 use datafusion_physical_plan::projection::ProjectionExec;
@@ -42,6 +42,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::arrow_out::DataFrameIpcStream;
 use crate::proto::sqlynx_compute::{AggregationFunction, BinningTransform, DataFrameTransform, GroupByKeyBinning, GroupByTransform, OrderByTransform, ValueIdentifierTransform, RowNumberTransform};
+use crate::udwf::create_udwf_window_expr;
 
 #[wasm_bindgen]
 pub struct DataFrame {
@@ -78,28 +79,39 @@ impl DataFrame {
         }
         let sort_limit = config.limit.map(|l| l as usize);
         let sort_exec = SortExec::new(
-            sort_exprs,
+            LexOrdering::new(sort_exprs),
             input,
         ).with_fetch(sort_limit);
         return Ok(sort_exec);
     }
 
     /// Compute a row number
-    fn row_number(&self, _rownum: &RowNumberTransform, _input: Arc<dyn ExecutionPlan>) -> anyhow::Result<Arc<dyn ExecutionPlan>> {
-        RowNumber::new();
-
-        Err(anyhow::anyhow!("not implemented"))
+    fn row_number(&self, row_num: &RowNumberTransform, input: Arc<dyn ExecutionPlan>) -> anyhow::Result<Arc<dyn ExecutionPlan>> {
+        // Create udwf expression
+        let udwf_expr = create_udwf_window_expr(
+            &row_number_udwf(),
+            &[],
+            &input.schema(),
+            row_num.output_alias.clone(),
+            false)?;
+        // Create window frame
+        let frame = Arc::new(WindowFrame::new(None));
+        // Create the window expression
+        let window_expr: Arc<dyn WindowExpr> = Arc::new(BuiltInWindowExpr::new(udwf_expr, &[], &[], frame));
+        // Create the window aggregate
+        let window_agg = BoundedWindowAggExec::try_new(vec![window_expr], input, vec![], InputOrderMode::Linear)?;
+        // Use the window aggregate as new input
+        Ok(Arc::new(window_agg))
     }
 
     /// Rank by a field
     fn value_identifiers(&self, ids: &[ValueIdentifierTransform], mut input: Arc<dyn ExecutionPlan>) -> anyhow::Result<Arc<dyn ExecutionPlan>> {
         for ranking in ids.iter() {
-            let input_col = col(&ranking.field_name, &input.schema())?;
-
             // Sort by the ranking column 
+            let input_col = col(&ranking.field_name, &input.schema())?;
             let sort_exprs: Vec<PhysicalSortExpr> = vec![
                 PhysicalSortExpr {
-                    expr: input_col,
+                    expr: input_col.clone(),
                     options: arrow::compute::SortOptions {
                         descending: false,
                         nulls_first: false
@@ -108,21 +120,27 @@ impl DataFrame {
             ];
             // Create the sort operator
             let sort_exec = Arc::new(SortExec::new(
-                sort_exprs,
+                LexOrdering::new(sort_exprs),
                 input,
             ));
+            // Create udwf expression
+            let udwf_expr = create_udwf_window_expr(
+                &dense_rank_udwf(),
+                &[input_col],
+                &sort_exec.schema(),
+                ranking.output_alias.clone(),
+                false)?;
 
-            // Rows between unbounded preceding and current row
+            // Create window frame
             let frame = Arc::new(WindowFrame::new(Some(true)));
-            let rank_fn_expr: Arc<dyn BuiltInWindowFunctionExpr> = Arc::new(dense_rank(ranking.output_alias.clone(), &DataType::UInt64));
-            let rank_expr: Arc<dyn WindowExpr> = Arc::new(BuiltInWindowExpr::new(rank_fn_expr, &[], sort_exec.expr(), frame));
-
+            // Create the window expression
+            let window_expr: Arc<dyn WindowExpr> = Arc::new(BuiltInWindowExpr::new(udwf_expr, &[], sort_exec.expr(), frame));
             // Create the window aggregate
-            let window_agg = BoundedWindowAggExec::try_new(vec![rank_expr], sort_exec, vec![], InputOrderMode::Linear)?;
+            let window_agg = BoundedWindowAggExec::try_new(vec![window_expr], sort_exec, vec![], InputOrderMode::Linear)?;
             // Use the window aggregate as new input
             input = Arc::new(window_agg);
         }
-        Err(anyhow::anyhow!("not implemented"))
+        Ok(input)
     }
 
     // Pre-bin fields
@@ -530,7 +548,7 @@ impl DataFrame {
         let grouping = PhysicalGroupBy::new(grouping_exprs, Vec::new(), vec![grouping_set]);
 
         // Collect aggregate expressions
-        let mut aggregate_exprs: Vec<AggregateFunctionExpr> = Vec::new();
+        let mut aggregate_exprs: Vec<Arc<AggregateFunctionExpr>> = Vec::new();
         for aggr in config.aggregates.iter() {
             // Output name collision?
             if output_field_names.contains(aggr.output_alias.as_str()) {
@@ -597,7 +615,7 @@ impl DataFrame {
                         .build()?
                 },
             };
-            aggregate_exprs.push(aggr_expr);
+            aggregate_exprs.push(Arc::new(aggr_expr));
         }
 
         // Construct null expressions
