@@ -82,7 +82,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
     const gridContainerSize = observeSize(gridContainerElement);
     const gridContainerHeight = Math.max(gridContainerSize?.height ?? 0, MIN_GRID_HEIGHT);
     const gridContainerWidth = Math.max(gridContainerSize?.width ?? 0, MIN_GRID_WIDTH);
-    const gridColumns = 1 + (computationState.dataTableColumns.length ?? 0);
+    const gridColumns = 1 + (computationState.gridColumns.length ?? 0);
     let gridRows = 1 + (table.numRows ?? 0);
 
     // Adjust based on the column header visibility

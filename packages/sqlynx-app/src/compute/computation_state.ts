@@ -1,7 +1,7 @@
 import * as arrow from 'apache-arrow';
 import * as proto from '@ankoh/sqlynx-protobuf';
 
-import { ColumnSummaryVariant, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskProgress, ColumnEntryVariant, ColumnPrecomputationTask } from './table_transforms.js';
+import { ColumnSummaryVariant, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskProgress, GridColumnVariant, ColumnPrecomputationTask } from './table_transforms.js';
 import { VariantKind } from '../utils/variant.js';
 import { AsyncDataFrame, ComputeWorkerBindings } from './compute_worker_bindings.js';
 
@@ -15,14 +15,15 @@ export interface TableComputationState {
 
     /// The table on the main thread
     dataTable: arrow.Table;
-    /// The data frame column information (if mapped)
-    dataTableColumns: ColumnEntryVariant[];
     /// The abort controller
     dataTableLifetime: AbortController;
     /// The data frame in the compute module
     dataFrame: AsyncDataFrame | null;
     /// The ordering constraints
     dataTableOrdering: proto.sqlynx_compute.pb.OrderByConstraint[];
+
+    /// The grid columns
+    gridColumns: GridColumnVariant[];
 
     /// The ordering task
     orderingTask: TableOrderingTask | null;
@@ -69,12 +70,12 @@ export function createComputationState(): ComputationState {
     };
 }
 /// Create the table computation state
-function createTableComputationState(computationId: number, table: arrow.Table, tableColumns: ColumnEntryVariant[], tableLifetime: AbortController): TableComputationState {
+function createTableComputationState(computationId: number, table: arrow.Table, tableColumns: GridColumnVariant[], tableLifetime: AbortController): TableComputationState {
     return {
         computationId: computationId,
         localEpoch: 0,
         dataTable: table,
-        dataTableColumns: tableColumns,
+        gridColumns: tableColumns,
         dataTableLifetime: tableLifetime,
         dataTableOrdering: [],
         dataFrame: null,
@@ -117,7 +118,7 @@ export type ComputationAction =
     | VariantKind<typeof COMPUTATION_WORKER_CONFIGURED, ComputeWorkerBindings>
     | VariantKind<typeof COMPUTATION_WORKER_CONFIGURATION_FAILED, Error | null>
 
-    | VariantKind<typeof COMPUTATION_FROM_QUERY_RESULT, [number, arrow.Table, ColumnEntryVariant[], AbortController]>
+    | VariantKind<typeof COMPUTATION_FROM_QUERY_RESULT, [number, arrow.Table, GridColumnVariant[], AbortController]>
     | VariantKind<typeof DELETE_COMPUTATION, [number]>
     | VariantKind<typeof CREATED_DATA_FRAME, [number, AsyncDataFrame]>
 
@@ -132,7 +133,7 @@ export type ComputationAction =
 
     | VariantKind<typeof PRECOMPUTATION_TASK_RUNNING, [number, TaskProgress]>
     | VariantKind<typeof PRECOMPUTATION_TASK_FAILED, [number, TaskProgress, any]>
-    | VariantKind<typeof PRECOMPUTATION_TASK_SUCCEEDED, [number, TaskProgress, arrow.Table, AsyncDataFrame, ColumnEntryVariant[]]>
+    | VariantKind<typeof PRECOMPUTATION_TASK_SUCCEEDED, [number, TaskProgress, arrow.Table, AsyncDataFrame, GridColumnVariant[]]>
 
     | VariantKind<typeof COLUMN_SUMMARY_TASK_RUNNING, [number, number, TaskProgress]>
     | VariantKind<typeof COLUMN_SUMMARY_TASK_FAILED, [number, number, TaskProgress, any]>
@@ -246,7 +247,7 @@ export function reduceComputationState(state: ComputationState, action: Computat
                 ...tableState,
                 dataTable,
                 dataFrame,
-                dataTableColumns: columnEntries,
+                gridColumns: columnEntries,
                 tableSummaryTaskStatus: taskProgress.status,
 
             });

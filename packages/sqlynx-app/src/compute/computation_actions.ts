@@ -3,7 +3,7 @@ import * as arrow from 'apache-arrow';
 import { Dispatch } from '../utils/variant.js';
 import { Logger } from '../platform/logger.js';
 import { COLUMN_SUMMARY_TASK_FAILED, COLUMN_SUMMARY_TASK_RUNNING, COLUMN_SUMMARY_TASK_SUCCEEDED, COMPUTATION_FROM_QUERY_RESULT, ComputationAction, CREATED_DATA_FRAME, PRECOMPUTATION_TASK_FAILED, PRECOMPUTATION_TASK_RUNNING, PRECOMPUTATION_TASK_SUCCEEDED, TABLE_ORDERING_TASK_FAILED, TABLE_ORDERING_TASK_RUNNING, TABLE_ORDERING_TASK_SUCCEEDED, TABLE_SUMMARY_TASK_FAILED, TABLE_SUMMARY_TASK_RUNNING, TABLE_SUMMARY_TASK_SUCCEEDED } from './computation_state.js';
-import { ColumnSummaryVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskProgress, ORDINAL_COLUMN, STRING_COLUMN, LIST_COLUMN, createOrderByTransform, createTableSummaryTransform, createColumnSummaryTransform, ColumnEntryVariant, SKIPPED_COLUMN, OrdinalColumnAnalysis, StringColumnAnalysis, ListColumnAnalysis, ListColumnEntry, StringColumnEntry, OrdinalColumnEntry, BinnedValuesTable, FrequentValuesTable, createPrecomputationTransform, ColumnPrecomputationTask, BIN_COUNT } from './table_transforms.js';
+import { ColumnSummaryVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskProgress, ORDINAL_COLUMN, STRING_COLUMN, LIST_COLUMN, createOrderByTransform, createTableSummaryTransform, createColumnSummaryTransform, GridColumnVariant, SKIPPED_COLUMN, OrdinalColumnAnalysis, StringColumnAnalysis, ListColumnAnalysis, ListGridColumn, StringGridColumn, OrdinalGridColumn, BinnedValuesTable, FrequentValuesTable, createPrecomputationTransform, ColumnPrecomputationTask, BIN_COUNT } from './table_transforms.js';
 import { AsyncDataFrame, ComputeWorkerBindings } from './compute_worker_bindings.js';
 import { ArrowTableFormatter } from '../view/query_result/arrow_formatter.js';
 import { assert } from '../utils/assert.js';
@@ -61,7 +61,7 @@ export async function analyzeTable(computationId: number, table: arrow.Table, di
 }
 
 /// Precompute expressions for column summaries
-async function precomputeMetadataColumns(task: ColumnPrecomputationTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<[AsyncDataFrame, ColumnEntryVariant[]]> {
+async function precomputeMetadataColumns(task: ColumnPrecomputationTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<[AsyncDataFrame, GridColumnVariant[]]> {
     let startedAt = new Date();
     let taskProgress: TaskProgress = {
         status: TaskStatus.TASK_RUNNING,
@@ -106,8 +106,8 @@ async function precomputeMetadataColumns(task: ColumnPrecomputationTask, dispatc
 }
 
 /// Helper to derive column entry variants from an arrow table
-function buildColumnEntryVariants(table: arrow.Table): ColumnEntryVariant[] {
-    const tableColumns: ColumnEntryVariant[] = [];
+function buildColumnEntryVariants(table: arrow.Table): GridColumnVariant[] {
+    const tableColumns: GridColumnVariant[] = [];
     for (let i = 0; i < table.schema.fields.length; ++i) {
         const field = table.schema.fields[i];
         switch (field.typeId) {
@@ -270,7 +270,7 @@ export async function sortTable(task: TableOrderingTask, dispatch: Dispatch<Comp
 }
 
 /// Helper to summarize a table
-export async function computeTableSummary(task: TableSummaryTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<[TableSummary, ColumnEntryVariant[]]> {
+export async function computeTableSummary(task: TableSummaryTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<[TableSummary, GridColumnVariant[]]> {
     // Create the transform
     const [transform, columnEntries, countStarColumn] = createTableSummaryTransform(task);
 
@@ -335,7 +335,7 @@ export async function computeTableSummary(task: TableSummaryTask, dispatch: Disp
     }
 }
 
-function analyzeOrdinalColumn(tableSummary: TableSummary, columnEntry: OrdinalColumnEntry, binnedValues: BinnedValuesTable, binnedValuesFormatter: ArrowTableFormatter): OrdinalColumnAnalysis {
+function analyzeOrdinalColumn(tableSummary: TableSummary, columnEntry: OrdinalGridColumn, binnedValues: BinnedValuesTable, binnedValuesFormatter: ArrowTableFormatter): OrdinalColumnAnalysis {
     const totalCountVector = tableSummary.statsTable.getChildAt(tableSummary.statsCountStarField!) as arrow.Vector<arrow.Int64>;
     const notNullCountVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.countField) as arrow.Vector<arrow.Int64>;
 
@@ -368,7 +368,7 @@ function analyzeOrdinalColumn(tableSummary: TableSummary, columnEntry: OrdinalCo
     };
 }
 
-function analyzeStringColumn(tableSummary: TableSummary, columnEntry: StringColumnEntry, frequentValueTable: FrequentValuesTable): StringColumnAnalysis {
+function analyzeStringColumn(tableSummary: TableSummary, columnEntry: StringGridColumn, frequentValueTable: FrequentValuesTable): StringColumnAnalysis {
     const totalCountVector = tableSummary.statsTable.getChildAt(tableSummary.statsCountStarField!) as arrow.Vector<arrow.Int64>;
     const notNullCountVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.countField) as arrow.Vector<arrow.Int64>;
     const distinctCountVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.distinctCountField!) as arrow.Vector<arrow.Int64>;
@@ -408,7 +408,7 @@ function analyzeStringColumn(tableSummary: TableSummary, columnEntry: StringColu
     };
 }
 
-function analyzeListColumn(tableSummary: TableSummary, columnEntry: ListColumnEntry, frequentValueTable: FrequentValuesTable): ListColumnAnalysis {
+function analyzeListColumn(tableSummary: TableSummary, columnEntry: ListGridColumn, frequentValueTable: FrequentValuesTable): ListColumnAnalysis {
     const totalCountVector = tableSummary.statsTable.getChildAt(tableSummary.statsCountStarField!) as arrow.Vector<arrow.Int64>;
     const notNullCountVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.countField) as arrow.Vector<arrow.Int64>;
     const distinctCountVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.distinctCountField!) as arrow.Vector<arrow.Int64>;
