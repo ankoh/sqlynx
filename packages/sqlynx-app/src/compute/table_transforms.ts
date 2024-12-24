@@ -15,6 +15,7 @@ export const ORDINAL_COLUMN = Symbol("ORDINAL_COLUMN");
 export const STRING_COLUMN = Symbol("STRING_COLUMN");
 export const LIST_COLUMN = Symbol("LIST_COLUMN");
 export const SKIPPED_COLUMN = Symbol("SKIPPED_COLUMN");
+export const ROWNUMBER_COLUMN = Symbol("ROWNUMBER_COLUMN");
 
 // ------------------------------------------------------------
 
@@ -37,7 +38,7 @@ export interface TableSummaryTask {
     /// The computation id
     computationId: number;
     /// The column entries
-    columnEntries: GridColumnVariant[];
+    columnEntries: GridColumnGroup[];
     /// The data frame
     inputDataFrame: AsyncDataFrame;
 }
@@ -46,7 +47,7 @@ export interface ColumnPrecomputationTask {
     /// The computation id
     computationId: number;
     /// The column entries
-    columnEntries: GridColumnVariant[];
+    columnEntries: GridColumnGroup[];
     /// The input table
     inputTable: arrow.Table;
     /// The input data frame
@@ -61,7 +62,7 @@ export interface ColumnSummaryTask {
     /// The task id
     columnId: number;
     /// The column entry
-    columnEntry: GridColumnVariant;
+    columnEntry: GridColumnGroup;
     /// The input data frame
     inputDataFrame: AsyncDataFrame;
     /// The table summary
@@ -91,19 +92,21 @@ export interface TaskProgress {
 
 // ------------------------------------------------------------
 
-export type GridColumnVariant =
-    VariantKind<typeof ORDINAL_COLUMN, OrdinalGridColumn>
-    | VariantKind<typeof STRING_COLUMN, StringGridColumn>
-    | VariantKind<typeof LIST_COLUMN, ListGridColumn>
-    | VariantKind<typeof SKIPPED_COLUMN, SkippedGridColumn>
+export type GridColumnGroup =
+    | VariantKind<typeof ROWNUMBER_COLUMN, RowNumberGridColumnGroup>
+    | VariantKind<typeof SKIPPED_COLUMN, SkippedGridColumnGroup>
+    | VariantKind<typeof ORDINAL_COLUMN, OrdinalGridColumnGroup>
+    | VariantKind<typeof STRING_COLUMN, StringGridColumnGroup>
+    | VariantKind<typeof LIST_COLUMN, ListGridColumnGroup>
     ;
 
-export function getGridColumnTypeName(variant: GridColumnVariant) {
+export function getGridColumnTypeName(variant: GridColumnGroup) {
     switch (variant.type) {
+        case ROWNUMBER_COLUMN: return "ROWNUMBER";
+        case SKIPPED_COLUMN: return "SKIPPED";
         case ORDINAL_COLUMN: return "ORDINAL";
         case STRING_COLUMN: return "STRING";
         case LIST_COLUMN: return "LIST";
-        case SKIPPED_COLUMN: return "SKIPPED";
     }
 }
 
@@ -123,12 +126,12 @@ export interface ColumnBinningFields {
     binField: number;
 }
 
-export interface RowNumberGridColumn {
+export interface RowNumberGridColumnGroup {
     /// The input field
     inputFieldId: number;
 }
 
-export interface OrdinalGridColumn {
+export interface OrdinalGridColumnGroup {
     /// The input column id
     inputFieldId: number;
     /// The input field name
@@ -145,7 +148,7 @@ export interface OrdinalGridColumn {
     binCount: number;
 }
 
-export interface StringGridColumn {
+export interface StringGridColumnGroup {
     /// The input column id
     inputFieldId: number;
     /// The input field name
@@ -160,7 +163,7 @@ export interface StringGridColumn {
     valueIdField: number | null;
 }
 
-export interface ListGridColumn {
+export interface ListGridColumnGroup {
     /// The input column id
     inputFieldId: number;
     /// The input field name
@@ -175,7 +178,7 @@ export interface ListGridColumn {
     valueIdField: number | null;
 }
 
-export interface SkippedGridColumn {
+export interface SkippedGridColumnGroup {
     /// The input column id
     inputFieldId: number;
     /// The input field name
@@ -219,7 +222,7 @@ export interface TableSummary {
 
 export interface OrdinalColumnSummary {
     /// The column entry
-    columnEntry: OrdinalGridColumn;
+    columnEntry: OrdinalGridColumnGroup;
     /// The binned values
     binnedValues: BinnedValuesTable;
     /// The formatter for the binned values
@@ -249,7 +252,7 @@ export interface OrdinalColumnAnalysis {
 
 export interface StringColumnSummary {
     /// The string column entry
-    columnEntry: StringGridColumn;
+    columnEntry: StringGridColumnGroup;
     /// The frequent values
     frequentValues: FrequentValuesTable;
     /// The formatter for the frequent values
@@ -282,7 +285,7 @@ export interface StringColumnAnalysis {
 export interface ListColumnSummary {
     /// The list column entry
     /// The string column entry
-    columnEntry: ListGridColumn;
+    columnEntry: ListGridColumnGroup;
     /// The frequent values
     frequentValues: FrequentValuesTable;
     /// The formatter for the frequent values
@@ -330,10 +333,9 @@ export type FrequentValuesTable<KeyType extends arrow.DataType = arrow.DataType>
 
 // ------------------------------------------------------------
 
-export function createTableSummaryTransform(task: TableSummaryTask): [proto.sqlynx_compute.pb.DataFrameTransform, GridColumnVariant[], number] {
+export function createTableSummaryTransform(task: TableSummaryTask): [proto.sqlynx_compute.pb.DataFrameTransform, GridColumnGroup[], number] {
     let aggregates: proto.sqlynx_compute.pb.GroupByAggregate[] = [];
     let nextOutputColumn = 0;
-    let outputColumnNames = new Set<string>();
 
     // Add count(*) aggregate
     const countStarColumn = nextOutputColumn++;
@@ -343,10 +345,14 @@ export function createTableSummaryTransform(task: TableSummaryTask): [proto.sqly
     }));
 
     // Add column aggregates
-    const newEntries: GridColumnVariant[] = [];
+    const updatedEntries: GridColumnGroup[] = [];
     for (let i = 0; i < task.columnEntries.length; ++i) {
         const entry = task.columnEntries[i];
         switch (entry.type) {
+            case SKIPPED_COLUMN:
+            case ROWNUMBER_COLUMN:
+                updatedEntries.push(entry);
+                break;
             case ORDINAL_COLUMN: {
                 const countAggregateColumn = nextOutputColumn++;
                 const minAggregateColumn = nextOutputColumn++;
@@ -366,7 +372,7 @@ export function createTableSummaryTransform(task: TableSummaryTask): [proto.sqly
                     outputAlias: `_${i}_max`,
                     aggregationFunction: proto.sqlynx_compute.pb.AggregationFunction.Max,
                 }));
-                const newEntry: GridColumnVariant = {
+                const newEntry: GridColumnGroup = {
                     type: ORDINAL_COLUMN,
                     value: {
                         ...entry.value,
@@ -378,7 +384,7 @@ export function createTableSummaryTransform(task: TableSummaryTask): [proto.sqly
                         }
                     }
                 };
-                newEntries.push(newEntry);
+                updatedEntries.push(newEntry);
                 break;
             }
             case STRING_COLUMN: {
@@ -407,7 +413,7 @@ export function createTableSummaryTransform(task: TableSummaryTask): [proto.sqly
                     outputAlias: `_${i}_max`,
                     aggregationFunction: proto.sqlynx_compute.pb.AggregationFunction.Max,
                 }));
-                const newEntry: GridColumnVariant = {
+                const newEntry: GridColumnGroup = {
                     type: STRING_COLUMN,
                     value: {
                         ...entry.value,
@@ -419,7 +425,7 @@ export function createTableSummaryTransform(task: TableSummaryTask): [proto.sqly
                         }
                     }
                 };
-                newEntries.push(newEntry);
+                updatedEntries.push(newEntry);
                 break;
             }
             case LIST_COLUMN: {
@@ -448,7 +454,7 @@ export function createTableSummaryTransform(task: TableSummaryTask): [proto.sqly
                     outputAlias: `_${i}_max`,
                     aggregationFunction: proto.sqlynx_compute.pb.AggregationFunction.Max,
                 }));
-                const newEntry: GridColumnVariant = {
+                const newEntry: GridColumnGroup = {
                     type: LIST_COLUMN,
                     value: {
                         ...entry.value,
@@ -460,7 +466,7 @@ export function createTableSummaryTransform(task: TableSummaryTask): [proto.sqly
                         }
                     }
                 };
-                newEntries.push(newEntry);
+                updatedEntries.push(newEntry);
                 break;
             }
         }
@@ -471,13 +477,13 @@ export function createTableSummaryTransform(task: TableSummaryTask): [proto.sqly
             aggregates
         })
     });
-    return [transform, newEntries, countStarColumn];
+    return [transform, updatedEntries, countStarColumn];
 }
 
 export const BIN_COUNT = 16;
 
 export function createColumnSummaryTransform(task: ColumnSummaryTask): proto.sqlynx_compute.pb.DataFrameTransform {
-    if (task.columnEntry.type == SKIPPED_COLUMN || task.columnEntry.value.statsFields == null) {
+    if (task.columnEntry.type == SKIPPED_COLUMN || task.columnEntry.type == ROWNUMBER_COLUMN || task.columnEntry.value.statsFields == null) {
         throw new Error("column summary requires precomputed table summary");
     }
     let fieldName = task.columnEntry.value.inputFieldName;
@@ -581,19 +587,41 @@ function createUniqueColumnName(prefix: string, fieldNames: Set<string>) {
     }
 }
 
-export function createPrecomputationTransform(schema: arrow.Schema, columns: GridColumnVariant[], stats: arrow.Table): [proto.sqlynx_compute.pb.DataFrameTransform, GridColumnVariant[]] {
+export function createPrecomputationTransform(schema: arrow.Schema, columns: GridColumnGroup[], stats: arrow.Table): [proto.sqlynx_compute.pb.DataFrameTransform, GridColumnGroup[]] {
     let nextOutputColumn = schema.fields.length;
     let binningTransforms = [];
     let identifierTransforms = [];
 
+    // Track field names for unique system columns
     let fieldNames = new Set<string>();
     for (const field of schema.fields) {
         fieldNames.add(field.name);
     }
-    let columnEntries = [...columns];
-    for (let i = 0; i < columns.length; ++i) {
-        let column = columnEntries[i];
+
+    // Prepend the row number column at position 0
+    const rowNumberFieldId = nextOutputColumn++;
+    const rowNumberFieldName = createUniqueColumnName(`_rownum`, fieldNames);
+    const rowNumberTransform = new proto.sqlynx_compute.pb.RowNumberTransform({
+        outputAlias: rowNumberFieldName
+    });
+    const rowNumberGridColumn: GridColumnGroup = {
+        type: ROWNUMBER_COLUMN,
+        value: {
+            inputFieldId: rowNumberFieldId
+        }
+    };
+    let gridColumns: GridColumnGroup[] = [
+        rowNumberGridColumn,
+        ...columns
+    ];
+
+    // Create the metadata columns for all others
+    for (let i = 1; i <= columns.length; ++i) {
+        let column = gridColumns[i];
         switch (column.type) {
+            case ROWNUMBER_COLUMN:
+            case SKIPPED_COLUMN:
+                break;
             case ORDINAL_COLUMN: {
                 const binFieldId = nextOutputColumn++;
                 const binFieldName = createUniqueColumnName(`_${i}_bin`, fieldNames);
@@ -604,7 +632,7 @@ export function createPrecomputationTransform(schema: arrow.Schema, columns: Gri
                     binCount: column.value.binCount,
                     outputAlias: binFieldName
                 }));
-                columnEntries[i] = {
+                gridColumns[i] = {
                     type: ORDINAL_COLUMN,
                     value: {
                         ...column.value,
@@ -621,7 +649,7 @@ export function createPrecomputationTransform(schema: arrow.Schema, columns: Gri
                     fieldName: column.value.inputFieldName,
                     outputAlias: valueFieldName
                 }));
-                columnEntries[i] = {
+                gridColumns[i] = {
                     type: STRING_COLUMN,
                     value: {
                         ...column.value,
@@ -630,14 +658,13 @@ export function createPrecomputationTransform(schema: arrow.Schema, columns: Gri
                 };
                 break;
             }
-            case SKIPPED_COLUMN:
-                break;
         }
     }
 
     const transform = new proto.sqlynx_compute.pb.DataFrameTransform({
+        rowNumber: rowNumberTransform,
         valueIdentifiers: identifierTransforms,
         binning: binningTransforms
     });
-    return [transform, columnEntries];
+    return [transform, gridColumns];
 }

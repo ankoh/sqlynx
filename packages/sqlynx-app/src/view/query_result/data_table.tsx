@@ -12,7 +12,7 @@ import { ArrowTableFormatter } from './arrow_formatter.js';
 import { GridCellLocation, useStickyRowAndColumnHeaders } from '../foundations/sticky_grid.js';
 import { ComputationAction, TableComputationState } from '../../compute/computation_state.js';
 import { Dispatch } from '../../utils/variant.js';
-import { LIST_COLUMN, ORDINAL_COLUMN, SKIPPED_COLUMN, STRING_COLUMN, TableOrderingTask, TaskStatus } from '../../compute/table_transforms.js';
+import { ColumnSummaryVariant, GridColumnGroup, LIST_COLUMN, ORDINAL_COLUMN, ROWNUMBER_COLUMN, SKIPPED_COLUMN, STRING_COLUMN, TableOrderingTask, TaskStatus } from '../../compute/table_transforms.js';
 import { sortTable } from '../../compute/computation_actions.js';
 import { useLogger } from '../../platform/logger_provider.js';
 import { RectangleWaveSpinner } from '../../view/foundations/spinners.js';
@@ -27,7 +27,7 @@ interface Props {
 
 const MIN_GRID_HEIGHT = 200;
 const MIN_GRID_WIDTH = 100;
-const MIN_COLUMN_WIDTH = 140;
+const MIN_COLUMN_WIDTH = 120;
 const COLUMN_HEADER_HEIGHT = 32;
 const COLUMN_HEADER_PLOTS_HEIGHT = 72;
 const ROW_HEIGHT = 26;
@@ -35,32 +35,149 @@ const ROW_HEADER_WIDTH = 48;
 const FORMATTER_PIXEL_SCALING = 10;
 const OVERSCAN_ROW_COUNT = 30;
 
-function computeColumnOffsets(formatter: ArrowTableFormatter, columns: number): Float64Array {
-    const offsets = new Float64Array(columns + 1);
-    let nextColumnOffset = 0;
-    for (let i = 0; i < columns; ++i) {
-        offsets[i] = nextColumnOffset;
-        if (i == 0) {
-            nextColumnOffset += ROW_HEADER_WIDTH;
-        } else if ((i - 1) < (formatter.columns.length ?? 0)) {
-            const column = formatter.columns[i - 1];
-            const columnWidth = Math.max(column.getLayoutInfo().valueAvgWidth, column.getColumnName().length) * FORMATTER_PIXEL_SCALING;
-            nextColumnOffset += Math.max(columnWidth, MIN_COLUMN_WIDTH);
-        } else {
-            nextColumnOffset += MIN_COLUMN_WIDTH;
+const SHOW_METADATA_COLUMNS = true;
+
+function computeColumnCount(columnGroups: GridColumnGroup[], showMetaColumns: boolean): number {
+    let columnCount = 0;
+    for (const columnGroup of columnGroups) {
+        switch (columnGroup.type) {
+            case ROWNUMBER_COLUMN:
+                ++columnCount;
+                break;
+            case SKIPPED_COLUMN:
+                break;
+            case STRING_COLUMN:
+            case LIST_COLUMN:
+                ++columnCount;
+                if (showMetaColumns && columnGroup.value.valueIdField != null) {
+                    ++columnCount;
+                }
+                break;
+            case ORDINAL_COLUMN:
+                ++columnCount;
+                if (showMetaColumns && columnGroup.value.binField != null) {
+                    ++columnCount;
+                }
+                break;
         }
     }
-    offsets[columns] = nextColumnOffset;
-    return offsets;
+    return columnCount;
 }
 
-function columnOffsetsAreEqual(oldWidths: Float64Array, newWidths: Float64Array) {
-    if (oldWidths.length != newWidths.length) {
+interface GridColumns {
+    formatter: ArrowTableFormatter;
+    columnCount: number;
+    columnFields: Uint32Array;
+    columnOffsets: Float64Array;
+    columnSummaries: (ColumnSummaryVariant | null)[];
+    columnSummariesStatus: (TaskStatus | null)[];
+}
+
+function computeGridColumns(formatter: ArrowTableFormatter, state: TableComputationState, showMetaColumns: boolean): GridColumns {
+    // Allocate column offsets
+    let columnCount = computeColumnCount(state.columnGroups, showMetaColumns);
+    const columnFields = new Uint32Array(columnCount);
+    const columnOffsets = new Float64Array(columnCount + 1);
+    const columnSummaries: (ColumnSummaryVariant | null)[] = new Array(columnCount).fill(null);
+    const columnSummariesStatus: (TaskStatus | null)[] = new Array(columnCount).fill(null);
+
+    // Allocate column offsets
+    let nextDisplayColumn = 0;
+    let nextDisplayOffset = 0;
+    for (let groupIndex = 0; groupIndex < state.columnGroups.length; ++groupIndex) {
+        const columnGroup = state.columnGroups[groupIndex];
+        switch (columnGroup.type) {
+            case ROWNUMBER_COLUMN: {
+                const columnId = nextDisplayColumn++;
+                columnFields[columnId] = columnGroup.value.inputFieldId;
+                columnOffsets[columnId] = nextDisplayOffset;
+                nextDisplayOffset += ROW_HEADER_WIDTH;
+                break;
+            }
+            case SKIPPED_COLUMN:
+                break;
+            case ORDINAL_COLUMN:
+                const valueColumnId = nextDisplayColumn++;
+                const valueColumn = formatter.columns[columnGroup.value.inputFieldId];
+                const valueColumnWidth = Math.max(
+                    Math.max(valueColumn.getLayoutInfo().valueAvgWidth, valueColumn.getColumnName().length) * FORMATTER_PIXEL_SCALING,
+                    MIN_COLUMN_WIDTH
+                );
+                columnFields[valueColumnId] = columnGroup.value.inputFieldId;
+                columnOffsets[valueColumnId] = nextDisplayOffset;
+                columnSummaries[valueColumnId] = state.columnGroupSummaries[groupIndex];
+                columnSummariesStatus[valueColumnId] = state.columnGroupSummariesStatus[groupIndex];
+                nextDisplayOffset += valueColumnWidth;
+                if (showMetaColumns && columnGroup.value.binField != null) {
+                    const idColumnId = nextDisplayColumn++;
+                    const idColumn = formatter.columns[columnGroup.value.binField];
+                    const idColumnWidth = Math.max(
+                        Math.max(
+                            idColumn.getLayoutInfo().valueAvgWidth,
+                            idColumn.getColumnName().length) * FORMATTER_PIXEL_SCALING,
+                        MIN_COLUMN_WIDTH
+                    );
+                    columnFields[idColumnId] = columnGroup.value.binField;
+                    columnOffsets[idColumnId] = nextDisplayOffset;
+                    nextDisplayOffset += idColumnWidth;
+                }
+                break;
+            case STRING_COLUMN:
+            case LIST_COLUMN: {
+                const valueColumnId = nextDisplayColumn++;
+                const valueColumn = formatter.columns[columnGroup.value.inputFieldId];
+                const valueColumnWidth = Math.max(
+                    Math.max(
+                        valueColumn.getLayoutInfo().valueAvgWidth,
+                        valueColumn.getColumnName().length) * FORMATTER_PIXEL_SCALING,
+                    MIN_COLUMN_WIDTH
+                );
+                columnFields[valueColumnId] = columnGroup.value.inputFieldId;
+                columnOffsets[valueColumnId] = nextDisplayOffset;
+                columnSummaries[valueColumnId] = state.columnGroupSummaries[groupIndex];
+                columnSummariesStatus[valueColumnId] = state.columnGroupSummariesStatus[groupIndex];
+                nextDisplayOffset += valueColumnWidth;
+                if (showMetaColumns && columnGroup.value.valueIdField != null) {
+                    const idColumnId = nextDisplayColumn++;
+                    const idColumn = formatter.columns[columnGroup.value.valueIdField];
+                    const idColumnWidth = Math.max(
+                        Math.max(
+                            idColumn.getLayoutInfo().valueAvgWidth,
+                            idColumn.getColumnName().length) * FORMATTER_PIXEL_SCALING,
+                        MIN_COLUMN_WIDTH
+                    );
+                    columnFields[idColumnId] = columnGroup.value.valueIdField;
+                    columnOffsets[idColumnId] = nextDisplayOffset;
+                    nextDisplayOffset += idColumnWidth;
+                }
+                break;
+            }
+        }
+    }
+    columnOffsets[nextDisplayColumn] = nextDisplayOffset;
+
+    return {
+        formatter,
+        columnCount,
+        columnFields,
+        columnOffsets,
+        columnSummaries,
+        columnSummariesStatus
+    };
+}
+
+function skipGridColumnUpdate(old: GridColumns, next: GridColumns) {
+    if (old.columnOffsets.length != next.columnOffsets.length && old.columnSummaries.length != next.columnSummaries.length) {
         return false;
     }
-    for (let i = 0; i < oldWidths.length; ++i) {
-        const delta = newWidths[i] - oldWidths[i];
+    for (let i = 0; i < old.columnOffsets.length; ++i) {
+        const delta = next.columnOffsets[i] - old.columnOffsets[i];
         if (delta > 0.01) {
+            return false;
+        }
+    }
+    for (let i = 0; i < old.columnSummaries.length; ++i) {
+        if (next.columnSummaries[i] !== old.columnSummaries[i] || next.columnSummariesStatus[i] !== old.columnSummariesStatus[i]) {
             return false;
         }
     }
@@ -82,8 +199,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
     const gridContainerSize = observeSize(gridContainerElement);
     const gridContainerHeight = Math.max(gridContainerSize?.height ?? 0, MIN_GRID_HEIGHT);
     const gridContainerWidth = Math.max(gridContainerSize?.width ?? 0, MIN_GRID_WIDTH);
-    const gridColumns = 1 + (computationState.gridColumns.length ?? 0);
-    let gridRows = 1 + (table.numRows ?? 0);
+    let gridRowCount = 1 + (table.numRows ?? 0);
 
     // Adjust based on the column header visibility
     let getRowHeight: (_row: number) => number;
@@ -97,7 +213,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
             break;
         case DataTableColumnHeader.WithColumnPlots:
             headerRowCount = 2;
-            gridRows += 1;
+            gridRowCount += 1;
             getRowHeight = (row: number) => {
                 switch (row) {
                     case 0: return COLUMN_HEADER_HEIGHT;
@@ -118,21 +234,36 @@ export const DataTable: React.FC<Props> = (props: Props) => {
     }, [table]);
 
     // Determine grid dimensions and column widths
-    const [gridColumnOffsets, setGridColumnOffsets] = React.useState<Float64Array>(() => {
-        if (tableFormatter?.columns) {
-            return computeColumnOffsets(tableFormatter, gridColumns);
-        } else {
-            return new Float64Array();
-        }
+    const [gridColumns, setGridColumns] = React.useState<GridColumns>({
+        formatter: tableFormatter,
+        columnCount: 0,
+        columnFields: new Uint32Array(),
+        columnOffsets: new Float64Array([0]),
+        columnSummaries: [],
+        columnSummariesStatus: []
     });
+    React.useEffect(() => {
+        if (tableFormatter) {
+            const newGridColumns = computeGridColumns(tableFormatter, computationState, SHOW_METADATA_COLUMNS);
+            if (!skipGridColumnUpdate(gridColumns, newGridColumns)) {
+                setGridColumns(newGridColumns);
+            }
+        }
+    }, [
+        gridColumns,
+        computationState.columnGroups,
+        computationState.columnGroupSummaries,
+        computationState.columnGroupSummariesStatus,
+        tableFormatter,
+    ]);
 
     // Compute helper to resolve a cell location
     const gridCellLocation = React.useMemo<GridCellLocation>(() => ({
         getRowHeight,
         getRowOffset,
-        getColumnWidth: (column: number) => gridColumnOffsets[column + 1] - gridColumnOffsets[column],
-        getColumnOffset: (column: number) => gridColumnOffsets[column],
-    }), [gridColumnOffsets]);
+        getColumnWidth: (column: number) => gridColumns.columnOffsets[column + 1] - gridColumns.columnOffsets[column],
+        getColumnOffset: (column: number) => gridColumns.columnOffsets[column],
+    }), [gridColumns]);
 
     // Rerender grids when the column widths change
     React.useEffect(() => {
@@ -179,11 +310,14 @@ export const DataTable: React.FC<Props> = (props: Props) => {
 
     // Helper to render a data cell
     const Cell = React.useCallback((cellProps: GridChildComponentProps) => {
+        if (cellProps.columnIndex >= gridColumns.columnFields.length) {
+            return <div />;
+        }
         if (cellProps.rowIndex == 0) {
             if (cellProps.columnIndex == 0) {
                 return <div className={styles.header_zero_cell} style={cellProps.style}></div>;
             } else {
-                const fieldId = cellProps.columnIndex - 1;
+                const fieldId = gridColumns.columnFields[cellProps.columnIndex];
                 return (
                     <div className={styles.header_cell} style={cellProps.style}>
                         <span className={styles.header_cell_name}>
@@ -206,15 +340,15 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                 );
             }
         } else if (cellProps.rowIndex == 1 && columnHeader == DataTableColumnHeader.WithColumnPlots) {
+            const columnSummary = gridColumns.columnSummaries[cellProps.columnIndex];
+            const columnSummaryStatus = gridColumns.columnSummariesStatus[cellProps.columnIndex];
+
             if (cellProps.columnIndex == 0) {
                 return <div className={styles.plots_zero_cell} style={cellProps.style}></div>;
-            } else if (cellProps.columnIndex >= (computationState.columnSummaries.length + 1)) {
+            } else if (columnSummary == null) {
                 return <div className={styles.plots_precomputed_cell} style={cellProps.style}></div>;
             } else {
-                const fieldId = cellProps.columnIndex - 1;
                 const tableSummary = computationState.tableSummary;
-                const columnSummary = computationState.columnSummaries[fieldId];
-                const columnStatus = computationState.columnSummariesStatus[fieldId];
                 if (tableSummary == null) {
                     return (
                         <div className={classNames(styles.plots_cell)} style={cellProps.style}>
@@ -222,7 +356,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                         </div>
                     );
                 }
-                switch (columnStatus) {
+                switch (columnSummaryStatus) {
                     case TaskStatus.TASK_RUNNING:
                         return (
                             <div className={classNames(styles.plots_cell, styles.plots_progress)} style={cellProps.style}>
@@ -266,7 +400,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                     </div>
                 );
             } else {
-                const dataColumn = cellProps.columnIndex - 1;
+                const columnFieldId = gridColumns.columnFields[cellProps.columnIndex];
                 const dataRow = cellProps.rowIndex - headerRowCount;
 
                 if (!tableFormatter) {
@@ -274,7 +408,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                         <div
                             className={styles.data_cell}
                             style={cellProps.style}
-                            data-table-col={dataColumn}
+                            data-table-col={columnFieldId}
                             data-table-row={dataRow}
                             onMouseEnter={onMouseEnterCell}
                             onMouseLeave={onMouseLeaveCell}
@@ -283,19 +417,19 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                 } else {
                     let focusClass: undefined | string = undefined;
                     if (dataRow == focusedCells.current?.row) {
-                        if (dataRow == focusedCells.current?.row && dataColumn == focusedCells.current?.col) {
+                        if (dataRow == focusedCells.current?.row && columnFieldId == focusedCells.current?.col) {
                             focusClass = styles.data_cell_focused_primary;
                         } else {
                             focusClass = styles.data_cell_focused_secondary;
                         }
                     }
-                    const formatted = tableFormatter.getValue(dataRow, dataColumn);
+                    const formatted = tableFormatter.getValue(dataRow, columnFieldId);
                     if (formatted == null) {
                         return (
                             <div
                                 className={classNames(styles.data_cell, styles.data_cell_null, focusClass)}
                                 style={cellProps.style}
-                                data-table-col={dataColumn}
+                                data-table-col={columnFieldId}
                                 data-table-row={dataRow}
                                 onMouseEnter={onMouseEnterCell}
                                 onMouseLeave={onMouseLeaveCell}
@@ -308,7 +442,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                             <div
                                 className={classNames(styles.data_cell, focusClass)}
                                 style={cellProps.style}
-                                data-table-col={dataColumn}
+                                data-table-col={columnFieldId}
                                 data-table-row={dataRow}
                                 onMouseEnter={onMouseEnterCell}
                                 onMouseLeave={onMouseLeaveCell}
@@ -320,7 +454,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                 }
             }
         }
-    }, [computationState]);
+    }, [gridColumns]);
 
     // Inner grid element type to render sticky row and column headers
     const innerGridElementType = useStickyRowAndColumnHeaders(Cell, gridCellLocation, styles.data_grid_cells, headerRowCount);
@@ -329,26 +463,26 @@ export const DataTable: React.FC<Props> = (props: Props) => {
     // Table elements are formatted lazily so we do not know upfront how wide a column will be.
     const onItemsRendered = React.useCallback((_event: GridOnItemsRenderedProps) => {
         if (dataGrid.current && tableFormatter) {
-            const newWidths = computeColumnOffsets(tableFormatter, gridColumns);
-            if (!columnOffsetsAreEqual(gridColumnOffsets, newWidths)) {
-                setGridColumnOffsets(newWidths);
+            const newGridColumns = computeGridColumns(tableFormatter, computationState, SHOW_METADATA_COLUMNS);
+            if (!skipGridColumnUpdate(gridColumns, newGridColumns)) {
+                setGridColumns(newGridColumns);
             }
         }
-    }, [tableFormatter]);
+    }, [gridColumns, tableFormatter]);
 
     return (
         <div className={classNames(styles.root, props.className)} ref={gridContainerElement}>
             <Grid
                 ref={dataGrid}
-                columnCount={gridColumns}
+                columnCount={gridColumns.columnCount}
                 columnWidth={gridCellLocation.getColumnWidth}
-                rowCount={gridRows}
+                rowCount={gridRowCount}
                 rowHeight={gridCellLocation.getRowHeight}
                 height={gridContainerHeight}
                 width={gridContainerWidth}
                 onItemsRendered={onItemsRendered}
-                innerElementType={innerGridElementType}
                 overscanRowCount={OVERSCAN_ROW_COUNT}
+                innerElementType={innerGridElementType}
             >
                 {Cell}
             </Grid>

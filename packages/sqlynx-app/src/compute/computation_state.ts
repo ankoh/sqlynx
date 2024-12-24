@@ -1,7 +1,7 @@
 import * as arrow from 'apache-arrow';
 import * as proto from '@ankoh/sqlynx-protobuf';
 
-import { ColumnSummaryVariant, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskProgress, GridColumnVariant, ColumnPrecomputationTask } from './table_transforms.js';
+import { ColumnSummaryVariant, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskProgress, GridColumnGroup, ColumnPrecomputationTask } from './table_transforms.js';
 import { VariantKind } from '../utils/variant.js';
 import { AsyncDataFrame, ComputeWorkerBindings } from './compute_worker_bindings.js';
 
@@ -23,7 +23,11 @@ export interface TableComputationState {
     dataTableOrdering: proto.sqlynx_compute.pb.OrderByConstraint[];
 
     /// The grid columns
-    gridColumns: GridColumnVariant[];
+    columnGroups: GridColumnGroup[];
+    /// The running column tasks
+    columnGroupSummariesStatus: (TaskStatus | null)[];
+    /// The column stats
+    columnGroupSummaries: (ColumnSummaryVariant | null)[];
 
     /// The ordering task
     orderingTask: TableOrderingTask | null;
@@ -41,11 +45,6 @@ export interface TableComputationState {
     columnPrecomputationTask: ColumnPrecomputationTask | null;
     /// The task tatus
     columnPrecomputationStatus: TaskStatus | null;
-
-    /// The running column tasks
-    columnSummariesStatus: (TaskStatus | null)[];
-    /// The column stats
-    columnSummaries: (ColumnSummaryVariant | null)[];
 }
 
 /// The computation registry
@@ -70,12 +69,12 @@ export function createComputationState(): ComputationState {
     };
 }
 /// Create the table computation state
-function createTableComputationState(computationId: number, table: arrow.Table, tableColumns: GridColumnVariant[], tableLifetime: AbortController): TableComputationState {
+function createTableComputationState(computationId: number, table: arrow.Table, tableColumns: GridColumnGroup[], tableLifetime: AbortController): TableComputationState {
     return {
         computationId: computationId,
         localEpoch: 0,
         dataTable: table,
-        gridColumns: tableColumns,
+        columnGroups: tableColumns,
         dataTableLifetime: tableLifetime,
         dataTableOrdering: [],
         dataFrame: null,
@@ -86,8 +85,8 @@ function createTableComputationState(computationId: number, table: arrow.Table, 
         tableSummary: null,
         columnPrecomputationTask: null,
         columnPrecomputationStatus: null,
-        columnSummariesStatus: Array.from({ length: tableColumns.length }, () => null),
-        columnSummaries: Array.from({ length: tableColumns.length }, () => null)
+        columnGroupSummariesStatus: Array.from({ length: tableColumns.length }, () => null),
+        columnGroupSummaries: Array.from({ length: tableColumns.length }, () => null)
     };
 }
 
@@ -118,7 +117,7 @@ export type ComputationAction =
     | VariantKind<typeof COMPUTATION_WORKER_CONFIGURED, ComputeWorkerBindings>
     | VariantKind<typeof COMPUTATION_WORKER_CONFIGURATION_FAILED, Error | null>
 
-    | VariantKind<typeof COMPUTATION_FROM_QUERY_RESULT, [number, arrow.Table, GridColumnVariant[], AbortController]>
+    | VariantKind<typeof COMPUTATION_FROM_QUERY_RESULT, [number, arrow.Table, GridColumnGroup[], AbortController]>
     | VariantKind<typeof DELETE_COMPUTATION, [number]>
     | VariantKind<typeof CREATED_DATA_FRAME, [number, AsyncDataFrame]>
 
@@ -133,7 +132,7 @@ export type ComputationAction =
 
     | VariantKind<typeof PRECOMPUTATION_TASK_RUNNING, [number, TaskProgress]>
     | VariantKind<typeof PRECOMPUTATION_TASK_FAILED, [number, TaskProgress, any]>
-    | VariantKind<typeof PRECOMPUTATION_TASK_SUCCEEDED, [number, TaskProgress, arrow.Table, AsyncDataFrame, GridColumnVariant[]]>
+    | VariantKind<typeof PRECOMPUTATION_TASK_SUCCEEDED, [number, TaskProgress, arrow.Table, AsyncDataFrame, GridColumnGroup[]]>
 
     | VariantKind<typeof COLUMN_SUMMARY_TASK_RUNNING, [number, number, TaskProgress]>
     | VariantKind<typeof COLUMN_SUMMARY_TASK_FAILED, [number, number, TaskProgress, any]>
@@ -247,7 +246,7 @@ export function reduceComputationState(state: ComputationState, action: Computat
                 ...tableState,
                 dataTable,
                 dataFrame,
-                gridColumns: columnEntries,
+                columnGroups: columnEntries,
                 tableSummaryTaskStatus: taskProgress.status,
 
             });
@@ -260,11 +259,11 @@ export function reduceComputationState(state: ComputationState, action: Computat
             if (tableState === undefined) {
                 return state;
             }
-            const status = [...tableState.columnSummariesStatus];
+            const status = [...tableState.columnGroupSummariesStatus];
             status[columnId] = taskProgress.status;
             state.tableComputations.set(computationId, {
                 ...tableState,
-                columnSummariesStatus: status,
+                columnGroupSummariesStatus: status,
             });
             return { ...state };
         }
@@ -274,14 +273,14 @@ export function reduceComputationState(state: ComputationState, action: Computat
             if (tableState === undefined) {
                 return state;
             }
-            const status = [...tableState.columnSummariesStatus];
-            const summaries = [...tableState.columnSummaries];
+            const status = [...tableState.columnGroupSummariesStatus];
+            const summaries = [...tableState.columnGroupSummaries];
             status[columnId] = taskProgress.status;
             summaries[columnId] = columnSummary;
             state.tableComputations.set(computationId, {
                 ...tableState,
-                columnSummariesStatus: status,
-                columnSummaries: summaries
+                columnGroupSummariesStatus: status,
+                columnGroupSummaries: summaries
             });
             return { ...state };
         }

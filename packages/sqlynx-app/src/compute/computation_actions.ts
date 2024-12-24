@@ -3,7 +3,7 @@ import * as arrow from 'apache-arrow';
 import { Dispatch } from '../utils/variant.js';
 import { Logger } from '../platform/logger.js';
 import { COLUMN_SUMMARY_TASK_FAILED, COLUMN_SUMMARY_TASK_RUNNING, COLUMN_SUMMARY_TASK_SUCCEEDED, COMPUTATION_FROM_QUERY_RESULT, ComputationAction, CREATED_DATA_FRAME, PRECOMPUTATION_TASK_FAILED, PRECOMPUTATION_TASK_RUNNING, PRECOMPUTATION_TASK_SUCCEEDED, TABLE_ORDERING_TASK_FAILED, TABLE_ORDERING_TASK_RUNNING, TABLE_ORDERING_TASK_SUCCEEDED, TABLE_SUMMARY_TASK_FAILED, TABLE_SUMMARY_TASK_RUNNING, TABLE_SUMMARY_TASK_SUCCEEDED } from './computation_state.js';
-import { ColumnSummaryVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskProgress, ORDINAL_COLUMN, STRING_COLUMN, LIST_COLUMN, createOrderByTransform, createTableSummaryTransform, createColumnSummaryTransform, GridColumnVariant, SKIPPED_COLUMN, OrdinalColumnAnalysis, StringColumnAnalysis, ListColumnAnalysis, ListGridColumn, StringGridColumn, OrdinalGridColumn, BinnedValuesTable, FrequentValuesTable, createPrecomputationTransform, ColumnPrecomputationTask, BIN_COUNT } from './table_transforms.js';
+import { ColumnSummaryVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskProgress, ORDINAL_COLUMN, STRING_COLUMN, LIST_COLUMN, createOrderByTransform, createTableSummaryTransform, createColumnSummaryTransform, GridColumnGroup, SKIPPED_COLUMN, OrdinalColumnAnalysis, StringColumnAnalysis, ListColumnAnalysis, ListGridColumnGroup, StringGridColumnGroup, OrdinalGridColumnGroup, BinnedValuesTable, FrequentValuesTable, createPrecomputationTransform, ColumnPrecomputationTask, BIN_COUNT, ROWNUMBER_COLUMN, getGridColumnTypeName } from './table_transforms.js';
 import { AsyncDataFrame, ComputeWorkerBindings } from './compute_worker_bindings.js';
 import { ArrowTableFormatter } from '../view/query_result/arrow_formatter.js';
 import { assert } from '../utils/assert.js';
@@ -13,11 +13,11 @@ const LOG_CTX = "compute";
 /// Compute all table summaries
 export async function analyzeTable(computationId: number, table: arrow.Table, dispatch: Dispatch<ComputationAction>, worker: ComputeWorkerBindings, logger: Logger): Promise<void> {
     // Register the table with compute
-    let columns = buildColumnEntryVariants(table!);
+    let gridColumnGroups = buildGridColumns(table!);
     const computeAbortCtrl = new AbortController();
     dispatch({
         type: COMPUTATION_FROM_QUERY_RESULT,
-        value: [computationId, table!, columns, computeAbortCtrl]
+        value: [computationId, table!, gridColumnGroups, computeAbortCtrl]
     });
 
     // Create a Data Frame from a table
@@ -30,30 +30,34 @@ export async function analyzeTable(computationId: number, table: arrow.Table, di
     // Summarize the table
     const tableSummaryTask: TableSummaryTask = {
         computationId,
-        columnEntries: columns,
+        columnEntries: gridColumnGroups,
         inputDataFrame: dataFrame
     };
-    const [tableSummary, columnEntries] = await computeTableSummary(tableSummaryTask, dispatch, logger);
-    columns = columnEntries;
+    const [tableSummary, updatedGridColumnGroups1] = await computeTableSummary(tableSummaryTask, dispatch, logger);
+    gridColumnGroups = updatedGridColumnGroups1;
 
     // Precompute column expressions
     const precomputationTask: ColumnPrecomputationTask = {
         computationId,
-        columnEntries: columns,
+        columnEntries: gridColumnGroups,
         inputTable: table,
         inputDataFrame: dataFrame,
         tableSummary
     };
-    const [newDataFrame, newColumnEntries] = await precomputeMetadataColumns(precomputationTask, dispatch, logger);
-    columns = newColumnEntries;
+    const [newDataFrame, updatedGridColumnGroups2] = await precomputeMetadataColumns(precomputationTask, dispatch, logger);
+    gridColumnGroups = updatedGridColumnGroups2;
 
     // Summarize the columns
-    for (let columnId = 0; columnId < columnEntries.length; ++columnId) {
+    for (let columnId = 0; columnId < gridColumnGroups.length; ++columnId) {
+        // Skip columns that don't compute a column summary
+        if (gridColumnGroups[columnId].type == SKIPPED_COLUMN || gridColumnGroups[columnId].type == ROWNUMBER_COLUMN) {
+            continue;
+        }
         const columnSummaryTask: ColumnSummaryTask = {
             computationId,
             columnId,
             tableSummary: tableSummary,
-            columnEntry: newColumnEntries[columnId],
+            columnEntry: gridColumnGroups[columnId],
             inputDataFrame: newDataFrame,
         };
         await computeColumnSummary(computationId, columnSummaryTask, dispatch, logger);
@@ -61,7 +65,7 @@ export async function analyzeTable(computationId: number, table: arrow.Table, di
 }
 
 /// Precompute expressions for column summaries
-async function precomputeMetadataColumns(task: ColumnPrecomputationTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<[AsyncDataFrame, GridColumnVariant[]]> {
+async function precomputeMetadataColumns(task: ColumnPrecomputationTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<[AsyncDataFrame, GridColumnGroup[]]> {
     let startedAt = new Date();
     let taskProgress: TaskProgress = {
         status: TaskStatus.TASK_RUNNING,
@@ -75,7 +79,7 @@ async function precomputeMetadataColumns(task: ColumnPrecomputationTask, dispatc
             type: PRECOMPUTATION_TASK_RUNNING,
             value: [task.computationId, taskProgress]
         });
-        const [transform, newColumns] = createPrecomputationTransform(task.inputTable.schema, task.columnEntries, task.tableSummary.statsTable);
+        const [transform, newGridColumns] = createPrecomputationTransform(task.inputTable.schema, task.columnEntries, task.tableSummary.statsTable);
 
         const transformStart = performance.now();
         const transformed = await task.inputDataFrame.transform(transform, task.tableSummary.statsDataFrame);
@@ -85,9 +89,9 @@ async function precomputeMetadataColumns(task: ColumnPrecomputationTask, dispatc
 
         dispatch({
             type: PRECOMPUTATION_TASK_SUCCEEDED,
-            value: [task.computationId, taskProgress, transformedTable, transformed, newColumns],
+            value: [task.computationId, taskProgress, transformedTable, transformed, newGridColumns],
         });
-        return [transformed, newColumns];
+        return [transformed, newGridColumns];
     } catch (error: any) {
         logger.error(`column precomputation failed with error: ${error.toString()}`);
         taskProgress = {
@@ -106,8 +110,8 @@ async function precomputeMetadataColumns(task: ColumnPrecomputationTask, dispatc
 }
 
 /// Helper to derive column entry variants from an arrow table
-function buildColumnEntryVariants(table: arrow.Table): GridColumnVariant[] {
-    const tableColumns: GridColumnVariant[] = [];
+function buildGridColumns(table: arrow.Table): GridColumnGroup[] {
+    const columnGroups: GridColumnGroup[] = [];
     for (let i = 0; i < table.schema.fields.length; ++i) {
         const field = table.schema.fields[i];
         switch (field.typeId) {
@@ -143,7 +147,7 @@ function buildColumnEntryVariants(table: arrow.Table): GridColumnVariant[] {
             case arrow.Type.DurationMillisecond:
             case arrow.Type.DurationMicrosecond:
             case arrow.Type.DurationNanosecond:
-                tableColumns.push({
+                columnGroups.push({
                     type: ORDINAL_COLUMN,
                     value: {
                         inputFieldId: i,
@@ -158,7 +162,7 @@ function buildColumnEntryVariants(table: arrow.Table): GridColumnVariant[] {
                 break;
             case arrow.Type.Utf8:
             case arrow.Type.LargeUtf8:
-                tableColumns.push({
+                columnGroups.push({
                     type: STRING_COLUMN,
                     value: {
                         inputFieldId: i,
@@ -172,7 +176,7 @@ function buildColumnEntryVariants(table: arrow.Table): GridColumnVariant[] {
                 break;
             case arrow.Type.List:
             case arrow.Type.FixedSizeList:
-                tableColumns.push({
+                columnGroups.push({
                     type: LIST_COLUMN,
                     value: {
                         inputFieldId: i,
@@ -185,7 +189,7 @@ function buildColumnEntryVariants(table: arrow.Table): GridColumnVariant[] {
                 });
                 break;
             default:
-                tableColumns.push({
+                columnGroups.push({
                     type: SKIPPED_COLUMN,
                     value: {
                         inputFieldId: i,
@@ -197,7 +201,7 @@ function buildColumnEntryVariants(table: arrow.Table): GridColumnVariant[] {
                 break;
         }
     }
-    return tableColumns;
+    return columnGroups;
 }
 
 /// Helper to sort a table
@@ -270,7 +274,7 @@ export async function sortTable(task: TableOrderingTask, dispatch: Dispatch<Comp
 }
 
 /// Helper to summarize a table
-export async function computeTableSummary(task: TableSummaryTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<[TableSummary, GridColumnVariant[]]> {
+export async function computeTableSummary(task: TableSummaryTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<[TableSummary, GridColumnGroup[]]> {
     // Create the transform
     const [transform, columnEntries, countStarColumn] = createTableSummaryTransform(task);
 
@@ -335,7 +339,7 @@ export async function computeTableSummary(task: TableSummaryTask, dispatch: Disp
     }
 }
 
-function analyzeOrdinalColumn(tableSummary: TableSummary, columnEntry: OrdinalGridColumn, binnedValues: BinnedValuesTable, binnedValuesFormatter: ArrowTableFormatter): OrdinalColumnAnalysis {
+function analyzeOrdinalColumn(tableSummary: TableSummary, columnEntry: OrdinalGridColumnGroup, binnedValues: BinnedValuesTable, binnedValuesFormatter: ArrowTableFormatter): OrdinalColumnAnalysis {
     const totalCountVector = tableSummary.statsTable.getChildAt(tableSummary.statsCountStarField!) as arrow.Vector<arrow.Int64>;
     const notNullCountVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.countField) as arrow.Vector<arrow.Int64>;
 
@@ -368,7 +372,7 @@ function analyzeOrdinalColumn(tableSummary: TableSummary, columnEntry: OrdinalGr
     };
 }
 
-function analyzeStringColumn(tableSummary: TableSummary, columnEntry: StringGridColumn, frequentValueTable: FrequentValuesTable): StringColumnAnalysis {
+function analyzeStringColumn(tableSummary: TableSummary, columnEntry: StringGridColumnGroup, frequentValueTable: FrequentValuesTable): StringColumnAnalysis {
     const totalCountVector = tableSummary.statsTable.getChildAt(tableSummary.statsCountStarField!) as arrow.Vector<arrow.Int64>;
     const notNullCountVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.countField) as arrow.Vector<arrow.Int64>;
     const distinctCountVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.distinctCountField!) as arrow.Vector<arrow.Int64>;
@@ -408,7 +412,7 @@ function analyzeStringColumn(tableSummary: TableSummary, columnEntry: StringGrid
     };
 }
 
-function analyzeListColumn(tableSummary: TableSummary, columnEntry: ListGridColumn, frequentValueTable: FrequentValuesTable): ListColumnAnalysis {
+function analyzeListColumn(tableSummary: TableSummary, columnEntry: ListGridColumnGroup, frequentValueTable: FrequentValuesTable): ListColumnAnalysis {
     const totalCountVector = tableSummary.statsTable.getChildAt(tableSummary.statsCountStarField!) as arrow.Vector<arrow.Int64>;
     const notNullCountVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.countField) as arrow.Vector<arrow.Int64>;
     const distinctCountVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.distinctCountField!) as arrow.Vector<arrow.Int64>;
@@ -449,6 +453,11 @@ function analyzeListColumn(tableSummary: TableSummary, columnEntry: ListGridColu
 }
 
 export async function computeColumnSummary(computationId: number, task: ColumnSummaryTask, dispatch: Dispatch<ComputationAction>, logger: Logger): Promise<ColumnSummaryVariant> {
+    // Fail to compute a column summary on unsupported type
+    if (task.columnEntry.type == SKIPPED_COLUMN || task.columnEntry.type == ROWNUMBER_COLUMN) {
+        throw new Error(`Cannot compute a column summary for type foo ${getGridColumnTypeName(task.columnEntry)}`);
+    }
+
     // Create the transform
     const columnSummaryTransform = createColumnSummaryTransform(task);
 
@@ -519,12 +528,6 @@ export async function computeColumnSummary(computationId: number, task: ColumnSu
                 };
                 break;
             }
-            case SKIPPED_COLUMN:
-                summary = {
-                    type: SKIPPED_COLUMN,
-                    value: null
-                };
-                break;
         }
         // Mark the task as succeeded
         taskProgress = {
