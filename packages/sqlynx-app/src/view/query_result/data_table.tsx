@@ -324,7 +324,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
         }
         if (cellProps.rowIndex == 0) {
             if (cellProps.columnIndex == 0) {
-                return <div className={styles.header_zero_cell} style={cellProps.style}></div>;
+                return <div className={styles.header_corner_cell} style={cellProps.style}></div>;
             } else {
                 const fieldId = gridColumns.columnFields[cellProps.columnIndex];
                 return (
@@ -358,7 +358,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
             const columnSummaryStatus = gridColumns.columnSummariesStatus[cellProps.columnIndex];
 
             if (cellProps.columnIndex == 0) {
-                return <div className={styles.plots_zero_cell} style={cellProps.style} />;
+                return <div className={styles.plots_corner_cell} style={cellProps.style} />;
             } else if (columnSummary == null) {
                 return <div className={classNames(styles.plots_cell, styles.plots_empty_cell)} style={cellProps.style} />;
             } else {
@@ -435,23 +435,17 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                         />
                     )
                 } else {
-                    let focusClass: undefined | string = undefined;
-                    if (dataRow == focusedCells.current?.row) {
-                        if (dataRow == focusedCells.current?.row && columnFieldId == focusedCells.current?.col) {
-                            focusClass = styles.data_cell_focused_primary;
-                        } else {
-                            focusClass = styles.data_cell_focused_secondary;
-                        }
-                    }
-                    let metadataClass: undefined | string = undefined;
-                    if (gridColumns.isMetadataColumn[cellProps.columnIndex] == 1) {
-                        metadataClass = styles.data_cell_metadata;
-                    }
                     const formatted = tableFormatter.getValue(dataRow, columnFieldId);
+                    const focusedRow = focusedCells.current?.row;
+                    const focusedCol = focusedCells.current?.col;
                     if (formatted == null) {
                         return (
                             <div
-                                className={classNames(styles.data_cell, styles.data_cell_null, metadataClass, focusClass)}
+                                className={classNames(styles.data_cell, styles.data_cell_null, {
+                                    [styles.data_cell_focused_primary]: dataRow == focusedRow && columnFieldId == focusedCol,
+                                    [styles.data_cell_focused_secondary]: dataRow == focusedRow && columnFieldId != focusedCol,
+                                    [styles.data_cell_metadata]: gridColumns.isMetadataColumn[cellProps.columnIndex] == 1,
+                                })}
                                 style={cellProps.style}
                                 data-table-col={columnFieldId}
                                 data-table-row={dataRow}
@@ -464,7 +458,11 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                     } else {
                         return (
                             <div
-                                className={classNames(styles.data_cell, metadataClass, focusClass)}
+                                className={classNames(styles.data_cell, {
+                                    [styles.data_cell_focused_primary]: dataRow == focusedRow && columnFieldId == focusedCol,
+                                    [styles.data_cell_focused_secondary]: dataRow == focusedRow && columnFieldId != focusedCol,
+                                    [styles.data_cell_metadata]: gridColumns.isMetadataColumn[cellProps.columnIndex] == 1,
+                                })}
                                 style={cellProps.style}
                                 data-table-col={columnFieldId}
                                 data-table-row={dataRow}

@@ -1,5 +1,12 @@
 :root {
     --data_table_bg_metadata: hsl(210, 29%, 96%);
+    --data_table_bg_corner: hsl(210, 29%, 98%);
+    --data_table_bg_header: hsl(210, 29%, 98%);
+    --data_table_bg_data: white;
+    --data_table_bg_plots: hsl(210, 29%, 98%);
+    --data_table_bg_focus_primary: hsl(46deg, 36%, 90%);
+    --data_table_bg_focus_secondary: hsl(46deg, 36%, 94%);
+    --data_table_border_focus_primary: hsl(46deg, 36%, 60%);
 }
 
 .root {
@@ -41,8 +48,8 @@
 
 }
 
-.header_zero_cell {
-    background-color: hsl(210, 29%, 98%);
+.header_corner_cell {
+    background-color: var(--data_table_bg_corner);
     border-right: 1px solid rgb(210, 210, 210);
     border-bottom: 1px solid rgb(210, 210, 210);
     box-sizing: border-box;
@@ -58,7 +65,7 @@
 }
 
 .plots_cell {
-    background-color: hsl(210, 29%, 98%);
+    background-color: var(--data_table_bg_plots);
     border-right: 1px solid rgb(210, 210, 210);
     border-bottom: 1px solid rgb(210, 210, 210);
     box-sizing: border-box;
@@ -89,8 +96,8 @@
     height: 36px;
 }
 
-.plots_zero_cell {
-    background-color: hsl(210, 29%, 98%);
+.plots_corner_cell {
+    background-color: var(--data_table_bg_corner);
     border-right: 1px solid rgb(210, 210, 210);
     border-bottom: 1px solid rgb(210, 210, 210);
     box-sizing: border-box;
@@ -106,7 +113,7 @@
 }
 
 .row_header_cell {
-    background-color: hsl(210, 29%, 98%);
+    background-color: var(--data_table_bg_header);
     border-right: 1px solid rgb(210, 210, 210);
     border-bottom: 1px solid rgb(210, 210, 210);
     box-sizing: border-box;
@@ -124,7 +131,7 @@
 }
 
 .data_cell {
-    background-color: white;
+    background-color: var(--data_table_bg_data);
     border-right: 1px solid rgb(210, 210, 210);
     border-bottom: 1px solid rgb(210, 210, 210);
     border-left: 1px solid transparent;
@@ -148,11 +155,11 @@
 }
 
 .data_cell_focused_primary {
-    background-color: hsl(46deg, 36%, 90%);
-    border: 1px solid hsl(46deg, 36%, 60%);
+    background-color: var(--data_table_bg_focus_primary);
+    border: 1px solid var(--data_table_border_focus_primary);
     z-index: 1;
 }
 
 .data_cell_focused_secondary {
-    background-color: hsl(46deg, 36%, 94%);
+    background-color: var(--data_table_bg_focus_secondary);
 }
