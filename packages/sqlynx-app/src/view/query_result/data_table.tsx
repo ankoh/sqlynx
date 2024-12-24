@@ -28,6 +28,7 @@ interface Props {
 const MIN_GRID_HEIGHT = 200;
 const MIN_GRID_WIDTH = 100;
 const MIN_COLUMN_WIDTH = 120;
+const COLUMN_HEADER_ACTION_WIDTH = 24;
 const COLUMN_HEADER_HEIGHT = 32;
 const COLUMN_HEADER_PLOTS_HEIGHT = 72;
 const ROW_HEIGHT = 26;
@@ -71,6 +72,7 @@ interface GridColumns {
     columnOffsets: Float64Array;
     columnSummaries: (ColumnSummaryVariant | null)[];
     columnSummariesStatus: (TaskStatus | null)[];
+    isMetadataColumn: Uint8Array;
 }
 
 function computeGridColumns(formatter: ArrowTableFormatter, state: TableComputationState, showMetaColumns: boolean): GridColumns {
@@ -80,6 +82,7 @@ function computeGridColumns(formatter: ArrowTableFormatter, state: TableComputat
     const columnOffsets = new Float64Array(columnCount + 1);
     const columnSummaries: (ColumnSummaryVariant | null)[] = new Array(columnCount).fill(null);
     const columnSummariesStatus: (TaskStatus | null)[] = new Array(columnCount).fill(null);
+    const isMetadataColumn = new Uint8Array(columnCount);
 
     // Allocate column offsets
     let nextDisplayColumn = 0;
@@ -100,7 +103,9 @@ function computeGridColumns(formatter: ArrowTableFormatter, state: TableComputat
                 const valueColumnId = nextDisplayColumn++;
                 const valueColumn = formatter.columns[columnGroup.value.inputFieldId];
                 const valueColumnWidth = Math.max(
-                    Math.max(valueColumn.getLayoutInfo().valueAvgWidth, valueColumn.getColumnName().length) * FORMATTER_PIXEL_SCALING,
+                    COLUMN_HEADER_ACTION_WIDTH + Math.max(
+                        valueColumn.getLayoutInfo().valueAvgWidth,
+                        valueColumn.getColumnName().length) * FORMATTER_PIXEL_SCALING,
                     MIN_COLUMN_WIDTH
                 );
                 columnFields[valueColumnId] = columnGroup.value.inputFieldId;
@@ -112,13 +117,14 @@ function computeGridColumns(formatter: ArrowTableFormatter, state: TableComputat
                     const idColumnId = nextDisplayColumn++;
                     const idColumn = formatter.columns[columnGroup.value.binField];
                     const idColumnWidth = Math.max(
-                        Math.max(
+                        COLUMN_HEADER_ACTION_WIDTH + Math.max(
                             idColumn.getLayoutInfo().valueAvgWidth,
                             idColumn.getColumnName().length) * FORMATTER_PIXEL_SCALING,
                         MIN_COLUMN_WIDTH
                     );
                     columnFields[idColumnId] = columnGroup.value.binField;
                     columnOffsets[idColumnId] = nextDisplayOffset;
+                    isMetadataColumn[idColumnId] = 1;
                     nextDisplayOffset += idColumnWidth;
                 }
                 break;
@@ -127,7 +133,7 @@ function computeGridColumns(formatter: ArrowTableFormatter, state: TableComputat
                 const valueColumnId = nextDisplayColumn++;
                 const valueColumn = formatter.columns[columnGroup.value.inputFieldId];
                 const valueColumnWidth = Math.max(
-                    Math.max(
+                    COLUMN_HEADER_ACTION_WIDTH + Math.max(
                         valueColumn.getLayoutInfo().valueAvgWidth,
                         valueColumn.getColumnName().length) * FORMATTER_PIXEL_SCALING,
                     MIN_COLUMN_WIDTH
@@ -141,13 +147,14 @@ function computeGridColumns(formatter: ArrowTableFormatter, state: TableComputat
                     const idColumnId = nextDisplayColumn++;
                     const idColumn = formatter.columns[columnGroup.value.valueIdField];
                     const idColumnWidth = Math.max(
-                        Math.max(
+                        COLUMN_HEADER_ACTION_WIDTH + Math.max(
                             idColumn.getLayoutInfo().valueAvgWidth,
                             idColumn.getColumnName().length) * FORMATTER_PIXEL_SCALING,
                         MIN_COLUMN_WIDTH
                     );
                     columnFields[idColumnId] = columnGroup.value.valueIdField;
                     columnOffsets[idColumnId] = nextDisplayOffset;
+                    isMetadataColumn[idColumnId] = 1;
                     nextDisplayOffset += idColumnWidth;
                 }
                 break;
@@ -162,7 +169,8 @@ function computeGridColumns(formatter: ArrowTableFormatter, state: TableComputat
         columnFields,
         columnOffsets,
         columnSummaries,
-        columnSummariesStatus
+        columnSummariesStatus,
+        isMetadataColumn
     };
 }
 
@@ -240,7 +248,8 @@ export const DataTable: React.FC<Props> = (props: Props) => {
         columnFields: new Uint32Array(),
         columnOffsets: new Float64Array([0]),
         columnSummaries: [],
-        columnSummariesStatus: []
+        columnSummariesStatus: [],
+        isMetadataColumn: new Uint8Array(),
     });
     React.useEffect(() => {
         if (tableFormatter) {
@@ -319,7 +328,12 @@ export const DataTable: React.FC<Props> = (props: Props) => {
             } else {
                 const fieldId = gridColumns.columnFields[cellProps.columnIndex];
                 return (
-                    <div className={styles.header_cell} style={cellProps.style}>
+                    <div
+                        className={classNames(styles.header_cell, {
+                            [styles.header_metadata_cell]: gridColumns.isMetadataColumn[cellProps.columnIndex] == 1
+                        })}
+                        style={cellProps.style}
+                    >
                         <span className={styles.header_cell_name}>
                             {table.schema.fields[fieldId].name}
                         </span>
@@ -344,14 +358,14 @@ export const DataTable: React.FC<Props> = (props: Props) => {
             const columnSummaryStatus = gridColumns.columnSummariesStatus[cellProps.columnIndex];
 
             if (cellProps.columnIndex == 0) {
-                return <div className={styles.plots_zero_cell} style={cellProps.style}></div>;
+                return <div className={styles.plots_zero_cell} style={cellProps.style} />;
             } else if (columnSummary == null) {
-                return <div className={styles.plots_precomputed_cell} style={cellProps.style}></div>;
+                return <div className={classNames(styles.plots_cell, styles.plots_empty_cell)} style={cellProps.style} />;
             } else {
                 const tableSummary = computationState.tableSummary;
                 if (tableSummary == null) {
                     return (
-                        <div className={classNames(styles.plots_cell)} style={cellProps.style}>
+                        <div className={styles.plots_cell} style={cellProps.style}>
                             Table summary is null
                         </div>
                     );
@@ -393,15 +407,21 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                 }
             }
         } else {
+            const columnFieldId = gridColumns.columnFields[cellProps.columnIndex];
+            const dataRow = cellProps.rowIndex - headerRowCount;
+
             if (cellProps.columnIndex == 0) {
                 return (
-                    <div className={styles.row_zero_cell} style={cellProps.style}>
+                    <div
+                        className={classNames(styles.row_header_cell, {
+                            [styles.data_cell_focused_secondary]: dataRow == focusedCells.current?.row
+                        })}
+                        style={cellProps.style}
+                    >
                         {cellProps.rowIndex - headerRowCount}
                     </div>
                 );
             } else {
-                const columnFieldId = gridColumns.columnFields[cellProps.columnIndex];
-                const dataRow = cellProps.rowIndex - headerRowCount;
 
                 if (!tableFormatter) {
                     return (
@@ -423,11 +443,15 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                             focusClass = styles.data_cell_focused_secondary;
                         }
                     }
+                    let metadataClass: undefined | string = undefined;
+                    if (gridColumns.isMetadataColumn[cellProps.columnIndex] == 1) {
+                        metadataClass = styles.data_cell_metadata;
+                    }
                     const formatted = tableFormatter.getValue(dataRow, columnFieldId);
                     if (formatted == null) {
                         return (
                             <div
-                                className={classNames(styles.data_cell, styles.data_cell_null, focusClass)}
+                                className={classNames(styles.data_cell, styles.data_cell_null, metadataClass, focusClass)}
                                 style={cellProps.style}
                                 data-table-col={columnFieldId}
                                 data-table-row={dataRow}
@@ -440,7 +464,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                     } else {
                         return (
                             <div
-                                className={classNames(styles.data_cell, focusClass)}
+                                className={classNames(styles.data_cell, metadataClass, focusClass)}
                                 style={cellProps.style}
                                 data-table-col={columnFieldId}
                                 data-table-row={dataRow}

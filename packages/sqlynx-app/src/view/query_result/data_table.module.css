@@ -1,3 +1,7 @@
+:root {
+    --data_table_bg_metadata: hsl(210, 29%, 96%);
+}
+
 .root {
     width: 100%;
     height: 100%;
@@ -23,6 +27,10 @@
 
     /* Needed for inline-flex alignment */
     vertical-align: top;
+}
+
+.header_metadata_cell {
+    background-color: var(--data_table_bg_metadata);
 }
 
 .header_cell_name {
@@ -63,6 +71,10 @@
     vertical-align: top;
 }
 
+.plots_empty_cell {
+    background-color: var(--data_table_bg_metadata);
+}
+
 .plots_progress {
     width: 100%;
     height: 100%;
@@ -93,19 +105,7 @@
     vertical-align: top;
 }
 
-.plots_precomputed_cell {
-    background-color: hsl(210, 29%, 98%);
-    border-right: 1px solid rgb(210, 210, 210);
-    border-bottom: 1px solid rgb(210, 210, 210);
-    box-sizing: border-box;
-
-    /* Needed for inline-flex alignment */
-    vertical-align: top;
-
-    z-index: 2;
-}
-
-.row_zero_cell {
+.row_header_cell {
     background-color: hsl(210, 29%, 98%);
     border-right: 1px solid rgb(210, 210, 210);
     border-bottom: 1px solid rgb(210, 210, 210);
@@ -139,16 +139,20 @@
     vertical-align: top;
 }
 
+.data_cell_metadata {
+    background-color: var(--data_table_bg_metadata);
+}
+
 .data_cell_null {
     color: hsl(208.5deg, 14.69%, 78.76%);
 }
 
 .data_cell_focused_primary {
-    background-color: hsl(208.5deg, 14.69%, 90.76%);
-    border: 1px solid hsl(208.5deg 20.69% 50.76%);
+    background-color: hsl(46deg, 36%, 90%);
+    border: 1px solid hsl(46deg, 36%, 60%);
     z-index: 1;
 }
 
 .data_cell_focused_secondary {
-    background-color: hsl(208.5deg, 14.69%, 95.76%);
+    background-color: hsl(46deg, 36%, 94%);
 }

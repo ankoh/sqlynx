@@ -97,8 +97,6 @@ export function useStickyRowAndColumnHeaders(Cell: React.ElementType, cellLocati
                     const rowIndex = minRow + i;
                     const columnIndex = 0;
 
-                    console.log(cellLocation.getColumnWidth(columnIndex));
-
                     newChildren.push(
                         React.createElement(Cell, {
                             key: `${rowIndex}:${columnIndex}`,
