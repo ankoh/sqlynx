@@ -230,7 +230,6 @@ export const DataTable: React.FC<Props> = (props: Props) => {
 
     /// Construct the arrow formatter
     const tableFormatter = React.useMemo(() => {
-        console.log(`NEW TABLE`);
         return new ArrowTableFormatter(table.schema, table.batches);
     }, [table]);
 
@@ -246,7 +245,6 @@ export const DataTable: React.FC<Props> = (props: Props) => {
         if (tableFormatter) {
             const newGridLayout = computeGridLayout(tableFormatter, computationState, SHOW_METADATA_COLUMNS);
             if (!skipGridLayoutUpdate(gridLayout, newGridLayout)) {
-                console.log("NEW GRID Layout")
                 setGridLayout(newGridLayout);
             }
         }
@@ -474,7 +472,8 @@ export const DataTable: React.FC<Props> = (props: Props) => {
     }, [
         gridLayout,
         computationState.columnGroupSummaries,
-        computationState.columnGroupSummariesStatus
+        computationState.columnGroupSummariesStatus,
+        tableFormatter
     ]);
 
     // Inner grid element type to render sticky row and column headers
