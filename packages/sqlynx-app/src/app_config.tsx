@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Resolvable, ResolvableMapper } from './utils/resolvable.js';
+import { StatePromise, StatePromiseMapper } from './utils/state_promise.js';
 import { ConnectorConfigs, readConnectorConfigs } from './connectors/connector_configs.js';
 import { useLogger } from './platform/logger_provider.js';
 import { SQLYNX_BUILD_MODE } from './globals.js';
@@ -27,8 +27,8 @@ export function readAppConfig(object: Record<string, object>): AppConfig {
     return object as AppConfig;
 }
 
-const configCtx = React.createContext<Resolvable<AppConfig> | null>(null);
-const reconfigureCtx = React.createContext<((sub: ResolvableMapper<AppConfig>) => void) | null>(null);
+const configCtx = React.createContext<StatePromise<AppConfig> | null>(null);
+const reconfigureCtx = React.createContext<((sub: StatePromiseMapper<AppConfig>) => void) | null>(null);
 
 type Props = {
     children: React.ReactElement;
@@ -36,7 +36,7 @@ type Props = {
 
 export const AppConfigProvider: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
-    const [config, setConfig] = React.useState<Resolvable<AppConfig>>(new Resolvable<AppConfig>());
+    const [config, setConfig] = React.useState<StatePromise<AppConfig>>(new StatePromise<AppConfig>());
     const started = React.useRef<boolean>(false);
     if (!started.current) {
         started.current = true;
@@ -57,7 +57,7 @@ export const AppConfigProvider: React.FC<Props> = (props: Props) => {
         };
         resolve();
     }
-    const reconfigure = React.useCallback((mapper: ResolvableMapper<AppConfig>) => {
+    const reconfigure = React.useCallback((mapper: StatePromiseMapper<AppConfig>) => {
         if (SQLYNX_BUILD_MODE == 'development') {
             logger.info(`reconfigure application`, "app_config");
         }
@@ -70,5 +70,5 @@ export const AppConfigProvider: React.FC<Props> = (props: Props) => {
     );
 };
 
-export const useAppConfig = (): Resolvable<AppConfig> => React.useContext(configCtx)!;
-export const useAppReconfigure = (): ((sub: ResolvableMapper<AppConfig>) => void) => React.useContext(reconfigureCtx)!;
+export const useAppConfig = (): StatePromise<AppConfig> => React.useContext(configCtx)!;
+export const useAppReconfigure = (): ((sub: StatePromiseMapper<AppConfig>) => void) => React.useContext(reconfigureCtx)!;
