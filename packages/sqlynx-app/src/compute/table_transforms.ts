@@ -661,10 +661,21 @@ export function createPrecomputationTransform(schema: arrow.Schema, columns: Gri
         }
     }
 
+    const ordering = new proto.sqlynx_compute.pb.OrderByTransform({
+        constraints: [
+            new proto.sqlynx_compute.pb.OrderByConstraint({
+                fieldName: rowNumberFieldName,
+                ascending: true,
+                nullsFirst: false
+            })
+        ]
+    });
+
     const transform = new proto.sqlynx_compute.pb.DataFrameTransform({
         rowNumber: rowNumberTransform,
         valueIdentifiers: identifierTransforms,
-        binning: binningTransforms
+        binning: binningTransforms,
+        orderBy: ordering
     });
     return [transform, gridColumns];
 }

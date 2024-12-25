@@ -290,18 +290,18 @@ export const DataTable: React.FC<Props> = (props: Props) => {
         }
     }, [computationState, dispatchComputation, logger]);
 
-    const focusedCells = React.useRef<{ row: number | null, col: number | null }>();
+    const focusedCells = React.useRef<{ row: number | null, field: number | null }>();
 
     const onMouseEnterCell: React.PointerEventHandler<HTMLDivElement> = React.useCallback((event: React.PointerEvent<HTMLDivElement>) => {
         const tableRow = Number.parseInt(event.currentTarget.dataset["tableRow"]!);
         const tableCol = Number.parseInt(event.currentTarget.dataset["tableCol"]!);
-        focusedCells.current = { row: tableRow, col: tableCol };
+        focusedCells.current = { row: tableRow, field: tableCol };
         dataGrid.current?.resetAfterColumnIndex(0);
     }, []);
     const onMouseLeaveCell: React.PointerEventHandler<HTMLDivElement> = React.useCallback((event: React.PointerEvent<HTMLDivElement>) => {
         const tableRow = Number.parseInt(event.currentTarget.dataset["tableRow"]!);
         const tableCol = Number.parseInt(event.currentTarget.dataset["tableCol"]!);
-        focusedCells.current = { row: tableRow, col: tableCol };
+        focusedCells.current = { row: tableRow, field: tableCol };
         dataGrid.current?.resetAfterColumnIndex(0);
     }, []);
 
@@ -310,11 +310,28 @@ export const DataTable: React.FC<Props> = (props: Props) => {
         if (cellProps.columnIndex >= gridLayout.columnFields.length) {
             return <div />;
         }
+        const fieldId = gridLayout.columnFields[cellProps.columnIndex];
+
         if (cellProps.rowIndex == 0) {
             if (cellProps.columnIndex == 0) {
-                return <div className={styles.header_corner_cell} style={cellProps.style}></div>;
+                return (
+                    <div className={styles.header_corner_cell} style={cellProps.style}>
+                        <span className={styles.header_cell_actions}>
+                            <IconButton
+                                variant={ButtonVariant.Invisible}
+                                size={ButtonSize.Small}
+                                aria-label="sort-column"
+                                onClick={() => orderByColumn(fieldId)}
+                                disabled={computationState.dataFrame == null}
+                            >
+                                <svg width="16px" height="16px">
+                                    <use xlinkHref={`${symbols}#sort_desc_16`} />
+                                </svg>
+                            </IconButton>
+                        </span>
+                    </div>
+                );
             } else {
-                const fieldId = gridLayout.columnFields[cellProps.columnIndex];
                 return (
                     <div
                         className={classNames(styles.header_cell, {
@@ -342,6 +359,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                 );
             }
         } else if (cellProps.rowIndex == 1 && columnHeader == DataTableColumnHeader.WithColumnPlots) {
+            // Resolve the column summary
             let columnSummary: ColumnSummaryVariant | null = null;
             let columnSummaryStatus: TaskStatus | null = null;
             const columnSummaryId = gridLayout.columnSummaryIds[cellProps.columnIndex];
@@ -350,11 +368,14 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                 columnSummaryStatus = computationState.columnGroupSummariesStatus[columnSummaryId];
             }
 
+            // Special case, corner cell, top-left
             if (cellProps.columnIndex == 0) {
                 return <div className={styles.plots_corner_cell} style={cellProps.style} />;
             } else if (columnSummary == null) {
+                // Special case, cell without summary
                 return <div className={classNames(styles.plots_cell, styles.plots_empty_cell)} style={cellProps.style} />;
             } else {
+                // Check summary status
                 const tableSummary = computationState.tableSummary;
                 if (tableSummary == null) {
                     return (
@@ -400,72 +421,78 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                 }
             }
         } else {
-            const columnFieldId = gridLayout.columnFields[cellProps.columnIndex];
+            // Otherwise, it's a normal data cell
             const dataRow = cellProps.rowIndex - headerRowCount;
 
+            // Abort if no formatter is available
+            if (!tableFormatter) {
+                return (
+                    <div
+                        className={styles.data_cell}
+                        style={cellProps.style}
+                        data-table-col={fieldId}
+                        data-table-row={dataRow}
+                        onMouseEnter={onMouseEnterCell}
+                        onMouseLeave={onMouseLeaveCell}
+                    />
+                )
+            }
+
+            // Format the value
+            const formatted = tableFormatter.getValue(dataRow, fieldId);
+            const focusedRow = focusedCells.current?.row;
+            const focusedCol = focusedCells.current?.field;
+
             if (cellProps.columnIndex == 0) {
+                // Tread the row number column separately
                 return (
                     <div
                         className={classNames(styles.row_header_cell, {
-                            [styles.data_cell_focused_secondary]: dataRow == focusedCells.current?.row
+                            [styles.data_cell_focused_secondary]: dataRow == focusedRow,
                         })}
                         style={cellProps.style}
                     >
-                        {cellProps.rowIndex - headerRowCount}
+                        {formatted ?? ""}
                     </div>
                 );
             } else {
-
-                if (!tableFormatter) {
+                // Is the value NULL?
+                // We want to format the cell differently
+                if (formatted == null) {
                     return (
                         <div
-                            className={styles.data_cell}
+                            className={classNames(styles.data_cell, styles.data_cell_null, {
+                                [styles.data_cell_focused_primary]: dataRow == focusedRow && fieldId == focusedCol,
+                                [styles.data_cell_focused_secondary]: dataRow == focusedRow && fieldId != focusedCol,
+                                [styles.data_cell_metadata]: gridLayout.isMetadataColumn[cellProps.columnIndex] == 1,
+                            })}
                             style={cellProps.style}
-                            data-table-col={columnFieldId}
+                            data-table-col={fieldId}
                             data-table-row={dataRow}
                             onMouseEnter={onMouseEnterCell}
                             onMouseLeave={onMouseLeaveCell}
-                        />
-                    )
+                        >
+                            NULL
+                        </div>
+                    );
                 } else {
-                    const formatted = tableFormatter.getValue(dataRow, columnFieldId);
-                    const focusedRow = focusedCells.current?.row;
-                    const focusedCol = focusedCells.current?.col;
-                    if (formatted == null) {
-                        return (
-                            <div
-                                className={classNames(styles.data_cell, styles.data_cell_null, {
-                                    [styles.data_cell_focused_primary]: dataRow == focusedRow && columnFieldId == focusedCol,
-                                    [styles.data_cell_focused_secondary]: dataRow == focusedRow && columnFieldId != focusedCol,
-                                    [styles.data_cell_metadata]: gridLayout.isMetadataColumn[cellProps.columnIndex] == 1,
-                                })}
-                                style={cellProps.style}
-                                data-table-col={columnFieldId}
-                                data-table-row={dataRow}
-                                onMouseEnter={onMouseEnterCell}
-                                onMouseLeave={onMouseLeaveCell}
-                            >
-                                NULL
-                            </div>
-                        );
-                    } else {
-                        return (
-                            <div
-                                className={classNames(styles.data_cell, {
-                                    [styles.data_cell_focused_primary]: dataRow == focusedRow && columnFieldId == focusedCol,
-                                    [styles.data_cell_focused_secondary]: dataRow == focusedRow && columnFieldId != focusedCol,
-                                    [styles.data_cell_metadata]: gridLayout.isMetadataColumn[cellProps.columnIndex] == 1,
-                                })}
-                                style={cellProps.style}
-                                data-table-col={columnFieldId}
-                                data-table-row={dataRow}
-                                onMouseEnter={onMouseEnterCell}
-                                onMouseLeave={onMouseLeaveCell}
-                            >
-                                {formatted}
-                            </div>
-                        );
-                    }
+                    // Otherwise draw a normal cell
+                    return (
+                        <div
+                            className={classNames(styles.data_cell, {
+                                [styles.data_cell_focused_primary]: dataRow == focusedRow && fieldId == focusedCol,
+                                [styles.data_cell_focused_secondary]: dataRow == focusedRow && fieldId != focusedCol,
+                                [styles.data_cell_metadata]: gridLayout.isMetadataColumn[cellProps.columnIndex] == 1,
+                            })}
+                            style={cellProps.style}
+                            data-table-col={fieldId}
+                            data-table-row={dataRow}
+                            onMouseEnter={onMouseEnterCell}
+                            onMouseLeave={onMouseLeaveCell}
+                        >
+                            {formatted}
+                        </div>
+                    );
                 }
             }
         }
