@@ -7,13 +7,14 @@ import { Button } from '../view/foundations/button.js';
 
 import { AnchoredOverlay } from './foundations/anchored_overlay.js';
 import { AnchorAlignment, AnchorSide } from './foundations/anchored_position.js';
-import { AppConfig, useAppReconfigure } from '../app_config.js';
+import { AppConfig, useAppConfig, useAppReconfigure } from '../app_config.js';
 
 interface VersionViewerProps {
     onClose: () => void;
 }
 
 export const InternalsViewer: React.FC<VersionViewerProps> = (props: VersionViewerProps) => {
+    const config = useAppConfig();
     const reconfigure = useAppReconfigure();
     const toggleDebugMode = React.useCallback(() => {
         reconfigure({
@@ -28,6 +29,7 @@ export const InternalsViewer: React.FC<VersionViewerProps> = (props: VersionView
         });
         props.onClose();
     }, []);
+    const interfaceDebugMode = config.value?.settings?.interfaceDebugMode ?? false;
 
     return (
         <div className={styles.overlay}>
@@ -50,7 +52,9 @@ export const InternalsViewer: React.FC<VersionViewerProps> = (props: VersionView
                         Debug Mode
                     </div>
                     <div className={styles.setting_switch}>
-                        <Button onClick={toggleDebugMode}>Enable</Button>
+                        <Button onClick={toggleDebugMode}>
+                            {interfaceDebugMode ? "Disable" : "Enable"}
+                        </Button>
                     </div>
                 </div>
             </div>
