@@ -36,7 +36,7 @@ const ROW_HEADER_WIDTH = 48;
 const FORMATTER_PIXEL_SCALING = 10;
 const OVERSCAN_ROW_COUNT = 30;
 
-const SHOW_METADATA_COLUMNS = true;
+const SHOW_METADATA_COLUMNS = false;
 
 function computeColumnCount(columnGroups: GridColumnGroup[], showMetaColumns: boolean): number {
     let columnCount = 0;
@@ -65,24 +65,25 @@ function computeColumnCount(columnGroups: GridColumnGroup[], showMetaColumns: bo
     return columnCount;
 }
 
-interface GridColumns {
-    formatter: ArrowTableFormatter;
+interface GridLayout {
     columnCount: number;
     columnFields: Uint32Array;
     columnOffsets: Float64Array;
-    columnSummaries: (ColumnSummaryVariant | null)[];
-    columnSummariesStatus: (TaskStatus | null)[];
+    columnSummaryIds: Int32Array;
     isMetadataColumn: Uint8Array;
 }
 
-function computeGridColumns(formatter: ArrowTableFormatter, state: TableComputationState, showMetaColumns: boolean): GridColumns {
+function computeGridLayout(formatter: ArrowTableFormatter, state: TableComputationState, showMetaColumns: boolean): GridLayout {
     // Allocate column offsets
     let columnCount = computeColumnCount(state.columnGroups, showMetaColumns);
     const columnFields = new Uint32Array(columnCount);
     const columnOffsets = new Float64Array(columnCount + 1);
-    const columnSummaries: (ColumnSummaryVariant | null)[] = new Array(columnCount).fill(null);
-    const columnSummariesStatus: (TaskStatus | null)[] = new Array(columnCount).fill(null);
+    const columnSummaryIndex = new Int32Array(columnCount);
     const isMetadataColumn = new Uint8Array(columnCount);
+
+    for (let i = 0; i < columnCount; ++i) {
+        columnSummaryIndex[i] = -1;
+    }
 
     // Allocate column offsets
     let nextDisplayColumn = 0;
@@ -110,8 +111,7 @@ function computeGridColumns(formatter: ArrowTableFormatter, state: TableComputat
                 );
                 columnFields[valueColumnId] = columnGroup.value.inputFieldId;
                 columnOffsets[valueColumnId] = nextDisplayOffset;
-                columnSummaries[valueColumnId] = state.columnGroupSummaries[groupIndex];
-                columnSummariesStatus[valueColumnId] = state.columnGroupSummariesStatus[groupIndex];
+                columnSummaryIndex[valueColumnId] = groupIndex;
                 nextDisplayOffset += valueColumnWidth;
                 if (showMetaColumns && columnGroup.value.binField != null) {
                     const idColumnId = nextDisplayColumn++;
@@ -140,8 +140,7 @@ function computeGridColumns(formatter: ArrowTableFormatter, state: TableComputat
                 );
                 columnFields[valueColumnId] = columnGroup.value.inputFieldId;
                 columnOffsets[valueColumnId] = nextDisplayOffset;
-                columnSummaries[valueColumnId] = state.columnGroupSummaries[groupIndex];
-                columnSummariesStatus[valueColumnId] = state.columnGroupSummariesStatus[groupIndex];
+                columnSummaryIndex[valueColumnId] = groupIndex;
                 nextDisplayOffset += valueColumnWidth;
                 if (showMetaColumns && columnGroup.value.valueIdField != null) {
                     const idColumnId = nextDisplayColumn++;
@@ -164,28 +163,21 @@ function computeGridColumns(formatter: ArrowTableFormatter, state: TableComputat
     columnOffsets[nextDisplayColumn] = nextDisplayOffset;
 
     return {
-        formatter,
         columnCount,
         columnFields,
         columnOffsets,
-        columnSummaries,
-        columnSummariesStatus,
+        columnSummaryIds: columnSummaryIndex,
         isMetadataColumn
     };
 }
 
-function skipGridColumnUpdate(old: GridColumns, next: GridColumns) {
-    if (old.columnOffsets.length != next.columnOffsets.length && old.columnSummaries.length != next.columnSummaries.length) {
+function skipGridLayoutUpdate(old: GridLayout, next: GridLayout) {
+    if (old.columnOffsets.length != next.columnOffsets.length) {
         return false;
     }
     for (let i = 0; i < old.columnOffsets.length; ++i) {
         const delta = next.columnOffsets[i] - old.columnOffsets[i];
         if (delta > 0.01) {
-            return false;
-        }
-    }
-    for (let i = 0; i < old.columnSummaries.length; ++i) {
-        if (next.columnSummaries[i] !== old.columnSummaries[i] || next.columnSummariesStatus[i] !== old.columnSummariesStatus[i]) {
             return false;
         }
     }
@@ -238,31 +230,29 @@ export const DataTable: React.FC<Props> = (props: Props) => {
 
     /// Construct the arrow formatter
     const tableFormatter = React.useMemo(() => {
+        console.log(`NEW TABLE`);
         return new ArrowTableFormatter(table.schema, table.batches);
     }, [table]);
 
     // Determine grid dimensions and column widths
-    const [gridColumns, setGridColumns] = React.useState<GridColumns>({
-        formatter: tableFormatter,
+    const [gridLayout, setGridLayout] = React.useState<GridLayout>({
         columnCount: 0,
         columnFields: new Uint32Array(),
         columnOffsets: new Float64Array([0]),
-        columnSummaries: [],
-        columnSummariesStatus: [],
+        columnSummaryIds: new Int32Array(),
         isMetadataColumn: new Uint8Array(),
     });
     React.useEffect(() => {
         if (tableFormatter) {
-            const newGridColumns = computeGridColumns(tableFormatter, computationState, SHOW_METADATA_COLUMNS);
-            if (!skipGridColumnUpdate(gridColumns, newGridColumns)) {
-                setGridColumns(newGridColumns);
+            const newGridLayout = computeGridLayout(tableFormatter, computationState, SHOW_METADATA_COLUMNS);
+            if (!skipGridLayoutUpdate(gridLayout, newGridLayout)) {
+                console.log("NEW GRID Layout")
+                setGridLayout(newGridLayout);
             }
         }
     }, [
-        gridColumns,
+        gridLayout,
         computationState.columnGroups,
-        computationState.columnGroupSummaries,
-        computationState.columnGroupSummariesStatus,
         tableFormatter,
     ]);
 
@@ -270,9 +260,9 @@ export const DataTable: React.FC<Props> = (props: Props) => {
     const gridCellLocation = React.useMemo<GridCellLocation>(() => ({
         getRowHeight,
         getRowOffset,
-        getColumnWidth: (column: number) => gridColumns.columnOffsets[column + 1] - gridColumns.columnOffsets[column],
-        getColumnOffset: (column: number) => gridColumns.columnOffsets[column],
-    }), [gridColumns]);
+        getColumnWidth: (column: number) => gridLayout.columnOffsets[column + 1] - gridLayout.columnOffsets[column],
+        getColumnOffset: (column: number) => gridLayout.columnOffsets[column],
+    }), [gridLayout]);
 
     // Rerender grids when the column widths change
     React.useEffect(() => {
@@ -319,18 +309,18 @@ export const DataTable: React.FC<Props> = (props: Props) => {
 
     // Helper to render a data cell
     const Cell = React.useCallback((cellProps: GridChildComponentProps) => {
-        if (cellProps.columnIndex >= gridColumns.columnFields.length) {
+        if (cellProps.columnIndex >= gridLayout.columnFields.length) {
             return <div />;
         }
         if (cellProps.rowIndex == 0) {
             if (cellProps.columnIndex == 0) {
                 return <div className={styles.header_corner_cell} style={cellProps.style}></div>;
             } else {
-                const fieldId = gridColumns.columnFields[cellProps.columnIndex];
+                const fieldId = gridLayout.columnFields[cellProps.columnIndex];
                 return (
                     <div
                         className={classNames(styles.header_cell, {
-                            [styles.header_metadata_cell]: gridColumns.isMetadataColumn[cellProps.columnIndex] == 1
+                            [styles.header_metadata_cell]: gridLayout.isMetadataColumn[cellProps.columnIndex] == 1
                         })}
                         style={cellProps.style}
                     >
@@ -354,8 +344,13 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                 );
             }
         } else if (cellProps.rowIndex == 1 && columnHeader == DataTableColumnHeader.WithColumnPlots) {
-            const columnSummary = gridColumns.columnSummaries[cellProps.columnIndex];
-            const columnSummaryStatus = gridColumns.columnSummariesStatus[cellProps.columnIndex];
+            let columnSummary: ColumnSummaryVariant | null = null;
+            let columnSummaryStatus: TaskStatus | null = null;
+            const columnSummaryId = gridLayout.columnSummaryIds[cellProps.columnIndex];
+            if (columnSummaryId != -1) {
+                columnSummary = computationState.columnGroupSummaries[columnSummaryId];
+                columnSummaryStatus = computationState.columnGroupSummariesStatus[columnSummaryId];
+            }
 
             if (cellProps.columnIndex == 0) {
                 return <div className={styles.plots_corner_cell} style={cellProps.style} />;
@@ -407,7 +402,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                 }
             }
         } else {
-            const columnFieldId = gridColumns.columnFields[cellProps.columnIndex];
+            const columnFieldId = gridLayout.columnFields[cellProps.columnIndex];
             const dataRow = cellProps.rowIndex - headerRowCount;
 
             if (cellProps.columnIndex == 0) {
@@ -444,7 +439,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                                 className={classNames(styles.data_cell, styles.data_cell_null, {
                                     [styles.data_cell_focused_primary]: dataRow == focusedRow && columnFieldId == focusedCol,
                                     [styles.data_cell_focused_secondary]: dataRow == focusedRow && columnFieldId != focusedCol,
-                                    [styles.data_cell_metadata]: gridColumns.isMetadataColumn[cellProps.columnIndex] == 1,
+                                    [styles.data_cell_metadata]: gridLayout.isMetadataColumn[cellProps.columnIndex] == 1,
                                 })}
                                 style={cellProps.style}
                                 data-table-col={columnFieldId}
@@ -461,7 +456,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                                 className={classNames(styles.data_cell, {
                                     [styles.data_cell_focused_primary]: dataRow == focusedRow && columnFieldId == focusedCol,
                                     [styles.data_cell_focused_secondary]: dataRow == focusedRow && columnFieldId != focusedCol,
-                                    [styles.data_cell_metadata]: gridColumns.isMetadataColumn[cellProps.columnIndex] == 1,
+                                    [styles.data_cell_metadata]: gridLayout.isMetadataColumn[cellProps.columnIndex] == 1,
                                 })}
                                 style={cellProps.style}
                                 data-table-col={columnFieldId}
@@ -476,7 +471,11 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                 }
             }
         }
-    }, [gridColumns]);
+    }, [
+        gridLayout,
+        computationState.columnGroupSummaries,
+        computationState.columnGroupSummariesStatus
+    ]);
 
     // Inner grid element type to render sticky row and column headers
     const innerGridElementType = useStickyRowAndColumnHeaders(Cell, gridCellLocation, styles.data_grid_cells, headerRowCount);
@@ -485,18 +484,18 @@ export const DataTable: React.FC<Props> = (props: Props) => {
     // Table elements are formatted lazily so we do not know upfront how wide a column will be.
     const onItemsRendered = React.useCallback((_event: GridOnItemsRenderedProps) => {
         if (dataGrid.current && tableFormatter) {
-            const newGridColumns = computeGridColumns(tableFormatter, computationState, SHOW_METADATA_COLUMNS);
-            if (!skipGridColumnUpdate(gridColumns, newGridColumns)) {
-                setGridColumns(newGridColumns);
+            const newGridColumns = computeGridLayout(tableFormatter, computationState, SHOW_METADATA_COLUMNS);
+            if (!skipGridLayoutUpdate(gridLayout, newGridColumns)) {
+                setGridLayout(newGridColumns);
             }
         }
-    }, [gridColumns, tableFormatter]);
+    }, [gridLayout, tableFormatter]);
 
     return (
         <div className={classNames(styles.root, props.className)} ref={gridContainerElement}>
             <Grid
                 ref={dataGrid}
-                columnCount={gridColumns.columnCount}
+                columnCount={gridLayout.columnCount}
                 columnWidth={gridCellLocation.getColumnWidth}
                 rowCount={gridRowCount}
                 rowHeight={gridCellLocation.getRowHeight}
