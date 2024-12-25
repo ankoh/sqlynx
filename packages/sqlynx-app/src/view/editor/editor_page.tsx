@@ -44,7 +44,7 @@ const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
                 <ActionList.Trailing>Ctrl + E</ActionList.Trailing>
             </ActionList.ListItem>
             <ActionList.ListItem
-                disabled={!props.connector?.features.refreshSchemaAction || !config.value?.features?.refreshSchema}
+                disabled={!props.connector?.features.refreshSchemaAction || !config.value?.settings?.enableCommandRefreshSchema}
             >
                 <ActionList.Leading>
                     <SyncIcon />
@@ -75,7 +75,7 @@ const OutputCommandList = (props: { connector: ConnectorInfo | null }) => {
                 <ActionList.Trailing>Ctrl + U</ActionList.Trailing>
             </ActionList.ListItem>
             <ActionList.ListItem
-                disabled={!props.connector?.features.executeQueryAction || !config.value?.features?.saveResultsAsArrow}
+                disabled={!props.connector?.features.executeQueryAction || !config.value?.settings?.enableCommandSaveResultsAsArrow}
             >
                 <ActionList.Leading>
                     <DownloadIcon />

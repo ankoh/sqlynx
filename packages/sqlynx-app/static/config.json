@@ -1,10 +1,11 @@
 {
-    "features": {
-        "files": false,
-        "completionDetails": false,
-        "refreshSchema": false,
-        "saveQueryAsSql": false,
-        "saveResultsAsArrow": false
+    "settings": {
+        "enableScriptFiles": false,
+        "showCompletionDetails": false,
+        "enableCommandRefreshSchema": false,
+        "enableCommandSaveQueryAsSql": false,
+        "enableCommandSaveResultsAsArrow": false,
+        "interfaceDebugMode": false
     },
     "connectors": {
         "salesforce": {

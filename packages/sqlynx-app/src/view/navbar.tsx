@@ -174,7 +174,7 @@ export const NavBar = (): React.ReactElement => {
                 data-tauri-drag-region="true"
             >
                 <PageTab label="Editor" route="/" location={location.pathname} icon={`${symbols}#file`} />
-                {appConfig.isResolved() && appConfig.value?.features?.files && (
+                {appConfig.isResolved() && appConfig.value?.settings?.enableScriptFiles && (
                     <PageTab label="Files" route="/files" location={location.pathname} icon={`${symbols}#folder`} />
                 )}
                 <PageTab label="Connectors" route="/connectors" location={location.pathname} icon={`${symbols}#database`} />

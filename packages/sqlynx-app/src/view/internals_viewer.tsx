@@ -3,15 +3,32 @@ import * as styles from './internals_viewer.module.css';
 
 import { XIcon } from '@primer/octicons-react';
 import { IconButton } from '@primer/react';
+import { Button } from '../view/foundations/button.js';
 
 import { AnchoredOverlay } from './foundations/anchored_overlay.js';
 import { AnchorAlignment, AnchorSide } from './foundations/anchored_position.js';
+import { AppConfig, useAppReconfigure } from '../app_config.js';
 
 interface VersionViewerProps {
     onClose: () => void;
 }
 
 export const InternalsViewer: React.FC<VersionViewerProps> = (props: VersionViewerProps) => {
+    const reconfigure = useAppReconfigure();
+    const toggleDebugMode = React.useCallback(() => {
+        reconfigure({
+            map: (value: AppConfig) => ({
+                ...value,
+                settings: {
+                    ...value.settings,
+                    interfaceDebugMode: !value.settings?.interfaceDebugMode,
+                }
+            }),
+            reject: (_err: Error) => { }
+        });
+        props.onClose();
+    }, []);
+
     return (
         <div className={styles.overlay}>
             <div className={styles.header_container}>
@@ -28,6 +45,14 @@ export const InternalsViewer: React.FC<VersionViewerProps> = (props: VersionView
                 </div>
             </div>
             <div className={styles.internals_container}>
+                <div className={styles.settings_container}>
+                    <div className={styles.setting_name}>
+                        Debug Mode
+                    </div>
+                    <div className={styles.setting_switch}>
+                        <Button onClick={toggleDebugMode}>Enable</Button>
+                    </div>
+                </div>
             </div>
         </div>
     );

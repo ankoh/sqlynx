@@ -18,6 +18,7 @@ import { useLogger } from '../../platform/logger_provider.js';
 import { RectangleWaveSpinner } from '../../view/foundations/spinners.js';
 import { HistogramCell } from './histogram_cell.js';
 import { MostFrequentCell } from './mostfrequent_cell.js';
+import { useAppConfig } from '../../app_config.js';
 
 interface Props {
     className?: string;
@@ -35,8 +36,6 @@ const ROW_HEIGHT = 26;
 const ROW_HEADER_WIDTH = 48;
 const FORMATTER_PIXEL_SCALING = 10;
 const OVERSCAN_ROW_COUNT = 30;
-
-const SHOW_METADATA_COLUMNS = false;
 
 function computeColumnCount(columnGroups: GridColumnGroup[], showMetaColumns: boolean): number {
     let columnCount = 0;
@@ -191,6 +190,7 @@ enum DataTableColumnHeader {
 var columnHeader: DataTableColumnHeader = DataTableColumnHeader.WithColumnPlots;
 
 export const DataTable: React.FC<Props> = (props: Props) => {
+    const config = useAppConfig();
     const logger = useLogger();
     const computationState = props.table;
     const table = computationState.dataTable;
@@ -200,6 +200,9 @@ export const DataTable: React.FC<Props> = (props: Props) => {
     const gridContainerHeight = Math.max(gridContainerSize?.height ?? 0, MIN_GRID_HEIGHT);
     const gridContainerWidth = Math.max(gridContainerSize?.width ?? 0, MIN_GRID_WIDTH);
     let gridRowCount = 1 + (table.numRows ?? 0);
+
+    // Enable debug mode?
+    const interfaceDebugMode = config.value?.settings?.interfaceDebugMode ?? false;
 
     // Adjust based on the column header visibility
     let getRowHeight: (_row: number) => number;
@@ -243,7 +246,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
     });
     React.useEffect(() => {
         if (tableFormatter) {
-            const newGridLayout = computeGridLayout(tableFormatter, computationState, SHOW_METADATA_COLUMNS);
+            const newGridLayout = computeGridLayout(tableFormatter, computationState, interfaceDebugMode);
             if (!skipGridLayoutUpdate(gridLayout, newGridLayout)) {
                 setGridLayout(newGridLayout);
             }
@@ -252,6 +255,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
         gridLayout,
         computationState.columnGroups,
         tableFormatter,
+        interfaceDebugMode,
     ]);
 
     // Compute helper to resolve a cell location
@@ -510,12 +514,12 @@ export const DataTable: React.FC<Props> = (props: Props) => {
     // Table elements are formatted lazily so we do not know upfront how wide a column will be.
     const onItemsRendered = React.useCallback((_event: GridOnItemsRenderedProps) => {
         if (dataGrid.current && tableFormatter) {
-            const newGridColumns = computeGridLayout(tableFormatter, computationState, SHOW_METADATA_COLUMNS);
+            const newGridColumns = computeGridLayout(tableFormatter, computationState, interfaceDebugMode);
             if (!skipGridLayoutUpdate(gridLayout, newGridColumns)) {
                 setGridLayout(newGridColumns);
             }
         }
-    }, [gridLayout, tableFormatter]);
+    }, [gridLayout, tableFormatter, interfaceDebugMode]);
 
     return (
         <div className={classNames(styles.root, props.className)} ref={gridContainerElement}>

@@ -195,7 +195,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         effects.push(
             UpdateSQLynxScript.of({
                 config: {
-                    showCompletionDetails: config?.value?.features?.completionDetails ?? false,
+                    showCompletionDetails: config?.value?.settings?.showCompletionDetails ?? false,
                 },
                 scriptKey: targetKey,
                 targetScript: targetScriptData.script,
@@ -255,7 +255,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         <div className={styles.editor_with_header}>
             <div className={styles.headerbar}>
                 <div className={styles.script_title}>{tabTitle}</div>
-                {config.value && config.value.features?.files && activeScript && <FileSelector className={styles.script_filename} variant="invisible" script={activeScript.metadata} />}
+                {config.value && config.value.settings?.enableScriptFiles && activeScript && <FileSelector className={styles.script_filename} variant="invisible" script={activeScript.metadata} />}
             </div>
             <div className={styles.editor_with_loader}>
                 <div className={styles.editor}>

@@ -1,21 +1,22 @@
 import * as React from 'react';
-import { Maybe, MaybeStatus } from './utils/maybe.js';
+import { Resolvable, ResolvableMapper } from './utils/resolvable.js';
 import { ConnectorConfigs, readConnectorConfigs } from './connectors/connector_configs.js';
 import { useLogger } from './platform/logger_provider.js';
 import { SQLYNX_BUILD_MODE } from './globals.js';
 
 const CONFIG_URL = new URL('../static/config.json', import.meta.url);
 
-export interface AppFeatures {
-    files?: boolean;
-    completionDetails?: boolean;
-    refreshSchema?: boolean;
-    saveQueryAsSql?: boolean;
-    saveResultsAsArrow?: boolean;
+export interface AppSettings {
+    enableScriptFiles?: boolean;
+    showCompletionDetails?: boolean;
+    enableCommandRefreshSchema?: boolean;
+    enableCommandSaveQueryAsSql?: boolean;
+    enableCommandSaveResultsAsArrow?: boolean;
+    interfaceDebugMode?: boolean;
 }
 
 export interface AppConfig {
-    features?: AppFeatures;
+    settings?: AppSettings;
     connectors?: ConnectorConfigs;
 }
 
@@ -26,8 +27,8 @@ export function readAppConfig(object: Record<string, object>): AppConfig {
     return object as AppConfig;
 }
 
-const configCtx = React.createContext<Maybe<AppConfig> | null>(null);
-const reconfigureCtx = React.createContext<((config: AppConfig) => void) | null>(null);
+const configCtx = React.createContext<Resolvable<AppConfig> | null>(null);
+const reconfigureCtx = React.createContext<((sub: ResolvableMapper<AppConfig>) => void) | null>(null);
 
 type Props = {
     children: React.ReactElement;
@@ -35,7 +36,7 @@ type Props = {
 
 export const AppConfigProvider: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
-    const [config, setConfig] = React.useState<Maybe<AppConfig>>(new Maybe<AppConfig, null>(MaybeStatus.NONE, null));
+    const [config, setConfig] = React.useState<Resolvable<AppConfig>>(new Resolvable<AppConfig>());
     const started = React.useRef<boolean>(false);
     if (!started.current) {
         started.current = true;
@@ -44,19 +45,24 @@ export const AppConfigProvider: React.FC<Props> = (props: Props) => {
                 const resp = await fetch(CONFIG_URL as unknown as string);
                 const body = await resp.json();
                 const config = readAppConfig(body);
-                setConfig(c => c.completeWith(config));
+                setConfig(c => c.resolve(config));
                 logger.info("configured application", "app_config");
                 if (SQLYNX_BUILD_MODE == 'development') {
                     logger.info(`react is running in strict mode and will duplicate events`, "app_config")
                 }
             } catch (e: any) {
                 console.error(e);
-                setConfig(c => c.failWith(e));
+                setConfig(c => c.reject(e));
             }
         };
         resolve();
     }
-    const reconfigure = (next: AppConfig) => setConfig(c => c.completeWith(next));
+    const reconfigure = React.useCallback((mapper: ResolvableMapper<AppConfig>) => {
+        if (SQLYNX_BUILD_MODE == 'development') {
+            logger.info(`reconfigure application`, "app_config");
+        }
+        setConfig(c => c.modify(mapper));
+    }, []);
     return (
         <configCtx.Provider value={config}>
             <reconfigureCtx.Provider value={reconfigure}>{props.children}</reconfigureCtx.Provider>
@@ -64,4 +70,5 @@ export const AppConfigProvider: React.FC<Props> = (props: Props) => {
     );
 };
 
-export const useAppConfig = (): Maybe<AppConfig> => React.useContext(configCtx)!;
+export const useAppConfig = (): Resolvable<AppConfig> => React.useContext(configCtx)!;
+export const useAppReconfigure = (): ((sub: ResolvableMapper<AppConfig>) => void) => React.useContext(reconfigureCtx)!;
