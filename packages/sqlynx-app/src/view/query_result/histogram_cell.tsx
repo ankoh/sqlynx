@@ -83,6 +83,14 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
         return [histXScale, histYScale, nullsXScale, nullsYScale];
     }, [histWidth, height]);
 
+    const onMouseOverBin = React.useCallback((elem: React.MouseEvent<SVGRectElement>) => {
+        const bin = elem.currentTarget.dataset.bin;
+        console.log(bin);
+    }, []);
+    const onMouseOverNull = React.useCallback((elem: React.MouseEvent<SVGRectElement>) => {
+        console.log("null");
+    }, []);
+
     React.useLayoutEffect(() => {
         // Draw the histogram bars
         d3.select(histBarContainer.current)
@@ -139,12 +147,45 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
             .attr('height', height);
 
         // Add the histogram x-axis
+        d3.select(histAxisContainer.current)
+            .selectChildren()
+            .remove();
         d3.select(histAxisContainer.current!)
-            .call(d3.axisBottom(histXScale).ticks(2).tickSize(0));
+            .selectAll("rect")
+            .data(bins.keys())
+            .enter()
+            .append("rect")
+            .attr("x", i => histXScale(bins[i].toString())!)
+            .attr("y", 0)
+            .attr("data-bin", i => i.toString())
+            .attr("width", histXScale.bandwidth())
+            .attr("height", margin.bottom)
+            .attr("fill-opacity", 0)
+            .on("mouseover", onMouseOverBin);
 
         // Add the nulls x-axis
         d3.select(nullAxisContainer.current!)
-            .call(d3.axisBottom(nullsXScale).tickValues([NULL_SYMBOL]).tickSize(0));
+            .selectChildren()
+            .remove();
+        d3.select(nullAxisContainer.current!)
+            .append("text")
+            .attr("x", nullsXScale(NULL_SYMBOL)! + nullsXScale.bandwidth() / 2)
+            .attr("y", 3)
+            .attr("dy", "0.71em")
+            .style("text-anchor", "middle")
+            .style("font-size", 10)
+            .text(NULL_SYMBOL);
+        d3.select(nullAxisContainer.current!)
+            .append("rect")
+            .attr("x", nullsXScale(NULL_SYMBOL)!)
+            .attr("y", 0)
+            .attr("width", nullsXScale.bandwidth())
+            .attr("height", margin.bottom)
+            .attr("fill-opacity", 0)
+            .on("mouseover", onMouseOverNull);
+
+        //d3.select(nullAxisContainer.current!)
+        //    .call(d3.axisBottom(nullsXScale).tickValues([NULL_SYMBOL]).tickSize(0));
 
     }, [histXScale, histYScale]);
 
