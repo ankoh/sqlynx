@@ -103,11 +103,11 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
             .attr("width", i => getWidth(i))
             .attr("height", _ => height)
             .attr("fill", barFill)
-            .on("mouseover", function (this: SVGRectElement, _event: any, _i: number) {
+            .on("mouseover", function(this: SVGRectElement, _event: any, _i: number) {
                 d3.select(this)
                     .attr("fill", "hsl(208.5deg 20.69% 20.76%)");
             })
-            .on("mouseout", function (this: SVGRectElement, _event: any, _i: number) {
+            .on("mouseout", function(this: SVGRectElement, _event: any, _i: number) {
                 d3.select(this)
                     .attr("fill", "hsl(208.5deg 20.69% 50.76%)");
             });
@@ -159,12 +159,12 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
                             <rect x={0} y={0} width={width} height={height} rx={3} ry={3} />
                         </clipPath>
                     </defs>
+                    <g transform={`translate(${margin.left},${margin.top})`}>
+                        <rect x={0} y={0} width={width} height={height} rx={3} ry={3} stroke="hsl(208.5deg 20.69% 40.76%)" strokeWidth={1} fill="transparent" />
+                    </g>
                     <g transform={`translate(${margin.left},${margin.top})`} clipPath="url(#rounded-bar)">
                         <g ref={barContainer} />
                         <g ref={barMoreContainer} />
-                    </g>
-                    <g transform={`translate(${margin.left},${margin.top})`}>
-                        <rect x={0} y={0} width={width} height={height} rx={3} ry={3} stroke="hsl(208.5deg 20.69% 40.76%)" strokeWidth={1} fill="transparent" />
                     </g>
                 </svg>
             </div>
