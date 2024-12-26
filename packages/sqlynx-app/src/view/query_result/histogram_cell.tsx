@@ -85,8 +85,19 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
     }, [histWidth, height]);
 
     const onMouseOverBin = React.useCallback((elem: React.MouseEvent<SVGRectElement>) => {
-        const bin = elem.currentTarget.dataset.bin;
-        console.log(bin);
+        const bin = Number.parseInt(elem.currentTarget.dataset.bin!);
+        d3.select(histBarContainer.current)
+            .selectAll("rect")
+            .data(bins.keys())
+            .join("rect")
+            .attr("fill", (v: number) => (v == bin) ? "hsl(208.5deg 20.69% 30.76%)" : "hsl(208.5deg 20.69% 50.76%)")
+    }, []);
+    const onMouseOutBin = React.useCallback((elem: React.MouseEvent<SVGRectElement>) => {
+        d3.select(histBarContainer.current)
+            .selectAll("rect")
+            .data(bins.keys())
+            .join("rect")
+            .attr("fill", "hsl(208.5deg 20.69% 50.76%)")
     }, []);
     const onMouseOverNull = React.useCallback((_elem: React.MouseEvent<SVGRectElement>) => {
         console.log("null");
@@ -106,7 +117,8 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
             .attr("y", i => histYScale(Number(binCounts[i])))
             .attr("width", histXScale.bandwidth())
             .attr("height", i => (height - histYScale(Number(binCounts[i]))!))
-            .attr("fill", "hsl(208.5deg 20.69% 50.76%)");
+            .attr("fill", "hsl(208.5deg 20.69% 50.76%)")
+            .attr("data-bin", i => i.toString());
 
         // Draw null bar if nullable
         if (inputNullable) {
@@ -162,7 +174,8 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
             .attr("width", histXScale.bandwidth())
             .attr("height", margin.bottom)
             .attr("fill-opacity", 0)
-            .on("mouseover", onMouseOverBin);
+            .on("mouseover", onMouseOverBin)
+            .on("mouseout", onMouseOutBin);
         d3.select(histAxisContainer.current!)
             .append("line")
             .attr("x1", 0)
