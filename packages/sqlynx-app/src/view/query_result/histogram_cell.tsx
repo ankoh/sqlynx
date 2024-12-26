@@ -92,7 +92,7 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
             .join("rect")
             .attr("fill", (v: number) => (v == bin) ? "hsl(208.5deg 20.69% 30.76%)" : "hsl(208.5deg 20.69% 50.76%)")
     }, []);
-    const onMouseOutBin = React.useCallback((elem: React.MouseEvent<SVGRectElement>) => {
+    const onMouseOutBin = React.useCallback((_elem: React.MouseEvent<SVGRectElement>) => {
         d3.select(histBarContainer.current)
             .selectAll("rect")
             .data(bins.keys())
