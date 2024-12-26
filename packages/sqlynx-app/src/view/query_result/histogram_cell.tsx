@@ -52,7 +52,7 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
         histWidth -= nullsWidth + nullsPadding;
     }
 
-    const [histXScale, histYScale, nullsXScale, nullsYScale] = React.useMemo(() => {
+    const [histXScale, histYScale, nullsXScale, nullsYScale, nullsXWidth] = React.useMemo(() => {
         const xValues: string[] = [];
         for (let i = 0; i < BIN_COUNT; ++i) {
             xValues.push(i.toString());
@@ -72,22 +72,23 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
             .range([height, 0])
             .domain(yDomain);
         // The x-scale of the null plot consists of a single band + padding
+        const nullsXWidth = histXScale.bandwidth() + 2 * histXScale.paddingOuter();
         const nullsXScale = d3.scaleBand()
-            .range([0, histXScale.bandwidth() + 2 * histXScale.paddingOuter()])
+            .range([0, nullsXWidth])
             .domain([NULL_SYMBOL])
             .padding(0.1);
         const nullsYScale = d3.scaleLinear()
             .range([height, 0])
             .domain(yDomain);
 
-        return [histXScale, histYScale, nullsXScale, nullsYScale];
+        return [histXScale, histYScale, nullsXScale, nullsYScale, nullsXWidth];
     }, [histWidth, height]);
 
     const onMouseOverBin = React.useCallback((elem: React.MouseEvent<SVGRectElement>) => {
         const bin = elem.currentTarget.dataset.bin;
         console.log(bin);
     }, []);
-    const onMouseOverNull = React.useCallback((elem: React.MouseEvent<SVGRectElement>) => {
+    const onMouseOverNull = React.useCallback((_elem: React.MouseEvent<SVGRectElement>) => {
         console.log("null");
     }, []);
 
@@ -162,6 +163,13 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
             .attr("height", margin.bottom)
             .attr("fill-opacity", 0)
             .on("mouseover", onMouseOverBin);
+        d3.select(histAxisContainer.current!)
+            .append("line")
+            .attr("x1", 0)
+            .attr("y1", 0)
+            .attr("x2", histWidth)
+            .attr("y2", 0)
+            .attr("stroke", "hsl(208.5deg 20.69% 40.76%)");
 
         // Add the nulls x-axis
         d3.select(nullAxisContainer.current!)
@@ -183,9 +191,13 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
             .attr("height", margin.bottom)
             .attr("fill-opacity", 0)
             .on("mouseover", onMouseOverNull);
-
-        //d3.select(nullAxisContainer.current!)
-        //    .call(d3.axisBottom(nullsXScale).tickValues([NULL_SYMBOL]).tickSize(0));
+        d3.select(nullAxisContainer.current!)
+            .append("line")
+            .attr("x1", 0)
+            .attr("y1", 0)
+            .attr("x2", nullsXWidth)
+            .attr("y2", 0)
+            .attr("stroke", "hsl(208.5deg 20.69% 40.76%)");
 
     }, [histXScale, histYScale]);
 
