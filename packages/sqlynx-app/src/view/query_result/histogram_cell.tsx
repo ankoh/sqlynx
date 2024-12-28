@@ -225,9 +225,9 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
                         <g ref={selectionBarContainer} />
                         <g ref={brushContainer} />
                         <g transform={`translate(0, ${height})`}>
-                            <text x={2} y={0} dy={14} textAnchor="start" fontSize={12} fontWeight={400}>left</text>
-                            <text x={histWidth - 2} y={0} dy={14} textAnchor="end" fontSize={12} fontWeight={400}>right</text>
-                            <text x={histWidth / 2} y={0} dy={14} textAnchor="middle" fontSize={12} fontWeight={400}>middle</text>
+                            <text x={1} y={0} dy={14} textAnchor="start" fontSize={12} fontWeight={400}>Left</text>
+                            <text x={histWidth - 1} y={0} dy={14} textAnchor="end" fontSize={12} fontWeight={400}>Right</text>
+                            <text x={histWidth / 2} y={0} dy={14} textAnchor="middle" fontSize={12} fontWeight={400}>Middle</text>
                         </g>
                         <g ref={histAxisContainer} transform={`translate(0, ${height})`} />
                         {inputNullable &&

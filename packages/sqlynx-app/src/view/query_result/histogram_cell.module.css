@@ -9,7 +9,7 @@
 
 .header_container {
     grid-row: 1;
-    font-size: 0.8rem;
+    font-size: 12px;
     font-weight: 400;
     display: flex;
 

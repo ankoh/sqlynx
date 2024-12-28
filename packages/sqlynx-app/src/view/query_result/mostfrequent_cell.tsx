@@ -166,6 +166,11 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
                         <g ref={barContainer} />
                         <g ref={barMoreContainer} />
                     </g>
+                    <g transform={`translate(${margin.left}, ${margin.top + height})`}>
+                        <text x={1} y={0} dy={14} textAnchor="start" fontSize={12} fontWeight={400}>Left</text>
+                        <text x={width - 1} y={0} dy={14} textAnchor="end" fontSize={12} fontWeight={400}>Right</text>
+                        <text x={width / 2} y={0} dy={14} textAnchor="middle" fontSize={12} fontWeight={400}>Middle</text>
+                    </g>
                 </svg>
             </div>
         </div>

@@ -9,13 +9,13 @@
 
 .header_container {
     grid-row: 1;
-    font-size: 0.8rem;
+    font-size: 12px;
     font-weight: 400;
     display: flex;
 
     padding: 4px 8px 0px 8px;
     justify-content: begin;
-    align-items: center;
+    align-items: middle;
 }
 
 .plot_container {
