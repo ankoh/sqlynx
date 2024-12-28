@@ -3,40 +3,27 @@ import * as d3 from 'd3';
 import * as styles from './histogram_cell.module.css';
 
 import { observeSize } from '../../view/foundations/size_observer.js';
-import { BIN_COUNT, ColumnSummaryVariant, LIST_COLUMN, ORDINAL_COLUMN, SKIPPED_COLUMN, STRING_COLUMN, TableSummary } from '../../compute/table_transforms.js';
+import { BIN_COUNT, OrdinalColumnSummary, TableSummary } from '../../compute/table_transforms.js';
 import { dataTypeToString } from './arrow_formatter.js';
 
 const NULL_SYMBOL = "∅";
 
 interface HistogramCellProps {
     tableSummary: TableSummary;
-    columnSummary: ColumnSummaryVariant;
+    columnSummary: OrdinalColumnSummary;
 }
 
 export function HistogramCell(props: HistogramCellProps): React.ReactElement {
-    let bins: Int32Array;
-    let binCounts: BigInt64Array;
-    let inputNullable: boolean = false;
-    switch (props.columnSummary.type) {
-        case ORDINAL_COLUMN: {
-            const table = props.columnSummary.value.binnedValues;
-            bins = table.getChild("bin")!.toArray();
-            binCounts = table.getChild("count")!.toArray();
-            inputNullable = props.columnSummary.value.columnEntry.inputFieldNullable;
-            break;
-        }
-        case STRING_COLUMN:
-        case LIST_COLUMN:
-        case SKIPPED_COLUMN:
-            return <div />;
-    }
+    const table = props.columnSummary.binnedValues;
+    const bins = table.getChild("bin")!.toArray();
+    const binCounts = table.getChild("count")!.toArray();
+    const inputNullable = props.columnSummary.columnEntry.inputFieldNullable;
 
     const rootContainer = React.useRef<HTMLDivElement>(null);
     const svgContainer = React.useRef<HTMLDivElement>(null);
     const svgContainerSize = observeSize(svgContainer);
     const histBarContainer = React.useRef<SVGGElement>(null);
     const nullBarContainer = React.useRef<SVGGElement>(null);
-    const selectionBarContainer = React.useRef<SVGGElement>(null);
     const brushContainer = React.useRef<SVGGElement>(null);
     const histAxisContainer = React.useRef<SVGGElement>(null);
     const nullAxisContainer = React.useRef<SVGGElement>(null);
@@ -58,7 +45,7 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
             xValues.push(i.toString());
         }
         let yMin = BigInt(0);
-        let yMax = BigInt(props.columnSummary.value?.analysis.countNull ?? 0);
+        let yMax = BigInt(props.columnSummary.analysis.countNull ?? 0);
         for (let i = 0; i < binCounts.length; ++i) {
             yMax = binCounts[i] > yMax ? binCounts[i] : yMax;
         }
@@ -87,13 +74,17 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
     // Adjust null padding to center null bar horizontally
     const nullsPadding = (nullsWidth - nullsXScale.bandwidth()) / 2;
 
+    const [focusedBin, setFocusedBin] = React.useState<number | null>(null);
     const onMouseOverBin = React.useCallback((elem: React.MouseEvent<SVGRectElement>) => {
         const bin = Number.parseInt(elem.currentTarget.dataset.bin!);
+
         d3.select(histBarContainer.current)
             .selectAll("rect")
             .data(bins.keys())
             .join("rect")
             .attr("fill", (v: number) => (v == bin) ? "hsl(208.5deg 20.69% 30.76%)" : "hsl(208.5deg 20.69% 50.76%)")
+
+        setFocusedBin(bin);
     }, []);
     const onMouseOutBin = React.useCallback((_elem: React.MouseEvent<SVGRectElement>) => {
         d3.select(histBarContainer.current)
@@ -101,9 +92,10 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
             .data(bins.keys())
             .join("rect")
             .attr("fill", "hsl(208.5deg 20.69% 50.76%)")
+
+        setFocusedBin(null);
     }, []);
     const onMouseOverNull = React.useCallback((_elem: React.MouseEvent<SVGRectElement>) => {
-        console.log("null");
     }, []);
 
     React.useLayoutEffect(() => {
@@ -132,7 +124,7 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
                 .selectAll("rect")
                 .data([{
                     x: nullsXScale(NULL_SYMBOL)!,
-                    y: nullsYScale(props.columnSummary.value?.analysis.countNull ?? 0)!
+                    y: nullsYScale(props.columnSummary.analysis.countNull ?? 0)!
                 }])
                 .enter()
                 .append("rect")
@@ -177,8 +169,7 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
             .attr("width", histXScale.bandwidth())
             .attr("height", margin.bottom)
             .attr("fill-opacity", 0)
-            .on("mouseover", onMouseOverBin)
-            .on("mouseout", onMouseOutBin);
+            .on("mouseover", onMouseOverBin);
         d3.select(histAxisContainer.current!)
             .append("line")
             .attr("x1", 0)
@@ -209,10 +200,15 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
 
     }, [histXScale, histYScale]);
 
+    const binLabels = props.columnSummary.analysis.binLowerBounds;
+    const binLabelLeft = binLabels[0];
+    const binLabelRight = binLabels[binLabels.length - 1];
+    const binLabelFocused = focusedBin != null ? binLabels[focusedBin] : null;
+
     return (
         <div className={styles.root} ref={rootContainer}>
             <div className={styles.header_container}>
-                {dataTypeToString(props.columnSummary.value.columnEntry.inputFieldType)}
+                {dataTypeToString(props.columnSummary.columnEntry.inputFieldType)}
             </div>
             <div className={styles.plot_container} ref={svgContainer}>
                 <svg
@@ -222,12 +218,18 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
                 >
                     <g transform={`translate(${margin.left},${margin.top})`}>
                         <g ref={histBarContainer} />
-                        <g ref={selectionBarContainer} />
                         <g ref={brushContainer} />
                         <g transform={`translate(0, ${height})`}>
-                            <text x={1} y={0} dy={14} textAnchor="start" fontSize={12} fontWeight={400}>Left</text>
-                            <text x={histWidth - 1} y={0} dy={14} textAnchor="end" fontSize={12} fontWeight={400}>Right</text>
-                            <text x={histWidth / 2} y={0} dy={14} textAnchor="middle" fontSize={12} fontWeight={400}>Middle</text>
+                            {binLabelFocused
+                                ? (
+                                    <text x={histWidth / 2} y={0} dy={14} textAnchor="middle" fontSize={12} fontWeight={400}>{binLabelFocused}</text>
+                                )
+                                : (
+                                    <>
+                                        <text x={1} y={0} dy={14} textAnchor="start" fontSize={12} fontWeight={400}>{binLabelLeft}</text>
+                                        <text x={histWidth - 1} y={0} dy={14} textAnchor="end" fontSize={12} fontWeight={400}>{binLabelRight}</text>
+                                    </>
+                                )}
                         </g>
                         <g ref={histAxisContainer} transform={`translate(0, ${height})`} />
                         {inputNullable &&

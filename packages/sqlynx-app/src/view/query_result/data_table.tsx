@@ -410,7 +410,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                             case ORDINAL_COLUMN:
                                 return (
                                     <div className={styles.plots_cell} style={cellProps.style}>
-                                        {<HistogramCell tableSummary={tableSummary} columnSummary={columnSummary} />}
+                                        {<HistogramCell tableSummary={tableSummary} columnSummary={columnSummary.value} />}
                                     </div>
                                 );
                             case LIST_COLUMN:
