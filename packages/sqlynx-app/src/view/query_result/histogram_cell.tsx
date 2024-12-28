@@ -222,7 +222,7 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
                         <g transform={`translate(0, ${height})`}>
                             {binLabelFocused
                                 ? (
-                                    <text x={histWidth / 2} y={0} dy={14} textAnchor="middle" fontSize={12} fontWeight={400}>{binLabelFocused}</text>
+                                    <text x={histXScale(focusedBin!.toString()) ?? 0 + histXScale.bandwidth() / 2} y={0} dy={14} textAnchor="middle" fontSize={12} fontWeight={400}>{binLabelFocused}</text>
                                 )
                                 : (
                                     <>
