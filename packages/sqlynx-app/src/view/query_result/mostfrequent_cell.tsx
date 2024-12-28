@@ -19,7 +19,7 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
     const barContainer = React.useRef<SVGGElement>(null);
     const barMoreContainer = React.useRef<SVGGElement>(null);
 
-    const margin = { top: 4, right: 8, bottom: 16, left: 8 },
+    const margin = { top: 4, right: 8, bottom: 20, left: 8 },
         width = (svgContainerSize?.width ?? 130) - margin.left - margin.right,
         height = (svgContainerSize?.height ?? 50) - margin.top - margin.bottom;
 

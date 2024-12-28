@@ -41,15 +41,15 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
     const histAxisContainer = React.useRef<SVGGElement>(null);
     const nullAxisContainer = React.useRef<SVGGElement>(null);
 
-    const margin = { top: 8, right: 8, bottom: 16, left: 8 },
+    const margin = { top: 8, right: 8, bottom: 20, left: 8 },
         width = (svgContainerSize?.width ?? 130) - margin.left - margin.right,
         height = (svgContainerSize?.height ?? 50) - margin.top - margin.bottom;
 
     let histWidth = width;
     const nullsWidth = 12;
-    const nullsPadding = 2;
+    const nullsMargin = 2;
     if (inputNullable) {
-        histWidth -= nullsWidth + nullsPadding;
+        histWidth -= nullsWidth + nullsMargin;
     }
 
     const [histXScale, histYScale, nullsXScale, nullsYScale, nullsXWidth] = React.useMemo(() => {
@@ -83,6 +83,9 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
 
         return [histXScale, histYScale, nullsXScale, nullsYScale, nullsXWidth];
     }, [histWidth, height]);
+
+    // Adjust null padding to center null bar horizontally
+    const nullsPadding = (nullsWidth - nullsXScale.bandwidth()) / 2;
 
     const onMouseOverBin = React.useCallback((elem: React.MouseEvent<SVGRectElement>) => {
         const bin = Number.parseInt(elem.currentTarget.dataset.bin!);
@@ -189,14 +192,6 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
             .selectChildren()
             .remove();
         d3.select(nullAxisContainer.current!)
-            .append("text")
-            .attr("x", nullsXScale(NULL_SYMBOL)! + nullsXScale.bandwidth() / 2)
-            .attr("y", 3)
-            .attr("dy", "0.71em")
-            .style("text-anchor", "middle")
-            .style("font-size", 10)
-            .text(NULL_SYMBOL);
-        d3.select(nullAxisContainer.current!)
             .append("rect")
             .attr("x", nullsXScale(NULL_SYMBOL)!)
             .attr("y", 0)
@@ -229,11 +224,19 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
                         <g ref={histBarContainer} />
                         <g ref={selectionBarContainer} />
                         <g ref={brushContainer} />
+                        <g transform={`translate(0, ${height})`}>
+                            <text x={2} y={0} dy={14} textAnchor="start" fontSize={12} fontWeight={400}>left</text>
+                            <text x={histWidth - 2} y={0} dy={14} textAnchor="end" fontSize={12} fontWeight={400}>right</text>
+                            <text x={histWidth / 2} y={0} dy={14} textAnchor="middle" fontSize={12} fontWeight={400}>middle</text>
+                        </g>
                         <g ref={histAxisContainer} transform={`translate(0, ${height})`} />
                         {inputNullable &&
                             <>
-                                <g ref={nullBarContainer} transform={`translate(${histWidth + nullsPadding}, 0)`} />
-                                <g ref={nullAxisContainer} transform={`translate(${histWidth + nullsPadding}, ${height})`} />
+                                <g ref={nullBarContainer} transform={`translate(${histWidth + nullsMargin + nullsPadding}, 0)`} />
+                                <g transform={`translate(${histWidth + nullsMargin + nullsPadding + nullsXScale.bandwidth() / 2}, ${height})`}>
+                                    <text x={0} y={0} dy={14} textAnchor="middle" fontSize={12} fontWeight={400}>{NULL_SYMBOL}</text>
+                                </g>
+                                <g ref={nullAxisContainer} transform={`translate(${histWidth + nullsMargin + nullsPadding}, ${height})`} />
                             </>
                         }
                     </g>
