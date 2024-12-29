@@ -211,6 +211,18 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
                 {dataTypeToString(props.columnSummary.columnEntry.inputFieldType)}
             </div>
             <div className={styles.plot_container} ref={svgContainer}>
+                {binLabelFocused && (
+                    <span style={{
+                        position: "absolute",
+                        left: `${histXScale(focusedBin!.toString()) ?? 0 + histXScale.bandwidth() / 2}px`,
+                        top: `${margin.top + height + 14 - 12}px`,
+                        textWrap: "nowrap",
+                        textAnchor: "middle",
+                        fontSize: "12px",
+                        fontWeight: 400,
+                        zIndex: 200,
+                    }}>{binLabelFocused}</span>
+                )}
                 <svg
                     className={styles.plot_svg}
                     width={width + margin.left + margin.right}
@@ -220,11 +232,8 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
                         <g ref={histBarContainer} />
                         <g ref={brushContainer} />
                         <g transform={`translate(0, ${height})`}>
-                            {binLabelFocused
-                                ? (
-                                    <text x={histXScale(focusedBin!.toString()) ?? 0 + histXScale.bandwidth() / 2} y={0} dy={14} textAnchor="middle" fontSize={12} fontWeight={400}>{binLabelFocused}</text>
-                                )
-                                : (
+                            {!binLabelFocused &&
+                                (
                                     <>
                                         <text x={1} y={0} dy={14} textAnchor="start" fontSize={12} fontWeight={400}>{binLabelLeft}</text>
                                         <text x={histWidth - 1} y={0} dy={14} textAnchor="end" fontSize={12} fontWeight={400}>{binLabelRight}</text>

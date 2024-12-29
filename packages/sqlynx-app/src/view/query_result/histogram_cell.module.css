@@ -14,17 +14,14 @@
     display: flex;
 
     padding: 4px 8px 0px 8px;
-    justify-content: begin;
-    align-items: middle;
 }
 
 .plot_container {
     grid-row: 2;
-}
-
-.plot {
     position: relative;
 }
+
 .plot_svg {
     position: absolute;
+    z-index: 300;
 }
