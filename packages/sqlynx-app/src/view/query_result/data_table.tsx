@@ -51,13 +51,13 @@ function computeColumnCount(columnGroups: GridColumnGroup[], showMetaColumns: bo
             case STRING_COLUMN:
             case LIST_COLUMN:
                 ++columnCount;
-                if (showMetaColumns && columnGroup.value.valueIdField != null) {
+                if (showMetaColumns && columnGroup.value.valueIdFieldName != null) {
                     ++columnCount;
                 }
                 break;
             case ORDINAL_COLUMN:
                 ++columnCount;
-                if (showMetaColumns && columnGroup.value.binField != null) {
+                if (showMetaColumns && columnGroup.value.binFieldName != null) {
                     ++columnCount;
                 }
                 break;
@@ -82,6 +82,13 @@ function computeGridLayout(formatter: ArrowTableFormatter, state: TableComputati
     const columnOffsets = new Float64Array(columnCount + 1);
     const columnSummaryIndex = new Int32Array(columnCount);
     const isMetadataColumn = new Uint8Array(columnCount);
+    const tableSchema = state.dataTable.schema;
+
+    // Index table fields by name
+    const fieldIndexByName = new Map<string, number>();
+    for (let i = 0; i < tableSchema.fields.length; ++i) {
+        fieldIndexByName.set(tableSchema.fields[i].name, i);
+    }
 
     for (let i = 0; i < columnCount; ++i) {
         columnSummaryIndex[i] = -1;
@@ -95,7 +102,7 @@ function computeGridLayout(formatter: ArrowTableFormatter, state: TableComputati
         switch (columnGroup.type) {
             case ROWNUMBER_COLUMN: {
                 const columnId = nextDisplayColumn++;
-                columnFields[columnId] = columnGroup.value.inputFieldId;
+                columnFields[columnId] = fieldIndexByName.get(columnGroup.value.inputFieldIdName)!;
                 columnOffsets[columnId] = nextDisplayOffset;
                 nextDisplayOffset += ROW_HEADER_WIDTH;
                 break;
@@ -104,27 +111,27 @@ function computeGridLayout(formatter: ArrowTableFormatter, state: TableComputati
                 break;
             case ORDINAL_COLUMN:
                 const valueColumnId = nextDisplayColumn++;
-                const valueColumn = formatter.columns[columnGroup.value.inputFieldId];
+                const valueColumnFormatter = formatter.columns[fieldIndexByName.get(columnGroup.value.inputFieldName)!];
                 const valueColumnWidth = Math.max(
                     COLUMN_HEADER_ACTION_WIDTH + Math.max(
-                        valueColumn.getLayoutInfo().valueAvgWidth,
-                        valueColumn.getColumnName().length) * FORMATTER_PIXEL_SCALING,
+                        valueColumnFormatter.getLayoutInfo().valueAvgWidth,
+                        valueColumnFormatter.getColumnName().length) * FORMATTER_PIXEL_SCALING,
                     MIN_COLUMN_WIDTH
                 );
-                columnFields[valueColumnId] = columnGroup.value.inputFieldId;
+                columnFields[valueColumnId] = fieldIndexByName.get(columnGroup.value.inputFieldName)!;
                 columnOffsets[valueColumnId] = nextDisplayOffset;
                 columnSummaryIndex[valueColumnId] = groupIndex;
                 nextDisplayOffset += valueColumnWidth;
-                if (showMetaColumns && columnGroup.value.binField != null) {
+                if (showMetaColumns && columnGroup.value.binFieldName != null) {
                     const idColumnId = nextDisplayColumn++;
-                    const idColumn = formatter.columns[columnGroup.value.binField];
+                    const idColumn = formatter.columns[columnGroup.value.binFieldName];
                     const idColumnWidth = Math.max(
                         COLUMN_HEADER_ACTION_WIDTH + Math.max(
                             idColumn.getLayoutInfo().valueAvgWidth,
                             idColumn.getColumnName().length) * FORMATTER_PIXEL_SCALING,
                         MIN_COLUMN_WIDTH
                     );
-                    columnFields[idColumnId] = columnGroup.value.binField;
+                    columnFields[idColumnId] = columnGroup.value.binFieldName;
                     columnOffsets[idColumnId] = nextDisplayOffset;
                     isMetadataColumn[idColumnId] = 1;
                     nextDisplayOffset += idColumnWidth;
@@ -133,27 +140,27 @@ function computeGridLayout(formatter: ArrowTableFormatter, state: TableComputati
             case STRING_COLUMN:
             case LIST_COLUMN: {
                 const valueColumnId = nextDisplayColumn++;
-                const valueColumn = formatter.columns[columnGroup.value.inputFieldId];
+                const valueColumnFormatter = formatter.columns[fieldIndexByName.get(columnGroup.value.inputFieldName)!];
                 const valueColumnWidth = Math.max(
                     COLUMN_HEADER_ACTION_WIDTH + Math.max(
-                        valueColumn.getLayoutInfo().valueAvgWidth,
-                        valueColumn.getColumnName().length) * FORMATTER_PIXEL_SCALING,
+                        valueColumnFormatter.getLayoutInfo().valueAvgWidth,
+                        valueColumnFormatter.getColumnName().length) * FORMATTER_PIXEL_SCALING,
                     MIN_COLUMN_WIDTH
                 );
-                columnFields[valueColumnId] = columnGroup.value.inputFieldId;
+                columnFields[valueColumnId] = fieldIndexByName.get(columnGroup.value.inputFieldName)!;
                 columnOffsets[valueColumnId] = nextDisplayOffset;
                 columnSummaryIndex[valueColumnId] = groupIndex;
                 nextDisplayOffset += valueColumnWidth;
-                if (showMetaColumns && columnGroup.value.valueIdField != null) {
+                if (showMetaColumns && columnGroup.value.valueIdFieldName != null) {
                     const idColumnId = nextDisplayColumn++;
-                    const idColumn = formatter.columns[columnGroup.value.valueIdField];
+                    const idColumn = formatter.columns[fieldIndexByName.get(columnGroup.value.valueIdFieldName)!];
                     const idColumnWidth = Math.max(
                         COLUMN_HEADER_ACTION_WIDTH + Math.max(
                             idColumn.getLayoutInfo().valueAvgWidth,
                             idColumn.getColumnName().length) * FORMATTER_PIXEL_SCALING,
                         MIN_COLUMN_WIDTH
                     );
-                    columnFields[idColumnId] = columnGroup.value.valueIdField;
+                    columnFields[idColumnId] = fieldIndexByName.get(columnGroup.value.valueIdFieldName)!;
                     columnOffsets[idColumnId] = nextDisplayOffset;
                     isMetadataColumn[idColumnId] = 1;
                     nextDisplayOffset += idColumnWidth;
@@ -515,6 +522,8 @@ export const DataTable: React.FC<Props> = (props: Props) => {
         if (computationState.dataFrame) {
             const orderingTask: TableOrderingTask = {
                 computationId: computationState.computationId,
+                inputDataTable: computationState.dataTable,
+                inputDataTableFieldIndex: computationState.dataTableFieldsByName,
                 inputDataFrame: computationState.dataFrame,
                 orderingConstraints
             };

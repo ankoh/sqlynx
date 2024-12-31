@@ -2,13 +2,15 @@ import * as arrow from 'apache-arrow';
 
 import { Dispatch } from '../utils/variant.js';
 import { Logger } from '../platform/logger.js';
-import { COLUMN_SUMMARY_TASK_FAILED, COLUMN_SUMMARY_TASK_RUNNING, COLUMN_SUMMARY_TASK_SUCCEEDED, COMPUTATION_FROM_QUERY_RESULT, ComputationAction, CREATED_DATA_FRAME, PRECOMPUTATION_TASK_FAILED, PRECOMPUTATION_TASK_RUNNING, PRECOMPUTATION_TASK_SUCCEEDED, TABLE_ORDERING_TASK_FAILED, TABLE_ORDERING_TASK_RUNNING, TABLE_ORDERING_TASK_SUCCEEDED, TABLE_SUMMARY_TASK_FAILED, TABLE_SUMMARY_TASK_RUNNING, TABLE_SUMMARY_TASK_SUCCEEDED } from './computation_state.js';
+import { COLUMN_SUMMARY_TASK_FAILED, COLUMN_SUMMARY_TASK_RUNNING, COLUMN_SUMMARY_TASK_SUCCEEDED, COMPUTATION_FROM_QUERY_RESULT, ComputationAction, createArrowFieldIndex, CREATED_DATA_FRAME, PRECOMPUTATION_TASK_FAILED, PRECOMPUTATION_TASK_RUNNING, PRECOMPUTATION_TASK_SUCCEEDED, TABLE_ORDERING_TASK_FAILED, TABLE_ORDERING_TASK_RUNNING, TABLE_ORDERING_TASK_SUCCEEDED, TABLE_SUMMARY_TASK_FAILED, TABLE_SUMMARY_TASK_RUNNING, TABLE_SUMMARY_TASK_SUCCEEDED } from './computation_state.js';
 import { ColumnSummaryVariant, ColumnSummaryTask, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskProgress, ORDINAL_COLUMN, STRING_COLUMN, LIST_COLUMN, createOrderByTransform, createTableSummaryTransform, createColumnSummaryTransform, GridColumnGroup, SKIPPED_COLUMN, OrdinalColumnAnalysis, StringColumnAnalysis, ListColumnAnalysis, ListGridColumnGroup, StringGridColumnGroup, OrdinalGridColumnGroup, BinnedValuesTable, FrequentValuesTable, createPrecomputationTransform, ColumnPrecomputationTask, BIN_COUNT, ROWNUMBER_COLUMN, getGridColumnTypeName } from './table_transforms.js';
 import { AsyncDataFrame, ComputeWorkerBindings } from './compute_worker_bindings.js';
 import { ArrowTableFormatter } from '../view/query_result/arrow_formatter.js';
 import { assert } from '../utils/assert.js';
 
 const LOG_CTX = "compute";
+
+// XXX Replace getChild with index lookups
 
 /// Compute all table summaries
 export async function analyzeTable(computationId: number, table: arrow.Table, dispatch: Dispatch<ComputationAction>, worker: ComputeWorkerBindings, logger: Logger): Promise<void> {
@@ -150,12 +152,11 @@ function buildGridColumns(table: arrow.Table): GridColumnGroup[] {
                 columnGroups.push({
                     type: ORDINAL_COLUMN,
                     value: {
-                        inputFieldId: i,
                         inputFieldName: field.name,
                         inputFieldType: field.type,
                         inputFieldNullable: field.nullable,
                         statsFields: null,
-                        binField: null,
+                        binFieldName: null,
                         binCount: BIN_COUNT
                     }
                 });
@@ -165,12 +166,11 @@ function buildGridColumns(table: arrow.Table): GridColumnGroup[] {
                 columnGroups.push({
                     type: STRING_COLUMN,
                     value: {
-                        inputFieldId: i,
                         inputFieldName: field.name,
                         inputFieldType: field.type,
                         inputFieldNullable: field.nullable,
                         statsFields: null,
-                        valueIdField: null,
+                        valueIdFieldName: null,
                     }
                 });
                 break;
@@ -179,12 +179,11 @@ function buildGridColumns(table: arrow.Table): GridColumnGroup[] {
                 columnGroups.push({
                     type: LIST_COLUMN,
                     value: {
-                        inputFieldId: i,
                         inputFieldName: field.name,
                         inputFieldType: field.type,
                         inputFieldNullable: field.nullable,
                         statsFields: null,
-                        valueIdField: null,
+                        valueIdFieldName: null,
                     }
                 });
                 break;
@@ -192,7 +191,6 @@ function buildGridColumns(table: arrow.Table): GridColumnGroup[] {
                 columnGroups.push({
                     type: SKIPPED_COLUMN,
                     value: {
-                        inputFieldId: i,
                         inputFieldName: field.name,
                         inputFieldType: field.type,
                         inputFieldNullable: field.nullable,
@@ -242,6 +240,7 @@ export async function sortTable(task: TableOrderingTask, dispatch: Dispatch<Comp
         const out: OrderedTable = {
             orderingConstraints: task.orderingConstraints,
             dataTable: orderedTable,
+            dataTableFieldsByName: task.inputDataTableFieldIndex,
             dataFrame: transformed,
         };
         // Mark the task as running
@@ -300,13 +299,15 @@ export async function computeTableSummary(task: TableSummaryTask, dispatch: Disp
         logger.info(`aggregated table ${task.computationId} in ${Math.floor(summaryEnd - summaryStart)} ms`, LOG_CTX);
         // Read the result
         const statsTable = await transformedDataFrame.readTable();
+        const statsTableFields = createArrowFieldIndex(statsTable);
         const statsTableFormatter = new ArrowTableFormatter(statsTable.schema, statsTable.batches);
         // The output table
         const summary: TableSummary = {
             statsTable,
             statsTableFormatter,
+            statsTableFieldsByName: statsTableFields,
             statsDataFrame: transformedDataFrame,
-            statsCountStarField: countStarColumn,
+            statsCountStarFieldName: countStarColumn,
         };
         // Mark the task as succeeded
         taskProgress = {
@@ -340,13 +341,15 @@ export async function computeTableSummary(task: TableSummaryTask, dispatch: Disp
 }
 
 function analyzeOrdinalColumn(tableSummary: TableSummary, columnEntry: OrdinalGridColumnGroup, binnedValues: BinnedValuesTable, binnedValuesFormatter: ArrowTableFormatter): OrdinalColumnAnalysis {
-    const totalCountVector = tableSummary.statsTable.getChildAt(tableSummary.statsCountStarField!) as arrow.Vector<arrow.Int64>;
-    const notNullCountVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.countField) as arrow.Vector<arrow.Int64>;
+    const totalCountVector = tableSummary.statsTable.getChild(tableSummary.statsCountStarFieldName!) as arrow.Vector<arrow.Int64>;
+    const notNullCountVector = tableSummary.statsTable.getChild(columnEntry.statsFields!.countFieldName) as arrow.Vector<arrow.Int64>;
 
     const totalCount = Number(totalCountVector.get(0) ?? BigInt(0));
     const notNullCount = Number(notNullCountVector.get(0) ?? BigInt(0));
-    const minValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.minAggregateField!) ?? "";
-    const maxValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.maxAggregateField!) ?? "";
+    const minFieldId = tableSummary.statsTableFieldsByName.get(columnEntry.statsFields!.minAggregateFieldName!)!;
+    const maxFieldId = tableSummary.statsTableFieldsByName.get(columnEntry.statsFields!.maxAggregateFieldName!)!;
+    const minValue = tableSummary.statsTableFormatter.getValue(0, minFieldId) ?? "";
+    const maxValue = tableSummary.statsTableFormatter.getValue(0, maxFieldId) ?? "";
 
     assert(binnedValues.schema.fields[1].name == "count");
     assert(binnedValues.schema.fields[3].name == "binLowerBound");
@@ -373,9 +376,9 @@ function analyzeOrdinalColumn(tableSummary: TableSummary, columnEntry: OrdinalGr
 }
 
 function analyzeStringColumn(tableSummary: TableSummary, columnEntry: StringGridColumnGroup, frequentValueTable: FrequentValuesTable): StringColumnAnalysis {
-    const totalCountVector = tableSummary.statsTable.getChildAt(tableSummary.statsCountStarField!) as arrow.Vector<arrow.Int64>;
-    const notNullCountVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.countField) as arrow.Vector<arrow.Int64>;
-    const distinctCountVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.distinctCountField!) as arrow.Vector<arrow.Int64>;
+    const totalCountVector = tableSummary.statsTable.getChild(tableSummary.statsCountStarFieldName!) as arrow.Vector<arrow.Int64>;
+    const notNullCountVector = tableSummary.statsTable.getChild(columnEntry.statsFields!.countFieldName) as arrow.Vector<arrow.Int64>;
+    const distinctCountVector = tableSummary.statsTable.getChild(columnEntry.statsFields!.distinctCountFieldName!) as arrow.Vector<arrow.Int64>;
 
     const totalCount = Number(totalCountVector.get(0) ?? BigInt(0));
     const notNullCount = Number(notNullCountVector.get(0) ?? BigInt(0));
@@ -409,9 +412,9 @@ function analyzeStringColumn(tableSummary: TableSummary, columnEntry: StringGrid
 }
 
 function analyzeListColumn(tableSummary: TableSummary, columnEntry: ListGridColumnGroup, frequentValueTable: FrequentValuesTable): ListColumnAnalysis {
-    const totalCountVector = tableSummary.statsTable.getChildAt(tableSummary.statsCountStarField!) as arrow.Vector<arrow.Int64>;
-    const notNullCountVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.countField) as arrow.Vector<arrow.Int64>;
-    const distinctCountVector = tableSummary.statsTable.getChildAt(columnEntry.statsFields!.distinctCountField!) as arrow.Vector<arrow.Int64>;
+    const totalCountVector = tableSummary.statsTable.getChild(tableSummary.statsCountStarFieldName!) as arrow.Vector<arrow.Int64>;
+    const notNullCountVector = tableSummary.statsTable.getChild(columnEntry.statsFields!.countFieldName) as arrow.Vector<arrow.Int64>;
+    const distinctCountVector = tableSummary.statsTable.getChild(columnEntry.statsFields!.distinctCountFieldName!) as arrow.Vector<arrow.Int64>;
 
     const totalCount = Number(totalCountVector.get(0) ?? BigInt(0));
     const notNullCount = Number(notNullCountVector.get(0) ?? BigInt(0));

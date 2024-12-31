@@ -15,6 +15,8 @@ export interface TableComputationState {
 
     /// The table on the main thread
     dataTable: arrow.Table;
+    /// The table field index
+    dataTableFieldsByName: Map<string, number>;
     /// The abort controller
     dataTableLifetime: AbortController;
     /// The data frame in the compute module
@@ -68,12 +70,22 @@ export function createComputationState(): ComputationState {
         tableComputations: new Map(),
     };
 }
+
+export function createArrowFieldIndex(table: arrow.Table): Map<string, number> {
+    let out = new Map<string, number>();
+    for (let i = 0; i < table.schema.fields.length; ++i) {
+        out.set(table.schema.fields[i].name, i);
+    }
+    return out;
+}
+
 /// Create the table computation state
 function createTableComputationState(computationId: number, table: arrow.Table, tableColumns: GridColumnGroup[], tableLifetime: AbortController): TableComputationState {
     return {
         computationId: computationId,
         localEpoch: 0,
         dataTable: table,
+        dataTableFieldsByName: createArrowFieldIndex(table),
         columnGroups: tableColumns,
         dataTableLifetime: tableLifetime,
         dataTableOrdering: [],
