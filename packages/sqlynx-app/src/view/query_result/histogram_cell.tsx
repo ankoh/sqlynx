@@ -175,9 +175,9 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
         d3.select(histAxisContainer.current!)
             .append("line")
             .attr("x1", 0)
-            .attr("y1", 0)
+            .attr("y1", 1)
             .attr("x2", histWidth)
-            .attr("y2", 0)
+            .attr("y2", 1)
             .attr("stroke", "hsl(208.5deg 20.69% 40.76%)");
 
         // Add the nulls x-axis
@@ -195,9 +195,9 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
         d3.select(nullAxisContainer.current!)
             .append("line")
             .attr("x1", 0)
-            .attr("y1", 0)
+            .attr("y1", 1)
             .attr("x2", nullsXWidth)
-            .attr("y2", 0)
+            .attr("y2", 1)
             .attr("stroke", "hsl(208.5deg 20.69% 40.76%)");
 
     }, [histXScale, histYScale]);
@@ -260,8 +260,10 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
                             fontSize: "12px",
                             fontWeight: 400,
                             pointerEvents: "none",
-                            backgroundColor: "white",
+                            color: "white",
+                            backgroundColor: "hsl(208.5deg 20.69% 30.76%)",
                             zIndex: 3,
+                            padding: "0px 4px 0px 4px",
                         }}>{binLabelFocused}</span>
                     )}
                 </div>
