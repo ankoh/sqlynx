@@ -59,7 +59,7 @@ export function useStickyRowAndColumnHeaders(Cell: React.ElementType, cellLocati
                                 position: "sticky",
                                 left: 0,
                                 top: rowOffset,
-                                zIndex: 4
+                                zIndex: 4,
                             }
                         })
                     );
@@ -79,7 +79,7 @@ export function useStickyRowAndColumnHeaders(Cell: React.ElementType, cellLocati
                                     position: "sticky",
                                     top: rowOffset,
                                     marginLeft: (j === 1) ? (cellLocation.getColumnOffset(columnIndex) - cellLocation.getColumnWidth(0)) : undefined,
-                                    zIndex: 3
+                                    zIndex: 3,
                                 }
                             })
                         );
@@ -108,7 +108,7 @@ export function useStickyRowAndColumnHeaders(Cell: React.ElementType, cellLocati
                                 position: "sticky",
                                 left: 0,
                                 marginTop: (i === headerRowCount) ? (cellLocation.getRowOffset(rowIndex) - firstStickyRowOffset) : undefined,
-                                zIndex: 2
+                                zIndex: 2,
                             }
                         })
                     );

@@ -8,6 +8,8 @@ import { observeSize } from '../../view/foundations/size_observer.js';
 import { assert } from '../../utils/assert.js';
 
 interface MostFrequentCellProps {
+    className?: string;
+    style?: React.CSSProperties;
     tableSummary: TableSummary;
     columnSummary: ColumnSummaryVariant;
 }
@@ -144,34 +146,36 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
     }
 
     return (
-        <div className={styles.root} ref={rootContainer}>
-            <div className={styles.header_container}>
-                {dataTypeToString(props.columnSummary.value.columnEntry.inputFieldType)}
-            </div>
-            <div className={styles.plot_container} ref={svgContainer}>
-                <svg
-                    className={styles.plot_svg}
-                    width={width + margin.left + margin.right}
-                    height={height + margin.top + margin.bottom}
-                >
-                    <defs>
-                        <clipPath id="rounded-bar">
-                            <rect x={0} y={0} width={width} height={height} rx={3} ry={3} />
-                        </clipPath>
-                    </defs>
-                    <g transform={`translate(${margin.left},${margin.top})`}>
-                        <rect x={0} y={0} width={width} height={height} rx={3} ry={3} stroke="hsl(208.5deg 20.69% 40.76%)" strokeWidth={1} fill="transparent" />
-                    </g>
-                    <g transform={`translate(${margin.left},${margin.top})`} clipPath="url(#rounded-bar)">
-                        <g ref={barContainer} />
-                        <g ref={barMoreContainer} />
-                    </g>
-                    <g transform={`translate(${margin.left}, ${margin.top + height})`}>
-                        <text x={1} y={0} dy={14} textAnchor="start" fontSize={12} fontWeight={400}>Left</text>
-                        <text x={width - 1} y={0} dy={14} textAnchor="end" fontSize={12} fontWeight={400}>Right</text>
-                        <text x={width / 2} y={0} dy={14} textAnchor="middle" fontSize={12} fontWeight={400}>Middle</text>
-                    </g>
-                </svg>
+        <div className={props.className} style={props.style}>
+            <div className={styles.root} ref={rootContainer}>
+                <div className={styles.header_container}>
+                    {dataTypeToString(props.columnSummary.value.columnEntry.inputFieldType)}
+                </div>
+                <div className={styles.plot_container} ref={svgContainer}>
+                    <svg
+                        className={styles.plot_svg}
+                        width={width + margin.left + margin.right}
+                        height={height + margin.top + margin.bottom}
+                    >
+                        <defs>
+                            <clipPath id="rounded-bar">
+                                <rect x={0} y={0} width={width} height={height} rx={3} ry={3} />
+                            </clipPath>
+                        </defs>
+                        <g transform={`translate(${margin.left},${margin.top})`}>
+                            <rect x={0} y={0} width={width} height={height} rx={3} ry={3} stroke="hsl(208.5deg 20.69% 40.76%)" strokeWidth={1} fill="transparent" />
+                        </g>
+                        <g transform={`translate(${margin.left},${margin.top})`} clipPath="url(#rounded-bar)">
+                            <g ref={barContainer} />
+                            <g ref={barMoreContainer} />
+                        </g>
+                        <g transform={`translate(${margin.left}, ${margin.top + height})`}>
+                            <text x={1} y={0} dy={14} textAnchor="start" fontSize={12} fontWeight={400}>Left</text>
+                            <text x={width - 1} y={0} dy={14} textAnchor="end" fontSize={12} fontWeight={400}>Right</text>
+                            <text x={width / 2} y={0} dy={14} textAnchor="middle" fontSize={12} fontWeight={400}>Middle</text>
+                        </g>
+                    </svg>
+                </div>
             </div>
         </div>
     );

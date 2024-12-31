@@ -9,6 +9,8 @@ import { dataTypeToString } from './arrow_formatter.js';
 const NULL_SYMBOL = "∅";
 
 interface HistogramCellProps {
+    className?: string;
+    style?: React.CSSProperties;
     tableSummary: TableSummary;
     columnSummary: OrdinalColumnSummary;
 }
@@ -206,53 +208,63 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
     const binLabelFocused = focusedBin != null ? binLabels[focusedBin] : null;
 
     return (
-        <div className={styles.root} ref={rootContainer}>
-            <div className={styles.header_container}>
-                {dataTypeToString(props.columnSummary.columnEntry.inputFieldType)}
-            </div>
-            <div className={styles.plot_container} ref={svgContainer}>
-                {binLabelFocused && (
-                    <span style={{
-                        position: "absolute",
-                        left: `${histXScale(focusedBin!.toString()) ?? 0 + histXScale.bandwidth() / 2}px`,
-                        top: `${margin.top + height + 14 - 12}px`,
-                        textWrap: "nowrap",
-                        textAnchor: "middle",
-                        fontSize: "12px",
-                        fontWeight: 400,
-                        zIndex: 200,
-                    }}>{binLabelFocused}</span>
-                )}
-                <svg
-                    className={styles.plot_svg}
-                    width={width + margin.left + margin.right}
-                    height={height + margin.top + margin.bottom}
-                >
-                    <g transform={`translate(${margin.left},${margin.top})`}>
-                        <g ref={histBarContainer} />
-                        <g ref={brushContainer} />
-                        <g transform={`translate(0, ${height})`}>
-                            {!binLabelFocused &&
-                                (
-                                    <>
-                                        <text x={1} y={0} dy={14} textAnchor="start" fontSize={12} fontWeight={400}>{binLabelLeft}</text>
-                                        <text x={histWidth - 1} y={0} dy={14} textAnchor="end" fontSize={12} fontWeight={400}>{binLabelRight}</text>
-                                    </>
-                                )}
+        <div
+            className={props.className}
+            style={{
+                ...props.style,
+                zIndex: focusedBin != null ? 100 : props.style?.zIndex
+            }}
+        >
+            <div className={styles.root} ref={rootContainer}>
+                <div className={styles.header_container}>
+                    {dataTypeToString(props.columnSummary.columnEntry.inputFieldType)}
+                </div>
+                <div className={styles.plot_container} ref={svgContainer}>
+                    <svg
+                        className={styles.plot_svg}
+                        width={width + margin.left + margin.right}
+                        height={height + margin.top + margin.bottom}
+                    >
+                        <g transform={`translate(${margin.left},${margin.top})`}>
+                            <g ref={histBarContainer} />
+                            <g ref={brushContainer} />
+                            <g transform={`translate(0, ${height})`}>
+                                {!binLabelFocused &&
+                                    (
+                                        <>
+                                            <text x={1} y={0} dy={14} textAnchor="start" fontSize={12} fontWeight={400}>{binLabelLeft}</text>
+                                            <text x={histWidth - 1} y={0} dy={14} textAnchor="end" fontSize={12} fontWeight={400}>{binLabelRight}</text>
+                                        </>
+                                    )}
+                            </g>
+                            <g ref={histAxisContainer} transform={`translate(0, ${height})`} />
+                            {inputNullable &&
+                                <>
+                                    <g ref={nullBarContainer} transform={`translate(${histWidth + nullsMargin + nullsPadding}, 0)`} />
+                                    <g transform={`translate(${histWidth + nullsMargin + nullsPadding + nullsXScale.bandwidth() / 2}, ${height})`}>
+                                        <text x={0} y={0} dy={14} textAnchor="middle" fontSize={12} fontWeight={400}>{NULL_SYMBOL}</text>
+                                    </g>
+                                    <g ref={nullAxisContainer} transform={`translate(${histWidth + nullsMargin + nullsPadding}, ${height})`} />
+                                </>
+                            }
                         </g>
-                        <g ref={histAxisContainer} transform={`translate(0, ${height})`} />
-                        {inputNullable &&
-                            <>
-                                <g ref={nullBarContainer} transform={`translate(${histWidth + nullsMargin + nullsPadding}, 0)`} />
-                                <g transform={`translate(${histWidth + nullsMargin + nullsPadding + nullsXScale.bandwidth() / 2}, ${height})`}>
-                                    <text x={0} y={0} dy={14} textAnchor="middle" fontSize={12} fontWeight={400}>{NULL_SYMBOL}</text>
-                                </g>
-                                <g ref={nullAxisContainer} transform={`translate(${histWidth + nullsMargin + nullsPadding}, ${height})`} />
-                            </>
-                        }
-                    </g>
 
-                </svg>
+                    </svg>
+                    {binLabelFocused && (
+                        <span style={{
+                            position: "absolute",
+                            left: `${histXScale(focusedBin!.toString()) ?? 0 + histXScale.bandwidth() / 2}px`,
+                            top: `${margin.top + height + 13 - 12}px`,
+                            textWrap: "nowrap",
+                            textAnchor: "middle",
+                            fontSize: "12px",
+                            fontWeight: 400,
+                            pointerEvents: "none",
+                            backgroundColor: "white",
+                            zIndex: 3,
+                        }}>{binLabelFocused}</span>
+                    )}
+                </div>
             </div>
         </div>
     );

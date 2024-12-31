@@ -23,5 +23,5 @@
 
 .plot_svg {
     position: absolute;
-    z-index: 300;
+    z-index: 2;
 }
