@@ -74,6 +74,34 @@ const DEFAULT_DEMO_CONFIG: DemoDatabaseConfig = {
                 return Int128.encodeLE(intPart);
             }
         },
+        {
+            name: "Float32",
+            type: new arrow.Float32(),
+            nullable: false,
+            generateScalarValue: (_row: number) => {
+                const value = Math.random();
+                return value;
+            }
+        },
+        {
+            name: "List/Float32",
+            type: new arrow.List(new arrow.Field(
+                "element",
+                new arrow.Float32(),
+                false
+            )),
+            nullable: false,
+            listElement: {
+                name: "List/Float32/Element",
+                type: new arrow.Float32(),
+                nullable: false,
+                generateScalarValue: (_row: number) => {
+                    const value = Math.random();
+                    return value;
+                }
+            },
+            listLength: (_row: number) => 1024,
+        },
     ],
     resultBatches: 3,
     resultRowsPerBatch: 200,

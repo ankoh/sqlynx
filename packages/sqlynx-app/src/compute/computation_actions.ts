@@ -345,8 +345,8 @@ function analyzeOrdinalColumn(tableSummary: TableSummary, columnEntry: OrdinalGr
 
     const totalCount = Number(totalCountVector.get(0) ?? BigInt(0));
     const notNullCount = Number(notNullCountVector.get(0) ?? BigInt(0));
-    const minValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.minAggregateField) ?? "";
-    const maxValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.maxAggregateField) ?? "";
+    const minValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.minAggregateField!) ?? "";
+    const maxValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.maxAggregateField!) ?? "";
 
     assert(binnedValues.schema.fields[1].name == "count");
     assert(binnedValues.schema.fields[3].name == "binLowerBound");
@@ -380,8 +380,6 @@ function analyzeStringColumn(tableSummary: TableSummary, columnEntry: StringGrid
     const totalCount = Number(totalCountVector.get(0) ?? BigInt(0));
     const notNullCount = Number(notNullCountVector.get(0) ?? BigInt(0));
     const distinctCount = Number(distinctCountVector.get(0) ?? BigInt(0));
-    const minValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.minAggregateField) ?? "";
-    const maxValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.maxAggregateField) ?? "";
 
     assert(frequentValueTable.schema.fields[0].name == "key");
     assert(frequentValueTable.schema.fields[1].name == "count");
@@ -403,8 +401,6 @@ function analyzeStringColumn(tableSummary: TableSummary, columnEntry: StringGrid
         countNotNull: notNullCount,
         countNull: totalCount - notNullCount,
         countDistinct: distinctCount,
-        minValue: minValue,
-        maxValue: maxValue,
         isUnique: notNullCount == distinctCount,
         frequentValueIsNull: frequentValueIsNull,
         frequentValueCounts: frequentValueCounts,
@@ -420,8 +416,6 @@ function analyzeListColumn(tableSummary: TableSummary, columnEntry: ListGridColu
     const totalCount = Number(totalCountVector.get(0) ?? BigInt(0));
     const notNullCount = Number(notNullCountVector.get(0) ?? BigInt(0));
     const distinctCount = Number(distinctCountVector.get(0) ?? BigInt(0));
-    const minValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.minAggregateField) ?? "";
-    const maxValue = tableSummary.statsTableFormatter.getValue(0, columnEntry.statsFields!.maxAggregateField) ?? "";
 
     assert(frequentValueTable.schema.fields[0].name == "key");
     assert(frequentValueTable.schema.fields[1].name == "count");
@@ -443,8 +437,6 @@ function analyzeListColumn(tableSummary: TableSummary, columnEntry: ListGridColu
         countNotNull: Number(notNullCount),
         countNull: Number(totalCount - notNullCount),
         countDistinct: Number(distinctCount),
-        minValue: minValue,
-        maxValue: maxValue,
         isUnique: notNullCount == distinctCount,
         frequentValueIsNull: frequentValueIsNull,
         frequentValueCounts: frequentValueCounts,
@@ -545,7 +537,7 @@ export async function computeColumnSummary(computationId: number, task: ColumnSu
         return summary;
 
     } catch (error: any) {
-        logger.error(`ordering table ${computationId} failed with error: ${error.toString()}`);
+        logger.error(`aggregated table ${computationId} failed with error: ${error.toString()}`);
         taskProgress = {
             status: TaskStatus.TASK_FAILED,
             startedAt,

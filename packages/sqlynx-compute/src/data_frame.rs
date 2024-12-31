@@ -211,7 +211,31 @@ impl DataFrame {
 
         // Bin the key field
         let (bin_f64, binning_metadata): (Arc<dyn PhysicalExpr>, BinningMetadata) = match &value_type {
-            DataType::Float16 | DataType::Float32 | DataType::Float64 => {
+            DataType::Float32 => {
+                let bin_width = match max_value
+                    .sub(min_value.clone())?
+                    .cast_to(&DataType::Float32)? 
+                    .div(ScalarValue::Float32(Some(bin_count as f32)))?
+                {
+                    ScalarValue::Float32(Some(0.0)) => ScalarValue::Float32(Some(1.0)),
+                    ScalarValue::Float32(Some(v)) => ScalarValue::Float32(Some(v.abs())),
+                    ScalarValue::Float32(None) => ScalarValue::Float32(None),
+                    _ => unreachable!(),
+                };
+
+                // Compute fractional bin
+                let min_delta = binary(value.clone(), Operator::Minus, lit(min_value.clone()), &input.schema())?;
+                let min_offset = Arc::new(CastExpr::new(min_delta, DataType::Float32, None));
+                let bin_f64 = binary(min_offset, Operator::Divide, lit(bin_width.clone()), &input.schema())?;
+
+                (bin_f64, BinningMetadata {
+                    min_value,
+                    bin_width,
+                    cast_bin_width_type: DataType::Float32,
+                    cast_bin_bounds_type: value_type.clone(),
+                })
+            }
+            DataType::Float64 => {
                 let bin_width = match max_value
                     .sub(min_value.clone())?
                     .cast_to(&DataType::Float64)? 
