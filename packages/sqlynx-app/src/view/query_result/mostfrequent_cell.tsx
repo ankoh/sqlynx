@@ -6,6 +6,7 @@ import { StringColumnSummary, TableSummary } from '../../compute/table_transform
 import { dataTypeToString } from './arrow_formatter.js';
 import { observeSize } from '../../view/foundations/size_observer.js';
 import { assert } from '../../utils/assert.js';
+import { NULL_SYMBOL } from './histogram_cell.js';
 
 interface MostFrequentCellProps {
     className?: string;
@@ -186,7 +187,8 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
                             backgroundColor: "hsl(208.5deg 20.69% 30.76%)",
                             zIndex: 3,
                             padding: "0px 4px 0px 4px",
-                        }}>{focusedValue}</span>
+                            borderRadius: "3px",
+                        }}>{focusedValue ?? NULL_SYMBOL}</span>
                     )}
                 </div>
             </div>

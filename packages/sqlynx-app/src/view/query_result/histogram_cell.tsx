@@ -6,7 +6,7 @@ import { observeSize } from '../../view/foundations/size_observer.js';
 import { BIN_COUNT, OrdinalColumnSummary, TableSummary } from '../../compute/table_transforms.js';
 import { dataTypeToString } from './arrow_formatter.js';
 
-const NULL_SYMBOL = "∅";
+export const NULL_SYMBOL = "∅";
 
 interface HistogramCellProps {
     className?: string;
@@ -225,6 +225,7 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
                             backgroundColor: "hsl(208.5deg 20.69% 30.76%)",
                             zIndex: 3,
                             padding: "0px 4px 0px 4px",
+                            borderRadius: "3px",
                         }}>{binLabelFocused}</span>
                     )}
                 </div>
