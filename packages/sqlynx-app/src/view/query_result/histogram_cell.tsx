@@ -99,9 +99,10 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
 
     // Track the focused bin id
     const [focusedBin, setFocusedBin] = React.useState<number | null>(null);
+    const [focusedNull, setFocusedNull] = React.useState<boolean | null>(null);
 
     // Listen for pointer events events
-    const onMouseOverBin = React.useCallback((elem: React.MouseEvent<SVGGElement>) => {
+    const onPointerOverBin = React.useCallback((elem: React.MouseEvent<SVGGElement>) => {
         const paddingInner = histXScale.paddingInner() * histXScale.bandwidth();
         const paddingOuter = histXScale.paddingOuter() * histXScale.bandwidth();
         const boundingBox = elem.currentTarget.getBoundingClientRect();
@@ -112,10 +113,14 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
 
         setFocusedBin(bin);
     }, [histXScale]);
-    const onMouseOutBin = React.useCallback((_elem: React.MouseEvent<SVGGElement>) => {
+    const onPointerOutBin = React.useCallback((_elem: React.MouseEvent<SVGGElement>) => {
         setFocusedBin(null);
     }, []);
-    const onMouseOverNull = React.useCallback((_elem: React.MouseEvent<SVGRectElement>) => {
+    const onPointerOverNull = React.useCallback((_elem: React.MouseEvent<SVGGElement>) => {
+        setFocusedNull(true);
+    }, []);
+    const onPointerOutNull = React.useCallback((_elem: React.MouseEvent<SVGGElement>) => {
+        setFocusedNull(false);
     }, []);
 
     // Resolve bin labels
@@ -156,15 +161,15 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
                                 ))}
                             </g>
                             <g ref={brushContainer}
-                                onPointerOver={onMouseOverBin}
-                                onPointerMove={onMouseOverBin}
-                                onPointerOut={onMouseOutBin}
+                                onPointerOver={onPointerOverBin}
+                                onPointerMove={onPointerOverBin}
+                                onPointerOut={onPointerOutBin}
                             />
                             <g
                                 transform={`translate(0, ${height})`}
-                                onPointerOver={onMouseOverBin}
-                                onPointerMove={onMouseOverBin}
-                                onPointerOut={onMouseOutBin}
+                                onPointerOver={onPointerOverBin}
+                                onPointerMove={onPointerOverBin}
+                                onPointerOut={onPointerOutBin}
                             >
                                 {(binLabelFocused == null) &&
                                     (
@@ -182,7 +187,12 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
                                 />
                             </g>
                             {inputNullable &&
-                                <g transform={`translate(${histWidth + nullsMargin + nullsPadding}, 0)`}>
+                                <g
+                                    transform={`translate(${histWidth + nullsMargin + nullsPadding}, 0)`}
+                                    onPointerOver={onPointerOverNull}
+                                    onPointerMove={onPointerOverNull}
+                                    onPointerOut={onPointerOutNull}
+                                >
                                     <rect
                                         x={nullsXScale(NULL_SYMBOL)}
                                         y={nullsYScale(props.columnSummary.analysis.countNull ?? 0)}
@@ -203,7 +213,6 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
                                             width={nullsXScale.bandwidth()}
                                             height={margin.bottom}
                                             fillOpacity={0}
-                                            onPointerOver={onMouseOverNull}
                                         />
                                     </g>
                                 </g>
@@ -227,6 +236,23 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
                             padding: "0px 4px 0px 4px",
                             borderRadius: "3px",
                         }}>{binLabelFocused}</span>
+                    )}
+                    {focusedNull && (
+                        <span style={{
+                            position: "absolute",
+                            top: `${margin.top + height + 13 - 12}px`,
+                            left: `${margin.left + histWidth + nullsMargin + nullsPadding + nullsXScale.bandwidth() / 2}px`,
+                            transform: 'translateX(-50%)',
+                            textWrap: "nowrap",
+                            fontSize: "12px",
+                            fontWeight: 400,
+                            pointerEvents: "none",
+                            color: "white",
+                            backgroundColor: "hsl(208.5deg 20.69% 30.76%)",
+                            zIndex: 3,
+                            padding: "0px 4px 0px 4px",
+                            borderRadius: "3px",
+                        }}>{NULL_SYMBOL}</span>
                     )}
                 </div>
             </div>
