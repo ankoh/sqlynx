@@ -71,14 +71,20 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
             .domain(yDomain);
 
         return [histXScale, histYScale, nullsXScale, nullsYScale, nullsXWidth];
-    }, [histWidth, height]);
+    }, [histWidth, height, svgContainerSize]);
 
     // Adjust null padding to center null bar horizontally
     const nullsPadding = (nullsWidth - nullsXScale.bandwidth()) / 2;
 
     const [focusedBin, setFocusedBin] = React.useState<number | null>(null);
     const onMouseOverBin = React.useCallback((elem: React.MouseEvent<SVGRectElement>) => {
-        const bin = Number.parseInt(elem.currentTarget.dataset.bin!);
+        const paddingInner = histXScale.paddingInner() * histXScale.bandwidth();
+        const paddingOuter = histXScale.paddingOuter() * histXScale.bandwidth();
+        const boundingBox = elem.currentTarget.getBoundingClientRect();
+        const relativeX = elem.clientX - boundingBox.left;
+        const innerX = Math.max(relativeX, paddingOuter) - paddingOuter;
+        const binWidth = histXScale.bandwidth() + paddingInner;
+        const bin = Math.min(Math.floor(innerX / binWidth), binCounts.length - 1);
 
         d3.select(histBarContainer.current)
             .selectAll("rect")
@@ -87,7 +93,7 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
             .attr("fill", (v: number) => (v == bin) ? "hsl(208.5deg 20.69% 30.76%)" : "hsl(208.5deg 20.69% 50.76%)")
 
         setFocusedBin(bin);
-    }, []);
+    }, [histXScale]);
     const onMouseOutBin = React.useCallback((_elem: React.MouseEvent<SVGRectElement>) => {
         d3.select(histBarContainer.current)
             .selectAll("rect")
@@ -161,17 +167,15 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
             .selectChildren()
             .remove();
         d3.select(histAxisContainer.current!)
-            .selectAll("rect")
-            .data(bins.keys())
-            .enter()
             .append("rect")
-            .attr("x", i => histXScale(bins[i].toString())!)
-            .attr("y", 0)
-            .attr("data-bin", i => i.toString())
-            .attr("width", histXScale.bandwidth())
-            .attr("height", margin.bottom)
+            .attr("x", 0)
+            .attr("y", 1)
+            .attr("width", histWidth)
+            .attr("height", margin.bottom - 1)
             .attr("fill-opacity", 0)
-            .on("mouseover", onMouseOverBin);
+            .on("mouseover", onMouseOverBin)
+            .on("mousemove", onMouseOverBin)
+            .on("mouseout", onMouseOutBin);
         d3.select(histAxisContainer.current!)
             .append("line")
             .attr("x1", 0)
@@ -253,10 +257,10 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
                     {binLabelFocused && (
                         <span style={{
                             position: "absolute",
-                            left: `${histXScale(focusedBin!.toString()) ?? 0 + histXScale.bandwidth() / 2}px`,
                             top: `${margin.top + height + 13 - 12}px`,
+                            left: `${margin.left + (histXScale(focusedBin!.toString()) ?? 0) + histXScale.bandwidth() / 2}px`,
+                            transform: 'translateX(-50%)',
                             textWrap: "nowrap",
-                            textAnchor: "middle",
                             fontSize: "12px",
                             fontWeight: 400,
                             pointerEvents: "none",

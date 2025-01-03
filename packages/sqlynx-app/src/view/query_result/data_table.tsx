@@ -362,6 +362,9 @@ function Cell(props: CellProps) {
             )
         }
 
+        // XXX Introduce special calls for certain types
+
+
         // Format the value
         const formatted = props.tableFormatter.getValue(dataRow, fieldId);
         const focusedRow = props.focusedRow;
