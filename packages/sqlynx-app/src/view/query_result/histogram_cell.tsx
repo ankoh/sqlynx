@@ -171,13 +171,6 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
                                 onPointerMove={onPointerOverBin}
                                 onPointerOut={onPointerOutBin}
                             >
-                                {(binLabelFocused == null) &&
-                                    (
-                                        <>
-                                            <text x={1} y={0} dy={14} textAnchor="start" fontSize={12} fontWeight={400}>{binLabelLeft}</text>
-                                            <text x={histWidth - 1} y={0} dy={14} textAnchor="end" fontSize={12} fontWeight={400}>{binLabelRight}</text>
-                                        </>
-                                    )}
                                 <line x1={0} y1={1} x2={histWidth} y2={1} stroke={"hsl(208.5deg 20.69% 40.76%)"} />
                                 <rect
                                     x={0} y={0}
@@ -200,7 +193,6 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
                                         height={height - nullsYScale(props.columnSummary.analysis.countNull ?? 0)}
                                         fill={"hsl(210deg 17.5% 74.31%)"}
                                     />
-                                    <text x={nullsXScale.bandwidth() / 2} y={height} dy={14} textAnchor="middle" fontSize={12} fontWeight={400}>{NULL_SYMBOL}</text>
                                     <g transform={`translate(0, ${height})`}>
                                         <line
                                             x1={0} y1={1}
@@ -220,39 +212,69 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
                         </g>
 
                     </svg>
-                    {(binLabelFocused != null) && (
-                        <span style={{
-                            position: "absolute",
-                            top: `${margin.top + height + 13 - 12}px`,
-                            left: `${margin.left + (histXScale(focusedBin!.toString()) ?? 0) + histXScale.bandwidth() / 2}px`,
-                            transform: 'translateX(-50%)',
-                            textWrap: "nowrap",
-                            fontSize: "12px",
-                            fontWeight: 400,
-                            pointerEvents: "none",
-                            color: "white",
-                            backgroundColor: "hsl(208.5deg 20.69% 30.76%)",
-                            zIndex: 3,
-                            padding: "0px 4px 0px 4px",
-                            borderRadius: "3px",
-                        }}>{binLabelFocused}</span>
-                    )}
-                    {focusedNull && (
-                        <span style={{
-                            position: "absolute",
-                            top: `${margin.top + height + 13 - 12}px`,
-                            left: `${margin.left + histWidth + nullsMargin + nullsPadding + nullsXScale.bandwidth() / 2}px`,
-                            transform: 'translateX(-50%)',
-                            textWrap: "nowrap",
-                            fontSize: "12px",
-                            fontWeight: 400,
-                            pointerEvents: "none",
-                            color: "white",
-                            backgroundColor: "hsl(208.5deg 20.69% 30.76%)",
-                            zIndex: 3,
-                            padding: "0px 4px 0px 4px",
-                            borderRadius: "3px",
-                        }}>{NULL_SYMBOL}</span>
+                    {(binLabelFocused == null)
+                        ? (
+                            <div
+                                className={styles.axis_labels_container}
+                                style={{
+                                    position: "absolute",
+                                    top: `${margin.top + height + 2}px`,
+                                    left: `${margin.left}px`,
+                                    width: `${histWidth}px`,
+                                }}
+                            >
+                                <span className={styles.axis_splitlabel_left}>{binLabelLeft}</span>
+                                <span className={styles.axis_splitlabel_right} >{binLabelRight}</span>
+                            </div>
+                        ) : (
+                            <span style={{
+                                position: "absolute",
+                                top: `${margin.top + height + 13 - 12}px`,
+                                left: `${margin.left + (histXScale(focusedBin!.toString()) ?? 0) + histXScale.bandwidth() / 2}px`,
+                                transform: 'translateX(-50%)',
+                                textWrap: "nowrap",
+                                fontSize: "12px",
+                                fontWeight: 400,
+                                pointerEvents: "none",
+                                color: "white",
+                                backgroundColor: "hsl(208.5deg 20.69% 30.76%)",
+                                zIndex: 3,
+                                padding: "0px 4px 0px 4px",
+                                borderRadius: "3px",
+                            }}>{binLabelFocused}</span>
+                        )}
+                    {inputNullable && (
+                        !focusedNull
+                            ? (
+                                <span
+                                    style={{
+                                        position: "absolute",
+                                        top: `${margin.top + height + 2}px`,
+                                        left: `${margin.left + histWidth + nullsMargin + nullsPadding + nullsXScale.bandwidth() / 2}px`,
+                                        transform: 'translateX(-50%)',
+                                        fontSize: "12px",
+                                        fontWeight: 400,
+                                        pointerEvents: "none",
+                                    }}
+                                >{NULL_SYMBOL}</span>
+
+                            ) : (
+                                <span style={{
+                                    position: "absolute",
+                                    top: `${margin.top + height + 13 - 12}px`,
+                                    left: `${margin.left + histWidth + nullsMargin + nullsPadding + nullsXScale.bandwidth() / 2}px`,
+                                    transform: 'translateX(-50%)',
+                                    textWrap: "nowrap",
+                                    fontSize: "12px",
+                                    fontWeight: 400,
+                                    pointerEvents: "none",
+                                    color: "white",
+                                    backgroundColor: "hsl(208.5deg 20.69% 30.76%)",
+                                    zIndex: 3,
+                                    padding: "0px 4px 0px 4px",
+                                    borderRadius: "3px",
+                                }}>{NULL_SYMBOL}</span>
+                            )
                     )}
                 </div>
             </div>
