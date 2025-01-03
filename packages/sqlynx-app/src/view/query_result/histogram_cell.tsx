@@ -21,13 +21,9 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
     const binCounts = table.getChild("count")!.toArray();
     const inputNullable = props.columnSummary.columnEntry.inputFieldNullable;
 
-    const rootContainer = React.useRef<HTMLDivElement>(null);
     const svgContainer = React.useRef<HTMLDivElement>(null);
     const svgContainerSize = observeSize(svgContainer);
-    const histBarContainer = React.useRef<SVGGElement>(null);
-    const nullBarContainer = React.useRef<SVGGElement>(null);
     const brushContainer = React.useRef<SVGGElement>(null);
-    const nullAxisContainer = React.useRef<SVGGElement>(null);
 
     const margin = { top: 8, right: 8, bottom: 20, left: 8 },
         width = (svgContainerSize?.width ?? 130) - margin.left - margin.right,
@@ -75,7 +71,10 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
     // Adjust null padding to center null bar horizontally
     const nullsPadding = (nullsWidth - nullsXScale.bandwidth()) / 2;
 
+    // Track the focused bin id
     const [focusedBin, setFocusedBin] = React.useState<number | null>(null);
+
+    // Listen for pointer events events
     const onMouseOverBin = React.useCallback((elem: React.MouseEvent<SVGGElement>) => {
         const paddingInner = histXScale.paddingInner() * histXScale.bandwidth();
         const paddingOuter = histXScale.paddingOuter() * histXScale.bandwidth();
@@ -85,63 +84,15 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
         const binWidth = histXScale.bandwidth() + paddingInner;
         const bin = Math.min(Math.floor(innerX / binWidth), binCounts.length - 1);
 
-        d3.select(histBarContainer.current)
-            .selectAll("rect")
-            .data(bins.keys())
-            .join("rect")
-            .attr("fill", (v: number) => (v == bin) ? "hsl(208.5deg 20.69% 30.76%)" : "hsl(208.5deg 20.69% 50.76%)")
-
         setFocusedBin(bin);
     }, [histXScale]);
     const onMouseOutBin = React.useCallback((_elem: React.MouseEvent<SVGGElement>) => {
-        d3.select(histBarContainer.current)
-            .selectAll("rect")
-            .data(bins.keys())
-            .join("rect")
-            .attr("fill", "hsl(208.5deg 20.69% 50.76%)")
-
         setFocusedBin(null);
     }, []);
     const onMouseOverNull = React.useCallback((_elem: React.MouseEvent<SVGRectElement>) => {
     }, []);
 
     React.useLayoutEffect(() => {
-        // Draw the histogram bars
-        d3.select(histBarContainer.current)
-            .selectChildren()
-            .remove();
-        d3.select(histBarContainer.current)
-            .selectAll("rect")
-            .data(bins.keys())
-            .enter()
-            .append("rect")
-            .attr("x", i => histXScale(bins[i].toString())!)
-            .attr("y", i => histYScale(Number(binCounts[i])))
-            .attr("width", histXScale.bandwidth())
-            .attr("height", i => (height - histYScale(Number(binCounts[i]))!))
-            .attr("fill", "hsl(208.5deg 20.69% 50.76%)")
-            .attr("data-bin", i => i.toString());
-
-        // Draw null bar if nullable
-        if (inputNullable) {
-            d3.select(nullBarContainer.current)
-                .selectChildren()
-                .remove();
-            d3.select(nullBarContainer.current)
-                .selectAll("rect")
-                .data([{
-                    x: nullsXScale(NULL_SYMBOL)!,
-                    y: nullsYScale(props.columnSummary.analysis.countNull ?? 0)!
-                }])
-                .enter()
-                .append("rect")
-                .attr("x", d => d.x)
-                .attr("y", d => d.y)
-                .attr("width", nullsXScale.bandwidth())
-                .attr("height", d => (height - d.y))
-                .attr("fill", "hsl(210deg 17.5% 74.31%)");
-        }
-
         const onBrushEnd = (_e: d3.D3BrushEvent<unknown>) => { };
         const onBrush = (_e: d3.D3BrushEvent<unknown>) => { };
         // Define the brush
@@ -156,31 +107,13 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
 
         // Add the brush overlay
         d3.select(brushContainer.current!)
+            .selectChildren()
+            .remove();
+        d3.select(brushContainer.current!)
             .call(brush)
             .selectAll('rect')
             .attr("y", 0)
             .attr('height', height);
-
-        // Add the nulls x-axis
-        d3.select(nullAxisContainer.current!)
-            .selectChildren()
-            .remove();
-        d3.select(nullAxisContainer.current!)
-            .append("rect")
-            .attr("x", nullsXScale(NULL_SYMBOL)!)
-            .attr("y", 0)
-            .attr("width", nullsXScale.bandwidth())
-            .attr("height", margin.bottom)
-            .attr("fill-opacity", 0)
-            .on("mouseover", onMouseOverNull);
-        d3.select(nullAxisContainer.current!)
-            .append("line")
-            .attr("x1", 0)
-            .attr("y1", 1)
-            .attr("x2", nullsXWidth)
-            .attr("y2", 1)
-            .attr("stroke", "hsl(208.5deg 20.69% 40.76%)");
-
     }, [histXScale, histYScale]);
 
     const binLabels = props.columnSummary.analysis.binLowerBounds;
@@ -196,7 +129,7 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
                 zIndex: focusedBin != null ? 100 : props.style?.zIndex
             }}
         >
-            <div className={styles.root} ref={rootContainer}>
+            <div className={styles.root}>
                 <div className={styles.header_container}>
                     {dataTypeToString(props.columnSummary.columnEntry.inputFieldType)}
                 </div>
@@ -207,7 +140,18 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
                         height={height + margin.top + margin.bottom}
                     >
                         <g transform={`translate(${margin.left},${margin.top})`}>
-                            <g ref={histBarContainer} />
+                            <g>
+                                {[...Array(bins.length)].map((_, i) => (
+                                    <rect
+                                        key={i}
+                                        x={histXScale(bins[i].toString())!}
+                                        y={histYScale(Number(binCounts[i]))}
+                                        width={histXScale.bandwidth()}
+                                        height={height - histYScale(Number(binCounts[i]))}
+                                        fill={i == focusedBin ? "hsl(208.5deg 20.69% 30.76%)" : "hsl(208.5deg 20.69% 50.76%)"}
+                                    />
+                                ))}
+                            </g>
                             <g ref={brushContainer}
                                 onPointerOver={onMouseOverBin}
                                 onPointerMove={onMouseOverBin}
@@ -226,29 +170,40 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
                                             <text x={histWidth - 1} y={0} dy={14} textAnchor="end" fontSize={12} fontWeight={400}>{binLabelRight}</text>
                                         </>
                                     )}
-                                <line
-                                    x1={0}
-                                    y1={1}
-                                    x2={histWidth}
-                                    y2={1}
-                                    stroke={"hsl(208.5deg 20.69% 40.76%)"}
-                                />
+                                <line x1={0} y1={1} x2={histWidth} y2={1} stroke={"hsl(208.5deg 20.69% 40.76%)"} />
                                 <rect
-                                    x={0}
-                                    y={0}
+                                    x={0} y={0}
                                     width={histWidth}
                                     height={margin.bottom - 1}
-                                    fill-opacity={0}
+                                    fillOpacity={0}
                                 />
                             </g>
                             {inputNullable &&
-                                <>
-                                    <g ref={nullBarContainer} transform={`translate(${histWidth + nullsMargin + nullsPadding}, 0)`} />
-                                    <g transform={`translate(${histWidth + nullsMargin + nullsPadding + nullsXScale.bandwidth() / 2}, ${height})`}>
-                                        <text x={0} y={0} dy={14} textAnchor="middle" fontSize={12} fontWeight={400}>{NULL_SYMBOL}</text>
+                                <g transform={`translate(${histWidth + nullsMargin + nullsPadding}, 0)`}>
+                                    <rect
+                                        x={nullsXScale(NULL_SYMBOL)}
+                                        y={nullsYScale(props.columnSummary.analysis.countNull ?? 0)}
+                                        width={nullsXScale.bandwidth()}
+                                        height={height - nullsYScale(props.columnSummary.analysis.countNull ?? 0)}
+                                        fill={"hsl(210deg 17.5% 74.31%)"}
+                                    />
+                                    <text x={nullsXScale.bandwidth() / 2} y={height} dy={14} textAnchor="middle" fontSize={12} fontWeight={400}>{NULL_SYMBOL}</text>
+                                    <g transform={`translate(0, ${height})`}>
+                                        <line
+                                            x1={0} y1={1}
+                                            x2={nullsXWidth} y2={1}
+                                            stroke={"hsl(208.5deg 20.69% 40.76%)"}
+                                        />
+                                        <rect
+                                            x={nullsXScale(NULL_SYMBOL)}
+                                            y={0}
+                                            width={nullsXScale.bandwidth()}
+                                            height={margin.bottom}
+                                            fillOpacity={0}
+                                            onPointerOver={onMouseOverNull}
+                                        />
                                     </g>
-                                    <g ref={nullAxisContainer} transform={`translate(${histWidth + nullsMargin + nullsPadding}, ${height})`} />
-                                </>
+                                </g>
                             }
                         </g>
 
