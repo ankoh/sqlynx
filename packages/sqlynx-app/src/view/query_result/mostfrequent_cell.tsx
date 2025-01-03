@@ -45,6 +45,14 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
         barWidth = Math.max(barWidth) - moreButtonWidth;
     }
 
+    // Find row of null value
+    let nullRow: number | null = null;
+    for (let i = 0; i < frequentValueStrings.length; ++i) {
+        if (frequentValueStrings[i] == null) {
+            nullRow = i;
+        }
+    }
+
     // Compute x-scale and offsets
     const [xScale, xOffsets, xCounts, xSum] = React.useMemo(() => {
         assert(frequentValues.schema.fields[1].name == "count");
@@ -101,24 +109,46 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
                         height={height + margin.top + margin.bottom}
                     >
                         <defs>
+                            <pattern id="diagonal-stripes" patternUnits="userSpaceOnUse" width="4" height="4">
+                                <path d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" style={{
+                                    stroke: "hsl(208.5deg 20.69% 50.76%)",
+                                    strokeOpacity: 0.8,
+                                    strokeWidth: 1
+                                }}
+                                />
+                            </pattern>
                             <clipPath id="rounded-bar">
                                 <rect x={0} y={0} width={width} height={height} rx={3} ry={3} />
                             </clipPath>
                         </defs>
-                        <g transform={`translate(${margin.left},${margin.top})`}>
-                            <rect x={0} y={0} width={width} height={height} rx={3} ry={3} stroke="hsl(208.5deg 20.69% 40.76%)" strokeWidth={1} fill="transparent" />
-                        </g>
                         <g transform={`translate(${margin.left},${margin.top})`} clipPath="url(#rounded-bar)">
                             {[...Array(frequentValueStrings.length)].map((_, i) => (
                                 <rect
                                     key={i}
-                                    x={Math.min(xScale(Number(xOffsets[i])) + xPadding, xUB)!}
+                                    x={Math.min(xScale(Number(xOffsets[i])) + xPadding, xUB)}
                                     y={0}
                                     width={Math.max(xScale(Number(xCounts[i])) - 2 * xPadding, 0)}
                                     height={height}
-                                    fill={i == focusedRow ? "hsl(208.5deg 20.69% 30.76%)" : "hsl(208.5deg 20.69% 50.76%)"}
+                                    fill={
+                                        i == nullRow
+                                            ? (
+                                                i == focusedRow
+                                                    ? "hsl(208.5deg 20.69% 30.76%)"
+                                                    : "hsl(210deg 17.5% 74.31%)"
+                                            ) : (
+                                                i == focusedRow
+                                                    ? "hsl(208.5deg 20.69% 30.76%)"
+                                                    : "hsl(208.5deg 20.69% 50.76%)"
+                                            )}
                                 />
                             ))}
+                            {(nullRow != null) && <rect
+                                x={Math.min(xScale(Number(xOffsets[nullRow])) + xPadding, xUB)}
+                                y={0}
+                                width={Math.max(xScale(Number(xCounts[nullRow])) - 2 * xPadding, 0)}
+                                height={height}
+                                fill="url(#diagonal-stripes)"
+                            />}
                             {isUnique && (
                                 <g>
                                     <rect
@@ -138,6 +168,9 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
                                     ))}
                                 </g>
                             )}
+                        </g>
+                        <g transform={`translate(${margin.left},${margin.top})`}>
+                            <rect x={0} y={0} width={width} height={height} rx={3} ry={3} stroke="hsl(208.5deg 20.69% 40.76%)" strokeWidth={1} fill="transparent" />
                         </g>
                         <g
                             transform={`translate(${margin.left}, ${margin.top + height})`}
