@@ -375,7 +375,7 @@ function analyzeOrdinalColumn(tableSummary: TableSummary, columnEntry: OrdinalGr
     };
 }
 
-function analyzeStringColumn(tableSummary: TableSummary, columnEntry: StringGridColumnGroup, frequentValueTable: FrequentValuesTable): StringColumnAnalysis {
+function analyzeStringColumn(tableSummary: TableSummary, columnEntry: StringGridColumnGroup, frequentValueTable: FrequentValuesTable, frequentValuesFormatter: ArrowTableFormatter): StringColumnAnalysis {
     const totalCountVector = tableSummary.statsTable.getChild(tableSummary.statsCountStarFieldName!) as arrow.Vector<arrow.Int64>;
     const notNullCountVector = tableSummary.statsTable.getChild(columnEntry.statsFields!.countFieldName) as arrow.Vector<arrow.Int64>;
     const distinctCountVector = tableSummary.statsTable.getChild(columnEntry.statsFields!.distinctCountFieldName!) as arrow.Vector<arrow.Int64>;
@@ -387,17 +387,12 @@ function analyzeStringColumn(tableSummary: TableSummary, columnEntry: StringGrid
     assert(frequentValueTable.schema.fields[0].name == "key");
     assert(frequentValueTable.schema.fields[1].name == "count");
 
-    const frequentValueIsNull = new Uint8Array(frequentValueTable.numRows);
-    const frequentValueKeys = frequentValueTable.getChild("key")!;
     const frequentValueCounts = frequentValueTable.getChild("count")!.toArray();
     const frequentValuePercentages = new Float64Array(frequentValueTable.numRows);
+    const frequentValueStrings = [];
     for (let i = 0; i < frequentValueTable.numRows; ++i) {
         frequentValuePercentages[i] = totalCount == 0 ? 0 : (Number(frequentValueCounts[i]) / totalCount);
-        if (frequentValueKeys.nullable) {
-            for (let i = 0; i < frequentValueTable.numRows; ++i) {
-                frequentValueIsNull[i] = frequentValueKeys.isValid(i) ? 0 : 1;
-            }
-        }
+        frequentValueStrings.push(frequentValuesFormatter.getValue(i, 0));
     }
 
     return {
@@ -405,7 +400,7 @@ function analyzeStringColumn(tableSummary: TableSummary, columnEntry: StringGrid
         countNull: totalCount - notNullCount,
         countDistinct: distinctCount,
         isUnique: notNullCount == distinctCount,
-        frequentValueIsNull: frequentValueIsNull,
+        frequentValueStrings: frequentValueStrings,
         frequentValueCounts: frequentValueCounts,
         frequentValuePercentages: frequentValuePercentages,
     };
@@ -498,7 +493,7 @@ export async function computeColumnSummary(computationId: number, task: ColumnSu
                 break;
             }
             case STRING_COLUMN: {
-                const analysis = analyzeStringColumn(task.tableSummary, task.columnEntry.value, columnSummaryTable);
+                const analysis = analyzeStringColumn(task.tableSummary, task.columnEntry.value, columnSummaryTable, columnSummaryTableFormatter);
                 summary = {
                     type: STRING_COLUMN,
                     value: {

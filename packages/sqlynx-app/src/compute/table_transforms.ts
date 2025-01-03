@@ -270,8 +270,8 @@ export interface StringColumnAnalysis {
     countDistinct: number;
     /// Is unique?
     isUnique: boolean;
-    /// The frequent value is null
-    frequentValueIsNull: Uint8Array;
+    /// The frequent values
+    frequentValueStrings: (string | null)[];
     /// The frequent value counts
     frequentValueCounts: BigInt64Array;
     /// The frequent value percentages

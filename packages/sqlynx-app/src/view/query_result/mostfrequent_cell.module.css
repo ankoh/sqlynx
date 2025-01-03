@@ -19,12 +19,11 @@
 }
 
 .plot_container {
+    position: relative;
     grid-row: 2;
 }
 
-.plot {
-    position: relative;
-}
 .plot_svg {
     position: absolute;
+    z-index: 2;
 }

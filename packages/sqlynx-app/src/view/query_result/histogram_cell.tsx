@@ -36,6 +36,7 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
         histWidth -= nullsWidth + nullsMargin;
     }
 
+    // Compute d3 scales
     const [histXScale, histYScale, nullsXScale, nullsYScale, nullsXWidth] = React.useMemo(() => {
         const xValues: string[] = [];
         for (let i = 0; i < BIN_COUNT; ++i) {
@@ -68,30 +69,7 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
         return [histXScale, histYScale, nullsXScale, nullsYScale, nullsXWidth];
     }, [histWidth, height, svgContainerSize]);
 
-    // Adjust null padding to center null bar horizontally
-    const nullsPadding = (nullsWidth - nullsXScale.bandwidth()) / 2;
-
-    // Track the focused bin id
-    const [focusedBin, setFocusedBin] = React.useState<number | null>(null);
-
-    // Listen for pointer events events
-    const onMouseOverBin = React.useCallback((elem: React.MouseEvent<SVGGElement>) => {
-        const paddingInner = histXScale.paddingInner() * histXScale.bandwidth();
-        const paddingOuter = histXScale.paddingOuter() * histXScale.bandwidth();
-        const boundingBox = elem.currentTarget.getBoundingClientRect();
-        const relativeX = elem.clientX - boundingBox.left;
-        const innerX = Math.max(relativeX, paddingOuter) - paddingOuter;
-        const binWidth = histXScale.bandwidth() + paddingInner;
-        const bin = Math.min(Math.floor(innerX / binWidth), binCounts.length - 1);
-
-        setFocusedBin(bin);
-    }, [histXScale]);
-    const onMouseOutBin = React.useCallback((_elem: React.MouseEvent<SVGGElement>) => {
-        setFocusedBin(null);
-    }, []);
-    const onMouseOverNull = React.useCallback((_elem: React.MouseEvent<SVGRectElement>) => {
-    }, []);
-
+    // Setup d3 brush
     React.useLayoutEffect(() => {
         const onBrushEnd = (_e: d3.D3BrushEvent<unknown>) => { };
         const onBrush = (_e: d3.D3BrushEvent<unknown>) => { };
@@ -116,6 +94,31 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
             .attr('height', height);
     }, [histXScale, histYScale]);
 
+    // Adjust null padding to center null bar horizontally
+    const nullsPadding = (nullsWidth - nullsXScale.bandwidth()) / 2;
+
+    // Track the focused bin id
+    const [focusedBin, setFocusedBin] = React.useState<number | null>(null);
+
+    // Listen for pointer events events
+    const onMouseOverBin = React.useCallback((elem: React.MouseEvent<SVGGElement>) => {
+        const paddingInner = histXScale.paddingInner() * histXScale.bandwidth();
+        const paddingOuter = histXScale.paddingOuter() * histXScale.bandwidth();
+        const boundingBox = elem.currentTarget.getBoundingClientRect();
+        const relativeX = elem.clientX - boundingBox.left;
+        const innerX = Math.max(relativeX, paddingOuter) - paddingOuter;
+        const binWidth = histXScale.bandwidth() + paddingInner;
+        const bin = Math.min(Math.floor(innerX / binWidth), binCounts.length - 1);
+
+        setFocusedBin(bin);
+    }, [histXScale]);
+    const onMouseOutBin = React.useCallback((_elem: React.MouseEvent<SVGGElement>) => {
+        setFocusedBin(null);
+    }, []);
+    const onMouseOverNull = React.useCallback((_elem: React.MouseEvent<SVGRectElement>) => {
+    }, []);
+
+    // Resolve bin labels
     const binLabels = props.columnSummary.analysis.binLowerBounds;
     const binLabelLeft = binLabels[0];
     const binLabelRight = binLabels[binLabels.length - 1];
@@ -163,7 +166,7 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
                                 onPointerMove={onMouseOverBin}
                                 onPointerOut={onMouseOutBin}
                             >
-                                {!binLabelFocused &&
+                                {(binLabelFocused == null) &&
                                     (
                                         <>
                                             <text x={1} y={0} dy={14} textAnchor="start" fontSize={12} fontWeight={400}>{binLabelLeft}</text>
@@ -208,7 +211,7 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
                         </g>
 
                     </svg>
-                    {binLabelFocused && (
+                    {(binLabelFocused != null) && (
                         <span style={{
                             position: "absolute",
                             top: `${margin.top + height + 13 - 12}px`,

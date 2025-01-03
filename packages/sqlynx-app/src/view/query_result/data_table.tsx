@@ -330,16 +330,16 @@ function Cell(props: CellProps) {
                                     columnSummary={columnSummary.value}
                                 />
                             );
-                        case LIST_COLUMN:
                         case STRING_COLUMN:
                             return (
                                 <MostFrequentCell
                                     className={styles.plots_cell}
                                     style={props.style}
                                     tableSummary={tableSummary}
-                                    columnSummary={columnSummary}
+                                    columnSummary={columnSummary.value}
                                 />
                             );
+                        case LIST_COLUMN:
                         case SKIPPED_COLUMN: break;
                     }
             }
