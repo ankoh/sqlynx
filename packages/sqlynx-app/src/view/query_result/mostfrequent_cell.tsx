@@ -203,24 +203,13 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
                                     width: `${width}px`,
                                 }}
                             >
-                                <span className={styles.axis_splitlabel_left}>{labelLeft}</span>
-                                <span className={styles.axis_splitlabel_right} >{labelRight}</span>
+                                <span className={styles.axis_label_left}>{labelLeft}</span>
+                                <span className={styles.axis_label_right} >{labelRight}</span>
                             </div>
                         ) : (
-                            <span style={{
-                                position: "absolute",
+                            <span className={styles.axis_label_overlay} style={{
                                 top: `${margin.top + height + 13 - 12}px`,
                                 left: `${margin.left + xScale(Number(xOffsets[focusedRow])) + xScale(Number(xCounts[focusedRow]) / 2)}px`,
-                                transform: 'translateX(-50%)',
-                                textWrap: "nowrap",
-                                fontSize: "12px",
-                                fontWeight: 400,
-                                pointerEvents: "none",
-                                color: "white",
-                                backgroundColor: "hsl(208.5deg 20.69% 30.76%)",
-                                zIndex: 3,
-                                padding: "0px 4px 0px 4px",
-                                borderRadius: "3px",
                             }}>{focusedValue ?? NULL_SYMBOL}</span>
                         )}
                 </div>
