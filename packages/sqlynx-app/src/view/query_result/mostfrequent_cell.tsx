@@ -39,10 +39,11 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
     const frequentValueCounts = props.columnSummary.analysis.frequentValueCounts;
     const frequentValuePercentages = props.columnSummary.analysis.frequentValuePercentages;
     const isUnique = props.columnSummary.analysis.isUnique;
+    const hasMore = props.columnSummary.analysis.countDistinct > props.columnSummary.frequentValues.numRows;
 
     let barWidth = width;
     const moreButtonWidth = 8;
-    if (isUnique) {
+    if (hasMore) {
         barWidth = Math.max(barWidth) - moreButtonWidth;
     }
 
@@ -155,7 +156,7 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
                                 height={height}
                                 fill="url(#diagonal-stripes)"
                             />}
-                            {isUnique && (
+                            {hasMore && (
                                 <g>
                                     <rect
                                         x={barWidth + xPadding}
@@ -163,15 +164,6 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
                                         width={moreButtonWidth - xPadding}
                                         fill={"hsl(208.5deg 20.69% 40.76%)"}
                                     />
-                                    {[...Array(3)].map((_, i) => (
-                                        <circle
-                                            key={i}
-                                            cx={barWidth + xPadding + moreButtonWidth / 2}
-                                            cy={height / 4 + i * ((height / 2) / 3) + 0.5 * ((height / 2) / 3)}
-                                            r={1.2}
-                                            fill={"white"}
-                                        />
-                                    ))}
                                 </g>
                             )}
                         </g>
@@ -192,6 +184,14 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
                             />
                         </g>
                     </svg>
+                    {isUnique && (
+                        <span className={styles.plot_label_overlay} style={{
+                            top: `${margin.top + height / 2}px`,
+                            left: `${margin.left + width / 2}px`,
+                        }}>
+                            all distinct
+                        </span>
+                    )}
                     {(focusedRow == null)
                         ? (
                             <div

@@ -65,3 +65,17 @@
     padding: 0px 4px 0px 4px;
     border-radius: 3px;
 }
+
+.plot_label_overlay {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    text-wrap: nowrap;
+    font-size: 12px;
+    font-weight: 400;
+    pointer-events: none;
+    color: white;
+    background-color: hsl(208.5deg 20.69% 30.76%);
+    z-index: 3;
+    padding: 0px 4px 0px 4px;
+    border-radius: 3px;
+}
