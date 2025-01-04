@@ -204,7 +204,7 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
                                         y={nullsYScale(props.columnSummary.analysis.countNull ?? 0)}
                                         width={nullsXScale.bandwidth()}
                                         height={height - nullsYScale(props.columnSummary.analysis.countNull ?? 0)}
-                                        fill={"hsl(210deg 17.5% 74.31%)"}
+                                        fill={focusedNull ? "hsl(208.5deg 20.69% 30.76%)" : "hsl(210deg 17.5% 74.31%)"}
                                     />
                                     <g transform={`translate(0, ${height})`}>
                                         <line
