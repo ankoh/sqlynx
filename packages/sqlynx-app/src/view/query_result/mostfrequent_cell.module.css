@@ -27,3 +27,27 @@
     position: absolute;
     z-index: 2;
 }
+
+.axis_labels_container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-column-gap: 8px;
+    pointer-events: none;
+    font-size: 12px;
+    color: black;
+    z-index: 3;
+    font-weight: 400;
+}
+
+.axis_labels_container > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.axis_splitlabel_left {
+}
+
+.axis_splitlabel_right {
+    text-align: end;
+}

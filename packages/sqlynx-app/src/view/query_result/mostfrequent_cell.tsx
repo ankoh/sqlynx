@@ -37,6 +37,7 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
     const frequentValues = props.columnSummary.frequentValues;
     const frequentValueStrings = props.columnSummary.analysis.frequentValueStrings;
     const frequentValueCounts = props.columnSummary.analysis.frequentValueCounts;
+    const frequentValuePercentages = props.columnSummary.analysis.frequentValuePercentages;
     const isUnique = props.columnSummary.analysis.isUnique;
 
     let barWidth = width;
@@ -89,6 +90,11 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
     const onPointerOut = React.useCallback((_elem: React.MouseEvent<SVGGElement>) => {
         setFocusedRow(null);
     }, []);
+
+    const percentageLeft = frequentValuePercentages[0];
+    const percentageRight = frequentValuePercentages[frequentValuePercentages.length - 1];
+    const labelLeft = `${Math.round(percentageLeft * 100 * 100) / 100}%`;
+    const labelRight = `${Math.round(percentageRight * 100 * 100) / 100}%`;
 
     return (
         <div
@@ -173,26 +179,6 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
                             <rect x={0} y={0} width={width} height={height} rx={3} ry={3} stroke="hsl(208.5deg 20.69% 40.76%)" strokeWidth={1} fill="transparent" />
                         </g>
                         <g
-                            transform={`translate(${margin.left}, ${margin.top + height})`}
-                            onPointerOver={onPointerOver}
-                            onPointerMove={onPointerOver}
-                            onPointerOut={onPointerOut}
-                        >
-                            {(focusedRow == null) &&
-                                <>
-                                    <text x={1} y={0} dy={14} textAnchor="start" fontSize={12} fontWeight={400}>Left</text>
-                                    <text x={width - 1} y={0} dy={14} textAnchor="end" fontSize={12} fontWeight={400}>Right</text>
-                                    <text x={width / 2} y={0} dy={14} textAnchor="middle" fontSize={12} fontWeight={400}>Middle</text>
-                                </>
-                            }
-                            <rect
-                                x={0} y={0}
-                                width={width}
-                                height={margin.bottom - 1}
-                                fillOpacity={0}
-                            />
-                        </g>
-                        <g
                             transform={`translate(${margin.left},${margin.top})`}
                             onPointerOver={onPointerOver}
                             onPointerMove={onPointerOver}
@@ -201,28 +187,42 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
                             <rect
                                 x={0} y={0}
                                 width={width}
-                                height={height}
+                                height={height + margin.bottom - 1}
                                 fillOpacity={0}
                             />
                         </g>
                     </svg>
-                    {(focusedRow != null) && (
-                        <span style={{
-                            position: "absolute",
-                            top: `${margin.top + height + 13 - 12}px`,
-                            left: `${margin.left + xScale(Number(xOffsets[focusedRow])) + xScale(Number(xCounts[focusedRow]) / 2)}px`,
-                            transform: 'translateX(-50%)',
-                            textWrap: "nowrap",
-                            fontSize: "12px",
-                            fontWeight: 400,
-                            pointerEvents: "none",
-                            color: "white",
-                            backgroundColor: "hsl(208.5deg 20.69% 30.76%)",
-                            zIndex: 3,
-                            padding: "0px 4px 0px 4px",
-                            borderRadius: "3px",
-                        }}>{focusedValue ?? NULL_SYMBOL}</span>
-                    )}
+                    {(focusedRow == null)
+                        ? (
+                            <div
+                                className={styles.axis_labels_container}
+                                style={{
+                                    position: "absolute",
+                                    top: `${margin.top + height + 2}px`,
+                                    left: `${margin.left}px`,
+                                    width: `${width}px`,
+                                }}
+                            >
+                                <span className={styles.axis_splitlabel_left}>{labelLeft}</span>
+                                <span className={styles.axis_splitlabel_right} >{labelRight}</span>
+                            </div>
+                        ) : (
+                            <span style={{
+                                position: "absolute",
+                                top: `${margin.top + height + 13 - 12}px`,
+                                left: `${margin.left + xScale(Number(xOffsets[focusedRow])) + xScale(Number(xCounts[focusedRow]) / 2)}px`,
+                                transform: 'translateX(-50%)',
+                                textWrap: "nowrap",
+                                fontSize: "12px",
+                                fontWeight: 400,
+                                pointerEvents: "none",
+                                color: "white",
+                                backgroundColor: "hsl(208.5deg 20.69% 30.76%)",
+                                zIndex: 3,
+                                padding: "0px 4px 0px 4px",
+                                borderRadius: "3px",
+                            }}>{focusedValue ?? NULL_SYMBOL}</span>
+                        )}
                 </div>
             </div>
         </div>
