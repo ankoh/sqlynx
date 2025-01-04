@@ -78,7 +78,14 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
 
     // Track the focused bin id
     const [focusedRow, setFocusedRow] = React.useState<number | null>(null);
-    const focusedValue = focusedRow != null ? props.columnSummary.analysis.frequentValueStrings[focusedRow] : null;
+    let focusedValue: string | null = null;
+    let focusDescription: string | null = null;
+    if (focusedRow != null) {
+        focusedValue = frequentValueStrings[focusedRow];
+        const percentage = Math.round(frequentValuePercentages[focusedRow] * 100 * 100) / 100;
+        const rows = frequentValueCounts[focusedRow];
+        focusDescription = `${rows} ${rows == 1n ? "row" : "rows"} (${percentage}%)`
+    }
 
     // Listen for pointer events events
     const onPointerOver = React.useCallback((elem: React.MouseEvent<SVGGElement>) => {
@@ -107,7 +114,7 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
         >
             <div className={styles.root}>
                 <div className={styles.header_container}>
-                    {dataTypeToString(props.columnSummary.columnEntry.inputFieldType)}
+                    {focusDescription ?? dataTypeToString(props.columnSummary.columnEntry.inputFieldType)}
                 </div>
                 <div className={styles.plot_container} ref={svgContainer}>
                     <svg

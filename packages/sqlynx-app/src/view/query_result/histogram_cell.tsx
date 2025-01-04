@@ -100,6 +100,19 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
     // Track the focused bin id
     const [focusedBin, setFocusedBin] = React.useState<number | null>(null);
     const [focusedNull, setFocusedNull] = React.useState<boolean | null>(null);
+    let focusDescription: string | null = null;
+    if (focusedBin != null) {
+        const binValueCounts = props.columnSummary.analysis.binValueCounts;
+        const binPercentages = props.columnSummary.analysis.binPercentages;
+        const percentage = Math.round(binPercentages[focusedBin] * 100 * 100) / 100;
+        const rows = binValueCounts[focusedBin];
+        focusDescription = `${rows} ${rows == 1n ? "row" : "rows"} (${percentage}%)`
+    } else if (focusedNull) {
+        const nullPercentage = props.columnSummary.analysis.countNull / (props.columnSummary.analysis.countNull + props.columnSummary.analysis.countNotNull);
+        const percentage = Math.round(nullPercentage * 100 * 100) / 100;
+        const rows = props.columnSummary.analysis.countNull;
+        focusDescription = `${rows} ${rows == 1 ? "row" : "rows"} (${percentage}%)`
+    }
 
     // Listen for pointer events events
     const onPointerOverBin = React.useCallback((elem: React.MouseEvent<SVGGElement>) => {
@@ -139,7 +152,7 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
         >
             <div className={styles.root}>
                 <div className={styles.header_container}>
-                    {dataTypeToString(props.columnSummary.columnEntry.inputFieldType)}
+                    {focusDescription ?? dataTypeToString(props.columnSummary.columnEntry.inputFieldType)}
                 </div>
                 <div className={styles.plot_container} ref={svgContainer}>
                     <svg
