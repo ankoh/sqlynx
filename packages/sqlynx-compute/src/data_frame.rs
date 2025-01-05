@@ -18,7 +18,7 @@ use datafusion_functions_aggregate::min_max::Max;
 use datafusion_functions_aggregate::min_max::Min;
 use datafusion_functions_window::rank::dense_rank_udwf;
 use datafusion_functions_window::row_number::row_number_udwf;
-use datafusion_physical_expr::expressions::CaseExpr;
+use datafusion_physical_expr::expressions::{BinaryExpr, CaseExpr};
 use datafusion_physical_expr::window::BuiltInWindowExpr;
 use datafusion_physical_expr::{LexOrdering, PhysicalExpr};
 use datafusion_physical_expr::PhysicalSortExpr;
@@ -29,6 +29,7 @@ use datafusion_physical_expr::expressions::binary;
 use datafusion_physical_expr::expressions::col;
 use datafusion_physical_expr::expressions::lit;
 use datafusion_physical_expr::ScalarFunctionExpr;
+use datafusion_physical_plan::filter::FilterExec;
 use datafusion_physical_plan::joins::{HashJoinExec, PartitionMode};
 use datafusion_physical_plan::projection::ProjectionExec;
 use datafusion_physical_plan::windows::BoundedWindowAggExec;
@@ -41,7 +42,7 @@ use prost::Message;
 use wasm_bindgen::prelude::*;
 
 use crate::arrow_out::DataFrameIpcStream;
-use crate::proto::sqlynx_compute::{AggregationFunction, BinningTransform, DataFrameTransform, GroupByKeyBinning, GroupByTransform, OrderByTransform, ValueIdentifierTransform, RowNumberTransform};
+use crate::proto::sqlynx_compute::{AggregationFunction, BinningTransform, DataFrameTransform, FilterPredicate, FilterTransform, GroupByKeyBinning, GroupByTransform, OrderByTransform, RowNumberTransform, ValueIdentifierTransform};
 use crate::udwf::create_udwf_window_expr;
 
 #[wasm_bindgen]
@@ -496,6 +497,36 @@ impl DataFrame {
         return Ok((bin_f64, binning_metadata));
     }
 
+    /// Filter a field
+    fn filters(&self, filters: &[FilterTransform], input: Arc<dyn ExecutionPlan>) -> anyhow::Result<Arc<dyn ExecutionPlan>> {
+        let mut latest: Option<Arc<dyn PhysicalExpr>> = None;
+        for filter in filters.iter() {
+            let val: Arc<dyn PhysicalExpr> = col(&filter.field_name, &self.schema)?;
+            let op = match FilterPredicate::try_from(filter.predicate)? {
+                FilterPredicate::Equal => datafusion_expr::Operator::Eq,
+                FilterPredicate::LessThan => datafusion_expr::Operator::Lt,
+                FilterPredicate::LessEqual => datafusion_expr::Operator::LtEq,
+                FilterPredicate::GreaterThan => datafusion_expr::Operator::Gt,
+                FilterPredicate::GreaterEqual => datafusion_expr::Operator::GtEq,
+            };
+            let lit = lit(ScalarValue::Float64(Some(filter.value_double as f64)));
+            let pred = BinaryExpr::new(val, op, lit);
+            let next =  match latest {
+                Some(latest) => BinaryExpr::new(latest, datafusion_expr::Operator::And, Arc::new(pred)),
+                None => pred,
+            };
+            latest = Some(Arc::new(next));
+        }
+
+        // Unpack the expression
+        let expr = match latest {
+            Some(expr) => expr,
+            None => return Ok(input)
+        };
+        let op = FilterExec::try_new(expr, input)?;
+        Ok(Arc::new(op))
+    }
+
     /// Group a data frame
     fn group_by<'a>(&self, config: &'a GroupByTransform, stats: Option<&DataFrame>, input: Arc<dyn ExecutionPlan>) -> anyhow::Result<Arc<dyn ExecutionPlan>> {
         // Detect collisions among output aliases
@@ -703,6 +734,10 @@ impl DataFrame {
             } else {
                 return Err(anyhow::anyhow!("field binning requires precomputed statistics, use transformWithStats"));
             }
+        }
+        // Compute the value identifiers
+        if !transform.filters.is_empty() {
+            input = self.filters(&transform.filters, input)?;
         }
         // Compute the groupings
         if let Some(group_by) = &transform.group_by {

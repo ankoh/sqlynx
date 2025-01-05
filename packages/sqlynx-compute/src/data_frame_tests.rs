@@ -1,4 +1,4 @@
-use arrow::array::{ArrayRef, ArrowNativeTypeOp, Date32Array, Date32BufferBuilder, Date64Array, Date64BufferBuilder, Decimal128Array, Decimal128BufferBuilder, Decimal256Array, Decimal256BufferBuilder, Int32Array, Int64Array, Int64BufferBuilder, RecordBatch, StringArray, Time32MillisecondArray, Time32MillisecondBufferBuilder, Time64MicrosecondArray, Time64MicrosecondBufferBuilder, TimestampMillisecondArray, TimestampMillisecondBufferBuilder};
+use arrow::array::{ArrayRef, ArrowNativeTypeOp, Date32Array, Date32BufferBuilder, Date64Array, Date64BufferBuilder, Decimal128Array, Decimal128BufferBuilder, Decimal256Array, Decimal256BufferBuilder, Float64Array, Int32Array, Int64Array, Int64BufferBuilder, RecordBatch, StringArray, Time32MillisecondArray, Time32MillisecondBufferBuilder, Time64MicrosecondArray, Time64MicrosecondBufferBuilder, TimestampMillisecondArray, TimestampMillisecondBufferBuilder};
 use arrow::datatypes::{i256, DataType, Field, SchemaBuilder, TimeUnit};
 use arrow::util::pretty::pretty_format_batches;
 use chrono::{DateTime, Duration};
@@ -7,7 +7,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use indoc::indoc;
 use pretty_assertions::assert_eq;
 
-use crate::proto::sqlynx_compute::{AggregationFunction, BinningTransform, GroupByAggregate, GroupByKey, GroupByKeyBinning, RowNumberTransform, ValueIdentifierTransform};
+use crate::proto::sqlynx_compute::{AggregationFunction, BinningTransform, FilterPredicate, FilterTransform, GroupByAggregate, GroupByKey, GroupByKeyBinning, RowNumberTransform, ValueIdentifierTransform};
 use crate::proto::sqlynx_compute::{DataFrameTransform, OrderByConstraint, OrderByTransform, GroupByTransform};
 use crate::data_frame::DataFrame;
 
@@ -1366,6 +1366,69 @@ async fn test_transform_bin_decimal256() -> anyhow::Result<()> {
         | 6     | 1     | 0.375000000000000000 | 2.750000000000000000 | 3.125000000000000000 |
         | 7     | 1     | 0.375000000000000000 | 3.125000000000000000 | 3.500000000000000000 |
         +-------+-------+----------------------+----------------------+----------------------+
+    "}.trim());
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_filters_1() -> anyhow::Result<()> {
+    let data = RecordBatch::try_from_iter(vec![
+        ("value", Arc::new(Float64Array::from(vec![1.0, 2.0, 3.0])) as ArrayRef),
+    ])?;
+    let data_frame = DataFrame::new(data.schema(), vec![data]);
+    let transform = DataFrameTransform {
+        filters: vec![FilterTransform {
+            field_name: "value".to_string(),
+            predicate: FilterPredicate::LessThan.into(),
+            value_double: 2.0,
+        }],
+        row_number: None,
+        value_identifiers: vec![],
+        binning: vec![],
+        group_by: None,
+        order_by: None,
+    };
+    let transformed = data_frame.transform(&transform, None).await?;
+    assert_eq!(format!("{}", pretty_format_batches(&transformed.partitions[0])?), indoc! {"
+        +-------+
+        | value |
+        +-------+
+        | 1.0   |
+        +-------+
+    "}.trim());
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_filters_2() -> anyhow::Result<()> {
+    let data = RecordBatch::try_from_iter(vec![
+        ("value", Arc::new(Float64Array::from(vec![1.0, 2.0, 3.0])) as ArrayRef),
+    ])?;
+    let data_frame = DataFrame::new(data.schema(), vec![data]);
+    let transform = DataFrameTransform {
+        filters: vec![FilterTransform {
+            field_name: "value".to_string(),
+            predicate: FilterPredicate::GreaterThan.into(),
+            value_double: 1.0,
+        }, FilterTransform {
+            field_name: "value".to_string(),
+            predicate: FilterPredicate::LessEqual.into(),
+            value_double: 3.0,
+        }],
+        row_number: None,
+        value_identifiers: vec![],
+        binning: vec![],
+        group_by: None,
+        order_by: None,
+    };
+    let transformed = data_frame.transform(&transform, None).await?;
+    assert_eq!(format!("{}", pretty_format_batches(&transformed.partitions[0])?), indoc! {"
+        +-------+
+        | value |
+        +-------+
+        | 2.0   |
+        | 3.0   |
+        +-------+
     "}.trim());
     Ok(())
 }
