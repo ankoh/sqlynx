@@ -109,6 +109,25 @@ message ValueIdentifierTransform {
     string output_alias = 2;
 }
 
+/// A filter predicate
+enum FilterPredicate {
+    Equal = 0;
+    LessThan = 1;
+    LessEqual = 2;
+    GreaterThan = 3;
+    GreaterEqual = 4;
+}
+
+/// A filter transform
+message FilterTransform {
+    /// The field name
+    string field_name = 1;
+    /// The filter predicate
+    FilterPredicate predicate = 2;
+    /// The double value
+    double value_double = 3;
+}
+
 message DataFrameTransform {
     /// The row number transform (if any)
     optional RowNumberTransform row_number = 6;
@@ -116,6 +135,8 @@ message DataFrameTransform {
     repeated ValueIdentifierTransform value_identifiers = 5;
     /// The binning transforms (if any)
     repeated BinningTransform binning = 1;
+    /// The filter transforms (if any)
+    repeated FilterTransform filters = 7;
     /// The group by transform (if any)
     optional GroupByTransform group_by = 3;
     /// The order by transform (if any)
