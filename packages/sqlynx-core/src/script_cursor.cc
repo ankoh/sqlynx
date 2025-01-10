@@ -50,9 +50,9 @@ std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Place(
                                 matched = true;
                                 for (auto& expression : innermost_scope.expressions) {
                                     if (node_id == expression.ast_node_id && expression.IsColumnRef()) {
-                                        assert(expression.expression_id.GetExternalId() ==
+                                        assert(expression.expression_id.GetContext() ==
                                                analyzed->GetCatalogEntryId());
-                                        cursor->context = ColumnRefContext{expression.expression_id.GetIndex()};
+                                        cursor->context = ColumnRefContext{expression.expression_id.GetObject()};
                                     }
                                 }
                                 break;
@@ -63,9 +63,9 @@ std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Place(
                                 matched = true;
                                 for (auto& table_ref : innermost_scope.table_references) {
                                     if (node_id == table_ref.ast_node_id) {
-                                        assert(table_ref.table_reference_id.GetExternalId() ==
+                                        assert(table_ref.table_reference_id.GetContext() ==
                                                analyzed->GetCatalogEntryId());
-                                        cursor->context = TableRefContext{table_ref.table_reference_id.GetIndex()};
+                                        cursor->context = TableRefContext{table_ref.table_reference_id.GetObject()};
                                     }
                                 }
                                 break;

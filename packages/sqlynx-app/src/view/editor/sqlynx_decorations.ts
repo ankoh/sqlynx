@@ -207,8 +207,8 @@ function buildDecorationsFromFocus(
 
     // Build decorations for column refs of targeting the primary table
     for (const [refId, focusType] of derivedFocus?.scriptColumnRefs ?? []) {
-        const externalId = sqlynx.ExternalObjectID.getExternalID(refId);
-        const objectId = sqlynx.ExternalObjectID.getObjectID(refId);
+        const externalId = sqlynx.ContextObjectID.getContext(refId);
+        const objectId = sqlynx.ContextObjectID.getObject(refId);
         if (externalId !== scriptKey) {
             continue;
         }
@@ -240,8 +240,8 @@ function buildDecorationsFromFocus(
 
     // Build decorations for table refs targeting the primary table
     for (const [refId, focusType] of derivedFocus?.scriptTableRefs ?? []) {
-        const externalId = sqlynx.ExternalObjectID.getExternalID(refId);
-        const objectId = sqlynx.ExternalObjectID.getObjectID(refId);
+        const externalId = sqlynx.ContextObjectID.getContext(refId);
+        const objectId = sqlynx.ContextObjectID.getObject(refId);
         if (externalId !== scriptKey) {
             continue;
         }

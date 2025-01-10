@@ -1,8 +1,8 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
 import { SessionState } from './session_state.js';
 
-export function findTableById(session: SessionState, table: sqlynx.ExternalObjectID.Value): sqlynx.proto.Table | null {
-    const scriptKey = sqlynx.ExternalObjectID.getExternalID(table);
+export function findTableById(session: SessionState, table: sqlynx.ContextObjectID.Value): sqlynx.proto.Table | null {
+    const scriptKey = sqlynx.ContextObjectID.getContext(table);
     const scriptData = session.scripts[scriptKey];
     if (!scriptData) {
         console.log("SCRIPT DATA NULL");
@@ -13,7 +13,7 @@ export function findTableById(session: SessionState, table: sqlynx.ExternalObjec
         return null;
     }
     const reader = scriptData.processed.analyzed.read();
-    const tableId = sqlynx.ExternalObjectID.getObjectID(table);
+    const tableId = sqlynx.ContextObjectID.getObject(table);
     if (tableId >= reader.tablesLength()) {
         console.log("TABLE ID OUT OF BOUNDS");
         return null;

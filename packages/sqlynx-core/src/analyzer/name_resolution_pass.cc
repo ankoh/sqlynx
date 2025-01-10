@@ -437,7 +437,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                     auto& n = analyzed.expressions.Append(AnalyzedScript::Expression());
                     n.buffer_index = analyzed.expressions.GetSize() - 1;
                     n.expression_id =
-                        ExternalObjectID{catalog_entry_id, static_cast<uint32_t>(analyzed.expressions.GetSize() - 1)};
+                        ContextObjectID{catalog_entry_id, static_cast<uint32_t>(analyzed.expressions.GetSize() - 1)};
                     n.ast_node_id = node_id;
                     n.location = parsed.nodes[node_id].location();
                     n.ast_statement_id = std::nullopt;
@@ -473,7 +473,7 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                         // Add table reference
                         auto& n = analyzed.table_references.Append(AnalyzedScript::TableReference(alias_name));
                         n.buffer_index = analyzed.table_references.GetSize() - 1;
-                        n.table_reference_id = ExternalObjectID{
+                        n.table_reference_id = ContextObjectID{
                             catalog_entry_id, static_cast<uint32_t>(analyzed.table_references.GetSize() - 1)};
                         n.ast_node_id = node_id;
                         n.location = parsed.nodes[node_id].location();
@@ -522,8 +522,8 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                     // Register the database
                     auto [db_id, schema_id] = RegisterSchema(table_name->database_name, table_name->schema_name);
                     // Determine the catalog table id
-                    ExternalObjectID catalog_table_id{catalog_entry_id,
-                                                      static_cast<uint32_t>(analyzed.table_declarations.GetSize())};
+                    ContextObjectID catalog_table_id{catalog_entry_id,
+                                                     static_cast<uint32_t>(analyzed.table_declarations.GetSize())};
                     // Merge child states
                     MergeChildStates(node_state, {elements_node});
                     // Collect all columns

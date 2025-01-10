@@ -99,7 +99,7 @@ describe('Catalog Tests ', () => {
         const resolved = tableRef.inner(new sqlynx.proto.ResolvedRelationExpression());
         expect(resolved.catalogDatabaseId()).not.toEqual(0xFFFFFFFF);
         expect(resolved.catalogSchemaId()).not.toEqual(0xFFFFFFFF);
-        expect(sqlynx.ExternalObjectID.isNull(resolved.catalogTableId())).toBeFalsy();
+        expect(sqlynx.ContextObjectID.isNull(resolved.catalogTableId())).toBeFalsy();
 
         // Delete all the memory
         analyzedBuffer.delete();

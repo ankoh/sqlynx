@@ -432,7 +432,7 @@ void Completion::FindCandidatesForNamePath() {
                                                    .replace_text_at = replace_text_at};
                             candidate.candidate_tags.AddIf(
                                 proto::CandidateTag::THROUGH_CATALOG,
-                                table_decl.catalog_table_id.GetExternalId() != script.GetCatalogEntryId());
+                                table_decl.catalog_table_id.GetContext() != script.GetCatalogEntryId());
                             dot_candidates.push_back(std::move(candidate));
                         }
                         break;

@@ -41,7 +41,7 @@ TEST(UnificationTest, SingleTableInDefaultSchema) {
     ASSERT_EQ(flat->columns()->size(), 1);
     ASSERT_EQ(flat->databases()->Get(0)->catalog_object_id(), INITIAL_DATABASE_ID);
     ASSERT_EQ(flat->schemas()->Get(0)->catalog_object_id(), INITIAL_SCHEMA_ID);
-    ASSERT_EQ(flat->tables()->Get(0)->catalog_object_id(), ExternalObjectID(42, 0).Pack());
+    ASSERT_EQ(flat->tables()->Get(0)->catalog_object_id(), ContextObjectID(42, 0).Pack());
 
     // Check names
     EXPECT_EQ(flat->name_dictionary()->size(), 4);
@@ -88,8 +88,8 @@ TEST(UnificationTest, MultipleTablesInDefaultSchema) {
     EXPECT_EQ(flat->schemas()->Get(0)->catalog_object_id(), INITIAL_SCHEMA_ID);
 
     // Tables names are ordered lexicographically in the flattend schema
-    EXPECT_EQ(flat->tables()->Get(0)->catalog_object_id(), ExternalObjectID(100, 0).Pack());
-    EXPECT_EQ(flat->tables()->Get(1)->catalog_object_id(), ExternalObjectID(42, 0).Pack());
+    EXPECT_EQ(flat->tables()->Get(0)->catalog_object_id(), ContextObjectID(100, 0).Pack());
+    EXPECT_EQ(flat->tables()->Get(1)->catalog_object_id(), ContextObjectID(42, 0).Pack());
     EXPECT_EQ(flat->tables()->Get(0)->flat_parent_idx(), 0);
     EXPECT_EQ(flat->tables()->Get(1)->flat_parent_idx(), 0);
     EXPECT_EQ(flat->tables()->Get(0)->flat_entry_idx(), 0);
@@ -133,11 +133,11 @@ TEST(UnificationTest, MultipleTablesInMultipleSchemas) {
     EXPECT_EQ(flat->schemas()->Get(1)->catalog_object_id(), INITIAL_SCHEMA_ID);          // "default"
 
     // separate.schema.in_separate_0 is written first
-    EXPECT_EQ(flat->tables()->Get(0)->catalog_object_id(), ExternalObjectID(100, 1).Pack());
+    EXPECT_EQ(flat->tables()->Get(0)->catalog_object_id(), ContextObjectID(100, 1).Pack());
     EXPECT_EQ(flat->tables()->Get(0)->flat_parent_idx(), 0);
     // sqlynx.default.in_default_0 < sqlynx.default.in_default_1
-    EXPECT_EQ(flat->tables()->Get(1)->catalog_object_id(), ExternalObjectID(42, 0).Pack());
-    EXPECT_EQ(flat->tables()->Get(2)->catalog_object_id(), ExternalObjectID(100, 0).Pack());
+    EXPECT_EQ(flat->tables()->Get(1)->catalog_object_id(), ContextObjectID(42, 0).Pack());
+    EXPECT_EQ(flat->tables()->Get(2)->catalog_object_id(), ContextObjectID(100, 0).Pack());
     EXPECT_EQ(flat->tables()->Get(1)->flat_parent_idx(), 1);
     EXPECT_EQ(flat->tables()->Get(2)->flat_parent_idx(), 1);
 }
@@ -176,8 +176,8 @@ TEST(UnificationTest, SimpleTableReference) {
     ASSERT_EQ(flat->name_dictionary()->Get(flat->schemas()->Get(0)->name_id())->string_view(), "schema1");
     ASSERT_EQ(flat->name_dictionary()->Get(flat->schemas()->Get(1)->name_id())->string_view(), "schema2");
 
-    EXPECT_EQ(flat->tables()->Get(0)->catalog_object_id(), ExternalObjectID(42, 0).Pack());
-    EXPECT_EQ(flat->tables()->Get(1)->catalog_object_id(), ExternalObjectID(42, 1).Pack());
+    EXPECT_EQ(flat->tables()->Get(0)->catalog_object_id(), ContextObjectID(42, 0).Pack());
+    EXPECT_EQ(flat->tables()->Get(1)->catalog_object_id(), ContextObjectID(42, 1).Pack());
 
     // Check table reference
     ASSERT_EQ(analyzed->table_references.GetSize(), 1);

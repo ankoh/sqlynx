@@ -25,13 +25,13 @@ describe('SQLynx setup', () => {
     });
 });
 
-describe('ExternalObjectChildID', () => {
+describe('ContextObjectChildID', () => {
     it('create child ids', () => {
-        const parentId = sqlynx.ExternalObjectID.create(1234, 5678);
-        const childId = sqlynx.ExternalObjectChildID.create(parentId, 91011);
+        const parentId = sqlynx.ContextObjectID.create(1234, 5678);
+        const childId = sqlynx.ContextObjectChildID.create(parentId, 91011);
         expect(childId).not.toEqual(parentId);
-        expect(sqlynx.ExternalObjectChildID.getParent(childId)).toEqual(parentId);
-        expect(sqlynx.ExternalObjectChildID.getChild(childId)).toEqual(91011);
+        expect(sqlynx.ContextObjectChildID.getParent(childId)).toEqual(parentId);
+        expect(sqlynx.ContextObjectChildID.getChild(childId)).toEqual(91011);
         expect(childId.toString()).toEqual("22763282211344411091843");
     });
 

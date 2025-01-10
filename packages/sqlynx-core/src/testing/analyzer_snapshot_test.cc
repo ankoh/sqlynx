@@ -155,7 +155,7 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
                     auto& resolved = std::get<AnalyzedScript::TableReference::ResolvedRelationExpression>(ref.inner);
                     std::string catalog_id = std::format("{}.{}.{}", resolved.catalog_database_id,
                                                          resolved.catalog_schema_id, resolved.catalog_table_id.Pack());
-                    auto type = is_main && resolved.catalog_table_id.GetExternalId() == script.GetCatalogEntryId()
+                    auto type = is_main && resolved.catalog_table_id.GetContext() == script.GetCatalogEntryId()
                                     ? "name/internal"
                                     : "name/external";
                     xml_ref.append_attribute("type").set_value(type);
@@ -189,7 +189,7 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
                     std::string catalog_id =
                         std::format("{}.{}.{}.{}", resolved.catalog_database_id, resolved.catalog_schema_id,
                                     resolved.catalog_table_id.Pack(), resolved.table_column_id);
-                    auto type = (is_main && resolved.catalog_table_id.GetExternalId() == script.GetCatalogEntryId())
+                    auto type = (is_main && resolved.catalog_table_id.GetContext() == script.GetCatalogEntryId())
                                     ? "colref/internal"
                                     : "colref/external";
                     xml_ref.append_attribute("type").set_value(type);

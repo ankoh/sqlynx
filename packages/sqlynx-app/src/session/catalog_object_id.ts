@@ -12,7 +12,7 @@ export interface QualifiedSchemaId extends QualifiedDatabaseId {
 }
 export interface QualifiedTableId extends QualifiedSchemaId {
     /// The table
-    table: sqlynx.ExternalObjectID.Value;
+    table: sqlynx.ContextObjectID.Value;
 }
 export interface QualifiedTableColumnId extends QualifiedTableId {
     /// The column index

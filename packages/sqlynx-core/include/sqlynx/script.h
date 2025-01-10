@@ -190,11 +190,11 @@ class AnalyzedScript : public CatalogEntry {
             /// The resolved schema id in the catalog
             CatalogSchemaID catalog_schema_id = 0;
             /// The resolved table id in the catalog
-            ExternalObjectID catalog_table_id;
+            ContextObjectID catalog_table_id;
         };
 
         /// The table reference id
-        ExternalObjectID table_reference_id;
+        ContextObjectID table_reference_id;
         /// The AST node id in the target script
         uint32_t ast_node_id;
         /// The location in the target script
@@ -233,13 +233,13 @@ class AnalyzedScript : public CatalogEntry {
             /// The resolved catalog schema id
             CatalogSchemaID catalog_schema_id = 0;
             /// The resolved table id in the catalog
-            ExternalObjectID catalog_table_id;
+            ContextObjectID catalog_table_id;
             /// The resolved table column id
             uint32_t table_column_id;
         };
 
         /// The expression id as (entry_id, reference_index)
-        ExternalObjectID expression_id;
+        ContextObjectID expression_id;
         /// The AST node id in the target script
         uint32_t ast_node_id;
         /// The location in the target script

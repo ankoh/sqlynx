@@ -122,7 +122,7 @@ class CatalogEntry {
         /// The catalog schema id
         CatalogSchemaID catalog_schema_id = 0;
         /// The catalog database id
-        ExternalObjectID catalog_table_id;
+        ContextObjectID catalog_table_id;
         /// The database reference id
         size_t database_reference_id = 0;
         /// The schema reference id
@@ -252,9 +252,9 @@ class CatalogEntry {
         std::string_view database_name, std::string_view schema_name,
         std::vector<std::pair<std::reference_wrapper<const CatalogEntry::TableDeclaration>, bool>>& out) const;
     /// Resolve a table by id
-    const TableDeclaration* ResolveTable(ExternalObjectID table_id) const;
+    const TableDeclaration* ResolveTable(ContextObjectID table_id) const;
     /// Resolve a table by id
-    const TableDeclaration* ResolveTableWithCatalog(ExternalObjectID table_id) const;
+    const TableDeclaration* ResolveTableWithCatalog(ContextObjectID table_id) const;
     /// Resolve a table by name
     const TableDeclaration* ResolveTable(QualifiedTableName table_name) const;
     /// Resolve a table by name
@@ -483,7 +483,7 @@ class Catalog {
                                           std::unique_ptr<const std::byte[]> descriptor_buffer);
 
     /// Resolve a table by id
-    const CatalogEntry::TableDeclaration* ResolveTable(ExternalObjectID table_id) const;
+    const CatalogEntry::TableDeclaration* ResolveTable(ContextObjectID table_id) const;
     /// Resolve a table by id
     const CatalogEntry::TableDeclaration* ResolveTable(CatalogEntry::QualifiedTableName table_name,
                                                        CatalogEntryID ignore_entry) const;

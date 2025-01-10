@@ -140,16 +140,16 @@ void CatalogEntry::ResolveSchemaTablesWithCatalog(
     }
 }
 
-const CatalogEntry::TableDeclaration* CatalogEntry::ResolveTable(ExternalObjectID table_id) const {
-    if (table_id.GetExternalId() == catalog_entry_id) {
-        return &table_declarations[table_id.GetIndex()];
+const CatalogEntry::TableDeclaration* CatalogEntry::ResolveTable(ContextObjectID table_id) const {
+    if (table_id.GetContext() == catalog_entry_id) {
+        return &table_declarations[table_id.GetObject()];
     }
     return nullptr;
 }
 
-const CatalogEntry::TableDeclaration* CatalogEntry::ResolveTableWithCatalog(ExternalObjectID table_id) const {
-    if (catalog_entry_id == table_id.GetExternalId()) {
-        return &table_declarations[table_id.GetIndex()];
+const CatalogEntry::TableDeclaration* CatalogEntry::ResolveTableWithCatalog(ContextObjectID table_id) const {
+    if (catalog_entry_id == table_id.GetContext()) {
+        return &table_declarations[table_id.GetObject()];
     } else {
         return catalog.ResolveTable(table_id);
     }
@@ -298,7 +298,7 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
     // Read tables
     uint32_t next_table_id = table_declarations.GetSize();
     for (auto* table : *descriptor.tables()) {
-        ExternalObjectID table_id{catalog_entry_id, next_table_id};
+        ContextObjectID table_id{catalog_entry_id, next_table_id};
 
         // Register the table name
         auto table_name_ptr = table->table_name();
@@ -456,7 +456,7 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
 
     struct TableNode {
         // The catalog object id
-        ExternalObjectID table_id;
+        ContextObjectID table_id;
         // A name id
         size_t name_id;
         // Child nodes
@@ -987,8 +987,8 @@ proto::StatusCode Catalog::AddSchemaDescriptor(CatalogEntryID external_id, std::
     return proto::StatusCode::OK;
 }
 
-const CatalogEntry::TableDeclaration* Catalog::ResolveTable(ExternalObjectID table_id) const {
-    if (auto iter = entries.find(table_id.GetExternalId()); iter != entries.end()) {
+const CatalogEntry::TableDeclaration* Catalog::ResolveTable(ContextObjectID table_id) const {
+    if (auto iter = entries.find(table_id.GetContext()); iter != entries.end()) {
         return iter->second->ResolveTable(table_id);
     } else {
         return nullptr;
