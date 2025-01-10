@@ -10,6 +10,7 @@ import { useThrottledMemo } from '../../utils/throttle.js';
 import { CatalogRenderingSettings, CatalogViewModel } from './catalog_view_model.js';
 import { ScriptKey } from '../../session/session_state.js';
 import { FOCUSED_COMPLETION, FOCUSED_EXPRESSION_ID, FOCUSED_TABLE_REF_ID } from '../../session/focus.js';
+import { ContextObjectID } from '@ankoh/sqlynx-core';
 
 const RENDERING_SETTINGS: CatalogRenderingSettings = {
     virtual: {
@@ -184,19 +185,61 @@ export function CatalogViewer(_props: Props) {
 
     // Collect overlay metrics
     const overlayEntries = React.useMemo<[string, string][]>(() => {
+        const overlayEntries: [string, string][] = [];
         const focusTarget = sessionState?.userFocus?.focusTarget;
         switch (focusTarget?.type) {
-            case FOCUSED_TABLE_REF_ID:
+            case FOCUSED_TABLE_REF_ID: {
+                const tableRefObject = focusTarget.value.tableReference;
+                const scriptKey = ContextObjectID.getContext(tableRefObject);
+                const tableRefId = ContextObjectID.getObject(tableRefObject);
+                const scriptData = sessionState?.scripts[scriptKey];
+                const analyzed = scriptData?.processed.analyzed;
+                if (analyzed) {
+                    const analyzedPtr = analyzed.read();
+                    const tableRef = analyzedPtr.tableReferences(tableRefId)!;
+                    overlayEntries.push([
+                        "Reference Type",
+                        tableRef.innerType().toString(),
+                    ]);
+                }
                 break;
-            case FOCUSED_EXPRESSION_ID:
+            }
+            case FOCUSED_EXPRESSION_ID: {
+                const expressionObject = focusTarget.value.expression;
+                const scriptKey = ContextObjectID.getContext(expressionObject);
+                const expressionId = ContextObjectID.getObject(expressionObject);
+                const scriptData = sessionState?.scripts[scriptKey];
+                const analyzed = scriptData?.processed.analyzed;
+                if (analyzed) {
+                    const analyzedPtr = analyzed.read();
+                    const expression = analyzedPtr.expressions(expressionId)!;
+                    overlayEntries.push([
+                        "Expression Type",
+                        expression.innerType().toString(),
+                    ]);
+                }
                 break;
+            }
             case FOCUSED_COMPLETION:
                 break;
         }
-        return [
-            ["foo", "bar"]
-        ];
-    }, []);
+        return overlayEntries;
+    }, [sessionState?.userFocus]);
+
+    const overlayScriptEntries: React.ReactElement[] = [];
+    for (let i = 0; i < overlayEntries.length; ++i) {
+        const [key, value] = overlayEntries[i];
+        overlayScriptEntries.push(
+            <span key={2 * i + 0} className={styles.overlay_body_list_key}>
+                {key}
+            </span>
+        );
+        overlayScriptEntries.push(
+            <span key={2 * i + 1} className={styles.overlay_body_list_value}>
+                {value}
+            </span>
+        );
+    }
 
     return (
         <div className={styles.root}>
@@ -232,16 +275,7 @@ export function CatalogViewer(_props: Props) {
                 </div>
                 <div className={styles.overlay_body_container}>
                     <div className={styles.overlay_body_list}>
-                        {overlayEntries.map(([key, value]: [string, string]) => (
-                            <>
-                                <span className={styles.overlay_body_list_key}>
-                                    {key}
-                                </span>
-                                <span className={styles.overlay_body_list_value}>
-                                    {value}
-                                </span>
-                            </>
-                        ))}
+                        {overlayScriptEntries}
                     </div>
                 </div>
             </div>
