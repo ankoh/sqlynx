@@ -30,6 +30,7 @@
     justify-content: start;
     padding-left: 8px;
     padding-right: 2px;
+    font-size: 0.9rem;
     font-weight: 500;
 
     /* Needed for inline-flex alignment */

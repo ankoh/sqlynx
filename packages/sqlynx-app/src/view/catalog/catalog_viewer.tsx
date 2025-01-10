@@ -9,6 +9,7 @@ import { NodeLayer } from './node_layer.js';
 import { useThrottledMemo } from '../../utils/throttle.js';
 import { CatalogRenderingSettings, CatalogViewModel } from './catalog_view_model.js';
 import { ScriptKey } from '../../session/session_state.js';
+import { FOCUSED_COMPLETION, FOCUSED_EXPRESSION_ID, FOCUSED_TABLE_REF_ID } from '../../session/focus.js';
 
 const RENDERING_SETTINGS: CatalogRenderingSettings = {
     virtual: {
@@ -181,6 +182,22 @@ export function CatalogViewer(_props: Props) {
 
     }, [viewModelVersion, renderingWindow]);
 
+    // Collect overlay metrics
+    const overlayEntries = React.useMemo<[string, string][]>(() => {
+        const focusTarget = sessionState?.userFocus?.focusTarget;
+        switch (focusTarget?.type) {
+            case FOCUSED_TABLE_REF_ID:
+                break;
+            case FOCUSED_EXPRESSION_ID:
+                break;
+            case FOCUSED_COMPLETION:
+                break;
+        }
+        return [
+            ["foo", "bar"]
+        ];
+    }, []);
+
     return (
         <div className={styles.root}>
             <div className={styles.board_container} ref={containerElement} onScroll={handleScroll}>
@@ -209,7 +226,25 @@ export function CatalogViewer(_props: Props) {
                     </div>
                 </div>
             </div>
-            <div className={styles.overlay_title}>Schema</div>
+            <div className={styles.overlay_container}>
+                <div className={styles.overlay_header_container}>
+                    Schema
+                </div>
+                <div className={styles.overlay_body_container}>
+                    <div className={styles.overlay_body_list}>
+                        {overlayEntries.map(([key, value]: [string, string]) => (
+                            <>
+                                <span className={styles.overlay_body_list_key}>
+                                    {key}
+                                </span>
+                                <span className={styles.overlay_body_list_value}>
+                                    {value}
+                                </span>
+                            </>
+                        ))}
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }
