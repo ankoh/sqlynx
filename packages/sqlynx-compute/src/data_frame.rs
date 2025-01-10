@@ -42,7 +42,7 @@ use prost::Message;
 use wasm_bindgen::prelude::*;
 
 use crate::arrow_out::DataFrameIpcStream;
-use crate::proto::sqlynx_compute::{AggregationFunction, BinningTransform, DataFrameTransform, FilterPredicate, FilterTransform, GroupByKeyBinning, GroupByTransform, OrderByTransform, RowNumberTransform, ValueIdentifierTransform};
+use crate::proto::sqlynx_compute::{AggregationFunction, BinningTransform, DataFrameTransform, FilterOperator, FilterTransform, GroupByKeyBinning, GroupByTransform, OrderByTransform, RowNumberTransform, ValueIdentifierTransform};
 use crate::udwf::create_udwf_window_expr;
 
 #[wasm_bindgen]
@@ -499,27 +499,31 @@ impl DataFrame {
 
     /// Filter a field
     fn filters(&self, filters: &[FilterTransform], input: Arc<dyn ExecutionPlan>) -> anyhow::Result<Arc<dyn ExecutionPlan>> {
-        let mut latest: Option<Arc<dyn PhysicalExpr>> = None;
+        let mut filter_conditions: Option<Arc<dyn PhysicalExpr>> = None;
         for filter in filters.iter() {
             let val: Arc<dyn PhysicalExpr> = col(&filter.field_name, &self.schema)?;
-            let op = match FilterPredicate::try_from(filter.predicate)? {
-                FilterPredicate::Equal => datafusion_expr::Operator::Eq,
-                FilterPredicate::LessThan => datafusion_expr::Operator::Lt,
-                FilterPredicate::LessEqual => datafusion_expr::Operator::LtEq,
-                FilterPredicate::GreaterThan => datafusion_expr::Operator::Gt,
-                FilterPredicate::GreaterEqual => datafusion_expr::Operator::GtEq,
+            let op = match FilterOperator::try_from(filter.operator)? {
+                FilterOperator::Equal => datafusion_expr::Operator::Eq,
+                FilterOperator::LessThan => datafusion_expr::Operator::Lt,
+                FilterOperator::LessEqual => datafusion_expr::Operator::LtEq,
+                FilterOperator::GreaterThan => datafusion_expr::Operator::Gt,
+                FilterOperator::GreaterEqual => datafusion_expr::Operator::GtEq,
+                FilterOperator::SemiJoinField => {
+                    // XXX Resolve filter
+                    continue;
+                },
             };
-            let lit = lit(ScalarValue::Float64(Some(filter.value_double as f64)));
+            let lit = lit(ScalarValue::Float64(Some(filter.value_double.unwrap_or_default() as f64)));
             let pred = BinaryExpr::new(val, op, lit);
-            let next =  match latest {
+            let next =  match filter_conditions {
                 Some(latest) => BinaryExpr::new(latest, datafusion_expr::Operator::And, Arc::new(pred)),
                 None => pred,
             };
-            latest = Some(Arc::new(next));
+            filter_conditions = Some(Arc::new(next));
         }
 
         // Unpack the expression
-        let expr = match latest {
+        let expr = match filter_conditions {
             Some(expr) => expr,
             None => return Ok(input)
         };

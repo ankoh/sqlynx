@@ -7,7 +7,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use indoc::indoc;
 use pretty_assertions::assert_eq;
 
-use crate::proto::sqlynx_compute::{AggregationFunction, BinningTransform, FilterPredicate, FilterTransform, GroupByAggregate, GroupByKey, GroupByKeyBinning, RowNumberTransform, ValueIdentifierTransform};
+use crate::proto::sqlynx_compute::{AggregationFunction, BinningTransform, FilterOperator, FilterTransform, GroupByAggregate, GroupByKey, GroupByKeyBinning, RowNumberTransform, ValueIdentifierTransform};
 use crate::proto::sqlynx_compute::{DataFrameTransform, OrderByConstraint, OrderByTransform, GroupByTransform};
 use crate::data_frame::DataFrame;
 
@@ -1379,8 +1379,9 @@ async fn test_filters_1() -> anyhow::Result<()> {
     let transform = DataFrameTransform {
         filters: vec![FilterTransform {
             field_name: "value".to_string(),
-            predicate: FilterPredicate::LessThan.into(),
-            value_double: 2.0,
+            operator: FilterOperator::LessThan.into(),
+            value_double: Some(2.0),
+            join_field_name: None,
         }],
         row_number: None,
         value_identifiers: vec![],
@@ -1408,12 +1409,14 @@ async fn test_filters_2() -> anyhow::Result<()> {
     let transform = DataFrameTransform {
         filters: vec![FilterTransform {
             field_name: "value".to_string(),
-            predicate: FilterPredicate::GreaterThan.into(),
-            value_double: 1.0,
+            operator: FilterOperator::GreaterThan.into(),
+            value_double: Some(1.0),
+            join_field_name: None,
         }, FilterTransform {
             field_name: "value".to_string(),
-            predicate: FilterPredicate::LessEqual.into(),
-            value_double: 3.0,
+            operator: FilterOperator::LessEqual.into(),
+            value_double: Some(3.0),
+            join_field_name: None,
         }],
         row_number: None,
         value_identifiers: vec![],
