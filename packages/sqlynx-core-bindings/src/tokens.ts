@@ -24,6 +24,23 @@ function lowerBound<ValueType, ArrayType extends Indexable<ValueType>>(
     return begin;
 }
 
+export function findClosestToken(hl: proto.ScannerTokens, pos: number): number | null {
+    const offsets = hl.tokenOffsetsArray();
+    if ((offsets?.length ?? 0) === 0) {
+        return null;
+    } else {
+        let rightIdx = lowerBound(offsets!, pos, 0, offsets!.length);
+        let leftIdx = rightIdx > 0 ? (rightIdx - 1) : rightIdx;
+        const right = offsets![rightIdx];
+        const left = offsets![leftIdx]
+        if (Math.abs(right - pos) < Math.abs(left - pos)) {
+            return rightIdx;
+        } else {
+            return leftIdx;
+        }
+    }
+}
+
 export function findTokensInRange(hl: proto.ScannerTokens, begin: number, end: number) {
     const offsets = hl.tokenOffsetsArray();
     if ((offsets?.length ?? 0) === 0) {

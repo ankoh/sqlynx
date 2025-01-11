@@ -1,0 +1,58 @@
+
+.root {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.overlay_container {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    overflow: hidden;
+    background: var(--catalog_overlay_background);
+    border-radius: var(--border_radius);
+    border: var(--catalog_overlay_border);
+
+    display: grid;
+    grid-template-rows: 32px 1fr;
+    color: white;
+    font-weight: 300;
+    font-size: 0.9rem;
+}
+
+.overlay_header_container {
+    grid-row: 1;
+
+    display: flex;
+    align-items: center;
+
+    background: var(--catalog_overlay_header_background);
+    padding: 0px 12px;
+}
+
+.overlay_body_container {
+    grid-row: 2;
+    padding: 4px 0px;
+}
+
+.overlay_body_list {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    grid-template-rows: repeat(auto-fit, 24px);
+    grid-column-gap: 8px;
+    grid-row-gap: 0px;
+    align-items: center;
+    font-weight: 400;
+    font-size: 0.8rem;
+}
+
+.overlay_body_list_key {
+    padding-left: 12px;
+}
+
+.overlay_body_list_value {
+    padding-right: 12px;
+    min-width: 100px;
+    text-align: right;
+}

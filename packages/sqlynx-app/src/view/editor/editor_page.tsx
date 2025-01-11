@@ -8,20 +8,20 @@ import { ButtonGroup, IconButton } from '@primer/react';
 import { DownloadIcon, LinkIcon, PaperAirplaneIcon, SyncIcon, ThreeBarsIcon } from '@primer/octicons-react';
 
 import { ConnectorInfo } from '../../connectors/connector_info.js';
-import { QueryExecutionStatus } from '../../connectors/query_execution_state.js';
-import { useCurrentSessionState } from '../../session/current_session.js';
-import { ScriptEditor } from './editor.js';
-import { KeyEventHandler, useKeyEvents } from '../../utils/key_events.js';
-import { VerticalTabs, VerticalTabVariant } from '../foundations/vertical_tabs.js';
-import { ScriptURLOverlay } from './script_url_overlay.js';
-import { useAppConfig } from '../../app_config.js';
-import { SessionListDropdown } from './session_list_dropdown.js';
 import { DragSizing, DragSizingBorder } from '../foundations/drag_sizing.js';
-import { useQueryState } from '../../connectors/query_executor.js';
-import { QueryStatusView } from '../query_status/query_status_view.js';
+import { KeyEventHandler, useKeyEvents } from '../../utils/key_events.js';
+import { QueryExecutionStatus } from '../../connectors/query_execution_state.js';
 import { QueryResultView } from '../query_result/query_result_view.js';
+import { QueryStatusView } from '../query_status/query_status_view.js';
+import { ScriptEditor } from './editor.js';
+import { ScriptGuideView } from '../../view/script_guide/script_guide_view.js';
+import { ScriptURLOverlay } from './script_url_overlay.js';
 import { SessionCommandType, useSessionCommandDispatch } from '../../session/session_commands.js';
-import { CatalogViewer } from '../../view/catalog/catalog_viewer.js';
+import { SessionListDropdown } from './session_list_dropdown.js';
+import { VerticalTabs, VerticalTabVariant } from '../foundations/vertical_tabs.js';
+import { useAppConfig } from '../../app_config.js';
+import { useCurrentSessionState } from '../../session/current_session.js';
+import { useQueryState } from '../../connectors/query_executor.js';
 
 const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
     const config = useAppConfig();
@@ -85,7 +85,7 @@ const OutputCommandList = (props: { connector: ConnectorInfo | null }) => {
 };
 
 enum TabKey {
-    CatalogView = 0,
+    ScriptGuide = 0,
     QueryStatusView = 1,
     QueryResultView = 2,
 }
@@ -98,7 +98,7 @@ interface Props { }
 
 export const EditorPage: React.FC<Props> = (_props: Props) => {
     const [currentSession, _dispatchCurrentSession] = useCurrentSessionState();
-    const [selectedTab, selectTab] = React.useState<TabKey>(TabKey.CatalogView);
+    const [selectedTab, selectTab] = React.useState<TabKey>(TabKey.ScriptGuide);
     const [sharingIsOpen, setSharingIsOpen] = React.useState<boolean>(false);
 
     // Resolve the editor query state (if any)
@@ -122,7 +122,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                 ctrlKey: true,
                 callback: () => {
                     selectTab(key => {
-                        const tabs = [TabKey.CatalogView, TabKey.QueryStatusView, TabKey.QueryResultView];
+                        const tabs = [TabKey.ScriptGuide, TabKey.QueryStatusView, TabKey.QueryResultView];
                         return tabs[((key as number) + 1) % tabState.current.enabledTabs];
                     });
                 },
@@ -138,7 +138,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
         const status = queryState?.status ?? null;
         switch (status) {
             case null:
-                selectTab(TabKey.CatalogView);
+                selectTab(TabKey.ScriptGuide);
                 break;
             case QueryExecutionStatus.STARTED:
             case QueryExecutionStatus.ACCEPTED:
@@ -194,7 +194,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                         selectedTab={selectedTab}
                         selectTab={selectTab}
                         tabProps={{
-                            [TabKey.CatalogView]: { tabId: TabKey.CatalogView, icon: `${icons}#tables_connected`, labelShort: 'Graph', disabled: false },
+                            [TabKey.ScriptGuide]: { tabId: TabKey.ScriptGuide, icon: `${icons}#tables_connected`, labelShort: 'Guide', disabled: false },
                             [TabKey.QueryStatusView]: {
                                 tabId: TabKey.QueryStatusView,
                                 icon: `${icons}#plan`,
@@ -208,9 +208,9 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                                 disabled: tabState.current.enabledTabs < 3,
                             },
                         }}
-                        tabKeys={[TabKey.CatalogView, TabKey.QueryStatusView, TabKey.QueryResultView]}
+                        tabKeys={[TabKey.ScriptGuide, TabKey.QueryStatusView, TabKey.QueryResultView]}
                         tabRenderers={{
-                            [TabKey.CatalogView]: _props => <CatalogViewer />,
+                            [TabKey.ScriptGuide]: _props => <ScriptGuideView />,
                             [TabKey.QueryStatusView]: _props => (
                                 <QueryStatusView query={queryState} />
                             ),
