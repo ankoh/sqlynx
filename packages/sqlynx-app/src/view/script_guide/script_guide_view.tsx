@@ -19,6 +19,23 @@ export function ScriptGuideView(_props: ScriptGuideViewProps) {
     const overlayEntries = React.useMemo<[string, string][]>(() => {
         const overlayEntries: [string, string][] = [];
 
+        // Inspect the cursor
+        const cursor = sessionState?.scripts[ScriptKey.MAIN_SCRIPT].cursor;
+        if (cursor && cursor.scannerSymbolId != U32_MAX) {
+            const scanned = sessionState?.scripts[ScriptKey.MAIN_SCRIPT].processed.scanned?.read();
+            const tokens = scanned?.tokens();
+            if (tokens) {
+                const tokenTypes = tokens.tokenTypesArray()!;
+                const tokenType = tokenTypes[cursor.scannerSymbolId];
+                const tokenTypeName = sqlynx.getScannerTokenTypeName(tokenType);
+
+                overlayEntries.push([
+                    "Token Type",
+                    tokenTypeName
+                ]);
+            }
+        }
+
         // Is there a user focus?
         const focusTarget = sessionState?.userFocus?.focusTarget;
         switch (focusTarget?.type) {
@@ -32,16 +49,9 @@ export function ScriptGuideView(_props: ScriptGuideViewProps) {
                     const analyzedPtr = analyzed.read();
                     const tableRef = analyzedPtr.tableReferences(tableRefId)!;
                     overlayEntries.push([
-                        "Reference Type",
+                        "Type",
                         tableRef.innerType().toString(),
                     ]);
-                    const location = tableRef.location();
-                    if (location != null) {
-                        overlayEntries.push([
-                            "Location",
-                            `${location.offset()}:+${location.length()}`
-                        ]);
-                    }
                 }
                 break;
             }
@@ -54,46 +64,48 @@ export function ScriptGuideView(_props: ScriptGuideViewProps) {
                 if (analyzed) {
                     const analyzedPtr = analyzed.read();
                     const expression = analyzedPtr.expressions(expressionId)!;
+                    switch (expression.innerType()) {
+                        case sqlynx.proto.ExpressionSubType.ResolvedColumnRefExpression: {
+                            const inner = new sqlynx.proto.ResolvedColumnRefExpression();
+                            expression.inner(inner) as sqlynx.proto.ResolvedColumnRefExpression;
+                            break;
+                        }
+                        case sqlynx.proto.ExpressionSubType.UnresolvedColumnRefExpression: {
+                            const inner = new sqlynx.proto.UnresolvedColumnRefExpression();
+                            expression.inner(inner) as sqlynx.proto.UnresolvedColumnRefExpression;
+                            break;
+                        }
+                    }
                     overlayEntries.push([
-                        "Expression Type",
+                        "Expression",
                         expression.innerType().toString(),
                     ]);
                 }
                 break;
             }
-            case FOCUSED_COMPLETION:
+            case FOCUSED_COMPLETION: {
+                switch (focusTarget.value.completion.strategy) {
+                    case sqlynx.proto.CompletionStrategy.DEFAULT:
+                        overlayEntries.push(["Completion", "Default"]);
+                        break;
+                    case sqlynx.proto.CompletionStrategy.TABLE_REF:
+                        overlayEntries.push(["Completion", "Table Reference"]);
+                        break;
+                    case sqlynx.proto.CompletionStrategy.COLUMN_REF:
+                        overlayEntries.push(["Completion", "Column Reference"]);
+                        break;
+                }
+                const completionCandidate = focusTarget.value.completion.candidates[focusTarget.value.completionCandidateIndex];
                 overlayEntries.push([
-                    "Type",
-                    "Completion",
+                    "Candidate Score",
+                    `${completionCandidate.score}`,
                 ]);
                 break;
-        }
-
-        // Otherwise inspect the cursor
-        if (overlayEntries.length == 0) {
-            const cursor = sessionState?.scripts[ScriptKey.MAIN_SCRIPT].cursor;
-            if (cursor && cursor.scannerSymbolId != U32_MAX) {
-                const scanned = sessionState?.scripts[ScriptKey.MAIN_SCRIPT].processed.scanned?.read();
-                const tokens = scanned?.tokens();
-                if (tokens) {
-                    const tokenOffsets = tokens.tokenOffsetsArray()!;
-                    // const tokenLengths = tokens.tokenLengthsArray()!;
-                    // const tokenTypes = tokens.tokenTypesArray()!;
-
-                    const tokenOffset = tokenOffsets[cursor.scannerSymbolId];
-                    // const tokenLength = tokenLengths[cursor.scannerSymbolId];
-                    // const tokenType = tokenTypes[cursor.scannerSymbolId];
-
-                    overlayEntries.push([
-                        "Token Offset",
-                        `${tokenOffset}`
-                    ]);
-                }
             }
         }
 
         return overlayEntries;
-    }, [sessionState?.userFocus]);
+    }, [sessionState?.userFocus, sessionState?.scripts[ScriptKey.MAIN_SCRIPT]?.cursor]);
 
     const overlayScriptEntries: React.ReactElement[] = [];
     for (let i = 0; i < overlayEntries.length; ++i) {

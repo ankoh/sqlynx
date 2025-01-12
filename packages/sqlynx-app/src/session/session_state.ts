@@ -6,7 +6,7 @@ import { ScriptMetadata } from './script_metadata.js';
 import { ScriptLoadingStatus } from './script_loader.js';
 import { analyzeScript, parseAndAnalyzeScript, SQLynxScriptBuffers } from '../view/editor/sqlynx_processor.js';
 import { ScriptLoadingInfo } from './script_loader.js';
-import { deriveFocusFromCompletionCandidates, deriveFocusFromScriptCursor, UserFocus } from './focus.js';
+import { deriveFocusFromCompletionCandidates, deriveFocusFromScriptCursor, FOCUSED_COMPLETION, UserFocus } from './focus.js';
 import { ConnectorInfo } from '../connectors/connector_info.js';
 import { VariantKind } from '../utils/index.js';
 
@@ -120,6 +120,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
             // Destroy the previous buffers
             const [scriptKey, buffers, cursor] = action.value;
             const prevScript = state.scripts[scriptKey];
+            const prevFocus = state.userFocus;
             if (!prevScript) {
                 return state;
             }
@@ -141,7 +142,15 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
 
             let scriptData = next.scripts[scriptKey];
             if (scriptData != null) {
-                next.userFocus = deriveFocusFromScriptCursor(scriptKey, scriptData, cursor);
+                // Previous completion?
+                if (prevFocus?.focusTarget?.type == FOCUSED_COMPLETION) {
+                    // Keep old events
+                    // XXX This assumes that keeping a stale user focus is NOT doing any harm!
+                    next.userFocus = state.userFocus;
+                } else {
+                    // Otherwise derive a new user focus
+                    next.userFocus = deriveFocusFromScriptCursor(scriptKey, scriptData, cursor);
+                }
             }
             // Is schema script?
             if (scriptKey == ScriptKey.SCHEMA_SCRIPT) {

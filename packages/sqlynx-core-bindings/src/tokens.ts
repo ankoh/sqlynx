@@ -51,3 +51,37 @@ export function findTokensInRange(hl: proto.ScannerTokens, begin: number, end: n
     const ub = lowerBound(offsets!, end, lb, offsets!.length);
     return [lb, ub];
 }
+
+export function getScannerTokenTypeName(token: proto.ScannerTokenType) {
+    switch (token) {
+        case proto.ScannerTokenType.NONE:
+            return "none";
+        case proto.ScannerTokenType.KEYWORD:
+            return "keyword";
+        case proto.ScannerTokenType.LITERAL_BINARY:
+            return "literal(binary)";
+        case proto.ScannerTokenType.LITERAL_BOOLEAN:
+            return "literal(boolean)";
+        case proto.ScannerTokenType.LITERAL_FLOAT:
+            return "literal(float)";
+        case proto.ScannerTokenType.LITERAL_HEX:
+            return "literal(hex)";
+        case proto.ScannerTokenType.LITERAL_INTEGER:
+            return "literal(integer)";
+        case proto.ScannerTokenType.LITERAL_STRING:
+            return "literal(string)";
+        case proto.ScannerTokenType.OPERATOR:
+            return "operator";
+        case proto.ScannerTokenType.IDENTIFIER:
+            return "identifier";
+        case proto.ScannerTokenType.COMMENT:
+            return "comment";
+        case proto.ScannerTokenType.DOT:
+            return "dot";
+        case proto.ScannerTokenType.DOT_TRAILING:
+            return "dot(trailing)";
+        default:
+            return "?";
+    }
+
+}

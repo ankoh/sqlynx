@@ -39,8 +39,8 @@
 .overlay_body_list {
     display: grid;
     grid-template-columns: max-content 1fr;
-    grid-template-rows: repeat(auto-fit, 24px);
-    grid-column-gap: 8px;
+    grid-auto-rows: 24px;
+    grid-column-gap: 16px;
     grid-row-gap: 0px;
     align-items: center;
     font-weight: 400;

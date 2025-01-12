@@ -720,16 +720,16 @@ export namespace ContextObjectID {
         return (BigInt(context) << 32n) | BigInt(value);
     }
     /// Get the context id
-    export function getContext(value: Value): number {
+    export function getContextID(value: Value): number {
         return Number(value >> 32n);
     }
     /// Mask index
-    export function getObject(value: Value): number {
+    export function getObjectID(value: Value): number {
         return Number(value & 0xffffffffn);
     }
     /// Is a null id?
     export function isNull(value: Value): boolean {
-        return ContextObjectID.getObject(value) == 0xffffffff;
+        return ContextObjectID.getObjectID(value) == 0xffffffff;
     }
 }
 
