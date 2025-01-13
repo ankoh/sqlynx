@@ -17,7 +17,7 @@ export function ScriptGuideView(_props: ScriptGuideViewProps) {
 
     // Collect overlay metrics
     const overlayEntries = React.useMemo<[string, string][]>(() => {
-        const overlayEntries: [string, string][] = [];
+        const overlay: [string, string][] = [];
 
         // Inspect the cursor
         const cursor = sessionState?.scripts[ScriptKey.MAIN_SCRIPT].cursor;
@@ -29,8 +29,8 @@ export function ScriptGuideView(_props: ScriptGuideViewProps) {
                 const tokenType = tokenTypes[cursor.scannerSymbolId];
                 const tokenTypeName = sqlynx.getScannerTokenTypeName(tokenType);
 
-                overlayEntries.push([
-                    "Token Type",
+                overlay.push([
+                    "Token",
                     tokenTypeName
                 ]);
             }
@@ -48,10 +48,19 @@ export function ScriptGuideView(_props: ScriptGuideViewProps) {
                 if (analyzed) {
                     const analyzedPtr = analyzed.read();
                     const tableRef = analyzedPtr.tableReferences(tableRefId)!;
-                    overlayEntries.push([
-                        "Type",
-                        tableRef.innerType().toString(),
-                    ]);
+                    switch (tableRef.innerType()) {
+                        case sqlynx.proto.TableReferenceSubType.ResolvedRelationExpression: {
+                            const inner = new sqlynx.proto.ResolvedRelationExpression();
+                            tableRef.inner(inner) as sqlynx.proto.ResolvedRelationExpression;
+                            const tableName = inner.tableName();
+                            overlay.push(["Table", tableName?.tableName() ?? ""]);
+                            break;
+                        }
+                        case sqlynx.proto.TableReferenceSubType.UnresolvedRelationExpression: {
+                            overlay.push(["Table", "<unresolved>"]);
+                            break;
+                        }
+                    }
                 }
                 break;
             }
@@ -68,43 +77,41 @@ export function ScriptGuideView(_props: ScriptGuideViewProps) {
                         case sqlynx.proto.ExpressionSubType.ResolvedColumnRefExpression: {
                             const inner = new sqlynx.proto.ResolvedColumnRefExpression();
                             expression.inner(inner) as sqlynx.proto.ResolvedColumnRefExpression;
+                            overlay.push(["Expression", "column reference"]);
+                            const columnName = inner.columnName();
+                            overlay.push(["Column", columnName?.columnName() ?? ""]);
                             break;
                         }
                         case sqlynx.proto.ExpressionSubType.UnresolvedColumnRefExpression: {
                             const inner = new sqlynx.proto.UnresolvedColumnRefExpression();
                             expression.inner(inner) as sqlynx.proto.UnresolvedColumnRefExpression;
+                            overlay.push(["Expression", "column reference"]);
+                            overlay.push(["Column", "<unresolved>"]);
                             break;
                         }
                     }
-                    overlayEntries.push([
-                        "Expression",
-                        expression.innerType().toString(),
-                    ]);
                 }
                 break;
             }
             case FOCUSED_COMPLETION: {
                 switch (focusTarget.value.completion.strategy) {
                     case sqlynx.proto.CompletionStrategy.DEFAULT:
-                        overlayEntries.push(["Completion", "Default"]);
+                        overlay.push(["Completion", "Default"]);
                         break;
                     case sqlynx.proto.CompletionStrategy.TABLE_REF:
-                        overlayEntries.push(["Completion", "Table Reference"]);
+                        overlay.push(["Completion", "Table Reference"]);
                         break;
                     case sqlynx.proto.CompletionStrategy.COLUMN_REF:
-                        overlayEntries.push(["Completion", "Column Reference"]);
+                        overlay.push(["Completion", "Column Reference"]);
                         break;
                 }
                 const completionCandidate = focusTarget.value.completion.candidates[focusTarget.value.completionCandidateIndex];
-                overlayEntries.push([
-                    "Candidate Score",
-                    `${completionCandidate.score}`,
-                ]);
+                overlay.push(["Candidate Score", `${completionCandidate.score}`]);
                 break;
             }
         }
 
-        return overlayEntries;
+        return overlay;
     }, [sessionState?.userFocus, sessionState?.scripts[ScriptKey.MAIN_SCRIPT]?.cursor]);
 
     const overlayScriptEntries: React.ReactElement[] = [];
