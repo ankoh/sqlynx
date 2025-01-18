@@ -127,17 +127,17 @@
 }
 
 .output_container {
-    height: 40%;
+    height: 50%;
 }
 
 .output_card {
     position: relative;
-    border-bottom: 1px solid var(--border_color_primary);
 }
 
 .editor_container {
     flex: 1;
     overflow: hidden;
+    border-bottom: 1px solid var(--border_color_primary);
 }
 
 .editor_card {
