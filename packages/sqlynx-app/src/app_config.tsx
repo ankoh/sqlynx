@@ -12,6 +12,7 @@ export interface AppSettings {
     enableCommandRefreshSchema?: boolean;
     enableCommandSaveQueryAsSql?: boolean;
     enableCommandSaveResultsAsArrow?: boolean;
+    showEditorStats?: boolean;
     interfaceDebugMode?: boolean;
 }
 

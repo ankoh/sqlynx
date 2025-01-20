@@ -9,14 +9,16 @@ import { FOCUSED_COMPLETION, FOCUSED_EXPRESSION_ID, FOCUSED_TABLE_REF_ID } from 
 import { useCurrentSessionState } from '../../session/current_session.js';
 import { ScriptKey } from '../../session/session_state.js';
 import { U32_MAX } from '../../utils/numeric_limits.js';
+import { ScriptInfo } from './script_info.js';
 
 interface ScriptGuideViewProps { }
 
 export function ScriptGuideView(_props: ScriptGuideViewProps) {
     const [sessionState, _dispatchSession] = useCurrentSessionState();
+    const [infoExpanded, setInfoExpanded] = React.useState(false);
 
     // Collect overlay metrics
-    const overlayEntries = React.useMemo<[string, string][]>(() => {
+    const infoEntries = React.useMemo<[string, string][]>(() => {
         const overlay: [string, string][] = [];
 
         // Inspect the cursor
@@ -24,8 +26,8 @@ export function ScriptGuideView(_props: ScriptGuideViewProps) {
         if (cursor && cursor.scannerSymbolId != U32_MAX) {
             const scanned = sessionState?.scripts[ScriptKey.MAIN_SCRIPT].processed.scanned?.read();
             const tokens = scanned?.tokens();
-            if (tokens) {
-                const tokenTypes = tokens.tokenTypesArray()!;
+            const tokenTypes = tokens?.tokenTypesArray();
+            if (tokenTypes && cursor.scannerSymbolId < tokenTypes.length) {
                 const tokenType = tokenTypes[cursor.scannerSymbolId];
                 const tokenTypeName = sqlynx.getScannerTokenTypeName(tokenType);
 
@@ -114,35 +116,19 @@ export function ScriptGuideView(_props: ScriptGuideViewProps) {
         return overlay;
     }, [sessionState?.userFocus, sessionState?.scripts[ScriptKey.MAIN_SCRIPT]?.cursor]);
 
-    const overlayScriptEntries: React.ReactElement[] = [];
-    for (let i = 0; i < overlayEntries.length; ++i) {
-        const [key, value] = overlayEntries[i];
-        overlayScriptEntries.push(
-            <span key={2 * i + 0} className={styles.overlay_body_list_key}>
-                {key}
-            </span>
-        );
-        overlayScriptEntries.push(
-            <span key={2 * i + 1} className={styles.overlay_body_list_value}>
-                {value}
-            </span>
-        );
-    }
+    const toggleInfo = () => setInfoExpanded(e => !e);
     return (
         <div className={styles.root}>
-            <CatalogViewer />
-            <div className={styles.overlay_container}>
-                <div className={styles.overlay_header_container}>
-                    Schema
-                </div>
-                {overlayScriptEntries.length > 0 && (
-                    <div className={styles.overlay_body_container}>
-                        <div className={styles.overlay_body_list}>
-                            {overlayScriptEntries}
-                        </div>
-                    </div>
-                )}
+            <div className={styles.catalog_viewer}>
+                <CatalogViewer />
             </div>
+            <div className={styles.catalog_header}>
+                Catalog
+            </div>
+            <div className={styles.info_toggle} onClick={toggleInfo} />
+            {infoExpanded && (
+                <ScriptInfo entries={infoEntries} />
+            )}
         </div>
     );
 }

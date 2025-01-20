@@ -266,7 +266,7 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                     />
                 </div>
             </div>
-            {isDebugBuild() &&
+            {isDebugBuild() && config?.value?.settings?.showEditorStats &&
                 <div className={styles.devtools_overlay}>
                     <div className={styles.devtools_title}>
                         Editor Perf

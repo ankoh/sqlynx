@@ -69,18 +69,28 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
         return [histXScale, histYScale, nullsXScale, nullsYScale, nullsXWidth];
     }, [histWidth, height, svgContainerSize]);
 
+    // Listen for brush events
+    const onBrushUpdate = React.useCallback((e: d3.D3BrushEvent<unknown>) => {
+        if (e.selection == null) {
+            return;
+        }
+        const [begin, end] = e.selection;
+        console.log([begin, end]);
+    }, []);
+    const onBrushEnd = React.useCallback((_e: d3.D3BrushEvent<unknown>) => {
+        console.log("brush end");
+    }, []);
+
     // Setup d3 brush
     React.useLayoutEffect(() => {
-        const onBrushEnd = (_e: d3.D3BrushEvent<unknown>) => { };
-        const onBrush = (_e: d3.D3BrushEvent<unknown>) => { };
         // Define the brush
         const brush = d3.brushX()
             .extent([
                 [histXScale.range()[0], 0],
                 [histXScale.range()[1], height]
             ])
-            .on('start', onBrush)
-            .on('brush', onBrush)
+            .on('start', onBrushUpdate)
+            .on('brush', onBrushUpdate)
             .on('end', onBrushEnd);
 
         // Add the brush overlay
@@ -114,7 +124,7 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
         focusDescription = `${rows} ${rows == 1 ? "row" : "rows"} (${percentage}%)`
     }
 
-    // Listen for pointer events events
+    // Listen for pointer events
     const onPointerOverBin = React.useCallback((elem: React.MouseEvent<SVGGElement>) => {
         const paddingInner = histXScale.paddingInner() * histXScale.bandwidth();
         const paddingOuter = histXScale.paddingOuter() * histXScale.bandwidth();
