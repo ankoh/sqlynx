@@ -17,7 +17,7 @@
     height: 100%;
     display: grid;
     grid-template-columns: 1fr;
-    grid-template-rows: 40px calc(100% - 40px);
+    grid-template-rows: 32px calc(100% - 32px);
 }
 
 .headerbar {
@@ -35,6 +35,8 @@
 
 .script_title {
     margin-left: 16px;
+    font-weight: 500;
+    font-size: 0.9rem;
 }
 
 .script_filename {

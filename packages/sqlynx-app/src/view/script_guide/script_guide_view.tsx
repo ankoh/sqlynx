@@ -119,16 +119,20 @@ export function ScriptGuideView(_props: ScriptGuideViewProps) {
     const toggleInfo = () => setInfoExpanded(e => !e);
     return (
         <div className={styles.root}>
-            <div className={styles.catalog_viewer}>
-                <CatalogViewer />
+            <div className={styles.guide_header}>
+                <div className={styles.guide_header_title}>
+                    Catalog
+                </div>
             </div>
-            <div className={styles.catalog_header}>
-                Catalog
+            <div className={styles.guide_container}>
+                <div className={styles.catalog_viewer}>
+                    <CatalogViewer />
+                </div>
+                <div className={styles.info_toggle} onClick={toggleInfo} />
+                {infoExpanded && (
+                    <ScriptInfo entries={infoEntries} />
+                )}
             </div>
-            <div className={styles.info_toggle} onClick={toggleInfo} />
-            {infoExpanded && (
-                <ScriptInfo entries={infoEntries} />
-            )}
         </div>
     );
 }
