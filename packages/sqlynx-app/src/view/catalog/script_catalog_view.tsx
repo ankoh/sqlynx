@@ -2,18 +2,18 @@ import { ContextObjectID } from '@ankoh/sqlynx-core';
 
 import * as sqlynx from '@ankoh/sqlynx-core';
 import * as React from 'react';
-import * as styles from './script_guide_view.module.css';
+import * as styles from './script_catalog_view.module.css';
 
 import { CatalogViewer } from '../catalog/catalog_viewer.js';
 import { FOCUSED_COMPLETION, FOCUSED_EXPRESSION_ID, FOCUSED_TABLE_REF_ID } from '../../session/focus.js';
 import { useCurrentSessionState } from '../../session/current_session.js';
 import { ScriptKey } from '../../session/session_state.js';
 import { U32_MAX } from '../../utils/numeric_limits.js';
-import { ScriptInfo } from './script_info.js';
+import { ScriptCatalogSidebar } from './script_catalog_sidebar.js';
 
 interface ScriptGuideViewProps { }
 
-export function ScriptGuideView(_props: ScriptGuideViewProps) {
+export function ScriptCatalogView(_props: ScriptGuideViewProps) {
     const [sessionState, _dispatchSession] = useCurrentSessionState();
     const [infoExpanded, setInfoExpanded] = React.useState(false);
 
@@ -130,7 +130,7 @@ export function ScriptGuideView(_props: ScriptGuideViewProps) {
                 </div>
                 <div className={styles.info_toggle} onClick={toggleInfo} />
                 {infoExpanded && (
-                    <ScriptInfo entries={infoEntries} />
+                    <ScriptCatalogSidebar entries={infoEntries} />
                 )}
             </div>
         </div>

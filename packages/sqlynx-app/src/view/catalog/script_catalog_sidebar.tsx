@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as styles from './script_info.module.css';
+import * as styles from './script_catalog_sidebar.module.css';
 
 import { CopyToClipboardButton } from '../../utils/clipboard.js';
 import { ButtonSize, ButtonVariant } from '../foundations/button.js';
@@ -41,7 +41,7 @@ interface ScriptInfoProps {
     entries: [string, string][];
 }
 
-export function ScriptInfo(props: ScriptInfoProps) {
+export function ScriptCatalogSidebar(props: ScriptInfoProps) {
     return (
         <div className={styles.info_container}>
             <div className={styles.metrics_container}>

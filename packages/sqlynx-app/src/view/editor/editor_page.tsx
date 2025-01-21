@@ -14,7 +14,7 @@ import { QueryExecutionStatus } from '../../connectors/query_execution_state.js'
 import { QueryResultView } from '../query_result/query_result_view.js';
 import { QueryStatusView } from '../query_status/query_status_view.js';
 import { ScriptEditor } from './editor.js';
-import { ScriptGuideView } from '../../view/script_guide/script_guide_view.js';
+import { ScriptCatalogView } from '../../view/catalog/script_catalog_view.js';
 import { ScriptURLOverlay } from './script_url_overlay.js';
 import { SessionCommandType, useSessionCommandDispatch } from '../../session/session_commands.js';
 import { SessionListDropdown } from './session_list_dropdown.js';
@@ -85,7 +85,7 @@ const OutputCommandList = (props: { connector: ConnectorInfo | null }) => {
 };
 
 enum TabKey {
-    ScriptGuide = 0,
+    Catalog = 0,
     QueryStatusView = 1,
     QueryResultView = 2,
 }
@@ -98,7 +98,7 @@ interface Props { }
 
 export const EditorPage: React.FC<Props> = (_props: Props) => {
     const [currentSession, _dispatchCurrentSession] = useCurrentSessionState();
-    const [selectedTab, selectTab] = React.useState<TabKey>(TabKey.ScriptGuide);
+    const [selectedTab, selectTab] = React.useState<TabKey>(TabKey.Catalog);
     const [sharingIsOpen, setSharingIsOpen] = React.useState<boolean>(false);
 
     // Resolve the editor query state (if any)
@@ -122,7 +122,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                 ctrlKey: true,
                 callback: () => {
                     selectTab(key => {
-                        const tabs = [TabKey.ScriptGuide, TabKey.QueryStatusView, TabKey.QueryResultView];
+                        const tabs = [TabKey.Catalog, TabKey.QueryStatusView, TabKey.QueryResultView];
                         return tabs[((key as number) + 1) % tabState.current.enabledTabs];
                     });
                 },
@@ -138,7 +138,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
         const status = queryState?.status ?? null;
         switch (status) {
             case null:
-                selectTab(TabKey.ScriptGuide);
+                selectTab(TabKey.Catalog);
                 break;
             case QueryExecutionStatus.STARTED:
             case QueryExecutionStatus.ACCEPTED:
@@ -197,7 +197,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                         selectedTab={selectedTab}
                         selectTab={selectTab}
                         tabProps={{
-                            [TabKey.ScriptGuide]: { tabId: TabKey.ScriptGuide, icon: `${icons}#tables_connected`, labelShort: 'Guide', disabled: false },
+                            [TabKey.Catalog]: { tabId: TabKey.Catalog, icon: `${icons}#tables_connected`, labelShort: 'Catalog', disabled: false },
                             [TabKey.QueryStatusView]: {
                                 tabId: TabKey.QueryStatusView,
                                 icon: `${icons}#plan`,
@@ -211,9 +211,9 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                                 disabled: tabState.current.enabledTabs < 3,
                             },
                         }}
-                        tabKeys={[TabKey.ScriptGuide, TabKey.QueryStatusView, TabKey.QueryResultView]}
+                        tabKeys={[TabKey.Catalog, TabKey.QueryStatusView, TabKey.QueryResultView]}
                         tabRenderers={{
-                            [TabKey.ScriptGuide]: _props => <ScriptGuideView />,
+                            [TabKey.Catalog]: _props => <ScriptCatalogView />,
                             [TabKey.QueryStatusView]: _props => (
                                 <QueryStatusView query={queryState} />
                             ),
