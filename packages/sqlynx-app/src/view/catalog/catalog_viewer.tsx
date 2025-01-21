@@ -206,16 +206,15 @@ export function CatalogViewer(_props: Props) {
                             padding={padding}
                             nodes={nodes ?? []}
                         />
-                        <div className={styles.actions_container}>
-                            <div className={styles.action}>
-                            </div>
-                            <div className={styles.action}>
-                            </div>
-                            <div className={styles.action}>
-
-                            </div>
-                        </div>
                     </div>
+                </div>
+            </div>
+            <div className={styles.actions_container}>
+                <div className={styles.action}>
+                </div>
+                <div className={styles.action}>
+                </div>
+                <div className={styles.action}>
                 </div>
             </div>
         </div>
