@@ -100,3 +100,28 @@
     align-items: center;
     color: var(--catalog_edge_focus_color);
 }
+
+.actions_container {
+    position: absolute;
+    left: 16px;
+    top: 8px;
+
+    background-color: white;
+    border-radius: 8px;
+    border: 1px solid var(--border_color_primary);
+    display: flex;
+    flex-direction: column;
+}
+
+.action {
+    width: 32px;
+    height: 32px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.action:not(:first-child) {
+    border-top: 1px solid var(--border_color_primary);
+}

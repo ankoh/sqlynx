@@ -9,18 +9,18 @@
     grid-template-columns: 100%;
 }
 
-.guide_header {
+.panel_header {
     border-bottom: 1px solid var(--border_color_primary);
     display: flex;
     align-items: center;
 }
-.guide_header_title {
+.panel_header_title {
     margin-left: 16px;
     font-weight: 500;
     font-size: 0.9rem;
 }
 
-.guide_container {
+.panel_container {
     display: grid;
     grid-template-columns: auto max-content max-content;
     grid-template-rows: 100%;

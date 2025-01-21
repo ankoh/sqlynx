@@ -11,9 +11,9 @@ import { ScriptKey } from '../../session/session_state.js';
 import { U32_MAX } from '../../utils/numeric_limits.js';
 import { ScriptCatalogSidebar } from './script_catalog_sidebar.js';
 
-interface ScriptGuideViewProps { }
+interface ScriptpanelViewProps { }
 
-export function ScriptCatalogView(_props: ScriptGuideViewProps) {
+export function ScriptCatalogView(_props: ScriptpanelViewProps) {
     const [sessionState, _dispatchSession] = useCurrentSessionState();
     const [infoExpanded, setInfoExpanded] = React.useState(false);
 
@@ -119,12 +119,12 @@ export function ScriptCatalogView(_props: ScriptGuideViewProps) {
     const toggleInfo = () => setInfoExpanded(e => !e);
     return (
         <div className={styles.root}>
-            <div className={styles.guide_header}>
-                <div className={styles.guide_header_title}>
+            <div className={styles.panel_header}>
+                <div className={styles.panel_header_title}>
                     Catalog
                 </div>
             </div>
-            <div className={styles.guide_container}>
+            <div className={styles.panel_container}>
                 <div className={styles.catalog_viewer}>
                     <CatalogViewer />
                 </div>
