@@ -2,6 +2,7 @@
     grid-row: 1;
     grid-column: 3;
     border-left: 1px solid var(--border_color_primary);
+    background-color: white;
 }
 
 .metrics_container {
