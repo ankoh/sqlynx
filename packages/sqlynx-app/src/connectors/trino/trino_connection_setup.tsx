@@ -9,26 +9,26 @@ import {
     HEALTH_CHECK_FAILED,
     HEALTH_CHECK_STARTED,
     HEALTH_CHECK_SUCCEEDED,
-    HyperGrpcConnectorAction,
-} from './hyper_connection_state.js';
+    TrinoConnectorAction,
+} from './trino_connection_state.js';
 import { Logger } from '../../platform/logger.js';
-import { HyperGrpcConnectionParams } from './hyper_connection_params.js';
-import { HyperGrpcConnectorConfig } from '../connector_configs.js';
+import { TrinoConnectionParams } from './trino_connection_params.js';
+import { TrinoConnectorConfig } from '../connector_configs.js';
 import { Dispatch } from '../../utils/index.js';
 import {
     AttachedDatabase,
-    HyperDatabaseChannel,
-    HyperDatabaseClient,
     HyperDatabaseConnectionContext,
 } from '../../platform/hyperdb_client.js';
 import { useLogger } from '../../platform/logger_provider.js';
 import { useAppConfig } from '../../app_config.js';
 import { useHyperDatabaseClient } from '../../platform/hyperdb_client_provider.js';
 import { RESET } from '../connection_state.js';
+import { TrinoClientInterface } from './trino_api_client.js';
+import { TrinoChannel } from './trino_channel.js';
 
-export async function setupHyperGrpcConnection(dispatch: Dispatch<HyperGrpcConnectorAction>, logger: Logger, params: HyperGrpcConnectionParams, _config: HyperGrpcConnectorConfig, client: HyperDatabaseClient, abortSignal: AbortSignal): Promise<HyperDatabaseChannel | null> {
+export async function setupTrinoConnection(dispatch: Dispatch<TrinoConnectorAction>, logger: Logger, params: TrinoConnectionParams, _config: TrinoConnectorConfig, client: TrinoClientInterface, abortSignal: AbortSignal): Promise<TrinoChannel | null> {
     // First prepare the channel
-    let channel: HyperDatabaseChannel;
+    let channel: TrinoChannel;
     try {
         // Start the channel setup
         dispatch({
@@ -41,15 +41,11 @@ export async function setupHyperGrpcConnection(dispatch: Dispatch<HyperGrpcConne
         // The direct gRPC Hyper connector never changes the headers it injects.
         const connectionContext: HyperDatabaseConnectionContext = {
             getAttachedDatabases(): AttachedDatabase[] {
-                const dbs = [];
-                for (const db of params.attachedDatabases) {
-                    dbs.push({ path: db.key, alias: db.value });
-                }
-                return dbs;
+                return [];
             },
             async getRequestMetadata(): Promise<Record<string, string>> {
                 const headers: Record<string, string> = {};
-                for (const md of params.gRPCMetadata) {
+                for (const md of params.metadata) {
                     headers[md.key] = md.value;
                 }
                 return headers;
@@ -127,33 +123,33 @@ export async function setupHyperGrpcConnection(dispatch: Dispatch<HyperGrpcConne
     }
     return channel;
 }
-export interface HyperGrpcSetupApi {
-    setup(dispatch: Dispatch<HyperGrpcConnectorAction>, params: HyperGrpcConnectionParams, abortSignal: AbortSignal): Promise<void>
-    reset(dispatch: Dispatch<HyperGrpcConnectorAction>): Promise<void>
+export interface TrinoSetupApi {
+    setup(dispatch: Dispatch<TrinoConnectorAction>, params: TrinoConnectionParams, abortSignal: AbortSignal): Promise<void>
+    reset(dispatch: Dispatch<TrinoConnectorAction>): Promise<void>
 }
 
-export const SETUP_CTX = React.createContext<HyperGrpcSetupApi | null>(null);
-export const useHyperGrpcSetup = () => React.useContext(SETUP_CTX!);
+export const SETUP_CTX = React.createContext<TrinoSetupApi | null>(null);
+export const useTrinoSetup = () => React.useContext(SETUP_CTX!);
 
 interface Props {
     /// The children
     children: React.ReactElement;
 }
 
-export const HyperGrpcSetupProvider: React.FC<Props> = (props: Props) => {
+export const TrinoSetupProvider: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
     const appConfig = useAppConfig();
     const connectorConfig = appConfig.value?.connectors?.hyper ?? null;
     const hyperClient = useHyperDatabaseClient();
 
-    const api = React.useMemo<HyperGrpcSetupApi | null>(() => {
+    const api = React.useMemo<TrinoSetupApi | null>(() => {
         if (!connectorConfig || !hyperClient) {
             return null;
         }
-        const setup = async (dispatch: Dispatch<HyperGrpcConnectorAction>, params: HyperGrpcConnectionParams, abort: AbortSignal) => {
-            await setupHyperGrpcConnection(dispatch, logger, params, connectorConfig, hyperClient, abort);
+        const setup = async (dispatch: Dispatch<TrinoConnectorAction>, params: TrinoConnectionParams, abort: AbortSignal) => {
+            await setupTrinoConnection(dispatch, logger, params, connectorConfig, hyperClient, abort);
         };
-        const reset = async (dispatch: Dispatch<HyperGrpcConnectorAction>) => {
+        const reset = async (dispatch: Dispatch<TrinoConnectorAction>) => {
             dispatch({
                 type: RESET,
                 value: null,

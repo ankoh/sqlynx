@@ -21,11 +21,16 @@ export interface SalesforceConnectorConfig {
     mock?: SalesforceConnectorMockConfig;
 }
 
+export interface TrinoConnectorConfig {
+}
+
 export interface ConnectorConfigs {
     /// The config for the Salesforce Data Cloud connector
     salesforce?: SalesforceConnectorConfig;
     /// The config for the Hyper gRPC connector
     hyper?: HyperGrpcConnectorConfig;
+    /// The config for the Trino connector
+    trino?: TrinoConnectorConfig;
 }
 
 export function readConnectorConfigs(configs: any): ConnectorConfigs {
@@ -37,6 +42,9 @@ export function readConnectorConfigs(configs: any): ConnectorConfigs {
         out.hyper = configs.hyper;
     } else {
         out.hyper = {};
+    }
+    if (configs.trino) {
+        out.trino = configs.trino;
     }
     return out;
 }

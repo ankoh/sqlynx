@@ -10,7 +10,7 @@ import {
     QueryExecutionTaskVariant,
 } from './query_execution_state.js';
 import { useSalesforceAPI } from './salesforce/salesforce_connector.js';
-import { DEMO_CONNECTOR, HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, SERVERLESS_CONNECTOR } from './connector_info.js';
+import { DEMO_CONNECTOR, HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, SERVERLESS_CONNECTOR, TRINO_CONNECTOR } from './connector_info.js';
 import {
     EXECUTE_QUERY,
     QUERY_EXECUTION_CANCELLED,
@@ -118,6 +118,20 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                     }
                 }
                 break;
+            }
+            case TRINO_CONNECTOR: {
+                const c = conn.details.value;
+                const channel = c.channel;
+                if (!channel) {
+                    throw new Error(`trino channel is not set up`);
+                }
+                task = {
+                    type: TRINO_CONNECTOR,
+                    value: {
+                        scriptText: args.query,
+                        trinoChannel: channel,
+                    }
+                };
             }
             // XXX
             case SERVERLESS_CONNECTOR:

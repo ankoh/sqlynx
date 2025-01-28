@@ -1,14 +1,10 @@
 import * as React from 'react';
 
 import { CONNECTOR_INFOS, ConnectorType, requiresSwitchingToNative } from '../../connectors/connector_info.js';
-import { ReleaseBundles } from '../release_bundle.js';
 
 import * as styles from './platform_check.module.css';
 import * as icons from '../../../static/svg/symbols.generated.svg';
 import { VersionInfoOverlay } from '../version_viewer.js';
-import { HoverMode, NavBarButtonWithRef } from '../navbar_button.js';
-import * as symbols from '../../../static/svg/symbols.generated.svg';
-import { SQLYNX_VERSION } from '../../globals.js';
 import { AnchorAlignment, AnchorSide } from '../foundations/anchored_position.js';
 import { Button, ButtonVariant } from '../foundations/button.js';
 import { PackageIcon } from '@primer/octicons-react';

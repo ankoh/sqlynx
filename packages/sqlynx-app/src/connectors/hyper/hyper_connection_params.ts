@@ -1,11 +1,11 @@
 import * as proto from '@ankoh/sqlynx-protobuf';
 
-import { GrpcChannelArgs } from "../../platform/grpc_common.js";
+import { ChannelArgs } from "../../platform/channel_common.js";
 import { KeyValueListElement } from "../../view/foundations/keyvalue_list.js";
 
 export interface HyperGrpcConnectionParams {
     /// The gRPC endpoint
-    channel: GrpcChannelArgs;
+    channelArgs: ChannelArgs;
     /// The attached databases
     attachedDatabases: KeyValueListElement[];
     /// The gRPC metadata
@@ -14,15 +14,15 @@ export interface HyperGrpcConnectionParams {
 
 export function buildHyperConnectorParams(params: HyperGrpcConnectionParams): proto.sqlynx_session.pb.ConnectorParams {
     const tls = new proto.sqlynx_session.pb.TlsConfig({
-        clientKeyPath: params.channel.tls?.keyPath,
-        clientCertPath: params.channel.tls?.pubPath,
-        caCertsPath: params.channel.tls?.caPath,
+        clientKeyPath: params.channelArgs.tls?.keyPath,
+        clientCertPath: params.channelArgs.tls?.pubPath,
+        caCertsPath: params.channelArgs.tls?.caPath,
     });
     return new proto.sqlynx_session.pb.ConnectorParams({
         connector: {
             case: "hyper",
             value: new proto.sqlynx_session.pb.HyperConnectorParams({
-                endpoint: params.channel.endpoint ?? "",
+                endpoint: params.channelArgs.endpoint ?? "",
                 tls
             })
         }

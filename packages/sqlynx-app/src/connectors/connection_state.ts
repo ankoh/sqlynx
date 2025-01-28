@@ -21,6 +21,7 @@ import {
     HYPER_GRPC_CONNECTOR,
     SALESFORCE_DATA_CLOUD_CONNECTOR,
     SERVERLESS_CONNECTOR,
+    TRINO_CONNECTOR,
 } from './connector_info.js';
 import {
     QueryExecutionProgress,
@@ -31,6 +32,7 @@ import {
 import { ConnectionMetrics, createConnectionMetrics } from './connection_statistics.js';
 import { reduceQueryAction } from './query_execution_state.js';
 import { DemoConnectionParams as DemoConnectionDetails } from './demo/demo_connection_state.js';
+import { TrinoConnectionDetails } from './trino/trino_connection_state.js';
 
 export interface ConnectionState {
     /// The connection id
@@ -69,7 +71,7 @@ export enum ConnectionStatus {
     HEALTH_CHECK_CANCELLED,
     HEALTH_CHECK_SUCCEEDED,
 
-    // gRPC channel setup
+    // Channel setup
     CHANNEL_SETUP_STARTED,
     CHANNEL_SETUP_FAILED,
     CHANNEL_SETUP_CANCELLED,
@@ -107,6 +109,7 @@ export type ConnectionDetailsVariant =
     | VariantKind<typeof SERVERLESS_CONNECTOR, unknown>
     | VariantKind<typeof DEMO_CONNECTOR, DemoConnectionDetails>
     | VariantKind<typeof HYPER_GRPC_CONNECTOR, HyperGrpcConnectionDetails>
+    | VariantKind<typeof TRINO_CONNECTOR, TrinoConnectionDetails>
     ;
 
 export type ConnectionStateWithoutId = Omit<ConnectionState, "connectionId">;

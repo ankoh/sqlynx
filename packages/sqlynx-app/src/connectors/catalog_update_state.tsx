@@ -1,7 +1,7 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
 
 import { VariantKind } from '../utils/index.js';
-import { HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR } from './connector_info.js';
+import { HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from './connector_info.js';
 import { SalesforceAPIClientInterface, SalesforceDataCloudAccessToken } from './salesforce/salesforce_api_client.js';
 import {
     CATALOG_UPDATE_CANCELLED,
@@ -12,6 +12,7 @@ import {
     UPDATE_CATALOG,
 } from './connection_state.js';
 import { HyperDatabaseChannel } from '../platform/hyperdb_client.js';
+import { TrinoChannel } from './trino/trino_channel.js';
 
 export const FULL_CATALOG_REFRESH = Symbol();
 
@@ -19,7 +20,8 @@ export type CatalogUpdateVariant = VariantKind<typeof FULL_CATALOG_REFRESH, null
 
 export type CatalogTaskVariant =
     | VariantKind<typeof SALESFORCE_DATA_CLOUD_CONNECTOR, UpdateSalesforceMetadataTask>
-    | VariantKind<typeof HYPER_GRPC_CONNECTOR, UpdateHyperCatalogTask>;
+    | VariantKind<typeof HYPER_GRPC_CONNECTOR, UpdateHyperCatalogTask>
+    | VariantKind<typeof TRINO_CONNECTOR, UpdateTrinoCatalogTask>;
 
 export interface UpdateSalesforceMetadataTask {
     /// The target catalog
@@ -35,6 +37,13 @@ export interface UpdateHyperCatalogTask {
     catalog: sqlynx.SQLynxCatalog;
     /// The channel
     hyperChannel: HyperDatabaseChannel;
+}
+
+export interface UpdateTrinoCatalogTask {
+    /// The target catalog
+    catalog: sqlynx.SQLynxCatalog;
+    /// The channel
+    trinoChannel: TrinoChannel;
 }
 
 export enum CatalogUpdateTaskStatus {

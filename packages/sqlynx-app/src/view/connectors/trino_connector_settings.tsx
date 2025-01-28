@@ -43,7 +43,7 @@ interface PageState {
 type PageStateSetter = Dispatch<React.SetStateAction<PageState>>;
 const PAGE_STATE_CTX = React.createContext<[PageState, PageStateSetter] | null>(null);
 
-export const HyperGrpcConnectorSettings: React.FC = () => {
+export const TrinoConnectorSettings: React.FC = () => {
     const logger = useLogger();
     const hyperClient = useHyperDatabaseClient();
     const hyperSetup = useHyperGrpcSetup();
@@ -259,7 +259,7 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
 
 interface ProviderProps { children: React.ReactElement };
 
-export const HyperGrpcConnectorSettingsStateProvider: React.FC<ProviderProps> = (props: ProviderProps) => {
+export const TrinoConnectorSettingsStateProvider: React.FC<ProviderProps> = (props: ProviderProps) => {
     const state = React.useState<PageState>({
         endpoint: "http://localhost:7484",
         mTlsKeyPath: "",

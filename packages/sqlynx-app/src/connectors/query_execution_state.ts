@@ -1,7 +1,7 @@
 import * as arrow from 'apache-arrow';
 
 import { VariantKind } from '../utils/index.js';
-import { DEMO_CONNECTOR, HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR } from './connector_info.js';
+import { DEMO_CONNECTOR, HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from './connector_info.js';
 import {
     ConnectionState,
     EXECUTE_QUERY,
@@ -17,11 +17,13 @@ import {
 import { ConnectionQueryMetrics } from './connection_statistics.js';
 import { HyperDatabaseChannel } from '../platform/hyperdb_client.js';
 import { DemoDatabaseChannel } from './demo/demo_database_channel.js';
+import { TrinoChannel } from './trino/trino_channel.js';
 
 export type QueryExecutionTaskVariant =
     | VariantKind<typeof DEMO_CONNECTOR, ExecuteDemoQueryTask>
     | VariantKind<typeof SALESFORCE_DATA_CLOUD_CONNECTOR, ExecuteDataCloudQueryTask>
-    | VariantKind<typeof HYPER_GRPC_CONNECTOR, HyperGrpcQueryTask>;
+    | VariantKind<typeof HYPER_GRPC_CONNECTOR, HyperGrpcQueryTask>
+    | VariantKind<typeof TRINO_CONNECTOR, TrinoQueryTask>;
 
 export interface ExecuteDemoQueryTask {
     /// The script text
@@ -42,6 +44,13 @@ export interface HyperGrpcQueryTask {
     scriptText: string;
     /// The channel
     hyperChannel: HyperDatabaseChannel;
+}
+
+export interface TrinoQueryTask {
+    /// The script text
+    scriptText: string;
+    /// Trino channel
+    trinoChannel: TrinoChannel;
 }
 
 export enum QueryExecutionStatus {

@@ -4,7 +4,7 @@ import * as proto from "@ankoh/sqlynx-protobuf";
 
 import { GrpcServerStream, NativeAPIMock } from './native_api_mock.js';
 import { NativeGrpcClient, NativeGrpcServerStreamBatchEvent } from './native_grpc_client.js';
-import { GrpcChannelArgs, GrpcMetadataProvider } from './grpc_common.js';
+import { ChannelArgs, ChannelMetadataProvider } from './channel_common.js';
 import { PlatformType } from './platform_type.js';
 import { TestLogger } from './test_logger.js';
 
@@ -17,10 +17,10 @@ describe('Native gRPC client', () => {
     afterEach(() => {
         (global.fetch as jest.Mock).mockRestore();
     });
-    const testChannelArgs: GrpcChannelArgs = {
+    const testChannelArgs: ChannelArgs = {
         endpoint: "http://localhost:8080"
     };
-    const fakeMetadataProvider: GrpcMetadataProvider = {
+    const fakeMetadataProvider: ChannelMetadataProvider = {
         getRequestMetadata(): Promise<Record<string, string>> {
             return Promise.resolve({});
         }

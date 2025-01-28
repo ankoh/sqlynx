@@ -20,7 +20,7 @@ import {
     QueryExecutionResponseStream, QueryExecutionResponseStreamMetrics,
     QueryExecutionStatus,
 } from '../connectors/query_execution_state.js';
-import { GrpcChannelArgs } from './grpc_common.js';
+import { ChannelArgs } from './channel_common.js';
 import { Logger } from './logger.js';
 
 const LOG_CTX = "native_hyperdb_client";
@@ -224,7 +224,7 @@ export class NativeHyperDatabaseClient implements HyperDatabaseClient {
     }
 
     /// Create a database connection
-    public async connect(args: GrpcChannelArgs, connection: HyperDatabaseConnectionContext): Promise<NativeHyperDatabaseChannel> {
+    public async connect(args: ChannelArgs, connection: HyperDatabaseConnectionContext): Promise<NativeHyperDatabaseChannel> {
         const channel = await this.client.connect(args, connection);
         return new NativeHyperDatabaseChannel(channel, connection, this.logger);
     }

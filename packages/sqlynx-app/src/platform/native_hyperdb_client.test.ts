@@ -3,7 +3,7 @@ import { jest } from '@jest/globals';
 import * as proto from "@ankoh/sqlynx-protobuf";
 
 import { GrpcServerStream, NativeAPIMock } from './native_api_mock.js';
-import { GrpcChannelArgs } from './grpc_common.js';
+import { ChannelArgs } from './channel_common.js';
 import { NativeHyperDatabaseClient, NativeHyperQueryResultStream } from './native_hyperdb_client.js';
 import { NativeGrpcServerStreamBatchEvent } from './native_grpc_client.js';
 import { PlatformType } from './platform_type.js';
@@ -19,7 +19,7 @@ describe('Native Hyper client', () => {
     afterEach(() => {
         (global.fetch as jest.Mock).mockRestore();
     });
-    const testChannelArgs: GrpcChannelArgs = {
+    const testChannelArgs: ChannelArgs = {
         endpoint: "http://localhost:8080"
     };
     const fakeConnection: HyperDatabaseConnectionContext = {

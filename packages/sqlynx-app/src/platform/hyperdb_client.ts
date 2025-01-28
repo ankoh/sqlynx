@@ -1,6 +1,6 @@
 import * as proto from "@ankoh/sqlynx-protobuf";
 
-import { GrpcChannelArgs, GrpcMetadataProvider } from './grpc_common.js';
+import { ChannelArgs, ChannelMetadataProvider } from './channel_common.js';
 import { QueryExecutionProgress, QueryExecutionResponseStream } from "../connectors/query_execution_state.js";
 
 export interface AttachedDatabase {
@@ -8,7 +8,7 @@ export interface AttachedDatabase {
     alias?: string;
 }
 
-export interface HyperDatabaseConnectionContext extends GrpcMetadataProvider {
+export interface HyperDatabaseConnectionContext extends ChannelMetadataProvider {
     /// Get the attached databases for a call
     getAttachedDatabases(): AttachedDatabase[];
 }
@@ -32,5 +32,5 @@ export interface HyperDatabaseChannel {
 
 export interface HyperDatabaseClient {
     /// Create a database connection
-    connect(args: GrpcChannelArgs, context: HyperDatabaseConnectionContext): Promise<HyperDatabaseChannel>;
+    connect(args: ChannelArgs, context: HyperDatabaseConnectionContext): Promise<HyperDatabaseChannel>;
 }

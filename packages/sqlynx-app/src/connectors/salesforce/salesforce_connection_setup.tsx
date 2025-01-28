@@ -221,7 +221,7 @@ export async function setupSalesforceConnection(dispatch: Dispatch<SalesforceCon
 
         // Start the channel setup
         const connParams: HyperGrpcConnectionParams = {
-            channel: {
+            channelArgs: {
                 endpoint: dcToken.instanceUrl.toString(),
                 tls: {},
             },
@@ -251,7 +251,7 @@ export async function setupSalesforceConnection(dispatch: Dispatch<SalesforceCon
         };
 
         // Create the channel
-        const channel = await hyperClient.connect(connParams.channel, connectionContext);
+        const channel = await hyperClient.connect(connParams.channelArgs, connectionContext);
         abortSignal.throwIfAborted();
 
         // Mark the channel as ready

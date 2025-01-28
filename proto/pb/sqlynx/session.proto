@@ -38,6 +38,13 @@ message ServerlessParams {}
 
 message DemoParams {}
 
+message TrinoConnectorParams {
+    /// The endpoint
+    string endpoint = 1;
+    /// The hint for the username
+    string loginHint = 2;
+}
+
 message ConnectorParams {
     oneof connector {
         /// Parameters for Serverless sessions
@@ -48,6 +55,8 @@ message ConnectorParams {
         HyperConnectorParams hyper = 3;
         /// Parameters for demo sessions
         DemoParams demo = 4;
+        /// Parameters for trino connections
+        TrinoConnectorParams trino = 5;
     }
 }
 

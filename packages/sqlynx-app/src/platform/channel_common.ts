@@ -1,4 +1,4 @@
-export interface GrpcTlsSettings {
+export interface ChannelTlsSettings {
     /// The mTLS client key path
     keyPath?: string;
     /// The mTLS client certificate path
@@ -7,24 +7,28 @@ export interface GrpcTlsSettings {
     caPath?: string;
 }
 
-export interface GrpcChannelArgs {
+export interface ChannelArgs {
+    /// The endpoint url
     endpoint: string,
-    tls?: GrpcTlsSettings;
+    /// The channel tls settings
+    tls?: ChannelTlsSettings;
 }
 
-export class GrpcError extends Error {
+export class ChannelError extends Error {
+    /// The gRPC status
     grpcStatus: number;
+    /// The headers
     headers: Record<string, string> | null;
 
     constructor(status: number, msg: string, headers?: Record<string, string>) {
         super(msg);
         this.grpcStatus = status;
         this.headers = headers ?? null;
-        Object.setPrototypeOf(this, GrpcError.prototype);
+        Object.setPrototypeOf(this, ChannelError.prototype);
     }
 }
 
-export interface GrpcMetadataProvider {
+export interface ChannelMetadataProvider {
     /// Get additional request metadata.
     /// Retrieving the request metadata might involve refreshing the OAuth token, thus the promise.
     getRequestMetadata(): Promise<Record<string, string>>;

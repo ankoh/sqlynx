@@ -9,6 +9,7 @@ import { PlatformCheck } from './platform_check.js';
 
 import * as styles from './connectors_page.module.css';
 import * as icons from '../../../static/svg/symbols.generated.svg';
+import { TrinoConnectorSettings } from './trino_connector_settings.js';
 
 type PageState = number | null;
 type PageStateSetter = Dispatch<React.SetStateAction<PageState>>;
@@ -40,11 +41,20 @@ export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
             iconActive: `${icons}#hyper_nocolor`,
             connectorType: ConnectorType.HYPER_GRPC,
         },
+        [ConnectorType.TRINO]: {
+            tabId: ConnectorType.TRINO as number,
+            labelShort: "Trino",
+            labelLong: "Trino",
+            icon: `${icons}#hyper_outlines`,
+            iconActive: `${icons}#hyper_nocolor`,
+            connectorType: ConnectorType.TRINO,
+        },
     }), []);
     const connectorRenderers: VerticalTabRenderers<ConnectorProps> = React.useMemo(() => ({
         [ConnectorType.HYPER_GRPC as number]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><HyperGrpcConnectorSettings /></PlatformCheck>,
         [ConnectorType.SALESFORCE_DATA_CLOUD as number]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><SalesforceConnectorSettings /></PlatformCheck>,
-//        [ConnectorType.SERVERLESS as number]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><ServerlessSettings /></PlatformCheck>,
+        [ConnectorType.TRINO as number]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><TrinoConnectorSettings /></PlatformCheck>,
+        //        [ConnectorType.SERVERLESS as number]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><ServerlessSettings /></PlatformCheck>,
     }), []);
 
     return (

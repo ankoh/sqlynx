@@ -5,12 +5,14 @@ export const DEMO_CONNECTOR = Symbol('DEMO_CONNECTOR');
 export const SERVERLESS_CONNECTOR = Symbol('SERVERLESS_CONNECTOR');
 export const SALESFORCE_DATA_CLOUD_CONNECTOR = Symbol('SALESFORCE_DATA_CLOUD_CONNECTOR');
 export const HYPER_GRPC_CONNECTOR = Symbol('HYPER_GRPC_CONNECTOR');
+export const TRINO_CONNECTOR = Symbol('TRINO_CONNECTOR');
 
 export enum ConnectorType {
     SERVERLESS = 0,
     SALESFORCE_DATA_CLOUD = 1,
     HYPER_GRPC = 2,
     DEMO = 3,
+    TRINO = 4,
 }
 
 export interface ConnectorInfo {

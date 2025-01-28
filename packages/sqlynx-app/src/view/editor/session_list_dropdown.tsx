@@ -81,7 +81,7 @@ export function SessionListDropdown(props: { className?: string; short: boolean 
             case HYPER_GRPC_CONNECTOR: {
                 enabled = connection.connectionHealth === ConnectionHealth.ONLINE;
                 if (enabled) {
-                    const endpoint = connection.details.value.channelSetupParams?.channel.endpoint;
+                    const endpoint = connection.details.value.channelSetupParams?.channelArgs.endpoint;
                     description = (
                         <ActionList.ItemTextDescription>
                             {endpoint ? endpoint : "-"}
