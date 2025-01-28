@@ -1,9 +1,9 @@
 import * as React from 'react';
 
-import { isNativePlatform } from './native_globals.js';
-import { HyperDatabaseClient } from './hyperdb_client.js';
-import { NativeHyperDatabaseClient } from './native_hyperdb_client.js';
-import { useLogger } from './logger_provider.js';
+import { isNativePlatform } from '../../platform/native_globals.js';
+import { HyperDatabaseClient } from '../../connectors/hyper/hyperdb_client.js';
+import { NativeHyperDatabaseClient } from '../../platform/native_hyperdb_client.js';
+import { useLogger } from '../../platform/logger_provider.js';
 
 type Props = {
     children: React.ReactElement;

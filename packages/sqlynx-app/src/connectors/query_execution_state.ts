@@ -15,7 +15,7 @@ import {
     QueryExecutionAction,
 } from './connection_state.js';
 import { ConnectionQueryMetrics } from './connection_statistics.js';
-import { HyperDatabaseChannel } from '../platform/hyperdb_client.js';
+import { HyperDatabaseChannel } from '../connectors/hyper/hyperdb_client.js';
 import { DemoDatabaseChannel } from './demo/demo_database_channel.js';
 import { TrinoChannel } from './trino/trino_channel.js';
 

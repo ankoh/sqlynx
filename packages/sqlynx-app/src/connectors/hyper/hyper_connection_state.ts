@@ -2,7 +2,7 @@ import * as sqlynx from "@ankoh/sqlynx-core";
 
 import { VariantKind } from '../../utils/variant.js';
 import { HyperGrpcConnectionParams } from './hyper_connection_params.js';
-import { HyperDatabaseChannel } from '../../platform/hyperdb_client.js';
+import { HyperDatabaseChannel } from '../../connectors/hyper/hyperdb_client.js';
 import { ConnectorType, CONNECTOR_INFOS, HYPER_GRPC_CONNECTOR } from '../connector_info.js';
 import {
     ConnectionHealth,

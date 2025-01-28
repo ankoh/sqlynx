@@ -30,7 +30,7 @@ import {
     HyperGrpcSetupTimings
 } from '../hyper/hyper_connection_state.js';
 import { updateDataCloudCatalog } from './salesforce_catalog_update.js';
-import { HyperDatabaseChannel } from '../../platform/hyperdb_client.js';
+import { HyperDatabaseChannel } from '../../connectors/hyper/hyperdb_client.js';
 
 export interface SalesforceSetupTimings extends HyperGrpcSetupTimings {
     /// The time when the auth started

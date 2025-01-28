@@ -36,8 +36,8 @@ import { useLogger } from '../../platform/logger_provider.js';
 import { isNativePlatform } from '../../platform/native_globals.js';
 import { isDebugBuild } from '../../globals.js';
 import { RESET } from './../connection_state.js';
-import { AttachedDatabase, HyperDatabaseClient, HyperDatabaseConnectionContext } from '../../platform/hyperdb_client.js';
-import { useHyperDatabaseClient } from '../../platform/hyperdb_client_provider.js';
+import { AttachedDatabase, HyperDatabaseClient, HyperDatabaseConnectionContext } from '../../connectors/hyper/hyperdb_client.js';
+import { useHyperDatabaseClient } from '../../connectors/hyper/hyperdb_client_provider.js';
 import {
     CHANNEL_READY,
     CHANNEL_SETUP_STARTED,

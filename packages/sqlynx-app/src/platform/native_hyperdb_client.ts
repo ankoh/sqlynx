@@ -7,7 +7,7 @@ import {
     HyperDatabaseClient,
     HyperDatabaseConnectionContext,
     HyperQueryResultStream,
-} from './hyperdb_client.js';
+} from '../connectors/hyper/hyperdb_client.js';
 import {
     NativeGrpcChannel,
     NativeGrpcClient,

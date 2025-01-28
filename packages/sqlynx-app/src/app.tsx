@@ -13,7 +13,7 @@ import { EditorPage } from './view/editor/editor_page.js';
 import { FilesPage } from './view/files/files_page.js';
 import { GitHubTheme } from './github_theme.js';
 import { HttpClientProvider } from './platform/http_client_provider.js';
-import { HyperDatabaseClientProvider } from './platform/hyperdb_client_provider.js';
+import { HyperDatabaseClientProvider } from './connectors/hyper/hyperdb_client_provider.js';
 import { HyperGrpcConnector } from './connectors/hyper/hyper_connector.js';
 import { HyperGrpcConnectorSettingsStateProvider } from './view/connectors/hyper_grpc_connector_settings.js';
 import { LoggerProvider } from './platform/logger_provider.js';

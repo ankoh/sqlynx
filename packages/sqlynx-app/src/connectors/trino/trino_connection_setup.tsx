@@ -18,10 +18,10 @@ import { Dispatch } from '../../utils/index.js';
 import {
     AttachedDatabase,
     HyperDatabaseConnectionContext,
-} from '../../platform/hyperdb_client.js';
+} from '../../connectors/hyper/hyperdb_client.js';
 import { useLogger } from '../../platform/logger_provider.js';
 import { useAppConfig } from '../../app_config.js';
-import { useHyperDatabaseClient } from '../../platform/hyperdb_client_provider.js';
+import { useHyperDatabaseClient } from '../../connectors/hyper/hyperdb_client_provider.js';
 import { RESET } from '../connection_state.js';
 import { TrinoClientInterface } from './trino_api_client.js';
 import { TrinoChannel } from './trino_channel.js';
