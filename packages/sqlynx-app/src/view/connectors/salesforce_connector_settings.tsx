@@ -5,9 +5,9 @@ import * as style from './connector_settings.module.css';
 import { FileSymlinkFileIcon, KeyIcon, PlugIcon, XIcon } from '@primer/octicons-react';
 
 import { useConnectionState } from '../../connectors/connection_registry.js';
-import { useSalesforceSetup } from '../../connectors/salesforce/salesforce_connection_setup.js';
 import { ConnectionHealth, ConnectionStatus } from '../../connectors/connection_state.js';
 import { SalesforceAuthParams } from '../../connectors/salesforce/salesforce_connection_params.js';
+import { useSalesforceSetup } from '../../connectors/salesforce/salesforce_connector.js';
 import { getSalesforceConnectionDetails } from '../../connectors/salesforce/salesforce_connection_state.js';
 import {
     TextField,

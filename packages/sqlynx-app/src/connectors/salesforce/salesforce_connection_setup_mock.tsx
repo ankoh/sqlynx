@@ -13,15 +13,13 @@ import {
     REQUESTING_DATA_CLOUD_ACCESS_TOKEN,
     SalesforceConnectionStateAction,
 } from './salesforce_connection_state.js';
-import { useSalesforceAPI } from './salesforce_connector.js';
-import { useAppConfig } from '../../app_config.js';
-import { useLogger } from '../../platform/logger_provider.js';
+import { AppConfig } from '../../app_config.js';
 import { generatePKCEChallenge } from '../../utils/pkce.js';
 import { sleep } from '../../utils/sleep.js';
 import { Dispatch } from '../../utils/variant.js';
 import { Logger } from '../../platform/logger.js';
 import { SalesforceAPIClientInterface } from './salesforce_api_client.js';
-import { SalesforceSetupApi, SETUP_CTX } from './salesforce_connection_setup.js';
+import { SalesforceSetupApi } from './salesforce_connection_setup.js';
 import { SalesforceAuthParams } from './salesforce_connection_params.js';
 import { SalesforceConnectorConfig } from '../connector_configs.js';
 import { RESET } from '../connection_state.js';
@@ -109,29 +107,20 @@ export async function authorizeSalesforceConnection(dispatch: Dispatch<Salesforc
     }
 }
 
-export const SalesforceAuthFlowMockProvider: React.FC<Props> = (props: Props) => {
-    const logger = useLogger();
-    const appConfig = useAppConfig();
-    const salesforceApi = useSalesforceAPI();
-    const connectorConfig = appConfig.value?.connectors?.salesforce ?? null;
+export function mockSalesforceAuthFlow(api: SalesforceAPIClientInterface, appConfig: AppConfig, logger: Logger): (SalesforceSetupApi | null) {
+    const connectorConfig = appConfig.connectors?.salesforce ?? null;
 
-    const api = React.useMemo<SalesforceSetupApi | null>(() => {
-        if (!connectorConfig) {
-            return null;
-        }
-        const auth = async (dispatch: Dispatch<SalesforceConnectionStateAction>, params: SalesforceAuthParams, abort: AbortSignal) => {
-            return authorizeSalesforceConnection(dispatch, logger, params, connectorConfig, salesforceApi, abort);
-        };
-        const reset = async (dispatch: Dispatch<SalesforceConnectionStateAction>) => {
-            dispatch({
-                type: RESET,
-                value: null,
-            })
-        };
-        return { authorize: auth, reset: reset };
-    }, [connectorConfig]);
-
-    return (
-        <SETUP_CTX.Provider value={api}>{props.children}</SETUP_CTX.Provider>
-    );
+    if (!connectorConfig) {
+        return null;
+    }
+    const auth = async (dispatch: Dispatch<SalesforceConnectionStateAction>, params: SalesforceAuthParams, abort: AbortSignal) => {
+        return authorizeSalesforceConnection(dispatch, logger, params, connectorConfig, api, abort);
+    };
+    const reset = async (dispatch: Dispatch<SalesforceConnectionStateAction>) => {
+        dispatch({
+            type: RESET,
+            value: null,
+        })
+    };
+    return { authorize: auth, reset: reset };
 };

@@ -20,7 +20,7 @@ import {
     SalesforceConnectionStateAction,
 } from './salesforce_connection_state.js';
 import { useSalesforceAPI } from './salesforce_connector.js';
-import { useAppConfig } from '../../app_config.js';
+import { AppConfig, useAppConfig } from '../../app_config.js';
 import { generatePKCEChallenge } from '../../utils/pkce.js';
 import { BASE64_CODEC } from '../../utils/base64.js';
 import { PlatformType, usePlatformType } from '../../platform/platform_type.js';
@@ -310,40 +310,20 @@ export interface SalesforceSetupApi {
     reset(dispatch: Dispatch<SalesforceConnectionStateAction>): Promise<void>
 }
 
-export const SETUP_CTX = React.createContext<SalesforceSetupApi | null>(null);
-export const useSalesforceSetup = () => React.useContext(SETUP_CTX!);
+export function createSalesforceAuthFlow(hyperClient: HyperDatabaseClient, salesforceApi: SalesforceAPIClientInterface, platformType: PlatformType, appEvents: AppEventListener, appConfig: AppConfig, logger: Logger): (SalesforceSetupApi | null) {
+    const connectorConfig = appConfig.connectors?.salesforce ?? null;
 
-interface Props {
-    /// The children
-    children: React.ReactElement;
-}
-
-export const SalesforceSetupProvider: React.FC<Props> = (props: Props) => {
-    const logger = useLogger();
-    const appConfig = useAppConfig();
-    const appEvents = useAppEventListener();
-    const platformType = usePlatformType();
-    const salesforceApi = useSalesforceAPI();
-    const hyperClient = useHyperDatabaseClient();
-    const connectorConfig = appConfig.value?.connectors?.salesforce ?? null;
-
-    const api = React.useMemo<SalesforceSetupApi | null>(() => {
-        if (!connectorConfig || !hyperClient) {
-            return null;
-        }
-        const auth = async (dispatch: Dispatch<SalesforceConnectionStateAction>, params: SalesforceAuthParams, abort: AbortSignal) => {
-            return setupSalesforceConnection(dispatch, logger, params, connectorConfig, platformType, salesforceApi, hyperClient, appEvents, abort);
-        };
-        const reset = async (dispatch: Dispatch<SalesforceConnectionStateAction>) => {
-            dispatch({
-                type: RESET,
-                value: null,
-            })
-        };
-        return { authorize: auth, reset: reset };
-    }, [connectorConfig]);
-
-    return (
-        <SETUP_CTX.Provider value={api}>{props.children}</SETUP_CTX.Provider>
-    );
+    if (!connectorConfig || !hyperClient) {
+        return null;
+    }
+    const auth = async (dispatch: Dispatch<SalesforceConnectionStateAction>, params: SalesforceAuthParams, abort: AbortSignal) => {
+        return setupSalesforceConnection(dispatch, logger, params, connectorConfig, platformType, salesforceApi, hyperClient, appEvents, abort);
+    };
+    const reset = async (dispatch: Dispatch<SalesforceConnectionStateAction>) => {
+        dispatch({
+            type: RESET,
+            value: null,
+        })
+    };
+    return { authorize: auth, reset: reset };
 };
