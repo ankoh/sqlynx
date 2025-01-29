@@ -19,9 +19,7 @@ import {
     AttachedDatabase,
     HyperDatabaseConnectionContext,
 } from '../../connectors/hyper/hyperdb_client.js';
-import { useLogger } from '../../platform/logger_provider.js';
-import { useAppConfig } from '../../app_config.js';
-import { useHyperDatabaseClient } from '../../connectors/hyper/hyperdb_client_provider.js';
+import { AppConfig } from '../../app_config.js';
 import { RESET } from '../connection_state.js';
 import { TrinoClientInterface } from './trino_api_client.js';
 import { TrinoChannel } from './trino_channel.js';
@@ -131,34 +129,20 @@ export interface TrinoSetupApi {
 export const SETUP_CTX = React.createContext<TrinoSetupApi | null>(null);
 export const useTrinoSetup = () => React.useContext(SETUP_CTX!);
 
-interface Props {
-    /// The children
-    children: React.ReactElement;
-}
+export function createTrinoSetupFlow(trinoClient: TrinoClientInterface, config: AppConfig, logger: Logger): (TrinoSetupApi | null) {
+    const connectorConfig = config.connectors?.hyper ?? null;
 
-export const TrinoSetupProvider: React.FC<Props> = (props: Props) => {
-    const logger = useLogger();
-    const appConfig = useAppConfig();
-    const connectorConfig = appConfig.value?.connectors?.hyper ?? null;
-    const hyperClient = useHyperDatabaseClient();
-
-    const api = React.useMemo<TrinoSetupApi | null>(() => {
-        if (!connectorConfig || !hyperClient) {
-            return null;
-        }
-        const setup = async (dispatch: Dispatch<TrinoConnectorAction>, params: TrinoConnectionParams, abort: AbortSignal) => {
-            await setupTrinoConnection(dispatch, logger, params, connectorConfig, hyperClient, abort);
-        };
-        const reset = async (dispatch: Dispatch<TrinoConnectorAction>) => {
-            dispatch({
-                type: RESET,
-                value: null,
-            })
-        };
-        return { setup, reset };
-    }, [connectorConfig]);
-
-    return (
-        <SETUP_CTX.Provider value={api}>{props.children}</SETUP_CTX.Provider>
-    );
+    if (!connectorConfig) {
+        return null;
+    }
+    const setup = async (dispatch: Dispatch<TrinoConnectorAction>, params: TrinoConnectionParams, abort: AbortSignal) => {
+        await setupTrinoConnection(dispatch, logger, params, connectorConfig, trinoClient, abort);
+    };
+    const reset = async (dispatch: Dispatch<TrinoConnectorAction>) => {
+        dispatch({
+            type: RESET,
+            value: null,
+        })
+    };
+    return { setup, reset };
 };

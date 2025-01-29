@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { SalesforceAPIClient, SalesforceAPIClientInterface } from './salesforce_api_client.js';
+import { SalesforceAPIClient, SalesforceApiClientInterface } from './salesforce_api_client.js';
 import { SalesforceAPIClientMock } from './salesforce_api_client_mock.js';
 import { mockSalesforceAuthFlow } from './salesforce_connection_setup_mock.js';
 import { SalesforceSetupApi, createSalesforceAuthFlow } from './salesforce_connection_setup.js';
@@ -11,7 +11,7 @@ import { useHyperDatabaseClient } from '../../connectors/hyper/hyperdb_client_pr
 import { usePlatformType } from '../../platform/platform_type.js';
 import { useAppEventListener } from '../../platform/event_listener_provider.js';
 
-const API_CTX = React.createContext<SalesforceAPIClientInterface | null>(null);
+const API_CTX = React.createContext<SalesforceApiClientInterface | null>(null);
 const SETUP_CTX = React.createContext<SalesforceSetupApi | null>(null);
 
 
@@ -24,7 +24,6 @@ export const SalesforceConnector: React.FC<Props> = (props: Props) => {
     const config = useAppConfig();
     const httpClient = useHttpClient();
     const hyperClient = useHyperDatabaseClient();
-    const sfApi = useSalesforceAPI();
     const platformType = usePlatformType();
     const appEvents = useAppEventListener();
 
@@ -33,11 +32,11 @@ export const SalesforceConnector: React.FC<Props> = (props: Props) => {
             return [null, null];
         } else if (config.value?.connectors?.salesforce?.mock?.enabled) {
             const api = new SalesforceAPIClientMock(config.value!.connectors?.salesforce?.mock);
-            const setup = mockSalesforceAuthFlow(sfApi, config.value!, logger);
+            const setup = mockSalesforceAuthFlow(api, config.value!, logger);
             return [api, setup];
         } else {
             const api = new SalesforceAPIClient(logger, httpClient);
-            const setup = createSalesforceAuthFlow(hyperClient!, sfApi, platformType, appEvents, config.value, logger);
+            const setup = createSalesforceAuthFlow(hyperClient!, api, platformType, appEvents, config.value, logger);
             return [api, setup];
         }
     }, []);
@@ -51,5 +50,5 @@ export const SalesforceConnector: React.FC<Props> = (props: Props) => {
     );
 };
 
-export const useSalesforceAPI = (): SalesforceAPIClientInterface => React.useContext(API_CTX)!;
+export const useSalesforceAPI = (): SalesforceApiClientInterface => React.useContext(API_CTX)!;
 export const useSalesforceSetup = () => React.useContext(SETUP_CTX!);

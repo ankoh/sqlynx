@@ -8,7 +8,7 @@ export interface TrinoClientInterface {
     connect(args: ChannelArgs, context: TrinoDatabaseConnectionContext): Promise<TrinoChannel>;
 }
 
-export class TrinoClient implements TrinoClientInterface {
+export class TrinoApiClient implements TrinoClientInterface {
     /// The logger
     logger: Logger;
     /// The http client

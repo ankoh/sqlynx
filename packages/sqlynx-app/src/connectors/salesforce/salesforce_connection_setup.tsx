@@ -27,7 +27,7 @@ import { PlatformType, usePlatformType } from '../../platform/platform_type.js';
 import { SalesforceConnectorConfig } from '../connector_configs.js';
 import { SalesforceAuthParams } from './salesforce_connection_params.js';
 import { HyperGrpcConnectionParams } from '../hyper/hyper_connection_params.js';
-import { SalesforceAPIClientInterface } from './salesforce_api_client.js';
+import { SalesforceApiClientInterface } from './salesforce_api_client.js';
 import { Dispatch } from '../../utils/variant.js';
 import { Logger } from '../../platform/logger.js';
 import { AppEventListener } from '../../platform/event_listener.js';
@@ -82,7 +82,7 @@ const DEFAULT_EXPIRATION_TIME_MS = 2 * 60 * 60 * 1000;
 const OAUTH_POPUP_NAME = 'SQLynx OAuth';
 const OAUTH_POPUP_SETTINGS = 'toolbar=no, menubar=no, width=600, height=700, top=100, left=100';
 
-export async function setupSalesforceConnection(dispatch: Dispatch<SalesforceConnectionStateAction>, logger: Logger, params: SalesforceAuthParams, config: SalesforceConnectorConfig, platformType: PlatformType, apiClient: SalesforceAPIClientInterface, hyperClient: HyperDatabaseClient, appEvents: AppEventListener, abortSignal: AbortSignal): Promise<void> {
+export async function setupSalesforceConnection(dispatch: Dispatch<SalesforceConnectionStateAction>, logger: Logger, params: SalesforceAuthParams, config: SalesforceConnectorConfig, platformType: PlatformType, apiClient: SalesforceApiClientInterface, hyperClient: HyperDatabaseClient, appEvents: AppEventListener, abortSignal: AbortSignal): Promise<void> {
     try {
         // Start the authorization process
         dispatch({
@@ -310,7 +310,7 @@ export interface SalesforceSetupApi {
     reset(dispatch: Dispatch<SalesforceConnectionStateAction>): Promise<void>
 }
 
-export function createSalesforceAuthFlow(hyperClient: HyperDatabaseClient, salesforceApi: SalesforceAPIClientInterface, platformType: PlatformType, appEvents: AppEventListener, appConfig: AppConfig, logger: Logger): (SalesforceSetupApi | null) {
+export function createSalesforceAuthFlow(hyperClient: HyperDatabaseClient, salesforceApi: SalesforceApiClientInterface, platformType: PlatformType, appEvents: AppEventListener, appConfig: AppConfig, logger: Logger): (SalesforceSetupApi | null) {
     const connectorConfig = appConfig.connectors?.salesforce ?? null;
 
     if (!connectorConfig || !hyperClient) {

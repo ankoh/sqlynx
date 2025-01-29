@@ -18,17 +18,14 @@ import { generatePKCEChallenge } from '../../utils/pkce.js';
 import { sleep } from '../../utils/sleep.js';
 import { Dispatch } from '../../utils/variant.js';
 import { Logger } from '../../platform/logger.js';
-import { SalesforceAPIClientInterface } from './salesforce_api_client.js';
+import { SalesforceApiClientInterface } from './salesforce_api_client.js';
 import { SalesforceSetupApi } from './salesforce_connection_setup.js';
 import { SalesforceAuthParams } from './salesforce_connection_params.js';
 import { SalesforceConnectorConfig } from '../connector_configs.js';
 import { RESET } from '../connection_state.js';
 
-interface Props {
-    children: React.ReactElement;
-}
 
-export async function authorizeSalesforceConnection(dispatch: Dispatch<SalesforceConnectionStateAction>, logger: Logger, params: SalesforceAuthParams, config: SalesforceConnectorConfig, apiClient: SalesforceAPIClientInterface, abortSignal: AbortSignal): Promise<void> {
+export async function authorizeSalesforceConnection(dispatch: Dispatch<SalesforceConnectionStateAction>, logger: Logger, params: SalesforceAuthParams, config: SalesforceConnectorConfig, apiClient: SalesforceApiClientInterface, abortSignal: AbortSignal): Promise<void> {
     try {
         // Start the authorization process
         dispatch({
@@ -107,7 +104,7 @@ export async function authorizeSalesforceConnection(dispatch: Dispatch<Salesforc
     }
 }
 
-export function mockSalesforceAuthFlow(api: SalesforceAPIClientInterface, appConfig: AppConfig, logger: Logger): (SalesforceSetupApi | null) {
+export function mockSalesforceAuthFlow(api: SalesforceApiClientInterface, appConfig: AppConfig, logger: Logger): (SalesforceSetupApi | null) {
     const connectorConfig = appConfig.connectors?.salesforce ?? null;
 
     if (!connectorConfig) {

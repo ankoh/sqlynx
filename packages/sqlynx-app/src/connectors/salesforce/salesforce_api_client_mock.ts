@@ -2,7 +2,7 @@ import { PKCEChallenge } from '../../utils/pkce.js';
 import { sleep } from '../../utils/sleep.js';
 import { QueryExecutionResponseStream } from '../query_execution_state.js';
 import {
-    SalesforceAPIClientInterface,
+    SalesforceApiClientInterface,
     SalesforceCoreAccessToken,
     SalesforceDataCloudAccessToken,
     SalesforceMetadata,
@@ -21,7 +21,7 @@ export interface SalesforceConnectorMockConfig {
     dataCloudMetadata: SalesforceMetadata;
 }
 
-export class SalesforceAPIClientMock implements SalesforceAPIClientInterface {
+export class SalesforceAPIClientMock implements SalesforceApiClientInterface {
     constructor(protected mock: SalesforceConnectorMockConfig) { }
 
     public async getCoreAccessToken(

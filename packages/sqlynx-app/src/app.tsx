@@ -32,6 +32,7 @@ import { SessionCommands } from './session/session_commands.js';
 import { SessionSetup } from './session/session_setup.js';
 import { SessionStateRegistry } from './session/session_state_registry.js';
 import { ShellPage } from './view/shell/shell_page.js';
+import { TrinoConnector } from './connectors/trino/trino_connector.js';
 import { UIInternalsPage } from './view/internals/ui_internals_page.js';
 import { VersionCheck } from './platform/version_check.js';
 import { isDebugBuild } from './globals.js';
@@ -67,13 +68,15 @@ const Connectors = (props: { children: React.ReactElement }) => (
     <ConnectionRegistry>
         <SalesforceConnector>
             <HyperGrpcConnector>
-                <CatalogUpdaterProvider>
-                    <Compute>
-                        <QueryExecutorProvider>
-                            {props.children}
-                        </QueryExecutorProvider>
-                    </Compute>
-                </CatalogUpdaterProvider>
+                <TrinoConnector>
+                    <CatalogUpdaterProvider>
+                        <Compute>
+                            <QueryExecutorProvider>
+                                {props.children}
+                            </QueryExecutorProvider>
+                        </Compute>
+                    </CatalogUpdaterProvider>
+                </TrinoConnector>
             </HyperGrpcConnector>
         </SalesforceConnector>
     </ConnectionRegistry>

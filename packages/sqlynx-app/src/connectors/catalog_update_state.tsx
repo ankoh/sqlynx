@@ -2,7 +2,7 @@ import * as sqlynx from '@ankoh/sqlynx-core';
 
 import { VariantKind } from '../utils/index.js';
 import { HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from './connector_info.js';
-import { SalesforceAPIClientInterface, SalesforceDataCloudAccessToken } from './salesforce/salesforce_api_client.js';
+import { SalesforceApiClientInterface, SalesforceDataCloudAccessToken } from './salesforce/salesforce_api_client.js';
 import {
     CATALOG_UPDATE_CANCELLED,
     CATALOG_UPDATE_FAILED,
@@ -27,7 +27,7 @@ export interface UpdateSalesforceMetadataTask {
     /// The target catalog
     catalog: sqlynx.SQLynxCatalog;
     /// The salesforce api client
-    api: SalesforceAPIClientInterface;
+    api: SalesforceApiClientInterface;
     /// The access token
     accessToken: SalesforceDataCloudAccessToken;
 }

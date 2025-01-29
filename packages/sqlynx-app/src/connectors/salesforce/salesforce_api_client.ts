@@ -197,7 +197,7 @@ export function readUserInformation(obj: any): SalesforceUserInfo {
     };
 }
 
-export interface SalesforceAPIClientInterface {
+export interface SalesforceApiClientInterface {
     getCoreAccessToken(
         authConfig: SalesforceAuthConfig,
         authParams: SalesforceAuthParams,
@@ -214,7 +214,7 @@ export interface SalesforceAPIClientInterface {
     executeQuery(scriptText: string, accessToken: SalesforceDataCloudAccessToken): QueryExecutionResponseStream;
 }
 
-export class SalesforceAPIClient implements SalesforceAPIClientInterface {
+export class SalesforceAPIClient implements SalesforceApiClientInterface {
     logger: Logger;
     httpClient: HttpClient;
     base64Codec: Base64Codec;
