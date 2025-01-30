@@ -2,7 +2,6 @@ import * as sqlynx from "@ankoh/sqlynx-core";
 
 import { VariantKind } from '../../utils/variant.js';
 import { TrinoConnectionParams } from './trino_connection_params.js';
-import { HyperDatabaseChannel } from '../../connectors/hyper/hyperdb_client.js';
 import { ConnectorType, CONNECTOR_INFOS, TRINO_CONNECTOR } from '../connector_info.js';
 import {
     ConnectionHealth,
@@ -46,7 +45,7 @@ export interface TrinoConnectionDetails {
     healthCheckError: string | null;
 }
 
-export function createHyperGrpcConnectionState(lnx: sqlynx.SQLynx): ConnectionStateWithoutId {
+export function createTrinoConnectionState(lnx: sqlynx.SQLynx): ConnectionStateWithoutId {
     return createConnectionState(lnx, CONNECTOR_INFOS[ConnectorType.TRINO], {
         type: TRINO_CONNECTOR,
         value: {
@@ -90,14 +89,14 @@ export type TrinoConnectorAction =
     | VariantKind<typeof CHANNEL_SETUP_STARTED, TrinoConnectionParams>
     | VariantKind<typeof CHANNEL_SETUP_CANCELLED, string>
     | VariantKind<typeof CHANNEL_SETUP_FAILED, string>
-    | VariantKind<typeof CHANNEL_READY, HyperDatabaseChannel>
+    | VariantKind<typeof CHANNEL_READY, TrinoChannel>
     | VariantKind<typeof HEALTH_CHECK_STARTED, null>
     | VariantKind<typeof HEALTH_CHECK_CANCELLED, null>
     | VariantKind<typeof HEALTH_CHECK_FAILED, string>
     | VariantKind<typeof HEALTH_CHECK_SUCCEEDED, null>
     ;
 
-export function reduceHyperGrpcConnectorState(state: ConnectionState, action: TrinoConnectorAction): ConnectionState | null {
+export function reduceTrinoConnectorState(state: ConnectionState, action: TrinoConnectorAction): ConnectionState | null {
     const details = state.details.value as TrinoConnectionDetails;
     let next: ConnectionState | null = null;
     switch (action.type) {

@@ -32,7 +32,7 @@ import {
 import { ConnectionMetrics, createConnectionMetrics } from './connection_statistics.js';
 import { reduceQueryAction } from './query_execution_state.js';
 import { DemoConnectionParams as DemoConnectionDetails } from './demo/demo_connection_state.js';
-import { TrinoConnectionDetails } from './trino/trino_connection_state.js';
+import { reduceTrinoConnectorState, TrinoConnectionDetails, TrinoConnectorAction } from './trino/trino_connection_state.js';
 
 export interface ConnectionState {
     /// The connection id
@@ -153,6 +153,7 @@ export type ConnectionStateAction =
     | CatalogAction
     | QueryExecutionAction
     | HyperGrpcConnectorAction
+    | TrinoConnectorAction
     | SalesforceConnectionStateAction
     ;
 
@@ -201,6 +202,9 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
                 case HYPER_GRPC_CONNECTOR:
                     details = reduceHyperGrpcConnectorState(cleaned, action as HyperGrpcConnectorAction);
                     break;
+                case HYPER_GRPC_CONNECTOR:
+                    details = reduceTrinoConnectorState(cleaned, action as TrinoConnectorAction);
+                    break;
                 case SERVERLESS_CONNECTOR:
                 case DEMO_CONNECTOR:
                     break;
@@ -218,6 +222,9 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
                     break;
                 case HYPER_GRPC_CONNECTOR:
                     next = reduceHyperGrpcConnectorState(state, action as HyperGrpcConnectorAction);
+                    break;
+                case TRINO_CONNECTOR:
+                    next = reduceTrinoConnectorState(state, action as TrinoConnectorAction);
                     break;
                 case SERVERLESS_CONNECTOR:
                 case DEMO_CONNECTOR:
