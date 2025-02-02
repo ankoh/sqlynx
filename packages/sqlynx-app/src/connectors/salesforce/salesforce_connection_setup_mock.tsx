@@ -13,7 +13,6 @@ import {
     REQUESTING_DATA_CLOUD_ACCESS_TOKEN,
     SalesforceConnectionStateAction,
 } from './salesforce_connection_state.js';
-import { AppConfig } from '../../app_config.js';
 import { generatePKCEChallenge } from '../../utils/pkce.js';
 import { sleep } from '../../utils/sleep.js';
 import { Dispatch } from '../../utils/variant.js';
@@ -60,6 +59,10 @@ export async function authorizeSalesforceConnection(dispatch: Dispatch<Salesforc
             type: REQUESTING_CORE_AUTH_TOKEN,
             value: null,
         });
+
+        if (!config.auth?.oauthRedirect) {
+            throw new Error(`missing oauth redirect url`);
+        }
         const coreAccessToken = await apiClient.getCoreAccessToken(
             config.auth,
             params,
@@ -104,14 +107,9 @@ export async function authorizeSalesforceConnection(dispatch: Dispatch<Salesforc
     }
 }
 
-export function mockSalesforceAuthFlow(api: SalesforceApiClientInterface, appConfig: AppConfig, logger: Logger): (SalesforceSetupApi | null) {
-    const connectorConfig = appConfig.connectors?.salesforce ?? null;
-
-    if (!connectorConfig) {
-        return null;
-    }
+export function mockSalesforceAuthFlow(api: SalesforceApiClientInterface, config: SalesforceConnectorConfig, logger: Logger): (SalesforceSetupApi | null) {
     const auth = async (dispatch: Dispatch<SalesforceConnectionStateAction>, params: SalesforceAuthParams, abort: AbortSignal) => {
-        return authorizeSalesforceConnection(dispatch, logger, params, connectorConfig, api, abort);
+        return authorizeSalesforceConnection(dispatch, logger, params, config, api, abort);
     };
     const reset = async (dispatch: Dispatch<SalesforceConnectionStateAction>) => {
         dispatch({

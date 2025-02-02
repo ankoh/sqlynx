@@ -19,7 +19,6 @@ import {
     AttachedDatabase,
     HyperDatabaseConnectionContext,
 } from '../../connectors/hyper/hyperdb_client.js';
-import { AppConfig } from '../../app_config.js';
 import { RESET } from '../connection_state.js';
 import { TrinoClientInterface } from './trino_api_client.js';
 import { TrinoChannel } from './trino_channel.js';
@@ -126,17 +125,9 @@ export interface TrinoSetupApi {
     reset(dispatch: Dispatch<TrinoConnectorAction>): Promise<void>
 }
 
-export const SETUP_CTX = React.createContext<TrinoSetupApi | null>(null);
-export const useTrinoSetup = () => React.useContext(SETUP_CTX!);
-
-export function createTrinoSetupFlow(trinoClient: TrinoClientInterface, config: AppConfig, logger: Logger): (TrinoSetupApi | null) {
-    const connectorConfig = config.connectors?.hyper ?? null;
-
-    if (!connectorConfig) {
-        return null;
-    }
+export function createTrinoSetupFlow(trinoClient: TrinoClientInterface, config: TrinoConnectorConfig, logger: Logger): (TrinoSetupApi | null) {
     const setup = async (dispatch: Dispatch<TrinoConnectorAction>, params: TrinoConnectionParams, abort: AbortSignal) => {
-        await setupTrinoConnection(dispatch, logger, params, connectorConfig, trinoClient, abort);
+        await setupTrinoConnection(dispatch, logger, params, config, trinoClient, abort);
     };
     const reset = async (dispatch: Dispatch<TrinoConnectorAction>) => {
         dispatch({

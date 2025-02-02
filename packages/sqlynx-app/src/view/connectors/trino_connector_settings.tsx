@@ -23,8 +23,8 @@ import { useCurrentSessionSelector } from '../../session/current_session.js';
 import { useNavigate } from 'react-router-dom';
 import { useDefaultSessions } from '../../session/session_setup.js';
 import { getConnectionHealthIndicator, getConnectionStatusText } from './salesforce_connector_settings.js';
-import { useTrinoSetup } from '../../connectors/trino/trino_connection_setup.js';
-import { TrinoAuthParams, TrinoConnectionParams } from 'connectors/trino/trino_connection_params.js';
+import { TrinoAuthParams, TrinoConnectionParams } from '../../connectors/trino/trino_connection_params.js';
+import { useTrinoSetup } from '../../connectors/trino/trino_connector.js';
 
 const LOG_CTX = "trino_connector";
 

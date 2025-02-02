@@ -14,7 +14,7 @@ export interface SalesforceAuthConfig {
 
 export interface SalesforceConnectorConfig {
     /// The connector auth config
-    auth: SalesforceAuthConfig;
+    auth?: SalesforceAuthConfig;
     /// The default parameters
     defaultParams?: SalesforceAuthParams;
     /// The mock config
@@ -37,6 +37,8 @@ export function readConnectorConfigs(configs: any): ConnectorConfigs {
     const out: ConnectorConfigs = {};
     if (configs.salesforce) {
         out.salesforce = configs.salesforce;
+    } else {
+        out.salesforce = {};
     }
     if (configs.hyper) {
         out.hyper = configs.hyper;
@@ -45,6 +47,8 @@ export function readConnectorConfigs(configs: any): ConnectorConfigs {
     }
     if (configs.trino) {
         out.trino = configs.trino;
+    } else {
+        out.trino = {};
     }
     return out;
 }

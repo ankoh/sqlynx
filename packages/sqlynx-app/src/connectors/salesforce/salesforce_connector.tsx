@@ -22,24 +22,25 @@ interface Props {
 export const SalesforceConnector: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
     const config = useAppConfig();
+    const connectorConfig = config?.value?.connectors?.salesforce;
     const httpClient = useHttpClient();
     const hyperClient = useHyperDatabaseClient();
     const platformType = usePlatformType();
     const appEvents = useAppEventListener();
 
     const [api, setup] = React.useMemo(() => {
-        if (config == null || !config.isResolved() || config.value == null) {
+        if (!connectorConfig) {
             return [null, null];
-        } else if (config.value?.connectors?.salesforce?.mock?.enabled) {
-            const api = new SalesforceAPIClientMock(config.value!.connectors?.salesforce?.mock);
-            const setup = mockSalesforceAuthFlow(api, config.value!, logger);
+        } else if (connectorConfig.mock?.enabled) {
+            const api = new SalesforceAPIClientMock(connectorConfig.mock);
+            const setup = mockSalesforceAuthFlow(api, connectorConfig, logger);
             return [api, setup];
         } else {
             const api = new SalesforceAPIClient(logger, httpClient);
-            const setup = createSalesforceAuthFlow(hyperClient!, api, platformType, appEvents, config.value, logger);
+            const setup = createSalesforceAuthFlow(hyperClient!, api, platformType, appEvents, connectorConfig, logger);
             return [api, setup];
         }
-    }, []);
+    }, [connectorConfig]);
 
     return (
         <API_CTX.Provider value={api}>

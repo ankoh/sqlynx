@@ -19,11 +19,9 @@ import {
     REQUESTING_DATA_CLOUD_METADATA,
     SalesforceConnectionStateAction,
 } from './salesforce_connection_state.js';
-import { useSalesforceAPI } from './salesforce_connector.js';
-import { AppConfig, useAppConfig } from '../../app_config.js';
 import { generatePKCEChallenge } from '../../utils/pkce.js';
 import { BASE64_CODEC } from '../../utils/base64.js';
-import { PlatformType, usePlatformType } from '../../platform/platform_type.js';
+import { PlatformType } from '../../platform/platform_type.js';
 import { SalesforceConnectorConfig } from '../connector_configs.js';
 import { SalesforceAuthParams } from './salesforce_connection_params.js';
 import { HyperGrpcConnectionParams } from '../hyper/hyper_connection_params.js';
@@ -31,13 +29,10 @@ import { SalesforceApiClientInterface } from './salesforce_api_client.js';
 import { Dispatch } from '../../utils/variant.js';
 import { Logger } from '../../platform/logger.js';
 import { AppEventListener } from '../../platform/event_listener.js';
-import { useAppEventListener } from '../../platform/event_listener_provider.js';
-import { useLogger } from '../../platform/logger_provider.js';
 import { isNativePlatform } from '../../platform/native_globals.js';
 import { isDebugBuild } from '../../globals.js';
 import { RESET } from './../connection_state.js';
 import { AttachedDatabase, HyperDatabaseClient, HyperDatabaseConnectionContext } from '../../connectors/hyper/hyperdb_client.js';
-import { useHyperDatabaseClient } from '../../connectors/hyper/hyperdb_client_provider.js';
 import {
     CHANNEL_READY,
     CHANNEL_SETUP_STARTED,
@@ -130,7 +125,7 @@ export async function setupSalesforceConnection(dispatch: Dispatch<SalesforceCon
         // Collect the oauth parameters
         const paramParts = [
             `client_id=${params.appConsumerKey}`,
-            `redirect_uri=${config.auth.oauthRedirect}`,
+            `redirect_uri=${config.auth?.oauthRedirect}`,
             `code_challenge=${pkceChallenge.value}`,
             `code_challange_method=S256`,
             `response_type=code`,
@@ -179,6 +174,11 @@ export async function setupSalesforceConnection(dispatch: Dispatch<SalesforceCon
             type: REQUESTING_CORE_AUTH_TOKEN,
             value: null,
         });
+
+        // Missing the oauth redirect?
+        if (!config.auth?.oauthRedirect) {
+            throw new Error(`missing oauth redirect url`);
+        }
         const coreAccessToken = await apiClient.getCoreAccessToken(
             config.auth,
             params,
@@ -310,14 +310,9 @@ export interface SalesforceSetupApi {
     reset(dispatch: Dispatch<SalesforceConnectionStateAction>): Promise<void>
 }
 
-export function createSalesforceAuthFlow(hyperClient: HyperDatabaseClient, salesforceApi: SalesforceApiClientInterface, platformType: PlatformType, appEvents: AppEventListener, appConfig: AppConfig, logger: Logger): (SalesforceSetupApi | null) {
-    const connectorConfig = appConfig.connectors?.salesforce ?? null;
-
-    if (!connectorConfig || !hyperClient) {
-        return null;
-    }
+export function createSalesforceAuthFlow(hyperClient: HyperDatabaseClient, salesforceApi: SalesforceApiClientInterface, platformType: PlatformType, appEvents: AppEventListener, config: SalesforceConnectorConfig, logger: Logger): (SalesforceSetupApi | null) {
     const auth = async (dispatch: Dispatch<SalesforceConnectionStateAction>, params: SalesforceAuthParams, abort: AbortSignal) => {
-        return setupSalesforceConnection(dispatch, logger, params, connectorConfig, platformType, salesforceApi, hyperClient, appEvents, abort);
+        return setupSalesforceConnection(dispatch, logger, params, config, platformType, salesforceApi, hyperClient, appEvents, abort);
     };
     const reset = async (dispatch: Dispatch<SalesforceConnectionStateAction>) => {
         dispatch({

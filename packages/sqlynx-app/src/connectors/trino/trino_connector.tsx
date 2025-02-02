@@ -16,17 +16,18 @@ interface Props {
 export const TrinoConnector: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
     const config = useAppConfig();
+    const connectorConfig = config?.value?.connectors?.trino;
     const httpClient = useHttpClient();
 
     const [api, setup] = React.useMemo(() => {
-        if (config == null || !config.isResolved() || config.value == null) {
+        if (!connectorConfig) {
             return [null, null];
         } else {
             const api = new TrinoApiClient(logger, httpClient);
-            const setup = createTrinoSetupFlow(api!, config.value, logger);
+            const setup = createTrinoSetupFlow(api!, connectorConfig, logger);
             return [api, setup];
         }
-    }, []);
+    }, [connectorConfig]);
 
     return (
         <API_CTX.Provider value={api}>
@@ -38,3 +39,4 @@ export const TrinoConnector: React.FC<Props> = (props: Props) => {
 }
 
 export const useTrinoAPI = (): TrinoClientInterface => React.useContext(API_CTX)!;
+export const useTrinoSetup = (): TrinoSetupApi => React.useContext(SETUP_CTX)!;
