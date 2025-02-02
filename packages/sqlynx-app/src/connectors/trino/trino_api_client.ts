@@ -192,12 +192,12 @@ export class TrinoApiClient implements TrinoApiClientInterface {
             headers.set('X-Trino-User', endpoint.auth.username);
         }
         try {
-            const request = new Request(`${endpoint.endpoint}/v1/statement`, {
+            const url = new URL(`${endpoint.endpoint}/v1/statement`);
+            const rawResponse = await this.httpClient.fetch(url, {
                 method: 'POST',
                 body: "select 1",
                 headers
             });
-            const rawResponse = await this.httpClient.fetch(request);
             return {
                 type: TRINO_STATUS_OK,
                 value: {
@@ -219,13 +219,13 @@ export class TrinoApiClient implements TrinoApiClientInterface {
 
     /// Run a query
     async runQuery(endpoint: TrinoApiEndpoint, text: string): Promise<TrinoQueryResult> {
+        const url = new URL(`${endpoint.endpoint}/v1/statement`);
         const headers = new Headers();
-        const request = new Request(`${endpoint.endpoint}/v1/statement`, {
+        const rawResponse = await this.httpClient.fetch(url, {
             method: 'POST',
             body: text,
             headers
         });
-        const rawResponse = await this.httpClient.fetch(request);
         if (rawResponse.status != 200) {
             throw new Error(`query failed: status=${rawResponse.status}, message=${rawResponse.statusText}`);
         }
@@ -236,12 +236,12 @@ export class TrinoApiClient implements TrinoApiClientInterface {
 
     /// Get the query result batch
     async getQueryResult(nextUri: string): Promise<TrinoQueryResult> {
+        const url = new URL(nextUri);
         const headers = new Headers();
-        const request = new Request(nextUri, {
+        const rawResponse = await this.httpClient.fetch(url, {
             method: 'GET',
             headers
         });
-        const rawResponse = await this.httpClient.fetch(request);
         if (rawResponse.status != 200) {
             throw new Error(`fetching query results failed: status=${rawResponse.status}, message=${rawResponse.statusText}`);
         }
@@ -252,12 +252,12 @@ export class TrinoApiClient implements TrinoApiClientInterface {
 
     /// Get a query info
     async getQueryInfo(endpoint: TrinoApiEndpoint, queryId: string): Promise<TrinoQueryInfo> {
+        const url = new URL(`${endpoint.endpoint}/v1/query/${queryId}`);
         const headers = new Headers();
-        const request = new Request(`${endpoint.endpoint}/v1/query/${queryId}`, {
+        const rawResponse = await this.httpClient.fetch(url, {
             method: 'GET',
             headers
         });
-        const rawResponse = await this.httpClient.fetch(request);
         if (rawResponse.status != 200) {
             throw new Error(`fetch query info failed: status=${rawResponse.status}, message=${rawResponse.statusText}`);
         }
@@ -268,12 +268,12 @@ export class TrinoApiClient implements TrinoApiClientInterface {
 
     /// Cancel a query
     async cancelQuery(endpoint: TrinoApiEndpoint, queryId: string): Promise<TrinoQueryResult> {
+        const url = new URL(`${endpoint.endpoint}/v1/query/${queryId}`);
         const headers = new Headers();
-        const request = new Request(`${endpoint.endpoint}/v1/query/${queryId}`, {
+        const rawResponse = await this.httpClient.fetch(url, {
             method: 'DELETE',
             headers
         });
-        const rawResponse = await this.httpClient.fetch(request);
         if (rawResponse.status != 200) {
             throw new Error(`cancelling a query failed: status=${rawResponse.status}, message=${rawResponse.statusText}`);
         }
