@@ -9,23 +9,19 @@ import {
     HEALTH_CHECK_SUCCEEDED,
     TrinoConnectorAction,
 } from './trino_connection_state.js';
+import { Dispatch } from '../../utils/index.js';
 import { Logger } from '../../platform/logger.js';
+import { RESET } from '../connection_state.js';
+import { TrinoApiClientInterface, TrinoApiEndpoint } from './trino_api_client.js';
+import { TrinoChannel, TrinoChannelInterface } from './trino_channel.js';
 import { TrinoConnectionParams } from './trino_connection_params.js';
 import { TrinoConnectorConfig } from '../connector_configs.js';
-import { Dispatch } from '../../utils/index.js';
-import {
-    AttachedDatabase,
-    HyperDatabaseConnectionContext,
-} from '../../connectors/hyper/hyperdb_client.js';
-import { RESET } from '../connection_state.js';
-import { TrinoClientInterface } from './trino_api_client.js';
-import { TrinoChannel } from './trino_channel.js';
 
 const LOG_CTX = "trino_setup";
 
-export async function setupTrinoConnection(dispatch: Dispatch<TrinoConnectorAction>, logger: Logger, params: TrinoConnectionParams, _config: TrinoConnectorConfig, client: TrinoClientInterface, abortSignal: AbortSignal): Promise<TrinoChannel | null> {
+export async function setupTrinoConnection(dispatch: Dispatch<TrinoConnectorAction>, logger: Logger, params: TrinoConnectionParams, _config: TrinoConnectorConfig, client: TrinoApiClientInterface, abortSignal: AbortSignal): Promise<TrinoChannelInterface | null> {
     // First prepare the channel
-    let channel: TrinoChannel;
+    let channel: TrinoChannelInterface;
     try {
         // Start the channel setup
         dispatch({
@@ -34,24 +30,12 @@ export async function setupTrinoConnection(dispatch: Dispatch<TrinoConnectorActi
         });
         abortSignal.throwIfAborted()
 
-        // Static connection context.
-        // The direct gRPC Hyper connector never changes the headers it injects.
-        const connectionContext: HyperDatabaseConnectionContext = {
-            getAttachedDatabases(): AttachedDatabase[] {
-                return [];
-            },
-            async getRequestMetadata(): Promise<Record<string, string>> {
-                const headers: Record<string, string> = {};
-                for (const md of params.metadata) {
-                    headers[md.key] = md.value;
-                }
-                return headers;
-            }
-        };
-
         // Create the channel
-        channel = await client.connect(params.channelArgs, connectionContext);
-        abortSignal.throwIfAborted();
+        const endpoint: TrinoApiEndpoint = {
+            endpoint: params.channelArgs.endpoint,
+            auth: params.authParams
+        };
+        channel = new TrinoChannel(logger, client, endpoint);
 
         // Mark the channel as ready
         dispatch({
@@ -125,7 +109,7 @@ export interface TrinoSetupApi {
     reset(dispatch: Dispatch<TrinoConnectorAction>): Promise<void>
 }
 
-export function createTrinoSetupFlow(trinoClient: TrinoClientInterface, config: TrinoConnectorConfig, logger: Logger): (TrinoSetupApi | null) {
+export function createTrinoSetupFlow(trinoClient: TrinoApiClientInterface, config: TrinoConnectorConfig, logger: Logger): (TrinoSetupApi | null) {
     const setup = async (dispatch: Dispatch<TrinoConnectorAction>, params: TrinoConnectionParams, abort: AbortSignal) => {
         await setupTrinoConnection(dispatch, logger, params, config, trinoClient, abort);
     };

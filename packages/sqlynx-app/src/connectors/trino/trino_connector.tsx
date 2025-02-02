@@ -1,12 +1,12 @@
 import * as React from 'react';
 
-import { TrinoApiClient, TrinoClientInterface } from "./trino_api_client.js";
+import { TrinoApiClient, TrinoApiClientInterface } from "./trino_api_client.js";
 import { useLogger } from '../../platform/logger_provider.js';
 import { useAppConfig } from '../../app_config.js';
 import { useHttpClient } from '../../platform/http_client_provider.js';
 import { createTrinoSetupFlow, TrinoSetupApi } from './trino_connection_setup.js';
 
-const API_CTX = React.createContext<TrinoClientInterface | null>(null);
+const API_CTX = React.createContext<TrinoApiClientInterface | null>(null);
 const SETUP_CTX = React.createContext<TrinoSetupApi | null>(null);
 
 interface Props {
@@ -38,5 +38,5 @@ export const TrinoConnector: React.FC<Props> = (props: Props) => {
     );
 }
 
-export const useTrinoAPI = (): TrinoClientInterface => React.useContext(API_CTX)!;
+export const useTrinoAPI = (): TrinoApiClientInterface => React.useContext(API_CTX)!;
 export const useTrinoSetup = (): TrinoSetupApi => React.useContext(SETUP_CTX)!;

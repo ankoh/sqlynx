@@ -12,7 +12,7 @@ import {
     UPDATE_CATALOG,
 } from './connection_state.js';
 import { HyperDatabaseChannel } from '../connectors/hyper/hyperdb_client.js';
-import { TrinoChannel } from './trino/trino_channel.js';
+import { TrinoChannelInterface } from './trino/trino_channel.js';
 
 export const FULL_CATALOG_REFRESH = Symbol();
 
@@ -43,7 +43,7 @@ export interface UpdateTrinoCatalogTask {
     /// The target catalog
     catalog: sqlynx.SQLynxCatalog;
     /// The channel
-    trinoChannel: TrinoChannel;
+    trinoChannel: TrinoChannelInterface;
 }
 
 export enum CatalogUpdateTaskStatus {

@@ -16,7 +16,7 @@ export interface TrinoConnectionParams {
     /// The endpoint URL
     channelArgs: ChannelArgs;
     /// The auth params
-    auth: TrinoAuthParams;
+    authParams: TrinoAuthParams;
     /// The gRPC metadata
     metadata: KeyValueListElement[];
 }
@@ -27,7 +27,7 @@ export function buildTrinoConnectorParams(params: TrinoConnectionParams): proto.
             case: "trino",
             value: new proto.sqlynx_session.pb.TrinoConnectorParams({
                 endpoint: params.channelArgs.endpoint ?? "",
-                loginHint: params.auth.username ?? "",
+                loginHint: params.authParams.username ?? "",
             })
         }
     });

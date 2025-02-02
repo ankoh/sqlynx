@@ -1,14 +1,166 @@
-import { HttpClient } from "platform/http_client.js";
-import { Logger } from "platform/logger.js";
-import { TrinoChannel, TrinoDatabaseConnectionContext } from "./trino_channel.js";
-import { ChannelArgs } from "platform/channel_common.js";
+import { HttpClient } from "../../platform/http_client.js";
+import { Logger } from "../../platform/logger.js";
+import { TrinoAuthParams } from "./trino_connection_params.js";
 
-export interface TrinoClientInterface {
-    /// Create a database connection
-    connect(args: ChannelArgs, context: TrinoDatabaseConnectionContext): Promise<TrinoChannel>;
+export interface TrinoApiEndpoint {
+    // The endpoint url
+    endpoint: string;
+    // The auth settings
+    auth: TrinoAuthParams;
 }
 
-export class TrinoApiClient implements TrinoClientInterface {
+export type TrinoQueryFailureInfo = {
+    /// The failure type
+    type: string;
+    /// The failure message
+    message: string;
+    /// The suppressed error
+    suppressed: string[];
+    /// The error stack
+    stack: string[];
+};
+
+export type TrinoQueryError = {
+    /// The erro message
+    message: string;
+    /// The error code
+    errorCode: number;
+    /// The error name
+    errorName: string;
+    /// The error type
+    errorType: string;
+    /// The failure info
+    failureInfo: TrinoQueryFailureInfo;
+};
+
+export interface TrinoQueryResultColumn {
+    /// The column name
+    name: string;
+    /// The column type
+    type: string
+};
+
+export type TrinoQueryData = any[];
+
+export type TrinoQueryStage = {
+    /// The trino stage id
+    stageId: string;
+    /// The state
+    state: string;
+    /// Is the query done?
+    done: boolean;
+    /// The number of nodes in the stage
+    nodes: number;
+    /// The total number of splits
+    totalSplits: number;
+    /// The number of queued splits
+    queuedSplits: number;
+    /// The splits that are currently running
+    runningSplits: number;
+    /// The splits that are completed
+    completedSplits: number;
+    /// The cpu time in milliseconds
+    cpuTimeMillis: number;
+    /// The wall time in milliseconds
+    wallTimeMillis: number;
+    /// The processed rows
+    processedRows: number;
+    /// The processed bytes
+    processedBytes: number;
+    /// The physical input bytes
+    physicalInputBytes: number;
+    /// The number of failed tasks
+    failedTasks: number;
+    /// Coordinator-only query?
+    coordinatorOnly: boolean;
+    /// The number of substages
+    subStages: TrinoQueryStage[];
+};
+
+export type TrinoQueryStatistics = {
+    /// The state
+    state: string;
+    /// Is the query queued?
+    queued: boolean;
+    /// Is the query scheduled?
+    scheduled: boolean;
+    /// The number of nodes
+    nodes: number;
+    /// The total number of splits
+    totalSplits: number;
+    /// The queued number of splits
+    queuedSplits: number;
+    /// The currently running splits
+    runningSplits: number;
+    /// The number of completed splits
+    completedSplits: number;
+    /// The CPU time in milliseconds
+    cpuTimeMillis: number;
+    /// The wallclock time in milliseconds
+    wallTimeMillis: number;
+    /// The time that the query was queued
+    queuedTimeMillis: number;
+    /// The elapsed time
+    elapsedTimeMillis: number;
+    /// The number of processed rows
+    processedRows: number;
+    /// The number of processed bytes
+    processedBytes: number;
+    /// The number of input bytes
+    physicalInputBytes: number;
+    /// The peak memory size
+    peakMemoryBytes: number;
+    /// The number of spilled bytes
+    spilledBytes: number;
+    /// The root stage
+    rootStage: TrinoQueryStage;
+    /// The progess percentage
+    progressPercentage: number;
+};
+
+export type TrinoQueryResult = {
+    /// The query id
+    id: string;
+    /// The URI for the query info call
+    infoUri?: string;
+    /// The URI for fetching the next query batch
+    nextUri?: string;
+    /// The result columns
+    columns?: TrinoQueryResultColumn[];
+    /// The query data
+    data?: TrinoQueryData[];
+    /// The query statistics
+    stats?: TrinoQueryStatistics;
+    /// The warnings during the query execution
+    warnings?: string[];
+    /// The query error (if any)
+    error?: TrinoQueryError;
+};
+
+export type TrinoQueryInfo = {
+    /// The query id
+    queryId: string;
+    /// The query state
+    state: string;
+    /// The query text
+    query: string;
+    /// The failure info
+    failureInfo?: TrinoQueryFailureInfo;
+};
+
+export interface TrinoApiClientInterface {
+    /// Run a query
+    runQuery(endpoint: TrinoApiEndpoint, text: string): Promise<TrinoQueryResult>;
+    /// Get a query result
+    getQueryResult(nextUri: string): Promise<TrinoQueryResult>;
+    /// Get a query info
+    getQueryInfo(endpoint: TrinoApiEndpoint, queryId: string): Promise<TrinoQueryInfo>;
+    /// Cancel a query
+    cancelQuery(endpoint: TrinoApiEndpoint, queryId: string): Promise<TrinoQueryResult>;
+}
+
+
+export class TrinoApiClient implements TrinoApiClientInterface {
     /// The logger
     logger: Logger;
     /// The http client
@@ -19,8 +171,68 @@ export class TrinoApiClient implements TrinoClientInterface {
         this.httpClient = httpClient;
     }
 
-    /// Create a Trino channel
-    connect(_args: ChannelArgs, _context: TrinoDatabaseConnectionContext): Promise<TrinoChannel> {
-        throw new Error("not implemented");
+    /// Run a query
+    async runQuery(endpoint: TrinoApiEndpoint, text: string): Promise<TrinoQueryResult> {
+        const headers = new Headers();
+        const request = new Request(`${endpoint.endpoint}/v1/statement`, {
+            method: 'POST',
+            body: text,
+            headers
+        });
+        const rawResponse = await this.httpClient.fetch(request);
+        if (rawResponse.status != 200) {
+            throw new Error(`query failed: status=${rawResponse.status}, message=${rawResponse.statusText}`);
+        }
+        const responseJson = await rawResponse.json() as TrinoQueryResult;
+        const response = responseJson as TrinoQueryResult;
+        return response;
+    }
+
+    /// Get the query result batch
+    async getQueryResult(nextUri: string): Promise<TrinoQueryResult> {
+        const headers = new Headers();
+        const request = new Request(nextUri, {
+            method: 'GET',
+            headers
+        });
+        const rawResponse = await this.httpClient.fetch(request);
+        if (rawResponse.status != 200) {
+            throw new Error(`fetching query results failed: status=${rawResponse.status}, message=${rawResponse.statusText}`);
+        }
+        const responseJson = await rawResponse.json() as TrinoQueryResult;
+        const response = responseJson as TrinoQueryResult;
+        return response;
+    }
+
+    /// Get a query info
+    async getQueryInfo(endpoint: TrinoApiEndpoint, queryId: string): Promise<TrinoQueryInfo> {
+        const headers = new Headers();
+        const request = new Request(`${endpoint.endpoint}/v1/query/${queryId}`, {
+            method: 'GET',
+            headers
+        });
+        const rawResponse = await this.httpClient.fetch(request);
+        if (rawResponse.status != 200) {
+            throw new Error(`fetch query info failed: status=${rawResponse.status}, message=${rawResponse.statusText}`);
+        }
+        const responseJson = await rawResponse.json() as TrinoQueryInfo;
+        const response = responseJson as TrinoQueryInfo;
+        return response;
+    }
+
+    /// Cancel a query
+    async cancelQuery(endpoint: TrinoApiEndpoint, queryId: string): Promise<TrinoQueryResult> {
+        const headers = new Headers();
+        const request = new Request(`${endpoint.endpoint}/v1/query/${queryId}`, {
+            method: 'DELETE',
+            headers
+        });
+        const rawResponse = await this.httpClient.fetch(request);
+        if (rawResponse.status != 200) {
+            throw new Error(`cancelling a query failed: status=${rawResponse.status}, message=${rawResponse.statusText}`);
+        }
+        const responseJson = await rawResponse.json() as TrinoQueryResult;
+        const response = responseJson as TrinoQueryResult;
+        return response;
     }
 }

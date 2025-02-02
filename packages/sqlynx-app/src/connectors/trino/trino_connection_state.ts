@@ -11,7 +11,7 @@ import {
     createConnectionState,
     RESET,
 } from '../connection_state.js';
-import { TrinoChannel } from "./trino_channel.js";
+import { TrinoChannelInterface } from "./trino_channel.js";
 
 export interface TrinoSetupTimings {
     /// The time when the channel setup started
@@ -40,7 +40,7 @@ export interface TrinoConnectionDetails {
     /// The authentication error
     channelError: string | null;
     /// The channel
-    channel: TrinoChannel | null;
+    channel: TrinoChannelInterface | null;
     /// The health check error
     healthCheckError: string | null;
 }
@@ -89,7 +89,7 @@ export type TrinoConnectorAction =
     | VariantKind<typeof CHANNEL_SETUP_STARTED, TrinoConnectionParams>
     | VariantKind<typeof CHANNEL_SETUP_CANCELLED, string>
     | VariantKind<typeof CHANNEL_SETUP_FAILED, string>
-    | VariantKind<typeof CHANNEL_READY, TrinoChannel>
+    | VariantKind<typeof CHANNEL_READY, TrinoChannelInterface>
     | VariantKind<typeof HEALTH_CHECK_STARTED, null>
     | VariantKind<typeof HEALTH_CHECK_CANCELLED, null>
     | VariantKind<typeof HEALTH_CHECK_FAILED, string>

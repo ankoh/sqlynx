@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { useNavigate } from 'react-router-dom';
+
 import * as symbols from '../../../static/svg/symbols.generated.svg';
 import * as style from './connector_settings.module.css';
 
@@ -9,21 +11,21 @@ import {
     XIcon,
 } from '@primer/octicons-react';
 
-import { classNames } from '../../utils/classnames.js';
-import { TextField } from '../foundations/text_field.js';
-import { useLogger } from '../../platform/logger_provider.js';
-import { KeyValueListBuilder, KeyValueListElement, UpdateKeyValueList } from '../foundations/keyvalue_list.js';
-import { IndicatorStatus, StatusIndicator } from '../foundations/status_indicator.js';
-import { Dispatch } from '../../utils/variant.js';
+
 import { Button, ButtonVariant } from '../foundations/button.js';
-import { useConnectionState } from '../../connectors/connection_registry.js';
 import { ConnectionHealth } from '../../connectors/connection_state.js';
-import { useSessionState } from '../../session/session_state_registry.js';
-import { useCurrentSessionSelector } from '../../session/current_session.js';
-import { useNavigate } from 'react-router-dom';
-import { useDefaultSessions } from '../../session/session_setup.js';
-import { getConnectionHealthIndicator, getConnectionStatusText } from './salesforce_connector_settings.js';
+import { Dispatch } from '../../utils/variant.js';
+import { IndicatorStatus, StatusIndicator } from '../foundations/status_indicator.js';
+import { KeyValueListBuilder, KeyValueListElement, UpdateKeyValueList } from '../foundations/keyvalue_list.js';
+import { TextField } from '../foundations/text_field.js';
 import { TrinoAuthParams, TrinoConnectionParams } from '../../connectors/trino/trino_connection_params.js';
+import { classNames } from '../../utils/classnames.js';
+import { getConnectionHealthIndicator, getConnectionStatusText } from './salesforce_connector_settings.js';
+import { useConnectionState } from '../../connectors/connection_registry.js';
+import { useCurrentSessionSelector } from '../../session/current_session.js';
+import { useDefaultSessions } from '../../session/session_setup.js';
+import { useLogger } from '../../platform/logger_provider.js';
+import { useSessionState } from '../../session/session_state_registry.js';
 import { useTrinoSetup } from '../../connectors/trino/trino_connector.js';
 
 const LOG_CTX = "trino_connector";
@@ -77,7 +79,7 @@ export const TrinoConnectorSettings: React.FC = () => {
             channelArgs: {
                 endpoint: pageState.endpoint
             },
-            auth: pageState.authParams,
+            authParams: pageState.authParams,
             metadata: pageState.additionalMetadata,
         };
 

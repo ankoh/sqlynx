@@ -17,7 +17,7 @@ import {
 import { ConnectionQueryMetrics } from './connection_statistics.js';
 import { HyperDatabaseChannel } from '../connectors/hyper/hyperdb_client.js';
 import { DemoDatabaseChannel } from './demo/demo_database_channel.js';
-import { TrinoChannel } from './trino/trino_channel.js';
+import { TrinoChannelInterface } from './trino/trino_channel.js';
 
 export type QueryExecutionTaskVariant =
     | VariantKind<typeof DEMO_CONNECTOR, ExecuteDemoQueryTask>
@@ -50,7 +50,7 @@ export interface TrinoQueryTask {
     /// The script text
     scriptText: string;
     /// Trino channel
-    trinoChannel: TrinoChannel;
+    trinoChannel: TrinoChannelInterface;
 }
 
 export enum QueryExecutionStatus {
