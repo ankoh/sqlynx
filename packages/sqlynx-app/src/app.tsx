@@ -33,6 +33,7 @@ import { SessionSetup } from './session/session_setup.js';
 import { SessionStateRegistry } from './session/session_state_registry.js';
 import { ShellPage } from './view/shell/shell_page.js';
 import { TrinoConnector } from './connectors/trino/trino_connector.js';
+import { TrinoConnectorSettingsStateProvider } from './view/connectors/trino_connector_settings.js';
 import { UIInternalsPage } from './view/internals/ui_internals_page.js';
 import { VersionCheck } from './platform/version_check.js';
 import { isDebugBuild } from './globals.js';
@@ -58,7 +59,9 @@ const PageStateProviders = (props: { children: React.ReactElement }) => (
     <ConnectorsPageStateProvider>
         <SalesforceConnectorSettingsStateProvider>
             <HyperGrpcConnectorSettingsStateProvider>
-                {props.children}
+                <TrinoConnectorSettingsStateProvider>
+                    {props.children}
+                </TrinoConnectorSettingsStateProvider>
             </HyperGrpcConnectorSettingsStateProvider>
         </SalesforceConnectorSettingsStateProvider>
     </ConnectorsPageStateProvider>

@@ -4,6 +4,7 @@ import * as style from './connector_settings.module.css';
 
 import {
     FileSymlinkFileIcon,
+    KeyIcon,
     PlugIcon,
     XIcon,
 } from '@primer/octicons-react';
@@ -25,7 +26,7 @@ import { getConnectionHealthIndicator, getConnectionStatusText } from './salesfo
 import { useTrinoSetup } from '../../connectors/trino/trino_connection_setup.js';
 import { TrinoAuthParams, TrinoConnectionParams } from 'connectors/trino/trino_connection_params.js';
 
-const LOG_CTX = "hyper_connector";
+const LOG_CTX = "trino_connector";
 
 interface PageState {
     endpoint: string;
@@ -39,9 +40,9 @@ export const TrinoConnectorSettings: React.FC = () => {
     const logger = useLogger();
     const trinoSetup = useTrinoSetup();
 
-    // Get Hyper connection from default session
+    // Get Trino connection from default session
     const defaultSessions = useDefaultSessions();
-    const sessionId = defaultSessions?.hyper ?? null;
+    const sessionId = defaultSessions?.trino ?? null;
     const [sessionState, _sessionDispatch] = useSessionState(sessionId);
 
     // Resolve connection for the default session
@@ -140,11 +141,11 @@ export const TrinoConnectorSettings: React.FC = () => {
             <div className={style.connector_header_container}>
                 <div className={style.platform_logo}>
                     <svg width="28px" height="28px">
-                        <use xlinkHref={`${symbols}#hyper`} />
+                        <use xlinkHref={`${symbols}#trino`} />
                     </svg>
                 </div>
                 <div className={style.platform_name} aria-labelledby="connector-hyper-database">
-                    Hyper Database
+                    Trino
                 </div>
                 <div className={style.platform_actions}>
                     {(connectionState?.connectionHealth == ConnectionHealth.ONLINE) && (
@@ -173,7 +174,7 @@ export const TrinoConnectorSettings: React.FC = () => {
                 <div className={style.section}>
                     <div className={classNames(style.section_layout, style.body_section_layout)}>
                         <TextField
-                            name="Trino Endpoint"
+                            name="Endpoint"
                             caption="Endpoint of the Trino Api as 'https://host:port'"
                             value={pageState.endpoint}
                             placeholder="trino endpoint url"
@@ -184,11 +185,11 @@ export const TrinoConnectorSettings: React.FC = () => {
                             logContext={LOG_CTX}
                         />
                         <TextField
-                            name="Trino Username"
+                            name="Username"
                             className={style.grid_column_1}
                             caption="Username for the Trino Api"
-                            value={pageState.endpoint}
-                            placeholder="trino username"
+                            value={pageState.authParams.username}
+                            placeholder=""
                             leadingVisual={() => <div>ID</div>}
                             onChange={(e) => setBasicAuthUsername(e.target.value)}
                             disabled={freezeInput}
@@ -196,14 +197,15 @@ export const TrinoConnectorSettings: React.FC = () => {
                             logContext={LOG_CTX}
                         />
                         <TextField
-                            name="Trino Secret"
+                            name="Secret"
                             caption="Password for the Trino Api"
-                            value={pageState.endpoint}
-                            placeholder="trino password"
-                            leadingVisual={() => <div>PW</div>}
+                            value={pageState.authParams.secret}
+                            placeholder=""
+                            leadingVisual={KeyIcon}
                             onChange={(e) => setBasicAuthSecret(e.target.value)}
                             disabled={freezeInput}
                             readOnly={freezeInput}
+                            concealed={true}
                             logContext={LOG_CTX}
                         />
                     </div>
@@ -232,7 +234,7 @@ interface ProviderProps { children: React.ReactElement };
 
 export const TrinoConnectorSettingsStateProvider: React.FC<ProviderProps> = (props: ProviderProps) => {
     const state = React.useState<PageState>({
-        endpoint: "http://localhost:7484",
+        endpoint: "http://localhost:8080",
         authParams: {
             username: "",
             secret: "",

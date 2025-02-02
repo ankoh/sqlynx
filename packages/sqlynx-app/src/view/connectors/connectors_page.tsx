@@ -4,12 +4,12 @@ import { HyperGrpcConnectorSettings } from './hyper_grpc_connector_settings.js';
 import { SalesforceConnectorSettings } from './salesforce_connector_settings.js';
 import { Dispatch } from '../../utils/variant.js';
 import { VerticalTabProps, VerticalTabRenderers, VerticalTabs, VerticalTabVariant } from '../foundations/vertical_tabs.js';
-import { ConnectorType } from '../../connectors/connector_info.js';
+import { CONNECTOR_INFOS, ConnectorType } from '../../connectors/connector_info.js';
 import { PlatformCheck } from './platform_check.js';
+import { TrinoConnectorSettings } from './trino_connector_settings.js';
 
 import * as styles from './connectors_page.module.css';
 import * as icons from '../../../static/svg/symbols.generated.svg';
-import { TrinoConnectorSettings } from './trino_connector_settings.js';
 
 type PageState = number | null;
 type PageStateSetter = Dispatch<React.SetStateAction<PageState>>;
@@ -21,41 +21,36 @@ interface ConnectorProps extends VerticalTabProps {
     connectorType: ConnectorType;
 }
 
+const CONNECTOR_TABS: ConnectorType[] = [
+    ConnectorType.HYPER_GRPC,
+    ConnectorType.SALESFORCE_DATA_CLOUD,
+    ConnectorType.TRINO
+];
+
+const CONNECTOR_RENDERERS: VerticalTabRenderers<ConnectorProps> = {
+    [ConnectorType.HYPER_GRPC as number]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><HyperGrpcConnectorSettings /></PlatformCheck>,
+    [ConnectorType.SALESFORCE_DATA_CLOUD as number]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><SalesforceConnectorSettings /></PlatformCheck>,
+    [ConnectorType.TRINO as number]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><TrinoConnectorSettings /></PlatformCheck>,
+};
+
 export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
     const [selectedConnector, selectConnector] = React.useContext(PAGE_STATE_CTX)!;
 
-    const connectors: Record<number, ConnectorProps> = React.useMemo(() => ({
-        [ConnectorType.SALESFORCE_DATA_CLOUD]: {
-            tabId: ConnectorType.SALESFORCE_DATA_CLOUD as number,
-            labelShort: "Salesforce",
-            labelLong: "Salesforce Data Cloud",
-            icon: `${icons}#salesforce_outlines`,
-            iconActive: `${icons}#salesforce_notext`,
-            connectorType: ConnectorType.SALESFORCE_DATA_CLOUD,
-        },
-        [ConnectorType.HYPER_GRPC]: {
-            tabId: ConnectorType.HYPER_GRPC as number,
-            labelShort: "Hyper",
-            labelLong: "Hyper Database",
-            icon: `${icons}#hyper_outlines`,
-            iconActive: `${icons}#hyper_nocolor`,
-            connectorType: ConnectorType.HYPER_GRPC,
-        },
-        [ConnectorType.TRINO]: {
-            tabId: ConnectorType.TRINO as number,
-            labelShort: "Trino",
-            labelLong: "Trino",
-            icon: `${icons}#hyper_outlines`,
-            iconActive: `${icons}#hyper_nocolor`,
-            connectorType: ConnectorType.TRINO,
-        },
-    }), []);
-    const connectorRenderers: VerticalTabRenderers<ConnectorProps> = React.useMemo(() => ({
-        [ConnectorType.HYPER_GRPC as number]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><HyperGrpcConnectorSettings /></PlatformCheck>,
-        [ConnectorType.SALESFORCE_DATA_CLOUD as number]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><SalesforceConnectorSettings /></PlatformCheck>,
-        [ConnectorType.TRINO as number]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><TrinoConnectorSettings /></PlatformCheck>,
-        //        [ConnectorType.SERVERLESS as number]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><ServerlessSettings /></PlatformCheck>,
-    }), []);
+    const connectors: Record<number, ConnectorProps> = React.useMemo(() => {
+        let connectorProps: Record<number, ConnectorProps> = {};
+        for (const tabType of CONNECTOR_TABS) {
+            const connInfo = CONNECTOR_INFOS[tabType as number];
+            connectorProps[tabType] = {
+                tabId: tabType as number,
+                labelShort: connInfo.displayName.short,
+                labelLong: connInfo.displayName.long,
+                icon: `${icons}#${connInfo.icons.outlines}`,
+                iconActive: `${icons}#${connInfo.icons.uncolored}`,
+                connectorType: tabType
+            };
+        }
+        return connectorProps;
+    }, []);
 
     return (
         <div className={styles.page}>
@@ -68,9 +63,9 @@ export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
                 variant={VerticalTabVariant.Wide}
                 selectedTab={selectedConnector ?? (ConnectorType.HYPER_GRPC as number)}
                 selectTab={selectConnector}
-                tabKeys={[ConnectorType.HYPER_GRPC as number, ConnectorType.SALESFORCE_DATA_CLOUD as number]}
+                tabKeys={CONNECTOR_TABS}
                 tabProps={connectors}
-                tabRenderers={connectorRenderers}
+                tabRenderers={CONNECTOR_RENDERERS}
             />
         </div >
     );

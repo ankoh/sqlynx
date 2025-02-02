@@ -22,6 +22,10 @@ endif
 # ---------------------------------------------------------------------------
 # Parser
 
+.PHONY: venv
+venv:
+	python3 -m venv ./.venv
+
 .PHONY: infra_linux
 infra_linux:
 	./scripts/install_infra.sh linux

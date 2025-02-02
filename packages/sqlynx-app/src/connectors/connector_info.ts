@@ -1,4 +1,5 @@
 import * as proto from '@ankoh/sqlynx-protobuf';
+
 import { isNativePlatform } from "../platform/native_globals.js";
 
 export const DEMO_CONNECTOR = Symbol('DEMO_CONNECTOR');
@@ -9,10 +10,10 @@ export const TRINO_CONNECTOR = Symbol('TRINO_CONNECTOR');
 
 export enum ConnectorType {
     SERVERLESS = 0,
-    SALESFORCE_DATA_CLOUD = 1,
-    HYPER_GRPC = 2,
-    DEMO = 3,
-    TRINO = 4,
+    HYPER_GRPC = 1,
+    SALESFORCE_DATA_CLOUD = 2,
+    TRINO = 3,
+    DEMO = 4,
 }
 
 export interface ConnectorInfo {
@@ -74,6 +75,27 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
         },
     },
     {
+        connectorType: ConnectorType.HYPER_GRPC,
+        displayName: {
+            short: 'Hyper',
+            long: 'Hyper Database',
+        },
+        icons: {
+            colored: "hyper",
+            uncolored: "hyper_nocolor",
+            outlines: "hyper_outlines",
+        },
+        features: {
+            schemaScript: false,
+            executeQueryAction: true,
+            refreshSchemaAction: true,
+        },
+        platforms: {
+            browser: false,
+            native: true,
+        },
+    },
+    {
         connectorType: ConnectorType.SALESFORCE_DATA_CLOUD,
         displayName: {
             short: 'Salesforce',
@@ -95,15 +117,15 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
         },
     },
     {
-        connectorType: ConnectorType.HYPER_GRPC,
+        connectorType: ConnectorType.TRINO,
         displayName: {
-            short: 'Hyper',
-            long: 'Hyper Database',
+            short: 'Trino',
+            long: 'Trino',
         },
         icons: {
-            colored: "hyper",
-            uncolored: "hyper_nocolor",
-            outlines: "hyper_outlines",
+            colored: "trino",
+            uncolored: "trino_nocolor",
+            outlines: "trino_outlines",
         },
         features: {
             schemaScript: false,
@@ -111,7 +133,7 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
             refreshSchemaAction: true,
         },
         platforms: {
-            browser: false,
+            browser: true,
             native: true,
         },
     },
@@ -140,10 +162,11 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
 
 export function getConnectorInfoForParams(params: proto.sqlynx_session.pb.ConnectorParams): ConnectorInfo | null {
     switch (params.connector.case) {
+        case "demo": return CONNECTOR_INFOS[ConnectorType.DEMO];
         case "hyper": return CONNECTOR_INFOS[ConnectorType.HYPER_GRPC];
         case "salesforce": return CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD];
         case "serverless": return CONNECTOR_INFOS[ConnectorType.SERVERLESS];
-        case "demo": return CONNECTOR_INFOS[ConnectorType.DEMO];
+        case "trino": return CONNECTOR_INFOS[ConnectorType.TRINO];
         default: return null;
     }
 }

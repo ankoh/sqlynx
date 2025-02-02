@@ -12,6 +12,7 @@ import { useCurrentSessionSelector } from './current_session.js';
 import { useLogger } from '../platform/logger_provider.js';
 import { useDynamicConnectionDispatch } from '../connectors/connection_registry.js';
 import { useSessionRegistry } from './session_state_registry.js';
+import { useTrinoSessionSetup } from '../connectors/trino/trino_session.js';
 import { RESET } from '../connectors/connection_state.js';
 import { isDebugBuild } from '../globals.js';
 
@@ -21,6 +22,7 @@ interface DefaultSessions {
     salesforce: number;
     hyper: number;
     serverless: number;
+    trino: number;
     demo: number;
 }
 const DEFAULT_SESSIONS = React.createContext<DefaultSessions | null>(null);
@@ -45,29 +47,34 @@ interface SessionSetupState {
 
 export const SessionSetup: React.FC<{ children: React.ReactElement }> = (props: { children: React.ReactElement }) => {
     const logger = useLogger();
+
     const setupServerlessSession = useServerlessSessionSetup();
     const setupHyperSession = useHyperSessionSetup();
     const setupSalesforceSession = useSalesforceSessionSetup();
     const setupDemoSession = useDemoSessionSetup();
+    const setupTrinoSession = useTrinoSessionSetup();
+
     const selectCurrentSession = useCurrentSessionSelector();
     const [defaultSessions, setDefaultSessions] = React.useState<DefaultSessions | null>(null);
     const sessionReg = useSessionRegistry();
-    const [connReg, connDispatch] = useDynamicConnectionDispatch();
+    const [_connReg, connDispatch] = useDynamicConnectionDispatch();
 
     const appEvents = useAppEventListener();
     const abortDefaultSessionSwitch = React.useRef(new AbortController());
 
     const setupDefaultSessions = React.useMemo(async () => {
-        const [sf, hyper, serverless, demo] = await Promise.all([
+        const [sf, hyper, serverless, demo, trino] = await Promise.all([
             setupSalesforceSession(),
             setupHyperSession(),
             setupServerlessSession(),
             setupDemoSession(),
+            setupTrinoSession(),
         ]);
         const defaultSessions: DefaultSessions = {
             salesforce: sf,
             hyper: hyper,
             serverless: serverless,
+            trino: trino,
             demo: demo,
         };
         setDefaultSessions(defaultSessions);

@@ -49,14 +49,14 @@ message ConnectorParams {
     oneof connector {
         /// Parameters for Serverless sessions
         ServerlessParams serverless = 1;
-        /// Parameters for Salesforce connections
-        SalesforceConnectorParams salesforce = 2;
         /// Parameters for direct-to-Hyper connections
-        HyperConnectorParams hyper = 3;
-        /// Parameters for demo sessions
-        DemoParams demo = 4;
+        HyperConnectorParams hyper = 20;
+        /// Parameters for Salesforce connections
+        SalesforceConnectorParams salesforce = 30;
         /// Parameters for trino connections
-        TrinoConnectorParams trino = 5;
+        TrinoConnectorParams trino = 50;
+        /// Parameters for demo sessions
+        DemoParams demo = 100;
     }
 }
 

@@ -90,7 +90,6 @@ export const KeyValueListBuilder: React.FC<Props> = (props: Props) => {
                             className={styles.alias}
                             value={elem.value}
                             onChange={(ev: any) => modifyElement(i, elem.key, ev.target.value)}
-                            placeholder="Database Alias"
                             leadingVisual={props.valueIcon}
                             disabled={props.disabled}
                             readOnly={props.disabled}

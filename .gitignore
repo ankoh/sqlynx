@@ -6,6 +6,7 @@ node_modules
 /.cache
 /.infra
 /.vscode
+/.venv
 /default.profraw
 /default.prof
 yarn-error.log
