@@ -1,5 +1,3 @@
-import * as React from 'react';
-
 import {
     CHANNEL_READY,
     CHANNEL_SETUP_CANCELLED,
@@ -22,6 +20,8 @@ import {
 import { RESET } from '../connection_state.js';
 import { TrinoClientInterface } from './trino_api_client.js';
 import { TrinoChannel } from './trino_channel.js';
+
+const LOG_CTX = "trino_setup";
 
 export async function setupTrinoConnection(dispatch: Dispatch<TrinoConnectorAction>, logger: Logger, params: TrinoConnectionParams, _config: TrinoConnectorConfig, client: TrinoClientInterface, abortSignal: AbortSignal): Promise<TrinoChannel | null> {
     // First prepare the channel
@@ -62,13 +62,13 @@ export async function setupTrinoConnection(dispatch: Dispatch<TrinoConnectorActi
 
     } catch (error: any) {
         if (error.name === 'AbortError') {
-            logger.warn("setup was aborted");
+            logger.warn("setup was aborted", LOG_CTX);
             dispatch({
                 type: CHANNEL_SETUP_CANCELLED,
                 value: error.message,
             });
         } else if (error instanceof Error) {
-            logger.error(`setup failed with error: ${error.toString()}`);
+            logger.error(`setup failed with error: ${error.toString()}`, LOG_CTX);
             dispatch({
                 type: CHANNEL_SETUP_FAILED,
                 value: error.message,
@@ -104,13 +104,13 @@ export async function setupTrinoConnection(dispatch: Dispatch<TrinoConnectorActi
         }
     } catch (error: any) {
         if (error.name === 'AbortError') {
-            logger.warn("setup was aborted");
+            logger.warn("setup was aborted", LOG_CTX);
             dispatch({
                 type: HEALTH_CHECK_CANCELLED,
                 value: error.message,
             });
         } else if (error instanceof Error) {
-            logger.error(`setup failed with error: ${error.toString()}`);
+            logger.error(`setup failed with error: ${error.toString()}`, LOG_CTX);
             dispatch({
                 type: CHANNEL_SETUP_FAILED,
                 value: error.message,
