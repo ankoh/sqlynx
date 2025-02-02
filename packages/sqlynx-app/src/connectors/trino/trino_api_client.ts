@@ -1,5 +1,7 @@
+import { VariantKind } from "utils/variant.js";
 import { HttpClient } from "../../platform/http_client.js";
 import { Logger } from "../../platform/logger.js";
+import { TrinoHealthCheckResult } from "./trino_channel.js";
 import { TrinoAuthParams } from "./trino_connection_params.js";
 
 export interface TrinoApiEndpoint {
@@ -137,7 +139,7 @@ export type TrinoQueryResult = {
     error?: TrinoQueryError;
 };
 
-export type TrinoQueryInfo = {
+export interface TrinoQueryInfo {
     /// The query id
     queryId: string;
     /// The query state
@@ -148,7 +150,18 @@ export type TrinoQueryInfo = {
     failureInfo?: TrinoQueryFailureInfo;
 };
 
+export const TRINO_STATUS_OK = Symbol("TRINO_STATUS_OK");
+export const TRINO_STATUS_HTTP_ERROR = Symbol("TRINO_STATUS_HTTP_ERROR");
+export const TRINO_STATUS_OTHER_ERROR = Symbol("TRINO_STATUS_OTHER_ERROR");
+
+export type TrinoHealthCheckStatus =
+    | VariantKind<typeof TRINO_STATUS_OK, { status: number }>
+    | VariantKind<typeof TRINO_STATUS_HTTP_ERROR, { status: number }>
+    | VariantKind<typeof TRINO_STATUS_OTHER_ERROR, any>
+
 export interface TrinoApiClientInterface {
+    /// Check the health
+    checkHealth(endpoint: TrinoApiEndpoint): Promise<TrinoHealthCheckStatus>;
     /// Run a query
     runQuery(endpoint: TrinoApiEndpoint, text: string): Promise<TrinoQueryResult>;
     /// Get a query result
@@ -169,6 +182,39 @@ export class TrinoApiClient implements TrinoApiClientInterface {
     constructor(logger: Logger, httpClient: HttpClient) {
         this.logger = logger;
         this.httpClient = httpClient;
+    }
+
+    /// Check the health
+    async checkHealth(endpoint: TrinoApiEndpoint): Promise<TrinoHealthCheckStatus> {
+        const headers = new Headers();
+        if (endpoint.auth.username.length > 0) {
+            headers.set('Authorization', 'Basic ' + btoa(endpoint.auth.username + ":" + endpoint.auth.secret));
+            headers.set('X-Trino-User', endpoint.auth.username);
+        }
+        try {
+            const request = new Request(`${endpoint.endpoint}/v1/statement`, {
+                method: 'POST',
+                body: "select 1",
+                headers
+            });
+            const rawResponse = await this.httpClient.fetch(request);
+            return {
+                type: TRINO_STATUS_OK,
+                value: {
+                    status: rawResponse.status,
+                }
+            };
+        } catch (error: any) {
+            return error.status ? {
+                type: TRINO_STATUS_HTTP_ERROR,
+                value: {
+                    status: error.status,
+                }
+            } : {
+                type: TRINO_STATUS_OTHER_ERROR,
+                value: error
+            };
+        }
     }
 
     /// Run a query

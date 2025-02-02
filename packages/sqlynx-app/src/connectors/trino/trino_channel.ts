@@ -3,7 +3,7 @@ import * as proto from "@ankoh/sqlynx-protobuf";
 
 import { Logger } from '../../platform/logger.js';
 import { QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionResponseStreamMetrics, QueryExecutionStatus } from "../../connectors/query_execution_state.js";
-import { TrinoApiClientInterface, TrinoApiEndpoint, TrinoQueryResult } from "./trino_api_client.js";
+import { TRINO_STATUS_HTTP_ERROR, TRINO_STATUS_OK, TRINO_STATUS_OTHER_ERROR, TrinoApiClientInterface, TrinoApiEndpoint, TrinoQueryResult } from "./trino_api_client.js";
 
 export interface TrinoQueryExecutionProgress extends QueryExecutionProgress { }
 
@@ -64,8 +64,10 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
 export interface TrinoHealthCheckResult {
     /// Did the health check succeed?
     ok: boolean;
-    /// The error message
-    errorMessage: string | null;
+    /// The http status (if any)
+    httpStatus: number | null;
+    /// The error message (if any)
+    otherError: any | null;
 }
 
 export interface TrinoChannelInterface {
@@ -94,24 +96,15 @@ export class TrinoChannel implements TrinoChannelInterface {
 
     /// Perform a health check
     async checkHealth(): Promise<TrinoHealthCheckResult> {
-        const result: TrinoHealthCheckResult = {
-            ok: false,
-            errorMessage: null
-        };
-        try {
-            const queryParam = new proto.salesforce_hyperdb_grpc_v1.pb.QueryParam({
-                query: "select 1",
-            });
-            const stream = await this.executeQuery(queryParam);
-            await stream.nextRecordBatch();
-            result.ok = true;
-            return result;
-
-        } catch (e: any) {
-            result.ok = false;
-            result.errorMessage = e?.message;
+        const status = await this.apiClient.checkHealth(this.endpoint);
+        switch (status.type) {
+            case TRINO_STATUS_OK:
+                return { ok: true, httpStatus: null, otherError: null };
+            case TRINO_STATUS_HTTP_ERROR:
+                return { ok: false, httpStatus: status.value.status, otherError: null };
+            case TRINO_STATUS_OTHER_ERROR:
+                return { ok: false, httpStatus: null, otherError: status.value };
         }
-        return result;
     }
 
     /// Execute Query

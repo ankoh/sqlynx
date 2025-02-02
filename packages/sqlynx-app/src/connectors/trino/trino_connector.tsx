@@ -23,7 +23,7 @@ export const TrinoConnector: React.FC<Props> = (props: Props) => {
         if (!connectorConfig) {
             return [null, null];
         } else {
-            const api = new TrinoApiClient(logger, httpClient);
+            const api: TrinoApiClientInterface = new TrinoApiClient(logger, httpClient);
             const setup = createTrinoSetupFlow(api!, connectorConfig, logger);
             return [api, setup];
         }

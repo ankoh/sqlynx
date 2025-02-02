@@ -80,11 +80,16 @@ export async function setupTrinoConnection(dispatch: Dispatch<TrinoConnectorActi
                 value: null,
             });
         } else {
+            let message: string = "";
+            if (health.httpStatus) {
+                message = `http status code ${health.httpStatus}`;
+            } else if (health.otherError) {
+                message = health.otherError.toString();
+            }
             dispatch({
                 type: HEALTH_CHECK_FAILED,
-                value: health.errorMessage!,
+                value: message,
             });
-            return null;
         }
     } catch (error: any) {
         if (error.name === 'AbortError') {
