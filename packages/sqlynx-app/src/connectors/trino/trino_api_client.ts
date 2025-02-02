@@ -1,7 +1,6 @@
 import { VariantKind } from "utils/variant.js";
 import { HttpClient } from "../../platform/http_client.js";
 import { Logger } from "../../platform/logger.js";
-import { TrinoHealthCheckResult } from "./trino_channel.js";
 import { TrinoAuthParams } from "./trino_connection_params.js";
 
 export interface TrinoApiEndpoint {
