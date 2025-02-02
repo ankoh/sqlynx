@@ -11,6 +11,7 @@ import {
     SALESFORCE_DATA_CLOUD_CONNECTOR,
     SERVERLESS_CONNECTOR,
     DEMO_CONNECTOR,
+    TRINO_CONNECTOR,
 } from '../../connectors/connector_info.js';
 import { SessionState } from '../../session/session_state.js';
 import { useConnectionRegistry } from '../../connectors/connection_registry.js';
@@ -82,6 +83,24 @@ export function SessionListDropdown(props: { className?: string; short: boolean 
                 enabled = connection.connectionHealth === ConnectionHealth.ONLINE;
                 if (enabled) {
                     const endpoint = connection.details.value.channelSetupParams?.channelArgs.endpoint;
+                    description = (
+                        <ActionList.ItemTextDescription>
+                            {endpoint ? endpoint : "-"}
+                        </ActionList.ItemTextDescription>
+                    );
+                } else {
+                    description = (
+                        <ActionList.ItemTextDescription>
+                            Not connected
+                        </ActionList.ItemTextDescription>
+                    );
+                }
+                break;
+            }
+            case TRINO_CONNECTOR: {
+                enabled = connection.connectionHealth === ConnectionHealth.ONLINE;
+                if (enabled) {
+                    const endpoint = connection.details.value.channelParams?.channelArgs.endpoint;
                     description = (
                         <ActionList.ItemTextDescription>
                             {endpoint ? endpoint : "-"}
