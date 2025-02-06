@@ -1,5 +1,12 @@
-import { configure, Configuration } from './webpack.common.js';
+import webpack from 'webpack';
+import * as webpackDevServer from 'webpack-dev-server';
 import * as url from 'url';
+
+import { configure } from './webpack.common.js';
+
+export type Configuration = webpack.Configuration & {
+    devServer?: webpackDevServer.Configuration;
+};
 
 const base = configure({
     mode: 'development',

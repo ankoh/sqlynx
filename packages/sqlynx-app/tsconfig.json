@@ -19,6 +19,7 @@
     ],
     "include": [
         "*.ts",
+        "bundles/*.ts",
         "src/**/*",
         "test/**/*.ts",
         "types/*.d.ts"
