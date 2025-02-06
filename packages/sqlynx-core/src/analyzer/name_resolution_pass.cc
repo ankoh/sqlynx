@@ -375,7 +375,7 @@ void NameResolutionPass::ResolveNames() {
         pending_scopes.push(*scope);
     }
     while (!pending_scopes.empty()) {
-        auto& top = pending_scopes.top();
+        auto top = pending_scopes.top();
         pending_scopes.pop();
         ResolveTableRefsInScope(top);
         tmp_refs_by_alias.clear();
