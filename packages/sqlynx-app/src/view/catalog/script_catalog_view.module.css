@@ -22,13 +22,15 @@
 
 .panel_container {
     display: grid;
-    grid-template-columns: auto max-content max-content;
+    width: 100%;
+    grid-template-columns: 1fr max-content max-content;
     grid-template-rows: 100%;
 }
 
 .catalog_viewer {
     grid-row: 1;
     grid-column: 1;
+    overflow: hidden;
 }
 
 .catalog_header {
