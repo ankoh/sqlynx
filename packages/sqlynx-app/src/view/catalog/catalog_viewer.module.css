@@ -68,6 +68,10 @@
 .board {
     position: relative;
     width: 100%;
+
+    background-image: radial-gradient(rgb(228, 228, 228) 1px, transparent 0);
+    background-size: 14px 14px;
+    background-position: -19px -19px;
 }
 
 .node_layer {
