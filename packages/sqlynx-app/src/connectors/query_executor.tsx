@@ -6,10 +6,9 @@ import {
     QueryExecutionResponseStream,
     QueryExecutionState,
     QueryExecutionStatus,
-    QueryExecutionTaskVariant,
 } from './query_execution_state.js';
 import { useSalesforceAPI } from './salesforce/salesforce_connector.js';
-import { DEMO_CONNECTOR, HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, SERVERLESS_CONNECTOR, TRINO_CONNECTOR } from './connector_info.js';
+import { DEMO_CONNECTOR, HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from './connector_info.js';
 import {
     EXECUTE_QUERY,
     QUERY_EXECUTION_CANCELLED,
@@ -25,10 +24,10 @@ import { analyzeTable } from '../compute/computation_actions.js';
 import { useSQLynxComputeWorker } from '../compute/compute_provider.js';
 import { useLogger } from '../platform/logger_provider.js';
 import { QueryExecutionArgs } from './query_execution_args.js';
-import { executeTrinoQuery, prepareTrinoQuery } from './trino/trino_query_execution.js';
-import { executeSalesforceQuery, prepareSalesforceQuery } from './salesforce/salesforce_query_execution.js';
-import { executeHyperQuery, prepareHyperGrpcQuery } from './hyper/hyper_query_execution.js';
-import { executeDemoQuery, prepareDemoQuery } from './demo/demo_query_execution.js';
+import { executeTrinoQuery } from './trino/trino_query_execution.js';
+import { executeSalesforceQuery } from './salesforce/salesforce_query_execution.js';
+import { executeHyperQuery } from './hyper/hyper_query_execution.js';
+import { executeDemoQuery } from './demo/demo_query_execution.js';
 
 let NEXT_QUERY_ID = 1;
 /// The query executor function
@@ -70,35 +69,9 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
             throw new Error(`couldn't find a connection with id ${connectionId}`);
         }
 
-        // Build the query task.
-        // We build the task up-front in order to register it as part of the initial query state.
-        // That way, we "see" the task definition while the query execution is running.
-        let task: QueryExecutionTaskVariant;
-        switch (conn.details.type) {
-            case SALESFORCE_DATA_CLOUD_CONNECTOR:
-                task = { type: SALESFORCE_DATA_CLOUD_CONNECTOR, value: prepareSalesforceQuery(conn.details.value, args) };
-                break;
-            case HYPER_GRPC_CONNECTOR:
-                task = { type: HYPER_GRPC_CONNECTOR, value: prepareHyperGrpcQuery(conn.details.value, args) };
-                break;
-            case DEMO_CONNECTOR:
-                task = { type: DEMO_CONNECTOR, value: prepareDemoQuery(conn.details.value, args) };
-                break;
-            case TRINO_CONNECTOR:
-                task = { type: TRINO_CONNECTOR, value: prepareTrinoQuery(conn.details.value, args) };
-                break;
-
-            // XXX
-            case SERVERLESS_CONNECTOR:
-                throw new Error(
-                    `script query executor does not support connector ${conn.connectionInfo.connectorType} yet`,
-                );
-        }
-
         // Accept the query and clear the request
         const initialState: QueryExecutionState = {
             queryId,
-            task: task,
             status: QueryExecutionStatus.ACCEPTED,
             cancellation: new AbortController(),
             resultStream: null,
@@ -169,18 +142,18 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
         let table: arrow.Table | null = null;
         try {
             // Start the query
-            switch (task.type) {
+            switch (conn.details.type) {
                 case SALESFORCE_DATA_CLOUD_CONNECTOR:
-                    resultStream = await executeSalesforceQuery(task.value);
+                    resultStream = await executeSalesforceQuery(conn.details.value, args);
                     break;
                 case HYPER_GRPC_CONNECTOR:
-                    resultStream = await executeHyperQuery(task.value);
+                    resultStream = await executeHyperQuery(conn.details.value, args);
                     break;
                 case TRINO_CONNECTOR:
-                    resultStream = await executeTrinoQuery(task.value);
+                    resultStream = await executeTrinoQuery(conn.details.value, args);
                     break;
                 case DEMO_CONNECTOR:
-                    resultStream = await executeDemoQuery(task.value);
+                    resultStream = await executeDemoQuery(conn.details.value, args);
                     break;
             }
             if (resultStream != null) {

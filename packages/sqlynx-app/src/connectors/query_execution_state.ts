@@ -1,7 +1,5 @@
 import * as arrow from 'apache-arrow';
 
-import { VariantKind } from '../utils/index.js';
-import { DEMO_CONNECTOR, HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from './connector_info.js';
 import {
     ConnectionState,
     EXECUTE_QUERY,
@@ -15,16 +13,6 @@ import {
     QueryExecutionAction,
 } from './connection_state.js';
 import { ConnectionQueryMetrics } from './connection_statistics.js';
-import { TrinoQueryTask } from './trino/trino_query_execution.js';
-import { SalesforceQueryTask } from './salesforce/salesforce_query_execution.js';
-import { HyperGrpcQueryTask } from './hyper/hyper_query_execution.js';
-import { DemoQueryTask } from './demo/demo_query_execution.js';
-
-export type QueryExecutionTaskVariant =
-    | VariantKind<typeof DEMO_CONNECTOR, DemoQueryTask>
-    | VariantKind<typeof SALESFORCE_DATA_CLOUD_CONNECTOR, SalesforceQueryTask>
-    | VariantKind<typeof HYPER_GRPC_CONNECTOR, HyperGrpcQueryTask>
-    | VariantKind<typeof TRINO_CONNECTOR, TrinoQueryTask>;
 
 export enum QueryExecutionStatus {
     ACCEPTED = 0,
@@ -84,8 +72,6 @@ export interface QueryMetrics {
 export interface QueryExecutionState {
     /// The query id
     queryId: number;
-    /// The script text that is executed
-    task: QueryExecutionTaskVariant;
     /// The current status
     status: QueryExecutionStatus;
     /// The query metric counters

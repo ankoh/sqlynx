@@ -33,7 +33,7 @@ export function CatalogUpdaterProvider(props: { children?: React.ReactElement })
     const connMap = connReg.connectionMap;
 
     // Execute a query with pre-allocated query id
-    const updateWithId = React.useCallback(async (connectionId: number, args: CatalogUpdateArgs, updateId: number): Promise<void> => {
+    const updateImpl = React.useCallback(async (connectionId: number, args: CatalogUpdateArgs, updateId: number): Promise<void> => {
         // Check if we know the connection id.
         const conn = connMap.get(connectionId);
         if (!conn) {
@@ -146,14 +146,14 @@ export function CatalogUpdaterProvider(props: { children?: React.ReactElement })
     }, [connMap, sfApi]);
 
     // Allocate the next query id and start the execution
-    const execute = React.useCallback<CatalogUpdater>((connectionId: number, args: CatalogUpdateArgs): [number, Promise<void>] => {
+    const update = React.useCallback<CatalogUpdater>((connectionId: number, args: CatalogUpdateArgs): [number, Promise<void>] => {
         const updateId = NEXT_CATALOG_UPDATE_ID++;
-        const execution = updateWithId(connectionId, args, updateId);
+        const execution = updateImpl(connectionId, args, updateId);
         return [updateId, execution];
-    }, [updateWithId]);
+    }, [updateImpl]);
 
     return (
-        <UPDATER_CTX.Provider value={execute}>
+        <UPDATER_CTX.Provider value={update}>
             {props.children}
         </UPDATER_CTX.Provider>
     );
