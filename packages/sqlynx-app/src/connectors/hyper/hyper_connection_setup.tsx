@@ -26,12 +26,12 @@ import { useAppConfig } from '../../app_config.js';
 import { useHyperDatabaseClient } from '../../connectors/hyper/hyperdb_client_provider.js';
 import { RESET } from '../connection_state.js';
 
-export async function setupHyperGrpcConnection(dispatch: Dispatch<HyperGrpcConnectorAction>, logger: Logger, params: HyperGrpcConnectionParams, _config: HyperGrpcConnectorConfig, client: HyperDatabaseClient, abortSignal: AbortSignal): Promise<HyperDatabaseChannel | null> {
+export async function setupHyperGrpcConnection(updateState: Dispatch<HyperGrpcConnectorAction>, logger: Logger, params: HyperGrpcConnectionParams, _config: HyperGrpcConnectorConfig, client: HyperDatabaseClient, abortSignal: AbortSignal): Promise<HyperDatabaseChannel | null> {
     // First prepare the channel
     let channel: HyperDatabaseChannel;
     try {
         // Start the channel setup
-        dispatch({
+        updateState({
             type: CHANNEL_SETUP_STARTED,
             value: params,
         });
@@ -61,7 +61,7 @@ export async function setupHyperGrpcConnection(dispatch: Dispatch<HyperGrpcConne
         abortSignal.throwIfAborted();
 
         // Mark the channel as ready
-        dispatch({
+        updateState({
             type: CHANNEL_READY,
             value: channel,
         });
@@ -70,13 +70,13 @@ export async function setupHyperGrpcConnection(dispatch: Dispatch<HyperGrpcConne
     } catch (error: any) {
         if (error.name === 'AbortError') {
             logger.warn("setup was aborted");
-            dispatch({
+            updateState({
                 type: CHANNEL_SETUP_CANCELLED,
                 value: error.message,
             });
         } else if (error instanceof Error) {
             logger.error(`setup failed with error: ${error.toString()}`);
-            dispatch({
+            updateState({
                 type: CHANNEL_SETUP_FAILED,
                 value: error.message,
             });
@@ -87,7 +87,7 @@ export async function setupHyperGrpcConnection(dispatch: Dispatch<HyperGrpcConne
     // Then perform an initial health check
     try {
         // Start the channel setup
-        dispatch({
+        updateState({
             type: HEALTH_CHECK_STARTED,
             value: null,
         });
@@ -98,12 +98,12 @@ export async function setupHyperGrpcConnection(dispatch: Dispatch<HyperGrpcConne
         abortSignal.throwIfAborted();
 
         if (health.ok) {
-            dispatch({
+            updateState({
                 type: HEALTH_CHECK_SUCCEEDED,
                 value: null,
             });
         } else {
-            dispatch({
+            updateState({
                 type: HEALTH_CHECK_FAILED,
                 value: health.errorMessage!,
             });
@@ -112,13 +112,13 @@ export async function setupHyperGrpcConnection(dispatch: Dispatch<HyperGrpcConne
     } catch (error: any) {
         if (error.name === 'AbortError') {
             logger.warn("setup was aborted");
-            dispatch({
+            updateState({
                 type: HEALTH_CHECK_CANCELLED,
                 value: error.message,
             });
         } else if (error instanceof Error) {
             logger.error(`setup failed with error: ${error.toString()}`);
-            dispatch({
+            updateState({
                 type: CHANNEL_SETUP_FAILED,
                 value: error.message,
             });

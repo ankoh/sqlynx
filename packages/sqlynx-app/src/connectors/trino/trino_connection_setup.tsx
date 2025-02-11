@@ -15,12 +15,12 @@ import { TrinoConnectorConfig } from '../connector_configs.js';
 
 const LOG_CTX = "trino_setup";
 
-export async function setupTrinoConnection(dispatch: Dispatch<TrinoConnectorAction>, logger: Logger, params: TrinoConnectionParams, _config: TrinoConnectorConfig, client: TrinoApiClientInterface, abortSignal: AbortSignal): Promise<TrinoChannelInterface | null> {
+export async function setupTrinoConnection(updateState: Dispatch<TrinoConnectorAction>, logger: Logger, params: TrinoConnectionParams, _config: TrinoConnectorConfig, client: TrinoApiClientInterface, abortSignal: AbortSignal): Promise<TrinoChannelInterface | null> {
     // First prepare the channel
     let channel: TrinoChannelInterface;
     try {
         // Start the channel setup
-        dispatch({
+        updateState({
             type: CHANNEL_SETUP_STARTED,
             value: params,
         });
@@ -34,7 +34,7 @@ export async function setupTrinoConnection(dispatch: Dispatch<TrinoConnectorActi
         channel = new TrinoChannel(logger, client, endpoint);
 
         // Mark the channel as ready
-        dispatch({
+        updateState({
             type: CHANNEL_READY,
             value: channel,
         });
@@ -43,13 +43,13 @@ export async function setupTrinoConnection(dispatch: Dispatch<TrinoConnectorActi
     } catch (error: any) {
         if (error.name === 'AbortError') {
             logger.warn("setup was aborted", LOG_CTX);
-            dispatch({
+            updateState({
                 type: CHANNEL_SETUP_CANCELLED,
                 value: error.message,
             });
         } else if (error instanceof Error) {
             logger.error(`setup failed with error: ${error.toString()}`, LOG_CTX);
-            dispatch({
+            updateState({
                 type: CHANNEL_SETUP_FAILED,
                 value: error.message,
             });
@@ -64,11 +64,11 @@ export interface TrinoSetupApi {
 }
 
 export function createTrinoSetupFlow(trinoClient: TrinoApiClientInterface, config: TrinoConnectorConfig, logger: Logger): (TrinoSetupApi | null) {
-    const setup = async (dispatch: Dispatch<TrinoConnectorAction>, params: TrinoConnectionParams, abort: AbortSignal) => {
-        await setupTrinoConnection(dispatch, logger, params, config, trinoClient, abort);
+    const setup = async (updateState: Dispatch<TrinoConnectorAction>, params: TrinoConnectionParams, abort: AbortSignal) => {
+        await setupTrinoConnection(updateState, logger, params, config, trinoClient, abort);
     };
-    const reset = async (dispatch: Dispatch<TrinoConnectorAction>) => {
-        dispatch({
+    const reset = async (updateState: Dispatch<TrinoConnectorAction>) => {
+        updateState({
             type: RESET,
             value: null,
         })

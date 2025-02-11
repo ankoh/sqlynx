@@ -76,23 +76,23 @@ const DEFAULT_EXPIRATION_TIME_MS = 2 * 60 * 60 * 1000;
 const OAUTH_POPUP_NAME = 'SQLynx OAuth';
 const OAUTH_POPUP_SETTINGS = 'toolbar=no, menubar=no, width=600, height=700, top=100, left=100';
 
-export async function setupSalesforceConnection(dispatch: Dispatch<SalesforceConnectionStateAction>, logger: Logger, params: SalesforceAuthParams, config: SalesforceConnectorConfig, platformType: PlatformType, apiClient: SalesforceApiClientInterface, hyperClient: HyperDatabaseClient, appEvents: AppEventListener, abortSignal: AbortSignal): Promise<void> {
+export async function setupSalesforceConnection(updateState: Dispatch<SalesforceConnectionStateAction>, logger: Logger, params: SalesforceAuthParams, config: SalesforceConnectorConfig, platformType: PlatformType, apiClient: SalesforceApiClientInterface, hyperClient: HyperDatabaseClient, appEvents: AppEventListener, abortSignal: AbortSignal): Promise<void> {
     try {
         // Start the authorization process
-        dispatch({
+        updateState({
             type: AUTH_STARTED,
             value: params,
         });
         abortSignal.throwIfAborted()
 
         // Generate new PKCE challenge
-        dispatch({
+        updateState({
             type: GENERATING_PKCE_CHALLENGE,
             value: null,
         });
         const pkceChallenge = await generatePKCEChallenge();
         abortSignal.throwIfAborted();
-        dispatch({
+        updateState({
             type: GENERATED_PKCE_CHALLENGE,
             value: pkceChallenge,
         });
@@ -146,12 +146,12 @@ export async function setupSalesforceConnection(dispatch: Dispatch<SalesforceCon
                 throw new Error('could not open oauth window');
             }
             popup.focus();
-            dispatch({ type: OAUTH_WEB_WINDOW_OPENED, value: popup });
+            updateState({ type: OAUTH_WEB_WINDOW_OPENED, value: popup });
         } else {
             // Just open the link with the default browser
             logger.debug(`opening url: ${url.toString()}`, "salesforce_auth");
             shell.open(url);
-            dispatch({ type: OAUTH_NATIVE_LINK_OPENED, value: null });
+            updateState({ type: OAUTH_NATIVE_LINK_OPENED, value: null });
         }
 
         // Await the oauth redirect
@@ -163,13 +163,13 @@ export async function setupSalesforceConnection(dispatch: Dispatch<SalesforceCon
         if (authCode.error) {
             throw new Error(authCode.error);
         }
-        dispatch({
+        updateState({
             type: RECEIVED_CORE_AUTH_CODE,
             value: authCode.code,
         });
 
         // Request the core access token
-        dispatch({
+        updateState({
             type: REQUESTING_CORE_AUTH_TOKEN,
             value: null,
         });
@@ -186,33 +186,33 @@ export async function setupSalesforceConnection(dispatch: Dispatch<SalesforceCon
             abortSignal,
         );
         logger.debug(`received core access token: ${JSON.stringify(coreAccessToken)}`);
-        dispatch({
+        updateState({
             type: RECEIVED_CORE_AUTH_TOKEN,
             value: coreAccessToken,
         });
         abortSignal.throwIfAborted();
 
         // Request the data cloud access token
-        dispatch({
+        updateState({
             type: REQUESTING_DATA_CLOUD_ACCESS_TOKEN,
             value: null,
         });
         const dcToken = await apiClient.getDataCloudAccessToken(coreAccessToken, abortSignal);
         logger.debug(`received data cloud token: ${JSON.stringify(dcToken)}`);
-        dispatch({
+        updateState({
             type: RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
             value: dcToken,
         });
         abortSignal.throwIfAborted();
 
         // Request the data cloud metadata
-        dispatch({
+        updateState({
             type: REQUESTING_DATA_CLOUD_METADATA,
             value: null,
         });
         const metadata = await apiClient.getDataCloudMetadata(dcToken, abortSignal);
         logger.debug(`received data cloud metadata`);
-        dispatch({
+        updateState({
             type: RECEIVED_DATA_CLOUD_METADATA,
             value: metadata,
         });
@@ -227,7 +227,7 @@ export async function setupSalesforceConnection(dispatch: Dispatch<SalesforceCon
             attachedDatabases: [],
             gRPCMetadata: []
         };
-        dispatch({
+        updateState({
             type: CHANNEL_SETUP_STARTED,
             value: connParams,
         });
@@ -254,14 +254,14 @@ export async function setupSalesforceConnection(dispatch: Dispatch<SalesforceCon
         abortSignal.throwIfAborted();
 
         // Mark the channel as ready
-        dispatch({
+        updateState({
             type: CHANNEL_READY,
             value: channel,
         });
         abortSignal.throwIfAborted();
 
         // Start the channel setup
-        dispatch({
+        updateState({
             type: HEALTH_CHECK_STARTED,
             value: null,
         });
@@ -272,13 +272,13 @@ export async function setupSalesforceConnection(dispatch: Dispatch<SalesforceCon
         abortSignal.throwIfAborted();
 
         if (health.ok) {
-            dispatch({
+            updateState({
                 type: HEALTH_CHECK_SUCCEEDED,
                 value: null,
             });
             return;
         } else {
-            dispatch({
+            updateState({
                 type: HEALTH_CHECK_FAILED,
                 value: health.errorMessage!,
             });
@@ -288,13 +288,13 @@ export async function setupSalesforceConnection(dispatch: Dispatch<SalesforceCon
     } catch (error: any) {
         if (error.name === 'AbortError') {
             logger.warn("oauth flow was aborted");
-            dispatch({
+            updateState({
                 type: AUTH_CANCELLED,
                 value: error.message,
             });
         } else if (error instanceof Error) {
             logger.error(`oauth flow failed with error: ${error.toString()}`);
-            dispatch({
+            updateState({
                 type: AUTH_FAILED,
                 value: error.message,
             });
@@ -310,11 +310,11 @@ export interface SalesforceSetupApi {
 }
 
 export function createSalesforceAuthFlow(hyperClient: HyperDatabaseClient, salesforceApi: SalesforceApiClientInterface, platformType: PlatformType, appEvents: AppEventListener, config: SalesforceConnectorConfig, logger: Logger): (SalesforceSetupApi | null) {
-    const auth = async (dispatch: Dispatch<SalesforceConnectionStateAction>, params: SalesforceAuthParams, abort: AbortSignal) => {
-        return setupSalesforceConnection(dispatch, logger, params, config, platformType, salesforceApi, hyperClient, appEvents, abort);
+    const auth = async (updateState: Dispatch<SalesforceConnectionStateAction>, params: SalesforceAuthParams, abort: AbortSignal) => {
+        return setupSalesforceConnection(updateState, logger, params, config, platformType, salesforceApi, hyperClient, appEvents, abort);
     };
-    const reset = async (dispatch: Dispatch<SalesforceConnectionStateAction>) => {
-        dispatch({
+    const reset = async (updateState: Dispatch<SalesforceConnectionStateAction>) => {
+        updateState({
             type: RESET,
             value: null,
         })
