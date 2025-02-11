@@ -3,7 +3,7 @@ import * as proto from "@ankoh/sqlynx-protobuf";
 
 import { Logger } from '../../platform/logger.js';
 import { QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionResponseStreamMetrics, QueryExecutionStatus } from "../../connectors/query_execution_state.js";
-import { TRINO_STATUS_HTTP_ERROR, TRINO_STATUS_OK, TRINO_STATUS_OTHER_ERROR, TrinoApiClientInterface, TrinoApiEndpoint, TrinoQueryResult } from "./trino_api_client.js";
+import { TRINO_STATUS_HTTP_ERROR, TRINO_STATUS_OK, TRINO_STATUS_OTHER_ERROR, TrinoApiClientInterface, TrinoApiEndpoint, TrinoQueryResult, TrinoQueryStatistics } from "./trino_api_client.js";
 
 export interface TrinoQueryExecutionProgress extends QueryExecutionProgress { }
 
@@ -18,6 +18,12 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
     responseMetadata: Map<string, string>;
     /// The schema
     resultSchema: arrow.Schema | null;
+    /// The current result
+    latestQueryResult: TrinoQueryResult | null;
+    /// The latest statistics
+    latestQueryStats: TrinoQueryStatistics | null;
+    /// The latest query state
+    latestQueryState: string | null;
 
     /// The constructor
     constructor(logger: Logger, apiClient: TrinoApiClientInterface, result: TrinoQueryResult) {
@@ -26,8 +32,24 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
         this.currentStatus = QueryExecutionStatus.STARTED;
         this.responseMetadata = new Map();
         this.resultSchema = null;
+        this.latestQueryResult = result;
+        this.latestQueryStats = result.stats ?? null;
+        this.latestQueryState = result.stats?.state ?? null;
+    }
 
-        console.log(result);
+    /// Fetch the next query result
+    async fetchNextQueryResult(): Promise<TrinoQueryResult | null> {
+        const nextUri = this.latestQueryResult?.nextUri;
+        if (!nextUri) {
+            return null;
+        }
+        const queryResult = await this.apiClient.getQueryResult(nextUri);
+        this.latestQueryResult = queryResult;
+        this.latestQueryStats = queryResult.stats ?? null;
+        this.latestQueryState = this.latestQueryStats?.state ?? null;
+        console.log(queryResult);
+        // XXX Translate trino query result to arrow
+        return null;
     }
 
     /// Get the result metadata (after completion)
@@ -54,9 +76,12 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
     }
     /// Await the next record batch
     async nextRecordBatch(): Promise<arrow.RecordBatch | null> {
-        // const fields: arrow.Field[] = [];
-        //  = new arrow.Schema(fields);
-        // return schema;
+        // While still running
+        while (this.latestQueryState == "RUNNING") {
+            // Fetch the next query result
+            const result = this.fetchNextQueryResult();
+            console.log(result);
+        }
         return null;
     }
 }
@@ -71,8 +96,6 @@ export interface TrinoHealthCheckResult {
 }
 
 export interface TrinoChannelInterface {
-    /// Perform a health check
-    checkHealth(): Promise<TrinoHealthCheckResult>;
     /// Execute Query
     executeQuery(param: proto.salesforce_hyperdb_grpc_v1.pb.QueryParam): Promise<TrinoQueryResultStream>;
     /// Destroy the connection

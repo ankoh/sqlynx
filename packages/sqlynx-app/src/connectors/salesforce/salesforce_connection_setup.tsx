@@ -1,4 +1,3 @@
-import * as React from 'react';
 import * as shell from '@tauri-apps/plugin-shell';
 import * as proto from '@ankoh/sqlynx-protobuf';
 

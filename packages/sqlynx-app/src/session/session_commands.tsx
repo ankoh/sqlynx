@@ -48,7 +48,8 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
                         const mainScript = session.scripts[ScriptKey.MAIN_SCRIPT];
                         const mainScriptText = mainScript.script!.toString();
                         const [queryId, _run] = executeQuery(session.connectionId, {
-                            query: mainScriptText
+                            query: mainScriptText,
+                            analyzeResults: true
                         });
                         dispatchSession({
                             type: REGISTER_EDITOR_QUERY,

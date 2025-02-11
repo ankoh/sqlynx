@@ -15,43 +15,16 @@ import {
     QueryExecutionAction,
 } from './connection_state.js';
 import { ConnectionQueryMetrics } from './connection_statistics.js';
-import { HyperDatabaseChannel } from '../connectors/hyper/hyperdb_client.js';
-import { DemoDatabaseChannel } from './demo/demo_database_channel.js';
-import { TrinoChannelInterface } from './trino/trino_channel.js';
+import { TrinoQueryTask } from './trino/trino_query_execution.js';
+import { SalesforceQueryTask } from './salesforce/salesforce_query_execution.js';
+import { HyperGrpcQueryTask } from './hyper/hyper_query_execution.js';
+import { DemoQueryTask } from './demo/demo_query_execution.js';
 
 export type QueryExecutionTaskVariant =
-    | VariantKind<typeof DEMO_CONNECTOR, ExecuteDemoQueryTask>
-    | VariantKind<typeof SALESFORCE_DATA_CLOUD_CONNECTOR, ExecuteDataCloudQueryTask>
+    | VariantKind<typeof DEMO_CONNECTOR, DemoQueryTask>
+    | VariantKind<typeof SALESFORCE_DATA_CLOUD_CONNECTOR, SalesforceQueryTask>
     | VariantKind<typeof HYPER_GRPC_CONNECTOR, HyperGrpcQueryTask>
     | VariantKind<typeof TRINO_CONNECTOR, TrinoQueryTask>;
-
-export interface ExecuteDemoQueryTask {
-    /// The script text
-    scriptText: string;
-    /// The channel
-    demoChannel: DemoDatabaseChannel;
-}
-
-export interface ExecuteDataCloudQueryTask {
-    /// The script text
-    scriptText: string;
-    /// The channel
-    hyperChannel: HyperDatabaseChannel;
-}
-
-export interface HyperGrpcQueryTask {
-    /// The script text
-    scriptText: string;
-    /// The channel
-    hyperChannel: HyperDatabaseChannel;
-}
-
-export interface TrinoQueryTask {
-    /// The script text
-    scriptText: string;
-    /// Trino channel
-    trinoChannel: TrinoChannelInterface;
-}
 
 export enum QueryExecutionStatus {
     ACCEPTED = 0,

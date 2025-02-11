@@ -3,10 +3,6 @@ import {
     CHANNEL_SETUP_CANCELLED,
     CHANNEL_SETUP_FAILED,
     CHANNEL_SETUP_STARTED,
-    HEALTH_CHECK_CANCELLED,
-    HEALTH_CHECK_FAILED,
-    HEALTH_CHECK_STARTED,
-    HEALTH_CHECK_SUCCEEDED,
     TrinoConnectorAction,
 } from './trino_connection_state.js';
 import { Dispatch } from '../../utils/index.js';
@@ -49,53 +45,6 @@ export async function setupTrinoConnection(dispatch: Dispatch<TrinoConnectorActi
             logger.warn("setup was aborted", LOG_CTX);
             dispatch({
                 type: CHANNEL_SETUP_CANCELLED,
-                value: error.message,
-            });
-        } else if (error instanceof Error) {
-            logger.error(`setup failed with error: ${error.toString()}`, LOG_CTX);
-            dispatch({
-                type: CHANNEL_SETUP_FAILED,
-                value: error.message,
-            });
-        }
-        return null;
-    }
-
-    // Then perform an initial health check
-    try {
-        // Start the channel setup
-        dispatch({
-            type: HEALTH_CHECK_STARTED,
-            value: null,
-        });
-        abortSignal.throwIfAborted();
-
-        // Create the channel
-        const health = await channel.checkHealth();
-        abortSignal.throwIfAborted();
-
-        if (health.ok) {
-            dispatch({
-                type: HEALTH_CHECK_SUCCEEDED,
-                value: null,
-            });
-        } else {
-            let message: string = "";
-            if (health.httpStatus) {
-                message = `http status code ${health.httpStatus}`;
-            } else if (health.otherError) {
-                message = health.otherError.toString();
-            }
-            dispatch({
-                type: HEALTH_CHECK_FAILED,
-                value: message,
-            });
-        }
-    } catch (error: any) {
-        if (error.name === 'AbortError') {
-            logger.warn("setup was aborted", LOG_CTX);
-            dispatch({
-                type: HEALTH_CHECK_CANCELLED,
                 value: error.message,
             });
         } else if (error instanceof Error) {

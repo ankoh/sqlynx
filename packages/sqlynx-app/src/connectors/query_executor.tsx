@@ -1,6 +1,5 @@
 import * as arrow from 'apache-arrow';
 import * as React from 'react';
-import * as proto from '@ankoh/sqlynx-protobuf';
 
 import { useConnectionState, useDynamicConnectionDispatch } from './connection_registry.js';
 import {
@@ -25,15 +24,15 @@ import { useComputationRegistry } from '../compute/computation_registry.js';
 import { analyzeTable } from '../compute/computation_actions.js';
 import { useSQLynxComputeWorker } from '../compute/compute_provider.js';
 import { useLogger } from '../platform/logger_provider.js';
+import { QueryExecutionArgs } from './query_execution_args.js';
+import { executeTrinoQuery, prepareTrinoQuery } from './trino/trino_query_execution.js';
+import { executeSalesforceQuery, prepareSalesforceQuery } from './salesforce/salesforce_query_execution.js';
+import { executeHyperQuery, prepareHyperGrpcQuery } from './hyper/hyper_query_execution.js';
+import { executeDemoQuery, prepareDemoQuery } from './demo/demo_query_execution.js';
 
 let NEXT_QUERY_ID = 1;
-
-/// The query executor args
-interface QueryExecutionArgs {
-    query: string;
-}
 /// The query executor function
-export type QueryExecutor = (connectionId: number, args: QueryExecutionArgs) => [number, Promise<void>];
+export type QueryExecutor = (connectionId: number, args: QueryExecutionArgs) => [number, Promise<arrow.Table | null>];
 /// The React context to resolve the active query executor
 const EXECUTOR_CTX = React.createContext<QueryExecutor | null>(null);
 /// The hook to resolve the query executor
@@ -60,7 +59,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
     const computeWorker = useSQLynxComputeWorker();
 
     // Execute a query with pre-allocated query id
-    const executeWithId = React.useCallback(async (connectionId: number, args: QueryExecutionArgs, queryId: number): Promise<void> => {
+    const executeImpl = React.useCallback(async (connectionId: number, args: QueryExecutionArgs, queryId: number): Promise<arrow.Table | null> => {
         // Make sure the compute worker is available
         if (!computeWorker) {
             throw new Error(`compute worker is not yet ready`);
@@ -71,68 +70,24 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
             throw new Error(`couldn't find a connection with id ${connectionId}`);
         }
 
-        // Build the query task
+        // Build the query task.
+        // We build the task up-front in order to register it as part of the initial query state.
+        // That way, we "see" the task definition while the query execution is running.
         let task: QueryExecutionTaskVariant;
         switch (conn.details.type) {
-            case SALESFORCE_DATA_CLOUD_CONNECTOR: {
-                const c = conn.details.value;
-                const channel = c.channel;
-                if (!channel) {
-                    throw new Error(`hyper channel is not set up`);
-                }
-                task = {
-                    type: SALESFORCE_DATA_CLOUD_CONNECTOR,
-                    value: {
-                        hyperChannel: channel,
-                        scriptText: args.query,
-                    },
-                };
+            case SALESFORCE_DATA_CLOUD_CONNECTOR:
+                task = { type: SALESFORCE_DATA_CLOUD_CONNECTOR, value: prepareSalesforceQuery(conn.details.value, args) };
                 break;
-            }
-            case HYPER_GRPC_CONNECTOR: {
-                const c = conn.details.value;
-                const channel = c.channel;
-                if (!channel) {
-                    throw new Error(`hyper channel is not set up`);
-                }
-                task = {
-                    type: HYPER_GRPC_CONNECTOR,
-                    value: {
-                        hyperChannel: channel,
-                        scriptText: args.query,
-                    }
-                }
+            case HYPER_GRPC_CONNECTOR:
+                task = { type: HYPER_GRPC_CONNECTOR, value: prepareHyperGrpcQuery(conn.details.value, args) };
                 break;
-            }
-            case DEMO_CONNECTOR: {
-                const c = conn.details.value;
-                const channel = c.channel;
-                if (!channel) {
-                    throw new Error(`demo channel is not set up`);
-                }
-                task = {
-                    type: DEMO_CONNECTOR,
-                    value: {
-                        scriptText: args.query,
-                        demoChannel: channel
-                    }
-                }
+            case DEMO_CONNECTOR:
+                task = { type: DEMO_CONNECTOR, value: prepareDemoQuery(conn.details.value, args) };
                 break;
-            }
-            case TRINO_CONNECTOR: {
-                const c = conn.details.value;
-                const channel = c.channel;
-                if (!channel) {
-                    throw new Error(`trino channel is not set up`);
-                }
-                task = {
-                    type: TRINO_CONNECTOR,
-                    value: {
-                        scriptText: args.query,
-                        trinoChannel: channel,
-                    }
-                };
-            }
+            case TRINO_CONNECTOR:
+                task = { type: TRINO_CONNECTOR, value: prepareTrinoQuery(conn.details.value, args) };
+                break;
+
             // XXX
             case SERVERLESS_CONNECTOR:
                 throw new Error(
@@ -215,30 +170,18 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
         try {
             // Start the query
             switch (task.type) {
-                case SALESFORCE_DATA_CLOUD_CONNECTOR: {
-                    const req = task.value;
-                    const param = new proto.salesforce_hyperdb_grpc_v1.pb.QueryParam({
-                        query: req.scriptText
-                    });
-                    resultStream = await req.hyperChannel.executeQuery(param);
+                case SALESFORCE_DATA_CLOUD_CONNECTOR:
+                    resultStream = await executeSalesforceQuery(task.value);
                     break;
-                }
-                case HYPER_GRPC_CONNECTOR: {
-                    const req = task.value;
-                    const param = new proto.salesforce_hyperdb_grpc_v1.pb.QueryParam({
-                        query: req.scriptText
-                    });
-                    resultStream = await req.hyperChannel.executeQuery(param);
+                case HYPER_GRPC_CONNECTOR:
+                    resultStream = await executeHyperQuery(task.value);
                     break;
-                }
-                case DEMO_CONNECTOR: {
-                    const req = task.value;
-                    const param = new proto.salesforce_hyperdb_grpc_v1.pb.QueryParam({
-                        query: req.scriptText
-                    });
-                    resultStream = await req.demoChannel.executeQuery(param);
+                case TRINO_CONNECTOR:
+                    resultStream = await executeTrinoQuery(task.value);
                     break;
-                }
+                case DEMO_CONNECTOR:
+                    resultStream = await executeDemoQuery(task.value);
+                    break;
             }
             if (resultStream != null) {
                 connDispatch(connectionId, {
@@ -275,18 +218,20 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
 
 
         // Compute all table summaries of the result
-        if (table) {
+        if (table && args.analyzeResults) {
             analyzeTable(queryId, table!, computeDispatch, computeWorker, logger);
         }
+
+        return table;
 
     }, [connMap, sfApi]);
 
     // Allocate the next query id and start the execution
-    const execute = React.useCallback<QueryExecutor>((connectionId: number, args: QueryExecutionArgs): [number, Promise<void>] => {
+    const execute = React.useCallback<QueryExecutor>((connectionId: number, args: QueryExecutionArgs): [number, Promise<arrow.Table | null>] => {
         const queryId = NEXT_QUERY_ID++;
-        const execution = executeWithId(connectionId, args, queryId);
+        const execution = executeImpl(connectionId, args, queryId);
         return [queryId, execution];
-    }, [executeWithId]);
+    }, [executeImpl]);
 
     return (
         <EXECUTOR_CTX.Provider value={execute}>
