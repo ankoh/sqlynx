@@ -1,8 +1,20 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
 
-import { SalesforceMetadata } from './salesforce_api_client.js';
+import { SalesforceApiClientInterface } from './salesforce_api_client.js';
+import { SalesforceConnectionDetails } from './salesforce_connection_state.js';
 
-export function updateDataCloudCatalog(catalog: sqlynx.SQLynxCatalog, metadata: SalesforceMetadata) {
+export async function updateSalesforceCatalog(conn: SalesforceConnectionDetails, catalog: sqlynx.SQLynxCatalog, api: SalesforceApiClientInterface, abortController: AbortController) {
+    // Missing the data cloud access token
+    if (!conn.dataCloudAccessToken) {
+        throw new Error(`salesforce data cloud access token is missing`);
+    }
+    // Get the Data Cloud metadata
+    const metadata = await api.getDataCloudMetadata(
+        conn.dataCloudAccessToken!,
+        abortController.signal,
+    );
+
+    // Translate tables
     const tables: sqlynx.proto.SchemaTableT[] = [];
     if (metadata.metadata) {
         for (const entry of metadata.metadata) {

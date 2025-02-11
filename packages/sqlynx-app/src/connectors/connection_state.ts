@@ -90,10 +90,6 @@ export enum ConnectionStatus {
     DATA_CLOUD_TOKEN_RECEIVED,
     CORE_ACCESS_TOKEN_REQUESTED,
     CORE_ACCESS_TOKEN_RECEIVED,
-
-    // Data Cloud metadata
-    DATA_CLOUD_METADATA_REQUESTED,
-    DATA_CLOUD_METADATA_RECEIVED,
 }
 
 export enum ConnectionHealth {

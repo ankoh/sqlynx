@@ -62,10 +62,6 @@ export function getConnectionStatusText(status: ConnectionStatus | undefined, lo
             return "Requesting Data Cloud access token";
         case ConnectionStatus.DATA_CLOUD_TOKEN_RECEIVED:
             return "Received Data Cloud access token";
-        case ConnectionStatus.DATA_CLOUD_METADATA_REQUESTED:
-            return "Requested Data Cloud metadata";
-        case ConnectionStatus.DATA_CLOUD_METADATA_RECEIVED:
-            return "Received Data Cloud metadata";
         case ConnectionStatus.CHANNEL_SETUP_STARTED:
             return "Creating channel";
         case ConnectionStatus.CHANNEL_SETUP_FAILED:

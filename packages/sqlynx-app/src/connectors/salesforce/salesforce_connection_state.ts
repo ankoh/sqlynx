@@ -29,7 +29,7 @@ import {
     HyperGrpcConnectorAction,
     HyperGrpcSetupTimings
 } from '../hyper/hyper_connection_state.js';
-import { updateDataCloudCatalog } from './salesforce_catalog_update.js';
+import { updateSalesforceCatalog } from './salesforce_catalog_update.js';
 import { HyperDatabaseChannel } from '../../connectors/hyper/hyperdb_client.js';
 
 export interface SalesforceSetupTimings extends HyperGrpcSetupTimings {
@@ -169,9 +169,6 @@ export const RECEIVED_CORE_AUTH_TOKEN = Symbol('RECEIVED_CORE_ACCESS_TOKEN');
 export const REQUESTING_DATA_CLOUD_ACCESS_TOKEN = Symbol('REQUESTING_DATA_CLOUD_ACCESS_TOKEN');
 export const RECEIVED_DATA_CLOUD_ACCESS_TOKEN = Symbol('RECEIVED_DATA_CLOUD_ACCESS_TOKEN');
 
-export const REQUESTING_DATA_CLOUD_METADATA = Symbol('REQUESTING_DATA_CLOUD_METADATA');
-export const RECEIVED_DATA_CLOUD_METADATA = Symbol('RECEIVED_DATA_CLOUD_METADATA');
-
 export type SalesforceConnectionStateAction =
     | VariantKind<typeof RESET, null>
     | VariantKind<typeof AUTH_STARTED, SalesforceAuthParams>
@@ -187,8 +184,6 @@ export type SalesforceConnectionStateAction =
     | VariantKind<typeof RECEIVED_CORE_AUTH_TOKEN, SalesforceCoreAccessToken>
     | VariantKind<typeof REQUESTING_DATA_CLOUD_ACCESS_TOKEN, null>
     | VariantKind<typeof RECEIVED_DATA_CLOUD_ACCESS_TOKEN, SalesforceDataCloudAccessToken>
-    | VariantKind<typeof REQUESTING_DATA_CLOUD_METADATA, null>
-    | VariantKind<typeof RECEIVED_DATA_CLOUD_METADATA, SalesforceMetadata>
     | HyperGrpcConnectorAction
     ;
 
@@ -456,41 +451,6 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                             dataCloudAccessTokenReceivedAt: new Date(),
                         },
                         dataCloudAccessToken: action.value,
-                    }
-                }
-            };
-            break;
-        case REQUESTING_DATA_CLOUD_METADATA:
-            next = {
-                ...state,
-                connectionStatus: ConnectionStatus.DATA_CLOUD_METADATA_RECEIVED,
-                connectionHealth: ConnectionHealth.CONNECTING,
-                details: {
-                    type: SALESFORCE_DATA_CLOUD_CONNECTOR,
-                    value: {
-                        ...details,
-                        authTimings: {
-                            ...details.authTimings,
-                            dataCloudMetadataRequestedAt: new Date(),
-                        },
-                    }
-                }
-            };
-            break;
-        case RECEIVED_DATA_CLOUD_METADATA:
-            updateDataCloudCatalog(state.catalog, action.value);
-            next = {
-                ...state,
-                connectionStatus: ConnectionStatus.DATA_CLOUD_METADATA_RECEIVED,
-                connectionHealth: ConnectionHealth.ONLINE,
-                details: {
-                    type: SALESFORCE_DATA_CLOUD_CONNECTOR,
-                    value: {
-                        ...details,
-                        authTimings: {
-                            ...details.authTimings,
-                            dataCloudMetadataReceivedAt: new Date(),
-                        },
                     }
                 }
             };

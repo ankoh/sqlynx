@@ -56,8 +56,6 @@ export enum CatalogUpdateTaskStatus {
 export interface CatalogUpdateTaskState {
     /// The task key
     taskId: number;
-    /// The task
-    task: CatalogTaskVariant;
     /// The status
     status: CatalogUpdateTaskStatus;
     /// The cancellation signal

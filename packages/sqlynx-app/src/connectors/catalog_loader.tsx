@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { useDynamicConnectionDispatch } from './connection_registry.js';
-import { CatalogTaskVariant, CatalogUpdateTaskState, CatalogUpdateTaskStatus } from './catalog_update_state.js';
+import { CatalogUpdateTaskState, CatalogUpdateTaskStatus } from './catalog_update_state.js';
 import { useSalesforceAPI } from './salesforce/salesforce_connector.js';
 import { DEMO_CONNECTOR, HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, SERVERLESS_CONNECTOR, TRINO_CONNECTOR } from './connector_info.js';
 import {
@@ -10,7 +10,10 @@ import {
     CATALOG_UPDATE_SUCCEEDED,
     UPDATE_CATALOG,
 } from './connection_state.js';
-import { updateDataCloudCatalog } from './salesforce/salesforce_catalog_update.js';
+import { updateSalesforceCatalog } from './salesforce/salesforce_catalog_update.js';
+import { updateHyperCatalog } from './hyper/hyper_catalog_update.js';
+import { useQueryExecutor } from './query_executor.js';
+import { updateTrinoCatalog } from './trino/trino_catalog_update.js';
 
 let NEXT_CATALOG_UPDATE_ID = 1;
 
@@ -25,7 +28,8 @@ const UPDATER_CTX = React.createContext<CatalogUpdater | null>(null);
 export const useCatalogUpdater = () => React.useContext(UPDATER_CTX)!;
 
 export function CatalogUpdaterProvider(props: { children?: React.ReactElement }) {
-    const sfApi = useSalesforceAPI();
+    const executor = useQueryExecutor();
+    const salesforceApi = useSalesforceAPI();
 
     // The connection registry changes frequently, the connection map is stable.
     // This executor will depend on the map directly since it can resolve everything ad-hoc.
@@ -40,61 +44,10 @@ export function CatalogUpdaterProvider(props: { children?: React.ReactElement })
             throw new Error(`couldn't find a connection with id ${connectionId}`);
         }
 
-        // Build the query task
-        let task: CatalogTaskVariant;
-        switch (conn.details.type) {
-            case SALESFORCE_DATA_CLOUD_CONNECTOR: {
-                const c = conn.details.value;
-                task = {
-                    type: SALESFORCE_DATA_CLOUD_CONNECTOR,
-                    value: {
-                        api: sfApi,
-                        accessToken: c.dataCloudAccessToken!,
-                        catalog: conn.catalog,
-                    },
-                };
-                break;
-            }
-            case HYPER_GRPC_CONNECTOR: {
-                const c = conn.details.value;
-                const channel = c.channel;
-                if (!channel) {
-                    throw new Error(`hyper channel is not set up`);
-                }
-                task = {
-                    type: HYPER_GRPC_CONNECTOR,
-                    value: {
-                        catalog: conn.catalog,
-                        hyperChannel: channel,
-                    }
-                }
-                break;
-            }
-            case TRINO_CONNECTOR: {
-                const c = conn.details.value;
-                task = {
-                    type: TRINO_CONNECTOR,
-                    value: {
-                        catalog: conn.catalog,
-                        trinoChannel: c.channel!
-                    }
-                }
-                break;
-
-            }
-            case DEMO_CONNECTOR:
-            // XXX
-            case SERVERLESS_CONNECTOR:
-                throw new Error(
-                    `catalog updater does not support connector ${conn.connectionInfo.connectorType} yet`,
-                );
-        }
-
         // Accept the query and clear the request
         const abortController = new AbortController();
         const initialState: CatalogUpdateTaskState = {
             taskId: updateId,
-            task: task,
             status: CatalogUpdateTaskStatus.STARTED,
             cancellation: abortController,
             error: null,
@@ -109,20 +62,21 @@ export function CatalogUpdaterProvider(props: { children?: React.ReactElement })
         // Update the catalog
         try {
             // Start the query
-            switch (task.type) {
-                case SALESFORCE_DATA_CLOUD_CONNECTOR: {
-                    const metadata = await task.value.api.getDataCloudMetadata(
-                        task.value.accessToken,
-                        abortController.signal,
+            switch (conn.details.type) {
+                case SALESFORCE_DATA_CLOUD_CONNECTOR:
+                    await updateSalesforceCatalog(conn.details.value, conn.catalog, salesforceApi, abortController);
+                    break;
+                case HYPER_GRPC_CONNECTOR:
+                    await updateHyperCatalog(connectionId, conn.catalog, executor);
+                    break;
+                case TRINO_CONNECTOR:
+                    await updateTrinoCatalog(connectionId, conn.catalog, executor);
+                    break;
+                case DEMO_CONNECTOR:
+                case SERVERLESS_CONNECTOR:
+                    throw new Error(
+                        `catalog updater does not support connector ${conn.connectionInfo.connectorType} yet`,
                     );
-                    updateDataCloudCatalog(task.value.catalog, metadata);
-                    break;
-                }
-                case HYPER_GRPC_CONNECTOR: {
-                    // XXX
-                    // read pg_class
-                    break;
-                }
             }
             // Mark the update successful
             connDispatch(connectionId, {
@@ -143,7 +97,7 @@ export function CatalogUpdaterProvider(props: { children?: React.ReactElement })
                 });
             }
         }
-    }, [connMap, sfApi]);
+    }, [connMap, salesforceApi]);
 
     // Allocate the next query id and start the execution
     const update = React.useCallback<CatalogUpdater>((connectionId: number, args: CatalogUpdateArgs): [number, Promise<void>] => {

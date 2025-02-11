@@ -12,10 +12,8 @@ import {
     RECEIVED_CORE_AUTH_CODE,
     RECEIVED_CORE_AUTH_TOKEN,
     RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
-    RECEIVED_DATA_CLOUD_METADATA,
     REQUESTING_CORE_AUTH_TOKEN,
     REQUESTING_DATA_CLOUD_ACCESS_TOKEN,
-    REQUESTING_DATA_CLOUD_METADATA,
     SalesforceConnectionStateAction,
 } from './salesforce_connection_state.js';
 import { generatePKCEChallenge } from '../../utils/pkce.js';
@@ -202,19 +200,6 @@ export async function setupSalesforceConnection(updateState: Dispatch<Salesforce
         updateState({
             type: RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
             value: dcToken,
-        });
-        abortSignal.throwIfAborted();
-
-        // Request the data cloud metadata
-        updateState({
-            type: REQUESTING_DATA_CLOUD_METADATA,
-            value: null,
-        });
-        const metadata = await apiClient.getDataCloudMetadata(dcToken, abortSignal);
-        logger.debug(`received data cloud metadata`);
-        updateState({
-            type: RECEIVED_DATA_CLOUD_METADATA,
-            value: metadata,
         });
         abortSignal.throwIfAborted();
 
