@@ -20,25 +20,29 @@ import { SalesforceSetupApi } from './salesforce_connection_setup.js';
 import { SalesforceAuthParams } from './salesforce_connection_params.js';
 import { SalesforceConnectorConfig } from '../connector_configs.js';
 import { RESET } from '../connection_state.js';
+import { HyperDatabaseChannel } from '../hyper/hyperdb_client.js';
+import { HyperDatabaseChannelMock } from '../hyper/hyperdb_client_mock.js';
+import { CHANNEL_READY, CHANNEL_SETUP_STARTED, HEALTH_CHECK_STARTED, HEALTH_CHECK_SUCCEEDED } from '../hyper/hyper_connection_state.js';
+import { HyperGrpcConnectionParams } from '../hyper/hyper_connection_params.js';
 
 
-export async function authorizeSalesforceConnection(dispatch: Dispatch<SalesforceConnectionStateAction>, logger: Logger, params: SalesforceAuthParams, config: SalesforceConnectorConfig, apiClient: SalesforceApiClientInterface, abortSignal: AbortSignal): Promise<void> {
+export async function setupSalesforceConnection(updateState: Dispatch<SalesforceConnectionStateAction>, logger: Logger, params: SalesforceAuthParams, config: SalesforceConnectorConfig, apiClient: SalesforceApiClientInterface, abortSignal: AbortSignal): Promise<HyperDatabaseChannel> {
     try {
         // Start the authorization process
-        dispatch({
+        updateState({
             type: AUTH_STARTED,
             value: params,
         });
         abortSignal.throwIfAborted()
 
         // Generate new PKCE challenge
-        dispatch({
+        updateState({
             type: GENERATING_PKCE_CHALLENGE,
             value: null,
         });
         const pkceChallenge = await generatePKCEChallenge();
         abortSignal.throwIfAborted();
-        dispatch({
+        updateState({
             type: GENERATED_PKCE_CHALLENGE,
             value: pkceChallenge,
         });
@@ -47,13 +51,13 @@ export async function authorizeSalesforceConnection(dispatch: Dispatch<Salesforc
         await sleep(200);
         abortSignal.throwIfAborted();
         const code = 'core-access-auth-code';
-        dispatch({
+        updateState({
             type: RECEIVED_CORE_AUTH_CODE,
             value: code,
         });
 
         // Request the core access token
-        dispatch({
+        updateState({
             type: REQUESTING_CORE_AUTH_TOKEN,
             value: null,
         });
@@ -69,45 +73,90 @@ export async function authorizeSalesforceConnection(dispatch: Dispatch<Salesforc
             abortSignal,
         );
         console.log(coreAccessToken);
-        dispatch({
+        updateState({
             type: RECEIVED_CORE_AUTH_TOKEN,
             value: coreAccessToken,
         });
         abortSignal.throwIfAborted();
 
         // Request the data cloud access token
-        dispatch({
+        updateState({
             type: REQUESTING_DATA_CLOUD_ACCESS_TOKEN,
             value: null,
         });
         const token = await apiClient.getDataCloudAccessToken(coreAccessToken, abortSignal);
         console.log(token);
-        dispatch({
+        updateState({
             type: RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
             value: token,
         });
         abortSignal.throwIfAborted();
 
+        // Start the channel setup
+        const connParams: HyperGrpcConnectionParams = {
+            channelArgs: {
+                endpoint: token.instanceUrl.toString(),
+                tls: {},
+            },
+            attachedDatabases: [],
+            gRPCMetadata: []
+        };
+        updateState({
+            type: CHANNEL_SETUP_STARTED,
+            value: connParams,
+        });
+        abortSignal.throwIfAborted()
+
+        const channel = new HyperDatabaseChannelMock();
+        sleep(100);
+
+        // Mark the channel as ready
+        updateState({
+            type: CHANNEL_READY,
+            value: channel,
+        });
+        abortSignal.throwIfAborted();
+
+        // Simulate Health check
+        updateState({
+            type: HEALTH_CHECK_STARTED,
+            value: null,
+        });
+        abortSignal.throwIfAborted();
+
+        // Always succeed the health check
+        sleep(100);
+        updateState({
+            type: HEALTH_CHECK_SUCCEEDED,
+            value: null,
+        });
+        abortSignal.throwIfAborted();
+
+        return channel;
+
     } catch (error: any) {
         if (error.name === 'AbortError') {
             logger.warn("oauth flow was aborted");
-            dispatch({
+            updateState({
                 type: AUTH_CANCELLED,
                 value: error.message,
             });
         } else if (error instanceof Error) {
             logger.error(`oauth flow failed with error: ${error.toString()}`);
-            dispatch({
+            updateState({
                 type: AUTH_FAILED,
                 value: error.message,
             });
         }
+
+        // Rethrow the error
+        throw error;
     }
 }
 
 export function mockSalesforceAuthFlow(api: SalesforceApiClientInterface, config: SalesforceConnectorConfig, logger: Logger): (SalesforceSetupApi | null) {
-    const auth = async (dispatch: Dispatch<SalesforceConnectionStateAction>, params: SalesforceAuthParams, abort: AbortSignal) => {
-        return authorizeSalesforceConnection(dispatch, logger, params, config, api, abort);
+    const setup = async (dispatch: Dispatch<SalesforceConnectionStateAction>, params: SalesforceAuthParams, abort: AbortSignal) => {
+        return setupSalesforceConnection(dispatch, logger, params, config, api, abort);
     };
     const reset = async (dispatch: Dispatch<SalesforceConnectionStateAction>) => {
         dispatch({
@@ -115,5 +164,5 @@ export function mockSalesforceAuthFlow(api: SalesforceApiClientInterface, config
             value: null,
         })
     };
-    return { authorize: auth, reset: reset };
+    return { setup, reset: reset };
 };

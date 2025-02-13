@@ -6,7 +6,7 @@ import {
 } from './query_execution_state.js';
 import { sleep } from '../utils/sleep.js';
 
-export class QueryExecutorMock implements QueryExecutionResponseStream {
+export class QueryExecutionResponseStreamMock implements QueryExecutionResponseStream {
     schema: arrow.Schema;
     batchCount: number;
     batchesWritten: number;

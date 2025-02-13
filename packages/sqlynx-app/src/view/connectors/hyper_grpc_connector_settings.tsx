@@ -81,22 +81,26 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
             return;
         }
 
-        // Setupt the Hyper connection
-        setupAbortController.current = new AbortController();
-        const connectionParams: HyperGrpcConnectionParams = {
-            channelArgs: {
-                endpoint: pageState.endpoint
-            },
-            attachedDatabases: pageState.attachedDatabases,
-            gRPCMetadata: pageState.gRPCMetadata,
-        };
+        try {
+            // Setup the Hyper connection
+            setupAbortController.current = new AbortController();
+            const connectionParams: HyperGrpcConnectionParams = {
+                channelArgs: {
+                    endpoint: pageState.endpoint
+                },
+                attachedDatabases: pageState.attachedDatabases,
+                gRPCMetadata: pageState.gRPCMetadata,
+            };
+            const channel = await hyperSetup.setup(dispatchConnectionState, connectionParams, setupAbortController.current.signal);
 
-        await hyperSetup.setup(dispatchConnectionState, connectionParams, setupAbortController.current.signal);
+            // Start the the inital catalog update
+            // XXX
+
+        } catch (error: any) {
+            // XXX
+        }
+
         setupAbortController.current = null;
-
-        // Close the channel
-        // XXX Remove
-        // await channel.close();
     };
 
     // Helper to cancel the authorization

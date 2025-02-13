@@ -29,7 +29,7 @@ import { AppEventListener } from '../../platform/event_listener.js';
 import { isNativePlatform } from '../../platform/native_globals.js';
 import { isDebugBuild } from '../../globals.js';
 import { RESET } from './../connection_state.js';
-import { AttachedDatabase, HyperDatabaseClient, HyperDatabaseConnectionContext } from '../../connectors/hyper/hyperdb_client.js';
+import { AttachedDatabase, HyperDatabaseChannel, HyperDatabaseClient, HyperDatabaseConnectionContext } from '../../connectors/hyper/hyperdb_client.js';
 import {
     CHANNEL_READY,
     CHANNEL_SETUP_STARTED,
@@ -74,7 +74,7 @@ const DEFAULT_EXPIRATION_TIME_MS = 2 * 60 * 60 * 1000;
 const OAUTH_POPUP_NAME = 'SQLynx OAuth';
 const OAUTH_POPUP_SETTINGS = 'toolbar=no, menubar=no, width=600, height=700, top=100, left=100';
 
-export async function setupSalesforceConnection(updateState: Dispatch<SalesforceConnectionStateAction>, logger: Logger, params: SalesforceAuthParams, config: SalesforceConnectorConfig, platformType: PlatformType, apiClient: SalesforceApiClientInterface, hyperClient: HyperDatabaseClient, appEvents: AppEventListener, abortSignal: AbortSignal): Promise<void> {
+export async function setupSalesforceConnection(updateState: Dispatch<SalesforceConnectionStateAction>, logger: Logger, params: SalesforceAuthParams, config: SalesforceConnectorConfig, platformType: PlatformType, apiClient: SalesforceApiClientInterface, hyperClient: HyperDatabaseClient, appEvents: AppEventListener, abortSignal: AbortSignal): Promise<HyperDatabaseChannel> {
     try {
         // Start the authorization process
         updateState({
@@ -261,13 +261,13 @@ export async function setupSalesforceConnection(updateState: Dispatch<Salesforce
                 type: HEALTH_CHECK_SUCCEEDED,
                 value: null,
             });
-            return;
+            return channel;
         } else {
             updateState({
                 type: HEALTH_CHECK_FAILED,
                 value: health.errorMessage!,
             });
-            return;
+            throw new Error(`failed to setup Hyper channel`);
         }
 
     } catch (error: any) {
@@ -284,18 +284,20 @@ export async function setupSalesforceConnection(updateState: Dispatch<Salesforce
                 value: error.message,
             });
         }
+
+        // Rethrow the error
         throw error;
     }
 
 }
 
 export interface SalesforceSetupApi {
-    authorize(dispatch: Dispatch<SalesforceConnectionStateAction>, params: SalesforceAuthParams, abortSignal: AbortSignal): Promise<void>
+    setup(dispatch: Dispatch<SalesforceConnectionStateAction>, params: SalesforceAuthParams, abortSignal: AbortSignal): Promise<HyperDatabaseChannel>
     reset(dispatch: Dispatch<SalesforceConnectionStateAction>): Promise<void>
 }
 
 export function createSalesforceAuthFlow(hyperClient: HyperDatabaseClient, salesforceApi: SalesforceApiClientInterface, platformType: PlatformType, appEvents: AppEventListener, config: SalesforceConnectorConfig, logger: Logger): (SalesforceSetupApi | null) {
-    const auth = async (updateState: Dispatch<SalesforceConnectionStateAction>, params: SalesforceAuthParams, abort: AbortSignal) => {
+    const setup = async (updateState: Dispatch<SalesforceConnectionStateAction>, params: SalesforceAuthParams, abort: AbortSignal) => {
         return setupSalesforceConnection(updateState, logger, params, config, platformType, salesforceApi, hyperClient, appEvents, abort);
     };
     const reset = async (updateState: Dispatch<SalesforceConnectionStateAction>) => {
@@ -304,5 +306,5 @@ export function createSalesforceAuthFlow(hyperClient: HyperDatabaseClient, sales
             value: null,
         })
     };
-    return { authorize: auth, reset: reset };
+    return { setup: setup, reset: reset };
 };

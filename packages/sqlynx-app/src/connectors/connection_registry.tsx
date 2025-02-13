@@ -56,7 +56,7 @@ export function useDynamicConnectionDispatch(): [ConnectionRegistry, DynamicConn
     /// Helper to modify a dynamic connection
     const dispatch = React.useCallback((id: number | null, action: ConnectionStateAction) => {
         // No id provided? Then do nothing.
-        if (!id) {
+        if (id == null) {
             return;
         }
         setRegistry(

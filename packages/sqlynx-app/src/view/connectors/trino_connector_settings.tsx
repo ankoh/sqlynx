@@ -73,22 +73,24 @@ export const TrinoConnectorSettings: React.FC = () => {
             return;
         }
 
-        // Setupt the Hyper connection
-        setupAbortController.current = new AbortController();
-        const connectionParams: TrinoConnectionParams = {
-            channelArgs: {
-                endpoint: pageState.endpoint
-            },
-            authParams: pageState.authParams,
-            metadata: pageState.additionalMetadata,
-        };
+        try {
+            // Setup the Trino connection
+            setupAbortController.current = new AbortController();
+            const connectionParams: TrinoConnectionParams = {
+                channelArgs: {
+                    endpoint: pageState.endpoint
+                },
+                authParams: pageState.authParams,
+                metadata: pageState.additionalMetadata,
+            };
+            const _channel = await trinoSetup.setup(dispatchConnectionState, connectionParams, setupAbortController.current.signal);
 
-        await trinoSetup.setup(dispatchConnectionState, connectionParams, setupAbortController.current.signal);
+            // Start the catalog update
+            // XXX
+        } catch (error: any) {
+            // XXX
+        }
         setupAbortController.current = null;
-
-        // Close the channel
-        // XXX Remove
-        // await channel.close();
     };
 
     // Helper to cancel the authorization

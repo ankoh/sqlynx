@@ -5,7 +5,6 @@ import { VariantKind } from '../../utils/variant.js';
 import {
     SalesforceCoreAccessToken,
     SalesforceDataCloudAccessToken,
-    SalesforceMetadata,
 } from './salesforce_api_client.js';
 import { SalesforceAuthParams } from './salesforce_connection_params.js';
 import { CONNECTOR_INFOS, ConnectorType, SALESFORCE_DATA_CLOUD_CONNECTOR } from '../connector_info.js';
@@ -29,7 +28,6 @@ import {
     HyperGrpcConnectorAction,
     HyperGrpcSetupTimings
 } from '../hyper/hyper_connection_state.js';
-import { updateSalesforceCatalog } from './salesforce_catalog_update.js';
 import { HyperDatabaseChannel } from '../../connectors/hyper/hyperdb_client.js';
 
 export interface SalesforceSetupTimings extends HyperGrpcSetupTimings {

@@ -8,7 +8,7 @@ import {
     SalesforceMetadata,
     SalesforceUserInfo,
 } from './salesforce_api_client.js';
-import { QueryExecutorMock } from '../query_execution_mock.js';
+import { QueryExecutionResponseStreamMock } from '../query_execution_mock.js';
 import { SalesforceAuthConfig } from '../connector_configs.js';
 import { SalesforceAuthParams } from './salesforce_connection_params.js';
 
@@ -63,6 +63,6 @@ export class SalesforceAPIClientMock implements SalesforceApiClientInterface {
         _scriptText: string,
         _accessToken: SalesforceDataCloudAccessToken,
     ): QueryExecutionResponseStream {
-        return new QueryExecutorMock();
+        return new QueryExecutionResponseStreamMock();
     }
 }

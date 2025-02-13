@@ -196,7 +196,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                         appConsumerSecret: null,
                         loginHint: null,
                     };
-                    await salesforceSetup.authorize(dispatchConnection, authParams, setupAbortController.current.signal);
+                    await salesforceSetup.setup(dispatchConnection, authParams, setupAbortController.current.signal);
                     setupAbortController.current.signal.throwIfAborted();
                     setupAbortController.current = null;
                     break;

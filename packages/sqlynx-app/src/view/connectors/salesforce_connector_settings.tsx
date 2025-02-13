@@ -103,7 +103,7 @@ export function getConnectionHealthIndicator(health: ConnectionHealth | null) {
 
 export const SalesforceConnectorSettings: React.FC<object> = (_props: object) => {
     const logger = useLogger();
-    const salesforceAuthFlow = useSalesforceSetup();
+    const sfSetup = useSalesforceSetup();
 
     // Get Hyper connection from default session
     const defaultSessions = useDefaultSessions();
@@ -158,19 +158,29 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
                 value: null
             })
         }
-        if (!validationSucceeded || !salesforceAuthFlow) {
+        if (!validationSucceeded || !sfSetup) {
             return;
         }
 
-        // Authorize the client
-        setupAbortController.current = new AbortController();
-        const authParams: SalesforceAuthParams = {
-            instanceUrl: pageState.instanceUrl,
-            appConsumerKey: pageState.appConsumerKey,
-            appConsumerSecret: null,
-            loginHint: null,
-        };
-        await salesforceAuthFlow.authorize(dispatchConnectionState, authParams, setupAbortController.current.signal);
+        try {
+            // Authorize the client
+            setupAbortController.current = new AbortController();
+            const authParams: SalesforceAuthParams = {
+                instanceUrl: pageState.instanceUrl,
+                appConsumerKey: pageState.appConsumerKey,
+                appConsumerSecret: null,
+                loginHint: null,
+            };
+            const channel = await sfSetup.setup(dispatchConnectionState, authParams, setupAbortController.current.signal);
+
+
+            // Start the catalog update
+            // XXX
+
+        } catch (error: any) {
+            // XXX
+        }
+
         setupAbortController.current = null;
     };
 
@@ -183,8 +193,8 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
     };
     // Helper to reset the setup
     const resetSetup = async () => {
-        if (salesforceAuthFlow) {
-            await salesforceAuthFlow.reset(dispatchConnectionState);
+        if (sfSetup) {
+            await sfSetup.reset(dispatchConnectionState);
         }
     };
 
