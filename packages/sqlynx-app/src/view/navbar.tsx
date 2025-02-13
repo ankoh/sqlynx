@@ -11,7 +11,7 @@ import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 import { VersionInfoOverlay } from './version_viewer.js';
 import { generateWorkbookUrl, WorkbookLinkTarget } from '../workbook/workbook_setup_url.js';
 import { useCurrentWorkbookState } from '../workbook/current_workbook.js';
-import { useConnectionState } from '../connectors/connection_registry.js';
+import { useConnectionState } from '../connection/connection_registry.js';
 import { useLogger } from '../platform/logger_provider.js';
 import { useVersionCheck } from '../platform/version_check.js';
 import { VersionCheckIndicator } from './version_viewer.js';
@@ -171,8 +171,8 @@ export const NavBar = (): React.ReactElement => {
             <div className={styles.tabs}
                 data-tauri-drag-region="true"
             >
-                <PageTab label="Editor" route="/" location={location.pathname} icon={`${symbols}#file`} />
-                <PageTab label="Connectors" route="/connectors" location={location.pathname} icon={`${symbols}#database`} />
+                <PageTab label="Workbook" route="/" location={location.pathname} icon={`${symbols}#file`} />
+                <PageTab label="Connection" route="/connection" location={location.pathname} icon={`${symbols}#database`} />
             </div>
             <div className={styles.version_container}>
                 <LogButton />

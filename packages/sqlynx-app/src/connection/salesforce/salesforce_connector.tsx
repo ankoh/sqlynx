@@ -7,7 +7,7 @@ import { SalesforceSetupApi, createSalesforceAuthFlow } from './salesforce_conne
 import { useAppConfig } from '../../app_config.js';
 import { useHttpClient } from '../../platform/http_client_provider.js';
 import { useLogger } from '../../platform/logger_provider.js';
-import { useHyperDatabaseClient } from '../../connectors/hyper/hyperdb_client_provider.js';
+import { useHyperDatabaseClient } from '../../connection/hyper/hyperdb_client_provider.js';
 import { usePlatformType } from '../../platform/platform_type.js';
 import { useAppEventListener } from '../../platform/event_listener_provider.js';
 

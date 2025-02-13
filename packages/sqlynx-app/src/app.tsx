@@ -4,34 +4,34 @@ import { Route, Routes, Navigate, BrowserRouter, HashRouter } from 'react-router
 
 import { AppConfigProvider } from './app_config.js';
 import { AppEventListenerProvider } from './platform/event_listener_provider.js';
-import { CatalogUpdaterProvider } from './connectors/catalog_loader.js';
+import { CatalogUpdaterProvider } from './connection/catalog_loader.js';
 import { ComputationRegistry } from './compute/computation_registry.js';
-import { ConnectionRegistry } from './connectors/connection_registry.js';
-import { ConnectorsPage, ConnectorsPageStateProvider } from './view/connectors/connectors_page.js';
+import { ConnectionRegistry } from './connection/connection_registry.js';
+import { ConnectorsPage, ConnectorsPageStateProvider } from './view/connection/connection_page.js';
 import { CurrentWorkbookStateProvider } from './workbook/current_workbook.js';
-import { EditorPage } from './view/editor/editor_page.js';
+import { EditorPage } from './view/workbook/workbook_page.js';
 import { GitHubTheme } from './github_theme.js';
 import { HttpClientProvider } from './platform/http_client_provider.js';
-import { HyperDatabaseClientProvider } from './connectors/hyper/hyperdb_client_provider.js';
-import { HyperGrpcConnector } from './connectors/hyper/hyper_connector.js';
-import { HyperGrpcConnectorSettingsStateProvider } from './view/connectors/hyper_grpc_connector_settings.js';
+import { HyperDatabaseClientProvider } from './connection/hyper/hyperdb_client_provider.js';
+import { HyperGrpcConnector } from './connection/hyper/hyper_connector.js';
+import { HyperGrpcConnectorSettingsStateProvider } from './view/connection/hyper_grpc_connector_settings.js';
 import { LoggerProvider } from './platform/logger_provider.js';
 import { NavBarContainer } from './view/navbar.js';
 import { PlatformTypeProvider } from './platform/platform_type.js';
 import { PlotInternalsPage } from './view/internals/plot_internals_page.js';
 import { ProcessProvider } from './platform/process.js';
-import { QueryExecutorProvider } from './connectors/query_executor.js';
+import { QueryExecutorProvider } from './connection/query_executor.js';
 import { SQLynxComputeProvider } from './compute/compute_provider.js';
 import { SQLynxCoreProvider } from './core_provider.js';
-import { SalesforceConnector } from './connectors/salesforce/salesforce_connector.js';
-import { SalesforceConnectorSettingsStateProvider } from './view/connectors/salesforce_connector_settings.js';
+import { SalesforceConnector } from './connection/salesforce/salesforce_connector.js';
+import { SalesforceConnectorSettingsStateProvider } from './view/connection/salesforce_connector_settings.js';
 import { SchemaGraphDemoPage } from './view/internals/schema_graph_demo.js';
 import { ScriptLoader } from './workbook/script_loader.js';
 import { WorkbookCommands } from './workbook/workbook_commands.js';
 import { WorkbookSetup } from './workbook/workbook_setup.js';
 import { WorkbookStateRegistry } from './workbook/workbook_state_registry.js';
-import { TrinoConnector } from './connectors/trino/trino_connector.js';
-import { TrinoConnectorSettingsStateProvider } from './view/connectors/trino_connector_settings.js';
+import { TrinoConnector } from './connection/trino/trino_connector.js';
+import { TrinoConnectorSettingsStateProvider } from './view/connection/trino_connector_settings.js';
 import { UIInternalsPage } from './view/internals/ui_internals_page.js';
 import { VersionCheck } from './platform/version_check.js';
 import { isDebugBuild } from './globals.js';
@@ -131,7 +131,7 @@ root.render(
             <NavBarContainer>
                 <Routes>
                     <Route index Component={EditorPage} />
-                    <Route path="/connectors" Component={ConnectorsPage} />
+                    <Route path="/connection" Component={ConnectorsPage} />
                     {isDebugBuild() && (
                         <>
                             <Route path="/internals/ui" Component={UIInternalsPage} />

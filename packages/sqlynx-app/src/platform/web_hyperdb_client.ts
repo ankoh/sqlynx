@@ -9,7 +9,7 @@ import {
     QueryExecutionResponseStream,
     QueryExecutionResponseStreamMetrics,
     QueryExecutionStatus,
-} from '../connectors/query_execution_state.js';
+} from '../connection/query_execution_state.js';
 
 export class QueryResultReader implements AsyncIterator<Uint8Array>, AsyncIterable<Uint8Array> {
     /// The logger

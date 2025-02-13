@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { isNativePlatform } from '../../platform/native_globals.js';
-import { HyperDatabaseClient } from '../../connectors/hyper/hyperdb_client.js';
+import { HyperDatabaseClient } from '../../connection/hyper/hyperdb_client.js';
 import { NativeHyperDatabaseClient } from '../../platform/native_hyperdb_client.js';
 import { useLogger } from '../../platform/logger_provider.js';
 

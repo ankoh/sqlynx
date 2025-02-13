@@ -1,14 +1,14 @@
 import * as React from 'react';
 import * as symbols from '../../../static/svg/symbols.generated.svg';
-import * as style from './connector_settings.module.css';
+import * as style from './connection_settings.module.css';
 
 import { FileSymlinkFileIcon, KeyIcon, PlugIcon, XIcon } from '@primer/octicons-react';
 
-import { useConnectionState } from '../../connectors/connection_registry.js';
-import { ConnectionHealth, ConnectionStatus } from '../../connectors/connection_state.js';
-import { SalesforceAuthParams } from '../../connectors/salesforce/salesforce_connection_params.js';
-import { useSalesforceSetup } from '../../connectors/salesforce/salesforce_connector.js';
-import { getSalesforceConnectionDetails } from '../../connectors/salesforce/salesforce_connection_state.js';
+import { useConnectionState } from '../../connection/connection_registry.js';
+import { ConnectionHealth, ConnectionStatus } from '../../connection/connection_state.js';
+import { SalesforceAuthParams } from '../../connection/salesforce/salesforce_connection_params.js';
+import { useSalesforceSetup } from '../../connection/salesforce/salesforce_connector.js';
+import { getSalesforceConnectionDetails } from '../../connection/salesforce/salesforce_connection_state.js';
 import {
     TextField,
     TextFieldValidationStatus,

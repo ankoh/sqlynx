@@ -7,7 +7,7 @@ import {
     HyperDatabaseClient,
     HyperDatabaseConnectionContext,
     HyperQueryResultStream,
-} from '../connectors/hyper/hyperdb_client.js';
+} from '../connection/hyper/hyperdb_client.js';
 import {
     NativeGrpcChannel,
     NativeGrpcClient,
@@ -19,7 +19,7 @@ import {
     QueryExecutionProgress,
     QueryExecutionResponseStream, QueryExecutionResponseStreamMetrics,
     QueryExecutionStatus,
-} from '../connectors/query_execution_state.js';
+} from '../connection/query_execution_state.js';
 import { ChannelArgs } from './channel_common.js';
 import { Logger } from './logger.js';
 

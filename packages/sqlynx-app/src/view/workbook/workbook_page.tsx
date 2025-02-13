@@ -1,16 +1,16 @@
 import * as React from 'react';
 import * as ActionList from '../foundations/action_list.js';
-import * as styles from './editor_page.module.css';
+import * as styles from './workbook_page.module.css';
 import * as theme from '../../github_theme.module.css';
 import * as icons from '../../../static/svg/symbols.generated.svg';
 
 import { ButtonGroup, IconButton } from '@primer/react';
 import { DownloadIcon, LinkIcon, PaperAirplaneIcon, SyncIcon, ThreeBarsIcon } from '@primer/octicons-react';
 
-import { ConnectorInfo } from '../../connectors/connector_info.js';
+import { ConnectorInfo } from '../../connection/connector_info.js';
 import { DragSizing, DragSizingBorder } from '../foundations/drag_sizing.js';
 import { KeyEventHandler, useKeyEvents } from '../../utils/key_events.js';
-import { QueryExecutionStatus } from '../../connectors/query_execution_state.js';
+import { QueryExecutionStatus } from '../../connection/query_execution_state.js';
 import { QueryResultView } from '../query_result/query_result_view.js';
 import { QueryStatusView } from '../query_status/query_status_view.js';
 import { ScriptEditor } from './editor.js';
@@ -21,7 +21,7 @@ import { WorkbookListDropdown } from './session_list_dropdown.js';
 import { VerticalTabs, VerticalTabVariant } from '../foundations/vertical_tabs.js';
 import { useAppConfig } from '../../app_config.js';
 import { useCurrentWorkbookState } from '../../workbook/current_workbook.js';
-import { useQueryState } from '../../connectors/query_executor.js';
+import { useQueryState } from '../../connection/query_executor.js';
 
 const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
     const config = useAppConfig();
@@ -163,7 +163,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
         <div className={styles.page}>
             <div className={styles.header_container}>
                 <div className={styles.header_left_container}>
-                    <div className={styles.page_title}>SQL Editor</div>
+                    <div className={styles.page_title}>Workbook</div>
                     <WorkbookListDropdown short={true} />
                 </div>
                 <div className={styles.header_action_container}>

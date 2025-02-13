@@ -1,7 +1,7 @@
 import * as proto from "@ankoh/sqlynx-protobuf";
 
 import { ChannelArgs, ChannelMetadataProvider } from '../../platform/channel_common.js';
-import { QueryExecutionProgress, QueryExecutionResponseStream } from "../../connectors/query_execution_state.js";
+import { QueryExecutionProgress, QueryExecutionResponseStream } from "../../connection/query_execution_state.js";
 
 export interface AttachedDatabase {
     path: string;

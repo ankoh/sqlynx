@@ -4,11 +4,11 @@ import { HyperGrpcConnectorSettings } from './hyper_grpc_connector_settings.js';
 import { SalesforceConnectorSettings } from './salesforce_connector_settings.js';
 import { Dispatch } from '../../utils/variant.js';
 import { VerticalTabProps, VerticalTabRenderers, VerticalTabs, VerticalTabVariant } from '../foundations/vertical_tabs.js';
-import { CONNECTOR_INFOS, ConnectorType } from '../../connectors/connector_info.js';
+import { CONNECTOR_INFOS, ConnectorType } from '../../connection/connector_info.js';
 import { PlatformCheck } from './platform_check.js';
 import { TrinoConnectorSettings } from './trino_connector_settings.js';
 
-import * as styles from './connectors_page.module.css';
+import * as styles from './connection_page.module.css';
 import * as icons from '../../../static/svg/symbols.generated.svg';
 
 type PageState = number | null;
@@ -56,7 +56,7 @@ export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
         <div className={styles.page}>
             <div className={styles.header_container}>
                 <div className={styles.header_left_container}>
-                    <div className={styles.page_title}>Connectors</div>
+                    <div className={styles.page_title}>Connection</div>
                 </div>
             </div>
             <VerticalTabs

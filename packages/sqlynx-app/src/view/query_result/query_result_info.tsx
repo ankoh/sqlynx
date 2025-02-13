@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as styles from './query_result_info.module.css';
 
-import { QueryExecutionState } from '../../connectors/query_execution_state.js';
+import { QueryExecutionState } from '../../connection/query_execution_state.js';
 import { ByteFormat, formatMilliseconds, formatThousands } from '../../utils/index.js';
 import { formatBytes } from '../../utils/format.js';
 import { CopyToClipboardButton } from '../../utils/clipboard.js';

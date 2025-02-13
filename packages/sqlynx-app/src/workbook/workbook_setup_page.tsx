@@ -3,34 +3,34 @@ import * as React from 'react';
 import * as symbols from '../../static/svg/symbols.generated.svg';
 import * as icons from '../../static/svg/symbols.generated.svg';
 import * as baseStyles from '../view/banner_page.module.css';
-import * as connStyles from '../view/connectors/connector_settings.module.css';
+import * as connStyles from '../view/connection/connection_settings.module.css';
 
 import { IconButton } from '@primer/react';
 import { ChecklistIcon, DesktopDownloadIcon, FileBadgeIcon, KeyIcon, PackageIcon, PlugIcon, XIcon } from '@primer/octicons-react';
 
 import { formatHHMMSS } from '../utils/format.js';
 import { useLogger } from '../platform/logger_provider.js';
-import { ConnectorInfo, requiresSwitchingToNative } from '../connectors/connector_info.js';
+import { ConnectorInfo, requiresSwitchingToNative } from '../connection/connector_info.js';
 import { encodeWorkbookAsUrl as encodeWorkbookAsUrl, WorkbookLinkTarget as WorkbookLinkTarget } from './workbook_setup_url.js';
 import { AnchorAlignment, AnchorSide } from '../view/foundations/anchored_position.js';
 import { Button, ButtonSize, ButtonVariant } from '../view/foundations/button.js';
 import { KeyValueTextField, TextField } from '../view/foundations/text_field.js';
 import { RESTORE_WORKBOOK } from './workbook_state.js';
 import { SQLYNX_VERSION } from '../globals.js';
-import { SalesforceAuthParams } from '../connectors/salesforce/salesforce_connection_params.js';
+import { SalesforceAuthParams } from '../connection/salesforce/salesforce_connection_params.js';
 import { VersionInfoOverlay } from '../view/version_viewer.js';
-import { useConnectionState } from '../connectors/connection_registry.js';
-import { useSalesforceSetup } from '../connectors/salesforce/salesforce_connector.js';
+import { useConnectionState } from '../connection/connection_registry.js';
+import { useSalesforceSetup } from '../connection/salesforce/salesforce_connector.js';
 import { useWorkbookState } from './workbook_state_registry.js';
 import { LogViewerOverlay } from '../view/log_viewer.js';
 import { OverlaySize } from '../view/foundations/overlay.js';
 import { CopyToClipboardButton } from '../utils/clipboard.js';
-import { ConnectionHealth } from '../connectors/connection_state.js';
+import { ConnectionHealth } from '../connection/connection_state.js';
 import { IndicatorStatus, StatusIndicator } from '../view/foundations/status_indicator.js';
 import {
     getConnectionHealthIndicator,
     getConnectionStatusText,
-} from '../view/connectors/salesforce_connector_settings.js';
+} from '../view/connection/salesforce_connector_settings.js';
 import { useNavigate } from 'react-router-dom';
 
 const LOG_CTX = "workbook_setup";

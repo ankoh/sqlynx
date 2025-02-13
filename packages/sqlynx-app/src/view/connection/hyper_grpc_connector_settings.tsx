@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as symbols from '../../../static/svg/symbols.generated.svg';
-import * as style from './connector_settings.module.css';
+import * as style from './connection_settings.module.css';
 
 import {
     ChecklistIcon,
@@ -15,20 +15,20 @@ import {
 import { classNames } from '../../utils/classnames.js';
 import { KeyValueTextField, TextField } from '../foundations/text_field.js';
 import { useLogger } from '../../platform/logger_provider.js';
-import { useHyperDatabaseClient } from '../../connectors/hyper/hyperdb_client_provider.js';
+import { useHyperDatabaseClient } from '../../connection/hyper/hyperdb_client_provider.js';
 import { KeyValueListBuilder, KeyValueListElement, UpdateKeyValueList } from '../foundations/keyvalue_list.js';
 import { IndicatorStatus, StatusIndicator } from '../foundations/status_indicator.js';
 import { Dispatch } from '../../utils/variant.js';
 import { Button, ButtonVariant } from '../foundations/button.js';
-import { useConnectionState } from '../../connectors/connection_registry.js';
-import { ConnectionHealth } from '../../connectors/connection_state.js';
-import { HyperGrpcConnectionParams } from '../../connectors/hyper/hyper_connection_params.js';
+import { useConnectionState } from '../../connection/connection_registry.js';
+import { ConnectionHealth } from '../../connection/connection_state.js';
+import { HyperGrpcConnectionParams } from '../../connection/hyper/hyper_connection_params.js';
 import { useWorkbookState } from '../../workbook/workbook_state_registry.js';
 import { useCurrentWorkbookSelector } from '../../workbook/current_workbook.js';
 import { useNavigate } from 'react-router-dom';
 import { useDefaultWorkbooks } from '../../workbook/workbook_setup.js';
 import { getConnectionHealthIndicator, getConnectionStatusText } from './salesforce_connector_settings.js';
-import { useHyperGrpcSetup } from '../../connectors/hyper/hyper_connection_setup.js';
+import { useHyperGrpcSetup } from '../../connection/hyper/hyper_connection_setup.js';
 
 const LOG_CTX = "hyper_connector";
 

@@ -29,7 +29,7 @@ import { AppEventListener } from '../../platform/event_listener.js';
 import { isNativePlatform } from '../../platform/native_globals.js';
 import { isDebugBuild } from '../../globals.js';
 import { RESET } from './../connection_state.js';
-import { AttachedDatabase, HyperDatabaseClient, HyperDatabaseConnectionContext } from '../../connectors/hyper/hyperdb_client.js';
+import { AttachedDatabase, HyperDatabaseClient, HyperDatabaseConnectionContext } from '../../connection/hyper/hyperdb_client.js';
 import {
     CHANNEL_READY,
     CHANNEL_SETUP_STARTED,

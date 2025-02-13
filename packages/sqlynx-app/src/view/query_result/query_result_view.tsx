@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as styles from './query_result_view.module.css';
 
-import { QueryExecutionState } from '../../connectors/query_execution_state.js';
+import { QueryExecutionState } from '../../connection/query_execution_state.js';
 import { DataTable } from './data_table.js';
 import { useComputationRegistry } from '../../compute/computation_registry.js';
 import { QueryResultInfo } from './query_result_info.js';

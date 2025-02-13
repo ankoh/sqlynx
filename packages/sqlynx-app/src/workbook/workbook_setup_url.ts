@@ -1,9 +1,9 @@
 import * as proto from '@ankoh/sqlynx-protobuf';
 
 import { WorkbookState } from './workbook_state.js';
-import { ConnectionState } from '../connectors/connection_state.js';
+import { ConnectionState } from '../connection/connection_state.js';
 import { BASE64_CODEC } from '../utils/base64.js';
-import { buildConnectorParams } from '../connectors/connection_params.js';
+import { buildConnectorParams } from '../connection/connection_params.js';
 
 export enum WorkbookLinkTarget {
     NATIVE,

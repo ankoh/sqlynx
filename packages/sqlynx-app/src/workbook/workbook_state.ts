@@ -5,10 +5,10 @@ import Immutable from 'immutable';
 
 import { ScriptMetadata, ScriptOriginType, ScriptType } from './script_metadata.js';
 import { ScriptLoadingStatus } from './script_loader.js';
-import { parseAndAnalyzeScript, SQLynxScriptBuffers } from '../view/editor/sqlynx_processor.js';
+import { parseAndAnalyzeScript, SQLynxScriptBuffers } from '../view/workbook/sqlynx_processor.js';
 import { ScriptLoadingInfo } from './script_loader.js';
 import { deriveFocusFromCompletionCandidates, deriveFocusFromScriptCursor, FOCUSED_COMPLETION, UserFocus } from './focus.js';
-import { ConnectorInfo } from '../connectors/connector_info.js';
+import { ConnectorInfo } from '../connection/connector_info.js';
 import { VariantKind } from '../utils/index.js';
 
 /// The script key

@@ -2,7 +2,7 @@ import * as proto from '@ankoh/sqlynx-protobuf';
 
 import { QueryExecutionArgs } from "../query_execution_args.js";
 import { SalesforceConnectionDetails } from "./salesforce_connection_state.js";
-import { QueryExecutionResponseStream } from 'connectors/query_execution_state.js';
+import { QueryExecutionResponseStream } from '../query_execution_state.js';
 
 export async function executeSalesforceQuery(conn: SalesforceConnectionDetails, args: QueryExecutionArgs): Promise<QueryExecutionResponseStream> {
     // Is the Hyper missing?

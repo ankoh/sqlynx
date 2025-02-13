@@ -5,17 +5,17 @@ import { useCurrentWorkbookSelector, useCurrentWorkbookState } from '../../workb
 import { useWorkbookRegistry } from '../../workbook/workbook_state_registry.js';
 import { AnchoredOverlay } from '../foundations/anchored_overlay.js';
 import { Button, ButtonVariant } from '../foundations/button.js';
-import { ConnectorIcon, ConnectorIconVariant } from '../connectors/connector_icons.js';
+import { ConnectorIcon, ConnectorIconVariant } from '../connection/connection_icons.js';
 import {
     HYPER_GRPC_CONNECTOR,
     SALESFORCE_DATA_CLOUD_CONNECTOR,
     SERVERLESS_CONNECTOR,
     DEMO_CONNECTOR,
     TRINO_CONNECTOR,
-} from '../../connectors/connector_info.js';
+} from '../../connection/connector_info.js';
 import { WorkbookState } from '../../workbook/workbook_state.js';
-import { useConnectionRegistry } from '../../connectors/connection_registry.js';
-import { ConnectionHealth } from '../../connectors/connection_state.js';
+import { useConnectionRegistry } from '../../connection/connection_registry.js';
+import { ConnectionHealth } from '../../connection/connection_state.js';
 
 export function WorkbookListDropdown(props: { className?: string; short: boolean }) {
     const workbookRegistry = useWorkbookRegistry();

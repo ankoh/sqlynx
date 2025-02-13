@@ -2,7 +2,7 @@ import * as arrow from 'apache-arrow';
 import * as proto from "@ankoh/sqlynx-protobuf";
 
 import { Logger } from '../../platform/logger.js';
-import { QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionResponseStreamMetrics, QueryExecutionStatus } from "../../connectors/query_execution_state.js";
+import { QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionResponseStreamMetrics, QueryExecutionStatus } from "../../connection/query_execution_state.js";
 import { TRINO_STATUS_HTTP_ERROR, TRINO_STATUS_OK, TRINO_STATUS_OTHER_ERROR, TrinoApiClientInterface, TrinoApiEndpoint, TrinoQueryResult, TrinoQueryStatistics } from "./trino_api_client.js";
 
 export interface TrinoQueryExecutionProgress extends QueryExecutionProgress { }

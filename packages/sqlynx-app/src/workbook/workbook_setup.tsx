@@ -2,18 +2,18 @@ import * as proto from '@ankoh/sqlynx-protobuf';
 import * as React from 'react';
 
 import { WorkbookSetupPage } from './workbook_setup_page.js';
-import { ConnectorInfo, getConnectorInfoForParams } from '../connectors/connector_info.js';
-import { useServerlessWorkbookSetup } from '../connectors/serverless/serverless_session.js';
+import { ConnectorInfo, getConnectorInfoForParams } from '../connection/connector_info.js';
+import { useServerlessWorkbookSetup } from '../connection/serverless/serverless_session.js';
 import { useAppEventListener } from '../platform/event_listener_provider.js';
-import { useSalesforceWorkbookSetup } from '../connectors/salesforce/salesforce_workbook.js';
-import { useDemoWorkbookSetup } from '../connectors/demo/demo_workbook.js';
-import { useHyperWorkbookSetup } from '../connectors/hyper/hyper_workbook.js';
+import { useSalesforceWorkbookSetup } from '../connection/salesforce/salesforce_workbook.js';
+import { useDemoWorkbookSetup } from '../connection/demo/demo_workbook.js';
+import { useHyperWorkbookSetup } from '../connection/hyper/hyper_workbook.js';
 import { useCurrentWorkbookSelector } from './current_workbook.js';
 import { useLogger } from '../platform/logger_provider.js';
-import { useDynamicConnectionDispatch } from '../connectors/connection_registry.js';
+import { useDynamicConnectionDispatch } from '../connection/connection_registry.js';
 import { useWorkbookRegistry } from './workbook_state_registry.js';
-import { useTrinoWorkbookSetup } from '../connectors/trino/trino_session.js';
-import { RESET } from '../connectors/connection_state.js';
+import { useTrinoWorkbookSetup } from '../connection/trino/trino_session.js';
+import { RESET } from '../connection/connection_state.js';
 import { isDebugBuild } from '../globals.js';
 
 /// For now, we just set up one workbook per connector.

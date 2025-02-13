@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { ConnectorInfo } from '../../connectors/connector_info.js';
+import { ConnectorInfo } from '../../connection/connector_info.js';
 
 import * as icons from '../../../static/svg/symbols.generated.svg';
 

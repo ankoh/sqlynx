@@ -1,11 +1,11 @@
 import * as React from 'react';
 
 import { KeyEventHandler, useKeyEvents } from '../utils/key_events.js';
-import { ConnectorInfo } from '../connectors/connector_info.js';
+import { ConnectorInfo } from '../connection/connector_info.js';
 import { useCurrentWorkbookState } from './current_workbook.js';
-import { useQueryExecutor } from '../connectors/query_executor.js';
-import { useConnectionState } from '../connectors/connection_registry.js';
-import { ConnectionHealth } from '../connectors/connection_state.js';
+import { useQueryExecutor } from '../connection/query_executor.js';
+import { useConnectionState } from '../connection/connection_registry.js';
+import { ConnectionHealth } from '../connection/connection_state.js';
 import { useLogger } from '../platform/logger_provider.js';
 import { REGISTER_QUERY } from './workbook_state.js';
 

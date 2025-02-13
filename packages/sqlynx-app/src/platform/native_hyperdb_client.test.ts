@@ -8,7 +8,7 @@ import { NativeHyperDatabaseClient, NativeHyperQueryResultStream } from './nativ
 import { NativeGrpcServerStreamBatchEvent } from './native_grpc_client.js';
 import { PlatformType } from './platform_type.js';
 import { TestLogger } from './test_logger.js';
-import { AttachedDatabase, HyperDatabaseConnectionContext } from '../connectors/hyper/hyperdb_client.js';
+import { AttachedDatabase, HyperDatabaseConnectionContext } from '../connection/hyper/hyperdb_client.js';
 
 describe('Native Hyper client', () => {
     let mock: NativeAPIMock | null;

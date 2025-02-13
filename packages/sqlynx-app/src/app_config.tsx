@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { StatePromise, StatePromiseMapper } from './utils/state_promise.js';
-import { ConnectorConfigs, readConnectorConfigs } from './connectors/connector_configs.js';
+import { ConnectorConfigs, readConnectorConfigs } from './connection/connector_configs.js';
 import { useLogger } from './platform/logger_provider.js';
 import { SQLYNX_BUILD_MODE } from './globals.js';
 

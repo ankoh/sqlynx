@@ -28,7 +28,7 @@ import {
     HEALTH_CHECK_SUCCEEDED,
     HyperGrpcSetupTimings
 } from '../hyper/hyper_connection_state.js';
-import { HyperGrpcConnectionParams } from 'connectors/hyper/hyper_connection_params.js';
+import { HyperGrpcConnectionParams } from '../hyper/hyper_connection_params.js';
 
 export interface SalesforceSetupTimings extends HyperGrpcSetupTimings {
     /// The time when the auth started

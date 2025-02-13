@@ -20,10 +20,10 @@ import {
     HyperDatabaseChannel,
     HyperDatabaseClient,
     HyperDatabaseConnectionContext,
-} from '../../connectors/hyper/hyperdb_client.js';
+} from '../../connection/hyper/hyperdb_client.js';
 import { useLogger } from '../../platform/logger_provider.js';
 import { useAppConfig } from '../../app_config.js';
-import { useHyperDatabaseClient } from '../../connectors/hyper/hyperdb_client_provider.js';
+import { useHyperDatabaseClient } from '../../connection/hyper/hyperdb_client_provider.js';
 import { RESET } from '../connection_state.js';
 
 export async function setupHyperGrpcConnection(updateState: Dispatch<HyperGrpcConnectorAction>, logger: Logger, params: HyperGrpcConnectionParams, _config: HyperGrpcConnectorConfig, client: HyperDatabaseClient, abortSignal: AbortSignal): Promise<HyperDatabaseChannel | null> {

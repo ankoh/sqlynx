@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import * as symbols from '../../../static/svg/symbols.generated.svg';
-import * as style from './connector_settings.module.css';
+import * as style from './connection_settings.module.css';
 
 import {
     FileSymlinkFileIcon,
@@ -13,20 +13,20 @@ import {
 
 
 import { Button, ButtonVariant } from '../foundations/button.js';
-import { ConnectionHealth } from '../../connectors/connection_state.js';
+import { ConnectionHealth } from '../../connection/connection_state.js';
 import { Dispatch } from '../../utils/variant.js';
 import { IndicatorStatus, StatusIndicator } from '../foundations/status_indicator.js';
 import { KeyValueListBuilder, KeyValueListElement, UpdateKeyValueList } from '../foundations/keyvalue_list.js';
 import { TextField } from '../foundations/text_field.js';
-import { TrinoAuthParams, TrinoConnectionParams } from '../../connectors/trino/trino_connection_params.js';
+import { TrinoAuthParams, TrinoConnectionParams } from '../../connection/trino/trino_connection_params.js';
 import { classNames } from '../../utils/classnames.js';
-import { getConnectionHealthIndicator, getConnectionStatusText } from './salesforce_connector_settings.js';
-import { useConnectionState } from '../../connectors/connection_registry.js';
+import { getConnectionHealthIndicator, getConnectionStatusText } from '../connection/salesforce_connector_settings.js';
+import { useConnectionState } from '../../connection/connection_registry.js';
 import { useCurrentWorkbookSelector } from '../../workbook/current_workbook.js';
 import { useDefaultWorkbooks } from '../../workbook/workbook_setup.js';
 import { useLogger } from '../../platform/logger_provider.js';
 import { useWorkbookState } from '../../workbook/workbook_state_registry.js';
-import { useTrinoSetup } from '../../connectors/trino/trino_connector.js';
+import { useTrinoSetup } from '../../connection/trino/trino_connector.js';
 
 const LOG_CTX = "trino_connector";
 

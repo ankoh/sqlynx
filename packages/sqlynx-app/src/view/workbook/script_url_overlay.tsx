@@ -9,7 +9,7 @@ import { TextInput } from '../foundations/text_input.js';
 import { classNames } from '../../utils/classnames.js';
 import { generateWorkbookUrl, WorkbookLinkTarget } from '../../workbook/workbook_setup_url.js';
 import { sleep } from '../../utils/sleep.js';
-import { useConnectionState } from '../../connectors/connection_registry.js';
+import { useConnectionState } from '../../connection/connection_registry.js';
 import { useCurrentWorkbookState } from '../../workbook/current_workbook.js';
 
 import * as styles from './script_url_overlay.module.css';
