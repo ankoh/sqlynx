@@ -22,14 +22,14 @@ import { PlatformType } from '../../platform/platform_type.js';
 import { SalesforceConnectorConfig } from '../connector_configs.js';
 import { SalesforceAuthParams } from './salesforce_connection_params.js';
 import { HyperGrpcConnectionParams } from '../hyper/hyper_connection_params.js';
-import { SalesforceApiClientInterface } from './salesforce_api_client.js';
+import { SalesforceApiClientInterface, SalesforceDatabaseChannel } from './salesforce_api_client.js';
 import { Dispatch } from '../../utils/variant.js';
 import { Logger } from '../../platform/logger.js';
 import { AppEventListener } from '../../platform/event_listener.js';
 import { isNativePlatform } from '../../platform/native_globals.js';
 import { isDebugBuild } from '../../globals.js';
 import { RESET } from './../connection_state.js';
-import { AttachedDatabase, HyperDatabaseChannel, HyperDatabaseClient, HyperDatabaseConnectionContext } from '../../connectors/hyper/hyperdb_client.js';
+import { AttachedDatabase, HyperDatabaseClient, HyperDatabaseConnectionContext } from '../../connectors/hyper/hyperdb_client.js';
 import {
     CHANNEL_READY,
     CHANNEL_SETUP_STARTED,
@@ -74,7 +74,7 @@ const DEFAULT_EXPIRATION_TIME_MS = 2 * 60 * 60 * 1000;
 const OAUTH_POPUP_NAME = 'SQLynx OAuth';
 const OAUTH_POPUP_SETTINGS = 'toolbar=no, menubar=no, width=600, height=700, top=100, left=100';
 
-export async function setupSalesforceConnection(updateState: Dispatch<SalesforceConnectionStateAction>, logger: Logger, params: SalesforceAuthParams, config: SalesforceConnectorConfig, platformType: PlatformType, apiClient: SalesforceApiClientInterface, hyperClient: HyperDatabaseClient, appEvents: AppEventListener, abortSignal: AbortSignal): Promise<HyperDatabaseChannel> {
+export async function setupSalesforceConnection(updateState: Dispatch<SalesforceConnectionStateAction>, logger: Logger, params: SalesforceAuthParams, config: SalesforceConnectorConfig, platformType: PlatformType, apiClient: SalesforceApiClientInterface, hyperClient: HyperDatabaseClient, appEvents: AppEventListener, abortSignal: AbortSignal): Promise<SalesforceDatabaseChannel> {
     try {
         // Start the authorization process
         updateState({
@@ -235,13 +235,14 @@ export async function setupSalesforceConnection(updateState: Dispatch<Salesforce
         };
 
         // Create the channel
-        const channel = await hyperClient.connect(connParams.channelArgs, connectionContext);
+        const hyperChannel = await hyperClient.connect(connParams.channelArgs, connectionContext);
+        const sfChannel = new SalesforceDatabaseChannel(apiClient, coreAccessToken, dcToken, hyperChannel);
         abortSignal.throwIfAborted();
 
         // Mark the channel as ready
         updateState({
             type: CHANNEL_READY,
-            value: channel,
+            value: sfChannel,
         });
         abortSignal.throwIfAborted();
 
@@ -253,7 +254,7 @@ export async function setupSalesforceConnection(updateState: Dispatch<Salesforce
         abortSignal.throwIfAborted();
 
         // Create the channel
-        const health = await channel.checkHealth();
+        const health = await hyperChannel.checkHealth();
         abortSignal.throwIfAborted();
 
         if (health.ok) {
@@ -261,7 +262,7 @@ export async function setupSalesforceConnection(updateState: Dispatch<Salesforce
                 type: HEALTH_CHECK_SUCCEEDED,
                 value: null,
             });
-            return channel;
+            return sfChannel;
         } else {
             updateState({
                 type: HEALTH_CHECK_FAILED,
@@ -292,7 +293,7 @@ export async function setupSalesforceConnection(updateState: Dispatch<Salesforce
 }
 
 export interface SalesforceSetupApi {
-    setup(dispatch: Dispatch<SalesforceConnectionStateAction>, params: SalesforceAuthParams, abortSignal: AbortSignal): Promise<HyperDatabaseChannel>
+    setup(dispatch: Dispatch<SalesforceConnectionStateAction>, params: SalesforceAuthParams, abortSignal: AbortSignal): Promise<SalesforceDatabaseChannel>
     reset(dispatch: Dispatch<SalesforceConnectionStateAction>): Promise<void>
 }
 

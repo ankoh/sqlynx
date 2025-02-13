@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { SalesforceAPIClient, SalesforceApiClientInterface } from './salesforce_api_client.js';
+import { SalesforceApiClient, SalesforceApiClientInterface } from './salesforce_api_client.js';
 import { SalesforceAPIClientMock } from './salesforce_api_client_mock.js';
 import { mockSalesforceAuthFlow } from './salesforce_connection_setup_mock.js';
 import { SalesforceSetupApi, createSalesforceAuthFlow } from './salesforce_connection_setup.js';
@@ -36,7 +36,7 @@ export const SalesforceConnector: React.FC<Props> = (props: Props) => {
             const setup = mockSalesforceAuthFlow(api, connectorConfig, logger);
             return [api, setup];
         } else {
-            const api = new SalesforceAPIClient(logger, httpClient);
+            const api = new SalesforceApiClient(logger, httpClient);
             const setup = createSalesforceAuthFlow(hyperClient!, api, platformType, appEvents, connectorConfig, logger);
             return [api, setup];
         }

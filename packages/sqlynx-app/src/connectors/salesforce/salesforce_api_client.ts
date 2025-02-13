@@ -1,9 +1,11 @@
+import * as proto from "@ankoh/sqlynx-protobuf";
+
 import { Logger } from '../../platform/logger.js';
 import { HttpClient } from '../../platform/http_client.js';
 import { SalesforceAuthParams } from './salesforce_connection_params.js';
 import { SalesforceAuthConfig } from '../connector_configs.js';
-import { QueryExecutionResponseStream } from '../query_execution_state.js';
 import { Base64Codec } from '../../utils/base64.js';
+import { HealthCheckResult, HyperDatabaseChannel, HyperQueryResultStream } from '../hyper/hyperdb_client.js';
 
 export interface SalesforceCoreAccessToken {
     /// The OAuth token
@@ -211,10 +213,9 @@ export interface SalesforceApiClientInterface {
         cancel: AbortSignal,
     ): Promise<SalesforceDataCloudAccessToken>;
     getDataCloudMetadata(access: SalesforceDataCloudAccessToken, cancel: AbortSignal): Promise<SalesforceMetadata>;
-    executeQuery(scriptText: string, accessToken: SalesforceDataCloudAccessToken): QueryExecutionResponseStream;
 }
 
-export class SalesforceAPIClient implements SalesforceApiClientInterface {
+export class SalesforceApiClient implements SalesforceApiClientInterface {
     logger: Logger;
     httpClient: HttpClient;
     base64Codec: Base64Codec;
@@ -371,7 +372,36 @@ export class SalesforceAPIClient implements SalesforceApiClientInterface {
         const responseJson = await response.json();
         return responseJson as SalesforceMetadata;
     }
-    public executeQuery(_scriptText: string, _accessToken: SalesforceDataCloudAccessToken): QueryExecutionResponseStream {
-        throw new Error("not implemented");
+}
+
+export class SalesforceDatabaseChannel implements HyperDatabaseChannel {
+    /// The api client
+    protected apiClient: SalesforceApiClientInterface;
+    /// The core access token
+    public readonly coreToken: SalesforceCoreAccessToken;
+    /// The data cloud access token
+    public readonly dataCloudToken: SalesforceDataCloudAccessToken;
+    /// The Hyper database channel
+    hyperChannel: HyperDatabaseChannel;
+
+    /// The constructor
+    constructor(apiClient: SalesforceApiClientInterface, coreToken: SalesforceCoreAccessToken, dataCloudToken: SalesforceDataCloudAccessToken, channel: HyperDatabaseChannel) {
+        this.apiClient = apiClient;
+        this.coreToken = coreToken;
+        this.dataCloudToken = dataCloudToken;
+        this.hyperChannel = channel;
+    }
+
+    /// Perform a health check
+    async checkHealth(): Promise<HealthCheckResult> {
+        return this.hyperChannel.checkHealth();
+    }
+    /// Execute Query
+    async executeQuery(param: proto.salesforce_hyperdb_grpc_v1.pb.QueryParam): Promise<HyperQueryResultStream> {
+        return this.hyperChannel.executeQuery(param);
+    }
+    /// Destroy the connection
+    async close(): Promise<void> {
+        return this.hyperChannel.close();
     }
 }

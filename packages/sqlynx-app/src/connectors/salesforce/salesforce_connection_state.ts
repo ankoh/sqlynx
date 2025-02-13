@@ -4,6 +4,7 @@ import { PKCEChallenge } from '../../utils/pkce.js';
 import { VariantKind } from '../../utils/variant.js';
 import {
     SalesforceCoreAccessToken,
+    SalesforceDatabaseChannel,
     SalesforceDataCloudAccessToken,
 } from './salesforce_api_client.js';
 import { SalesforceAuthParams } from './salesforce_connection_params.js';
@@ -25,10 +26,9 @@ import {
     HEALTH_CHECK_FAILED,
     HEALTH_CHECK_STARTED,
     HEALTH_CHECK_SUCCEEDED,
-    HyperGrpcConnectorAction,
     HyperGrpcSetupTimings
 } from '../hyper/hyper_connection_state.js';
-import { HyperDatabaseChannel } from '../../connectors/hyper/hyperdb_client.js';
+import { HyperGrpcConnectionParams } from 'connectors/hyper/hyper_connection_params.js';
 
 export interface SalesforceSetupTimings extends HyperGrpcSetupTimings {
     /// The time when the auth started
@@ -118,7 +118,7 @@ export interface SalesforceConnectionDetails {
     /// The authentication error
     channelError: string | null;
     /// The Hyper connection
-    channel: HyperDatabaseChannel | null;
+    channel: SalesforceDatabaseChannel | null;
     /// The health check error
     healthCheckError: string | null;
 }
@@ -168,21 +168,28 @@ export const REQUESTING_DATA_CLOUD_ACCESS_TOKEN = Symbol('REQUESTING_DATA_CLOUD_
 export const RECEIVED_DATA_CLOUD_ACCESS_TOKEN = Symbol('RECEIVED_DATA_CLOUD_ACCESS_TOKEN');
 
 export type SalesforceConnectionStateAction =
-    | VariantKind<typeof RESET, null>
-    | VariantKind<typeof AUTH_STARTED, SalesforceAuthParams>
-    | VariantKind<typeof AUTH_FAILED, string>
     | VariantKind<typeof AUTH_CANCELLED, string>
-    | VariantKind<typeof GENERATING_PKCE_CHALLENGE, null>
+    | VariantKind<typeof AUTH_FAILED, string>
+    | VariantKind<typeof AUTH_STARTED, SalesforceAuthParams>
+    | VariantKind<typeof CHANNEL_READY, SalesforceDatabaseChannel>
+    | VariantKind<typeof CHANNEL_SETUP_CANCELLED, string>
+    | VariantKind<typeof CHANNEL_SETUP_FAILED, string>
+    | VariantKind<typeof CHANNEL_SETUP_STARTED, HyperGrpcConnectionParams>
     | VariantKind<typeof GENERATED_PKCE_CHALLENGE, PKCEChallenge>
+    | VariantKind<typeof GENERATING_PKCE_CHALLENGE, null>
+    | VariantKind<typeof HEALTH_CHECK_CANCELLED, null>
+    | VariantKind<typeof HEALTH_CHECK_FAILED, string>
+    | VariantKind<typeof HEALTH_CHECK_STARTED, null>
+    | VariantKind<typeof HEALTH_CHECK_SUCCEEDED, null>
     | VariantKind<typeof OAUTH_NATIVE_LINK_OPENED, null>
-    | VariantKind<typeof OAUTH_WEB_WINDOW_OPENED, Window>
     | VariantKind<typeof OAUTH_WEB_WINDOW_CLOSED, null>
+    | VariantKind<typeof OAUTH_WEB_WINDOW_OPENED, Window>
     | VariantKind<typeof RECEIVED_CORE_AUTH_CODE, string>
-    | VariantKind<typeof REQUESTING_CORE_AUTH_TOKEN, null>
     | VariantKind<typeof RECEIVED_CORE_AUTH_TOKEN, SalesforceCoreAccessToken>
-    | VariantKind<typeof REQUESTING_DATA_CLOUD_ACCESS_TOKEN, null>
     | VariantKind<typeof RECEIVED_DATA_CLOUD_ACCESS_TOKEN, SalesforceDataCloudAccessToken>
-    | HyperGrpcConnectorAction
+    | VariantKind<typeof REQUESTING_CORE_AUTH_TOKEN, null>
+    | VariantKind<typeof REQUESTING_DATA_CLOUD_ACCESS_TOKEN, null>
+    | VariantKind<typeof RESET, null>
     ;
 
 export function reduceSalesforceConnectionState(state: ConnectionState, action: SalesforceConnectionStateAction): ConnectionState | null {

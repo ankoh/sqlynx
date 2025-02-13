@@ -15,18 +15,17 @@ import { generatePKCEChallenge } from '../../utils/pkce.js';
 import { sleep } from '../../utils/sleep.js';
 import { Dispatch } from '../../utils/variant.js';
 import { Logger } from '../../platform/logger.js';
-import { SalesforceApiClientInterface } from './salesforce_api_client.js';
+import { SalesforceApiClientInterface, SalesforceDatabaseChannel } from './salesforce_api_client.js';
 import { SalesforceSetupApi } from './salesforce_connection_setup.js';
 import { SalesforceAuthParams } from './salesforce_connection_params.js';
 import { SalesforceConnectorConfig } from '../connector_configs.js';
 import { RESET } from '../connection_state.js';
-import { HyperDatabaseChannel } from '../hyper/hyperdb_client.js';
 import { HyperDatabaseChannelMock } from '../hyper/hyperdb_client_mock.js';
 import { CHANNEL_READY, CHANNEL_SETUP_STARTED, HEALTH_CHECK_STARTED, HEALTH_CHECK_SUCCEEDED } from '../hyper/hyper_connection_state.js';
 import { HyperGrpcConnectionParams } from '../hyper/hyper_connection_params.js';
 
 
-export async function setupSalesforceConnection(updateState: Dispatch<SalesforceConnectionStateAction>, logger: Logger, params: SalesforceAuthParams, config: SalesforceConnectorConfig, apiClient: SalesforceApiClientInterface, abortSignal: AbortSignal): Promise<HyperDatabaseChannel> {
+export async function setupSalesforceConnection(updateState: Dispatch<SalesforceConnectionStateAction>, logger: Logger, params: SalesforceAuthParams, config: SalesforceConnectorConfig, apiClient: SalesforceApiClientInterface, abortSignal: AbortSignal): Promise<SalesforceDatabaseChannel> {
     try {
         // Start the authorization process
         updateState({
@@ -107,13 +106,14 @@ export async function setupSalesforceConnection(updateState: Dispatch<Salesforce
         });
         abortSignal.throwIfAborted()
 
-        const channel = new HyperDatabaseChannelMock();
+        const hyperChannel = new HyperDatabaseChannelMock();
+        const sfChannel = new SalesforceDatabaseChannel(apiClient, coreAccessToken, token, hyperChannel);
         sleep(100);
 
         // Mark the channel as ready
         updateState({
             type: CHANNEL_READY,
-            value: channel,
+            value: sfChannel,
         });
         abortSignal.throwIfAborted();
 
@@ -132,7 +132,7 @@ export async function setupSalesforceConnection(updateState: Dispatch<Salesforce
         });
         abortSignal.throwIfAborted();
 
-        return channel;
+        return sfChannel;
 
     } catch (error: any) {
         if (error.name === 'AbortError') {
