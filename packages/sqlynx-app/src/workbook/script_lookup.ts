@@ -1,9 +1,9 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
-import { SessionState } from './session_state.js';
+import { WorkbookState } from './workbook_state.js';
 
-export function findTableById(session: SessionState, table: sqlynx.ContextObjectID.Value): sqlynx.proto.Table | null {
+export function findTableById(workbook: WorkbookState, table: sqlynx.ContextObjectID.Value): sqlynx.proto.Table | null {
     const scriptKey = sqlynx.ContextObjectID.getContext(table);
-    const scriptData = session.scripts[scriptKey];
+    const scriptData = workbook.scripts[scriptKey];
     if (!scriptData) {
         console.log("SCRIPT DATA NULL");
         return null;

@@ -11,11 +11,11 @@ import { ChangeSpec, EditorSelection, StateEffect } from '@codemirror/state';
 import { CodeMirror } from './codemirror.js';
 import { SQLynxExtensions } from './sqlynx_extension.js';
 import { SQLynxScriptBuffers, SQLynxScriptKey, UpdateSQLynxScript } from './sqlynx_processor.js';
-import { COMPLETION_CHANGED, COMPLETION_STARTED, COMPLETION_STOPPED, UPDATE_SCRIPT, UPDATE_SCRIPT_ANALYSIS, UPDATE_SCRIPT_CURSOR } from '../../session/session_state.js';
+import { COMPLETION_CHANGED, COMPLETION_STARTED, COMPLETION_STOPPED, UPDATE_SCRIPT, UPDATE_SCRIPT_ANALYSIS, UPDATE_SCRIPT_CURSOR } from '../../workbook/workbook_state.js';
 import { ScriptStatisticsBar } from './script_statistics_bar.js';
 import { isDebugBuild } from '../../globals.js';
 import { useAppConfig } from '../../app_config.js';
-import { useCurrentSessionState } from '../../session/current_session.js';
+import { useCurrentWorkbookState } from '../../workbook/current_workbook.js';
 import { useLogger } from '../../platform/logger_provider.js';
 
 import * as styles from './editor.module.css';
@@ -33,7 +33,7 @@ interface ActiveScriptState {
 export const ScriptEditor: React.FC<Props> = (_props: Props) => {
     const logger = useLogger();
     const config = useAppConfig();
-    const [session, sessionDispatch] = useCurrentSessionState();
+    const [session, sessionDispatch] = useCurrentWorkbookState();
 
     // The editor view
     const [view, setView] = React.useState<EditorView | null>(null);

@@ -7,10 +7,10 @@ import { AnchorAlignment } from '../foundations/anchored_position.js';
 import { AnchoredOverlay } from '../foundations/anchored_overlay.js';
 import { TextInput } from '../foundations/text_input.js';
 import { classNames } from '../../utils/classnames.js';
-import { generateSessionSetupUrl, SessionLinkTarget } from '../../session/session_setup_url.js';
+import { generateWorkbookSetupUrl, WorkbookLinkTarget } from '../../workbook/workbook_setup_url.js';
 import { sleep } from '../../utils/sleep.js';
 import { useConnectionState } from '../../connectors/connection_registry.js';
-import { useCurrentSessionState } from '../../session/current_session.js';
+import { useCurrentWorkbookState } from '../../workbook/current_workbook.js';
 
 import * as styles from './script_url_overlay.module.css';
 
@@ -31,7 +31,7 @@ interface State {
 }
 
 export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
-    const [sessionState, _modifySessionState] = useCurrentSessionState();
+    const [sessionState, _modifySessionState] = useCurrentWorkbookState();
     const [connectionState, _setConnectionState] = useConnectionState(sessionState?.connectionId ?? null);
     const [state, setState] = React.useState<State>(() => ({
         publicURLText: null,
@@ -44,7 +44,7 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
     React.useEffect(() => {
         let setupUrl: URL | null = null;
         if (sessionState != null && connectionState != null) {
-            setupUrl = generateSessionSetupUrl(sessionState, connectionState, SessionLinkTarget.WEB);
+            setupUrl = generateWorkbookSetupUrl(sessionState, connectionState, WorkbookLinkTarget.WEB);
         }
         setState({
             publicURLText: setupUrl?.toString() ?? null,

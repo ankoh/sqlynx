@@ -25,22 +25,22 @@ export abstract class AppEventListener {
     /// The oauth subscriber.
     /// There can only be a single OAuth subscriber at a single point in time.
     private oAuthSubscriber: OAuthSubscriber | null = null;
-    /// The session setup subscriber.
+    /// The workbook setup subscriber.
     /// There can only be a single navigation subscribe at a single point in time
-    private sessionSetupSubscriber: ((data: proto.sqlynx_session.pb.SessionSetup) => void) | null = null;
+    private workbookSetupSubscriber: ((data: proto.sqlynx_session.pb.SessionSetup) => void) | null = null;
     /// The clipboard subscriber
     private clipboardEventHandler: (e: ClipboardEvent) => void;
 
-    /// The queued session setup (if any)
-    private queuedSessionSetupEvent: proto.sqlynx_session.pb.SessionSetup | null;
+    /// The queued workbook setup (if any)
+    private queuedWorkbookSetupEvent: proto.sqlynx_session.pb.SessionSetup | null;
 
     /// Constructor
     constructor(logger: Logger) {
         this.logger = logger;
         this.oAuthSubscriber = null;
-        this.sessionSetupSubscriber = null;
+        this.workbookSetupSubscriber = null;
         this.clipboardEventHandler = this.processClipboardEvent.bind(this);
-        this.queuedSessionSetupEvent = null;
+        this.queuedWorkbookSetupEvent = null;
     }
 
     /// Method to setup the listener
@@ -60,19 +60,19 @@ export abstract class AppEventListener {
                 break;
             }
             case "sessionSetup": {
-                this.dispatchSessionSetup(event.data.value);
+                this.dispatchWorkbookSetup(event.data.value);
                 break;
             }
         }
     }
 
     /// Received navigation event
-    protected dispatchSessionSetup(data: proto.sqlynx_session.pb.SessionSetup) {
-        if (!this.sessionSetupSubscriber) {
-            this.logger.info("queuing session setup event since there's no registered subscriber", LOG_CTX);
-            this.queuedSessionSetupEvent = data;
+    protected dispatchWorkbookSetup(data: proto.sqlynx_session.pb.SessionSetup) {
+        if (!this.workbookSetupSubscriber) {
+            this.logger.info("queuing workbook setup event since there's no registered subscriber", LOG_CTX);
+            this.queuedWorkbookSetupEvent = data;
         } else {
-            this.sessionSetupSubscriber(data);
+            this.workbookSetupSubscriber(data);
         }
     }
 
@@ -124,29 +124,29 @@ export abstract class AppEventListener {
     }
 
     /// Subscribe navigation events
-    public subscribeSessionSetupEvents(handler: (data: proto.sqlynx_session.pb.SessionSetup) => void): void {
-        if (this.sessionSetupSubscriber) {
-            this.logger.error("tried to register more than one session setup subscriber", LOG_CTX);
+    public subscribeWorkbookSetupEvents(handler: (data: proto.sqlynx_session.pb.SessionSetup) => void): void {
+        if (this.workbookSetupSubscriber) {
+            this.logger.error("tried to register more than one workbook setup subscriber", LOG_CTX);
             return;
         }
-        this.logger.info("subscribing to session setup events", LOG_CTX);
-        this.sessionSetupSubscriber = handler;
+        this.logger.info("subscribing to workbook setup events", LOG_CTX);
+        this.workbookSetupSubscriber = handler;
 
-        // Is there a pending session setup?
-        if (this.queuedSessionSetupEvent != null) {
-            const setup = this.queuedSessionSetupEvent;
-            this.queuedSessionSetupEvent = null;
-            this.logger.info("dispatching buffered session setup event", LOG_CTX);
-            this.sessionSetupSubscriber(setup);
+        // Is there a pending workbook setup?
+        if (this.queuedWorkbookSetupEvent != null) {
+            const setup = this.queuedWorkbookSetupEvent;
+            this.queuedWorkbookSetupEvent = null;
+            this.logger.info("dispatching buffered workbook setup event", LOG_CTX);
+            this.workbookSetupSubscriber(setup);
         }
     }
 
-    /// Unsubscribe from session setup events
-    public unsubscribeSessionSetupEvents(handler: (data: proto.sqlynx_session.pb.SessionSetup) => void): void {
-        if (this.sessionSetupSubscriber != handler) {
-            this.logger.error("tried to unregister a session setup subscriber that is not registered", LOG_CTX);
+    /// Unsubscribe from workbook setup events
+    public unsubscribeWorkbookSetupEvents(handler: (data: proto.sqlynx_session.pb.SessionSetup) => void): void {
+        if (this.workbookSetupSubscriber != handler) {
+            this.logger.error("tried to unregister a workbook setup subscriber that is not registered", LOG_CTX);
         } else {
-            this.sessionSetupSubscriber = null;
+            this.workbookSetupSubscriber = null;
         }
     }
 

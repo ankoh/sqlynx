@@ -1,7 +1,7 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
 import { StateField, StateEffect, StateEffectType, Text, Transaction } from '@codemirror/state';
 import { completionStatus } from '@codemirror/autocomplete';
-import { UserFocus } from '../../session/focus.js';
+import { UserFocus } from '../../workbook/focus.js';
 
 /// The configuration of the SQLynx config
 export interface SQLynxProcessorConfig {

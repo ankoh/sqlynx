@@ -3,23 +3,23 @@ import Immutable from 'immutable';
 
 import { CONNECTOR_INFOS, ConnectorType } from '../../connectors/connector_info.js';
 import { RESULT_OK } from '../../utils/result.js';
-import { ScriptData } from '../../session/session_state.js';
-import { ScriptLoadingStatus } from '../../session/script_loader.js';
-import { generateBlankScriptMetadata } from '../../session/script_metadata.js';
+import { ScriptData } from '../../workbook/workbook_state.js';
+import { ScriptLoadingStatus } from '../../workbook/script_loader.js';
+import { generateBlankScriptMetadata } from '../../workbook/script_metadata.js';
 import { useSQLynxCoreSetup } from '../../core_provider.js';
-import { useSessionStateAllocator } from '../../session/session_state_registry.js';
+import { useWorkbookStateAllocator } from '../../workbook/workbook_state_registry.js';
 import { createTrinoConnectionState } from './trino_connection_state.js';
 import { useConnectionStateAllocator } from '../../connectors/connection_registry.js';
 
-type SessionSetupFn = (abort?: AbortSignal) => Promise<number>;
+type WorkbookSetupFn = (abort?: AbortSignal) => Promise<number>;
 
-export function useTrinoSessionSetup(): SessionSetupFn {
+export function useTrinoWorkbookSetup(): WorkbookSetupFn {
     const setupSQLynx = useSQLynxCoreSetup();
     const allocateConnection = useConnectionStateAllocator();
-    const allocateSessionState = useSessionStateAllocator();
+    const allocateWorkbookState = useWorkbookStateAllocator();
 
     return React.useCallback(async (signal?: AbortSignal) => {
-        const instance = await setupSQLynx("trino_session");
+        const instance = await setupSQLynx("trino_workbook");
         if (instance?.type != RESULT_OK) throw instance.error;
         signal?.throwIfAborted();
 
@@ -51,7 +51,7 @@ export function useTrinoSessionSetup(): SessionSetupFn {
             selectedCompletionCandidate: null,
         };
 
-        return allocateSessionState({
+        return allocateWorkbookState({
             instance: instance.value,
             connectorInfo: CONNECTOR_INFOS[ConnectorType.TRINO],
             connectionId: connectionId,
@@ -67,5 +67,5 @@ export function useTrinoSessionSetup(): SessionSetupFn {
             selectedWorkbookEntry: 0,
             userFocus: null,
         });
-    }, [setupSQLynx, allocateSessionState]);
+    }, [setupSQLynx, allocateWorkbookState]);
 };

@@ -1,8 +1,8 @@
 import * as React from 'react';
 import * as ActionList from '../foundations/action_list.js';
 
-import { useCurrentSessionSelector, useCurrentSessionState } from '../../session/current_session.js';
-import { useSessionRegistry } from '../../session/session_state_registry.js';
+import { useCurrentWorkbookSelector, useCurrentWorkbookState } from '../../workbook/current_workbook.js';
+import { useWorkbookRegistry } from '../../workbook/workbook_state_registry.js';
 import { AnchoredOverlay } from '../foundations/anchored_overlay.js';
 import { Button, ButtonVariant } from '../foundations/button.js';
 import { ConnectorIcon, ConnectorIconVariant } from '../connectors/connector_icons.js';
@@ -13,32 +13,32 @@ import {
     DEMO_CONNECTOR,
     TRINO_CONNECTOR,
 } from '../../connectors/connector_info.js';
-import { SessionState } from '../../session/session_state.js';
+import { WorkbookState } from '../../workbook/workbook_state.js';
 import { useConnectionRegistry } from '../../connectors/connection_registry.js';
 import { ConnectionHealth } from '../../connectors/connection_state.js';
 
-export function SessionListDropdown(props: { className?: string; short: boolean }) {
-    const sessionRegistry = useSessionRegistry();
-    const [sessionState, _modifySessionState] = useCurrentSessionState();
-    const selectSession = useCurrentSessionSelector();
+export function WorkbookListDropdown(props: { className?: string; short: boolean }) {
+    const workbookRegistry = useWorkbookRegistry();
+    const [workbookState, _modifyWorkbookState] = useCurrentWorkbookState();
+    const selectWorkbook = useCurrentWorkbookSelector();
     const [isOpen, setIsOpen] = React.useState<boolean>(false);
     const connRegistry = useConnectionRegistry();
 
-    const onSessionClick = React.useCallback((e: React.MouseEvent) => {
+    const onWorkbookClick = React.useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
         const target = e.currentTarget as HTMLLIElement;
         if (target.dataset.item) {
-            const sessionId = Number.parseInt(target.dataset.item)!;
-            selectSession(sessionId);
+            const workbookId = Number.parseInt(target.dataset.item)!;
+            selectWorkbook(workbookId);
         } else {
             console.warn("click target did not contain a data attribute");
         }
     }, []);
-    const connectorName = !sessionState?.connectorInfo
+    const connectorName = !workbookState?.connectorInfo
         ? 'Not set'
         : props.short
-            ? sessionState?.connectorInfo.displayName.short
-            : sessionState?.connectorInfo.displayName.long;
+            ? workbookState?.connectorInfo.displayName.short
+            : workbookState?.connectorInfo.displayName.long;
 
     // Memoize button to prevent svg flickering
     const button = React.useMemo(() => (
@@ -46,17 +46,17 @@ export function SessionListDropdown(props: { className?: string; short: boolean 
             className={props.className}
             onClick={() => setIsOpen(true)}
             variant={ButtonVariant.Invisible}
-            leadingVisual={() => (!sessionState?.connectorInfo
+            leadingVisual={() => (!workbookState?.connectorInfo
                 ? <div />
-                : <ConnectorIcon connector={sessionState?.connectorInfo} variant={ConnectorIconVariant.OUTLINES} />
+                : <ConnectorIcon connector={workbookState?.connectorInfo} variant={ConnectorIconVariant.OUTLINES} />
             )}
         >
             {connectorName}
         </Button>
-    ), [sessionState?.connectorInfo, connectorName]);
+    ), [workbookState?.connectorInfo, connectorName]);
 
-    const renderItem = ([sessionId, session]: [number, SessionState]) => {
-        const connection = connRegistry.connectionMap.get(session.connectionId)!;
+    const renderItem = ([workbookId, workbook]: [number, WorkbookState]) => {
+        const connection = connRegistry.connectionMap.get(workbook.connectionId)!;
         let description: React.ReactElement | undefined = undefined;
         let enabled: boolean = true;
 
@@ -121,19 +121,19 @@ export function SessionListDropdown(props: { className?: string; short: boolean 
         }
         return (
             <ActionList.ListItem
-                key={sessionId}
-                data-session={session.connectionId}
-                onClick={onSessionClick}
-                selected={sessionId === sessionState?.sessionId}
+                key={workbookId}
+                data-workbook={workbook.connectionId}
+                onClick={onWorkbookClick}
+                selected={workbookId === workbookState?.workbookId}
                 disabled={!enabled}
-                data-item={sessionId.toString()}
+                data-item={workbookId.toString()}
             >
                 <ActionList.Leading>
-                    <ConnectorIcon connector={session.connectorInfo} variant={ConnectorIconVariant.OUTLINES} />
+                    <ConnectorIcon connector={workbook.connectorInfo} variant={ConnectorIconVariant.OUTLINES} />
                 </ActionList.Leading>
                 <ActionList.ItemText>
                     <ActionList.ItemTextTitle>
-                        {props.short ? session.connectorInfo.displayName.short : session.connectorInfo.displayName.long}
+                        {props.short ? workbook.connectorInfo.displayName.short : workbook.connectorInfo.displayName.long}
                     </ActionList.ItemTextTitle>
                     {description}
                 </ActionList.ItemText>
@@ -141,9 +141,9 @@ export function SessionListDropdown(props: { className?: string; short: boolean 
         )
     };
 
-    const sessions = React.useMemo(() => [...sessionRegistry.sessionMap.entries()].sort((l, r) => {
+    const workbooks = React.useMemo(() => [...workbookRegistry.workbookMap.entries()].sort((l, r) => {
         return l[1].connectorInfo.connectorType - r[1].connectorInfo.connectorType;
-    }), [sessionRegistry]);
+    }), [workbookRegistry]);
 
     return (
         <AnchoredOverlay
@@ -151,10 +151,10 @@ export function SessionListDropdown(props: { className?: string; short: boolean 
             onClose={() => setIsOpen(false)}
             renderAnchor={(p: object) => <div {...p}>{button}</div>}
         >
-            <ActionList.List aria-label="Sessions">
-                <ActionList.GroupHeading>Sessions</ActionList.GroupHeading>
+            <ActionList.List aria-label="Workbooks">
+                <ActionList.GroupHeading>Workbooks</ActionList.GroupHeading>
                 <>
-                    {sessions.map(renderItem)}
+                    {workbooks.map(renderItem)}
                 </>
             </ActionList.List>
         </AnchoredOverlay>

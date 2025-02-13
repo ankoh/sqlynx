@@ -6,7 +6,7 @@ import { Dispatch } from '../utils/variant.js';
 /// The connection registry
 ///
 /// Note that we're deliberately not using immutable maps for the connections here.
-/// Following the same reasoning as with the session registry, we don't have code that
+/// Following the same reasoning as with the workbook registry, we don't have code that
 /// explicitly observes modifications of the registry map.
 /// Instead, shallow-compare the entire registry object again.
 interface ConnectionRegistry {
@@ -61,14 +61,14 @@ export function useDynamicConnectionDispatch(): [ConnectionRegistry, DynamicConn
         }
         setRegistry(
             (reg: ConnectionRegistry) => {
-                // Find the previous session state
+                // Find the previous workbook state
                 const prev = reg.connectionMap.get(id);
-                // Ignore if the session does not exist
+                // Ignore if the workbook does not exist
                 if (!prev) {
-                    console.warn(`no session registered with id ${id}`);
+                    console.warn(`no workbook registered with id ${id}`);
                     return reg;
                 }
-                // Reduce the session action
+                // Reduce the workbook action
                 const next = reduceConnectionState(prev, action);
                 reg.connectionMap.set(id, next);
                 return { ...reg };

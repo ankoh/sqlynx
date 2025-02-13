@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as styles from './catalog_viewer.module.css'
 
 import { renderCatalog } from './catalog_renderer.js';
-import { useCurrentSessionState } from '../../session/current_session.js';
+import { useCurrentWorkbookState } from '../../workbook/current_workbook.js';
 import { observeSize } from '../foundations/size_observer.js';
 import { EdgeLayer } from './edge_layer.js';
 import { NodeLayer } from './node_layer.js';
@@ -50,26 +50,26 @@ interface Props {
 }
 
 export function CatalogViewer(_props: Props) {
-    const [sessionState, _dispatchSession] = useCurrentSessionState();
+    const [workbookState, _dispatchWorkbook] = useCurrentWorkbookState();
 
-    const workloadEntry = sessionState?.workbookEntries[sessionState.selectedWorkbookEntry];
-    const script = workloadEntry ? sessionState.scripts[workloadEntry.scriptKey] : null;
+    const workloadEntry = workbookState?.workbookEntries[workbookState.selectedWorkbookEntry];
+    const script = workloadEntry ? workbookState.scripts[workloadEntry.scriptKey] : null;
 
     // Watch the container size
     const containerElement = React.useRef(null);
     const containerSize = observeSize(containerElement);
     const padding = 20;
 
-    // Maintain a catalog snapshot of the session
+    // Maintain a catalog snapshot of the workbook
     const [viewModel, setViewModel] = React.useState<CatalogViewModel | null>(null);
     const [viewModelVersion, setViewModelVersion] = React.useState<number>(0);
     React.useEffect(() => {
-        const snapshot = sessionState?.connectionCatalog.createSnapshot() ?? null;
+        const snapshot = workbookState?.connectionCatalog.createSnapshot() ?? null;
         if (snapshot) {
             const state = new CatalogViewModel(snapshot, RENDERING_SETTINGS);
             setViewModel(state);
         }
-    }, [sessionState?.connectionCatalog.snapshot]);
+    }, [workbookState?.connectionCatalog.snapshot]);
 
     // Load script refs
     React.useEffect(() => {
@@ -86,9 +86,9 @@ export function CatalogViewer(_props: Props) {
 
     // Update user focus
     React.useEffect(() => {
-        if (viewModel != null && sessionState?.userFocus) {
+        if (viewModel != null && workbookState?.userFocus) {
             // Pin focused elements
-            viewModel.pinFocusedByUser(sessionState.userFocus);
+            viewModel.pinFocusedByUser(workbookState.userFocus);
 
             // Scroll to first focused entry
             let [scrollToFocus, found] = viewModel.getOffsetOfFirstFocused();
@@ -102,7 +102,7 @@ export function CatalogViewer(_props: Props) {
 
             setViewModelVersion(v => v + 1);
         }
-    }, [viewModel, sessionState?.userFocus]);
+    }, [viewModel, workbookState?.userFocus]);
 
     // Subscribe to scroll events
     interface Range {

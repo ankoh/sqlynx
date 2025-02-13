@@ -14,11 +14,11 @@ import { VariantKind } from '../utils/index.js';
 /// The script key
 export type ScriptKey = number;
 
-/// The state of the session
-export interface SessionState {
-    /// The session id
-    sessionId: number;
-    /// The session state contains many references into the Wasm heap.
+/// The state of the workbook
+export interface WorkbookState {
+    /// The workbook id
+    workbookId: number;
+    /// The workbook state contains many references into the Wasm heap.
     /// It therefore makes sense that script state users resolve the "right" module through here.
     instance: sqlynx.SQLynx | null;
     /// The connector info
@@ -33,15 +33,15 @@ export interface SessionState {
     };
     /// The workbook entries.
     /// A workbook defines a layout for a set of scripts and links script data to query executions.
-    workbookEntries: SessionWorkbookEntry[]
+    workbookEntries: WorkbookEntry[]
     /// The selected workbook entry
     selectedWorkbookEntry: number;
     /// The user focus info (if any)
     userFocus: UserFocus | null;
 }
 
-/// A session workbook entry
-export interface SessionWorkbookEntry {
+/// A workbook workbook entry
+export interface WorkbookEntry {
     /// The script key of this workbook entry
     scriptKey: ScriptKey;
     /// The latest query id (if the script was executed)
@@ -75,7 +75,7 @@ export interface ScriptData {
 }
 
 /// Destroy a state
-export function destroyState(state: SessionState): SessionState {
+export function destroyState(state: WorkbookState): WorkbookState {
     for (const key in state.scripts) {
         const script = state.scripts[key];
         script.processed.destroy(script.processed);
@@ -100,7 +100,7 @@ export const SCRIPT_LOADING_SUCCEEDED = Symbol('SCRIPT_LOADING_SUCCEEDED');
 export const SCRIPT_LOADING_FAILED = Symbol('SCRIPT_LOADING_FAILED');
 export const REGISTER_QUERY = Symbol('REGISTER_QUERY');
 
-export type SessionStateAction =
+export type WorkbookStateAction =
     | VariantKind<typeof DESTROY, null>
     | VariantKind<typeof RESTORE_WORKBOOK, proto.sqlynx_session.pb.SessionSetup>
     | VariantKind<typeof UPDATE_SCRIPT, ScriptKey>
@@ -117,7 +117,7 @@ export type SessionStateAction =
 const SCHEMA_SCRIPT_CATALOG_RANK = 1e9;
 const STATS_HISTORY_LIMIT = 20;
 
-export function reduceSessionState(state: SessionState, action: SessionStateAction): SessionState {
+export function reduceWorkbookState(state: WorkbookState, action: WorkbookStateAction): WorkbookState {
     switch (action.type) {
         case DESTROY:
             return destroyState({ ...state });
@@ -235,7 +235,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
             }
             // Store the new buffers
             prevScript.processed.destroy(prevScript.processed);
-            const next: SessionState = {
+            const next: WorkbookState = {
                 ...state,
                 scripts: {
                     ...state.scripts,
@@ -291,7 +291,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                 ...prevScript,
                 cursor,
             };
-            const newState: SessionState = {
+            const newState: WorkbookState = {
                 ...state,
                 scripts: {
                     ...state.scripts,
@@ -486,7 +486,7 @@ export function reduceSessionState(state: SessionState, action: SessionStateActi
                     };
                 }
             }
-            const next: SessionState = { ...state, scripts: scripts, userFocus: null };
+            const next: WorkbookState = { ...state, scripts: scripts, userFocus: null };
             let scriptData = next.scripts[action.value];
             if (scriptData != null && scriptData.cursor) {
                 next.userFocus = deriveFocusFromScriptCursor(action.value, scriptData, scriptData.cursor);

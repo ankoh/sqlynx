@@ -20,11 +20,11 @@ import { Dispatch } from '../../utils/variant.js';
 import { classNames } from '../../utils/classnames.js';
 import { Logger } from '../../platform/logger.js';
 import { useLogger } from '../../platform/logger_provider.js';
-import { useSessionState } from '../../session/session_state_registry.js';
-import { useCurrentSessionSelector } from '../../session/current_session.js';
+import { useWorkbookState } from '../../workbook/workbook_state_registry.js';
+import { useCurrentWorkbookSelector } from '../../workbook/current_workbook.js';
 import { useNavigate } from 'react-router-dom';
 import { Button, ButtonVariant } from '../foundations/button.js';
-import { useDefaultSessions } from '../../session/session_setup.js';
+import { useDefaultWorkbooks } from '../../workbook/workbook_setup.js';
 
 const LOG_CTX = "sf_connector";
 
@@ -105,13 +105,13 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
     const logger = useLogger();
     const sfSetup = useSalesforceSetup();
 
-    // Get Hyper connection from default session
-    const defaultSessions = useDefaultSessions();
-    const sessionId = defaultSessions?.salesforce ?? null;
-    const [sessionState, _sessionDispatch] = useSessionState(sessionId);
+    // Get Hyper connection from default workbook
+    const defaultWorkbooks = useDefaultWorkbooks();
+    const workbookId = defaultWorkbooks?.salesforce ?? null;
+    const [workbookState, _modifyWorkbook] = useWorkbookState(workbookId);
 
-    // Resolve connection for the default session
-    const connectionId = sessionState?.connectionId ?? null;
+    // Resolve connection for the default workbook
+    const connectionId = workbookState?.connectionId ?? null;
     const [connectionState, dispatchConnectionState] = useConnectionState(connectionId);
     const salesforceConnection = getSalesforceConnectionDetails(connectionState);
 
@@ -199,14 +199,14 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
     };
 
     // Helper to switch to the editor
-    const selectCurrentSession = useCurrentSessionSelector();
+    const selectCurrentSession = useCurrentWorkbookSelector();
     const navigate = useNavigate()
     const switchToEditor = React.useCallback(() => {
-        if (sessionId != null) {
-            selectCurrentSession(sessionId);
+        if (workbookId != null) {
+            selectCurrentSession(workbookId);
             navigate("/editor");
         }
-    }, [sessionId]);
+    }, [workbookId]);
 
     // Get the connection status
     const statusText = getConnectionStatusText(connectionState?.connectionStatus, logger);

@@ -9,10 +9,9 @@ import { classNames } from '../utils/classnames.js';
 import { HoverMode, NavBarButtonWithRef, NavBarLink } from './navbar_button.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 import { VersionInfoOverlay } from './version_viewer.js';
-import { generateSessionSetupUrl, SessionLinkTarget } from '../session/session_setup_url.js';
-import { useCurrentSessionState } from '../session/current_session.js';
+import { generateWorkbookSetupUrl, WorkbookLinkTarget } from '../workbook/workbook_setup_url.js';
+import { useCurrentWorkbookState } from '../workbook/current_workbook.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
-import { useAppConfig } from '../app_config.js';
 import { useLogger } from '../platform/logger_provider.js';
 import { useVersionCheck } from '../platform/version_check.js';
 import { VersionCheckIndicator } from './version_viewer.js';
@@ -149,17 +148,17 @@ export const NavBar = (): React.ReactElement => {
     const logger = useLogger();
     const location = useLocation();
     const platformType = usePlatformType();
-    const [sessionState, _modifySessionState] = useCurrentSessionState();
+    const [sessionState, _modifySessionState] = useCurrentWorkbookState();
     const [connectionState, _setConnectionState] = useConnectionState(sessionState?.connectionId ?? null);
 
     const isBrowser = platformType === PlatformType.WEB;
     const isMac = platformType === PlatformType.MACOS;
-    const setupLinkTarget = isBrowser ? SessionLinkTarget.NATIVE : SessionLinkTarget.WEB;
+    const setupLinkTarget = isBrowser ? WorkbookLinkTarget.NATIVE : WorkbookLinkTarget.WEB;
     const setupUrl = React.useMemo(() => {
         if (sessionState == null || connectionState == null) {
             return null;
         }
-        return generateSessionSetupUrl(sessionState, connectionState, setupLinkTarget);
+        return generateWorkbookSetupUrl(sessionState, connectionState, setupLinkTarget);
     }, [sessionState, connectionState, setupLinkTarget]);
 
     React.useEffect(() => {

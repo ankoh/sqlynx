@@ -8,7 +8,7 @@ import { CatalogUpdaterProvider } from './connectors/catalog_loader.js';
 import { ComputationRegistry } from './compute/computation_registry.js';
 import { ConnectionRegistry } from './connectors/connection_registry.js';
 import { ConnectorsPage, ConnectorsPageStateProvider } from './view/connectors/connectors_page.js';
-import { CurrentSessionStateProvider } from './session/current_session.js';
+import { CurrentWorkbookStateProvider } from './workbook/current_workbook.js';
 import { EditorPage } from './view/editor/editor_page.js';
 import { GitHubTheme } from './github_theme.js';
 import { HttpClientProvider } from './platform/http_client_provider.js';
@@ -26,10 +26,10 @@ import { SQLynxCoreProvider } from './core_provider.js';
 import { SalesforceConnector } from './connectors/salesforce/salesforce_connector.js';
 import { SalesforceConnectorSettingsStateProvider } from './view/connectors/salesforce_connector_settings.js';
 import { SchemaGraphDemoPage } from './view/internals/schema_graph_demo.js';
-import { ScriptLoader } from './session/script_loader.js';
-import { SessionCommands } from './session/session_commands.js';
-import { SessionSetup } from './session/session_setup.js';
-import { SessionStateRegistry } from './session/session_state_registry.js';
+import { ScriptLoader } from './workbook/script_loader.js';
+import { WorkbookCommands } from './workbook/workbook_commands.js';
+import { WorkbookSetup } from './workbook/workbook_setup.js';
+import { WorkbookStateRegistry } from './workbook/workbook_state_registry.js';
 import { TrinoConnector } from './connectors/trino/trino_connector.js';
 import { TrinoConnectorSettingsStateProvider } from './view/connectors/trino_connector_settings.js';
 import { UIInternalsPage } from './view/internals/ui_internals_page.js';
@@ -40,17 +40,17 @@ import './../static/fonts/fonts.css';
 import './colors.css';
 import './globals.css';
 
-const SessionProviders = (props: { children: React.ReactElement }) => (
-    <SessionStateRegistry>
-        <CurrentSessionStateProvider>
+const WorkbookProviders = (props: { children: React.ReactElement }) => (
+    <WorkbookStateRegistry>
+        <CurrentWorkbookStateProvider>
             <ScriptLoader />
-            <SessionCommands>
-                <SessionSetup>
+            <WorkbookCommands>
+                <WorkbookSetup>
                     {props.children}
-                </SessionSetup>
-            </SessionCommands>
-        </CurrentSessionStateProvider>
-    </SessionStateRegistry>
+                </WorkbookSetup>
+            </WorkbookCommands>
+        </CurrentWorkbookStateProvider>
+    </WorkbookStateRegistry>
 );
 
 const PageStateProviders = (props: { children: React.ReactElement }) => (
@@ -102,11 +102,11 @@ const AppProviders = (props: { children: React.ReactElement }) => (
                                         <SQLynxCoreProvider>
                                             <SQLynxComputeProvider>
                                                 <Connectors>
-                                                    <SessionProviders>
+                                                    <WorkbookProviders>
                                                         <PageStateProviders>
                                                             {props.children}
                                                         </PageStateProviders>
-                                                    </SessionProviders>
+                                                    </WorkbookProviders>
                                                 </Connectors>
                                             </SQLynxComputeProvider>
                                         </SQLynxCoreProvider>

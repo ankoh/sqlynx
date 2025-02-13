@@ -5,7 +5,7 @@ import { highlightingFor } from '@codemirror/language';
 import { tags as CODEMIRROR_TAGS, Tag } from '@lezer/highlight';
 
 import { SQLynxProcessor, SQLynxScriptBuffers, SQLynxScriptKey } from './sqlynx_processor.js';
-import { FocusType, UserFocus } from '../../session/focus.js';
+import { FocusType, UserFocus } from '../../workbook/focus.js';
 
 import './sqlynx_decorations.css';
 

@@ -11,17 +11,17 @@ import { ChecklistIcon, DesktopDownloadIcon, FileBadgeIcon, KeyIcon, PackageIcon
 import { formatHHMMSS } from '../utils/format.js';
 import { useLogger } from '../platform/logger_provider.js';
 import { ConnectorInfo, requiresSwitchingToNative } from '../connectors/connector_info.js';
-import { encodeSessionSetupUrl, SessionLinkTarget } from './session_setup_url.js';
+import { encodeWorkbookSetupUrl as encodeWorkbookSetupUrl, WorkbookLinkTarget as WorkbookLinkTarget } from './workbook_setup_url.js';
 import { AnchorAlignment, AnchorSide } from '../view/foundations/anchored_position.js';
 import { Button, ButtonSize, ButtonVariant } from '../view/foundations/button.js';
 import { KeyValueTextField, TextField } from '../view/foundations/text_field.js';
-import { RESTORE_WORKBOOK } from './session_state.js';
+import { RESTORE_WORKBOOK } from './workbook_state.js';
 import { SQLYNX_VERSION } from '../globals.js';
 import { SalesforceAuthParams } from '../connectors/salesforce/salesforce_connection_params.js';
 import { VersionInfoOverlay } from '../view/version_viewer.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
 import { useSalesforceSetup } from '../connectors/salesforce/salesforce_connector.js';
-import { useSessionState } from './session_state_registry.js';
+import { useWorkbookState } from './workbook_state_registry.js';
 import { LogViewerOverlay } from '../view/log_viewer.js';
 import { OverlaySize } from '../view/foundations/overlay.js';
 import { CopyToClipboardButton } from '../utils/clipboard.js';
@@ -33,7 +33,7 @@ import {
 } from '../view/connectors/salesforce_connector_settings.js';
 import { useNavigate } from 'react-router-dom';
 
-const LOG_CTX = "session_setup";
+const LOG_CTX = "workbook_setup";
 const AUTO_TRIGGER_DELAY = 2000;
 const AUTO_TRIGGER_COUNTER_INTERVAL = 200;
 
@@ -110,22 +110,22 @@ const ConnectorParamsSection: React.FC<{ params: proto.sqlynx_session.pb.Connect
 };
 
 interface Props {
-    sessionId: number;
+    workbookId: number;
     connector: ConnectorInfo;
     setupProto: proto.sqlynx_session.pb.SessionSetup;
     onDone: () => void;
 }
 
-export const SessionSetupPage: React.FC<Props> = (props: Props) => {
+export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
     const now = new Date();
     const navigate = useNavigate();
     const logger = useLogger();
     const salesforceSetup = useSalesforceSetup();
     const [showLogs, setShowLogs] = React.useState<boolean>(false);
     const [showVersionOverlay, setShowVersionOverlay] = React.useState<boolean>(false);
-    const [maybeSession, dispatchSession] = useSessionState(props.sessionId);
-    const session = maybeSession!;
-    const [maybeConnection, dispatchConnection] = useConnectionState(session!.connectionId);
+    const [maybeWorkbook, dispatchWorkbook] = useWorkbookState(props.workbookId);
+    const workbook = maybeWorkbook!;
+    const [maybeConnection, dispatchConnection] = useConnectionState(workbook!.connectionId);
     const connection = maybeConnection!;
 
     // // Resolve the connector info
@@ -150,16 +150,16 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
         canExecuteHere = true;
     }
 
-    // Generate the session setup url
-    const sessionSetupURL = React.useMemo(() => {
+    // Generate the workbook setup url
+    const workbookSetupURL = React.useMemo(() => {
         if (canExecuteHere) {
             return null;
         } else {
-            return encodeSessionSetupUrl(props.setupProto, SessionLinkTarget.NATIVE);
+            return encodeWorkbookSetupUrl(props.setupProto, WorkbookLinkTarget.NATIVE);
         }
     }, []);
 
-    // Helper to configure the session
+    // Helper to configure the workbook
     const [setupStarted, setSetupStarted] = React.useState<boolean>(false);
     const setupInProgressOrDone = React.useRef<boolean>(false);
     const setupAbortController = React.useRef<AbortController | null>(null);
@@ -173,12 +173,12 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
         // Cannot execute here? Then redirect the user
         if (!canExecuteHere) {
             const link = document.createElement('a');
-            link.href = sessionSetupURL!.toString();
+            link.href = workbookSetupURL!.toString();
             logger.info(`opening deep link: ${link.href}`);
             link.click();
         }
 
-        // Otherwise configure the session
+        // Otherwise configure the workbook
         try {
             // Check which connector configuring
             const connectorParams = props.setupProto.connectorParams?.connector;
@@ -205,14 +205,14 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
 
             // Restore the workbook scripts
             //
-            // XXX This is the first time we're modifying the attached session....
+            // XXX This is the first time we're modifying the attached workbook....
             //     We should make sure this is sane, ideally we would get the connector info from there.
-            dispatchSession({ type: RESTORE_WORKBOOK, value: props.setupProto });
+            dispatchWorkbook({ type: RESTORE_WORKBOOK, value: props.setupProto });
 
             // Navigate to the app root
             navigate("/");
 
-            // We're done, return close the session setup page
+            // We're done, return close the workbook setup page
             props.onDone();
         } catch (e: any) {
             setupInProgressOrDone.current = false;
@@ -232,7 +232,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
     const [remainingUntilAutoTrigger, setRemainingUntilAutoTrigger] = React.useState<number>(() => Math.max(autoTriggersAt.getTime(), now.getTime()) - now.getTime());
     React.useEffect(() => {
         // Otherwise setup an autotrigger for the setup
-        logger.info(`setup config auto-trigger in ${formatHHMMSS(remainingUntilAutoTrigger / 1000)}`, "session_setup");
+        logger.info(`setup config auto-trigger in ${formatHHMMSS(remainingUntilAutoTrigger / 1000)}`, LOG_CTX);
         const timeoutId = setTimeout(startSetup, remainingUntilAutoTrigger);
         const updaterId: { current: unknown | null } = { current: null };
 
@@ -297,7 +297,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
 
     // Do we need to switch to native?
     // Render a warning, information where to get the app and a button to switch.
-    if (!canExecuteHere && sessionSetupURL != null) {
+    if (!canExecuteHere && workbookSetupURL != null) {
         sections.push(
             <div key={sections.length} className={baseStyles.card_section}>
                 <div className={baseStyles.section_entries}>
@@ -338,7 +338,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                             variant={ButtonVariant.Primary}
                             size={ButtonSize.Medium}
                             logContext={LOG_CTX}
-                            value={sessionSetupURL.toString()}
+                            value={workbookSetupURL.toString()}
                             aria-label="copy-deeplink"
                             aria-labelledby=""
                         />
@@ -349,7 +349,7 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                                 <div>{Math.floor(remainingUntilAutoTrigger / 1000)}</div> : undefined}
                             onClick={() => {
                                 const link = document.createElement('a');
-                                link.href = sessionSetupURL.toString();
+                                link.href = workbookSetupURL.toString();
                                 logger.info(`opening deep link: ${link.href}`);
                                 link.click();
                             }}>

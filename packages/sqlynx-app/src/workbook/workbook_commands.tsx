@@ -2,63 +2,63 @@ import * as React from 'react';
 
 import { KeyEventHandler, useKeyEvents } from '../utils/key_events.js';
 import { ConnectorInfo } from '../connectors/connector_info.js';
-import { useCurrentSessionState } from './current_session.js';
+import { useCurrentWorkbookState } from './current_workbook.js';
 import { useQueryExecutor } from '../connectors/query_executor.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
 import { ConnectionHealth } from '../connectors/connection_state.js';
 import { useLogger } from '../platform/logger_provider.js';
-import { REGISTER_QUERY } from './session_state.js';
+import { REGISTER_QUERY } from './workbook_state.js';
 
-export enum SessionCommandType {
+export enum WorkbookCommandType {
     ExecuteEditorQuery = 1,
     RefreshSchema = 2,
-    SaveQueryAsSql = 3,
-    SaveQueryAsLink = 4,
+    SaveWorkbookAsLink = 3,
+    SaveQueryAsSql = 4,
     SaveQueryResultsAsArrow = 5,
 }
 
-export type ScriptCommandDispatch = (command: SessionCommandType) => void;
+export type ScriptCommandDispatch = (command: WorkbookCommandType) => void;
 
 interface Props {
     children?: React.ReactElement | React.ReactElement[];
 }
 
 const COMMAND_DISPATCH_CTX = React.createContext<ScriptCommandDispatch | null>(null);
-export const useSessionCommandDispatch = () => React.useContext(COMMAND_DISPATCH_CTX)!;
+export const useWorkbookCommandDispatch = () => React.useContext(COMMAND_DISPATCH_CTX)!;
 
-export const SessionCommands: React.FC<Props> = (props: Props) => {
+export const WorkbookCommands: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
-    const [session, dispatchSession] = useCurrentSessionState();
-    const [connection, _dispatchConnection] = useConnectionState(session?.connectionId ?? null);
+    const [workbook, dispatchWorkbook] = useCurrentWorkbookState();
+    const [connection, _dispatchConnection] = useConnectionState(workbook?.connectionId ?? null);
     const executeQuery = useQueryExecutor();
 
     // Setup command dispatch logic
     const commandDispatch = React.useCallback(
-        async (command: SessionCommandType) => {
-            if (session == null) {
-                logger.error("session is null");
+        async (command: WorkbookCommandType) => {
+            if (workbook == null) {
+                logger.error("workbook is null");
                 return;
             }
             switch (command) {
-                // Execute the query script in the current session
-                case SessionCommandType.ExecuteEditorQuery:
+                // Execute the query script in the current workbook
+                case WorkbookCommandType.ExecuteEditorQuery:
                     if (connection!.connectionHealth != ConnectionHealth.ONLINE) {
                         logger.error("cannot execute query command with an unhealthy connection");
                     } else {
-                        const entry = session.workbookEntries[session.selectedWorkbookEntry];
-                        const script = session.scripts[entry.scriptKey];
+                        const entry = workbook.workbookEntries[workbook.selectedWorkbookEntry];
+                        const script = workbook.scripts[entry.scriptKey];
                         const mainScriptText = script.toString();
-                        const [queryId, _run] = executeQuery(session.connectionId, {
+                        const [queryId, _run] = executeQuery(workbook.connectionId, {
                             query: mainScriptText,
                             analyzeResults: true
                         });
-                        dispatchSession({
+                        dispatchWorkbook({
                             type: REGISTER_QUERY,
-                            value: [session.selectedWorkbookEntry, script.scriptKey, queryId]
+                            value: [workbook.selectedWorkbookEntry, script.scriptKey, queryId]
                         })
                     }
                     break;
-                case SessionCommandType.RefreshSchema:
+                case WorkbookCommandType.RefreshSchema:
                     // XXX
                     // modifySession({
                     //     type: UPDATE_CATALOG,
@@ -68,23 +68,23 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
                     //     },
                     // });
                     break;
-                case SessionCommandType.SaveQueryAsSql:
+                case WorkbookCommandType.SaveWorkbookAsLink:
+                    console.log('save workbook as link');
+                    break;
+                case WorkbookCommandType.SaveQueryAsSql:
                     console.log('save query as sql command');
                     break;
-                case SessionCommandType.SaveQueryAsLink:
-                    console.log('save query as sql link');
-                    break;
-                case SessionCommandType.SaveQueryResultsAsArrow:
+                case WorkbookCommandType.SaveQueryResultsAsArrow:
                     console.log('save query results as arrow');
                     break;
             }
         },
-        [connection, session, session?.connectorInfo],
+        [connection, workbook, workbook?.connectorInfo],
     );
 
     // Helper to require connector info
     const requireConnector = (handler: (connectorInfo: ConnectorInfo) => () => void) => {
-        const connectorInfo = session?.connectorInfo ?? null;
+        const connectorInfo = workbook?.connectorInfo ?? null;
         if (connectorInfo == null) {
             return () => console.warn(`command requires an active connector`);
         } else {
@@ -105,7 +105,7 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
                 callback: requireConnector(c =>
                     !c.features.executeQueryAction
                         ? () => commandNotImplemented(c, 'EXECUTE_QUERY')
-                        : () => commandDispatch(SessionCommandType.ExecuteEditorQuery),
+                        : () => commandDispatch(WorkbookCommandType.ExecuteEditorQuery),
                 ),
             },
             {
@@ -114,18 +114,18 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
                 callback: requireConnector(c =>
                     !c.features.executeQueryAction
                         ? () => commandNotImplemented(c, 'REFRESH_SCHEMA')
-                        : () => commandDispatch(SessionCommandType.RefreshSchema),
+                        : () => commandDispatch(WorkbookCommandType.RefreshSchema),
                 ),
             },
             {
                 key: 'u',
                 ctrlKey: true,
-                callback: () => commandDispatch(SessionCommandType.SaveQueryAsLink),
+                callback: () => commandDispatch(WorkbookCommandType.SaveWorkbookAsLink),
             },
             {
                 key: 's',
                 ctrlKey: true,
-                callback: () => commandDispatch(SessionCommandType.SaveQueryAsSql),
+                callback: () => commandDispatch(WorkbookCommandType.SaveQueryAsSql),
             },
             {
                 key: 'a',
@@ -133,11 +133,11 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
                 callback: requireConnector(c =>
                     !c.features.executeQueryAction
                         ? () => commandNotImplemented(c, 'SAVE_QUERY_RESULTS_AS_ARROW')
-                        : () => commandDispatch(SessionCommandType.SaveQueryResultsAsArrow),
+                        : () => commandDispatch(WorkbookCommandType.SaveQueryResultsAsArrow),
                 ),
             },
         ],
-        [session?.connectorInfo, commandDispatch],
+        [workbook?.connectorInfo, commandDispatch],
     );
 
     // Setup key event handlers

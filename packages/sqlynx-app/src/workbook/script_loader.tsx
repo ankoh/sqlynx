@@ -1,8 +1,8 @@
 import * as React from 'react';
 
 import { ScriptMetadata } from './script_metadata.js';
-import { useCurrentSessionState } from './current_session.js';
-import { SCRIPT_LOADING_FAILED, SCRIPT_LOADING_STARTED, SCRIPT_LOADING_SUCCEEDED, ScriptData, ScriptKey } from './session_state.js';
+import { useCurrentWorkbookState } from './current_workbook.js';
+import { SCRIPT_LOADING_FAILED, SCRIPT_LOADING_STARTED, SCRIPT_LOADING_SUCCEEDED, ScriptData, ScriptKey } from './workbook_state.js';
 
 export enum ScriptLoadingStatus {
     PENDING = 1,
@@ -37,7 +37,7 @@ interface Props {
 }
 
 export const ScriptLoader: React.FC<Props> = (props: Props) => {
-    const [session, modifySession] = useCurrentSessionState();
+    const [workbook, modifyWorkbook] = useCurrentWorkbookState();
     const internal = React.useRef<LoaderState>({
         scripts: new Map<string, ScriptLoadingState>(),
     });
@@ -52,7 +52,7 @@ export const ScriptLoader: React.FC<Props> = (props: Props) => {
             return;
         }
         // Mark the script as loading
-        modifySession({
+        modifyWorkbook({
             type: SCRIPT_LOADING_STARTED,
             value: script.scriptKey,
         });
@@ -60,13 +60,13 @@ export const ScriptLoader: React.FC<Props> = (props: Props) => {
         const waitForResult = async (key: ScriptKey, inflight: Promise<string>) => {
             try {
                 const content = await inflight;
-                modifySession({
+                modifyWorkbook({
                     type: SCRIPT_LOADING_SUCCEEDED,
                     value: [key, content],
                 });
             } catch (e: any) {
                 console.warn(e);
-                modifySession({
+                modifyWorkbook({
                     type: SCRIPT_LOADING_FAILED,
                     value: [key, e],
                 });
@@ -103,13 +103,13 @@ export const ScriptLoader: React.FC<Props> = (props: Props) => {
 
     // Load scripts on demand
     React.useEffect(() => {
-        if (session) {
-            for (const k in session.scripts) {
-                const script = session.scripts[k];
+        if (workbook) {
+            for (const k in workbook.scripts) {
+                const script = workbook.scripts[k];
                 loadIfNeeded(script);
             }
         }
-    }, [session?.scripts, session?.connectorInfo]);
+    }, [workbook?.scripts, workbook?.connectorInfo]);
 
     return props.children;
 };

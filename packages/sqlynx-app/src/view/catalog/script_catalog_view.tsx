@@ -5,19 +5,19 @@ import * as React from 'react';
 import * as styles from './script_catalog_view.module.css';
 
 import { CatalogViewer } from '../catalog/catalog_viewer.js';
-import { FOCUSED_COMPLETION, FOCUSED_EXPRESSION_ID, FOCUSED_TABLE_REF_ID } from '../../session/focus.js';
-import { useCurrentSessionState } from '../../session/current_session.js';
+import { FOCUSED_COMPLETION, FOCUSED_EXPRESSION_ID, FOCUSED_TABLE_REF_ID } from '../../workbook/focus.js';
+import { useCurrentWorkbookState } from '../../workbook/current_workbook.js';
 import { U32_MAX } from '../../utils/numeric_limits.js';
 import { ScriptCatalogSidebar } from './script_catalog_sidebar.js';
 
 interface ScriptpanelViewProps { }
 
 export function ScriptCatalogView(_props: ScriptpanelViewProps) {
-    const [sessionState, _dispatchSession] = useCurrentSessionState();
+    const [workbookState, _dispatchWorkbook] = useCurrentWorkbookState();
     const [infoExpanded, setInfoExpanded] = React.useState(false);
 
-    const workloadEntry = sessionState?.workbookEntries[sessionState.selectedWorkbookEntry];
-    const script = workloadEntry ? sessionState.scripts[workloadEntry.scriptKey] : null;
+    const workloadEntry = workbookState?.workbookEntries[workbookState.selectedWorkbookEntry];
+    const script = workloadEntry ? workbookState.scripts[workloadEntry.scriptKey] : null;
 
     // Collect overlay metrics
     const infoEntries = React.useMemo<[string, string][]>(() => {
@@ -41,13 +41,13 @@ export function ScriptCatalogView(_props: ScriptpanelViewProps) {
         }
 
         // Is there a user focus?
-        const focusTarget = sessionState?.userFocus?.focusTarget;
+        const focusTarget = workbookState?.userFocus?.focusTarget;
         switch (focusTarget?.type) {
             case FOCUSED_TABLE_REF_ID: {
                 const tableRefObject = focusTarget.value.tableReference;
                 const scriptKey = ContextObjectID.getContext(tableRefObject);
                 const tableRefId = ContextObjectID.getObject(tableRefObject);
-                const scriptData = sessionState?.scripts[scriptKey];
+                const scriptData = workbookState?.scripts[scriptKey];
                 const analyzed = scriptData?.processed.analyzed;
                 if (analyzed) {
                     const analyzedPtr = analyzed.read();
@@ -72,7 +72,7 @@ export function ScriptCatalogView(_props: ScriptpanelViewProps) {
                 const expressionObject = focusTarget.value.expression;
                 const scriptKey = ContextObjectID.getContext(expressionObject);
                 const expressionId = ContextObjectID.getObject(expressionObject);
-                const scriptData = sessionState?.scripts[scriptKey];
+                const scriptData = workbookState?.scripts[scriptKey];
                 const analyzed = scriptData?.processed.analyzed;
                 if (analyzed) {
                     const analyzedPtr = analyzed.read();
@@ -116,7 +116,7 @@ export function ScriptCatalogView(_props: ScriptpanelViewProps) {
         }
 
         return overlay;
-    }, [sessionState?.userFocus, script?.cursor]);
+    }, [workbookState?.userFocus, script?.cursor]);
 
     const toggleInfo = () => setInfoExpanded(e => !e);
     return (

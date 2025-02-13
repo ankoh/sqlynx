@@ -1,6 +1,6 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
 
-import { ScriptData, ScriptKey } from './session_state.js';
+import { ScriptData, ScriptKey } from './workbook_state.js';
 import { VariantKind } from '../utils/variant.js';
 import { QUALIFIED_DATABASE_ID, QUALIFIED_SCHEMA_ID, QUALIFIED_TABLE_COLUMN_ID, QUALIFIED_TABLE_ID, QualifiedCatalogObjectID } from './catalog_object_id.js';
 

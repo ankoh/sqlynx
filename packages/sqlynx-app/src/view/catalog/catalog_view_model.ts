@@ -1,6 +1,6 @@
 import * as sqlynx from '@ankoh/sqlynx-core';
-import { FocusType, UserFocus } from '../../session/focus.js';
-import { QUALIFIED_DATABASE_ID, QUALIFIED_SCHEMA_ID, QUALIFIED_TABLE_COLUMN_ID, QUALIFIED_TABLE_ID, QualifiedCatalogObjectID } from '../../session/catalog_object_id.js';
+import { FocusType, UserFocus } from '../../workbook/focus.js';
+import { QUALIFIED_DATABASE_ID, QUALIFIED_SCHEMA_ID, QUALIFIED_TABLE_COLUMN_ID, QUALIFIED_TABLE_ID, QualifiedCatalogObjectID } from '../../workbook/catalog_object_id.js';
 
 /// The rendering settings for a catalog level
 export interface CatalogLevelRenderingSettings {

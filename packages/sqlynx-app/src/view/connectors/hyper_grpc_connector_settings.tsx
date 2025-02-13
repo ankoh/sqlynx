@@ -23,10 +23,10 @@ import { Button, ButtonVariant } from '../foundations/button.js';
 import { useConnectionState } from '../../connectors/connection_registry.js';
 import { ConnectionHealth } from '../../connectors/connection_state.js';
 import { HyperGrpcConnectionParams } from '../../connectors/hyper/hyper_connection_params.js';
-import { useSessionState } from '../../session/session_state_registry.js';
-import { useCurrentSessionSelector } from '../../session/current_session.js';
+import { useWorkbookState } from '../../workbook/workbook_state_registry.js';
+import { useCurrentWorkbookSelector } from '../../workbook/current_workbook.js';
 import { useNavigate } from 'react-router-dom';
-import { useDefaultSessions } from '../../session/session_setup.js';
+import { useDefaultWorkbooks } from '../../workbook/workbook_setup.js';
 import { getConnectionHealthIndicator, getConnectionStatusText } from './salesforce_connector_settings.js';
 import { useHyperGrpcSetup } from '../../connectors/hyper/hyper_connection_setup.js';
 
@@ -48,13 +48,13 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
     const hyperClient = useHyperDatabaseClient();
     const hyperSetup = useHyperGrpcSetup();
 
-    // Get Hyper connection from default session
-    const defaultSessions = useDefaultSessions();
-    const sessionId = defaultSessions?.hyper ?? null;
-    const [sessionState, _sessionDispatch] = useSessionState(sessionId);
+    // Get Hyper connection from default workbook
+    const defaultWorkbooks = useDefaultWorkbooks();
+    const workbookId = defaultWorkbooks?.hyper ?? null;
+    const [workbookState, _modifyWorkbook] = useWorkbookState(workbookId);
 
-    // Resolve connection for the default session
-    const connectionId = sessionState?.connectionId ?? null;
+    // Resolve connection for the default workbook
+    const connectionId = workbookState?.connectionId ?? null;
     const [connectionState, dispatchConnectionState] = useConnectionState(connectionId);
 
     // Wire up the page state
@@ -118,14 +118,14 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
     };
 
     // Helper to switch to the editor
-    const selectCurrentSession = useCurrentSessionSelector();
+    const selectCurrentWorkbook = useCurrentWorkbookSelector();
     const navigate = useNavigate()
     const switchToEditor = React.useCallback(() => {
-        if (sessionId != null) {
-            selectCurrentSession(sessionId);
+        if (workbookId != null) {
+            selectCurrentWorkbook(workbookId);
             navigate("/editor");
         }
-    }, [sessionId]);
+    }, [workbookId]);
 
     // Get the connection status
     const statusText: string = getConnectionStatusText(connectionState?.connectionStatus, logger);

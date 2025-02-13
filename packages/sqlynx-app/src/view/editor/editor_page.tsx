@@ -16,21 +16,21 @@ import { QueryStatusView } from '../query_status/query_status_view.js';
 import { ScriptEditor } from './editor.js';
 import { ScriptCatalogView } from '../../view/catalog/script_catalog_view.js';
 import { ScriptURLOverlay } from './script_url_overlay.js';
-import { SessionCommandType, useSessionCommandDispatch } from '../../session/session_commands.js';
-import { SessionListDropdown } from './session_list_dropdown.js';
+import { WorkbookCommandType, useWorkbookCommandDispatch } from '../../workbook/workbook_commands.js';
+import { WorkbookListDropdown } from './session_list_dropdown.js';
 import { VerticalTabs, VerticalTabVariant } from '../foundations/vertical_tabs.js';
 import { useAppConfig } from '../../app_config.js';
-import { useCurrentSessionState } from '../../session/current_session.js';
+import { useCurrentWorkbookState } from '../../workbook/current_workbook.js';
 import { useQueryState } from '../../connectors/query_executor.js';
 
 const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
     const config = useAppConfig();
-    const sessionCommand = useSessionCommandDispatch();
+    const sessionCommand = useWorkbookCommandDispatch();
     return (
         <>
             <ActionList.ListItem
                 disabled={!props.connector?.features.executeQueryAction}
-                onClick={() => sessionCommand(SessionCommandType.ExecuteEditorQuery)}
+                onClick={() => sessionCommand(WorkbookCommandType.ExecuteEditorQuery)}
             >
                 <ActionList.Leading>
                     <PaperAirplaneIcon />
@@ -96,7 +96,7 @@ interface TabState {
 interface Props { }
 
 export const EditorPage: React.FC<Props> = (_props: Props) => {
-    const [sessionState, _dispatchCurrentSession] = useCurrentSessionState();
+    const [sessionState, _dispatchCurrentSession] = useCurrentWorkbookState();
     const [selectedTab, selectTab] = React.useState<TabKey>(TabKey.Catalog);
     const [sharingIsOpen, setSharingIsOpen] = React.useState<boolean>(false);
 
@@ -158,13 +158,13 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
         prevStatus.current = [activeQueryId, status];
     }, [activeQueryId, activeQueryState?.status]);
 
-    const sessionCommand = useSessionCommandDispatch();
+    const sessionCommand = useWorkbookCommandDispatch();
     return (
         <div className={styles.page}>
             <div className={styles.header_container}>
                 <div className={styles.header_left_container}>
                     <div className={styles.page_title}>SQL Editor</div>
-                    <SessionListDropdown short={true} />
+                    <WorkbookListDropdown short={true} />
                 </div>
                 <div className={styles.header_action_container}>
                     <div>
@@ -172,7 +172,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                             <IconButton
                                 icon={PaperAirplaneIcon}
                                 aria-labelledby="execute-query"
-                                onClick={() => sessionCommand(SessionCommandType.ExecuteEditorQuery)}
+                                onClick={() => sessionCommand(WorkbookCommandType.ExecuteEditorQuery)}
                             />
                             <IconButton icon={SyncIcon} aria-labelledby="refresh-schema" />
                             <IconButton
