@@ -1,6 +1,6 @@
 import * as proto from '@ankoh/sqlynx-protobuf';
 
-import { SessionState, ScriptData, ScriptKey } from './session_state.js';
+import { SessionState } from './session_state.js';
 import { ConnectionState } from '../connectors/connection_state.js';
 import { BASE64_CODEC } from '../utils/base64.js';
 import { buildConnectorParams } from '../connectors/connection_params.js';
@@ -12,18 +12,16 @@ export enum SessionLinkTarget {
 
 export function generateSessionSetupUrl(sessionState: SessionState, connection: ConnectionState, target: SessionLinkTarget): URL {
     const connectorParams = buildConnectorParams(connection.details);
-    const scripts: proto.sqlynx_session.pb.SessionScript[] = [];
-    const addScript = (script: ScriptData | null) => {
-        if (script != null) {
-            scripts.push(new proto.sqlynx_session.pb.SessionScript({
-                scriptId: script.scriptKey as number,
-                scriptText: script.script?.toString() ?? "",
-            }));
-        }
-    };
-    addScript(sessionState?.scripts[ScriptKey.MAIN_SCRIPT] ?? null);
-    addScript(sessionState?.scripts[ScriptKey.SCHEMA_SCRIPT] ?? null);
 
+    // Collect the scripts
+    const scripts: proto.sqlynx_session.pb.SessionScript[] = [];
+    for (const k in sessionState.scripts) {
+        const script = sessionState.scripts[k];
+        scripts.push(new proto.sqlynx_session.pb.SessionScript({
+            scriptId: script.scriptKey as number,
+            scriptText: script.script?.toString() ?? "",
+        }));
+    }
     const eventData = new proto.sqlynx_app_event.pb.AppEventData({
         data: {
             case: "sessionSetup",

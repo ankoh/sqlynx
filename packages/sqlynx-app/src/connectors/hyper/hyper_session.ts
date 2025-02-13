@@ -3,9 +3,9 @@ import Immutable from 'immutable';
 
 import { CONNECTOR_INFOS, ConnectorType } from '../../connectors/connector_info.js';
 import { RESULT_OK } from '../../utils/result.js';
-import { ScriptData, ScriptKey } from '../../session/session_state.js';
+import { ScriptData } from '../../session/session_state.js';
 import { ScriptLoadingStatus } from '../../session/script_loader.js';
-import { generateBlankScript } from '../../session/script_metadata.js';
+import { generateBlankScriptMetadata } from '../../session/script_metadata.js';
 import { useSQLynxCoreSetup } from '../../core_provider.js';
 import { useSessionStateAllocator } from '../../session/session_state_registry.js';
 import { useConnectionStateAllocator } from '../../connectors/connection_registry.js';
@@ -26,12 +26,12 @@ export function useHyperSessionSetup(): SessionSetupFn {
         const lnx = instance.value;
         const connectionState = createHyperGrpcConnectionState(lnx);
         const connectionId = allocateConnection(connectionState);
-        const mainScript = lnx.createScript(connectionState.catalog, ScriptKey.MAIN_SCRIPT);
+        const mainScript = lnx.createScript(connectionState.catalog, 1);
 
         const mainScriptData: ScriptData = {
-            scriptKey: ScriptKey.MAIN_SCRIPT,
+            scriptKey: 1,
             script: mainScript,
-            metadata: generateBlankScript(),
+            metadata: generateBlankScriptMetadata(),
             loading: {
                 status: ScriptLoadingStatus.SUCCEEDED,
                 error: null,
@@ -44,6 +44,7 @@ export function useHyperSessionSetup(): SessionSetupFn {
                 analyzed: null,
                 destroy: () => { },
             },
+            outdatedAnalysis: true,
             statistics: Immutable.List(),
             cursor: null,
             completion: null,
@@ -56,11 +57,14 @@ export function useHyperSessionSetup(): SessionSetupFn {
             connectionId,
             connectionCatalog: connectionState.catalog,
             scripts: {
-                [ScriptKey.MAIN_SCRIPT]: mainScriptData,
+                [mainScriptData.scriptKey]: mainScriptData,
             },
-            runningQueries: new Set(),
-            finishedQueries: [],
-            editorQuery: null,
+            workbookEntries: [{
+                scriptKey: mainScriptData.scriptKey,
+                queryId: null,
+                title: null
+            }],
+            selectedWorkbookEntry: 0,
             userFocus: null,
         });
     }, [setupSQLynx, allocateSessionState]);

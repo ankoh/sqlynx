@@ -151,7 +151,6 @@ export const NavBar = (): React.ReactElement => {
     const platformType = usePlatformType();
     const [sessionState, _modifySessionState] = useCurrentSessionState();
     const [connectionState, _setConnectionState] = useConnectionState(sessionState?.connectionId ?? null);
-    const appConfig = useAppConfig();
 
     const isBrowser = platformType === PlatformType.WEB;
     const isMac = platformType === PlatformType.MACOS;
@@ -174,9 +173,6 @@ export const NavBar = (): React.ReactElement => {
                 data-tauri-drag-region="true"
             >
                 <PageTab label="Editor" route="/" location={location.pathname} icon={`${symbols}#file`} />
-                {appConfig.isResolved() && appConfig.value?.settings?.enableScriptFiles && (
-                    <PageTab label="Files" route="/files" location={location.pathname} icon={`${symbols}#folder`} />
-                )}
                 <PageTab label="Connectors" route="/connectors" location={location.pathname} icon={`${symbols}#database`} />
             </div>
             <div className={styles.version_container}>

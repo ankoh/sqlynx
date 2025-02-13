@@ -15,7 +15,7 @@ import { encodeSessionSetupUrl, SessionLinkTarget } from './session_setup_url.js
 import { AnchorAlignment, AnchorSide } from '../view/foundations/anchored_position.js';
 import { Button, ButtonSize, ButtonVariant } from '../view/foundations/button.js';
 import { KeyValueTextField, TextField } from '../view/foundations/text_field.js';
-import { REPLACE_SCRIPT_CONTENT } from './session_state.js';
+import { RESTORE_WORKBOOK } from './session_state.js';
 import { SQLYNX_VERSION } from '../globals.js';
 import { SalesforceAuthParams } from '../connectors/salesforce/salesforce_connection_params.js';
 import { VersionInfoOverlay } from '../view/version_viewer.js';
@@ -203,16 +203,11 @@ export const SessionSetupPage: React.FC<Props> = (props: Props) => {
                 }
             }
 
-            // Does the proto specify scripts?
-            // Load them asynchronously then after setting up the session.
+            // Restore the workbook scripts
             //
             // XXX This is the first time we're modifying the attached session....
             //     We should make sure this is sane, ideally we would get the connector info from there.
-            const update: Record<number, string> = {};
-            for (const script of props.setupProto.scripts) {
-                update[script.scriptId] = script.scriptText;
-            }
-            dispatchSession({ type: REPLACE_SCRIPT_CONTENT, value: update });
+            dispatchSession({ type: RESTORE_WORKBOOK, value: props.setupProto });
 
             // Navigate to the app root
             navigate("/");

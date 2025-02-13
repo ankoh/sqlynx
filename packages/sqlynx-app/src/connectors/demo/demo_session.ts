@@ -4,7 +4,7 @@ import Immutable from 'immutable';
 import { CONNECTOR_INFOS, ConnectorType } from '../../connectors/connector_info.js';
 import { EXAMPLES } from '../../session/example_scripts.js';
 import { RESULT_OK } from '../../utils/result.js';
-import { ScriptData, ScriptKey } from '../../session/session_state.js';
+import { ScriptData } from '../../session/session_state.js';
 import { ScriptLoadingStatus } from '../../session/script_loader.js';
 import { useConnectionStateAllocator } from '../../connectors/connection_registry.js';
 import { useSQLynxCoreSetup } from '../../core_provider.js';
@@ -29,11 +29,11 @@ export function useDemoSessionSetup(): SessionSetupFn {
         const lnx = instance.value;
         const connectionState = createDemoConnectionState(lnx);
         const connectionId = allocateConnection(connectionState);
-        const mainScript = lnx.createScript(connectionState.catalog, ScriptKey.MAIN_SCRIPT);
-        const schemaScript = lnx.createScript(connectionState.catalog, ScriptKey.SCHEMA_SCRIPT);
+        const mainScript = lnx.createScript(connectionState.catalog, 1);
+        const schemaScript = lnx.createScript(connectionState.catalog, 2);
 
         const mainScriptData: ScriptData = {
-            scriptKey: ScriptKey.MAIN_SCRIPT,
+            scriptKey: 1,
             script: mainScript,
             metadata: EXAMPLES.TPCH.queries[1],
             loading: {
@@ -48,13 +48,14 @@ export function useDemoSessionSetup(): SessionSetupFn {
                 analyzed: null,
                 destroy: () => { },
             },
+            outdatedAnalysis: true,
             statistics: Immutable.List(),
             cursor: null,
             completion: null,
             selectedCompletionCandidate: null,
         };
         const schemaScriptData: ScriptData = {
-            scriptKey: ScriptKey.SCHEMA_SCRIPT,
+            scriptKey: 2,
             script: schemaScript,
             metadata: EXAMPLES.TPCH.schema,
             loading: {
@@ -69,6 +70,7 @@ export function useDemoSessionSetup(): SessionSetupFn {
                 analyzed: null,
                 destroy: () => { },
             },
+            outdatedAnalysis: true,
             statistics: Immutable.List(),
             cursor: null,
             completion: null,
@@ -81,12 +83,19 @@ export function useDemoSessionSetup(): SessionSetupFn {
             connectionId: connectionId,
             connectionCatalog: connectionState.catalog,
             scripts: {
-                [ScriptKey.MAIN_SCRIPT]: mainScriptData,
-                [ScriptKey.SCHEMA_SCRIPT]: schemaScriptData,
+                [mainScriptData.scriptKey]: mainScriptData,
+                [schemaScriptData.scriptKey]: schemaScriptData,
             },
-            runningQueries: new Set(),
-            finishedQueries: [],
-            editorQuery: null,
+            workbookEntries: [{
+                scriptKey: mainScriptData.scriptKey,
+                queryId: null,
+                title: null,
+            }, {
+                scriptKey: schemaScriptData.scriptKey,
+                queryId: null,
+                title: null,
+            }],
+            selectedWorkbookEntry: 0,
             userFocus: null,
         });
     }, [setupSQLynx, allocateSessionState]);

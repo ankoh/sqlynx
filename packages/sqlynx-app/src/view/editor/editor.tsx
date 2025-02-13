@@ -1,104 +1,64 @@
 import * as React from 'react';
 import * as sqlynx from '@ankoh/sqlynx-core';
-import * as ActionList from '../foundations/action_list.js';
 import * as themes from './themes/index.js';
 
 import { lineNumbers } from '@codemirror/view';
 
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands"
-import { DecorationSet, EditorView, keymap } from '@codemirror/view';
+import { EditorView, keymap } from '@codemirror/view';
 import { ChangeSpec, EditorSelection, StateEffect } from '@codemirror/state';
 
-import { Button, ButtonVariant } from '../foundations/button.js';
 import { CodeMirror } from './codemirror.js';
 import { SQLynxExtensions } from './sqlynx_extension.js';
 import { SQLynxScriptBuffers, SQLynxScriptKey, UpdateSQLynxScript } from './sqlynx_processor.js';
-import { COMPLETION_CHANGED, COMPLETION_STARTED, COMPLETION_STOPPED, ScriptKey, UPDATE_SCRIPT_ANALYSIS, UPDATE_SCRIPT_CURSOR } from '../../session/session_state.js';
-import { ScriptMetadata } from '../../session/script_metadata.js';
+import { COMPLETION_CHANGED, COMPLETION_STARTED, COMPLETION_STOPPED, UPDATE_SCRIPT, UPDATE_SCRIPT_ANALYSIS, UPDATE_SCRIPT_CURSOR } from '../../session/session_state.js';
 import { ScriptStatisticsBar } from './script_statistics_bar.js';
-import { TriangleDownIcon } from '@primer/octicons-react';
-import { VerticalTabs, VerticalTabVariant } from '../foundations/vertical_tabs.js';
-import { classNames } from '../../utils/classnames.js';
 import { isDebugBuild } from '../../globals.js';
 import { useAppConfig } from '../../app_config.js';
 import { useCurrentSessionState } from '../../session/current_session.js';
 import { useLogger } from '../../platform/logger_provider.js';
-import { AnchoredOverlay } from '../foundations/anchored_overlay.js';
 
-import * as icons from '../../../static/svg/symbols.generated.svg';
 import * as styles from './editor.module.css';
-
-enum TabId {
-    MAIN_SCRIPT = 1,
-    SCHEMA_SCRIPT = 2,
-    ACCOUNT = 3,
-}
 
 interface Props {
     className?: string;
 }
 
 interface ActiveScriptState {
-    editorScript: sqlynx.SQLynxScript | null;
-    editorScriptBuffers: SQLynxScriptBuffers | null;
-    schemaScript: sqlynx.SQLynxScript | null;
-    decorations: DecorationSet | null;
+    script: sqlynx.SQLynxScript | null;
+    scriptBuffers: SQLynxScriptBuffers | null;
     cursor: sqlynx.proto.ScriptCursorT | null;
 }
 
-const FileSelector = (props: { className?: string; variant: 'default' | 'invisible'; script: ScriptMetadata }) => {
-    const [isOpen, setIsOpen] = React.useState<boolean>(false);
-
-    return (
-        <AnchoredOverlay
-            open={isOpen}
-            onOpen={() => setIsOpen(true)}
-            onClose={() => setIsOpen(false)}
-            renderAnchor={
-                (p: any) =>
-                    <Button
-                        {...p}
-                        className={props.className}
-                        variant={ButtonVariant.Invisible}
-                        alignContent="start"
-                        trailingVisual={TriangleDownIcon}
-                    >
-                        {props.script.name}
-                    </Button>}
-        >
-            <ActionList.List>
-                <ActionList.GroupHeading>Files</ActionList.GroupHeading>
-            </ActionList.List>
-        </AnchoredOverlay>
-    );
-};
-
-export const ScriptEditor: React.FC<Props> = (props: Props) => {
+export const ScriptEditor: React.FC<Props> = (_props: Props) => {
     const logger = useLogger();
     const config = useAppConfig();
     const [session, sessionDispatch] = useCurrentSessionState();
 
-    const [activeTab, setActiveTab] = React.useState<TabId>(TabId.MAIN_SCRIPT);
+    // The editor view
     const [view, setView] = React.useState<EditorView | null>(null);
-
     const viewWasCreated = React.useCallback((view: EditorView) => setView(view), [setView]);
     const viewWillBeDestroyed = React.useCallback((_view: EditorView) => setView(null), [setView]);
     const active = React.useRef<ActiveScriptState>({
-        editorScript: null,
-        editorScriptBuffers: null,
-        schemaScript: null,
-        decorations: null,
+        script: null,
+        scriptBuffers: null,
         cursor: null,
     });
-    const activeScriptKey = activeTab == TabId.SCHEMA_SCRIPT ? ScriptKey.SCHEMA_SCRIPT : ScriptKey.MAIN_SCRIPT;
-    const activeScript = session?.scripts[activeScriptKey] ?? null;
-    const activeScriptStatistics = activeScript?.statistics ?? null;
 
-    // Helper to update a script
+    // The current index in the workbook
+    const workbookEntryIdx = session?.selectedWorkbookEntry ?? 0;
+    const workbookEntry = (workbookEntryIdx < (session?.workbookEntries.length ?? 0))
+        ? session!.workbookEntries[workbookEntryIdx]
+        : null;
+    const workbookEntryScriptData = workbookEntry != null ? session!.scripts[workbookEntry.scriptKey] : null;
+
+
+    // Helper to update a script.
+    // Called when the script gets updated by the CodeMirror extension.
     const updateScript = React.useCallback(
         (scriptKey: SQLynxScriptKey, buffers: SQLynxScriptBuffers, cursor: sqlynx.proto.ScriptCursorT) => {
             active.current.cursor = cursor;
-            active.current.editorScriptBuffers = buffers;
+            active.current.scriptBuffers = buffers;
             sessionDispatch({
                 type: UPDATE_SCRIPT_ANALYSIS,
                 value: [scriptKey, buffers, cursor],
@@ -106,7 +66,8 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         },
         [sessionDispatch],
     );
-    // Helper to update a script cursor
+    // Helper to update a script cursor.
+    // Called when the cursor gets updated by the CodeMirror extension.
     const updateCursor = React.useCallback(
         (scriptKey: SQLynxScriptKey, cursor: sqlynx.proto.ScriptCursorT) => {
             active.current.cursor = cursor;
@@ -117,7 +78,8 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         },
         [sessionDispatch],
     );
-    // Helper to start a completion
+    // Helper to start a completion.
+    // Called when the CodeMirror extension opens the completion dropdown.
     const startCompletion = React.useCallback((scriptKey: SQLynxScriptKey, completion: sqlynx.proto.CompletionT) => {
         sessionDispatch({
             type: COMPLETION_STARTED,
@@ -125,13 +87,15 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         });
     }, []);
     // Helper to peek a completion candidate
+    // Called when the CodeMirror extension changes the selected completion.
     const peekCompletionCandidate = React.useCallback((scriptKey: SQLynxScriptKey, completion: sqlynx.proto.CompletionT, candidateId: number) => {
         sessionDispatch({
             type: COMPLETION_CHANGED,
             value: [scriptKey, completion, candidateId],
         });
     }, []);
-    // Helper to stop a completion
+    // Helper to stop a completion.
+    // Called when the CodeMirror extension opens the completion dropdown.
     const stopCompletion = React.useCallback((scriptKey: SQLynxScriptKey) => {
         sessionDispatch({
             type: COMPLETION_STOPPED,
@@ -139,68 +103,61 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         });
     }, []);
 
+    // Effect to update outdated scripts
+    React.useEffect(() => {
+        if (workbookEntryScriptData?.outdatedAnalysis) {
+            sessionDispatch({
+                type: UPDATE_SCRIPT,
+                value: workbookEntryScriptData.scriptKey
+            });
+        }
+    }, [workbookEntryScriptData]);
+
     // Effect to update the editor context whenever the script changes
     React.useEffect(() => {
         // CodeMirror not set up yet?
         if (view === null) {
             return;
         }
-        // Determine which script is active
-        let targetKey: SQLynxScriptKey = ScriptKey.MAIN_SCRIPT;
-        let schemaKey: SQLynxScriptKey | null = null;
-        switch (activeTab as TabId) {
-            case TabId.MAIN_SCRIPT:
-                targetKey = ScriptKey.MAIN_SCRIPT;
-                schemaKey = ScriptKey.SCHEMA_SCRIPT;
-                break;
-            case TabId.SCHEMA_SCRIPT:
-                targetKey = ScriptKey.SCHEMA_SCRIPT;
-                break;
-        }
-        const targetScriptData = session?.scripts[targetKey] ?? null;
-        const schemaScriptData = schemaKey != null ? (session?.scripts[schemaKey] ?? null) : null;
-        const schemaScript = schemaScriptData?.script ?? null;
-        if (!targetScriptData) {
-            return;
+        // No script data?
+        if (!workbookEntryScriptData) {
+            return
         }
 
         // Did the script change?
         const changes: ChangeSpec[] = [];
         const effects: StateEffect<any>[] = [];
         if (
-            active.current.editorScript !== targetScriptData.script ||
-            active.current.editorScriptBuffers !== targetScriptData.processed
+            active.current.script !== workbookEntryScriptData.script ||
+            active.current.scriptBuffers !== workbookEntryScriptData.processed
         ) {
             logger.info("loading new script", "editor");
-            active.current.editorScript = targetScriptData.script;
-            active.current.editorScriptBuffers = targetScriptData.processed;
-            active.current.schemaScript = schemaScript;
+            active.current.script = workbookEntryScriptData.script;
+            active.current.scriptBuffers = workbookEntryScriptData.processed;
             changes.push({
                 from: 0,
                 to: view.state.doc.length,
-                insert: targetScriptData.script?.toString(),
+                insert: workbookEntryScriptData.script?.toString(),
             });
-        } else if (active.current.schemaScript !== schemaScriptData?.script) {
-            logger.info("skipping schema script update", "editor");
-            // Only the external script changed, no need for text changes
-            active.current.editorScript = targetScriptData.script;
-            active.current.editorScriptBuffers = targetScriptData.processed;
-            active.current.schemaScript = schemaScript;
         }
+
+        // Did the cursor change?
         let selection: EditorSelection | null = null;
-        if (active.current.cursor !== targetScriptData.cursor) {
-            active.current.cursor = targetScriptData.cursor;
-            selection = EditorSelection.create([EditorSelection.cursor(targetScriptData.cursor?.textOffset ?? 0)]);
+        if (active.current.cursor !== workbookEntryScriptData.cursor) {
+            active.current.cursor = workbookEntryScriptData.cursor;
+            selection = EditorSelection.create([EditorSelection.cursor(workbookEntryScriptData.cursor?.textOffset ?? 0)]);
         }
+
+        // Notify the CodeMirror extension
         effects.push(
             UpdateSQLynxScript.of({
                 config: {
                     showCompletionDetails: config?.value?.settings?.showCompletionDetails ?? false,
                 },
-                scriptKey: targetKey,
-                targetScript: targetScriptData.script,
-                scriptBuffers: targetScriptData.processed,
-                scriptCursor: targetScriptData.cursor,
+                scriptKey: workbookEntryScriptData.scriptKey,
+                targetScript: workbookEntryScriptData.script,
+                scriptBuffers: workbookEntryScriptData.processed,
+                scriptCursor: workbookEntryScriptData.cursor,
                 derivedFocus: session?.userFocus ?? null,
 
                 onScriptUpdate: updateScript,
@@ -213,26 +170,11 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         view.dispatch({ changes, effects, selection: selection ?? undefined });
     }, [
         view,
-        activeTab,
-        session?.scripts[ScriptKey.MAIN_SCRIPT],
-        session?.scripts[ScriptKey.SCHEMA_SCRIPT],
+        workbookEntryIdx,
+        workbookEntryScriptData,
         session?.connectionCatalog,
         updateScript,
     ]);
-
-    // Get the title of the tab
-    let tabTitle = '';
-    switch (activeTab) {
-        case TabId.MAIN_SCRIPT:
-            tabTitle = 'SQL Query';
-            break;
-        case TabId.SCHEMA_SCRIPT:
-            tabTitle = 'SQL Schema';
-            break;
-        case TabId.ACCOUNT:
-            tabTitle = 'Account';
-            break;
-    }
 
     // See: https://github.com/codemirror/basic-setup/blob/main/src/codemirror.ts
     // We might want to add other plugins later.
@@ -251,11 +193,10 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
         ];
     }, []);
 
-    const EditorPage = (
+    return (
         <div className={styles.editor_with_header}>
             <div className={styles.headerbar}>
-                <div className={styles.script_title}>{tabTitle}</div>
-                {config.value && config.value.settings?.enableScriptFiles && activeScript && <FileSelector className={styles.script_filename} variant="invisible" script={activeScript.metadata} />}
+                <div className={styles.script_title}>{workbookEntry?.title ?? "Script"}</div>
             </div>
             <div className={styles.editor_with_loader}>
                 <div className={styles.editor}>
@@ -266,45 +207,16 @@ export const ScriptEditor: React.FC<Props> = (props: Props) => {
                     />
                 </div>
             </div>
-            {isDebugBuild() && config?.value?.settings?.showEditorStats &&
+            {isDebugBuild() && config?.value?.settings?.showEditorStats && workbookEntryScriptData?.statistics &&
                 <div className={styles.devtools_overlay}>
                     <div className={styles.devtools_title}>
                         Editor Perf
                     </div>
                     <div className={styles.script_stats}>
-                        <ScriptStatisticsBar stats={activeScriptStatistics} />
+                        <ScriptStatisticsBar stats={workbookEntryScriptData.statistics} />
                     </div>
                 </div>
             }
         </div>
-    );
-
-    // Collect the tab keys
-    const tabKeys = [TabId.MAIN_SCRIPT];
-    const hasSchema = session && session.scripts[ScriptKey.SCHEMA_SCRIPT] != undefined;
-    if (hasSchema) {
-        tabKeys.push(TabId.SCHEMA_SCRIPT);
-    }
-
-    return (
-        <VerticalTabs
-            variant={VerticalTabVariant.Stacked}
-            className={classNames(props.className, styles.container)}
-            selectedTab={activeTab}
-            selectTab={setActiveTab}
-            tabProps={{
-                [TabId.MAIN_SCRIPT]: { tabId: TabId.MAIN_SCRIPT, icon: `${icons}#search`, labelShort: 'Query' },
-                [TabId.SCHEMA_SCRIPT]: {
-                    tabId: TabId.SCHEMA_SCRIPT,
-                    icon: `${icons}#database`,
-                    labelShort: 'Model',
-                },
-            }}
-            tabKeys={tabKeys}
-            tabRenderers={{
-                [TabId.MAIN_SCRIPT]: () => EditorPage,
-                [TabId.SCHEMA_SCRIPT]: () => EditorPage,
-            }}
-        />
     );
 };

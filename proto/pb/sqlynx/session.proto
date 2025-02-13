@@ -65,6 +65,13 @@ enum ScriptType {
     Schema = 1;
 }
 
+message WorkbookEntry {
+    /// The script id
+    uint32 script_id = 1;
+    /// The title
+    string title = 2;
+}
+
 message SessionScript {
     /// The script id
     uint32 script_id = 1;
@@ -79,6 +86,8 @@ message SessionSetup {
     ConnectorParams connector_params = 1;
     /// The scripts
     repeated SessionScript scripts = 2;
+    /// The workbook entries
+    repeated WorkbookEntry workbook_entries = 3;
     /// The flag to disable the platform check
-    bool no_platform_check = 3;
+    bool no_platform_check = 4;
 }

@@ -7,7 +7,6 @@ import { SQLYNX_BUILD_MODE } from './globals.js';
 const CONFIG_URL = new URL('../static/config.json', import.meta.url);
 
 export interface AppSettings {
-    enableScriptFiles?: boolean;
     showCompletionDetails?: boolean;
     enableCommandRefreshSchema?: boolean;
     enableCommandSaveQueryAsSql?: boolean;

@@ -7,7 +7,6 @@ import * as styles from './script_catalog_view.module.css';
 import { CatalogViewer } from '../catalog/catalog_viewer.js';
 import { FOCUSED_COMPLETION, FOCUSED_EXPRESSION_ID, FOCUSED_TABLE_REF_ID } from '../../session/focus.js';
 import { useCurrentSessionState } from '../../session/current_session.js';
-import { ScriptKey } from '../../session/session_state.js';
 import { U32_MAX } from '../../utils/numeric_limits.js';
 import { ScriptCatalogSidebar } from './script_catalog_sidebar.js';
 
@@ -17,14 +16,17 @@ export function ScriptCatalogView(_props: ScriptpanelViewProps) {
     const [sessionState, _dispatchSession] = useCurrentSessionState();
     const [infoExpanded, setInfoExpanded] = React.useState(false);
 
+    const workloadEntry = sessionState?.workbookEntries[sessionState.selectedWorkbookEntry];
+    const script = workloadEntry ? sessionState.scripts[workloadEntry.scriptKey] : null;
+
     // Collect overlay metrics
     const infoEntries = React.useMemo<[string, string][]>(() => {
         const overlay: [string, string][] = [];
 
         // Inspect the cursor
-        const cursor = sessionState?.scripts[ScriptKey.MAIN_SCRIPT].cursor;
+        const cursor = script?.cursor;
         if (cursor && cursor.scannerSymbolId != U32_MAX) {
-            const scanned = sessionState?.scripts[ScriptKey.MAIN_SCRIPT].processed.scanned?.read();
+            const scanned = script.processed.scanned?.read();
             const tokens = scanned?.tokens();
             const tokenTypes = tokens?.tokenTypesArray();
             if (tokenTypes && cursor.scannerSymbolId < tokenTypes.length) {
@@ -114,7 +116,7 @@ export function ScriptCatalogView(_props: ScriptpanelViewProps) {
         }
 
         return overlay;
-    }, [sessionState?.userFocus, sessionState?.scripts[ScriptKey.MAIN_SCRIPT]?.cursor]);
+    }, [sessionState?.userFocus, script?.cursor]);
 
     const toggleInfo = () => setInfoExpanded(e => !e);
     return (

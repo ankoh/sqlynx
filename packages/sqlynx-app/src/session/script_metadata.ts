@@ -21,12 +21,10 @@ export interface ScriptAnnotations {
 }
 
 export interface ScriptMetadata {
-    /// The pseudo context id
-    scriptId: string;
+    /// The script id
+    scriptId: string | null;
     /// The schema id
-    schemaId: string | null;
-    /// The name
-    name: string | null;
+    schemaRef: string | null;
     /// The script type
     scriptType: ScriptType;
     /// The origin type
@@ -39,29 +37,16 @@ export interface ScriptMetadata {
     immutable: boolean;
 }
 
-export function generateBlankScript(): ScriptMetadata {
-    return createScriptMetadata({
-        schemaId: null,
-        name: null,
+export function generateBlankScriptMetadata(): ScriptMetadata {
+    return {
+        schemaRef: null,
+        scriptId: null,
         scriptType: ScriptType.UNKNOWN,
         originType: ScriptOriginType.LOCAL,
         httpURL: null,
         annotations: null,
         immutable: false,
-    });
-}
-
-export function createScriptMetadata(script: Omit<ScriptMetadata, 'scriptId'>): ScriptMetadata {
-    const s = script as any;
-    switch (script.originType) {
-        case ScriptOriginType.HTTP:
-            s.scriptId = script.httpURL;
-            break;
-        case ScriptOriginType.LOCAL:
-            s.scriptId = script.name;
-            break;
-    }
-    return s as ScriptMetadata;
+    };
 }
 
 export function getScriptOriginTypeName(origin: ScriptOriginType): string {

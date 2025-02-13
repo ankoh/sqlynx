@@ -7,7 +7,7 @@ import { useQueryExecutor } from '../connectors/query_executor.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
 import { ConnectionHealth } from '../connectors/connection_state.js';
 import { useLogger } from '../platform/logger_provider.js';
-import { REGISTER_EDITOR_QUERY, ScriptKey } from './session_state.js';
+import { REGISTER_QUERY } from './session_state.js';
 
 export enum SessionCommandType {
     ExecuteEditorQuery = 1,
@@ -45,15 +45,16 @@ export const SessionCommands: React.FC<Props> = (props: Props) => {
                     if (connection!.connectionHealth != ConnectionHealth.ONLINE) {
                         logger.error("cannot execute query command with an unhealthy connection");
                     } else {
-                        const mainScript = session.scripts[ScriptKey.MAIN_SCRIPT];
-                        const mainScriptText = mainScript.script!.toString();
+                        const entry = session.workbookEntries[session.selectedWorkbookEntry];
+                        const script = session.scripts[entry.scriptKey];
+                        const mainScriptText = script.toString();
                         const [queryId, _run] = executeQuery(session.connectionId, {
                             query: mainScriptText,
                             analyzeResults: true
                         });
                         dispatchSession({
-                            type: REGISTER_EDITOR_QUERY,
-                            value: queryId
+                            type: REGISTER_QUERY,
+                            value: [session.selectedWorkbookEntry, script.scriptKey, queryId]
                         })
                     }
                     break;

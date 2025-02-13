@@ -58,7 +58,6 @@ const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
 const OutputCommandList = (props: { connector: ConnectorInfo | null }) => {
     const config = useAppConfig();
     const [linkSharingIsOpen, openLinkSharing] = React.useState<boolean>(false);
-    const [saveSqlIsOpen, openSaveSql] = React.useState<boolean>(false);
     return (
         <>
             <ActionList.ListItem onClick={() => openLinkSharing(s => !s)}>
@@ -97,21 +96,22 @@ interface TabState {
 interface Props { }
 
 export const EditorPage: React.FC<Props> = (_props: Props) => {
-    const [currentSession, _dispatchCurrentSession] = useCurrentSessionState();
+    const [sessionState, _dispatchCurrentSession] = useCurrentSessionState();
     const [selectedTab, selectTab] = React.useState<TabKey>(TabKey.Catalog);
     const [sharingIsOpen, setSharingIsOpen] = React.useState<boolean>(false);
 
     // Resolve the editor query state (if any)
-    const editorQuery = currentSession?.editorQuery ?? null;
-    const queryState = useQueryState(currentSession?.connectionId ?? null, editorQuery);
+    const workbookEntry = sessionState?.workbookEntries[sessionState.selectedWorkbookEntry];
+    const activeQueryId = workbookEntry?.queryId ?? null;
+    const activeQueryState = useQueryState(sessionState?.connectionId ?? null, activeQueryId);
 
     // Determine selected tabs
     const tabState = React.useRef<TabState>({
         enabledTabs: 1,
     });
     let enabledTabs = 1;
-    enabledTabs += +(queryState != null);
-    enabledTabs += +(queryState?.status == QueryExecutionStatus.SUCCEEDED);
+    enabledTabs += +(activeQueryState != null);
+    enabledTabs += +(activeQueryState?.status == QueryExecutionStatus.SUCCEEDED);
     tabState.current.enabledTabs = enabledTabs;
 
     // Register keyboard events
@@ -135,7 +135,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
     // Automatically switch tabs when the execution status changes meaningfully
     const prevStatus = React.useRef<[number | null, QueryExecutionStatus | null] | null>(null);
     React.useEffect(() => {
-        const status = queryState?.status ?? null;
+        const status = activeQueryState?.status ?? null;
         switch (status) {
             case null:
                 selectTab(TabKey.Catalog);
@@ -144,7 +144,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
             case QueryExecutionStatus.ACCEPTED:
             case QueryExecutionStatus.RECEIVED_SCHEMA:
             case QueryExecutionStatus.RECEIVED_FIRST_RESULT:
-                if (prevStatus.current == null || prevStatus.current[0] != editorQuery || prevStatus.current[1] != status) {
+                if (prevStatus.current == null || prevStatus.current[0] != activeQueryId || prevStatus.current[1] != status) {
                     selectTab(TabKey.QueryStatusView);
                 }
                 break;
@@ -155,8 +155,8 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                 selectTab(TabKey.QueryResultView);
                 break;
         }
-        prevStatus.current = [editorQuery, status];
-    }, [editorQuery, queryState?.status]);
+        prevStatus.current = [activeQueryId, status];
+    }, [activeQueryId, activeQueryState?.status]);
 
     const sessionCommand = useSessionCommandDispatch();
     return (
@@ -215,10 +215,10 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                         tabRenderers={{
                             [TabKey.Catalog]: _props => <ScriptCatalogView />,
                             [TabKey.QueryStatusView]: _props => (
-                                <QueryStatusView query={queryState} />
+                                <QueryStatusView query={activeQueryState} />
                             ),
                             [TabKey.QueryResultView]: _props => (
-                                <QueryResultView query={queryState} />
+                                <QueryResultView query={activeQueryState} />
                             ),
                         }}
                     />
@@ -227,9 +227,9 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
             <div className={styles.action_sidebar}>
                 <ActionList.List aria-label="Actions">
                     <ActionList.GroupHeading>Connector</ActionList.GroupHeading>
-                    <ScriptCommandList connector={currentSession?.connectorInfo ?? null} />
+                    <ScriptCommandList connector={sessionState?.connectorInfo ?? null} />
                     <ActionList.GroupHeading>Output</ActionList.GroupHeading>
-                    <OutputCommandList connector={currentSession?.connectorInfo ?? null} />
+                    <OutputCommandList connector={sessionState?.connectorInfo ?? null} />
                     <ActionList.Divider />
                 </ActionList.List>
             </div>

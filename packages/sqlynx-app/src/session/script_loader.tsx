@@ -75,7 +75,7 @@ export const ScriptLoader: React.FC<Props> = (props: Props) => {
         // Are we already loading it?
         // This may happen if the user decided to load the script twice.
         // We'll just await the promise and store a duplicated script
-        const flightKey = script.scriptKey + script.metadata.scriptId;
+        const flightKey = script.scriptKey + (script.metadata.scriptId ?? "-");
         const existing = internal.current.scripts.get(flightKey);
         if (existing) {
             return;
@@ -101,13 +101,15 @@ export const ScriptLoader: React.FC<Props> = (props: Props) => {
         waitForResult(script.scriptKey, loadingState.inflight);
     };
 
-    React.useEffect(
-        () => loadIfNeeded(session?.scripts[ScriptKey.MAIN_SCRIPT] ?? null),
-        [session?.scripts[ScriptKey.MAIN_SCRIPT]?.metadata, session?.connectorInfo],
-    );
-    React.useEffect(
-        () => loadIfNeeded(session?.scripts[ScriptKey.SCHEMA_SCRIPT] ?? null),
-        [session?.scripts[ScriptKey.SCHEMA_SCRIPT]?.metadata, session?.connectorInfo],
-    );
+    // Load scripts on demand
+    React.useEffect(() => {
+        if (session) {
+            for (const k in session.scripts) {
+                const script = session.scripts[k];
+                loadIfNeeded(script);
+            }
+        }
+    }, [session?.scripts, session?.connectorInfo]);
+
     return props.children;
 };

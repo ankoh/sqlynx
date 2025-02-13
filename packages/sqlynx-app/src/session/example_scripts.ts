@@ -2,19 +2,18 @@ import {
     ScriptMetadata,
     ScriptType,
     ScriptOriginType,
-    createScriptMetadata,
 } from './script_metadata.js';
 
-function md(scriptType: ScriptType, name: string, url: URL, schemaId: string | null): ScriptMetadata {
-    return createScriptMetadata({
+function md(scriptType: ScriptType, name: string, url: URL, schemaRef: string | null): ScriptMetadata {
+    return {
         scriptType,
-        name,
+        scriptId: name,
         originType: ScriptOriginType.HTTP,
         httpURL: url,
-        schemaId,
+        schemaRef,
         annotations: null,
         immutable: true
-    });
+    };
 }
 
 const tpch_schema = new URL('../../static/examples/tpch/schema.sql', import.meta.url);

@@ -10,7 +10,6 @@ import { ConnectionRegistry } from './connectors/connection_registry.js';
 import { ConnectorsPage, ConnectorsPageStateProvider } from './view/connectors/connectors_page.js';
 import { CurrentSessionStateProvider } from './session/current_session.js';
 import { EditorPage } from './view/editor/editor_page.js';
-import { FilesPage } from './view/files/files_page.js';
 import { GitHubTheme } from './github_theme.js';
 import { HttpClientProvider } from './platform/http_client_provider.js';
 import { HyperDatabaseClientProvider } from './connectors/hyper/hyperdb_client_provider.js';
@@ -31,7 +30,6 @@ import { ScriptLoader } from './session/script_loader.js';
 import { SessionCommands } from './session/session_commands.js';
 import { SessionSetup } from './session/session_setup.js';
 import { SessionStateRegistry } from './session/session_state_registry.js';
-import { ShellPage } from './view/shell/shell_page.js';
 import { TrinoConnector } from './connectors/trino/trino_connector.js';
 import { TrinoConnectorSettingsStateProvider } from './view/connectors/trino_connector_settings.js';
 import { UIInternalsPage } from './view/internals/ui_internals_page.js';
@@ -134,8 +132,6 @@ root.render(
                 <Routes>
                     <Route index Component={EditorPage} />
                     <Route path="/connectors" Component={ConnectorsPage} />
-                    <Route path="/files" Component={FilesPage} />
-                    <Route path="/shell" Component={ShellPage} />
                     {isDebugBuild() && (
                         <>
                             <Route path="/internals/ui" Component={UIInternalsPage} />

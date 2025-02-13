@@ -4,7 +4,7 @@ import Immutable from 'immutable';
 import { CONNECTOR_INFOS, ConnectorType } from '../connector_info.js';
 import { EXAMPLES } from '../../session/example_scripts.js';
 import { RESULT_OK } from '../../utils/result.js';
-import { ScriptData, ScriptKey } from '../../session/session_state.js';
+import { ScriptData } from '../../session/session_state.js';
 import { ScriptLoadingStatus } from '../../session/script_loader.js';
 import { useConnectionStateAllocator } from '../connection_registry.js';
 import { useSQLynxCoreSetup } from '../../core_provider.js';
@@ -29,11 +29,11 @@ export function useServerlessSessionSetup(): SessionSetupFn {
         const lnx = instance.value;
         const connectionState = createServerlessConnectionState(lnx);
         const connectionId = allocateConnection(connectionState);
-        const mainScript = lnx.createScript(connectionState.catalog, ScriptKey.MAIN_SCRIPT);
-        const schemaScript = lnx.createScript(connectionState.catalog, ScriptKey.SCHEMA_SCRIPT);
+        const mainScript = lnx.createScript(connectionState.catalog, 1);
+        const schemaScript = lnx.createScript(connectionState.catalog, 2);
 
         const mainScriptData: ScriptData = {
-            scriptKey: ScriptKey.MAIN_SCRIPT,
+            scriptKey: 1,
             script: mainScript,
             // metadata: STRESS_TESTS[0].queries[0],
             metadata: EXAMPLES.TPCH.queries[1],
@@ -49,13 +49,14 @@ export function useServerlessSessionSetup(): SessionSetupFn {
                 analyzed: null,
                 destroy: () => { },
             },
+            outdatedAnalysis: true,
             statistics: Immutable.List(),
             cursor: null,
             completion: null,
             selectedCompletionCandidate: null,
         };
         const schemaScriptData: ScriptData = {
-            scriptKey: ScriptKey.SCHEMA_SCRIPT,
+            scriptKey: 2,
             script: schemaScript,
             // metadata: STRESS_TESTS[0].schema,
             metadata: EXAMPLES.TPCH.schema,
@@ -71,6 +72,7 @@ export function useServerlessSessionSetup(): SessionSetupFn {
                 analyzed: null,
                 destroy: () => { },
             },
+            outdatedAnalysis: true,
             statistics: Immutable.List(),
             cursor: null,
             completion: null,
@@ -83,12 +85,19 @@ export function useServerlessSessionSetup(): SessionSetupFn {
             connectionId: connectionId,
             connectionCatalog: connectionState.catalog,
             scripts: {
-                [ScriptKey.MAIN_SCRIPT]: mainScriptData,
-                [ScriptKey.SCHEMA_SCRIPT]: schemaScriptData,
+                [mainScriptData.scriptKey]: mainScriptData,
+                [schemaScriptData.scriptKey]: schemaScriptData,
             },
-            runningQueries: new Set(),
-            finishedQueries: [],
-            editorQuery: null,
+            workbookEntries: [{
+                scriptKey: mainScriptData.scriptKey,
+                queryId: null,
+                title: null,
+            }, {
+                scriptKey: schemaScriptData.scriptKey,
+                queryId: null,
+                title: null,
+            }],
+            selectedWorkbookEntry: 0,
             userFocus: null,
         });
 

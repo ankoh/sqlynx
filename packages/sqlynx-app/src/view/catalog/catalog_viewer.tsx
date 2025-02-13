@@ -8,7 +8,6 @@ import { EdgeLayer } from './edge_layer.js';
 import { NodeLayer } from './node_layer.js';
 import { useThrottledMemo } from '../../utils/throttle.js';
 import { CatalogRenderingSettings, CatalogViewModel } from './catalog_view_model.js';
-import { ScriptKey } from '../../session/session_state.js';
 
 const RENDERING_SETTINGS: CatalogRenderingSettings = {
     virtual: {
@@ -53,6 +52,9 @@ interface Props {
 export function CatalogViewer(_props: Props) {
     const [sessionState, _dispatchSession] = useCurrentSessionState();
 
+    const workloadEntry = sessionState?.workbookEntries[sessionState.selectedWorkbookEntry];
+    const script = workloadEntry ? sessionState.scripts[workloadEntry.scriptKey] : null;
+
     // Watch the container size
     const containerElement = React.useRef(null);
     const containerSize = observeSize(containerElement);
@@ -71,14 +73,16 @@ export function CatalogViewer(_props: Props) {
 
     // Load script refs
     React.useEffect(() => {
-        const script = sessionState?.scripts[ScriptKey.MAIN_SCRIPT] ?? null;
-        if (viewModel != null && script != null && script.processed.analyzed != null) {
+        if (!script) {
+            return;
+        }
+        if (viewModel != null && script.processed.analyzed != null) {
             const analyzed = script.processed.analyzed.read();
             viewModel.pinScriptRefs(analyzed);
             setViewModelVersion(v => v + 1);
         }
 
-    }, [viewModel, sessionState?.scripts[ScriptKey.MAIN_SCRIPT].processed]);
+    }, [viewModel, script?.processed]);
 
     // Update user focus
     React.useEffect(() => {

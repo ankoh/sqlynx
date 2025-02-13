@@ -262,14 +262,14 @@ export function deriveFocusFromCatalogSelection(
                 scriptColumnRefs: new Map(),
             };
             // Check the main and schema script for associated table and column refs
-            for (const targetKey of [ScriptKey.MAIN_SCRIPT, ScriptKey.SCHEMA_SCRIPT]) {
+            for (const k in scriptData) {
                 // Is there data for the script key?
-                const targetData = scriptData[targetKey];
-                if (!targetData) {
+                const d = scriptData[k];
+                if (!d) {
                     continue;
                 }
                 // Read the analyzed script
-                const targetAnalyzed = scriptData[targetKey].processed.analyzed?.read(tmpAnalyzed);
+                const targetAnalyzed = scriptData[k].processed.analyzed?.read(tmpAnalyzed);
                 if (!targetAnalyzed) continue;
 
                 // Find table refs
@@ -282,7 +282,7 @@ export function deriveFocusFromCatalogSelection(
                 for (let indexEntryId = begin0; indexEntryId < end0; ++indexEntryId) {
                     const indexEntry = targetAnalyzed.tableReferencesById(indexEntryId, tmpIndexedTableRef)!;
                     const tableRefId = indexEntry.tableReferenceId();
-                    focus.scriptTableRefs.set(sqlynx.ContextObjectID.create(targetKey, tableRefId), FocusType.TABLE_REF_OF_TARGET_TABLE);
+                    focus.scriptTableRefs.set(sqlynx.ContextObjectID.create(d.scriptKey, tableRefId), FocusType.TABLE_REF_OF_TARGET_TABLE);
                 }
 
                 // Find column refs
@@ -295,7 +295,7 @@ export function deriveFocusFromCatalogSelection(
                 for (let indexEntryId = begin1; indexEntryId < end1; ++indexEntryId) {
                     const indexEntry = targetAnalyzed.columnReferencesById(indexEntryId, tmpIndexedColumnRef)!;
                     const expressionId = indexEntry.expressionId();
-                    focus.scriptColumnRefs.set(sqlynx.ContextObjectID.create(targetKey, expressionId), FocusType.COLUMN_REF_OF_TARGET_TABLE);
+                    focus.scriptColumnRefs.set(sqlynx.ContextObjectID.create(d.scriptKey, expressionId), FocusType.COLUMN_REF_OF_TARGET_TABLE);
                 }
             }
             return focus;
@@ -310,14 +310,14 @@ export function deriveFocusFromCatalogSelection(
                 scriptTableRefs: new Map(),
                 scriptColumnRefs: new Map(),
             };
-            for (const targetKey of [ScriptKey.MAIN_SCRIPT, ScriptKey.SCHEMA_SCRIPT]) {
+            for (const k in scriptData) {
                 // Is there data for the script key?
-                const targetData = scriptData[targetKey];
-                if (!targetData) {
+                const d = scriptData[k];
+                if (!d) {
                     continue;
                 }
                 // Read the analyzed script
-                const targetAnalyzed = scriptData[targetKey].processed.analyzed?.read(tmpAnalyzed);
+                const targetAnalyzed = scriptData[k].processed.analyzed?.read(tmpAnalyzed);
                 if (!targetAnalyzed) continue;
 
                 // Find table refs
@@ -330,7 +330,7 @@ export function deriveFocusFromCatalogSelection(
                 for (let indexEntryId = begin0; indexEntryId < end0; ++indexEntryId) {
                     const indexEntry = targetAnalyzed.tableReferencesById(indexEntryId, tmpIndexedTableRef)!;
                     const tableRefId = indexEntry.tableReferenceId();
-                    focus.scriptTableRefs.set(sqlynx.ContextObjectID.create(targetKey, tableRefId), FocusType.TABLE_REF_OF_TARGET_TABLE);
+                    focus.scriptTableRefs.set(sqlynx.ContextObjectID.create(d.scriptKey, tableRefId), FocusType.TABLE_REF_OF_TARGET_TABLE);
                 }
 
                 // Find column refs
@@ -344,7 +344,7 @@ export function deriveFocusFromCatalogSelection(
                 for (let indexEntryId = begin1; indexEntryId < end1; ++indexEntryId) {
                     const indexEntry = targetAnalyzed.columnReferencesById(indexEntryId, tmpIndexedColumnRef)!;
                     const expressionId = indexEntry.expressionId();
-                    focus.scriptColumnRefs.set(sqlynx.ContextObjectID.create(targetKey, expressionId), FocusType.COLUMN_REF_OF_TARGET_COLUMN);
+                    focus.scriptColumnRefs.set(sqlynx.ContextObjectID.create(d.scriptKey, expressionId), FocusType.COLUMN_REF_OF_TARGET_COLUMN);
                 }
             }
             return focus;
