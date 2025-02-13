@@ -12,16 +12,16 @@ export interface HyperGrpcConnectionParams {
     gRPCMetadata: KeyValueListElement[];
 }
 
-export function buildHyperConnectorParams(params: HyperGrpcConnectionParams): proto.sqlynx_session.pb.ConnectorParams {
-    const tls = new proto.sqlynx_session.pb.TlsConfig({
+export function buildHyperConnectorParams(params: HyperGrpcConnectionParams): proto.sqlynx_workbook.pb.ConnectorParams {
+    const tls = new proto.sqlynx_workbook.pb.TlsConfig({
         clientKeyPath: params.channelArgs.tls?.keyPath,
         clientCertPath: params.channelArgs.tls?.pubPath,
         caCertsPath: params.channelArgs.tls?.caPath,
     });
-    return new proto.sqlynx_session.pb.ConnectorParams({
+    return new proto.sqlynx_workbook.pb.ConnectorParams({
         connector: {
             case: "hyper",
-            value: new proto.sqlynx_session.pb.HyperConnectorParams({
+            value: new proto.sqlynx_workbook.pb.HyperConnectorParams({
                 endpoint: params.channelArgs.endpoint ?? "",
                 tls
             })

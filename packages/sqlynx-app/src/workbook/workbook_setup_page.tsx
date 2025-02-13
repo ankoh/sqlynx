@@ -11,7 +11,7 @@ import { ChecklistIcon, DesktopDownloadIcon, FileBadgeIcon, KeyIcon, PackageIcon
 import { formatHHMMSS } from '../utils/format.js';
 import { useLogger } from '../platform/logger_provider.js';
 import { ConnectorInfo, requiresSwitchingToNative } from '../connectors/connector_info.js';
-import { encodeWorkbookSetupUrl as encodeWorkbookSetupUrl, WorkbookLinkTarget as WorkbookLinkTarget } from './workbook_setup_url.js';
+import { encodeWorkbookAsUrl as encodeWorkbookAsUrl, WorkbookLinkTarget as WorkbookLinkTarget } from './workbook_setup_url.js';
 import { AnchorAlignment, AnchorSide } from '../view/foundations/anchored_position.js';
 import { Button, ButtonSize, ButtonVariant } from '../view/foundations/button.js';
 import { KeyValueTextField, TextField } from '../view/foundations/text_field.js';
@@ -37,7 +37,7 @@ const LOG_CTX = "workbook_setup";
 const AUTO_TRIGGER_DELAY = 2000;
 const AUTO_TRIGGER_COUNTER_INTERVAL = 200;
 
-const ConnectorParamsSection: React.FC<{ params: proto.sqlynx_session.pb.ConnectorParams }> = (props: { params: proto.sqlynx_session.pb.ConnectorParams }) => {
+const ConnectorParamsSection: React.FC<{ params: proto.sqlynx_workbook.pb.ConnectorParams }> = (props: { params: proto.sqlynx_workbook.pb.ConnectorParams }) => {
     switch (props.params.connector.case) {
         case "salesforce": {
             return (
@@ -112,7 +112,7 @@ const ConnectorParamsSection: React.FC<{ params: proto.sqlynx_session.pb.Connect
 interface Props {
     workbookId: number;
     connector: ConnectorInfo;
-    setupProto: proto.sqlynx_session.pb.SessionSetup;
+    setupProto: proto.sqlynx_workbook.pb.Workbook;
     onDone: () => void;
 }
 
@@ -155,7 +155,7 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
         if (canExecuteHere) {
             return null;
         } else {
-            return encodeWorkbookSetupUrl(props.setupProto, WorkbookLinkTarget.NATIVE);
+            return encodeWorkbookAsUrl(props.setupProto, WorkbookLinkTarget.NATIVE);
         }
     }, []);
 
@@ -261,10 +261,10 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
         for (const script of props.setupProto.scripts) {
             let scriptName = null;
             switch (script.scriptType) {
-                case proto.sqlynx_session.pb.ScriptType.Query:
+                case proto.sqlynx_workbook.pb.ScriptType.Query:
                     scriptName = "Query";
                     break;
-                case proto.sqlynx_session.pb.ScriptType.Schema:
+                case proto.sqlynx_workbook.pb.ScriptType.Schema:
                     scriptName = "Schema";
                     break;
             }

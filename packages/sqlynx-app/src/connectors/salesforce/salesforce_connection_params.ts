@@ -11,11 +11,11 @@ export interface SalesforceAuthParams {
     loginHint: string | null;
 }
 
-export function buildSalesforceConnectorParams(params: SalesforceAuthParams | null): proto.sqlynx_session.pb.ConnectorParams {
-    return new proto.sqlynx_session.pb.ConnectorParams({
+export function buildSalesforceConnectorParams(params: SalesforceAuthParams | null): proto.sqlynx_workbook.pb.ConnectorParams {
+    return new proto.sqlynx_workbook.pb.ConnectorParams({
         connector: {
             case: "salesforce",
-            value: new proto.sqlynx_session.pb.SalesforceConnectorParams({
+            value: new proto.sqlynx_workbook.pb.SalesforceConnectorParams({
                 instanceUrl: params?.instanceUrl ?? "",
                 appConsumerKey: params?.appConsumerKey ?? "",
                 loginHint: params?.loginHint ?? undefined,

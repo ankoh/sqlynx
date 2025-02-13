@@ -9,7 +9,7 @@ import { classNames } from '../utils/classnames.js';
 import { HoverMode, NavBarButtonWithRef, NavBarLink } from './navbar_button.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 import { VersionInfoOverlay } from './version_viewer.js';
-import { generateWorkbookSetupUrl, WorkbookLinkTarget } from '../workbook/workbook_setup_url.js';
+import { generateWorkbookUrl, WorkbookLinkTarget } from '../workbook/workbook_setup_url.js';
 import { useCurrentWorkbookState } from '../workbook/current_workbook.js';
 import { useConnectionState } from '../connectors/connection_registry.js';
 import { useLogger } from '../platform/logger_provider.js';
@@ -148,18 +148,18 @@ export const NavBar = (): React.ReactElement => {
     const logger = useLogger();
     const location = useLocation();
     const platformType = usePlatformType();
-    const [sessionState, _modifySessionState] = useCurrentWorkbookState();
-    const [connectionState, _setConnectionState] = useConnectionState(sessionState?.connectionId ?? null);
+    const [workbook, _modifyWorkbook] = useCurrentWorkbookState();
+    const [connectionState, _setConnectionState] = useConnectionState(workbook?.connectionId ?? null);
 
     const isBrowser = platformType === PlatformType.WEB;
     const isMac = platformType === PlatformType.MACOS;
     const setupLinkTarget = isBrowser ? WorkbookLinkTarget.NATIVE : WorkbookLinkTarget.WEB;
     const setupUrl = React.useMemo(() => {
-        if (sessionState == null || connectionState == null) {
+        if (workbook == null || connectionState == null) {
             return null;
         }
-        return generateWorkbookSetupUrl(sessionState, connectionState, setupLinkTarget);
-    }, [sessionState, connectionState, setupLinkTarget]);
+        return generateWorkbookUrl(workbook, connectionState, setupLinkTarget);
+    }, [workbook, connectionState, setupLinkTarget]);
 
     React.useEffect(() => {
         logger.info(`navigated to path ${location.pathname}`, LOG_CTX);

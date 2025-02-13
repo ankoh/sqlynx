@@ -27,12 +27,12 @@ export abstract class AppEventListener {
     private oAuthSubscriber: OAuthSubscriber | null = null;
     /// The workbook setup subscriber.
     /// There can only be a single navigation subscribe at a single point in time
-    private workbookSetupSubscriber: ((data: proto.sqlynx_session.pb.SessionSetup) => void) | null = null;
+    private workbookSetupSubscriber: ((data: proto.sqlynx_workbook.pb.Workbook) => void) | null = null;
     /// The clipboard subscriber
     private clipboardEventHandler: (e: ClipboardEvent) => void;
 
     /// The queued workbook setup (if any)
-    private queuedWorkbookSetupEvent: proto.sqlynx_session.pb.SessionSetup | null;
+    private queuedWorkbookSetupEvent: proto.sqlynx_workbook.pb.Workbook | null;
 
     /// Constructor
     constructor(logger: Logger) {
@@ -59,15 +59,15 @@ export abstract class AppEventListener {
                 this.dispatchOAuthRedirect(event.data.value);
                 break;
             }
-            case "sessionSetup": {
-                this.dispatchWorkbookSetup(event.data.value);
+            case "workbook": {
+                this.dispatchWorkbook(event.data.value);
                 break;
             }
         }
     }
 
     /// Received navigation event
-    protected dispatchWorkbookSetup(data: proto.sqlynx_session.pb.SessionSetup) {
+    protected dispatchWorkbook(data: proto.sqlynx_workbook.pb.Workbook) {
         if (!this.workbookSetupSubscriber) {
             this.logger.info("queuing workbook setup event since there's no registered subscriber", LOG_CTX);
             this.queuedWorkbookSetupEvent = data;
@@ -124,7 +124,7 @@ export abstract class AppEventListener {
     }
 
     /// Subscribe navigation events
-    public subscribeWorkbookSetupEvents(handler: (data: proto.sqlynx_session.pb.SessionSetup) => void): void {
+    public subscribeWorkbookSetupEvents(handler: (data: proto.sqlynx_workbook.pb.Workbook) => void): void {
         if (this.workbookSetupSubscriber) {
             this.logger.error("tried to register more than one workbook setup subscriber", LOG_CTX);
             return;
@@ -142,7 +142,7 @@ export abstract class AppEventListener {
     }
 
     /// Unsubscribe from workbook setup events
-    public unsubscribeWorkbookSetupEvents(handler: (data: proto.sqlynx_session.pb.SessionSetup) => void): void {
+    public unsubscribeWorkbookSetupEvents(handler: (data: proto.sqlynx_workbook.pb.Workbook) => void): void {
         if (this.workbookSetupSubscriber != handler) {
             this.logger.error("tried to unregister a workbook setup subscriber that is not registered", LOG_CTX);
         } else {

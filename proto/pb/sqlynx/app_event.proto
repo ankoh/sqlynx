@@ -1,14 +1,14 @@
 syntax = "proto3";
 
 import "sqlynx/oauth.proto";
-import "sqlynx/session.proto";
+import "sqlynx/workbook.proto";
 
 package sqlynx;
 
 message AppEventData {
     oneof data {
-        /// Setup a session
-        SessionSetup session_setup = 2;
+        /// Workbook configuration
+        Workbook workbook = 2;
         /// Provide the oauth redirect
         OAuthRedirectData oauth_redirect = 1;
     }

@@ -72,7 +72,7 @@ message WorkbookEntry {
     string title = 2;
 }
 
-message SessionScript {
+message WorkbookScript {
     /// The script id
     uint32 script_id = 1;
     /// The script type
@@ -81,11 +81,11 @@ message SessionScript {
     string script_text = 3;
 }
 
-message SessionSetup {
+message Workbook {
     /// The connector params
     ConnectorParams connector_params = 1;
     /// The scripts
-    repeated SessionScript scripts = 2;
+    repeated WorkbookScript scripts = 2;
     /// The workbook entries
     repeated WorkbookEntry workbook_entries = 3;
     /// The flag to disable the platform check

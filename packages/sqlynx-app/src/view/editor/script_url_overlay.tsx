@@ -7,7 +7,7 @@ import { AnchorAlignment } from '../foundations/anchored_position.js';
 import { AnchoredOverlay } from '../foundations/anchored_overlay.js';
 import { TextInput } from '../foundations/text_input.js';
 import { classNames } from '../../utils/classnames.js';
-import { generateWorkbookSetupUrl, WorkbookLinkTarget } from '../../workbook/workbook_setup_url.js';
+import { generateWorkbookUrl, WorkbookLinkTarget } from '../../workbook/workbook_setup_url.js';
 import { sleep } from '../../utils/sleep.js';
 import { useConnectionState } from '../../connectors/connection_registry.js';
 import { useCurrentWorkbookState } from '../../workbook/current_workbook.js';
@@ -31,8 +31,8 @@ interface State {
 }
 
 export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
-    const [sessionState, _modifySessionState] = useCurrentWorkbookState();
-    const [connectionState, _setConnectionState] = useConnectionState(sessionState?.connectionId ?? null);
+    const [workbookState, _modifyWorkbook] = useCurrentWorkbookState();
+    const [connectionState, _setConnectionState] = useConnectionState(workbookState?.connectionId ?? null);
     const [state, setState] = React.useState<State>(() => ({
         publicURLText: null,
         copyStartedAt: null,
@@ -43,8 +43,8 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
 
     React.useEffect(() => {
         let setupUrl: URL | null = null;
-        if (sessionState != null && connectionState != null) {
-            setupUrl = generateWorkbookSetupUrl(sessionState, connectionState, WorkbookLinkTarget.WEB);
+        if (workbookState != null && connectionState != null) {
+            setupUrl = generateWorkbookUrl(workbookState, connectionState, WorkbookLinkTarget.WEB);
         }
         setState({
             publicURLText: setupUrl?.toString() ?? null,
@@ -53,7 +53,7 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
             copyError: null,
             uiResetAt: null,
         });
-    }, [sessionState, connectionState]);
+    }, [workbookState, connectionState]);
 
     // Copy the url to the clipboard
     const copyURL = React.useCallback(

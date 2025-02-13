@@ -21,11 +21,11 @@ export interface TrinoConnectionParams {
     metadata: KeyValueListElement[];
 }
 
-export function buildTrinoConnectorParams(params: TrinoConnectionParams): proto.sqlynx_session.pb.ConnectorParams {
-    return new proto.sqlynx_session.pb.ConnectorParams({
+export function buildTrinoConnectorParams(params: TrinoConnectionParams): proto.sqlynx_workbook.pb.ConnectorParams {
+    return new proto.sqlynx_workbook.pb.ConnectorParams({
         connector: {
             case: "trino",
-            value: new proto.sqlynx_session.pb.TrinoConnectorParams({
+            value: new proto.sqlynx_workbook.pb.TrinoConnectorParams({
                 endpoint: params.channelArgs.endpoint ?? "",
                 loginHint: params.authParams.username ?? "",
             })

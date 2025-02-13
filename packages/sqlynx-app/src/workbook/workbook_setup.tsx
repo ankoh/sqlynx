@@ -16,8 +16,8 @@ import { useTrinoWorkbookSetup } from '../connectors/trino/trino_session.js';
 import { RESET } from '../connectors/connection_state.js';
 import { isDebugBuild } from '../globals.js';
 
-/// For now, we just set up one session per connector.
-/// Our abstractions would allow for a more dynamic session management, but we don't have the UI for that.
+/// For now, we just set up one workbook per connector.
+/// Our abstractions would allow for a more dynamic workbook management, but we don't have the UI for that.
 interface DefaultWorkbooks {
     salesforce: number;
     hyper: number;
@@ -37,7 +37,7 @@ enum WorkbookSetupDecision {
 interface WorkbookSetupArgs {
     workbookId: number;
     connector: ConnectorInfo;
-    setupProto: proto.sqlynx_session.pb.SessionSetup;
+    setupProto: proto.sqlynx_workbook.pb.Workbook;
 }
 
 interface WorkbookSetupState {
@@ -91,7 +91,7 @@ export const WorkbookSetup: React.FC<{ children: React.ReactElement }> = (props:
     // The user may either paste a deep link through the clipboard, or may run a setup through a deep link.
     React.useEffect(() => {
         // Create a subscriber
-        const subscriber = async (data: proto.sqlynx_session.pb.SessionSetup) => {
+        const subscriber = async (data: proto.sqlynx_workbook.pb.Workbook) => {
             // Stop the default workbook switch after SQLynx is ready
             abortDefaultWorkbookSwitch.current.abort("workbook_setup_event");
             // Await the setup of the static workbooks

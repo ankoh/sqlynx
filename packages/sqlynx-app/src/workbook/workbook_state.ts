@@ -102,7 +102,7 @@ export const REGISTER_QUERY = Symbol('REGISTER_QUERY');
 
 export type WorkbookStateAction =
     | VariantKind<typeof DESTROY, null>
-    | VariantKind<typeof RESTORE_WORKBOOK, proto.sqlynx_session.pb.SessionSetup>
+    | VariantKind<typeof RESTORE_WORKBOOK, proto.sqlynx_workbook.pb.Workbook>
     | VariantKind<typeof UPDATE_SCRIPT, ScriptKey>
     | VariantKind<typeof UPDATE_SCRIPT_ANALYSIS, [ScriptKey, SQLynxScriptBuffers, sqlynx.proto.ScriptCursorT]>
     | VariantKind<typeof UPDATE_SCRIPT_CURSOR, [ScriptKey, sqlynx.proto.ScriptCursorT]>
@@ -151,7 +151,7 @@ export function reduceWorkbookState(state: WorkbookState, action: WorkbookStateA
                 const metadata: ScriptMetadata = {
                     scriptId: null,
                     schemaRef: null,
-                    scriptType: s.scriptType == proto.sqlynx_session.pb.ScriptType.Schema ? ScriptType.SCHEMA : ScriptType.QUERY,
+                    scriptType: s.scriptType == proto.sqlynx_workbook.pb.ScriptType.Schema ? ScriptType.SCHEMA : ScriptType.QUERY,
                     originType: ScriptOriginType.LOCAL,
                     httpURL: null,
                     annotations: null,

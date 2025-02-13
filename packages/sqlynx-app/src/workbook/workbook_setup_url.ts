@@ -10,22 +10,22 @@ export enum WorkbookLinkTarget {
     WEB
 }
 
-export function generateWorkbookSetupUrl(workbookState: WorkbookState, connection: ConnectionState, target: WorkbookLinkTarget): URL {
+export function generateWorkbookUrl(workbookState: WorkbookState, connection: ConnectionState, target: WorkbookLinkTarget): URL {
     const connectorParams = buildConnectorParams(connection.details);
 
     // Collect the scripts
-    const scripts: proto.sqlynx_session.pb.SessionScript[] = [];
+    const scripts: proto.sqlynx_workbook.pb.WorkbookScript[] = [];
     for (const k in workbookState.scripts) {
         const script = workbookState.scripts[k];
-        scripts.push(new proto.sqlynx_session.pb.SessionScript({
+        scripts.push(new proto.sqlynx_workbook.pb.WorkbookScript({
             scriptId: script.scriptKey as number,
             scriptText: script.script?.toString() ?? "",
         }));
     }
     const eventData = new proto.sqlynx_app_event.pb.AppEventData({
         data: {
-            case: "sessionSetup",
-            value: new proto.sqlynx_session.pb.SessionSetup({
+            case: "workbook",
+            value: new proto.sqlynx_workbook.pb.Workbook({
                 connectorParams: (connectorParams == null) ? undefined : connectorParams,
                 scripts: scripts
             })
@@ -42,10 +42,10 @@ export function generateWorkbookSetupUrl(workbookState: WorkbookState, connectio
     };
 }
 
-export function encodeWorkbookSetupUrl(setup: proto.sqlynx_session.pb.SessionSetup, target: WorkbookLinkTarget): URL {
+export function encodeWorkbookAsUrl(setup: proto.sqlynx_workbook.pb.Workbook, target: WorkbookLinkTarget): URL {
     const eventData = new proto.sqlynx_app_event.pb.AppEventData({
         data: {
-            case: "sessionSetup",
+            case: "workbook",
             value: setup
         }
     });

@@ -160,7 +160,7 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
     },
 ];
 
-export function getConnectorInfoForParams(params: proto.sqlynx_session.pb.ConnectorParams): ConnectorInfo | null {
+export function getConnectorInfoForParams(params: proto.sqlynx_workbook.pb.ConnectorParams): ConnectorInfo | null {
     switch (params.connector.case) {
         case "demo": return CONNECTOR_INFOS[ConnectorType.DEMO];
         case "hyper": return CONNECTOR_INFOS[ConnectorType.HYPER_GRPC];
