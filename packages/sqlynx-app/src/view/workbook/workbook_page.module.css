@@ -55,7 +55,7 @@
 
         display: grid;
         grid-template-rows: 48px calc(100% - 48px);
-        grid-template-columns: 1fr max-content;
+        grid-template-columns: max-content 1fr max-content;
 
         background-color: white;
         border: 1px solid var(--log_border_color);
@@ -64,32 +64,39 @@
     }
     .header_container {
         grid-row: 1;
-        grid-column: 1 / span 2;
+        grid-column: 1 / span 3;
         width: 100%;
 
         display: grid;
         grid-template-rows: 100%;
-        grid-template-columns: max-content auto max-content;
+        grid-template-columns: 120px auto max-content;
 
         border-bottom: 1px solid var(--border_color_primary);
+    }
+    .header_action_container {
+        display: none;
+    }
+    .workbook_entry_sidebar {
+        grid-row: 2;
+        grid-column: 1;
+        width: 120px;
+
+        border-right: 1px solid var(--border_color_primary);
     }
     .body_container {
         position: relative;
         grid-row: 2;
-        grid-column: 1;
+        grid-column: 2;
 
         height: 100%;
         display: flex;
         flex-direction: column;
         background-color: white;
     }
-    .header_action_container {
-        display: none;
-    }
     .action_sidebar {
         border-left: 1px solid var(--border_color_primary);
         grid-row: 2;
-        grid-column: 2;
+        grid-column: 3;
     }
     .action_list {
         display: grid;

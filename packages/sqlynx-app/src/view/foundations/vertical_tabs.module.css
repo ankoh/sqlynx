@@ -1,10 +1,10 @@
 :root {
     --pagenav_body_background: hsl(210, 29%, 97%);
-    --pagenav_tabs_background: hsl(210, 24%, 92%);
-    --pagenav_tabs_background_active: hsl(208.5deg 20.69% 50.76%);
-    --pagenav_tabs_foreground_active: white;
-    --pagenav_tabs_background_hover: hsl(208.5deg 24.69% 80.76%);
-    --pagenav_tabs_border_active: 1px solid hsl(208.5deg 20.69% 44.76%);
+    --pagenav_tabs_background: hsl(210, 29%, 97%);
+    --pagenav_tabs_background_active: hsl(210deg 17.5% 74.31% / 32%);
+    --pagenav_tabs_foreground_active: var(--base_color_black);
+    --pagenav_tabs_background_hover: hsl(210deg 17.5% 74.31% / 32%);
+    --pagenav_tabs_border_active: none;
     --pagenav_tabs_disabled_color: hsl(210, 24%, 62%);
     --pagenav_tabs_indicator_color: rgb(254, 150, 0);
 }

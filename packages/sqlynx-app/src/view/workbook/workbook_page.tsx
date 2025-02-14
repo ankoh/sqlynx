@@ -22,6 +22,17 @@ import { VerticalTabs, VerticalTabVariant } from '../foundations/vertical_tabs.j
 import { useAppConfig } from '../../app_config.js';
 import { useCurrentWorkbookState } from '../../workbook/current_workbook.js';
 import { useQueryState } from '../../connection/query_executor.js';
+import { WorkbookState } from '../../workbook/workbook_state.js';
+
+const WorkbookEntryList = (props: { workbook: WorkbookState | null }) => {
+    if (props.workbook == null) {
+        return <div />;
+    }
+    return (
+        <>
+        </>
+    );
+}
 
 const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
     const config = useAppConfig();
@@ -96,14 +107,14 @@ interface TabState {
 interface Props { }
 
 export const EditorPage: React.FC<Props> = (_props: Props) => {
-    const [sessionState, _dispatchCurrentSession] = useCurrentWorkbookState();
+    const [workbook, _modifyWorkbook] = useCurrentWorkbookState();
     const [selectedTab, selectTab] = React.useState<TabKey>(TabKey.Catalog);
     const [sharingIsOpen, setSharingIsOpen] = React.useState<boolean>(false);
 
     // Resolve the editor query state (if any)
-    const workbookEntry = sessionState?.workbookEntries[sessionState.selectedWorkbookEntry];
+    const workbookEntry = workbook?.workbookEntries[workbook.selectedWorkbookEntry];
     const activeQueryId = workbookEntry?.queryId ?? null;
-    const activeQueryState = useQueryState(sessionState?.connectionId ?? null, activeQueryId);
+    const activeQueryState = useQueryState(workbook?.connectionId ?? null, activeQueryId);
 
     // Determine selected tabs
     const tabState = React.useRef<TabState>({
@@ -186,6 +197,9 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                     <IconButton icon={ThreeBarsIcon} aria-labelledby="visit-github-repository" />
                 </div>
             </div>
+            <div className={styles.workbook_entry_sidebar}>
+                <WorkbookEntryList workbook={workbook} />
+            </div>
             <div className={styles.body_container}>
                 <div className={styles.editor_container}>
                     <ScriptEditor className={styles.editor_card} />
@@ -227,9 +241,9 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
             <div className={styles.action_sidebar}>
                 <ActionList.List aria-label="Actions">
                     <ActionList.GroupHeading>Connector</ActionList.GroupHeading>
-                    <ScriptCommandList connector={sessionState?.connectorInfo ?? null} />
+                    <ScriptCommandList connector={workbook?.connectorInfo ?? null} />
                     <ActionList.GroupHeading>Output</ActionList.GroupHeading>
-                    <OutputCommandList connector={sessionState?.connectorInfo ?? null} />
+                    <OutputCommandList connector={workbook?.connectorInfo ?? null} />
                     <ActionList.Divider />
                 </ActionList.List>
             </div>
