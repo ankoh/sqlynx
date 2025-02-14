@@ -79,7 +79,6 @@
     .workbook_entry_sidebar {
         grid-row: 2;
         grid-column: 1;
-        width: 120px;
 
         border-right: 1px solid var(--border_color_primary);
     }

@@ -22,17 +22,7 @@ import { VerticalTabs, VerticalTabVariant } from '../foundations/vertical_tabs.j
 import { useAppConfig } from '../../app_config.js';
 import { useCurrentWorkbookState } from '../../workbook/current_workbook.js';
 import { useQueryState } from '../../connection/query_executor.js';
-import { WorkbookState } from '../../workbook/workbook_state.js';
-
-const WorkbookEntryList = (props: { workbook: WorkbookState | null }) => {
-    if (props.workbook == null) {
-        return <div />;
-    }
-    return (
-        <>
-        </>
-    );
-}
+import { WorkbookEntryList } from './workbook_entry_list.js';
 
 const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
     const config = useAppConfig();
