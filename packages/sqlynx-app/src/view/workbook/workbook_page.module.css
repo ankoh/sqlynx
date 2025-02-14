@@ -81,6 +81,7 @@
         grid-column: 1;
 
         border-right: 1px solid var(--border_color_primary);
+        background-color: hsl(214.29deg 17.95% 92.35%);
     }
     .body_container {
         position: relative;
