@@ -4,21 +4,22 @@ import * as symbols from '../../static/svg/symbols.generated.svg';
 
 import { useLocation } from 'react-router-dom';
 
-import { SQLYNX_VERSION } from '../globals.js';
-import { classNames } from '../utils/classnames.js';
-import { HoverMode, NavBarButtonWithRef, NavBarLink } from './navbar_button.js';
-import { PlatformType, usePlatformType } from '../platform/platform_type.js';
-import { VersionInfoOverlay } from './version_viewer.js';
-import { generateWorkbookUrl, WorkbookLinkTarget } from '../workbook/workbook_setup_url.js';
-import { useCurrentWorkbookState } from '../workbook/current_workbook.js';
-import { useConnectionState } from '../connection/connection_registry.js';
-import { useLogger } from '../platform/logger_provider.js';
-import { useVersionCheck } from '../platform/version_check.js';
-import { VersionCheckIndicator } from './version_viewer.js';
 import { AnchorAlignment, AnchorSide } from './foundations/anchored_position.js';
+import { HoverMode, NavBarButtonWithRef, NavBarLink } from './navbar_button.js';
+import { InternalsViewerOverlay } from './internals_viewer.js';
 import { LogViewerOverlay } from './log_viewer.js';
 import { OverlaySize } from './foundations/overlay.js';
-import { InternalsViewerOverlay } from './internals_viewer.js';
+import { PlatformType, usePlatformType } from '../platform/platform_type.js';
+import { SQLYNX_VERSION } from '../globals.js';
+import { VersionCheckIndicator } from './version_viewer.js';
+import { VersionInfoOverlay } from './version_viewer.js';
+import { classNames } from '../utils/classnames.js';
+import { generateWorkbookUrl, WorkbookLinkTarget } from '../workbook/workbook_setup_url.js';
+import { getConnectionParamsFromDetails } from '../connection/connection_params.js';
+import { useConnectionState } from '../connection/connection_registry.js';
+import { useCurrentWorkbookState } from '../workbook/current_workbook.js';
+import { useLogger } from '../platform/logger_provider.js';
+import { useVersionCheck } from '../platform/version_check.js';
 
 const LOG_CTX = "navbar";
 
@@ -158,7 +159,11 @@ export const NavBar = (): React.ReactElement => {
         if (workbook == null || connectionState == null) {
             return null;
         }
-        return generateWorkbookUrl(workbook, connectionState, setupLinkTarget);
+        const params = getConnectionParamsFromDetails(connectionState.details);
+        if (params == null) {
+            return null;
+        }
+        return generateWorkbookUrl(workbook, params, setupLinkTarget);
     }, [workbook, connectionState, setupLinkTarget]);
 
     React.useEffect(() => {

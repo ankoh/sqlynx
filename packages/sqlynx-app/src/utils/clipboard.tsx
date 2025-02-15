@@ -16,6 +16,8 @@ interface Props {
     value: string;
     timeoutMs?: number;
     logContext: string;
+    disabled?: boolean;
+    icon?: Icon;
     ['aria-label']: string;
     ['aria-labelledby']: string;
 }
@@ -51,7 +53,7 @@ export function CopyToClipboardButton(props: Props): React.ReactElement {
     if (wasRecentlyCopied) {
         icon = CheckIcon;
     } else {
-        icon = CopyIcon;
+        icon = props.icon ?? CopyIcon;
     }
 
     const ariaLabel = props['aria-label'];
@@ -66,8 +68,8 @@ export function CopyToClipboardButton(props: Props): React.ReactElement {
                 icon={icon}
                 variant={buttonVariant}
                 size={buttonSize}
-                aria-labelledby={ariaLabelledBy}
                 onClick={copy}
+                aria-labelledby={ariaLabelledBy}
             />
         </Tooltip>
     );

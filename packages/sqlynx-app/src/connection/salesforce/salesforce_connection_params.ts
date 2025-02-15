@@ -1,6 +1,6 @@
 import * as proto from '@ankoh/sqlynx-protobuf';
 
-export interface SalesforceAuthParams {
+export interface SalesforceConnectionParams {
     /// The foundations URL
     instanceUrl: string;
     /// The client id
@@ -11,7 +11,7 @@ export interface SalesforceAuthParams {
     loginHint: string | null;
 }
 
-export function buildSalesforceConnectorParams(params: SalesforceAuthParams | null): proto.sqlynx_workbook.pb.ConnectorParams {
+export function buildSalesforceConnectorParams(params: SalesforceConnectionParams | null): proto.sqlynx_workbook.pb.ConnectorParams {
     return new proto.sqlynx_workbook.pb.ConnectorParams({
         connector: {
             case: "salesforce",

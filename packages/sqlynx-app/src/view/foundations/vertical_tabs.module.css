@@ -4,7 +4,6 @@
     --pagenav_tabs_background_active: hsl(210deg 17.5% 74.31% / 32%);
     --pagenav_tabs_foreground_active: var(--base_color_black);
     --pagenav_tabs_background_hover: hsl(210deg 17.5% 74.31% / 32%);
-    --pagenav_tabs_border_active: none;
     --pagenav_tabs_disabled_color: hsl(210, 24%, 62%);
     --pagenav_tabs_indicator_color: rgb(254, 150, 0);
 }
@@ -89,7 +88,6 @@
 .stacked_tab_active > .stacked_tab_icon {
     color: var(--pagenav_tabs_foreground_active);
     background-color: var(--pagenav_tabs_background_active) !important;
-    border: var(--pagenav_tabs_border_active);
 }
 
 
@@ -125,6 +123,5 @@
 .wide_tab_active > .wide_tab_button {
     color: var(--pagenav_tabs_foreground_active);
     background-color: var(--pagenav_tabs_background_active) !important;
-    border: var(--pagenav_tabs_border_active);
 }
 

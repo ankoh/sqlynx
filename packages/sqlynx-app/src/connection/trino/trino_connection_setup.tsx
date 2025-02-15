@@ -63,9 +63,9 @@ export interface TrinoSetupApi {
     reset(dispatch: Dispatch<TrinoConnectorAction>): Promise<void>
 }
 
-export function createTrinoSetupFlow(trinoClient: TrinoApiClientInterface, config: TrinoConnectorConfig, logger: Logger): (TrinoSetupApi | null) {
-    const setup = async (updateState: Dispatch<TrinoConnectorAction>, params: TrinoConnectionParams, abort: AbortSignal) => {
-        return await setupTrinoConnection(updateState, logger, params, config, trinoClient, abort);
+export function createTrinoSetup(trinoClient: TrinoApiClientInterface, config: TrinoConnectorConfig, logger: Logger): (TrinoSetupApi | null) {
+    const setup = async (modifyState: Dispatch<TrinoConnectorAction>, params: TrinoConnectionParams, abort: AbortSignal) => {
+        return await setupTrinoConnection(modifyState, logger, params, config, trinoClient, abort);
     };
     const reset = async (updateState: Dispatch<TrinoConnectorAction>) => {
         updateState({

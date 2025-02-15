@@ -27,7 +27,9 @@ export function buildTrinoConnectorParams(params: TrinoConnectionParams): proto.
             case: "trino",
             value: new proto.sqlynx_workbook.pb.TrinoConnectorParams({
                 endpoint: params.channelArgs.endpoint ?? "",
-                loginHint: params.authParams.username ?? "",
+                auth: new proto.sqlynx_workbook.pb.TrinoAuthParams({
+                    username: params.authParams.username ?? "",
+                })
             })
         }
     });

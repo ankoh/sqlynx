@@ -8,30 +8,29 @@ import * as connStyles from '../view/connection/connection_settings.module.css';
 import { IconButton } from '@primer/react';
 import { ChecklistIcon, DesktopDownloadIcon, FileBadgeIcon, KeyIcon, PackageIcon, PlugIcon, XIcon } from '@primer/octicons-react';
 
-import { formatHHMMSS } from '../utils/format.js';
-import { useLogger } from '../platform/logger_provider.js';
-import { ConnectorInfo, requiresSwitchingToNative } from '../connection/connector_info.js';
-import { encodeWorkbookAsUrl as encodeWorkbookAsUrl, WorkbookLinkTarget as WorkbookLinkTarget } from './workbook_setup_url.js';
 import { AnchorAlignment, AnchorSide } from '../view/foundations/anchored_position.js';
 import { Button, ButtonSize, ButtonVariant } from '../view/foundations/button.js';
+import { ConnectionHealth } from '../connection/connection_state.js';
+import { ConnectorInfo, requiresSwitchingToNative } from '../connection/connector_info.js';
+import { CopyToClipboardButton } from '../utils/clipboard.js';
+import { IndicatorStatus, StatusIndicator } from '../view/foundations/status_indicator.js';
 import { KeyValueTextField, TextField } from '../view/foundations/text_field.js';
-import { RESTORE_WORKBOOK } from './workbook_state.js';
-import { SQLYNX_VERSION } from '../globals.js';
-import { SalesforceAuthParams } from '../connection/salesforce/salesforce_connection_params.js';
-import { VersionInfoOverlay } from '../view/version_viewer.js';
-import { useConnectionState } from '../connection/connection_registry.js';
-import { useSalesforceSetup } from '../connection/salesforce/salesforce_connector.js';
-import { useWorkbookState } from './workbook_state_registry.js';
 import { LogViewerOverlay } from '../view/log_viewer.js';
 import { OverlaySize } from '../view/foundations/overlay.js';
-import { CopyToClipboardButton } from '../utils/clipboard.js';
-import { ConnectionHealth } from '../connection/connection_state.js';
-import { IndicatorStatus, StatusIndicator } from '../view/foundations/status_indicator.js';
-import {
-    getConnectionHealthIndicator,
-    getConnectionStatusText,
-} from '../view/connection/salesforce_connector_settings.js';
+import { RESTORE_WORKBOOK } from './workbook_state.js';
+import { SQLYNX_VERSION } from '../globals.js';
+import { SalesforceConnectionParams } from '../connection/salesforce/salesforce_connection_params.js';
+import { TrinoConnectionParams } from 'connection/trino/trino_connection_params.js';
+import { VersionInfoOverlay } from '../view/version_viewer.js';
+import { encodeWorkbookAsUrl as encodeWorkbookAsUrl, WorkbookLinkTarget as WorkbookLinkTarget } from './workbook_setup_url.js';
+import { formatHHMMSS } from '../utils/format.js';
+import { getConnectionHealthIndicator, getConnectionStatusText } from '../view/connection/salesforce_connector_settings.js';
+import { useConnectionState } from '../connection/connection_registry.js';
+import { useLogger } from '../platform/logger_provider.js';
 import { useNavigate } from 'react-router-dom';
+import { useSalesforceSetup } from '../connection/salesforce/salesforce_connector.js';
+import { useTrinoSetup } from '../connection/trino/trino_connector.js';
+import { useWorkbookState } from './workbook_state_registry.js';
 
 const LOG_CTX = "workbook_setup";
 const AUTO_TRIGGER_DELAY = 2000;
@@ -103,6 +102,27 @@ const ConnectorParamsSection: React.FC<{ params: proto.sqlynx_workbook.pb.Connec
                 </div>
             );
         }
+        case "trino": {
+            return (
+                <div className={baseStyles.card_section}>
+                    <div className={baseStyles.section_entries}>
+                        <TextField
+                            name="Username"
+                            value={props.params.connector.value.auth?.username ?? ""}
+                            leadingVisual={() => <div>ID</div>}
+                            logContext={LOG_CTX}
+                        />
+                        <TextField
+                            name="Secret"
+                            value={""}
+                            concealed={true}
+                            leadingVisual={KeyIcon}
+                            logContext={LOG_CTX}
+                        />
+                    </div>
+                </div>
+            );
+        }
         default: {
             return <div />;
         }
@@ -121,27 +141,13 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
     const navigate = useNavigate();
     const logger = useLogger();
     const salesforceSetup = useSalesforceSetup();
+    const trinoSetup = useTrinoSetup();
     const [showLogs, setShowLogs] = React.useState<boolean>(false);
     const [showVersionOverlay, setShowVersionOverlay] = React.useState<boolean>(false);
     const [maybeWorkbook, dispatchWorkbook] = useWorkbookState(props.workbookId);
     const workbook = maybeWorkbook!;
     const [maybeConnection, dispatchConnection] = useConnectionState(workbook!.connectionId);
     const connection = maybeConnection!;
-
-    // // Resolve the connector info
-    // let connectionSetupCheck: ConnectionSetupCheck | null = null;
-    // switch (props.setupProto.connectorParams?.connector.case) {
-    //     case "salesforce": {
-    //         connectionSetupCheck = checkSalesforceConnectionSetup(connection, props// .setupProto.connectorParams.connector.value);
-    //         break;
-    //     }
-    //     case "hyper": {
-    //         connectionSetupCheck = checkHyperConnectionSetup(connection, props.setupProto// .connectorParams.connector.value);
-    //         break;
-    //     }
-    //     default:
-    //         break;
-    // }
 
     // Need to switch to native?
     // Some connectors only run in the native app.
@@ -188,15 +194,35 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
                     if (!salesforceSetup) {
                         return;
                     }
-                    // Authorize the client
+                    // Setup the connection
                     setupAbortController.current = new AbortController();
-                    const authParams: SalesforceAuthParams = {
+                    const params: SalesforceConnectionParams = {
                         instanceUrl: connectorParams.value.instanceUrl,
                         appConsumerKey: connectorParams.value.appConsumerKey,
                         appConsumerSecret: null,
                         loginHint: null,
                     };
-                    await salesforceSetup.setup(dispatchConnection, authParams, setupAbortController.current.signal);
+                    await salesforceSetup.setup(dispatchConnection, params, setupAbortController.current.signal);
+                    setupAbortController.current.signal.throwIfAborted();
+                    setupAbortController.current = null;
+                    break;
+                }
+                case "trino": {
+                    if (!trinoSetup) {
+                        return;
+                    }
+                    setupAbortController.current = new AbortController();
+                    const params: TrinoConnectionParams = {
+                        channelArgs: {
+                            endpoint: connectorParams.value.endpoint
+                        },
+                        authParams: {
+                            username: "", // XXX
+                            secret: ""
+                        },
+                        metadata: []
+                    };
+                    await trinoSetup.setup(dispatchConnection, params, setupAbortController.current.signal);
                     setupAbortController.current.signal.throwIfAborted();
                     setupAbortController.current = null;
                     break;

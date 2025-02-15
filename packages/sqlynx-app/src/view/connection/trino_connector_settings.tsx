@@ -7,26 +7,31 @@ import * as style from './connection_settings.module.css';
 import {
     FileSymlinkFileIcon,
     KeyIcon,
+    LinkIcon,
     PlugIcon,
     XIcon,
 } from '@primer/octicons-react';
 
-
-import { Button, ButtonVariant } from '../foundations/button.js';
+import { Button, ButtonSize, ButtonVariant } from '../foundations/button.js';
 import { ConnectionHealth } from '../../connection/connection_state.js';
+import { CopyToClipboardButton } from '../../utils/clipboard.js';
 import { Dispatch } from '../../utils/variant.js';
 import { IndicatorStatus, StatusIndicator } from '../foundations/status_indicator.js';
 import { KeyValueListBuilder, KeyValueListElement, UpdateKeyValueList } from '../foundations/keyvalue_list.js';
+import { PlatformType, usePlatformType } from '../../platform/platform_type.js';
 import { TextField } from '../foundations/text_field.js';
 import { TrinoAuthParams, TrinoConnectionParams } from '../../connection/trino/trino_connection_params.js';
 import { classNames } from '../../utils/classnames.js';
+import { generateWorkbookUrl, WorkbookLinkTarget } from '../../workbook/workbook_setup_url.js';
 import { getConnectionHealthIndicator, getConnectionStatusText } from '../connection/salesforce_connector_settings.js';
 import { useConnectionState } from '../../connection/connection_registry.js';
 import { useCurrentWorkbookSelector } from '../../workbook/current_workbook.js';
 import { useDefaultWorkbooks } from '../../workbook/workbook_setup.js';
 import { useLogger } from '../../platform/logger_provider.js';
-import { useWorkbookState } from '../../workbook/workbook_state_registry.js';
 import { useTrinoSetup } from '../../connection/trino/trino_connector.js';
+import { useWorkbookState } from '../../workbook/workbook_state_registry.js';
+import { ConnectionParamsVariant } from '../../connection/connection_params.js';
+import { TRINO_CONNECTOR } from '../../connection/connector_info.js';
 
 const LOG_CTX = "trino_connector";
 
@@ -45,10 +50,10 @@ export const TrinoConnectorSettings: React.FC = () => {
     // Get Trino connection from default session
     const defaultWorkbooks = useDefaultWorkbooks();
     const workbookId = defaultWorkbooks?.trino ?? null;
-    const [workbookState, _modifyWorkbook] = useWorkbookState(workbookId);
+    const [workbook, _modifyWorkbook] = useWorkbookState(workbookId);
 
     // Resolve connection for the default workbook
-    const connectionId = workbookState?.connectionId ?? null;
+    const connectionId = workbook?.connectionId ?? null;
     const [connectionState, dispatchConnectionState] = useConnectionState(connectionId);
 
     // Wire up the page state
@@ -58,9 +63,15 @@ export const TrinoConnectorSettings: React.FC = () => {
     const setBasicAuthSecret = (v: string) => setPageState(s => ({ ...s, authParams: { ...s.authParams, secret: v } }));
     const modifyMetadata: Dispatch<UpdateKeyValueList> = (action: UpdateKeyValueList) => setPageState(s => ({ ...s, additionalMetadata: action(s.additionalMetadata) }));
 
-    const setupAbortController = React.useRef<AbortController | null>(null);
-
     // Helper to setup the connection
+    const setupParams = React.useMemo<TrinoConnectionParams>(() => ({
+        channelArgs: {
+            endpoint: pageState.endpoint
+        },
+        authParams: pageState.authParams,
+        metadata: pageState.additionalMetadata,
+    }), [pageState.endpoint, pageState.authParams, pageState.additionalMetadata]);
+    const setupAbortController = React.useRef<AbortController | null>(null);
     const setupConnection = async () => {
         // Is there a Trino client?
         if (trinoSetup == null) {
@@ -76,13 +87,7 @@ export const TrinoConnectorSettings: React.FC = () => {
         try {
             // Setup the Trino connection
             setupAbortController.current = new AbortController();
-            const connectionParams: TrinoConnectionParams = {
-                channelArgs: {
-                    endpoint: pageState.endpoint
-                },
-                authParams: pageState.authParams,
-                metadata: pageState.additionalMetadata,
-            };
+            const connectionParams: TrinoConnectionParams = setupParams;
             const _channel = await trinoSetup.setup(dispatchConnectionState, connectionParams, setupAbortController.current.signal);
 
             // Start the catalog update
@@ -93,14 +98,13 @@ export const TrinoConnectorSettings: React.FC = () => {
         setupAbortController.current = null;
     };
 
-    // Helper to cancel the authorization
+    // Helper to cancel and reset the authorization
     const cancelAuth = () => {
         if (setupAbortController.current) {
             setupAbortController.current.abort("abort the Hyper setup");
             setupAbortController.current = null;
         }
     };
-    // Helper to reset the authorization
     const resetAuth = async () => {
         if (trinoSetup) {
             await trinoSetup.reset(dispatchConnectionState);
@@ -140,6 +144,20 @@ export const TrinoConnectorSettings: React.FC = () => {
             break;
     }
 
+    // Maintain the workbook setup url for the same platform
+    const platformType = usePlatformType();
+    const setupLinkTarget = platformType === PlatformType.WEB ? WorkbookLinkTarget.WEB : WorkbookLinkTarget.NATIVE;
+    const setupURL = React.useMemo(() => {
+        if (workbook == null || connectionState == null || connectionState.details.type != TRINO_CONNECTOR) {
+            return null;
+        }
+        const params: ConnectionParamsVariant = {
+            type: TRINO_CONNECTOR,
+            value: setupParams
+        };
+        return generateWorkbookUrl(workbook, params, setupLinkTarget);
+    }, [workbook, connectionState, setupLinkTarget]);
+
     return (
         <div className={style.layout}>
             <div className={style.connector_header_container}>
@@ -152,6 +170,17 @@ export const TrinoConnectorSettings: React.FC = () => {
                     Trino
                 </div>
                 <div className={style.platform_actions}>
+                    <CopyToClipboardButton
+                        variant={ButtonVariant.Default}
+                        size={ButtonSize.Medium}
+                        logContext={LOG_CTX}
+                        value={setupURL?.toString() ?? ""}
+                        disabled={setupURL == null}
+                        icon={LinkIcon}
+                        aria-label="copy-link"
+                        aria-labelledby=""
+                    />
+
                     {(connectionState?.connectionHealth == ConnectionHealth.ONLINE) && (
                         <Button variant={ButtonVariant.Default} leadingVisual={FileSymlinkFileIcon} onClick={switchToEditor}>Open Editor</Button>
                     )}

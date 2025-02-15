@@ -38,11 +38,16 @@ message ServerlessParams {}
 
 message DemoParams {}
 
+message TrinoAuthParams {
+    /// The username
+    string username = 1;
+}
+
 message TrinoConnectorParams {
     /// The endpoint
     string endpoint = 1;
-    /// The hint for the username
-    string loginHint = 2;
+    /// The authentication params
+    TrinoAuthParams auth = 2;
 }
 
 message ConnectorParams {

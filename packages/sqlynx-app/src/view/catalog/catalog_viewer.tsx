@@ -185,28 +185,36 @@ export function CatalogViewer(_props: Props) {
 
     }, [viewModelVersion, renderingWindow]);
 
+    let totalWidth = viewModel?.totalWidth ?? 0;
+    if (totalWidth == 0) {
+        totalWidth = containerSize?.width ?? 0;
+    }
+    let totalHeight = viewModel?.totalHeight ?? 0;
+    if (totalHeight == 0) {
+        totalHeight = containerSize?.height ?? 0;
+    }
     return (
         <div className={styles.root}>
             <div className={styles.board_container} ref={containerElement} onScroll={handleScroll}>
                 <div className={styles.board_container_shadows}>
                     <div className={styles.board}>
                         <EdgeLayer
-                            width={viewModel?.totalWidth ?? 0}
-                            height={viewModel?.totalHeight ?? 0}
+                            width={totalWidth}
+                            height={totalHeight}
                             padding={padding}
                             paths={edges ?? []}
                             className={styles.edge_layer}
                         />
                         <EdgeLayer
-                            width={viewModel?.totalWidth ?? 0}
-                            height={viewModel?.totalHeight ?? 0}
+                            width={totalWidth}
+                            height={totalHeight}
                             padding={padding}
                             paths={edgesFocused ?? []}
                             className={styles.edge_layer_focused}
                         />
                         <NodeLayer
-                            width={viewModel?.totalWidth ?? 0}
-                            height={viewModel?.totalHeight ?? 0}
+                            width={totalWidth}
+                            height={totalHeight}
                             padding={padding}
                             nodes={nodes ?? []}
                         />

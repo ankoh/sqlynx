@@ -7,7 +7,7 @@ import {
     SalesforceDatabaseChannel,
     SalesforceDataCloudAccessToken,
 } from './salesforce_api_client.js';
-import { SalesforceAuthParams } from './salesforce_connection_params.js';
+import { SalesforceConnectionParams } from './salesforce_connection_params.js';
 import { CONNECTOR_INFOS, ConnectorType, SALESFORCE_DATA_CLOUD_CONNECTOR } from '../connector_info.js';
 import {
     ConnectionHealth,
@@ -100,7 +100,7 @@ export interface SalesforceConnectionDetails {
     /// The timings
     authTimings: SalesforceSetupTimings;
     /// The auth params
-    authParams: SalesforceAuthParams | null;
+    authParams: SalesforceConnectionParams | null;
     /// The authentication error
     authError: string | null;
 
@@ -170,7 +170,7 @@ export const RECEIVED_DATA_CLOUD_ACCESS_TOKEN = Symbol('RECEIVED_DATA_CLOUD_ACCE
 export type SalesforceConnectionStateAction =
     | VariantKind<typeof AUTH_CANCELLED, string>
     | VariantKind<typeof AUTH_FAILED, string>
-    | VariantKind<typeof AUTH_STARTED, SalesforceAuthParams>
+    | VariantKind<typeof AUTH_STARTED, SalesforceConnectionParams>
     | VariantKind<typeof CHANNEL_READY, SalesforceDatabaseChannel>
     | VariantKind<typeof CHANNEL_SETUP_CANCELLED, string>
     | VariantKind<typeof CHANNEL_SETUP_FAILED, string>

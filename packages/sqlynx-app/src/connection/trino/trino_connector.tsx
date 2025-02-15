@@ -4,7 +4,7 @@ import { TrinoApiClient, TrinoApiClientInterface } from "./trino_api_client.js";
 import { useLogger } from '../../platform/logger_provider.js';
 import { useAppConfig } from '../../app_config.js';
 import { useHttpClient } from '../../platform/http_client_provider.js';
-import { createTrinoSetupFlow, TrinoSetupApi } from './trino_connection_setup.js';
+import { createTrinoSetup, TrinoSetupApi } from './trino_connection_setup.js';
 
 const API_CTX = React.createContext<TrinoApiClientInterface | null>(null);
 const SETUP_CTX = React.createContext<TrinoSetupApi | null>(null);
@@ -16,15 +16,15 @@ interface Props {
 export const TrinoConnector: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
     const config = useAppConfig();
-    const connectorConfig = config?.value?.connectors?.trino;
     const httpClient = useHttpClient();
+    const connectorConfig = config?.value?.connectors?.trino;
 
     const [api, setup] = React.useMemo(() => {
         if (!connectorConfig) {
             return [null, null];
         } else {
             const api: TrinoApiClientInterface = new TrinoApiClient(logger, httpClient);
-            const setup = createTrinoSetupFlow(api!, connectorConfig, logger);
+            const setup = createTrinoSetup(api!, connectorConfig, logger);
             return [api, setup];
         }
     }, [connectorConfig]);

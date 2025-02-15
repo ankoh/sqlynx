@@ -169,7 +169,7 @@ export function reduceTrinoConnectorState(state: ConnectionState, action: TrinoC
             next = {
                 ...state,
                 connectionStatus: ConnectionStatus.CHANNEL_READY,
-                connectionHealth: ConnectionHealth.CONNECTING,
+                connectionHealth: ConnectionHealth.ONLINE,
                 details: {
                     type: TRINO_CONNECTOR,
                     value: {

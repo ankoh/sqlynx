@@ -66,9 +66,15 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
     const modifyAttachedDbs: Dispatch<UpdateKeyValueList> = (action: UpdateKeyValueList) => setPageState(s => ({ ...s, attachedDatabases: action(s.attachedDatabases) }));
     const modifyGrpcMetadata: Dispatch<UpdateKeyValueList> = (action: UpdateKeyValueList) => setPageState(s => ({ ...s, gRPCMetadata: action(s.gRPCMetadata) }));
 
-    const setupAbortController = React.useRef<AbortController | null>(null);
-
     // Helper to setup the connection
+    const setupParams: HyperGrpcConnectionParams = React.useMemo<HyperGrpcConnectionParams>(() => ({
+        channelArgs: {
+            endpoint: pageState.endpoint
+        },
+        attachedDatabases: pageState.attachedDatabases,
+        gRPCMetadata: pageState.gRPCMetadata,
+    }), [pageState.endpoint, pageState.attachedDatabases, pageState.gRPCMetadata]);
+    const setupAbortController = React.useRef<AbortController | null>(null);
     const setupConnection = async () => {
         // Is there a Hyper client?
         if (hyperClient == null || hyperSetup == null) {
@@ -84,14 +90,7 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
         try {
             // Setup the Hyper connection
             setupAbortController.current = new AbortController();
-            const connectionParams: HyperGrpcConnectionParams = {
-                channelArgs: {
-                    endpoint: pageState.endpoint
-                },
-                attachedDatabases: pageState.attachedDatabases,
-                gRPCMetadata: pageState.gRPCMetadata,
-            };
-            const channel = await hyperSetup.setup(dispatchConnectionState, connectionParams, setupAbortController.current.signal);
+            const _channel = await hyperSetup.setup(dispatchConnectionState, setupParams, setupAbortController.current.signal);
 
             // Start the the inital catalog update
             // XXX
@@ -103,14 +102,13 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
         setupAbortController.current = null;
     };
 
-    // Helper to cancel the authorization
+    // Helper to cancel and reset the authorization
     const cancelAuth = () => {
         if (setupAbortController.current) {
             setupAbortController.current.abort("abort the Hyper setup");
             setupAbortController.current = null;
         }
     };
-    // Helper to reset the authorization
     const resetAuth = async () => {
         if (hyperSetup) {
             await hyperSetup.reset(dispatchConnectionState);

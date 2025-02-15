@@ -8,6 +8,7 @@ import { AnchoredOverlay } from '../foundations/anchored_overlay.js';
 import { TextInput } from '../foundations/text_input.js';
 import { classNames } from '../../utils/classnames.js';
 import { generateWorkbookUrl, WorkbookLinkTarget } from '../../workbook/workbook_setup_url.js';
+import { getConnectionParamsFromDetails } from '../../connection/connection_params.js';
 import { sleep } from '../../utils/sleep.js';
 import { useConnectionState } from '../../connection/connection_registry.js';
 import { useCurrentWorkbookState } from '../../workbook/current_workbook.js';
@@ -44,7 +45,10 @@ export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
     React.useEffect(() => {
         let setupUrl: URL | null = null;
         if (workbookState != null && connectionState != null) {
-            setupUrl = generateWorkbookUrl(workbookState, connectionState, WorkbookLinkTarget.WEB);
+            const params = getConnectionParamsFromDetails(connectionState.details);
+            if (params != null) {
+                setupUrl = generateWorkbookUrl(workbookState, params, WorkbookLinkTarget.WEB);
+            }
         }
         setState({
             publicURLText: setupUrl?.toString() ?? null,

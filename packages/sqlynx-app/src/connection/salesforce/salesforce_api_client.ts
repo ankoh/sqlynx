@@ -2,7 +2,7 @@ import * as proto from "@ankoh/sqlynx-protobuf";
 
 import { Logger } from '../../platform/logger.js';
 import { HttpClient } from '../../platform/http_client.js';
-import { SalesforceAuthParams } from './salesforce_connection_params.js';
+import { SalesforceConnectionParams } from './salesforce_connection_params.js';
 import { SalesforceAuthConfig } from '../connector_configs.js';
 import { Base64Codec } from '../../utils/base64.js';
 import { HealthCheckResult, HyperDatabaseChannel, HyperQueryResultStream } from '../hyper/hyperdb_client.js';
@@ -202,7 +202,7 @@ export function readUserInformation(obj: any): SalesforceUserInfo {
 export interface SalesforceApiClientInterface {
     getCoreAccessToken(
         authConfig: SalesforceAuthConfig,
-        authParams: SalesforceAuthParams,
+        authParams: SalesforceConnectionParams,
         authCode: string,
         pkceVerifier: string,
         cancel: AbortSignal,
@@ -230,7 +230,7 @@ export class SalesforceApiClient implements SalesforceApiClientInterface {
 
     public async getCoreAccessToken(
         authConfig: SalesforceAuthConfig,
-        authParams: SalesforceAuthParams,
+        authParams: SalesforceConnectionParams,
         authCode: string,
         pkceVerifier: string,
         cancel: AbortSignal,

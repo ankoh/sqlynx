@@ -17,7 +17,7 @@ import { Dispatch } from '../../utils/variant.js';
 import { Logger } from '../../platform/logger.js';
 import { SalesforceApiClientInterface, SalesforceDatabaseChannel } from './salesforce_api_client.js';
 import { SalesforceSetupApi } from './salesforce_connection_setup.js';
-import { SalesforceAuthParams } from './salesforce_connection_params.js';
+import { SalesforceConnectionParams } from './salesforce_connection_params.js';
 import { SalesforceConnectorConfig } from '../connector_configs.js';
 import { RESET } from '../connection_state.js';
 import { HyperDatabaseChannelMock } from '../hyper/hyperdb_client_mock.js';
@@ -25,7 +25,7 @@ import { CHANNEL_READY, CHANNEL_SETUP_STARTED, HEALTH_CHECK_STARTED, HEALTH_CHEC
 import { HyperGrpcConnectionParams } from '../hyper/hyper_connection_params.js';
 
 
-export async function setupSalesforceConnection(updateState: Dispatch<SalesforceConnectionStateAction>, logger: Logger, params: SalesforceAuthParams, config: SalesforceConnectorConfig, apiClient: SalesforceApiClientInterface, abortSignal: AbortSignal): Promise<SalesforceDatabaseChannel> {
+export async function setupSalesforceConnection(updateState: Dispatch<SalesforceConnectionStateAction>, logger: Logger, params: SalesforceConnectionParams, config: SalesforceConnectorConfig, apiClient: SalesforceApiClientInterface, abortSignal: AbortSignal): Promise<SalesforceDatabaseChannel> {
     try {
         // Start the authorization process
         updateState({
@@ -155,7 +155,7 @@ export async function setupSalesforceConnection(updateState: Dispatch<Salesforce
 }
 
 export function mockSalesforceAuthFlow(api: SalesforceApiClientInterface, config: SalesforceConnectorConfig, logger: Logger): (SalesforceSetupApi | null) {
-    const setup = async (dispatch: Dispatch<SalesforceConnectionStateAction>, params: SalesforceAuthParams, abort: AbortSignal) => {
+    const setup = async (dispatch: Dispatch<SalesforceConnectionStateAction>, params: SalesforceConnectionParams, abort: AbortSignal) => {
         return setupSalesforceConnection(dispatch, logger, params, config, api, abort);
     };
     const reset = async (dispatch: Dispatch<SalesforceConnectionStateAction>) => {

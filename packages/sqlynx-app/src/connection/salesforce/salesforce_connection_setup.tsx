@@ -20,7 +20,7 @@ import { generatePKCEChallenge } from '../../utils/pkce.js';
 import { BASE64_CODEC } from '../../utils/base64.js';
 import { PlatformType } from '../../platform/platform_type.js';
 import { SalesforceConnectorConfig } from '../connector_configs.js';
-import { SalesforceAuthParams } from './salesforce_connection_params.js';
+import { SalesforceConnectionParams } from './salesforce_connection_params.js';
 import { HyperGrpcConnectionParams } from '../hyper/hyper_connection_params.js';
 import { SalesforceApiClientInterface, SalesforceDatabaseChannel } from './salesforce_api_client.js';
 import { Dispatch } from '../../utils/variant.js';
@@ -74,7 +74,7 @@ const DEFAULT_EXPIRATION_TIME_MS = 2 * 60 * 60 * 1000;
 const OAUTH_POPUP_NAME = 'SQLynx OAuth';
 const OAUTH_POPUP_SETTINGS = 'toolbar=no, menubar=no, width=600, height=700, top=100, left=100';
 
-export async function setupSalesforceConnection(updateState: Dispatch<SalesforceConnectionStateAction>, logger: Logger, params: SalesforceAuthParams, config: SalesforceConnectorConfig, platformType: PlatformType, apiClient: SalesforceApiClientInterface, hyperClient: HyperDatabaseClient, appEvents: AppEventListener, abortSignal: AbortSignal): Promise<SalesforceDatabaseChannel> {
+export async function setupSalesforceConnection(updateState: Dispatch<SalesforceConnectionStateAction>, logger: Logger, params: SalesforceConnectionParams, config: SalesforceConnectorConfig, platformType: PlatformType, apiClient: SalesforceApiClientInterface, hyperClient: HyperDatabaseClient, appEvents: AppEventListener, abortSignal: AbortSignal): Promise<SalesforceDatabaseChannel> {
     try {
         // Start the authorization process
         updateState({
@@ -293,12 +293,12 @@ export async function setupSalesforceConnection(updateState: Dispatch<Salesforce
 }
 
 export interface SalesforceSetupApi {
-    setup(dispatch: Dispatch<SalesforceConnectionStateAction>, params: SalesforceAuthParams, abortSignal: AbortSignal): Promise<SalesforceDatabaseChannel>
+    setup(dispatch: Dispatch<SalesforceConnectionStateAction>, params: SalesforceConnectionParams, abortSignal: AbortSignal): Promise<SalesforceDatabaseChannel>
     reset(dispatch: Dispatch<SalesforceConnectionStateAction>): Promise<void>
 }
 
 export function createSalesforceAuthFlow(hyperClient: HyperDatabaseClient, salesforceApi: SalesforceApiClientInterface, platformType: PlatformType, appEvents: AppEventListener, config: SalesforceConnectorConfig, logger: Logger): (SalesforceSetupApi | null) {
-    const setup = async (updateState: Dispatch<SalesforceConnectionStateAction>, params: SalesforceAuthParams, abort: AbortSignal) => {
+    const setup = async (updateState: Dispatch<SalesforceConnectionStateAction>, params: SalesforceConnectionParams, abort: AbortSignal) => {
         return setupSalesforceConnection(updateState, logger, params, config, platformType, salesforceApi, hyperClient, appEvents, abort);
     };
     const reset = async (updateState: Dispatch<SalesforceConnectionStateAction>) => {

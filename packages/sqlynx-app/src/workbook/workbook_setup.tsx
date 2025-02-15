@@ -131,6 +131,20 @@ export const WorkbookSetup: React.FC<{ children: React.ReactElement }> = (props:
                     });
                     break;
                 }
+                case "trino": {
+                    const workbook = workbookReg.workbookMap.get(defaultWorkbooks.trino)!;
+                    connDispatch(workbook.connectionId, { type: RESET, value: null });
+                    selectCurrentWorkbook(defaultWorkbooks.trino);
+                    setState({
+                        decision: WorkbookSetupDecision.SHOW_SETUP_PAGE,
+                        args: {
+                            workbookId: defaultWorkbooks.trino,
+                            connector: connectorInfo,
+                            setupProto: data,
+                        },
+                    });
+                    return;
+                }
                 case "serverless": {
                     const workbook = workbookReg.workbookMap.get(defaultWorkbooks.serverless)!;
                     connDispatch(workbook.connectionId, { type: RESET, value: null });

@@ -10,7 +10,7 @@ import {
 } from './salesforce_api_client.js';
 import { QueryExecutionResponseStreamMock } from '../query_execution_mock.js';
 import { SalesforceAuthConfig } from '../connector_configs.js';
-import { SalesforceAuthParams } from './salesforce_connection_params.js';
+import { SalesforceConnectionParams } from './salesforce_connection_params.js';
 
 export interface SalesforceConnectorMockConfig {
     enabled: boolean;
@@ -26,7 +26,7 @@ export class SalesforceAPIClientMock implements SalesforceApiClientInterface {
 
     public async getCoreAccessToken(
         _authConfig: SalesforceAuthConfig,
-        _authParams: SalesforceAuthParams,
+        _authParams: SalesforceConnectionParams,
         _authCode: string,
         _pkceVerifier: string,
         _cancel: AbortSignal,

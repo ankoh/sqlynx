@@ -6,7 +6,7 @@ import { FileSymlinkFileIcon, KeyIcon, PlugIcon, XIcon } from '@primer/octicons-
 
 import { useConnectionState } from '../../connection/connection_registry.js';
 import { ConnectionHealth, ConnectionStatus } from '../../connection/connection_state.js';
-import { SalesforceAuthParams } from '../../connection/salesforce/salesforce_connection_params.js';
+import { SalesforceConnectionParams } from '../../connection/salesforce/salesforce_connection_params.js';
 import { useSalesforceSetup } from '../../connection/salesforce/salesforce_connector.js';
 import { getSalesforceConnectionDetails } from '../../connection/salesforce/salesforce_connection_state.js';
 import {
@@ -131,8 +131,14 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
     });
 
     // Helper to start the authorization
+    const setupParams = React.useMemo<SalesforceConnectionParams>(() => ({
+        instanceUrl: pageState.instanceUrl,
+        appConsumerKey: pageState.appConsumerKey,
+        appConsumerSecret: null,
+        loginHint: null,
+    }), []);
     const setupAbortController = React.useRef<AbortController | null>(null);
-    const startSetup = async () => {
+    const setupConnection = async () => {
         let validationSucceeded = true;
         if (pageState.instanceUrl == "") {
             validationSucceeded = false;
@@ -165,13 +171,7 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
         try {
             // Authorize the client
             setupAbortController.current = new AbortController();
-            const authParams: SalesforceAuthParams = {
-                instanceUrl: pageState.instanceUrl,
-                appConsumerKey: pageState.appConsumerKey,
-                appConsumerSecret: null,
-                loginHint: null,
-            };
-            const channel = await sfSetup.setup(dispatchConnectionState, authParams, setupAbortController.current.signal);
+            const _channel = await sfSetup.setup(dispatchConnectionState, setupParams, setupAbortController.current.signal);
 
 
             // Start the catalog update
@@ -184,14 +184,13 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
         setupAbortController.current = null;
     };
 
-    // Helper to cancel the setup
+    // Helper to cancel and reset the setup
     const cancelSetup = () => {
         if (setupAbortController.current) {
             setupAbortController.current.abort("abort the authorization flow");
             setupAbortController.current = null;
         }
     };
-    // Helper to reset the setup
     const resetSetup = async () => {
         if (sfSetup) {
             await sfSetup.reset(dispatchConnectionState);
@@ -220,7 +219,7 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
         case ConnectionHealth.NOT_STARTED:
         case ConnectionHealth.FAILED:
         case ConnectionHealth.CANCELLED:
-            connectButton = <Button variant={ButtonVariant.Primary} leadingVisual={PlugIcon} onClick={startSetup}>Connect</Button>;
+            connectButton = <Button variant={ButtonVariant.Primary} leadingVisual={PlugIcon} onClick={setupConnection}>Connect</Button>;
             break;
         case ConnectionHealth.CONNECTING:
             connectButton = <Button variant={ButtonVariant.Danger} leadingVisual={XIcon} onClick={cancelSetup}>Cancel</Button>;

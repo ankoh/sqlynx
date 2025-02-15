@@ -71,7 +71,7 @@ interface LogViewerProps {
 }
 
 const COLUMN_COUNT = 4;
-const COLUMN_TIMESTAMP_WIDTH = 64;
+const COLUMN_TIMESTAMP_WIDTH = 80;
 const COLUMN_LEVEL_WIDTH = 48;
 const ROW_HEIGHT = 32;
 
