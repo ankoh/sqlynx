@@ -177,9 +177,7 @@
     font-weight: 500;
 }
 
-.status_stats {
-    grid-column: 4;
-
+.status_error_message {
     font-size: 0.8rem;
     font-weight: 500;
 }

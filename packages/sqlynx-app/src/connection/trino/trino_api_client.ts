@@ -197,6 +197,8 @@ export class TrinoApiClient implements TrinoApiClientInterface {
                 body: "select 1",
                 headers
             });
+            const responseJson = await rawResponse.json();
+            console.log(responseJson);
             return {
                 type: TRINO_STATUS_OK,
                 value: {

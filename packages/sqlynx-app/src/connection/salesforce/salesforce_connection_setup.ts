@@ -29,10 +29,11 @@ import { AppEventListener } from '../../platform/event_listener.js';
 import { isNativePlatform } from '../../platform/native_globals.js';
 import { isDebugBuild } from '../../globals.js';
 import { RESET } from './../connection_state.js';
-import { AttachedDatabase, HyperDatabaseClient, HyperDatabaseConnectionContext } from '../../connection/hyper/hyperdb_client.js';
+import { AttachedDatabase, HyperDatabaseChannel, HyperDatabaseClient, HyperDatabaseConnectionContext } from '../../connection/hyper/hyperdb_client.js';
 import {
     CHANNEL_READY,
     CHANNEL_SETUP_STARTED,
+    HEALTH_CHECK_CANCELLED,
     HEALTH_CHECK_FAILED,
     HEALTH_CHECK_STARTED,
     HEALTH_CHECK_SUCCEEDED,
@@ -74,23 +75,25 @@ const DEFAULT_EXPIRATION_TIME_MS = 2 * 60 * 60 * 1000;
 const OAUTH_POPUP_NAME = 'SQLynx OAuth';
 const OAUTH_POPUP_SETTINGS = 'toolbar=no, menubar=no, width=600, height=700, top=100, left=100';
 
-export async function setupSalesforceConnection(updateState: Dispatch<SalesforceConnectionStateAction>, logger: Logger, params: SalesforceConnectionParams, config: SalesforceConnectorConfig, platformType: PlatformType, apiClient: SalesforceApiClientInterface, hyperClient: HyperDatabaseClient, appEvents: AppEventListener, abortSignal: AbortSignal): Promise<SalesforceDatabaseChannel> {
+export async function setupSalesforceConnection(modifyState: Dispatch<SalesforceConnectionStateAction>, logger: Logger, params: SalesforceConnectionParams, config: SalesforceConnectorConfig, platformType: PlatformType, apiClient: SalesforceApiClientInterface, hyperClient: HyperDatabaseClient, appEvents: AppEventListener, abortSignal: AbortSignal): Promise<SalesforceDatabaseChannel> {
+    let hyperChannel: HyperDatabaseChannel;
+    let sfChannel: SalesforceDatabaseChannel;
     try {
         // Start the authorization process
-        updateState({
+        modifyState({
             type: AUTH_STARTED,
             value: params,
         });
         abortSignal.throwIfAborted()
 
         // Generate new PKCE challenge
-        updateState({
+        modifyState({
             type: GENERATING_PKCE_CHALLENGE,
             value: null,
         });
         const pkceChallenge = await generatePKCEChallenge();
         abortSignal.throwIfAborted();
-        updateState({
+        modifyState({
             type: GENERATED_PKCE_CHALLENGE,
             value: pkceChallenge,
         });
@@ -144,12 +147,12 @@ export async function setupSalesforceConnection(updateState: Dispatch<Salesforce
                 throw new Error('could not open oauth window');
             }
             popup.focus();
-            updateState({ type: OAUTH_WEB_WINDOW_OPENED, value: popup });
+            modifyState({ type: OAUTH_WEB_WINDOW_OPENED, value: popup });
         } else {
             // Just open the link with the default browser
             logger.debug(`opening url: ${url.toString()}`, "salesforce_auth");
             shell.open(url);
-            updateState({ type: OAUTH_NATIVE_LINK_OPENED, value: null });
+            modifyState({ type: OAUTH_NATIVE_LINK_OPENED, value: null });
         }
 
         // Await the oauth redirect
@@ -161,13 +164,13 @@ export async function setupSalesforceConnection(updateState: Dispatch<Salesforce
         if (authCode.error) {
             throw new Error(authCode.error);
         }
-        updateState({
+        modifyState({
             type: RECEIVED_CORE_AUTH_CODE,
             value: authCode.code,
         });
 
         // Request the core access token
-        updateState({
+        modifyState({
             type: REQUESTING_CORE_AUTH_TOKEN,
             value: null,
         });
@@ -184,20 +187,20 @@ export async function setupSalesforceConnection(updateState: Dispatch<Salesforce
             abortSignal,
         );
         logger.debug(`received core access token: ${JSON.stringify(coreAccessToken)}`);
-        updateState({
+        modifyState({
             type: RECEIVED_CORE_AUTH_TOKEN,
             value: coreAccessToken,
         });
         abortSignal.throwIfAborted();
 
         // Request the data cloud access token
-        updateState({
+        modifyState({
             type: REQUESTING_DATA_CLOUD_ACCESS_TOKEN,
             value: null,
         });
         const dcToken = await apiClient.getDataCloudAccessToken(coreAccessToken, abortSignal);
         logger.debug(`received data cloud token: ${JSON.stringify(dcToken)}`);
-        updateState({
+        modifyState({
             type: RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
             value: dcToken,
         });
@@ -212,7 +215,7 @@ export async function setupSalesforceConnection(updateState: Dispatch<Salesforce
             attachedDatabases: [],
             gRPCMetadata: []
         };
-        updateState({
+        modifyState({
             type: CHANNEL_SETUP_STARTED,
             value: connParams,
         });
@@ -235,57 +238,71 @@ export async function setupSalesforceConnection(updateState: Dispatch<Salesforce
         };
 
         // Create the channel
-        const hyperChannel = await hyperClient.connect(connParams.channelArgs, connectionContext);
-        const sfChannel = new SalesforceDatabaseChannel(apiClient, coreAccessToken, dcToken, hyperChannel);
+        hyperChannel = await hyperClient.connect(connParams.channelArgs, connectionContext);
+        sfChannel = new SalesforceDatabaseChannel(apiClient, coreAccessToken, dcToken, hyperChannel);
         abortSignal.throwIfAborted();
 
         // Mark the channel as ready
-        updateState({
+        modifyState({
             type: CHANNEL_READY,
             value: sfChannel,
         });
         abortSignal.throwIfAborted();
 
-        // Start the channel setup
-        updateState({
-            type: HEALTH_CHECK_STARTED,
-            value: null,
-        });
-        abortSignal.throwIfAborted();
-
-        // Create the channel
-        const health = await hyperChannel.checkHealth();
-        abortSignal.throwIfAborted();
-
-        if (health.ok) {
-            updateState({
-                type: HEALTH_CHECK_SUCCEEDED,
-                value: null,
-            });
-            return sfChannel;
-        } else {
-            updateState({
-                type: HEALTH_CHECK_FAILED,
-                value: health.errorMessage!,
-            });
-            throw new Error(`failed to setup Hyper channel`);
-        }
-
     } catch (error: any) {
         if (error.name === 'AbortError') {
             logger.warn("oauth flow was aborted");
-            updateState({
+            modifyState({
                 type: AUTH_CANCELLED,
                 value: error.message,
             });
         } else if (error instanceof Error) {
             logger.error(`oauth flow failed with error: ${error.toString()}`);
-            updateState({
+            modifyState({
                 type: AUTH_FAILED,
                 value: error.message,
             });
         }
+        // Rethrow the error
+        throw error;
+    }
 
+    try {
+        // Start the health check
+        modifyState({
+            type: HEALTH_CHECK_STARTED,
+            value: null,
+        });
+        abortSignal.throwIfAborted();
+
+        // Check the health
+        const health = await hyperChannel.checkHealth();
+        abortSignal.throwIfAborted();
+
+        if (health.ok) {
+            modifyState({
+                type: HEALTH_CHECK_SUCCEEDED,
+                value: null,
+            });
+            return sfChannel;
+        } else {
+            throw new Error(health.errorMessage ?? "health check failed");
+        }
+
+    } catch (error: any) {
+        if (error.name === 'AbortError') {
+            logger.warn("oauth flow was aborted");
+            modifyState({
+                type: HEALTH_CHECK_CANCELLED,
+                value: error.message,
+            });
+        } else if (error instanceof Error) {
+            logger.error(`oauth flow failed with error: ${error.toString()}`);
+            modifyState({
+                type: HEALTH_CHECK_FAILED,
+                value: error.message,
+            });
+        }
         // Rethrow the error
         throw error;
     }

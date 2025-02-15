@@ -91,11 +91,13 @@ export interface TrinoHealthCheckResult {
     ok: boolean;
     /// The http status (if any)
     httpStatus: number | null;
-    /// The error message (if any)
-    otherError: any | null;
+    /// The error (if any)
+    error: any | null;
 }
 
 export interface TrinoChannelInterface {
+    /// Perform a health check
+    checkHealth(): Promise<TrinoHealthCheckResult>;
     /// Execute Query
     executeQuery(param: proto.salesforce_hyperdb_grpc_v1.pb.QueryParam): Promise<TrinoQueryResultStream>;
     /// Destroy the connection
@@ -122,11 +124,11 @@ export class TrinoChannel implements TrinoChannelInterface {
         const status = await this.apiClient.checkHealth(this.endpoint);
         switch (status.type) {
             case TRINO_STATUS_OK:
-                return { ok: true, httpStatus: null, otherError: null };
+                return { ok: true, httpStatus: null, error: null };
             case TRINO_STATUS_HTTP_ERROR:
-                return { ok: false, httpStatus: status.value.status, otherError: null };
+                return { ok: false, httpStatus: status.value.status, error: null };
             case TRINO_STATUS_OTHER_ERROR:
-                return { ok: false, httpStatus: null, otherError: status.value };
+                return { ok: false, httpStatus: null, error: status.value };
         }
     }
 

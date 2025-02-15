@@ -99,13 +99,13 @@ export const TrinoConnectorSettings: React.FC = () => {
     };
 
     // Helper to cancel and reset the authorization
-    const cancelAuth = () => {
+    const cancelSetup = () => {
         if (setupAbortController.current) {
             setupAbortController.current.abort("abort the Hyper setup");
             setupAbortController.current = null;
         }
     };
-    const resetAuth = async () => {
+    const resetSetup = async () => {
         if (trinoSetup) {
             await trinoSetup.reset(dispatchConnectionState);
         }
@@ -135,11 +135,11 @@ export const TrinoConnectorSettings: React.FC = () => {
             connectButton = <Button variant={ButtonVariant.Primary} leadingVisual={PlugIcon} onClick={setupConnection}>Connect</Button>;
             break;
         case ConnectionHealth.CONNECTING:
-            connectButton = <Button variant={ButtonVariant.Danger} leadingVisual={XIcon} onClick={cancelAuth}>Cancel</Button>;
+            connectButton = <Button variant={ButtonVariant.Danger} leadingVisual={XIcon} onClick={cancelSetup}>Cancel</Button>;
             freezeInput = true;
             break;
         case ConnectionHealth.ONLINE:
-            connectButton = <Button variant={ButtonVariant.Danger} leadingVisual={XIcon} onClick={resetAuth}>Disconnect</Button>;
+            connectButton = <Button variant={ButtonVariant.Danger} leadingVisual={XIcon} onClick={resetSetup}>Disconnect</Button>;
             freezeInput = true;
             break;
     }
@@ -196,8 +196,6 @@ export const TrinoConnectorSettings: React.FC = () => {
                             </div>
                             <div className={style.status_text}>
                                 {statusText}
-                            </div>
-                            <div className={style.status_stats}>
                             </div>
                         </div>
                     </div>

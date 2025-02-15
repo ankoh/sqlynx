@@ -5,7 +5,7 @@ import * as style from './connection_settings.module.css';
 import { FileSymlinkFileIcon, KeyIcon, PlugIcon, XIcon } from '@primer/octicons-react';
 
 import { useConnectionState } from '../../connection/connection_registry.js';
-import { ConnectionHealth, ConnectionStatus } from '../../connection/connection_state.js';
+import { ConnectionDetailsVariant, ConnectionHealth, ConnectionStatus } from '../../connection/connection_state.js';
 import { SalesforceConnectionParams } from '../../connection/salesforce/salesforce_connection_params.js';
 import { useSalesforceSetup } from '../../connection/salesforce/salesforce_connector.js';
 import { getSalesforceConnectionDetails } from '../../connection/salesforce/salesforce_connection_state.js';
@@ -25,6 +25,7 @@ import { useCurrentWorkbookSelector } from '../../workbook/current_workbook.js';
 import { useNavigate } from 'react-router-dom';
 import { Button, ButtonVariant } from '../foundations/button.js';
 import { useDefaultWorkbooks } from '../../workbook/workbook_setup.js';
+import { HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from '../../connection/connector_info.js';
 
 const LOG_CTX = "sf_connector";
 
@@ -98,6 +99,19 @@ export function getConnectionHealthIndicator(health: ConnectionHealth | null) {
             return IndicatorStatus.Running;
         default:
             return IndicatorStatus.None;
+    }
+}
+
+export function getConnectionErrorMessage(status: ConnectionDetailsVariant | null): (string | null) {
+    switch (status?.type) {
+        case TRINO_CONNECTOR:
+            return status.value.channelError ?? status.value.healthCheckError;
+        case SALESFORCE_DATA_CLOUD_CONNECTOR:
+            return status.value.channelError ?? status.value.healthCheckError;
+        case HYPER_GRPC_CONNECTOR:
+            return status.value.channelError ?? status.value.healthCheckError;
+        default:
+            return null;
     }
 }
 
@@ -211,6 +225,8 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
     const statusText = getConnectionStatusText(connectionState?.connectionStatus, logger);
     // Get the indicator status
     const indicatorStatus: IndicatorStatus = getConnectionHealthIndicator(connectionState?.connectionHealth ?? null);
+    // Get the connection error
+    const errorMessage = getConnectionErrorMessage(connectionState?.details ?? null);
 
     // Get the action button
     let connectButton: React.ReactElement = <div />;
@@ -260,8 +276,11 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
                             <div className={style.status_text}>
                                 {statusText}
                             </div>
-                            <div className={style.status_stats}>
-                            </div>
+                            {errorMessage && (
+                                <div className={style.status_error_message}>
+                                    {errorMessage}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

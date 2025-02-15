@@ -27,7 +27,6 @@ import { useHyperDatabaseClient } from '../../connection/hyper/hyperdb_client_pr
 import { RESET } from '../connection_state.js';
 
 export async function setupHyperGrpcConnection(updateState: Dispatch<HyperGrpcConnectorAction>, logger: Logger, params: HyperGrpcConnectionParams, _config: HyperGrpcConnectorConfig, client: HyperDatabaseClient, abortSignal: AbortSignal): Promise<HyperDatabaseChannel | null> {
-    // First prepare the channel
     let channel: HyperDatabaseChannel;
     try {
         // Start the channel setup
@@ -81,7 +80,7 @@ export async function setupHyperGrpcConnection(updateState: Dispatch<HyperGrpcCo
                 value: error.message,
             });
         }
-        return null;
+        throw error;
     }
 
     // Then perform an initial health check
@@ -103,11 +102,7 @@ export async function setupHyperGrpcConnection(updateState: Dispatch<HyperGrpcCo
                 value: null,
             });
         } else {
-            updateState({
-                type: HEALTH_CHECK_FAILED,
-                value: health.errorMessage!,
-            });
-            return null;
+            throw new Error(health.errorMessage ?? "health check failed");
         }
     } catch (error: any) {
         if (error.name === 'AbortError') {
@@ -123,7 +118,7 @@ export async function setupHyperGrpcConnection(updateState: Dispatch<HyperGrpcCo
                 value: error.message,
             });
         }
-        return null;
+        throw error;
     }
     return channel;
 }
@@ -163,6 +158,6 @@ export const HyperGrpcSetupProvider: React.FC<Props> = (props: Props) => {
     }, [connectorConfig]);
 
     return (
-        <SETUP_CTX.Provider value={api}>{props.children}</SETUP_CTX.Provider>
+        <SETUP_CTX.Provider value={api} > {props.children} </SETUP_CTX.Provider>
     );
 };

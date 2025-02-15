@@ -1,5 +1,7 @@
 use hyper::header::{HeaderValue, HeaderMap};
 use std::collections::HashMap;
+use std::fmt;
+use std::fmt::Display;
 use std::sync::Arc;
 use std::sync::RwLock;
 use std::sync::atomic::AtomicUsize;
@@ -11,8 +13,52 @@ use tokio::time::timeout;
 use crate::status::Status;
 
 #[derive(Debug)]
+pub enum HttpError {
+    ErrorStatus(reqwest::StatusCode),
+    ConnectError(String),
+    OtherError(String),
+}
+
+impl Display for HttpError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match &self {
+            HttpError::ErrorStatus(status) => {
+                write!(f, "{}", &status)
+            }
+            HttpError::ConnectError(e) => {
+                write!(f, "{}", e)
+            }
+            HttpError::OtherError(e) => {
+                write!(f, "{}", e)
+            },
+        }
+    }
+}
+
+impl From<&reqwest::Error> for HttpError {
+    fn from(e: &reqwest::Error) -> HttpError {
+        // Is a status?
+        if let Some(s) = e.status() {
+            return HttpError::ErrorStatus(s);
+        }
+
+        // Inpack inner error
+        let mut inner: &dyn std::error::Error = &e;
+        while let Some(i) = inner.source() {
+            inner = i;
+        }
+
+        if e.is_connect() {
+            return HttpError::ConnectError(inner.to_string());
+        } else {
+            return HttpError::OtherError(e.to_string());
+        }
+    }
+}
+
+#[derive(Debug)]
 pub enum HttpServerStreamEvent {
-    RequestFailed(String),
+    RequestFailed(HttpError),
     Header(reqwest::StatusCode, HeaderMap<HeaderValue>),
     BodyChunk(Vec<u8>),
     BodyEnd,
@@ -113,12 +159,12 @@ impl HttpStreamManager {
             let mut response = match client.execute(request).await {
                 Ok(response) => response,
                 Err(e) => {
-                    log::warn!("{:?}", &e);
-                    if let Err(e) = stream_entry
+                    let mapped = HttpError::from(&e);
+                    let queue_error = stream_entry
                         .response_sender
-                        .send(HttpServerStreamEvent::RequestFailed(e.to_string()))
-                        .await
-                    {
+                        .send(HttpServerStreamEvent::RequestFailed(mapped))
+                        .await;
+                    if let Err(e) = queue_error {
                         log::warn!("forwarding request error failed: {}", e);
                         return;
                     }
@@ -145,7 +191,8 @@ impl HttpStreamManager {
                     Ok(Some(m)) => {
                         let buffer: Vec<u8> = m.into();
                         log::debug!(
-                            "received chunk from server stream, bytes={}",
+                            "received chunk from server stream {}, bytes={}",
+                            stream_id,
                             buffer.len()
                         );
                         HttpServerStreamEvent::BodyChunk(buffer)
@@ -153,7 +200,7 @@ impl HttpStreamManager {
                     // Stream was closed, delete stream and return trailers
                     Ok(None) => {
                         stream_alive = false;
-                        log::debug!("reached end of server stream");
+                        log::debug!("reached end of server stream {}", stream_id);
                         HttpServerStreamEvent::BodyEnd
                     }
                     // Stream failed, send error to receivers and close the stream
@@ -197,6 +244,7 @@ impl HttpStreamManager {
         let stream = if let Some(streams) = reg.server_streams.read().unwrap().get(&stream_id) {
             streams.clone()
         } else {
+            log::debug!("unknown stream id: {}", stream_id);
             return Err(Status::HttpStreamIsUnknown { stream_id });
         };
 
@@ -213,30 +261,42 @@ impl HttpStreamManager {
                 // Initially, we check the `timeout_read_after` timeout.
                 let receive_timeout = timeout_read_after.checked_sub(elapsed_since_start).unwrap_or_default();
                 match timeout(receive_timeout, receiver.recv()).await {
-                    Ok(Some(response)) =>  response,
+                    Ok(Some(response)) =>  {
+                        log::debug!("http stream {} received event", stream_id);
+                        response
+                    },
                     Ok(None) => {
+                        log::debug!("http stream {} closed", stream_id);
                         return Err(Status::HttpStreamClosed { stream_id });
                     },
                     Err(_) => {
+                        log::debug!("http stream {} read timed out", stream_id);
                         return Err(Status::HttpStreamReadTimedOut { stream_id });
                     }
                 }
             } else {
                 // After receiving one batch, we check the `flush_batch_after` timeout.
                 let receive_timeout = match flush_batch_after.checked_sub(elapsed_since_start) {
-                    Some(timeout) => timeout,
+                    Some(timeout) => {
+                        timeout
+                    },
                     None => {
                         batch.event = HttpServerStreamBatchEvent::FlushAfterTimeout;
                         return Ok(batch);
                     }
                 };
                 match timeout(receive_timeout, receiver.recv()).await {
-                    Ok(Some(response)) =>  response,
+                    Ok(Some(response)) => {
+                        log::debug!("http stream {} returned event", stream_id);
+                        response
+                    },
                     Ok(None) => {
+                        log::debug!("http stream {} closed", stream_id);
                         batch.event = HttpServerStreamBatchEvent::FlushAfterClose;
                         return Ok(batch);
                     },
                     Err(_) => {
+                        log::debug!("http stream {} read timed out", stream_id);
                         batch.event = HttpServerStreamBatchEvent::FlushAfterTimeout;
                         return Ok(batch);
                     }
@@ -246,18 +306,21 @@ impl HttpStreamManager {
             match response {
                 // Request failed?
                 HttpServerStreamEvent::RequestFailed(e) => {
+                    log::debug!("http stream {} request failed with error: {}", stream_id, e);
                     if let Ok(mut streams) = self.server_streams.write() {
                         streams.remove(&stream_id);
                     }
-                    return Err(Status::HttpRequestFailed { stream_id, error: e });
+                    return Err(Status::HttpRequestFailed { stream_id, error: e.to_string() });
                 }
                 // Received headers
                 HttpServerStreamEvent::Header(status, headers) => {
+                    log::debug!("http stream {} received header", stream_id);
                     batch.status = Some(status);
                     batch.headers = headers;
                 },
                 // Return the message
                 HttpServerStreamEvent::BodyChunk(m) => {
+                    log::debug!("http stream {} received body chunk", stream_id);
                     // Add the message to the current batch and check if we should flush
                     batch.total_body_bytes += m.len();
                     batch.body_chunks.push(m);
@@ -271,6 +334,7 @@ impl HttpStreamManager {
                 // An error occurred,.
                 // Throw away any intermediate messages that we held back.
                 HttpServerStreamEvent::BodyReadFailed(e) => {
+                    log::debug!("http stream {} failed to read body", stream_id);
                     if let Ok(mut streams) = self.server_streams.write() {
                         streams.remove(&stream_id);
                     }
@@ -282,6 +346,7 @@ impl HttpStreamManager {
                 // We reached the end of the stream.
                 // Flush the current batch with trailers and an EOS marker.
                 HttpServerStreamEvent::BodyEnd => {
+                    log::debug!("http stream {} reached end", stream_id);
                     if let Ok(mut streams) = self.server_streams.write() {
                         streams.remove(&stream_id);
                     }
@@ -301,3 +366,4 @@ impl HttpStreamManager {
         }
     }
 }
+

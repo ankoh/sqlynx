@@ -22,6 +22,14 @@ export interface TrinoSetupTimings {
     channelSetupFailedAt: Date | null;
     /// The time when the channel was marked ready
     channelReadyAt: Date | null;
+    /// The time when the health check started
+    healthCheckStartedAt: Date | null;
+    /// The time when the health check got cancelled
+    healthCheckCancelledAt: Date | null;
+    /// The time when the health check failed
+    healthCheckFailedAt: Date | null;
+    /// The time when the health check succeeded
+    healthCheckSucceededAt: Date | null;
 }
 
 export interface TrinoConnectionDetails {
@@ -33,6 +41,8 @@ export interface TrinoConnectionDetails {
     channelError: string | null;
     /// The channel
     channel: TrinoChannelInterface | null;
+    /// The health check error
+    healthCheckError: string | null;
     /// The health check error
     schemaResolutionError: string | null;
 }
@@ -46,10 +56,15 @@ export function createTrinoConnectionState(lnx: sqlynx.SQLynx): ConnectionStateW
                 channelSetupCancelledAt: null,
                 channelSetupFailedAt: null,
                 channelReadyAt: null,
+                healthCheckStartedAt: null,
+                healthCheckCancelledAt: null,
+                healthCheckFailedAt: null,
+                healthCheckSucceededAt: null,
             },
             channelParams: null,
             channelError: null,
             channel: null,
+            healthCheckError: null,
             schemaResolutionError: null,
         }
     });
@@ -67,6 +82,10 @@ export const CHANNEL_SETUP_CANCELLED = Symbol('CHANNEL_SETUP_CANCELLED');
 export const CHANNEL_SETUP_FAILED = Symbol('CHANNEL_SETUP_FAILED');
 export const CHANNEL_SETUP_STARTED = Symbol('CHANNEL_SETUP_STARTED');
 export const CHANNEL_READY = Symbol('CHANNEL_READY');
+export const HEALTH_CHECK_CANCELLED = Symbol('CHANNEL_SETUP_CANCELLED');
+export const HEALTH_CHECK_FAILED = Symbol('CHANNEL_SETUP_FAILED');
+export const HEALTH_CHECK_STARTED = Symbol('CHANNEL_SETUP_STARTED');
+export const HEALTH_CHECK_SUCCEEDED = Symbol('CHANNEL_READY');
 
 export type TrinoConnectorAction =
     | VariantKind<typeof RESET, null>
@@ -74,6 +93,10 @@ export type TrinoConnectorAction =
     | VariantKind<typeof CHANNEL_SETUP_CANCELLED, string>
     | VariantKind<typeof CHANNEL_SETUP_FAILED, string>
     | VariantKind<typeof CHANNEL_READY, TrinoChannelInterface>
+    | VariantKind<typeof HEALTH_CHECK_CANCELLED, null>
+    | VariantKind<typeof HEALTH_CHECK_FAILED, string>
+    | VariantKind<typeof HEALTH_CHECK_STARTED, null>
+    | VariantKind<typeof HEALTH_CHECK_SUCCEEDED, null>
     ;
 
 export function reduceTrinoConnectorState(state: ConnectionState, action: TrinoConnectorAction): ConnectionState | null {
@@ -95,10 +118,15 @@ export function reduceTrinoConnectorState(state: ConnectionState, action: TrinoC
                             channelSetupCancelledAt: null,
                             channelSetupFailedAt: null,
                             channelReadyAt: null,
+                            healthCheckStartedAt: null,
+                            healthCheckCancelledAt: null,
+                            healthCheckFailedAt: null,
+                            healthCheckSucceededAt: null,
                         },
                         channelParams: details.channelParams,
                         channelError: null,
                         channel: null,
+                        healthCheckError: null,
                         schemaResolutionError: null,
                     }
                 },
@@ -156,6 +184,10 @@ export function reduceTrinoConnectorState(state: ConnectionState, action: TrinoC
                             channelSetupCancelledAt: null,
                             channelSetupFailedAt: null,
                             channelReadyAt: null,
+                            healthCheckStartedAt: null,
+                            healthCheckCancelledAt: null,
+                            healthCheckFailedAt: null,
+                            healthCheckSucceededAt: null,
                         },
                         channelParams: action.value,
                         channelError: null,
@@ -169,7 +201,7 @@ export function reduceTrinoConnectorState(state: ConnectionState, action: TrinoC
             next = {
                 ...state,
                 connectionStatus: ConnectionStatus.CHANNEL_READY,
-                connectionHealth: ConnectionHealth.ONLINE,
+                connectionHealth: ConnectionHealth.CONNECTING,
                 details: {
                     type: TRINO_CONNECTOR,
                     value: {
@@ -179,6 +211,75 @@ export function reduceTrinoConnectorState(state: ConnectionState, action: TrinoC
                             channelReadyAt: new Date(),
                         },
                         channel: action.value
+                    }
+                },
+            };
+            break;
+        case HEALTH_CHECK_STARTED:
+            next = {
+                ...state,
+                connectionStatus: ConnectionStatus.HEALTH_CHECK_STARTED,
+                connectionHealth: ConnectionHealth.CONNECTING,
+                details: {
+                    type: TRINO_CONNECTOR,
+                    value: {
+                        ...details,
+                        setupTimings: {
+                            ...details.setupTimings,
+                            healthCheckStartedAt: new Date(),
+                        },
+                    }
+                },
+            };
+            break;
+        case HEALTH_CHECK_FAILED:
+            next = {
+                ...state,
+                connectionStatus: ConnectionStatus.HEALTH_CHECK_FAILED,
+                connectionHealth: ConnectionHealth.FAILED,
+                details: {
+                    type: TRINO_CONNECTOR,
+                    value: {
+                        ...details,
+                        setupTimings: {
+                            ...details.setupTimings,
+                            healthCheckFailedAt: new Date(),
+                        },
+                        healthCheckError: action.value,
+                    }
+                },
+            };
+            break;
+        case HEALTH_CHECK_CANCELLED:
+            next = {
+                ...state,
+                connectionStatus: ConnectionStatus.HEALTH_CHECK_CANCELLED,
+                connectionHealth: ConnectionHealth.CANCELLED,
+                details: {
+                    type: TRINO_CONNECTOR,
+                    value: {
+                        ...details,
+                        setupTimings: {
+                            ...details.setupTimings,
+                            healthCheckCancelledAt: new Date(),
+                        },
+                    }
+                },
+            };
+            break;
+        case HEALTH_CHECK_SUCCEEDED:
+            next = {
+                ...state,
+                connectionStatus: ConnectionStatus.HEALTH_CHECK_SUCCEEDED,
+                connectionHealth: ConnectionHealth.ONLINE,
+                details: {
+                    type: TRINO_CONNECTOR,
+                    value: {
+                        ...details,
+                        setupTimings: {
+                            ...details.setupTimings,
+                            healthCheckSucceededAt: new Date(),
+                        },
                     }
                 },
             };

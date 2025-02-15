@@ -153,11 +153,11 @@ impl From<&Status> for Response<Vec<u8>> {
                     .unwrap();
             }
         };
-        let code = (grpc_status.code() as usize).to_string();
+        let grpc_code = (grpc_status.code() as usize).to_string();
         Response::builder()
             .status(StatusCode::from(status).as_u16())
             .header(CONTENT_TYPE, mime::TEXT_PLAIN.essence_str())
-            .header(HEADER_NAME_GRPC_STATUS, &code)
+            .header(HEADER_NAME_GRPC_STATUS, &grpc_code)
             .body(grpc_status.message().as_bytes().to_vec())
             .unwrap()
     }

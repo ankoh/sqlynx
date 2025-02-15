@@ -3,6 +3,10 @@ import {
     CHANNEL_SETUP_CANCELLED,
     CHANNEL_SETUP_FAILED,
     CHANNEL_SETUP_STARTED,
+    HEALTH_CHECK_CANCELLED,
+    HEALTH_CHECK_FAILED,
+    HEALTH_CHECK_STARTED,
+    HEALTH_CHECK_SUCCEEDED,
     TrinoConnectorAction,
 } from './trino_connection_state.js';
 import { Dispatch } from '../../utils/index.js';
@@ -15,16 +19,16 @@ import { TrinoConnectorConfig } from '../connector_configs.js';
 
 const LOG_CTX = "trino_setup";
 
-export async function setupTrinoConnection(updateState: Dispatch<TrinoConnectorAction>, logger: Logger, params: TrinoConnectionParams, _config: TrinoConnectorConfig, client: TrinoApiClientInterface, abortSignal: AbortSignal): Promise<TrinoChannelInterface> {
+export async function setupTrinoConnection(modifyState: Dispatch<TrinoConnectorAction>, logger: Logger, params: TrinoConnectionParams, _config: TrinoConnectorConfig, client: TrinoApiClientInterface, abortSignal: AbortSignal): Promise<TrinoChannelInterface> {
     // First prepare the channel
     let channel: TrinoChannelInterface;
     try {
         // Start the channel setup
-        updateState({
+        modifyState({
             type: CHANNEL_SETUP_STARTED,
             value: params,
         });
-        abortSignal.throwIfAborted()
+        abortSignal.throwIfAborted();
 
         // Create the channel
         const endpoint: TrinoApiEndpoint = {
@@ -34,23 +38,61 @@ export async function setupTrinoConnection(updateState: Dispatch<TrinoConnectorA
         channel = new TrinoChannel(logger, client, endpoint);
 
         // Mark the channel as ready
-        updateState({
+        modifyState({
             type: CHANNEL_READY,
             value: channel,
         });
         abortSignal.throwIfAborted();
 
+
     } catch (error: any) {
         if (error.name === 'AbortError') {
             logger.warn("setup was aborted", LOG_CTX);
-            updateState({
+            modifyState({
                 type: CHANNEL_SETUP_CANCELLED,
                 value: error.message,
             });
         } else if (error instanceof Error) {
             logger.error(`setup failed with error: ${error.toString()}`, LOG_CTX);
-            updateState({
+            modifyState({
                 type: CHANNEL_SETUP_FAILED,
+                value: error.message,
+            });
+        }
+        throw error;
+    }
+
+    try {
+        // Start the health check
+        modifyState({
+            type: HEALTH_CHECK_STARTED,
+            value: null
+        });
+        abortSignal.throwIfAborted();
+
+        // Check the health
+        const health = await channel.checkHealth();
+        abortSignal.throwIfAborted();
+
+        if (health.ok) {
+            modifyState({
+                type: HEALTH_CHECK_SUCCEEDED,
+                value: null,
+            });
+        } else {
+            throw health.error;
+        }
+    } catch (error: any) {
+        if (error.name === 'AbortError') {
+            logger.warn("setup was aborted");
+            modifyState({
+                type: HEALTH_CHECK_CANCELLED,
+                value: error.message,
+            });
+        } else if (error instanceof Error) {
+            logger.error(`setup failed with error: ${error.toString()}`);
+            modifyState({
+                type: HEALTH_CHECK_FAILED,
                 value: error.message,
             });
         }
