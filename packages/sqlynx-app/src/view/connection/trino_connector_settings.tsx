@@ -17,10 +17,10 @@ import { ConnectionHealth } from '../../connection/connection_state.js';
 import { CopyToClipboardButton } from '../../utils/clipboard.js';
 import { Dispatch } from '../../utils/variant.js';
 import { IndicatorStatus, StatusIndicator } from '../foundations/status_indicator.js';
-import { KeyValueListBuilder, KeyValueListElement, UpdateKeyValueList } from '../foundations/keyvalue_list.js';
+import { KeyValueListBuilder, UpdateKeyValueList } from '../foundations/keyvalue_list.js';
 import { PlatformType, usePlatformType } from '../../platform/platform_type.js';
 import { TextField } from '../foundations/text_field.js';
-import { TrinoAuthParams, TrinoConnectionParams } from '../../connection/trino/trino_connection_params.js';
+import { TrinoConnectionParams } from '../../connection/trino/trino_connection_params.js';
 import { classNames } from '../../utils/classnames.js';
 import { generateWorkbookUrl, WorkbookLinkTarget } from '../../workbook/workbook_setup_url.js';
 import { getConnectionError, getConnectionHealthIndicator, getConnectionStatusText } from '../connection/salesforce_connector_settings.js';
@@ -38,9 +38,8 @@ import { ErrorDetailsButton } from '../error_details.js';
 const LOG_CTX = "trino_connector";
 
 interface PageState {
-    endpoint: string;
-    authParams: TrinoAuthParams;
-    additionalMetadata: KeyValueListElement[];
+    activeParams: TrinoConnectionParams | null;
+    newParams: TrinoConnectionParams;
 };
 type PageStateSetter = Dispatch<React.SetStateAction<PageState>>;
 const PAGE_STATE_CTX = React.createContext<[PageState, PageStateSetter] | null>(null);
@@ -60,19 +59,29 @@ export const TrinoConnectorSettings: React.FC = () => {
 
     // Wire up the page state
     const [pageState, setPageState] = React.useContext(PAGE_STATE_CTX)!;
-    const setEndpoint = (v: string) => setPageState(s => ({ ...s, endpoint: v }));
-    const setBasicAuthUsername = (v: string) => setPageState(s => ({ ...s, authParams: { ...s.authParams, username: v } }));
-    const setBasicAuthSecret = (v: string) => setPageState(s => ({ ...s, authParams: { ...s.authParams, secret: v } }));
-    const modifyMetadata: Dispatch<UpdateKeyValueList> = (action: UpdateKeyValueList) => setPageState(s => ({ ...s, additionalMetadata: action(s.additionalMetadata) }));
+    const setEndpoint = (v: string) => setPageState(s => ({ ...s, newParams: { ...s.newParams, channelArgs: { ...s.newParams.channelArgs, endpoint: v } } }));
+    const setBasicAuthUsername = (v: string) => setPageState(s => ({ ...s, newParams: { ...s.newParams, authParams: { ...s.newParams.authParams, username: v } } }));
+    const setBasicAuthSecret = (v: string) => setPageState(s => ({ ...s, newParams: { ...s.newParams, authParams: { ...s.newParams.authParams, secret: v } } }));
+    const modifyMetadata: Dispatch<UpdateKeyValueList> = (action: UpdateKeyValueList) => setPageState(s => ({ ...s, newParams: { ...s.newParams, metadata: action(s.newParams.metadata) } }));
+
+    // Update the page state with the connection params
+    React.useEffect(() => {
+        if (connectionState?.details.type != TRINO_CONNECTOR) {
+            return;
+        }
+        // Did the channel params change?
+        // Then we reset the params of the settings page
+        const activeParams = connectionState.details.value.channelParams;
+        if (activeParams != null && activeParams !== pageState.activeParams) {
+            console.log("RESET ACTIVE PARAMS");
+            setPageState({
+                activeParams: activeParams,
+                newParams: activeParams
+            });
+        }
+    }, [connectionState?.details]);
 
     // Helper to setup the connection
-    const setupParams = React.useMemo<TrinoConnectionParams>(() => ({
-        channelArgs: {
-            endpoint: pageState.endpoint
-        },
-        authParams: pageState.authParams,
-        metadata: pageState.additionalMetadata,
-    }), [pageState.endpoint, pageState.authParams, pageState.additionalMetadata]);
     const setupAbortController = React.useRef<AbortController | null>(null);
     const setupConnection = async () => {
         // Is there a Trino client?
@@ -89,7 +98,7 @@ export const TrinoConnectorSettings: React.FC = () => {
         try {
             // Setup the Trino connection
             setupAbortController.current = new AbortController();
-            const connectionParams: TrinoConnectionParams = setupParams;
+            const connectionParams: TrinoConnectionParams = pageState.newParams;
             const _channel = await trinoSetup.setup(dispatchConnectionState, connectionParams, setupAbortController.current.signal);
 
             // Start the catalog update
@@ -157,7 +166,7 @@ export const TrinoConnectorSettings: React.FC = () => {
         }
         const params: ConnectionParamsVariant = {
             type: TRINO_CONNECTOR,
-            value: setupParams
+            value: pageState.newParams
         };
         return generateWorkbookUrl(workbook, params, setupLinkTarget);
     }, [workbook, connectionState, setupLinkTarget]);
@@ -214,7 +223,7 @@ export const TrinoConnectorSettings: React.FC = () => {
                         <TextField
                             name="Endpoint"
                             caption="Endpoint of the Trino Api as 'https://host:port'"
-                            value={pageState.endpoint}
+                            value={pageState.newParams.channelArgs.endpoint}
                             placeholder="trino endpoint url"
                             leadingVisual={() => <div>URL</div>}
                             onChange={(e) => setEndpoint(e.target.value)}
@@ -226,7 +235,7 @@ export const TrinoConnectorSettings: React.FC = () => {
                             name="Username"
                             className={style.grid_column_1}
                             caption="Username for the Trino Api"
-                            value={pageState.authParams.username}
+                            value={pageState.newParams.authParams.username}
                             placeholder=""
                             leadingVisual={() => <div>ID</div>}
                             onChange={(e) => setBasicAuthUsername(e.target.value)}
@@ -237,7 +246,7 @@ export const TrinoConnectorSettings: React.FC = () => {
                         <TextField
                             name="Secret"
                             caption="Password for the Trino Api"
-                            value={pageState.authParams.secret}
+                            value={pageState.newParams.authParams.secret}
                             placeholder=""
                             leadingVisual={KeyIcon}
                             onChange={(e) => setBasicAuthSecret(e.target.value)}
@@ -256,7 +265,7 @@ export const TrinoConnectorSettings: React.FC = () => {
                             keyIcon={() => <div>Header</div>}
                             valueIcon={() => <div>Value</div>}
                             addButtonLabel="Add Header"
-                            elements={pageState.additionalMetadata}
+                            elements={pageState.newParams.metadata}
                             modifyElements={modifyMetadata}
                             disabled={freezeInput}
                             readOnly={freezeInput}
@@ -272,12 +281,17 @@ interface ProviderProps { children: React.ReactElement };
 
 export const TrinoConnectorSettingsStateProvider: React.FC<ProviderProps> = (props: ProviderProps) => {
     const state = React.useState<PageState>({
-        endpoint: "http://localhost:8080",
-        authParams: {
-            username: "",
-            secret: "",
-        },
-        additionalMetadata: [],
+        activeParams: null,
+        newParams: {
+            channelArgs: {
+                endpoint: "http://localhost:8080",
+            },
+            authParams: {
+                username: "",
+                secret: "",
+            },
+            metadata: [],
+        }
     });
     return (
         <PAGE_STATE_CTX.Provider value={state}>
