@@ -29,3 +29,21 @@ export function buildHyperConnectorParams(params: HyperGrpcConnectionParams): pr
     });
 }
 
+
+export function readHyperConnectorParams(params: proto.sqlynx_workbook.pb.HyperConnectorParams): HyperGrpcConnectionParams {
+    const metadata = [];
+    for (const k in params.metadata) {
+        metadata.push({
+            key: k,
+            value: params.metadata[k]
+        })
+    }
+    return {
+        channelArgs: {
+            endpoint: params.endpoint,
+        },
+        attachedDatabases: params.attachedDatabases.map((a) => ({ key: a.path, value: a.alias })),
+        gRPCMetadata: metadata
+    };
+}
+

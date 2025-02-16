@@ -252,5 +252,6 @@
 .connection_status {
     display: flex;
     flex-direction: row;
-    column-gap: 8px;
+    column-gap: 12px;
+    align-items: center;
 }

@@ -24,3 +24,12 @@ export function buildSalesforceConnectorParams(params: SalesforceConnectionParam
     });
 }
 
+export function readSalesforceConnectorParams(params: proto.sqlynx_workbook.pb.SalesforceConnectorParams): SalesforceConnectionParams {
+    return {
+        instanceUrl: params.instanceUrl,
+        appConsumerKey: params.appConsumerKey,
+        appConsumerSecret: "",
+        loginHint: params.loginHint,
+    };
+}
+

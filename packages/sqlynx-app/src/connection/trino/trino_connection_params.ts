@@ -35,3 +35,16 @@ export function buildTrinoConnectorParams(params: TrinoConnectionParams): proto.
     });
 }
 
+export function readTrinoConnectorParams(params: proto.sqlynx_workbook.pb.TrinoConnectorParams): TrinoConnectionParams {
+    return {
+        channelArgs: {
+            endpoint: params.endpoint
+        },
+        authParams: {
+            username: params.auth?.username ?? "",
+            secret: "",
+        },
+        metadata: []
+    };
+}
+

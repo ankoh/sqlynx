@@ -11,7 +11,7 @@ import { ChecklistIcon, DesktopDownloadIcon, FileBadgeIcon, KeyIcon, PackageIcon
 import { AnchorAlignment, AnchorSide } from '../view/foundations/anchored_position.js';
 import { Button, ButtonSize, ButtonVariant } from '../view/foundations/button.js';
 import { ConnectionHealth } from '../connection/connection_state.js';
-import { ConnectorInfo, requiresSwitchingToNative } from '../connection/connector_info.js';
+import { ConnectorInfo, HYPER_GRPC_CONNECTOR, requiresSwitchingToNative, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from '../connection/connector_info.js';
 import { CopyToClipboardButton } from '../utils/clipboard.js';
 import { IndicatorStatus, StatusIndicator } from '../view/foundations/status_indicator.js';
 import { KeyValueTextField, TextField } from '../view/foundations/text_field.js';
@@ -19,32 +19,38 @@ import { LogViewerOverlay } from '../view/log_viewer.js';
 import { OverlaySize } from '../view/foundations/overlay.js';
 import { RESTORE_WORKBOOK } from './workbook_state.js';
 import { SQLYNX_VERSION } from '../globals.js';
-import { SalesforceConnectionParams } from '../connection/salesforce/salesforce_connection_params.js';
-import { TrinoConnectionParams } from 'connection/trino/trino_connection_params.js';
 import { VersionInfoOverlay } from '../view/version_viewer.js';
 import { encodeWorkbookAsUrl as encodeWorkbookAsUrl, WorkbookLinkTarget as WorkbookLinkTarget } from './workbook_setup_url.js';
 import { formatHHMMSS } from '../utils/format.js';
-import { getConnectionHealthIndicator, getConnectionStatusText } from '../view/connection/salesforce_connector_settings.js';
+import { getConnectionError, getConnectionHealthIndicator, getConnectionStatusText } from '../view/connection/salesforce_connector_settings.js';
 import { useConnectionState } from '../connection/connection_registry.js';
 import { useLogger } from '../platform/logger_provider.js';
 import { useNavigate } from 'react-router-dom';
 import { useSalesforceSetup } from '../connection/salesforce/salesforce_connector.js';
 import { useTrinoSetup } from '../connection/trino/trino_connector.js';
 import { useWorkbookState } from './workbook_state_registry.js';
+import { ErrorDetailsButton } from '../view/error_details.js';
+import { DetailedError } from '../utils/error.js';
+import { ConnectionParamsVariant, encodeConnectionParams, readConnectionParamsFromProto } from '../connection/connection_params.js';
 
 const LOG_CTX = "workbook_setup";
 const AUTO_TRIGGER_DELAY = 2000;
 const AUTO_TRIGGER_COUNTER_INTERVAL = 200;
 
-const ConnectorParamsSection: React.FC<{ params: proto.sqlynx_workbook.pb.ConnectorParams }> = (props: { params: proto.sqlynx_workbook.pb.ConnectorParams }) => {
-    switch (props.params.connector.case) {
-        case "salesforce": {
+interface ConnectorParamsSectionProps {
+    params: ConnectionParamsVariant,
+    updateParams: (params: ConnectionParamsVariant) => void
+}
+
+const ConnectionParamsSection: React.FC<ConnectorParamsSectionProps> = (props: ConnectorParamsSectionProps) => {
+    switch (props.params.type) {
+        case SALESFORCE_DATA_CLOUD_CONNECTOR: {
             return (
                 <div className={baseStyles.card_section}>
                     <div className={baseStyles.section_entries}>
                         <TextField
                             name="Salesforce Instance URL"
-                            value={props.params.connector.value.instanceUrl ?? ""}
+                            value={props.params.value.instanceUrl ?? ""}
                             readOnly
                             disabled
                             leadingVisual={() => <div>URL</div>}
@@ -52,7 +58,7 @@ const ConnectorParamsSection: React.FC<{ params: proto.sqlynx_workbook.pb.Connec
                         />
                         <TextField
                             name="Connected App"
-                            value={props.params.connector.value.appConsumerKey ?? ""}
+                            value={props.params.value.appConsumerKey ?? ""}
                             readOnly
                             disabled
                             leadingVisual={() => <div>ID</div>}
@@ -62,13 +68,13 @@ const ConnectorParamsSection: React.FC<{ params: proto.sqlynx_workbook.pb.Connec
                 </div>
             );
         }
-        case "hyper": {
+        case HYPER_GRPC_CONNECTOR: {
             return (
                 <div className={baseStyles.card_section}>
                     <div className={baseStyles.section_entries}>
                         <TextField
                             name="gRPC Endpoint"
-                            value={props.params.connector.value.endpoint ?? ""}
+                            value={props.params.value.channelArgs.endpoint ?? ""}
                             leadingVisual={() => <div>URL</div>}
                             logContext={LOG_CTX}
                             readOnly
@@ -77,8 +83,8 @@ const ConnectorParamsSection: React.FC<{ params: proto.sqlynx_workbook.pb.Connec
                         <KeyValueTextField
                             className={connStyles.grid_column_1}
                             name="mTLS Client Key"
-                            k={props.params.connector.value.tls?.clientKeyPath ?? ""}
-                            v={props.params.connector.value.tls?.clientCertPath ?? ""}
+                            k={props.params.value.channelArgs.tls?.keyPath ?? ""}
+                            v={props.params.value.channelArgs.tls?.pubPath ?? ""}
                             keyPlaceholder="client.key"
                             valuePlaceholder="client.pem"
                             keyIcon={KeyIcon}
@@ -91,7 +97,7 @@ const ConnectorParamsSection: React.FC<{ params: proto.sqlynx_workbook.pb.Connec
                         />
                         <TextField
                             name="mTLS CA certificates"
-                            value={props.params.connector.value.tls?.caCertsPath ?? ""}
+                            value={props.params.value.channelArgs.tls?.caPath ?? ""}
                             placeholder="cacerts.pem"
                             leadingVisual={ChecklistIcon}
                             logContext={LOG_CTX}
@@ -102,22 +108,59 @@ const ConnectorParamsSection: React.FC<{ params: proto.sqlynx_workbook.pb.Connec
                 </div>
             );
         }
-        case "trino": {
+        case TRINO_CONNECTOR: {
+            const p = props.params.value;
             return (
                 <div className={baseStyles.card_section}>
                     <div className={baseStyles.section_entries}>
                         <TextField
+                            name="Endpoint"
+                            value={props.params.value.channelArgs.endpoint ?? ""}
+                            leadingVisual={() => <div>URL</div>}
+                            logContext={LOG_CTX}
+                            onChange={(e) => props.updateParams({
+                                type: TRINO_CONNECTOR,
+                                value: {
+                                    ...p,
+                                    channelArgs: {
+                                        ...p.channelArgs,
+                                        endpoint: e.target.value
+                                    }
+                                }
+                            })}
+                        />
+                        <TextField
                             name="Username"
-                            value={props.params.connector.value.auth?.username ?? ""}
+                            value={props.params.value.authParams?.username ?? ""}
                             leadingVisual={() => <div>ID</div>}
                             logContext={LOG_CTX}
+                            onChange={(e) => props.updateParams({
+                                type: TRINO_CONNECTOR,
+                                value: {
+                                    ...p,
+                                    authParams: {
+                                        ...p.authParams,
+                                        username: e.target.value
+                                    }
+                                }
+                            })}
                         />
                         <TextField
                             name="Secret"
-                            value={""}
+                            value={props.params.value.authParams?.secret ?? ""}
                             concealed={true}
                             leadingVisual={KeyIcon}
                             logContext={LOG_CTX}
+                            onChange={(e) => props.updateParams({
+                                type: TRINO_CONNECTOR,
+                                value: {
+                                    ...p,
+                                    authParams: {
+                                        ...p.authParams,
+                                        secret: e.target.value
+                                    }
+                                }
+                            })}
                         />
                     </div>
                 </div>
@@ -142,12 +185,17 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
     const salesforceSetup = useSalesforceSetup();
     const trinoSetup = useTrinoSetup();
+
     const [showLogs, setShowLogs] = React.useState<boolean>(false);
     const [showVersionOverlay, setShowVersionOverlay] = React.useState<boolean>(false);
+
+    // Resolve a connection id for the workbook
     const [maybeWorkbook, dispatchWorkbook] = useWorkbookState(props.workbookId);
-    const workbook = maybeWorkbook!;
-    const [maybeConnection, dispatchConnection] = useConnectionState(workbook!.connectionId);
+    const [maybeConnection, dispatchConnection] = useConnectionState(maybeWorkbook!.connectionId);
     const connection = maybeConnection!;
+
+    // Maintain setup override settings
+    const [connectionParams, setConnectionParams] = React.useState<ConnectionParamsVariant | null>(() => props.setupProto.connectorParams ? readConnectionParamsFromProto(props.setupProto.connectorParams) : null);
 
     // Need to switch to native?
     // Some connectors only run in the native app.
@@ -155,15 +203,6 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
     if (props.setupProto.noPlatformCheck) {
         canExecuteHere = true;
     }
-
-    // Generate the workbook setup url
-    const workbookSetupURL = React.useMemo(() => {
-        if (canExecuteHere) {
-            return null;
-        } else {
-            return encodeWorkbookAsUrl(props.setupProto, WorkbookLinkTarget.NATIVE);
-        }
-    }, []);
 
     // Helper to configure the workbook
     const [setupStarted, setSetupStarted] = React.useState<boolean>(false);
@@ -176,10 +215,16 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
         }
         setupInProgressOrDone.current = true;
 
+        // Bake the workbook proto, we'll need this in any case
+        const workbookProto = new proto.sqlynx_workbook.pb.Workbook({
+            ...props.setupProto,
+            connectorParams: connectionParams == null ? undefined : encodeConnectionParams(connectionParams)
+        });
+
         // Cannot execute here? Then redirect the user
         if (!canExecuteHere) {
             const link = document.createElement('a');
-            link.href = workbookSetupURL!.toString();
+            link.href = encodeWorkbookAsUrl(workbookProto, WorkbookLinkTarget.NATIVE).toString();
             logger.info(`opening deep link: ${link.href}`);
             link.click();
         }
@@ -187,42 +232,25 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
         // Otherwise configure the workbook
         try {
             // Check which connector configuring
-            const connectorParams = props.setupProto.connectorParams?.connector;
-            switch (connectorParams?.case) {
-                case "salesforce": {
+            switch (connectionParams?.type) {
+                case SALESFORCE_DATA_CLOUD_CONNECTOR: {
                     // Salesforce auth flow not yet ready?
                     if (!salesforceSetup) {
                         return;
                     }
                     // Setup the connection
                     setupAbortController.current = new AbortController();
-                    const params: SalesforceConnectionParams = {
-                        instanceUrl: connectorParams.value.instanceUrl,
-                        appConsumerKey: connectorParams.value.appConsumerKey,
-                        appConsumerSecret: null,
-                        loginHint: null,
-                    };
-                    await salesforceSetup.setup(dispatchConnection, params, setupAbortController.current.signal);
+                    await salesforceSetup.setup(dispatchConnection, connectionParams.value, setupAbortController.current.signal);
                     setupAbortController.current.signal.throwIfAborted();
                     setupAbortController.current = null;
                     break;
                 }
-                case "trino": {
+                case TRINO_CONNECTOR: {
                     if (!trinoSetup) {
                         return;
                     }
                     setupAbortController.current = new AbortController();
-                    const params: TrinoConnectionParams = {
-                        channelArgs: {
-                            endpoint: connectorParams.value.endpoint
-                        },
-                        authParams: {
-                            username: "", // XXX
-                            secret: ""
-                        },
-                        metadata: []
-                    };
-                    await trinoSetup.setup(dispatchConnection, params, setupAbortController.current.signal);
+                    await trinoSetup.setup(dispatchConnection, connectionParams.value, setupAbortController.current.signal);
                     setupAbortController.current.signal.throwIfAborted();
                     setupAbortController.current = null;
                     break;
@@ -233,7 +261,7 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
             //
             // XXX This is the first time we're modifying the attached workbook....
             //     We should make sure this is sane, ideally we would get the connector info from there.
-            dispatchWorkbook({ type: RESTORE_WORKBOOK, value: props.setupProto });
+            dispatchWorkbook({ type: RESTORE_WORKBOOK, value: workbookProto });
 
             // Navigate to the app root
             navigate("/");
@@ -243,7 +271,7 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
         } catch (e: any) {
             setupInProgressOrDone.current = false;
         }
-    }, [salesforceSetup]);
+    }, [salesforceSetup, connectionParams]);
 
     // Helper to cancel the setup
     const cancelSetup = () => {
@@ -281,49 +309,26 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
     }, [props.setupProto]);
     const sections: React.ReactElement[] = [];
 
-    // Collect all sections (after parsing the params)
-    if (props.setupProto.scripts.length > 0) {
-        const scriptElems: React.ReactElement[] = [];
-        for (const script of props.setupProto.scripts) {
-            let scriptName = null;
-            switch (script.scriptType) {
-                case proto.sqlynx_workbook.pb.ScriptType.Query:
-                    scriptName = "Query";
-                    break;
-                case proto.sqlynx_workbook.pb.ScriptType.Schema:
-                    scriptName = "Schema";
-                    break;
-            }
-            scriptElems.push(
-                <TextField
-                    key={script.scriptId}
-                    name={`Inline ${scriptName != null ? scriptName : script.scriptId}`}
-                    value={script.scriptText}
-                    readOnly={true}
-                    disabled={true}
-                    leadingVisual={() => <div>SQL</div>}
-                    logContext={LOG_CTX}
-                />
-            )
-        }
-        sections.push(
-            <div key={sections.length} className={baseStyles.card_section}>
-                <div className={baseStyles.section_entries}>
-                    {scriptElems}
-                </div>
-            </div>
-        );
-    }
-
     // Do we have connector params?
     // Then render them in a dedicated section.
-    if (props.setupProto.connectorParams) {
-        sections.push(<ConnectorParamsSection key={sections.length} params={props?.setupProto?.connectorParams} />);
+    if (connectionParams) {
+        sections.push(
+            <ConnectionParamsSection
+                key={sections.length}
+                params={connectionParams}
+                updateParams={setConnectionParams}
+            />);
     }
 
     // Do we need to switch to native?
     // Render a warning, information where to get the app and a button to switch.
-    if (!canExecuteHere && workbookSetupURL != null) {
+    if (!canExecuteHere) {
+        const workbookProto = new proto.sqlynx_workbook.pb.Workbook({
+            ...props.setupProto,
+            connectorParams: connectionParams == null ? undefined : encodeConnectionParams(connectionParams)
+        });
+        const workbookURL = encodeWorkbookAsUrl(workbookProto, WorkbookLinkTarget.NATIVE);
+
         sections.push(
             <div key={sections.length} className={baseStyles.card_section}>
                 <div className={baseStyles.section_entries}>
@@ -364,7 +369,7 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
                             variant={ButtonVariant.Primary}
                             size={ButtonSize.Medium}
                             logContext={LOG_CTX}
-                            value={workbookSetupURL.toString()}
+                            value={workbookURL.toString()}
                             aria-label="copy-deeplink"
                             aria-labelledby=""
                         />
@@ -375,7 +380,7 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
                                 <div>{Math.floor(remainingUntilAutoTrigger / 1000)}</div> : undefined}
                             onClick={() => {
                                 const link = document.createElement('a');
-                                link.href = workbookSetupURL.toString();
+                                link.href = workbookURL.toString();
                                 logger.info(`opening deep link: ${link.href}`);
                                 link.click();
                             }}>
@@ -390,6 +395,8 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
         const statusText: string = getConnectionStatusText(connection.connectionStatus, logger);
         // Get the indicator status
         const indicatorStatus: IndicatorStatus = getConnectionHealthIndicator(connection.connectionHealth);
+        // Get the connection error (if any)
+        const connectionError: DetailedError | null = getConnectionError(connection?.details ?? null);
         // Resolve the connect button
         let connectButton: React.ReactElement = <div />;
         switch (connection.connectionHealth) {
@@ -425,6 +432,9 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
                         <div className={connStyles.status_text}>
                             {statusText}
                         </div>
+                        {connectionError?.message &&
+                            <ErrorDetailsButton className={connStyles.status_error} error={connectionError} />
+                        }
                     </div>
                 </div>
                 <div className={baseStyles.card_actions_right}>
