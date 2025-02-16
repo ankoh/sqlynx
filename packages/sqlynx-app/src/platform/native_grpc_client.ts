@@ -1,4 +1,4 @@
-import { ChannelArgs, ChannelError, ChannelMetadataProvider } from './channel_common.js';
+import { ChannelArgs, ChannelError, ChannelMetadataProvider, RawProxyError } from './channel_common.js';
 import { Logger } from "./logger.js";
 import { HEADER_NAME_BATCH_BYTES, HEADER_NAME_BATCH_TIMEOUT, HEADER_NAME_CHANNEL_ID, HEADER_NAME_ENDPOINT, HEADER_NAME_PATH, HEADER_NAME_READ_TIMEOUT, HEADER_NAME_STREAM_ID, HEADER_NAME_TLS, HEADER_NAME_TLS_CACERTS, HEADER_NAME_TLS_CLIENT_CERT, HEADER_NAME_TLS_CLIENT_KEY } from "./native_api_mock.js";
 
@@ -34,6 +34,18 @@ function requireStringHeader(headers: Headers, key: string): string {
 function requireIntegerHeader(headers: Headers, key: string): number {
     const raw = headers.get(key)!;
     return Number.parseInt(raw);
+}
+async function throwIfError(response: Response): Promise<void> {
+    if (response.headers.get("sqlynx-error") ?? false) {
+        const proxyError = await response.json() as RawProxyError;
+        const statusCode = requireIntegerHeader(response.headers, "sqlynx-grpc-status");
+        throw new ChannelError(proxyError, statusCode, response.headers);
+    } else if (response.status != 200) {
+        const proxyError: RawProxyError = {
+            message: response.statusText
+        };
+        throw new ChannelError(proxyError, 500, response.headers);
+    }
 }
 
 export class NativeGrpcServerStream implements AsyncIterator<NativeGrpcServerStreamBatch> {
@@ -74,12 +86,7 @@ export class NativeGrpcServerStream implements AsyncIterator<NativeGrpcServerStr
             }
         });
         const response = await fetch(request);
-
-        if (response.status != 200) {
-            const grpcStatus = requireIntegerHeader(response.headers, "sqlynx-grpc-status");
-            const body = await response.text();
-            throw new ChannelError(grpcStatus, body);
-        }
+        await throwIfError(response);
 
         const streamBatchEvent = requireStringHeader(response.headers, "sqlynx-batch-event");
         const streamBatchMessages = requireIntegerHeader(response.headers, "sqlynx-batch-messages");
@@ -107,7 +114,7 @@ export class NativeGrpcServerStream implements AsyncIterator<NativeGrpcServerStr
             });
             await fetch(request);
             // XXX Log if the dropping failed
-            throw new ChannelError(13, "batch message count mismatch");
+            throw new ChannelError({ message: "batch message count mismatch" }, 13);
         }
 
         // Return the batch event and all messages
@@ -142,7 +149,7 @@ export class NativeGrpcServerStream implements AsyncIterator<NativeGrpcServerStr
 
             case NativeGrpcServerStreamBatchEvent.StreamFailed:
                 this.reachedEndOfStream = true;
-                throw new ChannelError(400, "", batch.metadata);
+                throw new ChannelError({ message: "stream failed" }, 400, new Headers(batch.metadata));
         }
     }
 }
@@ -240,11 +247,7 @@ export class NativeGrpcChannel {
             body: args.body,
         });
         const response = await fetch(request);
-        if (response.status != 200) {
-            const grpcStatus = requireIntegerHeader(response.headers, "sqlynx-grpc-status");
-            const body = await response.text();
-            throw new ChannelError(grpcStatus, body);
-        }
+        await throwIfError(response);
 
         const streamId = requireIntegerHeader(response.headers, HEADER_NAME_STREAM_ID);
         return new NativeGrpcServerStream(this.endpoint, this.channelId, streamId, this.metadataProvider, this.logger);
@@ -265,11 +268,7 @@ export class NativeGrpcChannel {
             body: "",
         });
         const response = await fetch(request);
-        if (response.status != 200) {
-            const grpcStatus = requireIntegerHeader(response.headers, "sqlynx-grpc-status");
-            const body = await response.text();
-            throw new ChannelError(grpcStatus, body);
-        }
+        await throwIfError(response);
     }
 }
 
@@ -312,11 +311,7 @@ export class NativeGrpcClient {
             headers
         });
         const response = await fetch(request);
-        if (response.status !== 200) {
-            const grpcStatus = requireIntegerHeader(response.headers, "sqlynx-grpc-status");
-            const body = await response.text();
-            throw new ChannelError(grpcStatus, body);
-        }
+        await throwIfError(response);
 
         const channelId = requireIntegerHeader(response.headers, HEADER_NAME_CHANNEL_ID);
         return new NativeGrpcChannel(this.proxy, channelId, metadataProvider, this.logger);

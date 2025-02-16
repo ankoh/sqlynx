@@ -14,3 +14,4 @@ pub const HEADER_NAME_BATCH_BYTES: &'static str = "sqlynx-batch-bytes";
 pub const HEADER_NAME_BATCH_EVENT: &'static str = "sqlynx-batch-event";
 pub const HEADER_NAME_BATCH_MESSAGES: &'static str = "sqlynx-batch-messages";
 pub const HEADER_NAME_GRPC_STATUS: &'static str = "sqlynx-grpc-status";
+pub const HEADER_NAME_ERROR: &'static str = "sqlynx-error";

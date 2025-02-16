@@ -6,6 +6,7 @@ import { GrpcServerStream, GrpcServerStreamBatch, HttpServerStream, HttpServerSt
 import { NativeGrpcServerStreamBatchEvent } from "./native_grpc_client.js";
 import { PlatformType } from "./platform_type.js";
 import { NativeHttpServerStreamBatchEvent } from "./native_http_client.js";
+import { RawProxyError } from "./channel_common.js";
 
 describe('Native API mock', () => {
     let mock: NativeAPIMock | null;
@@ -32,8 +33,10 @@ describe('Native API mock', () => {
             headers: {}
         });
         const response = await fetch(request);
-        expect(response.statusText).toEqual("invalid request: path=/invalid-path method=POST");
+        const responseJson = await response.json() as RawProxyError;
         expect(response.status).toEqual(400);
+        expect(responseJson.message).toEqual("invalid request");
+        expect(responseJson.details).toEqual("path=/invalid-path method=POST");
     });
 
     it("accepts requests that are targeting the root path /", async () => {
@@ -42,7 +45,6 @@ describe('Native API mock', () => {
             headers: {}
         });
         const response = await fetch(request);
-        expect(response.statusText).toEqual("OK");
         expect(response.status).toEqual(200);
     });
 
@@ -52,7 +54,6 @@ describe('Native API mock', () => {
             headers: {}
         });
         const response = await fetch(request);
-        expect(response.statusText).toEqual("OK");
         expect(response.status).toEqual(200);
         expect(response.headers.has("sqlynx-channel-id")).toBeTruthy();
         expect(() => {
@@ -66,7 +67,6 @@ describe('Native API mock', () => {
             headers: {}
         });
         const createResponse = await fetch(createRequest);
-        expect(createResponse.statusText).toEqual("OK");
         expect(createResponse.status).toEqual(200);
         expect(createResponse.headers.has("sqlynx-channel-id")).toBeTruthy();
         const channelId = Number.parseInt(createResponse.headers.get("sqlynx-channel-id")!);
@@ -75,7 +75,6 @@ describe('Native API mock', () => {
             headers: {}
         });
         const deleteResponse = await fetch(deleteRequest);
-        expect(deleteResponse.statusText).toEqual("OK");
         expect(deleteResponse.status).toEqual(200);
     });
 
@@ -85,7 +84,6 @@ describe('Native API mock', () => {
             headers: {}
         });
         const createResponse = await fetch(createRequest);
-        expect(createResponse.statusText).toEqual("OK");
         expect(createResponse.status).toEqual(200);
         expect(createResponse.headers.has("sqlynx-channel-id")).toBeTruthy();
         const channelId = Number.parseInt(createResponse.headers.get("sqlynx-channel-id")!);
@@ -97,8 +95,10 @@ describe('Native API mock', () => {
             }
         });
         const streamResponse = await fetch(streamRequest);
-        expect(streamResponse.statusText).toEqual(`unexpected gRPC call of: /salesforce.hyperdb.grpc.v1.HyperService/ExecuteQuery`);
         expect(streamResponse.status).toEqual(400);
+        const responseJson = await streamResponse.json();
+        expect(responseJson.message).toEqual("unexpected gRPC call");
+        expect(responseJson.details).toEqual("/salesforce.hyperdb.grpc.v1.HyperService/ExecuteQuery");
     });
 
     it("returns correct results for streaming gRPC calls", async () => {
@@ -107,7 +107,6 @@ describe('Native API mock', () => {
             headers: {}
         });
         const channelResponse = await fetch(channelRequest);
-        expect(channelResponse.statusText).toEqual("OK");
         expect(channelResponse.status).toEqual(200);
         expect(channelResponse.headers.has("sqlynx-channel-id")).toBeTruthy();
         const channelId = Number.parseInt(channelResponse.headers.get("sqlynx-channel-id")!);
@@ -171,7 +170,6 @@ describe('Native API mock', () => {
         (new Uint8Array(expectedBuffer, 4)).set(expectedMessage);
 
         const readResponse = await fetch(readRequest);
-        expect(readResponse.statusText).toEqual("OK");
         expect(readResponse.status).toEqual(200);
         expect(readResponse.headers.has("sqlynx-channel-id")).toBeTruthy();
         expect(readResponse.headers.has("sqlynx-stream-id")).toBeTruthy();
@@ -221,7 +219,6 @@ describe('Native API mock', () => {
             }
         });
         const streamResponse = await fetch(streamRequest);
-        expect(streamResponse.statusText).toEqual("OK");
         expect(streamResponse.status).toEqual(200);
         expect(streamResponse.headers.has("sqlynx-stream-id")).toBeTruthy();
         const streamId = Number.parseInt(streamResponse.headers.get("sqlynx-stream-id")!);
@@ -242,7 +239,6 @@ describe('Native API mock', () => {
             },
         });
         let streamReadResponse = await fetch(streamReadRequest);
-        expect(streamReadResponse.statusText).toEqual("OK");
         expect(streamReadResponse.status).toEqual(200);
         expect(streamReadResponse.headers.has("sqlynx-stream-id")).toBeTruthy();
         expect(streamReadResponse.headers.get("sqlynx-batch-event")).toEqual("FlushAfterTimeout");
@@ -260,7 +256,6 @@ describe('Native API mock', () => {
             },
         });
         streamReadResponse = await fetch(streamReadRequest);
-        expect(streamReadResponse.statusText).toEqual("OK");
         expect(streamReadResponse.status).toEqual(200);
         expect(streamReadResponse.headers.has("sqlynx-stream-id")).toBeTruthy();
         expect(streamReadResponse.headers.get("sqlynx-batch-event")).toEqual("FlushAfterClose");

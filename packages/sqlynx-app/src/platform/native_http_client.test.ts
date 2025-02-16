@@ -27,7 +27,8 @@ describe('Native HTTP client', () => {
             method: "POST",
         });
         expect(response.status).toEqual(400);
-        expect(response.statusText).toEqual("unexpected http call");
+        const responseJson = await response.json();
+        expect(responseJson.message).toEqual("unexpected http call");
     });
 
     // Tests reading from an HTTP output stream

@@ -89,9 +89,12 @@ export class HttpServerStream {
                 }
             });
         } else {
-            return new Response(null, {
+            return new Response(JSON.stringify({ message: "unknown stream" }), {
                 status: 404,
-                statusText: "unknown stream"
+                headers: new Headers({
+                    "sqlynx-error": "true",
+                    "content-type": "application/json"
+                })
             });
         }
     }
@@ -156,7 +159,6 @@ export class GrpcServerStream {
             }
             return new Response(bodyBuffer, {
                 status: 200,
-                statusText: "OK",
                 headers: {
                     [HEADER_NAME_CHANNEL_ID]: this.channelId!.toString(),
                     [HEADER_NAME_STREAM_ID]: this.streamId!.toString(),
@@ -166,9 +168,12 @@ export class GrpcServerStream {
                 }
             });
         } else {
-            return new Response(null, {
+            return new Response(JSON.stringify({ message: "unknown stream" }), {
                 status: 404,
-                statusText: "unknown stream"
+                headers: new Headers({
+                    "sqlynx-error": "true",
+                    "content-type": "application/json"
+                })
             });
         }
     }
@@ -237,11 +242,13 @@ export class NativeAPIMock {
     protected async startHttpServerStream(req: Request): Promise<Response> {
         const handler = this.httpServer.processRequest;
         if (handler == null) {
-            return new Response(null, {
+            return new Response(JSON.stringify({ message: "unexpected http call" }), {
                 status: 400,
-                statusText: "unexpected http call",
-                headers: {}
-            })
+                headers: new Headers({
+                    "sqlynx-error": "true",
+                    "content-type": "application/json"
+                })
+            });
         }
         const stream = handler(req);
         const streamId = this.nextHttpStreamId;
@@ -251,7 +258,6 @@ export class NativeAPIMock {
 
         return new Response(null, {
             status: 200,
-            statusText: "OK",
             headers: {
                 [HEADER_NAME_STREAM_ID]: streamId.toString()
             }
@@ -276,7 +282,6 @@ export class NativeAPIMock {
 
         return new Response(null, {
             status: 200,
-            statusText: "OK",
             headers: {
                 [HEADER_NAME_CHANNEL_ID]: channelId.toString()
             }
@@ -287,7 +292,6 @@ export class NativeAPIMock {
         this.grpcChannels.delete(channelId);
         return new Response(null, {
             status: 200,
-            statusText: "OK",
             headers: {}
         });
     }
@@ -299,11 +303,13 @@ export class NativeAPIMock {
             case "/salesforce.hyperdb.grpc.v1.HyperService/ExecuteQuery": {
                 const handler = this.hyperService.executeQuery;
                 if (handler == null) {
-                    return new Response(null, {
+                    return new Response(JSON.stringify({ message: "unexpected gRPC call", details: "/salesforce.hyperdb.grpc.v1.HyperService/ExecuteQuery" }), {
                         status: 400,
-                        statusText: "unexpected gRPC call of: /salesforce.hyperdb.grpc.v1.HyperService/ExecuteQuery",
-                        headers: {}
-                    })
+                        headers: new Headers({
+                            "sqlynx-error": "true",
+                            "content-type": "application/json"
+                        })
+                    });
                 }
                 const body = await req.arrayBuffer();
                 const params = proto.salesforce_hyperdb_grpc_v1.pb.QueryParam.fromBinary(new Uint8Array(body));
@@ -323,10 +329,12 @@ export class NativeAPIMock {
                 });
             }
             default:
-                return new Response(null, {
+                return new Response(JSON.stringify({ message: `invalid gRPC streaming path`, details: path }), {
                     status: 400,
-                    statusText: `invalid gRPC streaming path: ${path}`,
-                    headers: {}
+                    headers: new Headers({
+                        "sqlynx-error": "true",
+                        "content-type": "application/json"
+                    })
                 });
         }
     }
@@ -345,10 +353,12 @@ export class NativeAPIMock {
     public async process(req: Request): Promise<Response> {
         // Reject any requests that are not targeting native
         if (!req.url.startsWith(NATIVE_API_SCHEME)) {
-            return new Response(null, {
+            return new Response(JSON.stringify({ message: `scheme is not matching`, details: NATIVE_API_SCHEME }), {
                 status: 400,
-                statusText: `scheme is not matching ${NATIVE_API_SCHEME}`,
-                headers: {}
+                headers: new Headers({
+                    "sqlynx-error": "true",
+                    "content-type": "application/json"
+                })
             });
         }
         // If the request targets /, we consider this a health check and return with 200
@@ -362,10 +372,12 @@ export class NativeAPIMock {
         }
 
         // Helper to report an invalid request
-        const invalidRequest = (req: Request) => new Response(null, {
+        const invalidRequest = (req: Request) => new Response(JSON.stringify({ message: `invalid request`, details: `path=${new URL(req.url).pathname} method=${req.method}` }), {
             status: 400,
-            statusText: `invalid request: path=${new URL(req.url).pathname} method=${req.method}`,
-            headers: {}
+            headers: new Headers({
+                "sqlynx-error": "true",
+                "content-type": "application/json"
+            })
         });
 
         // Create a gRPC channel
@@ -391,9 +403,12 @@ export class NativeAPIMock {
             const channelId = Number.parseInt(matches.groups!["channel"]!);
             const channel = this.grpcChannels.get(channelId);
             if (!channel) {
-                return new Response(null, {
+                return new Response(JSON.stringify({ message: `channel not found` }), {
                     status: 404,
-                    statusText: `channel not found`
+                    headers: new Headers({
+                        "sqlynx-error": "true",
+                        "content-type": "application/json"
+                    })
                 });
             }
             switch (req.method) {
@@ -408,15 +423,22 @@ export class NativeAPIMock {
             const streamId = Number.parseInt(matches.groups!["stream"]!);
             const channel = this.grpcChannels.get(channelId);
             if (!channel) {
-                return new Response(null, {
+                return new Response(JSON.stringify({ message: `channel not found` }), {
                     status: 404,
-                    statusText: `channel not found`
+                    headers: new Headers({
+                        "sqlynx-error": "true",
+                        "content-type": "application/json"
+                    })
                 });
             }
             const stream = channel.streams.get(streamId);
             if (!stream) {
-                return new Response(`stream not found`, {
+                return new Response(JSON.stringify({ message: `stream not found` }), {
                     status: 404,
+                    headers: new Headers({
+                        "sqlynx-error": "true",
+                        "content-type": "application/json"
+                    })
                 });
             }
             switch (req.method) {
@@ -434,8 +456,12 @@ export class NativeAPIMock {
             const streamId = Number.parseInt(matches.groups!["stream"]!);
             const stream = this.httpStreams.get(streamId);
             if (!stream) {
-                return new Response(`stream not found`, {
+                return new Response(JSON.stringify({ message: `stream not found` }), {
                     status: 404,
+                    headers: new Headers({
+                        "sqlynx-error": "true",
+                        "content-type": "application/json"
+                    })
                 });
             }
             switch (req.method) {

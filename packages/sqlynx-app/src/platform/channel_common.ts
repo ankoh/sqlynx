@@ -14,15 +14,25 @@ export interface ChannelArgs {
     tls?: ChannelTlsSettings;
 }
 
-export class ChannelError extends Error {
-    /// The gRPC status
-    grpcStatus: number;
-    /// The headers
-    headers: Record<string, string> | null;
+export interface RawProxyError {
+    /// The error
+    message: string;
+    /// The details
+    details?: string;
+}
 
-    constructor(status: number, msg: string, headers?: Record<string, string>) {
-        super(msg);
-        this.grpcStatus = status;
+export class ChannelError extends Error {
+    /// The details (if any)
+    details: string | null;
+    /// The status code
+    statusCode: number;
+    /// The response headers
+    headers: Headers | null;
+
+    constructor(error: RawProxyError, status: number, headers?: Headers) {
+        super(error.message);
+        this.details = error.details ?? null;
+        this.statusCode = status;
         this.headers = headers ?? null;
         Object.setPrototypeOf(this, ChannelError.prototype);
     }

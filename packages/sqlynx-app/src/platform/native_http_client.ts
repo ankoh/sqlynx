@@ -1,3 +1,4 @@
+import { RawProxyError } from './channel_common.js';
 import { HttpClient, HttpFetchResult } from './http_client.js';
 import { Logger } from './logger.js';
 import { HEADER_NAME_BATCH_BYTES, HEADER_NAME_BATCH_EVENT, HEADER_NAME_BATCH_TIMEOUT, HEADER_NAME_ENDPOINT, HEADER_NAME_METHOD, HEADER_NAME_PATH, HEADER_NAME_READ_TIMEOUT, HEADER_NAME_STREAM_ID } from "./native_api_mock.js";
@@ -15,6 +16,25 @@ export interface NativeHttpProxyConfig {
     proxyEndpoint: URL;
 };
 
+export class NativeHttpError extends Error {
+    /// The detail
+    details: string | null;
+
+    constructor(o: RawProxyError) {
+        super(o.message);
+        this.details = o.details ?? null;
+    }
+}
+
+async function throwIfError(response: Response): Promise<void> {
+    if (response.headers.get("sqlynx-error") ?? false) {
+        const proxyError = await response.json() as RawProxyError;
+        throw new NativeHttpError(proxyError);
+    } else if (response.status != 200) {
+        throw new NativeHttpError({ message: response.statusText });
+    }
+}
+
 export class NativeHttpServerStream implements HttpFetchResult {
     /// The endpoint
     endpoint: NativeHttpProxyConfig;
@@ -26,16 +46,19 @@ export class NativeHttpServerStream implements HttpFetchResult {
     status: number;
     /// The status text
     statusText: string;
+    /// The native http error (if any)
+    initialErrorBody: RawProxyError | null;
     /// The logger
     logger: Logger;
     /// The text decoder for decoding utf8
     textDecoder: TextDecoder;
 
     /// Constructor
-    constructor(endpoint: NativeHttpProxyConfig, streamId: number | null, headers: Headers, status: number, statusText: string, logger: Logger) {
+    constructor(endpoint: NativeHttpProxyConfig, streamId: number | null, headers: Headers, status: number, statusText: string, initialErrorBody: RawProxyError | null, logger: Logger) {
         this.headers = headers;
         this.status = status;
         this.statusText = statusText;
+        this.initialErrorBody = initialErrorBody;
         this.endpoint = endpoint;
         this.streamId = streamId;
         this.logger = logger;
@@ -43,6 +66,9 @@ export class NativeHttpServerStream implements HttpFetchResult {
     }
 
     async json(): Promise<any> {
+        if (this.initialErrorBody != null) {
+            return this.initialErrorBody;
+        }
         const buffer = await this.arrayBuffer();
         const text = this.textDecoder.decode(buffer);
         if (text == "") {
@@ -78,16 +104,11 @@ export class NativeHttpServerStream implements HttpFetchResult {
                 headers,
             });
             const response = await fetch(request);
-            const status = response.status;
-            const statusText = response.statusText;
-            if (status !== 200) {
-                const errorMessage = await response.text();
-                throw new Error(errorMessage);
-            }
+            await throwIfError(response);
 
             // Get batch event
             const batchEvent = response.headers.get(HEADER_NAME_BATCH_EVENT);
-            this.logger.debug(`received fetch response: status=${status}, statusText=${statusText}, event=${batchEvent}`, "native_http_client")
+            this.logger.debug(`received fetch response: event=${batchEvent}`, "native_http_client")
             switch (batchEvent) {
                 case "StreamFailed":
                     fetchNext = false;
@@ -177,10 +198,15 @@ export class NativeHttpClient implements HttpClient {
                 throw new Error("missing stream id");
             }
             streamId = Number.parseInt(streamIdText);
-        }
 
-        // Return a native http server stream
-        return new NativeHttpServerStream(this.endpoint, streamId, response.headers, response.status, response.statusText, this.logger);;
+            return new NativeHttpServerStream(this.endpoint, streamId, response.headers, response.status, response.statusText, null, this.logger);;
+        } else {
+            let rawProxyError: any | null = null;
+            if (response.headers.get("sqlynx-error") ?? false) {
+                rawProxyError = await response.json() as RawProxyError;
+            }
+            return new NativeHttpServerStream(this.endpoint, streamId, response.headers, response.status, response.statusText, rawProxyError, this.logger);;
+        }
     }
 }
 
