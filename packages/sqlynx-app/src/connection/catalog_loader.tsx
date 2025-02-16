@@ -75,7 +75,7 @@ export function CatalogUpdaterProvider(props: { children?: React.ReactElement })
                 case DEMO_CONNECTOR:
                 case SERVERLESS_CONNECTOR:
                     throw new Error(
-                        `catalog updater does not support connector ${conn.connectionInfo.connectorType} yet`,
+                        `catalog updater does not support connector ${conn.connectorInfo.connectorType} yet`,
                     );
             }
             // Mark the update successful

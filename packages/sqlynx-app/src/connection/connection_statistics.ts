@@ -46,7 +46,7 @@ export function createConnectionState(lnx: sqlynx.SQLynx, info: ConnectorInfo, d
     return {
         connectionStatus: ConnectionStatus.NOT_STARTED,
         connectionHealth: ConnectionHealth.NOT_STARTED,
-        connectionInfo: info,
+        connectorInfo: info,
         metrics: createConnectionMetrics(),
         details,
         catalog,

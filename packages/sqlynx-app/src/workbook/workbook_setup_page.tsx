@@ -501,7 +501,7 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
                     <div className={baseStyles.card}>
                         <div className={baseStyles.card_header} data-tauri-drag-region>
                             <div className={baseStyles.card_header_left_container}>
-                                Setup {connection.connectionInfo.displayName.long}
+                                Setup {connection.connectorInfo.displayName.long}
                             </div>
                             <div className={baseStyles.card_header_right_container}>
                                 <LogViewerOverlay
