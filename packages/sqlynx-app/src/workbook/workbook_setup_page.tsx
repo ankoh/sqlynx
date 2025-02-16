@@ -281,13 +281,30 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
         }
     };
 
-    // Setup config auto-trigger
-    const autoTriggersAt = React.useMemo(() => new Date(now.getTime() + AUTO_TRIGGER_DELAY), []);
-    const [remainingUntilAutoTrigger, setRemainingUntilAutoTrigger] = React.useState<number>(() => Math.max(autoTriggersAt.getTime(), now.getTime()) - now.getTime());
+    // Setup config auto-trigger.
+    // We only auto-trigger if we need a platform switch
+    const autoTriggersAt = React.useMemo<Date | null>(() => {
+        if (canExecuteHere) {
+            return null;
+        } else {
+            return new Date(now.getTime() + AUTO_TRIGGER_DELAY);
+        }
+    }, []);
+    const [remainingUntilAutoTrigger, setRemainingUntilAutoTrigger] = React.useState<number | null>(() => {
+        if (autoTriggersAt == null) {
+            return null;
+        } else {
+            return Math.max(autoTriggersAt.getTime(), now.getTime()) - now.getTime();
+        }
+    });
+
+    // Configure an autotrigger for the setup
     React.useEffect(() => {
-        // Otherwise setup an autotrigger for the setup
-        logger.info(`setup config auto-trigger in ${formatHHMMSS(remainingUntilAutoTrigger / 1000)}`, LOG_CTX);
-        const timeoutId = setTimeout(startSetup, remainingUntilAutoTrigger);
+        if (autoTriggersAt == null) {
+            return;
+        }
+        logger.info(`setup config auto-trigger in ${formatHHMMSS(remainingUntilAutoTrigger! / 1000)}`, LOG_CTX);
+        const timeoutId = setTimeout(startSetup, remainingUntilAutoTrigger!);
         const updaterId: { current: unknown | null } = { current: null };
 
         const updateRemaining = () => {
@@ -307,10 +324,10 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
             }
         }
     }, [props.setupProto]);
-    const sections: React.ReactElement[] = [];
 
     // Do we have connector params?
     // Then render them in a dedicated section.
+    const sections: React.ReactElement[] = [];
     if (connectionParams) {
         sections.push(
             <ConnectionParamsSection
@@ -376,7 +393,7 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
                         <Button
                             variant={ButtonVariant.Primary}
                             leadingVisual={DesktopDownloadIcon}
-                            trailingVisual={!setupStarted ? () =>
+                            trailingVisual={remainingUntilAutoTrigger && !setupStarted ? () =>
                                 <div>{Math.floor(remainingUntilAutoTrigger / 1000)}</div> : undefined}
                             onClick={() => {
                                 const link = document.createElement('a');
@@ -405,7 +422,7 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
                     <Button
                         variant={ButtonVariant.Primary}
                         onClick={startSetup}
-                        trailingVisual={!setupStarted ? () =>
+                        trailingVisual={remainingUntilAutoTrigger && !setupStarted ? () =>
                             <div>{Math.floor(remainingUntilAutoTrigger / 1000)}</div> : undefined}
                     >
                         Connect
