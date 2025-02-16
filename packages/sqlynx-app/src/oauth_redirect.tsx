@@ -42,16 +42,16 @@ function buildDeepLink(eventBase64: string) {
 function triggerFlow(state: proto.sqlynx_oauth.pb.OAuthState, eventBase64: string, deepLink: string, logger: Logger) {
     switch (state.flowVariant) {
         case proto.sqlynx_oauth.pb.OAuthFlowVariant.NATIVE_LINK_FLOW: {
-            logger.info(`opening deep link`, LOG_CTX);
+            logger.info(`opening deep link`, { "link": deepLink }, LOG_CTX);
             window.open(deepLink, '_self');
             break;
         }
         case proto.sqlynx_oauth.pb.OAuthFlowVariant.WEB_OPENER_FLOW: {
             if (!window.opener) {
-                logger.error("window opener is undefined", LOG_CTX);
+                logger.error("window opener is undefined", {}, LOG_CTX);
                 return;
             }
-            logger.info(`posting oauth data to opener`, LOG_CTX);
+            logger.info(`posting oauth data to opener`, { "data": eventBase64 }, LOG_CTX);
             window.opener.postMessage(eventBase64);
             break;
         }
@@ -89,10 +89,10 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
     React.useEffect(() => {
         // Skip auto trigger for native apps in debug mode
         if (skipAutoTrigger) {
-            logger.info(`skip auto-trigger for native app in debug mode`, LOG_CTX);
+            logger.info(`skip auto-trigger for native app in debug mode`, {}, LOG_CTX);
             return () => { };
         } else {
-            logger.info(`setup auto-trigger in ${formatHHMMSS(remainingUntilAutoTrigger / 1000)}`, LOG_CTX);
+            logger.info("setup auto-trigger", { "remaining": formatHHMMSS(remainingUntilAutoTrigger / 1000) }, LOG_CTX);
             const timeoutId = setTimeout(() => {
                 triggerFlow(props.state, eventBase64, deepLink, logger);
                 setWasTriggered(true);
@@ -157,7 +157,7 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
     const remainingUntilExpiration = codeExpiresAt !== undefined
         ? (Math.max(codeExpiresAt.getTime(), now.getTime()) - now.getTime()) : 0;
     React.useEffect(() => {
-        logger.info(`code expires in ${formatHHMMSS(remainingUntilExpiration / 1000)}`, LOG_CTX);
+        logger.info("determine code expiration", { "remaining": formatHHMMSS(remainingUntilExpiration / 1000) }, LOG_CTX);
         const timeoutId = setTimeout(() => setCodeIsExpired(true), remainingUntilExpiration);
         return () => clearTimeout(timeoutId);
     }, [props.state]);

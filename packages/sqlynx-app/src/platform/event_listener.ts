@@ -69,7 +69,7 @@ export abstract class AppEventListener {
     /// Received navigation event
     protected dispatchWorkbook(data: proto.sqlynx_workbook.pb.Workbook) {
         if (!this.workbookSetupSubscriber) {
-            this.logger.info("queuing workbook setup event since there's no registered subscriber", LOG_CTX);
+            this.logger.info("queuing workbook setup event since there's no registered subscriber", {}, LOG_CTX);
             this.queuedWorkbookSetupEvent = data;
         } else {
             this.workbookSetupSubscriber(data);
@@ -79,7 +79,7 @@ export abstract class AppEventListener {
     /// OAuth succeeded, let the subscriber now
     protected dispatchOAuthRedirect(data: proto.sqlynx_oauth.pb.OAuthRedirectData) {
         if (!this.oAuthSubscriber) {
-            console.warn("received oauth redirect data but there's no registered oauth subscriber", LOG_CTX);
+            console.warn("received oauth redirect data but there's no registered oauth subscriber", {}, LOG_CTX);
         } else {
             const sub = this.oAuthSubscriber;
             sub.signal.removeEventListener("abort", sub.abortListener!);
@@ -126,17 +126,17 @@ export abstract class AppEventListener {
     /// Subscribe navigation events
     public subscribeWorkbookSetupEvents(handler: (data: proto.sqlynx_workbook.pb.Workbook) => void): void {
         if (this.workbookSetupSubscriber) {
-            this.logger.error("tried to register more than one workbook setup subscriber", LOG_CTX);
+            this.logger.error("tried to register more than one workbook setup subscriber", {}, LOG_CTX);
             return;
         }
-        this.logger.info("subscribing to workbook setup events", LOG_CTX);
+        this.logger.info("subscribing to workbook setup events", {}, LOG_CTX);
         this.workbookSetupSubscriber = handler;
 
         // Is there a pending workbook setup?
         if (this.queuedWorkbookSetupEvent != null) {
             const setup = this.queuedWorkbookSetupEvent;
             this.queuedWorkbookSetupEvent = null;
-            this.logger.info("dispatching buffered workbook setup event", LOG_CTX);
+            this.logger.info("dispatching buffered workbook setup event", {}, LOG_CTX);
             this.workbookSetupSubscriber(setup);
         }
     }
@@ -144,7 +144,7 @@ export abstract class AppEventListener {
     /// Unsubscribe from workbook setup events
     public unsubscribeWorkbookSetupEvents(handler: (data: proto.sqlynx_workbook.pb.Workbook) => void): void {
         if (this.workbookSetupSubscriber != handler) {
-            this.logger.error("tried to unregister a workbook setup subscriber that is not registered", LOG_CTX);
+            this.logger.error("tried to unregister a workbook setup subscriber that is not registered", {}, LOG_CTX);
         } else {
             this.workbookSetupSubscriber = null;
         }
@@ -152,7 +152,7 @@ export abstract class AppEventListener {
 
     /// Method to listen for pasted sqlynx links
     private listenForClipboardEvents() {
-        this.logger.info("subscribing to clipboard events", LOG_CTX);
+        this.logger.info("subscribing to clipboard events", {}, LOG_CTX);
         window.addEventListener("paste", this.clipboardEventHandler);
     }
 
@@ -160,12 +160,12 @@ export abstract class AppEventListener {
     public readAppEvent(dataBase64: any, fromWhat: string) {
         // Make sure everything arriving here is a valid base64 string
         if (!dataBase64 || typeof dataBase64 !== 'string') {
-            this.logger.trace("skipping app event with non-string data", LOG_CTX);
+            this.logger.trace("skipping app event with non-string data", {}, LOG_CTX);
             return null;
         }
         // Is a valid base64?
         if (!BASE64_CODEC.isValidBase64(dataBase64)) {
-            this.logger.info("skipping app event with invalid base64 data", LOG_CTX);
+            this.logger.info("skipping app event with invalid base64 data", {}, LOG_CTX);
             return null;
         }
         // Try to parse as app event data
@@ -173,11 +173,11 @@ export abstract class AppEventListener {
             const dataBuffer = BASE64_CODEC.decode(dataBase64);
             const dataBytes = new Uint8Array(dataBuffer);
             const event = proto.sqlynx_app_event.pb.AppEventData.fromBinary(dataBytes);
-            this.logger.info(`parsed app event of type ${event.data.case}`, LOG_CTX);
+            this.logger.info(`parsed app event`, { "type": event.data.case }, LOG_CTX);
             return event;
 
         } catch (error: any) {
-            this.logger.error(`${fromWhat} does not encode valid link data`, LOG_CTX);
+            this.logger.error(`event does not encode valid link data`, { "source": fromWhat }, LOG_CTX);
             return null;
         }
     }
@@ -191,16 +191,16 @@ export abstract class AppEventListener {
             let deepLinkData: any = null;
             try {
                 const deepLink = new URL(pastedText);
-                this.logger.info(`received deep link: ${deepLink.toString()}`, LOG_CTX);
+                this.logger.info("received deep link", { "link": deepLink.toString() }, LOG_CTX);
                 // Has link data?
                 deepLinkData = deepLink.searchParams.get(EVENT_QUERY_PARAMETER);
                 if (!deepLinkData) {
-                    this.logger.warn(`deep link lacks the query parameter '${EVENT_QUERY_PARAMETER}'`, LOG_CTX);
+                    this.logger.warn("deep link lacks the data query parameter", {}, LOG_CTX);
                     return;
                 }
             } catch (e: any) {
                 console.warn(e);
-                this.logger.warn(`parsing deep link failed with error: ${e.toString()}`, LOG_CTX);
+                this.logger.warn("parsing deep link failed", { "error": e.toString() }, LOG_CTX);
             }
 
             // Unpack the app event

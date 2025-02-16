@@ -33,7 +33,7 @@ const ReleaseBundle: React.FC<ReleaseBundleProps> = (props: ReleaseBundleProps) 
             </div>
             <div className={styles.native_app_platform_bundle_download}>
                 <Button onClick={() => {
-                    logger.info(`prompting user to download ${props.name} ${props.version}`);
+                    logger.info("prompting user to download", { "name": props.name, "version": props.version });
                     const link = document.createElement('a');
                     link.href = props.url.toString();
                     link.download = props.name;

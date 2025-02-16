@@ -26,6 +26,8 @@ import { useAppConfig } from '../../app_config.js';
 import { useHyperDatabaseClient } from '../../connection/hyper/hyperdb_client_provider.js';
 import { RESET } from '../connection_state.js';
 
+const LOG_CTX = "hyper_setup";
+
 export async function setupHyperGrpcConnection(updateState: Dispatch<HyperGrpcConnectorAction>, logger: Logger, params: HyperGrpcConnectionParams, _config: HyperGrpcConnectorConfig, client: HyperDatabaseClient, abortSignal: AbortSignal): Promise<HyperDatabaseChannel | null> {
     let channel: HyperDatabaseChannel;
     try {
@@ -68,13 +70,13 @@ export async function setupHyperGrpcConnection(updateState: Dispatch<HyperGrpcCo
 
     } catch (error: any) {
         if (error.name === 'AbortError') {
-            logger.warn("setup was aborted");
+            logger.warn("setup was aborted", {}, LOG_CTX);
             updateState({
                 type: CHANNEL_SETUP_CANCELLED,
                 value: error,
             });
         } else if (error instanceof Error) {
-            logger.error(`setup failed with error: ${error?.message}`);
+            logger.error("setup failed", { "error": error?.message }, LOG_CTX);
             updateState({
                 type: CHANNEL_SETUP_FAILED,
                 value: error,
@@ -106,15 +108,15 @@ export async function setupHyperGrpcConnection(updateState: Dispatch<HyperGrpcCo
         }
     } catch (error: any) {
         if (error.name === 'AbortError') {
-            logger.warn("setup was aborted");
+            logger.warn("health was aborted", {}, LOG_CTX);
             updateState({
                 type: HEALTH_CHECK_CANCELLED,
                 value: error,
             });
         } else if (error instanceof Error) {
-            logger.error(`setup failed with error: ${error.toString()}`);
+            logger.error("health check failed", { "error": error.toString() }, LOG_CTX);
             updateState({
-                type: CHANNEL_SETUP_FAILED,
+                type: HEALTH_CHECK_FAILED,
                 value: error,
             });
         }

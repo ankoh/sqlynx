@@ -46,9 +46,9 @@ export const AppConfigProvider: React.FC<Props> = (props: Props) => {
                 const body = await resp.json();
                 const config = readAppConfig(body);
                 setConfig(c => c.resolve(config));
-                logger.info("configured application", "app_config");
+                logger.info("configured application", {}, "app_config");
                 if (SQLYNX_BUILD_MODE == 'development') {
-                    logger.info(`react is running in strict mode and will duplicate events`, "app_config")
+                    logger.info(`react is running in strict mode and will duplicate events`, {}, "app_config")
                 }
             } catch (e: any) {
                 console.error(e);
@@ -59,7 +59,7 @@ export const AppConfigProvider: React.FC<Props> = (props: Props) => {
     }
     const reconfigure = React.useCallback((mapper: StatePromiseMapper<AppConfig>) => {
         if (SQLYNX_BUILD_MODE == 'development') {
-            logger.info(`reconfigure application`, "app_config");
+            logger.info(`reconfigure application`, {}, "app_config");
         }
         setConfig(c => c.modify(mapper));
     }, []);

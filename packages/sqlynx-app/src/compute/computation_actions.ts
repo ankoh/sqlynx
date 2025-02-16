@@ -87,7 +87,7 @@ async function precomputeMetadataColumns(task: ColumnPrecomputationTask, dispatc
         const transformed = await task.inputDataFrame.transform(transform, task.tableSummary.statsDataFrame);
         const transformEnd = performance.now();
         const transformedTable = await transformed.readTable();
-        logger.info(`precomputed system columns in ${Math.floor(transformEnd - transformStart)} ms`, LOG_CTX);
+        logger.info("precomputed system columns", { "duration": Math.floor(transformEnd - transformStart).toString() }, LOG_CTX);
 
         dispatch({
             type: PRECOMPUTATION_TASK_SUCCEEDED,
@@ -95,7 +95,7 @@ async function precomputeMetadataColumns(task: ColumnPrecomputationTask, dispatc
         });
         return [transformed, newGridColumns];
     } catch (error: any) {
-        logger.error(`column precomputation failed with error: ${error.toString()}`);
+        logger.error("column precomputation failed", { "error": error.toString() }, LOG_CTX);
         taskProgress = {
             status: TaskStatus.TASK_FAILED,
             startedAt,
@@ -218,9 +218,9 @@ export async function sortTable(task: TableOrderingTask, dispatch: Dispatch<Comp
     };
 
     if (task.orderingConstraints.length == 1) {
-        logger.info(`sorting table by field "${task.orderingConstraints[0].fieldName}"`, LOG_CTX);
+        logger.info("sorting table by field", { "field": task.orderingConstraints[0].fieldName }, LOG_CTX);
     } else {
-        logger.info(`sorting table by multiple fields`, LOG_CTX);
+        logger.info("sorting table by multiple fields", {}, LOG_CTX);
     }
 
     try {
@@ -232,7 +232,7 @@ export async function sortTable(task: TableOrderingTask, dispatch: Dispatch<Comp
         const sortStart = performance.now();
         const transformed = await task.inputDataFrame!.transform(transform);
         const sortEnd = performance.now();
-        logger.info(`sorted table in ${Math.floor(sortEnd - sortStart)} ms`, LOG_CTX);
+        logger.info("sorted table", { "duration": Math.floor(sortEnd - sortStart).toString() }, LOG_CTX);
         // Read the result
         const orderedTable = await transformed.readTable();
 
@@ -257,7 +257,7 @@ export async function sortTable(task: TableOrderingTask, dispatch: Dispatch<Comp
         });
 
     } catch (error: any) {
-        logger.error(`sorting table failed with error: ${error.toString()}`);
+        logger.error(`sorting table failed`, { "error": error.toString() }, LOG_CTX);
         taskProgress = {
             status: TaskStatus.TASK_FAILED,
             startedAt,
@@ -296,7 +296,7 @@ export async function computeTableSummary(task: TableSummaryTask, dispatch: Disp
         const summaryStart = performance.now();
         const transformedDataFrame = await task.inputDataFrame!.transform(transform);
         const summaryEnd = performance.now();
-        logger.info(`aggregated table ${task.computationId} in ${Math.floor(summaryEnd - summaryStart)} ms`, LOG_CTX);
+        logger.info("aggregated table", { "computation": task.computationId.toString(), "duration": Math.floor(summaryEnd - summaryStart).toString() }, LOG_CTX);
         // Read the result
         const statsTable = await transformedDataFrame.readTable();
         const statsTableFields = createArrowFieldIndex(statsTable);
@@ -324,7 +324,7 @@ export async function computeTableSummary(task: TableSummaryTask, dispatch: Disp
         return [summary, columnEntries];
 
     } catch (error: any) {
-        logger.error(`ordering table ${task.computationId} failed with error: ${error.toString()}`);
+        logger.error("ordering table failed", { "computation": task.computationId.toString(), "error": error.toString() }, LOG_CTX);
         taskProgress = {
             status: TaskStatus.TASK_FAILED,
             startedAt,
@@ -470,7 +470,7 @@ export async function computeColumnSummary(computationId: number, task: ColumnSu
         const summaryStart = performance.now();
         const columnSummaryDataFrame = await task.inputDataFrame!.transform(columnSummaryTransform, task.tableSummary.statsDataFrame);
         const summaryEnd = performance.now();
-        logger.info(`aggregated table ${task.computationId} column ${task.columnId} in ${Math.floor(summaryEnd - summaryStart)} ms`, LOG_CTX);
+        logger.info("aggregated table column", { "computation": task.computationId.toString(), "column": task.columnId.toString(), "duration": Math.floor(summaryEnd - summaryStart).toString() }, LOG_CTX);
         // Read the result
         const columnSummaryTable = await columnSummaryDataFrame.readTable();
         const columnSummaryTableFormatter = new ArrowTableFormatter(columnSummaryTable.schema, columnSummaryTable.batches);
@@ -535,7 +535,7 @@ export async function computeColumnSummary(computationId: number, task: ColumnSu
         return summary;
 
     } catch (error: any) {
-        logger.error(`aggregated table ${computationId} failed with error: ${error.toString()}`);
+        logger.error("aggregated table", { "computation": computationId.toString(), "error": error.toString() }, LOG_CTX);
         taskProgress = {
             status: TaskStatus.TASK_FAILED,
             startedAt,

@@ -63,7 +63,7 @@ class InstallableTauriUpdate implements InstallableUpdate {
                     }
                 }
             });
-        } catch(e: unknown) {
+        } catch (e: unknown) {
             const err = e instanceof Error ? e : new Error(e?.toString());
             this.setInstallationState(s => {
                 return {
@@ -83,22 +83,22 @@ class InstallableTauriUpdate implements InstallableUpdate {
 async function checkChannelUpdates(channel: ReleaseChannel, setResult: (result: Result<InstallableTauriUpdate | null>) => void, setInstallationStatus: (setter: InstallationStatusSetter) => void, logger: Logger) {
     const start = performance.now();
     try {
-        logger.info(`checking for ${channel} updates`, "version_check");
+        logger.info(`checking for channel updates`, { "channel": channel }, "version_check");
         const update = await check({
             headers: {
                 "sqlynx-channel": channel
             }
         });
         const end = performance.now();
-        logger.info(`checking for ${channel} updates succeeded in ${Math.floor(end - start)} ms`, "version_check");
+        logger.info(`checking for channel updates succeeded`, { "channel": channel, "duration": Math.floor(end - start).toString() }, "version_check");
         setResult({
             type: RESULT_OK,
             value: update == null ? null : new InstallableTauriUpdate(update, setInstallationStatus, logger),
         });
-    } catch (e: unknown) {
+    } catch (e: any) {
         const err = e instanceof Error ? e : new Error(e?.toString());
         const end = performance.now();
-        logger.error(`checking for ${channel} updates failed after ${Math.floor(end - start)} ms with error: ${err.toString()}`, "version_check");
+        logger.error(`checking for channel updates failed`, { "channel": channel, "duration": Math.floor(end - start).toString(), "error": e.toString() }, "version_check");
         setResult({
             type: RESULT_ERROR,
             error: new Error(err.toString())

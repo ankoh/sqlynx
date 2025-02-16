@@ -83,7 +83,7 @@ export function getConnectionStatusText(status: ConnectionStatus | undefined, lo
         case undefined:
             break;
         default:
-            logger.warn(`unexpected connection status: ${status}`);
+            logger.warn("unexpected connection status", { "status": status });
     }
     return "";
 }

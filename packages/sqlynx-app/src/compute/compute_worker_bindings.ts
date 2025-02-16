@@ -139,7 +139,7 @@ export class ComputeWorkerBindings {
             case ComputeWorkerResponseType.DATAFRAME_SCAN_MESSAGE: {
                 const scan = this.activeScans.get(response.data.scanId);
                 if (!scan) {
-                    this.logger.error(`DATAFRAME_SCAN_MESSAGE referred to unknown scan ${response.data.scanId}`, LOG_CTX);
+                    this.logger.error("DATAFRAME_SCAN_MESSAGE referred to unknown scan", { "scan": response.data.scanId.toString() }, LOG_CTX);
                     return;
                 }
                 scan.messageData.push(response.data.buffer);
@@ -149,7 +149,7 @@ export class ComputeWorkerBindings {
             case ComputeWorkerResponseType.DATAFRAME_SCAN_FINISH: {
                 const scan = this.activeScans.get(response.data.scanId);
                 if (!scan) {
-                    this.logger.error(`DATAFRAME_SCAN_FINISH referred to unknown scan ${response.data.scanId}`, LOG_CTX);
+                    this.logger.error("DATAFRAME_SCAN_FINISH referred to unknown scan", { "scan": response.data.scanId.toString() }, LOG_CTX);
                     return;
                 }
                 this.activeScans.delete(response.data.scanId);
@@ -164,7 +164,7 @@ export class ComputeWorkerBindings {
             case ComputeWorkerResponseType.DATAFRAME_SCAN_FINISH_WITH_ERROR: {
                 const scan = this.activeScans.get(response.data.scanId);
                 if (!scan) {
-                    this.logger.error(`DATAFRAME_SCAN_FINISH_WITH_ERROR referred to unknown scan ${response.data.scanId}`, LOG_CTX);
+                    this.logger.error("DATAFRAME_SCAN_FINISH_WITH_ERROR referred to unknown scan", { "scan": response.data.scanId.toString() }, LOG_CTX);
                     return;
                 }
                 this.activeScans.delete(response.data.scanId);
@@ -176,7 +176,7 @@ export class ComputeWorkerBindings {
         // Get registered task
         const task = this.pendingRequests.get(response.requestId);
         if (!task) {
-            this.logger.error(`unassociated response: [${response.requestId}, ${response.type.toString()}]`, LOG_CTX);
+            this.logger.error(`unassociated response`, { "request": response.requestId.toString(), "type": response.type.toString() }, LOG_CTX);
             return;
         }
         this.pendingRequests.delete(response.requestId);
@@ -232,7 +232,7 @@ export class ComputeWorkerBindings {
 
     /// Received an error from the worker
     protected onError(event: MessageEventLike): void {
-        this.logger.error(`error in compute worker: ${event.data}`, LOG_CTX);
+        this.logger.error("error in compute worker", { "error": event.data.toString() }, LOG_CTX);
         console.error(event);
         this.pendingRequests.clear();
     }
@@ -241,7 +241,7 @@ export class ComputeWorkerBindings {
     protected onClose(): void {
         this.workerShutdownResolver(null);
         if (this.pendingRequests.size != 0) {
-            this.logger.warn(`compute worker terminated with ${this.pendingRequests.size} pending requests`, LOG_CTX);
+            this.logger.warn("compute worker terminated", { "pending": this.pendingRequests.size.toString() }, LOG_CTX);
             return;
         }
         this.pendingRequests.clear();
@@ -255,7 +255,7 @@ export class ComputeWorkerBindings {
         const task = new ComputeWorkerTask<ComputeWorkerRequestType.INSTANTIATE, { url: string }, null>(ComputeWorkerRequestType.INSTANTIATE, { url: url });
         await this.postTask(task);
         const initEnd = performance.now();
-        this.logger.info(`instantiated compute in ${Math.floor(initEnd - initStart)} ms`, "compute");
+        this.logger.info("instantiated compute", { "duration": Math.floor(initEnd - initStart).toString() }, "compute");
     }
     /// Require a worker
     protected requireWorker() {

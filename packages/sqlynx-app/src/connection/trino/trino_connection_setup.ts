@@ -47,13 +47,13 @@ export async function setupTrinoConnection(modifyState: Dispatch<TrinoConnectorA
 
     } catch (error: any) {
         if (error.name === 'AbortError') {
-            logger.warn("setup was aborted", LOG_CTX);
+            logger.warn("setup was aborted", {}, LOG_CTX);
             modifyState({
                 type: CHANNEL_SETUP_CANCELLED,
                 value: error.message,
             });
-        } else if (error instanceof Error) {
-            logger.error(`setup failed with error: ${error.toString()}`, LOG_CTX);
+        } else {
+            logger.error("setup failed", { "message": error.message, "details": error.details }, LOG_CTX);
             modifyState({
                 type: CHANNEL_SETUP_FAILED,
                 value: error,
@@ -84,13 +84,13 @@ export async function setupTrinoConnection(modifyState: Dispatch<TrinoConnectorA
         }
     } catch (error: any) {
         if (error.name === 'AbortError') {
-            logger.warn("setup was aborted");
+            logger.warn("setup was aborted", {});
             modifyState({
                 type: HEALTH_CHECK_CANCELLED,
                 value: error,
             });
-        } else if (error instanceof Error) {
-            logger.error(`setup failed with error: ${error.toString()}`);
+        } else {
+            logger.error("setup failed", { "message": error.message, "details": error.details }, LOG_CTX);
             modifyState({
                 type: HEALTH_CHECK_FAILED,
                 value: error,

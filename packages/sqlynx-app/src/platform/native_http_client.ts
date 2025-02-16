@@ -73,7 +73,7 @@ export class NativeHttpServerStream implements HttpFetchResult {
         const buffer = await this.arrayBuffer();
         const text = this.textDecoder.decode(buffer);
         if (text == "") {
-            this.logger.debug(`response body is empty`);
+            this.logger.debug(`response body is empty`, {});
             return {};
         } else {
             return JSON.parse(text);
@@ -109,7 +109,7 @@ export class NativeHttpServerStream implements HttpFetchResult {
 
             // Get batch event
             const batchEvent = response.headers.get(HEADER_NAME_BATCH_EVENT);
-            this.logger.debug(`received fetch response: event=${batchEvent}`, "native_http_client")
+            this.logger.debug("received fetch response", { "event": batchEvent }, "native_http_client")
             switch (batchEvent) {
                 case "StreamFailed":
                     fetchNext = false;
@@ -167,7 +167,7 @@ export class NativeHttpClient implements HttpClient {
         headers.set(HEADER_NAME_BATCH_TIMEOUT, "1000");
         headers.set(HEADER_NAME_READ_TIMEOUT, "10000");
 
-        this.logger.info(`fetch: remote=${remote}, path=${input.pathname}`, "native_http_client");
+        this.logger.info(`fetch http stream`, { "remote": remote, "path": input?.toString() }, "native_http_client");
 
         const body: any = init?.body;
         let bodyBuffer: ArrayBuffer;
@@ -195,7 +195,7 @@ export class NativeHttpClient implements HttpClient {
         if (response.status == 200) {
             const streamIdText = response.headers.get(HEADER_NAME_STREAM_ID);
             if (streamIdText == null) {
-                this.logger.error("fetch returned with status 200 but did not include a stream id", "native_http_client");
+                this.logger.error("fetch returned with status 200 but did not include a stream id", {}, "native_http_client");
                 throw new Error("missing stream id");
             }
             streamId = Number.parseInt(streamIdText);

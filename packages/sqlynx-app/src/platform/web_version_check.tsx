@@ -48,7 +48,7 @@ export type ReleaseChannel = "stable" | "canary";
 /// Load the release manifest
 export async function loadReleaseManifest(channel: ReleaseChannel, url: URL, setResult: (result: Result<ReleaseManifest>) => void, logger: Logger) {
     const start = performance.now();
-    logger.info(`fetching ${channel} release manifest`, LOG_CTX);
+    logger.info(`fetching release manifest`, { "channel": channel }, LOG_CTX);
     try {
         // Fetch the release manifest
         const manifestRequest = await fetch(url);
@@ -56,14 +56,14 @@ export async function loadReleaseManifest(channel: ReleaseChannel, url: URL, set
         const manifest = parseReleaseManifest(manifestRaw);
         // Set release manifest
         const end = performance.now();
-        logger.info(`fetched ${channel} release manifest in ${Math.floor(end - start)} ms`, LOG_CTX);
+        logger.info(`fetched release manifest`, { "channel": channel, "duration": Math.floor(end - start).toString() }, LOG_CTX);
         setResult({
             type: RESULT_OK,
             value: manifest
         });
     } catch (e: any) {
         const end = performance.now();
-        logger.error(`failed to fetch ${channel} release manifest after ${Math.floor(end - start)} ms: ${e.toString()}`, LOG_CTX);
+        logger.error(`failed to fetch release manifest`, { "channel": channel, "duration": Math.floor(end - start).toString(), "error": e.toString() }, LOG_CTX);
         setResult({
             type: RESULT_ERROR,
             error: new Error(e.toString())

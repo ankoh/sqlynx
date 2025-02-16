@@ -70,7 +70,8 @@ impl TryFrom<&Status> for StatusMessage {
             Status::HeaderIsNotAnUsize { header, message } => Ok(StatusMessage {
                 message: "header is not an unsigned integer".to_string(),
                 details: HashMap::from_iter([
-                    ("header", header.to_string())
+                    ("header", header.to_string()),
+                    ("error", message.to_string())
                 ]),
             }),
             Status::HeaderPathIsInvalid { header, path, message } => Ok(StatusMessage {

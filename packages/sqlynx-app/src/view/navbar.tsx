@@ -167,7 +167,7 @@ export const NavBar = (): React.ReactElement => {
     }, [workbook, connectionState, setupLinkTarget]);
 
     React.useEffect(() => {
-        logger.info(`navigated to path ${location.pathname}`, LOG_CTX);
+        logger.info("navigated to path", { "path": location.pathname }, LOG_CTX);
     }, [location.pathname]);
 
     return (

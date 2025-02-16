@@ -183,11 +183,7 @@ class NativeHyperDatabaseChannel implements HyperDatabaseChannel {
             }
             return { ok: true, error: null };
         } catch (e: any) {
-            if (e.grpcStatus) {
-                this.logger.warn(`health check failed: grcp_status=${e.grpcStatus}`, LOG_CTX);
-            } else {
-                this.logger.warn(`health check failed: message=${e.message}`, LOG_CTX);
-            }
+            this.logger.warn("health check failed", { "message": e.message, "details": e.details }, LOG_CTX);
             if (e.message) {
                 return { ok: false, error: { message: e.message, details: e.details ?? {} } };
             } else {

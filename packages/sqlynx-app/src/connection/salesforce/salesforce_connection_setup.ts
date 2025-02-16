@@ -39,6 +39,8 @@ import {
     HEALTH_CHECK_SUCCEEDED,
 } from '../hyper/hyper_connection_state.js';
 
+const LOG_CTX = "salesforce_setup";
+
 // By default, a Salesforce OAuth Access Token expires after 2 hours = 7200 seconds
 const DEFAULT_EXPIRATION_TIME_MS = 2 * 60 * 60 * 1000;
 
@@ -138,7 +140,7 @@ export async function setupSalesforceConnection(modifyState: Dispatch<Salesforce
 
         // Either start request the oauth flow through a browser popup or by opening a url using the shell plugin
         if (flowVariant == proto.sqlynx_oauth.pb.OAuthFlowVariant.WEB_OPENER_FLOW) {
-            logger.debug(`opening popup: ${url.toString()}`, "salesforce_auth");
+            logger.debug("opening popup", { "url": url.toString() }, LOG_CTX);
             // Open popup window
             const popup = window.open(url, OAUTH_POPUP_NAME, OAUTH_POPUP_SETTINGS);
             if (!popup) {
@@ -150,7 +152,7 @@ export async function setupSalesforceConnection(modifyState: Dispatch<Salesforce
             modifyState({ type: OAUTH_WEB_WINDOW_OPENED, value: popup });
         } else {
             // Just open the link with the default browser
-            logger.debug(`opening url: ${url.toString()}`, "salesforce_auth");
+            logger.debug("opening url", { "url": url.toString() }, LOG_CTX);
             shell.open(url);
             modifyState({ type: OAUTH_NATIVE_LINK_OPENED, value: null });
         }
@@ -158,7 +160,7 @@ export async function setupSalesforceConnection(modifyState: Dispatch<Salesforce
         // Await the oauth redirect
         const authCode = await appEvents.waitForOAuthRedirect(abortSignal);
         abortSignal.throwIfAborted();
-        logger.debug(`received oauth code: ${JSON.stringify(authCode)}`);
+        logger.debug("received oauth code", { "code": JSON.stringify(authCode) }, LOG_CTX);
 
         // Received an oauth error?
         if (authCode.error) {
@@ -186,7 +188,7 @@ export async function setupSalesforceConnection(modifyState: Dispatch<Salesforce
             pkceChallenge.verifier,
             abortSignal,
         );
-        logger.debug(`received core access token: ${JSON.stringify(coreAccessToken)}`);
+        logger.debug("received core access token", { "token": JSON.stringify(coreAccessToken) }, LOG_CTX);
         modifyState({
             type: RECEIVED_CORE_AUTH_TOKEN,
             value: coreAccessToken,
@@ -199,7 +201,7 @@ export async function setupSalesforceConnection(modifyState: Dispatch<Salesforce
             value: null,
         });
         const dcToken = await apiClient.getDataCloudAccessToken(coreAccessToken, abortSignal);
-        logger.debug(`received data cloud token: ${JSON.stringify(dcToken)}`);
+        logger.debug("received data cloud token", { "token": JSON.stringify(dcToken) }, LOG_CTX);
         modifyState({
             type: RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
             value: dcToken,
@@ -251,13 +253,13 @@ export async function setupSalesforceConnection(modifyState: Dispatch<Salesforce
 
     } catch (error: any) {
         if (error.name === 'AbortError') {
-            logger.warn("oauth flow was aborted");
+            logger.warn("oauth flow was aborted", {}, LOG_CTX);
             modifyState({
                 type: AUTH_CANCELLED,
                 value: error,
             });
         } else if (error instanceof Error) {
-            logger.error(`oauth flow failed with error: ${error.toString()}`);
+            logger.error("oauth flow failed", { "error": error.toString() }, LOG_CTX);
             modifyState({
                 type: AUTH_FAILED,
                 value: error,
@@ -291,13 +293,13 @@ export async function setupSalesforceConnection(modifyState: Dispatch<Salesforce
 
     } catch (error: any) {
         if (error.name === 'AbortError') {
-            logger.warn("oauth flow was aborted");
+            logger.warn("oauth flow was aborted", {}, LOG_CTX);
             modifyState({
                 type: HEALTH_CHECK_CANCELLED,
                 value: error,
             });
         } else if (error instanceof Error) {
-            logger.error(`oauth flow failed with error: ${error.toString()}`);
+            logger.error("oauth flow failed", { "error": error.toString() }, LOG_CTX);
             modifyState({
                 type: HEALTH_CHECK_FAILED,
                 value: error,

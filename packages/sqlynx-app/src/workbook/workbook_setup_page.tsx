@@ -225,7 +225,7 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
         if (!canExecuteHere) {
             const link = document.createElement('a');
             link.href = encodeWorkbookAsUrl(workbookProto, WorkbookLinkTarget.NATIVE).toString();
-            logger.info(`opening deep link: ${link.href}`);
+            logger.info(`opening deep link`, { "href": link.href });
             link.click();
         }
 
@@ -303,7 +303,7 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
         if (autoTriggersAt == null) {
             return;
         }
-        logger.info(`setup config auto-trigger in ${formatHHMMSS(remainingUntilAutoTrigger! / 1000)}`, LOG_CTX);
+        logger.info("setup config auto-trigger", { "remaining": formatHHMMSS(remainingUntilAutoTrigger! / 1000) }, LOG_CTX);
         const timeoutId = setTimeout(startSetup, remainingUntilAutoTrigger!);
         const updaterId: { current: unknown | null } = { current: null };
 
@@ -389,7 +389,7 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
                             onClick={() => {
                                 const link = document.createElement('a');
                                 link.href = workbookURL.toString();
-                                logger.info(`opening deep link: ${link.href}`);
+                                logger.info(`opening deep link`, { "href": link.href });
                                 link.click();
                             }}>
                             Open in App

@@ -38,8 +38,10 @@ export interface LogRecord {
     level: LogLevel;
     /// The target
     target: string;
-    /// A message
+    /// The message
     message: string;
+    /// The log details
+    details: Record<string, string | null | undefined>;
 }
 
 const TARGET_CHUNK_SIZE = 1024;

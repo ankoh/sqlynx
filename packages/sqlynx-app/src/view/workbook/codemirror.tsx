@@ -66,10 +66,10 @@ export const CodeMirror: React.FC<CodeMirrorProps> = (props: CodeMirrorProps) =>
         // Has the DOM node been unmounted?
         // Then we don't need to create a new view.
         if (node === null) {
-            logger.warn("target node was unmounted", "codemirror");
+            logger.warn("target node was unmounted", {}, "codemirror");
             return;
         }
-        logger.info("creating a new codemirror view", "codemirror");
+        logger.info("creating a new codemirror view", {}, "codemirror");
 
         // The DOM node has changed, create a new view
         mount.current.view = new EditorView({

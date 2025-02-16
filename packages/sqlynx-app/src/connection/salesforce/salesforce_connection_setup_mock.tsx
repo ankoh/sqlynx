@@ -136,13 +136,13 @@ export async function setupSalesforceConnection(updateState: Dispatch<Salesforce
 
     } catch (error: any) {
         if (error.name === 'AbortError') {
-            logger.warn("oauth flow was aborted");
+            logger.warn("oauth flow was aborted", {});
             updateState({
                 type: AUTH_CANCELLED,
                 value: error.message,
             });
         } else if (error instanceof Error) {
-            logger.error(`oauth flow failed with error: ${error.toString()}`);
+            logger.error("oauth flow was failed", { "error": error.toString() });
             updateState({
                 type: AUTH_FAILED,
                 value: error,

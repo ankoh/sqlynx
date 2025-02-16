@@ -21,7 +21,7 @@ export class NativeAppEventListener extends AppEventListener {
         try {
             const currentLinks: string[] = await invoke("plugin:deep-link|get_current");
             if (currentLinks != null) {
-                this.logger.info(`reading initial deep links, received ${currentLinks.length}`, LOG_CTX);
+                this.logger.info("reading initial deep links", { "count": currentLinks.length.toString() }, LOG_CTX);
 
                 for (const currentLink of currentLinks) {
                     const url = new URL(currentLink);
@@ -30,13 +30,13 @@ export class NativeAppEventListener extends AppEventListener {
                     if (data) {
                         const event = this.readAppEvent(data, "initial deep link");
                         if (event != null) {
-                            this.logger.info(`initial deep link is an app event of type ${event?.data.case}`, LOG_CTX);
+                            this.logger.info("initial deep link is an app event", { "event": event?.data.case }, LOG_CTX);
                             super.dispatchAppEvent(event);
                         }
                     }
                 }
             } else {
-                this.logger.info(`reading initial deep links, received null`, LOG_CTX);
+                this.logger.info(`reading initial deep links, received null`, {}, LOG_CTX);
             }
         } catch (e: any) {
             console.warn(e)
@@ -46,7 +46,7 @@ export class NativeAppEventListener extends AppEventListener {
     public listenForAppEvents() {
         this.unlistenNativeEvents = listen(NATIVE_EVENT_CHANNEL, (event: any) => {
             const events = event.payload as string[];
-            this.logger.debug(`received native app events: ${events.toString()}`, LOG_CTX);
+            this.logger.debug(`received native app events`, { "count": events.length.toString() }, LOG_CTX);
             for (const event of events) {
                 const data = this.readAppEvent(event, `${NATIVE_EVENT_CHANNEL} message`);
                 if (data != null) {

@@ -99,7 +99,7 @@ export const WorkbookSetup: React.FC<{ children: React.ReactElement }> = (props:
             // Get the connector info for the workbook setup protobuf
             const connectorInfo = data.connectorParams ? getConnectorInfoForParams(data.connectorParams) : null;
             if (connectorInfo == null) {
-                logger.warn("failed to resolve the connector info from the parameters");
+                logger.warn("failed to resolve the connector info from the parameters", {});
                 return;
             }
             switch (data.connectorParams?.connector.case) {

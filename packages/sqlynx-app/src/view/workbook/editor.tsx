@@ -131,7 +131,7 @@ export const ScriptEditor: React.FC<Props> = (_props: Props) => {
             active.current.script !== workbookEntryScriptData.script ||
             active.current.scriptBuffers !== workbookEntryScriptData.processed
         ) {
-            logger.info("loading new script", "editor");
+            logger.info("loading new script", {}, "editor");
             active.current.script = workbookEntryScriptData.script;
             active.current.scriptBuffers = workbookEntryScriptData.processed;
             changes.push({

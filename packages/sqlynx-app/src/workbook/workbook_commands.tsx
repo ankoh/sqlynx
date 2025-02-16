@@ -36,14 +36,14 @@ export const WorkbookCommands: React.FC<Props> = (props: Props) => {
     const commandDispatch = React.useCallback(
         async (command: WorkbookCommandType) => {
             if (workbook == null) {
-                logger.error("workbook is null");
+                logger.error("workbook is null", {});
                 return;
             }
             switch (command) {
                 // Execute the query script in the current workbook
                 case WorkbookCommandType.ExecuteEditorQuery:
                     if (connection!.connectionHealth != ConnectionHealth.ONLINE) {
-                        logger.error("cannot execute query command with an unhealthy connection");
+                        logger.error("cannot execute query command with an unhealthy connection", {});
                     } else {
                         const entry = workbook.workbookEntries[workbook.selectedWorkbookEntry];
                         const script = workbook.scripts[entry.scriptKey];

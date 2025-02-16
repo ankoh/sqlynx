@@ -52,60 +52,65 @@ export abstract class Logger {
         this.flushPendingRecords();
     }
     /// Log a trace message
-    public trace(message: string, target?: string): void {
+    public trace(message: string, details: Record<string, string | null | undefined>, target?: string): void {
         const entry = {
             timestamp: Date.now(),
             level: LogLevel.Trace,
             target: target ?? "pwa:unknown",
             message,
+            details,
         };
         this.pendingRecords.push(entry);
         this.logStatistics.push(entry);
         this.flushPendingRecords();
     }
     /// Log an debug message
-    public debug(message: string, target?: string): void {
+    public debug(message: string, details: Record<string, string | null | undefined>, target?: string): void {
         const entry = {
             timestamp: Date.now(),
             level: LogLevel.Debug,
             target: target ?? "pwa:unknown",
             message,
+            details,
         };
         this.pendingRecords.push(entry);
         this.logStatistics.push(entry);
         this.flushPendingRecords();
     }
     /// Log an info message
-    public info(message: string, target?: string): void {
+    public info(message: string, details: Record<string, string | null | undefined>, target?: string): void {
         const entry = {
             timestamp: Date.now(),
             level: LogLevel.Info,
             target: target ?? "pwa:unknown",
             message,
+            details,
         };
         this.pendingRecords.push(entry);
         this.logStatistics.push(entry);
         this.flushPendingRecords();
     }
     /// Log a warning message
-    public warn(message: string, target?: string): void {
+    public warn(message: string, details: Record<string, string | null | undefined>, target?: string): void {
         const entry = {
             timestamp: Date.now(),
             level: LogLevel.Warn,
             target: target ?? "pwa:unknown",
             message,
+            details,
         };
         this.pendingRecords.push(entry);
         this.logStatistics.push(entry);
         this.flushPendingRecords();
     }
     /// Log an error message
-    public error(message: string, target?: string): void {
+    public error(message: string, details: Record<string, string | null | undefined>, target?: string): void {
         const entry = {
             timestamp: Date.now(),
             level: LogLevel.Warn,
             target: target ?? "pwa:unknown",
             message,
+            details,
         };
         this.pendingRecords.push(entry);
         this.logStatistics.push(entry);

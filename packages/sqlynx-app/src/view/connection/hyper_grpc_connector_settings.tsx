@@ -78,12 +78,12 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
     const setupConnection = async () => {
         // Is there a Hyper client?
         if (hyperClient == null || hyperSetup == null) {
-            logger.error("Hyper connector is unavailable", LOG_CTX);
+            logger.error("Hyper connector is unavailable", {}, LOG_CTX);
             return;
         }
         // Is there a connection id?
         if (connectionId == null) {
-            logger.warn("Hyper connection id is null", LOG_CTX);
+            logger.warn("Hyper connection id is null", {}, LOG_CTX);
             return;
         }
 

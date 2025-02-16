@@ -85,12 +85,12 @@ export const TrinoConnectorSettings: React.FC = () => {
     const setupConnection = async () => {
         // Is there a Trino client?
         if (trinoSetup == null) {
-            logger.error("Trino connector is unavailable", LOG_CTX);
+            logger.error("Trino connector is unavailable", {}, LOG_CTX);
             return;
         }
         // Is there a connection id?
         if (connectionId == null) {
-            logger.warn("Trino connection id is null", LOG_CTX);
+            logger.warn("Trino connection id is null", {}, LOG_CTX);
             return;
         }
 

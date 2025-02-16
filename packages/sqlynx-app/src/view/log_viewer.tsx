@@ -73,6 +73,7 @@ interface LogViewerProps {
 const COLUMN_COUNT = 4;
 const COLUMN_TIMESTAMP_WIDTH = 80;
 const COLUMN_LEVEL_WIDTH = 48;
+const COLUMN_TARGET_WIDTH = 112;
 const ROW_HEIGHT = 32;
 
 const PIXEL_PER_CHAR = 6.5;
@@ -89,7 +90,7 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
     const containerHeight = containerSize?.height ?? 100;
 
     // Compute size of target and message column based on log statistics
-    const targetColumnWidth = logStats.maxTargetWidth * PIXEL_PER_CHAR + VALUE_PADDING;
+    const targetColumnWidth = Math.min(logStats.maxTargetWidth * PIXEL_PER_CHAR + VALUE_PADDING, COLUMN_TARGET_WIDTH);
     let messageColumnWidth = logStats.maxMessageWidth * PIXEL_PER_CHAR + VALUE_PADDING;
 
     // Expand message column to the right if there's space

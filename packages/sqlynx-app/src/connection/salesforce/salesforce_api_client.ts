@@ -7,6 +7,8 @@ import { SalesforceAuthConfig } from '../connector_configs.js';
 import { Base64Codec } from '../../utils/base64.js';
 import { HealthCheckResult, HyperDatabaseChannel, HyperQueryResultStream } from '../hyper/hyperdb_client.js';
 
+const LOG_CTX = "salesforce_api";
+
 export interface SalesforceCoreAccessToken {
     /// The OAuth token
     accessToken: string;
@@ -260,7 +262,7 @@ export class SalesforceApiClient implements SalesforceApiClientInterface {
         const responseBody = await response.json();
         if (responseBody.error) {
             const errorDesc = responseBody.error_description;
-            this.logger.error(errorDesc, "salesforce_api");
+            this.logger.error(errorDesc, {}, LOG_CTX);
             throw new Error(errorDesc);
         } else {
             const parsed = readCoreAccessToken(responseBody);
