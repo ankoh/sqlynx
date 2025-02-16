@@ -350,16 +350,7 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
             <div key={sections.length} className={baseStyles.card_section}>
                 <div className={baseStyles.section_entries}>
                     <div className={baseStyles.section_description}>
-                        This connector can only be used in the native app.<br />
-                        cf.
-                        <svg className={baseStyles.github_link_icon} width="20px" height="20px">
-                            <use xlinkHref={`${icons}#github`} />
-                        </svg>
-                        &nbsp;
-                        <a className={baseStyles.github_link_text} href="https://github.com/ankoh/sqlynx/issues/738"
-                            target="_blank">
-                            Web connectors for Hyper and Data Cloud
-                        </a>
+                        This connector can only be used in the native app
                     </div>
                 </div>
                 <div className={baseStyles.card_actions}>
