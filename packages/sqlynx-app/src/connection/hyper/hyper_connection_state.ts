@@ -12,6 +12,7 @@ import {
     createConnectionState,
     RESET,
 } from '../connection_state.js';
+import { DetailedError } from "../../utils/error.js";
 
 export interface HyperGrpcSetupTimings {
     /// The time when the channel setup started
@@ -35,14 +36,14 @@ export interface HyperGrpcSetupTimings {
 export interface HyperGrpcConnectionDetails {
     /// The setup timings
     setupTimings: HyperGrpcSetupTimings;
-    /// The auth params
+    /// The setup params
     channelSetupParams: HyperGrpcConnectionParams | null;
-    /// The authentication error
-    channelError: string | null;
-    /// The Hyper connection
+    /// The setup error
+    channelError: DetailedError | null;
+    /// The hyper channel
     channel: HyperDatabaseChannel | null;
     /// The health check error
-    healthCheckError: string | null;
+    healthCheckError: DetailedError | null;
 }
 
 export function createHyperGrpcConnectionState(lnx: sqlynx.SQLynx): ConnectionStateWithoutId {
@@ -87,12 +88,12 @@ export const HEALTH_CHECK_FAILED = Symbol('HEALTH_CHECK_FAILED');
 export type HyperGrpcConnectorAction =
     | VariantKind<typeof RESET, null>
     | VariantKind<typeof CHANNEL_SETUP_STARTED, HyperGrpcConnectionParams>
-    | VariantKind<typeof CHANNEL_SETUP_CANCELLED, string>
-    | VariantKind<typeof CHANNEL_SETUP_FAILED, string>
+    | VariantKind<typeof CHANNEL_SETUP_CANCELLED, DetailedError>
+    | VariantKind<typeof CHANNEL_SETUP_FAILED, DetailedError>
     | VariantKind<typeof CHANNEL_READY, HyperDatabaseChannel>
     | VariantKind<typeof HEALTH_CHECK_STARTED, null>
     | VariantKind<typeof HEALTH_CHECK_CANCELLED, null>
-    | VariantKind<typeof HEALTH_CHECK_FAILED, string>
+    | VariantKind<typeof HEALTH_CHECK_FAILED, DetailedError>
     | VariantKind<typeof HEALTH_CHECK_SUCCEEDED, null>
     ;
 

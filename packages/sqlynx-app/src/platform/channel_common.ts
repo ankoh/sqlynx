@@ -1,3 +1,5 @@
+import { DetailedError } from "utils/error.js";
+
 export interface ChannelTlsSettings {
     /// The mTLS client key path
     keyPath?: string;
@@ -18,12 +20,12 @@ export interface RawProxyError {
     /// The error
     message: string;
     /// The details
-    details?: string;
+    details?: Record<string, string>;
 }
 
-export class ChannelError extends Error {
+export class ChannelError extends Error implements DetailedError {
     /// The details (if any)
-    details: string | null;
+    details: Record<string, string>;
     /// The status code
     statusCode: number;
     /// The response headers
@@ -31,7 +33,7 @@ export class ChannelError extends Error {
 
     constructor(error: RawProxyError, status: number, headers?: Headers) {
         super(error.message);
-        this.details = error.details ?? null;
+        this.details = error.details ?? {};
         this.statusCode = status;
         this.headers = headers ?? null;
         Object.setPrototypeOf(this, ChannelError.prototype);

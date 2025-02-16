@@ -56,7 +56,7 @@ export async function setupTrinoConnection(modifyState: Dispatch<TrinoConnectorA
             logger.error(`setup failed with error: ${error.toString()}`, LOG_CTX);
             modifyState({
                 type: CHANNEL_SETUP_FAILED,
-                value: error.message,
+                value: error,
             });
         }
         throw error;
@@ -87,13 +87,13 @@ export async function setupTrinoConnection(modifyState: Dispatch<TrinoConnectorA
             logger.warn("setup was aborted");
             modifyState({
                 type: HEALTH_CHECK_CANCELLED,
-                value: error.message,
+                value: error,
             });
         } else if (error instanceof Error) {
             logger.error(`setup failed with error: ${error.toString()}`);
             modifyState({
                 type: HEALTH_CHECK_FAILED,
-                value: error.message,
+                value: error,
             });
         }
         throw error;

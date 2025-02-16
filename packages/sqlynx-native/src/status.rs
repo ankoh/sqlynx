@@ -1,4 +1,4 @@
-use std::fmt::Error;
+use std::{collections::HashMap, fmt::Error};
 use serde::Serialize;
 use tauri::http::{header::CONTENT_TYPE, Response, StatusCode};
 
@@ -39,7 +39,7 @@ pub enum Status {
 #[derive(Serialize)]
 pub struct StatusMessage {
     message: String,
-    details: Option<String>,
+    details: HashMap<&'static str, String>,
 }
 
 impl TryFrom<&Status> for StatusMessage {
@@ -48,92 +48,155 @@ impl TryFrom<&Status> for StatusMessage {
     fn try_from(s: &Status) -> Result<StatusMessage, Error> {
         match s {
             Status::HeaderHasInvalidEncoding { header, message } => Ok(StatusMessage {
-                message: format!("header '{}' has an invalid encoding", header),
-                details: Some(message.to_string())
+                message: "header has an invalid encoding".to_string(),
+                details: HashMap::from_iter([
+                    ("header", header.to_string()),
+                    ("error", message.to_string())
+                ]),
             }),
             Status::HeaderIsNotAValidEndpoint { header, message } => Ok(StatusMessage {
-                message: format!("header '{}' is not a valid endpoint", header),
-                details: Some(message.to_string()),
+                message: "header is not a valid endpoint".to_string(),
+                details: HashMap::from_iter([
+                    ("header", header.to_string()),
+                    ("error", message.to_string())
+                ]),
             }),
             Status::HeaderRequiredButMissing { header } => Ok(StatusMessage {
-                message: format!("header '{}' is missing", header),
-                details: None,
+                message: "header is missing".to_string(),
+                details: HashMap::from_iter([
+                    ("header", header.to_string())
+                ]),
             }),
             Status::HeaderIsNotAnUsize { header, message } => Ok(StatusMessage {
-                message: format!("header '{}' is not an unsigned integer", header),
-                details: Some(message.to_string()),
+                message: "header is not an unsigned integer".to_string(),
+                details: HashMap::from_iter([
+                    ("header", header.to_string())
+                ]),
             }),
             Status::HeaderPathIsInvalid { header, path, message } => Ok(StatusMessage {
-                message: format!("header '{}' stores the path '{}' and is invalid", header, path),
-                details: Some(message.to_string()),
+                message: "header stores invalid path".to_string(),
+                details: HashMap::from_iter([
+                    ("header", header.to_string()),
+                    ("path", path.to_string()),
+                    ("error", message.to_string())
+                ]),
             }),
             Status::HttpEndpointIsInvalid { header, endpoint, message } => Ok(StatusMessage {
-                message: format!("header '{}' stores endpoint '{}' which is invalid", header, endpoint),
-                details: Some(message.to_string())
+                message: "header stores invalid endpoint".to_string(),
+                details: HashMap::from_iter([
+                    ("header", header.to_string()),
+                    ("endpoint", endpoint.to_string()),
+                    ("error", message.to_string())
+                ]),
             }),
             Status::HttpMethodIsInvalid { header, method, message } => Ok(StatusMessage {
-                message: format!("header '{}' stores method '{}' which is invalid", header, method),
-                details: Some(message.to_string())
+                message: "header stores invalid method".to_string(),
+                details: HashMap::from_iter([
+                    ("header", header.to_string()),
+                    ("method", method.to_string()),
+                    ("error", message.to_string())
+                ]),
             }),
             Status::GrpcChannelIdIsUnknown { channel_id } => Ok(StatusMessage {
-                message: format!("gRPC channel id {} is unknown", channel_id),
-                details: None
+                message: "gRPC channel id is unknown".to_string(),
+                details: HashMap::from_iter([
+                    ("channel", channel_id.to_string()),
+                ]),
             }),
             Status::GrpcEndpointConnectFailed { message } => Ok(StatusMessage {
                 message: format!("connecting to gRPC endpoint failed"),
-                details: Some(message.to_string())
+                details: HashMap::from_iter([
+                    ("error", message.to_string()),
+                ]),
             }),
             Status::GrpcCallFailed { status } => Ok(StatusMessage {
                 message: "gRPC call failed".to_string(),
-                details: Some(status.to_string()),
+                details: HashMap::from_iter([
+                    ("code", status.code().to_string()),
+                    ("error", status.to_string()),
+                ]),
             }),
             Status::GrpcStreamReadFailed {  channel_id, stream_id, element, status  } => Ok(StatusMessage {
-                message: format!("reading {} from gRPC stream {} of channel {} failed", match element { GrpcStreamElement::Trailers => "trailers", GrpcStreamElement::Message => "message" }, stream_id, channel_id),
-                details: Some(status.to_string())
+                message: "reading from gRPC stream failed".to_string(),
+                details: HashMap::from_iter([
+                    ("target", match element { GrpcStreamElement::Trailers => "trailers", GrpcStreamElement::Message => "message" }.to_string()),
+                    ("stream", stream_id.to_string()),
+                    ("channel", channel_id.to_string()),
+                    ("code", status.code().to_string()),
+                    ("error", status.to_string()),
+                ]),
             }),
             Status::GrpcStreamReadTimedOut { channel_id, stream_id } => Ok(StatusMessage {
-                message: format!("reading from gRPC stream {} of channel {} timed out", stream_id, channel_id),
-                details: None
+                message: "reading from gRPC stream timed out".to_string(),
+                details: HashMap::from_iter([
+                    ("stream", stream_id.to_string()),
+                    ("channel", channel_id.to_string()),
+                ]),
             }),
             Status::GrpcStreamIsUnknown { channel_id, stream_id } => Ok(StatusMessage {
-                message: format!("gRPC stream {} of channel {} is unknown", stream_id, channel_id),
-                details: None
+                message: "gRPC stream is unknown".to_string(),
+                details: HashMap::from_iter([
+                    ("stream", stream_id.to_string()),
+                    ("channel", channel_id.to_string()),
+                ]),
             }),
             Status::GrpcStreamClosed { channel_id, stream_id } => Ok(StatusMessage {
-                message: format!("gRPC stream {} of channel {} closed", stream_id, channel_id),
-                details: None
+                message: "gRPC stream is closed".to_string(),
+                details: HashMap::from_iter([
+                    ("stream", stream_id.to_string()),
+                    ("channel", channel_id.to_string()),
+                ]),
             }),
             Status::HttpRequestFailed { stream_id, error } => Ok(StatusMessage {
-                message: format!("request for http stream {} failed", stream_id),
-                details: Some(error.to_string())
+                message: "http request failed".to_string(),
+                details: HashMap::from_iter([
+                    ("stream", stream_id.to_string()),
+                    ("error", error.to_string()),
+                ]),
             }),
             Status::HttpStreamReadFailed { stream_id, error } => Ok(StatusMessage {
-                message: format!("reading chunk from http stream {} failed", stream_id),
-                details: Some(error.to_string())
+                message: "reading chunk from http stream failed".to_string(),
+                details: HashMap::from_iter([
+                    ("stream", stream_id.to_string()),
+                    ("error", error.to_string()),
+                ]),
             }),
             Status::HttpStreamReadTimedOut { stream_id } => Ok(StatusMessage {
-                message: format!("reading from http stream {} timed out", stream_id),
-                details: None
+                message: "reading from http stream timed out".to_string(),
+                details: HashMap::from_iter([
+                    ("stream", stream_id.to_string()),
+                ]),
             }),
             Status::HttpStreamIsUnknown { stream_id } => Ok(StatusMessage {
-                message: format!("http stream {} is unknown", stream_id),
-                details: None
+                message: "http stream is unknown".to_string(),
+                details: HashMap::from_iter([
+                    ("stream", stream_id.to_string()),
+                ]),
             }),
             Status::HttpStreamClosed { stream_id } => Ok(StatusMessage {
-                message: format!("http stream {} closed", stream_id),
-                details: None
+                message: "http stream is closed".to_string(),
+                details: HashMap::from_iter([
+                    ("stream", stream_id.to_string()),
+                ]),
             }),
             Status::HttpStreamFailed { stream_id, error } => Ok(StatusMessage {
-                message: format!("http stream {} failed", stream_id),
-                details: Some(error.to_string())
+                message: "http stream failed".to_string(),
+                details: HashMap::from_iter([
+                    ("stream", stream_id.to_string()),
+                    ("error", error.to_string()),
+                ]),
             }),
             Status::HttpClientConfigInvalid {  message } => Ok(StatusMessage {
                 message: format!("http client config is invalid"),
-                details: Some(message.to_string())
+                details: HashMap::from_iter([
+                    ("error", message.to_string()),
+                ]),
             }),
             Status::HttpUrlIsInvalid { message } => Ok(StatusMessage {
                 message: format!("http url is invalid"),
-                details: Some(message.to_string())
+                details: HashMap::from_iter([
+                    ("error", message.to_string()),
+                ]),
             }),
         }
     }
@@ -169,36 +232,40 @@ impl From<&Status> for StatusCode {
 }
 
 impl From<&Status> for Response<Vec<u8>> {
-    fn from(status: &Status) -> Response<Vec<u8>> {
-        let grpc_status = match &status {
-            // Is a gRPC status?
-            Status::GrpcCallFailed { ref status } => status,
-            Status::GrpcStreamReadFailed { channel_id: _, stream_id: _, element: _, ref status } => status,
+    fn from(s: &Status) -> Response<Vec<u8>> {
+        let mut body: Vec<u8> = Vec::new();
+        if let Ok(status_msg) = StatusMessage::try_from(s) {
+            body = serde_json::to_vec(&status_msg).unwrap_or_default();
+        }
+        match &s {
+            Status::GrpcCallFailed { ref status } => {
+                let grpc_code = (status.code() as usize).to_string();
+                Response::builder()
+                    .status(StatusCode::from(s).as_u16())
+                    .header(HEADER_NAME_ERROR, "true")
+                    .header(HEADER_NAME_GRPC_STATUS, &grpc_code)
+                    .header(CONTENT_TYPE, mime::APPLICATION_JSON.essence_str())
+                    .body(body)
+                    .unwrap()
+            },
+            Status::GrpcStreamReadFailed { channel_id: _, stream_id: _, element: _, ref status } => {
+                let grpc_code = (status.code() as usize).to_string();
+                Response::builder()
+                    .status(StatusCode::from(s).as_u16())
+                    .header(HEADER_NAME_ERROR, "true")
+                    .header(HEADER_NAME_GRPC_STATUS, &grpc_code)
+                    .header(CONTENT_TYPE, mime::APPLICATION_JSON.essence_str())
+                    .body(body)
+                    .unwrap()
+            },
             _ => {
-                let mut body: Vec<u8> = Vec::new();
-                if let Ok(status_msg) = StatusMessage::try_from(status) {
-                    body = serde_json::to_vec(&status_msg).unwrap_or_default();
-                }
-                return Response::builder()
-                    .status(StatusCode::from(status).as_u16())
+                Response::builder()
+                    .status(StatusCode::from(s).as_u16())
                     .header(HEADER_NAME_ERROR, "true")
                     .header(CONTENT_TYPE, mime::APPLICATION_JSON.essence_str())
                     .body(body)
-                    .unwrap();
+                    .unwrap()
             }
-        };
-        let grpc_code = (grpc_status.code() as usize).to_string();
-        let grpc_status_msg = StatusMessage {
-            message: grpc_status.message().to_string(),
-            details: None,
-        };
-        let body: Vec<u8> = serde_json::to_vec(&grpc_status_msg).unwrap_or_default();
-        Response::builder()
-            .status(StatusCode::from(status).as_u16())
-            .header(HEADER_NAME_ERROR, "true")
-            .header(HEADER_NAME_GRPC_STATUS, &grpc_code)
-            .header(CONTENT_TYPE, mime::APPLICATION_JSON.essence_str())
-            .body(body)
-            .unwrap()
+        }
     }
 }

@@ -254,13 +254,13 @@ export async function setupSalesforceConnection(modifyState: Dispatch<Salesforce
             logger.warn("oauth flow was aborted");
             modifyState({
                 type: AUTH_CANCELLED,
-                value: error.message,
+                value: error,
             });
         } else if (error instanceof Error) {
             logger.error(`oauth flow failed with error: ${error.toString()}`);
             modifyState({
                 type: AUTH_FAILED,
-                value: error.message,
+                value: error,
             });
         }
         // Rethrow the error
@@ -286,7 +286,7 @@ export async function setupSalesforceConnection(modifyState: Dispatch<Salesforce
             });
             return sfChannel;
         } else {
-            throw new Error(health.errorMessage ?? "health check failed");
+            throw new Error(health.error?.message ?? "health check failed");
         }
 
     } catch (error: any) {
@@ -294,13 +294,13 @@ export async function setupSalesforceConnection(modifyState: Dispatch<Salesforce
             logger.warn("oauth flow was aborted");
             modifyState({
                 type: HEALTH_CHECK_CANCELLED,
-                value: error.message,
+                value: error,
             });
         } else if (error instanceof Error) {
             logger.error(`oauth flow failed with error: ${error.toString()}`);
             modifyState({
                 type: HEALTH_CHECK_FAILED,
-                value: error.message,
+                value: error,
             });
         }
         // Rethrow the error

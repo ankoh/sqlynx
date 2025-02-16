@@ -145,7 +145,7 @@ export async function setupSalesforceConnection(updateState: Dispatch<Salesforce
             logger.error(`oauth flow failed with error: ${error.toString()}`);
             updateState({
                 type: AUTH_FAILED,
-                value: error.message,
+                value: error,
             });
         }
 

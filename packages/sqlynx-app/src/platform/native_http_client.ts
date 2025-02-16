@@ -1,3 +1,4 @@
+import { DetailedError } from '../utils/error.js';
 import { RawProxyError } from './channel_common.js';
 import { HttpClient, HttpFetchResult } from './http_client.js';
 import { Logger } from './logger.js';
@@ -16,13 +17,13 @@ export interface NativeHttpProxyConfig {
     proxyEndpoint: URL;
 };
 
-export class NativeHttpError extends Error {
+export class NativeHttpError extends Error implements DetailedError {
     /// The detail
-    details: string | null;
+    details: Record<string, string>;
 
     constructor(o: RawProxyError) {
         super(o.message);
-        this.details = o.details ?? null;
+        this.details = o.details ?? {};
     }
 }
 

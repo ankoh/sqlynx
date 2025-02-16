@@ -23,7 +23,7 @@ import { TextField } from '../foundations/text_field.js';
 import { TrinoAuthParams, TrinoConnectionParams } from '../../connection/trino/trino_connection_params.js';
 import { classNames } from '../../utils/classnames.js';
 import { generateWorkbookUrl, WorkbookLinkTarget } from '../../workbook/workbook_setup_url.js';
-import { getConnectionHealthIndicator, getConnectionStatusText } from '../connection/salesforce_connector_settings.js';
+import { getConnectionError, getConnectionHealthIndicator, getConnectionStatusText } from '../connection/salesforce_connector_settings.js';
 import { useConnectionState } from '../../connection/connection_registry.js';
 import { useCurrentWorkbookSelector } from '../../workbook/current_workbook.js';
 import { useDefaultWorkbooks } from '../../workbook/workbook_setup.js';
@@ -32,6 +32,8 @@ import { useTrinoSetup } from '../../connection/trino/trino_connector.js';
 import { useWorkbookState } from '../../workbook/workbook_state_registry.js';
 import { ConnectionParamsVariant } from '../../connection/connection_params.js';
 import { TRINO_CONNECTOR } from '../../connection/connector_info.js';
+import { DetailedError } from '../../utils/error.js';
+import { ErrorDetailsButton } from '../error_details.js';
 
 const LOG_CTX = "trino_connector";
 
@@ -123,6 +125,8 @@ export const TrinoConnectorSettings: React.FC = () => {
 
     // Get the connection status
     const statusText: string = getConnectionStatusText(connectionState?.connectionStatus, logger);
+    // Get the connection error (if any)
+    const connectionError: DetailedError | null = getConnectionError(connectionState?.details ?? null);
     // Get the indicator status
     const indicatorStatus: IndicatorStatus = getConnectionHealthIndicator(connectionState?.connectionHealth ?? null);
 
@@ -197,6 +201,9 @@ export const TrinoConnectorSettings: React.FC = () => {
                             <div className={style.status_text}>
                                 {statusText}
                             </div>
+                            {connectionError?.message &&
+                                <ErrorDetailsButton className={style.status_error} error={connectionError} />
+                            }
                         </div>
                     </div>
                 </div>

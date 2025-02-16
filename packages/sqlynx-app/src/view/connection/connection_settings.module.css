@@ -158,13 +158,14 @@
     grid-template-columns: max-content max-content auto max-content;
     align-items: center;
 
-    column-gap: 8px;
+    column-gap: 12px;
 }
 .status_indicator {
     display: flex;
     align-items: center;
     justify-content: center;
     margin-left: 8px;
+    height: 26px;
 }
 .status_indicator_spinner {
     width: 16px;
@@ -177,7 +178,8 @@
     font-weight: 500;
 }
 
-.status_error_message {
+.status_error {
     font-size: 0.8rem;
-    font-weight: 500;
+    font-weight: 300;
+    color: #8c959f;
 }

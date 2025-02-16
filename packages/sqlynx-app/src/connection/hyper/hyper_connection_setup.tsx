@@ -71,13 +71,13 @@ export async function setupHyperGrpcConnection(updateState: Dispatch<HyperGrpcCo
             logger.warn("setup was aborted");
             updateState({
                 type: CHANNEL_SETUP_CANCELLED,
-                value: error.message,
+                value: error,
             });
         } else if (error instanceof Error) {
-            logger.error(`setup failed with error: ${error.toString()}`);
+            logger.error(`setup failed with error: ${error?.message}`);
             updateState({
                 type: CHANNEL_SETUP_FAILED,
-                value: error.message,
+                value: error,
             });
         }
         throw error;
@@ -102,20 +102,20 @@ export async function setupHyperGrpcConnection(updateState: Dispatch<HyperGrpcCo
                 value: null,
             });
         } else {
-            throw new Error(health.errorMessage ?? "health check failed");
+            throw new Error(health.error?.message ?? "health check failed");
         }
     } catch (error: any) {
         if (error.name === 'AbortError') {
             logger.warn("setup was aborted");
             updateState({
                 type: HEALTH_CHECK_CANCELLED,
-                value: error.message,
+                value: error,
             });
         } else if (error instanceof Error) {
             logger.error(`setup failed with error: ${error.toString()}`);
             updateState({
                 type: CHANNEL_SETUP_FAILED,
-                value: error.message,
+                value: error,
             });
         }
         throw error;

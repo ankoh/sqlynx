@@ -2,6 +2,7 @@ import * as proto from "@ankoh/sqlynx-protobuf";
 
 import { ChannelArgs, ChannelMetadataProvider } from '../../platform/channel_common.js';
 import { QueryExecutionProgress, QueryExecutionResponseStream } from "../../connection/query_execution_state.js";
+import { DetailedError } from "../../utils/error.js";
 
 export interface AttachedDatabase {
     path: string;
@@ -19,7 +20,7 @@ export interface HyperQueryResultStream extends QueryExecutionResponseStream { }
 
 export interface HealthCheckResult {
     ok: boolean;
-    errorMessage: string | null;
+    error: DetailedError | null;
 }
 export interface HyperDatabaseChannel {
     /// Perform a health check

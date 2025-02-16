@@ -12,6 +12,7 @@ import {
     RESET,
 } from '../connection_state.js';
 import { TrinoChannelInterface } from "./trino_channel.js";
+import { DetailedError } from "../../utils/error.js";
 
 export interface TrinoSetupTimings {
     /// The time when the channel setup started
@@ -38,13 +39,13 @@ export interface TrinoConnectionDetails {
     /// The auth params
     channelParams: TrinoConnectionParams | null;
     /// The authentication error
-    channelError: string | null;
+    channelError: DetailedError | null;
     /// The channel
     channel: TrinoChannelInterface | null;
     /// The health check error
-    healthCheckError: string | null;
+    healthCheckError: DetailedError | null;
     /// The health check error
-    schemaResolutionError: string | null;
+    schemaResolutionError: DetailedError | null;
 }
 
 export function createTrinoConnectionState(lnx: sqlynx.SQLynx): ConnectionStateWithoutId {
@@ -90,11 +91,11 @@ export const HEALTH_CHECK_SUCCEEDED = Symbol('CHANNEL_READY');
 export type TrinoConnectorAction =
     | VariantKind<typeof RESET, null>
     | VariantKind<typeof CHANNEL_SETUP_STARTED, TrinoConnectionParams>
-    | VariantKind<typeof CHANNEL_SETUP_CANCELLED, string>
-    | VariantKind<typeof CHANNEL_SETUP_FAILED, string>
+    | VariantKind<typeof CHANNEL_SETUP_CANCELLED, DetailedError>
+    | VariantKind<typeof CHANNEL_SETUP_FAILED, DetailedError>
     | VariantKind<typeof CHANNEL_READY, TrinoChannelInterface>
-    | VariantKind<typeof HEALTH_CHECK_CANCELLED, null>
-    | VariantKind<typeof HEALTH_CHECK_FAILED, string>
+    | VariantKind<typeof HEALTH_CHECK_CANCELLED, DetailedError>
+    | VariantKind<typeof HEALTH_CHECK_FAILED, DetailedError>
     | VariantKind<typeof HEALTH_CHECK_STARTED, null>
     | VariantKind<typeof HEALTH_CHECK_SUCCEEDED, null>
     ;

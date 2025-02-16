@@ -44,12 +44,12 @@ export function getConnectionParamsFromDetails(state: ConnectionDetailsVariant):
             };
         }
         case SALESFORCE_DATA_CLOUD_CONNECTOR: {
-            if (state.value.authParams == null) {
+            if (state.value.setupParams == null) {
                 return null;
             }
             return {
                 type: SALESFORCE_DATA_CLOUD_CONNECTOR,
-                value: state.value.authParams
+                value: state.value.setupParams
             };
         }
     }

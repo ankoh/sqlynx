@@ -157,38 +157,42 @@ class NativeHyperDatabaseChannel implements HyperDatabaseChannel {
             }));
             const schema = await result.getSchema();
             if (schema == null) {
-                return { ok: false, errorMessage: "query result did not include a schema" };
+                return { ok: false, error: { message: "query result did not include a schema" } };
             }
             if (schema.fields.length != 1) {
-                return { ok: false, errorMessage: `unexpected number of fields in the query result schema: expected 1, received ${schema.fields.length}` };
+                return { ok: false, error: { message: `unexpected number of fields in the query result schema: expected 1, received ${schema.fields.length}` } };
             }
             const field = schema.fields[0];
             if (field.name != "healthy") {
-                return { ok: false, errorMessage: `unexpected field name in the query result schema: expected 'healthy', received '${field.name}'` };
+                return { ok: false, error: { message: `unexpected field name in the query result schema: expected 'healthy', received '${field.name}'` } };
             }
             const batch = await result.nextRecordBatch();
             if (batch == null) {
-                return { ok: false, errorMessage: "query result did not include a record batch" };
+                return { ok: false, error: { message: "query result did not include a record batch" } };
             }
             const healthyColumn = batch.getChildAt(0)!;
             if (healthyColumn == null) {
-                return { ok: false, errorMessage: "query result batch did not include any data" };
+                return { ok: false, error: { message: "query result batch did not include any data" } };
             }
             if (healthyColumn.length != 1) {
-                return { ok: false, errorMessage: `query result batch contains an unexpected number of rows: expected 1, received ${healthyColumn.length}` };
+                return { ok: false, error: { message: `query result batch contains an unexpected number of rows: expected 1, received ${healthyColumn.length}` } };
             }
             const healthyRow = healthyColumn.get(0);
             if (healthyRow !== 1) {
-                return { ok: false, errorMessage: `health check query returned an unexpected result` };
+                return { ok: false, error: { message: `health check query returned an unexpected result` } };
             }
-            return { ok: true, errorMessage: null };
+            return { ok: true, error: null };
         } catch (e: any) {
             if (e.grpcStatus) {
                 this.logger.warn(`health check failed: grcp_status=${e.grpcStatus}`, LOG_CTX);
             } else {
                 this.logger.warn(`health check failed: message=${e.message}`, LOG_CTX);
             }
-            return { ok: false, errorMessage: e.toString() };
+            if (e.message) {
+                return { ok: false, error: { message: e.message, details: e.details ?? {} } };
+            } else {
+                return { ok: false, error: { message: e.toString() } };
+            }
         }
     }
 

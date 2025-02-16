@@ -29,6 +29,7 @@ import {
     HyperGrpcSetupTimings
 } from '../hyper/hyper_connection_state.js';
 import { HyperGrpcConnectionParams } from '../hyper/hyper_connection_params.js';
+import { DetailedError } from 'utils/error.js';
 
 export interface SalesforceSetupTimings extends HyperGrpcSetupTimings {
     /// The time when the auth started
@@ -97,12 +98,12 @@ export function createSalesforceSetupTimings(): SalesforceSetupTimings {
 }
 
 export interface SalesforceConnectionDetails {
-    /// The timings
-    authTimings: SalesforceSetupTimings;
-    /// The auth params
-    authParams: SalesforceConnectionParams | null;
-    /// The authentication error
-    authError: string | null;
+    /// The setup timings
+    setupTimings: SalesforceSetupTimings;
+    /// The setup params
+    setupParams: SalesforceConnectionParams | null;
+    /// The setup error
+    setupError: DetailedError | null;
 
     /// The PKCE challenge
     pkceChallenge: PKCEChallenge | null;
@@ -116,20 +117,20 @@ export interface SalesforceConnectionDetails {
     dataCloudAccessToken: SalesforceDataCloudAccessToken | null;
 
     /// The authentication error
-    channelError: string | null;
+    channelError: DetailedError | null;
     /// The Hyper connection
     channel: SalesforceDatabaseChannel | null;
     /// The health check error
-    healthCheckError: string | null;
+    healthCheckError: DetailedError | null;
 }
 
 export function createSalesforceConnectorState(lnx: sqlynx.SQLynx): ConnectionStateWithoutId {
     return createConnectionState(lnx, CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD], {
         type: SALESFORCE_DATA_CLOUD_CONNECTOR,
         value: {
-            authTimings: createSalesforceSetupTimings(),
-            authParams: null,
-            authError: null,
+            setupTimings: createSalesforceSetupTimings(),
+            setupParams: null,
+            setupError: null,
 
             pkceChallenge: null,
             openAuthWindow: null,
@@ -168,17 +169,17 @@ export const REQUESTING_DATA_CLOUD_ACCESS_TOKEN = Symbol('REQUESTING_DATA_CLOUD_
 export const RECEIVED_DATA_CLOUD_ACCESS_TOKEN = Symbol('RECEIVED_DATA_CLOUD_ACCESS_TOKEN');
 
 export type SalesforceConnectionStateAction =
-    | VariantKind<typeof AUTH_CANCELLED, string>
-    | VariantKind<typeof AUTH_FAILED, string>
+    | VariantKind<typeof AUTH_CANCELLED, DetailedError>
+    | VariantKind<typeof AUTH_FAILED, DetailedError>
     | VariantKind<typeof AUTH_STARTED, SalesforceConnectionParams>
     | VariantKind<typeof CHANNEL_READY, SalesforceDatabaseChannel>
-    | VariantKind<typeof CHANNEL_SETUP_CANCELLED, string>
-    | VariantKind<typeof CHANNEL_SETUP_FAILED, string>
+    | VariantKind<typeof CHANNEL_SETUP_CANCELLED, DetailedError>
+    | VariantKind<typeof CHANNEL_SETUP_FAILED, DetailedError>
     | VariantKind<typeof CHANNEL_SETUP_STARTED, HyperGrpcConnectionParams>
     | VariantKind<typeof GENERATED_PKCE_CHALLENGE, PKCEChallenge>
     | VariantKind<typeof GENERATING_PKCE_CHALLENGE, null>
     | VariantKind<typeof HEALTH_CHECK_CANCELLED, null>
-    | VariantKind<typeof HEALTH_CHECK_FAILED, string>
+    | VariantKind<typeof HEALTH_CHECK_FAILED, DetailedError>
     | VariantKind<typeof HEALTH_CHECK_STARTED, null>
     | VariantKind<typeof HEALTH_CHECK_SUCCEEDED, null>
     | VariantKind<typeof OAUTH_NATIVE_LINK_OPENED, null>
@@ -202,9 +203,9 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                 details: {
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
-                        authTimings: createSalesforceSetupTimings(),
-                        authParams: details.authParams,
-                        authError: null,
+                        setupTimings: createSalesforceSetupTimings(),
+                        setupParams: details.setupParams,
+                        setupError: null,
 
                         pkceChallenge: null,
                         openAuthWindow: null,
@@ -228,12 +229,12 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                 details: {
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
-                        authTimings: {
+                        setupTimings: {
                             ...createSalesforceSetupTimings(),
                             authStartedAt: new Date(),
                         },
-                        authParams: action.value,
-                        authError: null,
+                        setupParams: action.value,
+                        setupError: null,
 
                         pkceChallenge: null,
                         openAuthWindow: null,
@@ -257,11 +258,11 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
                         ...details,
-                        authTimings: {
-                            ...details.authTimings,
+                        setupTimings: {
+                            ...details.setupTimings,
                             authCancelledAt: new Date(),
                         },
-                        authError: action.value
+                        setupError: action.value
                     }
                 }
             };
@@ -275,11 +276,11 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
                         ...details,
-                        authTimings: {
-                            ...details.authTimings,
+                        setupTimings: {
+                            ...details.setupTimings,
                             authFailedAt: new Date(),
                         },
-                        authError: action.value,
+                        setupError: action.value,
                     }
                 }
             };
@@ -293,8 +294,8 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
                         ...details,
-                        authTimings: {
-                            ...details.authTimings,
+                        setupTimings: {
+                            ...details.setupTimings,
                             pkceGenStartedAt: new Date(),
                         },
                     }
@@ -310,8 +311,8 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
                         ...details,
-                        authTimings: {
-                            ...details.authTimings,
+                        setupTimings: {
+                            ...details.setupTimings,
                             pkceGenFinishedAt: new Date(),
                         },
                         pkceChallenge: action.value,
@@ -328,8 +329,8 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
                         ...details,
-                        authTimings: {
-                            ...details.authTimings,
+                        setupTimings: {
+                            ...details.setupTimings,
                             openedNativeAuthLinkAt: new Date(),
                         },
                         openAuthWindow: null,
@@ -346,8 +347,8 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
                         ...details,
-                        authTimings: {
-                            ...details.authTimings,
+                        setupTimings: {
+                            ...details.setupTimings,
                             openedWebAuthWindowAt: new Date(),
                         },
                         openAuthWindow: action.value,
@@ -363,8 +364,8 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
                         ...details,
-                        authTimings: {
-                            ...details.authTimings,
+                        setupTimings: {
+                            ...details.setupTimings,
                             closedWebAuthWindowAt: new Date(),
                         },
                         openAuthWindow: null,
@@ -381,8 +382,8 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
                         ...details,
-                        authTimings: {
-                            ...details.authTimings,
+                        setupTimings: {
+                            ...details.setupTimings,
                             oauthCodeReceivedAt: new Date(),
                         },
                         coreAuthCode: action.value,
@@ -399,8 +400,8 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
                         ...details,
-                        authTimings: {
-                            ...details.authTimings,
+                        setupTimings: {
+                            ...details.setupTimings,
                             coreAccessTokenRequestedAt: new Date(),
                         },
                     }
@@ -416,8 +417,8 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
                         ...details,
-                        authTimings: {
-                            ...details.authTimings,
+                        setupTimings: {
+                            ...details.setupTimings,
                             coreAccessTokenReceivedAt: new Date(),
                         },
                         coreAccessToken: action.value,
@@ -434,8 +435,8 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
                         ...details,
-                        authTimings: {
-                            ...details.authTimings,
+                        setupTimings: {
+                            ...details.setupTimings,
                             dataCloudAccessTokenRequestedAt: new Date(),
                         },
                     }
@@ -451,8 +452,8 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
                         ...details,
-                        authTimings: {
-                            ...details.authTimings,
+                        setupTimings: {
+                            ...details.setupTimings,
                             dataCloudAccessTokenReceivedAt: new Date(),
                         },
                         dataCloudAccessToken: action.value,
@@ -469,8 +470,8 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
                         ...details,
-                        authTimings: {
-                            ...details.authTimings,
+                        setupTimings: {
+                            ...details.setupTimings,
                             channelSetupStartedAt: new Date(),
                         },
                         channelError: null,
@@ -489,8 +490,8 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
                         ...details,
-                        authTimings: {
-                            ...details.authTimings,
+                        setupTimings: {
+                            ...details.setupTimings,
                             channelSetupCancelledAt: new Date(),
                         },
                         channelError: action.value,
@@ -508,8 +509,8 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
                         ...details,
-                        authTimings: {
-                            ...details.authTimings,
+                        setupTimings: {
+                            ...details.setupTimings,
                             channelSetupFailedAt: new Date(),
                         },
                         channelError: action.value,
@@ -527,8 +528,8 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
                         ...details,
-                        authTimings: {
-                            ...details.authTimings,
+                        setupTimings: {
+                            ...details.setupTimings,
                             channelReadyAt: new Date(),
                         },
                         channel: action.value
@@ -545,8 +546,8 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
                         ...details,
-                        authTimings: {
-                            ...details.authTimings,
+                        setupTimings: {
+                            ...details.setupTimings,
                             healthCheckStartedAt: new Date(),
                         },
                     }
@@ -562,8 +563,8 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
                         ...details,
-                        authTimings: {
-                            ...details.authTimings,
+                        setupTimings: {
+                            ...details.setupTimings,
                             healthCheckFailedAt: new Date(),
                         },
                         healthCheckError: action.value,
@@ -580,8 +581,8 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
                         ...details,
-                        authTimings: {
-                            ...details.authTimings,
+                        setupTimings: {
+                            ...details.setupTimings,
                             healthCheckCancelledAt: new Date(),
                         },
                     }
@@ -597,8 +598,8 @@ export function reduceSalesforceConnectionState(state: ConnectionState, action: 
                     type: SALESFORCE_DATA_CLOUD_CONNECTOR,
                     value: {
                         ...details,
-                        authTimings: {
-                            ...details.authTimings,
+                        setupTimings: {
+                            ...details.setupTimings,
                             healthCheckSucceededAt: new Date(),
                         },
                     }

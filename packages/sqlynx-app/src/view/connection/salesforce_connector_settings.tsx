@@ -26,6 +26,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button, ButtonVariant } from '../foundations/button.js';
 import { useDefaultWorkbooks } from '../../workbook/workbook_setup.js';
 import { HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from '../../connection/connector_info.js';
+import { DetailedError } from 'utils/error.js';
 
 const LOG_CTX = "sf_connector";
 
@@ -102,7 +103,7 @@ export function getConnectionHealthIndicator(health: ConnectionHealth | null) {
     }
 }
 
-export function getConnectionErrorMessage(status: ConnectionDetailsVariant | null): (string | null) {
+export function getConnectionError(status: ConnectionDetailsVariant | null): (DetailedError | null) {
     switch (status?.type) {
         case TRINO_CONNECTOR:
             return status.value.channelError ?? status.value.healthCheckError;
@@ -226,7 +227,7 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
     // Get the indicator status
     const indicatorStatus: IndicatorStatus = getConnectionHealthIndicator(connectionState?.connectionHealth ?? null);
     // Get the connection error
-    const errorMessage = getConnectionErrorMessage(connectionState?.details ?? null);
+    const errorMessage = getConnectionError(connectionState?.details ?? null);
 
     // Get the action button
     let connectButton: React.ReactElement = <div />;
@@ -277,8 +278,8 @@ export const SalesforceConnectorSettings: React.FC<object> = (_props: object) =>
                                 {statusText}
                             </div>
                             {errorMessage && (
-                                <div className={style.status_error_message}>
-                                    {errorMessage}
+                                <div className={style.status_error}>
+                                    {errorMessage.toString()}
                                 </div>
                             )}
                         </div>

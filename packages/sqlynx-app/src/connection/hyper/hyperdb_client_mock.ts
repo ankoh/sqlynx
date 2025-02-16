@@ -9,7 +9,7 @@ export class HyperDatabaseChannelMock implements HyperDatabaseChannel {
     async checkHealth(): Promise<HealthCheckResult> {
         return {
             ok: true,
-            errorMessage: null,
+            error: null,
         };
     }
     /// Execute Query
