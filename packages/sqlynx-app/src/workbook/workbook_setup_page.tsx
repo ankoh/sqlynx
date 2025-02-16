@@ -448,6 +448,22 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
         );
     }
 
+    // Compute the log button only once to prevent svg flickering
+    const logButton = React.useMemo(() => {
+        return (
+            <IconButton
+                variant="invisible"
+                icon={() => (
+                    <svg width="16px" height="16px">
+                        <use xlinkHref={`${symbols}#log`} />
+                    </svg>
+                )}
+                aria-label="close-overlay"
+                onClick={() => setShowLogs(s => !s)}
+            />
+        );
+    }, []);
+
     // Render the page
     return (
         <div className={baseStyles.page}>
@@ -473,19 +489,7 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
                                 <LogViewerOverlay
                                     isOpen={showLogs}
                                     onClose={() => setShowLogs(false)}
-                                    renderAnchor={(p: object) => (
-                                        <IconButton
-                                            {...p}
-                                            variant="invisible"
-                                            icon={() => (
-                                                <svg width="16px" height="16px">
-                                                    <use xlinkHref={`${symbols}#log`} />
-                                                </svg>
-                                            )}
-                                            aria-label="close-overlay"
-                                            onClick={() => setShowLogs(s => !s)}
-                                        />
-                                    )}
+                                    renderAnchor={(p: object) => <div {...p}>{logButton}</div>}
                                     side={AnchorSide.OutsideBottom}
                                     align={AnchorAlignment.End}
                                     anchorOffset={16}
@@ -493,6 +497,12 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
                                         width: OverlaySize.L,
                                         height: OverlaySize.M
                                     }}
+                                />
+                                <IconButton
+                                    variant="invisible"
+                                    icon={XIcon}
+                                    aria-label="close-setup"
+                                    onClick={() => props.onDone()}
                                 />
                             </div>
                         </div>
