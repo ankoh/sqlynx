@@ -53,12 +53,16 @@ export const ErrorDetailsViewer: React.FC<ErrorDetailsViewerProps> = (props: Err
                 <span className={styles.error_message_text}>
                     {props.error.message}
                 </span>
-                <span className={styles.error_details_label}>
-                    Details
-                </span>
-                <div className={styles.error_details_entries}>
-                    {detailEntries}
-                </div>
+                {detailEntries.length > 0 && (
+                    <>
+                        <span className={styles.error_details_label}>
+                            Details
+                        </span>
+                        <div className={styles.error_details_entries}>
+                            {detailEntries}
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );

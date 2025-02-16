@@ -194,6 +194,7 @@ export function reduceTrinoConnectorState(state: ConnectionState, action: TrinoC
                         channelError: null,
                         channel: null,
                         schemaResolutionError: null,
+                        healthCheckError: null,
                     }
                 },
             };
