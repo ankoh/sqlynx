@@ -73,7 +73,6 @@ export const TrinoConnectorSettings: React.FC = () => {
         // Then we reset the params of the settings page
         const activeParams = connectionState.details.value.channelParams;
         if (activeParams != null && activeParams !== pageState.activeParams) {
-            console.log("RESET ACTIVE PARAMS");
             setPageState({
                 activeParams: activeParams,
                 newParams: activeParams
