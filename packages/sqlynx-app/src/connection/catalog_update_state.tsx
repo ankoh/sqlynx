@@ -90,7 +90,7 @@ export function reduceCatalogAction(state: ConnectionState, action: CatalogActio
                 finishedAt: now,
             };
             state.catalogUpdatesRunning.delete(updateId);
-            state.catalogUpdatesFinished.set(updateId, update);
+            state.catalogUpdatesFinished.push(update);
             return { ...state };
         case CATALOG_UPDATE_FAILED:
             update = {
@@ -100,7 +100,7 @@ export function reduceCatalogAction(state: ConnectionState, action: CatalogActio
                 finishedAt: now,
             };
             state.catalogUpdatesRunning.delete(updateId);
-            state.catalogUpdatesFinished.set(updateId, update);
+            state.catalogUpdatesFinished.push(update);
             return { ...state };
         case CATALOG_UPDATE_SUCCEEDED:
             update = {
@@ -109,7 +109,7 @@ export function reduceCatalogAction(state: ConnectionState, action: CatalogActio
                 finishedAt: now,
             };
             state.catalogUpdatesRunning.delete(updateId);
-            state.catalogUpdatesFinished.set(updateId, update);
+            state.catalogUpdatesFinished.push(update);
             return { ...state };
     }
 }

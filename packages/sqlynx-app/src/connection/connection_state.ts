@@ -54,7 +54,7 @@ export interface ConnectionState {
     /// The catalog updates that are currently running
     catalogUpdatesRunning: Map<number, CatalogUpdateTaskState>;
     /// The catalog updates that are currently running
-    catalogUpdatesFinished: Map<number, CatalogUpdateTaskState>;
+    catalogUpdatesFinished: CatalogUpdateTaskState[];
 
     /// The queries that are currently running
     queriesRunning: Map<number, QueryExecutionState>;
@@ -185,7 +185,7 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
                 connectionHealth: ConnectionHealth.NOT_STARTED,
                 metrics: createConnectionMetrics(),
                 catalogUpdatesRunning: new Map(),
-                catalogUpdatesFinished: new Map(),
+                catalogUpdatesFinished: [],
                 queriesRunning: new Map(),
                 queriesFinished: new Map(),
             };
@@ -244,7 +244,7 @@ export function createConnectionState(lnx: sqlynx.SQLynx, info: ConnectorInfo, d
         details,
         catalog,
         catalogUpdatesRunning: new Map(),
-        catalogUpdatesFinished: new Map(),
+        catalogUpdatesFinished: [],
         queriesRunning: new Map(),
         queriesFinished: new Map(),
     };

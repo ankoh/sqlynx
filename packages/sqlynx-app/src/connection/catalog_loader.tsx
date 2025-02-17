@@ -18,16 +18,15 @@ import { updateTrinoCatalog } from './trino/trino_catalog_update.js';
 let NEXT_CATALOG_UPDATE_ID = 1;
 
 /// The catalog update args
-interface CatalogUpdateArgs {
-}
+interface CatalogLoaderArgs { }
 /// The catalog updater function
-export type CatalogUpdater = (connectionId: number, args: CatalogUpdateArgs) => [number, Promise<void>];
+export type CatalogLoader = (connectionId: number, args: CatalogLoaderArgs) => [number, Promise<void>];
 /// The React context to resolve the active catalog updater
-const UPDATER_CTX = React.createContext<CatalogUpdater | null>(null);
+const LOADER_CTX = React.createContext<CatalogLoader | null>(null);
 /// The hook to resolve the catalog updater
-export const useCatalogUpdater = () => React.useContext(UPDATER_CTX)!;
+export const useCatalogUpdater = () => React.useContext(LOADER_CTX)!;
 
-export function CatalogUpdaterProvider(props: { children?: React.ReactElement }) {
+export function CatalogLoaderProvider(props: { children?: React.ReactElement }) {
     const executor = useQueryExecutor();
     const salesforceApi = useSalesforceAPI();
 
@@ -37,7 +36,9 @@ export function CatalogUpdaterProvider(props: { children?: React.ReactElement })
     const connMap = connReg.connectionMap;
 
     // Execute a query with pre-allocated query id
-    const updateImpl = React.useCallback(async (connectionId: number, args: CatalogUpdateArgs, updateId: number): Promise<void> => {
+    const updateImpl = React.useCallback(async (connectionId: number, args: CatalogLoaderArgs, updateId: number): Promise<void> => {
+        console.log("UPDATE CATALOG");
+
         // Check if we know the connection id.
         const conn = connMap.get(connectionId);
         if (!conn) {
@@ -100,15 +101,15 @@ export function CatalogUpdaterProvider(props: { children?: React.ReactElement })
     }, [connMap, salesforceApi]);
 
     // Allocate the next query id and start the execution
-    const update = React.useCallback<CatalogUpdater>((connectionId: number, args: CatalogUpdateArgs): [number, Promise<void>] => {
+    const update = React.useCallback<CatalogLoader>((connectionId: number, args: CatalogLoaderArgs): [number, Promise<void>] => {
         const updateId = NEXT_CATALOG_UPDATE_ID++;
         const execution = updateImpl(connectionId, args, updateId);
         return [updateId, execution];
     }, [updateImpl]);
 
     return (
-        <UPDATER_CTX.Provider value={update}>
+        <LOADER_CTX.Provider value={update}>
             {props.children}
-        </UPDATER_CTX.Provider>
+        </LOADER_CTX.Provider>
     );
 }
