@@ -5,6 +5,8 @@ import { Logger } from '../../platform/logger.js';
 import { QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionResponseStreamMetrics, QueryExecutionStatus } from "../../connection/query_execution_state.js";
 import { TRINO_STATUS_HTTP_ERROR, TRINO_STATUS_OK, TRINO_STATUS_OTHER_ERROR, TrinoApiClientInterface, TrinoApiEndpoint, TrinoQueryResult, TrinoQueryStatistics } from "./trino_api_client.js";
 
+const LOG_CTX = 'trino_channel';
+
 export interface TrinoQueryExecutionProgress extends QueryExecutionProgress { }
 
 export class TrinoQueryResultStream implements QueryExecutionResponseStream {
@@ -43,6 +45,7 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
         if (!nextUri) {
             return null;
         }
+        this.logger.debug("fetching next query results", { "nextUri": nextUri }, LOG_CTX);
         const queryResult = await this.apiClient.getQueryResult(nextUri);
         this.latestQueryResult = queryResult;
         this.latestQueryStats = queryResult.stats ?? null;
@@ -70,7 +73,8 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
     }
     /// Await the schema message
     async getSchema(): Promise<arrow.Schema | null> {
-        return this.resultSchema;
+        // XXX
+        return new arrow.Schema();
     }
     /// Await the next query_status update
     async nextProgressUpdate(): Promise<QueryExecutionProgress | null> {
@@ -78,11 +82,14 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
     }
     /// Await the next record batch
     async nextRecordBatch(): Promise<arrow.RecordBatch | null> {
+        console.log(this);
         // While still running
-        while (this.latestQueryState == "RUNNING") {
+        while (this.latestQueryState == "QUEUED" || this.latestQueryState == "RUNNING") {
             // Fetch the next query result
-            const _result = await this.fetchNextQueryResult();
+            const result = await this.fetchNextQueryResult();
+            console.log(result);
         }
+        this.logger.debug("reached end of query result stream", { "queryState": this.latestQueryState });
         return null;
     }
 }
@@ -135,7 +142,10 @@ export class TrinoChannel implements TrinoChannelInterface {
 
     /// Execute Query
     async executeQuery(param: proto.salesforce_hyperdb_grpc_v1.pb.QueryParam): Promise<TrinoQueryResultStream> {
+        this.logger.debug("executing query", {}, LOG_CTX);
         const result = await this.apiClient.runQuery(this.endpoint, param.query);
+
+        this.logger.debug("opened query result stream", {}, LOG_CTX);
         const stream = new TrinoQueryResultStream(this.logger, this.apiClient, result);
         return stream;
 

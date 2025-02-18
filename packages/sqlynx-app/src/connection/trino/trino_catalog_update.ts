@@ -8,7 +8,9 @@ export async function updateTrinoCatalog(connectionId: number, _catalog: sqlynx.
         query: "select * from information_schema.tables"
     };
     const [_queryId, queryExecution] = executor(connectionId, args);
-    const _queryResult = await queryExecution;
+    const queryResult = await queryExecution;
+
+    console.log(queryResult);
 
     // XXX Update the catalog
 }

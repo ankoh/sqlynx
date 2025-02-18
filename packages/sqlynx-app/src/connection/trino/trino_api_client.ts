@@ -3,6 +3,8 @@ import { HttpClient } from "../../platform/http_client.js";
 import { Logger } from "../../platform/logger.js";
 import { TrinoAuthParams } from "./trino_connection_params.js";
 
+const LOG_CTX = "trino_api";
+
 export interface TrinoApiEndpoint {
     // The endpoint url
     endpoint: string;
@@ -219,6 +221,7 @@ export class TrinoApiClient implements TrinoApiClientInterface {
 
     /// Run a query
     async runQuery(endpoint: TrinoApiEndpoint, text: string): Promise<TrinoQueryResult> {
+        this.logger.debug("running query", { "text": text }, LOG_CTX);
         const url = new URL(`${endpoint.endpoint}/v1/statement`);
         const headers = new Headers();
         if (endpoint.auth.username.length > 0) {
@@ -240,6 +243,7 @@ export class TrinoApiClient implements TrinoApiClientInterface {
 
     /// Get the query result batch
     async getQueryResult(nextUri: string): Promise<TrinoQueryResult> {
+        this.logger.debug("getting query results", { "nextUri": nextUri }, LOG_CTX);
         const url = new URL(nextUri);
         const headers = new Headers();
         const rawResponse = await this.httpClient.fetch(url, {
@@ -256,6 +260,7 @@ export class TrinoApiClient implements TrinoApiClientInterface {
 
     /// Get a query info
     async getQueryInfo(endpoint: TrinoApiEndpoint, queryId: string): Promise<TrinoQueryInfo> {
+        this.logger.debug("getting query info", { "query": queryId }, LOG_CTX);
         const url = new URL(`${endpoint.endpoint}/v1/query/${queryId}`);
         const headers = new Headers();
         const rawResponse = await this.httpClient.fetch(url, {
@@ -272,6 +277,7 @@ export class TrinoApiClient implements TrinoApiClientInterface {
 
     /// Cancel a query
     async cancelQuery(endpoint: TrinoApiEndpoint, queryId: string): Promise<TrinoQueryResult> {
+        this.logger.debug("cancelling query", { "query": queryId }, LOG_CTX);
         const url = new URL(`${endpoint.endpoint}/v1/query/${queryId}`);
         const headers = new Headers();
         const rawResponse = await this.httpClient.fetch(url, {

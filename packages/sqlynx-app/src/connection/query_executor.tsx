@@ -29,6 +29,8 @@ import { executeSalesforceQuery } from './salesforce/salesforce_query_execution.
 import { executeHyperQuery } from './hyper/hyper_query_execution.js';
 import { executeDemoQuery } from './demo/demo_query_execution.js';
 
+const LOG_CTX = 'query_executor';
+
 let NEXT_QUERY_ID = 1;
 /// The query executor function
 export type QueryExecutor = (connectionId: number, args: QueryExecutionArgs) => [number, Promise<arrow.Table | null>];
@@ -59,6 +61,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
 
     // Execute a query with pre-allocated query id
     const executeImpl = React.useCallback(async (connectionId: number, args: QueryExecutionArgs, queryId: number): Promise<arrow.Table | null> => {
+
         // Make sure the compute worker is available
         if (!computeWorker) {
             throw new Error(`compute worker is not yet ready`);
@@ -66,8 +69,10 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
         // Check if we know the connection id.
         const conn = connMap.get(connectionId);
         if (!conn) {
+            logger.error("connection is not configured", { "connection": connectionId.toString(), "query": queryId.toString() }, LOG_CTX);
             throw new Error(`couldn't find a connection with id ${connectionId}`);
         }
+        logger.debug("executing query", { "connection": connectionId.toString(), "query": queryId.toString(), "text": args.query }, LOG_CTX);
 
         // Accept the query and clear the request
         const initialState: QueryExecutionState = {
@@ -117,6 +122,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
         const readAllBatches = async (resultStream: QueryExecutionResponseStream) => {
             const schema = await resultStream.getSchema();
             if (schema == null) {
+                logger.error("query schema is null", { "connection": connectionId.toString(), "query": queryId.toString() }, LOG_CTX);
                 return;
             }
             connDispatch(connectionId, {
@@ -130,6 +136,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                     break;
                 }
                 batches.push(batch);
+                logger.error("received result batch", { "connection": connectionId.toString(), "query": queryId.toString() }, LOG_CTX);
                 connDispatch(connectionId, {
                     type: QUERY_EXECUTION_RECEIVED_BATCH,
                     value: [queryId, batch, resultStream.getMetrics()],
@@ -156,11 +163,14 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                     resultStream = await executeDemoQuery(conn.details.value, args);
                     break;
             }
+            logger.debug("retrieved query results", { "connection": connectionId.toString(), "query": queryId.toString() }, LOG_CTX);
+
             if (resultStream != null) {
                 connDispatch(connectionId, {
                     type: QUERY_EXECUTION_STARTED,
                     value: [queryId, resultStream],
                 });
+
                 // Subscribe to query_status and result messages
                 const progressUpdater = readAllProgressUpdates(resultStream);
                 const tableReader = readAllBatches(resultStream);
@@ -173,6 +183,8 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                     type: QUERY_EXECUTION_SUCCEEDED,
                     value: [queryId, table!, metadata, resultStream!.getMetrics()],
                 });
+            } else {
+                logger.error("query returned no results", { "connection": connectionId.toString(), "query": queryId.toString() }, LOG_CTX);
             }
         } catch (e: any) {
             if ((e.message === 'AbortError')) {

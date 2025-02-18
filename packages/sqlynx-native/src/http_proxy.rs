@@ -1,6 +1,6 @@
 use std::{str::FromStr, sync::Arc};
 
-use crate::http_stream_manager::HttpServerStreamBatch;
+use crate::{http_stream_manager::HttpServerStreamBatch, proxy_headers::HEADER_NAME_SEARCH_PARAMS};
 use http::{HeaderMap, HeaderName, HeaderValue};
 use std::time::Duration;
 use url::Url;
@@ -47,7 +47,8 @@ fn read_request_params(headers: &mut HeaderMap) -> Result<HttpRequestParams, Sta
     let mut extra_metadata = HeaderMap::with_capacity(headers.len());
     let method = require_string_header(headers, HEADER_NAME_METHOD)?;
     let endpoint = require_string_header(headers, HEADER_NAME_ENDPOINT)?;
-    let path_and_query = require_string_header(headers, HEADER_NAME_PATH)?;
+    let path = require_string_header(headers, HEADER_NAME_PATH)?;
+    let search_params = require_string_header(headers, HEADER_NAME_SEARCH_PARAMS)?;
     let read_timeout = require_usize_header(headers, HEADER_NAME_READ_TIMEOUT)?;
 
     // Copy all headers in the request that don't start with sqlynx-
@@ -67,7 +68,11 @@ fn read_request_params(headers: &mut HeaderMap) -> Result<HttpRequestParams, Sta
     // Remove some headers set by the webviews fetch call
     extra_metadata.remove("origin");
 
-    let url_text = format!("{}{}", &endpoint, &path_and_query);
+    let url_text = if search_params.is_empty() {
+        format!("{}{}", &endpoint, &path)
+    } else {
+        format!("{}{}?{}", &endpoint, &path, &search_params)
+    };
     let url = url::Url::parse(&url_text)
         .map_err(|e| {
             Status::HttpEndpointIsInvalid { header: HEADER_NAME_ENDPOINT, endpoint: url_text, message: e.to_string() }

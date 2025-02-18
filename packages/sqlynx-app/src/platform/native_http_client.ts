@@ -2,7 +2,7 @@ import { DetailedError } from '../utils/error.js';
 import { RawProxyError } from './channel_common.js';
 import { HttpClient, HttpFetchResult } from './http_client.js';
 import { Logger } from './logger.js';
-import { HEADER_NAME_BATCH_BYTES, HEADER_NAME_BATCH_EVENT, HEADER_NAME_BATCH_TIMEOUT, HEADER_NAME_ENDPOINT, HEADER_NAME_METHOD, HEADER_NAME_PATH, HEADER_NAME_READ_TIMEOUT, HEADER_NAME_STREAM_ID } from "./native_api_mock.js";
+import { HEADER_NAME_BATCH_BYTES, HEADER_NAME_BATCH_EVENT, HEADER_NAME_BATCH_TIMEOUT, HEADER_NAME_ENDPOINT, HEADER_NAME_METHOD, HEADER_NAME_PATH, HEADER_NAME_READ_TIMEOUT, HEADER_NAME_SEARCH_PARAMS, HEADER_NAME_STREAM_ID } from "./native_api_mock.js";
 
 export enum NativeHttpServerStreamBatchEvent {
     StreamFailed = "StreamFailed",
@@ -159,15 +159,17 @@ export class NativeHttpClient implements HttpClient {
         const url = new URL(this.endpoint.proxyEndpoint);
         url.pathname = `/http/streams`;
         const remote = `${input.protocol}//${input.host}`;
+        input.search
 
         const headers = new Headers(init?.headers);
         headers.set(HEADER_NAME_METHOD, init?.method ?? "GET");
         headers.set(HEADER_NAME_ENDPOINT, remote);
         headers.set(HEADER_NAME_PATH, input.pathname);
+        headers.set(HEADER_NAME_SEARCH_PARAMS, input.searchParams.toString());
         headers.set(HEADER_NAME_BATCH_TIMEOUT, "1000");
         headers.set(HEADER_NAME_READ_TIMEOUT, "10000");
 
-        this.logger.info(`fetch http stream`, { "remote": remote, "path": input?.toString() }, "native_http_client");
+        this.logger.debug(`fetch http stream`, { "remote": remote, "path": input?.toString() }, "native_http_client");
 
         const body: any = init?.body;
         let bodyBuffer: ArrayBuffer;

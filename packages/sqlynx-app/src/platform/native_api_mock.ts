@@ -18,6 +18,7 @@ export const HEADER_NAME_BATCH_TIMEOUT = "sqlynx-batch-timeout";
 export const HEADER_NAME_METHOD = "sqlynx-method";
 export const HEADER_NAME_ENDPOINT = "sqlynx-endpoint";
 export const HEADER_NAME_PATH = "sqlynx-path";
+export const HEADER_NAME_SEARCH_PARAMS = "sqlynx-search-params";
 export const HEADER_NAME_TLS = "sqlynx-tls";
 export const HEADER_NAME_TLS_CLIENT_KEY = "sqlynx-tls-client-key";
 export const HEADER_NAME_TLS_CLIENT_CERT = "sqlynx-tls-client-cert";

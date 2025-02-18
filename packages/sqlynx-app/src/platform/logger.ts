@@ -107,7 +107,7 @@ export abstract class Logger {
     public error(message: string, details: Record<string, string | null | undefined>, target?: string): void {
         const entry = {
             timestamp: Date.now(),
-            level: LogLevel.Warn,
+            level: LogLevel.Error,
             target: target ?? "pwa:unknown",
             message,
             details,
