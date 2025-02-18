@@ -12,7 +12,7 @@ export interface TrinoApiEndpoint {
     auth: TrinoAuthParams;
 }
 
-export type TrinoQueryFailureInfo = {
+export interface TrinoQueryFailureInfo {
     /// The failure type
     type: string;
     /// The failure message
@@ -23,7 +23,7 @@ export type TrinoQueryFailureInfo = {
     stack: string[];
 };
 
-export type TrinoQueryError = {
+export interface TrinoQueryError {
     /// The erro message
     message: string;
     /// The error code
@@ -45,7 +45,7 @@ export interface TrinoQueryResultColumn {
 
 export type TrinoQueryData = any[];
 
-export type TrinoQueryStage = {
+export interface TrinoQueryStage {
     /// The trino stage id
     stageId: string;
     /// The state
@@ -80,7 +80,7 @@ export type TrinoQueryStage = {
     subStages: TrinoQueryStage[];
 };
 
-export type TrinoQueryStatistics = {
+export interface TrinoQueryStatistics {
     /// The state
     state: string;
     /// Is the query queued?
@@ -121,7 +121,7 @@ export type TrinoQueryStatistics = {
     progressPercentage: number;
 };
 
-export type TrinoQueryResult = {
+export interface TrinoQueryResult {
     /// The query id
     id: string;
     /// The URI for the query info call
@@ -164,7 +164,7 @@ export interface TrinoApiClientInterface {
     /// Check the health
     checkHealth(endpoint: TrinoApiEndpoint): Promise<TrinoHealthCheckStatus>;
     /// Run a query
-    runQuery(endpoint: TrinoApiEndpoint, text: string): Promise<TrinoQueryResult>;
+    runQuery(endpoint: TrinoApiEndpoint, catalogName: string, text: string): Promise<TrinoQueryResult>;
     /// Get a query result
     getQueryResult(nextUri: string): Promise<TrinoQueryResult>;
     /// Get a query info
@@ -220,13 +220,14 @@ export class TrinoApiClient implements TrinoApiClientInterface {
     }
 
     /// Run a query
-    async runQuery(endpoint: TrinoApiEndpoint, text: string): Promise<TrinoQueryResult> {
+    async runQuery(endpoint: TrinoApiEndpoint, catalogName: string, text: string): Promise<TrinoQueryResult> {
         this.logger.debug("running query", { "text": text }, LOG_CTX);
         const url = new URL(`${endpoint.endpoint}/v1/statement`);
         const headers = new Headers();
         if (endpoint.auth.username.length > 0) {
             headers.set('Authorization', 'Basic ' + btoa(endpoint.auth.username + ":" + endpoint.auth.secret));
             headers.set('X-Trino-User', endpoint.auth.username);
+            headers.set('X-Trino-Catalog', catalogName);
         }
         const rawResponse = await this.httpClient.fetch(url, {
             method: 'POST',

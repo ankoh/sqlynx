@@ -5,6 +5,7 @@ import * as symbols from '../../../static/svg/symbols.generated.svg';
 import * as style from './connection_settings.module.css';
 
 import {
+    BookIcon,
     FileSymlinkFileIcon,
     KeyIcon,
     LinkIcon,
@@ -66,6 +67,7 @@ export const TrinoConnectorSettings: React.FC = () => {
     const setEndpoint = (v: string) => setPageState(s => ({ ...s, newParams: { ...s.newParams, channelArgs: { ...s.newParams.channelArgs, endpoint: v } } }));
     const setBasicAuthUsername = (v: string) => setPageState(s => ({ ...s, newParams: { ...s.newParams, authParams: { ...s.newParams.authParams, username: v } } }));
     const setBasicAuthSecret = (v: string) => setPageState(s => ({ ...s, newParams: { ...s.newParams, authParams: { ...s.newParams.authParams, secret: v } } }));
+    const setCatalogName = (v: string) => setPageState(s => ({ ...s, newParams: { ...s.newParams, catalogName: v } }));
     const modifyMetadata: Dispatch<UpdateKeyValueList> = (action: UpdateKeyValueList) => setPageState(s => ({ ...s, newParams: { ...s.newParams, metadata: action(s.newParams.metadata) } }));
 
     // Update the page state with the connection params
@@ -233,6 +235,7 @@ export const TrinoConnectorSettings: React.FC = () => {
                             onChange={(e) => setEndpoint(e.target.value)}
                             disabled={freezeInput}
                             readOnly={freezeInput}
+                            autoComplete={false}
                             logContext={LOG_CTX}
                         />
                         <TextField
@@ -245,6 +248,7 @@ export const TrinoConnectorSettings: React.FC = () => {
                             onChange={(e) => setBasicAuthUsername(e.target.value)}
                             disabled={freezeInput}
                             readOnly={freezeInput}
+                            autoComplete={false}
                             logContext={LOG_CTX}
                         />
                         <TextField
@@ -257,6 +261,22 @@ export const TrinoConnectorSettings: React.FC = () => {
                             disabled={freezeInput}
                             readOnly={freezeInput}
                             concealed={true}
+                            logContext={LOG_CTX}
+                        />
+                    </div>
+                </div>
+                <div className={style.section}>
+                    <div className={classNames(style.section_layout, style.body_section_layout)}>
+                        <TextField
+                            name="Catalog"
+                            caption="Name of the Trino Catalog"
+                            value={pageState.newParams.catalogName}
+                            placeholder=""
+                            leadingVisual={BookIcon}
+                            onChange={(e) => setCatalogName(e.target.value)}
+                            disabled={freezeInput}
+                            readOnly={freezeInput}
+                            autoComplete={false}
                             logContext={LOG_CTX}
                         />
                     </div>
@@ -295,6 +315,7 @@ export const TrinoConnectorSettingsStateProvider: React.FC<ProviderProps> = (pro
                 secret: "",
             },
             metadata: [],
+            catalogName: "",
         }
     });
     return (

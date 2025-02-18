@@ -20,6 +20,7 @@ interface TextInputProps {
     readOnly?: boolean;
     block?: boolean;
     validationStatus?: TextInputValidationStatus;
+    autoComplete?: boolean;
 }
 
 export function TextInput(props: TextInputProps): React.ReactElement {
@@ -42,6 +43,7 @@ export function TextInput(props: TextInputProps): React.ReactElement {
                 placeholder={props.placeholder}
                 disabled={props.disabled}
                 onChange={props.onChange}
+                autoComplete={props.autoComplete?.toString()}
             />
             {props.trailingVisual && (
                 <span className={styles.trailing_visual_container}>

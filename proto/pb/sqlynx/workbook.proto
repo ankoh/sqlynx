@@ -48,6 +48,8 @@ message TrinoConnectorParams {
     string endpoint = 1;
     /// The authentication params
     TrinoAuthParams auth = 2;
+    /// The catalog name
+    string catalog = 3;
 }
 
 message ConnectorParams {

@@ -35,7 +35,7 @@ export async function setupTrinoConnection(modifyState: Dispatch<TrinoConnectorA
             endpoint: params.channelArgs.endpoint,
             auth: params.authParams
         };
-        channel = new TrinoChannel(logger, client, endpoint);
+        channel = new TrinoChannel(logger, client, endpoint, params.catalogName);
 
         // Mark the channel as ready
         modifyState({

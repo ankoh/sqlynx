@@ -5,7 +5,7 @@ import * as baseStyles from '../view/banner_page.module.css';
 import * as connStyles from '../view/connection/connection_settings.module.css';
 
 import { IconButton } from '@primer/react';
-import { ChecklistIcon, DesktopDownloadIcon, FileBadgeIcon, KeyIcon, PackageIcon, PlugIcon, XIcon } from '@primer/octicons-react';
+import { BookIcon, ChecklistIcon, DesktopDownloadIcon, FileBadgeIcon, KeyIcon, PackageIcon, PlugIcon, XIcon } from '@primer/octicons-react';
 
 import { AnchorAlignment, AnchorSide } from '../view/foundations/anchored_position.js';
 import { Button, ButtonSize, ButtonVariant } from '../view/foundations/button.js';
@@ -126,6 +126,19 @@ const ConnectionParamsSection: React.FC<ConnectorParamsSectionProps> = (props: C
                                         ...p.channelArgs,
                                         endpoint: e.target.value
                                     }
+                                }
+                            })}
+                        />
+                        <TextField
+                            name="Catalog"
+                            value={props.params.value.catalogName ?? ""}
+                            leadingVisual={BookIcon}
+                            logContext={LOG_CTX}
+                            onChange={(e) => props.updateParams({
+                                type: TRINO_CONNECTOR,
+                                value: {
+                                    ...p,
+                                    catalogName: e.target.value
                                 }
                             })}
                         />

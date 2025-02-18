@@ -61,7 +61,6 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
 
     // Execute a query with pre-allocated query id
     const executeImpl = React.useCallback(async (connectionId: number, args: QueryExecutionArgs, queryId: number): Promise<arrow.Table | null> => {
-
         // Make sure the compute worker is available
         if (!computeWorker) {
             throw new Error(`compute worker is not yet ready`);
@@ -107,6 +106,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
         // Helper to subscribe to query_status updates
         const readAllProgressUpdates = async (resultStream: QueryExecutionResponseStream) => {
             while (true) {
+                // Resolve the next progress update
                 const update = await resultStream.nextProgressUpdate();
                 if (update == null) {
                     break;
@@ -120,6 +120,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
         };
         // Helper to subscribe to result batches
         const readAllBatches = async (resultStream: QueryExecutionResponseStream) => {
+            // Resolve the result schema
             const schema = await resultStream.getSchema();
             if (schema == null) {
                 logger.error("query schema is null", { "connection": connectionId.toString(), "query": queryId.toString() }, LOG_CTX);
@@ -129,21 +130,28 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                 type: QUERY_EXECUTION_RECEIVED_SCHEMA,
                 value: [queryId, schema],
             });
+
+            // Collect record batches
             const batches: arrow.RecordBatch[] = [];
             while (true) {
+                // Retrieve the next record batch
                 const batch = await resultStream.nextRecordBatch();
                 if (batch == null) {
                     break;
                 }
                 batches.push(batch);
+
                 logger.error("received result batch", { "connection": connectionId.toString(), "query": queryId.toString() }, LOG_CTX);
                 connDispatch(connectionId, {
                     type: QUERY_EXECUTION_RECEIVED_BATCH,
                     value: [queryId, batch, resultStream.getMetrics()],
                 });
             }
+
+            // Build result table
             return new arrow.Table(schema, batches);
         };
+
         // Execute the query and consume the results
         let resultStream: QueryExecutionResponseStream | null = null;
         let table: arrow.Table | null = null;
@@ -199,6 +207,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                     value: [queryId, e, resultStream?.getMetrics() ?? null],
                 });
             }
+            throw e;
         }
 
 

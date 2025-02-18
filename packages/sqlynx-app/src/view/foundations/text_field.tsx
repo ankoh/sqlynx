@@ -69,6 +69,7 @@ export function TextField(props: {
     readOnly?: boolean;
     validation?: TextFieldValidationStatus;
     logContext: string;
+    autoComplete?: boolean;
 }) {
     let validationStatus: undefined | TextInputValidationStatus = undefined;
     if (props.validation?.type === VALIDATION_OK) {
@@ -93,6 +94,7 @@ export function TextField(props: {
                 onChange={props.onChange}
                 disabled={props.disabled}
                 readOnly={props.readOnly}
+                autoComplete={props.autoComplete}
                 validationStatus={validationStatus}
             />
             <TextFieldValidation validation={props.validation} />

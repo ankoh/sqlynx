@@ -19,6 +19,8 @@ export interface TrinoConnectionParams {
     authParams: TrinoAuthParams;
     /// The gRPC metadata
     metadata: KeyValueListElement[];
+    /// The catalog name
+    catalogName: string;
 }
 
 export function buildTrinoConnectorParams(params: TrinoConnectionParams): proto.sqlynx_workbook.pb.ConnectorParams {
@@ -29,7 +31,8 @@ export function buildTrinoConnectorParams(params: TrinoConnectionParams): proto.
                 endpoint: params.channelArgs.endpoint ?? "",
                 auth: new proto.sqlynx_workbook.pb.TrinoAuthParams({
                     username: params.authParams.username ?? "",
-                })
+                }),
+                catalog: params.catalogName,
             })
         }
     });
@@ -44,7 +47,8 @@ export function readTrinoConnectorParams(params: proto.sqlynx_workbook.pb.TrinoC
             username: params.auth?.username ?? "",
             secret: "",
         },
-        metadata: []
+        metadata: [],
+        catalogName: params.catalog,
     };
 }
 

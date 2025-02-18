@@ -10,7 +10,10 @@ export async function updateTrinoCatalog(connectionId: number, _catalog: sqlynx.
     const [_queryId, queryExecution] = executor(connectionId, args);
     const queryResult = await queryExecution;
 
-    console.log(queryResult);
+    if (queryResult == null) {
+        // XXX
+        return;
+    }
 
     // XXX Update the catalog
 }

@@ -3,7 +3,8 @@ import * as proto from "@ankoh/sqlynx-protobuf";
 
 import { Logger } from '../../platform/logger.js';
 import { QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionResponseStreamMetrics, QueryExecutionStatus } from "../../connection/query_execution_state.js";
-import { TRINO_STATUS_HTTP_ERROR, TRINO_STATUS_OK, TRINO_STATUS_OTHER_ERROR, TrinoApiClientInterface, TrinoApiEndpoint, TrinoQueryResult, TrinoQueryStatistics } from "./trino_api_client.js";
+import { TRINO_STATUS_HTTP_ERROR, TRINO_STATUS_OK, TRINO_STATUS_OTHER_ERROR, TrinoApiClientInterface, TrinoApiEndpoint, TrinoQueryData, TrinoQueryResult, TrinoQueryStatistics } from "./trino_api_client.js";
+import { ChannelError, RawProxyError } from '../../platform/channel_common.js';
 
 const LOG_CTX = 'trino_channel';
 
@@ -20,6 +21,8 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
     responseMetadata: Map<string, string>;
     /// The schema
     resultSchema: arrow.Schema | null;
+    /// The first result batch
+    firstResultBatch: arrow.RecordBatch | null;
     /// The current result
     latestQueryResult: TrinoQueryResult | null;
     /// The latest statistics
@@ -34,6 +37,7 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
         this.currentStatus = QueryExecutionStatus.STARTED;
         this.responseMetadata = new Map();
         this.resultSchema = null;
+        this.firstResultBatch = null;
         this.latestQueryResult = result;
         this.latestQueryStats = result.stats ?? null;
         this.latestQueryState = result.stats?.state ?? null;
@@ -41,20 +45,52 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
 
     /// Fetch the next query result
     async fetchNextQueryResult(): Promise<TrinoQueryResult | null> {
+        // Do we have a next URI?
         const nextUri = this.latestQueryResult?.nextUri;
         if (!nextUri) {
             return null;
         }
         this.logger.debug("fetching next query results", { "nextUri": nextUri }, LOG_CTX);
+
+        // Get the next query result
         const queryResult = await this.apiClient.getQueryResult(nextUri);
         this.latestQueryResult = queryResult;
         this.latestQueryStats = queryResult.stats ?? null;
         this.latestQueryState = this.latestQueryStats?.state ?? null;
 
-        console.log(queryResult);
+        // Did the query fail?
+        if (queryResult.error) {
+            const errorCode = queryResult.error.errorCode;
+            const errorName = queryResult.error.errorName;
+            const errorType = queryResult.error.errorType;
+            const errorMessage = queryResult.error.message;
 
-        // XXX Translate trino query result to arrow
-        return null;
+            this.logger.error("fetching query results failed", {
+                "errorCode": errorCode.toString(),
+                "errorName": errorName,
+                "errorType": errorType,
+                "errorMessage": errorMessage,
+            }, LOG_CTX);
+
+            const rawError: RawProxyError = {
+                message: errorMessage,
+                details: {
+                    "errorCode": errorCode.toString(),
+                    "errorName": errorName,
+                    "errorType": errorType,
+                    "errorMessage": errorMessage,
+                },
+            };
+            throw new ChannelError(rawError, errorCode);
+        }
+        // Do we already have a schema?
+        if (this.resultSchema == null && queryResult.columns) {
+            // Attempt to translate the schema
+            this.resultSchema = translateTrinoSchema(queryResult);
+
+            console.log(this.resultSchema);
+        }
+        return queryResult;
     }
 
     /// Get the result metadata (after completion)
@@ -73,8 +109,8 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
     }
     /// Await the schema message
     async getSchema(): Promise<arrow.Schema | null> {
-        // XXX
-        return new arrow.Schema();
+        this.firstResultBatch = await this.nextRecordBatch();
+        return this.resultSchema;
     }
     /// Await the next query_status update
     async nextProgressUpdate(): Promise<QueryExecutionProgress | null> {
@@ -82,12 +118,20 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
     }
     /// Await the next record batch
     async nextRecordBatch(): Promise<arrow.RecordBatch | null> {
-        console.log(this);
+        // Is there a result batch?
+        if (this.firstResultBatch != null) {
+            const batch = this.firstResultBatch;
+            this.firstResultBatch = null;
+            return batch;
+        }
         // While still running
-        while (this.latestQueryState == "QUEUED" || this.latestQueryState == "RUNNING") {
+        while (this.latestQueryState == "QUEUED" || this.latestQueryState == "RUNNING" || this.latestQueryState == "FINISHING") {
             // Fetch the next query result
             const result = await this.fetchNextQueryResult();
-            console.log(result);
+            // Translate a batch
+            if (this.resultSchema != null && Array.isArray(result?.data)) {
+                return translateTrinoBatch(this.resultSchema, result.data);
+            }
         }
         this.logger.debug("reached end of query result stream", { "queryState": this.latestQueryState });
         return null;
@@ -119,12 +163,15 @@ export class TrinoChannel implements TrinoChannelInterface {
     apiClient: TrinoApiClientInterface;
     /// The trino api endpoint
     endpoint: TrinoApiEndpoint;
+    /// The catalog name
+    catalogName: string;
 
     /// Constructor
-    constructor(logger: Logger, client: TrinoApiClientInterface, endpoint: TrinoApiEndpoint) {
+    constructor(logger: Logger, client: TrinoApiClientInterface, endpoint: TrinoApiEndpoint, catalogName: string) {
         this.logger = logger;
         this.apiClient = client;
         this.endpoint = endpoint;
+        this.catalogName = catalogName;
     }
 
     /// Perform a health check
@@ -143,12 +190,11 @@ export class TrinoChannel implements TrinoChannelInterface {
     /// Execute Query
     async executeQuery(param: proto.salesforce_hyperdb_grpc_v1.pb.QueryParam): Promise<TrinoQueryResultStream> {
         this.logger.debug("executing query", {}, LOG_CTX);
-        const result = await this.apiClient.runQuery(this.endpoint, param.query);
+        const result = await this.apiClient.runQuery(this.endpoint, this.catalogName, param.query);
 
         this.logger.debug("opened query result stream", {}, LOG_CTX);
         const stream = new TrinoQueryResultStream(this.logger, this.apiClient, result);
         return stream;
-
     }
 
     /// Destroy the connection
@@ -156,3 +202,64 @@ export class TrinoChannel implements TrinoChannelInterface {
         return;
     }
 }
+
+/// Translate the Trino schema
+function translateTrinoSchema(result: TrinoQueryResult): (arrow.Schema | null) {
+    if (!result.columns?.length) {
+        return null;
+    }
+    let fields: arrow.Field[] = [];
+    for (const column of result.columns) {
+        let t: arrow.DataType | null = null;
+        switch (column.type) {
+            case "varchar":
+                t = new arrow.Utf8();
+                break;
+            default:
+                t = new arrow.Null();
+        }
+
+        fields.push(new arrow.Field(column.name, t, true))
+    }
+    return new arrow.Schema(fields);
+}
+
+/// Translate the Trino batch
+function translateTrinoBatch(schema: arrow.Schema, rows: TrinoQueryData): arrow.RecordBatch {
+    // Create column builders
+    const columnBuilders: arrow.Builder[] = [];
+    for (let i = 0; i < schema.fields.length; ++i) {
+        const field = schema.fields[i];
+        switch (schema.fields[i].typeId) {
+            case arrow.Type.Utf8:
+                columnBuilders.push(new arrow.Utf8Builder({ type: field.type }));
+                break;
+            default:
+                columnBuilders.push(new arrow.NullBuilder({ type: new arrow.Null() }));
+                break;
+        }
+    }
+    // Translate all rows
+    for (let i = 0; i < rows.length; ++i) {
+        const row = rows[i];
+        for (let j = 0; j < (row?.length ?? 0); ++j) {
+            columnBuilders[j].append(row[j]);
+        }
+    }
+    console.log(`translate trino batch with ${rows.length} rows`);
+    // Flush all columns
+    const columnData: arrow.Data[] = columnBuilders.map(col => {
+        col.finish();
+        return col.flush();
+    });
+    const structData = arrow.makeData({
+        nullCount: 0,
+        type: new arrow.Struct(schema.fields),
+        children: columnData,
+        length: rows.length
+    });
+    // Construct the record batch
+    return new arrow.RecordBatch(schema, structData);
+}
+
+
