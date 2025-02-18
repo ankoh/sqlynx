@@ -34,6 +34,7 @@ import { ConnectionParamsVariant } from '../../connection/connection_params.js';
 import { TRINO_CONNECTOR } from '../../connection/connector_info.js';
 import { DetailedError } from '../../utils/error.js';
 import { ErrorDetailsButton } from '../error_details.js';
+import { useCatalogLoaderQueueFn } from '../../connection/catalog_loader.js';
 
 const LOG_CTX = "trino_connector";
 
@@ -56,6 +57,9 @@ export const TrinoConnectorSettings: React.FC = () => {
     // Resolve connection for the default workbook
     const connectionId = workbook?.connectionId ?? null;
     const [connectionState, dispatchConnectionState] = useConnectionState(connectionId);
+
+    // Resolve the catalog loader
+    const loadCatalog = useCatalogLoaderQueueFn();
 
     // Wire up the page state
     const [pageState, setPageState] = React.useContext(PAGE_STATE_CTX)!;
@@ -101,7 +105,8 @@ export const TrinoConnectorSettings: React.FC = () => {
             const _channel = await trinoSetup.setup(dispatchConnectionState, connectionParams, setupAbortController.current.signal);
 
             // Start the catalog update
-            // XXX
+            loadCatalog(connectionId);
+
         } catch (error: any) {
             // XXX
         }

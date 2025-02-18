@@ -5,7 +5,6 @@ import { Route, Routes, Navigate, BrowserRouter, HashRouter } from 'react-router
 import { AppConfigProvider } from './app_config.js';
 import { AppEventListenerProvider } from './platform/event_listener_provider.js';
 import { CatalogLoaderProvider } from './connection/catalog_loader.js';
-import { CatalogLoaderQueueProvider } from './connection/catalog_loader_queue.js';
 import { ComputationRegistry } from './compute/computation_registry.js';
 import { ConnectionRegistry } from './connection/connection_registry.js';
 import { ConnectorsPage, ConnectorsPageStateProvider } from './view/connection/connection_page.js';
@@ -71,15 +70,13 @@ const Connectors = (props: { children: React.ReactElement }) => (
         <SalesforceConnector>
             <HyperGrpcConnector>
                 <TrinoConnector>
-                    <CatalogLoaderProvider>
-                        <CatalogLoaderQueueProvider>
-                            <Compute>
-                                <QueryExecutorProvider>
-                                    {props.children}
-                                </QueryExecutorProvider>
-                            </Compute>
-                        </CatalogLoaderQueueProvider>
-                    </CatalogLoaderProvider>
+                    <Compute>
+                        <QueryExecutorProvider>
+                            <CatalogLoaderProvider>
+                                {props.children}
+                            </CatalogLoaderProvider>
+                        </QueryExecutorProvider>
+                    </Compute>
                 </TrinoConnector>
             </HyperGrpcConnector>
         </SalesforceConnector>

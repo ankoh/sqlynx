@@ -176,8 +176,6 @@ export const HyperGrpcConnectorSettings: React.FC = () => {
                             <div className={style.status_text}>
                                 {statusText}
                             </div>
-                            <div className={style.status_stats}>
-                            </div>
                         </div>
                     </div>
                 </div>

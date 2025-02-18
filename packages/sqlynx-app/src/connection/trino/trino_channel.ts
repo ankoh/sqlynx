@@ -47,7 +47,9 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
         this.latestQueryResult = queryResult;
         this.latestQueryStats = queryResult.stats ?? null;
         this.latestQueryState = this.latestQueryStats?.state ?? null;
+
         console.log(queryResult);
+
         // XXX Translate trino query result to arrow
         return null;
     }
@@ -72,15 +74,14 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
     }
     /// Await the next query_status update
     async nextProgressUpdate(): Promise<QueryExecutionProgress | null> {
-        return {};
+        return null;
     }
     /// Await the next record batch
     async nextRecordBatch(): Promise<arrow.RecordBatch | null> {
         // While still running
         while (this.latestQueryState == "RUNNING") {
             // Fetch the next query result
-            const result = this.fetchNextQueryResult();
-            console.log(result);
+            const _result = await this.fetchNextQueryResult();
         }
         return null;
     }

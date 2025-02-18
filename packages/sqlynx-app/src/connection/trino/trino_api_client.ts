@@ -197,8 +197,7 @@ export class TrinoApiClient implements TrinoApiClientInterface {
                 body: "select 1",
                 headers
             });
-            const responseJson = await rawResponse.json();
-            console.log(responseJson);
+            await rawResponse.json();
             return {
                 type: TRINO_STATUS_OK,
                 value: {
@@ -222,6 +221,10 @@ export class TrinoApiClient implements TrinoApiClientInterface {
     async runQuery(endpoint: TrinoApiEndpoint, text: string): Promise<TrinoQueryResult> {
         const url = new URL(`${endpoint.endpoint}/v1/statement`);
         const headers = new Headers();
+        if (endpoint.auth.username.length > 0) {
+            headers.set('Authorization', 'Basic ' + btoa(endpoint.auth.username + ":" + endpoint.auth.secret));
+            headers.set('X-Trino-User', endpoint.auth.username);
+        }
         const rawResponse = await this.httpClient.fetch(url, {
             method: 'POST',
             body: text,

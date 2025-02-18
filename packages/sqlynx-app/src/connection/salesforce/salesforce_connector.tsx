@@ -2,8 +2,8 @@ import * as React from 'react';
 
 import { SalesforceApiClient, SalesforceApiClientInterface } from './salesforce_api_client.js';
 import { SalesforceAPIClientMock } from './salesforce_api_client_mock.js';
-import { mockSalesforceAuthFlow } from './salesforce_connection_setup_mock.js';
-import { SalesforceSetupApi, createSalesforceAuthFlow } from './salesforce_connection_setup.js';
+import { mockSalesforceAuthFlow as mockSalesforceSetup } from './salesforce_connection_setup_mock.js';
+import { SalesforceSetupApi, createSalesforceSetup } from './salesforce_connection_setup.js';
 import { useAppConfig } from '../../app_config.js';
 import { useHttpClient } from '../../platform/http_client_provider.js';
 import { useLogger } from '../../platform/logger_provider.js';
@@ -33,11 +33,11 @@ export const SalesforceConnector: React.FC<Props> = (props: Props) => {
             return [null, null];
         } else if (connectorConfig.mock?.enabled) {
             const api = new SalesforceAPIClientMock(connectorConfig.mock);
-            const setup = mockSalesforceAuthFlow(api, connectorConfig, logger);
+            const setup = mockSalesforceSetup(api, connectorConfig, logger);
             return [api, setup];
         } else {
             const api = new SalesforceApiClient(logger, httpClient);
-            const setup = createSalesforceAuthFlow(hyperClient!, api, platformType, appEvents, connectorConfig, logger);
+            const setup = createSalesforceSetup(hyperClient!, api, platformType, appEvents, connectorConfig, logger);
             return [api, setup];
         }
     }, [connectorConfig]);
