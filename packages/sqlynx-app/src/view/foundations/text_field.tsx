@@ -74,6 +74,8 @@ export function TextField(props: {
     let validationStatus: undefined | TextInputValidationStatus = undefined;
     if (props.validation?.type === VALIDATION_OK) {
         validationStatus = TextInputValidationStatus.Success;
+    } else if (props.validation?.type === VALIDATION_WARNING) {
+        validationStatus = TextInputValidationStatus.Warning;
     } else if (props.validation?.type === VALIDATION_ERROR) {
         validationStatus = TextInputValidationStatus.Error;
     }

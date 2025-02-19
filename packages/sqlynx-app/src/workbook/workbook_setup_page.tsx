@@ -13,7 +13,7 @@ import { ConnectionHealth } from '../connection/connection_state.js';
 import { ConnectorInfo, HYPER_GRPC_CONNECTOR, requiresSwitchingToNative, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from '../connection/connector_info.js';
 import { CopyToClipboardButton } from '../utils/clipboard.js';
 import { IndicatorStatus, StatusIndicator } from '../view/foundations/status_indicator.js';
-import { KeyValueTextField, TextField } from '../view/foundations/text_field.js';
+import { KeyValueTextField, TextField, VALIDATION_WARNING } from '../view/foundations/text_field.js';
 import { LogViewerOverlay } from '../view/log_viewer.js';
 import { OverlaySize } from '../view/foundations/overlay.js';
 import { RESTORE_WORKBOOK } from './workbook_state.js';
@@ -112,85 +112,111 @@ const ConnectionParamsSection: React.FC<ConnectorParamsSectionProps> = (props: C
         case TRINO_CONNECTOR: {
             const p = props.params.value;
             return (
-                <div className={baseStyles.card_section}>
-                    <div className={baseStyles.section_entries}>
-                        <TextField
-                            name="Endpoint"
-                            value={props.params.value.channelArgs.endpoint ?? ""}
-                            leadingVisual={() => <div>URL</div>}
-                            logContext={LOG_CTX}
-                            onChange={(e) => props.updateParams({
-                                type: TRINO_CONNECTOR,
-                                value: {
-                                    ...p,
-                                    channelArgs: {
-                                        ...p.channelArgs,
-                                        endpoint: e.target.value
+                <>
+                    <div className={baseStyles.card_section}>
+                        <div className={baseStyles.section_entries}>
+                            <TextField
+                                name="Endpoint"
+                                value={props.params.value.channelArgs.endpoint ?? ""}
+                                leadingVisual={() => <div>URL</div>}
+                                logContext={LOG_CTX}
+                                validation={
+                                    (props.params.value.authParams.username.length ?? 0) == 0
+                                        ? { type: VALIDATION_WARNING, value: "Endpoint is empty" }
+                                        : undefined
+                                }
+                                onChange={(e) => props.updateParams({
+                                    type: TRINO_CONNECTOR,
+                                    value: {
+                                        ...p,
+                                        channelArgs: {
+                                            ...p.channelArgs,
+                                            endpoint: e.target.value
+                                        }
                                     }
+                                })}
+                            />
+                            <TextField
+                                name="Username"
+                                value={props.params.value.authParams?.username ?? ""}
+                                leadingVisual={() => <div>ID</div>}
+                                logContext={LOG_CTX}
+                                validation={
+                                    (props.params.value.authParams.username.length ?? 0) == 0
+                                        ? { type: VALIDATION_WARNING, value: "Username is empty" }
+                                        : undefined
                                 }
-                            })}
-                        />
-                        <TextField
-                            name="Catalog"
-                            value={props.params.value.catalogName ?? ""}
-                            leadingVisual={BookIcon}
-                            logContext={LOG_CTX}
-                            onChange={(e) => props.updateParams({
-                                type: TRINO_CONNECTOR,
-                                value: {
-                                    ...p,
-                                    catalogName: e.target.value
-                                }
-                            })}
-                        />
-                        <ValueListBuilder
-                            title="Schemas"
-                            valueIcon={() => <div>Value</div>}
-                            addButtonLabel="Add Header"
-                            elements={props.params.value.schemaNames}
-                            modifyElements={(action) => props.updateParams({
-                                type: TRINO_CONNECTOR,
-                                value: {
-                                    ...p,
-                                    schemaNames: action(p.schemaNames)
-                                }
-                            })}
-                        />
-                        <TextField
-                            name="Username"
-                            value={props.params.value.authParams?.username ?? ""}
-                            leadingVisual={() => <div>ID</div>}
-                            logContext={LOG_CTX}
-                            onChange={(e) => props.updateParams({
-                                type: TRINO_CONNECTOR,
-                                value: {
-                                    ...p,
-                                    authParams: {
-                                        ...p.authParams,
-                                        username: e.target.value
+                                onChange={(e) => props.updateParams({
+                                    type: TRINO_CONNECTOR,
+                                    value: {
+                                        ...p,
+                                        authParams: {
+                                            ...p.authParams,
+                                            username: e.target.value
+                                        }
                                     }
+                                })}
+                            />
+                            <TextField
+                                name="Secret"
+                                value={props.params.value.authParams?.secret ?? ""}
+                                concealed={true}
+                                leadingVisual={KeyIcon}
+                                logContext={LOG_CTX}
+                                validation={
+                                    (props.params.value.authParams.secret.length ?? 0) == 0
+                                        ? { type: VALIDATION_WARNING, value: "Secret is empty" }
+                                        : undefined
                                 }
-                            })}
-                        />
-                        <TextField
-                            name="Secret"
-                            value={props.params.value.authParams?.secret ?? ""}
-                            concealed={true}
-                            leadingVisual={KeyIcon}
-                            logContext={LOG_CTX}
-                            onChange={(e) => props.updateParams({
-                                type: TRINO_CONNECTOR,
-                                value: {
-                                    ...p,
-                                    authParams: {
-                                        ...p.authParams,
-                                        secret: e.target.value
+                                onChange={(e) => props.updateParams({
+                                    type: TRINO_CONNECTOR,
+                                    value: {
+                                        ...p,
+                                        authParams: {
+                                            ...p.authParams,
+                                            secret: e.target.value
+                                        }
                                     }
-                                }
-                            })}
-                        />
+                                })}
+                            />
+                        </div>
                     </div>
-                </div>
+                    <div className={baseStyles.card_section}>
+                        <div className={baseStyles.section_entries}>
+                            <TextField
+                                name="Catalog"
+                                value={props.params.value.catalogName ?? ""}
+                                leadingVisual={BookIcon}
+                                validation={
+                                    (props.params.value.catalogName.length ?? 0) == 0
+                                        ? { type: VALIDATION_WARNING, value: "Catalog is empty" }
+                                        : undefined
+                                }
+                                logContext={LOG_CTX}
+                                onChange={(e) => props.updateParams({
+                                    type: TRINO_CONNECTOR,
+                                    value: {
+                                        ...p,
+                                        catalogName: e.target.value
+                                    }
+                                })}
+                            />
+                            <ValueListBuilder
+                                title="Schemas"
+                                valueIcon={() => <BookIcon />}
+                                addButtonLabel="Add Header"
+                                elements={props.params.value.schemaNames}
+                                modifyElements={(action) => props.updateParams({
+                                    type: TRINO_CONNECTOR,
+                                    value: {
+                                        ...p,
+                                        schemaNames: action(p.schemaNames)
+                                    }
+                                })}
+                            />
+                        </div>
+                    </div>
+                </>
             );
         }
         default: {
@@ -368,15 +394,19 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
             />);
     }
 
-    // Do we need to switch to native?
-    // Render a warning, information where to get the app and a button to switch.
-    if (!canExecuteHere) {
+    // Get the workbook url
+    const getWorkbookUrl = () => {
         const workbookProto = new proto.sqlynx_workbook.pb.Workbook({
             ...props.setupProto,
             connectorParams: connectionParams == null ? undefined : encodeConnectionParams(connectionParams)
         });
-        const workbookURL = encodeWorkbookAsUrl(workbookProto, WorkbookLinkTarget.NATIVE);
+        const url = encodeWorkbookAsUrl(workbookProto, WorkbookLinkTarget.NATIVE);
+        return url.toString();
+    }
 
+    // Do we need to switch to native?
+    // Render a warning, information where to get the app and a button to switch.
+    if (!canExecuteHere) {
         sections.push(
             <div key={sections.length} className={baseStyles.card_section}>
                 <div className={baseStyles.section_entries}>
@@ -408,7 +438,7 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
                             variant={ButtonVariant.Primary}
                             size={ButtonSize.Medium}
                             logContext={LOG_CTX}
-                            value={workbookURL.toString()}
+                            getValue={getWorkbookUrl}
                             aria-label="copy-deeplink"
                             aria-labelledby=""
                         />
@@ -419,7 +449,7 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
                                 <div>{Math.floor(remainingUntilAutoTrigger / 1000)}</div> : undefined}
                             onClick={() => {
                                 const link = document.createElement('a');
-                                link.href = workbookURL.toString();
+                                link.href = getWorkbookUrl();
                                 logger.info(`opening deep link`, { "href": link.href });
                                 link.click();
                             }}>
@@ -460,6 +490,13 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
                 break;
         }
 
+        // Encode the workbook url
+        const workbookProto = new proto.sqlynx_workbook.pb.Workbook({
+            ...props.setupProto,
+            connectorParams: connectionParams == null ? undefined : encodeConnectionParams(connectionParams)
+        });
+        const workbookURL = encodeWorkbookAsUrl(workbookProto, WorkbookLinkTarget.NATIVE);
+
         sections.push(
             <div key={sections.length} className={baseStyles.card_actions}>
                 <div className={baseStyles.card_actions_left}>
@@ -477,6 +514,14 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
                     </div>
                 </div>
                 <div className={baseStyles.card_actions_right}>
+                    <CopyToClipboardButton
+                        variant={ButtonVariant.Default}
+                        size={ButtonSize.Medium}
+                        logContext={LOG_CTX}
+                        value={workbookURL.toString()}
+                        aria-label="copy-deeplink"
+                        aria-labelledby=""
+                    />
                     {connectButton}
                 </div>
             </div>,
@@ -532,7 +577,7 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
                     <div className={baseStyles.card}>
                         <div className={baseStyles.card_header} data-tauri-drag-region>
                             <div className={baseStyles.card_header_left_container}>
-                                Setup {connection.connectorInfo.displayName.long}
+                                {connection.connectorInfo.displayName.long}
                             </div>
                             <div className={baseStyles.card_header_right_container}>
                                 <LogViewerOverlay
@@ -543,8 +588,8 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
                                     align={AnchorAlignment.End}
                                     anchorOffset={16}
                                     overlayProps={{
-                                        width: OverlaySize.L,
-                                        height: OverlaySize.M
+                                        width: OverlaySize.XL,
+                                        height: OverlaySize.L
                                     }}
                                 />
                                 <IconButton

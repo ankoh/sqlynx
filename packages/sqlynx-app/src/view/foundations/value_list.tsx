@@ -51,9 +51,11 @@ export const ValueListBuilder: React.FC<Props> = (props: Props) => {
             <div className={styles.list_name}>
                 {props.title}
             </div>
-            <div className={styles.list_caption}>
-                {props.caption}
-            </div>
+            {props.caption && (
+                <div className={styles.list_caption}>
+                    {props.caption}
+                </div>
+            )}
             <IconButton
                 className={styles.add_button}
                 icon={PlusIcon}

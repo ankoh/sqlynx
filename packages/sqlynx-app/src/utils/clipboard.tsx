@@ -13,7 +13,8 @@ interface Props {
     variant: ButtonVariant;
     size: ButtonSize;
     className?: string;
-    value: string;
+    value?: string;
+    getValue?: () => string;
     timeoutMs?: number;
     logContext: string;
     disabled?: boolean;
@@ -27,11 +28,12 @@ export function CopyToClipboardButton(props: Props): React.ReactElement {
     const [lastCopied, setLastCopied] = React.useState<number | null>(null);
     const [wasRecentlyCopied, setWasRecentlyCopied] = React.useState<boolean>(false);
     const timeoutMs = props.timeoutMs ?? DEFAULT_COPY_TIMEOUT;
+    const value = props.value ?? (props.getValue ? props.getValue() : "");
 
     const copy = React.useCallback(async () => {
         try {
-            await navigator.clipboard.writeText(props.value);
-            logger.error("copied to clipboard", { "chars": props.value.length.toString() }, props.logContext);
+            await navigator.clipboard.writeText(value);
+            logger.error("copied to clipboard", { "chars": value.length.toString() }, props.logContext);
             setLastCopied(Date.now());
         } catch (e: any) {
             logger.error("copying failed", { "error": e.toString() }, props.logContext);

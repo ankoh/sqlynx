@@ -20,7 +20,7 @@ import { Dispatch } from '../../utils/variant.js';
 import { IndicatorStatus, StatusIndicator } from '../foundations/status_indicator.js';
 import { KeyValueListBuilder, UpdateKeyValueList } from '../foundations/keyvalue_list.js';
 import { PlatformType, usePlatformType } from '../../platform/platform_type.js';
-import { TextField } from '../foundations/text_field.js';
+import { TextField, VALIDATION_WARNING } from '../foundations/text_field.js';
 import { TrinoConnectionParams } from '../../connection/trino/trino_connection_params.js';
 import { classNames } from '../../utils/classnames.js';
 import { generateWorkbookUrl, WorkbookLinkTarget } from '../../workbook/workbook_setup_url.js';
@@ -234,6 +234,11 @@ export const TrinoConnectorSettings: React.FC = () => {
                             caption="Endpoint of the Trino Api as 'https://host:port'"
                             value={pageState.newParams.channelArgs.endpoint}
                             placeholder="trino endpoint url"
+                            validation={
+                                (pageState.newParams.channelArgs.endpoint.length ?? 0) == 0
+                                    ? { type: VALIDATION_WARNING, value: "Endpoint is empty" }
+                                    : undefined
+                            }
                             leadingVisual={() => <div>URL</div>}
                             onChange={(e) => setEndpoint(e.target.value)}
                             disabled={freezeInput}
@@ -247,6 +252,11 @@ export const TrinoConnectorSettings: React.FC = () => {
                             caption="Username for the Trino Api"
                             value={pageState.newParams.authParams.username}
                             placeholder=""
+                            validation={
+                                (pageState.newParams.authParams.username.length ?? 0) == 0
+                                    ? { type: VALIDATION_WARNING, value: "Username is empty" }
+                                    : undefined
+                            }
                             leadingVisual={() => <div>ID</div>}
                             onChange={(e) => setBasicAuthUsername(e.target.value)}
                             disabled={freezeInput}
@@ -259,6 +269,11 @@ export const TrinoConnectorSettings: React.FC = () => {
                             caption="Password for the Trino Api"
                             value={pageState.newParams.authParams.secret}
                             placeholder=""
+                            validation={
+                                (pageState.newParams.authParams.secret.length ?? 0) == 0
+                                    ? { type: VALIDATION_WARNING, value: "Secret is empty" }
+                                    : undefined
+                            }
                             leadingVisual={KeyIcon}
                             onChange={(e) => setBasicAuthSecret(e.target.value)}
                             disabled={freezeInput}
@@ -275,6 +290,11 @@ export const TrinoConnectorSettings: React.FC = () => {
                             caption="Name of the Trino Catalog"
                             value={pageState.newParams.catalogName}
                             placeholder=""
+                            validation={
+                                (pageState.newParams.catalogName.length ?? 0) == 0
+                                    ? { type: VALIDATION_WARNING, value: "Catalog is empty" }
+                                    : undefined
+                            }
                             leadingVisual={BookIcon}
                             onChange={(e) => setCatalogName(e.target.value)}
                             disabled={freezeInput}

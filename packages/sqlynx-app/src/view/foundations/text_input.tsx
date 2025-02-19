@@ -5,7 +5,8 @@ import { classNames } from '../../utils/classnames.js';
 
 export enum TextInputValidationStatus {
     Success = 1,
-    Error = 2,
+    Warning = 2,
+    Error = 3,
 }
 
 interface TextInputProps {
@@ -29,6 +30,7 @@ export function TextInput(props: TextInputProps): React.ReactElement {
             [styles.root_disabled]: props.disabled,
             [styles.root_block]: props.block,
             [styles.root_validation_success]: props.validationStatus == TextInputValidationStatus.Success,
+            [styles.root_validation_warning]: props.validationStatus == TextInputValidationStatus.Warning,
             [styles.root_validation_error]: props.validationStatus == TextInputValidationStatus.Error,
         })}>
             {props.leadingVisual && (

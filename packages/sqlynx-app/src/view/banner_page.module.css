@@ -163,7 +163,7 @@
     border-top: 1px solid var(--border_color_primary);
 }
 .section_entries {
-    padding: 12px 12px 12px 12px;
+    padding: 12px 12px 16px 12px;
     display: flex;
     flex-direction: column;
     row-gap: 12px;

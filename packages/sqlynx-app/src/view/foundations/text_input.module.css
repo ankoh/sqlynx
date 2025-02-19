@@ -35,6 +35,9 @@
 .root_validation_success {
     border-color: #1f883d;
 }
+.root_validation_warning {
+    border-color: rgb(191, 135, 0);
+}
 .root_validation_error {
     border-color: #cf222e;
 }
