@@ -143,7 +143,6 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                 break;
             case QueryExecutionStatus.STARTED:
             case QueryExecutionStatus.ACCEPTED:
-            case QueryExecutionStatus.RECEIVED_SCHEMA:
             case QueryExecutionStatus.RECEIVED_FIRST_RESULT:
                 if (prevStatus.current == null || prevStatus.current[0] != activeQueryId || prevStatus.current[1] != status) {
                     selectTab(TabKey.QueryStatusView);

@@ -21,6 +21,8 @@ export interface TrinoConnectionParams {
     metadata: KeyValueListElement[];
     /// The catalog name
     catalogName: string;
+    /// The schema name
+    schemaName: string;
 }
 
 export function buildTrinoConnectorParams(params: TrinoConnectionParams): proto.sqlynx_workbook.pb.ConnectorParams {
@@ -33,6 +35,7 @@ export function buildTrinoConnectorParams(params: TrinoConnectionParams): proto.
                     username: params.authParams.username ?? "",
                 }),
                 catalog: params.catalogName,
+                schema: params.schemaName,
             })
         }
     });
@@ -49,6 +52,7 @@ export function readTrinoConnectorParams(params: proto.sqlynx_workbook.pb.TrinoC
         },
         metadata: [],
         catalogName: params.catalog,
+        schemaName: params.schema,
     };
 }
 

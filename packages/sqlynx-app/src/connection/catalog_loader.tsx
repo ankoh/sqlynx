@@ -91,7 +91,7 @@ export function CatalogLoaderProvider(props: { children?: React.ReactElement }) 
                     await updateHyperCatalog(connectionId, conn.catalog, executor);
                     break;
                 case TRINO_CONNECTOR:
-                    await updateTrinoCatalog(connectionId, conn.catalog, executor);
+                    await updateTrinoCatalog(connectionId, conn.details.value, conn.catalog, executor);
                     break;
                 case DEMO_CONNECTOR:
                 case SERVERLESS_CONNECTOR:

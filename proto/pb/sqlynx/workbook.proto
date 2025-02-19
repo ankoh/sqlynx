@@ -50,6 +50,8 @@ message TrinoConnectorParams {
     TrinoAuthParams auth = 2;
     /// The catalog name
     string catalog = 3;
+    /// The schema name
+    string schema = 4;
 }
 
 message ConnectorParams {

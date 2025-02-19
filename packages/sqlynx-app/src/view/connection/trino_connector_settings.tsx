@@ -68,6 +68,7 @@ export const TrinoConnectorSettings: React.FC = () => {
     const setBasicAuthUsername = (v: string) => setPageState(s => ({ ...s, newParams: { ...s.newParams, authParams: { ...s.newParams.authParams, username: v } } }));
     const setBasicAuthSecret = (v: string) => setPageState(s => ({ ...s, newParams: { ...s.newParams, authParams: { ...s.newParams.authParams, secret: v } } }));
     const setCatalogName = (v: string) => setPageState(s => ({ ...s, newParams: { ...s.newParams, catalogName: v } }));
+    const setSchemaName = (v: string) => setPageState(s => ({ ...s, newParams: { ...s.newParams, schemaName: v } }));
     const modifyMetadata: Dispatch<UpdateKeyValueList> = (action: UpdateKeyValueList) => setPageState(s => ({ ...s, newParams: { ...s.newParams, metadata: action(s.newParams.metadata) } }));
 
     // Update the page state with the connection params
@@ -279,6 +280,18 @@ export const TrinoConnectorSettings: React.FC = () => {
                             autoComplete={false}
                             logContext={LOG_CTX}
                         />
+                        <TextField
+                            name="Schema"
+                            caption="Name of the Trino Schema"
+                            value={pageState.newParams.schemaName}
+                            placeholder=""
+                            leadingVisual={BookIcon}
+                            onChange={(e) => setSchemaName(e.target.value)}
+                            disabled={freezeInput}
+                            readOnly={freezeInput}
+                            autoComplete={false}
+                            logContext={LOG_CTX}
+                        />
                     </div>
                 </div>
                 <div className={style.section}>
@@ -316,6 +329,7 @@ export const TrinoConnectorSettingsStateProvider: React.FC<ProviderProps> = (pro
             },
             metadata: [],
             catalogName: "",
+            schemaName: "",
         }
     });
     return (

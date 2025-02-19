@@ -143,6 +143,19 @@ const ConnectionParamsSection: React.FC<ConnectorParamsSectionProps> = (props: C
                             })}
                         />
                         <TextField
+                            name="Schema"
+                            value={props.params.value.schemaName ?? ""}
+                            leadingVisual={BookIcon}
+                            logContext={LOG_CTX}
+                            onChange={(e) => props.updateParams({
+                                type: TRINO_CONNECTOR,
+                                value: {
+                                    ...p,
+                                    schemaName: e.target.value
+                                }
+                            })}
+                        />
+                        <TextField
                             name="Username"
                             value={props.params.value.authParams?.username ?? ""}
                             leadingVisual={() => <div>ID</div>}
