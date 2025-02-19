@@ -27,34 +27,12 @@
     grid-row: 3;
     grid-column: 1 / span 2;
     display: grid;
+    row-gap: 8px;
     margin-top: 6px;
 }
 .element {
     position: relative;
-    display: grid;
-    grid-template-rows: max-content max-content;
-    row-gap: 8px;
-    position: relative;
 }
 
-.path {
-    grid-row: 1;
-    grid-column: 1;
-}
+.path {}
 
-.alias {
-    width: calc(100% - 36px) !important;
-    margin-left: 36px;
-}
-
-.aliaslink {
-    position: absolute;
-    left: 20px;
-    top: 33px;
-    width: 15px;
-    height: 24px;
-
-    border-bottom: 1px solid var(--border_color_primary);
-    border-left: 1px solid var(--border_color_primary);
-    border-bottom-left-radius: 6px;
-}
