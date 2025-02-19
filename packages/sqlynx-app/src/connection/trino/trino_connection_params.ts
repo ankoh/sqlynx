@@ -2,6 +2,7 @@ import * as proto from '@ankoh/sqlynx-protobuf';
 
 import { KeyValueListElement } from '../../view/foundations/keyvalue_list.js';
 import { ChannelArgs } from '../../platform/channel_common.js';
+import { ValueListElement } from '../../view/foundations/value_list.js';
 
 export interface TrinoBasicAuthParams {
     /// The username
@@ -21,8 +22,8 @@ export interface TrinoConnectionParams {
     metadata: KeyValueListElement[];
     /// The catalog name
     catalogName: string;
-    /// The schema name
-    schemaName: string;
+    /// The schema names
+    schemaNames: ValueListElement[];
 }
 
 export function buildTrinoConnectorParams(params: TrinoConnectionParams): proto.sqlynx_workbook.pb.ConnectorParams {
@@ -34,8 +35,8 @@ export function buildTrinoConnectorParams(params: TrinoConnectionParams): proto.
                 auth: new proto.sqlynx_workbook.pb.TrinoAuthParams({
                     username: params.authParams.username ?? "",
                 }),
-                catalog: params.catalogName,
-                schema: params.schemaName,
+                catalogName: params.catalogName,
+                schemaNames: params.schemaNames.map(v => v.value),
             })
         }
     });
@@ -51,8 +52,8 @@ export function readTrinoConnectorParams(params: proto.sqlynx_workbook.pb.TrinoC
             secret: "",
         },
         metadata: [],
-        catalogName: params.catalog,
-        schemaName: params.schema,
+        catalogName: params.catalogName,
+        schemaNames: params.schemaNames.map(v => ({ value: v })),
     };
 }
 

@@ -36,6 +36,7 @@ import { TRINO_CONNECTOR } from '../../connection/connector_info.js';
 import { DetailedError } from '../../utils/error.js';
 import { ErrorDetailsButton } from '../error_details.js';
 import { useCatalogLoaderQueueFn } from '../../connection/catalog_loader.js';
+import { UpdateValueList, ValueListBuilder } from '../../view/foundations/value_list.js';
 
 const LOG_CTX = "trino_connector";
 
@@ -68,7 +69,8 @@ export const TrinoConnectorSettings: React.FC = () => {
     const setBasicAuthUsername = (v: string) => setPageState(s => ({ ...s, newParams: { ...s.newParams, authParams: { ...s.newParams.authParams, username: v } } }));
     const setBasicAuthSecret = (v: string) => setPageState(s => ({ ...s, newParams: { ...s.newParams, authParams: { ...s.newParams.authParams, secret: v } } }));
     const setCatalogName = (v: string) => setPageState(s => ({ ...s, newParams: { ...s.newParams, catalogName: v } }));
-    const setSchemaName = (v: string) => setPageState(s => ({ ...s, newParams: { ...s.newParams, schemaName: v } }));
+
+    const modifySchemaNames: Dispatch<UpdateValueList> = (action: UpdateValueList) => setPageState(s => ({ ...s, newParams: { ...s.newParams, schemaNames: action(s.newParams.schemaNames) } }));
     const modifyMetadata: Dispatch<UpdateKeyValueList> = (action: UpdateKeyValueList) => setPageState(s => ({ ...s, newParams: { ...s.newParams, metadata: action(s.newParams.metadata) } }));
 
     // Update the page state with the connection params
@@ -280,17 +282,15 @@ export const TrinoConnectorSettings: React.FC = () => {
                             autoComplete={false}
                             logContext={LOG_CTX}
                         />
-                        <TextField
-                            name="Schema"
-                            caption="Name of the Trino Schema"
-                            value={pageState.newParams.schemaName}
-                            placeholder=""
-                            leadingVisual={BookIcon}
-                            onChange={(e) => setSchemaName(e.target.value)}
+                        <ValueListBuilder
+                            title="Schemas"
+                            caption="Names of the Trino Schemas"
+                            valueIcon={() => <div>Value</div>}
+                            addButtonLabel="Add Value"
+                            elements={pageState.newParams.schemaNames}
+                            modifyElements={modifySchemaNames}
                             disabled={freezeInput}
                             readOnly={freezeInput}
-                            autoComplete={false}
-                            logContext={LOG_CTX}
                         />
                     </div>
                 </div>
@@ -329,7 +329,7 @@ export const TrinoConnectorSettingsStateProvider: React.FC<ProviderProps> = (pro
             },
             metadata: [],
             catalogName: "",
-            schemaName: "",
+            schemaNames: [],
         }
     });
     return (

@@ -1,39 +1,36 @@
 import * as React from 'react';
+import * as styles from './value_list.module.css';
+
+import { IconButton } from '@primer/react';
+import { PlusIcon, XIcon } from '@primer/octicons-react';
 
 import { Dispatch } from '../../utils/variant.js';
-import { PlusIcon, XIcon } from '@primer/octicons-react';
 import { classNames } from '../../utils/classnames.js';
-
-import * as styles from './keyvalue_list.module.css';
 import { TextInput } from './text_input.js';
-import { IconButton } from '@primer/react';
 import { TextInputAction } from './text_input_action.js';
 
-export interface KeyValueListElement {
-    key: string;
+export interface ValueListElement {
     value: string;
 }
 
-export type UpdateKeyValueList = (prev: KeyValueListElement[]) => KeyValueListElement[];
+export type UpdateValueList = (prev: ValueListElement[]) => ValueListElement[];
 
 interface Props {
     className?: string;
     title: string;
-    caption: string;
-    keyIcon: React.ElementType;
+    caption?: string;
     valueIcon: React.ElementType;
     addButtonLabel: string;
-    elements: KeyValueListElement[];
-    modifyElements: Dispatch<UpdateKeyValueList>;
+    elements: ValueListElement[];
+    modifyElements: Dispatch<UpdateValueList>;
     disabled?: boolean;
     readOnly?: boolean;
 }
 
-export const KeyValueListBuilder: React.FC<Props> = (props: Props) => {
+export const ValueListBuilder: React.FC<Props> = (props: Props) => {
     const appendElement = () => props.modifyElements(list => {
         const copy = [...list];
         copy.push({
-            key: "",
             value: "",
         });
         return copy;
@@ -43,9 +40,9 @@ export const KeyValueListBuilder: React.FC<Props> = (props: Props) => {
         copy.splice(index, 1);
         return copy;
     });
-    const modifyElement = (index: number, key: string, value: string) => props.modifyElements(list => {
+    const modifyElement = (index: number, value: string) => props.modifyElements(list => {
         const copy = [...list];
-        copy[index] = { key, value };
+        copy[index] = { value };
         return copy;
     });
 
@@ -71,9 +68,9 @@ export const KeyValueListBuilder: React.FC<Props> = (props: Props) => {
                         <TextInput
                             block
                             className={styles.path}
-                            value={elem.key}
-                            onChange={(ev: any) => modifyElement(i, ev.target.value, elem.value)}
-                            leadingVisual={props.keyIcon}
+                            value={elem.value}
+                            onChange={(ev: any) => modifyElement(i, ev.target.value)}
+                            leadingVisual={props.valueIcon}
                             trailingAction={
                                 <TextInputAction
                                     icon={XIcon}
@@ -82,16 +79,6 @@ export const KeyValueListBuilder: React.FC<Props> = (props: Props) => {
                                     onClick={() => deleteIndex(i)}
                                 />
                             }
-                            disabled={props.disabled}
-                            readOnly={props.disabled}
-                        />
-                        <div className={styles.aliaslink} />
-                        <TextInput
-                            block
-                            className={styles.alias}
-                            value={elem.value}
-                            onChange={(ev: any) => modifyElement(i, elem.key, ev.target.value)}
-                            leadingVisual={props.valueIcon}
                             disabled={props.disabled}
                             readOnly={props.disabled}
                         />

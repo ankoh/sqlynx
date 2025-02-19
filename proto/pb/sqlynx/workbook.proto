@@ -49,9 +49,9 @@ message TrinoConnectorParams {
     /// The authentication params
     TrinoAuthParams auth = 2;
     /// The catalog name
-    string catalog = 3;
+    string catalog_name = 3;
     /// The schema name
-    string schema = 4;
+    repeated string schema_names = 4;
 }
 
 message ConnectorParams {

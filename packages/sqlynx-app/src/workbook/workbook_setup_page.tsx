@@ -32,6 +32,7 @@ import { ErrorDetailsButton } from '../view/error_details.js';
 import { DetailedError } from '../utils/error.js';
 import { ConnectionParamsVariant, encodeConnectionParams, readConnectionParamsFromProto } from '../connection/connection_params.js';
 import { useCatalogLoaderQueueFn } from '../connection/catalog_loader.js';
+import { ValueListBuilder } from '../view/foundations/value_list.js';
 
 const LOG_CTX = "workbook_setup";
 const AUTO_TRIGGER_DELAY = 2000;
@@ -142,16 +143,16 @@ const ConnectionParamsSection: React.FC<ConnectorParamsSectionProps> = (props: C
                                 }
                             })}
                         />
-                        <TextField
-                            name="Schema"
-                            value={props.params.value.schemaName ?? ""}
-                            leadingVisual={BookIcon}
-                            logContext={LOG_CTX}
-                            onChange={(e) => props.updateParams({
+                        <ValueListBuilder
+                            title="Schemas"
+                            valueIcon={() => <div>Value</div>}
+                            addButtonLabel="Add Header"
+                            elements={props.params.value.schemaNames}
+                            modifyElements={(action) => props.updateParams({
                                 type: TRINO_CONNECTOR,
                                 value: {
                                     ...p,
-                                    schemaName: e.target.value
+                                    schemaNames: action(p.schemaNames)
                                 }
                             })}
                         />
