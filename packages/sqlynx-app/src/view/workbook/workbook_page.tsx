@@ -12,9 +12,9 @@ import { DragSizing, DragSizingBorder } from '../foundations/drag_sizing.js';
 import { KeyEventHandler, useKeyEvents } from '../../utils/key_events.js';
 import { QueryExecutionStatus } from '../../connection/query_execution_state.js';
 import { QueryResultView } from '../query_result/query_result_view.js';
-import { QueryStatusView } from '../query_status/query_status_view.js';
+import { QueryStatusPanel } from '../query_status/query_status_panel.js';
 import { ScriptEditor } from './editor.js';
-import { ScriptCatalogView } from '../../view/catalog/script_catalog_view.js';
+import { CatalogPanel } from '../../view/catalog/catalog_panel.js';
 import { ScriptURLOverlay } from './script_url_overlay.js';
 import { WorkbookCommandType, useWorkbookCommandDispatch } from '../../workbook/workbook_commands.js';
 import { WorkbookListDropdown } from './session_list_dropdown.js';
@@ -86,7 +86,7 @@ const OutputCommandList = (props: { connector: ConnectorInfo | null }) => {
 
 enum TabKey {
     Catalog = 0,
-    QueryStatusView = 1,
+    QueryStatusPanel = 1,
     QueryResultView = 2,
 }
 
@@ -123,7 +123,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                 ctrlKey: true,
                 callback: () => {
                     selectTab(key => {
-                        const tabs = [TabKey.Catalog, TabKey.QueryStatusView, TabKey.QueryResultView];
+                        const tabs = [TabKey.Catalog, TabKey.QueryStatusPanel, TabKey.QueryResultView];
                         return tabs[((key as number) + 1) % tabState.current.enabledTabs];
                     });
                 },
@@ -145,11 +145,11 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
             case QueryExecutionStatus.ACCEPTED:
             case QueryExecutionStatus.RECEIVED_FIRST_RESULT:
                 if (prevStatus.current == null || prevStatus.current[0] != activeQueryId || prevStatus.current[1] != status) {
-                    selectTab(TabKey.QueryStatusView);
+                    selectTab(TabKey.QueryStatusPanel);
                 }
                 break;
             case QueryExecutionStatus.FAILED:
-                selectTab(TabKey.QueryStatusView);
+                selectTab(TabKey.QueryStatusPanel);
                 break;
             case QueryExecutionStatus.SUCCEEDED:
                 selectTab(TabKey.QueryResultView);
@@ -201,8 +201,8 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                         selectTab={selectTab}
                         tabProps={{
                             [TabKey.Catalog]: { tabId: TabKey.Catalog, icon: `${icons}#tables_connected`, labelShort: 'Catalog', disabled: false },
-                            [TabKey.QueryStatusView]: {
-                                tabId: TabKey.QueryStatusView,
+                            [TabKey.QueryStatusPanel]: {
+                                tabId: TabKey.QueryStatusPanel,
                                 icon: `${icons}#plan`,
                                 labelShort: 'Status',
                                 disabled: tabState.current.enabledTabs < 2,
@@ -214,11 +214,11 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                                 disabled: tabState.current.enabledTabs < 3,
                             },
                         }}
-                        tabKeys={[TabKey.Catalog, TabKey.QueryStatusView, TabKey.QueryResultView]}
+                        tabKeys={[TabKey.Catalog, TabKey.QueryStatusPanel, TabKey.QueryResultView]}
                         tabRenderers={{
-                            [TabKey.Catalog]: _props => <ScriptCatalogView />,
-                            [TabKey.QueryStatusView]: _props => (
-                                <QueryStatusView query={activeQueryState} />
+                            [TabKey.Catalog]: _props => <CatalogPanel />,
+                            [TabKey.QueryStatusPanel]: _props => (
+                                <QueryStatusPanel query={activeQueryState} />
                             ),
                             [TabKey.QueryResultView]: _props => (
                                 <QueryResultView query={activeQueryState} />

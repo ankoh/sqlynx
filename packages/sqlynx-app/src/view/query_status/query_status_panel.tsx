@@ -2,13 +2,13 @@ import * as React from 'react';
 import { RectangleWaveSpinner } from '../foundations/spinners.js';
 import { QueryExecutionState, QueryExecutionStatus } from '../../connection/query_execution_state.js';
 
-import * as styles from './query_status_view.module.css';
+import * as styles from './query_status_panel.module.css';
 
 interface Props {
     query: QueryExecutionState | null;
 }
 
-export const QueryStatusView: React.FC<Props> = (props: Props) => {
+export const QueryStatusPanel: React.FC<Props> = (props: Props) => {
     const getStatusText = (status: QueryExecutionStatus | null) => {
         if (status == null) {
             return '';

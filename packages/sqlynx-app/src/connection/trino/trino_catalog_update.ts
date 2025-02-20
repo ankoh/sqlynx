@@ -5,9 +5,16 @@ import { QueryExecutionArgs } from '../query_execution_args.js';
 import { TrinoConnectionDetails } from './trino_connection_state.js';
 
 export async function updateTrinoCatalog(connectionId: number, connDetails: TrinoConnectionDetails, _catalog: sqlynx.SQLynxCatalog, executor: QueryExecutor): Promise<void> {
+
     const query = (connDetails.channelParams?.schemaNames.length ?? 0) > 0
-        ? `select * from information_schema.tables where table_schema in ('${connDetails.channelParams?.schemaNames.map(n => n.value).join("','")}')`
-        : `select * from information_schema.tables`;
+        ? `
+            select * from information_schema.columns 
+            where table_catalog = '${connDetails.channelParams?.catalogName}'
+            and table_schema in ('${connDetails.channelParams?.schemaNames.map(n => n.value).join("','")}')`
+        : `
+            select * from information_schema.columns
+            where table_catalog = '${connDetails.channelParams?.catalogName}'
+        `;
 
     const args: QueryExecutionArgs = {
         query: query

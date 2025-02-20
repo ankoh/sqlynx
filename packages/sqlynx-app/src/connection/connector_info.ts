@@ -16,6 +16,13 @@ export enum ConnectorType {
     DEMO = 4,
 }
 
+export enum CatalogResolver {
+    SQL_SCRIPT = 0,
+    SQL_INFORMATION_SCHEMA = 1,
+    SQL_PG_ATTRIBUTE = 2,
+    SALESFORCE_METDATA_API = 3,
+}
+
 export interface ConnectorInfo {
     /// The connector type
     connectorType: ConnectorType;
@@ -30,6 +37,8 @@ export interface ConnectorInfo {
         uncolored: string,
         outlines: string,
     }
+    /// The catalog resolution type
+    catalogResolver: CatalogResolver;
     /// The connector features
     features: ConnectorFeatures;
     /// The connector platforms
@@ -64,6 +73,7 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
             uncolored: "cloud_offline",
             outlines: "cloud_offline",
         },
+        catalogResolver: CatalogResolver.SQL_SCRIPT,
         features: {
             schemaScript: true,
             executeQueryAction: false,
@@ -85,6 +95,7 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
             uncolored: "hyper_nocolor",
             outlines: "hyper_outlines",
         },
+        catalogResolver: CatalogResolver.SQL_PG_ATTRIBUTE,
         features: {
             schemaScript: false,
             executeQueryAction: true,
@@ -106,6 +117,7 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
             uncolored: "salesforce_notext",
             outlines: "salesforce_outlines",
         },
+        catalogResolver: CatalogResolver.SALESFORCE_METDATA_API,
         features: {
             schemaScript: false,
             executeQueryAction: true,
@@ -127,6 +139,7 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
             uncolored: "trino_nocolor",
             outlines: "trino_outlines",
         },
+        catalogResolver: CatalogResolver.SQL_INFORMATION_SCHEMA,
         features: {
             schemaScript: false,
             executeQueryAction: true,
@@ -148,6 +161,7 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
             uncolored: "code",
             outlines: "code",
         },
+        catalogResolver: CatalogResolver.SQL_SCRIPT,
         features: {
             schemaScript: true,
             executeQueryAction: true,

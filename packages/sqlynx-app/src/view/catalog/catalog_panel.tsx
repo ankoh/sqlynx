@@ -2,17 +2,17 @@ import { ContextObjectID } from '@ankoh/sqlynx-core';
 
 import * as sqlynx from '@ankoh/sqlynx-core';
 import * as React from 'react';
-import * as styles from './script_catalog_view.module.css';
+import * as styles from './catalog_panel.module.css';
 
 import { CatalogViewer } from '../catalog/catalog_viewer.js';
 import { FOCUSED_COMPLETION, FOCUSED_EXPRESSION_ID, FOCUSED_TABLE_REF_ID } from '../../workbook/focus.js';
 import { useCurrentWorkbookState } from '../../workbook/current_workbook.js';
 import { U32_MAX } from '../../utils/numeric_limits.js';
-import { ScriptCatalogSidebar } from './script_catalog_sidebar.js';
+import { CatalogPanelSidebar } from './catalog_panel_sidebar.js';
 
-interface ScriptpanelViewProps { }
+interface CatalogPanelProps { }
 
-export function ScriptCatalogView(_props: ScriptpanelViewProps) {
+export function CatalogPanel(_props: CatalogPanelProps) {
     const [workbookState, _dispatchWorkbook] = useCurrentWorkbookState();
     const [infoExpanded, setInfoExpanded] = React.useState(false);
 
@@ -132,7 +132,7 @@ export function ScriptCatalogView(_props: ScriptpanelViewProps) {
                 </div>
                 <div className={styles.info_toggle} onClick={toggleInfo} />
                 {infoExpanded && (
-                    <ScriptCatalogSidebar entries={infoEntries} />
+                    <CatalogPanelSidebar entries={infoEntries} />
                 )}
             </div>
         </div>
