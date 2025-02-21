@@ -147,7 +147,8 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
                 shouldForceUpdate: true
             });
 
-            // Scroll to last row
+            // Scroll to last row.
+            // Note that this is the index of a pseudo-row after the last content row
             gridRef.current.scrollToItem({
                 align: 'end',
                 rowIndex: Math.max(rowCount, 1)
@@ -156,6 +157,9 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
     }, [logVersion, containerHeight]);
 
     const Cell = ({ columnIndex, rowIndex, style }: any) => {
+        if (rowIndex >= logger.buffer.length) {
+            return <div />;
+        }
         const record = logger.buffer.at(rowIndex)!;
         switch (columnIndex) {
             case 0: return <TimestampCell rowIndex={rowIndex} style={style}>{record.timestamp}</TimestampCell>;
@@ -187,7 +191,7 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
                     height={containerHeight}
                     columnCount={COLUMN_COUNT}
                     columnWidth={getColumnWidth}
-                    rowCount={logger.buffer.length}
+                    rowCount={logger.buffer.length + 1}
                     rowHeight={getRowHeight}
                     estimatedColumnWidth={containerWidth / COLUMN_COUNT}
                     estimatedRowHeight={ROW_HEIGHT}
