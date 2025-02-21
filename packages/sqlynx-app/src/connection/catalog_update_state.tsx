@@ -6,6 +6,7 @@ import { SalesforceApiClientInterface, SalesforceDataCloudAccessToken } from './
 import {
     CATALOG_UPDATE_CANCELLED,
     CATALOG_UPDATE_FAILED,
+    CATALOG_UPDATE_REGISTER_QUERY,
     CATALOG_UPDATE_SUCCEEDED,
     CatalogAction,
     ConnectionState,
@@ -53,6 +54,11 @@ export enum CatalogUpdateTaskStatus {
     CANCELLED = 4,
 }
 
+export interface CatalogUpdateQuery {
+    /// The query id
+    queryId: number;
+}
+
 export interface CatalogUpdateTaskState {
     /// The task key
     taskId: number;
@@ -60,6 +66,8 @@ export interface CatalogUpdateTaskState {
     status: CatalogUpdateTaskStatus;
     /// The cancellation signal
     cancellation: AbortController;
+    /// The queries
+    queries: CatalogUpdateQuery[];
     /// The loading error (if any)
     error: Error | null;
     /// The time at which the loading started (if any)
@@ -82,6 +90,14 @@ export function reduceCatalogAction(state: ConnectionState, action: CatalogActio
         return state;
     }
     switch (action.type) {
+        case CATALOG_UPDATE_REGISTER_QUERY: {
+            update = {
+                ...update,
+                queries: [...update.queries, { queryId: action.value[1] }]
+            };
+            state.catalogUpdatesRunning.set(updateId, update);
+            return { ...state };
+        }
         case CATALOG_UPDATE_CANCELLED:
             update = {
                 ...update,

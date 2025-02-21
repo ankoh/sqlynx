@@ -76,6 +76,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
         // Accept the query and clear the request
         const initialState: QueryExecutionState = {
             queryId,
+            queryMetadata: args.metadata,
             status: QueryExecutionStatus.ACCEPTED,
             cancellation: new AbortController(),
             resultStream: null,
@@ -141,7 +142,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                 }
                 batches.push(batch);
 
-                logger.error("received result batch", { "connection": connectionId.toString(), "query": queryId.toString() }, LOG_CTX);
+                logger.info("received result batch", { "connection": connectionId.toString(), "query": queryId.toString() }, LOG_CTX);
                 connDispatch(connectionId, {
                     type: QUERY_EXECUTION_RECEIVED_BATCH,
                     value: [queryId, batch, resultStream.getMetrics()],

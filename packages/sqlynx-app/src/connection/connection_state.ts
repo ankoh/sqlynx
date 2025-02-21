@@ -113,6 +113,7 @@ export type ConnectionStateWithoutId = Omit<ConnectionState, "connectionId">;
 export const RESET = Symbol('RESET');
 export const UPDATE_CATALOG = Symbol('UPDATE_CATALOG');
 export const CATALOG_UPDATE_STARTED = Symbol('CATALOG_UPDATE_STARTED');
+export const CATALOG_UPDATE_REGISTER_QUERY = Symbol('CATALOG_UPDATE_REGISTER_QUERY');
 export const CATALOG_UPDATE_SUCCEEDED = Symbol('CATALOG_UPDATE_SUCCEEDED');
 export const CATALOG_UPDATE_FAILED = Symbol('CATALOG_UPDATE_FAILED');
 export const CATALOG_UPDATE_CANCELLED = Symbol('CATALOG_UPDATE_CANCELLED');
@@ -128,6 +129,7 @@ export const QUERY_EXECUTION_CANCELLED = Symbol('QUERY_EXECUTION_CANCELLED');
 
 export type CatalogAction =
     | VariantKind<typeof UPDATE_CATALOG, [number, CatalogUpdateTaskState]>
+    | VariantKind<typeof CATALOG_UPDATE_REGISTER_QUERY, [number, number]>
     | VariantKind<typeof CATALOG_UPDATE_CANCELLED, [number, Error]>
     | VariantKind<typeof CATALOG_UPDATE_FAILED, [number, Error]>
     | VariantKind<typeof CATALOG_UPDATE_SUCCEEDED, [number]>
@@ -156,6 +158,7 @@ export type ConnectionStateAction =
 export function reduceConnectionState(state: ConnectionState, action: ConnectionStateAction): ConnectionState {
     switch (action.type) {
         case UPDATE_CATALOG:
+        case CATALOG_UPDATE_REGISTER_QUERY:
         case CATALOG_UPDATE_CANCELLED:
         case CATALOG_UPDATE_SUCCEEDED:
         case CATALOG_UPDATE_FAILED:

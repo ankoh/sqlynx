@@ -36,7 +36,7 @@ export function buildTrinoConnectorParams(params: TrinoConnectionParams): proto.
                     username: params.authParams.username ?? "",
                 }),
                 catalogName: params.catalogName,
-                schemaNames: params.schemaNames.map(v => v.value),
+                schemaNames: params.schemaNames,
             })
         }
     });
@@ -53,7 +53,7 @@ export function readTrinoConnectorParams(params: proto.sqlynx_workbook.pb.TrinoC
         },
         metadata: [],
         catalogName: params.catalogName,
-        schemaNames: params.schemaNames.map(v => ({ value: v })),
+        schemaNames: params.schemaNames,
     };
 }
 

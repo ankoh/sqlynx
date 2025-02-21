@@ -9,9 +9,7 @@ import { classNames } from '../../utils/classnames.js';
 import { TextInput } from './text_input.js';
 import { TextInputAction } from './text_input_action.js';
 
-export interface ValueListElement {
-    value: string;
-}
+export type ValueListElement = string;
 
 export type UpdateValueList = (prev: ValueListElement[]) => ValueListElement[];
 
@@ -30,9 +28,7 @@ interface Props {
 export const ValueListBuilder: React.FC<Props> = (props: Props) => {
     const appendElement = () => props.modifyElements(list => {
         const copy = [...list];
-        copy.push({
-            value: "",
-        });
+        copy.push("");
         return copy;
     });
     const deleteIndex = (index: number) => props.modifyElements(list => {
@@ -42,7 +38,7 @@ export const ValueListBuilder: React.FC<Props> = (props: Props) => {
     });
     const modifyElement = (index: number, value: string) => props.modifyElements(list => {
         const copy = [...list];
-        copy[index] = { value };
+        copy[index] = value;
         return copy;
     });
 
@@ -70,7 +66,7 @@ export const ValueListBuilder: React.FC<Props> = (props: Props) => {
                         <TextInput
                             block
                             className={styles.path}
-                            value={elem.value}
+                            value={elem}
                             onChange={(ev: any) => modifyElement(i, ev.target.value)}
                             leadingVisual={props.valueIcon}
                             trailingAction={

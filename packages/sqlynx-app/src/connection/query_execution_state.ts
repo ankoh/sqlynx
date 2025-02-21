@@ -69,9 +69,22 @@ export interface QueryMetrics {
     queryDurationMs: number | null;
 }
 
+export interface QueryMetadata {
+    /// The title of the query (if any)
+    title: string | null;
+    /// The description
+    description: string | null;
+    /// The issuer
+    issuer: string | null;
+    /// Authored by the user or the app?
+    userProvided: boolean;
+}
+
 export interface QueryExecutionState {
     /// The query id
     queryId: number;
+    /// The query metadata
+    queryMetadata: QueryMetadata;
     /// The current status
     status: QueryExecutionStatus;
     /// The query metric counters

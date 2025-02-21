@@ -3,6 +3,7 @@ import * as sqlynx from '@ankoh/sqlynx-core';
 
 import { QueryExecutor } from './query_executor.js';
 import { QueryExecutionArgs } from './query_execution_args.js';
+import { DynamicConnectionDispatch } from "./connection_registry.js";
 
 export type InformationSchemaColumnsTable = arrow.Table<{
     table_catalog: arrow.Utf8;
@@ -10,16 +11,8 @@ export type InformationSchemaColumnsTable = arrow.Table<{
     table_name: arrow.Utf8;
     column_name: arrow.Utf8;
     ordinal_position: arrow.Int32;
-    //    column_default: arrow.Utf8;
     is_nullable: arrow.Utf8;  // 'YES' or 'NO'
     data_type: arrow.Utf8;
-    character_maximum_length: arrow.Int32;
-    character_octet_length: arrow.Int32;
-    numeric_precision: arrow.Int32;
-    numeric_scale: arrow.Int32;
-    //    datetime_precision: arrow.Int32;
-    //    interval_type: arrow.Utf8;
-    //    interval_precision: arrow.Int32;
 }>;
 
 function collectSchemaDescriptors(result: InformationSchemaColumnsTable): sqlynx.proto.SchemaDescriptorT[] {
@@ -46,7 +39,7 @@ function collectSchemaDescriptors(result: InformationSchemaColumnsTable): sqlynx
             if (!schemaMap) {
                 // Catalog does not exist, create a new map for schema tables
                 const tableMap = new Map<string, sqlynx.proto.SchemaTableT>();
-                tableMap.set(tableName, new sqlynx.proto.SchemaTableT(0, tableSchema, [
+                tableMap.set(tableName, new sqlynx.proto.SchemaTableT(0, tableName, [
                     new sqlynx.proto.SchemaTableColumnT(columnName),
                 ]));
                 const schemaMap = new Map<string, Map<string, sqlynx.proto.SchemaTableT>>();
@@ -58,7 +51,7 @@ function collectSchemaDescriptors(result: InformationSchemaColumnsTable): sqlynx
                 let tableMap = schemaMap.get(tableSchema);
                 if (!tableMap) {
                     tableMap = new Map<string, sqlynx.proto.SchemaTableT>();
-                    tableMap.set(tableName, new sqlynx.proto.SchemaTableT(0, tableSchema, [
+                    tableMap.set(tableName, new sqlynx.proto.SchemaTableT(0, tableName, [
                         new sqlynx.proto.SchemaTableColumnT(columnName),
                     ]));
                     schemaMap.set(tableSchema, tableMap);
@@ -67,7 +60,7 @@ function collectSchemaDescriptors(result: InformationSchemaColumnsTable): sqlynx
                     const table = tableMap.get(tableName);
                     if (!table) {
                         // Table does not exist, create a new table
-                        tableMap.set(tableName, new sqlynx.proto.SchemaTableT(0, tableSchema, [
+                        tableMap.set(tableName, new sqlynx.proto.SchemaTableT(0, tableName, [
                             new sqlynx.proto.SchemaTableColumnT(columnName),
                         ]));
                     } else {
@@ -92,7 +85,7 @@ function collectSchemaDescriptors(result: InformationSchemaColumnsTable): sqlynx
     return descriptors;
 }
 
-export async function queryInformationSchema(connectionId: number, catalogName: string, schemaNames: string[], executor: QueryExecutor): Promise<void> {
+export async function queryInformationSchema(connectionId: number, connectionDispatch: DynamicConnectionDispatch, catalogName: string, schemaNames: string[], executor: QueryExecutor): Promise<void> {
     const query = `
         SELECT
             table_catalog,
@@ -101,18 +94,20 @@ export async function queryInformationSchema(connectionId: number, catalogName: 
             column_name,
             ordinal_position,
             is_nullable,
-            data_type,
-            character_maximum_length,
-            character_octet_length,
-            numeric_precision,
-            numeric_scale
+            data_type
         FROM information_schema.columns 
         WHERE table_catalog = '${catalogName}'
         ${schemaNames.length > 0 ? `AND table_schema IN ('${schemaNames.join("','")}')` : ''}
     `;
 
     const args: QueryExecutionArgs = {
-        query: query
+        query: query,
+        metadata: {
+            title: "Query Information Schema Columns",
+            description: null,
+            issuer: "Catalog Update",
+            userProvided: false
+        }
     };
     const [_queryId, queryExecution] = executor(connectionId, args);
     const queryResult = await queryExecution as InformationSchemaColumnsTable;
@@ -126,6 +121,6 @@ export async function queryInformationSchema(connectionId: number, catalogName: 
     console.log(descriptors);
 }
 
-export async function updateInformationSchemaCatalog(connectionId: number, catalogName: string, schemaNames: string[], executor: QueryExecutor, _catalog: sqlynx.SQLynxCatalog): Promise<void> {
-    await queryInformationSchema(connectionId, catalogName, schemaNames, executor);
+export async function updateInformationSchemaCatalog(connectionId: number, connectionDispatch: DynamicConnectionDispatch, catalogName: string, schemaNames: string[], executor: QueryExecutor, _catalog: sqlynx.SQLynxCatalog): Promise<void> {
+    await queryInformationSchema(connectionId, connectionDispatch, catalogName, schemaNames, executor);
 }

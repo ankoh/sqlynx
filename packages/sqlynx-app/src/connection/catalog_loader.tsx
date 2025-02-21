@@ -3,7 +3,7 @@ import * as React from 'react';
 import { useDynamicConnectionDispatch } from './connection_registry.js';
 import { CatalogUpdateTaskState, CatalogUpdateTaskStatus } from './catalog_update_state.js';
 import { useSalesforceAPI } from './salesforce/salesforce_connector.js';
-import { DEMO_CONNECTOR, HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, SERVERLESS_CONNECTOR, TRINO_CONNECTOR } from './connector_info.js';
+import { CatalogResolver, HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from './connector_info.js';
 import {
     CATALOG_UPDATE_CANCELLED,
     CATALOG_UPDATE_FAILED,
@@ -11,10 +11,10 @@ import {
     UPDATE_CATALOG,
 } from './connection_state.js';
 import { updateSalesforceCatalog } from './salesforce/salesforce_catalog_update.js';
-import { updateHyperCatalog } from './hyper/hyper_catalog_update.js';
 import { useQueryExecutor } from './query_executor.js';
-import { updateTrinoCatalog } from './trino/trino_catalog_update.js';
 import { useLogger } from '../platform/logger_provider.js';
+import { updateInformationSchemaCatalog } from './catalog_query_information_schema.js';
+import { updatePgAttributeSchemaCatalog } from './catalog_query_pg_attribute.js';
 
 const LOG_CTX = 'catalog_loader';
 
@@ -71,6 +71,7 @@ export function CatalogLoaderProvider(props: { children?: React.ReactElement }) 
             taskId: updateId,
             status: CatalogUpdateTaskStatus.STARTED,
             cancellation: abortController,
+            queries: [],
             error: null,
             startedAt: new Date(),
             finishedAt: null
@@ -82,22 +83,45 @@ export function CatalogLoaderProvider(props: { children?: React.ReactElement }) 
 
         // Update the catalog
         try {
-            // Start the query
-            switch (conn.details.type) {
-                case SALESFORCE_DATA_CLOUD_CONNECTOR:
-                    await updateSalesforceCatalog(conn.details.value, conn.catalog, sfapi, abortController);
+            switch (conn.connectorInfo.catalogResolver) {
+                // Update the catalog by querying the information_schema?
+                case CatalogResolver.SQL_INFORMATION_SCHEMA: {
+                    if (conn.details.type == TRINO_CONNECTOR) {
+                        const catalog = conn.details.value.channelParams?.catalogName ?? "";
+                        const schemas = conn.details.value.channelParams?.schemaNames ?? [];
+                        await updateInformationSchemaCatalog(connectionId, connDispatch, catalog, schemas, executor, conn.catalog);
+                    } else {
+                        throw new Error(
+                            `cannot load information_schema catalog for ${conn.connectorInfo.connectorType} connections`,
+                        );
+                    }
                     break;
-                case HYPER_GRPC_CONNECTOR:
-                    await updateHyperCatalog(connectionId, conn.catalog, executor);
+                }
+                // Update the catalog by querying the pg_attribute?
+                case CatalogResolver.SQL_PG_ATTRIBUTE: {
+                    if (conn.details.type == HYPER_GRPC_CONNECTOR) {
+                        const schemas: string[] = []; // XXX
+                        await updatePgAttributeSchemaCatalog(connectionId, connDispatch, schemas, executor, conn.catalog);
+                    } else {
+                        throw new Error(
+                            `cannot load pg_attribute catalog for ${conn.connectorInfo.connectorType} connections`,
+                        );
+                    }
                     break;
-                case TRINO_CONNECTOR:
-                    await updateTrinoCatalog(connectionId, conn.details.value, conn.catalog, executor);
+                }
+                // Update the catalog by querying the Salesforce Metadata Service?
+                case CatalogResolver.SALESFORCE_METDATA_API: {
+                    if (conn.details.type == SALESFORCE_DATA_CLOUD_CONNECTOR) {
+                        await updateSalesforceCatalog(conn.details.value, conn.catalog, sfapi, abortController);
+                        break;
+                    } else {
+                        throw new Error(
+                            `cannot load salesforce metadata catalog for ${conn.connectorInfo.connectorType} connections`,
+                        );
+                    }
+                }
+                case CatalogResolver.SQL_SCRIPT:
                     break;
-                case DEMO_CONNECTOR:
-                case SERVERLESS_CONNECTOR:
-                    throw new Error(
-                        `catalog updater does not support connector ${conn.connectorInfo.connectorType} yet`,
-                    );
             }
             logger.debug("catalog update succeeded", { "connection": connectionId.toString() }, LOG_CTX);
 

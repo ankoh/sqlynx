@@ -50,7 +50,13 @@ export const WorkbookCommands: React.FC<Props> = (props: Props) => {
                         const mainScriptText = script.toString();
                         const [queryId, _run] = executeQuery(workbook.connectionId, {
                             query: mainScriptText,
-                            analyzeResults: true
+                            analyzeResults: true,
+                            metadata: {
+                                title: "Workbook Query",
+                                description: null,
+                                issuer: "Query Execution Command",
+                                userProvided: true
+                            }
                         });
                         dispatchWorkbook({
                             type: REGISTER_QUERY,

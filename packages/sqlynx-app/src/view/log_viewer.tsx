@@ -150,7 +150,7 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
             // Scroll to last row
             gridRef.current.scrollToItem({
                 align: 'end',
-                rowIndex: Math.max(rowCount, 1) - 1
+                rowIndex: Math.max(rowCount, 1)
             });
         }
     }, [logVersion, containerHeight]);
