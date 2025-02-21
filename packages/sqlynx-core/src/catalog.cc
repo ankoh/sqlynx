@@ -329,6 +329,7 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
                     auto& column_name =
                         name_registry.Register(column_name_text->string_view(), NameTags{proto::NameTag::COLUMN_NAME});
                     columns.emplace_back(std::nullopt, column_name);
+                    columns.back().column_index = column->ordinal_position();
 
                     // Ad the column name to the index
                     fuzzy_ci_string_view ci_name{column_name.text.data(), column_name.text.size()};
@@ -342,7 +343,7 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescrip
 
         // Sort the table columns
         std::sort(columns.begin(), columns.end(),
-                  [&](TableColumn& l, TableColumn& r) { return l.column_name.get().text < r.column_name.get().text; });
+                  [&](TableColumn& l, TableColumn& r) { return l.column_index < r.column_index; });
         // Create the table
         auto& t = table_declarations.Append(
             AnalyzedScript::TableDeclaration(QualifiedTableName{std::nullopt, db_name, schema_name, table_name}));
