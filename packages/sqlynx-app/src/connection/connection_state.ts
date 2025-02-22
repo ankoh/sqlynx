@@ -34,6 +34,13 @@ import { reduceQueryAction } from './query_execution_state.js';
 import { DemoConnectionParams as DemoConnectionDetails } from './demo/demo_connection_state.js';
 import { reduceTrinoConnectorState, TrinoConnectionDetails, TrinoConnectorAction } from './trino/trino_connection_state.js';
 
+export interface CatalogUpdates {
+    /// The running tasks
+    tasksRunning: Map<number, CatalogUpdateTaskState>;
+    /// The finished tasks
+    tasksFinished: CatalogUpdateTaskState[];
+}
+
 export interface ConnectionState {
     /// The connection id
     connectionId: number;
@@ -51,10 +58,8 @@ export interface ConnectionState {
 
     /// The catalog
     catalog: sqlynx.SQLynxCatalog;
-    /// The catalog updates that are currently running
-    catalogUpdatesRunning: Map<number, CatalogUpdateTaskState>;
-    /// The catalog updates that are currently running
-    catalogUpdatesFinished: CatalogUpdateTaskState[];
+    /// The  catalog updates
+    catalogUpdates: CatalogUpdates;
 
     /// The queries that are currently running
     queriesRunning: Map<number, QueryExecutionState>;
@@ -187,8 +192,10 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
                 connectionStatus: ConnectionStatus.NOT_STARTED,
                 connectionHealth: ConnectionHealth.NOT_STARTED,
                 metrics: createConnectionMetrics(),
-                catalogUpdatesRunning: new Map(),
-                catalogUpdatesFinished: [],
+                catalogUpdates: {
+                    tasksRunning: new Map(),
+                    tasksFinished: [],
+                },
                 queriesRunning: new Map(),
                 queriesFinished: new Map(),
             };
@@ -246,8 +253,10 @@ export function createConnectionState(lnx: sqlynx.SQLynx, info: ConnectorInfo, d
         metrics: createConnectionMetrics(),
         details,
         catalog,
-        catalogUpdatesRunning: new Map(),
-        catalogUpdatesFinished: [],
+        catalogUpdates: {
+            tasksRunning: new Map(),
+            tasksFinished: [],
+        },
         queriesRunning: new Map(),
         queriesFinished: new Map(),
     };

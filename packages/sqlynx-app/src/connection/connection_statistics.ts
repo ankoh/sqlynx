@@ -50,8 +50,10 @@ export function createConnectionState(lnx: sqlynx.SQLynx, info: ConnectorInfo, d
         metrics: createConnectionMetrics(),
         details,
         catalog,
-        catalogUpdatesRunning: new Map(),
-        catalogUpdatesFinished: [],
+        catalogUpdates: {
+            tasksRunning: new Map(),
+            tasksFinished: [],
+        },
         queriesRunning: new Map(),
         queriesFinished: new Map(),
     };

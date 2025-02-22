@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { useDynamicConnectionDispatch } from './connection_registry.js';
-import { CatalogUpdateTaskState, CatalogUpdateTaskStatus } from './catalog_update_state.js';
+import { CatalogUpdateTaskState, CatalogUpdateTaskStatus, CatalogUpdateVariant } from './catalog_update_state.js';
 import { useSalesforceAPI } from './salesforce/salesforce_connector.js';
 import { CatalogResolver, HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from './connector_info.js';
 import {
@@ -69,6 +69,7 @@ export function CatalogLoaderProvider(props: { children?: React.ReactElement }) 
         const abortController = new AbortController();
         const initialState: CatalogUpdateTaskState = {
             taskId: updateId,
+            taskVariant: CatalogUpdateVariant.FULL_CATALOG_REFRESH,
             status: CatalogUpdateTaskStatus.STARTED,
             cancellation: abortController,
             queries: [],
@@ -198,14 +199,14 @@ export function CatalogLoaderProvider(props: { children?: React.ReactElement }) 
 
             // Has a current catalog update running?
             // Then we skip auto-updates
-            if (connState.catalogUpdatesRunning.size > 0) {
+            if (connState.catalogUpdates.tasksRunning.size > 0) {
                 logger.info("skipping redundant catalog update", { "connection": cid.toString() }, LOG_CTX);
                 continue;
             }
 
             // Was there a recent update?
-            if (connState.catalogUpdatesFinished.length > 0) {
-                const recent = connState.catalogUpdatesFinished[connState.catalogUpdatesFinished.length - 1];
+            if (connState.catalogUpdates.tasksFinished.length > 0) {
+                const recent = connState.catalogUpdates.tasksFinished[connState.catalogUpdates.tasksFinished.length - 1];
                 const now = new Date();
                 const elapsed = (recent.finishedAt?.getTime() ?? now.getTime()) - now.getTime();
                 if (elapsed < CATALOG_REFRESH_AFTER) {

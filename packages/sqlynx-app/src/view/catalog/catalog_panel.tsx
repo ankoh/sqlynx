@@ -9,15 +9,25 @@ import { FOCUSED_COMPLETION, FOCUSED_EXPRESSION_ID, FOCUSED_TABLE_REF_ID } from 
 import { useCurrentWorkbookState } from '../../workbook/current_workbook.js';
 import { U32_MAX } from '../../utils/numeric_limits.js';
 import { CatalogPanelSidebar } from './catalog_panel_sidebar.js';
+import { useConnectionState } from '../../connection/connection_registry.js';
+import { CatalogUpdateTaskState, CatalogUpdateVariant } from '../../connection/catalog_update_state.js';
+import { QueryExecutionState } from '../../connection/query_execution_state.js';
 
 interface CatalogPanelProps { }
 
+interface CatalogUpdate {
+    /// The full refresh task (if any)
+    fullRefreshTask: CatalogUpdateTaskState | null;
+    /// The queries of full refresh tasks
+    queryStates: Map<number, QueryExecutionState>;
+}
+
 export function CatalogPanel(_props: CatalogPanelProps) {
     const [workbookState, _dispatchWorkbook] = useCurrentWorkbookState();
-    const [infoExpanded, setInfoExpanded] = React.useState(false);
+    const [connState, connDispatch] = useConnectionState(workbookState?.connectionId ?? null);
 
-    const workloadEntry = workbookState?.workbookEntries[workbookState.selectedWorkbookEntry];
-    const script = workloadEntry ? workbookState.scripts[workloadEntry.scriptKey] : null;
+    const workbookEntry = workbookState?.workbookEntries[workbookState.selectedWorkbookEntry];
+    const script = workbookEntry ? workbookState.scripts[workbookEntry.scriptKey] : null;
 
     // Collect overlay metrics
     const infoEntries = React.useMemo<[string, string][]>(() => {
@@ -118,6 +128,34 @@ export function CatalogPanel(_props: CatalogPanelProps) {
         return overlay;
     }, [workbookState?.userFocus, script?.cursor]);
 
+    const _catalogUpdate = React.useMemo<CatalogUpdate | null>(() => {
+        if (!connState?.catalogUpdates.tasksRunning) {
+            return null;
+        }
+        const update: CatalogUpdate = {
+            fullRefreshTask: null,
+            queryStates: new Map(),
+        };
+        for (const [_k, task] of connState?.catalogUpdates.tasksRunning) {
+            if (task.taskVariant == CatalogUpdateVariant.FULL_CATALOG_REFRESH) {
+                update.fullRefreshTask = task;
+                for (const query of task.queries) {
+                    const queryState = connState.queriesRunning.get(query.queryId)
+                        ?? connState.queriesFinished.get(query.queryId)
+                        ?? null;
+                    if (queryState != null) {
+                        update.queryStates.set(query.queryId, queryState);
+                    }
+                }
+            }
+        }
+        console.log(update);
+        return update;
+
+    }, [connState?.catalogUpdates]);
+
+
+    const [infoExpanded, setInfoExpanded] = React.useState(false);
     const toggleInfo = () => setInfoExpanded(e => !e);
     return (
         <div className={styles.root}>
@@ -127,13 +165,16 @@ export function CatalogPanel(_props: CatalogPanelProps) {
                 </div>
             </div>
             <div className={styles.panel_container}>
-                <div className={styles.catalog_viewer}>
-                    <CatalogViewer />
-                </div>
-                <div className={styles.info_toggle} onClick={toggleInfo} />
-                {infoExpanded && (
-                    <CatalogPanelSidebar entries={infoEntries} />
-                )}
+
+                <>
+                    <div className={styles.catalog_viewer}>
+                        <CatalogViewer />
+                    </div>
+                    <div className={styles.info_toggle} onClick={toggleInfo} />
+                    {infoExpanded && (
+                        <CatalogPanelSidebar entries={infoEntries} />
+                    )}
+                </>
             </div>
         </div>
     );

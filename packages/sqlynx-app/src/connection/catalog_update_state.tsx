@@ -1,8 +1,3 @@
-import * as sqlynx from '@ankoh/sqlynx-core';
-
-import { VariantKind } from '../utils/index.js';
-import { HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from './connector_info.js';
-import { SalesforceApiClientInterface, SalesforceDataCloudAccessToken } from './salesforce/salesforce_api_client.js';
 import {
     CATALOG_UPDATE_CANCELLED,
     CATALOG_UPDATE_FAILED,
@@ -12,39 +7,9 @@ import {
     ConnectionState,
     UPDATE_CATALOG,
 } from './connection_state.js';
-import { HyperDatabaseChannel } from '../connection/hyper/hyperdb_client.js';
-import { TrinoChannelInterface } from './trino/trino_channel.js';
 
-export const FULL_CATALOG_REFRESH = Symbol();
-
-export type CatalogUpdateVariant = VariantKind<typeof FULL_CATALOG_REFRESH, null>;
-
-export type CatalogTaskVariant =
-    | VariantKind<typeof SALESFORCE_DATA_CLOUD_CONNECTOR, UpdateSalesforceMetadataTask>
-    | VariantKind<typeof HYPER_GRPC_CONNECTOR, UpdateHyperCatalogTask>
-    | VariantKind<typeof TRINO_CONNECTOR, UpdateTrinoCatalogTask>;
-
-export interface UpdateSalesforceMetadataTask {
-    /// The target catalog
-    catalog: sqlynx.SQLynxCatalog;
-    /// The salesforce api client
-    api: SalesforceApiClientInterface;
-    /// The access token
-    accessToken: SalesforceDataCloudAccessToken;
-}
-
-export interface UpdateHyperCatalogTask {
-    /// The target catalog
-    catalog: sqlynx.SQLynxCatalog;
-    /// The channel
-    hyperChannel: HyperDatabaseChannel;
-}
-
-export interface UpdateTrinoCatalogTask {
-    /// The target catalog
-    catalog: sqlynx.SQLynxCatalog;
-    /// The channel
-    trinoChannel: TrinoChannelInterface;
+export enum CatalogUpdateVariant {
+    FULL_CATALOG_REFRESH
 }
 
 export enum CatalogUpdateTaskStatus {
@@ -62,6 +27,8 @@ export interface CatalogUpdateQuery {
 export interface CatalogUpdateTaskState {
     /// The task key
     taskId: number;
+    /// The catalog update variant
+    taskVariant: CatalogUpdateVariant;
     /// The status
     status: CatalogUpdateTaskStatus;
     /// The cancellation signal
@@ -81,11 +48,17 @@ export function reduceCatalogAction(state: ConnectionState, action: CatalogActio
 
     if (action.type == UPDATE_CATALOG) {
         const [updateId, update] = action.value;
-        state.catalogUpdatesRunning.set(updateId, update);
-        return { ...state };
+        state.catalogUpdates.tasksRunning.set(updateId, update);
+        return {
+            ...state,
+            catalogUpdates: {
+                ...state.catalogUpdates,
+                tasksRunning: state.catalogUpdates.tasksRunning,
+            }
+        };
     }
     const updateId = action.value[0];
-    let update = state.catalogUpdatesRunning.get(updateId);
+    let update = state.catalogUpdates.tasksRunning.get(updateId);
     if (!update) {
         return state;
     }
@@ -95,8 +68,14 @@ export function reduceCatalogAction(state: ConnectionState, action: CatalogActio
                 ...update,
                 queries: [...update.queries, { queryId: action.value[1] }]
             };
-            state.catalogUpdatesRunning.set(updateId, update);
-            return { ...state };
+            state.catalogUpdates.tasksRunning.set(updateId, update);
+            return {
+                ...state,
+                catalogUpdates: {
+                    ...state.catalogUpdates,
+                    tasksRunning: state.catalogUpdates.tasksRunning,
+                }
+            };
         }
         case CATALOG_UPDATE_CANCELLED:
             update = {
@@ -105,9 +84,15 @@ export function reduceCatalogAction(state: ConnectionState, action: CatalogActio
                 error: action.value[1],
                 finishedAt: now,
             };
-            state.catalogUpdatesRunning.delete(updateId);
-            state.catalogUpdatesFinished.push(update);
-            return { ...state };
+            state.catalogUpdates.tasksRunning.delete(updateId);
+            state.catalogUpdates.tasksFinished.push(update);
+            return {
+                ...state,
+                catalogUpdates: {
+                    tasksRunning: state.catalogUpdates.tasksRunning,
+                    tasksFinished: state.catalogUpdates.tasksFinished,
+                }
+            };
         case CATALOG_UPDATE_FAILED:
             update = {
                 ...update,
@@ -115,17 +100,29 @@ export function reduceCatalogAction(state: ConnectionState, action: CatalogActio
                 error: action.value[1],
                 finishedAt: now,
             };
-            state.catalogUpdatesRunning.delete(updateId);
-            state.catalogUpdatesFinished.push(update);
-            return { ...state };
+            state.catalogUpdates.tasksRunning.delete(updateId);
+            state.catalogUpdates.tasksFinished.push(update);
+            return {
+                ...state,
+                catalogUpdates: {
+                    tasksRunning: state.catalogUpdates.tasksRunning,
+                    tasksFinished: state.catalogUpdates.tasksFinished,
+                }
+            };
         case CATALOG_UPDATE_SUCCEEDED:
             update = {
                 ...update,
                 status: CatalogUpdateTaskStatus.SUCCEEDED,
                 finishedAt: now,
             };
-            state.catalogUpdatesRunning.delete(updateId);
-            state.catalogUpdatesFinished.push(update);
-            return { ...state };
+            state.catalogUpdates.tasksRunning.delete(updateId);
+            state.catalogUpdates.tasksFinished.push(update);
+            return {
+                ...state,
+                catalogUpdates: {
+                    tasksRunning: state.catalogUpdates.tasksRunning,
+                    tasksFinished: state.catalogUpdates.tasksFinished,
+                }
+            };
     }
 }
