@@ -1,14 +1,14 @@
 type Resolver<Value> = (value: Value) => void;
 type Rejecter<Error> = (value: Error) => void;
 
-enum AsyncConsumerValueStatus {
+enum AsyncValueStatus {
     PENDING,
     RESOLVED,
     REJECTED
 }
 
-export class AsyncConsumerValue<Value, Error> {
-    protected status: AsyncConsumerValueStatus;
+export class AsyncValue<Value, Error> {
+    protected status: AsyncValueStatus;
     protected valuePromise: Promise<Value>;
     protected resolvedValue: Value | null;
     protected rejectedError: Error | null;
@@ -16,7 +16,7 @@ export class AsyncConsumerValue<Value, Error> {
     protected rejectFn: Rejecter<Error>;
 
     constructor() {
-        this.status = AsyncConsumerValueStatus.PENDING;
+        this.status = AsyncValueStatus.PENDING;
         let resolveFn: Resolver<Value> | null = null;
         let rejectFn: Rejecter<Error> | null = null;
         this.valuePromise = new Promise<Value>((resolve, reject) => {
@@ -30,13 +30,13 @@ export class AsyncConsumerValue<Value, Error> {
     }
 
     public isResolved(): boolean {
-        return this.status == AsyncConsumerValueStatus.RESOLVED || this.status == AsyncConsumerValueStatus.REJECTED;
+        return this.status == AsyncValueStatus.RESOLVED || this.status == AsyncValueStatus.REJECTED;
     }
     public async getValue(): Promise<Value> {
         switch (this.status) {
-            case AsyncConsumerValueStatus.RESOLVED:
+            case AsyncValueStatus.RESOLVED:
                 return this.resolvedValue!;
-            case AsyncConsumerValueStatus.REJECTED:
+            case AsyncValueStatus.REJECTED:
                 throw this.rejectedError!;
             default:
                 return await this.valuePromise;
@@ -44,28 +44,28 @@ export class AsyncConsumerValue<Value, Error> {
     }
     public getResolvedValue(): Value {
         switch (this.status) {
-            case AsyncConsumerValueStatus.RESOLVED:
+            case AsyncValueStatus.RESOLVED:
                 return this.resolvedValue!;
-            case AsyncConsumerValueStatus.REJECTED:
+            case AsyncValueStatus.REJECTED:
                 throw this.rejectedError;
-            case AsyncConsumerValueStatus.PENDING:
+            case AsyncValueStatus.PENDING:
                 throw new Error("async value is not resolved");
         }
     }
     public resolve(value: Value) {
-        if (this.status != AsyncConsumerValueStatus.PENDING) {
+        if (this.status != AsyncValueStatus.PENDING) {
             throw new Error("tried to resolve an async value that is not pending");
         }
         this.resolvedValue = value;
-        this.status = AsyncConsumerValueStatus.RESOLVED;
+        this.status = AsyncValueStatus.RESOLVED;
         this.resolveFn(value);
     }
     public reject(error: Error) {
-        if (this.status != AsyncConsumerValueStatus.PENDING) {
+        if (this.status != AsyncValueStatus.PENDING) {
             throw new Error("tried to reject an async value that is not pending");
         }
         this.rejectedError = error;
-        this.status = AsyncConsumerValueStatus.REJECTED;
+        this.status = AsyncValueStatus.REJECTED;
         this.reject(error);
     }
 }

@@ -1,7 +1,7 @@
 import * as arrow from 'apache-arrow';
 import * as proto from "@ankoh/sqlynx-protobuf";
 
-import { QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionResponseStreamMetrics, QueryExecutionStatus } from "../query_execution_state.js";
+import { QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionStreamMetrics, QueryExecutionStatus, createQueryResponseStreamMetrics } from "../query_execution_state.js";
 import { generateRandomData, RandomDataConfig } from '../../utils/random_data.js';
 import { sleep } from '../../utils/sleep.js';
 
@@ -21,6 +21,8 @@ class DemoQueryExecutionResponseStream implements QueryExecutionResponseStream {
     batches: arrow.RecordBatch[];
     /// The next stream batch
     nextBatchId: number;
+    /// The metrics
+    metrics: QueryExecutionStreamMetrics;
 
     /// Constructor
     constructor(config: DemoDatabaseConfig, schema: arrow.Schema, batches: arrow.RecordBatch[]) {
@@ -28,16 +30,15 @@ class DemoQueryExecutionResponseStream implements QueryExecutionResponseStream {
         this.schema = schema;
         this.batches = batches;
         this.nextBatchId = 0;
+        this.metrics = createQueryResponseStreamMetrics();
     }
     /// Get the result metadata (after completion)
     getMetadata(): Map<string, string> {
         return new Map();
     }
     /// Get the stream metrics
-    getMetrics(): QueryExecutionResponseStreamMetrics {
-        return {
-            dataBytes: 0
-        };
+    getMetrics(): QueryExecutionStreamMetrics {
+        return this.metrics;
     }
     /// Get the current query status
     getStatus(): QueryExecutionStatus {

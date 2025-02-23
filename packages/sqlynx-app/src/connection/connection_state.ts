@@ -26,7 +26,7 @@ import {
 import {
     QueryExecutionProgress,
     QueryExecutionResponseStream,
-    QueryExecutionResponseStreamMetrics,
+    QueryExecutionStreamMetrics,
     QueryExecutionState,
 } from './query_execution_state.js';
 import { ConnectionMetrics, createConnectionMetrics } from './connection_statistics.js';
@@ -146,10 +146,10 @@ export type QueryExecutionAction =
     | VariantKind<typeof EXECUTE_QUERY, [number, QueryExecutionState]>
     | VariantKind<typeof QUERY_EXECUTION_STARTED, [number, QueryExecutionResponseStream]>
     | VariantKind<typeof QUERY_EXECUTION_PROGRESS_UPDATED, [number, QueryExecutionProgress]>
-    | VariantKind<typeof QUERY_EXECUTION_RECEIVED_BATCH, [number, arrow.RecordBatch, QueryExecutionResponseStreamMetrics]>
-    | VariantKind<typeof QUERY_EXECUTION_SUCCEEDED, [number, arrow.Table, Map<string, string>, QueryExecutionResponseStreamMetrics]>
-    | VariantKind<typeof QUERY_EXECUTION_FAILED, [number, Error, QueryExecutionResponseStreamMetrics | null]>
-    | VariantKind<typeof QUERY_EXECUTION_CANCELLED, [number, Error, QueryExecutionResponseStreamMetrics | null]>
+    | VariantKind<typeof QUERY_EXECUTION_RECEIVED_BATCH, [number, arrow.RecordBatch, QueryExecutionStreamMetrics]>
+    | VariantKind<typeof QUERY_EXECUTION_SUCCEEDED, [number, arrow.Table, Map<string, string>, QueryExecutionStreamMetrics]>
+    | VariantKind<typeof QUERY_EXECUTION_FAILED, [number, Error, QueryExecutionStreamMetrics | null]>
+    | VariantKind<typeof QUERY_EXECUTION_CANCELLED, [number, Error, QueryExecutionStreamMetrics | null]>
     ;
 
 export type ConnectionStateAction =

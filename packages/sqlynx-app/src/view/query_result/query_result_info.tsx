@@ -46,10 +46,10 @@ interface ResultInfoProps {
 
 export function QueryResultInfo(props: ResultInfoProps) {
     const metrics = props.query.metrics;
-    const rowsReceived = (metrics.rowsReceived == null) ? '-' : formatThousands(metrics.rowsReceived);
-    const batchesReceived = (metrics.batchesReceived == null) ? '-' : formatThousands(metrics.batchesReceived);
-    const dataBytes = (metrics.dataBytesReceived == null) ? '-' : formatBytes(metrics.dataBytesReceived, ByteFormat.SI);
-    const untilFirstRow = (metrics.durationUntilFirstBatchMs == null) ? "-" : formatMilliseconds(metrics.durationUntilFirstBatchMs);
+    const rowsReceived = (metrics.stream.totalRowsReceived == null) ? '-' : formatThousands(metrics.stream.totalRowsReceived);
+    const batchesReceived = (metrics.stream.totalBatchesReceived == null) ? '-' : formatThousands(metrics.stream.totalBatchesReceived);
+    const dataBytes = (metrics.stream.totalDataBytesReceived == null) ? '-' : formatBytes(metrics.stream.totalDataBytesReceived, ByteFormat.SI);
+    const untilFirstRow = (metrics.stream.durationUntilFirstBatchMs == null) ? "-" : formatMilliseconds(metrics.stream.durationUntilFirstBatchMs);
     const queryDuration = (metrics.queryDurationMs == null) ? "-" : formatMilliseconds(metrics.queryDurationMs);
 
     const b3TraceId = props.query.resultMetadata?.get("x-b3-traceid") ?? null;

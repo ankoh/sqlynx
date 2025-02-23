@@ -1,8 +1,9 @@
 import * as arrow from 'apache-arrow';
 import {
     QueryExecutionProgress,
-    QueryExecutionResponseStream, QueryExecutionResponseStreamMetrics,
+    QueryExecutionResponseStream, QueryExecutionStreamMetrics,
     QueryExecutionStatus,
+    createQueryResponseStreamMetrics,
 } from './query_execution_state.js';
 import { sleep } from '../utils/sleep.js';
 
@@ -10,6 +11,7 @@ export class QueryExecutionResponseStreamMock implements QueryExecutionResponseS
     schema: arrow.Schema;
     batchCount: number;
     batchesWritten: number;
+    metrics: QueryExecutionStreamMetrics;
 
     constructor() {
         this.schema = new arrow.Schema([
@@ -19,6 +21,7 @@ export class QueryExecutionResponseStreamMock implements QueryExecutionResponseS
         ]);
         this.batchCount = 1;
         this.batchesWritten = 0;
+        this.metrics = createQueryResponseStreamMetrics();
     }
 
     /// Get the metrics
@@ -26,10 +29,8 @@ export class QueryExecutionResponseStreamMock implements QueryExecutionResponseS
         return new Map();
     }
     /// Get the metrics
-    getMetrics(): QueryExecutionResponseStreamMetrics {
-        return {
-            dataBytes: 42
-        };
+    getMetrics(): QueryExecutionStreamMetrics {
+        return this.metrics;
     }
     /// Get the status
     getStatus() {

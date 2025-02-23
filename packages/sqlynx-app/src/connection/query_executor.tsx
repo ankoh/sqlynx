@@ -3,6 +3,7 @@ import * as React from 'react';
 
 import { useConnectionState, useDynamicConnectionDispatch } from './connection_registry.js';
 import {
+    createQueryResponseStreamMetrics,
     QueryExecutionResponseStream,
     QueryExecutionState,
     QueryExecutionStatus,
@@ -84,12 +85,9 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                 startedAt: null,
                 finishedAt: null,
                 lastUpdatedAt: null,
-                dataBytesReceived: 0,
-                batchesReceived: 0,
-                rowsReceived: 0,
                 progressUpdatesReceived: 0,
-                durationUntilFirstBatchMs: null,
                 queryDurationMs: null,
+                stream: createQueryResponseStreamMetrics(),
             },
             latestProgressUpdate: null,
             resultMetadata: null,

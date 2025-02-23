@@ -22,18 +22,35 @@ export enum QueryExecutionStatus {
     CANCELLED = 6,
 }
 
-export interface QueryExecutionProgress { }
+export interface QueryExecutionProgress {
+}
 
-export interface QueryExecutionResponseStreamMetrics {
+export interface QueryExecutionStreamMetrics {
     /// The total data bytes
-    dataBytes: number;
+    totalDataBytesReceived: number;
+    /// The total batches received
+    totalBatchesReceived: number;
+    /// The total batches received
+    totalRowsReceived: number;
+
+    /// The query requests that started
+    totalQueryRequestsStarted: number;
+    /// The query requests that finished
+    totalQueryRequestsSucceeded: number;
+    /// The query requests that failed
+    totalQueryRequestsFailed: number
+    /// The total request duration of all requests that failed or succeeded
+    totalQueryRequestDurationMs: number;
+
+    /// The duration until the first batch
+    durationUntilFirstBatchMs: number | null;
 }
 
 export interface QueryExecutionResponseStream {
     /// Get the result metadata (after completion)
     getMetadata(): Map<string, string>;
     /// Get the stream metrics
-    getMetrics(): QueryExecutionResponseStreamMetrics;
+    getMetrics(): QueryExecutionStreamMetrics;
     /// Get the current query status
     getStatus(): QueryExecutionStatus;
     /// Await the schema message
@@ -51,18 +68,12 @@ export interface QueryMetrics {
     finishedAt: Date | null;
     /// The time at which the query execution was last updated
     lastUpdatedAt: Date | null;
-    /// The number of data bytes received
-    dataBytesReceived: number;
-    /// The number of batches received
-    batchesReceived: number;
-    /// The number of rows received
-    rowsReceived: number;
     /// The number of query_status updates received
     progressUpdatesReceived: number;
-    /// The duration until the first batch
-    durationUntilFirstBatchMs: number | null;
     /// The total query duration
     queryDurationMs: number | null;
+    /// The stream metrics
+    stream: QueryExecutionStreamMetrics;
 }
 
 export interface QueryMetadata {
@@ -146,15 +157,10 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
             return { ...state };
         }
         case QUERY_EXECUTION_RECEIVED_BATCH: {
-            const batch = action.value[1];
+            const [_queryId, batch, streamMetrics] = action.value;
             const metrics = { ...query.metrics };
             metrics.lastUpdatedAt = now;
-            if (metrics.batchesReceived == 0) {
-                metrics.durationUntilFirstBatchMs = now.getTime() - (query.metrics.startedAt ?? now).getTime();
-            }
-            metrics.batchesReceived += 1;
-            metrics.rowsReceived += batch.numRows;
-            metrics.dataBytesReceived = action.value[2]?.dataBytes ?? metrics.dataBytesReceived;
+            metrics.stream = streamMetrics;
             query.resultBatches.push(batch);
             query = {
                 ...query,
@@ -196,7 +202,7 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
             metrics.lastUpdatedAt = now;
             metrics.finishedAt = now;
             metrics.queryDurationMs = untilNow;
-            metrics.dataBytesReceived = action.value[2]?.dataBytes ?? metrics.dataBytesReceived;
+            metrics.stream = action.value[2] ?? metrics.stream;
             query = {
                 ...query,
                 status: QueryExecutionStatus.CANCELLED,
@@ -219,7 +225,7 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
             metrics.lastUpdatedAt = now;
             metrics.finishedAt = now;
             metrics.queryDurationMs = untilNow;
-            metrics.dataBytesReceived = action.value[2]?.dataBytes ?? metrics.dataBytesReceived;
+            metrics.stream = action.value[2] ?? metrics.stream;
             query = {
                 ...query,
                 status: QueryExecutionStatus.FAILED,
@@ -242,9 +248,24 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
 function mergeQueryMetrics(metrics: ConnectionQueryMetrics, query: QueryMetrics): ConnectionQueryMetrics {
     return {
         totalQueries: metrics.totalQueries + BigInt(1),
-        totalBatchesReceived: metrics.totalBatchesReceived + BigInt(query.batchesReceived),
-        totalRowsReceived: metrics.totalRowsReceived + BigInt(query.rowsReceived),
-        accumulatedTimeUntilFirstBatchMs: metrics.accumulatedTimeUntilFirstBatchMs + BigInt(query.durationUntilFirstBatchMs ?? 0),
+        totalBatchesReceived: metrics.totalBatchesReceived + BigInt(query.stream.totalBatchesReceived),
+        totalRowsReceived: metrics.totalRowsReceived + BigInt(query.stream.totalRowsReceived),
+        accumulatedTimeUntilFirstBatchMs: metrics.accumulatedTimeUntilFirstBatchMs + BigInt(query.stream.durationUntilFirstBatchMs ?? 0),
         accumulatedQueryDurationMs: metrics.accumulatedQueryDurationMs + BigInt(query.queryDurationMs ?? 0)
+    };
+}
+
+export function createQueryResponseStreamMetrics(): QueryExecutionStreamMetrics {
+    return {
+        totalDataBytesReceived: 0,
+        totalBatchesReceived: 0,
+        totalRowsReceived: 0,
+
+        totalQueryRequestsStarted: 0,
+        totalQueryRequestsSucceeded: 0,
+        totalQueryRequestsFailed: 0,
+        totalQueryRequestDurationMs: 0,
+
+        durationUntilFirstBatchMs: null,
     };
 }
