@@ -16,9 +16,8 @@ export function QueryExecutionSummary(props: QueryExecutionSummaryProps) {
 
     return (
         <div className={styles.root}>
-            <div>{query.status}</div>
+            <div>Status: {query.status}</div>
             <div>Title: {query.queryMetadata.title}</div>
-            <div>Description: {query.queryMetadata.description}</div>
             <div>Last update: {query.metrics.lastUpdatedAt?.toString()}</div>
             <div>Bytes received: {query.metrics.dataBytesReceived}</div>
             <div>Rows received: {query.metrics.rowsReceived}</div>

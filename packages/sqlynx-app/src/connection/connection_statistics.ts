@@ -11,7 +11,6 @@ export interface ConnectionQueryMetrics {
     totalQueries: bigint;
     totalBatchesReceived: bigint;
     totalRowsReceived: bigint;
-    accumulatedTimeUntilSchemaMs: bigint;
     accumulatedTimeUntilFirstBatchMs: bigint;
     accumulatedQueryDurationMs: bigint;
 }
@@ -27,7 +26,6 @@ export function createConnectionQueryStatistics(): ConnectionQueryMetrics {
         totalQueries: BigInt(0),
         totalBatchesReceived: BigInt(0),
         totalRowsReceived: BigInt(0),
-        accumulatedTimeUntilSchemaMs: BigInt(0),
         accumulatedTimeUntilFirstBatchMs: BigInt(0),
         accumulatedQueryDurationMs: BigInt(0)
     };

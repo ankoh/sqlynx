@@ -18,8 +18,6 @@ export const QueryStatusPanel: React.FC<Props> = (props: Props) => {
                 return 'Sending query';
             case QueryExecutionStatus.STARTED:
                 return 'Executing query';
-            case QueryExecutionStatus.RECEIVED_SCHEMA:
-                return 'Executing query, received schema';
             case QueryExecutionStatus.RECEIVED_FIRST_RESULT:
                 return 'Executing query, received first result';
             case QueryExecutionStatus.FAILED:
@@ -36,7 +34,6 @@ export const QueryStatusPanel: React.FC<Props> = (props: Props) => {
     switch (props.query.status) {
         case QueryExecutionStatus.ACCEPTED:
         case QueryExecutionStatus.STARTED:
-        case QueryExecutionStatus.RECEIVED_SCHEMA:
         case QueryExecutionStatus.RECEIVED_FIRST_RESULT: {
             return (
                 <div className={styles.root}>

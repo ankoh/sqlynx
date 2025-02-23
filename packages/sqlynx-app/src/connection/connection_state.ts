@@ -129,7 +129,6 @@ export const CATALOG_UPDATE_CANCELLED = Symbol('CATALOG_UPDATE_CANCELLED');
 export const EXECUTE_QUERY = Symbol('EXECUTE_QUERY');
 export const QUERY_EXECUTION_STARTED = Symbol('QUERY_EXECUTION_STARTED');
 export const QUERY_EXECUTION_PROGRESS_UPDATED = Symbol('QUERY_EXECUTION_PROGRESS_UPDATED');
-export const QUERY_EXECUTION_RECEIVED_SCHEMA = Symbol('QUERY_EXECUTION_RECEIVED_SCHEMA');
 export const QUERY_EXECUTION_RECEIVED_BATCH = Symbol('QUERY_EXECUTION_RECEIVED_BATCH');
 export const QUERY_EXECUTION_SUCCEEDED = Symbol('QUERY_EXECUTION_SUCCEEDED');
 export const QUERY_EXECUTION_FAILED = Symbol('QUERY_EXECUTION_FAILED');
@@ -147,7 +146,6 @@ export type QueryExecutionAction =
     | VariantKind<typeof EXECUTE_QUERY, [number, QueryExecutionState]>
     | VariantKind<typeof QUERY_EXECUTION_STARTED, [number, QueryExecutionResponseStream]>
     | VariantKind<typeof QUERY_EXECUTION_PROGRESS_UPDATED, [number, QueryExecutionProgress]>
-    | VariantKind<typeof QUERY_EXECUTION_RECEIVED_SCHEMA, [number, arrow.Schema]>
     | VariantKind<typeof QUERY_EXECUTION_RECEIVED_BATCH, [number, arrow.RecordBatch, QueryExecutionResponseStreamMetrics]>
     | VariantKind<typeof QUERY_EXECUTION_SUCCEEDED, [number, arrow.Table, Map<string, string>, QueryExecutionResponseStreamMetrics]>
     | VariantKind<typeof QUERY_EXECUTION_FAILED, [number, Error, QueryExecutionResponseStreamMetrics | null]>
@@ -164,7 +162,6 @@ export type ConnectionStateAction =
     ;
 
 export function reduceConnectionState(state: ConnectionState, action: ConnectionStateAction): ConnectionState {
-    console.log(action);
     switch (action.type) {
         case UPDATE_CATALOG:
         case CATALOG_UPDATE_REGISTER_QUERY:
@@ -176,7 +173,6 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
         case EXECUTE_QUERY:
         case QUERY_EXECUTION_STARTED:
         case QUERY_EXECUTION_PROGRESS_UPDATED:
-        case QUERY_EXECUTION_RECEIVED_SCHEMA:
         case QUERY_EXECUTION_RECEIVED_BATCH:
         case QUERY_EXECUTION_SUCCEEDED:
         case QUERY_EXECUTION_CANCELLED:

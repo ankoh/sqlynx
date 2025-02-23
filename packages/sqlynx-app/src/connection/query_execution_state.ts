@@ -7,7 +7,6 @@ import {
     QUERY_EXECUTION_FAILED,
     QUERY_EXECUTION_PROGRESS_UPDATED,
     QUERY_EXECUTION_RECEIVED_BATCH,
-    QUERY_EXECUTION_RECEIVED_SCHEMA,
     QUERY_EXECUTION_STARTED,
     QUERY_EXECUTION_SUCCEEDED,
     QueryExecutionAction,
@@ -17,7 +16,6 @@ import { ConnectionQueryMetrics } from './connection_statistics.js';
 export enum QueryExecutionStatus {
     ACCEPTED = 0,
     STARTED = 1,
-    RECEIVED_SCHEMA = 2,
     RECEIVED_FIRST_RESULT = 3,
     SUCCEEDED = 4,
     FAILED = 5,
@@ -61,8 +59,6 @@ export interface QueryMetrics {
     rowsReceived: number;
     /// The number of query_status updates received
     progressUpdatesReceived: number;
-    /// The duration until the first batch
-    durationUntilSchemaMs: number | null;
     /// The duration until the first batch
     durationUntilFirstBatchMs: number | null;
     /// The total query duration
@@ -121,7 +117,6 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
     if (!query) {
         return state;
     }
-    console.log(action);
     switch (action.type) {
         case QUERY_EXECUTION_STARTED: {
             query = {
@@ -150,20 +145,6 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
             state.queriesRunning.set(query.queryId, query);
             return { ...state };
         }
-        case QUERY_EXECUTION_RECEIVED_SCHEMA: {
-            query = {
-                ...query,
-                status: QueryExecutionStatus.RECEIVED_SCHEMA,
-                resultSchema: action.value[1],
-                metrics: {
-                    ...query.metrics,
-                    lastUpdatedAt: now,
-                    durationUntilSchemaMs: now.getTime() - (query.metrics.startedAt ?? now).getTime(),
-                },
-            };
-            state.queriesRunning.set(query.queryId, query);
-            return { ...state };
-        }
         case QUERY_EXECUTION_RECEIVED_BATCH: {
             const batch = action.value[1];
             const metrics = { ...query.metrics };
@@ -175,13 +156,14 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
             metrics.rowsReceived += batch.numRows;
             metrics.dataBytesReceived = action.value[2]?.dataBytes ?? metrics.dataBytesReceived;
             query.resultBatches.push(batch);
-            console.log("NEW METRICS");
-            console.log(metrics);
             query = {
                 ...query,
                 status: QueryExecutionStatus.RECEIVED_FIRST_RESULT,
                 metrics: metrics,
             };
+            if (query.resultSchema == null) {
+                query.resultSchema = batch.schema;
+            }
             state.queriesRunning.set(query.queryId, query);
             return { ...state };
         }
@@ -262,7 +244,6 @@ function mergeQueryMetrics(metrics: ConnectionQueryMetrics, query: QueryMetrics)
         totalQueries: metrics.totalQueries + BigInt(1),
         totalBatchesReceived: metrics.totalBatchesReceived + BigInt(query.batchesReceived),
         totalRowsReceived: metrics.totalRowsReceived + BigInt(query.rowsReceived),
-        accumulatedTimeUntilSchemaMs: metrics.accumulatedTimeUntilSchemaMs + BigInt(query.durationUntilSchemaMs ?? 0),
         accumulatedTimeUntilFirstBatchMs: metrics.accumulatedTimeUntilFirstBatchMs + BigInt(query.durationUntilFirstBatchMs ?? 0),
         accumulatedQueryDurationMs: metrics.accumulatedQueryDurationMs + BigInt(query.queryDurationMs ?? 0)
     };

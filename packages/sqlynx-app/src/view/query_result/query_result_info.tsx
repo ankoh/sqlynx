@@ -49,7 +49,6 @@ export function QueryResultInfo(props: ResultInfoProps) {
     const rowsReceived = (metrics.rowsReceived == null) ? '-' : formatThousands(metrics.rowsReceived);
     const batchesReceived = (metrics.batchesReceived == null) ? '-' : formatThousands(metrics.batchesReceived);
     const dataBytes = (metrics.dataBytesReceived == null) ? '-' : formatBytes(metrics.dataBytesReceived, ByteFormat.SI);
-    const untilSchema = (metrics.durationUntilSchemaMs == null) ? "-" : formatMilliseconds(metrics.durationUntilSchemaMs);
     const untilFirstRow = (metrics.durationUntilFirstBatchMs == null) ? "-" : formatMilliseconds(metrics.durationUntilFirstBatchMs);
     const queryDuration = (metrics.queryDurationMs == null) ? "-" : formatMilliseconds(metrics.queryDurationMs);
 
@@ -67,7 +66,6 @@ export function QueryResultInfo(props: ResultInfoProps) {
                     <MetricEntry name="Data Bytes" value={dataBytes.toString()} />
                 </div>
                 <div className={styles.metrics_group}>
-                    <MetricEntry name="Schema At" value={untilSchema} />
                     <MetricEntry name="First Batch At" value={untilFirstRow} />
                     <MetricEntry name="Finished At" value={queryDuration} />
                 </div>

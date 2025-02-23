@@ -5,6 +5,8 @@ import { Logger } from '../../platform/logger.js';
 import { QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionResponseStreamMetrics, QueryExecutionStatus } from "../../connection/query_execution_state.js";
 import { TRINO_STATUS_HTTP_ERROR, TRINO_STATUS_OK, TRINO_STATUS_OTHER_ERROR, TrinoApiClientInterface, TrinoApiEndpoint, TrinoQueryData, TrinoQueryResult, TrinoQueryStatistics } from "./trino_api_client.js";
 import { ChannelError, RawProxyError } from '../../platform/channel_common.js';
+import { AsyncConsumerValue } from '../../utils/async_value.js';
+import { Semaphore } from '../../utils/semaphore.js';
 
 const LOG_CTX = 'trino_channel';
 
@@ -20,9 +22,9 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
     /// The response metadata
     responseMetadata: Map<string, string>;
     /// The schema
-    resultSchema: arrow.Schema | null;
-    /// The current in-flight result fetch
-    inFlightResultFetch: Promise<arrow.RecordBatch | null> | null;
+    resultSchema: AsyncConsumerValue<arrow.Schema, Error>;
+    /// The semaphore for serial result fetches
+    resultFetchSemaphore: Semaphore;
     /// The current result
     latestQueryResult: TrinoQueryResult | null;
     /// The latest statistics
@@ -36,8 +38,8 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
         this.apiClient = apiClient;
         this.currentStatus = QueryExecutionStatus.STARTED;
         this.responseMetadata = new Map();
-        this.resultSchema = null;
-        this.inFlightResultFetch = null;
+        this.resultSchema = new AsyncConsumerValue();
+        this.resultFetchSemaphore = new Semaphore(1);
         this.latestQueryResult = result;
         this.latestQueryStats = result.stats ?? null;
         this.latestQueryState = result.stats?.state ?? null;
@@ -81,14 +83,13 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
                     "errorMessage": errorMessage,
                 },
             };
-            throw new ChannelError(rawError, errorCode);
+            this.resultSchema.reject(new ChannelError(rawError, errorCode));
         }
         // Do we already have a schema?
-        if (this.resultSchema == null && queryResult.columns) {
+        if (!this.resultSchema.isResolved() && queryResult.columns) {
             // Attempt to translate the schema
-            this.resultSchema = translateTrinoSchema(queryResult);
-
-            console.log(this.resultSchema);
+            const resultSchema = translateTrinoSchema(queryResult);
+            this.resultSchema.resolve(resultSchema);
         }
         return queryResult;
     }
@@ -109,22 +110,7 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
     }
     /// Await the schema message
     async getSchema(): Promise<arrow.Schema | null> {
-        // Already fetched the schema?
-        if (this.resultSchema == null) {
-            // Is there a fetch in flight?
-            if (this.inFlightResultFetch != null) {
-                // Someone else will consume the results...
-                await this.inFlightResultFetch;
-                // Return the schema.
-                // Note that it might still be null if something wen't wrong with the stream
-                return this.resultSchema;
-            }
-            // Fetch a batch ourselves
-            this.inFlightResultFetch = this.nextRecordBatch();
-            // ... We leave the result fetch "in flight" so that somebody else can fetch the schema
-            await this.inFlightResultFetch;
-        }
-        return this.resultSchema;
+        return this.resultSchema.getValue();
     }
     /// Await the next query_status update
     async nextProgressUpdate(): Promise<QueryExecutionProgress | null> {
@@ -132,24 +118,35 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
     }
     /// Await the next record batch
     async nextRecordBatch(): Promise<arrow.RecordBatch | null> {
-        // Is there an in-flight fetch?
-        // Might have been triggered by getSchema...
-        if (this.inFlightResultFetch != null) {
-            const result = await this.inFlightResultFetch;
-            this.inFlightResultFetch = null;
-            return result;
-        }
-        // While still running
-        while (this.latestQueryState == "QUEUED" || this.latestQueryState == "RUNNING" || this.latestQueryState == "FINISHING") {
-            // Fetch the next query result
-            const result = await this.fetchNextQueryResult();
-            // Translate a batch
-            if (this.resultSchema != null && Array.isArray(result?.data)) {
-                return translateTrinoBatch(this.resultSchema, result.data);
+        const releaseResultFetch = await this.resultFetchSemaphore.acquire();
+        try {
+            // While still running
+            while (this.latestQueryState == "QUEUED" || this.latestQueryState == "RUNNING" || this.latestQueryState == "FINISHING") {
+                // Fetch the next query result
+                const result = await this.fetchNextQueryResult();
+                // Is resolved schema?
+                if (Array.isArray(result?.data)) {
+                    // Have result data but not schema yet?
+                    // This is unexpected.
+                    if (!this.resultSchema.isResolved()) {
+                        throw new Error("result schema is mssing");
+                    }
+                    // Translate the trino batch
+                    const schema = this.resultSchema.getResolvedValue();
+                    const resultBatch = translateTrinoBatch(schema!, result.data);
+                    releaseResultFetch();
+                    return resultBatch;
+                }
             }
+            this.logger.debug("reached end of query result stream", { "queryState": this.latestQueryState });
+
+            releaseResultFetch();
+            return null;
+
+        } catch (e: any) {
+            releaseResultFetch();
+            throw e;
         }
-        this.logger.debug("reached end of query result stream", { "queryState": this.latestQueryState });
-        return null;
     }
 }
 
@@ -219,12 +216,9 @@ export class TrinoChannel implements TrinoChannelInterface {
 }
 
 /// Translate the Trino schema
-function translateTrinoSchema(result: TrinoQueryResult): (arrow.Schema | null) {
-    if (!result.columns?.length) {
-        return null;
-    }
+function translateTrinoSchema(result: TrinoQueryResult): arrow.Schema {
     let fields: arrow.Field[] = [];
-    for (const column of result.columns) {
+    for (const column of result.columns!) {
         let t: arrow.DataType | null = null;
         switch (column.type) {
             case "varchar":

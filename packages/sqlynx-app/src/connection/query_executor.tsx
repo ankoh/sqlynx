@@ -15,7 +15,6 @@ import {
     QUERY_EXECUTION_FAILED,
     QUERY_EXECUTION_PROGRESS_UPDATED,
     QUERY_EXECUTION_RECEIVED_BATCH,
-    QUERY_EXECUTION_RECEIVED_SCHEMA,
     QUERY_EXECUTION_STARTED,
     QUERY_EXECUTION_SUCCEEDED,
 } from './connection_state.js';
@@ -89,7 +88,6 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                 batchesReceived: 0,
                 rowsReceived: 0,
                 progressUpdatesReceived: 0,
-                durationUntilSchemaMs: null,
                 durationUntilFirstBatchMs: null,
                 queryDurationMs: null,
             },
@@ -121,17 +119,6 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
         };
         // Helper to subscribe to result batches
         const readAllBatches = async (resultStream: QueryExecutionResponseStream) => {
-            // Resolve the result schema
-            const schema = await resultStream.getSchema();
-            if (schema == null) {
-                logger.error("query schema is null", { "connection": connectionId.toString(), "query": queryId.toString() }, LOG_CTX);
-                return;
-            }
-            connDispatch(connectionId, {
-                type: QUERY_EXECUTION_RECEIVED_SCHEMA,
-                value: [queryId, schema],
-            });
-
             // Collect record batches
             const batches: arrow.RecordBatch[] = [];
             while (true) {
@@ -148,6 +135,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                     value: [queryId, batch, resultStream.getMetrics()],
                 });
             }
+            const schema = batches.length > 0 ? batches[0].schema : new arrow.Schema();
 
             // Build result table
             return new arrow.Table(schema, batches);
