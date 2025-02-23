@@ -52,7 +52,8 @@ export function createConnectionState(lnx: sqlynx.SQLynx, info: ConnectorInfo, d
         catalog,
         catalogUpdates: {
             tasksRunning: new Map(),
-            tasksFinished: [],
+            tasksFinished: new Map(),
+            lastFullRefresh: null,
         },
         queriesRunning: new Map(),
         queriesFinished: new Map(),

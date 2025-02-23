@@ -10,17 +10,10 @@ import { useCurrentWorkbookState } from '../../workbook/current_workbook.js';
 import { U32_MAX } from '../../utils/numeric_limits.js';
 import { CatalogPanelSidebar } from './catalog_panel_sidebar.js';
 import { useConnectionState } from '../../connection/connection_registry.js';
-import { CatalogUpdateTaskState, CatalogUpdateVariant } from '../../connection/catalog_update_state.js';
-import { QueryExecutionState } from '../../connection/query_execution_state.js';
+import { CatalogUpdateTaskState, CatalogUpdateTaskStatus } from '../../connection/catalog_update_state.js';
+import { CatalogRefreshView } from './catalog_refresh_view.js';
 
 interface CatalogPanelProps { }
-
-interface CatalogUpdate {
-    /// The full refresh task (if any)
-    fullRefreshTask: CatalogUpdateTaskState | null;
-    /// The queries of full refresh tasks
-    queryStates: Map<number, QueryExecutionState>;
-}
 
 export function CatalogPanel(_props: CatalogPanelProps) {
     const [workbookState, _dispatchWorkbook] = useCurrentWorkbookState();
@@ -128,32 +121,21 @@ export function CatalogPanel(_props: CatalogPanelProps) {
         return overlay;
     }, [workbookState?.userFocus, script?.cursor]);
 
-    const _catalogUpdate = React.useMemo<CatalogUpdate | null>(() => {
-        if (!connState?.catalogUpdates.tasksRunning) {
-            return null;
+    // Resolve the latest full-refresh task
+    const fullRefreshTask = React.useMemo<CatalogUpdateTaskState | null>(() => {
+        const lastFullRefresh = connState?.catalogUpdates.lastFullRefresh ?? null;
+        if (lastFullRefresh != null) {
+            const task = connState!.catalogUpdates.tasksRunning.get(lastFullRefresh)
+                ?? connState!.catalogUpdates.tasksFinished.get(lastFullRefresh)
+                ?? null;
+            return task;
         }
-        const update: CatalogUpdate = {
-            fullRefreshTask: null,
-            queryStates: new Map(),
-        };
-        for (const [_k, task] of connState?.catalogUpdates.tasksRunning) {
-            if (task.taskVariant == CatalogUpdateVariant.FULL_CATALOG_REFRESH) {
-                update.fullRefreshTask = task;
-                for (const query of task.queries) {
-                    const queryState = connState.queriesRunning.get(query.queryId)
-                        ?? connState.queriesFinished.get(query.queryId)
-                        ?? null;
-                    if (queryState != null) {
-                        update.queryStates.set(query.queryId, queryState);
-                    }
-                }
-            }
-        }
-        console.log(update);
-        return update;
-
+        return null;
     }, [connState?.catalogUpdates]);
 
+    // Show the catalog full refresh status until the latest refresh succeeded
+    const showRefreshView = fullRefreshTask != null
+        && fullRefreshTask.status != CatalogUpdateTaskStatus.SUCCEEDED;
 
     const [infoExpanded, setInfoExpanded] = React.useState(false);
     const toggleInfo = () => setInfoExpanded(e => !e);
@@ -165,16 +147,19 @@ export function CatalogPanel(_props: CatalogPanelProps) {
                 </div>
             </div>
             <div className={styles.panel_container}>
-
-                <>
-                    <div className={styles.catalog_viewer}>
-                        <CatalogViewer />
-                    </div>
-                    <div className={styles.info_toggle} onClick={toggleInfo} />
-                    {infoExpanded && (
-                        <CatalogPanelSidebar entries={infoEntries} />
-                    )}
-                </>
+                {showRefreshView ? (
+                    <CatalogRefreshView conn={connState!} refresh={fullRefreshTask} />
+                ) : (
+                    <>
+                        <div className={styles.catalog_viewer}>
+                            <CatalogViewer />
+                        </div>
+                        <div className={styles.info_toggle} onClick={toggleInfo} />
+                        {infoExpanded && (
+                            <CatalogPanelSidebar entries={infoEntries} />
+                        )}
+                    </>
+                )}
             </div>
         </div>
     );

@@ -38,7 +38,10 @@ export interface CatalogUpdates {
     /// The running tasks
     tasksRunning: Map<number, CatalogUpdateTaskState>;
     /// The finished tasks
-    tasksFinished: CatalogUpdateTaskState[];
+    tasksFinished: Map<number, CatalogUpdateTaskState>;
+    /// The most recent catalog update.
+    /// We use this to trigger auto-refreshs.
+    lastFullRefresh: number | null;
 }
 
 export interface ConnectionState {
@@ -161,6 +164,7 @@ export type ConnectionStateAction =
     ;
 
 export function reduceConnectionState(state: ConnectionState, action: ConnectionStateAction): ConnectionState {
+    console.log(action);
     switch (action.type) {
         case UPDATE_CATALOG:
         case CATALOG_UPDATE_REGISTER_QUERY:
@@ -194,7 +198,8 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
                 metrics: createConnectionMetrics(),
                 catalogUpdates: {
                     tasksRunning: new Map(),
-                    tasksFinished: [],
+                    tasksFinished: new Map(),
+                    lastFullRefresh: null,
                 },
                 queriesRunning: new Map(),
                 queriesFinished: new Map(),
@@ -255,7 +260,8 @@ export function createConnectionState(lnx: sqlynx.SQLynx, info: ConnectorInfo, d
         catalog,
         catalogUpdates: {
             tasksRunning: new Map(),
-            tasksFinished: [],
+            tasksFinished: new Map(),
+            lastFullRefresh: null,
         },
         queriesRunning: new Map(),
         queriesFinished: new Map(),

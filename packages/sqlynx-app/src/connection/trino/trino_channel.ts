@@ -21,8 +21,8 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
     responseMetadata: Map<string, string>;
     /// The schema
     resultSchema: arrow.Schema | null;
-    /// The first result batch
-    firstResultBatch: arrow.RecordBatch | null;
+    /// The current in-flight result fetch
+    inFlightResultFetch: Promise<arrow.RecordBatch | null> | null;
     /// The current result
     latestQueryResult: TrinoQueryResult | null;
     /// The latest statistics
@@ -37,7 +37,7 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
         this.currentStatus = QueryExecutionStatus.STARTED;
         this.responseMetadata = new Map();
         this.resultSchema = null;
-        this.firstResultBatch = null;
+        this.inFlightResultFetch = null;
         this.latestQueryResult = result;
         this.latestQueryStats = result.stats ?? null;
         this.latestQueryState = result.stats?.state ?? null;
@@ -109,7 +109,21 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
     }
     /// Await the schema message
     async getSchema(): Promise<arrow.Schema | null> {
-        this.firstResultBatch = await this.nextRecordBatch();
+        // Already fetched the schema?
+        if (this.resultSchema == null) {
+            // Is there a fetch in flight?
+            if (this.inFlightResultFetch != null) {
+                // Someone else will consume the results...
+                await this.inFlightResultFetch;
+                // Return the schema.
+                // Note that it might still be null if something wen't wrong with the stream
+                return this.resultSchema;
+            }
+            // Fetch a batch ourselves
+            this.inFlightResultFetch = this.nextRecordBatch();
+            // ... We leave the result fetch "in flight" so that somebody else can fetch the schema
+            await this.inFlightResultFetch;
+        }
         return this.resultSchema;
     }
     /// Await the next query_status update
@@ -118,11 +132,12 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
     }
     /// Await the next record batch
     async nextRecordBatch(): Promise<arrow.RecordBatch | null> {
-        // Is there a result batch?
-        if (this.firstResultBatch != null) {
-            const batch = this.firstResultBatch;
-            this.firstResultBatch = null;
-            return batch;
+        // Is there an in-flight fetch?
+        // Might have been triggered by getSchema...
+        if (this.inFlightResultFetch != null) {
+            const result = await this.inFlightResultFetch;
+            this.inFlightResultFetch = null;
+            return result;
         }
         // While still running
         while (this.latestQueryState == "QUEUED" || this.latestQueryState == "RUNNING" || this.latestQueryState == "FINISHING") {

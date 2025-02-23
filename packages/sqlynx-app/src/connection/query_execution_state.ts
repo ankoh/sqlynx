@@ -121,6 +121,7 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
     if (!query) {
         return state;
     }
+    console.log(action);
     switch (action.type) {
         case QUERY_EXECUTION_STARTED: {
             query = {
@@ -174,6 +175,8 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
             metrics.rowsReceived += batch.numRows;
             metrics.dataBytesReceived = action.value[2]?.dataBytes ?? metrics.dataBytesReceived;
             query.resultBatches.push(batch);
+            console.log("NEW METRICS");
+            console.log(metrics);
             query = {
                 ...query,
                 status: QueryExecutionStatus.RECEIVED_FIRST_RESULT,

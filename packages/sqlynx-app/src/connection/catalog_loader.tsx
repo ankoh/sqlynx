@@ -67,6 +67,7 @@ export function CatalogLoaderProvider(props: { children?: React.ReactElement }) 
 
         // Accept the query and clear the request
         const abortController = new AbortController();
+        const now = new Date();
         const initialState: CatalogUpdateTaskState = {
             taskId: updateId,
             taskVariant: CatalogUpdateVariant.FULL_CATALOG_REFRESH,
@@ -74,8 +75,9 @@ export function CatalogLoaderProvider(props: { children?: React.ReactElement }) 
             cancellation: abortController,
             queries: [],
             error: null,
-            startedAt: new Date(),
-            finishedAt: null
+            startedAt: now,
+            finishedAt: null,
+            lastUpdateAt: now,
         };
         connDispatch(connectionId, {
             type: UPDATE_CATALOG,
@@ -90,7 +92,7 @@ export function CatalogLoaderProvider(props: { children?: React.ReactElement }) 
                     if (conn.details.type == TRINO_CONNECTOR) {
                         const catalog = conn.details.value.channelParams?.catalogName ?? "";
                         const schemas = conn.details.value.channelParams?.schemaNames ?? [];
-                        await updateInformationSchemaCatalog(connectionId, connDispatch, catalog, schemas, executor, conn.catalog);
+                        await updateInformationSchemaCatalog(connectionId, connDispatch, updateId, catalog, schemas, executor, conn.catalog);
                     } else {
                         throw new Error(
                             `cannot load information_schema catalog for ${conn.connectorInfo.connectorType} connections`,
@@ -102,7 +104,7 @@ export function CatalogLoaderProvider(props: { children?: React.ReactElement }) 
                 case CatalogResolver.SQL_PG_ATTRIBUTE: {
                     if (conn.details.type == HYPER_GRPC_CONNECTOR) {
                         const schemas: string[] = []; // XXX
-                        await updatePgAttributeSchemaCatalog(connectionId, connDispatch, schemas, executor, conn.catalog);
+                        await updatePgAttributeSchemaCatalog(connectionId, connDispatch, updateId, schemas, executor, conn.catalog);
                     } else {
                         throw new Error(
                             `cannot load pg_attribute catalog for ${conn.connectorInfo.connectorType} connections`,
@@ -204,15 +206,19 @@ export function CatalogLoaderProvider(props: { children?: React.ReactElement }) 
                 continue;
             }
 
-            // Was there a recent update?
-            if (connState.catalogUpdates.tasksFinished.length > 0) {
-                const recent = connState.catalogUpdates.tasksFinished[connState.catalogUpdates.tasksFinished.length - 1];
-                const now = new Date();
-                const elapsed = (recent.finishedAt?.getTime() ?? now.getTime()) - now.getTime();
-                if (elapsed < CATALOG_REFRESH_AFTER) {
-                    // XXX Add option to force the update
-                    logger.info("skipping catalog update", { "elapsed": elapsed.toString(), "threshold": CATALOG_REFRESH_AFTER.toString() }, LOG_CTX)
-                    continue;
+            // Was there a recent refresh?
+            if (connState.catalogUpdates.lastFullRefresh != null) {
+                const refresh = connState.catalogUpdates.tasksRunning.get(connState.catalogUpdates.lastFullRefresh)
+                    ?? connState.catalogUpdates.tasksFinished.get(connState.catalogUpdates.lastFullRefresh)
+                    ?? null;
+                if (refresh) {
+                    const now = new Date();
+                    const elapsed = (refresh.finishedAt?.getTime() ?? now.getTime()) - now.getTime();
+                    if (elapsed < CATALOG_REFRESH_AFTER) {
+                        // XXX Add option to force the update
+                        logger.info("skipping catalog update", { "elapsed": elapsed.toString(), "threshold": CATALOG_REFRESH_AFTER.toString() }, LOG_CTX)
+                        continue;
+                    }
                 }
             }
 

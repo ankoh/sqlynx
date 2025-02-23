@@ -4,7 +4,7 @@ import { QueryExecutor } from './query_executor.js';
 import { QueryExecutionArgs } from './query_execution_args.js';
 import { DynamicConnectionDispatch } from './connection_registry.js';
 
-export async function queryPgAttribute(connectionId: number, schemaNames: string[], executor: QueryExecutor): Promise<void> {
+export async function queryPgAttribute(connectionId: number, updateId: number, schemaNames: string[], executor: QueryExecutor): Promise<void> {
     const query = `
         SELECT 
             n.nspname AS table_schema,
@@ -53,6 +53,6 @@ export async function queryPgAttribute(connectionId: number, schemaNames: string
     // XXX Update the catalog
 }
 
-export async function updatePgAttributeSchemaCatalog(connectionId: number, connectionDispatch: DynamicConnectionDispatch, schemaNames: string[], executor: QueryExecutor, _catalog: sqlynx.SQLynxCatalog): Promise<void> {
-    await queryPgAttribute(connectionId, schemaNames, executor);
+export async function updatePgAttributeSchemaCatalog(connectionId: number, connectionDispatch: DynamicConnectionDispatch, updateId: number, schemaNames: string[], executor: QueryExecutor, _catalog: sqlynx.SQLynxCatalog): Promise<void> {
+    await queryPgAttribute(connectionId, updateId, schemaNames, executor);
 }

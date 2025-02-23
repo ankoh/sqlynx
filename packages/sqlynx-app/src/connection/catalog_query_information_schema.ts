@@ -4,6 +4,7 @@ import * as sqlynx from '@ankoh/sqlynx-core';
 import { QueryExecutor } from './query_executor.js';
 import { QueryExecutionArgs } from './query_execution_args.js';
 import { DynamicConnectionDispatch } from "./connection_registry.js";
+import { CATALOG_UPDATE_REGISTER_QUERY } from "./connection_state.js";
 
 export type InformationSchemaColumnsTable = arrow.Table<{
     table_catalog: arrow.Utf8;
@@ -88,7 +89,7 @@ function collectSchemaDescriptors(result: InformationSchemaColumnsTable): sqlynx
     return descriptors;
 }
 
-export async function queryInformationSchema(connectionId: number, connectionDispatch: DynamicConnectionDispatch, catalogName: string, schemaNames: string[], executor: QueryExecutor): Promise<void> {
+export async function queryInformationSchema(connectionId: number, connectionDispatch: DynamicConnectionDispatch, updateId: number, catalogName: string, schemaNames: string[], executor: QueryExecutor): Promise<void> {
     const query = `
         SELECT
             table_catalog,
@@ -112,7 +113,12 @@ export async function queryInformationSchema(connectionId: number, connectionDis
             userProvided: false
         }
     };
-    const [_queryId, queryExecution] = executor(connectionId, args);
+    const [queryId, queryExecution] = executor(connectionId, args);
+    connectionDispatch(connectionId, {
+        type: CATALOG_UPDATE_REGISTER_QUERY,
+        value: [updateId, queryId]
+    });
+
     const queryResult = await queryExecution as InformationSchemaColumnsTable;
 
     if (queryResult == null) {
@@ -124,6 +130,6 @@ export async function queryInformationSchema(connectionId: number, connectionDis
     console.log(descriptors);
 }
 
-export async function updateInformationSchemaCatalog(connectionId: number, connectionDispatch: DynamicConnectionDispatch, catalogName: string, schemaNames: string[], executor: QueryExecutor, _catalog: sqlynx.SQLynxCatalog): Promise<void> {
-    await queryInformationSchema(connectionId, connectionDispatch, catalogName, schemaNames, executor);
+export async function updateInformationSchemaCatalog(connectionId: number, connectionDispatch: DynamicConnectionDispatch, updateId: number, catalogName: string, schemaNames: string[], executor: QueryExecutor, _catalog: sqlynx.SQLynxCatalog): Promise<void> {
+    await queryInformationSchema(connectionId, connectionDispatch, updateId, catalogName, schemaNames, executor);
 }
