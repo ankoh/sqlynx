@@ -2,7 +2,7 @@ import * as arrow from 'apache-arrow';
 import * as proto from "@ankoh/sqlynx-protobuf";
 
 import { Logger } from '../../platform/logger.js';
-import { createQueryResponseStreamMetrics, QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionStreamMetrics, QueryExecutionStatus } from "../../connection/query_execution_state.js";
+import { createQueryResponseStreamMetrics, QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionMetrics, QueryExecutionStatus } from "../../connection/query_execution_state.js";
 import { TRINO_STATUS_HTTP_ERROR, TRINO_STATUS_OK, TRINO_STATUS_OTHER_ERROR, TrinoApiClientInterface, TrinoApiEndpoint, TrinoQueryData, TrinoQueryResult, TrinoQueryStatistics } from "./trino_api_client.js";
 import { ChannelError, RawProxyError } from '../../platform/channel_common.js';
 import { AsyncValue } from '../../utils/async_value.js';
@@ -32,10 +32,10 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
     /// The latest query state
     latestQueryState: string | null;
     /// The metrics
-    metrics: QueryExecutionStreamMetrics;
+    metrics: QueryExecutionMetrics;
 
     /// The constructor
-    constructor(logger: Logger, apiClient: TrinoApiClientInterface, result: TrinoQueryResult) {
+    constructor(logger: Logger, apiClient: TrinoApiClientInterface, result: TrinoQueryResult, metrics: QueryExecutionMetrics) {
         this.logger = logger;
         this.apiClient = apiClient;
         this.currentStatus = QueryExecutionStatus.STARTED;
@@ -45,7 +45,7 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
         this.latestQueryResult = result;
         this.latestQueryStats = result.stats ?? null;
         this.latestQueryState = result.stats?.state ?? null;
-        this.metrics = createQueryResponseStreamMetrics();
+        this.metrics = metrics;
     }
 
     /// Fetch the next query result
@@ -110,7 +110,7 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
         return new Map();
     }
     /// Get the stream metrics
-    getMetrics(): QueryExecutionStreamMetrics {
+    getMetrics(): QueryExecutionMetrics {
         return this.metrics;
     }
     /// Get the current query status
@@ -213,12 +213,28 @@ export class TrinoChannel implements TrinoChannelInterface {
 
     /// Execute Query
     async executeQuery(param: proto.salesforce_hyperdb_grpc_v1.pb.QueryParam): Promise<TrinoQueryResultStream> {
-        this.logger.debug("executing query", {}, LOG_CTX);
-        const result = await this.apiClient.runQuery(this.endpoint, this.catalogName, param.query);
+        const metrics = createQueryResponseStreamMetrics();
+        const timeBefore = (new Date()).getTime();
 
-        this.logger.debug("opened query result stream", {}, LOG_CTX);
-        const stream = new TrinoQueryResultStream(this.logger, this.apiClient, result);
-        return stream;
+        try {
+            this.logger.debug("executing query", {}, LOG_CTX);
+            metrics.totalQueryRequestsStarted += 1;
+
+            const result = await this.apiClient.runQuery(this.endpoint, this.catalogName, param.query);
+            const timeAfter = (new Date()).getTime();
+
+            metrics.totalQueryRequestsSucceeded += 1;
+            metrics.totalQueryRequestDurationMs += timeAfter - timeBefore;
+
+            this.logger.debug("opened query result stream", {}, LOG_CTX);
+            const stream = new TrinoQueryResultStream(this.logger, this.apiClient, result, metrics);
+            return stream;
+        } catch (e: any) {
+            const timeAfter = (new Date()).getTime();
+            metrics.totalQueryRequestsFailed += 1;
+            metrics.totalQueryRequestDurationMs += timeAfter - timeBefore;
+            throw e;
+        }
     }
 
     /// Destroy the connection

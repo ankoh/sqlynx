@@ -32,6 +32,7 @@ import { executeDemoQuery } from './demo/demo_query_execution.js';
 const LOG_CTX = 'query_executor';
 
 let NEXT_QUERY_ID = 1;
+
 /// The query executor function
 export type QueryExecutor = (connectionId: number, args: QueryExecutionArgs) => [number, Promise<arrow.Table | null>];
 /// The React context to resolve the active query executor

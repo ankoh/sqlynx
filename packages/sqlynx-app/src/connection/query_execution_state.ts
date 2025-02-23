@@ -25,7 +25,7 @@ export enum QueryExecutionStatus {
 export interface QueryExecutionProgress {
 }
 
-export interface QueryExecutionStreamMetrics {
+export interface QueryExecutionMetrics {
     /// The total data bytes
     totalDataBytesReceived: number;
     /// The total batches received
@@ -50,7 +50,7 @@ export interface QueryExecutionResponseStream {
     /// Get the result metadata (after completion)
     getMetadata(): Map<string, string>;
     /// Get the stream metrics
-    getMetrics(): QueryExecutionStreamMetrics;
+    getMetrics(): QueryExecutionMetrics;
     /// Get the current query status
     getStatus(): QueryExecutionStatus;
     /// Await the schema message
@@ -73,7 +73,7 @@ export interface QueryMetrics {
     /// The total query duration
     queryDurationMs: number | null;
     /// The stream metrics
-    stream: QueryExecutionStreamMetrics;
+    stream: QueryExecutionMetrics;
 }
 
 export interface QueryMetadata {
@@ -255,7 +255,7 @@ function mergeQueryMetrics(metrics: ConnectionQueryMetrics, query: QueryMetrics)
     };
 }
 
-export function createQueryResponseStreamMetrics(): QueryExecutionStreamMetrics {
+export function createQueryResponseStreamMetrics(): QueryExecutionMetrics {
     return {
         totalDataBytesReceived: 0,
         totalBatchesReceived: 0,

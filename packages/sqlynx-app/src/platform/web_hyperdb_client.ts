@@ -8,7 +8,7 @@ import {
     createQueryResponseStreamMetrics,
     QueryExecutionProgress,
     QueryExecutionResponseStream,
-    QueryExecutionStreamMetrics,
+    QueryExecutionMetrics,
     QueryExecutionStatus,
 } from '../connection/query_execution_state.js';
 
@@ -20,7 +20,7 @@ export class QueryResultReader implements AsyncIterator<Uint8Array>, AsyncIterab
     /// The current status
     currentStatus: QueryExecutionStatus;
     /// The metrics
-    metrics: QueryExecutionStreamMetrics;
+    metrics: QueryExecutionMetrics;
 
     constructor(stream: AsyncIterator<hyper.salesforce_hyperdb_grpc_v1.pb.QueryResult>, logger: Logger) {
         this.stream = stream;
@@ -76,7 +76,7 @@ export class WebHyperQueryResultStream implements QueryExecutionResponseStream {
         return new Map();
     }
     /// Get the metrics
-    getMetrics(): QueryExecutionStreamMetrics {
+    getMetrics(): QueryExecutionMetrics {
         return this.resultReader.metrics;
     }
     /// Get the current query status

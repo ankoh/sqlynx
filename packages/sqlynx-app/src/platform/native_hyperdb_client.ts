@@ -18,7 +18,7 @@ import {
 import {
     createQueryResponseStreamMetrics,
     QueryExecutionProgress,
-    QueryExecutionResponseStream, QueryExecutionStreamMetrics,
+    QueryExecutionResponseStream, QueryExecutionMetrics,
     QueryExecutionStatus,
 } from '../connection/query_execution_state.js';
 import { ChannelArgs } from './channel_common.js';
@@ -36,7 +36,7 @@ export class QueryResultReader implements AsyncIterator<Uint8Array>, AsyncIterab
     /// The current status
     currentStatus: QueryExecutionStatus;
     /// The metrics
-    metrics: QueryExecutionStreamMetrics;
+    metrics: QueryExecutionMetrics;
 
     constructor(stream: NativeGrpcServerStream, logger: Logger) {
         this.grpcStream = stream;
@@ -101,7 +101,7 @@ export class NativeHyperQueryResultStream implements QueryExecutionResponseStrea
         return this.resultReader.metadata;
     }
     /// Get the metrics
-    getMetrics(): QueryExecutionStreamMetrics {
+    getMetrics(): QueryExecutionMetrics {
         return this.resultReader.metrics;
     }
     /// Get the current query status

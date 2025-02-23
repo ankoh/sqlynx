@@ -2,6 +2,7 @@ import { VariantKind } from "utils/variant.js";
 import { HttpClient } from "../../platform/http_client.js";
 import { Logger } from "../../platform/logger.js";
 import { TrinoAuthParams } from "./trino_connection_params.js";
+import { createQueryResponseStreamMetrics, QueryExecutionMetrics } from "connection/query_execution_state.js";
 
 const LOG_CTX = "trino_api";
 
