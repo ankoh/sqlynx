@@ -6,8 +6,7 @@ import { useLocation } from 'react-router-dom';
 
 import { AnchorAlignment, AnchorSide } from './foundations/anchored_position.js';
 import { HoverMode, NavBarButtonWithRef, NavBarLink } from './navbar_button.js';
-import { InternalsViewerOverlay } from './internals_viewer.js';
-import { LogViewerOverlay } from './log_viewer.js';
+import { InternalsViewerOverlay } from './internals_overlay.js';
 import { OverlaySize } from './foundations/overlay.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 import { SQLYNX_VERSION } from '../globals.js';
@@ -55,38 +54,6 @@ const OpenIn = (props: { url?: string | null; alt?: string; icon?: string; label
         </NavBarLink>
     </div>
 );
-
-const LogButton = () => {
-    const [showLogOverlay, setShowLogOverlay] = React.useState<boolean>(false);
-    return (
-        <div className={styles.tab}>
-            <LogViewerOverlay
-                isOpen={showLogOverlay}
-                onClose={() => setShowLogOverlay(false)}
-                renderAnchor={(p: object) => (
-                    <NavBarButtonWithRef
-                        {...p}
-                        className={styles.tab_button}
-                        hover={HoverMode.Darken} onClick={() => setShowLogOverlay(true)}>
-                        <>
-                            <svg width="14px" height="14px">
-                                <use xlinkHref={`${symbols}#log`} />
-                            </svg>
-                            <span className={styles.tab_button_text}>Logs</span>
-                        </>
-                    </NavBarButtonWithRef>
-                )}
-                side={AnchorSide.OutsideBottom}
-                align={AnchorAlignment.End}
-                anchorOffset={16}
-                overlayProps={{
-                    width: OverlaySize.XL,
-                    height: OverlaySize.XL
-                }}
-            />
-        </div>
-    );
-}
 
 const InternalsButton = (_props: {}) => {
     const [showInternalsViewerOverlay, setInternalsViewerOverlay] = React.useState<boolean>(false);
@@ -180,7 +147,6 @@ export const NavBar = (): React.ReactElement => {
                 <PageTab label="Connection" route="/connection" location={location.pathname} icon={`${symbols}#database`} />
             </div>
             <div className={styles.version_container}>
-                <LogButton />
                 <InternalsButton />
                 <VersionButton />
                 {isBrowser

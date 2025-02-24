@@ -2,6 +2,7 @@ import * as React from 'react';
 import * as proto from '@ankoh/sqlynx-protobuf';
 import * as styles from './view/banner_page.module.css';
 import * as symbols from '../static/svg/symbols.generated.svg';
+import * as page_styles from './view/banner_page.module.css';
 
 import { IconButton } from '@primer/react';
 import { createRoot } from 'react-dom/client';
@@ -14,16 +15,14 @@ import { Button, ButtonSize, ButtonVariant } from './view/foundations/button.js'
 import { TextField, TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_WARNING } from './view/foundations/text_field.js';
 import { GitHubTheme } from './github_theme.js';
 import { formatHHMMSS, formatTimeDifference } from './utils/format.js';
-import { LogViewerOverlay } from './view/log_viewer.js';
 import { LoggerProvider, useLogger } from './platform/logger_provider.js';
 import { Logger } from './platform/logger.js';
 
 import '../static/fonts/fonts.css';
 import './globals.css';
 import { AnchorAlignment, AnchorSide } from './view/foundations/anchored_position.js';
-import { OverlaySize } from './view/foundations/overlay.js';
-import * as page_styles from './view/banner_page.module.css';
 import { CopyToClipboardButton } from './utils/clipboard.js';
+import { InternalsViewerOverlay } from './view/internals_overlay.js';
 
 const AUTO_TRIGGER_DELAY = 2000;
 const AUTO_TRIGGER_COUNTER_INTERVAL = 200;
@@ -272,7 +271,7 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                                 Authorization Succeeded
                             </div>
                             <div className={styles.card_header_right_container}>
-                                <LogViewerOverlay
+                                <InternalsViewerOverlay
                                     isOpen={logsAreOpen}
                                     onClose={() => setLogsAreOpen(false)}
                                     renderAnchor={(p: object) => (
@@ -291,10 +290,6 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
                                     side={AnchorSide.OutsideBottom}
                                     align={AnchorAlignment.End}
                                     anchorOffset={16}
-                                    overlayProps={{
-                                        width: OverlaySize.L,
-                                        height: OverlaySize.M
-                                    }}
                                 />
                             </div>
                         </div>

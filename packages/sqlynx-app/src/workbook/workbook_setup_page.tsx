@@ -14,7 +14,6 @@ import { ConnectorInfo, HYPER_GRPC_CONNECTOR, requiresSwitchingToNative, SALESFO
 import { CopyToClipboardButton } from '../utils/clipboard.js';
 import { IndicatorStatus, StatusIndicator } from '../view/foundations/status_indicator.js';
 import { KeyValueTextField, TextField, VALIDATION_WARNING } from '../view/foundations/text_field.js';
-import { LogViewerOverlay } from '../view/log_viewer.js';
 import { OverlaySize } from '../view/foundations/overlay.js';
 import { RESTORE_WORKBOOK } from './workbook_state.js';
 import { SQLYNX_VERSION } from '../globals.js';
@@ -33,6 +32,7 @@ import { DetailedError } from '../utils/error.js';
 import { ConnectionParamsVariant, encodeConnectionParams, readConnectionParamsFromProto } from '../connection/connection_params.js';
 import { useCatalogLoaderQueueFn } from '../connection/catalog_loader.js';
 import { ValueListBuilder } from '../view/foundations/value_list.js';
+import { InternalsViewerOverlay } from '../view/internals_overlay.js';
 
 const LOG_CTX = "workbook_setup";
 const AUTO_TRIGGER_DELAY = 2000;
@@ -580,17 +580,13 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
                                 {connection.connectorInfo.displayName.long}
                             </div>
                             <div className={baseStyles.card_header_right_container}>
-                                <LogViewerOverlay
+                                <InternalsViewerOverlay
                                     isOpen={showLogs}
                                     onClose={() => setShowLogs(false)}
                                     renderAnchor={(p: object) => <div {...p}>{logButton}</div>}
                                     side={AnchorSide.OutsideBottom}
                                     align={AnchorAlignment.End}
                                     anchorOffset={16}
-                                    overlayProps={{
-                                        width: OverlaySize.XL,
-                                        height: OverlaySize.L
-                                    }}
                                 />
                                 <IconButton
                                     variant="invisible"

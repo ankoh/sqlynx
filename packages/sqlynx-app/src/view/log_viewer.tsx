@@ -9,9 +9,6 @@ import { useScrollbarWidth } from '../utils/scrollbar.js';
 import { LogLevel, getLogLevelName } from '../platform/log_buffer.js';
 import { useLogger } from '../platform/logger_provider.js';
 import { observeSize } from './foundations/size_observer.js';
-import { OverlayProps } from './foundations/overlay.js';
-import { AnchorAlignment, AnchorSide } from './foundations/anchored_position.js';
-import { AnchoredOverlay } from './foundations/anchored_overlay.js';
 
 interface LevelCellProps {
     level: LogLevel;
@@ -200,30 +197,5 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
                 </Grid>
             </div>
         </div>
-    );
-}
-
-type LogViewerOverlayProps = {
-    isOpen: boolean;
-    onClose: () => void;
-    renderAnchor: (p: object) => React.ReactElement;
-    side?: AnchorSide;
-    align?: AnchorAlignment;
-    anchorOffset?: number;
-    overlayProps?: Partial<OverlayProps>;
-}
-export function LogViewerOverlay(props: LogViewerOverlayProps) {
-    return (
-        <AnchoredOverlay
-            open={props.isOpen}
-            onClose={props.onClose}
-            renderAnchor={props.renderAnchor}
-            side={props.side}
-            align={props.align}
-            anchorOffset={props.anchorOffset}
-            overlayProps={props.overlayProps}
-        >
-            <LogViewer onClose={props.onClose} />
-        </AnchoredOverlay>
     );
 }

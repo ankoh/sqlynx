@@ -1,8 +1,9 @@
+.overlay_container {
+}
 
-.overlay {
+.settings_root {
     display: grid;
-    grid-template-rows: 48px max-content max-content max-content;
-    grid-template-columns: 100%;
+    grid-template-rows: 48px 1fr;
 }
 
 .header_container {
