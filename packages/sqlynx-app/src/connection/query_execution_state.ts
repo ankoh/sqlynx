@@ -64,6 +64,10 @@ export interface QueryExecutionResponseStream {
 export interface QueryMetrics {
     /// The time at which the query execution started (if any)
     startedAt: Date | null;
+    /// Received the frist batch at (if any)
+    receivedFirstBatchAt: Date | null;
+    /// Received all batches at (if any)
+    receivedLastBatchAt: Date | null;
     /// The time at which the query execution finished (if any)
     finishedAt: Date | null;
     /// The time at which the query execution was last updated
@@ -159,6 +163,10 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
         case QUERY_EXECUTION_RECEIVED_BATCH: {
             const [_queryId, batch, streamMetrics] = action.value;
             const metrics = { ...query.metrics };
+            if (metrics.receivedFirstBatchAt == null) {
+                metrics.receivedFirstBatchAt = now;
+            }
+            metrics.receivedLastBatchAt = now;
             metrics.lastUpdatedAt = now;
             metrics.stream = streamMetrics;
             query.resultBatches.push(batch);

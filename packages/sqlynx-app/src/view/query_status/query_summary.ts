@@ -23,9 +23,9 @@ enum QueryStageType {
     PREPARE_QUERY,
     SEND_QUERY,
     AWAIT_FIRST_QUERY_RESULT,
-    COLLECT_ALL_QUERY_RESULTS,
     // Finished, failed or cancelled
-    QUERY_STOPPED,
+    AWAIT_QUERY_END,
+    PROCESS_QUERY_RESULTS,
 }
 
 interface QueryStage {

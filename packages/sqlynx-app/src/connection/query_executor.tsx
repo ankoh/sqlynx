@@ -84,6 +84,8 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
             error: null,
             metrics: {
                 startedAt: null,
+                receivedFirstBatchAt: null,
+                receivedLastBatchAt: null,
                 finishedAt: null,
                 lastUpdatedAt: null,
                 progressUpdatesReceived: 0,
