@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as styles from './query_summary.module.css';
+import * as styles from './query_summary_view.module.css';
 
 import { useQueryState } from '../../connection/query_executor.js';
 
@@ -8,7 +8,7 @@ interface QueryExecutionSummaryProps {
     query: number;
 }
 
-export function QueryExecutionSummary(props: QueryExecutionSummaryProps) {
+export function QueryExecutionSummaryView(props: QueryExecutionSummaryProps) {
     const query = useQueryState(props.conn, props.query);
     if (!query) {
         return <div />;

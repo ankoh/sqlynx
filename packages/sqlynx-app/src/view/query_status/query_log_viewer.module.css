@@ -1,0 +1,43 @@
+.overlay {
+    height: 100%;
+    display: grid;
+    grid-template-rows: 48px 1fr;
+}
+
+.header_container {
+    grid-row: 1;
+    width: 100%;
+
+    display: grid;
+    grid-template-rows: 100%;
+    grid-template-columns: max-content auto max-content;
+
+    border-bottom: 1px solid var(--border_color_primary);
+    border-top-right-radius: var(--border_radius);
+    border-top-left-radius: var(--border_radius);
+}
+
+.header_left_container {
+    grid-column: 1;
+    margin-left: 20px;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    column-gap: 8px;
+}
+
+.header_right_container {
+    grid-column: 3;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    column-gap: 8px;
+    padding: 0px 8px;
+    overflow: hidden;
+}
+
+.title {
+    font-size: 1rem;
+}

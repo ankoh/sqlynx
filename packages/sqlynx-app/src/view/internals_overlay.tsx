@@ -7,6 +7,7 @@ import { VerticalTabs, VerticalTabVariant } from './foundations/vertical_tabs.js
 import { OverlaySize } from './foundations/overlay.js';
 import { AppSettings } from './app_settings_view.js';
 import { LogViewer } from './log_viewer.js';
+import { QueryLogViewer } from './query_status/query_log_viewer.js';
 
 interface InternalsViewerProps {
     onClose: () => void;
@@ -52,7 +53,7 @@ export const InternalsViewer: React.FC<InternalsViewerProps> = (props: Internals
                     <LogViewer onClose={props.onClose} />
                 ),
                 [TabKey.QueryViewer]: _props => (
-                    <div />
+                    <QueryLogViewer onClose={props.onClose} />
                 ),
                 [TabKey.AppSettings]: _props => (
                     <AppSettings onClose={props.onClose} />
