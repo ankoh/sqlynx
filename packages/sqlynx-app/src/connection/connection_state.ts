@@ -67,6 +67,10 @@ export interface ConnectionState {
     /// The queries that are currently running
     queriesRunning: Map<number, QueryExecutionState>;
     /// The queries that finished (succeeded, failed, cancelled)
+    /// Note that Maps order entries by insertion order.
+    ///
+    /// So as long as we don't update already finished queries,
+    /// we'll get a natural log order when iterating over the map
     queriesFinished: Map<number, QueryExecutionState>;
 }
 

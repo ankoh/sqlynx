@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as styles from './query_summary_view.module.css';
+import * as styles from './query_info_view.module.css';
 
 import { useQueryState } from '../../connection/query_executor.js';
 

@@ -153,18 +153,21 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
         }
     }, [logVersion, containerHeight]);
 
-    const Cell = ({ columnIndex, rowIndex, style }: any) => {
-        if (rowIndex >= logger.buffer.length) {
+    // Helper to render a cell
+    type CellProps = { columnIndex: number, rowIndex: number, style: React.CSSProperties };
+    const Cell = React.useCallback<(props: CellProps) => React.ReactElement>((props: CellProps) => {
+        if (props.rowIndex >= logger.buffer.length) {
             return <div />;
         }
-        const record = logger.buffer.at(rowIndex)!;
-        switch (columnIndex) {
-            case 0: return <TimestampCell rowIndex={rowIndex} style={style}>{record.timestamp}</TimestampCell>;
-            case 1: return <LevelCell rowIndex={rowIndex} level={record.level} style={style} />;
-            case 2: return <TargetCell rowIndex={rowIndex} style={style}>{record.target}</TargetCell>;
-            case 3: return <MessageCell rowIndex={rowIndex} style={style}>{record.message}</MessageCell>;
+        const record = logger.buffer.at(props.rowIndex)!;
+        switch (props.columnIndex) {
+            case 0: return <TimestampCell rowIndex={props.rowIndex} style={props.style}>{record.timestamp}</TimestampCell>;
+            case 1: return <LevelCell rowIndex={props.rowIndex} level={record.level} style={props.style} />;
+            case 2: return <TargetCell rowIndex={props.rowIndex} style={props.style}>{record.target}</TargetCell>;
+            case 3: return <MessageCell rowIndex={props.rowIndex} style={props.style}>{record.message}</MessageCell>;
+            default: return <div />;
         }
-    };
+    }, [logger]);
 
     return (
         <div className={styles.overlay}>

@@ -4,7 +4,7 @@ import * as styles from './query_log_viewer.module.css';
 import { XIcon } from '@primer/octicons-react';
 import { IconButton } from '@primer/react';
 
-import { useConnectionRegistry } from '../../connection/connection_registry.js';
+import { QueryInfoListView } from './query_info_list_view.js';
 
 interface Props {
     onClose: () => void;
@@ -12,8 +12,6 @@ interface Props {
 
 
 export function QueryLogViewer(props: Props) {
-    const connReg = useConnectionRegistry();
-
     return (
         <div className={styles.overlay}>
             <div className={styles.header_container}>
@@ -28,6 +26,9 @@ export function QueryLogViewer(props: Props) {
                         onClick={props.onClose}
                     />
                 </div>
+            </div>
+            <div className={styles.query_summary_list}>
+                <QueryInfoListView />
             </div>
         </div>
     );

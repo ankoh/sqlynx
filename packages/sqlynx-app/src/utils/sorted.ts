@@ -47,3 +47,18 @@ export function binarySearch<T extends SortedElement>(values: T[], key: number):
         return [values[iter], iter];
     }
 }
+
+export function lowerBoundU32(values: Uint32Array, value: number): number {
+    let begin = 0;
+    let end = values.length;
+    while (begin < end) {
+        const m: number = begin + ((end - begin) >> 1);
+        const midRef = values[m];
+        if (midRef < value) {
+            begin = m + 1;
+        } else {
+            end = m;
+        }
+    }
+    return begin;
+}

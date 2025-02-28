@@ -43,7 +43,7 @@ interface QueryStage {
     failedAt: Date;
 }
 
-export interface QuerySummary {
+export interface QueryInfoViewModel {
     /// The stages
     stages: QueryStage[];
 }
