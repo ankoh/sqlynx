@@ -19,13 +19,8 @@ interface QueryInfoListViewProps {
 
 /// The view model for a connection list
 interface ConnectionListViewModel {
-    connectionIds: Uint32Array;
-    offsetsRow: Uint32Array;
-    offsetsRowRunningOrProvided: Uint32Array;
-    offsetsRowFinished: Uint32Array;
-    offsetsPx: Uint32Array;
-    offsetsPxRunningOrProvided: Uint32Array;
-    offsetsPxFinished: Uint32Array;
+    firstConnectionRows: Uint32Array;
+    rowOffsets: Uint32Array;
     totalRowCount: number;
     totalHeight: number;
 }
@@ -69,108 +64,81 @@ export function QueryInfoListView(props: QueryInfoListViewProps) {
             }
         }
 
+        const totalRowCount = totalConnectionCount + totalQueryCount;
         const viewModel: ConnectionListViewModel = {
-            connectionIds: new Uint32Array(totalConnectionCount),
-            offsetsRow: new Uint32Array(totalConnectionCount),
-            offsetsRowRunningOrProvided: new Uint32Array(totalConnectionCount),
-            offsetsRowFinished: new Uint32Array(totalConnectionCount),
-            offsetsPx: new Uint32Array(totalConnectionCount),
-            offsetsPxRunningOrProvided: new Uint32Array(totalConnectionCount),
-            offsetsPxFinished: new Uint32Array(totalConnectionCount),
-            totalRowCount: totalConnectionCount + totalQueryCount,
+            firstConnectionRows: new Uint32Array(totalConnectionCount),
+            rowOffsets: new Uint32Array(totalRowCount + 1),
+            totalRowCount: totalRowCount,
             totalHeight: totalConnectionCount * ENTRY_SIZE_CONNECTION_HEADER + totalQueryCount * ENTRY_SIZE_QUERY,
         };
 
-        let writer = 0;
-        let writerOffsetRow = 0;
-        let writerOffsetPx = 0;
+        let writerConn = 0;
+        let writerRow = 0;
+        let writerRowOffset = 0;
 
         if (props.conn) {
             const conn = connReg.connectionMap.get(props.conn);
             if (conn) {
-                viewModel.connectionIds[writer] = props.conn;
-                viewModel.offsetsRow[writer] = writerOffsetRow;
-                viewModel.offsetsPx[writer] = writerOffsetPx;
-                writerOffsetRow += 1;
-                writerOffsetPx += ENTRY_SIZE_CONNECTION_HEADER;
+                viewModel.firstConnectionRows[writerConn] = writerRow;
+                viewModel.rowOffsets[writerRow] = writerRowOffset;
+                writerRow += 1;
+                writerRowOffset += ENTRY_SIZE_CONNECTION_HEADER;
 
-                if (props.connQueries) {
-                    viewModel.offsetsRowRunningOrProvided[writer] = writerOffsetRow;
-                    viewModel.offsetsPxRunningOrProvided[writer] = writerOffsetPx;
-                    writerOffsetRow += props.connQueries.length;
-                    writerOffsetPx += props.connQueries.length * ENTRY_SIZE_QUERY;
-                } else {
-                    viewModel.offsetsRowRunningOrProvided[writer] = writerOffsetRow;
-                    viewModel.offsetsPxRunningOrProvided[writer] = writerOffsetPx;
-                    writerOffsetRow += conn.queriesRunning.size;
-                    writerOffsetPx += conn.queriesRunning.size * ENTRY_SIZE_QUERY;
-
-                    viewModel.offsetsRowFinished[writer] = writerOffsetRow;
-                    viewModel.offsetsPxFinished[writer] = writerOffsetPx;
-                    writerOffsetRow += conn.queriesFinished.size;
-                    writerOffsetPx += conn.queriesFinished.size * ENTRY_SIZE_QUERY;
+                // Note that this loop is not really cheap since it's writing row offsets for every single query entry.
+                // It's not reading |query| data, but it's writing |query| u32 offsets, many of which are (and will remain) off-screen.
+                //
+                // Take this as motivator to detect in the future if the total query count really changed...
+                // (Not that easy as soon as we collect old queries, that's why we didn't do it yet)
+                let queryCount = props.connQueries ? props.connQueries.length : (conn.queriesRunning.size + conn.queriesFinished.size);
+                for (let i = 0; i < queryCount; ++i) {
+                    viewModel.rowOffsets[writerRow] = writerRowOffset;
+                    writerRow += 1;
+                    writerRowOffset += ENTRY_SIZE_QUERY;
                 }
-                writer += 1;
+                writerConn += 1;
             }
         } else {
-            for (const [cid, conn] of connReg.connectionMap) {
-                viewModel.connectionIds[writer] = cid;
-                viewModel.offsetsRow[writer] = writerOffsetRow;
-                viewModel.offsetsPx[writer] = writerOffsetPx;
-                writerOffsetRow += 1;
-                writerOffsetPx += ENTRY_SIZE_CONNECTION_HEADER;
+            for (const [_cid, conn] of connReg.connectionMap) {
+                viewModel.firstConnectionRows[writerConn] = writerRow;
+                viewModel.rowOffsets[writerRow] = writerRowOffset;
+                writerRow += 1;
+                writerRowOffset += ENTRY_SIZE_CONNECTION_HEADER;
 
-                viewModel.offsetsRowRunningOrProvided[writer] = writerOffsetRow;
-                viewModel.offsetsPxRunningOrProvided[writer] = writerOffsetPx;
-                writerOffsetRow += conn.queriesRunning.size;
-                writerOffsetPx += conn.queriesRunning.size * ENTRY_SIZE_QUERY;
-
-                viewModel.offsetsRowFinished[writer] = writerOffsetRow;
-                viewModel.offsetsPxFinished[writer] = writerOffsetPx;
-                writerOffsetRow += conn.queriesFinished.size;
-                writerOffsetPx += conn.queriesFinished.size * ENTRY_SIZE_QUERY;
-
-                writer += 1;
+                let queryCount = conn.queriesRunning.size + conn.queriesFinished.size;
+                for (let i = 0; i < queryCount; ++i) {
+                    viewModel.rowOffsets[writerRow] = writerRowOffset;
+                    writerRow += 1;
+                    writerRowOffset += ENTRY_SIZE_QUERY;
+                }
+                writerConn += 1;
             }
         }
-        // Reset the cache
-        connectionViewModels.current = (new Array(viewModel.connectionIds.length)).fill(null);
+
+        // Write trailing row offset
+        viewModel.rowOffsets[writerRow] = writerRowOffset;
+        // Reset the cached connectionv iew models
+        connectionViewModels.current = (new Array(viewModel.firstConnectionRows.length)).fill(null);
 
         return viewModel;
     }, [connReg]);
 
     // Helper to resolve the height of a row
-    const getRowHeight = React.useCallback<(row: number) => number>((row: number) => {
-        if (crossConnViewModel.connectionIds.length == 0) {
-            return 0;
-        }
-        // Find out which connection the row belongs to
-        let idx = Math.min(
-            lowerBoundU32(crossConnViewModel.offsetsRow, row),
-            crossConnViewModel.offsetsRow.length - 1
-        );
-
-        // Is it the first row of the connection?
-        // Then return the height of the connection header, otherwise it's the query entry
-        const firstRow = crossConnViewModel.offsetsRow[idx];
-        return firstRow == row ? ENTRY_SIZE_CONNECTION_HEADER : ENTRY_SIZE_QUERY;
-    }, [crossConnViewModel]);
-
+    const getRowHeight = React.useCallback<(row: number) => number>((row: number) => (crossConnViewModel.rowOffsets[row + 1] - crossConnViewModel.rowOffsets[row]), [crossConnViewModel]);
     // Helper to render a cell
     type CellProps = { rowIndex: number, style: React.CSSProperties };
     const Cell = React.useCallback<(props: CellProps) => React.ReactElement>((props: CellProps) => {
-        if (crossConnViewModel.connectionIds.length == 0) {
+        if (crossConnViewModel.firstConnectionRows.length == 0) {
             return <div />;
         }
         // Find out which connection the row belongs to
         const idx = Math.min(
-            lowerBoundU32(crossConnViewModel.offsetsRow, props.rowIndex),
-            crossConnViewModel.offsetsRow.length - 1
+            lowerBoundU32(crossConnViewModel.firstConnectionRows, props.rowIndex),
+            crossConnViewModel.firstConnectionRows.length - 1
         );
 
         // Is the first row?
-        const firstRow = crossConnViewModel.offsetsRow[idx];
-        if (props.rowIndex == firstRow) {
+        const firstConnectionRow = crossConnViewModel.firstConnectionRows[idx];
+        if (props.rowIndex == firstConnectionRow) {
             return <div style={props.style}>HeaderCell</div>;
 
         } else {
