@@ -72,23 +72,23 @@ export function computeConnectionInfoViewModel(state: ConnectionState): Connecti
                 stageMetrics: [
 
                 ],
-                startedAt: query.metrics.queryQueuedAt,
-                finishedAt: query.metrics.queryPreparedAt,
+                startedAt: query.metrics.queryPreparingStartedAt,
+                finishedAt: query.metrics.queryPreparingStartedAt,
             };
             const sendQuery: QueryStage = {
                 stageType: QueryStageType.SEND_QUERY,
                 stageMetrics: [
 
                 ],
-                startedAt: query.metrics.queryPreparedAt,
-                finishedAt: query.metrics.queryRunningAt,
+                startedAt: query.metrics.queryPreparingStartedAt,
+                finishedAt: query.metrics.queryRunningStartedAt,
             };
             const awaitFirstBatch: QueryStage = {
                 stageType: QueryStageType.AWAIT_FIRST_QUERY_RESULT,
                 stageMetrics: [
 
                 ],
-                startedAt: query.metrics.queryRunningAt,
+                startedAt: query.metrics.queryRunningStartedAt,
                 finishedAt: query.metrics.receivedFirstBatchAt,
             };
             const awaitQueryEnd: QueryStage = {

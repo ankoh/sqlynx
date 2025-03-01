@@ -13,21 +13,25 @@ import {
     QUERY_SUCCEEDED,
     QUERY_PROCESSED_RESULTS,
     QUERY_QUEUED,
-    QUERY_PREPARED,
+    QUERY_PREPARING,
+    QUERY_SENDING,
+    QUERY_PROCESSING_RESULTS,
 } from './connection_state.js';
 import { ConnectionQueryMetrics } from './connection_statistics.js';
 
 export enum QueryExecutionStatus {
     REQUESTED = 0,
-    PREPARED = 1,
-    QUEUED = 2,
-    RUNNING = 3,
-    RECEIVED_FIRST_BATCH = 4,
-    RECEIVED_ALL_BATCHES = 5,
-    PROCESSED_RESULTS = 6,
-    SUCCEEDED = 7,
-    FAILED = 8,
-    CANCELLED = 9,
+    PREPARING = 1,
+    SENDING = 2,
+    QUEUED = 3,
+    RUNNING = 4,
+    RECEIVED_FIRST_BATCH = 5,
+    RECEIVED_ALL_BATCHES = 6,
+    PROCESSING_RESULTS = 7,
+    PROCESSED_RESULTS = 8,
+    SUCCEEDED = 9,
+    FAILED = 10,
+    CANCELLED = 11,
 }
 
 export interface QueryExecutionProgress {
@@ -71,25 +75,29 @@ export interface QueryExecutionResponseStream {
 
 export interface QueryMetrics {
     /// The time at which we prepared the query (if any)
-    queryPreparedAt: Date | null;
+    queryPreparingStartedAt: Date | null;
+    /// The time at which the query was sent (if any)
+    querySendingStartedAt: Date | null;
     /// The time at which the query was queued (if any)
-    queryQueuedAt: Date | null;
+    queryQueuedStartedAt: Date | null;
     /// The time at which we the query started running (if any)
-    queryRunningAt: Date | null;
+    queryRunningStartedAt: Date | null;
     /// Received the frist batch at (if any)
     receivedFirstBatchAt: Date | null;
     /// Received all batches at (if any)
     receivedLastBatchAt: Date | null;
     /// Received all batches at (if any)
     receivedAllBatchesAt: Date | null;
+    /// The time at which we started processed the results
+    processingResultsStartedAt: Date | null;
     /// The time at which we processed the results
     processedResultsAt: Date | null;
     /// The time at which the query execution finished (if any)
-    succeededAt: Date | null;
+    querySucceededAt: Date | null;
     /// The time at which the query execution failed (if any)
-    failedAt: Date | null;
+    queryFailedAt: Date | null;
     /// The time at which the query execution was cancelled (if any)
-    cancelledAt: Date | null;
+    queryCancelledAt: Date | null;
     /// The time at which the query execution was last updated
     lastUpdatedAt: Date | null;
     /// The number of query_status updates received
@@ -155,14 +163,27 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
         return state;
     }
     switch (action.type) {
-        case QUERY_PREPARED: {
+        case QUERY_PREPARING: {
             query = {
                 ...query,
-                status: QueryExecutionStatus.PREPARED,
+                status: QueryExecutionStatus.PREPARING,
                 metrics: {
                     ...query.metrics,
                     lastUpdatedAt: now,
-                    queryPreparedAt: now,
+                    queryPreparingStartedAt: now,
+                },
+            };
+            state.queriesActive.set(query.queryId, query);
+            return { ...state };
+        }
+        case QUERY_SENDING: {
+            query = {
+                ...query,
+                status: QueryExecutionStatus.SENDING,
+                metrics: {
+                    ...query.metrics,
+                    lastUpdatedAt: now,
+                    querySendingStartedAt: now,
                 },
             };
             state.queriesActive.set(query.queryId, query);
@@ -175,7 +196,7 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
                 metrics: {
                     ...query.metrics,
                     lastUpdatedAt: now,
-                    queryQueuedAt: now,
+                    queryQueuedStartedAt: now,
                 },
             };
             state.queriesActive.set(query.queryId, query);
@@ -189,7 +210,7 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
                 metrics: {
                     ...query.metrics,
                     lastUpdatedAt: now,
-                    queryRunningAt: now,
+                    queryRunningStartedAt: now,
                 },
             };
             state.queriesActive.set(query.queryId, query);
@@ -243,6 +264,18 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
             state.queriesActive.set(query.queryId, query);
             return { ...state, };
         }
+        case QUERY_PROCESSING_RESULTS: {
+            const metrics = { ...query.metrics };
+            metrics.lastUpdatedAt = now;
+            metrics.processingResultsStartedAt = now;
+            query = {
+                ...query,
+                status: QueryExecutionStatus.PROCESSING_RESULTS,
+                metrics: metrics,
+            };
+            state.queriesActive.set(query.queryId, query);
+            return { ...state, };
+        }
         case QUERY_PROCESSED_RESULTS: {
             const metrics = { ...query.metrics };
             metrics.lastUpdatedAt = now;
@@ -257,9 +290,9 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
         }
         case QUERY_SUCCEEDED: {
             const metrics = { ...query.metrics };
-            const untilNow = now.getTime() - (query.metrics.queryRunningAt ?? now).getTime();
+            const untilNow = now.getTime() - (query.metrics.queryRunningStartedAt ?? now).getTime();
             metrics.lastUpdatedAt = now;
-            metrics.succeededAt = now;
+            metrics.querySucceededAt = now;
             metrics.queryDurationMs = untilNow;
             query = {
                 ...query,
@@ -277,10 +310,10 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
             };
         }
         case QUERY_CANCELLED: {
-            const untilNow = (query.metrics.queryRunningAt ?? now).getTime();
+            const untilNow = (query.metrics.queryRunningStartedAt ?? now).getTime();
             const metrics = { ...query.metrics };
             metrics.lastUpdatedAt = now;
-            metrics.cancelledAt = now;
+            metrics.queryCancelledAt = now;
             metrics.queryDurationMs = untilNow;
             metrics.streamMetrics = action.value[2] ?? metrics.streamMetrics;
             query = {
@@ -300,10 +333,10 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
             };
         }
         case QUERY_FAILED: {
-            const untilNow = (query.metrics.queryRunningAt ?? now).getTime();
+            const untilNow = (query.metrics.queryRunningStartedAt ?? now).getTime();
             const metrics = { ...query.metrics };
             metrics.lastUpdatedAt = now;
-            metrics.failedAt = now;
+            metrics.queryFailedAt = now;
             metrics.queryDurationMs = untilNow;
             metrics.streamMetrics = action.value[2] ?? metrics.streamMetrics;
             query = {

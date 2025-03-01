@@ -131,12 +131,14 @@ export const CATALOG_UPDATE_FAILED = Symbol('CATALOG_UPDATE_FAILED');
 export const CATALOG_UPDATE_CANCELLED = Symbol('CATALOG_UPDATE_CANCELLED');
 
 export const EXECUTE_QUERY = Symbol('EXECUTE_QUERY');
-export const QUERY_PREPARED = Symbol('QUERY_PREPARED');
+export const QUERY_PREPARING = Symbol('QUERY_PREPARING');
+export const QUERY_SENDING = Symbol('QUERY_SENDING');
 export const QUERY_QUEUED = Symbol('QUERY_QUEUED');
 export const QUERY_RUNNING = Symbol('QUERY_RUNNING');
 export const QUERY_PROGRESS_UPDATED = Symbol('QUERY_PROGRESS_UPDATED');
 export const QUERY_RECEIVED_BATCH = Symbol('QUERY_RECEIVED_BATCH');
 export const QUERY_RECEIVED_ALL_BATCHES = Symbol('QUERY_RECEIVED_ALL_BATCHES');
+export const QUERY_PROCESSING_RESULTS = Symbol('QUERY_PROCESSING_RESULTS');
 export const QUERY_PROCESSED_RESULTS = Symbol('QUERY_PROCESSED_RESULTS');
 export const QUERY_SUCCEEDED = Symbol('QUERY_SUCCEEDED');
 export const QUERY_FAILED = Symbol('QUERY_FAILED');
@@ -152,12 +154,14 @@ export type CatalogAction =
 
 export type QueryExecutionAction =
     | VariantKind<typeof EXECUTE_QUERY, [number, QueryExecutionState]>
-    | VariantKind<typeof QUERY_PREPARED, [number]>
+    | VariantKind<typeof QUERY_PREPARING, [number]>
+    | VariantKind<typeof QUERY_SENDING, [number]>
     | VariantKind<typeof QUERY_QUEUED, [number]>
     | VariantKind<typeof QUERY_RUNNING, [number, QueryExecutionResponseStream]>
     | VariantKind<typeof QUERY_PROGRESS_UPDATED, [number, QueryExecutionProgress]>
     | VariantKind<typeof QUERY_RECEIVED_BATCH, [number, arrow.RecordBatch, QueryExecutionMetrics]>
     | VariantKind<typeof QUERY_RECEIVED_ALL_BATCHES, [number, arrow.Table, Map<string, string>, QueryExecutionMetrics]>
+    | VariantKind<typeof QUERY_PROCESSING_RESULTS, [number]>
     | VariantKind<typeof QUERY_PROCESSED_RESULTS, [number]>
     | VariantKind<typeof QUERY_SUCCEEDED, [number]>
     | VariantKind<typeof QUERY_FAILED, [number, Error, QueryExecutionMetrics | null]>
@@ -183,7 +187,7 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
             return reduceCatalogAction(state, action);
 
         case EXECUTE_QUERY:
-        case QUERY_PREPARED:
+        case QUERY_PREPARING:
         case QUERY_QUEUED:
         case QUERY_RUNNING:
         case QUERY_PROGRESS_UPDATED:
