@@ -34,9 +34,6 @@ export enum QueryExecutionStatus {
     CANCELLED = 11,
 }
 
-export interface QueryExecutionProgress {
-}
-
 export interface QueryExecutionMetrics {
     /// The total data bytes
     totalDataBytesReceived: number;
@@ -56,6 +53,13 @@ export interface QueryExecutionMetrics {
 
     /// The duration until the first batch
     durationUntilFirstBatchMs: number | null;
+}
+
+export interface QueryExecutionProgress {
+    /// Is queued?
+    isQueued: boolean | null;
+    /// The query execution metrics
+    metrics: QueryExecutionMetrics;
 }
 
 export interface QueryExecutionResponseStream {

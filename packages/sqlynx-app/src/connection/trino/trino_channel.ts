@@ -7,6 +7,7 @@ import { TRINO_STATUS_HTTP_ERROR, TRINO_STATUS_OK, TRINO_STATUS_OTHER_ERROR, Tri
 import { ChannelError, RawProxyError } from '../../platform/channel_common.js';
 import { AsyncValue } from '../../utils/async_value.js';
 import { Semaphore } from '../../utils/semaphore.js';
+import { AsyncValueStream } from '../../utils/async_value_stream.js';
 
 const LOG_CTX = 'trino_channel';
 
@@ -31,8 +32,12 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
     latestQueryStats: TrinoQueryStatistics | null;
     /// The latest query state
     latestQueryState: string | null;
+    /// The progress updates
+    latestQueryProgress: QueryExecutionProgress | null;
+    /// The query progress stream
+    queryProgressUpdates: AsyncValueStream<QueryExecutionProgress>;
     /// The metrics
-    metrics: QueryExecutionMetrics;
+    queryMetrics: QueryExecutionMetrics;
 
     /// The constructor
     constructor(logger: Logger, apiClient: TrinoApiClientInterface, result: TrinoQueryResult, metrics: QueryExecutionMetrics) {
@@ -45,7 +50,9 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
         this.latestQueryResult = result;
         this.latestQueryStats = result.stats ?? null;
         this.latestQueryState = result.stats?.state ?? null;
-        this.metrics = metrics;
+        this.latestQueryProgress = null;
+        this.queryProgressUpdates = new AsyncValueStream();
+        this.queryMetrics = metrics;
     }
 
     /// Fetch the next query result
@@ -58,7 +65,7 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
         this.logger.debug("fetching next query results", { "nextUri": nextUri }, LOG_CTX);
 
         // Get the next query result
-        this.metrics.totalQueryRequestsStarted += 1;
+        this.queryMetrics.totalQueryRequestsStarted += 1;
         const timeBefore = (new Date()).getTime();
         const queryResult = await this.apiClient.getQueryResult(nextUri);
         const timeAfter = (new Date()).getTime();
@@ -90,11 +97,11 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
                 },
             };
             this.resultSchema.reject(new ChannelError(rawError, errorCode));
-            this.metrics.totalQueryRequestsFailed += 1;
+            this.queryMetrics.totalQueryRequestsFailed += 1;
         } else {
-            this.metrics.totalQueryRequestsSucceeded += 1;
+            this.queryMetrics.totalQueryRequestsSucceeded += 1;
         }
-        this.metrics.totalQueryRequestDurationMs += timeAfter - timeBefore;
+        this.queryMetrics.totalQueryRequestDurationMs += timeAfter - timeBefore;
 
         // Do we already have a schema?
         if (!this.resultSchema.isResolved() && queryResult.columns) {
@@ -111,7 +118,7 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
     }
     /// Get the stream metrics
     getMetrics(): QueryExecutionMetrics {
-        return this.metrics;
+        return this.queryMetrics;
     }
     /// Get the current query status
     getStatus(): QueryExecutionStatus {
@@ -123,7 +130,7 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
     }
     /// Await the next query_status update
     async nextProgressUpdate(): Promise<QueryExecutionProgress | null> {
-        return null;
+        return this.queryProgressUpdates.nextValue();
     }
     /// Await the next record batch
     async nextRecordBatch(): Promise<arrow.RecordBatch | null> {
@@ -143,11 +150,19 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
                     // Translate the trino batch
                     const schema = this.resultSchema.getResolvedValue();
                     const resultBatch = translateTrinoBatch(schema!, result.data);
-                    this.metrics.totalBatchesReceived += 1;
-                    this.metrics.totalRowsReceived += resultBatch.numRows;
+                    this.queryMetrics.totalBatchesReceived += 1;
+                    this.queryMetrics.totalRowsReceived += resultBatch.numRows;
+
+                    // Publish a new progress update
+                    this.latestQueryProgress = deriveProgress(this.latestQueryStats, this.queryMetrics);
+                    this.queryProgressUpdates.publish(this.latestQueryProgress);
 
                     releaseResultFetch();
                     return resultBatch;
+                } else {
+                    // Publish the progress update
+                    this.latestQueryProgress = deriveProgress(this.latestQueryStats, this.queryMetrics);
+                    this.queryProgressUpdates.publish(this.latestQueryProgress);
                 }
             }
             this.logger.debug("reached end of query result stream", { "queryState": this.latestQueryState });
@@ -299,4 +314,10 @@ function translateTrinoBatch(schema: arrow.Schema, rows: TrinoQueryData): arrow.
     return new arrow.RecordBatch(schema, structData);
 }
 
-
+/// Derive the execution progress
+function deriveProgress(stats: TrinoQueryStatistics | null, metrics: QueryExecutionMetrics): QueryExecutionProgress {
+    return {
+        isQueued: stats?.queued ?? null,
+        metrics: { ...metrics }
+    };
+}
