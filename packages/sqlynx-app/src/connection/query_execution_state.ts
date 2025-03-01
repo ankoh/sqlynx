@@ -3,23 +3,31 @@ import * as arrow from 'apache-arrow';
 import {
     ConnectionState,
     EXECUTE_QUERY,
-    QUERY_EXECUTION_CANCELLED,
-    QUERY_EXECUTION_FAILED,
-    QUERY_EXECUTION_PROGRESS_UPDATED,
-    QUERY_EXECUTION_RECEIVED_BATCH,
-    QUERY_EXECUTION_STARTED,
-    QUERY_EXECUTION_SUCCEEDED,
+    QUERY_CANCELLED,
+    QUERY_FAILED,
+    QUERY_PROGRESS_UPDATED,
+    QUERY_RECEIVED_BATCH,
+    QUERY_RUNNING,
+    QUERY_RECEIVED_ALL_BATCHES,
     QueryExecutionAction,
+    QUERY_SUCCEEDED,
+    QUERY_PROCESSED_RESULTS,
+    QUERY_QUEUED,
+    QUERY_PREPARED,
 } from './connection_state.js';
 import { ConnectionQueryMetrics } from './connection_statistics.js';
 
 export enum QueryExecutionStatus {
-    ACCEPTED = 0,
-    STARTED = 1,
-    RECEIVED_FIRST_RESULT = 3,
-    SUCCEEDED = 4,
-    FAILED = 5,
-    CANCELLED = 6,
+    REQUESTED = 0,
+    PREPARED = 1,
+    QUEUED = 2,
+    RUNNING = 3,
+    RECEIVED_FIRST_BATCH = 4,
+    RECEIVED_ALL_BATCHES = 5,
+    PROCESSED_RESULTS = 6,
+    SUCCEEDED = 7,
+    FAILED = 8,
+    CANCELLED = 9,
 }
 
 export interface QueryExecutionProgress {
@@ -62,22 +70,36 @@ export interface QueryExecutionResponseStream {
 }
 
 export interface QueryMetrics {
-    /// The time at which the query execution started (if any)
-    startedAt: Date | null;
+    /// The time at which we prepared the query (if any)
+    queryPreparedAt: Date | null;
+    /// The time at which the query was queued (if any)
+    queryQueuedAt: Date | null;
+    /// The time at which we the query started running (if any)
+    queryRunningAt: Date | null;
     /// Received the frist batch at (if any)
     receivedFirstBatchAt: Date | null;
     /// Received all batches at (if any)
     receivedLastBatchAt: Date | null;
+    /// Received all batches at (if any)
+    receivedAllBatchesAt: Date | null;
+    /// The time at which we processed the results
+    processedResultsAt: Date | null;
     /// The time at which the query execution finished (if any)
-    finishedAt: Date | null;
+    succeededAt: Date | null;
+    /// The time at which the query execution failed (if any)
+    failedAt: Date | null;
+    /// The time at which the query execution was cancelled (if any)
+    cancelledAt: Date | null;
     /// The time at which the query execution was last updated
     lastUpdatedAt: Date | null;
     /// The number of query_status updates received
     progressUpdatesReceived: number;
     /// The total query duration
     queryDurationMs: number | null;
+    /// The text length in characters
+    textLength: number | null;
     /// The stream metrics
-    stream: QueryExecutionMetrics;
+    streamMetrics: QueryExecutionMetrics;
 }
 
 export interface QueryMetadata {
@@ -124,30 +146,56 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
 
     // Initial setup?
     if (action.type == EXECUTE_QUERY) {
-        state.queriesRunning.set(queryId, action.value[1]);
+        state.queriesActive.set(queryId, action.value[1]);
         return { ...state };
     }
 
-    let query = state.queriesRunning.get(queryId);
+    let query = state.queriesActive.get(queryId);
     if (!query) {
         return state;
     }
     switch (action.type) {
-        case QUERY_EXECUTION_STARTED: {
+        case QUERY_PREPARED: {
             query = {
                 ...query,
-                status: QueryExecutionStatus.STARTED,
+                status: QueryExecutionStatus.PREPARED,
+                metrics: {
+                    ...query.metrics,
+                    lastUpdatedAt: now,
+                    queryPreparedAt: now,
+                },
+            };
+            state.queriesActive.set(query.queryId, query);
+            return { ...state };
+        }
+        case QUERY_QUEUED: {
+            query = {
+                ...query,
+                status: QueryExecutionStatus.QUEUED,
+                metrics: {
+                    ...query.metrics,
+                    lastUpdatedAt: now,
+                    queryQueuedAt: now,
+                },
+            };
+            state.queriesActive.set(query.queryId, query);
+            return { ...state };
+        }
+        case QUERY_RUNNING: {
+            query = {
+                ...query,
+                status: QueryExecutionStatus.RECEIVED_FIRST_BATCH,
                 resultStream: action.value[1],
                 metrics: {
                     ...query.metrics,
                     lastUpdatedAt: now,
-                    startedAt: now,
+                    queryRunningAt: now,
                 },
             };
-            state.queriesRunning.set(query.queryId, query);
+            state.queriesActive.set(query.queryId, query);
             return { ...state };
         }
-        case QUERY_EXECUTION_PROGRESS_UPDATED: {
+        case QUERY_PROGRESS_UPDATED: {
             query = {
                 ...query,
                 latestProgressUpdate: action.value[1],
@@ -157,10 +205,10 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
                     progressUpdatesReceived: ++query.metrics.progressUpdatesReceived
                 },
             };
-            state.queriesRunning.set(query.queryId, query);
+            state.queriesActive.set(query.queryId, query);
             return { ...state };
         }
-        case QUERY_EXECUTION_RECEIVED_BATCH: {
+        case QUERY_RECEIVED_BATCH: {
             const [_queryId, batch, streamMetrics] = action.value;
             const metrics = { ...query.metrics };
             if (metrics.receivedFirstBatchAt == null) {
@@ -168,33 +216,57 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
             }
             metrics.receivedLastBatchAt = now;
             metrics.lastUpdatedAt = now;
-            metrics.stream = streamMetrics;
+            metrics.streamMetrics = streamMetrics;
             query.resultBatches.push(batch);
             query = {
                 ...query,
-                status: QueryExecutionStatus.RECEIVED_FIRST_RESULT,
+                status: QueryExecutionStatus.RECEIVED_ALL_BATCHES,
                 metrics: metrics,
             };
             if (query.resultSchema == null) {
                 query.resultSchema = batch.schema;
             }
-            state.queriesRunning.set(query.queryId, query);
+            state.queriesActive.set(query.queryId, query);
             return { ...state };
         }
-        case QUERY_EXECUTION_SUCCEEDED: {
+        case QUERY_RECEIVED_ALL_BATCHES: {
             const metrics = { ...query.metrics };
-            const untilNow = now.getTime() - (query.metrics.startedAt ?? now).getTime();
             metrics.lastUpdatedAt = now;
-            metrics.finishedAt = now;
-            metrics.queryDurationMs = untilNow;
+            metrics.receivedAllBatchesAt = now;
             query = {
                 ...query,
                 resultMetadata: action.value[2],
                 resultTable: action.value[1],
+                status: QueryExecutionStatus.RECEIVED_ALL_BATCHES,
+                metrics: metrics,
+            };
+            state.queriesActive.set(query.queryId, query);
+            return { ...state, };
+        }
+        case QUERY_PROCESSED_RESULTS: {
+            const metrics = { ...query.metrics };
+            metrics.lastUpdatedAt = now;
+            metrics.processedResultsAt = now;
+            query = {
+                ...query,
+                status: QueryExecutionStatus.PROCESSED_RESULTS,
+                metrics: metrics,
+            };
+            state.queriesActive.set(query.queryId, query);
+            return { ...state, };
+        }
+        case QUERY_SUCCEEDED: {
+            const metrics = { ...query.metrics };
+            const untilNow = now.getTime() - (query.metrics.queryRunningAt ?? now).getTime();
+            metrics.lastUpdatedAt = now;
+            metrics.succeededAt = now;
+            metrics.queryDurationMs = untilNow;
+            query = {
+                ...query,
                 status: QueryExecutionStatus.SUCCEEDED,
                 metrics: metrics,
             };
-            state.queriesRunning.delete(query.queryId);
+            state.queriesActive.delete(query.queryId);
             state.queriesFinished.set(query.queryId, query);
             return {
                 ...state,
@@ -204,20 +276,20 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
                 },
             };
         }
-        case QUERY_EXECUTION_CANCELLED: {
-            const untilNow = (query.metrics.startedAt ?? now).getTime();
+        case QUERY_CANCELLED: {
+            const untilNow = (query.metrics.queryRunningAt ?? now).getTime();
             const metrics = { ...query.metrics };
             metrics.lastUpdatedAt = now;
-            metrics.finishedAt = now;
+            metrics.cancelledAt = now;
             metrics.queryDurationMs = untilNow;
-            metrics.stream = action.value[2] ?? metrics.stream;
+            metrics.streamMetrics = action.value[2] ?? metrics.streamMetrics;
             query = {
                 ...query,
                 status: QueryExecutionStatus.CANCELLED,
                 error: action.value[1],
                 metrics
             };
-            state.queriesRunning.delete(query.queryId);
+            state.queriesActive.delete(query.queryId);
             state.queriesFinished.set(query.queryId, query);
             return {
                 ...state,
@@ -227,20 +299,20 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
                 },
             };
         }
-        case QUERY_EXECUTION_FAILED: {
-            const untilNow = (query.metrics.startedAt ?? now).getTime();
+        case QUERY_FAILED: {
+            const untilNow = (query.metrics.queryRunningAt ?? now).getTime();
             const metrics = { ...query.metrics };
             metrics.lastUpdatedAt = now;
-            metrics.finishedAt = now;
+            metrics.failedAt = now;
             metrics.queryDurationMs = untilNow;
-            metrics.stream = action.value[2] ?? metrics.stream;
+            metrics.streamMetrics = action.value[2] ?? metrics.streamMetrics;
             query = {
                 ...query,
                 status: QueryExecutionStatus.FAILED,
                 error: action.value[1],
                 metrics
             };
-            state.queriesRunning.delete(query.queryId);
+            state.queriesActive.delete(query.queryId);
             state.queriesFinished.set(query.queryId, query);
             return {
                 ...state,
@@ -256,9 +328,9 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
 function mergeQueryMetrics(metrics: ConnectionQueryMetrics, query: QueryMetrics): ConnectionQueryMetrics {
     return {
         totalQueries: metrics.totalQueries + BigInt(1),
-        totalBatchesReceived: metrics.totalBatchesReceived + BigInt(query.stream.totalBatchesReceived),
-        totalRowsReceived: metrics.totalRowsReceived + BigInt(query.stream.totalRowsReceived),
-        accumulatedTimeUntilFirstBatchMs: metrics.accumulatedTimeUntilFirstBatchMs + BigInt(query.stream.durationUntilFirstBatchMs ?? 0),
+        totalBatchesReceived: metrics.totalBatchesReceived + BigInt(query.streamMetrics.totalBatchesReceived),
+        totalRowsReceived: metrics.totalRowsReceived + BigInt(query.streamMetrics.totalRowsReceived),
+        accumulatedTimeUntilFirstBatchMs: metrics.accumulatedTimeUntilFirstBatchMs + BigInt(query.streamMetrics.durationUntilFirstBatchMs ?? 0),
         accumulatedQueryDurationMs: metrics.accumulatedQueryDurationMs + BigInt(query.queryDurationMs ?? 0)
     };
 }

@@ -42,7 +42,7 @@ export class QueryResultReader implements AsyncIterator<Uint8Array>, AsyncIterab
         this.grpcStream = stream;
         this.logger = logger;
         this.messageIterator = new NativeGrpcServerStreamMessageIterator(this.grpcStream, logger);
-        this.currentStatus = QueryExecutionStatus.STARTED;
+        this.currentStatus = QueryExecutionStatus.RUNNING;
         this.metrics = createQueryResponseStreamMetrics();
     }
 

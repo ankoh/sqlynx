@@ -25,7 +25,7 @@ export class QueryResultReader implements AsyncIterator<Uint8Array>, AsyncIterab
     constructor(stream: AsyncIterator<hyper.salesforce_hyperdb_grpc_v1.pb.QueryResult>, logger: Logger) {
         this.stream = stream;
         this.logger = logger;
-        this.currentStatus = QueryExecutionStatus.STARTED;
+        this.currentStatus = QueryExecutionStatus.RUNNING;
         this.metrics = createQueryResponseStreamMetrics();
     }
 

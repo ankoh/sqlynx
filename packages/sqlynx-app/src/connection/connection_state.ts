@@ -65,7 +65,7 @@ export interface ConnectionState {
     catalogUpdates: CatalogUpdates;
 
     /// The queries that are currently running
-    queriesRunning: Map<number, QueryExecutionState>;
+    queriesActive: Map<number, QueryExecutionState>;
     /// The queries that finished (succeeded, failed, cancelled)
     /// Note that Maps order entries by insertion order.
     ///
@@ -131,12 +131,16 @@ export const CATALOG_UPDATE_FAILED = Symbol('CATALOG_UPDATE_FAILED');
 export const CATALOG_UPDATE_CANCELLED = Symbol('CATALOG_UPDATE_CANCELLED');
 
 export const EXECUTE_QUERY = Symbol('EXECUTE_QUERY');
-export const QUERY_EXECUTION_STARTED = Symbol('QUERY_EXECUTION_STARTED');
-export const QUERY_EXECUTION_PROGRESS_UPDATED = Symbol('QUERY_EXECUTION_PROGRESS_UPDATED');
-export const QUERY_EXECUTION_RECEIVED_BATCH = Symbol('QUERY_EXECUTION_RECEIVED_BATCH');
-export const QUERY_EXECUTION_SUCCEEDED = Symbol('QUERY_EXECUTION_SUCCEEDED');
-export const QUERY_EXECUTION_FAILED = Symbol('QUERY_EXECUTION_FAILED');
-export const QUERY_EXECUTION_CANCELLED = Symbol('QUERY_EXECUTION_CANCELLED');
+export const QUERY_PREPARED = Symbol('QUERY_PREPARED');
+export const QUERY_QUEUED = Symbol('QUERY_QUEUED');
+export const QUERY_RUNNING = Symbol('QUERY_RUNNING');
+export const QUERY_PROGRESS_UPDATED = Symbol('QUERY_PROGRESS_UPDATED');
+export const QUERY_RECEIVED_BATCH = Symbol('QUERY_RECEIVED_BATCH');
+export const QUERY_RECEIVED_ALL_BATCHES = Symbol('QUERY_RECEIVED_ALL_BATCHES');
+export const QUERY_PROCESSED_RESULTS = Symbol('QUERY_PROCESSED_RESULTS');
+export const QUERY_SUCCEEDED = Symbol('QUERY_SUCCEEDED');
+export const QUERY_FAILED = Symbol('QUERY_FAILED');
+export const QUERY_CANCELLED = Symbol('QUERY_CANCELLED');
 
 export type CatalogAction =
     | VariantKind<typeof UPDATE_CATALOG, [number, CatalogUpdateTaskState]>
@@ -148,12 +152,16 @@ export type CatalogAction =
 
 export type QueryExecutionAction =
     | VariantKind<typeof EXECUTE_QUERY, [number, QueryExecutionState]>
-    | VariantKind<typeof QUERY_EXECUTION_STARTED, [number, QueryExecutionResponseStream]>
-    | VariantKind<typeof QUERY_EXECUTION_PROGRESS_UPDATED, [number, QueryExecutionProgress]>
-    | VariantKind<typeof QUERY_EXECUTION_RECEIVED_BATCH, [number, arrow.RecordBatch, QueryExecutionMetrics]>
-    | VariantKind<typeof QUERY_EXECUTION_SUCCEEDED, [number, arrow.Table, Map<string, string>, QueryExecutionMetrics]>
-    | VariantKind<typeof QUERY_EXECUTION_FAILED, [number, Error, QueryExecutionMetrics | null]>
-    | VariantKind<typeof QUERY_EXECUTION_CANCELLED, [number, Error, QueryExecutionMetrics | null]>
+    | VariantKind<typeof QUERY_PREPARED, [number]>
+    | VariantKind<typeof QUERY_QUEUED, [number]>
+    | VariantKind<typeof QUERY_RUNNING, [number, QueryExecutionResponseStream]>
+    | VariantKind<typeof QUERY_PROGRESS_UPDATED, [number, QueryExecutionProgress]>
+    | VariantKind<typeof QUERY_RECEIVED_BATCH, [number, arrow.RecordBatch, QueryExecutionMetrics]>
+    | VariantKind<typeof QUERY_RECEIVED_ALL_BATCHES, [number, arrow.Table, Map<string, string>, QueryExecutionMetrics]>
+    | VariantKind<typeof QUERY_PROCESSED_RESULTS, [number]>
+    | VariantKind<typeof QUERY_SUCCEEDED, [number]>
+    | VariantKind<typeof QUERY_FAILED, [number, Error, QueryExecutionMetrics | null]>
+    | VariantKind<typeof QUERY_CANCELLED, [number, Error, QueryExecutionMetrics | null]>
     ;
 
 export type ConnectionStateAction =
@@ -175,12 +183,16 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
             return reduceCatalogAction(state, action);
 
         case EXECUTE_QUERY:
-        case QUERY_EXECUTION_STARTED:
-        case QUERY_EXECUTION_PROGRESS_UPDATED:
-        case QUERY_EXECUTION_RECEIVED_BATCH:
-        case QUERY_EXECUTION_SUCCEEDED:
-        case QUERY_EXECUTION_CANCELLED:
-        case QUERY_EXECUTION_FAILED:
+        case QUERY_PREPARED:
+        case QUERY_QUEUED:
+        case QUERY_RUNNING:
+        case QUERY_PROGRESS_UPDATED:
+        case QUERY_RECEIVED_BATCH:
+        case QUERY_RECEIVED_ALL_BATCHES:
+        case QUERY_PROCESSED_RESULTS:
+        case QUERY_SUCCEEDED:
+        case QUERY_CANCELLED:
+        case QUERY_FAILED:
             return reduceQueryAction(state, action);
 
         // RESET is a bit special since we want to clean up our details as well
@@ -201,7 +213,7 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
                     tasksFinished: new Map(),
                     lastFullRefresh: null,
                 },
-                queriesRunning: new Map(),
+                queriesActive: new Map(),
                 queriesFinished: new Map(),
             };
             // Cleanup the details
@@ -263,7 +275,7 @@ export function createConnectionState(lnx: sqlynx.SQLynx, info: ConnectorInfo, d
             tasksFinished: new Map(),
             lastFullRefresh: null,
         },
-        queriesRunning: new Map(),
+        queriesActive: new Map(),
         queriesFinished: new Map(),
     };
 }

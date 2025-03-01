@@ -4,18 +4,12 @@ import * as styles from './query_info_list_view.module.css';
 import { VariableSizeGrid } from "react-window";
 
 import { useConnectionRegistry } from "../../connection/connection_registry.js";
-import { QueryInfoViewModel } from "./query_info_view_model.js";
 import { observeSize } from "../../view/foundations/size_observer.js";
 import { lowerBoundU32 } from "../../utils/sorted.js";
+import { ConnectionViewModel } from "./query_info_view_model.js";
 
 const ENTRY_SIZE_CONNECTION_HEADER = 80;
 const ENTRY_SIZE_QUERY = 64;
-
-/// The props passed to a query info list
-interface QueryInfoListViewProps {
-    conn?: number;
-    connQueries?: number[];
-}
 
 /// The view model for a connection list
 interface ConnectionListViewModel {
@@ -25,12 +19,10 @@ interface ConnectionListViewModel {
     totalHeight: number;
 }
 
-/// The view model for a connection
-interface ConnectionViewModel {
-    /// The queries that are either running or have been provided via props
-    queriesRunningOrProvided: QueryInfoViewModel[];
-    /// The finished queries
-    queriesFinished: QueryInfoViewModel[];
+/// The props passed to a query info list
+interface QueryInfoListViewProps {
+    conn?: number;
+    connQueries?: number[];
 }
 
 export function QueryInfoListView(props: QueryInfoListViewProps) {
@@ -38,7 +30,6 @@ export function QueryInfoListView(props: QueryInfoListViewProps) {
 
     // We collect the connection query infos lazily to not compute too many off-screen infos.
     const connectionViewModels = React.useRef<(ConnectionViewModel | null)[]>();
-
     // We accept to recompute this view model very often whenever query logs are visible on the screen.
     const crossConnViewModel = React.useMemo<ConnectionListViewModel>(() => {
         // First we find out how many entries we have
@@ -54,13 +45,13 @@ export function QueryInfoListView(props: QueryInfoListViewProps) {
                 if (props.connQueries) {
                     totalQueryCount += props.connQueries.length;
                 } else {
-                    totalQueryCount += conn.queriesRunning.size + conn.queriesFinished.size;
+                    totalQueryCount += conn.queriesActive.size + conn.queriesFinished.size;
                 }
             }
         } else {
             for (const [_cid, conn] of connReg.connectionMap) {
                 totalConnectionCount += 1;
-                totalQueryCount += conn.queriesRunning.size + conn.queriesFinished.size;
+                totalQueryCount += conn.queriesActive.size + conn.queriesFinished.size;
             }
         }
 
@@ -89,7 +80,11 @@ export function QueryInfoListView(props: QueryInfoListViewProps) {
                 //
                 // Take this as motivator to detect in the future if the total query count really changed...
                 // (Not that easy as soon as we collect old queries, that's why we didn't do it yet)
-                let queryCount = props.connQueries ? props.connQueries.length : (conn.queriesRunning.size + conn.queriesFinished.size);
+                //
+                // Alternatively, we could also just store the total connection height and then binary-search for every row height estimation.
+                // The problem is that scrolling through all queries will be a bit annoying.
+                // I expect us to limit the number of displayed queries per connections eventually, computing for all queries in the log is fine for now.
+                let queryCount = props.connQueries ? props.connQueries.length : (conn.queriesActive.size + conn.queriesFinished.size);
                 for (let i = 0; i < queryCount; ++i) {
                     viewModel.rowOffsets[writerRow] = writerRowOffset;
                     writerRow += 1;
@@ -104,7 +99,7 @@ export function QueryInfoListView(props: QueryInfoListViewProps) {
                 writerRow += 1;
                 writerRowOffset += ENTRY_SIZE_CONNECTION_HEADER;
 
-                let queryCount = conn.queriesRunning.size + conn.queriesFinished.size;
+                let queryCount = conn.queriesActive.size + conn.queriesFinished.size;
                 for (let i = 0; i < queryCount; ++i) {
                     viewModel.rowOffsets[writerRow] = writerRowOffset;
                     writerRow += 1;
@@ -170,3 +165,5 @@ export function QueryInfoListView(props: QueryInfoListViewProps) {
         </div>
     );
 }
+
+

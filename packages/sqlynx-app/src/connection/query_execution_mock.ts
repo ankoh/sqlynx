@@ -34,7 +34,7 @@ export class QueryExecutionResponseStreamMock implements QueryExecutionResponseS
     }
     /// Get the status
     getStatus() {
-        return QueryExecutionStatus.STARTED;
+        return QueryExecutionStatus.RUNNING;
     }
     /// Get the arrow schema
     async getSchema(): Promise<arrow.Schema | null> {

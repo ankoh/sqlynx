@@ -14,12 +14,20 @@ export const QueryStatusPanel: React.FC<Props> = (props: Props) => {
             return '';
         }
         switch (status) {
-            case QueryExecutionStatus.ACCEPTED:
-                return 'Sending query';
-            case QueryExecutionStatus.STARTED:
+            case QueryExecutionStatus.REQUESTED:
+                return 'Requested query';
+            case QueryExecutionStatus.PREPARED:
+                return 'Prepared query';
+            case QueryExecutionStatus.QUEUED:
+                return 'Queued query';
+            case QueryExecutionStatus.RUNNING:
                 return 'Executing query';
-            case QueryExecutionStatus.RECEIVED_FIRST_RESULT:
+            case QueryExecutionStatus.RECEIVED_FIRST_BATCH:
                 return 'Executing query, received first result';
+            case QueryExecutionStatus.RECEIVED_ALL_BATCHES:
+                return 'Executing query, received all results';
+            case QueryExecutionStatus.PROCESSED_RESULTS:
+                return 'Processed results';
             case QueryExecutionStatus.FAILED:
                 return 'Query execution failed';
             case QueryExecutionStatus.CANCELLED:
@@ -32,9 +40,12 @@ export const QueryStatusPanel: React.FC<Props> = (props: Props) => {
         return <div className={styles.root}></div>;
     }
     switch (props.query.status) {
-        case QueryExecutionStatus.ACCEPTED:
-        case QueryExecutionStatus.STARTED:
-        case QueryExecutionStatus.RECEIVED_FIRST_RESULT: {
+        case QueryExecutionStatus.PREPARED:
+        case QueryExecutionStatus.QUEUED:
+        case QueryExecutionStatus.RUNNING:
+        case QueryExecutionStatus.RECEIVED_FIRST_BATCH:
+        case QueryExecutionStatus.RECEIVED_ALL_BATCHES:
+        case QueryExecutionStatus.PROCESSED_RESULTS: {
             return (
                 <div className={styles.root}>
                     <RectangleWaveSpinner active={true} />

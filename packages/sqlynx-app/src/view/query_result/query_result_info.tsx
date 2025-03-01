@@ -46,10 +46,10 @@ interface ResultInfoProps {
 
 export function QueryResultInfo(props: ResultInfoProps) {
     const metrics = props.query.metrics;
-    const rowsReceived = (metrics.stream.totalRowsReceived == null) ? '-' : formatThousands(metrics.stream.totalRowsReceived);
-    const batchesReceived = (metrics.stream.totalBatchesReceived == null) ? '-' : formatThousands(metrics.stream.totalBatchesReceived);
-    const dataBytes = (metrics.stream.totalDataBytesReceived == null) ? '-' : formatBytes(metrics.stream.totalDataBytesReceived, ByteFormat.SI);
-    const untilFirstRow = (metrics.stream.durationUntilFirstBatchMs == null) ? "-" : formatMilliseconds(metrics.stream.durationUntilFirstBatchMs);
+    const rowsReceived = (metrics.streamMetrics.totalRowsReceived == null) ? '-' : formatThousands(metrics.streamMetrics.totalRowsReceived);
+    const batchesReceived = (metrics.streamMetrics.totalBatchesReceived == null) ? '-' : formatThousands(metrics.streamMetrics.totalBatchesReceived);
+    const dataBytes = (metrics.streamMetrics.totalDataBytesReceived == null) ? '-' : formatBytes(metrics.streamMetrics.totalDataBytesReceived, ByteFormat.SI);
+    const untilFirstRow = (metrics.streamMetrics.durationUntilFirstBatchMs == null) ? "-" : formatMilliseconds(metrics.streamMetrics.durationUntilFirstBatchMs);
     const queryDuration = (metrics.queryDurationMs == null) ? "-" : formatMilliseconds(metrics.queryDurationMs);
 
     const b3TraceId = props.query.resultMetadata?.get("x-b3-traceid") ?? null;

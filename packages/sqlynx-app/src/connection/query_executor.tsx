@@ -12,12 +12,15 @@ import { useSalesforceAPI } from './salesforce/salesforce_connector.js';
 import { DEMO_CONNECTOR, HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from './connector_info.js';
 import {
     EXECUTE_QUERY,
-    QUERY_EXECUTION_CANCELLED,
-    QUERY_EXECUTION_FAILED,
-    QUERY_EXECUTION_PROGRESS_UPDATED,
-    QUERY_EXECUTION_RECEIVED_BATCH,
-    QUERY_EXECUTION_STARTED,
-    QUERY_EXECUTION_SUCCEEDED,
+    QUERY_CANCELLED,
+    QUERY_FAILED,
+    QUERY_PROGRESS_UPDATED,
+    QUERY_RECEIVED_BATCH,
+    QUERY_RUNNING,
+    QUERY_RECEIVED_ALL_BATCHES,
+    QUERY_PROCESSED_RESULTS,
+    QUERY_SUCCEEDED,
+    QUERY_PREPARED,
 } from './connection_state.js';
 import { useComputationRegistry } from '../compute/computation_registry.js';
 import { analyzeTable } from '../compute/computation_actions.js';
@@ -43,7 +46,7 @@ export const useQueryExecutor = () => React.useContext(EXECUTOR_CTX)!;
 export function useQueryState(connectionId: number | null, queryId: number | null) {
     const [connReg, _connDispatch] = useConnectionState(connectionId);
     if (queryId == null) return null;
-    return connReg?.queriesRunning.get(queryId) ?? connReg?.queriesFinished.get(queryId) ?? null;
+    return connReg?.queriesActive.get(queryId) ?? connReg?.queriesFinished.get(queryId) ?? null;
 }
 
 export function QueryExecutorProvider(props: { children?: React.ReactElement }) {
@@ -78,19 +81,26 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
         const initialState: QueryExecutionState = {
             queryId,
             queryMetadata: args.metadata,
-            status: QueryExecutionStatus.ACCEPTED,
+            status: QueryExecutionStatus.REQUESTED,
             cancellation: new AbortController(),
             resultStream: null,
             error: null,
             metrics: {
-                startedAt: null,
+                queryPreparedAt: null,
+                queryQueuedAt: null,
+                queryRunningAt: null,
                 receivedFirstBatchAt: null,
                 receivedLastBatchAt: null,
-                finishedAt: null,
+                receivedAllBatchesAt: null,
+                succeededAt: null,
+                failedAt: null,
+                cancelledAt: null,
+                processedResultsAt: null,
                 lastUpdatedAt: null,
                 progressUpdatesReceived: 0,
                 queryDurationMs: null,
-                stream: createQueryResponseStreamMetrics(),
+                textLength: args.query.length,
+                streamMetrics: createQueryResponseStreamMetrics(),
             },
             latestProgressUpdate: null,
             resultMetadata: null,
@@ -112,7 +122,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                     break;
                 }
                 connDispatch(connectionId, {
-                    type: QUERY_EXECUTION_PROGRESS_UPDATED,
+                    type: QUERY_PROGRESS_UPDATED,
                     value: [queryId, update],
                 });
             }
@@ -132,7 +142,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
 
                 logger.info("received result batch", { "connection": connectionId.toString(), "query": queryId.toString() }, LOG_CTX);
                 connDispatch(connectionId, {
-                    type: QUERY_EXECUTION_RECEIVED_BATCH,
+                    type: QUERY_RECEIVED_BATCH,
                     value: [queryId, batch, resultStream.getMetrics()],
                 });
             }
@@ -165,7 +175,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
 
             if (resultStream != null) {
                 connDispatch(connectionId, {
-                    type: QUERY_EXECUTION_STARTED,
+                    type: QUERY_RUNNING,
                     value: [queryId, resultStream],
                 });
 
@@ -178,7 +188,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                 // Is there any metadata?
                 const metadata = resultStream.getMetadata();
                 connDispatch(connectionId, {
-                    type: QUERY_EXECUTION_SUCCEEDED,
+                    type: QUERY_RECEIVED_ALL_BATCHES,
                     value: [queryId, table!, metadata, resultStream!.getMetrics()],
                 });
             } else {
@@ -187,13 +197,13 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
         } catch (e: any) {
             if ((e.message === 'AbortError')) {
                 connDispatch(connectionId, {
-                    type: QUERY_EXECUTION_CANCELLED,
+                    type: QUERY_CANCELLED,
                     value: [queryId, e, resultStream?.getMetrics() ?? null],
                 });
             } else {
                 console.error(e);
                 connDispatch(connectionId, {
-                    type: QUERY_EXECUTION_FAILED,
+                    type: QUERY_FAILED,
                     value: [queryId, e, resultStream?.getMetrics() ?? null],
                 });
             }
@@ -203,9 +213,28 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
 
         // Compute all table summaries of the result
         if (table && args.analyzeResults) {
-            analyzeTable(queryId, table!, computeDispatch, computeWorker, logger);
+            try {
+                await analyzeTable(queryId, table!, computeDispatch, computeWorker, logger);
+
+                connDispatch(connectionId, {
+                    type: QUERY_PROCESSED_RESULTS,
+                    value: [queryId],
+                });
+            } catch (e: any) {
+                console.error(e);
+                connDispatch(connectionId, {
+                    type: QUERY_FAILED,
+                    value: [queryId, e, null],
+                });
+                throw e;
+            }
         }
 
+        // Mark as succeeded
+        connDispatch(connectionId, {
+            type: QUERY_SUCCEEDED,
+            value: [queryId],
+        });
         return table;
 
     }, [connMap, sfApi]);

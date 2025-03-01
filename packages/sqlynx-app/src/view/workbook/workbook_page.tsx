@@ -141,9 +141,13 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
             case null:
                 selectTab(TabKey.Catalog);
                 break;
-            case QueryExecutionStatus.STARTED:
-            case QueryExecutionStatus.ACCEPTED:
-            case QueryExecutionStatus.RECEIVED_FIRST_RESULT:
+            case QueryExecutionStatus.REQUESTED:
+            case QueryExecutionStatus.PREPARED:
+            case QueryExecutionStatus.QUEUED:
+            case QueryExecutionStatus.RUNNING:
+            case QueryExecutionStatus.RECEIVED_FIRST_BATCH:
+            case QueryExecutionStatus.RECEIVED_ALL_BATCHES:
+            case QueryExecutionStatus.PROCESSED_RESULTS:
                 if (prevStatus.current == null || prevStatus.current[0] != activeQueryId || prevStatus.current[1] != status) {
                     selectTab(TabKey.QueryStatusPanel);
                 }

@@ -38,7 +38,7 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
     constructor(logger: Logger, apiClient: TrinoApiClientInterface, result: TrinoQueryResult, metrics: QueryExecutionMetrics) {
         this.logger = logger;
         this.apiClient = apiClient;
-        this.currentStatus = QueryExecutionStatus.STARTED;
+        this.currentStatus = QueryExecutionStatus.RUNNING;
         this.responseMetadata = new Map();
         this.resultSchema = new AsyncValue();
         this.resultFetchSemaphore = new Semaphore(1);
