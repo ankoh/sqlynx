@@ -8,7 +8,7 @@ import { observeSize } from "../../view/foundations/size_observer.js";
 import { lowerBoundU32 } from "../../utils/sorted.js";
 import { ConnectionViewModel } from "./query_info_view_model.js";
 
-const ENTRY_SIZE_CONNECTION_HEADER = 80;
+const ENTRY_SIZE_CONNECTION_HEADER = 40;
 const ENTRY_SIZE_QUERY = 64;
 
 /// The view model for a connection list

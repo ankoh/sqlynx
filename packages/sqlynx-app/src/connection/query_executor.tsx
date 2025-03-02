@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useConnectionState, useDynamicConnectionDispatch } from './connection_registry.js';
 import {
     createQueryResponseStreamMetrics,
+    QueryExecutionProgress,
     QueryExecutionResponseStream,
     QueryExecutionState,
     QueryExecutionStatus,
@@ -31,6 +32,7 @@ import { executeTrinoQuery } from './trino/trino_query_execution.js';
 import { executeSalesforceQuery } from './salesforce/salesforce_query_execution.js';
 import { executeHyperQuery } from './hyper/hyper_query_execution.js';
 import { executeDemoQuery } from './demo/demo_query_execution.js';
+import { AsyncValueTopic } from '../utils/async_value_topic.js';
 
 const LOG_CTX = 'query_executor';
 
@@ -154,6 +156,9 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
             return new arrow.Table(schema, batches);
         };
 
+        // The channel for progress updates
+        let progressUpdates = new AsyncValueTopic<QueryExecutionProgress>();
+
         // Execute the query and consume the results
         let resultStream: QueryExecutionResponseStream | null = null;
         let table: arrow.Table | null = null;
@@ -161,16 +166,16 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
             // Start the query
             switch (conn.details.type) {
                 case SALESFORCE_DATA_CLOUD_CONNECTOR:
-                    resultStream = await executeSalesforceQuery(conn.details.value, args);
+                    resultStream = await executeSalesforceQuery(conn.details.value, args, progressUpdates);
                     break;
                 case HYPER_GRPC_CONNECTOR:
-                    resultStream = await executeHyperQuery(conn.details.value, args);
+                    resultStream = await executeHyperQuery(conn.details.value, args, progressUpdates);
                     break;
                 case TRINO_CONNECTOR:
-                    resultStream = await executeTrinoQuery(conn.details.value, args);
+                    resultStream = await executeTrinoQuery(conn.details.value, args, progressUpdates);
                     break;
                 case DEMO_CONNECTOR:
-                    resultStream = await executeDemoQuery(conn.details.value, args);
+                    resultStream = await executeDemoQuery(conn.details.value, args, progressUpdates);
                     break;
             }
             logger.debug("retrieved query results", { "connection": connectionId.toString(), "query": queryId.toString() }, LOG_CTX);
