@@ -206,7 +206,7 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
             return { ...state };
         }
         case QUERY_PROGRESS_UPDATED: {
-            query = {
+            const next = {
                 ...query,
                 latestProgressUpdate: action.value[1],
                 metrics: {
@@ -215,7 +215,12 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
                     progressUpdatesReceived: ++query.metrics.progressUpdatesReceived
                 },
             };
-            state.queriesActive.set(query.queryId, query);
+            // Is the query queued for the first time?
+            if (action.value[1].isQueued && next.status == QueryExecutionStatus.SENDING) {
+                next.status = QueryExecutionStatus.QUEUED;
+                next.metrics.queryQueuedStartedAt = now;
+            }
+            state.queriesActive.set(query.queryId, next);
             return { ...state };
         }
         case QUERY_RECEIVED_BATCH: {
