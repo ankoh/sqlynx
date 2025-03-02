@@ -22,6 +22,8 @@ import {
     QUERY_PROCESSED_RESULTS,
     QUERY_SUCCEEDED,
     QUERY_PREPARING,
+    QUERY_PROCESSING_RESULTS,
+    QUERY_SENDING,
 } from './connection_state.js';
 import { useComputationRegistry } from '../compute/computation_registry.js';
 import { analyzeTable } from '../compute/computation_actions.js';
@@ -32,7 +34,7 @@ import { executeTrinoQuery } from './trino/trino_query_execution.js';
 import { executeSalesforceQuery } from './salesforce/salesforce_query_execution.js';
 import { executeHyperQuery } from './hyper/hyper_query_execution.js';
 import { executeDemoQuery } from './demo/demo_query_execution.js';
-import { AsyncConsumerLambdas, AsyncConsumer } from '../utils/async_consumer.js';
+import { AsyncConsumerLambdas } from '../utils/async_consumer.js';
 
 const LOG_CTX = 'query_executor';
 
@@ -117,34 +119,17 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
             value: [queryId, initialState],
         });
 
-        // Helper to forward progress updates
-        const consumeProgress = new AsyncConsumerLambdas<QueryExecutionResponseStream, QueryExecutionProgress>(
-            (_: QueryExecutionResponseStream, progress: QueryExecutionProgress) => {
-                connDispatch(connectionId, {
-                    type: QUERY_PROGRESS_UPDATED,
-                    value: [queryId, progress],
-                });
-            },
-        );
-
-        // Helper to consume result batches
-        const batches: arrow.RecordBatch[] = [];
-        const consumeBatches = new AsyncConsumerLambdas<QueryExecutionResponseStream, arrow.RecordBatch>(
-            (ctx: QueryExecutionResponseStream, batch: arrow.RecordBatch) => {
-                batches.push(batch);
-
-                logger.info("received result batch", { "connection": connectionId.toString(), "query": queryId.toString() }, LOG_CTX);
-                connDispatch(connectionId, {
-                    type: QUERY_RECEIVED_BATCH,
-                    value: [queryId, batch, ctx.getMetrics()],
-                });
-            },
-        );
+        // XXX Add explicit query preparation here later
 
         // Execute the query and consume the results
         let resultStream: QueryExecutionResponseStream | null = null;
         let table: arrow.Table | null = null;
         try {
+            connDispatch(connectionId, {
+                type: QUERY_SENDING,
+                value: [queryId],
+            });
+
             // Start the query
             switch (conn.details.type) {
                 case SALESFORCE_DATA_CLOUD_CONNECTOR:
@@ -167,6 +152,30 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                     type: QUERY_RUNNING,
                     value: [queryId, resultStream],
                 });
+
+                // Helper to forward progress updates
+                const consumeProgress = new AsyncConsumerLambdas<QueryExecutionResponseStream, QueryExecutionProgress>(
+                    (_: QueryExecutionResponseStream, progress: QueryExecutionProgress) => {
+                        connDispatch(connectionId, {
+                            type: QUERY_PROGRESS_UPDATED,
+                            value: [queryId, progress],
+                        });
+                    },
+                );
+
+                // Helper to consume result batches
+                const batches: arrow.RecordBatch[] = [];
+                const consumeBatches = new AsyncConsumerLambdas<QueryExecutionResponseStream, arrow.RecordBatch>(
+                    (ctx: QueryExecutionResponseStream, batch: arrow.RecordBatch) => {
+                        batches.push(batch);
+
+                        logger.info("received result batch", { "connection": connectionId.toString(), "query": queryId.toString() }, LOG_CTX);
+                        connDispatch(connectionId, {
+                            type: QUERY_RECEIVED_BATCH,
+                            value: [queryId, batch, ctx.getMetrics()],
+                        });
+                    },
+                );
 
                 // Subscribe to query_status and result messages
                 await resultStream.produce(consumeBatches, consumeProgress);
@@ -201,6 +210,11 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
         // Compute all table summaries of the result
         if (table && args.analyzeResults) {
             try {
+                connDispatch(connectionId, {
+                    type: QUERY_PROCESSING_RESULTS,
+                    value: [queryId],
+                });
+
                 await analyzeTable(queryId, table!, computeDispatch, computeWorker, logger);
 
                 connDispatch(connectionId, {

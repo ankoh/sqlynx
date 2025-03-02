@@ -133,7 +133,6 @@ export const CATALOG_UPDATE_CANCELLED = Symbol('CATALOG_UPDATE_CANCELLED');
 export const EXECUTE_QUERY = Symbol('EXECUTE_QUERY');
 export const QUERY_PREPARING = Symbol('QUERY_PREPARING');
 export const QUERY_SENDING = Symbol('QUERY_SENDING');
-export const QUERY_QUEUED = Symbol('QUERY_QUEUED');
 export const QUERY_RUNNING = Symbol('QUERY_RUNNING');
 export const QUERY_PROGRESS_UPDATED = Symbol('QUERY_PROGRESS_UPDATED');
 export const QUERY_RECEIVED_BATCH = Symbol('QUERY_RECEIVED_BATCH');
@@ -156,7 +155,6 @@ export type QueryExecutionAction =
     | VariantKind<typeof EXECUTE_QUERY, [number, QueryExecutionState]>
     | VariantKind<typeof QUERY_PREPARING, [number]>
     | VariantKind<typeof QUERY_SENDING, [number]>
-    | VariantKind<typeof QUERY_QUEUED, [number]>
     | VariantKind<typeof QUERY_RUNNING, [number, QueryExecutionResponseStream]>
     | VariantKind<typeof QUERY_PROGRESS_UPDATED, [number, QueryExecutionProgress]>
     | VariantKind<typeof QUERY_RECEIVED_BATCH, [number, arrow.RecordBatch, QueryExecutionMetrics]>
@@ -188,11 +186,12 @@ export function reduceConnectionState(state: ConnectionState, action: Connection
 
         case EXECUTE_QUERY:
         case QUERY_PREPARING:
-        case QUERY_QUEUED:
         case QUERY_RUNNING:
+        case QUERY_SENDING:
         case QUERY_PROGRESS_UPDATED:
         case QUERY_RECEIVED_BATCH:
         case QUERY_RECEIVED_ALL_BATCHES:
+        case QUERY_PROCESSING_RESULTS:
         case QUERY_PROCESSED_RESULTS:
         case QUERY_SUCCEEDED:
         case QUERY_CANCELLED:

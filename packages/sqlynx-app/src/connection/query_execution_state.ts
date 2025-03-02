@@ -12,7 +12,6 @@ import {
     QueryExecutionAction,
     QUERY_SUCCEEDED,
     QUERY_PROCESSED_RESULTS,
-    QUERY_QUEUED,
     QUERY_PREPARING,
     QUERY_SENDING,
     QUERY_PROCESSING_RESULTS,
@@ -187,19 +186,6 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
                     ...query.metrics,
                     lastUpdatedAt: now,
                     querySendingStartedAt: now,
-                },
-            };
-            state.queriesActive.set(query.queryId, query);
-            return { ...state };
-        }
-        case QUERY_QUEUED: {
-            query = {
-                ...query,
-                status: QueryExecutionStatus.QUEUED,
-                metrics: {
-                    ...query.metrics,
-                    lastUpdatedAt: now,
-                    queryQueuedStartedAt: now,
                 },
             };
             state.queriesActive.set(query.queryId, query);
