@@ -4,6 +4,7 @@ import * as proto from "@ankoh/sqlynx-protobuf";
 import { QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionMetrics, QueryExecutionStatus, createQueryResponseStreamMetrics } from "../query_execution_state.js";
 import { generateRandomData, RandomDataConfig } from '../../utils/random_data.js';
 import { sleep } from '../../utils/sleep.js';
+import { AsyncConsumer } from '../../utils/async_consumer.js';
 
 export interface DemoDatabaseConfig extends RandomDataConfig {
     /// Time in milliseconds until the first batch
@@ -48,12 +49,8 @@ class DemoQueryExecutionResponseStream implements QueryExecutionResponseStream {
     async getSchema(): Promise<arrow.Schema | null> {
         return this.schema;
     }
-    /// Await the next query_status update
-    async nextProgressUpdate(): Promise<QueryExecutionProgress | null> {
-        return null;
-    }
     /// Await the next record batch
-    async nextRecordBatch(): Promise<arrow.RecordBatch | null> {
+    async nextRecordBatch(_progress: AsyncConsumer<QueryExecutionProgress>): Promise<arrow.RecordBatch | null> {
         const batchId = this.nextBatchId++;
         if (batchId < this.batches.length) {
             if (batchId == 0) {

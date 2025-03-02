@@ -18,6 +18,7 @@ import {
     QUERY_PROCESSING_RESULTS,
 } from './connection_state.js';
 import { ConnectionQueryMetrics } from './connection_statistics.js';
+import { AsyncConsumer } from '../utils/async_consumer.js';
 
 export enum QueryExecutionStatus {
     REQUESTED = 0,
@@ -71,10 +72,8 @@ export interface QueryExecutionResponseStream {
     getStatus(): QueryExecutionStatus;
     /// Await the schema message
     getSchema(): Promise<arrow.Schema | null>;
-    /// Await the next query_status update
-    nextProgressUpdate(): Promise<QueryExecutionProgress | null>;
     /// Await the next record batch
-    nextRecordBatch(): Promise<arrow.RecordBatch | null>;
+    nextRecordBatch(progress: AsyncConsumer<QueryExecutionProgress>): Promise<arrow.RecordBatch | null>;
 }
 
 export interface QueryMetrics {

@@ -6,8 +6,8 @@ import { SalesforceConnectionParams } from './salesforce_connection_params.js';
 import { SalesforceAuthConfig } from '../connector_configs.js';
 import { Base64Codec } from '../../utils/base64.js';
 import { HealthCheckResult, HyperDatabaseChannel, HyperQueryResultStream } from '../hyper/hyperdb_client.js';
-import { AsyncValueTopic } from "utils/async_value_topic.js";
-import { QueryExecutionProgress } from "connection/query_execution_state.js";
+import { AsyncConsumer } from "../../utils/async_consumer.js";
+import { QueryExecutionProgress } from "../../connection/query_execution_state.js";
 
 const LOG_CTX = "salesforce_api";
 
@@ -401,7 +401,7 @@ export class SalesforceDatabaseChannel implements HyperDatabaseChannel {
         return this.hyperChannel.checkHealth();
     }
     /// Execute Query
-    async executeQuery(param: proto.salesforce_hyperdb_grpc_v1.pb.QueryParam, progressUpdates: AsyncValueTopic<QueryExecutionProgress>): Promise<HyperQueryResultStream> {
+    async executeQuery(param: proto.salesforce_hyperdb_grpc_v1.pb.QueryParam, progressUpdates: AsyncConsumer<QueryExecutionProgress>): Promise<HyperQueryResultStream> {
         return this.hyperChannel.executeQuery(param, progressUpdates);
     }
     /// Destroy the connection

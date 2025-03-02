@@ -6,6 +6,7 @@ import {
     createQueryResponseStreamMetrics,
 } from './query_execution_state.js';
 import { sleep } from '../utils/sleep.js';
+import { AsyncConsumer } from '../utils/async_consumer.js';
 
 export class QueryExecutionResponseStreamMock implements QueryExecutionResponseStream {
     schema: arrow.Schema;
@@ -41,13 +42,8 @@ export class QueryExecutionResponseStreamMock implements QueryExecutionResponseS
         await sleep(200);
         return this.schema;
     }
-    /// Await the next query_status update
-    async nextProgressUpdate(): Promise<QueryExecutionProgress | null> {
-        await sleep(100);
-        return null;
-    }
     /// Await the next record batch
-    async nextRecordBatch(): Promise<arrow.RecordBatch | null> {
+    async nextRecordBatch(_progress: AsyncConsumer<QueryExecutionProgress>): Promise<arrow.RecordBatch | null> {
         if (this.batchesWritten >= this.batchCount) {
             return null;
         }

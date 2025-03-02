@@ -11,6 +11,7 @@ import {
     QueryExecutionMetrics,
     QueryExecutionStatus,
 } from '../connection/query_execution_state.js';
+import { AsyncConsumer } from '../utils/async_consumer.js';
 
 export class QueryResultReader implements AsyncIterator<Uint8Array>, AsyncIterable<Uint8Array> {
     /// The logger
@@ -91,15 +92,11 @@ export class WebHyperQueryResultStream implements QueryExecutionResponseStream {
         return this.arrowReader!.schema;
     }
     /// Await the next record batch
-    async nextRecordBatch(): Promise<arrow.RecordBatch<any> | null> {
+    async nextRecordBatch(_progress: AsyncConsumer<QueryExecutionProgress>): Promise<arrow.RecordBatch<any> | null> {
         if (this.arrowReader == null) {
             await this.setupArrowReader();
         }
         return this.arrowReader!.next();
-    }
-    /// Await the next query_status update
-    async nextProgressUpdate(): Promise<QueryExecutionProgress | null> {
-        return null;
     }
 }
 

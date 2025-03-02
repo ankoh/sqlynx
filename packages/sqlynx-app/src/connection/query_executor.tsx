@@ -32,7 +32,7 @@ import { executeTrinoQuery } from './trino/trino_query_execution.js';
 import { executeSalesforceQuery } from './salesforce/salesforce_query_execution.js';
 import { executeHyperQuery } from './hyper/hyper_query_execution.js';
 import { executeDemoQuery } from './demo/demo_query_execution.js';
-import { AsyncValueTopic } from '../utils/async_value_topic.js';
+import { AsyncConsumerLambdas, AsyncConsumer } from '../utils/async_consumer.js';
 
 const LOG_CTX = 'query_executor';
 
@@ -117,28 +117,22 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
             value: [queryId, initialState],
         });
 
-        // Helper to subscribe to query_status updates
-        const readAllProgressUpdates = async (resultStream: QueryExecutionResponseStream) => {
-            while (true) {
-                // Resolve the next progress update
-                const update = await resultStream.nextProgressUpdate();
-                if (update == null) {
-                    break;
-                }
+        // The channel for progress updates
+        let consumeProgress = new AsyncConsumerLambdas<QueryExecutionProgress>(
+            (progress: QueryExecutionProgress) => {
                 connDispatch(connectionId, {
                     type: QUERY_PROGRESS_UPDATED,
-                    value: [queryId, update],
+                    value: [queryId, progress],
                 });
-            }
-            return null;
-        };
+            },
+        );
         // Helper to subscribe to result batches
-        const readAllBatches = async (resultStream: QueryExecutionResponseStream) => {
+        const readAllBatches = async (resultStream: QueryExecutionResponseStream, progress: AsyncConsumer<QueryExecutionProgress>) => {
             // Collect record batches
             const batches: arrow.RecordBatch[] = [];
             while (true) {
                 // Retrieve the next record batch
-                const batch = await resultStream.nextRecordBatch();
+                const batch = await resultStream.nextRecordBatch(progress);
                 if (batch == null) {
                     break;
                 }
@@ -156,9 +150,6 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
             return new arrow.Table(schema, batches);
         };
 
-        // The channel for progress updates
-        let progressUpdates = new AsyncValueTopic<QueryExecutionProgress>();
-
         // Execute the query and consume the results
         let resultStream: QueryExecutionResponseStream | null = null;
         let table: arrow.Table | null = null;
@@ -166,16 +157,16 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
             // Start the query
             switch (conn.details.type) {
                 case SALESFORCE_DATA_CLOUD_CONNECTOR:
-                    resultStream = await executeSalesforceQuery(conn.details.value, args, progressUpdates);
+                    resultStream = await executeSalesforceQuery(conn.details.value, args, consumeProgress);
                     break;
                 case HYPER_GRPC_CONNECTOR:
-                    resultStream = await executeHyperQuery(conn.details.value, args, progressUpdates);
+                    resultStream = await executeHyperQuery(conn.details.value, args, consumeProgress);
                     break;
                 case TRINO_CONNECTOR:
-                    resultStream = await executeTrinoQuery(conn.details.value, args, progressUpdates);
+                    resultStream = await executeTrinoQuery(conn.details.value, args, consumeProgress);
                     break;
                 case DEMO_CONNECTOR:
-                    resultStream = await executeDemoQuery(conn.details.value, args, progressUpdates);
+                    resultStream = await executeDemoQuery(conn.details.value, args, consumeProgress);
                     break;
             }
             logger.debug("retrieved query results", { "connection": connectionId.toString(), "query": queryId.toString() }, LOG_CTX);
@@ -187,10 +178,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                 });
 
                 // Subscribe to query_status and result messages
-                const progressUpdater = readAllProgressUpdates(resultStream);
-                const tableReader = readAllBatches(resultStream);
-                const result = await Promise.all([tableReader, progressUpdater]);
-                table = result[0]!;
+                table = await readAllBatches(resultStream, consumeProgress);
 
                 // Is there any metadata?
                 const metadata = resultStream.getMetadata();

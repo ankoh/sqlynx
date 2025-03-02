@@ -7,7 +7,7 @@ import { TRINO_STATUS_HTTP_ERROR, TRINO_STATUS_OK, TRINO_STATUS_OTHER_ERROR, Tri
 import { ChannelError, RawProxyError } from '../../platform/channel_common.js';
 import { AsyncValue } from '../../utils/async_value.js';
 import { Semaphore } from '../../utils/semaphore.js';
-import { AsyncValueTopic } from '../../utils/async_value_topic.js';
+import { AsyncConsumer } from '../../utils/async_consumer.js';
 
 const LOG_CTX = 'trino_channel';
 
@@ -35,12 +35,12 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
     /// The progress updates
     latestQueryProgress: QueryExecutionProgress | null;
     /// The query progress stream
-    queryProgressUpdates: AsyncValueTopic<QueryExecutionProgress>;
+    queryProgressUpdates: AsyncConsumer<QueryExecutionProgress>;
     /// The metrics
     queryMetrics: QueryExecutionMetrics;
 
     /// The constructor
-    constructor(logger: Logger, apiClient: TrinoApiClientInterface, result: TrinoQueryResult, metrics: QueryExecutionMetrics, progressUpdates: AsyncValueTopic<QueryExecutionProgress>) {
+    constructor(logger: Logger, apiClient: TrinoApiClientInterface, result: TrinoQueryResult, metrics: QueryExecutionMetrics, progressUpdates: AsyncConsumer<QueryExecutionProgress>) {
         this.logger = logger;
         this.apiClient = apiClient;
         this.currentStatus = QueryExecutionStatus.RUNNING;
@@ -128,12 +128,8 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
     async getSchema(): Promise<arrow.Schema | null> {
         return this.resultSchema.getValue();
     }
-    /// Await the next query_status update
-    async nextProgressUpdate(): Promise<QueryExecutionProgress | null> {
-        return this.queryProgressUpdates.next();
-    }
     /// Await the next record batch
-    async nextRecordBatch(): Promise<arrow.RecordBatch | null> {
+    async nextRecordBatch(_progress: AsyncConsumer<QueryExecutionProgress>): Promise<arrow.RecordBatch | null> {
         const releaseResultFetch = await this.resultFetchSemaphore.acquire();
         try {
             // While still running
@@ -155,14 +151,14 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
 
                     // Publish a new progress update
                     this.latestQueryProgress = deriveProgress(this.latestQueryStats, this.queryMetrics);
-                    this.queryProgressUpdates.publish(this.latestQueryProgress);
+                    this.queryProgressUpdates.resolve(this.latestQueryProgress);
 
                     releaseResultFetch();
                     return resultBatch;
                 } else {
                     // Publish the progress update
                     this.latestQueryProgress = deriveProgress(this.latestQueryStats, this.queryMetrics);
-                    this.queryProgressUpdates.publish(this.latestQueryProgress);
+                    this.queryProgressUpdates.resolve(this.latestQueryProgress);
                 }
             }
             this.logger.debug("reached end of query result stream", { "queryState": this.latestQueryState });
@@ -190,7 +186,7 @@ export interface TrinoChannelInterface {
     /// Perform a health check
     checkHealth(): Promise<TrinoHealthCheckResult>;
     /// Execute Query
-    executeQuery(param: proto.salesforce_hyperdb_grpc_v1.pb.QueryParam, progressUpdates: AsyncValueTopic<QueryExecutionProgress>): Promise<TrinoQueryResultStream>;
+    executeQuery(param: proto.salesforce_hyperdb_grpc_v1.pb.QueryParam, progressUpdates: AsyncConsumer<QueryExecutionProgress>): Promise<TrinoQueryResultStream>;
     /// Destroy the connection
     close(): Promise<void>;
 }
@@ -227,7 +223,7 @@ export class TrinoChannel implements TrinoChannelInterface {
     }
 
     /// Execute Query
-    async executeQuery(param: proto.salesforce_hyperdb_grpc_v1.pb.QueryParam, progressUpdates: AsyncValueTopic<QueryExecutionProgress>): Promise<TrinoQueryResultStream> {
+    async executeQuery(param: proto.salesforce_hyperdb_grpc_v1.pb.QueryParam, progressUpdates: AsyncConsumer<QueryExecutionProgress>): Promise<TrinoQueryResultStream> {
         const metrics = createQueryResponseStreamMetrics();
         const timeBefore = (new Date()).getTime();
 

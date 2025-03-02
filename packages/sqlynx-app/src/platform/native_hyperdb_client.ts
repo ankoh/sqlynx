@@ -23,6 +23,7 @@ import {
 } from '../connection/query_execution_state.js';
 import { ChannelArgs } from './channel_common.js';
 import { Logger } from './logger.js';
+import { AsyncConsumerLambdas, AsyncConsumer } from '../utils/async_consumer.js';
 
 const LOG_CTX = "native_hyperdb_client";
 
@@ -116,7 +117,7 @@ export class NativeHyperQueryResultStream implements QueryExecutionResponseStrea
         return this.arrowReader!.schema;
     }
     /// Await the next record batch
-    async nextRecordBatch(): Promise<arrow.RecordBatch | null> {
+    async nextRecordBatch(_progress: AsyncConsumer<QueryExecutionProgress>): Promise<arrow.RecordBatch | null> {
         if (this.arrowReader == null) {
             await this.setupArrowReader();
         }
@@ -126,10 +127,6 @@ export class NativeHyperQueryResultStream implements QueryExecutionResponseStrea
         } else {
             return result.value;
         }
-    }
-    /// Await the next query_status update
-    async nextProgressUpdate(): Promise<QueryExecutionProgress | null> {
-        return null;
     }
 }
 
@@ -165,7 +162,8 @@ class NativeHyperDatabaseChannel implements HyperDatabaseChannel {
             if (field.name != "healthy") {
                 return { ok: false, error: { message: `unexpected field name in the query result schema: expected 'healthy', received '${field.name}'` } };
             }
-            const batch = await result.nextRecordBatch();
+            const ignoreProgressUpdates = new AsyncConsumerLambdas();
+            const batch = await result.nextRecordBatch(ignoreProgressUpdates);
             if (batch == null) {
                 return { ok: false, error: { message: "query result did not include a record batch" } };
             }
