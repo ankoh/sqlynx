@@ -73,7 +73,7 @@ export interface QueryExecutionResponseStream {
     /// Await the schema message
     getSchema(): Promise<arrow.Schema | null>;
     /// Await the next record batch
-    nextRecordBatch(progress: AsyncConsumer<QueryExecutionProgress>): Promise<arrow.RecordBatch | null>;
+    produce(batches: AsyncConsumer<QueryExecutionResponseStream, arrow.RecordBatch>, progress: AsyncConsumer<QueryExecutionResponseStream, QueryExecutionProgress>): Promise<void>;
 }
 
 export interface QueryMetrics {

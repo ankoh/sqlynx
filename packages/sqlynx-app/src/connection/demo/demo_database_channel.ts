@@ -49,18 +49,17 @@ class DemoQueryExecutionResponseStream implements QueryExecutionResponseStream {
     async getSchema(): Promise<arrow.Schema | null> {
         return this.schema;
     }
-    /// Await the next record batch
-    async nextRecordBatch(_progress: AsyncConsumer<QueryExecutionProgress>): Promise<arrow.RecordBatch | null> {
-        const batchId = this.nextBatchId++;
-        if (batchId < this.batches.length) {
-            if (batchId == 0) {
+    /// Produce the result batches
+    async produce(batches: AsyncConsumer<QueryExecutionResponseStream, arrow.RecordBatch>, _progress: AsyncConsumer<QueryExecutionResponseStream, QueryExecutionProgress>, abort?: AbortSignal): Promise<void> {
+        for (; this.nextBatchId < this.batches.length; this.nextBatchId++) {
+            if (this.nextBatchId == 0) {
                 await sleep(this.config.timeMsUntilFirstBatch);
+                abort?.throwIfAborted();
             } else {
                 await sleep(this.config.timeMsBetweenBatches);
+                abort?.throwIfAborted();
             }
-            return this.batches[batchId];
-        } else {
-            return null;
+            batches.resolve(this, this.batches[this.nextBatchId]);
         }
     }
 }
@@ -75,7 +74,7 @@ export class DemoDatabaseChannel {
     }
 
     /// Execute Query
-    async executeQuery(_param: proto.salesforce_hyperdb_grpc_v1.pb.QueryParam): Promise<QueryExecutionResponseStream> {
+    async executeQuery(_param: proto.salesforce_hyperdb_grpc_v1.pb.QueryParam, _abort?: AbortSignal): Promise<QueryExecutionResponseStream> {
         const [schema, batches] = generateRandomData(this.config);
         return new DemoQueryExecutionResponseStream(this.config, schema, batches);
     }

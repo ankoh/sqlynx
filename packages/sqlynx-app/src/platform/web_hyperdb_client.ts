@@ -12,6 +12,7 @@ import {
     QueryExecutionStatus,
 } from '../connection/query_execution_state.js';
 import { AsyncConsumer } from '../utils/async_consumer.js';
+import { AsyncValue } from 'utils/async_value.js';
 
 export class QueryResultReader implements AsyncIterator<Uint8Array>, AsyncIterable<Uint8Array> {
     /// The logger
@@ -58,19 +59,14 @@ export class QueryResultReader implements AsyncIterator<Uint8Array>, AsyncIterab
 export class WebHyperQueryResultStream implements QueryExecutionResponseStream {
     /// The query result iterator
     resultReader: QueryResultReader;
-    /// An arrow reader
-    arrowReader: arrow.RecordBatchReader | null;
+    /// The schema Promise
+    resultSchema: AsyncValue<arrow.Schema<any>, Error>;
 
     constructor(stream: AsyncIterator<hyper.salesforce_hyperdb_grpc_v1.pb.QueryResult>, logger: Logger) {
         this.resultReader = new QueryResultReader(stream, logger);
-        this.arrowReader = null;
+        this.resultSchema = new AsyncValue();
     }
 
-    /// Open the stream if the setup is pending
-    protected async setupArrowReader(): Promise<void> {
-        this.arrowReader = await arrow.AsyncRecordBatchStreamReader.from(this.resultReader);
-        await this.arrowReader.open();
-    }
     /// Get the metadata
     getMetadata(): Map<string, string> {
         // XXX Remember trailers
@@ -85,18 +81,31 @@ export class WebHyperQueryResultStream implements QueryExecutionResponseStream {
         return this.resultReader.currentStatus;
     }
     /// Await the Arrow schema
-    async getSchema(): Promise<arrow.Schema<any> | null> {
-        if (this.arrowReader == null) {
-            await this.setupArrowReader();
-        }
-        return this.arrowReader!.schema;
+    getSchema(): Promise<arrow.Schema<any>> {
+        return this.resultSchema.getValue();
     }
-    /// Await the next record batch
-    async nextRecordBatch(_progress: AsyncConsumer<QueryExecutionProgress>): Promise<arrow.RecordBatch<any> | null> {
-        if (this.arrowReader == null) {
-            await this.setupArrowReader();
+    /// Produce the result batches
+    async produce(batches: AsyncConsumer<QueryExecutionResponseStream, arrow.RecordBatch>, _progress: AsyncConsumer<QueryExecutionResponseStream, QueryExecutionProgress>, abort?: AbortSignal): Promise<void> {
+        // Setup the arrow reader
+        const arrowReader = await arrow.AsyncRecordBatchStreamReader.from(this.resultReader);
+        abort?.throwIfAborted();
+
+        // Open the arrow reader
+        await arrowReader.open();
+        abort?.throwIfAborted();
+        this.resultSchema.resolve(arrowReader.schema);
+
+        while (true) {
+            const iter = await arrowReader!.next();
+            abort?.throwIfAborted();
+            if (iter.done) {
+                if (iter.value !== undefined) {
+                    batches.resolve(this, iter.value);
+                }
+            } else {
+                batches.resolve(this, iter.value);
+            }
         }
-        return this.arrowReader!.next();
     }
 }
 

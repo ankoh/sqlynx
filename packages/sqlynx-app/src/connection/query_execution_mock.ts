@@ -43,26 +43,28 @@ export class QueryExecutionResponseStreamMock implements QueryExecutionResponseS
         return this.schema;
     }
     /// Await the next record batch
-    async nextRecordBatch(_progress: AsyncConsumer<QueryExecutionProgress>): Promise<arrow.RecordBatch | null> {
-        if (this.batchesWritten >= this.batchCount) {
-            return null;
+    /// Produce the result batches
+    async produce(batches: AsyncConsumer<QueryExecutionResponseStream, arrow.RecordBatch>, _progress: AsyncConsumer<QueryExecutionResponseStream, QueryExecutionProgress>, abort?: AbortSignal): Promise<void> {
+        while (this.batchesWritten < this.batchCount) {
+            await sleep(400);
+            abort?.throwIfAborted();
+
+            const columnA = Int32Array.from({ length: 1000 }, () => Number((Math.random() * 1000).toFixed(0)));
+            const columnB = Int32Array.from({ length: 1000 }, () => Number((Math.random() * 1000).toFixed(0)));
+            const columnC = Int32Array.from({ length: 1000 }, () => Number((Math.random() * 1000).toFixed(0)));
+
+            const vecA = arrow.makeData({ type: new arrow.Int32(), data: columnA });
+            const vecB = arrow.makeData({ type: new arrow.Int32(), data: columnB });
+            const vecC = arrow.makeData({ type: new arrow.Int32(), data: columnC });
+
+            const data = arrow.makeData({
+                type: new arrow.Struct(this.schema.fields),
+                length,
+                children: [vecA, vecB, vecC],
+                nullCount: 0,
+            });
+            batches.resolve(this, new arrow.RecordBatch(this.schema, data));
+            this.batchesWritten += 1;
         }
-        this.batchesWritten += 1;
-        await sleep(400);
-        const columnA = Int32Array.from({ length: 1000 }, () => Number((Math.random() * 1000).toFixed(0)));
-        const columnB = Int32Array.from({ length: 1000 }, () => Number((Math.random() * 1000).toFixed(0)));
-        const columnC = Int32Array.from({ length: 1000 }, () => Number((Math.random() * 1000).toFixed(0)));
-
-        const vecA = arrow.makeData({ type: new arrow.Int32(), data: columnA });
-        const vecB = arrow.makeData({ type: new arrow.Int32(), data: columnB });
-        const vecC = arrow.makeData({ type: new arrow.Int32(), data: columnC });
-
-        const data = arrow.makeData({
-            type: new arrow.Struct(this.schema.fields),
-            length,
-            children: [vecA, vecB, vecC],
-            nullCount: 0,
-        });
-        return new arrow.RecordBatch(this.schema, data);
     }
 }

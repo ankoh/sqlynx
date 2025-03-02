@@ -24,6 +24,7 @@ import {
 import { ChannelArgs } from './channel_common.js';
 import { Logger } from './logger.js';
 import { AsyncConsumerLambdas, AsyncConsumer } from '../utils/async_consumer.js';
+import { AsyncValue } from '../utils/async_value.js';
 
 const LOG_CTX = "native_hyperdb_client";
 
@@ -84,19 +85,14 @@ export class QueryResultReader implements AsyncIterator<Uint8Array>, AsyncIterab
 export class NativeHyperQueryResultStream implements QueryExecutionResponseStream {
     /// The query result iterator
     resultReader: QueryResultReader;
-    /// An arrow reader
-    arrowReader: arrow.RecordBatchReader | null;
+    /// The schema Promise
+    resultSchema: AsyncValue<arrow.Schema<any>, Error>;
 
     constructor(stream: NativeGrpcServerStream, _connection: HyperDatabaseConnectionContext, logger: Logger) {
         this.resultReader = new QueryResultReader(stream, logger);
-        this.arrowReader = null;
+        this.resultSchema = new AsyncValue();
     }
 
-    /// Open the stream if the setup is pending
-    protected async setupArrowReader(): Promise<void> {
-        this.arrowReader = await arrow.AsyncRecordBatchStreamReader.from(this.resultReader);
-        await this.arrowReader.open();
-    }
     /// Get the metadata
     getMetadata(): Map<string, string> {
         return this.resultReader.metadata;
@@ -110,22 +106,28 @@ export class NativeHyperQueryResultStream implements QueryExecutionResponseStrea
         return this.resultReader.currentStatus;
     }
     /// Await the Arrow schema
-    async getSchema(): Promise<arrow.Schema> {
-        if (this.arrowReader == null) {
-            await this.setupArrowReader();
-        }
-        return this.arrowReader!.schema;
+    getSchema(): Promise<arrow.Schema> {
+        return this.resultSchema.getValue();
     }
-    /// Await the next record batch
-    async nextRecordBatch(_progress: AsyncConsumer<QueryExecutionProgress>): Promise<arrow.RecordBatch | null> {
-        if (this.arrowReader == null) {
-            await this.setupArrowReader();
-        }
-        const result = await this.arrowReader!.next();
-        if (result.done) {
-            return null;
-        } else {
-            return result.value;
+    /// Produce the result batches
+    async produce(batches: AsyncConsumer<QueryExecutionResponseStream, arrow.RecordBatch>, _progress: AsyncConsumer<QueryExecutionResponseStream, QueryExecutionProgress>, abort?: AbortSignal): Promise<void> {
+        const arrowReader = await arrow.AsyncRecordBatchStreamReader.from(this.resultReader);
+        abort?.throwIfAborted();
+
+        await arrowReader.open();
+        abort?.throwIfAborted();
+        this.resultSchema.resolve(arrowReader.schema);
+
+        while (true) {
+            const iter = await arrowReader!.next();
+            abort?.throwIfAborted();
+            if (iter.done) {
+                if (iter.value !== undefined) {
+                    batches.resolve(this, iter.value);
+                }
+            } else {
+                batches.resolve(this, iter.value);
+            }
         }
     }
 }
@@ -162,12 +164,18 @@ class NativeHyperDatabaseChannel implements HyperDatabaseChannel {
             if (field.name != "healthy") {
                 return { ok: false, error: { message: `unexpected field name in the query result schema: expected 'healthy', received '${field.name}'` } };
             }
+            let batches: arrow.RecordBatch<any>[] = [];
+            const collectBatches = new AsyncConsumerLambdas(
+                (_: QueryExecutionResponseStream, batch: arrow.RecordBatch<any>) => {
+                    batches.push(batch);
+                }
+            );
             const ignoreProgressUpdates = new AsyncConsumerLambdas();
-            const batch = await result.nextRecordBatch(ignoreProgressUpdates);
-            if (batch == null) {
+            await result.produce(collectBatches, ignoreProgressUpdates);
+            if (batches.length == 0) {
                 return { ok: false, error: { message: "query result did not include a record batch" } };
             }
-            const healthyColumn = batch.getChildAt(0)!;
+            const healthyColumn = batches[0].getChildAt(0)!;
             if (healthyColumn == null) {
                 return { ok: false, error: { message: "query result batch did not include any data" } };
             }

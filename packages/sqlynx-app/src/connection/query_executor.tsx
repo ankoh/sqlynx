@@ -117,38 +117,29 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
             value: [queryId, initialState],
         });
 
-        // The channel for progress updates
-        let consumeProgress = new AsyncConsumerLambdas<QueryExecutionProgress>(
-            (progress: QueryExecutionProgress) => {
+        // Helper to forward progress updates
+        const consumeProgress = new AsyncConsumerLambdas<QueryExecutionResponseStream, QueryExecutionProgress>(
+            (_: QueryExecutionResponseStream, progress: QueryExecutionProgress) => {
                 connDispatch(connectionId, {
                     type: QUERY_PROGRESS_UPDATED,
                     value: [queryId, progress],
                 });
             },
         );
-        // Helper to subscribe to result batches
-        const readAllBatches = async (resultStream: QueryExecutionResponseStream, progress: AsyncConsumer<QueryExecutionProgress>) => {
-            // Collect record batches
-            const batches: arrow.RecordBatch[] = [];
-            while (true) {
-                // Retrieve the next record batch
-                const batch = await resultStream.nextRecordBatch(progress);
-                if (batch == null) {
-                    break;
-                }
+
+        // Helper to consume result batches
+        const batches: arrow.RecordBatch[] = [];
+        const consumeBatches = new AsyncConsumerLambdas<QueryExecutionResponseStream, arrow.RecordBatch>(
+            (ctx: QueryExecutionResponseStream, batch: arrow.RecordBatch) => {
                 batches.push(batch);
 
                 logger.info("received result batch", { "connection": connectionId.toString(), "query": queryId.toString() }, LOG_CTX);
                 connDispatch(connectionId, {
                     type: QUERY_RECEIVED_BATCH,
-                    value: [queryId, batch, resultStream.getMetrics()],
+                    value: [queryId, batch, ctx.getMetrics()],
                 });
-            }
-            const schema = batches.length > 0 ? batches[0].schema : new arrow.Schema();
-
-            // Build result table
-            return new arrow.Table(schema, batches);
-        };
+            },
+        );
 
         // Execute the query and consume the results
         let resultStream: QueryExecutionResponseStream | null = null;
@@ -157,16 +148,16 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
             // Start the query
             switch (conn.details.type) {
                 case SALESFORCE_DATA_CLOUD_CONNECTOR:
-                    resultStream = await executeSalesforceQuery(conn.details.value, args, consumeProgress);
+                    resultStream = await executeSalesforceQuery(conn.details.value, args);
                     break;
                 case HYPER_GRPC_CONNECTOR:
-                    resultStream = await executeHyperQuery(conn.details.value, args, consumeProgress);
+                    resultStream = await executeHyperQuery(conn.details.value, args);
                     break;
                 case TRINO_CONNECTOR:
-                    resultStream = await executeTrinoQuery(conn.details.value, args, consumeProgress);
+                    resultStream = await executeTrinoQuery(conn.details.value, args);
                     break;
                 case DEMO_CONNECTOR:
-                    resultStream = await executeDemoQuery(conn.details.value, args, consumeProgress);
+                    resultStream = await executeDemoQuery(conn.details.value, args);
                     break;
             }
             logger.debug("retrieved query results", { "connection": connectionId.toString(), "query": queryId.toString() }, LOG_CTX);
@@ -178,7 +169,8 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                 });
 
                 // Subscribe to query_status and result messages
-                table = await readAllBatches(resultStream, consumeProgress);
+                await resultStream.produce(consumeBatches, consumeProgress);
+                table = new arrow.Table(batches.length > 0 ? batches[0].schema : new arrow.Schema(), batches);
 
                 // Is there any metadata?
                 const metadata = resultStream.getMetadata();

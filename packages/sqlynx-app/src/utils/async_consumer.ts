@@ -1,19 +1,27 @@
-type Resolve<Value> = (value: Value) => void;
-type Reject<Err> = (err: Err) => void;
+type Resolve<Context, Value> = (ctx: Context, value: Value) => void;
+type Reject<Context, Err> = (ctx: Context, err: Err) => void;
 
-export interface AsyncConsumer<Value> {
-    resolve(value: Value): void;
-    reject(err: Error): void;
+export interface AsyncConsumer<Context, Value> {
+    resolve(ctx: Context, value: Value): void;
+    reject(ctx: Context, err: Error): void;
 }
 
-export class AsyncConsumerLambdas<Value> implements AsyncConsumer<Value> {
-    constructor(protected resolveFn: Resolve<Value> = () => { }, protected rejectFn: Reject<Error> = () => { }) { }
+export class AsyncConsumerLambdas<Context, Value> implements AsyncConsumer<Context, Value> {
+    constructor(protected resolveFn: Resolve<Context, Value> = () => { }, protected rejectFn: Reject<Context, Error> = () => { }) { }
 
-    resolve(value: Value): void {
-        this.resolveFn(value);
+    resolve(ctx: Context, value: Value): void {
+        try {
+            this.resolveFn(ctx, value);
+        } catch (e: any) {
+            console.warn(`AsyncConsumerLambdas::resolveFn threw error: ${e}`);
+        }
     }
-    reject(err: Error): void {
-        this.rejectFn(err);
+    reject(ctx: Context, err: Error): void {
+        try {
+            this.rejectFn(ctx, err);
+        } catch (e: any) {
+            console.warn(`AsyncConsumerLambdas::rejectFn threw error: ${e}`);
+        }
     }
 }
 

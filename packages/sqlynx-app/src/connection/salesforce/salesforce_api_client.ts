@@ -401,8 +401,8 @@ export class SalesforceDatabaseChannel implements HyperDatabaseChannel {
         return this.hyperChannel.checkHealth();
     }
     /// Execute Query
-    async executeQuery(param: proto.salesforce_hyperdb_grpc_v1.pb.QueryParam, progressUpdates: AsyncConsumer<QueryExecutionProgress>): Promise<HyperQueryResultStream> {
-        return this.hyperChannel.executeQuery(param, progressUpdates);
+    async executeQuery(param: proto.salesforce_hyperdb_grpc_v1.pb.QueryParam, abort?: AbortSignal): Promise<HyperQueryResultStream> {
+        return this.hyperChannel.executeQuery(param, abort);
     }
     /// Destroy the connection
     async close(): Promise<void> {
