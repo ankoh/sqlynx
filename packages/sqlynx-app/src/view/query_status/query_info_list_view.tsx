@@ -6,13 +6,15 @@ import { VariableSizeGrid } from "react-window";
 import { useConnectionRegistry } from "../../connection/connection_registry.js";
 import { observeSize } from "../../view/foundations/size_observer.js";
 import { lowerBoundU32 } from "../../utils/sorted.js";
-import { ConnectionViewModel } from "./query_info_view_model.js";
+import { computeConnectionInfoViewModel, ConnectionViewModel } from "./query_info_view_model.js";
+import { ConnectionState } from "../../connection/connection_state.js";
 
 const ENTRY_SIZE_CONNECTION_HEADER = 40;
 const ENTRY_SIZE_QUERY = 64;
 
 /// The view model for a connection list
 interface ConnectionListViewModel {
+    connectionStates: (ConnectionState | null)[]
     firstConnectionRows: Uint32Array;
     rowOffsets: Uint32Array;
     totalRowCount: number;
@@ -57,6 +59,7 @@ export function QueryInfoListView(props: QueryInfoListViewProps) {
 
         const totalRowCount = totalConnectionCount + totalQueryCount;
         const viewModel: ConnectionListViewModel = {
+            connectionStates: (new Array(totalConnectionCount)).fill(null),
             firstConnectionRows: new Uint32Array(totalConnectionCount),
             rowOffsets: new Uint32Array(totalRowCount + 1),
             totalRowCount: totalRowCount,
@@ -70,6 +73,7 @@ export function QueryInfoListView(props: QueryInfoListViewProps) {
         if (props.conn) {
             const conn = connReg.connectionMap.get(props.conn);
             if (conn) {
+                viewModel.connectionStates[writerConn] = conn;
                 viewModel.firstConnectionRows[writerConn] = writerRow;
                 viewModel.rowOffsets[writerRow] = writerRowOffset;
                 writerRow += 1;
@@ -94,6 +98,7 @@ export function QueryInfoListView(props: QueryInfoListViewProps) {
             }
         } else {
             for (const [_cid, conn] of connReg.connectionMap) {
+                viewModel.connectionStates[writerConn] = conn;
                 viewModel.firstConnectionRows[writerConn] = writerRow;
                 viewModel.rowOffsets[writerRow] = writerRowOffset;
                 writerRow += 1;
@@ -108,6 +113,7 @@ export function QueryInfoListView(props: QueryInfoListViewProps) {
                 writerConn += 1;
             }
         }
+        console.log("RESET VIEW MODELS");
 
         // Write trailing row offset
         viewModel.rowOffsets[writerRow] = writerRowOffset;
@@ -126,20 +132,57 @@ export function QueryInfoListView(props: QueryInfoListViewProps) {
             return <div />;
         }
         // Find out which connection the row belongs to
-        const idx = Math.min(
+        let idx = Math.min(
             lowerBoundU32(crossConnViewModel.firstConnectionRows, props.rowIndex),
             crossConnViewModel.firstConnectionRows.length - 1
         );
+        // Use predecessor if the first connection row is larger the row index
+        if (crossConnViewModel.firstConnectionRows[idx] > props.rowIndex) {
+            --idx;
+        }
 
         // Is the first row?
         const firstConnectionRow = crossConnViewModel.firstConnectionRows[idx];
+        const connState = crossConnViewModel.connectionStates[idx];
+        let connViewModel = connectionViewModels.current![idx];
+
         if (props.rowIndex == firstConnectionRow) {
-            return <div style={props.style}>HeaderCell</div>;
+            return (
+                <div style={props.style}>
+                    HeaderCell
+                </div>
+            );
 
-        } else {
+        } else if (connState != null) {
             // Make sure we computed the query info view models for the connection
+            if (connViewModel == null) {
+                connViewModel = computeConnectionInfoViewModel(connState);
+                connectionViewModels.current![idx] = connViewModel;
+            };
 
-            return <div style={props.style}>BodyCell</div>;
+            // Subtract the connection header row for the relative row index in the list
+            const relativeRowIndex = props.rowIndex - firstConnectionRow - 1;
+
+            // Is the query running?
+            // We always render all running queries first, before the finished ones
+            const runningQueryCount = connViewModel.queriesRunning.length;
+            const isRunningQuery = relativeRowIndex < runningQueryCount;
+            const queryViewModel = isRunningQuery
+                ? connViewModel!.queriesRunning[relativeRowIndex]
+                : connViewModel!.queriesFinished[relativeRowIndex - runningQueryCount];
+
+            return (
+                <div style={props.style}>
+                    running={isRunningQuery}
+                    <div className={styles.stages_container}>
+                        {queryViewModel.stages.map(s => (s.startedAt != null) ? "+" : "-")}
+                    </div>
+                </div>
+            );
+        } else {
+            return (
+                <div style={props.style} />
+            );
         }
     }, [crossConnViewModel]);
 

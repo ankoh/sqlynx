@@ -12,8 +12,10 @@ export type QueryStageMetricVariant =
     ;
 
 export enum QueryStageType {
+    REQUEST_QUERY,
     PREPARE_QUERY,
     SEND_QUERY,
+    QUEUE_QUERY,
     AWAIT_FIRST_QUERY_RESULT,
     // Finished, failed or cancelled
     AWAIT_QUERY_END,
@@ -27,8 +29,6 @@ export interface QueryStage {
     stageMetrics: QueryStageMetricVariant[];
     /// Started at?
     startedAt: Date | null;
-    /// Finished at?
-    finishedAt: Date | null;
 }
 
 /// The view model for a query
@@ -67,50 +67,47 @@ export function computeConnectionInfoViewModel(state: ConnectionState): Connecti
     ];
     for (const [i, o] of queries) {
         for (const [_queryId, query] of i) {
+            const registerQuery: QueryStage = {
+                stageType: QueryStageType.REQUEST_QUERY,
+                stageMetrics: [],
+                startedAt: query.metrics.queryRequestedAt,
+            };
             const prepareQuery: QueryStage = {
                 stageType: QueryStageType.PREPARE_QUERY,
-                stageMetrics: [
-
-                ],
+                stageMetrics: [],
                 startedAt: query.metrics.queryPreparingStartedAt,
-                finishedAt: query.metrics.queryPreparingStartedAt,
             };
             const sendQuery: QueryStage = {
                 stageType: QueryStageType.SEND_QUERY,
-                stageMetrics: [
-
-                ],
+                stageMetrics: [],
                 startedAt: query.metrics.queryPreparingStartedAt,
-                finishedAt: query.metrics.queryRunningStartedAt,
+            };
+            const queueQuery: QueryStage = {
+                stageType: QueryStageType.QUEUE_QUERY,
+                stageMetrics: [],
+                startedAt: query.metrics.queryQueuedStartedAt,
             };
             const awaitFirstBatch: QueryStage = {
                 stageType: QueryStageType.AWAIT_FIRST_QUERY_RESULT,
-                stageMetrics: [
-
-                ],
+                stageMetrics: [],
                 startedAt: query.metrics.queryRunningStartedAt,
-                finishedAt: query.metrics.receivedFirstBatchAt,
             };
             const awaitQueryEnd: QueryStage = {
                 stageType: QueryStageType.AWAIT_QUERY_END,
-                stageMetrics: [
-
-                ],
+                stageMetrics: [],
                 startedAt: query.metrics.receivedFirstBatchAt,
-                finishedAt: query.metrics.receivedLastBatchAt,
             };
             const processResults: QueryStage = {
                 stageType: QueryStageType.PROCESS_QUERY_RESULTS,
-                stageMetrics: [
-
-                ],
+                stageMetrics: [],
                 startedAt: query.metrics.receivedLastBatchAt,
-                finishedAt: query.metrics.processedResultsAt,
             };
             o.push({
                 stages: [
+                    registerQuery,
                     prepareQuery,
                     sendQuery,
+                    queueQuery,
                     awaitFirstBatch,
                     awaitQueryEnd,
                     processResults

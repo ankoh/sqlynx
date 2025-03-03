@@ -91,6 +91,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
             error: null,
             metrics: {
                 textLength: args.query.length,
+                queryRequestedAt: new Date(),
                 queryPreparingStartedAt: null,
                 querySendingStartedAt: null,
                 queryQueuedStartedAt: null,

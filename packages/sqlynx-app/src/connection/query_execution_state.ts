@@ -76,6 +76,8 @@ export interface QueryExecutionResponseStream {
 }
 
 export interface QueryMetrics {
+    /// The time at which we requested the query (if any)
+    queryRequestedAt: Date | null;
     /// The time at which we prepared the query (if any)
     queryPreparingStartedAt: Date | null;
     /// The time at which the query was sent (if any)
