@@ -7,14 +7,13 @@ import { useConnectionRegistry } from "../../connection/connection_registry.js";
 import { observeSize } from "../../view/foundations/size_observer.js";
 import { lowerBoundU32 } from "../../utils/sorted.js";
 import { computeConnectionInfoViewModel, ConnectionViewModel } from "./query_info_view_model.js";
-import { ConnectionState } from "../../connection/connection_state.js";
 
 const ENTRY_SIZE_CONNECTION_HEADER = 40;
 const ENTRY_SIZE_QUERY = 64;
 
 /// The view model for a connection list
 interface ConnectionListViewModel {
-    connectionStates: (ConnectionState | null)[]
+    connectionIds: Uint32Array
     firstConnectionRows: Uint32Array;
     rowOffsets: Uint32Array;
     totalRowCount: number;
@@ -31,9 +30,9 @@ export function QueryInfoListView(props: QueryInfoListViewProps) {
     const connReg = useConnectionRegistry();
 
     // We collect the connection query infos lazily to not compute too many off-screen infos.
-    const connectionViewModels = React.useRef<(ConnectionViewModel | null)[]>();
+    const connViewModels = React.useRef<(ConnectionViewModel | null)[]>();
     // We accept to recompute this view model very often whenever query logs are visible on the screen.
-    const crossConnViewModel = React.useMemo<ConnectionListViewModel>(() => {
+    const listViewModel = React.useMemo<ConnectionListViewModel>(() => {
         // First we find out how many entries we have
         let totalConnectionCount = 0;
         let totalQueryCount = 0;
@@ -59,7 +58,7 @@ export function QueryInfoListView(props: QueryInfoListViewProps) {
 
         const totalRowCount = totalConnectionCount + totalQueryCount;
         const viewModel: ConnectionListViewModel = {
-            connectionStates: (new Array(totalConnectionCount)).fill(null),
+            connectionIds: new Uint32Array(totalConnectionCount),
             firstConnectionRows: new Uint32Array(totalConnectionCount),
             rowOffsets: new Uint32Array(totalRowCount + 1),
             totalRowCount: totalRowCount,
@@ -73,7 +72,7 @@ export function QueryInfoListView(props: QueryInfoListViewProps) {
         if (props.conn) {
             const conn = connReg.connectionMap.get(props.conn);
             if (conn) {
-                viewModel.connectionStates[writerConn] = conn;
+                viewModel.connectionIds[writerConn] = props.conn;
                 viewModel.firstConnectionRows[writerConn] = writerRow;
                 viewModel.rowOffsets[writerRow] = writerRowOffset;
                 writerRow += 1;
@@ -97,8 +96,8 @@ export function QueryInfoListView(props: QueryInfoListViewProps) {
                 writerConn += 1;
             }
         } else {
-            for (const [_cid, conn] of connReg.connectionMap) {
-                viewModel.connectionStates[writerConn] = conn;
+            for (const [cid, conn] of connReg.connectionMap) {
+                viewModel.connectionIds[writerConn] = cid;
                 viewModel.firstConnectionRows[writerConn] = writerRow;
                 viewModel.rowOffsets[writerRow] = writerRowOffset;
                 writerRow += 1;
@@ -118,34 +117,49 @@ export function QueryInfoListView(props: QueryInfoListViewProps) {
         // Write trailing row offset
         viewModel.rowOffsets[writerRow] = writerRowOffset;
         // Reset the cached connectionv iew models
-        connectionViewModels.current = (new Array(viewModel.firstConnectionRows.length)).fill(null);
+        connViewModels.current = (new Array(viewModel.firstConnectionRows.length)).fill(null);
 
         return viewModel;
     }, [connReg]);
 
     // Helper to resolve the height of a row
-    const getRowHeight = React.useCallback<(row: number) => number>((row: number) => (crossConnViewModel.rowOffsets[row + 1] - crossConnViewModel.rowOffsets[row]), [crossConnViewModel]);
+    const getRowHeight = React.useCallback<(row: number) => number>((row: number) => (listViewModel.rowOffsets[row + 1] - listViewModel.rowOffsets[row]), [listViewModel]);
     // Helper to render a cell
     type CellProps = { rowIndex: number, style: React.CSSProperties };
     const Cell = React.useCallback<(props: CellProps) => React.ReactElement>((props: CellProps) => {
-        if (crossConnViewModel.firstConnectionRows.length == 0) {
+        if (listViewModel.firstConnectionRows.length == 0) {
             return <div />;
         }
         // Find out which connection the row belongs to
-        let idx = Math.min(
-            lowerBoundU32(crossConnViewModel.firstConnectionRows, props.rowIndex),
-            crossConnViewModel.firstConnectionRows.length - 1
+        let connEntryIdx = Math.min(
+            lowerBoundU32(listViewModel.firstConnectionRows, props.rowIndex),
+            listViewModel.firstConnectionRows.length - 1
         );
         // Use predecessor if the first connection row is larger the row index
-        if (crossConnViewModel.firstConnectionRows[idx] > props.rowIndex) {
-            --idx;
+        if (listViewModel.firstConnectionRows[connEntryIdx] > props.rowIndex) {
+            --connEntryIdx;
         }
 
         // Is the first row?
-        const firstConnectionRow = crossConnViewModel.firstConnectionRows[idx];
-        const connState = crossConnViewModel.connectionStates[idx];
-        let connViewModel = connectionViewModels.current![idx];
+        const connId = listViewModel.connectionIds[connEntryIdx];
+        const connState = connReg.connectionMap.get(connId);
+        const firstConnectionRow = listViewModel.firstConnectionRows[connEntryIdx];
+        let connViewModel = connViewModels.current![connEntryIdx];
 
+        // Failed to resolve the connection state?
+        if (connState == null) {
+            return (
+                <div style={props.style} />
+            );
+        }
+
+        // Make sure we computed the query info view models for the connection
+        if (connViewModel == null) {
+            connViewModel = computeConnectionInfoViewModel(connState);
+            connViewModels.current![connEntryIdx] = connViewModel;
+        };
+
+        // Is the header row?
         if (props.rowIndex == firstConnectionRow) {
             return (
                 <div style={props.style}>
@@ -153,12 +167,8 @@ export function QueryInfoListView(props: QueryInfoListViewProps) {
                 </div>
             );
 
-        } else if (connState != null) {
-            // Make sure we computed the query info view models for the connection
-            if (connViewModel == null) {
-                connViewModel = computeConnectionInfoViewModel(connState);
-                connectionViewModels.current![idx] = connViewModel;
-            };
+        } else {
+            // Is a query row
 
             // Subtract the connection header row for the relative row index in the list
             const relativeRowIndex = props.rowIndex - firstConnectionRow - 1;
@@ -179,12 +189,8 @@ export function QueryInfoListView(props: QueryInfoListViewProps) {
                     </div>
                 </div>
             );
-        } else {
-            return (
-                <div style={props.style} />
-            );
         }
-    }, [crossConnViewModel]);
+    }, [listViewModel]);
 
     // Track the root container dimensions
     const containerRef = React.useRef<HTMLDivElement>(null);
@@ -199,7 +205,7 @@ export function QueryInfoListView(props: QueryInfoListViewProps) {
                 height={containerHeight}
                 columnCount={1}
                 columnWidth={() => containerWidth}
-                rowCount={crossConnViewModel.totalRowCount}
+                rowCount={listViewModel.totalRowCount}
                 rowHeight={getRowHeight}
                 estimatedColumnWidth={containerWidth}
             >
