@@ -66,12 +66,12 @@ export interface ConnectionState {
 
     /// The queries that are currently running
     queriesActive: Map<number, QueryExecutionState>;
+    /// The active queries ordered
+    queriesActiveOrdered: number[];
     /// The queries that finished (succeeded, failed, cancelled)
-    /// Note that Maps order entries by insertion order.
-    ///
-    /// So as long as we don't update already finished queries,
-    /// we'll get a natural log order when iterating over the map
     queriesFinished: Map<number, QueryExecutionState>;
+    /// The finished queries ordered
+    queriesFinishedOrdered: number[];
 }
 
 export enum ConnectionStatus {
@@ -279,7 +279,9 @@ export function createConnectionState(lnx: sqlynx.SQLynx, info: ConnectorInfo, d
             lastFullRefresh: null,
         },
         queriesActive: new Map(),
+        queriesActiveOrdered: [],
         queriesFinished: new Map(),
+        queriesFinishedOrdered: [],
     };
 }
 

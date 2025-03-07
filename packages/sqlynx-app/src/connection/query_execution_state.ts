@@ -18,6 +18,7 @@ import {
 } from './connection_state.js';
 import { ConnectionQueryMetrics } from './connection_statistics.js';
 import { AsyncConsumer } from '../utils/async_consumer.js';
+import { removePrimitiveFromArray } from '../utils/array.js';
 
 export enum QueryExecutionStatus {
     REQUESTED = 0,
@@ -159,6 +160,7 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
     // Initial setup?
     if (action.type == EXECUTE_QUERY) {
         state.queriesActive.set(queryId, action.value[1]);
+        state.queriesActiveOrdered.push(queryId);
         return { ...state };
     }
 
@@ -296,7 +298,9 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
                 metrics: metrics,
             };
             state.queriesActive.delete(query.queryId);
+            removePrimitiveFromArray(state.queriesActiveOrdered, query.queryId);
             state.queriesFinished.set(query.queryId, query);
+            state.queriesFinishedOrdered.push(query.queryId);
             return {
                 ...state,
                 metrics: {
@@ -319,7 +323,9 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
                 metrics
             };
             state.queriesActive.delete(query.queryId);
+            removePrimitiveFromArray(state.queriesActiveOrdered, query.queryId);
             state.queriesFinished.set(query.queryId, query);
+            state.queriesFinishedOrdered.push(query.queryId);
             return {
                 ...state,
                 metrics: {
@@ -342,7 +348,9 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
                 metrics
             };
             state.queriesActive.delete(query.queryId);
+            removePrimitiveFromArray(state.queriesActiveOrdered, query.queryId);
             state.queriesFinished.set(query.queryId, query);
+            state.queriesFinishedOrdered.push(query.queryId);
             return {
                 ...state,
                 metrics: {
