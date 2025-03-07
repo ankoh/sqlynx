@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as styles from './query_info_list_view.module.css';
 
-import { VariableSizeGrid } from "react-window";
+import { VariableSizeList } from "react-window";
 
 import { ConnectionRegistry, useConnectionRegistry } from "../../connection/connection_registry.js";
 import { observeSize } from "../../view/foundations/size_observer.js";
@@ -180,17 +180,14 @@ export function QueryInfoListView(props: QueryInfoListViewProps) {
         setListViewModel(listViewModel);
     });
 
-    // Helper to resolve the height of a row
-    const getRowHeight = React.useCallback<(row: number) => number>((row: number) => (listViewModel.rowOffsets[row + 1] - listViewModel.rowOffsets[row]), [listViewModel]);
-
     // Helper to render a cell
-    type CellProps = { rowIndex: number, style: React.CSSProperties };
+    type CellProps = { index: number, style: React.CSSProperties };
     const Cell = React.useCallback<(props: CellProps) => React.ReactElement>((props: CellProps) => {
         if (listViewModel == null) {
             return <div />;
         }
-        const connId = listViewModel.connectionIds[props.rowIndex];
-        const connQueryId = listViewModel.connectionQueryIds[props.rowIndex];
+        const connId = listViewModel.connectionIds[props.index];
+        const connQueryId = listViewModel.connectionQueryIds[props.index];
 
         // Is the header row?
         if (connQueryId == U32_MAX) {
@@ -209,6 +206,9 @@ export function QueryInfoListView(props: QueryInfoListViewProps) {
         }
     }, [listViewModel]);
 
+    // Helper to resolve the height of a row
+    const getRowHeight = React.useCallback<(row: number) => number>((row: number) => (listViewModel.rowOffsets[row + 1] - listViewModel.rowOffsets[row]), [listViewModel]);
+
     // Track the root container dimensions
     const containerRef = React.useRef<HTMLDivElement>(null);
     const containerSize = observeSize(containerRef);
@@ -216,27 +216,24 @@ export function QueryInfoListView(props: QueryInfoListViewProps) {
     const containerHeight = containerSize?.height ?? 100;
 
     // Reset grid when container widths and heights change
-    const dataGrid = React.useRef<VariableSizeGrid>(null);
+    const dataGrid = React.useRef<VariableSizeList>(null);
     React.useEffect(() => {
         if (dataGrid.current) {
-            dataGrid.current.resetAfterColumnIndex(0);
+            dataGrid.current.resetAfterIndex(0, false);
         }
     }, [containerWidth, containerHeight, listViewModel]);
 
     return (
         <div className={styles.grid_container} ref={containerRef}>
-            <VariableSizeGrid
+            <VariableSizeList
                 ref={dataGrid}
                 width={containerWidth}
                 height={containerHeight}
-                columnCount={1}
-                columnWidth={() => containerWidth}
-                rowCount={listViewModel.totalRowCount}
-                rowHeight={getRowHeight}
-                estimatedColumnWidth={containerWidth}
+                itemCount={listViewModel.totalRowCount}
+                itemSize={getRowHeight}
             >
                 {Cell}
-            </VariableSizeGrid>
+            </VariableSizeList>
         </div>
     );
 }
