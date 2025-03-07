@@ -9,7 +9,7 @@ import { Dispatch } from '../utils/variant.js';
 /// Following the same reasoning as with the workbook registry, we don't have code that
 /// explicitly observes modifications of the registry map.
 /// Instead, shallow-compare the entire registry object again.
-interface ConnectionRegistry {
+export interface ConnectionRegistry {
     connectionMap: Map<number, ConnectionState>;
 }
 

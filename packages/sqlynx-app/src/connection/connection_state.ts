@@ -72,6 +72,9 @@ export interface ConnectionState {
     queriesFinished: Map<number, QueryExecutionState>;
     /// The finished queries ordered
     queriesFinishedOrdered: number[];
+
+    /// The snapshot of query ids that are active or finished
+    snapshotQueriesActiveFinished: number;
 }
 
 export enum ConnectionStatus {
@@ -278,6 +281,7 @@ export function createConnectionState(lnx: sqlynx.SQLynx, info: ConnectorInfo, d
             tasksFinished: new Map(),
             lastFullRefresh: null,
         },
+        snapshotQueriesActiveFinished: 1,
         queriesActive: new Map(),
         queriesActiveOrdered: [],
         queriesFinished: new Map(),

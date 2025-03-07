@@ -53,6 +53,7 @@ export function createConnectionState(lnx: sqlynx.SQLynx, info: ConnectorInfo, d
             tasksFinished: new Map(),
             lastFullRefresh: null,
         },
+        snapshotQueriesActiveFinished: 1,
         queriesActive: new Map(),
         queriesActiveOrdered: [],
         queriesFinished: new Map(),

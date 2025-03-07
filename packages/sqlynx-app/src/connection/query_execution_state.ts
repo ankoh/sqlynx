@@ -161,6 +161,7 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
     if (action.type == EXECUTE_QUERY) {
         state.queriesActive.set(queryId, action.value[1]);
         state.queriesActiveOrdered.push(queryId);
+        state.snapshotQueriesActiveFinished += 1;
         return { ...state };
     }
 
@@ -301,6 +302,7 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
             removePrimitiveFromArray(state.queriesActiveOrdered, query.queryId);
             state.queriesFinished.set(query.queryId, query);
             state.queriesFinishedOrdered.push(query.queryId);
+            state.snapshotQueriesActiveFinished += 1;
             return {
                 ...state,
                 metrics: {
@@ -326,6 +328,7 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
             removePrimitiveFromArray(state.queriesActiveOrdered, query.queryId);
             state.queriesFinished.set(query.queryId, query);
             state.queriesFinishedOrdered.push(query.queryId);
+            state.snapshotQueriesActiveFinished += 1;
             return {
                 ...state,
                 metrics: {
@@ -351,6 +354,7 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
             removePrimitiveFromArray(state.queriesActiveOrdered, query.queryId);
             state.queriesFinished.set(query.queryId, query);
             state.queriesFinishedOrdered.push(query.queryId);
+            state.snapshotQueriesActiveFinished += 1;
             return {
                 ...state,
                 metrics: {
