@@ -10,7 +10,6 @@ export type QueryStageMetricVariant =
     ;
 
 export enum QueryStageType {
-    REQUEST_QUERY,
     PREPARE_QUERY,
     SEND_QUERY,
     QUEUE_QUERY,
@@ -42,12 +41,6 @@ export interface QueryInfoViewModel {
 /// Helper to compute the view model for a connection entry
 export function computeQueryInfoViewModel(query: QueryExecutionState): QueryInfoViewModel {
     let stages: QueryStage[] = [];
-    stages.push({
-        stageType: QueryStageType.REQUEST_QUERY,
-        stageMetrics: [],
-        startedAt: query.metrics.queryRequestedAt,
-        ongoing: query.status == QueryExecutionStatus.REQUESTED,
-    });
     if (query.metrics.queryPreparingStartedAt != null) {
         stages.push({
             stageType: QueryStageType.PREPARE_QUERY,
