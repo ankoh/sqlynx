@@ -1,5 +1,5 @@
 import { VariantKind } from "../../utils/variant.js";
-import { QueryExecutionState } from "../../connection/query_execution_state.js";
+import { QueryExecutionState, QueryExecutionStatus } from "../../connection/query_execution_state.js";
 
 export const METRIC_REQUEST_COUNT = Symbol("METRIC_REQUEST_COUNT");
 export const METRIC_LATEST_REQUEST_STARTED = Symbol("METRIC_LATEST_REQUEST_STARTED");
@@ -27,6 +27,8 @@ export interface QueryStage {
     stageMetrics: QueryStageMetricVariant[];
     /// Started at?
     startedAt: Date | null;
+    /// Finished?
+    ongoing: boolean;
 }
 
 /// The view model for a query
@@ -35,58 +37,59 @@ export interface QueryInfoViewModel {
     stages: QueryStage[];
     /// Finished at?
     error: Error | null;
-    /// Failed at?
-    wasCancelled: boolean;
 }
 
 /// Helper to compute the view model for a connection entry
 export function computeQueryInfoViewModel(query: QueryExecutionState): QueryInfoViewModel {
-    const registerQuery: QueryStage = {
+    let stages: QueryStage[] = [];
+    stages.push({
         stageType: QueryStageType.REQUEST_QUERY,
         stageMetrics: [],
         startedAt: query.metrics.queryRequestedAt,
-    };
-    const prepareQuery: QueryStage = {
-        stageType: QueryStageType.PREPARE_QUERY,
-        stageMetrics: [],
-        startedAt: query.metrics.queryPreparingStartedAt,
-    };
-    const sendQuery: QueryStage = {
+        ongoing: query.status == QueryExecutionStatus.REQUESTED,
+    });
+    if (query.metrics.queryPreparingStartedAt != null) {
+        stages.push({
+            stageType: QueryStageType.PREPARE_QUERY,
+            stageMetrics: [],
+            startedAt: query.metrics.queryPreparingStartedAt,
+            ongoing: query.status == QueryExecutionStatus.PREPARING,
+        });
+    }
+    stages.push({
         stageType: QueryStageType.SEND_QUERY,
         stageMetrics: [],
-        startedAt: query.metrics.queryPreparingStartedAt,
+        startedAt: query.metrics.querySendingStartedAt,
+        ongoing: query.status == QueryExecutionStatus.SENDING,
+    });
+    if (query.metrics.queryPreparingStartedAt != null) {
+        stages.push({
+            stageType: QueryStageType.QUEUE_QUERY,
+            stageMetrics: [],
+            startedAt: query.metrics.queryQueuedStartedAt,
+            ongoing: query.status == QueryExecutionStatus.QUEUED,
+        });
     };
-    const queueQuery: QueryStage = {
-        stageType: QueryStageType.QUEUE_QUERY,
-        stageMetrics: [],
-        startedAt: query.metrics.queryQueuedStartedAt,
-    };
-    const awaitFirstBatch: QueryStage = {
+    stages.push({
         stageType: QueryStageType.AWAIT_FIRST_QUERY_RESULT,
         stageMetrics: [],
         startedAt: query.metrics.queryRunningStartedAt,
-    };
-    const awaitQueryEnd: QueryStage = {
+        ongoing: query.status == QueryExecutionStatus.RUNNING,
+    });
+    stages.push({
         stageType: QueryStageType.AWAIT_QUERY_END,
         stageMetrics: [],
         startedAt: query.metrics.receivedFirstBatchAt,
-    };
-    const processResults: QueryStage = {
+        ongoing: query.status == QueryExecutionStatus.RECEIVED_FIRST_BATCH,
+    });
+    stages.push({
         stageType: QueryStageType.PROCESS_QUERY_RESULTS,
         stageMetrics: [],
-        startedAt: query.metrics.receivedLastBatchAt,
-    };
+        startedAt: query.metrics.receivedAllBatchesAt,
+        ongoing: query.status == QueryExecutionStatus.PROCESSING_RESULTS,
+    });
     return {
-        stages: [
-            registerQuery,
-            prepareQuery,
-            sendQuery,
-            queueQuery,
-            awaitFirstBatch,
-            awaitQueryEnd,
-            processResults
-        ],
+        stages: stages,
         error: query.error,
-        wasCancelled: query.cancellation.signal.aborted,
     };
 }

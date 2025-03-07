@@ -199,7 +199,7 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
         case QUERY_RUNNING: {
             query = {
                 ...query,
-                status: QueryExecutionStatus.RECEIVED_FIRST_BATCH,
+                status: QueryExecutionStatus.RUNNING,
                 resultStream: action.value[1],
                 metrics: {
                     ...query.metrics,
@@ -240,7 +240,7 @@ export function reduceQueryAction(state: ConnectionState, action: QueryExecution
             query.resultBatches.push(batch);
             query = {
                 ...query,
-                status: QueryExecutionStatus.RECEIVED_ALL_BATCHES,
+                status: QueryExecutionStatus.RECEIVED_FIRST_BATCH,
                 metrics: metrics,
             };
             if (query.resultSchema == null) {

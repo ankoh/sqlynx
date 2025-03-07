@@ -3,6 +3,47 @@
 }
 
 .stages_container {
+    width: 100%;
+    max-width: 300px;
+
     display: flex;
     flex-direction: row;
+}
+
+.stage_bars {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+}
+
+
+.stage_bar {
+    flex: 1;
+    border: 1px solid black;
+    border-radius: 8px;
+    height: 12px;
+}
+
+.stage_bar_default {
+    background-color: grey;
+}
+
+.stage_bar_started {
+    background-color: yellow;
+}
+
+.stage_bar_started_ongoing {
+    background-color: yellow;
+}
+
+.stage_bar_failed {
+    background-color: red;
+}
+
+.stage_bar_succeeded {
+    background-color: green;
+}
+
+.stage_bar_cancelled {
+    background-color: orange;
 }
