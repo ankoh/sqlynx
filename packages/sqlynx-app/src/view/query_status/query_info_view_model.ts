@@ -4,7 +4,7 @@ import { QueryExecutionState, QueryExecutionStatus } from "../../connection/quer
 export const METRIC_REQUEST_COUNT = Symbol("METRIC_REQUEST_COUNT");
 export const METRIC_LATEST_REQUEST_STARTED = Symbol("METRIC_LATEST_REQUEST_STARTED");
 
-export type QueryStageMetricVariant =
+export type QueryMetricValue =
     | VariantKind<typeof METRIC_REQUEST_COUNT, number>
     | VariantKind<typeof METRIC_LATEST_REQUEST_STARTED, Date>
     ;
@@ -23,7 +23,7 @@ export interface QueryStage {
     /// The stage type
     stageType: QueryStageType;
     /// The metrics
-    stageMetrics: QueryStageMetricVariant[];
+    stageMetrics: QueryMetricValue[];
     /// Started at?
     startedAt: Date | null;
     /// Finished?
@@ -34,8 +34,10 @@ export interface QueryStage {
 export interface QueryInfoViewModel {
     /// The stages
     stages: QueryStage[];
-    /// Finished at?
+    /// Query failed with error?
     error: Error | null;
+    /// The overall metrics that shown at the end
+    queryMetrics: QueryMetricValue[];
 }
 
 /// Helper to compute the view model for a connection entry
@@ -84,5 +86,6 @@ export function computeQueryInfoViewModel(query: QueryExecutionState): QueryInfo
     return {
         stages: stages,
         error: query.error,
+        queryMetrics: []
     };
 }

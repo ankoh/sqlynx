@@ -7,6 +7,7 @@ import { ConnectionRegistry, useConnectionRegistry } from "../../connection/conn
 import { observeSize } from "../../view/foundations/size_observer.js";
 import { U32_MAX } from "../../utils/numeric_limits.js";
 import { QueryInfoView } from "./query_info_view.js";
+import { ConnectionInfoView } from "./connection_info_view.js";
 
 const ENTRY_SIZE_CONNECTION_HEADER = 40;
 const ENTRY_SIZE_QUERY = 64;
@@ -193,7 +194,7 @@ export function QueryInfoListView(props: QueryInfoListViewProps) {
         if (connQueryId == U32_MAX) {
             return (
                 <div style={props.style}>
-                    HeaderCell
+                    <ConnectionInfoView conn={connId} />
                 </div>
             );
 

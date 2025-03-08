@@ -1,0 +1,16 @@
+.root {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: center;
+    justify-items: begin;
+
+    border-top: 1px solid black;
+}
+
+.title {
+    padding: 0px 8px;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
