@@ -307,6 +307,9 @@ if(NOT WASM)
   add_executable(benchmark_pipeline benchmarks/benchmark_pipeline.cc)
   target_link_libraries(benchmark_pipeline sqlynx_testutils benchmark gtest gflags Threads::Threads)
 
+  add_executable(benchmark_catalog benchmarks/benchmark_catalog.cc)
+  target_link_libraries(benchmark_catalog sqlynx_testutils benchmark gtest gflags Threads::Threads)
+
   add_executable(snapshotter tools/snapshotter.cc)
   target_link_libraries(snapshotter sqlynx sqlynx_testutils pugixml gtest gflags Threads::Threads)
 
