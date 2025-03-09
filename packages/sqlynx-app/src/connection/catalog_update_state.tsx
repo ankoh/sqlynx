@@ -14,10 +14,16 @@ export enum CatalogUpdateVariant {
 
 export enum CatalogUpdateTaskStatus {
     STARTED = 0,
-    SUCCEEDED = 2,
-    FAILED = 3,
-    CANCELLED = 4,
+    SUCCEEDED = 1,
+    FAILED = 2,
+    CANCELLED = 3,
 }
+export const CATALOG_UPDATE_TASK_STATUS_NAMES: string[] = [
+    "Started",
+    "Succeeded",
+    "Failed",
+    "Cancelled",
+];
 
 export interface CatalogUpdateTaskState {
     /// The task key

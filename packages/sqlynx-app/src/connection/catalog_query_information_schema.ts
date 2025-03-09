@@ -109,7 +109,7 @@ export async function queryInformationSchema(connectionId: number, connectionDis
         query: query,
         metadata: {
             queryType: QueryType.CATALOG_QUERY_INFORMATION_SCHEMA,
-            title: "Query Information Schema Columns",
+            title: "Information Schema",
             description: null,
             issuer: "Catalog Update",
             userProvided: false
