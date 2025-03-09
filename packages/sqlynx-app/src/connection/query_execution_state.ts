@@ -35,6 +35,17 @@ export enum QueryExecutionStatus {
     CANCELLED = 11,
 }
 
+export function queryIsDone(status: QueryExecutionStatus) {
+    switch (status) {
+        case QueryExecutionStatus.SUCCEEDED:
+        case QueryExecutionStatus.FAILED:
+        case QueryExecutionStatus.CANCELLED:
+            return true;
+        default:
+            return false;
+    }
+}
+
 export interface QueryExecutionMetrics {
     /// The total data bytes
     totalDataBytesReceived: number;

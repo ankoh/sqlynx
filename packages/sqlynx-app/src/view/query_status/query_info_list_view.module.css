@@ -1,5 +1,13 @@
-
 .grid_container {
     width: 100%;
     height: 100%;
+}
+
+.conn_entry:not(:first-child) {
+    border-top: 1px solid var(--border_color_primary);
+}
+
+.query_entry {
+    border-top: 1px solid var(--border_color_primary);
+    padding-left: 20px;
 }

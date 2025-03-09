@@ -1,10 +1,12 @@
 import * as React from 'react';
+import * as symbols from '../../../static/svg/symbols.generated.svg';
 import * as styles from './query_info_view.module.css';
 
 import { useQueryState } from '../../connection/query_executor.js';
 import { computeQueryInfoViewModel, QueryStage, QueryMetricValue, METRIC_REQUEST_COUNT, METRIC_LATEST_REQUEST_STARTED } from './query_info_view_model.js';
-import { QueryExecutionState, QueryExecutionStatus } from '../../connection/query_execution_state.js';
+import { QueryExecutionState, queryIsDone } from '../../connection/query_execution_state.js';
 import { classNames } from '../../utils/classnames.js';
+import { ButtonSize, ButtonVariant, IconButton } from '../../view/foundations/button.js';
 
 interface QueryStageViewProps {
     query: QueryExecutionState;
@@ -47,6 +49,10 @@ function QueryMetricView(props: QueryStageMetricViewProps) {
 }
 
 interface QueryInfoViewProps {
+    /// The classname
+    className?: string;
+    /// The styles
+    style?: React.CSSProperties;
     /// The connection id
     conn: number;
     /// The query id
@@ -58,8 +64,10 @@ export function QueryInfoView(props: QueryInfoViewProps) {
     const query = useQueryState(props.conn, props.query);
     // Compute the query info view model
     const queryInfo = React.useMemo(() => (query != null) ? computeQueryInfoViewModel(query) : null, [query]);
+    /// Is the query done?
+    const isDone = query && queryIsDone(query.status);
 
-    // Determine the query metrics
+    // Determine the current query metrics
     let metrics: QueryMetricValue[] = [];
     for (const stage of queryInfo!.stages) {
         if (stage.ongoing) {
@@ -75,7 +83,7 @@ export function QueryInfoView(props: QueryInfoViewProps) {
         return <div />;
     }
     return (
-        <div className={styles.root}>
+        <div className={classNames(props.className, styles.root)} style={props.style}>
             <div className={styles.title}>
                 {query.queryMetadata.title}
             </div>
@@ -84,6 +92,32 @@ export function QueryInfoView(props: QueryInfoViewProps) {
             </div>
             <div className={styles.stage_bars}>
                 {queryInfo.stages.map((s, i) => <QueryStageView key={i} stage={s} query={query} />)}
+            </div>
+            <div className={styles.action_container}>
+                {isDone
+                    ? (
+                        <IconButton
+                            variant={ButtonVariant.Invisible}
+                            size={ButtonSize.Small}
+                            aria-label="Info"
+                        >
+                            <svg width="16px" height="16px">
+                                <use xlinkHref={`${symbols}#info_circle`} />
+                            </svg>
+                        </IconButton>
+                    )
+                    : (
+                        <IconButton
+                            variant={ButtonVariant.Invisible}
+                            size={ButtonSize.Small}
+                            aria-label="Cancel"
+                        >
+                            <svg width="16px" height="16px">
+                                <use xlinkHref={`${symbols}#x`} />
+                            </svg>
+                        </IconButton>
+                    )
+                }
             </div>
         </div>
     );

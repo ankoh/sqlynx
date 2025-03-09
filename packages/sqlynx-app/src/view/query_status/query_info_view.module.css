@@ -4,16 +4,16 @@
 
     display: grid;
     grid-template-rows: max-content 1fr;
-    grid-template-columns: 1fr 160px;
-
-    border-top: 1px solid black;
+    grid-template-columns: 1fr 140px max-content;
+    column-gap: 16px;
+    padding-top: 8px;
 }
 
 .title {
     grid-row: 1;
     grid-column: 1;
 
-    padding: 0px 8px;
+    padding: 0px 0px 0px 16px;
     font-weight: 500;
     font-size: 0.9rem;
 }
@@ -25,7 +25,7 @@
 }
 
 .stage_bars {
-    grid-row: 1 / span 2;
+    grid-row: 1;
     grid-column: 2;
 
     width: 100%;
@@ -33,14 +33,13 @@
     flex-direction: row;
     align-items: center;
     column-gap: 8px;
-    padding: 2px 16px;
 }
 
 .stage_bar {
     flex: 1;
     border: 1px solid rgb(80, 80, 80);
     border-radius: 8px;
-    height: 8px;
+    height: 4px;
 }
 
 .stage_bar_default {
@@ -65,4 +64,16 @@
 
 .stage_bar_cancelled {
     background-color: orange;
+}
+
+
+.action_container {
+    display: flex;
+    justify-items: center;
+    align-items: center;
+
+    grid-column: 3;
+    grid-row: 1 / span 2;
+
+    padding: 0px 8px 0px 0px;
 }

@@ -192,18 +192,9 @@ export function QueryInfoListView(props: QueryInfoListViewProps) {
 
         // Is the header row?
         if (connQueryId == U32_MAX) {
-            return (
-                <div style={props.style}>
-                    <ConnectionInfoView conn={connId} />
-                </div>
-            );
-
+            return (<ConnectionInfoView className={styles.conn_entry} style={props.style} conn={connId} />);
         } else {
-            return (
-                <div style={props.style}>
-                    <QueryInfoView conn={connId} query={connQueryId} />
-                </div>
-            );
+            return (<QueryInfoView className={styles.query_entry} style={props.style} conn={connId} query={connQueryId} />);
         }
     }, [listViewModel]);
 

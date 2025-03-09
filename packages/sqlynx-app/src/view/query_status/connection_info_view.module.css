@@ -5,12 +5,10 @@
     grid-template-columns: 1fr;
     align-items: center;
     justify-items: begin;
-
-    border-top: 1px solid black;
 }
 
 .title {
-    padding: 0px 8px;
+    padding: 0px 16px;
     font-weight: 500;
     font-size: 0.9rem;
 }
