@@ -3,7 +3,7 @@ import * as React from 'react';
 import { useDynamicConnectionDispatch } from './connection_registry.js';
 import { CatalogUpdateTaskState, CatalogUpdateTaskStatus, CatalogUpdateVariant } from './catalog_update_state.js';
 import { useSalesforceAPI } from './salesforce/salesforce_connector.js';
-import { CatalogResolver, HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from './connector_info.js';
+import { CatalogResolver, DEMO_CONNECTOR, HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from './connector_info.js';
 import {
     CATALOG_UPDATE_CANCELLED,
     CATALOG_UPDATE_FAILED,
@@ -30,15 +30,11 @@ type CatalogLoaderQueueFn = (connectionId: number) => void;
 /// A catalog loader queue
 interface CatalogLoaderQueue { queue: Set<number>; }
 
-/// The React context to resolve the active catalog loader
-const LOADER_CTX = React.createContext<CatalogLoader | null>(null);
 /// The React context to propagate a active catalog loader queue function
 const LOADER_QUEUE_FN_CTX = React.createContext<CatalogLoaderQueueFn | null>(null);
 
-/// The hook to resolve the catalog updater
-export const useCatalogLoader = () => React.useContext(LOADER_CTX)!;
 /// The hook to resolve the catalog queue
-export const useCatalogLoaderQueueFn = () => React.useContext(LOADER_QUEUE_FN_CTX)!;
+export const useCatalogLoaderQueue = () => React.useContext(LOADER_QUEUE_FN_CTX)!;
 
 export function CatalogLoaderProvider(props: { children?: React.ReactElement }) {
     const logger = useLogger();
@@ -89,14 +85,23 @@ export function CatalogLoaderProvider(props: { children?: React.ReactElement }) 
             switch (conn.connectorInfo.catalogResolver) {
                 // Update the catalog by querying the information_schema?
                 case CatalogResolver.SQL_INFORMATION_SCHEMA: {
-                    if (conn.details.type == TRINO_CONNECTOR) {
-                        const catalog = conn.details.value.channelParams?.catalogName ?? "";
-                        const schemas = conn.details.value.channelParams?.schemaNames ?? [];
-                        await updateInformationSchemaCatalog(connectionId, connDispatch, updateId, catalog, schemas, executor, conn.catalog);
-                    } else {
-                        throw new Error(
-                            `cannot load information_schema catalog for ${conn.connectorInfo.connectorType} connections`,
-                        );
+                    switch (conn.details.type) {
+                        case TRINO_CONNECTOR: {
+                            const catalog = conn.details.value.channelParams?.catalogName ?? "";
+                            const schemas = conn.details.value.channelParams?.schemaNames ?? [];
+                            await updateInformationSchemaCatalog(connectionId, connDispatch, updateId, catalog, schemas, executor, conn.catalog);
+                            break;
+                        }
+                        case DEMO_CONNECTOR: {
+                            const catalog = "";
+                            const schemas: string[] = [];
+                            await updateInformationSchemaCatalog(connectionId, connDispatch, updateId, catalog, schemas, executor, conn.catalog);
+                            break;
+                        }
+                        default:
+                            throw new Error(
+                                `cannot load information_schema catalog for ${conn.connectorInfo.displayName.short} connections`,
+                            );
                     }
                     break;
                 }
@@ -107,7 +112,7 @@ export function CatalogLoaderProvider(props: { children?: React.ReactElement }) 
                         await updatePgAttributeSchemaCatalog(connectionId, connDispatch, updateId, schemas, executor, conn.catalog);
                     } else {
                         throw new Error(
-                            `cannot load pg_attribute catalog for ${conn.connectorInfo.connectorType} connections`,
+                            `cannot load pg_attribute catalog for ${conn.connectorInfo.displayName.short} connections`,
                         );
                     }
                     break;
@@ -119,7 +124,7 @@ export function CatalogLoaderProvider(props: { children?: React.ReactElement }) 
                         break;
                     } else {
                         throw new Error(
-                            `cannot load salesforce metadata catalog for ${conn.connectorInfo.connectorType} connections`,
+                            `cannot load salesforce metadata catalog for ${conn.connectorInfo.displayName.short} connections`,
                         );
                     }
                 }
@@ -245,9 +250,7 @@ export function CatalogLoaderProvider(props: { children?: React.ReactElement }) 
 
     return (
         <LOADER_QUEUE_FN_CTX.Provider value={enqueue}>
-            <LOADER_CTX.Provider value={update}>
-                {props.children}
-            </LOADER_CTX.Provider>
+            {props.children}
         </LOADER_QUEUE_FN_CTX.Provider>
     );
 }

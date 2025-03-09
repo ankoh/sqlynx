@@ -126,7 +126,15 @@ export interface QueryMetrics {
     streamMetrics: QueryExecutionMetrics;
 }
 
+/// A query hint
+export enum QueryType {
+    USER_PROVIDED,
+    CATALOG_QUERY_INFORMATION_SCHEMA
+}
+
 export interface QueryMetadata {
+    /// The query type
+    queryType: QueryType;
     /// The title of the query (if any)
     title: string | null;
     /// The description

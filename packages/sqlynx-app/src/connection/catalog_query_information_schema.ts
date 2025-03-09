@@ -5,6 +5,7 @@ import { QueryExecutor } from './query_executor.js';
 import { QueryExecutionArgs } from './query_execution_args.js';
 import { DynamicConnectionDispatch } from "./connection_registry.js";
 import { CATALOG_UPDATE_REGISTER_QUERY } from "./connection_state.js";
+import { QueryType } from "./query_execution_state.js";
 
 export type InformationSchemaColumnsTable = arrow.Table<{
     table_catalog: arrow.Utf8;
@@ -107,6 +108,7 @@ export async function queryInformationSchema(connectionId: number, connectionDis
     const args: QueryExecutionArgs = {
         query: query,
         metadata: {
+            queryType: QueryType.CATALOG_QUERY_INFORMATION_SCHEMA,
             title: "Query Information Schema Columns",
             description: null,
             issuer: "Catalog Update",
@@ -127,7 +129,7 @@ export async function queryInformationSchema(connectionId: number, connectionDis
     }
 
     const descriptors = collectSchemaDescriptors(queryResult);
-    console.log(descriptors);
+    // console.log(descriptors);
 }
 
 export async function updateInformationSchemaCatalog(connectionId: number, connectionDispatch: DynamicConnectionDispatch, updateId: number, catalogName: string, schemaNames: string[], executor: QueryExecutor, _catalog: sqlynx.SQLynxCatalog): Promise<void> {

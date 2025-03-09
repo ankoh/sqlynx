@@ -8,6 +8,8 @@ import { useConnectionState } from '../connection/connection_registry.js';
 import { ConnectionHealth } from '../connection/connection_state.js';
 import { useLogger } from '../platform/logger_provider.js';
 import { REGISTER_QUERY } from './workbook_state.js';
+import { QueryType } from '../connection/query_execution_state.js';
+import { useCatalogLoaderQueue } from '../connection/catalog_loader.js';
 
 export enum WorkbookCommandType {
     ExecuteEditorQuery = 1,
@@ -31,6 +33,7 @@ export const WorkbookCommands: React.FC<Props> = (props: Props) => {
     const [workbook, dispatchWorkbook] = useCurrentWorkbookState();
     const [connection, _dispatchConnection] = useConnectionState(workbook?.connectionId ?? null);
     const executeQuery = useQueryExecutor();
+    const queueCatalogLoading = useCatalogLoaderQueue();
 
     // Setup command dispatch logic
     const commandDispatch = React.useCallback(
@@ -52,6 +55,7 @@ export const WorkbookCommands: React.FC<Props> = (props: Props) => {
                             query: mainScriptText,
                             analyzeResults: true,
                             metadata: {
+                                queryType: QueryType.USER_PROVIDED,
                                 title: "Workbook Query",
                                 description: null,
                                 issuer: "Query Execution Command",
@@ -65,14 +69,11 @@ export const WorkbookCommands: React.FC<Props> = (props: Props) => {
                     }
                     break;
                 case WorkbookCommandType.RefreshSchema:
-                    // XXX
-                    // modifySession({
-                    //     type: UPDATE_CATALOG,
-                    //     value: {
-                    //         type: FULL_CATALOG_REFRESH,
-                    //         value: null,
-                    //     },
-                    // });
+                    if (connection?.connectionHealth != ConnectionHealth.ONLINE) {
+                        logger.error("cannot refresh the catalog of unhealthy connection", {});
+                    } else {
+                        queueCatalogLoading(connection.connectionId);
+                    }
                     break;
                 case WorkbookCommandType.SaveWorkbookAsLink:
                     console.log('save workbook as link');

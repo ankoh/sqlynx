@@ -35,7 +35,7 @@ import { ConnectionParamsVariant } from '../../connection/connection_params.js';
 import { TRINO_CONNECTOR } from '../../connection/connector_info.js';
 import { DetailedError } from '../../utils/error.js';
 import { ErrorDetailsButton } from '../error_details.js';
-import { useCatalogLoaderQueueFn } from '../../connection/catalog_loader.js';
+import { useCatalogLoaderQueue } from '../../connection/catalog_loader.js';
 import { UpdateValueList, ValueListBuilder } from '../../view/foundations/value_list.js';
 
 const LOG_CTX = "trino_connector";
@@ -61,7 +61,7 @@ export const TrinoConnectorSettings: React.FC = () => {
     const [connectionState, dispatchConnectionState] = useConnectionState(connectionId);
 
     // Resolve the catalog loader
-    const loadCatalog = useCatalogLoaderQueueFn();
+    const loadCatalog = useCatalogLoaderQueue();
 
     // Wire up the page state
     const [pageState, setPageState] = React.useContext(PAGE_STATE_CTX)!;

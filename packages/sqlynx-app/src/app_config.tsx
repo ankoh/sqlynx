@@ -8,7 +8,6 @@ const CONFIG_URL = new URL('../static/config.json', import.meta.url);
 
 export interface AppSettings {
     showCompletionDetails?: boolean;
-    enableCommandRefreshSchema?: boolean;
     enableCommandSaveQueryAsSql?: boolean;
     enableCommandSaveResultsAsArrow?: boolean;
     showEditorStats?: boolean;

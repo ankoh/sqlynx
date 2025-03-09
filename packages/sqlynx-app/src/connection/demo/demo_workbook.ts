@@ -54,28 +54,6 @@ export function useDemoWorkbookSetup(): WorkbookSetupFn {
             completion: null,
             selectedCompletionCandidate: null,
         };
-        const schemaScriptData: ScriptData = {
-            scriptKey: 2,
-            script: schemaScript,
-            metadata: EXAMPLES.TPCH.schema,
-            loading: {
-                status: ScriptLoadingStatus.PENDING,
-                error: null,
-                startedAt: null,
-                finishedAt: null,
-            },
-            processed: {
-                scanned: null,
-                parsed: null,
-                analyzed: null,
-                destroy: () => { },
-            },
-            outdatedAnalysis: true,
-            statistics: Immutable.List(),
-            cursor: null,
-            completion: null,
-            selectedCompletionCandidate: null,
-        };
 
         return allocateWorkbookState({
             instance: instance.value,
@@ -84,14 +62,9 @@ export function useDemoWorkbookSetup(): WorkbookSetupFn {
             connectionCatalog: connectionState.catalog,
             scripts: {
                 [mainScriptData.scriptKey]: mainScriptData,
-                [schemaScriptData.scriptKey]: schemaScriptData,
             },
             workbookEntries: [{
                 scriptKey: mainScriptData.scriptKey,
-                queryId: null,
-                title: null,
-            }, {
-                scriptKey: schemaScriptData.scriptKey,
                 queryId: null,
                 title: null,
             }],

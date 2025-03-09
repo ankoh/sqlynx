@@ -161,9 +161,9 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
             uncolored: "code",
             outlines: "code",
         },
-        catalogResolver: CatalogResolver.SQL_SCRIPT,
+        catalogResolver: CatalogResolver.SQL_INFORMATION_SCHEMA,
         features: {
-            schemaScript: true,
+            schemaScript: false,
             executeQueryAction: true,
             refreshSchemaAction: true,
         },

@@ -25,7 +25,6 @@ import { useQueryState } from '../../connection/query_executor.js';
 import { WorkbookEntryList } from './workbook_entry_list.js';
 
 const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
-    const config = useAppConfig();
     const sessionCommand = useWorkbookCommandDispatch();
     return (
         <>
@@ -42,7 +41,7 @@ const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
                 <ActionList.Trailing>Ctrl + E</ActionList.Trailing>
             </ActionList.ListItem>
             <ActionList.ListItem
-                disabled={!props.connector?.features.refreshSchemaAction || !config.value?.settings?.enableCommandRefreshSchema}
+                disabled={!props.connector?.features.refreshSchemaAction}
             >
                 <ActionList.Leading>
                     <SyncIcon />

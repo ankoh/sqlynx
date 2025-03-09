@@ -1,12 +1,11 @@
 import * as arrow from 'apache-arrow';
-import * as proto from "@ankoh/sqlynx-protobuf";
 
 import { QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionMetrics, QueryExecutionStatus, createQueryResponseStreamMetrics } from "../query_execution_state.js";
 import { generateRandomData, RandomDataConfig } from '../../utils/random_data.js';
 import { sleep } from '../../utils/sleep.js';
 import { AsyncConsumer } from '../../utils/async_consumer.js';
 
-export interface DemoDatabaseConfig extends RandomDataConfig {
+export interface DemoQuerySpec extends RandomDataConfig {
     /// Time in milliseconds until the first batch
     timeMsUntilFirstBatch: number;
     /// Time in milliseconds between two batches
@@ -15,7 +14,7 @@ export interface DemoDatabaseConfig extends RandomDataConfig {
 
 class DemoQueryExecutionResponseStream implements QueryExecutionResponseStream {
     /// The config
-    config: DemoDatabaseConfig;
+    config: DemoQuerySpec;
     /// The schema
     schema: arrow.Schema;
     /// The batch
@@ -26,7 +25,7 @@ class DemoQueryExecutionResponseStream implements QueryExecutionResponseStream {
     metrics: QueryExecutionMetrics;
 
     /// Constructor
-    constructor(config: DemoDatabaseConfig, schema: arrow.Schema, batches: arrow.RecordBatch[]) {
+    constructor(config: DemoQuerySpec, schema: arrow.Schema, batches: arrow.RecordBatch[]) {
         this.config = config;
         this.schema = schema;
         this.batches = batches;
@@ -65,18 +64,13 @@ class DemoQueryExecutionResponseStream implements QueryExecutionResponseStream {
 }
 
 export class DemoDatabaseChannel {
-    /// The demo database config
-    config: DemoDatabaseConfig;
-
     /// Constructor
-    constructor(config: DemoDatabaseConfig) {
-        this.config = config;
-    }
+    constructor() { }
 
     /// Execute Query
-    async executeQuery(_param: proto.salesforce_hyperdb_grpc_v1.pb.QueryParam, _abort?: AbortSignal): Promise<QueryExecutionResponseStream> {
-        const [schema, batches] = generateRandomData(this.config);
-        return new DemoQueryExecutionResponseStream(this.config, schema, batches);
+    async executeQuery(config: DemoQuerySpec, _abort?: AbortSignal): Promise<QueryExecutionResponseStream> {
+        const [schema, batches] = generateRandomData(config);
+        return new DemoQueryExecutionResponseStream(config, schema, batches);
     }
     /// Destroy the connection
     async close(): Promise<void> { }

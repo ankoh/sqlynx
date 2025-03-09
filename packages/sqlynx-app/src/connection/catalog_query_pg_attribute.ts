@@ -3,6 +3,7 @@ import * as sqlynx from '@ankoh/sqlynx-core';
 import { QueryExecutor } from './query_executor.js';
 import { QueryExecutionArgs } from './query_execution_args.js';
 import { DynamicConnectionDispatch } from './connection_registry.js';
+import { QueryType } from './query_execution_state.js';
 
 export async function queryPgAttribute(connectionId: number, updateId: number, schemaNames: string[], executor: QueryExecutor): Promise<void> {
     const query = `
@@ -36,6 +37,7 @@ export async function queryPgAttribute(connectionId: number, updateId: number, s
     const args: QueryExecutionArgs = {
         query: query,
         metadata: {
+            queryType: QueryType.CATALOG_QUERY_INFORMATION_SCHEMA,
             title: "Query Postgres Schema Columns",
             description: null,
             issuer: "Catalog Update",

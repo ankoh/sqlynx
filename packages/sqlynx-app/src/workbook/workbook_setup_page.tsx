@@ -14,7 +14,6 @@ import { ConnectorInfo, HYPER_GRPC_CONNECTOR, requiresSwitchingToNative, SALESFO
 import { CopyToClipboardButton } from '../utils/clipboard.js';
 import { IndicatorStatus, StatusIndicator } from '../view/foundations/status_indicator.js';
 import { KeyValueTextField, TextField, VALIDATION_WARNING } from '../view/foundations/text_field.js';
-import { OverlaySize } from '../view/foundations/overlay.js';
 import { RESTORE_WORKBOOK } from './workbook_state.js';
 import { SQLYNX_VERSION } from '../globals.js';
 import { VersionInfoOverlay } from '../view/version_viewer.js';
@@ -30,7 +29,7 @@ import { useWorkbookState } from './workbook_state_registry.js';
 import { ErrorDetailsButton } from '../view/error_details.js';
 import { DetailedError } from '../utils/error.js';
 import { ConnectionParamsVariant, encodeConnectionParams, readConnectionParamsFromProto } from '../connection/connection_params.js';
-import { useCatalogLoaderQueueFn } from '../connection/catalog_loader.js';
+import { useCatalogLoaderQueue } from '../connection/catalog_loader.js';
 import { ValueListBuilder } from '../view/foundations/value_list.js';
 import { InternalsViewerOverlay } from '../view/internals_overlay.js';
 
@@ -238,7 +237,7 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
     const salesforceSetup = useSalesforceSetup();
     const trinoSetup = useTrinoSetup();
-    const loadCatalog = useCatalogLoaderQueueFn();
+    const loadCatalog = useCatalogLoaderQueue();
 
     const [showLogs, setShowLogs] = React.useState<boolean>(false);
     const [showVersionOverlay, setShowVersionOverlay] = React.useState<boolean>(false);
