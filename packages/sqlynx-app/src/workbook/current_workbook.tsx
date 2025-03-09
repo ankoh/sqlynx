@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Dispatch } from '../utils/variant.js';
 import { WorkbookState } from './workbook_state.js';
-import { modifyWorkbook, useWorkbookState } from './workbook_state_registry.js';
+import { ModifyWorkbook, useWorkbookState } from './workbook_state_registry.js';
 
 type CurrentWorkbookSetter = Dispatch<React.SetStateAction<number | null>>;
 
@@ -26,7 +26,7 @@ export function useCurrentWorkbookSelector(): CurrentWorkbookSetter {
     return setCurrentWorkbook;
 }
 
-export function useCurrentWorkbookState(): [WorkbookState | null, modifyWorkbook] {
+export function useCurrentWorkbookState(): [WorkbookState | null, ModifyWorkbook] {
     const [currentWorkbook, _setCurrentWorkbook] = React.useContext(WORKBOOK_CTX)!;
     return useWorkbookState(currentWorkbook);
 }

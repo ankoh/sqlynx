@@ -18,7 +18,8 @@ interface WorkbookRegistry {
 type WorkbookStateWithoutId = Omit<WorkbookState, "workbookId">;
 type SetWorkbookRegistryAction = React.SetStateAction<WorkbookRegistry>;
 export type WorkbookAllocator = (workbook: WorkbookStateWithoutId) => number;
-export type modifyWorkbook = (action: WorkbookStateAction) => void;
+export type ModifyWorkbook = (action: WorkbookStateAction) => void;
+export type ModifyConnectionWorkbooks = (conn: number, action: WorkbookStateAction) => void;
 
 const WORKBOOK_REGISTRY_CTX = React.createContext<[WorkbookRegistry, Dispatch<SetWorkbookRegistryAction>] | null>(null);
 let NEXT_WORKBOOK_ID: number = 1;
@@ -61,7 +62,7 @@ export function useWorkbookStateAllocator(): WorkbookAllocator {
     }, [setReg]);
 }
 
-export function useWorkbookState(id: number | null): [WorkbookState | null, modifyWorkbook] {
+export function useWorkbookState(id: number | null): [WorkbookState | null, ModifyWorkbook] {
     const [registry, setRegistry] = React.useContext(WORKBOOK_REGISTRY_CTX)!;
 
     /// Wrapper to modify an individual workbook
@@ -102,3 +103,24 @@ export function useWorkbookState(id: number | null): [WorkbookState | null, modi
 
     return [id == null ? null : registry.workbookMap.get(id) ?? null, dispatch];
 };
+
+export function useConnectionWorkbookDispatch(): ModifyConnectionWorkbooks {
+    const [_registry, setRegistry] = React.useContext(WORKBOOK_REGISTRY_CTX)!;
+    const dispatch = React.useCallback<ModifyConnectionWorkbooks>((conn: number, action: WorkbookStateAction) => {
+        setRegistry(
+            (reg: WorkbookRegistry) => {
+                const workbookIds = reg.workbooksByConnection.get(conn) ?? [];
+                if (workbookIds.length == 0) {
+                    return reg;
+                }
+                for (const workbookId of workbookIds) {
+                    const prev = reg.workbookMap.get(workbookId);
+                    const next = reduceWorkbookState(prev!, action);
+                    reg.workbookMap.set(workbookId, next);
+                }
+                return { ...reg };
+            }
+        );
+    }, [setRegistry]);
+    return dispatch;
+}

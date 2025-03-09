@@ -118,13 +118,13 @@ const CATALOG_QUERY_SPEC: DemoQuerySpec = {
             name: "table_catalog",
             type: new arrow.Utf8(),
             nullable: true,
-            generateScalarValue: (_row: number) => "some_catalog"
+            generateScalarValue: (_row: number) => "sqlynx"
         },
         {
             name: "table_schema",
             type: new arrow.Utf8(),
             nullable: true,
-            generateScalarValue: (row: number) => `schema_${Math.floor(row / CATALOG_COLUMNS_PER_SCHEMA)}`
+            generateScalarValue: (_row: number) => `public`
         },
         {
             name: "table_name",

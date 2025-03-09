@@ -15,6 +15,8 @@ import { useQueryExecutor } from './query_executor.js';
 import { useLogger } from '../platform/logger_provider.js';
 import { updateInformationSchemaCatalog } from './catalog_query_information_schema.js';
 import { updatePgAttributeSchemaCatalog } from './catalog_query_pg_attribute.js';
+import { useConnectionWorkbookDispatch } from '../workbook/workbook_state_registry.js';
+import { CATALOG_DID_UPDATE } from '../workbook/workbook_state.js';
 
 const LOG_CTX = 'catalog_loader';
 
@@ -45,6 +47,7 @@ export function CatalogLoaderProvider(props: { children?: React.ReactElement }) 
     // This executor will depend on the map directly since it can resolve everything ad-hoc.
     const [connReg, connDispatch] = useDynamicConnectionDispatch();
     const connMap = connReg.connectionMap;
+    const connWorkbookDispatch = useConnectionWorkbookDispatch();
 
     // Execute a query with pre-allocated query id
     const updateImpl = React.useCallback(async (connectionId: number, _args: CatalogLoaderArgs, updateId: number): Promise<void> => {
@@ -138,6 +141,12 @@ export function CatalogLoaderProvider(props: { children?: React.ReactElement }) 
                 type: CATALOG_UPDATE_SUCCEEDED,
                 value: [updateId],
             });
+            // Mark all connection workbooks outdated
+            connWorkbookDispatch(connectionId, {
+                type: CATALOG_DID_UPDATE,
+                value: null,
+            });
+
         } catch (e: any) {
             if ((e.message === 'AbortError')) {
                 logger.error("catalog update was cancelled", { "connection": connectionId.toString() }, LOG_CTX);

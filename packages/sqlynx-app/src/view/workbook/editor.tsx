@@ -33,7 +33,7 @@ interface ActiveScriptState {
 export const ScriptEditor: React.FC<Props> = (_props: Props) => {
     const logger = useLogger();
     const config = useAppConfig();
-    const [session, sessionDispatch] = useCurrentWorkbookState();
+    const [workbook, modifyWorkbook] = useCurrentWorkbookState();
 
     // The editor view
     const [view, setView] = React.useState<EditorView | null>(null);
@@ -46,11 +46,11 @@ export const ScriptEditor: React.FC<Props> = (_props: Props) => {
     });
 
     // The current index in the workbook
-    const workbookEntryIdx = session?.selectedWorkbookEntry ?? 0;
-    const workbookEntry = (workbookEntryIdx < (session?.workbookEntries.length ?? 0))
-        ? session!.workbookEntries[workbookEntryIdx]
+    const workbookEntryIdx = workbook?.selectedWorkbookEntry ?? 0;
+    const workbookEntry = (workbookEntryIdx < (workbook?.workbookEntries.length ?? 0))
+        ? workbook!.workbookEntries[workbookEntryIdx]
         : null;
-    const workbookEntryScriptData = workbookEntry != null ? session!.scripts[workbookEntry.scriptKey] : null;
+    const workbookEntryScriptData = workbookEntry != null ? workbook!.scripts[workbookEntry.scriptKey] : null;
 
 
     // Helper to update a script.
@@ -59,29 +59,29 @@ export const ScriptEditor: React.FC<Props> = (_props: Props) => {
         (scriptKey: SQLynxScriptKey, buffers: SQLynxScriptBuffers, cursor: sqlynx.proto.ScriptCursorT) => {
             active.current.cursor = cursor;
             active.current.scriptBuffers = buffers;
-            sessionDispatch({
+            modifyWorkbook({
                 type: UPDATE_SCRIPT_ANALYSIS,
                 value: [scriptKey, buffers, cursor],
             });
         },
-        [sessionDispatch],
+        [modifyWorkbook],
     );
     // Helper to update a script cursor.
     // Called when the cursor gets updated by the CodeMirror extension.
     const updateCursor = React.useCallback(
         (scriptKey: SQLynxScriptKey, cursor: sqlynx.proto.ScriptCursorT) => {
             active.current.cursor = cursor;
-            sessionDispatch({
+            modifyWorkbook({
                 type: UPDATE_SCRIPT_CURSOR,
                 value: [scriptKey, cursor],
             });
         },
-        [sessionDispatch],
+        [modifyWorkbook],
     );
     // Helper to start a completion.
     // Called when the CodeMirror extension opens the completion dropdown.
     const startCompletion = React.useCallback((scriptKey: SQLynxScriptKey, completion: sqlynx.proto.CompletionT) => {
-        sessionDispatch({
+        modifyWorkbook({
             type: COMPLETION_STARTED,
             value: [scriptKey, completion],
         });
@@ -89,7 +89,7 @@ export const ScriptEditor: React.FC<Props> = (_props: Props) => {
     // Helper to peek a completion candidate
     // Called when the CodeMirror extension changes the selected completion.
     const peekCompletionCandidate = React.useCallback((scriptKey: SQLynxScriptKey, completion: sqlynx.proto.CompletionT, candidateId: number) => {
-        sessionDispatch({
+        modifyWorkbook({
             type: COMPLETION_CHANGED,
             value: [scriptKey, completion, candidateId],
         });
@@ -97,7 +97,7 @@ export const ScriptEditor: React.FC<Props> = (_props: Props) => {
     // Helper to stop a completion.
     // Called when the CodeMirror extension opens the completion dropdown.
     const stopCompletion = React.useCallback((scriptKey: SQLynxScriptKey) => {
-        sessionDispatch({
+        modifyWorkbook({
             type: COMPLETION_STOPPED,
             value: scriptKey,
         });
@@ -106,7 +106,7 @@ export const ScriptEditor: React.FC<Props> = (_props: Props) => {
     // Effect to update outdated scripts
     React.useEffect(() => {
         if (workbookEntryScriptData?.outdatedAnalysis) {
-            sessionDispatch({
+            modifyWorkbook({
                 type: UPDATE_SCRIPT,
                 value: workbookEntryScriptData.scriptKey
             });
@@ -158,7 +158,7 @@ export const ScriptEditor: React.FC<Props> = (_props: Props) => {
                 targetScript: workbookEntryScriptData.script,
                 scriptBuffers: workbookEntryScriptData.processed,
                 scriptCursor: workbookEntryScriptData.cursor,
-                derivedFocus: session?.userFocus ?? null,
+                derivedFocus: workbook?.userFocus ?? null,
 
                 onScriptUpdate: updateScript,
                 onCursorUpdate: updateCursor,
@@ -172,7 +172,7 @@ export const ScriptEditor: React.FC<Props> = (_props: Props) => {
         view,
         workbookEntryIdx,
         workbookEntryScriptData,
-        session?.connectionCatalog,
+        workbook?.connectionCatalog,
         updateScript,
     ]);
 

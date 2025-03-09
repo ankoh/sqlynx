@@ -92,6 +92,7 @@ export const RESTORE_WORKBOOK = Symbol('RESTORE_WORKBOOK');
 export const UPDATE_SCRIPT = Symbol('UPDATE_SCRIPT');
 export const UPDATE_SCRIPT_ANALYSIS = Symbol('UPDATE_SCRIPT_ANALYSIS');
 export const UPDATE_SCRIPT_CURSOR = Symbol('UPDATE_SCRIPT_CURSOR');
+export const CATALOG_DID_UPDATE = Symbol('CATALOG_DID_UPDATE');
 export const COMPLETION_STARTED = Symbol('SCRIPT_COMPLETION_STARTED')
 export const COMPLETION_CHANGED = Symbol('COMPLETION_CHANGED')
 export const COMPLETION_STOPPED = Symbol('COMPLETION_STOPPED')
@@ -106,6 +107,7 @@ export type WorkbookStateAction =
     | VariantKind<typeof UPDATE_SCRIPT, ScriptKey>
     | VariantKind<typeof UPDATE_SCRIPT_ANALYSIS, [ScriptKey, SQLynxScriptBuffers, sqlynx.proto.ScriptCursorT]>
     | VariantKind<typeof UPDATE_SCRIPT_CURSOR, [ScriptKey, sqlynx.proto.ScriptCursorT]>
+    | VariantKind<typeof CATALOG_DID_UPDATE, null>
     | VariantKind<typeof COMPLETION_STARTED, [ScriptKey, sqlynx.proto.CompletionT]>
     | VariantKind<typeof COMPLETION_CHANGED, [ScriptKey, sqlynx.proto.CompletionT, number]>
     | VariantKind<typeof COMPLETION_STOPPED, ScriptKey>
@@ -196,6 +198,21 @@ export function reduceWorkbookState(state: WorkbookState, action: WorkbookStateA
 
             // All other scripts are marked via `outdatedAnalysis`
             return next;
+        }
+
+        case CATALOG_DID_UPDATE: {
+            const scripts = { ...state.scripts };
+            for (const scriptKey in scripts) {
+                const prev = scripts[scriptKey];
+                scripts[scriptKey] = {
+                    ...prev,
+                    outdatedAnalysis: true
+                };
+            }
+            return {
+                ...state,
+                scripts
+            };
         }
 
         case UPDATE_SCRIPT: {

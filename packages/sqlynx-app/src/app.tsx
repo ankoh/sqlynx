@@ -40,19 +40,6 @@ import './../static/fonts/fonts.css';
 import './colors.css';
 import './globals.css';
 
-const WorkbookProviders = (props: { children: React.ReactElement }) => (
-    <WorkbookStateRegistry>
-        <CurrentWorkbookStateProvider>
-            <ScriptLoader />
-            <WorkbookCommands>
-                <WorkbookSetup>
-                    {props.children}
-                </WorkbookSetup>
-            </WorkbookCommands>
-        </CurrentWorkbookStateProvider>
-    </WorkbookStateRegistry>
-);
-
 const PageStateProviders = (props: { children: React.ReactElement }) => (
     <ConnectorsPageStateProvider>
         <SalesforceConnectorSettingsStateProvider>
@@ -72,9 +59,18 @@ const Connectors = (props: { children: React.ReactElement }) => (
                 <TrinoConnector>
                     <Compute>
                         <QueryExecutorProvider>
-                            <CatalogLoaderProvider>
-                                {props.children}
-                            </CatalogLoaderProvider>
+                            <WorkbookStateRegistry>
+                                <CatalogLoaderProvider>
+                                    <CurrentWorkbookStateProvider>
+                                        <ScriptLoader />
+                                        <WorkbookCommands>
+                                            <WorkbookSetup>
+                                                {props.children}
+                                            </WorkbookSetup>
+                                        </WorkbookCommands>
+                                    </CurrentWorkbookStateProvider>
+                                </CatalogLoaderProvider>
+                            </WorkbookStateRegistry>
                         </QueryExecutorProvider>
                     </Compute>
                 </TrinoConnector>
@@ -102,11 +98,9 @@ const AppProviders = (props: { children: React.ReactElement }) => (
                                         <SQLynxCoreProvider>
                                             <SQLynxComputeProvider>
                                                 <Connectors>
-                                                    <WorkbookProviders>
-                                                        <PageStateProviders>
-                                                            {props.children}
-                                                        </PageStateProviders>
-                                                    </WorkbookProviders>
+                                                    <PageStateProviders>
+                                                        {props.children}
+                                                    </PageStateProviders>
                                                 </Connectors>
                                             </SQLynxComputeProvider>
                                         </SQLynxCoreProvider>
