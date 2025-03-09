@@ -52,12 +52,15 @@ const PageStateProviders = (props: { children: React.ReactElement }) => (
     </ConnectorsPageStateProvider>
 );
 
-const Connectors = (props: { children: React.ReactElement }) => (
+// Note that the order among connection providers is important and non-obvious.
+// For example:
+// - CatalogLoaderProvider requires the WorkbookStateRegistry to mark connection workbooks as outdated.
+const WorkbookProviders = (props: { children: React.ReactElement }) => (
     <ConnectionRegistry>
         <SalesforceConnector>
             <HyperGrpcConnector>
                 <TrinoConnector>
-                    <Compute>
+                    <ComputationRegistry>
                         <QueryExecutorProvider>
                             <WorkbookStateRegistry>
                                 <CatalogLoaderProvider>
@@ -72,17 +75,11 @@ const Connectors = (props: { children: React.ReactElement }) => (
                                 </CatalogLoaderProvider>
                             </WorkbookStateRegistry>
                         </QueryExecutorProvider>
-                    </Compute>
+                    </ComputationRegistry>
                 </TrinoConnector>
             </HyperGrpcConnector>
         </SalesforceConnector>
     </ConnectionRegistry>
-);
-
-const Compute = (props: { children: React.ReactElement }) => (
-    <ComputationRegistry>
-        {props.children}
-    </ComputationRegistry>
 );
 
 const AppProviders = (props: { children: React.ReactElement }) => (
@@ -97,11 +94,11 @@ const AppProviders = (props: { children: React.ReactElement }) => (
                                     <HyperDatabaseClientProvider>
                                         <SQLynxCoreProvider>
                                             <SQLynxComputeProvider>
-                                                <Connectors>
+                                                <WorkbookProviders>
                                                     <PageStateProviders>
                                                         {props.children}
                                                     </PageStateProviders>
-                                                </Connectors>
+                                                </WorkbookProviders>
                                             </SQLynxComputeProvider>
                                         </SQLynxCoreProvider>
                                     </HyperDatabaseClientProvider>
