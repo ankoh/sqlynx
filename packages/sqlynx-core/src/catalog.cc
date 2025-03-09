@@ -6,6 +6,7 @@
 
 #include <map>
 
+#include "sqlynx/catalog_object.h"
 #include "sqlynx/external.h"
 #include "sqlynx/proto/proto_generated.h"
 #include "sqlynx/script.h"
@@ -951,6 +952,13 @@ proto::StatusCode Catalog::AddDescriptorPool(CatalogEntryID external_id, Catalog
 proto::StatusCode Catalog::DropDescriptorPool(CatalogEntryID external_id) {
     auto iter = descriptor_pool_entries.find(external_id);
     if (iter != descriptor_pool_entries.end()) {
+        auto& pool = *iter->second;
+        auto rank = iter->second->GetRank();
+        entries_ranked.erase({rank, external_id});
+        pool.GetSchemas().ForEach([&](auto i, const CatalogEntry::SchemaReference& schema_ref) {
+            entries_by_schema.erase({schema_ref.database_name, schema_ref.schema_name, rank, external_id});
+        });
+        entries.erase(external_id);
         descriptor_pool_entries.erase(iter);
         ++version;
     }

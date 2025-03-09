@@ -676,7 +676,7 @@ export class SQLynxCatalog {
     public dropDescriptorPool(id: number) {
         this.deleteSnapshot();
         const catalogPtr = this.ptr.assertNotNull();
-        this.ptr.api.instanceExports.sqlynx_catalog_drop_script(catalogPtr, id);
+        this.ptr.api.instanceExports.sqlynx_catalog_drop_descriptor_pool(catalogPtr, id);
     }
     /// Add a schema descriptor to a descriptor pool
     public addSchemaDescriptor(id: number, buffer: Uint8Array) {

@@ -1,5 +1,6 @@
 import * as arrow from "apache-arrow";
 import * as sqlynx from '@ankoh/sqlynx-core';
+import * as flatbuffers from 'flatbuffers';
 
 import { QueryExecutor } from './query_executor.js';
 import { QueryExecutionArgs } from './query_execution_args.js';
@@ -91,7 +92,7 @@ function collectSchemaDescriptors(result: InformationSchemaColumnsTable): sqlynx
     return descriptors;
 }
 
-export async function queryInformationSchema(connectionId: number, connectionDispatch: DynamicConnectionDispatch, updateId: number, catalogName: string, schemaNames: string[], executor: QueryExecutor): Promise<sqlynx.proto.SchemaDescriptorT[]> {
+export async function queryInformationSchema(connectionId: number, connectionDispatch: DynamicConnectionDispatch, updateId: number, catalogName: string, schemaNames: string[], executor: QueryExecutor): Promise<InformationSchemaColumnsTable | null> {
     const query = `
         SELECT
             table_catalog,
@@ -123,43 +124,21 @@ export async function queryInformationSchema(connectionId: number, connectionDis
     });
 
     const queryResult = await queryExecution as InformationSchemaColumnsTable;
-    if (queryResult == null) {
-        return [];
-    }
-
-    const descriptors = collectSchemaDescriptors(queryResult);
-    return descriptors;
+    return queryResult;
 }
 
 export async function updateInformationSchemaCatalog(connectionId: number, connectionDispatch: DynamicConnectionDispatch, updateId: number, catalogName: string, schemaNames: string[], executor: QueryExecutor, catalog: sqlynx.SQLynxCatalog): Promise<void> {
-    const descriptors = await queryInformationSchema(connectionId, connectionDispatch, updateId, catalogName, schemaNames, executor);
-
-    let prev = performance.now();
-    let log = (msg: string) => {
-        const next = performance.now();
-        console.log(`${Math.floor(next - prev)}     ${msg}`);
-        prev = next;
-    };
-    let printStats = () => {
-        const statsPtr = catalog.getStatistics();
-        const stats = statsPtr.read().unpack();
-        statsPtr.delete();
-        console.log(stats);
+    // Query the information schema
+    const queryResult = await queryInformationSchema(connectionId, connectionDispatch, updateId, catalogName, schemaNames, executor);
+    if (queryResult == null) {
+        return;
     }
+    const descriptors = collectSchemaDescriptors(queryResult);
 
+    // Update the catalog
     catalog.dropDescriptorPool(CATALOG_DEFAULT_DESCRIPTOR_POOL);
-    log("drop pool");
     catalog.addDescriptorPool(CATALOG_DEFAULT_DESCRIPTOR_POOL, CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK);
-    log("add pool");
     for (const descriptor of descriptors) {
         catalog.addSchemaDescriptorT(CATALOG_DEFAULT_DESCRIPTOR_POOL, descriptor);
-        log("add descriptor");
-        printStats();
     }
-
-    const entriesPtr = catalog.describeEntriesOf(CATALOG_DEFAULT_DESCRIPTOR_POOL);
-    const entries = entriesPtr.read();
-    const entriesObj = entries.unpack();
-    entriesPtr.delete();
-    console.log(entriesObj);
 }

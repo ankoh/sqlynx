@@ -92,16 +92,6 @@ static void catalog_update(benchmark::State& state) {
     }
 }
 
-BENCHMARK(catalog_update)
-    ->Args({1, 10, 10})
-    ->Args({2, 10, 10})
-    ->Args({3, 10, 10})
-    ->Args({4, 10, 10})
-    ->Args({5, 10, 10})
-    ->Args({6, 10, 10})
-    ->Args({7, 10, 10})
-    ->Args({8, 10, 10})
-    ->Args({9, 10, 10})
-    ->Args({10, 10, 10});
+BENCHMARK(catalog_update)->Args({1, 10, 10})->Args({50, 10, 10})->Args({100, 10, 10});
 
 BENCHMARK_MAIN();
