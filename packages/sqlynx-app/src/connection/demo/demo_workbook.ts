@@ -2,7 +2,7 @@ import * as React from 'react';
 import Immutable from 'immutable';
 
 import { CONNECTOR_INFOS, ConnectorType } from '../connector_info.js';
-import { EXAMPLES } from '../../workbook/example_scripts.js';
+import { createExampleMetadata } from '../../workbook/example_scripts.js';
 import { RESULT_OK } from '../../utils/result.js';
 import { ScriptData } from '../../workbook/workbook_state.js';
 import { ScriptLoadingStatus } from '../../workbook/script_loader.js';
@@ -10,6 +10,9 @@ import { useConnectionStateAllocator } from '../connection_registry.js';
 import { useSQLynxCoreSetup } from '../../core_provider.js';
 import { useWorkbookStateAllocator } from '../../workbook/workbook_state_registry.js';
 import { createDemoConnectionState } from './demo_connection_state.js';
+import { ScriptType } from '../../workbook/script_metadata.js';
+
+const demo_q1 = new URL('../../../static/examples/demo/demo1.sql', import.meta.url);
 
 export const DEFAULT_BOARD_WIDTH = 800;
 export const DEFAULT_BOARD_HEIGHT = 600;
@@ -30,12 +33,11 @@ export function useDemoWorkbookSetup(): WorkbookSetupFn {
         const connectionState = createDemoConnectionState(lnx);
         const connectionId = allocateConnection(connectionState);
         const mainScript = lnx.createScript(connectionState.catalog, 1);
-        const schemaScript = lnx.createScript(connectionState.catalog, 2);
 
         const mainScriptData: ScriptData = {
             scriptKey: 1,
             script: mainScript,
-            metadata: EXAMPLES.TPCH.queries[1],
+            metadata: createExampleMetadata(ScriptType.QUERY, "Demo", demo_q1, null),
             loading: {
                 status: ScriptLoadingStatus.PENDING,
                 error: null,
