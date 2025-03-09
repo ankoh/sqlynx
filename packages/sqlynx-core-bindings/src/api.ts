@@ -41,6 +41,7 @@ interface SQLynxModuleExports {
         data_ptr: number,
         data_size: number,
     ) => number;
+    sqlynx_catalog_get_statistics: (ptr: number) => number;
 }
 
 type InstantiateWasmCallback = (stubs: WebAssembly.Imports) => PromiseLike<WebAssembly.WebAssemblyInstantiatedSource>;
@@ -152,6 +153,7 @@ export class SQLynx {
                 data_ptr: number,
                 data_size: number,
             ) => number,
+            sqlynx_catalog_get_statistics: instance.exports['sqlynx_catalog_get_statistics'] as (catalog_ptr: number) => number,
         };
     }
 
@@ -697,6 +699,12 @@ export class SQLynxCatalog {
         builder.finish(descriptorOffset);
         const buffer = builder.asUint8Array();
         this.addSchemaDescriptor(id, buffer);
+    }
+    /// Get the catalog statistics.
+    public getStatistics(): FlatBufferPtr<proto.CatalogStatistics> {
+        const catalogPtr = this.ptr.assertNotNull();
+        const resultPtr = this.ptr.api.instanceExports.sqlynx_catalog_get_statistics(catalogPtr);
+        return this.ptr.api.readFlatBufferResult<proto.CatalogStatistics>(resultPtr, () => new proto.CatalogStatistics());
     }
 }
 

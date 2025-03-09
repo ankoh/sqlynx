@@ -359,11 +359,23 @@ extern "C" FFIResult* sqlynx_catalog_add_schema_descriptor(sqlynx::Catalog* cata
                                                            const void* data_ptr, size_t data_size) {
     std::unique_ptr<const std::byte[]> descriptor_buffer{static_cast<const std::byte*>(data_ptr)};
     std::span<const std::byte> descriptor_data{descriptor_buffer.get(), data_size};
-    auto status = catalog->AddSchemaDescriptor(external_id, descriptor_data, std::move(descriptor_buffer));
+    auto status = catalog->AddSchemaDescriptor(external_id, descriptor_data, std::move(descriptor_buffer), data_size);
     if (status != proto::StatusCode::OK) {
         return packError(status);
     }
     return packOK();
+}
+
+extern "C" FFIResult* sqlynx_catalog_get_statistics(sqlynx::Catalog* catalog) {
+    auto stats = catalog->GetStatistics();
+
+    // Pack the catalog statistics
+    flatbuffers::FlatBufferBuilder fb;
+    fb.Finish(proto::CatalogStatistics::Pack(fb, stats.get()));
+
+    // Return the buffer
+    auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
+    return packBuffer(std::move(detached));
 }
 
 #ifdef WASM

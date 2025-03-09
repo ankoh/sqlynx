@@ -273,6 +273,8 @@ class DescriptorPool : public CatalogEntry {
         const proto::SchemaDescriptor& descriptor;
         /// The descriptor buffer
         std::unique_ptr<const std::byte[]> descriptor_buffer;
+        /// The descriptor buffer size
+        size_t descriptor_buffer_size;
     };
 
    protected:
@@ -293,11 +295,16 @@ class DescriptorPool : public CatalogEntry {
     flatbuffers::Offset<proto::CatalogEntry> DescribeEntry(flatbuffers::FlatBufferBuilder& builder) const override;
     /// Get the name search index
     const NameSearchIndex& GetNameSearchIndex() override;
+    /// Get the name registry
+    const NameRegistry& GetNameRegistry() const { return name_registry; }
+    /// Get the descriptors
+    std::span<const Descriptor> GetDescriptors() const { return descriptor_buffers; }
 
     /// Add a schema descriptor
     proto::StatusCode AddSchemaDescriptor(const proto::SchemaDescriptor& descriptor,
                                           std::unique_ptr<const std::byte[]> descriptor_buffer,
-                                          CatalogDatabaseID& db_id, CatalogSchemaID& schema_id);
+                                          size_t descriptor_buffer_size, CatalogDatabaseID& db_id,
+                                          CatalogSchemaID& schema_id);
 };
 
 class Catalog {
@@ -480,7 +487,8 @@ class Catalog {
     proto::StatusCode DropDescriptorPool(CatalogEntryID external_id);
     /// Add a schema descriptor as serialized FlatBuffer
     proto::StatusCode AddSchemaDescriptor(CatalogEntryID external_id, std::span<const std::byte> descriptor_data,
-                                          std::unique_ptr<const std::byte[]> descriptor_buffer);
+                                          std::unique_ptr<const std::byte[]> descriptor_buffer,
+                                          size_t descriptor_buffer_size);
 
     /// Resolve a table by id
     const CatalogEntry::TableDeclaration* ResolveTable(ContextObjectID table_id) const;
@@ -490,6 +498,8 @@ class Catalog {
     /// Resolve all schema tables
     void ResolveSchemaTables(std::string_view database_name, std::string_view schema_name,
                              std::vector<std::reference_wrapper<const CatalogEntry::TableDeclaration>>& out) const;
+    /// Get statisics
+    std::unique_ptr<proto::CatalogStatisticsT> GetStatistics();
 };
 
 }  // namespace sqlynx

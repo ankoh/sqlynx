@@ -8,6 +8,13 @@ import {
     UPDATE_CATALOG,
 } from './connection_state.js';
 
+/// The default descriptor pool of the catalog
+export const CATALOG_DEFAULT_DESCRIPTOR_POOL = 42;
+/// The rank for catalog default descriptor pool.
+/// We match catalog entries ordered by rank.
+/// A higher rank is matched later.
+export const CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK = 9999;
+
 export enum CatalogUpdateVariant {
     FULL_CATALOG_REFRESH
 }

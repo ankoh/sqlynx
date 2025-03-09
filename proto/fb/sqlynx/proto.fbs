@@ -1,5 +1,6 @@
 include "sqlynx/analyzed_script.fbs";
 include "sqlynx/catalog.fbs";
+include "sqlynx/catalog_statistics.fbs";
 include "sqlynx/completion.fbs";
 include "sqlynx/parsed_script.fbs";
 include "sqlynx/query_plan.fbs";

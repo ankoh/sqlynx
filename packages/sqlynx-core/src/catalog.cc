@@ -240,11 +240,16 @@ const CatalogEntry::NameSearchIndex& DescriptorPool::GetNameSearchIndex() { retu
 
 proto::StatusCode DescriptorPool::AddSchemaDescriptor(const proto::SchemaDescriptor& descriptor,
                                                       std::unique_ptr<const std::byte[]> descriptor_buffer,
-                                                      CatalogDatabaseID& db_id, CatalogSchemaID& schema_id) {
+                                                      size_t descriptor_buffer_size, CatalogDatabaseID& db_id,
+                                                      CatalogSchemaID& schema_id) {
     if (!descriptor.tables()) {
         return proto::StatusCode::CATALOG_DESCRIPTOR_TABLES_NULL;
     }
-    descriptor_buffers.push_back({.descriptor = descriptor, .descriptor_buffer = std::move(descriptor_buffer)});
+    descriptor_buffers.push_back({
+        .descriptor = descriptor,
+        .descriptor_buffer = std::move(descriptor_buffer),
+        .descriptor_buffer_size = descriptor_buffer_size,
+    });
 
     // Register the database name
     auto db_name_text = descriptor.database_name() == nullptr ? "" : descriptor.database_name()->string_view();
@@ -953,7 +958,8 @@ proto::StatusCode Catalog::DropDescriptorPool(CatalogEntryID external_id) {
 }
 
 proto::StatusCode Catalog::AddSchemaDescriptor(CatalogEntryID external_id, std::span<const std::byte> descriptor_data,
-                                               std::unique_ptr<const std::byte[]> descriptor_buffer) {
+                                               std::unique_ptr<const std::byte[]> descriptor_buffer,
+                                               size_t descriptor_buffer_size) {
     auto iter = descriptor_pool_entries.find(external_id);
     if (iter == descriptor_pool_entries.end()) {
         return proto::StatusCode::CATALOG_DESCRIPTOR_POOL_UNKNOWN;
@@ -963,7 +969,8 @@ proto::StatusCode Catalog::AddSchemaDescriptor(CatalogEntryID external_id, std::
     auto& descriptor = *flatbuffers::GetRoot<proto::SchemaDescriptor>(descriptor_data.data());
     CatalogDatabaseID db_id;
     CatalogSchemaID schema_id;
-    auto status = pool.AddSchemaDescriptor(descriptor, std::move(descriptor_buffer), db_id, schema_id);
+    auto status =
+        pool.AddSchemaDescriptor(descriptor, std::move(descriptor_buffer), descriptor_buffer_size, db_id, schema_id);
     if (status != proto::StatusCode::OK) {
         return status;
     }
@@ -1038,4 +1045,33 @@ void Catalog::ResolveSchemaTables(
             out.push_back(table_decl);
         }
     }
+}
+
+/// Get statisics
+std::unique_ptr<proto::CatalogStatisticsT> Catalog::GetStatistics() {
+    auto stats = std::make_unique<proto::CatalogStatisticsT>();
+
+    for (auto& [entry_id, entry] : descriptor_pool_entries) {
+        auto entry_stats = std::make_unique<proto::CatalogEntryStatisticsT>();
+        auto entry_mem = std::make_unique<proto::CatalogMemoryStatistics>();
+
+        auto descriptors = entry->GetDescriptors();
+        auto& name_index = entry->GetNameSearchIndex();
+        auto& name_registry = entry->GetNameRegistry();
+
+        size_t descriptor_bytes = 0;
+        for (auto& descriptor : descriptors) {
+            descriptor_bytes += descriptor.descriptor_buffer_size;
+        }
+
+        entry_mem->mutate_descriptor_buffer_count(descriptors.size());
+        entry_mem->mutate_descriptor_buffer_bytes(descriptor_bytes);
+        entry_mem->mutate_name_search_index_entries(name_index.size());
+        entry_mem->mutate_name_registry_size(name_registry.GetSize());
+        entry_mem->mutate_name_registry_bytes(name_registry.GetByteSize());
+        entry_stats->memory = std::move(entry_mem);
+
+        stats->entries.push_back(std::move(entry_stats));
+    }
+    return stats;
 }

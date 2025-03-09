@@ -27,7 +27,7 @@ struct Schema {
     std::vector<SchemaTable> tables;
 };
 
-std::pair<std::span<const std::byte>, std::unique_ptr<const std::byte[]>> PackSchema(const Schema& schema) {
+std::tuple<std::span<const std::byte>, std::unique_ptr<const std::byte[]>, size_t> PackSchema(const Schema& schema) {
     flatbuffers::FlatBufferBuilder fbb;
     auto database_name = fbb.CreateString(schema.database_name);
     auto schema_name = fbb.CreateString(schema.schema_name);
@@ -59,14 +59,14 @@ std::pair<std::span<const std::byte>, std::unique_ptr<const std::byte[]>> PackSc
     auto buffer = fbb.ReleaseRaw(buffer_size, buffer_offset);
     auto buffer_owned = std::unique_ptr<const std::byte[]>(reinterpret_cast<const std::byte*>(buffer));
     std::span<const std::byte> data_span{buffer_owned.get() + buffer_offset, buffer_size - buffer_offset};
-    return {data_span, std::move(buffer_owned)};
+    return {data_span, std::move(buffer_owned), buffer_size};
 }
 
 TEST(CatalogTest, Clear) {
     Catalog catalog;
     ASSERT_EQ(catalog.AddDescriptorPool(1, 10), proto::StatusCode::OK);
 
-    auto [descriptor, descriptor_buffer] = PackSchema(Schema{
+    auto [descriptor, descriptor_buffer, descriptor_buffer_size] = PackSchema(Schema{
         .database_name = "db1",
         .schema_name = "schema1",
         .tables = {SchemaTable{
@@ -74,7 +74,7 @@ TEST(CatalogTest, Clear) {
             .table_columns = {SchemaTableColumn{.column_name = "column1"}, SchemaTableColumn{.column_name = "column2"},
                               SchemaTableColumn{.column_name = "column3"}}}},
     });
-    auto status = catalog.AddSchemaDescriptor(1, descriptor, std::move(descriptor_buffer));
+    auto status = catalog.AddSchemaDescriptor(1, descriptor, std::move(descriptor_buffer), descriptor_buffer_size);
     ASSERT_EQ(status, proto::StatusCode::OK);
 
     {
@@ -98,7 +98,7 @@ TEST(CatalogTest, SingleDescriptorPool) {
     Catalog catalog;
     ASSERT_EQ(catalog.AddDescriptorPool(1, 10), proto::StatusCode::OK);
 
-    auto [descriptor, descriptor_buffer] = PackSchema(Schema{
+    auto [descriptor, descriptor_buffer, descriptor_buffer_size] = PackSchema(Schema{
         .database_name = "db1",
         .schema_name = "schema1",
         .tables = {SchemaTable{
@@ -106,7 +106,7 @@ TEST(CatalogTest, SingleDescriptorPool) {
             .table_columns = {SchemaTableColumn{.column_name = "column1"}, SchemaTableColumn{.column_name = "column2"},
                               SchemaTableColumn{.column_name = "column3"}}}},
     });
-    auto status = catalog.AddSchemaDescriptor(1, descriptor, std::move(descriptor_buffer));
+    auto status = catalog.AddSchemaDescriptor(1, descriptor, std::move(descriptor_buffer), descriptor_buffer_size);
     ASSERT_EQ(status, proto::StatusCode::OK);
 
     {
@@ -164,7 +164,7 @@ TEST(CatalogTest, FlattenSingleDescriptorPool) {
     Catalog catalog;
     ASSERT_EQ(catalog.AddDescriptorPool(1, 10), proto::StatusCode::OK);
 
-    auto [descriptor, descriptor_buffer] = PackSchema(Schema{
+    auto [descriptor, descriptor_buffer, descriptor_buffer_size] = PackSchema(Schema{
         .database_name = "db1",
         .schema_name = "schema1",
         .tables = {SchemaTable{.table_name = "table1",
@@ -180,7 +180,7 @@ TEST(CatalogTest, FlattenSingleDescriptorPool) {
 
                    }},
     });
-    auto status = catalog.AddSchemaDescriptor(1, descriptor, std::move(descriptor_buffer));
+    auto status = catalog.AddSchemaDescriptor(1, descriptor, std::move(descriptor_buffer), descriptor_buffer_size);
     ASSERT_EQ(status, proto::StatusCode::OK);
 
     flatbuffers::FlatBufferBuilder fb;

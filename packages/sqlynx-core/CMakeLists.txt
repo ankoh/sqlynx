@@ -62,6 +62,7 @@ if(WASM)
         -Wl,--export=sqlynx_catalog_add_descriptor_pool \
         -Wl,--export=sqlynx_catalog_drop_descriptor_pool \
         -Wl,--export=sqlynx_catalog_add_schema_descriptor \
+        -Wl,--export=sqlynx_catalog_get_statistics \
         -Wl,--export=sqlynx_catalog_flatten \
         -Wl,--export=sqlynx_script_new \
         -Wl,--export=sqlynx_script_insert_text_at \

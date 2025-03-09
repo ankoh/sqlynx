@@ -6,6 +6,7 @@ import { QueryExecutionArgs } from './query_execution_args.js';
 import { DynamicConnectionDispatch } from "./connection_registry.js";
 import { CATALOG_UPDATE_REGISTER_QUERY } from "./connection_state.js";
 import { QueryType } from "./query_execution_state.js";
+import { CATALOG_DEFAULT_DESCRIPTOR_POOL, CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK } from "./catalog_update_state.js";
 
 export type InformationSchemaColumnsTable = arrow.Table<{
     table_catalog: arrow.Utf8;
@@ -35,7 +36,7 @@ function collectSchemaDescriptors(result: InformationSchemaColumnsTable): sqlynx
             const columnName = colColumnName.at(i);
             const ordinalPosition = colOrdinalPos.at(i);
 
-            if (!tableCatalog || !tableSchema || !columnName || !tableName || !ordinalPosition) {
+            if (!tableCatalog || !tableSchema || !columnName || !tableName || ordinalPosition === undefined || ordinalPosition == null) {
                 continue;
             }
 
@@ -90,7 +91,7 @@ function collectSchemaDescriptors(result: InformationSchemaColumnsTable): sqlynx
     return descriptors;
 }
 
-export async function queryInformationSchema(connectionId: number, connectionDispatch: DynamicConnectionDispatch, updateId: number, catalogName: string, schemaNames: string[], executor: QueryExecutor): Promise<void> {
+export async function queryInformationSchema(connectionId: number, connectionDispatch: DynamicConnectionDispatch, updateId: number, catalogName: string, schemaNames: string[], executor: QueryExecutor): Promise<sqlynx.proto.SchemaDescriptorT[]> {
     const query = `
         SELECT
             table_catalog,
@@ -122,16 +123,43 @@ export async function queryInformationSchema(connectionId: number, connectionDis
     });
 
     const queryResult = await queryExecution as InformationSchemaColumnsTable;
-
     if (queryResult == null) {
-        // XXX
-        return;
+        return [];
     }
 
     const descriptors = collectSchemaDescriptors(queryResult);
-    // console.log(descriptors);
+    return descriptors;
 }
 
-export async function updateInformationSchemaCatalog(connectionId: number, connectionDispatch: DynamicConnectionDispatch, updateId: number, catalogName: string, schemaNames: string[], executor: QueryExecutor, _catalog: sqlynx.SQLynxCatalog): Promise<void> {
-    await queryInformationSchema(connectionId, connectionDispatch, updateId, catalogName, schemaNames, executor);
+export async function updateInformationSchemaCatalog(connectionId: number, connectionDispatch: DynamicConnectionDispatch, updateId: number, catalogName: string, schemaNames: string[], executor: QueryExecutor, catalog: sqlynx.SQLynxCatalog): Promise<void> {
+    const descriptors = await queryInformationSchema(connectionId, connectionDispatch, updateId, catalogName, schemaNames, executor);
+
+    let prev = performance.now();
+    let log = (msg: string) => {
+        const next = performance.now();
+        console.log(`${Math.floor(next - prev)}     ${msg}`);
+        prev = next;
+    };
+    let printStats = () => {
+        const statsPtr = catalog.getStatistics();
+        const stats = statsPtr.read().unpack();
+        statsPtr.delete();
+        console.log(stats);
+    }
+
+    catalog.dropDescriptorPool(CATALOG_DEFAULT_DESCRIPTOR_POOL);
+    log("drop pool");
+    catalog.addDescriptorPool(CATALOG_DEFAULT_DESCRIPTOR_POOL, CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK);
+    log("add pool");
+    for (const descriptor of descriptors) {
+        catalog.addSchemaDescriptorT(CATALOG_DEFAULT_DESCRIPTOR_POOL, descriptor);
+        log("add descriptor");
+        printStats();
+    }
+
+    const entriesPtr = catalog.describeEntriesOf(CATALOG_DEFAULT_DESCRIPTOR_POOL);
+    const entries = entriesPtr.read();
+    const entriesObj = entries.unpack();
+    entriesPtr.delete();
+    console.log(entriesObj);
 }

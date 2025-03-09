@@ -81,3 +81,5 @@ extern "C" void sqlynx_catalog_drop_descriptor_pool(sqlynx::Catalog* catalog, si
 /// Add schema descriptor to a catalog
 extern "C" FFIResult* sqlynx_catalog_add_schema_descriptor(sqlynx::Catalog* catalog, size_t external_id,
                                                            const void* data_ptr, size_t data_size);
+/// Get catalog statistics
+extern "C" FFIResult* sqlynx_catalog_get_statistics(sqlynx::Catalog* catalog);
