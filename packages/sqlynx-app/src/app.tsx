@@ -40,6 +40,7 @@ import './../static/fonts/fonts.css';
 import './colors.css';
 import './globals.css';
 
+// We decouple (some) page states from the actual page views to remember user input
 const PageStateProviders = (props: { children: React.ReactElement }) => (
     <ConnectorsPageStateProvider>
         <SalesforceConnectorSettingsStateProvider>
