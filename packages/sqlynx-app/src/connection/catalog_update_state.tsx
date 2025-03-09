@@ -1,6 +1,7 @@
 import {
     CATALOG_UPDATE_CANCELLED,
     CATALOG_UPDATE_FAILED,
+    CATALOG_UPDATE_LOAD_DESCRIPTORS,
     CATALOG_UPDATE_REGISTER_QUERY,
     CATALOG_UPDATE_SUCCEEDED,
     CatalogAction,
@@ -80,6 +81,20 @@ export function reduceCatalogAction(state: ConnectionState, action: CatalogActio
             update = {
                 ...update,
                 queries: [...update.queries, action.value[1]],
+                lastUpdateAt: now,
+            };
+            state.catalogUpdates.tasksRunning.set(updateId, update);
+            return {
+                ...state,
+                catalogUpdates: {
+                    ...state.catalogUpdates,
+                    tasksRunning: state.catalogUpdates.tasksRunning,
+                }
+            };
+        }
+        case CATALOG_UPDATE_LOAD_DESCRIPTORS: {
+            update = {
+                ...update,
                 lastUpdateAt: now,
             };
             state.catalogUpdates.tasksRunning.set(updateId, update);
