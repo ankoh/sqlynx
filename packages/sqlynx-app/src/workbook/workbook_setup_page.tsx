@@ -237,7 +237,6 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
     const salesforceSetup = useSalesforceSetup();
     const trinoSetup = useTrinoSetup();
-    const refreshCatalog = useCatalogLoaderQueue();
 
     const [showLogs, setShowLogs] = React.useState<boolean>(false);
     const [showVersionOverlay, setShowVersionOverlay] = React.useState<boolean>(false);

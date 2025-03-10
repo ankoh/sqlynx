@@ -230,6 +230,15 @@ export function reduceWorkbookState(state: WorkbookState, action: WorkbookStateA
                 copy.statistics = rotateStatistics(copy.statistics, copy.script!.getStatistics() ?? null);
                 copy.outdatedAnalysis = false;
 
+                // Update the cursor?
+                if (copy.script && copy.cursor != null) {
+                    const ofs = copy.cursor.textOffset;
+                    const cursorBuffer = copy.script.moveCursor(ofs);
+                    copy.cursor = cursorBuffer.read().unpack();
+                    cursorBuffer.delete();
+                }
+
+                // Create the next script
                 const next = {
                     ...state,
                     scripts: {
@@ -237,6 +246,11 @@ export function reduceWorkbookState(state: WorkbookState, action: WorkbookStateA
                         [copy.scriptKey]: copy
                     }
                 };
+
+                // Update the user focus
+                if (next.userFocus != null && copy.cursor != null) {
+                    next.userFocus = deriveFocusFromScriptCursor(scriptKey, copy, copy.cursor);
+                }
                 return next;
             }
             return state;
