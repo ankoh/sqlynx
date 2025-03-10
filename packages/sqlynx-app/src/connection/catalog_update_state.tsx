@@ -121,7 +121,7 @@ export function reduceCatalogAction(state: ConnectionState, action: CatalogActio
                 catalogUpdates: {
                     tasksRunning: state.catalogUpdates.tasksRunning,
                     tasksFinished: state.catalogUpdates.tasksFinished,
-                    lastFullRefresh: null,
+                    lastFullRefresh: updateId,
                 }
             };
         case CATALOG_UPDATE_FAILED:
@@ -139,7 +139,7 @@ export function reduceCatalogAction(state: ConnectionState, action: CatalogActio
                 catalogUpdates: {
                     tasksRunning: state.catalogUpdates.tasksRunning,
                     tasksFinished: state.catalogUpdates.tasksFinished,
-                    lastFullRefresh: null,
+                    lastFullRefresh: updateId,
                 }
             };
         case CATALOG_UPDATE_SUCCEEDED:
@@ -156,7 +156,7 @@ export function reduceCatalogAction(state: ConnectionState, action: CatalogActio
                 catalogUpdates: {
                     tasksRunning: state.catalogUpdates.tasksRunning,
                     tasksFinished: state.catalogUpdates.tasksFinished,
-                    lastFullRefresh: null,
+                    lastFullRefresh: updateId,
                 }
             };
     }
