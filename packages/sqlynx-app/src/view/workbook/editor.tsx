@@ -1,5 +1,6 @@
 import * as React from 'react';
 import * as sqlynx from '@ankoh/sqlynx-core';
+import * as styles from './editor.module.css';
 import * as themes from './themes/index.js';
 
 import { lineNumbers } from '@codemirror/view';
@@ -20,8 +21,6 @@ import { useLogger } from '../../platform/logger_provider.js';
 import { useConnectionState } from '../../connection/connection_registry.js';
 import { useCatalogLoaderQueue } from '../../connection/catalog_loader.js';
 import { ConnectionHealth } from '../../connection/connection_state.js';
-
-import * as styles from './editor.module.css';
 
 interface Props {
     className?: string;
@@ -122,8 +121,7 @@ export const ScriptEditor: React.FC<Props> = (_props: Props) => {
     React.useEffect(() => {
         const lastFullRefresh = connState?.catalogUpdates.lastFullRefresh ?? null;
         if (lastFullRefresh == null && connState != null && connState.connectionHealth == ConnectionHealth.ONLINE) {
-            refreshCatalog(connState.connectionId);
-            console.log("refresh the catalog");
+            refreshCatalog(connState.connectionId, false);
         }
     }, [connState]);
 

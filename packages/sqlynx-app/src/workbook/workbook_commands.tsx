@@ -72,7 +72,7 @@ export const WorkbookCommands: React.FC<Props> = (props: Props) => {
                     if (connection?.connectionHealth != ConnectionHealth.ONLINE) {
                         logger.error("cannot refresh the catalog of unhealthy connection", {});
                     } else {
-                        queueCatalogLoading(connection.connectionId);
+                        queueCatalogLoading(connection.connectionId, true);
                     }
                     break;
                 case WorkbookCommandType.SaveWorkbookAsLink:

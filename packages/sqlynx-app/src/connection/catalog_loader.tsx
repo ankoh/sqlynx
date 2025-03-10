@@ -28,12 +28,12 @@ interface CatalogLoaderArgs { }
 /// The catalog updater function
 export type CatalogLoader = (connectionId: number, args: CatalogLoaderArgs) => [number, Promise<void>];
 /// A function to add a connection id to a catalog loader queue
-type CatalogLoaderQueueFn = (connectionId: number) => void;
+type RefreshCatalogFn = (connectionId: number, force: boolean) => void;
 /// A catalog loader queue
-interface CatalogLoaderQueue { queue: Set<number>; }
+interface CatalogLoaderQueue { queue: Map<number, boolean>; }
 
 /// The React context to propagate a active catalog loader queue function
-const LOADER_QUEUE_FN_CTX = React.createContext<CatalogLoaderQueueFn | null>(null);
+const LOADER_QUEUE_FN_CTX = React.createContext<RefreshCatalogFn | null>(null);
 
 /// The hook to resolve the catalog queue
 export const useCatalogLoaderQueue = () => React.useContext(LOADER_QUEUE_FN_CTX)!;
@@ -173,9 +173,9 @@ export function CatalogLoaderProvider(props: { children?: React.ReactElement }) 
     }, [updateImpl]);
 
     // Maintain a queue
-    const [queueState, setQueueState] = React.useState<CatalogLoaderQueue>(() => ({ queue: new Set() }));
-    const enqueue = React.useCallback<CatalogLoaderQueueFn>((cid: number) => {
-        setQueueState(s => ({ queue: s.queue.add(cid) }));
+    const [queueState, setQueueState] = React.useState<CatalogLoaderQueue>(() => ({ queue: new Map() }));
+    const enqueue = React.useCallback<RefreshCatalogFn>((cid: number, force: boolean) => {
+        setQueueState(s => ({ queue: s.queue.set(cid, force) }));
     }, []);
 
     // Subscribe the queue
@@ -199,7 +199,7 @@ export function CatalogLoaderProvider(props: { children?: React.ReactElement }) 
         };
 
         const processed: number[] = [];
-        for (const cid of queueState.queue) {
+        for (const [cid, force] of queueState.queue) {
             // Already updating?
             if (inProgress.has(cid)) {
                 continue;
@@ -221,7 +221,7 @@ export function CatalogLoaderProvider(props: { children?: React.ReactElement }) 
             }
 
             // Was there a recent refresh?
-            if (connState.catalogUpdates.lastFullRefresh != null) {
+            if (!force && connState.catalogUpdates.lastFullRefresh != null) {
                 const refresh = connState.catalogUpdates.tasksRunning.get(connState.catalogUpdates.lastFullRefresh)
                     ?? connState.catalogUpdates.tasksFinished.get(connState.catalogUpdates.lastFullRefresh)
                     ?? null;

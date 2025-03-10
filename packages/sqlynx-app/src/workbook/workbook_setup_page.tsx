@@ -237,7 +237,7 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
     const salesforceSetup = useSalesforceSetup();
     const trinoSetup = useTrinoSetup();
-    const loadCatalog = useCatalogLoaderQueue();
+    const refreshCatalog = useCatalogLoaderQueue();
 
     const [showLogs, setShowLogs] = React.useState<boolean>(false);
     const [showVersionOverlay, setShowVersionOverlay] = React.useState<boolean>(false);
@@ -315,9 +315,6 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
             // XXX This is the first time we're modifying the attached workbook....
             //     We should make sure this is sane, ideally we would get the connector info from there.
             dispatchWorkbook({ type: RESTORE_WORKBOOK, value: workbookProto });
-
-            // Load the catalog
-            loadCatalog(connection.connectionId);
 
             // Navigate to the app root
             navigate("/");
