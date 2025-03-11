@@ -8,6 +8,8 @@ import {
     CATALOG_UPDATE_CANCELLED,
     CATALOG_UPDATE_FAILED,
     CATALOG_UPDATE_SUCCEEDED,
+    ConnectionHealth,
+    ConnectionState,
     UPDATE_CATALOG,
 } from './connection_state.js';
 import { updateSalesforceCatalog } from './salesforce/salesforce_catalog_update.js';
@@ -262,4 +264,15 @@ export function CatalogLoaderProvider(props: { children?: React.ReactElement }) 
             {props.children}
         </LOADER_QUEUE_FN_CTX.Provider>
     );
+}
+
+
+export function refreshCatalogOnce(connState: ConnectionState | null) {
+    const refreshCatalog = useCatalogLoaderQueue();
+    React.useEffect(() => {
+        const lastFullRefresh = connState?.catalogUpdates.lastFullRefresh ?? null;
+        if (lastFullRefresh == null && connState != null && connState.connectionHealth == ConnectionHealth.ONLINE) {
+            refreshCatalog(connState.connectionId, false);
+        }
+    }, [connState]);
 }

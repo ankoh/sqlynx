@@ -17,7 +17,7 @@ interface CatalogPanelProps { }
 
 export function CatalogPanel(_props: CatalogPanelProps) {
     const [workbookState, _dispatchWorkbook] = useCurrentWorkbookState();
-    const [connState, connDispatch] = useConnectionState(workbookState?.connectionId ?? null);
+    const [connState, _connDispatch] = useConnectionState(workbookState?.connectionId ?? null);
 
     const workbookEntry = workbookState?.workbookEntries[workbookState.selectedWorkbookEntry];
     const script = workbookEntry ? workbookState.scripts[workbookEntry.scriptKey] : null;

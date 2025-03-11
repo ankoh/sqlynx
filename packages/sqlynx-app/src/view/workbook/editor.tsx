@@ -19,8 +19,7 @@ import { useAppConfig } from '../../app_config.js';
 import { useCurrentWorkbookState } from '../../workbook/current_workbook.js';
 import { useLogger } from '../../platform/logger_provider.js';
 import { useConnectionState } from '../../connection/connection_registry.js';
-import { useCatalogLoaderQueue } from '../../connection/catalog_loader.js';
-import { ConnectionHealth } from '../../connection/connection_state.js';
+import { refreshCatalogOnce } from '../../connection/catalog_loader.js';
 
 interface Props {
     className?: string;
@@ -37,7 +36,6 @@ export const ScriptEditor: React.FC<Props> = (_props: Props) => {
     const config = useAppConfig();
     const [workbook, modifyWorkbook] = useCurrentWorkbookState();
     const [connState, _modifyConn] = useConnectionState(workbook?.connectionId ?? null);
-    const refreshCatalog = useCatalogLoaderQueue();
 
     // The editor view
     const [view, setView] = React.useState<EditorView | null>(null);
@@ -55,6 +53,20 @@ export const ScriptEditor: React.FC<Props> = (_props: Props) => {
         ? workbook!.workbookEntries[workbookEntryIdx]
         : null;
     const workbookEntryScriptData = workbookEntry != null ? workbook!.scripts[workbookEntry.scriptKey] : null;
+
+    // Effect to refresh the connection catalog for the active script
+    // if it hasn't been refreshed yet.
+    refreshCatalogOnce(connState);
+
+    // Update outdated scripts that are displayed in the editor
+    React.useEffect(() => {
+        if (workbookEntryScriptData?.outdatedAnalysis) {
+            modifyWorkbook({
+                type: UPDATE_SCRIPT,
+                value: workbookEntryScriptData.scriptKey
+            });
+        }
+    }, [workbookEntryScriptData]);
 
     // Helper to update a script.
     // Called when the script gets updated by the CodeMirror extension.
@@ -105,25 +117,6 @@ export const ScriptEditor: React.FC<Props> = (_props: Props) => {
             value: scriptKey,
         });
     }, []);
-
-    // Effect to update outdated scripts
-    React.useEffect(() => {
-        if (workbookEntryScriptData?.outdatedAnalysis) {
-            modifyWorkbook({
-                type: UPDATE_SCRIPT,
-                value: workbookEntryScriptData.scriptKey
-            });
-        }
-    }, [workbookEntryScriptData]);
-
-    // Effect to refresh the connection catalog for the active script
-    // if it hasn't been refreshed yet.
-    React.useEffect(() => {
-        const lastFullRefresh = connState?.catalogUpdates.lastFullRefresh ?? null;
-        if (lastFullRefresh == null && connState != null && connState.connectionHealth == ConnectionHealth.ONLINE) {
-            refreshCatalog(connState.connectionId, false);
-        }
-    }, [connState]);
 
     // Effect to update the editor context whenever the script changes
     React.useEffect(() => {
