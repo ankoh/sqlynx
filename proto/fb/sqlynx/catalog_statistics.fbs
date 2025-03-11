@@ -1,5 +1,16 @@
 namespace sqlynx.proto;
 
+struct CatalogContentStatistics {
+    /// The database count
+    database_count: uint32;
+    /// The schema count
+    schema_count: uint32;
+    /// The table count
+    table_count: uint32;
+    /// The table column count
+    table_column_count: uint32;
+}
+
 struct CatalogMemoryStatistics {
     /// The number of descriptor buffers
     descriptor_buffer_count: uint32;
@@ -16,9 +27,13 @@ struct CatalogMemoryStatistics {
 table CatalogEntryStatistics {
     /// The memory statistics
     memory: CatalogMemoryStatistics;
+    /// The content statistics
+    content: CatalogContentStatistics;
 }
 
 table CatalogStatistics {
     /// The catalog entries
     entries: [CatalogEntryStatistics];
+    /// The content statistics
+    content: CatalogContentStatistics;
 }

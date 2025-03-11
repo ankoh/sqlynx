@@ -234,6 +234,8 @@ class CatalogEntry {
     auto& GetTables() const { return table_declarations; }
     /// Get the table declarations by name
     auto& GetTablesByName() const { return tables_by_name; }
+    /// Get the table columns by name
+    auto& GetTableColumnsByName() const { return table_columns_by_name; }
 
     /// Get the qualified name
     QualifiedTableName QualifyTableName(NameRegistry& name_registry, QualifiedTableName name) const;

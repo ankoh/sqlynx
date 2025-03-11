@@ -1058,10 +1058,17 @@ void Catalog::ResolveSchemaTables(
 /// Get statisics
 std::unique_ptr<proto::CatalogStatisticsT> Catalog::GetStatistics() {
     auto stats = std::make_unique<proto::CatalogStatisticsT>();
+    proto::CatalogContentStatistics totals;
+
+    size_t total_dbs = 0;
+    size_t total_schemas = 0;
+    size_t total_tables = 0;
+    size_t total_columns = 0;
 
     for (auto& [entry_id, entry] : descriptor_pool_entries) {
         auto entry_stats = std::make_unique<proto::CatalogEntryStatisticsT>();
         auto entry_mem = std::make_unique<proto::CatalogMemoryStatistics>();
+        auto entry_content = std::make_unique<proto::CatalogContentStatistics>();
 
         auto descriptors = entry->GetDescriptors();
         auto& name_index = entry->GetNameSearchIndex();
@@ -1079,7 +1086,30 @@ std::unique_ptr<proto::CatalogStatisticsT> Catalog::GetStatistics() {
         entry_mem->mutate_name_registry_bytes(name_registry.GetByteSize());
         entry_stats->memory = std::move(entry_mem);
 
+        auto& dbs = entry->GetDatabases();
+        auto& schemas = entry->GetSchemas();
+        auto& tables = entry->GetTables();
+        auto& table_columns = entry->GetTableColumnsByName();
+        entry_content->mutate_database_count(dbs.GetSize());
+        entry_content->mutate_schema_count(schemas.GetSize());
+        entry_content->mutate_table_count(tables.GetSize());
+        entry_content->mutate_table_column_count(table_columns.size());
+        entry_stats->content = std::move(entry_content);
+
+        total_dbs += dbs.GetSize();
+        total_schemas += schemas.GetSize();
+        total_tables += tables.GetSize();
+        total_columns += table_columns.size();
+
         stats->entries.push_back(std::move(entry_stats));
     }
+
+    auto content = std::make_unique<proto::CatalogContentStatistics>();
+    content->mutate_database_count(total_dbs);
+    content->mutate_schema_count(total_schemas);
+    content->mutate_table_count(total_tables);
+    content->mutate_table_column_count(total_columns);
+    stats->content = std::move(content);
+
     return stats;
 }
