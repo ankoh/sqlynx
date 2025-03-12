@@ -12,6 +12,7 @@ import { CatalogPanelSidebar } from './catalog_panel_sidebar.js';
 import { useConnectionState } from '../../connection/connection_registry.js';
 import { CatalogUpdateTaskState, CatalogUpdateTaskStatus } from '../../connection/catalog_update_state.js';
 import { CatalogRefreshView } from './catalog_refresh_view.js';
+import { CatalogInfoView } from './catalog_info_view.js';
 
 interface CatalogPanelProps { }
 
@@ -149,10 +150,17 @@ export function CatalogPanel(_props: CatalogPanelProps) {
             <div className={styles.panel_container}>
                 <div className={styles.catalog_viewer}>
                     <CatalogViewer />
-                    {showRefreshView &&
-                        <div className={styles.info_overlay}>
-                            <CatalogRefreshView conn={connState!} refresh={fullRefreshTask} />
-                        </div>
+                    {showRefreshView
+                        ? (
+                            <div className={styles.info_overlay}>
+                                <CatalogRefreshView conn={connState!} refresh={fullRefreshTask} />
+                            </div>
+                        )
+                        : (
+                            <div className={styles.info_overlay}>
+                                <CatalogInfoView conn={connState!} />
+                            </div>
+                        )
                     }
 
                 </div>
