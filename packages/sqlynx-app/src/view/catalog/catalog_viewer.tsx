@@ -221,14 +221,6 @@ export function CatalogViewer(_props: Props) {
                     </div>
                 </div>
             </div>
-            <div className={styles.actions_container}>
-                <div className={styles.action}>
-                </div>
-                <div className={styles.action}>
-                </div>
-                <div className={styles.action}>
-                </div>
-            </div>
         </div>
     );
 }

@@ -147,18 +147,18 @@ export function CatalogPanel(_props: CatalogPanelProps) {
                 </div>
             </div>
             <div className={styles.panel_container}>
-                {showRefreshView ? (
-                    <CatalogRefreshView conn={connState!} refresh={fullRefreshTask} />
-                ) : (
-                    <>
-                        <div className={styles.catalog_viewer}>
-                            <CatalogViewer />
+                <div className={styles.catalog_viewer}>
+                    <CatalogViewer />
+                    {showRefreshView &&
+                        <div className={styles.info_overlay}>
+                            <CatalogRefreshView conn={connState!} refresh={fullRefreshTask} />
                         </div>
-                        <div className={styles.info_toggle} onClick={toggleInfo} />
-                        {infoExpanded && (
-                            <CatalogPanelSidebar entries={infoEntries} />
-                        )}
-                    </>
+                    }
+
+                </div>
+                <div className={styles.info_toggle} onClick={toggleInfo} />
+                {infoExpanded && (
+                    <CatalogPanelSidebar entries={infoEntries} />
                 )}
             </div>
         </div>
