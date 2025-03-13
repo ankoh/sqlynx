@@ -27,7 +27,7 @@ function collectSchemaDescriptors(result: InformationSchemaColumnsTable): sqlynx
         const colTableSchema = batch.getChild("table_schema")!;
         const colTableName = batch.getChild("table_name")!;
         const colColumnName = batch.getChild("column_name")!;
-        const colOrdinalPos = batch.getChild("ordinal_position")!;
+        // const colOrdinalPos = batch.getChild("ordinal_position")!;
 
         // Iterate over all rows in the batch
         for (let i = 0; i < batch.numRows; ++i) {
@@ -35,9 +35,9 @@ function collectSchemaDescriptors(result: InformationSchemaColumnsTable): sqlynx
             const tableSchema = colTableSchema.at(i);
             const tableName = colTableName.at(i);
             const columnName = colColumnName.at(i);
-            const ordinalPosition = colOrdinalPos.at(i);
+            // const ordinalPosition = colOrdinalPos.at(i); XXX
 
-            if (!tableCatalog || !tableSchema || !columnName || !tableName || ordinalPosition === undefined || ordinalPosition == null) {
+            if (!tableCatalog || !tableSchema || !columnName || !tableName) {
                 continue;
             }
 
@@ -47,7 +47,7 @@ function collectSchemaDescriptors(result: InformationSchemaColumnsTable): sqlynx
                 // Catalog does not exist, create a new map for schema tables
                 const tableMap = new Map<string, sqlynx.proto.SchemaTableT>();
                 tableMap.set(tableName, new sqlynx.proto.SchemaTableT(nextTableId++, tableName, [
-                    new sqlynx.proto.SchemaTableColumnT(columnName),
+                    new sqlynx.proto.SchemaTableColumnT(columnName, 0),
                 ]));
                 const schemaMap = new Map<string, Map<string, sqlynx.proto.SchemaTableT>>();
                 schemaMap.set(tableSchema, tableMap);
@@ -68,10 +68,10 @@ function collectSchemaDescriptors(result: InformationSchemaColumnsTable): sqlynx
                     if (!table) {
                         // Table does not exist, create a new table
                         tableMap.set(tableName, new sqlynx.proto.SchemaTableT(nextTableId++, tableName, [
-                            new sqlynx.proto.SchemaTableColumnT(columnName, ordinalPosition),
+                            new sqlynx.proto.SchemaTableColumnT(columnName, 0),
                         ]));
                     } else {
-                        table.columns.push(new sqlynx.proto.SchemaTableColumnT(columnName));
+                        table.columns.push(new sqlynx.proto.SchemaTableColumnT(columnName, table.columns.length));
                     }
                 }
             }
