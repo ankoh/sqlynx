@@ -213,7 +213,6 @@ export function CatalogViewer(_props: Props) {
                             paths={edgesFocused ?? []}
                         />
                         <NodeLayer
-                            className={styles.node_layer}
                             width={totalWidth}
                             height={totalHeight}
                             padding={padding}
