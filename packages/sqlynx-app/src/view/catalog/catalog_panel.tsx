@@ -8,7 +8,6 @@ import { CatalogViewer } from '../catalog/catalog_viewer.js';
 import { FOCUSED_COMPLETION, FOCUSED_EXPRESSION_ID, FOCUSED_TABLE_REF_ID } from '../../workbook/focus.js';
 import { useCurrentWorkbookState } from '../../workbook/current_workbook.js';
 import { U32_MAX } from '../../utils/numeric_limits.js';
-import { CatalogPanelSidebar } from './catalog_panel_sidebar.js';
 import { useConnectionState } from '../../connection/connection_registry.js';
 import { CatalogUpdateTaskState, CatalogUpdateTaskStatus } from '../../connection/catalog_update_state.js';
 import { CatalogRefreshView } from './catalog_refresh_view.js';
@@ -138,15 +137,8 @@ export function CatalogPanel(_props: CatalogPanelProps) {
     const showRefreshView = fullRefreshTask != null
         && fullRefreshTask.status != CatalogUpdateTaskStatus.SUCCEEDED;
 
-    const [infoExpanded, setInfoExpanded] = React.useState(false);
-    const toggleInfo = () => setInfoExpanded(e => !e);
     return (
         <div className={styles.root}>
-            <div className={styles.panel_header}>
-                <div className={styles.panel_header_title}>
-                    Catalog
-                </div>
-            </div>
             <div className={styles.panel_container}>
                 <div className={styles.catalog_viewer}>
                     <CatalogViewer />
@@ -158,16 +150,12 @@ export function CatalogPanel(_props: CatalogPanelProps) {
                         )
                         : (
                             <div className={styles.info_overlay}>
-                                <CatalogInfoView conn={connState!} />
+                                <CatalogInfoView conn={connState!} entries={infoEntries} />
                             </div>
                         )
                     }
 
                 </div>
-                <div className={styles.info_toggle} onClick={toggleInfo} />
-                {infoExpanded && (
-                    <CatalogPanelSidebar entries={infoEntries} />
-                )}
             </div>
         </div>
     );

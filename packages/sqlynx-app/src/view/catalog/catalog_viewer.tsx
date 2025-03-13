@@ -199,20 +199,21 @@ export function CatalogViewer(_props: Props) {
                 <div className={styles.board_container_shadows}>
                     <div className={styles.board}>
                         <EdgeLayer
+                            className={styles.edge_layer}
                             width={totalWidth}
                             height={totalHeight}
                             padding={padding}
                             paths={edges ?? []}
-                            className={styles.edge_layer}
                         />
                         <EdgeLayer
+                            className={styles.edge_layer_focused}
                             width={totalWidth}
                             height={totalHeight}
                             padding={padding}
                             paths={edgesFocused ?? []}
-                            className={styles.edge_layer_focused}
                         />
                         <NodeLayer
+                            className={styles.node_layer}
                             width={totalWidth}
                             height={totalHeight}
                             padding={padding}

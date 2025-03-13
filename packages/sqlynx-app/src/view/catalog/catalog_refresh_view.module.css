@@ -4,4 +4,9 @@
 
 .header {
     padding: 8px 16px ;
+    font-size: 0.95rem;
+}
+
+.query_list {
+    border-top: 1px solid var(--border_color_primary);
 }

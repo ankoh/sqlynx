@@ -16,7 +16,7 @@ export function CatalogRefreshView(props: CatalogRefreshViewProps) {
             <div className={styles.header}>
                 {CATALOG_UPDATE_TASK_STATUS_NAMES[props.refresh.status]}
             </div>
-            <div>
+            <div className={styles.query_list}>
                 <QueryInfoListView conn={props.conn.connectionId} connQueries={props.refresh?.queries ?? []} />
             </div>
         </div>

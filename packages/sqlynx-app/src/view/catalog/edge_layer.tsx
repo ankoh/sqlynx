@@ -1,11 +1,11 @@
 import * as React from 'react';
 
 interface EdgeLayerProps {
+    className?: string;
     width: number;
     height: number;
     padding: number;
     paths: React.ReactElement[];
-    className: string;
 }
 
 export function EdgeLayer(props: EdgeLayerProps) {

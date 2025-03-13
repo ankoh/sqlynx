@@ -565,7 +565,7 @@ export class SQLynxScript {
 }
 
 export class SQLynxCatalogSnapshotReader {
-    catalogReader: proto.FlatCatalog;
+    public catalogReader: proto.FlatCatalog;
     nameDictionary: (string | null)[];
 
     /// Construct a snapshot reader with a name dictionary

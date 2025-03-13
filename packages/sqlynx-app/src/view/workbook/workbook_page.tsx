@@ -47,7 +47,7 @@ const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
                     <SyncIcon />
                 </ActionList.Leading>
                 <ActionList.ItemText>
-                    Refresh Schema
+                    Refresh Catalog
                 </ActionList.ItemText>
                 <ActionList.Trailing>Ctrl + R</ActionList.Trailing>
             </ActionList.ListItem>

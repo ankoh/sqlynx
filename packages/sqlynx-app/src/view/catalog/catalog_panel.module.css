@@ -5,14 +5,8 @@
     height: 100%;
 
     display: grid;
-    grid-template-rows: 32px calc(100% - 32px);
+    grid-template-rows: 100%;
     grid-template-columns: 100%;
-}
-
-.panel_header {
-    border-bottom: 1px solid var(--border_color_primary);
-    display: flex;
-    align-items: center;
 }
 .panel_header_title {
     margin-left: 16px;
