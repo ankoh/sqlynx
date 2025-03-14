@@ -2,9 +2,6 @@
     "settings": {
         "enableScriptFiles": false,
         "showCompletionDetails": false,
-        "enableCommandRefreshSchema": false,
-        "enableCommandSaveQueryAsSql": false,
-        "enableCommandSaveResultsAsArrow": false,
         "interfaceDebugMode": false
     },
     "connectors": {

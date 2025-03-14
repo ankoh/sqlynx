@@ -7,6 +7,7 @@ import * as icons from '../../../static/svg/symbols.generated.svg';
 import { ButtonGroup, IconButton } from '@primer/react';
 import { DownloadIcon, LinkIcon, PaperAirplaneIcon, SyncIcon, ThreeBarsIcon } from '@primer/octicons-react';
 
+import { CatalogPanel } from '../../view/catalog/catalog_panel.js';
 import { ConnectorInfo } from '../../connection/connector_info.js';
 import { DragSizing, DragSizingBorder } from '../foundations/drag_sizing.js';
 import { KeyEventHandler, useKeyEvents } from '../../utils/key_events.js';
@@ -14,15 +15,14 @@ import { QueryExecutionStatus } from '../../connection/query_execution_state.js'
 import { QueryResultView } from '../query_result/query_result_view.js';
 import { QueryStatusPanel } from '../query_status/query_status_panel.js';
 import { ScriptEditor } from './editor.js';
-import { CatalogPanel } from '../../view/catalog/catalog_panel.js';
-import { WorkbookURLShareOverlay } from './workbook_url_share_overlay.js';
-import { WorkbookCommandType, useWorkbookCommandDispatch } from '../../workbook/workbook_commands.js';
-import { WorkbookListDropdown } from './session_list_dropdown.js';
 import { VerticalTabs, VerticalTabVariant } from '../foundations/vertical_tabs.js';
-import { useAppConfig } from '../../app_config.js';
+import { WorkbookCommandType, useWorkbookCommandDispatch } from '../../workbook/workbook_commands.js';
+import { WorkbookEntryList } from './workbook_entry_list.js';
+import { WorkbookFileSaveOverlay } from './workbook_file_save_overlay.js';
+import { WorkbookListDropdown } from './session_list_dropdown.js';
+import { WorkbookURLShareOverlay } from './workbook_url_share_overlay.js';
 import { useCurrentWorkbookState } from '../../workbook/current_workbook.js';
 import { useQueryState } from '../../connection/query_executor.js';
-import { WorkbookEntryList } from './workbook_entry_list.js';
 
 const ConnectionCommandList = (props: { connector: ConnectorInfo | null }) => {
     const sessionCommand = useWorkbookCommandDispatch();
@@ -55,9 +55,9 @@ const ConnectionCommandList = (props: { connector: ConnectorInfo | null }) => {
     );
 };
 
-const WorkbookCommandList = (props: { connector: ConnectorInfo | null }) => {
-    const config = useAppConfig();
+const WorkbookCommandList = (_props: { connector: ConnectorInfo | null }) => {
     const [linkSharingIsOpen, openLinkSharing] = React.useState<boolean>(false);
+    const [fileSaveIsOpen, openFileSave] = React.useState<boolean>(false);
     return (
         <>
             <ActionList.ListItem onClick={() => openLinkSharing(s => !s)}>
@@ -70,13 +70,14 @@ const WorkbookCommandList = (props: { connector: ConnectorInfo | null }) => {
                 </ActionList.ItemText>
                 <ActionList.Trailing>Ctrl + U</ActionList.Trailing>
             </ActionList.ListItem>
-            <ActionList.ListItem
-                disabled={!props.connector?.features.executeQueryAction || !config.value?.settings?.enableCommandSaveResultsAsArrow}
-            >
+            <ActionList.ListItem onClick={() => openFileSave(s => !s)}>
                 <ActionList.Leading>
                     <DownloadIcon />
                 </ActionList.Leading>
-                <ActionList.ItemText>Save as File</ActionList.ItemText>
+                <ActionList.ItemText>
+                    Save as File
+                    <WorkbookFileSaveOverlay isOpen={fileSaveIsOpen} setIsOpen={openFileSave} />
+                </ActionList.ItemText>
                 <ActionList.Trailing>Ctrl + S</ActionList.Trailing>
             </ActionList.ListItem>
         </>

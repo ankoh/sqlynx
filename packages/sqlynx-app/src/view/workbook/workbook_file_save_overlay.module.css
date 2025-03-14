@@ -1,50 +1,61 @@
 @media only screen and (max-width: 400px) {
-    .filesave_overlay {
+    .overlay {
         display: grid;
         grid-template-rows: max-content;
-        grid-template-columns: 20px 1fr max-content;
+        grid-template-columns: 100%;
         padding: 8px;
         column-gap: 8px;
         justify-content: center;
         align-items: center;
+        width: 300px;
     }
 }
 @media only screen and (min-width: 400px) {
-    .filesave_overlay {
+    .overlay {
         display: grid;
         grid-template-rows: max-content;
-        grid-template-columns: 20px 1fr max-content;
+        grid-template-columns: 100%;
         padding: 8px;
-        width: 200px;
+        width: 300px;
         column-gap: 8px;
         justify-content: center;
         align-items: center;
     }
 }
 
-.filesave_file_icon_container {
+.header {
+    width: 100%;
+    height: 100%;
+
+    display: grid;
+    grid-template-rows: max-content;
+    grid-template-columns: 24px 1fr max-content;
+    column-gap: 8px;
+}
+
+.file_icon_container {
     grid-row: 1;
     grid-column: 1;
     display: grid;
     justify-items: center;
     align-items: center;
 }
-.filesave_file_info {
+.file_info {
     display: grid;
-    grid-template-columns: 100%;
-    grid-template-rows: 1fr 1fr;
-    row-gap: 2px;
+    grid-template-columns: 1fr max-content;
+    grid-template-rows: 100%;
+    align-items: center;
 }
-.filesave_file_name {
-    grid-row: 1;
+.file_name {
+    grid-column: 1;
     font-size: 0.9rem;
     font-weight: 500;
 }
-.filesave_file_stats {
-    grid-row: 2;
+.file_stats {
+    grid-column: 2;
     font-size: 0.7rem;
 }
-.filesave_download {
+.download {
     grid-row: 1;
     grid-column: 3;
 }

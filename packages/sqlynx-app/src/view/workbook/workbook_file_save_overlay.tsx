@@ -29,20 +29,22 @@ export const WorkbookFileSaveOverlay: React.FC<Props> = (props: Props) => {
                 initialFocusRef: buttonRef,
             }}
         >
-            <Box className={classNames(styles.filesave_overlay, props.className)}>
-                <div className={styles.filesave_file_icon_container}>
-                    <FileIcon />
-                </div>
-                <div className={styles.filesave_file_info}>
-                    <div className={styles.filesave_file_name}>query.sql</div>
-                    <div className={styles.filesave_file_stats}>~&nbsp;123&nbsp;KB</div>
-                </div>
-                <div className={styles.filesave_download}>
-                    <IconButton
-                        ref={buttonRef}
-                        icon={DownloadIcon}
-                        aria-labelledby="save-file"
-                    />
+            <Box className={classNames(styles.overlay, props.className)}>
+                <div className={styles.header}>
+                    <div className={styles.file_icon_container}>
+                        <FileIcon />
+                    </div>
+                    <div className={styles.file_info}>
+                        <div className={styles.file_name}>workbook.slnx</div>
+                        <div className={styles.file_stats}>~&nbsp;123&nbsp;KB</div>
+                    </div>
+                    <div className={styles.download}>
+                        <IconButton
+                            ref={buttonRef}
+                            icon={DownloadIcon}
+                            aria-labelledby="save-file"
+                        />
+                    </div>
                 </div>
             </Box>
         </AnchoredOverlay>
