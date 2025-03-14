@@ -58,6 +58,8 @@ table SchemaTableColumn {
 
 // ----------------------------------------------------------------------------
 
+// Note that the following types are mirrored into the protobuf message type "FlatCatalog".
+
 /// Our API supports returning a "flattened" catalog where entries from the same schema are merged.
 /// The data is structured in a way that enables an efficient "virtualized" hierarchical schema tree renderer.
 /// - A renderer can determine the virtual boundaries in logarithmic time.

@@ -252,9 +252,6 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
     // Need to switch to native?
     // Some connectors only run in the native app.
     let canExecuteHere = props.connector ? !requiresSwitchingToNative(props.connector) : true;
-    if (props.setupProto.noPlatformCheck) {
-        canExecuteHere = true;
-    }
 
     // Helper to configure the workbook
     const [setupStarted, setSetupStarted] = React.useState<boolean>(false);
