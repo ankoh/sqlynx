@@ -13,6 +13,7 @@ import { getConnectionParamsFromDetails } from '../../connection/connection_para
 import { sleep } from '../../utils/sleep.js';
 import { useConnectionState } from '../../connection/connection_registry.js';
 import { useCurrentWorkbookState } from '../../workbook/current_workbook.js';
+import { WorkbookExportSettings } from './workbook_export_settings.js';
 
 const COPY_CHECKMARK_DURATION_MS = 1000;
 
@@ -111,9 +112,8 @@ export const WorkbookURLShareOverlay: React.FC<Props> = (props: Props) => {
             }}
         >
             <Box className={classNames(styles.sharing_overlay, props.className)}>
-                <div className={styles.sharing_title}>Save Query as Link</div>
                 <div className={styles.sharing_url}>
-                    <TextInput className={styles.sharing_url} disabled={true} value={state.publicURLText ?? ''} />
+                    <TextInput disabled={true} value={state.publicURLText ?? ''} />
                     <IconButton
                         ref={buttonRef}
                         icon={state.copyFinishedAt != null && state.uiResetAt == null ? CheckIcon : PaperclipIcon}
@@ -122,6 +122,7 @@ export const WorkbookURLShareOverlay: React.FC<Props> = (props: Props) => {
                     />
                     <div className={styles.sharing_url_stats}>{state.publicURLText?.length ?? 0} characters</div>
                 </div>
+                <WorkbookExportSettings enableCatalog={false} />
             </Box>
         </AnchoredOverlay>
     );

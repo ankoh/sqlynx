@@ -3,6 +3,7 @@ import * as React from 'react';
 import { Box, IconButton } from '@primer/react';
 import { DownloadIcon, FileIcon } from '@primer/octicons-react';
 
+import { WorkbookExportSettings } from './workbook_export_settings.js';
 import { AnchoredOverlay } from '../foundations/anchored_overlay.js';
 import { AnchorAlignment } from '../foundations/anchored_position.js';
 import { classNames } from '../../utils/classnames.js';
@@ -36,7 +37,7 @@ export const WorkbookFileSaveOverlay: React.FC<Props> = (props: Props) => {
                     </div>
                     <div className={styles.file_info}>
                         <div className={styles.file_name}>workbook.slnx</div>
-                        <div className={styles.file_stats}>~&nbsp;123&nbsp;KB</div>
+                        <div className={styles.file_size}>~&nbsp;123&nbsp;KB</div>
                     </div>
                     <div className={styles.download}>
                         <IconButton
@@ -46,6 +47,7 @@ export const WorkbookFileSaveOverlay: React.FC<Props> = (props: Props) => {
                         />
                     </div>
                 </div>
+                <WorkbookExportSettings enableCatalog={true} />
             </Box>
         </AnchoredOverlay>
     );

@@ -1,6 +1,6 @@
 @media only screen and (max-width: 400px) {
     .sharing_overlay {
-        padding: 8px 10px 8px 10px;
+        width: 340px;
         display: flex;
         flex-direction: column;
         row-gap: 6px;
@@ -8,32 +8,26 @@
 }
 @media only screen and (min-width: 400px) {
     .sharing_overlay {
-        padding: 8px 10px 8px 10px;
-        width: 400px;
+        width: 340px;
         display: flex;
         flex-direction: column;
         row-gap: 6px;
     }
 }
 
-.sharing_title {
-    grid-row: 1;
-    grid-column: 1 / span 2;
-    font-size: 0.9rem;
-    font-weight: 500;
-    margin: 0px 2px;
-}
 .sharing_url {
     width: 100%;
     display: grid;
     grid-template-columns: 1fr max-content;
     column-gap: 8px;
     row-gap: 4px;
+    padding: 12px 12px 0px 12px;
 }
 .sharing_url_stats {
     font-size: 0.8rem;
     font-weight: 500;
-    color: hsl(212, 8%, 73%);
+    color: #8c959f;
     text-align: right;
     margin-right: 4px;
 }
+

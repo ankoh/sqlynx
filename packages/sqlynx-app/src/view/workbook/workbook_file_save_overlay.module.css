@@ -1,22 +1,20 @@
 @media only screen and (max-width: 400px) {
     .overlay {
+        width: 340px;
         display: grid;
         grid-template-rows: max-content;
         grid-template-columns: 100%;
-        padding: 8px;
         column-gap: 8px;
         justify-content: center;
         align-items: center;
-        width: 300px;
     }
 }
 @media only screen and (min-width: 400px) {
     .overlay {
+        width: 340px;
         display: grid;
         grid-template-rows: max-content;
         grid-template-columns: 100%;
-        padding: 8px;
-        width: 300px;
         column-gap: 8px;
         justify-content: center;
         align-items: center;
@@ -31,6 +29,7 @@
     grid-template-rows: max-content;
     grid-template-columns: 24px 1fr max-content;
     column-gap: 8px;
+    padding: 12px;
 }
 
 .file_icon_container {
@@ -51,9 +50,11 @@
     font-size: 0.9rem;
     font-weight: 500;
 }
-.file_stats {
+.file_size {
     grid-column: 2;
-    font-size: 0.7rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #8c959f;
 }
 .download {
     grid-row: 1;
