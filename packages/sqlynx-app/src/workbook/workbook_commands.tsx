@@ -13,7 +13,7 @@ import { useCatalogLoaderQueue } from '../connection/catalog_loader.js';
 
 export enum WorkbookCommandType {
     ExecuteEditorQuery = 1,
-    RefreshSchema = 2,
+    RefreshCatalog = 2,
     SaveWorkbookAsLink = 3,
     SaveQueryAsSql = 4,
     SaveQueryResultsAsArrow = 5,
@@ -33,7 +33,7 @@ export const WorkbookCommands: React.FC<Props> = (props: Props) => {
     const [workbook, dispatchWorkbook] = useCurrentWorkbookState();
     const [connection, _dispatchConnection] = useConnectionState(workbook?.connectionId ?? null);
     const executeQuery = useQueryExecutor();
-    const queueCatalogLoading = useCatalogLoaderQueue();
+    const refreshCatalog = useCatalogLoaderQueue();
 
     // Setup command dispatch logic
     const commandDispatch = React.useCallback(
@@ -68,11 +68,11 @@ export const WorkbookCommands: React.FC<Props> = (props: Props) => {
                         })
                     }
                     break;
-                case WorkbookCommandType.RefreshSchema:
+                case WorkbookCommandType.RefreshCatalog:
                     if (connection?.connectionHealth != ConnectionHealth.ONLINE) {
                         logger.error("cannot refresh the catalog of unhealthy connection", {});
                     } else {
-                        queueCatalogLoading(connection.connectionId, true);
+                        refreshCatalog(connection.connectionId, true);
                     }
                     break;
                 case WorkbookCommandType.SaveWorkbookAsLink:
@@ -121,7 +121,7 @@ export const WorkbookCommands: React.FC<Props> = (props: Props) => {
                 callback: requireConnector(c =>
                     !c.features.executeQueryAction
                         ? () => commandNotImplemented(c, 'REFRESH_SCHEMA')
-                        : () => commandDispatch(WorkbookCommandType.RefreshSchema),
+                        : () => commandDispatch(WorkbookCommandType.RefreshCatalog),
                 ),
             },
             {

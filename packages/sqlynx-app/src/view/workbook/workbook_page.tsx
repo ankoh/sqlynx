@@ -42,6 +42,7 @@ const ConnectionCommandList = (props: { connector: ConnectorInfo | null }) => {
             </ActionList.ListItem>
             <ActionList.ListItem
                 disabled={!props.connector?.features.refreshSchemaAction}
+                onClick={() => sessionCommand(WorkbookCommandType.RefreshCatalog)}
             >
                 <ActionList.Leading>
                     <SyncIcon />
@@ -179,7 +180,11 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                                 aria-labelledby="execute-query"
                                 onClick={() => sessionCommand(WorkbookCommandType.ExecuteEditorQuery)}
                             />
-                            <IconButton icon={SyncIcon} aria-labelledby="refresh-schema" />
+                            <IconButton
+                                icon={SyncIcon}
+                                aria-labelledby="refresh-schema"
+                                onClick={() => sessionCommand(WorkbookCommandType.RefreshCatalog)}
+                            />
                             <IconButton
                                 icon={LinkIcon}
                                 aria-labelledby="visit-github-repository"
