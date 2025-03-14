@@ -4,16 +4,22 @@ import * as styles from './workbook_file_save_overlay.module.css';
 import { Box, IconButton } from '@primer/react';
 import { DownloadIcon, FileIcon } from '@primer/octicons-react';
 
-import { WorkbookExportSettingsView } from './workbook_export_settings_view.js';
-import { WorkbookExportSettings } from '../../workbook/workbook_export_settings.js';
-import { AnchoredOverlay } from '../foundations/anchored_overlay.js';
 import { AnchorAlignment } from '../foundations/anchored_position.js';
+import { AnchoredOverlay } from '../foundations/anchored_overlay.js';
+import { ConnectionState } from '../../connection/connection_state.js';
+import { WorkbookExportSettings } from '../../workbook/workbook_export_settings.js';
+import { WorkbookExportSettingsView } from './workbook_export_settings_view.js';
+import { WorkbookState } from '../../workbook/workbook_state.js';
 import { classNames } from '../../utils/classnames.js';
+import { encodeWorkbookAsFile } from '../../workbook/workbook_export_file.js';
+import { formatBytes } from '../../utils/format.js';
 
 interface Props {
     className?: string;
     isOpen: boolean;
     setIsOpen: (v: boolean) => void;
+    workbook: WorkbookState | null;
+    conn: ConnectionState | null;
 }
 
 export const WorkbookFileSaveOverlay: React.FC<Props> = (props: Props) => {
@@ -24,6 +30,16 @@ export const WorkbookFileSaveOverlay: React.FC<Props> = (props: Props) => {
         exportCatalog: true,
         exportUsername: true
     });
+
+    const [fileBytes, setFileBytes] = React.useState<Uint8Array>(new Uint8Array());
+    React.useEffect(() => {
+        if (props.conn == null || props.workbook == null) {
+            return;
+        }
+        const file = encodeWorkbookAsFile(props.workbook, props.conn, settings);
+        const fileBytes = file.toBinary();
+        setFileBytes(fileBytes);
+    }, [settings, props.conn, props.workbook]);
 
     return (
         <AnchoredOverlay
@@ -43,7 +59,7 @@ export const WorkbookFileSaveOverlay: React.FC<Props> = (props: Props) => {
                     </div>
                     <div className={styles.file_info}>
                         <div className={styles.file_name}>workbook.slnx</div>
-                        <div className={styles.file_size}>~&nbsp;123&nbsp;KB</div>
+                        <div className={styles.file_size}>~&nbsp;{formatBytes(fileBytes.length)}</div>
                     </div>
                     <div className={styles.download}>
                         <IconButton

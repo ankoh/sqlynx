@@ -23,13 +23,16 @@ import { WorkbookListDropdown } from './session_list_dropdown.js';
 import { WorkbookURLShareOverlay } from './workbook_url_share_overlay.js';
 import { useCurrentWorkbookState } from '../../workbook/current_workbook.js';
 import { useQueryState } from '../../connection/query_executor.js';
+import { useConnectionState } from '../../connection/connection_registry.js';
+import { ConnectionState } from '../../connection/connection_state.js';
+import { WorkbookState } from 'workbook/workbook_state.js';
 
-const ConnectionCommandList = (props: { connector: ConnectorInfo | null }) => {
+const ConnectionCommandList = (props: { conn: ConnectionState | null, workbook: WorkbookState | null }) => {
     const sessionCommand = useWorkbookCommandDispatch();
     return (
         <>
             <ActionList.ListItem
-                disabled={!props.connector?.features.executeQueryAction}
+                disabled={!props.conn?.connectorInfo.features.executeQueryAction}
                 onClick={() => sessionCommand(WorkbookCommandType.ExecuteEditorQuery)}
             >
                 <ActionList.Leading>
@@ -41,7 +44,7 @@ const ConnectionCommandList = (props: { connector: ConnectorInfo | null }) => {
                 <ActionList.Trailing>Ctrl + E</ActionList.Trailing>
             </ActionList.ListItem>
             <ActionList.ListItem
-                disabled={!props.connector?.features.refreshSchemaAction}
+                disabled={!props.conn?.connectorInfo.features.refreshSchemaAction}
                 onClick={() => sessionCommand(WorkbookCommandType.RefreshCatalog)}
             >
                 <ActionList.Leading>
@@ -56,7 +59,7 @@ const ConnectionCommandList = (props: { connector: ConnectorInfo | null }) => {
     );
 };
 
-const WorkbookCommandList = (_props: { connector: ConnectorInfo | null }) => {
+const WorkbookCommandList = (props: { conn: ConnectionState | null, workbook: WorkbookState | null }) => {
     const [linkSharingIsOpen, openLinkSharing] = React.useState<boolean>(false);
     const [fileSaveIsOpen, openFileSave] = React.useState<boolean>(false);
     return (
@@ -77,7 +80,12 @@ const WorkbookCommandList = (_props: { connector: ConnectorInfo | null }) => {
                 </ActionList.Leading>
                 <ActionList.ItemText>
                     Save as File
-                    <WorkbookFileSaveOverlay isOpen={fileSaveIsOpen} setIsOpen={openFileSave} />
+                    <WorkbookFileSaveOverlay
+                        isOpen={fileSaveIsOpen}
+                        setIsOpen={openFileSave}
+                        conn={props.conn}
+                        workbook={props.workbook}
+                    />
                 </ActionList.ItemText>
                 <ActionList.Trailing>Ctrl + S</ActionList.Trailing>
             </ActionList.ListItem>
@@ -99,6 +107,7 @@ interface Props { }
 
 export const EditorPage: React.FC<Props> = (_props: Props) => {
     const [workbook, _modifyWorkbook] = useCurrentWorkbookState();
+    const [conn, _modifyConn] = useConnectionState(workbook?.connectionId ?? null);
     const [selectedTab, selectTab] = React.useState<TabKey>(TabKey.Catalog);
     const [sharingIsOpen, setSharingIsOpen] = React.useState<boolean>(false);
 
@@ -240,9 +249,15 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
             <div className={styles.action_sidebar}>
                 <ActionList.List aria-label="Actions">
                     <ActionList.GroupHeading>Connection</ActionList.GroupHeading>
-                    <ConnectionCommandList connector={workbook?.connectorInfo ?? null} />
+                    <ConnectionCommandList
+                        conn={conn ?? null}
+                        workbook={workbook}
+                    />
                     <ActionList.GroupHeading>Workbook</ActionList.GroupHeading>
-                    <WorkbookCommandList connector={workbook?.connectorInfo ?? null} />
+                    <WorkbookCommandList
+                        conn={conn ?? null}
+                        workbook={workbook}
+                    />
                     <ActionList.Divider />
                 </ActionList.List>
             </div>
