@@ -51,6 +51,9 @@ export const WorkbookURLShareOverlay: React.FC<Props> = (props: Props) => {
     });
 
     React.useEffect(() => {
+        if (!props.isOpen) {
+            return;
+        }
         let setupUrl: URL | null = null;
         if (workbookState != null && connectionState != null) {
             const params = getConnectionParamsFromDetails(connectionState.details);
@@ -66,7 +69,7 @@ export const WorkbookURLShareOverlay: React.FC<Props> = (props: Props) => {
             copyError: null,
             uiResetAt: null,
         });
-    }, [settings, workbookState, connectionState]);
+    }, [settings, workbookState, connectionState, props.isOpen]);
 
     // Copy the url to the clipboard
     const copyURL = React.useCallback(
