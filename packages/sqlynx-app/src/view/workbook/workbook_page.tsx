@@ -15,7 +15,7 @@ import { QueryResultView } from '../query_result/query_result_view.js';
 import { QueryStatusPanel } from '../query_status/query_status_panel.js';
 import { ScriptEditor } from './editor.js';
 import { CatalogPanel } from '../../view/catalog/catalog_panel.js';
-import { ScriptURLOverlay } from './script_url_overlay.js';
+import { WorkbookURLShareOverlay } from './workbook_url_share_overlay.js';
 import { WorkbookCommandType, useWorkbookCommandDispatch } from '../../workbook/workbook_commands.js';
 import { WorkbookListDropdown } from './session_list_dropdown.js';
 import { VerticalTabs, VerticalTabVariant } from '../foundations/vertical_tabs.js';
@@ -66,7 +66,7 @@ const WorkbookCommandList = (props: { connector: ConnectorInfo | null }) => {
                 </ActionList.Leading>
                 <ActionList.ItemText>
                     Share as URL
-                    <ScriptURLOverlay isOpen={linkSharingIsOpen} setIsOpen={openLinkSharing} />
+                    <WorkbookURLShareOverlay isOpen={linkSharingIsOpen} setIsOpen={openLinkSharing} />
                 </ActionList.ItemText>
                 <ActionList.Trailing>Ctrl + U</ActionList.Trailing>
             </ActionList.ListItem>
@@ -185,7 +185,7 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
                                 onClick={() => setSharingIsOpen(s => !s)}
                             />
                         </ButtonGroup>
-                        <ScriptURLOverlay isOpen={sharingIsOpen} setIsOpen={setSharingIsOpen} />
+                        <WorkbookURLShareOverlay isOpen={sharingIsOpen} setIsOpen={setSharingIsOpen} />
                     </div>
                     <IconButton icon={ThreeBarsIcon} aria-labelledby="visit-github-repository" />
                 </div>

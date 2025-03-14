@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as styles from './workbook_url_share_overlay.module.css';
 
 import { Box, IconButton } from '@primer/react';
 import { CheckIcon, PaperclipIcon } from '@primer/octicons-react';
@@ -12,8 +13,6 @@ import { getConnectionParamsFromDetails } from '../../connection/connection_para
 import { sleep } from '../../utils/sleep.js';
 import { useConnectionState } from '../../connection/connection_registry.js';
 import { useCurrentWorkbookState } from '../../workbook/current_workbook.js';
-
-import * as styles from './script_url_overlay.module.css';
 
 const COPY_CHECKMARK_DURATION_MS = 1000;
 
@@ -31,7 +30,7 @@ interface State {
     uiResetAt: Date | null;
 }
 
-export const ScriptURLOverlay: React.FC<Props> = (props: Props) => {
+export const WorkbookURLShareOverlay: React.FC<Props> = (props: Props) => {
     const [workbookState, _modifyWorkbook] = useCurrentWorkbookState();
     const [connectionState, _setConnectionState] = useConnectionState(workbookState?.connectionId ?? null);
     const [state, setState] = React.useState<State>(() => ({

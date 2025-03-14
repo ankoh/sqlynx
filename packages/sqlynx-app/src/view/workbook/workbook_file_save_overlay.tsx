@@ -7,7 +7,7 @@ import { AnchoredOverlay } from '../foundations/anchored_overlay.js';
 import { AnchorAlignment } from '../foundations/anchored_position.js';
 import { classNames } from '../../utils/classnames.js';
 
-import * as styles from './script_filesave_overlay.module.css';
+import * as styles from './workbook_file_save_overlay.module.css';
 
 interface Props {
     className?: string;
@@ -15,7 +15,7 @@ interface Props {
     setIsOpen: (v: boolean) => void;
 }
 
-export const ScriptFileSaveOverlay: React.FC<Props> = (props: Props) => {
+export const WorkbookFileSaveOverlay: React.FC<Props> = (props: Props) => {
     const anchorRef = React.createRef<HTMLDivElement>();
     const buttonRef = React.createRef<HTMLAnchorElement>();
     return (
