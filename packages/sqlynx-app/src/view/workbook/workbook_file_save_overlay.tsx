@@ -3,7 +3,8 @@ import * as React from 'react';
 import { Box, IconButton } from '@primer/react';
 import { DownloadIcon, FileIcon } from '@primer/octicons-react';
 
-import { WorkbookExportSettings } from './workbook_export_settings.js';
+import { WorkbookExportSettingsView } from './workbook_export_settings_view.js';
+import { WorkbookExportSettings } from '../../workbook/workbook_export_settings.js';
 import { AnchoredOverlay } from '../foundations/anchored_overlay.js';
 import { AnchorAlignment } from '../foundations/anchored_position.js';
 import { classNames } from '../../utils/classnames.js';
@@ -19,6 +20,12 @@ interface Props {
 export const WorkbookFileSaveOverlay: React.FC<Props> = (props: Props) => {
     const anchorRef = React.createRef<HTMLDivElement>();
     const buttonRef = React.createRef<HTMLAnchorElement>();
+
+    const [settings, setSettings] = React.useState<WorkbookExportSettings>({
+        exportCatalog: true,
+        exportUsername: true
+    });
+
     return (
         <AnchoredOverlay
             renderAnchor={() => <div ref={anchorRef} />}
@@ -47,7 +54,11 @@ export const WorkbookFileSaveOverlay: React.FC<Props> = (props: Props) => {
                         />
                     </div>
                 </div>
-                <WorkbookExportSettings enableCatalog={true} />
+                <WorkbookExportSettingsView
+                    withCatalog={true}
+                    settings={settings}
+                    setSettings={setSettings}
+                />
             </Box>
         </AnchoredOverlay>
     );

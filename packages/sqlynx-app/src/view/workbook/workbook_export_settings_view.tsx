@@ -2,15 +2,16 @@ import * as React from 'react';
 
 import { ToggleSwitch } from '@primer/react';
 
-import * as styles from './workbook_export_settings.module.css';
+import * as styles from './workbook_export_settings_view.module.css';
+import { WorkbookExportSettings } from '../../workbook/workbook_export_settings.js';
 
 interface Props {
-    enableCatalog: boolean;
+    withCatalog: boolean;
+    settings: WorkbookExportSettings;
+    setSettings: (s: WorkbookExportSettings) => void;
 }
 
-export const WorkbookExportSettings: React.FC<Props> = (props: Props) => {
-    const [catalog, _setCatalog] = React.useState<boolean>(true && props.enableCatalog);
-
+export const WorkbookExportSettingsView: React.FC<Props> = (props: Props) => {
     return (
         <div className={styles.root}>
             <div className={styles.part_list}>
@@ -30,7 +31,12 @@ export const WorkbookExportSettings: React.FC<Props> = (props: Props) => {
                     Catalog Data
                 </div>
                 <div className={styles.part_toggle}>
-                    <ToggleSwitch size="small" checked={catalog} disabled={!props.enableCatalog} />
+                    <ToggleSwitch
+                        size="small"
+                        checked={props.settings.exportCatalog}
+                        disabled={!props.withCatalog}
+                        onChange={(b: boolean) => props.setSettings({ ...props.settings, exportCatalog: b })}
+                    />
                 </div>
             </div>
             <div className={styles.part_list}>
@@ -38,7 +44,11 @@ export const WorkbookExportSettings: React.FC<Props> = (props: Props) => {
                     Trino Username
                 </div>
                 <div className={styles.part_toggle}>
-                    <ToggleSwitch size="small" checked={true} />
+                    <ToggleSwitch
+                        size="small"
+                        checked={true}
+                        onChange={(b: boolean) => props.setSettings({ ...props.settings, exportUsername: b })}
+                    />
                 </div>
             </div>
         </div>

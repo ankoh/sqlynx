@@ -13,7 +13,8 @@ import { getConnectionParamsFromDetails } from '../../connection/connection_para
 import { sleep } from '../../utils/sleep.js';
 import { useConnectionState } from '../../connection/connection_registry.js';
 import { useCurrentWorkbookState } from '../../workbook/current_workbook.js';
-import { WorkbookExportSettings } from './workbook_export_settings.js';
+import { WorkbookExportSettingsView } from './workbook_export_settings_view.js';
+import { WorkbookExportSettings } from '../../workbook/workbook_export_settings.js';
 
 const COPY_CHECKMARK_DURATION_MS = 1000;
 
@@ -32,6 +33,9 @@ interface State {
 }
 
 export const WorkbookURLShareOverlay: React.FC<Props> = (props: Props) => {
+    const anchorRef = React.createRef<HTMLDivElement>();
+    const buttonRef = React.createRef<HTMLAnchorElement>();
+
     const [workbookState, _modifyWorkbook] = useCurrentWorkbookState();
     const [connectionState, _setConnectionState] = useConnectionState(workbookState?.connectionId ?? null);
     const [state, setState] = React.useState<State>(() => ({
@@ -41,6 +45,10 @@ export const WorkbookURLShareOverlay: React.FC<Props> = (props: Props) => {
         copyError: null,
         uiResetAt: null,
     }));
+    const [settings, setSettings] = React.useState<WorkbookExportSettings>({
+        exportCatalog: true,
+        exportUsername: true
+    });
 
     React.useEffect(() => {
         let setupUrl: URL | null = null;
@@ -98,8 +106,6 @@ export const WorkbookURLShareOverlay: React.FC<Props> = (props: Props) => {
         [state, setState],
     );
 
-    const anchorRef = React.createRef<HTMLDivElement>();
-    const buttonRef = React.createRef<HTMLAnchorElement>();
     return (
         <AnchoredOverlay
             renderAnchor={() => <div ref={anchorRef} />}
@@ -122,7 +128,11 @@ export const WorkbookURLShareOverlay: React.FC<Props> = (props: Props) => {
                     />
                     <div className={styles.sharing_url_stats}>{state.publicURLText?.length ?? 0} characters</div>
                 </div>
-                <WorkbookExportSettings enableCatalog={false} />
+                <WorkbookExportSettingsView
+                    withCatalog={false}
+                    settings={settings}
+                    setSettings={setSettings}
+                />
             </Box>
         </AnchoredOverlay>
     );
