@@ -24,7 +24,7 @@ import { useWorkbookState } from '../../workbook/workbook_state_registry.js';
 import { useCurrentWorkbookSelector } from '../../workbook/current_workbook.js';
 import { useNavigate } from 'react-router-dom';
 import { Button, ButtonVariant } from '../foundations/button.js';
-import { useDefaultWorkbooks } from '../../workbook/workbook_setup.js';
+import { useDefaultWorkbooks } from '../../workbook/workbook_setup_gate.js';
 import { HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from '../../connection/connector_info.js';
 import { DetailedError } from 'utils/error.js';
 

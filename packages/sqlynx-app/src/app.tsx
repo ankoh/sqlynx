@@ -28,7 +28,7 @@ import { SalesforceConnectorSettingsStateProvider } from './view/connection/sale
 import { SchemaGraphDemoPage } from './view/internals/schema_graph_demo.js';
 import { ScriptLoader } from './workbook/script_loader.js';
 import { WorkbookCommands } from './workbook/workbook_commands.js';
-import { WorkbookSetup } from './workbook/workbook_setup.js';
+import { WorkbookSetupGate } from './workbook/workbook_setup_gate.js';
 import { WorkbookStateRegistry } from './workbook/workbook_state_registry.js';
 import { TrinoConnector } from './connection/trino/trino_connector.js';
 import { TrinoConnectorSettingsStateProvider } from './view/connection/trino_connector_settings.js';
@@ -68,9 +68,9 @@ const WorkbookProviders = (props: { children: React.ReactElement }) => (
                                     <CurrentWorkbookStateProvider>
                                         <ScriptLoader />
                                         <WorkbookCommands>
-                                            <WorkbookSetup>
+                                            <WorkbookSetupGate>
                                                 {props.children}
-                                            </WorkbookSetup>
+                                            </WorkbookSetupGate>
                                         </WorkbookCommands>
                                     </CurrentWorkbookStateProvider>
                                 </CatalogLoaderProvider>

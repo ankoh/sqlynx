@@ -26,7 +26,7 @@ import { HyperGrpcConnectionParams } from '../../connection/hyper/hyper_connecti
 import { useWorkbookState } from '../../workbook/workbook_state_registry.js';
 import { useCurrentWorkbookSelector } from '../../workbook/current_workbook.js';
 import { useNavigate } from 'react-router-dom';
-import { useDefaultWorkbooks } from '../../workbook/workbook_setup.js';
+import { useDefaultWorkbooks } from '../../workbook/workbook_setup_gate.js';
 import { getConnectionHealthIndicator, getConnectionStatusText } from './salesforce_connector_settings.js';
 import { useHyperGrpcSetup } from '../../connection/hyper/hyper_connection_setup.js';
 

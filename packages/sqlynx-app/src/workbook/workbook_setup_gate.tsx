@@ -45,7 +45,7 @@ interface WorkbookSetupState {
     args: WorkbookSetupArgs | null;
 }
 
-export const WorkbookSetup: React.FC<{ children: React.ReactElement }> = (props: { children: React.ReactElement }) => {
+export const WorkbookSetupGate: React.FC<{ children: React.ReactElement }> = (props: { children: React.ReactElement }) => {
     const logger = useLogger();
 
     const setupServerlessWorkbook = useServerlessWorkbookSetup();

@@ -27,7 +27,7 @@ import { encodeWorkbookProtoAsUrl, encodeWorkbookAsProto, WorkbookLinkTarget } f
 import { getConnectionError, getConnectionHealthIndicator, getConnectionStatusText } from '../connection/salesforce_connector_settings.js';
 import { useConnectionState } from '../../connection/connection_registry.js';
 import { useCurrentWorkbookSelector } from '../../workbook/current_workbook.js';
-import { useDefaultWorkbooks } from '../../workbook/workbook_setup.js';
+import { useDefaultWorkbooks } from '../../workbook/workbook_setup_gate.js';
 import { useLogger } from '../../platform/logger_provider.js';
 import { useTrinoSetup } from '../../connection/trino/trino_connector.js';
 import { useWorkbookState } from '../../workbook/workbook_state_registry.js';
