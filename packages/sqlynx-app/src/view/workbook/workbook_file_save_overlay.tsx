@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as zstd from '../../utils/zstd.js';
 import * as styles from './workbook_file_save_overlay.module.css';
 
 import { Box, IconButton } from '@primer/react';
@@ -13,6 +14,16 @@ import { WorkbookState } from '../../workbook/workbook_state.js';
 import { classNames } from '../../utils/classnames.js';
 import { encodeWorkbookAsFile } from '../../workbook/workbook_export_file.js';
 import { formatBytes } from '../../utils/format.js';
+import { downloadBufferAsFile } from '../../utils/file_download.js';
+
+const SLNX_COMPRESSION_LEVEL = 5;
+
+async function packSlnx(conn: ConnectionState, workbook: WorkbookState, settings: WorkbookExportSettings): Promise<Uint8Array> {
+    const file = encodeWorkbookAsFile(workbook, conn, settings);
+    const fileBytes = file.toBinary();
+    await zstd.init();
+    return zstd.compress(fileBytes, SLNX_COMPRESSION_LEVEL);
+}
 
 interface Props {
     className?: string;
@@ -33,13 +44,28 @@ export const WorkbookFileSaveOverlay: React.FC<Props> = (props: Props) => {
 
     const [fileBytes, setFileBytes] = React.useState<Uint8Array>(new Uint8Array());
     React.useEffect(() => {
-        if (props.conn == null || props.workbook == null) {
+        if (!props.isOpen) {
             return;
         }
-        const file = encodeWorkbookAsFile(props.workbook, props.conn, settings);
-        const fileBytes = file.toBinary();
-        setFileBytes(fileBytes);
-    }, [settings, props.conn, props.workbook]);
+        const conn = props.conn;
+        const workbook = props.workbook;
+        if (conn == null || workbook == null) {
+            return;
+        }
+        const cancellation = new AbortController();
+        const pack = async () => {
+            const fileBytes = await packSlnx(conn, workbook, settings);
+            if (!cancellation.signal.aborted) {
+                setFileBytes(fileBytes);
+            }
+        };
+        pack();
+        return () => cancellation.abort();
+    }, [settings, props.conn, props.workbook, props.isOpen]);
+
+    const downloadFile = React.useCallback(async () => {
+        downloadBufferAsFile(fileBytes, "workbook.slnx");
+    }, [fileBytes]);
 
     return (
         <AnchoredOverlay
@@ -66,6 +92,7 @@ export const WorkbookFileSaveOverlay: React.FC<Props> = (props: Props) => {
                             ref={buttonRef}
                             icon={DownloadIcon}
                             aria-labelledby="save-file"
+                            onClick={downloadFile}
                         />
                     </div>
                 </div>

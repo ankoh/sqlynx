@@ -29,6 +29,7 @@ __metadata:
     "@ankoh/sqlynx-compute": "link:../sqlynx-compute/dist/"
     "@ankoh/sqlynx-core": "link:../sqlynx-core-bindings"
     "@ankoh/sqlynx-protobuf": "link:../sqlynx-protobuf"
+    "@bokuweb/zstd-wasm": "npm:^0.0.27"
     "@bufbuild/protobuf": "npm:^1.10.0"
     "@codemirror/autocomplete": "npm:^6.18.1"
     "@codemirror/commands": "npm:^6.6.2"
@@ -553,6 +554,13 @@ __metadata:
   version: 0.2.3
   resolution: "@bcoe/v8-coverage@npm:0.2.3"
   checksum: 10c0/6b80ae4cb3db53f486da2dc63b6e190a74c8c3cca16bb2733f234a0b6a9382b09b146488ae08e2b22cf00f6c83e20f3e040a2f7894f05c045c946d6a090b1d52
+  languageName: node
+  linkType: hard
+
+"@bokuweb/zstd-wasm@npm:^0.0.27":
+  version: 0.0.27
+  resolution: "@bokuweb/zstd-wasm@npm:0.0.27"
+  checksum: 10c0/02c8fa7221ad379bc6187dc05ce70c0fdf5b3a8341177e1550dce79ea5490a33c6d4ed85afa9782ec55d36b587242da0777b56ae39ab80bff9d124d5bd3896a5
   languageName: node
   linkType: hard
 
