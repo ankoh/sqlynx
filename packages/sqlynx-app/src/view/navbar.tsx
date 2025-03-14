@@ -12,7 +12,7 @@ import { SQLYNX_VERSION } from '../globals.js';
 import { VersionCheckIndicator } from './version_viewer.js';
 import { VersionInfoOverlay } from './version_viewer.js';
 import { classNames } from '../utils/classnames.js';
-import { encodeWorkbookAsProto, encodeWorkbookProtoAsUrl, WorkbookLinkTarget } from '../workbook/workbook_setup_url.js';
+import { encodeWorkbookAsProto, encodeWorkbookProtoAsUrl, WorkbookLinkTarget } from '../workbook/workbook_export_url.js';
 import { getConnectionParamsFromDetails } from '../connection/connection_params.js';
 import { useConnectionState } from '../connection/connection_registry.js';
 import { useCurrentWorkbookState } from '../workbook/current_workbook.js';

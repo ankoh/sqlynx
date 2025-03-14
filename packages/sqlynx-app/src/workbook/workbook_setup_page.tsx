@@ -17,7 +17,7 @@ import { KeyValueTextField, TextField, VALIDATION_WARNING } from '../view/founda
 import { RESTORE_WORKBOOK } from './workbook_state.js';
 import { SQLYNX_VERSION } from '../globals.js';
 import { VersionInfoOverlay } from '../view/version_viewer.js';
-import { encodeWorkbookProtoAsUrl, WorkbookLinkTarget } from './workbook_setup_url.js';
+import { encodeWorkbookProtoAsUrl, WorkbookLinkTarget } from './workbook_export_url.js';
 import { formatHHMMSS } from '../utils/format.js';
 import { getConnectionError, getConnectionHealthIndicator, getConnectionStatusText } from '../view/connection/salesforce_connector_settings.js';
 import { useConnectionState } from '../connection/connection_registry.js';
