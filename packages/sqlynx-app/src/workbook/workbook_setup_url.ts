@@ -26,7 +26,7 @@ export function generateWorkbookUrl(workbookState: WorkbookState, connectionPara
         data: {
             case: "workbook",
             value: new proto.sqlynx_workbook.pb.Workbook({
-                connectorParams: (params == null) ? undefined : params,
+                connectionParams: (params == null) ? undefined : params,
                 scripts: scripts
             })
         }

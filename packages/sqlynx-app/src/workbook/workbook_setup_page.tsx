@@ -29,7 +29,6 @@ import { useWorkbookState } from './workbook_state_registry.js';
 import { ErrorDetailsButton } from '../view/error_details.js';
 import { DetailedError } from '../utils/error.js';
 import { ConnectionParamsVariant, encodeConnectionParams, readConnectionParamsFromProto } from '../connection/connection_params.js';
-import { useCatalogLoaderQueue } from '../connection/catalog_loader.js';
 import { ValueListBuilder } from '../view/foundations/value_list.js';
 import { InternalsViewerOverlay } from '../view/internals_overlay.js';
 
@@ -247,7 +246,7 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
     const connection = maybeConnection!;
 
     // Maintain setup override settings
-    const [connectionParams, setConnectionParams] = React.useState<ConnectionParamsVariant | null>(() => props.setupProto.connectorParams ? readConnectionParamsFromProto(props.setupProto.connectorParams) : null);
+    const [connectionParams, setConnectionParams] = React.useState<ConnectionParamsVariant | null>(() => props.setupProto.connectionParams ? readConnectionParamsFromProto(props.setupProto.connectionParams) : null);
 
     // Need to switch to native?
     // Some connectors only run in the native app.
@@ -267,7 +266,7 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
         // Bake the workbook proto, we'll need this in any case
         const workbookProto = new proto.sqlynx_workbook.pb.Workbook({
             ...props.setupProto,
-            connectorParams: connectionParams == null ? undefined : encodeConnectionParams(connectionParams)
+            connectionParams: connectionParams == null ? undefined : encodeConnectionParams(connectionParams)
         });
 
         // Cannot execute here? Then redirect the user
@@ -390,7 +389,7 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
     const getWorkbookUrl = () => {
         const workbookProto = new proto.sqlynx_workbook.pb.Workbook({
             ...props.setupProto,
-            connectorParams: connectionParams == null ? undefined : encodeConnectionParams(connectionParams)
+            connectionParams: connectionParams == null ? undefined : encodeConnectionParams(connectionParams)
         });
         const url = encodeWorkbookAsUrl(workbookProto, WorkbookLinkTarget.NATIVE);
         return url.toString();
@@ -485,7 +484,7 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
         // Encode the workbook url
         const workbookProto = new proto.sqlynx_workbook.pb.Workbook({
             ...props.setupProto,
-            connectorParams: connectionParams == null ? undefined : encodeConnectionParams(connectionParams)
+            connectionParams: connectionParams == null ? undefined : encodeConnectionParams(connectionParams)
         });
         const workbookURL = encodeWorkbookAsUrl(workbookProto, WorkbookLinkTarget.NATIVE);
 

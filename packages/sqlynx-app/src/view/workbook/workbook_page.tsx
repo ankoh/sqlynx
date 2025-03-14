@@ -76,7 +76,7 @@ const OutputCommandList = (props: { connector: ConnectorInfo | null }) => {
                 <ActionList.Leading>
                     <DownloadIcon />
                 </ActionList.Leading>
-                <ActionList.ItemText>Save Query</ActionList.ItemText>
+                <ActionList.ItemText>Save as File</ActionList.ItemText>
                 <ActionList.Trailing>Ctrl + S</ActionList.Trailing>
             </ActionList.ListItem>
         </>

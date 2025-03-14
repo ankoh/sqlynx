@@ -16,7 +16,7 @@ export enum ConnectionSetupCheck {
 
 export function checkSalesforceConnectionSetup(
     state: ConnectionState | null,
-    params: proto.sqlynx_workbook.pb.SalesforceConnectorParams,
+    params: proto.sqlynx_connection.pb.SalesforceConnectionParams,
 ): ConnectionSetupCheck {
     if (!state) {
         return ConnectionSetupCheck.CONNECTION_NULL;
@@ -45,7 +45,7 @@ export function checkSalesforceConnectionSetup(
 
 export function checkHyperConnectionSetup(
     state: ConnectionState | null,
-    params: proto.sqlynx_workbook.pb.HyperConnectorParams,
+    params: proto.sqlynx_connection.pb.HyperConnectionParams,
 ): ConnectionSetupCheck {
     return ConnectionSetupCheck.UNKNOWN;
 }

@@ -174,8 +174,8 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
     },
 ];
 
-export function getConnectorInfoForParams(params: proto.sqlynx_workbook.pb.ConnectorParams): ConnectorInfo | null {
-    switch (params.connector.case) {
+export function getConnectorInfoForParams(params: proto.sqlynx_connection.pb.ConnectionParams): ConnectorInfo | null {
+    switch (params.connection.case) {
         case "demo": return CONNECTOR_INFOS[ConnectorType.DEMO];
         case "hyper": return CONNECTOR_INFOS[ConnectorType.HYPER_GRPC];
         case "salesforce": return CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD];

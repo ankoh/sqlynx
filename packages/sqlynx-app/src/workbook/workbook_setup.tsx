@@ -97,12 +97,12 @@ export const WorkbookSetup: React.FC<{ children: React.ReactElement }> = (props:
             // Await the setup of the static workbooks
             const defaultWorkbooks = await setupDefaultWorkbook;
             // Get the connector info for the workbook setup protobuf
-            const connectorInfo = data.connectorParams ? getConnectorInfoForParams(data.connectorParams) : null;
+            const connectorInfo = data.connectionParams ? getConnectorInfoForParams(data.connectionParams) : null;
             if (connectorInfo == null) {
                 logger.warn("failed to resolve the connector info from the parameters", {});
                 return;
             }
-            switch (data.connectorParams?.connector.case) {
+            switch (data.connectionParams?.connection.case) {
                 case "hyper": {
                     const workbook = workbookReg.workbookMap.get(defaultWorkbooks.hyper)!;
                     connDispatch(workbook.connectionId, { type: RESET, value: null });

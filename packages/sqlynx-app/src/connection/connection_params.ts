@@ -2,11 +2,11 @@ import * as proto from '@ankoh/sqlynx-protobuf';
 
 import { ConnectionDetailsVariant } from './connection_state.js';
 import { DEMO_CONNECTOR, HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, SERVERLESS_CONNECTOR, TRINO_CONNECTOR } from './connector_info.js';
-import { buildServerlessConnectorParams } from './serverless/serverless_connection_params.js';
-import { buildDemoConnectorParams } from './demo/demo_connection_params.js';
-import { buildHyperConnectorParams, HyperGrpcConnectionParams, readHyperConnectorParams } from './hyper/hyper_connection_params.js';
-import { buildSalesforceConnectorParams, readSalesforceConnectorParams, SalesforceConnectionParams } from './salesforce/salesforce_connection_params.js';
-import { buildTrinoConnectorParams, readTrinoConnectorParams, TrinoConnectionParams } from './trino/trino_connection_params.js';
+import { buildServerlessConnectionParams } from './serverless/serverless_connection_params.js';
+import { buildDemoConnectionParams } from './demo/demo_connection_params.js';
+import { buildHyperConnectionParams, HyperGrpcConnectionParams, readHyperConnectionParams } from './hyper/hyper_connection_params.js';
+import { buildSalesforceConnectionParams, readSalesforceConnectionParams, SalesforceConnectionParams } from './salesforce/salesforce_connection_params.js';
+import { buildTrinoConnectionParams, readTrinoConnectionParams, TrinoConnectionParams } from './trino/trino_connection_params.js';
 import { VariantKind } from '../utils/variant.js';
 
 export type ConnectionParamsVariant =
@@ -60,20 +60,20 @@ export function getConnectionParamsFromDetails(state: ConnectionDetailsVariant):
 export function encodeConnectionParams(state: ConnectionParamsVariant) {
     switch (state.type) {
         case SERVERLESS_CONNECTOR:
-            return buildServerlessConnectorParams();
+            return buildServerlessConnectionParams();
         case DEMO_CONNECTOR:
-            return buildDemoConnectorParams();
+            return buildDemoConnectionParams();
         case TRINO_CONNECTOR:
-            return buildTrinoConnectorParams(state.value);
+            return buildTrinoConnectionParams(state.value);
         case HYPER_GRPC_CONNECTOR:
-            return buildHyperConnectorParams(state.value);
+            return buildHyperConnectionParams(state.value);
         case SALESFORCE_DATA_CLOUD_CONNECTOR:
-            return buildSalesforceConnectorParams(state.value);
+            return buildSalesforceConnectionParams(state.value);
     }
 }
 
-export function readConnectionParamsFromProto(pb: proto.sqlynx_workbook.pb.ConnectorParams): ConnectionParamsVariant | null {
-    switch (pb.connector.case) {
+export function readConnectionParamsFromProto(pb: proto.sqlynx_connection.pb.ConnectionParams): ConnectionParamsVariant | null {
+    switch (pb.connection.case) {
         case "serverless":
             return {
                 type: SERVERLESS_CONNECTOR,
@@ -87,17 +87,17 @@ export function readConnectionParamsFromProto(pb: proto.sqlynx_workbook.pb.Conne
         case "salesforce":
             return {
                 type: SALESFORCE_DATA_CLOUD_CONNECTOR,
-                value: readSalesforceConnectorParams(pb.connector.value)
+                value: readSalesforceConnectionParams(pb.connection.value)
             }
         case "hyper":
             return {
                 type: HYPER_GRPC_CONNECTOR,
-                value: readHyperConnectorParams(pb.connector.value)
+                value: readHyperConnectionParams(pb.connection.value)
             }
         case "trino":
             return {
                 type: TRINO_CONNECTOR,
-                value: readTrinoConnectorParams(pb.connector.value)
+                value: readTrinoConnectionParams(pb.connection.value)
             }
     }
     return null;

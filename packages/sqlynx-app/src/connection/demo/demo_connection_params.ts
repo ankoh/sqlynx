@@ -1,10 +1,10 @@
 import * as proto from '@ankoh/sqlynx-protobuf';
 
-export function buildDemoConnectorParams(): proto.sqlynx_workbook.pb.ConnectorParams {
-    return new proto.sqlynx_workbook.pb.ConnectorParams({
-        connector: {
+export function buildDemoConnectionParams(): proto.sqlynx_connection.pb.ConnectionParams {
+    return new proto.sqlynx_connection.pb.ConnectionParams({
+        connection: {
             case: "demo",
-            value: new proto.sqlynx_workbook.pb.DemoParams()
+            value: new proto.sqlynx_connection.pb.DemoParams()
         }
     });
 }

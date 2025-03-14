@@ -1,10 +1,10 @@
 import * as proto from '@ankoh/sqlynx-protobuf';
 
-export function buildServerlessConnectorParams(): proto.sqlynx_workbook.pb.ConnectorParams {
-    return new proto.sqlynx_workbook.pb.ConnectorParams({
-        connector: {
+export function buildServerlessConnectionParams(): proto.sqlynx_connection.pb.ConnectionParams {
+    return new proto.sqlynx_connection.pb.ConnectionParams({
+        connection: {
             case: "serverless",
-            value: new proto.sqlynx_workbook.pb.ServerlessParams()
+            value: new proto.sqlynx_connection.pb.ServerlessParams()
         }
     });
 }

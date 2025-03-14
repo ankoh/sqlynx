@@ -26,13 +26,13 @@ export interface TrinoConnectionParams {
     schemaNames: ValueListElement[];
 }
 
-export function buildTrinoConnectorParams(params: TrinoConnectionParams): proto.sqlynx_workbook.pb.ConnectorParams {
-    return new proto.sqlynx_workbook.pb.ConnectorParams({
-        connector: {
+export function buildTrinoConnectionParams(params: TrinoConnectionParams): proto.sqlynx_connection.pb.ConnectionParams {
+    return new proto.sqlynx_connection.pb.ConnectionParams({
+        connection: {
             case: "trino",
-            value: new proto.sqlynx_workbook.pb.TrinoConnectorParams({
+            value: new proto.sqlynx_connection.pb.TrinoConnectionParams({
                 endpoint: params.channelArgs.endpoint ?? "",
-                auth: new proto.sqlynx_workbook.pb.TrinoAuthParams({
+                auth: new proto.sqlynx_connection.pb.TrinoAuthParams({
                     username: params.authParams.username ?? "",
                 }),
                 catalogName: params.catalogName,
@@ -42,7 +42,7 @@ export function buildTrinoConnectorParams(params: TrinoConnectionParams): proto.
     });
 }
 
-export function readTrinoConnectorParams(params: proto.sqlynx_workbook.pb.TrinoConnectorParams): TrinoConnectionParams {
+export function readTrinoConnectionParams(params: proto.sqlynx_connection.pb.TrinoConnectionParams): TrinoConnectionParams {
     return {
         channelArgs: {
             endpoint: params.endpoint
