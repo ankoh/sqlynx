@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as styles from './workbook_file_save_overlay.module.css';
 
 import { Box, IconButton } from '@primer/react';
 import { DownloadIcon, FileIcon } from '@primer/octicons-react';
@@ -8,8 +9,6 @@ import { WorkbookExportSettings } from '../../workbook/workbook_export_settings.
 import { AnchoredOverlay } from '../foundations/anchored_overlay.js';
 import { AnchorAlignment } from '../foundations/anchored_position.js';
 import { classNames } from '../../utils/classnames.js';
-
-import * as styles from './workbook_file_save_overlay.module.css';
 
 interface Props {
     className?: string;

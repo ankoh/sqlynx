@@ -46,7 +46,7 @@ export const WorkbookURLShareOverlay: React.FC<Props> = (props: Props) => {
         uiResetAt: null,
     }));
     const [settings, setSettings] = React.useState<WorkbookExportSettings>({
-        exportCatalog: true,
+        exportCatalog: false,
         exportUsername: true
     });
 
