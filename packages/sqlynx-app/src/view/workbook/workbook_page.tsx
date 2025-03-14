@@ -24,7 +24,7 @@ import { useCurrentWorkbookState } from '../../workbook/current_workbook.js';
 import { useQueryState } from '../../connection/query_executor.js';
 import { WorkbookEntryList } from './workbook_entry_list.js';
 
-const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
+const ConnectionCommandList = (props: { connector: ConnectorInfo | null }) => {
     const sessionCommand = useWorkbookCommandDispatch();
     return (
         <>
@@ -55,7 +55,7 @@ const ScriptCommandList = (props: { connector: ConnectorInfo | null }) => {
     );
 };
 
-const OutputCommandList = (props: { connector: ConnectorInfo | null }) => {
+const WorkbookCommandList = (props: { connector: ConnectorInfo | null }) => {
     const config = useAppConfig();
     const [linkSharingIsOpen, openLinkSharing] = React.useState<boolean>(false);
     return (
@@ -233,10 +233,10 @@ export const EditorPage: React.FC<Props> = (_props: Props) => {
             </div>
             <div className={styles.action_sidebar}>
                 <ActionList.List aria-label="Actions">
-                    <ActionList.GroupHeading>Connector</ActionList.GroupHeading>
-                    <ScriptCommandList connector={workbook?.connectorInfo ?? null} />
-                    <ActionList.GroupHeading>Output</ActionList.GroupHeading>
-                    <OutputCommandList connector={workbook?.connectorInfo ?? null} />
+                    <ActionList.GroupHeading>Connection</ActionList.GroupHeading>
+                    <ConnectionCommandList connector={workbook?.connectorInfo ?? null} />
+                    <ActionList.GroupHeading>Workbook</ActionList.GroupHeading>
+                    <WorkbookCommandList connector={workbook?.connectorInfo ?? null} />
                     <ActionList.Divider />
                 </ActionList.List>
             </div>
