@@ -1,7 +1,6 @@
 syntax = "proto3";
 
 import "sqlynx/connection.proto";
-import "sqlynx/catalog.proto";
 import "salesforce/hyperdb/grpc/v1/hyper_service.proto";
 
 package sqlynx;
@@ -34,7 +33,4 @@ message Workbook {
     repeated WorkbookScript scripts = 2;
     /// The workbook entries
     repeated WorkbookEntry workbook_entries = 3;
-    /// The catalog (if available).
-    /// This catalog is only serialised into workbook files, not URLs, due to it's size.
-    Catalog catalog = 5;
 }
