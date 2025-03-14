@@ -17,7 +17,7 @@ import { KeyValueTextField, TextField, VALIDATION_WARNING } from '../view/founda
 import { RESTORE_WORKBOOK } from './workbook_state.js';
 import { SQLYNX_VERSION } from '../globals.js';
 import { VersionInfoOverlay } from '../view/version_viewer.js';
-import { encodeWorkbookAsUrl as encodeWorkbookAsUrl, WorkbookLinkTarget as WorkbookLinkTarget } from './workbook_setup_url.js';
+import { encodeWorkbookProtoAsUrl, WorkbookLinkTarget } from './workbook_setup_url.js';
 import { formatHHMMSS } from '../utils/format.js';
 import { getConnectionError, getConnectionHealthIndicator, getConnectionStatusText } from '../view/connection/salesforce_connector_settings.js';
 import { useConnectionState } from '../connection/connection_registry.js';
@@ -272,7 +272,7 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
         // Cannot execute here? Then redirect the user
         if (!canExecuteHere) {
             const link = document.createElement('a');
-            link.href = encodeWorkbookAsUrl(workbookProto, WorkbookLinkTarget.NATIVE).toString();
+            link.href = encodeWorkbookProtoAsUrl(workbookProto, WorkbookLinkTarget.NATIVE).toString();
             logger.info(`opening deep link`, { "href": link.href });
             link.click();
         }
@@ -391,7 +391,7 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
             ...props.setupProto,
             connectionParams: connectionParams == null ? undefined : encodeConnectionParams(connectionParams)
         });
-        const url = encodeWorkbookAsUrl(workbookProto, WorkbookLinkTarget.NATIVE);
+        const url = encodeWorkbookProtoAsUrl(workbookProto, WorkbookLinkTarget.NATIVE);
         return url.toString();
     }
 
@@ -486,7 +486,7 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
             ...props.setupProto,
             connectionParams: connectionParams == null ? undefined : encodeConnectionParams(connectionParams)
         });
-        const workbookURL = encodeWorkbookAsUrl(workbookProto, WorkbookLinkTarget.NATIVE);
+        const workbookURL = encodeWorkbookProtoAsUrl(workbookProto, WorkbookLinkTarget.NATIVE);
 
         sections.push(
             <div key={sections.length} className={baseStyles.card_actions}>

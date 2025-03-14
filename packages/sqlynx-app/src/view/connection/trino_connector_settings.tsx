@@ -23,7 +23,7 @@ import { PlatformType, usePlatformType } from '../../platform/platform_type.js';
 import { TextField, VALIDATION_WARNING } from '../foundations/text_field.js';
 import { TrinoConnectionParams } from '../../connection/trino/trino_connection_params.js';
 import { classNames } from '../../utils/classnames.js';
-import { generateWorkbookUrl, WorkbookLinkTarget } from '../../workbook/workbook_setup_url.js';
+import { encodeWorkbookProtoAsUrl, encodeWorkbookAsProto, WorkbookLinkTarget } from '../../workbook/workbook_setup_url.js';
 import { getConnectionError, getConnectionHealthIndicator, getConnectionStatusText } from '../connection/salesforce_connector_settings.js';
 import { useConnectionState } from '../../connection/connection_registry.js';
 import { useCurrentWorkbookSelector } from '../../workbook/current_workbook.js';
@@ -170,7 +170,8 @@ export const TrinoConnectorSettings: React.FC = () => {
             type: TRINO_CONNECTOR,
             value: pageState.newParams
         };
-        return generateWorkbookUrl(workbook, params, setupLinkTarget);
+        const proto = encodeWorkbookAsProto(workbook, params);
+        return encodeWorkbookProtoAsUrl(proto, setupLinkTarget);
     }, [workbook, connectionState, setupLinkTarget]);
 
     return (

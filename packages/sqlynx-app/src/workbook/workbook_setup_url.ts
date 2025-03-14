@@ -10,7 +10,7 @@ export enum WorkbookLinkTarget {
     WEB
 }
 
-export function generateWorkbookUrl(workbookState: WorkbookState, connectionParams: ConnectionParamsVariant, target: WorkbookLinkTarget, settings: WorkbookExportSettings | null = null): URL {
+export function encodeWorkbookAsProto(workbookState: WorkbookState, connectionParams: ConnectionParamsVariant, settings: WorkbookExportSettings | null = null): proto.sqlynx_workbook.pb.Workbook {
     // Build the connector params
     const params = encodeConnectionParams(connectionParams, settings);
 
@@ -23,27 +23,14 @@ export function generateWorkbookUrl(workbookState: WorkbookState, connectionPara
             scriptText: script.script?.toString() ?? "",
         }));
     }
-    const eventData = new proto.sqlynx_app_event.pb.AppEventData({
-        data: {
-            case: "workbook",
-            value: new proto.sqlynx_workbook.pb.Workbook({
-                connectionParams: (params == null) ? undefined : params,
-                scripts: scripts
-            })
-        }
+    const setup = new proto.sqlynx_workbook.pb.Workbook({
+        connectionParams: (params == null) ? undefined : params,
+        scripts: scripts
     });
-    const eventDataBytes = eventData.toBinary();
-    const eventDataBase64 = BASE64_CODEC.encode(eventDataBytes.buffer);
-
-    switch (target) {
-        case WorkbookLinkTarget.WEB:
-            return new URL(`${process.env.SQLYNX_APP_URL!}?data=${eventDataBase64}`);
-        case WorkbookLinkTarget.NATIVE:
-            return new URL(`sqlynx://localhost?data=${eventDataBase64}`);
-    };
+    return setup;
 }
 
-export function encodeWorkbookAsUrl(setup: proto.sqlynx_workbook.pb.Workbook, target: WorkbookLinkTarget): URL {
+export function encodeWorkbookProtoAsUrl(setup: proto.sqlynx_workbook.pb.Workbook, target: WorkbookLinkTarget): URL {
     const eventData = new proto.sqlynx_app_event.pb.AppEventData({
         data: {
             case: "workbook",

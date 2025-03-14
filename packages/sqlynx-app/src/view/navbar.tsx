@@ -7,13 +7,12 @@ import { useLocation } from 'react-router-dom';
 import { AnchorAlignment, AnchorSide } from './foundations/anchored_position.js';
 import { HoverMode, NavBarButtonWithRef, NavBarLink } from './navbar_button.js';
 import { InternalsViewerOverlay } from './internals_overlay.js';
-import { OverlaySize } from './foundations/overlay.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 import { SQLYNX_VERSION } from '../globals.js';
 import { VersionCheckIndicator } from './version_viewer.js';
 import { VersionInfoOverlay } from './version_viewer.js';
 import { classNames } from '../utils/classnames.js';
-import { generateWorkbookUrl, WorkbookLinkTarget } from '../workbook/workbook_setup_url.js';
+import { encodeWorkbookAsProto, encodeWorkbookProtoAsUrl, WorkbookLinkTarget } from '../workbook/workbook_setup_url.js';
 import { getConnectionParamsFromDetails } from '../connection/connection_params.js';
 import { useConnectionState } from '../connection/connection_registry.js';
 import { useCurrentWorkbookState } from '../workbook/current_workbook.js';
@@ -130,7 +129,8 @@ export const NavBar = (): React.ReactElement => {
         if (params == null) {
             return null;
         }
-        return generateWorkbookUrl(workbook, params, setupLinkTarget);
+        const proto = encodeWorkbookAsProto(workbook, params);
+        return encodeWorkbookProtoAsUrl(proto, setupLinkTarget);
     }, [workbook, connectionState, setupLinkTarget]);
 
     React.useEffect(() => {

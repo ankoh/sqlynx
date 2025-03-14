@@ -8,7 +8,7 @@ import { AnchorAlignment } from '../foundations/anchored_position.js';
 import { AnchoredOverlay } from '../foundations/anchored_overlay.js';
 import { TextInput } from '../foundations/text_input.js';
 import { classNames } from '../../utils/classnames.js';
-import { generateWorkbookUrl, WorkbookLinkTarget } from '../../workbook/workbook_setup_url.js';
+import { encodeWorkbookAsProto, encodeWorkbookProtoAsUrl, WorkbookLinkTarget } from '../../workbook/workbook_setup_url.js';
 import { getConnectionParamsFromDetails } from '../../connection/connection_params.js';
 import { sleep } from '../../utils/sleep.js';
 import { useConnectionState } from '../../connection/connection_registry.js';
@@ -55,7 +55,8 @@ export const WorkbookURLShareOverlay: React.FC<Props> = (props: Props) => {
         if (workbookState != null && connectionState != null) {
             const params = getConnectionParamsFromDetails(connectionState.details);
             if (params != null) {
-                setupUrl = generateWorkbookUrl(workbookState, params, WorkbookLinkTarget.WEB);
+                const proto = encodeWorkbookAsProto(workbookState, params);
+                setupUrl = encodeWorkbookProtoAsUrl(proto, WorkbookLinkTarget.WEB);
             }
         }
         setState({
