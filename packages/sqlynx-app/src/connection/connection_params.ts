@@ -8,6 +8,7 @@ import { buildHyperConnectionParams, HyperGrpcConnectionParams, readHyperConnect
 import { buildSalesforceConnectionParams, readSalesforceConnectionParams, SalesforceConnectionParams } from './salesforce/salesforce_connection_params.js';
 import { buildTrinoConnectionParams, readTrinoConnectionParams, TrinoConnectionParams } from './trino/trino_connection_params.js';
 import { VariantKind } from '../utils/variant.js';
+import { WorkbookExportSettings } from 'workbook/workbook_export_settings.js';
 
 export type ConnectionParamsVariant =
     | VariantKind<typeof SERVERLESS_CONNECTOR, {}>
@@ -57,18 +58,18 @@ export function getConnectionParamsFromDetails(state: ConnectionDetailsVariant):
     }
 }
 
-export function encodeConnectionParams(state: ConnectionParamsVariant) {
+export function encodeConnectionParams(state: ConnectionParamsVariant, settings: WorkbookExportSettings | null = null) {
     switch (state.type) {
         case SERVERLESS_CONNECTOR:
-            return buildServerlessConnectionParams();
+            return buildServerlessConnectionParams(settings);
         case DEMO_CONNECTOR:
-            return buildDemoConnectionParams();
+            return buildDemoConnectionParams(settings);
         case TRINO_CONNECTOR:
-            return buildTrinoConnectionParams(state.value);
+            return buildTrinoConnectionParams(state.value, settings);
         case HYPER_GRPC_CONNECTOR:
-            return buildHyperConnectionParams(state.value);
+            return buildHyperConnectionParams(state.value, settings);
         case SALESFORCE_DATA_CLOUD_CONNECTOR:
-            return buildSalesforceConnectionParams(state.value);
+            return buildSalesforceConnectionParams(state.value, settings);
     }
 }
 

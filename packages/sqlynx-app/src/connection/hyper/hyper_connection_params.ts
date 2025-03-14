@@ -2,6 +2,7 @@ import * as proto from '@ankoh/sqlynx-protobuf';
 
 import { ChannelArgs } from "../../platform/channel_common.js";
 import { KeyValueListElement } from "../../view/foundations/keyvalue_list.js";
+import { WorkbookExportSettings } from '../../workbook/workbook_export_settings.js';
 
 export interface HyperGrpcConnectionParams {
     /// The gRPC endpoint
@@ -12,7 +13,7 @@ export interface HyperGrpcConnectionParams {
     gRPCMetadata: KeyValueListElement[];
 }
 
-export function buildHyperConnectionParams(params: HyperGrpcConnectionParams): proto.sqlynx_connection.pb.ConnectionParams {
+export function buildHyperConnectionParams(params: HyperGrpcConnectionParams, _settings: WorkbookExportSettings | null): proto.sqlynx_connection.pb.ConnectionParams {
     const tls = new proto.sqlynx_connection.pb.TlsConfig({
         clientKeyPath: params.channelArgs.tls?.keyPath,
         clientCertPath: params.channelArgs.tls?.pubPath,

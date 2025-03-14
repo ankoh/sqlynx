@@ -3,6 +3,7 @@ import * as proto from '@ankoh/sqlynx-protobuf';
 import { KeyValueListElement } from '../../view/foundations/keyvalue_list.js';
 import { ChannelArgs } from '../../platform/channel_common.js';
 import { ValueListElement } from '../../view/foundations/value_list.js';
+import { WorkbookExportSettings } from '../../workbook/workbook_export_settings.js';
 
 export interface TrinoBasicAuthParams {
     /// The username
@@ -26,7 +27,7 @@ export interface TrinoConnectionParams {
     schemaNames: ValueListElement[];
 }
 
-export function buildTrinoConnectionParams(params: TrinoConnectionParams): proto.sqlynx_connection.pb.ConnectionParams {
+export function buildTrinoConnectionParams(params: TrinoConnectionParams, _settings: WorkbookExportSettings | null): proto.sqlynx_connection.pb.ConnectionParams {
     return new proto.sqlynx_connection.pb.ConnectionParams({
         connection: {
             case: "trino",

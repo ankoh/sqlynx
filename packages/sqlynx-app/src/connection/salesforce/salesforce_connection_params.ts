@@ -1,5 +1,7 @@
 import * as proto from '@ankoh/sqlynx-protobuf';
 
+import { WorkbookExportSettings } from '../../workbook/workbook_export_settings.js';
+
 export interface SalesforceConnectionParams {
     /// The foundations URL
     instanceUrl: string;
@@ -11,14 +13,14 @@ export interface SalesforceConnectionParams {
     loginHint: string | null;
 }
 
-export function buildSalesforceConnectionParams(params: SalesforceConnectionParams | null): proto.sqlynx_connection.pb.ConnectionParams {
+export function buildSalesforceConnectionParams(params: SalesforceConnectionParams | null, settings: WorkbookExportSettings | null): proto.sqlynx_connection.pb.ConnectionParams {
     return new proto.sqlynx_connection.pb.ConnectionParams({
         connection: {
             case: "salesforce",
             value: new proto.sqlynx_connection.pb.SalesforceConnectionParams({
                 instanceUrl: params?.instanceUrl ?? "",
                 appConsumerKey: params?.appConsumerKey ?? "",
-                loginHint: params?.loginHint ?? undefined,
+                loginHint: settings?.exportUsername ? (params?.loginHint ?? undefined) : undefined,
             })
         }
     });

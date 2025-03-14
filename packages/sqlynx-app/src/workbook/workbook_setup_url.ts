@@ -3,15 +3,16 @@ import * as proto from '@ankoh/sqlynx-protobuf';
 import { WorkbookState } from './workbook_state.js';
 import { BASE64_CODEC } from '../utils/base64.js';
 import { ConnectionParamsVariant, encodeConnectionParams } from '../connection/connection_params.js';
+import { WorkbookExportSettings } from './workbook_export_settings.js';
 
 export enum WorkbookLinkTarget {
     NATIVE,
     WEB
 }
 
-export function generateWorkbookUrl(workbookState: WorkbookState, connectionParams: ConnectionParamsVariant, target: WorkbookLinkTarget): URL {
+export function generateWorkbookUrl(workbookState: WorkbookState, connectionParams: ConnectionParamsVariant, target: WorkbookLinkTarget, settings: WorkbookExportSettings | null = null): URL {
     // Build the connector params
-    const params = encodeConnectionParams(connectionParams);
+    const params = encodeConnectionParams(connectionParams, settings);
 
     // Collect the scripts
     const scripts: proto.sqlynx_workbook.pb.WorkbookScript[] = [];
