@@ -31,7 +31,7 @@ import {
 } from './query_execution_state.js';
 import { ConnectionMetrics, createConnectionMetrics } from './connection_statistics.js';
 import { reduceQueryAction } from './query_execution_state.js';
-import { DemoConnectionParams as DemoConnectionDetails } from './demo/demo_connection_state.js';
+import { DemoConnectionParams } from './demo/demo_connection_state.js';
 import { reduceTrinoConnectorState, TrinoConnectionDetails, TrinoConnectorAction } from './trino/trino_connection_state.js';
 
 export interface CatalogUpdates {
@@ -118,7 +118,7 @@ export enum ConnectionHealth {
 export type ConnectionDetailsVariant =
     | VariantKind<typeof SALESFORCE_DATA_CLOUD_CONNECTOR, SalesforceConnectionDetails>
     | VariantKind<typeof SERVERLESS_CONNECTOR, unknown>
-    | VariantKind<typeof DEMO_CONNECTOR, DemoConnectionDetails>
+    | VariantKind<typeof DEMO_CONNECTOR, DemoConnectionParams>
     | VariantKind<typeof HYPER_GRPC_CONNECTOR, HyperGrpcConnectionDetails>
     | VariantKind<typeof TRINO_CONNECTOR, TrinoConnectionDetails>
     ;

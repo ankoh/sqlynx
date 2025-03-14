@@ -5,11 +5,6 @@ import { BASE64_CODEC } from '../utils/base64.js';
 import { ConnectionParamsVariant, encodeConnectionParams } from '../connection/connection_params.js';
 import { WorkbookExportSettings } from './workbook_export_settings.js';
 
-export enum WorkbookLinkTarget {
-    NATIVE,
-    WEB
-}
-
 export function encodeWorkbookAsProto(workbookState: WorkbookState, connectionParams: ConnectionParamsVariant, settings: WorkbookExportSettings | null = null): proto.sqlynx_workbook.pb.Workbook {
     // Build the connector params
     const params = encodeConnectionParams(connectionParams, settings);
@@ -28,6 +23,11 @@ export function encodeWorkbookAsProto(workbookState: WorkbookState, connectionPa
         scripts: scripts
     });
     return setup;
+}
+
+export enum WorkbookLinkTarget {
+    NATIVE,
+    WEB
 }
 
 export function encodeWorkbookProtoAsUrl(setup: proto.sqlynx_workbook.pb.Workbook, target: WorkbookLinkTarget): URL {

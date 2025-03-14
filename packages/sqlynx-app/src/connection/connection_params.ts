@@ -58,7 +58,7 @@ export function getConnectionParamsFromDetails(state: ConnectionDetailsVariant):
     }
 }
 
-export function encodeConnectionParams(state: ConnectionParamsVariant, settings: WorkbookExportSettings | null = null) {
+export function encodeConnectionParams(state: ConnectionParamsVariant, settings: WorkbookExportSettings | null = null): proto.sqlynx_connection.pb.ConnectionParams {
     switch (state.type) {
         case SERVERLESS_CONNECTOR:
             return buildServerlessConnectionParams(settings);
