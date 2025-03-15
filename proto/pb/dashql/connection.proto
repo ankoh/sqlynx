@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+import "salesforce/hyperdb/grpc/v1/hyper_service.proto";
+
+package dashql;
+
+message TlsConfig {
+    /// The path to the client private key
+    string client_key_path = 1;
+    /// The path to the client public key
+    string client_cert_path = 2;
+    /// The path to the CA certificates
+    string ca_certs_path = 3;
+}
+
+message HyperConnectionParams {
+    /// The endpoint
+    string endpoint = 1;
+    /// The TLS config
+    TlsConfig tls = 2;
+    /// The attached databases
+    repeated salesforce.hyperdb.grpc.v1.AttachedDatabase attached_databases = 3;
+    /// The metadata
+    map<string, string> metadata = 4;
+}
+
+message SalesforceConnectionParams {
+    /// The instance url
+    string instanceUrl = 1;
+    /// The key of the connected app
+    string appConsumerKey = 2;
+    /// The login hint
+    string loginHint = 3;
+}
+
+message ServerlessParams {}
+
+message DemoParams {}
+
+message TrinoAuthParams {
+    /// The username
+    string username = 1;
+}
+
+message TrinoConnectionParams {
+    /// The endpoint
+    string endpoint = 1;
+    /// The authentication params
+    TrinoAuthParams auth = 2;
+    /// The catalog name
+    string catalog_name = 3;
+    /// The schema name
+    repeated string schema_names = 4;
+}
+
+message ConnectionParams {
+    oneof connection {
+        /// Parameters for Serverless sessions
+        ServerlessParams serverless = 1;
+        /// Parameters for direct-to-Hyper connections
+        HyperConnectionParams hyper = 20;
+        /// Parameters for Salesforce connections
+        SalesforceConnectionParams salesforce = 30;
+        /// Parameters for trino connections
+        TrinoConnectionParams trino = 50;
+        /// Parameters for demo sessions
+        DemoParams demo = 100;
+    }
+}

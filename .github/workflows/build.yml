@@ -18,10 +18,10 @@ jobs:
                 build:
                     - os: macos-14
                       target: aarch64-apple-darwin
-                      artifact: sqlynx_pack_macos
+                      artifact: dashql_pack_macos
                     - os: ubuntu-24.04
                       target: x86_64-unknown-linux-gnu
-                      artifact: sqlynx_pack_linux
+                      artifact: dashql_pack_linux
         name: Pack / ${{ matrix.build.os }}
         runs-on: ${{ matrix.build.os }}
         steps:
@@ -50,15 +50,15 @@ jobs:
               with:
                 os: ${{ matrix.build.os }}
 
-            - name: Build sqlynx-pack
+            - name: Build dashql-pack
               shell: bash
               run: |
-                    cargo build --target=${{ matrix.build.target }} -p sqlynx-pack --release
+                    cargo build --target=${{ matrix.build.target }} -p dashql-pack --release
 
             - uses: actions/upload-artifact@v4
               with:
                   name: ${{ matrix.build.artifact }}
-                  path: ${{ github.workspace }}/target/${{ matrix.build.target }}/release/*sqlynx*
+                  path: ${{ github.workspace }}/target/${{ matrix.build.target }}/release/*dashql*
                   retention-days: 1
 
     core_wasm:
@@ -101,8 +101,8 @@ jobs:
 
             - uses: actions/upload-artifact@v4
               with:
-                  name: sqlynx_core_wasm_${{ matrix.build_type }}
-                  path: ${{ github.workspace }}/packages/sqlynx-core/build/wasm/${{ matrix.build_type }}/sqlynx.wasm
+                  name: dashql_core_wasm_${{ matrix.build_type }}
+                  path: ${{ github.workspace }}/packages/dashql-core/build/wasm/${{ matrix.build_type }}/dashql.wasm
                   retention-days: 1
 
     core_native:
@@ -131,62 +131,62 @@ jobs:
             - name: Compile library
               shell: bash
               env:
-                  SQLYNX_SOURCE_DIR: ${{ github.workspace }}/packages/sqlynx-core
-                  SQLYNX_BUILD_DIR: ${{ github.workspace }}/packages/sqlynx-core/build/native/${{ matrix.build_type }}
+                  DASHQL_SOURCE_DIR: ${{ github.workspace }}/packages/dashql-core
+                  DASHQL_BUILD_DIR: ${{ github.workspace }}/packages/dashql-core/build/native/${{ matrix.build_type }}
               run: |
-                  cmake -S ${SQLYNX_SOURCE_DIR} -B ${SQLYNX_BUILD_DIR} \
+                  cmake -S ${DASHQL_SOURCE_DIR} -B ${DASHQL_BUILD_DIR} \
                   -DCMAKE_C_COMPILER=${{env.LLVM_PATH}}/bin/clang \
                   -DCMAKE_CXX_COMPILER=${{env.LLVM_PATH}}/bin/clang++ \
                   -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
                   -DCMAKE_EXPORT_COMPILE_COMMANDS=1 \
                   -DCODE_COVERAGE=1
-                  ln -sf ${SQLYNX_BUILD_DIR}/compile_commands.json ${SQLYNX_SOURCE_DIR}/compile_commands.json
-                  cmake --build ${SQLYNX_BUILD_DIR} --parallel $(nproc --all)
+                  ln -sf ${DASHQL_BUILD_DIR}/compile_commands.json ${DASHQL_SOURCE_DIR}/compile_commands.json
+                  cmake --build ${DASHQL_BUILD_DIR} --parallel $(nproc --all)
 
             - name: Test library
               shell: bash
               env:
-                  SQLYNX_SOURCE_DIR: ${{ github.workspace }}/packages/sqlynx
-                  SQLYNX_BUILD_DIR: ${{ github.workspace }}/packages/sqlynx-core/build/native/${{ matrix.build_type }}
+                  DASHQL_SOURCE_DIR: ${{ github.workspace }}/packages/dashql
+                  DASHQL_BUILD_DIR: ${{ github.workspace }}/packages/dashql-core/build/native/${{ matrix.build_type }}
               run: |
-                  ${SQLYNX_BUILD_DIR}/tester --source ${SQLYNX_SOURCE_DIR}
+                  ${DASHQL_BUILD_DIR}/tester --source ${DASHQL_SOURCE_DIR}
 
             - name: Run pipeline benchmarks
               if: matrix.build_type == 'o2'
               shell: bash
               env:
-                  SQLYNX_SOURCE_DIR: ${{ github.workspace }}/packages/sqlynx
-                  SQLYNX_BUILD_DIR: ${{ github.workspace }}/packages/sqlynx-core/build/native/${{ matrix.build_type }}
+                  DASHQL_SOURCE_DIR: ${{ github.workspace }}/packages/dashql
+                  DASHQL_BUILD_DIR: ${{ github.workspace }}/packages/dashql-core/build/native/${{ matrix.build_type }}
               run: |
-                  ${SQLYNX_BUILD_DIR}/benchmark_pipeline
+                  ${DASHQL_BUILD_DIR}/benchmark_pipeline
 
             - name: Merge coverage data
               shell: bash
               env:
-                  SQLYNX_COVERAGE_DIR: ${{ github.workspace }}/packages/sqlynx-core/build/coverage
+                  DASHQL_COVERAGE_DIR: ${{ github.workspace }}/packages/dashql-core/build/coverage
               run: |
-                  mkdir -p ${SQLYNX_COVERAGE_DIR}
-                  ${{env.LLVM_PATH}}/bin/llvm-profdata merge -output=${SQLYNX_COVERAGE_DIR}/coverage.prof -instr default.profraw
+                  mkdir -p ${DASHQL_COVERAGE_DIR}
+                  ${{env.LLVM_PATH}}/bin/llvm-profdata merge -output=${DASHQL_COVERAGE_DIR}/coverage.prof -instr default.profraw
 
             - name: Build coverage report
               shell: bash
               env:
-                  SQLYNX_BUILD_DIR: ${{ github.workspace }}/packages/sqlynx-core/build/native/${{ matrix.build_type }}
-                  SQLYNX_COVERAGE_DIR: ${{ github.workspace }}/packages/sqlynx-core/build/coverage
+                  DASHQL_BUILD_DIR: ${{ github.workspace }}/packages/dashql-core/build/native/${{ matrix.build_type }}
+                  DASHQL_COVERAGE_DIR: ${{ github.workspace }}/packages/dashql-core/build/coverage
               run: |
                   ${{env.LLVM_PATH}}/bin/llvm-cov export \
-                  --instr-profile ${SQLYNX_COVERAGE_DIR}/coverage.prof \
+                  --instr-profile ${DASHQL_COVERAGE_DIR}/coverage.prof \
                   --format lcov \
                   --ignore-filename-regex='.*/build/native/${{ matrix.build_type }}/.*' \
                   --ignore-filename-regex='.*/utf8proc/.*' \
                   --ignore-filename-regex='.*/proto/proto_generated.h' \
                   --ignore-filename-regex='.*/.*\.list' \
-                  ${SQLYNX_BUILD_DIR}/tester > ${SQLYNX_COVERAGE_DIR}/lcov.info
+                  ${DASHQL_BUILD_DIR}/tester > ${DASHQL_COVERAGE_DIR}/lcov.info
 
             - uses: actions/upload-artifact@v4
               with:
-                  name: sqlynx_coverage_native_${{ matrix.build_type }}
-                  path: ${{ github.workspace }}/packages/sqlynx-core/build/coverage/lcov.info
+                  name: dashql_coverage_native_${{ matrix.build_type }}
+                  path: ${{ github.workspace }}/packages/dashql-core/build/coverage/lcov.info
                   retention-days: 1
 
     core:
@@ -203,8 +203,8 @@ jobs:
 
             - uses: actions/download-artifact@v4
               with:
-                  name: sqlynx_core_wasm_o3
-                  path: ${{ github.workspace }}/packages/sqlynx-core/build/wasm/o3/
+                  name: dashql_core_wasm_o3
+                  path: ${{ github.workspace }}/packages/dashql-core/build/wasm/o3/
 
             - name: Setup flatc
               uses: ./.github/actions/setup-flatc
@@ -218,26 +218,26 @@ jobs:
               run: |
                   yarn install --frozen-lockfile
 
-            - name: Build @ankoh/sqlynx-core
+            - name: Build @ankoh/dashql-core
               shell: bash
               run: |
-                  yarn workspace @ankoh/sqlynx-core build:o3
+                  yarn workspace @ankoh/dashql-core build:o3
 
-            - name: Test @ankoh/sqlynx-core
+            - name: Test @ankoh/dashql-core
               shell: bash
               run: |
-                  yarn workspace @ankoh/sqlynx-core test:coverage
+                  yarn workspace @ankoh/dashql-core test:coverage
 
             - uses: actions/upload-artifact@v4
               with:
-                  name: sqlynx_core
-                  path: ${{ github.workspace }}/packages/sqlynx-core-bindings/dist
+                  name: dashql_core
+                  path: ${{ github.workspace }}/packages/dashql-core-bindings/dist
                   retention-days: 1
 
             - uses: actions/upload-artifact@v4
               with:
-                  name: sqlynx_coverage_js
-                  path: ${{ github.workspace }}/packages/sqlynx-core-bindings/coverage/lcov.info
+                  name: dashql_coverage_js
+                  path: ${{ github.workspace }}/packages/dashql-core-bindings/coverage/lcov.info
                   retention-days: 1
 
     compute_native:
@@ -281,15 +281,15 @@ jobs:
               with:
                 os: ubuntu-24.04 
 
-            - name: Build sqlynx-compute
+            - name: Build dashql-compute
               shell: bash
               run: |
-                    cargo build -p sqlynx-compute --profile=${{ matrix.build.profile }} 
+                    cargo build -p dashql-compute --profile=${{ matrix.build.profile }} 
 
-            - name: Test sqlynx-compute
+            - name: Test dashql-compute
               shell: bash
               run: |
-                    cargo test -p sqlynx-compute --profile=${{ matrix.build.profile }} 
+                    cargo test -p dashql-compute --profile=${{ matrix.build.profile }} 
 
     compute_wasm:
         name: Compute / WASM / O3
@@ -329,19 +329,19 @@ jobs:
               run: |
                   yarn install --frozen-lockfile
 
-            - name: Build @ankoh/sqlynx-compute
+            - name: Build @ankoh/dashql-compute
               shell: bash
               run: |
                   ./node_modules/.bin/wasm-pack build \
                     --target web --release \
-                    --out-name sqlynx_compute \
+                    --out-name dashql_compute \
                     --out-dir ./dist \
-                    ./packages/sqlynx-compute/
+                    ./packages/dashql-compute/
 
             - uses: actions/upload-artifact@v4
               with:
-                  name: sqlynx_compute_wasm_o3
-                  path: ${{ github.workspace }}/packages/sqlynx-compute/dist
+                  name: dashql_compute_wasm_o3
+                  path: ${{ github.workspace }}/packages/dashql-compute/dist
                   retention-days: 1
 
     pwa:
@@ -354,11 +354,11 @@ jobs:
                     - name: Relocatable
                       target: build:reloc
                       output: reloc
-                      artifact: sqlynx_pwa_reloc
+                      artifact: dashql_pwa_reloc
                     - name: Pages
                       target: build:pages
                       output: pages
-                      artifact: sqlynx_pwa_pages
+                      artifact: dashql_pwa_pages
         needs:
             - core
             - pack
@@ -372,24 +372,24 @@ jobs:
 
             - uses: actions/download-artifact@v4
               with:
-                  name: sqlynx_pack_linux
+                  name: dashql_pack_linux
                   path: ${{ github.workspace }}/.bin/
 
             - uses: actions/download-artifact@v4
               with:
-                  name: sqlynx_core
-                  path: ${{ github.workspace }}/packages/sqlynx-core-bindings/dist
+                  name: dashql_core
+                  path: ${{ github.workspace }}/packages/dashql-core-bindings/dist
 
             - uses: actions/download-artifact@v4
               with:
-                  name: sqlynx_compute_wasm_o3
-                  path: ${{ github.workspace }}/packages/sqlynx-compute/dist
+                  name: dashql_compute_wasm_o3
+                  path: ${{ github.workspace }}/packages/dashql-compute/dist
 
-            - name: Freeze SQLynx version
+            - name: Freeze DashQL version
               shell: bash
               run: |
-                    chmod +x ./.bin/sqlynx-pack
-                    ./.bin/sqlynx-pack freeze
+                    chmod +x ./.bin/dashql-pack
+                    ./.bin/dashql-pack freeze
 
             - name: Install npm dependencies
               shell: bash
@@ -400,24 +400,24 @@ jobs:
               shell: bash
               run: |
                     ./node_modules/.bin/buf generate
-                    yarn workspace @ankoh/sqlynx-protobuf build
+                    yarn workspace @ankoh/dashql-protobuf build
 
             - name: Run tests
               shell: bash
               run: |
-                    yarn workspace @ankoh/sqlynx-app test
+                    yarn workspace @ankoh/dashql-app test
 
             - name: Build web app
               shell: bash
               env:
-                SQLYNX_APP_URL: "https://sqlynx.app"
+                DASHQL_APP_URL: "https://dashql.app"
               run: |
-                    yarn workspace @ankoh/sqlynx-app ${{ matrix.build.target }}
+                    yarn workspace @ankoh/dashql-app ${{ matrix.build.target }}
 
             - uses: actions/upload-artifact@v4
               with:
                   name: ${{ matrix.build.artifact }}
-                  path: ${{ github.workspace }}/packages/sqlynx-app/build/${{ matrix.build.output }}
+                  path: ${{ github.workspace }}/packages/dashql-app/build/${{ matrix.build.output }}
                   retention-days: 1
 
     native:
@@ -436,18 +436,18 @@ jobs:
 
             - uses: actions/download-artifact@v4
               with:
-                name: sqlynx_pack_macos
+                name: dashql_pack_macos
                 path: ${{ github.workspace }}/.bin/
 
             - uses: actions/download-artifact@v4
               with:
-                name: sqlynx_core
-                path: ${{ github.workspace }}/packages/sqlynx-core-bindings/dist
+                name: dashql_core
+                path: ${{ github.workspace }}/packages/dashql-core-bindings/dist
 
             - uses: actions/download-artifact@v4
               with:
-                name: sqlynx_pwa_reloc
-                path: ${{ github.workspace }}/packages/sqlynx-app/build/reloc
+                name: dashql_pwa_reloc
+                path: ${{ github.workspace }}/packages/dashql-app/build/reloc
 
             - name: Setup cargo cache
               uses: actions/cache@v4
@@ -478,15 +478,15 @@ jobs:
               run: |
                     yarn install --frozen-lockfile
 
-            - name: Freeze SQLynx version
+            - name: Freeze DashQL version
               shell: bash
               run: |
-                    chmod +x ./.bin/sqlynx-pack
-                    ./.bin/sqlynx-pack freeze
+                    chmod +x ./.bin/dashql-pack
+                    ./.bin/dashql-pack freeze
 
             - name: Run tests
               run: |
-                    cargo test -p sqlynx-native
+                    cargo test -p dashql-native
 
             - name: Build native app for macOS without code signing
               if: ${{ !inputs.signed }}
@@ -523,14 +523,14 @@ jobs:
 
             - uses: actions/upload-artifact@v4
               with:
-                  name: sqlynx_native_macos_dmg
+                  name: dashql_native_macos_dmg
                   path: ${{ github.workspace }}/target/universal-apple-darwin/release/bundle/dmg/
                   retention-days: 1
 
             - uses: actions/upload-artifact@v4
               if: ${{ inputs.signed }}
               with:
-                  name: sqlynx_native_macos_update
+                  name: dashql_native_macos_update
                   path: ${{ github.workspace }}/target/release/bundle/macos/
                   retention-days: 1
 

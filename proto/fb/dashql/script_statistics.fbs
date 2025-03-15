@@ -1,0 +1,41 @@
+namespace dashql.proto;
+
+struct ScriptProcessingTimings {
+    /// The last duration of the scanner
+    scanner_last_elapsed: double;
+    /// The last duration of the parser
+    parser_last_elapsed: double;
+    /// The last duration of the analyzer
+    analyzer_last_elapsed: double;
+}
+
+struct ScriptProcessingMemoryStatistics {
+    /// The size of the scanner input
+    scanner_input_bytes: uint32;
+    /// The size of the scanner symbols
+    scanner_symbol_bytes: uint32;
+    /// The size of the scanner dictionary
+    scanner_name_dictionary_bytes: uint32;
+    /// The size of parser ast
+    parser_ast_bytes: uint32;
+    /// The size of the analyzed script
+    analyzer_description_bytes: uint32;
+    /// The number of entries in the name index
+    analyzer_name_index_size: uint32;
+    /// The size of the name index
+    analyzer_name_index_bytes: uint32;
+}
+
+struct ScriptMemoryStatistics {
+    /// The number of rope bytes
+    rope_bytes: uint32;
+    /// The memory statistics of the latest script
+    latest_script: ScriptProcessingMemoryStatistics;
+}
+
+table ScriptStatistics {
+    /// The analyzer statistics
+    timings: ScriptProcessingTimings;
+    /// The memory statistics
+    memory: ScriptMemoryStatistics;
+}

@@ -16,10 +16,10 @@ ${FLATC} --version &&
     }
 
 SPEC_DIR="${PROJECT_ROOT}/proto/fb/"
-SPEC_INDEX="${SPEC_DIR}/sqlynx/proto.fbs"
+SPEC_INDEX="${SPEC_DIR}/dashql/proto.fbs"
 
-OUT_DIR_CPP="${PROJECT_ROOT}/packages/sqlynx-core/include/sqlynx/proto"
-OUT_DIR_TS="${PROJECT_ROOT}/packages/sqlynx-core-bindings/gen"
+OUT_DIR_CPP="${PROJECT_ROOT}/packages/dashql-core/include/dashql/proto"
+OUT_DIR_TS="${PROJECT_ROOT}/packages/dashql-core-bindings/gen"
 
 rm -rf ${OUT_DIR_CPP}/*
 rm -rf ${OUT_DIR_TS}/*
@@ -49,7 +49,7 @@ ${FLATC} -I ${SPEC_DIR} -o ${OUT_DIR_TS} ${SPEC_INDEX} --ts \
         exit 1
     }
 
-TS_OUT_PROTO_BASE="${OUT_DIR_TS}/sqlynx/proto"
+TS_OUT_PROTO_BASE="${OUT_DIR_TS}/dashql/proto"
 TS_OUT_PROTO_DIRS=$(ls ${TS_OUT_PROTO_BASE}/)
 TS_OUT_PROTO_IDX="${TS_OUT_PROTO_BASE}/../proto.ts"
 if [ -f ${TS_OUT_PROTO_IDX} ]; then

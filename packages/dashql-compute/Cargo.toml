@@ -1,0 +1,57 @@
+[package]
+name = "dashql-compute"
+version = "0.0.2-dev.17"
+description = "Arrow-backed computations for DashQL"
+edition = "2021"
+rust-version = "1.70"
+workspace = "../../"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wasm-bindgen = "0.2.93"
+wasm-bindgen-futures = "0.4.43"
+console_error_panic_hook = "0.1.7"
+
+log = "0.4.22"
+chrono = { version = "0.4.38", features = ["wasmbind"] }
+getrandom = { version = "0.2.15", features = ["js"] }
+anyhow = "1.0.89"
+
+prost = "0.13.3"
+
+tokio = { version = "1.40.0", features = ["macros", "rt", "sync"] }
+arrow = { version = "53.0", default-features = false, features = ["ipc"] }
+
+datafusion-common = { version = "43.0.0", default-features = false }
+datafusion-expr = { version = "43.0.0", default-features = false }
+datafusion-execution = { version = "43.0.0", default-features = false }
+datafusion-functions = { version = "43.0.0", default-features = false }
+datafusion-functions-aggregate = { version = "43.0.0", default-features = false }
+datafusion-functions-nested = { version = "43.0.0", default-features = false }
+datafusion-functions-window = { version = "43.0.0", default-features = false }
+datafusion-physical-expr = { version = "43.0.0", default-features = false }
+datafusion-physical-plan = { version = "43.0.0", default-features = false }
+
+[dependencies.web-sys]
+version = "0.3.70"
+features = [
+  'console',
+]
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3.43"
+pretty_assertions = "1.4.1"
+indoc = "2.0.5"
+
+[build-dependencies]
+anyhow = "1.0.89"
+regex = "1.11.0"
+prost-build = "0.13.3"
+
+[profile.release]
+strip = true
+lto = true
+opt-level = "s"

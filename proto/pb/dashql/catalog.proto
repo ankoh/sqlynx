@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package dashql;
+
+// Note that this catalog encoding is the protobuf variant of the FlatCatalog in catalog.fbs.
+//
+// We deliberately maintain two versions here because dashql-core benefits from
+// zero-copy reading flatbuffers from the wasm heap (which we cannot do with protobuf)
+// However, mixing flatbuf and protobuf when serializing a workbook is also not sane.
+// The catalog encoding is not complicated, so we just maintain a protobuf variant of it.
+//
+// When validating/santizing a workbook file or URL, we then only need to worry about protobuf validation, not flatbuffer vtables pointing into nirvana.
+
+message CatalogColumn {
+    /// The column name
+    string name = 1;
+}
+
+message CatalogTable {
+    /// The table name
+    string name = 1;
+    /// The columns
+    repeated CatalogColumn columns = 2;
+}
+
+message CatalogSchema {
+    /// The schema name
+    string name = 1;
+    /// The tables
+    repeated CatalogTable tables = 2;
+}
+
+message CatalogDatabase {
+    /// A catalog database
+    string name = 1;
+    /// The schema entries
+    repeated CatalogSchema schemas = 2;
+}
+
+/// An indexed flat database entry
+message Catalog {
+    // The databases
+    repeated CatalogDatabase databases = 1;
+}

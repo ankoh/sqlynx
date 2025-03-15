@@ -5836,7 +5836,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sqlynx-compute"
+name = "dashql-compute"
 version = "0.0.2-dev.17"
 dependencies = [
  "anyhow",
@@ -5867,7 +5867,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sqlynx-native"
+name = "dashql-native"
 version = "0.0.2-dev.17"
 dependencies = [
  "anyhow",
@@ -5907,7 +5907,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sqlynx-pack"
+name = "dashql-pack"
 version = "0.0.2-dev.17"
 dependencies = [
  "anyhow",

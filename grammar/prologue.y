@@ -1,7 +1,7 @@
 %skeleton "lalr1.cc"
 %require "3.3"
 
-%define api.namespace {sqlynx::parser}
+%define api.namespace {dashql::parser}
 %define api.parser.class {ParserBase}
 %define api.token.constructor
 %define api.token.prefix {FQL_}
@@ -13,7 +13,7 @@
 %locations
 %define api.location.type {proto::Location}
 
-%parse-param    { sqlynx::parser::ParseContext& ctx }
+%parse-param    { dashql::parser::ParseContext& ctx }
 
 // ---------------------------------------------------------------------------
 // HEADER
@@ -27,13 +27,13 @@
 #include <string>
 #include <cstdlib>
 #include <utility>
-#include "sqlynx/parser/grammar/state.h"
-#include "sqlynx/parser/grammar/location.h"
-#include "sqlynx/proto/proto_generated.h"
+#include "dashql/parser/grammar/state.h"
+#include "dashql/parser/grammar/location.h"
+#include "dashql/proto/proto_generated.h"
 
-namespace sx = sqlynx::proto;
+namespace sx = dashql::proto;
 
-namespace sqlynx { namespace parser { class ParseContext;  }}
+namespace dashql { namespace parser { class ParseContext;  }}
 
 #define YYRHSLOC(Rhs, K) ((Rhs)[K].location)
 #define YYLLOC_DEFAULT(Cur, Rhs, N) { \
@@ -54,16 +54,16 @@ namespace sqlynx { namespace parser { class ParseContext;  }}
 // IMPLEMENTATION
 
 %code {
-#include "sqlynx/parser/grammar/enums.h"
-#include "sqlynx/parser/grammar/location.h"
-#include "sqlynx/parser/grammar/nodes.h"
-#include "sqlynx/parser/scanner.h"
-#include "sqlynx/parser/parse_context.h"
+#include "dashql/parser/grammar/enums.h"
+#include "dashql/parser/grammar/location.h"
+#include "dashql/parser/grammar/nodes.h"
+#include "dashql/parser/scanner.h"
+#include "dashql/parser/parse_context.h"
 
 #undef yylex
 #define yylex ctx.NextSymbol
 
-using namespace sqlynx::parser;
+using namespace dashql::parser;
 }
 
 // ---------------------------------------------------------------------------

@@ -3,7 +3,7 @@ ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 UID=${shell id -u}
 GID=${shell id -g}
 
-LIB_SOURCE_DIR="${ROOT_DIR}/packages/sqlynx-core"
+LIB_SOURCE_DIR="${ROOT_DIR}/packages/dashql-core"
 LIB_DEBUG_DIR="${LIB_SOURCE_DIR}/build/native/o0"
 LIB_RELWITHDEBINFO_DIR="${LIB_SOURCE_DIR}/build/native/o2"
 LIB_RELEASE_DIR="${LIB_SOURCE_DIR}/build/native/o3"
@@ -43,7 +43,7 @@ flatbuf:
 
 .PHONY: protobuf
 protobuf:
-	node ./node_modules/.bin/buf generate && yarn workspace @ankoh/sqlynx-protobuf build
+	node ./node_modules/.bin/buf generate && yarn workspace @ankoh/dashql-protobuf build
 
 .PHONY: core_native_o0
 core_native_o0:
@@ -125,23 +125,23 @@ core_wasm_o3:
 
 .PHONY: core_js_o0
 core_js_o0:
-	yarn workspace @ankoh/sqlynx-core build:o0
+	yarn workspace @ankoh/dashql-core build:o0
 
 .PHONY: core_js_o2
 core_js_o2:
-	yarn workspace @ankoh/sqlynx-core build:o2
+	yarn workspace @ankoh/dashql-core build:o2
 
 .PHONY: core_js_o3
 core_js_o3:
-	yarn workspace @ankoh/sqlynx-core build:o3
+	yarn workspace @ankoh/dashql-core build:o3
 
 .PHONY: core_js_tests
 core_js_tests:
-	yarn workspace @ankoh/sqlynx-core test
+	yarn workspace @ankoh/dashql-core test
 
 .PHONY: core_js_debug
 core_js_tests_debug:
-	yarn workspace @ankoh/sqlynx-core test:debug
+	yarn workspace @ankoh/dashql-core test:debug
 
 .PHONY: compute_wasm_o0
 compute_wasm_o0:
@@ -153,29 +153,29 @@ compute_wasm_o3:
 
 .PHONY: pwa_pages
 pwa_pages:
-	yarn workspace @ankoh/sqlynx-app build:pages
+	yarn workspace @ankoh/dashql-app build:pages
 
 .PHONY: pwa_reloc
 pwa_reloc:
-	yarn workspace @ankoh/sqlynx-app build:reloc
+	yarn workspace @ankoh/dashql-app build:reloc
 
 .PHONY: pwa_dev
 pwa_dev:
-	yarn workspace @ankoh/sqlynx-app serve:dev
+	yarn workspace @ankoh/dashql-app serve:dev
 
 .PHONY: pwa_dev_trace
 pwa_dev_trace:
-	SQLYNX_LOG_LEVEL=trace yarn workspace @ankoh/sqlynx-app serve:dev
+	DASHQL_LOG_LEVEL=trace yarn workspace @ankoh/dashql-app serve:dev
 
 # Run specific pwa tests with:
-# yarn workspace @ankoh/sqlynx-app test random_data.test.ts
+# yarn workspace @ankoh/dashql-app test random_data.test.ts
 .PHONY: pwa_tests
 pwa_tests:
-	yarn workspace @ankoh/sqlynx-app test
+	yarn workspace @ankoh/dashql-app test
 
 .PHONY: pwa_tests_verbose
 pwa_tests_verbose:
-	yarn workspace @ankoh/sqlynx-app test --verbose=true
+	yarn workspace @ankoh/dashql-app test --verbose=true
 
 .PHONY: lint
 lint:

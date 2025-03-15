@@ -1,0 +1,83 @@
+[package]
+name = "dashql-native"
+version = "0.0.2-dev.17"
+description = "SQL client for the Hyper database system and Salesforce Data Cloud"
+edition = "2021"
+rust-version = "1.70"
+workspace = "../../"
+
+[build-dependencies.tauri-build]
+version = "2.0.1"
+features = []
+
+[build-dependencies.tonic-build]
+version = "0.11"
+features = []
+
+[dependencies]
+anyhow = "1.0.89"
+byteorder = "1.5.0"
+serde_json = "1.0.128"
+tauri-plugin-updater = "2.0.2"
+tauri-plugin-deep-link = "2.0.1"
+tauri-plugin-log = "2.0.1"
+tauri-plugin-shell = "2.0.1"
+tauri-plugin-os = "2.0.1"
+tauri-plugin-http = "2.0.1"
+tauri-plugin-process = "2.0.1"
+hyper = "1.4.1"
+http-body-util = "0.1.2"
+http = "1.1.0"
+tower-service = "0.3.3"
+bytes = "1.7.2"
+prost = "^0.12.6"
+once_cell = "1.20.2"
+lazy_static = "1.5.0"
+log = "0.4.22"
+url = "2.5.2"
+env_logger = "0.11.5"
+regex-automata = "0.4.8"
+mime = "0.3.17"
+futures-util = "0.3.30"
+futures-core = "0.3.31"
+
+[dependencies.hyper-util]
+version = "0.1.9"
+features = ["server"]
+
+[dependencies.reqwest]
+version = "^0.12.8"
+features = ["stream"]
+
+[dependencies.tonic]
+version = "^0.11.0"
+features = ["tls"]
+
+[dependencies.serde]
+version = "1.0.210"
+features = ["derive"]
+
+[dependencies.tauri]
+version = "2.0.1"
+features = []
+
+
+[dependencies.tokio-stream]
+version = "0.1.16"
+features = [
+    "net",
+]
+
+[dependencies.tokio]
+version = "^1.40.0"
+features = [
+    "net",
+    "rt",
+    "rt-multi-thread",
+    "sync",
+    "macros",
+    "time"
+]
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]

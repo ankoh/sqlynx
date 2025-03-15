@@ -1,0 +1,147 @@
+syntax = "proto3";
+
+package dashql.compute;
+
+/// An ordering constraint
+message OrderByConstraint {
+    /// The field name
+    string field_name = 1;
+    /// Sort ascending?
+    bool ascending = 2;
+    /// Sort nulls first?
+    bool nulls_first = 3;
+}
+
+/// Order a data frame by constraints
+message OrderByTransform {
+    /// The field name
+    repeated OrderByConstraint constraints = 1;
+    /// Limit results?
+    optional uint32 limit = 2;
+}
+
+/// An aggregate function
+enum AggregationFunction {
+    Min = 0;
+    Max = 1;
+    Average = 2;
+    Count = 3;
+    CountStar = 4;
+}
+
+/// The binning metadata.
+/// Requires precomputed min/max statistics.
+message GroupByKeyBinning {
+    /// The pre-binned field name.
+    optional string pre_binned_field_name = 1;
+    /// The number of bins
+    uint32 bin_count = 2;
+    /// The field containing the precomputed minimum of the field
+    string stats_minimum_field_name = 3;
+    /// The field containing the precomputed maximum of the field
+    string stats_maximum_field_name = 4;
+    /// The output bin minimum field name
+    string output_bin_lb_alias = 5;
+    /// The output bin minimum field name
+    string output_bin_ub_alias = 6;
+    /// The output bin width field name
+    string output_bin_width_alias = 7;
+}
+
+message GroupByKey {
+    /// The field name
+    string field_name = 1;
+    /// The output alias
+    string output_alias = 2;
+    /// The binning of the grouping key
+    optional GroupByKeyBinning binning = 3;
+}
+
+message GroupByAggregate {
+    /// The field name
+    optional string field_name = 1;
+    /// The output alias
+    string output_alias = 2;
+    /// The aggregation function
+    AggregationFunction aggregation_function = 3;
+    /// Aggregate distinct values?
+    optional bool aggregate_distinct = 4;
+}
+
+message GroupByTransform {
+    /// The group by keys
+    repeated GroupByKey keys = 1;
+    /// The aggregates
+    repeated GroupByAggregate aggregates = 2;
+}
+
+/// Bins are computed as: `(data[field_name] - stats[stats_min_field_name]) / (stats[stats_max_field_name] - stats[stats_min_field_name]))`
+/// Requires precomputed min/max statistics of the field `field_name`.
+message BinningTransform {
+    /// The field name
+    string field_name = 1;
+    /// The field containing the precomputed minimum of the field
+    string stats_minimum_field_name = 2;
+    /// The field containing the precomputed maximum of the field
+    string stats_maximum_field_name = 3;
+    /// The number of bins
+    uint32 bin_count = 4;
+    /// The output alias of the fractional bin
+    string output_alias = 6;
+}
+
+/// A row number transform.
+/// Populates a row-number u64 column to the output.
+/// You can use this to restore the initial ordering.
+message RowNumberTransform {
+    /// The output alias
+    string output_alias = 1;
+}
+
+
+/// An identifier transform.
+/// Derive an output column that assigns same values the same id.
+/// (Currently implemented as dense_rank)
+message ValueIdentifierTransform {
+    /// The field name
+    string field_name = 1;
+    /// The output alias
+    string output_alias = 2;
+}
+
+/// A filter predicate
+enum FilterOperator {
+    Equal = 0;
+    LessThan = 1;
+    LessEqual = 2;
+    GreaterThan = 3;
+    GreaterEqual = 4;
+    SemiJoinField = 5;
+}
+
+/// A filter transform
+message FilterTransform {
+    /// The field name
+    string field_name = 1;
+    /// The filter predicate
+    FilterOperator operator = 2;
+    /// The double value
+    optional double value_double = 3;
+    /// The joined field name
+    optional string join_field_name = 4;
+}
+
+message DataFrameTransform {
+    /// The row number transform (if any)
+    optional RowNumberTransform row_number = 6;
+    /// The identifier transforms (if any)
+    repeated ValueIdentifierTransform value_identifiers = 5;
+    /// The binning transforms (if any)
+    repeated BinningTransform binning = 1;
+    /// The filter transforms (if any)
+    repeated FilterTransform filters = 7;
+    /// The group by transform (if any)
+    optional GroupByTransform group_by = 3;
+    /// The order by transform (if any)
+    optional OrderByTransform order_by = 4;
+}

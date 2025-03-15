@@ -2,9 +2,9 @@
     "private": true,
     "type": "module",
     "workspaces": [
-        "packages/sqlynx-app",
-        "packages/sqlynx-core-bindings",
-        "packages/sqlynx-protobuf"
+        "packages/dashql-app",
+        "packages/dashql-core-bindings",
+        "packages/dashql-protobuf"
     ],
     "packages": {
         "ts-node": "^10.9.1"
@@ -32,7 +32,7 @@
         "@primer/octicons-react@npm:^19.8.0": "patch:@primer/octicons-react@npm%3A19.9.0#~/.yarn/patches/@primer-octicons-react-npm-19.9.0-65341cfa23.patch"
     },
     "scripts": {
-        "compute:wasm:o0": "wasm-pack build --target web --debug --out-name sqlynx_compute --out-dir ./dist ./packages/sqlynx-compute/",
-        "compute:wasm:o3": "wasm-pack build --target web --release --out-name sqlynx_compute --out-dir ./dist ./packages/sqlynx-compute/"
+        "compute:wasm:o0": "wasm-pack build --target web --debug --out-name dashql_compute --out-dir ./dist ./packages/dashql-compute/",
+        "compute:wasm:o3": "wasm-pack build --target web --release --out-name dashql_compute --out-dir ./dist ./packages/dashql-compute/"
     }
 }

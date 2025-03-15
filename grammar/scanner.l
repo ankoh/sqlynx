@@ -7,11 +7,11 @@
 #include <string_view>
 #include <string>
 #include <charconv>
-#include "sqlynx/parser/grammar/keywords.h"
-#include "sqlynx/parser/grammar/location.h"
-#include "sqlynx/parser/grammar/raw.h"
-#include "sqlynx/parser/parser.h"
-#include "sqlynx/parser/scanner.h"
+#include "dashql/parser/grammar/keywords.h"
+#include "dashql/parser/grammar/location.h"
+#include "dashql/parser/grammar/raw.h"
+#include "dashql/parser/parser.h"
+#include "dashql/parser/scanner.h"
 
 // ISO C++17 does not allow 'register' storage class specifier
 #pragma GCC diagnostic push
@@ -19,8 +19,8 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wregister"
 
-using namespace sqlynx;
-using namespace sqlynx::parser;
+using namespace dashql;
+using namespace dashql::parser;
 namespace sx = proto;
 
 // Flex use 16KiB buffers by default.
@@ -32,7 +32,7 @@ namespace sx = proto;
 // Declare the yylex function
 #define YY_DECL Parser::symbol_type yylex(void* yyscanner)
 // Declare yy_extra_type
-#define YY_EXTRA_TYPE sqlynx::parser::Scanner*
+#define YY_EXTRA_TYPE dashql::parser::Scanner*
 
 // Done after the current pattern has been matched and before the corrsponding action.
 // We update the location here and not in YY_USER_ACTION so that yyless picks it up.
@@ -59,7 +59,7 @@ namespace sx = proto;
 #define yyterminate() return Parser::make_EOF(loc)
 
 using YYLTYPE = sx::Location;
-using YYSTYPE = sqlynx::parser::Parser::symbol_type;
+using YYSTYPE = dashql::parser::Parser::symbol_type;
 
 %}
 
@@ -81,7 +81,7 @@ using YYSTYPE = sqlynx::parser::Parser::symbol_type;
 %option never-interactive
 %option batch
 %option caseless
-%option prefix="sqlynx_yy"
+%option prefix="dashql_yy"
 
 /*
  * OK, here is a short description of lex/flex rules behavior.
@@ -315,7 +315,7 @@ other           .
 %{
 // This code is inlined at the beginning of yylex()
 
-Scanner& ctx = *sqlynx_yyget_extra(yyscanner);
+Scanner& ctx = *dashql_yyget_extra(yyscanner);
 
 sx::Location loc;
 auto& ext_begin = ctx.ext_begin;
@@ -521,7 +521,7 @@ std::string_view input = ctx.GetInputData();
 <<EOF>>         { return Parser::make_EOF(loc); }
 %%
 
-namespace sqlynx {
+namespace dashql {
 namespace parser {
 
 Scanner::Scanner(const rope::Rope& text, uint32_t external_id): output(std::make_shared<ScannedScript>(text, external_id)) {
@@ -570,9 +570,9 @@ Scanner::Scanner(const rope::Rope& text, uint32_t external_id): output(std::make
     yyb->yy_buffer_status = YY_BUFFER_NEW;
 
     // Set the buffer
-    sqlynx_yy_switch_to_buffer(yyb, yyg);
+    dashql_yy_switch_to_buffer(yyb, yyg);
     // Set scanner ref
-    sqlynx_yyset_extra(this, yyg);
+    dashql_yyset_extra(this, yyg);
 }
 
 }

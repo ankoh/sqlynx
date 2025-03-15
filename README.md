@@ -2,20 +2,20 @@
   <img src="misc/logo.png" width=80>
 </p>
 <p align="center">
-  <a href="https://github.com/ankoh/sqlynx/actions/workflows/push_main.yml"><img src="https://github.com/ankoh/sqlynx/actions/workflows/push_main.yml/badge.svg?branch=main" /></a>
-  <a href="https://github.com/ankoh/sqlynx/actions/workflows/renovate.yml"><img src="https://github.com/ankoh/sqlynx/actions/workflows/renovate.yml/badge.svg" /></a>
-  <a href="https://coveralls.io/github/ankoh/sqlynx?branch=main"><img src="https://coveralls.io/repos/github/ankoh/sqlynx/badge.svg?branch=main" /></a>
+  <a href="https://github.com/ankoh/dashql/actions/workflows/push_main.yml"><img src="https://github.com/ankoh/dashql/actions/workflows/push_main.yml/badge.svg?branch=main" /></a>
+  <a href="https://github.com/ankoh/dashql/actions/workflows/renovate.yml"><img src="https://github.com/ankoh/dashql/actions/workflows/renovate.yml/badge.svg" /></a>
+  <a href="https://coveralls.io/github/ankoh/dashql?branch=main"><img src="https://coveralls.io/repos/github/ankoh/dashql/badge.svg?branch=main" /></a>
   <a href="https://opensource.org/licenses/MPL-2.0"><img src="misc/badge_mpl2.svg?raw=true" /></a>
-  <a href="https://github.com/ankoh/sqlynx/commits/main"><img src="misc/badge_wip.svg?raw=true" /></a>
+  <a href="https://github.com/ankoh/dashql/commits/main"><img src="misc/badge_wip.svg?raw=true" /></a>
 </p>
 
 ---
 
-SQLynx is a library for creating and analyzing a compact version of the PostgreSQL AST.
+DashQL is a library for creating and analyzing a compact version of the PostgreSQL AST.
 It builds around a Bison parser that materializes AST Nodes into a single Flatbuffer vector.
 It can be compiled to WebAssembly and has been originally built for lightweight SQL instrumentation, running on every user keystroke in DashQL.
 
-_Each AST node is packed into [24 bytes](https://github.com/ankoh/sqlynx/blob/b38e952afcd3367c91ea18f068ed58183dc59683/proto/sqlynx/parsed_script.fbs#L355-L361) and references matched substrings in the original script text.
+_Each AST node is packed into [24 bytes](https://github.com/ankoh/dashql/blob/b38e952afcd3367c91ea18f068ed58183dc59683/proto/dashql/parsed_script.fbs#L355-L361) and references matched substrings in the original script text.
 This encoding is compact and efficient for simple passes, but is not directly suited for a full semantic analysis._
 
 <img src="misc/ast.png?raw=true" width="680px">
@@ -63,23 +63,23 @@ make native_mac_updates   # Create universal app updates with code signing (requ
 Tree-sitter is a great parser framework and I recommend everyone to try it out.
 It gives you flexible incremental parsing without much hassle and is a perfect fit for many editors.
 
-SQLynx was built for specific database systems.
+DashQL was built for specific database systems.
 The systems Hyper, Umbra, NoisePage, AlloyDB and DuckDB all use Bison parsers derived from the PostgreSQL grammar.
 The PostgreSQL grammar stood the test of time and established itself as de-facto reference for SQL syntax.
 Staying close to PostgreSQL simplifies building frontends for these database systems without worrying too much about grammar differences.
-SQLynx builds around a carefully optimized and very fast parser based on the PostgreSQL-grammar and provides lightweight semantic analysis passes, running on every single keystroke.
+DashQL builds around a carefully optimized and very fast parser based on the PostgreSQL-grammar and provides lightweight semantic analysis passes, running on every single keystroke.
 
-SQLynx is still doing work in `O(text-length)` with every input event, as opposed to `O(change-size)` by Tree-sitter.
-Yet, SQLynx analyzes most input in well under a millisecond in your browser, even when replacing the entire text.
+DashQL is still doing work in `O(text-length)` with every input event, as opposed to `O(change-size)` by Tree-sitter.
+Yet, DashQL analyzes most input in well under a millisecond in your browser, even when replacing the entire text.
 After all, the parser is not the only component that has to be tuned for fast analysis passes, incremental parsing alone "only" gives you a head-start for the AST update.
-SQLynx maintains B+-tree ropes, dictionary-encodes and tags SQL object names in-flight and performs efficient post-order DFS traversals through linear scans over a compact AST representation.
+DashQL maintains B+-tree ropes, dictionary-encodes and tags SQL object names in-flight and performs efficient post-order DFS traversals through linear scans over a compact AST representation.
 
 ---
 
 ### What does "fast" mean in numbers?
 
 Here are timings for TPC-DS Q1 on my laptop. All steps run single-threaded on a M1Max.
-SQLynx spends **5us** with scanning, **10us** with parsing, and **15us** with analyzing, leaving plenty of time for Javascript to reflect changes in the UI.
+DashQL spends **5us** with scanning, **10us** with parsing, and **15us** with analyzing, leaving plenty of time for Javascript to reflect changes in the UI.
 
 ```
 Run on (10 X 24.1324 MHz CPU s)

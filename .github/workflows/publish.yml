@@ -18,7 +18,7 @@ jobs:
         steps:
             - uses: actions/download-artifact@v4
               with:
-                  name: sqlynx_pwa_pages
+                  name: dashql_pwa_pages
                   path: ./page
 
             - uses: actions/upload-pages-artifact@v3
@@ -39,42 +39,42 @@ jobs:
 
             - uses: actions/download-artifact@v4
               with:
-                  name: sqlynx_pack_linux
+                  name: dashql_pack_linux
                   path: ${{ github.workspace }}/.bin/
 
             - uses: actions/download-artifact@v4
               with:
-                  name: sqlynx_native_macos_dmg
+                  name: dashql_native_macos_dmg
                   path: ${{ github.workspace }}/target/universal-apple-darwin/release/bundle/dmg/
 
             - uses: actions/download-artifact@v4
               with:
-                  name: sqlynx_native_macos_update
+                  name: dashql_native_macos_update
                   path: ${{ github.workspace }}/target/release/bundle/macos/
 
-            - name: Freeze SQLynx version
+            - name: Freeze DashQL version
               shell: bash
               run: |
-                    chmod +x ./.bin/sqlynx-pack
-                    ./.bin/sqlynx-pack freeze
+                    chmod +x ./.bin/dashql-pack
+                    ./.bin/dashql-pack freeze
 
             - name: Publish native apps
               env:
-                SQLYNX_GET_R2_ENDPOINT: ${{ secrets.R2_SQLYNX_GET_ENDPOINT }}
-                SQLYNX_GET_R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-                SQLYNX_GET_R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-                SQLYNX_RELEASE_SIGNING_KEY_BASE64: ${{ secrets.RELEASE_SIGNING_KEY_BASE64 }}
-                SQLYNX_RELEASE_SIGNING_KEY_PASSWORD: ${{ secrets.RELEASE_SIGNING_KEY_PASSWORD }}
+                DASHQL_GET_R2_ENDPOINT: ${{ secrets.R2_DASHQL_GET_ENDPOINT }}
+                DASHQL_GET_R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+                DASHQL_GET_R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+                DASHQL_RELEASE_SIGNING_KEY_BASE64: ${{ secrets.RELEASE_SIGNING_KEY_BASE64 }}
+                DASHQL_RELEASE_SIGNING_KEY_PASSWORD: ${{ secrets.RELEASE_SIGNING_KEY_PASSWORD }}
               run: |
-                    ./.bin/sqlynx-pack publish --save-summary ./release.json
+                    ./.bin/dashql-pack publish --save-summary ./release.json
 
             - name: Cleanup native app releases
               env:
-                SQLYNX_GET_R2_ENDPOINT: ${{ secrets.R2_SQLYNX_GET_ENDPOINT }}
-                SQLYNX_GET_R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-                SQLYNX_GET_R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+                DASHQL_GET_R2_ENDPOINT: ${{ secrets.R2_DASHQL_GET_ENDPOINT }}
+                DASHQL_GET_R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+                DASHQL_GET_R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
               run: |
-                    ./.bin/sqlynx-pack vacuum --keep-stable 100 --keep-canary 10
+                    ./.bin/dashql-pack vacuum --keep-stable 100 --keep-canary 10
 
             - name: Publish release metadata through Slack Webhook
               uses: slackapi/slack-github-action@v1.26.0

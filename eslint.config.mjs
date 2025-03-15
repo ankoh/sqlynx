@@ -24,14 +24,14 @@ const config = ts.config(
         "ignores": [
             "target/*",
             "node_modules/*",
-            "packages/sqlynx-app/build",
-            "packages/sqlynx-core",
-            "packages/sqlynx-native",
-            "packages/sqlynx-pack",
-            "packages/sqlynx-core-bindings/dist",
-            "packages/sqlynx-core-bindings/gen",
-            "packages/sqlynx-protobuf/dist",
-            "packages/sqlynx-protobuf/gen",
+            "packages/dashql-app/build",
+            "packages/dashql-core",
+            "packages/dashql-native",
+            "packages/dashql-pack",
+            "packages/dashql-core-bindings/dist",
+            "packages/dashql-core-bindings/gen",
+            "packages/dashql-protobuf/dist",
+            "packages/dashql-protobuf/gen",
         ],
     }
 );

@@ -1,0 +1,134 @@
+namespace dashql.proto;
+
+// ----------------------------------------------------------------------------
+
+/// The type of an entry in the catalog.
+/// The user either inserted a schema script or a descriptor flatbuffer.
+enum CatalogEntryType: uint8 {
+    SCRIPT = 0,
+    DESCRIPTOR_POOL = 1,
+}
+
+/// A catalog entry.
+/// Catalaog entries are ordered by rank and contain an external id.
+table CatalogEntry {
+    // The external id that the user specified for this catalog entry
+    catalog_entry_id: uint32;
+    // The entry type
+    catalog_entry_type: CatalogEntryType;
+    // The rank that the user assigned
+    rank: uint32;
+    // The schemas contained in this catalog entry
+    schemas: [SchemaDescriptor];
+}
+
+/// A collection of catalog entries
+table CatalogEntries {
+    // The catalog entries
+    entries: [CatalogEntry];
+}
+
+/// A descriptor for a single schema
+table SchemaDescriptor {
+    // The name of the database
+    database_name: string;
+    // The name of the schema
+    schema_name: string;
+    // The tables
+    tables: [SchemaTable];
+}
+
+/// A descriptor for a table within a schema
+table SchemaTable {
+    // The table id in the catalog entry
+    table_id: uint32;
+    // The table name
+    table_name: string;
+    // The table columns
+    columns: [SchemaTableColumn];
+}
+
+/// A descriptor for a column within a table
+table SchemaTableColumn {
+    // The name of the column
+    column_name: string;
+    // The ordinal position
+    ordinal_position: uint32;
+}
+
+// ----------------------------------------------------------------------------
+
+// Note that the following types are mirrored into the protobuf message type "FlatCatalog".
+
+/// Our API supports returning a "flattened" catalog where entries from the same schema are merged.
+/// The data is structured in a way that enables an efficient "virtualized" hierarchical schema tree renderer.
+/// - A renderer can determine the virtual boundaries in logarithmic time.
+/// - A renderer can lazily decode utf8 strings through the dictionary.
+table FlatCatalog {
+    /// The version indicates if the frontend has to refresh the UI due to a catalog change.
+    catalog_version: uint64;
+    /// The name dictionary allows us to implement flat catalog entries as structs
+    name_dictionary: [string];
+
+    /// The flattened database array
+    databases: [FlatCatalogEntry];
+    /// The flattened schema array
+    schemas: [FlatCatalogEntry];
+    /// The flattened table array
+    tables: [FlatCatalogEntry];
+    /// The flattened column array
+    columns: [FlatCatalogEntry];
+
+    /// The database entry indices ordered by database id
+    databases_by_id: [IndexedFlatDatabaseEntry];
+    /// The schema entry indices ordered by schema id
+    schemas_by_id: [IndexedFlatSchemaEntry];
+    /// The table entry indices ordered by table id
+    tables_by_id: [IndexedFlatTableEntry];
+}
+
+
+/// A descriptor for a catalog element
+struct FlatCatalogEntry {
+    /// The index of the flat catalog entry.
+    flat_entry_idx: uint32;
+    /// The index of the parent flat catalog entry.
+    /// Always 0 for level 0.
+    flat_parent_idx: uint32;
+    /// The object id:
+    /// - Databases store the unified database id
+    /// - Schemas store the unified schema id
+    /// - Tables store the external table id as pair of (external catalog entry id, table id)
+    /// - Columns store the column id
+    catalog_object_id: uint64;
+    /// The name id
+    name_id: uint32;
+    /// The index of the first child entry
+    child_begin: uint32;
+    /// The child entry count
+    child_count: uint32;
+}
+
+/// An indexed flat database entry
+struct IndexedFlatDatabaseEntry {
+    // The database id
+    database_id: uint32;
+    /// The index of the flat catalog entry
+    flat_entry_idx: uint32;
+}
+
+/// An indexed flat schema entry
+struct IndexedFlatSchemaEntry {
+    // The schema id
+    schema_id: uint32;
+    /// The index of the flat catalog entry
+    flat_entry_idx: uint32;
+}
+
+/// An indexed flat table entry
+struct IndexedFlatTableEntry {
+    // The schema id
+    table_id: uint64;
+    /// The index of the flat catalog entry
+    flat_entry_idx: uint32;
+}

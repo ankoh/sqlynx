@@ -1,0 +1,36 @@
+{
+    "name": "@ankoh/dashql-core",
+    "version": "0.0.2-dev.17",
+    "gitCommit": "453866d",
+    "description": "",
+    "license": "MPL-2.0",
+    "dependencies": {
+        "flatbuffers": "^24.3.25"
+    },
+    "devDependencies": {
+        "@types/jest": "^29.5.13",
+        "cross-env": "^7.0.3",
+        "esbuild": "^0.24.0",
+        "jest": "^29.7.0",
+        "ts-jest": "^29.2.5",
+        "typescript": "^5.6.2"
+    },
+    "scripts": {
+        "build:o0": "tsc --emitDeclarationOnly && cross-env NODE_OPTIONS=--import=../../scripts/tsnode-esm.js node ./bundle.ts o0",
+        "build:o2": "tsc --emitDeclarationOnly && cross-env NODE_OPTIONS=--import=../../scripts/tsnode-esm.js node ./bundle.ts o2",
+        "build:o3": "tsc --emitDeclarationOnly && cross-env NODE_OPTIONS=--import=../../scripts/tsnode-esm.js node ./bundle.ts o3",
+        "test": "cross-env NODE_OPTIONS=--experimental-vm-modules NODE_NO_WARNINGS=1 jest",
+        "test:debug": "cross-env NODE_OPTIONS=--experimental-vm-modules NODE_OPTIONS=--inspect-brk NODE_NO_WARNINGS=1 jest",
+        "test:coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules NODE_NO_WARNINGS=1 jest --coverage"
+    },
+    "files": [
+        "dist/gen/*.d.ts",
+        "dist/gen/*.js",
+        "dist/*.js",
+        "dist/*.d.ts",
+        "dist/*.wasm"
+    ],
+    "type": "module",
+    "module": "./dist/dashql.module.js",
+    "types": "./dist/dashql.module.d.ts"
+}

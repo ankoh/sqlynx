@@ -22,13 +22,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ankoh/sqlynx-app@workspace:packages/sqlynx-app":
+"@ankoh/dashql-app@workspace:packages/dashql-app":
   version: 0.0.0-use.local
-  resolution: "@ankoh/sqlynx-app@workspace:packages/sqlynx-app"
+  resolution: "@ankoh/dashql-app@workspace:packages/dashql-app"
   dependencies:
-    "@ankoh/sqlynx-compute": "link:../sqlynx-compute/dist/"
-    "@ankoh/sqlynx-core": "link:../sqlynx-core-bindings"
-    "@ankoh/sqlynx-protobuf": "link:../sqlynx-protobuf"
+    "@ankoh/dashql-compute": "link:../dashql-compute/dist/"
+    "@ankoh/dashql-core": "link:../dashql-core-bindings"
+    "@ankoh/dashql-protobuf": "link:../dashql-protobuf"
     "@bokuweb/zstd-wasm": "npm:^0.0.27"
     "@bufbuild/protobuf": "npm:^1.10.0"
     "@codemirror/autocomplete": "npm:^6.18.1"
@@ -112,21 +112,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@ankoh/sqlynx-compute@link:../sqlynx-compute/dist/::locator=%40ankoh%2Fsqlynx-app%40workspace%3Apackages%2Fsqlynx-app":
+"@ankoh/dashql-compute@link:../dashql-compute/dist/::locator=%40ankoh%2Fdashql-app%40workspace%3Apackages%2Fdashql-app":
   version: 0.0.0-use.local
-  resolution: "@ankoh/sqlynx-compute@link:../sqlynx-compute/dist/::locator=%40ankoh%2Fsqlynx-app%40workspace%3Apackages%2Fsqlynx-app"
+  resolution: "@ankoh/dashql-compute@link:../dashql-compute/dist/::locator=%40ankoh%2Fdashql-app%40workspace%3Apackages%2Fdashql-app"
   languageName: node
   linkType: soft
 
-"@ankoh/sqlynx-core@link:../sqlynx-core-bindings::locator=%40ankoh%2Fsqlynx-app%40workspace%3Apackages%2Fsqlynx-app":
+"@ankoh/dashql-core@link:../dashql-core-bindings::locator=%40ankoh%2Fdashql-app%40workspace%3Apackages%2Fdashql-app":
   version: 0.0.0-use.local
-  resolution: "@ankoh/sqlynx-core@link:../sqlynx-core-bindings::locator=%40ankoh%2Fsqlynx-app%40workspace%3Apackages%2Fsqlynx-app"
+  resolution: "@ankoh/dashql-core@link:../dashql-core-bindings::locator=%40ankoh%2Fdashql-app%40workspace%3Apackages%2Fdashql-app"
   languageName: node
   linkType: soft
 
-"@ankoh/sqlynx-core@workspace:packages/sqlynx-core-bindings":
+"@ankoh/dashql-core@workspace:packages/dashql-core-bindings":
   version: 0.0.0-use.local
-  resolution: "@ankoh/sqlynx-core@workspace:packages/sqlynx-core-bindings"
+  resolution: "@ankoh/dashql-core@workspace:packages/dashql-core-bindings"
   dependencies:
     "@types/jest": "npm:^29.5.13"
     cross-env: "npm:^7.0.3"
@@ -138,15 +138,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@ankoh/sqlynx-protobuf@link:../sqlynx-protobuf::locator=%40ankoh%2Fsqlynx-app%40workspace%3Apackages%2Fsqlynx-app":
+"@ankoh/dashql-protobuf@link:../dashql-protobuf::locator=%40ankoh%2Fdashql-app%40workspace%3Apackages%2Fdashql-app":
   version: 0.0.0-use.local
-  resolution: "@ankoh/sqlynx-protobuf@link:../sqlynx-protobuf::locator=%40ankoh%2Fsqlynx-app%40workspace%3Apackages%2Fsqlynx-app"
+  resolution: "@ankoh/dashql-protobuf@link:../dashql-protobuf::locator=%40ankoh%2Fdashql-app%40workspace%3Apackages%2Fdashql-app"
   languageName: node
   linkType: soft
 
-"@ankoh/sqlynx-protobuf@workspace:packages/sqlynx-protobuf":
+"@ankoh/dashql-protobuf@workspace:packages/dashql-protobuf":
   version: 0.0.0-use.local
-  resolution: "@ankoh/sqlynx-protobuf@workspace:packages/sqlynx-protobuf"
+  resolution: "@ankoh/dashql-protobuf@workspace:packages/dashql-protobuf"
   dependencies:
     "@bufbuild/protobuf": "npm:^1.10.0"
     "@connectrpc/connect": "npm:^1.5.0"

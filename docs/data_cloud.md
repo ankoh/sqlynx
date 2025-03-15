@@ -2,7 +2,7 @@
 
 1. Go To Setup > App Manager > New Connected App
 2. Enable OAuth Settings
-    a. Callback URL: `https://sqlynx.app/oauth.html`
+    a. Callback URL: `https://dashql.app/oauth.html`
     b. Enable OAuth Scopes: api, cdp_api
 3. Uncheck Require Secret for Web Server Flow
 4. Save

@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// SQLynx Objects
+// DashQL Objects
 
 varargs:
     LRB vararg_fields RRB  { $$ = std::move($2); }

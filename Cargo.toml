@@ -2,9 +2,9 @@
 resolver = "2"
 
 members = [
-    "packages/sqlynx-compute",
-    "packages/sqlynx-native",
-    "packages/sqlynx-pack",
+    "packages/dashql-compute",
+    "packages/dashql-native",
+    "packages/dashql-pack",
 ]
 
 [profile.release]

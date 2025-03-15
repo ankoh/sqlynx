@@ -14,12 +14,12 @@ def parse(path):
         for sym in root.findall('.//{http://www.w3.org/2000/svg}symbol', namespaces):
             out.append(sym)
 
-for logo_path in glob.glob("./packages/sqlynx-app/static/svg/logo/*.svg"):
+for logo_path in glob.glob("./packages/dashql-app/static/svg/logo/*.svg"):
     parse(logo_path)
-for icon_path in glob.glob("./packages/sqlynx-app/static/svg/icons/*.svg"):
+for icon_path in glob.glob("./packages/dashql-app/static/svg/icons/*.svg"):
     parse(icon_path)
             
-with open('./packages/sqlynx-app/static/svg/symbols.generated.svg', 'wb') as f:
+with open('./packages/dashql-app/static/svg/symbols.generated.svg', 'wb') as f:
     f.truncate()
     tree = etree.ElementTree(out)
     tree.write(f, encoding='utf-8', pretty_print=False)

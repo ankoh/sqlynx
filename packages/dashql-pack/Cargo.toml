@@ -1,0 +1,56 @@
+[package]
+name = "dashql-pack"
+version = "0.0.2-dev.17"
+description = "Packaging tool for get.dashql.app"
+edition = "2021"
+rust-version = "1.70"
+workspace = "../../"
+
+[dev-dependencies]
+tauri-build = "2.0.1"
+tauri-plugin-updater = "2.0.2"
+
+[dependencies]
+futures = "0.3.31"
+chrono = "0.4.38"
+anyhow = "1.0.89"
+semver = "1.0.23"
+aws-sdk-s3 = "1.54.0"
+aws-credential-types = "1.2.1"
+log = "0.4.22"
+env_logger = "0.11.5"
+git2 = "0.19.0"
+regex = "1.11.0"
+lazy_static = "1.5.0"
+minisign = "0.7.8"
+
+[dependencies.serde]
+version = "1.0.210"
+features = ["derive"]
+
+[dependencies.serde_json]
+version = "1.0.128"
+features = ["preserve_order"]
+
+[dependencies.serde_with]
+version = "3.10.0"
+features = ["json"]
+
+[dependencies.aws-config]
+version = "1.5.8"
+
+[dependencies.tokio]
+version = "1.40.0"
+features = ["full"]
+
+[dependencies.clap]
+version = "4.5.19"
+features = ["derive"]
+
+[dependencies.uuid]
+version = "1.10.0"
+features = ["v5"]
+
+[dependencies.toml]
+version = "0.8.19"
+features = ["preserve_order"]

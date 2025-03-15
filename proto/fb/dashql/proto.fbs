@@ -1,0 +1,10 @@
+include "dashql/analyzed_script.fbs";
+include "dashql/catalog.fbs";
+include "dashql/catalog_statistics.fbs";
+include "dashql/completion.fbs";
+include "dashql/parsed_script.fbs";
+include "dashql/query_plan.fbs";
+include "dashql/script_cursor.fbs";
+include "dashql/script_statistics.fbs";
+include "dashql/sql_enums.fbs";
+include "dashql/status.fbs";

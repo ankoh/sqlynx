@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+import "dashql/connection.proto";
+import "dashql/catalog.proto";
+import "dashql/workbook.proto";
+
+package dashql;
+
+message SlnxCatalog {
+    /// The connection params
+    ConnectionParams connection_params = 1;
+    /// The preloaded catalog (if any)
+    Catalog catalog = 2;
+}
+
+message SlnxFile {
+    /// The workbooks
+    repeated Workbook workbooks = 1;
+    /// The catalogs
+    repeated SlnxCatalog catalogs = 2;
+}

@@ -31,13 +31,13 @@ jobs:
 
             - uses: actions/download-artifact@v4
               with:
-                  name: sqlynx_coverage_native_o0
-                  path: ./packages/sqlynx-core/build/coverage/
+                  name: dashql_coverage_native_o0
+                  path: ./packages/dashql-core/build/coverage/
 
             - uses: actions/download-artifact@v4
               with:
-                  name: sqlynx_coverage_js
-                  path: ./packages/sqlynx-core-bindings/coverage/
+                  name: dashql_coverage_js
+                  path: ./packages/dashql-core-bindings/coverage/
 
             - name: Upload coverage report
               uses: coverallsapp/github-action@v2

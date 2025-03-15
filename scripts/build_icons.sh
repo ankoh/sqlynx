@@ -4,7 +4,7 @@ iconutil -c icns ./misc/app_icons_mac.iconset
 
 ICONSET=./misc/app_icons_mac.iconset/
 ICNS=./misc/app_icons_mac.icns
-OUT=./packages/sqlynx-native/icons/
+OUT=./packages/dashql-native/icons/
 
 rm ${OUT}/*
 cp ${ICNS}                          ${OUT}/icon.icns
