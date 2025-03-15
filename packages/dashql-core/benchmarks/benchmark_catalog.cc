@@ -1,3 +1,5 @@
+#include <format>
+
 #include "benchmark/benchmark.h"
 #include "dashql/catalog.h"
 #include "dashql/proto/proto_generated.h"
