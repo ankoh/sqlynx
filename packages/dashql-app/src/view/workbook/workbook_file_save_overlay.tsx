@@ -84,7 +84,7 @@ export const WorkbookFileSaveOverlay: React.FC<Props> = (props: Props) => {
                         <FileIcon />
                     </div>
                     <div className={styles.file_info}>
-                        <div className={styles.file_name}>workbook.slnx</div>
+                        <div className={styles.file_name}>workbook.dashql</div>
                         <div className={styles.file_size}>~&nbsp;{formatBytes(fileBytes.length)}</div>
                     </div>
                     <div className={styles.download}>
