@@ -14,9 +14,9 @@
         "lint": "eslint"
     },
     "devDependencies": {
-        "@ankoh/dashql-compute": "link:../dashql-compute/dist/",
-        "@ankoh/dashql-core": "link:../dashql-core-bindings",
-        "@ankoh/dashql-protobuf": "link:../dashql-protobuf",
+        "@ankoh/dashql-compute": "file:../dashql-compute/dist/",
+        "@ankoh/dashql-core": "file:../dashql-core-bindings",
+        "@ankoh/dashql-protobuf": "file:../dashql-protobuf",
         "@bokuweb/zstd-wasm": "^0.0.27",
         "@bufbuild/protobuf": "^1.10.0",
         "@codemirror/autocomplete": "^6.18.1",

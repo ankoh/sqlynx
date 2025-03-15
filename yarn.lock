@@ -26,9 +26,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@ankoh/dashql-app@workspace:packages/dashql-app"
   dependencies:
-    "@ankoh/dashql-compute": "link:../dashql-compute/dist/"
-    "@ankoh/dashql-core": "link:../dashql-core-bindings"
-    "@ankoh/dashql-protobuf": "link:../dashql-protobuf"
+    "@ankoh/dashql-compute": "file:../dashql-compute/dist/"
+    "@ankoh/dashql-core": "file:../dashql-core-bindings"
+    "@ankoh/dashql-protobuf": "file:../dashql-protobuf"
     "@bokuweb/zstd-wasm": "npm:^0.0.27"
     "@bufbuild/protobuf": "npm:^1.10.0"
     "@codemirror/autocomplete": "npm:^6.18.1"
@@ -112,17 +112,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@ankoh/dashql-compute@link:../dashql-compute/dist/::locator=%40ankoh%2Fdashql-app%40workspace%3Apackages%2Fdashql-app":
-  version: 0.0.0-use.local
-  resolution: "@ankoh/dashql-compute@link:../dashql-compute/dist/::locator=%40ankoh%2Fdashql-app%40workspace%3Apackages%2Fdashql-app"
+"@ankoh/dashql-compute@file:../dashql-compute/dist/::locator=%40ankoh%2Fdashql-app%40workspace%3Apackages%2Fdashql-app":
+  version: 0.0.2-dev.17
+  resolution: "@ankoh/dashql-compute@file:../dashql-compute/dist/#../dashql-compute/dist/::hash=99a429&locator=%40ankoh%2Fdashql-app%40workspace%3Apackages%2Fdashql-app"
+  checksum: 10c0/c5b31ff99bbedecfcf722ee851662a4aa7af262a4c76f04fc1ca24fde637f58e57b27811f1703312c6cec2ca8b35cdf844578fea6a4cd1b64f614eefad73dad3
   languageName: node
-  linkType: soft
+  linkType: hard
 
-"@ankoh/dashql-core@link:../dashql-core-bindings::locator=%40ankoh%2Fdashql-app%40workspace%3Apackages%2Fdashql-app":
-  version: 0.0.0-use.local
-  resolution: "@ankoh/dashql-core@link:../dashql-core-bindings::locator=%40ankoh%2Fdashql-app%40workspace%3Apackages%2Fdashql-app"
+"@ankoh/dashql-core@file:../dashql-core-bindings::locator=%40ankoh%2Fdashql-app%40workspace%3Apackages%2Fdashql-app":
+  version: 0.0.2-dev.17
+  resolution: "@ankoh/dashql-core@file:../dashql-core-bindings#../dashql-core-bindings::hash=800081&locator=%40ankoh%2Fdashql-app%40workspace%3Apackages%2Fdashql-app"
+  dependencies:
+    flatbuffers: "npm:^24.3.25"
+  checksum: 10c0/7bde1351a8aa038cf996ce7ebc280aded60f575ad0556b3c25d130c3af595dbb8008374e56c1d779e16fb4f6267d6a57d84b0256f8b9db1dee8036019f5764f3
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "@ankoh/dashql-core@workspace:packages/dashql-core-bindings":
   version: 0.0.0-use.local
@@ -138,11 +142,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@ankoh/dashql-protobuf@link:../dashql-protobuf::locator=%40ankoh%2Fdashql-app%40workspace%3Apackages%2Fdashql-app":
-  version: 0.0.0-use.local
-  resolution: "@ankoh/dashql-protobuf@link:../dashql-protobuf::locator=%40ankoh%2Fdashql-app%40workspace%3Apackages%2Fdashql-app"
+"@ankoh/dashql-protobuf@file:../dashql-protobuf::locator=%40ankoh%2Fdashql-app%40workspace%3Apackages%2Fdashql-app":
+  version: 0.0.2-dev.17
+  resolution: "@ankoh/dashql-protobuf@file:../dashql-protobuf#../dashql-protobuf::hash=6c76d9&locator=%40ankoh%2Fdashql-app%40workspace%3Apackages%2Fdashql-app"
+  dependencies:
+    "@bufbuild/protobuf": "npm:^1.10.0"
+    "@connectrpc/connect-web": "npm:^1.5.0"
+  checksum: 10c0/639115fa85ba8813a2e4ff80eae9994c797cb66ce9fee018b685dedcb687519c8c44a1cac6a7d80e204190e7baa8682929b3c9e8df2effda51cb432fa57e66f0
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "@ankoh/dashql-protobuf@workspace:packages/dashql-protobuf":
   version: 0.0.0-use.local
@@ -9815,7 +9823,7 @@ __metadata:
     ts-node: "npm:^10.9.2"
     typescript: "npm:^5.6.2"
     typescript-eslint: "npm:^7.18.0"
-    wasm-pack: "npm:^0.13.0"
+    wasm-pack: "npm:^0.13.1"
   languageName: unknown
   linkType: soft
 
@@ -11229,14 +11237,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"wasm-pack@npm:^0.13.0":
-  version: 0.13.0
-  resolution: "wasm-pack@npm:0.13.0"
+"wasm-pack@npm:^0.13.1":
+  version: 0.13.1
+  resolution: "wasm-pack@npm:0.13.1"
   dependencies:
     binary-install: "npm:^1.0.1"
   bin:
     wasm-pack: run.js
-  checksum: 10c0/71ed64c9b0082d51098ec71041ce68a9323d7a0027e3a9c0b694c5931f83ce2a58f1df7255c68239ca4ab702e2daf5c550a7886f8af048f0cb76945a510268b6
+  checksum: 10c0/46fc5309f46377d6dd09890cd642640ddb40d654bfdae5c9be66b50bf5ea27b0953916dd14d718b13a3b3dbad1351d4007ef040ef3778053625130ccef6f7cd6
   languageName: node
   linkType: hard
 

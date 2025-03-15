@@ -10,6 +10,9 @@ publish = false
 [lib]
 crate-type = ["cdylib"]
 
+[target.wasm32-unknown-unknown]
+rustflags = ['--cfg getrandom_backend="wasm_js"']
+
 [dependencies]
 wasm-bindgen = "0.2.93"
 wasm-bindgen-futures = "0.4.43"
@@ -17,23 +20,30 @@ console_error_panic_hook = "0.1.7"
 
 log = "0.4.22"
 chrono = { version = "0.4.38", features = ["wasmbind"] }
-getrandom = { version = "0.2.15", features = ["js"] }
 anyhow = "1.0.89"
+
+getrandom_2 = { package = "getrandom", version = "0.2", features = ["js"] }
+getrandom_3 = { package = "getrandom", version = "0.3", features = ["wasm_js"] }
 
 prost = "0.13.3"
 
 tokio = { version = "1.40.0", features = ["macros", "rt", "sync"] }
-arrow = { version = "53.4", default-features = false, features = ["ipc"] }
+arrow = { version = "54.2.1", default-features = false, features = ["ipc"] }
 
-datafusion-common = { version = "43.0.0", default-features = false }
-datafusion-expr = { version = "43.0.0", default-features = false }
-datafusion-execution = { version = "43.0.0", default-features = false }
-datafusion-functions = { version = "43.0.0", default-features = false }
-datafusion-functions-aggregate = { version = "43.0.0", default-features = false }
-datafusion-functions-nested = { version = "43.0.0", default-features = false }
-datafusion-functions-window = { version = "43.0.0", default-features = false }
-datafusion-physical-expr = { version = "43.0.0", default-features = false }
-datafusion-physical-plan = { version = "43.0.0", default-features = false }
+datafusion-common = { version = "46.0.0", default-features = false }
+datafusion-expr = { version = "46.0.0", default-features = false }
+datafusion-execution = { version = "46.0.0", default-features = false }
+datafusion-datasource = { version = "46.0.0", default-features = false }
+datafusion-functions = { version = "46.0.0", default-features = false }
+datafusion-functions-aggregate = { version = "46.0.0", default-features = false }
+datafusion-functions-nested = { version = "46.0.0", default-features = false }
+datafusion-functions-window = { version = "46.0.0", default-features = false }
+datafusion-physical-expr = { version = "46.0.0", default-features = false }
+datafusion-physical-plan = { version = "46.0.0", default-features = false }
+
+[dependencies.uuid]
+version = "1.10.0"
+features = ["v5", "rng-getrandom"]
 
 [dependencies.web-sys]
 version = "0.3.70"

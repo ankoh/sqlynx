@@ -331,6 +331,8 @@ jobs:
 
             - name: Build @ankoh/dashql-compute
               shell: bash
+              env:
+                RUSTFLAGS: --cfg getrandom_backend="wasm_js"
               run: |
                   ./node_modules/.bin/wasm-pack build \
                     --target web --release \

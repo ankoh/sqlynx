@@ -6,6 +6,8 @@ use arrow::datatypes::DataType;
 use arrow::util::pretty::pretty_format_batches;
 use chrono::DateTime;
 use datafusion_common::scalar::ScalarValue;
+use datafusion_datasource::memory::MemorySourceConfig;
+use datafusion_datasource::source::DataSourceExec;
 use datafusion_execution::TaskContext;
 use datafusion_expr::AggregateUDF;
 use datafusion_expr::Operator;
@@ -17,7 +19,6 @@ use datafusion_physical_plan::ExecutionPlan;
 use datafusion_physical_plan::aggregates::{AggregateMode, AggregateExec, PhysicalGroupBy};
 use datafusion_physical_plan::collect;
 use datafusion_physical_plan::filter::FilterExec;
-use datafusion_physical_plan::memory::MemoryExec;
 use datafusion_physical_plan::projection::ProjectionExec;
 use datafusion_physical_plan::sorts::sort::SortExec;
 use indoc::indoc;
@@ -32,7 +33,7 @@ async fn test_filter_sort() -> anyhow::Result<()> {
         ("score", Arc::new(Int32Array::from(vec![9000, 8000, 7000]))),
     ])?;
     let input = Arc::new(
-        MemoryExec::try_new(&[vec![data.clone()]], data.schema(), None).unwrap(),
+        DataSourceExec::new(Arc::new(MemorySourceConfig::try_new(&[vec![data.clone()]], data.schema(), None).unwrap()))
     );
     let sort_exec = Arc::new(SortExec::new(
         LexOrdering::new(vec![PhysicalSortExpr {
@@ -90,7 +91,7 @@ async fn test_decimal_literal_filter() -> anyhow::Result<()> {
         ));
 
     let input = Arc::new(
-        MemoryExec::try_new(&[vec![record_batch.clone()]], record_batch.schema(), None).unwrap(),
+        DataSourceExec::new(Arc::new(MemorySourceConfig::try_new(&[vec![record_batch.clone()]], record_batch.schema(), None).unwrap()))
     );
     let sort_exec = Arc::new(SortExec::new(
         LexOrdering::new(vec![PhysicalSortExpr {
@@ -155,7 +156,7 @@ async fn test_group_by_1phase_1key() -> anyhow::Result<()> {
         .build()?;
 
     let input = Arc::new(
-        MemoryExec::try_new(&[vec![data.clone()]], data.schema(), None)?,
+        DataSourceExec::new(Arc::new(MemorySourceConfig::try_new(&[vec![data.clone()]], data.schema(), None).unwrap()))
     );
     let groupby_exec = Arc::new(AggregateExec::try_new(
         AggregateMode::Single,
@@ -219,7 +220,7 @@ async fn test_string_array() -> anyhow::Result<()> {
         ])) as ArrayRef,
     ])?;
     let input = Arc::new(
-        MemoryExec::try_new(&[vec![data.clone()]], data.schema(), None).unwrap(),
+        DataSourceExec::new(Arc::new(MemorySourceConfig::try_new(&[vec![data.clone()]], data.schema(), None).unwrap()))
     );
     let task_ctx = Arc::new(TaskContext::default());
     let result = collect(input, Arc::clone(&task_ctx)).await?;
@@ -288,7 +289,7 @@ async fn test_group_by_1phase_1key_distinct() -> anyhow::Result<()> {
         .build()?;
 
     let input = Arc::new(
-        MemoryExec::try_new(&[vec![data.clone()]], data.schema(), None)?,
+        DataSourceExec::new(Arc::new(MemorySourceConfig::try_new(&[vec![data.clone()]], data.schema(), None).unwrap()))
     );
     let groupby_exec = Arc::new(AggregateExec::try_new(
         AggregateMode::Single,
@@ -371,7 +372,7 @@ async fn test_group_by_1phase_static_distinct() -> anyhow::Result<()> {
         .build()?;
 
     let input = Arc::new(
-        MemoryExec::try_new(&[vec![data.clone()]], data.schema(), None)?,
+        DataSourceExec::new(Arc::new(MemorySourceConfig::try_new(&[vec![data.clone()]], data.schema(), None).unwrap()))
     );
     let groupby_exec = Arc::new(AggregateExec::try_new(
         AggregateMode::Single,
@@ -434,7 +435,7 @@ async fn test_bin_timestamps() -> anyhow::Result<()> {
         .build()?;
 
     let data_scan = Arc::new(
-        MemoryExec::try_new(&[vec![data.clone()]], data.schema(), None)?,
+        DataSourceExec::new(Arc::new(MemorySourceConfig::try_new(&[vec![data.clone()]], data.schema(), None).unwrap()))
     );
     let groupby_exec = Arc::new(AggregateExec::try_new(
         AggregateMode::Single,
@@ -501,7 +502,7 @@ async fn test_bin_timestamps() -> anyhow::Result<()> {
         data.schema_ref())?;
 
     let data_scan = Arc::new(
-        MemoryExec::try_new(&[vec![data.clone()]], data.schema(), None)?,
+        DataSourceExec::new(Arc::new(MemorySourceConfig::try_new(&[vec![data.clone()]], data.schema(), None).unwrap()))
     );
     let projection_exec = Arc::new(ProjectionExec::try_new(
         vec![

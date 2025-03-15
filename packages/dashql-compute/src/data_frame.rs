@@ -8,6 +8,7 @@ use arrow::datatypes::Schema;
 use arrow::datatypes::SchemaRef;
 use arrow::datatypes::TimeUnit;
 use datafusion_common::ScalarValue;
+use datafusion_datasource::source::DataSourceExec;
 use datafusion_execution::TaskContext;
 use datafusion_expr::{AggregateUDF, WindowFrame};
 use datafusion_expr::Operator;
@@ -19,7 +20,7 @@ use datafusion_functions_aggregate::min_max::Min;
 use datafusion_functions_window::rank::dense_rank_udwf;
 use datafusion_functions_window::row_number::row_number_udwf;
 use datafusion_physical_expr::expressions::{BinaryExpr, CaseExpr};
-use datafusion_physical_expr::window::BuiltInWindowExpr;
+use datafusion_physical_expr::window::StandardWindowExpr;
 use datafusion_physical_expr::{LexOrdering, PhysicalExpr};
 use datafusion_physical_expr::PhysicalSortExpr;
 use datafusion_physical_expr::aggregate::AggregateExprBuilder;
@@ -32,18 +33,17 @@ use datafusion_physical_expr::ScalarFunctionExpr;
 use datafusion_physical_plan::filter::FilterExec;
 use datafusion_physical_plan::joins::{HashJoinExec, PartitionMode};
 use datafusion_physical_plan::projection::ProjectionExec;
-use datafusion_physical_plan::windows::BoundedWindowAggExec;
+use datafusion_physical_plan::windows::{create_udwf_window_expr, BoundedWindowAggExec};
 use datafusion_physical_plan::{ExecutionPlan, InputOrderMode, WindowExpr};
 use datafusion_physical_plan::aggregates::{AggregateMode, AggregateExec, PhysicalGroupBy};
 use datafusion_physical_plan::collect;
-use datafusion_physical_plan::memory::MemoryExec;
 use datafusion_physical_plan::sorts::sort::SortExec;
+use datafusion_datasource::memory::MemorySourceConfig;
 use prost::Message;
 use wasm_bindgen::prelude::*;
 
 use crate::arrow_out::DataFrameIpcStream;
 use crate::proto::dashql_compute::{AggregationFunction, BinningTransform, DataFrameTransform, FilterOperator, FilterTransform, GroupByKeyBinning, GroupByTransform, OrderByTransform, RowNumberTransform, ValueIdentifierTransform};
-use crate::udwf::create_udwf_window_expr;
 
 #[wasm_bindgen]
 pub struct DataFrame {
@@ -98,9 +98,9 @@ impl DataFrame {
         // Create window frame
         let frame = Arc::new(WindowFrame::new(None));
         // Create the window expression
-        let window_expr: Arc<dyn WindowExpr> = Arc::new(BuiltInWindowExpr::new(udwf_expr, &[], &[], frame));
+        let window_expr: Arc<dyn WindowExpr> = Arc::new(StandardWindowExpr::new(udwf_expr, &[], LexOrdering::empty(), frame));
         // Create the window aggregate
-        let window_agg = BoundedWindowAggExec::try_new(vec![window_expr], input, vec![], InputOrderMode::Linear)?;
+        let window_agg = BoundedWindowAggExec::try_new(vec![window_expr], input, InputOrderMode::Linear, false)?;
         // Use the window aggregate as new input
         Ok(Arc::new(window_agg))
     }
@@ -135,9 +135,9 @@ impl DataFrame {
             // Create window frame
             let frame = Arc::new(WindowFrame::new(Some(true)));
             // Create the window expression
-            let window_expr: Arc<dyn WindowExpr> = Arc::new(BuiltInWindowExpr::new(udwf_expr, &[], sort_exec.expr(), frame));
+            let window_expr: Arc<dyn WindowExpr> = Arc::new(StandardWindowExpr::new(udwf_expr, &[], sort_exec.expr(), frame));
             // Create the window aggregate
-            let window_agg = BoundedWindowAggExec::try_new(vec![window_expr], sort_exec, vec![], InputOrderMode::Linear)?;
+            let window_agg = BoundedWindowAggExec::try_new(vec![window_expr], sort_exec, InputOrderMode::Linear, false)?;
             // Use the window aggregate as new input
             input = Arc::new(window_agg);
         }
@@ -720,9 +720,9 @@ impl DataFrame {
 
     /// Transform a data frame
     pub(crate) async fn transform(&self, transform: &DataFrameTransform, stats: Option<&DataFrame>) -> anyhow::Result<DataFrame> {
-        let mut input: Arc<dyn ExecutionPlan> = Arc::new(
-            MemoryExec::try_new(&self.partitions, self.schema.clone(), None).unwrap(),
-        );
+        let input_config = MemorySourceConfig::try_new(&self.partitions, self.schema.clone(), None).unwrap();
+        let mut input: Arc<dyn ExecutionPlan> = Arc::new(DataSourceExec::new(Arc::new(input_config)));
+
         // Compute the row number
         if let Some(row_number) = &transform.row_number {
             input = self.row_number(&row_number, input)?;
@@ -829,9 +829,8 @@ fn create_missing_bins(input: &Arc<dyn ExecutionPlan>, bin_field: &str, bin_coun
     let all_bins = RecordBatch::try_from_iter(vec![
         (bin_field, Arc::new(UInt32Array::from((0..bin_count).collect::<Vec<u32>>())) as ArrayRef),
     ])?;
-    let scan_all_bins = Arc::new(
-        MemoryExec::try_new(&[vec![all_bins.clone()]], all_bins.schema(), None)?,
-    );
+    let scan_all_bins_config = MemorySourceConfig::try_new(&[vec![all_bins.clone()]], all_bins.schema(), None).unwrap();
+    let scan_all_bins: Arc<dyn ExecutionPlan> = Arc::new(DataSourceExec::new(Arc::new(scan_all_bins_config)));
     let mut join_projection: Vec<usize> = vec![0];
     join_projection.reserve(input.schema().fields().len());
     for i in 2..=input.schema().fields().len() {
