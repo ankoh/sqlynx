@@ -1,8 +1,8 @@
-#include "gtest/gtest.h"
 #include "dashql/catalog.h"
 #include "dashql/external.h"
 #include "dashql/proto/proto_generated.h"
 #include "dashql/script.h"
+#include "gtest/gtest.h"
 
 using namespace dashql;
 
@@ -122,23 +122,26 @@ TEST(UnificationTest, MultipleTablesInMultipleSchemas) {
     // "in_default_1" should get expanded to dashql.default.in_default_1
     // "separate.schema.in_separate_0" should reside in a separate schema
 
+    // Note that these expectations are based on lexicograhical order
+    // "dashql" < "separate"
+
     ASSERT_EQ(flat->databases()->size(), 2);
     ASSERT_EQ(flat->schemas()->size(), 2);
     ASSERT_EQ(flat->tables()->size(), 3);
     ASSERT_EQ(flat->columns()->size(), 3);
 
-    EXPECT_EQ(flat->databases()->Get(0)->catalog_object_id(), INITIAL_DATABASE_ID + 1);  // "separate"
-    EXPECT_EQ(flat->databases()->Get(1)->catalog_object_id(), INITIAL_DATABASE_ID);      // "dashql"
-    EXPECT_EQ(flat->schemas()->Get(0)->catalog_object_id(), INITIAL_SCHEMA_ID + 1);      // "schema"
-    EXPECT_EQ(flat->schemas()->Get(1)->catalog_object_id(), INITIAL_SCHEMA_ID);          // "default"
+    EXPECT_EQ(flat->databases()->Get(0)->catalog_object_id(), INITIAL_DATABASE_ID);      // "dashql"
+    EXPECT_EQ(flat->databases()->Get(1)->catalog_object_id(), INITIAL_DATABASE_ID + 1);  // "separate"
+    EXPECT_EQ(flat->schemas()->Get(0)->catalog_object_id(), INITIAL_SCHEMA_ID);          // "default"
+    EXPECT_EQ(flat->schemas()->Get(1)->catalog_object_id(), INITIAL_SCHEMA_ID + 1);      // "schema"
 
-    // separate.schema.in_separate_0 is written first
-    EXPECT_EQ(flat->tables()->Get(0)->catalog_object_id(), ContextObjectID(100, 1).Pack());
-    EXPECT_EQ(flat->tables()->Get(0)->flat_parent_idx(), 0);
     // dashql.default.in_default_0 < dashql.default.in_default_1
-    EXPECT_EQ(flat->tables()->Get(1)->catalog_object_id(), ContextObjectID(42, 0).Pack());
-    EXPECT_EQ(flat->tables()->Get(2)->catalog_object_id(), ContextObjectID(100, 0).Pack());
-    EXPECT_EQ(flat->tables()->Get(1)->flat_parent_idx(), 1);
+    EXPECT_EQ(flat->tables()->Get(0)->catalog_object_id(), ContextObjectID(42, 0).Pack());
+    EXPECT_EQ(flat->tables()->Get(1)->catalog_object_id(), ContextObjectID(100, 0).Pack());
+    EXPECT_EQ(flat->tables()->Get(0)->flat_parent_idx(), 0);
+    EXPECT_EQ(flat->tables()->Get(1)->flat_parent_idx(), 0);
+    // separate.schema.in_separate_0 is written last
+    EXPECT_EQ(flat->tables()->Get(2)->catalog_object_id(), ContextObjectID(100, 1).Pack());
     EXPECT_EQ(flat->tables()->Get(2)->flat_parent_idx(), 1);
 }
 

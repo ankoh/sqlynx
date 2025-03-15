@@ -34,8 +34,8 @@
             <entry score="40" value="similar_name_1" ntags="TABLE_NAME" ctags="NAME_INDEX|PREFIX_MATCH" replace_loc="162..163" replace_text="s">
                 <object score="20" type="table" id="256.65536.1" ctags="NAME_INDEX|PREFIX_MATCH" />
             </entry>
-            <entry score="40" value="dashql" ntags="DATABASE_NAME" ctags="NAME_INDEX|PREFIX_MATCH" replace_loc="162..163" replace_text="s">
-                <object score="20" type="database" id="256" ctags="NAME_INDEX|PREFIX_MATCH" />
+            <entry score="35" value="dashql" ntags="DATABASE_NAME" ctags="NAME_INDEX|SUBSTRING_MATCH" replace_loc="162..163" replace_text="s">
+                <object score="15" type="database" id="256" ctags="NAME_INDEX|SUBSTRING_MATCH" />
             </entry>
         </completions>
     </completion-snapshot>
