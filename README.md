@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="misc/logo-dashql-glyphs/logo.png" width=80>
+  <img src="misc/logo-dashql-glyphs/logo.png" width=100>
 </p>
 <p align="center">
   <a href="https://github.com/ankoh/dashql/actions/workflows/push_main.yml"><img src="https://github.com/ankoh/dashql/actions/workflows/push_main.yml/badge.svg?branch=main" /></a>
