@@ -6,6 +6,7 @@ use crate::proxy_headers::HEADER_NAME_PATH;
 use crate::proxy_headers::HEADER_NAME_READ_TIMEOUT;
 use crate::proxy_headers::HEADER_NAME_BATCH_TIMEOUT;
 use crate::proxy_headers::HEADER_NAME_BATCH_BYTES;
+use crate::proxy_headers::HEADER_NAME_SEARCH_PARAMS;
 use crate::proxy_headers::HEADER_NAME_STREAM_ID;
 use crate::test::http_server_mock::spawn_http_service_mock;
 use crate::test::http_server_mock::HttpServiceMock;
@@ -42,6 +43,7 @@ async fn test_http_stream_setup() -> anyhow::Result<()> {
         .header(HEADER_NAME_METHOD, "GET")
         .header(HEADER_NAME_ENDPOINT, &host)
         .header(HEADER_NAME_PATH, "/foo")
+        .header(HEADER_NAME_SEARCH_PARAMS, "")
         .header(HEADER_NAME_READ_TIMEOUT, "10000")
         .header(CONTENT_TYPE, mime::APPLICATION_OCTET_STREAM.essence_str())
         .body(Vec::new())

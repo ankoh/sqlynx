@@ -23,7 +23,7 @@ anyhow = "1.0.89"
 prost = "0.13.3"
 
 tokio = { version = "1.40.0", features = ["macros", "rt", "sync"] }
-arrow = { version = "53.0", default-features = false, features = ["ipc"] }
+arrow = { version = "53.4", default-features = false, features = ["ipc"] }
 
 datafusion-common = { version = "43.0.0", default-features = false }
 datafusion-expr = { version = "43.0.0", default-features = false }
