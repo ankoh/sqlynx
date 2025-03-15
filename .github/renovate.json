@@ -1,81 +1,48 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "extends": [
-        "config:recommended"
-    ],
+    "extends": ["config:recommended"],
     "timezone": "Europe/Berlin",
-    "baseBranches": [
-        "main"
-    ],
+    "baseBranches": ["main"],
     "rangeStrategy": "bump",
     "automergeStrategy": "rebase",
-    "postUpdateOptions": [
-        "yarnDedupeFewer"
-    ],
-    "labels": [
-        "dependencies"
-    ],
+    "postUpdateOptions": ["yarnDedupeFewer"],
+    "labels": ["dependencies"],
     "npm": {
-        "labels": [
-            "dependencies",
-            "javascript"
-        ]
+        "labels": ["dependencies", "javascript"]
     },
     "cargo": {
-        "labels": [
-            "dependencies",
-            "rust"
-        ]
+        "labels": ["dependencies", "rust"]
     },
     "packageRules": [
         {
             "groupName": "flatbuffers",
-            "matchPackageNames": [
-                "flatbuffers"
-            ],
+            "matchPackageNames": ["flatbuffers"],
             "automerge": true
         },
         {
             "groupName": "esbuild",
-            "matchPackageNames": [
-                "esbuild"
-            ],
+            "matchPackageNames": ["esbuild"],
             "automerge": true
         },
         {
             "groupName": "webpack",
-            "matchPackagePatterns": [
-                "^webpack",
-                "^webpack-.*"
-            ],
-            "automerge": true
+            "automerge": true,
+            "matchPackageNames": ["/^webpack/", "/^webpack-.*/"]
         },
         {
             "groupName": "jest",
-            "matchPackageNames": [
-                "@types/jest"
-            ],
-            "matchPackagePatterns": [
-                ".*jest.*"
-            ],
+            "matchPackageNames": ["@types/jest", "/.*jest.*/"],
             "automerge": true
         },
         {
             "groupName": "linter",
-            "matchPackagePatterns": [
-                ".*eslint.*"
-            ],
-            "automerge": true
+            "automerge": true,
+            "matchPackageNames": ["/.*eslint.*/"]
         },
         {
             "groupName": "type definitions",
-            "matchPackagePatterns": [
-                "^@types/.*"
-            ],
-            "excludePackagePatterns": [
-                "^@types/react.*"
-            ],
-            "automerge": true
+            "automerge": true,
+            "matchPackageNames": ["/^@types/.*/", "!/^@types/react.*/"]
         },
         {
             "groupName": "vscode",
@@ -89,38 +56,27 @@
         },
         {
             "groupName": "connectrpc",
-            "matchPackagePatterns": [
-                "^@connectrpc/.*"
-            ],
-            "automerge": false
+            "automerge": false,
+            "matchPackageNames": ["/^@connectrpc/.*/"]
         },
         {
             "groupName": "tauri",
             "matchPackageNames": [
                 "tauri",
-                "tauri-build"
-            ],
-            "matchPackagePatterns": [
-                "^tauri-plugin-*",
-                "^@tauri-apps/*"
+                "tauri-build",
+                "/^tauri-plugin-*/",
+                "/^@tauri-apps/*/"
             ],
             "automerge": false
         },
         {
             "groupName": "bufbuild",
-            "matchPackagePatterns": [
-                "^@bufbuild/.*"
-            ],
-            "automerge": false
+            "automerge": false,
+            "matchPackageNames": ["/^@bufbuild/.*/"]
         },
         {
             "groupName": "datafusion",
-            "matchPackageNames": [
-                "datafusion"
-            ],
-            "matchPackagePatterns": [
-                "^datafusion-*"
-            ],
+            "matchPackageNames": ["datafusion", "/^datafusion-*/"],
             "automerge": true
         },
         {
