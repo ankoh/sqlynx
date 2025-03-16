@@ -2,7 +2,7 @@ import * as proto from '@ankoh/dashql-protobuf';
 
 import { BASE64_CODEC } from '../utils/base64.js';
 import { Logger } from './logger.js';
-import { PlatformDragDropEventVariant } from './event.js';
+import { PlatformDragDropEventVariant, SETUP_WORKBOOK, SetupEventVariant } from './event.js';
 
 const LOG_CTX = "event_listener";
 export const EVENT_QUERY_PARAMETER = "data";
@@ -26,11 +26,11 @@ export abstract class PlatformEventListener {
     /// The oauth subscriber.
     /// There can only be a single OAuth subscriber at a single point in time.
     private oAuthSubscriber: OAuthSubscriber | null = null;
-    /// The workbook setup subscriber.
+    /// The setup subscriber.
     /// There can only be a single navigation subscribe at a single point in time
-    private workbookSetupSubscriber: ((data: proto.dashql_workbook.pb.Workbook) => void) | null = null;
+    private setupSubscriber: ((data: SetupEventVariant) => void) | null = null;
     /// The queued workbook setup (if any)
-    private queuedWorkbookSetupEvent: proto.dashql_workbook.pb.Workbook | null;
+    private queuedSetupEvent: SetupEventVariant | null;
     /// The clipboard subscriber
     private clipboardEventHandler: (e: ClipboardEvent) => void;
     /// The drag event subscriber
@@ -40,8 +40,8 @@ export abstract class PlatformEventListener {
     constructor(logger: Logger) {
         this.logger = logger;
         this.oAuthSubscriber = null;
-        this.workbookSetupSubscriber = null;
-        this.queuedWorkbookSetupEvent = null;
+        this.setupSubscriber = null;
+        this.queuedSetupEvent = null;
         this.clipboardEventHandler = this.processClipboardEvent.bind(this);
         this.dragDropEventSubscribers = new Map();
     }
@@ -63,19 +63,23 @@ export abstract class PlatformEventListener {
                 break;
             }
             case "workbook": {
-                this.dispatchWorkbook(event.data.value);
+                const setupEvent: SetupEventVariant = {
+                    type: SETUP_WORKBOOK,
+                    value: event.data.value
+                };
+                this.dispatchSetup(setupEvent);
                 break;
             }
         }
     }
 
     /// Received navigation event
-    protected dispatchWorkbook(data: proto.dashql_workbook.pb.Workbook) {
-        if (!this.workbookSetupSubscriber) {
-            this.logger.info("queuing workbook setup event since there's no registered subscriber", {}, LOG_CTX);
-            this.queuedWorkbookSetupEvent = data;
+    protected dispatchSetup(event: SetupEventVariant) {
+        if (!this.setupSubscriber) {
+            this.logger.info("queuing setup event since there's no registered subscriber", {}, LOG_CTX);
+            this.queuedSetupEvent = event;
         } else {
-            this.workbookSetupSubscriber(data);
+            this.setupSubscriber(event);
         }
     }
     /// OAuth succeeded, let the subscriber now
@@ -132,28 +136,28 @@ export abstract class PlatformEventListener {
     }
 
     /// Subscribe navigation events
-    public subscribeWorkbookSetupEvents(handler: (data: proto.dashql_workbook.pb.Workbook) => void): void {
-        if (this.workbookSetupSubscriber) {
+    public subscribeSetupEvents(handler: (data: SetupEventVariant) => void): void {
+        if (this.setupSubscriber) {
             this.logger.error("tried to register more than one workbook setup subscriber", {}, LOG_CTX);
             return;
         }
         this.logger.info("subscribing to workbook setup events", {}, LOG_CTX);
-        this.workbookSetupSubscriber = handler;
+        this.setupSubscriber = handler;
 
         // Is there a pending workbook setup?
-        if (this.queuedWorkbookSetupEvent != null) {
-            const setup = this.queuedWorkbookSetupEvent;
-            this.queuedWorkbookSetupEvent = null;
+        if (this.queuedSetupEvent != null) {
+            const setup = this.queuedSetupEvent;
+            this.queuedSetupEvent = null;
             this.logger.info("dispatching buffered workbook setup event", {}, LOG_CTX);
-            this.workbookSetupSubscriber(setup);
+            this.setupSubscriber(setup);
         }
     }
     /// Unsubscribe from workbook setup events
-    public unsubscribeWorkbookSetupEvents(handler: (data: proto.dashql_workbook.pb.Workbook) => void): void {
-        if (this.workbookSetupSubscriber != handler) {
+    public unsubscribeSetupEvents(handler: (data: SetupEventVariant) => void): void {
+        if (this.setupSubscriber != handler) {
             this.logger.error("tried to unregister a workbook setup subscriber that is not registered", {}, LOG_CTX);
         } else {
-            this.workbookSetupSubscriber = null;
+            this.setupSubscriber = null;
         }
     }
 

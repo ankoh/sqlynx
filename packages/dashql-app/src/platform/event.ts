@@ -1,4 +1,6 @@
-import { VariantKind } from "utils/variant.js";
+import * as proto from '@ankoh/dashql-protobuf';
+
+import { VariantKind } from "../utils/variant.js";
 import { PlatformFile } from "./file.js";
 
 export const DROP_EVENT = Symbol("DROP_EVENT");
@@ -22,4 +24,13 @@ export type PlatformDragDropEventVariant =
     | VariantKind<typeof DRAG_EVENT, PlatformDragEvent>
     | VariantKind<typeof DRAG_STOP_EVENT, null>
     | VariantKind<typeof DROP_EVENT, PlatformDropEvent>
+    ;
+
+
+export const SETUP_WORKBOOK = Symbol("SETUP_WORKBOOK");
+export const SETUP_FILE = Symbol("SETUP_FILE");
+
+export type SetupEventVariant =
+    | VariantKind<typeof SETUP_WORKBOOK, proto.dashql_workbook.pb.Workbook>
+    | VariantKind<typeof SETUP_FILE, proto.dashql_file.pb.File>
     ;

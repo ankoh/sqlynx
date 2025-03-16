@@ -8,7 +8,6 @@ import { DRAG_EVENT, DRAG_STOP_EVENT, DROP_EVENT, PlatformDragDropEventVariant }
 import { PlatformFile } from '../platform/file.js';
 import { usePlatformEventListener } from '../platform/event_listener_provider.js';
 import { useLogger } from '../platform/logger_provider.js';
-import { Logger } from '../platform/logger.js';
 
 function DropzoneArea() {
     return (
@@ -24,27 +23,27 @@ function DropzoneArea() {
     );
 }
 
-async function onDropFile(file: PlatformFile, setDragOngoing: React.Dispatch<React.SetStateAction<Date | null>>, _logger: Logger) {
-    try {
-        const fileBuffer = await file.readAsArrayBuffer();
-        await zstd.init();
-        const fileDecompressed = zstd.decompress(fileBuffer);
-        const fileProto = proto.dashql_file.pb.File.fromBinary(fileDecompressed);
-
-        // XXX
-        console.log(`read bytes: ${fileBuffer.byteLength}, decompressed: ${fileDecompressed.byteLength}`);
-        console.log(fileProto);
-    } catch (e: any) {
-        console.log(e);
-    }
-
-    setDragOngoing(null);
-}
-
 export function DropzoneContainer(props: { children: React.ReactElement }) {
-    const logger = useLogger();
+    const _logger = useLogger();
     const appEvents = usePlatformEventListener();
     const [dragOngoing, setDragOngoing] = React.useState<Date | null>(null);
+
+    // Callback to drop file
+    const onDropFile = React.useCallback(async (file: PlatformFile) => {
+        try {
+            const fileBuffer = await file.readAsArrayBuffer();
+            await zstd.init();
+            const fileDecompressed = zstd.decompress(fileBuffer);
+            const fileProto = proto.dashql_file.pb.File.fromBinary(fileDecompressed);
+
+            // XXX
+            console.log(`read bytes: ${fileBuffer.byteLength}, decompressed: ${fileDecompressed.byteLength}`);
+            console.log(fileProto);
+        } catch (e: any) {
+            console.log(e);
+        }
+        setDragOngoing(null);
+    }, []);
 
     // Callback for drag/drop events
     const onDragDrop = React.useCallback((event: PlatformDragDropEventVariant) => {
@@ -56,7 +55,7 @@ export function DropzoneContainer(props: { children: React.ReactElement }) {
                 setDragOngoing(null);
                 break;
             case DROP_EVENT: {
-                onDropFile(event.value.file, setDragOngoing, logger);
+                onDropFile(event.value.file);
                 break;
             }
         }

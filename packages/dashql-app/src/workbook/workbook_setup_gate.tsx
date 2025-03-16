@@ -15,6 +15,7 @@ import { useWorkbookRegistry } from './workbook_state_registry.js';
 import { useTrinoWorkbookSetup } from '../connection/trino/trino_session.js';
 import { RESET } from '../connection/connection_state.js';
 import { isDebugBuild } from '../globals.js';
+import { SETUP_FILE, SETUP_WORKBOOK, SetupEventVariant } from '../platform/event.js';
 
 /// For now, we just set up one workbook per connector.
 /// Our abstractions would allow for a more dynamic workbook management, but we don't have the UI for that.
@@ -87,22 +88,36 @@ export const WorkbookSetupGate: React.FC<{ children: React.ReactElement }> = (pr
         args: null,
     }));
 
-    // Register an event handler for setup events.
-    // The user may either paste a deep link through the clipboard, or may run a setup through a deep link.
-    React.useEffect(() => {
-        // Create a subscriber
-        const subscriber = async (data: proto.dashql_workbook.pb.Workbook) => {
-            // Stop the default workbook switch after DashQL is ready
-            abortDefaultWorkbookSwitch.current.abort("workbook_setup_event");
-            // Await the setup of the static workbooks
-            const defaultWorkbooks = await setupDefaultWorkbook;
+    // Configure catalog and workbooks
+    const runSetup = React.useCallback(async (data: SetupEventVariant) => {
+        // Stop the default workbook switch after DashQL is ready
+        abortDefaultWorkbookSwitch.current.abort("workbook_setup_event");
+        // Await the setup of the static workbooks
+        const defaultWorkbooks = await setupDefaultWorkbook;
+
+        // Resolve workbook
+        let workbooks: proto.dashql_workbook.pb.Workbook[] = [];
+        switch (data.type) {
+            case SETUP_WORKBOOK:
+                workbooks.push(data.value);
+                break;
+            case SETUP_FILE:
+                workbooks = data.value.workbooks;
+                break;
+        }
+
+        // Setup connection
+        // XXX
+
+        // Setup workbooks
+        for (const workbookProto of workbooks) {
             // Get the connector info for the workbook setup protobuf
-            const connectorInfo = data.connectionParams ? getConnectorInfoForParams(data.connectionParams) : null;
+            const connectorInfo = workbookProto.connectionParams ? getConnectorInfoForParams(workbookProto.connectionParams) : null;
             if (connectorInfo == null) {
                 logger.warn("failed to resolve the connector info from the parameters", {});
                 return;
             }
-            switch (data.connectionParams?.connection.case) {
+            switch (workbookProto.connectionParams?.connection.case) {
                 case "hyper": {
                     const workbook = workbookReg.workbookMap.get(defaultWorkbooks.hyper)!;
                     connDispatch(workbook.connectionId, { type: RESET, value: null });
@@ -112,7 +127,7 @@ export const WorkbookSetupGate: React.FC<{ children: React.ReactElement }> = (pr
                         args: {
                             workbookId: defaultWorkbooks.hyper,
                             connector: connectorInfo,
-                            setupProto: data,
+                            setupProto: workbookProto,
                         },
                     });
                     break;
@@ -126,7 +141,7 @@ export const WorkbookSetupGate: React.FC<{ children: React.ReactElement }> = (pr
                         args: {
                             workbookId: defaultWorkbooks.salesforce,
                             connector: connectorInfo,
-                            setupProto: data,
+                            setupProto: workbookProto,
                         },
                     });
                     break;
@@ -140,7 +155,7 @@ export const WorkbookSetupGate: React.FC<{ children: React.ReactElement }> = (pr
                         args: {
                             workbookId: defaultWorkbooks.trino,
                             connector: connectorInfo,
-                            setupProto: data,
+                            setupProto: workbookProto,
                         },
                     });
                     return;
@@ -166,13 +181,17 @@ export const WorkbookSetupGate: React.FC<{ children: React.ReactElement }> = (pr
                     return;
                 }
             }
-        };
+        }
+    }, []);
 
+    // Register an event handler for setup events.
+    // The user may either paste a deep link through the clipboard, or may run a setup through a deep link.
+    React.useEffect(() => {
         // Subscribe to setup events
-        appEvents.subscribeWorkbookSetupEvents(subscriber);
+        appEvents.subscribeSetupEvents(runSetup);
         // Remove listener as soon as this component unmounts
         return () => {
-            appEvents.unsubscribeWorkbookSetupEvents(subscriber);
+            appEvents.unsubscribeSetupEvents(runSetup);
         };
     }, [appEvents]);
 
