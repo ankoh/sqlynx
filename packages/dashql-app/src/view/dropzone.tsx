@@ -1,10 +1,14 @@
+import * as proto from '@ankoh/dashql-protobuf';
 import * as React from 'react';
 import * as styles from './dropzone.module.css';
 import * as symbols from '../../static/svg/symbols.generated.svg';
+import * as zstd from '../utils/zstd.js';
 
 import { DRAG_EVENT, DRAG_STOP_EVENT, DROP_EVENT, PlatformDragDropEventVariant } from '../platform/event.js';
 import { PlatformFile } from '../platform/file.js';
 import { usePlatformEventListener } from '../platform/event_listener_provider.js';
+import { useLogger } from '../platform/logger_provider.js';
+import { Logger } from '../platform/logger.js';
 
 function DropzoneArea() {
     return (
@@ -20,15 +24,25 @@ function DropzoneArea() {
     );
 }
 
-async function onDropFile(file: PlatformFile, setDragOngoing: React.Dispatch<React.SetStateAction<Date | null>>) {
-    const fileBuffer = await file.readAsArrayBuffer();
-    // XXX
-    console.log(`read bytes: ${fileBuffer.byteLength}`);
+async function onDropFile(file: PlatformFile, setDragOngoing: React.Dispatch<React.SetStateAction<Date | null>>, _logger: Logger) {
+    try {
+        const fileBuffer = await file.readAsArrayBuffer();
+        await zstd.init();
+        const fileDecompressed = zstd.decompress(fileBuffer);
+        const fileProto = proto.dashql_file.pb.File.fromBinary(fileDecompressed);
+
+        // XXX
+        console.log(`read bytes: ${fileBuffer.byteLength}, decompressed: ${fileDecompressed.byteLength}`);
+        console.log(fileProto);
+    } catch (e: any) {
+        console.log(e);
+    }
 
     setDragOngoing(null);
 }
 
 export function DropzoneContainer(props: { children: React.ReactElement }) {
+    const logger = useLogger();
     const appEvents = usePlatformEventListener();
     const [dragOngoing, setDragOngoing] = React.useState<Date | null>(null);
 
@@ -42,7 +56,7 @@ export function DropzoneContainer(props: { children: React.ReactElement }) {
                 setDragOngoing(null);
                 break;
             case DROP_EVENT: {
-                onDropFile(event.value.file, setDragOngoing);
+                onDropFile(event.value.file, setDragOngoing, logger);
                 break;
             }
         }

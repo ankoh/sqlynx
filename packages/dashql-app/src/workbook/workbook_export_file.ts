@@ -6,7 +6,7 @@ import { WorkbookState } from './workbook_state.js';
 import { encodeConnectionParams, getConnectionParamsFromDetails } from '../connection/connection_params.js';
 import { encodeCatalogAsProto } from '../connection/catalog_export.js';
 
-export function encodeWorkbookAsFile(workbookState: WorkbookState, connectionState: ConnectionState, settings: WorkbookExportSettings | null = null): proto.dashql_slnx.pb.SlnxFile {
+export function encodeWorkbookAsFile(workbookState: WorkbookState, connectionState: ConnectionState, settings: WorkbookExportSettings | null = null): proto.dashql_file.pb.File {
     // Get connection params
     const params = getConnectionParamsFromDetails(connectionState.details);
 
@@ -31,7 +31,7 @@ export function encodeWorkbookAsFile(workbookState: WorkbookState, connectionSta
     });
 
     // Pack the file
-    const file = new proto.dashql_slnx.pb.SlnxFile({
+    const file = new proto.dashql_file.pb.File({
         workbooks: [workbook]
     });
 
@@ -39,7 +39,7 @@ export function encodeWorkbookAsFile(workbookState: WorkbookState, connectionSta
     if (settings?.exportCatalog) {
         const catalogSnapshot = connectionState.catalog.createSnapshot();
         const catalogProto = encodeCatalogAsProto(catalogSnapshot);
-        const c = new proto.dashql_slnx.pb.SlnxCatalog({
+        const c = new proto.dashql_file.pb.FileCatalog({
             connectionParams: paramsProto,
             catalog: catalogProto
         });
