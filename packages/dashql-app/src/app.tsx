@@ -34,7 +34,7 @@ import { TrinoConnectorSettingsStateProvider } from './view/connection/trino_con
 import { UIInternalsPage } from './view/internals/ui_internals_page.js';
 import { VersionCheck } from './platform/version_check.js';
 import { WorkbookCommands } from './workbook/workbook_commands.js';
-import { WorkbookSetupGate } from './workbook/workbook_setup_gate.js';
+import { AppSetupGate } from './app_setup_gate.js';
 import { WorkbookStateRegistry } from './workbook/workbook_state_registry.js';
 import { isDebugBuild } from './globals.js';
 
@@ -70,9 +70,9 @@ const WorkbookProviders = (props: { children: React.ReactElement }) => (
                                     <CurrentWorkbookStateProvider>
                                         <ScriptLoader />
                                         <WorkbookCommands>
-                                            <WorkbookSetupGate>
+                                            <AppSetupGate>
                                                 {props.children}
-                                            </WorkbookSetupGate>
+                                            </AppSetupGate>
                                         </WorkbookCommands>
                                     </CurrentWorkbookStateProvider>
                                 </CatalogLoaderProvider>

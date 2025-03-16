@@ -1,21 +1,21 @@
 import * as proto from '@ankoh/dashql-protobuf';
 import * as React from 'react';
 
-import { WorkbookSetupPage } from './workbook_setup_page.js';
-import { ConnectorInfo, getConnectorInfoForParams } from '../connection/connector_info.js';
-import { useServerlessWorkbookSetup } from '../connection/serverless/serverless_session.js';
-import { usePlatformEventListener } from '../platform/event_listener_provider.js';
-import { useSalesforceWorkbookSetup } from '../connection/salesforce/salesforce_workbook.js';
-import { useDemoWorkbookSetup } from '../connection/demo/demo_workbook.js';
-import { useHyperWorkbookSetup } from '../connection/hyper/hyper_workbook.js';
-import { useCurrentWorkbookSelector } from './current_workbook.js';
-import { useLogger } from '../platform/logger_provider.js';
-import { useDynamicConnectionDispatch } from '../connection/connection_registry.js';
-import { useWorkbookRegistry } from './workbook_state_registry.js';
-import { useTrinoWorkbookSetup } from '../connection/trino/trino_session.js';
-import { RESET } from '../connection/connection_state.js';
-import { isDebugBuild } from '../globals.js';
-import { SETUP_FILE, SETUP_WORKBOOK, SetupEventVariant } from '../platform/event.js';
+import { AppSetupPage } from './view/app_setup_page.js';
+import { ConnectorInfo, getConnectorInfoForParams } from './connection/connector_info.js';
+import { useServerlessWorkbookSetup } from './connection/serverless/serverless_session.js';
+import { usePlatformEventListener } from './platform/event_listener_provider.js';
+import { useSalesforceWorkbookSetup } from './connection/salesforce/salesforce_workbook.js';
+import { useDemoWorkbookSetup } from './connection/demo/demo_workbook.js';
+import { useHyperWorkbookSetup } from './connection/hyper/hyper_workbook.js';
+import { useCurrentWorkbookSelector } from './workbook/current_workbook.js';
+import { useLogger } from './platform/logger_provider.js';
+import { useDynamicConnectionDispatch } from './connection/connection_registry.js';
+import { useWorkbookRegistry } from './workbook/workbook_state_registry.js';
+import { useTrinoWorkbookSetup } from './connection/trino/trino_session.js';
+import { RESET } from './connection/connection_state.js';
+import { isDebugBuild } from './globals.js';
+import { SETUP_FILE, SETUP_WORKBOOK, SetupEventVariant } from './platform/event.js';
 
 /// For now, we just set up one workbook per connector.
 /// Our abstractions would allow for a more dynamic workbook management, but we don't have the UI for that.
@@ -29,24 +29,24 @@ interface DefaultWorkbooks {
 const DEFAULT_WORKBOOKS = React.createContext<DefaultWorkbooks | null>(null);
 export const useDefaultWorkbooks = () => React.useContext(DEFAULT_WORKBOOKS);
 
-enum WorkbookSetupDecision {
+enum AppSetupDecision {
     UNDECIDED,
     SKIP_SETUP_PAGE,
     SHOW_SETUP_PAGE,
 }
 
-interface WorkbookSetupArgs {
+interface AppSetupArgs {
     workbookId: number;
     connector: ConnectorInfo;
     setupProto: proto.dashql_workbook.pb.Workbook;
 }
 
-interface WorkbookSetupState {
-    decision: WorkbookSetupDecision;
-    args: WorkbookSetupArgs | null;
+interface AppSetupState {
+    decision: AppSetupDecision;
+    args: AppSetupArgs | null;
 }
 
-export const WorkbookSetupGate: React.FC<{ children: React.ReactElement }> = (props: { children: React.ReactElement }) => {
+export const AppSetupGate: React.FC<{ children: React.ReactElement }> = (props: { children: React.ReactElement }) => {
     const logger = useLogger();
 
     const setupServerlessWorkbook = useServerlessWorkbookSetup();
@@ -83,8 +83,8 @@ export const WorkbookSetupGate: React.FC<{ children: React.ReactElement }> = (pr
     }, []);
 
     // State to decide about workbook setup strategy
-    const [state, setState] = React.useState<WorkbookSetupState>(() => ({
-        decision: WorkbookSetupDecision.UNDECIDED,
+    const [state, setState] = React.useState<AppSetupState>(() => ({
+        decision: AppSetupDecision.UNDECIDED,
         args: null,
     }));
 
@@ -96,18 +96,29 @@ export const WorkbookSetupGate: React.FC<{ children: React.ReactElement }> = (pr
         const defaultWorkbooks = await setupDefaultWorkbook;
 
         // Resolve workbook
+        let catalogs: proto.dashql_file.pb.FileCatalog[] = [];
         let workbooks: proto.dashql_workbook.pb.Workbook[] = [];
         switch (data.type) {
             case SETUP_WORKBOOK:
                 workbooks.push(data.value);
                 break;
             case SETUP_FILE:
+                catalogs = data.value.catalogs;
                 workbooks = data.value.workbooks;
                 break;
         }
 
         // Setup connection
-        // XXX
+        for (const catalogProto of catalogs) {
+            // Get the connector info for the workbook setup protobuf
+            const connectorInfo = catalogProto.connectionParams ? getConnectorInfoForParams(catalogProto.connectionParams) : null;
+            if (connectorInfo == null) {
+                logger.warn("failed to resolve the connector info from the parameters", {});
+                continue;
+            }
+
+            // XXX
+        }
 
         // Setup workbooks
         for (const workbookProto of workbooks) {
@@ -123,7 +134,7 @@ export const WorkbookSetupGate: React.FC<{ children: React.ReactElement }> = (pr
                     connDispatch(workbook.connectionId, { type: RESET, value: null });
                     selectCurrentWorkbook(defaultWorkbooks.hyper);
                     setState({
-                        decision: WorkbookSetupDecision.SHOW_SETUP_PAGE,
+                        decision: AppSetupDecision.SHOW_SETUP_PAGE,
                         args: {
                             workbookId: defaultWorkbooks.hyper,
                             connector: connectorInfo,
@@ -137,7 +148,7 @@ export const WorkbookSetupGate: React.FC<{ children: React.ReactElement }> = (pr
                     connDispatch(workbook.connectionId, { type: RESET, value: null });
                     selectCurrentWorkbook(defaultWorkbooks.salesforce);
                     setState({
-                        decision: WorkbookSetupDecision.SHOW_SETUP_PAGE,
+                        decision: AppSetupDecision.SHOW_SETUP_PAGE,
                         args: {
                             workbookId: defaultWorkbooks.salesforce,
                             connector: connectorInfo,
@@ -151,7 +162,7 @@ export const WorkbookSetupGate: React.FC<{ children: React.ReactElement }> = (pr
                     connDispatch(workbook.connectionId, { type: RESET, value: null });
                     selectCurrentWorkbook(defaultWorkbooks.trino);
                     setState({
-                        decision: WorkbookSetupDecision.SHOW_SETUP_PAGE,
+                        decision: AppSetupDecision.SHOW_SETUP_PAGE,
                         args: {
                             workbookId: defaultWorkbooks.trino,
                             connector: connectorInfo,
@@ -165,7 +176,7 @@ export const WorkbookSetupGate: React.FC<{ children: React.ReactElement }> = (pr
                     connDispatch(workbook.connectionId, { type: RESET, value: null });
                     selectCurrentWorkbook(defaultWorkbooks.serverless);
                     setState({
-                        decision: WorkbookSetupDecision.SKIP_SETUP_PAGE,
+                        decision: AppSetupDecision.SKIP_SETUP_PAGE,
                         args: null,
                     });
                     return;
@@ -175,7 +186,7 @@ export const WorkbookSetupGate: React.FC<{ children: React.ReactElement }> = (pr
                     connDispatch(workbook.connectionId, { type: RESET, value: null });
                     selectCurrentWorkbook(defaultWorkbooks.demo);
                     setState({
-                        decision: WorkbookSetupDecision.SKIP_SETUP_PAGE,
+                        decision: AppSetupDecision.SKIP_SETUP_PAGE,
                         args: null,
                     });
                     return;
@@ -210,7 +221,7 @@ export const WorkbookSetupGate: React.FC<{ children: React.ReactElement }> = (pr
             selectCurrentWorkbook(s => (s == null) ? d : s);
             // Skip the setup
             setState({
-                decision: WorkbookSetupDecision.SKIP_SETUP_PAGE,
+                decision: AppSetupDecision.SKIP_SETUP_PAGE,
                 args: null,
             });
         };
@@ -220,18 +231,18 @@ export const WorkbookSetupGate: React.FC<{ children: React.ReactElement }> = (pr
     // Determine what we want to render
     let child: React.ReactElement = <div />;
     switch (state.decision) {
-        case WorkbookSetupDecision.UNDECIDED:
+        case AppSetupDecision.UNDECIDED:
             break;
-        case WorkbookSetupDecision.SKIP_SETUP_PAGE:
+        case AppSetupDecision.SKIP_SETUP_PAGE:
             child = props.children;
             break;
-        case WorkbookSetupDecision.SHOW_SETUP_PAGE: {
+        case AppSetupDecision.SHOW_SETUP_PAGE: {
             const args = state.args!;
-            child = <WorkbookSetupPage
+            child = <AppSetupPage
                 workbookId={args.workbookId}
                 connector={args.connector}
                 setupProto={args.setupProto}
-                onDone={() => setState(s => ({ ...s, decision: WorkbookSetupDecision.SKIP_SETUP_PAGE }))}
+                onDone={() => setState(s => ({ ...s, decision: AppSetupDecision.SKIP_SETUP_PAGE }))}
             />;
             break;
         }
