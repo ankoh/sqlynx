@@ -1,8 +1,23 @@
 import * as React from 'react';
 import * as styles from './dropzone.module.css';
+import * as symbols from '../../static/svg/symbols.generated.svg';
 
 import { usePlatformEventListener } from '../platform/event_listener_provider.js';
 import { DRAG_EVENT, DRAG_STOP_EVENT, DROP_EVENT, PlatformDragDropEventVariant } from '../platform/event.js';
+
+function DropzoneArea() {
+    return (
+        <div className={styles.area_centered}>
+            <div className={styles.area_container}>
+                <div className={styles.area_logo}>
+                    <svg width="180px" height="180px">
+                        <use xlinkHref={`${symbols}#dashql`} />
+                    </svg>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 export function DropzoneContainer(props: { children: React.ReactElement }) {
     const appEvents = usePlatformEventListener();
@@ -31,7 +46,7 @@ export function DropzoneContainer(props: { children: React.ReactElement }) {
 
     return (
         <div className={styles.root}>
-            {dragOngoing ? <div /> : props.children}
+            {dragOngoing ? <DropzoneArea /> : props.children}
         </div>
     );
 }
