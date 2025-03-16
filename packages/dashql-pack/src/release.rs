@@ -187,6 +187,32 @@ impl Release {
     }
 
     pub async fn publish(&self, client: &aws_sdk_s3::Client) -> anyhow::Result<()> {
+        // Upload files one by one first to work around R2 upload issue
+        for (_, file_upload) in self.file_uploads.iter() {
+            let path = file_upload.remote_path.clone();
+            let bytes = ByteStream::from_path(file_upload.source_path.clone()).await?;
+            let client = client.clone();
+            log::info!("upload started, path={}", &path);
+            let result = client
+                .put_object()
+                .bucket("dashql-get")
+                .key(&path)
+                .body(bytes)
+                .content_type("application/octet-stream")
+                .send()
+                .await
+                .map_err(|e| (path.clone(), e))
+                .map(|_| path.clone());
+            match result {
+                Ok(path) => {
+                    log::info!("upload finished, path={}", &path);
+                }
+                Err((path, e)) => {
+                    log::error!("upload failed, path={}, error={}", &path, &e);
+                }
+            }
+        }
+
         // Serialize release metadata and update manifest and abort after serialization errors
         let release_metadata = serde_json::to_string_pretty(&self.release_metadata)?
             .as_bytes()
@@ -215,26 +241,6 @@ impl Release {
                     .key(&path)
                     .body(bytes)
                     .content_type("application/json")
-                    .send()
-                    .await
-                    .map_err(|e| (path.clone(), e))
-                    .map(|_| path.clone())
-            }));
-        }
-
-        // Spawn file uploads
-        for (_, file_upload) in self.file_uploads.iter() {
-            let path = file_upload.remote_path.clone();
-            let bytes = ByteStream::from_path(file_upload.source_path.clone()).await?;
-            let client = client.clone();
-            log::info!("upload started, path={}", &path);
-            upload_futures.push(tokio::spawn(async move {
-                client
-                    .put_object()
-                    .bucket("dashql-get")
-                    .key(&path)
-                    .body(bytes)
-                    .content_type("application/octet-stream")
                     .send()
                     .await
                     .map_err(|e| (path.clone(), e))
