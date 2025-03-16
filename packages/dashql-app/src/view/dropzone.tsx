@@ -2,8 +2,9 @@ import * as React from 'react';
 import * as styles from './dropzone.module.css';
 import * as symbols from '../../static/svg/symbols.generated.svg';
 
-import { usePlatformEventListener } from '../platform/event_listener_provider.js';
 import { DRAG_EVENT, DRAG_STOP_EVENT, DROP_EVENT, PlatformDragDropEventVariant } from '../platform/event.js';
+import { PlatformFile } from '../platform/file.js';
+import { usePlatformEventListener } from '../platform/event_listener_provider.js';
 
 function DropzoneArea() {
     return (
@@ -19,6 +20,14 @@ function DropzoneArea() {
     );
 }
 
+async function onDropFile(file: PlatformFile, setDragOngoing: React.Dispatch<React.SetStateAction<Date | null>>) {
+    const fileBuffer = await file.readAsArrayBuffer();
+    // XXX
+    console.log(`read bytes: ${fileBuffer.byteLength}`);
+
+    setDragOngoing(null);
+}
+
 export function DropzoneContainer(props: { children: React.ReactElement }) {
     const appEvents = usePlatformEventListener();
     const [dragOngoing, setDragOngoing] = React.useState<Date | null>(null);
@@ -32,9 +41,10 @@ export function DropzoneContainer(props: { children: React.ReactElement }) {
             case DRAG_STOP_EVENT:
                 setDragOngoing(null);
                 break;
-            case DROP_EVENT:
-                setDragOngoing(null);
+            case DROP_EVENT: {
+                onDropFile(event.value.file, setDragOngoing);
                 break;
+            }
         }
     }, []);
 
