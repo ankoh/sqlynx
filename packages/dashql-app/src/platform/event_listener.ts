@@ -2,6 +2,7 @@ import * as proto from '@ankoh/dashql-protobuf';
 
 import { BASE64_CODEC } from '../utils/base64.js';
 import { Logger } from './logger.js';
+import { DragDropEventVariant } from './event.js';
 
 const LOG_CTX = "event_listener";
 export const EVENT_QUERY_PARAMETER = "data";
@@ -18,7 +19,7 @@ interface OAuthSubscriber {
     abortListener: () => void;
 }
 
-export abstract class AppEventListener {
+export abstract class PlatformEventListener {
     /// The logger
     protected logger: Logger;
 
@@ -28,29 +29,31 @@ export abstract class AppEventListener {
     /// The workbook setup subscriber.
     /// There can only be a single navigation subscribe at a single point in time
     private workbookSetupSubscriber: ((data: proto.dashql_workbook.pb.Workbook) => void) | null = null;
-    /// The clipboard subscriber
-    private clipboardEventHandler: (e: ClipboardEvent) => void;
-
     /// The queued workbook setup (if any)
     private queuedWorkbookSetupEvent: proto.dashql_workbook.pb.Workbook | null;
+    /// The clipboard subscriber
+    private clipboardEventHandler: (e: ClipboardEvent) => void;
+    /// The drag event subscriber
+    private dragDropEventSubscribers: Map<string, (e: DragDropEventVariant) => void>;
 
     /// Constructor
     constructor(logger: Logger) {
         this.logger = logger;
         this.oAuthSubscriber = null;
         this.workbookSetupSubscriber = null;
-        this.clipboardEventHandler = this.processClipboardEvent.bind(this);
         this.queuedWorkbookSetupEvent = null;
+        this.clipboardEventHandler = this.processClipboardEvent.bind(this);
+        this.dragDropEventSubscribers = new Map();
     }
 
     /// Method to setup the listener
-    public setup() {
-        this.listenForAppEvents();
+    public async setup(): Promise<void> {
+        await this.listenForAppEvents();
         this.listenForClipboardEvents();
     }
 
     /// Method to setup the listener for app events
-    protected abstract listenForAppEvents(): void;
+    protected abstract listenForAppEvents(): Promise<void>;
 
     /// Called by subclasses when receiving an app event
     public dispatchAppEvent(event: proto.dashql_app_event.pb.AppEventData) {
@@ -75,7 +78,6 @@ export abstract class AppEventListener {
             this.workbookSetupSubscriber(data);
         }
     }
-
     /// OAuth succeeded, let the subscriber now
     protected dispatchOAuthRedirect(data: proto.dashql_oauth.pb.OAuthRedirectData) {
         if (!this.oAuthSubscriber) {
@@ -87,6 +89,12 @@ export abstract class AppEventListener {
             if (!sub.signal.aborted) {
                 sub.resolve(data)
             }
+        }
+    }
+    /// Dispatch a drag/drop event to all subscribers
+    protected dispatchDragDrop(event: DragDropEventVariant) {
+        for (const [_k, v] of this.dragDropEventSubscribers) {
+            v(event);
         }
     }
 
@@ -140,7 +148,6 @@ export abstract class AppEventListener {
             this.workbookSetupSubscriber(setup);
         }
     }
-
     /// Unsubscribe from workbook setup events
     public unsubscribeWorkbookSetupEvents(handler: (data: proto.dashql_workbook.pb.Workbook) => void): void {
         if (this.workbookSetupSubscriber != handler) {
@@ -148,6 +155,15 @@ export abstract class AppEventListener {
         } else {
             this.workbookSetupSubscriber = null;
         }
+    }
+
+    /// Subscribe drag-drop events
+    public subscribeDragDropEvents(key: string, handler: (data: DragDropEventVariant) => void): void {
+        this.dragDropEventSubscribers.set(key, handler);
+    }
+    /// Unsubscribe drag-drop events
+    public unsubscribeDragDropEvents(key: string): void {
+        this.dragDropEventSubscribers.delete(key);
     }
 
     /// Method to listen for pasted dashql links
@@ -181,7 +197,6 @@ export abstract class AppEventListener {
             return null;
         }
     }
-
     /// Helper to process a clipboard event
     private processClipboardEvent(event: ClipboardEvent) {
         // Is the pasted text of a deeplink?

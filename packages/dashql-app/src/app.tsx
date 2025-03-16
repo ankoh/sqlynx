@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { Route, Routes, Navigate, BrowserRouter, HashRouter } from 'react-router-dom';
 
 import { AppConfigProvider } from './app_config.js';
-import { AppEventListenerProvider } from './platform/event_listener_provider.js';
+import { PlatformEventListenerProvider } from './platform/event_listener_provider.js';
 import { CatalogLoaderProvider } from './connection/catalog_loader.js';
 import { ComputationRegistry } from './compute/computation_registry.js';
 import { ConnectionRegistry } from './connection/connection_registry.js';
@@ -90,7 +90,7 @@ const AppProviders = (props: { children: React.ReactElement }) => (
             <LoggerProvider>
                 <FileDownloaderProvider>
                     <AppConfigProvider>
-                        <AppEventListenerProvider>
+                        <PlatformEventListenerProvider>
                             <ProcessProvider>
                                 <VersionCheck>
                                     <HttpClientProvider>
@@ -108,7 +108,7 @@ const AppProviders = (props: { children: React.ReactElement }) => (
                                     </HttpClientProvider>
                                 </VersionCheck>
                             </ProcessProvider>
-                        </AppEventListenerProvider>
+                        </PlatformEventListenerProvider>
                     </AppConfigProvider>
                 </FileDownloaderProvider>
             </LoggerProvider>

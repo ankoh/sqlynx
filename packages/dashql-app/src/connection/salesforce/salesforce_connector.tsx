@@ -9,7 +9,7 @@ import { useHttpClient } from '../../platform/http_client_provider.js';
 import { useLogger } from '../../platform/logger_provider.js';
 import { useHyperDatabaseClient } from '../../connection/hyper/hyperdb_client_provider.js';
 import { usePlatformType } from '../../platform/platform_type.js';
-import { useAppEventListener } from '../../platform/event_listener_provider.js';
+import { usePlatformEventListener } from '../../platform/event_listener_provider.js';
 
 const API_CTX = React.createContext<SalesforceApiClientInterface | null>(null);
 const SETUP_CTX = React.createContext<SalesforceSetupApi | null>(null);
@@ -26,7 +26,7 @@ export const SalesforceConnector: React.FC<Props> = (props: Props) => {
     const httpClient = useHttpClient();
     const hyperClient = useHyperDatabaseClient();
     const platformType = usePlatformType();
-    const appEvents = useAppEventListener();
+    const appEvents = usePlatformEventListener();
 
     const [api, setup] = React.useMemo(() => {
         if (!connectorConfig) {

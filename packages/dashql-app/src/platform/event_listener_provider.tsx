@@ -2,28 +2,28 @@ import * as React from 'react';
 
 import { useLocation } from 'react-router-dom';
 
-import { AppEventListener, EVENT_QUERY_PARAMETER } from './event_listener.js';
-import { NativeAppEventListener } from './native_event_listener.js';
-import { WebAppEventListener } from './web_event_listener.js';
+import { PlatformEventListener, EVENT_QUERY_PARAMETER } from './event_listener.js';
+import { NativePlatformEventListener } from './native_event_listener.js';
+import { WebPlatformEventListener } from './web_event_listener.js';
 import { isNativePlatform } from './native_globals.js';
 import { useLogger } from './logger_provider.js';
 
 export const SKIP_EVENT_LISTENER = Symbol("SKIP_EVENT_LISTENER");
 
-const LISTENER_CTX = React.createContext<AppEventListener | null>(null);
-export const useAppEventListener = () => React.useContext(LISTENER_CTX)!;
+const LISTENER_CTX = React.createContext<PlatformEventListener | null>(null);
+export const usePlatformEventListener = () => React.useContext(LISTENER_CTX)!;
 
 type Props = {
     children: React.ReactElement;
 };
 
-export const AppEventListenerProvider: React.FC<Props> = (props: Props) => {
+export const PlatformEventListenerProvider: React.FC<Props> = (props: Props) => {
     const logger = useLogger();
     const location = useLocation();
 
     // Construct the event listener
-    const listener = React.useMemo<AppEventListener>(() => {
-        const l = isNativePlatform() ? new NativeAppEventListener(logger) : new WebAppEventListener(logger);
+    const listener = React.useMemo<PlatformEventListener>(() => {
+        const l = isNativePlatform() ? new NativePlatformEventListener(logger) : new WebPlatformEventListener(logger);
         l.setup();
         return l;
     }, []);

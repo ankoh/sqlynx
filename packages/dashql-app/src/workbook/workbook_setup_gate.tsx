@@ -4,7 +4,7 @@ import * as React from 'react';
 import { WorkbookSetupPage } from './workbook_setup_page.js';
 import { ConnectorInfo, getConnectorInfoForParams } from '../connection/connector_info.js';
 import { useServerlessWorkbookSetup } from '../connection/serverless/serverless_session.js';
-import { useAppEventListener } from '../platform/event_listener_provider.js';
+import { usePlatformEventListener } from '../platform/event_listener_provider.js';
 import { useSalesforceWorkbookSetup } from '../connection/salesforce/salesforce_workbook.js';
 import { useDemoWorkbookSetup } from '../connection/demo/demo_workbook.js';
 import { useHyperWorkbookSetup } from '../connection/hyper/hyper_workbook.js';
@@ -59,7 +59,7 @@ export const WorkbookSetupGate: React.FC<{ children: React.ReactElement }> = (pr
     const workbookReg = useWorkbookRegistry();
     const [_connReg, connDispatch] = useDynamicConnectionDispatch();
 
-    const appEvents = useAppEventListener();
+    const appEvents = usePlatformEventListener();
     const abortDefaultWorkbookSwitch = React.useRef(new AbortController());
 
     const setupDefaultWorkbook = React.useMemo(async () => {
