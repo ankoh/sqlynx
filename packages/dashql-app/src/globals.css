@@ -10,8 +10,8 @@
     --button_hover_bg: hsl(210deg, 12%, 16%);
     --button_hover_bg_inverted: hsl(210deg, 12%, 6%);
 
-    --background_color_80: hsl(0deg, 0%, 24%);
-    --background_color_100: hsl(0deg, 0%, 12%);
+    --background_color_80: hsl(210deg, 12%, 24%);
+    --background_color_100: hsl(210deg, 12%, 16%);
     --background: radial-gradient(circle at 50% 50%, var(--background_color_80) 20%, transparent 80%),
         conic-gradient(
             from 45deg at 50% 50%,
