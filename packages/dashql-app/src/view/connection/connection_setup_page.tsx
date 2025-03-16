@@ -15,7 +15,6 @@ import { ConnectorInfo, HYPER_GRPC_CONNECTOR, requiresSwitchingToNative, SALESFO
 import { CopyToClipboardButton } from '../../utils/clipboard.js';
 import { IndicatorStatus, StatusIndicator } from '../foundations/status_indicator.js';
 import { KeyValueTextField, TextField, VALIDATION_WARNING } from '../foundations/text_field.js';
-import { RESTORE_WORKBOOK } from '../../workbook/workbook_state.js';
 import { DASHQL_VERSION } from '../../globals.js';
 import { VersionInfoOverlay } from '../version_viewer.js';
 import { encodeWorkbookProtoAsUrl, WorkbookLinkTarget } from '../../workbook/workbook_export_url.js';
@@ -25,7 +24,6 @@ import { useConnectionState } from '../../connection/connection_registry.js';
 import { useLogger } from '../../platform/logger_provider.js';
 import { useSalesforceSetup } from '../../connection/salesforce/salesforce_connector.js';
 import { useTrinoSetup } from '../../connection/trino/trino_connector.js';
-import { useWorkbookState } from '../../workbook/workbook_state_registry.js';
 import { ErrorDetailsButton } from '../error_details.js';
 import { DetailedError } from '../../utils/error.js';
 import { ConnectionParamsVariant, encodeConnectionParams, readConnectionParamsFromProto } from '../../connection/connection_params.js';
@@ -224,15 +222,19 @@ const ConnectionParamsSection: React.FC<ConnectorParamsSectionProps> = (props: C
 };
 
 interface Props {
-    workbookId: number;
-    connector: ConnectorInfo;
-    setupProto: proto.dashql_workbook.pb.Workbook;
+    /// The connection id
+    connectionId: number;
+    /// The connection params
+    connectionParams: proto.dashql_connection.pb.ConnectionParams;
+    /// The proto of the workbook where this connection is used.
+    /// This is necessary to generate links with workbook data when switching platforms.
+    workbookProto: proto.dashql_workbook.pb.Workbook;
+    /// The done callback
     onDone: () => void;
 }
 
 export const ConnectionSetupPage: React.FC<Props> = (props: Props) => {
     const now = new Date();
-    const navigate = useNavigate();
     const logger = useLogger();
     const salesforceSetup = useSalesforceSetup();
     const trinoSetup = useTrinoSetup();
@@ -241,16 +243,13 @@ export const ConnectionSetupPage: React.FC<Props> = (props: Props) => {
     const [showVersionOverlay, setShowVersionOverlay] = React.useState<boolean>(false);
 
     // Resolve a connection id for the workbook
-    const [maybeWorkbook, dispatchWorkbook] = useWorkbookState(props.workbookId);
-    const [maybeConnection, dispatchConnection] = useConnectionState(maybeWorkbook!.connectionId);
-    const connection = maybeConnection!;
-
-    // Maintain setup override settings
-    const [connectionParams, setConnectionParams] = React.useState<ConnectionParamsVariant | null>(() => props.setupProto.connectionParams ? readConnectionParamsFromProto(props.setupProto.connectionParams) : null);
+    const [maybeConn, dispatchConnection] = useConnectionState(props.connectionId);
+    const connection = maybeConn!;
+    const [connectionParams, setConnectionParams] = React.useState<ConnectionParamsVariant | null>(() => props.connectionParams ? readConnectionParamsFromProto(props.connectionParams) : null);
 
     // Need to switch to native?
     // Some connectors only run in the native app.
-    let canExecuteHere = props.connector ? !requiresSwitchingToNative(props.connector) : true;
+    let canExecuteHere = connection.connectorInfo ? !requiresSwitchingToNative(connection.connectorInfo) : true;
 
     // Helper to configure the workbook
     const [setupStarted, setSetupStarted] = React.useState<boolean>(false);
@@ -265,7 +264,7 @@ export const ConnectionSetupPage: React.FC<Props> = (props: Props) => {
 
         // Bake the workbook proto, we'll need this in any case
         const workbookProto = new proto.dashql_workbook.pb.Workbook({
-            ...props.setupProto,
+            ...props.workbookProto,
             connectionParams: connectionParams == null ? undefined : encodeConnectionParams(connectionParams)
         });
 
@@ -304,15 +303,6 @@ export const ConnectionSetupPage: React.FC<Props> = (props: Props) => {
                     break;
                 }
             }
-
-            // Restore the workbook scripts
-            //
-            // XXX This is the first time we're modifying the attached workbook....
-            //     We should make sure this is sane, ideally we would get the connector info from there.
-            dispatchWorkbook({ type: RESTORE_WORKBOOK, value: workbookProto });
-
-            // Navigate to the app root
-            navigate("/");
 
             // We're done, return close the workbook setup page
             props.onDone();
@@ -371,7 +361,7 @@ export const ConnectionSetupPage: React.FC<Props> = (props: Props) => {
                 clearTimeout(updaterId.current as any);
             }
         }
-    }, [props.setupProto]);
+    }, [props.connectionParams]);
 
     // Do we have connector params?
     // Then render them in a dedicated section.
@@ -388,7 +378,7 @@ export const ConnectionSetupPage: React.FC<Props> = (props: Props) => {
     // Get the workbook url
     const getWorkbookUrl = () => {
         const workbookProto = new proto.dashql_workbook.pb.Workbook({
-            ...props.setupProto,
+            ...props.workbookProto,
             connectionParams: connectionParams == null ? undefined : encodeConnectionParams(connectionParams)
         });
         const url = encodeWorkbookProtoAsUrl(workbookProto, WorkbookLinkTarget.NATIVE);
@@ -483,7 +473,7 @@ export const ConnectionSetupPage: React.FC<Props> = (props: Props) => {
 
         // Encode the workbook url
         const workbookProto = new proto.dashql_workbook.pb.Workbook({
-            ...props.setupProto,
+            ...props.workbookProto,
             connectionParams: connectionParams == null ? undefined : encodeConnectionParams(connectionParams)
         });
         const workbookURL = encodeWorkbookProtoAsUrl(workbookProto, WorkbookLinkTarget.NATIVE);

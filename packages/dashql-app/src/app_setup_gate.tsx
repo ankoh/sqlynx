@@ -31,14 +31,15 @@ export const useDefaultWorkbooks = () => React.useContext(DEFAULT_WORKBOOKS);
 
 enum AppSetupDecision {
     UNDECIDED,
-    SHOW_CONNECTION_PARAMS_PAGE,
+    SHOW_CONNECTION_SETUP,
     SETUP_DONE,
 }
 
 interface AppSetupArgs {
+    connectionId: number;
+    connectionParams: proto.dashql_connection.pb.ConnectionParams;
     workbookId: number;
-    connector: ConnectorInfo;
-    setupProto: proto.dashql_workbook.pb.Workbook;
+    workbookProto: proto.dashql_workbook.pb.Workbook;
 }
 
 interface AppSetupState {
@@ -134,11 +135,12 @@ export const AppSetupGate: React.FC<{ children: React.ReactElement }> = (props: 
                     connDispatch(workbook.connectionId, { type: RESET, value: null });
                     selectCurrentWorkbook(defaultWorkbooks.hyper);
                     setState({
-                        decision: AppSetupDecision.SHOW_CONNECTION_PARAMS_PAGE,
+                        decision: AppSetupDecision.SHOW_CONNECTION_SETUP,
                         args: {
+                            connectionId: workbook.connectionId,
+                            connectionParams: workbookProto.connectionParams,
                             workbookId: defaultWorkbooks.hyper,
-                            connector: connectorInfo,
-                            setupProto: workbookProto,
+                            workbookProto: workbookProto,
                         },
                     });
                     break;
@@ -148,11 +150,12 @@ export const AppSetupGate: React.FC<{ children: React.ReactElement }> = (props: 
                     connDispatch(workbook.connectionId, { type: RESET, value: null });
                     selectCurrentWorkbook(defaultWorkbooks.salesforce);
                     setState({
-                        decision: AppSetupDecision.SHOW_CONNECTION_PARAMS_PAGE,
+                        decision: AppSetupDecision.SHOW_CONNECTION_SETUP,
                         args: {
+                            connectionId: workbook.connectionId,
+                            connectionParams: workbookProto.connectionParams,
                             workbookId: defaultWorkbooks.salesforce,
-                            connector: connectorInfo,
-                            setupProto: workbookProto,
+                            workbookProto: workbookProto,
                         },
                     });
                     break;
@@ -162,11 +165,12 @@ export const AppSetupGate: React.FC<{ children: React.ReactElement }> = (props: 
                     connDispatch(workbook.connectionId, { type: RESET, value: null });
                     selectCurrentWorkbook(defaultWorkbooks.trino);
                     setState({
-                        decision: AppSetupDecision.SHOW_CONNECTION_PARAMS_PAGE,
+                        decision: AppSetupDecision.SHOW_CONNECTION_SETUP,
                         args: {
+                            connectionId: workbook.connectionId,
+                            connectionParams: workbookProto.connectionParams,
                             workbookId: defaultWorkbooks.trino,
-                            connector: connectorInfo,
-                            setupProto: workbookProto,
+                            workbookProto: workbookProto,
                         },
                     });
                     return;
@@ -233,12 +237,12 @@ export const AppSetupGate: React.FC<{ children: React.ReactElement }> = (props: 
     switch (state.decision) {
         case AppSetupDecision.UNDECIDED:
             break;
-        case AppSetupDecision.SHOW_CONNECTION_PARAMS_PAGE: {
+        case AppSetupDecision.SHOW_CONNECTION_SETUP: {
             const args = state.args!;
             child = <ConnectionSetupPage
-                workbookId={args.workbookId}
-                connector={args.connector}
-                setupProto={args.setupProto}
+                connectionId={args.connectionId}
+                connectionParams={args.connectionParams}
+                workbookProto={args.workbookProto}
                 onDone={() => setState(s => ({ ...s, decision: AppSetupDecision.SETUP_DONE }))}
             />;
             break;
