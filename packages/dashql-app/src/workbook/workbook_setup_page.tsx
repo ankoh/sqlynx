@@ -110,7 +110,7 @@ const ConnectionParamsSection: React.FC<ConnectorParamsSectionProps> = (props: C
         case TRINO_CONNECTOR: {
             const p = props.params.value;
             return (
-                <>
+                <div className={baseStyles.card_body_sections}>
                     <div className={baseStyles.card_section}>
                         <div className={baseStyles.section_entries}>
                             <TextField
@@ -214,7 +214,7 @@ const ConnectionParamsSection: React.FC<ConnectorParamsSectionProps> = (props: C
                             />
                         </div>
                     </div>
-                </>
+                </div>
             );
         }
         default: {
@@ -540,7 +540,7 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
                 variant="invisible"
                 icon={() => (
                     <svg width="16px" height="16px">
-                        <use xlinkHref={`${symbols}#log`} />
+                        <use xlinkHref={`${symbols}#processor`} />
                     </svg>
                 )}
                 aria-label="close-overlay"
@@ -551,12 +551,12 @@ export const WorkbookSetupPage: React.FC<Props> = (props: Props) => {
 
     // Render the page
     return (
-        <div className={baseStyles.page}>
+        <div className={baseStyles.page} data-tauri-drag-region>
             <div className={baseStyles.banner_and_content_container} data-tauri-drag-region>
                 <div className={baseStyles.banner_container} data-tauri-drag-region>
                     <div className={baseStyles.banner_logo} data-tauri-drag-region>
                         <svg width="100%" height="100%">
-                            <use xlinkHref={`${symbols}#dashql-inverted`} />
+                            <use xlinkHref={`${symbols}#dashql`} />
                         </svg>
                     </div>
                     <div className={baseStyles.banner_text_container} data-tauri-drag-region>
