@@ -9,7 +9,7 @@ import { PlatformCheck } from './platform_check.js';
 import { TrinoConnectorSettings } from './trino_connector_settings.js';
 import { useCurrentWorkbookState } from '../../workbook/current_workbook.js';
 
-import * as styles from './connection_page.module.css';
+import * as styles from './connection_settings_page.module.css';
 import * as icons from '../../../static/svg/symbols.generated.svg';
 
 type PageState = {
@@ -40,7 +40,7 @@ const CONNECTOR_RENDERERS: VerticalTabRenderers<ConnectorProps> = {
     [ConnectorType.TRINO as number]: (props: ConnectorProps) => <PlatformCheck connectorType={props.connectorType}><TrinoConnectorSettings /></PlatformCheck>,
 };
 
-export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
+export const ConnectionSettingsPage: React.FC<PageProps> = (_props: PageProps) => {
     const [pageState, updatePageState] = React.useContext(PAGE_STATE_CTX)!;
     const [workbook, _] = useCurrentWorkbookState();
 
@@ -106,7 +106,7 @@ export const ConnectorsPage: React.FC<PageProps> = (_props: PageProps) => {
 
 interface ProviderProps { children: React.ReactElement };
 
-export const ConnectorsPageStateProvider: React.FC<ProviderProps> = (props: ProviderProps) => {
+export const ConnectionSettingsPageStateProvider: React.FC<ProviderProps> = (props: ProviderProps) => {
     const state = React.useState<PageState>({
         workbook: null,
         focus: ConnectorType.HYPER_GRPC

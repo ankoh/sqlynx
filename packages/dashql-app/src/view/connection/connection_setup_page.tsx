@@ -1,36 +1,36 @@
 import * as proto from '@ankoh/dashql-protobuf';
 import * as React from 'react';
-import * as symbols from '../../static/svg/symbols.generated.svg';
-import * as baseStyles from '../view/banner_page.module.css';
-import * as connStyles from '../view/connection/connection_settings.module.css';
-
 import { useNavigate } from 'react-router-dom';
 import { IconButton } from '@primer/react';
 import { BookIcon, ChecklistIcon, DesktopDownloadIcon, FileBadgeIcon, KeyIcon, PackageIcon, PlugIcon, XIcon } from '@primer/octicons-react';
 
-import { AnchorAlignment, AnchorSide } from '../view/foundations/anchored_position.js';
-import { Button, ButtonSize, ButtonVariant } from '../view/foundations/button.js';
-import { ConnectionHealth } from '../connection/connection_state.js';
-import { ConnectorInfo, HYPER_GRPC_CONNECTOR, requiresSwitchingToNative, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from '../connection/connector_info.js';
-import { CopyToClipboardButton } from '../utils/clipboard.js';
-import { IndicatorStatus, StatusIndicator } from './foundations/status_indicator.js';
-import { KeyValueTextField, TextField, VALIDATION_WARNING } from './foundations/text_field.js';
-import { RESTORE_WORKBOOK } from '../workbook/workbook_state.js';
-import { DASHQL_VERSION } from '../globals.js';
-import { VersionInfoOverlay } from './version_viewer.js';
-import { encodeWorkbookProtoAsUrl, WorkbookLinkTarget } from '../workbook/workbook_export_url.js';
-import { formatHHMMSS } from '../utils/format.js';
-import { getConnectionError, getConnectionHealthIndicator, getConnectionStatusText } from '../view/connection/salesforce_connector_settings.js';
-import { useConnectionState } from '../connection/connection_registry.js';
-import { useLogger } from '../platform/logger_provider.js';
-import { useSalesforceSetup } from '../connection/salesforce/salesforce_connector.js';
-import { useTrinoSetup } from '../connection/trino/trino_connector.js';
-import { useWorkbookState } from '../workbook/workbook_state_registry.js';
-import { ErrorDetailsButton } from '../view/error_details.js';
-import { DetailedError } from '../utils/error.js';
-import { ConnectionParamsVariant, encodeConnectionParams, readConnectionParamsFromProto } from '../connection/connection_params.js';
-import { ValueListBuilder } from '../view/foundations/value_list.js';
-import { InternalsViewerOverlay } from '../view/internals_overlay.js';
+import * as symbols from '../../../static/svg/symbols.generated.svg';
+import * as baseStyles from '../banner_page.module.css';
+import * as connStyles from './connection_settings.module.css';
+
+import { AnchorAlignment, AnchorSide } from '../foundations/anchored_position.js';
+import { Button, ButtonSize, ButtonVariant } from '../foundations/button.js';
+import { ConnectionHealth } from '../../connection/connection_state.js';
+import { ConnectorInfo, HYPER_GRPC_CONNECTOR, requiresSwitchingToNative, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from '../../connection/connector_info.js';
+import { CopyToClipboardButton } from '../../utils/clipboard.js';
+import { IndicatorStatus, StatusIndicator } from '../foundations/status_indicator.js';
+import { KeyValueTextField, TextField, VALIDATION_WARNING } from '../foundations/text_field.js';
+import { RESTORE_WORKBOOK } from '../../workbook/workbook_state.js';
+import { DASHQL_VERSION } from '../../globals.js';
+import { VersionInfoOverlay } from '../version_viewer.js';
+import { encodeWorkbookProtoAsUrl, WorkbookLinkTarget } from '../../workbook/workbook_export_url.js';
+import { formatHHMMSS } from '../../utils/format.js';
+import { getConnectionError, getConnectionHealthIndicator, getConnectionStatusText } from '../../view/connection/salesforce_connector_settings.js';
+import { useConnectionState } from '../../connection/connection_registry.js';
+import { useLogger } from '../../platform/logger_provider.js';
+import { useSalesforceSetup } from '../../connection/salesforce/salesforce_connector.js';
+import { useTrinoSetup } from '../../connection/trino/trino_connector.js';
+import { useWorkbookState } from '../../workbook/workbook_state_registry.js';
+import { ErrorDetailsButton } from '../error_details.js';
+import { DetailedError } from '../../utils/error.js';
+import { ConnectionParamsVariant, encodeConnectionParams, readConnectionParamsFromProto } from '../../connection/connection_params.js';
+import { ValueListBuilder } from '../foundations/value_list.js';
+import { InternalsViewerOverlay } from '../internals_overlay.js';
 
 const LOG_CTX = "workbook_setup";
 const AUTO_TRIGGER_DELAY = 2000;
@@ -230,7 +230,7 @@ interface Props {
     onDone: () => void;
 }
 
-export const AppSetupPage: React.FC<Props> = (props: Props) => {
+export const ConnectionSetupPage: React.FC<Props> = (props: Props) => {
     const now = new Date();
     const navigate = useNavigate();
     const logger = useLogger();

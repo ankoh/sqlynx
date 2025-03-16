@@ -1,7 +1,7 @@
 import * as proto from '@ankoh/dashql-protobuf';
 import * as React from 'react';
 
-import { AppSetupPage } from './view/app_setup_page.js';
+import { ConnectionSetupPage } from './view/connection/connection_setup_page.js';
 import { ConnectorInfo, getConnectorInfoForParams } from './connection/connector_info.js';
 import { useServerlessWorkbookSetup } from './connection/serverless/serverless_session.js';
 import { usePlatformEventListener } from './platform/event_listener_provider.js';
@@ -31,8 +31,8 @@ export const useDefaultWorkbooks = () => React.useContext(DEFAULT_WORKBOOKS);
 
 enum AppSetupDecision {
     UNDECIDED,
-    SKIP_SETUP_PAGE,
-    SHOW_SETUP_PAGE,
+    SHOW_CONNECTION_PARAMS_PAGE,
+    SETUP_DONE,
 }
 
 interface AppSetupArgs {
@@ -134,7 +134,7 @@ export const AppSetupGate: React.FC<{ children: React.ReactElement }> = (props: 
                     connDispatch(workbook.connectionId, { type: RESET, value: null });
                     selectCurrentWorkbook(defaultWorkbooks.hyper);
                     setState({
-                        decision: AppSetupDecision.SHOW_SETUP_PAGE,
+                        decision: AppSetupDecision.SHOW_CONNECTION_PARAMS_PAGE,
                         args: {
                             workbookId: defaultWorkbooks.hyper,
                             connector: connectorInfo,
@@ -148,7 +148,7 @@ export const AppSetupGate: React.FC<{ children: React.ReactElement }> = (props: 
                     connDispatch(workbook.connectionId, { type: RESET, value: null });
                     selectCurrentWorkbook(defaultWorkbooks.salesforce);
                     setState({
-                        decision: AppSetupDecision.SHOW_SETUP_PAGE,
+                        decision: AppSetupDecision.SHOW_CONNECTION_PARAMS_PAGE,
                         args: {
                             workbookId: defaultWorkbooks.salesforce,
                             connector: connectorInfo,
@@ -162,7 +162,7 @@ export const AppSetupGate: React.FC<{ children: React.ReactElement }> = (props: 
                     connDispatch(workbook.connectionId, { type: RESET, value: null });
                     selectCurrentWorkbook(defaultWorkbooks.trino);
                     setState({
-                        decision: AppSetupDecision.SHOW_SETUP_PAGE,
+                        decision: AppSetupDecision.SHOW_CONNECTION_PARAMS_PAGE,
                         args: {
                             workbookId: defaultWorkbooks.trino,
                             connector: connectorInfo,
@@ -176,7 +176,7 @@ export const AppSetupGate: React.FC<{ children: React.ReactElement }> = (props: 
                     connDispatch(workbook.connectionId, { type: RESET, value: null });
                     selectCurrentWorkbook(defaultWorkbooks.serverless);
                     setState({
-                        decision: AppSetupDecision.SKIP_SETUP_PAGE,
+                        decision: AppSetupDecision.SETUP_DONE,
                         args: null,
                     });
                     return;
@@ -186,7 +186,7 @@ export const AppSetupGate: React.FC<{ children: React.ReactElement }> = (props: 
                     connDispatch(workbook.connectionId, { type: RESET, value: null });
                     selectCurrentWorkbook(defaultWorkbooks.demo);
                     setState({
-                        decision: AppSetupDecision.SKIP_SETUP_PAGE,
+                        decision: AppSetupDecision.SETUP_DONE,
                         args: null,
                     });
                     return;
@@ -221,7 +221,7 @@ export const AppSetupGate: React.FC<{ children: React.ReactElement }> = (props: 
             selectCurrentWorkbook(s => (s == null) ? d : s);
             // Skip the setup
             setState({
-                decision: AppSetupDecision.SKIP_SETUP_PAGE,
+                decision: AppSetupDecision.SETUP_DONE,
                 args: null,
             });
         };
@@ -233,19 +233,19 @@ export const AppSetupGate: React.FC<{ children: React.ReactElement }> = (props: 
     switch (state.decision) {
         case AppSetupDecision.UNDECIDED:
             break;
-        case AppSetupDecision.SKIP_SETUP_PAGE:
-            child = props.children;
-            break;
-        case AppSetupDecision.SHOW_SETUP_PAGE: {
+        case AppSetupDecision.SHOW_CONNECTION_PARAMS_PAGE: {
             const args = state.args!;
-            child = <AppSetupPage
+            child = <ConnectionSetupPage
                 workbookId={args.workbookId}
                 connector={args.connector}
                 setupProto={args.setupProto}
-                onDone={() => setState(s => ({ ...s, decision: AppSetupDecision.SKIP_SETUP_PAGE }))}
+                onDone={() => setState(s => ({ ...s, decision: AppSetupDecision.SETUP_DONE }))}
             />;
             break;
         }
+        case AppSetupDecision.SETUP_DONE:
+            child = props.children;
+            break;
     }
     return (
         <DEFAULT_WORKBOOKS.Provider value={defaultWorkbooks}>

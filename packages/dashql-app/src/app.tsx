@@ -6,7 +6,7 @@ import { AppConfigProvider } from './app_config.js';
 import { CatalogLoaderProvider } from './connection/catalog_loader.js';
 import { ComputationRegistry } from './compute/computation_registry.js';
 import { ConnectionRegistry } from './connection/connection_registry.js';
-import { ConnectorsPage, ConnectorsPageStateProvider } from './view/connection/connection_page.js';
+import { ConnectionSettingsPage, ConnectionSettingsPageStateProvider } from './view/connection/connection_settings_page.js';
 import { CurrentWorkbookStateProvider } from './workbook/current_workbook.js';
 import { DashQLComputeProvider } from './compute/compute_provider.js';
 import { DashQLCoreProvider } from './core_provider.js';
@@ -44,7 +44,7 @@ import './globals.css';
 
 // We decouple (some) page states from the actual page views to remember user input
 const PageStateProviders = (props: { children: React.ReactElement }) => (
-    <ConnectorsPageStateProvider>
+    <ConnectionSettingsPageStateProvider>
         <SalesforceConnectorSettingsStateProvider>
             <HyperGrpcConnectorSettingsStateProvider>
                 <TrinoConnectorSettingsStateProvider>
@@ -52,7 +52,7 @@ const PageStateProviders = (props: { children: React.ReactElement }) => (
                 </TrinoConnectorSettingsStateProvider>
             </HyperGrpcConnectorSettingsStateProvider>
         </SalesforceConnectorSettingsStateProvider>
-    </ConnectorsPageStateProvider>
+    </ConnectionSettingsPageStateProvider>
 );
 
 // Note that the order among connection providers is important and non-obvious.
@@ -128,7 +128,7 @@ root.render(
                 <NavBarContainer>
                     <Routes>
                         <Route index Component={EditorPage} />
-                        <Route path="/connection" Component={ConnectorsPage} />
+                        <Route path="/connection" Component={ConnectionSettingsPage} />
                         {isDebugBuild() && (
                             <>
                                 <Route path="/internals/ui" Component={UIInternalsPage} />
