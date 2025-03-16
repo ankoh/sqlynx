@@ -9,7 +9,10 @@ import { ComputationRegistry } from './compute/computation_registry.js';
 import { ConnectionRegistry } from './connection/connection_registry.js';
 import { ConnectorsPage, ConnectorsPageStateProvider } from './view/connection/connection_page.js';
 import { CurrentWorkbookStateProvider } from './workbook/current_workbook.js';
+import { DashQLComputeProvider } from './compute/compute_provider.js';
+import { DashQLCoreProvider } from './core_provider.js';
 import { EditorPage } from './view/workbook/workbook_page.js';
+import { FileDownloaderProvider } from './platform/file_downloader_provider.js';
 import { GitHubTheme } from './github_theme.js';
 import { HttpClientProvider } from './platform/http_client_provider.js';
 import { HyperDatabaseClientProvider } from './connection/hyper/hyperdb_client_provider.js';
@@ -21,19 +24,17 @@ import { PlatformTypeProvider } from './platform/platform_type.js';
 import { PlotInternalsPage } from './view/internals/plot_internals_page.js';
 import { ProcessProvider } from './platform/process.js';
 import { QueryExecutorProvider } from './connection/query_executor.js';
-import { DashQLComputeProvider } from './compute/compute_provider.js';
-import { DashQLCoreProvider } from './core_provider.js';
 import { SalesforceConnector } from './connection/salesforce/salesforce_connector.js';
 import { SalesforceConnectorSettingsStateProvider } from './view/connection/salesforce_connector_settings.js';
 import { SchemaGraphDemoPage } from './view/internals/schema_graph_demo.js';
 import { ScriptLoader } from './workbook/script_loader.js';
-import { WorkbookCommands } from './workbook/workbook_commands.js';
-import { WorkbookSetupGate } from './workbook/workbook_setup_gate.js';
-import { WorkbookStateRegistry } from './workbook/workbook_state_registry.js';
 import { TrinoConnector } from './connection/trino/trino_connector.js';
 import { TrinoConnectorSettingsStateProvider } from './view/connection/trino_connector_settings.js';
 import { UIInternalsPage } from './view/internals/ui_internals_page.js';
 import { VersionCheck } from './platform/version_check.js';
+import { WorkbookCommands } from './workbook/workbook_commands.js';
+import { WorkbookSetupGate } from './workbook/workbook_setup_gate.js';
+import { WorkbookStateRegistry } from './workbook/workbook_state_registry.js';
 import { isDebugBuild } from './globals.js';
 
 import './../static/fonts/fonts.css';
@@ -87,27 +88,29 @@ const AppProviders = (props: { children: React.ReactElement }) => (
     <GitHubTheme>
         <PlatformTypeProvider>
             <LoggerProvider>
-                <AppConfigProvider>
-                    <AppEventListenerProvider>
-                        <ProcessProvider>
-                            <VersionCheck>
-                                <HttpClientProvider>
-                                    <HyperDatabaseClientProvider>
-                                        <DashQLCoreProvider>
-                                            <DashQLComputeProvider>
-                                                <WorkbookProviders>
-                                                    <PageStateProviders>
-                                                        {props.children}
-                                                    </PageStateProviders>
-                                                </WorkbookProviders>
-                                            </DashQLComputeProvider>
-                                        </DashQLCoreProvider>
-                                    </HyperDatabaseClientProvider>
-                                </HttpClientProvider>
-                            </VersionCheck>
-                        </ProcessProvider>
-                    </AppEventListenerProvider>
-                </AppConfigProvider>
+                <FileDownloaderProvider>
+                    <AppConfigProvider>
+                        <AppEventListenerProvider>
+                            <ProcessProvider>
+                                <VersionCheck>
+                                    <HttpClientProvider>
+                                        <HyperDatabaseClientProvider>
+                                            <DashQLCoreProvider>
+                                                <DashQLComputeProvider>
+                                                    <WorkbookProviders>
+                                                        <PageStateProviders>
+                                                            {props.children}
+                                                        </PageStateProviders>
+                                                    </WorkbookProviders>
+                                                </DashQLComputeProvider>
+                                            </DashQLCoreProvider>
+                                        </HyperDatabaseClientProvider>
+                                    </HttpClientProvider>
+                                </VersionCheck>
+                            </ProcessProvider>
+                        </AppEventListenerProvider>
+                    </AppConfigProvider>
+                </FileDownloaderProvider>
             </LoggerProvider>
         </PlatformTypeProvider>
     </GitHubTheme>

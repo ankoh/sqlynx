@@ -18,6 +18,8 @@
         "core:window:default",
         "deep-link:allow-get-current",
         "deep-link:default",
+        "dialog:default",
+        "fs:allow-write-file",
         "log:allow-log",
         "log:default",
         "os:allow-arch",

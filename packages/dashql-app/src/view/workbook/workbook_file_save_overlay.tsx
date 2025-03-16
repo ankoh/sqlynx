@@ -14,7 +14,7 @@ import { WorkbookState } from '../../workbook/workbook_state.js';
 import { classNames } from '../../utils/classnames.js';
 import { encodeWorkbookAsFile } from '../../workbook/workbook_export_file.js';
 import { formatBytes } from '../../utils/format.js';
-import { downloadBufferAsFile } from '../../utils/file_download.js';
+import { useFileDownloader } from '../../platform/file_downloader_provider.js';
 
 const SLNX_COMPRESSION_LEVEL = 5;
 
@@ -36,6 +36,7 @@ interface Props {
 export const WorkbookFileSaveOverlay: React.FC<Props> = (props: Props) => {
     const anchorRef = React.createRef<HTMLDivElement>();
     const buttonRef = React.createRef<HTMLAnchorElement>();
+    const fileDownloader = useFileDownloader();
 
     const [settings, setSettings] = React.useState<WorkbookExportSettings>({
         exportCatalog: true,
@@ -64,7 +65,7 @@ export const WorkbookFileSaveOverlay: React.FC<Props> = (props: Props) => {
     }, [settings, props.conn, props.workbook, props.isOpen]);
 
     const downloadFile = React.useCallback(async () => {
-        downloadBufferAsFile(fileBytes, "workbook.slnx");
+        await fileDownloader.downloadBufferAsFile(fileBytes, "workbook.dashql");
     }, [fileBytes]);
 
     return (
