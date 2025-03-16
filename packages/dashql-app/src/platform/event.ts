@@ -1,8 +1,9 @@
 import { VariantKind } from "utils/variant.js";
 import { PlatformFile } from "./file.js";
 
-export const DRAG_EVENT = Symbol("DRAG_EVENT");
 export const DROP_EVENT = Symbol("DROP_EVENT");
+export const DRAG_EVENT = Symbol("DRAG_EVENT");
+export const DRAG_STOP_EVENT = Symbol("DRAG_STOP_EVENT");
 
 /// A drag event
 export interface PlatformDragEvent {
@@ -17,7 +18,8 @@ export interface PlatformDropEvent extends PlatformDragEvent {
     file: PlatformFile;
 }
 
-export type DragDropEventVariant =
+export type PlatformDragDropEventVariant =
     | VariantKind<typeof DRAG_EVENT, PlatformDragEvent>
+    | VariantKind<typeof DRAG_STOP_EVENT, PlatformDragEvent>
     | VariantKind<typeof DROP_EVENT, PlatformDropEvent>
     ;

@@ -2,7 +2,7 @@ import * as proto from '@ankoh/dashql-protobuf';
 
 import { BASE64_CODEC } from '../utils/base64.js';
 import { Logger } from './logger.js';
-import { DragDropEventVariant } from './event.js';
+import { PlatformDragDropEventVariant } from './event.js';
 
 const LOG_CTX = "event_listener";
 export const EVENT_QUERY_PARAMETER = "data";
@@ -34,7 +34,7 @@ export abstract class PlatformEventListener {
     /// The clipboard subscriber
     private clipboardEventHandler: (e: ClipboardEvent) => void;
     /// The drag event subscriber
-    private dragDropEventSubscribers: Map<string, (e: DragDropEventVariant) => void>;
+    private dragDropEventSubscribers: Map<string, (e: PlatformDragDropEventVariant) => void>;
 
     /// Constructor
     constructor(logger: Logger) {
@@ -92,7 +92,7 @@ export abstract class PlatformEventListener {
         }
     }
     /// Dispatch a drag/drop event to all subscribers
-    protected dispatchDragDrop(event: DragDropEventVariant) {
+    protected dispatchDragDrop(event: PlatformDragDropEventVariant) {
         for (const [_k, v] of this.dragDropEventSubscribers) {
             v(event);
         }
@@ -158,7 +158,7 @@ export abstract class PlatformEventListener {
     }
 
     /// Subscribe drag-drop events
-    public subscribeDragDropEvents(key: string, handler: (data: DragDropEventVariant) => void): void {
+    public subscribeDragDropEvents(key: string, handler: (data: PlatformDragDropEventVariant) => void): void {
         this.dragDropEventSubscribers.set(key, handler);
     }
     /// Unsubscribe drag-drop events

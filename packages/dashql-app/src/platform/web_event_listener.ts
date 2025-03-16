@@ -1,7 +1,7 @@
 import { Logger } from './logger.js';
 import { PlatformEventListener } from "./event_listener.js";
 import { WebFile } from './web_file.js';
-import { DRAG_EVENT, PlatformDragEvent, PlatformDropEvent } from './event.js';
+import { DRAG_EVENT, DRAG_STOP_EVENT, DROP_EVENT, PlatformDragEvent, PlatformDropEvent } from './event.js';
 
 export class WebPlatformEventListener extends PlatformEventListener {
     onWindowMessage: (event: any) => void;
@@ -27,6 +27,20 @@ export class WebPlatformEventListener extends PlatformEventListener {
                 value: event
             });
         });
+        window.addEventListener("dragend", function(e: DragEvent) {
+            // Prevent default to enable drop events
+            e.preventDefault();
+            console.log("DRAG_END");
+
+            const event: PlatformDragEvent = {
+                pageX: e.pageX as number,
+                pageY: e.pageY as number,
+            };
+            listener.dispatchDragDrop({
+                type: DRAG_STOP_EVENT,
+                value: event
+            });
+        });
         window.addEventListener("drop", (e: DragEvent) => {
             // Prevent default drop handler
             e.preventDefault();
@@ -41,7 +55,7 @@ export class WebPlatformEventListener extends PlatformEventListener {
                             file: new WebFile(file, file.name),
                         };
                         listener.dispatchDragDrop({
-                            type: DRAG_EVENT,
+                            type: DROP_EVENT,
                             value: event
                         });
                     }

@@ -5,7 +5,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { Logger } from './logger.js';
 import { PlatformEventListener } from "./event_listener.js";
 import { NativeFile } from "./native_file.js";
-import { DRAG_EVENT, DROP_EVENT, PlatformDragEvent, PlatformDropEvent } from "./event.js";
+import { DRAG_EVENT, DRAG_STOP_EVENT, DROP_EVENT, PlatformDragEvent, PlatformDropEvent } from "./event.js";
 
 const LOG_CTX = "native_event_listener";
 
@@ -87,7 +87,17 @@ export class NativePlatformEventListener extends PlatformEventListener {
                         value: event
                     });
                 }
+            } else {
 
+                const pos = rawEvent.payload.position;
+                const mapped: PlatformDragEvent = {
+                    pageX: pos.x,
+                    pageY: pos.y,
+                };
+                listener.dispatchDragDrop({
+                    type: DRAG_STOP_EVENT,
+                    value: mapped
+                });
             }
         });
 
