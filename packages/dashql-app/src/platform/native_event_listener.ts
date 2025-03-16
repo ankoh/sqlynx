@@ -88,15 +88,9 @@ export class NativePlatformEventListener extends PlatformEventListener {
                     });
                 }
             } else {
-
-                const pos = rawEvent.payload.position;
-                const mapped: PlatformDragEvent = {
-                    pageX: pos.x,
-                    pageY: pos.y,
-                };
                 listener.dispatchDragDrop({
                     type: DRAG_STOP_EVENT,
-                    value: mapped
+                    value: null
                 });
             }
         });

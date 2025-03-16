@@ -20,6 +20,6 @@ export interface PlatformDropEvent extends PlatformDragEvent {
 
 export type PlatformDragDropEventVariant =
     | VariantKind<typeof DRAG_EVENT, PlatformDragEvent>
-    | VariantKind<typeof DRAG_STOP_EVENT, PlatformDragEvent>
+    | VariantKind<typeof DRAG_STOP_EVENT, null>
     | VariantKind<typeof DROP_EVENT, PlatformDropEvent>
     ;
