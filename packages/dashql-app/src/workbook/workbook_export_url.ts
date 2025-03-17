@@ -2,12 +2,12 @@ import * as proto from '@ankoh/dashql-protobuf';
 
 import { WorkbookState } from './workbook_state.js';
 import { BASE64_CODEC } from '../utils/base64.js';
-import { ConnectionParamsVariant, encodeConnectionParams } from '../connection/connection_params.js';
+import { ConnectionParamsVariant, encodeConnectionParamsAsProto } from '../connection/connection_params.js';
 import { WorkbookExportSettings } from './workbook_export_settings.js';
 
 export function encodeWorkbookAsProto(workbookState: WorkbookState, connectionParams: ConnectionParamsVariant, settings: WorkbookExportSettings | null = null): proto.dashql_workbook.pb.Workbook {
     // Build the connector params
-    const params = encodeConnectionParams(connectionParams, settings);
+    const params = encodeConnectionParamsAsProto(connectionParams, settings);
 
     // Collect the scripts
     const scripts: proto.dashql_workbook.pb.WorkbookScript[] = [];

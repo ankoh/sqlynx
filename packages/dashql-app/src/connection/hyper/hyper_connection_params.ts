@@ -13,7 +13,7 @@ export interface HyperGrpcConnectionParams {
     gRPCMetadata: KeyValueListElement[];
 }
 
-export function buildHyperConnectionParams(params: HyperGrpcConnectionParams, _settings: WorkbookExportSettings | null): proto.dashql_connection.pb.ConnectionParams {
+export function encodeHyperConnectionParamsAsProto(params: HyperGrpcConnectionParams, _settings: WorkbookExportSettings | null): proto.dashql_connection.pb.ConnectionParams {
     const tls = new proto.dashql_connection.pb.TlsConfig({
         clientKeyPath: params.channelArgs.tls?.keyPath,
         clientCertPath: params.channelArgs.tls?.pubPath,
@@ -30,8 +30,7 @@ export function buildHyperConnectionParams(params: HyperGrpcConnectionParams, _s
     });
 }
 
-
-export function readHyperConnectionParams(params: proto.dashql_connection.pb.HyperConnectionParams): HyperGrpcConnectionParams {
+export function readHyperConnectionParamsFromProto(params: proto.dashql_connection.pb.HyperConnectionParams): HyperGrpcConnectionParams {
     const metadata = [];
     for (const k in params.metadata) {
         metadata.push({

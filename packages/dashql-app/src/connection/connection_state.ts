@@ -117,7 +117,7 @@ export enum ConnectionHealth {
 
 export type ConnectionDetailsVariant =
     | VariantKind<typeof SALESFORCE_DATA_CLOUD_CONNECTOR, SalesforceConnectionDetails>
-    | VariantKind<typeof SERVERLESS_CONNECTOR, unknown>
+    | VariantKind<typeof SERVERLESS_CONNECTOR, {}>
     | VariantKind<typeof DEMO_CONNECTOR, DemoConnectionParams>
     | VariantKind<typeof HYPER_GRPC_CONNECTOR, HyperGrpcConnectionDetails>
     | VariantKind<typeof TRINO_CONNECTOR, TrinoConnectionDetails>

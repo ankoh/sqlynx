@@ -13,7 +13,7 @@ export interface SalesforceConnectionParams {
     loginHint: string | null;
 }
 
-export function buildSalesforceConnectionParams(params: SalesforceConnectionParams | null, settings: WorkbookExportSettings | null): proto.dashql_connection.pb.ConnectionParams {
+export function encodeSalesforceConnectionParamsAsProto(params: SalesforceConnectionParams | null, settings: WorkbookExportSettings | null): proto.dashql_connection.pb.ConnectionParams {
     return new proto.dashql_connection.pb.ConnectionParams({
         connection: {
             case: "salesforce",
@@ -26,7 +26,7 @@ export function buildSalesforceConnectionParams(params: SalesforceConnectionPara
     });
 }
 
-export function readSalesforceConnectionParams(params: proto.dashql_connection.pb.SalesforceConnectionParams): SalesforceConnectionParams {
+export function readSalesforceConnectionParamsFromProto(params: proto.dashql_connection.pb.SalesforceConnectionParams): SalesforceConnectionParams {
     return {
         instanceUrl: params.instanceUrl,
         appConsumerKey: params.appConsumerKey,

@@ -27,7 +27,7 @@ export interface TrinoConnectionParams {
     schemaNames: ValueListElement[];
 }
 
-export function buildTrinoConnectionParams(params: TrinoConnectionParams, _settings: WorkbookExportSettings | null): proto.dashql_connection.pb.ConnectionParams {
+export function encodeTrinoConnectionParamsAsProto(params: TrinoConnectionParams, _settings: WorkbookExportSettings | null): proto.dashql_connection.pb.ConnectionParams {
     return new proto.dashql_connection.pb.ConnectionParams({
         connection: {
             case: "trino",
@@ -43,7 +43,7 @@ export function buildTrinoConnectionParams(params: TrinoConnectionParams, _setti
     });
 }
 
-export function readTrinoConnectionParams(params: proto.dashql_connection.pb.TrinoConnectionParams): TrinoConnectionParams {
+export function readTrinoConnectionParamsFromProto(params: proto.dashql_connection.pb.TrinoConnectionParams): TrinoConnectionParams {
     return {
         channelArgs: {
             endpoint: params.endpoint

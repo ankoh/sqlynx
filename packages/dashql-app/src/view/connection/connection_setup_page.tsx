@@ -1,6 +1,5 @@
 import * as proto from '@ankoh/dashql-protobuf';
 import * as React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { IconButton } from '@primer/react';
 import { BookIcon, ChecklistIcon, DesktopDownloadIcon, FileBadgeIcon, KeyIcon, PackageIcon, PlugIcon, XIcon } from '@primer/octicons-react';
 
@@ -11,7 +10,7 @@ import * as connStyles from './connection_settings.module.css';
 import { AnchorAlignment, AnchorSide } from '../foundations/anchored_position.js';
 import { Button, ButtonSize, ButtonVariant } from '../foundations/button.js';
 import { ConnectionHealth } from '../../connection/connection_state.js';
-import { ConnectorInfo, HYPER_GRPC_CONNECTOR, requiresSwitchingToNative, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from '../../connection/connector_info.js';
+import { HYPER_GRPC_CONNECTOR, requiresSwitchingToNative, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR } from '../../connection/connector_info.js';
 import { CopyToClipboardButton } from '../../utils/clipboard.js';
 import { IndicatorStatus, StatusIndicator } from '../foundations/status_indicator.js';
 import { KeyValueTextField, TextField, VALIDATION_WARNING } from '../foundations/text_field.js';
@@ -26,7 +25,7 @@ import { useSalesforceSetup } from '../../connection/salesforce/salesforce_conne
 import { useTrinoSetup } from '../../connection/trino/trino_connector.js';
 import { ErrorDetailsButton } from '../error_details.js';
 import { DetailedError } from '../../utils/error.js';
-import { ConnectionParamsVariant, encodeConnectionParams, readConnectionParamsFromProto } from '../../connection/connection_params.js';
+import { ConnectionParamsVariant, encodeConnectionParamsAsProto, readConnectionParamsFromProto } from '../../connection/connection_params.js';
 import { ValueListBuilder } from '../foundations/value_list.js';
 import { InternalsViewerOverlay } from '../internals_overlay.js';
 
@@ -265,7 +264,7 @@ export const ConnectionSetupPage: React.FC<Props> = (props: Props) => {
         // Bake the workbook proto, we'll need this in any case
         const workbookProto = new proto.dashql_workbook.pb.Workbook({
             ...props.workbookProto,
-            connectionParams: connectionParams == null ? undefined : encodeConnectionParams(connectionParams)
+            connectionParams: connectionParams == null ? undefined : encodeConnectionParamsAsProto(connectionParams)
         });
 
         // Cannot execute here? Then redirect the user
@@ -379,7 +378,7 @@ export const ConnectionSetupPage: React.FC<Props> = (props: Props) => {
     const getWorkbookUrl = () => {
         const workbookProto = new proto.dashql_workbook.pb.Workbook({
             ...props.workbookProto,
-            connectionParams: connectionParams == null ? undefined : encodeConnectionParams(connectionParams)
+            connectionParams: connectionParams == null ? undefined : encodeConnectionParamsAsProto(connectionParams)
         });
         const url = encodeWorkbookProtoAsUrl(workbookProto, WorkbookLinkTarget.NATIVE);
         return url.toString();
@@ -474,7 +473,7 @@ export const ConnectionSetupPage: React.FC<Props> = (props: Props) => {
         // Encode the workbook url
         const workbookProto = new proto.dashql_workbook.pb.Workbook({
             ...props.workbookProto,
-            connectionParams: connectionParams == null ? undefined : encodeConnectionParams(connectionParams)
+            connectionParams: connectionParams == null ? undefined : encodeConnectionParamsAsProto(connectionParams)
         });
         const workbookURL = encodeWorkbookProtoAsUrl(workbookProto, WorkbookLinkTarget.NATIVE);
 

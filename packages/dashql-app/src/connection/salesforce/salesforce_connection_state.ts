@@ -124,24 +124,28 @@ export interface SalesforceConnectionDetails {
     healthCheckError: DetailedError | null;
 }
 
+export function createSalesforceConnectionDetails(): SalesforceConnectionDetails {
+    return {
+        setupTimings: createSalesforceSetupTimings(),
+        setupParams: null,
+        setupError: null,
+
+        pkceChallenge: null,
+        openAuthWindow: null,
+        coreAuthCode: null,
+        coreAccessToken: null,
+        dataCloudAccessToken: null,
+
+        channelError: null,
+        channel: null,
+        healthCheckError: null,
+    };
+}
+
 export function createSalesforceConnectorState(lnx: dashql.DashQL): ConnectionStateWithoutId {
     return createConnectionState(lnx, CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD], {
         type: SALESFORCE_DATA_CLOUD_CONNECTOR,
-        value: {
-            setupTimings: createSalesforceSetupTimings(),
-            setupParams: null,
-            setupError: null,
-
-            pkceChallenge: null,
-            openAuthWindow: null,
-            coreAuthCode: null,
-            coreAccessToken: null,
-            dataCloudAccessToken: null,
-
-            channelError: null,
-            channel: null,
-            healthCheckError: null,
-        }
+        value: createSalesforceConnectionDetails(),
     });
 }
 

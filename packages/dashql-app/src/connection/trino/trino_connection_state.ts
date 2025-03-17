@@ -48,26 +48,30 @@ export interface TrinoConnectionDetails {
     schemaResolutionError: DetailedError | null;
 }
 
+export function createTrinoConnectionDetails(): TrinoConnectionDetails {
+    return {
+        setupTimings: {
+            channelSetupStartedAt: null,
+            channelSetupCancelledAt: null,
+            channelSetupFailedAt: null,
+            channelReadyAt: null,
+            healthCheckStartedAt: null,
+            healthCheckCancelledAt: null,
+            healthCheckFailedAt: null,
+            healthCheckSucceededAt: null,
+        },
+        channelParams: null,
+        channelError: null,
+        channel: null,
+        healthCheckError: null,
+        schemaResolutionError: null,
+    };
+}
+
 export function createTrinoConnectionState(lnx: dashql.DashQL): ConnectionStateWithoutId {
     return createConnectionState(lnx, CONNECTOR_INFOS[ConnectorType.TRINO], {
         type: TRINO_CONNECTOR,
-        value: {
-            setupTimings: {
-                channelSetupStartedAt: null,
-                channelSetupCancelledAt: null,
-                channelSetupFailedAt: null,
-                channelReadyAt: null,
-                healthCheckStartedAt: null,
-                healthCheckCancelledAt: null,
-                healthCheckFailedAt: null,
-                healthCheckSucceededAt: null,
-            },
-            channelParams: null,
-            channelError: null,
-            channel: null,
-            healthCheckError: null,
-            schemaResolutionError: null,
-        }
+        value: createTrinoConnectionDetails(),
     });
 }
 
