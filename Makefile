@@ -145,11 +145,11 @@ core_js_tests_debug:
 
 .PHONY: compute_wasm_o0
 compute_wasm_o0:
-	yarn run compute:wasm:o0
+	RUSTFLAGS="--cfg getrandom_backend=\"wasm_js\"" yarn run compute:wasm:o0
 
 .PHONY: compute_wasm_o3
 compute_wasm_o3:
-	yarn run compute:wasm:o3
+	RUSTFLAGS="--cfg getrandom_backend=\"wasm_js\"" yarn run compute:wasm:o3
 
 .PHONY: pwa_pages
 pwa_pages:
@@ -208,3 +208,16 @@ svg_symbols:
 .PHONY: snapshots
 snapshots:
 	${LIB_DEBUG_DIR}/snapshotter --source_dir .
+
+.PHONY: clean
+clean:
+	rm -rf ${ROOT_DIR}/target
+	rm -rf ${ROOT_DIR}/packages/dashql-app/build
+	rm -rf ${ROOT_DIR}/packages/dashql-compute/dist
+	rm -rf ${ROOT_DIR}/packages/dashql-core/build
+	rm -rf ${ROOT_DIR}/packages/dashql-native/gen
+	rm -rf ${ROOT_DIR}/packages/dashql-protobuf/dist
+	rm -rf ${ROOT_DIR}/packages/dashql-protobuf/gen
+
+.PHONY: all
+all: flatbuf protobuf core_native_o0 core_wasm_o2 core_js_o2 compute_wasm_o3
