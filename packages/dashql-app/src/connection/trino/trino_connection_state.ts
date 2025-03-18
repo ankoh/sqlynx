@@ -33,7 +33,7 @@ export interface TrinoSetupTimings {
     healthCheckSucceededAt: Date | null;
 }
 
-export interface TrinoConnectionDetails {
+export interface TrinoConnectionStateDetails {
     /// The setup timings
     setupTimings: TrinoSetupTimings;
     /// The auth params
@@ -48,7 +48,7 @@ export interface TrinoConnectionDetails {
     schemaResolutionError: DetailedError | null;
 }
 
-export function createTrinoConnectionDetails(): TrinoConnectionDetails {
+export function createTrinoConnectionStateDetails(): TrinoConnectionStateDetails {
     return {
         setupTimings: {
             channelSetupStartedAt: null,
@@ -71,11 +71,11 @@ export function createTrinoConnectionDetails(): TrinoConnectionDetails {
 export function createTrinoConnectionState(lnx: dashql.DashQL): ConnectionStateWithoutId {
     return createConnectionState(lnx, CONNECTOR_INFOS[ConnectorType.TRINO], {
         type: TRINO_CONNECTOR,
-        value: createTrinoConnectionDetails(),
+        value: createTrinoConnectionStateDetails(),
     });
 }
 
-export function getTrinoConnectionDetails(state: ConnectionState | null): TrinoConnectionDetails | null {
+export function getTrinoConnectionDetails(state: ConnectionState | null): TrinoConnectionStateDetails | null {
     if (state == null) return null;
     switch (state.details.type) {
         case TRINO_CONNECTOR: return state.details.value;
@@ -105,7 +105,7 @@ export type TrinoConnectorAction =
     ;
 
 export function reduceTrinoConnectorState(state: ConnectionState, action: TrinoConnectorAction): ConnectionState | null {
-    const details = state.details.value as TrinoConnectionDetails;
+    const details = state.details.value as TrinoConnectionStateDetails;
     let next: ConnectionState | null = null;
     switch (action.type) {
         case RESET:

@@ -8,7 +8,7 @@ import {
 } from './hyper/hyper_connection_state.js';
 import {
     reduceSalesforceConnectionState,
-    SalesforceConnectionDetails,
+    SalesforceConnectionStateDetails,
     SalesforceConnectionStateAction,
 } from './salesforce/salesforce_connection_state.js';
 import { CatalogUpdateTaskState, reduceCatalogAction } from './catalog_update_state.js';
@@ -32,7 +32,7 @@ import {
 import { ConnectionMetrics, createConnectionMetrics } from './connection_statistics.js';
 import { reduceQueryAction } from './query_execution_state.js';
 import { DemoConnectionParams } from './demo/demo_connection_state.js';
-import { reduceTrinoConnectorState, TrinoConnectionDetails, TrinoConnectorAction } from './trino/trino_connection_state.js';
+import { reduceTrinoConnectorState, TrinoConnectionStateDetails, TrinoConnectorAction } from './trino/trino_connection_state.js';
 
 export interface CatalogUpdates {
     /// The running tasks
@@ -116,11 +116,11 @@ export enum ConnectionHealth {
 }
 
 export type ConnectionDetailsVariant =
-    | VariantKind<typeof SALESFORCE_DATA_CLOUD_CONNECTOR, SalesforceConnectionDetails>
+    | VariantKind<typeof SALESFORCE_DATA_CLOUD_CONNECTOR, SalesforceConnectionStateDetails>
     | VariantKind<typeof SERVERLESS_CONNECTOR, {}>
     | VariantKind<typeof DEMO_CONNECTOR, DemoConnectionParams>
     | VariantKind<typeof HYPER_GRPC_CONNECTOR, HyperGrpcConnectionDetails>
-    | VariantKind<typeof TRINO_CONNECTOR, TrinoConnectionDetails>
+    | VariantKind<typeof TRINO_CONNECTOR, TrinoConnectionStateDetails>
     ;
 
 export type ConnectionStateWithoutId = Omit<ConnectionState, "connectionId">;

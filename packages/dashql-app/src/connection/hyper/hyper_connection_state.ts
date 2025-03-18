@@ -46,7 +46,7 @@ export interface HyperGrpcConnectionDetails {
     healthCheckError: DetailedError | null;
 }
 
-export function createHyperGrpcConnectionDetails(): HyperGrpcConnectionDetails {
+export function createHyperGrpcConnectionStateDetails(): HyperGrpcConnectionDetails {
     return {
         setupTimings: {
             channelSetupStartedAt: null,
@@ -68,7 +68,7 @@ export function createHyperGrpcConnectionDetails(): HyperGrpcConnectionDetails {
 export function createHyperGrpcConnectionState(lnx: dashql.DashQL): ConnectionStateWithoutId {
     return createConnectionState(lnx, CONNECTOR_INFOS[ConnectorType.HYPER_GRPC], {
         type: HYPER_GRPC_CONNECTOR,
-        value: createHyperGrpcConnectionDetails()
+        value: createHyperGrpcConnectionStateDetails()
     });
 }
 

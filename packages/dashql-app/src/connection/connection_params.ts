@@ -1,7 +1,7 @@
 import * as dashql from '@ankoh/dashql-core';
 import * as proto from '@ankoh/dashql-protobuf';
 
-import { ConnectionDetailsVariant, ConnectionHealth, ConnectionStateWithoutId, ConnectionStatus } from './connection_state.js';
+import { ConnectionDetailsVariant as ConnectionStateDetailsVariant, ConnectionHealth, ConnectionStateWithoutId, ConnectionStatus } from './connection_state.js';
 import { CONNECTOR_INFOS, ConnectorType, DEMO_CONNECTOR, HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, SERVERLESS_CONNECTOR, TRINO_CONNECTOR } from './connector_info.js';
 import { encodeServerlessConnectionParamsAsProto, readServerlessConnectionParamsFromProto } from './serverless/serverless_connection_params.js';
 import { encodeDemoConnectionParamsAsProto, readDemoConnectionParamsFromProto } from './demo/demo_connection_params.js';
@@ -11,9 +11,9 @@ import { encodeTrinoConnectionParamsAsProto, readTrinoConnectionParamsFromProto,
 import { VariantKind } from '../utils/variant.js';
 import { WorkbookExportSettings } from 'workbook/workbook_export_settings.js';
 import { createConnectionMetrics } from './connection_statistics.js';
-import { createTrinoConnectionDetails } from './trino/trino_connection_state.js';
-import { createHyperGrpcConnectionDetails } from './hyper/hyper_connection_state.js';
-import { createSalesforceConnectionDetails } from './salesforce/salesforce_connection_state.js';
+import { createTrinoConnectionStateDetails } from './trino/trino_connection_state.js';
+import { createHyperGrpcConnectionStateDetails } from './hyper/hyper_connection_state.js';
+import { createSalesforceConnectionStateDetails } from './salesforce/salesforce_connection_state.js';
 import { DemoConnectionParams } from './demo/demo_connection_state.js';
 
 export type ConnectionParamsVariant =
@@ -38,22 +38,22 @@ export function getConnectionInfoFromParams(params: ConnectionParamsVariant) {
     }
 }
 
-export function getConnectionDetailsFromParams(params: ConnectionParamsVariant): ConnectionDetailsVariant {
+export function getConnectionStateDetailsFromParams(params: ConnectionParamsVariant): ConnectionStateDetailsVariant {
     switch (params.type) {
         case SERVERLESS_CONNECTOR:
             return { type: SERVERLESS_CONNECTOR, value: {} };
         case DEMO_CONNECTOR:
             return { type: DEMO_CONNECTOR, value: params.value };
         case TRINO_CONNECTOR:
-            return { type: TRINO_CONNECTOR, value: createTrinoConnectionDetails() };
+            return { type: TRINO_CONNECTOR, value: createTrinoConnectionStateDetails() };
         case HYPER_GRPC_CONNECTOR:
-            return { type: HYPER_GRPC_CONNECTOR, value: createHyperGrpcConnectionDetails() };
+            return { type: HYPER_GRPC_CONNECTOR, value: createHyperGrpcConnectionStateDetails() };
         case SALESFORCE_DATA_CLOUD_CONNECTOR:
-            return { type: SALESFORCE_DATA_CLOUD_CONNECTOR, value: createSalesforceConnectionDetails() };
+            return { type: SALESFORCE_DATA_CLOUD_CONNECTOR, value: createSalesforceConnectionStateDetails() };
     }
 }
 
-export function getConnectionParamsFromDetails(params: ConnectionDetailsVariant): ConnectionParamsVariant | null {
+export function getConnectionParamsFromStateDetails(params: ConnectionStateDetailsVariant): ConnectionParamsVariant | null {
     switch (params.type) {
         case SERVERLESS_CONNECTOR:
             return {
@@ -94,7 +94,7 @@ export function getConnectionParamsFromDetails(params: ConnectionDetailsVariant)
     }
 }
 
-export function createConnectionDetailsFromParams(params: ConnectionParamsVariant): ConnectionDetailsVariant {
+export function createConnectionStateDetailsFromParams(params: ConnectionParamsVariant): ConnectionStateDetailsVariant {
     switch (params.type) {
         case SERVERLESS_CONNECTOR:
             return {
@@ -109,17 +109,17 @@ export function createConnectionDetailsFromParams(params: ConnectionParamsVarian
         case TRINO_CONNECTOR:
             return {
                 type: TRINO_CONNECTOR,
-                value: createTrinoConnectionDetails()
+                value: createTrinoConnectionStateDetails()
             };
         case HYPER_GRPC_CONNECTOR:
             return {
                 type: HYPER_GRPC_CONNECTOR,
-                value: createHyperGrpcConnectionDetails(),
+                value: createHyperGrpcConnectionStateDetails(),
             };
         case SALESFORCE_DATA_CLOUD_CONNECTOR:
             return {
                 type: SALESFORCE_DATA_CLOUD_CONNECTOR,
-                value: createSalesforceConnectionDetails(),
+                value: createSalesforceConnectionStateDetails(),
             };
     }
 }
@@ -173,7 +173,7 @@ export function readConnectionParamsFromProto(pb: proto.dashql_connection.pb.Con
 
 export function createConnectionStateFromParams(lnx: dashql.DashQL, params: ConnectionParamsVariant): ConnectionStateWithoutId {
     const info = getConnectionInfoFromParams(params);
-    const details = getConnectionDetailsFromParams(params);
+    const details = getConnectionStateDetailsFromParams(params);
 
     const catalog = lnx.createCatalog();
     return {

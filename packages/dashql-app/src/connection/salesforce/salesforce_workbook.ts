@@ -8,7 +8,7 @@ import { ScriptLoadingStatus } from '../../workbook/script_loader.js';
 import { generateBlankScriptMetadata } from '../../workbook/script_metadata.js';
 import { useDashQLCoreSetup } from '../../core_provider.js';
 import { useWorkbookStateAllocator } from '../../workbook/workbook_state_registry.js';
-import { createSalesforceConnectorState } from './salesforce_connection_state.js';
+import { createSalesforceConnectionState } from './salesforce_connection_state.js';
 import { useConnectionStateAllocator } from '../../connection/connection_registry.js';
 
 type WorkbookSetupFn = (abort?: AbortSignal) => Promise<number>;
@@ -24,7 +24,7 @@ export function useSalesforceWorkbookSetup(): WorkbookSetupFn {
         signal?.throwIfAborted();
 
         const lnx = instance.value;
-        const connectionState = createSalesforceConnectorState(lnx);
+        const connectionState = createSalesforceConnectionState(lnx);
         const connectionId = allocateConnection(connectionState);
         const mainScript = lnx.createScript(connectionState.catalog, 1);
 

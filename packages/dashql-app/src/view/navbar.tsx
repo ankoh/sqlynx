@@ -13,7 +13,7 @@ import { VersionCheckIndicator } from './version_viewer.js';
 import { VersionInfoOverlay } from './version_viewer.js';
 import { classNames } from '../utils/classnames.js';
 import { encodeWorkbookAsProto, encodeWorkbookProtoAsUrl, WorkbookLinkTarget } from '../workbook/workbook_export_url.js';
-import { getConnectionParamsFromDetails } from '../connection/connection_params.js';
+import { getConnectionParamsFromStateDetails } from '../connection/connection_params.js';
 import { useConnectionState } from '../connection/connection_registry.js';
 import { useCurrentWorkbookState } from '../workbook/current_workbook.js';
 import { useLogger } from '../platform/logger_provider.js';
@@ -125,7 +125,7 @@ export const NavBar = (): React.ReactElement => {
         if (workbook == null || connectionState == null) {
             return null;
         }
-        const params = getConnectionParamsFromDetails(connectionState.details);
+        const params = getConnectionParamsFromStateDetails(connectionState.details);
         if (params == null) {
             return null;
         }

@@ -2,9 +2,9 @@ import * as proto from '@ankoh/dashql-protobuf';
 
 import { QueryExecutionResponseStream } from "../query_execution_state.js";
 import { QueryExecutionArgs } from "../query_execution_args.js";
-import { TrinoConnectionDetails } from "./trino_connection_state.js";
+import { TrinoConnectionStateDetails } from "./trino_connection_state.js";
 
-export async function executeTrinoQuery(conn: TrinoConnectionDetails, args: QueryExecutionArgs, abort?: AbortSignal): Promise<QueryExecutionResponseStream> {
+export async function executeTrinoQuery(conn: TrinoConnectionStateDetails, args: QueryExecutionArgs, abort?: AbortSignal): Promise<QueryExecutionResponseStream> {
     if (!conn.channel) {
         throw new Error(`trino channel is not set up`);
     }

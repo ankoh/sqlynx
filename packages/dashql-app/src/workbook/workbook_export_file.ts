@@ -3,12 +3,12 @@ import * as proto from '@ankoh/dashql-protobuf';
 import { ConnectionState } from '../connection/connection_state.js';
 import { WorkbookExportSettings } from './workbook_export_settings.js';
 import { WorkbookState } from './workbook_state.js';
-import { encodeConnectionParamsAsProto, getConnectionParamsFromDetails } from '../connection/connection_params.js';
+import { encodeConnectionParamsAsProto, getConnectionParamsFromStateDetails } from '../connection/connection_params.js';
 import { encodeCatalogAsProto } from '../connection/catalog_export.js';
 
 export function encodeWorkbookAsFile(workbookState: WorkbookState, connectionState: ConnectionState, settings: WorkbookExportSettings | null = null): proto.dashql_file.pb.File {
     // Get connection params
-    const params = getConnectionParamsFromDetails(connectionState.details);
+    const params = getConnectionParamsFromStateDetails(connectionState.details);
 
     // Pack the connection params
     if (params == null) {

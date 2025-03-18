@@ -1,9 +1,9 @@
 import * as dashql from '@ankoh/dashql-core';
 
 import { SalesforceApiClientInterface } from './salesforce_api_client.js';
-import { SalesforceConnectionDetails } from './salesforce_connection_state.js';
+import { SalesforceConnectionStateDetails } from './salesforce_connection_state.js';
 
-export async function updateSalesforceCatalog(conn: SalesforceConnectionDetails, catalog: dashql.DashQLCatalog, api: SalesforceApiClientInterface, abortController: AbortController) {
+export async function updateSalesforceCatalog(conn: SalesforceConnectionStateDetails, catalog: dashql.DashQLCatalog, api: SalesforceApiClientInterface, abortController: AbortController) {
     // Missing the data cloud access token
     if (!conn.dataCloudAccessToken) {
         throw new Error(`salesforce data cloud access token is missing`);

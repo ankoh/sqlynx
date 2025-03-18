@@ -97,7 +97,7 @@ export function createSalesforceSetupTimings(): SalesforceSetupTimings {
     };
 }
 
-export interface SalesforceConnectionDetails {
+export interface SalesforceConnectionStateDetails {
     /// The setup timings
     setupTimings: SalesforceSetupTimings;
     /// The setup params
@@ -124,7 +124,7 @@ export interface SalesforceConnectionDetails {
     healthCheckError: DetailedError | null;
 }
 
-export function createSalesforceConnectionDetails(): SalesforceConnectionDetails {
+export function createSalesforceConnectionStateDetails(): SalesforceConnectionStateDetails {
     return {
         setupTimings: createSalesforceSetupTimings(),
         setupParams: null,
@@ -142,14 +142,14 @@ export function createSalesforceConnectionDetails(): SalesforceConnectionDetails
     };
 }
 
-export function createSalesforceConnectorState(lnx: dashql.DashQL): ConnectionStateWithoutId {
+export function createSalesforceConnectionState(lnx: dashql.DashQL): ConnectionStateWithoutId {
     return createConnectionState(lnx, CONNECTOR_INFOS[ConnectorType.SALESFORCE_DATA_CLOUD], {
         type: SALESFORCE_DATA_CLOUD_CONNECTOR,
-        value: createSalesforceConnectionDetails(),
+        value: createSalesforceConnectionStateDetails(),
     });
 }
 
-export function getSalesforceConnectionDetails(state: ConnectionState | null): SalesforceConnectionDetails | null {
+export function getSalesforceConnectionDetails(state: ConnectionState | null): SalesforceConnectionStateDetails | null {
     if (state == null) return null;
     switch (state.details.type) {
         case SALESFORCE_DATA_CLOUD_CONNECTOR: return state.details.value;
@@ -198,7 +198,7 @@ export type SalesforceConnectionStateAction =
     ;
 
 export function reduceSalesforceConnectionState(state: ConnectionState, action: SalesforceConnectionStateAction): ConnectionState | null {
-    const details = state.details.value as SalesforceConnectionDetails;
+    const details = state.details.value as SalesforceConnectionStateDetails;
     let next: ConnectionState | null = null;
     switch (action.type) {
         case RESET:
