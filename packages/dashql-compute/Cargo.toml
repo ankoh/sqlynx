@@ -23,7 +23,7 @@ chrono = { version = "0.4.38", features = ["wasmbind"] }
 anyhow = "1.0.97"
 
 getrandom_2 = { package = "getrandom", version = "0.2", features = ["js"] }
-getrandom_3 = { package = "getrandom", version = "0.3", features = ["wasm_js"] }
+getrandom_3 = { package = "getrandom", version = "0.3.2", features = ["wasm_js"] }
 
 prost = "0.13.3"
 
