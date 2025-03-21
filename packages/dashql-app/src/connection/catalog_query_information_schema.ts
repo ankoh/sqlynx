@@ -1,6 +1,5 @@
 import * as arrow from "apache-arrow";
 import * as dashql from '@ankoh/dashql-core';
-import * as flatbuffers from 'flatbuffers';
 
 import { QueryExecutor } from './query_executor.js';
 import { QueryExecutionArgs } from './query_execution_args.js';
@@ -19,7 +18,7 @@ export type InformationSchemaColumnsTable = arrow.Table<{
     data_type: arrow.Utf8;
 }>;
 
-function collectSchemaDescriptors(result: InformationSchemaColumnsTable): dashql.proto.SchemaDescriptorT[] {
+function collectSchemaDescriptors(result: InformationSchemaColumnsTable): dashql.proto.SchemaDescriptorsT {
     // Iterate over all record batches
     const catalogs = new Map<string, Map<string, Map<string, dashql.proto.SchemaTableT>>>();
     for (const batch of result.batches) {
@@ -89,7 +88,8 @@ function collectSchemaDescriptors(result: InformationSchemaColumnsTable): dashql
             descriptors.push(descriptor)
         }
     }
-    return descriptors;
+
+    return new dashql.proto.SchemaDescriptorsT(descriptors);
 }
 
 export async function queryInformationSchema(connectionId: number, connectionDispatch: DynamicConnectionDispatch, updateId: number, catalogName: string, schemaNames: string[], executor: QueryExecutor): Promise<InformationSchemaColumnsTable | null> {
@@ -145,7 +145,5 @@ export async function updateInformationSchemaCatalog(connectionId: number, conne
     // Update the catalog
     catalog.dropDescriptorPool(CATALOG_DEFAULT_DESCRIPTOR_POOL);
     catalog.addDescriptorPool(CATALOG_DEFAULT_DESCRIPTOR_POOL, CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK);
-    for (const descriptor of descriptors) {
-        catalog.addSchemaDescriptorT(CATALOG_DEFAULT_DESCRIPTOR_POOL, descriptor);
-    }
+    catalog.addSchemaDescriptorsT(CATALOG_DEFAULT_DESCRIPTOR_POOL, descriptors);
 }
