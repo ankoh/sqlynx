@@ -41,6 +41,12 @@ interface DashQLModuleExports {
         data_ptr: number,
         data_size: number,
     ) => number;
+    dashql_catalog_add_schema_descriptors: (
+        catalog_ptr: number,
+        external_id: number,
+        data_ptr: number,
+        data_size: number,
+    ) => number;
     dashql_catalog_get_statistics: (ptr: number) => number;
 }
 
@@ -148,6 +154,12 @@ export class DashQL {
                 external_id: number,
             ) => void,
             dashql_catalog_add_schema_descriptor: instance.exports['dashql_catalog_add_schema_descriptor'] as (
+                catalog_ptr: number,
+                external_id: number,
+                data_ptr: number,
+                data_size: number,
+            ) => number,
+            dashql_catalog_add_schema_descriptors: instance.exports['dashql_catalog_add_schema_descriptors'] as (
                 catalog_ptr: number,
                 external_id: number,
                 data_ptr: number,
@@ -699,6 +711,28 @@ export class DashQLCatalog {
         builder.finish(descriptorOffset);
         const buffer = builder.asUint8Array();
         this.addSchemaDescriptor(id, buffer);
+    }
+    /// Add schema descriptors to a descriptor pool
+    public addSchemaDescriptors(id: number, buffer: Uint8Array) {
+        this.deleteSnapshot();
+        const catalogPtr = this.ptr.assertNotNull();
+        const [bufferPtr, bufferLength] = this.ptr.api.copyBuffer(buffer);
+        const result = this.ptr.api.instanceExports.dashql_catalog_add_schema_descriptors(
+            catalogPtr,
+            id,
+            bufferPtr, // pass ownership over buffer
+            bufferLength,
+        );
+        this.ptr.api.readStatusResult(result);
+    }
+    /// Add a schema descriptors to a descriptor pool
+    public addSchemaDescriptorsT(id: number, descriptor: proto.SchemaDescriptorsT) {
+        this.deleteSnapshot();
+        const builder = new flatbuffers.Builder();
+        const descriptorOffset = descriptor.pack(builder);
+        builder.finish(descriptorOffset);
+        const buffer = builder.asUint8Array();
+        this.addSchemaDescriptors(id, buffer);
     }
     /// Get the catalog statistics.
     public getStatistics(): FlatBufferPtr<proto.CatalogStatistics> {

@@ -62,6 +62,7 @@ if(WASM)
         -Wl,--export=dashql_catalog_add_descriptor_pool \
         -Wl,--export=dashql_catalog_drop_descriptor_pool \
         -Wl,--export=dashql_catalog_add_schema_descriptor \
+        -Wl,--export=dashql_catalog_add_schema_descriptors \
         -Wl,--export=dashql_catalog_get_statistics \
         -Wl,--export=dashql_catalog_flatten \
         -Wl,--export=dashql_script_new \

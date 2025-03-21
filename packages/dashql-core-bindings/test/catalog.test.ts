@@ -50,7 +50,7 @@ describe('Catalog Tests ', () => {
         descriptionBuffer.delete();
     });
 
-    it('dynamic registration', () => {
+    it('dynamic registration, one table', () => {
         const catalog = lnx!.createCatalog();
         catalog.addDescriptorPool(1, 10);
 
@@ -92,6 +92,72 @@ describe('Catalog Tests ', () => {
         analyzedBuffer = script.analyze();
         analyzed = analyzedBuffer.read();
         expect(analyzed.tableReferencesLength()).toEqual(1);
+        tableRef = analyzed.tableReferences(0)!;
+        expect(tableRef.innerType()).toEqual(dashql.proto.TableReferenceSubType.ResolvedRelationExpression);
+
+        // Make sure we set some values for the resolved table
+        const resolved = tableRef.inner(new dashql.proto.ResolvedRelationExpression());
+        expect(resolved.catalogDatabaseId()).not.toEqual(0xFFFFFFFF);
+        expect(resolved.catalogSchemaId()).not.toEqual(0xFFFFFFFF);
+        expect(dashql.ContextObjectID.isNull(resolved.catalogTableId())).toBeFalsy();
+
+        // Delete all the memory
+        analyzedBuffer.delete();
+        script.delete();
+        catalog.delete();
+    });
+
+    it('dynamic registration, multiple tables', () => {
+        const catalog = lnx!.createCatalog();
+        catalog.addDescriptorPool(1, 10);
+
+        // Create and analyze a script referencing an unknown table
+        const script = lnx!.createScript(catalog, 2);
+        script.replaceText('select * from db1.schema1.table1, db1.schema2.table1');
+        script.scan().delete();
+        script.parse().delete();
+        let analyzedBuffer = script.analyze();
+        let analyzed = analyzedBuffer.read();
+        expect(analyzed.tableReferencesLength()).toEqual(2);
+
+        // The analyzed script contains an unresolved table ref
+        let tableRef = analyzed.tableReferences(0)!;
+        expect(tableRef.innerType()).toEqual(dashql.proto.TableReferenceSubType.UnresolvedRelationExpression);
+
+        // Check the table name
+        const unresolved = tableRef.inner(new dashql.proto.UnresolvedRelationExpression());
+        const tableName = unresolved.tableName(new dashql.proto.QualifiedTableName())!;
+        expect(tableName.databaseName()).toEqual('db1');
+        expect(tableName.schemaName()).toEqual('schema1');
+        expect(tableName.tableName()).toEqual('table1');
+        analyzedBuffer.delete();
+
+        // Resolve the table declaration and add a schema descriptor to the descriptor pool
+        catalog.addSchemaDescriptorsT(
+            1,
+            new dashql.proto.SchemaDescriptorsT([
+                new dashql.proto.SchemaDescriptorT('db1', 'schema1', [
+                    new dashql.proto.SchemaTableT(0, 'table1', [
+                        new dashql.proto.SchemaTableColumnT('column1'),
+                        new dashql.proto.SchemaTableColumnT('column2'),
+                        new dashql.proto.SchemaTableColumnT('column3'),
+                    ]),
+                ]),
+                new dashql.proto.SchemaDescriptorT('db1', 'schema2', [
+                    new dashql.proto.SchemaTableT(0, 'table2', [
+                        new dashql.proto.SchemaTableColumnT('column1'),
+                        new dashql.proto.SchemaTableColumnT('column2'),
+                        new dashql.proto.SchemaTableColumnT('column3'),
+                    ]),
+                ])
+            ])
+        );
+
+        // Now analyze the script again
+        script.parse().delete();
+        analyzedBuffer = script.analyze();
+        analyzed = analyzedBuffer.read();
+        expect(analyzed.tableReferencesLength()).toEqual(2);
         tableRef = analyzed.tableReferences(0)!;
         expect(tableRef.innerType()).toEqual(dashql.proto.TableReferenceSubType.ResolvedRelationExpression);
 
