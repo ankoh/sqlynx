@@ -54,7 +54,7 @@ features = [
 [dev-dependencies]
 wasm-bindgen-test = "0.3.43"
 pretty_assertions = "1.4.1"
-indoc = "2.0.5"
+indoc = "2.0.6"
 
 [build-dependencies]
 anyhow = "1.0.97"
