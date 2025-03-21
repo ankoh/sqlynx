@@ -44,7 +44,7 @@ futures-util = "0.3.30"
 futures-core = "0.3.31"
 
 [dependencies.hyper-util]
-version = "0.1.9"
+version = "0.1.10"
 features = ["server"]
 
 [dependencies.reqwest]
