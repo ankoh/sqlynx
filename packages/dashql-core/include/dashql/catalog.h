@@ -9,6 +9,7 @@
 #include <span>
 #include <string_view>
 #include <tuple>
+#include <variant>
 
 #include "dashql/catalog_object.h"
 #include "dashql/external.h"
