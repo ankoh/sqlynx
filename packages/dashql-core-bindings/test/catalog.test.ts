@@ -113,7 +113,7 @@ describe('Catalog Tests ', () => {
 
         // Create and analyze a script referencing an unknown table
         const script = lnx!.createScript(catalog, 2);
-        script.replaceText('select * from db1.schema1.table1, db1.schema2.table1');
+        script.replaceText('select * from db1.schema1.table1, db1.schema2.table2');
         script.scan().delete();
         script.parse().delete();
         let analyzedBuffer = script.analyze();
@@ -162,7 +162,16 @@ describe('Catalog Tests ', () => {
         expect(tableRef.innerType()).toEqual(dashql.proto.TableReferenceSubType.ResolvedRelationExpression);
 
         // Make sure we set some values for the resolved table
-        const resolved = tableRef.inner(new dashql.proto.ResolvedRelationExpression());
+        let resolved = tableRef.inner(new dashql.proto.ResolvedRelationExpression());
+        expect(resolved.catalogDatabaseId()).not.toEqual(0xFFFFFFFF);
+        expect(resolved.catalogSchemaId()).not.toEqual(0xFFFFFFFF);
+        expect(dashql.ContextObjectID.isNull(resolved.catalogTableId())).toBeFalsy();
+
+        tableRef = analyzed.tableReferences(1)!;
+        expect(tableRef.innerType()).toEqual(dashql.proto.TableReferenceSubType.ResolvedRelationExpression);
+
+        // Make sure we set some values for the second resolved table
+        resolved = tableRef.inner(new dashql.proto.ResolvedRelationExpression());
         expect(resolved.catalogDatabaseId()).not.toEqual(0xFFFFFFFF);
         expect(resolved.catalogSchemaId()).not.toEqual(0xFFFFFFFF);
         expect(dashql.ContextObjectID.isNull(resolved.catalogTableId())).toBeFalsy();
