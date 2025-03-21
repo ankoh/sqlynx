@@ -365,6 +365,17 @@ extern "C" FFIResult* dashql_catalog_add_schema_descriptor(dashql::Catalog* cata
     }
     return packOK();
 }
+/// Add schema descriptors to a catalog
+extern "C" FFIResult* dashql_catalog_add_schema_descriptors(dashql::Catalog* catalog, size_t external_id,
+                                                            const void* data_ptr, size_t data_size) {
+    std::unique_ptr<const std::byte[]> descriptor_buffer{static_cast<const std::byte*>(data_ptr)};
+    std::span<const std::byte> descriptor_data{descriptor_buffer.get(), data_size};
+    auto status = catalog->AddSchemaDescriptors(external_id, descriptor_data, std::move(descriptor_buffer), data_size);
+    if (status != proto::StatusCode::OK) {
+        return packError(status);
+    }
+    return packOK();
+}
 
 extern "C" FFIResult* dashql_catalog_get_statistics(dashql::Catalog* catalog) {
     auto stats = catalog->GetStatistics();

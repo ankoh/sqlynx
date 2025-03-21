@@ -56,6 +56,12 @@ table SchemaTableColumn {
     ordinal_position: uint32;
 }
 
+/// Descriptors for multiple schemas
+table SchemaDescriptors {
+    /// The schemas
+    schemas: [SchemaDescriptor];
+}
+
 // ----------------------------------------------------------------------------
 
 // Note that the following types are mirrored into the protobuf message type "FlatCatalog".

@@ -269,10 +269,13 @@ class CatalogEntry {
 
 class DescriptorPool : public CatalogEntry {
    public:
+    /// A reference to a flatbuffer descriptor
+    using DescriptorRefVariant = std::variant<std::reference_wrapper<const proto::SchemaDescriptor>,
+                                              std::reference_wrapper<const proto::SchemaDescriptors>>;
     /// A schema descriptors
     struct Descriptor {
-        /// The descriptor
-        const proto::SchemaDescriptor& descriptor;
+        /// The schema descriptor
+        DescriptorRefVariant descriptor;
         /// The descriptor buffer
         std::unique_ptr<const std::byte[]> descriptor_buffer;
         /// The descriptor buffer size
@@ -303,7 +306,7 @@ class DescriptorPool : public CatalogEntry {
     std::span<const Descriptor> GetDescriptors() const { return descriptor_buffers; }
 
     /// Add a schema descriptor
-    proto::StatusCode AddSchemaDescriptor(const proto::SchemaDescriptor& descriptor,
+    proto::StatusCode AddSchemaDescriptor(DescriptorRefVariant descriptor,
                                           std::unique_ptr<const std::byte[]> descriptor_buffer,
                                           size_t descriptor_buffer_size, CatalogDatabaseID& db_id,
                                           CatalogSchemaID& schema_id);
@@ -491,6 +494,10 @@ class Catalog {
     proto::StatusCode AddSchemaDescriptor(CatalogEntryID external_id, std::span<const std::byte> descriptor_data,
                                           std::unique_ptr<const std::byte[]> descriptor_buffer,
                                           size_t descriptor_buffer_size);
+    /// Add a schema descriptor>s< as serialized FlatBuffer
+    proto::StatusCode AddSchemaDescriptors(CatalogEntryID external_id, std::span<const std::byte> descriptor_data,
+                                           std::unique_ptr<const std::byte[]> descriptor_buffer,
+                                           size_t descriptor_buffer_size);
 
     /// Resolve a table by id
     const CatalogEntry::TableDeclaration* ResolveTable(ContextObjectID table_id) const;
