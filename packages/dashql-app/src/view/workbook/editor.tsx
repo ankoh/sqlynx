@@ -28,7 +28,7 @@ interface Props {
 interface ActiveScriptState {
     script: dashql.DashQLScript | null;
     scriptBuffers: DashQLScriptBuffers | null;
-    cursor: dashql.proto.ScriptCursorT | null;
+    cursor: dashql.buffers.ScriptCursorT | null;
 }
 
 export const ScriptEditor: React.FC<Props> = (_props: Props) => {
@@ -71,7 +71,7 @@ export const ScriptEditor: React.FC<Props> = (_props: Props) => {
     // Helper to update a script.
     // Called when the script gets updated by the CodeMirror extension.
     const updateScript = React.useCallback(
-        (scriptKey: DashQLScriptKey, buffers: DashQLScriptBuffers, cursor: dashql.proto.ScriptCursorT) => {
+        (scriptKey: DashQLScriptKey, buffers: DashQLScriptBuffers, cursor: dashql.buffers.ScriptCursorT) => {
             active.current.cursor = cursor;
             active.current.scriptBuffers = buffers;
             modifyWorkbook({
@@ -84,7 +84,7 @@ export const ScriptEditor: React.FC<Props> = (_props: Props) => {
     // Helper to update a script cursor.
     // Called when the cursor gets updated by the CodeMirror extension.
     const updateCursor = React.useCallback(
-        (scriptKey: DashQLScriptKey, cursor: dashql.proto.ScriptCursorT) => {
+        (scriptKey: DashQLScriptKey, cursor: dashql.buffers.ScriptCursorT) => {
             active.current.cursor = cursor;
             modifyWorkbook({
                 type: UPDATE_SCRIPT_CURSOR,
@@ -95,7 +95,7 @@ export const ScriptEditor: React.FC<Props> = (_props: Props) => {
     );
     // Helper to start a completion.
     // Called when the CodeMirror extension opens the completion dropdown.
-    const startCompletion = React.useCallback((scriptKey: DashQLScriptKey, completion: dashql.proto.CompletionT) => {
+    const startCompletion = React.useCallback((scriptKey: DashQLScriptKey, completion: dashql.buffers.CompletionT) => {
         modifyWorkbook({
             type: COMPLETION_STARTED,
             value: [scriptKey, completion],
@@ -103,7 +103,7 @@ export const ScriptEditor: React.FC<Props> = (_props: Props) => {
     }, []);
     // Helper to peek a completion candidate
     // Called when the CodeMirror extension changes the selected completion.
-    const peekCompletionCandidate = React.useCallback((scriptKey: DashQLScriptKey, completion: dashql.proto.CompletionT, candidateId: number) => {
+    const peekCompletionCandidate = React.useCallback((scriptKey: DashQLScriptKey, completion: dashql.buffers.CompletionT, candidateId: number) => {
         modifyWorkbook({
             type: COMPLETION_CHANGED,
             value: [scriptKey, completion, candidateId],

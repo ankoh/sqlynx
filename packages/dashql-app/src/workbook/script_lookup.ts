@@ -1,7 +1,7 @@
 import * as dashql from '@ankoh/dashql-core';
 import { WorkbookState } from './workbook_state.js';
 
-export function findTableById(workbook: WorkbookState, table: dashql.ContextObjectID.Value): dashql.proto.Table | null {
+export function findTableById(workbook: WorkbookState, table: dashql.ContextObjectID.Value): dashql.buffers.Table | null {
     const scriptKey = dashql.ContextObjectID.getContext(table);
     const scriptData = workbook.scripts[scriptKey];
     if (!scriptData) {

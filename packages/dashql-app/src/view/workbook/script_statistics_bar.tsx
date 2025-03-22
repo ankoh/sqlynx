@@ -33,7 +33,7 @@ const History: React.FC<HistoryProps> = (props: HistoryProps) => {
 
 interface Props {
     className?: string;
-    stats: Immutable.List<dashql.FlatBufferPtr<dashql.proto.ScriptStatistics>> | null;
+    stats: Immutable.List<dashql.FlatBufferPtr<dashql.buffers.ScriptStatistics>> | null;
 }
 
 export const ScriptStatisticsBar: React.FC<Props> = (props: Props) => {
@@ -42,20 +42,20 @@ export const ScriptStatisticsBar: React.FC<Props> = (props: Props) => {
         return <div className={props.className}></div>;
     }
 
-    const protoStats = new dashql.proto.ScriptStatistics();
-    const protoTimings = new dashql.proto.ScriptProcessingTimings();
-    const protoMemory = new dashql.proto.ScriptMemoryStatistics();
-    const protoProcessingMemory = new dashql.proto.ScriptProcessingMemoryStatistics();
+    const protoStats = new dashql.buffers.ScriptStatistics();
+    const protoTimings = new dashql.buffers.ScriptProcessingTimings();
+    const protoMemory = new dashql.buffers.ScriptMemoryStatistics();
+    const protoProcessingMemory = new dashql.buffers.ScriptProcessingMemoryStatistics();
 
-    const computeTotalElapsed = (timings: dashql.proto.ScriptProcessingTimings) =>
+    const computeTotalElapsed = (timings: dashql.buffers.ScriptProcessingTimings) =>
         timings.scannerLastElapsed() + timings.parserLastElapsed() + timings.analyzerLastElapsed();
-    const sumProcessingMemory = (mem: dashql.proto.ScriptProcessingMemoryStatistics) =>
+    const sumProcessingMemory = (mem: dashql.buffers.ScriptProcessingMemoryStatistics) =>
         mem.scannerInputBytes() +
         mem.scannerNameDictionaryBytes() +
         mem.parserAstBytes() +
         mem.analyzerDescriptionBytes() +
         mem.analyzerNameIndexBytes();
-    const computeTotalMemory = (mem: dashql.proto.ScriptMemoryStatistics) => {
+    const computeTotalMemory = (mem: dashql.buffers.ScriptMemoryStatistics) => {
         let total = mem.ropeBytes();
         total += sumProcessingMemory(mem.latestScript(protoProcessingMemory)!);
         return total;

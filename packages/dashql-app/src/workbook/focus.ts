@@ -15,7 +15,7 @@ export interface FocusedTableRef {
 
 export interface FocusedCompletion {
     /// The completion
-    completion: dashql.proto.CompletionT;
+    completion: dashql.buffers.CompletionT;
     /// The index of the selected completion candidate
     completionCandidateIndex: number;
 }
@@ -61,14 +61,14 @@ export interface UserFocus {
 export function deriveFocusFromScriptCursor(
     scriptKey: ScriptKey,
     scriptData: ScriptData,
-    cursor: dashql.proto.ScriptCursorT,
+    cursor: dashql.buffers.ScriptCursorT,
 ): UserFocus | null {
-    const tmpSourceAnalyzed = new dashql.proto.AnalyzedScript();
-    const tmpTargetAnalyzed = new dashql.proto.AnalyzedScript();
-    const tmpIndexedTableRef = new dashql.proto.IndexedTableReference();
-    const tmpIndexedColumnRef = new dashql.proto.IndexedColumnReference();
-    const tmpResolvedColumnRef = new dashql.proto.ResolvedColumnRefExpression();
-    const tmpResolvedRelationExpr = new dashql.proto.ResolvedRelationExpression();
+    const tmpSourceAnalyzed = new dashql.buffers.AnalyzedScript();
+    const tmpTargetAnalyzed = new dashql.buffers.AnalyzedScript();
+    const tmpIndexedTableRef = new dashql.buffers.IndexedTableReference();
+    const tmpIndexedColumnRef = new dashql.buffers.IndexedColumnReference();
+    const tmpResolvedColumnRef = new dashql.buffers.ResolvedColumnRefExpression();
+    const tmpResolvedRelationExpr = new dashql.buffers.ResolvedRelationExpression();
 
     let sourceAnalyzed = scriptData.processed.analyzed?.read(tmpSourceAnalyzed);
     if (sourceAnalyzed == null) {
@@ -76,8 +76,8 @@ export function deriveFocusFromScriptCursor(
     }
 
     switch (cursor.contextType) {
-        case dashql.proto.ScriptCursorContext.ScriptCursorTableRefContext: {
-            const context = cursor.context as dashql.proto.ScriptCursorTableRefContextT;
+        case dashql.buffers.ScriptCursorContext.ScriptCursorTableRefContext: {
+            const context = cursor.context as dashql.buffers.ScriptCursorTableRefContextT;
             const focusTarget: FocusTarget = {
                 type: FOCUSED_TABLE_REF_ID,
                 value: {
@@ -92,8 +92,8 @@ export function deriveFocusFromScriptCursor(
             };
             // Is resolved?
             const sourceRef = sourceAnalyzed.tableReferences(context.tableReferenceId)!;
-            if (sourceRef.innerType() == dashql.proto.TableReferenceSubType.ResolvedRelationExpression) {
-                const resolved = sourceRef.inner(tmpResolvedRelationExpr) as dashql.proto.ResolvedRelationExpression;
+            if (sourceRef.innerType() == dashql.buffers.TableReferenceSubType.ResolvedRelationExpression) {
+                const resolved = sourceRef.inner(tmpResolvedRelationExpr) as dashql.buffers.ResolvedRelationExpression;
 
                 // Focus in catalog
                 focus.catalogObjects = [{
@@ -142,8 +142,8 @@ export function deriveFocusFromScriptCursor(
             }
             return focus;
         }
-        case dashql.proto.ScriptCursorContext.ScriptCursorColumnRefContext: {
-            const context = cursor.context as dashql.proto.ScriptCursorColumnRefContextT;
+        case dashql.buffers.ScriptCursorContext.ScriptCursorColumnRefContext: {
+            const context = cursor.context as dashql.buffers.ScriptCursorColumnRefContextT;
             const focusTarget: FocusTarget = {
                 type: FOCUSED_EXPRESSION_ID,
                 value: {
@@ -158,8 +158,8 @@ export function deriveFocusFromScriptCursor(
             };
             // Is resolved?
             const sourceRef = sourceAnalyzed.expressions(context.expressionId)!;
-            if (sourceRef.innerType() == dashql.proto.ExpressionSubType.ResolvedColumnRefExpression) {
-                const resolved = sourceRef.inner(tmpResolvedColumnRef) as dashql.proto.ResolvedColumnRefExpression;
+            if (sourceRef.innerType() == dashql.buffers.ExpressionSubType.ResolvedColumnRefExpression) {
+                const resolved = sourceRef.inner(tmpResolvedColumnRef) as dashql.buffers.ResolvedColumnRefExpression;
 
                 // Focus in catalog
                 focus.catalogObjects = [{
@@ -222,7 +222,7 @@ export function deriveFocusFromScriptCursor(
             return focus;
         }
 
-        case dashql.proto.ScriptCursorContext.NONE:
+        case dashql.buffers.ScriptCursorContext.NONE:
             break;
     }
     return null;
@@ -235,9 +235,9 @@ export function deriveFocusFromCatalogSelection(
     },
     target: QualifiedCatalogObjectID
 ): UserFocus | null {
-    const tmpAnalyzed = new dashql.proto.AnalyzedScript();
-    const tmpIndexedTableRef = new dashql.proto.IndexedTableReference();
-    const tmpIndexedColumnRef = new dashql.proto.IndexedColumnReference();
+    const tmpAnalyzed = new dashql.buffers.AnalyzedScript();
+    const tmpIndexedTableRef = new dashql.buffers.IndexedTableReference();
+    const tmpIndexedColumnRef = new dashql.buffers.IndexedColumnReference();
 
     switch (target.type) {
         case QUALIFIED_DATABASE_ID:
@@ -383,7 +383,7 @@ export function deriveFocusFromCompletionCandidates(
     const candidate = scriptData.completion.candidates[scriptData.selectedCompletionCandidate ?? 0];
     for (const candidateObject of candidate.catalogObjects) {
         switch (candidateObject.objectType) {
-            case dashql.proto.CompletionCandidateObjectType.DATABASE:
+            case dashql.buffers.CompletionCandidateObjectType.DATABASE:
                 focus.catalogObjects.push({
                     type: QUALIFIED_DATABASE_ID,
                     value: {
@@ -392,7 +392,7 @@ export function deriveFocusFromCompletionCandidates(
                     focus: FocusType.COMPLETION_CANDIDATE
                 });
                 break;
-            case dashql.proto.CompletionCandidateObjectType.SCHEMA:
+            case dashql.buffers.CompletionCandidateObjectType.SCHEMA:
                 focus.catalogObjects.push({
                     type: QUALIFIED_SCHEMA_ID,
                     value: {
@@ -402,7 +402,7 @@ export function deriveFocusFromCompletionCandidates(
                     focus: FocusType.COMPLETION_CANDIDATE
                 });
                 break;
-            case dashql.proto.CompletionCandidateObjectType.TABLE:
+            case dashql.buffers.CompletionCandidateObjectType.TABLE:
                 focus.catalogObjects.push({
                     type: QUALIFIED_TABLE_ID,
                     value: {
@@ -413,7 +413,7 @@ export function deriveFocusFromCompletionCandidates(
                     focus: FocusType.COMPLETION_CANDIDATE
                 });
                 break;
-            case dashql.proto.CompletionCandidateObjectType.COLUMN:
+            case dashql.buffers.CompletionCandidateObjectType.COLUMN:
                 focus.catalogObjects.push({
                     type: QUALIFIED_TABLE_COLUMN_ID,
                     value: {

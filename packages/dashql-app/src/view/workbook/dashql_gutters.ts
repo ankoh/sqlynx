@@ -49,12 +49,12 @@ const GutterState: StateField<State> = StateField.define<State>({
 
         const collectGutters = (
             buffer: {
-                errors: (index: number, obj?: dashql.proto.Error) => dashql.proto.Error | null;
+                errors: (index: number, obj?: dashql.buffers.Error) => dashql.buffers.Error | null;
                 errorsLength: () => number;
             },
             out: Set<number>,
         ) => {
-            const tmp = new dashql.proto.Error();
+            const tmp = new dashql.buffers.Error();
             for (let i = 0; i < buffer.errorsLength(); ++i) {
                 const error = buffer.errors(i, tmp)!;
                 const loc = error.location()!;

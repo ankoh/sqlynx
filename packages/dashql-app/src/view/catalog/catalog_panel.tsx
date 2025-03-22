@@ -56,14 +56,14 @@ export function CatalogPanel(_props: CatalogPanelProps) {
                     const analyzedPtr = analyzed.read();
                     const tableRef = analyzedPtr.tableReferences(tableRefId)!;
                     switch (tableRef.innerType()) {
-                        case dashql.proto.TableReferenceSubType.ResolvedRelationExpression: {
-                            const inner = new dashql.proto.ResolvedRelationExpression();
-                            tableRef.inner(inner) as dashql.proto.ResolvedRelationExpression;
+                        case dashql.buffers.TableReferenceSubType.ResolvedRelationExpression: {
+                            const inner = new dashql.buffers.ResolvedRelationExpression();
+                            tableRef.inner(inner) as dashql.buffers.ResolvedRelationExpression;
                             const tableName = inner.tableName();
                             overlay.push(["Table", tableName?.tableName() ?? ""]);
                             break;
                         }
-                        case dashql.proto.TableReferenceSubType.UnresolvedRelationExpression: {
+                        case dashql.buffers.TableReferenceSubType.UnresolvedRelationExpression: {
                             overlay.push(["Table", "<unresolved>"]);
                             break;
                         }
@@ -81,17 +81,17 @@ export function CatalogPanel(_props: CatalogPanelProps) {
                     const analyzedPtr = analyzed.read();
                     const expression = analyzedPtr.expressions(expressionId)!;
                     switch (expression.innerType()) {
-                        case dashql.proto.ExpressionSubType.ResolvedColumnRefExpression: {
-                            const inner = new dashql.proto.ResolvedColumnRefExpression();
-                            expression.inner(inner) as dashql.proto.ResolvedColumnRefExpression;
+                        case dashql.buffers.ExpressionSubType.ResolvedColumnRefExpression: {
+                            const inner = new dashql.buffers.ResolvedColumnRefExpression();
+                            expression.inner(inner) as dashql.buffers.ResolvedColumnRefExpression;
                             overlay.push(["Expression", "column reference"]);
                             const columnName = inner.columnName();
                             overlay.push(["Column", columnName?.columnName() ?? ""]);
                             break;
                         }
-                        case dashql.proto.ExpressionSubType.UnresolvedColumnRefExpression: {
-                            const inner = new dashql.proto.UnresolvedColumnRefExpression();
-                            expression.inner(inner) as dashql.proto.UnresolvedColumnRefExpression;
+                        case dashql.buffers.ExpressionSubType.UnresolvedColumnRefExpression: {
+                            const inner = new dashql.buffers.UnresolvedColumnRefExpression();
+                            expression.inner(inner) as dashql.buffers.UnresolvedColumnRefExpression;
                             overlay.push(["Expression", "column reference"]);
                             overlay.push(["Column", "<unresolved>"]);
                             break;
@@ -102,13 +102,13 @@ export function CatalogPanel(_props: CatalogPanelProps) {
             }
             case FOCUSED_COMPLETION: {
                 switch (focusTarget.value.completion.strategy) {
-                    case dashql.proto.CompletionStrategy.DEFAULT:
+                    case dashql.buffers.CompletionStrategy.DEFAULT:
                         overlay.push(["Completion", "Default"]);
                         break;
-                    case dashql.proto.CompletionStrategy.TABLE_REF:
+                    case dashql.buffers.CompletionStrategy.TABLE_REF:
                         overlay.push(["Completion", "Table Reference"]);
                         break;
-                    case dashql.proto.CompletionStrategy.COLUMN_REF:
+                    case dashql.buffers.CompletionStrategy.COLUMN_REF:
                         overlay.push(["Completion", "Column Reference"]);
                         break;
                 }

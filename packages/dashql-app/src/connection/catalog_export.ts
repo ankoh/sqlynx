@@ -9,7 +9,7 @@ export function encodeCatalogAsProto(snap: dashql.DashQLCatalogSnapshot): pb.das
     const tables: pb.dashql.catalog.CatalogTable[] = [];
     const columns: pb.dashql.catalog.CatalogColumn[] = [];
 
-    const tmpEntry = new dashql.proto.FlatCatalogEntry();
+    const tmpEntry = new dashql.buffers.FlatCatalogEntry();
     for (let i = 0; i < snapReader.catalogReader.databasesLength(); ++i) {
         const entry = snapReader.catalogReader.databases(i, tmpEntry)!;
         const name = snapReader.readName(entry.nameId());

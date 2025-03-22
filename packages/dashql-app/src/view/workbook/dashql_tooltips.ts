@@ -9,12 +9,12 @@ function createCursorTooltip(state: EditorState, pos: number): Tooltip | null {
     const processor = state.field(DashQLProcessor);
     const findErrorAtLocation = (
         buffer: {
-            errors: (index: number, obj?: dashql.proto.Error) => dashql.proto.Error | null;
+            errors: (index: number, obj?: dashql.buffers.Error) => dashql.buffers.Error | null;
             errorsLength: () => number;
         },
         cursor: number,
     ) => {
-        const tmp = new dashql.proto.Error();
+        const tmp = new dashql.buffers.Error();
         for (let i = 0; i < buffer.errorsLength(); ++i) {
             const error = buffer.errors(i, tmp)!;
             const errorLoc = error.location()!;

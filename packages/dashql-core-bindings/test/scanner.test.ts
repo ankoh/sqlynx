@@ -18,20 +18,20 @@ beforeAll(async () => {
     expect(lnx).not.toBeNull();
 });
 
-const Token = dashql.proto.ScannerTokenType;
+const Token = dashql.buffers.ScannerTokenType;
 
 describe('DashQL Scanner', () => {
     it(`Character Sequence`, () => {
         const catalog = lnx!.createCatalog();
         const script = lnx!.createScript(catalog, 1);
-        const tmp = new dashql.proto.ScannedScript();
+        const tmp = new dashql.buffers.ScannedScript();
 
         let size = 0;
         const add = (
             t: string,
             expectedOffsets: number[],
             expectedLengths: number[],
-            expectedTypes: dashql.proto.ScannerTokenType[],
+            expectedTypes: dashql.buffers.ScannerTokenType[],
             expectedBreaks: number[],
         ) => {
             script.insertTextAt(size++, t);
@@ -68,7 +68,7 @@ describe('DashQL Scanner', () => {
                 text: string,
                 expectedOffsets: number[],
                 expectedLengths: number[],
-                expectedTypes: dashql.proto.ScannerTokenType[],
+                expectedTypes: dashql.buffers.ScannerTokenType[],
                 textRange: [number, number],
                 expectedFiltered: [number, number],
             ) => {

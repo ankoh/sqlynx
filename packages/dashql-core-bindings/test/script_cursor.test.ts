@@ -21,8 +21,8 @@ beforeAll(async () => {
 interface ExpectedCursor {
     scannerTokenText: string;
     statementId: number;
-    astAttributeKey: dashql.proto.AttributeKey;
-    astNodeType: dashql.proto.NodeType;
+    astAttributeKey: dashql.buffers.AttributeKey;
+    astNodeType: dashql.buffers.NodeType;
     tableRefName: string | null;
     columnRefName: string | null;
     graphFrom: string[] | null;
@@ -41,7 +41,7 @@ describe('DashQL Cursor', () => {
         const analyzedBuffer = script.analyze();
         const scanned = scannedBuffer.read();
         const parsed = parsedBuffer.read();
-        const tmpCursor = new dashql.proto.ScriptCursor();
+        const tmpCursor = new dashql.buffers.ScriptCursor();
 
         const scannerTokens = scanned.tokens()!;
         expect(scannerTokens).not.toBeNull();
@@ -70,8 +70,8 @@ describe('DashQL Cursor', () => {
         test(script, 0, {
             scannerTokenText: 'select',
             statementId: 0,
-            astAttributeKey: dashql.proto.AttributeKey.NONE,
-            astNodeType: dashql.proto.NodeType.OBJECT_SQL_SELECT,
+            astAttributeKey: dashql.buffers.AttributeKey.NONE,
+            astNodeType: dashql.buffers.NodeType.OBJECT_SQL_SELECT,
             tableRefName: null,
             columnRefName: null,
             graphFrom: null,

@@ -20,32 +20,32 @@ export interface DashQLScriptUpdate {
     /// The previous processed script buffers (if any)
     scriptBuffers: DashQLScriptBuffers;
     /// The script cursor
-    scriptCursor: dashql.proto.ScriptCursorT | null;
+    scriptCursor: dashql.buffers.ScriptCursorT | null;
     /// The derive focus info
     derivedFocus: UserFocus | null;
     // This callback is called when the editor updates the script
     onScriptUpdate: (
         scriptKey: DashQLScriptKey,
         script: DashQLScriptBuffers,
-        cursor: dashql.proto.ScriptCursorT,
+        cursor: dashql.buffers.ScriptCursorT,
     ) => void;
     // This callback is called when the editor updates the cursor
-    onCursorUpdate: (scriptKey: DashQLScriptKey, cursor: dashql.proto.ScriptCursorT) => void;
+    onCursorUpdate: (scriptKey: DashQLScriptKey, cursor: dashql.buffers.ScriptCursorT) => void;
     // This callback is called when the editor completion is starting
-    onCompletionStart: (scriptKey: DashQLScriptKey, completion: dashql.proto.CompletionT) => void;
+    onCompletionStart: (scriptKey: DashQLScriptKey, completion: dashql.buffers.CompletionT) => void;
     // This callback is called when the user peeks a completion candidate
-    onCompletionPeek: (scriptKey: DashQLScriptKey, completion: dashql.proto.CompletionT, candidateId: number) => void;
+    onCompletionPeek: (scriptKey: DashQLScriptKey, completion: dashql.buffers.CompletionT, candidateId: number) => void;
     // This callback is called when the editor completion is starting
     onCompletionStop: (scriptKey: DashQLScriptKey) => void;
 }
 /// The DashQL script buffers
 export interface DashQLScriptBuffers {
     /// The scanned script
-    scanned: dashql.FlatBufferPtr<dashql.proto.ScannedScript> | null;
+    scanned: dashql.FlatBufferPtr<dashql.buffers.ScannedScript> | null;
     /// The parsed script
-    parsed: dashql.FlatBufferPtr<dashql.proto.ParsedScript> | null;
+    parsed: dashql.FlatBufferPtr<dashql.buffers.ParsedScript> | null;
     /// The analyzed script
-    analyzed: dashql.FlatBufferPtr<dashql.proto.AnalyzedScript> | null;
+    analyzed: dashql.FlatBufferPtr<dashql.buffers.AnalyzedScript> | null;
     /// Destroy the state.
     /// The user is responsible for cleanup up FlatBufferRefs that are no longer needed.
     /// E.g. one strategy may be to destroy the "old" state once a script with the same script key is emitted.

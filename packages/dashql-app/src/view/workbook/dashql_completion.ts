@@ -14,7 +14,7 @@ interface DashQLCompletion extends Completion {
     state: DashQLEditorState;
     /// The completion buffer
     /// XXX How do we clean this up after the completion ends?
-    coreCompletion: dashql.proto.CompletionT;
+    coreCompletion: dashql.buffers.CompletionT;
     /// The candidate id
     candidateId: number;
 }
@@ -67,9 +67,9 @@ export async function completeDashQL(context: CompletionContext): Promise<Comple
     if (processor.targetScript !== null && processor.scriptCursor !== null) {
         const relativePos = processor.scriptCursor.scannerRelativePosition;
         const performCompletion =
-            relativePos == dashql.proto.RelativeSymbolPosition.BEGIN_OF_SYMBOL ||
-            relativePos == dashql.proto.RelativeSymbolPosition.MID_OF_SYMBOL ||
-            relativePos == dashql.proto.RelativeSymbolPosition.END_OF_SYMBOL;
+            relativePos == dashql.buffers.RelativeSymbolPosition.BEGIN_OF_SYMBOL ||
+            relativePos == dashql.buffers.RelativeSymbolPosition.MID_OF_SYMBOL ||
+            relativePos == dashql.buffers.RelativeSymbolPosition.END_OF_SYMBOL;
         if (performCompletion) {
             const completionBuffer = processor.targetScript.completeAtCursor(COMPLETION_LIMIT);
             const completion = completionBuffer.read().unpack();

@@ -18,9 +18,9 @@ export type InformationSchemaColumnsTable = arrow.Table<{
     data_type: arrow.Utf8;
 }>;
 
-function collectSchemaDescriptors(result: InformationSchemaColumnsTable): dashql.proto.SchemaDescriptorsT {
+function collectSchemaDescriptors(result: InformationSchemaColumnsTable): dashql.buffers.SchemaDescriptorsT {
     // Iterate over all record batches
-    const catalogs = new Map<string, Map<string, Map<string, dashql.proto.SchemaTableT>>>();
+    const catalogs = new Map<string, Map<string, Map<string, dashql.buffers.SchemaTableT>>>();
     for (const batch of result.batches) {
         const colTableCatalog = batch.getChild("table_catalog")!;
         const colTableSchema = batch.getChild("table_schema")!;
@@ -44,11 +44,11 @@ function collectSchemaDescriptors(result: InformationSchemaColumnsTable): dashql
             const schemaMap = catalogs.get(tableCatalog);
             if (!schemaMap) {
                 // Catalog does not exist, create a new map for schema tables
-                const tableMap = new Map<string, dashql.proto.SchemaTableT>();
-                tableMap.set(tableName, new dashql.proto.SchemaTableT(nextTableId++, tableName, [
-                    new dashql.proto.SchemaTableColumnT(columnName, 0),
+                const tableMap = new Map<string, dashql.buffers.SchemaTableT>();
+                tableMap.set(tableName, new dashql.buffers.SchemaTableT(nextTableId++, tableName, [
+                    new dashql.buffers.SchemaTableColumnT(columnName, 0),
                 ]));
-                const schemaMap = new Map<string, Map<string, dashql.proto.SchemaTableT>>();
+                const schemaMap = new Map<string, Map<string, dashql.buffers.SchemaTableT>>();
                 schemaMap.set(tableSchema, tableMap);
                 catalogs.set(tableCatalog, schemaMap);
 
@@ -56,9 +56,9 @@ function collectSchemaDescriptors(result: InformationSchemaColumnsTable): dashql
                 // Schema does not exist, create a new map for tables
                 let tableMap = schemaMap.get(tableSchema);
                 if (!tableMap) {
-                    tableMap = new Map<string, dashql.proto.SchemaTableT>();
-                    tableMap.set(tableName, new dashql.proto.SchemaTableT(nextTableId++, tableName, [
-                        new dashql.proto.SchemaTableColumnT(columnName),
+                    tableMap = new Map<string, dashql.buffers.SchemaTableT>();
+                    tableMap.set(tableName, new dashql.buffers.SchemaTableT(nextTableId++, tableName, [
+                        new dashql.buffers.SchemaTableColumnT(columnName),
                     ]));
                     schemaMap.set(tableSchema, tableMap);
 
@@ -66,11 +66,11 @@ function collectSchemaDescriptors(result: InformationSchemaColumnsTable): dashql
                     const table = tableMap.get(tableName);
                     if (!table) {
                         // Table does not exist, create a new table
-                        tableMap.set(tableName, new dashql.proto.SchemaTableT(nextTableId++, tableName, [
-                            new dashql.proto.SchemaTableColumnT(columnName, 0),
+                        tableMap.set(tableName, new dashql.buffers.SchemaTableT(nextTableId++, tableName, [
+                            new dashql.buffers.SchemaTableColumnT(columnName, 0),
                         ]));
                     } else {
-                        table.columns.push(new dashql.proto.SchemaTableColumnT(columnName, table.columns.length));
+                        table.columns.push(new dashql.buffers.SchemaTableColumnT(columnName, table.columns.length));
                     }
                 }
             }
@@ -78,10 +78,10 @@ function collectSchemaDescriptors(result: InformationSchemaColumnsTable): dashql
     }
 
     // Collect all schema descriptors
-    const descriptors: dashql.proto.SchemaDescriptorT[] = [];
+    const descriptors: dashql.buffers.SchemaDescriptorT[] = [];
     for (const [catalogName, catalogSchemas] of catalogs) {
         for (const [schemaName, schemaTables] of catalogSchemas) {
-            const descriptor = new dashql.proto.SchemaDescriptorT(catalogName, schemaName, []);
+            const descriptor = new dashql.buffers.SchemaDescriptorT(catalogName, schemaName, []);
             for (const [_tableName, table] of schemaTables) {
                 descriptor.tables.push(table);
             }
@@ -89,7 +89,7 @@ function collectSchemaDescriptors(result: InformationSchemaColumnsTable): dashql
         }
     }
 
-    return new dashql.proto.SchemaDescriptorsT(descriptors);
+    return new dashql.buffers.SchemaDescriptorsT(descriptors);
 }
 
 export async function queryInformationSchema(connectionId: number, connectionDispatch: DynamicConnectionDispatch, updateId: number, catalogName: string, schemaNames: string[], executor: QueryExecutor): Promise<InformationSchemaColumnsTable | null> {

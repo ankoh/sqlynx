@@ -75,8 +75,8 @@ describe('DashQL Analyzer', () => {
         expect(mainAnalyzer.tableReferencesLength()).toEqual(1);
 
         const tableRef = mainAnalyzer.tableReferences(0)!;
-        expect(tableRef.innerType()).toEqual(dashql.proto.TableReferenceSubType.ResolvedRelationExpression);
-        const resolved = tableRef.inner(new dashql.proto.ResolvedRelationExpression()) as dashql.proto.ResolvedRelationExpression;
+        expect(tableRef.innerType()).toEqual(dashql.buffers.TableReferenceSubType.ResolvedRelationExpression);
+        const resolved = tableRef.inner(new dashql.buffers.ResolvedRelationExpression()) as dashql.buffers.ResolvedRelationExpression;
         expect(resolved.tableName()!.tableName()!).toEqual('foo');
 
         mainScannerRes.delete();

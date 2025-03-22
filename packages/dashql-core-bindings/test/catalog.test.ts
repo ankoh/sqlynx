@@ -24,11 +24,11 @@ describe('Catalog Tests ', () => {
         catalog.addDescriptorPool(1, 10);
         catalog.addSchemaDescriptorT(
             1,
-            new dashql.proto.SchemaDescriptorT('db1', 'schema1', [
-                new dashql.proto.SchemaTableT(0, 'table1', [
-                    new dashql.proto.SchemaTableColumnT('column1'),
-                    new dashql.proto.SchemaTableColumnT('column2'),
-                    new dashql.proto.SchemaTableColumnT('column3'),
+            new dashql.buffers.SchemaDescriptorT('db1', 'schema1', [
+                new dashql.buffers.SchemaTableT(0, 'table1', [
+                    new dashql.buffers.SchemaTableColumnT('column1'),
+                    new dashql.buffers.SchemaTableColumnT('column2'),
+                    new dashql.buffers.SchemaTableColumnT('column3'),
                 ]),
             ]),
         );
@@ -67,11 +67,11 @@ describe('Catalog Tests ', () => {
 
         // The analyzed script contains an unresolved table ref
         let tableRef = analyzed.tableReferences(0)!;
-        expect(tableRef.innerType()).toEqual(dashql.proto.TableReferenceSubType.UnresolvedRelationExpression);
+        expect(tableRef.innerType()).toEqual(dashql.buffers.TableReferenceSubType.UnresolvedRelationExpression);
 
         // Check the table name
-        const unresolved = tableRef.inner(new dashql.proto.UnresolvedRelationExpression());
-        const tableName = unresolved.tableName(new dashql.proto.QualifiedTableName())!;
+        const unresolved = tableRef.inner(new dashql.buffers.UnresolvedRelationExpression());
+        const tableName = unresolved.tableName(new dashql.buffers.QualifiedTableName())!;
         expect(tableName.databaseName()).toEqual('db1');
         expect(tableName.schemaName()).toEqual('schema1');
         expect(tableName.tableName()).toEqual('table1');
@@ -80,11 +80,11 @@ describe('Catalog Tests ', () => {
         // Resolve the table declaration and add a schema descriptor to the descriptor pool
         catalog.addSchemaDescriptorT(
             1,
-            new dashql.proto.SchemaDescriptorT('db1', 'schema1', [
-                new dashql.proto.SchemaTableT(0, 'table1', [
-                    new dashql.proto.SchemaTableColumnT('column1'),
-                    new dashql.proto.SchemaTableColumnT('column2'),
-                    new dashql.proto.SchemaTableColumnT('column3'),
+            new dashql.buffers.SchemaDescriptorT('db1', 'schema1', [
+                new dashql.buffers.SchemaTableT(0, 'table1', [
+                    new dashql.buffers.SchemaTableColumnT('column1'),
+                    new dashql.buffers.SchemaTableColumnT('column2'),
+                    new dashql.buffers.SchemaTableColumnT('column3'),
                 ]),
             ]),
         );
@@ -95,10 +95,10 @@ describe('Catalog Tests ', () => {
         analyzed = analyzedBuffer.read();
         expect(analyzed.tableReferencesLength()).toEqual(1);
         tableRef = analyzed.tableReferences(0)!;
-        expect(tableRef.innerType()).toEqual(dashql.proto.TableReferenceSubType.ResolvedRelationExpression);
+        expect(tableRef.innerType()).toEqual(dashql.buffers.TableReferenceSubType.ResolvedRelationExpression);
 
         // Make sure we set some values for the resolved table
-        const resolved = tableRef.inner(new dashql.proto.ResolvedRelationExpression());
+        const resolved = tableRef.inner(new dashql.buffers.ResolvedRelationExpression());
         expect(resolved.catalogDatabaseId()).not.toEqual(0xFFFFFFFF);
         expect(resolved.catalogSchemaId()).not.toEqual(0xFFFFFFFF);
         expect(dashql.ContextObjectID.isNull(resolved.catalogTableId())).toBeFalsy();
@@ -124,11 +124,11 @@ describe('Catalog Tests ', () => {
 
         // The analyzed script contains an unresolved table ref
         let tableRef = analyzed.tableReferences(0)!;
-        expect(tableRef.innerType()).toEqual(dashql.proto.TableReferenceSubType.UnresolvedRelationExpression);
+        expect(tableRef.innerType()).toEqual(dashql.buffers.TableReferenceSubType.UnresolvedRelationExpression);
 
         // Check the table name
-        const unresolved = tableRef.inner(new dashql.proto.UnresolvedRelationExpression());
-        const tableName = unresolved.tableName(new dashql.proto.QualifiedTableName())!;
+        const unresolved = tableRef.inner(new dashql.buffers.UnresolvedRelationExpression());
+        const tableName = unresolved.tableName(new dashql.buffers.QualifiedTableName())!;
         expect(tableName.databaseName()).toEqual('db1');
         expect(tableName.schemaName()).toEqual('schema1');
         expect(tableName.tableName()).toEqual('table1');
@@ -137,19 +137,19 @@ describe('Catalog Tests ', () => {
         // Resolve the table declaration and add a schema descriptor to the descriptor pool
         catalog.addSchemaDescriptorsT(
             1,
-            new dashql.proto.SchemaDescriptorsT([
-                new dashql.proto.SchemaDescriptorT('db1', 'schema1', [
-                    new dashql.proto.SchemaTableT(0, 'table1', [
-                        new dashql.proto.SchemaTableColumnT('column1'),
-                        new dashql.proto.SchemaTableColumnT('column2'),
-                        new dashql.proto.SchemaTableColumnT('column3'),
+            new dashql.buffers.SchemaDescriptorsT([
+                new dashql.buffers.SchemaDescriptorT('db1', 'schema1', [
+                    new dashql.buffers.SchemaTableT(0, 'table1', [
+                        new dashql.buffers.SchemaTableColumnT('column1'),
+                        new dashql.buffers.SchemaTableColumnT('column2'),
+                        new dashql.buffers.SchemaTableColumnT('column3'),
                     ]),
                 ]),
-                new dashql.proto.SchemaDescriptorT('db1', 'schema2', [
-                    new dashql.proto.SchemaTableT(0, 'table2', [
-                        new dashql.proto.SchemaTableColumnT('column1'),
-                        new dashql.proto.SchemaTableColumnT('column2'),
-                        new dashql.proto.SchemaTableColumnT('column3'),
+                new dashql.buffers.SchemaDescriptorT('db1', 'schema2', [
+                    new dashql.buffers.SchemaTableT(0, 'table2', [
+                        new dashql.buffers.SchemaTableColumnT('column1'),
+                        new dashql.buffers.SchemaTableColumnT('column2'),
+                        new dashql.buffers.SchemaTableColumnT('column3'),
                     ]),
                 ])
             ])
@@ -161,19 +161,19 @@ describe('Catalog Tests ', () => {
         analyzed = analyzedBuffer.read();
         expect(analyzed.tableReferencesLength()).toEqual(2);
         tableRef = analyzed.tableReferences(0)!;
-        expect(tableRef.innerType()).toEqual(dashql.proto.TableReferenceSubType.ResolvedRelationExpression);
+        expect(tableRef.innerType()).toEqual(dashql.buffers.TableReferenceSubType.ResolvedRelationExpression);
 
         // Make sure we set some values for the resolved table
-        let resolved = tableRef.inner(new dashql.proto.ResolvedRelationExpression());
+        let resolved = tableRef.inner(new dashql.buffers.ResolvedRelationExpression());
         expect(resolved.catalogDatabaseId()).not.toEqual(0xFFFFFFFF);
         expect(resolved.catalogSchemaId()).not.toEqual(0xFFFFFFFF);
         expect(dashql.ContextObjectID.isNull(resolved.catalogTableId())).toBeFalsy();
 
         tableRef = analyzed.tableReferences(1)!;
-        expect(tableRef.innerType()).toEqual(dashql.proto.TableReferenceSubType.ResolvedRelationExpression);
+        expect(tableRef.innerType()).toEqual(dashql.buffers.TableReferenceSubType.ResolvedRelationExpression);
 
         // Make sure we set some values for the second resolved table
-        resolved = tableRef.inner(new dashql.proto.ResolvedRelationExpression());
+        resolved = tableRef.inner(new dashql.buffers.ResolvedRelationExpression());
         expect(resolved.catalogDatabaseId()).not.toEqual(0xFFFFFFFF);
         expect(resolved.catalogSchemaId()).not.toEqual(0xFFFFFFFF);
         expect(dashql.ContextObjectID.isNull(resolved.catalogTableId())).toBeFalsy();
