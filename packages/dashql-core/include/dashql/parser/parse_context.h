@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "dashql/parser/parser.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "dashql/script.h"
 #include "dashql/utils/chunk_buffer.h"
 #include "dashql/utils/temp_allocator.h"
@@ -30,11 +30,11 @@ class ParseContext {
     ChunkBuffer<Parser::symbol_type>::ConstTupleIterator symbol_iterator;
 
     /// The nodes
-    ChunkBuffer<proto::Node> nodes;
+    ChunkBuffer<buffers::Node> nodes;
     /// The statements
     std::vector<ParsedScript::Statement> statements;
     /// The errors
-    std::vector<std::pair<proto::Location, std::string>> errors;
+    std::vector<std::pair<buffers::Location, std::string>> errors;
 
     /// The current statement
     ParsedScript::Statement current_statement;
@@ -64,48 +64,48 @@ class ParseContext {
     }
 
     /// Create a list
-    WeakUniquePtr<NodeList> List(std::initializer_list<proto::Node> nodes = {});
+    WeakUniquePtr<NodeList> List(std::initializer_list<buffers::Node> nodes = {});
     /// Add a an array
-    proto::Node Array(proto::Location loc, WeakUniquePtr<NodeList>&& values, bool null_if_empty = true,
+    buffers::Node Array(buffers::Location loc, WeakUniquePtr<NodeList>&& values, bool null_if_empty = true,
                       bool shrink_location = false);
     /// Add a an array
-    proto::Node Array(proto::Location loc, std::span<ExpressionVariant> values, bool null_if_empty = true,
+    buffers::Node Array(buffers::Location loc, std::span<ExpressionVariant> values, bool null_if_empty = true,
                       bool shrink_location = false);
     /// Add a an array
-    inline proto::Node Array(proto::Location loc, std::initializer_list<proto::Node> values, bool null_if_empty = true,
+    inline buffers::Node Array(buffers::Location loc, std::initializer_list<buffers::Node> values, bool null_if_empty = true,
                              bool shrink_location = false) {
         return Array(loc, List(std::move(values)), null_if_empty, shrink_location);
     }
     /// Add an object
-    proto::Node Object(proto::Location loc, proto::NodeType type, WeakUniquePtr<NodeList>&& attrs,
+    buffers::Node Object(buffers::Location loc, buffers::NodeType type, WeakUniquePtr<NodeList>&& attrs,
                        bool null_if_empty = true, bool shrink_location = false);
     /// Add a an object
-    inline proto::Node Object(proto::Location loc, proto::NodeType type, std::initializer_list<proto::Node> values = {},
+    inline buffers::Node Object(buffers::Location loc, buffers::NodeType type, std::initializer_list<buffers::Node> values = {},
                               bool null_if_empty = true, bool shrink_location = false) {
         return Object(loc, type, List(std::move(values)), null_if_empty, shrink_location);
     }
     /// Add an expression
-    proto::Node Expression(ExpressionVariant&& expr);
+    buffers::Node Expression(ExpressionVariant&& expr);
     /// Flatten an expression
-    std::optional<ExpressionVariant> TryMerge(proto::Location loc, proto::Node opNode,
+    std::optional<ExpressionVariant> TryMerge(buffers::Location loc, buffers::Node opNode,
                                               std::span<ExpressionVariant> args);
 
     /// Create a name from a keyword
-    proto::Node NameFromKeyword(proto::Location loc, std::string_view text);
+    buffers::Node NameFromKeyword(buffers::Location loc, std::string_view text);
     /// Create a name from a string literal
-    proto::Node NameFromStringLiteral(proto::Location loc);
+    buffers::Node NameFromStringLiteral(buffers::Location loc);
     /// Mark a trailing dot
-    proto::Node TrailingDot(proto::Location loc);
+    buffers::Node TrailingDot(buffers::Location loc);
 
     /// Read a float type
-    proto::NumericType ReadFloatType(proto::Location bitsLoc);
+    buffers::NumericType ReadFloatType(buffers::Location bitsLoc);
 
     /// Add a node
-    NodeID AddNode(proto::Node node);
+    NodeID AddNode(buffers::Node node);
     /// Add an error
-    void AddError(proto::Location loc, const std::string& message);
+    void AddError(buffers::Location loc, const std::string& message);
     /// Add a statement
-    void AddStatement(proto::Node node);
+    void AddStatement(buffers::Node node);
     /// Reset a statement
     void ResetStatement();
 };

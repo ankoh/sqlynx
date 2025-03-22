@@ -298,10 +298,10 @@ std::vector<Parser::ExpectedSymbol> Parser::ParseUntil(ScannedScript& scanned, s
     return expected;
 }
 
-std::pair<std::shared_ptr<ParsedScript>, proto::StatusCode> Parser::Parse(std::shared_ptr<ScannedScript> scanned,
+std::pair<std::shared_ptr<ParsedScript>, buffers::StatusCode> Parser::Parse(std::shared_ptr<ScannedScript> scanned,
                                                                           bool debug) {
     if (scanned == nullptr) {
-        return {nullptr, proto::StatusCode::PARSER_INPUT_NOT_SCANNED};
+        return {nullptr, buffers::StatusCode::PARSER_INPUT_NOT_SCANNED};
     }
 
 #ifndef NDEBUG
@@ -329,8 +329,8 @@ std::pair<std::shared_ptr<ParsedScript>, proto::StatusCode> Parser::Parse(std::s
     auto text = in.ToString();
     auto text_view = std::string_view{text};
     ctx.temp_list_elements.ForEachAllocated([&](size_t value_id, NodeList::ListElement& elem) {
-        std::cout << proto::EnumNameAttributeKey(static_cast<proto::AttributeKey>(elem.node.attribute_key())) << " "
-                  << proto::EnumNameNodeType(elem.node.node_type()) << " "
+        std::cout << buffers::EnumNameAttributeKey(static_cast<buffers::AttributeKey>(elem.node.attribute_key())) << " "
+                  << buffers::EnumNameNodeType(elem.node.node_type()) << " "
                   << text_view.substr(elem.node.location().offset(), elem.node.location().length()) << std::endl;
     });
 #else
@@ -342,7 +342,7 @@ std::pair<std::shared_ptr<ParsedScript>, proto::StatusCode> Parser::Parse(std::s
     assert(ctx.temp_nary_expressions.GetAllocatedNodeCount() == 0);
 
     // Pack the program
-    return {std::make_shared<ParsedScript>(scanned, std::move(ctx)), proto::StatusCode::OK};
+    return {std::make_shared<ParsedScript>(scanned, std::move(ctx)), buffers::StatusCode::OK};
 }
 
 }  // namespace dashql::parser

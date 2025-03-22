@@ -1,4 +1,4 @@
-import * as proto from '../gen/dashql/proto/index.js';
+import * as proto from '../gen/dashql/buffers/index.js';
 import * as flatbuffers from 'flatbuffers';
 
 interface DashQLModuleExports {

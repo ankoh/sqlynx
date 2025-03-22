@@ -2,7 +2,7 @@
 
 #include "dashql/parser/grammar/nodes.h"
 #include "dashql/parser/parser.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "dashql/utils/string_trimming.h"
 
 namespace dashql {
@@ -23,24 +23,24 @@ ParseContext::ParseContext(ScannedScript& scan)
 ParseContext::~ParseContext() {}
 
 /// Create a list
-WeakUniquePtr<NodeList> ParseContext::List(std::initializer_list<proto::Node> nodes) {
+WeakUniquePtr<NodeList> ParseContext::List(std::initializer_list<buffers::Node> nodes) {
     auto list = new (temp_lists.Allocate()) NodeList(temp_lists, temp_list_elements);
     list->append(nodes);
     return list;
 }
 
 /// Process a new node
-NodeID ParseContext::AddNode(proto::Node node) {
+NodeID ParseContext::AddNode(buffers::Node node) {
     auto node_id = nodes.GetSize();
-    nodes.Append(proto::Node(node.location(), node.node_type(), node.attribute_key(), node_id,
+    nodes.Append(buffers::Node(node.location(), node.node_type(), node.attribute_key(), node_id,
                              node.children_begin_or_value(), node.children_count()));
 
     // Set parent reference
-    if (node.node_type() == proto::NodeType::ARRAY ||
-        static_cast<uint16_t>(node.node_type()) > static_cast<uint16_t>(proto::NodeType::OBJECT_KEYS_)) {
+    if (node.node_type() == buffers::NodeType::ARRAY ||
+        static_cast<uint16_t>(node.node_type()) > static_cast<uint16_t>(buffers::NodeType::OBJECT_KEYS_)) {
         nodes.ForEachIn(node.children_begin_or_value(), node.children_count(),
-                        [node_id](size_t child_id, proto::Node& n) {
-                            n = proto::Node(n.location(), n.node_type(), n.attribute_key(), node_id,
+                        [node_id](size_t child_id, buffers::Node& n) {
+                            n = buffers::Node(n.location(), n.node_type(), n.attribute_key(), node_id,
                                             n.children_begin_or_value(), n.children_count());
                         });
     }
@@ -48,17 +48,17 @@ NodeID ParseContext::AddNode(proto::Node node) {
 }
 
 /// Flatten an expression
-std::optional<ExpressionVariant> ParseContext::TryMerge(proto::Location loc, proto::Node op_node,
+std::optional<ExpressionVariant> ParseContext::TryMerge(buffers::Location loc, buffers::Node op_node,
                                                         std::span<ExpressionVariant> args) {
     // Function is not an expression operator?
-    if (op_node.node_type() != proto::NodeType::ENUM_SQL_EXPRESSION_OPERATOR) {
+    if (op_node.node_type() != buffers::NodeType::ENUM_SQL_EXPRESSION_OPERATOR) {
         return std::nullopt;
     }
     // Check if the expression operator can be flattened
-    auto op = static_cast<proto::ExpressionOperator>(op_node.children_begin_or_value());
+    auto op = static_cast<buffers::ExpressionOperator>(op_node.children_begin_or_value());
     switch (op) {
-        case proto::ExpressionOperator::AND:
-        case proto::ExpressionOperator::OR:
+        case buffers::ExpressionOperator::AND:
+        case buffers::ExpressionOperator::OR:
             break;
         default:
             return std::nullopt;
@@ -87,11 +87,11 @@ std::optional<ExpressionVariant> ParseContext::TryMerge(proto::Location loc, pro
 }
 
 /// Add an array
-proto::Node ParseContext::Array(proto::Location loc, WeakUniquePtr<NodeList>&& values, bool null_if_empty,
+buffers::Node ParseContext::Array(buffers::Location loc, WeakUniquePtr<NodeList>&& values, bool null_if_empty,
                                 bool shrink_location) {
     auto begin = nodes.GetSize();
     for (auto iter = values->front(); iter; iter = iter->next) {
-        if (iter->node.node_type() == proto::NodeType::NONE) continue;
+        if (iter->node.node_type() == buffers::NodeType::NONE) continue;
         AddNode(iter->node);
     }
     values.Destroy();
@@ -103,13 +103,13 @@ proto::Node ParseContext::Array(proto::Location loc, WeakUniquePtr<NodeList>&& v
         auto fstBegin = nodes[begin].location().offset();
         auto& lst = nodes.GetLast();
         auto lstEnd = lst.location().offset() + lst.location().length();
-        loc = proto::Location(fstBegin, lstEnd - fstBegin);
+        loc = buffers::Location(fstBegin, lstEnd - fstBegin);
     }
-    return proto::Node(loc, proto::NodeType::ARRAY, proto::AttributeKey::NONE, NO_PARENT, begin, n);
+    return buffers::Node(loc, buffers::NodeType::ARRAY, buffers::AttributeKey::NONE, NO_PARENT, begin, n);
 }
 
 /// Add an array
-proto::Node ParseContext::Array(proto::Location loc, std::span<ExpressionVariant> exprs, bool null_if_empty,
+buffers::Node ParseContext::Array(buffers::Location loc, std::span<ExpressionVariant> exprs, bool null_if_empty,
                                 bool shrink_location) {
     auto nodes = List();
     for (auto& expr : exprs) {
@@ -119,13 +119,13 @@ proto::Node ParseContext::Array(proto::Location loc, std::span<ExpressionVariant
 }
 
 /// Add an expression
-proto::Node ParseContext::Expression(ExpressionVariant&& expr) {
+buffers::Node ParseContext::Expression(ExpressionVariant&& expr) {
     if (expr.index() == 0) {
         return std::get<0>(std::move(expr));
     } else {
         auto nary = std::get<1>(expr);
         auto args = Array(nary->location, std::move(nary->args));
-        auto node = Object(nary->location, proto::NodeType::OBJECT_SQL_NARY_EXPRESSION,
+        auto node = Object(nary->location, buffers::NodeType::OBJECT_SQL_NARY_EXPRESSION,
                            {
                                Attr(Key::SQL_EXPRESSION_OPERATOR, nary->opNode),
                                Attr(Key::SQL_EXPRESSION_ARGS, args),
@@ -136,49 +136,49 @@ proto::Node ParseContext::Expression(ExpressionVariant&& expr) {
 }
 
 /// Read a name from a keyword
-proto::Node ParseContext::NameFromKeyword(proto::Location loc, std::string_view text) {
+buffers::Node ParseContext::NameFromKeyword(buffers::Location loc, std::string_view text) {
     auto id = program.RegisterKeywordAsName(text, loc);
-    return proto::Node(loc, proto::NodeType::NAME, proto::AttributeKey::NONE, NO_PARENT, id, 0);
+    return buffers::Node(loc, buffers::NodeType::NAME, buffers::AttributeKey::NONE, NO_PARENT, id, 0);
 }
 
 /// Read a name from a string literal
-proto::Node ParseContext::NameFromStringLiteral(proto::Location loc) {
+buffers::Node ParseContext::NameFromStringLiteral(buffers::Location loc) {
     auto text = program.ReadTextAtLocation(loc);
     auto trimmed = trim_view(text, is_no_double_quote);
     auto& name = program.name_registry.Register(trimmed, loc);
-    return proto::Node(loc, proto::NodeType::NAME, proto::AttributeKey::NONE, NO_PARENT, name.name_id, 0);
+    return buffers::Node(loc, buffers::NodeType::NAME, buffers::AttributeKey::NONE, NO_PARENT, name.name_id, 0);
 }
 
 /// Mark a trailing dot
-proto::Node ParseContext::TrailingDot(proto::Location loc) {
+buffers::Node ParseContext::TrailingDot(buffers::Location loc) {
     AddError(loc, "name has a trailing dot");
-    return proto::Node(loc, proto::NodeType::OBJECT_EXT_TRAILING_DOT, proto::AttributeKey::NONE, NO_PARENT, 0, 0);
+    return buffers::Node(loc, buffers::NodeType::OBJECT_EXT_TRAILING_DOT, buffers::AttributeKey::NONE, NO_PARENT, 0, 0);
 }
 
 /// Read a float type
-proto::NumericType ParseContext::ReadFloatType(proto::Location bitsLoc) {
+buffers::NumericType ParseContext::ReadFloatType(buffers::Location bitsLoc) {
     auto text = program.ReadTextAtLocation(bitsLoc);
     int64_t bits;
     std::from_chars(text.data(), text.data() + text.size(), bits);
     if (bits < 1) {
         AddError(bitsLoc, "precision for float type must be least 1 bit");
     } else if (bits < 24) {
-        return proto::NumericType::FLOAT4;
+        return buffers::NumericType::FLOAT4;
     } else if (bits < 53) {
-        return proto::NumericType::FLOAT8;
+        return buffers::NumericType::FLOAT8;
     } else {
         AddError(bitsLoc, "precision for float type must be less than 54 bits");
     }
-    return proto::NumericType::FLOAT4;
+    return buffers::NumericType::FLOAT4;
 }
 
 /// Add an object
-proto::Node ParseContext::Object(proto::Location loc, proto::NodeType type, WeakUniquePtr<NodeList>&& attr_list,
+buffers::Node ParseContext::Object(buffers::Location loc, buffers::NodeType type, WeakUniquePtr<NodeList>&& attr_list,
                                  bool null_if_empty, bool shrink_location) {
     // Add the nodes
     auto begin = nodes.GetSize();
     for (auto iter = attr_list->first_element; iter; iter = iter->next) {
-        if (iter->node.node_type() == proto::NodeType::NONE) continue;
+        if (iter->node.node_type() == buffers::NodeType::NONE) continue;
         AddNode(iter->node);
     }
     attr_list.Destroy();
@@ -192,37 +192,37 @@ proto::Node ParseContext::Object(proto::Location loc, proto::NodeType type, Weak
         auto fstBegin = nodes[begin].location().offset();
         auto& lst = nodes.GetLast();
         auto lstEnd = lst.location().offset() + lst.location().length();
-        loc = proto::Location(fstBegin, lstEnd - fstBegin);
+        loc = buffers::Location(fstBegin, lstEnd - fstBegin);
     }
-    return proto::Node(loc, type, proto::AttributeKey::NONE, NO_PARENT, begin, n);
+    return buffers::Node(loc, type, buffers::AttributeKey::NONE, NO_PARENT, begin, n);
 }
 
 /// Add a statement
-void ParseContext::AddStatement(proto::Node node) {
-    if (node.node_type() == proto::NodeType::NONE) {
+void ParseContext::AddStatement(buffers::Node node) {
+    if (node.node_type() == buffers::NodeType::NONE) {
         return;
     }
     current_statement.root = AddNode(node);
-    auto stmt_type = proto::StatementType::NONE;
+    auto stmt_type = buffers::StatementType::NONE;
     switch (node.node_type()) {
-        case proto::NodeType::OBJECT_EXT_SET:
-            stmt_type = proto::StatementType::SET;
+        case buffers::NodeType::OBJECT_EXT_SET:
+            stmt_type = buffers::StatementType::SET;
             break;
 
-        case proto::NodeType::OBJECT_SQL_CREATE_AS:
-            stmt_type = proto::StatementType::CREATE_TABLE_AS;
+        case buffers::NodeType::OBJECT_SQL_CREATE_AS:
+            stmt_type = buffers::StatementType::CREATE_TABLE_AS;
             break;
 
-        case proto::NodeType::OBJECT_SQL_CREATE:
-            stmt_type = proto::StatementType::CREATE_TABLE;
+        case buffers::NodeType::OBJECT_SQL_CREATE:
+            stmt_type = buffers::StatementType::CREATE_TABLE;
             break;
 
-        case proto::NodeType::OBJECT_SQL_VIEW:
-            stmt_type = proto::StatementType::CREATE_VIEW;
+        case buffers::NodeType::OBJECT_SQL_VIEW:
+            stmt_type = buffers::StatementType::CREATE_VIEW;
             break;
 
-        case proto::NodeType::OBJECT_SQL_SELECT:
-            stmt_type = proto::StatementType::SELECT;
+        case buffers::NodeType::OBJECT_SQL_SELECT:
+            stmt_type = buffers::StatementType::SELECT;
             break;
 
         default:
@@ -232,7 +232,7 @@ void ParseContext::AddStatement(proto::Node node) {
     current_statement.node_count = nodes.GetSize() - current_statement.nodes_begin;
     statements.push_back(std::move(current_statement));
     current_statement = {
-        .type = proto::StatementType::NONE,
+        .type = buffers::StatementType::NONE,
         .root = std::numeric_limits<uint32_t>::max(),
         .nodes_begin = nodes.GetSize(),
         .node_count = 0,
@@ -242,7 +242,7 @@ void ParseContext::AddStatement(proto::Node node) {
 void ParseContext::ResetStatement() { current_statement.nodes_begin = nodes.GetSize(); }
 
 /// Add an error
-void ParseContext::AddError(proto::Location loc, const std::string& message) { errors.push_back({loc, message}); }
+void ParseContext::AddError(buffers::Location loc, const std::string& message) { errors.push_back({loc, message}); }
 
 }  // namespace parser
 }  // namespace dashql

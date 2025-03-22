@@ -280,16 +280,16 @@ mod test {
 
     use crate::status::Status;
     use crate::test::hyper_service_mock::{spawn_hyper_service_mock, HyperServiceMock};
-    use crate::proto::salesforce_hyperdb_grpc_v1::hyper_service_client::HyperServiceClient;
-    use crate::proto::salesforce_hyperdb_grpc_v1::query_param;
-    use crate::proto::salesforce_hyperdb_grpc_v1::query_result;
-    use crate::proto::salesforce_hyperdb_grpc_v1::query_result_header::Header;
-    use crate::proto::salesforce_hyperdb_grpc_v1::QueryBinaryResultChunk;
-    use crate::proto::salesforce_hyperdb_grpc_v1::QueryParam;
-    use crate::proto::salesforce_hyperdb_grpc_v1::QueryResultSchema;
-    use crate::proto::salesforce_hyperdb_grpc_v1::SqlType;
-    use crate::proto::salesforce_hyperdb_grpc_v1::{sql_type, QueryResultHeader};
-    use crate::proto::salesforce_hyperdb_grpc_v1::{ColumnDescription, QueryResult};
+    use crate::buffers::salesforce_hyperdb_grpc_v1::hyper_service_client::HyperServiceClient;
+    use crate::buffers::salesforce_hyperdb_grpc_v1::query_param;
+    use crate::buffers::salesforce_hyperdb_grpc_v1::query_result;
+    use crate::buffers::salesforce_hyperdb_grpc_v1::query_result_header::Header;
+    use crate::buffers::salesforce_hyperdb_grpc_v1::QueryBinaryResultChunk;
+    use crate::buffers::salesforce_hyperdb_grpc_v1::QueryParam;
+    use crate::buffers::salesforce_hyperdb_grpc_v1::QueryResultSchema;
+    use crate::buffers::salesforce_hyperdb_grpc_v1::SqlType;
+    use crate::buffers::salesforce_hyperdb_grpc_v1::{sql_type, QueryResultHeader};
+    use crate::buffers::salesforce_hyperdb_grpc_v1::{ColumnDescription, QueryResult};
 
     impl Into<Vec<u8>> for QueryResult {
         fn into(self) -> Vec<u8> {

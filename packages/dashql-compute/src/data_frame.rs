@@ -43,7 +43,7 @@ use prost::Message;
 use wasm_bindgen::prelude::*;
 
 use crate::arrow_out::DataFrameIpcStream;
-use crate::proto::dashql_compute::{AggregationFunction, BinningTransform, DataFrameTransform, FilterOperator, FilterTransform, GroupByKeyBinning, GroupByTransform, OrderByTransform, RowNumberTransform, ValueIdentifierTransform};
+use crate::buffers::dashql_compute::{AggregationFunction, BinningTransform, DataFrameTransform, FilterOperator, FilterTransform, GroupByKeyBinning, GroupByTransform, OrderByTransform, RowNumberTransform, ValueIdentifierTransform};
 
 #[wasm_bindgen]
 pub struct DataFrame {

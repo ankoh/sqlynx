@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include "pugixml.hpp"
 #include "dashql/catalog.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "dashql/script.h"
 #include "dashql/testing/completion_snapshot_test.h"
 #include "dashql/testing/xml_tests.h"
@@ -47,7 +47,7 @@ TEST_P(CompletionSnapshotTestSuite, Test) {
     // Move cursor and get completion
     main_script.MoveCursor(cursor_pos);
     auto [completion, completion_status] = main_script.CompleteAtCursor(test->completion_limit);
-    ASSERT_EQ(completion_status, proto::StatusCode::OK);
+    ASSERT_EQ(completion_status, buffers::StatusCode::OK);
     ASSERT_NE(completion, nullptr);
 
     auto completions = out.append_child("completions");

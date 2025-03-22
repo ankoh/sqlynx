@@ -3,7 +3,7 @@
 #include <unordered_set>
 
 #include "dashql/parser/parser.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "dashql/script.h"
 #include "dashql/utils/btree/map.h"
 #include "dashql/utils/chunk_buffer.h"

@@ -9,7 +9,7 @@
 #include "dashql/analyzer/completion.h"
 #include "dashql/catalog.h"
 #include "dashql/parser/parser.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "dashql/script.h"
 #include "dashql/version.h"
 
@@ -32,7 +32,7 @@ void log(std::string_view text) { return ::log(text.data(), text.size()); }
 
 static FFIResult* packOK() {
     auto result = std::make_unique<FFIResult>();
-    result->status_code = static_cast<uint32_t>(proto::StatusCode::OK);
+    result->status_code = static_cast<uint32_t>(buffers::StatusCode::OK);
     result->data_ptr = nullptr;
     result->data_length = 0;
     result->owner_ptr = nullptr;
@@ -43,7 +43,7 @@ static FFIResult* packOK() {
 template <typename T> static FFIResult* packPtr(std::unique_ptr<T> ptr) {
     auto result = std::make_unique<FFIResult>();
     auto raw_ptr = ptr.release();
-    result->status_code = static_cast<uint32_t>(proto::StatusCode::OK);
+    result->status_code = static_cast<uint32_t>(buffers::StatusCode::OK);
     result->data_ptr = nullptr;
     result->data_length = 0;
     result->owner_ptr = raw_ptr;
@@ -53,7 +53,7 @@ template <typename T> static FFIResult* packPtr(std::unique_ptr<T> ptr) {
 
 static FFIResult* packBuffer(std::unique_ptr<flatbuffers::DetachedBuffer> detached) {
     auto result = std::make_unique<FFIResult>();
-    result->status_code = static_cast<uint32_t>(proto::StatusCode::OK);
+    result->status_code = static_cast<uint32_t>(buffers::StatusCode::OK);
     result->data_ptr = detached->data();
     result->data_length = detached->size();
     result->owner_ptr = detached.release();
@@ -61,52 +61,52 @@ static FFIResult* packBuffer(std::unique_ptr<flatbuffers::DetachedBuffer> detach
     return result.release();
 }
 
-static FFIResult* packError(proto::StatusCode status) {
+static FFIResult* packError(buffers::StatusCode status) {
     std::string_view message;
     switch (status) {
-        case proto::StatusCode::CATALOG_NULL:
+        case buffers::StatusCode::CATALOG_NULL:
             message = "Catalog is null";
             break;
-        case proto::StatusCode::CATALOG_MISMATCH:
+        case buffers::StatusCode::CATALOG_MISMATCH:
             message = "Catalog is not matching";
             break;
-        case proto::StatusCode::CATALOG_ID_OUT_OF_SYNC:
+        case buffers::StatusCode::CATALOG_ID_OUT_OF_SYNC:
             message = "Catalog id is out of sync";
             break;
-        case proto::StatusCode::PARSER_INPUT_NOT_SCANNED:
+        case buffers::StatusCode::PARSER_INPUT_NOT_SCANNED:
             message = "Parser input is not scanned";
             break;
-        case proto::StatusCode::ANALYZER_INPUT_NOT_PARSED:
+        case buffers::StatusCode::ANALYZER_INPUT_NOT_PARSED:
             message = "Analyzer input is not parsed";
             break;
-        case proto::StatusCode::CATALOG_SCRIPT_NOT_ANALYZED:
+        case buffers::StatusCode::CATALOG_SCRIPT_NOT_ANALYZED:
             message = "Unanalyzed scripts cannot be added to the catalog";
             break;
-        case proto::StatusCode::CATALOG_SCRIPT_UNKNOWN:
+        case buffers::StatusCode::CATALOG_SCRIPT_UNKNOWN:
             message = "Script is missing in catalog";
             break;
-        case proto::StatusCode::CATALOG_DESCRIPTOR_POOL_UNKNOWN:
+        case buffers::StatusCode::CATALOG_DESCRIPTOR_POOL_UNKNOWN:
             message = "Schema descriptor pool is not known";
             break;
-        case proto::StatusCode::CATALOG_DESCRIPTOR_TABLES_NULL:
+        case buffers::StatusCode::CATALOG_DESCRIPTOR_TABLES_NULL:
             message = "Schema descriptor field `tables` is null or empty";
             break;
-        case proto::StatusCode::CATALOG_DESCRIPTOR_TABLE_NAME_EMPTY:
+        case buffers::StatusCode::CATALOG_DESCRIPTOR_TABLE_NAME_EMPTY:
             message = "Table name in schema descriptor is null or empty";
             break;
-        case proto::StatusCode::CATALOG_DESCRIPTOR_TABLE_NAME_COLLISION:
+        case buffers::StatusCode::CATALOG_DESCRIPTOR_TABLE_NAME_COLLISION:
             message = "Schema descriptor contains a duplicate table name";
             break;
-        case proto::StatusCode::COMPLETION_MISSES_CURSOR:
+        case buffers::StatusCode::COMPLETION_MISSES_CURSOR:
             message = "Completion requires a script cursor";
             break;
-        case proto::StatusCode::COMPLETION_MISSES_SCANNER_TOKEN:
+        case buffers::StatusCode::COMPLETION_MISSES_SCANNER_TOKEN:
             message = "Completion requires a scanner token";
             break;
-        case proto::StatusCode::EXTERNAL_ID_COLLISION:
+        case buffers::StatusCode::EXTERNAL_ID_COLLISION:
             message = "Collision on external identifier";
             break;
-        case proto::StatusCode::OK:
+        case buffers::StatusCode::OK:
             message = "";
             break;
     }
@@ -138,10 +138,10 @@ extern "C" void dashql_delete_result(FFIResult* result) {
 /// Create a script
 extern "C" FFIResult* dashql_script_new(dashql::Catalog* catalog, uint32_t external_id) {
     if (!catalog) {
-        return packError(proto::StatusCode::CATALOG_NULL);
+        return packError(buffers::StatusCode::CATALOG_NULL);
     }
     if (catalog && catalog->Contains(external_id)) {
-        return packError(proto::StatusCode::EXTERNAL_ID_COLLISION);
+        return packError(buffers::StatusCode::EXTERNAL_ID_COLLISION);
     }
     // Construct the script
     auto script = std::make_unique<Script>(*catalog, external_id);
@@ -171,7 +171,7 @@ extern "C" void dashql_script_erase_text_range(Script* script, size_t offset, si
 extern "C" FFIResult* dashql_script_to_string(Script* script) {
     auto text = std::make_unique<std::string>(std::move(script->ToString()));
     auto result = new FFIResult();
-    result->status_code = static_cast<uint32_t>(proto::StatusCode::OK);
+    result->status_code = static_cast<uint32_t>(buffers::StatusCode::OK);
     result->data_ptr = text->data();
     result->data_length = text->length();
     result->owner_ptr = text.release();
@@ -183,7 +183,7 @@ extern "C" FFIResult* dashql_script_to_string(Script* script) {
 extern "C" FFIResult* dashql_script_scan(Script* script) {
     // Scan the script
     auto [scanned, status] = script->Scan();
-    if (status != proto::StatusCode::OK) {
+    if (status != buffers::StatusCode::OK) {
         return packError(status);
     }
 
@@ -200,7 +200,7 @@ extern "C" FFIResult* dashql_script_scan(Script* script) {
 extern "C" FFIResult* dashql_script_parse(Script* script) {
     // Parse the script
     auto [parsed, status] = script->Parse();
-    if (status != proto::StatusCode::OK) {
+    if (status != buffers::StatusCode::OK) {
         return packError(status);
     }
 
@@ -217,7 +217,7 @@ extern "C" FFIResult* dashql_script_parse(Script* script) {
 extern "C" FFIResult* dashql_script_analyze(Script* script) {
     // Analyze the script
     auto [analyzed, status] = script->Analyze();
-    if (status != proto::StatusCode::OK) {
+    if (status != buffers::StatusCode::OK) {
         return packError(status);
     }
 
@@ -234,7 +234,7 @@ extern "C" FFIResult* dashql_script_analyze(Script* script) {
 extern "C" FFIResult* dashql_script_format(dashql::Script* script) {
     auto text = std::make_unique<std::string>(script->Format());
     auto result = new FFIResult();
-    result->status_code = static_cast<uint32_t>(proto::StatusCode::OK);
+    result->status_code = static_cast<uint32_t>(buffers::StatusCode::OK);
     result->data_ptr = text->data();
     result->data_length = text->length();
     result->owner_ptr = text.release();
@@ -245,7 +245,7 @@ extern "C" FFIResult* dashql_script_format(dashql::Script* script) {
 /// Move the cursor to a script at a position
 extern "C" FFIResult* dashql_script_move_cursor(dashql::Script* script, size_t text_offset) {
     auto [cursor, status] = script->MoveCursor(text_offset);
-    if (status != proto::StatusCode::OK) {
+    if (status != buffers::StatusCode::OK) {
         return packError(status);
     }
 
@@ -260,7 +260,7 @@ extern "C" FFIResult* dashql_script_move_cursor(dashql::Script* script, size_t t
 
 extern "C" FFIResult* dashql_script_complete_at_cursor(dashql::Script* script, size_t limit) {
     auto [completion, status] = script->CompleteAtCursor(limit);
-    if (status != proto::StatusCode::OK) {
+    if (status != buffers::StatusCode::OK) {
         return packError(status);
     }
 
@@ -278,7 +278,7 @@ extern "C" FFIResult* dashql_script_get_statistics(dashql::Script* script) {
 
     // Pack a schema graph
     flatbuffers::FlatBufferBuilder fb;
-    fb.Finish(proto::ScriptStatistics::Pack(fb, stats.get()));
+    fb.Finish(buffers::ScriptStatistics::Pack(fb, stats.get()));
 
     // Return the buffer
     auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));
@@ -333,7 +333,7 @@ extern "C" FFIResult* dashql_catalog_flatten(dashql::Catalog* catalog) {
 /// Add a script in the catalog
 extern "C" FFIResult* dashql_catalog_load_script(dashql::Catalog* catalog, dashql::Script* script, size_t rank) {
     auto status = catalog->LoadScript(*script, rank);
-    if (status != proto::StatusCode::OK) {
+    if (status != buffers::StatusCode::OK) {
         return packError(status);
     }
     return packOK();
@@ -345,7 +345,7 @@ extern "C" void dashql_catalog_drop_script(dashql::Catalog* catalog, dashql::Scr
 /// Add a descriptor pool to the catalog
 extern "C" FFIResult* dashql_catalog_add_descriptor_pool(dashql::Catalog* catalog, size_t external_id, size_t rank) {
     auto status = catalog->AddDescriptorPool(external_id, rank);
-    if (status != proto::StatusCode::OK) {
+    if (status != buffers::StatusCode::OK) {
         return packError(status);
     }
     return packOK();
@@ -360,7 +360,7 @@ extern "C" FFIResult* dashql_catalog_add_schema_descriptor(dashql::Catalog* cata
     std::unique_ptr<const std::byte[]> descriptor_buffer{static_cast<const std::byte*>(data_ptr)};
     std::span<const std::byte> descriptor_data{descriptor_buffer.get(), data_size};
     auto status = catalog->AddSchemaDescriptor(external_id, descriptor_data, std::move(descriptor_buffer), data_size);
-    if (status != proto::StatusCode::OK) {
+    if (status != buffers::StatusCode::OK) {
         return packError(status);
     }
     return packOK();
@@ -371,7 +371,7 @@ extern "C" FFIResult* dashql_catalog_add_schema_descriptors(dashql::Catalog* cat
     std::unique_ptr<const std::byte[]> descriptor_buffer{static_cast<const std::byte*>(data_ptr)};
     std::span<const std::byte> descriptor_data{descriptor_buffer.get(), data_size};
     auto status = catalog->AddSchemaDescriptors(external_id, descriptor_data, std::move(descriptor_buffer), data_size);
-    if (status != proto::StatusCode::OK) {
+    if (status != buffers::StatusCode::OK) {
         return packError(status);
     }
     return packOK();
@@ -382,7 +382,7 @@ extern "C" FFIResult* dashql_catalog_get_statistics(dashql::Catalog* catalog) {
 
     // Pack the catalog statistics
     flatbuffers::FlatBufferBuilder fb;
-    fb.Finish(proto::CatalogStatistics::Pack(fb, stats.get()));
+    fb.Finish(buffers::CatalogStatistics::Pack(fb, stats.get()));
 
     // Return the buffer
     auto detached = std::make_unique<flatbuffers::DetachedBuffer>(std::move(fb.Release()));

@@ -25,7 +25,7 @@ class Parser : public ParserBase {
     /// Complete at a token
     static std::vector<ExpectedSymbol> ParseUntil(ScannedScript& in, size_t symbol_id);
     /// Parse a module
-    static std::pair<std::shared_ptr<ParsedScript>, proto::StatusCode> Parse(std::shared_ptr<ScannedScript> in,
+    static std::pair<std::shared_ptr<ParsedScript>, buffers::StatusCode> Parse(std::shared_ptr<ScannedScript> in,
                                                                              bool debug = false);
 };
 

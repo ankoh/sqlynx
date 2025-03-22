@@ -3,7 +3,7 @@
 #include <format>
 #include <fstream>
 
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "dashql/script.h"
 #include "dashql/testing/xml_tests.h"
 #include "dashql/text/names.h"
@@ -31,13 +31,13 @@ std::vector<const CompletionSnapshotTest*> CompletionSnapshotTest::GetTests(std:
 /// Encode a script
 void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Completion& completion) {
     auto entries = completion.GetHeap().GetEntries();
-    auto ctxName = proto::EnumNameCompletionStrategy(completion.GetStrategy());
+    auto ctxName = buffers::EnumNameCompletionStrategy(completion.GetStrategy());
     root.append_attribute("strategy").set_value(ctxName);
     if (auto node_id = completion.GetCursor().ast_node_id) {
         root.append_attribute("symbol").set_value(
-            proto::EnumNameNodeType(completion.GetCursor().script.parsed_script->nodes[*node_id].node_type()));
+            buffers::EnumNameNodeType(completion.GetCursor().script.parsed_script->nodes[*node_id].node_type()));
         root.append_attribute("relative")
-            .set_value(proto::EnumNameRelativeSymbolPosition(completion.GetCursor().scanner_location->relative_pos));
+            .set_value(buffers::EnumNameRelativeSymbolPosition(completion.GetCursor().scanner_location->relative_pos));
     }
     for (auto iter = entries.rbegin(); iter != entries.rend(); ++iter) {
         auto xml_entry = root.append_child("entry");
@@ -47,11 +47,11 @@ void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Complet
         {
             std::stringstream name_tags;
             size_t i = 0;
-            iter->coarse_name_tags.ForEach([&](proto::NameTag tag) {
+            iter->coarse_name_tags.ForEach([&](buffers::NameTag tag) {
                 if (i++ > 0) {
                     name_tags << "|";
                 }
-                name_tags << proto::EnumNameNameTag(tag);
+                name_tags << buffers::EnumNameNameTag(tag);
             });
             if (i > 0) {
                 xml_entry.append_attribute("ntags").set_value(name_tags.str().c_str());
@@ -60,11 +60,11 @@ void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Complet
         {
             std::stringstream candidate_tags;
             size_t i = 0;
-            iter->candidate_tags.ForEach([&](proto::CandidateTag tag) {
+            iter->candidate_tags.ForEach([&](buffers::CandidateTag tag) {
                 if (i++ > 0) {
                     candidate_tags << "|";
                 }
-                candidate_tags << proto::EnumNameCandidateTag(tag);
+                candidate_tags << buffers::EnumNameCandidateTag(tag);
             });
             if (i > 0) {
                 xml_entry.append_attribute("ctags").set_value(candidate_tags.str().c_str());
@@ -118,11 +118,11 @@ void CompletionSnapshotTest::EncodeCompletion(pugi::xml_node root, const Complet
             {
                 std::stringstream candidate_tags;
                 size_t i = 0;
-                co.candidate_tags.ForEach([&](proto::CandidateTag tag) {
+                co.candidate_tags.ForEach([&](buffers::CandidateTag tag) {
                     if (i++ > 0) {
                         candidate_tags << "|";
                     }
-                    candidate_tags << proto::EnumNameCandidateTag(tag);
+                    candidate_tags << buffers::EnumNameCandidateTag(tag);
                 });
                 if (i > 0) {
                     xml_obj.append_attribute("ctags").set_value(candidate_tags.str().c_str());

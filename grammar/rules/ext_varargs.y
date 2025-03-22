@@ -20,7 +20,7 @@ vararg_key_path:
   | vararg_key                      { $$ = ctx.List({ $1 }); }
 
 vararg_key:
-    SCONST                      { $$ = Const(@1, proto::AConstType::STRING); }
+    SCONST                      { $$ = Const(@1, buffers::AConstType::STRING); }
   | IDENT                       { $$ = NameFromIdentifier(@1, $1); }
   | sql_unreserved_keywords     { $$ = ctx.NameFromKeyword(@1, $1); }
   | sql_column_name_keywords    { $$ = ctx.NameFromKeyword(@1, $1); }
@@ -31,7 +31,7 @@ vararg_key:
 vararg_value:
     varargs                   { $$ = ctx.Array(@$, std::move($1)); }
   | vararg_array_brackets {
-      $$ = ctx.Object(@$, proto::NodeType::OBJECT_EXT_VARARG_ARRAY, {
+      $$ = ctx.Object(@$, buffers::NodeType::OBJECT_EXT_VARARG_ARRAY, {
           Attr(Key::EXT_VARARG_ARRAY_VALUES, ctx.Array(@1, std::move($1))),
       });
     }

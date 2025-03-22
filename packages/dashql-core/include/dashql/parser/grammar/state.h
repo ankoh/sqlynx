@@ -2,7 +2,7 @@
 
 #include <variant>
 
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "dashql/text/rope.h"
 #include "dashql/utils/chunk_buffer.h"
 #include "dashql/utils/temp_allocator.h"
@@ -58,7 +58,7 @@ struct NodeList {
         /// The next list element
         ListElement* prev = nullptr;
         /// The element node
-        proto::Node node;
+        buffers::Node node;
         /// Constructor
         ListElement() = default;
     };
@@ -92,15 +92,15 @@ struct NodeList {
     /// Is empty?
     inline bool empty() { return size() == 0; }
     /// Prepend a node
-    void push_front(proto::Node node);
+    void push_front(buffers::Node node);
     /// Append a node
-    void push_back(proto::Node node);
+    void push_back(buffers::Node node);
     /// Append a list of nodes
-    void append(std::initializer_list<proto::Node> nodes);
+    void append(std::initializer_list<buffers::Node> nodes);
     /// Append a list of nodes
     void append(WeakUniquePtr<NodeList>&& other);
     /// Write elements into span
-    void copy_into(std::span<proto::Node> nodes);
+    void copy_into(std::span<buffers::Node> nodes);
 };
 
 /// Helper for nary expressions
@@ -111,22 +111,22 @@ struct NAryExpression {
     /// The expression pool
     Pool& expression_pool;
     /// The location
-    proto::Location location;
+    buffers::Location location;
     /// The expression operator
-    proto::ExpressionOperator op;
+    buffers::ExpressionOperator op;
     /// The expression operator node
-    proto::Node opNode;
+    buffers::Node opNode;
     /// The arguments
     WeakUniquePtr<NodeList> args;
 
     /// Constructor
-    NAryExpression(Pool& pool, proto::Location loc, proto::ExpressionOperator op, proto::Node node,
+    NAryExpression(Pool& pool, buffers::Location loc, buffers::ExpressionOperator op, buffers::Node node,
                    WeakUniquePtr<NodeList> args);
     /// Destructor
     ~NAryExpression();
 };
 /// An expression is either a proto node with materialized children, or an n-ary expression that can be flattened
-using ExpressionVariant = std::variant<proto::Node, WeakUniquePtr<NAryExpression>>;
+using ExpressionVariant = std::variant<buffers::Node, WeakUniquePtr<NAryExpression>>;
 
 }  // namespace parser
 }  // namespace dashql

@@ -16,9 +16,9 @@ TEST_P(ParserSnapshotTestSuite, Test) {
     auto* test = GetParam();
     rope::Rope input{1024, test->input};
     auto [scanned, scannedStatus] = parser::Scanner::Scan(input, 2);
-    ASSERT_EQ(scannedStatus, proto::StatusCode::OK);
+    ASSERT_EQ(scannedStatus, buffers::StatusCode::OK);
     auto [parsed, parsedStatus] = parser::Parser::Parse(scanned, test->debug);
-    ASSERT_EQ(parsedStatus, proto::StatusCode::OK);
+    ASSERT_EQ(parsedStatus, buffers::StatusCode::OK);
 
     pugi::xml_document out;
     ParserSnapshotTest::EncodeScript(out, *scanned, *parsed, test->input);

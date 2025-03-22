@@ -1,6 +1,6 @@
 include "dashql/sql_enums.fbs";
 
-namespace dashql.proto;
+namespace dashql.buffers;
 
 struct Location { offset: uint32; length: uint32; }
 

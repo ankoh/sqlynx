@@ -1,7 +1,7 @@
 #pragma once
 
 #include "dashql/catalog_object.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "dashql/script.h"
 #include "dashql/utils/enum_bitset.h"
 #include "dashql/utils/topk.h"
@@ -12,7 +12,7 @@ struct Completion {
     /// A score value
     using ScoreValueType = uint32_t;
     /// A bitset for candidate tags
-    using CandidateTags = EnumBitset<uint16_t, proto::CandidateTag, proto::CandidateTag::MAX>;
+    using CandidateTags = EnumBitset<uint16_t, buffers::CandidateTag, buffers::CandidateTag::MAX>;
 
     struct Candidate;
     /// A catalog object referenced by a completion candidate
@@ -73,7 +73,7 @@ struct Completion {
     /// The script cursor
     const ScriptCursor& cursor;
     /// The completion strategy
-    const proto::CompletionStrategy strategy;
+    const buffers::CompletionStrategy strategy;
 
     /// The candidate buffer
     ChunkBuffer<Candidate, 16> candidates;
@@ -118,9 +118,9 @@ struct Completion {
     auto& GetHeap() const { return result_heap; }
 
     /// Pack the completion result
-    flatbuffers::Offset<proto::Completion> Pack(flatbuffers::FlatBufferBuilder& builder);
+    flatbuffers::Offset<buffers::Completion> Pack(flatbuffers::FlatBufferBuilder& builder);
     // Compute completion at a cursor
-    static std::pair<std::unique_ptr<Completion>, proto::StatusCode> Compute(const ScriptCursor& cursor, size_t k);
+    static std::pair<std::unique_ptr<Completion>, buffers::StatusCode> Compute(const ScriptCursor& cursor, size_t k);
 };
 
 }  // namespace dashql

@@ -37,7 +37,7 @@ constexpr size_t LOCATION_HINT_LENGTH = 10;
     return ::testing::AssertionFailure() << err.str();
 }
 
-void EncodeLocation(pugi::xml_node n, proto::Location loc, std::string_view text, const char* loc_key,
+void EncodeLocation(pugi::xml_node n, buffers::Location loc, std::string_view text, const char* loc_key,
                     const char* text_key) {
     auto begin = loc.offset();
     auto end = loc.offset() + loc.length();
@@ -59,7 +59,7 @@ void EncodeLocation(pugi::xml_node n, proto::Location loc, std::string_view text
     }
 }
 
-void WriteLocation(pugi::xml_node n, proto::Location loc, std::string_view text) {
+void WriteLocation(pugi::xml_node n, buffers::Location loc, std::string_view text) {
     auto begin = loc.offset();
     auto end = loc.offset() + loc.length();
     {
@@ -80,7 +80,7 @@ void WriteLocation(pugi::xml_node n, proto::Location loc, std::string_view text)
     }
 }
 
-void EncodeError(pugi::xml_node n, const proto::ErrorT& err, std::string_view text) {
+void EncodeError(pugi::xml_node n, const buffers::ErrorT& err, std::string_view text) {
     n.append_attribute("message") = err.message.c_str();
     EncodeLocation(n, *err.location, text);
 }

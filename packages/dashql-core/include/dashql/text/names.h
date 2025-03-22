@@ -2,16 +2,16 @@
 
 #include "ankerl/unordered_dense.h"
 #include "dashql/catalog_object.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "dashql/utils/chunk_buffer.h"
 #include "dashql/utils/enum_bitset.h"
 #include "dashql/utils/intrusive_list.h"
 
 namespace dashql {
 
-namespace sx = proto;
+namespace sx = buffers;
 
-using NameTags = EnumBitset<uint8_t, proto::NameTag, proto::NameTag::MAX>;
+using NameTags = EnumBitset<uint8_t, buffers::NameTag, buffers::NameTag::MAX>;
 
 /// An indexed name id
 using RegisteredNameID = uint32_t;

@@ -1,4 +1,4 @@
-namespace dashql.proto;
+namespace dashql.buffers;
 
 enum RelativeSymbolPosition: uint8 {
     NEW_SYMBOL_BEFORE = 0,

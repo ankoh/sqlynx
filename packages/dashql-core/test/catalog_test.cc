@@ -5,7 +5,7 @@
 
 #include "gtest/gtest.h"
 #include "dashql/analyzer/analyzer.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "dashql/script.h"
 
 using namespace dashql;
@@ -31,25 +31,25 @@ std::tuple<std::span<const std::byte>, std::unique_ptr<const std::byte[]>, size_
     flatbuffers::FlatBufferBuilder fbb;
     auto database_name = fbb.CreateString(schema.database_name);
     auto schema_name = fbb.CreateString(schema.schema_name);
-    std::vector<flatbuffers::Offset<proto::SchemaTable>> tables;
-    std::vector<flatbuffers::Offset<proto::SchemaTableColumn>> table_columns;
+    std::vector<flatbuffers::Offset<buffers::SchemaTable>> tables;
+    std::vector<flatbuffers::Offset<buffers::SchemaTableColumn>> table_columns;
     for (auto& table : schema.tables) {
         table_columns.clear();
         for (auto& column : table.table_columns) {
             auto column_name = fbb.CreateString(column.column_name);
-            proto::SchemaTableColumnBuilder column_builder{fbb};
+            buffers::SchemaTableColumnBuilder column_builder{fbb};
             column_builder.add_column_name(column_name);
             table_columns.push_back(column_builder.Finish());
         }
         auto table_columns_ofs = fbb.CreateVector(table_columns);
         auto table_name_ofs = fbb.CreateString(table.table_name);
-        proto::SchemaTableBuilder table_builder{fbb};
+        buffers::SchemaTableBuilder table_builder{fbb};
         table_builder.add_table_name(table_name_ofs);
         table_builder.add_columns(table_columns_ofs);
         tables.push_back(table_builder.Finish());
     }
     auto tables_ofs = fbb.CreateVector(tables);
-    proto::SchemaDescriptorBuilder descriptor_builder{fbb};
+    buffers::SchemaDescriptorBuilder descriptor_builder{fbb};
     descriptor_builder.add_database_name(database_name);
     descriptor_builder.add_schema_name(schema_name);
     descriptor_builder.add_tables(tables_ofs);
@@ -64,7 +64,7 @@ std::tuple<std::span<const std::byte>, std::unique_ptr<const std::byte[]>, size_
 
 TEST(CatalogTest, Clear) {
     Catalog catalog;
-    ASSERT_EQ(catalog.AddDescriptorPool(1, 10), proto::StatusCode::OK);
+    ASSERT_EQ(catalog.AddDescriptorPool(1, 10), buffers::StatusCode::OK);
 
     auto [descriptor, descriptor_buffer, descriptor_buffer_size] = PackSchema(Schema{
         .database_name = "db1",
@@ -75,28 +75,28 @@ TEST(CatalogTest, Clear) {
                               SchemaTableColumn{.column_name = "column3"}}}},
     });
     auto status = catalog.AddSchemaDescriptor(1, descriptor, std::move(descriptor_buffer), descriptor_buffer_size);
-    ASSERT_EQ(status, proto::StatusCode::OK);
+    ASSERT_EQ(status, buffers::StatusCode::OK);
 
     {
         flatbuffers::FlatBufferBuilder fb;
         fb.Finish(catalog.DescribeEntries(fb));
-        auto description = flatbuffers::GetRoot<proto::CatalogEntries>(fb.GetBufferPointer());
+        auto description = flatbuffers::GetRoot<buffers::CatalogEntries>(fb.GetBufferPointer());
         ASSERT_EQ(description->entries()->size(), 1);
         ASSERT_EQ(description->entries()->Get(0)->catalog_entry_id(), 1);
-        ASSERT_EQ(description->entries()->Get(0)->catalog_entry_type(), proto::CatalogEntryType::DESCRIPTOR_POOL);
+        ASSERT_EQ(description->entries()->Get(0)->catalog_entry_type(), buffers::CatalogEntryType::DESCRIPTOR_POOL);
     }
     catalog.Clear();
     {
         flatbuffers::FlatBufferBuilder fb;
         fb.Finish(catalog.DescribeEntries(fb));
-        auto description = flatbuffers::GetRoot<proto::CatalogEntries>(fb.GetBufferPointer());
+        auto description = flatbuffers::GetRoot<buffers::CatalogEntries>(fb.GetBufferPointer());
         ASSERT_EQ(description->entries()->size(), 0);
     }
 }
 
 TEST(CatalogTest, SingleDescriptorPool) {
     Catalog catalog;
-    ASSERT_EQ(catalog.AddDescriptorPool(1, 10), proto::StatusCode::OK);
+    ASSERT_EQ(catalog.AddDescriptorPool(1, 10), buffers::StatusCode::OK);
 
     auto [descriptor, descriptor_buffer, descriptor_buffer_size] = PackSchema(Schema{
         .database_name = "db1",
@@ -107,24 +107,24 @@ TEST(CatalogTest, SingleDescriptorPool) {
                               SchemaTableColumn{.column_name = "column3"}}}},
     });
     auto status = catalog.AddSchemaDescriptor(1, descriptor, std::move(descriptor_buffer), descriptor_buffer_size);
-    ASSERT_EQ(status, proto::StatusCode::OK);
+    ASSERT_EQ(status, buffers::StatusCode::OK);
 
     {
         flatbuffers::FlatBufferBuilder fb;
         fb.Finish(catalog.DescribeEntries(fb));
-        auto description = flatbuffers::GetRoot<proto::CatalogEntries>(fb.GetBufferPointer());
+        auto description = flatbuffers::GetRoot<buffers::CatalogEntries>(fb.GetBufferPointer());
         ASSERT_EQ(description->entries()->size(), 1);
         ASSERT_EQ(description->entries()->Get(0)->catalog_entry_id(), 1);
-        ASSERT_EQ(description->entries()->Get(0)->catalog_entry_type(), proto::CatalogEntryType::DESCRIPTOR_POOL);
+        ASSERT_EQ(description->entries()->Get(0)->catalog_entry_type(), buffers::CatalogEntryType::DESCRIPTOR_POOL);
     }
 
     Script script{catalog, 2};
     {
         script.ReplaceText("select * from db1.schema1.table1");
-        ASSERT_EQ(script.Scan().second, proto::StatusCode::OK);
-        ASSERT_EQ(script.Parse().second, proto::StatusCode::OK);
+        ASSERT_EQ(script.Scan().second, buffers::StatusCode::OK);
+        ASSERT_EQ(script.Parse().second, buffers::StatusCode::OK);
         auto [analyzed, analysis_status] = script.Analyze();
-        ASSERT_EQ(analysis_status, proto::StatusCode::OK);
+        ASSERT_EQ(analysis_status, buffers::StatusCode::OK);
         ASSERT_EQ(analyzed->table_references.GetSize(), 1);
         ASSERT_TRUE(std::holds_alternative<AnalyzedScript::TableReference::ResolvedRelationExpression>(
             analyzed->table_references[0].inner));
@@ -136,10 +136,10 @@ TEST(CatalogTest, SingleDescriptorPool) {
     }
     {
         script.ReplaceText("select * from db1.schema1.table2");
-        ASSERT_EQ(script.Scan().second, proto::StatusCode::OK);
-        ASSERT_EQ(script.Parse().second, proto::StatusCode::OK);
+        ASSERT_EQ(script.Scan().second, buffers::StatusCode::OK);
+        ASSERT_EQ(script.Parse().second, buffers::StatusCode::OK);
         auto [analyzed, analysis_status] = script.Analyze();
-        ASSERT_EQ(analysis_status, proto::StatusCode::OK);
+        ASSERT_EQ(analysis_status, buffers::StatusCode::OK);
         ASSERT_EQ(analyzed->table_references.GetSize(), 1);
         ASSERT_TRUE(std::holds_alternative<AnalyzedScript::TableReference::UnresolvedRelationExpression>(
             analyzed->table_references[0].inner));
@@ -148,21 +148,21 @@ TEST(CatalogTest, SingleDescriptorPool) {
 
 TEST(CatalogTest, DescriptorPoolIDCollision) {
     Catalog catalog;
-    ASSERT_EQ(catalog.AddDescriptorPool(1, 10), proto::StatusCode::OK);
-    ASSERT_EQ(catalog.AddDescriptorPool(1, 10), proto::StatusCode::EXTERNAL_ID_COLLISION);
+    ASSERT_EQ(catalog.AddDescriptorPool(1, 10), buffers::StatusCode::OK);
+    ASSERT_EQ(catalog.AddDescriptorPool(1, 10), buffers::StatusCode::EXTERNAL_ID_COLLISION);
 }
 
 TEST(CatalogTest, FlattenEmpty) {
     Catalog catalog;
     flatbuffers::FlatBufferBuilder fb;
     fb.Finish(catalog.Flatten(fb));
-    auto flat = flatbuffers::GetRoot<proto::FlatCatalog>(fb.GetBufferPointer());
+    auto flat = flatbuffers::GetRoot<buffers::FlatCatalog>(fb.GetBufferPointer());
     ASSERT_EQ(flat->catalog_version(), catalog.GetVersion());
 }
 
 TEST(CatalogTest, FlattenSingleDescriptorPool) {
     Catalog catalog;
-    ASSERT_EQ(catalog.AddDescriptorPool(1, 10), proto::StatusCode::OK);
+    ASSERT_EQ(catalog.AddDescriptorPool(1, 10), buffers::StatusCode::OK);
 
     auto [descriptor, descriptor_buffer, descriptor_buffer_size] = PackSchema(Schema{
         .database_name = "db1",
@@ -181,11 +181,11 @@ TEST(CatalogTest, FlattenSingleDescriptorPool) {
                    }},
     });
     auto status = catalog.AddSchemaDescriptor(1, descriptor, std::move(descriptor_buffer), descriptor_buffer_size);
-    ASSERT_EQ(status, proto::StatusCode::OK);
+    ASSERT_EQ(status, buffers::StatusCode::OK);
 
     flatbuffers::FlatBufferBuilder fb;
     fb.Finish(catalog.Flatten(fb));
-    auto flat = flatbuffers::GetRoot<proto::FlatCatalog>(fb.GetBufferPointer());
+    auto flat = flatbuffers::GetRoot<buffers::FlatCatalog>(fb.GetBufferPointer());
     ASSERT_EQ(flat->catalog_version(), catalog.GetVersion());
     ASSERT_EQ(flat->databases()->size(), 1);
     ASSERT_EQ(flat->schemas()->size(), 1);
@@ -296,11 +296,11 @@ TEST(CatalogTest, FlattenExampleSchema) {
     Script script{catalog, 1};
     script.InsertTextAt(0, TPCH_SCHEMA);
     auto [scanned, scanner_status] = script.Scan();
-    ASSERT_EQ(scanner_status, proto::StatusCode::OK);
+    ASSERT_EQ(scanner_status, buffers::StatusCode::OK);
     auto [parsed, parser_status] = script.Parse();
-    ASSERT_EQ(parser_status, proto::StatusCode::OK);
+    ASSERT_EQ(parser_status, buffers::StatusCode::OK);
     auto [analyzed, analyzer_status] = script.Analyze();
-    ASSERT_EQ(analyzer_status, proto::StatusCode::OK);
+    ASSERT_EQ(analyzer_status, buffers::StatusCode::OK);
 
     // Make sure the analyzed script matches expectations
     ASSERT_EQ(analyzed->GetDatabasesByName().size(), 1);
@@ -309,12 +309,12 @@ TEST(CatalogTest, FlattenExampleSchema) {
 
     // Add to catalog
     auto catalog_status = catalog.LoadScript(script, 1);
-    ASSERT_EQ(catalog_status, proto::StatusCode::OK);
+    ASSERT_EQ(catalog_status, buffers::StatusCode::OK);
 
     // Flatten the catalog
     flatbuffers::FlatBufferBuilder fb;
     fb.Finish(catalog.Flatten(fb));
-    auto flat = flatbuffers::GetRoot<proto::FlatCatalog>(fb.GetBufferPointer());
+    auto flat = flatbuffers::GetRoot<buffers::FlatCatalog>(fb.GetBufferPointer());
 
     // Test the catalog
     ASSERT_EQ(flat->catalog_version(), catalog.GetVersion());

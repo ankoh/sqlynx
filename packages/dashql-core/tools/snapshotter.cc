@@ -8,7 +8,7 @@
 #include "dashql/catalog.h"
 #include "dashql/parser/parser.h"
 #include "dashql/parser/scanner.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "dashql/script.h"
 #include "dashql/testing/analyzer_snapshot_test.h"
 #include "dashql/testing/completion_snapshot_test.h"
@@ -59,8 +59,8 @@ static void generate_parser_snapshots(const std::filesystem::path& source_dir) {
             auto input_buffer = std::string{input.last_child().value()};
             rope::Rope input_rope{1024, input_buffer};
             auto scanned = parser::Scanner::Scan(input_rope, 1);
-            if (scanned.second != proto::StatusCode::OK) {
-                std::cout << "  ERROR " << proto::EnumNameStatusCode(scanned.second) << std::endl;
+            if (scanned.second != buffers::StatusCode::OK) {
+                std::cout << "  ERROR " << buffers::EnumNameStatusCode(scanned.second) << std::endl;
                 continue;
             }
             auto [parsed, parserError] = parser::Parser::Parse(scanned.first);
@@ -87,18 +87,18 @@ static std::unique_ptr<Script> read_script(pugi::xml_node node, size_t entry_id,
     auto script = std::make_unique<Script>(catalog, entry_id);
     script->InsertTextAt(0, input);
     auto scanned = script->Scan();
-    if (scanned.second != proto::StatusCode::OK) {
-        std::cout << "  ERROR " << proto::EnumNameStatusCode(scanned.second) << std::endl;
+    if (scanned.second != buffers::StatusCode::OK) {
+        std::cout << "  ERROR " << buffers::EnumNameStatusCode(scanned.second) << std::endl;
         return nullptr;
     }
     auto parsed = script->Parse();
-    if (parsed.second != proto::StatusCode::OK) {
-        std::cout << "  ERROR " << proto::EnumNameStatusCode(parsed.second) << std::endl;
+    if (parsed.second != buffers::StatusCode::OK) {
+        std::cout << "  ERROR " << buffers::EnumNameStatusCode(parsed.second) << std::endl;
         return nullptr;
     }
     auto analyzed = script->Analyze();
-    if (analyzed.second != proto::StatusCode::OK) {
-        std::cout << "  ERROR " << proto::EnumNameStatusCode(analyzed.second) << std::endl;
+    if (analyzed.second != buffers::StatusCode::OK) {
+        std::cout << "  ERROR " << buffers::EnumNameStatusCode(analyzed.second) << std::endl;
         return nullptr;
     }
     return script;
@@ -241,8 +241,8 @@ static void generate_completion_snapshots(const std::filesystem::path& source_di
 
             main_script->MoveCursor(cursor_pos);
             auto [completion, completion_status] = main_script->CompleteAtCursor(limit);
-            if (completion_status != proto::StatusCode::OK) {
-                std::cout << "  ERROR " << proto::EnumNameStatusCode(completion_status) << std::endl;
+            if (completion_status != buffers::StatusCode::OK) {
+                std::cout << "  ERROR " << buffers::EnumNameStatusCode(completion_status) << std::endl;
                 continue;
             }
 

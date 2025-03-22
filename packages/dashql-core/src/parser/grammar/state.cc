@@ -6,7 +6,7 @@ namespace dashql {
 namespace parser {
 
 /// Constructor
-NAryExpression::NAryExpression(Pool& pool, proto::Location loc, proto::ExpressionOperator op, proto::Node node,
+NAryExpression::NAryExpression(Pool& pool, buffers::Location loc, buffers::ExpressionOperator op, buffers::Node node,
                                WeakUniquePtr<NodeList> args)
     : expression_pool(pool), location(loc), op(op), opNode(node), args(std::move(args)) {}
 /// Destructor
@@ -30,7 +30,7 @@ NodeList::~NodeList() {
     list_pool.Deallocate(this);
 }
 /// Prepend a node
-void NodeList::push_front(proto::Node node) {
+void NodeList::push_front(buffers::Node node) {
     auto* elem = new (element_pool.Allocate()) ListElement();
     elem->node = node;
     if (!first_element) {
@@ -48,7 +48,7 @@ void NodeList::push_front(proto::Node node) {
     ++element_count;
 }
 /// Append a node
-void NodeList::push_back(proto::Node node) {
+void NodeList::push_back(buffers::Node node) {
     auto* elem = new (element_pool.Allocate()) ListElement();
     elem->node = node;
     if (!last_element) {
@@ -66,7 +66,7 @@ void NodeList::push_back(proto::Node node) {
     ++element_count;
 }
 /// Append a list of nodes
-void NodeList::append(std::initializer_list<proto::Node> nodes) {
+void NodeList::append(std::initializer_list<buffers::Node> nodes) {
     for (auto node : nodes) {
         push_back(node);
     }
@@ -89,7 +89,7 @@ void NodeList::append(WeakUniquePtr<NodeList>&& other) {
     other.Destroy();
 }
 /// Copy a list into a vector
-void NodeList::copy_into(std::span<proto::Node> nodes) {
+void NodeList::copy_into(std::span<buffers::Node> nodes) {
     assert(nodes.size() == element_count);
     auto iter = first_element;
     for (size_t i = 0; i < element_count; ++i) {

@@ -2,7 +2,7 @@
 
 #include "gtest/gtest.h"
 #include "dashql/catalog.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 
 using namespace dashql;
 
@@ -27,17 +27,17 @@ SELECT s_co
     Catalog catalog;
     Script external_script{catalog, 1};
     external_script.InsertTextAt(0, TPCH_SCHEMA);
-    ASSERT_EQ(external_script.Scan().second, proto::StatusCode::OK);
-    ASSERT_EQ(external_script.Parse().second, proto::StatusCode::OK);
-    ASSERT_EQ(external_script.Analyze().second, proto::StatusCode::OK);
+    ASSERT_EQ(external_script.Scan().second, buffers::StatusCode::OK);
+    ASSERT_EQ(external_script.Parse().second, buffers::StatusCode::OK);
+    ASSERT_EQ(external_script.Analyze().second, buffers::StatusCode::OK);
 
     catalog.LoadScript(external_script, 0);
 
     Script main_script{catalog, 2};
     main_script.InsertTextAt(0, main_script_text);
-    ASSERT_EQ(main_script.Scan().second, proto::StatusCode::OK);
-    ASSERT_EQ(main_script.Parse().second, proto::StatusCode::OK);
-    ASSERT_EQ(main_script.Analyze().second, proto::StatusCode::OK);
+    ASSERT_EQ(main_script.Scan().second, buffers::StatusCode::OK);
+    ASSERT_EQ(main_script.Parse().second, buffers::StatusCode::OK);
+    ASSERT_EQ(main_script.Analyze().second, buffers::StatusCode::OK);
 
     // Move the cursor
     auto cursor_ofs = main_script_text.find("s_co");
@@ -47,7 +47,7 @@ SELECT s_co
 
     // Compute completion
     auto [completion, status] = main_script.CompleteAtCursor();
-    ASSERT_EQ(status, proto::StatusCode::OK);
+    ASSERT_EQ(status, buffers::StatusCode::OK);
     auto& heap = completion->GetHeap();
     auto entries = heap.GetEntries();
 

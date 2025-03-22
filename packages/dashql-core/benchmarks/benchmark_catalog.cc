@@ -2,7 +2,7 @@
 
 #include "benchmark/benchmark.h"
 #include "dashql/catalog.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 
 using namespace dashql;
 
@@ -25,25 +25,25 @@ std::tuple<std::span<const std::byte>, std::unique_ptr<const std::byte[]>, size_
     flatbuffers::FlatBufferBuilder fbb;
     auto database_name = fbb.CreateString(schema.database_name);
     auto schema_name = fbb.CreateString(schema.schema_name);
-    std::vector<flatbuffers::Offset<proto::SchemaTable>> tables;
-    std::vector<flatbuffers::Offset<proto::SchemaTableColumn>> table_columns;
+    std::vector<flatbuffers::Offset<buffers::SchemaTable>> tables;
+    std::vector<flatbuffers::Offset<buffers::SchemaTableColumn>> table_columns;
     for (auto& table : schema.tables) {
         table_columns.clear();
         for (auto& column : table.table_columns) {
             auto column_name = fbb.CreateString(column.column_name);
-            proto::SchemaTableColumnBuilder column_builder{fbb};
+            buffers::SchemaTableColumnBuilder column_builder{fbb};
             column_builder.add_column_name(column_name);
             table_columns.push_back(column_builder.Finish());
         }
         auto table_columns_ofs = fbb.CreateVector(table_columns);
         auto table_name_ofs = fbb.CreateString(table.table_name);
-        proto::SchemaTableBuilder table_builder{fbb};
+        buffers::SchemaTableBuilder table_builder{fbb};
         table_builder.add_table_name(table_name_ofs);
         table_builder.add_columns(table_columns_ofs);
         tables.push_back(table_builder.Finish());
     }
     auto tables_ofs = fbb.CreateVector(tables);
-    proto::SchemaDescriptorBuilder descriptor_builder{fbb};
+    buffers::SchemaDescriptorBuilder descriptor_builder{fbb};
     descriptor_builder.add_database_name(database_name);
     descriptor_builder.add_schema_name(schema_name);
     descriptor_builder.add_tables(tables_ofs);

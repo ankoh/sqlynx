@@ -1,7 +1,7 @@
 #include "benchmark/benchmark.h"
 #include "dashql/analyzer/completion.h"
 #include "dashql/catalog.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "dashql/script.h"
 
 using namespace dashql;
@@ -604,7 +604,7 @@ static void parse_query(benchmark::State& state) {
     Script main{catalog, 1};
     main.InsertTextAt(0, main_script);
     auto scan = main.Scan();
-    assert(scan.second == proto::StatusCode::OK);
+    assert(scan.second == buffers::StatusCode::OK);
 
     for (auto _ : state) {
         auto parsed = main.Parse();
@@ -620,9 +620,9 @@ static void analyze_query(benchmark::State& state) {
     auto ext_scan = external.Scan();
     auto ext_parsed = external.Parse();
     auto ext_analyzed = external.Analyze();
-    assert(ext_scan.second == proto::StatusCode::OK);
-    assert(ext_parsed.second == proto::StatusCode::OK);
-    assert(ext_analyzed.second == proto::StatusCode::OK);
+    assert(ext_scan.second == buffers::StatusCode::OK);
+    assert(ext_parsed.second == buffers::StatusCode::OK);
+    assert(ext_analyzed.second == buffers::StatusCode::OK);
 
     catalog.LoadScript(external, 0);
 
@@ -631,8 +631,8 @@ static void analyze_query(benchmark::State& state) {
 
     auto main_scan = main.Scan();
     auto main_parsed = main.Parse();
-    assert(main_scan.second == proto::StatusCode::OK);
-    assert(main_parsed.second == proto::StatusCode::OK);
+    assert(main_scan.second == buffers::StatusCode::OK);
+    assert(main_parsed.second == buffers::StatusCode::OK);
 
     for (auto _ : state) {
         auto main_analyzed = main.Analyze();
@@ -654,10 +654,10 @@ static void move_cursor(benchmark::State& state) {
     text_offset += text.size();
     auto cursor = main.MoveCursor(text_offset);
 
-    assert(scanned.second == proto::StatusCode::OK);
-    assert(parsed.second == proto::StatusCode::OK);
-    assert(analyzed.second == proto::StatusCode::OK);
-    assert(cursor.second == proto::StatusCode::OK);
+    assert(scanned.second == buffers::StatusCode::OK);
+    assert(parsed.second == buffers::StatusCode::OK);
+    assert(analyzed.second == buffers::StatusCode::OK);
+    assert(cursor.second == buffers::StatusCode::OK);
 
     for (auto _ : state) {
         auto cursor = main.MoveCursor(text_offset);
@@ -680,10 +680,10 @@ static void complete_cursor(benchmark::State& state) {
     auto cursor = main.MoveCursor(text_offset);
     auto completion = main.CompleteAtCursor(10);
 
-    assert(scanned.second == proto::StatusCode::OK);
-    assert(parsed.second == proto::StatusCode::OK);
-    assert(analyzed.second == proto::StatusCode::OK);
-    assert(completion.second == proto::StatusCode::OK);
+    assert(scanned.second == buffers::StatusCode::OK);
+    assert(parsed.second == buffers::StatusCode::OK);
+    assert(analyzed.second == buffers::StatusCode::OK);
+    assert(completion.second == buffers::StatusCode::OK);
     assert(completion.first != nullptr);
 
     for (auto _ : state) {

@@ -2,7 +2,7 @@
 
 #include "dashql/analyzer/pass_manager.h"
 #include "dashql/catalog.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "dashql/utils/attribute_index.h"
 
 namespace dashql {
@@ -32,7 +32,7 @@ struct Analyzer {
     Analyzer(std::shared_ptr<ParsedScript> parsed, Catalog& catalog);
 
     /// Analyze a program
-    static std::pair<std::shared_ptr<AnalyzedScript>, proto::StatusCode> Analyze(std::shared_ptr<ParsedScript> parsed,
+    static std::pair<std::shared_ptr<AnalyzedScript>, buffers::StatusCode> Analyze(std::shared_ptr<ParsedScript> parsed,
                                                                                  Catalog& catalog);
 };
 

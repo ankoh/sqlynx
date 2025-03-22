@@ -21,7 +21,7 @@
 
 using namespace dashql;
 using namespace dashql::parser;
-namespace sx = proto;
+namespace sx = buffers;
 
 // Flex use 16KiB buffers by default.
 // This is way too large as the data comes from main-memory anyway.
@@ -338,7 +338,7 @@ std::string_view input = ctx.GetInputData();
 
 {xbstart}       { ext_begin = loc; BEGIN(xb); }
 <xb>{quotestop} { BEGIN(INITIAL); return ctx.ReadBitStringLiteral(Loc({ext_begin, loc})); }
-<xb>{quotefail} { yyless(1); BEGIN(INITIAL); return ctx.ReadBitStringLiteral(Loc({ext_begin, proto::Location(loc.offset(), loc.length() - 1)})); }
+<xb>{quotefail} { yyless(1); BEGIN(INITIAL); return ctx.ReadBitStringLiteral(Loc({ext_begin, buffers::Location(loc.offset(), loc.length() - 1)})); }
 <xh>{xhinside}  |
 <xb>{xbinside} 
 <xh>{quotecontinue} |
@@ -346,13 +346,13 @@ std::string_view input = ctx.GetInputData();
 <xb><<EOF>>     { ctx.AddError(Loc({ext_begin, loc}), "unterminated bit string literal"); BEGIN(INITIAL); }
 {xhstart}       { ext_begin = loc; BEGIN(xh); }
 <xh>{quotestop} { BEGIN(INITIAL); return ctx.ReadHexStringLiteral(Loc({ext_begin, loc})); }
-<xh>{quotefail} { yyless(1); BEGIN(INITIAL); return ctx.ReadHexStringLiteral(Loc({ext_begin, proto::Location(loc.offset(), loc.length() - 1)})); }
+<xh>{quotefail} { yyless(1); BEGIN(INITIAL); return ctx.ReadHexStringLiteral(Loc({ext_begin, buffers::Location(loc.offset(), loc.length() - 1)})); }
 <xh><<EOF>>     { ctx.AddError(Loc({ext_begin, loc}), "unterminated hexadecimal bit string literal"); BEGIN(INITIAL); }
 
 
 {xqstart}       { ext_begin = loc; BEGIN(xq); }
 <xq>{quotestop} { BEGIN(INITIAL); return ctx.ReadStringLiteral(Loc({ext_begin, loc})); }
-<xq>{quotefail} { yyless(1); BEGIN(INITIAL); return ctx.ReadStringLiteral(Loc({ext_begin, proto::Location(loc.offset(), loc.length() - 1)})); }
+<xq>{quotefail} { yyless(1); BEGIN(INITIAL); return ctx.ReadStringLiteral(Loc({ext_begin, buffers::Location(loc.offset(), loc.length() - 1)})); }
 <xq>{xqdouble}
 <xq>{xqinside}
 <xq><<EOF>>     { ctx.AddError(Loc({ext_begin, loc}), "unterminated quoted string"); BEGIN(INITIAL); }
@@ -372,7 +372,7 @@ std::string_view input = ctx.GetInputData();
 {raw_typecast}      { return Parser::make_TYPECAST(loc); }
 {raw_dot_dot}       { return Parser::make_DOT_DOT(loc); }
 {raw_dot}           { return Parser::make_DOT(loc); }
-{raw_dot_trailing}  { return Parser::make_DOT_TRAILING(proto::Location(loc.offset(), 1)); }
+{raw_dot_trailing}  { return Parser::make_DOT_TRAILING(buffers::Location(loc.offset(), 1)); }
 {colon_equals}      { return Parser::make_COLON_EQUALS(loc); }
 {equals_greater}    { return Parser::make_EQUALS_GREATER(loc); }
 {less_equals}       { return Parser::make_LESS_EQUALS(loc); }

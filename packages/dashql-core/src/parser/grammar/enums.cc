@@ -2,18 +2,18 @@
 
 #include <algorithm>
 
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 
 namespace dashql {
 namespace parser {
 
-const char* getEnumText(const proto::Node& target) {
+const char* getEnumText(const buffers::Node& target) {
     auto nt = target.node_type();
     auto v = static_cast<uint32_t>(target.children_begin_or_value());
     switch (nt) {
 #define X(ENUM_TYPE, TYPE_TABLE)     \
-    case proto::NodeType::ENUM_TYPE: \
-        return proto::TYPE_TABLE()->names[v];
+    case buffers::NodeType::ENUM_TYPE: \
+        return buffers::TYPE_TABLE()->names[v];
         X(ENUM_SQL_CHARACTER_TYPE, CharacterTypeTypeTable)
         X(ENUM_SQL_COLUMN_CONSTRAINT, ColumnConstraintTypeTable)
         X(ENUM_SQL_COMBINE_MODIFIER, CombineModifierTypeTable)
@@ -40,15 +40,15 @@ const char* getEnumText(const proto::Node& target) {
         X(ENUM_SQL_WINDOW_RANGE_MODE, WindowRangeModeTypeTable)
 #undef X
 
-        case proto::NodeType::ENUM_SQL_JOIN_TYPE: {
-            auto tt = proto::JoinTypeTypeTable();
+        case buffers::NodeType::ENUM_SQL_JOIN_TYPE: {
+            auto tt = buffers::JoinTypeTypeTable();
             auto iter =
                 std::lower_bound(tt->values, tt->values + tt->num_elems, v, [](auto l, auto r) { return l < r; });
             if (iter >= (tt->values + tt->num_elems) || *iter != v) {
                 return "?";
             }
             auto idx = iter - tt->values;
-            return proto::JoinTypeTypeTable()->names[idx];
+            return buffers::JoinTypeTypeTable()->names[idx];
         }
 
         default:

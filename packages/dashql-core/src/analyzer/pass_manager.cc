@@ -17,7 +17,7 @@ void PassManager::Execute(LTRPass& pass) {
     auto iter = 0;
     while (iter != parsedProgram.nodes.size()) {
         size_t morsel_size = std::min<size_t>(parsedProgram.nodes.size() - iter, 1024);
-        pass.Visit(std::span<proto::Node>(parsedProgram.nodes).subspan(iter, morsel_size));
+        pass.Visit(std::span<buffers::Node>(parsedProgram.nodes).subspan(iter, morsel_size));
         iter += morsel_size;
     }
     // Finish all passes

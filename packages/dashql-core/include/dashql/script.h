@@ -11,7 +11,7 @@
 #include "dashql/catalog.h"
 #include "dashql/external.h"
 #include "dashql/parser/parser.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "dashql/text/rope.h"
 #include "dashql/utils/intrusive_list.h"
 #include "dashql/utils/string_pool.h"
@@ -25,8 +25,8 @@ class Analyzer;
 class NameSuffixIndex;
 class Completion;
 
-using Key = proto::AttributeKey;
-using Location = proto::Location;
+using Key = buffers::AttributeKey;
+using Location = buffers::Location;
 using NameID = uint32_t;
 using NodeID = uint32_t;
 using StatementID = uint32_t;
@@ -41,11 +41,11 @@ class ScannedScript {
     std::string text_buffer;
 
     /// The scanner errors
-    std::vector<std::pair<proto::Location, std::string>> errors;
+    std::vector<std::pair<buffers::Location, std::string>> errors;
     /// The line breaks
-    std::vector<proto::Location> line_breaks;
+    std::vector<buffers::Location> line_breaks;
     /// The comments
-    std::vector<proto::Location> comments;
+    std::vector<buffers::Location> comments;
 
     /// The name pool
     StringPool<1024> name_pool;
@@ -78,7 +78,7 @@ class ScannedScript {
 
     /// A location info
     struct LocationInfo {
-        using RelativePosition = dashql::proto::RelativeSymbolPosition;
+        using RelativePosition = dashql::buffers::RelativeSymbolPosition;
         /// The text offset
         size_t text_offset;
         /// The last scanner symbol that does not have a begin greater than the text offset
@@ -121,9 +121,9 @@ class ScannedScript {
     /// Find token at text offset
     LocationInfo FindSymbol(size_t text_offset);
     /// Pack syntax tokens
-    std::unique_ptr<proto::ScannerTokensT> PackTokens();
+    std::unique_ptr<buffers::ScannerTokensT> PackTokens();
     /// Pack scanned program
-    flatbuffers::Offset<proto::ScannedScript> Pack(flatbuffers::FlatBufferBuilder& builder);
+    flatbuffers::Offset<buffers::ScannedScript> Pack(flatbuffers::FlatBufferBuilder& builder);
 };
 
 class ParsedScript {
@@ -131,7 +131,7 @@ class ParsedScript {
     /// A statement
     struct Statement {
         /// The statement type
-        proto::StatementType type = proto::StatementType::NONE;
+        buffers::StatementType type = buffers::StatementType::NONE;
         /// The root node
         NodeID root = std::numeric_limits<uint32_t>::max();
         /// The begin of the nodes
@@ -139,7 +139,7 @@ class ParsedScript {
         /// The node count
         size_t node_count = 0;
         /// Get as flatbuffer object
-        std::unique_ptr<proto::StatementT> Pack();
+        std::unique_ptr<buffers::StatementT> Pack();
     };
 
     /// The origin id
@@ -147,11 +147,11 @@ class ParsedScript {
     /// The scanned script
     std::shared_ptr<ScannedScript> scanned_script;
     /// The nodes
-    std::vector<proto::Node> nodes;
+    std::vector<buffers::Node> nodes;
     /// The statements
     std::vector<Statement> statements;
     /// The parser errors
-    std::vector<std::pair<proto::Location, std::string>> errors;
+    std::vector<std::pair<buffers::Location, std::string>> errors;
 
    public:
     /// Constructor
@@ -162,7 +162,7 @@ class ParsedScript {
     /// Resolve statement and ast node at a text offset
     std::optional<std::pair<size_t, size_t>> FindNodeAtOffset(size_t text_offset) const;
     /// Build the script
-    flatbuffers::Offset<proto::ParsedScript> Pack(flatbuffers::FlatBufferBuilder& builder);
+    flatbuffers::Offset<buffers::ParsedScript> Pack(flatbuffers::FlatBufferBuilder& builder);
 };
 
 class AnalyzedScript : public CatalogEntry {
@@ -211,7 +211,7 @@ class AnalyzedScript : public CatalogEntry {
         /// Constructor
         TableReference(std::optional<std::reference_wrapper<RegisteredName>> alias_name) : alias_name(alias_name) {}
         /// Pack as FlatBuffer
-        flatbuffers::Offset<proto::TableReference> Pack(flatbuffers::FlatBufferBuilder& builder) const;
+        flatbuffers::Offset<buffers::TableReference> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
     /// An expression
     struct Expression : public IntrusiveListNode {
@@ -259,7 +259,7 @@ class AnalyzedScript : public CatalogEntry {
                    std::holds_alternative<ResolvedColumnRef>(inner);
         }
         /// Pack as FlatBuffer
-        flatbuffers::Offset<proto::Expression> Pack(flatbuffers::FlatBufferBuilder& builder) const;
+        flatbuffers::Offset<buffers::Expression> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
     /// A result target
     struct ResultTarget {
@@ -312,7 +312,7 @@ class AnalyzedScript : public CatalogEntry {
     /// The catalog version
     Catalog::Version catalog_version;
     /// The analyzer errors
-    std::vector<proto::AnalyzerErrorT> errors;
+    std::vector<buffers::AnalyzerErrorT> errors;
     /// The table references
     ChunkBuffer<TableReference, 16> table_references;
     /// The expressions
@@ -331,12 +331,12 @@ class AnalyzedScript : public CatalogEntry {
     AnalyzedScript(std::shared_ptr<ParsedScript> parsed, Catalog& catalog);
 
     /// Describe the catalog entry
-    virtual flatbuffers::Offset<proto::CatalogEntry> DescribeEntry(
+    virtual flatbuffers::Offset<buffers::CatalogEntry> DescribeEntry(
         flatbuffers::FlatBufferBuilder& builder) const override;
     /// Get the name search index
     const CatalogEntry::NameSearchIndex& GetNameSearchIndex() override;
     /// Build the program
-    flatbuffers::Offset<proto::AnalyzedScript> Pack(flatbuffers::FlatBufferBuilder& builder);
+    flatbuffers::Offset<buffers::AnalyzedScript> Pack(flatbuffers::FlatBufferBuilder& builder);
 };
 
 class Script;
@@ -376,10 +376,10 @@ struct ScriptCursor {
     /// Move the cursor to a script at a position
     ScriptCursor(const Script& script, size_t text_offset);
     /// Pack the cursor info
-    flatbuffers::Offset<proto::ScriptCursor> Pack(flatbuffers::FlatBufferBuilder& builder) const;
+    flatbuffers::Offset<buffers::ScriptCursor> Pack(flatbuffers::FlatBufferBuilder& builder) const;
 
     /// Create a script cursor
-    static std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> Place(const Script& script, size_t text_offset);
+    static std::pair<std::unique_ptr<ScriptCursor>, buffers::StatusCode> Place(const Script& script, size_t text_offset);
 };
 
 class Script {
@@ -403,9 +403,9 @@ class Script {
     std::unique_ptr<ScriptCursor> cursor;
 
     /// The memory statistics
-    proto::ScriptProcessingTimings timing_statistics;
+    buffers::ScriptProcessingTimings timing_statistics;
     /// Get memory statisics
-    std::unique_ptr<proto::ScriptMemoryStatistics> GetMemoryStatistics();
+    std::unique_ptr<buffers::ScriptMemoryStatistics> GetMemoryStatistics();
 
    public:
     /// Constructor
@@ -436,18 +436,18 @@ class Script {
     std::string Format();
 
     /// Parse the latest scanned script
-    std::pair<ScannedScript*, proto::StatusCode> Scan();
+    std::pair<ScannedScript*, buffers::StatusCode> Scan();
     /// Parse the latest scanned script
-    std::pair<ParsedScript*, proto::StatusCode> Parse();
+    std::pair<ParsedScript*, buffers::StatusCode> Parse();
     /// Analyze the latest parsed script
-    std::pair<AnalyzedScript*, proto::StatusCode> Analyze();
+    std::pair<AnalyzedScript*, buffers::StatusCode> Analyze();
 
     /// Move the cursor
-    std::pair<const ScriptCursor*, proto::StatusCode> MoveCursor(size_t text_offset);
+    std::pair<const ScriptCursor*, buffers::StatusCode> MoveCursor(size_t text_offset);
     /// Complete at the cursor
-    std::pair<std::unique_ptr<Completion>, proto::StatusCode> CompleteAtCursor(size_t limit = 10) const;
+    std::pair<std::unique_ptr<Completion>, buffers::StatusCode> CompleteAtCursor(size_t limit = 10) const;
     /// Get statisics
-    std::unique_ptr<proto::ScriptStatisticsT> GetStatistics();
+    std::unique_ptr<buffers::ScriptStatisticsT> GetStatistics();
 };
 
 }  // namespace dashql

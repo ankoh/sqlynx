@@ -1,6 +1,6 @@
 #pragma once
 
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "dashql/utils/intrusive_list.h"
 
 namespace dashql {
@@ -12,12 +12,12 @@ enum CatalogObjectType {
     TableDeclaration = 3,
     ColumnDeclaration = 4,
 };
-static_assert(static_cast<uint8_t>(proto::CompletionCandidateObjectType::COLUMN) ==
+static_assert(static_cast<uint8_t>(buffers::CompletionCandidateObjectType::COLUMN) ==
               CatalogObjectType::ColumnDeclaration);
-static_assert(static_cast<uint8_t>(proto::CompletionCandidateObjectType::DATABASE) ==
+static_assert(static_cast<uint8_t>(buffers::CompletionCandidateObjectType::DATABASE) ==
               CatalogObjectType::DatabaseReference);
-static_assert(static_cast<uint8_t>(proto::CompletionCandidateObjectType::SCHEMA) == CatalogObjectType::SchemaReference);
-static_assert(static_cast<uint8_t>(proto::CompletionCandidateObjectType::TABLE) == CatalogObjectType::TableDeclaration);
+static_assert(static_cast<uint8_t>(buffers::CompletionCandidateObjectType::SCHEMA) == CatalogObjectType::SchemaReference);
+static_assert(static_cast<uint8_t>(buffers::CompletionCandidateObjectType::TABLE) == CatalogObjectType::TableDeclaration);
 
 /// A catalog object
 struct CatalogObject : public IntrusiveListNode {

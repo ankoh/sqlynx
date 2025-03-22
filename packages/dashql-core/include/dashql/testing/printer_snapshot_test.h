@@ -4,7 +4,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "gtest/gtest.h"
 #include "pugixml.hpp"
 
@@ -29,7 +29,7 @@ struct PrinterSnapshotTest {
     ::testing::AssertionResult Matches(const pugi::xml_node& actual) const;
 
     /// Encode a program
-    static void EncodeProgram(pugi::xml_node root, const proto::ParsedProgramT& program, std::string_view text);
+    static void EncodeProgram(pugi::xml_node root, const buffers::ParsedProgramT& program, std::string_view text);
     /// Get the grammar tests
     static void LoadTests(std::filesystem::path& project_root);
     /// Get the grammar tests

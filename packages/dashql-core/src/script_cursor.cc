@@ -1,4 +1,4 @@
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "dashql/script.h"
 
 namespace dashql {
@@ -7,7 +7,7 @@ ScriptCursor::ScriptCursor(const Script& script, size_t text_offset)
     : script(script), text_offset(text_offset), context(std::monostate{}) {}
 
 /// Constructor
-std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Place(const Script& script,
+std::pair<std::unique_ptr<ScriptCursor>, buffers::StatusCode> ScriptCursor::Place(const Script& script,
                                                                                 size_t text_offset) {
     auto cursor = std::make_unique<ScriptCursor>(script, text_offset);
 
@@ -46,7 +46,7 @@ std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Place(
                         switch (nodes[node_id].node_type()) {
                             // Node is a column ref?
                             // Then we check all expressions in the innermost scope.
-                            case proto::NodeType::OBJECT_SQL_COLUMN_REF: {
+                            case buffers::NodeType::OBJECT_SQL_COLUMN_REF: {
                                 matched = true;
                                 for (auto& expression : innermost_scope.expressions) {
                                     if (node_id == expression.ast_node_id && expression.IsColumnRef()) {
@@ -59,7 +59,7 @@ std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Place(
                             }
                             // Node is a table ref?
                             // Then we check all table refs in the innermost scope.
-                            case proto::NodeType::OBJECT_SQL_TABLEREF: {
+                            case buffers::NodeType::OBJECT_SQL_TABLEREF: {
                                 matched = true;
                                 for (auto& table_ref : innermost_scope.table_references) {
                                     if (node_id == table_ref.ast_node_id) {
@@ -82,23 +82,23 @@ std::pair<std::unique_ptr<ScriptCursor>, proto::StatusCode> ScriptCursor::Place(
             }
         }
     }
-    return {std::move(cursor), proto::StatusCode::OK};
+    return {std::move(cursor), buffers::StatusCode::OK};
 }
 
 /// Pack the cursor info
-flatbuffers::Offset<proto::ScriptCursor> ScriptCursor::Pack(flatbuffers::FlatBufferBuilder& builder) const {
-    auto out = std::make_unique<proto::ScriptCursorT>();
+flatbuffers::Offset<buffers::ScriptCursor> ScriptCursor::Pack(flatbuffers::FlatBufferBuilder& builder) const {
+    auto out = std::make_unique<buffers::ScriptCursorT>();
     out->text_offset = text_offset;
     if (scanner_location) {
         auto& symbol = script.scanned_script->symbols[scanner_location->symbol_id];
         auto symbol_offset = symbol.location.offset();
         out->scanner_symbol_id = scanner_location->symbol_id;
-        out->scanner_relative_position = static_cast<proto::RelativeSymbolPosition>(scanner_location->relative_pos);
+        out->scanner_relative_position = static_cast<buffers::RelativeSymbolPosition>(scanner_location->relative_pos);
         out->scanner_symbol_offset = symbol_offset;
         out->scanner_symbol_kind = static_cast<uint32_t>(symbol.kind_);
     } else {
         out->scanner_symbol_id = std::numeric_limits<uint32_t>::max();
-        out->scanner_relative_position = proto::RelativeSymbolPosition::NEW_SYMBOL_AFTER;
+        out->scanner_relative_position = buffers::RelativeSymbolPosition::NEW_SYMBOL_AFTER;
         out->scanner_symbol_offset = 0;
         out->scanner_symbol_kind = 0;
     }
@@ -114,20 +114,20 @@ flatbuffers::Offset<proto::ScriptCursor> ScriptCursor::Pack(flatbuffers::FlatBuf
             break;
         case 1: {
             auto& table_ref = std::get<ScriptCursor::TableRefContext>(context);
-            proto::ScriptCursorTableRefContextT ctx;
+            buffers::ScriptCursorTableRefContextT ctx;
             ctx.table_reference_id = table_ref.table_reference_id;
             out->context.Set(std::move(ctx));
             break;
         }
         case 2: {
             auto& column_ref = std::get<ScriptCursor::ColumnRefContext>(context);
-            proto::ScriptCursorColumnRefContextT ctx;
+            buffers::ScriptCursorColumnRefContextT ctx;
             ctx.expression_id = column_ref.expression_id;
             out->context.Set(std::move(ctx));
             break;
         }
     }
-    return proto::ScriptCursor::Pack(builder, out.get());
+    return buffers::ScriptCursor::Pack(builder, out.get());
 }
 
 }  // namespace dashql

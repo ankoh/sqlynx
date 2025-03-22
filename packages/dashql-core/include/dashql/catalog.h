@@ -13,7 +13,7 @@
 
 #include "dashql/catalog_object.h"
 #include "dashql/external.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "dashql/text/names.h"
 #include "dashql/utils/btree/map.h"
 #include "dashql/utils/btree/set.h"
@@ -73,7 +73,7 @@ class CatalogEntry {
             return *this;
         }
         /// Pack as FlatBuffer
-        flatbuffers::Offset<proto::QualifiedTableName> Pack(flatbuffers::FlatBufferBuilder& builder) const;
+        flatbuffers::Offset<buffers::QualifiedTableName> Pack(flatbuffers::FlatBufferBuilder& builder) const;
         /// Construct a key
         operator Key() { return {database_name.get().text, schema_name.get().text, table_name.get().text}; }
     };
@@ -92,7 +92,7 @@ class CatalogEntry {
                             RegisteredName& column_name)
             : ast_node_id(ast_node_id), table_alias(table_alias), column_name(column_name) {}
         /// Pack as FlatBuffer
-        flatbuffers::Offset<proto::QualifiedColumnName> Pack(flatbuffers::FlatBufferBuilder& builder) const;
+        flatbuffers::Offset<buffers::QualifiedColumnName> Pack(flatbuffers::FlatBufferBuilder& builder) const;
         /// Construct a key
         operator Key() {
             return {table_alias.has_value() ? table_alias.value().get().text : "", column_name.get().text};
@@ -114,7 +114,7 @@ class CatalogEntry {
         TableColumn(std::optional<uint32_t> ast_node_id, RegisteredName& column_name)
             : CatalogObject(CatalogObjectType::ColumnDeclaration), ast_node_id(ast_node_id), column_name(column_name) {}
         /// Pack as FlatBuffer
-        flatbuffers::Offset<proto::TableColumn> Pack(flatbuffers::FlatBufferBuilder& builder) const;
+        flatbuffers::Offset<buffers::TableColumn> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
     /// A table declaration
     struct TableDeclaration : public CatalogObject {
@@ -146,7 +146,7 @@ class CatalogEntry {
         TableDeclaration(QualifiedTableName table_name)
             : CatalogObject(CatalogObjectType::TableDeclaration), table_name(std::move(table_name)) {}
         /// Pack as FlatBuffer
-        flatbuffers::Offset<proto::Table> Pack(flatbuffers::FlatBufferBuilder& builder) const;
+        flatbuffers::Offset<buffers::Table> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
     /// A database name declaration
     struct DatabaseReference : public CatalogObject {
@@ -166,7 +166,7 @@ class CatalogEntry {
               database_name(database_name),
               database_alias(database_alias) {}
         /// Pack as FlatBuffer
-        flatbuffers::Offset<proto::DatabaseDeclaration> Pack(flatbuffers::FlatBufferBuilder& builder) const;
+        flatbuffers::Offset<buffers::DatabaseDeclaration> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
     /// A schema name declaration
     struct SchemaReference : public CatalogObject {
@@ -191,7 +191,7 @@ class CatalogEntry {
               database_name(database_name),
               schema_name(schema_name) {}
         /// Pack as FlatBuffer
-        flatbuffers::Offset<proto::SchemaDeclaration> Pack(flatbuffers::FlatBufferBuilder& builder) const;
+        flatbuffers::Offset<buffers::SchemaDeclaration> Pack(flatbuffers::FlatBufferBuilder& builder) const;
     };
 
    protected:
@@ -242,7 +242,7 @@ class CatalogEntry {
     QualifiedTableName QualifyTableName(NameRegistry& name_registry, QualifiedTableName name) const;
 
     /// Describe the catalog entry
-    virtual flatbuffers::Offset<proto::CatalogEntry> DescribeEntry(flatbuffers::FlatBufferBuilder& builder) const = 0;
+    virtual flatbuffers::Offset<buffers::CatalogEntry> DescribeEntry(flatbuffers::FlatBufferBuilder& builder) const = 0;
     /// Get the name search index
     virtual const NameSearchIndex& GetNameSearchIndex() = 0;
 
@@ -271,8 +271,8 @@ class CatalogEntry {
 class DescriptorPool : public CatalogEntry {
    public:
     /// A reference to a flatbuffer descriptor
-    using DescriptorRefVariant = std::variant<std::reference_wrapper<const proto::SchemaDescriptor>,
-                                              std::reference_wrapper<const proto::SchemaDescriptors>>;
+    using DescriptorRefVariant = std::variant<std::reference_wrapper<const buffers::SchemaDescriptor>,
+                                              std::reference_wrapper<const buffers::SchemaDescriptors>>;
     /// A schema descriptors
     struct Descriptor {
         /// The schema descriptor
@@ -298,7 +298,7 @@ class DescriptorPool : public CatalogEntry {
     auto GetRank() const { return rank; }
 
     /// Describe the catalog entry
-    flatbuffers::Offset<proto::CatalogEntry> DescribeEntry(flatbuffers::FlatBufferBuilder& builder) const override;
+    flatbuffers::Offset<buffers::CatalogEntry> DescribeEntry(flatbuffers::FlatBufferBuilder& builder) const override;
     /// Get the name search index
     const NameSearchIndex& GetNameSearchIndex() override;
     /// Get the name registry
@@ -307,7 +307,7 @@ class DescriptorPool : public CatalogEntry {
     std::span<const Descriptor> GetDescriptors() const { return descriptor_buffers; }
 
     /// Add a schema descriptor
-    proto::StatusCode AddSchemaDescriptor(DescriptorRefVariant descriptor,
+    buffers::StatusCode AddSchemaDescriptor(DescriptorRefVariant descriptor,
                                           std::unique_ptr<const std::byte[]> descriptor_buffer,
                                           size_t descriptor_buffer_size, CatalogDatabaseID& db_id,
                                           CatalogSchemaID& schema_id);
@@ -417,7 +417,7 @@ class Catalog {
     btree::map<std::pair<std::string_view, std::string_view>, std::unique_ptr<SchemaDeclaration>> schemas;
 
     /// Update a script entry
-    proto::StatusCode UpdateScript(ScriptEntry& entry);
+    buffers::StatusCode UpdateScript(ScriptEntry& entry);
 
    public:
     /// Explicit constructor needed due to deleted copy constructor
@@ -476,27 +476,27 @@ class Catalog {
     /// Clear a catalog
     void Clear();
     /// Describe catalog entries
-    flatbuffers::Offset<proto::CatalogEntries> DescribeEntries(flatbuffers::FlatBufferBuilder& builder) const;
+    flatbuffers::Offset<buffers::CatalogEntries> DescribeEntries(flatbuffers::FlatBufferBuilder& builder) const;
     /// Describe catalog entries
-    flatbuffers::Offset<proto::CatalogEntries> DescribeEntriesOf(flatbuffers::FlatBufferBuilder& builder,
+    flatbuffers::Offset<buffers::CatalogEntries> DescribeEntriesOf(flatbuffers::FlatBufferBuilder& builder,
                                                                  size_t external_id) const;
     /// Flatten the catalog
-    flatbuffers::Offset<proto::FlatCatalog> Flatten(flatbuffers::FlatBufferBuilder& builder) const;
+    flatbuffers::Offset<buffers::FlatCatalog> Flatten(flatbuffers::FlatBufferBuilder& builder) const;
 
     /// Add a script
-    proto::StatusCode LoadScript(Script& script, CatalogEntry::Rank rank);
+    buffers::StatusCode LoadScript(Script& script, CatalogEntry::Rank rank);
     /// Drop a script
     void DropScript(Script& script);
     /// Add a descriptor pool
-    proto::StatusCode AddDescriptorPool(CatalogEntryID external_id, CatalogEntry::Rank rank);
+    buffers::StatusCode AddDescriptorPool(CatalogEntryID external_id, CatalogEntry::Rank rank);
     /// Drop a descriptor pool
-    proto::StatusCode DropDescriptorPool(CatalogEntryID external_id);
+    buffers::StatusCode DropDescriptorPool(CatalogEntryID external_id);
     /// Add a schema descriptor as serialized FlatBuffer
-    proto::StatusCode AddSchemaDescriptor(CatalogEntryID external_id, std::span<const std::byte> descriptor_data,
+    buffers::StatusCode AddSchemaDescriptor(CatalogEntryID external_id, std::span<const std::byte> descriptor_data,
                                           std::unique_ptr<const std::byte[]> descriptor_buffer,
                                           size_t descriptor_buffer_size);
     /// Add a schema descriptor>s< as serialized FlatBuffer
-    proto::StatusCode AddSchemaDescriptors(CatalogEntryID external_id, std::span<const std::byte> descriptor_data,
+    buffers::StatusCode AddSchemaDescriptors(CatalogEntryID external_id, std::span<const std::byte> descriptor_data,
                                            std::unique_ptr<const std::byte[]> descriptor_buffer,
                                            size_t descriptor_buffer_size);
 
@@ -509,7 +509,7 @@ class Catalog {
     void ResolveSchemaTables(std::string_view database_name, std::string_view schema_name,
                              std::vector<std::reference_wrapper<const CatalogEntry::TableDeclaration>>& out) const;
     /// Get statisics
-    std::unique_ptr<proto::CatalogStatisticsT> GetStatistics();
+    std::unique_ptr<buffers::CatalogStatisticsT> GetStatistics();
 };
 
 }  // namespace dashql

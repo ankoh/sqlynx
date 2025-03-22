@@ -5,7 +5,7 @@
 #include "dashql/analyzer/analyzer.h"
 #include "dashql/analyzer/pass_manager.h"
 #include "dashql/external.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "dashql/script.h"
 #include "dashql/text/names.h"
 #include "dashql/utils/attribute_index.h"
@@ -46,7 +46,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// The attribute index
     AttributeIndex& attribute_index;
     /// The ast
-    std::span<const proto::Node> ast;
+    std::span<const buffers::Node> ast;
 
     /// The default database name
     RegisteredName& default_database_name;
@@ -79,7 +79,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// Merge child states into a destination state
     void MergeChildStates(NodeState& dst, const sx::Node& parent);
     /// Merge child states into a destination state
-    void MergeChildStates(NodeState& dst, std::initializer_list<const proto::Node*> children);
+    void MergeChildStates(NodeState& dst, std::initializer_list<const buffers::Node*> children);
     /// Create a naming scope
     AnalyzedScript::NameScope& CreateScope(NodeState& target, uint32_t scope_root_node);
 
@@ -103,7 +103,7 @@ class NameResolutionPass : public PassManager::LTRPass {
     /// Prepare the analysis pass
     void Prepare() override;
     /// Visit a chunk of nodes
-    void Visit(std::span<proto::Node> morsel) override;
+    void Visit(std::span<buffers::Node> morsel) override;
     /// Finish the analysis pass
     void Finish() override;
 };

@@ -4,7 +4,7 @@
 
 #include "dashql/external.h"
 #include "dashql/parser/parser.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "dashql/script.h"
 #include "dashql/text/rope.h"
 
@@ -43,28 +43,28 @@ class Scanner {
     /// Read a parameter
     std::string_view GetInputData() const { return {input_data.data(), input_data.size()}; };
     /// Read a parameter
-    Parser::symbol_type ReadParameter(proto::Location loc);
+    Parser::symbol_type ReadParameter(buffers::Location loc);
     /// Read an integer
-    Parser::symbol_type ReadInteger(proto::Location loc);
+    Parser::symbol_type ReadInteger(buffers::Location loc);
     /// Read an identifier
-    Parser::symbol_type ReadIdentifier(proto::Location loc);
+    Parser::symbol_type ReadIdentifier(buffers::Location loc);
     /// Read a double-quoted identifier
-    Parser::symbol_type ReadDoubleQuotedIdentifier(proto::Location loc);
+    Parser::symbol_type ReadDoubleQuotedIdentifier(buffers::Location loc);
     /// Read a string literal
-    Parser::symbol_type ReadStringLiteral(proto::Location loc);
+    Parser::symbol_type ReadStringLiteral(buffers::Location loc);
     /// Read a hex literal
-    Parser::symbol_type ReadHexStringLiteral(proto::Location loc);
+    Parser::symbol_type ReadHexStringLiteral(buffers::Location loc);
     /// Read a hex literal
-    Parser::symbol_type ReadBitStringLiteral(proto::Location loc);
+    Parser::symbol_type ReadBitStringLiteral(buffers::Location loc);
 
     /// Add an error
-    void AddError(proto::Location location, const char* message);
+    void AddError(buffers::Location location, const char* message);
     /// Add an error
-    void AddError(proto::Location location, std::string&& message);
+    void AddError(buffers::Location location, std::string&& message);
     /// Add a line break
-    void AddLineBreak(proto::Location location);
+    void AddLineBreak(buffers::Location location);
     /// Add a comment
-    void AddComment(proto::Location location);
+    void AddComment(buffers::Location location);
 
    protected:
     /// Constructor
@@ -76,7 +76,7 @@ class Scanner {
 
    public:
     /// Scan input and produce all tokens
-    static std::pair<std::shared_ptr<ScannedScript>, proto::StatusCode> Scan(const rope::Rope& text,
+    static std::pair<std::shared_ptr<ScannedScript>, buffers::StatusCode> Scan(const rope::Rope& text,
                                                                              uint32_t external_id);
 };
 

@@ -9,40 +9,40 @@
 
 #include "dashql/catalog_object.h"
 #include "dashql/external.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "dashql/script.h"
 #include "dashql/utils/chunk_buffer.h"
 #include "dashql/utils/string_conversion.h"
 
 using namespace dashql;
 
-flatbuffers::Offset<proto::TableColumn> CatalogEntry::TableColumn::Pack(flatbuffers::FlatBufferBuilder& builder) const {
+flatbuffers::Offset<buffers::TableColumn> CatalogEntry::TableColumn::Pack(flatbuffers::FlatBufferBuilder& builder) const {
     flatbuffers::Offset<flatbuffers::String> column_name_ofs;
     if (!column_name.get().text.empty()) {
         column_name_ofs = builder.CreateString(column_name.get().text);
     }
-    proto::TableColumnBuilder out{builder};
+    buffers::TableColumnBuilder out{builder};
     out.add_ast_node_id(ast_node_id.value_or(PROTO_NULL_U32));
     out.add_column_name(column_name_ofs);
     return out.Finish();
 }
 
-flatbuffers::Offset<proto::Table> CatalogEntry::TableDeclaration::Pack(flatbuffers::FlatBufferBuilder& builder) const {
+flatbuffers::Offset<buffers::Table> CatalogEntry::TableDeclaration::Pack(flatbuffers::FlatBufferBuilder& builder) const {
     auto table_name_ofs = table_name.Pack(builder);
 
     // Pack table columns
-    std::vector<flatbuffers::Offset<proto::TableColumn>> table_column_offsets;
+    std::vector<flatbuffers::Offset<buffers::TableColumn>> table_column_offsets;
     table_column_offsets.reserve(table_columns.size());
     for (auto& table_column : table_columns) {
         auto column_name_ofs = builder.CreateString(table_column.column_name.get().text);
-        proto::TableColumnBuilder column_builder{builder};
+        buffers::TableColumnBuilder column_builder{builder};
         column_builder.add_column_name(column_name_ofs);
         table_column_offsets.push_back(column_builder.Finish());
     }
     auto table_columns_ofs = builder.CreateVector(table_column_offsets);
 
     // Pack table
-    proto::TableBuilder out{builder};
+    buffers::TableBuilder out{builder};
     out.add_catalog_table_id(catalog_table_id.Pack());
     out.add_catalog_schema_id(catalog_schema_id);
     out.add_catalog_database_id(catalog_database_id);
@@ -70,11 +70,11 @@ CatalogEntry::QualifiedTableName CatalogEntry::QualifyTableName(NameRegistry& na
                                                                 CatalogEntry::QualifiedTableName name) const {
     if (name.database_name.get().text.empty()) {
         name.database_name =
-            name_registry.Register(catalog.GetDefaultDatabaseName(), NameTags{proto::NameTag::DATABASE_NAME});
+            name_registry.Register(catalog.GetDefaultDatabaseName(), NameTags{buffers::NameTag::DATABASE_NAME});
     }
     if (name.schema_name.get().text.empty()) {
         name.schema_name =
-            name_registry.Register(catalog.GetDefaultSchemaName(), NameTags{proto::NameTag::SCHEMA_NAME});
+            name_registry.Register(catalog.GetDefaultSchemaName(), NameTags{buffers::NameTag::SCHEMA_NAME});
     }
     return name;
 }
@@ -185,28 +185,28 @@ DescriptorPool::DescriptorPool(Catalog& catalog, CatalogEntryID external_id, uin
     name_search_index.emplace(CatalogEntry::NameSearchIndex{});
 }
 
-static flatbuffers::Offset<proto::SchemaDescriptor> describeEntrySchema(flatbuffers::FlatBufferBuilder& builder,
-                                                                        const proto::SchemaDescriptor& descriptor,
+static flatbuffers::Offset<buffers::SchemaDescriptor> describeEntrySchema(flatbuffers::FlatBufferBuilder& builder,
+                                                                        const buffers::SchemaDescriptor& descriptor,
                                                                         uint32_t& table_id) {
     auto database_name = builder.CreateString(descriptor.database_name());
     auto schema_name = builder.CreateString(descriptor.schema_name());
 
-    std::vector<flatbuffers::Offset<proto::SchemaTable>> table_offsets;
+    std::vector<flatbuffers::Offset<buffers::SchemaTable>> table_offsets;
     table_offsets.reserve(descriptor.tables()->size());
     for (auto* table : *descriptor.tables()) {
         auto table_name = builder.CreateString(table->table_name());
 
-        std::vector<flatbuffers::Offset<proto::SchemaTableColumn>> column_offsets;
+        std::vector<flatbuffers::Offset<buffers::SchemaTableColumn>> column_offsets;
         column_offsets.reserve(table->columns()->size());
         for (auto* column : *table->columns()) {
             auto column_name = builder.CreateString(column->column_name());
-            proto::SchemaTableColumnBuilder column_builder{builder};
+            buffers::SchemaTableColumnBuilder column_builder{builder};
             column_builder.add_column_name(column_name);
             column_offsets.push_back(column_builder.Finish());
         }
         auto columns_offset = builder.CreateVector(column_offsets);
 
-        proto::SchemaTableBuilder table_builder{builder};
+        buffers::SchemaTableBuilder table_builder{builder};
         table_builder.add_table_id(table_id++);
         table_builder.add_table_name(table_name);
         table_builder.add_columns(columns_offset);
@@ -214,15 +214,15 @@ static flatbuffers::Offset<proto::SchemaDescriptor> describeEntrySchema(flatbuff
     }
     auto tables_offset = builder.CreateVector(table_offsets);
 
-    proto::SchemaDescriptorBuilder schema_builder{builder};
+    buffers::SchemaDescriptorBuilder schema_builder{builder};
     schema_builder.add_database_name(database_name);
     schema_builder.add_schema_name(schema_name);
     schema_builder.add_tables(tables_offset);
     return schema_builder.Finish();
 }
 
-flatbuffers::Offset<proto::CatalogEntry> DescriptorPool::DescribeEntry(flatbuffers::FlatBufferBuilder& builder) const {
-    std::vector<flatbuffers::Offset<proto::SchemaDescriptor>> schema_offsets;
+flatbuffers::Offset<buffers::CatalogEntry> DescriptorPool::DescribeEntry(flatbuffers::FlatBufferBuilder& builder) const {
+    std::vector<flatbuffers::Offset<buffers::SchemaDescriptor>> schema_offsets;
     schema_offsets.reserve(descriptor_buffers.size());
     uint32_t table_id = 0;
     for (auto& buffer : descriptor_buffers) {
@@ -245,9 +245,9 @@ flatbuffers::Offset<proto::CatalogEntry> DescriptorPool::DescribeEntry(flatbuffe
     }
     auto schemas_offset = builder.CreateVector(schema_offsets);
 
-    proto::CatalogEntryBuilder catalog{builder};
+    buffers::CatalogEntryBuilder catalog{builder};
     catalog.add_catalog_entry_id(catalog_entry_id);
-    catalog.add_catalog_entry_type(proto::CatalogEntryType::DESCRIPTOR_POOL);
+    catalog.add_catalog_entry_type(buffers::CatalogEntryType::DESCRIPTOR_POOL);
     catalog.add_rank(0);
     catalog.add_schemas(schemas_offset);
     return catalog.Finish();
@@ -255,17 +255,17 @@ flatbuffers::Offset<proto::CatalogEntry> DescriptorPool::DescribeEntry(flatbuffe
 
 const CatalogEntry::NameSearchIndex& DescriptorPool::GetNameSearchIndex() { return name_search_index.value(); }
 
-proto::StatusCode DescriptorPool::AddSchemaDescriptor(DescriptorRefVariant descriptor_variant,
+buffers::StatusCode DescriptorPool::AddSchemaDescriptor(DescriptorRefVariant descriptor_variant,
                                                       std::unique_ptr<const std::byte[]> descriptor_buffer,
                                                       size_t descriptor_buffer_size, CatalogDatabaseID& db_id,
                                                       CatalogSchemaID& schema_id) {
     // Unpack the schemas
-    std::vector<std::reference_wrapper<const proto::SchemaDescriptor>> descriptors;
+    std::vector<std::reference_wrapper<const buffers::SchemaDescriptor>> descriptors;
     switch (descriptor_variant.index()) {
         case 0: {
             auto& entry = std::get<0>(descriptor_variant).get();
             if (!entry.tables()) {
-                return proto::StatusCode::CATALOG_DESCRIPTOR_TABLES_NULL;
+                return buffers::StatusCode::CATALOG_DESCRIPTOR_TABLES_NULL;
             }
             descriptors.push_back(std::get<0>(descriptor_variant));
             break;
@@ -276,7 +276,7 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(DescriptorRefVariant descr
             for (size_t i = 0; i < entries->size(); ++i) {
                 auto& entry = *entries->Get(i);
                 if (!entry.tables()) {
-                    return proto::StatusCode::CATALOG_DESCRIPTOR_TABLES_NULL;
+                    return buffers::StatusCode::CATALOG_DESCRIPTOR_TABLES_NULL;
                 }
                 descriptors.push_back(*entries->Get(i));
             }
@@ -295,7 +295,7 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(DescriptorRefVariant descr
 
         // Register the database name
         auto db_name_text = descriptor.database_name() == nullptr ? "" : descriptor.database_name()->string_view();
-        auto& db_name = name_registry.Register(db_name_text, NameTags{proto::NameTag::DATABASE_NAME});
+        auto& db_name = name_registry.Register(db_name_text, NameTags{buffers::NameTag::DATABASE_NAME});
         {
             fuzzy_ci_string_view ci_name{db_name.text.data(), db_name.text.size()};
             for (size_t i = 1; i < ci_name.size(); ++i) {
@@ -306,7 +306,7 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(DescriptorRefVariant descr
 
         // Register the schema name
         auto schema_name_text = descriptor.schema_name() == nullptr ? "" : descriptor.schema_name()->string_view();
-        auto& schema_name = name_registry.Register(schema_name_text, NameTags{proto::NameTag::SCHEMA_NAME});
+        auto& schema_name = name_registry.Register(schema_name_text, NameTags{buffers::NameTag::SCHEMA_NAME});
         {
             fuzzy_ci_string_view ci_name{schema_name.text.data(), schema_name.text.size()};
             for (size_t i = 1; i < ci_name.size(); ++i) {
@@ -350,10 +350,10 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(DescriptorRefVariant descr
             // Register the table name
             auto table_name_ptr = table->table_name();
             if (!table_name_ptr || table_name_ptr->size() == 0) {
-                return proto::StatusCode::CATALOG_DESCRIPTOR_TABLE_NAME_EMPTY;
+                return buffers::StatusCode::CATALOG_DESCRIPTOR_TABLE_NAME_EMPTY;
             }
             auto& table_name =
-                name_registry.Register(table_name_ptr->string_view(), NameTags{proto::NameTag::TABLE_NAME});
+                name_registry.Register(table_name_ptr->string_view(), NameTags{buffers::NameTag::TABLE_NAME});
             {
                 fuzzy_ci_string_view ci_name{table_name.text.data(), table_name.text.size()};
                 for (size_t i = 1; i < ci_name.size(); ++i) {
@@ -364,7 +364,7 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(DescriptorRefVariant descr
             // Build the qualified table name
             QualifiedTableName::Key qualified_table_name{db_name.text, schema_name.text, table_name.text};
             if (tables_by_name.contains(qualified_table_name)) {
-                return proto::StatusCode::CATALOG_DESCRIPTOR_TABLE_NAME_COLLISION;
+                return buffers::StatusCode::CATALOG_DESCRIPTOR_TABLE_NAME_COLLISION;
             }
             // Collect the table columns (if any)
             std::vector<TableColumn> columns;
@@ -375,7 +375,7 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(DescriptorRefVariant descr
                     if (auto column_name_text = column->column_name()) {
                         // Register the column name
                         auto& column_name = name_registry.Register(column_name_text->string_view(),
-                                                                   NameTags{proto::NameTag::COLUMN_NAME});
+                                                                   NameTags{buffers::NameTag::COLUMN_NAME});
                         columns.emplace_back(std::nullopt, column_name);
                         columns.back().column_index = column->ordinal_position();
 
@@ -423,7 +423,7 @@ proto::StatusCode DescriptorPool::AddSchemaDescriptor(DescriptorRefVariant descr
             }
         }
     }
-    return proto::StatusCode::OK;
+    return buffers::StatusCode::OK;
 }
 
 void CatalogEntry::ResolveTableColumnsWithCatalog(std::string_view table_column, std::vector<TableColumn>& tmp) const {
@@ -448,37 +448,37 @@ void Catalog::Clear() {
     ++version;
 }
 
-flatbuffers::Offset<proto::CatalogEntries> Catalog::DescribeEntries(flatbuffers::FlatBufferBuilder& builder) const {
-    std::vector<flatbuffers::Offset<proto::CatalogEntry>> entryOffsets;
+flatbuffers::Offset<buffers::CatalogEntries> Catalog::DescribeEntries(flatbuffers::FlatBufferBuilder& builder) const {
+    std::vector<flatbuffers::Offset<buffers::CatalogEntry>> entryOffsets;
     entryOffsets.reserve(entries_ranked.size());
     for (auto& [rank, external_id] : entries_ranked) {
         auto* entry = entries.at(external_id);
         entryOffsets.push_back(entry->DescribeEntry(builder));
     }
     auto entriesOffset = builder.CreateVector(entryOffsets);
-    proto::CatalogEntriesBuilder entriesBuilder{builder};
+    buffers::CatalogEntriesBuilder entriesBuilder{builder};
     entriesBuilder.add_entries(entriesOffset);
     return entriesBuilder.Finish();
 }
 
-flatbuffers::Offset<proto::CatalogEntries> Catalog::DescribeEntriesOf(flatbuffers::FlatBufferBuilder& builder,
+flatbuffers::Offset<buffers::CatalogEntries> Catalog::DescribeEntriesOf(flatbuffers::FlatBufferBuilder& builder,
                                                                       size_t external_id) const {
     auto iter = entries.find(external_id);
     if (iter == entries.end()) {
         return {};
     } else {
-        std::vector<flatbuffers::Offset<proto::CatalogEntry>> entryOffsets;
+        std::vector<flatbuffers::Offset<buffers::CatalogEntry>> entryOffsets;
         entryOffsets.reserve(entries_ranked.size());
         entryOffsets.push_back(iter->second->DescribeEntry(builder));
         auto entriesOffset = builder.CreateVector(entryOffsets);
-        proto::CatalogEntriesBuilder entriesBuilder{builder};
+        buffers::CatalogEntriesBuilder entriesBuilder{builder};
         entriesBuilder.add_entries(entriesOffset);
         return entriesBuilder.Finish();
     }
 }
 
 /// Flatten the catalog
-flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBufferBuilder& builder) const {
+flatbuffers::Offset<buffers::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBufferBuilder& builder) const {
     // We build a name dictionary so that JS can save unnecessary utf8->utf16 conversions.
     // The JS renderers are virtualized which means that they only need to convert catalog entry names that are visible.
     std::unordered_map<std::string_view, size_t> name_dictionary_index;
@@ -632,19 +632,19 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
     auto dictionary = builder.CreateVectorOfStrings(name_dictionary);
 
     // Allocate the entry node vectors
-    std::vector<dashql::proto::FlatCatalogEntry> database_entries;
-    std::vector<dashql::proto::FlatCatalogEntry> schema_entries;
-    std::vector<dashql::proto::FlatCatalogEntry> table_entries;
-    std::vector<dashql::proto::FlatCatalogEntry> column_entries;
+    std::vector<dashql::buffers::FlatCatalogEntry> database_entries;
+    std::vector<dashql::buffers::FlatCatalogEntry> schema_entries;
+    std::vector<dashql::buffers::FlatCatalogEntry> table_entries;
+    std::vector<dashql::buffers::FlatCatalogEntry> column_entries;
     database_entries.resize(database_nodes.GetSize());
     schema_entries.resize(schema_nodes.GetSize());
     table_entries.resize(effective_table_count);
     column_entries.resize(column_nodes.GetSize());
 
     // Allocate the index vectors
-    std::vector<proto::IndexedFlatDatabaseEntry> indexed_database_entries;
-    std::vector<proto::IndexedFlatSchemaEntry> indexed_schema_entries;
-    std::vector<proto::IndexedFlatTableEntry> indexed_table_entries;
+    std::vector<buffers::IndexedFlatDatabaseEntry> indexed_database_entries;
+    std::vector<buffers::IndexedFlatSchemaEntry> indexed_schema_entries;
+    std::vector<buffers::IndexedFlatTableEntry> indexed_table_entries;
     indexed_database_entries.resize(database_nodes.GetSize());
     indexed_schema_entries.resize(schema_nodes.GetSize());
     indexed_table_entries.resize(effective_table_count);
@@ -659,10 +659,10 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
         auto& [database_name, database_node] = *root_iter;
         // Write database node
         auto& db_node_ref = database_node.get();
-        database_entries[next_database_idx] = proto::FlatCatalogEntry(
+        database_entries[next_database_idx] = buffers::FlatCatalogEntry(
             next_database_idx, 0, db_node_ref.database_id, db_node_ref.name_id, 0, db_node_ref.children.size());
         indexed_database_entries[next_database_idx] =
-            proto::IndexedFlatDatabaseEntry(db_node_ref.database_id, next_database_idx);
+            buffers::IndexedFlatDatabaseEntry(db_node_ref.database_id, next_database_idx);
 
         // Write schema nodes
         for (auto db_child_iter = db_node_ref.children.begin(); db_child_iter != db_node_ref.children.end();
@@ -670,11 +670,11 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
             auto& [schema_name, schema_node] = *db_child_iter;
             // Write schema node
             auto& schema_node_ref = schema_node.get();
-            schema_entries[next_schema_idx] = dashql::proto::FlatCatalogEntry(
+            schema_entries[next_schema_idx] = dashql::buffers::FlatCatalogEntry(
                 next_schema_idx, next_database_idx, schema_node_ref.schema_id, schema_node_ref.name_id, next_table_idx,
                 schema_node_ref.children.size());
             indexed_schema_entries[next_schema_idx] =
-                proto::IndexedFlatSchemaEntry(schema_node_ref.schema_id, next_schema_idx);
+                buffers::IndexedFlatSchemaEntry(schema_node_ref.schema_id, next_schema_idx);
 
             // Write table nodes
             for (auto schema_child_iter = schema_node_ref.children.begin();
@@ -682,11 +682,11 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
                 auto& [table_name, table_node] = *schema_child_iter;
                 // Write table node
                 auto& table_node_ref = table_node.get();
-                table_entries[next_table_idx] = dashql::proto::FlatCatalogEntry(
+                table_entries[next_table_idx] = dashql::buffers::FlatCatalogEntry(
                     next_table_idx, next_schema_idx, table_node_ref.table_id.Pack(), table_node_ref.name_id,
                     next_column_idx, table_node_ref.child_count);
                 indexed_table_entries[next_table_idx] =
-                    proto::IndexedFlatTableEntry(table_node_ref.table_id.Pack(), next_table_idx);
+                    buffers::IndexedFlatTableEntry(table_node_ref.table_id.Pack(), next_table_idx);
 
                 // Write column nodes
                 auto child_iter = table_node_ref.children_begin;
@@ -694,7 +694,7 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
                      ++column_id, ++child_iter, ++next_column_idx) {
                     auto& column_node = *child_iter;
                     // Write column node
-                    column_entries[next_column_idx] = dashql::proto::FlatCatalogEntry(
+                    column_entries[next_column_idx] = dashql::buffers::FlatCatalogEntry(
                         next_column_idx, next_table_idx, column_id, column_node.name_id, 0, 0);
                 }
             }
@@ -726,7 +726,7 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
     auto tables_by_id_ofs = builder.CreateVectorOfStructs(indexed_table_entries);
 
     // Build the flat catalog
-    proto::FlatCatalogBuilder catalogBuilder{builder};
+    buffers::FlatCatalogBuilder catalogBuilder{builder};
     catalogBuilder.add_catalog_version(version);
     catalogBuilder.add_name_dictionary(dictionary);
     catalogBuilder.add_databases(databases_ofs);
@@ -739,12 +739,12 @@ flatbuffers::Offset<proto::FlatCatalog> Catalog::Flatten(flatbuffers::FlatBuffer
     return catalogBuilder.Finish();
 }
 
-proto::StatusCode Catalog::LoadScript(Script& script, CatalogEntry::Rank rank) {
+buffers::StatusCode Catalog::LoadScript(Script& script, CatalogEntry::Rank rank) {
     if (!script.analyzed_script) {
-        return proto::StatusCode::CATALOG_SCRIPT_NOT_ANALYZED;
+        return buffers::StatusCode::CATALOG_SCRIPT_NOT_ANALYZED;
     }
     if (&script.catalog != this) {
-        return proto::StatusCode::CATALOG_MISMATCH;
+        return buffers::StatusCode::CATALOG_MISMATCH;
     }
 
     // Script has been added to catalog before?
@@ -755,7 +755,7 @@ proto::StatusCode Catalog::LoadScript(Script& script, CatalogEntry::Rank rank) {
     // Is there another entry (!= the script) with the same external id?
     auto entry_iter = entries.find(script.GetCatalogEntryId());
     if (entry_iter != entries.end()) {
-        return proto::StatusCode::EXTERNAL_ID_COLLISION;
+        return buffers::StatusCode::EXTERNAL_ID_COLLISION;
     }
     // Check if any of the containng schemas/databases are registered with a different id.
     //
@@ -779,7 +779,7 @@ proto::StatusCode Catalog::LoadScript(Script& script, CatalogEntry::Rank rank) {
             if (iter != databases.end()) {
                 if (iter->second->catalog_database_id != ref.get().catalog_database_id) {
                     // Catalog id is out of sync
-                    return proto::StatusCode::CATALOG_ID_OUT_OF_SYNC;
+                    return buffers::StatusCode::CATALOG_ID_OUT_OF_SYNC;
                 }
             } else {
                 auto db = std::make_unique<DatabaseDeclaration>(ref.get().catalog_database_id, ref.get().database_name,
@@ -795,7 +795,7 @@ proto::StatusCode Catalog::LoadScript(Script& script, CatalogEntry::Rank rank) {
                 if (iter->second->catalog_database_id != ref.get().catalog_database_id ||
                     iter->second->catalog_schema_id != ref.get().catalog_schema_id) {
                     // Catalog id is out of sync
-                    return proto::StatusCode::CATALOG_ID_OUT_OF_SYNC;
+                    return buffers::StatusCode::CATALOG_ID_OUT_OF_SYNC;
                 }
             } else {
                 // Copy strings and register the schema
@@ -829,16 +829,16 @@ proto::StatusCode Catalog::LoadScript(Script& script, CatalogEntry::Rank rank) {
     // Register rank
     entries_ranked.insert({rank, entry.GetCatalogEntryId()});
     ++version;
-    return proto::StatusCode::OK;
+    return buffers::StatusCode::OK;
 }
 
-proto::StatusCode Catalog::UpdateScript(ScriptEntry& entry) {
+buffers::StatusCode Catalog::UpdateScript(ScriptEntry& entry) {
     auto& script = entry.script;
     assert(script.analyzed_script);
 
     // Script stayed the same? Nothing to do then
     if (entry.analyzed == script.analyzed_script) {
-        return proto::StatusCode::OK;
+        return buffers::StatusCode::OK;
     }
     auto external_id = script.GetCatalogEntryId();
     auto rank = entry.rank;
@@ -959,7 +959,7 @@ proto::StatusCode Catalog::UpdateScript(ScriptEntry& entry) {
     assert(entry_iter != entries.end());
     entry_iter->second = entry.analyzed.get();
     ++version;
-    return proto::StatusCode::OK;
+    return buffers::StatusCode::OK;
 }
 
 void Catalog::DropScript(Script& script) {
@@ -980,19 +980,19 @@ void Catalog::DropScript(Script& script) {
     }
 }
 
-proto::StatusCode Catalog::AddDescriptorPool(CatalogEntryID external_id, CatalogEntry::Rank rank) {
+buffers::StatusCode Catalog::AddDescriptorPool(CatalogEntryID external_id, CatalogEntry::Rank rank) {
     if (entries.contains(external_id)) {
-        return proto::StatusCode::EXTERNAL_ID_COLLISION;
+        return buffers::StatusCode::EXTERNAL_ID_COLLISION;
     }
     auto pool = std::make_unique<DescriptorPool>(*this, external_id, rank);
     entries.insert({external_id, pool.get()});
     entries_ranked.insert({rank, external_id});
     descriptor_pool_entries.insert({external_id, std::move(pool)});
     ++version;
-    return proto::StatusCode::OK;
+    return buffers::StatusCode::OK;
 }
 
-proto::StatusCode Catalog::DropDescriptorPool(CatalogEntryID external_id) {
+buffers::StatusCode Catalog::DropDescriptorPool(CatalogEntryID external_id) {
     auto iter = descriptor_pool_entries.find(external_id);
     if (iter != descriptor_pool_entries.end()) {
         auto& pool = *iter->second;
@@ -1005,24 +1005,24 @@ proto::StatusCode Catalog::DropDescriptorPool(CatalogEntryID external_id) {
         descriptor_pool_entries.erase(iter);
         ++version;
     }
-    return proto::StatusCode::OK;
+    return buffers::StatusCode::OK;
 }
 
-proto::StatusCode Catalog::AddSchemaDescriptor(CatalogEntryID external_id, std::span<const std::byte> descriptor_data,
+buffers::StatusCode Catalog::AddSchemaDescriptor(CatalogEntryID external_id, std::span<const std::byte> descriptor_data,
                                                std::unique_ptr<const std::byte[]> descriptor_buffer,
                                                size_t descriptor_buffer_size) {
     auto iter = descriptor_pool_entries.find(external_id);
     if (iter == descriptor_pool_entries.end()) {
-        return proto::StatusCode::CATALOG_DESCRIPTOR_POOL_UNKNOWN;
+        return buffers::StatusCode::CATALOG_DESCRIPTOR_POOL_UNKNOWN;
     }
     // Add schema descriptor
     auto& pool = *iter->second;
-    auto& schema = *flatbuffers::GetRoot<proto::SchemaDescriptor>(descriptor_data.data());
+    auto& schema = *flatbuffers::GetRoot<buffers::SchemaDescriptor>(descriptor_data.data());
     CatalogDatabaseID db_id;
     CatalogSchemaID schema_id;
     auto status =
         pool.AddSchemaDescriptor(schema, std::move(descriptor_buffer), descriptor_buffer_size, db_id, schema_id);
-    if (status != proto::StatusCode::OK) {
+    if (status != buffers::StatusCode::OK) {
         return status;
     }
     // Register database and schema names
@@ -1041,25 +1041,25 @@ proto::StatusCode Catalog::AddSchemaDescriptor(CatalogEntryID external_id, std::
         entries_by_schema.insert({entry_key, entry});
     }
     ++version;
-    return proto::StatusCode::OK;
+    return buffers::StatusCode::OK;
 }
 
-proto::StatusCode Catalog::AddSchemaDescriptors(CatalogEntryID external_id, std::span<const std::byte> descriptor_data,
+buffers::StatusCode Catalog::AddSchemaDescriptors(CatalogEntryID external_id, std::span<const std::byte> descriptor_data,
                                                 std::unique_ptr<const std::byte[]> descriptor_buffer,
                                                 size_t descriptor_buffer_size) {
     auto iter = descriptor_pool_entries.find(external_id);
     if (iter == descriptor_pool_entries.end()) {
-        return proto::StatusCode::CATALOG_DESCRIPTOR_POOL_UNKNOWN;
+        return buffers::StatusCode::CATALOG_DESCRIPTOR_POOL_UNKNOWN;
     }
 
     // Add schema descriptor
     auto& pool = *iter->second;
-    auto& descriptor = *flatbuffers::GetRoot<proto::SchemaDescriptors>(descriptor_data.data());
+    auto& descriptor = *flatbuffers::GetRoot<buffers::SchemaDescriptors>(descriptor_data.data());
     CatalogDatabaseID db_id;
     CatalogSchemaID schema_id;
     auto status =
         pool.AddSchemaDescriptor(descriptor, std::move(descriptor_buffer), descriptor_buffer_size, db_id, schema_id);
-    if (status != proto::StatusCode::OK) {
+    if (status != buffers::StatusCode::OK) {
         return status;
     }
     // Register database and schema names
@@ -1082,7 +1082,7 @@ proto::StatusCode Catalog::AddSchemaDescriptors(CatalogEntryID external_id, std:
         }
     }
     ++version;
-    return proto::StatusCode::OK;
+    return buffers::StatusCode::OK;
 }
 
 const CatalogEntry::TableDeclaration* Catalog::ResolveTable(ContextObjectID table_id) const {
@@ -1138,9 +1138,9 @@ void Catalog::ResolveSchemaTables(
 }
 
 /// Get statisics
-std::unique_ptr<proto::CatalogStatisticsT> Catalog::GetStatistics() {
-    auto stats = std::make_unique<proto::CatalogStatisticsT>();
-    proto::CatalogContentStatistics totals;
+std::unique_ptr<buffers::CatalogStatisticsT> Catalog::GetStatistics() {
+    auto stats = std::make_unique<buffers::CatalogStatisticsT>();
+    buffers::CatalogContentStatistics totals;
 
     size_t total_dbs = 0;
     size_t total_schemas = 0;
@@ -1148,9 +1148,9 @@ std::unique_ptr<proto::CatalogStatisticsT> Catalog::GetStatistics() {
     size_t total_columns = 0;
 
     for (auto& [entry_id, entry] : descriptor_pool_entries) {
-        auto entry_stats = std::make_unique<proto::CatalogEntryStatisticsT>();
-        auto entry_mem = std::make_unique<proto::CatalogMemoryStatistics>();
-        auto entry_content = std::make_unique<proto::CatalogContentStatistics>();
+        auto entry_stats = std::make_unique<buffers::CatalogEntryStatisticsT>();
+        auto entry_mem = std::make_unique<buffers::CatalogMemoryStatistics>();
+        auto entry_content = std::make_unique<buffers::CatalogContentStatistics>();
 
         auto descriptors = entry->GetDescriptors();
         auto& name_index = entry->GetNameSearchIndex();
@@ -1186,7 +1186,7 @@ std::unique_ptr<proto::CatalogStatisticsT> Catalog::GetStatistics() {
         stats->entries.push_back(std::move(entry_stats));
     }
 
-    auto content = std::make_unique<proto::CatalogContentStatistics>();
+    auto content = std::make_unique<buffers::CatalogContentStatistics>();
     content->mutate_database_count(total_dbs);
     content->mutate_schema_count(total_schemas);
     content->mutate_table_count(total_tables);

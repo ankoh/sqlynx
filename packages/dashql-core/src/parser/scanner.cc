@@ -5,7 +5,7 @@
 #include "dashql/external.h"
 #include "dashql/parser/grammar/keywords.h"
 #include "dashql/parser/parser.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "dashql/script.h"
 #include "dashql/utils/string_conversion.h"
 #include "dashql/utils/string_trimming.h"
@@ -18,18 +18,18 @@ namespace dashql {
 namespace parser {
 
 /// Add an error
-void Scanner::AddError(proto::Location location, const char* message) { output->errors.push_back({location, message}); }
+void Scanner::AddError(buffers::Location location, const char* message) { output->errors.push_back({location, message}); }
 /// Add an error
-void Scanner::AddError(proto::Location location, std::string&& message) {
+void Scanner::AddError(buffers::Location location, std::string&& message) {
     output->errors.push_back({location, std::move(message)});
 }
 /// Add a line break
-void Scanner::AddLineBreak(proto::Location location) { output->line_breaks.push_back(location); }
+void Scanner::AddLineBreak(buffers::Location location) { output->line_breaks.push_back(location); }
 /// Add a comment
-void Scanner::AddComment(proto::Location location) { output->comments.push_back(location); }
+void Scanner::AddComment(buffers::Location location) { output->comments.push_back(location); }
 
 /// Read a parameter
-Parser::symbol_type Scanner::ReadParameter(proto::Location loc) {
+Parser::symbol_type Scanner::ReadParameter(buffers::Location loc) {
     auto text = GetInputData().substr(loc.offset(), loc.length());
     int64_t value;
     auto result = std::from_chars(text.data(), text.data() + text.size(), value);
@@ -40,7 +40,7 @@ Parser::symbol_type Scanner::ReadParameter(proto::Location loc) {
 }
 
 /// Read an integer
-Parser::symbol_type Scanner::ReadInteger(proto::Location loc) {
+Parser::symbol_type Scanner::ReadInteger(buffers::Location loc) {
     auto text = GetInputData().substr(loc.offset(), loc.length());
     int64_t value;
     auto result = std::from_chars(text.data(), text.data() + text.size(), value);
@@ -52,7 +52,7 @@ Parser::symbol_type Scanner::ReadInteger(proto::Location loc) {
 }
 
 /// Read an unquoted identifier
-Parser::symbol_type Scanner::ReadIdentifier(proto::Location loc) {
+Parser::symbol_type Scanner::ReadIdentifier(buffers::Location loc) {
     auto text = GetInputData().substr(loc.offset(), loc.length());
     // Convert to lower-case
     temp_buffer = text;
@@ -74,7 +74,7 @@ Parser::symbol_type Scanner::ReadIdentifier(proto::Location loc) {
     return Parser::make_IDENT(id, loc);
 }
 /// Read a double quoted identifier
-Parser::symbol_type Scanner::ReadDoubleQuotedIdentifier(proto::Location loc) {
+Parser::symbol_type Scanner::ReadDoubleQuotedIdentifier(buffers::Location loc) {
     auto text = GetInputData().substr(loc.offset(), loc.length());
     // Trim spaces & quotes
     auto trimmed = trim_view_right(text, is_no_space);
@@ -85,26 +85,26 @@ Parser::symbol_type Scanner::ReadDoubleQuotedIdentifier(proto::Location loc) {
 }
 
 /// Read a string literal
-Parser::symbol_type Scanner::ReadStringLiteral(proto::Location loc) {
+Parser::symbol_type Scanner::ReadStringLiteral(buffers::Location loc) {
     auto text = GetInputData().substr(loc.offset(), loc.length());
     auto trimmed = trim_view_right(text, is_no_space);
     return Parser::make_SCONST(sx::Location(loc.offset(), trimmed.size()));
 }
 /// Read a hex string literal
-Parser::symbol_type Scanner::ReadHexStringLiteral(proto::Location loc) {
+Parser::symbol_type Scanner::ReadHexStringLiteral(buffers::Location loc) {
     auto text = GetInputData().substr(loc.offset(), loc.length());
     auto trimmed = trim_view_right(text, is_no_space);
     return Parser::make_XCONST(sx::Location(loc.offset(), trimmed.size()));
 }
 /// Read a bit string literal
-Parser::symbol_type Scanner::ReadBitStringLiteral(proto::Location loc) {
+Parser::symbol_type Scanner::ReadBitStringLiteral(buffers::Location loc) {
     auto text = GetInputData().substr(loc.offset(), loc.length());
     auto trimmed = trim_view_right(text, is_no_space);
     return Parser::make_BCONST(sx::Location(loc.offset(), trimmed.size()));
 }
 
 /// Scan input and produce all tokens
-std::pair<std::shared_ptr<ScannedScript>, proto::StatusCode> Scanner::Scan(const rope::Rope& text,
+std::pair<std::shared_ptr<ScannedScript>, buffers::StatusCode> Scanner::Scan(const rope::Rope& text,
                                                                            CatalogEntryID external_id) {
     // Function to get next token
     auto next = [](void* scanner_state_ptr, std::optional<Parser::symbol_type>& lookahead_symbol) {
@@ -186,7 +186,7 @@ std::pair<std::shared_ptr<ScannedScript>, proto::StatusCode> Scanner::Scan(const
     }
 
     // Collect scanner output
-    return {std::move(scanner.output), proto::StatusCode::OK};
+    return {std::move(scanner.output), buffers::StatusCode::OK};
 }
 
 }  // namespace parser

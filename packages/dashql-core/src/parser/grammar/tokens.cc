@@ -1,10 +1,10 @@
 #include "dashql/parser/grammar/keywords.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "dashql/script.h"
 
 namespace dashql {
 namespace parser {
-static const proto::ScannerTokenType MapToken(Parser::symbol_type symbol, std::string_view text) {
+static const buffers::ScannerTokenType MapToken(Parser::symbol_type symbol, std::string_view text) {
     switch (symbol.kind()) {
 #define X(CATEGORY, NAME, TOKEN) case Parser::symbol_kind_type::S_##TOKEN:
 #include "../../../grammar/lists/sql_column_name_keywords.list"
@@ -15,48 +15,48 @@ static const proto::ScannerTokenType MapToken(Parser::symbol_type symbol, std::s
         case Parser::symbol_kind_type::S_NULLS_LA:
         case Parser::symbol_kind_type::S_NOT_LA:
         case Parser::symbol_kind_type::S_WITH_LA:
-            return proto::ScannerTokenType::KEYWORD;
+            return buffers::ScannerTokenType::KEYWORD;
         case Parser::symbol_kind_type::S_SCONST:
-            return proto::ScannerTokenType::LITERAL_STRING;
+            return buffers::ScannerTokenType::LITERAL_STRING;
         case Parser::symbol_kind_type::S_ICONST:
-            return proto::ScannerTokenType::LITERAL_INTEGER;
+            return buffers::ScannerTokenType::LITERAL_INTEGER;
         case Parser::symbol_kind_type::S_FCONST:
-            return proto::ScannerTokenType::LITERAL_FLOAT;
+            return buffers::ScannerTokenType::LITERAL_FLOAT;
         case Parser::symbol_kind_type::S_BCONST:
-            return proto::ScannerTokenType::LITERAL_BINARY;
+            return buffers::ScannerTokenType::LITERAL_BINARY;
         case Parser::symbol_kind_type::S_XCONST:
-            return proto::ScannerTokenType::LITERAL_HEX;
+            return buffers::ScannerTokenType::LITERAL_HEX;
         case Parser::symbol_kind_type::S_IDENT:
-            return proto::ScannerTokenType::IDENTIFIER;
+            return buffers::ScannerTokenType::IDENTIFIER;
         case Parser::symbol_kind_type::S_Op:
         case Parser::symbol_kind_type::S_EQUALS_GREATER:
         case Parser::symbol_kind_type::S_GREATER_EQUALS:
         case Parser::symbol_kind_type::S_LESS_EQUALS:
         case Parser::symbol_kind_type::S_NOT_EQUALS:
-            return proto::ScannerTokenType::OPERATOR;
+            return buffers::ScannerTokenType::OPERATOR;
         case Parser::symbol_kind_type::S_DOT:
-            return proto::ScannerTokenType::DOT;
+            return buffers::ScannerTokenType::DOT;
         case Parser::symbol_kind_type::S_DOT_TRAILING:
-            return proto::ScannerTokenType::DOT_TRAILING;
+            return buffers::ScannerTokenType::DOT_TRAILING;
         default: {
             auto loc = symbol.location;
             if (loc.length() == 1) {
                 switch (text[loc.offset()]) {
                     case '=':
-                        return proto::ScannerTokenType::OPERATOR;
+                        return buffers::ScannerTokenType::OPERATOR;
                 }
             }
-            return proto::ScannerTokenType::NONE;
+            return buffers::ScannerTokenType::NONE;
         }
     };
 };
 }  // namespace parser
 
 /// Pack the highlighting data
-std::unique_ptr<proto::ScannerTokensT> ScannedScript::PackTokens() {
+std::unique_ptr<buffers::ScannerTokensT> ScannedScript::PackTokens() {
     std::vector<uint32_t> offsets;
     std::vector<uint32_t> lengths;
-    std::vector<proto::ScannerTokenType> types;
+    std::vector<buffers::ScannerTokenType> types;
     offsets.reserve(symbols.GetSize() * 3 / 2);
     lengths.reserve(symbols.GetSize() * 3 / 2);
     types.reserve(symbols.GetSize() * 3 / 2);
@@ -68,7 +68,7 @@ std::unique_ptr<proto::ScannerTokensT> ScannedScript::PackTokens() {
             auto& comment = comments[ci++];
             offsets.push_back(comment.offset());
             lengths.push_back(comment.length());
-            types.push_back(proto::ScannerTokenType::COMMENT);
+            types.push_back(buffers::ScannerTokenType::COMMENT);
         }
         // Map as standard token.
         offsets.push_back(symbol.location.offset());
@@ -80,7 +80,7 @@ std::unique_ptr<proto::ScannerTokensT> ScannedScript::PackTokens() {
         auto& comment = comments[ci++];
         offsets.push_back(comment.offset());
         lengths.push_back(comment.length());
-        types.push_back(proto::ScannerTokenType::COMMENT);
+        types.push_back(buffers::ScannerTokenType::COMMENT);
     }
 
     // Build the line breaks
@@ -93,7 +93,7 @@ std::unique_ptr<proto::ScannerTokensT> ScannedScript::PackTokens() {
     }
 
     // Build highlighting
-    auto out = std::make_unique<proto::ScannerTokensT>();
+    auto out = std::make_unique<buffers::ScannerTokensT>();
     out->token_offsets = std::move(offsets);
     out->token_lengths = std::move(lengths);
     out->token_types = std::move(types);

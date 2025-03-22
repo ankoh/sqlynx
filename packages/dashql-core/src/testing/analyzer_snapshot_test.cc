@@ -5,7 +5,7 @@
 
 #include "gtest/gtest.h"
 #include "dashql/analyzer/analyzer.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "dashql/script.h"
 #include "dashql/testing/xml_tests.h"
 
@@ -78,11 +78,11 @@ void AnalyzerSnapshotTest::TestRegistrySnapshot(const std::vector<ScriptAnalysis
         auto& script = *catalog_scripts.back();
         script.InsertTextAt(0, entry.input);
         auto scanned = script.Scan();
-        ASSERT_EQ(scanned.second, proto::StatusCode::OK);
+        ASSERT_EQ(scanned.second, buffers::StatusCode::OK);
         auto parsed = script.Parse();
-        ASSERT_EQ(parsed.second, proto::StatusCode::OK);
+        ASSERT_EQ(parsed.second, buffers::StatusCode::OK);
         auto analyzed = script.Analyze();
-        ASSERT_EQ(analyzed.second, proto::StatusCode::OK);
+        ASSERT_EQ(analyzed.second, buffers::StatusCode::OK);
 
         catalog.LoadScript(script, entry_id);
 
@@ -101,11 +101,11 @@ void AnalyzerSnapshotTest::TestMainScriptSnapshot(const ScriptAnalysisSnapshot& 
     script.InsertTextAt(entry_id, snap.input);
 
     auto scan = script.Scan();
-    ASSERT_EQ(scan.second, proto::StatusCode::OK);
+    ASSERT_EQ(scan.second, buffers::StatusCode::OK);
     auto parsed = script.Parse();
-    ASSERT_EQ(parsed.second, proto::StatusCode::OK);
+    ASSERT_EQ(parsed.second, buffers::StatusCode::OK);
     auto analyzed = script.Analyze();
-    ASSERT_EQ(analyzed.second, proto::StatusCode::OK) << proto::EnumNameStatusCode(analyzed.second);
+    ASSERT_EQ(analyzed.second, buffers::StatusCode::OK) << buffers::EnumNameStatusCode(analyzed.second);
 
     AnalyzerSnapshotTest::EncodeScript(node, *script.analyzed_script, true);
 
@@ -119,8 +119,8 @@ void operator<<(std::ostream& out, const AnalyzerSnapshotTest& p) { out << p.nam
 
 void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript& script, bool is_main) {
     // Unpack modules
-    auto* stmt_type_tt = proto::StatementTypeTypeTable();
-    auto* node_type_tt = proto::NodeTypeTypeTable();
+    auto* stmt_type_tt = buffers::StatementTypeTypeTable();
+    auto* node_type_tt = buffers::NodeTypeTypeTable();
 
     out.prepend_attribute("id").set_value(script.GetCatalogEntryId());
 
@@ -133,7 +133,7 @@ void AnalyzerSnapshotTest::EncodeScript(pugi::xml_node out, const AnalyzedScript
     auto errors_node = out.append_child("errors");
     for (auto& error : script.errors) {
         auto error_node = errors_node.append_child("error");
-        error_node.append_attribute("type").set_value(proto::EnumNameAnalyzerErrorType(error.error_type));
+        error_node.append_attribute("type").set_value(buffers::EnumNameAnalyzerErrorType(error.error_type));
         error_node.append_attribute("message").set_value(error.message.c_str());
         WriteLocation(error_node, *error.location, script.parsed_script->scanned_script->GetInput());
     }

@@ -7,7 +7,7 @@
 #include <stack>
 #include <tuple>
 
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 
 namespace dashql {
 

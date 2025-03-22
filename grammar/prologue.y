@@ -11,7 +11,7 @@
 %define parse.lac full
 
 %locations
-%define api.location.type {proto::Location}
+%define api.location.type {buffers::Location}
 
 %parse-param    { dashql::parser::ParseContext& ctx }
 
@@ -29,9 +29,9 @@
 #include <utility>
 #include "dashql/parser/grammar/state.h"
 #include "dashql/parser/grammar/location.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 
-namespace sx = dashql::proto;
+namespace sx = dashql::buffers;
 
 namespace dashql { namespace parser { class ParseContext;  }}
 
@@ -40,11 +40,11 @@ namespace dashql { namespace parser { class ParseContext;  }}
     if (N) { \
         uint32_t o = YYRHSLOC(Rhs, 1).offset(); \
         uint32_t l = YYRHSLOC(Rhs, N).offset() + YYRHSLOC(Rhs, N).length() - YYRHSLOC(Rhs, 1).offset(); \
-        (Cur) = proto::Location(o, l); \
+        (Cur) = buffers::Location(o, l); \
     } else { \
         uint32_t o = YYRHSLOC(Rhs, 0).offset() + YYRHSLOC(Rhs, 0).length(); \
         uint32_t l = 0; \
-        (Cur) = proto::Location(o, l); \
+        (Cur) = buffers::Location(o, l); \
     } \
 }
 

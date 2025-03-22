@@ -15,13 +15,13 @@
 #include "dashql/parser/parse_context.h"
 #include "dashql/parser/parser.h"
 #include "dashql/parser/scanner.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 
 namespace dashql {
 
 /// Finish a statement
-std::unique_ptr<proto::StatementT> ParsedScript::Statement::Pack() {
-    auto stmt = std::make_unique<proto::StatementT>();
+std::unique_ptr<buffers::StatementT> ParsedScript::Statement::Pack() {
+    auto stmt = std::make_unique<buffers::StatementT>();
     stmt->statement_type = type;
     stmt->root_node = root;
     stmt->nodes_begin = nodes_begin;
@@ -161,20 +161,20 @@ ScannedScript::LocationInfo ScannedScript::FindSymbol(size_t text_offset) {
     return {text_offset, global_symbol_id, *symbol_iter, prev_symbol, relative_pos, at_eof};
 }
 
-flatbuffers::Offset<proto::ScannedScript> ScannedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {
-    proto::ScannedScriptT out;
+flatbuffers::Offset<buffers::ScannedScript> ScannedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {
+    buffers::ScannedScriptT out;
     out.external_id = external_id;
     out.errors.reserve(errors.size());
     for (auto& [loc, msg] : errors) {
-        auto err = std::make_unique<proto::ErrorT>();
-        err->location = std::make_unique<proto::Location>(loc);
+        auto err = std::make_unique<buffers::ErrorT>();
+        err->location = std::make_unique<buffers::Location>(loc);
         err->message = msg;
         out.errors.push_back(std::move(err));
     }
     out.tokens = PackTokens();
     out.line_breaks = line_breaks;
     out.comments = comments;
-    return proto::ScannedScript::Pack(builder, &out);
+    return buffers::ScannedScript::Pack(builder, &out);
 }
 
 /// Constructor
@@ -250,8 +250,8 @@ std::optional<std::pair<size_t, size_t>> ParsedScript::FindNodeAtOffset(size_t t
 }
 
 /// Pack the FlatBuffer
-flatbuffers::Offset<proto::ParsedScript> ParsedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {
-    proto::ParsedScriptT out;
+flatbuffers::Offset<buffers::ParsedScript> ParsedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {
+    buffers::ParsedScriptT out;
     out.external_id = external_id;
     out.nodes = nodes;
     out.statements.reserve(statements.size());
@@ -260,15 +260,15 @@ flatbuffers::Offset<proto::ParsedScript> ParsedScript::Pack(flatbuffers::FlatBuf
     }
     out.errors.reserve(errors.size());
     for (auto& [loc, msg] : errors) {
-        auto err = std::make_unique<proto::ErrorT>();
-        err->location = std::make_unique<proto::Location>(loc);
+        auto err = std::make_unique<buffers::ErrorT>();
+        err->location = std::make_unique<buffers::Location>(loc);
         err->message = msg;
         out.errors.push_back(std::move(err));
     }
-    return proto::ParsedScript::Pack(builder, &out);
+    return buffers::ParsedScript::Pack(builder, &out);
 }
 
-flatbuffers::Offset<proto::QualifiedTableName> AnalyzedScript::QualifiedTableName::Pack(
+flatbuffers::Offset<buffers::QualifiedTableName> AnalyzedScript::QualifiedTableName::Pack(
     flatbuffers::FlatBufferBuilder& builder) const {
     flatbuffers::Offset<flatbuffers::String> database_name_ofs;
     flatbuffers::Offset<flatbuffers::String> schema_name_ofs;
@@ -282,7 +282,7 @@ flatbuffers::Offset<proto::QualifiedTableName> AnalyzedScript::QualifiedTableNam
     if (!table_name.get().text.empty()) {
         table_name_ofs = builder.CreateString(table_name.get().text);
     }
-    proto::QualifiedTableNameBuilder out{builder};
+    buffers::QualifiedTableNameBuilder out{builder};
     out.add_ast_node_id(ast_node_id.value_or(PROTO_NULL_U32));
     out.add_database_name(database_name_ofs);
     out.add_schema_name(schema_name_ofs);
@@ -290,7 +290,7 @@ flatbuffers::Offset<proto::QualifiedTableName> AnalyzedScript::QualifiedTableNam
     return out.Finish();
 }
 
-flatbuffers::Offset<proto::QualifiedColumnName> AnalyzedScript::QualifiedColumnName::Pack(
+flatbuffers::Offset<buffers::QualifiedColumnName> AnalyzedScript::QualifiedColumnName::Pack(
     flatbuffers::FlatBufferBuilder& builder) const {
     flatbuffers::Offset<flatbuffers::String> table_alias_ofs;
     flatbuffers::Offset<flatbuffers::String> column_name_ofs;
@@ -300,7 +300,7 @@ flatbuffers::Offset<proto::QualifiedColumnName> AnalyzedScript::QualifiedColumnN
     if (!column_name.get().text.empty()) {
         column_name_ofs = builder.CreateString(column_name.get().text);
     }
-    proto::QualifiedColumnNameBuilder out{builder};
+    buffers::QualifiedColumnNameBuilder out{builder};
     out.add_ast_node_id(ast_node_id.value_or(PROTO_NULL_U32));
     out.add_table_alias(table_alias_ofs);
     out.add_column_name(column_name_ofs);
@@ -308,30 +308,30 @@ flatbuffers::Offset<proto::QualifiedColumnName> AnalyzedScript::QualifiedColumnN
 }
 
 /// Pack as FlatBuffer
-flatbuffers::Offset<proto::TableReference> AnalyzedScript::TableReference::Pack(
+flatbuffers::Offset<buffers::TableReference> AnalyzedScript::TableReference::Pack(
     flatbuffers::FlatBufferBuilder& builder) const {
-    std::optional<proto::TableReferenceSubType> inner_type;
+    std::optional<buffers::TableReferenceSubType> inner_type;
     flatbuffers::Offset<void> inner_ofs;
     switch (inner.index()) {
         case 1: {
             auto& unresolved = std::get<AnalyzedScript::TableReference::UnresolvedRelationExpression>(inner);
             auto table_name_ofs = unresolved.table_name.Pack(builder);
-            proto::UnresolvedRelationExpressionBuilder out{builder};
+            buffers::UnresolvedRelationExpressionBuilder out{builder};
             out.add_table_name(table_name_ofs);
             inner_ofs = out.Finish().Union();
-            inner_type = proto::TableReferenceSubType::UnresolvedRelationExpression;
+            inner_type = buffers::TableReferenceSubType::UnresolvedRelationExpression;
             break;
         }
         case 2: {
             auto& resolved = std::get<AnalyzedScript::TableReference::ResolvedRelationExpression>(inner);
             auto table_name_ofs = resolved.table_name.Pack(builder);
-            proto::ResolvedRelationExpressionBuilder out{builder};
+            buffers::ResolvedRelationExpressionBuilder out{builder};
             out.add_table_name(table_name_ofs);
             out.add_catalog_database_id(resolved.catalog_database_id);
             out.add_catalog_schema_id(resolved.catalog_schema_id);
             out.add_catalog_table_id(resolved.catalog_table_id.Pack());
             inner_ofs = out.Finish().Union();
-            inner_type = proto::TableReferenceSubType::ResolvedRelationExpression;
+            inner_type = buffers::TableReferenceSubType::ResolvedRelationExpression;
             break;
         }
     }
@@ -339,7 +339,7 @@ flatbuffers::Offset<proto::TableReference> AnalyzedScript::TableReference::Pack(
     if (alias_name.has_value()) {
         alias_name_ofs = builder.CreateString(alias_name.value().get().text);
     }
-    proto::TableReferenceBuilder out{builder};
+    buffers::TableReferenceBuilder out{builder};
     out.add_ast_node_id(ast_node_id);
     out.add_ast_scope_root(ast_scope_root.value_or(std::numeric_limits<uint32_t>::max()));
     out.add_ast_statement_id(ast_statement_id.value_or(std::numeric_limits<uint32_t>::max()));
@@ -357,36 +357,36 @@ flatbuffers::Offset<proto::TableReference> AnalyzedScript::TableReference::Pack(
 }
 
 /// Pack as FlatBuffer
-flatbuffers::Offset<proto::Expression> AnalyzedScript::Expression::Pack(flatbuffers::FlatBufferBuilder& builder) const {
-    std::optional<proto::ExpressionSubType> inner_type;
+flatbuffers::Offset<buffers::Expression> AnalyzedScript::Expression::Pack(flatbuffers::FlatBufferBuilder& builder) const {
+    std::optional<buffers::ExpressionSubType> inner_type;
     flatbuffers::Offset<void> inner_ofs;
     switch (inner.index()) {
         case 1: {
             auto& unresolved = std::get<AnalyzedScript::Expression::UnresolvedColumnRef>(inner);
             auto column_name_ofs = unresolved.column_name.Pack(builder);
-            proto::UnresolvedColumnRefExpressionBuilder out{builder};
+            buffers::UnresolvedColumnRefExpressionBuilder out{builder};
             out.add_column_name(column_name_ofs);
             inner_ofs = out.Finish().Union();
-            inner_type = proto::ExpressionSubType::UnresolvedColumnRefExpression;
+            inner_type = buffers::ExpressionSubType::UnresolvedColumnRefExpression;
             break;
         }
         case 2: {
             auto& resolved = std::get<AnalyzedScript::Expression::ResolvedColumnRef>(inner);
             auto column_name_ofs = resolved.column_name.Pack(builder);
-            proto::ResolvedColumnRefExpressionBuilder out{builder};
+            buffers::ResolvedColumnRefExpressionBuilder out{builder};
             out.add_column_name(column_name_ofs);
             out.add_catalog_database_id(resolved.catalog_database_id);
             out.add_catalog_schema_id(resolved.catalog_schema_id);
             out.add_catalog_table_id(resolved.catalog_table_id.Pack());
             out.add_column_id(resolved.table_column_id);
             inner_ofs = out.Finish().Union();
-            inner_type = proto::ExpressionSubType::ResolvedColumnRefExpression;
+            inner_type = buffers::ExpressionSubType::ResolvedColumnRefExpression;
             break;
         }
         default:
             break;
     }
-    proto::ExpressionBuilder out{builder};
+    buffers::ExpressionBuilder out{builder};
     out.add_ast_node_id(ast_node_id);
     out.add_ast_scope_root(ast_scope_root.value_or(std::numeric_limits<uint32_t>::max()));
     out.add_ast_statement_id(ast_statement_id.value_or(std::numeric_limits<uint32_t>::max()));
@@ -409,25 +409,25 @@ AnalyzedScript::AnalyzedScript(std::shared_ptr<ParsedScript> parsed, Catalog& ca
       catalog_version(catalog.GetVersion()) {}
 
 /// Get the name search index
-flatbuffers::Offset<proto::CatalogEntry> AnalyzedScript::DescribeEntry(flatbuffers::FlatBufferBuilder& builder) const {
-    std::vector<flatbuffers::Offset<proto::SchemaTable>> table_offsets;
+flatbuffers::Offset<buffers::CatalogEntry> AnalyzedScript::DescribeEntry(flatbuffers::FlatBufferBuilder& builder) const {
+    std::vector<flatbuffers::Offset<buffers::SchemaTable>> table_offsets;
     table_offsets.reserve(table_declarations.GetSize());
     uint32_t table_id = 0;
     for (auto& table_chunk : table_declarations.GetChunks()) {
         for (auto& table : table_chunk) {
             auto table_name = builder.CreateString(table.table_name.table_name.get().text);
 
-            std::vector<flatbuffers::Offset<proto::SchemaTableColumn>> column_offsets;
+            std::vector<flatbuffers::Offset<buffers::SchemaTableColumn>> column_offsets;
             column_offsets.reserve(table.table_columns.size());
             for (auto& column : table.table_columns) {
                 auto column_name = builder.CreateString(column.column_name.get().text);
-                proto::SchemaTableColumnBuilder column_builder{builder};
+                buffers::SchemaTableColumnBuilder column_builder{builder};
                 column_builder.add_column_name(column_name);
                 column_offsets.push_back(column_builder.Finish());
             }
             auto columns_offset = builder.CreateVector(column_offsets);
 
-            proto::SchemaTableBuilder table_builder{builder};
+            buffers::SchemaTableBuilder table_builder{builder};
             table_builder.add_table_id(table_id++);
             table_builder.add_table_name(table_name);
             table_builder.add_columns(columns_offset);
@@ -435,15 +435,15 @@ flatbuffers::Offset<proto::CatalogEntry> AnalyzedScript::DescribeEntry(flatbuffe
     }
     auto tables_offset = builder.CreateVector(table_offsets);
 
-    proto::SchemaDescriptorBuilder schemaBuilder{builder};
+    buffers::SchemaDescriptorBuilder schemaBuilder{builder};
     schemaBuilder.add_tables(tables_offset);
     auto schema_offset = schemaBuilder.Finish();
-    std::vector<flatbuffers::Offset<proto::SchemaDescriptor>> schemas{schema_offset};
+    std::vector<flatbuffers::Offset<buffers::SchemaDescriptor>> schemas{schema_offset};
     auto schemas_offset = builder.CreateVector(schemas);
 
-    proto::CatalogEntryBuilder catalog{builder};
+    buffers::CatalogEntryBuilder catalog{builder};
     catalog.add_catalog_entry_id(catalog_entry_id);
-    catalog.add_catalog_entry_type(proto::CatalogEntryType::DESCRIPTOR_POOL);
+    catalog.add_catalog_entry_type(buffers::CatalogEntryType::DESCRIPTOR_POOL);
     catalog.add_rank(0);
     catalog.add_schemas(schemas_offset);
     return catalog.Finish();
@@ -494,11 +494,11 @@ static flatbuffers::Offset<flatbuffers::Vector<const Out*>> packStructVector(fla
 };
 
 // Pack an analyzed script
-flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {
+flatbuffers::Offset<buffers::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::FlatBufferBuilder& builder) {
     // Pack tables
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<proto::Table>>> tables_ofs;
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<buffers::Table>>> tables_ofs;
     {
-        std::vector<flatbuffers::Offset<proto::Table>> table_offsets;
+        std::vector<flatbuffers::Offset<buffers::Table>> table_offsets;
         table_offsets.reserve(table_declarations.GetSize());
         for (auto& table_chunk : table_declarations.GetChunks()) {
             for (auto& table : table_chunk) {
@@ -509,14 +509,14 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
     }
     // Pack table references
     auto table_references_ofs =
-        PackVector<AnalyzedScript::TableReference, proto::TableReference>(builder, table_references);
+        PackVector<AnalyzedScript::TableReference, buffers::TableReference>(builder, table_references);
     // Pack expressions
-    auto expressions_ofs = PackVector<AnalyzedScript::Expression, proto::Expression>(builder, expressions);
+    auto expressions_ofs = PackVector<AnalyzedScript::Expression, buffers::Expression>(builder, expressions);
 
     // Build index: (db_id, schema_id, table_id) -> table_ref*
-    flatbuffers::Offset<flatbuffers::Vector<const proto::IndexedTableReference*>> table_refs_by_id_ofs;
+    flatbuffers::Offset<flatbuffers::Vector<const buffers::IndexedTableReference*>> table_refs_by_id_ofs;
     {
-        std::vector<proto::IndexedTableReference> table_refs_by_id;
+        std::vector<buffers::IndexedTableReference> table_refs_by_id;
         table_refs_by_id.reserve(table_references.GetSize());
         table_references.ForEach([&](size_t ref_id, TableReference& ref) {
             if (auto* resolved = std::get_if<TableReference::ResolvedRelationExpression>(&ref.inner)) {
@@ -527,7 +527,7 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
             }
         });
         std::sort(table_refs_by_id.begin(), table_refs_by_id.end(),
-                  [&](proto::IndexedTableReference& l, proto::IndexedTableReference& r) {
+                  [&](buffers::IndexedTableReference& l, buffers::IndexedTableReference& r) {
                       auto a = std::make_tuple(l.catalog_database_id(), l.catalog_schema_id(), l.catalog_table_id());
                       auto b = std::make_tuple(r.catalog_database_id(), r.catalog_schema_id(), r.catalog_table_id());
                       return a < b;
@@ -536,9 +536,9 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
     }
 
     // Build index: (db_id, schema_id, table_id, column_id) -> column_ref*
-    flatbuffers::Offset<flatbuffers::Vector<const proto::IndexedColumnReference*>> column_refs_by_id_ofs;
+    flatbuffers::Offset<flatbuffers::Vector<const buffers::IndexedColumnReference*>> column_refs_by_id_ofs;
     {
-        std::vector<proto::IndexedColumnReference> column_refs_by_id;
+        std::vector<buffers::IndexedColumnReference> column_refs_by_id;
         column_refs_by_id.reserve(expressions.GetSize());
         expressions.ForEach([&](size_t ref_id, Expression& ref) {
             if (auto* resolved = std::get_if<AnalyzedScript::Expression::ResolvedColumnRef>(&ref.inner)) {
@@ -550,7 +550,7 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
             }
         });
         std::sort(column_refs_by_id.begin(), column_refs_by_id.end(),
-                  [&](proto::IndexedColumnReference& l, proto::IndexedColumnReference& r) {
+                  [&](buffers::IndexedColumnReference& l, buffers::IndexedColumnReference& r) {
                       auto a = std::make_tuple(l.catalog_database_id(), l.catalog_schema_id(), l.catalog_table_id(),
                                                l.table_column_id());
                       auto b = std::make_tuple(r.catalog_database_id(), r.catalog_schema_id(), r.catalog_table_id(),
@@ -561,9 +561,9 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
     }
 
     // Pack name scopes
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<proto::NameScope>>> name_scopes_ofs;
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<buffers::NameScope>>> name_scopes_ofs;
     {
-        std::vector<flatbuffers::Offset<proto::NameScope>> name_scope_offsets;
+        std::vector<flatbuffers::Offset<buffers::NameScope>> name_scope_offsets;
         name_scopes.ForEach([&](size_t scope_id, const NameScope& scope) {
             // Encode child scopes
             builder.StartVector<uint32_t>(scope.child_scopes.GetSize());
@@ -589,7 +589,7 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
             flatbuffers::Offset<flatbuffers::Vector<uint32_t>> table_refs_ofs{
                 builder.EndVector(scope.table_references.GetSize())};
 
-            proto::NameScopeBuilder scope_builder{builder};
+            buffers::NameScopeBuilder scope_builder{builder};
             scope_builder.add_scope_id(scope_id);
             scope_builder.add_ast_node_id(scope.ast_node_id);
             scope_builder.add_ast_statement_id(scope.ast_statement_id);
@@ -602,7 +602,7 @@ flatbuffers::Offset<proto::AnalyzedScript> AnalyzedScript::Pack(flatbuffers::Fla
         name_scopes_ofs = builder.CreateVector(name_scope_offsets);
     }
 
-    proto::AnalyzedScriptBuilder out{builder};
+    buffers::AnalyzedScriptBuilder out{builder};
     out.add_catalog_entry_id(catalog_entry_id);
     out.add_tables(tables_ofs);
     out.add_table_references(table_references_ofs);
@@ -642,8 +642,8 @@ std::string Script::Format() {
 }
 
 /// Update memory statisics
-std::unique_ptr<proto::ScriptMemoryStatistics> Script::GetMemoryStatistics() {
-    auto memory = std::make_unique<proto::ScriptMemoryStatistics>();
+std::unique_ptr<buffers::ScriptMemoryStatistics> Script::GetMemoryStatistics() {
+    auto memory = std::make_unique<buffers::ScriptMemoryStatistics>();
     memory->mutate_rope_bytes(text.GetStats().text_bytes);
 
     std::unordered_set<const ScannedScript*> registered_scanned;
@@ -652,7 +652,7 @@ std::unique_ptr<proto::ScriptMemoryStatistics> Script::GetMemoryStatistics() {
     registered_scanned.reserve(4);
     registered_parsed.reserve(4);
     registered_analyzed.reserve(4);
-    auto registerScript = [&](AnalyzedScript* analyzed, proto::ScriptProcessingMemoryStatistics& stats) {
+    auto registerScript = [&](AnalyzedScript* analyzed, buffers::ScriptProcessingMemoryStatistics& stats) {
         if (!analyzed) return;
         // Added analyzed before?
         if (registered_analyzed.contains(analyzed)) return;
@@ -696,15 +696,15 @@ std::unique_ptr<proto::ScriptMemoryStatistics> Script::GetMemoryStatistics() {
 }
 
 /// Get statisics
-std::unique_ptr<proto::ScriptStatisticsT> Script::GetStatistics() {
-    auto stats = std::make_unique<proto::ScriptStatisticsT>();
+std::unique_ptr<buffers::ScriptStatisticsT> Script::GetStatistics() {
+    auto stats = std::make_unique<buffers::ScriptStatisticsT>();
     stats->memory = GetMemoryStatistics();
-    stats->timings = std::make_unique<proto::ScriptProcessingTimings>(timing_statistics);
+    stats->timings = std::make_unique<buffers::ScriptProcessingTimings>(timing_statistics);
     return stats;
 }
 
 /// Scan a script
-std::pair<ScannedScript*, proto::StatusCode> Script::Scan() {
+std::pair<ScannedScript*, buffers::StatusCode> Script::Scan() {
     auto time_start = std::chrono::steady_clock::now();
     auto [script, status] = parser::Scanner::Scan(text, catalog_entry_id);
     scanned_script = std::move(script);
@@ -713,7 +713,7 @@ std::pair<ScannedScript*, proto::StatusCode> Script::Scan() {
     return {scanned_script.get(), status};
 }
 /// Parse a script
-std::pair<ParsedScript*, proto::StatusCode> Script::Parse() {
+std::pair<ParsedScript*, buffers::StatusCode> Script::Parse() {
     auto time_start = std::chrono::steady_clock::now();
     auto [script, status] = parser::Parser::Parse(scanned_script);
     parsed_script = std::move(script);
@@ -723,7 +723,7 @@ std::pair<ParsedScript*, proto::StatusCode> Script::Parse() {
 }
 
 /// Analyze a script
-std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze() {
+std::pair<AnalyzedScript*, buffers::StatusCode> Script::Analyze() {
     auto time_start = std::chrono::steady_clock::now();
 
     // Check if the script was already analyzed.
@@ -739,7 +739,7 @@ std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze() {
 
     // Analyze a script
     auto [script, status] = Analyzer::Analyze(parsed_script, catalog);
-    if (status != proto::StatusCode::OK) {
+    if (status != buffers::StatusCode::OK) {
         return {nullptr, status};
     }
     analyzed_script = std::move(script);
@@ -751,22 +751,22 @@ std::pair<AnalyzedScript*, proto::StatusCode> Script::Analyze() {
 }
 
 /// Move the cursor to a offset
-std::pair<const ScriptCursor*, proto::StatusCode> Script::MoveCursor(size_t text_offset) {
+std::pair<const ScriptCursor*, buffers::StatusCode> Script::MoveCursor(size_t text_offset) {
     auto [maybe_cursor, status] = ScriptCursor::Place(*this, text_offset);
-    if (status == proto::StatusCode::OK) {
+    if (status == buffers::StatusCode::OK) {
         cursor = std::move(maybe_cursor);
     }
     return {cursor.get(), status};
 }
 /// Complete at the cursor
-std::pair<std::unique_ptr<Completion>, proto::StatusCode> Script::CompleteAtCursor(size_t limit) const {
+std::pair<std::unique_ptr<Completion>, buffers::StatusCode> Script::CompleteAtCursor(size_t limit) const {
     // Fail if the user forgot to move the cursor
     if (cursor == nullptr) {
-        return {nullptr, proto::StatusCode::COMPLETION_MISSES_CURSOR};
+        return {nullptr, buffers::StatusCode::COMPLETION_MISSES_CURSOR};
     }
     // Fail if the scanner is not associated with a scanner token
     if (!cursor->scanner_location.has_value()) {
-        return {nullptr, proto::StatusCode::COMPLETION_MISSES_SCANNER_TOKEN};
+        return {nullptr, buffers::StatusCode::COMPLETION_MISSES_SCANNER_TOKEN};
     }
     // Compute the completion
     return Completion::Compute(*cursor, limit);

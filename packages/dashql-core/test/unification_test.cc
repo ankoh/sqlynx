@@ -1,6 +1,6 @@
 #include "dashql/catalog.h"
 #include "dashql/external.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "dashql/script.h"
 #include "gtest/gtest.h"
 
@@ -13,7 +13,7 @@ TEST(UnificationTest, EmptyCatalogHasNoSchema) {
 
     flatbuffers::FlatBufferBuilder fb;
     fb.Finish(catalog.Flatten(fb));
-    auto flat = flatbuffers::GetRoot<proto::FlatCatalog>(fb.GetBufferPointer());
+    auto flat = flatbuffers::GetRoot<buffers::FlatCatalog>(fb.GetBufferPointer());
     EXPECT_EQ(flat->databases()->size(), 0);
     EXPECT_EQ(flat->schemas()->size(), 0);
 }
@@ -24,14 +24,14 @@ TEST(UnificationTest, SingleTableInDefaultSchema) {
     Script script{catalog, 42};
     script.InsertTextAt(0, "create table foo(a int);");
 
-    ASSERT_EQ(script.Scan().second, proto::StatusCode::OK);
-    ASSERT_EQ(script.Parse().second, proto::StatusCode::OK);
-    ASSERT_EQ(script.Analyze().second, proto::StatusCode::OK);
-    ASSERT_EQ(catalog.LoadScript(script, 1), proto::StatusCode::OK);
+    ASSERT_EQ(script.Scan().second, buffers::StatusCode::OK);
+    ASSERT_EQ(script.Parse().second, buffers::StatusCode::OK);
+    ASSERT_EQ(script.Analyze().second, buffers::StatusCode::OK);
+    ASSERT_EQ(catalog.LoadScript(script, 1), buffers::StatusCode::OK);
 
     flatbuffers::FlatBufferBuilder fb;
     fb.Finish(catalog.Flatten(fb));
-    auto flat = flatbuffers::GetRoot<proto::FlatCatalog>(fb.GetBufferPointer());
+    auto flat = flatbuffers::GetRoot<buffers::FlatCatalog>(fb.GetBufferPointer());
 
     // "foo" should get expanded to dashql.default.foo
     // The flat catalog should therefore have exactly 1 database, 1 schema, 1 table, 1 column
@@ -61,19 +61,19 @@ TEST(UnificationTest, MultipleTablesInDefaultSchema) {
     schema0.InsertTextAt(0, "create table foo(a int);");
     schema1.InsertTextAt(0, "create table bar(a int);");
 
-    ASSERT_EQ(schema0.Scan().second, proto::StatusCode::OK);
-    ASSERT_EQ(schema0.Parse().second, proto::StatusCode::OK);
-    ASSERT_EQ(schema0.Analyze().second, proto::StatusCode::OK);
-    ASSERT_EQ(catalog.LoadScript(schema0, 1), proto::StatusCode::OK);
+    ASSERT_EQ(schema0.Scan().second, buffers::StatusCode::OK);
+    ASSERT_EQ(schema0.Parse().second, buffers::StatusCode::OK);
+    ASSERT_EQ(schema0.Analyze().second, buffers::StatusCode::OK);
+    ASSERT_EQ(catalog.LoadScript(schema0, 1), buffers::StatusCode::OK);
 
-    ASSERT_EQ(schema1.Scan().second, proto::StatusCode::OK);
-    ASSERT_EQ(schema1.Parse().second, proto::StatusCode::OK);
-    ASSERT_EQ(schema1.Analyze().second, proto::StatusCode::OK);
-    ASSERT_EQ(catalog.LoadScript(schema1, 2), proto::StatusCode::OK);
+    ASSERT_EQ(schema1.Scan().second, buffers::StatusCode::OK);
+    ASSERT_EQ(schema1.Parse().second, buffers::StatusCode::OK);
+    ASSERT_EQ(schema1.Analyze().second, buffers::StatusCode::OK);
+    ASSERT_EQ(catalog.LoadScript(schema1, 2), buffers::StatusCode::OK);
 
     flatbuffers::FlatBufferBuilder fb;
     fb.Finish(catalog.Flatten(fb));
-    auto flat = flatbuffers::GetRoot<proto::FlatCatalog>(fb.GetBufferPointer());
+    auto flat = flatbuffers::GetRoot<buffers::FlatCatalog>(fb.GetBufferPointer());
 
     // "foo" should get expanded to dashql.default.foo
     // "bar" should get expanded to dashql.default.foo
@@ -104,19 +104,19 @@ TEST(UnificationTest, MultipleTablesInMultipleSchemas) {
     schema0.InsertTextAt(0, "create table in_default_0(a int);");
     schema1.InsertTextAt(0, "create table in_default_1(a int); create table separate.schema.in_separate_0(b int);");
 
-    ASSERT_EQ(schema0.Scan().second, proto::StatusCode::OK);
-    ASSERT_EQ(schema0.Parse().second, proto::StatusCode::OK);
-    ASSERT_EQ(schema0.Analyze().second, proto::StatusCode::OK);
-    ASSERT_EQ(catalog.LoadScript(schema0, 1), proto::StatusCode::OK);
+    ASSERT_EQ(schema0.Scan().second, buffers::StatusCode::OK);
+    ASSERT_EQ(schema0.Parse().second, buffers::StatusCode::OK);
+    ASSERT_EQ(schema0.Analyze().second, buffers::StatusCode::OK);
+    ASSERT_EQ(catalog.LoadScript(schema0, 1), buffers::StatusCode::OK);
 
-    ASSERT_EQ(schema1.Scan().second, proto::StatusCode::OK);
-    ASSERT_EQ(schema1.Parse().second, proto::StatusCode::OK);
-    ASSERT_EQ(schema1.Analyze().second, proto::StatusCode::OK);
-    ASSERT_EQ(catalog.LoadScript(schema1, 2), proto::StatusCode::OK);
+    ASSERT_EQ(schema1.Scan().second, buffers::StatusCode::OK);
+    ASSERT_EQ(schema1.Parse().second, buffers::StatusCode::OK);
+    ASSERT_EQ(schema1.Analyze().second, buffers::StatusCode::OK);
+    ASSERT_EQ(catalog.LoadScript(schema1, 2), buffers::StatusCode::OK);
 
     flatbuffers::FlatBufferBuilder fb;
     fb.Finish(catalog.Flatten(fb));
-    auto flat = flatbuffers::GetRoot<proto::FlatCatalog>(fb.GetBufferPointer());
+    auto flat = flatbuffers::GetRoot<buffers::FlatCatalog>(fb.GetBufferPointer());
 
     // "in_default_0" should get expanded to dashql.default.in_default_0
     // "in_default_1" should get expanded to dashql.default.in_default_1
@@ -153,21 +153,21 @@ TEST(UnificationTest, SimpleTableReference) {
     schema.InsertTextAt(0, "create table db1.schema1.table1(a int);create table db2.schema2.table2(a int);");
     query.InsertTextAt(0, "select * from db2.schema2.table2");
 
-    ASSERT_EQ(schema.Scan().second, proto::StatusCode::OK);
-    ASSERT_EQ(schema.Parse().second, proto::StatusCode::OK);
-    ASSERT_EQ(schema.Analyze().second, proto::StatusCode::OK);
-    ASSERT_EQ(catalog.LoadScript(schema, 1), proto::StatusCode::OK);
+    ASSERT_EQ(schema.Scan().second, buffers::StatusCode::OK);
+    ASSERT_EQ(schema.Parse().second, buffers::StatusCode::OK);
+    ASSERT_EQ(schema.Analyze().second, buffers::StatusCode::OK);
+    ASSERT_EQ(catalog.LoadScript(schema, 1), buffers::StatusCode::OK);
 
     // Analyze query after loading the schema script in the catalog
-    ASSERT_EQ(query.Scan().second, proto::StatusCode::OK);
-    ASSERT_EQ(query.Parse().second, proto::StatusCode::OK);
+    ASSERT_EQ(query.Scan().second, buffers::StatusCode::OK);
+    ASSERT_EQ(query.Parse().second, buffers::StatusCode::OK);
     auto [analyzed, analysis_status] = query.Analyze();
-    ASSERT_EQ(analysis_status, proto::StatusCode::OK);
+    ASSERT_EQ(analysis_status, buffers::StatusCode::OK);
 
     // Check flattened catalog
     flatbuffers::FlatBufferBuilder fb;
     fb.Finish(catalog.Flatten(fb));
-    auto flat = flatbuffers::GetRoot<proto::FlatCatalog>(fb.GetBufferPointer());
+    auto flat = flatbuffers::GetRoot<buffers::FlatCatalog>(fb.GetBufferPointer());
 
     ASSERT_EQ(flat->databases()->size(), 2);
     ASSERT_EQ(flat->schemas()->size(), 2);
@@ -201,16 +201,16 @@ TEST(UnificationTest, ParallelDatabaseRegistration) {
     schema0.InsertTextAt(0, "create table db1.schema1.table1(a int);");
     schema1.InsertTextAt(0, "create table db1.schema2.table2(a int);");
 
-    ASSERT_EQ(schema0.Scan().second, proto::StatusCode::OK);
-    ASSERT_EQ(schema0.Parse().second, proto::StatusCode::OK);
-    ASSERT_EQ(schema0.Analyze().second, proto::StatusCode::OK);
+    ASSERT_EQ(schema0.Scan().second, buffers::StatusCode::OK);
+    ASSERT_EQ(schema0.Parse().second, buffers::StatusCode::OK);
+    ASSERT_EQ(schema0.Analyze().second, buffers::StatusCode::OK);
 
-    ASSERT_EQ(schema1.Scan().second, proto::StatusCode::OK);
-    ASSERT_EQ(schema1.Parse().second, proto::StatusCode::OK);
-    ASSERT_EQ(schema1.Analyze().second, proto::StatusCode::OK);
+    ASSERT_EQ(schema1.Scan().second, buffers::StatusCode::OK);
+    ASSERT_EQ(schema1.Parse().second, buffers::StatusCode::OK);
+    ASSERT_EQ(schema1.Analyze().second, buffers::StatusCode::OK);
 
-    ASSERT_EQ(catalog.LoadScript(schema0, 1), proto::StatusCode::OK);
-    ASSERT_EQ(catalog.LoadScript(schema1, 2), proto::StatusCode::CATALOG_ID_OUT_OF_SYNC);
+    ASSERT_EQ(catalog.LoadScript(schema0, 1), buffers::StatusCode::OK);
+    ASSERT_EQ(catalog.LoadScript(schema1, 2), buffers::StatusCode::CATALOG_ID_OUT_OF_SYNC);
 }
 
 TEST(UnificationTest, ParallelSchemaRegistration) {
@@ -221,16 +221,16 @@ TEST(UnificationTest, ParallelSchemaRegistration) {
     schema0.InsertTextAt(0, "create table schema1.table1(a int);");
     schema1.InsertTextAt(0, "create table schema1.table2(a int);");
 
-    ASSERT_EQ(schema0.Scan().second, proto::StatusCode::OK);
-    ASSERT_EQ(schema0.Parse().second, proto::StatusCode::OK);
-    ASSERT_EQ(schema0.Analyze().second, proto::StatusCode::OK);
+    ASSERT_EQ(schema0.Scan().second, buffers::StatusCode::OK);
+    ASSERT_EQ(schema0.Parse().second, buffers::StatusCode::OK);
+    ASSERT_EQ(schema0.Analyze().second, buffers::StatusCode::OK);
 
-    ASSERT_EQ(schema1.Scan().second, proto::StatusCode::OK);
-    ASSERT_EQ(schema1.Parse().second, proto::StatusCode::OK);
-    ASSERT_EQ(schema1.Analyze().second, proto::StatusCode::OK);
+    ASSERT_EQ(schema1.Scan().second, buffers::StatusCode::OK);
+    ASSERT_EQ(schema1.Parse().second, buffers::StatusCode::OK);
+    ASSERT_EQ(schema1.Analyze().second, buffers::StatusCode::OK);
 
-    ASSERT_EQ(catalog.LoadScript(schema0, 1), proto::StatusCode::OK);
-    ASSERT_EQ(catalog.LoadScript(schema1, 2), proto::StatusCode::CATALOG_ID_OUT_OF_SYNC);
+    ASSERT_EQ(catalog.LoadScript(schema0, 1), buffers::StatusCode::OK);
+    ASSERT_EQ(catalog.LoadScript(schema1, 2), buffers::StatusCode::CATALOG_ID_OUT_OF_SYNC);
 }
 
 }  // namespace

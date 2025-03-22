@@ -5,7 +5,7 @@
 #include "dashql/catalog.h"
 #include "dashql/parser/parser.h"
 #include "dashql/parser/scanner.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "dashql/script.h"
 #include "dashql/text/names.h"
 
@@ -54,13 +54,13 @@ TEST_P(TestNameTags, Test) {
     buffer.Insert(0, GetParam().script);
 
     auto [scanned, scan_status] = parser::Scanner::Scan(buffer, 0);
-    ASSERT_EQ(scan_status, proto::StatusCode::OK);
+    ASSERT_EQ(scan_status, buffers::StatusCode::OK);
     auto [parsed, parser_status] = parser::Parser::Parse(scanned);
-    ASSERT_EQ(parser_status, proto::StatusCode::OK);
+    ASSERT_EQ(parser_status, buffers::StatusCode::OK);
     ASSERT_TRUE(parsed->errors.empty()) << parsed->errors[0].second;
     Catalog catalog;
     auto [analyzed, analyzer_status] = Analyzer::Analyze(parsed, catalog);
-    ASSERT_EQ(analyzer_status, proto::StatusCode::OK);
+    ASSERT_EQ(analyzer_status, buffers::StatusCode::OK);
 
     ASSERT_EQ(scanned->name_registry.GetSize(), GetParam().expected.size()) << snapshot(scanned->name_registry);
     size_t i = 0;
@@ -77,82 +77,82 @@ std::vector<NameTaggingTest> TESTS_SIMPLE{
     {"select_1",
      "select 1",
      {
-         {Catalog::DEFAULT_DATABASE_NAME, NameTags(proto::NameTag::DATABASE_NAME)},
-         {Catalog::DEFAULT_SCHEMA_NAME, NameTags(proto::NameTag::SCHEMA_NAME)},
+         {Catalog::DEFAULT_DATABASE_NAME, NameTags(buffers::NameTag::DATABASE_NAME)},
+         {Catalog::DEFAULT_SCHEMA_NAME, NameTags(buffers::NameTag::SCHEMA_NAME)},
      }},
     {"select_foo",
      "select foo",
      {
-         {"foo", NameTags(proto::NameTag::COLUMN_NAME)},
-         {Catalog::DEFAULT_DATABASE_NAME, NameTags(proto::NameTag::DATABASE_NAME)},
-         {Catalog::DEFAULT_SCHEMA_NAME, NameTags(proto::NameTag::SCHEMA_NAME)},
+         {"foo", NameTags(buffers::NameTag::COLUMN_NAME)},
+         {Catalog::DEFAULT_DATABASE_NAME, NameTags(buffers::NameTag::DATABASE_NAME)},
+         {Catalog::DEFAULT_SCHEMA_NAME, NameTags(buffers::NameTag::SCHEMA_NAME)},
      }},
     {"select_foo_from_bar",
      "select foo from bar",
      {
-         {"foo", NameTags(proto::NameTag::COLUMN_NAME)},
-         {"bar", NameTags(proto::NameTag::TABLE_NAME)},
-         {Catalog::DEFAULT_DATABASE_NAME, NameTags(proto::NameTag::DATABASE_NAME)},
-         {Catalog::DEFAULT_SCHEMA_NAME, NameTags(proto::NameTag::SCHEMA_NAME)},
+         {"foo", NameTags(buffers::NameTag::COLUMN_NAME)},
+         {"bar", NameTags(buffers::NameTag::TABLE_NAME)},
+         {Catalog::DEFAULT_DATABASE_NAME, NameTags(buffers::NameTag::DATABASE_NAME)},
+         {Catalog::DEFAULT_SCHEMA_NAME, NameTags(buffers::NameTag::SCHEMA_NAME)},
      }},
     {"select_foo_from_foo",
      "select foo from foo",
      {
-         {"foo", NameTags(proto::NameTag::COLUMN_NAME) | proto::NameTag::TABLE_NAME},
-         {Catalog::DEFAULT_DATABASE_NAME, NameTags(proto::NameTag::DATABASE_NAME)},
-         {Catalog::DEFAULT_SCHEMA_NAME, NameTags(proto::NameTag::SCHEMA_NAME)},
+         {"foo", NameTags(buffers::NameTag::COLUMN_NAME) | buffers::NameTag::TABLE_NAME},
+         {Catalog::DEFAULT_DATABASE_NAME, NameTags(buffers::NameTag::DATABASE_NAME)},
+         {Catalog::DEFAULT_SCHEMA_NAME, NameTags(buffers::NameTag::SCHEMA_NAME)},
      }},
     {"select_foo_from_foo_foo",
      "select foo from foo foo",
      {
-         {"foo", NameTags(proto::NameTag::COLUMN_NAME) | proto::NameTag::TABLE_NAME | proto::NameTag::TABLE_ALIAS},
-         {Catalog::DEFAULT_DATABASE_NAME, NameTags(proto::NameTag::DATABASE_NAME)},
-         {Catalog::DEFAULT_SCHEMA_NAME, NameTags(proto::NameTag::SCHEMA_NAME)},
+         {"foo", NameTags(buffers::NameTag::COLUMN_NAME) | buffers::NameTag::TABLE_NAME | buffers::NameTag::TABLE_ALIAS},
+         {Catalog::DEFAULT_DATABASE_NAME, NameTags(buffers::NameTag::DATABASE_NAME)},
+         {Catalog::DEFAULT_SCHEMA_NAME, NameTags(buffers::NameTag::SCHEMA_NAME)},
      }},
     {"select_foo_from_foo_bar",
      "select foo from foo bar",
      {
-         {"foo", NameTags(proto::NameTag::COLUMN_NAME) | proto::NameTag::TABLE_NAME},
-         {"bar", NameTags(proto::NameTag::TABLE_ALIAS)},
-         {Catalog::DEFAULT_DATABASE_NAME, NameTags(proto::NameTag::DATABASE_NAME)},
-         {Catalog::DEFAULT_SCHEMA_NAME, NameTags(proto::NameTag::SCHEMA_NAME)},
+         {"foo", NameTags(buffers::NameTag::COLUMN_NAME) | buffers::NameTag::TABLE_NAME},
+         {"bar", NameTags(buffers::NameTag::TABLE_ALIAS)},
+         {Catalog::DEFAULT_DATABASE_NAME, NameTags(buffers::NameTag::DATABASE_NAME)},
+         {Catalog::DEFAULT_SCHEMA_NAME, NameTags(buffers::NameTag::SCHEMA_NAME)},
      }},
     {"select_foo_bar_from_the_foo",
      "select foo.bar from the foo",
      {
-         {"foo", NameTags(proto::NameTag::TABLE_ALIAS)},
-         {"bar", NameTags(proto::NameTag::COLUMN_NAME)},
-         {"the", NameTags(proto::NameTag::TABLE_NAME)},
-         {Catalog::DEFAULT_DATABASE_NAME, NameTags(proto::NameTag::DATABASE_NAME)},
-         {Catalog::DEFAULT_SCHEMA_NAME, NameTags(proto::NameTag::SCHEMA_NAME)},
+         {"foo", NameTags(buffers::NameTag::TABLE_ALIAS)},
+         {"bar", NameTags(buffers::NameTag::COLUMN_NAME)},
+         {"the", NameTags(buffers::NameTag::TABLE_NAME)},
+         {Catalog::DEFAULT_DATABASE_NAME, NameTags(buffers::NameTag::DATABASE_NAME)},
+         {Catalog::DEFAULT_SCHEMA_NAME, NameTags(buffers::NameTag::SCHEMA_NAME)},
      }},
     {"select_foo_bar_from_the_real_foo",
      "select foo.bar from the.real foo",
      {
-         {"foo", NameTags(proto::NameTag::TABLE_ALIAS)},
-         {"bar", NameTags(proto::NameTag::COLUMN_NAME)},
-         {"the", NameTags(proto::NameTag::SCHEMA_NAME)},
-         {"real", NameTags(proto::NameTag::TABLE_NAME)},
-         {Catalog::DEFAULT_DATABASE_NAME, NameTags(proto::NameTag::DATABASE_NAME)},
-         {Catalog::DEFAULT_SCHEMA_NAME, NameTags(proto::NameTag::SCHEMA_NAME)},
+         {"foo", NameTags(buffers::NameTag::TABLE_ALIAS)},
+         {"bar", NameTags(buffers::NameTag::COLUMN_NAME)},
+         {"the", NameTags(buffers::NameTag::SCHEMA_NAME)},
+         {"real", NameTags(buffers::NameTag::TABLE_NAME)},
+         {Catalog::DEFAULT_DATABASE_NAME, NameTags(buffers::NameTag::DATABASE_NAME)},
+         {Catalog::DEFAULT_SCHEMA_NAME, NameTags(buffers::NameTag::SCHEMA_NAME)},
      }},
     {"select_foo_bar_from_the_actually_real_foo",
      "select foo.bar from the.actually.real foo",
      {
-         {"foo", NameTags(proto::NameTag::TABLE_ALIAS)},
-         {"bar", NameTags(proto::NameTag::COLUMN_NAME)},
-         {"the", NameTags(proto::NameTag::DATABASE_NAME)},
-         {"actually", NameTags(proto::NameTag::SCHEMA_NAME)},
-         {"real", NameTags(proto::NameTag::TABLE_NAME)},
-         {Catalog::DEFAULT_DATABASE_NAME, NameTags(proto::NameTag::DATABASE_NAME)},
-         {Catalog::DEFAULT_SCHEMA_NAME, NameTags(proto::NameTag::SCHEMA_NAME)},
+         {"foo", NameTags(buffers::NameTag::TABLE_ALIAS)},
+         {"bar", NameTags(buffers::NameTag::COLUMN_NAME)},
+         {"the", NameTags(buffers::NameTag::DATABASE_NAME)},
+         {"actually", NameTags(buffers::NameTag::SCHEMA_NAME)},
+         {"real", NameTags(buffers::NameTag::TABLE_NAME)},
+         {Catalog::DEFAULT_DATABASE_NAME, NameTags(buffers::NameTag::DATABASE_NAME)},
+         {Catalog::DEFAULT_SCHEMA_NAME, NameTags(buffers::NameTag::SCHEMA_NAME)},
      }},
     {"quoted_identifier",
      "select * from \"SomeQuotedString\"",
      {
-         {"SomeQuotedString", NameTags(proto::NameTag::TABLE_NAME)},
-         {Catalog::DEFAULT_DATABASE_NAME, NameTags(proto::NameTag::DATABASE_NAME)},
-         {Catalog::DEFAULT_SCHEMA_NAME, NameTags(proto::NameTag::SCHEMA_NAME)},
+         {"SomeQuotedString", NameTags(buffers::NameTag::TABLE_NAME)},
+         {Catalog::DEFAULT_DATABASE_NAME, NameTags(buffers::NameTag::DATABASE_NAME)},
+         {Catalog::DEFAULT_SCHEMA_NAME, NameTags(buffers::NameTag::SCHEMA_NAME)},
      }}};
 
 INSTANTIATE_TEST_SUITE_P(SimpleNameTagging, TestNameTags, ::testing::ValuesIn(TESTS_SIMPLE), NameTaggingTestPrinter());

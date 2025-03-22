@@ -8,7 +8,7 @@
 #include "gtest/gtest.h"
 #include "pugixml.hpp"
 #include "dashql/analyzer/completion.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "dashql/script.h"
 
 using namespace dashql;
@@ -149,8 +149,8 @@ TEST_P(FormatTestSuite, Test) {
     Catalog catalog;
     Script s{catalog};
     s.InsertTextAt(0, test.input);
-    ASSERT_EQ(s.Scan().second, proto::StatusCode::OK);
-    ASSERT_EQ(s.Parse().second, proto::StatusCode::OK);
+    ASSERT_EQ(s.Scan().second, buffers::StatusCode::OK);
+    ASSERT_EQ(s.Parse().second, buffers::StatusCode::OK);
     std::string actual = s.Format();
 
     if (update_expecteds) {

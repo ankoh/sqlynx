@@ -1,1 +1,1 @@
-%type <proto::Node> set_statement;
+%type <buffers::Node> set_statement;

@@ -7,8 +7,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use indoc::indoc;
 use pretty_assertions::assert_eq;
 
-use crate::proto::dashql_compute::{AggregationFunction, BinningTransform, FilterOperator, FilterTransform, GroupByAggregate, GroupByKey, GroupByKeyBinning, RowNumberTransform, ValueIdentifierTransform};
-use crate::proto::dashql_compute::{DataFrameTransform, OrderByConstraint, OrderByTransform, GroupByTransform};
+use crate::buffers::dashql_compute::{AggregationFunction, BinningTransform, FilterOperator, FilterTransform, GroupByAggregate, GroupByKey, GroupByKeyBinning, RowNumberTransform, ValueIdentifierTransform};
+use crate::buffers::dashql_compute::{DataFrameTransform, OrderByConstraint, OrderByTransform, GroupByTransform};
 use crate::data_frame::DataFrame;
 
 #[tokio::test]

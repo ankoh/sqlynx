@@ -1,6 +1,6 @@
 include "dashql/parsed_script.fbs";
 
-namespace dashql.proto;
+namespace dashql.buffers;
 
 enum CompletionCandidateObjectType: uint8 {
     NONE = 0,

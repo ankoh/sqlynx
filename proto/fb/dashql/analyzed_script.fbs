@@ -1,6 +1,6 @@
 include "dashql/sql_enums.fbs";
 
-namespace dashql.proto;
+namespace dashql.buffers;
 
 table DatabaseDeclaration {
     // The unified database id across all catalog entries

@@ -2,7 +2,7 @@
 
 #include "gtest/gtest.h"
 #include "dashql/catalog.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 
 using namespace dashql;
 
@@ -13,7 +13,7 @@ TEST(ScriptTest, ParsingBeforeScanning) {
     Script script{catalog, 1};
     auto [scanned, status] = script.Parse();
     ASSERT_EQ(scanned, nullptr);
-    ASSERT_EQ(status, proto::StatusCode::PARSER_INPUT_NOT_SCANNED);
+    ASSERT_EQ(status, buffers::StatusCode::PARSER_INPUT_NOT_SCANNED);
 }
 
 TEST(ScriptTest, AnalyzingBeforeParsing) {
@@ -21,7 +21,7 @@ TEST(ScriptTest, AnalyzingBeforeParsing) {
     Script script{catalog, 1};
     auto [analyzed, status] = script.Analyze();
     ASSERT_EQ(analyzed, nullptr);
-    ASSERT_EQ(status, proto::StatusCode::ANALYZER_INPUT_NOT_PARSED);
+    ASSERT_EQ(status, buffers::StatusCode::ANALYZER_INPUT_NOT_PARSED);
 }
 
 TEST(ScriptTest, TPCH_Q2) {
@@ -86,17 +86,17 @@ limit 100
     Catalog catalog;
     Script external_script{catalog, 1};
     external_script.InsertTextAt(0, external_script_text);
-    ASSERT_EQ(external_script.Scan().second, proto::StatusCode::OK);
-    ASSERT_EQ(external_script.Parse().second, proto::StatusCode::OK);
-    ASSERT_EQ(external_script.Analyze().second, proto::StatusCode::OK);
+    ASSERT_EQ(external_script.Scan().second, buffers::StatusCode::OK);
+    ASSERT_EQ(external_script.Parse().second, buffers::StatusCode::OK);
+    ASSERT_EQ(external_script.Analyze().second, buffers::StatusCode::OK);
 
     Script main_script{catalog, 2};
     main_script.InsertTextAt(0, main_script_text);
-    ASSERT_EQ(main_script.Scan().second, proto::StatusCode::OK);
-    ASSERT_EQ(main_script.Parse().second, proto::StatusCode::OK);
+    ASSERT_EQ(main_script.Scan().second, buffers::StatusCode::OK);
+    ASSERT_EQ(main_script.Parse().second, buffers::StatusCode::OK);
 
     catalog.LoadScript(external_script, 0);
-    ASSERT_EQ(main_script.Analyze().second, proto::StatusCode::OK);
+    ASSERT_EQ(main_script.Analyze().second, buffers::StatusCode::OK);
 }
 
 TEST(ScriptTest, ReplaceText) {

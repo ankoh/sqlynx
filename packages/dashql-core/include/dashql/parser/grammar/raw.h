@@ -3,7 +3,7 @@
 #include <string_view>
 
 #include "dashql/parser/parser.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 
 namespace dashql {
 namespace parser {

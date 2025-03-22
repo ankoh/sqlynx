@@ -1,4 +1,4 @@
-namespace dashql.proto;
+namespace dashql.buffers;
 
 enum ExpressionOperator: uint8 {
     DEFAULT,

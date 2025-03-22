@@ -1,4 +1,4 @@
-import * as proto from '../gen/dashql/proto/index.js';
+import * as proto from '../gen/dashql/buffers/index.js';
 
 /// Find lower bound among table refs for a table
 export function findScriptTableRefsLowerBound(script: proto.AnalyzedScript, tmp: proto.IndexedTableReference, begin: number, end: number, targetDb: number, targetSchema: number, targetTable: bigint) {

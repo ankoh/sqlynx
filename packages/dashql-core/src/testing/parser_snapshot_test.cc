@@ -6,7 +6,7 @@
 
 #include "pugixml.hpp"
 #include "dashql/parser/grammar/enums.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "dashql/testing/xml_tests.h"
 
 namespace dashql::testing {
@@ -19,8 +19,8 @@ void ParserSnapshotTest::EncodeScript(pugi::xml_node root, const ScannedScript& 
     // Unpack modules
     auto& nodes = parsed.nodes;
     auto& statements = parsed.statements;
-    auto* stmt_type_tt = proto::StatementTypeTypeTable();
-    auto* node_type_tt = proto::NodeTypeTypeTable();
+    auto* stmt_type_tt = buffers::StatementTypeTypeTable();
+    auto* node_type_tt = buffers::NodeTypeTypeTable();
 
     // Add the statements list
     auto stmts = root.append_child("statements");
@@ -34,7 +34,7 @@ void ParserSnapshotTest::EncodeScript(pugi::xml_node root, const ScannedScript& 
         stmt.append_attribute("begin") = s.nodes_begin;
         stmt.append_attribute("count") = s.node_count;
 
-        std::vector<std::tuple<pugi::xml_node, const proto::Node*>> pending;
+        std::vector<std::tuple<pugi::xml_node, const buffers::Node*>> pending;
         pending.push_back({stmt.append_child("node"), &nodes[s.root]});
 
         while (!pending.empty()) {
@@ -42,32 +42,32 @@ void ParserSnapshotTest::EncodeScript(pugi::xml_node root, const ScannedScript& 
             pending.pop_back();
 
             // Add or append to parent
-            if (target->attribute_key() != proto::AttributeKey::NONE) {
-                auto name = proto::EnumNameAttributeKey(target->attribute_key());
+            if (target->attribute_key() != buffers::AttributeKey::NONE) {
+                auto name = buffers::EnumNameAttributeKey(target->attribute_key());
                 n.append_attribute("key").set_value(name);
             }
 
             // Check node type
             n.append_attribute("type").set_value(
-                proto::NodeTypeTypeTable()->names[static_cast<uint16_t>(target->node_type())]);
+                buffers::NodeTypeTypeTable()->names[static_cast<uint16_t>(target->node_type())]);
             switch (target->node_type()) {
-                case proto::NodeType::NONE:
+                case buffers::NodeType::NONE:
                     break;
-                case proto::NodeType::BOOL: {
+                case buffers::NodeType::BOOL: {
                     n.append_attribute("value") = target->children_begin_or_value() != 0;
                     break;
                 }
-                case proto::NodeType::OPERATOR:
-                case proto::NodeType::NAME:
-                case proto::NodeType::LITERAL_NULL:
-                case proto::NodeType::LITERAL_FLOAT:
-                case proto::NodeType::LITERAL_INTEGER:
-                case proto::NodeType::LITERAL_INTERVAL:
-                case proto::NodeType::LITERAL_STRING: {
+                case buffers::NodeType::OPERATOR:
+                case buffers::NodeType::NAME:
+                case buffers::NodeType::LITERAL_NULL:
+                case buffers::NodeType::LITERAL_FLOAT:
+                case buffers::NodeType::LITERAL_INTEGER:
+                case buffers::NodeType::LITERAL_INTERVAL:
+                case buffers::NodeType::LITERAL_STRING: {
                     EncodeLocation(n, target->location(), text);
                     break;
                 }
-                case proto::NodeType::ARRAY: {
+                case buffers::NodeType::ARRAY: {
                     EncodeLocation(n, target->location(), text);
                     auto begin = target->children_begin_or_value();
                     auto end = begin + target->children_count();
@@ -78,13 +78,13 @@ void ParserSnapshotTest::EncodeScript(pugi::xml_node root, const ScannedScript& 
                 }
                 default: {
                     auto node_type_id = static_cast<uint32_t>(target->node_type());
-                    if (node_type_id > static_cast<uint32_t>(proto::NodeType::OBJECT_KEYS_)) {
+                    if (node_type_id > static_cast<uint32_t>(buffers::NodeType::OBJECT_KEYS_)) {
                         EncodeLocation(n, target->location(), text);
                         auto begin = target->children_begin_or_value();
                         for (auto i = 0; i < target->children_count(); ++i) {
                             pending.push_back({n.append_child("node"), &nodes[begin + i]});
                         }
-                    } else if (node_type_id > static_cast<uint32_t>(proto::NodeType::ENUM_KEYS_)) {
+                    } else if (node_type_id > static_cast<uint32_t>(buffers::NodeType::ENUM_KEYS_)) {
                         n.append_attribute("value") = dashql::parser::getEnumText(*target);
                     } else {
                         n.append_attribute("value") = target->children_begin_or_value();

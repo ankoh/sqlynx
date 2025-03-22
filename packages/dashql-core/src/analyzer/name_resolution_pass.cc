@@ -8,7 +8,7 @@
 
 #include "dashql/catalog.h"
 #include "dashql/external.h"
-#include "dashql/proto/proto_generated.h"
+#include "dashql/buffers/index_generated.h"
 #include "dashql/script.h"
 #include "dashql/utils/intrusive_list.h"
 
@@ -52,12 +52,12 @@ NameResolutionPass::NameResolutionPass(AnalyzedScript& analyzed, Catalog& catalo
       default_database_name(parsed.scanned_script->name_registry.Register(catalog.GetDefaultDatabaseName())),
       default_schema_name(parsed.scanned_script->name_registry.Register(catalog.GetDefaultSchemaName())) {
     node_states.resize(ast.size());
-    default_database_name.coarse_analyzer_tags |= proto::NameTag::DATABASE_NAME;
-    default_schema_name.coarse_analyzer_tags |= proto::NameTag::SCHEMA_NAME;
+    default_database_name.coarse_analyzer_tags |= buffers::NameTag::DATABASE_NAME;
+    default_schema_name.coarse_analyzer_tags |= buffers::NameTag::SCHEMA_NAME;
 }
 
 std::span<std::reference_wrapper<RegisteredName>> NameResolutionPass::ReadNamePath(const sx::Node& node) {
-    if (node.node_type() != proto::NodeType::ARRAY) {
+    if (node.node_type() != buffers::NodeType::ARRAY) {
         return {};
     }
     name_path_buffer.clear();
@@ -67,11 +67,11 @@ std::span<std::reference_wrapper<RegisteredName>> NameResolutionPass::ReadNamePa
         // We only consider plan name paths for now and extend later.
         auto& child = children[i];
         // Skip over trailing dots
-        if (child.node_type() == proto::NodeType::OBJECT_EXT_TRAILING_DOT) {
+        if (child.node_type() == buffers::NodeType::OBJECT_EXT_TRAILING_DOT) {
             continue;
         }
         // Not a name?
-        if (child.node_type() != proto::NodeType::NAME) {
+        if (child.node_type() != buffers::NodeType::NAME) {
             name_path_buffer.clear();
             break;
         }
@@ -157,14 +157,14 @@ std::pair<CatalogDatabaseID, CatalogSchemaID> NameResolutionPass::RegisterSchema
     return {db_id, schema_id};
 }
 
-void NameResolutionPass::MergeChildStates(NodeState& dst, std::initializer_list<const proto::Node*> children) {
-    for (const proto::Node* child : children) {
+void NameResolutionPass::MergeChildStates(NodeState& dst, std::initializer_list<const buffers::Node*> children) {
+    for (const buffers::Node* child : children) {
         if (!child) continue;
         dst.Merge(std::move(node_states[child - ast.data()]));
     }
 }
 
-void NameResolutionPass::MergeChildStates(NodeState& dst, const proto::Node& parent) {
+void NameResolutionPass::MergeChildStates(NodeState& dst, const buffers::Node& parent) {
     for (size_t i = 0; i < parent.children_count(); ++i) {
         auto child_id = parent.children_begin_or_value() + i;
         auto& child = node_states[parent.children_begin_or_value() + i];
@@ -216,9 +216,9 @@ void NameResolutionPass::ResolveTableRefsInScope(AnalyzedScript::NameScope& scop
             if (resolved_iter != scope.referenced_tables_by_name.end()) {
                 // Register an error
                 auto& error = analyzed.errors.emplace_back();
-                error.error_type = proto::AnalyzerErrorType::DUPLICATE_TABLE_ALIAS;
+                error.error_type = buffers::AnalyzerErrorType::DUPLICATE_TABLE_ALIAS;
                 error.ast_node_id = table_ref.ast_node_id;
-                error.location = std::make_unique<proto::Location>(parsed.nodes[table_ref.ast_node_id].location());
+                error.location = std::make_unique<buffers::Location>(parsed.nodes[table_ref.ast_node_id].location());
 
                 std::string tmp;
                 std::string_view alias_text = alias;
@@ -313,9 +313,9 @@ void NameResolutionPass::ResolveColumnRefsInScope(AnalyzedScript::NameScope& sco
                 if (candidates.size() > 1) {
                     analyzed.errors.emplace_back();
                     auto& error = analyzed.errors.back();
-                    error.error_type = proto::AnalyzerErrorType::COLUMN_REF_AMBIGUOUS;
+                    error.error_type = buffers::AnalyzerErrorType::COLUMN_REF_AMBIGUOUS;
                     error.ast_node_id = expr.ast_node_id;
-                    error.location = std::make_unique<proto::Location>(parsed.nodes[expr.ast_node_id].location());
+                    error.location = std::make_unique<buffers::Location>(parsed.nodes[expr.ast_node_id].location());
 
                     // Construct the error message
                     // Note that we deliberately do not use std::stringstream here since clang is then baking in fd
@@ -391,7 +391,7 @@ void NameResolutionPass::ResolveNames() {
 void NameResolutionPass::Prepare() {}
 
 /// Visit a chunk of nodes
-void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
+void NameResolutionPass::Visit(std::span<buffers::Node> morsel) {
     // XXX What about:
     //  indirections? c_expr
     //  subquery with alias
@@ -400,17 +400,17 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
     size_t morsel_offset = morsel.data() - ast.data();
     for (size_t i = 0; i < morsel.size(); ++i) {
         // Resolve the node
-        proto::Node& node = morsel[i];
+        buffers::Node& node = morsel[i];
         NodeID node_id = morsel_offset + i;
         // Create empty node state
         NodeState& node_state = node_states[node_id];
 
         // Check node type
         switch (node.node_type()) {
-            case proto::NodeType::OBJECT_SQL_COLUMN_DEF: {
+            case buffers::NodeType::OBJECT_SQL_COLUMN_DEF: {
                 auto children = ast.subspan(node.children_begin_or_value(), node.children_count());
                 auto attrs = attribute_index.Load(children);
-                auto column_def_node = attrs[proto::AttributeKey::SQL_COLUMN_DEF_NAME];
+                auto column_def_node = attrs[buffers::AttributeKey::SQL_COLUMN_DEF_NAME];
                 if (column_def_node && column_def_node->node_type() == sx::NodeType::NAME) {
                     auto& name = scanned.GetNames().At(column_def_node->children_begin_or_value());
                     name.coarse_analyzer_tags |= sx::NameTag::COLUMN_NAME;
@@ -425,11 +425,11 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 break;
             }
 
-            case proto::NodeType::OBJECT_SQL_COLUMN_REF: {
+            case buffers::NodeType::OBJECT_SQL_COLUMN_REF: {
                 // Read column ref path
                 auto children = ast.subspan(node.children_begin_or_value(), node.children_count());
                 auto attrs = attribute_index.Load(children);
-                auto column_ref_node = attrs[proto::AttributeKey::SQL_COLUMN_REF_PATH];
+                auto column_ref_node = attrs[buffers::AttributeKey::SQL_COLUMN_REF_PATH];
                 auto column_name_node_id = static_cast<uint32_t>(column_ref_node - parsed.nodes.data());
                 auto column_name = ReadQualifiedColumnName(column_ref_node);
                 if (column_name.has_value()) {
@@ -451,18 +451,18 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 break;
             }
 
-            case proto::NodeType::OBJECT_SQL_TABLEREF: {
+            case buffers::NodeType::OBJECT_SQL_TABLEREF: {
                 // Read a table ref name
                 auto children = ast.subspan(node.children_begin_or_value(), node.children_count());
                 auto attrs = attribute_index.Load(children);
                 // Only consider table refs with a name for now
-                if (auto name_node = attrs[proto::AttributeKey::SQL_TABLEREF_NAME]) {
+                if (auto name_node = attrs[buffers::AttributeKey::SQL_TABLEREF_NAME]) {
                     auto name_node_id = static_cast<uint32_t>(name_node - parsed.nodes.data());
                     auto name = ReadQualifiedTableName(name_node);
                     if (name.has_value()) {
                         // Read a table alias
                         std::string_view alias_str;
-                        auto alias_node = attrs[proto::AttributeKey::SQL_TABLEREF_ALIAS];
+                        auto alias_node = attrs[buffers::AttributeKey::SQL_TABLEREF_ALIAS];
                         std::optional<std::reference_wrapper<RegisteredName>> alias_name = std::nullopt;
                         if (alias_node && alias_node->node_type() == sx::NodeType::NAME) {
                             auto& alias = scanned.GetNames().At(alias_node->children_begin_or_value());
@@ -489,16 +489,16 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 break;
             }
 
-            case proto::NodeType::OBJECT_SQL_RESULT_TARGET: {
+            case buffers::NodeType::OBJECT_SQL_RESULT_TARGET: {
                 // // Read result target
                 // auto children = ast.subspan(node.children_begin_or_value(), node.children_count());
                 // auto attrs = attribute_index.Load(children);
                 //
-                // if (auto star_node = attrs[proto::AttributeKey::SQL_RESULT_TARGET_STAR]) {
+                // if (auto star_node = attrs[buffers::AttributeKey::SQL_RESULT_TARGET_STAR]) {
                 //
                 // }
                 // // Specifies a target name?
-                // if (auto name_node = attrs[proto::AttributeKey::SQL_RESULT_TARGET_NAME]) {
+                // if (auto name_node = attrs[buffers::AttributeKey::SQL_RESULT_TARGET_NAME]) {
                 // }
                 //
                 // XXX Register result targets
@@ -506,16 +506,16 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 break;
             }
 
-            case proto::NodeType::OBJECT_SQL_SELECT: {
+            case buffers::NodeType::OBJECT_SQL_SELECT: {
                 MergeChildStates(node_state, node);
                 CreateScope(node_state, node_id);
                 break;
             }
 
-            case proto::NodeType::OBJECT_SQL_CREATE: {
+            case buffers::NodeType::OBJECT_SQL_CREATE: {
                 auto attrs = attribute_index.Load(ast.subspan(node.children_begin_or_value(), node.children_count()));
-                const proto::Node* name_node = attrs[proto::AttributeKey::SQL_CREATE_TABLE_NAME];
-                const proto::Node* elements_node = attrs[proto::AttributeKey::SQL_CREATE_TABLE_ELEMENTS];
+                const buffers::Node* name_node = attrs[buffers::AttributeKey::SQL_CREATE_TABLE_NAME];
+                const buffers::Node* elements_node = attrs[buffers::AttributeKey::SQL_CREATE_TABLE_ELEMENTS];
                 // Read the name
                 auto table_name = ReadQualifiedTableName(name_node);
                 if (table_name.has_value()) {
@@ -559,11 +559,11 @@ void NameResolutionPass::Visit(std::span<proto::Node> morsel) {
                 break;
             }
 
-            case proto::NodeType::OBJECT_SQL_CREATE_AS: {
+            case buffers::NodeType::OBJECT_SQL_CREATE_AS: {
                 auto attrs = attribute_index.Load(ast.subspan(node.children_begin_or_value(), node.children_count()));
-                auto name_node = attrs[proto::AttributeKey::SQL_CREATE_TABLE_NAME];
-                auto columns_node = attrs[proto::AttributeKey::SQL_CREATE_TABLE_NAME];
-                auto elements_node = attrs[proto::AttributeKey::SQL_CREATE_TABLE_ELEMENTS];
+                auto name_node = attrs[buffers::AttributeKey::SQL_CREATE_TABLE_NAME];
+                auto columns_node = attrs[buffers::AttributeKey::SQL_CREATE_TABLE_NAME];
+                auto elements_node = attrs[buffers::AttributeKey::SQL_CREATE_TABLE_ELEMENTS];
 
                 (void)name_node;
                 (void)columns_node;
