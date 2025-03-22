@@ -23,7 +23,6 @@ import { LoggerProvider } from './platform/logger_provider.js';
 import { NavBarContainer } from './view/navbar.js';
 import { PlatformEventListenerProvider } from './platform/event_listener_provider.js';
 import { PlatformTypeProvider } from './platform/platform_type.js';
-import { PlotInternalsPage } from './view/internals/plot_internals_page.js';
 import { ProcessProvider } from './platform/process.js';
 import { QueryExecutorProvider } from './connection/query_executor.js';
 import { SalesforceConnector } from './connection/salesforce/salesforce_connector.js';
@@ -132,7 +131,6 @@ root.render(
                         {isDebugBuild() && (
                             <>
                                 <Route path="/internals/ui" Component={UIInternalsPage} />
-                                <Route path="/internals/plot" Component={PlotInternalsPage} />
                                 <Route path="/internals/schema" Component={SchemaGraphDemoPage} />
                             </>
                         )}
