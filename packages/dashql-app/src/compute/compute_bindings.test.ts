@@ -7,7 +7,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 import { fileURLToPath } from 'node:url';
-import { DataFrameIpcStreamIterable, dataFrameFromTable as createDataFrameFromTable, readDataFrame } from './compute_bindings.js';
+import { DataFrameIpcStreamIterable, createDataFrameFromTable, readDataFrame } from './compute_bindings.js';
 
 const distPath = path.resolve(fileURLToPath(new URL('../../../dashql-compute/dist/', import.meta.url)));
 const wasmPath = path.resolve(distPath, './dashql_compute_bg.wasm');

@@ -1,7 +1,7 @@
 import * as arrow from 'apache-arrow';
 import * as compute from "@ankoh/dashql-compute";
 
-export function dataFrameFromTable(t: arrow.Table): compute.DataFrame {
+export function createDataFrameFromTable(t: arrow.Table): compute.DataFrame {
     const ingest = new compute.ArrowIngest();
     const tableBuffer = arrow.tableToIPC(t, 'stream');
     ingest.read(tableBuffer);
