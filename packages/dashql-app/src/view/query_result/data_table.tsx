@@ -1,6 +1,6 @@
 import * as arrow from 'apache-arrow';
 import * as React from 'react';
-import * as proto from '@ankoh/dashql-protobuf';
+import * as pb from '@ankoh/dashql-protobuf';
 import * as styles from './data_table.module.css';
 import * as symbols from '../../../static/svg/symbols.generated.svg';
 
@@ -515,8 +515,8 @@ export const DataTable: React.FC<Props> = (props: Props) => {
     const dispatchComputation = props.dispatchComputation;
     const orderByColumn = React.useCallback((fieldId: number) => {
         const fieldName = table.schema.fields[fieldId].name;
-        const orderingConstraints: proto.dashql_compute.pb.OrderByConstraint[] = [
-            new proto.dashql_compute.pb.OrderByConstraint({
+        const orderingConstraints: pb.dashql.compute.OrderByConstraint[] = [
+            new pb.dashql.compute.OrderByConstraint({
                 fieldName: fieldName,
                 ascending: true,
                 nullsFirst: false,

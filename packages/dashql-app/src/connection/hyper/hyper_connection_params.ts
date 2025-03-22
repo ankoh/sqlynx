@@ -1,4 +1,4 @@
-import * as proto from '@ankoh/dashql-protobuf';
+import * as pb from '@ankoh/dashql-protobuf';
 
 import { ChannelArgs } from "../../platform/channel_common.js";
 import { KeyValueListElement } from "../../view/foundations/keyvalue_list.js";
@@ -13,16 +13,16 @@ export interface HyperGrpcConnectionParams {
     gRPCMetadata: KeyValueListElement[];
 }
 
-export function encodeHyperConnectionParamsAsProto(params: HyperGrpcConnectionParams, _settings: WorkbookExportSettings | null): proto.dashql_connection.pb.ConnectionParams {
-    const tls = new proto.dashql_connection.pb.TlsConfig({
+export function encodeHyperConnectionParamsAsProto(params: HyperGrpcConnectionParams, _settings: WorkbookExportSettings | null): pb.dashql.connection.ConnectionParams {
+    const tls = new pb.dashql.connection.TlsConfig({
         clientKeyPath: params.channelArgs.tls?.keyPath,
         clientCertPath: params.channelArgs.tls?.pubPath,
         caCertsPath: params.channelArgs.tls?.caPath,
     });
-    return new proto.dashql_connection.pb.ConnectionParams({
+    return new pb.dashql.connection.ConnectionParams({
         connection: {
             case: "hyper",
-            value: new proto.dashql_connection.pb.HyperConnectionParams({
+            value: new pb.dashql.connection.HyperConnectionParams({
                 endpoint: params.channelArgs.endpoint ?? "",
                 tls
             })
@@ -30,7 +30,7 @@ export function encodeHyperConnectionParamsAsProto(params: HyperGrpcConnectionPa
     });
 }
 
-export function readHyperConnectionParamsFromProto(params: proto.dashql_connection.pb.HyperConnectionParams): HyperGrpcConnectionParams {
+export function readHyperConnectionParamsFromProto(params: pb.dashql.connection.HyperConnectionParams): HyperGrpcConnectionParams {
     const metadata = [];
     for (const k in params.metadata) {
         metadata.push({

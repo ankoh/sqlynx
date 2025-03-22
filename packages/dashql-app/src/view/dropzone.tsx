@@ -1,4 +1,4 @@
-import * as proto from '@ankoh/dashql-protobuf';
+import * as pb from '@ankoh/dashql-protobuf';
 import * as React from 'react';
 import * as styles from './dropzone.module.css';
 import * as symbols from '../../static/svg/symbols.generated.svg';
@@ -34,7 +34,7 @@ export function DropzoneContainer(props: { children: React.ReactElement }) {
             const fileBuffer = await file.readAsArrayBuffer();
             await zstd.init();
             const fileDecompressed = zstd.decompress(fileBuffer);
-            const fileProto = proto.dashql_file.pb.File.fromBinary(fileDecompressed);
+            const fileProto = pb.dashql.file.File.fromBinary(fileDecompressed);
 
             // XXX
             console.log(`read bytes: ${fileBuffer.byteLength}, decompressed: ${fileDecompressed.byteLength}`);

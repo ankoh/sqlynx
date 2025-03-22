@@ -1,4 +1,4 @@
-import * as proto from '@ankoh/dashql-protobuf';
+import * as pb from '@ankoh/dashql-protobuf';
 
 import { WorkbookExportSettings } from '../../workbook/workbook_export_settings.js';
 
@@ -13,11 +13,11 @@ export interface SalesforceConnectionParams {
     loginHint: string | null;
 }
 
-export function encodeSalesforceConnectionParamsAsProto(params: SalesforceConnectionParams | null, settings: WorkbookExportSettings | null): proto.dashql_connection.pb.ConnectionParams {
-    return new proto.dashql_connection.pb.ConnectionParams({
+export function encodeSalesforceConnectionParamsAsProto(params: SalesforceConnectionParams | null, settings: WorkbookExportSettings | null): pb.dashql.connection.ConnectionParams {
+    return new pb.dashql.connection.ConnectionParams({
         connection: {
             case: "salesforce",
-            value: new proto.dashql_connection.pb.SalesforceConnectionParams({
+            value: new pb.dashql.connection.SalesforceConnectionParams({
                 instanceUrl: params?.instanceUrl ?? "",
                 appConsumerKey: params?.appConsumerKey ?? "",
                 loginHint: settings?.exportUsername ? (params?.loginHint ?? undefined) : undefined,
@@ -26,7 +26,7 @@ export function encodeSalesforceConnectionParamsAsProto(params: SalesforceConnec
     });
 }
 
-export function readSalesforceConnectionParamsFromProto(params: proto.dashql_connection.pb.SalesforceConnectionParams): SalesforceConnectionParams {
+export function readSalesforceConnectionParamsFromProto(params: pb.dashql.connection.SalesforceConnectionParams): SalesforceConnectionParams {
     return {
         instanceUrl: params.instanceUrl,
         appConsumerKey: params.appConsumerKey,

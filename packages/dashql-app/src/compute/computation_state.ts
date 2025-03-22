@@ -1,5 +1,5 @@
 import * as arrow from 'apache-arrow';
-import * as proto from '@ankoh/dashql-protobuf';
+import * as pb from '@ankoh/dashql-protobuf';
 
 import { ColumnSummaryVariant, TableSummaryTask, TaskStatus, TableOrderingTask, TableSummary, OrderedTable, TaskProgress, GridColumnGroup, ColumnPrecomputationTask } from './table_transforms.js';
 import { VariantKind } from '../utils/variant.js';
@@ -22,7 +22,7 @@ export interface TableComputationState {
     /// The data frame in the compute module
     dataFrame: AsyncDataFrame | null;
     /// The ordering constraints
-    dataTableOrdering: proto.dashql_compute.pb.OrderByConstraint[];
+    dataTableOrdering: pb.dashql.compute.OrderByConstraint[];
 
     /// The grid columns
     columnGroups: GridColumnGroup[];

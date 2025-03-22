@@ -337,7 +337,7 @@ export class AsyncDataFrame {
     }
 
     /// Transform a data frame
-    async transform(transform: pb.dashql_compute.pb.DataFrameTransform, stats: AsyncDataFrame | null = null): Promise<AsyncDataFrame> {
+    async transform(transform: pb.dashql.compute.DataFrameTransform, stats: AsyncDataFrame | null = null): Promise<AsyncDataFrame> {
         const bytes = transform.toBinary();
         const task = new ComputeWorkerTask<
             ComputeWorkerRequestType.DATAFRAME_TRANSFORM,

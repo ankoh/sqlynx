@@ -1,4 +1,4 @@
-import * as proto from '@ankoh/dashql-protobuf';
+import * as pb from '@ankoh/dashql-protobuf';
 
 import { BASE64_CODEC } from '../utils/base64.js';
 import { Logger } from './logger.js';
@@ -10,7 +10,7 @@ export const EVENT_QUERY_PARAMETER = "data";
 // An oauth subscriber
 interface OAuthSubscriber {
     /// Resolve the promise with oauth redirect data
-    resolve: (data: proto.dashql_oauth.pb.OAuthRedirectData) => void;
+    resolve: (data: pb.dashql.oauth.OAuthRedirectData) => void;
     /// Reject with an error
     reject: (err: Error) => void;
     /// The abort signal provided by the client
@@ -56,7 +56,7 @@ export abstract class PlatformEventListener {
     protected abstract listenForAppEvents(): Promise<void>;
 
     /// Called by subclasses when receiving an app event
-    public dispatchAppEvent(event: proto.dashql_app_event.pb.AppEventData) {
+    public dispatchAppEvent(event: pb.dashql.app_event.AppEventData) {
         switch (event.data.case) {
             case "oauthRedirect": {
                 this.dispatchOAuthRedirect(event.data.value);
@@ -83,7 +83,7 @@ export abstract class PlatformEventListener {
         }
     }
     /// OAuth succeeded, let the subscriber now
-    protected dispatchOAuthRedirect(data: proto.dashql_oauth.pb.OAuthRedirectData) {
+    protected dispatchOAuthRedirect(data: pb.dashql.oauth.OAuthRedirectData) {
         if (!this.oAuthSubscriber) {
             console.warn("received oauth redirect data but there's no registered oauth subscriber", {}, LOG_CTX);
         } else {
@@ -103,14 +103,14 @@ export abstract class PlatformEventListener {
     }
 
     /// Wait for the oauth code to arrive
-    public async waitForOAuthRedirect(signal: AbortSignal): Promise<proto.dashql_oauth.pb.OAuthRedirectData> {
+    public async waitForOAuthRedirect(signal: AbortSignal): Promise<pb.dashql.oauth.OAuthRedirectData> {
         // Already set?
         if (this.oAuthSubscriber != null) {
             // Just throw, we don't support multiple outstanding listeners
             return Promise.reject(new Error("duplicate oauth listener"));
         } else {
             // Setup the subscriber
-            return new Promise<proto.dashql_oauth.pb.OAuthRedirectData>((resolve, reject) => {
+            return new Promise<pb.dashql.oauth.OAuthRedirectData>((resolve, reject) => {
                 const subscriber: OAuthSubscriber = {
                     signal,
                     resolve,
@@ -192,7 +192,7 @@ export abstract class PlatformEventListener {
         try {
             const dataBuffer = BASE64_CODEC.decode(dataBase64);
             const dataBytes = new Uint8Array(dataBuffer);
-            const event = proto.dashql_app_event.pb.AppEventData.fromBinary(dataBytes);
+            const event = pb.dashql.app_event.AppEventData.fromBinary(dataBytes);
             this.logger.info(`parsed app event`, { "type": event.data.case }, LOG_CTX);
             return event;
 

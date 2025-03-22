@@ -13,30 +13,12 @@ export namespace salesforce_hyperdb_grpc_v1 {
     export import grpc = salesforce_hyperdb_grpc_v1_grpc_;
 }
 
-export namespace dashql_oauth {
-    export import pb = dashql_oauth_pb_;
-}
-
-export namespace dashql_workbook {
-    export import pb = dashql_workbook_pb_;
-}
-
-export namespace dashql_connection {
-    export import pb = dashql_connection_pb_;
-}
-
-export namespace dashql_catalog {
-    export import pb = dashql_catalog_pb_;
-}
-
-export namespace dashql_file {
-    export import pb = dashql_file_pb_;
-}
-
-export namespace dashql_app_event {
-    export import pb = dashql_app_event_pb_;
-}
-
-export namespace dashql_compute {
-    export import pb = dashql_compute_pb_;
+export namespace dashql {
+    export import oauth = dashql_oauth_pb_;
+    export import workbook = dashql_workbook_pb_;
+    export import connection = dashql_connection_pb_;
+    export import catalog = dashql_catalog_pb_;
+    export import file = dashql_file_pb_;
+    export import app_event = dashql_app_event_pb_;
+    export import compute = dashql_compute_pb_;
 }

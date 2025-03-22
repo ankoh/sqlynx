@@ -1,4 +1,4 @@
-import * as proto from '@ankoh/dashql-protobuf';
+import * as pb from '@ankoh/dashql-protobuf';
 import * as React from 'react';
 import { IconButton } from '@primer/react';
 import { BookIcon, ChecklistIcon, DesktopDownloadIcon, FileBadgeIcon, KeyIcon, PackageIcon, PlugIcon, XIcon } from '@primer/octicons-react';
@@ -224,10 +224,10 @@ interface Props {
     /// The connection id
     connectionId: number;
     /// The connection params
-    connectionParams: proto.dashql_connection.pb.ConnectionParams;
+    connectionParams: pb.dashql.connection.ConnectionParams;
     /// The proto of the workbook where this connection is used.
     /// This is necessary to generate links with workbook data when switching platforms.
-    workbookProto: proto.dashql_workbook.pb.Workbook;
+    workbookProto: pb.dashql.workbook.Workbook;
     /// The done callback
     onDone: () => void;
 }
@@ -262,7 +262,7 @@ export const ConnectionSetupPage: React.FC<Props> = (props: Props) => {
         setupInProgressOrDone.current = true;
 
         // Bake the workbook proto, we'll need this in any case
-        const workbookProto = new proto.dashql_workbook.pb.Workbook({
+        const workbookProto = new pb.dashql.workbook.Workbook({
             ...props.workbookProto,
             connectionParams: connectionParams == null ? undefined : encodeConnectionParamsAsProto(connectionParams)
         });
@@ -376,7 +376,7 @@ export const ConnectionSetupPage: React.FC<Props> = (props: Props) => {
 
     // Get the workbook url
     const getWorkbookUrl = () => {
-        const workbookProto = new proto.dashql_workbook.pb.Workbook({
+        const workbookProto = new pb.dashql.workbook.Workbook({
             ...props.workbookProto,
             connectionParams: connectionParams == null ? undefined : encodeConnectionParamsAsProto(connectionParams)
         });
@@ -471,7 +471,7 @@ export const ConnectionSetupPage: React.FC<Props> = (props: Props) => {
         }
 
         // Encode the workbook url
-        const workbookProto = new proto.dashql_workbook.pb.Workbook({
+        const workbookProto = new pb.dashql.workbook.Workbook({
             ...props.workbookProto,
             connectionParams: connectionParams == null ? undefined : encodeConnectionParamsAsProto(connectionParams)
         });

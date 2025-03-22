@@ -1,4 +1,4 @@
-import * as proto from '@ankoh/dashql-protobuf';
+import * as pb from '@ankoh/dashql-protobuf';
 
 import { VariantKind } from "../utils/variant.js";
 import { PlatformFile } from "./file.js";
@@ -31,6 +31,6 @@ export const SETUP_WORKBOOK = Symbol("SETUP_WORKBOOK");
 export const SETUP_FILE = Symbol("SETUP_FILE");
 
 export type SetupEventVariant =
-    | VariantKind<typeof SETUP_WORKBOOK, proto.dashql_workbook.pb.Workbook>
-    | VariantKind<typeof SETUP_FILE, proto.dashql_file.pb.File>
+    | VariantKind<typeof SETUP_WORKBOOK, pb.dashql.workbook.Workbook>
+    | VariantKind<typeof SETUP_FILE, pb.dashql.file.File>
     ;

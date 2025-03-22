@@ -1,4 +1,4 @@
-import * as proto from '@ankoh/dashql-protobuf';
+import * as pb from '@ankoh/dashql-protobuf';
 import * as React from 'react';
 
 import { ConnectionSetupPage } from './view/connection/connection_setup_page.js';
@@ -37,9 +37,9 @@ enum AppSetupDecision {
 
 interface AppSetupArgs {
     connectionId: number;
-    connectionParams: proto.dashql_connection.pb.ConnectionParams;
+    connectionParams: pb.dashql.connection.ConnectionParams;
     workbookId: number;
-    workbookProto: proto.dashql_workbook.pb.Workbook;
+    workbookProto: pb.dashql.workbook.Workbook;
 }
 
 interface AppSetupState {
@@ -97,8 +97,8 @@ export const AppSetupGate: React.FC<{ children: React.ReactElement }> = (props: 
         const defaultWorkbooks = await setupDefaultWorkbook;
 
         // Resolve workbook
-        let catalogs: proto.dashql_file.pb.FileCatalog[] = [];
-        let workbooks: proto.dashql_workbook.pb.Workbook[] = [];
+        let catalogs: pb.dashql.file.FileCatalog[] = [];
+        let workbooks: pb.dashql.workbook.Workbook[] = [];
         switch (data.type) {
             case SETUP_WORKBOOK:
                 workbooks.push(data.value);

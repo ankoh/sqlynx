@@ -1,5 +1,5 @@
 import * as arrow from 'apache-arrow';
-import * as proto from '@ankoh/dashql-protobuf';
+import * as pb from '@ankoh/dashql-protobuf';
 
 import { VariantKind } from '../utils/variant.js';
 import { AsyncDataFrame } from './compute_worker_bindings.js';
@@ -35,7 +35,7 @@ export interface TableOrderingTask {
     /// The data frame
     inputDataFrame: AsyncDataFrame;
     /// The ordering constraints
-    orderingConstraints: proto.dashql_compute.pb.OrderByConstraint[];
+    orderingConstraints: pb.dashql.compute.OrderByConstraint[];
 }
 
 export interface TableSummaryTask {
@@ -189,7 +189,7 @@ export interface SkippedGridColumnGroup {
 
 export interface OrderedTable {
     /// The ordering constraints
-    orderingConstraints: proto.dashql_compute.pb.OrderByConstraint[];
+    orderingConstraints: pb.dashql.compute.OrderByConstraint[];
     /// The arrow table
     dataTable: arrow.Table;
     /// The field index
@@ -325,14 +325,14 @@ export type FrequentValuesTable<KeyType extends arrow.DataType = arrow.DataType>
 
 // ------------------------------------------------------------
 
-export function createTableSummaryTransform(task: TableSummaryTask): [proto.dashql_compute.pb.DataFrameTransform, GridColumnGroup[], string] {
-    let aggregates: proto.dashql_compute.pb.GroupByAggregate[] = [];
+export function createTableSummaryTransform(task: TableSummaryTask): [pb.dashql.compute.DataFrameTransform, GridColumnGroup[], string] {
+    let aggregates: pb.dashql.compute.GroupByAggregate[] = [];
 
     // Add count(*) aggregate
     const countColumn = `_count`;
-    aggregates.push(new proto.dashql_compute.pb.GroupByAggregate({
+    aggregates.push(new pb.dashql.compute.GroupByAggregate({
         outputAlias: `_count`,
-        aggregationFunction: proto.dashql_compute.pb.AggregationFunction.CountStar,
+        aggregationFunction: pb.dashql.compute.AggregationFunction.CountStar,
     }));
 
     // Add column aggregates
@@ -348,20 +348,20 @@ export function createTableSummaryTransform(task: TableSummaryTask): [proto.dash
                 const countAggregateColumn = `_${i}_count`;
                 const minAggregateColumn = `_${i}_min`;
                 const maxAggregateColumn = `_${i}_max`;
-                aggregates.push(new proto.dashql_compute.pb.GroupByAggregate({
+                aggregates.push(new pb.dashql.compute.GroupByAggregate({
                     fieldName: entry.value.inputFieldName,
                     outputAlias: countAggregateColumn,
-                    aggregationFunction: proto.dashql_compute.pb.AggregationFunction.Count,
+                    aggregationFunction: pb.dashql.compute.AggregationFunction.Count,
                 }));
-                aggregates.push(new proto.dashql_compute.pb.GroupByAggregate({
+                aggregates.push(new pb.dashql.compute.GroupByAggregate({
                     fieldName: entry.value.inputFieldName,
                     outputAlias: minAggregateColumn,
-                    aggregationFunction: proto.dashql_compute.pb.AggregationFunction.Min,
+                    aggregationFunction: pb.dashql.compute.AggregationFunction.Min,
                 }));
-                aggregates.push(new proto.dashql_compute.pb.GroupByAggregate({
+                aggregates.push(new pb.dashql.compute.GroupByAggregate({
                     fieldName: entry.value.inputFieldName,
                     outputAlias: maxAggregateColumn,
-                    aggregationFunction: proto.dashql_compute.pb.AggregationFunction.Max,
+                    aggregationFunction: pb.dashql.compute.AggregationFunction.Max,
                 }));
                 const newEntry: GridColumnGroup = {
                     type: ORDINAL_COLUMN,
@@ -381,15 +381,15 @@ export function createTableSummaryTransform(task: TableSummaryTask): [proto.dash
             case STRING_COLUMN: {
                 const countAggregateColumn = `_${i}_count`;
                 const countDistinctAggregateColumn = `_${i}_countd`;
-                aggregates.push(new proto.dashql_compute.pb.GroupByAggregate({
+                aggregates.push(new pb.dashql.compute.GroupByAggregate({
                     fieldName: entry.value.inputFieldName,
                     outputAlias: countAggregateColumn,
-                    aggregationFunction: proto.dashql_compute.pb.AggregationFunction.Count,
+                    aggregationFunction: pb.dashql.compute.AggregationFunction.Count,
                 }));
-                aggregates.push(new proto.dashql_compute.pb.GroupByAggregate({
+                aggregates.push(new pb.dashql.compute.GroupByAggregate({
                     fieldName: entry.value.inputFieldName,
                     outputAlias: countDistinctAggregateColumn,
-                    aggregationFunction: proto.dashql_compute.pb.AggregationFunction.Count,
+                    aggregationFunction: pb.dashql.compute.AggregationFunction.Count,
                     aggregateDistinct: true,
                 }));
                 const newEntry: GridColumnGroup = {
@@ -410,15 +410,15 @@ export function createTableSummaryTransform(task: TableSummaryTask): [proto.dash
             case LIST_COLUMN: {
                 const countAggregateColumn = `_${i}_count`;
                 const countDistinctAggregateColumn = `_${i}_countd`;
-                aggregates.push(new proto.dashql_compute.pb.GroupByAggregate({
+                aggregates.push(new pb.dashql.compute.GroupByAggregate({
                     fieldName: entry.value.inputFieldName,
                     outputAlias: countAggregateColumn,
-                    aggregationFunction: proto.dashql_compute.pb.AggregationFunction.Count,
+                    aggregationFunction: pb.dashql.compute.AggregationFunction.Count,
                 }));
-                aggregates.push(new proto.dashql_compute.pb.GroupByAggregate({
+                aggregates.push(new pb.dashql.compute.GroupByAggregate({
                     fieldName: entry.value.inputFieldName,
                     outputAlias: countDistinctAggregateColumn,
-                    aggregationFunction: proto.dashql_compute.pb.AggregationFunction.Count,
+                    aggregationFunction: pb.dashql.compute.AggregationFunction.Count,
                     aggregateDistinct: true,
                 }));
                 const newEntry: GridColumnGroup = {
@@ -438,8 +438,8 @@ export function createTableSummaryTransform(task: TableSummaryTask): [proto.dash
             }
         }
     }
-    const transform = new proto.dashql_compute.pb.DataFrameTransform({
-        groupBy: new proto.dashql_compute.pb.GroupByTransform({
+    const transform = new pb.dashql.compute.DataFrameTransform({
+        groupBy: new pb.dashql.compute.GroupByTransform({
             keys: [],
             aggregates
         })
@@ -449,23 +449,23 @@ export function createTableSummaryTransform(task: TableSummaryTask): [proto.dash
 
 export const BIN_COUNT = 16;
 
-export function createColumnSummaryTransform(task: ColumnSummaryTask): proto.dashql_compute.pb.DataFrameTransform {
+export function createColumnSummaryTransform(task: ColumnSummaryTask): pb.dashql.compute.DataFrameTransform {
     if (task.columnEntry.type == SKIPPED_COLUMN || task.columnEntry.type == ROWNUMBER_COLUMN || task.columnEntry.value.statsFields == null) {
         throw new Error("column summary requires precomputed table summary");
     }
     let fieldName = task.columnEntry.value.inputFieldName;
-    let out: proto.dashql_compute.pb.DataFrameTransform;
+    let out: pb.dashql.compute.DataFrameTransform;
     switch (task.columnEntry.type) {
         case ORDINAL_COLUMN: {
             const minField = task.columnEntry.value.statsFields.minAggregateFieldName!;
             const maxField = task.columnEntry.value.statsFields.maxAggregateFieldName!;
-            out = new proto.dashql_compute.pb.DataFrameTransform({
-                groupBy: new proto.dashql_compute.pb.GroupByTransform({
+            out = new pb.dashql.compute.DataFrameTransform({
+                groupBy: new pb.dashql.compute.GroupByTransform({
                     keys: [
-                        new proto.dashql_compute.pb.GroupByKey({
+                        new pb.dashql.compute.GroupByKey({
                             fieldName,
                             outputAlias: "bin",
-                            binning: new proto.dashql_compute.pb.GroupByKeyBinning({
+                            binning: new pb.dashql.compute.GroupByKeyBinning({
                                 statsMinimumFieldName: minField,
                                 statsMaximumFieldName: maxField,
                                 binCount: BIN_COUNT,
@@ -476,16 +476,16 @@ export function createColumnSummaryTransform(task: ColumnSummaryTask): proto.das
                         })
                     ],
                     aggregates: [
-                        new proto.dashql_compute.pb.GroupByAggregate({
+                        new pb.dashql.compute.GroupByAggregate({
                             fieldName,
                             outputAlias: "count",
-                            aggregationFunction: proto.dashql_compute.pb.AggregationFunction.CountStar,
+                            aggregationFunction: pb.dashql.compute.AggregationFunction.CountStar,
                         })
                     ]
                 }),
-                orderBy: new proto.dashql_compute.pb.OrderByTransform({
+                orderBy: new pb.dashql.compute.OrderByTransform({
                     constraints: [
-                        new proto.dashql_compute.pb.OrderByConstraint({
+                        new pb.dashql.compute.OrderByConstraint({
                             fieldName: "bin",
                             ascending: true,
                             nullsFirst: false,
@@ -497,25 +497,25 @@ export function createColumnSummaryTransform(task: ColumnSummaryTask): proto.das
         }
         case LIST_COLUMN:
         case STRING_COLUMN: {
-            out = new proto.dashql_compute.pb.DataFrameTransform({
-                groupBy: new proto.dashql_compute.pb.GroupByTransform({
+            out = new pb.dashql.compute.DataFrameTransform({
+                groupBy: new pb.dashql.compute.GroupByTransform({
                     keys: [
-                        new proto.dashql_compute.pb.GroupByKey({
+                        new pb.dashql.compute.GroupByKey({
                             fieldName,
                             outputAlias: "key",
                         })
                     ],
                     aggregates: [
-                        new proto.dashql_compute.pb.GroupByAggregate({
+                        new pb.dashql.compute.GroupByAggregate({
                             fieldName,
                             outputAlias: "count",
-                            aggregationFunction: proto.dashql_compute.pb.AggregationFunction.CountStar,
+                            aggregationFunction: pb.dashql.compute.AggregationFunction.CountStar,
                         })
                     ]
                 }),
-                orderBy: new proto.dashql_compute.pb.OrderByTransform({
+                orderBy: new pb.dashql.compute.OrderByTransform({
                     constraints: [
-                        new proto.dashql_compute.pb.OrderByConstraint({
+                        new pb.dashql.compute.OrderByConstraint({
                             fieldName: "count",
                             ascending: false,
                             nullsFirst: false,
@@ -530,9 +530,9 @@ export function createColumnSummaryTransform(task: ColumnSummaryTask): proto.das
     return out;
 }
 
-export function createOrderByTransform(constraints: proto.dashql_compute.pb.OrderByConstraint[], limit?: number): proto.dashql_compute.pb.DataFrameTransform {
-    const out = new proto.dashql_compute.pb.DataFrameTransform({
-        orderBy: new proto.dashql_compute.pb.OrderByTransform({
+export function createOrderByTransform(constraints: pb.dashql.compute.OrderByConstraint[], limit?: number): pb.dashql.compute.DataFrameTransform {
+    const out = new pb.dashql.compute.DataFrameTransform({
+        orderBy: new pb.dashql.compute.OrderByTransform({
             constraints,
             limit
         })
@@ -553,7 +553,7 @@ function createUniqueColumnName(prefix: string, fieldNames: Set<string>) {
     }
 }
 
-export function createPrecomputationTransform(schema: arrow.Schema, columns: GridColumnGroup[], stats: arrow.Table): [proto.dashql_compute.pb.DataFrameTransform, GridColumnGroup[]] {
+export function createPrecomputationTransform(schema: arrow.Schema, columns: GridColumnGroup[], stats: arrow.Table): [pb.dashql.compute.DataFrameTransform, GridColumnGroup[]] {
     let nextOutputColumn = schema.fields.length;
     let binningTransforms = [];
     let identifierTransforms = [];
@@ -566,7 +566,7 @@ export function createPrecomputationTransform(schema: arrow.Schema, columns: Gri
 
     // Prepend the row number column at position 0
     const rowNumberFieldName = createUniqueColumnName(`_rownum`, fieldNames);
-    const rowNumberTransform = new proto.dashql_compute.pb.RowNumberTransform({
+    const rowNumberTransform = new pb.dashql.compute.RowNumberTransform({
         outputAlias: rowNumberFieldName
     });
     const rowNumberGridColumn: GridColumnGroup = {
@@ -590,7 +590,7 @@ export function createPrecomputationTransform(schema: arrow.Schema, columns: Gri
             case ORDINAL_COLUMN: {
                 const binFieldId = nextOutputColumn++;
                 const binFieldName = createUniqueColumnName(`_${i}_bin`, fieldNames);
-                binningTransforms.push(new proto.dashql_compute.pb.BinningTransform({
+                binningTransforms.push(new pb.dashql.compute.BinningTransform({
                     fieldName: column.value.inputFieldName,
                     statsMaximumFieldName: column.value.statsFields!.maxAggregateFieldName!,
                     statsMinimumFieldName: column.value.statsFields!.minAggregateFieldName!,
@@ -608,7 +608,7 @@ export function createPrecomputationTransform(schema: arrow.Schema, columns: Gri
             }
             case STRING_COLUMN: {
                 const valueFieldName = createUniqueColumnName(`_${i}_id`, fieldNames);
-                identifierTransforms.push(new proto.dashql_compute.pb.ValueIdentifierTransform({
+                identifierTransforms.push(new pb.dashql.compute.ValueIdentifierTransform({
                     fieldName: column.value.inputFieldName,
                     outputAlias: valueFieldName
                 }));
@@ -623,7 +623,7 @@ export function createPrecomputationTransform(schema: arrow.Schema, columns: Gri
             }
             case LIST_COLUMN: {
                 const valueFieldName = createUniqueColumnName(`_${i}_id`, fieldNames);
-                identifierTransforms.push(new proto.dashql_compute.pb.ValueIdentifierTransform({
+                identifierTransforms.push(new pb.dashql.compute.ValueIdentifierTransform({
                     fieldName: column.value.inputFieldName,
                     outputAlias: valueFieldName
                 }));
@@ -639,9 +639,9 @@ export function createPrecomputationTransform(schema: arrow.Schema, columns: Gri
         }
     }
 
-    const ordering = new proto.dashql_compute.pb.OrderByTransform({
+    const ordering = new pb.dashql.compute.OrderByTransform({
         constraints: [
-            new proto.dashql_compute.pb.OrderByConstraint({
+            new pb.dashql.compute.OrderByConstraint({
                 fieldName: rowNumberFieldName,
                 ascending: true,
                 nullsFirst: false
@@ -649,7 +649,7 @@ export function createPrecomputationTransform(schema: arrow.Schema, columns: Gri
         ]
     });
 
-    const transform = new proto.dashql_compute.pb.DataFrameTransform({
+    const transform = new pb.dashql.compute.DataFrameTransform({
         rowNumber: rowNumberTransform,
         valueIdentifiers: identifierTransforms,
         binning: binningTransforms,

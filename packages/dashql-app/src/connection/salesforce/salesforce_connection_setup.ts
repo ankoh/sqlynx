@@ -1,5 +1,5 @@
 import * as shell from '@tauri-apps/plugin-shell';
-import * as proto from '@ankoh/dashql-protobuf';
+import * as pb from '@ankoh/dashql-protobuf';
 
 import {
     AUTH_CANCELLED,
@@ -105,16 +105,16 @@ export async function setupSalesforceConnection(modifyState: Dispatch<Salesforce
         // When initiating the OAuth flow from the native app, the redirect will then open a deep link with the OAuth code.
         // When initiating from the web, the redirect will assume there's an opener that it can post the code to.
         const flowVariant = platformType !== PlatformType.WEB
-            ? proto.dashql_oauth.pb.OAuthFlowVariant.NATIVE_LINK_FLOW
-            : proto.dashql_oauth.pb.OAuthFlowVariant.WEB_OPENER_FLOW;
+            ? pb.dashql.oauth.OAuthFlowVariant.NATIVE_LINK_FLOW
+            : pb.dashql.oauth.OAuthFlowVariant.WEB_OPENER_FLOW;
 
         // Construct the auth state
-        const authState = new proto.dashql_oauth.pb.OAuthState({
+        const authState = new pb.dashql.oauth.OAuthState({
             debugMode: isNativePlatform() && isDebugBuild(),
             flowVariant: flowVariant,
             providerOptions: {
                 case: "salesforceProvider",
-                value: new proto.dashql_oauth.pb.SalesforceOAuthOptions({
+                value: new pb.dashql.oauth.SalesforceOAuthOptions({
                     instanceUrl: params.instanceUrl,
                     appConsumerKey: params.appConsumerKey,
                     expiresAt: BigInt(Date.now()) + BigInt(DEFAULT_EXPIRATION_TIME_MS)
@@ -139,7 +139,7 @@ export async function setupSalesforceConnection(modifyState: Dispatch<Salesforce
         const url = `${params.instanceUrl}/services/oauth2/authorize?${paramParts.join('&')}`;
 
         // Either start request the oauth flow through a browser popup or by opening a url using the shell plugin
-        if (flowVariant == proto.dashql_oauth.pb.OAuthFlowVariant.WEB_OPENER_FLOW) {
+        if (flowVariant == pb.dashql.oauth.OAuthFlowVariant.WEB_OPENER_FLOW) {
             logger.debug("opening popup", { "url": url.toString() }, LOG_CTX);
             // Open popup window
             const popup = window.open(url, OAUTH_POPUP_NAME, OAUTH_POPUP_SETTINGS);

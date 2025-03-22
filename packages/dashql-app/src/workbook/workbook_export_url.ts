@@ -1,24 +1,24 @@
-import * as proto from '@ankoh/dashql-protobuf';
+import * as pb from '@ankoh/dashql-protobuf';
 
 import { WorkbookState } from './workbook_state.js';
 import { BASE64_CODEC } from '../utils/base64.js';
 import { ConnectionParamsVariant, encodeConnectionParamsAsProto } from '../connection/connection_params.js';
 import { WorkbookExportSettings } from './workbook_export_settings.js';
 
-export function encodeWorkbookAsProto(workbookState: WorkbookState, connectionParams: ConnectionParamsVariant, settings: WorkbookExportSettings | null = null): proto.dashql_workbook.pb.Workbook {
+export function encodeWorkbookAsProto(workbookState: WorkbookState, connectionParams: ConnectionParamsVariant, settings: WorkbookExportSettings | null = null): pb.dashql.workbook.Workbook {
     // Build the connector params
     const params = encodeConnectionParamsAsProto(connectionParams, settings);
 
     // Collect the scripts
-    const scripts: proto.dashql_workbook.pb.WorkbookScript[] = [];
+    const scripts: pb.dashql.workbook.WorkbookScript[] = [];
     for (const k in workbookState.scripts) {
         const script = workbookState.scripts[k];
-        scripts.push(new proto.dashql_workbook.pb.WorkbookScript({
+        scripts.push(new pb.dashql.workbook.WorkbookScript({
             scriptId: script.scriptKey as number,
             scriptText: script.script?.toString() ?? "",
         }));
     }
-    const setup = new proto.dashql_workbook.pb.Workbook({
+    const setup = new pb.dashql.workbook.Workbook({
         connectionParams: (params == null) ? undefined : params,
         scripts: scripts
     });
@@ -30,8 +30,8 @@ export enum WorkbookLinkTarget {
     WEB
 }
 
-export function encodeWorkbookProtoAsUrl(setup: proto.dashql_workbook.pb.Workbook, target: WorkbookLinkTarget): URL {
-    const eventData = new proto.dashql_app_event.pb.AppEventData({
+export function encodeWorkbookProtoAsUrl(setup: pb.dashql.workbook.Workbook, target: WorkbookLinkTarget): URL {
+    const eventData = new pb.dashql.app_event.AppEventData({
         data: {
             case: "workbook",
             value: setup

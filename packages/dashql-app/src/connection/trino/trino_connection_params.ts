@@ -1,4 +1,4 @@
-import * as proto from '@ankoh/dashql-protobuf';
+import * as pb from '@ankoh/dashql-protobuf';
 
 import { KeyValueListElement } from '../../view/foundations/keyvalue_list.js';
 import { ChannelArgs } from '../../platform/channel_common.js';
@@ -27,13 +27,13 @@ export interface TrinoConnectionParams {
     schemaNames: ValueListElement[];
 }
 
-export function encodeTrinoConnectionParamsAsProto(params: TrinoConnectionParams, _settings: WorkbookExportSettings | null): proto.dashql_connection.pb.ConnectionParams {
-    return new proto.dashql_connection.pb.ConnectionParams({
+export function encodeTrinoConnectionParamsAsProto(params: TrinoConnectionParams, _settings: WorkbookExportSettings | null): pb.dashql.connection.ConnectionParams {
+    return new pb.dashql.connection.ConnectionParams({
         connection: {
             case: "trino",
-            value: new proto.dashql_connection.pb.TrinoConnectionParams({
+            value: new pb.dashql.connection.TrinoConnectionParams({
                 endpoint: params.channelArgs.endpoint ?? "",
-                auth: new proto.dashql_connection.pb.TrinoAuthParams({
+                auth: new pb.dashql.connection.TrinoAuthParams({
                     username: params.authParams.username ?? "",
                 }),
                 catalogName: params.catalogName,
@@ -43,7 +43,7 @@ export function encodeTrinoConnectionParamsAsProto(params: TrinoConnectionParams
     });
 }
 
-export function readTrinoConnectionParamsFromProto(params: proto.dashql_connection.pb.TrinoConnectionParams): TrinoConnectionParams {
+export function readTrinoConnectionParamsFromProto(params: pb.dashql.connection.TrinoConnectionParams): TrinoConnectionParams {
     return {
         channelArgs: {
             endpoint: params.endpoint

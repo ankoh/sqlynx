@@ -1,4 +1,4 @@
-import * as proto from '@ankoh/dashql-protobuf';
+import * as pb from '@ankoh/dashql-protobuf';
 
 import { BASE64_CODEC } from "./base64.js";
 import { cyrb128, randomBuffer32, sfc32T } from "./prng.js";
@@ -26,11 +26,11 @@ describe('Base64Codec', () => {
     });
 
     it("encode salesforce oauth web flow state", () => {
-        const authState = new proto.dashql_oauth.pb.OAuthState({
-            flowVariant: proto.dashql_oauth.pb.OAuthFlowVariant.WEB_OPENER_FLOW,
+        const authState = new pb.dashql.oauth.OAuthState({
+            flowVariant: pb.dashql.oauth.OAuthFlowVariant.WEB_OPENER_FLOW,
             providerOptions: {
                 case: "salesforceProvider",
-                value: new proto.dashql_oauth.pb.SalesforceOAuthOptions({
+                value: new pb.dashql.oauth.SalesforceOAuthOptions({
                     instanceUrl: "https://trialorgfarmforu-16f.test2.my.pc-rnd.salesforce.com",
                     appConsumerKey: "foo",
                 }),
@@ -42,11 +42,11 @@ describe('Base64Codec', () => {
     });
 
     it("encode salesforce oauth native flow state", () => {
-        const authState = new proto.dashql_oauth.pb.OAuthState({
-            flowVariant: proto.dashql_oauth.pb.OAuthFlowVariant.NATIVE_LINK_FLOW,
+        const authState = new pb.dashql.oauth.OAuthState({
+            flowVariant: pb.dashql.oauth.OAuthFlowVariant.NATIVE_LINK_FLOW,
             providerOptions: {
                 case: "salesforceProvider",
-                value: new proto.dashql_oauth.pb.SalesforceOAuthOptions({
+                value: new pb.dashql.oauth.SalesforceOAuthOptions({
                     instanceUrl: "https://trialorgfarmforu-16f.test2.my.pc-rnd.salesforce.com",
                     appConsumerKey: "foo"
                 }),

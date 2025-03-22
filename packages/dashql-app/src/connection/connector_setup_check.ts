@@ -1,4 +1,4 @@
-import * as proto from '@ankoh/dashql-protobuf';
+import * as pb from '@ankoh/dashql-protobuf';
 
 import { ConnectionState } from './connection_state.js';
 import { SALESFORCE_DATA_CLOUD_CONNECTOR } from './connector_info.js';
@@ -16,7 +16,7 @@ export enum ConnectionSetupCheck {
 
 export function checkSalesforceConnectionSetup(
     state: ConnectionState | null,
-    params: proto.dashql_connection.pb.SalesforceConnectionParams,
+    params: pb.dashql.connection.SalesforceConnectionParams,
 ): ConnectionSetupCheck {
     if (!state) {
         return ConnectionSetupCheck.CONNECTION_NULL;
@@ -45,7 +45,7 @@ export function checkSalesforceConnectionSetup(
 
 export function checkHyperConnectionSetup(
     state: ConnectionState | null,
-    params: proto.dashql_connection.pb.HyperConnectionParams,
+    params: pb.dashql.connection.HyperConnectionParams,
 ): ConnectionSetupCheck {
     return ConnectionSetupCheck.UNKNOWN;
 }

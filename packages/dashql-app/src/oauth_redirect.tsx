@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as proto from '@ankoh/dashql-protobuf';
+import * as pb from '@ankoh/dashql-protobuf';
 import * as styles from './view/banner_page.module.css';
 import * as symbols from '../static/svg/symbols.generated.svg';
 import * as page_styles from './view/banner_page.module.css';
@@ -31,21 +31,21 @@ const LOG_CTX = "oauth_redirect";
 
 interface OAuthSucceededProps {
     params: URLSearchParams;
-    state: proto.dashql_oauth.pb.OAuthState;
+    state: pb.dashql.oauth.OAuthState;
 }
 
 function buildDeepLink(eventBase64: string) {
     return new URL(`dashql://localhost?data=${eventBase64}`);
 }
 
-function triggerFlow(state: proto.dashql_oauth.pb.OAuthState, eventBase64: string, deepLink: string, logger: Logger) {
+function triggerFlow(state: pb.dashql.oauth.OAuthState, eventBase64: string, deepLink: string, logger: Logger) {
     switch (state.flowVariant) {
-        case proto.dashql_oauth.pb.OAuthFlowVariant.NATIVE_LINK_FLOW: {
+        case pb.dashql.oauth.OAuthFlowVariant.NATIVE_LINK_FLOW: {
             logger.info(`opening deep link`, { "link": deepLink }, LOG_CTX);
             window.open(deepLink, '_self');
             break;
         }
-        case proto.dashql_oauth.pb.OAuthFlowVariant.WEB_OPENER_FLOW: {
+        case pb.dashql.oauth.OAuthFlowVariant.WEB_OPENER_FLOW: {
             if (!window.opener) {
                 logger.error("window opener is undefined", {}, LOG_CTX);
                 return;
@@ -66,10 +66,10 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
 
     // Encode the event as base64
     const { eventBase64, deepLink } = React.useMemo(() => {
-        const eventMessage = new proto.dashql_app_event.pb.AppEventData({
+        const eventMessage = new pb.dashql.app_event.AppEventData({
             data: {
                 case: "oauthRedirect",
-                value: new proto.dashql_oauth.pb.OAuthRedirectData({ code, state: props.state })
+                value: new pb.dashql.oauth.OAuthRedirectData({ code, state: props.state })
             }
         });
         const event = BASE64_CODEC.encode(eventMessage.toBinary().buffer);
@@ -80,7 +80,7 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
     }, [code, props.state]);
 
     // Setup auto-trigger
-    const skipAutoTrigger = props.state.flowVariant == proto.dashql_oauth.pb.OAuthFlowVariant.NATIVE_LINK_FLOW && props.state.debugMode;
+    const skipAutoTrigger = props.state.flowVariant == pb.dashql.oauth.OAuthFlowVariant.NATIVE_LINK_FLOW && props.state.debugMode;
     const autoTriggersAt = React.useMemo(() => new Date(now.getTime() + AUTO_TRIGGER_DELAY), []);
     const [remainingUntilAutoTrigger, setRemainingUntilAutoTrigger] = React.useState<number>(() => Math.max(autoTriggersAt.getTime(), now.getTime()) - now.getTime());
     const [wasTriggered, setWasTriggered] = React.useState<boolean>(false);
@@ -182,10 +182,10 @@ const OAuthSucceeded: React.FC<OAuthSucceededProps> = (props: OAuthSucceededProp
     // Get flow continuation
     let flowContinuation: React.ReactElement = <div />;
     switch (props.state.flowVariant) {
-        case proto.dashql_oauth.pb.OAuthFlowVariant.WEB_OPENER_FLOW: {
+        case pb.dashql.oauth.OAuthFlowVariant.WEB_OPENER_FLOW: {
             break;
         }
-        case proto.dashql_oauth.pb.OAuthFlowVariant.NATIVE_LINK_FLOW: {
+        case pb.dashql.oauth.OAuthFlowVariant.NATIVE_LINK_FLOW: {
             if (props.state.debugMode) {
                 flowContinuation = (
                     <div className={styles.card_section}>
@@ -353,12 +353,12 @@ const RedirectPage: React.FC<RedirectPageProps> = (_props: RedirectPageProps) =>
     // const code = params.get("code") ?? "";
     const state = params.get("state") ?? "";
 
-    const authState = React.useMemo<Result<proto.dashql_oauth.pb.OAuthState>>(() => {
+    const authState = React.useMemo<Result<pb.dashql.oauth.OAuthState>>(() => {
         try {
             const authStateBuffer = BASE64_CODEC.decode(state);
             return {
                 type: RESULT_OK,
-                value: proto.dashql_oauth.pb.OAuthState.fromBinary(new Uint8Array(authStateBuffer))
+                value: pb.dashql.oauth.OAuthState.fromBinary(new Uint8Array(authStateBuffer))
             };
         } catch (e: any) {
             return {

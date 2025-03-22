@@ -1,4 +1,4 @@
-import * as proto from '@ankoh/dashql-protobuf';
+import * as pb from '@ankoh/dashql-protobuf';
 
 import { isNativePlatform } from "../platform/native_globals.js";
 
@@ -174,7 +174,7 @@ export const CONNECTOR_INFOS: ConnectorInfo[] = [
     },
 ];
 
-export function getConnectorInfoForParams(params: proto.dashql_connection.pb.ConnectionParams): ConnectorInfo | null {
+export function getConnectorInfoForParams(params: pb.dashql.connection.ConnectionParams): ConnectorInfo | null {
     switch (params.connection.case) {
         case "demo": return CONNECTOR_INFOS[ConnectorType.DEMO];
         case "hyper": return CONNECTOR_INFOS[ConnectorType.HYPER_GRPC];

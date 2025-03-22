@@ -48,6 +48,8 @@ describe('Catalog Tests ', () => {
         description = descriptionBuffer.read();
         expect(description.entriesLength()).toEqual(0);
         descriptionBuffer.delete();
+
+        catalog.delete();
     });
 
     it('dynamic registration, one table', () => {

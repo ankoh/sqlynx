@@ -1,5 +1,5 @@
 import * as dashql from '@ankoh/dashql-core';
-import * as proto from '@ankoh/dashql-protobuf';
+import * as pb from '@ankoh/dashql-protobuf';
 
 import { ConnectionDetailsVariant as ConnectionStateDetailsVariant, ConnectionHealth, ConnectionStateWithoutId, ConnectionStatus } from './connection_state.js';
 import { CONNECTOR_INFOS, ConnectorType, DEMO_CONNECTOR, HYPER_GRPC_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, SERVERLESS_CONNECTOR, TRINO_CONNECTOR } from './connector_info.js';
@@ -124,7 +124,7 @@ export function createConnectionStateDetailsFromParams(params: ConnectionParamsV
     }
 }
 
-export function encodeConnectionParamsAsProto(params: ConnectionParamsVariant, settings: WorkbookExportSettings | null = null): proto.dashql_connection.pb.ConnectionParams {
+export function encodeConnectionParamsAsProto(params: ConnectionParamsVariant, settings: WorkbookExportSettings | null = null): pb.dashql.connection.ConnectionParams {
     switch (params.type) {
         case SERVERLESS_CONNECTOR:
             return encodeServerlessConnectionParamsAsProto(settings);
@@ -139,7 +139,7 @@ export function encodeConnectionParamsAsProto(params: ConnectionParamsVariant, s
     }
 }
 
-export function readConnectionParamsFromProto(pb: proto.dashql_connection.pb.ConnectionParams): ConnectionParamsVariant | null {
+export function readConnectionParamsFromProto(pb: pb.dashql.connection.ConnectionParams): ConnectionParamsVariant | null {
     switch (pb.connection.case) {
         case "serverless":
             return {

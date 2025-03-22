@@ -1,5 +1,5 @@
-import * as dashql from '@ankoh/dashql-core';
-import * as proto from '@ankoh/dashql-protobuf';
+import * as core from '@ankoh/dashql-core';
+import * as pb from '@ankoh/dashql-protobuf';
 
 import Immutable from 'immutable';
 
@@ -20,13 +20,13 @@ export interface WorkbookState {
     workbookId: number;
     /// The workbook state contains many references into the Wasm heap.
     /// It therefore makes sense that script state users resolve the "right" module through here.
-    instance: dashql.DashQL | null;
+    instance: core.DashQL | null;
     /// The connector info
     connectorInfo: ConnectorInfo;
     /// The connector state
     connectionId: number;
     /// The connection catalog
-    connectionCatalog: dashql.DashQLCatalog;
+    connectionCatalog: core.DashQLCatalog;
     /// The scripts
     scripts: {
         [scriptKey: number]: ScriptData
@@ -55,7 +55,7 @@ export interface ScriptData {
     /// The script key
     scriptKey: number;
     /// The script
-    script: dashql.DashQLScript | null;
+    script: core.DashQLScript | null;
     /// The metadata
     metadata: ScriptMetadata;
     /// The loading info
@@ -65,11 +65,11 @@ export interface ScriptData {
     /// The analysis was done against an outdated catalog?
     outdatedAnalysis: boolean;
     /// The statistics
-    statistics: Immutable.List<dashql.FlatBufferPtr<dashql.proto.ScriptStatistics>>;
+    statistics: Immutable.List<core.FlatBufferPtr<core.proto.ScriptStatistics>>;
     /// The cursor
-    cursor: dashql.proto.ScriptCursorT | null;
+    cursor: core.proto.ScriptCursorT | null;
     /// The completion
-    completion: dashql.proto.CompletionT | null;
+    completion: core.proto.CompletionT | null;
     /// The selected completion candidate
     selectedCompletionCandidate: number | null;
 }
@@ -103,13 +103,13 @@ export const REGISTER_QUERY = Symbol('REGISTER_QUERY');
 
 export type WorkbookStateAction =
     | VariantKind<typeof DESTROY, null>
-    | VariantKind<typeof RESTORE_WORKBOOK, proto.dashql_workbook.pb.Workbook>
+    | VariantKind<typeof RESTORE_WORKBOOK, pb.dashql.workbook.Workbook>
     | VariantKind<typeof UPDATE_SCRIPT, ScriptKey>
-    | VariantKind<typeof UPDATE_SCRIPT_ANALYSIS, [ScriptKey, DashQLScriptBuffers, dashql.proto.ScriptCursorT]>
-    | VariantKind<typeof UPDATE_SCRIPT_CURSOR, [ScriptKey, dashql.proto.ScriptCursorT]>
+    | VariantKind<typeof UPDATE_SCRIPT_ANALYSIS, [ScriptKey, DashQLScriptBuffers, core.proto.ScriptCursorT]>
+    | VariantKind<typeof UPDATE_SCRIPT_CURSOR, [ScriptKey, core.proto.ScriptCursorT]>
     | VariantKind<typeof CATALOG_DID_UPDATE, null>
-    | VariantKind<typeof COMPLETION_STARTED, [ScriptKey, dashql.proto.CompletionT]>
-    | VariantKind<typeof COMPLETION_CHANGED, [ScriptKey, dashql.proto.CompletionT, number]>
+    | VariantKind<typeof COMPLETION_STARTED, [ScriptKey, core.proto.CompletionT]>
+    | VariantKind<typeof COMPLETION_CHANGED, [ScriptKey, core.proto.CompletionT, number]>
     | VariantKind<typeof COMPLETION_STOPPED, ScriptKey>
     | VariantKind<typeof SCRIPT_LOADING_STARTED, ScriptKey>
     | VariantKind<typeof SCRIPT_LOADING_SUCCEEDED, [ScriptKey, string]>
@@ -153,7 +153,7 @@ export function reduceWorkbookState(state: WorkbookState, action: WorkbookStateA
                 const metadata: ScriptMetadata = {
                     scriptId: null,
                     schemaRef: null,
-                    scriptType: s.scriptType == proto.dashql_workbook.pb.ScriptType.Schema ? ScriptType.SCHEMA : ScriptType.QUERY,
+                    scriptType: s.scriptType == pb.dashql.workbook.ScriptType.Schema ? ScriptType.SCHEMA : ScriptType.QUERY,
                     originType: ScriptOriginType.LOCAL,
                     httpURL: null,
                     annotations: null,
@@ -536,8 +536,8 @@ function deleteScriptData(data: ScriptData) {
 }
 
 function rotateStatistics(
-    log: Immutable.List<dashql.FlatBufferPtr<dashql.proto.ScriptStatistics>>,
-    stats: dashql.FlatBufferPtr<dashql.proto.ScriptStatistics> | null,
+    log: Immutable.List<core.FlatBufferPtr<core.proto.ScriptStatistics>>,
+    stats: core.FlatBufferPtr<core.proto.ScriptStatistics> | null,
 ) {
     if (stats == null) {
         return log;
