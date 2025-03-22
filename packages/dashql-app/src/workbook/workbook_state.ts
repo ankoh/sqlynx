@@ -65,11 +65,11 @@ export interface ScriptData {
     /// The analysis was done against an outdated catalog?
     outdatedAnalysis: boolean;
     /// The statistics
-    statistics: Immutable.List<core.FlatBufferPtr<core.proto.ScriptStatistics>>;
+    statistics: Immutable.List<core.FlatBufferPtr<core.buffers.ScriptStatistics>>;
     /// The cursor
-    cursor: core.proto.ScriptCursorT | null;
+    cursor: core.buffers.ScriptCursorT | null;
     /// The completion
-    completion: core.proto.CompletionT | null;
+    completion: core.buffers.CompletionT | null;
     /// The selected completion candidate
     selectedCompletionCandidate: number | null;
 }
@@ -105,11 +105,11 @@ export type WorkbookStateAction =
     | VariantKind<typeof DESTROY, null>
     | VariantKind<typeof RESTORE_WORKBOOK, pb.dashql.workbook.Workbook>
     | VariantKind<typeof UPDATE_SCRIPT, ScriptKey>
-    | VariantKind<typeof UPDATE_SCRIPT_ANALYSIS, [ScriptKey, DashQLScriptBuffers, core.proto.ScriptCursorT]>
-    | VariantKind<typeof UPDATE_SCRIPT_CURSOR, [ScriptKey, core.proto.ScriptCursorT]>
+    | VariantKind<typeof UPDATE_SCRIPT_ANALYSIS, [ScriptKey, DashQLScriptBuffers, core.buffers.ScriptCursorT]>
+    | VariantKind<typeof UPDATE_SCRIPT_CURSOR, [ScriptKey, core.buffers.ScriptCursorT]>
     | VariantKind<typeof CATALOG_DID_UPDATE, null>
-    | VariantKind<typeof COMPLETION_STARTED, [ScriptKey, core.proto.CompletionT]>
-    | VariantKind<typeof COMPLETION_CHANGED, [ScriptKey, core.proto.CompletionT, number]>
+    | VariantKind<typeof COMPLETION_STARTED, [ScriptKey, core.buffers.CompletionT]>
+    | VariantKind<typeof COMPLETION_CHANGED, [ScriptKey, core.buffers.CompletionT, number]>
     | VariantKind<typeof COMPLETION_STOPPED, ScriptKey>
     | VariantKind<typeof SCRIPT_LOADING_STARTED, ScriptKey>
     | VariantKind<typeof SCRIPT_LOADING_SUCCEEDED, [ScriptKey, string]>
@@ -536,8 +536,8 @@ function deleteScriptData(data: ScriptData) {
 }
 
 function rotateStatistics(
-    log: Immutable.List<core.FlatBufferPtr<core.proto.ScriptStatistics>>,
-    stats: core.FlatBufferPtr<core.proto.ScriptStatistics> | null,
+    log: Immutable.List<core.FlatBufferPtr<core.buffers.ScriptStatistics>>,
+    stats: core.FlatBufferPtr<core.buffers.ScriptStatistics> | null,
 ) {
     if (stats == null) {
         return log;
