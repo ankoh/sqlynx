@@ -1,6 +1,6 @@
 import * as pb from '@ankoh/dashql-protobuf';
 import * as React from 'react';
-import * as styles from './dropzone.module.css';
+import * as styles from './file_dropzone.module.css';
 import * as symbols from '../../static/svg/symbols.generated.svg';
 import * as zstd from '../utils/zstd.js';
 
@@ -9,7 +9,7 @@ import { PlatformFile } from '../platform/file.js';
 import { usePlatformEventListener } from '../platform/event_listener_provider.js';
 import { useLogger } from '../platform/logger_provider.js';
 
-function DropzoneArea() {
+function FileDropzoneArea() {
     return (
         <div className={styles.area_centered}>
             <div className={styles.area_container}>
@@ -23,7 +23,7 @@ function DropzoneArea() {
     );
 }
 
-export function DropzoneContainer(props: { children: React.ReactElement }) {
+export function FileDropzone(props: { children: React.ReactElement }) {
     const _logger = useLogger();
     const appEvents = usePlatformEventListener();
     const [dragOngoing, setDragOngoing] = React.useState<Date | null>(null);
@@ -69,7 +69,7 @@ export function DropzoneContainer(props: { children: React.ReactElement }) {
 
     return (
         <div className={styles.root}>
-            {dragOngoing ? <DropzoneArea /> : props.children}
+            {dragOngoing ? <FileDropzoneArea /> : props.children}
         </div>
     );
 }

@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { Route, Routes, Navigate, BrowserRouter, HashRouter } from 'react-router-dom';
 
 import { AppConfigProvider } from './app_config.js';
+import { AppSetupGate } from './app_setup_gate.js';
 import { CatalogLoaderProvider } from './connection/catalog_loader.js';
 import { ComputationRegistry } from './compute/computation_registry.js';
 import { ConnectionRegistry } from './connection/connection_registry.js';
@@ -10,9 +11,9 @@ import { ConnectionSettingsPage, ConnectionSettingsPageStateProvider } from './v
 import { CurrentWorkbookStateProvider } from './workbook/current_workbook.js';
 import { DashQLComputeProvider } from './compute/compute_provider.js';
 import { DashQLCoreProvider } from './core_provider.js';
-import { DropzoneContainer } from './view/dropzone.js';
 import { EditorPage } from './view/workbook/workbook_page.js';
 import { FileDownloaderProvider } from './platform/file_downloader_provider.js';
+import { FileDropzone } from './view/file_dropzone.js';
 import { GitHubTheme } from './github_theme.js';
 import { HttpClientProvider } from './platform/http_client_provider.js';
 import { HyperDatabaseClientProvider } from './connection/hyper/hyperdb_client_provider.js';
@@ -34,7 +35,6 @@ import { TrinoConnectorSettingsStateProvider } from './view/connection/trino_con
 import { UIInternalsPage } from './view/internals/ui_internals_page.js';
 import { VersionCheck } from './platform/version_check.js';
 import { WorkbookCommands } from './workbook/workbook_commands.js';
-import { AppSetupGate } from './app_setup_gate.js';
 import { WorkbookStateRegistry } from './workbook/workbook_state_registry.js';
 import { isDebugBuild } from './globals.js';
 
@@ -124,7 +124,7 @@ const root = createRoot(element!);
 root.render(
     <Router>
         <AppProviders>
-            <DropzoneContainer>
+            <FileDropzone>
                 <NavBarContainer>
                     <Routes>
                         <Route index Component={EditorPage} />
@@ -139,7 +139,7 @@ root.render(
                         <Route path="*" element={<Navigate to="/" />} />
                     </Routes>
                 </NavBarContainer>
-            </DropzoneContainer>
+            </FileDropzone>
         </AppProviders>
     </Router>
 );
