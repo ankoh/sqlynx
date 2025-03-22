@@ -1,39 +1,70 @@
 import '@jest/globals';
 
-import * as dashql from '@ankoh/dashql-core';
 import * as pb from '@ankoh/dashql-protobuf';
 
-import * as path from 'path';
-import * as fs from 'fs';
-import { fileURLToPath } from 'node:url';
-
-const distPath = path.resolve(fileURLToPath(new URL('../../../dashql-core-bindings/dist', import.meta.url)));
-const wasmPath = path.resolve(distPath, './dashql.wasm');
-
-let lnx: dashql.DashQL | null = null;
-
-beforeAll(async () => {
-    lnx = await dashql.DashQL.create(async (imports: WebAssembly.Imports) => {
-        const buf = await fs.promises.readFile(wasmPath);
-        return await WebAssembly.instantiate(buf, imports);
-    });
-    expect(lnx).not.toBeNull();
-});
+import { decodeCatalogFileFromProto } from './catalog_import.js';
 
 describe('Catalog Import', () => {
-    it('foo', async () => {
-        const catalog = lnx!.createCatalog();
-
-        const workbookProto = new pb.dashql.workbook.Workbook();
-        const catalogProto = new pb.dashql.file.FileCatalog(
-        );
-
-        const _fileProto = new pb.dashql.file.File({
-            workbooks: [workbookProto],
-            catalogs: [catalogProto],
+    it('can import example file catalog', async () => {
+        const catalogPb = new pb.dashql.file.FileCatalog({
+            connectionParams: new pb.dashql.connection.ConnectionParams({
+                connection: {
+                    case: "demo",
+                    value: {}
+                }
+            }),
+            catalog: {
+                databases: [
+                    new pb.dashql.catalog.CatalogDatabase({
+                        name: "db1",
+                        schemas: [
+                            new pb.dashql.catalog.CatalogSchema({
+                                name: "schema1",
+                                tables: [
+                                    new pb.dashql.catalog.CatalogTable({
+                                        name: "table1",
+                                        columns: [
+                                            new pb.dashql.catalog.CatalogColumn({ name: "column1" }),
+                                            new pb.dashql.catalog.CatalogColumn({ name: "column2" }),
+                                            new pb.dashql.catalog.CatalogColumn({ name: "column3" }),
+                                        ]
+                                    }),
+                                    new pb.dashql.catalog.CatalogTable({
+                                        name: "table2",
+                                        columns: [
+                                            new pb.dashql.catalog.CatalogColumn({ name: "column1" }),
+                                            new pb.dashql.catalog.CatalogColumn({ name: "column2" }),
+                                            new pb.dashql.catalog.CatalogColumn({ name: "column3" }),
+                                        ]
+                                    })
+                                ]
+                            }),
+                            new pb.dashql.catalog.CatalogSchema({
+                                name: "schema2",
+                                tables: [
+                                    new pb.dashql.catalog.CatalogTable({
+                                        name: "table1",
+                                        columns: [
+                                            new pb.dashql.catalog.CatalogColumn({ name: "column1" }),
+                                            new pb.dashql.catalog.CatalogColumn({ name: "column2" }),
+                                            new pb.dashql.catalog.CatalogColumn({ name: "column3" }),
+                                        ]
+                                    })
+                                ]
+                            })
+                        ]
+                    })
+                ]
+            }
         });
 
-        catalog.delete();
+        const schemaDescriptors = decodeCatalogFileFromProto(catalogPb);
+        expect(schemaDescriptors.schemas.length).toEqual(2);
+        expect(schemaDescriptors.schemas[0].tables.length).toEqual(2);
+        expect(schemaDescriptors.schemas[0].tables[0].columns.length).toEqual(3);
+        expect(schemaDescriptors.schemas[0].tables[1].columns.length).toEqual(3);
+        expect(schemaDescriptors.schemas[1].tables.length).toEqual(1);
+        expect(schemaDescriptors.schemas[1].tables[0].columns.length).toEqual(3);
     });
 });
 
