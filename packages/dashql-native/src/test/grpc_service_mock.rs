@@ -1,4 +1,4 @@
-use crate::buffers::dashql_test::{
+use crate::proto::dashql_test::{
     test_service_server::{TestService, TestServiceServer}, TestServerStreamingRequest, TestServerStreamingResponse, TestUnaryRequest, TestUnaryResponse
 };
 use std::{net::SocketAddr, pin::Pin};

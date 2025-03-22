@@ -107,7 +107,7 @@ mod test {
     use prost::Message;
     use tokio_stream::StreamExt;
 
-    use crate::{buffers::dashql_test::{TestServerStreamingRequest, TestServerStreamingResponse, TestUnaryRequest, TestUnaryResponse}, test::grpc_service_mock::{spawn_grpc_test_service_mock, GrpcServiceMock}};
+    use crate::{proto::dashql_test::{TestServerStreamingRequest, TestServerStreamingResponse, TestUnaryRequest, TestUnaryResponse}, test::grpc_service_mock::{spawn_grpc_test_service_mock, GrpcServiceMock}};
 
     #[tokio::test]
     async fn test_unary() -> Result<()> {

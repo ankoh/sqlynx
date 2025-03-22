@@ -1,4 +1,4 @@
-use crate::buffers::salesforce_hyperdb_grpc_v1::{
+use crate::proto::salesforce_hyperdb_grpc_v1::{
     hyper_service_server::{HyperService, HyperServiceServer},
     QueryParam, QueryResult,
 };
