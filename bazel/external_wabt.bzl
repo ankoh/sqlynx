@@ -7,7 +7,7 @@ and macOS developer/CI machines without re-fetching.
 
 # WABT releases: https://github.com/WebAssembly/wabt/releases
 # Match scripts/install_infra.sh
-_WABT_VERSION = "1.0.41"
+_WABT_VERSION = "1.0.42"
 _BASE_URL = "https://github.com/WebAssembly/wabt/releases/download/" + _WABT_VERSION
 
 def _wabt_prebuilt_repository_impl(repository_ctx):
