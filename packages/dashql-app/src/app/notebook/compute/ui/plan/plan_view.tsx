@@ -2,7 +2,7 @@ import * as React from 'react';
 import { ScreenFullIcon, ZoomInIcon, ZoomOutIcon } from '../../../../../ui/foundations/symbol_icon.js';
 import { color as parseColor, interpolateBrBG, interpolatePuOr, interpolateRdBu, interpolateRdPu, select, zoom, zoomIdentity, ZoomBehavior, ZoomTransform } from 'd3';
 
-import * as dashql from '../../../../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 import { JsonView } from '../../../../../ui/json/json_view.js';
 import { IconButton, ButtonSize, ButtonVariant } from '../../../../../ui/foundations/button.js';
 import { ButtonGroup } from '../../../../../ui/foundations/button_group.js';

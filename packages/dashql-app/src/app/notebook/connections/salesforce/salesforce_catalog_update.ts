@@ -1,4 +1,4 @@
-import * as dashql from '../../../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 import * as connection from '@ankoh/dashql-jsonschema/connection.js';
 
 import { SalesforceApiClientInterface, type SalesforceMetadataProgress } from './salesforce_api_client.js';

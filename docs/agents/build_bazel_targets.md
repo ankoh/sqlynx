@@ -51,6 +51,9 @@ bazel build //...
 | `//packages/dashql-pack:pack` | Publish architecture-specific Electron artifacts and update manifests to R2 |
 | `//packages/dashql-pack:vacuum` | Remove complete expired release versions, including old updater blockmaps |
 | `//packages/dashql-core:dashql_core` | Core C++ library |
+| `//packages/dashql-core-js:compile` | Core ESM bindings and TypeScript declarations |
+| `//packages/dashql-core-js:npm_package` | Standalone core npm package directory |
+| `//packages/dashql-core-js:npm_tarball` | Core npm archive at `bazel-bin/packages/dashql-core-js/dashql-core.tgz` |
 
 ### Build Configs
 
@@ -94,6 +97,8 @@ bazel test //packages/dashql-core:*_tests
 | `//packages/dashql-core:analyzer_tests` | Analyzer snapshot tests |
 | `//packages/dashql-core:formatter_tests` | Formatter snapshot tests |
 | `//packages/dashql-core:formatter_validation_hyper_tests` | Execute formatted SQL against Hyper |
+| `//packages/dashql-core-js:all` | Core Node unit, assembled-runtime, and tarball consumer tests |
+| `//packages/dashql-core-js/test:all` | Core browser tests in Chromium and Firefox, including browser workers |
 | `//packages/hyper-api:smoke_test` | Native Tableau Hyper API integration test |
 | `//packages/dashql-native:test` | Electron host unit tests |
 | `//packages/dashql-app:test_chromium` | Web app tests in Chromium |
@@ -268,6 +273,29 @@ bazel test //packages/dashql-native:test
 bazel build //packages/dashql-core:dashql_core
 bazel test //packages/dashql-core:unit_tests
 ```
+
+### Core npm Package
+
+```bash
+# Compile ESM bindings and declarations
+bazel build //packages/dashql-core-js:compile
+
+# Assemble the standalone npm directory
+bazel build //packages/dashql-core-js:npm_package
+
+# Run Node, tarball consumer, and browser tests
+bazel test //packages/dashql-core-js:all //packages/dashql-core-js/test:all
+
+# Build the release archive without building the app or native packages
+bazel build --config=release //packages/dashql-core-js:npm_tarball
+```
+
+The package targets build their own Wasm and generated bindings. They require no
+secrets, npm authentication, or prebuilt app artifacts; the remote cache is optional.
+The release archive is `bazel-bin/packages/dashql-core-js/dashql-core.tgz`.
+Trusted CI uploads it as `dashql_core_npm` from an independent, secret-free job;
+it does not publish to npm. Trusted fastbuild/release and untrusted fastbuild CI
+run both core JS test target sets.
 
 ### After Changing Parser Grammar
 

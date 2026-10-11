@@ -1,5 +1,5 @@
 import * as arrow from 'apache-arrow';
-import * as dashql from '../../../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 
 import { CATALOG_UPDATE_SCHEMA_SCRIPT, CATALOG_UPDATE_REGISTER_QUERY } from '../attached_database_state.js';
 import { DynamicAttachedDatabaseDispatch } from '../attached_database_registry.js';

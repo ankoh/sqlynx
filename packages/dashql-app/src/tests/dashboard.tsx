@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { createRoot } from 'react-dom/client';
 import symbols from '@ankoh/dashql-svg-symbols';
-import coreWasmUrl from '@ankoh/dashql-core-wasm?url';
+import coreWasmUrl from '@ankoh/dashql-core/wasm?url';
 
-import { DashQL } from '../core/api.js';
+import { createPrecompiledTestCore } from './core_pool.js';
 import { DASHQL_GIT_COMMIT, DASHQL_VERSION, HYPERDB_WASM_VERSION } from '../globals.js';
 import { IconButton, ButtonSize, ButtonVariant } from '../ui/foundations/button.js';
 import { IndicatorStatus, StatusIndicator } from '../ui/foundations/status_indicator.js';
@@ -36,8 +36,6 @@ declare global {
 
 const coreBytes = fetch(coreWasmUrl).then(response => response.bytes());
 globalThis.DASHQL_PRECOMPILED = coreBytes;
-globalThis.__DASHQL_TEST_CORE_WASM_MODULE__ ??= coreBytes.then(bytes => WebAssembly.compile(bytes.slice().buffer));
-globalThis.__DASHQL_TEST_SHARE_CORE_INSTANCE__ = true;
 
 function expectHyperDBOK(result: HyperDBResult, operation: string): void {
     if (result.state !== 'ok') {
@@ -71,7 +69,7 @@ globalThis.__DASHQL_TEST_HYPERDB_CLIENT__ = getHyperDBClient;
 const hyperDBClient = getHyperDBClient();
 globalThis.__DASHQL_TEST_DASHBOARD_CORE_INSTANCE__ ??= hyperDBClient.then(() => {
     globalThis.__DASHQL_TEST_CORE_CREATIONS__ = (globalThis.__DASHQL_TEST_CORE_CREATIONS__ ?? 0) + 1;
-    return DashQL.create();
+    return createPrecompiledTestCore(coreBytes);
 });
 globalThis.__DASHQL_TEST_CORE_FACTORY__ = () => globalThis.__DASHQL_TEST_DASHBOARD_CORE_INSTANCE__!;
 

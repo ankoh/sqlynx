@@ -1,5 +1,5 @@
 import * as arrow from "apache-arrow";
-import * as dashql from '../../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 
 import { QueryExecutor } from './query_executor.js';
 import { QueryExecutionArgs } from './query_execution_args.js';

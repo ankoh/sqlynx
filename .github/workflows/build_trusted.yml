@@ -121,7 +121,8 @@ jobs:
             - name: Test Everything
               shell: bash
               run: |
-                bazel test --config=fastbuild //packages/... \
+                bazel test --config=fastbuild \
+                    //packages/... \
                     --build_tests_only \
                     --test_output=errors \
                     --test_summary=detailed
@@ -175,7 +176,8 @@ jobs:
             - name: Test Web App
               shell: bash
               run: |
-                bazel test --config=release //packages/... \
+                bazel test --config=release \
+                    //packages/... \
                     --build_tests_only \
                     --test_output=errors \
                     --test_summary=detailed
@@ -185,6 +187,48 @@ jobs:
                 name: dashql_app_pages
                 path: ./bazel-bin/packages/dashql-app/pages_deploy/
                 retention-days: 1
+
+    core_npm_release:
+        name: Core npm Release
+        runs-on: ubuntu-24.04
+        steps:
+            - uses: actions/checkout@v6
+              with:
+                  submodules: 'recursive'
+                  fetch-depth: 0
+                  ref: ${{ inputs.commit || github.sha }}
+
+            - uses: ./.github/actions/setup-ubuntu-mirror
+
+            - name: Install apt dependencies
+              shell: bash
+              run: |
+                  sudo apt-get install -y clang lld
+
+            # Build independently without remote-cache credentials or app artifacts.
+            - name: Setup Bazel
+              uses: bazel-contrib/setup-bazel@0.19.0
+              with:
+                  bazelisk-cache: true
+                  repository-cache: true
+                  disk-cache: false
+
+            - name: Build and validate core npm tarball
+              shell: bash
+              run: |
+                  bazel build --config=release \
+                      //packages/dashql-core-js:npm_tarball
+                  bazel test --config=release \
+                      //packages/dashql-core-js:all \
+                      --test_output=errors
+
+            - name: Upload core npm tarball
+              uses: actions/upload-artifact@v7
+              with:
+                  name: dashql_core_npm
+                  path: ./bazel-bin/packages/dashql-core-js/dashql-core.tgz
+                  if-no-files-found: error
+                  retention-days: 7
 
     macos_electron_arm64:
         name: macOS Electron arm64

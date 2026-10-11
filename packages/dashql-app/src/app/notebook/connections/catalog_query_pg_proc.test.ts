@@ -2,7 +2,7 @@ import * as arrow from 'apache-arrow';
 import * as flatbuffers from 'flatbuffers';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import * as dashql from '../../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 import { setupWebHyperDB } from '../../../platform/hyperdb/hyperdb_provider_web.js';
 import { TestLogger } from '../../../platform/logger/test_logger.js';
 import { queryPgProc, generateCatalogSQLFromPgProc } from './catalog_query_pg_proc.js';

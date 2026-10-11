@@ -1,4 +1,4 @@
-import * as core from '../../../core/index.js';
+import * as core from '@ankoh/dashql-core';
 import * as Immutable from 'immutable';
 
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';

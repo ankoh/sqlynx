@@ -4,7 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConnectionHealth } from '../connections/attached_database_state.js';
 import { ConnectorType } from '../connections/connector_info.js';
-import * as dashql from '../../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 import { DELETE_SCRIPT, RENAME_SCRIPT, SET_SCRIPT_TEXT, type NotebookScripts } from '../scripts/notebook_scripts.js';
 import { runNotebookScript } from './rerun_query.js';
 import { ScriptDetails, type ScriptDetailsDependencies } from './script_details.js';

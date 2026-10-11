@@ -1,4 +1,4 @@
-import * as dashql from '../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 
 import { TracedLogger } from '../../platform/logger/logger.js';
 import { StorageReader } from '../notebook/persistence/storage_provider.js';

@@ -1,4 +1,4 @@
-import * as core from '../../../core/index.js';
+import * as core from '@ankoh/dashql-core';
 import * as Immutable from 'immutable';
 
 import { DashQLCompletionState, DashQLPendingDiff, DashQLProcessorUpdateOut } from './editor/dashql_processor.js';

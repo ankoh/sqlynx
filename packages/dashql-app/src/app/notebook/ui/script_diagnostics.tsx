@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as dashql from '../../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 import * as styles from './script_diagnostics.module.css';
 
 import { AlertIcon, XCircleFillIcon, XIcon } from '../../../ui/foundations/symbol_icon.js';

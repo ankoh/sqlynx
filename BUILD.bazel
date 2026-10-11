@@ -9,6 +9,7 @@ load("@npm//:defs.bzl", "npm_link_all_packages")
 exports_files([
     "Cargo.lock",
     "Cargo.toml",
+    "LICENSE",
     "NOTICE",
     "package.json",
     "pnpm-workspace.yaml",

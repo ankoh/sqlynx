@@ -3,7 +3,7 @@ import { HyperDatabaseChannel } from "./hyper/hyperdb_grpc_client.js";
 import { QueryMetadata } from "./query_execution_state.js";
 import { SalesforceDatabaseChannel } from "./salesforce/salesforce_api_client.js";
 import { TrinoChannelInterface } from "./trino/trino_channel.js";
-import type { DashQLScriptExecution } from '../../../core/api.js';
+import type { DashQLScriptExecution } from '@ankoh/dashql-core';
 
 /// The query executor args
 export interface QueryExecutionArgs {

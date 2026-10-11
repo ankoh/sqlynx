@@ -1,4 +1,4 @@
-import type { DashQL, FlatBufferPtr, buffers } from '../../../core/index.js';
+import type { DashQL, FlatBufferPtr, buffers } from '@ankoh/dashql-core';
 import type { NotebookData, ScriptData, StorageBackend } from './storage_backend.js';
 import { StorageBackendType } from './storage_backend.js';
 import {

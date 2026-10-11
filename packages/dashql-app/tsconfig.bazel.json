@@ -12,8 +12,9 @@
         "jsx": "react-jsx",
         "baseUrl": ".",
         "paths": {
-            "@ankoh/dashql-flatbuf": ["./dependencies/dashql-flatbuf"],
-            "@ankoh/dashql-flatbuf/*": ["./dependencies/dashql-flatbuf/*"],
+            "@ankoh/dashql-core": ["./dependencies/dashql-core/dist/index.d.ts"],
+            "@ankoh/dashql-core/buffers": ["./dependencies/dashql-core/dist/buffers.d.ts"],
+            "@ankoh/dashql-core/browser-worker": ["./dependencies/dashql-core/dist/browser_worker.d.ts"],
             "@ankoh/dashql-protobuf": ["./dependencies/dashql-protobuf"],
             "@ankoh/dashql-protobuf/*": ["./dependencies/dashql-protobuf/*"],
             "@ankoh/dashql-jsonschema": ["./dependencies/dashql-jsonschema"],

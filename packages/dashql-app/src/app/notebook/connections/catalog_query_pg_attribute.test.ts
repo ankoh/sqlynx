@@ -1,9 +1,9 @@
 import * as arrow from 'apache-arrow';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import * as dashql from '../../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 import * as flatbuffers from 'flatbuffers';
-import * as buffers from '../../../core/buffers.js';
-import type { BatchRequest } from '../../../core/batch.js';
+import * as buffers from '@ankoh/dashql-core/buffers';
+import type { BatchRequest } from '@ankoh/dashql-core';
 
 import { CATALOG_QUERY_READ_TIMEOUT_MS, queryPgAttribute, updatePgCatalog, updatePgSchemaScript } from './catalog_query_pg_attribute.js';
 import type { QueryExecutor } from './query_executor.js';

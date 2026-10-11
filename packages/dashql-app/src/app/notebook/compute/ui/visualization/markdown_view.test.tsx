@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
 
 import { QueryExecutionStatus, type QueryExecutionState } from '../../../connections/query_execution_state.js';
-import { buffers } from '../../../../../core/index.js';
+import { buffers } from '@ankoh/dashql-core';
 import { MarkdownView, type MarkdownViewDependencies } from './markdown_view.js';
 
 const Node = buffers.visualization.MarkdownNodeT;

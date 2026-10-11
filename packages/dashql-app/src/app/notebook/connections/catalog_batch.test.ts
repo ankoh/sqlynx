@@ -1,10 +1,10 @@
 import * as flatbuffers from 'flatbuffers';
 import { describe, expect, it, vi } from 'vitest';
-import * as buffers from '../../../core/buffers.js';
-import type { DashQLCatalog, DashQLScript } from '../../../core/api.js';
-import type { BatchRequest, BatchResult } from '../../../core/batch.js';
+import * as buffers from '@ankoh/dashql-core/buffers';
+import type { DashQLCatalog, DashQLScript } from '@ankoh/dashql-core';
+import type { BatchRequest, BatchResult } from '@ankoh/dashql-core';
 import { beginCatalogBatch, disposeCatalogBatchWorker, initializeCatalogBatchWorker, invalidateCatalogBatch, publishCatalogBatch, publishCatalogBatchSync } from './catalog_batch.js';
-import { DashQL } from '../../../core/api.js';
+import { DashQL } from '@ankoh/dashql-core';
 
 function fixture() {
     const builder = new flatbuffers.Builder();

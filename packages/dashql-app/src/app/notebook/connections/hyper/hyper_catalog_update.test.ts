@@ -1,7 +1,7 @@
 import * as arrow from 'apache-arrow';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import * as dashql from '../../../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 import { buildHyperCloudCatalogQuery, generateCatalogSQLFromHyperCloud, updateHyperCatalog } from './hyper_catalog_update.js';
 import type { QueryExecutor } from '../query_executor.js';
 import { CATALOG_QUERY_READ_TIMEOUT_MS } from '../catalog_query_pg_attribute.js';

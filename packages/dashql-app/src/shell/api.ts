@@ -1,7 +1,7 @@
 import createDashQLShellModule from '@ankoh/dashql-shell-js';
 import shellWasmUrl from '@ankoh/dashql-shell-wasm?url';
-import { DashQL, DashQLCatalog, DashQLModuleOptions, DashQLScript, EmscriptenModule } from '../core/api.js';
-import * as dashql from '../core/index.js';
+import { DashQL, DashQLCatalog, DashQLModuleOptions, DashQLScript, EmscriptenModule } from '@ankoh/dashql-core';
+import * as dashql from '@ankoh/dashql-core';
 import { stringifyError } from '../platform/logger/logger.js';
 
 const RESULT_SIZE = 16;

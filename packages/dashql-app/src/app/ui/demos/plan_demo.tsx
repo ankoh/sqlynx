@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as dashql from '../../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 import * as styles from './plan_demo.module.css';
 
 import { useDashQLCoreSetup } from '../../providers/core_provider.js';

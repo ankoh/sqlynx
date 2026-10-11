@@ -3,8 +3,8 @@
 import * as arrow from 'apache-arrow';
 import { describe, expect, it, vi } from 'vitest';
 
-import * as core from '../../../core/index.js';
-import type { DashQLScriptExecution } from '../../../core/api.js';
+import * as core from '@ankoh/dashql-core';
+import type { DashQLScriptExecution } from '@ankoh/dashql-core';
 import { TestLogger } from '../../../platform/logger/test_logger.js';
 import { createTrace } from '../../../platform/logger/trace_context.js';
 import { QueryType } from '../../../query/query_execution_state.js';

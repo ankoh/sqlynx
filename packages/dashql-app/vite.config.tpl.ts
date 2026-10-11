@@ -15,11 +15,9 @@ export default vite.defineConfig(({ mode, command }) => {
     const base = isReloc ? './' : '/';
     const rootDir = process.cwd();
     const PUBLIC_DIR = path.resolve(rootDir, "__PUBLIC_DIR__");
-    const FLATBUF_PATH = path.resolve(rootDir, "__FLATBUF_PATH__");
+    const CORE_PATH = path.resolve(rootDir, "__CORE_PATH__");
     const PROTOBUF_PATH = path.resolve(rootDir, "__PROTOBUF_PATH__");
     const JSONSCHEMA_PATH = path.resolve(rootDir, "__JSONSCHEMA_PATH__");
-    const CORE_JS_PATH = path.resolve(rootDir, "__CORE_JS_PATH__");
-    const CORE_WASM_PATH = path.resolve(rootDir, "__CORE_WASM_PATH__");
     const SHELL_JS_PATH = path.resolve(rootDir, "__SHELL_JS_PATH__");
     const SHELL_WASM_PATH = path.resolve(rootDir, "__SHELL_WASM_PATH__");
     // Entry point of the vendored UMAP wasm module (dependencies/umap-wasm/index.js).
@@ -116,16 +114,14 @@ export default vite.defineConfig(({ mode, command }) => {
         },
         resolve: {
             alias: [
-                { find: /@ankoh\/dashql-flatbuf/, replacement: FLATBUF_PATH },
+                { find: /^@ankoh\/dashql-core$/, replacement: path.join(CORE_PATH, 'index.js') },
+                { find: /^@ankoh\/dashql-core\/buffers$/, replacement: path.join(CORE_PATH, 'buffers.js') },
+                { find: /^@ankoh\/dashql-core\/browser-worker$/, replacement: path.join(CORE_PATH, 'browser_worker.js') },
                 { find: /@ankoh\/dashql-protobuf/, replacement: PROTOBUF_PATH },
                 { find: /@ankoh\/dashql-jsonschema/, replacement: JSONSCHEMA_PATH },
                 {
-                    find: /^@ankoh\/dashql-core-js(\?.*)?$/,
-                    replacement: CORE_JS_PATH + "$1",
-                },
-                {
-                    find: /^@ankoh\/dashql-core-wasm(\?.*)?$/,
-                    replacement: CORE_WASM_PATH + "$1",
+                    find: /^@ankoh\/dashql-core\/wasm(\?.*)?$/,
+                    replacement: path.join(CORE_PATH, 'wasm/dashql_core.wasm') + "$1",
                 },
                 {
                     find: /^@ankoh\/dashql-shell-js(\?.*)?$/,
@@ -182,10 +178,8 @@ export default vite.defineConfig(({ mode, command }) => {
                     '.', // Current directory
                 ].concat((() => {
                     const paths = [
-                        FLATBUF_PATH,
+                        CORE_PATH,
                         PROTOBUF_PATH,
-                        path.dirname(CORE_JS_PATH),
-                        path.dirname(CORE_WASM_PATH),
                         path.dirname(SHELL_JS_PATH),
                         path.dirname(SHELL_WASM_PATH),
                         path.dirname(SVG_SYMBOLS_PATH),

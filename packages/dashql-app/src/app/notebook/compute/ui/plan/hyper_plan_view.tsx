@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import * as dashql from '../../../../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 import { useDashQLCoreSetup } from '../../../../providers/core_provider.js';
 import { createPlanLayoutConfig, PlanView } from './plan_view.js';
 

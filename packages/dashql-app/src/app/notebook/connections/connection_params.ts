@@ -1,4 +1,4 @@
-import * as dashql from '../../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 import type * as app_notebook from '@ankoh/dashql-jsonschema/app_notebook.js';
 
 import { CONNECTOR_INFOS, ConnectorType, HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR, TRINO_CONNECTOR, ConnectorInfo } from './connector_info.js';

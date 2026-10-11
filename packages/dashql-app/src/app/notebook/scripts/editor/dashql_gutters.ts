@@ -1,4 +1,4 @@
-import * as dashql from '../../../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 
 import { gutter, GutterMarker } from '@codemirror/view';
 import { Transaction, StateField } from '@codemirror/state';

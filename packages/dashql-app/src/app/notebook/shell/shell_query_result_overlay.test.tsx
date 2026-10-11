@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as arrow from 'apache-arrow';
-import type * as dashql from '../../../core/index.js';
+import type * as dashql from '@ankoh/dashql-core';
 import { act } from '@dashql/browser-test-act';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

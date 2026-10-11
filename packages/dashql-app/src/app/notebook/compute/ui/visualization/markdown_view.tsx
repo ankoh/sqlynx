@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { buffers } from '../../../../../core/index.js';
+import { buffers } from '@ankoh/dashql-core';
 import { ArrowTableFormatter } from '../../../../../compute/arrow_formatter.js';
 import type { LoggerLike } from '../../../../../platform/logger/logger.js';
 import { useLogger } from '../../../../../platform/logger/logger_provider.js';

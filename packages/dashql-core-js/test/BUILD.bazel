@@ -1,0 +1,68 @@
+load("@aspect_bazel_lib//lib:copy_to_bin.bzl", "copy_to_bin")
+load("@aspect_bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("@npm//:vite/package_json.bzl", vite_bin = "bin")
+load(":bazel/browser_test.bzl", "browser_test")
+
+copy_to_bin(
+    name = "srcs",
+    srcs = glob(["*.ts", "*.mjs", "*.html"]),
+)
+
+copy_to_directory(
+    name = "packaged",
+    srcs = ["//packages/dashql-core-js:npm_package"],
+    out = "packaged",
+    root_paths = ["packages/dashql-core-js/npm_package"],
+)
+
+copy_to_directory(
+    name = "inputs",
+    srcs = [
+        "//packages/dashql-core-js:srcs",
+        "//packages/dashql-core-js:wasm_assets",
+        "//proto/fb:dashql_buffers_ts_gen",
+    ],
+    out = "inputs",
+    root_paths = ["packages/dashql-core-js"],
+    replace_prefixes = {"proto/fb/dashql_buffers_ts": "src/gen"},
+)
+
+vite_bin.vite(
+    name = "bundle",
+    srcs = [
+        ":srcs",
+        ":inputs",
+        ":packaged",
+        "//:node_modules/@vitest/expect",
+        "//:node_modules/@vitest/spy",
+        "//:node_modules/flatbuffers",
+        "//:node_modules/mocha",
+        "//:node_modules/vite",
+    ],
+    args = ["build", "--config", "vite.config.mjs", "--outDir", "bundle"],
+    chdir = "packages/dashql-core-js/test",
+    out_dirs = ["bundle"],
+    visibility = ["//visibility:public"],
+)
+
+copy_to_directory(
+    name = "playwright_firefox",
+    srcs = ["@playwright_firefox//:firefox_files"],
+    include_external_repositories = ["*playwright_firefox"],
+    out = "playwright_firefox",
+)
+
+browser_test(
+    name = "test_chromium",
+    browser = "chromium",
+    executable = "@playwright_chromium//:chromium",
+    runtime = "@playwright_chromium//:runtime",
+)
+
+browser_test(
+    name = "test_firefox",
+    browser = "firefox",
+    env = {"MOZ_DISABLE_CONTENT_SANDBOX": "1"},
+    executable = ":playwright_firefox",
+    executable_root = True,
+)

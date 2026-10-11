@@ -1,8 +1,8 @@
 import * as flatbuffers from 'flatbuffers';
-import * as buffers from '../../../core/buffers.js';
-import type { DashQL, DashQLCatalog, DashQLScript } from '../../../core/api.js';
-import type { BatchRequest, BatchResult } from '../../../core/batch.js';
-import { createBatchWorker, type DashQLBatchWorker } from '../../../core/batch_worker_client.js';
+import * as buffers from '@ankoh/dashql-core/buffers';
+import type { DashQL, DashQLCatalog, DashQLScript } from '@ankoh/dashql-core';
+import type { BatchRequest, BatchResult } from '@ankoh/dashql-core';
+import { createBatchWorker, type DashQLBatchWorker } from '@ankoh/dashql-core/browser-worker';
 
 export type BatchProcessor = (request: BatchRequest) => Promise<BatchResult>;
 

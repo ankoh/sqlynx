@@ -1,4 +1,4 @@
-import * as dashql from '../../../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 
 import * as connection from '@ankoh/dashql-jsonschema/connection.js';
 import * as auth from '@ankoh/dashql-jsonschema/auth.js';

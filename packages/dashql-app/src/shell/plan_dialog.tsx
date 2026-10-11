@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as dashql from '../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 import * as themes from '../app/notebook/scripts/editor/themes/index.js';
 
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';

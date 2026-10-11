@@ -1,0 +1,127 @@
+load("@aspect_bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("@aspect_bazel_lib//lib:tar.bzl", "mtree_mutate", "mtree_spec", "tar")
+load("@aspect_rules_js//js:defs.bzl", "js_test")
+load("@aspect_rules_js//npm:defs.bzl", "npm_package")
+load("@npm//:typescript/package_json.bzl", typescript_bin = "bin")
+load("@npm//:vitest/package_json.bzl", vitest_bin = "bin")
+
+package(default_visibility = ["//visibility:public"])
+
+filegroup(
+    name = "srcs",
+    srcs = glob(["src/**/*.ts"]),
+)
+
+genrule(
+    name = "wasm_assets",
+    srcs = ["//packages/dashql-core:core_wasm"],
+    outs = ["src/wasm/dashql_core.js", "src/wasm/dashql_core.wasm"],
+    cmd = """
+        for src in $(SRCS); do
+            case "$$src" in
+                *.js) sed 's/dashql_core_wasm[.]wasm/dashql_core.wasm/g' "$$src" > "$(RULEDIR)/src/wasm/dashql_core.js" ;;
+                *.wasm) cp "$$src" "$(RULEDIR)/src/wasm/dashql_core.wasm" ;;
+            esac
+        done
+    """,
+)
+
+copy_to_directory(
+    name = "compile_inputs",
+    srcs = [":srcs", ":wasm_assets", "tsconfig.json", "package.json", "//proto/fb:dashql_buffers_ts_gen"],
+    out = "compile_inputs",
+    root_paths = ["packages/dashql-core-js"],
+    replace_prefixes = {"proto/fb/dashql_buffers_ts": "src/gen"},
+)
+
+typescript_bin.tsc(
+    name = "compile",
+    srcs = [":compile_inputs", "//:node_modules/flatbuffers"],
+    args = ["--project", "compile_inputs/tsconfig.json", "--outDir", "dist"],
+    chdir = "packages/dashql-core-js",
+    out_dirs = ["dist"],
+)
+
+npm_package(
+    name = "npm_package",
+    package = "@ankoh/dashql-core",
+    # No Bazel linking consumers: publish metadata comes only from package.json.
+    srcs = [":compile", ":wasm_assets", "src/wasm/dashql_core.d.ts", "package.json", "README.md", ":notice", ":license"],
+    include_transitive_sources = False,
+    include_transitive_types = False,
+    replace_prefixes = {"src/wasm": "dist/wasm"},
+)
+
+genrule(
+    name = "notice",
+    srcs = ["//:NOTICE"],
+    outs = ["NOTICE"],
+    cmd = "cp $(location //:NOTICE) $@",
+)
+
+genrule(
+    name = "license",
+    srcs = ["//:LICENSE"],
+    outs = ["LICENSE"],
+    cmd = "cp $(location //:LICENSE) $@",
+)
+
+mtree_spec(
+    name = "npm_tarball_mtree",
+    srcs = [":npm_package"],
+)
+
+mtree_mutate(
+    name = "npm_mtree",
+    mtree = ":npm_tarball_mtree",
+    strip_prefix = "packages/dashql-core-js/npm_package",
+    package_dir = "package",
+)
+
+tar(
+    name = "npm_tarball",
+    srcs = [":npm_package"],
+    mtree = ":npm_mtree",
+    out = "dashql-core.tgz",
+    compress = "gzip",
+    args = ["--format=ustar", "--uid=0", "--gid=0", "--uname=root", "--gname=root"],
+)
+
+tar(
+    name = "npm_tarball_reproducibility",
+    testonly = True,
+    srcs = [":npm_package"],
+    mtree = ":npm_mtree",
+    out = "dashql-core-rebuilt.tgz",
+    compress = "gzip",
+    args = ["--format=ustar", "--uid=0", "--gid=0", "--uname=root", "--gname=root"],
+)
+
+vitest_bin.vitest_test(
+    name = "tests",
+    data = [":compile_inputs", ":compile", "vitest.config.mjs", "//:node_modules/vitest", "//:node_modules/flatbuffers"],
+    args = ["run", "--config", "vitest.config.mjs"],
+    chdir = "packages/dashql-core-js",
+)
+
+js_test(
+    name = "node_smoke_test",
+    entry_point = "tests/node_smoke.mjs",
+    data = [":npm_package", "//:node_modules/flatbuffers"],
+)
+
+js_test(
+    name = "tarball_consumer_test",
+    entry_point = "tests/tarball_consumer.mjs",
+    data = [
+        ":npm_tarball",
+        ":npm_tarball_reproducibility",
+        "tests/consumer.mjs",
+        "tests/consumer.mts",
+        "package.json",
+        ":license",
+        ":notice",
+        "//:node_modules/flatbuffers",
+        "//:node_modules/typescript",
+    ],
+)

@@ -1,0 +1,26 @@
+{
+  "name": "@ankoh/dashql-core",
+  "version": "0.0.2-dev.17",
+  "description": "DashQL SQL analysis and formatting WebAssembly bindings",
+  "type": "module",
+  "license": "MPL-2.0",
+  "publishConfig": { "access": "public" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ankoh/dashql.git",
+    "directory": "packages/dashql-core-js"
+  },
+  "homepage": "https://github.com/ankoh/dashql/tree/main/packages/dashql-core-js#readme",
+  "bugs": { "url": "https://github.com/ankoh/dashql/issues" },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./buffers": { "types": "./dist/buffers.d.ts", "import": "./dist/buffers.js" },
+    "./browser-worker": { "types": "./dist/browser_worker.d.ts", "import": "./dist/browser_worker.js" },
+    "./wasm": "./dist/wasm/dashql_core.wasm",
+    "./wasm/glue": { "types": "./dist/wasm/dashql_core.d.ts", "import": "./dist/wasm/dashql_core.js" }
+  },
+  "files": ["dist", "README.md", "LICENSE", "NOTICE"],
+  "dependencies": { "flatbuffers": "25.9.23" }
+}

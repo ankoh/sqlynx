@@ -9,12 +9,6 @@
         "strict": true,
         "jsx": "react-jsx",
         "paths": {
-            "@ankoh/dashql-flatbuf": [
-                "./bazel-bin/packages/dashql-app/dependencies/dashql-flatbuf"
-            ],
-            "@ankoh/dashql-flatbuf/*": [
-                "./bazel-bin/packages/dashql-app/dependencies/dashql-flatbuf/*"
-            ],
             "@ankoh/dashql-protobuf": [
                 "./bazel-bin/packages/dashql-app/dependencies/dashql-protobuf"
             ],
@@ -27,11 +21,14 @@
             "@ankoh/dashql-jsonschema/*": [
                 "./bazel-bin/packages/dashql-app/dependencies/dashql-jsonschema/*"
             ],
-            "@ankoh/dashql-corek": [
-                "./packages/dashql-core/api"
+            "@ankoh/dashql-core": [
+                "./bazel-bin/packages/dashql-core-js/dist/index.d.ts"
             ],
-            "@ankoh/dashql-core/*": [
-                "./packages/dashql-core/api/*"
+            "@ankoh/dashql-core/buffers": [
+                "./bazel-bin/packages/dashql-core-js/dist/buffers.d.ts"
+            ],
+            "@ankoh/dashql-core/browser-worker": [
+                "./bazel-bin/packages/dashql-core-js/dist/browser_worker.d.ts"
             ],
             "@ankoh/dashql-svg-symbols": [
                 "./bazel-bin/packages/dashql-app/dependencies/svg-symbols/symbols.generated.svg"

@@ -1,5 +1,7 @@
 export const BROWSER_TEST_MODULES = import.meta.glob([
     '../**/*.test.{ts,tsx}',
+    // Also exclude stale copy_to_bin outputs left behind by the core extraction.
+    '!../core/**',
 ]);
 
 function normalizePath(path: string): string {

@@ -1,4 +1,4 @@
-import * as dashql from '../../../../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 
 export class PlanExecutionController {
     private operatorSlots: Array<SVGGElement | null> = [];

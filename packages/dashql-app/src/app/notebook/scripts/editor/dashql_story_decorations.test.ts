@@ -1,4 +1,4 @@
-import * as core from '../../../../core/index.js';
+import * as core from '@ankoh/dashql-core';
 
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';

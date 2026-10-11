@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { ANALYZE_OUTDATED_SCRIPT, REGISTER_QUERY, type NotebookScripts, type ScriptData } from '../scripts/notebook_scripts.js';
 import { ConnectorType } from '../connections/connector_info.js';
-import * as dashql from '../../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 import { registerNotebookScriptQuery, runNotebookScript } from './rerun_query.js';
 
 describe('registerNotebookScriptQuery', () => {

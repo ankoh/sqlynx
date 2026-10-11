@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as styles from './cell_detail_overlay.module.css';
-import * as dashql from '../../../../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 
 import { EditorView } from '@codemirror/view';
 import { XIcon, ChevronUpIcon, ChevronDownIcon } from '../../../../../ui/foundations/symbol_icon.js';

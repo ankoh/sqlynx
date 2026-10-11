@@ -1,5 +1,6 @@
-import coreWasmUrl from '@ankoh/dashql-core-wasm?url';
+import coreWasmUrl from '@ankoh/dashql-core/wasm?url';
 import shellWasmUrl from '@ankoh/dashql-shell-wasm?url';
+import { installSharedCoreTestPool } from './core_pool.js';
 
 import {
     BROWSER_TEST_MESSAGE_SOURCE,
@@ -53,9 +54,7 @@ async function setupBrowserTestEnvironment(): Promise<void> {
     const globals = globalThis as typeof globalThis & {
         DASHQL_PRECOMPILED?: Promise<Uint8Array>;
         DASHQL_SHELL_PRECOMPILED?: Promise<Uint8Array>;
-        __DASHQL_TEST_CORE_WASM_MODULE__?: Promise<WebAssembly.Module>;
         __DASHQL_TEST_HYPERDB_CLIENT__?: typeof globalThis.__DASHQL_TEST_HYPERDB_CLIENT__;
-        __DASHQL_TEST_SHARE_CORE_INSTANCE__?: boolean;
         __DASHQL_TEST_SHARE_SHELL_MODULE__?: boolean;
         IS_REACT_ACT_ENVIRONMENT?: boolean;
     };
@@ -64,7 +63,7 @@ async function setupBrowserTestEnvironment(): Promise<void> {
     globals.DASHQL_PRECOMPILED = parent.DASHQL_PRECOMPILED ?? fetch(coreWasmUrl).then(response => response.bytes());
     globals.__DASHQL_TEST_CORE_FACTORY__ = parent.__DASHQL_TEST_CORE_FACTORY__;
     globals.__DASHQL_TEST_HYPERDB_CLIENT__ = parent.__DASHQL_TEST_HYPERDB_CLIENT__;
-    globals.__DASHQL_TEST_SHARE_CORE_INSTANCE__ = true;
+    installSharedCoreTestPool();
     globals.DASHQL_SHELL_PRECOMPILED = fetch(shellWasmUrl).then(response => response.bytes());
     globals.__DASHQL_TEST_SHARE_SHELL_MODULE__ = true;
     if (typeof ResizeObserver === 'undefined') {

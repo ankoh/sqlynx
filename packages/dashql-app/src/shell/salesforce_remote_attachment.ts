@@ -2,7 +2,7 @@ import type { EmbeddedConnection } from '../platform/database/embedded_database.
 import { generateSchemaSQL } from '../app/notebook/connections/catalog_sql_generator.js';
 import type { LoggerLike } from '../platform/logger/logger.js';
 import type { DashQLShell } from './api.js';
-import type { DashQLScript } from '../core/api.js';
+import type { DashQLScript } from '@ankoh/dashql-core';
 
 export const SALESFORCE_CATALOG_RANK = 100;
 const ENDPOINT_KEY_PREFIX = 'salesforce-';

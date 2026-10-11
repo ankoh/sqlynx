@@ -5,7 +5,7 @@ import { OPFSStorageBackend } from './opfs_storage_backend.js';
 import { CompositeStorageBackend } from './composite_storage_backend.js';
 import { type NotebookLocation } from './notebook_locator.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
-import type { DashQL } from '../../../core/api.js';
+import type { DashQL } from '@ankoh/dashql-core';
 import { restoreAppState, type RestoredAppState, type AppStateRestorationProgress } from './app_state_loader.js';
 
 // Storage context for the writer

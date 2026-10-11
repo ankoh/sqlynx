@@ -1,7 +1,7 @@
 import * as arrow from 'apache-arrow';
 
-import * as core from '../../../core/index.js';
-import type { DashQLScriptExecution } from '../../../core/api.js';
+import * as core from '@ankoh/dashql-core';
+import type { DashQLScriptExecution } from '@ankoh/dashql-core';
 import type { TracedLogger } from '../../../platform/logger/logger.js';
 import { LoggableException, stringifyError } from '../../../platform/logger/logger.js';
 import type { QueryExecutionResponseStream } from '../../../query/query_execution_state.js';

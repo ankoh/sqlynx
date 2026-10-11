@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { ANALYZE_OUTDATED_SCRIPT, NotebookScripts, NotebookScriptsAction, ScriptData, destroyNotebookScripts, reduceNotebookScripts } from './notebook_scripts.js';
 import { Dispatch } from '../../../utils/variant.js';
-import type { DashQLScript } from '../../../core/index.js';
+import type { DashQLScript } from '@ankoh/dashql-core';
 import { CONNECTOR_TYPES, ConnectorType } from '../connections/connector_info.js';
 import { useAttachedDatabaseRegistry } from '../connections/attached_database_registry.js';
 import { useStorageWriter } from '../persistence/storage_provider.js';

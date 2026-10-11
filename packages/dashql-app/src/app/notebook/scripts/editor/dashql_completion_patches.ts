@@ -1,4 +1,4 @@
-import * as dashql from '../../../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 import { DEFAULT_DATABASE_NAME } from '../../connections/catalog_sql_generator.js';
 
 import { ChangeSpec, Text } from '@codemirror/state';

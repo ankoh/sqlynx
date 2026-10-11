@@ -1,4 +1,4 @@
-import * as core from '../../../core/index.js';
+import * as core from '@ankoh/dashql-core';
 
 import { verifyScript } from './scratch_script_verify.js';
 

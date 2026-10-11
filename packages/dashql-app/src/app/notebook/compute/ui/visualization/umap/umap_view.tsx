@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import * as styles from '../visualization.module.css';
-import type * as buffers from '../../../../../../core/buffers.js';
+import type * as buffers from '@ankoh/dashql-core/buffers';
 import { QueryExecutionState, QueryExecutionStatus } from '../../../../connections/query_execution_state.js';
 import { EmbeddingScatter, EmbeddingPoints } from './embedding_scatter.js';
 import { extractCategories } from './umap_categories.js';

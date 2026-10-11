@@ -1,7 +1,7 @@
 import type { UMAPOptions } from '@dashql/umap-wasm';
 
 import type { UmapRequest } from '../../../../../../compute/umap/umap_projection.js';
-import type * as buffers from '../../../../../../core/buffers.js';
+import type * as buffers from '@ankoh/dashql-core/buffers';
 
 /// Map the analyzer's projection sub-spec to UMAP options, applying UMAP's defaults
 /// for anything the user left unspecified (metric cosine, nNeighbors 15, minDist 0.1).

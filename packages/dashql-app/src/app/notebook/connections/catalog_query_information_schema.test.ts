@@ -1,8 +1,8 @@
 import * as arrow from 'apache-arrow';
 import * as flatbuffers from 'flatbuffers';
 import { describe, expect, it, vi } from 'vitest';
-import * as buffers from '../../../core/buffers.js';
-import type { BatchRequest } from '../../../core/batch.js';
+import * as buffers from '@ankoh/dashql-core/buffers';
+import type { BatchRequest } from '@ankoh/dashql-core';
 import type { QueryExecutor } from './query_executor.js';
 import { updateInformationSchemaCatalog } from './catalog_query_information_schema.js';
 

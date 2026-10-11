@@ -1,5 +1,5 @@
 import { DashQLShell, DashQLShellError, DashQLShellPromptAction, DashQLShellPromptInput, DashQLShellStatus } from './api.js';
-import * as dashql from '../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 import * as arrow from 'apache-arrow';
 import { createEmbeddedDatabaseShellEnvironment } from './embedded_database_shell_environment.js';
 import { setupWebHyperDB } from '../platform/hyperdb/hyperdb_provider_web.js';

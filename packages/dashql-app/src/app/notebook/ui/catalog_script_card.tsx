@@ -8,7 +8,7 @@ import { LockIcon, XIcon } from '../../../ui/foundations/symbol_icon.js';
 import { CodeMirror, createReadonlyCodeMirrorExtensions } from '../scripts/editor/codemirror.js';
 import { DashQLUpdateEffect } from '../scripts/editor/dashql_processor.js';
 import { ScriptName } from './script_name.js';
-import type { DashQLScript } from '../../../core/api.js';
+import type { DashQLScript } from '@ankoh/dashql-core';
 import { ButtonSize, ButtonVariant, IconButton } from '../../../ui/foundations/button.js';
 
 export interface CatalogScriptCardProps {

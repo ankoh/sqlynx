@@ -18,7 +18,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { List, type RowComponentProps, useListRef } from 'react-window';
 
-import * as core from '../../../core/index.js';
+import * as core from '@ankoh/dashql-core';
 import { useComputationRegistry } from '../../../compute/computation_registry.js';
 import { DELETE_COMPUTATION } from '../../../compute/computation_state.js';
 import { AnchorAlignment, AnchorSide } from '../../../ui/foundations/anchored_position.js';

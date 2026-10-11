@@ -4,5 +4,7 @@
 import '../platform/hyperdb/hyperdb_wasm.integration.test.js';
 import.meta.glob([
     '../**/*.test.{ts,tsx}',
+    // Core tests now belong to the independent package, including stale Bazel outputs.
+    '!../core/**',
     '!../platform/hyperdb/hyperdb_wasm.integration.test.ts',
 ], { eager: true });

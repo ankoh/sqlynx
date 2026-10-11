@@ -4,8 +4,8 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DashQLCoreProvider, logCoreStderr, useDashQLCoreSetup, type DashQLCoreSetupOptions, type DashQLSetupFn } from './core_provider.js';
-import { DashQL } from '../../core/index.js';
-import type { BatchWorkerRequest, BatchWorkerResponse } from '../../core/batch_worker_protocol.js';
+import { DashQL } from '@ankoh/dashql-core';
+import type { BatchWorkerRequest, BatchWorkerResponse } from '@ankoh/dashql-core/browser-worker';
 import { TracedLogger } from '../../platform/logger/logger.js';
 import { LoggerProvider } from '../../platform/logger/logger_provider.js';
 import { initializeCatalogBatchWorker } from '../notebook/connections/catalog_batch.js';

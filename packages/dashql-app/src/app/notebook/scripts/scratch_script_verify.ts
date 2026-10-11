@@ -1,4 +1,4 @@
-import * as core from '../../../core/index.js';
+import * as core from '@ankoh/dashql-core';
 
 /// The result of verifying a candidate script against the parser + analyzer.
 export interface VerifyResult {

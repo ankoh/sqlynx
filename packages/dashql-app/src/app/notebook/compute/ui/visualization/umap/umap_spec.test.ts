@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buffers } from '../../../../../../core/index.js';
+import { buffers } from '@ankoh/dashql-core';
 import { umapRequestFromSpec } from './umap_spec.js';
 
 const Projection = buffers.visualization.UmapProjectionSpecT;

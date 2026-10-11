@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as styles from './notebook_feed.module.css';
-import * as dashql from '../../../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 
 import type { EditorView } from '@codemirror/view';
 import type { Icon } from '../../../../ui/foundations/symbol_icon.js';

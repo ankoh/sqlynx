@@ -1,4 +1,4 @@
-import type { DashQL } from '../../../core/api.js';
+import type { DashQL } from '@ankoh/dashql-core';
 import type { Logger } from '../../../platform/logger/logger.js';
 import { stringifyError } from '../../../platform/logger/logger.js';
 import { ProgressCounter } from '../../../utils/progress.js';

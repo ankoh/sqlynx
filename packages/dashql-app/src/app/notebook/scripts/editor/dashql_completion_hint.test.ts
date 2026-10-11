@@ -1,4 +1,4 @@
-import * as dashql from '../../../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 import { Text } from '@codemirror/state';
 
 import { deriveCompletionHints, InsertPatchWidget } from './dashql_completion_hint.js';

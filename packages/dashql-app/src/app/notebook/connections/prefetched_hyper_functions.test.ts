@@ -1,6 +1,6 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import * as dashql from '../../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 import {
     fetchPrefetchedHyperFunctions,
     loadPrefetchedHyperFunctions,

@@ -1,4 +1,4 @@
-import * as dashql from '../../../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 import { Decoration, DecorationSet, EditorView } from '@codemirror/view';
 import { Transaction, StateField, RangeSetBuilder } from '@codemirror/state';
 

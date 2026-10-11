@@ -1,4 +1,4 @@
-import * as dashql from '../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 import * as React from 'react';
 
 import { useLogger } from '../../platform/logger/logger_provider.js';
@@ -6,9 +6,9 @@ import { TracedLogger, stringifyError } from '../../platform/logger/logger.js';
 import { createTrace } from '../../platform/logger/trace_context.js';
 import { disposeCatalogBatchWorker, initializeCatalogBatchWorker } from '../notebook/connections/catalog_batch.js';
 
-// Asset import: dedicated alias so WASM resolves independently from API (Bazel: DASHQL_CORE_WASM_PATH; local: core dist).
+// Load the WebAssembly asset through the core package export.
 // eslint-disable-next-line import/no-unresolved -- resolved by bundler
-import coreWasmUrl from '@ankoh/dashql-core-wasm?url';
+import coreWasmUrl from '@ankoh/dashql-core/wasm?url';
 const DASHQL_WASM_URL = typeof coreWasmUrl === 'string' ? coreWasmUrl : new URL(coreWasmUrl as string, import.meta.url).href;
 
 export function logCoreStderr(traced: TracedLogger, text: string): void {

@@ -1,6 +1,6 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import * as dashql from '../../../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 import { PREFETCHED_HYPER_FUNCTIONS_SQL } from '../prefetched_hyper_functions.js';
 import { updateSalesforceCatalog } from './salesforce_catalog_update.js';
 import type { SalesforceConnectionStateDetails } from './salesforce_connection_state.js';

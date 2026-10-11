@@ -1,9 +1,8 @@
 packages/dashql-core/build
 packages/dashql-app/node_modules
 packages/dashql-native/node_modules
-packages/dashql-core/api/node_modules
+packages/dashql-core-js/node_modules
 packages/vite-example/node_modules
 node_modules
 # dashql-cloud is a standalone Cloudflare Worker (workers-rs) built via wrangler, not Bazel.
 packages/dashql-cloud
-# Exclude pnpm-linked package trees so //... does not run their tests (use //packages/dashql-core/api:tests instead)

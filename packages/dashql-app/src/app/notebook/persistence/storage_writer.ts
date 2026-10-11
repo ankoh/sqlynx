@@ -1,5 +1,5 @@
 import * as Immutable from 'immutable';
-import * as dashql from '../../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 
 import { Logger, stringifyError } from '../../../platform/logger/logger.js';
 import { VariantKind } from '../../../utils/index.js';

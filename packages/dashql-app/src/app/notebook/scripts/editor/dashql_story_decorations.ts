@@ -1,4 +1,4 @@
-import * as core from '../../../../core/index.js';
+import * as core from '@ankoh/dashql-core';
 
 import { Decoration, DecorationSet, EditorView, GutterMarker, gutter, lineNumbers, WidgetType } from '@codemirror/view';
 import { EditorState, type Extension, Range, RangeSet, RangeSetBuilder, StateEffect, StateEffectType, StateField, Transaction } from '@codemirror/state';

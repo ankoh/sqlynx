@@ -1,4 +1,4 @@
-import * as dashql from '../../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 
 import { CATALOG_DEFAULT_DESCRIPTOR_POOL_RANK } from './catalog_update_state.js';
 import { generateFunctionScriptHeader } from './catalog_function_sql_generator.js';

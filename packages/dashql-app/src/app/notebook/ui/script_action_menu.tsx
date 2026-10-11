@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as dashql from '../../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 import * as styles from './action_menu.module.css';
 
 import { ButtonSize, ButtonVariant, IconButton } from '../../../ui/foundations/button.js';

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as styles from './script_details.module.css';
-import * as dashql from '../../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 import { EditorView } from '@codemirror/view';
 import { DashQLCompletionAbortEffect, DashQLCompletionStatus, DashQLProcessorPlugin } from '../scripts/editor/dashql_processor.js';
 

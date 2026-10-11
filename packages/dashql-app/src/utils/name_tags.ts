@@ -1,4 +1,4 @@
-import * as dashql from '../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 
 export function unpackNameTags(tags: number): dashql.buffers.analyzer.NameTag[] {
     const out = [];

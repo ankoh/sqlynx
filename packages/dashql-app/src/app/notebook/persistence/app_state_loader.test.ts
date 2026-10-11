@@ -1,11 +1,11 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import * as dashql from '../../../core/index.js';
+import * as dashql from '@ankoh/dashql-core';
 import * as flatbuffers from 'flatbuffers';
-import * as buffers from '../../../core/buffers.js';
+import * as buffers from '@ankoh/dashql-core/buffers';
 import type { BatchProcessor } from '../connections/catalog_batch.js';
-import type { BatchRequest } from '../../../core/batch.js';
+import type { BatchRequest } from '@ankoh/dashql-core';
 
-import type { DashQL } from '../../../core/api.js';
+import type { DashQL } from '@ankoh/dashql-core';
 import { Logger } from '../../../platform/logger/logger.js';
 import { ConnectorType } from '../connections/connector_info.js';
 import { destroyRestoredNotebook, restoreAppState } from './app_state_loader.js';

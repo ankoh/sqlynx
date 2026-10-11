@@ -9,11 +9,11 @@ load("@npm//:vite/package_json.bzl", vite_bin = "bin")
 load(":bazel/browser_test.bzl", "browser_test")
 
 copy_to_directory(
-    name = "dep_flatbuf",
-    srcs = ["//proto/fb:dashql_buffers_ts_gen"],
-    out = "./dependencies/dashql-flatbuf",
+    name = "dep_core",
+    srcs = ["//packages/dashql-core-js:npm_package"],
+    out = "dependencies/dashql-core",
     replace_prefixes = {
-        "proto/fb/dashql_buffers_ts": "",
+        "packages/dashql-core-js/npm_package": "",
     },
     visibility = ["//visibility:private"],
 )
@@ -33,30 +33,6 @@ copy_to_directory(
     replace_prefixes = {
         "proto/json": ""
     },
-    visibility = ["//visibility:private"],
-)
-
-genrule(
-    name = "dep_core_wasm",
-    srcs = ["//packages/dashql-core:core_wasm"],
-    outs = [
-        "dependencies/dashql-core-wasm/dashql_core.wasm",
-        "dependencies/dashql-core-wasm/dashql_core.js",
-        "dependencies/dashql-core-wasm/dashql_core_wasm",
-    ],
-    cmd = """
-        # Copy both .wasm and .js files
-        SRCS=($(SRCS))
-        OUTS=($(OUTS))
-        for src in $${SRCS[@]}; do
-            if [[ $$src == *.wasm ]]; then
-                cp $$src $${OUTS[0]}
-            elif [[ $$src == *.js ]]; then
-                cp $$src $${OUTS[1]}
-                cp $$src $${OUTS[2]}
-            fi
-        done
-    """,
     visibility = ["//visibility:private"],
 )
 
@@ -162,9 +138,8 @@ genrule(
         "vite.config.tpl.ts",
         "@dashql_app_version//:version.env",
         "//:package.json",
-        ":dep_flatbuf",
+        ":dep_core",
         ":dep_protobuf",
-        ":dep_core_wasm",
         ":dep_shell_wasm",
         ":dep_umap_wasm",
         ":dep_svg_symbols",
@@ -180,9 +155,7 @@ genrule(
         sed -e "s|__PUBLIC_DIR__|./public|g" \\
             -e "s|__PROTOBUF_PATH__|./dependencies/dashql-protobuf|g" \\
             -e "s|__JSONSCHEMA_PATH__|./dependencies/dashql-jsonschema|g" \\
-            -e "s|__FLATBUF_PATH__|./dependencies/dashql-flatbuf|g" \\
-            -e "s|__CORE_JS_PATH__|./dependencies/dashql-core-wasm/dashql_core.js|g" \\
-            -e "s|__CORE_WASM_PATH__|./dependencies/dashql-core-wasm/dashql_core.wasm|g" \\
+            -e "s|__CORE_PATH__|./dependencies/dashql-core/dist|g" \\
             -e "s|__SHELL_JS_PATH__|./dependencies/dashql-shell-wasm/dashql_shell.js|g" \\
             -e "s|__SHELL_WASM_PATH__|./dependencies/dashql-shell-wasm/dashql_shell.wasm|g" \\
             -e "s|__UMAP_JS_PATH__|./dependencies/umap-wasm/index.js|g" \\
@@ -213,11 +186,9 @@ genrule(
             -e "s|__DASHQL_VERSION__|$${VERSION}|g" \
             -e "s|__DASHQL_COMMIT__|$${COMMIT}|g" \
             -e "s|__HYPERDB_WASM_VERSION__|$${HYPERDB_WASM_VERSION}|g" \
-            -e "s|__FLATBUF_PATH__|../../bazel-bin/packages/dashql-app/dependencies/dashql-flatbuf|g" \
+            -e "s|__CORE_PATH__|../../bazel-bin/packages/dashql-app/dependencies/dashql-core/dist|g" \
             -e "s|__PROTOBUF_PATH__|../../bazel-bin/packages/dashql-app/dependencies/dashql-protobuf|g" \
             -e "s|__JSONSCHEMA_PATH__|../../bazel-bin/packages/dashql-app/dependencies/dashql-jsonschema|g" \
-            -e "s|__CORE_JS_PATH__|../../bazel-bin/packages/dashql-app/dependencies/dashql-core-wasm/dashql_core.js|g" \
-            -e "s|__CORE_WASM_PATH__|../../bazel-bin/packages/dashql-app/dependencies/dashql-core-wasm/dashql_core.wasm|g" \
             -e "s|__SHELL_JS_PATH__|../../bazel-bin/packages/dashql-app/dependencies/dashql-shell-wasm/dashql_shell.js|g" \
             -e "s|__SHELL_WASM_PATH__|../../bazel-bin/packages/dashql-app/dependencies/dashql-shell-wasm/dashql_shell.wasm|g" \
             -e "s|__UMAP_JS_PATH__|../../bazel-bin/packages/dashql-app/dependencies/umap-wasm/index.js|g" \
@@ -256,8 +227,8 @@ copy_to_bin(
 )
 
 js_library(
-    name = "dep_flatbuf_lib",
-    srcs = [":dep_flatbuf"],
+    name = "dep_core_lib",
+    srcs = [":dep_core"],
     visibility = ["//visibility:private"],
 )
 
@@ -294,7 +265,7 @@ ts_project(
     validate = False,
     validator = ":_tsc_bin",
     deps = [
-        ":dep_flatbuf_lib",
+        ":dep_core_lib",
         ":dep_protobuf_lib",
         ":dep_jsonschema_lib",
         "//:node_modules",
@@ -306,10 +277,9 @@ _vite_web_deps = [
     ":srcs",
     ":example_notebooks",
     ":vite_config",
-    ":dep_flatbuf",
+    ":dep_core",
     ":dep_protobuf",
     ":dep_jsonschema",
-    ":dep_core_wasm",
     ":dep_shell_wasm",
     ":dep_umap_wasm",
     ":dep_svg_symbols",
@@ -448,10 +418,9 @@ sh_binary(
     data = [
         ":example_notebooks",
         ":dev_config",
-        ":dep_flatbuf",
+        ":dep_core",
         ":dep_protobuf",
         ":dep_jsonschema",
-        ":dep_core_wasm",
         ":dep_shell_wasm",
         ":dep_umap_wasm",
         ":dep_svg_symbols",
