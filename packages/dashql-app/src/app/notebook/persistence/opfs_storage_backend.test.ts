@@ -115,6 +115,14 @@ describe('OPFSStorageBackend V2 flat storage', () => {
         expect(JSON.parse(files.get(STORAGE_MANIFEST_FILE)!).appSettings.keywordCase).toBe('upper');
     });
 
+    it('round-trips the narrow screen layout override in the app manifest', async () => {
+        await backend.saveAppSettings({ narrowScreenLayout: true });
+        expect(await backend.loadAppSettings()).toEqual({ narrowScreenLayout: true });
+        expect(JSON.parse(files.get(STORAGE_MANIFEST_FILE)!).appSettings.narrowScreenLayout).toBe(true);
+        await backend.saveAppSettings({ narrowScreenLayout: false });
+        expect(await backend.loadAppSettings()).toEqual({ narrowScreenLayout: false });
+    });
+
     it('removes obsolete AI provider settings from the manifest', async () => {
         files.set(STORAGE_MANIFEST_FILE, JSON.stringify({
             notebooks: [],

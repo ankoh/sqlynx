@@ -51,6 +51,9 @@
         "enableTableColumnPlots": {
           "type": "boolean"
         },
+        "narrowScreenLayout": {
+          "type": "boolean"
+        },
         "scriptDebugMode": {
           "type": "boolean"
         },

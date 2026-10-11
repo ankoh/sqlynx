@@ -13,7 +13,7 @@ import { SETUP_NOTEBOOK, SETUP_NOTEBOOK_URL, SetupEventVariant } from '../../pla
 import { AppLoadingProgress } from './app_loading_progress.js';
 import { ProgressCounter } from '../../utils/progress.js';
 import { loadApp, selectStartupNotebook, shouldFinishInitialNavigation } from './app_loading_logic.js';
-import { useAppConfig } from '../config/app_config.js';
+import { useAppConfig, useAppReconfigure } from '../config/app_config.js';
 import { useStorage } from '../notebook/persistence/storage_provider.js';
 import { useNotebookScriptsRegistry } from '../notebook/scripts/notebook_scripts_registry.js';
 import { useEmbeddedDatabaseSetup } from '../../platform/database/embedded_database_provider.js';
@@ -37,6 +37,7 @@ import { useHyperSetup } from '../notebook/connections/hyper/hyper_connection_se
 import { ConnectionHealth } from '../notebook/connections/attached_database_state.js';
 import { HYPER_CONNECTOR } from '../notebook/connections/connector_info.js';
 import { NotebookSetupStatus } from '../router/notebook_setup_status.js';
+import { NarrowScreenWarning, useNarrowScreenWarning } from '../ui/narrow_screen_warning.js';
 
 async function loadFonts(): Promise<void> {
     await Promise.all([
@@ -55,6 +56,8 @@ interface Props { }
 export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React.PropsWithChildren<Props>) => {
     const config = useAppConfig();
     const appSettingsReady = useAppSettingsReady();
+    const reconfigure = useAppReconfigure();
+    const showNarrowScreenWarning = useNarrowScreenWarning(appSettingsReady, config?.settings?.narrowScreenLayout ?? false);
     const logger = useLogger();
     const navigate = useRouterNavigate();
     const routeContext = useRouteContext();
@@ -409,6 +412,13 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
             return next;
         });
     }, [storageWriter, logger]);
+
+    if (showNarrowScreenWarning) {
+        return <NarrowScreenWarning onEnable={() => reconfigure(value => value == null ? null : {
+            ...value,
+            settings: { ...value.settings, narrowScreenLayout: true },
+        })} />;
+    }
 
     if (remoteNotebookLoading != null) {
         return <NotebookImportCard

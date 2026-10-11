@@ -1,0 +1,31 @@
+.page {
+    position: relative;
+    isolation: isolate;
+}
+
+.foreground {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 440px;
+}
+
+.card {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.description {
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.description p {
+    margin: 0;
+}

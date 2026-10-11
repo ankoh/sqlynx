@@ -11,6 +11,7 @@ export interface AppSettings {
     pauseAfterAppSetup?: boolean;
     enableTableColumnPlots?: boolean;
     enableDashboards?: boolean;
+    narrowScreenLayout?: boolean;
     scriptDebugMode?: boolean;
     tableDebugMode?: boolean;
     formattingDebugMode?: boolean;
