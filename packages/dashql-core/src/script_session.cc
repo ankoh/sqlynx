@@ -397,6 +397,7 @@ bool ScriptSession::IsAnalysisCurrent() const {
     const auto& analyzed = script_.GetAnalyzedScript();
     return analyzed_text_version_ == GetTextVersion() &&
            analyzed_catalog_revision_ == catalog_.GetVersion() && analyzed != nullptr &&
+           analyzed->GetCatalogVersion() == catalog_.GetVersion() &&
            analyzed->parsed_script != nullptr &&
            analyzed->parsed_script == script_.GetParsedScript() &&
            analyzed->parsed_script->scanned_script != nullptr &&
@@ -555,8 +556,8 @@ flatbuffers::Offset<buffers::diff::ScriptDiff> ScriptSession::PackDiff(flatbuffe
 
 void ScriptSession::LoadIntoCatalog(CatalogEntry::Rank rank) {
     catalog_.LoadScript(script_, rank);
-    // Publishing this exact analyzed snapshot advances the catalog generation but does not make
-    // the session stale against itself. Other sessions observe the new generation and reanalyze.
+    // Publishing advances the catalog generation. The analyzed snapshot still needs a refresh
+    // against that generation before it can be used by the planner.
     analyzed_catalog_revision_ = catalog_.GetVersion();
     cursor_catalog_revision_ = catalog_.GetVersion();
 }

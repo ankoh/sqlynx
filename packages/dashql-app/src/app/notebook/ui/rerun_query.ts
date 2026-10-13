@@ -1,9 +1,10 @@
 import type { QueryExecutor } from '../connections/query_executor.js';
 import { QueryType } from '../connections/query_execution_state.js';
-import { NotebookScripts, ScriptData, REGISTER_QUERY, compileNotebookQuery, createScriptExecution } from '../scripts/notebook_scripts.js';
+import { NotebookScripts, ScriptData, REGISTER_QUERY, REGISTER_SCRIPT_RESULT, compileNotebookQuery, createScriptExecution } from '../scripts/notebook_scripts.js';
 import { ensureNotebookScriptAnalyzed, ModifyNotebookScripts } from '../scripts/notebook_scripts_registry.js';
 import { projectionForVisualizeQuery } from '../scripts/script_types.js';
 import type { LoggerLike } from '../../../platform/logger/logger.js';
+import { isNotebookExecutionRunning } from '../scripts/notebook_execution.js';
 
 export function registerNotebookScriptQuery(
     scriptData: ScriptData,
@@ -13,7 +14,11 @@ export function registerNotebookScriptQuery(
     modifyNotebookScripts: ModifyNotebookScripts,
 ): void {
     modifyNotebookScripts({ type: REGISTER_QUERY, value: [scriptData.scriptKey, queryId] });
-    void execution.catch(() => { });
+    void execution.then(async table => {
+        if (table != null) {
+            await modifyNotebookScripts({ type: REGISTER_SCRIPT_RESULT, value: [scriptData.scriptKey, queryId] });
+        }
+    }).catch(() => { });
 }
 
 export function runNotebookScript(
@@ -24,6 +29,7 @@ export function runNotebookScript(
     modifyNotebookScripts: ModifyNotebookScripts,
     logger: LoggerLike,
 ): Promise<void> | void {
+    if (isNotebookExecutionRunning(notebookScripts)) return;
     logger?.info('Notebook script execution requested', {
         connectionId,
         notebookId: notebookScripts.notebookId,
@@ -63,6 +69,7 @@ function executeNotebookScript(
     modifyNotebookScripts: ModifyNotebookScripts,
     logger: LoggerLike,
 ): void {
+    if (isNotebookExecutionRunning(notebookScripts)) return;
     const compiled = compileNotebookQuery(scriptData, notebookScripts.connectorInfo.connectorType, logger);
     const queryText = compiled.sql;
     if (queryText.trim().length === 0) {
@@ -75,7 +82,8 @@ function executeNotebookScript(
         query: queryText,
         scriptExecution: createScriptExecution(scriptData, notebookScripts.connectorInfo.connectorType),
         analyzeResults: true,
-        replaceComputationId: scriptData.latestQueryId,
+        replaceComputationId: scriptData.latestResultQueryId === undefined
+            ? scriptData.latestQueryId : scriptData.latestResultQueryId,
         cacheable: compiled.cacheable,
         cacheSignature: compiled.cacheSignature,
         projection: projectionForVisualizeQuery(scriptData.annotations.visualizeQuery),

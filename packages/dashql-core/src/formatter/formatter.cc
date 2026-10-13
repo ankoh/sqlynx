@@ -596,6 +596,8 @@ FmtReg Formatter::FormatArray(const buffers::parser::Node& node) {
         case AttributeKey::SQL_ATTACH_DATABASE_OPTIONS:
         case AttributeKey::SQL_INSERT_COLUMNS:
         case AttributeKey::SQL_INSERT_RETURNING:
+        case AttributeKey::SQL_DELETE_USING:
+        case AttributeKey::SQL_DELETE_RETURNING:
         case AttributeKey::SQL_CTE_COLUMNS:
         case AttributeKey::SQL_GRAPH_ELEMENT_TABLE_LABELS:
         case AttributeKey::SQL_GRAPH_MATCH_PATTERNS:
@@ -680,10 +682,10 @@ FmtReg Formatter::FormatArray(const buffers::parser::Node& node) {
 }
 
 FmtReg Formatter::FormatTableRef(const buffers::parser::Node& node) {
-    auto [name, alias, table, lateral, sample] =
+    auto [name, alias, table, lateral, sample, only] =
         GetAttributes<AttributeKey::SQL_TABLEREF_NAME, AttributeKey::SQL_TABLEREF_ALIAS,
                       AttributeKey::SQL_TABLEREF_TABLE, AttributeKey::SQL_TABLEREF_LATERAL,
-                      AttributeKey::SQL_TABLEREF_SAMPLE>(node);
+                       AttributeKey::SQL_TABLEREF_SAMPLE, AttributeKey::SQL_TABLEREF_ONLY>(node);
 
     FmtReg base_reg = 0;
     if (table) {
@@ -695,6 +697,10 @@ FmtReg Formatter::FormatTableRef(const buffers::parser::Node& node) {
         base_reg = Reg(*name);
     }
     if (base_reg == 0) return FormatUnimplemented(node);
+
+    if (only && only->node_type() == NodeType::BOOL && only->children_begin_or_value() != 0) {
+        base_reg = fmt.Concat({fmt.Text("only "), base_reg});
+    }
 
     if (lateral && lateral->node_type() == NodeType::BOOL && lateral->children_begin_or_value() != 0) {
         base_reg = fmt.Concat({fmt.Text("lateral "), base_reg});
@@ -2387,6 +2393,8 @@ FmtReg Formatter::FormatNode(size_t node_id) {
             return FormatSelect(node_id);
         case NodeType::OBJECT_SQL_INSERT:
             return FormatInsert(node);
+        case NodeType::OBJECT_SQL_DELETE:
+            return FormatDelete(node);
         case NodeType::OBJECT_SQL_CREATE:
             return FormatCreate(node_id);
         case NodeType::OBJECT_SQL_CREATE_AS:

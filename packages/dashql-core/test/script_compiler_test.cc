@@ -96,6 +96,39 @@ TEST(ScriptCompilerTest, ComputesSemanticCacheSignature) {
     EXPECT_NE(compact.cache_signature, different_query.cache_signature);
 }
 
+TEST(ScriptCompilerTest, ClassifiesDeleteCommandsAndReturningOutputsWithoutCaching) {
+    for (auto sql : {"DELETE FROM target WHERE id = 1;",
+                     "WITH ids AS (SELECT 1 AS id) DELETE FROM target USING ids WHERE target.id = ids.id;",
+                     "DELETE FROM target RETURNING *;",
+                     "DELETE FROM target RETURNING (SELECT id FROM source) AS deleted_id;"}) {
+        SCOPED_TRACE(sql);
+        auto result = Compile(sql);
+        ASSERT_TRUE(result.errors.empty()) << (result.errors.empty() ? "" : result.errors.front().message);
+        ASSERT_EQ(result.statements.size(), 1u);
+        EXPECT_EQ(result.kind, buffers::execution::ScriptCompilationStatementKind::QUERY);
+        EXPECT_EQ(result.statements[0].statement_type, buffers::parser::StatementType::DELETE);
+        EXPECT_EQ(result.statements[0].kind, std::string_view{sql}.find("RETURNING") != std::string_view::npos
+                                                 ? buffers::execution::CompiledScriptStatementKind::OUTPUT
+                                                 : buffers::execution::CompiledScriptStatementKind::COMMAND);
+        EXPECT_EQ(result.sql, std::string_view{sql}.substr(0, std::string_view{sql}.size() - 1));
+        EXPECT_FALSE(result.cacheable);
+        EXPECT_EQ(result.cache_signature.size(), 32u);
+    }
+}
+
+TEST(ScriptCompilerTest, AllowsDeletePrefixButRejectsNonterminalDeleteReturning) {
+    auto commands = Compile("DELETE FROM target WHERE id = 1; SELECT * FROM target;");
+    ASSERT_TRUE(commands.errors.empty());
+    ASSERT_EQ(commands.statements.size(), 2u);
+    EXPECT_EQ(commands.statements[0].kind, buffers::execution::CompiledScriptStatementKind::COMMAND);
+    EXPECT_EQ(commands.statements[1].kind, buffers::execution::CompiledScriptStatementKind::OUTPUT);
+
+    auto returning = Compile("DELETE FROM target RETURNING id; SELECT 1;");
+    ASSERT_EQ(returning.errors.size(), 1u);
+    EXPECT_EQ(returning.errors[0].code, buffers::execution::ScriptCompilationErrorCode::OUTPUT_STATEMENT_NOT_LAST);
+    EXPECT_EQ(returning.errors[0].statement_id, 0u);
+}
+
 TEST(ScriptCompilerTest, ExcludesTerminalVisualizationFromCacheSignature) {
     auto select = Compile("SELECT value FROM metrics");
     auto bars = Compile("SELECT value FROM metrics VISUALIZE USING vegalite (mark => bar)");
@@ -302,6 +335,83 @@ VISUALIZE USING table (
     EXPECT_EQ(*packed->visualization()->dashboard()->column(), 4);
     EXPECT_EQ(packed->visualization()->dashboard()->width(), 8);
     EXPECT_EQ(packed->visualization()->dashboard()->height(), 5);
+}
+
+TEST(ScriptCompilerTest, RendererCaseNormalizationCompilesTerminalMetadataWithoutMutatingNativeState) {
+    Catalog catalog;
+    struct Case {
+        std::string_view renderer;
+        std::string_view normalized;
+        std::string_view options;
+    };
+    for (auto test : {Case{"TABLE", "table", "()"}, Case{"TaBlE", "table", "()"},
+                      Case{"VEGALITE", "vegalite", "(mark => bar)"},
+                      Case{"VeGaLiTe", "vegalite", "(mark => bar)"},
+                      Case{"UMAP", "umap", "(vector => embedding, label => label)"},
+                      Case{"UmAp", "umap", "(vector => embedding, label => label)"},
+                      Case{"MARKDOWN", "markdown", "(template => '## {{label}}')"},
+                      Case{"MaRkDoWn", "markdown", "(template => '## {{label}}')"}}) {
+        SCOPED_TRACE(test.renderer);
+        auto sql = "create table embeddings (embedding int, label text); "
+                   "select embedding, label from embeddings visualize using " + std::string{test.renderer} +
+                   " " + std::string{test.options};
+        Script script{catalog};
+        script.ReplaceText(sql);
+        script.Parse();
+        script.Analyze(false);
+        auto analyzed = script.GetAnalyzedScript();
+        auto parsed = script.GetParsedScript();
+        ASSERT_TRUE(parsed->errors.empty());
+        auto version = catalog.GetVersion();
+        auto text_version = script.text_version;
+        ASSERT_EQ(analyzed->visualization_specs.GetSize(), 1);
+        auto check_analysis = [&] {
+            analyzed->visualization_specs.ForEach([&](size_t, const VisualizationSpec& spec) {
+                ASSERT_TRUE(spec.renderer.has_value());
+                EXPECT_EQ(*spec.renderer, test.renderer);
+            });
+        };
+        check_analysis();
+        auto result = script.CompileQuery(ExecutionConfig(), {.allow_extensions = true, .parse_if_outdated = false});
+        ASSERT_TRUE(result.errors.empty()) << (result.errors.empty() ? "" : result.errors.front().message);
+        EXPECT_EQ(result.kind, buffers::execution::ScriptCompilationStatementKind::VISUALIZE);
+        EXPECT_EQ(result.terminal_statement_id, 1);
+        EXPECT_EQ(result.sql, "select embedding, label from embeddings");
+        ASSERT_EQ(result.statements.size(), 2);
+        EXPECT_EQ(result.statements[0].kind, buffers::execution::CompiledScriptStatementKind::COMMAND);
+        EXPECT_EQ(result.statements[1].kind, buffers::execution::CompiledScriptStatementKind::VISUALIZE);
+        ASSERT_TRUE(result.statements[1].visualization.has_value());
+        EXPECT_EQ(result.statements[1].visualization->renderer, test.normalized);
+        ASSERT_TRUE(result.visualization.has_value());
+        auto& visualization = *result.visualization;
+        EXPECT_EQ(visualization.renderer, test.normalized);
+        if (test.normalized == "table") ASSERT_NE(visualization.table_spec, nullptr);
+        if (test.normalized == "vegalite") EXPECT_NE(visualization.vegalite_spec.find("\"bar\""), std::string::npos);
+        if (test.normalized == "umap") {
+            ASSERT_NE(visualization.umap_spec, nullptr);
+            EXPECT_EQ(visualization.umap_spec->vector_column, "embedding");
+            EXPECT_EQ(visualization.umap_spec->label_column, "label");
+        }
+        if (test.normalized == "markdown") {
+            ASSERT_NE(visualization.markdown_spec, nullptr);
+            EXPECT_EQ(visualization.markdown_spec->template_, "## {{label}}");
+            EXPECT_EQ(visualization.markdown_spec->fields, (std::vector<std::string>{"label"}));
+            ASSERT_NE(visualization.markdown_spec->document, nullptr);
+        }
+        flatbuffers::FlatBufferBuilder builder;
+        builder.Finish(result.Pack(builder));
+        auto* packed = flatbuffers::GetRoot<buffers::execution::ScriptCompilationResult>(builder.GetBufferPointer());
+        ASSERT_NE(packed->visualization(), nullptr);
+        EXPECT_EQ(packed->visualization()->renderer()->string_view(), test.normalized);
+        ASSERT_NE(packed->statements()->Get(1)->visualization(), nullptr);
+        EXPECT_EQ(packed->statements()->Get(1)->visualization()->renderer()->string_view(), test.normalized);
+        EXPECT_EQ(script.ToString(), sql);
+        EXPECT_EQ(script.text_version, text_version);
+        EXPECT_EQ(script.GetParsedScript(), parsed);
+        EXPECT_EQ(script.GetAnalyzedScript(), analyzed);
+        EXPECT_EQ(catalog.GetVersion(), version);
+        check_analysis();
+    }
 }
 
 TEST(ScriptCompilerTest, DefaultsDashboardLayout) {

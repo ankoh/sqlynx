@@ -163,7 +163,7 @@ export const NotebookCommands: React.FC<Props> = (props: Props) => {
                         logger.warn("Ignoring Ctrl+E outside notebook view", { notebookId: route.notebookId }, LOG_CTX);
                         break;
                     }
-                    if (connection!.connectionHealth != ConnectionHealth.ONLINE) {
+                    if (connection?.connectionHealth != ConnectionHealth.ONLINE) {
                         logger.warn("Cannot execute query command with an unhealthy connection", {
                             notebookId: route.notebookId,
                             status: printConnectionHealth(connection?.connectionHealth ?? ConnectionHealth.NOT_STARTED)

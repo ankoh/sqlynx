@@ -33,6 +33,8 @@ struct CompiledVisualization {
     std::shared_ptr<visualize::MarkdownDocument> markdown_spec;
     std::shared_ptr<buffers::visualization::DashboardSpecT> dashboard;
     std::shared_ptr<buffers::visualization::TableSpecT> table_spec;
+
+    buffers::execution::CompiledVisualizationT ToObject() const;
 };
 
 struct CompiledScriptStatement {
@@ -60,6 +62,10 @@ struct ScriptCompilationResult {
 };
 
 struct ScriptCompiler {
+    /// Compile metadata without modifying the analyzed script; throws on invalid metadata.
+    static CompiledVisualization CompileVisualization(const VisualizationSpec& visualization,
+                                                      const AnalyzedScript& script);
+
     static ScriptCompilationResult Compile(Script& script,
                                            const buffers::formatting::FormattingConfigT& config,
                                            ScriptCompilationOptions options = {});

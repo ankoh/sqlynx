@@ -140,6 +140,7 @@ export function useNotebookScripts(id: string | null): [NotebookScripts | null, 
 
     // Queue for batching rapid dispatch calls to avoid concurrent rendering issues
     const pendingActionsRef = React.useRef<Array<{
+        notebookId: string;
         action: NotebookScriptsAction;
         resolve: (state: NotebookScripts | null) => void;
     }>>([]);
@@ -149,7 +150,7 @@ export function useNotebookScripts(id: string | null): [NotebookScripts | null, 
     const flushPendingActions = React.useCallback(() => {
         flushScheduledRef.current = false;
         const pending = pendingActionsRef.current;
-        if (pending.length === 0 || id == null) return;
+        if (pending.length === 0) return;
         pendingActionsRef.current = [];
         logger.debug('Flushing notebook script actions', {
             notebookId: id,
@@ -159,11 +160,11 @@ export function useNotebookScripts(id: string | null): [NotebookScripts | null, 
 
         setRegistry((reg: NotebookScriptsRegistry) => {
             // Check if the connection is active to gate storage writes
-            const mapping = connReg.attachedDatabasesByNotebook.get(id);
-            const executionDatabaseId = mapping?.mainDatabaseId;
-            const active = executionDatabaseId == null ? false : connReg.attachedDatabases.get(executionDatabaseId)?.active ?? false;
-            for (const { action, resolve } of pending) {
-                const prev = reg.notebookScriptsMap.get(id);
+            for (const { notebookId, action, resolve } of pending) {
+                const mapping = connReg.attachedDatabasesByNotebook.get(notebookId);
+                const executionDatabaseId = mapping?.mainDatabaseId;
+                const active = executionDatabaseId == null ? false : connReg.attachedDatabases.get(executionDatabaseId)?.active ?? false;
+                const prev = reg.notebookScriptsMap.get(notebookId);
                 if (!prev) {
                     logger.warn('No notebook scripts registered for notebook', { notebookId: id }, LOG_CTX);
                     resolve(null);
@@ -174,7 +175,7 @@ export function useNotebookScripts(id: string | null): [NotebookScripts | null, 
                     actionType: action.type.description ?? action.type.toString(),
                 }, LOG_CTX);
                 const next = reduceNotebookScripts(prev, action, storageWriter, logger, active);
-                reg.notebookScriptsMap.set(id, next);
+                reg.notebookScriptsMap.set(notebookId, next);
                 resolve(next);
             }
             return { ...reg };
@@ -191,7 +192,7 @@ export function useNotebookScripts(id: string | null): [NotebookScripts | null, 
                 queueLength: (pendingActionsRef.current.length + 1).toString(),
             }, LOG_CTX);
             // Queue the action
-            pendingActionsRef.current.push({ action, resolve });
+            pendingActionsRef.current.push({ notebookId: id, action, resolve });
 
             // Schedule a flush if not already scheduled
             if (!flushScheduledRef.current) {

@@ -1,4 +1,5 @@
 include "dashql/parsed_script.fbs";
+include "dashql/script_compilation.fbs";
 
 namespace dashql.buffers.execution;
 
@@ -48,6 +49,7 @@ table ExecutionGraphNode {
     produces_output: bool;
     barrier: bool;
     accesses: [ExecutionGraphAccess];
+    visualization: CompiledVisualization;
 }
 
 table ExecutionGraphEdge {

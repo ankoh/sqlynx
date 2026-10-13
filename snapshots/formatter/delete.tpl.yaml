@@ -1,0 +1,98 @@
+formatter-snapshots:
+
+  - name: coverage_delete_all
+    input: DELETE FROM delete_target
+    dialects:
+      hyper:
+        validation:
+          setup: create table delete_target(id int, label text);
+
+  - name: coverage_delete_alias_where
+    input: DELETE FROM delete_target AS t WHERE t.id=1
+    dialects:
+      hyper:
+        validation:
+          setup: create table delete_target(id int, label text);
+
+  - name: coverage_delete_using
+    input: DELETE FROM delete_target t USING delete_source s WHERE t.id=s.id RETURNING t.id,s.label AS source_label
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table delete_target(id int);
+            create table delete_source(id int, label text);
+
+  - name: coverage_delete_using_join
+    input: DELETE FROM delete_target t USING delete_source s JOIN delete_audit a ON s.id=a.id WHERE t.id=s.id
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table delete_target(id int);
+            create table delete_source(id int);
+            create table delete_audit(id int);
+
+  - name: coverage_delete_correlated_where
+    input: DELETE FROM delete_target t WHERE EXISTS(SELECT 1 FROM delete_source s WHERE s.id=t.id) RETURNING t.id
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table delete_target(id int);
+            create table delete_source(id int);
+
+  - name: coverage_delete_returning_subquery
+    input: DELETE FROM delete_target t RETURNING (SELECT max(s.id) FROM delete_source s WHERE s.id=t.id) AS deleted_id
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table delete_target(id int);
+            create table delete_source(id int);
+
+  - name: coverage_delete_with
+    input: WITH ids AS(SELECT id FROM delete_source) DELETE FROM delete_target t USING ids WHERE t.id=ids.id RETURNING *
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table delete_target(id int);
+            create table delete_source(id int);
+
+  - name: coverage_delete_with_recursive
+    input: WITH RECURSIVE ids AS(SELECT 1 AS id UNION ALL SELECT id+1 FROM ids WHERE id<3) DELETE FROM delete_target WHERE id IN(SELECT id FROM ids)
+    dialects:
+      hyper:
+        validation:
+          setup: create table delete_target(id int);
+
+  - name: coverage_delete_only_qualified
+    input: DELETE FROM ONLY delete_schema.delete_target AS t RETURNING t.id,t.label AS deleted_label
+    dialects:
+      hyper: {}
+
+  - name: coverage_delete_using_subquery
+    input: DELETE FROM delete_target t USING (SELECT id FROM delete_source) AS s WHERE t.id=s.id
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table delete_target(id int);
+            create table delete_source(id int);
+
+  - name: coverage_delete_comments
+    input: |-
+      -- deleted rows
+      DELETE FROM delete_target /* target */ WHERE id=1 RETURNING id -- output
+    dialects:
+      hyper:
+        validation:
+          setup: create table delete_target(id int);
+
+  - name: coverage_explain_delete
+    input: EXPLAIN DELETE FROM delete_target WHERE id=1
+    dialects:
+      hyper:
+        validation:
+          setup: create table delete_target(id int);

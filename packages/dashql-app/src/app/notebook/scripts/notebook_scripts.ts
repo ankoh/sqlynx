@@ -104,6 +104,8 @@ export interface ScriptData {
     pendingDiff: DashQLPendingDiff | null;
     /// The latest query id
     latestQueryId: number | null;
+    /// The retained result/computation id, independent of later commands or failures.
+    latestResultQueryId?: number | null;
     /// The file name of this committed script
     fileName: string;
 }
@@ -112,9 +114,12 @@ export const SELECT_NEXT_SCRIPT = Symbol('SELECT_NEXT_SCRIPT');
 export const SELECT_PREV_SCRIPT = Symbol('SELECT_PREV_SCRIPT');
 export const SELECT_SCRIPT = Symbol('SELECT_SCRIPT');
 export const ANALYZE_OUTDATED_SCRIPT = Symbol('ANALYZE_OUTDATED_SCRIPT');
+export const APPLY_PLANNER_ANALYSIS = Symbol('APPLY_PLANNER_ANALYSIS');
 export const UPDATE_FROM_PROCESSOR = Symbol('UPDATE_FROM_PROCESSOR');
 export const CATALOG_DID_UPDATE = Symbol('CATALOG_DID_UPDATE');
 export const REGISTER_QUERY = Symbol('REGISTER_QUERY');
+export const REGISTER_SCRIPT_RESULT = Symbol('REGISTER_SCRIPT_RESULT');
+export const SET_SCRIPT_EXECUTION_VISUALIZATION = Symbol('SET_SCRIPT_EXECUTION_VISUALIZATION');
 export const CREATE_SCRIPT = Symbol('CREATE_SCRIPT');
 export const DELETE_SCRIPT = Symbol('DELETE_SCRIPT');
 export const RENAME_SCRIPT = Symbol('RENAME_SCRIPT');
@@ -129,9 +134,12 @@ export type NotebookScriptsAction =
     | VariantKind<typeof SELECT_PREV_SCRIPT, null>
     | VariantKind<typeof SELECT_SCRIPT, string>
     | VariantKind<typeof ANALYZE_OUTDATED_SCRIPT, ScriptKey>
+    | VariantKind<typeof APPLY_PLANNER_ANALYSIS, Array<{ scriptKey: number; editorUpdate: core.buffers.editor.EditorUpdateT }>>
     | VariantKind<typeof UPDATE_FROM_PROCESSOR, DashQLProcessorUpdateOut>
     | VariantKind<typeof CATALOG_DID_UPDATE, null>
     | VariantKind<typeof REGISTER_QUERY, [ScriptKey, number]>
+    | VariantKind<typeof REGISTER_SCRIPT_RESULT, [ScriptKey, number]>
+    | VariantKind<typeof SET_SCRIPT_EXECUTION_VISUALIZATION, [ScriptKey, ResolvedVisualizeQuery | null]>
     | VariantKind<typeof CREATE_SCRIPT, number | null>
     | VariantKind<typeof DELETE_SCRIPT, string>
     | VariantKind<typeof RENAME_SCRIPT, { fileName: string, newFileName: string }>
@@ -157,6 +165,7 @@ export function createEmptyScriptData(instance: core.DashQL, catalog: core.DashQ
         completion: null,
         pendingDiff: null,
         latestQueryId: null,
+        latestResultQueryId: null,
         fileName,
     };
     return [scriptKey, scriptData];
@@ -320,6 +329,54 @@ export function reduceNotebookScripts(state: NotebookScripts, action: NotebookSc
         case ANALYZE_OUTDATED_SCRIPT:
             return analyzeOutdatedScript(state, action.value, logger);
 
+        case APPLY_PLANNER_ANALYSIS: {
+            let scripts = state.scripts;
+            const focusedScriptKey = getSelectedScriptRef(state)?.scriptId;
+            let semanticUserFocus: SemanticUserFocus | null = null;
+            for (const { scriptKey, editorUpdate } of action.value) {
+                const prevScript = scripts[scriptKey];
+                if (!prevScript ||
+                    prevScript.scriptSession.getTextVersion() !== editorUpdate.textVersion ||
+                    prevScript.scriptSession.getCatalogRevision() !== editorUpdate.catalogRevision ||
+                    editorUpdate.status !== core.buffers.editor.EditorUpdateStatus.OK ||
+                    !editorUpdate.analysisAvailable) {
+                    continue;
+                }
+                // Cursor movement can supersede a planner snapshot without changing text or catalog.
+                const nextUpdate = prevScript.scriptSession.getStateRevision() === editorUpdate.stateRevision
+                    ? editorUpdate
+                    : prevScript.scriptSession.analyze();
+                const projectionChanged = prevScript.editorUpdate?.stateRevision !== nextUpdate.stateRevision;
+                if (projectionChanged) {
+                    prevScript.completion?.buffer.destroy();
+                }
+                if (scripts === state.scripts) scripts = { ...scripts };
+                scripts[scriptKey] = {
+                    ...prevScript,
+                    editorUpdate: nextUpdate,
+                    analysisOutdated: false,
+                    annotations: deriveScriptAnnotations(nextUpdate, prevScript.scriptSession,
+                        state.connectorInfo.connectorType, logger),
+                    statistics: editorUpdate.analysisUpdated
+                        ? rotateScriptStatistics(prevScript.statistics, editorUpdate.processingStatistics)
+                        : prevScript.statistics,
+                    completion: projectionChanged ? null : prevScript.completion,
+                };
+                if (scriptKey === focusedScriptKey) {
+                    semanticUserFocus = scripts[scriptKey].completion != null
+                        ? deriveFocusFromCompletionCandidates(scriptKey, scripts[scriptKey])
+                        : deriveFocusFromEditorUpdate(scriptKey, nextUpdate);
+                }
+            }
+            if (scripts === state.scripts) return state;
+            // Analysis is already published by the planner. Publishing again invalidates its revision.
+            return {
+                ...state,
+                scripts,
+                semanticUserFocus,
+            };
+        }
+
         case UPDATE_FROM_PROCESSOR: {
             const update = action.value;
             const prevScript = state.scripts[update.scriptKey];
@@ -474,13 +531,47 @@ export function reduceNotebookScripts(state: NotebookScripts, action: NotebookSc
                 }, LOG_CTX);
                 return state;
             } else {
-                const next = { ...state };
+                const next = { ...state, scripts: { ...state.scripts } };
                 next.scripts[scriptKey] = {
                     ...scriptData,
                     latestQueryId: queryId,
+                    latestResultQueryId: scriptData.latestResultQueryId === undefined
+                        ? scriptData.latestQueryId : scriptData.latestResultQueryId,
                 };
                 return next;
             }
+        }
+
+        case SET_SCRIPT_EXECUTION_VISUALIZATION: {
+            const [scriptKey, visualizeQuery] = action.value;
+            const scriptData = state.scripts[scriptKey];
+            if (!scriptData) return state;
+            return {
+                ...state,
+                scripts: {
+                    ...state.scripts,
+                    [scriptKey]: {
+                        ...scriptData,
+                        annotations: { ...scriptData.annotations, visualizeQuery },
+                    },
+                },
+            };
+        }
+
+        case REGISTER_SCRIPT_RESULT: {
+            const [scriptKey, queryId] = action.value;
+            const scriptData = state.scripts[scriptKey];
+            // Query ids are monotonic; an older overlapping execution must not replace a newer result.
+            if (!scriptData || (scriptData.latestResultQueryId != null && scriptData.latestResultQueryId >= queryId)) {
+                return state;
+            }
+            return {
+                ...state,
+                scripts: {
+                    ...state.scripts,
+                    [scriptKey]: { ...scriptData, latestResultQueryId: queryId },
+                },
+            };
         }
 
         case DELETE_SCRIPT: {
@@ -538,6 +629,7 @@ export function reduceNotebookScripts(state: NotebookScripts, action: NotebookSc
                 completion: null,
                 pendingDiff: null,
                 latestQueryId: null,
+                latestResultQueryId: null,
                 fileName,
             };
 
@@ -1124,35 +1216,42 @@ function compileVisualizeQuery(scriptSession: core.DashQLScriptSession, connecto
         const sql = reader.sql();
         const visualization = reader.visualization();
         if (!sql || !visualization) return null;
-        const dashboardSpec = visualization.dashboard()?.unpack() ?? null;
         logger?.debug('Compiled visualization for execution', { sql }, LOG_CTX);
-        switch (visualization.renderer()) {
-            case 'umap': {
-                const umapSpec = visualization.umapSpec()?.unpack();
-                return umapSpec && typeof umapSpec.vectorColumn === 'string' && umapSpec.vectorColumn.length > 0
-                    ? { renderer: 'umap', sql, umapSpec, dashboardSpec }
-                    : null;
-            }
-            case 'markdown': {
-                const markdownSpec = visualization.markdownSpec()?.unpack();
-                return markdownSpec?.document ? { renderer: 'markdown', sql, markdownSpec, dashboardSpec } : null;
-            }
-            case 'vegalite': {
-                const raw = visualization.vegaliteSpec();
-                if (!raw) return null;
-                try {
-                    return { renderer: 'vegalite', sql, vegaLiteSpec: JSON.parse(raw), dashboardSpec };
-                } catch {
-                    return null;
-                }
-            }
-            case 'table':
-                return { renderer: 'table', sql, dashboardSpec };
-            default:
-                return null;
-        }
+        return resolveCompiledVisualization(sql, visualization.unpack());
     } finally {
         compiled.destroy();
+    }
+}
+
+export function resolveCompiledVisualization(
+    sql: string,
+    visualization: core.buffers.execution.CompiledVisualizationT,
+): ResolvedVisualizeQuery | null {
+    const dashboardSpec = visualization.dashboard ?? null;
+    switch (visualization.renderer) {
+        case 'umap': {
+            const umapSpec = visualization.umapSpec;
+            return umapSpec && typeof umapSpec.vectorColumn === 'string' && umapSpec.vectorColumn.length > 0
+                ? { renderer: 'umap', sql, umapSpec, dashboardSpec }
+                : null;
+        }
+        case 'markdown': {
+            const markdownSpec = visualization.markdownSpec;
+            return markdownSpec?.document ? { renderer: 'markdown', sql, markdownSpec, dashboardSpec } : null;
+        }
+        case 'vegalite': {
+            const raw = visualization.vegaliteSpec;
+            if (!raw) return null;
+            try {
+                return { renderer: 'vegalite', sql, vegaLiteSpec: JSON.parse(String(raw)), dashboardSpec };
+            } catch {
+                return null;
+            }
+        }
+        case 'table':
+            return { renderer: 'table', sql, dashboardSpec };
+        default:
+            return null;
     }
 }
 

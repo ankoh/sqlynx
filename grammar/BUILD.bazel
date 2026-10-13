@@ -38,6 +38,7 @@ filegroup(
     name = "type_files",
     srcs = [
         "rules/sql_create.yh",
+        "rules/sql_delete.yh",
         "rules/sql_drop_attach.yh",
         "rules/sql_function.yh",
         "rules/sql_insert.yh",
@@ -56,6 +57,7 @@ filegroup(
     name = "rule_files",
     srcs = [
         "rules/sql_create.y",
+        "rules/sql_delete.y",
         "rules/sql_drop_attach.y",
         "rules/sql_function.y",
         "rules/sql_insert.y",

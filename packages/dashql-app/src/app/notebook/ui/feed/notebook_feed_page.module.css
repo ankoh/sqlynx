@@ -83,6 +83,80 @@
     margin-left: auto;
 }
 
+.execution_controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.execution_status {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    font-size: 12px;
+}
+
+.execution_progress {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.execution_indicator {
+    display: flex;
+    align-items: center;
+}
+
+.execution_error_card {
+    width: min(360px, calc(100vw - 32px));
+    max-height: calc(100vh - 32px);
+    display: flex;
+    flex-direction: column;
+    font-size: var(--font_size_small);
+    overflow-wrap: anywhere;
+}
+
+.execution_error_header {
+    display: flex;
+    align-items: center;
+    padding: 4px 4px 4px 16px;
+    border-bottom: 1px solid var(--border_color_primary);
+    flex-shrink: 0;
+}
+
+.execution_details_title {
+    flex: 1;
+    margin: 0;
+    font-size: var(--font_size_body);
+    font-weight: 600;
+}
+
+.execution_details_body {
+    padding: 12px 16px 16px;
+    display: grid;
+    gap: 8px;
+    overflow: auto;
+}
+
+.execution_error_message {
+    white-space: pre-wrap;
+}
+
+@media only screen and (max-width: 600px) {
+    .page {
+        --notebook_header_height: 76px;
+    }
+    .view_bar {
+        flex-wrap: wrap;
+    }
+    .execution_controls {
+        order: 3;
+        flex-basis: 100%;
+    }
+}
+
 @media only screen and (max-width: 1000px) {
     .action_label {
         display: none;

@@ -1,0 +1,2 @@
+%type <buffers::parser::Node> sql_delete_stmt sql_delete_target sql_delete_using_clause;
+%type <BackedUniquePtr<NodeList>> sql_delete_body;

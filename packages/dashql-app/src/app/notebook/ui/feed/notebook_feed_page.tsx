@@ -1,9 +1,9 @@
 import * as React from 'react';
 import * as styles from './notebook_feed_page.module.css';
 
-import { FileDirectoryIcon, LinkIcon, SymbolIcon, ThreeBarsIcon } from '../../../../ui/foundations/symbol_icon.js';
+import { FileDirectoryIcon, LinkIcon, PaperAirplaneIcon, SquareFillIcon, SymbolIcon, ThreeBarsIcon } from '../../../../ui/foundations/symbol_icon.js';
 
-import type { AttachedDatabaseState } from '../../connections/attached_database_state.js';
+import { ConnectionHealth, type AttachedDatabaseState } from '../../connections/attached_database_state.js';
 import {
     SELECT_SCRIPT,
     type NotebookScripts,
@@ -21,8 +21,13 @@ import { Dashboard } from '../../dashboard/dashboard.js';
 import { NotebookViewMode, useNotebookViewMode } from '../../scripts/notebook_commands.js';
 import { SegmentedControl, SegmentedControlSize } from '../../../../ui/foundations/segmented_control.js';
 import { useAppConfig } from '../../../config/app_config.js';
+import { useNotebookExecution } from '../../scripts/notebook_execution_provider.js';
+import { IndicatorStatus, StatusIndicator } from '../../../../ui/foundations/status_indicator.js';
+import { AnchoredOverlay } from '../../../../ui/foundations/anchored_overlay.js';
+import { AnchorAlignment, AnchorSide } from '../../../../ui/foundations/anchored_position.js';
 
 const FileZipIcon = SymbolIcon('file_zip_16');
+const CloseIcon = SymbolIcon('x_16');
 
 export interface NotebookFeedPageDependencies {
     NotebookFeed: typeof NotebookFeed;
@@ -39,6 +44,7 @@ export interface NotebookFeedPageDependencies {
     useNotebookViewMode: typeof useNotebookViewMode;
     useAppConfig: typeof useAppConfig;
     SegmentedControl: typeof SegmentedControl;
+    useNotebookExecution: typeof useNotebookExecution;
 }
 
 const DEFAULT_DEPENDENCIES: NotebookFeedPageDependencies = {
@@ -56,6 +62,7 @@ const DEFAULT_DEPENDENCIES: NotebookFeedPageDependencies = {
     useNotebookViewMode,
     useAppConfig,
     SegmentedControl,
+    useNotebookExecution,
 };
 
 interface Props {
@@ -79,6 +86,17 @@ export const NotebookFeedPage: React.FC<Props> = (props) => {
     const [shareOpen, setShareOpen] = React.useState(false);
     const [exportOpen, setExportOpen] = React.useState(false);
     const [storageOpen, setStorageOpen] = React.useState(false);
+    const execution = dependencies.useNotebookExecution(props.notebookScripts.notebookId);
+    const run = execution.state;
+    const [executionDetailsOpen, setExecutionDetailsOpen] = React.useState(false);
+    React.useEffect(() => setExecutionDetailsOpen(false), [props.notebookScripts.notebookId]);
+    const executeRef = React.useRef<HTMLButtonElement>(null);
+    const progress = run ? `${run.completedScripts}/${run.totalScripts}` : '';
+    const statusText = !run ? '' : run.phase === 'planning' ? 'Planning...'
+        : run.phase === 'stopping' ? `Stopping · ${progress} completed`
+        : run.phase === 'failed' ? `${progress} completed`
+        : run.phase === 'cancelled' ? `Stopped · ${progress} completed`
+        : run.phase === 'succeeded' ? `${progress} succeeded` : `${progress} completed`;
     const { mode, setMode } = dependencies.useNotebookViewMode();
     const dashboardsEnabled = dependencies.useAppConfig()?.settings?.enableDashboards === true;
     const dashboardActive = dashboardsEnabled && mode === NotebookViewMode.Dashboard;
@@ -106,6 +124,47 @@ export const NotebookFeedPage: React.FC<Props> = (props) => {
                     <dependencies.SegmentedControl.Button selected={!dashboardActive}>Notebook</dependencies.SegmentedControl.Button>
                     <dependencies.SegmentedControl.Button selected={dashboardActive}>Dashboard</dependencies.SegmentedControl.Button>
                 </dependencies.SegmentedControl>}
+                <div className={styles.execution_controls}>
+                    <dependencies.Button ref={executeRef} size={ButtonSize.Small} variant={ButtonVariant.Invisible}
+                        leadingVisual={execution.busy ? SquareFillIcon : PaperAirplaneIcon}
+                        aria-label={execution.busy ? 'Stop notebook execution' : 'Execute All'}
+                        disabled={execution.busy ? run?.phase === 'stopping' : props.connection?.connectionHealth !== ConnectionHealth.ONLINE
+                            || (props.connection?.queriesActive?.size ?? 0) > 0 || Object.keys(props.notebookScripts.scriptRefs).length === 0}
+                        onClick={() => execution.busy ? execution.stop() : execution.start(props.modifyNotebookScripts)}>
+                        <span className={styles.action_label}>{execution.busy ? run?.phase === 'stopping' ? 'Stopping' : 'Stop' : 'Execute All'}</span>
+                    </dependencies.Button>
+                    <div className={styles.execution_status} role="status" aria-live="polite" aria-atomic="true"
+                        title={run?.error ?? undefined} aria-label={run?.error ? `${statusText}: ${run.error}` : undefined}>
+                        {run && <>
+                            <AnchoredOverlay
+                                open={executionDetailsOpen} onOpen={() => setExecutionDetailsOpen(true)} onClose={() => setExecutionDetailsOpen(false)}
+                                side={AnchorSide.OutsideBottom} align={AnchorAlignment.Start} anchorOffset={4}
+                                renderAnchor={anchorProps => <dependencies.Button {...anchorProps}
+                                    size={ButtonSize.Small} variant={ButtonVariant.Invisible} aria-label="Show notebook execution details"
+                                    leadingVisual={() => <span className={styles.execution_indicator} aria-hidden="true"><StatusIndicator width="16px" height="16px" status={execution.busy
+                                        ? IndicatorStatus.Running : run.phase === 'failed' ? IndicatorStatus.Failed
+                                            : run.phase === 'succeeded' ? IndicatorStatus.Succeeded : IndicatorStatus.Skip} /></span>}>
+                                    <span className={styles.execution_progress}>{statusText}</span>
+                                </dependencies.Button>}>
+                                <section className={styles.execution_error_card} role="dialog" aria-label="Notebook execution details">
+                                    <header className={styles.execution_error_header}>
+                                        <h2 className={styles.execution_details_title}>{run.phase === 'failed' ? 'Execution failed' : 'Notebook execution'}</h2>
+                                        <dependencies.IconButton size={ButtonSize.Small} variant={ButtonVariant.Invisible}
+                                            aria-label="Close notebook execution details" onClick={() => setExecutionDetailsOpen(false)}>
+                                            <CloseIcon size={16} />
+                                        </dependencies.IconButton>
+                                    </header>
+                                    <div className={styles.execution_details_body}>
+                                        <div>{statusText}</div>
+                                        {run.activeFileName && <div>{run.activeFileName} · statement {run.activeStatementIndex}/{run.activeStatementCount}</div>}
+                                        <div>{run.completedStatements}/{run.totalStatements} statements completed</div>
+                                        {run.error && <div className={styles.execution_error_message}>{run.error}</div>}
+                                    </div>
+                                </section>
+                            </AnchoredOverlay>
+                        </>}
+                    </div>
+                </div>
                 <div className={styles.header_actions}>
                     <dependencies.Button ref={shareTriggerRef} size={ButtonSize.Small} variant={ButtonVariant.Invisible} leadingVisual={LinkIcon} aria-label="Share as URL" aria-expanded={shareOpen} onClick={() => {
                         setExportOpen(false);

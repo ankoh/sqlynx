@@ -287,6 +287,10 @@ void ParseContext::AddStatement(buffers::parser::Node node) {
             stmt_type = buffers::parser::StatementType::INSERT;
             break;
 
+        case buffers::parser::NodeType::OBJECT_SQL_DELETE:
+            stmt_type = buffers::parser::StatementType::DELETE;
+            break;
+
         case buffers::parser::NodeType::OBJECT_VIS_VISUALISE:
             stmt_type = buffers::parser::StatementType::VIS_VISUALISE;
             break;

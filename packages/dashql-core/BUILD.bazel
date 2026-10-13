@@ -22,6 +22,7 @@ LIB_SRCS = [
     "src/script_session.cc",
     "src/formatter/formatter.cc",
     "src/formatter/formatter_create.cc",
+    "src/formatter/formatter_delete.cc",
     "src/formatter/formatter_explain.cc",
     "src/formatter/formatter_insert.cc",
     "src/formatter/formatter_pgq.cc",
@@ -377,6 +378,7 @@ cc_test(
     size = "small",
     srcs = [
         "test/analyzer_declaration_test.cc",
+        "test/analyzer_delete_test.cc",
         "test/analyzer_insert_test.cc",
         "test/api_test.cc",
         "test/batch_descriptor_test.cc",

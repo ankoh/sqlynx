@@ -1,15 +1,22 @@
 #include "dashql/planner.h"
 
 #include <algorithm>
+#include <cctype>
+#include <exception>
 #include <map>
 #include <set>
 #include <tuple>
+
+#include "dashql/script_compiler.h"
+#include "dashql/utils/ast_attributes.h"
 
 namespace dashql {
 
 buffers::execution::ExecutionGraphT Planner::Plan(std::span<const PlannerInput> inputs) {
     using namespace buffers::execution;
     using Type = buffers::parser::StatementType;
+    using Key = buffers::parser::AttributeKey;
+    using NodeType = buffers::parser::NodeType;
     using Mode = ExecutionGraphAccessMode;
     using Reason = ExecutionGraphEdgeReason;
     using Name = std::tuple<std::string, std::string, std::string>;
@@ -163,7 +170,14 @@ buffers::execution::ExecutionGraphT Planner::Plan(std::span<const PlannerInput> 
             node->statement_type = parsed.statements[statement_id].type;
             auto type = node->statement_type;
             node->sql = parsed.scanned_script->ReadTextAtTextSpan(descriptions[statement_id].statement_span);
-            node->produces_output = type == Type::SELECT;
+            node->produces_output = type == Type::SELECT || type == Type::EXPLAIN || type == Type::VIS_VISUALISE;
+            auto& statement = parsed.statements[statement_id];
+            auto& root = parsed.nodes[statement.root];
+            auto children = [&](const buffers::parser::Node& ast) {
+                return std::span<const buffers::parser::Node>{parsed.nodes}.subspan(ast.children_begin_or_value(),
+                                                                                  ast.children_count());
+            };
+            bool explain_executes = false;
             std::map<std::pair<uint32_t, uint32_t>, Mode> accesses;
             auto access = [&](const Name& name, const Table* table, Mode mode) {
                 auto target = table ? std::pair{intern_entity(*table), none}
@@ -178,6 +192,9 @@ buffers::execution::ExecutionGraphT Planner::Plan(std::span<const PlannerInput> 
             switch (type) {
                 case Type::SELECT:
                 case Type::INSERT:
+                case Type::DELETE:
+                case Type::EXPLAIN:
+                case Type::VIS_VISUALISE:
                 case Type::CREATE_TABLE:
                 case Type::CREATE_TABLE_AS:
                 case Type::CREATE_VIEW:
@@ -190,24 +207,97 @@ buffers::execution::ExecutionGraphT Planner::Plan(std::span<const PlannerInput> 
                     node->sql.clear();
                     break;
             }
+            if (type == Type::VIS_VISUALISE) {
+                auto [source] = LookupAttributes<Key::VIS_VISUALISE_SELECT>(children(root));
+                if (!source || source->node_type() != NodeType::OBJECT_SQL_SELECT) {
+                    barrier("VISUALIZE requires a SELECT source", true);
+                    node->sql.clear();
+                } else {
+                    node->sql = parsed.scanned_script->ReadTextAtSymbolSpan(source->symbol_span());
+                    const VisualizationSpec* visualization = nullptr;
+                    analyzed.visualization_specs.ForEach([&](size_t, const VisualizationSpec& spec) {
+                        if (!visualization && spec.ast_statement_id == statement_id) visualization = &spec;
+                    });
+                    if (!visualization) {
+                        barrier("could not resolve visualization metadata", true);
+                        node->sql.clear();
+                    } else {
+                        try {
+                            node->visualization = std::make_unique<CompiledVisualizationT>(
+                                ScriptCompiler::CompileVisualization(*visualization, analyzed).ToObject());
+                        } catch (const std::exception& error) {
+                            barrier(std::string{"visualization: "} + error.what(), true);
+                            node->sql.clear();
+                        }
+                    }
+                }
+            }
+            if (type == Type::EXPLAIN) {
+                auto [body, options] =
+                    LookupAttributes<Key::EXT_EXPLAIN_STATEMENT, Key::EXT_EXPLAIN_OPTIONS>(children(root));
+                auto option_text = [&](const buffers::parser::Node* ast) {
+                    std::string text;
+                    if (ast && ast->node_type() != NodeType::NONE) {
+                        text = parsed.scanned_script->ReadTextAtSymbolSpan(ast->symbol_span());
+                        std::transform(text.begin(), text.end(), text.begin(),
+                                       [](unsigned char c) { return std::tolower(c); });
+                        if (text.size() >= 2 && (text.front() == '\'' || text.front() == '"') &&
+                            text.back() == text.front()) text = text.substr(1, text.size() - 2);
+                    }
+                    return text;
+                };
+                if (options && options->node_type() == NodeType::ARRAY) {
+                    for (auto& option : children(*options)) {
+                        if (option.node_type() != NodeType::OBJECT_SQL_GENERIC_OPTION) continue;
+                        auto [key, value] =
+                            LookupAttributes<Key::SQL_GENERIC_OPTION_KEY, Key::SQL_GENERIC_OPTION_VALUE>(children(option));
+                        auto name = option_text(key);
+                        if (name == "analyze" || name == "analyse") {
+                            // Unknown arguments are execution-enabled, not proof of read-only behavior.
+                            explain_executes |= !value || value->node_type() != NodeType::BOOL ||
+                                                value->children_begin_or_value() != 0;
+                        } else if (name == "format" &&
+                                   (option_text(value) == "analyze" || option_text(value) == "analyse")) {
+                            explain_executes = true;
+                        }
+                    }
+                }
+                if (!body || body->node_type() == NodeType::NONE) {
+                    barrier("EXPLAIN requires a statement or expressions body", true);
+                    node->sql.clear();
+                }
+            }
             for (auto& error : analyzed.errors) {
-                auto& statement = parsed.statements[statement_id];
                 if (error.ast_node_id < statement.nodes_begin ||
                     error.ast_node_id >= statement.nodes_begin + statement.node_count) continue;
                 bool invalid = error.severity == buffers::analyzer::AnalyzerErrorSeverity::ERROR;
                 diagnose(node_id, "analyzer: " + error.message, invalid);
                 if (invalid) node->barrier = true;
             }
-            analyzed.insert_statements.ForEach([&](size_t, const InsertStatement& insert) {
-                if (insert.ast_statement_id == statement_id) node->produces_output = insert.returning;
-            });
+            if (type == Type::INSERT || type == Type::DELETE) {
+                auto [returning] = type == Type::INSERT ? LookupAttributes<Key::SQL_INSERT_RETURNING>(children(root))
+                                                        : LookupAttributes<Key::SQL_DELETE_RETURNING>(children(root));
+                node->produces_output = returning && returning->node_type() != NodeType::NONE;
+            }
             // These AST effects are not represented by ordinary relation reads.
-            auto& statement = parsed.statements[statement_id];
             for (size_t ni = statement.nodes_begin; ni < statement.nodes_begin + statement.node_count; ++ni) {
                 auto& ast = parsed.nodes[ni];
-                using Key = buffers::parser::AttributeKey;
-                using NodeType = buffers::parser::NodeType;
                 if (ast.node_type() == NodeType::NONE) continue;
+                bool mutating = ast.node_type() == NodeType::OBJECT_SQL_INSERT ||
+                                ast.node_type() == NodeType::OBJECT_SQL_DELETE ||
+                                ast.node_type() == NodeType::OBJECT_SQL_CREATE ||
+                                ast.node_type() == NodeType::OBJECT_SQL_CREATE_AS ||
+                                ast.node_type() == NodeType::OBJECT_SQL_VIEW ||
+                                ast.node_type() == NodeType::OBJECT_SQL_CREATE_FUNCTION ||
+                                ast.attribute_key() == Key::SQL_SELECT_INTO;
+                if (type == Type::EXPLAIN && explain_executes && mutating) {
+                    barrier("execution-enabled EXPLAIN with a mutating body cannot be safely classified", true);
+                    node->sql.clear();
+                }
+                if (type == Type::VIS_VISUALISE && ast.attribute_key() == Key::SQL_SELECT_INTO) {
+                    barrier("VISUALIZE SELECT INTO has unsupported mutation and session effects", true);
+                    node->sql.clear();
+                }
                 if (ast.node_type() == NodeType::ENUM_SQL_TEMP_TYPE &&
                     ast.children_begin_or_value() == static_cast<uint32_t>(buffers::parser::TempType::NONE)) continue;
                 if (ast.attribute_key() == Key::SQL_CREATE_TABLE_TEMP ||
@@ -258,7 +348,8 @@ buffers::execution::ExecutionGraphT Planner::Plan(std::span<const PlannerInput> 
                     }
                     if (!table) barrier("resolved relation declaration is incompatible or unavailable", true);
                 }
-                access(name, table, ref.role == TableReference::Role::Write ? Mode::WRITE : Mode::READ);
+                bool write = ref.role == TableReference::Role::Write && (type != Type::EXPLAIN || explain_executes);
+                access(name, table, write ? Mode::WRITE : Mode::READ);
                 if (dropped_resources.contains(name)) {
                     barrier("relation was dropped without an earlier lifetime producer; "
                             "later producer cannot be reordered", true);

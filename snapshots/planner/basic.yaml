@@ -35,7 +35,9 @@ planner-snapshots:
           name: b
       unresolved-references: []
       nodes:
-        - statement: 'first[0]'
+        - id: 0
+          script: first
+          statement-id: 0
           type: SELECT
           sql: "select * from a"
           produces-output: true
@@ -43,7 +45,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967296'
               mode: READ
-        - statement: 'first[1]'
+        - id: 1
+          script: first
+          statement-id: 1
           type: SELECT
           sql: "select * from a"
           produces-output: true
@@ -51,7 +55,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967296'
               mode: READ
-        - statement: 'first[2]'
+        - id: 2
+          script: first
+          statement-id: 2
           type: SELECT
           sql: "select * from b"
           produces-output: true
@@ -59,13 +65,17 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967297'
               mode: READ
-        - statement: 'second[0]'
+        - id: 3
+          script: second
+          statement-id: 0
           type: SELECT
           sql: "select 1"
           produces-output: true
           barrier: false
           accesses: []
-        - statement: 'second[1]'
+        - id: 4
+          script: second
+          statement-id: 1
           type: SELECT
           sql: "select * from b"
           produces-output: true
@@ -122,7 +132,9 @@ planner-snapshots:
           name: right_branch
       unresolved-references: []
       nodes:
-        - statement: 'root[0]'
+        - id: 0
+          script: root
+          statement-id: 0
           type: CREATE_TABLE_AS
           sql: "create table base as select * from source"
           produces-output: false
@@ -132,7 +144,9 @@ planner-snapshots:
               mode: READ
             - entity: '256.65536.8589934592'
               mode: DDL
-        - statement: 'left[0]'
+        - id: 1
+          script: left
+          statement-id: 0
           type: CREATE_TABLE_AS
           sql: "create table left_branch as select * from base"
           produces-output: false
@@ -142,7 +156,9 @@ planner-snapshots:
               mode: READ
             - entity: '256.65536.12884901888'
               mode: DDL
-        - statement: 'right[0]'
+        - id: 2
+          script: right
+          statement-id: 0
           type: CREATE_TABLE_AS
           sql: "create table right_branch as select * from base"
           produces-output: false
@@ -152,7 +168,9 @@ planner-snapshots:
               mode: READ
             - entity: '256.65536.17179869184'
               mode: DDL
-        - statement: 'sink[0]'
+        - id: 3
+          script: sink
+          statement-id: 0
           type: SELECT
           sql: "select * from left_branch join right_branch using (id)"
           produces-output: true
@@ -163,20 +181,20 @@ planner-snapshots:
             - entity: '256.65536.17179869184'
               mode: READ
       edges:
-        - from: 'root[0]'
-          to: 'left[0]'
+        - from: 0
+          to: 1
           reason: DDL
           entity: '256.65536.8589934592'
-        - from: 'root[0]'
-          to: 'right[0]'
+        - from: 0
+          to: 2
           reason: DDL
           entity: '256.65536.8589934592'
-        - from: 'left[0]'
-          to: 'sink[0]'
+        - from: 1
+          to: 3
           reason: DDL
           entity: '256.65536.12884901888'
-        - from: 'right[0]'
-          to: 'sink[0]'
+        - from: 2
+          to: 3
           reason: DDL
           entity: '256.65536.17179869184'
       diagnostics: []
@@ -227,7 +245,9 @@ planner-snapshots:
           name: right_branch
       unresolved-references: []
       nodes:
-        - statement: 'root[0]'
+        - id: 0
+          script: root
+          statement-id: 0
           type: CREATE_VIEW
           sql: "create view base as select * from source"
           produces-output: false
@@ -237,7 +257,9 @@ planner-snapshots:
               mode: READ
             - entity: '256.65536.8589934592'
               mode: DDL
-        - statement: 'left[0]'
+        - id: 1
+          script: left
+          statement-id: 0
           type: CREATE_VIEW
           sql: "create view left_branch as select * from base"
           produces-output: false
@@ -247,7 +269,9 @@ planner-snapshots:
               mode: READ
             - entity: '256.65536.12884901888'
               mode: DDL
-        - statement: 'right[0]'
+        - id: 2
+          script: right
+          statement-id: 0
           type: CREATE_VIEW
           sql: "create view right_branch as select * from base"
           produces-output: false
@@ -257,7 +281,9 @@ planner-snapshots:
               mode: READ
             - entity: '256.65536.17179869184'
               mode: DDL
-        - statement: 'sink[0]'
+        - id: 3
+          script: sink
+          statement-id: 0
           type: SELECT
           sql: "select * from left_branch join right_branch using (id)"
           produces-output: true
@@ -268,39 +294,39 @@ planner-snapshots:
             - entity: '256.65536.17179869184'
               mode: READ
       edges:
-        - from: 'root[0]'
-          to: 'left[0]'
+        - from: 0
+          to: 1
           reason: DDL
           entity: '256.65536.8589934592'
-        - from: 'root[0]'
-          to: 'left[0]'
+        - from: 0
+          to: 1
           reason: BARRIER
-        - from: 'root[0]'
-          to: 'right[0]'
+        - from: 0
+          to: 2
           reason: DDL
           entity: '256.65536.8589934592'
-        - from: 'left[0]'
-          to: 'right[0]'
+        - from: 1
+          to: 2
           reason: BARRIER
-        - from: 'left[0]'
-          to: 'sink[0]'
+        - from: 1
+          to: 3
           reason: DDL
           entity: '256.65536.12884901888'
-        - from: 'right[0]'
-          to: 'sink[0]'
+        - from: 2
+          to: 3
           reason: DDL
           entity: '256.65536.17179869184'
-        - from: 'right[0]'
-          to: 'sink[0]'
+        - from: 2
+          to: 3
           reason: BARRIER
       diagnostics:
-        - statement: 'left[0]'
+        - node: 1
           message: view dependencies are not expanded; conservative access barrier
-        - statement: 'right[0]'
+        - node: 2
           message: view dependencies are not expanded; conservative access barrier
-        - statement: 'sink[0]'
+        - node: 3
           message: view dependencies are not expanded; conservative access barrier
-        - statement: 'sink[0]'
+        - node: 3
           message: view dependencies are not expanded; conservative access barrier
 
   - name: MutationHazards
@@ -340,7 +366,9 @@ planner-snapshots:
           name: b
       unresolved-references: []
       nodes:
-        - statement: 'first[0]'
+        - id: 0
+          script: first
+          statement-id: 0
           type: SELECT
           sql: "select * from a"
           produces-output: true
@@ -348,7 +376,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967296'
               mode: READ
-        - statement: 'first[1]'
+        - id: 1
+          script: first
+          statement-id: 1
           type: SELECT
           sql: "select * from a"
           produces-output: true
@@ -356,7 +386,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967296'
               mode: READ
-        - statement: 'first[2]'
+        - id: 2
+          script: first
+          statement-id: 2
           type: INSERT
           sql: "insert into a values (1)"
           produces-output: false
@@ -364,7 +396,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967296'
               mode: WRITE
-        - statement: 'first[3]'
+        - id: 3
+          script: first
+          statement-id: 3
           type: INSERT
           sql: "insert into b values (9)"
           produces-output: false
@@ -372,7 +406,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967297'
               mode: WRITE
-        - statement: 'second[0]'
+        - id: 4
+          script: second
+          statement-id: 0
           type: SELECT
           sql: "select * from a"
           produces-output: true
@@ -380,7 +416,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967296'
               mode: READ
-        - statement: 'second[1]'
+        - id: 5
+          script: second
+          statement-id: 1
           type: INSERT
           sql: "insert into a values (2) returning id"
           produces-output: true
@@ -388,7 +426,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967296'
               mode: WRITE
-        - statement: 'second[2]'
+        - id: 6
+          script: second
+          statement-id: 2
           type: INSERT
           sql: "insert into a values (3)"
           produces-output: false
@@ -396,7 +436,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967296'
               mode: WRITE
-        - statement: 'second[3]'
+        - id: 7
+          script: second
+          statement-id: 3
           type: SELECT
           sql: "select * from b"
           produces-output: true
@@ -405,32 +447,32 @@ planner-snapshots:
             - entity: '256.65536.4294967297'
               mode: READ
       edges:
-        - from: 'first[0]'
-          to: 'first[2]'
+        - from: 0
+          to: 2
           reason: WRITE_AFTER_READ
           entity: '256.65536.4294967296'
-        - from: 'first[1]'
-          to: 'first[2]'
+        - from: 1
+          to: 2
           reason: WRITE_AFTER_READ
           entity: '256.65536.4294967296'
-        - from: 'first[2]'
-          to: 'second[0]'
+        - from: 2
+          to: 4
           reason: READ_AFTER_WRITE
           entity: '256.65536.4294967296'
-        - from: 'first[2]'
-          to: 'second[1]'
+        - from: 2
+          to: 5
           reason: WRITE_AFTER_WRITE
           entity: '256.65536.4294967296'
-        - from: 'first[3]'
-          to: 'second[3]'
+        - from: 3
+          to: 7
           reason: READ_AFTER_WRITE
           entity: '256.65536.4294967297'
-        - from: 'second[0]'
-          to: 'second[1]'
+        - from: 4
+          to: 5
           reason: WRITE_AFTER_READ
           entity: '256.65536.4294967296'
-        - from: 'second[1]'
-          to: 'second[2]'
+        - from: 5
+          to: 6
           reason: WRITE_AFTER_WRITE
           entity: '256.65536.4294967296'
       diagnostics: []
@@ -467,7 +509,9 @@ planner-snapshots:
           name: c
       unresolved-references: []
       nodes:
-        - statement: 'mutations[0]'
+        - id: 0
+          script: mutations
+          statement-id: 0
           type: SELECT
           sql: "select * from a"
           produces-output: true
@@ -475,7 +519,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967296'
               mode: READ
-        - statement: 'mutations[1]'
+        - id: 1
+          script: mutations
+          statement-id: 1
           type: INSERT
           sql: "insert into a select * from a returning id"
           produces-output: true
@@ -483,7 +529,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967296'
               mode: WRITE
-        - statement: 'mutations[2]'
+        - id: 2
+          script: mutations
+          statement-id: 2
           type: INSERT
           sql: "insert into c select a.id from a join b using (id)"
           produces-output: false
@@ -495,7 +543,9 @@ planner-snapshots:
               mode: READ
             - entity: '256.65536.4294967298'
               mode: WRITE
-        - statement: 'mutations[3]'
+        - id: 3
+          script: mutations
+          statement-id: 3
           type: INSERT
           sql: "insert into b values (2)"
           produces-output: false
@@ -503,7 +553,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967297'
               mode: WRITE
-        - statement: 'mutations[4]'
+        - id: 4
+          script: mutations
+          statement-id: 4
           type: SELECT
           sql: "select * from c"
           produces-output: true
@@ -512,20 +564,20 @@ planner-snapshots:
             - entity: '256.65536.4294967298'
               mode: READ
       edges:
-        - from: 'mutations[0]'
-          to: 'mutations[1]'
+        - from: 0
+          to: 1
           reason: WRITE_AFTER_READ
           entity: '256.65536.4294967296'
-        - from: 'mutations[1]'
-          to: 'mutations[2]'
+        - from: 1
+          to: 2
           reason: READ_AFTER_WRITE
           entity: '256.65536.4294967296'
-        - from: 'mutations[2]'
-          to: 'mutations[3]'
+        - from: 2
+          to: 3
           reason: WRITE_AFTER_READ
           entity: '256.65536.4294967297'
-        - from: 'mutations[2]'
-          to: 'mutations[4]'
+        - from: 2
+          to: 4
           reason: READ_AFTER_WRITE
           entity: '256.65536.4294967298'
       diagnostics: []
@@ -550,7 +602,9 @@ planner-snapshots:
           name: '"source"'
       unresolved-references: []
       nodes:
-        - statement: 'queries[0]'
+        - id: 0
+          script: queries
+          statement-id: 0
           type: SELECT
           sql: "with c as (select * from source), d as (select * from c) select * from d"
           produces-output: true
@@ -558,7 +612,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967296'
               mode: READ
-        - statement: 'queries[1]'
+        - id: 1
+          script: queries
+          statement-id: 1
           type: INSERT
           sql: "insert into source select * from source"
           produces-output: false
@@ -567,8 +623,8 @@ planner-snapshots:
             - entity: '256.65536.4294967296'
               mode: WRITE
       edges:
-        - from: 'queries[0]'
-          to: 'queries[1]'
+        - from: 0
+          to: 1
           reason: WRITE_AFTER_READ
           entity: '256.65536.4294967296'
       diagnostics: []
@@ -603,7 +659,9 @@ planner-snapshots:
           name: db.s.a
       unresolved-references: []
       nodes:
-        - statement: 'producer[0]'
+        - id: 0
+          script: producer
+          statement-id: 0
           type: CREATE_TABLE
           sql: "create table db.s.a (id int)"
           produces-output: false
@@ -611,7 +669,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967296'
               mode: DDL
-        - statement: 'lifetime[0]'
+        - id: 1
+          script: lifetime
+          statement-id: 0
           type: SELECT
           sql: "select * from a"
           produces-output: true
@@ -619,7 +679,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967296'
               mode: READ
-        - statement: 'lifetime[1]'
+        - id: 2
+          script: lifetime
+          statement-id: 1
           type: DROP_TABLE
           sql: "drop table a"
           produces-output: false
@@ -627,7 +689,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967296'
               mode: DDL
-        - statement: 'lifetime[2]'
+        - id: 3
+          script: lifetime
+          statement-id: 2
           type: CREATE_TABLE
           sql: "create table db.s.a (id int)"
           produces-output: false
@@ -635,7 +699,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.8589934592'
               mode: DDL
-        - statement: 'lifetime[3]'
+        - id: 4
+          script: lifetime
+          statement-id: 3
           type: SELECT
           sql: "select * from a"
           produces-output: true
@@ -644,24 +710,24 @@ planner-snapshots:
             - entity: '256.65536.8589934592'
               mode: READ
       edges:
-        - from: 'producer[0]'
-          to: 'lifetime[0]'
+        - from: 0
+          to: 1
           reason: DDL
           entity: '256.65536.4294967296'
-        - from: 'producer[0]'
-          to: 'lifetime[1]'
+        - from: 0
+          to: 2
           reason: DDL
           entity: '256.65536.4294967296'
-        - from: 'lifetime[0]'
-          to: 'lifetime[1]'
+        - from: 1
+          to: 2
           reason: DDL
           entity: '256.65536.4294967296'
-        - from: 'lifetime[1]'
-          to: 'lifetime[2]'
+        - from: 2
+          to: 3
           reason: DDL
           entity: '256.65536.8589934592'
-        - from: 'lifetime[2]'
-          to: 'lifetime[3]'
+        - from: 3
+          to: 4
           reason: DDL
           entity: '256.65536.8589934592'
       diagnostics: []
@@ -691,7 +757,9 @@ planner-snapshots:
           name: a
       unresolved-references: []
       nodes:
-        - statement: 'lifetime[0]'
+        - id: 0
+          script: lifetime
+          statement-id: 0
           type: CREATE_TABLE
           sql: "create table a (id int)"
           produces-output: false
@@ -699,7 +767,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967296'
               mode: DDL
-        - statement: 'lifetime[1]'
+        - id: 1
+          script: lifetime
+          statement-id: 1
           type: SELECT
           sql: "select * from a"
           produces-output: true
@@ -707,7 +777,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967296'
               mode: READ
-        - statement: 'lifetime[2]'
+        - id: 2
+          script: lifetime
+          statement-id: 2
           type: DROP_TABLE
           sql: "drop table a"
           produces-output: false
@@ -715,7 +787,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967296'
               mode: DDL
-        - statement: 'lifetime[3]'
+        - id: 3
+          script: lifetime
+          statement-id: 3
           type: CREATE_TABLE
           sql: "create table a (id int)"
           produces-output: false
@@ -723,7 +797,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967297'
               mode: DDL
-        - statement: 'lifetime[4]'
+        - id: 4
+          script: lifetime
+          statement-id: 4
           type: SELECT
           sql: "select * from a"
           produces-output: true
@@ -732,24 +808,24 @@ planner-snapshots:
             - entity: '256.65536.4294967297'
               mode: READ
       edges:
-        - from: 'lifetime[0]'
-          to: 'lifetime[1]'
+        - from: 0
+          to: 1
           reason: DDL
           entity: '256.65536.4294967296'
-        - from: 'lifetime[0]'
-          to: 'lifetime[2]'
+        - from: 0
+          to: 2
           reason: DDL
           entity: '256.65536.4294967296'
-        - from: 'lifetime[1]'
-          to: 'lifetime[2]'
+        - from: 1
+          to: 2
           reason: DDL
           entity: '256.65536.4294967296'
-        - from: 'lifetime[2]'
-          to: 'lifetime[3]'
+        - from: 2
+          to: 3
           reason: DDL
           entity: '256.65536.4294967297'
-        - from: 'lifetime[3]'
-          to: 'lifetime[4]'
+        - from: 3
+          to: 4
           reason: DDL
           entity: '256.65536.4294967297'
       diagnostics: []
@@ -779,7 +855,9 @@ planner-snapshots:
           name: db.s.a
       unresolved-references: []
       nodes:
-        - statement: 'lifetime[0]'
+        - id: 0
+          script: lifetime
+          statement-id: 0
           type: SELECT
           sql: "select * from a"
           produces-output: true
@@ -787,7 +865,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967296'
               mode: READ
-        - statement: 'lifetime[1]'
+        - id: 1
+          script: lifetime
+          statement-id: 1
           type: DROP_TABLE
           sql: "drop table a"
           produces-output: false
@@ -795,7 +875,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967296'
               mode: DDL
-        - statement: 'lifetime[2]'
+        - id: 2
+          script: lifetime
+          statement-id: 2
           type: CREATE_TABLE
           sql: "create table db.s.a (id int)"
           produces-output: false
@@ -803,7 +885,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.8589934592'
               mode: DDL
-        - statement: 'lifetime[3]'
+        - id: 3
+          script: lifetime
+          statement-id: 3
           type: SELECT
           sql: "select * from a"
           produces-output: true
@@ -812,16 +896,16 @@ planner-snapshots:
             - entity: '256.65536.8589934592'
               mode: READ
       edges:
-        - from: 'lifetime[0]'
-          to: 'lifetime[1]'
+        - from: 0
+          to: 1
           reason: DDL
           entity: '256.65536.4294967296'
-        - from: 'lifetime[1]'
-          to: 'lifetime[2]'
+        - from: 1
+          to: 2
           reason: DDL
           entity: '256.65536.8589934592'
-        - from: 'lifetime[2]'
-          to: 'lifetime[3]'
+        - from: 2
+          to: 3
           reason: DDL
           entity: '256.65536.8589934592'
       diagnostics: []
@@ -845,7 +929,9 @@ planner-snapshots:
           name: later
       unresolved-references: []
       nodes:
-        - statement: 'forward[0]'
+        - id: 0
+          script: forward
+          statement-id: 0
           type: SELECT
           sql: "select * from later"
           produces-output: true
@@ -853,7 +939,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967296'
               mode: READ
-        - statement: 'forward[1]'
+        - id: 1
+          script: forward
+          statement-id: 1
           type: CREATE_TABLE
           sql: "create table later (id int)"
           produces-output: false
@@ -862,15 +950,15 @@ planner-snapshots:
             - entity: '256.65536.4294967296'
               mode: DDL
       edges:
-        - from: 'forward[0]'
-          to: 'forward[1]'
+        - from: 0
+          to: 1
           reason: DDL
           entity: '256.65536.4294967296'
-        - from: 'forward[0]'
-          to: 'forward[1]'
+        - from: 0
+          to: 1
           reason: BARRIER
       diagnostics:
-        - statement: 'forward[0]'
+        - node: 0
           message: relation resolves to a later producer in input order
 
   - name: ProducerThenConsumer
@@ -896,7 +984,9 @@ planner-snapshots:
           name: relation
       unresolved-references: []
       nodes:
-        - statement: 'producer[0]'
+        - id: 0
+          script: producer
+          statement-id: 0
           type: CREATE_TABLE
           sql: "create table relation (id int)"
           produces-output: false
@@ -904,7 +994,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967296'
               mode: DDL
-        - statement: 'consumer[0]'
+        - id: 1
+          script: consumer
+          statement-id: 0
           type: SELECT
           sql: "select * from relation"
           produces-output: true
@@ -913,8 +1005,8 @@ planner-snapshots:
             - entity: '256.65536.4294967296'
               mode: READ
       edges:
-        - from: 'producer[0]'
-          to: 'consumer[0]'
+        - from: 0
+          to: 1
           reason: DDL
           entity: '256.65536.4294967296'
       diagnostics: []
@@ -942,7 +1034,9 @@ planner-snapshots:
           name: relation
       unresolved-references: []
       nodes:
-        - statement: 'consumer[0]'
+        - id: 0
+          script: consumer
+          statement-id: 0
           type: SELECT
           sql: "select * from relation"
           produces-output: true
@@ -950,7 +1044,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.8589934592'
               mode: READ
-        - statement: 'producer[0]'
+        - id: 1
+          script: producer
+          statement-id: 0
           type: CREATE_TABLE
           sql: "create table relation (id int)"
           produces-output: false
@@ -959,15 +1055,15 @@ planner-snapshots:
             - entity: '256.65536.8589934592'
               mode: DDL
       edges:
-        - from: 'consumer[0]'
-          to: 'producer[0]'
+        - from: 0
+          to: 1
           reason: DDL
           entity: '256.65536.8589934592'
-        - from: 'consumer[0]'
-          to: 'producer[0]'
+        - from: 0
+          to: 1
           reason: BARRIER
       diagnostics:
-        - statement: 'consumer[0]'
+        - node: 0
           message: relation resolves to a later producer in input order
 
   - name: UnresolvedBarrier
@@ -989,13 +1085,17 @@ planner-snapshots:
       unresolved-references:
         - name: missing
       nodes:
-        - statement: 'queries[0]'
+        - id: 0
+          script: queries
+          statement-id: 0
           type: SELECT
           sql: "select 1"
           produces-output: true
           barrier: false
           accesses: []
-        - statement: 'queries[1]'
+        - id: 1
+          script: queries
+          statement-id: 1
           type: SELECT
           sql: "select * from missing"
           produces-output: true
@@ -1003,30 +1103,34 @@ planner-snapshots:
           accesses:
             - unresolved-reference: 0
               mode: READ
-        - statement: 'queries[2]'
+        - id: 2
+          script: queries
+          statement-id: 2
           type: SELECT
           sql: "select 2"
           produces-output: true
           barrier: false
           accesses: []
-        - statement: 'queries[3]'
+        - id: 3
+          script: queries
+          statement-id: 3
           type: SELECT
           sql: "select 3"
           produces-output: true
           barrier: false
           accesses: []
       edges:
-        - from: 'queries[0]'
-          to: 'queries[1]'
+        - from: 0
+          to: 1
           reason: BARRIER
-        - from: 'queries[1]'
-          to: 'queries[2]'
+        - from: 1
+          to: 2
           reason: BARRIER
-        - from: 'queries[1]'
-          to: 'queries[3]'
+        - from: 1
+          to: 3
           reason: BARRIER
       diagnostics:
-        - statement: 'queries[1]'
+        - node: 1
           message: 'unresolved relation: missing'
 
   - name: UnsupportedSet
@@ -1046,33 +1150,39 @@ planner-snapshots:
       entities: []
       unresolved-references: []
       nodes:
-        - statement: 'session[0]'
+        - id: 0
+          script: session
+          statement-id: 0
           type: SELECT
           sql: "select 1"
           produces-output: true
           barrier: false
           accesses: []
-        - statement: 'session[1]'
+        - id: 1
+          script: session
+          statement-id: 1
           type: SET
           sql: ""
           produces-output: false
           barrier: true
           accesses: []
-        - statement: 'session[2]'
+        - id: 2
+          script: session
+          statement-id: 2
           type: SELECT
           sql: "select 2"
           produces-output: true
           barrier: false
           accesses: []
       edges:
-        - from: 'session[0]'
-          to: 'session[1]'
+        - from: 0
+          to: 1
           reason: BARRIER
-        - from: 'session[1]'
-          to: 'session[2]'
+        - from: 1
+          to: 2
           reason: BARRIER
       diagnostics:
-        - statement: 'session[1]'
+        - node: 1
           message: unsupported statement effects; backend session semantics are not guaranteed
 
   - name: UnresolvedDrop
@@ -1094,7 +1204,9 @@ planner-snapshots:
         - name: db.s.missing
         - name: missing
       nodes:
-        - statement: 'queries[0]'
+        - id: 0
+          script: queries
+          statement-id: 0
           type: SELECT
           sql: "select * from db.s.missing"
           produces-output: true
@@ -1102,7 +1214,9 @@ planner-snapshots:
           accesses:
             - unresolved-reference: 0
               mode: READ
-        - statement: 'queries[1]'
+        - id: 1
+          script: queries
+          statement-id: 1
           type: DROP_TABLE
           sql: "drop table missing"
           produces-output: false
@@ -1110,49 +1224,632 @@ planner-snapshots:
           accesses:
             - unresolved-reference: 1
               mode: DDL
-        - statement: 'queries[2]'
+        - id: 2
+          script: queries
+          statement-id: 2
           type: SELECT
           sql: "select 1"
           produces-output: true
           barrier: false
           accesses: []
       edges:
-        - from: 'queries[0]'
-          to: 'queries[1]'
+        - from: 0
+          to: 1
           reason: BARRIER
-        - from: 'queries[1]'
-          to: 'queries[2]'
+        - from: 1
+          to: 2
           reason: BARRIER
       diagnostics:
-        - statement: 'queries[0]'
+        - node: 0
           message: 'unresolved relation: db.s.missing'
-        - statement: 'queries[1]'
+        - node: 1
           message: unresolved DROP target; conservative access barrier
 
-  - name: UnsupportedExplain
+  - name: ExplainOutputs
+    catalog: |
+      create table a (id int);
+      create table b (id int);
     scripts:
       - name: explain
-        input: explain select 1;
+        input: |
+          explain select 1;
+          explain select * from a;
+          explain insert into a select * from b;
+          explain delete from a returning id;
+          explain expressions (1 + 2);
+          insert into a values (1);
+          explain insert into a values (2);
+    expected:
+      valid: true
+      scripts:
+        - name: explain
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+      entities:
+        - catalog-id: '256.65536.4294967296'
+          type: TABLE
+          name: a
+        - catalog-id: '256.65536.4294967297'
+          type: TABLE
+          name: b
+      unresolved-references: []
+      nodes:
+        - id: 0
+          script: explain
+          statement-id: 0
+          type: EXPLAIN
+          sql: "explain select 1"
+          produces-output: true
+          barrier: false
+          accesses: []
+        - id: 1
+          script: explain
+          statement-id: 1
+          type: EXPLAIN
+          sql: "explain select * from a"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+        - id: 2
+          script: explain
+          statement-id: 2
+          type: EXPLAIN
+          sql: "explain insert into a select * from b"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+            - entity: '256.65536.4294967297'
+              mode: READ
+        - id: 3
+          script: explain
+          statement-id: 3
+          type: EXPLAIN
+          sql: "explain delete from a returning id"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+        - id: 4
+          script: explain
+          statement-id: 4
+          type: EXPLAIN
+          sql: "explain expressions (1 + 2)"
+          produces-output: true
+          barrier: false
+          accesses: []
+        - id: 5
+          script: explain
+          statement-id: 5
+          type: INSERT
+          sql: "insert into a values (1)"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: WRITE
+        - id: 6
+          script: explain
+          statement-id: 6
+          type: EXPLAIN
+          sql: "explain insert into a values (2)"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+      edges:
+        - from: 1
+          to: 5
+          reason: WRITE_AFTER_READ
+          entity: '256.65536.4294967296'
+        - from: 2
+          to: 5
+          reason: WRITE_AFTER_READ
+          entity: '256.65536.4294967296'
+        - from: 3
+          to: 5
+          reason: WRITE_AFTER_READ
+          entity: '256.65536.4294967296'
+        - from: 5
+          to: 6
+          reason: READ_AFTER_WRITE
+          entity: '256.65536.4294967296'
+      diagnostics: []
+
+  - name: ExplainDeclarationsAreNotProducers
+    catalog: create table source (id int);
+    scripts:
+      - name: explain
+        input: |
+          explain create table plain (id int);
+          explain create table copied as select * from source;
+          explain create view v as select * from source;
+          explain select * into destination from source;
+      - name: consumer
+        input: select * from copied;
+    expected:
+      valid: true
+      scripts:
+        - name: explain
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+        - name: consumer
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+      entities:
+        - catalog-id: '256.65536.4294967296'
+          type: TABLE
+          name: '"source"'
+      unresolved-references:
+        - name: copied
+      nodes:
+        - id: 0
+          script: explain
+          statement-id: 0
+          type: EXPLAIN
+          sql: "explain create table plain (id int)"
+          produces-output: true
+          barrier: false
+          accesses: []
+        - id: 1
+          script: explain
+          statement-id: 1
+          type: EXPLAIN
+          sql: "explain create table copied as select * from source"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+        - id: 2
+          script: explain
+          statement-id: 2
+          type: EXPLAIN
+          sql: "explain create view v as select * from source"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+        - id: 3
+          script: explain
+          statement-id: 3
+          type: EXPLAIN
+          sql: "explain select * into destination from source"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+        - id: 4
+          script: consumer
+          statement-id: 0
+          type: SELECT
+          sql: "select * from copied"
+          produces-output: true
+          barrier: true
+          accesses:
+            - unresolved-reference: 0
+              mode: READ
+      edges:
+        - from: 0
+          to: 4
+          reason: BARRIER
+        - from: 1
+          to: 4
+          reason: BARRIER
+        - from: 2
+          to: 4
+          reason: BARRIER
+        - from: 3
+          to: 4
+          reason: BARRIER
+      diagnostics:
+        - node: 4
+          message: 'unresolved relation: copied'
+
+  - name: ExecutionEnabledExplainMutation
+    catalog: create table a (id int);
+    scripts:
+      - name: explain
+        input: |
+          explain (analyze) insert into a values (1);
+          explain (analyse true) delete from a returning id;
+          explain (format 'analyze') insert into a values (2);
+          explain (analyze) create table copied as select * from a;
     expected:
       valid: false
       scripts:
         - name: explain
           text-version: 1
           analyzed-text-version: 1
-          analyzed-catalog-revision: 1
-      entities: []
+          analyzed-catalog-revision: 2
+      entities:
+        - catalog-id: '256.65536.4294967296'
+          type: TABLE
+          name: a
       unresolved-references: []
       nodes:
-        - statement: 'explain[0]'
+        - id: 0
+          script: explain
+          statement-id: 0
           type: EXPLAIN
           sql: ""
-          produces-output: false
+          produces-output: true
           barrier: true
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: WRITE
+        - id: 1
+          script: explain
+          statement-id: 1
+          type: EXPLAIN
+          sql: ""
+          produces-output: true
+          barrier: true
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: WRITE
+        - id: 2
+          script: explain
+          statement-id: 2
+          type: EXPLAIN
+          sql: ""
+          produces-output: true
+          barrier: true
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: WRITE
+        - id: 3
+          script: explain
+          statement-id: 3
+          type: EXPLAIN
+          sql: ""
+          produces-output: true
+          barrier: true
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+      edges:
+        - from: 0
+          to: 1
+          reason: WRITE_AFTER_WRITE
+          entity: '256.65536.4294967296'
+        - from: 0
+          to: 1
+          reason: BARRIER
+        - from: 1
+          to: 2
+          reason: WRITE_AFTER_WRITE
+          entity: '256.65536.4294967296'
+        - from: 1
+          to: 2
+          reason: BARRIER
+        - from: 2
+          to: 3
+          reason: READ_AFTER_WRITE
+          entity: '256.65536.4294967296'
+        - from: 2
+          to: 3
+          reason: BARRIER
+      diagnostics:
+        - node: 0
+          message: execution-enabled EXPLAIN with a mutating body cannot be safely classified
+        - node: 1
+          message: execution-enabled EXPLAIN with a mutating body cannot be safely classified
+        - node: 2
+          message: execution-enabled EXPLAIN with a mutating body cannot be safely classified
+        - node: 3
+          message: execution-enabled EXPLAIN with a mutating body cannot be safely classified
+
+  - name: ExplainAnalyzeQueriesAndDisabledMutation
+    catalog: create table a (id int);
+    scripts:
+      - name: explain
+        input: |
+          explain (analyze) select * from a;
+          explain (analyse true) expressions (1 + 2);
+          explain (analyze false) insert into a values (1);
+          explain (analyse false) delete from a;
+    expected:
+      valid: true
+      scripts:
+        - name: explain
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+      entities:
+        - catalog-id: '256.65536.4294967296'
+          type: TABLE
+          name: a
+      unresolved-references: []
+      nodes:
+        - id: 0
+          script: explain
+          statement-id: 0
+          type: EXPLAIN
+          sql: "explain (analyze) select * from a"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+        - id: 1
+          script: explain
+          statement-id: 1
+          type: EXPLAIN
+          sql: "explain (analyse true) expressions (1 + 2)"
+          produces-output: true
+          barrier: false
           accesses: []
+        - id: 2
+          script: explain
+          statement-id: 2
+          type: EXPLAIN
+          sql: "explain (analyze false) insert into a values (1)"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+        - id: 3
+          script: explain
+          statement-id: 3
+          type: EXPLAIN
+          sql: "explain (analyse false) delete from a"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+      edges: []
+      diagnostics: []
+
+  - name: VisualizationSourceOutputs
+    catalog: create table a (id int);
+    scripts:
+      - name: queries
+        input: |
+          -- Description is not part of the source query.
+          select 1 as id visualize using table ();
+          with c as (select * from a) select * from c visualize using table ();
+          insert into a values (1) returning id;
+          select * from a visualize using table ();
+          explain select * from a;
+    expected:
+      valid: true
+      scripts:
+        - name: queries
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+      entities:
+        - catalog-id: '256.65536.4294967296'
+          type: TABLE
+          name: a
+      unresolved-references: []
+      nodes:
+        - id: 0
+          script: queries
+          statement-id: 0
+          type: VIS_VISUALISE
+          sql: "select 1 as id"
+          produces-output: true
+          barrier: false
+          accesses: []
+        - id: 1
+          script: queries
+          statement-id: 1
+          type: VIS_VISUALISE
+          sql: "with c as (select * from a) select * from c"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+        - id: 2
+          script: queries
+          statement-id: 2
+          type: INSERT
+          sql: "insert into a values (1) returning id"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: WRITE
+        - id: 3
+          script: queries
+          statement-id: 3
+          type: VIS_VISUALISE
+          sql: "select * from a"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+        - id: 4
+          script: queries
+          statement-id: 4
+          type: EXPLAIN
+          sql: "explain select * from a"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+      edges:
+        - from: 1
+          to: 2
+          reason: WRITE_AFTER_READ
+          entity: '256.65536.4294967296'
+        - from: 2
+          to: 3
+          reason: READ_AFTER_WRITE
+          entity: '256.65536.4294967296'
+        - from: 2
+          to: 4
+          reason: READ_AFTER_WRITE
+          entity: '256.65536.4294967296'
+      diagnostics: []
+
+  - name: UnsupportedVisualizationSelectInto
+    catalog: create table a (id int);
+    scripts:
+      - name: mutation
+        input: select * into destination from a visualize using table ();
+    expected:
+      valid: false
+      scripts:
+        - name: mutation
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 3
+      entities:
+        - catalog-id: '256.65536.4294967296'
+          type: TABLE
+          name: a
+      unresolved-references: []
+      nodes:
+        - id: 0
+          script: mutation
+          statement-id: 0
+          type: VIS_VISUALISE
+          sql: ""
+          produces-output: true
+          barrier: true
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
       edges: []
       diagnostics:
-        - statement: 'explain[0]'
-          message: unsupported statement effects; backend session semantics are not guaranteed
+        - node: 0
+          message: VISUALIZE SELECT INTO has unsupported mutation and session effects
+
+  - name: DeleteHazardsAndReturning
+    catalog: |
+      create table a (id int);
+      create table b (id int);
+    scripts:
+      - name: mutations
+        input: |
+          select * from a;
+          delete from a where id in (select id from b) returning id;
+          select * from a;
+          insert into b values (1);
+          delete from a;
+          insert into a values (2) returning id;
+    expected:
+      valid: true
+      scripts:
+        - name: mutations
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+      entities:
+        - catalog-id: '256.65536.4294967296'
+          type: TABLE
+          name: a
+        - catalog-id: '256.65536.4294967297'
+          type: TABLE
+          name: b
+      unresolved-references: []
+      nodes:
+        - id: 0
+          script: mutations
+          statement-id: 0
+          type: SELECT
+          sql: "select * from a"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+        - id: 1
+          script: mutations
+          statement-id: 1
+          type: DELETE
+          sql: "delete from a where id in (select id from b) returning id"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: WRITE
+            - entity: '256.65536.4294967297'
+              mode: READ
+        - id: 2
+          script: mutations
+          statement-id: 2
+          type: SELECT
+          sql: "select * from a"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+        - id: 3
+          script: mutations
+          statement-id: 3
+          type: INSERT
+          sql: "insert into b values (1)"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967297'
+              mode: WRITE
+        - id: 4
+          script: mutations
+          statement-id: 4
+          type: DELETE
+          sql: "delete from a"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: WRITE
+        - id: 5
+          script: mutations
+          statement-id: 5
+          type: INSERT
+          sql: "insert into a values (2) returning id"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: WRITE
+      edges:
+        - from: 0
+          to: 1
+          reason: WRITE_AFTER_READ
+          entity: '256.65536.4294967296'
+        - from: 1
+          to: 2
+          reason: READ_AFTER_WRITE
+          entity: '256.65536.4294967296'
+        - from: 1
+          to: 3
+          reason: WRITE_AFTER_READ
+          entity: '256.65536.4294967297'
+        - from: 1
+          to: 4
+          reason: WRITE_AFTER_WRITE
+          entity: '256.65536.4294967296'
+        - from: 2
+          to: 4
+          reason: WRITE_AFTER_READ
+          entity: '256.65536.4294967296'
+        - from: 4
+          to: 5
+          reason: WRITE_AFTER_WRITE
+          entity: '256.65536.4294967296'
+      diagnostics: []
 
   - name: UnsupportedTemporaryTable
     scripts:
@@ -1171,7 +1868,9 @@ planner-snapshots:
           name: t
       unresolved-references: []
       nodes:
-        - statement: 'session[0]'
+        - id: 0
+          script: session
+          statement-id: 0
           type: CREATE_TABLE
           sql: "create temp table t (id int)"
           produces-output: false
@@ -1181,7 +1880,7 @@ planner-snapshots:
               mode: DDL
       edges: []
       diagnostics:
-        - statement: 'session[0]'
+        - node: 0
           message: 'unsupported session, locking, constraint, or graph effects'
 
   - name: MalformedParser
@@ -1274,7 +1973,9 @@ planner-snapshots:
           name: '"Mixed"'
       unresolved-references: []
       nodes:
-        - statement: 'queries[0]'
+        - id: 0
+          script: queries
+          statement-id: 0
           type: SELECT
           sql: "select * from DB.s.MIXED"
           produces-output: true
@@ -1282,7 +1983,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967296'
               mode: READ
-        - statement: 'queries[1]'
+        - id: 1
+          script: queries
+          statement-id: 1
           type: INSERT
           sql: "insert into db.S.mixed values (1)"
           produces-output: false
@@ -1290,7 +1993,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967296'
               mode: WRITE
-        - statement: 'queries[2]'
+        - id: 2
+          script: queries
+          statement-id: 2
           type: SELECT
           sql: "select * from \"Mixed\""
           produces-output: true
@@ -1299,8 +2004,8 @@ planner-snapshots:
             - entity: '257.65537.4294967297'
               mode: READ
       edges:
-        - from: 'queries[0]'
-          to: 'queries[1]'
+        - from: 0
+          to: 1
           reason: WRITE_AFTER_READ
           entity: '256.65536.4294967296'
       diagnostics: []
@@ -1332,7 +2037,9 @@ planner-snapshots:
           name: copied
       unresolved-references: []
       nodes:
-        - statement: 'producer[0]'
+        - id: 0
+          script: producer
+          statement-id: 0
           type: SELECT_INTO
           sql: "select * into copied from source"
           produces-output: false
@@ -1342,7 +2049,9 @@ planner-snapshots:
               mode: READ
             - entity: '256.65536.8589934592'
               mode: DDL
-        - statement: 'consumer[0]'
+        - id: 1
+          script: consumer
+          statement-id: 0
           type: SELECT
           sql: "select * from copied"
           produces-output: true
@@ -1351,8 +2060,8 @@ planner-snapshots:
             - entity: '256.65536.8589934592'
               mode: READ
       edges:
-        - from: 'producer[0]'
-          to: 'consumer[0]'
+        - from: 0
+          to: 1
           reason: DDL
           entity: '256.65536.8589934592'
       diagnostics: []
@@ -1385,7 +2094,9 @@ planner-snapshots:
       unresolved-references:
         - name: '"missing.db"."missing""schema"."Missing.Name"'
       nodes:
-        - statement: 'queries[0]'
+        - id: 0
+          script: queries
+          statement-id: 0
           type: SELECT
           sql: "select * from \"Db.Dot\".\"s\"\"quote\".\"Mixed.Name\""
           produces-output: true
@@ -1393,7 +2104,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967296'
               mode: READ
-        - statement: 'queries[1]'
+        - id: 1
+          script: queries
+          statement-id: 1
           type: INSERT
           sql: "insert into \"Db.Dot\".\"s\"\"quote\".\"Mixed.Name\" values (1)"
           produces-output: false
@@ -1401,7 +2114,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967296'
               mode: WRITE
-        - statement: 'queries[2]'
+        - id: 2
+          script: queries
+          statement-id: 2
           type: SELECT
           sql: "select * from \"select\""
           produces-output: true
@@ -1409,7 +2124,9 @@ planner-snapshots:
           accesses:
             - entity: '257.65537.4294967297'
               mode: READ
-        - statement: 'queries[3]'
+        - id: 3
+          script: queries
+          statement-id: 3
           type: SELECT
           sql: "select * from \"missing.db\".\"missing\"\"schema\".\"Missing.Name\""
           produces-output: true
@@ -1418,21 +2135,21 @@ planner-snapshots:
             - unresolved-reference: 0
               mode: READ
       edges:
-        - from: 'queries[0]'
-          to: 'queries[1]'
+        - from: 0
+          to: 1
           reason: WRITE_AFTER_READ
           entity: '256.65536.4294967296'
-        - from: 'queries[0]'
-          to: 'queries[3]'
+        - from: 0
+          to: 3
           reason: BARRIER
-        - from: 'queries[1]'
-          to: 'queries[3]'
+        - from: 1
+          to: 3
           reason: BARRIER
-        - from: 'queries[2]'
-          to: 'queries[3]'
+        - from: 2
+          to: 3
           reason: BARRIER
       diagnostics:
-        - statement: 'queries[3]'
+        - node: 3
           message: 'unresolved relation: missing.db.missing"schema.Missing.Name'
 
   - name: PublishedViewBarrier
@@ -1456,13 +2173,17 @@ planner-snapshots:
           name: v
       unresolved-references: []
       nodes:
-        - statement: 'queries[0]'
+        - id: 0
+          script: queries
+          statement-id: 0
           type: SELECT
           sql: "select 1"
           produces-output: true
           barrier: false
           accesses: []
-        - statement: 'queries[1]'
+        - id: 1
+          script: queries
+          statement-id: 1
           type: SELECT
           sql: "select * from v"
           produces-output: true
@@ -1470,21 +2191,23 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967296'
               mode: READ
-        - statement: 'queries[2]'
+        - id: 2
+          script: queries
+          statement-id: 2
           type: SELECT
           sql: "select 2"
           produces-output: true
           barrier: false
           accesses: []
       edges:
-        - from: 'queries[0]'
-          to: 'queries[1]'
+        - from: 0
+          to: 1
           reason: BARRIER
-        - from: 'queries[1]'
-          to: 'queries[2]'
+        - from: 1
+          to: 2
           reason: BARRIER
       diagnostics:
-        - statement: 'queries[1]'
+        - node: 1
           message: view dependencies are not expanded; conservative access barrier
 
   - name: EmptyScript
@@ -1535,7 +2258,9 @@ planner-snapshots:
           name: base
       unresolved-references: []
       nodes:
-        - statement: 'writer[0]'
+        - id: 0
+          script: writer
+          statement-id: 0
           type: INSERT
           sql: "insert into v values (1)"
           produces-output: false
@@ -1543,7 +2268,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967297'
               mode: WRITE
-        - statement: 'reader[0]'
+        - id: 1
+          script: reader
+          statement-id: 0
           type: SELECT
           sql: "select * from base"
           produces-output: true
@@ -1552,11 +2279,11 @@ planner-snapshots:
             - entity: '256.65536.4294967296'
               mode: READ
       edges:
-        - from: 'writer[0]'
-          to: 'reader[0]'
+        - from: 0
+          to: 1
           reason: BARRIER
       diagnostics:
-        - statement: 'writer[0]'
+        - node: 0
           message: view dependencies are not expanded; conservative access barrier
 
   - name: ViewWriteBaseWrite
@@ -1588,7 +2315,9 @@ planner-snapshots:
           name: base
       unresolved-references: []
       nodes:
-        - statement: 'view_writer[0]'
+        - id: 0
+          script: view_writer
+          statement-id: 0
           type: INSERT
           sql: "insert into v values (1)"
           produces-output: false
@@ -1596,7 +2325,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967297'
               mode: WRITE
-        - statement: 'base_writer[0]'
+        - id: 1
+          script: base_writer
+          statement-id: 0
           type: INSERT
           sql: "insert into base values (2)"
           produces-output: false
@@ -1605,11 +2336,11 @@ planner-snapshots:
             - entity: '256.65536.4294967296'
               mode: WRITE
       edges:
-        - from: 'view_writer[0]'
-          to: 'base_writer[0]'
+        - from: 0
+          to: 1
           reason: BARRIER
       diagnostics:
-        - statement: 'view_writer[0]'
+        - node: 0
           message: view dependencies are not expanded; conservative access barrier
 
   - name: QualifiedCteCollision
@@ -1628,7 +2359,9 @@ planner-snapshots:
       unresolved-references:
         - name: s.c
       nodes:
-        - statement: 'collision[0]'
+        - id: 0
+          script: collision
+          statement-id: 0
           type: SELECT
           sql: "with c as (select 1 as id) select * from s.c"
           produces-output: true
@@ -1638,7 +2371,7 @@ planner-snapshots:
               mode: READ
       edges: []
       diagnostics:
-        - statement: 'collision[0]'
+        - node: 0
           message: 'unresolved relation: s.c'
 
   - name: DropBeforeFutureQualifiedProducer
@@ -1672,7 +2405,9 @@ planner-snapshots:
           name: s.a
       unresolved-references: []
       nodes:
-        - statement: 'earlier[0]'
+        - id: 0
+          script: earlier
+          statement-id: 0
           type: CREATE_TABLE
           sql: "create table a (id int)"
           produces-output: false
@@ -1680,7 +2415,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65537.8589934592'
               mode: DDL
-        - statement: 'earlier[1]'
+        - id: 1
+          script: earlier
+          statement-id: 1
           type: SELECT
           sql: "select * from a"
           produces-output: true
@@ -1688,7 +2425,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65537.8589934592'
               mode: READ
-        - statement: 'later[0]'
+        - id: 2
+          script: later
+          statement-id: 0
           type: DROP_TABLE
           sql: "drop table a"
           produces-output: false
@@ -1696,7 +2435,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65537.8589934592'
               mode: DDL
-        - statement: 'later[1]'
+        - id: 3
+          script: later
+          statement-id: 1
           type: CREATE_TABLE
           sql: "create table s.a (id int)"
           produces-output: false
@@ -1705,16 +2446,16 @@ planner-snapshots:
             - entity: '256.65536.12884901888'
               mode: DDL
       edges:
-        - from: 'earlier[0]'
-          to: 'earlier[1]'
+        - from: 0
+          to: 1
           reason: DDL
           entity: '256.65537.8589934592'
-        - from: 'earlier[0]'
-          to: 'later[0]'
+        - from: 0
+          to: 2
           reason: DDL
           entity: '256.65537.8589934592'
-        - from: 'earlier[1]'
-          to: 'later[0]'
+        - from: 1
+          to: 2
           reason: DDL
           entity: '256.65537.8589934592'
       diagnostics: []
@@ -1756,13 +2497,17 @@ planner-snapshots:
           name: base
       unresolved-references: []
       nodes:
-        - statement: 'drops[0]'
+        - id: 0
+          script: drops
+          statement-id: 0
           type: SELECT
           sql: "select 1"
           produces-output: true
           barrier: false
           accesses: []
-        - statement: 'drops[1]'
+        - id: 1
+          script: drops
+          statement-id: 1
           type: DROP_VIEW
           sql: "drop view v"
           produces-output: false
@@ -1770,7 +2515,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967297'
               mode: DDL
-        - statement: 'drops[2]'
+        - id: 2
+          script: drops
+          statement-id: 2
           type: DROP_TABLE
           sql: "drop table base"
           produces-output: false
@@ -1779,14 +2526,14 @@ planner-snapshots:
             - entity: '256.65536.4294967296'
               mode: DDL
       edges:
-        - from: 'drops[0]'
-          to: 'drops[1]'
+        - from: 0
+          to: 1
           reason: BARRIER
-        - from: 'drops[1]'
-          to: 'drops[2]'
+        - from: 1
+          to: 2
           reason: BARRIER
       diagnostics:
-        - statement: 'drops[1]'
+        - node: 1
           message: view dependencies are not expanded; conservative access barrier
 
   - name: DropTableTargetingViewBeforeBaseDrop
@@ -1815,13 +2562,17 @@ planner-snapshots:
           name: base
       unresolved-references: []
       nodes:
-        - statement: 'drops[0]'
+        - id: 0
+          script: drops
+          statement-id: 0
           type: SELECT
           sql: "select 1"
           produces-output: true
           barrier: false
           accesses: []
-        - statement: 'drops[1]'
+        - id: 1
+          script: drops
+          statement-id: 1
           type: DROP_TABLE
           sql: "drop table v"
           produces-output: false
@@ -1829,7 +2580,9 @@ planner-snapshots:
           accesses:
             - entity: '256.65536.4294967297'
               mode: DDL
-        - statement: 'drops[2]'
+        - id: 2
+          script: drops
+          statement-id: 2
           type: DROP_TABLE
           sql: "drop table base"
           produces-output: false
@@ -1838,12 +2591,12 @@ planner-snapshots:
             - entity: '256.65536.4294967296'
               mode: DDL
       edges:
-        - from: 'drops[0]'
-          to: 'drops[1]'
+        - from: 0
+          to: 1
           reason: BARRIER
-        - from: 'drops[1]'
-          to: 'drops[2]'
+        - from: 1
+          to: 2
           reason: BARRIER
       diagnostics:
-        - statement: 'drops[1]'
+        - node: 1
           message: view dependencies are not expanded; conservative access barrier

@@ -40,9 +40,9 @@ describe('DashQL Completion', () => {
             'with',
             'attach',
             'create',
+            'delete',
             'drop',
-            'explain',
-            'table'
+            'explain'
         ]));
     });
 

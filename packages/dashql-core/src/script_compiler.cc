@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <stdexcept>
 
 #include "dashql/formatter/formatter.h"
 #include "dashql/script.h"
@@ -39,6 +40,7 @@ std::optional<uint32_t> ReadTerminalSqlNode(const ParsedScript& parsed, uint32_t
         case buffers::parser::StatementType::EXPLAIN:
         case buffers::parser::StatementType::SELECT:
         case buffers::parser::StatementType::INSERT:
+        case buffers::parser::StatementType::DELETE:
         case buffers::parser::StatementType::SET:
             kind = StatementKind::QUERY;
             return statement.root;
@@ -56,10 +58,12 @@ std::optional<uint32_t> ReadTerminalSqlNode(const ParsedScript& parsed, uint32_t
     return std::nullopt;
 }
 
-bool InsertHasReturning(const ParsedScript& parsed, const ParsedScript::Statement& statement) {
+bool HasReturning(const ParsedScript& parsed, const ParsedScript::Statement& statement) {
     const auto& root = parsed.nodes[statement.root];
-    auto [returning] = LookupAttributes<AttributeKey::SQL_INSERT_RETURNING>(
+    auto [insert_returning, delete_returning] = LookupAttributes<AttributeKey::SQL_INSERT_RETURNING,
+                                                              AttributeKey::SQL_DELETE_RETURNING>(
         std::span{parsed.nodes}.subspan(root.children_begin_or_value(), root.children_count()));
+    auto* returning = statement.type == buffers::parser::StatementType::DELETE ? delete_returning : insert_returning;
     return returning != nullptr && returning->node_type() != NodeType::NONE;
 }
 
@@ -71,7 +75,8 @@ bool ProducesOutput(const ParsedScript& parsed, const ParsedScript::Statement& s
         case buffers::parser::StatementType::VIS_VISUALISE:
             return true;
         case buffers::parser::StatementType::INSERT:
-            return InsertHasReturning(parsed, statement);
+        case buffers::parser::StatementType::DELETE:
+            return HasReturning(parsed, statement);
         default:
             return false;
     }
@@ -103,6 +108,47 @@ flatbuffers::Offset<buffers::execution::CompiledVisualization> PackVisualization
 }
 
 }  // namespace
+
+buffers::execution::CompiledVisualizationT CompiledVisualization::ToObject() const {
+    buffers::execution::CompiledVisualizationT result;
+    result.renderer = renderer;
+    result.vegalite_spec = vegalite_spec;
+    if (umap_spec) result.umap_spec = std::make_unique<visualize::UmapDocument>(*umap_spec);
+    if (markdown_spec) result.markdown_spec = std::make_unique<visualize::MarkdownDocument>(*markdown_spec);
+    if (dashboard) result.dashboard = std::make_unique<buffers::visualization::DashboardSpecT>(*dashboard);
+    if (table_spec) result.table_spec = std::make_unique<buffers::visualization::TableSpecT>(*table_spec);
+    return result;
+}
+
+CompiledVisualization ScriptCompiler::CompileVisualization(const VisualizationSpec& visualization,
+                                                           const AnalyzedScript& script) {
+    if (!visualization.renderer) throw std::invalid_argument("could not resolve visualization renderer");
+    const auto& spec = visualization;
+    CompiledVisualization compiled{.renderer = std::string(*spec.renderer)};
+    std::transform(compiled.renderer.begin(), compiled.renderer.end(), compiled.renderer.begin(),
+                   [](unsigned char c) { return std::tolower(c); });
+    compiled.dashboard = std::make_shared<buffers::visualization::DashboardSpecT>();
+    compiled.dashboard->row = spec.dashboard.row;
+    compiled.dashboard->column = spec.dashboard.column;
+    compiled.dashboard->width = spec.dashboard.width;
+    compiled.dashboard->height = spec.dashboard.height;
+    if (compiled.renderer == "vegalite") {
+        compiled.vegalite_spec = visualize::GenerateVegaLiteSpec(spec, script);
+    } else if (compiled.renderer == "umap") {
+        compiled.umap_spec = visualize::CompileUmapSpec(spec, script);
+        if (!compiled.umap_spec || compiled.umap_spec->vector_column.empty()) {
+            throw std::invalid_argument("UMAP visualization requires a vector field");
+        }
+    } else if (compiled.renderer == "markdown") {
+        compiled.markdown_spec = visualize::CompileMarkdownSpec(spec);
+        if (!compiled.markdown_spec) throw std::invalid_argument("could not compile Markdown visualization spec");
+    } else if (compiled.renderer == "table") {
+        compiled.table_spec = std::make_shared<buffers::visualization::TableSpecT>();
+    } else {
+        throw std::invalid_argument("unsupported visualization renderer: " + compiled.renderer);
+    }
+    return compiled;
+}
 
 flatbuffers::Offset<buffers::execution::ScriptCompilationResult> ScriptCompilationResult::Pack(
     flatbuffers::FlatBufferBuilder& builder) const {
@@ -199,7 +245,7 @@ ScriptCompilationResult ScriptCompiler::Compile(Script& script, const buffers::f
         if (produces_output && statement_id != terminal_statement_id) {
             const auto& span = descriptions[statement_id].statement_span;
             result.errors.push_back(MakeError(ErrorCode::OUTPUT_STATEMENT_NOT_LAST,
-                                              "SELECT, EXPLAIN, SELECT INTO, INSERT RETURNING, or VISUALIZE must be the final statement",
+                                              "SELECT, EXPLAIN, SELECT INTO, INSERT RETURNING, DELETE RETURNING, or VISUALIZE must be the final statement",
                                               statement_id, statement.root, span));
             continue;
         }
@@ -256,23 +302,14 @@ ScriptCompilationResult ScriptCompiler::Compile(Script& script, const buffers::f
                                               parsed.statements.back().root));
             return result;
         }
-        CompiledVisualization compiled{.renderer = std::string(*visualization->renderer)};
-        compiled.dashboard = std::make_shared<buffers::visualization::DashboardSpecT>();
-        compiled.dashboard->row = visualization->dashboard.row;
-        compiled.dashboard->column = visualization->dashboard.column;
-        compiled.dashboard->width = visualization->dashboard.width;
-        compiled.dashboard->height = visualization->dashboard.height;
-        if (*visualization->renderer == "vegalite") {
-            compiled.vegalite_spec = visualize::GenerateVegaLiteSpec(*visualization, *script.analyzed_script);
-        } else if (*visualization->renderer == "umap") {
-            compiled.umap_spec = visualize::CompileUmapSpec(*visualization, *script.analyzed_script);
-        } else if (*visualization->renderer == "markdown") {
-            auto markdown = visualize::CompileMarkdownSpec(*visualization);
-            if (markdown) compiled.markdown_spec = std::move(markdown);
-        } else if (*visualization->renderer == "table") {
-            compiled.table_spec = std::make_shared<buffers::visualization::TableSpecT>();
+        try {
+            result.visualization = CompileVisualization(*visualization, *script.analyzed_script);
+        } catch (const std::exception& error) {
+            result.sql.clear();
+            result.errors.push_back(MakeError(ErrorCode::VISUALIZATION_METADATA_UNAVAILABLE, error.what(),
+                                              terminal_statement_id, parsed.statements.back().root));
+            return result;
         }
-        result.visualization = std::move(compiled);
         auto& terminal = result.statements.back();
         terminal.kind = CompiledKind::VISUALIZE;
         terminal.sql = result.sql;

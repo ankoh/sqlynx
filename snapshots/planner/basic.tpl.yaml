@@ -158,10 +158,84 @@ planner-snapshots:
           drop table missing;
           select 1;
 
-  - name: UnsupportedExplain
+  - name: ExplainOutputs
+    catalog: |
+      create table a (id int);
+      create table b (id int);
     scripts:
       - name: explain
-        input: explain select 1;
+        input: |
+          explain select 1;
+          explain select * from a;
+          explain insert into a select * from b;
+          explain delete from a returning id;
+          explain expressions (1 + 2);
+          insert into a values (1);
+          explain insert into a values (2);
+
+  - name: ExplainDeclarationsAreNotProducers
+    catalog: create table source (id int);
+    scripts:
+      - name: explain
+        input: |
+          explain create table plain (id int);
+          explain create table copied as select * from source;
+          explain create view v as select * from source;
+          explain select * into destination from source;
+      - name: consumer
+        input: select * from copied;
+
+  - name: ExecutionEnabledExplainMutation
+    catalog: create table a (id int);
+    scripts:
+      - name: explain
+        input: |
+          explain (analyze) insert into a values (1);
+          explain (analyse true) delete from a returning id;
+          explain (format 'analyze') insert into a values (2);
+          explain (analyze) create table copied as select * from a;
+
+  - name: ExplainAnalyzeQueriesAndDisabledMutation
+    catalog: create table a (id int);
+    scripts:
+      - name: explain
+        input: |
+          explain (analyze) select * from a;
+          explain (analyse true) expressions (1 + 2);
+          explain (analyze false) insert into a values (1);
+          explain (analyse false) delete from a;
+
+  - name: VisualizationSourceOutputs
+    catalog: create table a (id int);
+    scripts:
+      - name: queries
+        input: |
+          -- Description is not part of the source query.
+          select 1 as id visualize using table ();
+          with c as (select * from a) select * from c visualize using table ();
+          insert into a values (1) returning id;
+          select * from a visualize using table ();
+          explain select * from a;
+
+  - name: UnsupportedVisualizationSelectInto
+    catalog: create table a (id int);
+    scripts:
+      - name: mutation
+        input: select * into destination from a visualize using table ();
+
+  - name: DeleteHazardsAndReturning
+    catalog: |
+      create table a (id int);
+      create table b (id int);
+    scripts:
+      - name: mutations
+        input: |
+          select * from a;
+          delete from a where id in (select id from b) returning id;
+          select * from a;
+          insert into b values (1);
+          delete from a;
+          insert into a values (2) returning id;
 
   - name: UnsupportedTemporaryTable
     scripts:

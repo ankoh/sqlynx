@@ -168,6 +168,7 @@ enum NodeType: uint16 {
     OBJECT_VIS_MARKDOWN_SPEC,
     OBJECT_VIS_DASHBOARD_SPEC,
     OBJECT_VIS_TABLE_SPEC,
+    OBJECT_SQL_DELETE,
 }
 
 enum AttributeKey: uint16 {
@@ -645,6 +646,10 @@ enum AttributeKey: uint16 {
     VIS_DASHBOARD_COLUMN,
     VIS_DASHBOARD_WIDTH,
     VIS_DASHBOARD_HEIGHT,
+    SQL_DELETE_TARGET,
+    SQL_DELETE_USING,
+    SQL_DELETE_WHERE,
+    SQL_DELETE_RETURNING,
 }
 
 enum StatementType: uint8 {
@@ -662,6 +667,7 @@ enum StatementType: uint8 {
     SELECT_INTO = 11,
     ATTACH_DATABASE = 12,
     INSERT = 13,
+    DELETE = 14,
 }
 
 enum StatementTargetType: uint8 {

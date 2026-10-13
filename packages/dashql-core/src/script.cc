@@ -417,6 +417,10 @@ std::unique_ptr<buffers::parser::StatementT> ParsedScript::PackStatement(size_t 
             set_target(buffers::parser::StatementTargetType::TABLE,
                        buffers::parser::AttributeKey::SQL_INSERT_TARGET);
             break;
+        case buffers::parser::StatementType::DELETE:
+            set_target(buffers::parser::StatementTargetType::TABLE,
+                       buffers::parser::AttributeKey::SQL_DELETE_TARGET);
+            break;
         default:
             break;
     }

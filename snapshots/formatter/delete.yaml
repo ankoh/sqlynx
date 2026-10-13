@@ -1,0 +1,287 @@
+formatter-snapshots:
+
+  - name: coverage_delete_all
+    input: |-
+      DELETE FROM delete_target
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              delete from delete_target;
+          - mode: compact
+            expected: |-
+              delete from delete_target;
+          - mode: pretty
+            expected: |-
+              delete from delete_target;
+        validation:
+          setup: |-
+            create table delete_target(id int, label text);
+
+  - name: coverage_delete_alias_where
+    input: |-
+      DELETE FROM delete_target AS t WHERE t.id=1
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              delete from delete_target t where t.id = 1;
+          - mode: compact
+            expected: |-
+              delete from delete_target t where t.id = 1;
+          - mode: pretty
+            expected: |-
+              delete from delete_target t
+              where t.id = 1;
+        validation:
+          setup: |-
+            create table delete_target(id int, label text);
+
+  - name: coverage_delete_using
+    input: |-
+      DELETE FROM delete_target t USING delete_source s WHERE t.id=s.id RETURNING t.id,s.label AS source_label
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              delete from delete_target t using delete_source s where t.id = s.id returning t.id, s.label as source_label;
+          - mode: compact
+            expected: |-
+              delete from delete_target t using delete_source s where t.id = s.id returning t.id, s.label as source_label;
+          - mode: pretty
+            expected: |-
+              delete from delete_target t
+              using delete_source s
+              where t.id = s.id
+              returning t.id, s.label as source_label;
+        validation:
+          setup: |-
+            create table delete_target(id int);
+            create table delete_source(id int, label text);
+
+  - name: coverage_delete_using_join
+    input: |-
+      DELETE FROM delete_target t USING delete_source s JOIN delete_audit a ON s.id=a.id WHERE t.id=s.id
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              delete from delete_target t using delete_source s join delete_audit a on s.id = a.id where t.id = s.id;
+          - mode: compact
+            expected: |-
+              delete from delete_target t using delete_source s join delete_audit a on s.id = a.id where t.id = s.id;
+          - mode: pretty
+            expected: |-
+              delete from delete_target t
+              using delete_source s
+                join delete_audit a on s.id = a.id
+              where t.id = s.id;
+        validation:
+          setup: |-
+            create table delete_target(id int);
+            create table delete_source(id int);
+            create table delete_audit(id int);
+
+  - name: coverage_delete_correlated_where
+    input: |-
+      DELETE FROM delete_target t WHERE EXISTS(SELECT 1 FROM delete_source s WHERE s.id=t.id) RETURNING t.id
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              delete from delete_target t where exists (select 1 from delete_source s where s.id = t.id) returning t.id;
+          - mode: compact
+            expected: |-
+              delete from delete_target t where exists (select 1 from delete_source s where s.id = t.id) returning t.id;
+          - mode: pretty
+            expected: |-
+              delete from delete_target t
+              where exists (
+                select 1
+                from delete_source s
+                where s.id = t.id
+              )
+              returning t.id;
+        validation:
+          setup: |-
+            create table delete_target(id int);
+            create table delete_source(id int);
+
+  - name: coverage_delete_returning_subquery
+    input: |-
+      DELETE FROM delete_target t RETURNING (SELECT max(s.id) FROM delete_source s WHERE s.id=t.id) AS deleted_id
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              delete from delete_target t returning (select max(s.id) from delete_source s where s.id = t.id) as deleted_id;
+          - mode: compact
+            expected: |-
+              delete from delete_target t returning (select max(s.id) from delete_source s where s.id = t.id) as deleted_id;
+          - mode: pretty
+            expected: |-
+              delete from delete_target t
+              returning (
+                select max(s.id)
+                from delete_source s
+                where s.id = t.id
+              ) as deleted_id;
+        validation:
+          setup: |-
+            create table delete_target(id int);
+            create table delete_source(id int);
+
+  - name: coverage_delete_with
+    input: |-
+      WITH ids AS(SELECT id FROM delete_source) DELETE FROM delete_target t USING ids WHERE t.id=ids.id RETURNING *
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              with ids as (select id from delete_source) delete from delete_target t using ids where t.id = ids.id returning *;
+          - mode: compact
+            expected: |-
+              with ids as (select id from delete_source) delete from delete_target t using ids where t.id = ids.id returning *;
+          - mode: pretty
+            expected: |-
+              with ids as (
+                select id
+                from delete_source
+              )
+              delete from delete_target t
+              using ids
+              where t.id = ids.id
+              returning *;
+        validation:
+          setup: |-
+            create table delete_target(id int);
+            create table delete_source(id int);
+
+  - name: coverage_delete_with_recursive
+    input: |-
+      WITH RECURSIVE ids AS(SELECT 1 AS id UNION ALL SELECT id+1 FROM ids WHERE id<3) DELETE FROM delete_target WHERE id IN(SELECT id FROM ids)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              with recursive ids as (select 1 as id union all select id + 1 from ids where id < 3) delete from delete_target where id in (select id from ids);
+          - mode: compact
+            expected: |-
+              with recursive ids as (select 1 as id union all select id + 1 from ids where id < 3)
+              delete from delete_target
+              where id in (select id from ids);
+          - mode: pretty
+            expected: |-
+              with recursive ids as (
+                select 1 as id
+                union all
+                select id + 1
+                from ids
+                where id < 3
+              )
+              delete from delete_target
+              where id in (
+                select id
+                from ids
+              );
+        validation:
+          setup: |-
+            create table delete_target(id int);
+
+  - name: coverage_delete_only_qualified
+    input: |-
+      DELETE FROM ONLY delete_schema.delete_target AS t RETURNING t.id,t.label AS deleted_label
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              delete from only delete_schema.delete_target t returning t.id, t.label as deleted_label;
+          - mode: compact
+            expected: |-
+              delete from only delete_schema.delete_target t returning t.id, t.label as deleted_label;
+          - mode: pretty
+            expected: |-
+              delete from only delete_schema.delete_target t
+              returning t.id, t.label as deleted_label;
+
+  - name: coverage_delete_using_subquery
+    input: |-
+      DELETE FROM delete_target t USING (SELECT id FROM delete_source) AS s WHERE t.id=s.id
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              delete from delete_target t using (select id from delete_source) s where t.id = s.id;
+          - mode: compact
+            expected: |-
+              delete from delete_target t using (select id from delete_source) s where t.id = s.id;
+          - mode: pretty
+            expected: |-
+              delete from delete_target t
+              using (
+                select id
+                from delete_source
+              ) s
+              where t.id = s.id;
+        validation:
+          setup: |-
+            create table delete_target(id int);
+            create table delete_source(id int);
+
+  - name: coverage_delete_comments
+    input: |-
+      -- deleted rows
+      DELETE FROM delete_target /* target */ WHERE id=1 RETURNING id -- output
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              delete from delete_target where id = 1 returning id;
+          - mode: compact
+            expected: |-
+              -- deleted rows
+              delete from delete_target where id = 1 returning id;
+              /* target */
+              -- output
+          - mode: pretty
+            expected: |-
+              -- deleted rows
+              delete from delete_target
+              where id = 1
+              returning id;
+              /* target */
+              -- output
+        validation:
+          setup: |-
+            create table delete_target(id int);
+
+  - name: coverage_explain_delete
+    input: |-
+      EXPLAIN DELETE FROM delete_target WHERE id=1
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              explain delete from delete_target where id = 1;
+          - mode: compact
+            expected: |-
+              explain delete from delete_target where id = 1;
+          - mode: pretty
+            expected: |-
+              explain delete from delete_target
+              where id = 1;
+        validation:
+          setup: |-
+            create table delete_target(id int);

@@ -23,6 +23,7 @@ import {
     SET_SCRIPT_TEXT,
 } from '../scripts/notebook_scripts.js';
 import { runNotebookScript } from './rerun_query.js';
+import { useNotebookExecution } from '../scripts/notebook_execution_provider.js';
 import { useStorageReader } from '../persistence/storage_provider.js';
 import { scriptDisplayName } from '../scripts/script_types.js';
 import type { ModifyNotebookScripts } from '../scripts/notebook_scripts_registry.js';
@@ -82,6 +83,7 @@ const DEFAULT_DEPENDENCIES: ScriptDetailsDependencies = {
 };
 
 export const ScriptDetails: React.FC<ScriptDetailsProps> = (props) => {
+    const notebookExecution = useNotebookExecution(props.notebookScripts.notebookId);
     const dependencies = props.dependencies ?? DEFAULT_DEPENDENCIES;
     const config = dependencies.useAppConfig();
     const logger = dependencies.useLogger();
@@ -317,7 +319,7 @@ export const ScriptDetails: React.FC<ScriptDetailsProps> = (props) => {
                             scriptData={scriptData}
                             scriptDisplay={scriptDisplay}
                             scriptDebugMode={scriptDebugMode}
-                            executeDisabled={props.connection?.connectionHealth !== ConnectionHealth.ONLINE}
+                            executeDisabled={notebookExecution.busy || props.connection?.connectionHealth !== ConnectionHealth.ONLINE}
                             isEditingName={isEditingName}
                             draftFileName={draftFileName}
                             editInputRef={editInputRef}
@@ -359,7 +361,7 @@ export const ScriptDetails: React.FC<ScriptDetailsProps> = (props) => {
                             onToggleExpanded={handleToggleResultExpanded}
                             contentId={`script-result-${scriptData.scriptKey}`}
                             onCancelQuery={activeQueryId != null
-                                ? () => props.connection && cancelQuery(props.connection.databaseId, activeQueryId)
+                                ? () => notebookExecution.busy ? notebookExecution.stop() : props.connection && cancelQuery(props.connection.databaseId, activeQueryId)
                                 : undefined}
                             statusActions={(
                                 <>

@@ -91,7 +91,7 @@ For each qualified relation name, the planner remembers its last writer and the
 readers since that writer. A read depends on the last writer. A write depends on
 that writer and outstanding readers. DDL participates in the same conflict timeline, with
 distinct DDL edge reasons. Repeated accesses within one statement are merged;
-there are no self-edges for INSERT statements reading their own destination.
+there are no self-edges for INSERT or DELETE statements reading their own destination.
 
 Conflict grouping uses internal `(database, schema, name)` tuples so DROP and
 recreation share a timeline without conflating their published entity identities.
@@ -108,10 +108,43 @@ unresolved DROP records an unresolved reference, not a synthetic catalog entity.
 References to later producers are diagnosed rather than moving those producers
 ahead of notebook order. CTE bindings are not catalog entities in this graph.
 
-The current supported statement families are SELECT, INSERT, CREATE TABLE,
-CREATE TABLE AS, CREATE VIEW, SELECT INTO, DROP TABLE, and DROP VIEW. Multiple
-SELECT outputs within a script are supported independently of the sequential
-script compiler's terminal-output policy.
+The current supported statement families are SELECT, INSERT, DELETE, EXPLAIN,
+VISUALIZE, CREATE TABLE, CREATE TABLE AS, CREATE VIEW, SELECT INTO, DROP TABLE,
+and DROP VIEW. Multiple outputs within a script are supported independently of
+the sequential script compiler's terminal-output policy. INSERT and DELETE
+produce output only when their root DML node has RETURNING. Nested DML RETURNING
+never overrides the output classification of an enclosing EXPLAIN.
+
+## Explain and Visualize
+
+EXPLAIN always produces output, preserving its statement type and backend SQL.
+Plain EXPLAIN treats all referenced relations as READ, including nested INSERT
+and DELETE targets. The analyzer still retains the body's table references and
+DML roles. Nested CREATE TABLE, CTAS, CREATE VIEW, and SELECT INTO declarations
+are not registered as catalog tables, even when the analyzed script is published;
+they cannot become planner producers or resolve later consumers.
+
+Execution-enabled EXPLAIN of SELECT or expressions is supported. Options are
+inspected structurally through `EXT_EXPLAIN_OPTIONS` and the generic option
+key/value attributes, not by searching the whole SQL text. `analyze` and `analyse`
+enable execution unless their argument is an explicit boolean false; missing or
+unknown arguments are conservative. `format analyze` (including quoted values)
+also enables execution. Any enabling option wins over a disabling duplicate.
+Execution-enabled EXPLAIN with a mutating body is an invalid barrier with the
+diagnostic `execution-enabled EXPLAIN with a mutating body cannot be safely classified`
+and no backend SQL. Its nested DML target accesses remain WRITE for diagnostic
+dependency tracking, but consumers must not execute any node of an invalid graph.
+An ordering barrier alone is not a proof that backend execution, DDL publication,
+or session effects are safe.
+
+VISUALIZE always produces output and keeps its `VIS_VISUALISE` statement type.
+Backend SQL is only the already-parsed `VIS_VISUALISE_SELECT` child's source span;
+descriptions and visualization syntax are excluded. Analyzer table reads, CTE
+bindings, and conflict dependencies are preserved. This is raw backend SELECT
+syntax, without whole-script compilation or dialect rewriting. Visualization
+metadata and application rendering integration are not part of the planner API
+yet. SELECT INTO within VISUALIZE is rejected with no backend SQL because its
+mutation and session effects are not represented by this query lowering.
 
 ## Conservative Limits
 
@@ -120,7 +153,7 @@ views, and unresolved physical relations, create barriers against all earlier an
 later nodes. Such barriers have diagnostics but do not necessarily invalidate
 the graph. Ambiguous references, stale inputs, malformed SQL, unsupported
 statements, and recognized session/locking/constraint/graph effects invalidate it.
-VISUALIZE and EXPLAIN are not executable planner nodes in this first version.
+Execution-enabled mutating EXPLAIN and VISUALIZE SELECT INTO invalidate the graph.
 
 This is relation-level planning, not a proof of arbitrary SQL side effects.
 Opaque function effects, triggers, backend search-path behavior, and transaction
@@ -133,7 +166,10 @@ concurrent operations.
 
 Planner snapshots contain ordered named scripts, optional external catalog SQL,
 and expected native text versions, catalog revisions, entities, unresolved
-references, nodes, accesses, edges, and diagnostics. The same preparation and
+references, nodes, accesses, edges, and diagnostics. Node identifiers are
+structured: `id` is the graph-local node index, `script` is the fixture script
+name, and `statement-id` is the zero-based statement index. Edge `from`/`to` and
+diagnostic `node` fields refer to numeric node IDs. The same preparation and
 encoding helper serves generation and comparison, including a repeated encoding
 check for deterministic output.
 Fixtures do not inject independent document revisions or default versions; script

@@ -2,6 +2,7 @@
 
 #include <flatbuffers/flatbuffer_builder.h>
 
+#include <array>
 #include <cstring>
 #include <memory>
 #include <string>
@@ -11,6 +12,7 @@
 #include "dashql/api.h"
 #include "dashql/buffers/index_generated.h"
 #include "dashql/catalog.h"
+#include "dashql/planner.h"
 #include "gtest/gtest.h"
 
 namespace dashql {
@@ -365,16 +367,67 @@ TEST(ScriptSessionTest, EditingPublishedScriptDropsStaleCatalogEntry) {
     session.LoadIntoCatalog(0);
     ASSERT_TRUE(catalog.Contains(session.GetCatalogEntryId()));
 
+    const auto published_revision = catalog.GetVersion();
+    auto published_analysis = session.GetScript().GetAnalyzedScript();
+    ASSERT_NE(published_analysis->GetCatalogVersion(), published_revision);
     auto no_op = session.ReplaceText(session.GetTextVersion(), "create table items (id int)");
     EXPECT_FALSE(no_op.text_changed);
-    EXPECT_TRUE(no_op.analysis_available);
+    EXPECT_FALSE(no_op.analysis_available);
     EXPECT_TRUE(catalog.Contains(session.GetCatalogEntryId()));
+
+    auto refreshed = session.Analyze();
+    EXPECT_EQ(refreshed.status, EditorUpdateStatus::OK);
+    EXPECT_TRUE(refreshed.analysis_updated);
+    EXPECT_TRUE(refreshed.analysis_available);
+    EXPECT_NE(session.GetScript().GetAnalyzedScript(), published_analysis);
+    EXPECT_EQ(session.GetScript().GetAnalyzedScript()->GetCatalogVersion(), published_revision);
+    EXPECT_EQ(refreshed.catalog_revision, published_revision);
+    EXPECT_EQ(catalog.GetVersion(), published_revision);
     EXPECT_FALSE(session.Analyze().analysis_updated);
 
     auto update = session.ReplaceText(session.GetTextVersion(), "create table updated (id int)");
 
     EXPECT_EQ(update.status, EditorUpdateStatus::OK);
     EXPECT_FALSE(catalog.Contains(session.GetCatalogEntryId()));
+}
+
+TEST(ScriptSessionTest, PublishedSessionsRefreshAtFinalCatalogRevisionBeforePlanning) {
+    Catalog catalog;
+    ScriptSession schema{catalog};
+    ScriptSession query{catalog};
+    ASSERT_TRUE(Analyze(schema, "create table items (id int)").analysis_available);
+    schema.LoadIntoCatalog(0);
+    ASSERT_TRUE(Analyze(query, "select id from items").analysis_available);
+    query.LoadIntoCatalog(1);
+
+    const auto final_revision = catalog.GetVersion();
+    ASSERT_NE(query.GetScript().GetAnalyzedScript()->GetCatalogVersion(), final_revision);
+    for (auto* session : {&schema, &query}) {
+        auto update = session->Analyze();
+        ASSERT_EQ(update.status, EditorUpdateStatus::OK);
+        EXPECT_TRUE(update.analysis_updated);
+        EXPECT_TRUE(update.analysis_available);
+        EXPECT_EQ(update.catalog_revision, final_revision);
+        EXPECT_EQ(session->GetScript().GetAnalyzedScript()->GetCatalogVersion(), final_revision);
+        EXPECT_EQ(catalog.GetVersion(), final_revision);
+    }
+    for (auto* session : {&schema, &query}) {
+        auto update = session->Analyze();
+        EXPECT_FALSE(update.analysis_updated);
+        EXPECT_TRUE(update.analysis_available);
+    }
+
+    std::array inputs{PlannerInput{&schema.GetScript()}, PlannerInput{&query.GetScript()}};
+    auto graph = Planner::Plan(inputs);
+    ASSERT_TRUE(graph.valid);
+    EXPECT_TRUE(graph.diagnostics.empty());
+    EXPECT_TRUE(graph.unresolved_references.empty());
+    EXPECT_EQ(graph.nodes.size(), 2u);
+    ASSERT_EQ(graph.scripts.size(), 2u);
+    for (const auto& script : graph.scripts) {
+        EXPECT_EQ(script->analyzed_catalog_revision, final_revision);
+    }
+    EXPECT_EQ(catalog.GetVersion(), final_revision);
 }
 
 TEST(ScriptSessionTest, EditCanSynchronouslyAnalyzeAndPlaceCursor) {

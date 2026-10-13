@@ -381,6 +381,10 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                         // Start the query
                         startQueryExecution();
                         resultStream = await executeConnectionQuery(conn.details, args, initialState.cancellation.signal);
+                        if (initialState.cancellation.signal.aborted) {
+                            await resultStream?.cancel?.();
+                            initialState.cancellation.signal.throwIfAborted();
+                        }
                         traced.debug("Received query results", {
                             notebookId,
                             "query": queryId.toString()
@@ -394,7 +398,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                             table = await consumeQueryResponseStream({
                                 stream: resultStream,
                                 abort: initialState.cancellation.signal,
-                                publishResults: true,
+                                publishResults: args.publishResults !== false,
                                 onProgress: progress => queryTracker.dispatch({
                                     type: QUERY_PROGRESS_UPDATED,
                                     value: [queryId, progress],
@@ -411,15 +415,15 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                             traced.info("Executed query", {
                                 notebookId,
                                 "query": queryId.toString(),
-                                "numRows": table!.numRows.toString(),
-                                "numCols": table!.numCols.toString(),
+                                "numRows": table?.numRows.toString(),
+                                "numCols": table?.numCols.toString(),
                                 "batchesReceived": resultStream.getMetrics().totalBatchesReceived.toString(),
                                 "dataBytesReceived": resultStream.getMetrics().totalDataBytesReceived.toString(),
                             }, LOG_CTX);
 
                             // Is there any metadata?
                             const metadata = resultStream.getMetadata();
-                            queryTracker.dispatch({
+                            if (table != null) queryTracker.dispatch({
                                 type: QUERY_RECEIVED_ALL_BATCHES,
                                 value: [queryId, table!, metadata, resultStream!.getMetrics()],
                             });
@@ -482,6 +486,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                                 notebookId,
                             }, LOG_CTX);
                             tracked.cancel(cancellationError, resultStream?.getMetrics() ?? null);
+                            if (args.throwOnError) throw e;
                             return null;
                         }
                         const processingError = e instanceof LoggableException

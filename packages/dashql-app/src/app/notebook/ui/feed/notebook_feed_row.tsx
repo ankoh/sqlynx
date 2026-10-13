@@ -1,6 +1,7 @@
 import * as React from 'react';
 import * as styles from './notebook_feed.module.css';
 import * as dashql from '@ankoh/dashql-core';
+import { useNotebookExecution } from '../../scripts/notebook_execution_provider.js';
 
 import type { EditorView } from '@codemirror/view';
 import type { Icon } from '../../../../ui/foundations/symbol_icon.js';
@@ -104,6 +105,7 @@ const DEFAULT_SCRIPT_CARD_DEPENDENCIES: ScriptCardDependencies = {
 };
 
 export const ScriptCard: React.FC<ScriptCardProps> = (props: ScriptCardProps) => {
+    const notebookExecution = useNotebookExecution(props.notebookId);
     const dependencies = props.dependencies ?? DEFAULT_SCRIPT_CARD_DEPENDENCIES;
     const MoveUpIcon: Icon = SymbolIcon('chevron_up_16');
     const MoveDownIcon: Icon = SymbolIcon('chevron_down_16');
@@ -174,9 +176,10 @@ export const ScriptCard: React.FC<ScriptCardProps> = (props: ScriptCardProps) =>
     }, [props.onAutoCollapseResult, props.onResetAutoCollapsedResult, props.scriptData?.latestQueryId, queryState, scriptKey]);
     const cancelEntryOperation = React.useCallback(() => {
         if (entryStatus?.kind === EntryStatusKind.Query && props.scriptData?.latestQueryId != null) {
-            if (props.connection != null) cancelQuery(props.connection.databaseId, props.scriptData.latestQueryId);
+            if (notebookExecution.busy) notebookExecution.stop();
+            else if (props.connection != null) cancelQuery(props.connection.databaseId, props.scriptData.latestQueryId);
         }
-    }, [cancelQuery, entryStatus?.kind, props.connection, props.scriptData?.latestQueryId]);
+    }, [cancelQuery, entryStatus?.kind, props.connection, props.scriptData?.latestQueryId, notebookExecution.busy, notebookExecution.stop]);
 
     const acceptDiff = React.useCallback(() => {
         if (scriptKey != null) props.onAcceptDiff(scriptKey);
@@ -258,10 +261,11 @@ export const ScriptCard: React.FC<ScriptCardProps> = (props: ScriptCardProps) =>
                         size={ButtonSize.Small}
                         aria-label={queryActive ? `Stop ${displayName} query` : `Execute ${displayName} query`}
                         aria-current={props.isFocused ? 'true' : undefined}
-                        disabled={!queryActive && !props.canExecute}
+                        disabled={!queryActive && (!props.canExecute || notebookExecution.busy)}
                         onClick={() => {
                             if (queryActive && props.scriptData?.latestQueryId != null) {
-                                if (props.connection != null) cancelQuery(props.connection.databaseId, props.scriptData.latestQueryId);
+                                if (notebookExecution.busy) notebookExecution.stop();
+                                else if (props.connection != null) cancelQuery(props.connection.databaseId, props.scriptData.latestQueryId);
                             } else {
                                 props.onExecute(props.scriptFileName);
                             }

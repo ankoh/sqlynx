@@ -16,6 +16,8 @@ export interface QueryExecutionArgs {
     /// Maximum time to wait for the next native gRPC result batch.
     readTimeoutMs?: number;
     analyzeResults?: boolean;
+    /// Drain statements without materializing a result when the planner discards their output.
+    publishResults?: boolean;
     /// Receives trace-scoped query execution log messages as they are emitted. Intended for
     /// transient progress surfaces such as the notebook shell.
     onLog?: (message: string) => void;

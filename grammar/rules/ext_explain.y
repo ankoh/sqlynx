@@ -52,6 +52,7 @@ explainable_stmt:
   | sql_create_as_stmt  { $$ = std::move($1); }
   | sql_view_stmt       { $$ = std::move($1); }
   | sql_insert_stmt     { $$ = std::move($1); }
+  | sql_delete_stmt     { $$ = std::move($1); }
   | EXPRESSIONS LRB sql_expr_list RRB {
         $$ = ctx.Object(@$, buffers::parser::NodeType::OBJECT_EXT_EXPLAIN_EXPRESSIONS, {
             Attr(Key::EXT_EXPLAIN_EXPRESSIONS, ctx.Array(@3, std::move($3))),

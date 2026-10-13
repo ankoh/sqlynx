@@ -196,6 +196,164 @@ TEST(PlannerTest, ResourceTimelineTracksAllHazardsAndOutstandingReaders) {
     EXPECT_TRUE(graph.nodes[4]->produces_output);
 }
 
+TEST(PlannerTest, DeleteReturningAndSourceReadsTrackMutationHazards) {
+    Catalog catalog;
+    auto schema = Analyze(catalog, "create table a (id int); create table b (id int)", true);
+    auto script = Analyze(catalog,
+        "select * from a; delete from a where id in (select id from b) returning id; "
+        "select * from a; insert into b values (1); delete from a; insert into a values (2) returning id");
+    ASSERT_TRUE(script->GetParsedScript()->errors.empty());
+    auto graph = Plan(*script);
+    ASSERT_TRUE(graph.valid);
+    ASSERT_EQ(graph.nodes.size(), 6);
+    EXPECT_EQ(graph.nodes[1]->statement_type, buffers::parser::StatementType::DELETE);
+    EXPECT_TRUE(graph.nodes[1]->produces_output);
+    EXPECT_FALSE(graph.nodes[4]->produces_output);
+    EXPECT_TRUE(graph.nodes[5]->produces_output);
+    ASSERT_EQ(graph.nodes[1]->accesses.size(), 2);
+    for (auto& access : graph.nodes[1]->accesses) {
+        auto& name = graph.entities[access->entity]->name;
+        EXPECT_EQ(access->mode, name == "a" ? Mode::WRITE : Mode::READ);
+    }
+    EXPECT_TRUE(HasEdge(graph, 0, 1, Reason::WRITE_AFTER_READ));
+    EXPECT_TRUE(HasEdge(graph, 1, 2, Reason::READ_AFTER_WRITE));
+    EXPECT_TRUE(HasEdge(graph, 1, 3, Reason::WRITE_AFTER_READ));
+    EXPECT_TRUE(HasEdge(graph, 1, 4, Reason::WRITE_AFTER_WRITE));
+    EXPECT_TRUE(HasEdge(graph, 2, 4, Reason::WRITE_AFTER_READ));
+    EXPECT_TRUE(HasEdge(graph, 4, 5, Reason::WRITE_AFTER_WRITE));
+    Serialize(graph);
+}
+
+TEST(PlannerTest, ExplainOutputsRemainIndependentReadsEvenForDmlBodies) {
+    Catalog catalog;
+    auto schema = Analyze(catalog, "create table a (id int); create table b (id int)", true);
+    auto script = Analyze(catalog,
+        "select * from a; explain select * from a; explain insert into a select * from b; "
+        "explain delete from a returning id; explain expressions (1 + 2); "
+        "insert into a values (1); explain insert into a values (2)");
+    ASSERT_TRUE(script->GetParsedScript()->errors.empty());
+    auto graph = Plan(*script);
+    ASSERT_TRUE(graph.valid);
+    ASSERT_EQ(graph.nodes.size(), 7);
+    for (auto index : {1, 2, 3, 4, 6}) {
+        EXPECT_EQ(graph.nodes[index]->statement_type, buffers::parser::StatementType::EXPLAIN);
+        EXPECT_TRUE(graph.nodes[index]->produces_output);
+        EXPECT_FALSE(graph.nodes[index]->barrier);
+        for (auto& access : graph.nodes[index]->accesses) EXPECT_EQ(access->mode, Mode::READ);
+    }
+    ASSERT_EQ(graph.nodes[2]->accesses.size(), 2);
+    EXPECT_TRUE(graph.nodes[4]->accesses.empty());
+    EXPECT_EQ(graph.nodes[2]->sql, "explain insert into a select * from b");
+    EXPECT_FALSE(HasEdge(graph, 0, 1, Reason::READ_AFTER_WRITE));
+    EXPECT_FALSE(HasEdge(graph, 1, 2, Reason::WRITE_AFTER_READ));
+    for (auto index : {0, 1, 2, 3}) EXPECT_TRUE(HasEdge(graph, index, 5, Reason::WRITE_AFTER_READ));
+    EXPECT_TRUE(HasEdge(graph, 5, 6, Reason::READ_AFTER_WRITE));
+    EXPECT_FALSE(graph.nodes[5]->produces_output);
+    size_t analyzer_writes = 0;
+    script->GetAnalyzedScript()->table_references.ForEach([&](size_t, const TableReference& ref) {
+        if (ref.role == TableReference::Role::Write) ++analyzer_writes;
+    });
+    EXPECT_EQ(analyzer_writes, 4);
+    Serialize(graph);
+}
+
+TEST(PlannerTest, DeleteUsingCteAndSelfReadsRetainOnlyPhysicalResources) {
+    Catalog catalog;
+    auto schema = Analyze(catalog, "create table a (id int); create table b (id int)", true);
+    auto first = Analyze(catalog,
+        "with c as (select * from b) delete from a using c where a.id = c.id returning a.id; "
+        "delete from a where id in (select id from a)");
+    auto second = Analyze(catalog, "select * from a; insert into b values (1)");
+    ASSERT_TRUE(first->GetParsedScript()->errors.empty());
+    std::array inputs{PlannerInput{first.get()}, PlannerInput{second.get()}};
+    auto graph = Planner::Plan(inputs);
+    ASSERT_TRUE(graph.valid);
+    ASSERT_EQ(graph.nodes.size(), 4);
+    ASSERT_EQ(graph.entities.size(), 2);
+    EXPECT_TRUE(graph.unresolved_references.empty());
+    EXPECT_FALSE(graph.nodes[0]->barrier);
+    ASSERT_EQ(graph.nodes[0]->accesses.size(), 2);
+    ASSERT_EQ(graph.nodes[1]->accesses.size(), 1);
+    EXPECT_EQ(graph.nodes[1]->accesses[0]->mode, Mode::WRITE);
+    EXPECT_TRUE(HasEdge(graph, 0, 1, Reason::WRITE_AFTER_WRITE));
+    EXPECT_TRUE(HasEdge(graph, 1, 2, Reason::READ_AFTER_WRITE));
+    EXPECT_TRUE(HasEdge(graph, 0, 3, Reason::WRITE_AFTER_READ));
+    for (auto& edge : graph.edges) EXPECT_NE(edge->from, edge->to);
+    Serialize(graph);
+}
+
+TEST(PlannerTest, ExplainDeclarationsNeverPublishCatalogTablesOrProducers) {
+    Catalog catalog;
+    auto schema = Analyze(catalog, "create table source (id int)", true);
+    for (auto sql : {"explain create table phantom (id int)",
+                     "explain create table phantom as select * from source",
+                     "explain create view phantom as select * from source",
+                     "explain select * into phantom from source"}) {
+        auto script = Analyze(catalog, sql, true);
+        ASSERT_TRUE(script->GetParsedScript()->errors.empty()) << sql;
+        EXPECT_EQ(script->GetAnalyzedScript()->GetTables().GetSize(), 0) << sql;
+        auto graph = Plan(*script);
+        ASSERT_TRUE(graph.valid) << sql;
+        ASSERT_EQ(graph.nodes.size(), 1);
+        EXPECT_TRUE(graph.nodes[0]->produces_output);
+        EXPECT_FALSE(graph.nodes[0]->barrier);
+        EXPECT_EQ(graph.nodes[0]->accesses.size(), std::string_view{sql}.find("source") == std::string_view::npos ? 0 : 1);
+        for (auto& entity : graph.entities) EXPECT_EQ(entity->name, "source");
+        for (auto& access : graph.nodes[0]->accesses) EXPECT_EQ(access->mode, Mode::READ);
+        auto consumer = Analyze(catalog, "select * from phantom");
+        std::array inputs{PlannerInput{script.get()}, PlannerInput{consumer.get()}};
+        graph = Planner::Plan(inputs);
+        ASSERT_TRUE(graph.valid);
+        ASSERT_EQ(graph.unresolved_references.size(), 1);
+        EXPECT_EQ(graph.unresolved_references[0]->name, "phantom");
+        EXPECT_TRUE(HasDiagnostic(graph, "unresolved relation"));
+        EXPECT_FALSE(HasDiagnostic(graph, "later producer"));
+        catalog.DropScript(*script);
+    }
+}
+
+TEST(PlannerTest, ExecutionEnabledExplainRejectsMutationsButAllowsQueries) {
+    Catalog catalog;
+    auto schema = Analyze(catalog, "create table a (id int)", true);
+    for (auto sql : {"explain (analyze) insert into a values (1)",
+                     "explain (ANALYSE true) delete from a returning id",
+                     "explain (format 'analyze') insert into a values (1)",
+                     "explain (analyze false, analyze true) insert into a values (1)",
+                     "explain (analyze 'unknown') insert into a values (1)",
+                     "explain (analyze) create table phantom as select * from a",
+                     "explain (analyze) select * into phantom from a"}) {
+        auto script = Analyze(catalog, sql);
+        ASSERT_TRUE(script->GetParsedScript()->errors.empty()) << sql;
+        EXPECT_EQ(script->GetAnalyzedScript()->GetTables().GetSize(), 0);
+        auto graph = Plan(*script);
+        EXPECT_FALSE(graph.valid) << sql;
+        EXPECT_TRUE(HasDiagnostic(graph, "execution-enabled EXPLAIN with a mutating body")) << sql;
+        ASSERT_EQ(graph.nodes.size(), 1);
+        EXPECT_TRUE(graph.nodes[0]->produces_output);
+        EXPECT_TRUE(graph.nodes[0]->barrier);
+        EXPECT_TRUE(graph.nodes[0]->sql.empty());
+        if (std::string_view{sql}.find("insert") != std::string_view::npos ||
+            std::string_view{sql}.find("delete") != std::string_view::npos) {
+            ASSERT_EQ(graph.nodes[0]->accesses.size(), 1);
+            EXPECT_EQ(graph.nodes[0]->accesses[0]->mode, Mode::WRITE);
+        }
+    }
+    for (auto sql : {"explain (analyze) select * from a", "explain (analyse true) expressions (1)",
+                     "explain (analyze false) insert into a values (1)",
+                     "explain (analyse false) delete from a",
+                     "explain (format 'analyze') select * from a",
+                     "explain (verbose true) select 'analyze' from a"}) {
+        auto script = Analyze(catalog, sql);
+        ASSERT_TRUE(script->GetParsedScript()->errors.empty()) << sql;
+        auto graph = Plan(*script);
+        EXPECT_TRUE(graph.valid) << sql;
+        ASSERT_EQ(graph.nodes.size(), 1);
+        EXPECT_TRUE(graph.nodes[0]->produces_output);
+        EXPECT_FALSE(graph.nodes[0]->barrier);
+        for (auto& access : graph.nodes[0]->accesses) EXPECT_EQ(access->mode, Mode::READ);
+    }
+}
+
 TEST(PlannerTest, CrossScriptCreationAndDropRecreateRetainDeclarationIds) {
     Catalog catalog;
     auto create = Analyze(catalog, "create table a (id int)", true);
@@ -406,8 +564,8 @@ TEST(PlannerTest, InvalidSnapshotsDoNotProducePartialExecutablePlans) {
 
 TEST(PlannerTest, UnsupportedStatementsAndSyntaxNeverPassThrough) {
     Catalog catalog;
-    for (auto sql : {"set foo = 1", "attach database 'test.db' as db", "explain select 1",
-                     "create function f() returns int", "select 1 visualize using table", "create temp table t (id int)",
+    for (auto sql : {"set foo = 1", "attach database 'test.db' as db",
+                     "create function f() returns int", "create temp table t (id int)",
                      "select * into temp t from unknown"}) {
         auto script = Analyze(catalog, sql);
         auto graph = Plan(*script);
@@ -522,15 +680,231 @@ TEST(PlannerTest, EarlierLifetimeProducerAllowsLaterNativeDeclarationResolution)
     EXPECT_TRUE(HasEdge(graph, 1, 2, Reason::DDL));
 }
 
-TEST(PlannerTest, UnsupportedVisualizationHasNoBackendSql) {
+TEST(PlannerTest, VisualizationLowersOnlySourceSelectAndPreservesReadsAndOutputTypes) {
     Catalog catalog;
-    auto script = Analyze(catalog, "select 1 as id visualize using table ()");
+    auto schema = Analyze(catalog, "create table a (id int)", true);
+    auto script = Analyze(catalog,
+        "-- description\nselect 1 as id visualize using table (); "
+        "with c as (select * from a) select * from c visualize using table (); "
+        "insert into a values (1) returning id; select * from a visualize using table (); explain select * from a");
+    ASSERT_TRUE(script->GetParsedScript()->errors.empty());
+    auto graph = Plan(*script);
+    ASSERT_TRUE(graph.valid);
+    ASSERT_EQ(graph.nodes.size(), 5);
+    EXPECT_EQ(graph.nodes[0]->sql, "select 1 as id");
+    EXPECT_EQ(graph.nodes[1]->sql, "with c as (select * from a) select * from c");
+    EXPECT_EQ(graph.nodes[3]->sql, "select * from a");
+    EXPECT_EQ(graph.nodes[4]->sql, "explain select * from a");
+    for (auto index : {0, 1, 3}) {
+        EXPECT_EQ(graph.nodes[index]->statement_type, buffers::parser::StatementType::VIS_VISUALISE);
+        EXPECT_FALSE(graph.nodes[index]->barrier);
+    }
+    for (auto& node : graph.nodes) EXPECT_TRUE(node->produces_output);
+    EXPECT_TRUE(graph.nodes[0]->accesses.empty());
+    ASSERT_EQ(graph.nodes[1]->accesses.size(), 1);
+    EXPECT_EQ(graph.nodes[1]->accesses[0]->mode, Mode::READ);
+    EXPECT_TRUE(HasEdge(graph, 1, 2, Reason::WRITE_AFTER_READ));
+    EXPECT_TRUE(HasEdge(graph, 2, 3, Reason::READ_AFTER_WRITE));
+    EXPECT_TRUE(HasEdge(graph, 2, 4, Reason::READ_AFTER_WRITE));
+    Serialize(graph);
+}
+
+TEST(PlannerTest, VisualizationSelectIntoHasNoBackendSql) {
+    Catalog catalog;
+    auto schema = Analyze(catalog, "create table a (id int)", true);
+    auto script = Analyze(catalog, "select * into target from a visualize using table ()");
+    ASSERT_TRUE(script->GetParsedScript()->errors.empty());
     auto graph = Plan(*script);
     EXPECT_FALSE(graph.valid);
     ASSERT_EQ(graph.nodes.size(), 1);
     EXPECT_TRUE(graph.nodes[0]->barrier);
     EXPECT_TRUE(graph.nodes[0]->sql.empty());
-    EXPECT_TRUE(HasDiagnostic(graph, "unsupported statement"));
+    EXPECT_TRUE(HasDiagnostic(graph, "VISUALIZE SELECT INTO"));
+}
+
+TEST(PlannerTest, VisualizationMetadataIsPerStatementAndRoundTripsWithoutMutatingNativeState) {
+    Catalog catalog;
+    auto schema = Analyze(catalog, "create table embeddings (embedding int, cluster_id int, label text)", true);
+    auto script = Analyze(catalog,
+        "select 1; "
+        "select 2 as value visualize using vegalite (mark => bar, encoding => (x => (field => value))); "
+        "select embedding, cluster_id, label from embeddings visualize using umap "
+        "(vector => embedding, category => cluster_id, label => label, neighbors => 15, min_dist => 0.1, metric => cosine); "
+        "select 'item' as product visualize using markdown (template => '## {{product}}'); "
+        "select 5 visualize using table (dashboard => (row => 2, column => 4, width => 8, height => 5)); "
+        "select 6");
+    ASSERT_TRUE(script->GetParsedScript()->errors.empty());
+    auto analyzed = script->GetAnalyzedScript();
+    auto version = catalog.GetVersion();
+    auto text_version = script->text_version;
+    analyzed->visualization_specs.ForEach([&](size_t, const VisualizationSpec& spec) {
+        EXPECT_EQ(spec.umap_model, nullptr);
+        EXPECT_EQ(spec.markdown_ast, nullptr);
+    });
+    auto graph = Plan(*script);
+    ASSERT_TRUE(graph.valid);
+    ASSERT_EQ(graph.nodes.size(), 6);
+    EXPECT_EQ(graph.nodes[0]->visualization, nullptr);
+    EXPECT_EQ(graph.nodes[5]->visualization, nullptr);
+    for (auto index : {1, 2, 3, 4}) {
+        ASSERT_NE(graph.nodes[index]->visualization, nullptr);
+        EXPECT_EQ(graph.nodes[index]->statement_id, index);
+        EXPECT_TRUE(graph.nodes[index]->produces_output);
+        EXPECT_FALSE(graph.nodes[index]->barrier);
+        EXPECT_EQ(graph.nodes[index]->sql.find("visualize"), std::string::npos);
+    }
+    EXPECT_EQ(graph.nodes[2]->sql, "select embedding, cluster_id, label from embeddings");
+    ASSERT_EQ(graph.nodes[2]->accesses.size(), 1);
+    EXPECT_EQ(graph.nodes[2]->accesses[0]->mode, Mode::READ);
+    auto bytes = Serialize(graph);
+    auto unpacked = std::unique_ptr<ExecutionGraphT>{flatbuffers::GetRoot<ExecutionGraph>(bytes.data())->UnPack()};
+    auto& vega = *unpacked->nodes[1]->visualization;
+    EXPECT_EQ(vega.renderer, "vegalite");
+    EXPECT_NE(vega.vegalite_spec.find("\"bar\""), std::string::npos);
+    EXPECT_NE(vega.vegalite_spec.find("\"value\""), std::string::npos);
+    auto& umap = *unpacked->nodes[2]->visualization;
+    EXPECT_EQ(umap.renderer, "umap");
+    ASSERT_NE(umap.umap_spec, nullptr);
+    EXPECT_EQ(umap.umap_spec->vector_column, "embedding");
+    EXPECT_EQ(umap.umap_spec->category_column, "cluster_id");
+    EXPECT_EQ(umap.umap_spec->label_column, "label");
+    ASSERT_NE(umap.umap_spec->projection, nullptr);
+    EXPECT_EQ(umap.umap_spec->projection->method, buffers::visualization::UmapProjectionMethod::UMAP);
+    EXPECT_EQ(umap.umap_spec->projection->metric, "cosine");
+    EXPECT_EQ(umap.umap_spec->projection->neighbors, 15);
+    ASSERT_TRUE(umap.umap_spec->projection->min_dist.has_value());
+    EXPECT_DOUBLE_EQ(*umap.umap_spec->projection->min_dist, 0.1);
+    auto& markdown = *unpacked->nodes[3]->visualization;
+    EXPECT_EQ(markdown.renderer, "markdown");
+    ASSERT_NE(markdown.markdown_spec, nullptr);
+    EXPECT_EQ(markdown.markdown_spec->template_, "## {{product}}");
+    EXPECT_EQ(markdown.markdown_spec->fields, (std::vector<std::string>{"product"}));
+    ASSERT_NE(markdown.markdown_spec->document, nullptr);
+    ASSERT_EQ(markdown.markdown_spec->document->children.size(), 1);
+    EXPECT_EQ(markdown.markdown_spec->document->children[0]->node_type,
+              buffers::visualization::MarkdownNodeType::HEADING);
+    auto& table = *unpacked->nodes[4]->visualization;
+    EXPECT_EQ(table.renderer, "table");
+    ASSERT_NE(table.table_spec, nullptr);
+    ASSERT_NE(table.dashboard, nullptr);
+    EXPECT_EQ(table.dashboard->row, 2);
+    EXPECT_EQ(table.dashboard->column, 4);
+    EXPECT_EQ(table.dashboard->width, 8);
+    EXPECT_EQ(table.dashboard->height, 5);
+    ASSERT_NE(vega.dashboard, nullptr);
+    EXPECT_FALSE(vega.dashboard->row.has_value());
+    EXPECT_FALSE(vega.dashboard->column.has_value());
+    EXPECT_EQ(vega.dashboard->width, 6);
+    EXPECT_EQ(vega.dashboard->height, 3);
+    EXPECT_EQ(bytes, Serialize(Plan(*script)));
+    EXPECT_EQ(bytes, Serialize(*unpacked));
+    EXPECT_EQ(script->GetAnalyzedScript(), analyzed);
+    EXPECT_EQ(script->text_version, text_version);
+    EXPECT_EQ(catalog.GetVersion(), version);
+    analyzed->visualization_specs.ForEach([&](size_t, const VisualizationSpec& spec) {
+        EXPECT_EQ(spec.umap_model != nullptr, spec.renderer == std::string_view{"umap"});
+        EXPECT_EQ(spec.markdown_ast != nullptr, spec.renderer == std::string_view{"markdown"});
+    });
+}
+
+TEST(PlannerTest, RendererCaseNormalizationCompilesMetadataWithoutMutatingNativeState) {
+    Catalog catalog;
+    auto schema = Analyze(catalog, "create table embeddings (embedding int, label text)", true);
+    struct Case {
+        std::string_view renderer;
+        std::string_view normalized;
+        std::string_view options;
+    };
+    for (auto test : {Case{"TABLE", "table", "()"}, Case{"TaBlE", "table", "()"},
+                      Case{"VEGALITE", "vegalite", "(mark => bar)"},
+                      Case{"VeGaLiTe", "vegalite", "(mark => bar)"},
+                      Case{"UMAP", "umap", "(vector => embedding, label => label)"},
+                      Case{"UmAp", "umap", "(vector => embedding, label => label)"},
+                      Case{"MARKDOWN", "markdown", "(template => '## {{label}}')"},
+                      Case{"MaRkDoWn", "markdown", "(template => '## {{label}}')"}}) {
+        SCOPED_TRACE(test.renderer);
+        auto sql = "select embedding, label from embeddings visualize using " + std::string{test.renderer} +
+                   " " + std::string{test.options};
+        auto script = Analyze(catalog, sql);
+        ASSERT_TRUE(script->GetParsedScript()->errors.empty());
+        auto analyzed = script->GetAnalyzedScript();
+        auto parsed = script->GetParsedScript();
+        auto version = catalog.GetVersion();
+        auto text_version = script->text_version;
+        ASSERT_EQ(analyzed->visualization_specs.GetSize(), 1);
+        auto check_analysis = [&] {
+            analyzed->visualization_specs.ForEach([&](size_t, const VisualizationSpec& spec) {
+                ASSERT_TRUE(spec.renderer.has_value());
+                EXPECT_EQ(*spec.renderer, test.renderer);
+            });
+        };
+        check_analysis();
+        auto graph = Plan(*script);
+        ASSERT_TRUE(graph.valid);
+        EXPECT_TRUE(graph.diagnostics.empty());
+        EXPECT_TRUE(graph.edges.empty());
+        ASSERT_EQ(graph.nodes.size(), 1);
+        auto& node = *graph.nodes[0];
+        EXPECT_EQ(node.statement_type, buffers::parser::StatementType::VIS_VISUALISE);
+        EXPECT_TRUE(node.produces_output);
+        EXPECT_FALSE(node.barrier);
+        EXPECT_EQ(node.sql, "select embedding, label from embeddings");
+        ASSERT_EQ(node.accesses.size(), 1);
+        EXPECT_EQ(node.accesses[0]->mode, Mode::READ);
+        ASSERT_NE(node.visualization, nullptr);
+        auto& visualization = *node.visualization;
+        EXPECT_EQ(visualization.renderer, test.normalized);
+        if (test.normalized == "table") ASSERT_NE(visualization.table_spec, nullptr);
+        if (test.normalized == "vegalite") EXPECT_NE(visualization.vegalite_spec.find("\"bar\""), std::string::npos);
+        if (test.normalized == "umap") {
+            ASSERT_NE(visualization.umap_spec, nullptr);
+            EXPECT_EQ(visualization.umap_spec->vector_column, "embedding");
+            EXPECT_EQ(visualization.umap_spec->label_column, "label");
+        }
+        if (test.normalized == "markdown") {
+            ASSERT_NE(visualization.markdown_spec, nullptr);
+            EXPECT_EQ(visualization.markdown_spec->template_, "## {{label}}");
+            EXPECT_EQ(visualization.markdown_spec->fields, (std::vector<std::string>{"label"}));
+            ASSERT_NE(visualization.markdown_spec->document, nullptr);
+        }
+        auto bytes = Serialize(graph);
+        EXPECT_EQ(bytes, Serialize(Plan(*script)));
+        EXPECT_EQ(script->ToString(), sql);
+        EXPECT_EQ(script->text_version, text_version);
+        EXPECT_EQ(script->GetParsedScript(), parsed);
+        EXPECT_EQ(script->GetAnalyzedScript(), analyzed);
+        EXPECT_EQ(catalog.GetVersion(), version);
+        check_analysis();
+    }
+}
+
+TEST(PlannerTest, InvalidVisualizationMetadataRejectsTheOwningNodeBeforeBackendExecution) {
+    Catalog catalog;
+    for (auto renderer : {"missing", "unsupported", "umap"}) {
+        SCOPED_TRACE(renderer);
+        auto script = Analyze(catalog, renderer == std::string_view{"umap"}
+            ? "select 1; select 2 visualize using umap (); select 3"
+            : "select 1; select 2 visualize using table (); select 3");
+        ASSERT_TRUE(script->GetParsedScript()->errors.empty());
+        script->GetAnalyzedScript()->visualization_specs.ForEach([&](size_t, VisualizationSpec& spec) {
+            if (renderer == std::string_view{"missing"}) spec.renderer.reset();
+            if (renderer == std::string_view{"unsupported"}) spec.renderer = "unsupported";
+        });
+        auto graph = Plan(*script);
+        EXPECT_FALSE(graph.valid);
+        ASSERT_EQ(graph.nodes.size(), 3);
+        EXPECT_EQ(graph.nodes[0]->sql, "select 1");
+        EXPECT_EQ(graph.nodes[2]->sql, "select 3");
+        EXPECT_TRUE(graph.nodes[1]->barrier);
+        EXPECT_TRUE(graph.nodes[1]->sql.empty());
+        EXPECT_EQ(graph.nodes[1]->visualization, nullptr);
+        ASSERT_EQ(graph.diagnostics.size(), 1);
+        EXPECT_EQ(graph.diagnostics[0]->node, 1);
+        EXPECT_TRUE(HasDiagnostic(graph, "visualization:"));
+        EXPECT_TRUE(HasEdge(graph, 0, 1, Reason::BARRIER));
+        EXPECT_TRUE(HasEdge(graph, 1, 2, Reason::BARRIER));
+        Serialize(graph);
+    }
 }
 
 TEST(PlannerTest, IdentifierCaseNormalizationPreservesQuotedNames) {

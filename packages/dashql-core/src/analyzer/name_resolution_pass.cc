@@ -116,6 +116,10 @@ void NameResolutionPass::RegisterDerivedTable(const buffers::parser::Node& decla
                                               const buffers::parser::Node* name_node,
                                               const buffers::parser::Node* columns_node,
                                               const buffers::parser::Node& select_node) {
+    auto statement_id = FindStatementId(state.GetNodeId(declaration_node));
+    // EXPLAIN describes a declaration; publishing it would create a phantom catalog producer.
+    if (statement_id < state.parsed.statements.size() &&
+        state.parsed.statements[statement_id].type == buffers::parser::StatementType::EXPLAIN) return;
     auto table_name = state.ReadQualifiedTableName(name_node);
     if (!table_name.has_value()) return;
 
@@ -520,6 +524,15 @@ void NameResolutionPass::AssociateUnresolvedColumns(AnalyzedScript::NameScope& s
 }
 
 void NameResolutionPass::PopulateOutputColumns(AnalyzedScript::NameScope& scope) {
+    auto [combine_inputs] = state.GetAttributes<AttributeKey::SQL_COMBINE_INPUT>(state.ast[scope.ast_node_id]);
+    if (combine_inputs && combine_inputs->children_count() > 0) {
+        // Set operations expose the left input's column names, including in recursive CTEs.
+        auto left = state.analyzed->name_scopes_by_root_node.find(combine_inputs->children_begin_or_value());
+        if (left != state.analyzed->name_scopes_by_root_node.end()) {
+            scope.output_columns = left->second.get().output_columns;
+            scope.output_columns_by_name = left->second.get().output_columns_by_name;
+        }
+    }
     for (auto& rt : scope.result_targets) {
         // Note that this is deliberately fuzzy.
         // Independent of the algebra, we just forward all names of table references as output columns if a star is
@@ -629,6 +642,16 @@ void NameResolutionPass::ResolveNames() {
     while (!dfs.empty()) {
         auto [scope, _] = dfs.top();
         dfs.pop();
+        // Recursive CTE outputs are available only after the bottom-up pass completes.
+        for (auto& expr : scope->expressions) {
+            auto* column = std::get_if<AnalyzedScript::Expression::ColumnRef>(&expr.inner);
+            if (!column || column->IsResolved()) continue;
+            bool ambiguous = std::ranges::any_of(state.analyzed->errors, [&](const auto& error) {
+                return error.error_type == buffers::analyzer::AnalyzerErrorType::COLUMN_REF_AMBIGUOUS &&
+                       error.ast_node_id == expr.ast_node_id;
+            });
+            if (!ambiguous) TryResolveColumnInScope(expr, *scope, state);
+        }
         ResolveColumnRefsFromParents(*scope);
         for (auto& child : scope->child_scopes) {
             dfs.push({static_cast<AnalyzedScript::NameScope*>(&child), false});
@@ -929,6 +952,31 @@ void NameResolutionPass::Visit(std::span<const buffers::parser::Node> morsel) {
                 break;
             }
 
+            case buffers::parser::NodeType::OBJECT_SQL_DELETE: {
+                auto [target_node, recursive_node] =
+                    state.GetAttributes<AttributeKey::SQL_DELETE_TARGET,
+                                        AttributeKey::SQL_SELECT_WITH_RECURSIVE>(node);
+                if (target_node) {
+                    auto& target_state = node_states[target_node - state.ast.data()];
+                    for (auto& reference : target_state.table_references) {
+                        reference.role = TableReference::Role::Write;
+                    }
+                }
+                MergeChildStates(node_state, node);
+                auto result_targets = std::move(node_state.result_targets);
+                auto cte_defs = std::move(node_state.ctes);
+                auto& scope = CreateScope(node_state, node_id);
+                scope.result_targets.Append(std::move(result_targets));
+                scope.ctes_recursive = recursive_node != nullptr;
+                scope.child_output_resolution_barrier = true;
+                AttachCTEs(scope, std::move(cte_defs));
+                // CTE definitions cannot correlate to the DELETE target or USING relations.
+                for (auto& [_, cte] : scope.cte_definitions) {
+                    if (cte.child_scope) cte.child_scope->column_correlation_barrier = true;
+                }
+                break;
+            }
+
             case buffers::parser::NodeType::OBJECT_VIS_VISUALISE: {
                 MergeChildStates(node_state, node);
                 CreateScope(node_state, node_id);
@@ -936,6 +984,13 @@ void NameResolutionPass::Visit(std::span<const buffers::parser::Node> morsel) {
             }
 
             case buffers::parser::NodeType::OBJECT_SQL_CREATE: {
+                auto statement_id = FindStatementId(node_id);
+                if (statement_id < state.parsed.statements.size() &&
+                    state.parsed.statements[statement_id].type == buffers::parser::StatementType::EXPLAIN) {
+                    MergeChildStates(node_state, node);
+                    CreateScope(node_state, node_id);
+                    break;
+                }
                 auto [name_node, elements_node] =
                     state.GetAttributes<AttributeKey::SQL_CREATE_TABLE_NAME, AttributeKey::SQL_CREATE_TABLE_ELEMENTS>(
                         node);
@@ -982,6 +1037,12 @@ void NameResolutionPass::Visit(std::span<const buffers::parser::Node> morsel) {
             }
 
             case buffers::parser::NodeType::OBJECT_SQL_CREATE_FUNCTION: {
+                auto statement_id = FindStatementId(node_id);
+                if (statement_id < state.parsed.statements.size() &&
+                    state.parsed.statements[statement_id].type == buffers::parser::StatementType::EXPLAIN) {
+                    MergeChildStates(node_state, node);
+                    break;
+                }
                 auto [name_node, params_node, returns_node, is_aggregate_node] = state.GetAttributes<
                     AttributeKey::SQL_CREATE_FUNCTION_NAME, AttributeKey::SQL_CREATE_FUNCTION_PARAMS,
                     AttributeKey::SQL_CREATE_FUNCTION_RETURNS, AttributeKey::SQL_CREATE_FUNCTION_IS_AGGREGATE>(node);

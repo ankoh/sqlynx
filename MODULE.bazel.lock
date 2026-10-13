@@ -326,7 +326,7 @@
   "moduleExtensions": {
     "//bazel:core_dependencies.bzl%dashql_core_dependencies": {
       "general": {
-        "bzlTransitiveDigest": "edtKnDglCcq1+IJCQXakBw11ssIJKh8u+HUiaru+Ey0=",
+        "bzlTransitiveDigest": "vEhN4RSdeI+uCof3bl6KKyfFvRAqC4ZXKuKjCidLu2Q=",
         "usagesDigest": "4H7C5z4lYul1yYNYYwUY3jZlWd5eTSUYdgheRsLiXBM=",
         "recordedInputs": [
           "REPO_MAPPING:,bazel_tools bazel_tools"

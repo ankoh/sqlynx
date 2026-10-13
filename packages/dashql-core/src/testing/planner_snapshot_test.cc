@@ -177,17 +177,15 @@ void PlannerSnapshotTest::Encode(c4::yml::NodeRef out, c4::yml::ConstNodeRef fix
             parent.append_child() << c4::yml::key("unresolved-reference") << unresolved_reference;
         }
     };
-    auto label = [&](uint32_t id) {
-        auto& node = *graph.nodes.at(id);
-        return names.at(node.script) + "[" + std::to_string(node.statement_id) + "]";
-    };
     auto nodes = sequence(out, "nodes");
     if (!graph.nodes.empty()) nodes.set_container_style(c4::yml::BLOCK);
     for (size_t ni = 0; ni < graph.nodes.size(); ++ni) {
         auto& value = *graph.nodes[ni];
         auto node = nodes.append_child();
         node |= c4::yml::MAP;
-        node.append_child() << c4::yml::key("statement") << label(ni);
+        node.append_child() << c4::yml::key("id") << ni;
+        node.append_child() << c4::yml::key("script") << names.at(value.script);
+        node.append_child() << c4::yml::key("statement-id") << value.statement_id;
         node.append_child() << c4::yml::key("type") << buffers::parser::EnumNameStatementType(value.statement_type);
         auto text = node.append_child();
         text << c4::yml::key("sql") << value.sql;
@@ -209,8 +207,8 @@ void PlannerSnapshotTest::Encode(c4::yml::NodeRef out, c4::yml::ConstNodeRef fix
     for (auto& value : graph.edges) {
         auto node = edges.append_child();
         node |= c4::yml::MAP;
-        node.append_child() << c4::yml::key("from") << label(value->from);
-        node.append_child() << c4::yml::key("to") << label(value->to);
+        node.append_child() << c4::yml::key("from") << value->from;
+        node.append_child() << c4::yml::key("to") << value->to;
         node.append_child() << c4::yml::key("reason")
                             << buffers::execution::EnumNameExecutionGraphEdgeReason(value->reason);
         target(node, value->entity, value->unresolved_reference);
@@ -221,7 +219,7 @@ void PlannerSnapshotTest::Encode(c4::yml::NodeRef out, c4::yml::ConstNodeRef fix
         auto node = diagnostics.append_child();
         node |= c4::yml::MAP;
         if (value->node != std::numeric_limits<uint32_t>::max()) {
-            node.append_child() << c4::yml::key("statement") << label(value->node);
+            node.append_child() << c4::yml::key("node") << value->node;
         }
         node.append_child() << c4::yml::key("message") << value->message;
     }

@@ -74,6 +74,7 @@ INSTANTIATE_TEST_SUITE_P(Comments, FormatterSnapshotTestSuite, ::testing::Values
 INSTANTIATE_TEST_SUITE_P(Statements, FormatterSnapshotTestSuite, ::testing::ValuesIn(FormatterSnapshotTest::GetTests("statements.yaml")), FormatterSnapshotTest::TestPrinter());
 INSTANTIATE_TEST_SUITE_P(SelectClauses, FormatterSnapshotTestSuite, ::testing::ValuesIn(FormatterSnapshotTest::GetTests("select_clauses.yaml")), FormatterSnapshotTest::TestPrinter());
 INSTANTIATE_TEST_SUITE_P(Insert, FormatterSnapshotTestSuite, ::testing::ValuesIn(FormatterSnapshotTest::GetTests("insert.yaml")), FormatterSnapshotTest::TestPrinter());
+INSTANTIATE_TEST_SUITE_P(Delete, FormatterSnapshotTestSuite, ::testing::ValuesIn(FormatterSnapshotTest::GetTests("delete.yaml")), FormatterSnapshotTest::TestPrinter());
 INSTANTIATE_TEST_SUITE_P(Tpch, FormatterSnapshotTestSuite, ::testing::ValuesIn(FormatterSnapshotTest::GetTests("tpch.yaml")), FormatterSnapshotTest::TestPrinter());
 INSTANTIATE_TEST_SUITE_P(Tpcds, FormatterSnapshotTestSuite, ::testing::ValuesIn(FormatterSnapshotTest::GetTests("tpcds.yaml")), FormatterSnapshotTest::TestPrinter());
 INSTANTIATE_TEST_SUITE_P(PGQ, FormatterSnapshotTestSuite, ::testing::ValuesIn(FormatterSnapshotTest::GetTests("pgq.yaml")), FormatterSnapshotTest::TestPrinter());

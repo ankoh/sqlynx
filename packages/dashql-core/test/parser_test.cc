@@ -142,7 +142,7 @@ TEST(ParserTest, ExposesNormalizedStatementMetadata) {
         std::string_view attach_alias;
         bool attach_local;
     };
-    constexpr std::array<TestCase, 10> tests = {{
+    constexpr std::array<TestCase, 11> tests = {{
         {"create table foo (a integer)", buffers::parser::StatementType::CREATE_TABLE,
          buffers::parser::StatementTargetType::TABLE, {}, {}, "foo", {}, {}, false},
         {"create table target as select 1", buffers::parser::StatementType::CREATE_TABLE_AS,
@@ -159,6 +159,8 @@ TEST(ParserTest, ExposesNormalizedStatementMetadata) {
          buffers::parser::StatementTargetType::TABLE, {}, "schema", "target", {}, {}, false},
         {"insert into catalog.schema.target values (1)", buffers::parser::StatementType::INSERT,
          buffers::parser::StatementTargetType::TABLE, "catalog", "schema", "target", {}, {}, false},
+        {"delete from only catalog.schema.\"Target\" as t returning t.id", buffers::parser::StatementType::DELETE,
+         buffers::parser::StatementTargetType::TABLE, "catalog", "schema", "Target", {}, {}, false},
         {"attach database \"path/to/source.hyper\" as source", buffers::parser::StatementType::ATTACH_DATABASE,
          buffers::parser::StatementTargetType::NONE, {}, {}, {}, "path/to/source.hyper", "source", false},
         {"attach local database local_source as attached with (access_mode = 'readonly')",
@@ -194,6 +196,47 @@ TEST(ParserTest, ExposesNormalizedStatementMetadata) {
             << test.input;
         EXPECT_EQ(attach ? attach->local() : false, test.attach_local) << test.input;
     }
+}
+
+TEST(ParserTest, ParsesDeleteForms) {
+    for (auto input : {
+             "delete from target",
+             "delete from target where id = 1 returning *",
+             "delete from only (schema.target) as t where t.id = 1",
+             "delete from schema.target * t using source s, audit a where t.id = s.id returning t.id, a.id as aid",
+             "delete from target t using source s join audit a on s.id = a.id where t.id = s.id",
+             "delete from target t where exists (select 1 from source s where s.id = t.id)",
+             "delete from target returning (select id from source)",
+             "with source as (select 1 as id) delete from target using source where target.id = source.id",
+             "with recursive source as (select 1 as id) delete from target returning id",
+             "explain delete from target where id = 1",
+             "explain (analyze false) with source as (select 1) delete from target returning *",
+         }) {
+        SCOPED_TRACE(input);
+        auto script = ParseString(input);
+        ASSERT_TRUE(script->errors.empty()) << (script->errors.empty() ? "" : script->errors.front().message);
+        ASSERT_EQ(script->statements.size(), 1u);
+        EXPECT_EQ(script->statements[0].type, std::string_view{input}.starts_with("explain")
+                                                  ? buffers::parser::StatementType::EXPLAIN
+                                                  : buffers::parser::StatementType::DELETE);
+    }
+    for (auto input : {"delete target", "delete from", "delete from target using", "delete from target returning"}) {
+        SCOPED_TRACE(input);
+        EXPECT_FALSE(ParseString(input)->errors.empty());
+    }
+}
+
+TEST(ParserTest, FormatsDeleteKeywordCaseWithoutChangingNamesOrLiterals) {
+    auto script = ParseString("with ids as (select 1 as id) delete from \"Target\" t using ids "
+                              "where t.id = ids.id returning 'KeepCase' as \"Label\"");
+    ASSERT_TRUE(script->errors.empty());
+    buffers::formatting::FormattingConfigT config;
+    config.mode = buffers::formatting::FormattingMode::INLINE;
+    config.keyword_case = buffers::formatting::KeywordCase::UPPER;
+    Formatter formatter{*script};
+    EXPECT_EQ(formatter.Format(config), "WITH ids AS (SELECT 1 AS id) DELETE FROM \"Target\" t USING ids "
+                                       "WHERE t.id = ids.id RETURNING 'KeepCase' AS \"Label\";");
+    EXPECT_TRUE(formatter.IsFullyFormatted());
 }
 
 TEST(ParserTest, ParsesHyperInsertForms) {
