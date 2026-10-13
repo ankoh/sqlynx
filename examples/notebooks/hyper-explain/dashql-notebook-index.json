@@ -31,46 +31,34 @@
       "name": "10_postagg_schema.sql"
     },
     {
-      "name": "11_preagg_limitation_sort.sql"
+      "name": "11_text_tree.sql"
     },
     {
-      "name": "12_preagg_limitation_static.sql"
+      "name": "12_sql_dialect.sql"
     },
     {
-      "name": "13_preagg_limitation_windows.sql"
+      "name": "13_sql_with_obfuscated.sql"
     },
     {
-      "name": "14_text_tree.sql"
+      "name": "14_sql_regexp_like.sql"
     },
     {
-      "name": "15_sql_dialect.sql"
+      "name": "15_sql_with_dialect_check_lenient.sql"
     },
     {
-      "name": "16_sql_with_obfuscated.sql"
+      "name": "16_sql_expand_views_false.sql"
     },
     {
-      "name": "17_sql_regexp_like.sql"
+      "name": "17_sql_expand_views_true.sql"
     },
     {
-      "name": "18_sql_with_dialect_check_lenient.sql"
+      "name": "18_sql_expressions.sql"
     },
     {
-      "name": "19_sql_with_dialect_check_strict.sql"
+      "name": "20_streaming_explain_options.sql"
     },
     {
-      "name": "20_sql_expand_views_false.sql"
-    },
-    {
-      "name": "21_sql_expand_views_true.sql"
-    },
-    {
-      "name": "22_sql_expressions.sql"
-    },
-    {
-      "name": "23_streaming_explain_options.sql"
-    },
-    {
-      "name": "24_streaming_with_predicate.sql"
+      "name": "21_streaming_with_predicate.sql"
     }
   ]
 }
