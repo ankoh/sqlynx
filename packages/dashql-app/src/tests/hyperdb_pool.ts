@@ -18,6 +18,8 @@ export function installSharedHyperDBTestPool(): SharedHyperDBTestPool {
         if (!getClient) throw new Error('Shared HyperDB client is not installed');
         const client = await getClient(onSetupProgress);
         return await HyperDB.create(client, undefined, {
+            computeDatabasePath: `/mnt/fs/dashql-test-${nextLease++}.hyper`,
+            defaultDatabasePath: `/mnt/fs/dashql-test-${nextLease++}.hyper`,
             terminateClient: false,
         });
     };

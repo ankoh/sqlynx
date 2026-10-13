@@ -11,11 +11,11 @@ import type {
     EmbeddedTableInsertOptions,
 } from '../database/embedded_database.js';
 
-const COMPUTE_DATABASE_NAME = '__dashql_compute';
 const DATABASE_SCHEMA = 'public';
 
 export interface HyperDBOptions {
-    databasePrefix?: string;
+    computeDatabasePath?: string;
+    defaultDatabasePath?: string;
     terminateClient?: boolean;
     createObjectURL?: (blob: Blob) => string;
     revokeObjectURL?: (url: string) => void;
@@ -146,8 +146,9 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedExternalFileDat
     private termination: Promise<void> | null = null;
     private terminated = false;
     private databaseOperation: Promise<void> = Promise.resolve();
-    private readonly computeDatabaseName: string;
     private readonly terminateClient: boolean;
+    private readonly computeDatabasePath: string | null;
+    private readonly defaultDatabasePath: string | null;
     private readonly createObjectURL: (blob: Blob) => string;
     private readonly revokeObjectURL: (url: string) => void;
     private readonly externalFiles = new Map<string, string>();
@@ -158,7 +159,8 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedExternalFileDat
         private readonly settings?: HyperDBSettings,
         options: HyperDBOptions = {},
     ) {
-        this.computeDatabaseName = `${options.databasePrefix ?? ''}${COMPUTE_DATABASE_NAME}`;
+        this.computeDatabasePath = options.computeDatabasePath ?? null;
+        this.defaultDatabasePath = options.defaultDatabasePath ?? null;
         this.terminateClient = options.terminateClient ?? true;
         this.createObjectURL = options.createObjectURL ?? (blob => URL.createObjectURL(blob));
         this.revokeObjectURL = options.revokeObjectURL ?? (url => URL.revokeObjectURL(url));
@@ -174,7 +176,7 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedExternalFileDat
         return database;
     }
 
-    async connect(_options: EmbeddedConnectionOptions = {}): Promise<HyperDBConnection> {
+    async connect(options: EmbeddedConnectionOptions = {}): Promise<HyperDBConnection> {
         await this.initialize();
         if (this.termination || this.terminated) {
             throw new Error('database is terminated');
@@ -186,13 +188,15 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedExternalFileDat
             throw new Error('database is terminated');
         }
 
+        const databasePath = options.defaultDatabase === 'hyper' ? this.defaultDatabasePath : this.computeDatabasePath;
+        const alias = options.defaultDatabase === 'hyper' ? 'hyper' : '__dashql_compute';
         const connection = new HyperDBConnection(this.client, connectionHandle, () => {
             this.connections.delete(connection);
-        }, COMPUTE_DATABASE_NAME);
+        }, databasePath == null ? undefined : alias);
         try {
-            await connection.query(
-                `ATTACH DATABASE ${quoteIdentifier(this.computeDatabaseName)} AS ${quoteIdentifier(COMPUTE_DATABASE_NAME)}`,
-            );
+            if (databasePath != null) {
+                await connection.query(`ATTACH DATABASE ${quoteIdentifier(databasePath)} AS ${quoteIdentifier(alias)}`);
+            }
         } catch (error) {
             await connection.close();
             throw error;
@@ -327,7 +331,12 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedExternalFileDat
                         expectOK(await this.client.removeExternalRegistration(path), 'remove external directory during termination');
                         this.externalDirectories.delete(path);
                     }
-                    await this.executeDatabaseStatement(`DROP DATABASE ${quoteIdentifier(this.computeDatabaseName)}`);
+                    if (this.computeDatabasePath != null) {
+                        await this.executeDatabaseStatement(`DROP DATABASE ${quoteIdentifier(this.computeDatabasePath)}`);
+                    }
+                    if (this.defaultDatabasePath != null) {
+                        await this.executeDatabaseStatement(`DROP DATABASE ${quoteIdentifier(this.defaultDatabasePath)}`);
+                    }
                     if (this.terminateClient) {
                         expectOK(await this.client.shutdown(), 'shutdown');
                         await this.client.terminate();
@@ -355,7 +364,12 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedExternalFileDat
                         'initialize HyperDB settings',
                     );
                 }
-                await this.executeDatabaseStatement(`CREATE DATABASE ${quoteIdentifier(this.computeDatabaseName)}`);
+                if (this.computeDatabasePath != null) {
+                    await this.executeDatabaseStatement(`CREATE DATABASE ${quoteIdentifier(this.computeDatabasePath)}`);
+                }
+                if (this.defaultDatabasePath != null) {
+                    await this.executeDatabaseStatement(`CREATE DATABASE ${quoteIdentifier(this.defaultDatabasePath)}`);
+                }
             })().catch(error => {
                 this.initialization = null;
                 throw error;
@@ -378,17 +392,14 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedExternalFileDat
     }
 
     private async executeDatabaseStatement(statement: string): Promise<void> {
-        const connection = new HyperDBConnection(
-            this.client,
-            readHandle(await this.client.connect(), 'connect'),
-            () => {},
-        );
+        const connection = new HyperDBConnection(this.client, readHandle(await this.client.connect(), 'connect'), () => {});
         try {
             await connection.query(statement);
         } finally {
             await connection.close();
         }
     }
+
 }
 
 function throwIfAborted(signal?: AbortSignal): void {

@@ -5,6 +5,7 @@ import type { SetupProgress } from '../database/embedded_database_provider.js';
 
 import { HyperDB, type HyperDBEngineClient } from './hyperdb_wasm.js';
 import { HYPERDB_WASM_ENGINE_SETTINGS } from './hyperdb_settings.js';
+import { cleanupStaleHyperDBOPFSSessions, createHyperDBOPFSSession } from './hyperdb_opfs_session.js';
 import { getHyperDBWebSupportError } from './hyperdb_web_support.js';
 
 declare global {
@@ -149,12 +150,26 @@ export async function setupWebHyperDB(
     const initStart = performance.now();
     try {
         logger.info('Creating HyperDB WASM client', { context }, 'hyperdb');
+        await cleanupStaleHyperDBOPFSSessions();
         const client = await createWebHyperDBClient(onSetupProgress);
+        const session = await createHyperDBOPFSSession();
         try {
             const database = await HyperDB.create(
                 client,
                 HYPERDB_WASM_ENGINE_SETTINGS,
+                {
+                    computeDatabasePath: session.computeDatabasePath,
+                    defaultDatabasePath: session.defaultDatabasePath,
+                },
             );
+            const terminate = database.terminate.bind(database);
+            database.terminate = async () => {
+                try {
+                    await terminate();
+                } finally {
+                    await session.dispose();
+                }
+            };
 
             logger.info('Instantiated HyperDB WASM', {
                 context,
@@ -162,6 +177,7 @@ export async function setupWebHyperDB(
             }, 'hyperdb');
             return database;
         } catch (error) {
+            await session.dispose();
             await client.terminate();
             throw error;
         }

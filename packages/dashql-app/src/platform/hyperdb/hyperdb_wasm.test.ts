@@ -282,14 +282,14 @@ describe('HyperDB embedded database adapter', () => {
         await first.close();
         const third = await database.connect();
 
-        expect(client.connectCount).toBe(4);
-        expect(client.disconnectCount).toBe(2);
+        expect(client.connectCount).toBe(3);
+        expect(client.disconnectCount).toBe(1);
 
         await second.close();
         await third.close();
         await database.terminate();
 
-        expect(client.disconnectCount).toBe(5);
+        expect(client.disconnectCount).toBe(3);
         expect(client.terminateCount).toBe(1);
         expect(client.calls).toContain('shutdown');
     });
@@ -343,7 +343,7 @@ describe('HyperDB embedded database adapter', () => {
             { id: 3, label: 'gamma' },
         ]);
         expect(client.calls.some(call => /insert:\d+:\/tmp\/hyperdb\/test-1\.arrows:public:__frame:true:true/.test(call))).toBe(true);
-        expect(client.connectCount).toBe(3);
+        expect(client.connectCount).toBe(2);
 
         await reader.close();
         await database.terminate();
@@ -447,7 +447,7 @@ describe('HyperDB embedded database adapter', () => {
         await expect(second.query('SELECT 42 AS answer')).resolves.toBeDefined();
 
         expect(client.activeOperationCount).toBe(0);
-        expect(client.calls.filter(call => call.startsWith('finish:'))).toHaveLength(5);
+        expect(client.calls.filter(call => call.startsWith('finish:'))).toHaveLength(2);
 
         await first.close();
         await second.close();
@@ -479,7 +479,7 @@ describe('HyperDB embedded database adapter', () => {
         await connection.close();
 
         await expect(connection.query('SELECT 1')).rejects.toThrow('connection is closed');
-        expect(client.disconnectCount).toBe(2);
+        expect(client.disconnectCount).toBe(1);
 
         await database.terminate();
     });

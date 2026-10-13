@@ -139,6 +139,7 @@ describe('HyperDB embedded database integration', () => {
     let client: CountingClient;
     let engineClient: HyperDBEngineClient;
     let database: HyperDB | null = null;
+    let nextDatabase = 1;
 
     beforeAll(async () => {
         engineClient = globalThis.__DASHQL_TEST_HYPERDB_CLIENT__
@@ -149,6 +150,8 @@ describe('HyperDB embedded database integration', () => {
     beforeEach(async () => {
         client = new CountingClient(engineClient);
         database = await HyperDB.create(client, undefined, {
+            computeDatabasePath: `/mnt/fs/dashql-integration-${nextDatabase++}.hyper`,
+            defaultDatabasePath: `/mnt/fs/dashql-integration-${nextDatabase++}.hyper`,
             terminateClient: false,
         });
     }, 60_000);
@@ -178,7 +181,11 @@ describe('HyperDB embedded database integration', () => {
             await database!.terminate();
             database = null;
 
-            database = await HyperDB.create(engineClient, undefined, { terminateClient: false });
+            database = await HyperDB.create(engineClient, undefined, {
+                computeDatabasePath: `/mnt/fs/dashql-integration-${nextDatabase++}.hyper`,
+                defaultDatabasePath: `/mnt/fs/dashql-integration-${nextDatabase++}.hyper`,
+                terminateClient: false,
+            });
             const second = await database.connect();
             try {
                 await second.query(`ATTACH DATABASE ${quoteSqlIdentifier(path)} AS restored`);
