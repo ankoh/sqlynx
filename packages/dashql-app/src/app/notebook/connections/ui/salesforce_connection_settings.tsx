@@ -36,6 +36,7 @@ interface PageState {
     appConsumerKey: string;
     dataCloudInstanceUrl: string;
     dataCloudTenantId: string;
+    login: string;
 };
 
 export function getConnectionStatusText(status: ConnectionStatus | undefined, logger: Logger) {
@@ -153,6 +154,7 @@ interface SalesforceConnectionSettingsPageProps {
     updateAppConsumerKey: React.ChangeEventHandler<HTMLInputElement>;
     updateDataCloudInstanceUrl: React.ChangeEventHandler<HTMLInputElement>;
     updateDataCloudTenantId: React.ChangeEventHandler<HTMLInputElement>;
+    updateLogin: React.ChangeEventHandler<HTMLInputElement>;
     setupConnection: () => void;
     cancelSetup: () => void;
     resetSetup: () => void;
@@ -237,11 +239,26 @@ export const SalesforceConnectionSettingsPage: React.FC<SalesforceConnectionSett
                             readOnly={props.freezeInput}
                         />
                         <TextField
+                            name="Salesforce Login"
+                            caption="Account offered as the sign-in hint"
+                            value={props.login}
+                            placeholder=""
+                            leadingVisual={PersonIcon}
+                            onChange={props.updateLogin}
+                            readOnly={props.freezeInput}
+                            disabled={props.freezeInput}
+                            logContext={LOG_CTX}
+                        />
+                    </div>
+                </div>
+                <div className={style.section}>
+                    <div className={classNames(style.section_layout, style.body_section_layout)}>
+                        <TextField
                             name="Data Cloud Instance URL"
                             caption="Tenant Endpoint of the Data Cloud Instance"
                             value={props.dataCloudInstanceUrl}
                             onChange={props.updateDataCloudInstanceUrl}
-                            placeholder=""
+                            placeholder="Data Cloud Instance"
                             leadingVisual={() => <div>URL</div>}
                             validation={props.dataCloudInstanceUrlValidation}
                             readOnly={props.freezeInput}
@@ -253,7 +270,7 @@ export const SalesforceConnectionSettingsPage: React.FC<SalesforceConnectionSett
                             caption="Required CDP tenant ID for Data Cloud APIs"
                             value={props.dataCloudTenantId}
                             onChange={props.updateDataCloudTenantId}
-                            placeholder=""
+                            placeholder="Data Cloud Tenant"
                             leadingVisual={() => <div>ID</div>}
                             validation={props.dataCloudTenantIdValidation}
                             readOnly={props.freezeInput}
@@ -274,20 +291,6 @@ export const SalesforceConnectionSettingsPage: React.FC<SalesforceConnectionSett
                             disabled
                             logContext={LOG_CTX}
                         />
-                        <TextField
-                            name="Login"
-                            caption="Account offered as the sign-in hint"
-                            value={props.login}
-                            placeholder=""
-                            leadingVisual={PersonIcon}
-                            readOnly
-                            disabled
-                            logContext={LOG_CTX}
-                        />
-                    </div>
-                </div>
-                <div className={style.section}>
-                    <div className={classNames(style.section_layout, style.body_section_layout)}>
                         <TextField
                             name="Core Tenant ID"
                             caption="Tenant id for core apis"
@@ -324,6 +327,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
         appConsumerKey: params?.appConsumerKey ?? "",
         dataCloudInstanceUrl: params?.dataCloudInstanceUrl ?? "",
         dataCloudTenantId: params?.dataCloudTenantId ?? "",
+        login: params?.login ?? "",
     });
     const [pageState, setPageState] = useConnectionDraftForm(props.databaseId,
         params => buildPageState(params && 'salesforce' in params ? params.salesforce : undefined),
@@ -331,7 +335,6 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
             ...salesforceParams,
             ...form,
             appConsumerSecret: salesforceParams?.appConsumerSecret ?? '',
-            login: salesforceParams?.login ?? '',
         } }));
     const hyperProtocol = pageState.hyperProtocol;
 
@@ -342,6 +345,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
     const updateAppConsumerKey: React.ChangeEventHandler<HTMLInputElement> = ev => setPageState(s => ({ ...s, appConsumerKey: ev.target.value }));
     const updateDataCloudInstanceUrl: React.ChangeEventHandler<HTMLInputElement> = ev => setPageState(s => ({ ...s, dataCloudInstanceUrl: ev.target.value }));
     const updateDataCloudTenantId: React.ChangeEventHandler<HTMLInputElement> = ev => setPageState(s => ({ ...s, dataCloudTenantId: ev.target.value }));
+    const updateLogin: React.ChangeEventHandler<HTMLInputElement> = ev => setPageState(s => ({ ...s, login: ev.target.value }));
 
     // Maintain setting validations
     const [instanceUrlValidation, setInstanceUrlValidation] = React.useState<TextFieldValidationStatus>({
@@ -361,7 +365,6 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
         setDataCloudTenantIdValidation({ type: VALIDATION_UNKNOWN, value: null });
     }, [connectionState?.paramsDraft]);
 
-    const restoredLogin = salesforceParams?.login ?? "";
     const setupParams = React.useMemo<connection.SalesforceConnectionParams>(() => ({
         hyperProtocol: pageState.hyperProtocol,
         instanceUrl: pageState.instanceUrl,
@@ -369,8 +372,8 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
         appConsumerSecret: salesforceParams?.appConsumerSecret ?? '',
         dataCloudInstanceUrl: pageState.dataCloudInstanceUrl,
         dataCloudTenantId: pageState.dataCloudTenantId,
-        login: restoredLogin,
-    }), [pageState, salesforceParams?.appConsumerSecret, restoredLogin]);
+        login: pageState.login,
+    }), [pageState, salesforceParams?.appConsumerSecret]);
     const setupAbortController = React.useRef<AbortController | null>(null);
     const setupConnection = async () => {
         let validationSucceeded = true;
@@ -460,7 +463,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
             freezeInput={freezeInput}
             instanceUrl={pageState.instanceUrl}
             appConsumerKey={pageState.appConsumerKey}
-            login={restoredLogin}
+            login={pageState.login}
             orgJwt={dcAuthInfo?.offcoreRawJwt ?? ''}
             dataCloudInstanceUrl={pageState.dataCloudInstanceUrl}
             coreTenantId={dcAuthInfo?.coreTenantId ?? ''}
@@ -474,6 +477,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
             updateAppConsumerKey={updateAppConsumerKey}
             updateDataCloudInstanceUrl={updateDataCloudInstanceUrl}
             updateDataCloudTenantId={updateDataCloudTenantId}
+            updateLogin={updateLogin}
             setupConnection={setupConnection}
             cancelSetup={cancelSetup}
             resetSetup={resetSetup}

@@ -389,6 +389,7 @@ function SalesforceLoginDialog(props: SalesforceLoginDialogProps) {
                     updateAppConsumerKey={event => setAppConsumerKey(event.target.value)}
                     updateDataCloudInstanceUrl={event => setDataCloudInstanceUrl(event.target.value)}
                     updateDataCloudTenantId={event => setDataCloudTenantId(event.target.value)}
+                    updateLogin={event => setLoginHint(event.target.value)}
                     setupConnection={setupConnection}
                     cancelSetup={props.onCancel}
                     resetSetup={props.onCancel}

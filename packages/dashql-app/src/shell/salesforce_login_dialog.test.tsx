@@ -118,9 +118,12 @@ describe('useSalesforceLoginDialog', () => {
         expect(inputForLabel('Connected App')).toBeInstanceOf(HTMLInputElement);
         expect(inputForLabel('Data Cloud Instance URL').disabled).toBe(false);
         expect(inputForLabel('Data Cloud Instance URL').readOnly).toBe(false);
+        expect(inputForLabel('Data Cloud Instance URL').placeholder).toBe('Data Cloud Instance');
         expect(inputForLabel('Data Cloud Tenant ID').disabled).toBe(false);
         expect(inputForLabel('Data Cloud Tenant ID').readOnly).toBe(false);
-        expect(inputForLabel('Login').disabled).toBe(true);
+        expect(inputForLabel('Data Cloud Tenant ID').placeholder).toBe('Data Cloud Tenant');
+        expect(inputForLabel('Salesforce Login').disabled).toBe(false);
+        expect(inputForLabel('Salesforce Login').readOnly).toBe(false);
         expect(inputForLabel('OrgJWT').disabled).toBe(true);
         expect(dialog.textContent).not.toContain('Core Access Token');
         expect(dialog.textContent).not.toContain('Data Cloud Access Token');
@@ -129,6 +132,20 @@ describe('useSalesforceLoginDialog', () => {
 
         act(() => closeButton().click());
         await expect(result).resolves.toBeNull();
+    });
+
+    it('uses an editable login hint until OAuth returns the token login', async () => {
+        const result = open();
+        openOAuthPopup.mockReturnValue(window);
+        act(() => setInputValue(inputForLabel('Salesforce Login'), 'hint@example.com'));
+        fillValidForm();
+        submit();
+
+        await expect(result).resolves.toMatchObject({ loginHint: 'hint@example.com' });
+
+        act(() => controller.update({ login: 'token@example.com' }));
+        expect(inputForLabel('Salesforce Login').value).toBe('token@example.com');
+        expect(inputForLabel('Salesforce Login').disabled).toBe(true);
     });
 
     it('displays a single OrgJWT without replacing entered Data Cloud settings when the core token arrives', async () => {
@@ -198,7 +215,7 @@ describe('useSalesforceLoginDialog', () => {
         expect(inputForLabel('Connected App').value).toBe('saved-consumer-key');
         expect(inputForLabel('Data Cloud Instance URL').value).toBe('https://saved-data.example.com');
         expect(inputForLabel('Data Cloud Tenant ID').value).toBe('saved-data-tenant');
-        expect(inputForLabel('Login').value).toBe('user@example.com');
+        expect(inputForLabel('Salesforce Login').value).toBe('user@example.com');
         expect(historyButton.getAttribute('aria-expanded')).toBe('false');
 
         act(() => closeButton().click());
