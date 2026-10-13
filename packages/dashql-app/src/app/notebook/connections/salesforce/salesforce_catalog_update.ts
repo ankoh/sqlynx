@@ -23,7 +23,6 @@ export interface ResolvedSalesforceCatalog {
 export async function resolveSalesforceCatalog(
     logger: LoggerLike,
     coreAccessToken: connection.SalesforceCoreAccessToken,
-    dataCloudAccessToken: connection.SalesforceDataCloudAccessToken,
     api: SalesforceApiClientInterface,
     signal: AbortSignal,
     onProgress?: (progress: SalesforceMetadataProgress) => void,
@@ -31,7 +30,7 @@ export async function resolveSalesforceCatalog(
     if (!coreAccessToken.accessToken || !coreAccessToken.instanceUrl) {
         throw new Error('Salesforce core access token is missing');
     }
-    const dataSpace = getSalesforceDataSpace(dataCloudAccessToken);
+    const dataSpace = getSalesforceDataSpace(coreAccessToken);
     logger.info('Resolving Salesforce catalog metadata', { dataSpace }, 'salesforce_catalog');
     const metadataStartedAt = performance.now();
     const [metadata, functionsSQL] = await Promise.all([
@@ -76,15 +75,10 @@ export async function updateSalesforceCatalog(
     if (!coreAccessToken?.accessToken || !coreAccessToken.instanceUrl) {
         throw new Error(`Salesforce core access token is missing`);
     }
-    // The selected data space is encoded in the Data Cloud token.
-    if (!conn.proto.oauthState?.dataCloudAccessToken) {
-        throw new Error(`Salesforce data cloud access token is missing`);
-    }
-    const dataSpace = getSalesforceDataSpace(conn.proto.oauthState.dataCloudAccessToken);
+    const dataSpace = getSalesforceDataSpace(coreAccessToken);
     const { tables, functionsSQL, columnCount } = await resolveSalesforceCatalog(
         logger,
         coreAccessToken,
-        conn.proto.oauthState.dataCloudAccessToken,
         api,
         abortController.signal,
     );

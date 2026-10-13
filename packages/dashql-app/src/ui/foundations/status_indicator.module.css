@@ -1,5 +1,6 @@
 .status_running_spinner {
-    transform-origin: 0 0;
+    transform-box: fill-box;
+    transform-origin: center;
     animation: status_rotate 1s linear infinite;
 }
 

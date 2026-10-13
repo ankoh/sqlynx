@@ -8,9 +8,7 @@ import {
     GENERATING_PKCE_CHALLENGE,
     RECEIVED_CORE_AUTH_CODE,
     RECEIVED_CORE_AUTH_TOKEN,
-    RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
     REQUESTING_CORE_AUTH_TOKEN,
-    REQUESTING_DATA_CLOUD_ACCESS_TOKEN,
     SalesforceConnectionStateAction,
     SF_CHANNEL_READY,
     SF_CHANNEL_SETUP_STARTED,
@@ -19,7 +17,7 @@ import { generatePKCEChallenge } from '../../../../utils/pkce.js';
 import { sleep } from '../../../../utils/sleep.js';
 import { Dispatch } from '../../../../utils/variant.js';
 import { Logger, stringifyError } from '../../../../platform/logger/logger.js';
-import { SalesforceApiClientInterface, SalesforceDatabaseChannel } from './salesforce_api_client.js';
+import { getSalesforceDataCloudUrl, SalesforceApiClientInterface, SalesforceDatabaseChannel } from './salesforce_api_client.js';
 import { SalesforceSetupApi } from './salesforce_connection_setup.js';
 import { SalesforceConnectorConfig } from '../connector_configs.js';
 import { HEALTH_CHECK_STARTED, HEALTH_CHECK_SUCCEEDED, RESET_ATTACHED_DATABASE } from '../attached_database_state.js';
@@ -81,22 +79,10 @@ export async function setupSalesforceConnection(updateState: Dispatch<Salesforce
         });
         abortSignal.throwIfAborted();
 
-        // Request the data cloud access token
-        updateState({
-            type: REQUESTING_DATA_CLOUD_ACCESS_TOKEN,
-            value: null,
-        });
-        const token = await apiClient.getDataCloudAccessToken(coreAccessToken, abortSignal);
-        updateState({
-            type: RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
-            value: token,
-        });
-        abortSignal.throwIfAborted();
-
         // Start the channel setup
         const connParams: connection.HyperConnectionParams = {
             protocol: params.hyperProtocol,
-            endpoint: token.instanceUrl ?? "",
+            endpoint: getSalesforceDataCloudUrl(params.dataCloudInstanceUrl),
             tls: {
                 clientKeyPath: "",
                 clientCertPath: "",
@@ -110,7 +96,7 @@ export async function setupSalesforceConnection(updateState: Dispatch<Salesforce
         abortSignal.throwIfAborted()
 
         const hyperChannel = new HyperDatabaseChannelMock();
-        const sfChannel = new SalesforceDatabaseChannel(apiClient, coreAccessToken, token, hyperChannel);
+        const sfChannel = new SalesforceDatabaseChannel(apiClient, coreAccessToken, hyperChannel);
         sleep(100);
 
         // Mark the channel as ready

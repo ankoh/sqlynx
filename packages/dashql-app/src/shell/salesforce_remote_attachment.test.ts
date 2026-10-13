@@ -1,5 +1,6 @@
 // @vitest-environment node
 import type { EmbeddedConnection } from '../platform/database/embedded_database.js';
+import type * as connection from '@ankoh/dashql-jsonschema/connection.js';
 import { TestLogger } from '../platform/logger/test_logger.js';
 import {
     quoteSqlIdentifier,
@@ -8,7 +9,6 @@ import {
     SalesforceRemoteAttachmentManager,
     type SalesforceRemoteAttachmentDependencies,
     type SalesforceRemoteCatalog,
-    type SalesforceRemoteDataCloudToken,
 } from './salesforce_remote_attachment.js';
 
 const CATALOG: SalesforceRemoteCatalog = {
@@ -24,8 +24,14 @@ const CATALOG: SalesforceRemoteCatalog = {
     ],
 };
 
-function makeToken(instanceUrl: string, tenant: string, raw: string): SalesforceRemoteDataCloudToken {
-    return { instanceUrl, jwt: { raw, payload: { audienceTenantId: tenant } } };
+function makeConnection(cdpUrl: string, tenant: string, raw: string): [connection.SalesforceCoreAccessToken, Pick<connection.SalesforceConnectionParams, 'dataCloudInstanceUrl' | 'dataCloudTenantId'>] {
+    return [{
+        createdAt: new Date(0).toISOString(),
+        expiresAt: new Date(1).toISOString(),
+        accessToken: raw,
+        instanceUrl: 'https://core.example.com',
+        jwt: { raw, header: {}, payload: { exp: 0.001 } },
+    }, { dataCloudInstanceUrl: cdpUrl, dataCloudTenantId: tenant }];
 }
 
 function createManager(options: {
@@ -68,6 +74,50 @@ function createManager(options: {
 }
 
 describe('SalesforceRemoteAttachmentManager', () => {
+    it.each(['data.example.com', 'data.example.com/', 'data.example.com:8443/'])(
+        'normalizes configured endpoint %s without using the core instance URL', async endpoint => {
+            const { manager, sql } = createManager();
+            await manager.attach('Salesforce', ...makeConnection(endpoint, 'cdp-tenant', 'org-jwt'));
+            expect(sql[0]).toContain('"host":"https://data.example.com"');
+            expect(sql[0]).toContain(`"port":${endpoint.includes(':8443') ? 8443 : 443}`);
+            expect(sql[0]).toContain('"tenant":"cdp-tenant","token":"org-jwt"');
+            expect(sql[0]).not.toContain('core.example.com');
+        },
+    );
+
+    it.each([
+        'http://data.example.com',
+        'ftp://data.example.com',
+        'https://user:password@data.example.com',
+        'https://@data.example.com',
+        'https://data.exam\nple.com',
+        'https://data.example.com?query=1',
+        'https://data.example.com?',
+        'https://data.example.com#fragment',
+        'https://data.example.com#',
+        'https://data.example.com/api',
+        'data.example.com/api',
+        'https://data.example.com//',
+        'https://data.example.com/../',
+        'https://data.example.com/%2e%2e/',
+        'https://data.example.com\\api',
+        '//data.example.com',
+    ])('rejects unsafe configured endpoint %s before executing SQL', async endpoint => {
+        const { manager, queryArrowIPC } = createManager();
+        await expect(manager.attach('Salesforce', ...makeConnection(endpoint, 'tenant', 'org-jwt'))).rejects.toThrow();
+        expect(queryArrowIPC).not.toHaveBeenCalled();
+        expect(manager.hasAlias('Salesforce')).toBe(false);
+    });
+
+    it.each(['dataCloudInstanceUrl', 'dataCloudTenantId', 'raw'] as const)('rejects a missing %s before executing SQL', async field => {
+        const { manager, queryArrowIPC } = createManager();
+        const [token, params] = makeConnection('https://data.example.com', 'tenant', 'org-jwt');
+        if (field === 'raw') token.jwt.raw = '';
+        else params[field] = ' ';
+        await expect(manager.attach('Salesforce', token, params)).rejects.toThrow(field === 'raw' ? 'Salesforce OrgJWT is missing raw JWT' : 'cannot be empty');
+        expect(queryArrowIPC).not.toHaveBeenCalled();
+    });
+
     it('quotes SQL strings and identifiers safely', () => {
         expect(quoteSqlString("x'; DROP TABLE secrets; --")).toBe("'x''; DROP TABLE secrets; --'");
         expect(quoteSqlIdentifier('a"; DETACH db; --')).toBe('"a""; DETACH db; --"');
@@ -78,7 +128,7 @@ describe('SalesforceRemoteAttachmentManager', () => {
         const { manager, sql } = createManager({ createEndpointKey: () => endpointKey });
         await manager.attach(
             'a"; DETACH db; --',
-            makeToken('https://data.example.com:8443/path', "tenant'one", "jwt'one"),
+            ...makeConnection('https://data.example.com:8443/', "tenant'one", "jwt'one"),
         );
         expect(sql[0]).toContain("SET global.hyper_remote_endpoints = '");
         expect(sql[0]).toContain("jwt''one");
@@ -91,7 +141,7 @@ describe('SalesforceRemoteAttachmentManager', () => {
         const { manager, sql, loadCatalogScript, logger } = createManager();
         await expect(manager.attach(
             'Salesforce',
-            makeToken('https://data.example.com:8443/api', 'tenant-1', 'jwt.payload.signature'),
+            ...makeConnection('https://data.example.com:8443/', 'tenant-1', 'jwt.payload.signature'),
         )).resolves.toEqual({ alias: 'Salesforce' });
 
         expect(sql).toEqual([
@@ -117,8 +167,8 @@ describe('SalesforceRemoteAttachmentManager', () => {
 
     it('preserves the first endpoint when attaching a second alias', async () => {
         const { manager, sql, loadCatalogScript, dependencies } = createManager();
-        await manager.attach('One', makeToken('https://one.example.com', 'tenant-1', 'jwt-1'));
-        await manager.attach('Two', makeToken('https://two.example.com:9443', 'tenant-2', 'jwt-2'));
+        await manager.attach('One', ...makeConnection('https://one.example.com', 'tenant-1', 'jwt-1'));
+        await manager.attach('Two', ...makeConnection('https://two.example.com:9443', 'tenant-2', 'jwt-2'));
 
         const secondSetting = sql[3];
         expect(secondSetting).toContain('"key-one":{"connection":{"host":"https://one.example.com","port":443}');
@@ -132,7 +182,7 @@ describe('SalesforceRemoteAttachmentManager', () => {
 
     it('loads functions once and replaces an existing alias catalog', async () => {
         const { manager, loadCatalogScript, replaceCatalogScript, catalogScript, dependencies } = createManager();
-        await manager.attach('Salesforce', makeToken('https://data.example.com', 'tenant-1', 'jwt-1'));
+        await manager.attach('Salesforce', ...makeConnection('https://data.example.com', 'tenant-1', 'jwt-1'));
 
         await manager.refreshCatalog('salesFORCE', CATALOG);
         await manager.refreshCatalog('Salesforce', {
@@ -164,9 +214,9 @@ describe('SalesforceRemoteAttachmentManager', () => {
 
     it('rejects duplicate aliases case-insensitively without executing more SQL', async () => {
         const { manager, queryArrowIPC } = createManager();
-        const token = makeToken('https://data.example.com', 'tenant-1', 'jwt-1');
-        await manager.attach('Salesforce', token);
-        await expect(manager.attach('salesFORCE', token)).rejects.toThrow(
+        const params = makeConnection('https://data.example.com', 'tenant-1', 'jwt-1');
+        await manager.attach('Salesforce', ...params);
+        await expect(manager.attach('salesFORCE', ...params)).rejects.toThrow(
             'Salesforce alias already exists: salesFORCE',
         );
         expect(queryArrowIPC).toHaveBeenCalledTimes(3);
@@ -176,7 +226,7 @@ describe('SalesforceRemoteAttachmentManager', () => {
         const { manager, sql, logger } = createManager({ failAt: 3 });
         await expect(manager.attach(
             'Salesforce',
-            makeToken('https://data.example.com', 'tenant-1', 'jwt-1'),
+            ...makeConnection('https://data.example.com', 'tenant-1', 'jwt-1'),
         )).rejects.toThrow('query failed');
         expect(sql.slice(-2)).toEqual([
             "SET global.hyper_remote_endpoints = '{}'",

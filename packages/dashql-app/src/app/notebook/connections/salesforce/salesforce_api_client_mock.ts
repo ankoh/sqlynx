@@ -11,7 +11,6 @@ export interface SalesforceConnectorMockConfig {
     pkceChallenge: auth.OAuthPKCEChallenge;
     coreAccess: connection.SalesforceCoreAccessToken;
     coreUserInfo: connection.SalesforceCoreUserInfo;
-    dataCloudAccess: connection.SalesforceDataCloudAccessToken;
     dataCloudMetadata: connection.SalesforceDataCloudMetadata;
 }
 
@@ -37,16 +36,6 @@ export class SalesforceAPIClientMock implements SalesforceApiClientInterface {
         return this.mock.coreUserInfo;
     }
 
-    public async getDataCloudAccessToken(
-        _access: connection.SalesforceCoreAccessToken,
-        _cancel: AbortSignal,
-    ): Promise<connection.SalesforceDataCloudAccessToken> {
-        await sleep(200);
-        const expiresAt = new Date();
-        expiresAt.setSeconds(expiresAt.getSeconds() + 7200);
-        return this.mock.dataCloudAccess;
-    }
-
     public async getDataCloudMetadata(
         _access: connection.SalesforceCoreAccessToken,
         _dataSpace: string,
@@ -60,7 +49,7 @@ export class SalesforceAPIClientMock implements SalesforceApiClientInterface {
 
     public executeQuery(
         _scriptText: string,
-        _accessToken: connection.SalesforceDataCloudAccessToken,
+        _accessToken: connection.SalesforceCoreAccessToken,
     ): QueryExecutionResponseStream {
         return new QueryExecutionResponseStreamMock();
     }

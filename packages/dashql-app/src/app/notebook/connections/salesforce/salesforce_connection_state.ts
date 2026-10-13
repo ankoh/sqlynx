@@ -87,8 +87,6 @@ export const RECEIVED_CORE_AUTH_CODE = Symbol('RECEIVED_AUTH_CODE');
 export const REQUESTING_CORE_AUTH_TOKEN = Symbol('REQUESTING_CORE_AUTH_TOKEN');
 export const RECEIVED_CORE_AUTH_TOKEN = Symbol('RECEIVED_CORE_ACCESS_TOKEN');
 export const RECEIVED_CORE_USER_INFO = Symbol('RECEIVED_CORE_USER_INFO');
-export const REQUESTING_DATA_CLOUD_ACCESS_TOKEN = Symbol('REQUESTING_DATA_CLOUD_ACCESS_TOKEN');
-export const RECEIVED_DATA_CLOUD_ACCESS_TOKEN = Symbol('RECEIVED_DATA_CLOUD_ACCESS_TOKEN');
 
 export type SalesforceConnectionStateAction =
     | VariantKind<typeof SETUP_CANCELLED, DetailedError>
@@ -106,9 +104,7 @@ export type SalesforceConnectionStateAction =
     | VariantKind<typeof RECEIVED_CORE_AUTH_CODE, auth.TemporaryToken>
     | VariantKind<typeof RECEIVED_CORE_AUTH_TOKEN, connection.SalesforceCoreAccessToken>
     | VariantKind<typeof RECEIVED_CORE_USER_INFO, connection.SalesforceCoreUserInfo>
-    | VariantKind<typeof RECEIVED_DATA_CLOUD_ACCESS_TOKEN, connection.SalesforceDataCloudAccessToken>
     | VariantKind<typeof REQUESTING_CORE_AUTH_TOKEN, null>
-    | VariantKind<typeof REQUESTING_DATA_CLOUD_ACCESS_TOKEN, null>
     | VariantKind<typeof SF_CHANNEL_READY, SalesforceDatabaseChannel>
     | VariantKind<typeof SF_CHANNEL_SETUP_CANCELLED, DetailedError>
     | VariantKind<typeof SF_CHANNEL_SETUP_FAILED, DetailedError>
@@ -165,7 +161,6 @@ export function reduceSalesforceConnectionState(state: AttachedDatabaseState, ac
                         oauthPkce: details.proto.oauthState?.oauthPkce ?? ({ value: "", verifier: "" } as auth.OAuthPKCEChallenge),
                         coreAuthCode: details.proto.oauthState?.coreAuthCode ?? ({ token: "", createdAt: new Date().toISOString() } as auth.TemporaryToken),
                         coreAccessToken: details.proto.oauthState?.coreAccessToken ?? ({} as connection.SalesforceCoreAccessToken),
-                        dataCloudAccessToken: details.proto.oauthState?.dataCloudAccessToken ?? ({} as connection.SalesforceDataCloudAccessToken),
                     }
                 },
                 channel: null,
@@ -271,7 +266,6 @@ export function reduceSalesforceConnectionState(state: AttachedDatabaseState, ac
                                 oauthPkce: action.value,
                                 coreAuthCode: details.proto.oauthState?.coreAuthCode ?? ({ token: "", createdAt: new Date().toISOString() } as auth.TemporaryToken),
                                 coreAccessToken: details.proto.oauthState?.coreAccessToken ?? ({} as connection.SalesforceCoreAccessToken),
-                                dataCloudAccessToken: details.proto.oauthState?.dataCloudAccessToken ?? ({} as connection.SalesforceDataCloudAccessToken),
                             }
                         },
                     }
@@ -356,7 +350,6 @@ export function reduceSalesforceConnectionState(state: AttachedDatabaseState, ac
                                 oauthPkce: details.proto.oauthState?.oauthPkce ?? ({ value: "", verifier: "" } as auth.OAuthPKCEChallenge),
                                 coreAuthCode: action.value,
                                 coreAccessToken: details.proto.oauthState?.coreAccessToken ?? ({} as connection.SalesforceCoreAccessToken),
-                                dataCloudAccessToken: details.proto.oauthState?.dataCloudAccessToken ?? ({} as connection.SalesforceDataCloudAccessToken),
                             }
                         },
                     }
@@ -403,7 +396,6 @@ export function reduceSalesforceConnectionState(state: AttachedDatabaseState, ac
                                 oauthPkce: details.proto.oauthState?.oauthPkce ?? ({ value: "", verifier: "" } as auth.OAuthPKCEChallenge),
                                 coreAuthCode: details.proto.oauthState?.coreAuthCode ?? ({ token: "", createdAt: new Date().toISOString() } as auth.TemporaryToken),
                                 coreAccessToken: action.value,
-                                dataCloudAccessToken: details.proto.oauthState?.dataCloudAccessToken ?? ({} as connection.SalesforceDataCloudAccessToken),
                             }
                         },
                     }
@@ -433,53 +425,6 @@ export function reduceSalesforceConnectionState(state: AttachedDatabaseState, ac
             };
             break;
         }
-        case REQUESTING_DATA_CLOUD_ACCESS_TOKEN:
-            next = {
-                ...state,
-                connectionStatus: ConnectionStatus.DATA_CLOUD_TOKEN_REQUESTED,
-                connectionHealth: ConnectionHealth.CONNECTING,
-                details: {
-                    type: SALESFORCE_DATA_CLOUD_CONNECTOR,
-                    value: {
-                        ...details,
-                        proto: {
-                            ...details.proto,
-                            setupTimings: {
-                                ...details.proto.setupTimings,
-                                dataCloudAccessTokenRequestedAt: dateToTimestamp(new Date()),
-                            },
-                        },
-                    }
-                }
-            };
-            break;
-        case RECEIVED_DATA_CLOUD_ACCESS_TOKEN:
-            next = {
-                ...state,
-                connectionStatus: ConnectionStatus.DATA_CLOUD_TOKEN_RECEIVED,
-                connectionHealth: ConnectionHealth.CONNECTING,
-                details: {
-                    type: SALESFORCE_DATA_CLOUD_CONNECTOR,
-                    value: {
-                        ...details,
-                        proto: {
-                            ...details.proto,
-                            setupTimings: {
-                                ...details.proto.setupTimings,
-                                dataCloudAccessTokenReceivedAt: dateToTimestamp(new Date()),
-                            },
-                            oauthState: {
-                                oauthParams: details.proto.oauthState?.oauthParams ?? { instanceUrl: "", appConsumerKey: "", requestedAt: Date.now(), expiresAt: Date.now() },
-                                oauthPkce: details.proto.oauthState?.oauthPkce ?? ({ value: "", verifier: "" } as auth.OAuthPKCEChallenge),
-                                coreAuthCode: details.proto.oauthState?.coreAuthCode ?? ({ token: "", createdAt: new Date().toISOString() } as auth.TemporaryToken),
-                                coreAccessToken: details.proto.oauthState?.coreAccessToken ?? ({} as connection.SalesforceCoreAccessToken),
-                                dataCloudAccessToken: action.value,
-                            }
-                        },
-                    }
-                }
-            };
-            break;
         case SF_CHANNEL_SETUP_STARTED:
             next = {
                 ...state,

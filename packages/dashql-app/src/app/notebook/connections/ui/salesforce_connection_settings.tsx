@@ -25,7 +25,7 @@ import { ConnectionStateDetailsVariant } from '../connection_state_details.js';
 import type { DetailedError } from '../connection_types.js';
 import { useAnyConnectionNotebookScripts } from './connection_notebook_scripts.js';
 import { ConnectionInlineHeader } from './connection_inline_header.js';
-import { collectSalesforceAuthInfo } from '../salesforce/salesforce_api_client.js';
+import { collectSalesforceAuthInfo, getSalesforceDataCloudUrl } from '../salesforce/salesforce_api_client.js';
 
 const LOG_CTX = "sf_connector";
 
@@ -33,6 +33,8 @@ interface PageState {
     hyperProtocol: connection.HyperProtocol;
     instanceUrl: string;
     appConsumerKey: string;
+    dataCloudInstanceUrl: string;
+    dataCloudTenantId: string;
 };
 
 export function getConnectionStatusText(status: ConnectionStatus | undefined, logger: Logger) {
@@ -59,13 +61,9 @@ export function getConnectionStatusText(status: ConnectionStatus | undefined, lo
         case ConnectionStatus.ACCESS_TOKEN_RECEIVED:
             return "Received access token";
         case ConnectionStatus.CORE_ACCESS_TOKEN_REQUESTED:
-            return "Requesting Core access token";
+            return "Requesting Salesforce OrgJWT";
         case ConnectionStatus.CORE_ACCESS_TOKEN_RECEIVED:
-            return "Received Core access token";
-        case ConnectionStatus.DATA_CLOUD_TOKEN_REQUESTED:
-            return "Requesting Data Cloud access token";
-        case ConnectionStatus.DATA_CLOUD_TOKEN_RECEIVED:
-            return "Received Data Cloud access token";
+            return "Received Salesforce OrgJWT";
         case ConnectionStatus.CHANNEL_SETUP_STARTED:
             return "Creating channel";
         case ConnectionStatus.CHANNEL_SETUP_FAILED:
@@ -140,16 +138,19 @@ interface SalesforceConnectionSettingsPageProps {
     instanceUrl: string;
     appConsumerKey: string;
     login: string;
-    coreAccessToken: string;
+    orgJwt: string;
     dataCloudInstanceUrl: string;
-    dataCloudAccessToken: string;
     coreTenantId: string;
     dataCloudTenantId: string;
     instanceUrlValidation: TextFieldValidationStatus;
     appConsumerValidation: TextFieldValidationStatus;
+    dataCloudInstanceUrlValidation: TextFieldValidationStatus;
+    dataCloudTenantIdValidation: TextFieldValidationStatus;
     setHyperProtocol: (protocol: connection.HyperProtocol) => void;
     updateInstanceUrl: React.ChangeEventHandler<HTMLInputElement>;
     updateAppConsumerKey: React.ChangeEventHandler<HTMLInputElement>;
+    updateDataCloudInstanceUrl: React.ChangeEventHandler<HTMLInputElement>;
+    updateDataCloudTenantId: React.ChangeEventHandler<HTMLInputElement>;
     setupConnection: () => void;
     cancelSetup: () => void;
     resetSetup: () => void;
@@ -231,14 +232,38 @@ export const SalesforceConnectionSettingsPage: React.FC<SalesforceConnectionSett
                             disabled={props.freezeInput}
                             readOnly={props.freezeInput}
                         />
+                        <TextField
+                            name="Data Cloud Instance URL"
+                            caption="Required tenant-specific HTTPS endpoint, without a path, query, or fragment"
+                            value={props.dataCloudInstanceUrl}
+                            onChange={props.updateDataCloudInstanceUrl}
+                            placeholder=""
+                            leadingVisual={() => <div>URL</div>}
+                            validation={props.dataCloudInstanceUrlValidation}
+                            readOnly={props.freezeInput}
+                            disabled={props.freezeInput}
+                            logContext={LOG_CTX}
+                        />
+                        <TextField
+                            name="Data Cloud Tenant ID"
+                            caption="Required CDP tenant ID for Data Cloud APIs"
+                            value={props.dataCloudTenantId}
+                            onChange={props.updateDataCloudTenantId}
+                            placeholder=""
+                            leadingVisual={() => <div>ID</div>}
+                            validation={props.dataCloudTenantIdValidation}
+                            readOnly={props.freezeInput}
+                            disabled={props.freezeInput}
+                            logContext={LOG_CTX}
+                        />
                     </div>
                 </div>
                 <div className={style.section}>
                     <div className={classNames(style.section_layout, style.body_section_layout)}>
                         <TextField
-                            name="Core Access Token"
-                            caption="Access Token for Salesforce Core"
-                            value={props.coreAccessToken}
+                            name="OrgJWT"
+                            caption="Salesforce organization JWT for Core and Data Cloud APIs"
+                            value={props.orgJwt}
                             placeholder=""
                             leadingVisual={KeyIcon}
                             readOnly
@@ -260,39 +285,9 @@ export const SalesforceConnectionSettingsPage: React.FC<SalesforceConnectionSett
                 <div className={style.section}>
                     <div className={classNames(style.section_layout, style.body_section_layout)}>
                         <TextField
-                            name="Data Cloud Instance URL"
-                            caption="URL of the Data Cloud instance"
-                            value={props.dataCloudInstanceUrl}
-                            placeholder=""
-                            leadingVisual={() => <div>URL</div>}
-                            readOnly
-                            disabled
-                            logContext={LOG_CTX}
-                        />
-                        <TextField
-                            name="Data Cloud Access Token"
-                            caption="Raw Data Cloud JWT"
-                            value={props.dataCloudAccessToken}
-                            placeholder=""
-                            leadingVisual={KeyIcon}
-                            readOnly
-                            disabled
-                            logContext={LOG_CTX}
-                        />
-                        <TextField
                             name="Core Tenant ID"
                             caption="Tenant id for core apis"
                             value={props.coreTenantId}
-                            placeholder=""
-                            leadingVisual={() => <div>ID</div>}
-                            readOnly
-                            disabled
-                            logContext={LOG_CTX}
-                        />
-                        <TextField
-                            name="Data Cloud Tenant ID"
-                            caption="Tenant id for Data Cloud apis"
-                            value={props.dataCloudTenantId}
                             placeholder=""
                             leadingVisual={() => <div>ID</div>}
                             readOnly
@@ -326,6 +321,8 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
         hyperProtocol: params?.hyperProtocol ?? "V3_HTTP",
         instanceUrl: params?.instanceUrl ?? "",
         appConsumerKey: params?.appConsumerKey ?? "",
+        dataCloudInstanceUrl: params?.dataCloudInstanceUrl ?? "",
+        dataCloudTenantId: params?.dataCloudTenantId ?? "",
     });
     const [pageState, setPageState] = React.useState<PageState>(() =>
         buildPageState(salesforceConnection?.proto.setupParams));
@@ -344,6 +341,8 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
     const setHyperProtocol = (v: connection.HyperProtocol) => setPageState(s => ({ ...s, hyperProtocol: v }));
     const updateInstanceUrl: React.ChangeEventHandler<HTMLInputElement> = ev => setPageState(s => ({ ...s, instanceUrl: ev.target.value }));
     const updateAppConsumerKey: React.ChangeEventHandler<HTMLInputElement> = ev => setPageState(s => ({ ...s, appConsumerKey: ev.target.value }));
+    const updateDataCloudInstanceUrl: React.ChangeEventHandler<HTMLInputElement> = ev => setPageState(s => ({ ...s, dataCloudInstanceUrl: ev.target.value }));
+    const updateDataCloudTenantId: React.ChangeEventHandler<HTMLInputElement> = ev => setPageState(s => ({ ...s, dataCloudTenantId: ev.target.value }));
 
     // Maintain setting validations
     const [instanceUrlValidation, setInstanceUrlValidation] = React.useState<TextFieldValidationStatus>({
@@ -354,6 +353,8 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
         type: VALIDATION_UNKNOWN,
         value: null
     });
+    const [dataCloudInstanceUrlValidation, setDataCloudInstanceUrlValidation] = React.useState<TextFieldValidationStatus>({ type: VALIDATION_UNKNOWN, value: null });
+    const [dataCloudTenantIdValidation, setDataCloudTenantIdValidation] = React.useState<TextFieldValidationStatus>({ type: VALIDATION_UNKNOWN, value: null });
 
     // Helper to start the authorization.
     // Carry a previously resolved/shared login through as the OAuth login_hint. It is not a
@@ -365,8 +366,10 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
         instanceUrl: pageState.instanceUrl,
         appConsumerKey: pageState.appConsumerKey,
         appConsumerSecret: "",
+        dataCloudInstanceUrl: pageState.dataCloudInstanceUrl.trim(),
+        dataCloudTenantId: pageState.dataCloudTenantId.trim(),
         login: restoredLogin,
-    }), [pageState.hyperProtocol, pageState.instanceUrl, pageState.appConsumerKey, restoredLogin]);
+    }), [pageState.hyperProtocol, pageState.instanceUrl, pageState.appConsumerKey, pageState.dataCloudInstanceUrl, pageState.dataCloudTenantId, restoredLogin]);
     const setupAbortController = React.useRef<AbortController | null>(null);
     const setupConnection = async () => {
         let validationSucceeded = true;
@@ -381,6 +384,19 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
             setAppConsumerValidation({ type: VALIDATION_ERROR, value: "Connected App cannot be empty" });
         } else {
             setAppConsumerValidation({ type: VALIDATION_UNKNOWN, value: null });
+        }
+        try {
+            getSalesforceDataCloudUrl(setupParams.dataCloudInstanceUrl);
+            setDataCloudInstanceUrlValidation({ type: VALIDATION_UNKNOWN, value: null });
+        } catch (error) {
+            validationSucceeded = false;
+            setDataCloudInstanceUrlValidation({ type: VALIDATION_ERROR, value: error instanceof Error ? error.message : String(error) });
+        }
+        if (!setupParams.dataCloudTenantId) {
+            validationSucceeded = false;
+            setDataCloudTenantIdValidation({ type: VALIDATION_ERROR, value: "Data Cloud Tenant ID cannot be empty" });
+        } else {
+            setDataCloudTenantIdValidation({ type: VALIDATION_UNKNOWN, value: null });
         }
         if (!validationSucceeded || !sfSetup) return;
 
@@ -426,9 +442,8 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
 
     // Read the auth info
     const coreAccessToken = salesforceConnection?.proto.oauthState?.coreAccessToken;
-    const dcAccessToken = salesforceConnection?.proto.oauthState?.dataCloudAccessToken;
-    const dcAuthInfo = (coreAccessToken && dcAccessToken)
-        ? collectSalesforceAuthInfo(coreAccessToken, dcAccessToken)
+    const dcAuthInfo = coreAccessToken
+        ? collectSalesforceAuthInfo(coreAccessToken, setupParams)
         : null;
 
     // Lock any changes?
@@ -442,16 +457,19 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
             instanceUrl={pageState.instanceUrl}
             appConsumerKey={pageState.appConsumerKey}
             login={restoredLogin}
-            coreAccessToken={dcAuthInfo?.coreAccessToken ?? ''}
-            dataCloudInstanceUrl={dcAuthInfo?.offcoreInstanceUrl ?? ''}
-            dataCloudAccessToken={dcAuthInfo?.offcoreRawJwt ?? ''}
+            orgJwt={dcAuthInfo?.offcoreRawJwt ?? ''}
+            dataCloudInstanceUrl={pageState.dataCloudInstanceUrl}
             coreTenantId={dcAuthInfo?.coreTenantId ?? ''}
-            dataCloudTenantId={dcAuthInfo?.offcoreTenantId ?? ''}
+            dataCloudTenantId={pageState.dataCloudTenantId}
             instanceUrlValidation={instanceUrlValidation}
             appConsumerValidation={appConsumerValidation}
+            dataCloudInstanceUrlValidation={dataCloudInstanceUrlValidation}
+            dataCloudTenantIdValidation={dataCloudTenantIdValidation}
             setHyperProtocol={setHyperProtocol}
             updateInstanceUrl={updateInstanceUrl}
             updateAppConsumerKey={updateAppConsumerKey}
+            updateDataCloudInstanceUrl={updateDataCloudInstanceUrl}
+            updateDataCloudTenantId={updateDataCloudTenantId}
             setupConnection={setupConnection}
             cancelSetup={cancelSetup}
             resetSetup={resetSetup}

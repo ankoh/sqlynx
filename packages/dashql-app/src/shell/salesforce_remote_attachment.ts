@@ -3,22 +3,14 @@ import { generateSchemaSQL } from '../app/notebook/connections/catalog_sql_gener
 import type { LoggerLike } from '../platform/logger/logger.js';
 import type { DashQLShell } from './api.js';
 import type { DashQLScript } from '@ankoh/dashql-core';
+import type * as connection from '@ankoh/dashql-jsonschema/connection.js';
+import { getSalesforceDataCloudUrl } from '../app/notebook/connections/salesforce/salesforce_api_client.js';
 
 export const SALESFORCE_CATALOG_RANK = 100;
 const ENDPOINT_KEY_PREFIX = 'salesforce-';
 const HYPER_REMOTE_ENDPOINTS_SETTING = 'global.hyper_remote_endpoints';
 const HYPER_REMOTE_GATE = 'global.experimental_dbregistry_hyper_remote';
 const LOG_CTX = 'salesforce_remote_attachment';
-
-export interface SalesforceRemoteDataCloudToken {
-    readonly instanceUrl?: string | null;
-    readonly jwt?: {
-        readonly raw?: string | null;
-        readonly payload?: {
-            readonly audienceTenantId?: string | null;
-        } | null;
-    } | null;
-}
 
 export interface SalesforceRemoteCatalogColumn {
     readonly name: string;
@@ -80,25 +72,18 @@ function defaultCreateEndpointKey(alias: string): string {
     return `${ENDPOINT_KEY_PREFIX}${alias.toLowerCase().replace(/[^a-z0-9_-]/g, '-')}`;
 }
 
-function readEndpoint(token: SalesforceRemoteDataCloudToken): HyperRemoteEndpointConfig {
-    if (!token.instanceUrl) throw new Error('Salesforce Data Cloud token is missing instanceUrl');
-    if (!token.jwt?.payload?.audienceTenantId) {
-        throw new Error('Salesforce Data Cloud token is missing audienceTenantId');
-    }
-    if (!token.jwt.raw) throw new Error('Salesforce Data Cloud token is missing raw JWT');
-
-    const url = new URL(token.instanceUrl);
-    if (url.protocol !== 'https:') throw new Error('Salesforce Data Cloud endpoint must use HTTPS');
-    if (url.username || url.password || url.search || url.hash) {
-        throw new Error('Salesforce Data Cloud endpoint URL must not contain credentials, query, or fragment');
-    }
+function readEndpoint(token: connection.SalesforceCoreAccessToken, params: Pick<connection.SalesforceConnectionParams, 'dataCloudInstanceUrl' | 'dataCloudTenantId'>): HyperRemoteEndpointConfig {
+    const url = new URL(getSalesforceDataCloudUrl(params.dataCloudInstanceUrl));
+    const tenant = params.dataCloudTenantId?.trim();
+    if (!tenant) throw new Error('Data Cloud Tenant ID cannot be empty');
+    if (!token.jwt.raw) throw new Error('Salesforce OrgJWT is missing raw JWT');
     const port = url.port || '443';
     return {
         connection: {
             host: `${url.protocol}//${url.hostname}`,
             port: Number(port),
         },
-        tenant: token.jwt.payload.audienceTenantId,
+        tenant,
         token: token.jwt.raw,
     };
 }
@@ -135,7 +120,8 @@ export class SalesforceRemoteAttachmentManager {
 
     async attach(
         alias: string,
-        token: SalesforceRemoteDataCloudToken,
+        token: connection.SalesforceCoreAccessToken,
+        params: Pick<connection.SalesforceConnectionParams, 'dataCloudInstanceUrl' | 'dataCloudTenantId'>,
         signal?: AbortSignal,
     ): Promise<SalesforceRemoteAttachment> {
         signal?.throwIfAborted();
@@ -144,7 +130,7 @@ export class SalesforceRemoteAttachmentManager {
 
         const endpointKey = (this.dependencies.createEndpointKey ?? defaultCreateEndpointKey)(alias);
         if (this.endpoints.has(endpointKey)) throw new Error(`Salesforce endpoint key already exists: ${endpointKey}`);
-        const endpoint = readEndpoint(token);
+        const endpoint = readEndpoint(token, params);
         const nextEndpoints = new Map(this.endpoints);
         nextEndpoints.set(endpointKey, endpoint);
         const previousSetting = this.serializeEndpoints(this.endpoints);

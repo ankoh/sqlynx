@@ -5,7 +5,6 @@ import { Logger } from '../../../../platform/logger/logger.js';
 import { HttpClient } from '../../../../platform/http/http_client.js';
 import { HyperDatabaseChannel, HyperQueryExecutionOptions, HyperQueryResultStream } from '../hyper/hyperdb_grpc_client.js';
 import { BASE64URL_CODEC } from "../../../../utils/base64.js";
-import { dateToTimestamp } from "../proto_helper.js";
 
 const LOG_CTX = "salesforce_api";
 const SALESFORCE_API_VERSION = "v64.0";
@@ -73,7 +72,7 @@ export function formatSalesforceMetadataProgress(
     return `Metadata: ${counts.join(', ')} | ${stages.join(' | ')}`;
 }
 
-export function getSalesforceDataSpace(access: connection.SalesforceDataCloudAccessToken): string {
+export function getSalesforceDataSpace(access: connection.SalesforceCoreAccessToken): string {
     const customAttributes = access.jwt?.payload?.customAttributes as unknown;
     if (customAttributes && typeof customAttributes === "object") {
         const attributes = customAttributes as Record<string, unknown>;
@@ -93,37 +92,112 @@ export function getSalesforceLakehousePath(tenantId: string | null | undefined, 
 }
 
 /// Read the Salesforce auth tokens
-export function collectSalesforceAuthInfo(coreToken: connection.SalesforceCoreAccessToken, offcoreToken: connection.SalesforceDataCloudAccessToken): SalesforceAuthInfo | null {
-    const jwt = offcoreToken?.jwt;
+export function getSalesforceDataCloudUrl(endpoint: string | undefined): string {
+    if (typeof endpoint !== 'string' || endpoint.trim().length === 0) {
+        throw new Error('Data Cloud Instance URL cannot be empty');
+    }
+    const value = endpoint.trim();
+    const normalized = /^[a-z][a-z0-9+.-]*:\/\//i.test(value) ? value : `https://${value}`;
+    const url = new URL(normalized);
+    if (!/^https:\/\/[^/\\\s@?#]+\/?$/i.test(normalized)
+        || url.protocol !== 'https:' || url.username || url.password || url.search || url.hash || url.pathname !== '/') {
+        throw new Error('Data Cloud Instance URL must be an HTTPS origin without credentials, path, query, or fragment');
+    }
+    return url.toString();
+}
+
+export function collectSalesforceAuthInfo(coreToken: connection.SalesforceCoreAccessToken, params: Pick<connection.SalesforceConnectionParams, 'dataCloudInstanceUrl' | 'dataCloudTenantId'>): SalesforceAuthInfo | null {
+    const jwt = coreToken?.jwt;
     if (jwt) {
         return {
             offcoreRawJwt: jwt.raw,
-            offcoreInstanceUrl: offcoreToken?.instanceUrl ?? null,
-            offcoreTenantId: jwt.payload?.audienceTenantId ?? null,
+            offcoreInstanceUrl: params.dataCloudInstanceUrl ?? null,
+            offcoreTenantId: params.dataCloudTenantId?.trim() || null,
             offcoreAccessToken: null,
-            coreTenantId: jwt.payload?.audienceTenantId ?? null,
+            coreTenantId: jwt.payload?.sfoid ?? null,
             coreAccessToken: coreToken?.accessToken ?? null,
-            dataspace: getSalesforceDataSpace(offcoreToken),
+            dataspace: getSalesforceDataSpace(coreToken),
         };
     } else {
         return null;
     }
 }
 
-export function parseCoreAccessToken(obj: any): connection.SalesforceCoreAccessToken {
-    return {
-        createdAt: new Date().toISOString(),
-        accessToken: obj.access_token,
-        apiInstanceUrl: obj.api_instance_url,
-        id: obj.id,
-        idToken: obj.id_token,
-        instanceUrl: obj.instance_url,
-        issuedAt: obj.issued_at,
-        refreshToken: obj.refresh_token,
-        scope: obj.scope,
-        signature: obj.signature,
-        tokenType: obj.token_type,
+function redactTokenDiagnostics(value: unknown): string {
+    return JSON.stringify(value, (key, item) => {
+        // Redact credentials and identities at every nesting level, not the routing context.
+        const normalized = key.replace(/[-_]/g, '').toLowerCase();
+        if ((/(token|secret|password|signature|assertion|authorization|email|username)/.test(normalized)
+            && normalized !== 'tokentype' && normalized !== 'tokenformat')
+            || ['id', 'sub', 'jti', 'clientid', 'userid', 'orgid', 'sfuid', 'sfoid', 'sfappid',
+                'tnk', 'sfi', 'sfapop', 'code', 'codeverifier', 'name', 'givenname', 'familyname', 'preferredusername'].includes(normalized)) {
+            return '<redacted>';
+        }
+        return item;
+    }) ?? 'null';
+}
+
+export function parseCoreAccessToken(obj: any, logger?: Logger): connection.SalesforceCoreAccessToken {
+    const diagnostics: Record<string, string> = {
+        oauthResponse: redactTokenDiagnostics(obj),
+        tokenPartCount: typeof obj?.access_token === 'string' ? obj.access_token.split('.').length.toString() : '0',
+        validationStage: 'token-format',
     };
+    try {
+        const message = 'Expected an OrgJWT access token; enable "Issue JSON Web Token (JWT)-based access tokens for named users" in the External Client App';
+        if (typeof obj?.access_token !== 'string') throw new Error(message);
+        const parts: string[] = obj.access_token.split('.');
+        if (parts.length !== 3 || parts.some(part => part.length === 0)) throw new Error(message);
+        let header: Record<string, string>;
+        let payload: connection.SalesforceOrgJWTPayload;
+        diagnostics.validationStage = 'jwt-decoding';
+        try {
+            const decoder = new TextDecoder();
+            header = JSON.parse(decoder.decode(BASE64URL_CODEC.decode(parts[0])));
+            payload = JSON.parse(decoder.decode(BASE64URL_CODEC.decode(parts[1])));
+            diagnostics.jwtHeader = redactTokenDiagnostics(header);
+            diagnostics.jwtPayload = redactTokenDiagnostics(payload);
+            if (!header || typeof header !== 'object' || Array.isArray(header)
+                || typeof header.alg !== 'string' || header.alg.length === 0 || header.alg.toLowerCase() === 'none'
+                || !payload || typeof payload !== 'object' || Array.isArray(payload)) {
+                throw new Error(message);
+            }
+        } catch {
+            throw new Error(message);
+        }
+        // The receiving Salesforce service verifies the signature.
+        diagnostics.validationStage = 'expiration';
+        const scopeValues = [obj.scope, payload.scp].flatMap(value => typeof value === 'string'
+            ? value.split(/\s+/) : Array.isArray(value) ? value : []);
+        diagnostics.expectedScopes = JSON.stringify(Object.fromEntries(
+            ['api', 'sfap_api', 'cdp_query_api', 'data_cloud_user_claims'].map(scope => [scope, scopeValues.includes(scope)]),
+        ));
+        if (typeof payload.exp !== 'number' || !Number.isFinite(payload.exp)
+            || !Number.isFinite(new Date(payload.exp * 1000).getTime())) {
+            throw new Error('OrgJWT is missing a valid numeric exp claim');
+        }
+        if (payload.exp * 1000 <= Date.now()) throw new Error('OrgJWT has expired');
+        diagnostics.expiresInSeconds = Math.floor(payload.exp - Date.now() / 1000).toString();
+        const jwt = { raw: obj.access_token, header, payload };
+        return {
+            createdAt: new Date().toISOString(),
+            accessToken: obj.access_token,
+            jwt,
+            expiresAt: new Date(payload.exp * 1000).toISOString(),
+            apiInstanceUrl: obj.api_instance_url,
+            id: obj.id,
+            idToken: obj.id_token,
+            instanceUrl: obj.instance_url,
+            issuedAt: obj.issued_at,
+            refreshToken: obj.refresh_token,
+            scope: obj.scope,
+            signature: obj.signature,
+            tokenType: obj.token_type,
+        };
+    } catch (error) {
+        logger?.warn('Rejected Salesforce OAuth token response', diagnostics, LOG_CTX);
+        throw error;
+    }
 }
 
 export function parseCoreUserInfo(obj: any): connection.SalesforceCoreUserInfo {
@@ -153,46 +227,6 @@ export function parseCoreUserInfo(obj: any): connection.SalesforceCoreUserInfo {
     });
 }
 
-function parseDataCloudJWTPayload(obj: any): connection.SalesforceDataCloudJWTPayload {
-    if (typeof obj !== "object") {
-        return {
-            sub: "",
-            aud: "",
-            exp: "",
-            iat: "",
-            jti: "",
-            scp: "",
-            iss: "",
-            nbf: "",
-            orgId: "",
-            sfappid: "",
-            sfoid: "",
-            sfuid: "",
-            issuerTenantId: "",
-            audienceTenantId: "",
-        };
-    }
-    // XXX This is likely insufficiently relaxed.
-    // Also: Log if something unexpected comes up.
-    return {
-        sub: obj.sub,
-        aud: obj.aud,
-        exp: obj.exp,
-        iat: obj.iat,
-        jti: obj.jti,
-        scp: obj.scp,
-        iss: obj.iss,
-        nbf: obj.nbf,
-        orgId: obj.orgId,
-        sfappid: obj.sfappid,
-        sfoid: obj.sfoid,
-        sfuid: obj.sfuid,
-        issuerTenantId: obj.issuerTenantId,
-        audienceTenantId: obj.audienceTenantId,
-        customAttributes: obj.customAttributes ?? obj.custom_attributes,
-    };
-}
-
 export interface SalesforceApiClientInterface {
     getCoreAccessToken(
         authConfig: connection.SalesforceOAuthConfig,
@@ -205,10 +239,6 @@ export interface SalesforceApiClientInterface {
         access: connection.SalesforceCoreAccessToken,
         cancel: AbortSignal,
     ): Promise<connection.SalesforceCoreUserInfo>;
-    getDataCloudAccessToken(
-        access: connection.SalesforceCoreAccessToken,
-        cancel: AbortSignal,
-    ): Promise<connection.SalesforceDataCloudAccessToken>;
     getDataCloudMetadata(
         access: connection.SalesforceCoreAccessToken,
         dataSpace: string,
@@ -220,12 +250,10 @@ export interface SalesforceApiClientInterface {
 export class SalesforceApiClient implements SalesforceApiClientInterface {
     logger: Logger;
     httpClient: HttpClient;
-    textDecoder: TextDecoder;
 
     constructor(logger: Logger, httpClient: HttpClient) {
         this.logger = logger;
         this.httpClient = httpClient;
-        this.textDecoder = new TextDecoder();
     }
 
     public async getCoreAccessToken(
@@ -260,93 +288,18 @@ export class SalesforceApiClient implements SalesforceApiClientInterface {
             signal: cancel,
         });
         const responseBody = await response.json();
-        if (responseBody.error) {
-            const errorDesc = responseBody.error_description;
-            this.logger.warn(errorDesc, {}, LOG_CTX);
+        if (response.status < 200 || response.status >= 300 || responseBody.error) {
+            const errorDesc = responseBody.error_description ?? responseBody.error ?? `OAuth token request failed: ${response.status}`;
+            this.logger.warn(errorDesc, {
+                endpoint: url.toString(),
+                status: response.status.toString(),
+                oauthResponse: redactTokenDiagnostics(responseBody),
+            }, LOG_CTX);
             throw new Error(errorDesc);
         } else {
-            const parsed = parseCoreAccessToken(responseBody);
+            const parsed = parseCoreAccessToken(responseBody, this.logger);
             return parsed;
         }
-    }
-
-    protected readDataCloudAccessToken(obj: any): connection.SalesforceDataCloudAccessToken {
-        const prependURLSchemaIfMissing = (urlString: string) => {
-            if (!urlString.startsWith('https:')) {
-                urlString = `https://${urlString}`;
-            }
-            return new URL(urlString);
-        };
-        if (!obj.access_token) {
-            throw new Error('missing access_token');
-        }
-        if (!obj.instance_url) {
-            throw new Error('missing instance_url');
-        }
-
-        const access_token = obj.access_token;
-        const jwtParts = access_token.split('.');
-        if (jwtParts.length != 3) {
-            throw new Error(`invalid jwt, expected 3 parts, received ${jwtParts.length}`);
-        }
-
-        // Parse the JWT header
-        const jwtHeaderRaw = jwtParts[0];
-        const jwtHeaderBytes = BASE64URL_CODEC.decode(jwtHeaderRaw);
-        const jwtHeaderText = this.textDecoder.decode(jwtHeaderBytes);
-        const jwtHeaderParsed = JSON.parse(jwtHeaderText);
-
-        // Parse the JWT payload
-        const jwtPayloadRaw = jwtParts[1];
-        const jwtPayloadBytes = BASE64URL_CODEC.decode(jwtPayloadRaw);
-        const jwtPayloadText = this.textDecoder.decode(jwtPayloadBytes);
-        const jwtPayloadParsed = parseDataCloudJWTPayload(JSON.parse(jwtPayloadText));
-
-        const accessTokenExpiresAt = new Date(Number.parseInt(jwtPayloadParsed.exp) * 1000);
-        const accessToken: connection.SalesforceDataCloudAccessToken = {
-            createdAt: new Date().toISOString(),
-            tokenType: obj.token_type,
-            issuedTokenType: obj.issued_token_type,
-            expiresAt: dateToTimestamp(accessTokenExpiresAt)!,
-            jwt: {
-                raw: access_token,
-                header: jwtHeaderParsed,
-                payload: jwtPayloadParsed
-            },
-            instanceUrl: prependURLSchemaIfMissing(obj.instance_url).toString(),
-        };
-        return accessToken;
-    }
-
-    public async getDataCloudAccessToken(
-        access: connection.SalesforceCoreAccessToken,
-        cancel: AbortSignal,
-    ): Promise<connection.SalesforceDataCloudAccessToken> {
-        const params: Record<string, string> = {
-            grant_type: 'urn:salesforce:grant-type:external:cdp',
-            subject_token: access.accessToken!,
-            subject_token_type: 'urn:ietf:params:oauth:token-type:access_token',
-            // dataspace: 'default'
-        };
-        const body = new URLSearchParams(params);
-        // Get the data cloud access token
-        const headers = new Headers({
-            Accept: 'application/json',
-            'Content-Type': 'application/x-www-form-urlencoded',
-        });
-        const url = new URL(`${access.instanceUrl ?? ""}/services/a360/token`);
-        const response = await this.httpClient.fetch(url, {
-            method: 'POST',
-            headers,
-            body: body,
-            signal: cancel,
-        });
-        const responseBody = await response.json();
-        if (responseBody.error) {
-            const err = responseBody as { error: string, error_description: string };
-            throw new Error(`request failed: error=${err.error}, description=${err.error_description}`);
-        }
-        return this.readDataCloudAccessToken(responseBody);
     }
 
     public async getCoreUserInfo(
@@ -520,16 +473,13 @@ export class SalesforceDatabaseChannel implements HyperDatabaseChannel {
     protected apiClient: SalesforceApiClientInterface;
     /// The core access token
     public readonly coreToken: connection.SalesforceCoreAccessToken;
-    /// The data cloud access token
-    public readonly dataCloudToken: connection.SalesforceDataCloudAccessToken;
     /// The Hyper database channel
     hyperChannel: HyperDatabaseChannel;
 
     /// The constructor
-    constructor(apiClient: SalesforceApiClientInterface, coreToken: connection.SalesforceCoreAccessToken, dataCloudToken: connection.SalesforceDataCloudAccessToken, channel: HyperDatabaseChannel) {
+    constructor(apiClient: SalesforceApiClientInterface, coreToken: connection.SalesforceCoreAccessToken, channel: HyperDatabaseChannel) {
         this.apiClient = apiClient;
         this.coreToken = coreToken;
-        this.dataCloudToken = dataCloudToken;
         this.hyperChannel = channel;
     }
 

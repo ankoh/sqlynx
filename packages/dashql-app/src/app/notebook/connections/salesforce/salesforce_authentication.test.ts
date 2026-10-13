@@ -28,6 +28,21 @@ const params: connection.SalesforceConnectionParams = {
 const authConfig: connection.SalesforceOAuthConfig = {
     oauthRedirect: 'https://dashql.app/oauth.html',
 };
+const coreAccessToken: connection.SalesforceCoreAccessToken = {
+    createdAt: new Date(0).toISOString(),
+    expiresAt: new Date(7_200_000).toISOString(),
+    accessToken: 'core-token',
+    jwt: {
+        raw: 'core-token',
+        header: { alg: 'RS256' },
+        payload: {
+            exp: 7_200,
+            cdp_url: 'https://hyper.example.com',
+            cdp_tenant: 'tenant-id',
+            sfoid: 'org-id',
+        },
+    },
+};
 
 function makeState(overrides: Partial<OAuthState> = {}): OAuthState {
     return {
@@ -104,16 +119,15 @@ describe('Salesforce OAuth callback state', () => {
 });
 
 describe('authenticateSalesforce', () => {
-    it('returns tokens and optional user info through staged progress', async () => {
+    it('returns the core token and optional user info through staged progress', async () => {
         const popup = { closed: false, close: vi.fn(), focus: vi.fn() } as unknown as Window;
         const open = vi.spyOn(window, 'open').mockReturnValue(popup);
-        const coreAccessToken = { createdAt: new Date(0).toISOString(), accessToken: 'core-token' } as connection.SalesforceCoreAccessToken;
-        const dataCloudAccessToken = { createdAt: new Date(0).toISOString(), expiresAt: new Date(1).toISOString() } as connection.SalesforceDataCloudAccessToken;
+        const logger = new NullLogger();
+        const info = vi.spyOn(logger, 'info');
         const coreUserInfo = { preferredUsername: 'user@example.com', photos: {} } as connection.SalesforceCoreUserInfo;
         const apiClient = {
             getCoreAccessToken: vi.fn().mockResolvedValue(coreAccessToken),
             getCoreUserInfo: vi.fn().mockResolvedValue(coreUserInfo),
-            getDataCloudAccessToken: vi.fn().mockResolvedValue(dataCloudAccessToken),
         } as unknown as SalesforceApiClientInterface;
         const appEvents = {
             waitForOAuthRedirect: vi.fn().mockImplementation(async () => {
@@ -124,7 +138,7 @@ describe('authenticateSalesforce', () => {
         const stages: string[] = [];
 
         const result = await authenticateSalesforce({
-            logger: new NullLogger(),
+            logger,
             params,
             authConfig,
             platformType: PlatformType.WEB,
@@ -135,7 +149,22 @@ describe('authenticateSalesforce', () => {
             onProgress: progress => stages.push(progress.stage),
         });
 
-        expect(result).toEqual({ coreAccessToken, dataCloudAccessToken, coreUserInfo });
+        expect(result).toEqual({ coreAccessToken, coreUserInfo });
+        expect(info).toHaveBeenCalledWith('Opening Salesforce OAuth authorization URL', expect.objectContaining({
+            endpoint: 'https://example.my.salesforce.com/services/oauth2/authorize',
+            flowVariant: 'WEB_OPENER_FLOW',
+            authorizationParameters: expect.stringContaining('"client_id":"consumer+key"'),
+            oauthState: expect.stringContaining('"flowId":"<redacted>"'),
+        }), 'salesforce_authentication');
+        const authorizationParameters = JSON.parse(info.mock.calls[0][1].authorizationParameters!);
+        expect(authorizationParameters.redirect_uri).toBe('https://dashql.app/oauth.html');
+        expect(authorizationParameters.code_challenge_method).toBe('S256');
+        expect(authorizationParameters.response_type).toBe('code');
+        expect(authorizationParameters.state).toBe('<redacted>');
+        expect(authorizationParameters.code_challenge).toBe('<redacted>');
+        const oauthRequestLog = JSON.stringify(info.mock.calls);
+        expect(oauthRequestLog).not.toContain('test+oauth@example.com');
+        expect(apiClient.getCoreUserInfo).toHaveBeenCalledWith(coreAccessToken, expect.any(AbortSignal));
         expect(popup.close).toHaveBeenCalledOnce();
         expect(stages).toEqual([
             'GENERATING_PKCE_CHALLENGE',
@@ -146,8 +175,6 @@ describe('authenticateSalesforce', () => {
             'REQUESTING_CORE_AUTH_TOKEN',
             'RECEIVED_CORE_AUTH_TOKEN',
             'RECEIVED_CORE_USER_INFO',
-            'REQUESTING_DATA_CLOUD_ACCESS_TOKEN',
-            'RECEIVED_DATA_CLOUD_ACCESS_TOKEN',
         ]);
     });
 
@@ -155,12 +182,9 @@ describe('authenticateSalesforce', () => {
         const openExternal = vi.fn();
         vi.stubGlobal('dashqlElectron', { openExternal });
         const open = vi.spyOn(window, 'open');
-        const coreAccessToken = { createdAt: new Date(0).toISOString(), accessToken: 'core-token' } as connection.SalesforceCoreAccessToken;
-        const dataCloudAccessToken = { createdAt: new Date(0).toISOString(), expiresAt: new Date(1).toISOString() } as connection.SalesforceDataCloudAccessToken;
         const apiClient = {
             getCoreAccessToken: vi.fn().mockResolvedValue(coreAccessToken),
             getCoreUserInfo: vi.fn().mockRejectedValue(new Error('unavailable')),
-            getDataCloudAccessToken: vi.fn().mockResolvedValue(dataCloudAccessToken),
         } as unknown as SalesforceApiClientInterface;
         const appEvents = {
             waitForOAuthRedirect: vi.fn().mockImplementation(async () => {
@@ -180,7 +204,7 @@ describe('authenticateSalesforce', () => {
             forceReLogin: false,
             abortSignal: new AbortController().signal,
             onProgress: progress => stages.push(progress.stage),
-        })).resolves.toEqual({ coreAccessToken, dataCloudAccessToken });
+        })).resolves.toEqual({ coreAccessToken, coreUserInfo: undefined });
 
         expect(open).not.toHaveBeenCalled();
         expect(openExternal).toHaveBeenCalledOnce();

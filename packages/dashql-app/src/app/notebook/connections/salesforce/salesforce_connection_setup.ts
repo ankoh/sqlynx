@@ -14,16 +14,14 @@ import {
     RECEIVED_CORE_AUTH_CODE,
     RECEIVED_CORE_AUTH_TOKEN,
     RECEIVED_CORE_USER_INFO,
-    RECEIVED_DATA_CLOUD_ACCESS_TOKEN,
     REQUESTING_CORE_AUTH_TOKEN,
-    REQUESTING_DATA_CLOUD_ACCESS_TOKEN,
     SalesforceConnectionStateAction,
     SF_CHANNEL_READY,
     SF_CHANNEL_SETUP_STARTED,
 } from './salesforce_connection_state.js';
 import { PlatformType } from '../../../../platform/platform_type.js';
 import { SalesforceConnectorConfig } from '../connector_configs.js';
-import { collectSalesforceAuthInfo, getSalesforceLakehousePath, SalesforceApiClientInterface, SalesforceDatabaseChannel } from './salesforce_api_client.js';
+import { collectSalesforceAuthInfo, getSalesforceDataCloudUrl, getSalesforceLakehousePath, SalesforceApiClientInterface, SalesforceDatabaseChannel } from './salesforce_api_client.js';
 import { Dispatch } from '../../../../utils/variant.js';
 import { Logger, stringifyError } from '../../../../platform/logger/logger.js';
 import { PlatformEventListener } from '../../../../platform/events/event_listener.js';
@@ -35,7 +33,8 @@ const LOG_CTX = "salesforce_setup";
 
 // We use the web-server OAuth Flow with or without consumer secret.
 //
-// !! Don't embed a client secret of a connected Salesforce App !!
+// !! Don't embed an External Client App secret !!
+// Enable named-user JWT access tokens in the ECA; the OAuth grant remains authorization code.
 //
 // For untrusted clients, like this SPA, the web server OAuth flow can be configure to NOT require a consumer secret but
 // still use PKCE. PKCE makes this more preferrable than the alternative user-agent flow for untrusted clients since it
@@ -73,6 +72,8 @@ export async function setupSalesforceConnection(modifyState: Dispatch<Salesforce
             value: params,
         });
         abortSignal.throwIfAborted();
+        const dataCloudUrl = getSalesforceDataCloudUrl(params.dataCloudInstanceUrl);
+        if (!params.dataCloudTenantId?.trim()) throw new Error('Data Cloud Tenant ID cannot be empty');
         if (!config.auth?.oauthRedirect) {
             throw new Error(`missing oauth redirect url`);
         }
@@ -108,15 +109,9 @@ export async function setupSalesforceConnection(modifyState: Dispatch<Salesforce
                 case 'RECEIVED_CORE_USER_INFO':
                     modifyState({ type: RECEIVED_CORE_USER_INFO, value: progress.coreUserInfo });
                     break;
-                case 'REQUESTING_DATA_CLOUD_ACCESS_TOKEN':
-                    modifyState({ type: REQUESTING_DATA_CLOUD_ACCESS_TOKEN, value: null });
-                    break;
-                case 'RECEIVED_DATA_CLOUD_ACCESS_TOKEN':
-                    modifyState({ type: RECEIVED_DATA_CLOUD_ACCESS_TOKEN, value: progress.dataCloudAccessToken });
-                    break;
             }
         };
-        const { coreAccessToken, dataCloudAccessToken: dcToken } = await authenticateSalesforce({
+        const { coreAccessToken } = await authenticateSalesforce({
             logger,
             params,
             authConfig: config.auth,
@@ -133,10 +128,9 @@ export async function setupSalesforceConnection(modifyState: Dispatch<Salesforce
         if (params.hyperProtocol === 'WASM') {
             throw new Error('Salesforce connections do not support Hyper WASM');
         }
-        // const dcAuthInfo = getAuthI
         const connParams: connection.HyperConnectionParams = {
             protocol: params.hyperProtocol,
-            endpoint: dcToken.instanceUrl ?? "",
+            endpoint: dataCloudUrl,
             tls: {
                 clientKeyPath: "",
                 clientCertPath: "",
@@ -156,7 +150,7 @@ export async function setupSalesforceConnection(modifyState: Dispatch<Salesforce
 
         // Static connection context.
         // Inject the database name, the audience header and the bearer token
-        const authInfo = collectSalesforceAuthInfo(coreAccessToken, dcToken);
+        const authInfo = collectSalesforceAuthInfo(coreAccessToken, params);
         const connectionContext: HyperDatabaseConnectionContext = {
             getAttachedDatabases(): AttachedDatabase[] {
                 if (params.hyperProtocol === 'V3_HTTP') return [];
@@ -180,7 +174,7 @@ export async function setupSalesforceConnection(modifyState: Dispatch<Salesforce
         const client = connParams.protocol === 'V3_HTTP' ? httpClient : grpcClient;
         if (!client) throw new Error(`No client available for protocol ${connParams.protocol}`);
         hyperChannel = await client.connect(connParams, connectionContext);
-        sfChannel = new SalesforceDatabaseChannel(apiClient, coreAccessToken, dcToken, hyperChannel);
+        sfChannel = new SalesforceDatabaseChannel(apiClient, coreAccessToken, hyperChannel);
         abortSignal.throwIfAborted();
 
         // Mark the channel as ready

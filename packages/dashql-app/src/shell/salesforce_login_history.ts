@@ -8,6 +8,8 @@ export interface SalesforceLoginHistoryEntry {
     name: string;
     instanceUrl: string;
     appConsumerKey: string;
+    dataCloudInstanceUrl?: string;
+    dataCloudTenantId?: string;
     loginHint?: string;
     lastUsedAt: string;
 }
@@ -25,6 +27,8 @@ function isHistoryEntry(value: unknown): value is SalesforceLoginHistoryEntry {
         && typeof entry.name === 'string'
         && typeof entry.instanceUrl === 'string'
         && typeof entry.appConsumerKey === 'string'
+        && (entry.dataCloudInstanceUrl === undefined || typeof entry.dataCloudInstanceUrl === 'string')
+        && (entry.dataCloudTenantId === undefined || typeof entry.dataCloudTenantId === 'string')
         && (entry.loginHint === undefined || typeof entry.loginHint === 'string')
         && typeof entry.lastUsedAt === 'string'
         && Number.isFinite(Date.parse(entry.lastUsedAt));
@@ -79,6 +83,8 @@ export class SalesforceLoginHistoryStore {
             name: entry.name.trim(),
             instanceUrl: entry.instanceUrl.trim(),
             appConsumerKey: entry.appConsumerKey.trim(),
+            ...(entry.dataCloudInstanceUrl !== undefined ? { dataCloudInstanceUrl: entry.dataCloudInstanceUrl.trim() } : {}),
+            ...(entry.dataCloudTenantId !== undefined ? { dataCloudTenantId: entry.dataCloudTenantId.trim() } : {}),
             ...(entry.loginHint?.trim() ? { loginHint: entry.loginHint.trim() } : {}),
             lastUsedAt: this.now().toISOString(),
         };

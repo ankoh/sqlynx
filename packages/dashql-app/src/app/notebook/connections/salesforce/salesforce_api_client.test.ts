@@ -8,6 +8,9 @@ import {
     formatSalesforceMetadataProgress,
     getSalesforceDataSpace,
     getSalesforceLakehousePath,
+    getSalesforceDataCloudUrl,
+    collectSalesforceAuthInfo,
+    parseCoreAccessToken,
     SalesforceApiClient,
 } from './salesforce_api_client.js';
 
@@ -28,7 +31,7 @@ function makeResponse(body: unknown, status = 200): HttpFetchResult {
     };
 }
 
-function makeDataCloudAccessToken(customAttributes: unknown): connection.SalesforceDataCloudAccessToken {
+function makeCoreAccessToken(customAttributes: unknown): connection.SalesforceCoreAccessToken {
     return {
         createdAt: new Date(0).toISOString(),
         expiresAt: new Date(1).toISOString(),
@@ -39,7 +42,7 @@ function makeDataCloudAccessToken(customAttributes: unknown): connection.Salesfo
                 customAttributes,
             },
         },
-    } as connection.SalesforceDataCloudAccessToken;
+    } as connection.SalesforceCoreAccessToken;
 }
 
 function encodeJwtPart(value: unknown): string {
@@ -241,50 +244,146 @@ describe('SalesforceApiClient metadata', () => {
     });
 });
 
-describe('SalesforceApiClient Data Cloud token parsing', () => {
+describe('SalesforceApiClient OrgJWT token parsing', () => {
     it('decodes Base64URL JWT parts without changing the raw token', async () => {
         const payload = {
-            exp: '1800000000',
-            audienceTenantId: 'tenant-1',
-            custom_attributes: { dataspace: 'Marketing' },
+            exp: Math.floor(Date.now() / 1000) + 7200,
+            cdp_tenant: 'tenant-1',
+            cdp_url: 'data.example.com',
+            sfoid: 'org-1',
+            aud: ['https://api.salesforce.com', 'https://example.my.salesforce.com'],
+            scp: ['api', 'sfap_api', 'cdp_query_api', 'data_cloud_user_claims'],
+            customAttributes: { dataspace: 'Marketing' },
         };
-        const rawToken = `${encodeJwtPart({ alg: 'none', marker: '\u083e' })}.${encodeJwtPart(payload)}.`;
+        const rawToken = `${encodeJwtPart({ alg: 'RS256', marker: '\uffff\uffff\uffff' })}.${encodeJwtPart(payload)}.signature`;
         expect(rawToken).toMatch(/[-_]/);
         const fetch = vi.fn().mockResolvedValue(makeResponse({
             access_token: rawToken,
-            instance_url: 'data.example.com',
+            instance_url: 'https://example.my.salesforce.com',
             token_type: 'Bearer',
         }));
         const client = new SalesforceApiClient(new NullLogger(), { fetch });
-        const coreToken = {
-            accessToken: 'core-token',
+        const params = {
             instanceUrl: 'https://example.my.salesforce.com',
-        } as connection.SalesforceCoreAccessToken;
+            appConsumerKey: 'consumer-key',
+            appConsumerSecret: '',
+        } as connection.SalesforceConnectionParams;
 
-        const token = await client.getDataCloudAccessToken(coreToken, new AbortController().signal);
+        const token = await client.getCoreAccessToken(
+            { oauthRedirect: 'https://dashql.app/oauth.html' }, params, 'code', 'verifier', new AbortController().signal,
+        );
 
         expect(token.jwt?.raw).toBe(rawToken);
-        expect(token.jwt?.payload?.audienceTenantId).toBe(payload.audienceTenantId);
+        expect(token.accessToken).toBe(rawToken);
+        expect(token.jwt?.payload).toEqual(payload);
+        expect(token.expiresAt).toBe(new Date(payload.exp * 1000).toISOString());
         expect(getSalesforceDataSpace(token)).toBe('Marketing');
-        expect(token.instanceUrl).toBe('https://data.example.com/');
+        expect(token.instanceUrl).toBe('https://example.my.salesforce.com');
+        expect(getSalesforceDataCloudUrl('configured.example.com')).toBe('https://configured.example.com/');
+        expect(collectSalesforceAuthInfo(token, { dataCloudInstanceUrl: 'https://configured.example.com', dataCloudTenantId: 'configured-tenant' })).toMatchObject({
+            coreTenantId: 'org-1', offcoreTenantId: 'configured-tenant', offcoreInstanceUrl: 'https://configured.example.com', offcoreRawJwt: rawToken,
+        });
+        expect(fetch).toHaveBeenCalledTimes(1);
+        expect(fetch.mock.calls[0][0].toString()).toBe('https://example.my.salesforce.com/services/oauth2/token');
+        const body = fetch.mock.calls[0][1].body as URLSearchParams;
+        expect(body.get('grant_type')).toBe('authorization_code');
+        expect(body.get('code_verifier')).toBe('verifier');
+        expect(body.has('client_secret')).toBe(false);
+    });
+
+    it.each(['opaque-token', 'a.b', 'a.b.', 'a.b.c'])('rejects a non-OrgJWT credential: %s', access_token => {
+        expect(() => parseCoreAccessToken({ access_token })).toThrow('enable "Issue JSON Web Token');
+    });
+
+    it('logs actual response and claims with credentials and identities redacted', async () => {
+        const payload = {
+            exp: 1,
+            scp: ['api', 'data_cloud_user_claims'],
+            sub: 'private-user@example.com',
+            user_claims: { cdp_tenant: 'private-tenant', cdp_url: 'private-endpoint.example.com', 'user-id': 'private-user-id', 'org-id': 'private-org-id' },
+            cdp_url: 'private-endpoint.example.com',
+            aud: ['https://api.salesforce.com', 'https://example.my.salesforce.com'],
+            hsc: false,
+            sfap_rh: '',
+            sfap_op: 'private-opaque-context',
+        };
+        const access_token = `${encodeJwtPart({ alg: 'RS256' })}.${encodeJwtPart(payload)}.private-signature`;
+        const logger = new NullLogger();
+        const warn = vi.spyOn(logger, 'warn');
+        const client = new SalesforceApiClient(logger, { fetch: vi.fn().mockResolvedValue(makeResponse({
+            access_token, refresh_token: 'private-refresh-token', id_token: 'private-id-token', signature: 'private-response-signature',
+            scope: 'api data_cloud_user_claims',
+            token_format: 'jwt', token_type: 'Bearer', expires_in: 7200,
+        })) });
+        await expect(client.getCoreAccessToken(
+            { oauthRedirect: 'https://dashql.app/oauth.html' },
+            { instanceUrl: 'https://example.my.salesforce.com', appConsumerKey: 'key', appConsumerSecret: '' } as connection.SalesforceConnectionParams,
+            'code', 'verifier', new AbortController().signal,
+        )).rejects.toThrow('expired');
+        expect(warn).toHaveBeenCalledWith('Rejected Salesforce OAuth token response', expect.objectContaining({
+            validationStage: 'expiration', tokenPartCount: '3',
+        }), 'salesforce_api');
+        const diagnostics = warn.mock.calls[0][1];
+        expect(JSON.parse(diagnostics.jwtPayload!)).toEqual({
+            ...payload, sub: '<redacted>', sfap_op: '<redacted>',
+            user_claims: { ...payload.user_claims, 'user-id': '<redacted>', 'org-id': '<redacted>' },
+        });
+        expect(JSON.parse(diagnostics.oauthResponse!)).toEqual({
+            access_token: '<redacted>', refresh_token: '<redacted>', id_token: '<redacted>', signature: '<redacted>',
+            scope: 'api data_cloud_user_claims', token_format: 'jwt', token_type: 'Bearer', expires_in: 7200,
+        });
+        expect(JSON.parse(diagnostics.jwtHeader!)).toEqual({ alg: 'RS256' });
+        expect(JSON.parse(diagnostics.expectedScopes!)).toEqual({
+            api: true, sfap_api: false, cdp_query_api: false, data_cloud_user_claims: true,
+        });
+        const logged = JSON.stringify(warn.mock.calls);
+        for (const secret of [access_token, 'private-refresh-token', 'private-id-token', 'private-response-signature', payload.sub,
+            'private-user-id', 'private-org-id', payload.sfap_op]) {
+            expect(logged).not.toContain(secret);
+        }
+    });
+
+    it.each(['opaque-token', 'a.b.c'])('logs safe format diagnostics for %s', access_token => {
+        const logger = new NullLogger();
+        const warn = vi.spyOn(logger, 'warn');
+        expect(() => parseCoreAccessToken({ access_token }, logger)).toThrow();
+        expect(warn).toHaveBeenCalledOnce();
+        expect(JSON.stringify(warn.mock.calls)).not.toContain(access_token);
+    });
+
+    it.each([
+        { exp: undefined, error: 'numeric exp' },
+        { exp: '1800000000', error: 'numeric exp' },
+        { exp: 0, error: 'expired' },
+        { exp: 1e100, error: 'numeric exp' },
+    ])('rejects invalid expiration claims: $error', ({ error, ...claims }) => {
+        const payload = claims;
+        const access_token = `${encodeJwtPart({ alg: 'RS256' })}.${encodeJwtPart(payload)}.signature`;
+        expect(() => parseCoreAccessToken({ access_token })).toThrow(error);
+    });
+
+    it('accepts an OrgJWT without Data Cloud routing claims', () => {
+        const payload = { exp: Math.floor(Date.now() / 1000) + 7200 };
+        const access_token = `${encodeJwtPart({ alg: 'RS256' })}.${encodeJwtPart(payload)}.signature`;
+        expect(parseCoreAccessToken({ access_token }).jwt.payload).toEqual(payload);
     });
 });
 
 describe('Salesforce data-space resolution', () => {
     it('reads the selected data space from nested token attributes', () => {
-        expect(getSalesforceDataSpace(makeDataCloudAccessToken({
+        expect(getSalesforceDataSpace(makeCoreAccessToken({
             data: { dataspace: 'Marketing' },
         }))).toBe('Marketing');
     });
 
     it('supports the legacy flat token attribute', () => {
-        expect(getSalesforceDataSpace(makeDataCloudAccessToken({
+        expect(getSalesforceDataSpace(makeCoreAccessToken({
             dataspace: 'Sales',
         }))).toBe('Sales');
     });
 
     it('falls back to default and uses the same value in the lakehouse path', () => {
-        const dataSpace = getSalesforceDataSpace(makeDataCloudAccessToken({}));
+        const dataSpace = getSalesforceDataSpace(makeCoreAccessToken({}));
         expect(dataSpace).toBe(DEFAULT_SALESFORCE_DATA_SPACE);
         expect(getSalesforceLakehousePath('tenant-id', dataSpace)).toBe('sf:tenant-id;default');
     });

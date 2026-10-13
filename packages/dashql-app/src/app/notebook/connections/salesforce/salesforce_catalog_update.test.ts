@@ -35,16 +35,16 @@ describe('updateSalesforceCatalog', () => {
                 setupParams: { hyperProtocol: protocol },
                 oauthState: {
                     coreAccessToken: {
-                        accessToken: 'core-token',
+                        createdAt: new Date(0).toISOString(),
+                        expiresAt: new Date(1).toISOString(),
+                        accessToken: 'org-jwt',
                         instanceUrl: 'https://example.my.salesforce.com',
-                    },
-                    dataCloudAccessToken: {
-                        jwt: { raw: 'data-cloud-token', payload: {} },
+                        jwt: { raw: 'org-jwt', header: {}, payload: { exp: 0.001, customAttributes: { dataspace: 'Marketing' } } },
                     },
                 },
             },
             channel: null,
-        } as SalesforceConnectionStateDetails;
+        } as unknown as SalesforceConnectionStateDetails;
         const catalog = dql.createCatalog();
         const relationScript = dql.createScript(catalog);
         const functionScript = dql.createScript(catalog);
@@ -63,6 +63,12 @@ describe('updateSalesforceCatalog', () => {
         );
 
         expect(relationScript.toString()).toContain('CREATE TABLE "lakehouse"."public"."Account__dlm"');
+        expect(api.getDataCloudMetadata).toHaveBeenCalledWith(
+            connection.proto.oauthState!.coreAccessToken,
+            'Marketing',
+            expect.any(AbortSignal),
+            undefined,
+        );
         const catalogSnapshot = catalog.createSnapshot().read();
         const findEntry = (
             begin: number,
@@ -122,9 +128,12 @@ describe('updateSalesforceCatalog', () => {
 
     it.each(['processing', 'publication', 'later publication', 'aborted'])('retains earlier publications and unchanged pools after %s failure', async failure => {
         const connection = { proto: { oauthState: {
-            coreAccessToken: { accessToken: 'token', instanceUrl: 'https://example.my.salesforce.com' },
-            dataCloudAccessToken: { jwt: { raw: 'token', payload: {} } },
-        } }, channel: null } as SalesforceConnectionStateDetails;
+            coreAccessToken: {
+                createdAt: new Date(0).toISOString(), expiresAt: new Date(1).toISOString(),
+                accessToken: 'token', instanceUrl: 'https://example.my.salesforce.com',
+                jwt: { raw: 'token', header: {}, payload: { exp: 0.001 } },
+            },
+        } }, channel: null } as unknown as SalesforceConnectionStateDetails;
         const catalog = dql.createCatalog();
         const relations = dql.createScript(catalog);
         const functions = dql.createScript(catalog);
@@ -171,9 +180,12 @@ describe('updateSalesforceCatalog', () => {
 
     it.each([{ metadata: [] }, { metadata: [{ name: 'empty', fields: [] }] }])('preserves the catalog when metadata has no usable relations: %j', async ({ metadata }) => {
         const connection = { proto: { oauthState: {
-            coreAccessToken: { accessToken: 'token', instanceUrl: 'https://example.my.salesforce.com' },
-            dataCloudAccessToken: { jwt: { raw: 'token', payload: {} } },
-        } }, channel: null } as SalesforceConnectionStateDetails;
+            coreAccessToken: {
+                createdAt: new Date(0).toISOString(), expiresAt: new Date(1).toISOString(),
+                accessToken: 'token', instanceUrl: 'https://example.my.salesforce.com',
+                jwt: { raw: 'token', header: {}, payload: { exp: 0.001 } },
+            },
+        } }, channel: null } as unknown as SalesforceConnectionStateDetails;
         const catalog = dql.createCatalog();
         const relations = dql.createScript(catalog);
         const functions = dql.createScript(catalog);

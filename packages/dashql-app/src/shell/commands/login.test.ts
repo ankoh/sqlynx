@@ -9,16 +9,21 @@ import type * as connection from '@ankoh/dashql-jsonschema/connection.js';
 
 function createDependencies(overrides: Partial<SalesforceLoginCommandDependencies> = {}) {
     const authentication: SalesforceLoginAuthentication = {
-        coreAccessToken: { createdAt: '', accessToken: 'core-token' } as connection.SalesforceCoreAccessToken,
-        dataCloudAccessToken: {
-            jwt: { raw: 'data-cloud-token', header: {}, payload: {} },
-        } as connection.SalesforceDataCloudAccessToken,
+        coreAccessToken: {
+            createdAt: new Date(0).toISOString(),
+            expiresAt: new Date(1).toISOString(),
+            accessToken: 'org-jwt',
+            instanceUrl: 'https://example.my.salesforce.com',
+            jwt: { raw: 'org-jwt', header: {}, payload: { exp: 0.001 } },
+        } as connection.SalesforceCoreAccessToken,
     };
     const dependencies: SalesforceLoginCommandDependencies = {
         requestForm: vi.fn().mockResolvedValue({
             alias: 'salesforce',
             instanceUrl: 'https://example.my.salesforce.com',
             appConsumerKey: 'consumer-key',
+            dataCloudInstanceUrl: 'https://data.example.com',
+            dataCloudTenantId: 'tenant-1',
             loginHint: '',
         }),
         hasAlias: vi.fn().mockReturnValue(false),
@@ -52,6 +57,8 @@ describe('Salesforce login command', () => {
                 alias: 'SaLeSfOrCe',
                 instanceUrl: 'https://example.my.salesforce.com',
                 appConsumerKey: 'consumer-key',
+                dataCloudInstanceUrl: 'https://data.example.com',
+                dataCloudTenantId: 'tenant-1',
                 loginHint: '',
             }),
             hasAlias: vi.fn(alias => alias.toLowerCase() === 'salesforce'),
@@ -70,13 +77,15 @@ describe('Salesforce login command', () => {
                 alias: 'salesforce',
                 instanceUrl: 'https://example.my.salesforce.com',
                 appConsumerKey: 'consumer-key',
+                dataCloudInstanceUrl: 'https://data.example.com',
+                dataCloudTenantId: 'tenant-1',
                 loginHint: '',
             },
             undefined,
             onProgress,
         );
         expect(dependencies.attach).toHaveBeenCalledWith(
-            'salesforce',
+            expect.objectContaining({ alias: 'salesforce', dataCloudInstanceUrl: 'https://data.example.com', dataCloudTenantId: 'tenant-1' }),
             authentication,
             undefined,
             onProgress,

@@ -80,10 +80,12 @@ describe('SalesforceLoginHistoryStore', () => {
             name: 'new',
             instanceUrl: 'https://new.my.salesforce.com',
             appConsumerKey: 'new-key',
+            dataCloudInstanceUrl: ' https://tenant.example.com ',
+            dataCloudTenantId: ' cdp-tenant ',
         });
 
         await expect(store.load()).resolves.toEqual([
-            expect.objectContaining({ organizationId: '00D-new', lastUsedAt: '2026-02-01T00:00:00.000Z' }),
+            expect.objectContaining({ organizationId: '00D-new', dataCloudInstanceUrl: 'https://tenant.example.com', dataCloudTenantId: 'cdp-tenant', lastUsedAt: '2026-02-01T00:00:00.000Z' }),
             expect.objectContaining({ organizationId: '00D-old', lastUsedAt: '2026-01-01T00:00:00.000Z' }),
         ]);
     });

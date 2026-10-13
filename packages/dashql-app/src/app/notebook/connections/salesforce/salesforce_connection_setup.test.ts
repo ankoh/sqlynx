@@ -7,10 +7,16 @@ import type { HyperDatabaseClient, HyperDatabaseConnectionContext } from '../hyp
 import { TestLogger } from '../../../../platform/logger/test_logger.js';
 import { PlatformType } from '../../../../platform/platform_type.js';
 import { BASE64URL_CODEC } from '../../../../utils/base64.js';
+import { SETUP_FAILED, SF_CHANNEL_READY } from './salesforce_connection_state.js';
 
 afterEach(() => vi.unstubAllGlobals());
 
-describe('setupSalesforceConnection', () => {
+for (const { cdpUrl, tenantId, valid } of [
+    { cdpUrl: 'https://hyper.example.com', tenantId: 'tenant-id', valid: true },
+    { cdpUrl: undefined, tenantId: 'tenant-id', valid: false },
+    { cdpUrl: 'http://hyper.example.com', tenantId: 'tenant-id', valid: false },
+    { cdpUrl: 'https://hyper.example.com', tenantId: ' ', valid: false },
+]) describe(`setupSalesforceConnection with configured endpoint=${cdpUrl}, tenant=${tenantId}`, () => {
     it.each(['V3_GRPC', 'V3_HTTP'] as const)('configures the Salesforce database for %s', async protocol => {
         let context: HyperDatabaseConnectionContext | undefined;
         const client: HyperDatabaseClient = {
@@ -19,23 +25,37 @@ describe('setupSalesforceConnection', () => {
                 return { executeQuery: vi.fn(), close: vi.fn() } as any;
             }),
         };
+        const unusedClient: HyperDatabaseClient = { connect: vi.fn() };
         const popup = { closed: false, focus: vi.fn(), close: vi.fn() };
         const open = vi.fn((_url: string | URL) => popup);
         vi.stubGlobal('open', open);
         const params = {
             hyperProtocol: protocol,
             instanceUrl: 'https://example.my.salesforce.com',
+            dataCloudInstanceUrl: cdpUrl,
+            dataCloudTenantId: tenantId,
             appConsumerKey: 'consumer-key',
             appConsumerSecret: '',
             login: '',
         } as connection.SalesforceConnectionParams;
+        const coreToken: connection.SalesforceCoreAccessToken = {
+            createdAt: new Date(0).toISOString(),
+            expiresAt: new Date(7_200_000).toISOString(),
+            accessToken: 'core-token',
+            instanceUrl: params.instanceUrl,
+            jwt: {
+                raw: 'core-token',
+                header: { alg: 'RS256' },
+                payload: {
+                    exp: 7_200,
+                    sfoid: 'org-id',
+                    customAttributes: { dataspace: 'analytics' },
+                },
+            },
+        };
         const api = {
-            getCoreAccessToken: vi.fn().mockResolvedValue({ accessToken: 'core-token' }),
-            getCoreUserInfo: vi.fn().mockResolvedValue({ preferredUsername: 'test@example.com' }),
-            getDataCloudAccessToken: vi.fn().mockResolvedValue({
-                instanceUrl: 'https://hyper.example.com',
-                jwt: { raw: 'offcore-token', payload: { audienceTenantId: 'tenant-id' } },
-            }),
+            getCoreAccessToken: vi.fn().mockResolvedValue(coreToken),
+            getCoreUserInfo: vi.fn().mockResolvedValue({ preferredUsername: 'test@example.com', photos: {} }),
         } as unknown as SalesforceApiClientInterface;
         const events = {
             waitForOAuthRedirect: vi.fn(async (_signal, matches) => {
@@ -47,23 +67,44 @@ describe('setupSalesforceConnection', () => {
                 return callback;
             }),
         };
-        await setupSalesforceConnection(
-            vi.fn(),
+        const dispatch = vi.fn();
+        const setup = setupSalesforceConnection(
+            dispatch,
             new TestLogger(),
             params,
             { auth: { oauthRedirect: 'https://example.com/callback' } },
             PlatformType.WEB,
             api,
-            client,
-            client,
+            protocol === 'V3_HTTP' ? unusedClient : client,
+            protocol === 'V3_HTTP' ? client : unusedClient,
             events as any,
             false,
             new AbortController().signal,
         );
 
+        if (!valid) {
+            await expect(setup).rejects.toThrow();
+            expect(client.connect).not.toHaveBeenCalled();
+            expect(unusedClient.connect).not.toHaveBeenCalled();
+            expect(api.getCoreAccessToken).not.toHaveBeenCalled();
+            expect(dispatch).toHaveBeenLastCalledWith({ type: SETUP_FAILED, value: { message: expect.any(String) } });
+            return;
+        }
+        const channel = await setup;
+        expect(unusedClient.connect).not.toHaveBeenCalled();
+        expect(client.connect).toHaveBeenCalledWith(expect.objectContaining({
+            protocol,
+            endpoint: 'https://hyper.example.com/',
+        }), context);
         expect(context?.getAttachedDatabases()).toEqual(protocol === 'V3_HTTP' ? [] : [{
-            path: 'sf:tenant-id;default',
+            path: 'sf:tenant-id;analytics',
             alias: 'lakehouse',
         }]);
+        expect(await context?.getRequestMetadata()).toEqual({
+            audience: 'tenant-id',
+            authorization: 'Bearer core-token',
+        });
+        expect(channel.coreToken).toBe(coreToken);
+        expect(dispatch).toHaveBeenLastCalledWith({ type: SF_CHANNEL_READY, value: channel });
     });
 });

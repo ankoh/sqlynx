@@ -146,6 +146,8 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
                     const params: connectionTypes.SalesforceConnectionParams = {
                         hyperProtocol: 'WASM',
                         instanceUrl: form.instanceUrl,
+                        dataCloudInstanceUrl: form.dataCloudInstanceUrl,
+                        dataCloudTenantId: form.dataCloudTenantId,
                         appConsumerKey: form.appConsumerKey,
                         appConsumerSecret: '',
                         login: form.loginHint,
@@ -165,8 +167,7 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
                                 GENERATING_PKCE_CHALLENGE: 'Preparing secure Salesforce login',
                                 OAUTH_NATIVE_LINK_OPENED: 'Waiting for Salesforce authorization in your browser',
                                 OAUTH_WEB_WINDOW_OPENED: 'Waiting for Salesforce authorization',
-                                REQUESTING_CORE_AUTH_TOKEN: 'Exchanging Salesforce authorization code',
-                                REQUESTING_DATA_CLOUD_ACCESS_TOKEN: 'Requesting Data Cloud credentials',
+                                REQUESTING_CORE_AUTH_TOKEN: 'Requesting Salesforce OrgJWT',
                             };
                             const message = messages[progress.stage];
                             if (message) {
@@ -175,30 +176,26 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
                             }
                             if (progress.stage === 'RECEIVED_CORE_AUTH_TOKEN') {
                                 loginDialog.update({
-                                    status: 'Received Core access token',
+                                    status: 'Received Salesforce OrgJWT',
                                     coreAccessToken: progress.coreAccessToken,
                                 });
                             } else if (progress.stage === 'RECEIVED_CORE_USER_INFO') {
                                 loginDialog.update({
                                     login: progress.coreUserInfo.preferredUsername ?? progress.coreUserInfo.email ?? '',
                                 });
-                            } else if (progress.stage === 'RECEIVED_DATA_CLOUD_ACCESS_TOKEN') {
-                                loginDialog.update({
-                                    status: 'Received Data Cloud access token',
-                                    dataCloudAccessToken: progress.dataCloudAccessToken,
-                                });
                             }
                         },
                     });
                 },
-                attach: async (alias, authentication, signal) => {
+                attach: async (form, authentication, signal) => {
+                    const alias = form.alias;
                     loginDialog.update({ status: `Attaching database as ${alias}` });
-                    await attachmentManager.attach(alias, authentication.dataCloudAccessToken, signal);
+                    await attachmentManager.attach(alias, authentication.coreAccessToken, form, signal);
                     authentications.set(alias.toLowerCase(), authentication);
                 },
                 onSuccess: async (form, authentication) => {
                     const organizationId = authentication.coreUserInfo?.organizationId
-                        ?? authentication.dataCloudAccessToken.jwt.payload.orgId;
+                        ?? authentication.coreAccessToken.jwt.payload.sfoid;
                     if (organizationId) {
                         try {
                             await loginHistoryRef.current.record({
@@ -206,6 +203,8 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
                                 name: form.alias,
                                 instanceUrl: authentication.coreAccessToken.instanceUrl ?? form.instanceUrl,
                                 appConsumerKey: form.appConsumerKey,
+                                dataCloudInstanceUrl: form.dataCloudInstanceUrl,
+                                dataCloudTenantId: form.dataCloudTenantId,
                                 loginHint: authentication.coreUserInfo?.preferredUsername
                                     ?? authentication.coreUserInfo?.email,
                             });
@@ -234,7 +233,6 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
                     const resolved = await resolveSalesforceCatalog(
                         logger,
                         authentication.coreAccessToken,
-                        authentication.dataCloudAccessToken,
                         new SalesforceApiClient(logger, httpClient),
                         signal ?? new AbortController().signal,
                         progress => {

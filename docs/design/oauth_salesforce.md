@@ -3,6 +3,12 @@
 DashQL uses the [Web Server OAuth Flow with PKCE](https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_web_server_flow.htm&type=5).
 No client secret is embedded; PKCE alone binds the initiator to the finisher.
 
+The External Client App must enable **Issue JSON Web Token (JWT)-based access tokens
+for named users** (`isNamedUserJwtEnabled=true`). The OAuth grant remains authorization
+code, not JWT-Bearer. Salesforce signs the returned `access_token`; DashQL uses that
+same OrgJWT for Core REST and Data Cloud Direct/Hyper without an A360 token exchange.
+See [External Client App setup](../misc/setup_data_cloud.md).
+
 The registered `redirect_uri` is always `https://dashql.app/oauth.html` regardless of where the
 app is running. That page acts as a relay: it receives the authorization code from Salesforce,
 encodes it into a platform-appropriate event, and hands it back to the originating app instance.
@@ -35,8 +41,16 @@ After the code arrives:
 
 7. Exchange the code for a core access token: POST to `{instanceUrl}/services/oauth2/token`
    with `code`, `code_verifier`, and `redirect_uri=https://dashql.app/oauth.html`.
-8. Exchange the core token for a Data Cloud access token.
-9. Open the Hyper gRPC channel using the Data Cloud token.
+8. Decode the OrgJWT and validate its expiration. Data Cloud routing claims are not required.
+   Decoding does not verify the JWT signature; the receiving Salesforce service does that.
+9. Use the explicitly configured tenant-specific Data Cloud endpoint and CDP tenant ID for
+   Direct HTTP, Hyper gRPC, or an embedded Hyper remote attachment. Send the original
+   OrgJWT unchanged as the bearer token. Keep the OAuth response's `instance_url` for
+   Core REST user info and metadata.
+
+OrgJWT acceptance and tenant-context mapping are Salesforce-side requirements for each
+Direct/Hyper path. Query Connect success does not prove these paths work. The app does
+not currently refresh credentials automatically; reconnect when the OrgJWT expires.
 
 ---
 

@@ -9,10 +9,13 @@ import {
 import type { SalesforceLoginAuthentication } from './login.js';
 
 const AUTHENTICATION: SalesforceLoginAuthentication = {
-    coreAccessToken: { createdAt: '', accessToken: 'core-token' } as connection.SalesforceCoreAccessToken,
-    dataCloudAccessToken: {
-        jwt: { raw: 'data-cloud-token', header: {}, payload: {} },
-    } as connection.SalesforceDataCloudAccessToken,
+    coreAccessToken: {
+        createdAt: new Date(0).toISOString(),
+        expiresAt: new Date(1).toISOString(),
+        accessToken: 'org-jwt',
+        instanceUrl: 'https://example.my.salesforce.com',
+        jwt: { raw: 'org-jwt', header: {}, payload: { exp: 0.001 } },
+    } as connection.SalesforceCoreAccessToken,
 };
 
 const CATALOG: SalesforceRefreshCatalog = {

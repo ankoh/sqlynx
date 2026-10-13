@@ -163,7 +163,7 @@ export function createDefaultConnectionParamsForConnector(connector: ConnectorIn
         case ConnectorType.HYPER:
             return { hyper: { protocol: 'WASM', endpoint: '', tls: { clientKeyPath: '', clientCertPath: '', caCertsPath: '' } } };
         case ConnectorType.SALESFORCE_DATA_CLOUD:
-            return { salesforce: { hyperProtocol: 'V3_HTTP', instanceUrl: '', appConsumerKey: '', appConsumerSecret: '', login: '' } };
+            return { salesforce: { hyperProtocol: 'V3_HTTP', instanceUrl: '', dataCloudInstanceUrl: '', dataCloudTenantId: '', appConsumerKey: '', appConsumerSecret: '', login: '' } };
         case ConnectorType.TRINO:
             return { trino: { endpoint: '', catalogName: '', auth: { authType: 'AUTH_BASIC' } } };
     }
