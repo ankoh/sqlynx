@@ -43,6 +43,7 @@ import { getKeywordCase } from '../app/notebook/ui/script_format.js';
 import { useShellQueryResult } from './use_shell_query_result.js';
 import { useFormatDialog } from './format_dialog.js';
 import { usePlanDialog } from './plan_dialog.js';
+import { getHyperDBWebSupportError } from '../platform/hyperdb/hyperdb_web_support.js';
 import * as styles from './shell_page.module.css';
 
 const LOG_CTX = 'standalone_shell';
@@ -83,6 +84,7 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
     const platformType = usePlatformType();
     const appConfig = useAppConfig();
     const keywordCase = getKeywordCase(appConfig?.settings);
+    const hyperDBSupportError = platformType === PlatformType.WEB ? getHyperDBWebSupportError() : null;
     const keywordCaseRef = React.useRef(keywordCase);
     keywordCaseRef.current = keywordCase;
     const loginHistoryRef = React.useRef(new SalesforceLoginHistoryStore());
@@ -107,6 +109,7 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
     const { resultQuery, showResultQuery, closeResultQuery } = useShellQueryResult(queryExecutions);
 
     React.useEffect(() => {
+        if (hyperDBSupportError != null) return;
         if (containerRef.current == null) return;
 
         let cancelled = false;
@@ -371,7 +374,18 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
             setConnected(false);
             void fileRegistry?.dispose().finally(() => connection?.close());
         };
-    }, [appConfig?.connectors, appConfig?.settings?.forceReLogin, appEvents, dispatchComputation, fileDownloader, formatDialog, httpClient, logger, loginDialog, planDialog, platformType, props.onEngineVersion, queryExecutions, setConnected, setupEmbeddedDatabase, showResultQuery]);
+    }, [appConfig?.connectors, appConfig?.settings?.forceReLogin, appEvents, dispatchComputation, fileDownloader, formatDialog, httpClient, hyperDBSupportError, logger, loginDialog, planDialog, platformType, props.onEngineVersion, queryExecutions, setConnected, setupEmbeddedDatabase, showResultQuery]);
+
+    if (hyperDBSupportError != null) {
+        return (
+            <main className={styles.page} aria-label="HyperDB Shell">
+                <section className={styles.unsupported} role="alert">
+                    <h1>Unsupported platform</h1>
+                    <p>{hyperDBSupportError}</p>
+                </section>
+            </main>
+        );
+    }
 
     return (
         <main className={styles.page} aria-label="HyperDB Shell">

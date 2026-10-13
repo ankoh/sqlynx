@@ -6,6 +6,7 @@ import type { SetupProgress } from '../database/embedded_database_provider.js';
 import { HyperDB, type HyperDBEngineClient } from './hyperdb_wasm.js';
 import { HYPERDB_WASM_ENGINE_SETTINGS } from './hyperdb_settings.js';
 import { ensureHyperDBOPFSDirectories } from './hyperdb_opfs.js';
+import { getHyperDBWebSupportError } from './hyperdb_web_support.js';
 
 declare global {
     var __DASHQL_TEST_HYPERDB_CLIENT__: ((
@@ -43,11 +44,8 @@ function createEngineScript(): { url: string; revoke: () => void } {
 export async function createWebHyperDBClient(
     onSetupProgress?: (progress: SetupProgress) => void,
 ): Promise<HyperDBEngineClient> {
-    const hasSharedArrayBuffer = typeof SharedArrayBuffer !== 'undefined';
-    const isCrossOriginIsolated = typeof crossOriginIsolated !== 'undefined' && crossOriginIsolated;
-    if (!hasSharedArrayBuffer || !isCrossOriginIsolated) {
-        throw new Error('HyperDB requires SharedArrayBuffer and a cross-origin-isolated page');
-    }
+    const supportError = getHyperDBWebSupportError();
+    if (supportError != null) throw new Error(supportError);
 
     await ensureHyperDBOPFSDirectories();
 
