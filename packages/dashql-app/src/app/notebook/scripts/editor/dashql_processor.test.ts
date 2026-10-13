@@ -348,7 +348,7 @@ describe('CodeMirror portable editor events', () => {
 
         const event = transactionToEditorEvent(transaction, 7n);
 
-        expect(event.expectedDocumentRevision).toBe(7n);
+        expect(event.expectedTextVersion).toBe(7n);
         expect(event.changes.map(change => [change.from, change.to, change.insert])).toEqual([
             [1n, 2n, '☃'],
             [3n, 5n, '!'],
@@ -358,7 +358,7 @@ describe('CodeMirror portable editor events', () => {
         expect(event.action).toBe(dashql.buffers.editor.EditorEventAction.TYPE);
     });
 
-    it('applies a Unicode multi-range edit as one session revision', () => {
+    it('applies a Unicode multi-range edit as one text version', () => {
         const catalog = dql!.createCatalog();
         const text = 'aéz😀q';
         const { scriptSession, editorUpdate } = createScriptSession(catalog, text, 1);
@@ -378,7 +378,7 @@ describe('CodeMirror portable editor events', () => {
             extensions: [DashQLProcessorPlugin],
         });
         editorState = editorState.update({ effects: DashQLUpdateEffect.of(processorState) }).state;
-        const revision = scriptSession.getDocumentRevision();
+        const textVersion = scriptSession.getTextVersion();
         editorState = editorState.update({
             changes: [
                 { from: 1, to: 2, insert: '☃' },
@@ -389,7 +389,7 @@ describe('CodeMirror portable editor events', () => {
         }).state;
 
         expect(scriptSession.getText()).toBe('a☃z!q');
-        expect(scriptSession.getDocumentRevision()).toBe(revision + 1n);
+        expect(scriptSession.getTextVersion()).toBe(textVersion + 1n);
         expect(editorState.doc.toString()).toBe(scriptSession.getText());
     });
 });
@@ -445,8 +445,8 @@ describe('DashQL processor completion triggers', () => {
         expect(Array.from({ length: objects.read().candidatesLength() }, (_, i) => objects.read().candidates(i)?.completionText()))
             .toContain('orders');
         objects.destroy();
-        scriptSession.replaceText(scriptSession.getDocumentRevision(), 'select * from orders group');
-        scriptSession.setCursor(scriptSession.getDocumentRevision(), BigInt('select * from orders group'.length));
+        scriptSession.replaceText(scriptSession.getTextVersion(), 'select * from orders group');
+        scriptSession.setCursor(scriptSession.getTextVersion(), BigInt('select * from orders group'.length));
         const keywords = scriptSession.completeAtCursor(30, dashql.buffers.formatting.KeywordCase.UPPER);
         const candidates = Array.from({ length: keywords.read().candidatesLength() }, (_, i) => keywords.read().candidates(i));
         expect(candidates.find(candidate => candidate?.completionText() === 'GROUP')?.keywordContinuation()).toBe('BY');

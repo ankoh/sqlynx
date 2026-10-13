@@ -331,7 +331,7 @@ export function reduceNotebookScripts(state: NotebookScripts, action: NotebookSc
                 logger.warn("Dropping editor update for unknown script", {
                     notebookId: state.notebookId,
                     scriptKey: update.scriptKey.toString(),
-                    documentRevision: update.editorUpdate?.documentRevision.toString(),
+                    textVersion: update.editorUpdate?.textVersion.toString(),
                     stateRevision: update.editorUpdate?.stateRevision.toString(),
                 }, LOG_CTX);
                 update.scriptBuffers?.destroy(update.scriptBuffers);
@@ -342,7 +342,7 @@ export function reduceNotebookScripts(state: NotebookScripts, action: NotebookSc
                 logger.warn("Dropping editor update from stale editor session", {
                     notebookId: state.notebookId,
                     scriptKey: update.scriptKey.toString(),
-                    documentRevision: update.editorUpdate?.documentRevision.toString(),
+                    textVersion: update.editorUpdate?.textVersion.toString(),
                     stateRevision: update.editorUpdate?.stateRevision.toString(),
                 }, LOG_CTX);
                 update.scriptBuffers?.destroy(update.scriptBuffers);
@@ -350,7 +350,7 @@ export function reduceNotebookScripts(state: NotebookScripts, action: NotebookSc
                 return clearSemanticUserFocus(state);
             }
             const nextCursorContext = update.editorUpdate?.primaryCursorContext;
-            const documentChanged = prevScript.editorUpdate?.documentRevision !== update.editorUpdate?.documentRevision;
+            const documentChanged = prevScript.editorUpdate?.textVersion !== update.editorUpdate?.textVersion;
             const analysisRefreshed = update.editorUpdate?.analysisUpdated === true;
             const projectionChanged = prevScript.editorUpdate?.stateRevision !== update.editorUpdate?.stateRevision;
             logger.debug("Applying editor processor update", {
@@ -359,8 +359,8 @@ export function reduceNotebookScripts(state: NotebookScripts, action: NotebookSc
                 documentChanged: documentChanged.toString(),
                 analysisRefreshed: analysisRefreshed.toString(),
                 projectionChanged: projectionChanged.toString(),
-                previousDocumentRevision: prevScript.editorUpdate?.documentRevision.toString(),
-                documentRevision: update.editorUpdate?.documentRevision.toString(),
+                previousTextVersion: prevScript.editorUpdate?.textVersion.toString(),
+                textVersion: update.editorUpdate?.textVersion.toString(),
                 previousStateRevision: prevScript.editorUpdate?.stateRevision.toString(),
                 stateRevision: update.editorUpdate?.stateRevision.toString(),
                 cursorOffset: update.editorUpdate?.primaryCursorState?.textOffset?.toString(),
@@ -1046,9 +1046,9 @@ export function compileNotebookQuery(
     logger?.debug('Compiling script for query execution', {
         scriptKey: scriptData.scriptKey.toString(),
         fileName: scriptData.fileName,
-        documentRevision: scriptData.editorUpdate?.documentRevision.toString(),
+        textVersion: scriptData.editorUpdate?.textVersion.toString(),
         stateRevision: scriptData.editorUpdate?.stateRevision.toString(),
-        nativeDocumentRevision: scriptData.scriptSession.getDocumentRevision?.().toString(),
+        nativeTextVersion: scriptData.scriptSession.getTextVersion?.().toString(),
         analysisOutdated: scriptData.analysisOutdated.toString(),
         analysisAvailable: scriptData.editorUpdate?.analysisAvailable.toString(),
         textLength: scriptData.scriptSession.getText?.().length.toString(),
@@ -1227,7 +1227,7 @@ export function analyzeScriptData(scriptData: ScriptData, _catalog: core.DashQLC
 }
 
 export function replaceScriptSessionText(scriptSession: core.DashQLScriptSession, text: string): void {
-    const update = scriptSession.replaceText(scriptSession.getDocumentRevision(), text);
+    const update = scriptSession.replaceText(scriptSession.getTextVersion(), text);
     if (update.status !== core.buffers.editor.EditorUpdateStatus.OK) {
         const status = core.buffers.editor.EditorUpdateStatus[update.status] ?? update.status.toString();
         throw new Error(`Failed to replace editor session text: ${status}`);

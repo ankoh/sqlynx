@@ -582,7 +582,7 @@ auto& ext_depth = ctx.ext_depth;
 namespace dashql {
 namespace parser {
 
-Scanner::Scanner(const rope::Rope& text, uint32_t text_version, uint32_t external_id): output(std::make_shared<ScannedScript>(text, text_version, external_id)) {
+Scanner::Scanner(const rope::Rope& text, TextVersion text_version, uint32_t external_id): output(std::make_shared<ScannedScript>(text, text_version, external_id)) {
     // Write end-of-buffer markers
     input_data = output->text_buffer;
     assert(input_data.size() >= 2);

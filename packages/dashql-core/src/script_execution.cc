@@ -9,7 +9,7 @@ namespace dashql::execution {
 ScriptExecution::ScriptExecution(ScriptSession& session,
                                  buffers::formatting::FormattingConfigT formatting_config)
     : formatting_config_{std::move(formatting_config)},
-      document_revision_{session.GetDocumentRevision()} {
+      text_version_{session.GetTextVersion()} {
     compilation_ = ScriptCompiler::Compile(session.GetScript(), formatting_config_);
     for (uint32_t i = 0; i < compilation_.statements.size(); ++i) {
         if (compilation_.statements[i].kind != buffers::execution::CompiledScriptStatementKind::COMMAND) {
@@ -149,7 +149,7 @@ ScriptExecution::Update ScriptExecution::MakeUpdate(ProtocolError error, std::st
     update.protocol_error_message = std::move(message);
     update.snapshot = std::make_unique<buffers::execution::ScriptExecutionSnapshotT>();
     update.snapshot->phase = phase_;
-    update.snapshot->document_revision = document_revision_;
+    update.snapshot->text_version = text_version_;
     update.snapshot->statement_index = statement_index_;
     update.snapshot->statement_count = static_cast<uint32_t>(compilation_.statements.size());
     update.snapshot->output_statement_index = output_statement_index_;

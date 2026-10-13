@@ -124,12 +124,10 @@ ScriptSession::EditorUpdate ScriptSession::MakeUpdate(EditorUpdateStatus status,
     update.status_message = message;
     update.offset_unit = offset_unit_;
     update.catalog_entry_id = GetCatalogEntryId();
-    update.document_revision = document_revision_;
+    update.text_version = GetTextVersion();
     update.state_revision = state_revision_;
     update.catalog_revision = catalog_.GetVersion();
-    update.analysis_available = analyzed_document_revision_ == document_revision_ &&
-                                analyzed_catalog_revision_ == catalog_.GetVersion() &&
-                                script_.GetAnalyzedScript() != nullptr;
+    update.analysis_available = IsAnalysisCurrent();
     if (primary_selection_) {
         update.primary_selection = std::make_unique<EditorSelection>(*primary_selection_);
     }
@@ -395,16 +393,26 @@ void ScriptSession::ProjectEditorState(EditorUpdate& update) {
     update.processing_statistics = std::move(projected_statistics);
 }
 
+bool ScriptSession::IsAnalysisCurrent() const {
+    const auto& analyzed = script_.GetAnalyzedScript();
+    return analyzed_text_version_ == GetTextVersion() &&
+           analyzed_catalog_revision_ == catalog_.GetVersion() && analyzed != nullptr &&
+           analyzed->parsed_script != nullptr &&
+           analyzed->parsed_script == script_.GetParsedScript() &&
+           analyzed->parsed_script->scanned_script != nullptr &&
+           analyzed->parsed_script->scanned_script == script_.GetScannedScript() &&
+           analyzed->parsed_script->scanned_script->text_version == GetTextVersion();
+}
+
 bool ScriptSession::Analyze(EditorUpdate& update) {
-    if (analyzed_document_revision_ == document_revision_ && analyzed_catalog_revision_ == catalog_.GetVersion() &&
-        script_.GetAnalyzedScript() != nullptr) {
+    if (IsAnalysisCurrent()) {
         update.analysis_available = true;
         return true;
     }
 
     try {
         script_.Analyze(true);
-        analyzed_document_revision_ = document_revision_;
+        analyzed_text_version_ = GetTextVersion();
         analyzed_catalog_revision_ = catalog_.GetVersion();
         update.analysis_updated = true;
         update.analysis_available = true;
@@ -420,9 +428,9 @@ bool ScriptSession::Analyze(EditorUpdate& update) {
     return false;
 }
 
-ScriptSession::EditorUpdate ScriptSession::ReplaceText(uint64_t expected_document_revision, std::string_view text) {
+ScriptSession::EditorUpdate ScriptSession::ReplaceText(TextVersion expected_text_version, std::string_view text) {
     EditorEvent event;
-    event.expected_document_revision = expected_document_revision;
+    event.expected_text_version = expected_text_version;
     event.origin = buffers::editor::EditorEventOrigin::SYSTEM;
     event.intent = buffers::editor::EditorEventIntent::REPLACE;
     event.action = buffers::editor::EditorEventAction::APPLY;
@@ -436,9 +444,9 @@ ScriptSession::EditorUpdate ScriptSession::ReplaceText(uint64_t expected_documen
     return Apply(event);
 }
 
-ScriptSession::EditorUpdate ScriptSession::SetPrimaryCursor(uint64_t expected_document_revision, uint64_t offset) {
+ScriptSession::EditorUpdate ScriptSession::SetPrimaryCursor(TextVersion expected_text_version, uint64_t offset) {
     EditorEvent event;
-    event.expected_document_revision = expected_document_revision;
+    event.expected_text_version = expected_text_version;
     event.origin = buffers::editor::EditorEventOrigin::USER;
     event.intent = buffers::editor::EditorEventIntent::SELECTION;
     event.primary_selection = std::make_unique<EditorSelection>();
@@ -559,18 +567,19 @@ ScriptSession::EditorUpdate ScriptSession::Analyze() {
     auto update = MakeUpdate();
     if (Analyze(update)) {
         const bool cursor_outdated =
-            cursor_document_revision_ != document_revision_ || cursor_catalog_revision_ != catalog_.GetVersion();
+            update.analysis_updated || script_.cursor == nullptr || cursor_text_version_ != GetTextVersion() ||
+            cursor_catalog_revision_ != catalog_.GetVersion();
         if (primary_selection_ && cursor_outdated) {
             auto cursor = ResolveOffset(script_.text, primary_selection_->head);
             if (cursor) script_.MoveCursor(cursor->text_bytes);
-            cursor_document_revision_ = document_revision_;
+            cursor_text_version_ = GetTextVersion();
             cursor_catalog_revision_ = catalog_.GetVersion();
         }
         if (update.analysis_updated) {
             ++state_revision_;
         }
     }
-    update.document_revision = document_revision_;
+    update.text_version = GetTextVersion();
     update.state_revision = state_revision_;
     update.catalog_revision = catalog_.GetVersion();
     return FinalizeUpdate(std::move(update));
@@ -581,9 +590,9 @@ ScriptSession::EditorUpdate ScriptSession::Apply(const EditorEvent& event) {
     update.origin = event.origin;
     update.intent = event.intent;
     update.action = event.action;
-    if (event.expected_document_revision != document_revision_) {
-        update.status = EditorUpdateStatus::STALE_DOCUMENT_REVISION;
-        update.status_message = "editor event targets a stale document revision";
+    if (event.expected_text_version != GetTextVersion()) {
+        update.status = EditorUpdateStatus::STALE_TEXT_VERSION;
+        update.status_message = "editor event targets a stale text version";
         return FinalizeUpdate(std::move(update));
     }
 
@@ -682,46 +691,40 @@ ScriptSession::EditorUpdate ScriptSession::Apply(const EditorEvent& event) {
         catalog_.DropScript(script_);
         script_.ReplaceText(next_text);
         script_.cursor.reset();
-        cursor_document_revision_ = std::numeric_limits<uint64_t>::max();
+        cursor_text_version_ = std::numeric_limits<TextVersion>::max();
         cursor_catalog_revision_ = std::numeric_limits<uint64_t>::max();
-        ++document_revision_;
     }
     primary_selection_ = std::move(next_selection);
 
-    const bool analysis_stale = analyzed_document_revision_ != document_revision_ ||
-                                analyzed_catalog_revision_ != catalog_.GetVersion() ||
-                                script_.GetAnalyzedScript() == nullptr;
+    const bool analysis_stale = !IsAnalysisCurrent();
     // Selection updates also publish a complete EditorUpdate projection. Refresh stale analysis first;
     // otherwise a catalog revision change would turn a cursor move into an empty projection.
     const bool analysis_succeeded = !(event.analyze || (event.primary_selection && analysis_stale)) || Analyze(update);
-    const bool analysis_current = analyzed_document_revision_ == document_revision_ &&
-                                  analyzed_catalog_revision_ == catalog_.GetVersion() &&
-                                  script_.GetAnalyzedScript() != nullptr;
-    const bool cursor_outdated = event.primary_selection != nullptr || update.text_changed ||
-                                 cursor_document_revision_ != document_revision_ ||
+    const bool analysis_current = IsAnalysisCurrent();
+    const bool cursor_outdated = event.primary_selection != nullptr || update.text_changed || update.analysis_updated ||
+                                 script_.cursor == nullptr ||
+                                 cursor_text_version_ != GetTextVersion() ||
                                  cursor_catalog_revision_ != catalog_.GetVersion();
     if (analysis_succeeded && analysis_current && primary_selection_ && cursor_outdated) {
         auto cursor = ResolveOffset(script_.text, primary_selection_->head);
         if (cursor) {
             script_.MoveCursor(cursor->text_bytes);
-            cursor_document_revision_ = document_revision_;
+            cursor_text_version_ = GetTextVersion();
             cursor_catalog_revision_ = catalog_.GetVersion();
         }
     } else if (analysis_succeeded && analysis_current && !primary_selection_) {
         script_.cursor.reset();
-        cursor_document_revision_ = std::numeric_limits<uint64_t>::max();
+        cursor_text_version_ = std::numeric_limits<TextVersion>::max();
         cursor_catalog_revision_ = std::numeric_limits<uint64_t>::max();
     }
     if (update.text_changed || update.selection_changed || update.analysis_updated) {
         ++state_revision_;
     }
 
-    update.document_revision = document_revision_;
+    update.text_version = GetTextVersion();
     update.state_revision = state_revision_;
     update.catalog_revision = catalog_.GetVersion();
-    update.analysis_available = analyzed_document_revision_ == document_revision_ &&
-                                analyzed_catalog_revision_ == catalog_.GetVersion() &&
-                                script_.GetAnalyzedScript() != nullptr;
+    update.analysis_available = IsAnalysisCurrent();
     if (primary_selection_) {
         update.primary_selection = std::make_unique<EditorSelection>(*primary_selection_);
     } else {

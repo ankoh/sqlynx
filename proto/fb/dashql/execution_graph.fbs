@@ -1,0 +1,74 @@
+include "dashql/parsed_script.fbs";
+
+namespace dashql.buffers.execution;
+
+enum ExecutionGraphAccessMode: uint8 { READ, WRITE, DDL }
+enum ExecutionGraphEdgeReason: uint8 { READ_AFTER_WRITE, WRITE_AFTER_READ, WRITE_AFTER_WRITE, DDL, BARRIER }
+enum ExecutionGraphEntityType: uint8 { DEFERRED = 0, DATABASE = 1, SCHEMA = 2, TABLE = 3, COLUMN = 4, FUNCTION = 5 }
+
+struct ExecutionGraphCatalogObjectID {
+    object_type: ExecutionGraphEntityType;
+    object_id: uint64;
+    sub_object_id: uint32;
+}
+
+table ExecutionGraphScript {
+    script_id: uint32;
+    text_version: uint64;
+    analyzed_text_version: uint64;
+    analyzed_catalog_revision: uint64;
+}
+
+table ExecutionGraphEntity {
+    catalog_object_id: ExecutionGraphCatalogObjectID (required);
+    catalog_database_id: uint32;
+    catalog_schema_id: uint32;
+    database_name: string;
+    schema_name: string;
+    name: string;
+}
+
+table ExecutionGraphUnresolvedReference {
+    database_name: string;
+    schema_name: string;
+    name: string;
+}
+
+table ExecutionGraphAccess {
+    entity: uint32 = 4294967295;
+    unresolved_reference: uint32 = 4294967295;
+    mode: ExecutionGraphAccessMode;
+}
+
+table ExecutionGraphNode {
+    script: uint32;
+    statement_id: uint32;
+    statement_type: dashql.buffers.parser.StatementType;
+    sql: string;
+    produces_output: bool;
+    barrier: bool;
+    accesses: [ExecutionGraphAccess];
+}
+
+table ExecutionGraphEdge {
+    from: uint32;
+    to: uint32;
+    entity: uint32 = 4294967295;
+    unresolved_reference: uint32 = 4294967295;
+    reason: ExecutionGraphEdgeReason;
+}
+
+table ExecutionGraphDiagnostic {
+    node: uint32 = 4294967295;
+    message: string;
+}
+
+table ExecutionGraph {
+    scripts: [ExecutionGraphScript];
+    entities: [ExecutionGraphEntity];
+    unresolved_references: [ExecutionGraphUnresolvedReference];
+    nodes: [ExecutionGraphNode];
+    edges: [ExecutionGraphEdge];
+    diagnostics: [ExecutionGraphDiagnostic];
+    valid: bool = true;
+}

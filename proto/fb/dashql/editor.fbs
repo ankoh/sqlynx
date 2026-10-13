@@ -38,7 +38,7 @@ enum EditorEventAction: uint8 {
 
 enum EditorUpdateStatus: uint8 {
     OK,
-    STALE_DOCUMENT_REVISION,
+    STALE_TEXT_VERSION,
     INVALID_UTF8,
     INVALID_RANGE,
     OVERLAPPING_CHANGES,
@@ -182,7 +182,7 @@ table EditorProcessingStatistics {
 
 /// One portable editor transaction. Changes use pre-change offsets; the selection uses post-change offsets.
 table EditorEvent {
-    expected_document_revision: uint64;
+    expected_text_version: uint64;
     changes: [EditorTextChange];
     primary_selection: EditorSelection;
     origin: EditorEventOrigin;
@@ -198,7 +198,7 @@ table EditorUpdate {
     core_status: dashql.buffers.status.StatusCode = OK;
     offset_unit: EditorOffsetUnit = UTF8_BYTES;
     catalog_entry_id: uint32;
-    document_revision: uint64;
+    text_version: uint64;
     state_revision: uint64;
     catalog_revision: uint64;
     text_changed: bool;

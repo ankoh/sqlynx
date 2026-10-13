@@ -54,7 +54,7 @@ template <typename T> const T* ReadBuffer(const std::vector<uint8_t>& data) {
 
 ScriptSession::EditorUpdate Analyze(ScriptSession& session, std::string_view text) {
     ScriptSession::EditorEvent event;
-    event.expected_document_revision = session.GetDocumentRevision();
+    event.expected_text_version = session.GetTextVersion();
     event.analyze = true;
     event.changes.push_back(Change(0, session.GetText().size(), text));
     return session.Apply(event);
@@ -81,7 +81,7 @@ TEST(ScriptSessionTest, AppliesAtomicBatchInPreChangeOffsets) {
     ASSERT_EQ(session.ReplaceText(0, "abcdef").status, EditorUpdateStatus::OK);
 
     ScriptSession::EditorEvent event;
-    event.expected_document_revision = 1;
+    event.expected_text_version = 1;
     event.origin = EditorEventOrigin::USER;
     event.intent = EditorEventIntent::EDIT;
     event.action = EditorEventAction::TYPE;
@@ -94,7 +94,8 @@ TEST(ScriptSessionTest, AppliesAtomicBatchInPreChangeOffsets) {
     auto update = session.Apply(event);
     EXPECT_EQ(update.status, EditorUpdateStatus::OK);
     EXPECT_EQ(session.GetText(), "aXcdYZ");
-    EXPECT_EQ(update.document_revision, 2);
+    EXPECT_EQ(update.text_version, 2);
+    EXPECT_EQ(session.GetScript().text_version, 2);
     EXPECT_EQ(update.state_revision, 2);
     ASSERT_NE(update.primary_selection, nullptr);
     EXPECT_EQ(update.primary_selection->head, 6);
@@ -106,12 +107,79 @@ TEST(ScriptSessionTest, PreservesInputOrderForInsertionsAtSameOffset) {
     ASSERT_EQ(session.ReplaceText(0, "ab").status, EditorUpdateStatus::OK);
 
     ScriptSession::EditorEvent event;
-    event.expected_document_revision = 1;
+    event.expected_text_version = 1;
     event.changes.push_back(Change(1, 1, "X"));
     event.changes.push_back(Change(1, 1, "Y"));
 
     EXPECT_EQ(session.Apply(event).status, EditorUpdateStatus::OK);
     EXPECT_EQ(session.GetText(), "aXYb");
+}
+
+TEST(ScriptSessionTest, NoOpAndRejectedEditsPreserveTextVersion) {
+    Catalog catalog;
+    ScriptSession session{catalog};
+    ASSERT_EQ(session.ReplaceText(0, "abc").status, EditorUpdateStatus::OK);
+    auto unchanged = session.ReplaceText(1, "abc");
+    EXPECT_FALSE(unchanged.text_changed);
+    EXPECT_EQ(unchanged.text_version, 1);
+
+    ScriptSession::EditorEvent event;
+    event.expected_text_version = 1;
+    event.changes.push_back(Change(0, 1, "a"));
+    event.changes.push_back(Change(100, 100, ""));
+    auto update = session.Apply(event);
+    EXPECT_EQ(update.status, EditorUpdateStatus::OK);
+    EXPECT_FALSE(update.text_changed);
+    EXPECT_EQ(update.text_version, 1);
+    EXPECT_EQ(update.state_revision, 1);
+
+    event.changes.push_back(Change(2, 2, "\xFF"));
+    EXPECT_EQ(session.Apply(event).status, EditorUpdateStatus::INVALID_UTF8);
+    EXPECT_EQ(session.GetTextVersion(), 1);
+    EXPECT_EQ(session.GetScript().text_version, 1);
+    EXPECT_EQ(session.GetText(), "abc");
+}
+
+TEST(ScriptSessionTest, DirectScriptEditsShareVersionAndRefreshAnalysis) {
+    Catalog catalog;
+    ScriptSession session{catalog};
+    ASSERT_TRUE(Analyze(session, "select 1").analysis_available);
+    ASSERT_EQ(session.SetPrimaryCursor(1, 7).status, EditorUpdateStatus::OK);
+    auto first_analysis = session.GetScript().GetAnalyzedScript();
+    session.GetScript().InsertTextAt(0, "-- comment\n");
+    EXPECT_EQ(session.GetTextVersion(), 2);
+
+    auto stale = session.ReplaceText(1, "select 2");
+    EXPECT_EQ(stale.status, EditorUpdateStatus::STALE_TEXT_VERSION);
+    EXPECT_EQ(stale.text_version, 2);
+    EXPECT_FALSE(stale.analysis_available);
+    EXPECT_TRUE(stale.syntax_spans.empty());
+
+    auto update = session.Analyze();
+    EXPECT_EQ(update.text_version, 2);
+    EXPECT_TRUE(update.analysis_updated);
+    EXPECT_TRUE(update.analysis_available);
+    EXPECT_NE(session.GetScript().GetAnalyzedScript(), first_analysis);
+    EXPECT_EQ(session.GetScript().GetAnalyzedScript()->parsed_script->scanned_script->text_version, 2);
+
+    // A direct parse can invalidate snapshot identity without changing the text version.
+    session.GetScript().Parse();
+    auto reparsed = session.Analyze();
+    EXPECT_TRUE(reparsed.analysis_updated);
+    EXPECT_TRUE(reparsed.analysis_available);
+    ASSERT_NE(reparsed.primary_cursor_state, nullptr);
+    EXPECT_EQ(reparsed.primary_cursor_state->text_offset, 7);
+    EXPECT_EQ(session.GetTextVersion(), 2);
+
+    // Restoring an older native snapshot must not fool the session's captured version.
+    session.GetScript().analyzed_script = first_analysis;
+    session.GetScript().parsed_script = first_analysis->parsed_script;
+    session.GetScript().scanned_script = first_analysis->parsed_script->scanned_script;
+    auto restored = session.Analyze();
+    EXPECT_TRUE(restored.analysis_updated);
+    EXPECT_TRUE(restored.analysis_available);
+    EXPECT_EQ(session.GetScript().GetAnalyzedScript()->parsed_script->scanned_script->text_version, 2);
+    EXPECT_EQ(session.GetTextVersion(), 2);
 }
 
 TEST(ScriptSessionTest, ClampsInsertionPastDocumentEnd) {
@@ -120,7 +188,7 @@ TEST(ScriptSessionTest, ClampsInsertionPastDocumentEnd) {
     ASSERT_EQ(session.ReplaceText(0, "a\xF0\x9F\x98\x80").status, EditorUpdateStatus::OK);
 
     ScriptSession::EditorEvent event;
-    event.expected_document_revision = 1;
+    event.expected_text_version = 1;
     event.changes.push_back(Change(100, 100, "!"));
 
     EXPECT_EQ(session.Apply(event).status, EditorUpdateStatus::OK);
@@ -133,19 +201,21 @@ TEST(ScriptSessionTest, RejectsWholeOverlappingOrStaleBatch) {
     ASSERT_EQ(session.ReplaceText(0, "abcdef").status, EditorUpdateStatus::OK);
 
     ScriptSession::EditorEvent overlap;
-    overlap.expected_document_revision = 1;
+    overlap.expected_text_version = 1;
     overlap.changes.push_back(Change(1, 4, "x"));
     overlap.changes.push_back(Change(3, 5, "y"));
     auto overlap_update = session.Apply(overlap);
     EXPECT_EQ(overlap_update.status, EditorUpdateStatus::OVERLAPPING_CHANGES);
     EXPECT_EQ(session.GetText(), "abcdef");
-    EXPECT_EQ(session.GetDocumentRevision(), 1);
+    EXPECT_EQ(session.GetTextVersion(), 1);
+    EXPECT_EQ(session.GetScript().text_version, 1);
 
     ScriptSession::EditorEvent stale;
-    stale.expected_document_revision = 0;
+    stale.expected_text_version = 0;
     stale.changes.push_back(Change(0, 1, "z"));
     auto stale_update = session.Apply(stale);
-    EXPECT_EQ(stale_update.status, EditorUpdateStatus::STALE_DOCUMENT_REVISION);
+    EXPECT_EQ(stale_update.status, EditorUpdateStatus::STALE_TEXT_VERSION);
+    EXPECT_EQ(session.GetTextVersion(), 1);
     EXPECT_EQ(session.GetText(), "abcdef");
     EXPECT_EQ(session.GetStateRevision(), 1);
 }
@@ -156,19 +226,19 @@ TEST(ScriptSessionTest, ConvertsUtf8ByteOffsetsAndRejectsSplitCodepoints) {
     ASSERT_EQ(session.ReplaceText(0, "a\xC3\xA9z").status, EditorUpdateStatus::OK);
 
     ScriptSession::EditorEvent valid;
-    valid.expected_document_revision = 1;
+    valid.expected_text_version = 1;
     valid.changes.push_back(Change(1, 3, "\xE2\x98\x83"));
     auto valid_update = session.Apply(valid);
     EXPECT_EQ(valid_update.status, EditorUpdateStatus::OK);
     EXPECT_EQ(session.GetText(), "a\xE2\x98\x83z");
 
     ScriptSession::EditorEvent split;
-    split.expected_document_revision = 2;
+    split.expected_text_version = 2;
     split.changes.push_back(Change(2, 3, "x"));
     auto split_update = session.Apply(split);
     EXPECT_EQ(split_update.status, EditorUpdateStatus::INVALID_RANGE);
     EXPECT_EQ(session.GetText(), "a\xE2\x98\x83z");
-    EXPECT_EQ(session.GetDocumentRevision(), 2);
+    EXPECT_EQ(session.GetTextVersion(), 2);
 }
 
 TEST(ScriptSessionTest, UsesUtf16OffsetsForEventsSelectionsAndProjections) {
@@ -187,7 +257,7 @@ TEST(ScriptSessionTest, UsesUtf16OffsetsForEventsSelectionsAndProjections) {
     EXPECT_EQ((*missing)->text_span->offset(), 17u);
 
     ScriptSession::EditorEvent event;
-    event.expected_document_revision = 1;
+    event.expected_text_version = 1;
     event.changes.push_back(Change(8, 10, "x"));
     event.primary_selection = std::make_unique<ScriptSession::EditorSelection>();
     event.primary_selection->anchor = 9;
@@ -199,7 +269,7 @@ TEST(ScriptSessionTest, UsesUtf16OffsetsForEventsSelectionsAndProjections) {
     EXPECT_EQ(update.primary_selection->head, 9u);
 
     ScriptSession::EditorEvent split_surrogate;
-    split_surrogate.expected_document_revision = 2;
+    split_surrogate.expected_text_version = 2;
     split_surrogate.changes.push_back(Change(0, 0, "\xF0\x9F\x98\x80"));
     split_surrogate.primary_selection = std::make_unique<ScriptSession::EditorSelection>();
     split_surrogate.primary_selection->anchor = 1;
@@ -281,7 +351,7 @@ TEST(ScriptSessionTest, CursorMoveRefreshesAnalysisAfterCatalogRevision) {
     ASSERT_TRUE(Analyze(schema, "create table items (value int)").analysis_available);
     schema.LoadIntoCatalog(0);
 
-    auto moved = source.SetPrimaryCursor(source.GetDocumentRevision(), 7);
+    auto moved = source.SetPrimaryCursor(source.GetTextVersion(), 7);
     EXPECT_EQ(moved.status, EditorUpdateStatus::OK);
     EXPECT_TRUE(moved.analysis_available);
     EXPECT_TRUE(moved.analysis_updated);
@@ -295,7 +365,13 @@ TEST(ScriptSessionTest, EditingPublishedScriptDropsStaleCatalogEntry) {
     session.LoadIntoCatalog(0);
     ASSERT_TRUE(catalog.Contains(session.GetCatalogEntryId()));
 
-    auto update = session.ReplaceText(session.GetDocumentRevision(), "create table updated (id int)");
+    auto no_op = session.ReplaceText(session.GetTextVersion(), "create table items (id int)");
+    EXPECT_FALSE(no_op.text_changed);
+    EXPECT_TRUE(no_op.analysis_available);
+    EXPECT_TRUE(catalog.Contains(session.GetCatalogEntryId()));
+    EXPECT_FALSE(session.Analyze().analysis_updated);
+
+    auto update = session.ReplaceText(session.GetTextVersion(), "create table updated (id int)");
 
     EXPECT_EQ(update.status, EditorUpdateStatus::OK);
     EXPECT_FALSE(catalog.Contains(session.GetCatalogEntryId()));
@@ -306,7 +382,7 @@ TEST(ScriptSessionTest, EditCanSynchronouslyAnalyzeAndPlaceCursor) {
     ScriptSession session{catalog};
 
     ScriptSession::EditorEvent event;
-    event.expected_document_revision = 0;
+    event.expected_text_version = 0;
     event.analyze = true;
     event.changes.push_back(Change(0, 0, "select 1"));
     event.primary_selection = std::make_unique<ScriptSession::EditorSelection>();
@@ -324,7 +400,7 @@ TEST(ScriptSessionTest, EditCanSynchronouslyAnalyzeAndPlaceCursor) {
     EXPECT_EQ(update.primary_cursor_state->scanner_relative_position,
               buffers::cursor::RelativeSymbolPosition::END_OF_SYMBOL);
     EXPECT_FALSE(update.primary_cursor_state->scanner_symbol_completable);
-    EXPECT_EQ(update.document_revision, 1);
+    EXPECT_EQ(update.text_version, 1);
     EXPECT_EQ(update.state_revision, 1);
 }
 
@@ -440,7 +516,7 @@ TEST(ScriptSessionTest, ProjectsPrimaryCursorSemanticContextAndRelatedReferences
     auto update = Analyze(session, text);
     ASSERT_EQ(update.status, EditorUpdateStatus::OK);
 
-    auto column_update = session.SetPrimaryCursor(session.GetDocumentRevision(), 8);
+    auto column_update = session.SetPrimaryCursor(session.GetTextVersion(), 8);
     ASSERT_NE(column_update.primary_cursor_context, nullptr);
     EXPECT_EQ(column_update.primary_cursor_context->kind, EditorCursorSemanticKind::COLUMN_REFERENCE);
     EXPECT_TRUE(column_update.primary_cursor_context->resolved);
@@ -449,7 +525,7 @@ TEST(ScriptSessionTest, ProjectsPrimaryCursorSemanticContextAndRelatedReferences
     EXPECT_EQ(column_update.primary_cursor_context->catalog_column_id, 0u);
 
     const auto table_offset = text.find("items") + 2;
-    auto table_update = session.SetPrimaryCursor(session.GetDocumentRevision(), table_offset);
+    auto table_update = session.SetPrimaryCursor(session.GetTextVersion(), table_offset);
     ASSERT_NE(table_update.primary_cursor_context, nullptr);
     EXPECT_EQ(table_update.primary_cursor_context->kind, EditorCursorSemanticKind::TABLE_REFERENCE);
     EXPECT_TRUE(table_update.primary_cursor_context->resolved);
@@ -522,7 +598,7 @@ TEST(ScriptSessionTest, ProjectsIncrementallyTypedWithPrefixAsUtf16) {
 
     for (std::string_view character : {"w", "i", "t"}) {
         ScriptSession::EditorEvent event;
-        event.expected_document_revision = session.GetDocumentRevision();
+        event.expected_text_version = session.GetTextVersion();
         event.analyze = true;
         const auto offset = session.GetText().size();
         event.changes.push_back(Change(offset, offset, character));
@@ -576,7 +652,7 @@ TEST(ScriptSessionTest, CAbiOwnsSessionAndDetachedUpdateBuffers) {
         auto* update = flatbuffers::GetRoot<buffers::editor::EditorUpdate>(replace_result.data_ptr);
         EXPECT_EQ(update->status(), EditorUpdateStatus::OK);
         EXPECT_EQ(update->offset_unit(), buffers::editor::EditorOffsetUnit::UTF8_BYTES);
-        EXPECT_EQ(update->document_revision(), 1);
+        EXPECT_EQ(update->text_version(), 1);
         dashql_delete_owner(replace_result.owner_ptr, replace_result.owner_deleter);
 
         flatbuffers::FlatBufferBuilder event_builder;
@@ -590,7 +666,7 @@ TEST(ScriptSessionTest, CAbiOwnsSessionAndDetachedUpdateBuffers) {
         dashql_script_session_apply(&apply_result, session, event_builder.GetBufferPointer(), event_builder.GetSize());
         update = flatbuffers::GetRoot<buffers::editor::EditorUpdate>(apply_result.data_ptr);
         EXPECT_EQ(update->status(), EditorUpdateStatus::OK);
-        EXPECT_EQ(update->document_revision(), 2);
+        EXPECT_EQ(update->text_version(), 2);
         dashql_delete_owner(apply_result.owner_ptr, apply_result.owner_deleter);
 
         FFIResult text_result;

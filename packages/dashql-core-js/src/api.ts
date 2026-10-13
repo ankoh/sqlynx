@@ -29,6 +29,7 @@ export interface EmscriptenModule {
     _dashql_free: (ptr: number) => void;
     _dashql_delete_owner: (owner_ptr: number, owner_deleter: number) => void;
     _dashql_process_batch: (result: number, request: number, requestLength: number) => void;
+    _dashql_planner_plan: (result: number, sessions: number, sessionCount: number) => void;
     _dashql_script_execution_new: (result: number, session: number, dialect: number, mode: number, maxWidth: number, indentationWidth: number, debugMode: boolean) => void;
     _dashql_script_execution_start: (result: number, ptr: number) => void;
     _dashql_script_execution_resume: (result: number, ptr: number, statementResult: number, statementResultLength: number) => void;
@@ -37,12 +38,12 @@ export interface EmscriptenModule {
     _dashql_script_session_destroy: (ptr: number) => void;
     _dashql_script_session_get_catalog_entry_id: (ptr: number) => number;
     _dashql_script_session_get_text: (result: number, ptr: number) => void;
-    _dashql_script_session_get_document_revision: (ptr: number) => bigint;
+    _dashql_script_session_get_text_version: (ptr: number) => bigint;
     _dashql_script_session_get_state_revision: (ptr: number) => bigint;
     _dashql_script_session_get_catalog_revision: (ptr: number) => bigint;
-    _dashql_script_session_replace_text: (result: number, ptr: number, expectedDocumentRevision: bigint, text: number, textLength: number) => void;
+    _dashql_script_session_replace_text: (result: number, ptr: number, expectedTextVersion: bigint, text: number, textLength: number) => void;
     _dashql_script_session_apply: (result: number, ptr: number, event: number, eventLength: number) => void;
-    _dashql_script_session_set_primary_cursor: (result: number, ptr: number, expectedDocumentRevision: bigint, offset: bigint) => void;
+    _dashql_script_session_set_primary_cursor: (result: number, ptr: number, expectedTextVersion: bigint, offset: bigint) => void;
     _dashql_script_session_analyze: (result: number, ptr: number) => void;
     _dashql_script_session_complete_at_cursor: (result: number, ptr: number, limit: number, keywordCase: number) => void;
     _dashql_script_session_compile_query: (result: number, ptr: number, dialect: number, mode: number, maxWidth: number, indentationWidth: number, allowExtensions: boolean, parseIfOutdated: boolean) => void;
@@ -108,6 +109,7 @@ interface DashQLModuleExports {
     dashql_free: (ptr: number) => void;
     dashql_delete_owner: (owner_ptr: number, owner_deleter: number) => void;
     dashql_process_batch: (result: number, request: number, requestLength: number) => void;
+    dashql_planner_plan: (result: number, sessions: number, sessionCount: number) => void;
 
     dashql_script_execution_new: (result: number, session: number, dialect: number, mode: number, maxWidth: number, indentationWidth: number, debugMode: boolean) => void;
     dashql_script_execution_start: (result: number, ptr: number) => void;
@@ -118,12 +120,12 @@ interface DashQLModuleExports {
     dashql_script_session_destroy: (ptr: number) => void;
     dashql_script_session_get_catalog_entry_id: (ptr: number) => number;
     dashql_script_session_get_text: (result: number, ptr: number) => void;
-    dashql_script_session_get_document_revision: (ptr: number) => bigint;
+    dashql_script_session_get_text_version: (ptr: number) => bigint;
     dashql_script_session_get_state_revision: (ptr: number) => bigint;
     dashql_script_session_get_catalog_revision: (ptr: number) => bigint;
-    dashql_script_session_replace_text: (result: number, ptr: number, expectedDocumentRevision: bigint, text: number, textLength: number) => void;
+    dashql_script_session_replace_text: (result: number, ptr: number, expectedTextVersion: bigint, text: number, textLength: number) => void;
     dashql_script_session_apply: (result: number, ptr: number, event: number, eventLength: number) => void;
-    dashql_script_session_set_primary_cursor: (result: number, ptr: number, expectedDocumentRevision: bigint, offset: bigint) => void;
+    dashql_script_session_set_primary_cursor: (result: number, ptr: number, expectedTextVersion: bigint, offset: bigint) => void;
     dashql_script_session_analyze: (result: number, ptr: number) => void;
     dashql_script_session_complete_at_cursor: (result: number, ptr: number, limit: number, keywordCase: number) => void;
     dashql_script_session_compile_query: (result: number, ptr: number, dialect: number, mode: number, maxWidth: number, indentationWidth: number, allowExtensions: boolean, parseIfOutdated: boolean) => void;
@@ -202,6 +204,7 @@ const SCRIPT_DIFF_TYPE = Symbol('SCRIPT_DIFF_TYPE');
 const SCRIPT_COMPILATION_TYPE = Symbol('SCRIPT_COMPILATION_TYPE');
 const SCRIPT_EXECUTION_TYPE = Symbol('SCRIPT_EXECUTION_TYPE');
 const SCRIPT_EXECUTION_UPDATE_TYPE = Symbol('SCRIPT_EXECUTION_UPDATE_TYPE');
+const EXECUTION_GRAPH_TYPE = Symbol('EXECUTION_GRAPH_TYPE');
 const FLAT_CATALOG_TYPE = Symbol('FLAT_CATALOG_TYPE');
 const FLAT_PLAN_VIEW_MODEL_TYPE = Symbol('FLAT_PLAN_VIEW_MODEL_TYPE');
 const PARSED_SCRIPT_TYPE = Symbol('PARSED_SCRIPT_TYPE');
@@ -223,6 +226,7 @@ export type DashQLRegisteredMemory =
     | VariantKind<typeof SCRIPT_COMPILATION_TYPE, FlatBufferPtr<buffers.execution.ScriptCompilationResult>>
     | VariantKind<typeof SCRIPT_EXECUTION_TYPE, Ptr<typeof SCRIPT_EXECUTION_TYPE>>
     | VariantKind<typeof SCRIPT_EXECUTION_UPDATE_TYPE, FlatBufferPtr<buffers.execution.ScriptExecutionUpdate>>
+    | VariantKind<typeof EXECUTION_GRAPH_TYPE, FlatBufferPtr<buffers.execution.ExecutionGraph>>
     | VariantKind<typeof FLAT_CATALOG_TYPE, FlatBufferPtr<buffers.catalog.FlatCatalog>>
     | VariantKind<typeof FLAT_PLAN_VIEW_MODEL_TYPE, FlatBufferPtr<buffers.view.PlanViewModel>>
     | VariantKind<typeof PARSED_SCRIPT_TYPE, FlatBufferPtr<buffers.parser.ParsedScript>>
@@ -259,6 +263,7 @@ export class DashQL {
             dashql_free: module._dashql_free,
             dashql_delete_owner: module._dashql_delete_owner,
             dashql_process_batch: module._dashql_process_batch,
+            dashql_planner_plan: module._dashql_planner_plan,
             dashql_script_execution_new: module._dashql_script_execution_new,
             dashql_script_execution_start: module._dashql_script_execution_start,
             dashql_script_execution_resume: module._dashql_script_execution_resume,
@@ -267,7 +272,7 @@ export class DashQL {
             dashql_script_session_destroy: module._dashql_script_session_destroy,
             dashql_script_session_get_catalog_entry_id: module._dashql_script_session_get_catalog_entry_id,
             dashql_script_session_get_text: module._dashql_script_session_get_text,
-            dashql_script_session_get_document_revision: module._dashql_script_session_get_document_revision,
+            dashql_script_session_get_text_version: module._dashql_script_session_get_text_version,
             dashql_script_session_get_state_revision: module._dashql_script_session_get_state_revision,
             dashql_script_session_get_catalog_revision: module._dashql_script_session_get_catalog_revision,
             dashql_script_session_replace_text: module._dashql_script_session_replace_text,
@@ -532,6 +537,50 @@ export class DashQL {
         const session = new DashQLScriptSession(ptr);
         this.registerMemory({ type: SCRIPT_SESSION_TYPE, value: session.ptr });
         return session;
+    }
+
+    /// Plan current analysis in notebook order; callers prepare and publish sessions explicitly.
+    public plan(sessions: readonly DashQLScriptSession[]): FlatBufferPtr<buffers.execution.ExecutionGraph> {
+        if (!Array.isArray(sessions)) {
+            throw new TypeError('planner sessions must be an array');
+        }
+        const byteLength = sessions.length * Uint32Array.BYTES_PER_ELEMENT;
+        if (byteLength > 0xffffffff) {
+            throw new RangeError('planner session pointers exceed the wasm32 byte length limit');
+        }
+        const pointers = Array.from(sessions, session => {
+            if (!(session instanceof DashQLScriptSession)) {
+                throw new TypeError('planner input must be a DashQLScriptSession');
+            }
+            if (session.ptr.api !== this) {
+                throw new Error('planner session belongs to a different DashQL instance');
+            }
+            const pointer = session.ptr.assertNotNull();
+            if (pointer === 0 || session.ptr.resultPtr == null) {
+                throw NULL_POINTER_EXCEPTION;
+            }
+            return pointer;
+        });
+        const sessionPtrs = byteLength === 0 ? 0 : this.instanceExports.dashql_malloc(byteLength);
+        if (byteLength !== 0 && sessionPtrs === 0) {
+            throw new Error('failed to allocate planner session pointers');
+        }
+        try {
+            this.module.HEAPU32.set(pointers, sessionPtrs / 4);
+            const result = this.callSRetFlatBufPtr<buffers.execution.ExecutionGraph>(
+                EXECUTION_GRAPH_TYPE,
+                resultPtr => this.instanceExports.dashql_planner_plan(resultPtr, sessionPtrs, pointers.length),
+                () => new buffers.execution.ExecutionGraph(),
+            );
+            if (!result.resultPtr || !result.dataPtr || result.dataLength === 0) {
+                result.destroy();
+                throw new Error('failed to allocate planner graph');
+            }
+            this.registerMemory({ type: EXECUTION_GRAPH_TYPE, value: result });
+            return result;
+        } finally {
+            this.instanceExports.dashql_free(sessionPtrs);
+        }
     }
 
     public createPlanViewModel(layoutConfig: buffers.view.PlanLayoutConfigT): DashQLPlanViewModel {
@@ -855,8 +904,8 @@ export class DashQLScriptSession {
         );
     }
 
-    public getDocumentRevision(): bigint {
-        return this.ptr.api.instanceExports.dashql_script_session_get_document_revision(this.ptr.assertNotNull());
+    public getTextVersion(): bigint {
+        return this.ptr.api.instanceExports.dashql_script_session_get_text_version(this.ptr.assertNotNull());
     }
 
     public getStateRevision(): bigint {
@@ -867,14 +916,14 @@ export class DashQLScriptSession {
         return this.ptr.api.instanceExports.dashql_script_session_get_catalog_revision(this.ptr.assertNotNull());
     }
 
-    public replaceText(expectedDocumentRevision: bigint, text: string): buffers.editor.EditorUpdateT {
+    public replaceText(expectedTextVersion: bigint, text: string): buffers.editor.EditorUpdateT {
         const sessionPtr = this.ptr.assertNotNull();
         const [textBegin, textLength] = this.ptr.api.copyString(text);
         return this.readUpdate((resultPtr) =>
             this.ptr.api.instanceExports.dashql_script_session_replace_text(
                 resultPtr,
                 sessionPtr,
-                expectedDocumentRevision,
+                expectedTextVersion,
                 textBegin,
                 textLength,
             )
@@ -900,13 +949,13 @@ export class DashQLScriptSession {
         }
     }
 
-    public setCursor(expectedDocumentRevision: bigint, offset: bigint): buffers.editor.EditorUpdateT {
+    public setCursor(expectedTextVersion: bigint, offset: bigint): buffers.editor.EditorUpdateT {
         const sessionPtr = this.ptr.assertNotNull();
         return this.readUpdate((resultPtr) =>
             this.ptr.api.instanceExports.dashql_script_session_set_primary_cursor(
                 resultPtr,
                 sessionPtr,
-                expectedDocumentRevision,
+                expectedTextVersion,
                 offset,
             )
         );

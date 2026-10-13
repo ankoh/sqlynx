@@ -5,6 +5,7 @@ include "dashql/catalog.fbs";
 include "dashql/catalog_statistics.fbs";
 include "dashql/completion.fbs";
 include "dashql/editor.fbs";
+include "dashql/execution_graph.fbs";
 include "dashql/formatting.fbs";
 include "dashql/markdown.fbs";
 include "dashql/parsed_script.fbs";

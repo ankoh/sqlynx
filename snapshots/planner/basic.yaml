@@ -1,0 +1,1849 @@
+planner-snapshots:
+
+  - name: IndependentQueries
+    catalog: |
+      create table a (id int);
+      create table b (id int);
+    scripts:
+      - name: first
+        input: |
+          -- Query descriptions are not backend SQL.
+          select * from a;
+          select * from a;
+          select * from b;
+      - name: second
+        input: |
+          select 1;
+          select * from b;
+    expected:
+      valid: true
+      scripts:
+        - name: first
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+        - name: second
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+      entities:
+        - catalog-id: '256.65536.4294967296'
+          type: TABLE
+          name: a
+        - catalog-id: '256.65536.4294967297'
+          type: TABLE
+          name: b
+      unresolved-references: []
+      nodes:
+        - statement: 'first[0]'
+          type: SELECT
+          sql: "select * from a"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+        - statement: 'first[1]'
+          type: SELECT
+          sql: "select * from a"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+        - statement: 'first[2]'
+          type: SELECT
+          sql: "select * from b"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967297'
+              mode: READ
+        - statement: 'second[0]'
+          type: SELECT
+          sql: "select 1"
+          produces-output: true
+          barrier: false
+          accesses: []
+        - statement: 'second[1]'
+          type: SELECT
+          sql: "select * from b"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967297'
+              mode: READ
+      edges: []
+      diagnostics: []
+
+  - name: CrossScriptCtasDiamond
+    catalog: |
+      create table source (id int);
+    scripts:
+      - name: root
+        input: create table base as select * from source;
+      - name: left
+        input: create table left_branch as select * from base;
+      - name: right
+        input: create table right_branch as select * from base;
+      - name: sink
+        input: select * from left_branch join right_branch using (id);
+    expected:
+      valid: true
+      scripts:
+        - name: root
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 3
+        - name: left
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 3
+        - name: right
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 3
+        - name: sink
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 3
+      entities:
+        - catalog-id: '256.65536.4294967296'
+          type: TABLE
+          name: '"source"'
+        - catalog-id: '256.65536.8589934592'
+          type: TABLE
+          name: base
+        - catalog-id: '256.65536.12884901888'
+          type: TABLE
+          name: left_branch
+        - catalog-id: '256.65536.17179869184'
+          type: TABLE
+          name: right_branch
+      unresolved-references: []
+      nodes:
+        - statement: 'root[0]'
+          type: CREATE_TABLE_AS
+          sql: "create table base as select * from source"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+            - entity: '256.65536.8589934592'
+              mode: DDL
+        - statement: 'left[0]'
+          type: CREATE_TABLE_AS
+          sql: "create table left_branch as select * from base"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.8589934592'
+              mode: READ
+            - entity: '256.65536.12884901888'
+              mode: DDL
+        - statement: 'right[0]'
+          type: CREATE_TABLE_AS
+          sql: "create table right_branch as select * from base"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.8589934592'
+              mode: READ
+            - entity: '256.65536.17179869184'
+              mode: DDL
+        - statement: 'sink[0]'
+          type: SELECT
+          sql: "select * from left_branch join right_branch using (id)"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.12884901888'
+              mode: READ
+            - entity: '256.65536.17179869184'
+              mode: READ
+      edges:
+        - from: 'root[0]'
+          to: 'left[0]'
+          reason: DDL
+          entity: '256.65536.8589934592'
+        - from: 'root[0]'
+          to: 'right[0]'
+          reason: DDL
+          entity: '256.65536.8589934592'
+        - from: 'left[0]'
+          to: 'sink[0]'
+          reason: DDL
+          entity: '256.65536.12884901888'
+        - from: 'right[0]'
+          to: 'sink[0]'
+          reason: DDL
+          entity: '256.65536.17179869184'
+      diagnostics: []
+
+  - name: CrossScriptViewDiamond
+    catalog: |
+      create table source (id int);
+    scripts:
+      - name: root
+        input: create view base as select * from source;
+      - name: left
+        input: create view left_branch as select * from base;
+      - name: right
+        input: create view right_branch as select * from base;
+      - name: sink
+        input: select * from left_branch join right_branch using (id);
+    expected:
+      valid: true
+      scripts:
+        - name: root
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 3
+        - name: left
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 3
+        - name: right
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 3
+        - name: sink
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 3
+      entities:
+        - catalog-id: '256.65536.4294967296'
+          type: TABLE
+          name: '"source"'
+        - catalog-id: '256.65536.8589934592'
+          type: TABLE
+          name: base
+        - catalog-id: '256.65536.12884901888'
+          type: TABLE
+          name: left_branch
+        - catalog-id: '256.65536.17179869184'
+          type: TABLE
+          name: right_branch
+      unresolved-references: []
+      nodes:
+        - statement: 'root[0]'
+          type: CREATE_VIEW
+          sql: "create view base as select * from source"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+            - entity: '256.65536.8589934592'
+              mode: DDL
+        - statement: 'left[0]'
+          type: CREATE_VIEW
+          sql: "create view left_branch as select * from base"
+          produces-output: false
+          barrier: true
+          accesses:
+            - entity: '256.65536.8589934592'
+              mode: READ
+            - entity: '256.65536.12884901888'
+              mode: DDL
+        - statement: 'right[0]'
+          type: CREATE_VIEW
+          sql: "create view right_branch as select * from base"
+          produces-output: false
+          barrier: true
+          accesses:
+            - entity: '256.65536.8589934592'
+              mode: READ
+            - entity: '256.65536.17179869184'
+              mode: DDL
+        - statement: 'sink[0]'
+          type: SELECT
+          sql: "select * from left_branch join right_branch using (id)"
+          produces-output: true
+          barrier: true
+          accesses:
+            - entity: '256.65536.12884901888'
+              mode: READ
+            - entity: '256.65536.17179869184'
+              mode: READ
+      edges:
+        - from: 'root[0]'
+          to: 'left[0]'
+          reason: DDL
+          entity: '256.65536.8589934592'
+        - from: 'root[0]'
+          to: 'left[0]'
+          reason: BARRIER
+        - from: 'root[0]'
+          to: 'right[0]'
+          reason: DDL
+          entity: '256.65536.8589934592'
+        - from: 'left[0]'
+          to: 'right[0]'
+          reason: BARRIER
+        - from: 'left[0]'
+          to: 'sink[0]'
+          reason: DDL
+          entity: '256.65536.12884901888'
+        - from: 'right[0]'
+          to: 'sink[0]'
+          reason: DDL
+          entity: '256.65536.17179869184'
+        - from: 'right[0]'
+          to: 'sink[0]'
+          reason: BARRIER
+      diagnostics:
+        - statement: 'left[0]'
+          message: view dependencies are not expanded; conservative access barrier
+        - statement: 'right[0]'
+          message: view dependencies are not expanded; conservative access barrier
+        - statement: 'sink[0]'
+          message: view dependencies are not expanded; conservative access barrier
+        - statement: 'sink[0]'
+          message: view dependencies are not expanded; conservative access barrier
+
+  - name: MutationHazards
+    catalog: |
+      create table a (id int);
+      create table b (id int);
+    scripts:
+      - name: first
+        input: |
+          select * from a;
+          select * from a;
+          insert into a values (1);
+          insert into b values (9);
+      - name: second
+        input: |
+          select * from a;
+          insert into a values (2) returning id;
+          insert into a values (3);
+          select * from b;
+    expected:
+      valid: true
+      scripts:
+        - name: first
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+        - name: second
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+      entities:
+        - catalog-id: '256.65536.4294967296'
+          type: TABLE
+          name: a
+        - catalog-id: '256.65536.4294967297'
+          type: TABLE
+          name: b
+      unresolved-references: []
+      nodes:
+        - statement: 'first[0]'
+          type: SELECT
+          sql: "select * from a"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+        - statement: 'first[1]'
+          type: SELECT
+          sql: "select * from a"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+        - statement: 'first[2]'
+          type: INSERT
+          sql: "insert into a values (1)"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: WRITE
+        - statement: 'first[3]'
+          type: INSERT
+          sql: "insert into b values (9)"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967297'
+              mode: WRITE
+        - statement: 'second[0]'
+          type: SELECT
+          sql: "select * from a"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+        - statement: 'second[1]'
+          type: INSERT
+          sql: "insert into a values (2) returning id"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: WRITE
+        - statement: 'second[2]'
+          type: INSERT
+          sql: "insert into a values (3)"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: WRITE
+        - statement: 'second[3]'
+          type: SELECT
+          sql: "select * from b"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967297'
+              mode: READ
+      edges:
+        - from: 'first[0]'
+          to: 'first[2]'
+          reason: WRITE_AFTER_READ
+          entity: '256.65536.4294967296'
+        - from: 'first[1]'
+          to: 'first[2]'
+          reason: WRITE_AFTER_READ
+          entity: '256.65536.4294967296'
+        - from: 'first[2]'
+          to: 'second[0]'
+          reason: READ_AFTER_WRITE
+          entity: '256.65536.4294967296'
+        - from: 'first[2]'
+          to: 'second[1]'
+          reason: WRITE_AFTER_WRITE
+          entity: '256.65536.4294967296'
+        - from: 'first[3]'
+          to: 'second[3]'
+          reason: READ_AFTER_WRITE
+          entity: '256.65536.4294967297'
+        - from: 'second[0]'
+          to: 'second[1]'
+          reason: WRITE_AFTER_READ
+          entity: '256.65536.4294967296'
+        - from: 'second[1]'
+          to: 'second[2]'
+          reason: WRITE_AFTER_WRITE
+          entity: '256.65536.4294967296'
+      diagnostics: []
+
+  - name: InsertSelfReadAndMultipleEntities
+    catalog: |
+      create table a (id int);
+      create table b (id int);
+      create table c (id int);
+    scripts:
+      - name: mutations
+        input: |
+          select * from a;
+          insert into a select * from a returning id;
+          insert into c select a.id from a join b using (id);
+          insert into b values (2);
+          select * from c;
+    expected:
+      valid: true
+      scripts:
+        - name: mutations
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+      entities:
+        - catalog-id: '256.65536.4294967296'
+          type: TABLE
+          name: a
+        - catalog-id: '256.65536.4294967297'
+          type: TABLE
+          name: b
+        - catalog-id: '256.65536.4294967298'
+          type: TABLE
+          name: c
+      unresolved-references: []
+      nodes:
+        - statement: 'mutations[0]'
+          type: SELECT
+          sql: "select * from a"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+        - statement: 'mutations[1]'
+          type: INSERT
+          sql: "insert into a select * from a returning id"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: WRITE
+        - statement: 'mutations[2]'
+          type: INSERT
+          sql: "insert into c select a.id from a join b using (id)"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+            - entity: '256.65536.4294967297'
+              mode: READ
+            - entity: '256.65536.4294967298'
+              mode: WRITE
+        - statement: 'mutations[3]'
+          type: INSERT
+          sql: "insert into b values (2)"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967297'
+              mode: WRITE
+        - statement: 'mutations[4]'
+          type: SELECT
+          sql: "select * from c"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967298'
+              mode: READ
+      edges:
+        - from: 'mutations[0]'
+          to: 'mutations[1]'
+          reason: WRITE_AFTER_READ
+          entity: '256.65536.4294967296'
+        - from: 'mutations[1]'
+          to: 'mutations[2]'
+          reason: READ_AFTER_WRITE
+          entity: '256.65536.4294967296'
+        - from: 'mutations[2]'
+          to: 'mutations[3]'
+          reason: WRITE_AFTER_READ
+          entity: '256.65536.4294967297'
+        - from: 'mutations[2]'
+          to: 'mutations[4]'
+          reason: READ_AFTER_WRITE
+          entity: '256.65536.4294967298'
+      diagnostics: []
+
+  - name: CtePhysicalEntities
+    catalog: create table source (id int);
+    scripts:
+      - name: queries
+        input: |
+          with c as (select * from source), d as (select * from c) select * from d;
+          insert into source select * from source;
+    expected:
+      valid: true
+      scripts:
+        - name: queries
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+      entities:
+        - catalog-id: '256.65536.4294967296'
+          type: TABLE
+          name: '"source"'
+      unresolved-references: []
+      nodes:
+        - statement: 'queries[0]'
+          type: SELECT
+          sql: "with c as (select * from source), d as (select * from c) select * from d"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+        - statement: 'queries[1]'
+          type: INSERT
+          sql: "insert into source select * from source"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: WRITE
+      edges:
+        - from: 'queries[0]'
+          to: 'queries[1]'
+          reason: WRITE_AFTER_READ
+          entity: '256.65536.4294967296'
+      diagnostics: []
+
+  - name: DropRecreate
+    scripts:
+      - name: producer
+        input: create table db.s.a (id int);
+      - name: lifetime
+        input: |
+          select * from a;
+          drop table a;
+          create table db.s.a (id int);
+          select * from a;
+    expected:
+      valid: true
+      scripts:
+        - name: producer
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+        - name: lifetime
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+      entities:
+        - catalog-id: '256.65536.4294967296'
+          type: TABLE
+          name: db.s.a
+        - catalog-id: '256.65536.8589934592'
+          type: TABLE
+          name: db.s.a
+      unresolved-references: []
+      nodes:
+        - statement: 'producer[0]'
+          type: CREATE_TABLE
+          sql: "create table db.s.a (id int)"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: DDL
+        - statement: 'lifetime[0]'
+          type: SELECT
+          sql: "select * from a"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+        - statement: 'lifetime[1]'
+          type: DROP_TABLE
+          sql: "drop table a"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: DDL
+        - statement: 'lifetime[2]'
+          type: CREATE_TABLE
+          sql: "create table db.s.a (id int)"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.8589934592'
+              mode: DDL
+        - statement: 'lifetime[3]'
+          type: SELECT
+          sql: "select * from a"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.8589934592'
+              mode: READ
+      edges:
+        - from: 'producer[0]'
+          to: 'lifetime[0]'
+          reason: DDL
+          entity: '256.65536.4294967296'
+        - from: 'producer[0]'
+          to: 'lifetime[1]'
+          reason: DDL
+          entity: '256.65536.4294967296'
+        - from: 'lifetime[0]'
+          to: 'lifetime[1]'
+          reason: DDL
+          entity: '256.65536.4294967296'
+        - from: 'lifetime[1]'
+          to: 'lifetime[2]'
+          reason: DDL
+          entity: '256.65536.8589934592'
+        - from: 'lifetime[2]'
+          to: 'lifetime[3]'
+          reason: DDL
+          entity: '256.65536.8589934592'
+      diagnostics: []
+
+  - name: SameScriptDropRecreate
+    scripts:
+      - name: lifetime
+        input: |
+          create table a (id int);
+          select * from a;
+          drop table a;
+          create table a (id int);
+          select * from a;
+    expected:
+      valid: true
+      scripts:
+        - name: lifetime
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+      entities:
+        - catalog-id: '256.65536.4294967296'
+          type: TABLE
+          name: a
+        - catalog-id: '256.65536.4294967297'
+          type: TABLE
+          name: a
+      unresolved-references: []
+      nodes:
+        - statement: 'lifetime[0]'
+          type: CREATE_TABLE
+          sql: "create table a (id int)"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: DDL
+        - statement: 'lifetime[1]'
+          type: SELECT
+          sql: "select * from a"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+        - statement: 'lifetime[2]'
+          type: DROP_TABLE
+          sql: "drop table a"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: DDL
+        - statement: 'lifetime[3]'
+          type: CREATE_TABLE
+          sql: "create table a (id int)"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967297'
+              mode: DDL
+        - statement: 'lifetime[4]'
+          type: SELECT
+          sql: "select * from a"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967297'
+              mode: READ
+      edges:
+        - from: 'lifetime[0]'
+          to: 'lifetime[1]'
+          reason: DDL
+          entity: '256.65536.4294967296'
+        - from: 'lifetime[0]'
+          to: 'lifetime[2]'
+          reason: DDL
+          entity: '256.65536.4294967296'
+        - from: 'lifetime[1]'
+          to: 'lifetime[2]'
+          reason: DDL
+          entity: '256.65536.4294967296'
+        - from: 'lifetime[2]'
+          to: 'lifetime[3]'
+          reason: DDL
+          entity: '256.65536.4294967297'
+        - from: 'lifetime[3]'
+          to: 'lifetime[4]'
+          reason: DDL
+          entity: '256.65536.4294967297'
+      diagnostics: []
+
+  - name: ExternalDropRecreate
+    catalog: create table db.s.a (id int);
+    scripts:
+      - name: lifetime
+        input: |
+          select * from a;
+          drop table a;
+          create table db.s.a (id int);
+          select * from a;
+    expected:
+      valid: true
+      scripts:
+        - name: lifetime
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 3
+      entities:
+        - catalog-id: '256.65536.4294967296'
+          type: TABLE
+          name: db.s.a
+        - catalog-id: '256.65536.8589934592'
+          type: TABLE
+          name: db.s.a
+      unresolved-references: []
+      nodes:
+        - statement: 'lifetime[0]'
+          type: SELECT
+          sql: "select * from a"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+        - statement: 'lifetime[1]'
+          type: DROP_TABLE
+          sql: "drop table a"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: DDL
+        - statement: 'lifetime[2]'
+          type: CREATE_TABLE
+          sql: "create table db.s.a (id int)"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.8589934592'
+              mode: DDL
+        - statement: 'lifetime[3]'
+          type: SELECT
+          sql: "select * from a"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.8589934592'
+              mode: READ
+      edges:
+        - from: 'lifetime[0]'
+          to: 'lifetime[1]'
+          reason: DDL
+          entity: '256.65536.4294967296'
+        - from: 'lifetime[1]'
+          to: 'lifetime[2]'
+          reason: DDL
+          entity: '256.65536.8589934592'
+        - from: 'lifetime[2]'
+          to: 'lifetime[3]'
+          reason: DDL
+          entity: '256.65536.8589934592'
+      diagnostics: []
+
+  - name: LaterProducerWithinScript
+    scripts:
+      - name: forward
+        input: |
+          select * from later;
+          create table later (id int);
+    expected:
+      valid: false
+      scripts:
+        - name: forward
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+      entities:
+        - catalog-id: '256.65536.4294967296'
+          type: TABLE
+          name: later
+      unresolved-references: []
+      nodes:
+        - statement: 'forward[0]'
+          type: SELECT
+          sql: "select * from later"
+          produces-output: true
+          barrier: true
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+        - statement: 'forward[1]'
+          type: CREATE_TABLE
+          sql: "create table later (id int)"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: DDL
+      edges:
+        - from: 'forward[0]'
+          to: 'forward[1]'
+          reason: DDL
+          entity: '256.65536.4294967296'
+        - from: 'forward[0]'
+          to: 'forward[1]'
+          reason: BARRIER
+      diagnostics:
+        - statement: 'forward[0]'
+          message: relation resolves to a later producer in input order
+
+  - name: ProducerThenConsumer
+    scripts:
+      - name: producer
+        input: create table relation (id int);
+      - name: consumer
+        input: select * from relation;
+    expected:
+      valid: true
+      scripts:
+        - name: producer
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+        - name: consumer
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+      entities:
+        - catalog-id: '256.65536.4294967296'
+          type: TABLE
+          name: relation
+      unresolved-references: []
+      nodes:
+        - statement: 'producer[0]'
+          type: CREATE_TABLE
+          sql: "create table relation (id int)"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: DDL
+        - statement: 'consumer[0]'
+          type: SELECT
+          sql: "select * from relation"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+      edges:
+        - from: 'producer[0]'
+          to: 'consumer[0]'
+          reason: DDL
+          entity: '256.65536.4294967296'
+      diagnostics: []
+
+  - name: ReversedProducerConsumer
+    scripts:
+      - name: consumer
+        input: select * from relation;
+      - name: producer
+        input: create table relation (id int);
+    expected:
+      valid: false
+      scripts:
+        - name: consumer
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+        - name: producer
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+      entities:
+        - catalog-id: '256.65536.8589934592'
+          type: TABLE
+          name: relation
+      unresolved-references: []
+      nodes:
+        - statement: 'consumer[0]'
+          type: SELECT
+          sql: "select * from relation"
+          produces-output: true
+          barrier: true
+          accesses:
+            - entity: '256.65536.8589934592'
+              mode: READ
+        - statement: 'producer[0]'
+          type: CREATE_TABLE
+          sql: "create table relation (id int)"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.8589934592'
+              mode: DDL
+      edges:
+        - from: 'consumer[0]'
+          to: 'producer[0]'
+          reason: DDL
+          entity: '256.65536.8589934592'
+        - from: 'consumer[0]'
+          to: 'producer[0]'
+          reason: BARRIER
+      diagnostics:
+        - statement: 'consumer[0]'
+          message: relation resolves to a later producer in input order
+
+  - name: UnresolvedBarrier
+    scripts:
+      - name: queries
+        input: |
+          select 1;
+          select * from missing;
+          select 2;
+          select 3;
+    expected:
+      valid: true
+      scripts:
+        - name: queries
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 1
+      entities: []
+      unresolved-references:
+        - name: missing
+      nodes:
+        - statement: 'queries[0]'
+          type: SELECT
+          sql: "select 1"
+          produces-output: true
+          barrier: false
+          accesses: []
+        - statement: 'queries[1]'
+          type: SELECT
+          sql: "select * from missing"
+          produces-output: true
+          barrier: true
+          accesses:
+            - unresolved-reference: 0
+              mode: READ
+        - statement: 'queries[2]'
+          type: SELECT
+          sql: "select 2"
+          produces-output: true
+          barrier: false
+          accesses: []
+        - statement: 'queries[3]'
+          type: SELECT
+          sql: "select 3"
+          produces-output: true
+          barrier: false
+          accesses: []
+      edges:
+        - from: 'queries[0]'
+          to: 'queries[1]'
+          reason: BARRIER
+        - from: 'queries[1]'
+          to: 'queries[2]'
+          reason: BARRIER
+        - from: 'queries[1]'
+          to: 'queries[3]'
+          reason: BARRIER
+      diagnostics:
+        - statement: 'queries[1]'
+          message: 'unresolved relation: missing'
+
+  - name: UnsupportedSet
+    scripts:
+      - name: session
+        input: |
+          select 1;
+          set foo = 1;
+          select 2;
+    expected:
+      valid: false
+      scripts:
+        - name: session
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 1
+      entities: []
+      unresolved-references: []
+      nodes:
+        - statement: 'session[0]'
+          type: SELECT
+          sql: "select 1"
+          produces-output: true
+          barrier: false
+          accesses: []
+        - statement: 'session[1]'
+          type: SET
+          sql: ""
+          produces-output: false
+          barrier: true
+          accesses: []
+        - statement: 'session[2]'
+          type: SELECT
+          sql: "select 2"
+          produces-output: true
+          barrier: false
+          accesses: []
+      edges:
+        - from: 'session[0]'
+          to: 'session[1]'
+          reason: BARRIER
+        - from: 'session[1]'
+          to: 'session[2]'
+          reason: BARRIER
+      diagnostics:
+        - statement: 'session[1]'
+          message: unsupported statement effects; backend session semantics are not guaranteed
+
+  - name: UnresolvedDrop
+    scripts:
+      - name: queries
+        input: |
+          select * from db.s.missing;
+          drop table missing;
+          select 1;
+    expected:
+      valid: true
+      scripts:
+        - name: queries
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 1
+      entities: []
+      unresolved-references:
+        - name: db.s.missing
+        - name: missing
+      nodes:
+        - statement: 'queries[0]'
+          type: SELECT
+          sql: "select * from db.s.missing"
+          produces-output: true
+          barrier: true
+          accesses:
+            - unresolved-reference: 0
+              mode: READ
+        - statement: 'queries[1]'
+          type: DROP_TABLE
+          sql: "drop table missing"
+          produces-output: false
+          barrier: true
+          accesses:
+            - unresolved-reference: 1
+              mode: DDL
+        - statement: 'queries[2]'
+          type: SELECT
+          sql: "select 1"
+          produces-output: true
+          barrier: false
+          accesses: []
+      edges:
+        - from: 'queries[0]'
+          to: 'queries[1]'
+          reason: BARRIER
+        - from: 'queries[1]'
+          to: 'queries[2]'
+          reason: BARRIER
+      diagnostics:
+        - statement: 'queries[0]'
+          message: 'unresolved relation: db.s.missing'
+        - statement: 'queries[1]'
+          message: unresolved DROP target; conservative access barrier
+
+  - name: UnsupportedExplain
+    scripts:
+      - name: explain
+        input: explain select 1;
+    expected:
+      valid: false
+      scripts:
+        - name: explain
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 1
+      entities: []
+      unresolved-references: []
+      nodes:
+        - statement: 'explain[0]'
+          type: EXPLAIN
+          sql: ""
+          produces-output: false
+          barrier: true
+          accesses: []
+      edges: []
+      diagnostics:
+        - statement: 'explain[0]'
+          message: unsupported statement effects; backend session semantics are not guaranteed
+
+  - name: UnsupportedTemporaryTable
+    scripts:
+      - name: session
+        input: create temp table t (id int);
+    expected:
+      valid: false
+      scripts:
+        - name: session
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+      entities:
+        - catalog-id: '256.65536.4294967296'
+          type: TABLE
+          name: t
+      unresolved-references: []
+      nodes:
+        - statement: 'session[0]'
+          type: CREATE_TABLE
+          sql: "create temp table t (id int)"
+          produces-output: false
+          barrier: true
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: DDL
+      edges: []
+      diagnostics:
+        - statement: 'session[0]'
+          message: 'unsupported session, locking, constraint, or graph effects'
+
+  - name: MalformedParser
+    scripts:
+      - name: valid
+        input: select 1;
+      - name: malformed
+        input: select from;
+    expected:
+      valid: false
+      scripts:
+        - name: valid
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 1
+        - name: malformed
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 1
+      entities: []
+      unresolved-references: []
+      nodes: []
+      edges: []
+      diagnostics:
+        - message: 'unsupported SQL: parser produced no statements'
+
+  - name: MalformedScanner
+    scripts:
+      - name: malformed
+        input: select 'unterminated
+    expected:
+      valid: false
+      scripts:
+        - name: malformed
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 1
+      entities: []
+      unresolved-references: []
+      nodes: []
+      edges: []
+      diagnostics:
+        - message: 'scanner: unterminated quoted string'
+        - message: 'unsupported SQL: parser produced no statements'
+
+  - name: StaleAnalysis
+    scripts:
+      - name: valid
+        input: select 2;
+      - name: stale
+        input: select 1;
+        stale-prepend: " "
+    expected:
+      valid: false
+      scripts:
+        - name: valid
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 1
+      entities: []
+      unresolved-references: []
+      nodes: []
+      edges: []
+      diagnostics:
+        - message: missing or stale script analysis
+
+  - name: NormalizedIdentifiers
+    catalog: |
+      create table Db.S.Mixed (id int);
+      create table "Mixed" (id int);
+    scripts:
+      - name: queries
+        input: |
+          select * from DB.s.MIXED;
+          insert into db.S.mixed values (1);
+          select * from "Mixed";
+    expected:
+      valid: true
+      scripts:
+        - name: queries
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+      entities:
+        - catalog-id: '256.65536.4294967296'
+          type: TABLE
+          name: db.s.mixed
+        - catalog-id: '257.65537.4294967297'
+          type: TABLE
+          name: '"Mixed"'
+      unresolved-references: []
+      nodes:
+        - statement: 'queries[0]'
+          type: SELECT
+          sql: "select * from DB.s.MIXED"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+        - statement: 'queries[1]'
+          type: INSERT
+          sql: "insert into db.S.mixed values (1)"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: WRITE
+        - statement: 'queries[2]'
+          type: SELECT
+          sql: "select * from \"Mixed\""
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '257.65537.4294967297'
+              mode: READ
+      edges:
+        - from: 'queries[0]'
+          to: 'queries[1]'
+          reason: WRITE_AFTER_READ
+          entity: '256.65536.4294967296'
+      diagnostics: []
+
+  - name: SelectInto
+    catalog: create table source (id int);
+    scripts:
+      - name: producer
+        input: select * into copied from source;
+      - name: consumer
+        input: select * from copied;
+    expected:
+      valid: true
+      scripts:
+        - name: producer
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 3
+        - name: consumer
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 3
+      entities:
+        - catalog-id: '256.65536.4294967296'
+          type: TABLE
+          name: '"source"'
+        - catalog-id: '256.65536.8589934592'
+          type: TABLE
+          name: copied
+      unresolved-references: []
+      nodes:
+        - statement: 'producer[0]'
+          type: SELECT_INTO
+          sql: "select * into copied from source"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+            - entity: '256.65536.8589934592'
+              mode: DDL
+        - statement: 'consumer[0]'
+          type: SELECT
+          sql: "select * from copied"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.8589934592'
+              mode: READ
+      edges:
+        - from: 'producer[0]'
+          to: 'consumer[0]'
+          reason: DDL
+          entity: '256.65536.8589934592'
+      diagnostics: []
+
+  - name: QualifiedIdentifierComponents
+    catalog: |
+      create table "Db.Dot"."s""quote"."Mixed.Name" (id int);
+      create table "select" (id int);
+    scripts:
+      - name: queries
+        input: |
+          select * from "Db.Dot"."s""quote"."Mixed.Name";
+          insert into "Db.Dot"."s""quote"."Mixed.Name" values (1);
+          select * from "select";
+          select * from "missing.db"."missing""schema"."Missing.Name";
+    expected:
+      valid: true
+      scripts:
+        - name: queries
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+      entities:
+        - catalog-id: '256.65536.4294967296'
+          type: TABLE
+          name: '"Db.Dot"."s""quote"."Mixed.Name"'
+        - catalog-id: '257.65537.4294967297'
+          type: TABLE
+          name: '"select"'
+      unresolved-references:
+        - name: '"missing.db"."missing""schema"."Missing.Name"'
+      nodes:
+        - statement: 'queries[0]'
+          type: SELECT
+          sql: "select * from \"Db.Dot\".\"s\"\"quote\".\"Mixed.Name\""
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+        - statement: 'queries[1]'
+          type: INSERT
+          sql: "insert into \"Db.Dot\".\"s\"\"quote\".\"Mixed.Name\" values (1)"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: WRITE
+        - statement: 'queries[2]'
+          type: SELECT
+          sql: "select * from \"select\""
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '257.65537.4294967297'
+              mode: READ
+        - statement: 'queries[3]'
+          type: SELECT
+          sql: "select * from \"missing.db\".\"missing\"\"schema\".\"Missing.Name\""
+          produces-output: true
+          barrier: true
+          accesses:
+            - unresolved-reference: 0
+              mode: READ
+      edges:
+        - from: 'queries[0]'
+          to: 'queries[1]'
+          reason: WRITE_AFTER_READ
+          entity: '256.65536.4294967296'
+        - from: 'queries[0]'
+          to: 'queries[3]'
+          reason: BARRIER
+        - from: 'queries[1]'
+          to: 'queries[3]'
+          reason: BARRIER
+        - from: 'queries[2]'
+          to: 'queries[3]'
+          reason: BARRIER
+      diagnostics:
+        - statement: 'queries[3]'
+          message: 'unresolved relation: missing.db.missing"schema.Missing.Name'
+
+  - name: PublishedViewBarrier
+    catalog: create view v as select 1 as id;
+    scripts:
+      - name: queries
+        input: |
+          select 1;
+          select * from v;
+          select 2;
+    expected:
+      valid: true
+      scripts:
+        - name: queries
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+      entities:
+        - catalog-id: '256.65536.4294967296'
+          type: TABLE
+          name: v
+      unresolved-references: []
+      nodes:
+        - statement: 'queries[0]'
+          type: SELECT
+          sql: "select 1"
+          produces-output: true
+          barrier: false
+          accesses: []
+        - statement: 'queries[1]'
+          type: SELECT
+          sql: "select * from v"
+          produces-output: true
+          barrier: true
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+        - statement: 'queries[2]'
+          type: SELECT
+          sql: "select 2"
+          produces-output: true
+          barrier: false
+          accesses: []
+      edges:
+        - from: 'queries[0]'
+          to: 'queries[1]'
+          reason: BARRIER
+        - from: 'queries[1]'
+          to: 'queries[2]'
+          reason: BARRIER
+      diagnostics:
+        - statement: 'queries[1]'
+          message: view dependencies are not expanded; conservative access barrier
+
+  - name: EmptyScript
+    scripts:
+      - name: trivia
+        input: |
+          -- only trivia
+          /* comment */
+    expected:
+      valid: true
+      scripts:
+        - name: trivia
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 1
+      entities: []
+      unresolved-references: []
+      nodes: []
+      edges: []
+      diagnostics: []
+
+  - name: ViewWriteBaseRead
+    catalog: |
+      create table base (id int);
+      create view v as select * from base;
+    scripts:
+      - name: writer
+        input: insert into v values (1);
+      - name: reader
+        input: select * from base;
+    expected:
+      valid: true
+      scripts:
+        - name: writer
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+        - name: reader
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+      entities:
+        - catalog-id: '256.65536.4294967297'
+          type: TABLE
+          name: v
+        - catalog-id: '256.65536.4294967296'
+          type: TABLE
+          name: base
+      unresolved-references: []
+      nodes:
+        - statement: 'writer[0]'
+          type: INSERT
+          sql: "insert into v values (1)"
+          produces-output: false
+          barrier: true
+          accesses:
+            - entity: '256.65536.4294967297'
+              mode: WRITE
+        - statement: 'reader[0]'
+          type: SELECT
+          sql: "select * from base"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: READ
+      edges:
+        - from: 'writer[0]'
+          to: 'reader[0]'
+          reason: BARRIER
+      diagnostics:
+        - statement: 'writer[0]'
+          message: view dependencies are not expanded; conservative access barrier
+
+  - name: ViewWriteBaseWrite
+    catalog: |
+      create table base (id int);
+      create view v as select * from base;
+    scripts:
+      - name: view_writer
+        input: insert into v values (1);
+      - name: base_writer
+        input: insert into base values (2);
+    expected:
+      valid: true
+      scripts:
+        - name: view_writer
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+        - name: base_writer
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+      entities:
+        - catalog-id: '256.65536.4294967297'
+          type: TABLE
+          name: v
+        - catalog-id: '256.65536.4294967296'
+          type: TABLE
+          name: base
+      unresolved-references: []
+      nodes:
+        - statement: 'view_writer[0]'
+          type: INSERT
+          sql: "insert into v values (1)"
+          produces-output: false
+          barrier: true
+          accesses:
+            - entity: '256.65536.4294967297'
+              mode: WRITE
+        - statement: 'base_writer[0]'
+          type: INSERT
+          sql: "insert into base values (2)"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: WRITE
+      edges:
+        - from: 'view_writer[0]'
+          to: 'base_writer[0]'
+          reason: BARRIER
+      diagnostics:
+        - statement: 'view_writer[0]'
+          message: view dependencies are not expanded; conservative access barrier
+
+  - name: QualifiedCteCollision
+    catalog: create table s.unrelated (id int);
+    scripts:
+      - name: collision
+        input: with c as (select 1 as id) select * from s.c;
+    expected:
+      valid: true
+      scripts:
+        - name: collision
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+      entities: []
+      unresolved-references:
+        - name: s.c
+      nodes:
+        - statement: 'collision[0]'
+          type: SELECT
+          sql: "with c as (select 1 as id) select * from s.c"
+          produces-output: true
+          barrier: true
+          accesses:
+            - unresolved-reference: 0
+              mode: READ
+      edges: []
+      diagnostics:
+        - statement: 'collision[0]'
+          message: 'unresolved relation: s.c'
+
+  - name: DropBeforeFutureQualifiedProducer
+    catalog: create table s.unrelated (id int);
+    scripts:
+      - name: earlier
+        input: |
+          create table a (id int);
+          select * from a;
+      - name: later
+        input: |
+          drop table a;
+          create table s.a (id int);
+    expected:
+      valid: true
+      scripts:
+        - name: earlier
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 3
+        - name: later
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 3
+      entities:
+        - catalog-id: '256.65537.8589934592'
+          type: TABLE
+          name: a
+        - catalog-id: '256.65536.12884901888'
+          type: TABLE
+          name: s.a
+      unresolved-references: []
+      nodes:
+        - statement: 'earlier[0]'
+          type: CREATE_TABLE
+          sql: "create table a (id int)"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65537.8589934592'
+              mode: DDL
+        - statement: 'earlier[1]'
+          type: SELECT
+          sql: "select * from a"
+          produces-output: true
+          barrier: false
+          accesses:
+            - entity: '256.65537.8589934592'
+              mode: READ
+        - statement: 'later[0]'
+          type: DROP_TABLE
+          sql: "drop table a"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65537.8589934592'
+              mode: DDL
+        - statement: 'later[1]'
+          type: CREATE_TABLE
+          sql: "create table s.a (id int)"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.12884901888'
+              mode: DDL
+      edges:
+        - from: 'earlier[0]'
+          to: 'earlier[1]'
+          reason: DDL
+          entity: '256.65537.8589934592'
+        - from: 'earlier[0]'
+          to: 'later[0]'
+          reason: DDL
+          entity: '256.65537.8589934592'
+        - from: 'earlier[1]'
+          to: 'later[0]'
+          reason: DDL
+          entity: '256.65537.8589934592'
+      diagnostics: []
+
+  - name: EmptyInputs
+    scripts: []
+    expected:
+      valid: true
+      scripts: []
+      entities: []
+      unresolved-references: []
+      nodes: []
+      edges: []
+      diagnostics: []
+
+  - name: DropViewBeforeBaseDrop
+    catalog: |
+      create table base (id int);
+      create view v as select * from base;
+    scripts:
+      - name: drops
+        input: |
+          select 1;
+          drop view v;
+          drop table base;
+    expected:
+      valid: true
+      scripts:
+        - name: drops
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+      entities:
+        - catalog-id: '256.65536.4294967297'
+          type: TABLE
+          name: v
+        - catalog-id: '256.65536.4294967296'
+          type: TABLE
+          name: base
+      unresolved-references: []
+      nodes:
+        - statement: 'drops[0]'
+          type: SELECT
+          sql: "select 1"
+          produces-output: true
+          barrier: false
+          accesses: []
+        - statement: 'drops[1]'
+          type: DROP_VIEW
+          sql: "drop view v"
+          produces-output: false
+          barrier: true
+          accesses:
+            - entity: '256.65536.4294967297'
+              mode: DDL
+        - statement: 'drops[2]'
+          type: DROP_TABLE
+          sql: "drop table base"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: DDL
+      edges:
+        - from: 'drops[0]'
+          to: 'drops[1]'
+          reason: BARRIER
+        - from: 'drops[1]'
+          to: 'drops[2]'
+          reason: BARRIER
+      diagnostics:
+        - statement: 'drops[1]'
+          message: view dependencies are not expanded; conservative access barrier
+
+  - name: DropTableTargetingViewBeforeBaseDrop
+    catalog: |
+      create table base (id int);
+      create view v as select * from base;
+    scripts:
+      - name: drops
+        input: |
+          select 1;
+          drop table v;
+          drop table base;
+    expected:
+      valid: true
+      scripts:
+        - name: drops
+          text-version: 1
+          analyzed-text-version: 1
+          analyzed-catalog-revision: 2
+      entities:
+        - catalog-id: '256.65536.4294967297'
+          type: TABLE
+          name: v
+        - catalog-id: '256.65536.4294967296'
+          type: TABLE
+          name: base
+      unresolved-references: []
+      nodes:
+        - statement: 'drops[0]'
+          type: SELECT
+          sql: "select 1"
+          produces-output: true
+          barrier: false
+          accesses: []
+        - statement: 'drops[1]'
+          type: DROP_TABLE
+          sql: "drop table v"
+          produces-output: false
+          barrier: true
+          accesses:
+            - entity: '256.65536.4294967297'
+              mode: DDL
+        - statement: 'drops[2]'
+          type: DROP_TABLE
+          sql: "drop table base"
+          produces-output: false
+          barrier: false
+          accesses:
+            - entity: '256.65536.4294967296'
+              mode: DDL
+      edges:
+        - from: 'drops[0]'
+          to: 'drops[1]'
+          reason: BARRIER
+        - from: 'drops[1]'
+          to: 'drops[2]'
+          reason: BARRIER
+      diagnostics:
+        - statement: 'drops[1]'
+          message: view dependencies are not expanded; conservative access barrier

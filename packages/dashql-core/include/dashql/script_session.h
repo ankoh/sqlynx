@@ -41,8 +41,8 @@ class ScriptSession {
     CatalogEntryID GetCatalogEntryId() const { return script_.GetCatalogEntryId(); }
     /// Materialize and return the current script text.
     std::string GetText() { return script_.ToString(); }
-    /// Return the revision incremented by each successfully committed text change.
-    uint64_t GetDocumentRevision() const { return document_revision_; }
+    /// Return the owned script's version, incremented by each committed text change.
+    TextVersion GetTextVersion() const { return script_.text_version; }
     /// Return the revision incremented by any committed text or selection-state change.
     uint64_t GetStateRevision() const { return state_revision_; }
     /// Return the current version of the catalog used to analyze this script.
@@ -56,12 +56,12 @@ class ScriptSession {
     /// Provide read-only access to the owned script without materializing its text.
     const Script& GetScript() const { return script_; }
 
-    /// Atomically replace all text when `expected_document_revision` still matches the session.
-    EditorUpdate ReplaceText(uint64_t expected_document_revision, std::string_view text);
+    /// Atomically replace all text when `expected_text_version` still matches the script.
+    EditorUpdate ReplaceText(TextVersion expected_text_version, std::string_view text);
     /// Validate and atomically apply one editor event, returning a projection of the resulting state.
     EditorUpdate Apply(const EditorEvent& event);
-    /// Move the primary cursor without changing text when the expected document revision matches.
-    EditorUpdate SetPrimaryCursor(uint64_t expected_document_revision, uint64_t offset);
+    /// Move the primary cursor without changing text when the expected text version matches.
+    EditorUpdate SetPrimaryCursor(TextVersion expected_text_version, uint64_t offset);
     /// Bring parsing and analysis up to date with both the document and catalog, then project an update.
     EditorUpdate Analyze();
     /// Compute completion candidates and pack them for embedding in the caller's active builder.
@@ -90,11 +90,10 @@ class ScriptSession {
     Catalog& catalog_;
     Script script_;
     const buffers::editor::EditorOffsetUnit offset_unit_;
-    uint64_t document_revision_ = 0;
     uint64_t state_revision_ = 0;
-    uint64_t analyzed_document_revision_ = std::numeric_limits<uint64_t>::max();
+    TextVersion analyzed_text_version_ = std::numeric_limits<TextVersion>::max();
     uint64_t analyzed_catalog_revision_ = std::numeric_limits<uint64_t>::max();
-    uint64_t cursor_document_revision_ = std::numeric_limits<uint64_t>::max();
+    TextVersion cursor_text_version_ = std::numeric_limits<TextVersion>::max();
     uint64_t cursor_catalog_revision_ = std::numeric_limits<uint64_t>::max();
     std::optional<EditorSelection> primary_selection_;
 
@@ -113,7 +112,9 @@ class ScriptSession {
     std::unique_ptr<buffers::editor::EditorTextSpan> ProjectTextSpan(buffers::parser::TextSpan span) const;
     /// Populate all editor-facing projections that depend on a current analyzed script.
     void ProjectEditorState(EditorUpdate& update);
-    /// Refresh analysis when its document or catalog revision is stale and record the outcome in `update`.
+    /// Check both session bookkeeping and the script's actual analyzed snapshot.
+    bool IsAnalysisCurrent() const;
+    /// Refresh analysis when its text version or catalog revision is stale and record the outcome in `update`.
     bool Analyze(EditorUpdate& update);
 };
 

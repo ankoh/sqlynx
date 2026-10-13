@@ -1353,21 +1353,23 @@ void Script::InsertCharAt(size_t char_idx, uint32_t unicode) {
     std::array<std::byte, 6> buffer;
     auto length = dashql::utf8::utf8proc_encode_char(unicode, reinterpret_cast<uint8_t*>(buffer.data()));
     std::string_view encoded{reinterpret_cast<char*>(buffer.data()), static_cast<size_t>(length)};
-    text.Insert(char_idx, encoded);
-    ++text_version;
+    InsertTextAt(char_idx, encoded);
 }
 /// Insert a text at an offet
 void Script::InsertTextAt(size_t char_idx, std::string_view encoded) {
+    if (encoded.empty()) return;
     text.Insert(char_idx, encoded);
     ++text_version;
 }
 /// Erase a text at an offet
 void Script::EraseTextRange(size_t char_idx, size_t count) {
+    if (count == 0 || char_idx >= text.GetStats().utf8_codepoints) return;
     text.Remove(char_idx, count);
     ++text_version;
 }
 /// Replace the text in the script
 void Script::ReplaceText(std::string_view encoded) {
+    if (encoded.size() == text.GetStats().text_bytes && encoded == text.ToString()) return;
     text = rope::Rope{1024, encoded};
     ++text_version;
 }

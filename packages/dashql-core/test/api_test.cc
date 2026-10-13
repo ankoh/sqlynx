@@ -192,4 +192,45 @@ TEST(ApiTest, FailedCatalogAnalysisDoesNotBlockScriptSessions) {
     EXPECT_TRUE(analyzed.analysis_available);
 }
 
+TEST(ApiTest, SessionAndExecutionExpose64BitTextVersions) {
+    Catalog catalog;
+    ScriptSession session{catalog};
+    const auto version = (uint64_t{1} << 32) + 42;
+    session.GetScript().text_version = version - 1;
+    auto* text = reinterpret_cast<char*>(dashql_malloc(8));
+    memcpy(text, "select 1", 8);
+    FFIResult result{};
+    dashql_script_session_replace_text(&result, &session, version - 1, text, 8);
+    auto* update = flatbuffers::GetRoot<buffers::editor::EditorUpdate>(result.data_ptr);
+    EXPECT_EQ(update->status(), buffers::editor::EditorUpdateStatus::OK);
+    EXPECT_EQ(update->text_version(), version);
+    EXPECT_EQ(dashql_script_session_get_text_version(&session), version);
+    dashql_delete_owner(result.owner_ptr, result.owner_deleter);
+
+    dashql_script_session_set_primary_cursor(&result, &session, version - 1, 0);
+    update = flatbuffers::GetRoot<buffers::editor::EditorUpdate>(result.data_ptr);
+    EXPECT_EQ(update->status(), buffers::editor::EditorUpdateStatus::STALE_TEXT_VERSION);
+    EXPECT_EQ(update->text_version(), version);
+    dashql_delete_owner(result.owner_ptr, result.owner_deleter);
+
+    dashql_script_session_apply(&result, &session, nullptr, 0);
+    update = flatbuffers::GetRoot<buffers::editor::EditorUpdate>(result.data_ptr);
+    EXPECT_EQ(update->status(), buffers::editor::EditorUpdateStatus::INVALID_EVENT);
+    EXPECT_EQ(update->text_version(), version);
+    dashql_delete_owner(result.owner_ptr, result.owner_deleter);
+
+    dashql_script_execution_new(&result, &session,
+                                static_cast<size_t>(buffers::formatting::FormattingDialect::HYPER),
+                                static_cast<size_t>(buffers::formatting::FormattingMode::INLINE), 80, 4, false);
+    auto* execution = reinterpret_cast<execution::ScriptExecution*>(result.owner_ptr);
+    session.GetScript().ReplaceText("select 2");
+    FFIResult started{};
+    dashql_script_execution_start(&started, execution);
+    auto* execution_update = flatbuffers::GetRoot<buffers::execution::ScriptExecutionUpdate>(started.data_ptr);
+    ASSERT_NE(execution_update->snapshot(), nullptr);
+    EXPECT_EQ(execution_update->snapshot()->text_version(), version);
+    dashql_delete_owner(started.owner_ptr, started.owner_deleter);
+    dashql_delete_owner(result.owner_ptr, result.owner_deleter);
+}
+
 }  // namespace

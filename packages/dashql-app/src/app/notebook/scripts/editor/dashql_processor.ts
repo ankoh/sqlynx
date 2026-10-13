@@ -147,7 +147,7 @@ function eventAction(transaction: Transaction): dashql.buffers.editor.EditorEven
 /// Build one portable event from CodeMirror's pre-change ranges and post-change selection.
 export function transactionToEditorEvent(
     transaction: Transaction,
-    expectedDocumentRevision: bigint,
+    expectedTextVersion: bigint,
 ): dashql.buffers.editor.EditorEventT {
     const changes: dashql.buffers.editor.EditorTextChangeT[] = [];
     transaction.changes.iterChanges((fromA, toA, _fromB, _toB, inserted) => {
@@ -160,7 +160,7 @@ export function transactionToEditorEvent(
     const selection = transaction.newSelection.main;
     const userEvent = transaction.annotation(Transaction.userEvent);
     return new dashql.buffers.editor.EditorEventT(
-        expectedDocumentRevision,
+        expectedTextVersion,
         changes,
         new dashql.buffers.editor.EditorSelectionT(
             BigInt(selection.anchor),
@@ -319,17 +319,17 @@ export const DashQLProcessorPlugin: StateField<DashQLProcessorState> = StateFiel
         if (transaction.docChanged || selectionChanged || state.editorUpdate?.primaryCursorState == null) {
             state = copyLazily(state, prevState);
             const scriptSession = state.scriptSession!;
-            const expectedDocumentRevision = scriptSession.getDocumentRevision();
+            const expectedTextVersion = scriptSession.getTextVersion();
             const update = scriptSession.apply(transactionToEditorEvent(
                 transaction,
-                expectedDocumentRevision,
+                expectedTextVersion,
             ));
             console.debug(`${LOG_PREFIX} applied CodeMirror transaction`, {
                 scriptKey: state.scriptKey,
                 docChanged: transaction.docChanged,
                 selectionChanged,
-                expectedDocumentRevision,
-                resultDocumentRevision: update.documentRevision,
+                expectedTextVersion,
+                resultTextVersion: update.textVersion,
                 resultStateRevision: update.stateRevision,
                 status: update.status,
                 statusMessage: update.statusMessage,
@@ -341,7 +341,7 @@ export const DashQLProcessorPlugin: StateField<DashQLProcessorState> = StateFiel
             if (update.status !== dashql.buffers.editor.EditorUpdateStatus.OK) {
                 console.error(`${LOG_PREFIX} native editor session rejected CodeMirror transaction`, {
                     scriptKey: state.scriptKey,
-                    expectedDocumentRevision,
+                    expectedTextVersion,
                     status: update.status,
                     statusMessage: update.statusMessage,
                 });
@@ -367,7 +367,7 @@ export const DashQLProcessorPlugin: StateField<DashQLProcessorState> = StateFiel
         if (prevState !== state && !externalUpdate) {
             console.debug(`${LOG_PREFIX} emitting processor update`, {
                 scriptKey: state.scriptKey,
-                documentRevision: state.editorUpdate?.documentRevision,
+                textVersion: state.editorUpdate?.textVersion,
                 stateRevision: state.editorUpdate?.stateRevision,
                 analysisAvailable: state.editorUpdate?.analysisAvailable,
                 analysisUpdated: state.editorUpdate?.analysisUpdated,

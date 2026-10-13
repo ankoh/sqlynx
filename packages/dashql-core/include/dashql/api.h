@@ -40,6 +40,15 @@ struct FFIResult {
 /// Delete an owner by calling its deleter
 extern "C" void dashql_delete_owner(void* owner_ptr, void (*owner_deleter)(void*));
 
+/// Plan sessions in notebook order without analyzing or publishing them.
+/// Borrows the session pointer array and returns an owned ExecutionGraph FlatBuffer.
+/// Non-null session pointers must refer to live sessions with live borrowed catalogs;
+/// native callers own their lifetime for the duration of this call.
+/// Null entries and invalid analysis are reported as graph diagnostics, not dangling pointers.
+/// Allocation failure leaves an empty result.
+extern "C" void dashql_planner_plan(FFIResult* result, dashql::ScriptSession* const* sessions,
+                                     uint32_t session_count) noexcept;
+
 // -----------------------------------------------------------------------------
 
 extern "C" void dashql_script_execution_new(FFIResult* result, dashql::ScriptSession* session,
@@ -122,20 +131,20 @@ extern "C" uint32_t dashql_script_session_get_catalog_entry_id(dashql::ScriptSes
 /// Get the current document as UTF-8 text.
 extern "C" void dashql_script_session_get_text(FFIResult* result, dashql::ScriptSession* session);
 /// Get revisions directly.
-extern "C" uint64_t dashql_script_session_get_document_revision(dashql::ScriptSession* session);
+extern "C" uint64_t dashql_script_session_get_text_version(dashql::ScriptSession* session);
 extern "C" uint64_t dashql_script_session_get_state_revision(dashql::ScriptSession* session);
 extern "C" uint64_t dashql_script_session_get_catalog_revision(dashql::ScriptSession* session);
 /// Replace all UTF-8 text and return an owned EditorUpdate FlatBuffer.
 /// Takes ownership of text_ptr, which must be null or allocated by dashql_malloc.
 extern "C" void dashql_script_session_replace_text(FFIResult* result, dashql::ScriptSession* session,
-                                                    uint64_t expected_document_revision, const char* text_ptr,
+                                                    uint64_t expected_text_version, const char* text_ptr,
                                                     size_t text_length);
 /// Apply a serialized EditorEvent and return an owned EditorUpdate FlatBuffer.
 extern "C" void dashql_script_session_apply(FFIResult* result, dashql::ScriptSession* session,
                                              const uint8_t* event_ptr, size_t event_length);
 /// Set a collapsed primary selection and return an owned EditorUpdate FlatBuffer.
 extern "C" void dashql_script_session_set_primary_cursor(FFIResult* result, dashql::ScriptSession* session,
-                                                          uint64_t expected_document_revision, uint64_t offset);
+                                                          uint64_t expected_text_version, uint64_t offset);
 /// Analyze and publish the session script synchronously, returning an owned EditorUpdate FlatBuffer.
 extern "C" void dashql_script_session_analyze(FFIResult* result, dashql::ScriptSession* session);
 extern "C" void dashql_script_session_complete_at_cursor(FFIResult* result,

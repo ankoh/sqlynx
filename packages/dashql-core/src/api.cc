@@ -13,6 +13,7 @@
 #include "dashql/batch.h"
 #include "dashql/catalog_object.h"
 #include "dashql/exception.h"
+#include "dashql/planner.h"
 #include "dashql/script_session.h"
 #include "dashql/script_diff.h"
 #include "dashql/script.h"
@@ -90,7 +91,7 @@ static void packInvalidEditorEvent(FFIResult* result, const ScriptSession& sessi
     update.status_message = "invalid EditorEvent FlatBuffer";
     update.offset_unit = session.GetOffsetUnit();
     update.catalog_entry_id = session.GetCatalogEntryId();
-    update.document_revision = session.GetDocumentRevision();
+    update.text_version = session.GetTextVersion();
     update.state_revision = session.GetStateRevision();
     update.catalog_revision = session.GetCatalogRevision();
     packEditorUpdate(result, update);
@@ -112,6 +113,42 @@ extern "C" void dashql_free(const void* buffer) { delete[] reinterpret_cast<cons
 extern "C" void dashql_delete_owner(void* owner_ptr, void (*owner_deleter)(void*)) {
     if (owner_deleter && owner_ptr) {
         owner_deleter(owner_ptr);
+    }
+}
+
+extern "C" void dashql_planner_plan(FFIResult* result, ScriptSession* const* sessions,
+                                     uint32_t session_count) noexcept {
+    if (!result) return;
+    *result = {};
+    try {
+        buffers::execution::ExecutionGraphT graph;
+        try {
+            if (!sessions && session_count != 0) throw std::invalid_argument("null planner session array");
+            std::vector<PlannerInput> inputs;
+            inputs.reserve(session_count);
+            for (uint32_t i = 0; i < session_count; ++i) {
+                auto* session = sessions[i];
+                inputs.push_back({session ? &session->GetScript() : nullptr});
+            }
+            graph = Planner::Plan(inputs);
+        } catch (const std::exception& error) {
+            graph = {};
+            graph.valid = false;
+            auto diagnostic = std::make_unique<buffers::execution::ExecutionGraphDiagnosticT>();
+            diagnostic->message = error.what();
+            graph.diagnostics.push_back(std::move(diagnostic));
+        } catch (...) {
+            graph = {};
+            graph.valid = false;
+            auto diagnostic = std::make_unique<buffers::execution::ExecutionGraphDiagnosticT>();
+            diagnostic->message = "planner failed";
+            graph.diagnostics.push_back(std::move(diagnostic));
+        }
+        packFlatBuffer(result, [&](auto& builder) {
+            builder.Finish(buffers::execution::ExecutionGraph::Pack(builder, &graph));
+        });
+    } catch (...) {
+        // Even diagnostic serialization can fail. Never unwind across the C/Wasm boundary.
     }
 }
 
@@ -396,8 +433,8 @@ extern "C" void dashql_script_session_get_text(FFIResult* result, ScriptSession*
     result->owner_deleter = [](void* buffer) { delete reinterpret_cast<std::string*>(buffer); };
 }
 
-extern "C" uint64_t dashql_script_session_get_document_revision(ScriptSession* session) {
-    return session->GetDocumentRevision();
+extern "C" uint64_t dashql_script_session_get_text_version(ScriptSession* session) {
+    return session->GetTextVersion();
 }
 
 extern "C" uint64_t dashql_script_session_get_state_revision(ScriptSession* session) {
@@ -409,11 +446,11 @@ extern "C" uint64_t dashql_script_session_get_catalog_revision(ScriptSession* se
 }
 
 extern "C" void dashql_script_session_replace_text(FFIResult* result, ScriptSession* session,
-                                                     uint64_t expected_document_revision, const char* text_ptr,
+                                                     uint64_t expected_text_version, const char* text_ptr,
                                                      size_t text_length) {
     std::unique_ptr<const std::byte[]> text_buffer{reinterpret_cast<const std::byte*>(text_ptr)};
     std::string_view text{text_ptr ? text_ptr : "", text_ptr ? text_length : 0};
-    packEditorUpdate(result, session->ReplaceText(expected_document_revision, text));
+    packEditorUpdate(result, session->ReplaceText(expected_text_version, text));
 }
 
 extern "C" void dashql_script_session_apply(FFIResult* result, ScriptSession* session,
@@ -433,8 +470,8 @@ extern "C" void dashql_script_session_apply(FFIResult* result, ScriptSession* se
 }
 
 extern "C" void dashql_script_session_set_primary_cursor(FFIResult* result, ScriptSession* session,
-                                                           uint64_t expected_document_revision, uint64_t offset) {
-    packEditorUpdate(result, session->SetPrimaryCursor(expected_document_revision, offset));
+                                                           uint64_t expected_text_version, uint64_t offset) {
+    packEditorUpdate(result, session->SetPrimaryCursor(expected_text_version, offset));
 }
 
 extern "C" void dashql_script_session_analyze(FFIResult* result, ScriptSession* session) {

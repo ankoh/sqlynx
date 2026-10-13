@@ -1,0 +1,299 @@
+planner-snapshots:
+  - name: IndependentQueries
+    catalog: |
+      create table a (id int);
+      create table b (id int);
+    scripts:
+      - name: first
+        input: |
+          -- Query descriptions are not backend SQL.
+          select * from a;
+          select * from a;
+          select * from b;
+      - name: second
+        input: |
+          select 1;
+          select * from b;
+
+  - name: CrossScriptCtasDiamond
+    catalog: |
+      create table source (id int);
+    scripts:
+      - name: root
+        input: create table base as select * from source;
+      - name: left
+        input: create table left_branch as select * from base;
+      - name: right
+        input: create table right_branch as select * from base;
+      - name: sink
+        input: select * from left_branch join right_branch using (id);
+
+  - name: CrossScriptViewDiamond
+    catalog: |
+      create table source (id int);
+    scripts:
+      - name: root
+        input: create view base as select * from source;
+      - name: left
+        input: create view left_branch as select * from base;
+      - name: right
+        input: create view right_branch as select * from base;
+      - name: sink
+        input: select * from left_branch join right_branch using (id);
+
+  - name: MutationHazards
+    catalog: |
+      create table a (id int);
+      create table b (id int);
+    scripts:
+      - name: first
+        input: |
+          select * from a;
+          select * from a;
+          insert into a values (1);
+          insert into b values (9);
+      - name: second
+        input: |
+          select * from a;
+          insert into a values (2) returning id;
+          insert into a values (3);
+          select * from b;
+
+  - name: InsertSelfReadAndMultipleEntities
+    catalog: |
+      create table a (id int);
+      create table b (id int);
+      create table c (id int);
+    scripts:
+      - name: mutations
+        input: |
+          select * from a;
+          insert into a select * from a returning id;
+          insert into c select a.id from a join b using (id);
+          insert into b values (2);
+          select * from c;
+
+  - name: CtePhysicalEntities
+    catalog: create table source (id int);
+    scripts:
+      - name: queries
+        input: |
+          with c as (select * from source), d as (select * from c) select * from d;
+          insert into source select * from source;
+
+  - name: DropRecreate
+    scripts:
+      - name: producer
+        input: create table db.s.a (id int);
+      - name: lifetime
+        input: |
+          select * from a;
+          drop table a;
+          create table db.s.a (id int);
+          select * from a;
+
+  - name: SameScriptDropRecreate
+    scripts:
+      - name: lifetime
+        input: |
+          create table a (id int);
+          select * from a;
+          drop table a;
+          create table a (id int);
+          select * from a;
+
+  - name: ExternalDropRecreate
+    catalog: create table db.s.a (id int);
+    scripts:
+      - name: lifetime
+        input: |
+          select * from a;
+          drop table a;
+          create table db.s.a (id int);
+          select * from a;
+
+  - name: LaterProducerWithinScript
+    scripts:
+      - name: forward
+        input: |
+          select * from later;
+          create table later (id int);
+
+  - name: ProducerThenConsumer
+    scripts:
+      - name: producer
+        input: create table relation (id int);
+      - name: consumer
+        input: select * from relation;
+
+  - name: ReversedProducerConsumer
+    scripts:
+      - name: consumer
+        input: select * from relation;
+      - name: producer
+        input: create table relation (id int);
+
+  - name: UnresolvedBarrier
+    scripts:
+      - name: queries
+        input: |
+          select 1;
+          select * from missing;
+          select 2;
+          select 3;
+
+  - name: UnsupportedSet
+    scripts:
+      - name: session
+        input: |
+          select 1;
+          set foo = 1;
+          select 2;
+
+  - name: UnresolvedDrop
+    scripts:
+      - name: queries
+        input: |
+          select * from db.s.missing;
+          drop table missing;
+          select 1;
+
+  - name: UnsupportedExplain
+    scripts:
+      - name: explain
+        input: explain select 1;
+
+  - name: UnsupportedTemporaryTable
+    scripts:
+      - name: session
+        input: create temp table t (id int);
+
+  - name: MalformedParser
+    scripts:
+      - name: valid
+        input: select 1;
+      - name: malformed
+        input: select from;
+
+  - name: MalformedScanner
+    scripts:
+      - name: malformed
+        input: select 'unterminated
+
+  - name: StaleAnalysis
+    scripts:
+      - name: valid
+        input: select 2;
+      - name: stale
+        input: select 1;
+        stale-prepend: " "
+
+  - name: NormalizedIdentifiers
+    catalog: |
+      create table Db.S.Mixed (id int);
+      create table "Mixed" (id int);
+    scripts:
+      - name: queries
+        input: |
+          select * from DB.s.MIXED;
+          insert into db.S.mixed values (1);
+          select * from "Mixed";
+
+  - name: SelectInto
+    catalog: create table source (id int);
+    scripts:
+      - name: producer
+        input: select * into copied from source;
+      - name: consumer
+        input: select * from copied;
+
+  - name: QualifiedIdentifierComponents
+    catalog: |
+      create table "Db.Dot"."s""quote"."Mixed.Name" (id int);
+      create table "select" (id int);
+    scripts:
+      - name: queries
+        input: |
+          select * from "Db.Dot"."s""quote"."Mixed.Name";
+          insert into "Db.Dot"."s""quote"."Mixed.Name" values (1);
+          select * from "select";
+          select * from "missing.db"."missing""schema"."Missing.Name";
+
+  - name: PublishedViewBarrier
+    catalog: create view v as select 1 as id;
+    scripts:
+      - name: queries
+        input: |
+          select 1;
+          select * from v;
+          select 2;
+
+  - name: EmptyScript
+    scripts:
+      - name: trivia
+        input: |
+          -- only trivia
+          /* comment */
+
+  - name: ViewWriteBaseRead
+    catalog: |
+      create table base (id int);
+      create view v as select * from base;
+    scripts:
+      - name: writer
+        input: insert into v values (1);
+      - name: reader
+        input: select * from base;
+
+  - name: ViewWriteBaseWrite
+    catalog: |
+      create table base (id int);
+      create view v as select * from base;
+    scripts:
+      - name: view_writer
+        input: insert into v values (1);
+      - name: base_writer
+        input: insert into base values (2);
+
+  - name: QualifiedCteCollision
+    catalog: create table s.unrelated (id int);
+    scripts:
+      - name: collision
+        input: with c as (select 1 as id) select * from s.c;
+
+  - name: DropBeforeFutureQualifiedProducer
+    catalog: create table s.unrelated (id int);
+    scripts:
+      - name: earlier
+        input: |
+          create table a (id int);
+          select * from a;
+      - name: later
+        input: |
+          drop table a;
+          create table s.a (id int);
+
+  - name: EmptyInputs
+    scripts: []
+
+  - name: DropViewBeforeBaseDrop
+    catalog: |
+      create table base (id int);
+      create view v as select * from base;
+    scripts:
+      - name: drops
+        input: |
+          select 1;
+          drop view v;
+          drop table base;
+
+  - name: DropTableTargetingViewBeforeBaseDrop
+    catalog: |
+      create table base (id int);
+      create view v as select * from base;
+    scripts:
+      - name: drops
+        input: |
+          select 1;
+          drop table v;
+          drop table base;

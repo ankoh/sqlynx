@@ -128,8 +128,8 @@ function updateEditor(view: EditorView, scripts: NotebookScripts, scriptData: Sc
             notebookId: scripts.notebookId,
             scriptKey: scriptData.scriptKey.toString(),
             editorHadSession: (state.scriptSession != null).toString(),
-            nativeDocumentRevision: scriptData.scriptSession.getDocumentRevision().toString(),
-            projectedDocumentRevision: scriptData.editorUpdate?.documentRevision.toString(),
+            nativeTextVersion: scriptData.scriptSession.getTextVersion().toString(),
+            projectedTextVersion: scriptData.editorUpdate?.textVersion.toString(),
         }, LOG_CTX);
         // When that happens we have to reset the editor state.
         // It means that someone gave us a new notebook script that requires a state update
@@ -195,7 +195,7 @@ function updateEditor(view: EditorView, scripts: NotebookScripts, scriptData: Sc
         logger.debug("Dispatching editor processor update", {
             notebookId: scripts.notebookId,
             scriptKey: update.scriptKey.toString(),
-            documentRevision: update.editorUpdate?.documentRevision.toString(),
+            textVersion: update.editorUpdate?.textVersion.toString(),
             stateRevision: update.editorUpdate?.stateRevision.toString(),
             cursorOffset: update.editorUpdate?.primaryCursorState?.textOffset?.toString(),
         }, LOG_CTX);

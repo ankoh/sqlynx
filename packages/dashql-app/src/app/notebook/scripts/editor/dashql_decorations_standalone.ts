@@ -133,7 +133,7 @@ export function createScannerHighlightPlugin(
                     : Decoration.none;
                 console.debug('[notebook-editor-debug] initialized syntax highlighting', {
                     hasProjection: this.lastUpdate != null,
-                    documentRevision: this.lastUpdate?.documentRevision,
+                    textVersion: this.lastUpdate?.textVersion,
                     stateRevision: this.lastUpdate?.stateRevision,
                     syntaxSpanCount: this.lastUpdate?.syntaxSpans.length ?? 0,
                     semanticSpanCount: this.lastUpdate?.semanticSpans.length ?? 0,
@@ -155,7 +155,7 @@ export function createScannerHighlightPlugin(
                         projectionChanged,
                         viewportChanged: u.viewportChanged,
                         docChanged: u.docChanged,
-                        documentRevision: update?.documentRevision,
+                        textVersion: update?.textVersion,
                         stateRevision: update?.stateRevision,
                         syntaxSpanCount: update?.syntaxSpans.length ?? 0,
                         semanticSpanCount: update?.semanticSpans.length ?? 0,

@@ -39,11 +39,11 @@ describe('V2 app state loader', () => {
             }),
             createScriptSession: vi.fn(() => {
                 let text = '';
-                let revision = 0n;
+                let textVersion = 0n;
                 return {
                     getCatalogEntryId: () => ++scriptId,
-                    getDocumentRevision: () => revision,
-                    replaceText: (_revision: bigint, next: string) => { text = next; revision += 1n; return { status: 0 }; },
+                    getTextVersion: () => textVersion,
+                    replaceText: (_expectedTextVersion: bigint, next: string) => { text = next; textVersion += 1n; return { status: 0 }; },
                     getText: () => text,
                     destroy: vi.fn(),
                 };

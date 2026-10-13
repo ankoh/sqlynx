@@ -42,7 +42,7 @@ using NameID = uint32_t;
 using NodeID = uint32_t;
 using ColumnID = uint32_t;
 using StatementID = uint32_t;
-using TextVersion = uint32_t;
+using TextVersion = uint64_t;
 using CompletionPtr = flatbuffers::Offset<buffers::completion::Completion>;
 
 class ScannedScript {
@@ -376,7 +376,7 @@ class Script {
     /// The underlying rope
     rope::Rope text;
     /// The text version
-    uint32_t text_version = 0;
+    TextVersion text_version = 0;
 
     /// The last scanned script
     std::shared_ptr<ScannedScript> scanned_script;

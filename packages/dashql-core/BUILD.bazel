@@ -35,6 +35,7 @@ LIB_SRCS = [
     "src/parser/parse_context.cc",
     "src/parser/parser.cc",
     "src/parser/scanner.cc",
+    "src/planner.cc",
     "src/script.cc",
     "src/script_cursor.cc",
     "src/script_diff.cc",
@@ -299,6 +300,7 @@ test_utils_SRCS = [
     "src/testing/formatter_snapshot_test.cc",
     "src/testing/parser_snapshot_test.cc",
     "src/testing/plan_view_model_snapshot_test.cc",
+    "src/testing/planner_snapshot_test.cc",
     "src/testing/visualize_snapshot_test.cc",
     "src/testing/yaml_tests.cc",
 ]
@@ -384,6 +386,7 @@ cc_test(
         "test/keywords_test.cc",
         "test/name_tagging_test.cc",
         "test/pmh_unordered_map.cc",
+        "test/planner_test.cc",
         "test/rope_test.cc",
         "test/scanner_test.cc",
         "test/script_compiler_test.cc",
@@ -426,6 +429,16 @@ cc_test(
     linkopts = DASHQL_LINKOPTS,
     deps = CORE_TEST_DEPS,
     visibility = ["//visibility:public"]
+)
+cc_test(
+    name = "planner_tests",
+    size = "small",
+    srcs = ["test/planner_snapshot_test_suite.cc"],
+    data = ["//snapshots/planner:files"],
+    copts = DASHQL_COPTS,
+    linkopts = DASHQL_LINKOPTS,
+    deps = CORE_TEST_DEPS,
+    visibility = ["//visibility:public"],
 )
 cc_test(
     name = "completion_tests",

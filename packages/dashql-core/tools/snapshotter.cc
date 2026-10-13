@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <fstream>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -22,6 +23,7 @@
 #include "dashql/testing/diff_snapshot_test.h"
 #include "dashql/testing/parser_snapshot_test.h"
 #include "dashql/testing/plan_view_model_snapshot_test.h"
+#include "dashql/testing/planner_snapshot_test.h"
 #include "dashql/testing/visualize_snapshot_test.h"
 #include "dashql/testing/yaml_tests.h"
 #include "dashql/visualize/markdown.h"
@@ -37,7 +39,8 @@ using namespace dashql::testing;
 DEFINE_string(source_dir, "", "Source directory");
 DEFINE_string(
     filter, "",
-    "Snapshot category to update (parser, analyzer, completion, formatter, plan_view_model, visualize, diff). Empty = all.");
+    "Snapshot category to update (parser, analyzer, planner, completion, formatter, plan_view_model, visualize, diff). "
+    "Empty = all.");
 
 static void generate_parser_snapshots(const std::filesystem::path& snapshot_dir) {
     for (auto& p : std::filesystem::directory_iterator(snapshot_dir)) {
@@ -242,6 +245,36 @@ static void generate_analyzer_snapshots(const std::filesystem::path& snapshot_di
         InjectBlankLinesInSnapshot(emitted);
         std::ofstream outs(out, std::ofstream::out | std::ofstream::trunc);
         outs << emitted;
+    }
+}
+
+static void generate_planner_snapshots(const std::filesystem::path& snapshot_dir) {
+    for (auto& entry : std::filesystem::directory_iterator(snapshot_dir)) {
+        auto path = entry.path();
+        if (path.extension() != ".yaml" || path.stem().extension() != ".tpl") continue;
+        std::ifstream input(path);
+        if (!input) throw std::runtime_error("cannot read planner template: " + path.string());
+        std::stringstream buffer;
+        buffer << input.rdbuf();
+        auto content = buffer.str();
+        c4::yml::Tree tree;
+        c4::yml::parse_in_arena(c4::to_csubstr(content), &tree);
+        auto out = path;
+        out.replace_extension();
+        out.replace_extension(".yaml");
+        std::cout << "FILE " << out << std::endl;
+        for (auto fixture : tree.rootref()["planner-snapshots"].children()) {
+            std::cout << "  TEST " << fixture["name"].val() << std::endl;
+            if (fixture.has_child("expected")) fixture.remove_child("expected");
+            auto expected = fixture.append_child();
+            expected << c4::yml::key("expected");
+            PlannerSnapshotTest::Encode(expected, fixture);
+        }
+        auto emitted = c4::yml::emitrs_yaml<std::string>(tree.rootref(), c4::yml::EmitOptions().max_depth(128));
+        InjectBlankLinesInSnapshot(emitted);
+        std::ofstream output(out, std::ios::trunc);
+        if (!output) throw std::runtime_error("cannot write planner snapshot: " + out.string());
+        output << emitted;
     }
 }
 
@@ -861,6 +894,7 @@ int main(int argc, char* argv[]) {
     const auto& f = FLAGS_filter;
     if (f.empty() || f == "parser") generate_parser_snapshots(source_dir / "snapshots" / "parser");
     if (f.empty() || f == "analyzer") generate_analyzer_snapshots(source_dir / "snapshots" / "analyzer");
+    if (f.empty() || f == "planner") generate_planner_snapshots(source_dir / "snapshots" / "planner");
     if (f.empty() || f == "completion") generate_completion_snapshots(source_dir / "snapshots" / "completion");
     if (f.empty() || f == "formatter") generate_formatter_snapshots(source_dir / "snapshots" / "formatter");
     if (f.empty() || f == "hyper_plan")

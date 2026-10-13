@@ -1,5 +1,7 @@
 #include "dashql/script.h"
 
+#include <stdexcept>
+
 #include "dashql/buffers/index_generated.h"
 #include "dashql/catalog.h"
 #include "dashql/exception.h"
@@ -8,6 +10,55 @@
 using namespace dashql;
 
 namespace {
+
+TEST(ScriptTest, TextVersionChangesOnlyForSuccessfulTextEdits) {
+    Catalog catalog;
+    Script script{catalog};
+    script.InsertTextAt(100, "");
+    script.EraseTextRange(0, 100);
+    script.ReplaceText("");
+    EXPECT_EQ(script.text_version, 0);
+
+    script.InsertTextAt(100, "a\xC3\xA9z");
+    EXPECT_EQ(script.text_version, 1);
+    script.InsertTextAt(1, "");
+    script.EraseTextRange(1, 0);
+    script.EraseTextRange(3, 100);
+    script.EraseTextRange(100, 100);
+    script.ReplaceText("a\xC3\xA9z");
+    EXPECT_EQ(script.text_version, 1);
+    EXPECT_EQ(script.ToString(), "a\xC3\xA9z");
+
+    EXPECT_THROW(script.InsertTextAt(0, "\xFF"), std::invalid_argument);
+    EXPECT_THROW(script.ReplaceText("\xFF"), std::invalid_argument);
+    EXPECT_EQ(script.text_version, 1);
+    EXPECT_EQ(script.ToString(), "a\xC3\xA9z");
+
+    script.InsertCharAt(100, '!');
+    EXPECT_EQ(script.text_version, 2);
+    EXPECT_EQ(script.ToString(), "a\xC3\xA9z!");
+    script.EraseTextRange(1, 100);
+    EXPECT_EQ(script.text_version, 3);
+    EXPECT_EQ(script.ToString(), "a");
+    script.ReplaceText("select 1");
+    EXPECT_EQ(script.text_version, 4);
+}
+
+TEST(ScriptTest, TextVersionAndAnalysisSnapshotExceed32Bits) {
+    Catalog catalog;
+    Script script{catalog};
+    script.text_version = (uint64_t{1} << 32) - 1;
+    script.ReplaceText("select 1");
+    script.Analyze();
+    EXPECT_EQ(script.text_version, uint64_t{1} << 32);
+    EXPECT_EQ(script.GetAnalyzedScript()->parsed_script->scanned_script->text_version, script.text_version);
+    auto first = script.GetAnalyzedScript();
+    script.InsertTextAt(100, ";");
+    script.Analyze();
+    EXPECT_EQ(script.text_version, (uint64_t{1} << 32) + 1);
+    EXPECT_NE(script.GetAnalyzedScript(), first);
+    EXPECT_EQ(script.GetAnalyzedScript()->parsed_script->scanned_script->text_version, script.text_version);
+}
 
 TEST(ScriptTest, ParseAutoScans) {
     Catalog catalog;

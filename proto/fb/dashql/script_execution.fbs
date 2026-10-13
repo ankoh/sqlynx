@@ -39,7 +39,7 @@ table StatementResult {
 
 table ScriptExecutionSnapshot {
     phase: ScriptExecutionPhase = IDLE;
-    document_revision: uint64;
+    text_version: uint64;
     statement_index: uint32;
     statement_count: uint32;
     output_statement_index: uint32 = 4294967295;

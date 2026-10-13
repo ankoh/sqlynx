@@ -67,6 +67,29 @@ TEST(ScriptExecutionTest, StopsAfterStatementError) {
     EXPECT_EQ(operation.pending_statement, nullptr);
 }
 
+TEST(ScriptExecutionTest, CapturesImmutable64BitTextVersion) {
+    Catalog catalog;
+    ScriptSession session{catalog};
+    const auto version = (uint64_t{1} << 32) + 42;
+    session.GetScript().text_version = version - 1;
+    session.GetScript().ReplaceText("select 1");
+    ScriptExecution execution{session, ExecutionConfig()};
+    session.GetScript().ReplaceText("select 2");
+
+    auto update = execution.Start();
+    ASSERT_NE(update.snapshot, nullptr);
+    EXPECT_EQ(update.snapshot->text_version, version);
+    ASSERT_NE(update.pending_statement, nullptr);
+    EXPECT_EQ(update.pending_statement->sql, "select 1");
+    EXPECT_EQ(session.GetTextVersion(), version + 1);
+
+    buffers::execution::StatementResultT result;
+    result.pending_statement_id = update.pending_statement->id;
+    update = execution.Resume(result);
+    ASSERT_NE(update.snapshot, nullptr);
+    EXPECT_EQ(update.snapshot->text_version, version);
+}
+
 TEST(ScriptExecutionTest, SendsUnparseableSQLToRemoteAsOneOutputStatement) {
     Catalog catalog;
     ScriptSession session{catalog};

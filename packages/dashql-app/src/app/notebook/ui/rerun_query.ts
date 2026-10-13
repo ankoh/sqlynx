@@ -30,8 +30,8 @@ export function runNotebookScript(
         scriptKey: scriptData.scriptKey.toString(),
         analysisOutdated: scriptData.analysisOutdated.toString(),
         analysisAvailable: scriptData.editorUpdate?.analysisAvailable.toString(),
-        documentRevision: scriptData.editorUpdate?.documentRevision.toString(),
-        nativeDocumentRevision: scriptData.scriptSession.getDocumentRevision?.().toString(),
+        textVersion: scriptData.editorUpdate?.textVersion.toString(),
+        nativeTextVersion: scriptData.scriptSession.getTextVersion?.().toString(),
         textLength: scriptData.scriptSession.getText?.().length.toString(),
     }, 'notebook_execution');
     if (scriptData.analysisOutdated) {

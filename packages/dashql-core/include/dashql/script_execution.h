@@ -21,7 +21,7 @@ class ScriptExecution {
     using Update = buffers::execution::ScriptExecutionUpdateT;
     using StatementResult = buffers::execution::StatementResultT;
 
-    /// Compile and capture an immutable execution plan for the session's current document revision.
+    /// Compile and capture an immutable execution plan for the session's current text version.
     ScriptExecution(ScriptSession& session, buffers::formatting::FormattingConfigT formatting_config);
     /// Destroy any coroutine still suspended while waiting for a statement result.
     ~ScriptExecution();
@@ -118,7 +118,7 @@ class ScriptExecution {
     void Complete(Phase phase, std::string error = {});
 
     buffers::formatting::FormattingConfigT formatting_config_;
-    uint64_t document_revision_ = 0;
+    TextVersion text_version_ = 0;
     uint64_t next_pending_statement_id_ = 1;
     uint32_t statement_index_ = 0;
     uint32_t output_statement_index_ = PROTO_NULL_U32;
