@@ -3,7 +3,9 @@ import * as arrow from 'apache-arrow';
 import type {
     EmbeddedComputeDatabase,
     EmbeddedConnectionOptions,
+    EmbeddedExternalDirectoryDatabase,
     EmbeddedExternalFileDatabase,
+    ExternalDirectoryMode,
     OPFSFileImportOptions,
     EmbeddedPersistentDatabase,
     EmbeddedPersistentDatabaseConnection,
@@ -68,6 +70,7 @@ export interface HyperDBEngineClient {
     createTemporaryFile(bytes: Uint8Array): Promise<HyperDBResult>;
     removeFile(path: string): Promise<HyperDBResult>;
     registerExternalFile(name: string, url: string, size: number): Promise<HyperDBResult>;
+    registerExternalDirectory(handle: FileSystemDirectoryHandle, mode: ExternalDirectoryMode): Promise<HyperDBResult>;
     removeExternalRegistration(path: string): Promise<HyperDBResult>;
     importOPFSFile?(path: string, blob: Blob, options?: OPFSFileImportOptions): Promise<void>;
     prepareOPFSFile?(path: string): Promise<void>;
@@ -177,7 +180,7 @@ function yieldToEventLoop(): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, 0));
 }
 
-export class HyperDB implements EmbeddedComputeDatabase, EmbeddedPersistentDatabase, EmbeddedExternalFileDatabase {
+export class HyperDB implements EmbeddedComputeDatabase, EmbeddedPersistentDatabase, EmbeddedExternalFileDatabase, EmbeddedExternalDirectoryDatabase {
     private readonly connections = new Set<HyperDBConnection>();
     private initialization: Promise<void> | null = null;
     private termination: Promise<void> | null = null;
@@ -189,6 +192,7 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedPersistentDatab
     private readonly createObjectURL: (blob: Blob) => string;
     private readonly revokeObjectURL: (url: string) => void;
     private readonly externalFiles = new Map<string, string>();
+    private readonly externalDirectories = new Set<string>();
 
     constructor(
         private readonly client: HyperDBEngineClient,
@@ -329,6 +333,28 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedPersistentDatab
         });
     }
 
+    async registerExternalDirectory(handle: FileSystemDirectoryHandle, mode: ExternalDirectoryMode): Promise<string> {
+        return await this.runDatabaseOperation(async () => {
+            const result = await this.client.registerExternalDirectory(handle, mode);
+            expectOK(result, 'register external directory');
+            const path = new TextDecoder('utf-8', { fatal: true }).decode(result.payload);
+            if (!path.startsWith('/mnt/external/')) {
+                await this.client.removeExternalRegistration(path).catch(() => {});
+                throw new Error('register external directory returned an invalid path');
+            }
+            this.externalDirectories.add(path);
+            return path;
+        });
+    }
+
+    async removeExternalDirectory(path: string): Promise<void> {
+        await this.runDatabaseOperation(async () => {
+            if (!this.externalDirectories.has(path)) throw new Error(`external directory is not registered: ${path}`);
+            expectOK(await this.client.removeExternalRegistration(path), 'remove external directory');
+            this.externalDirectories.delete(path);
+        });
+    }
+
     async importOPFSFile(path: string, blob: Blob, options?: OPFSFileImportOptions): Promise<void> {
         if (this.client.importOPFSFile == null) throw new Error('importing OPFS files is not supported');
         await this.client.importOPFSFile(path, blob, options);
@@ -372,6 +398,10 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedPersistentDatab
                         expectOK(await this.client.removeExternalRegistration(path), 'remove external file during termination');
                         this.externalFiles.delete(path);
                         this.revokeObjectURL(url);
+                    }
+                    for (const path of this.externalDirectories) {
+                        expectOK(await this.client.removeExternalRegistration(path), 'remove external directory during termination');
+                        this.externalDirectories.delete(path);
                     }
                     expectOK(await this.client.dropDatabase(this.defaultDatabaseName), 'drop default database');
                     expectOK(await this.client.dropDatabase(this.computeDatabaseName), 'drop compute database');

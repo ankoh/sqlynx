@@ -23,6 +23,7 @@ class FakeHyperDBEngineClient implements HyperDBEngineClient {
     readonly queryResults = new Map<string, Uint8Array>();
     readonly temporaryFiles = new Map<string, Uint8Array>();
     readonly externalFiles = new Map<string, { url: string; size: number }>();
+    readonly externalDirectories = new Map<string, { handle: FileSystemDirectoryHandle; mode: 'read' | 'readwrite' }>();
     readonly insertedTables = new Map<string, arrow.Table>();
 
     connectCount = 0;
@@ -175,10 +176,18 @@ class FakeHyperDBEngineClient implements HyperDBEngineClient {
         return Promise.resolve({ state: 'ok', payload: new TextEncoder().encode(path) });
     }
 
+    registerExternalDirectory(handle: FileSystemDirectoryHandle, mode: 'read' | 'readwrite'): Promise<HyperDBResult> {
+        const path = `/mnt/external/${this.nextFile++}/${handle.name}`;
+        this.calls.push(`register-external-directory:${path}:${mode}`);
+        this.externalDirectories.set(path, { handle, mode });
+        return Promise.resolve({ state: 'ok', payload: new TextEncoder().encode(path) });
+    }
+
     removeExternalRegistration(path: string): Promise<HyperDBResult> {
         this.calls.push(`remove-external-registration:${path}`);
         if (this.failExternalFileRemoval) return Promise.resolve({ state: 'busy', error: 'External file has active readers' });
         this.externalFiles.delete(path);
+        this.externalDirectories.delete(path);
         return Promise.resolve({ state: 'ok', payload: new Uint8Array() });
     }
 
@@ -238,6 +247,34 @@ describe('HyperDB embedded database adapter', () => {
         await database.removeExternalFile(path);
         expect(revoked).toEqual(['blob:test-file']);
         await database.terminate();
+    });
+
+    it('registers and removes browser directories using the requested mode', async () => {
+        const client = new FakeHyperDBEngineClient();
+        const database = await HyperDB.create(client);
+        const handle = { kind: 'directory', name: 'exports' } as FileSystemDirectoryHandle;
+
+        const path = await database.registerExternalDirectory(handle, 'readwrite');
+
+        expect(path).toBe('/mnt/external/1/exports');
+        expect(client.externalDirectories.get(path)).toEqual({ handle, mode: 'readwrite' });
+        await database.removeExternalDirectory(path);
+        expect(client.externalDirectories.has(path)).toBe(false);
+        await database.terminate();
+    });
+
+    it('cleans external directories during termination', async () => {
+        const client = new FakeHyperDBEngineClient();
+        const database = await HyperDB.create(client);
+        const path = await database.registerExternalDirectory(
+            { kind: 'directory', name: 'exports' } as FileSystemDirectoryHandle,
+            'read',
+        );
+
+        await database.terminate();
+
+        expect(client.calls).toContain(`remove-external-registration:${path}`);
+        expect(client.externalDirectories.has(path)).toBe(false);
     });
 
     it('retains object URLs when external-file removal is busy', async () => {
@@ -316,6 +353,18 @@ describe('HyperDB embedded database adapter', () => {
             'create-database:__dashql_compute:false',
             'create-database:hyper:false',
         ]);
+    });
+
+    it('serializes global external table settings for the engine', async () => {
+        const client = new FakeHyperDBEngineClient();
+        await HyperDB.create(client, {
+            'global.experimental_external_metaquery': 1,
+            'global.experimental_persisted_external_tables': 1,
+        });
+
+        expect(client.calls).toContain(
+            'initialize:{"global.experimental_external_metaquery":1,"global.experimental_persisted_external_tables":1}',
+        );
     });
 
     it('attaches hyper as the separate user-facing database', async () => {

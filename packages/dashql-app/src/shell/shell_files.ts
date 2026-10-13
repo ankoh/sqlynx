@@ -1,4 +1,8 @@
-import type { EmbeddedExternalFileDatabase } from '../platform/database/embedded_database.js';
+import type {
+    EmbeddedExternalDirectoryDatabase,
+    EmbeddedExternalFileDatabase,
+    ExternalDirectoryMode,
+} from '../platform/database/embedded_database.js';
 import type { FileDownloader } from '../platform/file/file_downloader.js';
 import type { PlatformFile } from '../platform/file/file.js';
 import { HYPER_OPFS_ROOT, LEGACY_HYPER_OPFS_ROOT, SHELL_FILES_DIRECTORY } from '../platform/hyperdb/hyperdb_opfs.js';
@@ -17,6 +21,7 @@ interface ShellFileEntry {
 interface ShellFileListing {
     readonly path: string;
     readonly size?: number;
+    readonly directoryMode?: ExternalDirectoryMode;
 }
 
 interface FileOperationOptions {
@@ -26,6 +31,7 @@ interface FileOperationOptions {
 
 export class ShellFileRegistry {
     private readonly files = new Map<string, ShellFileEntry>();
+    private readonly directories = new Map<string, ExternalDirectoryMode>();
     private readonly mountedPaths = new Set<string>();
     private disposed = false;
 
@@ -34,6 +40,7 @@ export class ShellFileRegistry {
         private readonly getOPFSRoot: () => Promise<FileSystemDirectoryHandle> = () => navigator.storage.getDirectory(),
         private readonly logger?: LoggerLike,
         private readonly externalFiles?: EmbeddedExternalFileDatabase,
+        private readonly externalDirectories?: EmbeddedExternalDirectoryDatabase,
     ) {}
 
     async list(): Promise<readonly string[]> {
@@ -52,6 +59,9 @@ export class ShellFileRegistry {
         const files: ShellFileListing[] = [];
         for (const path of this.mountedPaths) {
             files.push({ path, size: await this.files.get(path)?.size() });
+        }
+        for (const [path, directoryMode] of this.directories) {
+            files.push({ path, directoryMode });
         }
         for await (const [name, handle] of directory.entries()) {
             if (handle.kind === 'file') files.push({
@@ -111,7 +121,41 @@ export class ShellFileRegistry {
         }
     }
 
+    async mountDirectory(handle: FileSystemDirectoryHandle, mode: ExternalDirectoryMode): Promise<string> {
+        this.checkUsable();
+        if (this.externalDirectories == null) throw new Error('external browser directories are not supported');
+        const startedAt = Date.now();
+        this.logger?.info('Mounting shell directory', logDetails(handle.name, undefined, undefined, 'register_external_directory', startedAt), LOG_CTX);
+        let path: string | null = null;
+        try {
+            path = await this.externalDirectories.registerExternalDirectory(handle, mode);
+            if (this.disposed) {
+                await this.externalDirectories.removeExternalDirectory(path);
+                throw new Error('shell file registry is disposed');
+            }
+            this.directories.set(path, mode);
+            this.logger?.info('Mounted shell directory', {
+                ...logDetails(handle.name, path, undefined, 'complete', startedAt),
+                mode,
+            }, LOG_CTX);
+            return path;
+        } catch (error) {
+            this.logger?.error('Failed to mount shell directory', {
+                ...logDetails(handle.name, path ?? undefined, undefined, 'register_external_directory', startedAt),
+                mode,
+                error: stringifyError(error),
+                error_name: error instanceof Error ? error.name : undefined,
+            }, LOG_CTX);
+            throw error;
+        }
+    }
+
     async drop(path: string): Promise<boolean> {
+        if (this.directories.has(path)) {
+            await this.externalDirectories!.removeExternalDirectory(path);
+            this.directories.delete(path);
+            return true;
+        }
         const registeredPath = this.native || this.files.has(path) ? path : this.canonicalOPFSPath(path);
         const entry = this.files.get(registeredPath);
         if (entry != null) {
@@ -162,6 +206,17 @@ export class ShellFileRegistry {
                 this.mountedPaths.delete(path);
             } catch (error) {
                 this.logger?.warn('Failed to unmount shell file during disposal', {
+                    path,
+                    error: stringifyError(error),
+                }, LOG_CTX);
+            }
+        }
+        for (const path of Array.from(this.directories.keys())) {
+            try {
+                await this.externalDirectories!.removeExternalDirectory(path);
+                this.directories.delete(path);
+            } catch (error) {
+                this.logger?.warn('Failed to unmount shell directory during disposal', {
                     path,
                     error: stringifyError(error),
                 }, LOG_CTX);
@@ -361,25 +416,29 @@ export function createShellFilesCommand(
     downloader: FileDownloader,
     selectFiles: (signal?: AbortSignal) => Promise<readonly PlatformFile[]> = selectPlatformFiles,
     logger?: LoggerLike,
+    selectDirectory: (mode: ExternalDirectoryMode) => Promise<FileSystemDirectoryHandle> = selectPlatformDirectory,
 ): DashQLShellCommand {
     return [
-        'files',
-        'Manage queryable files: list, mount, import, add, drop, or get',
+        'fs',
+        'Manage queryable files: list, mount, mount-dir, mount-dir-rw, import, add, drop, or get',
         async (args, context) => {
             const [action = 'list', ...pathParts] = args;
             const path = pathParts.join(' ');
             switch (action) {
                 case 'list': {
-                    if (path.length !== 0) throw new Error('usage: .files list');
+                    if (path.length !== 0) throw new Error('usage: .fs list');
                     const files = await registry.listFiles();
                     return files.length === 0
                         ? 'No files registered'
-                        : files.map(file => `${file.path}${file.size == null ? '' : ` (${formatBytes(file.size)})`}`).join('\r\n');
+                        : files.map(file => file.directoryMode == null
+                            ? `${file.path}${file.size == null ? '' : ` (${formatBytes(file.size)})`}`
+                            : `${file.path} (directory, ${file.directoryMode === 'read' ? 'read-only' : 'read/write'})`)
+                            .join('\r\n');
                 }
                 case 'add':
                 case 'import':
                 case 'mount': {
-                    if (path.length !== 0) throw new Error(`usage: .files ${action}`);
+                    if (path.length !== 0) throw new Error(`usage: .fs ${action}`);
                     const selected = await selectShellFiles(selectFiles, context, logger);
                     const paths: string[] = [];
                     for (const file of selected) {
@@ -393,20 +452,26 @@ export function createShellFilesCommand(
                     const verb = action === 'import' ? 'Imported' : 'Added';
                     return `${verb} ${paths.length} file${paths.length === 1 ? '' : 's'}\r\n${paths.join('\r\n')}`;
                 }
+                case 'mount-dir':
+                case 'mount-dir-rw': {
+                    if (path.length !== 0) throw new Error(`usage: .fs ${action}`);
+                    const mode: ExternalDirectoryMode = action === 'mount-dir' ? 'read' : 'readwrite';
+                    return await registry.mountDirectory(await selectDirectory(mode), mode);
+                }
                 case 'drop': {
-                    if (path.length === 0) throw new Error('usage: .files drop <path>');
+                    if (path.length === 0) throw new Error('usage: .fs drop <path>');
                     if (!await registry.drop(path)) throw new Error(`file not registered: ${path}`);
                     return `Dropped ${path}`;
                 }
                 case 'get': {
-                    if (path.length === 0) throw new Error('usage: .files get <path>');
+                    if (path.length === 0) throw new Error('usage: .fs get <path>');
                     const file = await registry.get(path);
                     if (file == null) throw new Error(`file not registered: ${path}`);
                     await downloader.downloadBufferAsFile(await file.read(), fileName(path));
                     return `Downloaded ${path}`;
                 }
                 default:
-                    throw new Error('usage: .files [list|mount|import|add|drop|get]');
+                    throw new Error('usage: .fs [list|mount|mount-dir|mount-dir-rw|import|add|drop|get]');
             }
         },
     ];
@@ -479,6 +544,16 @@ async function selectPlatformFiles(signal?: AbortSignal): Promise<readonly Platf
         signal?.addEventListener('abort', onAbort, { once: true });
         input.click();
     });
+}
+
+async function selectPlatformDirectory(mode: ExternalDirectoryMode): Promise<FileSystemDirectoryHandle> {
+    const picker = (window as Window & typeof globalThis & {
+        showDirectoryPicker?: (options: { mode: ExternalDirectoryMode }) => Promise<FileSystemDirectoryHandle>;
+    }).showDirectoryPicker;
+    if (picker == null) {
+        throw new Error('folder mounting requires the File System Access API');
+    }
+    return await picker({ mode });
 }
 
 function nativeEntry(file: PlatformFile): ShellFileEntry {

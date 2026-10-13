@@ -1,5 +1,9 @@
 // @vitest-environment node
-import type { EmbeddedExternalFileDatabase } from '../platform/database/embedded_database.js';
+import type {
+    EmbeddedExternalDirectoryDatabase,
+    EmbeddedExternalFileDatabase,
+    ExternalDirectoryMode,
+} from '../platform/database/embedded_database.js';
 import type { PlatformFile } from '../platform/file/file.js';
 import { LogLevel } from '../platform/logger/log_buffer.js';
 import { TestLogger } from '../platform/logger/test_logger.js';
@@ -79,13 +83,15 @@ class MockOPFSDirectoryHandle {
     }
 }
 
-class MockExternalFiles implements EmbeddedExternalFileDatabase {
+class MockExternalFiles implements EmbeddedExternalFileDatabase, EmbeddedExternalDirectoryDatabase {
     readonly files = new Map<string, Blob>();
     nextFile = 1;
     removeError: Error | null = null;
     aborts: string[] = [];
     imports: string[] = [];
     readonly opfsWrites = new Map<string, Uint8Array>();
+    readonly directories = new Map<string, ExternalDirectoryMode>();
+    nextDirectory = 1;
 
     constructor(private readonly opfs?: MockOPFSDirectoryHandle) {}
 
@@ -98,6 +104,16 @@ class MockExternalFiles implements EmbeddedExternalFileDatabase {
     async removeExternalFile(path: string): Promise<void> {
         if (this.removeError) throw this.removeError;
         if (!this.files.delete(path)) throw new Error(`missing external file: ${path}`);
+    }
+
+    async registerExternalDirectory(handle: FileSystemDirectoryHandle, mode: ExternalDirectoryMode): Promise<string> {
+        const path = `/mnt/external/directory-${this.nextDirectory++}/${handle.name}`;
+        this.directories.set(path, mode);
+        return path;
+    }
+
+    async removeExternalDirectory(path: string): Promise<void> {
+        if (!this.directories.delete(path)) throw new Error(`missing directory: ${path}`);
     }
 
     async importOPFSFile(
@@ -218,6 +234,41 @@ describe('shell files command', () => {
 
         expect(await command[2](['drop', '/mnt/external/1/data.csv'], {})).toBe('Dropped /mnt/external/1/data.csv');
         expect(external.files.size).toBe(0);
+    });
+
+    it('mounts read-only and read/write browser directories', async () => {
+        const external = new MockExternalFiles();
+        const registry = new ShellFileRegistry(
+            false,
+            async () => new MockOPFSDirectoryHandle() as unknown as FileSystemDirectoryHandle,
+            undefined,
+            external,
+            external,
+        );
+        const directory = { kind: 'directory', name: 'exports' } as FileSystemDirectoryHandle;
+        const selectDirectory = vi.fn().mockResolvedValue(directory);
+        const command = createShellFilesCommand(
+            registry,
+            { downloadBufferAsFile: vi.fn() },
+            undefined,
+            undefined,
+            selectDirectory,
+        );
+
+        expect(await command[2](['mount-dir'], {})).toBe('/mnt/external/directory-1/exports');
+        expect(await command[2](['mount-dir-rw'], {})).toBe('/mnt/external/directory-2/exports');
+        expect(selectDirectory).toHaveBeenNthCalledWith(1, 'read');
+        expect(selectDirectory).toHaveBeenNthCalledWith(2, 'readwrite');
+        expect(await command[2](['list'], {})).toBe([
+            '/mnt/external/directory-1/exports (directory, read-only)',
+            '/mnt/external/directory-2/exports (directory, read/write)',
+        ].join('\r\n'));
+
+        expect(await command[2](['drop', '/mnt/external/directory-2/exports'], {}))
+            .toBe('Dropped /mnt/external/directory-2/exports');
+        expect(external.directories.has('/mnt/external/directory-2/exports')).toBe(false);
+        await registry.dispose();
+        expect(external.directories.size).toBe(0);
     });
 
     it('imports browser Blobs without reading their page-side streams', async () => {
@@ -395,8 +446,8 @@ describe('shell files command', () => {
         );
 
         await expect(command[2](['add'], {})).resolves.toBe('No files selected');
-        await expect(command[2](['unknown'], {})).rejects.toThrow('usage: .files [list|mount|import|add|drop|get]');
+        await expect(command[2](['unknown'], {})).rejects.toThrow('usage: .fs [list|mount|mount-dir|mount-dir-rw|import|add|drop|get]');
         await expect(command[2](['get', 'missing.csv'], {})).rejects.toThrow('file not registered: missing.csv');
-        await expect(command[2](['drop'], {})).rejects.toThrow('usage: .files drop <path>');
+        await expect(command[2](['drop'], {})).rejects.toThrow('usage: .fs drop <path>');
     });
 });

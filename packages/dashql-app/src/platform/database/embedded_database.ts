@@ -57,6 +57,14 @@ export interface EmbeddedExternalFileDatabase {
     removeOPFSFile(path: string): Promise<void>;
 }
 
+export type ExternalDirectoryMode = 'read' | 'readwrite';
+
+/** Optional browser directory registration capability. */
+export interface EmbeddedExternalDirectoryDatabase {
+    registerExternalDirectory(handle: FileSystemDirectoryHandle, mode: ExternalDirectoryMode): Promise<string>;
+    removeExternalDirectory(path: string): Promise<void>;
+}
+
 export interface EmbeddedDatabase<Connection extends EmbeddedConnection = EmbeddedConnection> {
     terminate(): void | Promise<void>;
     getVersion(): Promise<string>;

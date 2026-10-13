@@ -111,6 +111,10 @@ class CountingClient implements HyperDBEngineClient {
         return this.client.registerExternalFile(name, url, size);
     }
 
+    registerExternalDirectory(handle: FileSystemDirectoryHandle, mode: 'read' | 'readwrite'): Promise<HyperDBResult> {
+        return this.client.registerExternalDirectory(handle, mode);
+    }
+
     removeExternalRegistration(path: string): Promise<HyperDBResult> {
         return this.client.removeExternalRegistration(path);
     }
@@ -272,6 +276,35 @@ describe('HyperDB embedded database integration', () => {
             path = null;
         } finally {
             if (path != null) await ignoreCleanupFailure(() => database!.removeExternalFile(path!));
+            await connection.close();
+        }
+    }, 60_000);
+
+    it('queries a nested OPFS file through a registered browser directory', async () => {
+        const connection = await database!.connect();
+        const root = await navigator.storage.getDirectory();
+        const name = `dashql-directory-${crypto.randomUUID()}`;
+        const directory = await root.getDirectoryHandle(name, { create: true });
+        const nested = await directory.getDirectoryHandle('input', { create: true });
+        const file = await nested.getFileHandle('values.csv', { create: true });
+        const writer = await file.createWritable();
+        await writer.write('value,name\n1,alpha\n2,beta\n');
+        await writer.close();
+        let path: string | null = null;
+        try {
+            path = await database!.registerExternalDirectory(directory, 'read');
+            expect(toPlainObjects(await connection.query(`
+                SELECT sum(value) AS total
+                FROM external('${path}/input/values.csv', format => 'csv', header => true,
+                    columns => descriptor(value bigint, name text))
+            `))).toEqual([{ total: 3n }]);
+
+            await database!.removeExternalDirectory(path);
+            await expect(connection.query(`SELECT * FROM external('${path}/input/values.csv', format => 'csv')`)).rejects.toThrow();
+            path = null;
+        } finally {
+            if (path != null) await ignoreCleanupFailure(() => database!.removeExternalDirectory(path!));
+            await ignoreCleanupFailure(() => root.removeEntry(name, { recursive: true }));
             await connection.close();
         }
     }, 60_000);

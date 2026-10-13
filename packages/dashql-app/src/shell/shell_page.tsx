@@ -3,7 +3,7 @@ import * as React from 'react';
 import * as connectionTypes from '@ankoh/dashql-jsonschema/connection.js';
 
 import type { EmbeddedConnection } from '../platform/database/embedded_database.js';
-import type { EmbeddedExternalFileDatabase } from '../platform/database/embedded_database.js';
+import type { EmbeddedExternalDirectoryDatabase, EmbeddedExternalFileDatabase } from '../platform/database/embedded_database.js';
 import { useEmbeddedDatabaseSetup } from '../platform/database/embedded_database_provider.js';
 import { stringifyError } from '../platform/logger/logger.js';
 import { useLogger } from '../platform/logger/logger_provider.js';
@@ -54,6 +54,12 @@ function externalFileDatabase(database: unknown): EmbeddedExternalFileDatabase |
         !('finishOPFSFile' in database) || !('abortOPFSFile' in database) ||
         !('removeOPFSFile' in database)) return undefined;
     return database as EmbeddedExternalFileDatabase;
+}
+
+function externalDirectoryDatabase(database: unknown): EmbeddedExternalDirectoryDatabase | undefined {
+    if (database == null || typeof database !== 'object') return undefined;
+    if (!('registerExternalDirectory' in database) || !('removeExternalDirectory' in database)) return undefined;
+    return database as EmbeddedExternalDirectoryDatabase;
 }
 
 interface ShellPageProps {
@@ -250,7 +256,13 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
                 },
                 refreshCatalog: (alias, catalog, signal) => attachmentManager.refreshCatalog(alias, catalog, signal),
             });
-            fileRegistry = new ShellFileRegistry(false, undefined, logger, externalFileDatabase(database));
+            fileRegistry = new ShellFileRegistry(
+                false,
+                undefined,
+                logger,
+                externalFileDatabase(database),
+                externalDirectoryDatabase(database),
+            );
             const commands: DashQLShellCommand[] = [
                 examplesCommand,
                 createFormatCommand({
