@@ -111,8 +111,8 @@ class CountingClient implements HyperDBEngineClient {
         return this.client.registerExternalFile(name, url, size);
     }
 
-    removeExternalFile(path: string): Promise<HyperDBResult> {
-        return this.client.removeExternalFile(path);
+    removeExternalRegistration(path: string): Promise<HyperDBResult> {
+        return this.client.removeExternalRegistration(path);
     }
 
     importOPFSFile(path: string, blob: Blob, options?: OPFSFileImportOptions): Promise<void> {
@@ -153,8 +153,8 @@ class CountingClient implements HyperDBEngineClient {
         return this.client.cancelQuery(query);
     }
 
-    releaseQuery(query: number): Promise<HyperDBResult> {
-        return this.client.releaseQuery(query);
+    finishQuery(query: number): Promise<HyperDBResult> {
+        return this.client.finishQuery(query);
     }
 
     shutdown(): Promise<HyperDBResult> {

@@ -28,8 +28,16 @@ export type HyperDBResult =
     | { state: 'pending' }
     | { state: 'chunk'; payload: Uint8Array }
     | { state: 'done' }
-    | { state: 'error'; error: string }
+    | { state: 'error'; error: string | HyperDBError }
     | { state: 'busy'; error: string };
+
+interface HyperDBError {
+    message: string;
+    sqlState: string;
+    errorSource: 'User' | 'System' | 'OverloadRejection';
+    detail: string;
+    hint: string;
+}
 
 type HyperDBSettingValue = string | number | boolean | null | readonly HyperDBSettingValue[] | {
     readonly [key: string]: HyperDBSettingValue;
@@ -60,7 +68,7 @@ export interface HyperDBEngineClient {
     createTemporaryFile(bytes: Uint8Array): Promise<HyperDBResult>;
     removeFile(path: string): Promise<HyperDBResult>;
     registerExternalFile(name: string, url: string, size: number): Promise<HyperDBResult>;
-    removeExternalFile(path: string): Promise<HyperDBResult>;
+    removeExternalRegistration(path: string): Promise<HyperDBResult>;
     importOPFSFile?(path: string, blob: Blob, options?: OPFSFileImportOptions): Promise<void>;
     prepareOPFSFile?(path: string): Promise<void>;
     writeOPFSFile?(path: string, chunk: Uint8Array, offset: number): Promise<void>;
@@ -69,14 +77,14 @@ export interface HyperDBEngineClient {
     removeOPFSFile?(path: string): Promise<void>;
     pollQuery(query: number): Promise<HyperDBResult>;
     cancelQuery(query: number): Promise<HyperDBResult>;
-    releaseQuery(query: number): Promise<HyperDBResult>;
+    finishQuery(query: number): Promise<HyperDBResult>;
     shutdown(): Promise<HyperDBResult>;
     terminate(): Promise<void>;
 }
 
 function readError(result: HyperDBResult, operation: string): Error {
     if (result.state === 'error' || result.state === 'busy') {
-        return new Error(result.error);
+        return new Error(typeof result.error === 'string' ? result.error : result.error.message);
     }
     return new Error(`${operation} returned unexpected state ${result.state}`);
 }
@@ -291,13 +299,13 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedPersistentDatab
                 registered = true;
                 path = new TextDecoder('utf-8', { fatal: true }).decode(result.payload);
                 if (!path.startsWith('/mnt/external/')) {
-                    const removal = await this.client.removeExternalFile(path);
+                    const removal = await this.client.removeExternalRegistration(path);
                     if (removal.state === 'ok') registered = false;
                     else this.externalFiles.set(path, url);
                     throw new Error('register external file returned an invalid path');
                 }
                 if (signal?.aborted) {
-                    const removal = await this.client.removeExternalFile(path);
+                    const removal = await this.client.removeExternalRegistration(path);
                     if (removal.state === 'ok') registered = false;
                     else this.externalFiles.set(path, url);
                     throw signal.reason ?? new DOMException('The operation was aborted', 'AbortError');
@@ -315,7 +323,7 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedPersistentDatab
         await this.runDatabaseOperation(async () => {
             const url = this.externalFiles.get(path);
             if (url == null) throw new Error(`external file is not registered: ${path}`);
-            expectOK(await this.client.removeExternalFile(path), 'remove external file');
+            expectOK(await this.client.removeExternalRegistration(path), 'remove external file');
             this.externalFiles.delete(path);
             this.revokeObjectURL(url);
         });
@@ -361,7 +369,7 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedPersistentDatab
                     await this.databaseOperation;
                     await Promise.all([...this.connections].map(connection => connection.closeForTermination()));
                     for (const [path, url] of this.externalFiles) {
-                        expectOK(await this.client.removeExternalFile(path), 'remove external file during termination');
+                        expectOK(await this.client.removeExternalRegistration(path), 'remove external file during termination');
                         this.externalFiles.delete(path);
                         this.revokeObjectURL(url);
                     }
@@ -488,7 +496,7 @@ export class HyperDBConnection implements EmbeddedTableImportConnection, Embedde
                 }
                 if (queryHandle !== null) {
                     try {
-                        await this.releaseQuery(queryHandle);
+                        await this.finishQuery(queryHandle);
                     } catch (error) {
                         cleanupError ??= error;
                     }
@@ -536,7 +544,7 @@ export class HyperDBConnection implements EmbeddedTableImportConnection, Embedde
                         throw readError(result, 'insert Arrow IPC from path');
                     }
                 } finally {
-                    await this.releaseQuery(queryHandle);
+                    await this.finishQuery(queryHandle);
                 }
             } finally {
                 if (path !== null) {
@@ -604,15 +612,15 @@ export class HyperDBConnection implements EmbeddedTableImportConnection, Embedde
         await this.closing;
     }
 
-    private async releaseQuery(query: number): Promise<void> {
+    private async finishQuery(query: number): Promise<void> {
         let delay = 1;
         for (;;) {
-            const result = await this.client.releaseQuery(query);
+            const result = await this.client.finishQuery(query);
             if (result.state === 'ok') {
                 return;
             }
             if (result.state !== 'pending') {
-                throw readError(result, 'release query');
+                throw readError(result, 'finish query');
             }
             await new Promise(resolve => setTimeout(resolve, delay));
             delay = Math.min(delay * 2, 32);

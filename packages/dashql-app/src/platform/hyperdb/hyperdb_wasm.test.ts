@@ -175,8 +175,8 @@ class FakeHyperDBEngineClient implements HyperDBEngineClient {
         return Promise.resolve({ state: 'ok', payload: new TextEncoder().encode(path) });
     }
 
-    removeExternalFile(path: string): Promise<HyperDBResult> {
-        this.calls.push(`remove-external-file:${path}`);
+    removeExternalRegistration(path: string): Promise<HyperDBResult> {
+        this.calls.push(`remove-external-registration:${path}`);
         if (this.failExternalFileRemoval) return Promise.resolve({ state: 'busy', error: 'External file has active readers' });
         this.externalFiles.delete(path);
         return Promise.resolve({ state: 'ok', payload: new Uint8Array() });
@@ -193,8 +193,8 @@ class FakeHyperDBEngineClient implements HyperDBEngineClient {
         return Promise.resolve({ state: 'ok', payload: new Uint8Array() });
     }
 
-    releaseQuery(query: number): Promise<HyperDBResult> {
-        this.calls.push(`release:${query}`);
+    finishQuery(query: number): Promise<HyperDBResult> {
+        this.calls.push(`finish:${query}`);
         this.queries.delete(query);
         this.activeOperationCount--;
         return Promise.resolve({ state: 'ok', payload: new Uint8Array() });
@@ -270,7 +270,7 @@ describe('HyperDB embedded database adapter', () => {
 
         await database.terminate();
 
-        expect(client.calls).toContain(`remove-external-file:${path}`);
+        expect(client.calls).toContain(`remove-external-registration:${path}`);
         expect(revoked).toEqual(['blob:shared-file']);
         expect(client.terminateCount).toBe(0);
     });
@@ -460,7 +460,7 @@ describe('HyperDB embedded database adapter', () => {
         await expect(second.query('SELECT 42 AS answer')).resolves.toBeDefined();
 
         expect(client.activeOperationCount).toBe(0);
-        expect(client.calls.filter(call => call.startsWith('release:'))).toHaveLength(2);
+        expect(client.calls.filter(call => call.startsWith('finish:'))).toHaveLength(2);
 
         await first.close();
         await second.close();
