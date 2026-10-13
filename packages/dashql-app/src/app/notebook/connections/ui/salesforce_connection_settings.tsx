@@ -234,7 +234,7 @@ export const SalesforceConnectionSettingsPage: React.FC<SalesforceConnectionSett
                         />
                         <TextField
                             name="Data Cloud Instance URL"
-                            caption="Required tenant-specific HTTPS endpoint, without a path, query, or fragment"
+                            caption="Tenant Endpoint of the Data Cloud Instance"
                             value={props.dataCloudInstanceUrl}
                             onChange={props.updateDataCloudInstanceUrl}
                             placeholder=""
