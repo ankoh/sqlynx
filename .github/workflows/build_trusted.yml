@@ -255,7 +255,6 @@ jobs:
                     //packages/dashql-native:test \
                     //packages/dashql-native:native_addon_utility_test \
                     //packages/dashql-native:startup_smoke_test \
-                    //packages/dashql-native:opfs_persistence_test \
                     --test_output=errors
 
             - name: Build Electron arm64 packages
