@@ -1,12 +1,11 @@
 import { CONNECTOR_INFOS, ConnectorType, HYPER_CONNECTOR, TRINO_CONNECTOR } from '../connections/connector_info.js';
-import { ConnectionHealth, type AttachedDatabaseState } from '../connections/attached_database_state.js';
+import { type AttachedDatabaseState } from '../connections/attached_database_state.js';
 import { attachedDatabaseLabel } from './attached_database_label.js';
 import {
     attachedDatabaseDisplayOrder,
     flattenCatalogRows,
     isAttachedDatabaseInitiallyExpanded,
     isVisibleCatalogNode,
-    notebookSwitchMode,
     type CatalogNode,
 } from './notebook_workbench_sidebar.js';
 
@@ -94,22 +93,5 @@ describe('notebook workbench catalog tree', () => {
 
         const withTables = flattenCatalogRows(reader, [database], new Set([database.key, withSchema[1].key]));
         expect(withTables.map(row => row.name)).toEqual(['hyper', 'public', 'accounts', 'contacts']);
-    });
-});
-
-describe('notebook workbench switching', () => {
-    function database(connectionHealth: ConnectionHealth, type = HYPER_CONNECTOR): AttachedDatabaseState {
-        return {
-            connectionHealth,
-            details: type === HYPER_CONNECTOR
-                ? { type, value: { proto: { setupParams: { protocol: 'WASM' } } } }
-                : { type, value: { proto: { setupParams: {} } } },
-        } as AttachedDatabaseState;
-    }
-
-    it('keeps the notebook page mounted while silently starting a restored Hyper/WASM notebook', () => {
-        expect(notebookSwitchMode(database(ConnectionHealth.NOT_STARTED), true)).toBe('setup-hyper-wasm');
-        expect(notebookSwitchMode(database(ConnectionHealth.ONLINE), true)).toBe('select');
-        expect(notebookSwitchMode(database(ConnectionHealth.NOT_STARTED, TRINO_CONNECTOR), true)).toBe('open-setup');
     });
 });

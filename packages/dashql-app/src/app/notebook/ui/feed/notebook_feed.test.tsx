@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as dashql from '@ankoh/dashql-core';
 import { ScriptFeedRow, type ScriptFeedRowDependencies } from './notebook_feed_row.js';
 import { ConnectorType } from '../../connections/connector_info.js';
+import { ConnectionHealth } from '../../connections/attached_database_state.js';
+import { NotebookConnectionAttentionContext } from '../notebook_connection_attention.js';
 
 vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
 
@@ -125,7 +127,7 @@ describe('V2 notebook feed rows', () => {
 
     it('keeps Play available for SQL with parser diagnostics', () => {
         const props = baseProps();
-        props.connection = { databaseId: 'database' } as any;
+        props.connection = { databaseId: 'database', connectionHealth: ConnectionHealth.ONLINE } as any;
         props.scripts[1] = { ...props.scripts[1], analysisOutdated: false,
             editorUpdate: { analysisAvailable: true }, scriptSession: { getText: () => 'SELECT * FROM t QUALIFY x = 1' } } as any;
         act(() => root.render(<ScriptFeedRow {...({ ...props, index: 1, style: {} } as any)} />));
@@ -143,6 +145,27 @@ describe('V2 notebook feed rows', () => {
         expect((container.firstElementChild as HTMLElement).style.height).toBe('');
         expect(props.onRowHeightChange).toHaveBeenCalledWith(1, 312);
         rect.mockRestore();
+    });
+
+    it('blocks execution offline and requests attention once per pointer entry without opening settings', () => {
+        const props = baseProps();
+        const request = vi.fn();
+        act(() => root.render(<NotebookConnectionAttentionContext.Provider value={{ notebookId: 'notebook', active: false, request }}>
+            <ScriptFeedRow {...({ ...props, index: 1, style: {} } as any)} />
+        </NotebookConnectionAttentionContext.Provider>));
+        const play = container.querySelector<HTMLButtonElement>('[aria-label="Execute alpha query"]')!;
+        expect(play.disabled).toBe(true);
+        act(() => play.click());
+        expect(props.onExecute).not.toHaveBeenCalled();
+        const wrapper = play.parentElement!;
+        act(() => {
+            wrapper.dispatchEvent(new PointerEvent('pointerover', { bubbles: true }));
+            wrapper.dispatchEvent(new PointerEvent('pointerover', { bubbles: true, relatedTarget: play }));
+            wrapper.dispatchEvent(new PointerEvent('pointermove', { bubbles: true }));
+        });
+        expect(request).toHaveBeenCalledExactlyOnceWith('notebook');
+        expect(wrapper.tabIndex).toBe(0);
+        expect(container.querySelector('[role="tooltip"]')?.textContent).toContain('Connect to execute');
     });
 
     it('translates a dragged card without applying dnd-kit scale distortion', () => {

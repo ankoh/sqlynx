@@ -7,6 +7,10 @@ import { NotebookViewMode } from '../../scripts/notebook_commands.js';
 import { SegmentedControl } from '../../../../ui/foundations/segmented_control.js';
 import { Button } from '../../../../ui/foundations/button.js';
 import { ConnectionHealth } from '../../connections/attached_database_state.js';
+import { HYPER_CONNECTOR } from '../../connections/connector_info.js';
+import { AnchorSide } from '../../../../ui/foundations/anchored_position.js';
+import { NotebookConnectionAttentionContext } from '../notebook_connection_attention.js';
+import * as styles from './notebook_feed_page.module.css';
 
 vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
 
@@ -19,10 +23,13 @@ const state = {
     shareProps: null as any,
     exportProps: null as any,
     storageProps: null as any,
+    connectionProps: null as any,
+    attention: null as any,
     execution: { state: null, busy: false, start: vi.fn(), stop: vi.fn() } as any,
 };
 const dependencies = {
     NotebookFeed: (props: any) => {
+        state.attention = React.useContext(NotebookConnectionAttentionContext);
         state.feedProps = props;
         return null;
     },
@@ -44,6 +51,7 @@ const dependencies = {
         state.storageProps = props;
         return props.renderAnchor({ onClick: props.onOpen });
     },
+    ConnectionSettingsOverlay: (props: any) => { state.connectionProps = props; return null; },
     Dashboard: (props: any) => {
         state.dashboardProps = props;
         return <div data-testid="dashboard" />;
@@ -81,6 +89,7 @@ describe('NotebookFeedPage', () => {
         state.shareProps = null;
         state.exportProps = null;
         state.storageProps = null;
+        state.connectionProps = null;
         state.execution = { state: null, busy: false, start: vi.fn(), stop: vi.fn() };
         container = document.createElement('div');
         document.body.appendChild(container);
@@ -116,6 +125,119 @@ describe('NotebookFeedPage', () => {
         expect(state.execution.start).toHaveBeenCalledWith(modify);
         render({ connectionHealth: ConnectionHealth.ONLINE, queriesActive: new Map([[1, {}]]) });
         expect(container.querySelector<HTMLButtonElement>('[aria-label="Execute All"]')?.disabled).toBe(true);
+    });
+
+    it('shows the main connection before secondary actions and opens settings only on click', () => {
+        const render = (connection: any) => act(() => root.render(<NotebookFeedPage notebookScripts={scripts()}
+            modifyNotebookScripts={vi.fn()} connection={connection} active dependencies={dependencies} />));
+        render({ databaseId: 'main', connectionHealth: ConnectionHealth.NOT_STARTED });
+        const connect = container.querySelector<HTMLButtonElement>('[aria-label="Disconnected: main execution database"]')!;
+        expect(connect.textContent).toBe('Disconnected');
+        expect(connect.querySelector('svg')).not.toBeNull();
+        expect(connect.querySelector('circle')?.getAttribute('fill')).toBe('#6e7781');
+        expect(connect.compareDocumentPosition(container.querySelector('[aria-label="Share as URL"]')!) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+        expect(state.connectionProps.isOpen).toBe(false);
+        expect(state.connectionProps.databaseId).toBe('main');
+        expect(state.connectionProps.side).toBe(AnchorSide.OutsideBottom);
+        act(() => connect.click());
+        expect(state.connectionProps.isOpen).toBe(true);
+        expect(state.connectionProps.onConnected).toBeUndefined();
+        render({ databaseId: 'main', connectionHealth: ConnectionHealth.ONLINE,
+            details: { type: HYPER_CONNECTOR, value: { proto: { setupParams: { protocol: 'WASM' } } } } });
+        expect(state.connectionProps.isOpen).toBe(true);
+        expect(container.querySelector('[aria-label="Embedded: main execution database (embedded)"]')?.textContent).toBe('Embedded');
+        expect(container.querySelector('[aria-label="Embedded: main execution database (embedded)"] circle')?.getAttribute('fill')).toBe('#1f883d');
+        act(() => state.connectionProps.onClose());
+        expect(state.connectionProps.isOpen).toBe(false);
+        render({ databaseId: 'main', connectionHealth: ConnectionHealth.FAILED });
+        expect(container.querySelector('[aria-label="Failed: main execution database"]')?.textContent).toBe('Failed');
+        expect(container.querySelector('[aria-label="Failed: main execution database"] circle')?.getAttribute('fill')).toBe('#cf222e');
+        render({ databaseId: 'main', connectionHealth: ConnectionHealth.CONNECTING });
+        expect(container.querySelector('[aria-label="Connecting: main execution database"] svg')).not.toBeNull();
+    });
+
+    it('pulses Connect on blocked execution hover and clears on main health or notebook changes', async () => {
+        const render = (notebookId: string, health: ConnectionHealth) => act(() => root.render(<NotebookFeedPage
+            notebookScripts={{ ...scripts(), notebookId }} modifyNotebookScripts={vi.fn()}
+            connection={{ databaseId: 'main', connectionHealth: health } as any} active dependencies={dependencies} />));
+        render('notebook', ConnectionHealth.NOT_STARTED);
+        const wrapper = container.querySelector('[aria-label="Execute All"]')!.parentElement!;
+        expect(wrapper.getAttribute('data-execution-connection-blocked')).toBe('true');
+        const request = vi.spyOn(state.attention, 'request');
+        act(() => wrapper.dispatchEvent(new PointerEvent('pointerover', { bubbles: true })));
+        expect(request).toHaveBeenCalledWith('notebook');
+        await act(async () => { await new Promise(resolve => setTimeout(resolve, 50)); });
+        expect(state.attention.active).toBe(true);
+        expect(container.querySelector('[data-connection-attention="true"]')).not.toBeNull();
+        expect(state.connectionProps.isOpen).toBe(false);
+        render('notebook', ConnectionHealth.CONNECTING);
+        expect(container.querySelector('[data-connection-attention="true"]')).toBeNull();
+        act(() => state.attention.request('notebook'));
+        render('other', ConnectionHealth.CONNECTING);
+        expect(container.querySelector('[data-connection-attention="true"]')).toBeNull();
+    });
+
+    it('keeps the view switch, connection, and execution controls inside mobile and desktop headers', async () => {
+        const frame = document.createElement('iframe');
+        frame.style.height = '600px';
+        document.body.appendChild(frame);
+        const frameDocument = frame.contentDocument!;
+        const style = frameDocument.createElement('style');
+        style.textContent = Array.from(document.styleSheets)
+            .flatMap(sheet => Array.from(sheet.cssRules).map(rule => rule.cssText)).join('\n');
+        frameDocument.head.appendChild(style);
+        frameDocument.body.style.margin = '0';
+        const host = frameDocument.createElement('div');
+        host.style.height = '600px';
+        frameDocument.body.appendChild(host);
+        const frameRoot = createRoot(host);
+        state.dashboardsEnabled = true;
+        try {
+            for (const width of [320, 375, 800, 1024, 1440]) {
+                frame.style.width = `${width}px`;
+                for (const busy of [false, true]) {
+                    state.execution = { busy, start: vi.fn(), stop: vi.fn(), state: busy ? {
+                        phase: 'running', completedScripts: 123, totalScripts: 456,
+                        completedStatements: 123, totalStatements: 456, error: null,
+                    } : null };
+                    await act(async () => {
+                        frameRoot.render(<NotebookFeedPage notebookScripts={scripts()} modifyNotebookScripts={vi.fn()}
+                            connection={null} active dependencies={dependencies} />);
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                    });
+                    const header = host.querySelector('header')!;
+                    const bounds = header.getBoundingClientRect();
+                    expect(header.scrollWidth).toBeLessThanOrEqual(header.clientWidth);
+                    const controls = [host.querySelector('[aria-label="Notebook view"]')!,
+                        host.querySelector('[aria-label="Disconnected: main execution database"]')!,
+                        host.querySelector(busy ? '[aria-label="Stop notebook execution"]' : '[aria-label="Execute All"]')!];
+                    for (const control of controls) {
+                        const rect = control.getBoundingClientRect();
+                        expect(rect.width).toBeGreaterThan(0);
+                        expect(rect.left).toBeGreaterThanOrEqual(bounds.left);
+                        expect(rect.right).toBeLessThanOrEqual(bounds.right);
+                        expect(rect.bottom).toBeLessThanOrEqual(bounds.bottom);
+                    }
+                }
+            }
+        } finally {
+            act(() => frameRoot.unmount());
+            frame.remove();
+        }
+    });
+
+    it('uses two finite attention pulses and a scoped static spinner for reduced motion', () => {
+        const rules = Array.from(document.styleSheets).flatMap(sheet => Array.from(sheet.cssRules));
+        const pulse = rules.find(rule => rule instanceof CSSStyleRule && rule.selectorText === `.${styles.connection_attention}`) as CSSStyleRule;
+        expect(pulse.style.animationIterationCount).toBe('2');
+        expect(pulse.style.animationDuration).toBe('0.45s');
+        const reduced = rules.find(rule => rule instanceof CSSMediaRule && rule.conditionText === '(prefers-reduced-motion: reduce)'
+            && Array.from(rule.cssRules).some(child => child instanceof CSSStyleRule && child.selectorText === `.${styles.connection_spinner} *`)) as CSSMediaRule;
+        const spinner = Array.from(reduced.cssRules).find(rule => rule instanceof CSSStyleRule && rule.selectorText === `.${styles.connection_spinner} *`) as CSSStyleRule;
+        expect(spinner.style.animationName).toBe('none');
+        const attention = Array.from(reduced.cssRules).find(rule => rule instanceof CSSStyleRule && rule.selectorText === `.${styles.connection_attention}`) as CSSStyleRule;
+        expect(attention.style.animationName).toBe('none');
+        expect(attention.style.backgroundColor).not.toBe('');
     });
 
     it('shows compact progress and Stop without a Details control', () => {

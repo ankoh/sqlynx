@@ -5,7 +5,7 @@ import { Logger, stringifyError } from '../../../platform/logger/logger.js';
 import { VariantKind } from '../../../utils/index.js';
 import { NotebookScripts } from '../scripts/notebook_scripts.js';
 import { AttachedDatabaseState } from '../connections/attached_database_state.js';
-import { getConnectionParamsFromStateDetails, createDefaultConnectionParamsForConnector } from '../connections/connection_params.js';
+import { createDefaultConnectionParamsForConnector } from '../connections/connection_params.js';
 import type { StorageBackend, NotebookData, NotebookMetadata as StorageNotebookMetadata } from './storage_backend.js';
 import { STORAGE_SCRIPTS_FOLDER, STORAGE_NOTEBOOK_FILE } from './storage_backend.js';
 
@@ -85,6 +85,8 @@ export type StorageWriteKey = string;
 /// file's write row). Keying both on the file also means a scheduled-but-not-yet-flushed manifest
 /// write coalesces onto the same statistics row as its completion.
 export const groupNotebookManifestWrites = (notebookId: string) => `${notebookId}/${STORAGE_NOTEBOOK_FILE}`;
+/// Connection updates and name updates must not coalesce, but both serialize per notebook.
+export const groupNotebookConnectionWrites = (notebookId: string) => `${notebookId}/${STORAGE_NOTEBOOK_FILE}:connections`;
 export const groupNotebookSchemaWrites = (notebookId: string) => `${notebookId}/dashql-relations.sql`;
 export const groupNotebookFunctionWrites = (notebookId: string) => `${notebookId}/dashql-functions.sql`;
 export const groupNotebookWrites = (notebookId: string) => `${notebookId}/${STORAGE_SCRIPTS_FOLDER}`;
@@ -429,9 +431,9 @@ export class StorageWriter {
                 // Extract connection params
                 const persistedDatabases: Array<NotebookData['attachedDatabases'][number]> = [];
                 for (const database of databases) {
-                    const params = getConnectionParamsFromStateDetails(database.details);
+                    const params = database.params;
                     if (params == null) continue;
-                    persistedDatabases.push({ databaseId: database.databaseId, params });
+                    persistedDatabases.push({ databaseId: database.databaseId, params, ...(database.paramsDraft == null ? {} : { paramsDraft: database.paramsDraft }) });
                 }
                 const mainDatabase = persistedDatabases.find(database => database.databaseId === mainDatabaseId);
                 if (mainDatabase == null) {

@@ -1,6 +1,19 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { loadApp, selectStartupNotebook, shouldFinishInitialNavigation } from './app_loading_logic.js';
+import { canShowNotebook, loadApp, selectStartupNotebook, shouldFinishInitialNavigation } from './app_loading_logic.js';
+import { AppLoadingStatus } from '../router/app_loading_status.js';
+import { NotebookSetupStatus } from '../router/notebook_setup_status.js';
+
+describe('canShowNotebook', () => {
+    it.each([NotebookSetupStatus.OPENING, NotebookSetupStatus.CONFIGURING, NotebookSetupStatus.NONE])('shows an opened notebook without waiting for connection setup (%s)', notebookSetupStatus => {
+        expect(canShowNotebook({
+            appLoadingStatus: AppLoadingStatus.SETUP_DONE,
+            notebookId: 'offline-notebook',
+            notebookSetupStatus,
+            confirmedFinishedSetup: false,
+        }, false)).toBe(true);
+    });
+});
 
 describe('selectStartupNotebook', () => {
     it('selects the first restored notebook', () => {

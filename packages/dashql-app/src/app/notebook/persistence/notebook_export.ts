@@ -53,7 +53,15 @@ export async function createNotebookZip(
     const zip = new JSZip();
 
     // Add notebook metadata
-    zip.file(STORAGE_NOTEBOOK_FILE, JSON.stringify(notebookData, null, 2));
+    const exportDatabase = (database: NotebookData['mainDatabase']) => ({
+        databaseId: database.databaseId,
+        params: sanitizeConnectionParamsForSharing(database.params),
+    });
+    zip.file(STORAGE_NOTEBOOK_FILE, JSON.stringify({
+        ...notebookData,
+        mainDatabase: exportDatabase(notebookData.mainDatabase),
+        attachedDatabases: notebookData.attachedDatabases.map(exportDatabase),
+    }, null, 2));
     if (schemaSql != null) {
         zip.file(STORAGE_SCRIPT_SCHEMA, schemaSql);
     }

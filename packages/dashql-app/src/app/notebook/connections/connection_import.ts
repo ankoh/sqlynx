@@ -10,6 +10,7 @@ import { generateFunctionScriptHeader } from './catalog_function_sql_generator.j
 import { DefaultHasher } from '../../../utils/hash_default.js';
 import { ConnectionSignatureMap, newConnectionSignature } from './connection_signature.js';
 import { QueryExecutionState } from './query_execution_state.js';
+import { getConnectionParamsFromStateDetails, type ConnectionParams } from './connection_params.js';
 const LOG_CTX = "connection";
 
 export function decodeConnectionFromProto(conn: connection.Connection, notebookId: string): [ConnectorInfo, ConnectionStateDetailsVariant] {
@@ -62,7 +63,7 @@ export function decodeConnectionFromProto(conn: connection.Connection, notebookI
     }
 }
 
-export function restoreAttachedDatabaseState(instance: dashql.DashQL, databaseId: string, info: ConnectorInfo, details: ConnectionStateDetailsVariant, connSigs: ConnectionSignatureMap): AttachedDatabaseState {
+export function restoreAttachedDatabaseState(instance: dashql.DashQL, databaseId: string, info: ConnectorInfo, details: ConnectionStateDetailsVariant, connSigs: ConnectionSignatureMap, paramsDraft?: ConnectionParams): AttachedDatabaseState {
     const hasher = new DefaultHasher();
     computeConnectionSignatureFromDetails(details, hasher);
     const sig = newConnectionSignature(hasher, connSigs, null);
@@ -96,6 +97,8 @@ export function restoreAttachedDatabaseState(instance: dashql.DashQL, databaseId
         connectorInfo: info,
         connectionSignature: sig,
         details: details,
+        params: getConnectionParamsFromStateDetails(details)!,
+        paramsDraft: paramsDraft == null ? undefined : structuredClone(paramsDraft),
         metrics: createConnectionMetrics(),
         catalog: restoredCatalog,
         catalogUpdates: {

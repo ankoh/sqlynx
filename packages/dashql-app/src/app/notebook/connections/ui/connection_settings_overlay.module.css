@@ -8,28 +8,10 @@
     container-name: connection-overlay;
 }
 
-.header {
-    min-height: 40px;
-    padding: 4px 4px 4px 12px;
-    border-bottom: 1px solid var(--border_color_primary);
-    background: white;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    box-sizing: border-box;
-}
-
-.header_title {
-    margin: 0;
-    font-size: 0.95rem;
-    font-weight: 400;
-}
-
-.content_sized_tabs {
+.content {
     flex: 1;
     min-height: 0;
-    grid-template-rows: minmax(0, 1fr);
+    overflow: hidden;
 }
 
 .overlay_container :global(.body),

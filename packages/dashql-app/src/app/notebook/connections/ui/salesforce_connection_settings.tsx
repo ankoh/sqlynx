@@ -4,7 +4,7 @@ import * as connection from '@ankoh/dashql-jsonschema/connection.js';
 
 import { KeyIcon, PersonIcon } from '../../../../ui/foundations/symbol_icon.js';
 
-import { findNotebookForAttachedDatabase, useAttachedDatabaseById, useAttachedDatabaseRegistry } from '../attached_database_registry.js';
+import { findNotebookForAttachedDatabase, useAttachedDatabaseById, useAttachedDatabaseRegistry, useConnectionDraftForm } from '../attached_database_registry.js';
 import { ConnectionHealth, ConnectionStatus } from '../attached_database_state.js';
 import { performHealthCheck } from '../health_check.js';
 import { useQueryExecutor } from '../query_executor.js';
@@ -26,6 +26,7 @@ import type { DetailedError } from '../connection_types.js';
 import { useAnyConnectionNotebookScripts } from './connection_notebook_scripts.js';
 import { ConnectionInlineHeader } from './connection_inline_header.js';
 import { collectSalesforceAuthInfo, getSalesforceDataCloudUrl } from '../salesforce/salesforce_api_client.js';
+import { cancelConnectionSetup, registerConnectionSetup } from '../connection_setup_cancellation.js';
 
 const LOG_CTX = "sf_connector";
 
@@ -119,6 +120,7 @@ export function getConnectionError(status: ConnectionStateDetailsVariant | null)
 interface Props {
     databaseId: string | null;
     onClose?: () => void;
+    headerActions?: React.ReactNode;
 }
 
 export interface SalesforceConnectionAliasField {
@@ -155,6 +157,7 @@ interface SalesforceConnectionSettingsPageProps {
     cancelSetup: () => void;
     resetSetup: () => void;
     onClose?: () => void;
+    headerActions?: React.ReactNode;
     alias?: SalesforceConnectionAliasField;
     connectorNameAction?: React.ReactNode;
     statusText?: string;
@@ -180,6 +183,7 @@ export const SalesforceConnectionSettingsPage: React.FC<SalesforceConnectionSett
                 onProtocolChange={props.setHyperProtocol}
                 freezeInput={props.freezeInput}
                 onClose={props.onClose}
+                headerActions={props.headerActions}
                 statusText={props.statusText}
                 indicatorStatus={props.indicatorStatus}
                 statusError={props.statusError}
@@ -311,12 +315,9 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
     const [connectionState, dispatchAttachedDatabaseState] = useAttachedDatabaseById(props.databaseId);
     const connectionNotebookScripts = useAnyConnectionNotebookScripts(notebookId);
     const salesforceConnection = getSalesforceConnectionDetails(connectionState);
+    const editableParams = connectionState?.paramsDraft ?? connectionState?.params;
+    const salesforceParams = editableParams && 'salesforce' in editableParams ? editableParams.salesforce : undefined;
 
-    // Seed the form state from the restored connection params so a notebook
-    // that was saved across an app restart displays its endpoint/key.
-    // Re-seeds whenever the stored setupParams reference changes (notebook
-    // switch, async storage hydration, or an action like RESET that swaps
-    // the wrapper state).
     const buildPageState = (params: connection.SalesforceConnectionParams | undefined): PageState => ({
         hyperProtocol: params?.hyperProtocol ?? "V3_HTTP",
         instanceUrl: params?.instanceUrl ?? "",
@@ -324,16 +325,14 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
         dataCloudInstanceUrl: params?.dataCloudInstanceUrl ?? "",
         dataCloudTenantId: params?.dataCloudTenantId ?? "",
     });
-    const [pageState, setPageState] = React.useState<PageState>(() =>
-        buildPageState(salesforceConnection?.proto.setupParams));
-    const seededParamsRef = React.useRef(salesforceConnection?.proto.setupParams);
-    React.useEffect(() => {
-        const params = salesforceConnection?.proto.setupParams;
-        if (params !== seededParamsRef.current) {
-            seededParamsRef.current = params;
-            setPageState(buildPageState(params));
-        }
-    }, [salesforceConnection]);
+    const [pageState, setPageState] = useConnectionDraftForm(props.databaseId,
+        params => buildPageState(params && 'salesforce' in params ? params.salesforce : undefined),
+        form => ({ salesforce: {
+            ...salesforceParams,
+            ...form,
+            appConsumerSecret: salesforceParams?.appConsumerSecret ?? '',
+            login: salesforceParams?.login ?? '',
+        } }));
     const hyperProtocol = pageState.hyperProtocol;
 
     // gRPC requires the native platform
@@ -355,21 +354,23 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
     });
     const [dataCloudInstanceUrlValidation, setDataCloudInstanceUrlValidation] = React.useState<TextFieldValidationStatus>({ type: VALIDATION_UNKNOWN, value: null });
     const [dataCloudTenantIdValidation, setDataCloudTenantIdValidation] = React.useState<TextFieldValidationStatus>({ type: VALIDATION_UNKNOWN, value: null });
+    React.useEffect(() => {
+        setInstanceUrlValidation({ type: VALIDATION_UNKNOWN, value: null });
+        setAppConsumerValidation({ type: VALIDATION_UNKNOWN, value: null });
+        setDataCloudInstanceUrlValidation({ type: VALIDATION_UNKNOWN, value: null });
+        setDataCloudTenantIdValidation({ type: VALIDATION_UNKNOWN, value: null });
+    }, [connectionState?.paramsDraft]);
 
-    // Helper to start the authorization.
-    // Carry a previously resolved/shared login through as the OAuth login_hint. It is not a
-    // user-editable field here — it is populated after connect from the userinfo endpoint or
-    // seeded from a shared link — so we read it straight from the restored setupParams.
-    const restoredLogin = salesforceConnection?.proto.setupParams?.login ?? "";
+    const restoredLogin = salesforceParams?.login ?? "";
     const setupParams = React.useMemo<connection.SalesforceConnectionParams>(() => ({
         hyperProtocol: pageState.hyperProtocol,
         instanceUrl: pageState.instanceUrl,
         appConsumerKey: pageState.appConsumerKey,
-        appConsumerSecret: "",
-        dataCloudInstanceUrl: pageState.dataCloudInstanceUrl.trim(),
-        dataCloudTenantId: pageState.dataCloudTenantId.trim(),
+        appConsumerSecret: salesforceParams?.appConsumerSecret ?? '',
+        dataCloudInstanceUrl: pageState.dataCloudInstanceUrl,
+        dataCloudTenantId: pageState.dataCloudTenantId,
         login: restoredLogin,
-    }), [pageState.hyperProtocol, pageState.instanceUrl, pageState.appConsumerKey, pageState.dataCloudInstanceUrl, pageState.dataCloudTenantId, restoredLogin]);
+    }), [pageState, salesforceParams?.appConsumerSecret, restoredLogin]);
     const setupAbortController = React.useRef<AbortController | null>(null);
     const setupConnection = async () => {
         let validationSucceeded = true;
@@ -400,23 +401,27 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
         }
         if (!validationSucceeded || !sfSetup) return;
 
+        const controller = new AbortController();
+        const unregister = connectionState == null ? () => {} : registerConnectionSetup(connectionState.databaseId, controller);
         try {
-            setupAbortController.current = new AbortController();
-            const sfChannel = await sfSetup.setup(dispatchAttachedDatabaseState, setupParams, setupAbortController.current.signal);
+            setupAbortController.current = controller;
+            const sfChannel = await sfSetup.setup(dispatchAttachedDatabaseState, setupParams, controller.signal);
             if (connectionState != null) {
-                await performHealthCheck(queryExecutor, connectionState.databaseId, { type: 'salesforce', channel: sfChannel }, dispatchAttachedDatabaseState, setupAbortController.current.signal);
+                await performHealthCheck(queryExecutor, connectionState.databaseId, { type: 'salesforce', channel: sfChannel }, dispatchAttachedDatabaseState, controller.signal);
             }
         } catch {
             // Setup updates connection state with the failure details.
         } finally {
-            setupAbortController.current = null;
+            unregister();
+            if (setupAbortController.current === controller) setupAbortController.current = null;
         }
     };
 
     // Helper to cancel and reset the setup
     const cancelSetup = () => {
+        if (props.databaseId != null) cancelConnectionSetup(props.databaseId);
         if (setupAbortController.current) {
-            setupAbortController.current.abort("abort the authorization flow");
+            setupAbortController.current.abort(new DOMException('Connection setup cancelled', 'AbortError'));
             setupAbortController.current = null;
         }
     };
@@ -436,7 +441,6 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
             freezeInput = true;
             break;
         case ConnectionHealth.ONLINE:
-            freezeInput = true;
             break;
     }
 
@@ -474,6 +478,7 @@ export const SalesforceConnectorSettings: React.FC<Props> = (props: Props) => {
             cancelSetup={cancelSetup}
             resetSetup={resetSetup}
             onClose={props.onClose}
+            headerActions={props.headerActions}
         />
     );
 };

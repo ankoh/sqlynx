@@ -14,7 +14,8 @@ import { ButtonSize, ButtonVariant, IconButton } from '../../../../ui/foundation
 import { ButtonGroup } from '../../../../ui/foundations/button_group.js';
 import { IndicatorStatus } from '../../../../ui/foundations/status_indicator.js';
 import { SymbolIcon } from '../../../../ui/foundations/symbol_icon.js';
-import type { AttachedDatabaseState } from '../../connections/attached_database_state.js';
+import { ConnectionHealth, type AttachedDatabaseState } from '../../connections/attached_database_state.js';
+import { ExecuteConnectionGuard } from '../notebook_connection_attention.js';
 import type { ConnectorType } from '../../connections/connector_info.js';
 import { QueryExecutionStatus, queryIsDone } from '../../connections/query_execution_state.js';
 import { computeQueryCacheKeyForConnection, useCancelQuery, useQueryState } from '../../connections/query_executor.js';
@@ -255,13 +256,14 @@ export const ScriptCard: React.FC<ScriptCardProps> = (props: ScriptCardProps) =>
         >
             <div className={styles.feed_entry_cell} data-result-card={hasFooterContent ? '' : undefined}>
                 <div className={styles.feed_entry_action_bar}>
+                    <ExecuteConnectionGuard notebookId={props.notebookId} blocked={!queryActive && props.connection?.connectionHealth !== ConnectionHealth.ONLINE}>
                     <IconButton
                         className={props.isFocused ? undefined : styles.feed_entry_execute_unfocused}
                         variant={ButtonVariant.Invisible}
                         size={ButtonSize.Small}
                         aria-label={queryActive ? `Stop ${displayName} query` : `Execute ${displayName} query`}
                         aria-current={props.isFocused ? 'true' : undefined}
-                        disabled={!queryActive && (!props.canExecute || notebookExecution.busy)}
+                        disabled={!queryActive && (!props.canExecute || notebookExecution.busy || props.connection?.connectionHealth !== ConnectionHealth.ONLINE)}
                         onClick={() => {
                             if (queryActive && props.scriptData?.latestQueryId != null) {
                                 if (notebookExecution.busy) notebookExecution.stop();
@@ -273,6 +275,7 @@ export const ScriptCard: React.FC<ScriptCardProps> = (props: ScriptCardProps) =>
                     >
                         {queryActive ? <SquareFillIcon size={14} /> : <PaperAirplaneIcon size={16} />}
                     </IconButton>
+                    </ExecuteConnectionGuard>
                     <div className={styles.feed_entry_file_name}>
                         <ScriptName
                             file={displayName}
@@ -391,7 +394,8 @@ export const ScriptCard: React.FC<ScriptCardProps> = (props: ScriptCardProps) =>
                                     <dependencies.QueryResultCacheLabel query={queryState} />
                                     <dependencies.QueryResultRerunButton
                                         query={queryState}
-                                        onRerun={(cacheKey) => props.onRerun(props.scriptFileName, cacheKey)}
+                                        onRerun={props.connection?.connectionHealth === ConnectionHealth.ONLINE && !notebookExecution.busy
+                                            ? (cacheKey) => props.onRerun(props.scriptFileName, cacheKey) : undefined}
                                     />
                                 </>
                             }
@@ -565,7 +569,7 @@ export function ScriptFeedRow(props: RowComponentProps<ScriptFeedRowProps>) {
                     scriptDebugMode={props.scriptDebugMode}
                     formattingDebugMode={props.formattingDebugMode}
                     keywordCase={props.keywordCase}
-                    canExecute={scriptData != null && props.connection != null}
+                    canExecute={scriptData != null && props.connection?.connectionHealth === ConnectionHealth.ONLINE}
                     canDelete={props.canDelete}
                     active={props.active}
                     canMoveUp={canMoveUp}

@@ -155,7 +155,7 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
             await storageReader.backend.deleteQueryResultCache(notebookScripts.notebookId, cacheKey).catch(() => { });
         }
         runNotebookScript(props.conn!.databaseId, notebookScripts, scriptData, executeQuery, props.modifyNotebookScripts, logger);
-    }, [props.notebookScripts, props.modifyNotebookScripts, isDisconnected, executeQuery, storageReader, logger]);
+    }, [props.notebookScripts, props.modifyNotebookScripts, props.conn, isDisconnected, executeQuery, storageReader, logger]);
 
     const handleExecuteEntry = React.useCallback((fileName: string) => {
         if (isDisconnected) return;
@@ -164,7 +164,7 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
         const scriptData = entry != null ? notebookScripts.scripts[entry.scriptId] : undefined;
         if (scriptData == null) return;
         runNotebookScript(props.conn!.databaseId, notebookScripts, scriptData, executeQuery, props.modifyNotebookScripts, logger);
-    }, [executeQuery, isDisconnected, props.modifyNotebookScripts, props.notebookScripts, logger]);
+    }, [executeQuery, isDisconnected, props.conn, props.modifyNotebookScripts, props.notebookScripts, logger]);
 
     const handleDelete = React.useCallback((fileName: string) => {
         props.modifyNotebookScripts({ type: DELETE_SCRIPT, value: fileName });

@@ -195,7 +195,7 @@ async function restoreNotebookEntry(
     // Decode connection details (validation above guarantees the params map to a known connector)
     const restoreDatabase = (database: NotebookData['attachedDatabases'][number]) => {
         const [connectorInfo, details] = decodeConnectionFromProto(database.params as any, notebookId);
-        const state = restoreAttachedDatabaseState(core, database.databaseId, connectorInfo, details, connectionSignatures);
+        const state = restoreAttachedDatabaseState(core, database.databaseId, connectorInfo, details, connectionSignatures, database.paramsDraft);
         connectionStates.set(state.databaseId, state);
         connectionStatesByType[connectorInfo.connectorType].push(state.databaseId);
         return state;

@@ -104,6 +104,10 @@ export function validateNotebookData(data: NotebookData): NotebookValidationResu
         if (getConnectorInfoForParams(database.params as any) == null) {
             return { ok: false, error: NotebookValidationError.UnknownConnector };
         }
+        if (database.paramsDraft != null && getConnectorInfoForParams(database.paramsDraft as any)?.connectorType
+            !== getConnectorInfoForParams(database.params as any)?.connectorType) {
+            return { ok: false, error: NotebookValidationError.UnknownConnector };
+        }
     }
     return { ok: true };
 }

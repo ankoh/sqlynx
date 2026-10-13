@@ -48,6 +48,8 @@ function resolveClient(protocol: connection.HyperProtocol, grpcClient: HyperData
 }
 
 export async function setupHyperConnection(updateState: Dispatch<HyperConnectorAction>, logger: Logger, params: connection.HyperConnectionParams, _config: HyperConnectorConfig, grpcClient: HyperDatabaseClient | null, httpClient: HyperDatabaseClient | null, setupEmbeddedDatabase: EmbeddedDatabaseSetupFn, abortSignal: AbortSignal): Promise<HyperDatabaseChannel | null> {
+    params = structuredClone(params);
+    delete params.draftRows;
     let channel: HyperDatabaseChannel | null = null;
     try {
         // Start the channel setup

@@ -9,12 +9,13 @@ import { useAttachedDatabaseState } from '../connections/attached_database_regis
 import { useLogger } from '../../../platform/logger/logger_provider.js';
 import { useQueryExecutor } from '../connections/query_executor.js';
 import { useRouteContext } from '../../router/router.js';
-import { useNotebookScriptsRegistry, useNotebookScripts } from './notebook_scripts_registry.js';
+import { useNotebookScripts } from './notebook_scripts_registry.js';
 import { isCatalogRefreshRunning } from '../connections/catalog_update_state.js';
 import { runNotebookScript } from '../ui/rerun_query.js';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppConfig } from '../../config/app_config.js';
 import { useAppSettingsReady } from '../../config/app_settings_sync.js';
+import { NotebookConnectionAttentionContext, useNotebookConnectionAttention } from '../ui/notebook_connection_attention.js';
 
 const LOG_CTX = "notebook_commands";
 
@@ -34,7 +35,23 @@ export type ScriptCommandDispatch = (command: NotebookCommandType) => void;
 
 interface Props {
     children?: React.ReactElement | React.ReactElement[];
+    dependencies?: NotebookCommandsDependencies;
 }
+
+export interface NotebookCommandsDependencies {
+    useNotebookScripts: typeof useNotebookScripts;
+    useAttachedDatabaseState: typeof useAttachedDatabaseState;
+    useQueryExecutor: typeof useQueryExecutor;
+    useCatalogLoaderQueue: typeof useCatalogLoaderQueue;
+    useLogger: typeof useLogger;
+    useAppConfig: typeof useAppConfig;
+    useAppSettingsReady: typeof useAppSettingsReady;
+}
+
+const DEFAULT_DEPENDENCIES: NotebookCommandsDependencies = {
+    useNotebookScripts, useAttachedDatabaseState,
+    useQueryExecutor, useCatalogLoaderQueue, useLogger, useAppConfig, useAppSettingsReady,
+};
 
 const COMMAND_DISPATCH_CTX = React.createContext<ScriptCommandDispatch | null>(null);
 export const useNotebookCommandDispatch = () => React.useContext(COMMAND_DISPATCH_CTX)!;
@@ -81,18 +98,19 @@ export function notebookViewNavigation(
 }
 
 export const NotebookCommands: React.FC<Props> = (props: Props) => {
+    const dependencies = props.dependencies ?? DEFAULT_DEPENDENCIES;
     const route = useRouteContext();
     const location = useLocation();
     const navigate = useNavigate();
-    const logger = useLogger();
-    const dashboardsEnabled = useAppConfig()?.settings?.enableDashboards === true;
-    const settingsReady = useAppSettingsReady();
+    const logger = dependencies.useLogger();
+    const dashboardsEnabled = dependencies.useAppConfig()?.settings?.enableDashboards === true;
+    const settingsReady = dependencies.useAppSettingsReady();
 
-    const registry = useNotebookScriptsRegistry()[0];
-    const [notebookScripts, modifyNotebookScripts] = useNotebookScripts(route.notebookId ?? null);
-    const [connection, _dispatchConnection] = useAttachedDatabaseState(notebookScripts?.notebookId ?? null);
-    const executeQuery = useQueryExecutor();
-    const refreshCatalog = useCatalogLoaderQueue();
+    const [notebookScripts, modifyNotebookScripts] = dependencies.useNotebookScripts(route.notebookId ?? null);
+    const [connection, _dispatchConnection] = dependencies.useAttachedDatabaseState(notebookScripts?.notebookId ?? null);
+    const connectionAttention = useNotebookConnectionAttention(notebookScripts?.notebookId ?? null, connection?.databaseId ?? null, connection?.connectionHealth);
+    const executeQuery = dependencies.useQueryExecutor();
+    const refreshCatalog = dependencies.useCatalogLoaderQueue();
     const [notebookViewMode, setNotebookViewModeState] = React.useState(() => notebookViewModeFromSearch(location.search, dashboardsEnabled));
     const visibleViewMode = !dashboardsEnabled && notebookViewMode === NotebookViewMode.Dashboard
         ? NotebookViewMode.Notebook : notebookViewMode;
@@ -163,7 +181,8 @@ export const NotebookCommands: React.FC<Props> = (props: Props) => {
                         logger.warn("Ignoring Ctrl+E outside notebook view", { notebookId: route.notebookId }, LOG_CTX);
                         break;
                     }
-                    if (connection?.connectionHealth != ConnectionHealth.ONLINE) {
+                    if (connection == null || connection.connectionHealth !== ConnectionHealth.ONLINE) {
+                        connectionAttention.request(notebookScripts.notebookId);
                         logger.warn("Cannot execute query command with an unhealthy connection", {
                             notebookId: route.notebookId,
                             status: printConnectionHealth(connection?.connectionHealth ?? ConnectionHealth.NOT_STARTED)
@@ -186,7 +205,7 @@ export const NotebookCommands: React.FC<Props> = (props: Props) => {
                             break;
                         }
                         await runNotebookScript(
-                            connection!.databaseId,
+                            connection.databaseId,
                             notebookScripts,
                             scriptData,
                             executeQuery,
@@ -238,7 +257,7 @@ export const NotebookCommands: React.FC<Props> = (props: Props) => {
                     break;
             }
         },
-        [connection, notebookScripts, notebookScripts?.connectorInfo],
+        [connection, notebookScripts, notebookScripts?.connectorInfo, connectionAttention.request],
     );
 
     // Helper to require connector info
@@ -261,11 +280,7 @@ export const NotebookCommands: React.FC<Props> = (props: Props) => {
             {
                 key: 'e',
                 ctrlKey: true,
-                callback: requireConnector(c =>
-                    !c.features.executeQueryAction
-                        ? () => commandNotImplemented(c, 'EXECUTE_QUERY')
-                        : () => commandDispatch(NotebookCommandType.ExecuteEditorQuery),
-                ),
+                callback: () => commandDispatch(NotebookCommandType.ExecuteEditorQuery),
             },
             {
                 key: 'r',
@@ -303,10 +318,12 @@ export const NotebookCommands: React.FC<Props> = (props: Props) => {
     useKeyEvents(keyHandlers);
 
     return (
-        <COMMAND_DISPATCH_CTX.Provider value={commandDispatch}>
-            <NOTEBOOK_VIEW_MODE_CTX.Provider value={notebookViewModeValue}>
-                {props.children}
-            </NOTEBOOK_VIEW_MODE_CTX.Provider>
-        </COMMAND_DISPATCH_CTX.Provider>
+        <NotebookConnectionAttentionContext.Provider value={connectionAttention}>
+            <COMMAND_DISPATCH_CTX.Provider value={commandDispatch}>
+                <NOTEBOOK_VIEW_MODE_CTX.Provider value={notebookViewModeValue}>
+                    {props.children}
+                </NOTEBOOK_VIEW_MODE_CTX.Provider>
+            </COMMAND_DISPATCH_CTX.Provider>
+        </NotebookConnectionAttentionContext.Provider>
     );
 };

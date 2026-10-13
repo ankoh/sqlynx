@@ -77,6 +77,7 @@ describe('notebook attached database routing', () => {
 describe('notebook manifest persistence', () => {
     const state = (active: boolean, endpoint: string): AttachedDatabaseState => ({
         active,
+        params: { hyper: { protocol: 'V3_HTTP', endpoint, tls: { clientKeyPath: '', clientCertPath: '', caCertsPath: '' } } },
         details: {
             type: HYPER_CONNECTOR,
             value: {

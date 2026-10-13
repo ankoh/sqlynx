@@ -2,6 +2,21 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "dashql/connection.json",
   "definitions": {
+    "DraftKeyValueRow": {
+      "type": "object",
+      "properties": { "key": { "type": "string" }, "value": { "type": "string" } },
+      "required": ["key", "value"],
+      "additionalProperties": false
+    },
+    "ConnectionDraftRows": {
+      "type": "object",
+      "description": "Local draft-only ordered form rows, preserving duplicate and incomplete keys. Removed before setup, promotion and export.",
+      "properties": {
+        "metadata": { "type": "array", "items": { "$ref": "#/definitions/DraftKeyValueRow" } },
+        "queryParameters": { "type": "array", "items": { "$ref": "#/definitions/DraftKeyValueRow" } }
+      },
+      "additionalProperties": false
+    },
     "SetupTimings": {
       "type": "object",
       "description": "Setup Timings",
@@ -124,6 +139,7 @@
       "type": "object",
       "description": "Connection Parameters - Hyper",
       "properties": {
+        "draftRows": { "$ref": "#/definitions/ConnectionDraftRows" },
         "protocol": {
           "$ref": "#/definitions/HyperProtocol",
           "description": "The connection protocol"
@@ -792,6 +808,7 @@
       "type": "object",
       "description": "Connection Parameters - Trino",
       "properties": {
+        "draftRows": { "$ref": "#/definitions/ConnectionDraftRows" },
         "endpoint": {
           "type": "string",
           "description": "The endpoint"

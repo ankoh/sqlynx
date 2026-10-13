@@ -28,7 +28,7 @@ export const ConnectorConfigTabs: React.FC<Props> = (props: Props) => {
 
     // Check if connection is online or configured
     const isOnline = conn?.connectionHealth === ConnectionHealth.ONLINE;
-    const isUnconfigured = conn?.connectionStatus === ConnectionStatus.NOT_STARTED;
+    const isUnconfigured = conn?.connectionStatus === ConnectionStatus.NOT_STARTED && !conn?.active && conn?.paramsDraft == null;
 
     // Handle tab selection: switch the connection's type when unconfigured
     const handleSelectTab = React.useCallback((newType: ConnectorType) => {
@@ -45,7 +45,7 @@ export const ConnectorConfigTabs: React.FC<Props> = (props: Props) => {
     connectorTypes.forEach(connectorType => {
         const info = CONNECTOR_INFOS[connectorType];
         const isCurrentConnection = conn?.connectorInfo.connectorType === connectorType;
-        const isDisabled = (isOnline || props.lockConnectorType) && !isCurrentConnection;
+        const isDisabled = (!isUnconfigured || isOnline || props.lockConnectorType) && !isCurrentConnection;
 
         tabProps[connectorType] = {
             tabId: connectorType,

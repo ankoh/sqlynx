@@ -70,7 +70,11 @@
         },
         "params": {
           "$ref": "connection.json#/definitions/ConnectionParams",
-          "description": "Database connection parameters"
+          "description": "Last successfully connected parameters, or initial defaults before the first connection"
+        },
+        "paramsDraft": {
+          "$ref": "connection.json#/definitions/ConnectionParams",
+          "description": "Optional local editable parameters, including incomplete or invalid settings. Not shared or exported."
         }
       },
       "required": ["databaseId", "params"],

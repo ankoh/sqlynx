@@ -16,6 +16,7 @@ import { ScriptEditor } from './script_editor.js';
 import { ScriptName } from './script_name.js';
 import { ScriptOutputDetails, type ScriptDetailsTab } from './script_output_details.js';
 import { ScriptStatisticsBar } from './script_statistics_bar.js';
+import { ExecuteConnectionGuard } from './notebook_connection_attention.js';
 
 interface ScriptDetailsEditorPaneProps {
     notebookId: string;
@@ -23,6 +24,7 @@ interface ScriptDetailsEditorPaneProps {
     scriptDisplay: string;
     scriptDebugMode: boolean;
     executeDisabled: boolean;
+    connectionBlocked: boolean;
     isEditingName: boolean;
     draftFileName: string;
     editInputRef: React.RefObject<HTMLInputElement | null>;
@@ -49,6 +51,7 @@ interface ScriptDetailsEditorPaneProps {
 export const ScriptDetailsEditorPane: React.FC<ScriptDetailsEditorPaneProps> = (props) => (
     <div className={styles.entry_script_section}>
         <div className={styles.entry_card_action_bar}>
+            <ExecuteConnectionGuard notebookId={props.notebookId} blocked={props.connectionBlocked}>
             <IconButton
                 variant={ButtonVariant.Invisible}
                 size={ButtonSize.Small}
@@ -58,6 +61,7 @@ export const ScriptDetailsEditorPane: React.FC<ScriptDetailsEditorPaneProps> = (
             >
                 <PaperAirplaneIcon size={16} />
             </IconButton>
+            </ExecuteConnectionGuard>
             <div className={styles.entry_card_file_name}>
                 <ScriptName
                     file={props.scriptDisplay}

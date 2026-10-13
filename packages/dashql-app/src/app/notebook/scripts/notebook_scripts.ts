@@ -266,21 +266,19 @@ function applyScriptRepad(
     return { scriptRefs: nextScriptRefs, scripts: nextScripts, focusFileName: nextFocus };
 }
 
-export function reduceNotebookScripts(state: NotebookScripts, action: NotebookScriptsAction, storageArg: StorageWriter, logger: Logger, active: boolean): NotebookScripts {
-    // Suppress storage writes when the connection is not yet active
-    const storage = active ? storageArg : null;
+export function reduceNotebookScripts(state: NotebookScripts, action: NotebookScriptsAction, storageArg: StorageWriter, logger: Logger, _active: boolean): NotebookScripts {
+    // Notebook files are local state, independent of connection setup and health.
+    const storage = storageArg;
     switch (action.type) {
         case RENAME_NOTEBOOK: {
             const trimmed = action.value?.trim() ?? '';
             const name = trimmed.length > 0 ? trimmed : null;
             if (name === state.name) return state;
-            if (active) {
-                void storageArg.write(
-                    groupNotebookManifestWrites(state.notebookId),
-                    { type: WRITE_NOTEBOOK_NAME, value: [state.notebookId, name] },
-                    DEBOUNCE_DURATION_NOTEBOOK_WRITE,
-                );
-            }
+            void storage.write(
+                groupNotebookManifestWrites(state.notebookId),
+                { type: WRITE_NOTEBOOK_NAME, value: [state.notebookId, name] },
+                DEBOUNCE_DURATION_NOTEBOOK_WRITE,
+            );
             return { ...state, name };
         }
         case SELECT_NEXT_SCRIPT: {

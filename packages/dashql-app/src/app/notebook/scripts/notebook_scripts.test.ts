@@ -17,6 +17,8 @@ import {
     type NotebookScripts,
     reduceNotebookScripts,
     RENAME_SCRIPT,
+    RENAME_NOTEBOOK,
+    UPDATE_FROM_PROCESSOR,
     REORDER_SCRIPTS,
     replaceNotebookScriptsFromStorage,
     replaceScriptSessionText,
@@ -73,6 +75,46 @@ function reduce(current: NotebookScripts, action: Parameters<typeof reduceNotebo
 }
 
 describe('V2 flat notebook script mutations', () => {
+    it('persists notebook and script mutations before the connection ever becomes active', () => {
+        const writer = new RecordingWriter(logger, new NotebookTestBackend());
+        let current = state(['1_alpha.sql', '2_beta.sql']);
+        for (const action of [
+            { type: RENAME_NOTEBOOK, value: 'Offline notebook' },
+            { type: RENAME_SCRIPT, value: { fileName: '1_alpha.sql', newFileName: 'offline' } },
+            { type: CREATE_SCRIPT, value: 1 },
+        ] as Parameters<typeof reduceNotebookScripts>[1][]) {
+            current = reduceNotebookScripts(current, action, writer, logger, false);
+        }
+        expect(current.name).toBe('Offline notebook');
+        current = reduceNotebookScripts(current, {
+            type: DELETE_SCRIPT, value: getSortedScriptFileNames(current.scriptRefs)[0],
+        }, writer, logger, false);
+        expect(writer.records.some(task => task.type.description === 'WRITE_NOTEBOOK_NAME')).toBe(true);
+        expect(writer.records.filter(task => task.type.description === 'WRITE_SCRIPT').length).toBeGreaterThanOrEqual(2);
+        expect(writer.records.some(task => task.type.description === 'DELETE_SCRIPT')).toBe(true);
+    });
+
+    it('persists editor text changes with an inactive connection', () => {
+        const current = state(['1_alpha.sql']);
+        const scriptKey = current.scriptRefs['1_alpha.sql'].scriptId;
+        const script = current.scripts[scriptKey];
+        script.editorUpdate = script.scriptSession.analyze();
+        replaceScriptSessionText(script.scriptSession, 'SELECT 42');
+        const editorUpdate = script.scriptSession.analyze();
+        const writer = new RecordingWriter(logger, new NotebookTestBackend());
+        reduceNotebookScripts(current, { type: UPDATE_FROM_PROCESSOR, value: {
+            scriptKey,
+            scriptSession: script.scriptSession,
+            editorUpdate,
+            scriptBuffers: null,
+            scriptCompletion: null,
+            scriptPendingDiff: null,
+        } }, writer, logger, false);
+        expect(writer.records).toContainEqual(expect.objectContaining({
+            value: [current.notebookId, '1_alpha.sql', 'SELECT 42'],
+        }));
+    });
+
     it('executes a stale unparseable script verbatim after analysis', async () => {
         const current = state(['1_remote.sql']);
         const sql = 'SELECT * FROM remote_table QUALIFY row_number() OVER (ORDER BY id) = 1;';

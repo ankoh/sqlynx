@@ -25,6 +25,10 @@ import { useNotebookExecution } from '../../scripts/notebook_execution_provider.
 import { IndicatorStatus, StatusIndicator } from '../../../../ui/foundations/status_indicator.js';
 import { AnchoredOverlay } from '../../../../ui/foundations/anchored_overlay.js';
 import { AnchorAlignment, AnchorSide } from '../../../../ui/foundations/anchored_position.js';
+import { ConnectionSettingsOverlay } from '../../connections/ui/connection_settings_overlay.js';
+import { CONNECTION_HEALTH_COLORS } from '../../connections/ui/connection_status.js';
+import { HYPER_CONNECTOR } from '../../connections/connector_info.js';
+import { ExecuteConnectionGuard, NotebookConnectionAttentionContext, useNotebookConnectionAttention } from '../notebook_connection_attention.js';
 
 const FileZipIcon = SymbolIcon('file_zip_16');
 const CloseIcon = SymbolIcon('x_16');
@@ -41,6 +45,7 @@ export interface NotebookFeedPageDependencies {
     NotebookURLShareOverlay: typeof NotebookURLShareOverlay;
     NotebookFileSaveOverlay: typeof NotebookFileSaveOverlay;
     NotebookStorageOverlay: typeof NotebookStorageOverlay;
+    ConnectionSettingsOverlay: typeof ConnectionSettingsOverlay;
     useNotebookViewMode: typeof useNotebookViewMode;
     useAppConfig: typeof useAppConfig;
     SegmentedControl: typeof SegmentedControl;
@@ -59,6 +64,7 @@ const DEFAULT_DEPENDENCIES: NotebookFeedPageDependencies = {
     NotebookURLShareOverlay,
     NotebookFileSaveOverlay,
     NotebookStorageOverlay,
+    ConnectionSettingsOverlay,
     useNotebookViewMode,
     useAppConfig,
     SegmentedControl,
@@ -86,6 +92,16 @@ export const NotebookFeedPage: React.FC<Props> = (props) => {
     const [shareOpen, setShareOpen] = React.useState(false);
     const [exportOpen, setExportOpen] = React.useState(false);
     const [storageOpen, setStorageOpen] = React.useState(false);
+    const [connectionOpen, setConnectionOpen] = React.useState(false);
+    const connectionTriggerRef = React.useRef<HTMLButtonElement>(null);
+    const connectionHealth = props.connection?.connectionHealth;
+    const disconnected = connectionHealth !== ConnectionHealth.ONLINE;
+    const connectionAttention = useNotebookConnectionAttention(props.notebookScripts.notebookId, props.connection?.databaseId ?? null, connectionHealth);
+    const embedded = props.connection?.details?.type === HYPER_CONNECTOR && props.connection.details.value.proto.setupParams?.protocol === 'WASM';
+    const connectionIdentity = embedded ? 'Embedded' : props.connection?.connectorInfo?.names.displayShort ?? 'Database';
+    const connectionLabel = connectionHealth === ConnectionHealth.CONNECTING ? 'Connecting'
+        : connectionHealth === ConnectionHealth.FAILED ? 'Failed' : disconnected ? 'Disconnected' : connectionIdentity;
+    React.useEffect(() => setConnectionOpen(false), [props.notebookScripts.notebookId, props.connection?.databaseId]);
     const execution = dependencies.useNotebookExecution(props.notebookScripts.notebookId);
     const run = execution.state;
     const [executionDetailsOpen, setExecutionDetailsOpen] = React.useState(false);
@@ -109,6 +125,7 @@ export const NotebookFeedPage: React.FC<Props> = (props) => {
     );
 
     return (
+        <NotebookConnectionAttentionContext.Provider value={connectionAttention}>
         <div className={styles.page}>
             <header className={styles.view_bar} data-electron-drag-region>
                 <dependencies.IconButton className={styles.mobile_menu_button} ref={navigationDrawerTriggerRef} variant={ButtonVariant.Default} aria-label="Open notebook workbench" onClick={() => setNavigationDrawerOpen(true)}>
@@ -125,14 +142,16 @@ export const NotebookFeedPage: React.FC<Props> = (props) => {
                     <dependencies.SegmentedControl.Button selected={dashboardActive}>Dashboard</dependencies.SegmentedControl.Button>
                 </dependencies.SegmentedControl>}
                 <div className={styles.execution_controls}>
+                    <ExecuteConnectionGuard notebookId={props.notebookScripts.notebookId} blocked={disconnected && !execution.busy}>
                     <dependencies.Button ref={executeRef} size={ButtonSize.Small} variant={ButtonVariant.Invisible}
                         leadingVisual={execution.busy ? SquareFillIcon : PaperAirplaneIcon}
                         aria-label={execution.busy ? 'Stop notebook execution' : 'Execute All'}
                         disabled={execution.busy ? run?.phase === 'stopping' : props.connection?.connectionHealth !== ConnectionHealth.ONLINE
                             || (props.connection?.queriesActive?.size ?? 0) > 0 || Object.keys(props.notebookScripts.scriptRefs).length === 0}
-                        onClick={() => execution.busy ? execution.stop() : execution.start(props.modifyNotebookScripts)}>
+                        onClick={() => execution.busy ? execution.stop() : !disconnected && execution.start(props.modifyNotebookScripts)}>
                         <span className={styles.action_label}>{execution.busy ? run?.phase === 'stopping' ? 'Stopping' : 'Stop' : 'Execute All'}</span>
                     </dependencies.Button>
+                    </ExecuteConnectionGuard>
                     <div className={styles.execution_status} role="status" aria-live="polite" aria-atomic="true"
                         title={run?.error ?? undefined} aria-label={run?.error ? `${statusText}: ${run.error}` : undefined}>
                         {run && <>
@@ -166,8 +185,34 @@ export const NotebookFeedPage: React.FC<Props> = (props) => {
                     </div>
                 </div>
                 <div className={styles.header_actions}>
+                    <dependencies.Button ref={connectionTriggerRef} size={ButtonSize.Small}
+                        variant={ButtonVariant.Invisible}
+                        leadingVisual={() => <span aria-hidden="true" className={styles.connection_spinner}>
+                            {connectionHealth === ConnectionHealth.CONNECTING
+                                ? <StatusIndicator width="16px" height="16px" status={IndicatorStatus.Running} />
+                                : <svg width="16px" height="16px" viewBox="0 0 16 16">
+                                    <circle cx="8" cy="8" r="4" fill={CONNECTION_HEALTH_COLORS[connectionHealth ?? ConnectionHealth.NOT_STARTED]} />
+                                </svg>}
+                        </span>}
+                        className={`${styles.connection_action} ${connectionAttention.active && disconnected ? styles.connection_attention : ''}`}
+                        data-connection-attention={connectionAttention.active && disconnected ? 'true' : undefined}
+                        aria-label={`${connectionLabel}: main execution database${embedded ? ' (embedded)' : ''}`}
+                        aria-expanded={connectionOpen} aria-haspopup="dialog"
+                        title={disconnected ? 'Connect to execute queries' : `${connectionIdentity} connection settings`}
+                        onClick={() => {
+                            setShareOpen(false);
+                            setExportOpen(false);
+                            setStorageOpen(false);
+                            setConnectionOpen(value => !value);
+                        }}>
+                        <span className={styles.connection_label}>{connectionLabel}</span>
+                    </dependencies.Button>
+                    <dependencies.ConnectionSettingsOverlay databaseId={props.connection?.databaseId ?? null}
+                        isOpen={connectionOpen} onClose={() => setConnectionOpen(false)} anchorRef={connectionTriggerRef}
+                        side={AnchorSide.OutsideBottom} />
                     <dependencies.Button ref={shareTriggerRef} size={ButtonSize.Small} variant={ButtonVariant.Invisible} leadingVisual={LinkIcon} aria-label="Share as URL" aria-expanded={shareOpen} onClick={() => {
                         setExportOpen(false);
+                        setConnectionOpen(false);
                         setStorageOpen(false);
                         setShareOpen(value => !value);
                     }}>
@@ -176,6 +221,7 @@ export const NotebookFeedPage: React.FC<Props> = (props) => {
                     <dependencies.NotebookURLShareOverlay notebookId={props.notebookScripts.notebookId} isOpen={shareOpen} setIsOpen={setShareOpen} anchorRef={shareTriggerRef} />
                     <dependencies.Button ref={exportTriggerRef} size={ButtonSize.Small} variant={ButtonVariant.Invisible} leadingVisual={FileZipIcon} aria-label="Export .dashql" aria-expanded={exportOpen} onClick={() => {
                         setShareOpen(false);
+                        setConnectionOpen(false);
                         setStorageOpen(false);
                         setExportOpen(value => !value);
                     }}>
@@ -194,6 +240,7 @@ export const NotebookFeedPage: React.FC<Props> = (props) => {
                         isOpen={storageOpen}
                         onOpen={() => {
                             setShareOpen(false);
+                            setConnectionOpen(false);
                             setExportOpen(false);
                             setStorageOpen(true);
                         }}
@@ -269,5 +316,6 @@ export const NotebookFeedPage: React.FC<Props> = (props) => {
                 </dependencies.NotebookNavigationDrawer>
             )}
         </div>
+        </NotebookConnectionAttentionContext.Provider>
     );
 };

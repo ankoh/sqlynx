@@ -321,6 +321,8 @@ export async function setupTrinoConnection(
     abortSignal: AbortSignal
 ): Promise<TrinoChannelInterface> {
     // Determine auth type
+    params = structuredClone(params);
+    delete params.draftRows;
     const authType = params.auth?.authType ?? "AUTH_BASIC";
     switch (authType) {
         case "AUTH_OAUTH":

@@ -31,7 +31,8 @@ describe('Hyper connection setup', () => {
         );
 
         const ready = dispatch.mock.calls.find(([action]) => action.type === HYPER_CHANNEL_READY)?.[0];
-        expect(ready?.value[1]).toBe(params);
+        expect(ready?.value[1]).toEqual(params);
+        expect(ready?.value[1]).not.toBe(params);
         expect(ready?.value[0]).toBeInstanceOf(Object);
         expect(channel.close).not.toHaveBeenCalled();
     });
@@ -64,6 +65,7 @@ describe('Hyper connection setup', () => {
         );
 
         expect(capturedContext).not.toBeNull();
+        params.metadata!['ctx-tenant-id'] = 'edited-after-setup';
         expect(await capturedContext!.getRequestMetadata()).toEqual({ 'ctx-tenant-id': 'tenant-123' });
     });
 

@@ -7,7 +7,8 @@ import { LoggerProvider } from '../../../platform/logger/logger_provider.js';
 import { AttachedDatabaseRegistry } from '../connections/attached_database_registry.js';
 import { NotebookTestBackend } from '../persistence/notebook_test_backend.js';
 import { StorageProvider } from '../persistence/storage_provider.js';
-import { REGISTER_QUERY, type NotebookScripts } from './notebook_scripts.js';
+import { REGISTER_QUERY, RENAME_NOTEBOOK, type NotebookScripts } from './notebook_scripts.js';
+import { StorageWriter, WRITE_NOTEBOOK_NAME } from '../persistence/storage_writer.js';
 import {
     NotebookScriptsRegistryProvider,
     useNotebookScripts,
@@ -49,6 +50,7 @@ function Consumer(props: { notebookId: string; capture: (scripts: ScriptsHook, r
 
 describe('useNotebookScripts dispatch', () => {
     it('keeps retained and current modifiers bound to their notebooks when a reused route batches actions', async () => {
+        const write = vi.spyOn(StorageWriter.prototype, 'write').mockResolvedValue(true);
         const notebooks = [fixture('a'), fixture('b')];
         const backend = new NotebookTestBackend();
         const container = document.createElement('div');
@@ -104,7 +106,15 @@ describe('useNotebookScripts dispatch', () => {
             expect(registry.notebookScriptsMap.get('a')?.scripts[1].latestQueryId).toBe(101);
             expect(registry.notebookScriptsMap.get('b')?.scripts[1].latestQueryId).toBe(202);
             expect(current[0]?.scripts[1].latestQueryId).toBe(202);
+            await act(async () => {
+                modifyA({ type: RENAME_NOTEBOOK, value: 'Offline notebook' });
+                await new Promise(resolve => setTimeout(resolve, 0));
+            });
+            expect(write).toHaveBeenCalledWith(expect.any(String), {
+                type: WRITE_NOTEBOOK_NAME, value: ['a', 'Offline notebook'],
+            }, expect.any(Number));
         } finally {
+            write.mockRestore();
             act(() => root.unmount());
             container.remove();
         }

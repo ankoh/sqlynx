@@ -4,7 +4,6 @@ import { ANALYZE_OUTDATED_SCRIPT, NotebookScripts, NotebookScriptsAction, Script
 import { Dispatch } from '../../../utils/variant.js';
 import type { DashQLScript } from '@ankoh/dashql-core';
 import { CONNECTOR_TYPES, ConnectorType } from '../connections/connector_info.js';
-import { useAttachedDatabaseRegistry } from '../connections/attached_database_registry.js';
 import { useStorageWriter } from '../persistence/storage_provider.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
 import {
@@ -134,7 +133,6 @@ export function useNotebookScriptsDeletion(): (notebookId: string) => void {
 
 export function useNotebookScripts(id: string | null): [NotebookScripts | null, ModifyNotebookScripts] {
     const [registry, setRegistry] = React.useContext(NOTEBOOK_SCRIPTS_REGISTRY_CTX)!;
-    const [connReg] = useAttachedDatabaseRegistry();
     const storageWriter = useStorageWriter();
     const logger = useLogger();
 
@@ -159,11 +157,7 @@ export function useNotebookScripts(id: string | null): [NotebookScripts | null, 
         }, LOG_CTX);
 
         setRegistry((reg: NotebookScriptsRegistry) => {
-            // Check if the connection is active to gate storage writes
             for (const { notebookId, action, resolve } of pending) {
-                const mapping = connReg.attachedDatabasesByNotebook.get(notebookId);
-                const executionDatabaseId = mapping?.mainDatabaseId;
-                const active = executionDatabaseId == null ? false : connReg.attachedDatabases.get(executionDatabaseId)?.active ?? false;
                 const prev = reg.notebookScriptsMap.get(notebookId);
                 if (!prev) {
                     logger.warn('No notebook scripts registered for notebook', { notebookId: id }, LOG_CTX);
@@ -174,13 +168,13 @@ export function useNotebookScripts(id: string | null): [NotebookScripts | null, 
                     notebookId: id,
                     actionType: action.type.description ?? action.type.toString(),
                 }, LOG_CTX);
-                const next = reduceNotebookScripts(prev, action, storageWriter, logger, active);
+                const next = reduceNotebookScripts(prev, action, storageWriter, logger, true);
                 reg.notebookScriptsMap.set(notebookId, next);
                 resolve(next);
             }
             return { ...reg };
         });
-    }, [id, setRegistry, storageWriter, logger, connReg]);
+    }, [id, setRegistry, storageWriter, logger]);
 
     /// Wrapper to modify an individual notebook scripts collection
     const dispatch = React.useCallback((action: NotebookScriptsAction) => {
@@ -222,7 +216,6 @@ export async function ensureNotebookScriptAnalyzed(
 
 export function useConnectionScriptsDispatch(): ModifyConnectionNotebookScripts {
     const [_registry, setRegistry] = React.useContext(NOTEBOOK_SCRIPTS_REGISTRY_CTX)!;
-    const [connReg] = useAttachedDatabaseRegistry();
     const storage = useStorageWriter();
     const logger = useLogger();
 
@@ -243,15 +236,14 @@ export function useConnectionScriptsDispatch(): ModifyConnectionNotebookScripts 
                 if (notebookId) {
                     const prev = reg.notebookScriptsMap.get(notebookId);
                     if (prev) {
-                        const active = connReg.attachedDatabases.get(conn)?.active ?? false;
-                        const next = reduceNotebookScripts(prev, action, storage, logger, active);
+                        const next = reduceNotebookScripts(prev, action, storage, logger, true);
                         reg.notebookScriptsMap.set(notebookId, next);
                     }
                 }
             }
             return { ...reg };
         });
-    }, [setRegistry, storage, logger, connReg]);
+    }, [setRegistry, storage, logger]);
 
     const dispatch = React.useCallback<ModifyConnectionNotebookScripts>((conn: string, action: NotebookScriptsAction) => {
         // Queue the action

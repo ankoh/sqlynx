@@ -5,11 +5,15 @@ import { AnchoredOverlay } from '../../../../ui/foundations/anchored_overlay.js'
 import { AnchorAlignment, AnchorSide } from '../../../../ui/foundations/anchored_position.js';
 import { OverlaySize } from '../../../../ui/foundations/overlay.js';
 import { ButtonVariant, IconButton } from '../../../../ui/foundations/button.js';
-import { XIcon } from '../../../../ui/foundations/symbol_icon.js';
+import { SymbolIcon } from '../../../../ui/foundations/symbol_icon.js';
 import { ConnectorType } from '../connector_info.js';
-import { useAttachedDatabaseById } from '../attached_database_registry.js';
+import { useAttachedDatabaseById, useConnectionDraft } from '../attached_database_registry.js';
 import { ConnectionHealth, type AttachedDatabaseState } from '../attached_database_state.js';
-import { ConnectorConfigTabs } from './connector_config_tabs.js';
+import { HyperConnectorSettings } from './hyper_connection_settings.js';
+import { TrinoConnectorSettings } from './trino_connection_settings.js';
+import { SalesforceConnectorSettings } from './salesforce_connection_settings.js';
+
+const UndoIcon = SymbolIcon('undo_16');
 
 interface Props {
     databaseId: string | null;
@@ -18,27 +22,14 @@ interface Props {
     anchorRef: React.RefObject<HTMLElement | null>;
     headerTitle?: string;
     onConnected?: (database: AttachedDatabaseState) => void;
+    side?: AnchorSide;
 }
 
 export const ConnectionSettingsOverlay: React.FC<Props> = (props: Props) => {
     const [conn, _modifyConn] = useAttachedDatabaseById(props.databaseId);
+    const { paramsDraft, discard } = useConnectionDraft(props.databaseId);
 
     const currentConnectorType = conn?.connectorInfo.connectorType ?? ConnectorType.HYPER;
-    const [selectedConnectorType, setSelectedConnectorType] = React.useState<ConnectorType>(currentConnectorType);
-
-    // When connection changes, update selected tab if it's currently the same
-    React.useEffect(() => {
-        if (conn && selectedConnectorType === conn.connectorInfo.connectorType) {
-            setSelectedConnectorType(conn.connectorInfo.connectorType);
-        }
-    }, [conn?.connectorInfo.connectorType]);
-
-    // Reset to current connector when opening
-    React.useEffect(() => {
-        if (props.isOpen && conn) {
-            setSelectedConnectorType(conn.connectorInfo.connectorType);
-        }
-    }, [props.isOpen, conn?.connectorInfo.connectorType]);
 
     const completedDatabaseId = React.useRef<string | null>(null);
     React.useEffect(() => {
@@ -51,13 +42,21 @@ export const ConnectionSettingsOverlay: React.FC<Props> = (props: Props) => {
         if (!props.isOpen) completedDatabaseId.current = null;
     }, [props.isOpen]);
 
+    const headerActions = <IconButton
+        variant={ButtonVariant.Invisible}
+        aria-label="Discard Changes"
+        title="Discard changes and restore saved connection settings"
+        disabled={paramsDraft == null || conn?.connectionHealth === ConnectionHealth.CONNECTING}
+        onClick={discard}
+    ><UndoIcon /></IconButton>;
+
     return (
         <AnchoredOverlay
             renderAnchor={null}
             anchorRef={props.anchorRef as React.RefObject<HTMLElement | null>}
             open={props.isOpen}
             onClose={props.onClose}
-            side={AnchorSide.OutsideRight}
+            side={props.side ?? AnchorSide.OutsideRight}
             align={AnchorAlignment.Start}
             minWidth={OverlaySize.L}
             maxWidth={OverlaySize.XXL}
@@ -65,22 +64,11 @@ export const ConnectionSettingsOverlay: React.FC<Props> = (props: Props) => {
             maxHeight={OverlaySize.XL}
         >
             <div className={styles.overlay_container}>
-                <header className={styles.header}>
-                    <h2 className={styles.header_title}>{props.headerTitle ?? 'Connection settings'}</h2>
-                    <IconButton
-                        variant={ButtonVariant.Invisible}
-                        aria-label="Close"
-                        onClick={props.onClose}
-                    >
-                        <XIcon />
-                    </IconButton>
-                </header>
-                <ConnectorConfigTabs
-                    className={styles.content_sized_tabs}
-                    databaseId={props.databaseId}
-                    selectedConnectorType={selectedConnectorType}
-                    setSelectedConnectorType={setSelectedConnectorType}
-                />
+                <div className={styles.content}>
+                    {currentConnectorType === ConnectorType.HYPER && <HyperConnectorSettings databaseId={props.databaseId} headerActions={headerActions} onClose={props.onClose} />}
+                    {currentConnectorType === ConnectorType.TRINO && <TrinoConnectorSettings databaseId={props.databaseId} headerActions={headerActions} onClose={props.onClose} />}
+                    {currentConnectorType === ConnectorType.SALESFORCE_DATA_CLOUD && <SalesforceConnectorSettings databaseId={props.databaseId} headerActions={headerActions} onClose={props.onClose} />}
+                </div>
             </div>
         </AnchoredOverlay>
     );

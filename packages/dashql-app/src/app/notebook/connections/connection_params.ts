@@ -20,6 +20,26 @@ export type HyperConnectionParams = app_notebook.HyperConnectionParams;
 export type SalesforceConnectionParams = app_notebook.SalesforceConnectionParams;
 export type TrinoConnectionParams = app_notebook.TrinoConnectionParams;
 
+/// Raw form rows belong only to the local draft, never to committed/runtime parameters.
+export function connectionParamsWithoutDraftRows(params: ConnectionParams): ConnectionParams {
+    if ('hyper' in params) {
+        const { draftRows: _rows, ...hyper } = params.hyper;
+        return { hyper };
+    }
+    if ('trino' in params) {
+        const { draftRows: _rows, ...trino } = params.trino;
+        return { trino };
+    }
+    return params;
+}
+
+export function connectionParamsEqual(left: ConnectionParams | undefined, right: ConnectionParams | undefined): boolean {
+    const encode = (params: ConnectionParams | undefined) => JSON.stringify(params, (_key, value) =>
+        value != null && typeof value === 'object' && !Array.isArray(value)
+            ? Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b))) : value);
+    return encode(left) === encode(right);
+}
+
 export function getConnectionInfoFromParams(params: ConnectionParams) {
     if ('trino' in params) return CONNECTOR_INFOS[ConnectorType.TRINO];
     if ('hyper' in params) return CONNECTOR_INFOS[ConnectorType.HYPER];
@@ -58,6 +78,7 @@ export function getConnectionParamsFromStateDetails(params: ConnectionStateDetai
 /// it is only carried when `withLoginHint` is true. When false it is cleared while the rest of
 /// the (non-secret) connection identity is preserved.
 export function sanitizeConnectionParamsForSharing(params: ConnectionParams, withLoginHint: boolean = true): ConnectionParams {
+    params = connectionParamsWithoutDraftRows(params);
     if ('salesforce' in params && params.salesforce) {
         // Keep instanceUrl, appConsumerKey and the login hint; drop the connected-app secret.
         return { salesforce: { ...params.salesforce, appConsumerSecret: "", ...(withLoginHint ? {} : { login: "" }) } };
@@ -66,7 +87,8 @@ export function sanitizeConnectionParamsForSharing(params: ConnectionParams, wit
         // Keep endpoint, catalog and the basic-auth username; drop the basic-auth secret /
         // access token. OAuth params (client id + urls) carry no secret and are left as-is.
         // The basic-auth username doubles as the login hint here.
-        const trino = params.trino;
+        // Arbitrary request headers may carry credentials under any name.
+        const { metadata: _metadata, ...trino } = params.trino;
         return {
             trino: {
                 ...trino,
@@ -78,10 +100,11 @@ export function sanitizeConnectionParamsForSharing(params: ConnectionParams, wit
         };
     }
     if ('hyper' in params && params.hyper) {
-        // Keep endpoint and protocol; drop local TLS key/cert/ca file paths.
+        // Arbitrary headers and query parameters may carry credentials under any name.
+        const { metadata: _metadata, queryParameters: _queryParameters, ...hyper } = params.hyper;
         return {
             hyper: {
-                ...params.hyper,
+                ...hyper,
                 tls: { clientKeyPath: "", clientCertPath: "", caCertsPath: "" },
             },
         };
@@ -128,6 +151,7 @@ export function createConnectionStateFromParams(dql: dashql.DashQL, params: Conn
         connectionSignature: newConnectionSignature(sig, connSigs, null),
         metrics: createConnectionMetrics(),
         details,
+        params: structuredClone(params),
         catalog,
         catalogUpdates: {
             tasksRunning: new Map(),

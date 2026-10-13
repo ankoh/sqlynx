@@ -13,6 +13,60 @@ import { importNotebookFromZip } from './notebook_import.js';
 import { NotebookTestBackend, TEST_NOTEBOOK_ID, testNotebook } from './notebook_test_backend.js';
 
 describe('V2 notebook export', () => {
+    it.each(['hyper', 'trino'])('omits %s header credentials from main and attached databases in ZIP and URL exports', async connector => {
+        const backend = new NotebookTestBackend();
+        const metadata = { authorization: 'bearer-secret', cookie: 'cookie-secret', 'x-api-key': 'api-secret', arbitrary: 'custom-secret' };
+        const params = connector === 'hyper' ? { hyper: {
+            protocol: 'V3_HTTP', endpoint: 'https://identity.example',
+            tls: { clientKeyPath: '', clientCertPath: '', caCertsPath: '' },
+            metadata, queryParameters: { credential: 'query-secret' },
+        } } : { trino: { endpoint: 'https://identity.example', catalogName: 'catalog', metadata } };
+        const manifest = testNotebook({
+            mainDatabase: { databaseId: testNotebook().mainDatabase.databaseId, params: params as any },
+            attachedDatabases: [{ databaseId: 'bbbbbbbb-cccc-4ddd-8eee-ffffffffffff', params: params as any }],
+        });
+        await backend.saveNotebookManifest(TEST_NOTEBOOK_ID, manifest);
+        const liveParams = new Map([manifest.mainDatabase, ...manifest.attachedDatabases].map(database => [database.databaseId, database.params]));
+        const url = await exportNotebookAsUrl(backend, TEST_NOTEBOOK_ID, liveParams, NotebookLinkTarget.WEB);
+        const event = JSON.parse(new TextDecoder().decode(BASE64URL_CODEC.decode(url.searchParams.get('data')!)));
+        const archives = [
+            await JSZip.loadAsync(await exportNotebookAsZip(TEST_NOTEBOOK_ID, backend)),
+            await JSZip.loadAsync(await exportNotebookAsSharedZip(backend, TEST_NOTEBOOK_ID, liveParams)),
+            await JSZip.loadAsync(BASE64URL_CODEC.decode(event.notebook)),
+        ];
+        for (const archive of archives) {
+            const text = await archive.file('dashql-notebook.json')!.async('text');
+            for (const secret of [...Object.values(metadata), 'query-secret']) expect(text).not.toContain(secret);
+            const exported = JSON.parse(text);
+            for (const database of [exported.mainDatabase, ...exported.attachedDatabases]) {
+                expect(database.params[connector].metadata).toBeUndefined();
+                expect(database.params[connector].queryParameters).toBeUndefined();
+                expect(database.params[connector].endpoint).toBe('https://identity.example');
+            }
+        }
+        expect((await backend.loadNotebook(TEST_NOTEBOOK_ID)).mainDatabase.params).toEqual(params);
+    });
+    it('omits main and attached drafts and secrets from plain and shared ZIP exports', async () => {
+        const backend = new NotebookTestBackend();
+        const database = (databaseId: string) => ({
+            databaseId,
+            params: { trino: { endpoint: 'https://committed.example', auth: { authType: 'AUTH_BASIC', basic: { username: 'user', secret: 'committed-secret' } } } } as any,
+            paramsDraft: { trino: { endpoint: 'unfinished', auth: { authType: 'AUTH_BASIC', basic: { username: 'user', secret: 'draft-secret' } } } } as any,
+        });
+        await backend.saveNotebookManifest(TEST_NOTEBOOK_ID, testNotebook({
+            mainDatabase: database(testNotebook().mainDatabase.databaseId),
+            attachedDatabases: [database('bbbbbbbb-cccc-4ddd-8eee-ffffffffffff')],
+        }));
+        for (const blob of [await exportNotebookAsZip(TEST_NOTEBOOK_ID, backend), await exportNotebookAsSharedZip(backend, TEST_NOTEBOOK_ID, new Map())]) {
+            const archive = await JSZip.loadAsync(blob);
+            const text = await archive.file('dashql-notebook.json')!.async('text');
+            expect(text).not.toContain('paramsDraft');
+            expect(text).not.toContain('committed-secret');
+            expect(text).not.toContain('draft-secret');
+            expect(JSON.parse(text).mainDatabase.params.trino.endpoint).toBe('https://committed.example');
+        }
+        expect((await backend.loadNotebook(TEST_NOTEBOOK_ID)).mainDatabase.paramsDraft).toBeDefined();
+    });
     it('does not encode the reserved draft script', async () => {
         const archive = await JSZip.loadAsync(await createNotebookZip(testNotebook(), [
             { name: 'dashql-draft.sql', sql: 'SELECT draft' },

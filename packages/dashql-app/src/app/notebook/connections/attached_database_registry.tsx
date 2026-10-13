@@ -9,6 +9,8 @@ import {
     DELETE_ATTACHED_DATABASE,
     SWITCH_CONNECTOR_TYPE,
     reduceAttachedDatabaseState,
+    SET_CONNECTION_DRAFT,
+    DISCARD_CONNECTION_DRAFT,
 } from './attached_database_state.js';
 import { Dispatch } from '../../../utils/variant.js';
 import { CONNECTOR_TYPES } from './connector_info.js';
@@ -18,15 +20,13 @@ import { useLogger } from '../../../platform/logger/logger_provider.js';
 import {
     DEBOUNCE_DURATION_NOTEBOOK_WRITE,
     groupNotebookFunctionWrites,
-    groupNotebookManifestWrites,
+    groupNotebookConnectionWrites,
     groupNotebookSchemaWrites,
     WRITE_NOTEBOOK_CATALOG_SCRIPT,
     WRITE_NOTEBOOK_FUNCTION_SCRIPT,
     WRITE_NOTEBOOK_MANIFEST,
 } from '../persistence/storage_writer.js';
-import { getConnectionParamsFromStateDetails } from './connection_params.js';
-
-// Note: Storage persistence handled by connection reducer when setupParams are configured
+import { connectionParamsEqual, type ConnectionParams } from './connection_params.js';
 
 /// The connection registry
 ///
@@ -85,9 +85,7 @@ export function findNotebookForAttachedDatabase(registry: AttachedDatabaseRegist
 
 export function didPersistedConnectionChange(prev: AttachedDatabaseState, next: AttachedDatabaseState): boolean {
     if (!prev.active && next.active) return true;
-    const prevParams = getConnectionParamsFromStateDetails(prev.details);
-    const nextParams = getConnectionParamsFromStateDetails(next.details);
-    return JSON.stringify(prevParams) !== JSON.stringify(nextParams);
+    return !connectionParamsEqual(prev.params, next.params) || !connectionParamsEqual(prev.paramsDraft, next.paramsDraft);
 }
 
 export type SetAttachedDatabaseRegistryAction = React.SetStateAction<AttachedDatabaseRegistry>;
@@ -143,8 +141,8 @@ export function useAttachedDatabaseStateAllocator(): AttachedDatabaseAllocator {
             reg.attachedDatabasesBySignature.set(state.connectionSignature.signatureString, databaseId);
             return { ...reg };
         });
-        // Don't persist yet - wait until connection is configured
-        // Persistence happens in connection reducer when CHANNEL_READY/HEALTH_CHECK_SUCCEEDED
+        // The caller writes newly committed notebooks. Subsequent edits and successful setups
+        // persist through the dispatch boundary, including drafts before the first connection.
         return database;
     }, [setReg]);
 }
@@ -205,10 +203,10 @@ export function useDynamicAttachedDatabaseDispatch(): [AttachedDatabaseRegistry,
                         reg.attachedDatabasesBySignature.delete(connectionSignature);
                         reg.attachedDatabasesBySignature.set(next.connectionSignature.signatureString, databaseId);
                     }
-                    if (notebookId != null && next.active) {
+                    if (notebookId != null) {
                         if (didPersistedConnectionChange(prev, next)) {
                             void storageWriter.write(
-                                groupNotebookManifestWrites(notebookId),
+                                groupNotebookConnectionWrites(notebookId),
                                 {
                                     type: WRITE_NOTEBOOK_MANIFEST,
                                     value: [notebookId, mappingMainDatabaseId(reg, notebookId), notebookAttachedDatabaseStates(reg, notebookId)],
@@ -216,7 +214,7 @@ export function useDynamicAttachedDatabaseDispatch(): [AttachedDatabaseRegistry,
                                 DEBOUNCE_DURATION_NOTEBOOK_WRITE,
                             );
                         }
-                        if (databaseId === mappingMainDatabaseId(reg, notebookId)
+                        if (next.active && databaseId === mappingMainDatabaseId(reg, notebookId)
                             && (action.type === CATALOG_UPDATE_SUCCEEDED || action.type === CATALOG_UPDATE_PARTIALLY_SUCCEEDED)) {
                             void storageWriter.write(
                                 groupNotebookSchemaWrites(notebookId),
@@ -292,4 +290,51 @@ export function useAttachedDatabaseById(databaseId: string | null): [AttachedDat
     const [registry, dispatch] = useDynamicAttachedDatabaseDispatch();
     const capturingDispatch = React.useCallback((action: AttachedDatabaseAction) => dispatch(databaseId, action), [databaseId, dispatch]);
     return [databaseId == null ? null : registry.attachedDatabases.get(databaseId) ?? null, capturingDispatch];
+}
+
+/// Editing dispatches immediately; the registry debounces only the durable manifest write.
+export function useConnectionDraft(databaseId: string | null) {
+    const [database, dispatch] = useAttachedDatabaseById(databaseId);
+    const setDraft = React.useCallback((params: ConnectionParams) => {
+        dispatch({ type: SET_CONNECTION_DRAFT, value: params });
+    }, [dispatch]);
+    const discard = React.useCallback(() => {
+        dispatch({ type: DISCARD_CONNECTION_DRAFT, value: null });
+    }, [dispatch]);
+    return { params: database?.params ?? null, paramsDraft: database?.paramsDraft, setDraft, discard };
+}
+
+/// Forms write from user actions, never from hydration effects (which could resurrect a draft).
+export function useConnectionDraftForm<T>(
+    databaseId: string | null,
+    decode: (params: ConnectionParams | null) => T,
+    encode: (form: T) => ConnectionParams,
+): [T, React.Dispatch<React.SetStateAction<T>>] {
+    const { params, paramsDraft, setDraft } = useConnectionDraft(databaseId);
+    const source = paramsDraft ?? params;
+    const [form, setForm] = React.useState(() => decode(source));
+    const sourceRef = React.useRef(source);
+    const formRef = React.useRef(form);
+    const databaseIdRef = React.useRef(databaseId);
+    const editedParamsRef = React.useRef<ConnectionParams | undefined>(undefined);
+    if (databaseIdRef.current !== databaseId || sourceRef.current !== source) {
+        const ownEdit = databaseIdRef.current === databaseId && paramsDraft != null
+            && connectionParamsEqual(editedParamsRef.current, paramsDraft);
+        databaseIdRef.current = databaseId;
+        sourceRef.current = source;
+        if (!ownEdit) {
+            editedParamsRef.current = undefined;
+            formRef.current = decode(source);
+            setForm(formRef.current);
+        }
+    }
+    const update = (value: React.SetStateAction<T>) => {
+        const next = typeof value === 'function' ? (value as (prev: T) => T)(formRef.current) : value;
+        formRef.current = next;
+        setForm(next);
+        const encoded = encode(next);
+        editedParamsRef.current = encoded;
+        setDraft(encoded);
+    };
+    return [formRef.current, update];
 }

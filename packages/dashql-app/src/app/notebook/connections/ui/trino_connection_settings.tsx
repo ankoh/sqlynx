@@ -13,7 +13,7 @@ import { Dispatch } from '../../../../utils/variant.js';
 import { KeyValueListBuilder, KeyValueListElement, UpdateKeyValueList } from '../../../../ui/foundations/keyvalue_list.js';
 import { TextField, VALIDATION_WARNING } from '../../../../ui/foundations/text_field.js';
 import { classNames } from '../../../../utils/classnames.js';
-import { findNotebookForAttachedDatabase, useAttachedDatabaseById, useAttachedDatabaseRegistry } from '../attached_database_registry.js';
+import { findNotebookForAttachedDatabase, useAttachedDatabaseById, useAttachedDatabaseRegistry, useConnectionDraftForm } from '../attached_database_registry.js';
 import { useLogger } from '../../../../platform/logger/logger_provider.js';
 import { useQueryExecutor } from '../query_executor.js';
 import { performHealthCheck } from '../health_check.js';
@@ -24,6 +24,7 @@ import { useAnyConnectionNotebookScripts } from './connection_notebook_scripts.j
 import { ConnectionInlineHeader } from './connection_inline_header.js';
 import { SegmentedControl } from '../../../../ui/foundations/segmented_control.js';
 import { LoggableException, stringifyError } from '../../../../platform/logger/logger.js';
+import { cancelConnectionSetup, registerConnectionSetup } from '../connection_setup_cancellation.js';
 
 const LOG_CTX = "trino_connector";
 
@@ -49,20 +50,21 @@ const DEFAULT_TRINO_PARAMS: connection.TrinoConnectionParams = {
     schemaNames: [],
 };
 
-function buildPageStateFromParams(params: connection.TrinoConnectionParams | null | undefined): PageState {
+export function buildPageStateFromParams(params: connection.TrinoConnectionParams | null | undefined): PageState {
     const active = params ?? null;
     const newParams = params ?? DEFAULT_TRINO_PARAMS;
-    const metadataData = (newParams.metadata as { data?: Record<string, string> } | undefined)?.data ?? {};
+    const metadataData = newParams.metadata ?? {};
     return {
         activeParams: active,
         newParams,
-        newParamsMetadata: Object.entries(metadataData).map(([k, v]) => ({ key: k, value: v ?? "" })),
+        newParamsMetadata: params?.draftRows?.metadata ?? Object.entries(metadataData).map(([k, v]) => ({ key: k, value: v ?? "" })),
     };
 }
 
 interface Props {
     databaseId: string | null;
     onClose?: () => void;
+    headerActions?: React.ReactNode;
 }
 
 export const TrinoConnectorSettings: React.FC<Props> = (props: Props) => {
@@ -80,15 +82,9 @@ export const TrinoConnectorSettings: React.FC<Props> = (props: Props) => {
     const [connectionState, dispatchAttachedDatabaseState] = useAttachedDatabaseById(props.databaseId);
     const connectionNotebookScripts = useAnyConnectionNotebookScripts(notebookId);
 
-    // Seed the form state from the restored connection params so a notebook
-    // that was saved across an app restart displays its endpoint/auth/etc.
-    // The effect below keeps it in sync with later param changes.
-    const [pageState, setPageState] = React.useState<PageState>(() => {
-        const params = connectionState?.details.type === TRINO_CONNECTOR
-            ? connectionState.details.value.proto.setupParams
-            : null;
-        return buildPageStateFromParams(params);
-    });
+    const [pageState, setPageState] = useConnectionDraftForm(props.databaseId,
+        params => buildPageStateFromParams(params && 'trino' in params ? params.trino as connection.TrinoConnectionParams : undefined),
+        form => ({ trino: { ...form.newParams, draftRows: { metadata: form.newParamsMetadata } } }));
 
     const endpoint = pageState.newParams?.endpoint;
     const setEndpoint = (v: string) => setPageState(s => ({
@@ -246,35 +242,19 @@ export const TrinoConnectorSettings: React.FC<Props> = (props: Props) => {
 
         // Flatten the key-value list eagerly for the new params.
         // We could decide to do this lazily but it shouldn't really matter.
-        const metadataObj: { [key: string]: string | undefined } = {};
+        const metadataObj: Record<string, string> = {};
         for (const entry of metadata) {
             metadataObj[entry.key] = entry.value;
         }
-        const metadataError = {
-            message: "",
-            ...(Object.keys(metadataObj).length > 0 ? { data: metadataObj } : {})
-        } as any;
         return {
             ...s,
             newParamsMetadata: metadata,
             newParams: {
                 ...s.newParams,
-                metadata: metadataError
+                metadata: metadataObj
             }
         };
     });
-
-    // Re-seed the form when the underlying connection params change
-    // (e.g. on notebook switch or after a successful setup).
-    React.useEffect(() => {
-        if (connectionState?.details.type != TRINO_CONNECTOR) {
-            return;
-        }
-        const activeParams = connectionState.details.value.proto.setupParams;
-        if (activeParams != null && activeParams !== pageState.activeParams) {
-            setPageState(buildPageStateFromParams(activeParams));
-        }
-    }, [connectionState?.details]);
 
     // Helper to setup the connection
     const setupAbortController = React.useRef<AbortController | null>(null);
@@ -290,13 +270,15 @@ export const TrinoConnectorSettings: React.FC<Props> = (props: Props) => {
             return;
         }
 
+        const controller = new AbortController();
+        const unregister = registerConnectionSetup(connectionState.databaseId, controller);
         try {
             // Setup the Trino connection
-            setupAbortController.current = new AbortController();
+            setupAbortController.current = controller;
             const connectionParams: connection.TrinoConnectionParams = pageState.newParams;
-            const trinoChannel = await trinoSetup.setup(dispatchAttachedDatabaseState, connectionParams, setupAbortController.current.signal);
+            const trinoChannel = await trinoSetup.setup(dispatchAttachedDatabaseState, connectionParams, controller.signal);
             if (trinoChannel != null) {
-                await performHealthCheck(queryExecutor, connectionState.databaseId, { type: 'trino', channel: trinoChannel }, dispatchAttachedDatabaseState, setupAbortController.current.signal);
+                await performHealthCheck(queryExecutor, connectionState.databaseId, { type: 'trino', channel: trinoChannel }, dispatchAttachedDatabaseState, controller.signal);
             }
 
         } catch (error: any) {
@@ -308,14 +290,17 @@ export const TrinoConnectorSettings: React.FC<Props> = (props: Props) => {
                     error: stringifyError(error)
                 }, LOG_CTX);
             }
+        } finally {
+            unregister();
+            if (setupAbortController.current === controller) setupAbortController.current = null;
         }
-        setupAbortController.current = null;
     };
 
     // Helper to cancel and reset the authorization
     const cancelSetup = () => {
+        if (props.databaseId != null) cancelConnectionSetup(props.databaseId);
         if (setupAbortController.current) {
-            setupAbortController.current.abort("abort the Hyper setup");
+            setupAbortController.current.abort(new DOMException('Connection setup cancelled', 'AbortError'));
             setupAbortController.current = null;
         }
     };
@@ -339,7 +324,6 @@ export const TrinoConnectorSettings: React.FC<Props> = (props: Props) => {
             break;
         case ConnectionHealth.ONLINE:
             connectButton = <Button variant={ButtonVariant.Danger} leadingVisual={XIcon} onClick={resetSetup}>Disconnect</Button>;
-            freezeInput = true;
             break;
     }
 
@@ -354,6 +338,7 @@ export const TrinoConnectorSettings: React.FC<Props> = (props: Props) => {
                 resetSetup={resetSetup}
                 notebookScripts={connectionNotebookScripts}
                 onClose={props.onClose}
+                headerActions={props.headerActions}
             />
             <div className={style.body_container}>
                 <div className={style.section}>

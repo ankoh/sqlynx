@@ -36,6 +36,7 @@ import { formatScriptEditor, formattingDialectForConnector, getKeywordCase, isSc
 import { ScriptActionMenu } from './script_action_menu.js';
 import { ScriptDetailsEditorPane, ScriptDetailsOutputPane } from './script_details_panes.js';
 import { VerticalSplit } from '../../../ui/foundations/vertical_split.js';
+import { NotebookConnectionAttentionContext } from './notebook_connection_attention.js';
 
 export { ScriptDetailsTab as TabKey };
 
@@ -84,6 +85,7 @@ const DEFAULT_DEPENDENCIES: ScriptDetailsDependencies = {
 
 export const ScriptDetails: React.FC<ScriptDetailsProps> = (props) => {
     const notebookExecution = useNotebookExecution(props.notebookScripts.notebookId);
+    const connectionAttention = React.useContext(NotebookConnectionAttentionContext);
     const dependencies = props.dependencies ?? DEFAULT_DEPENDENCIES;
     const config = dependencies.useAppConfig();
     const logger = dependencies.useLogger();
@@ -220,13 +222,15 @@ export const ScriptDetails: React.FC<ScriptDetailsProps> = (props) => {
     const executeQuery = dependencies.useQueryExecutor();
     const storageReader = dependencies.useStorageReader();
     const handleExecute = React.useCallback(() => {
-        if (scriptData == null || props.connection?.connectionHealth !== ConnectionHealth.ONLINE) {
+        if (props.connection?.connectionHealth !== ConnectionHealth.ONLINE) {
+            connectionAttention?.request(props.notebookScripts.notebookId);
             return;
         }
+        if (scriptData == null || notebookExecution.busy) return;
         dependencies.runNotebookScript(props.connection.databaseId, props.notebookScripts, scriptData, executeQuery, props.modifyNotebookScripts, logger);
-    }, [props.connection?.connectionHealth, props.notebookScripts, props.modifyNotebookScripts, scriptData, executeQuery, logger]);
+    }, [props.connection, props.notebookScripts, props.modifyNotebookScripts, scriptData, executeQuery, logger, notebookExecution.busy, connectionAttention]);
     const handleRerun = React.useCallback(async (cacheKey: string | null) => {
-        if (scriptData == null) {
+        if (scriptData == null || props.connection?.connectionHealth !== ConnectionHealth.ONLINE || notebookExecution.busy) {
             return;
         }
         // Best-effort delete of the stale cache entry first; the re-execution then misses and
@@ -237,7 +241,7 @@ export const ScriptDetails: React.FC<ScriptDetailsProps> = (props) => {
         if (props.connection != null) {
             dependencies.runNotebookScript(props.connection.databaseId, props.notebookScripts, scriptData, executeQuery, props.modifyNotebookScripts, logger);
         }
-    }, [props.notebookScripts, props.modifyNotebookScripts, scriptData, executeQuery, storageReader, logger]);
+    }, [props.connection, props.notebookScripts, props.modifyNotebookScripts, scriptData, executeQuery, storageReader, logger, notebookExecution.busy]);
 
     const visualizeQuery = scriptData?.annotations.visualizeQuery ?? null;
 
@@ -320,6 +324,7 @@ export const ScriptDetails: React.FC<ScriptDetailsProps> = (props) => {
                             scriptDisplay={scriptDisplay}
                             scriptDebugMode={scriptDebugMode}
                             executeDisabled={notebookExecution.busy || props.connection?.connectionHealth !== ConnectionHealth.ONLINE}
+                            connectionBlocked={props.connection?.connectionHealth !== ConnectionHealth.ONLINE}
                             isEditingName={isEditingName}
                             draftFileName={draftFileName}
                             editInputRef={editInputRef}
@@ -366,7 +371,7 @@ export const ScriptDetails: React.FC<ScriptDetailsProps> = (props) => {
                             statusActions={(
                                 <>
                                     <QueryResultCacheLabel query={activeQueryState} />
-                                    <QueryResultRerunButton query={activeQueryState} onRerun={handleRerun} />
+                                    <QueryResultRerunButton query={activeQueryState} onRerun={props.connection?.connectionHealth === ConnectionHealth.ONLINE && !notebookExecution.busy ? handleRerun : undefined} />
                                 </>
                             )}
                         />

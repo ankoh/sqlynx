@@ -27,9 +27,7 @@ async function packAndCompressFile(
 ): Promise<Uint8Array> {
     const connectionParams = new Map();
     for (const database of databases) {
-        const params = await import('../connections/connection_params.js').then(m =>
-            m.getConnectionParamsFromStateDetails(database.details)
-        );
+        const params = database.params;
         if (params != null) connectionParams.set(database.databaseId, params);
     }
     const zipBlob = await exportNotebookAsSharedZip(backend, notebookScripts.notebookId, connectionParams, settings);

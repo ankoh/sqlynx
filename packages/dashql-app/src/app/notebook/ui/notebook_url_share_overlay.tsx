@@ -73,7 +73,7 @@ export const NotebookURLShareOverlay: React.FC<Props> = (props: Props) => {
                 if (attached != null) {
                     const params = new Map();
                     for (const database of [attached.main, ...attached.attached]) {
-                        const connectionParams = getConnectionParamsFromStateDetails(database.details);
+                        const connectionParams = database.params;
                         if (connectionParams != null) params.set(database.databaseId, connectionParams);
                     }
                     setupUrl = await exportNotebookAsUrl(

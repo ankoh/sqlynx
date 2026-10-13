@@ -46,7 +46,6 @@ import { OPEN_NOTEBOOK, SELECT_NOTEBOOK, useRouteContext, useRouterNavigate } fr
 import { NotebookSetupStatus } from '../../router/notebook_setup_status.js';
 import {
     AttachedDatabaseState,
-    ConnectionHealth,
     DELETE_ATTACHED_DATABASE,
 } from '../connections/attached_database_state.js';
 import {
@@ -58,11 +57,12 @@ import {
 } from '../connections/attached_database_registry.js';
 import {
     createDefaultHyperWasmAttachedDatabaseState,
+    createConnectionStateFromParams,
+    createDefaultConnectionParamsForConnector,
 } from '../connections/connection_params.js';
-import { HYPER_CONNECTOR } from '../connections/connector_info.js';
+import { CONNECTOR_INFOS, ConnectorType } from '../connections/connector_info.js';
 import { ConnectionSettingsOverlay } from '../connections/ui/connection_settings_overlay.js';
 import { useCatalogLoaderQueue } from '../connections/catalog_loader.js';
-import { useHyperSetup } from '../connections/hyper/hyper_connection_setup.js';
 import { IndicatorStatus, StatusIndicator } from '../../../ui/foundations/status_indicator.js';
 import { observeSize } from '../../../ui/foundations/size_observer.js';
 import { VerticalScrollShadows } from '../../../ui/foundations/vertical_scroll_shadows.js';
@@ -149,18 +149,6 @@ interface InvalidNotebookItem {
     invalidReason: string;
 }
 
-export type NotebookSwitchMode = 'select' | 'setup-hyper-wasm' | 'open-setup';
-
-export function notebookSwitchMode(database: AttachedDatabaseState, hyperSetupAvailable: boolean): NotebookSwitchMode {
-    if (database.connectionHealth === ConnectionHealth.ONLINE) return 'select';
-    if (hyperSetupAvailable
-        && database.connectionHealth === ConnectionHealth.NOT_STARTED
-        && isHyperWasmAttachedDatabase(database)) {
-        return 'setup-hyper-wasm';
-    }
-    return 'open-setup';
-}
-
 interface Props {
     notebookScripts: NotebookScripts;
     closeAfterSelection?: () => void;
@@ -179,7 +167,6 @@ export interface NotebookWorkbenchSidebarDependencies {
     useComputationRegistry: typeof useComputationRegistry;
     useStorageReader: typeof useStorageReader;
     useStorageWriter: typeof useStorageWriter;
-    useHyperSetup: typeof useHyperSetup;
     useDashQLCoreSetup: typeof useDashQLCoreSetup;
     useNotebookImport: typeof useNotebookImport;
     usePlatformType: typeof usePlatformType;
@@ -187,6 +174,7 @@ export interface NotebookWorkbenchSidebarDependencies {
     useInvalidNotebookRegistry: typeof useInvalidNotebookRegistry;
     useNotebookAttachedDatabases: typeof useNotebookAttachedDatabases;
     createDefaultHyperWasmAttachedDatabaseState: typeof createDefaultHyperWasmAttachedDatabaseState;
+    createConnectionStateFromParams: typeof createConnectionStateFromParams;
     BundledNotebooksOverlay: typeof BundledNotebooksOverlay;
     ConnectionSettingsOverlay: typeof ConnectionSettingsOverlay;
     NotebookStorageOverlay: typeof NotebookStorageOverlay;
@@ -206,7 +194,6 @@ const DEFAULT_NOTEBOOK_WORKBENCH_SIDEBAR_DEPENDENCIES: NotebookWorkbenchSidebarD
     useComputationRegistry,
     useStorageReader,
     useStorageWriter,
-    useHyperSetup,
     useDashQLCoreSetup,
     useNotebookImport,
     usePlatformType,
@@ -214,6 +201,7 @@ const DEFAULT_NOTEBOOK_WORKBENCH_SIDEBAR_DEPENDENCIES: NotebookWorkbenchSidebarD
     useInvalidNotebookRegistry,
     useNotebookAttachedDatabases,
     createDefaultHyperWasmAttachedDatabaseState,
+    createConnectionStateFromParams,
     BundledNotebooksOverlay,
     ConnectionSettingsOverlay,
     NotebookStorageOverlay,
@@ -819,7 +807,6 @@ export const NotebookWorkbenchSidebar: React.FC<Props> = (props) => {
     const [, computationDispatch] = dependencies.useComputationRegistry();
     const storageReader = dependencies.useStorageReader();
     const storageWriter = dependencies.useStorageWriter();
-    const hyperSetup = dependencies.useHyperSetup();
     const setupCore = dependencies.useDashQLCoreSetup();
     const notebookImport = dependencies.useNotebookImport();
     const platform = dependencies.usePlatformType();
@@ -831,11 +818,9 @@ export const NotebookWorkbenchSidebar: React.FC<Props> = (props) => {
         [attached?.main, attached?.attached],
     );
     const [connectionOverlayDatabaseId, setConnectionOverlayDatabaseId] = React.useState<string | null>(null);
-    const [connectionOverlayHeader, setConnectionOverlayHeader] = React.useState<string | null>(null);
-    const pendingNotebookRef = React.useRef<{ notebookId: string; databaseId: string; committing: boolean } | null>(null);
-    const pendingNotebookSelectionRef = React.useRef<{ notebookId: string; databaseId: string } | null>(null);
+    const [createOpen, setCreateOpen] = React.useState(false);
+    const createButtonRef = React.useRef<HTMLButtonElement>(null);
     const connectionSettingsAnchorRef = React.useRef<HTMLButtonElement>(null);
-    const notebookSwitchAbortRef = React.useRef<AbortController | null>(null);
     const folderButtonRef = React.useRef<HTMLButtonElement>(null);
     const folderInputRef = React.useRef<HTMLInputElement>(null);
     const [notebookOrder, setNotebookOrder] = React.useState(() => storageReader.getNotebookOrder());
@@ -844,8 +829,6 @@ export const NotebookWorkbenchSidebar: React.FC<Props> = (props) => {
         () => [...scriptsRegistry.notebookScriptsMap.keys()],
         [scriptsRegistry],
     );
-
-    React.useEffect(() => () => notebookSwitchAbortRef.current?.abort('notebook workbench unmounted'), []);
 
     React.useEffect(() => {
         if (route.notebookSetupStatus !== NotebookSetupStatus.CONFIGURING
@@ -929,71 +912,30 @@ export const NotebookWorkbenchSidebar: React.FC<Props> = (props) => {
         });
     }, [logger, storageReader.backend]);
 
-    const beginCreateNotebook = React.useCallback((anchor: HTMLButtonElement) => {
-        if (pendingNotebookRef.current != null) return;
+    const createNotebook = React.useCallback((connector: ConnectorType) => {
+        setCreateOpen(false);
         const notebookId = crypto.randomUUID();
-        const database = allocateDatabase(notebookId, dependencies.createDefaultHyperWasmAttachedDatabaseState(
-            props.notebookScripts.instance,
-            databaseRegistry.attachedDatabasesBySignature,
-        ));
-        pendingNotebookRef.current = { notebookId, databaseId: database.databaseId, committing: false };
-        connectionSettingsAnchorRef.current = anchor;
-        setConnectionOverlayHeader('Create notebook');
-        setConnectionOverlayDatabaseId(database.databaseId);
-    }, [allocateDatabase, databaseRegistry.attachedDatabasesBySignature, props.notebookScripts.instance]);
+        const params = createDefaultConnectionParamsForConnector(CONNECTOR_INFOS[connector]);
+        const initialDatabase = connector === ConnectorType.HYPER
+            ? dependencies.createDefaultHyperWasmAttachedDatabaseState(props.notebookScripts.instance, databaseRegistry.attachedDatabasesBySignature)
+            : dependencies.createConnectionStateFromParams(props.notebookScripts.instance, params, databaseRegistry.attachedDatabasesBySignature);
+        // The notebook is committed now; settings must not switch its initialized script dialect.
+        const database = allocateDatabase(notebookId, { ...initialDatabase, active: true });
+        setupNotebookScripts(notebookId, database);
+        void storageWriter.write(
+            groupNotebookManifestWrites(notebookId),
+            { type: WRITE_NOTEBOOK_MANIFEST, value: [notebookId, database.databaseId, [database]] },
+        );
+        navigate({ type: SELECT_NOTEBOOK, value: notebookId });
+        props.closeAfterSelection?.();
+    }, [allocateDatabase, databaseRegistry.attachedDatabasesBySignature, dependencies, navigate, props.closeAfterSelection, props.notebookScripts.instance, setupNotebookScripts, storageWriter]);
 
     const closeConnectionOverlay = React.useCallback(() => {
-        const pending = pendingNotebookRef.current;
-        pendingNotebookRef.current = null;
-        pendingNotebookSelectionRef.current = null;
-        if (pending != null) {
-            storageWriter.cancelPendingWritesForNotebook(pending.notebookId);
-            databaseDispatch(pending.databaseId, { type: DELETE_ATTACHED_DATABASE, value: null });
-            void storageWriter.backend.deleteNotebook(pending.notebookId).catch(() => {});
-        }
-        setConnectionOverlayHeader(null);
         setConnectionOverlayDatabaseId(null);
         if (route.notebookSetupStatus === NotebookSetupStatus.CONFIGURING && route.notebookId != null) {
             navigate({ type: SELECT_NOTEBOOK, value: route.notebookId });
         }
-    }, [databaseDispatch, navigate, route.notebookId, route.notebookSetupStatus, storageWriter]);
-
-    const finishConnectionSetup = React.useCallback(async (database: AttachedDatabaseState) => {
-        const pending = pendingNotebookRef.current;
-        if (pending != null && pending.databaseId === database.databaseId && !pending.committing) {
-            pending.committing = true;
-            const persisted = await storageWriter.write(
-                groupNotebookManifestWrites(pending.notebookId),
-                { type: WRITE_NOTEBOOK_MANIFEST, value: [pending.notebookId, database.databaseId, [database]] },
-            );
-            if (!persisted || pendingNotebookRef.current !== pending) {
-                pending.committing = false;
-                return;
-            }
-            setupNotebookScripts(pending.notebookId, database);
-            pendingNotebookRef.current = null;
-            setConnectionOverlayHeader(null);
-            setConnectionOverlayDatabaseId(null);
-            navigate({ type: SELECT_NOTEBOOK, value: pending.notebookId });
-            props.closeAfterSelection?.();
-            return;
-        }
-        const selection = pendingNotebookSelectionRef.current;
-        if (selection != null && selection.databaseId === database.databaseId) {
-            pendingNotebookSelectionRef.current = null;
-            setConnectionOverlayHeader(null);
-            setConnectionOverlayDatabaseId(null);
-            navigate({ type: SELECT_NOTEBOOK, value: selection.notebookId });
-            props.closeAfterSelection?.();
-            return;
-        }
-        if (route.notebookId != null) {
-            setConnectionOverlayHeader(null);
-            setConnectionOverlayDatabaseId(null);
-            navigate({ type: SELECT_NOTEBOOK, value: route.notebookId });
-            props.closeAfterSelection?.();
-        }
-    }, [navigate, props.closeAfterSelection, route.notebookId, setupNotebookScripts, storageWriter]);
+    }, [navigate, route.notebookId, route.notebookSetupStatus]);
 
     const duplicateNotebook = React.useCallback(async (item: NotebookItem) => {
         const newNotebookId = crypto.randomUUID();
@@ -1082,51 +1024,10 @@ export const NotebookWorkbenchSidebar: React.FC<Props> = (props) => {
         }
     }, [computationDispatch, databaseDispatch, databaseRegistry, deleteNotebookScripts, navigate, notebooks, props.notebookScripts.notebookId, storageWriter.backend]);
 
-    const openNotebook = React.useCallback((item: NotebookItem, anchor: HTMLButtonElement) => {
-        if (item.notebookId === props.notebookScripts.notebookId) {
-            props.closeAfterSelection?.();
-            return;
-        }
-
-        const mode = notebookSwitchMode(item.database, hyperSetup != null);
-        if (mode === 'select') {
-            navigate({ type: SELECT_NOTEBOOK, value: item.notebookId });
-        } else if (mode === 'open-setup') {
-            pendingNotebookSelectionRef.current = {
-                notebookId: item.notebookId,
-                databaseId: item.database.databaseId,
-            };
-            connectionSettingsAnchorRef.current = anchor;
-            setConnectionOverlayHeader(`Open ${item.label}`);
-            setConnectionOverlayDatabaseId(item.database.databaseId);
-        } else {
-            notebookSwitchAbortRef.current?.abort('another notebook selected');
-            const abort = new AbortController();
-            notebookSwitchAbortRef.current = abort;
-            if (item.database.details.type !== HYPER_CONNECTOR) {
-                navigate({ type: OPEN_NOTEBOOK, value: item.notebookId });
-            } else {
-                const params = item.database.details.value.proto.setupParams;
-                if (params == null) {
-                    navigate({ type: OPEN_NOTEBOOK, value: item.notebookId });
-                    props.closeAfterSelection?.();
-                    return;
-                }
-                void hyperSetup!.setup(
-                    action => databaseDispatch(item.database.databaseId, action),
-                    params,
-                    abort.signal,
-                ).then(() => {
-                    if (!abort.signal.aborted) navigate({ type: SELECT_NOTEBOOK, value: item.notebookId });
-                }).catch(() => {
-                    if (!abort.signal.aborted) navigate({ type: OPEN_NOTEBOOK, value: item.notebookId });
-                }).finally(() => {
-                    if (notebookSwitchAbortRef.current === abort) notebookSwitchAbortRef.current = null;
-                });
-            }
-        }
+    const openNotebook = React.useCallback((item: NotebookItem) => {
+        navigate({ type: SELECT_NOTEBOOK, value: item.notebookId });
         props.closeAfterSelection?.();
-    }, [databaseDispatch, hyperSetup, navigate, props.closeAfterSelection, props.notebookScripts.notebookId]);
+    }, [navigate, props.closeAfterSelection]);
     const notebookListRef = React.useRef<HTMLUListElement>(null);
     const getNotebookScrollElement = React.useCallback(() => notebookListRef.current, []);
 
@@ -1175,14 +1076,37 @@ export const NotebookWorkbenchSidebar: React.FC<Props> = (props) => {
                                 )}
                             </>
                         )}
-                        <IconButton
-                            size={ButtonSize.Small}
-                            variant={ButtonVariant.Invisible}
-                            aria-label="Create notebook"
-                            onClick={event => beginCreateNotebook(event.currentTarget)}
+                        <AnchoredOverlay
+                            open={createOpen}
+                            onOpen={() => setCreateOpen(true)}
+                            onClose={() => setCreateOpen(false)}
+                            anchorRef={createButtonRef}
+                            returnFocusRef={createButtonRef}
+                            side={AnchorSide.OutsideBottom}
+                            align={AnchorAlignment.End}
+                            renderAnchor={anchorProps => <IconButton
+                                {...anchorProps}
+                                ref={createButtonRef}
+                                size={ButtonSize.Small}
+                                variant={ButtonVariant.Invisible}
+                                aria-label="Create notebook"
+                            ><PlusIcon size={14} /></IconButton>}
                         >
-                            <PlusIcon size={14} />
-                        </IconButton>
+                            <div className={actionMenuStyles.menu} role="dialog" aria-label="Choose notebook connector">
+                                <ActionList.List aria-label="Notebook connector">
+                                    {([ConnectorType.HYPER, ConnectorType.TRINO, ConnectorType.SALESFORCE_DATA_CLOUD] as const).map(connector => (
+                                        <ActionList.ListItem key={connector} onClick={() => createNotebook(connector)}>
+                                            <ActionList.Leading>
+                                                <svg width="16px" height="16px" aria-hidden="true">
+                                                    <use xlinkHref={`${symbols}#${CONNECTOR_INFOS[connector].icons.colored}`} />
+                                                </svg>
+                                            </ActionList.Leading>
+                                            <ActionList.ItemText>{CONNECTOR_INFOS[connector].names.displayShort}</ActionList.ItemText>
+                                        </ActionList.ListItem>
+                                    ))}
+                                </ActionList.List>
+                            </div>
+                        </AnchoredOverlay>
                     </div>
                 </header>
                 <div className={styles.scroll_shadow_container}>
@@ -1194,7 +1118,7 @@ export const NotebookWorkbenchSidebar: React.FC<Props> = (props) => {
                                         key={item.notebookId}
                                         item={item}
                                         selected={item.notebookId === props.notebookScripts.notebookId}
-                                        onOpen={anchor => openNotebook(item, anchor)}
+                                        onOpen={() => openNotebook(item)}
                                         onDuplicate={() => { void duplicateNotebook(item); }}
                                         onDelete={() => { void deleteNotebook(item); }}
                                         dependencies={dependencies}
@@ -1252,12 +1176,6 @@ export const NotebookWorkbenchSidebar: React.FC<Props> = (props) => {
                 isOpen={connectionOverlayDatabaseId != null}
                 onClose={closeConnectionOverlay}
                 anchorRef={connectionSettingsAnchorRef}
-                headerTitle={connectionOverlayHeader ?? undefined}
-                onConnected={pendingNotebookRef.current != null
-                    || pendingNotebookSelectionRef.current != null
-                    || route.notebookSetupStatus === NotebookSetupStatus.CONFIGURING
-                    ? finishConnectionSetup
-                    : undefined}
             />
         </nav>
     );

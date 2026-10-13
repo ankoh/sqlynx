@@ -31,6 +31,7 @@ interface Props {
     freezeInput?: boolean;
     embedded?: boolean;
     onClose?: () => void;
+    headerActions?: React.ReactNode;
     connectorNameAction?: React.ReactNode;
     statusText?: string;
     indicatorStatus?: IndicatorStatus;
@@ -141,6 +142,7 @@ export function ConnectionInlineHeader(props: Props): React.ReactElement {
                             ))}
                         </SegmentedControl>
                     )}
+                    {props.headerActions}
                     {props.onClose && (
                         <IconButton
                             variant={ButtonVariant.Invisible}

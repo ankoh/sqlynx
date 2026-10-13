@@ -8,6 +8,14 @@ import { Dispatch } from '../../utils/variant.js';
 import { SetNotebookScriptsRegistryAction } from '../notebook/scripts/notebook_scripts_registry.js';
 import { ProgressCounter } from '../../utils/progress.js';
 import { InvalidNotebook } from '../notebook/persistence/notebook_validation.js';
+import { AppLoadingStatus } from '../router/app_loading_status.js';
+import type { RouteContext } from '../router/router.js';
+
+export function canShowNotebook(route: RouteContext, pauseAfterSetup: boolean): boolean {
+    return route.appLoadingStatus === AppLoadingStatus.SETUP_DONE
+        && route.notebookId != null
+        && (!pauseAfterSetup || route.confirmedFinishedSetup);
+}
 
 export interface AppLoadingResult {
     /// Notebooks whose metadata failed validation and were refused a load (keyed by bare UUID).

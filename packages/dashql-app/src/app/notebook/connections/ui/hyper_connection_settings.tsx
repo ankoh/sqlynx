@@ -18,17 +18,17 @@ import { useLogger } from '../../../../platform/logger/logger_provider.js';
 import { useHyperGrpcClient, useHyperHttpClient } from '../hyper/hyperdb_grpc_client_provider.js';
 import { flattenKeyValueList, KeyValueListBuilder, KeyValueListElement, UpdateKeyValueList } from '../../../../ui/foundations/keyvalue_list.js';
 import { Dispatch } from '../../../../utils/variant.js';
-import { findNotebookForAttachedDatabase, useAttachedDatabaseById, useAttachedDatabaseRegistry } from '../attached_database_registry.js';
+import { findNotebookForAttachedDatabase, useAttachedDatabaseById, useAttachedDatabaseRegistry, useConnectionDraftForm } from '../attached_database_registry.js';
 import { ConnectionHealth } from '../attached_database_state.js';
 import { performHealthCheck } from '../health_check.js';
 import { useHyperSetup } from '../hyper/hyper_connection_setup.js';
-import { getHyperConnectionDetails } from '../hyper/hyper_connection_state.js';
 import { useQueryExecutor } from '../query_executor.js';
 import { useAnyConnectionNotebookScripts } from './connection_notebook_scripts.js';
 import { CONNECTOR_INFOS, ConnectorType } from '../connector_info.js';
 import { isNativePlatform } from '../../../../platform/native_globals.js';
 import { ConnectionInlineHeader } from './connection_inline_header.js';
 import { HYPERDB_WASM_ENGINE_SETTINGS } from '../../../../platform/hyperdb/hyperdb_settings.js';
+import { cancelConnectionSetup, registerConnectionSetup } from '../connection_setup_cancellation.js';
 
 const LOG_CTX = "hyper_connector";
 
@@ -75,8 +75,8 @@ export function buildHyperConnectionPageState(params: connection.HyperConnection
             key: db?.path ?? "",
             value: db?.alias ?? "",
         })),
-        gRPCMetadata: Object.entries(metadata).map(([k, v]) => ({ key: k, value: v ?? "" })),
-        queryParameters: Object.entries(params?.queryParameters ?? {}).map(([k, v]) => ({ key: k, value: v ?? "" })),
+        gRPCMetadata: params?.draftRows?.metadata ?? Object.entries(metadata).map(([k, v]) => ({ key: k, value: v ?? "" })),
+        queryParameters: params?.draftRows?.queryParameters ?? Object.entries(params?.queryParameters ?? {}).map(([k, v]) => ({ key: k, value: v ?? "" })),
     };
 }
 
@@ -101,6 +101,7 @@ export function buildHyperConnectionSetupParams(pageState: HyperConnectionPageSt
 interface Props {
     databaseId: string | null;
     onClose?: () => void;
+    headerActions?: React.ReactNode;
 }
 
 export const HyperConnectorSettings: React.FC<Props> = (props: Props) => {
@@ -118,23 +119,10 @@ export const HyperConnectorSettings: React.FC<Props> = (props: Props) => {
     const notebookId = props.databaseId == null ? null : findNotebookForAttachedDatabase(registry, props.databaseId);
     const [connectionState, dispatchAttachedDatabaseState] = useAttachedDatabaseById(props.databaseId);
     const connectionNotebookScripts = useAnyConnectionNotebookScripts(notebookId);
-    const hyperConnection = getHyperConnectionDetails(connectionState);
 
-    // Seed the form state from the restored connection params so a notebook
-    // that was saved across an app restart displays its endpoint/etc.
-    // Re-seeds whenever the stored setupParams reference changes (notebook
-    // switch, async storage hydration, or an action like RESET that swaps
-    // the wrapper state).
-    const [pageState, setPageState] = React.useState<HyperConnectionPageState>(() =>
-        buildHyperConnectionPageState(hyperConnection?.proto.setupParams));
-    const seededParamsRef = React.useRef(hyperConnection?.proto.setupParams);
-    React.useEffect(() => {
-        const params = hyperConnection?.proto.setupParams;
-        if (params !== seededParamsRef.current) {
-            seededParamsRef.current = params;
-            setPageState(buildHyperConnectionPageState(params));
-        }
-    }, [hyperConnection]);
+    const [pageState, setPageState] = useConnectionDraftForm(props.databaseId,
+        params => buildHyperConnectionPageState(params && 'hyper' in params ? params.hyper as connection.HyperConnectionParams : undefined),
+        form => ({ hyper: { ...buildHyperConnectionSetupParams(form), draftRows: { metadata: form.gRPCMetadata, queryParameters: form.queryParameters } } }));
 
     const protocol = pageState.protocol;
 
@@ -163,7 +151,7 @@ export const HyperConnectorSettings: React.FC<Props> = (props: Props) => {
     React.useEffect(() => {
         setClientIdentityValidation({ type: VALIDATION_UNKNOWN, value: null });
         setEndpointValidation({ type: VALIDATION_UNKNOWN, value: null });
-    }, [hyperConnection?.proto.setupParams, pageState.protocol, pageState.endpoint, pageState.mTlsKeyPath, pageState.mTlsPubPath, pageState.mTlsCaPath]);
+    }, [connectionState?.paramsDraft, pageState.protocol, pageState.endpoint, pageState.mTlsKeyPath, pageState.mTlsPubPath, pageState.mTlsCaPath]);
 
     // Helper to setup the connection
     const setupParams = React.useMemo<connection.HyperConnectionParams>(() => buildHyperConnectionSetupParams(pageState), [pageState]);
@@ -203,12 +191,14 @@ export const HyperConnectorSettings: React.FC<Props> = (props: Props) => {
             return;
         }
 
+        const controller = new AbortController();
+        const unregister = registerConnectionSetup(connectionState.databaseId, controller);
         try {
             // Setup the Hyper connection
-            setupAbortController.current = new AbortController();
-            const hyperChannel = await hyperSetup.setup(dispatchAttachedDatabaseState, setupParams, setupAbortController.current.signal);
+            setupAbortController.current = controller;
+            const hyperChannel = await hyperSetup.setup(dispatchAttachedDatabaseState, setupParams, controller.signal);
             if (hyperChannel != null && protocol !== 'WASM') {
-                await performHealthCheck(queryExecutor, connectionState.databaseId, { type: 'hyper', channel: hyperChannel }, dispatchAttachedDatabaseState, setupAbortController.current.signal);
+                await performHealthCheck(queryExecutor, connectionState.databaseId, { type: 'hyper', channel: hyperChannel }, dispatchAttachedDatabaseState, controller.signal);
             }
 
             // Start the the inital catalog update
@@ -216,15 +206,17 @@ export const HyperConnectorSettings: React.FC<Props> = (props: Props) => {
 
         } catch (error: any) {
             // XXX
+        } finally {
+            unregister();
+            if (setupAbortController.current === controller) setupAbortController.current = null;
         }
-
-        setupAbortController.current = null;
     };
 
     // Helper to cancel and reset the authorization
     const cancelSetup = () => {
+        if (props.databaseId != null) cancelConnectionSetup(props.databaseId);
         if (setupAbortController.current) {
-            setupAbortController.current.abort("abort the Hyper setup");
+            setupAbortController.current.abort(new DOMException('Connection setup cancelled', 'AbortError'));
             setupAbortController.current = null;
         }
     };
@@ -245,7 +237,6 @@ export const HyperConnectorSettings: React.FC<Props> = (props: Props) => {
             freezeInput = true;
             break;
         case ConnectionHealth.ONLINE:
-            freezeInput = true;
             break;
     }
 
@@ -265,6 +256,7 @@ export const HyperConnectorSettings: React.FC<Props> = (props: Props) => {
                 freezeInput={freezeInput}
                 embedded={protocol === 'WASM'}
                 onClose={props.onClose}
+                headerActions={props.headerActions}
             />
             {protocol === 'WASM' ? (
                 <div className={style.body_container}>

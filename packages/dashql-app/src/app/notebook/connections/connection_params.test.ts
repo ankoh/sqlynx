@@ -25,6 +25,37 @@ describe('createDefaultConnectionParamsForConnector', () => {
 });
 
 describe('sanitizeConnectionParamsForSharing', () => {
+    it('omits all Hyper headers and query parameters without mutating local settings', () => {
+        const params: ConnectionParams = { hyper: {
+            protocol: 'V3_HTTP', endpoint: 'https://hyper.example.com',
+            tls: { clientKeyPath: '', clientCertPath: '', caCertsPath: '' },
+            attachedDatabases: [{ path: 'database.hyper', alias: 'db' }],
+            metadata: { authorization: 'bearer-secret', Cookie: 'session-secret', 'x-api-key': 'key-secret', arbitrary: 'unknown-secret' },
+            queryParameters: { password: 'query-secret', harmless: 'value' },
+            draftRows: { metadata: [{ key: '', value: 'draft-secret' }] },
+        } };
+        const sanitized = sanitizeConnectionParamsForSharing(params);
+        expect(sanitized).toEqual({ hyper: {
+            protocol: 'V3_HTTP', endpoint: 'https://hyper.example.com',
+            tls: { clientKeyPath: '', clientCertPath: '', caCertsPath: '' },
+            attachedDatabases: [{ path: 'database.hyper', alias: 'db' }],
+        } });
+        expect(params.hyper.metadata?.authorization).toBe('bearer-secret');
+        expect(params.hyper.queryParameters?.password).toBe('query-secret');
+    });
+
+    it('omits all Trino headers while preserving nonsecret connection identity', () => {
+        const params: ConnectionParams = { trino: {
+            endpoint: 'https://trino.example.com', catalogName: 'catalog', schemaNames: ['public'],
+            auth: { authType: 'AUTH_BASIC', basic: { username: 'alice', secret: 'password' } },
+            metadata: { Authorization: 'bearer-secret', cookie: 'session-secret', api_key: 'key-secret', arbitrary: 'unknown-secret' },
+        } };
+        expect(sanitizeConnectionParamsForSharing(params)).toEqual({ trino: {
+            endpoint: 'https://trino.example.com', catalogName: 'catalog', schemaNames: ['public'],
+            auth: { authType: 'AUTH_BASIC', basic: { username: 'alice', secret: '' } },
+        } });
+        expect(params.trino.metadata?.Authorization).toBe('bearer-secret');
+    });
     it('strips the salesforce consumer secret but keeps the identity and login hint', () => {
         const params: ConnectionParams = {
             salesforce: {

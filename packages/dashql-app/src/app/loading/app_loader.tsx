@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { AppLoadingStatus } from '../router/app_loading_status.js';
-import { BEGIN_NOTEBOOK_SETUP, OPEN_LINK_NOTEBOOK, SELECT_NOTEBOOK, useRouteContext, useRouterNavigate } from '../router/router.js';
+import { OPEN_LINK_NOTEBOOK, SELECT_NOTEBOOK, useRouteContext, useRouterNavigate } from '../router/router.js';
 import { resolveNotebookExecutionDatabase, useAttachedDatabaseRegistry, useAttachedDatabaseStateAllocator, useDynamicAttachedDatabaseDispatch } from '../notebook/connections/attached_database_registry.js';
 import { useDashQLCoreSetup } from '../providers/core_provider.js';
 import { useLogger } from '../../platform/logger/logger_provider.js';
@@ -12,9 +12,10 @@ import { AppLoadingPage } from '../ui/app_loading_page.js';
 import { SETUP_NOTEBOOK, SETUP_NOTEBOOK_URL, SetupEventVariant } from '../../platform/events/event.js';
 import { AppLoadingProgress } from './app_loading_progress.js';
 import { ProgressCounter } from '../../utils/progress.js';
-import { loadApp, selectStartupNotebook, shouldFinishInitialNavigation } from './app_loading_logic.js';
+import { canShowNotebook, loadApp, selectStartupNotebook, shouldFinishInitialNavigation } from './app_loading_logic.js';
 import { useAppConfig, useAppReconfigure } from '../config/app_config.js';
 import { useStorage } from '../notebook/persistence/storage_provider.js';
+import { groupNotebookManifestWrites, WRITE_NOTEBOOK_MANIFEST } from '../notebook/persistence/storage_writer.js';
 import { useNotebookScriptsRegistry } from '../notebook/scripts/notebook_scripts_registry.js';
 import { useEmbeddedDatabaseSetup } from '../../platform/database/embedded_database_provider.js';
 import { InvalidNotebook } from '../notebook/persistence/notebook_validation.js';
@@ -34,8 +35,7 @@ import { createDefaultHyperWasmAttachedDatabaseState } from '../notebook/connect
 import { useAppSettingsReady } from '../config/app_settings_sync.js';
 import { InvalidNotebookRegistryProvider } from '../notebook/persistence/invalid_notebook_registry.js';
 import { useHyperSetup } from '../notebook/connections/hyper/hyper_connection_setup.js';
-import { ConnectionHealth } from '../notebook/connections/attached_database_state.js';
-import { HYPER_CONNECTOR } from '../notebook/connections/connector_info.js';
+import { useInitialMemorySetup } from './initial_memory_setup.js';
 import { NotebookSetupStatus } from '../router/notebook_setup_status.js';
 import { NarrowScreenWarning, useNarrowScreenWarning } from '../ui/narrow_screen_warning.js';
 
@@ -86,7 +86,6 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
         progress: HttpNotebookLoadProgress;
     } | null>(null);
     const remoteNotebookAbortRef = React.useRef<AbortController | null>(null);
-    const openingAttemptRef = React.useRef<{ databaseId: string; abort: AbortController } | null>(null);
     // Normal startup must not replace the route selected by an inline notebook import.
     const initialInlineSetupRef = React.useRef<Promise<boolean> | null>(null);
     // Notebooks whose metadata was refused a load. Surfaced (marked invalid, blocked, deletable) in
@@ -108,42 +107,18 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
     }, []);
 
     React.useEffect(() => {
-        if (routeContext.notebookSetupStatus !== NotebookSetupStatus.OPENING || routeContext.notebookId == null) {
-            openingAttemptRef.current?.abort.abort('notebook opening changed');
-            openingAttemptRef.current = null;
-            return;
+        if (routeContext.notebookSetupStatus === NotebookSetupStatus.OPENING && routeContext.notebookId != null) {
+            navigate({ type: SELECT_NOTEBOOK, value: routeContext.notebookId });
         }
-        const notebookId = routeContext.notebookId;
-        const database = resolveNotebookExecutionDatabase(connReg, notebookId);
-        if (database == null || openingAttemptRef.current?.databaseId === database.databaseId) return;
-        if (database.connectionHealth === ConnectionHealth.ONLINE) {
-            navigate({ type: SELECT_NOTEBOOK, value: notebookId });
-            return;
-        }
-        const params = database.details.type === HYPER_CONNECTOR
-            ? database.details.value.proto.setupParams
-            : null;
-        if (database.connectionHealth !== ConnectionHealth.NOT_STARTED
-            || params?.protocol !== 'WASM'
-            || hyperSetup == null) {
-            navigate({ type: BEGIN_NOTEBOOK_SETUP, value: notebookId });
-            return;
-        }
-        const abort = new AbortController();
-        openingAttemptRef.current = { databaseId: database.databaseId, abort };
-        void hyperSetup.setup(
-            action => dispatchDatabase(database.databaseId, action),
-            params,
-            abort.signal,
-        ).then(() => {
-            if (!abort.signal.aborted) navigate({ type: SELECT_NOTEBOOK, value: notebookId });
-        }).catch(() => {
-            if (!abort.signal.aborted) navigate({ type: BEGIN_NOTEBOOK_SETUP, value: notebookId });
-        }).finally(() => {
-            if (openingAttemptRef.current?.abort === abort) openingAttemptRef.current = null;
-        });
-    }, [connReg, dispatchDatabase, hyperSetup, navigate, routeContext.notebookId, routeContext.notebookSetupStatus]);
-    React.useEffect(() => () => openingAttemptRef.current?.abort.abort('app loader unmounted'), []);
+    }, [navigate, routeContext.notebookId, routeContext.notebookSetupStatus]);
+
+    useInitialMemorySetup(
+        routeContext.notebookId,
+        routeContext.notebookId == null ? null : resolveNotebookExecutionDatabase(connReg, routeContext.notebookId),
+        hyperSetup,
+        dispatchDatabase,
+        logger,
+    );
 
     // Callback to consume setup event.
     // This function is called through os deep links and when opening DashQL by through .dashql files
@@ -368,9 +343,13 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
                     notebookId = crypto.randomUUID();
                     const database = allocateAttachedDatabase(
                         notebookId,
-                        createDefaultHyperWasmAttachedDatabaseState(core, connReg.attachedDatabasesBySignature),
+                        { ...createDefaultHyperWasmAttachedDatabaseState(core, connReg.attachedDatabasesBySignature), active: true },
                     );
                     setupNotebookScripts(notebookId, database, 'Default');
+                    void storageWriter.write(groupNotebookManifestWrites(notebookId), {
+                        type: WRITE_NOTEBOOK_MANIFEST,
+                        value: [notebookId, database.databaseId, [database]],
+                    });
                 }
                 navigate({
                     type: OPEN_LINK_NOTEBOOK,
@@ -442,20 +421,9 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
         />;
     }
 
-    if (routeContext.appLoadingStatus == AppLoadingStatus.SETUP_DONE
-        && routeContext.notebookSetupStatus === NotebookSetupStatus.OPENING) {
-        return <AppLoadingPage
-            pauseAfterSetup={false}
-            progress={loadingProgress}
-            embeddedDatabaseStatus={embeddedDatabaseStatus}
-        />;
-    }
-
     // Setup done and notebook selected? Show main interface
     const pauseAfterSetup = config?.settings?.pauseAfterAppSetup ?? false;
-    if (routeContext.appLoadingStatus == AppLoadingStatus.SETUP_DONE &&
-        routeContext.notebookId !== null &&
-        (!pauseAfterSetup || routeContext.confirmedFinishedSetup)) {
+    if (canShowNotebook(routeContext, pauseAfterSetup)) {
         return (
             <InvalidNotebookRegistryProvider value={{ invalidNotebooks, deleteInvalidNotebook }}>
                 {props.children}

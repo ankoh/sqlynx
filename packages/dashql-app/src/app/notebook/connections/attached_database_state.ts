@@ -45,6 +45,11 @@ import { ConnectionSignatureMap, ConnectionSignatureState, newConnectionSignatur
 import { StorageWriter } from '../persistence/storage_writer.js';
 import { Logger } from '../../../platform/logger/logger.js';
 import { invalidateCatalogBatch, publishCatalogBatchSync, type CatalogBatchEntry } from './catalog_batch.js';
+import { connectionParamsEqual, connectionParamsWithoutDraftRows, getConnectionInfoFromParams, getConnectionParamsFromStateDetails, type ConnectionParams } from './connection_params.js';
+import { HYPER_CHANNEL_SETUP_STARTED } from './hyper/hyper_connection_state.js';
+import { OAUTH_STARTED, TRINO_CHANNEL_SETUP_STARTED } from './trino/trino_connection_state.js';
+import { SETUP_STARTED } from './salesforce/salesforce_connection_state.js';
+import { cancelConnectionSetup } from './connection_setup_cancellation.js';
 
 export interface CatalogUpdates {
     /// The running tasks
@@ -70,8 +75,8 @@ export interface AttachedDatabaseState {
     /// The connection state contains many references into the Wasm heap.
     /// It therefore makes sense that connection state users resolve the "right" module through here.
     instance: core.DashQL;
-    /// Whether this connection has been activated (setup completed at least once).
-    /// Storage writes are suppressed until this is true.
+    /// Whether the database belongs to a committed notebook or has connected at least once.
+    /// Draft manifest writes are independent of activation; catalog writes require activation.
     active: boolean;
 
     /// The connection state
@@ -85,6 +90,14 @@ export interface AttachedDatabaseState {
 
     /// The connection details
     details: ConnectionStateDetailsVariant;
+    /// Last successful parameters (initial defaults until the first successful setup).
+    params: ConnectionParams;
+    /// Local editable settings, independent of the runtime channel and OAuth state.
+    paramsDraft?: ConnectionParams;
+    /// Immutable input of the current setup attempt; never persisted.
+    setupAttemptParams?: ConnectionParams;
+    /// Draft at attempt start, including raw form rows, for exact successful-discard comparison.
+    setupAttemptDraft?: ConnectionParams;
     /// The connection statistics
     metrics: connection.ConnectionMetrics;
 
@@ -210,6 +223,8 @@ export const HEALTH_CHECK_STARTED = Symbol('HEALTH_CHECK_STARTED');
 export const HEALTH_CHECK_CANCELLED = Symbol('HEALTH_CHECK_CANCELLED');
 export const HEALTH_CHECK_SUCCEEDED = Symbol('HEALTH_CHECK_SUCCEEDED');
 export const HEALTH_CHECK_FAILED = Symbol('HEALTH_CHECK_FAILED');
+export const SET_CONNECTION_DRAFT = Symbol('SET_CONNECTION_DRAFT');
+export const DISCARD_CONNECTION_DRAFT = Symbol('DISCARD_CONNECTION_DRAFT');
 
 export type CatalogAction =
     | VariantKind<typeof SET_CATALOG_SCRIPT, dashql.DashQLScript>
@@ -223,6 +238,8 @@ export type CatalogAction =
     ;
 
 export type AttachedDatabaseAction =
+    | VariantKind<typeof SET_CONNECTION_DRAFT, ConnectionParams>
+    | VariantKind<typeof DISCARD_CONNECTION_DRAFT, null>
     | VariantKind<typeof DELETE_ATTACHED_DATABASE, null>
     | VariantKind<typeof RESET_ATTACHED_DATABASE, null>
     | VariantKind<typeof SWITCH_CONNECTOR_TYPE, ConnectorType>
@@ -236,6 +253,29 @@ export type AttachedDatabaseAction =
 
 export function reduceAttachedDatabaseState(state: AttachedDatabaseState, action: AttachedDatabaseAction, storage: StorageWriter, _logger: Logger): AttachedDatabaseState {
     switch (action.type) {
+        case SET_CONNECTION_DRAFT: {
+            if (getConnectionInfoFromParams(action.value)?.connectorType !== state.connectorInfo.connectorType) return state;
+            const paramsDraft = structuredClone(action.value);
+            if (connectionParamsEqual(state.paramsDraft, paramsDraft)) return state;
+            return { ...state, paramsDraft };
+        }
+        case DISCARD_CONNECTION_DRAFT: {
+            if (state.connectionHealth === ConnectionHealth.CONNECTING) return state;
+            const details = {
+                ...state.details,
+                value: {
+                    ...state.details.value,
+                    proto: {
+                        ...state.details.value.proto,
+                        setupError: undefined,
+                        channelError: undefined,
+                        schemaResolutionError: undefined,
+                        healthCheckError: undefined,
+                    },
+                },
+            } as unknown as ConnectionStateDetailsVariant;
+            return { ...state, paramsDraft: undefined, details };
+        }
         case SET_CATALOG_SCRIPT:
             return {
                 ...state,
@@ -271,6 +311,7 @@ export function reduceAttachedDatabaseState(state: AttachedDatabaseState, action
 
         // RESET_ATTACHED_DATABASE is a bit special since we want to clean up our details as well
         case RESET_ATTACHED_DATABASE: {
+            cancelConnectionSetup(state.databaseId);
             // Reset the DashQL catalog
             invalidateCatalogBatch(state.catalog);
             for (const task of state.catalogUpdates.tasksRunning.values()) {
@@ -285,6 +326,8 @@ export function reduceAttachedDatabaseState(state: AttachedDatabaseState, action
                 ...state,
                 connectionStatus: ConnectionStatus.NOT_STARTED,
                 connectionHealth: ConnectionHealth.NOT_STARTED,
+                setupAttemptParams: undefined,
+                setupAttemptDraft: undefined,
                 metrics: createConnectionMetrics(),
                 catalogUpdates: {
                     tasksRunning: new Map(),
@@ -319,7 +362,7 @@ export function reduceAttachedDatabaseState(state: AttachedDatabaseState, action
         // SWITCH_CONNECTOR_TYPE changes the connection's type in-place.
         // Only allowed when the connection hasn't been configured yet.
         case SWITCH_CONNECTOR_TYPE: {
-            if (state.connectionStatus !== ConnectionStatus.NOT_STARTED) {
+            if (state.connectionStatus !== ConnectionStatus.NOT_STARTED || state.active || state.paramsDraft != null) {
                 return state;
             }
             const newType = action.value;
@@ -334,6 +377,10 @@ export function reduceAttachedDatabaseState(state: AttachedDatabaseState, action
                 connectorInfo: newInfo,
                 connectionSignature: newConnectionSignature(newSig, state.connectionSignature.signatures, null),
                 details: newDetails,
+                params: getConnectionParamsFromStateDetails(newDetails)!,
+                paramsDraft: undefined,
+                setupAttemptParams: undefined,
+                setupAttemptDraft: undefined,
             };
         }
 
@@ -348,6 +395,7 @@ export function reduceAttachedDatabaseState(state: AttachedDatabaseState, action
 
         /// DELETE_ATTACHED_DATABASE deletes the attached database state
         case DELETE_ATTACHED_DATABASE: {
+            cancelConnectionSetup(state.databaseId);
             invalidateCatalogBatch(state.catalog);
             for (const task of state.catalogUpdates.tasksRunning.values()) {
                 task.cancellation.abort(new DOMException('Attached database was deleted', 'AbortError'));
@@ -411,6 +459,24 @@ export function reduceAttachedDatabaseState(state: AttachedDatabaseState, action
         }
 
         default: {
+            // Capture setup input before connector reducers replace runtime setupParams.
+            let setupAttemptParams = state.setupAttemptParams;
+            let setupAttemptDraft = state.setupAttemptDraft;
+            switch (action.type) {
+                case HYPER_CHANNEL_SETUP_STARTED:
+                    setupAttemptParams = structuredClone({ hyper: action.value });
+                    setupAttemptDraft = state.paramsDraft;
+                    break;
+                case OAUTH_STARTED:
+                case TRINO_CHANNEL_SETUP_STARTED:
+                    setupAttemptParams = structuredClone({ trino: action.value });
+                    setupAttemptDraft = state.setupAttemptParams == null ? state.paramsDraft : state.setupAttemptDraft;
+                    break;
+                case SETUP_STARTED:
+                    setupAttemptParams = structuredClone({ salesforce: action.value });
+                    setupAttemptDraft = state.paramsDraft;
+                    break;
+            }
             // Dispatch to the individual state detail handlers
             let newState: AttachedDatabaseState | null = null;
             switch (state.details.type) {
@@ -426,6 +492,28 @@ export function reduceAttachedDatabaseState(state: AttachedDatabaseState, action
             }
             if (newState == null) {
                 throw new Error(`failed to apply state action: ${String(action.type)}`);
+            }
+            newState = { ...newState, setupAttemptParams, setupAttemptDraft };
+            if (newState.connectionHealth === ConnectionHealth.ONLINE
+                && state.connectionHealth !== ConnectionHealth.ONLINE && setupAttemptParams != null) {
+                newState = {
+                    ...newState,
+                    params: connectionParamsWithoutDraftRows(setupAttemptParams),
+                    paramsDraft: connectionParamsEqual(state.paramsDraft, setupAttemptDraft)
+                        && (setupAttemptDraft == null || connectionParamsEqual(connectionParamsWithoutDraftRows(setupAttemptDraft), connectionParamsWithoutDraftRows(setupAttemptParams)))
+                        ? undefined : state.paramsDraft,
+                    setupAttemptParams: undefined,
+                    setupAttemptDraft: undefined,
+                };
+                if ('salesforce' in setupAttemptParams && newState.details.type === SALESFORCE_DATA_CLOUD_CONNECTOR) {
+                    newState.params = { salesforce: {
+                        ...setupAttemptParams.salesforce,
+                        login: newState.details.value.proto.setupParams?.login ?? setupAttemptParams.salesforce.login,
+                    } };
+                }
+            } else if (newState.connectionHealth === ConnectionHealth.FAILED || newState.connectionHealth === ConnectionHealth.CANCELLED) {
+                newState.setupAttemptParams = undefined;
+                newState.setupAttemptDraft = undefined;
             }
 
             // Embedded connectors become online as soon as their local channel is ready, without a
@@ -459,6 +547,7 @@ export function createAttachedDatabaseState(dql: dashql.DashQL, info: ConnectorI
         connectionSignature: newConnectionSignature(connSig, connSigs, null),
         metrics: createConnectionMetrics(),
         details,
+        params: getConnectionParamsFromStateDetails(details)!,
         catalog,
         catalogUpdates: {
             tasksRunning: new Map(),
@@ -497,6 +586,7 @@ export function createAttachedDatabaseStateForType(dql: dashql.DashQL, type: Con
         connectionSignature: newConnectionSignature(connSig, connSigs, null),
         metrics: connMetrics,
         details: connDetails,
+        params: getConnectionParamsFromStateDetails(connDetails)!,
         catalog,
         catalogUpdates: {
             tasksRunning: new Map(),

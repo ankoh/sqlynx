@@ -103,6 +103,33 @@ describe('V2 app state loader', () => {
         expect(result.notebookScripts.get(TEST_NOTEBOOK_ID)?.databaseId).toBe(remoteId);
     });
 
+    it('restores invalid drafts separately from committed settings without runtime OAuth state', async () => {
+        const params = { salesforce: { instanceUrl: 'https://committed.example', appConsumerKey: 'key' } } as any;
+        const paramsDraft = { salesforce: { instanceUrl: '', appConsumerKey: 'unfinished' } } as any;
+        vi.mocked(backend.loadNotebook).mockResolvedValue(testNotebook({
+            mainDatabase: { databaseId: TEST_DATABASE_ID, params, paramsDraft },
+        }));
+        const result = await restoreAppState(core, backend, new NullLogger(), () => {}, processor);
+        const restored = result.connectionStates.get(TEST_DATABASE_ID)!;
+        expect(restored.params).toEqual(params);
+        expect(restored.paramsDraft).toEqual(paramsDraft);
+        expect(restored.details.value.proto.setupParams).toEqual(params.salesforce);
+        expect('oauthState' in restored.details.value.proto).toBe(false);
+    });
+
+    it('restores partially typed raw draft rows after manifest serialization', async () => {
+        const rows = [{ key: '', value: 'partial' }, { key: '', value: '' }];
+        const manifest = testNotebook({ mainDatabase: {
+            databaseId: TEST_DATABASE_ID,
+            params: { hyper: { protocol: 'WASM', endpoint: '', tls: { clientKeyPath: '', clientCertPath: '', caCertsPath: '' } } },
+            paramsDraft: { hyper: { protocol: 'V3_HTTP', endpoint: 'unfinished', tls: { clientKeyPath: '', clientCertPath: '', caCertsPath: '' }, draftRows: { metadata: rows, queryParameters: rows } } },
+        } });
+        vi.mocked(backend.loadNotebook).mockResolvedValue(JSON.parse(JSON.stringify(manifest)));
+        const result = await restoreAppState(core, backend, new NullLogger(), () => {}, processor);
+        expect(result.connectionStates.get(TEST_DATABASE_ID)?.paramsDraft).toEqual(manifest.mainDatabase.paramsDraft);
+        expect(result.connectionStates.get(TEST_DATABASE_ID)?.params).toEqual(manifest.mainDatabase.params);
+    });
+
     it('keeps the local database as main when a remote is attached', async () => {
         const remoteId = 'ffffffff-eeee-4ddd-8ccc-bbbbbbbbbbbb';
         vi.mocked(backend.loadNotebook).mockResolvedValue(testNotebook({

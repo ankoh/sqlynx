@@ -4,8 +4,9 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ConnectionHealth, type AttachedDatabaseState } from '../connections/attached_database_state.js';
-import { HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR } from '../connections/connector_info.js';
+import { CONNECTOR_INFOS, ConnectorType, HYPER_CONNECTOR, SALESFORCE_DATA_CLOUD_CONNECTOR } from '../connections/connector_info.js';
 import { NotebookSetupStatus } from '../../router/notebook_setup_status.js';
+import { SELECT_NOTEBOOK } from '../../router/router.js';
 import { NotebookWorkbenchSidebar, type NotebookWorkbenchSidebarDependencies } from './notebook_workbench_sidebar.js';
 
 vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
@@ -16,6 +17,9 @@ const state = {
     setupNotebookScripts: vi.fn(),
     write: vi.fn<() => Promise<boolean>>(),
     refreshCatalog: vi.fn(),
+    createConnectionStateFromParams: vi.fn(),
+    deleteNotebook: vi.fn(),
+    allocateDatabase: vi.fn(),
     local: null as AttachedDatabaseState | null,
     overlayProps: null as { databaseId: string | null; headerTitle?: string; isOpen: boolean; onClose: () => void; onConnected?: (database: AttachedDatabaseState) => void } | null,
     shareProps: null as { isOpen: boolean; notebookId?: string } | null,
@@ -39,7 +43,7 @@ const dependencies = {
         attachedDatabasesByNotebook: state.attachedDatabasesByNotebook,
         attachedDatabasesBySignature: new Map(),
     }, state.dispatchDatabase],
-    useAttachedDatabaseStateAllocator: () => () => state.local,
+    useAttachedDatabaseStateAllocator: () => state.allocateDatabase,
     ConnectionSettingsOverlay: (props: typeof state.overlayProps) => {
         state.overlayProps = props;
         return props?.isOpen ? <button onClick={() => props.onConnected?.(state.local!)}>Complete setup</button> : null;
@@ -54,7 +58,7 @@ const dependencies = {
     }),
     useStorageWriter: () => ({
         write: state.write,
-        backend: {},
+        backend: { deleteNotebook: state.deleteNotebook },
         cancelPendingWritesForNotebook: vi.fn(),
     }),
     useComputationRegistry: () => [null, vi.fn()],
@@ -73,8 +77,8 @@ const dependencies = {
     useDashQLCoreSetup: () => vi.fn(),
     usePlatformType: () => 0,
     useLogger: () => ({ warn: vi.fn(), error: vi.fn() }),
-    useHyperSetup: () => null,
     createDefaultHyperWasmAttachedDatabaseState: () => ({ type: 'local' }),
+    createConnectionStateFromParams: (...args: unknown[]) => state.createConnectionStateFromParams(...args),
 } as unknown as NotebookWorkbenchSidebarDependencies;
 
 describe('NotebookWorkbenchSidebar notebook creation', () => {
@@ -90,6 +94,8 @@ describe('NotebookWorkbenchSidebar notebook creation', () => {
         state.setupNotebookScripts.mockReset();
         state.write.mockReset().mockResolvedValue(true);
         state.refreshCatalog.mockReset();
+        state.createConnectionStateFromParams.mockReset().mockReturnValue({ type: 'remote' });
+        state.deleteNotebook.mockReset();
         state.overlayProps = null;
         state.shareProps = null;
         state.fileSaveProps = null;
@@ -102,6 +108,7 @@ describe('NotebookWorkbenchSidebar notebook creation', () => {
             databaseId: 'local-database',
             details: { type: HYPER_CONNECTOR, value: { proto: { setupParams: { protocol: 'WASM' } } } },
         } as AttachedDatabaseState;
+        state.allocateDatabase.mockReset().mockReturnValue(state.local);
         vi.spyOn(crypto, 'randomUUID').mockReturnValue('00000000-0000-4000-8000-000000000001');
         act(() => root.render(<NotebookWorkbenchSidebar notebookScripts={{
             notebookId: 'current-notebook',
@@ -155,28 +162,83 @@ describe('NotebookWorkbenchSidebar notebook creation', () => {
         expect(container.querySelector('[aria-label="2 attached databases"]')?.textContent).toBe('2');
     });
 
-    it('creates a notebook only after the selected main database connects', async () => {
-        click('Create notebook');
-        expect(state.overlayProps).toMatchObject({ headerTitle: 'Create notebook' });
-        expect(state.setupNotebookScripts).not.toHaveBeenCalled();
-        await act(async () => {
+    it('keeps ordinary settings open for an online database without a completion callback', () => {
+        const main = {
+            ...state.local!,
+            connectionHealth: ConnectionHealth.ONLINE,
+            connectorInfo: CONNECTOR_INFOS[ConnectorType.HYPER],
+            catalog: { createSnapshot: () => ({
+                read: () => ({ catalogReader: { databasesLength: () => 0 } }),
+            }) },
+            catalogUpdates: { currentFullRefresh: null, tasksRunning: new Map() },
+        } as AttachedDatabaseState;
+        state.notebookAttachedDatabases = { main, attached: [] };
+        act(() => root.render(<NotebookWorkbenchSidebar notebookScripts={{
+            notebookId: 'current-notebook', instance: {},
+        } as any} dependencies={dependencies} />));
+        click('More actions for Memory');
+        act(() => {
+            Array.from(document.querySelectorAll('button')).find(button => button.textContent === 'Settings')!.click();
+        });
+        expect(state.overlayProps).toMatchObject({ databaseId: main.databaseId, isOpen: true });
+        expect(state.overlayProps?.onConnected).toBeUndefined();
+        act(() => {
             Array.from(container.querySelectorAll('button')).find(button => button.textContent === 'Complete setup')!.click();
-            await Promise.resolve();
+        });
+        expect(state.overlayProps?.isOpen).toBe(true);
+        expect(state.navigate).not.toHaveBeenCalled();
+    });
+
+    it.each(['Hyper', 'Trino', 'Salesforce'])('creates and selects a %s notebook before connecting', async connector => {
+        state.write.mockReturnValue(new Promise(() => {}));
+        click('Create notebook');
+        expect(state.setupNotebookScripts).not.toHaveBeenCalled();
+        expect(Array.from(document.querySelectorAll('button')).some(button => button.textContent === 'Memory')).toBe(false);
+        const choice = Array.from(document.querySelectorAll('button')).find(button => button.textContent === connector)!;
+        expect(choice.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
+        expect(choice.querySelector('use')?.getAttribute('xlink:href')).toContain(
+            `#${connector === 'Salesforce' ? 'salesforce_notext' : connector.toLowerCase()}`,
+        );
+        act(() => {
+            choice.click();
         });
         expect(state.setupNotebookScripts).toHaveBeenCalledWith(
             '00000000-0000-4000-8000-000000000001',
             state.local,
         );
+        expect(state.allocateDatabase).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ active: true }));
         expect(state.navigate).toHaveBeenCalledWith({
-            type: expect.any(Symbol),
+            type: SELECT_NOTEBOOK,
             value: '00000000-0000-4000-8000-000000000001',
         });
+        expect(state.write).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({
+            value: ['00000000-0000-4000-8000-000000000001', 'local-database', [state.local]],
+        }));
+        expect(state.overlayProps?.isOpen).toBe(false);
+        if (connector === 'Hyper') {
+            expect(state.allocateDatabase).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ type: 'local' }));
+            expect(state.createConnectionStateFromParams).not.toHaveBeenCalled();
+        } else {
+            const params = state.createConnectionStateFromParams.mock.calls[0][1];
+            expect(Object.keys(params)).toEqual([connector === 'Salesforce' ? 'salesforce' : connector.toLowerCase()]);
+        }
+        act(() => root.render(<NotebookWorkbenchSidebar notebookScripts={{
+            notebookId: 'current-notebook', instance: {},
+        } as any} dependencies={{
+            ...dependencies,
+            useRouteContext: () => ({
+                notebookId: 'current-notebook', notebookSetupStatus: NotebookSetupStatus.CONFIGURING,
+            } as ReturnType<NotebookWorkbenchSidebarDependencies['useRouteContext']>),
+        }} />));
+        act(() => state.overlayProps!.onClose());
+        expect(state.deleteNotebook).not.toHaveBeenCalled();
+        expect(state.dispatchDatabase).not.toHaveBeenCalled();
     });
 
-    it('logs into a disconnected notebook in the workbench before selecting it', async () => {
+    it.each([ConnectionHealth.NOT_STARTED, ConnectionHealth.CONNECTING, ConnectionHealth.FAILED, ConnectionHealth.CANCELLED])('selects a disconnected notebook immediately (%s)', async connectionHealth => {
         const database = {
             databaseId: 'salesforce-database',
-            connectionHealth: ConnectionHealth.NOT_STARTED,
+            connectionHealth,
             connectorInfo: { icons: { colored: 'salesforce' } },
             details: {
                 type: SALESFORCE_DATA_CLOUD_CONNECTOR,
@@ -204,21 +266,9 @@ describe('NotebookWorkbenchSidebar notebook creation', () => {
                 .click();
         });
 
-        expect(state.overlayProps).toMatchObject({
-            databaseId: database.databaseId,
-            headerTitle: 'Open Salesforce notebook',
-            isOpen: true,
-        });
-        expect(state.navigate).not.toHaveBeenCalled();
-
-        await act(async () => {
-            await state.overlayProps!.onConnected?.({
-                ...database,
-                connectionHealth: ConnectionHealth.ONLINE,
-            });
-        });
+        expect(state.overlayProps?.isOpen).toBe(false);
         expect(state.navigate).toHaveBeenCalledWith({
-            type: expect.any(Symbol),
+            type: SELECT_NOTEBOOK,
             value: 'salesforce-notebook',
         });
     });

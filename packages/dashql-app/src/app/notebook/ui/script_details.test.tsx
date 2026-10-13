@@ -8,11 +8,12 @@ import * as dashql from '@ankoh/dashql-core';
 import { DELETE_SCRIPT, RENAME_SCRIPT, SET_SCRIPT_TEXT, type NotebookScripts } from '../scripts/notebook_scripts.js';
 import { runNotebookScript } from './rerun_query.js';
 import { ScriptDetails, type ScriptDetailsDependencies } from './script_details.js';
+import { NotebookConnectionAttentionContext } from './notebook_connection_attention.js';
 
 vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
 vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
 
-const state = { keyHandlers: [] as any[], executeQuery: vi.fn(), formatScriptEditor: vi.fn() };
+const state = { keyHandlers: [] as any[], executeQuery: vi.fn(), formatScriptEditor: vi.fn(), deleteCache: vi.fn(), outputProps: null as any };
 const dependencies = {
     useAppConfig: () => ({ settings: {} }),
     useLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn() }),
@@ -22,7 +23,7 @@ const dependencies = {
     useQueryState: () => null,
     useCancelQuery: () => vi.fn(),
     useQueryExecutor: () => state.executeQuery,
-    useStorageReader: () => ({ backend: { deleteQueryResultCache: vi.fn() } }),
+    useStorageReader: () => ({ backend: { deleteQueryResultCache: state.deleteCache } }),
     isScriptFormattable: () => true,
     formatScriptEditor: (...args: any[]) => {
         state.formatScriptEditor(...args);
@@ -44,7 +45,7 @@ const dependencies = {
             <div data-testid="details-editor">{props.scriptDisplay}</div>
         </div>;
     },
-    ScriptDetailsOutputPane: () => <div data-testid="output-pane" />,
+    ScriptDetailsOutputPane: (props: any) => { state.outputProps = props; return <div data-testid="output-pane" />; },
     VerticalSplit: (props: any) => <div>{props.first}{props.second}</div>,
 } as unknown as ScriptDetailsDependencies;
 
@@ -106,6 +107,23 @@ describe('ScriptDetails V2 flat scripts', () => {
         expect(handler).toBeDefined();
         act(() => handler.callback({ preventDefault: vi.fn(), stopImmediatePropagation: vi.fn() }));
         expect(state.executeQuery).toHaveBeenCalledWith('database', expect.objectContaining({ query: 'SELECT 2' }));
+    });
+
+    it('blocks pinned Ctrl+E and cached reruns before cache deletion while main is offline', async () => {
+        const request = vi.fn();
+        state.deleteCache.mockReset().mockResolvedValue(undefined);
+        const connection = { databaseId: 'main', connectionHealth: ConnectionHealth.FAILED } as any;
+        act(() => root.render(<NotebookConnectionAttentionContext.Provider value={{ notebookId: 'notebook', active: false, request }}>
+            <ScriptDetails notebookScripts={scripts()} modifyNotebookScripts={vi.fn()}
+                connection={connection} hideDetails={() => {}} scriptId={2} dependencies={dependencies} />
+        </NotebookConnectionAttentionContext.Provider>));
+        const handler = state.keyHandlers.find(value => value.key === 'e' && value.ctrlKey === true);
+        act(() => handler.callback({ preventDefault: vi.fn(), stopImmediatePropagation: vi.fn() }));
+        expect(request).toHaveBeenCalledExactlyOnceWith('notebook');
+        expect(state.executeQuery).not.toHaveBeenCalled();
+        const rerun = state.outputProps.statusActions.props.children[1];
+        expect(rerun.props.onRerun).toBeUndefined();
+        expect(state.deleteCache).not.toHaveBeenCalled();
     });
 
     it('executes unparseable remote SQL from Ctrl+E without caching', () => {
