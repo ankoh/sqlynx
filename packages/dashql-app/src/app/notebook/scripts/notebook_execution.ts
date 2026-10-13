@@ -7,6 +7,12 @@ import type { ModifyNotebookScripts } from './notebook_scripts_registry.js';
 import { projectionForVisualizeQuery } from './script_types.js';
 
 const activeNotebooks = new WeakMap<core.DashQL, Set<string>>();
+const PREPARATION_YIELD_INTERVAL = 8;
+const EXECUTION_YIELD_INTERVAL = 8;
+
+function yieldToBrowser(): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, 0));
+}
 
 export function isNotebookExecutionRunning(notebook: NotebookScripts): boolean {
     return activeNotebooks.get(notebook.instance)?.has(notebook.notebookId) ?? false;
@@ -33,6 +39,8 @@ export async function runNotebookExecution(args: {
     modifyNotebookScripts: ModifyNotebookScripts;
     signal: AbortSignal;
     onState: (state: NotebookExecutionState) => void;
+    /// Allows tests to control cooperative scheduling without relying on timer timing.
+    yieldToBrowser?: () => Promise<void>;
 }): Promise<void> {
     const { notebook, signal } = args;
     const { databaseId, notebookId, instance, connectionCatalog } = notebook;
@@ -53,6 +61,11 @@ export async function runNotebookExecution(args: {
     let activeQueryId: number | null = null;
     let activeExecution: Promise<unknown> | null = null;
     let cancellation: Promise<void> | null = null;
+    const cooperate = async () => {
+        signal.throwIfAborted();
+        await (args.yieldToBrowser ?? yieldToBrowser)();
+        signal.throwIfAborted();
+    };
     const stop = () => {
         emit({ phase: 'stopping' });
         if (activeQueryId !== null && cancellation === null) {
@@ -68,7 +81,9 @@ export async function runNotebookExecution(args: {
     try {
         const files = getSortedScriptFileNames(notebook.scriptRefs);
         emit({ totalScripts: files.length });
-        signal.throwIfAborted();
+        // Let React commit the running state and the browser paint its spinner before synchronous
+        // analysis and planning work starts.
+        await cooperate();
         const scripts = files.map(file => {
             const script = notebook.scripts[notebook.scriptRefs[file].scriptId];
             if (!script) throw new Error(`Missing script: ${file}`);
@@ -82,27 +97,40 @@ export async function runNotebookExecution(args: {
             return update;
         };
         // Publish all declarations, then refresh analysis at the final catalog revision.
-        scripts.forEach((script) => {
+        for (const [index, script] of scripts.entries()) {
             analyze(script);
             script.scriptSession.loadIntoCatalog(script.scriptKey);
-        });
-        const updates = scripts.map(script => ({ scriptKey: script.scriptKey, editorUpdate: analyze(script) }));
+            if ((index + 1) % PREPARATION_YIELD_INTERVAL === 0) await cooperate();
+        }
+        const updates = [] as Array<{ scriptKey: number; editorUpdate: ReturnType<typeof analyze> }>;
+        for (const [index, script] of scripts.entries()) {
+            updates.push({ scriptKey: script.scriptKey, editorUpdate: analyze(script) });
+            if ((index + 1) % PREPARATION_YIELD_INTERVAL === 0) await cooperate();
+        }
+        await cooperate();
         const graph: core.buffers.execution.ExecutionGraphT = instance
             .plan(scripts.map(script => script.scriptSession)).unpackAndDestroy();
         if (!graph.valid) {
             throw new Error(graph.diagnostics.map(diagnostic => String(diagnostic.message ?? '')).join('; ')
                 || 'Invalid notebook execution plan');
         }
-        const nodes = scripts.map((_, index) => graph.nodes.filter(node => node.script === index));
+        const nodes = scripts.map(() => [] as typeof graph.nodes);
+        for (const [index, node] of graph.nodes.entries()) {
+            if (node.script < scripts.length) nodes[node.script].push(node);
+            if ((index + 1) % PREPARATION_YIELD_INTERVAL === 0) await cooperate();
+        }
         // Decode every output before executing commands, including outputs we will discard.
-        const visualizations = new Map(graph.nodes.filter(node => node.producesOutput).map(node => {
+        const visualizations = new Map<typeof graph.nodes[number], ReturnType<typeof resolveCompiledVisualization>>();
+        for (const [index, node] of graph.nodes.entries()) {
+            if (!node.producesOutput) continue;
             const visualization = node.visualization
                 ? resolveCompiledVisualization(String(node.sql ?? ''), node.visualization) : null;
             if (node.visualization && !visualization) {
                 throw new Error('Invalid captured visualization metadata');
             }
-            return [node, visualization] as const;
-        }));
+            visualizations.set(node, visualization);
+            if ((index + 1) % PREPARATION_YIELD_INTERVAL === 0) await cooperate();
+        }
         emit({ phase: 'running', totalStatements: graph.nodes.length });
 
         // Validate after notifications, but before the first backend call. Later edits belong to the next run.
@@ -194,6 +222,9 @@ export async function runNotebookExecution(args: {
                 }
                 signal.throwIfAborted();
                 emit({ completedStatements: state.completedStatements + 1 });
+                // A sequence of immediately resolved commands otherwise monopolizes the microtask
+                // queue and prevents status updates and animations from painting.
+                if (state.completedStatements % EXECUTION_YIELD_INTERVAL === 0) await cooperate();
             }
             signal.throwIfAborted();
             if (outputQueryId !== null && outputIndex < statements.length - 1) {

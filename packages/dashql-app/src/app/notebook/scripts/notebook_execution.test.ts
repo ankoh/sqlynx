@@ -74,17 +74,19 @@ function fixture(entries = [
     const controller = new AbortController();
     const states: NotebookExecutionState[] = [];
     const onState = vi.fn((state: NotebookExecutionState) => { states.push(state); });
+    const yieldToBrowser = vi.fn(async () => {});
     const args = { notebook, getNotebook, executeQuery, cancelQuery, modifyNotebookScripts,
-        signal: controller.signal, onState };
+        signal: controller.signal, onState, yieldToBrowser };
     const lastState = () => states[states.length - 1];
     return { args, notebook, sessions, graph, plan, unpackAndDestroy, preparation,
-        executeQuery, cancelQuery, modifyNotebookScripts, getNotebook, controller, states, onState, lastState };
+        executeQuery, cancelQuery, modifyNotebookScripts, getNotebook, controller, states, onState, yieldToBrowser, lastState };
 }
 
 describe('runNotebookExecution', () => {
-    it('prepares synchronously and executes natural committed order, including empty scripts', async () => {
+    it('prepares and executes natural committed order, including empty scripts', async () => {
         const f = fixture();
         const run = runNotebookExecution(f.args);
+        await run;
         expect(f.preparation).toEqual([
             'analyze:1_empty.sql', 'load:1_empty.sql:102',
             'analyze:2_commands.sql', 'load:2_commands.sql:101',
@@ -92,7 +94,6 @@ describe('runNotebookExecution', () => {
             'analyze:1_empty.sql', 'analyze:2_commands.sql', 'analyze:10_last.sql',
         ]);
         expect(f.plan).toHaveBeenCalledWith([f.sessions[2], f.sessions[1], f.sessions[0]]);
-        await run;
         expect(f.executeQuery.mock.calls.map(([connection, args]) => [connection, args.query])).toEqual([
             ['connection', '2_commands.sql:1'], ['connection', '2_commands.sql:2'],
             ['connection', '2_commands.sql:3'], ['connection', '10_last.sql:1'],
@@ -108,6 +109,27 @@ describe('runNotebookExecution', () => {
             .toEqual(expect.arrayContaining([1, 2, 3]));
         expect(f.unpackAndDestroy).toHaveBeenCalledOnce();
         f.sessions.forEach(session => expect(session.startExecution).not.toHaveBeenCalled());
+    });
+
+    it('yields before planning so the execution status can paint', async () => {
+        const f = fixture();
+        const firstYield = deferred<void>();
+        f.yieldToBrowser.mockImplementationOnce(() => firstYield.promise);
+        const run = runNotebookExecution(f.args);
+        expect(f.lastState()).toMatchObject({ phase: 'planning', totalScripts: 3 });
+        expect(f.preparation).toEqual([]);
+        expect(f.yieldToBrowser).toHaveBeenCalledOnce();
+        firstYield.resolve();
+        await run;
+        expect(f.plan).toHaveBeenCalledOnce();
+    });
+
+    it('yields while executing a batch of immediately resolved commands', async () => {
+        const f = fixture([{ file: '1_commands.sql', outputs: Array(8).fill(false) }]);
+        await runNotebookExecution(f.args);
+        // Initial status, before graph planning, after graph grouping, then after the eighth command.
+        expect(f.yieldToBrowser).toHaveBeenCalledTimes(4);
+        expect(f.lastState()).toMatchObject({ phase: 'succeeded', completedStatements: 8 });
     });
 
     it('waits for execution to settle before launching another statement', async () => {
