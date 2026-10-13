@@ -5,7 +5,6 @@ import type { SetupProgress } from '../database/embedded_database_provider.js';
 
 import { HyperDB, type HyperDBEngineClient } from './hyperdb_wasm.js';
 import { HYPERDB_WASM_ENGINE_SETTINGS } from './hyperdb_settings.js';
-import { ensureHyperDBOPFSDirectories } from './hyperdb_opfs.js';
 import { getHyperDBWebSupportError } from './hyperdb_web_support.js';
 
 declare global {
@@ -47,8 +46,6 @@ export async function createWebHyperDBClient(
     const supportError = getHyperDBWebSupportError();
     if (supportError != null) throw new Error(supportError);
 
-    await ensureHyperDBOPFSDirectories();
-
     const { BrowserWorker, HyperDBEngineClient: BrowserEngineClient } = await import('hyperdb-wasm/raw');
     const engineScript = createEngineScript();
     let client: HyperDBEngineClient;
@@ -58,7 +55,7 @@ export async function createWebHyperDBClient(
         bridgeUrl.searchParams.set('engineUrl', engineScript.url);
         bridgeUrl.searchParams.set('wasmUrl', HYPERDB_WASM_URL.href);
         const worker = new Worker(bridgeUrl, { type: 'classic' });
-        client = new BrowserEngineClient(new BrowserWorker(worker), onSetupProgress) as HyperDBEngineClient;
+        client = new BrowserEngineClient(new BrowserWorker(worker), onSetupProgress);
         client.importOPFSFile = (path, blob, options) => importWorkerOPFSFile(worker, path, blob, options);
         client.prepareOPFSFile = path => prepareWorkerOPFSFile(worker, path);
         client.writeOPFSFile = (path, chunk, offset) => writeWorkerOPFSFile(worker, path, chunk, offset);

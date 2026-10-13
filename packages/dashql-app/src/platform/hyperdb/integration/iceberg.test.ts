@@ -19,7 +19,6 @@ async function ignoreCleanupFailure(cleanup: () => Promise<void>): Promise<void>
 describe('HyperDB Wasm Iceberg integration', () => {
     let engineClient: HyperDBEngineClient;
     let database: HyperDB | null = null;
-    let nextDatabase = 1;
 
     beforeAll(async () => {
         engineClient = globalThis.__DASHQL_TEST_HYPERDB_CLIENT__
@@ -29,7 +28,6 @@ describe('HyperDB Wasm Iceberg integration', () => {
 
     beforeEach(async () => {
         database = await HyperDB.create(engineClient, undefined, {
-            databasePrefix: `__dashql_iceberg_${nextDatabase++}_`,
             terminateClient: false,
         });
     }, 60_000);

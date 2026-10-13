@@ -5,7 +5,7 @@ import type {
 } from '../platform/database/embedded_database.js';
 import type { FileDownloader } from '../platform/file/file_downloader.js';
 import type { PlatformFile } from '../platform/file/file.js';
-import { HYPER_OPFS_ROOT, LEGACY_HYPER_OPFS_ROOT, SHELL_FILES_DIRECTORY } from '../platform/hyperdb/hyperdb_opfs.js';
+import { HYPER_OPFS_ROOT, SHELL_FILES_DIRECTORY } from '../platform/hyperdb/hyperdb_opfs.js';
 import { stringifyError, type LoggerLike } from '../platform/logger/logger.js';
 import type { DashQLShellCommand, DashQLShellCommandContext } from './api.js';
 
@@ -393,9 +393,7 @@ export class ShellFileRegistry {
     }
 
     private opfsFileName(path: string): string {
-        const prefix = [HYPER_OPFS_ROOT, LEGACY_HYPER_OPFS_ROOT]
-            .map(root => `${root}/${SHELL_FILES_DIRECTORY}/`)
-            .find(candidate => path.startsWith(candidate));
+        const prefix = `${HYPER_OPFS_ROOT}/${SHELL_FILES_DIRECTORY}/`;
         if (prefix == null || path.slice(prefix.length) !== fileName(path)) {
             throw new Error(`invalid shell file path: ${path}`);
         }

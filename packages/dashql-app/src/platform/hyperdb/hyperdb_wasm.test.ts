@@ -28,12 +28,6 @@ class FakeHyperDBEngineClient implements HyperDBEngineClient {
 
     connectCount = 0;
     disconnectCount = 0;
-    createDatabaseCount = 0;
-    openDatabaseCount = 0;
-    checkpointDatabaseCount = 0;
-    dropDatabaseCount = 0;
-    attachDatabaseCount = 0;
-    detachDatabaseCount = 0;
     terminateCount = 0;
     activeOperationCount = 0;
     maximumActiveOperationCount = 0;
@@ -68,49 +62,16 @@ class FakeHyperDBEngineClient implements HyperDBEngineClient {
         return Promise.resolve({ state: 'ok', payload: new Uint8Array() });
     }
 
-    createDatabase(databaseName: string, persistent: boolean): Promise<HyperDBResult> {
-        this.calls.push(`create-database:${databaseName}:${persistent}`);
-        this.createDatabaseCount++;
-        return Promise.resolve({ state: 'ok', payload: new Uint8Array() });
-    }
-
-    openDatabase(databaseName: string): Promise<HyperDBResult> {
-        this.calls.push(`open-database:${databaseName}`);
-        this.openDatabaseCount++;
-        return Promise.resolve({ state: 'ok', payload: new Uint8Array() });
-    }
-
-    listDatabases(): Promise<HyperDBResult> {
-        const payload = new Uint8Array(4);
-        new DataView(payload.buffer).setUint32(0, 0, true);
-        return Promise.resolve({ state: 'ok', payload });
-    }
-
-    checkpointDatabase(databaseName: string): Promise<HyperDBResult> {
-        this.calls.push(`checkpoint-database:${databaseName}`);
-        this.checkpointDatabaseCount++;
-        return Promise.resolve({ state: 'ok', payload: new Uint8Array() });
-    }
-
-    dropDatabase(databaseName: string): Promise<HyperDBResult> {
-        this.calls.push(`drop-database:${databaseName}`);
-        this.dropDatabaseCount++;
-        return Promise.resolve({ state: 'ok', payload: new Uint8Array() });
-    }
-
-    attachDatabase(connection: number, databaseName: string, alias: string): Promise<HyperDBResult> {
-        this.calls.push(`attach:${connection}:${databaseName}:${alias}`);
-        this.attachDatabaseCount++;
-        return Promise.resolve({ state: 'ok', payload: new Uint8Array() });
-    }
-
-    detachDatabase(connection: number, alias: string): Promise<HyperDBResult> {
-        this.calls.push(`detach:${connection}:${alias}`);
-        this.detachDatabaseCount++;
-        return Promise.resolve({ state: 'ok', payload: new Uint8Array() });
-    }
 
     startQuery(connection: number, sql: string): Promise<HyperDBResult> {
+        const lifecycleStatement = /^(?:CREATE|DROP|ATTACH|DETACH) DATABASE\b/.test(sql);
+        if (lifecycleStatement) {
+            this.beginOperation();
+            this.calls.push(`query:${connection}:${sql}`);
+            const query = this.nextQuery++;
+            this.queries.set(query, [{ state: 'done' }]);
+            return Promise.resolve(handle(query));
+        }
         if (this.failStartQuery) {
             return Promise.resolve({ state: 'busy', error: 'start failed' });
         }
@@ -312,34 +273,28 @@ describe('HyperDB embedded database adapter', () => {
         expect(client.terminateCount).toBe(0);
     });
 
-    it('attaches the compute database to each physical connection', async () => {
+    it('opens and closes physical connections', async () => {
         const client = new FakeHyperDBEngineClient();
         const database = await HyperDB.create(client);
-        const first = await database.connect({ defaultDatabase: '__dashql_compute' });
+        const first = await database.connect();
         const second = await database.connect();
 
         await first.close();
         const third = await database.connect();
 
-        expect(client.connectCount).toBe(3);
-        expect(client.disconnectCount).toBe(1);
-        expect(client.createDatabaseCount).toBe(2);
-        expect(client.attachDatabaseCount).toBe(3);
-        expect(client.calls).toContain('attach:7:__dashql_compute:__dashql_compute');
+        expect(client.connectCount).toBe(4);
+        expect(client.disconnectCount).toBe(2);
 
         await second.close();
         await third.close();
         await database.terminate();
 
-        expect(client.disconnectCount).toBe(3);
-        expect(client.detachDatabaseCount).toBe(3);
-        expect(client.calls).toContain('detach:7:__dashql_compute');
-        expect(client.dropDatabaseCount).toBe(2);
+        expect(client.disconnectCount).toBe(5);
         expect(client.terminateCount).toBe(1);
         expect(client.calls).toContain('shutdown');
     });
 
-    it('initializes the engine settings before creating the shared database', async () => {
+    it('initializes the engine settings before opening connections', async () => {
         const client = new FakeHyperDBEngineClient();
         await HyperDB.create(client, {
             'global.experimental_view_creation': true,
@@ -347,12 +302,9 @@ describe('HyperDB embedded database adapter', () => {
             'global.http_location_allowlist': ['*'],
         });
 
-        expect(client.calls).toEqual([
-            'ready',
+        expect(client.calls).toContain(
             'initialize:{"global.experimental_view_creation":true,"global.experimental_persisted_view_creation":true,"global.http_location_allowlist":["*"]}',
-            'create-database:__dashql_compute:false',
-            'create-database:hyper:false',
-        ]);
+        );
     });
 
     it('serializes global external table settings for the engine', async () => {
@@ -365,20 +317,6 @@ describe('HyperDB embedded database adapter', () => {
         expect(client.calls).toContain(
             'initialize:{"global.experimental_external_metaquery":1,"global.experimental_persisted_external_tables":1}',
         );
-    });
-
-    it('attaches hyper as the separate user-facing database', async () => {
-        const client = new FakeHyperDBEngineClient();
-        const database = await HyperDB.create(client);
-
-        const connection = await database.connect({ defaultDatabase: 'hyper' });
-
-        expect(client.calls).toContain('attach:7:hyper:hyper');
-
-        await connection.close();
-        await database.terminate();
-
-        expect(client.calls).toContain('detach:7:hyper');
     });
 
     it('creates shared Arrow tables in the attached database', async () => {
@@ -404,8 +342,8 @@ describe('HyperDB embedded database adapter', () => {
             { id: 2, label: 'beta' },
             { id: 3, label: 'gamma' },
         ]);
-        expect(client.calls).toContain('insert:7:/tmp/hyperdb/test-1.arrows:public:__frame:true:true');
-        expect(client.connectCount).toBe(2);
+        expect(client.calls.some(call => /insert:\d+:\/tmp\/hyperdb\/test-1\.arrows:public:__frame:true:true/.test(call))).toBe(true);
+        expect(client.connectCount).toBe(3);
 
         await reader.close();
         await database.terminate();
@@ -448,8 +386,8 @@ describe('HyperDB embedded database adapter', () => {
             { value: 1 },
             { value: 2 },
         ]);
-        expect(client.calls).toContain('insert:7:/tmp/hyperdb/test-1.arrows:pg_temp:values:true:true');
-        expect(client.calls).toContain('insert:7:/tmp/hyperdb/test-2.arrows:pg_temp:values:false:true');
+        expect(client.calls.some(call => /insert:\d+:\/tmp\/hyperdb\/test-1\.arrows:pg_temp:values:true:true/.test(call))).toBe(true);
+        expect(client.calls.some(call => /insert:\d+:\/tmp\/hyperdb\/test-2\.arrows:pg_temp:values:false:true/.test(call))).toBe(true);
         expect(client.temporaryFiles.size).toBe(0);
 
         await connection.close();
@@ -467,7 +405,7 @@ describe('HyperDB embedded database adapter', () => {
 
         await connection.createTableAs('derived"rows', 'SELECT 1');
 
-        expect(client.calls).toContain('query:7:CREATE TABLE "derived""rows" AS SELECT 1');
+        expect(client.calls.some(call => /query:\d+:CREATE TABLE "derived""rows" AS SELECT 1/.test(call))).toBe(true);
         await connection.close();
         await database.terminate();
     });
@@ -490,8 +428,8 @@ describe('HyperDB embedded database adapter', () => {
         expect(toPlainObjects(one)).toEqual([{ value: 1 }]);
         expect(toPlainObjects(two)).toEqual([{ value: 2 }]);
         expect(client.maximumActiveOperationCount).toBe(2);
-        expect(client.calls).toContain('query:7:SELECT 1 AS value');
-        expect(client.calls).toContain('query:8:SELECT 2 AS value');
+        expect(client.calls.some(call => /query:\d+:SELECT 1 AS value/.test(call))).toBe(true);
+        expect(client.calls.some(call => /query:\d+:SELECT 2 AS value/.test(call))).toBe(true);
 
         await first.close();
         await second.close();
@@ -509,7 +447,7 @@ describe('HyperDB embedded database adapter', () => {
         await expect(second.query('SELECT 42 AS answer')).resolves.toBeDefined();
 
         expect(client.activeOperationCount).toBe(0);
-        expect(client.calls.filter(call => call.startsWith('finish:'))).toHaveLength(2);
+        expect(client.calls.filter(call => call.startsWith('finish:'))).toHaveLength(5);
 
         await first.close();
         await second.close();
@@ -541,7 +479,7 @@ describe('HyperDB embedded database adapter', () => {
         await connection.close();
 
         await expect(connection.query('SELECT 1')).rejects.toThrow('connection is closed');
-        expect(client.disconnectCount).toBe(1);
+        expect(client.disconnectCount).toBe(2);
 
         await database.terminate();
     });

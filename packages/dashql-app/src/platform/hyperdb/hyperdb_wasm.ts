@@ -7,15 +7,11 @@ import type {
     EmbeddedExternalFileDatabase,
     ExternalDirectoryMode,
     OPFSFileImportOptions,
-    EmbeddedPersistentDatabase,
-    EmbeddedPersistentDatabaseConnection,
     EmbeddedTableImportConnection,
     EmbeddedTableInsertOptions,
-    PersistentDatabaseMetadata,
 } from '../database/embedded_database.js';
 
 const COMPUTE_DATABASE_NAME = '__dashql_compute';
-const DEFAULT_DATABASE_NAME = 'hyper';
 const DATABASE_SCHEMA = 'public';
 
 export interface HyperDBOptions {
@@ -51,13 +47,6 @@ export interface HyperDBEngineClient {
     initialize(settings: string): Promise<HyperDBResult>;
     connect(): Promise<HyperDBResult>;
     disconnect(connection: number): Promise<HyperDBResult>;
-    createDatabase(databaseName: string, persistent: boolean): Promise<HyperDBResult>;
-    openDatabase(databaseName: string): Promise<HyperDBResult>;
-    listDatabases(): Promise<HyperDBResult>;
-    checkpointDatabase(databaseName: string): Promise<HyperDBResult>;
-    dropDatabase(databaseName: string): Promise<HyperDBResult>;
-    attachDatabase(connection: number, databaseName: string, alias: string): Promise<HyperDBResult>;
-    detachDatabase(connection: number, alias: string): Promise<HyperDBResult>;
     startQuery(connection: number, sql: string): Promise<HyperDBResult>;
     insertArrowIPCFromPath(
         connection: number,
@@ -120,35 +109,6 @@ function decodeArrowTable(buffer: Uint8Array): arrow.Table {
     return new arrow.Table(arrow.RecordBatchReader.from(buffer));
 }
 
-function readDatabases(result: HyperDBResult): PersistentDatabaseMetadata[] {
-    expectOK(result, 'list databases');
-    const invalidResult = () => new Error('list databases returned invalid metadata');
-    if (result.payload.byteLength < 4) throw invalidResult();
-    const view = new DataView(result.payload.buffer, result.payload.byteOffset, result.payload.byteLength);
-    const count = view.getUint32(0, true);
-    const decoder = new TextDecoder('utf-8', { fatal: true });
-    const databases: PersistentDatabaseMetadata[] = [];
-    let offset = 4;
-    for (let index = 0; index < count; index++) {
-        if (offset + 8 > result.payload.byteLength) throw invalidResult();
-        const rawStorage = view.getUint32(offset, true);
-        const nameLength = view.getUint32(offset + 4, true);
-        offset += 8;
-        if (nameLength > result.payload.byteLength - offset || (rawStorage !== 0 && rawStorage !== 1)) throw invalidResult();
-        let name: string;
-        try {
-            name = decoder.decode(result.payload.subarray(offset, offset + nameLength));
-        } catch {
-            throw invalidResult();
-        }
-        if (!name || name.includes('\0')) throw invalidResult();
-        databases.push({ name, storage: rawStorage === 0 ? 'memory' : 'persistent' });
-        offset += nameLength;
-    }
-    if (offset !== result.payload.byteLength) throw invalidResult();
-    return databases;
-}
-
 function materializeDictionaryColumns(table: arrow.Table): arrow.Table {
     const dictionaryColumns = table.schema.fields
         .map((field, index) => arrow.DataType.isDictionary(field.type) ? index : -1)
@@ -180,14 +140,13 @@ function yieldToEventLoop(): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, 0));
 }
 
-export class HyperDB implements EmbeddedComputeDatabase, EmbeddedPersistentDatabase, EmbeddedExternalFileDatabase, EmbeddedExternalDirectoryDatabase {
+export class HyperDB implements EmbeddedComputeDatabase, EmbeddedExternalFileDatabase, EmbeddedExternalDirectoryDatabase {
     private readonly connections = new Set<HyperDBConnection>();
     private initialization: Promise<void> | null = null;
     private termination: Promise<void> | null = null;
     private terminated = false;
     private databaseOperation: Promise<void> = Promise.resolve();
     private readonly computeDatabaseName: string;
-    private readonly defaultDatabaseName: string;
     private readonly terminateClient: boolean;
     private readonly createObjectURL: (blob: Blob) => string;
     private readonly revokeObjectURL: (url: string) => void;
@@ -199,9 +158,7 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedPersistentDatab
         private readonly settings?: HyperDBSettings,
         options: HyperDBOptions = {},
     ) {
-        const prefix = options.databasePrefix ?? '';
-        this.computeDatabaseName = `${prefix}${COMPUTE_DATABASE_NAME}`;
-        this.defaultDatabaseName = `${prefix}${DEFAULT_DATABASE_NAME}`;
+        this.computeDatabaseName = `${options.databasePrefix ?? ''}${COMPUTE_DATABASE_NAME}`;
         this.terminateClient = options.terminateClient ?? true;
         this.createObjectURL = options.createObjectURL ?? (blob => URL.createObjectURL(blob));
         this.revokeObjectURL = options.revokeObjectURL ?? (url => URL.revokeObjectURL(url));
@@ -217,34 +174,29 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedPersistentDatab
         return database;
     }
 
-    async connect(options: EmbeddedConnectionOptions = {}): Promise<HyperDBConnection> {
+    async connect(_options: EmbeddedConnectionOptions = {}): Promise<HyperDBConnection> {
         await this.initialize();
         if (this.termination || this.terminated) {
             throw new Error('database is terminated');
         }
 
         const connectionHandle = readHandle(await this.client.connect(), 'connect');
-        const databaseName = options.defaultDatabase === 'hyper' ? this.defaultDatabaseName : this.computeDatabaseName;
-        const databaseAlias = options.defaultDatabase === 'hyper' ? DEFAULT_DATABASE_NAME : COMPUTE_DATABASE_NAME;
-        try {
-            expectOK(
-                await this.client.attachDatabase(connectionHandle, databaseName, databaseAlias),
-                'attach database',
-            );
-        } catch (error) {
-            expectOK(await this.client.disconnect(connectionHandle), 'disconnect');
-            throw error;
-        }
-
         if (this.termination || this.terminated) {
-            expectOK(await this.client.detachDatabase(connectionHandle, databaseAlias), 'detach database');
             expectOK(await this.client.disconnect(connectionHandle), 'disconnect');
             throw new Error('database is terminated');
         }
 
-        const connection = new HyperDBConnection(this.client, connectionHandle, databaseAlias, () => {
+        const connection = new HyperDBConnection(this.client, connectionHandle, () => {
             this.connections.delete(connection);
-        });
+        }, COMPUTE_DATABASE_NAME);
+        try {
+            await connection.query(
+                `ATTACH DATABASE ${quoteIdentifier(this.computeDatabaseName)} AS ${quoteIdentifier(COMPUTE_DATABASE_NAME)}`,
+            );
+        } catch (error) {
+            await connection.close();
+            throw error;
+        }
         this.connections.add(connection);
         return connection;
     }
@@ -261,34 +213,6 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedPersistentDatab
         } finally {
             await connection.close();
         }
-    }
-
-    async listDatabases(): Promise<readonly PersistentDatabaseMetadata[]> {
-        return await this.runDatabaseOperation(async () => readDatabases(await this.client.listDatabases()));
-    }
-
-    async createPersistentDatabase(name: string): Promise<void> {
-        await this.runDatabaseOperation(async () => {
-            expectOK(await this.client.createDatabase(name, true), 'create persistent database');
-        });
-    }
-
-    async openPersistentDatabase(name: string): Promise<void> {
-        await this.runDatabaseOperation(async () => {
-            expectOK(await this.client.openDatabase(name), 'open persistent database');
-        });
-    }
-
-    async checkpointPersistentDatabase(name: string): Promise<void> {
-        await this.runDatabaseOperation(async () => {
-            expectOK(await this.client.checkpointDatabase(name), 'checkpoint persistent database');
-        });
-    }
-
-    async dropPersistentDatabase(name: string): Promise<void> {
-        await this.runDatabaseOperation(async () => {
-            expectOK(await this.client.dropDatabase(name), 'drop persistent database');
-        });
     }
 
     async registerExternalFile(name: string, blob: Blob, signal?: AbortSignal): Promise<string> {
@@ -403,8 +327,7 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedPersistentDatab
                         expectOK(await this.client.removeExternalRegistration(path), 'remove external directory during termination');
                         this.externalDirectories.delete(path);
                     }
-                    expectOK(await this.client.dropDatabase(this.defaultDatabaseName), 'drop default database');
-                    expectOK(await this.client.dropDatabase(this.computeDatabaseName), 'drop compute database');
+                    await this.executeDatabaseStatement(`DROP DATABASE ${quoteIdentifier(this.computeDatabaseName)}`);
                     if (this.terminateClient) {
                         expectOK(await this.client.shutdown(), 'shutdown');
                         await this.client.terminate();
@@ -432,8 +355,7 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedPersistentDatab
                         'initialize HyperDB settings',
                     );
                 }
-                expectOK(await this.client.createDatabase(this.computeDatabaseName, false), 'create compute database');
-                expectOK(await this.client.createDatabase(this.defaultDatabaseName, false), 'create default database');
+                await this.executeDatabaseStatement(`CREATE DATABASE ${quoteIdentifier(this.computeDatabaseName)}`);
             })().catch(error => {
                 this.initialization = null;
                 throw error;
@@ -454,23 +376,35 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedPersistentDatab
             release();
         }
     }
+
+    private async executeDatabaseStatement(statement: string): Promise<void> {
+        const connection = new HyperDBConnection(
+            this.client,
+            readHandle(await this.client.connect(), 'connect'),
+            () => {},
+        );
+        try {
+            await connection.query(statement);
+        } finally {
+            await connection.close();
+        }
+    }
 }
 
 function throwIfAborted(signal?: AbortSignal): void {
     if (signal?.aborted) throw signal.reason ?? new DOMException('The operation was aborted', 'AbortError');
 }
 
-export class HyperDBConnection implements EmbeddedTableImportConnection, EmbeddedPersistentDatabaseConnection {
+export class HyperDBConnection implements EmbeddedTableImportConnection {
     private closed = false;
     private active = false;
     private closing: Promise<void> | null = null;
-    private readonly persistentAliases = new Set<string>();
 
     constructor(
         private readonly client: HyperDBEngineClient,
         private readonly connectionHandle: number,
-        private readonly databaseAlias: string,
         private readonly onClose: () => void,
+        private readonly databaseAlias?: string,
     ) {}
 
     async close(): Promise<void> {
@@ -589,20 +523,6 @@ export class HyperDBConnection implements EmbeddedTableImportConnection, Embedde
         await this.queryArrowIPC(`CREATE TABLE ${quoteIdentifier(name)} AS ${query}`, abort);
     }
 
-    async attachPersistentDatabase(name: string, alias: string): Promise<void> {
-        await this.run(async () => {
-            expectOK(await this.client.attachDatabase(this.connectionHandle, name, alias), 'attach persistent database');
-            this.persistentAliases.add(alias);
-        });
-    }
-
-    async detachPersistentDatabase(alias: string): Promise<void> {
-        await this.run(async () => {
-            expectOK(await this.client.detachDatabase(this.connectionHandle, alias), 'detach persistent database');
-            this.persistentAliases.delete(alias);
-        });
-    }
-
     async closeForTermination(): Promise<void> {
         while (this.active) {
             await yieldToEventLoop();
@@ -626,11 +546,9 @@ export class HyperDBConnection implements EmbeddedTableImportConnection, Embedde
     private async closeImpl(): Promise<void> {
         if (!this.closing) {
             this.closing = (async () => {
-                for (const alias of this.persistentAliases) {
-                    expectOK(await this.client.detachDatabase(this.connectionHandle, alias), 'detach persistent database');
+                if (this.databaseAlias != null) {
+                    await this.queryArrowIPC(`DETACH DATABASE ${quoteIdentifier(this.databaseAlias)}`);
                 }
-                this.persistentAliases.clear();
-                expectOK(await this.client.detachDatabase(this.connectionHandle, this.databaseAlias), 'detach database');
                 expectOK(await this.client.disconnect(this.connectionHandle), 'disconnect');
                 this.closed = true;
                 this.onClose();

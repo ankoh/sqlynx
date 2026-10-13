@@ -79,14 +79,11 @@ async function handleAppRequest(request: Request): Promise<Response> {
     }
 }
 
-type RendererTestMode = "capability" | "persistence-write" | "persistence-verify" | "startup" | null;
+type RendererTestMode = "capability" | "startup" | null;
 
 function rendererTestMode(): RendererTestMode {
     if (process.argv.includes("--capability-test")) return "capability";
     if (process.argv.includes("--startup-smoke-test")) return "startup";
-    const persistence = process.argv.find((arg) => arg.startsWith("--persistence-test="))?.split("=", 2)[1];
-    if (persistence === "write" || persistence === "verify") return `persistence-${persistence}`;
-    if (persistence !== undefined) throw new Error(`Unknown persistence test mode: ${persistence}`);
     return null;
 }
 
@@ -135,7 +132,7 @@ async function createWindow(testMode: RendererTestMode): Promise<BrowserWindow> 
             event.preventDefault();
         }
     });
-    const target = testMode === "capability" || testMode?.startsWith("persistence-")
+    const target = testMode === "capability"
         ? `hyperdb-capability.html?mode=${testMode}`
         : "index.html";
     await window.loadURL(`${rendererDevOrigin ?? APP_ORIGIN}/${target}`);
@@ -230,21 +227,6 @@ async function waitForRendererResult<T>(window: BrowserWindow, expression: strin
         };
         poll();
     })`) as T;
-}
-
-async function runPersistenceTest(window: BrowserWindow, mode: "persistence-write" | "persistence-verify"): Promise<void> {
-    const result = await waitForRendererResult<{
-        answer?: number;
-        error?: string;
-        initialized: boolean;
-        mode: string;
-        persisted?: boolean;
-        value?: string;
-    }>(window, "globalThis.__DASHQL_HYPERDB_CAPABILITY__");
-    console.log(JSON.stringify(result));
-    const passed = result.initialized && result.mode === mode && result.persisted === true &&
-        (mode === "persistence-write" || result.answer === 42 && result.value === "dashql-opfs-persistence");
-    app.exit(passed ? 0 : 1);
 }
 
 async function runStartupSmokeTest(window: BrowserWindow): Promise<void> {
@@ -600,8 +582,6 @@ if (!hasSingleInstanceLock) {
         if (testMode === null) void updater?.check().catch((error) => console.error("Update check failed", error));
         if (testMode === "capability") {
             await runCapabilityTest(window);
-        } else if (testMode === "persistence-write" || testMode === "persistence-verify") {
-            await runPersistenceTest(window, testMode);
         } else if (testMode === "startup") {
             await runStartupSmokeTest(window);
         }

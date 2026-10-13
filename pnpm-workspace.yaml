@@ -6,7 +6,7 @@ onlyBuiltDependencies:
   - electron
   - electron-winstaller
 minimumReleaseAgeExclude:
-  - hyperdb-wasm@0.0.26553-dev.wasm.gc7d06744 || 0.0.26772-dev.wasm.g94d5c8ef || 0.0.26773-dev.wasm.g25ca5c66 || 0.0.26773-dev.wasm.g4670215f || 0.0.26774-dev.wasm.g364818c4 || 0.0.26775-dev.wasm.g7f2c129a || 0.0.26776-dev.wasm.ge19fa803 || 0.0.26792-dev.wasm.g72cc44c1 || 0.0.26845-dev.wasm.g5b622080 || 0.0.26862-dev.wasm.g42f1012b || 0.0.26862-dev.wasm.g8c0876f6
+  - hyperdb-wasm@0.0.26553-dev.wasm.gc7d06744 || 0.0.26772-dev.wasm.g94d5c8ef || 0.0.26773-dev.wasm.g25ca5c66 || 0.0.26773-dev.wasm.g4670215f || 0.0.26774-dev.wasm.g364818c4 || 0.0.26775-dev.wasm.g7f2c129a || 0.0.26776-dev.wasm.ge19fa803 || 0.0.26792-dev.wasm.g72cc44c1 || 0.0.26845-dev.wasm.g5b622080 || 0.0.26862-dev.wasm.g42f1012b || 0.0.26862-dev.wasm.g89537caa || 0.0.26862-dev.wasm.g8c0876f6
 allowBuilds:
   '@bufbuild/buf': true
   '@parcel/watcher': true

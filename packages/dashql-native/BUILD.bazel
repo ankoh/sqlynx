@@ -187,21 +187,3 @@ sh_test(
     timeout = "long",
     visibility = ["//visibility:public"],
 )
-
-sh_test(
-    name = "opfs_persistence_test",
-    size = "large",
-    srcs = ["scripts/test_opfs_persistence.sh"],
-    data = [
-        ":compile",
-        ":package.json",
-        ":preload",
-        "//:node_modules/electron",
-        "//packages/dashql-app:electron_bundle",
-        "//packages/dashql-native-napi:addon",
-    ],
-    target_compatible_with = ["@platforms//os:macos"],
-    tags = ["no-sandbox"],
-    timeout = "long",
-    visibility = ["//visibility:public"],
-)

@@ -21,25 +21,6 @@ export interface EmbeddedTableImportConnection extends EmbeddedConnection {
     createTableAs(name: string, query: string, abort?: AbortSignal): Promise<void>;
 }
 
-export interface PersistentDatabaseMetadata {
-    readonly name: string;
-    readonly storage: 'memory' | 'persistent';
-}
-
-/** Optional browser-backed database management capability. */
-export interface EmbeddedPersistentDatabase {
-    listDatabases(): Promise<readonly PersistentDatabaseMetadata[]>;
-    createPersistentDatabase(name: string): Promise<void>;
-    openPersistentDatabase(name: string): Promise<void>;
-    checkpointPersistentDatabase(name: string): Promise<void>;
-    dropPersistentDatabase(name: string): Promise<void>;
-}
-
-export interface EmbeddedPersistentDatabaseConnection extends EmbeddedConnection {
-    attachPersistentDatabase(name: string, alias: string): Promise<void>;
-    detachPersistentDatabase(alias: string): Promise<void>;
-}
-
 /** Optional browser file registration capability. */
 export interface OPFSFileImportOptions {
     readonly signal?: AbortSignal;

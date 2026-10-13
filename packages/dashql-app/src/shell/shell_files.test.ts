@@ -180,24 +180,24 @@ describe('shell files command', () => {
             logger,
         );
 
-        expect(await command[2](['import'], {})).toBe('Imported 1 file\r\n/mnt/opfs/imported/data.csv');
+        expect(await command[2](['import'], {})).toBe('Imported 1 file\r\n/mnt/fs/imported/data.csv');
         expect(opfs.files.get('data.csv')?.bytes).toEqual(new Uint8Array([1, 2, 3]));
         expect(opfs.files.get('data.csv')?.closed).toBe(true);
         expect(sourceReads).toBe(0);
-        expect(await command[2](['list'], {})).toBe('/mnt/opfs/imported/data.csv (3 B)');
+        expect(await command[2](['list'], {})).toBe('/mnt/fs/imported/data.csv (3 B)');
 
-        expect(await command[2](['get', '/mnt/opfs/imported/data.csv'], {}))
-            .toBe('Downloaded /mnt/opfs/imported/data.csv');
+        expect(await command[2](['get', '/mnt/fs/imported/data.csv'], {}))
+            .toBe('Downloaded /mnt/fs/imported/data.csv');
         expect(downloader.downloadBufferAsFile).toHaveBeenCalledWith(new Uint8Array([1, 2, 3]), 'data.csv');
         const records = Array.from({ length: logger.buffer.length }, (_, index) => logger.buffer.at(index));
         expect(records.find(record => record?.message === 'Imported shell file to OPFS')?.keyValues).toMatchObject({
-            target_path: '/mnt/opfs/imported/data.csv',
+            target_path: '/mnt/fs/imported/data.csv',
             bytes_copied: '3',
             stage: 'complete',
         });
 
-        expect(await command[2](['drop', '/mnt/opfs/imported/data.csv'], {}))
-            .toBe('Dropped /mnt/opfs/imported/data.csv');
+        expect(await command[2](['drop', '/mnt/fs/imported/data.csv'], {}))
+            .toBe('Dropped /mnt/fs/imported/data.csv');
         expect(opfs.files.has('data.csv')).toBe(false);
     });
 
@@ -209,7 +209,7 @@ describe('shell files command', () => {
             async () => [sourceFile('data.csv', [[1]])],
         );
 
-        expect(await command[2](['add'], {})).toBe('Added 1 file\r\n/mnt/opfs/imported/data.csv');
+        expect(await command[2](['add'], {})).toBe('Added 1 file\r\n/mnt/fs/imported/data.csv');
     });
 
     it('mounts browser files without reading or streaming them', async () => {
@@ -285,10 +285,10 @@ describe('shell files command', () => {
         );
 
         await expect(registry.importFile(file, { onProgress: progress }))
-            .resolves.toBe('/mnt/opfs/imported/data.csv');
+            .resolves.toBe('/mnt/fs/imported/data.csv');
 
         expect(stream).not.toHaveBeenCalled();
-        expect(external.imports).toEqual(['/mnt/opfs/imported/data.csv']);
+        expect(external.imports).toEqual(['/mnt/fs/imported/data.csv']);
         expect(opfs.files.get('data.csv')?.bytes).toEqual(new Uint8Array([1, 2, 3]));
         expect(progress).toHaveBeenLastCalledWith('Importing data.csv: 3 B / 3 B (100%)');
     });
@@ -374,7 +374,7 @@ describe('shell files command', () => {
             readAsArrayBuffer: async () => new Uint8Array(),
         })).rejects.toBe(failure);
 
-        expect(external.aborts).toEqual(['/mnt/opfs/imported/data.csv']);
+        expect(external.aborts).toEqual(['/mnt/fs/imported/data.csv']);
         expect(existing.bytes).toEqual(new Uint8Array([9]));
     });
 
@@ -388,9 +388,9 @@ describe('shell files command', () => {
             downloader,
         );
 
-        expect(await command[2](['list'], {})).toBe('/mnt/opfs/imported/existing.csv (2 B)');
-        expect(await command[2](['get', '/opfs/imported/existing.csv'], {}))
-            .toBe('Downloaded /opfs/imported/existing.csv');
+        expect(await command[2](['list'], {})).toBe('/mnt/fs/imported/existing.csv (2 B)');
+        expect(await command[2](['get', '/mnt/fs/imported/existing.csv'], {}))
+            .toBe('Downloaded /mnt/fs/imported/existing.csv');
     });
 
     it('accepts legacy OPFS paths for current-session imports', async () => {
@@ -404,8 +404,8 @@ describe('shell files command', () => {
         );
         await registry.importFile(sourceFile('data.csv', [[1, 2, 3]]));
 
-        expect(await registry.get('/opfs/imported/data.csv')).toBeDefined();
-        expect(await registry.drop('/opfs/imported/data.csv')).toBe(true);
+        expect(await registry.get('/mnt/fs/imported/data.csv')).toBeDefined();
+        expect(await registry.drop('/mnt/fs/imported/data.csv')).toBe(true);
         expect(await registry.list()).toEqual([]);
     });
 

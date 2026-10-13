@@ -20,10 +20,8 @@ import { examplesCommand } from './commands/examples.js';
 import { useShellConnection } from './shell_connection.js';
 import { createShellOutputCommand, type ShellOutputMode } from './shell_result.js';
 import { createShellFilesCommand, ShellFileRegistry } from './shell_files.js';
-import { createDatabaseCommand } from './commands/database.js';
 import { createFormatCommand } from './commands/format.js';
 import { createPlanCommand } from './commands/plan.js';
-import { OPFSPersistentDatabaseRegistry } from './persistent_database_registry.js';
 import { useFileDownloader } from '../platform/file/file_downloader_provider.js';
 import { useSalesforceLoginDialog } from './salesforce_login_dialog.js';
 import { SalesforceRemoteAttachmentManager } from './salesforce_remote_attachment.js';
@@ -98,7 +96,6 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
     const { controller: formatDialog, dialog: formatterDialog } = useFormatDialog();
     const { controller: planDialog, dialog: queryPlanDialog } = usePlanDialog(appEvents);
     const containerRef = React.useRef<HTMLDivElement>(null);
-    const databaseRegistryRef = React.useRef(new OPFSPersistentDatabaseRegistry());
     const outputModeRef = React.useRef<ShellOutputMode>('auto');
     const terminalColumnsRef = React.useRef(100);
     const [status, setStatus] = React.useState('Instantiating hyperdb-wasm');
@@ -285,13 +282,6 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
                 createShellOutputCommand(getOutputMode, mode => { outputModeRef.current = mode; }),
                 createShellFilesCommand(fileRegistry, fileDownloader, undefined, logger),
             ];
-            const databaseCommand = createDatabaseCommand(
-                database,
-                connection,
-                databaseRegistryRef.current,
-                fileDownloader,
-            );
-            if (databaseCommand != null) commands.push(databaseCommand);
             const nextShell = await createDashQLShell({
                 environment: createEmbeddedDatabaseShellEnvironment(connection, queryExecutions, {
                     getOutputMode,

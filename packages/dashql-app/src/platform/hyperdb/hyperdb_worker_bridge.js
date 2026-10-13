@@ -2,7 +2,6 @@
 const openFiles = new Map();
 self.addEventListener('message', event => {
     if (!event.data?.type?.startsWith('dashql:') || !event.data.type.endsWith('-opfs-file')) return;
-    ensureCanonicalOPFSMount();
     if (event.data.type === 'dashql:import-opfs-file') {
         void importOPFSFile(event.data.path, event.data.blob, event.ports[0]);
         return;
@@ -108,7 +107,7 @@ async function importOPFSFile(path, blob, port) {
 }
 
 async function resolveOPFSFile(path) {
-    const root = path.startsWith('/mnt/opfs/') ? '/mnt/opfs' : path.startsWith('/opfs/') ? '/opfs' : null;
+    const root = path.startsWith('/mnt/fs/') ? '/mnt/fs' : null;
     if (root == null) throw new Error(`Invalid OPFS path: ${path}`);
     const parts = path.slice(root.length + 1).split('/');
     if (parts.length < 1 || parts.some(part => !part || part === '.' || part === '..')) {
@@ -122,12 +121,6 @@ async function resolveOPFSFile(path) {
         directoryPath: `${root}/${parts.join('/')}`,
         name,
     };
-}
-
-function ensureCanonicalOPFSMount() {
-    if (self.Module.FS.findObject('/mnt/opfs') != null) return;
-    self.Module.FS.mkdirTree('/mnt/opfs');
-    self.Module.FS.mount(self.Module.OPFS, {}, '/mnt/opfs');
 }
 
 function throwIfCancelled(cancelled) {
@@ -144,12 +137,6 @@ function closeFile(path) {
     }
     return file.temporaryPath;
 }
-
-const postMessage = self.postMessage.bind(self);
-self.postMessage = (message, transfer) => {
-    if (message?.type === 'ready') ensureCanonicalOPFSMount();
-    postMessage(message, transfer);
-};
 
 const workerUrl = new URL(self.location.href).searchParams.get('workerUrl');
 if (workerUrl == null) throw new Error('Missing HyperDB worker URL');
