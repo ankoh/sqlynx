@@ -430,14 +430,16 @@ describe('SQLFrame execution', () => {
         expect(rows[16]).toMatchObject({ bin: 16, count: 1n, bin_lb: null, bin_ub: null });
     });
 
-    it('binned group by with NaN / Inf / near-constant Float32', async () => {
-        // Float32 columns (e.g. embedding data) commonly contain NaN/Inf, and
+    it('binned group by with NaN / Inf / near-constant floats', async () => {
+        // Floating-point columns commonly contain NaN/Inf, and
         // near-constant columns clamp bin_width to 1e-15, producing bin indices
         // far outside INT32 range. The clamp must happen before the INTEGER cast.
-        await conn.query(`CREATE TABLE input (score REAL)`);
+        // Web Hyper does not support REAL, so use its supported floating-point type.
+        await conn.query(`CREATE TABLE input (score DOUBLE PRECISION)`);
         await conn.query(
             `INSERT INTO input VALUES ` +
-            `(10.0), (10.0), ('NaN'::REAL), ('Infinity'::REAL), ('-Infinity'::REAL), (10.0000001)`
+            `(10.0), (10.0), ('NaN'::DOUBLE PRECISION), ` +
+            `('Infinity'::DOUBLE PRECISION), ('-Infinity'::DOUBLE PRECISION), (10.0000001)`
         );
         const statsSql = SQLFrame.from("input")
             .groupBy({
