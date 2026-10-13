@@ -5,7 +5,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ComputationRegistry } from '../../../compute/computation_registry.js';
-import { ComputeConnectionProvider } from '../../../compute/compute_connection_provider.js';
+import { ComputeConnectionProvider, useComputeDatabase } from '../../../compute/compute_connection_provider.js';
 import { EmbeddedDatabaseProvider } from '../../../platform/database/embedded_database_provider.js';
 import type { EmbeddedComputeDatabase } from '../../../platform/database/embedded_database.js';
 import { LoggerProvider } from '../../../platform/logger/logger_provider.js';
@@ -95,7 +95,8 @@ type Execution = ReturnType<typeof useNotebookExecution>;
 
 function Consumer(props: { notebookId: string; capture: (execution: Execution) => void }) {
     const execution = useNotebookExecution(props.notebookId);
-    React.useLayoutEffect(() => props.capture(execution));
+    const database = useComputeDatabase();
+    React.useLayoutEffect(() => { if (database) props.capture(execution); });
     return null;
 }
 
@@ -142,12 +143,15 @@ describe('NotebookExecutionProvider', () => {
         act(() => root.unmount());
         await act(async () => {
             fixtures.forEach(f => { f.acquisition.resolve(); f.execution.resolve(); f.cancellation.resolve(); });
-            await new Promise(resolve => setTimeout(resolve, 0));
+            await vi.waitFor(() => {
+                for (const f of fixtures) expect(isNotebookExecutionRunning(f.notebook)).toBe(false);
+            });
         });
         container.remove();
     });
 
     async function render(notebookId = 'first', showConsumer = true, showProvider = true) {
+        const previousObserver = observer;
         await act(async () => {
             root.render(<LoggerProvider>
                 <StorageProvider backend={backend}>
@@ -173,11 +177,16 @@ describe('NotebookExecutionProvider', () => {
             </LoggerProvider>);
             await new Promise(resolve => setTimeout(resolve, 0));
         });
+        // A timer turn does not guarantee that async database setup and React commits have finished.
+        if (showProvider) await vi.waitFor(() => expect(observer).not.toBe(previousObserver));
     }
 
     async function start(f = fixtures[0]) {
         act(() => current.start(f.modify));
-        await vi.waitFor(() => expect(f.stream.produce).toHaveBeenCalledTimes(1));
+        await vi.waitFor(() => {
+            expect(f.stream.produce).toHaveBeenCalledTimes(1);
+            expect(current.state?.phase).toBe('running');
+        });
         expect(current.busy).toBe(true);
         expect(current.state?.phase).toBe('running');
     }
@@ -190,6 +199,20 @@ describe('NotebookExecutionProvider', () => {
         expect(fixtures[0].plan).toHaveBeenCalledTimes(1);
         expect(fixtures[0].executeQuery).toHaveBeenCalledTimes(1);
         expect(fixtures[0].modify.mock.calls.filter(([action]) => action.type === REGISTER_QUERY)).toHaveLength(1);
+    });
+
+    it('waits for delayed compute database setup before starting execution', async () => {
+        const setup = deferred();
+        setupDatabase = vi.fn(async () => {
+            await setup.promise;
+            return { terminate: vi.fn() } as unknown as EmbeddedComputeDatabase;
+        });
+        const rendering = render();
+        await vi.waitFor(() => expect(setupDatabase).toHaveBeenCalledTimes(1));
+        expect(fixtures[0].executeQuery).not.toHaveBeenCalled();
+        setup.resolve();
+        await rendering;
+        await start();
     });
 
     it.each(['execution', 'cancellation'] as const)('keeps stopping busy until both promises drain, with %s settling first', async first => {
@@ -231,7 +254,10 @@ describe('NotebookExecutionProvider', () => {
         const f = fixtures[0] = fixture('first', true);
         await render();
         act(() => current.start(f.modify));
-        await vi.waitFor(() => expect(f.executeQuery).toHaveBeenCalledTimes(1));
+        await vi.waitFor(() => {
+            expect(f.executeQuery).toHaveBeenCalledTimes(1);
+            expect(current.state?.phase).toBe('running');
+        });
         expect(f.stream.produce).not.toHaveBeenCalled();
         expect(current.busy).toBe(true);
 
