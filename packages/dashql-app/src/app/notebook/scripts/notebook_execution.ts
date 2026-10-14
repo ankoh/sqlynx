@@ -10,6 +10,7 @@ import { yieldToBrowser } from '../../../utils/yield_to_browser.js';
 const activeNotebooks = new WeakMap<core.DashQL, Set<string>>();
 const PREPARATION_YIELD_INTERVAL = 8;
 const EXECUTION_YIELD_INTERVAL = 8;
+const DEFAULT_MAX_CONCURRENT_QUERIES = 1;
 
 export function isNotebookExecutionRunning(notebook: NotebookScripts): boolean {
     return activeNotebooks.get(notebook.instance)?.has(notebook.notebookId) ?? false;
@@ -38,6 +39,8 @@ export async function runNotebookExecution(args: {
     onState: (state: NotebookExecutionState) => void;
     /// Allows tests to control cooperative scheduling without relying on timer timing.
     yieldToBrowser?: () => Promise<void>;
+    /// Maximum concurrently running backend queries for this connection.
+    maxConcurrentQueries?: number;
 }): Promise<void> {
     const { notebook, signal } = args;
     const { databaseId, notebookId, instance, connectionCatalog } = notebook;
@@ -55,9 +58,8 @@ export async function runNotebookExecution(args: {
         state = { ...state, ...update };
         args.onState(state);
     };
-    let activeQueryId: number | null = null;
-    let activeExecution: Promise<unknown> | null = null;
-    let cancellation: Promise<void> | null = null;
+    const activeExecutions = new Map<number, Promise<unknown>>();
+    const cancellations = new Map<number, Promise<void>>();
     const cooperate = async () => {
         signal.throwIfAborted();
         await (args.yieldToBrowser ?? yieldToBrowser)();
@@ -65,12 +67,13 @@ export async function runNotebookExecution(args: {
     };
     const stop = () => {
         emit({ phase: 'stopping' });
-        if (activeQueryId !== null && cancellation === null) {
+        for (const queryId of activeExecutions.keys()) {
+            if (cancellations.has(queryId)) continue;
             // Catch immediately: cancellation can reject before execution has drained.
             try {
-                cancellation = args.cancelQuery(databaseId, activeQueryId).catch(() => {});
+                cancellations.set(queryId, args.cancelQuery(databaseId, queryId).catch(() => {}));
             } catch {
-                cancellation = Promise.resolve();
+                cancellations.set(queryId, Promise.resolve());
             }
         }
     };
@@ -166,80 +169,137 @@ export async function runNotebookExecution(args: {
         await args.modifyNotebookScripts({ type: APPLY_PLANNER_ANALYSIS, value: updates });
         signal.throwIfAborted();
         validate();
-        for (const [scriptIndex, script] of scripts.entries()) {
-            const statements = nodes[scriptIndex];
-            let outputIndex = -1;
-            statements.forEach((node, index) => { if (node.producesOutput) outputIndex = index; });
-            let outputQueryId: number | null = null;
+        const predecessorCount = graph.nodes.map(() => 0);
+        const successors = graph.nodes.map(() => [] as number[]);
+        const uniqueEdges = new Set<string>();
+        for (const edge of graph.edges) {
+            const key = `${edge.from}:${edge.to}`;
+            if (uniqueEdges.has(key)) continue;
+            uniqueEdges.add(key);
+            predecessorCount[edge.to]++;
+            successors[edge.from].push(edge.to);
+        }
+        const statementIndexes = scripts.map(() => [] as number[]);
+        const outputNodeIndexes = scripts.map(() => -1);
+        const outputQueryIds = scripts.map(() => null as number | null);
+        const previousResultQueryIds = scripts.map(script => {
             const liveScript = args.getNotebook()?.scripts[script.scriptKey];
-            const previousQueryId = liveScript?.latestResultQueryId === undefined
-                ? liveScript?.latestQueryId : liveScript.latestResultQueryId;
-            for (const [index, node] of statements.entries()) {
-                signal.throwIfAborted();
-                validate(false);
-                emit({ activeScriptKey: script.scriptKey, activeFileName: files[scriptIndex],
-                    activeStatementIndex: index + 1, activeStatementCount: statements.length });
-                signal.throwIfAborted();
-                const output = index === outputIndex;
-                const visualization = visualizations.get(node) ?? null;
-                const [queryId, execution] = args.executeQuery(databaseId, {
-                    query: String(node.sql ?? ''), cacheable: false, throwOnError: true,
-                    abortSignal: signal, analyzeResults: output, publishResults: output,
-                    replaceComputationId: output ? previousQueryId : undefined,
-                    projection: output ? projectionForVisualizeQuery(visualization) : undefined,
-                    metadata: { queryType: QueryType.USER_PROVIDED, title: null, description: null,
-                        issuer: null, userProvided: true },
-                });
-                activeQueryId = queryId;
-                activeExecution = execution;
-                execution.catch(() => {});
-                if (signal.aborted) stop();
-                try {
-                    args.modifyNotebookScripts({ type: REGISTER_QUERY, value: [script.scriptKey, queryId] });
-                    if (output) {
-                        args.modifyNotebookScripts({ type: SET_SCRIPT_EXECUTION_VISUALIZATION,
-                            value: [script.scriptKey, visualization] });
-                    }
-                    const table = await execution;
-                    if (output) {
-                        // Edits while the backend was running must not relabel the captured result.
-                        await args.modifyNotebookScripts({ type: SET_SCRIPT_EXECUTION_VISUALIZATION,
-                            value: [script.scriptKey, visualization] });
-                    }
-                    if (output && table != null) {
-                        await args.modifyNotebookScripts({ type: REGISTER_SCRIPT_RESULT, value: [script.scriptKey, queryId] });
-                    }
-                    if (output) outputQueryId = queryId;
-                } finally {
-                    await Promise.allSettled([execution]);
-                    if (cancellation) await cancellation;
-                    activeQueryId = null;
-                    activeExecution = null;
-                    cancellation = null;
-                }
-                signal.throwIfAborted();
-                emit({ completedStatements: state.completedStatements + 1 });
-                // A sequence of immediately resolved commands otherwise monopolizes the microtask
-                // queue and prevents status updates and animations from painting.
-                if (state.completedStatements % EXECUTION_YIELD_INTERVAL === 0) await cooperate();
-            }
-            signal.throwIfAborted();
-            if (outputQueryId !== null && outputIndex < statements.length - 1) {
-                await args.modifyNotebookScripts({ type: REGISTER_QUERY, value: [script.scriptKey, outputQueryId] });
-                signal.throwIfAborted();
-                await args.modifyNotebookScripts({ type: SET_SCRIPT_EXECUTION_VISUALIZATION,
-                    value: [script.scriptKey, visualizations.get(statements[outputIndex]) ?? null] });
-                signal.throwIfAborted();
-            }
+            return liveScript?.latestResultQueryId === undefined ? liveScript?.latestQueryId : liveScript.latestResultQueryId;
+        });
+        const settledStatementCounts = scripts.map(() => 0);
+        for (const [nodeIndex, node] of graph.nodes.entries()) {
+            statementIndexes[node.script].push(nodeIndex);
+            if (node.producesOutput) outputNodeIndexes[node.script] = nodeIndex;
+        }
+        const ready = graph.nodes.map((_node, index) => index).filter(index => predecessorCount[index] === 0);
+        const maxConcurrentQueries = Math.max(1, args.maxConcurrentQueries ?? DEFAULT_MAX_CONCURRENT_QUERIES);
+        const completions: Promise<void>[] = [];
+        for (const statements of statementIndexes) if (statements.length === 0) {
             emit({ completedScripts: state.completedScripts + 1 });
+        }
+        let running = 0;
+        let failure: unknown = null;
+        let notify: (() => void) | null = null;
+        const wait = () => new Promise<void>(resolve => { notify = resolve; });
+        const wake = () => { const resolve = notify; notify = null; resolve?.(); };
+        const cancelActive = () => {
+            for (const queryId of activeExecutions.keys()) {
+                if (cancellations.has(queryId)) continue;
+                try { cancellations.set(queryId, args.cancelQuery(databaseId, queryId).catch(() => {})); }
+                catch { cancellations.set(queryId, Promise.resolve()); }
+            }
+        };
+        const launch = (nodeIndex: number) => {
+            const node = graph.nodes[nodeIndex];
+            const scriptIndex = node.script;
+            const script = scripts[scriptIndex];
+            const statementIndex = statementIndexes[scriptIndex].indexOf(nodeIndex);
+            const output = outputNodeIndexes[scriptIndex] === nodeIndex;
+            const visualization = visualizations.get(node) ?? null;
+            const previousQueryId = previousResultQueryIds[scriptIndex];
+            let released = false;
+            const release = () => {
+                if (released) return;
+                released = true;
+                running--;
+                for (const successor of successors[nodeIndex]) if (--predecessorCount[successor] === 0) ready.push(successor);
+                ready.sort((a, b) => a - b);
+                wake();
+            };
+            validate(false);
+            emit({ activeScriptKey: script.scriptKey, activeFileName: files[scriptIndex],
+                activeStatementIndex: statementIndex + 1, activeStatementCount: statementIndexes[scriptIndex].length });
+            running++;
+            const [queryId, execution] = args.executeQuery(databaseId, {
+                query: String(node.sql ?? ''), cacheable: false, throwOnError: true, abortSignal: signal,
+                analyzeResults: output, publishResults: output, replaceComputationId: output ? previousQueryId : undefined,
+                projection: output ? projectionForVisualizeQuery(visualization) : undefined, onResultsReady: release,
+                metadata: { queryType: QueryType.USER_PROVIDED, title: null, description: null, issuer: null, userProvided: true },
+            });
+            activeExecutions.set(queryId, execution);
+            args.modifyNotebookScripts({ type: REGISTER_QUERY, value: [script.scriptKey, queryId] });
+            if (output) args.modifyNotebookScripts({ type: SET_SCRIPT_EXECUTION_VISUALIZATION, value: [script.scriptKey, visualization] });
+            const completion = execution.then(async table => {
+                // Executors that do not implement result readiness retain the historical behavior.
+                release();
+                if (output) {
+                    await args.modifyNotebookScripts({ type: SET_SCRIPT_EXECUTION_VISUALIZATION, value: [script.scriptKey, visualization] });
+                    if (table != null) await args.modifyNotebookScripts({ type: REGISTER_SCRIPT_RESULT, value: [script.scriptKey, queryId] });
+                    outputQueryIds[scriptIndex] = queryId;
+                }
+                activeExecutions.delete(queryId);
+                await cancellations.get(queryId);
+                cancellations.delete(queryId);
+                if (signal.aborted) {
+                    wake();
+                    return;
+                }
+                emit({ completedStatements: state.completedStatements + 1 });
+                settledStatementCounts[scriptIndex]++;
+                if (settledStatementCounts[scriptIndex] === statementIndexes[scriptIndex].length) {
+                    emit({ completedScripts: state.completedScripts + 1 });
+                }
+                if (state.completedStatements % EXECUTION_YIELD_INTERVAL === 0) await cooperate();
+                wake();
+            }, error => {
+                release();
+                activeExecutions.delete(queryId);
+                if (failure == null) { failure = error; cancelActive(); }
+                wake();
+                throw error;
+            });
+            completion.catch(() => {});
+            completions.push(completion);
+        };
+        while ((ready.length > 0 || running > 0) && failure == null && !signal.aborted) {
+            while (ready.length > 0 && running < maxConcurrentQueries && failure == null && !signal.aborted) launch(ready.shift()!);
+            if (ready.length > 0 && running >= maxConcurrentQueries || running > 0) await wait();
+        }
+        if (signal.aborted) throw signal.reason ?? new DOMException('Aborted', 'AbortError');
+        if (failure != null) throw failure;
+        await Promise.all(completions);
+        for (const [scriptIndex, script] of scripts.entries()) {
+            const outputQueryId = outputQueryIds[scriptIndex];
+            const outputNodeIndex = outputNodeIndexes[scriptIndex];
+            const statements = statementIndexes[scriptIndex];
+            if (outputQueryId !== null && outputNodeIndex !== statements[statements.length - 1]) {
+                await args.modifyNotebookScripts({ type: REGISTER_QUERY, value: [script.scriptKey, outputQueryId] });
+                await args.modifyNotebookScripts({ type: SET_SCRIPT_EXECUTION_VISUALIZATION,
+                    value: [script.scriptKey, visualizations.get(graph.nodes[outputNodeIndex]) ?? null] });
+            }
         }
         signal.throwIfAborted();
         signal.removeEventListener('abort', stop);
         emit({ phase: 'succeeded', activeScriptKey: null, activeFileName: null,
             activeStatementIndex: null, activeStatementCount: null });
     } catch (error) {
-        if (activeExecution) await Promise.allSettled([activeExecution]);
-        if (cancellation) await cancellation;
+        for (const queryId of activeExecutions.keys()) {
+            if (cancellations.has(queryId)) continue;
+            try { cancellations.set(queryId, args.cancelQuery(databaseId, queryId).catch(() => {})); }
+            catch { cancellations.set(queryId, Promise.resolve()); }
+        }
+        await Promise.allSettled(activeExecutions.values());
+        await Promise.allSettled(cancellations.values());
         const cancelled = signal.aborted || (error instanceof Error && error.name === 'AbortError');
         signal.removeEventListener('abort', stop);
         emit({ phase: cancelled ? 'cancelled' : 'failed',

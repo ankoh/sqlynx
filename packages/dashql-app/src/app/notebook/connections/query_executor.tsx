@@ -169,6 +169,16 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                         }
                     }
                 };
+                let resultsReady = false;
+                const reportResultsReady = () => {
+                    if (resultsReady) return;
+                    resultsReady = true;
+                    try {
+                        args.onResultsReady?.();
+                    } catch {
+                        // Scheduler notifications must not interrupt query execution.
+                    }
+                };
                 traced.info("Executing query", {
                     notebookId,
                     "query": queryId.toString(),
@@ -214,6 +224,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                                     type: QUERY_CACHE_RECORDED,
                                     value: [queryId, cacheHash, true, cached.cachedAtMs],
                                 });
+                                reportResultsReady();
                                 if (args.analyzeResults) {
                                     if (args.replaceComputationId != null && args.replaceComputationId !== queryId) {
                                         computeDispatch({ type: DELETE_COMPUTATION, value: [args.replaceComputationId] });
@@ -283,6 +294,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                             },
                         });
                         reportQueryExecution();
+                        reportResultsReady();
                         if (table && args.analyzeResults) {
                             if (args.replaceComputationId != null && args.replaceComputationId !== queryId) {
                                 computeDispatch({ type: DELETE_COMPUTATION, value: [args.replaceComputationId] });
@@ -455,6 +467,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                     return null;
                 }
 
+                reportResultsReady();
 
                 // Compute all table summaries of the result
                 if (table && args.analyzeResults) {

@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { ConnectionHealth } from '../connections/attached_database_state.js';
+import { ConnectorType, HYPER_CONNECTOR } from '../connections/connector_info.js';
 import { useAttachedDatabaseRegistry } from '../connections/attached_database_registry.js';
 import { useCancelQuery, useQueryExecutor } from '../connections/query_executor.js';
 import { useNotebookScriptsRegistry, type ModifyNotebookScripts } from './notebook_scripts_registry.js';
@@ -63,6 +64,10 @@ export function NotebookExecutionProvider(props: React.PropsWithChildren) {
             notebook,
             getNotebook: () => registry.notebookScriptsMap.get(notebookId) ?? null,
             executeQuery, cancelQuery, modifyNotebookScripts,
+            maxConcurrentQueries: connection.connectorInfo.connectorType === ConnectorType.HYPER
+                && connection.details.type === HYPER_CONNECTOR
+                && connection.details.value.proto?.setupParams?.protocol != null
+                && connection.details.value.proto.setupParams.protocol !== 'WASM' ? 4 : 1,
             signal: controller.signal,
             onState: state => setStates(previous => new Map(previous).set(notebookId, state)),
         }).finally(() => {

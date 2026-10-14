@@ -47,6 +47,9 @@ function fixture(entries = [
         edges: [] as Array<{ from: number; to: number }>,
         diagnostics: [] as Array<{ message: string }>,
     };
+    // Most lifecycle tests model a sequential script. Parallel-scheduler tests replace these
+    // explicit planner dependencies with the graph shape they need to exercise.
+    graph.edges.push(...graph.nodes.slice(1).map((_node, index) => ({ from: index, to: index + 1 })));
     const unpackAndDestroy = vi.fn(() => graph as unknown as core.buffers.execution.ExecutionGraphT);
     const plan = vi.fn((input: core.DashQLScriptSession[]) => {
         graph.scripts = input.map(session => ({
@@ -75,7 +78,7 @@ function fixture(entries = [
     const states: NotebookExecutionState[] = [];
     const onState = vi.fn((state: NotebookExecutionState) => { states.push(state); });
     const yieldToBrowser = vi.fn(async () => {});
-    const args = { notebook, getNotebook, executeQuery, cancelQuery, modifyNotebookScripts,
+    const args: Parameters<typeof runNotebookExecution>[0] = { notebook, getNotebook, executeQuery, cancelQuery, modifyNotebookScripts,
         signal: controller.signal, onState, yieldToBrowser };
     const lastState = () => states[states.length - 1];
     return { args, notebook, sessions, graph, plan, unpackAndDestroy, preparation,
@@ -132,18 +135,45 @@ describe('runNotebookExecution', () => {
         expect(f.lastState()).toMatchObject({ phase: 'succeeded', completedStatements: 8 });
     });
 
-    it('waits for execution to settle before launching another statement', async () => {
-        const f = fixture();
+    it('starts an eligible query after its predecessor result is ready', async () => {
+        const f = fixture([{ file: '1.sql', outputs: [false, false] }]);
+        f.args.maxConcurrentQueries = 4;
         const first = deferred<null>();
         const started = deferred<void>();
-        f.executeQuery.mockImplementationOnce(() => { started.resolve(); return [1, first.promise]; });
+        f.executeQuery.mockImplementationOnce((_connection, args) => {
+            args.onResultsReady?.();
+            started.resolve();
+            return [1, first.promise];
+        });
         const run = runNotebookExecution(f.args);
         await started.promise;
-        expect(f.executeQuery).toHaveBeenCalledTimes(1);
+        expect(f.executeQuery).toHaveBeenCalledTimes(2);
         expect(f.lastState()?.completedStatements).toBe(0);
         first.resolve(null);
         await run;
-        expect(f.executeQuery).toHaveBeenCalledTimes(4);
+        expect(f.executeQuery).toHaveBeenCalledTimes(2);
+    });
+
+    it('waits for result readiness before launching dependent queries', async () => {
+        const f = fixture([{ file: '1.sql', outputs: [false, false] }]);
+        f.args.maxConcurrentQueries = 4;
+        f.graph.edges.push({ from: 0, to: 1 });
+        const resultsReady = deferred<void>();
+        const first = deferred<null>();
+        const started = deferred<void>();
+        f.executeQuery.mockImplementationOnce((_connection, args) => {
+            resultsReady.promise.then(() => args.onResultsReady?.());
+            started.resolve();
+            return [1, first.promise];
+        });
+        const run = runNotebookExecution(f.args);
+        await started.promise;
+        expect(f.executeQuery).toHaveBeenCalledTimes(1);
+        resultsReady.resolve();
+        await new Promise<void>(resolve => setTimeout(resolve));
+        expect(f.executeQuery).toHaveBeenCalledTimes(2);
+        first.resolve(null);
+        await run;
     });
 
     it.each(['invalid', 'text', 'analysis', 'catalog', 'membership', 'session', 'connection', 'missing', 'order', 'edge'])

@@ -5,6 +5,12 @@ import { QueryExecutionStatus } from '../query/query_execution_state.js';
 import { createEmbeddedDatabaseShellEnvironment } from './embedded_database_shell_environment.js';
 import { ShellQueryExecutionTracker } from './query_execution.js';
 
+function deferred<T>() {
+    let resolve!: (value: T) => void;
+    const promise = new Promise<T>(yes => { resolve = yes; });
+    return { promise, resolve };
+}
+
 describe('embedded database shell environment', () => {
     it('executes against the provided connection', async () => {
         const result = arrow.tableToIPC(arrow.tableFromArrays({ value: [42] }), 'file');
@@ -80,6 +86,24 @@ describe('embedded database shell environment', () => {
 
         expect(arrow.tableFromIPC(result).numCols).toBe(0);
         expect(prepareResult).toHaveBeenCalledWith(expect.any(Number), expect.objectContaining({ numRows: 1 }));
+        expect(onResult).toHaveBeenCalledWith(expect.any(Number), 1);
+    });
+
+    it('opens the UI result only after aggregate preparation completes', async () => {
+        const table = arrow.tableFromArrays({ value: [42] });
+        const preparation = deferred<void>();
+        const environment = createEmbeddedDatabaseShellEnvironment(
+            { queryArrowIPC: vi.fn().mockResolvedValue(arrow.tableToIPC(table, 'file')) } as any,
+            undefined,
+            { getOutputMode: () => 'ui', prepareResult: () => preparation.promise },
+        );
+        const onResult = vi.fn();
+        const execution = environment.executeQuery('SELECT 42', undefined, undefined, onResult);
+
+        await Promise.resolve();
+        expect(onResult).not.toHaveBeenCalled();
+        preparation.resolve();
+        await execution;
         expect(onResult).toHaveBeenCalledWith(expect.any(Number), 1);
     });
 

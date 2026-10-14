@@ -23,6 +23,9 @@ export interface QueryExecutionArgs {
     onLog?: (message: string) => void;
     /// Reports labeled query lifecycle timings before the complete execution promise resolves.
     onTiming?: (label: string, elapsedMs: number) => void;
+    /// Called once after the backend result is fully consumed, but before optional result analysis.
+    /// The normal execution promise still resolves only after postprocessing completes.
+    onResultsReady?: () => void;
     /// Computation from the previous execution of the same notebook entry. It can be retired before
     /// analyzing this result so its temporary embedded-database tables do not accumulate across reruns.
     replaceComputationId?: number | null;
