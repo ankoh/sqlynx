@@ -20,7 +20,9 @@
 .section:first-child {
     flex: 0 1 42%;
 }
-
+.section:not(:first-child) {
+    border-top: 1px solid var(--border_color_primary);
+}
 
 .database_section {
     flex: 1 1 58%;
