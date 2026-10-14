@@ -7,7 +7,8 @@ import { PlusIcon, XIcon } from './symbol_icon.js';
 import { classNames } from '../../utils/classnames.js';
 import { TextInput } from './text_input.js';
 import { TextInputAction } from './text_input_action.js';
-import { ButtonSize, IconButton } from './button.js';
+import { ButtonSize, ButtonVariant, IconButton } from './button.js';
+import { CopyToClipboardButton } from '../../utils/clipboard.js';
 
 export interface KeyValueListElement {
     key: string;
@@ -27,6 +28,9 @@ interface Props {
     modifyElements: Dispatch<UpdateKeyValueList>;
     disabled?: boolean;
     readOnly?: boolean;
+    sideBySide?: boolean;
+    copyValue?: (element: KeyValueListElement) => string;
+    copyLogContext?: string;
 }
 
 export const KeyValueListBuilder: React.FC<Props> = (props: Props) => {
@@ -49,7 +53,9 @@ export const KeyValueListBuilder: React.FC<Props> = (props: Props) => {
         return copy;
     });
     return (
-        <div className={classNames(props.className, styles.list)}>
+        <div className={classNames(props.className, styles.list, {
+            [styles.list_side_by_side]: props.sideBySide,
+        })}>
             <div className={styles.list_name}>
                 {props.title}
             </div>
@@ -69,10 +75,14 @@ export const KeyValueListBuilder: React.FC<Props> = (props: Props) => {
             )}
             <div className={styles.list_elements} role="list">
                 {props.elements.map((elem, i) => (
-                    <div key={i} className={styles.element} role="listitem">
+                    <div key={i} className={classNames(styles.element, {
+                        [styles.element_side_by_side]: props.sideBySide,
+                    })} role="listitem">
                         <TextInput
                             block
-                            className={styles.path}
+                            className={classNames(styles.path, {
+                                [styles.path_side_by_side]: props.sideBySide,
+                            })}
                             value={elem.key}
                             onChange={(ev: any) => modifyElement(i, ev.target.value, elem.value)}
                             aria-label={`${props.title} name ${i + 1}`}
@@ -89,10 +99,12 @@ export const KeyValueListBuilder: React.FC<Props> = (props: Props) => {
                             disabled={props.disabled}
                             readOnly={props.readOnly || props.disabled}
                         />
-                        <div className={styles.aliaslink} />
+                        {!props.sideBySide && <div className={styles.aliaslink} />}
                         <TextInput
                             block
-                            className={styles.alias}
+                            className={classNames(styles.alias, {
+                                [styles.alias_side_by_side]: props.sideBySide,
+                            })}
                             value={elem.value}
                             onChange={(ev: any) => modifyElement(i, elem.key, ev.target.value)}
                             aria-label={`${props.title} value ${i + 1}`}
@@ -100,6 +112,17 @@ export const KeyValueListBuilder: React.FC<Props> = (props: Props) => {
                             disabled={props.disabled}
                             readOnly={props.readOnly || props.disabled}
                         />
+                        {props.copyValue && props.copyLogContext && (
+                            <CopyToClipboardButton
+                                className={styles.copy_action}
+                                aria-label={`Copy ${props.title} ${i + 1}`}
+                                aria-labelledby=""
+                                value={props.copyValue(elem)}
+                                logContext={props.copyLogContext}
+                                variant={ButtonVariant.Invisible}
+                                size={ButtonSize.Small}
+                            />
+                        )}
                     </div>))}
             </div>
         </div>

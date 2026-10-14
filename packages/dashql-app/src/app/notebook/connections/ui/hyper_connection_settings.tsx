@@ -32,6 +32,9 @@ import { cancelConnectionSetup, registerConnectionSetup } from '../connection_se
 
 const LOG_CTX = "hyper_connector";
 
+const HyperEngineArgumentPrefix: React.FC = () => <span className={style.engine_argument_token}>--</span>;
+const HyperEngineArgumentDelimiter: React.FC = () => <span className={style.engine_argument_token}>=</span>;
+
 export const HYPERDB_WASM_ENGINE_SETTING_ELEMENTS: readonly KeyValueListElement[] = Object.freeze(
     Object.entries(HYPERDB_WASM_ENGINE_SETTINGS).map(([key, value]) => Object.freeze({
         key,
@@ -266,13 +269,16 @@ export const HyperConnectorSettings: React.FC<Props> = (props: Props) => {
                                 className={style.grid_column_1_span_2}
                                 title="Engine Settings"
                                 caption="Settings used to initialize the embedded Hyper engine"
-                                keyIcon={() => <div>Name</div>}
-                                valueIcon={() => <div>Value</div>}
+                                keyIcon={HyperEngineArgumentPrefix}
+                                valueIcon={HyperEngineArgumentDelimiter}
                                 addButtonLabel="Add Setting"
                                 elements={HYPERDB_WASM_ENGINE_SETTING_ELEMENTS}
                                 modifyElements={() => { }}
                                 disabled
                                 readOnly
+                                sideBySide
+                                copyValue={({ key, value }) => `--${key}=${value}`}
+                                copyLogContext={LOG_CTX}
                             />
                         </div>
                     </div>

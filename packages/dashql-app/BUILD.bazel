@@ -197,6 +197,17 @@ genrule(
     """,
 )
 
+genrule(
+    name = "browser_test_files",
+    srcs = glob(["src/**/*.test.ts", "src/**/*.test.tsx"]),
+    outs = ["browser_test_files.txt"],
+    cmd = """
+        for src in $(SRCS); do
+            printf '%s\\n' "$${src#packages/dashql-app/src/}"
+        done > $@
+    """,
+)
+
 copy_to_bin(
     name = "srcs",
     srcs = glob([
@@ -275,6 +286,7 @@ ts_project(
 
 _vite_web_deps = [
     ":srcs",
+    ":browser_test_files",
     ":example_notebooks",
     ":vite_config",
     ":dep_core",

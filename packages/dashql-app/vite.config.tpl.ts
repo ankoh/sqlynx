@@ -25,6 +25,11 @@ export default vite.defineConfig(({ mode, command }) => {
     // import.meta.url, so only the entry needs an alias — the .wasm has no placeholder.
     const UMAP_JS_PATH = path.resolve(rootDir, "__UMAP_JS_PATH__");
     const SVG_SYMBOLS_PATH = path.resolve(rootDir, "__SVG_SYMBOLS_PATH__");
+    // copy_to_bin can leave deleted sources in the execroot. Only bundle declared test inputs.
+    const browserTestPatterns = includesBrowserTests && command === 'build'
+        ? nodeFs.readFileSync(path.join(rootDir, 'browser_test_files.txt'), 'utf8')
+            .trim().split('\n').filter(Boolean).map(file => `../${file}`)
+        : null;
 
     return {
         plugins: [
@@ -44,6 +49,15 @@ export default vite.defineConfig(({ mode, command }) => {
                 },
             },
             ...(includesBrowserTests ? [{
+                name: 'bazel-browser-test-manifest',
+                enforce: 'pre' as const,
+                transform(code: string, id: string): string | undefined {
+                    if (browserTestPatterns == null) return;
+                    const cleanId = id.split('?', 1)[0]?.split(path.sep).join('/');
+                    if (!cleanId || !/\/src\/tests\/(test_modules|test_bundle)\.ts$/.test(cleanId)) return;
+                    return code.replace("'../**/*.test.{ts,tsx}'", browserTestPatterns.map(file => JSON.stringify(file)).join(',\n'));
+                },
+            }, {
                 name: 'dashql-browser-test-file',
                 enforce: 'pre' as const,
                 transform(code: string, id: string): string | undefined {
