@@ -20,9 +20,6 @@
 .section:first-child {
     flex: 0 1 42%;
 }
-.section:not(:first-child) {
-    border-top: 1px solid var(--border_color_primary);
-}
 
 
 .database_section {
@@ -35,6 +32,7 @@
     justify-content: space-between;
     min-height: 44px;
     padding: 0 6px 0 12px;
+    border-bottom: 1px solid var(--border_color_primary);
 }
 
 .section_title {
