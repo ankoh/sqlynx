@@ -80,15 +80,12 @@
     align-items: center;
     gap: 12px;
     margin-left: 20px;
+    padding-left: 4px;
     color: white;
     fill: currentColor;
     font-family: 'Roboto Mono';
     font-size: var(--font_size_title);
     font-weight: 400;
-}
-
-.navbar_mac .brand_identity {
-    padding-left: 8px;
 }
 
 .navbar_overlay {
