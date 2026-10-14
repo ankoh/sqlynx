@@ -47,9 +47,18 @@ export async function cleanupStaleHyperDBOPFSSessions(
         if (handle.kind !== 'directory' || !name.startsWith(DIRECTORY_PREFIX)) continue;
         const id = name.slice(DIRECTORY_PREFIX.length);
         if (!isUuid(id)) continue;
-        await navigator.locks.request(`${LOCK_PREFIX}${id}`, { ifAvailable: true }, async lock => {
-            if (lock != null) await root.removeEntry(name, { recursive: true });
+        const failure = await navigator.locks.request(`${LOCK_PREFIX}${id}`, { ifAvailable: true }, async lock => {
+            if (lock == null) return;
+            try {
+                await root.removeEntry(name, { recursive: true });
+            } catch (error) {
+                // Browsers report locked OPFS handles with either modification error while workers terminate.
+                const errorName = (error as DOMException).name;
+                if (errorName !== 'InvalidModificationError' && errorName !== 'NoModificationAllowedError'
+                    && errorName !== 'NotFoundError') return { error };
+            }
         });
+        if (failure != null) throw failure.error;
     }
 }
 
