@@ -1,6 +1,5 @@
 import type { Logger } from '../logger/logger.js';
 import { stringifyError } from '../logger/logger.js';
-import type { OPFSFileImportOptions } from '../database/embedded_database.js';
 import type { SetupProgress } from '../database/embedded_database_provider.js';
 
 import { HyperDB, type HyperDBEngineClient } from './hyperdb_wasm.js';
@@ -57,12 +56,6 @@ export async function createWebHyperDBClient(
         bridgeUrl.searchParams.set('wasmUrl', HYPERDB_WASM_URL.href);
         const worker = new Worker(bridgeUrl, { type: 'classic' });
         client = new BrowserEngineClient(new BrowserWorker(worker), onSetupProgress);
-        client.importOPFSFile = (path, blob, options) => importWorkerOPFSFile(worker, path, blob, options);
-        client.prepareOPFSFile = path => prepareWorkerOPFSFile(worker, path);
-        client.writeOPFSFile = (path, chunk, offset) => writeWorkerOPFSFile(worker, path, chunk, offset);
-        client.finishOPFSFile = path => requestWorkerFileOperation(worker, { type: 'dashql:finish-opfs-file', path });
-        client.abortOPFSFile = path => requestWorkerFileOperation(worker, { type: 'dashql:abort-opfs-file', path });
-        client.removeOPFSFile = path => requestWorkerFileOperation(worker, { type: 'dashql:remove-opfs-file', path });
     } catch (error) {
         engineScript.revoke();
         throw error;
@@ -76,67 +69,6 @@ export async function createWebHyperDBClient(
         }
     };
     return client;
-}
-
-function importWorkerOPFSFile(
-    worker: Worker,
-    path: string,
-    blob: Blob,
-    options: OPFSFileImportOptions = {},
-): Promise<void> {
-    return new Promise((resolve, reject) => {
-        if (options.signal?.aborted) {
-            reject(options.signal.reason ?? new DOMException('The operation was aborted', 'AbortError'));
-            return;
-        }
-        const channel = new MessageChannel();
-        const finish = (error?: unknown) => {
-            options.signal?.removeEventListener('abort', onAbort);
-            channel.port1.close();
-            if (error == null) resolve();
-            else reject(error);
-        };
-        const onAbort = () => channel.port1.postMessage({ type: 'cancel' });
-        channel.port1.addEventListener('message', event => {
-            const result = event.data as { type: string; bytesWritten?: number; name?: string; error?: string };
-            if (result.type === 'progress') {
-                options.onProgress?.(result.bytesWritten ?? 0);
-            } else if (result.type === 'done') {
-                finish();
-            } else if (result.type === 'error') {
-                const error = result.name === 'AbortError'
-                    ? new DOMException(result.error ?? 'The operation was aborted', 'AbortError')
-                    : new Error(result.error ?? 'OPFS import failed');
-                finish(error);
-            }
-        });
-        channel.port1.start();
-        options.signal?.addEventListener('abort', onAbort, { once: true });
-        worker.postMessage({ type: 'dashql:import-opfs-file', path, blob }, [channel.port2]);
-    });
-}
-
-function prepareWorkerOPFSFile(worker: Worker, path: string): Promise<void> {
-    return requestWorkerFileOperation(worker, { type: 'dashql:prepare-opfs-file', path });
-}
-
-function writeWorkerOPFSFile(worker: Worker, path: string, chunk: Uint8Array, offset: number): Promise<void> {
-    const bytes = chunk.slice();
-    return requestWorkerFileOperation(worker, { type: 'dashql:write-opfs-file', path, bytes, offset }, [bytes.buffer]);
-}
-
-function requestWorkerFileOperation(worker: Worker, request: object, transfer: Transferable[] = []): Promise<void> {
-    return new Promise((resolve, reject) => {
-        const channel = new MessageChannel();
-        channel.port1.addEventListener('message', event => {
-            channel.port1.close();
-            const result = event.data as { error?: unknown };
-            if (result.error == null) resolve();
-            else reject(new Error(String(result.error)));
-        }, { once: true });
-        channel.port1.start();
-        worker.postMessage(request, [channel.port2, ...transfer]);
-    });
 }
 
 export async function setupWebHyperDB(
@@ -164,11 +96,8 @@ export async function setupWebHyperDB(
             );
             const terminate = database.terminate.bind(database);
             database.terminate = async () => {
-                try {
-                    await terminate();
-                } finally {
-                    await session.dispose();
-                }
+                await terminate();
+                await session.dispose();
             };
 
             logger.info('Instantiated HyperDB WASM', {
@@ -177,8 +106,15 @@ export async function setupWebHyperDB(
             }, 'hyperdb');
             return database;
         } catch (error) {
-            await session.dispose();
-            await client.terminate();
+            try {
+                await client.terminate();
+                await session.dispose();
+            } catch (cleanupError) {
+                logger.warn('Cleaning up failed HyperDB setup failed', {
+                    context,
+                    error: stringifyError(cleanupError),
+                }, 'hyperdb');
+            }
             throw error;
         }
     } catch (error) {

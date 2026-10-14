@@ -61,17 +61,12 @@ export const ShellQueryResultOverlay: React.FC<Props> = ({
     const { plan } = dependencies.useHyperPlan(planText);
     const hasPlan = plan != null;
     const [selectedTab, setSelectedTab] = React.useState<ResultTab>(ResultTab.Data);
-    const selectedPlanRef = React.useRef(false);
-    React.useEffect(() => {
-        selectedPlanRef.current = false;
-        setLockedHeight(null);
-        setSelectedTab(ResultTab.Data);
-    }, [query.queryId]);
-    React.useEffect(() => {
-        if (hasPlan && !selectedPlanRef.current) {
+    const selectedPlanQueryIdRef = React.useRef<number | null>(null);
+    React.useLayoutEffect(() => {
+        if (hasPlan && selectedPlanQueryIdRef.current !== query.queryId) {
             const height = dialogRef.current?.getBoundingClientRect().height;
             setLockedHeight(height == null ? null : { queryId: query.queryId, height });
-            selectedPlanRef.current = true;
+            selectedPlanQueryIdRef.current = query.queryId;
             setSelectedTab(ResultTab.Plan);
         } else if (!hasPlan && selectedTab === ResultTab.Plan) {
             setLockedHeight(null);
@@ -128,7 +123,7 @@ export const ShellQueryResultOverlay: React.FC<Props> = ({
     }), [closeButton, plan, PlanViewComponent, query, ResultDetails]);
     useFocusTrap({
         containerRef: dialogRef as React.RefObject<HTMLElement>,
-        initialFocusRef: closeRef as React.RefObject<HTMLElement>,
+        initialFocusRef: dialogRef as React.RefObject<HTMLElement>,
         restoreFocusOnCleanUp: true,
     });
     return (
@@ -137,7 +132,7 @@ export const ShellQueryResultOverlay: React.FC<Props> = ({
             width={OverlaySize.XXL}
             height={OverlaySize.AUTO}
             maxHeight={OverlaySize.XL}
-            initialFocusRef={closeRef}
+            initialFocusRef={dialogRef as React.RefObject<HTMLElement>}
             onEscape={onClose}
             onClickOutside={dismissOnClickOutside ? onClose : IGNORE_OUTSIDE_CLICK}
         >
@@ -147,6 +142,7 @@ export const ShellQueryResultOverlay: React.FC<Props> = ({
                 role="dialog"
                 aria-modal="true"
                 aria-label="Shell query results"
+                tabIndex={-1}
                 style={{
                     height: currentLockedHeight ?? undefined,
                     minHeight: selectedTab === ResultTab.Plan ? MIN_PLAN_OVERLAY_HEIGHT : undefined,

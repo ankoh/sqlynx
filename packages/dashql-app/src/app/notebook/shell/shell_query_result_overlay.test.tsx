@@ -73,6 +73,18 @@ describe('ShellQueryResultOverlay', () => {
         expect(onClose).toHaveBeenCalledOnce();
     });
 
+    it('initially focuses the dialog rather than its close button', () => {
+        act(() => root.render(
+            <ShellQueryResultOverlay
+                query={{ queryId: 42, status: QueryExecutionStatus.SUCCEEDED } as any}
+                onClose={vi.fn()}
+                dependencies={dependencies}
+            />,
+        ));
+
+        expect(document.activeElement).toBe(document.querySelector('[aria-label="Shell query results"]'));
+    });
+
     it('adds and selects a Plan tab for a valid 1x1 plan result', () => {
         const plan = '{"operator":"executiontarget","operatorId":1}';
         act(() => root.render(

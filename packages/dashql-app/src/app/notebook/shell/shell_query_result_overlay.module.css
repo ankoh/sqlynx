@@ -5,6 +5,7 @@
     min-height: 0;
     background: #ffffff;
     overflow: hidden;
+    outline: none;
 }
 
 .tabs {

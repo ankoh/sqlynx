@@ -1,4 +1,5 @@
 import * as arrow from 'apache-arrow';
+import type { MountSource } from 'hyperdb-wasm/raw';
 
 import type {
     EmbeddedComputeDatabase,
@@ -6,7 +7,6 @@ import type {
     EmbeddedExternalDirectoryDatabase,
     EmbeddedExternalFileDatabase,
     ExternalDirectoryMode,
-    OPFSFileImportOptions,
     EmbeddedTableImportConnection,
     EmbeddedTableInsertOptions,
 } from '../database/embedded_database.js';
@@ -58,15 +58,8 @@ export interface HyperDBEngineClient {
     ): Promise<HyperDBResult>;
     createTemporaryFile(bytes: Uint8Array): Promise<HyperDBResult>;
     removeFile(path: string): Promise<HyperDBResult>;
-    registerExternalFile(name: string, url: string, size: number): Promise<HyperDBResult>;
-    registerExternalDirectory(handle: FileSystemDirectoryHandle, mode: ExternalDirectoryMode): Promise<HyperDBResult>;
-    removeExternalRegistration(path: string): Promise<HyperDBResult>;
-    importOPFSFile?(path: string, blob: Blob, options?: OPFSFileImportOptions): Promise<void>;
-    prepareOPFSFile?(path: string): Promise<void>;
-    writeOPFSFile?(path: string, chunk: Uint8Array, offset: number): Promise<void>;
-    finishOPFSFile?(path: string): Promise<void>;
-    abortOPFSFile?(path: string): Promise<void>;
-    removeOPFSFile?(path: string): Promise<void>;
+    mount(source: MountSource, path: string, mode: ExternalDirectoryMode): Promise<HyperDBResult>;
+    unmount(path: string): Promise<HyperDBResult>;
     pollQuery(query: number): Promise<HyperDBResult>;
     cancelQuery(query: number): Promise<HyperDBResult>;
     finishQuery(query: number): Promise<HyperDBResult>;
@@ -219,25 +212,19 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedExternalFileDat
         }
     }
 
-    async registerExternalFile(name: string, blob: Blob, signal?: AbortSignal): Promise<string> {
+    async registerExternalFile(name: string, blob: Blob, path?: string, signal?: AbortSignal): Promise<string> {
         return await this.runDatabaseOperation(async () => {
             throwIfAborted(signal);
+            path ??= externalMountPath(name);
+            validateExternalMountPath(path);
             const url = this.createObjectURL(blob);
-            let path: string | null = null;
             let registered = false;
             try {
-                const result = await this.client.registerExternalFile(name, url, blob.size);
+                const result = await this.client.mount({ kind: 'browser-file', name, url, size: blob.size }, path, 'read');
                 expectOK(result, 'register external file');
                 registered = true;
-                path = new TextDecoder('utf-8', { fatal: true }).decode(result.payload);
-                if (!path.startsWith('/mnt/external/')) {
-                    const removal = await this.client.removeExternalRegistration(path);
-                    if (removal.state === 'ok') registered = false;
-                    else this.externalFiles.set(path, url);
-                    throw new Error('register external file returned an invalid path');
-                }
                 if (signal?.aborted) {
-                    const removal = await this.client.removeExternalRegistration(path);
+                    const removal = await this.client.unmount(path);
                     if (removal.state === 'ok') registered = false;
                     else this.externalFiles.set(path, url);
                     throw signal.reason ?? new DOMException('The operation was aborted', 'AbortError');
@@ -255,21 +242,22 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedExternalFileDat
         await this.runDatabaseOperation(async () => {
             const url = this.externalFiles.get(path);
             if (url == null) throw new Error(`external file is not registered: ${path}`);
-            expectOK(await this.client.removeExternalRegistration(path), 'remove external file');
+            expectOK(await this.client.unmount(path), 'remove external file');
             this.externalFiles.delete(path);
             this.revokeObjectURL(url);
         });
     }
 
-    async registerExternalDirectory(handle: FileSystemDirectoryHandle, mode: ExternalDirectoryMode): Promise<string> {
+    async registerExternalDirectory(
+        handle: FileSystemDirectoryHandle,
+        path: string | undefined,
+        mode: ExternalDirectoryMode,
+    ): Promise<string> {
         return await this.runDatabaseOperation(async () => {
-            const result = await this.client.registerExternalDirectory(handle, mode);
+            path ??= externalMountPath(handle.name);
+            validateExternalMountPath(path);
+            const result = await this.client.mount({ kind: 'browser-directory', handle }, path, mode);
             expectOK(result, 'register external directory');
-            const path = new TextDecoder('utf-8', { fatal: true }).decode(result.payload);
-            if (!path.startsWith('/mnt/external/')) {
-                await this.client.removeExternalRegistration(path).catch(() => {});
-                throw new Error('register external directory returned an invalid path');
-            }
             this.externalDirectories.add(path);
             return path;
         });
@@ -278,39 +266,9 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedExternalFileDat
     async removeExternalDirectory(path: string): Promise<void> {
         await this.runDatabaseOperation(async () => {
             if (!this.externalDirectories.has(path)) throw new Error(`external directory is not registered: ${path}`);
-            expectOK(await this.client.removeExternalRegistration(path), 'remove external directory');
+            expectOK(await this.client.unmount(path), 'remove external directory');
             this.externalDirectories.delete(path);
         });
-    }
-
-    async importOPFSFile(path: string, blob: Blob, options?: OPFSFileImportOptions): Promise<void> {
-        if (this.client.importOPFSFile == null) throw new Error('importing OPFS files is not supported');
-        await this.client.importOPFSFile(path, blob, options);
-    }
-
-    async prepareOPFSFile(path: string): Promise<void> {
-        if (this.client.prepareOPFSFile == null) throw new Error('preparing OPFS files is not supported');
-        await this.client.prepareOPFSFile(path);
-    }
-
-    async writeOPFSFile(path: string, chunk: Uint8Array, offset: number): Promise<void> {
-        if (this.client.writeOPFSFile == null) throw new Error('writing OPFS files is not supported');
-        await this.client.writeOPFSFile(path, chunk, offset);
-    }
-
-    async finishOPFSFile(path: string): Promise<void> {
-        if (this.client.finishOPFSFile == null) throw new Error('finishing OPFS files is not supported');
-        await this.client.finishOPFSFile(path);
-    }
-
-    async abortOPFSFile(path: string): Promise<void> {
-        if (this.client.abortOPFSFile == null) throw new Error('aborting OPFS files is not supported');
-        await this.client.abortOPFSFile(path);
-    }
-
-    async removeOPFSFile(path: string): Promise<void> {
-        if (this.client.removeOPFSFile == null) throw new Error('removing OPFS files is not supported');
-        await this.client.removeOPFSFile(path);
     }
 
     async terminate(): Promise<void> {
@@ -323,12 +281,12 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedExternalFileDat
                     await this.databaseOperation;
                     await Promise.all([...this.connections].map(connection => connection.closeForTermination()));
                     for (const [path, url] of this.externalFiles) {
-                        expectOK(await this.client.removeExternalRegistration(path), 'remove external file during termination');
+                        expectOK(await this.client.unmount(path), 'remove external file during termination');
                         this.externalFiles.delete(path);
                         this.revokeObjectURL(url);
                     }
                     for (const path of this.externalDirectories) {
-                        expectOK(await this.client.removeExternalRegistration(path), 'remove external directory during termination');
+                        expectOK(await this.client.unmount(path), 'remove external directory during termination');
                         this.externalDirectories.delete(path);
                     }
                     if (this.computeDatabasePath != null) {
@@ -400,6 +358,24 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedExternalFileDat
         }
     }
 
+}
+
+function externalMountPath(name: string): string {
+    // Mount paths allow only ASCII components and at most 200 bytes below /mnt/external/.
+    const component = name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 200);
+    return `/mnt/external/${!component || component === '.' || component === '..' ? 'file' : component}`;
+}
+
+function validateExternalMountPath(path: string): void {
+    const prefix = '/mnt/external/';
+    const relativePath = path.startsWith(prefix) ? path.slice(prefix.length) : '';
+    if (
+        relativePath.length === 0 ||
+        new TextEncoder().encode(relativePath).byteLength > 200 ||
+        relativePath.split('/').some(component => !/^[A-Za-z0-9._-]+$/.test(component) || component === '.' || component === '..')
+    ) {
+        throw new Error('external mount path must be below /mnt/external/ with ASCII path components');
+    }
 }
 
 function throwIfAborted(signal?: AbortSignal): void {

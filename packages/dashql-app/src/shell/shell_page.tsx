@@ -19,10 +19,16 @@ import { SalesforceLoginHistoryStore } from './salesforce_login_history.js';
 import { examplesCommand } from './commands/examples.js';
 import { useShellConnection } from './shell_connection.js';
 import { createShellOutputCommand, type ShellOutputMode } from './shell_result.js';
-import { createShellFilesCommand, ShellFileRegistry } from './shell_files.js';
+import {
+    createShellFilesCommand,
+    selectPlatformDirectory,
+    selectPlatformFiles,
+    ShellFileRegistry,
+} from './shell_files.js';
+import { useMountDialog } from './filesystem_mount_dialog.js';
+import { useFilesystemDialog } from './filesystem_dialog.js';
 import { createFormatCommand } from './commands/format.js';
 import { createPlanCommand } from './commands/plan.js';
-import { useFileDownloader } from '../platform/file/file_downloader_provider.js';
 import { useSalesforceLoginDialog } from './salesforce_login_dialog.js';
 import { SalesforceRemoteAttachmentManager } from './salesforce_remote_attachment.js';
 import {
@@ -48,10 +54,7 @@ const LOG_CTX = 'standalone_shell';
 
 function externalFileDatabase(database: unknown): EmbeddedExternalFileDatabase | undefined {
     if (database == null || typeof database !== 'object') return undefined;
-    if (!('registerExternalFile' in database) || !('removeExternalFile' in database) ||
-        !('importOPFSFile' in database) || !('prepareOPFSFile' in database) || !('writeOPFSFile' in database) ||
-        !('finishOPFSFile' in database) || !('abortOPFSFile' in database) ||
-        !('removeOPFSFile' in database)) return undefined;
+    if (!('registerExternalFile' in database) || !('removeExternalFile' in database)) return undefined;
     return database as EmbeddedExternalFileDatabase;
 }
 
@@ -76,7 +79,6 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
     const setupEmbeddedDatabase = useEmbeddedDatabaseSetup();
     const { setConnected, queryExecutions } = useShellConnection();
     const [, dispatchComputation] = useComputationRegistry();
-    const fileDownloader = useFileDownloader();
     const httpClient = useHttpClient();
     const appEvents = usePlatformEventListener();
     const platformType = usePlatformType();
@@ -95,6 +97,34 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
     });
     const { controller: formatDialog, dialog: formatterDialog } = useFormatDialog();
     const { controller: planDialog, dialog: queryPlanDialog } = usePlanDialog(appEvents);
+    const fileRegistryRef = React.useRef<ShellFileRegistry | null>(null);
+    const { controller: mountDialog, dialog: mountDialogOverlay } = useMountDialog({
+        selectFiles: async signal => {
+            const files = await selectPlatformFiles(signal);
+            if (files.length === 0) return null;
+            if (files.length !== 1) throw new Error('select exactly one file to choose a mount path');
+            return { kind: 'file', name: files[0].path, file: files[0] };
+        },
+        selectDirectory: async (mode, signal) => {
+            const handle = await selectPlatformDirectory(mode);
+            return { kind: 'directory', name: handle.name, handle, mode };
+        },
+        mount: async (selection, path, signal) => {
+            const registry = fileRegistryRef.current;
+            if (registry == null) throw new Error('Filesystem mounting is not ready');
+            return selection.kind === 'file'
+                ? await registry.mountFile(selection.file, path, { signal })
+                : await registry.mountDirectory(selection.handle, path, selection.mode);
+        },
+    });
+    const { controller: filesystemDialog, dialog: filesystemDialogOverlay } = useFilesystemDialog({
+        list: async () => fileRegistryRef.current?.listFiles() ?? [],
+        unlink: async path => {
+            const registry = fileRegistryRef.current;
+            if (registry == null || !await registry.drop(path)) throw new Error(`filesystem entry not registered: ${path}`);
+        },
+        mount: mountDialog.request,
+    });
     const containerRef = React.useRef<HTMLDivElement>(null);
     const outputModeRef = React.useRef<ShellOutputMode>('auto');
     const terminalColumnsRef = React.useRef(100);
@@ -259,12 +289,11 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
                 refreshCatalog: (alias, catalog, signal) => attachmentManager.refreshCatalog(alias, catalog, signal),
             });
             fileRegistry = new ShellFileRegistry(
-                false,
-                undefined,
                 logger,
                 externalFileDatabase(database),
                 externalDirectoryDatabase(database),
             );
+            fileRegistryRef.current = fileRegistry;
             const commands: DashQLShellCommand[] = [
                 examplesCommand,
                 createFormatCommand({
@@ -282,7 +311,7 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
                 loginCommand,
                 refreshCommand,
                 createShellOutputCommand(getOutputMode, mode => { outputModeRef.current = mode; }),
-                createShellFilesCommand(fileRegistry, fileDownloader, undefined, logger),
+                createShellFilesCommand(fileRegistry, mountDialog.request, filesystemDialog.request),
             ];
             const nextShell = await createDashQLShell({
                 environment: createEmbeddedDatabaseShellEnvironment(connection, queryExecutions, {
@@ -362,11 +391,12 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
             controller?.dispose();
             shell?.destroy();
             shellRef.current = null;
+            fileRegistryRef.current = null;
             attachmentManagerRef.current = null;
             setConnected(false);
             void fileRegistry?.dispose().finally(() => connection?.close());
         };
-    }, [appConfig?.connectors, appConfig?.settings?.forceReLogin, appEvents, dispatchComputation, fileDownloader, formatDialog, httpClient, hyperDBSupportError, logger, loginDialog, planDialog, platformType, props.onEngineVersion, queryExecutions, setConnected, setupEmbeddedDatabase, showResultQuery]);
+    }, [appConfig?.connectors, appConfig?.settings?.forceReLogin, appEvents, dispatchComputation, formatDialog, httpClient, hyperDBSupportError, logger, loginDialog, planDialog, platformType, props.onEngineVersion, queryExecutions, setConnected, setupEmbeddedDatabase, showResultQuery]);
 
     if (hyperDBSupportError != null) {
         return (
@@ -399,6 +429,8 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
             {dialog}
             {formatterDialog}
             {queryPlanDialog}
+            {mountDialogOverlay}
+            {filesystemDialogOverlay}
         </main>
     );
 };

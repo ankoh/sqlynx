@@ -3,22 +3,20 @@ import type {
     EmbeddedExternalFileDatabase,
     ExternalDirectoryMode,
 } from '../platform/database/embedded_database.js';
-import type { FileDownloader } from '../platform/file/file_downloader.js';
 import type { PlatformFile } from '../platform/file/file.js';
-import { HYPER_OPFS_ROOT, SHELL_FILES_DIRECTORY } from '../platform/hyperdb/hyperdb_opfs.js';
 import { stringifyError, type LoggerLike } from '../platform/logger/logger.js';
 import type { DashQLShellCommand, DashQLShellCommandContext } from './api.js';
 
 const LOG_CTX = 'standalone_shell_files';
+const FS_USAGE = 'usage: .fs';
 
 interface ShellFileEntry {
     readonly path: string;
     size(): Promise<number | undefined>;
-    read(): Promise<Uint8Array>;
     drop(): Promise<void>;
 }
 
-interface ShellFileListing {
+export interface ShellFileListing {
     readonly path: string;
     readonly size?: number;
     readonly directoryMode?: ExternalDirectoryMode;
@@ -36,8 +34,6 @@ export class ShellFileRegistry {
     private disposed = false;
 
     constructor(
-        private readonly native: boolean = false,
-        private readonly getOPFSRoot: () => Promise<FileSystemDirectoryHandle> = () => navigator.storage.getDirectory(),
         private readonly logger?: LoggerLike,
         private readonly externalFiles?: EmbeddedExternalFileDatabase,
         private readonly externalDirectories?: EmbeddedExternalDirectoryDatabase,
@@ -48,14 +44,6 @@ export class ShellFileRegistry {
     }
 
     async listFiles(): Promise<readonly ShellFileListing[]> {
-        if (this.native) {
-            const files = await Promise.all(Array.from(this.files.values(), async file => ({
-                path: file.path,
-                size: await file.size(),
-            })));
-            return files.sort((a, b) => a.path.localeCompare(b.path));
-        }
-        const directory = await this.getOPFSDirectory();
         const files: ShellFileListing[] = [];
         for (const path of this.mountedPaths) {
             files.push({ path, size: await this.files.get(path)?.size() });
@@ -63,28 +51,10 @@ export class ShellFileRegistry {
         for (const [path, directoryMode] of this.directories) {
             files.push({ path, directoryMode });
         }
-        for await (const [name, handle] of directory.entries()) {
-            if (handle.kind === 'file') files.push({
-                path: this.opfsPath(name),
-                size: (await handle.getFile()).size,
-            });
-        }
         return files.sort((a, b) => a.path.localeCompare(b.path));
     }
 
-    async add(file: PlatformFile, options: FileOperationOptions = {}): Promise<string> {
-        return await this.importFile(file, options);
-    }
-
-    async importFile(file: PlatformFile, options: FileOperationOptions = {}): Promise<string> {
-        this.checkUsable();
-        throwIfAborted(options.signal);
-        const entry = this.native ? nativeEntry(file) : await this.copyToOPFS(file, options);
-        this.files.set(entry.path, entry);
-        return entry.path;
-    }
-
-    async mountFile(file: PlatformFile, options: FileOperationOptions = {}): Promise<string> {
+    async mountFile(file: PlatformFile, path?: string, options: FileOperationOptions = {}): Promise<string> {
         this.checkUsable();
         if (this.externalFiles == null) throw new Error('external browser files are not supported');
         if (file.blob == null) throw new Error(`file cannot be mounted directly: ${file.path}`);
@@ -93,27 +63,26 @@ export class ShellFileRegistry {
         const startedAt = Date.now();
         const name = fileName(file.path);
         this.logger?.info('Mounting shell file', logDetails(file.path, undefined, file.size, 'register_external_file', startedAt), LOG_CTX);
-        let path: string | null = null;
+        let mountedPath: string | null = null;
         try {
             options.onProgress?.(`Mounting ${name}`);
-            path = await this.externalFiles.registerExternalFile(name, file.blob, options.signal);
+            mountedPath = await this.externalFiles.registerExternalFile(name, file.blob, path, options.signal);
             if (this.disposed || options.signal?.aborted) {
-                await this.externalFiles.removeExternalFile(path);
+                await this.externalFiles.removeExternalFile(mountedPath);
                 throw options.signal?.reason ?? new DOMException('The operation was aborted', 'AbortError');
             }
             const entry: ShellFileEntry = {
-                path,
+                path: mountedPath,
                 size: async () => file.size ?? file.blob!.size,
-                read: () => file.readAsArrayBuffer(),
-                drop: () => this.externalFiles!.removeExternalFile(path!),
+                drop: () => this.externalFiles!.removeExternalFile(mountedPath!),
             };
-            this.files.set(path, entry);
-            this.mountedPaths.add(path);
-            this.logger?.info('Mounted shell file', logDetails(file.path, path, file.size, 'complete', startedAt), LOG_CTX);
-            return path;
+            this.files.set(mountedPath, entry);
+            this.mountedPaths.add(mountedPath);
+            this.logger?.info('Mounted shell file', logDetails(file.path, mountedPath, file.size, 'complete', startedAt), LOG_CTX);
+            return mountedPath;
         } catch (error) {
             this.logger?.error('Failed to mount shell file', {
-                ...logDetails(file.path, path ?? undefined, file.size, 'register_external_file', startedAt),
+                ...logDetails(file.path, mountedPath ?? undefined, file.size, 'register_external_file', startedAt),
                 error: stringifyError(error),
                 error_name: error instanceof Error ? error.name : undefined,
             }, LOG_CTX);
@@ -121,27 +90,31 @@ export class ShellFileRegistry {
         }
     }
 
-    async mountDirectory(handle: FileSystemDirectoryHandle, mode: ExternalDirectoryMode): Promise<string> {
+    async mountDirectory(
+        handle: FileSystemDirectoryHandle,
+        path: string | undefined,
+        mode: ExternalDirectoryMode,
+    ): Promise<string> {
         this.checkUsable();
         if (this.externalDirectories == null) throw new Error('external browser directories are not supported');
         const startedAt = Date.now();
         this.logger?.info('Mounting shell directory', logDetails(handle.name, undefined, undefined, 'register_external_directory', startedAt), LOG_CTX);
-        let path: string | null = null;
+        let mountedPath: string | null = null;
         try {
-            path = await this.externalDirectories.registerExternalDirectory(handle, mode);
+            mountedPath = await this.externalDirectories.registerExternalDirectory(handle, path, mode);
             if (this.disposed) {
-                await this.externalDirectories.removeExternalDirectory(path);
+                await this.externalDirectories.removeExternalDirectory(mountedPath);
                 throw new Error('shell file registry is disposed');
             }
-            this.directories.set(path, mode);
+            this.directories.set(mountedPath, mode);
             this.logger?.info('Mounted shell directory', {
-                ...logDetails(handle.name, path, undefined, 'complete', startedAt),
+                ...logDetails(handle.name, mountedPath, undefined, 'complete', startedAt),
                 mode,
             }, LOG_CTX);
-            return path;
+            return mountedPath;
         } catch (error) {
             this.logger?.error('Failed to mount shell directory', {
-                ...logDetails(handle.name, path ?? undefined, undefined, 'register_external_directory', startedAt),
+                ...logDetails(handle.name, mountedPath ?? undefined, undefined, 'register_external_directory', startedAt),
                 mode,
                 error: stringifyError(error),
                 error_name: error instanceof Error ? error.name : undefined,
@@ -156,42 +129,14 @@ export class ShellFileRegistry {
             this.directories.delete(path);
             return true;
         }
-        const registeredPath = this.native || this.files.has(path) ? path : this.canonicalOPFSPath(path);
-        const entry = this.files.get(registeredPath);
+        const entry = this.files.get(path);
         if (entry != null) {
             await entry.drop();
-            this.files.delete(registeredPath);
-            this.mountedPaths.delete(registeredPath);
+            this.files.delete(path);
+            this.mountedPaths.delete(path);
             return true;
         }
-        if (this.native) return false;
-        const name = this.opfsFileName(path);
-        try {
-            const directory = await this.getOPFSDirectory();
-            await directory.getFileHandle(name, { create: false });
-            if (this.externalFiles != null) await this.externalFiles.removeOPFSFile(path);
-            else await directory.removeEntry(name);
-            return true;
-        } catch (error) {
-            if ((error as DOMException).name === 'NotFoundError') return false;
-            throw error;
-        }
-    }
-
-    async get(path: string): Promise<ShellFileEntry | undefined> {
-        const registeredPath = this.native || this.files.has(path) ? path : this.canonicalOPFSPath(path);
-        const registered = this.files.get(registeredPath);
-        if (registered != null) return registered;
-        if (this.native) return undefined;
-        const name = this.opfsFileName(path);
-        try {
-            const directory = await this.getOPFSDirectory();
-            const handle = await directory.getFileHandle(name, { create: false });
-            return this.opfsEntry(directory, handle, name);
-        } catch (error) {
-            if ((error as DOMException).name === 'NotFoundError') return undefined;
-            throw error;
-        }
+        return false;
     }
 
     async dispose(): Promise<void> {
@@ -224,186 +169,6 @@ export class ShellFileRegistry {
         }
     }
 
-    private async copyToOPFS(file: PlatformFile, options: FileOperationOptions): Promise<ShellFileEntry> {
-        const name = fileName(file.path);
-        const path = this.opfsPath(name);
-        const startedAt = Date.now();
-        let stage = 'resolve_opfs_directory';
-        let bytesCopied = 0;
-        let destinationExisted = false;
-        let externalFilePrepared = false;
-        let directory: FileSystemDirectoryHandle | null = null;
-        this.logger?.info('Importing shell file to OPFS', logDetails(file.path, path, file.size, stage, startedAt), LOG_CTX);
-
-        try {
-            directory = await this.getOPFSDirectory();
-            stage = 'resolve_opfs_file';
-            let handle: FileSystemFileHandle | null = null;
-            try {
-                handle = await directory.getFileHandle(name, { create: false });
-                destinationExisted = true;
-            } catch (error) {
-                if ((error as DOMException).name !== 'NotFoundError') throw error;
-            }
-
-            if (this.externalFiles != null && file.blob != null) {
-                stage = 'stream_opfs_file';
-                options.onProgress?.(formatImportProgress(name, 0, file.size));
-                await this.externalFiles.importOPFSFile(path, file.blob, {
-                    signal: options.signal,
-                    onProgress: bytesWritten => {
-                        bytesCopied = bytesWritten;
-                        options.onProgress?.(formatImportProgress(name, bytesWritten, file.size));
-                    },
-                });
-            } else if (this.externalFiles != null) {
-                stage = 'prepare_hyperdb_opfs_file';
-                await this.externalFiles.prepareOPFSFile(path);
-                externalFilePrepared = true;
-                await this.streamToOPFS(file, path, name, options, bytes => { bytesCopied = bytes; });
-                externalFilePrepared = false;
-            } else {
-                if (handle == null) handle = await directory.getFileHandle(name, { create: true });
-                throwIfAborted(options.signal);
-                const source = file.stream();
-                stage = 'create_opfs_writable';
-                const writable = await handle.createWritable();
-                const total = file.size;
-                let lastProgressAt = 0;
-                let writableClosed = false;
-                stage = 'stream_opfs_file';
-                options.onProgress?.(formatImportProgress(name, 0, total));
-                const reader = source.getReader();
-                try {
-                    for (;;) {
-                        throwIfAborted(options.signal);
-                        const { done, value } = await reader.read();
-                        if (done) break;
-                        throwIfAborted(options.signal);
-                        await writable.write(value as Uint8Array<ArrayBuffer>);
-                        bytesCopied += value.byteLength;
-                        const now = Date.now();
-                        if (now - lastProgressAt >= 100 || bytesCopied === total) {
-                            options.onProgress?.(formatImportProgress(name, bytesCopied, total));
-                            lastProgressAt = now;
-                        }
-                    }
-                    stage = 'close_opfs_file';
-                    await writable.close();
-                    writableClosed = true;
-                } catch (error) {
-                    const cleanup = [reader.cancel(error)];
-                    if (!writableClosed && typeof writable.abort === 'function') cleanup.push(writable.abort(error));
-                    await Promise.allSettled(cleanup);
-                    throw error;
-                } finally {
-                    reader.releaseLock();
-                }
-            }
-            this.logger?.info('Imported shell file to OPFS', {
-                ...logDetails(file.path, path, file.size ?? bytesCopied, 'complete', startedAt),
-                bytes_copied: bytesCopied.toString(),
-                destination_existed: destinationExisted.toString(),
-            }, LOG_CTX);
-            directory = await this.getOPFSDirectory();
-            handle = await directory.getFileHandle(name, { create: false });
-            return this.opfsEntry(directory, handle, name);
-        } catch (error) {
-            let cleanupError: unknown;
-            if (externalFilePrepared && this.externalFiles != null) {
-                try {
-                    await this.externalFiles.abortOPFSFile(path);
-                } catch (candidate) {
-                    cleanupError = candidate;
-                }
-            } else if (!destinationExisted && directory != null) {
-                try {
-                    await directory.removeEntry(name);
-                } catch (candidate) {
-                    if ((candidate as DOMException).name !== 'NotFoundError') cleanupError = candidate;
-                }
-            }
-            this.logger?.error('Failed to import shell file to OPFS', {
-                ...logDetails(file.path, path, file.size, stage, startedAt),
-                bytes_copied: bytesCopied.toString(),
-                destination_existed: destinationExisted.toString(),
-                error: stringifyError(error),
-                error_name: error instanceof Error ? error.name : undefined,
-                cleanup_error: cleanupError == null ? undefined : stringifyError(cleanupError),
-            }, LOG_CTX);
-            throw error;
-        }
-    }
-
-    private async streamToOPFS(
-        file: PlatformFile,
-        path: string,
-        name: string,
-        options: FileOperationOptions,
-        onBytesCopied: (bytes: number) => void,
-    ): Promise<void> {
-        const source = file.stream();
-        const reader = source.getReader();
-        let bytesCopied = 0;
-        let lastProgressAt = 0;
-        options.onProgress?.(formatImportProgress(name, 0, file.size));
-        try {
-            for (;;) {
-                throwIfAborted(options.signal);
-                const { done, value } = await reader.read();
-                if (done) break;
-                throwIfAborted(options.signal);
-                await this.externalFiles!.writeOPFSFile(path, value, bytesCopied);
-                bytesCopied += value.byteLength;
-                onBytesCopied(bytesCopied);
-                const now = Date.now();
-                if (now - lastProgressAt >= 100 || bytesCopied === file.size) {
-                    options.onProgress?.(formatImportProgress(name, bytesCopied, file.size));
-                    lastProgressAt = now;
-                }
-            }
-            await this.externalFiles!.finishOPFSFile(path);
-        } finally {
-            await reader.cancel().catch(() => {});
-            reader.releaseLock();
-        }
-    }
-
-    private async getOPFSDirectory(): Promise<FileSystemDirectoryHandle> {
-        return await (await this.getOPFSRoot()).getDirectoryHandle(SHELL_FILES_DIRECTORY, { create: true });
-    }
-
-    private opfsEntry(
-        directory: FileSystemDirectoryHandle,
-        handle: FileSystemFileHandle,
-        name: string,
-    ): ShellFileEntry {
-        return {
-            path: this.opfsPath(name),
-            size: async () => (await handle.getFile()).size,
-            read: async () => new Uint8Array(await (await handle.getFile()).arrayBuffer()),
-            drop: async () => this.externalFiles != null
-                ? this.externalFiles.removeOPFSFile(this.opfsPath(name))
-                : directory.removeEntry(name),
-        };
-    }
-
-    private opfsPath(name: string): string {
-        return `${HYPER_OPFS_ROOT}/${SHELL_FILES_DIRECTORY}/${name}`;
-    }
-
-    private opfsFileName(path: string): string {
-        const prefix = `${HYPER_OPFS_ROOT}/${SHELL_FILES_DIRECTORY}/`;
-        if (prefix == null || path.slice(prefix.length) !== fileName(path)) {
-            throw new Error(`invalid shell file path: ${path}`);
-        }
-        return path.slice(prefix.length);
-    }
-
-    private canonicalOPFSPath(path: string): string {
-        return this.opfsPath(this.opfsFileName(path));
-    }
-
     private checkUsable(): void {
         if (this.disposed) throw new Error('shell file registry is disposed');
     }
@@ -411,66 +176,25 @@ export class ShellFileRegistry {
 
 export function createShellFilesCommand(
     registry: ShellFileRegistry,
-    downloader: FileDownloader,
-    selectFiles: (signal?: AbortSignal) => Promise<readonly PlatformFile[]> = selectPlatformFiles,
-    logger?: LoggerLike,
-    selectDirectory: (mode: ExternalDirectoryMode) => Promise<FileSystemDirectoryHandle> = selectPlatformDirectory,
+    requestMountDialog?: (signal?: AbortSignal) => Promise<string>,
+    requestFilesystemDialog?: (signal?: AbortSignal) => Promise<void>,
 ): DashQLShellCommand {
     return [
         'fs',
-        'Manage queryable files: list, mount, mount-dir, mount-dir-rw, import, add, drop, or get',
+        'Manage filesystem mounts',
         async (args, context) => {
-            const [action = 'list', ...pathParts] = args;
-            const path = pathParts.join(' ');
-            switch (action) {
-                case 'list': {
-                    if (path.length !== 0) throw new Error('usage: .fs list');
-                    const files = await registry.listFiles();
-                    return files.length === 0
-                        ? 'No files registered'
-                        : files.map(file => file.directoryMode == null
-                            ? `${file.path}${file.size == null ? '' : ` (${formatBytes(file.size)})`}`
-                            : `${file.path} (directory, ${file.directoryMode === 'read' ? 'read-only' : 'read/write'})`)
-                            .join('\r\n');
-                }
-                case 'add':
-                case 'import':
-                case 'mount': {
-                    if (path.length !== 0) throw new Error(`usage: .fs ${action}`);
-                    const selected = await selectShellFiles(selectFiles, context, logger);
-                    const paths: string[] = [];
-                    for (const file of selected) {
-                        throwIfAborted(context.signal);
-                        paths.push(action === 'mount'
-                            ? await registry.mountFile(file, context)
-                            : await registry.importFile(file, context));
-                    }
-                    if (paths.length === 0) return 'No files selected';
-                    if (action === 'mount') return paths.join('\r\n');
-                    const verb = action === 'import' ? 'Imported' : 'Added';
-                    return `${verb} ${paths.length} file${paths.length === 1 ? '' : 's'}\r\n${paths.join('\r\n')}`;
-                }
-                case 'mount-dir':
-                case 'mount-dir-rw': {
-                    if (path.length !== 0) throw new Error(`usage: .fs ${action}`);
-                    const mode: ExternalDirectoryMode = action === 'mount-dir' ? 'read' : 'readwrite';
-                    return await registry.mountDirectory(await selectDirectory(mode), mode);
-                }
-                case 'drop': {
-                    if (path.length === 0) throw new Error('usage: .fs drop <path>');
-                    if (!await registry.drop(path)) throw new Error(`file not registered: ${path}`);
-                    return `Dropped ${path}`;
-                }
-                case 'get': {
-                    if (path.length === 0) throw new Error('usage: .fs get <path>');
-                    const file = await registry.get(path);
-                    if (file == null) throw new Error(`file not registered: ${path}`);
-                    await downloader.downloadBufferAsFile(await file.read(), fileName(path));
-                    return `Downloaded ${path}`;
-                }
-                default:
-                    throw new Error('usage: .fs [list|mount|mount-dir|mount-dir-rw|import|add|drop|get]');
+            if (args.length === 0 || args[0] === 'ls') {
+                if (args.length > 1) return FS_USAGE;
+                if (requestFilesystemDialog == null) return FS_USAGE;
+                await requestFilesystemDialog(context.signal);
+                return;
             }
+            if (args[0] === 'mount') {
+                if (args.length > 1 || requestMountDialog == null) return FS_USAGE;
+                const path = await requestMountDialog(context.signal);
+                return path === 'Mount cancelled' ? undefined : path;
+            }
+            return FS_USAGE;
         },
     ];
 }
@@ -515,7 +239,7 @@ function logDetails(
     };
 }
 
-async function selectPlatformFiles(signal?: AbortSignal): Promise<readonly PlatformFile[]> {
+export async function selectPlatformFiles(signal?: AbortSignal): Promise<readonly PlatformFile[]> {
     const { WebFile } = await import('../platform/file/web_file.js');
     return await new Promise((resolve, reject) => {
         const input = document.createElement('input');
@@ -544,7 +268,7 @@ async function selectPlatformFiles(signal?: AbortSignal): Promise<readonly Platf
     });
 }
 
-async function selectPlatformDirectory(mode: ExternalDirectoryMode): Promise<FileSystemDirectoryHandle> {
+export async function selectPlatformDirectory(mode: ExternalDirectoryMode): Promise<FileSystemDirectoryHandle> {
     const picker = (window as Window & typeof globalThis & {
         showDirectoryPicker?: (options: { mode: ExternalDirectoryMode }) => Promise<FileSystemDirectoryHandle>;
     }).showDirectoryPicker;
@@ -552,31 +276,6 @@ async function selectPlatformDirectory(mode: ExternalDirectoryMode): Promise<Fil
         throw new Error('folder mounting requires the File System Access API');
     }
     return await picker({ mode });
-}
-
-function nativeEntry(file: PlatformFile): ShellFileEntry {
-    return {
-        path: file.path,
-        size: async () => file.size,
-        read: () => file.readAsArrayBuffer(),
-        drop: async () => {},
-    };
-}
-
-function formatImportProgress(name: string, copied: number, total?: number): string {
-    if (total == null || total <= 0) return `Importing ${name}: ${formatBytes(copied)}`;
-    return `Importing ${name}: ${formatBytes(copied)} / ${formatBytes(total)} (${Math.floor(copied / total * 100)}%)`;
-}
-
-function formatBytes(bytes: number): string {
-    const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB'];
-    let value = bytes;
-    let unit = 0;
-    while (value >= 1024 && unit < units.length - 1) {
-        value /= 1024;
-        unit++;
-    }
-    return `${value >= 10 || unit === 0 ? value.toFixed(0) : value.toFixed(1)} ${units[unit]}`;
 }
 
 function throwIfAborted(signal?: AbortSignal): void {

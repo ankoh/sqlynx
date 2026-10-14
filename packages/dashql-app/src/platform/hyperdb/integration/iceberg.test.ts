@@ -50,7 +50,7 @@ describe('HyperDB Wasm Iceberg integration', () => {
         const directory = await root.getDirectoryHandle(name, { create: true });
         let path: string | null = null;
         try {
-            path = await database!.registerExternalDirectory(directory, 'readwrite');
+            path = await database!.registerExternalDirectory(directory, `/mnt/external/${name}`, 'readwrite');
             await test(path);
         } finally {
             if (path != null) await ignoreCleanupFailure(() => database!.removeExternalDirectory(path!));

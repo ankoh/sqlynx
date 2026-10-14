@@ -5,7 +5,6 @@ export type {
     EmbeddedExternalDirectoryDatabase,
     EmbeddedExternalFileDatabase,
     ExternalDirectoryMode,
-    OPFSFileImportOptions,
     EmbeddedTableImportConnection,
     EmbeddedTableInsertOptions,
 } from './embedded_database.js';

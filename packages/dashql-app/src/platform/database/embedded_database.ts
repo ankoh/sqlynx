@@ -21,28 +21,20 @@ export interface EmbeddedTableImportConnection extends EmbeddedConnection {
     createTableAs(name: string, query: string, abort?: AbortSignal): Promise<void>;
 }
 
-/** Optional browser file registration capability. */
-export interface OPFSFileImportOptions {
-    readonly signal?: AbortSignal;
-    readonly onProgress?: (bytesWritten: number) => void;
-}
-
 export interface EmbeddedExternalFileDatabase {
-    registerExternalFile(name: string, blob: Blob, signal?: AbortSignal): Promise<string>;
+    registerExternalFile(name: string, blob: Blob, path?: string, signal?: AbortSignal): Promise<string>;
     removeExternalFile(path: string): Promise<void>;
-    importOPFSFile(path: string, blob: Blob, options?: OPFSFileImportOptions): Promise<void>;
-    prepareOPFSFile(path: string): Promise<void>;
-    writeOPFSFile(path: string, chunk: Uint8Array, offset: number): Promise<void>;
-    finishOPFSFile(path: string): Promise<void>;
-    abortOPFSFile(path: string): Promise<void>;
-    removeOPFSFile(path: string): Promise<void>;
 }
 
 export type ExternalDirectoryMode = 'read' | 'readwrite';
 
 /** Optional browser directory registration capability. */
 export interface EmbeddedExternalDirectoryDatabase {
-    registerExternalDirectory(handle: FileSystemDirectoryHandle, mode: ExternalDirectoryMode): Promise<string>;
+    registerExternalDirectory(
+        handle: FileSystemDirectoryHandle,
+        path: string | undefined,
+        mode: ExternalDirectoryMode,
+    ): Promise<string>;
     removeExternalDirectory(path: string): Promise<void>;
 }
 
