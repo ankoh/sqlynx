@@ -251,9 +251,11 @@ export function useDynamicAttachedDatabaseDispatch(): [AttachedDatabaseRegistry,
         pendingActionsRef.current.push({ databaseId, action });
 
         const frameCoalescible = action.type === QUERY_PROGRESS_UPDATED || action.type === QUERY_RECEIVED_BATCH;
-        // Streamed progress and batches can arrive in a microtask cascade. Batch them until the
-        // next frame so React and the status spinner can paint between bursts. Lifecycle actions
-        // stay immediate and flush any queued stream updates first to preserve action order.
+        // Query execution may happen in a worker or remotely, but Arrow batch decoding and these
+        // state updates happen on the renderer thread. A fast result stream can therefore enqueue
+        // a microtask cascade that repeatedly rerenders the notebook before the browser gets a
+        // frame to paint. Publish only the latest streamed progress once per frame; lifecycle
+        // actions stay immediate and flush queued stream updates first to preserve action order.
         if (frameCoalescible && flushScheduledRef.current == null) {
             const handle = requestAnimationFrame(flushPendingActions);
             flushScheduledRef.current = { type: 'frame', handle };

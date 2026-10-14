@@ -60,8 +60,8 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     disabled?: boolean;
     inactive?: boolean;
     block?: boolean;
-    leadingVisual?: React.ElementType;
-    trailingVisual?: React.ElementType;
+    leadingVisual?: React.ElementType | React.ReactElement;
+    trailingVisual?: React.ElementType | React.ReactElement;
     trailingAction?: React.ReactElement<React.HTMLProps<HTMLButtonElement>>;
     children?: React.ReactNode;
 }
@@ -83,8 +83,12 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props: B
     } = props;
     const variantStyle = BUTTON_VARIANT_CLASSNAME[props.variant ?? ButtonVariant.Default];
     const sizeStyle = BUTTON_SIZE_CLASSNAME[props.size ?? ButtonSize.Medium];
-    const LeadingVisual = leadingVisual;
-    const TrailingVisual = trailingVisual;
+    const leadingVisualElement = React.isValidElement(leadingVisual)
+        ? leadingVisual
+        : leadingVisual ? React.createElement(leadingVisual) : null;
+    const trailingVisualElement = React.isValidElement(trailingVisual)
+        ? trailingVisual
+        : trailingVisual ? React.createElement(trailingVisual) : null;
     return (
         <button
             className={classNames(styles.button, variantStyle, sizeStyle, {
@@ -100,14 +104,14 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props: B
             type={type ?? 'button'}
         >
             <span className={styles.button_content}>
-                {LeadingVisual && (
-                    <span className={styles.leading_visual}><LeadingVisual /></span>
+                {leadingVisualElement && (
+                    <span className={styles.leading_visual}>{leadingVisualElement}</span>
                 )}
                 {children && (
                     <span className={styles.text}>{children}</span>
                 )}
-                {TrailingVisual && (
-                    <span className={styles.trailing_visual}><TrailingVisual /></span>
+                {trailingVisualElement && (
+                    <span className={styles.trailing_visual}>{trailingVisualElement}</span>
                 )}
             </span>
             {trailingAction && (

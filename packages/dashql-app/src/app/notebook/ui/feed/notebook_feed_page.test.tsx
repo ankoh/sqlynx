@@ -295,6 +295,20 @@ describe('NotebookFeedPage', () => {
         expect(document.querySelector('[role="dialog"][aria-label="Notebook execution details"]')?.textContent).toContain('5/5 succeeded');
     });
 
+    it('keeps the running status indicator mounted as execution progress changes', () => {
+        state.execution = { busy: true, start: vi.fn(), stop: vi.fn(), state: {
+            phase: 'running', completedScripts: 1, totalScripts: 5,
+            completedStatements: 1, totalStatements: 9, error: null,
+        } };
+        const render = () => act(() => root.render(<NotebookFeedPage notebookScripts={scripts()}
+            modifyNotebookScripts={vi.fn()} connection={null} active dependencies={dependencies} />));
+        render();
+        const indicator = container.querySelector('[aria-label="Show notebook execution details"] svg');
+        state.execution.state = { ...state.execution.state, completedScripts: 2, completedStatements: 4 };
+        render();
+        expect(container.querySelector('[aria-label="Show notebook execution details"] svg')).toBe(indicator);
+    });
+
     it('uses one header for the workbench toggle, view switcher, and notebook actions', () => {
         state.dashboardsEnabled = true;
         const notebookScripts = scripts();

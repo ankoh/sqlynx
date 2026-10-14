@@ -160,7 +160,7 @@ export const NotebookFeedPage: React.FC<Props> = (props) => {
                                 side={AnchorSide.OutsideBottom} align={AnchorAlignment.Start} anchorOffset={4}
                                 renderAnchor={anchorProps => <dependencies.Button {...anchorProps}
                                     size={ButtonSize.Small} variant={ButtonVariant.Invisible} aria-label="Show notebook execution details"
-                                    leadingVisual={() => <span className={styles.execution_indicator} aria-hidden="true"><StatusIndicator width="16px" height="16px" status={execution.busy
+                                    leadingVisual={<span className={styles.execution_indicator} aria-hidden="true"><StatusIndicator width="16px" height="16px" status={execution.busy
                                         ? IndicatorStatus.Running : run.phase === 'failed' ? IndicatorStatus.Failed
                                             : run.phase === 'succeeded' ? IndicatorStatus.Succeeded : IndicatorStatus.Skip} /></span>}>
                                     <span className={styles.execution_progress}>{statusText}</span>
