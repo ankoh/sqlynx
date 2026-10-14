@@ -11,6 +11,9 @@ import {
     type QueryExecutionMetrics,
 } from '../query_execution_state.js';
 import type { HyperDatabaseChannel } from '../hyper/hyperdb_grpc_client.js';
+import { yieldToBrowser } from '../../../../utils/yield_to_browser.js';
+
+const STREAM_YIELD_INTERVAL = 8;
 
 class EmbeddedQueryResultStream implements QueryExecutionResponseStream {
     private readonly table: arrow.Table;
@@ -53,6 +56,7 @@ class EmbeddedQueryResultStream implements QueryExecutionResponseStream {
         for (; this.nextBatch < this.table.batches.length; this.nextBatch += 1) {
             abort?.throwIfAborted();
             batches.resolve(this, this.table.batches[this.nextBatch]);
+            if ((this.nextBatch + 1) % STREAM_YIELD_INTERVAL === 0) await yieldToBrowser();
         }
     }
 }

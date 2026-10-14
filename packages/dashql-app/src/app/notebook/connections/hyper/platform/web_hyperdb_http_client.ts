@@ -26,6 +26,7 @@ import { AsyncConsumer } from '../../../../../utils/async_consumer.js';
 import { AsyncValue } from '../../../../../utils/async_value.js';
 import { HttpClient } from '../../../../../platform/http/http_client.js';
 import { Logger } from '../../../../../platform/logger/logger.js';
+import { yieldToBrowser } from '../../../../../utils/yield_to_browser.js';
 
 const LOG_CTX = "web_hyperdb_http_client";
 
@@ -40,6 +41,7 @@ function rethrowAsHyperQueryError(e: unknown): never {
 
 const CHUNK_POLL_DELAY_MS = 250;
 export const DEFAULT_PARALLEL_CHUNKS = 4;
+const STREAM_YIELD_INTERVAL = 8;
 
 /// Bytes-reader that feeds Arrow IPC stream chunks from v3 HTTP into an AsyncRecordBatchStreamReader.
 /// Chunks are prefetched in parallel up to `parallelChunks`, but yielded in-order so that the
@@ -204,6 +206,7 @@ export class WebHyperQueryResultStream implements QueryExecutionResponseStream {
         abort?.throwIfAborted();
         this.resultSchema.resolve(arrowReader.schema);
 
+        let batchesRead = 0;
         while (true) {
             const iter = await arrowReader.next();
             abort?.throwIfAborted();
@@ -214,6 +217,7 @@ export class WebHyperQueryResultStream implements QueryExecutionResponseStream {
                 break;
             }
             batches.resolve(this, iter.value);
+            if (++batchesRead % STREAM_YIELD_INTERVAL === 0) await yieldToBrowser();
         }
     }
 }

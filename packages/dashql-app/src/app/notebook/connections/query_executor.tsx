@@ -33,6 +33,7 @@ import type { LogRecord } from '../../../platform/logger/log_buffer.js';
 import { allocateQueryId, executeTrackedQuery } from '../../../query/tracked_query_execution.js';
 import { consumeQueryResponseStream, executeConnectionQuery } from './query_execution.js';
 import { executeScriptQuery } from './script_query_execution.js';
+import { yieldToBrowser } from '../../../utils/yield_to_browser.js';
 
 const LOG_CTX = 'query_executor';
 
@@ -219,6 +220,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                                     }
                                     queryTracker.dispatch({ type: QUERY_PROCESSING_RESULTS, value: [queryId] });
                                     await measurePostprocessing(async () => {
+                                        await yieldToBrowser();
                                         await analyzeTable(queryId, table, computeDispatch, computeDb, traced, args.projection);
                                         initialState.cancellation.signal.throwIfAborted();
                                     });
@@ -287,6 +289,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                             }
                             queryTracker.dispatch({ type: QUERY_PROCESSING_RESULTS, value: [queryId] });
                             await measurePostprocessing(async () => {
+                                await yieldToBrowser();
                                 await analyzeTable(queryId, table, computeDispatch, computeDb, traced, args.projection);
                                 initialState.cancellation.signal.throwIfAborted();
                             });
@@ -468,6 +471,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
                         });
 
                         await measurePostprocessing(async () => {
+                            await yieldToBrowser();
                             await analyzeTable(queryId, table!, computeDispatch, computeDb, traced, args.projection);
                             initialState.cancellation.signal.throwIfAborted();
                         });

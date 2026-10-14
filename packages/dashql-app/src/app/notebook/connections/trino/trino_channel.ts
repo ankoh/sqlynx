@@ -3,6 +3,9 @@ import * as proto from "../../../../proto.js";
 
 import { Logger } from '../../../../platform/logger/logger.js';
 import { createQueryResponseStreamMetrics, QueryExecutionProgress, QueryExecutionResponseStream, QueryExecutionMetrics, QueryExecutionStatus } from "../query_execution_state.js";
+import { yieldToBrowser } from '../../../../utils/yield_to_browser.js';
+
+const STREAM_YIELD_INTERVAL = 8;
 import { TrinoApiClientInterface, TrinoApiEndpoint, TrinoQueryData, TrinoQueryResult, TrinoQueryStatistics } from "./trino_api_client.js";
 import { ChannelError, RawProxyError } from '../../../../platform/channel_common.js';
 import { AsyncValue } from '../../../../utils/async_value.js';
@@ -132,6 +135,7 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
     /// Await the next record batch
     async produce(batches: AsyncConsumer<QueryExecutionResponseStream, arrow.RecordBatch | null>, progress: AsyncConsumer<QueryExecutionResponseStream, QueryExecutionProgress>, abort?: AbortSignal): Promise<void> {
         try {
+            let batchesRead = 0;
             // While still running
             while (this.latestQueryState == "QUEUED" || this.latestQueryState == "RUNNING" || this.latestQueryState == "FINISHING") {
                 // Fetch the next query result
@@ -158,6 +162,7 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
                     // Produce a batch
                     batches.resolve(this, resultBatch);
                     abort?.throwIfAborted();
+                    if (++batchesRead % STREAM_YIELD_INTERVAL === 0) await yieldToBrowser();
                 } else {
                     // Publish the progress update
                     this.latestQueryProgress = deriveProgress(this.latestQueryStats, this.queryMetrics);

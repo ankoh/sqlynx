@@ -28,8 +28,10 @@ import { decodeGrpcErrorHeaders, HyperQueryError } from '../hyper_error_info.js'
 import { Logger } from '../../../../../platform/logger/logger.js';
 import { AsyncConsumer } from '../../../../../utils/async_consumer.js';
 import { AsyncValue } from '../../../../../utils/async_value.js';
+import { yieldToBrowser } from '../../../../../utils/yield_to_browser.js';
 
 const LOG_CTX = "native_hyperdb_grpc_client";
+const STREAM_YIELD_INTERVAL = 8;
 
 export class QueryResultReader implements AsyncIterator<Uint8Array>, AsyncIterable<Uint8Array> {
     /// The gRPC stream
@@ -127,6 +129,7 @@ export class NativeHyperQueryResultStream implements QueryExecutionResponseStrea
             abort?.throwIfAborted();
             this.resultSchema.resolve(arrowReader.schema);
 
+            let batchesRead = 0;
             while (true) {
                 const iter = await arrowReader!.next();
                 abort?.throwIfAborted();
@@ -137,6 +140,7 @@ export class NativeHyperQueryResultStream implements QueryExecutionResponseStrea
                     return;
                 }
                 batches.resolve(this, iter.value);
+                if (++batchesRead % STREAM_YIELD_INTERVAL === 0) await yieldToBrowser();
             }
         } catch (e: unknown) {
             // A failed gRPC stream surfaces as a ChannelError whose headers carry

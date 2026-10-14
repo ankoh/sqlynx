@@ -5,14 +5,11 @@ import { QueryType } from '../connections/query_execution_state.js';
 import { APPLY_PLANNER_ANALYSIS, getSortedScriptFileNames, REGISTER_QUERY, REGISTER_SCRIPT_RESULT, resolveCompiledVisualization, SET_SCRIPT_EXECUTION_VISUALIZATION, type NotebookScripts } from './notebook_scripts.js';
 import type { ModifyNotebookScripts } from './notebook_scripts_registry.js';
 import { projectionForVisualizeQuery } from './script_types.js';
+import { yieldToBrowser } from '../../../utils/yield_to_browser.js';
 
 const activeNotebooks = new WeakMap<core.DashQL, Set<string>>();
 const PREPARATION_YIELD_INTERVAL = 8;
 const EXECUTION_YIELD_INTERVAL = 8;
-
-function yieldToBrowser(): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, 0));
-}
 
 export function isNotebookExecutionRunning(notebook: NotebookScripts): boolean {
     return activeNotebooks.get(notebook.instance)?.has(notebook.notebookId) ?? false;

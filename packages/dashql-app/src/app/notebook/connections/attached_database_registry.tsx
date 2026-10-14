@@ -12,6 +12,7 @@ import {
     SET_CONNECTION_DRAFT,
     DISCARD_CONNECTION_DRAFT,
 } from './attached_database_state.js';
+import { QUERY_PROGRESS_UPDATED, QUERY_RECEIVED_BATCH } from '../../../query/query_execution_state.js';
 import { Dispatch } from '../../../utils/variant.js';
 import { CONNECTOR_TYPES } from './connector_info.js';
 import { ConnectionSignatureMap } from './connection_signature.js';
@@ -158,11 +159,17 @@ export function useDynamicAttachedDatabaseDispatch(): [AttachedDatabaseRegistry,
 
     // Queue for batching dispatch calls to avoid concurrent rendering issues
     const pendingActionsRef = React.useRef<Array<{ databaseId: string; action: AttachedDatabaseAction }>>([]);
-    const flushScheduledRef = React.useRef(false);
+    const flushScheduledRef = React.useRef<{ type: 'microtask' } | { type: 'frame'; handle: number } | null>(null);
+
+    React.useEffect(() => () => {
+        if (flushScheduledRef.current?.type === 'frame') {
+            cancelAnimationFrame(flushScheduledRef.current.handle);
+        }
+    }, []);
 
     // Flush all pending actions in a single state update
     const flushPendingActions = React.useCallback(() => {
-        flushScheduledRef.current = false;
+        flushScheduledRef.current = null;
         const actions = pendingActionsRef.current;
         if (actions.length === 0) return;
         pendingActionsRef.current = [];
@@ -243,9 +250,18 @@ export function useDynamicAttachedDatabaseDispatch(): [AttachedDatabaseRegistry,
         // Queue the action
         pendingActionsRef.current.push({ databaseId, action });
 
-        // Schedule a flush if not already scheduled
-        if (!flushScheduledRef.current) {
-            flushScheduledRef.current = true;
+        const frameCoalescible = action.type === QUERY_PROGRESS_UPDATED || action.type === QUERY_RECEIVED_BATCH;
+        // Streamed progress and batches can arrive in a microtask cascade. Batch them until the
+        // next frame so React and the status spinner can paint between bursts. Lifecycle actions
+        // stay immediate and flush any queued stream updates first to preserve action order.
+        if (frameCoalescible && flushScheduledRef.current == null) {
+            const handle = requestAnimationFrame(flushPendingActions);
+            flushScheduledRef.current = { type: 'frame', handle };
+        } else if (!frameCoalescible && flushScheduledRef.current?.type === 'frame') {
+            cancelAnimationFrame(flushScheduledRef.current.handle);
+            flushPendingActions();
+        } else if (!frameCoalescible && flushScheduledRef.current == null) {
+            flushScheduledRef.current = { type: 'microtask' };
             queueMicrotask(flushPendingActions);
         }
     }, [flushPendingActions]);
