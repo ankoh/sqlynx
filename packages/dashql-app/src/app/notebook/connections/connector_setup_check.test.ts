@@ -11,11 +11,16 @@ describe('Salesforce connection setup check', () => {
         { token: {}, error: undefined, expected: ConnectionSetupCheck.AUTHENTICATION_IN_PROGRESS },
         { token: {}, error: { message: 'OAuth failed' }, expected: ConnectionSetupCheck.AUTHENTICATION_FAILED },
         {
-            token: { accessToken: 'org-jwt', jwt: { raw: 'org-jwt', payload: {} } },
+            token: { jwt: { raw: 'data-cloud-jwt', payload: {} } },
             error: undefined,
             expected: ConnectionSetupCheck.AUTHENTICATED,
         },
-    ])('requires a usable OrgJWT instead of a reducer placeholder', ({ token, error, expected }) => {
+        {
+            token: { jwt: { raw: 'data-cloud-jwt', payload: {} } },
+            error: { message: 'Setup failed after exchange' },
+            expected: ConnectionSetupCheck.AUTHENTICATION_FAILED,
+        },
+    ])('requires an exchanged token and gives setup errors precedence', ({ token, error, expected }) => {
         const state = {
             details: {
                 type: SALESFORCE_DATA_CLOUD_CONNECTOR,
@@ -24,7 +29,7 @@ describe('Salesforce connection setup check', () => {
                         setupParams: params,
                         setupTimings: { authStartedAt: new Date(0).toISOString() },
                         setupError: error,
-                        oauthState: { coreAccessToken: token },
+                        oauthState: { coreAccessToken: { accessToken: 'opaque-core-token' }, dataCloudAccessToken: token },
                     },
                 },
             },

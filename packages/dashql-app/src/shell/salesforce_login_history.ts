@@ -8,8 +8,6 @@ export interface SalesforceLoginHistoryEntry {
     name: string;
     instanceUrl: string;
     appConsumerKey: string;
-    dataCloudInstanceUrl?: string;
-    dataCloudTenantId?: string;
     loginHint?: string;
     lastUsedAt: string;
 }
@@ -27,8 +25,6 @@ function isHistoryEntry(value: unknown): value is SalesforceLoginHistoryEntry {
         && typeof entry.name === 'string'
         && typeof entry.instanceUrl === 'string'
         && typeof entry.appConsumerKey === 'string'
-        && (entry.dataCloudInstanceUrl === undefined || typeof entry.dataCloudInstanceUrl === 'string')
-        && (entry.dataCloudTenantId === undefined || typeof entry.dataCloudTenantId === 'string')
         && (entry.loginHint === undefined || typeof entry.loginHint === 'string')
         && typeof entry.lastUsedAt === 'string'
         && Number.isFinite(Date.parse(entry.lastUsedAt));
@@ -58,7 +54,14 @@ export class SalesforceLoginHistoryStore {
             if (candidate.version !== 1 || !Array.isArray(candidate.entries) || !candidate.entries.every(isHistoryEntry)) {
                 throw new Error('Invalid Salesforce login history format');
             }
-            return sortByLastUse([...candidate.entries]);
+            return sortByLastUse(candidate.entries.map(entry => ({
+                organizationId: entry.organizationId,
+                name: entry.name,
+                instanceUrl: entry.instanceUrl,
+                appConsumerKey: entry.appConsumerKey,
+                ...(entry.loginHint !== undefined ? { loginHint: entry.loginHint } : {}),
+                lastUsedAt: entry.lastUsedAt,
+            })));
         } catch (error) {
             if ((error as DOMException).name === 'NotFoundError') return [];
             throw error;
@@ -78,13 +81,10 @@ export class SalesforceLoginHistoryStore {
         if (!organizationId) throw new Error('Salesforce organization ID is required');
 
         const next: SalesforceLoginHistoryEntry = {
-            ...entry,
             organizationId,
             name: entry.name.trim(),
             instanceUrl: entry.instanceUrl.trim(),
             appConsumerKey: entry.appConsumerKey.trim(),
-            ...(entry.dataCloudInstanceUrl !== undefined ? { dataCloudInstanceUrl: entry.dataCloudInstanceUrl.trim() } : {}),
-            ...(entry.dataCloudTenantId !== undefined ? { dataCloudTenantId: entry.dataCloudTenantId.trim() } : {}),
             ...(entry.loginHint?.trim() ? { loginHint: entry.loginHint.trim() } : {}),
             lastUsedAt: this.now().toISOString(),
         };

@@ -7,7 +7,7 @@ import { TextFieldValidationStatus, VALIDATION_ERROR, VALIDATION_UNKNOWN } from 
 import { IndicatorStatus } from '../ui/foundations/status_indicator.js';
 import { ConnectionHealth } from '../app/notebook/connections/attached_database_state.js';
 import { SalesforceConnectionSettingsPage } from '../app/notebook/connections/ui/salesforce_connection_settings.js';
-import { collectSalesforceAuthInfo, getSalesforceDataCloudUrl } from '../app/notebook/connections/salesforce/salesforce_api_client.js';
+import { collectSalesforceAuthInfo } from '../app/notebook/connections/salesforce/salesforce_api_client.js';
 import type { SalesforceLoginHistoryEntry } from './salesforce_login_history.js';
 import * as styles from './salesforce_login_dialog.module.css';
 
@@ -18,8 +18,6 @@ export interface SalesforceLoginFormValues {
     alias: string;
     instanceUrl: string;
     appConsumerKey: string;
-    dataCloudInstanceUrl: string;
-    dataCloudTenantId: string;
     loginHint: string;
     oauthPopup?: Window | null;
     abortSignal?: AbortSignal;
@@ -35,6 +33,7 @@ export interface SalesforceLoginDialogController {
 export interface SalesforceLoginDialogProgress {
     status?: string;
     coreAccessToken?: connection.SalesforceCoreAccessToken;
+    dataCloudAccessToken?: connection.SalesforceDataCloudAccessToken;
     login?: string;
 }
 
@@ -224,19 +223,15 @@ function SalesforceLoginDialog(props: SalesforceLoginDialogProps) {
     const [alias, setAlias] = React.useState('d360');
     const [instanceUrl, setInstanceUrl] = React.useState('');
     const [appConsumerKey, setAppConsumerKey] = React.useState('');
-    const [dataCloudInstanceUrl, setDataCloudInstanceUrl] = React.useState('');
-    const [dataCloudTenantId, setDataCloudTenantId] = React.useState('');
     const [loginHint, setLoginHint] = React.useState('');
     const [historyOpen, setHistoryOpen] = React.useState(false);
     const [aliasValidation, setAliasValidation] = React.useState<TextFieldValidationStatus>({ type: VALIDATION_UNKNOWN, value: null });
     const [instanceUrlValidation, setInstanceUrlValidation] = React.useState<TextFieldValidationStatus>({ type: VALIDATION_UNKNOWN, value: null });
     const [appConsumerValidation, setAppConsumerValidation] = React.useState<TextFieldValidationStatus>({ type: VALIDATION_UNKNOWN, value: null });
-    const [dataCloudInstanceUrlValidation, setDataCloudInstanceUrlValidation] = React.useState<TextFieldValidationStatus>({ type: VALIDATION_UNKNOWN, value: null });
-    const [dataCloudTenantIdValidation, setDataCloudTenantIdValidation] = React.useState<TextFieldValidationStatus>({ type: VALIDATION_UNKNOWN, value: null });
     const isRunning = props.state.phase === 'running';
     const freezeInput = isRunning || props.state.phase === 'succeeded';
-    const authentication = props.state.coreAccessToken
-        ? collectSalesforceAuthInfo(props.state.coreAccessToken, { dataCloudInstanceUrl, dataCloudTenantId })
+    const authentication = props.state.coreAccessToken && props.state.dataCloudAccessToken
+        ? collectSalesforceAuthInfo(props.state.coreAccessToken, props.state.dataCloudAccessToken)
         : null;
     const connectionHealth = props.state.phase === 'running'
         ? ConnectionHealth.CONNECTING
@@ -261,14 +256,10 @@ function SalesforceLoginDialog(props: SalesforceLoginDialogProps) {
         setAlias(entry.name);
         setInstanceUrl(entry.instanceUrl);
         setAppConsumerKey(entry.appConsumerKey);
-        setDataCloudInstanceUrl(entry.dataCloudInstanceUrl ?? '');
-        setDataCloudTenantId(entry.dataCloudTenantId ?? '');
         setLoginHint(entry.loginHint ?? '');
         setAliasValidation({ type: VALIDATION_UNKNOWN, value: null });
         setInstanceUrlValidation({ type: VALIDATION_UNKNOWN, value: null });
         setAppConsumerValidation({ type: VALIDATION_UNKNOWN, value: null });
-        setDataCloudInstanceUrlValidation({ type: VALIDATION_UNKNOWN, value: null });
-        setDataCloudTenantIdValidation({ type: VALIDATION_UNKNOWN, value: null });
         setHistoryOpen(false);
     }, []);
 
@@ -276,8 +267,6 @@ function SalesforceLoginDialog(props: SalesforceLoginDialogProps) {
         const trimmedAlias = alias.trim();
         const trimmedInstanceUrl = instanceUrl.trim();
         const trimmedConsumerKey = appConsumerKey.trim();
-        const trimmedDataCloudInstanceUrl = dataCloudInstanceUrl.trim();
-        const trimmedDataCloudTenantId = dataCloudTenantId.trim();
         let valid = true;
 
         if (!trimmedAlias) {
@@ -304,19 +293,6 @@ function SalesforceLoginDialog(props: SalesforceLoginDialogProps) {
         } else {
             setAppConsumerValidation({ type: VALIDATION_UNKNOWN, value: null });
         }
-        try {
-            getSalesforceDataCloudUrl(trimmedDataCloudInstanceUrl);
-            setDataCloudInstanceUrlValidation({ type: VALIDATION_UNKNOWN, value: null });
-        } catch (error) {
-            valid = false;
-            setDataCloudInstanceUrlValidation({ type: VALIDATION_ERROR, value: error instanceof Error ? error.message : String(error) });
-        }
-        if (!trimmedDataCloudTenantId) {
-            valid = false;
-            setDataCloudTenantIdValidation({ type: VALIDATION_ERROR, value: 'Data Cloud Tenant ID cannot be empty' });
-        } else {
-            setDataCloudTenantIdValidation({ type: VALIDATION_UNKNOWN, value: null });
-        }
         if (!valid) return;
 
         const oauthPopup = props.nativeOAuth ? undefined : props.openOAuthPopup();
@@ -327,14 +303,10 @@ function SalesforceLoginDialog(props: SalesforceLoginDialogProps) {
         setAlias(trimmedAlias);
         setInstanceUrl(trimmedInstanceUrl);
         setAppConsumerKey(trimmedConsumerKey);
-        setDataCloudInstanceUrl(trimmedDataCloudInstanceUrl);
-        setDataCloudTenantId(trimmedDataCloudTenantId);
         props.onSubmit({
             alias: trimmedAlias,
             instanceUrl: trimmedInstanceUrl,
             appConsumerKey: trimmedConsumerKey,
-            dataCloudInstanceUrl: trimmedDataCloudInstanceUrl,
-            dataCloudTenantId: trimmedDataCloudTenantId,
             loginHint,
             oauthPopup,
             abortSignal: props.abortSignal,
@@ -376,19 +348,16 @@ function SalesforceLoginDialog(props: SalesforceLoginDialogProps) {
                     instanceUrl={instanceUrl}
                     appConsumerKey={appConsumerKey}
                     login={props.state.login ?? loginHint}
-                    orgJwt={authentication?.offcoreRawJwt ?? ''}
-                    dataCloudInstanceUrl={dataCloudInstanceUrl}
+                    coreAccessToken={props.state.coreAccessToken?.accessToken ?? ''}
+                    dataCloudAccessToken={authentication?.offcoreRawJwt ?? ''}
+                    dataCloudInstanceUrl={authentication?.offcoreInstanceUrl ?? ''}
                     coreTenantId={authentication?.coreTenantId ?? ''}
-                    dataCloudTenantId={dataCloudTenantId}
+                    dataCloudTenantId={authentication?.offcoreTenantId ?? ''}
                     instanceUrlValidation={instanceUrlValidation}
                     appConsumerValidation={appConsumerValidation}
-                    dataCloudInstanceUrlValidation={dataCloudInstanceUrlValidation}
-                    dataCloudTenantIdValidation={dataCloudTenantIdValidation}
                     setHyperProtocol={() => {}}
                     updateInstanceUrl={event => setInstanceUrl(event.target.value)}
                     updateAppConsumerKey={event => setAppConsumerKey(event.target.value)}
-                    updateDataCloudInstanceUrl={event => setDataCloudInstanceUrl(event.target.value)}
-                    updateDataCloudTenantId={event => setDataCloudTenantId(event.target.value)}
                     updateLogin={event => setLoginHint(event.target.value)}
                     setupConnection={setupConnection}
                     cancelSetup={props.onCancel}

@@ -11,12 +11,7 @@ import { SETUP_FAILED, SF_CHANNEL_READY } from './salesforce_connection_state.js
 
 afterEach(() => vi.unstubAllGlobals());
 
-for (const { cdpUrl, tenantId, valid } of [
-    { cdpUrl: 'https://hyper.example.com', tenantId: 'tenant-id', valid: true },
-    { cdpUrl: undefined, tenantId: 'tenant-id', valid: false },
-    { cdpUrl: 'http://hyper.example.com', tenantId: 'tenant-id', valid: false },
-    { cdpUrl: 'https://hyper.example.com', tenantId: ' ', valid: false },
-]) describe(`setupSalesforceConnection with configured endpoint=${cdpUrl}, tenant=${tenantId}`, () => {
+for (const exchangeFails of [false, true]) describe(`setupSalesforceConnection with exchange failure=${exchangeFails}`, () => {
     it.each(['V3_GRPC', 'V3_HTTP'] as const)('configures the Salesforce database for %s', async protocol => {
         let context: HyperDatabaseConnectionContext | undefined;
         const client: HyperDatabaseClient = {
@@ -32,23 +27,25 @@ for (const { cdpUrl, tenantId, valid } of [
         const params = {
             hyperProtocol: protocol,
             instanceUrl: 'https://example.my.salesforce.com',
-            dataCloudInstanceUrl: cdpUrl,
-            dataCloudTenantId: tenantId,
             appConsumerKey: 'consumer-key',
             appConsumerSecret: '',
             login: '',
         } as connection.SalesforceConnectionParams;
         const coreToken: connection.SalesforceCoreAccessToken = {
             createdAt: new Date(0).toISOString(),
-            expiresAt: new Date(7_200_000).toISOString(),
             accessToken: 'core-token',
             instanceUrl: params.instanceUrl,
+        };
+        const dataCloudToken: connection.SalesforceDataCloudAccessToken = {
+            createdAt: new Date(0).toISOString(),
+            expiresAt: new Date(7_200_000).toISOString(),
+            instanceUrl: 'https://hyper.example.com/',
             jwt: {
-                raw: 'core-token',
+                raw: 'offcore-token',
                 header: { alg: 'RS256' },
                 payload: {
                     exp: 7_200,
-                    sfoid: 'org-id',
+                    audienceTenantId: 'tenant-id',
                     customAttributes: { dataspace: 'analytics' },
                 },
             },
@@ -56,6 +53,9 @@ for (const { cdpUrl, tenantId, valid } of [
         const api = {
             getCoreAccessToken: vi.fn().mockResolvedValue(coreToken),
             getCoreUserInfo: vi.fn().mockResolvedValue({ preferredUsername: 'test@example.com', photos: {} }),
+            getDataCloudAccessToken: exchangeFails
+                ? vi.fn().mockRejectedValue(new Error('exchange failed'))
+                : vi.fn().mockResolvedValue(dataCloudToken),
         } as unknown as SalesforceApiClientInterface;
         const events = {
             waitForOAuthRedirect: vi.fn(async (_signal, matches) => {
@@ -82,11 +82,11 @@ for (const { cdpUrl, tenantId, valid } of [
             new AbortController().signal,
         );
 
-        if (!valid) {
-            await expect(setup).rejects.toThrow();
+        if (exchangeFails) {
+            await expect(setup).rejects.toThrow('exchange failed');
             expect(client.connect).not.toHaveBeenCalled();
             expect(unusedClient.connect).not.toHaveBeenCalled();
-            expect(api.getCoreAccessToken).not.toHaveBeenCalled();
+            expect(api.getDataCloudAccessToken).toHaveBeenCalledWith(coreToken, expect.any(AbortSignal));
             expect(dispatch).toHaveBeenLastCalledWith({ type: SETUP_FAILED, value: { message: expect.any(String) } });
             return;
         }
@@ -102,9 +102,11 @@ for (const { cdpUrl, tenantId, valid } of [
         }]);
         expect(await context?.getRequestMetadata()).toEqual({
             audience: 'tenant-id',
-            authorization: 'Bearer core-token',
+            authorization: 'Bearer offcore-token',
         });
         expect(channel.coreToken).toBe(coreToken);
+        expect(channel.dataCloudToken).toBe(dataCloudToken);
+        expect(params.login).toBe('');
         expect(dispatch).toHaveBeenLastCalledWith({ type: SF_CHANNEL_READY, value: channel });
     });
 });

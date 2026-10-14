@@ -80,12 +80,10 @@ describe('SalesforceLoginHistoryStore', () => {
             name: 'new',
             instanceUrl: 'https://new.my.salesforce.com',
             appConsumerKey: 'new-key',
-            dataCloudInstanceUrl: ' https://tenant.example.com ',
-            dataCloudTenantId: ' cdp-tenant ',
         });
 
         await expect(store.load()).resolves.toEqual([
-            expect.objectContaining({ organizationId: '00D-new', dataCloudInstanceUrl: 'https://tenant.example.com', dataCloudTenantId: 'cdp-tenant', lastUsedAt: '2026-02-01T00:00:00.000Z' }),
+            expect.objectContaining({ organizationId: '00D-new', lastUsedAt: '2026-02-01T00:00:00.000Z' }),
             expect.objectContaining({ organizationId: '00D-old', lastUsedAt: '2026-01-01T00:00:00.000Z' }),
         ]);
     });
@@ -178,6 +176,31 @@ describe('SalesforceLoginHistoryStore', () => {
         await expect(store.load()).resolves.toEqual([
             expect.objectContaining({ organizationId: '00D-keep' }),
         ]);
+    });
+
+    it('drops previously saved manual Data Cloud routing values when loading and rewriting history', async () => {
+        const root = new MockDirectoryHandle();
+        const directory = await root.getDirectoryHandle('dashql-shell', { create: true }) as unknown as MockDirectoryHandle;
+        const file = await directory.getFileHandle('salesforce-login-history.json', { create: true }) as unknown as MockFileHandle;
+        const entry = {
+            organizationId: '00D-old',
+            name: 'old',
+            instanceUrl: 'https://old.my.salesforce.com',
+            appConsumerKey: 'old-key',
+            loginHint: 'user@example.com',
+            lastUsedAt: '2026-01-01T00:00:00.000Z',
+        };
+        file.text = JSON.stringify({ version: 1, entries: [{
+            ...entry, dataCloudInstanceUrl: 'https://data.example.com', dataCloudTenantId: 'old-tenant',
+        }] });
+        const store = new SalesforceLoginHistoryStore(async () => root as unknown as FileSystemDirectoryHandle);
+
+        await expect(store.load()).resolves.toEqual([entry]);
+        await store.record({
+            organizationId: '00D-new', name: 'new', instanceUrl: 'https://new.my.salesforce.com', appConsumerKey: 'new-key',
+        });
+        expect(file.text).not.toContain('dataCloudInstanceUrl');
+        expect(file.text).not.toContain('dataCloudTenantId');
     });
 
     it('rejects malformed history instead of overwriting it', async () => {

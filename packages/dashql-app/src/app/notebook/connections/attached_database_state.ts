@@ -151,6 +151,8 @@ export enum ConnectionStatus {
     ACCESS_TOKEN_RECEIVED,
 
     // Salesforce OAuth
+    DATA_CLOUD_TOKEN_REQUESTED,
+    DATA_CLOUD_TOKEN_RECEIVED,
     CORE_ACCESS_TOKEN_REQUESTED,
     CORE_ACCESS_TOKEN_RECEIVED,
 }
@@ -163,6 +165,7 @@ export function canDeleteConnectionWithStatus(status: ConnectionStatus) {
         case ConnectionStatus.CHANNEL_SETUP_FAILED:
         case ConnectionStatus.CHANNEL_SETUP_STARTED:
         case ConnectionStatus.CORE_ACCESS_TOKEN_RECEIVED:
+        case ConnectionStatus.DATA_CLOUD_TOKEN_RECEIVED:
         case ConnectionStatus.HEALTH_CHECK_CANCELLED:
         case ConnectionStatus.HEALTH_CHECK_FAILED:
         case ConnectionStatus.HEALTH_CHECK_SUCCEEDED:
@@ -172,6 +175,7 @@ export function canDeleteConnectionWithStatus(status: ConnectionStatus) {
             return true;
         case ConnectionStatus.AUTH_STARTED:
         case ConnectionStatus.CORE_ACCESS_TOKEN_REQUESTED:
+        case ConnectionStatus.DATA_CLOUD_TOKEN_REQUESTED:
         case ConnectionStatus.HEALTH_CHECK_STARTED:
         case ConnectionStatus.PKCE_GENERATION_STARTED:
         case ConnectionStatus.WAITING_FOR_OAUTH_CODE_VIA_LINK:

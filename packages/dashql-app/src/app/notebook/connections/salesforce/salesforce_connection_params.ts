@@ -5,8 +5,6 @@ export function createSalesforceConnectionParamsSignature(params: SalesforceConn
         case: "salesforce",
         hyperProtocol: params.hyperProtocol,
         instanceUrl: params.instanceUrl,
-        dataCloudInstanceUrl: params.dataCloudInstanceUrl,
-        dataCloudTenantId: params.dataCloudTenantId,
         appConsumerKey: params.appConsumerKey,
         login: params.login,
     };

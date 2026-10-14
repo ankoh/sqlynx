@@ -286,6 +286,14 @@
           "type": "string",
           "format": "date-time"
         },
+        "dataCloudAccessTokenRequestedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dataCloudAccessTokenReceivedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
         "dataCloudMetadataReceivedAt": {
           "type": "string",
           "format": "date-time"
@@ -304,14 +312,6 @@
         "instanceUrl": {
           "type": "string",
           "description": "The instance url"
-        },
-        "dataCloudInstanceUrl": {
-          "type": "string",
-          "description": "The tenant-specific Data Cloud HTTPS endpoint"
-        },
-        "dataCloudTenantId": {
-          "type": "string",
-          "description": "The CDP tenant ID for Data Cloud APIs"
         },
         "appConsumerKey": {
           "type": "string",
@@ -350,16 +350,7 @@
         },
         "accessToken": {
           "type": "string",
-          "description": "The Salesforce-signed OrgJWT OAuth access token"
-        },
-        "jwt": {
-          "$ref": "#/definitions/SalesforceOrgJWT",
-          "description": "Decoded OrgJWT for routing; not a signature verification"
-        },
-        "expiresAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Expiration derived from the OrgJWT exp claim"
+          "description": "The Core OAuth access token; may be opaque"
         },
         "instanceUrl": {
           "type": "string",
@@ -399,7 +390,7 @@
           "description": "A Bearer token type"
         }
       },
-      "required": ["createdAt", "accessToken", "jwt", "expiresAt"],
+      "required": ["createdAt", "accessToken"],
       "additionalProperties": false
     },
     "SalesforceCoreUserInfoPhotos": {
@@ -511,7 +502,7 @@
       "required": ["photos"],
       "additionalProperties": false
     },
-    "SalesforceOrgJWTPayload": {
+    "SalesforceDataCloudJWTPayload": {
       "type": "object",
       "properties": {
         "sub": {
@@ -523,11 +514,11 @@
           "description": "The JWT audience"
         },
         "exp": {
-          "type": "number",
+          "oneOf": [{"type": "string"}, {"type": "number"}],
           "description": "The JWT expiration time, seconds since epoch for SF"
         },
         "iat": {
-          "type": "number",
+          "oneOf": [{"type": "string"}, {"type": "number"}],
           "description": "The time when the JWT was issued"
         },
         "jti": {
@@ -543,7 +534,7 @@
           "description": "The JWT issuer"
         },
         "nbf": {
-          "type": "number",
+          "oneOf": [{"type": "string"}, {"type": "number"}],
           "description": "The time when the JWT becomes valid"
         },
         "orgId": {
@@ -562,11 +553,11 @@
           "type": "string",
           "description": "The SF uid"
         },
-        "cdp_url": {
+        "issuerTenantId": {
           "type": "string",
-          "description": "The Data Cloud endpoint origin"
+          "description": "The Salesforce Core tenant id of the issuer"
         },
-        "cdp_tenant": {
+        "audienceTenantId": {
           "type": "string",
           "description": "The Data Cloud tenant id used for Direct and Hyper routing"
         },
@@ -579,7 +570,7 @@
       "required": ["exp"],
       "additionalProperties": true
     },
-    "SalesforceOrgJWT": {
+    "SalesforceDataCloudJWT": {
       "type": "object",
       "properties": {
         "raw": {
@@ -594,11 +585,24 @@
           "description": "The JWT header"
         },
         "payload": {
-          "$ref": "#/definitions/SalesforceOrgJWTPayload",
+          "$ref": "#/definitions/SalesforceDataCloudJWTPayload",
           "description": "The JWT payload"
         }
       },
       "required": ["raw", "header", "payload"],
+      "additionalProperties": false
+    },
+    "SalesforceDataCloudAccessToken": {
+      "type": "object",
+      "properties": {
+        "createdAt": { "type": "string", "format": "date-time" },
+        "jwt": { "$ref": "#/definitions/SalesforceDataCloudJWT" },
+        "expiresAt": { "type": "string", "format": "date-time" },
+        "tokenType": { "type": "string" },
+        "issuedTokenType": { "type": "string" },
+        "instanceUrl": { "type": "string" }
+      },
+      "required": ["createdAt", "jwt", "expiresAt"],
       "additionalProperties": false
     },
     "SalesforceDataCloudMetadataEntityField": {
@@ -712,10 +716,14 @@
         },
         "coreAccessToken": {
           "$ref": "#/definitions/SalesforceCoreAccessToken",
-          "description": "The OrgJWT access token used for Core and Data Cloud"
+          "description": "The Core OAuth access token"
+        },
+        "dataCloudAccessToken": {
+          "$ref": "#/definitions/SalesforceDataCloudAccessToken",
+          "description": "The exchanged Data Cloud access token"
         }
       },
-      "required": ["oauthParams", "oauthPkce", "coreAuthCode", "coreAccessToken"],
+      "required": ["oauthParams", "oauthPkce", "coreAuthCode", "coreAccessToken", "dataCloudAccessToken"],
       "additionalProperties": false
     },
     "SalesforceConnectionDetails": {

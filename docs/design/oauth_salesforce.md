@@ -3,10 +3,8 @@
 DashQL uses the [Web Server OAuth Flow with PKCE](https://help.salesforce.com/s/articleView?id=sf.remoteaccess_oauth_web_server_flow.htm&type=5).
 No client secret is embedded; PKCE alone binds the initiator to the finisher.
 
-The External Client App must enable **Issue JSON Web Token (JWT)-based access tokens
-for named users** (`isNamedUserJwtEnabled=true`). The OAuth grant remains authorization
-code, not JWT-Bearer. Salesforce signs the returned `access_token`; DashQL uses that
-same OrgJWT for Core REST and Data Cloud Direct/Hyper without an A360 token exchange.
+Core OAuth access tokens may be opaque. DashQL exchanges the Core token for a separate
+Data Cloud JWT; named-user OrgJWT access tokens are not required.
 See [External Client App setup](../misc/setup_data_cloud.md).
 
 The registered `redirect_uri` is always `https://dashql.app/oauth.html` regardless of where the
@@ -41,16 +39,20 @@ After the code arrives:
 
 7. Exchange the code for a core access token: POST to `{instanceUrl}/services/oauth2/token`
    with `code`, `code_verifier`, and `redirect_uri=https://dashql.app/oauth.html`.
-8. Decode the OrgJWT and validate its expiration. Data Cloud routing claims are not required.
-   Decoding does not verify the JWT signature; the receiving Salesforce service does that.
-9. Use the explicitly configured tenant-specific Data Cloud endpoint and CDP tenant ID for
-   Direct HTTP, Hyper gRPC, or an embedded Hyper remote attachment. Send the original
-   OrgJWT unchanged as the bearer token. Keep the OAuth response's `instance_url` for
-   Core REST user info and metadata.
+8. POST to the Core token response's `{instance_url}/services/a360/token` with
+   `grant_type=urn:salesforce:grant-type:external:cdp`, `subject_token={coreAccessToken}`,
+   and `subject_token_type=urn:ietf:params:oauth:token-type:access_token`.
+9. Decode the exchanged Data Cloud JWT and use the exchange response's `instance_url`
+   for Direct HTTP or Hyper gRPC. Send the Data Cloud JWT unchanged as the bearer token
+   and its `audienceTenantId` as the audience. Read the selected dataspace from
+   `customAttributes.data.dataspace` (or the flat `customAttributes.dataspace`), falling
+   back to `default`. The gRPC lakehouse path is `sf:{audienceTenantId};{dataspace}`.
+   Keep the Core token and its `instance_url` for Core REST user info and metadata;
+   metadata requests use the dataspace from the Data Cloud token.
 
-OrgJWT acceptance and tenant-context mapping are Salesforce-side requirements for each
-Direct/Hyper path. Query Connect success does not prove these paths work. The app does
-not currently refresh credentials automatically; reconnect when the OrgJWT expires.
+JWT decoding does not verify signatures; the receiving Salesforce service does that.
+No manual Data Cloud endpoint or tenant parameters are needed. The app does not
+currently refresh credentials automatically; reconnect when the tokens expire.
 
 ---
 

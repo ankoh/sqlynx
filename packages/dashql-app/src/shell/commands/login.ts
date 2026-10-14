@@ -7,6 +7,7 @@ export type SalesforceLoginForm = SalesforceLoginFormValues;
 
 export interface SalesforceLoginAuthentication {
     readonly coreAccessToken: connection.SalesforceCoreAccessToken;
+    readonly dataCloudAccessToken: connection.SalesforceDataCloudAccessToken;
     readonly coreUserInfo?: connection.SalesforceCoreUserInfo;
 }
 
@@ -19,7 +20,7 @@ export interface SalesforceLoginCommandDependencies {
         onProgress?: (message: string) => void,
     ): Promise<SalesforceLoginAuthentication>;
     attach(
-        form: SalesforceLoginForm,
+        alias: string,
         authentication: SalesforceLoginAuthentication,
         signal?: AbortSignal,
         onProgress?: (message: string) => void,
@@ -60,7 +61,7 @@ export function createLoginCommand(dependencies: SalesforceLoginCommandDependenc
                     operationSignal?.throwIfAborted();
 
                     onProgress?.(`Attaching Salesforce connection as ${alias}`);
-                    await dependencies.attach({ ...form, alias }, authentication, operationSignal, onProgress);
+                    await dependencies.attach(alias, authentication, operationSignal, onProgress);
                     operationSignal?.throwIfAborted();
 
                     await dependencies.onSuccess?.(form, authentication);

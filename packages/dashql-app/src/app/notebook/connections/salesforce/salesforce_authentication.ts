@@ -24,10 +24,13 @@ export type SalesforceAuthenticationProgress =
     | { stage: 'RECEIVED_CORE_AUTH_CODE'; code: string }
     | { stage: 'REQUESTING_CORE_AUTH_TOKEN' }
     | { stage: 'RECEIVED_CORE_AUTH_TOKEN'; coreAccessToken: connection.SalesforceCoreAccessToken }
-    | { stage: 'RECEIVED_CORE_USER_INFO'; coreUserInfo: connection.SalesforceCoreUserInfo };
+    | { stage: 'RECEIVED_CORE_USER_INFO'; coreUserInfo: connection.SalesforceCoreUserInfo }
+    | { stage: 'REQUESTING_DATA_CLOUD_ACCESS_TOKEN' }
+    | { stage: 'RECEIVED_DATA_CLOUD_ACCESS_TOKEN'; dataCloudAccessToken: connection.SalesforceDataCloudAccessToken };
 
 export interface SalesforceAuthenticationResult {
     coreAccessToken: connection.SalesforceCoreAccessToken;
+    dataCloudAccessToken: connection.SalesforceDataCloudAccessToken;
     coreUserInfo?: connection.SalesforceCoreUserInfo;
 }
 
@@ -228,7 +231,11 @@ export async function authenticateSalesforce(options: SalesforceAuthenticationOp
             }, LOG_CTX);
         }
 
-        return { coreAccessToken, coreUserInfo };
+        onProgress({ stage: 'REQUESTING_DATA_CLOUD_ACCESS_TOKEN' });
+        const dataCloudAccessToken = await apiClient.getDataCloudAccessToken(coreAccessToken, abortSignal);
+        abortSignal.throwIfAborted();
+        onProgress({ stage: 'RECEIVED_DATA_CLOUD_ACCESS_TOKEN', dataCloudAccessToken });
+        return { coreAccessToken, dataCloudAccessToken, coreUserInfo };
     } finally {
         closeOAuthPopup();
     }

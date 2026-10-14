@@ -35,11 +35,11 @@ describe('updateSalesforceCatalog', () => {
                 setupParams: { hyperProtocol: protocol },
                 oauthState: {
                     coreAccessToken: {
-                        createdAt: new Date(0).toISOString(),
-                        expiresAt: new Date(1).toISOString(),
-                        accessToken: 'org-jwt',
+                        accessToken: 'core-token',
                         instanceUrl: 'https://example.my.salesforce.com',
-                        jwt: { raw: 'org-jwt', header: {}, payload: { exp: 0.001, customAttributes: { dataspace: 'Marketing' } } },
+                    },
+                    dataCloudAccessToken: {
+                        jwt: { raw: 'data-cloud-token', header: {}, payload: { exp: 0.001, customAttributes: { dataspace: 'Marketing' } } },
                     },
                 },
             },
@@ -131,8 +131,8 @@ describe('updateSalesforceCatalog', () => {
             coreAccessToken: {
                 createdAt: new Date(0).toISOString(), expiresAt: new Date(1).toISOString(),
                 accessToken: 'token', instanceUrl: 'https://example.my.salesforce.com',
-                jwt: { raw: 'token', header: {}, payload: { exp: 0.001 } },
             },
+            dataCloudAccessToken: { jwt: { raw: 'data-cloud-token', header: {}, payload: { exp: 0.001 } } },
         } }, channel: null } as unknown as SalesforceConnectionStateDetails;
         const catalog = dql.createCatalog();
         const relations = dql.createScript(catalog);
@@ -183,8 +183,8 @@ describe('updateSalesforceCatalog', () => {
             coreAccessToken: {
                 createdAt: new Date(0).toISOString(), expiresAt: new Date(1).toISOString(),
                 accessToken: 'token', instanceUrl: 'https://example.my.salesforce.com',
-                jwt: { raw: 'token', header: {}, payload: { exp: 0.001 } },
             },
+            dataCloudAccessToken: { jwt: { raw: 'data-cloud-token', header: {}, payload: { exp: 0.001 } } },
         } }, channel: null } as unknown as SalesforceConnectionStateDetails;
         const catalog = dql.createCatalog();
         const relations = dql.createScript(catalog);

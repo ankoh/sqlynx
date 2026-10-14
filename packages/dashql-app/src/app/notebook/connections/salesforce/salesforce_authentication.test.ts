@@ -30,15 +30,18 @@ const authConfig: connection.SalesforceOAuthConfig = {
 };
 const coreAccessToken: connection.SalesforceCoreAccessToken = {
     createdAt: new Date(0).toISOString(),
-    expiresAt: new Date(7_200_000).toISOString(),
     accessToken: 'core-token',
+};
+const dataCloudAccessToken: connection.SalesforceDataCloudAccessToken = {
+    createdAt: new Date(0).toISOString(),
+    expiresAt: new Date(7_200_000).toISOString(),
+    instanceUrl: 'https://hyper.example.com',
     jwt: {
-        raw: 'core-token',
+        raw: 'data-cloud-token',
         header: { alg: 'RS256' },
         payload: {
             exp: 7_200,
-            cdp_url: 'https://hyper.example.com',
-            cdp_tenant: 'tenant-id',
+            audienceTenantId: 'tenant-id',
             sfoid: 'org-id',
         },
     },
@@ -119,7 +122,7 @@ describe('Salesforce OAuth callback state', () => {
 });
 
 describe('authenticateSalesforce', () => {
-    it('returns the core token and optional user info through staged progress', async () => {
+    it('returns both tokens and optional user info through staged progress', async () => {
         const popup = { closed: false, close: vi.fn(), focus: vi.fn() } as unknown as Window;
         const open = vi.spyOn(window, 'open').mockReturnValue(popup);
         const logger = new NullLogger();
@@ -128,6 +131,7 @@ describe('authenticateSalesforce', () => {
         const apiClient = {
             getCoreAccessToken: vi.fn().mockResolvedValue(coreAccessToken),
             getCoreUserInfo: vi.fn().mockResolvedValue(coreUserInfo),
+            getDataCloudAccessToken: vi.fn().mockResolvedValue(dataCloudAccessToken),
         } as unknown as SalesforceApiClientInterface;
         const appEvents = {
             waitForOAuthRedirect: vi.fn().mockImplementation(async () => {
@@ -149,7 +153,8 @@ describe('authenticateSalesforce', () => {
             onProgress: progress => stages.push(progress.stage),
         });
 
-        expect(result).toEqual({ coreAccessToken, coreUserInfo });
+        expect(result).toEqual({ coreAccessToken, dataCloudAccessToken, coreUserInfo });
+        expect(apiClient.getDataCloudAccessToken).toHaveBeenCalledWith(coreAccessToken, expect.any(AbortSignal));
         expect(info).toHaveBeenCalledWith('Opening Salesforce OAuth authorization URL', expect.objectContaining({
             endpoint: 'https://example.my.salesforce.com/services/oauth2/authorize',
             flowVariant: 'WEB_OPENER_FLOW',
@@ -175,6 +180,8 @@ describe('authenticateSalesforce', () => {
             'REQUESTING_CORE_AUTH_TOKEN',
             'RECEIVED_CORE_AUTH_TOKEN',
             'RECEIVED_CORE_USER_INFO',
+            'REQUESTING_DATA_CLOUD_ACCESS_TOKEN',
+            'RECEIVED_DATA_CLOUD_ACCESS_TOKEN',
         ]);
     });
 
@@ -185,6 +192,7 @@ describe('authenticateSalesforce', () => {
         const apiClient = {
             getCoreAccessToken: vi.fn().mockResolvedValue(coreAccessToken),
             getCoreUserInfo: vi.fn().mockRejectedValue(new Error('unavailable')),
+            getDataCloudAccessToken: vi.fn().mockResolvedValue(dataCloudAccessToken),
         } as unknown as SalesforceApiClientInterface;
         const appEvents = {
             waitForOAuthRedirect: vi.fn().mockImplementation(async () => {
@@ -204,7 +212,7 @@ describe('authenticateSalesforce', () => {
             forceReLogin: false,
             abortSignal: new AbortController().signal,
             onProgress: progress => stages.push(progress.stage),
-        })).resolves.toEqual({ coreAccessToken, coreUserInfo: undefined });
+        })).resolves.toEqual({ coreAccessToken, dataCloudAccessToken, coreUserInfo: undefined });
 
         expect(open).not.toHaveBeenCalled();
         expect(openExternal).toHaveBeenCalledOnce();
@@ -232,6 +240,36 @@ describe('authenticateSalesforce', () => {
             forceReLogin: false,
             abortSignal: new AbortController().signal,
         })).rejects.toThrow('The user denied access');
+        expect(popup.close).toHaveBeenCalledOnce();
+    });
+
+    it.each(['failed', 'aborted'])('does not report a received Data Cloud token when the exchange is %s', async outcome => {
+        const popup = { closed: false, close: vi.fn(), focus: vi.fn() } as unknown as Window;
+        const open = vi.spyOn(window, 'open').mockReturnValue(popup);
+        const abort = new AbortController();
+        const stages: string[] = [];
+        const apiClient = {
+            getCoreAccessToken: vi.fn().mockResolvedValue(coreAccessToken),
+            getCoreUserInfo: vi.fn().mockResolvedValue({ photos: {} }),
+            getDataCloudAccessToken: vi.fn(async () => {
+                if (outcome === 'failed') throw new Error('exchange failed');
+                abort.abort();
+                return dataCloudAccessToken;
+            }),
+        } as unknown as SalesforceApiClientInterface;
+        const appEvents = {
+            waitForOAuthRedirect: vi.fn(async () => ({
+                state: decodeState(new URL(open.mock.calls[0][0]!.toString())),
+                code: 'authorization-code',
+            })),
+        };
+        await expect(authenticateSalesforce({
+            logger: new NullLogger(), params, authConfig, platformType: PlatformType.WEB,
+            apiClient, appEvents: appEvents as any, forceReLogin: false,
+            abortSignal: abort.signal, onProgress: progress => stages.push(progress.stage),
+        })).rejects.toThrow();
+        expect(stages).toContain('REQUESTING_DATA_CLOUD_ACCESS_TOKEN');
+        expect(stages).not.toContain('RECEIVED_DATA_CLOUD_ACCESS_TOKEN');
         expect(popup.close).toHaveBeenCalledOnce();
     });
 

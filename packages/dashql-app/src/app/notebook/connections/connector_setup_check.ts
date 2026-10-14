@@ -31,12 +31,13 @@ export function checkSalesforceConnectionSetup(
     if (details.proto.setupParams.appConsumerKey != params.appConsumerKey) {
         return ConnectionSetupCheck.CLIENT_ID_MISMATCH;
     }
-    const token = details.proto.oauthState?.coreAccessToken;
-    if (token?.accessToken && token.jwt?.raw) {
-        return ConnectionSetupCheck.AUTHENTICATED;
-    }
     if (details.proto.setupError) {
         return ConnectionSetupCheck.AUTHENTICATION_FAILED;
+    }
+    const coreToken = details.proto.oauthState?.coreAccessToken;
+    const token = details.proto.oauthState?.dataCloudAccessToken;
+    if (coreToken?.accessToken && token?.jwt?.raw) {
+        return ConnectionSetupCheck.AUTHENTICATED;
     }
     if (details.proto.setupTimings?.authStartedAt) {
         return ConnectionSetupCheck.AUTHENTICATION_IN_PROGRESS;

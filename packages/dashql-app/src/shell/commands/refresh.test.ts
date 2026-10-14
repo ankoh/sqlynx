@@ -11,11 +11,13 @@ import type { SalesforceLoginAuthentication } from './login.js';
 const AUTHENTICATION: SalesforceLoginAuthentication = {
     coreAccessToken: {
         createdAt: new Date(0).toISOString(),
-        expiresAt: new Date(1).toISOString(),
-        accessToken: 'org-jwt',
+        accessToken: 'core-token',
         instanceUrl: 'https://example.my.salesforce.com',
-        jwt: { raw: 'org-jwt', header: {}, payload: { exp: 0.001 } },
     } as connection.SalesforceCoreAccessToken,
+    dataCloudAccessToken: {
+        instanceUrl: 'https://data.example.com',
+        jwt: { raw: 'data-cloud-token', header: {}, payload: { audienceTenantId: 'tenant-1' } },
+    } as connection.SalesforceDataCloudAccessToken,
 };
 
 const CATALOG: SalesforceRefreshCatalog = {

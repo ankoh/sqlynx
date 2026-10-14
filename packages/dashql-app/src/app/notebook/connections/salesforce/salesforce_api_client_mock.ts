@@ -11,6 +11,7 @@ export interface SalesforceConnectorMockConfig {
     pkceChallenge: auth.OAuthPKCEChallenge;
     coreAccess: connection.SalesforceCoreAccessToken;
     coreUserInfo: connection.SalesforceCoreUserInfo;
+    dataCloudAccess: connection.SalesforceDataCloudAccessToken;
     dataCloudMetadata: connection.SalesforceDataCloudMetadata;
 }
 
@@ -42,14 +43,21 @@ export class SalesforceAPIClientMock implements SalesforceApiClientInterface {
         _cancel: AbortSignal,
         _onProgress?: (progress: SalesforceMetadataProgress) => void,
     ): Promise<connection.SalesforceDataCloudMetadata> {
-        console.log('mock(getDataCloudMetadata)');
         await sleep(200);
         return this.mock.dataCloudMetadata;
     }
 
+    public async getDataCloudAccessToken(
+        _access: connection.SalesforceCoreAccessToken,
+        _cancel: AbortSignal,
+    ): Promise<connection.SalesforceDataCloudAccessToken> {
+        await sleep(200);
+        return this.mock.dataCloudAccess;
+    }
+
     public executeQuery(
         _scriptText: string,
-        _accessToken: connection.SalesforceCoreAccessToken,
+        _accessToken: connection.SalesforceDataCloudAccessToken,
     ): QueryExecutionResponseStream {
         return new QueryExecutionResponseStreamMock();
     }
