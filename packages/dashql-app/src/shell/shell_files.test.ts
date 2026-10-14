@@ -61,7 +61,7 @@ describe('shell files command', () => {
     it('rejects retired and unknown subcommands', async () => {
         const command = createShellFilesCommand(new ShellFileRegistry());
 
-        for (const action of ['add', 'import', 'list', 'mount-dir', 'mount-dir-rw', 'drop', 'get', 'unknown']) {
+        for (const action of ['add', 'import', 'list', 'drop', 'get', 'unknown']) {
             await expect(command[2]([action], {})).resolves.toBe('usage: .fs');
         }
     });
@@ -78,9 +78,13 @@ describe('shell files command', () => {
         await expect(command[2]([], {})).resolves.toBeUndefined();
         await expect(command[2](['ls'], {})).resolves.toBeUndefined();
         await expect(command[2](['mount'], {})).resolves.toBe('/mnt/external/data.csv');
+        await expect(command[2](['mount-dir'], {})).resolves.toBe('/mnt/external/data.csv');
+        await expect(command[2](['mount-dir-rw'], {})).resolves.toBe('/mnt/external/data.csv');
         expect(requestFilesystemDialog).toHaveBeenCalledWith(undefined);
         expect(requestFilesystemDialog).toHaveBeenCalledTimes(2);
-        expect(requestMountDialog).toHaveBeenCalledWith(undefined);
+        expect(requestMountDialog).toHaveBeenNthCalledWith(1, undefined);
+        expect(requestMountDialog).toHaveBeenNthCalledWith(2, undefined);
+        expect(requestMountDialog).toHaveBeenNthCalledWith(3, undefined);
     });
 
     it('does not print mount cancellation', async () => {
@@ -90,5 +94,7 @@ describe('shell files command', () => {
         );
 
         await expect(command[2](['mount'], {})).resolves.toBeUndefined();
+        await expect(command[2](['mount-dir'], {})).resolves.toBeUndefined();
+        await expect(command[2](['mount-dir-rw'], {})).resolves.toBeUndefined();
     });
 });

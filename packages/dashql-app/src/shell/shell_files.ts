@@ -189,7 +189,7 @@ export function createShellFilesCommand(
                 await requestFilesystemDialog(context.signal);
                 return;
             }
-            if (args[0] === 'mount') {
+            if (args[0] === 'mount' || args[0] === 'mount-dir' || args[0] === 'mount-dir-rw') {
                 if (args.length > 1 || requestMountDialog == null) return FS_USAGE;
                 const path = await requestMountDialog(context.signal);
                 return path === 'Mount cancelled' ? undefined : path;
