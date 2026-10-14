@@ -20,15 +20,15 @@ lazy_static = "1.5.0"
 minisign = "0.9.1"
 
 [dependencies.serde]
-version = "1.0.228"
+version = "1.0.229"
 features = ["derive"]
 
 [dependencies.serde_json]
-version = "1.0.150"
+version = "1.0.154"
 features = ["preserve_order"]
 
 [dependencies.serde_with]
-version = "3.20.0"
+version = "3.24.0"
 features = ["json"]
 
 [dependencies.aws-config]
