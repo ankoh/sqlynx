@@ -63,6 +63,13 @@ def _tableauhyperapi_cxx_repository_impl(repository_ctx):
     )
     repository_ctx.delete(archive)
 
+    # Tableau 0.0.26359 calls the int overload of abs for a long duration count.
+    # Patch all platform archives before their headers are exposed to C++ consumers.
+    repository_ctx.patch(
+        Label("//bazel:tableauhyperapi_abs.patch"),
+        strip = 1,
+    )
+
     # Debug symbols and examples make the extracted repository several times
     # larger but are not inputs to the native library.
     repository_ctx.delete("examples")

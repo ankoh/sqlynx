@@ -1,0 +1,8 @@
+--- a/include/hyperapi/impl/OffsetTimestamp.impl.hpp
++++ b/include/hyperapi/impl/OffsetTimestamp.impl.hpp
+@@ -48 +48 @@
+-   stream << std::setw(2) << std::setfill('0') << (abs(offset_.count()) / 60);
++   stream << std::setw(2) << std::setfill('0') << (std::abs(offset_.count()) / 60);
+@@ -50 +50 @@
+-   stream << std::setw(2) << std::setfill('0') << (abs(offset_.count()) % 60);
++   stream << std::setw(2) << std::setfill('0') << (std::abs(offset_.count()) % 60);

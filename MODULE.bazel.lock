@@ -469,7 +469,7 @@
     },
     "//bazel:external_tableauhyperapi.bzl%tableauhyperapi_ext": {
       "general": {
-        "bzlTransitiveDigest": "Oj/I6fEfoDGqUZJynmlvxarR05FjjEUU2wNiIakM6Us=",
+        "bzlTransitiveDigest": "wE3BLJcUHkCblwWYgHKc37Rr555Aq8LKw81+PLvUvIA=",
         "usagesDigest": "/Cj4t34gwtluFYaKn+aza5CUpAo3VxHJDL1vTkM7hIs=",
         "recordedInputs": [],
         "generatedRepoSpecs": {
