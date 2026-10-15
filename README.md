@@ -54,11 +54,13 @@ bazel run //:refresh_compile_commands
 
 # Many tests are backed by snapshots / fixtures
 # /snapshots/*.tpl.yaml are the input to generate /snapshots/*.yaml
-# Update them using:
+# Update a snapshot category after intentional changes:
 bazel run //snapshots/analyzer:update
 bazel run //snapshots/completion:update
+bazel run //snapshots/diff:update
 bazel run //snapshots/formatter:update
 bazel run //snapshots/parser:update
+bazel run //snapshots/planner:update
 bazel run //snapshots/plans/hyper/tests:update
 bazel run //snapshots/visualize:update
 

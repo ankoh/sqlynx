@@ -3,6 +3,9 @@ import type { DashQLShellCommand } from '../api.js';
 export const SHELL_EXAMPLES = `-- Vega cars
 SELECT * FROM external('https://data.dashql.app/vega-cars/v1/cars.parquet') limit 10;
 
+-- Vega stocks (Iceberg)
+select * from external('https://data.dashql.app/vega-stocks/v1/iceberg/', format => 'iceberg', metadata_filename => '00000-bd86997f-7550-4e1a-8af1-5fe63926db79.metadata.json') limit 10;
+
 -- TPC-H Q1
 select
     l_returnflag,
