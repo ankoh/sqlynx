@@ -45,7 +45,6 @@ export interface SalesforceLoginDialogHookResult {
 export interface SalesforceLoginDialogOptions {
     openOAuthPopup?: () => Window | null;
     nativeOAuth?: boolean;
-    hasAlias?: (alias: string) => boolean;
     loadHistory?: () => Promise<SalesforceLoginHistoryEntry[]>;
     deleteHistoryEntry?: (organizationId: string) => Promise<SalesforceLoginHistoryEntry[]>;
 }
@@ -178,7 +177,7 @@ export function useSalesforceLoginDialog(
         setDialogState(state => ({
             ...state,
             phase: 'failed',
-            status: 'Attached database failed',
+            status: 'Salesforce authentication failed',
             statusError: message,
             indicator: IndicatorStatus.Failed,
         }));
@@ -195,7 +194,6 @@ export function useSalesforceLoginDialog(
                 nativeOAuth={options.nativeOAuth ?? false}
                 state={dialogState}
                 abortSignal={pendingRequestRef.current?.abortController.signal}
-                hasAlias={options.hasAlias}
                 loadHistory={options.loadHistory}
                 deleteHistoryEntry={options.deleteHistoryEntry}
                 onCancel={dismiss}
@@ -210,7 +208,6 @@ interface SalesforceLoginDialogProps {
     nativeOAuth: boolean;
     state: DialogState;
     abortSignal?: AbortSignal;
-    hasAlias?: (alias: string) => boolean;
     loadHistory?: () => Promise<SalesforceLoginHistoryEntry[]>;
     deleteHistoryEntry?: (organizationId: string) => Promise<SalesforceLoginHistoryEntry[]>;
     onCancel: () => void;
@@ -275,9 +272,6 @@ function SalesforceLoginDialog(props: SalesforceLoginDialogProps) {
         } else if (!ALIAS_PATTERN.test(trimmedAlias)) {
             valid = false;
             setAliasValidation({ type: VALIDATION_ERROR, value: 'Use letters, numbers, and underscores, starting with a letter or underscore' });
-        } else if (props.hasAlias?.(trimmedAlias)) {
-            valid = false;
-            setAliasValidation({ type: VALIDATION_ERROR, value: `Salesforce alias already exists: ${trimmedAlias}` });
         } else {
             setAliasValidation({ type: VALIDATION_UNKNOWN, value: null });
         }
@@ -329,7 +323,7 @@ function SalesforceLoginDialog(props: SalesforceLoginDialogProps) {
                 className={styles.dialog}
                 role="dialog"
                 aria-modal="true"
-                aria-label="Salesforce Data Cloud attached database"
+                aria-label="Salesforce login"
                 onKeyDown={event => {
                     if (event.key !== 'Escape') return;
                     event.preventDefault();
@@ -368,6 +362,8 @@ function SalesforceLoginDialog(props: SalesforceLoginDialogProps) {
                         value: alias,
                         onChange: event => setAlias(event.target.value),
                         validation: aliasValidation,
+                        name: 'Salesforce Login Name',
+                        caption: 'Name saved in login history',
                     }}
                     statusText={props.state.status}
                     indicatorStatus={props.state.indicator}

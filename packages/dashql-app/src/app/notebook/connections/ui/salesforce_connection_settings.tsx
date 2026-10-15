@@ -131,6 +131,8 @@ export interface SalesforceConnectionAliasField {
     value: string;
     onChange: React.ChangeEventHandler<HTMLInputElement>;
     validation?: TextFieldValidationStatus;
+    name?: string;
+    caption?: string;
 }
 
 interface SalesforceConnectionSettingsPageProps {
@@ -197,8 +199,8 @@ export const SalesforceConnectionSettingsPage: React.FC<SalesforceConnectionSett
                         <div className={classNames(style.section_layout, style.body_section_layout)}>
                             <TextField
                                 inputRef={props.alias.inputRef}
-                                name="Attached Database Alias"
-                                caption="Name saved in login history and used to address this attached database in the shell"
+                                name={props.alias.name ?? 'Attached Database Alias'}
+                                caption={props.alias.caption ?? 'Name saved in login history and used to address this attached database in the shell'}
                                 value={props.alias.value}
                                 onChange={props.alias.onChange}
                                 placeholder="Alias"

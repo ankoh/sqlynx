@@ -14,7 +14,6 @@ import { useComputationRegistry } from '../compute/computation_registry.js';
 import { ShellQueryResultOverlay } from '../app/notebook/shell/shell_query_result_overlay.js';
 import { createEmbeddedDatabaseShellEnvironment } from './embedded_database_shell_environment.js';
 import { createLoginCommand, type SalesforceLoginAuthentication } from './commands/login.js';
-import { createRefreshCommand } from './commands/refresh.js';
 import { SalesforceLoginHistoryStore } from './salesforce_login_history.js';
 import { examplesCommand } from './commands/examples.js';
 import { useShellConnection } from './shell_connection.js';
@@ -30,15 +29,8 @@ import { useFilesystemDialog } from './filesystem_dialog.js';
 import { createFormatCommand } from './commands/format.js';
 import { createPlanCommand } from './commands/plan.js';
 import { useSalesforceLoginDialog } from './salesforce_login_dialog.js';
-import { SalesforceRemoteAttachmentManager } from './salesforce_remote_attachment.js';
-import {
-    formatSalesforceMetadataProgress,
-    SalesforceApiClient,
-    type SalesforceMetadataProgress,
-} from '../app/notebook/connections/salesforce/salesforce_api_client.js';
+import { SalesforceApiClient } from '../app/notebook/connections/salesforce/salesforce_api_client.js';
 import { authenticateSalesforce } from '../app/notebook/connections/salesforce/salesforce_authentication.js';
-import { resolveSalesforceCatalog } from '../app/notebook/connections/salesforce/salesforce_catalog_update.js';
-import { fetchPrefetchedHyperFunctions } from '../app/notebook/connections/prefetched_hyper_functions.js';
 import { useHttpClient } from '../platform/http/http_client_provider.js';
 import { usePlatformEventListener } from '../platform/events/event_listener_provider.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
@@ -88,10 +80,8 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
     const keywordCaseRef = React.useRef(keywordCase);
     keywordCaseRef.current = keywordCase;
     const loginHistoryRef = React.useRef(new SalesforceLoginHistoryStore());
-    const attachmentManagerRef = React.useRef<SalesforceRemoteAttachmentManager | null>(null);
     const { controller: loginDialog, dialog } = useSalesforceLoginDialog({
         nativeOAuth: platformType !== PlatformType.WEB,
-        hasAlias: (alias: string) => attachmentManagerRef.current?.hasAlias(alias) ?? false,
         loadHistory: () => loginHistoryRef.current.load(),
         deleteHistoryEntry: organizationId => loginHistoryRef.current.delete(organizationId),
     });
@@ -169,11 +159,8 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
 
             setStatus('Instantiating shell');
             const getOutputMode = () => outputModeRef.current;
-            let attachmentManager: SalesforceRemoteAttachmentManager;
-            const authentications = new Map<string, SalesforceLoginAuthentication>();
             const loginCommand = createLoginCommand({
                 requestForm: loginDialog.request,
-                hasAlias: alias => attachmentManager?.hasAlias(alias) ?? false,
                 authenticate: async (form, signal, onProgress) => {
                     if (!httpClient) throw new Error('HTTP client is not ready');
                     const oauthRedirect = appConfig?.connectors?.salesforce?.auth?.oauthRedirect;
@@ -227,11 +214,6 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
                         },
                     });
                 },
-                attach: async (alias, authentication, signal) => {
-                    loginDialog.update({ status: `Attaching database as ${alias}` });
-                    await attachmentManager.attach(alias, authentication.dataCloudAccessToken, signal);
-                    authentications.set(alias.toLowerCase(), authentication);
-                },
                 onSuccess: async (form, authentication) => {
                     const organizationId = authentication.coreUserInfo?.organizationId
                         ?? authentication.dataCloudAccessToken.jwt.payload.orgId;
@@ -253,40 +235,12 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
                     } else {
                         logger.warn('Salesforce login did not return an organization ID; history was not updated', {}, LOG_CTX);
                     }
-                    loginDialog.succeed(`Attached ${form.alias}`);
+                    loginDialog.succeed(`Authenticated with Salesforce as ${form.alias}`);
                 },
                 onError: error => {
                     loginDialog.fail(stringifyError(error));
                     return 'retry';
                 },
-            });
-            const refreshCommand = createRefreshCommand({
-                getAliases: () => attachmentManager?.getAliases() ?? [],
-                getAuthentication: alias => authentications.get(alias.toLowerCase()),
-                resolveCatalog: async (alias, authentication, signal, onProgress) => {
-                    if (!httpClient) throw new Error('HTTP client is not ready');
-                    onProgress?.(`Fetching Salesforce catalog metadata for ${alias}`);
-                    const metadataProgress = new Map<string, SalesforceMetadataProgress>();
-                    const resolved = await resolveSalesforceCatalog(
-                        logger,
-                        authentication.coreAccessToken,
-                        authentication.dataCloudAccessToken,
-                        new SalesforceApiClient(logger, httpClient),
-                        signal ?? new AbortController().signal,
-                        progress => {
-                            metadataProgress.set(progress.collection, progress);
-                            onProgress?.(formatSalesforceMetadataProgress(metadataProgress));
-                        },
-                    );
-                    return {
-                        tableCount: resolved.tableCount,
-                        columnCount: resolved.columnCount,
-                        metadataStatus: formatSalesforceMetadataProgress(metadataProgress),
-                        functionsSQL: resolved.functionsSQL,
-                        tables: Array.from(resolved.tables, ([name, columns]) => ({ name, columns })),
-                    };
-                },
-                refreshCatalog: (alias, catalog, signal) => attachmentManager.refreshCatalog(alias, catalog, signal),
             });
             fileRegistry = new ShellFileRegistry(
                 logger,
@@ -309,7 +263,6 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
                     },
                 }),
                 loginCommand,
-                refreshCommand,
                 createShellOutputCommand(getOutputMode, mode => { outputModeRef.current = mode; }),
                 createShellFilesCommand(fileRegistry, mountDialog.request, filesystemDialog.request),
             ];
@@ -341,21 +294,6 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
             shell = nextShell;
             shellRef.current = nextShell;
             nextShell.setKeywordCase(keywordCaseRef.current);
-            attachmentManager = new SalesforceRemoteAttachmentManager(connection, shell, {
-                loadPrefetchedFunctionSql: fetchPrefetchedHyperFunctions,
-                logger,
-                onStage: stage => {
-                    const messages = {
-                        CONFIGURING_ENDPOINT: 'Configuring Data Cloud endpoint',
-                        ENABLING_REMOTE_DATABASES: 'Enabling remote databases',
-                        ATTACHING_DATABASE: 'Attaching Data Cloud database',
-                        LOADING_CATALOG: 'Loading Salesforce catalog',
-                    } as const;
-                    loginDialog.update({ status: messages[stage] });
-                },
-            });
-            attachmentManagerRef.current = attachmentManager;
-
             const { embedDashQLShell } = await import('./browser_shell.js');
             if (cancelled || containerRef.current == null) return;
             const nextController = await embedDashQLShell({
@@ -392,7 +330,6 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
             shell?.destroy();
             shellRef.current = null;
             fileRegistryRef.current = null;
-            attachmentManagerRef.current = null;
             setConnected(false);
             void fileRegistry?.dispose().finally(() => connection?.close());
         };

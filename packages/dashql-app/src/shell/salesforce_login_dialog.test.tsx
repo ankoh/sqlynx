@@ -97,7 +97,7 @@ describe('useSalesforceLoginDialog', () => {
 
     function fillValidForm() {
         act(() => {
-            setInputValue(inputForLabel('Attached Database Alias'), ' production ');
+            setInputValue(inputForLabel('Salesforce Login Name'), ' production ');
             setInputValue(inputForLabel('Salesforce Instance URL'), ' https://example.my.salesforce.com ');
             setInputValue(inputForLabel('Connected App'), ' consumer-key ');
         });
@@ -108,10 +108,10 @@ describe('useSalesforceLoginDialog', () => {
         const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!;
 
         expect(dialog.getAttribute('aria-modal')).toBe('true');
-        expect(dialog.getAttribute('aria-label')).toBe('Salesforce Data Cloud attached database');
+        expect(dialog.getAttribute('aria-label')).toBe('Salesforce login');
         expect(closeButton()).toBeInstanceOf(HTMLButtonElement);
         expect(Array.from(document.querySelectorAll('button')).some(button => button.textContent === 'Connect')).toBe(true);
-        expect(inputForLabel('Attached Database Alias').value).toBe('d360');
+        expect(inputForLabel('Salesforce Login Name').value).toBe('d360');
         expect(inputForLabel('Salesforce Instance URL')).toBeInstanceOf(HTMLInputElement);
         expect(inputForLabel('Connected App')).toBeInstanceOf(HTMLInputElement);
         for (const label of ['Data Cloud Instance URL', 'Data Cloud Tenant ID', 'Core Tenant ID', 'Core Access Token', 'Data Cloud Access Token']) {
@@ -126,7 +126,7 @@ describe('useSalesforceLoginDialog', () => {
         expect(inputForLabel('Salesforce Login').readOnly).toBe(false);
         expect(dialog.textContent).not.toContain('OrgJWT');
         expect(document.querySelector('button[aria-label="Recent Salesforce logins"]')).toBeInstanceOf(HTMLButtonElement);
-        expect(document.activeElement).toBe(inputForLabel('Attached Database Alias'));
+        expect(document.activeElement).toBe(inputForLabel('Salesforce Login Name'));
 
         act(() => closeButton().click());
         await expect(result).resolves.toBeNull();
@@ -217,7 +217,7 @@ describe('useSalesforceLoginDialog', () => {
             .find(button => button.textContent?.includes('production.my.salesforce.com'))!;
         act(() => savedLogin.click());
 
-        expect(inputForLabel('Attached Database Alias').value).toBe('production');
+        expect(inputForLabel('Salesforce Login Name').value).toBe('production');
         expect(inputForLabel('Salesforce Instance URL').value).toBe('https://production.my.salesforce.com');
         expect(inputForLabel('Connected App').value).toBe('saved-consumer-key');
         expect(inputForLabel('Data Cloud Instance URL').value).toBe('');
@@ -273,7 +273,7 @@ describe('useSalesforceLoginDialog', () => {
         ));
 
         expect(document.querySelector('button[aria-label="Recent Salesforce logins"]')?.getAttribute('aria-expanded')).toBe('false');
-        expect(document.querySelector('[aria-label="Salesforce Data Cloud attached database"]')).not.toBeNull();
+        expect(document.querySelector('[aria-label="Salesforce login"]')).not.toBeNull();
 
         act(() => closeButton().click());
         await expect(result).resolves.toBeNull();
@@ -317,13 +317,13 @@ describe('useSalesforceLoginDialog', () => {
     it('trims fields, reports inline validation errors, and focuses the first invalid field', async () => {
         const result = open();
         act(() => {
-            setInputValue(inputForLabel('Attached Database Alias'), '   ');
+            setInputValue(inputForLabel('Salesforce Login Name'), '   ');
             setInputValue(inputForLabel('Salesforce Instance URL'), ' ftp://example.com ');
             setInputValue(inputForLabel('Connected App'), '   ');
         });
         submit();
 
-        const alias = inputForLabel('Attached Database Alias');
+        const alias = inputForLabel('Salesforce Login Name');
         const instanceUrl = inputForLabel('Salesforce Instance URL');
         const appConsumerKey = inputForLabel('Connected App');
         expect(alias.parentElement?.parentElement?.textContent).toContain('Alias cannot be empty');
@@ -404,24 +404,9 @@ describe('useSalesforceLoginDialog', () => {
         submit();
         await expect(result).resolves.toEqual(expect.objectContaining({ alias: 'production' }));
 
-        act(() => controller.succeed('Attached production'));
+        act(() => controller.succeed('Authenticated with Salesforce as production'));
 
         expect(document.querySelector('[role="dialog"]')).toBeNull();
-    });
-
-    it('rejects duplicate aliases inline before opening OAuth', async () => {
-        act(() => root.render(<Harness openOAuthPopup={openOAuthPopup} hasAlias={(alias: string) => alias.toLowerCase() === 'production'} />));
-        const result = open();
-        fillValidForm();
-        submit();
-
-        expect(openOAuthPopup).not.toHaveBeenCalled();
-        expect(inputForLabel('Attached Database Alias').parentElement?.parentElement?.textContent).toContain(
-            'Salesforce alias already exists: production',
-        );
-
-        act(() => closeButton().click());
-        await expect(result).resolves.toBeNull();
     });
 
     it('settles with null when cancelled', async () => {
@@ -482,7 +467,7 @@ describe('useSalesforceLoginDialog', () => {
         act(() => controller.fail('authorization failed'));
         const retry = open();
         expect(document.querySelector('[role="dialog"]')?.textContent).toContain('authorization failed');
-        expect(inputForLabel('Attached Database Alias').value).toBe('production');
+        expect(inputForLabel('Salesforce Login Name').value).toBe('production');
         expect(inputForLabel('Salesforce Instance URL').value).toBe('https://example.my.salesforce.com');
         expect(inputForLabel('Connected App').value).toBe('consumer-key');
         expect(inputForLabel('Data Cloud Instance URL').value).toBe('');

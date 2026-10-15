@@ -26,9 +26,7 @@ function createDependencies(overrides: Partial<SalesforceLoginCommandDependencie
             appConsumerKey: 'consumer-key',
             loginHint: '',
         }),
-        hasAlias: vi.fn().mockReturnValue(false),
         authenticate: vi.fn().mockResolvedValue(authentication),
-        attach: vi.fn().mockResolvedValue(undefined),
         ...overrides,
     };
     return { dependencies, authentication };
@@ -51,25 +49,11 @@ describe('Salesforce login command', () => {
         expect(dependencies.authenticate).not.toHaveBeenCalled();
     });
 
-    it('rejects duplicate aliases case-insensitively before authentication', async () => {
-        const { dependencies } = createDependencies({
-            requestForm: vi.fn().mockResolvedValue({
-                alias: 'SaLeSfOrCe',
-                instanceUrl: 'https://example.my.salesforce.com',
-                appConsumerKey: 'consumer-key',
-                loginHint: '',
-            }),
-            hasAlias: vi.fn(alias => alias.toLowerCase() === 'salesforce'),
-        });
-        await expect(execute(dependencies)).rejects.toThrow('Salesforce alias already exists: SaLeSfOrCe');
-        expect(dependencies.authenticate).not.toHaveBeenCalled();
-    });
-
-    it('authenticates and attaches without resolving a catalog', async () => {
+    it('authenticates without attaching a remote database', async () => {
         const onSuccess = vi.fn();
         const { dependencies, authentication } = createDependencies({ onSuccess });
         const onProgress = vi.fn();
-        await expect(execute(dependencies, { onProgress })).resolves.toBe('Attached Salesforce as salesforce');
+        await expect(execute(dependencies, { onProgress })).resolves.toBe('Authenticated with Salesforce as salesforce');
         expect(dependencies.authenticate).toHaveBeenCalledWith(
             {
                 alias: 'salesforce',
@@ -80,14 +64,8 @@ describe('Salesforce login command', () => {
             undefined,
             onProgress,
         );
-        expect(dependencies.attach).toHaveBeenCalledWith(
-            'salesforce',
-            authentication,
-            undefined,
-            onProgress,
-        );
         expect(onProgress).toHaveBeenNthCalledWith(1, 'Authenticating with Salesforce');
-        expect(onProgress).toHaveBeenNthCalledWith(2, 'Attaching Salesforce connection as salesforce');
+        expect(onProgress).toHaveBeenCalledTimes(1);
         expect(onSuccess).toHaveBeenCalledWith(
             expect.objectContaining({ alias: 'salesforce' }),
             authentication,
@@ -104,7 +82,6 @@ describe('Salesforce login command', () => {
             }),
         });
         await expect(execute(dependencies, { signal: abort.signal })).resolves.toBeUndefined();
-        expect(dependencies.attach).not.toHaveBeenCalled();
     });
 
     it('restarts the login flow after a handled error', async () => {
@@ -124,22 +101,11 @@ describe('Salesforce login command', () => {
         const { dependencies, authentication } = createDependencies({ requestForm, authenticate, onError });
         authenticate.mockResolvedValueOnce(authentication);
 
-        await expect(execute(dependencies)).resolves.toBe('Attached Salesforce as salesforce');
+        await expect(execute(dependencies)).resolves.toBe('Authenticated with Salesforce as salesforce');
         expect(requestForm).toHaveBeenCalledTimes(2);
         expect(authenticate).toHaveBeenNthCalledWith(1, firstForm, undefined, undefined);
         expect(authenticate).toHaveBeenNthCalledWith(2, secondForm, undefined, undefined);
         expect(onError).toHaveBeenCalledOnce();
-        expect(dependencies.attach).toHaveBeenCalledOnce();
     });
 
-    it('does not report success when attachment fails', async () => {
-        const onSuccess = vi.fn();
-        const { dependencies } = createDependencies({
-            attach: vi.fn().mockRejectedValue(new Error('attachment failed')),
-            onSuccess,
-        });
-
-        await expect(execute(dependencies)).rejects.toThrow('attachment failed');
-        expect(onSuccess).not.toHaveBeenCalled();
-    });
 });
