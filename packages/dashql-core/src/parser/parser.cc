@@ -109,7 +109,10 @@ std::vector<Parser::ExpectedSymbol> Parser::CollectExpectedSymbols() {
 }
 
 template <typename Policy> void Parser::DriveLALR(Policy& policy, bool init_stack) {
-    constexpr size_t MAX_REDUCTIONS_WITHOUT_SHIFT = 4096;
+    // Completion probes replay this driver once per keyword candidate. A restored prefix can
+    // enter a nullable reduction cycle that a regular parse never reaches; keep the bound small
+    // enough that LAC cannot turn one completion request into unbounded work.
+    constexpr size_t MAX_REDUCTIONS_WITHOUT_SHIFT = 128;
     // The next symbol id
     int yyn;
     // The length of the RHS of the rule being reduced
