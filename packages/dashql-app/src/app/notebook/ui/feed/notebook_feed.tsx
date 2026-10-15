@@ -35,6 +35,12 @@ import { useNotebookFeedLayout } from './notebook_feed_layout.js';
 import { ScriptFeedRow, type ScriptFeedRowProps } from './notebook_feed_row.js';
 import { getKeywordCase } from '../script_format.js';
 import { reorderFeedEntries } from './notebook_feed_drag.js';
+import type { DataFile } from '../../persistence/storage_backend.js';
+import { stringifyError } from '../../../../platform/logger/logger.js';
+import { NotebookDataCard } from './notebook_data_card.js';
+import { ButtonSize, ButtonVariant, IconButton } from '../../../../ui/foundations/button.js';
+import { ChevronDownIcon, ChevronUpIcon, PlusIcon } from '../../../../ui/foundations/symbol_icon.js';
+import { HYPER_CONNECTOR } from '../../connections/connector_info.js';
 
 export interface NotebookFeedProps {
     notebookScripts: NotebookScripts;
@@ -80,6 +86,7 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
     const logger = useLogger();
     const scriptDebugMode = config?.settings?.scriptDebugMode ?? false;
     const formattingDebugMode = config?.settings?.formattingDebugMode ?? false;
+    const attachmentsVisible = config?.settings?.experimental_file_attachments === true;
     const keywordCase = getKeywordCase(config?.settings);
     const compactLayout = useCompactFeedLayout();
     const scriptRefs = props.notebookScripts.scriptRefs;
@@ -103,6 +110,53 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
         setDisplayEntries({ source: scriptRefs, entries: canonicalEntries });
     }, [scriptRefs, canonicalEntries]);
     const storageReader = useStorageReader();
+    const notebookId = props.notebookScripts.notebookId;
+    const [dataFiles, setDataFiles] = React.useState<{ notebookId: string; files: DataFile[] } | null>(null);
+    const [dataFilesVersion, setDataFilesVersion] = React.useState(0);
+    const [attachmentsExpanded, setAttachmentsExpanded] = React.useState(false);
+    const [attachmentError, setAttachmentError] = React.useState<string | null>(null);
+    const attachmentInputRef = React.useRef<HTMLInputElement>(null);
+    const refreshDataFiles = React.useCallback(() => setDataFilesVersion(version => version + 1), []);
+    React.useEffect(() => {
+        const cancel = new AbortController();
+        storageReader.backend.listDataFiles(notebookId).then(files => {
+            if (!cancel.signal.aborted) {
+                setDataFiles({
+                    notebookId, files: [...files].sort((a, b) => (
+                        a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
+                    ))
+                });
+            }
+        }).catch(e => {
+            if (!cancel.signal.aborted) {
+                logger.error('Listing notebook data files failed', { error: stringifyError(e) }, 'notebook_feed');
+            }
+        });
+        return () => cancel.abort();
+    }, [notebookId, storageReader.backend, dataFilesVersion, logger]);
+    const pinnedDataFiles = dataFiles?.notebookId === notebookId ? dataFiles.files : [];
+    const attachmentsEnabled = props.conn?.details.type === HYPER_CONNECTOR
+        && props.conn.details.value.proto.setupParams?.protocol === 'WASM';
+    const saveAttachments = React.useCallback(async (files: Iterable<File>) => {
+        setAttachmentError(null);
+        try {
+            for (const file of files) {
+                await storageReader.backend.saveDataFile(notebookId, file.name, file);
+            }
+            refreshDataFiles();
+        } catch (e) {
+            setAttachmentError('Adding attachment failed');
+            logger.error('Adding notebook attachment failed', { error: stringifyError(e) }, 'notebook_feed');
+        }
+    }, [logger, notebookId, refreshDataFiles, storageReader.backend]);
+    const handleAttachmentInput = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+        if (attachmentsEnabled && event.target.files != null) void saveAttachments(Array.from(event.target.files));
+        event.target.value = '';
+    }, [saveAttachments]);
+    const handleAttachmentDrop = React.useCallback((event: React.DragEvent<HTMLElement>) => {
+        event.preventDefault();
+        if (props.active && attachmentsEnabled) void saveAttachments(Array.from(event.dataTransfer.files));
+    }, [attachmentsEnabled, props.active, saveAttachments]);
 
     const pendingCreatedScriptKeyRef = React.useRef<number | null>(null);
     const editorViewsRef = React.useRef(new Map<number, EditorView>());
@@ -373,8 +427,45 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
     return (
         <div
             className={styles.feed_body_container}
+            data-attachments-visible={attachmentsVisible ? '' : undefined}
+            data-attachments-expanded={attachmentsExpanded ? '' : undefined}
             style={{ '--feed-scrollbar-inset': `${feedLayout.listScrollbarInset}px` } as React.CSSProperties}
         >
+            {attachmentsVisible && <section className={styles.feed_data_section} aria-label="Notebook attachments">
+                <input ref={attachmentInputRef} className={styles.feed_data_input} type="file" multiple
+                    onChange={handleAttachmentInput} aria-label="Add notebook attachments" disabled={!attachmentsEnabled} />
+                <button type="button" className={styles.feed_data_toggle}
+                    aria-expanded={attachmentsExpanded}
+                    aria-controls="notebook-attachments"
+                    onClick={() => setAttachmentsExpanded(expanded => !expanded)}>
+                    <span className={styles.feed_data_toggle_title}>
+                        Attached Files
+                        <span className={styles.feed_data_count}>{pinnedDataFiles.length}</span>
+                    </span>
+                    {attachmentsExpanded ? <ChevronUpIcon size={16} /> : <ChevronDownIcon size={16} />}
+                </button>
+                {attachmentsExpanded && (
+                    <div id="notebook-attachments" className={styles.feed_data_drawer}
+                        onDragOver={event => event.preventDefault()} onDrop={handleAttachmentDrop}>
+                        <IconButton variant={ButtonVariant.Invisible} size={ButtonSize.Small}
+                            aria-label="Add notebook attachments" disabled={!attachmentsEnabled}
+                            onClick={event => {
+                                event.stopPropagation();
+                                attachmentInputRef.current?.click();
+                            }}>
+                            <PlusIcon size={16} />
+                        </IconButton>
+                        <div className={styles.feed_data_cards}>
+                            {pinnedDataFiles.map(file => (
+                                <NotebookDataCard key={`${notebookId}/${file.name}`} notebookId={notebookId}
+                                    file={file} conn={props.conn} storageReader={storageReader} onRemoved={refreshDataFiles} />
+                            ))}
+                            {pinnedDataFiles.length === 0 && <div className={styles.feed_data_empty}>Drop files here or add attachments.</div>}
+                        </div>
+                    </div>
+                )}
+                {attachmentError != null && <div className={styles.feed_data_error} role="alert">{attachmentError}</div>}
+            </section>}
             <div className={styles.feed_list_container} ref={feedLayout.listContainerRef}>
                 <DndContext
                     sensors={dndSensors}

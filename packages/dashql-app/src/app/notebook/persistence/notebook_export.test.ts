@@ -10,9 +10,37 @@ import {
     NotebookLinkTarget,
 } from './notebook_export.js';
 import { importNotebookFromZip } from './notebook_import.js';
+import { notebookBundlesEqual } from './notebook_bundle.js';
 import { NotebookTestBackend, TEST_NOTEBOOK_ID, testNotebook } from './notebook_test_backend.js';
 
 describe('V2 notebook export', () => {
+    it('compares data bytes independently of typed-array JSON serialization', () => {
+        const bundle = { notebook: testNotebook(), schemaSql: null, functionsSql: null, scripts: [] };
+        const bytes = new Uint8Array([0, 255]);
+        const view = new Uint8Array([99, 0, 255, 99]).subarray(1, 3);
+        expect(notebookBundlesEqual({ ...bundle, data: [{ name: 'payload.bin', bytes }] },
+            { ...bundle, data: [{ name: 'payload.bin', bytes: view }] })).toBe(true);
+        expect(notebookBundlesEqual({ ...bundle, data: [{ name: 'payload.bin', bytes }] },
+            { ...bundle, data: [{ name: 'payload.bin', bytes: new Uint8Array([0, 254]) }] })).toBe(false);
+        expect(notebookBundlesEqual(bundle, { ...bundle, data: [] })).toBe(true);
+    });
+    it('persists arbitrary binary data and round-trips it through a ZIP', async () => {
+        const bytes = new Uint8Array([0, 255, 128, 195, 40, 13, 10, 0]);
+        const input = new JSZip();
+        input.file('dashql-notebook.json', JSON.stringify(testNotebook()));
+        input.file('attachments/2_payload.bin', bytes);
+        const backend = new NotebookTestBackend();
+        await importNotebookFromZip(await input.generateAsync({ type: 'blob' }), backend);
+        expect(await backend.listDataFiles(TEST_NOTEBOOK_ID)).toEqual([{ name: '2_payload.bin', sizeBytes: bytes.length }]);
+        expect(await backend.loadDataFile(TEST_NOTEBOOK_ID, '2_payload.bin')).toEqual(bytes);
+
+        const archive = await JSZip.loadAsync(await exportNotebookAsZip(TEST_NOTEBOOK_ID, backend));
+        expect(archive.file('attachments/2_payload.bin')).not.toBeNull();
+        expect(await archive.file('attachments/2_payload.bin')!.async('uint8array')).toEqual(bytes);
+        const target = new NotebookTestBackend();
+        await importNotebookFromZip(await archive.generateAsync({ type: 'blob' }), target);
+        expect(await target.loadDataFile(TEST_NOTEBOOK_ID, '2_payload.bin')).toEqual(bytes);
+    });
     it.each(['hyper', 'trino'])('omits %s header credentials from main and attached databases in ZIP and URL exports', async connector => {
         const backend = new NotebookTestBackend();
         const metadata = { authorization: 'bearer-secret', cookie: 'cookie-secret', 'x-api-key': 'api-secret', arbitrary: 'custom-secret' };
@@ -142,6 +170,8 @@ describe('V2 notebook export', () => {
         await backend.saveNotebookManifest(TEST_NOTEBOOK_ID, testNotebook({
             attachedDatabases: [{ databaseId: attachedDatabaseId, params: { hyper: {} } as any }],
         }));
+        await backend.saveScript(TEST_NOTEBOOK_ID, '01_attachment.sql',
+            `SELECT * FROM external('/mnt/fs/notebooks/${TEST_NOTEBOOK_ID}/attachments/payload.bin')`);
 
         const archive = await JSZip.loadAsync(await exportNotebookAsSharedZip(
             backend,
@@ -149,6 +179,8 @@ describe('V2 notebook export', () => {
             new Map(),
         ));
         const exported = JSON.parse(await archive.file('dashql-notebook.json')!.async('text'));
+        expect(await archive.file('scripts/01_attachment.sql')!.async('text')).toContain(
+            `/mnt/fs/notebooks/${exported.notebookId}/attachments/payload.bin`);
 
         expect(exported.notebookId).not.toBe(TEST_NOTEBOOK_ID);
         expect(exported.mainDatabase.databaseId).not.toBe(testNotebook().mainDatabase.databaseId);

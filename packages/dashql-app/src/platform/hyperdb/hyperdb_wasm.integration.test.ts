@@ -222,6 +222,31 @@ describe('HyperDB embedded database integration', () => {
         }
     }, 60_000);
 
+    it('queries notebook CSV data directly from the canonical OPFS path without registration', async () => {
+        const connection = await database!.connect();
+        const root = await navigator.storage.getDirectory();
+        const notebooks = await root.getDirectoryHandle('notebooks', { create: true });
+        const notebookId = crypto.randomUUID();
+        try {
+            const notebook = await notebooks.getDirectoryHandle(notebookId, { create: true });
+            const attachments = await notebook.getDirectoryHandle('attachments', { create: true });
+            const file = await attachments.getFileHandle('values.csv', { create: true });
+            const writer = await file.createWritable();
+            await writer.write('value,name\n1,alpha\n2,beta\n');
+            await writer.close();
+
+            expect(toPlainObjects(await connection.query(`
+                SELECT value, name
+                FROM external('/mnt/fs/notebooks/${notebookId}/attachments/values.csv', format => 'csv', header => true,
+                    columns => descriptor(value bigint, name text))
+                ORDER BY value
+            `))).toEqual([{ value: 1n, name: 'alpha' }, { value: 2n, name: 'beta' }]);
+        } finally {
+            await connection.close();
+            await ignoreCleanupFailure(() => notebooks.removeEntry(notebookId, { recursive: true }));
+        }
+    }, 60_000);
+
     it('queries a nested OPFS file through a registered browser directory', async () => {
         const connection = await database!.connect();
         const root = await navigator.storage.getDirectory();

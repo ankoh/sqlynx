@@ -11,6 +11,7 @@ export const STORAGE_NOTEBOOKS_FOLDER = 'notebooks';
 export const STORAGE_NOTEBOOK_FILE = 'dashql-notebook.json';
 export const STORAGE_NOTEBOOK_INDEX_FILE = 'dashql-notebook-index.json';
 export const STORAGE_SCRIPTS_FOLDER = 'scripts';
+export const STORAGE_ATTACHMENTS_FOLDER = 'attachments';
 export const STORAGE_CACHE_FOLDER = 'cache';
 export const STORAGE_CACHE_EXTENSION = '.arrow';
 /// Suffix of the empty "last access" marker that sits beside each cached `.arrow` file, e.g.
@@ -31,6 +32,27 @@ export interface NotebookIndexScript {
 
 export interface NotebookIndexData {
     scripts: NotebookIndexScript[];
+    data?: NotebookIndexScript[];
+}
+
+export interface DataFile {
+    name: string;
+    sizeBytes: number;
+}
+
+export interface DataFileData {
+    name: string;
+    bytes: Uint8Array;
+}
+
+/// Browser-originated attachments stay as Blobs until OPFS consumes them, avoiding a renderer-memory
+/// copy for large picker/drop files. Other persistence paths use bytes.
+export type DataFileContent = Uint8Array | Blob;
+
+export function validateDataFileName(name: string): void {
+    if (!name || name === '.' || name === '..' || /[/\\\0]/.test(name)) {
+        throw new Error(`Invalid data file basename: ${name}`);
+    }
 }
 
 // Re-export JSON Schema types
@@ -79,7 +101,7 @@ export interface StorageBackend {
     saveNotebookManifest(notebookId: string, data: NotebookData): Promise<void>;
     /// Create the derived HTTP publication index only when it is missing.
     ensureNotebookIndex?(notebookId: string): Promise<void>;
-    /// Rewrite the derived HTTP publication index from the authoritative script tree.
+    /// Rewrite the derived HTTP publication index from the authoritative script and data trees.
     regenerateNotebookIndex?(notebookId: string): Promise<void>;
     /// Delete a notebook
     deleteNotebook(notebookId: string): Promise<void>;
@@ -105,6 +127,12 @@ export interface StorageBackend {
     /// Rename a script file, preserving its contents (no rewrite from memory). Callers must
     /// guarantee `oldScriptName` exists and `newScriptName` does not.
     renameScript(notebookId: string, oldScriptName: string, newScriptName: string): Promise<void>;
+
+    listDataFiles(notebookId: string): Promise<DataFile[]>;
+    loadDataFile(notebookId: string, name: string): Promise<Uint8Array>;
+    saveDataFile(notebookId: string, name: string, content: DataFileContent): Promise<void>;
+    deleteDataFile(notebookId: string, name: string): Promise<void>;
+    renameDataFile(notebookId: string, oldName: string, newName: string): Promise<void>;
 
     /// Load a cached query result by content hash, or null on a cache miss.
     ///

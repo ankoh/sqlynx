@@ -246,6 +246,7 @@ function normalizePortableBundle(bundle: NotebookBundle, notebookId: string): No
         schemaSql: bundle.schemaSql,
         functionsSql: bundle.functionsSql ?? '',
         scripts: bundle.scripts,
+        data: bundle.data,
     };
 }
 

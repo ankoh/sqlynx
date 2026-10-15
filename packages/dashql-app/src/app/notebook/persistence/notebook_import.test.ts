@@ -27,6 +27,7 @@ describe('V2 notebook ZIP import', () => {
             notebook: testNotebook(),
             schemaSql: 'schema',
             functionsSql: 'functions',
+            data: [],
             scripts: [
                 { name: '2_first.sql', sql: 'SELECT 2' },
                 { name: '10_last.sql', sql: 'SELECT 10' },
@@ -37,6 +38,9 @@ describe('V2 notebook ZIP import', () => {
     it.each([
         ['nested scripts', 'scripts/page/query.sql', 'directly inside scripts/'],
         ['draft scripts', 'scripts/dashql-draft.sql', 'draft scripts are not supported'],
+        ['nested attachment', 'attachments/folder/payload.bin', 'directly inside attachments/'],
+        ['backslash attachment', 'attachments/payload\\name.bin', 'basename'],
+        ['NUL attachment', 'attachments/payload\0.bin', 'basename'],
     ])('rejects %s before mutating storage', async (_label, path, message) => {
         const backend = new NotebookTestBackend();
         await expect(importNotebookFromZip(await zip({

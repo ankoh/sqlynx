@@ -114,7 +114,7 @@ export const NotebookFeedPage: React.FC<Props> = (props) => {
         : run.phase === 'cancelled' ? `Stopped · ${progress} completed`
         : run.phase === 'succeeded' ? `${progress} succeeded` : `${progress} completed`;
     const { mode, setMode } = dependencies.useNotebookViewMode();
-    const dashboardsEnabled = dependencies.useAppConfig()?.settings?.enableDashboards === true;
+    const dashboardsEnabled = dependencies.useAppConfig()?.settings?.experimental_dashboards === true;
     const dashboardActive = dashboardsEnabled && mode === NotebookViewMode.Dashboard;
     const feedActive = props.active && !dashboardActive && !showDetails;
     const workbench = (closeAfterSelection: boolean) => (

@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { TestLogger } from '../../../platform/logger/test_logger.js';
 import { CompositeStorageBackend } from './composite_storage_backend.js';
+import { NativeStorageBackend } from './native_storage_backend.js';
+import { OPFSStorageBackend } from './opfs_storage_backend.js';
 import type { NotebookEntry, NotebookRegistryBackend } from './storage_backend.js';
 import { StorageBackendType } from './storage_backend.js';
 import { NotebookTestBackend, TEST_NOTEBOOK_ID, testNotebook } from './notebook_test_backend.js';
@@ -67,6 +69,79 @@ describe('CompositeStorageBackend V2 flat routing', () => {
         expect(await backend.loadScripts(TEST_NOTEBOOK_ID)).toEqual([{ name: '01_query.sql', sql: 'SELECT 1' }]);
         expect(registry.manifest).toEqual([{ path: TEST_NOTEBOOK_ID, storageType: StorageBackendType.OPFS }]);
         expect(fsStore.files.size).toBe(0);
+    });
+
+    it('mirrors native attachment bytes into the OPFS UUID namespace before returning a notebook', async () => {
+        const opfs = new OPFSStorageBackend();
+        const composite = new CompositeStorageBackend(opfs, new TestLogger());
+        await composite.initialize();
+        const native = new NativeStorageBackend('/tmp/native-attachments');
+        const bytes = new Uint8Array([0, 128, 255, 10]);
+        await native.saveNotebookManifest(TEST_NOTEBOOK_ID, testNotebook());
+        await native.saveDataFile(TEST_NOTEBOOK_ID, 'data.bin', bytes);
+        try {
+            await composite.upsertNotebookEntry({ path: TEST_NOTEBOOK_ID, storageType: StorageBackendType.Native, nativePath: native.getDir() });
+            await composite.loadNotebook(TEST_NOTEBOOK_ID);
+            await expect(opfs.loadDataFile(TEST_NOTEBOOK_ID, 'data.bin')).resolves.toEqual(bytes);
+            const root = await navigator.storage.getDirectory();
+            const notebooks = await root.getDirectoryHandle('notebooks');
+            const notebook = await notebooks.getDirectoryHandle(TEST_NOTEBOOK_ID);
+            const attachments = await notebook.getDirectoryHandle('attachments');
+            const file = await attachments.getFileHandle('data.bin');
+            expect(new Uint8Array(await (await file.getFile()).arrayBuffer())).toEqual(bytes);
+        } finally {
+            await opfs.deleteNotebook(TEST_NOTEBOOK_ID);
+        }
+    });
+
+    it('refreshes the complete native attachment mirror and removes stale files without native writes', async () => {
+        const native = new NativeStorageBackend('/tmp/native-refresh');
+        await native.saveNotebookManifest(TEST_NOTEBOOK_ID, testNotebook());
+        await native.saveDataFile(TEST_NOTEBOOK_ID, 'first.bin', new Uint8Array([1]));
+        await native.saveDataFile(TEST_NOTEBOOK_ID, 'second.bin', new Uint8Array([2]));
+        await registry.saveDataFile(TEST_NOTEBOOK_ID, 'first.bin', new Uint8Array([0]));
+        await registry.saveDataFile(TEST_NOTEBOOK_ID, 'stale.bin', new Uint8Array([3]));
+        await backend.upsertNotebookEntry({ path: TEST_NOTEBOOK_ID, storageType: StorageBackendType.Native, nativePath: native.getDir() });
+        const before = { files: new Map(fsStore.files), bytes: new Map(fsStore.binFiles), dirs: new Set(fsStore.dirs), mtimes: new Map(fsStore.mtimes) };
+        await backend.loadNotebook(TEST_NOTEBOOK_ID);
+        expect(await registry.listDataFiles(TEST_NOTEBOOK_ID)).toEqual([{ name: 'first.bin', sizeBytes: 1 }, { name: 'second.bin', sizeBytes: 1 }]);
+        expect(await registry.loadDataFile(TEST_NOTEBOOK_ID, 'first.bin')).toEqual(new Uint8Array([1]));
+        expect(await registry.loadDataFile(TEST_NOTEBOOK_ID, 'second.bin')).toEqual(new Uint8Array([2]));
+        expect({ files: fsStore.files, bytes: fsStore.binFiles, dirs: fsStore.dirs, mtimes: fsStore.mtimes }).toEqual(before);
+        await native.deleteDataFile(TEST_NOTEBOOK_ID, 'first.bin');
+        await native.deleteDataFile(TEST_NOTEBOOK_ID, 'second.bin');
+        await backend.loadNotebook(TEST_NOTEBOOK_ID);
+        expect(await registry.listDataFiles(TEST_NOTEBOOK_ID)).toEqual([]);
+    });
+
+    it('mirrors native attachment saves through the composite backend', async () => {
+        await backend.upsertNotebookEntry({ path: TEST_NOTEBOOK_ID, storageType: StorageBackendType.Native, nativePath: '/tmp/native-save' });
+        const bytes = new Uint8Array([0, 255]);
+        await backend.saveDataFile(TEST_NOTEBOOK_ID, 'saved.bin', bytes);
+        await expect(registry.loadDataFile(TEST_NOTEBOOK_ID, 'saved.bin')).resolves.toEqual(bytes);
+        expect(await backend.loadDataFile(TEST_NOTEBOOK_ID, 'saved.bin')).toEqual(bytes);
+    });
+
+    it('mirrors native attachment deletes through the composite backend', async () => {
+        const native = new NativeStorageBackend('/tmp/native-delete');
+        await native.saveDataFile(TEST_NOTEBOOK_ID, 'deleted.bin', new Uint8Array([1]));
+        await registry.saveDataFile(TEST_NOTEBOOK_ID, 'deleted.bin', new Uint8Array([1]));
+        await backend.upsertNotebookEntry({ path: TEST_NOTEBOOK_ID, storageType: StorageBackendType.Native, nativePath: native.getDir() });
+        await backend.deleteDataFile(TEST_NOTEBOOK_ID, 'deleted.bin');
+        expect(await registry.listDataFiles(TEST_NOTEBOOK_ID)).toEqual([]);
+        expect(await native.listDataFiles(TEST_NOTEBOOK_ID)).toEqual([]);
+    });
+
+    it('mirrors native attachment renames even when the source has not been mirrored', async () => {
+        const native = new NativeStorageBackend('/tmp/native-rename');
+        const bytes = new Uint8Array([128, 255]);
+        await native.saveDataFile(TEST_NOTEBOOK_ID, 'old.bin', bytes);
+        await registry.saveDataFile(TEST_NOTEBOOK_ID, 'new.bin', new Uint8Array([0]));
+        await backend.upsertNotebookEntry({ path: TEST_NOTEBOOK_ID, storageType: StorageBackendType.Native, nativePath: native.getDir() });
+        await backend.renameDataFile(TEST_NOTEBOOK_ID, 'old.bin', 'new.bin');
+        await expect(registry.loadDataFile(TEST_NOTEBOOK_ID, 'new.bin')).resolves.toEqual(bytes);
+        expect(await registry.listDataFiles(TEST_NOTEBOOK_ID)).toEqual([{ name: 'new.bin', sizeBytes: 2 }]);
+        expect(await native.listDataFiles(TEST_NOTEBOOK_ID)).toEqual([{ name: 'new.bin', sizeBytes: 2 }]);
     });
 
     it('routes flat CRUD to a registered native directory and preserves files on unregister', async () => {

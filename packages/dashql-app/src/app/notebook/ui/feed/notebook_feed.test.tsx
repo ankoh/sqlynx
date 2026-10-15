@@ -7,6 +7,12 @@ import { ScriptFeedRow, type ScriptFeedRowDependencies } from './notebook_feed_r
 import { ConnectorType } from '../../connections/connector_info.js';
 import { ConnectionHealth } from '../../connections/attached_database_state.js';
 import { NotebookConnectionAttentionContext } from '../notebook_connection_attention.js';
+import { NotebookDataCard, type NotebookDataCardProps } from './notebook_data_card.js';
+import { HYPER_CONNECTOR, TRINO_CONNECTOR } from '../../connections/connector_info.js';
+import { LoggerProvider } from '../../../../platform/logger/logger_provider.js';
+import { FileDownloaderProvider } from '../../../../platform/file/file_downloader_provider.js';
+import { WebFileDownloader } from '../../../../platform/file/web_file_downloader.js';
+import { NotebookTestBackend } from '../../persistence/notebook_test_backend.js';
 
 vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
 
@@ -68,6 +74,57 @@ describe('V2 notebook feed rows', () => {
     let root: Root;
     beforeEach(() => { state.query = null; state.sortableTransform = null; state.formatScriptEditor.mockReset(); container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container); });
     afterEach(() => { act(() => root.unmount()); container.remove(); });
+
+    it('keeps the HyperDB path behind a copy action and disables every file action for non-WASM connections', () => {
+        const notebookId = '12345678-1234-1234-1234-123456789abc';
+        const props: NotebookDataCardProps = {
+            notebookId, file: { name: 'sales 2.csv', sizeBytes: 42 },
+            conn: null, storageReader: { backend: new NotebookTestBackend() } as any, onRemoved: vi.fn(),
+        };
+        for (const conn of [null,
+            { details: { type: HYPER_CONNECTOR, value: { proto: { setupParams: { protocol: 'V3_HTTP' } } } } },
+            { details: { type: TRINO_CONNECTOR, value: {} } },
+        ]) {
+            act(() => root.render(<LoggerProvider><FileDownloaderProvider>
+                <NotebookDataCard {...props} conn={conn as any} />
+            </FileDownloaderProvider></LoggerProvider>));
+            expect(container.textContent).not.toContain(`/mnt/fs/notebooks/${notebookId}/attachments/sales 2.csv`);
+            expect(container.textContent).toContain('42 bytes');
+            expect(container.querySelector('[aria-hidden="true"]')?.textContent).toContain('CSV');
+            const buttons = Array.from(container.querySelectorAll('button'));
+            expect(buttons.map(button => button.getAttribute('aria-label'))).toEqual([
+                'Copy HyperDB path for sales 2.csv', 'Download sales 2.csv', 'Remove sales 2.csv',
+            ]);
+            expect(buttons.every(button => button.disabled)).toBe(true);
+            expect(container.querySelector('[aria-label*="reorder"]')).toBeNull();
+        }
+    });
+
+    it('downloads data bytes and removes the file before requesting a list refresh for HyperDB WASM', async () => {
+        const backend = new NotebookTestBackend();
+        const bytes = new Uint8Array([0, 255, 13]);
+        await backend.saveDataFile('notebook', 'sales.csv', bytes);
+        const onRemoved = vi.fn();
+        const download = vi.spyOn(WebFileDownloader.prototype, 'downloadBufferAsFile').mockResolvedValue();
+        try {
+            act(() => root.render(<LoggerProvider><FileDownloaderProvider>
+                <NotebookDataCard notebookId="notebook" file={{ name: 'sales.csv', sizeBytes: 3 }}
+                    conn={{ details: { type: HYPER_CONNECTOR, value: { proto: { setupParams: { protocol: 'WASM' } } } } } as any}
+                    storageReader={{ backend } as any} onRemoved={onRemoved} />
+            </FileDownloaderProvider></LoggerProvider>));
+            const downloadButton = container.querySelector<HTMLButtonElement>('[aria-label="Download sales.csv"]');
+            expect(downloadButton).not.toBeNull();
+            expect(Array.from(container.querySelectorAll('button')).every(button => !button.disabled)).toBe(true);
+            await act(async () => { downloadButton!.click(); });
+            expect(download).toHaveBeenCalledExactlyOnceWith(bytes, 'sales.csv');
+            await vi.waitFor(() => expect(container.querySelector<HTMLButtonElement>('[aria-label="Remove sales.csv"]')!.disabled).toBe(false));
+            await act(async () => { container.querySelector<HTMLButtonElement>('[aria-label="Remove sales.csv"]')!.click(); });
+            expect(await backend.listDataFiles('notebook')).toEqual([]);
+            expect(onRemoved).toHaveBeenCalledExactlyOnceWith();
+        } finally {
+            download.mockRestore();
+        }
+    });
 
     it('renders insertion separators before, between, and after flat scripts', () => {
         const props = baseProps();

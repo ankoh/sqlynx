@@ -56,12 +56,21 @@ export function AppSettings(props: { onClose: () => void; }) {
             }
         }));
     }, [reconfigure]);
-    const toggleDashboards = React.useCallback(() => {
+    const toggleExperimentalDashboards = React.useCallback(() => {
         reconfigure((value: AppConfig | null) => (value == null ? null : {
             ...value,
             settings: {
                 ...(value.settings ?? {}),
-                enableDashboards: !value.settings?.enableDashboards,
+                experimental_dashboards: !value.settings?.experimental_dashboards,
+            }
+        }));
+    }, [reconfigure]);
+    const toggleExperimentalFileAttachments = React.useCallback(() => {
+        reconfigure((value: AppConfig | null) => (value == null ? null : {
+            ...value,
+            settings: {
+                ...(value.settings ?? {}),
+                experimental_file_attachments: !value.settings?.experimental_file_attachments,
             }
         }));
     }, [reconfigure]);
@@ -266,16 +275,28 @@ export function AppSettings(props: { onClose: () => void; }) {
                             aria-labelledby="app-setting-force-relogin"
                         />
                     </div>
-                    <div id="app-setting-dashboards" className={styles.setting_name}>
-                        Dashboard View
+                    <div id="app-setting-experimental-dashboards" className={styles.setting_name}>
+                        Experimental Dashboards
                     </div>
                     <div className={styles.setting_switch}>
                         <ToggleSwitch
                             size="medium"
-                            checked={config?.settings?.enableDashboards ?? false}
-                            onClick={toggleDashboards}
+                            checked={config?.settings?.experimental_dashboards ?? false}
+                            onClick={toggleExperimentalDashboards}
                             disabled={config == null}
-                            aria-labelledby="app-setting-dashboards"
+                            aria-labelledby="app-setting-experimental-dashboards"
+                        />
+                    </div>
+                    <div id="app-setting-experimental-file-attachments" className={styles.setting_name}>
+                        Experimental File Attachments
+                    </div>
+                    <div className={styles.setting_switch}>
+                        <ToggleSwitch
+                            size="medium"
+                            checked={config?.settings?.experimental_file_attachments ?? false}
+                            onClick={toggleExperimentalFileAttachments}
+                            disabled={config == null}
+                            aria-labelledby="app-setting-experimental-file-attachments"
                         />
                     </div>
                     <div className={styles.setting_name}>

@@ -23,6 +23,23 @@ function client(files: Record<string, string>): HttpClient {
 }
 
 describe('V2 HTTP notebook bundle', () => {
+    it('loads indexed binary data and refuses unsafe names without fetching them', async () => {
+        const bytes = new Uint8Array([0, 255, 128]);
+        const httpClient = client({
+            '/notebook/dashql-notebook.json': JSON.stringify(testNotebook()),
+            '/notebook/dashql-notebook-index.json': JSON.stringify({ scripts: [], data: [
+                { name: '../escape' }, { name: 'payload.bin' }, { name: 'PAYLOAD.bin' },
+            ] }),
+        });
+        const fetch = httpClient.fetch;
+        httpClient.fetch = vi.fn(async (input, init) => String(input).endsWith('/attachments/payload.bin')
+            ? { ...response(''), arrayBuffer: async () => bytes.buffer }
+            : fetch(input, init));
+        const result = await readNotebookBundleFromHttp(URL, httpClient);
+        expect(result.bundle.data).toEqual([{ name: 'payload.bin', bytes }]);
+        expect(result.incomplete).toBe(true);
+        expect(vi.mocked(httpClient.fetch).mock.calls.map(call => String(call[0])).some(url => url.includes('escape'))).toBe(false);
+    });
     it('loads flat indexed scripts and reports progress', async () => {
         const progress = vi.fn();
         const result = await readNotebookBundleFromHttp(URL, client({

@@ -1,6 +1,7 @@
 import { type StorageBackend, type NotebookData, type ScriptData, type NotebookEntry, type AppSettings, type CachedQueryResult, StorageBackendType, STORAGE_NOTEBOOK_FILE, STORAGE_NOTEBOOK_INDEX_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_SCRIPT_SCHEMA, STORAGE_SCRIPT_FUNCTIONS, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX } from './storage_backend.js';
 import { type CacheFileStat, type QueryResultCacheStore, evictToFit } from './query_result_cache_eviction.js';
 import { serializeNotebookIndex } from './notebook_index.js';
+import { type DataFile, type DataFileContent, STORAGE_ATTACHMENTS_FOLDER, validateDataFileName } from './storage_backend.js';
 
 import { exists, join, mkdir, readDir, readFile, readTextFile, remove, rename, stat, writeFile, writeTextFile } from '../../../platform/electron_fs.js';
 
@@ -92,7 +93,7 @@ export class NativeStorageBackend implements StorageBackend {
 
     async regenerateNotebookIndex(notebookId: string): Promise<void> {
         const indexFile = await this.abs(STORAGE_NOTEBOOK_INDEX_FILE);
-        await writeTextFile(indexFile, serializeNotebookIndex(await this.loadScripts(notebookId)));
+        await writeTextFile(indexFile, serializeNotebookIndex(await this.loadScripts(notebookId), await this.listDataFiles(notebookId)));
     }
 
     async ensureNotebookIndex(notebookId: string): Promise<void> {
@@ -221,6 +222,52 @@ export class NativeStorageBackend implements StorageBackend {
             bytes,
             cachedAtMs: meta.mtime ? meta.mtime.getTime() : 0,
         };
+    }
+
+    async listDataFiles(_notebookId: string): Promise<DataFile[]> {
+        const dir = await this.abs(STORAGE_ATTACHMENTS_FOLDER);
+        if (!(await exists(dir))) return [];
+        const files: DataFile[] = [];
+        for (const entry of await readDir(dir)) {
+            validateDataFileName(entry.name);
+            if (entry.isDirectory) throw new Error(`Invalid notebook layout: nested data directory ${entry.name}`);
+            if (entry.isFile) {
+                const meta = await stat(await this.abs(`${STORAGE_ATTACHMENTS_FOLDER}/${entry.name}`));
+                files.push({ name: entry.name, sizeBytes: meta.size });
+            }
+        }
+        return files.sort((a, b) => this.naturalSort(a.name, b.name));
+    }
+
+    async loadDataFile(_notebookId: string, name: string): Promise<Uint8Array> {
+        validateDataFileName(name);
+        return await readFile(await this.abs(`${STORAGE_ATTACHMENTS_FOLDER}/${name}`));
+    }
+
+    async saveDataFile(notebookId: string, name: string, content: DataFileContent): Promise<void> {
+        validateDataFileName(name);
+        await this.ensureDir(STORAGE_ATTACHMENTS_FOLDER);
+        const bytes = content instanceof Blob ? new Uint8Array(await content.arrayBuffer()) : content;
+        await writeFile(await this.abs(`${STORAGE_ATTACHMENTS_FOLDER}/${name}`), bytes);
+        await this.regenerateNotebookIndex(notebookId);
+    }
+
+    async deleteDataFile(notebookId: string, name: string): Promise<void> {
+        validateDataFileName(name);
+        const path = await this.abs(`${STORAGE_ATTACHMENTS_FOLDER}/${name}`);
+        if (!(await exists(path))) return;
+        await remove(path);
+        await this.regenerateNotebookIndex(notebookId);
+    }
+
+    async renameDataFile(notebookId: string, oldName: string, newName: string): Promise<void> {
+        validateDataFileName(oldName);
+        validateDataFileName(newName);
+        if (oldName === newName) return;
+        const oldPath = await this.abs(`${STORAGE_ATTACHMENTS_FOLDER}/${oldName}`);
+        if (!(await exists(oldPath))) return;
+        await rename(oldPath, await this.abs(`${STORAGE_ATTACHMENTS_FOLDER}/${newName}`));
+        await this.regenerateNotebookIndex(notebookId);
     }
 
     async saveQueryResultCache(notebookId: string, hash: string, bytes: Uint8Array): Promise<void> {

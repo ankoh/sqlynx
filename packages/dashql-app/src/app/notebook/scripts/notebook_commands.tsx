@@ -103,7 +103,7 @@ export const NotebookCommands: React.FC<Props> = (props: Props) => {
     const location = useLocation();
     const navigate = useNavigate();
     const logger = dependencies.useLogger();
-    const dashboardsEnabled = dependencies.useAppConfig()?.settings?.enableDashboards === true;
+    const dashboardsEnabled = dependencies.useAppConfig()?.settings?.experimental_dashboards === true;
     const settingsReady = dependencies.useAppSettingsReady();
 
     const [notebookScripts, modifyNotebookScripts] = dependencies.useNotebookScripts(route.notebookId ?? null);

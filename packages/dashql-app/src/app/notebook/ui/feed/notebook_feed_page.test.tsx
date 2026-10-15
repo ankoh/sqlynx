@@ -57,7 +57,7 @@ const dependencies = {
         return <div data-testid="dashboard" />;
     },
     useNotebookViewMode: () => ({ mode: state.mode, setMode: state.setMode }),
-    useAppConfig: () => ({ settings: { enableDashboards: state.dashboardsEnabled } }),
+    useAppConfig: () => ({ settings: { experimental_dashboards: state.dashboardsEnabled } }),
     SegmentedControl,
     useNotebookExecution: () => state.execution,
 } as unknown as NotebookFeedPageDependencies;

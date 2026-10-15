@@ -1,6 +1,7 @@
 import { type NotebookRegistryBackend, type NotebookData, type ScriptData, type NotebookEntry, type StorageManifest, type AppSettings, type CachedQueryResult, StorageBackendType, STORAGE_MANIFEST_FILE, STORAGE_NOTEBOOKS_FOLDER, STORAGE_NOTEBOOK_FILE, STORAGE_NOTEBOOK_INDEX_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_SCRIPT_SCHEMA, STORAGE_SCRIPT_FUNCTIONS, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX, STORAGE_SHELL_FOLDER } from './storage_backend.js';
 import { type CacheFileStat, type QueryResultCacheStore, evictToFit } from './query_result_cache_eviction.js';
 import { serializeNotebookIndex } from './notebook_index.js';
+import { type DataFile, type DataFileContent, STORAGE_ATTACHMENTS_FOLDER, validateDataFileName } from './storage_backend.js';
 
 /// Origin Private File System storage backend.
 ///
@@ -122,7 +123,7 @@ export class OPFSStorageBackend implements NotebookRegistryBackend {
         const notebookDir = await this.getNotebookDir(this.notebookRelPath(notebookId), true);
         const indexFile = await notebookDir.getFileHandle(STORAGE_NOTEBOOK_INDEX_FILE, { create: true });
         const writable = await indexFile.createWritable();
-        await writable.write(serializeNotebookIndex(await this.loadScripts(notebookId)));
+        await writable.write(serializeNotebookIndex(await this.loadScripts(notebookId), await this.listDataFiles(notebookId)));
         await writable.close();
     }
 
@@ -341,6 +342,80 @@ export class OPFSStorageBackend implements NotebookRegistryBackend {
     /// The relative folder that holds a notebook's cached query results, e.g. "notebooks/<uuid>/cache"
     private cacheRelPath(notebookId: string): string {
         return `${this.notebookRelPath(notebookId)}/${STORAGE_CACHE_FOLDER}`;
+    }
+
+    private async dataDir(notebookId: string, create: boolean): Promise<FileSystemDirectoryHandle | null> {
+        const root = this.ensureInitialized();
+        try {
+            const notebooks = await root.getDirectoryHandle(STORAGE_NOTEBOOKS_FOLDER, { create });
+            const notebook = await notebooks.getDirectoryHandle(notebookId, { create });
+            return await notebook.getDirectoryHandle(STORAGE_ATTACHMENTS_FOLDER, { create });
+        } catch (error) {
+            if (!create && (error as Error).name === 'NotFoundError') return null;
+            throw error;
+        }
+    }
+
+    async listDataFiles(notebookId: string): Promise<DataFile[]> {
+        const dir = await this.dataDir(notebookId, false);
+        if (!dir) return [];
+        const files: DataFile[] = [];
+        for await (const [name, handle] of dir.entries()) {
+            validateDataFileName(name);
+            if (handle.kind === 'directory') throw new Error(`Invalid notebook layout: nested data directory ${name}`);
+            const file = await (handle as FileSystemFileHandle).getFile();
+            files.push({ name, sizeBytes: file.size });
+        }
+        return files.sort((a, b) => this.naturalSort(a.name, b.name));
+    }
+
+    async loadDataFile(notebookId: string, name: string): Promise<Uint8Array> {
+        validateDataFileName(name);
+        const dir = await this.dataDir(notebookId, false);
+        if (!dir) throw new Error(`Data file not found: ${name}`);
+        const handle = await dir.getFileHandle(name, { create: false });
+        return new Uint8Array(await (await handle.getFile()).arrayBuffer());
+    }
+
+    async saveDataFile(notebookId: string, name: string, content: DataFileContent): Promise<void> {
+        validateDataFileName(name);
+        const dir = (await this.dataDir(notebookId, true))!;
+        const handle = await dir.getFileHandle(name, { create: true });
+        const writable = await handle.createWritable();
+        // FileSystemWritableFileStream accepts Blob directly and streams it into OPFS without
+        // materializing a second full attachment buffer in the renderer.
+        if (content instanceof Blob) {
+            await writable.write(content);
+        } else {
+            const buffer = new ArrayBuffer(content.byteLength);
+            new Uint8Array(buffer).set(content);
+            await writable.write(buffer);
+        }
+        await writable.close();
+        await this.regenerateNotebookIndex(notebookId);
+    }
+
+    async deleteDataFile(notebookId: string, name: string): Promise<void> {
+        validateDataFileName(name);
+        const dir = await this.dataDir(notebookId, false);
+        if (!dir) return;
+        try {
+            await dir.removeEntry(name);
+        } catch (error) {
+            if ((error as Error).name === 'NotFoundError') return;
+            throw error;
+        }
+        await this.regenerateNotebookIndex(notebookId);
+    }
+
+    async renameDataFile(notebookId: string, oldName: string, newName: string): Promise<void> {
+        validateDataFileName(oldName);
+        validateDataFileName(newName);
+        if (oldName === newName) return;
+        const dir = await this.dataDir(notebookId, false);
+        if (!dir) return;
+        await this.moveFile(dir, oldName, dir, newName);
+        await this.regenerateNotebookIndex(notebookId);
     }
 
     async loadQueryResultCache(notebookId: string, hash: string): Promise<CachedQueryResult | null> {

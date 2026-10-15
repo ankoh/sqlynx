@@ -2,16 +2,18 @@ import JSZip from 'jszip';
 
 import * as app_event from '@ankoh/dashql-jsonschema/app_event.js';
 
-import type { StorageBackend, NotebookData, ScriptData, ConnectionParams } from './storage_backend.js';
+import type { StorageBackend, NotebookData, ScriptData, DataFileData, ConnectionParams } from './storage_backend.js';
 import {
     STORAGE_NOTEBOOK_FILE,
+    STORAGE_ATTACHMENTS_FOLDER,
+    validateDataFileName,
     STORAGE_SCRIPTS_FOLDER,
     STORAGE_SCRIPT_FUNCTIONS,
     STORAGE_SCRIPT_SCHEMA,
 } from './storage_backend.js';
 import { BASE64URL_CODEC } from '../../../utils/base64.js';
 import { sanitizeConnectionParamsForSharing } from '../connections/connection_params.js';
-import { readNotebookBundle, regenerateNotebookDatabaseIds } from './notebook_bundle.js';
+import { readNotebookBundle, regenerateNotebookDatabaseIds, rebaseNotebookAttachmentPaths } from './notebook_bundle.js';
 
 /// The target platform a shared notebook link points at.
 export enum NotebookLinkTarget {
@@ -49,6 +51,7 @@ export async function createNotebookZip(
     scripts: ScriptData[],
     schemaSql: string | null = null,
     functionsSql: string | null = null,
+    data: readonly DataFileData[] = [],
 ): Promise<Blob> {
     const zip = new JSZip();
 
@@ -79,6 +82,10 @@ export async function createNotebookZip(
         if (script.name.toLowerCase() === 'dashql-draft.sql') continue;
         scriptsFolder.file(script.name, script.sql);
     }
+    for (const file of data) {
+        validateDataFileName(file.name);
+        zip.file(`${STORAGE_ATTACHMENTS_FOLDER}/${file.name}`, file.bytes);
+    }
 
     // Generate ZIP blob with compression
     return await zip.generateAsync({
@@ -102,13 +109,18 @@ export async function exportNotebookAsZip(
 
     // Apply the caller's notebook transform (sharing sanitization, name override, ...)
     const outNotebook = options.transformNotebook ? options.transformNotebook(bundle.notebook) : bundle.notebook;
+    const scripts = bundle.scripts.map(script => ({
+        ...script,
+        sql: rebaseNotebookAttachmentPaths(script.sql, bundle.notebook.notebookId, outNotebook.notebookId)!,
+    }));
 
     // Create ZIP from loaded data
     return await createNotebookZip(
         outNotebook,
-        bundle.scripts,
-        bundle.schemaSql,
-        bundle.functionsSql,
+        scripts,
+        rebaseNotebookAttachmentPaths(bundle.schemaSql, bundle.notebook.notebookId, outNotebook.notebookId),
+        rebaseNotebookAttachmentPaths(bundle.functionsSql, bundle.notebook.notebookId, outNotebook.notebookId),
+        bundle.data,
     );
 }
 

@@ -68,6 +68,8 @@ describe('V2 app state loader', () => {
                 { name: '2_first.sql', sql: 'SELECT 2' },
             ]),
             loadScript: vi.fn(), saveScript: vi.fn(), deleteScript: vi.fn(), renameScript: vi.fn(),
+            listDataFiles: vi.fn(async () => []), loadDataFile: vi.fn(), saveDataFile: vi.fn(),
+            deleteDataFile: vi.fn(), renameDataFile: vi.fn(),
             loadQueryResultCache: vi.fn(async () => null), touchQueryResultCacheAccess: vi.fn(),
             saveQueryResultCache: vi.fn(), listQueryResultCache: vi.fn(async () => []),
             hasCachedQueryResult: vi.fn(async () => false), deleteQueryResultCache: vi.fn(),

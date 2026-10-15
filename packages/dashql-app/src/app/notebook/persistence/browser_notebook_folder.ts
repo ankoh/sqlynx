@@ -1,6 +1,8 @@
 import type { NotebookData, ScriptData } from './storage_backend.js';
 import {
     STORAGE_NOTEBOOK_FILE,
+    STORAGE_ATTACHMENTS_FOLDER,
+    validateDataFileName,
     STORAGE_SCRIPTS_FOLDER,
     STORAGE_SCRIPT_FUNCTIONS,
     STORAGE_SCRIPT_SCHEMA,
@@ -33,6 +35,14 @@ export async function readNotebookBundleFromBrowserFolder(
             throw new Error('Invalid notebook folder: selection mixes rooted and fallback file paths');
         }
         const selectedPath = hasRelativePath ? file.webkitRelativePath : file.name;
+        const rawPath = hasRelativePath ? selectedPath.split('/').slice(1).join('/') : selectedPath;
+        if (rawPath.replace(/\\/g, '/').toLowerCase().startsWith(`${STORAGE_ATTACHMENTS_FOLDER}/`)) {
+            const parts = rawPath.split('/');
+            if (parts.length !== 2 || parts[0].toLowerCase() !== STORAGE_ATTACHMENTS_FOLDER) {
+                throw new Error(`Invalid notebook folder: attachments must be directly inside attachments/: ${rawPath}`);
+            }
+            validateDataFileName(parts[1]);
+        }
         const { path, sourcePath } = normalizeSelectedPath(selectedPath);
         const parts = path.split('/');
         const sourceParts = sourcePath.split('/');
@@ -62,6 +72,9 @@ export async function readNotebookBundleFromBrowserFolder(
                 `Invalid notebook folder: SQL scripts must be directly inside scripts/: ${entry.path}`,
             );
         }
+        if (classification === 'invalid-data') {
+            throw new Error(`Invalid notebook folder: attachments must be directly inside attachments/: ${entry.path}`);
+        }
 
         const key = destinationKey(entry.path);
         if (destinations.has(key)) {
@@ -78,6 +91,7 @@ export async function readNotebookBundleFromBrowserFolder(
 
     const contents = new Map<string, string>();
     await Promise.all([...destinations].map(async ([key, entry]) => {
+        if (classifyBundlePath(entry.path) === 'data') return;
         contents.set(key, await entry.file.text());
     }));
 
@@ -111,10 +125,15 @@ export async function readNotebookBundleFromBrowserFolder(
         schemaSql: getOptionalContent(contents, STORAGE_SCRIPT_SCHEMA),
         functionsSql: getOptionalContent(contents, STORAGE_SCRIPT_FUNCTIONS),
         scripts,
+        data: await Promise.all([...destinations.values()]
+            .filter(entry => classifyBundlePath(entry.path) === 'data')
+            .sort((a, b) => NATURAL_SORT.compare(a.path, b.path))
+            .map(async entry => ({ name: entry.path.split('/')[1], bytes: new Uint8Array(await entry.file.arrayBuffer()) }))),
     };
 }
 
 function normalizeSelectedPath(input: string): { path: string; sourcePath: string } {
+    if (input.includes('\0')) throw new Error(`Invalid notebook folder: NUL in path ${input}`);
     const path = input.replace(/\\/g, '/');
     if (path.startsWith('/') || /^[a-z]:\//i.test(path)) {
         throw new Error(`Invalid notebook folder: absolute path ${input}`);
@@ -135,8 +154,14 @@ function normalizeSelectedPath(input: string): { path: string; sourcePath: strin
     };
 }
 
-function classifyBundlePath(path: string): 'accept' | 'script' | 'ignore' | 'invalid-script' {
+function classifyBundlePath(path: string): 'accept' | 'script' | 'data' | 'ignore' | 'invalid-script' | 'invalid-data' {
     const key = destinationKey(path);
+    if (key.startsWith(`${STORAGE_ATTACHMENTS_FOLDER}/`)) {
+        const parts = path.split('/');
+        if (parts.length !== 2) return 'invalid-data';
+        validateDataFileName(parts[1]);
+        return 'data';
+    }
     if (key === destinationKey(STORAGE_NOTEBOOK_FILE)
         || key === destinationKey(STORAGE_SCRIPT_SCHEMA)
         || key === destinationKey(STORAGE_SCRIPT_FUNCTIONS)) {

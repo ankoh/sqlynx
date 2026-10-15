@@ -1,6 +1,6 @@
 import type { Logger } from '../../../platform/logger/logger.js';
 import type { StorageBackend } from './storage_backend.js';
-import { regenerateNotebookDatabaseIds } from './notebook_bundle.js';
+import { regenerateNotebookDatabaseIds, rebaseNotebookAttachmentPaths } from './notebook_bundle.js';
 
 const LOG_CTX = 'storage_migration';
 
@@ -8,14 +8,14 @@ const LOG_CTX = 'storage_migration';
 export interface MigrationResult {
     /// The number of notebooks copied
     notebookCount: number;
-    /// The number of files written (manifests + schema + functions + scripts + drafts)
+    /// The number of files written (manifests + schema + functions + scripts + data)
     fileCount: number;
 }
 
 /// Copy a single notebook's files from `source` to `target`, keyed by the same UUID.
 ///
 /// The UUID is the authoritative identity and is preserved verbatim - nothing is re-prefixed. The
-/// notebook manifest, schema, functions, every script folder + script, and the draft are copied as
+/// notebook manifest, schema, functions, flat scripts, and binary data are copied as
 /// they are. `source` is left untouched; the caller deletes the source copy only after the copy is
 /// verified.
 export async function copyNotebook(
@@ -47,6 +47,10 @@ export async function copyNotebook(
 
     for (const script of await source.loadScripts(notebookId)) {
         await target.saveScript(notebookId, script.name, script.sql);
+        fileCount++;
+    }
+    for (const file of await source.listDataFiles(notebookId)) {
+        await target.saveDataFile(notebookId, file.name, await source.loadDataFile(notebookId, file.name));
         fileCount++;
     }
 
@@ -81,20 +85,25 @@ export async function cloneNotebook(
         await target.saveNotebookManifest(newNotebookId, notebookData);
         fileCount++;
 
-        const schema = await source.loadNotebookSchema(sourceNotebookId);
+        const schema = rebaseNotebookAttachmentPaths(await source.loadNotebookSchema(sourceNotebookId), sourceNotebookId, newNotebookId);
         if (schema != null) {
             await target.saveNotebookSchema(newNotebookId, schema);
             fileCount++;
         }
 
-        const functions = await source.loadNotebookFunctions(sourceNotebookId);
+        const functions = rebaseNotebookAttachmentPaths(await source.loadNotebookFunctions(sourceNotebookId), sourceNotebookId, newNotebookId);
         if (functions != null) {
             await target.saveNotebookFunctions(newNotebookId, functions);
             fileCount++;
         }
 
         for (const script of await source.loadScripts(sourceNotebookId)) {
-            await target.saveScript(newNotebookId, script.name, script.sql);
+            await target.saveScript(newNotebookId, script.name,
+                rebaseNotebookAttachmentPaths(script.sql, sourceNotebookId, newNotebookId)!);
+            fileCount++;
+        }
+        for (const file of await source.listDataFiles(sourceNotebookId)) {
+            await target.saveDataFile(newNotebookId, file.name, await source.loadDataFile(sourceNotebookId, file.name));
             fileCount++;
         }
 
@@ -130,5 +139,18 @@ export async function verifyNotebook(notebookId: string, source: StorageBackend,
         return false;
     }
 
-    return (await source.loadScripts(notebookId)).length === (await target.loadScripts(notebookId)).length;
+    if ((await source.loadScripts(notebookId)).length !== (await target.loadScripts(notebookId)).length) return false;
+    try {
+        const sourceFiles = await source.listDataFiles(notebookId);
+        const targetFiles = await target.listDataFiles(notebookId);
+        if (sourceFiles.length !== targetFiles.length) return false;
+        for (const file of sourceFiles) {
+            const sourceBytes = await source.loadDataFile(notebookId, file.name);
+            const targetBytes = await target.loadDataFile(notebookId, file.name);
+            if (sourceBytes.length !== targetBytes.length || !sourceBytes.every((byte, i) => byte === targetBytes[i])) return false;
+        }
+        return true;
+    } catch {
+        return false;
+    }
 }

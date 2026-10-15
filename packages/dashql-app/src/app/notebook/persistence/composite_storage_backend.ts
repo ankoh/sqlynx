@@ -3,6 +3,8 @@ import {
     type NotebookRegistryBackend,
     type NotebookData,
     type ScriptData,
+    type DataFile,
+    type DataFileContent,
     type NotebookEntry,
     type AppSettings,
     type CachedQueryResult,
@@ -191,7 +193,27 @@ export class CompositeStorageBackend implements NotebookRegistryBackend {
     // ---- Per-notebook operations (routed by uuid) ----------------------------------------------
 
     async loadNotebook(notebookId: string): Promise<NotebookData> {
-        return (await this.backendFor(notebookId)).loadNotebook(notebookId);
+        const backend = await this.backendFor(notebookId);
+        const notebook = await backend.loadNotebook(notebookId);
+        await this.syncNativeAttachments(notebookId, backend);
+        return notebook;
+    }
+
+    private async syncNativeAttachments(notebookId: string, backend: StorageBackend): Promise<void> {
+        if (backend === this.opfs) {
+            return;
+        }
+        // HyperDB-WASM reads attachments from OPFS even when the native folder owns the notebook.
+        const files = await backend.listDataFiles(notebookId);
+        const names = new Set(files.map(file => file.name));
+        for (const file of files) {
+            await this.opfs.saveDataFile(notebookId, file.name, await backend.loadDataFile(notebookId, file.name));
+        }
+        for (const file of await this.opfs.listDataFiles(notebookId)) {
+            if (!names.has(file.name)) {
+                await this.opfs.deleteDataFile(notebookId, file.name);
+            }
+        }
     }
 
     async saveNotebookManifest(notebookId: string, data: NotebookData): Promise<void> {
@@ -234,6 +256,8 @@ export class CompositeStorageBackend implements NotebookRegistryBackend {
             // again on the next launch. Dropping the entry is all that's needed and can't fail on a
             // missing folder.
             await this.opfs.removeNotebookEntry(notebookId);
+            // Native files remain user-owned, but their OPFS attachment mirror belongs to DashQL.
+            await this.opfs.deleteNotebookFiles(notebookId);
         } else {
             // OPFS deletes files and removes the registry entry in one step.
             await this.opfs.deleteNotebook(notebookId);
@@ -271,6 +295,27 @@ export class CompositeStorageBackend implements NotebookRegistryBackend {
     }
     async loadQueryResultCache(notebookId: string, hash: string): Promise<CachedQueryResult | null> {
         return (await this.backendFor(notebookId)).loadQueryResultCache(notebookId, hash);
+    }
+    async listDataFiles(notebookId: string): Promise<DataFile[]> {
+        return (await this.backendFor(notebookId)).listDataFiles(notebookId);
+    }
+    async loadDataFile(notebookId: string, name: string): Promise<Uint8Array> {
+        return (await this.backendFor(notebookId)).loadDataFile(notebookId, name);
+    }
+    async saveDataFile(notebookId: string, name: string, content: DataFileContent): Promise<void> {
+        const backend = await this.backendFor(notebookId);
+        await backend.saveDataFile(notebookId, name, content);
+        await this.syncNativeAttachments(notebookId, backend);
+    }
+    async deleteDataFile(notebookId: string, name: string): Promise<void> {
+        const backend = await this.backendFor(notebookId);
+        await backend.deleteDataFile(notebookId, name);
+        await this.syncNativeAttachments(notebookId, backend);
+    }
+    async renameDataFile(notebookId: string, oldName: string, newName: string): Promise<void> {
+        const backend = await this.backendFor(notebookId);
+        await backend.renameDataFile(notebookId, oldName, newName);
+        await this.syncNativeAttachments(notebookId, backend);
     }
     async saveQueryResultCache(notebookId: string, hash: string, bytes: Uint8Array): Promise<void> {
         return (await this.backendFor(notebookId)).saveQueryResultCache(notebookId, hash, bytes);

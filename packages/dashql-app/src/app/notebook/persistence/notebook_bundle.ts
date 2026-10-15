@@ -1,6 +1,6 @@
 import type { DashQL, FlatBufferPtr, buffers } from '@ankoh/dashql-core';
-import type { NotebookData, ScriptData, StorageBackend } from './storage_backend.js';
-import { StorageBackendType } from './storage_backend.js';
+import type { DataFileData, NotebookData, ScriptData, StorageBackend } from './storage_backend.js';
+import { StorageBackendType, validateDataFileName } from './storage_backend.js';
 import {
     describeNotebookValidationError,
     isValidUuid,
@@ -14,6 +14,7 @@ export interface NotebookBundle {
     schemaSql: string | null;
     functionsSql: string | null;
     scripts: ScriptData[];
+    data?: DataFileData[];
 }
 
 export interface NotebookCatalogValidationResult {
@@ -31,6 +32,15 @@ export function regenerateNotebookDatabaseIds(notebook: NotebookData): NotebookD
         mainDatabase: remap(notebook.mainDatabase),
         attachedDatabases: notebook.attachedDatabases.map(remap) as NotebookData['attachedDatabases'],
     };
+}
+
+/// Rewrite only this notebook's canonical attachment paths after explicitly creating a new identity.
+/// References to another notebook are left unchanged.
+export function rebaseNotebookAttachmentPaths(text: string | null, sourceNotebookId: string, targetNotebookId: string): string | null {
+    if (text == null || sourceNotebookId === targetNotebookId) return text;
+    return text.split(
+        `/mnt/fs/notebooks/${sourceNotebookId}/attachments/`,
+    ).join(`/mnt/fs/notebooks/${targetNotebookId}/attachments/`);
 }
 
 /// Parse catalog files on scratch scripts and omit malformed SQL before it can reach storage.
@@ -100,7 +110,9 @@ export async function readNotebookBundle(
         withCatalog ? backend.loadNotebookSchema(notebookId) : null,
         withCatalog ? backend.loadNotebookFunctions(notebookId) : null,
     ]);
-    return { notebook, schemaSql, functionsSql, scripts };
+    const data = await Promise.all((await backend.listDataFiles(notebookId))
+        .map(async file => ({ name: file.name, bytes: await backend.loadDataFile(notebookId, file.name) })));
+    return { notebook, schemaSql, functionsSql, scripts, data };
 }
 
 /// Write a fully parsed bundle to storage. This is deliberately not a replacement transaction:
@@ -121,6 +133,7 @@ export async function writeNotebookBundle(
     if (options.targetIsFresh && options.targetNotebookId == null) {
         throw new Error('targetIsFresh requires an explicit targetNotebookId');
     }
+    for (const file of bundle.data ?? []) validateDataFileName(file.name);
 
     let notebook: NotebookData = {
         ...bundle.notebook,
@@ -141,12 +154,18 @@ export async function writeNotebookBundle(
 
     try {
         await backend.saveNotebookManifest(notebookId, notebook);
-        if (bundle.schemaSql != null) {
-            await backend.saveNotebookSchema(notebookId, bundle.schemaSql);
+        const schemaSql = rebaseNotebookAttachmentPaths(bundle.schemaSql, bundle.notebook.notebookId, notebookId);
+        const functionsSql = rebaseNotebookAttachmentPaths(bundle.functionsSql ?? '', bundle.notebook.notebookId, notebookId)!;
+        if (schemaSql != null) {
+            await backend.saveNotebookSchema(notebookId, schemaSql);
         }
-        await backend.saveNotebookFunctions(notebookId, bundle.functionsSql ?? '');
+        await backend.saveNotebookFunctions(notebookId, functionsSql);
         for (const script of bundle.scripts) {
-            await backend.saveScript(notebookId, script.name, script.sql);
+            await backend.saveScript(notebookId, script.name,
+                rebaseNotebookAttachmentPaths(script.sql, bundle.notebook.notebookId, notebookId)!);
+        }
+        for (const file of bundle.data ?? []) {
+            await backend.saveDataFile(notebookId, file.name, file.bytes);
         }
     } catch (error) {
         if (options.targetIsFresh) {
@@ -165,5 +184,11 @@ export async function writeNotebookBundle(
 /// Compare all portable durable content. Used to verify a staged replacement before touching the
 /// live notebook UUID.
 export function notebookBundlesEqual(a: NotebookBundle, b: NotebookBundle): boolean {
-    return JSON.stringify(a) === JSON.stringify(b);
+    const { data: aData = [], ...aText } = a;
+    const { data: bData = [], ...bText } = b;
+    return JSON.stringify(aText) === JSON.stringify(bText)
+        && aData.length === bData.length
+        && aData.every((file, i) => file.name === bData[i].name
+            && file.bytes.byteLength === bData[i].bytes.byteLength
+            && file.bytes.every((byte, j) => byte === bData[i].bytes[j]));
 }

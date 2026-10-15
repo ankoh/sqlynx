@@ -63,4 +63,22 @@ describe('NativeStorageBackend V2 flat storage', () => {
         await backend.deleteNotebook(TEST_NOTEBOOK_ID);
         expect(fsStore.files).toEqual(before);
     });
+    it('preserves binary data through CRUD and publishes naturally sorted names', async () => {
+        const bytes = new Uint8Array([0, 255, 128, 195, 40]);
+        await backend.saveDataFile(TEST_NOTEBOOK_ID, '10_payload.bin', bytes);
+        await backend.saveDataFile(TEST_NOTEBOOK_ID, '2_payload.bin', new Uint8Array());
+        expect(await backend.listDataFiles(TEST_NOTEBOOK_ID)).toEqual([
+            { name: '2_payload.bin', sizeBytes: 0 }, { name: '10_payload.bin', sizeBytes: 5 },
+        ]);
+        expect(JSON.parse(fsStore.files.get(`${DIR}/dashql-notebook-index.json`)!).data).toEqual([
+            { name: '2_payload.bin' }, { name: '10_payload.bin' },
+        ]);
+        await backend.renameDataFile(TEST_NOTEBOOK_ID, '10_payload.bin', '1_renamed.bin');
+        expect(await backend.loadDataFile(TEST_NOTEBOOK_ID, '1_renamed.bin')).toEqual(bytes);
+        await backend.deleteDataFile(TEST_NOTEBOOK_ID, '1_renamed.bin');
+        expect(await backend.listDataFiles(TEST_NOTEBOOK_ID)).toHaveLength(1);
+        await expect(backend.saveDataFile(TEST_NOTEBOOK_ID, '../escape', bytes)).rejects.toThrow('basename');
+        fsStore.dirs.add(`${DIR}/attachments/nested`);
+        await expect(backend.listDataFiles(TEST_NOTEBOOK_ID)).rejects.toThrow('nested data');
+    });
 });

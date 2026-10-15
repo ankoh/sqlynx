@@ -2,6 +2,7 @@ import type { Logger } from '../../../platform/logger/logger.js';
 import type { NotebookLocation } from './notebook_locator.js';
 import {
     StorageBackendType,
+    STORAGE_ATTACHMENTS_FOLDER,
     STORAGE_SCRIPTS_FOLDER,
     STORAGE_SCRIPT_FUNCTIONS,
     STORAGE_SCRIPT_SCHEMA,
@@ -25,7 +26,7 @@ export function nativeNotebookWatchForLocation(notebookId: string, location: Not
     return { notebookId, dir: location.nativePath };
 }
 
-/// True when a watcher event can affect reloadable notebook scripts. The notebook manifest and generated
+/// True when a watcher event can affect notebook scripts or attachments. The notebook manifest and generated
 /// cache are intentionally outside this boundary; connection identity/config changes require a full
 /// connection lifecycle rather than an in-place file reload.
 export function isNotebookContentWatchEvent(event: WatchEvent, dir: string): boolean {
@@ -39,7 +40,9 @@ export function isNotebookContentWatchEvent(event: WatchEvent, dir: string): boo
         return relative === STORAGE_SCRIPT_SCHEMA
             || relative === STORAGE_SCRIPT_FUNCTIONS
             || relative === STORAGE_SCRIPTS_FOLDER
-            || relative.startsWith(`${STORAGE_SCRIPTS_FOLDER}/`);
+            || relative.startsWith(`${STORAGE_SCRIPTS_FOLDER}/`)
+            || relative === STORAGE_ATTACHMENTS_FOLDER
+            || relative.startsWith(`${STORAGE_ATTACHMENTS_FOLDER}/`);
     });
 }
 

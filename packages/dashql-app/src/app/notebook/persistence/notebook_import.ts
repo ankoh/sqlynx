@@ -3,6 +3,8 @@ import JSZip from 'jszip';
 import type { NotebookData, ScriptData, StorageBackend } from './storage_backend.js';
 import {
     STORAGE_NOTEBOOK_FILE,
+    STORAGE_ATTACHMENTS_FOLDER,
+    validateDataFileName,
     STORAGE_SCRIPTS_FOLDER,
     STORAGE_SCRIPT_FUNCTIONS,
     STORAGE_SCRIPT_SCHEMA,
@@ -31,7 +33,9 @@ export async function readNotebookBundleFromZip(zipBlob: Blob): Promise<Notebook
 
     for (const file of Object.values(zip.files)) {
         const originalPath = (file as ZipObjectWithOriginalName).unsafeOriginalName ?? file.name;
+        validateDataPath(originalPath);
         const path = normalizeBundlePath(originalPath);
+        validateDataPath(path);
         if (file.dir) continue;
         if (!isBundleFile(path)) {
             continue;
@@ -97,7 +101,21 @@ export async function readNotebookBundleFromZip(zipBlob: Blob): Promise<Notebook
         functions ? functions.file.async('text') : null,
     ]);
 
-    return { notebook, schemaSql, functionsSql, scripts: parsedScripts };
+    const data = await Promise.all([...destinations.values()]
+        .filter(entry => destinationKey(entry.path).startsWith(`${STORAGE_ATTACHMENTS_FOLDER}/`))
+        .sort((a, b) => NATURAL_SORT.compare(a.path, b.path))
+        .map(async entry => ({ name: entry.path.split('/')[1], bytes: await entry.file.async('uint8array') })));
+    return { notebook, schemaSql, functionsSql, scripts: parsedScripts, data };
+}
+
+function validateDataPath(path: string): void {
+    if (!path.replace(/\\/g, '/').toLowerCase().startsWith(`${STORAGE_ATTACHMENTS_FOLDER}/`)) return;
+    if (path.toLowerCase() === `${STORAGE_ATTACHMENTS_FOLDER}/`) return;
+    const parts = path.split('/');
+    if (parts.length !== 2 || parts[0].toLowerCase() !== STORAGE_ATTACHMENTS_FOLDER) {
+        throw new Error(`Invalid ZIP: attachments must be directly inside attachments/: ${path}`);
+    }
+    validateDataFileName(parts[1]);
 }
 
 /// Import a portable notebook ZIP. By default the source UUID is preserved.
@@ -114,6 +132,7 @@ export async function importNotebookFromZip(
 }
 
 function normalizeBundlePath(input: string): string {
+    if (input.includes('\0')) throw new Error(`Invalid ZIP: NUL in path ${input}`);
     const path = input.replace(/\\/g, '/');
     if (path.startsWith('/')) {
         throw new Error(`Invalid ZIP: absolute path ${input}`);
@@ -140,5 +159,6 @@ function isBundleFile(path: string): boolean {
     return key === destinationKey(STORAGE_NOTEBOOK_FILE)
         || key === destinationKey(STORAGE_SCRIPT_SCHEMA)
         || key === destinationKey(STORAGE_SCRIPT_FUNCTIONS)
+        || key.startsWith(`${STORAGE_ATTACHMENTS_FOLDER}/`)
         || (key.startsWith(`${destinationKey(STORAGE_SCRIPTS_FOLDER)}/`) && key.endsWith('.sql'));
 }

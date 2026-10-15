@@ -44,4 +44,12 @@ describe('native notebook sync', () => {
         };
         expect(isNotebookContentWatchEvent(event, 'C:\\notebooks\\one')).toBe(false);
     });
+
+    it('accepts attachment directory and file changes including windows paths', () => {
+        expect(isNotebookContentWatchEvent({ paths: [`${DIR}/attachments`] }, DIR)).toBe(true);
+        expect(isNotebookContentWatchEvent({ paths: [`${DIR}/attachments/data.csv`] }, DIR)).toBe(true);
+        expect(isNotebookContentWatchEvent({ paths: ['C:\\notebooks\\one\\attachments\\data.csv'] }, 'C:\\notebooks\\one')).toBe(true);
+        expect(isNotebookContentWatchEvent({ paths: [`${DIR}/attachments-old/data.csv`] }, DIR)).toBe(false);
+        expect(isNotebookContentWatchEvent({ type: { access: {} }, paths: [`${DIR}/attachments/data.csv`] }, DIR)).toBe(false);
+    });
 });

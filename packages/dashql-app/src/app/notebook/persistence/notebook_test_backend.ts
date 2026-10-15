@@ -1,12 +1,13 @@
 import type {
     AppSettings,
+    DataFile,
     CachedQueryResult,
     NotebookData,
     NotebookEntry,
     ScriptData,
     StorageBackend,
 } from './storage_backend.js';
-import { StorageBackendType } from './storage_backend.js';
+import { StorageBackendType, validateDataFileName } from './storage_backend.js';
 import type { CacheFileStat } from './query_result_cache_eviction.js';
 
 export class NotebookTestBackend implements StorageBackend {
@@ -14,6 +15,7 @@ export class NotebookTestBackend implements StorageBackend {
     readonly schemas = new Map<string, string>();
     readonly functions = new Map<string, string>();
     readonly scripts = new Map<string, Map<string, string>>();
+    readonly data = new Map<string, Map<string, Uint8Array>>();
     readonly calls: string[] = [];
     appSettings: AppSettings | null = null;
 
@@ -38,6 +40,7 @@ export class NotebookTestBackend implements StorageBackend {
         this.schemas.delete(notebookId);
         this.functions.delete(notebookId);
         this.scripts.delete(notebookId);
+        this.data.delete(notebookId);
     }
     async loadNotebookSchema(notebookId: string): Promise<string | null> { return this.schemas.get(notebookId) ?? null; }
     async saveNotebookSchema(notebookId: string, sql: string): Promise<void> {
@@ -78,6 +81,36 @@ export class NotebookTestBackend implements StorageBackend {
         scripts.set(newScriptName, sql);
     }
     async loadQueryResultCache(): Promise<CachedQueryResult | null> { return null; }
+    async listDataFiles(notebookId: string): Promise<DataFile[]> {
+        return [...(this.data.get(notebookId) ?? new Map<string, Uint8Array>())]
+            .map(([name, bytes]) => ({ name, sizeBytes: bytes.byteLength }))
+            .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+    }
+    async loadDataFile(notebookId: string, name: string): Promise<Uint8Array> {
+        validateDataFileName(name);
+        const bytes = this.data.get(notebookId)?.get(name);
+        if (!bytes) throw new Error(`Data file not found: ${name}`);
+        return bytes.slice();
+    }
+    async saveDataFile(notebookId: string, name: string, content: Uint8Array | Blob): Promise<void> {
+        validateDataFileName(name);
+        const data = this.data.get(notebookId) ?? new Map<string, Uint8Array>();
+        const bytes = content instanceof Blob ? new Uint8Array(await content.arrayBuffer()) : content;
+        data.set(name, bytes.slice());
+        this.data.set(notebookId, data);
+    }
+    async deleteDataFile(notebookId: string, name: string): Promise<void> {
+        validateDataFileName(name);
+        this.data.get(notebookId)?.delete(name);
+    }
+    async renameDataFile(notebookId: string, oldName: string, newName: string): Promise<void> {
+        validateDataFileName(oldName);
+        validateDataFileName(newName);
+        const data = this.data.get(notebookId);
+        if (!data?.has(oldName) || oldName === newName) return;
+        data.set(newName, data.get(oldName)!);
+        data.delete(oldName);
+    }
     async touchQueryResultCacheAccess(): Promise<void> {}
     async saveQueryResultCache(): Promise<void> {}
     async listQueryResultCache(): Promise<CacheFileStat[]> { return []; }

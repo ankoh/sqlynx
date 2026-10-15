@@ -51,6 +51,12 @@
         "enableTableColumnPlots": {
           "type": "boolean"
         },
+        "experimental_dashboards": {
+          "type": "boolean"
+        },
+        "experimental_file_attachments": {
+          "type": "boolean"
+        },
         "narrowScreenLayout": {
           "type": "boolean"
         },

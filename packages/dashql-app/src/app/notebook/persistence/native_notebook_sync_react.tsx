@@ -107,6 +107,10 @@ export const NativeNotebookSync: React.FC = () => {
         try {
             // A write that started before the watcher event must finish before the stable disk read.
             await writer.settle();
+            // Composite storage mirrors native attachments into the notebook's OPFS namespace while
+            // loading. Do this before the SQL/catalog unchanged fast path so attachment-only edits
+            // refresh the files exposed to embedded HyperDB-WASM.
+            await reader.backend.loadNotebook(notebookId);
             const [schema, functions, scripts] = await Promise.all([
                 reader.backend.loadNotebookSchema(notebookId),
                 reader.backend.loadNotebookFunctions(notebookId),

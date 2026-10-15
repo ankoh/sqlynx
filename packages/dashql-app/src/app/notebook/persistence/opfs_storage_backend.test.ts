@@ -6,20 +6,20 @@ import { TEST_NOTEBOOK_ID, testNotebook } from './notebook_test_backend.js';
 
 class FileHandle {
     readonly kind = 'file' as const;
-    constructor(readonly name: string, private files: Map<string, string>) {}
+    constructor(readonly name: string, private files: Map<string, string | ArrayBuffer>) {}
     async getFile(): Promise<File> { return new File([this.files.get(this.name) ?? ''], this.name); }
     async createWritable() {
         return { write: async (value: string | Blob | ArrayBuffer) => {
             if (typeof value === 'string') this.files.set(this.name, value);
-            else if (value instanceof Blob) this.files.set(this.name, await value.text());
-            else this.files.set(this.name, new TextDecoder().decode(value));
+            else if (value instanceof Blob) this.files.set(this.name, await value.arrayBuffer());
+            else this.files.set(this.name, value.slice(0));
         }, close: async () => {} };
     }
 }
 
 class DirectoryHandle {
     readonly kind = 'directory' as const;
-    constructor(readonly name: string, private files: Map<string, string>, private dirs: Set<string>) {}
+    constructor(readonly name: string, private files: Map<string, string | ArrayBuffer>, private dirs: Set<string>) {}
     private path(child: string) { return this.name ? `${this.name}/${child}` : child; }
     async getFileHandle(name: string, options?: { create?: boolean }): Promise<FileHandle> {
         const path = this.path(name);
@@ -62,7 +62,7 @@ function notFound(): Error { const error = new Error('not found'); error.name = 
 
 describe('OPFSStorageBackend V2 flat storage', () => {
     let backend: OPFSStorageBackend;
-    let files: Map<string, string>;
+    let files: Map<string, string | ArrayBuffer>;
     let dirs: Set<string>;
 
     beforeEach(async () => {
@@ -85,7 +85,7 @@ describe('OPFSStorageBackend V2 flat storage', () => {
             { name: '2_first.sql', sql: 'SELECT 2' },
             { name: '10_last.sql', sql: 'SELECT 10' },
         ]);
-        expect(JSON.parse(files.get(`notebooks/${TEST_NOTEBOOK_ID}/dashql-notebook-index.json`)!)).toEqual({
+        expect(JSON.parse(files.get(`notebooks/${TEST_NOTEBOOK_ID}/dashql-notebook-index.json`)! as string)).toEqual({
             scripts: [{ name: '2_first.sql' }, { name: '10_last.sql' }],
         });
         expect(await backend.listNotebooks(STORAGE_MANIFEST_FILE)).toEqual([{ path: TEST_NOTEBOOK_ID, storageType: 'opfs' }]);
@@ -101,6 +101,17 @@ describe('OPFSStorageBackend V2 flat storage', () => {
         files.set(`notebooks/${TEST_NOTEBOOK_ID}/scripts/dashql-draft.sql`, 'SELECT 1');
         await expect(backend.loadScripts(TEST_NOTEBOOK_ID)).rejects.toThrow('dashql-draft.sql is not supported');
     });
+    it('preserves binary data through rename fallback and deletion', async () => {
+        const bytes = new Uint8Array([0, 255, 128, 195, 40]);
+        await backend.saveDataFile(TEST_NOTEBOOK_ID, 'payload.bin', bytes);
+        expect(await backend.listDataFiles(TEST_NOTEBOOK_ID)).toEqual([{ name: 'payload.bin', sizeBytes: 5 }]);
+        expect(await backend.loadDataFile(TEST_NOTEBOOK_ID, 'payload.bin')).toEqual(bytes);
+        await backend.renameDataFile(TEST_NOTEBOOK_ID, 'payload.bin', 'renamed.bin');
+        expect(await backend.loadDataFile(TEST_NOTEBOOK_ID, 'renamed.bin')).toEqual(bytes);
+        await backend.deleteDataFile(TEST_NOTEBOOK_ID, 'renamed.bin');
+        expect(await backend.listDataFiles(TEST_NOTEBOOK_ID)).toEqual([]);
+        await expect(backend.saveDataFile(TEST_NOTEBOOK_ID, 'bad\\name', bytes)).rejects.toThrow('basename');
+    });
 
     it('preserves app settings while refusing obsolete session registration', async () => {
         files.set(STORAGE_MANIFEST_FILE, JSON.stringify({ sessions: [{ path: 'old' }], appSettings: { theme: 'dark' } }));
@@ -112,13 +123,13 @@ describe('OPFSStorageBackend V2 flat storage', () => {
     it('round-trips the SQL keyword case preference in the app manifest', async () => {
         await backend.saveAppSettings({ keywordCase: 'upper' });
         expect(await backend.loadAppSettings()).toEqual({ keywordCase: 'upper' });
-        expect(JSON.parse(files.get(STORAGE_MANIFEST_FILE)!).appSettings.keywordCase).toBe('upper');
+        expect(JSON.parse(files.get(STORAGE_MANIFEST_FILE)! as string).appSettings.keywordCase).toBe('upper');
     });
 
     it('round-trips the narrow screen layout override in the app manifest', async () => {
         await backend.saveAppSettings({ narrowScreenLayout: true });
         expect(await backend.loadAppSettings()).toEqual({ narrowScreenLayout: true });
-        expect(JSON.parse(files.get(STORAGE_MANIFEST_FILE)!).appSettings.narrowScreenLayout).toBe(true);
+        expect(JSON.parse(files.get(STORAGE_MANIFEST_FILE)! as string).appSettings.narrowScreenLayout).toBe(true);
         await backend.saveAppSettings({ narrowScreenLayout: false });
         expect(await backend.loadAppSettings()).toEqual({ narrowScreenLayout: false });
     });
@@ -130,7 +141,7 @@ describe('OPFSStorageBackend V2 flat storage', () => {
         }));
 
         expect(await backend.loadAppSettings()).toEqual({ theme: 'dark' });
-        expect(JSON.parse(files.get(STORAGE_MANIFEST_FILE)!)).toEqual({
+        expect(JSON.parse(files.get(STORAGE_MANIFEST_FILE)! as string)).toEqual({
             notebooks: [],
             appSettings: { theme: 'dark' },
         });
