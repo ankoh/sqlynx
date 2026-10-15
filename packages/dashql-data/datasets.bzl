@@ -6,9 +6,9 @@ two places:
   * the fetch phase (`deps.bzl` module extension) turns every source into a
     hash-pinned `http_file` — `http_file` *requires* `sha256`, so the pin is
     load-bearing, exactly like `bazel/core_dependencies.bzl`;
-  * the build phase (`declare_datasets()`, called from `BUILD.bazel`) converts each
-    source to Parquet with the vendored DuckDB CLI, assembles the versioned tree,
-    and computes `index.json`.
+  * the build phase (`declare_datasets()`, called from `BUILD.bazel`) executes each
+    output with its declared engine, assembles the versioned tree, and computes
+    `index.json`.
 
 Adding a dataset = one entry here + `bazel run //packages/dashql-data:sync`. See
 `README.md`. Source hashes sit beside `# renovate:` markers so Renovate can bump a
@@ -25,6 +25,7 @@ Dataset schema:
         }],
         "outputs": [{
             "file": "cars.parquet",   # exact output file -> <name>/v<version>/cars.parquet
+            "engine": "duckdb",
             "sql":  "COPY (...) TO '{output}' (FORMAT PARQUET)",
         }],
     }
@@ -63,10 +64,31 @@ DATASETS = [
         }],
         "outputs": [{
             "file": "cars.parquet",
+            "engine": "duckdb",
             "sql": "COPY (SELECT * FROM read_json_auto('{cars}')) TO '{output}' (FORMAT PARQUET)",
         }, {
             "file": "cars.csv",
+            "engine": "duckdb",
             "sql": "COPY (SELECT * FROM read_json_auto('{cars}')) TO '{output}' (FORMAT CSV, HEADER)",
+        }],
+    },
+    {
+        "name": "vega-stocks",
+        "version": "1",
+        "sources": [{
+            "as": "stocks",
+            # renovate: datasource=npm depName=vega-datasets
+            "url": "https://cdn.jsdelivr.net/npm/vega-datasets@3.2.1/data/stocks.csv",
+            "sha256": "f9953ac6693e587476b4ebf2f0b00d9bb95371ca8c39da4cc6155077b3e417cd",
+        }],
+        "outputs": [{
+            "folder": "iceberg",
+            "engine": "hyper",
+            "sql": """COPY (
+                SELECT symbol, "date"::date AS date, price
+                FROM external('{stocks}', format => 'csv', header => true,
+                    columns => descriptor(symbol text, "date" text, price double precision))
+            ) TO '{output}' WITH (format => 'iceberg')""",
         }],
     },
     # TPC-H at several scale factors (each an independent, immutably-versioned dataset,
@@ -149,42 +171,117 @@ def _resolve_sql(dataset, output):
     `{'k': 1}` are safe. A literal `$` in SQL must be written `$$` (standard Bazel
     genrule escaping)."""
     sql = output["sql"]
-    out_path = "$(RULEDIR)/{}/v{}/{}".format(dataset["name"], dataset["version"], output["file"])
+    output_name = output.get("file", output.get("folder"))
+    out_path = "$(RULEDIR)/{}/v{}/{}".format(dataset["name"], dataset["version"], output_name)
     sql = sql.replace("{output}", out_path)
     for src in dataset["sources"]:
         placeholder = "{" + src["as"] + "}"
         sql = sql.replace(placeholder, "$(location {})".format(_source_label(dataset["name"], src["as"])))
     return sql
 
+def _hyper_folder_output_impl(ctx):
+    output = ctx.actions.declare_directory(ctx.attr.out)
+    arguments = [
+        ctx.executable._hyper_sql.path,
+        ctx.file._hyperd.path,
+        output.path,
+        ctx.attr.sql,
+        ctx.executable._folder_index.path,
+        "true",
+    ]
+    for source_name, source in zip(ctx.attr.source_names, ctx.files.srcs):
+        arguments += [source_name, source.path]
+
+    ctx.actions.run_shell(
+        inputs = ctx.files.srcs,
+        outputs = [output],
+        tools = [ctx.executable._hyper_sql, ctx.file._hyperd, ctx.executable._folder_index],
+        arguments = arguments,
+        command = "\n".join([
+            "set -euo pipefail",
+            "mkdir -p \"$3\"",
+            "hyper_sql=\"$1\"; hyperd=\"$2\"; output=\"$3\"; sql=\"$4\"; folder_index=\"$5\"; should_index=\"$6\"",
+            "shift 6",
+            "args=(\"$hyper_sql\" --hyperd \"$hyperd\" --output \"$output\" --sql \"$sql\")",
+            "while [ \"$#\" -gt 0 ]; do args+=(--source \"$1\" \"$2\"); shift 2; done",
+            "\"${args[@]}\"",
+            "if [ \"$should_index\" = true ]; then \"$folder_index\" folder-index --dir \"$output\"; fi",
+        ]),
+        mnemonic = "DashqlHyperDataset",
+        progress_message = "Generating Hyper folder dataset %{label}",
+    )
+    return [DefaultInfo(files = depset([output]))]
+
+_hyper_folder_output = rule(
+    implementation = _hyper_folder_output_impl,
+    attrs = {
+        "srcs": attr.label_list(allow_files = True),
+        "source_names": attr.string_list(),
+        "sql": attr.string(mandatory = True),
+        "out": attr.string(mandatory = True),
+        "_hyper_sql": attr.label(default = "//packages/hyper-api:hyper_sql", executable = True, cfg = "exec"),
+        "_hyperd": attr.label(default = "//packages/hyper-api:hyperd", allow_single_file = True, cfg = "exec"),
+        "_folder_index": attr.label(default = "//packages/dashql-data:dashql-data", executable = True, cfg = "exec"),
+    },
+)
+
 def _declare_sql_dataset(dataset):
     """Convert genrule for a "sql" dataset: fetched sources -> DuckDB CLI runs each
     output's verbatim SQL. Returns the genrule label."""
     convert_name = "convert_{}".format(_sanitize(dataset["name"]))
     srcs = [_source_label(dataset["name"], src["as"]) for src in dataset["sources"]]
+    duckdb_outputs = [output for output in dataset["outputs"] if output["engine"] == "duckdb"]
+    unsupported = []
+    for output in dataset["outputs"]:
+        if output["engine"] not in ["duckdb", "hyper"]:
+            unsupported.append(output["engine"])
+    if unsupported:
+        fail("unsupported dataset output engine(s): {}".format(", ".join(unsupported)))
+    for output in duckdb_outputs:
+        if "folder" in output:
+            fail("duckdb outputs must declare file, not folder")
     outs = [
         "{}/v{}/{}".format(dataset["name"], dataset["version"], output["file"])
-        for output in dataset["outputs"]
+        for output in duckdb_outputs
     ]
     version_dir = "$(RULEDIR)/{}/v{}".format(dataset["name"], dataset["version"])
 
     # One combined SQL script per dataset, fed to the CLI via a quoted heredoc so
     # arbitrary author SQL (single AND double quotes) passes through verbatim.
     # Bazel expands the $(RULEDIR)/$(location) make-vars before the shell runs.
-    sql_lines = [_resolve_sql(dataset, output) + ";" for output in dataset["outputs"]]
-    cmd = "\n".join([
-        "mkdir -p {}".format(version_dir),
-        "$(execpath //bazel:duckdb_cli) <<'__DASHQL_SQL__'",
-    ] + sql_lines + [
-        "__DASHQL_SQL__",
-    ])
-    native.genrule(
-        name = convert_name,
-        srcs = srcs,
-        outs = outs,
-        tools = ["//bazel:duckdb_cli"],
-        cmd = cmd,
-    )
-    return ":" + convert_name
+    targets = []
+    if duckdb_outputs:
+        sql_lines = [_resolve_sql(dataset, output) + ";" for output in duckdb_outputs]
+        cmd = "\n".join([
+            "mkdir -p {}".format(version_dir),
+            "$(execpath //bazel:duckdb_cli) <<'__DASHQL_SQL__'",
+        ] + sql_lines + [
+            "__DASHQL_SQL__",
+        ])
+        native.genrule(
+            name = convert_name,
+            srcs = srcs,
+            outs = outs,
+            tools = ["//bazel:duckdb_cli"],
+            cmd = cmd,
+        )
+        targets.append(":" + convert_name)
+
+    for output in dataset["outputs"]:
+        if output["engine"] != "hyper":
+            continue
+        if "folder" not in output or "file" in output:
+            fail("hyper outputs must declare folder and not file")
+        folder_target = "convert_{}_{}".format(_sanitize(dataset["name"]), _sanitize(output["folder"]))
+        _hyper_folder_output(
+            name = folder_target,
+            srcs = srcs,
+            source_names = [source["as"] for source in dataset["sources"]],
+            sql = output["sql"],
+            out = "{}/v{}/{}".format(dataset["name"], dataset["version"], output["folder"]),
+        )
+        targets.append(":" + folder_target)
+    return targets
 
 def _declare_tpch_dataset(dataset):
     """Convert genrule for a "tpch" dataset: LOAD the vendored tpch extension offline,
@@ -243,7 +340,7 @@ def declare_datasets(name = "datasets", index_tool = "//packages/dashql-data:das
         if dataset.get("kind", "sql") == "tpch":
             output_targets.append(_declare_tpch_dataset(dataset))
         else:
-            output_targets.append(_declare_sql_dataset(dataset))
+            output_targets += _declare_sql_dataset(dataset)
 
     # Output tree (<dataset>/v<version>/<file> at the root) — a single directory the
     # index tool can walk. The package prefix is stripped by default.

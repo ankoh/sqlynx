@@ -1,4 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_test")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -60,6 +60,15 @@ alias(
         ":macos_arm64": "@tableauhyperapi_cxx_macos_arm64//:licenses",
         ":macos_x86_64": "@tableauhyperapi_cxx_macos_x86_64//:licenses",
     }),
+)
+
+# Executes one SQL statement through the bundled Hyper runtime. Build actions use this
+# instead of relying on a separately installed Hyper command-line client.
+cc_binary(
+    name = "hyper_sql",
+    srcs = ["hyper_sql.cc"],
+    data = [":hyperd"],
+    deps = [":hyperapi"],
 )
 
 cc_test(
