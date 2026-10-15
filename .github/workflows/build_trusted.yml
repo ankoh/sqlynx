@@ -189,8 +189,9 @@ jobs:
                 retention-days: 1
 
     core_npm_release:
-        name: Core npm Release
+        name: Core NPM Bundle
         runs-on: ubuntu-24.04
+        needs: [core_wasm_release]
         steps:
             - uses: actions/checkout@v6
               with:
@@ -205,13 +206,19 @@ jobs:
               run: |
                   sudo apt-get install -y clang lld
 
-            # Build independently without remote-cache credentials or app artifacts.
             - name: Setup Bazel
-              uses: bazel-contrib/setup-bazel@0.19.0
+              uses: ./.github/actions/setup-bazel
               with:
-                  bazelisk-cache: true
-                  repository-cache: true
-                  disk-cache: false
+                  bazel-mtls-ca: ${{ secrets.BAZEL_CACHE_MTLS_CA }}
+                  bazel-mtls-client-cert: ${{ secrets.BAZEL_CACHE_MTLS_CLIENT_CERT }}
+                  bazel-mtls-client-key: ${{ secrets.BAZEL_CACHE_MTLS_CLIENT_KEY }}
+
+            - name: Assert WASM is in remote cache
+              shell: bash
+              run: |
+                bazel build --config=release \
+                    --experimental_remote_require_cached \
+                    //packages/dashql-core:core_wasm
 
             - name: Build and validate core npm tarball
               shell: bash

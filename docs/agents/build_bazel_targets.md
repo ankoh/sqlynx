@@ -290,12 +290,13 @@ bazel test //packages/dashql-core-js:all //packages/dashql-core-js/test:all
 bazel build --config=release //packages/dashql-core-js:npm_tarball
 ```
 
-The package targets build their own Wasm and generated bindings. They require no
-secrets, npm authentication, or prebuilt app artifacts; the remote cache is optional.
-The release archive is `bazel-bin/packages/dashql-core-js/dashql-core.tgz`.
-Trusted CI uploads it as `dashql_core_npm` from an independent, secret-free job;
-it does not publish to npm. Trusted fastbuild/release and untrusted fastbuild CI
-run both core JS test target sets.
+The package targets depend directly on `//packages/dashql-core:core_wasm` and build
+the generated bindings around that artifact. The release archive is
+`bazel-bin/packages/dashql-core-js/dashql-core.tgz`. Trusted CI waits for the release
+Wasm build and requires that artifact to be available in the remote cache before
+packaging, so it does not rebuild the same Wasm action. It uploads the archive as
+`dashql_core_npm`; it does not publish to npm. Trusted fastbuild/release and
+untrusted fastbuild CI run both core JS test target sets.
 
 ### After Changing Parser Grammar
 
