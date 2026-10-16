@@ -69,7 +69,10 @@ export interface HyperDBEngineClient {
 
 function readError(result: HyperDBResult, operation: string): Error {
     if (result.state === 'error' || result.state === 'busy') {
-        return new Error(typeof result.error === 'string' ? result.error : result.error.message);
+        const error = new Error(typeof result.error === 'string' ? result.error : result.error.message);
+        // Firefox stacks omit the message, so test reporters that print only the stack would lose it.
+        error.stack = `Error: ${operation} ${result.state}: ${error.message}\n${error.stack}`;
+        return error;
     }
     return new Error(`${operation} returned unexpected state ${result.state}`);
 }

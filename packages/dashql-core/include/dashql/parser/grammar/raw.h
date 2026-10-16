@@ -15,7 +15,7 @@ inline Parser::symbol_type matchSpecialCharacter(char c, Parser::location_type l
     switch (c) {
 #define X(CHAR, SYMBOL) \
     case CHAR:          \
-        Parser::make_##SYMBOL(loc)
+        return Parser::make_##SYMBOL(loc)
         X(',', COMMA);
         X('(', LRB);
         X(')', RRB);

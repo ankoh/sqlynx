@@ -314,3 +314,88 @@ formatter-snapshots:
             create table region (region_id integer, name text);
             create table nation (nation_id integer, region_id integer, name text);
             create table customer (customer_id integer, nation_id integer, name text);
+
+  - name: coverage_pgq_left_edge
+    input: |-
+      SELECT * FROM GRAPH_TABLE(g MATCH (a:A)<-[:E]-(b:A) COLUMNS (a.x AS y)) AS gt
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from graph_table(g match (a :A)<-[:E]-(b :A) columns (a.x as y)) gt;
+          - mode: compact
+            expected: |-
+              select * from graph_table(g match (a :A)<-[:E]-(b :A) columns (a.x as y)) gt;
+          - mode: pretty
+            expected: |-
+              select *
+              from graph_table(
+                g
+                  match (a :A)<-[:E]-(b :A)
+                  columns (a.x as y)
+              ) gt;
+
+  - name: coverage_pgq_long_chain_pattern
+    input: |-
+      SELECT gt.*
+      FROM
+      GRAPH_TABLE(kg_custzero_ki_65k
+      MATCH (a:Kg_KnownIssue_2238c)-[:Kg_AFFECTS_2238c]-> (f:Kg_Feature_2238c) <-[:Kg_AFFECTS_2238c]-(b:Kg_KnownIssue_2238c)
+      -[:Kg_RESOLVED_BY_2238c]->(act:Kg_Action_2238c)<-[:Kg_RESOLVED_BY_2238c]-(c:Kg_KnownIssue_2238c) -[:Kg_HAS_SYMPTOM_2238c]->(sy:Kg_Symptom_2238c)<-[:Kg_HAS_SYMPTOM_2238c]-(d:Kg_KnownIssue_2238c)
+      -[:Kg_CONFIGURED_VIA_2238c]->(s:Kg_Setting_2238c)<-[:Kg_CONFIGURED_VIA_2238c]-(e:Kg_KnownIssue_2238c)
+      -[:Kg_AFFECTS_PRODUCT_2238c]->(p:Kg_Product_2238c)-[:Kg_BELONGS_TO_CLOUD_2238c]->(cl:Kg_Cloud_2238c)
+      WHERE a.Kg_Subject_2238c = 'x'
+      COLUMNS (a.Kg_Subject_2238c AS start_issue, f.Kg_FeatureName_2238c AS h1_f, b.Kg_Subject_2238c AS h2_b, act.Kg_ActionName_2238c AS h3_act, c.Kg_Subject_2238c AS h4_c, sy.Kg_SymptomText_2238c AS h5_sy, d.Kg_Subject_2238c AS h6_d, s.Kg_SettingName_2238c AS h7_s, e.Kg_Subject_2238c AS h8_e, p.Kg_ProductName_2238c AS h9_p, cl.Kg_CloudName_2238c AS h10_cl))
+      AS gt LIMIT 10
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select gt.* from graph_table(kg_custzero_ki_65k match (a :Kg_KnownIssue_2238c)-[:Kg_AFFECTS_2238c]->(f :Kg_Feature_2238c)<-[:Kg_AFFECTS_2238c]-(b :Kg_KnownIssue_2238c)-[:Kg_RESOLVED_BY_2238c]->(act :Kg_Action_2238c)<-[:Kg_RESOLVED_BY_2238c]-(c :Kg_KnownIssue_2238c)-[:Kg_HAS_SYMPTOM_2238c]->(sy :Kg_Symptom_2238c)<-[:Kg_HAS_SYMPTOM_2238c]-(d :Kg_KnownIssue_2238c)-[:Kg_CONFIGURED_VIA_2238c]->(s :Kg_Setting_2238c)<-[:Kg_CONFIGURED_VIA_2238c]-(e :Kg_KnownIssue_2238c)-[:Kg_AFFECTS_PRODUCT_2238c]->(p :Kg_Product_2238c)-[:Kg_BELONGS_TO_CLOUD_2238c]->(cl :Kg_Cloud_2238c) where a.Kg_Subject_2238c = 'x' columns (a.Kg_Subject_2238c as start_issue, f.Kg_FeatureName_2238c as h1_f, b.Kg_Subject_2238c as h2_b, act.Kg_ActionName_2238c as h3_act, c.Kg_Subject_2238c as h4_c, sy.Kg_SymptomText_2238c as h5_sy, d.Kg_Subject_2238c as h6_d, s.Kg_SettingName_2238c as h7_s, e.Kg_Subject_2238c as h8_e, p.Kg_ProductName_2238c as h9_p, cl.Kg_CloudName_2238c as h10_cl)) gt limit 10;
+          - mode: compact
+            expected: |-
+              select gt.*
+              from graph_table(
+                kg_custzero_ki_65k
+                  match (a :Kg_KnownIssue_2238c)-[:Kg_AFFECTS_2238c]->(f :Kg_Feature_2238c)<-[:Kg_AFFECTS_2238c]-
+                    (b :Kg_KnownIssue_2238c)-[:Kg_RESOLVED_BY_2238c]->(act :Kg_Action_2238c)<-[:Kg_RESOLVED_BY_2238c]-
+                    (c :Kg_KnownIssue_2238c)-[:Kg_HAS_SYMPTOM_2238c]->(sy :Kg_Symptom_2238c)<-[:Kg_HAS_SYMPTOM_2238c]-
+                    (d :Kg_KnownIssue_2238c)-[:Kg_CONFIGURED_VIA_2238c]->(s :Kg_Setting_2238c)<-[:Kg_CONFIGURED_VIA_2238c]-
+                    (e :Kg_KnownIssue_2238c)-[:Kg_AFFECTS_PRODUCT_2238c]->(p :Kg_Product_2238c)-[:Kg_BELONGS_TO_CLOUD_2238c]->
+                    (cl :Kg_Cloud_2238c) where a.Kg_Subject_2238c = 'x'
+                  columns (
+                    a.Kg_Subject_2238c as start_issue, f.Kg_FeatureName_2238c as h1_f, b.Kg_Subject_2238c as h2_b,
+                    act.Kg_ActionName_2238c as h3_act, c.Kg_Subject_2238c as h4_c, sy.Kg_SymptomText_2238c as h5_sy,
+                    d.Kg_Subject_2238c as h6_d, s.Kg_SettingName_2238c as h7_s, e.Kg_Subject_2238c as h8_e,
+                    p.Kg_ProductName_2238c as h9_p, cl.Kg_CloudName_2238c as h10_cl
+                  )
+              ) gt
+              limit 10;
+          - mode: pretty
+            expected: |-
+              select gt.*
+              from graph_table(
+                kg_custzero_ki_65k
+                  match (a :Kg_KnownIssue_2238c)-[:Kg_AFFECTS_2238c]->(f :Kg_Feature_2238c)<-[:Kg_AFFECTS_2238c]-
+                    (b :Kg_KnownIssue_2238c)-[:Kg_RESOLVED_BY_2238c]->(act :Kg_Action_2238c)<-[:Kg_RESOLVED_BY_2238c]-
+                    (c :Kg_KnownIssue_2238c)-[:Kg_HAS_SYMPTOM_2238c]->(sy :Kg_Symptom_2238c)<-[:Kg_HAS_SYMPTOM_2238c]-
+                    (d :Kg_KnownIssue_2238c)-[:Kg_CONFIGURED_VIA_2238c]->(s :Kg_Setting_2238c)<-[:Kg_CONFIGURED_VIA_2238c]-
+                    (e :Kg_KnownIssue_2238c)-[:Kg_AFFECTS_PRODUCT_2238c]->(p :Kg_Product_2238c)-[:Kg_BELONGS_TO_CLOUD_2238c]->
+                    (cl :Kg_Cloud_2238c) where a.Kg_Subject_2238c = 'x'
+                  columns (
+                    a.Kg_Subject_2238c as start_issue,
+                    f.Kg_FeatureName_2238c as h1_f,
+                    b.Kg_Subject_2238c as h2_b,
+                    act.Kg_ActionName_2238c as h3_act,
+                    c.Kg_Subject_2238c as h4_c,
+                    sy.Kg_SymptomText_2238c as h5_sy,
+                    d.Kg_Subject_2238c as h6_d,
+                    s.Kg_SettingName_2238c as h7_s,
+                    e.Kg_Subject_2238c as h8_e,
+                    p.Kg_ProductName_2238c as h9_p,
+                    cl.Kg_CloudName_2238c as h10_cl
+                  )
+              ) gt
+              limit 10;

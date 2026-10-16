@@ -563,7 +563,7 @@ FmtReg Formatter::FormatArray(const buffers::parser::Node& node) {
             std::vector<FmtReg> parts;
             parts.reserve(children.size());
             for (auto& child : children) parts.push_back(child.reg);
-            return fmt.Concat(std::move(parts));
+            return fmt.Join(parts, fmt.Empty(), fmt.Break(), FormattingJoinPolicy::BreakOnOverflow, true);
         }
         if (parent_id < ast.size() && ast[parent_id].node_type() == NodeType::OBJECT_SQL_NARY_EXPRESSION) {
             return FormatCommaList(node);

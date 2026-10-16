@@ -148,7 +148,13 @@ FmtReg Formatter::FormatGraphPathElement(const buffers::parser::Node& node) {
     if (variable) body_parts.push_back(Reg(*variable));
     if (label) body_parts.push_back(fmt.Concat({fmt.Text(":"), Reg(*label)}));
     if (where) body_parts.push_back(fmt.Concat({fmt.Text("where "), Reg(*where)}));
-    auto body = fmt.Join(body_parts, fmt.Text(" "), fmt.Break(), FormattingJoinPolicy::BreakOnOverflow);
+    // Path element bodies are short and must not wrap, breaks happen between path elements instead.
+    std::vector<FmtReg> spaced_parts;
+    for (size_t i = 0; i < body_parts.size(); ++i) {
+        if (i > 0) spaced_parts.push_back(fmt.Text(" "));
+        spaced_parts.push_back(body_parts[i]);
+    }
+    auto body = fmt.Concat(std::move(spaced_parts));
     FmtReg result;
     if (IsTrue(vertex)) {
         result = body == 0 ? fmt.Text("()") : fmt.Concat({fmt.Text("("), body, fmt.Text(")")});
