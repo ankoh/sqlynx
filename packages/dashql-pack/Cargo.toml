@@ -16,7 +16,7 @@ log = "0.4.34"
 env_logger = "0.11.11"
 git2 = "0.21.0"
 regex = "1.12.3"
-lazy_static = "1.5.0"
+lazy_static = "1.5.1"
 minisign = "0.9.1"
 
 [dependencies.serde]
