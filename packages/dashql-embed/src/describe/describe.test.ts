@@ -1,9 +1,15 @@
-import { mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import type Anthropic from '@anthropic-ai/sdk';
-import { afterAll, describe, expect, it } from 'vitest';
-import { CachedDescriber, ClaudeDescriber, DescribeSkipError, buildUserPrompt, parseDescription } from './describe.js';
+import { describe, expect, it } from 'vitest';
+import {
+    ClaudeCodeDescriber,
+    ClaudeDescriber,
+    DESCRIPTION_SCHEMA,
+    DescribeSkipError,
+    SYSTEM_PROMPT,
+    buildUserPrompt,
+    parseDescription,
+    type CommandRunner,
+} from './describe.js';
 
 const input = { scriptName: 'a.sql', sql: 'select 1;' };
 
@@ -26,11 +32,6 @@ function fakeClient(response: Record<string, unknown>) {
 const ok = (payload: unknown) => ({
     stop_reason: 'end_turn',
     content: [{ type: 'text', text: JSON.stringify(payload) }],
-});
-
-const dirs: string[] = [];
-afterAll(async () => {
-    await Promise.all(dirs.map(d => rm(d, { recursive: true, force: true })));
 });
 
 describe('prompt and response parsing', () => {
@@ -78,19 +79,42 @@ describe('ClaudeDescriber', () => {
     });
 });
 
-describe('CachedDescriber', () => {
-    it('calls the model once per script content and model', async () => {
-        const dir = await mkdtemp(join(tmpdir(), 'dashql-embed-cache-'));
-        dirs.push(dir);
-        let calls = 0;
-        const inner = { describe: async () => (++calls, { summary: 'S', questions: ['a', 'b'] }) };
-        const cached = new CachedDescriber(inner, dir, 'm1');
-        await cached.describe(input);
-        await cached.describe(input);
-        expect(calls).toBe(1);
-        await cached.describe({ ...input, sql: 'select 2' });
-        expect(calls).toBe(2);
-        await new CachedDescriber(inner, dir, 'm2').describe(input);
-        expect(calls).toBe(3);
+/// A runner that records invocations and prints a canned Claude Code result
+function fakeRunner(result: Record<string, unknown>) {
+    const calls: { command: string; args: string[]; input: string }[] = [];
+    const run: CommandRunner = async (command, args, input) => {
+        calls.push({ command, args, input });
+        return JSON.stringify(result);
+    };
+    return { run, calls };
+}
+
+describe('ClaudeCodeDescriber', () => {
+    const description = { summary: 'Counts nations.', questions: ['How many nations?', 'Count the nations'] };
+
+    it('runs claude -p with the prompt, the schema and the SQL on stdin', async () => {
+        const fake = fakeRunner({ type: 'result', subtype: 'success', is_error: false, structured_output: description });
+        const result = await new ClaudeCodeDescriber('claude-sonnet-5-5', 'claude', fake.run).describe(input);
+        expect(result).toEqual(description);
+        expect(fake.calls).toHaveLength(1);
+        const { command, args, input: stdin } = fake.calls[0];
+        expect(command).toBe('claude');
+        expect(stdin).toBe('select 1;');
+        const option = (name: string) => args[args.indexOf(name) + 1];
+        expect(args).toContain('--print');
+        expect(option('--model')).toBe('claude-sonnet-5-5');
+        expect(option('--tools')).toBe('');
+        expect(option('--system-prompt')).toBe(SYSTEM_PROMPT);
+        expect(JSON.parse(option('--json-schema'))).toEqual(DESCRIPTION_SCHEMA);
+    });
+
+    it('fails on errors reported by Claude Code', async () => {
+        const fake = fakeRunner({ type: 'result', subtype: 'success', is_error: true, result: 'Not logged in' });
+        await expect(new ClaudeCodeDescriber('m', 'claude', fake.run).describe(input)).rejects.toThrow('Not logged in');
+    });
+
+    it('skips scripts without structured output', async () => {
+        const fake = fakeRunner({ type: 'result', subtype: 'success', is_error: false, result: 'no' });
+        await expect(new ClaudeCodeDescriber('m', 'claude', fake.run).describe(input)).rejects.toThrow(DescribeSkipError);
     });
 });

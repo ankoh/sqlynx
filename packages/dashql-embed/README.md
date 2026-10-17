@@ -31,8 +31,12 @@ select ...
 ```
 
 The result is plain SQL that can be reviewed, edited and committed. `index` never calls an LLM, so you can
-regenerate embeddings without paying for descriptions again. Credentials come from `ANTHROPIC_API_KEY` or an
-`ant auth login` profile. Responses are cached in `~/.cache/dashql-embed/descriptions`.
+regenerate embeddings without paying for descriptions again. Run it again and only scripts without a description
+block are sent to the model.
+
+By default `describe` runs the Claude Code CLI (`claude -p`) and uses its login, so `claude` has to be on the `PATH`.
+`--describer api` calls the Anthropic API instead, with credentials from `ANTHROPIC_API_KEY` or an `ant auth login`
+profile.
 
 **`index`** analyzes every script with DashQL and embeds two separate things, one Parquet file each.
 Both files identify the script by `script_name` (its path relative to the input directory) and `script_hash`

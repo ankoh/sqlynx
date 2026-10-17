@@ -29,7 +29,7 @@ describe('description header', () => {
     it('inserts above existing comments and keeps the script', async () => {
         const result = await apply('-- TPC-H query 3\nselect 1;\n');
         expect(result.action).toBe('inserted');
-        expect(result.text.endsWith('-- @dashql:end\n-- TPC-H query 3\nselect 1;\n')).toBe(true);
+        expect(result.text.endsWith('-- @dashql:end\n\n-- TPC-H query 3\nselect 1;\n')).toBe(true);
     });
 
     it('keeps an existing description unless forced', async () => {
@@ -42,7 +42,9 @@ describe('description header', () => {
         const original = '-- @dashql:description\n-- old text\n-- @dashql:end\n-- my own note\nselect 1;\n';
         const result = await apply(original, true);
         expect(result.action).toBe('replaced');
-        expect(result.text).toBe(renderHeader(description, '\n') + '-- my own note\nselect 1;\n');
+        expect(result.text).toBe(renderHeader(description, '\n') + '\n-- my own note\nselect 1;\n');
+        // The blank line after the block is replaced too, replacing again changes nothing
+        expect((await apply(result.text, true)).text).toBe(result.text);
     });
 
     it('keeps CRLF line endings and multi-byte text', async () => {

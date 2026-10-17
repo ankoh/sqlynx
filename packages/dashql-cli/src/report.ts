@@ -1,4 +1,4 @@
-import type { Execution } from './execute.js';
+import type { Execution, ExecutionTimings } from './execute.js';
 import { lineColumn, type Diagnostic } from './lint.js';
 
 /// Applies a text style, e.g. `styleText` of node:util. Must not change the visible width.
@@ -21,6 +21,25 @@ function plural(n: number, word: string): string {
     return `${n} ${word}${n === 1 ? '' : 's'}`;
 }
 
+/// A duration in milliseconds, in seconds from one second on
+export function duration(ms: number | null): string {
+    if (ms === null) return '-';
+    return ms < 1000 ? `${Math.round(ms)} ms` : `${(ms / 1000).toFixed(1)} s`;
+}
+
+/// Where the time of one script went
+function timingRows(timings: ExecutionTimings): [string, string][] {
+    const rows: [string, string][] = [['core', `analyze and compile ${duration(timings.core)}`]];
+    timings.statements.forEach((statement, i) => {
+        const hyper = statement.hyper;
+        const parts = hyper
+            ? ` (parse ${duration(hyper.parsing)}, compile ${duration(hyper.compilation)}, execute ${duration(hyper.execution)})`
+            : '';
+        rows.push(['hyper', `statement ${i + 1}: ${duration(statement.wall)}${parts}`]);
+    });
+    return rows;
+}
+
 /// The source line of a diagnostic with its span underlined
 function codeFrame(lines: string[], bytes: Uint8Array, d: Diagnostic): [string, string] | null {
     if (d.line === undefined || d.column === undefined || d.offset === undefined) return null;
@@ -32,8 +51,9 @@ function codeFrame(lines: string[], bytes: Uint8Array, d: Diagnostic): [string, 
     return [line.join(''), ' '.repeat(d.column - 1) + '^'.repeat(width)];
 }
 
-/// Format the report of one script, the file name followed by one indented line per finding
-export function formatFile(report: FileReport, style: Style = plain): string {
+/// Format the report of one script, the file name followed by one indented line per finding.
+/// `debug` adds where the time of the execution went.
+export function formatFile(report: FileReport, style: Style = plain, debug = false): string {
     const lines = report.text.split('\n');
     const bytes = new TextEncoder().encode(report.text);
     const locations = report.diagnostics.map(d => (d.line === undefined ? '' : `${d.line}:${d.column}`));
@@ -75,6 +95,9 @@ export function formatFile(report: FileReport, style: Style = plain): string {
             for (const line of extra?.replace(/^\n+/, '').split('\n') ?? []) out.push(continuation + style('dim', line));
         }
     }
+    if (debug && execution && execution !== 'skipped') {
+        for (const [stage, message] of timingRows(execution.timings)) row('', 'dim', 'debug', stage, message);
+    }
     return out.join('\n');
 }
 
@@ -94,4 +117,36 @@ export function formatSummary(summary: Summary, style: Style = plain): string {
     ];
     if (summary.executed !== undefined) parts.push(`${summary.executed} executed`);
     return parts.join(', ');
+}
+
+/// Where the time of a whole run went, in milliseconds
+export interface RunTimings {
+    coreStartup: number;
+    /// Absent if the scripts were only linted
+    hyperStartup?: number;
+    /// Scanning, parsing and analyzing all scripts, dashql-core does that in batches
+    lint: number;
+    /// Analysis and compilation before execution in dashql-core
+    compile: number;
+    /// Statements in Hyper, from the client and as reported by Hyper
+    hyperWall: number;
+    hyperParsing: number;
+    hyperCompilation: number;
+    hyperExecution: number;
+    statements: number;
+}
+
+export function formatTimings(t: RunTimings, style: Style = plain): string {
+    const lines = [
+        ['startup', `dashql-core ${duration(t.coreStartup)}` + (t.hyperStartup === undefined ? '' : `, hyper ${duration(t.hyperStartup)}`)],
+        ['dashql-core', `scan, parse and analyze ${duration(t.lint)}` + (t.hyperStartup === undefined ? '' : `, compile ${duration(t.compile)}`)],
+    ];
+    if (t.hyperStartup !== undefined) {
+        lines.push([
+            'hyper',
+            `${plural(t.statements, 'statement')} ${duration(t.hyperWall)}: parse ${duration(t.hyperParsing)}, ` +
+                `compile ${duration(t.hyperCompilation)}, execute ${duration(t.hyperExecution)}`,
+        ]);
+    }
+    return lines.map(([label, text]) => `${style('dim', label.padEnd(11))}  ${text}`).join('\n');
 }

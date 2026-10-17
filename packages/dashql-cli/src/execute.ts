@@ -12,6 +12,7 @@ export interface ExecutionSuccess {
     ok: true;
     statements: number;
     rows?: number;
+    timings: ExecutionTimings;
 }
 
 /// Statement `statement` (1-based) or, without it, the compilation of the script failed
@@ -22,7 +23,25 @@ export interface ExecutionFailure {
     sqlState?: string;
     detail?: string;
     hint?: string;
+    timings: ExecutionTimings;
 }
+
+/// Where the time of a script went, in milliseconds
+export interface ExecutionTimings {
+    /// Analysis and compilation of the script in dashql-core
+    core: number;
+    /// The statements that were sent to Hyper, up to the failing one
+    statements: StatementTiming[];
+}
+
+export interface StatementTiming {
+    /// From sending the statement until its result and query info arrived
+    wall: number;
+    /// What Hyper reports for the statement, absent if it failed
+    hyper?: { elapsed: number | null; parsing: number | null; compilation: number | null; execution: number | null };
+}
+
+const millis = (seconds: number | null) => (seconds === null ? null : seconds * 1000);
 
 /// The engine settings of the app, see packages/dashql-app/src/platform/hyperdb/hyperdb_settings.ts.
 /// Scripts may load data over HTTP like they do in the app.
@@ -56,8 +75,8 @@ const FORMATTING = new buffers.formatting.FormattingConfigT(
     false,
 );
 
-function failure(error: unknown, statement?: number): ExecutionFailure {
-    const out: ExecutionFailure = { ok: false, message: error instanceof Error ? error.message : String(error) };
+function failure(timings: ExecutionTimings, error: unknown, statement?: number): ExecutionFailure {
+    const out: ExecutionFailure = { ok: false, message: error instanceof Error ? error.message : String(error), timings };
     if (statement !== undefined) out.statement = statement;
     if (error instanceof HyperDBError) {
         out.sqlState = error.sqlState || undefined;
@@ -97,7 +116,9 @@ export class Executor {
     /// Compile the script into its statements like the app does and run them one after the other.
     /// Results are not materialized, only the rows of the final statement are counted.
     async execute(text: string): Promise<Execution> {
+        const timings: ExecutionTimings = { core: 0, statements: [] };
         let statements: { sql: string; output: boolean }[];
+        const coreStart = performance.now();
         const catalog = this.core.createCatalog();
         const script = this.core.createScript(catalog);
         try {
@@ -110,9 +131,9 @@ export class Executor {
                     const error = reader.errors(0)!;
                     // Scripts with comments only are fine, there is just nothing to run
                     if (error.code() === buffers.execution.ScriptCompilationErrorCode.EMPTY_SCRIPT) {
-                        return { ok: true, statements: 0 };
+                        return { ok: true, statements: 0, timings };
                     }
-                    return failure(error.message() ?? 'could not compile the script');
+                    return failure(timings, error.message() ?? 'could not compile the script');
                 }
                 statements = Array.from({ length: reader.statementsLength() }, (_, i) => {
                     const statement = reader.statements(i)!;
@@ -125,24 +146,37 @@ export class Executor {
                 compiled.destroy();
             }
         } catch (error) {
-            return failure(error);
+            return failure(timings, error);
         } finally {
             script.destroy();
             catalog.destroy();
+            timings.core = performance.now() - coreStart;
         }
 
         let rows: number | undefined;
         for (let i = 0; i < statements.length; ++i) {
+            const start = performance.now();
             try {
                 const query = this.connection.queryIPC(statements[i].sql);
                 await query.result;
                 const info = await query.info;
                 if (statements[i].output && info.rowCount !== null) rows = Number(info.rowCount);
+                const t = info.timings;
+                timings.statements.push({
+                    wall: performance.now() - start,
+                    hyper: {
+                        elapsed: millis(t.elapsedSeconds),
+                        parsing: millis(t.parsingSeconds),
+                        compilation: millis(t.compilationSeconds),
+                        execution: millis(t.executionSeconds),
+                    },
+                });
             } catch (error) {
-                return failure(error, i + 1);
+                timings.statements.push({ wall: performance.now() - start });
+                return failure(timings, error, i + 1);
             }
         }
-        return { ok: true, statements: statements.length, rows };
+        return { ok: true, statements: statements.length, rows, timings };
     }
 
     async close(): Promise<void> {

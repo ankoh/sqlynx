@@ -2,7 +2,7 @@ import { parseArgs } from 'node:util';
 import { describeFiles } from './commands/describe.js';
 import { SqlAnalyzer } from './analysis/core.js';
 import { runIndex } from './commands/index.js';
-import { CachedDescriber, ClaudeDescriber, DEFAULT_DESCRIBE_MODEL } from './describe/describe.js';
+import { ClaudeCodeDescriber, ClaudeDescriber, DEFAULT_DESCRIBE_MODEL, type Describer } from './describe/describe.js';
 import { DEFAULT_MODEL, HashEmbedder, TransformersEmbedder, defaultCacheDir, type Embedder } from './embedding/embedder.js';
 import { collectSqlFiles, resolveUserPath } from './inputs.js';
 import { DEFAULT_SEARCH_OPTIONS, embedderForIndex, loadIndex, searchIndex, type Fusion } from './query.js';
@@ -14,11 +14,12 @@ Usage:
       Ask Claude for a description of each script and write it as a header comment into scripts that have none.
       The model gets the statements of the script, without comments.
       --model <id>             Claude model (default ${DEFAULT_DESCRIBE_MODEL})
+      --describer <kind>       claude-code (default, runs \`claude -p\` with the login of Claude Code) or
+                               api (needs ANTHROPIC_API_KEY or an \`ant auth login\` profile)
       --force                  Replace existing generated descriptions
       --skip-commented         Skip scripts that already have comments
       --dry-run                Print the descriptions without touching the scripts
       --concurrency <n>        Parallel requests (default 4)
-      --cache-dir <dir>        Cache for descriptions and models (default ${defaultCacheDir()})
 
   dashql-embed index <dir|file.sql>... --out-dir <dir> [options]
       Write comments.parquet and features.parquet with embeddings.
@@ -28,7 +29,7 @@ Usage:
       --batch-size <n>         Embedding batch size (default 32)
       --embedder <kind>        transformers (default) or hash (offline, deterministic, for tests)
       --no-layout              Skip the 2D layout (layout_x/y) of the scripts
-      --cache-dir <dir>        Model cache
+      --cache-dir <dir>        Model cache (default ${defaultCacheDir()})
 
   dashql-embed query <dir|file.sql>... --index-dir <dir> --prompt <text> [options]
       Search a set of scripts with the Parquet files that "index" wrote for it and print the best matches.
@@ -72,6 +73,7 @@ async function main(argv: string[]): Promise<number> {
             'max-tokens': { type: 'string' },
             'batch-size': { type: 'string' },
             embedder: { type: 'string' },
+            describer: { type: 'string' },
             'no-layout': { type: 'boolean' },
             prompt: { type: 'string' },
             top: { type: 'string' },
@@ -93,7 +95,7 @@ async function main(argv: string[]): Promise<number> {
             const model = values.model ?? DEFAULT_DESCRIBE_MODEL;
             const files = await collectSqlFiles(positionals);
             const analyzer = await SqlAnalyzer.create();
-            const describer = new CachedDescriber(new ClaudeDescriber(model), cacheDir, model);
+            const describer = createDescriber(values.describer, model);
             const dryRun = values['dry-run'] ?? false;
             const outcomes = await describeFiles(files, analyzer, describer, {
                 force: values.force ?? false,
@@ -173,6 +175,12 @@ async function main(argv: string[]): Promise<number> {
             console.error(USAGE);
             return 1;
     }
+}
+
+function createDescriber(kind: string | undefined, model: string): Describer {
+    if (kind === undefined || kind === 'claude-code') return new ClaudeCodeDescriber(model);
+    if (kind === 'api') return new ClaudeDescriber(model);
+    throw new Error('--describer must be claude-code or api');
 }
 
 async function createEmbedder(values: Record<string, any>, cacheDir: string): Promise<Embedder> {

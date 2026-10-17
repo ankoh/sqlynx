@@ -1,11 +1,8 @@
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { spawn } from 'node:child_process';
+import { tmpdir } from 'node:os';
 import Anthropic from '@anthropic-ai/sdk';
-import { sha256 } from '../inputs.js';
 import type { Description } from './header.js';
 
-/// Bump when the prompt changes to invalidate cached descriptions
-export const PROMPT_VERSION = 'v2';
 export const DEFAULT_DESCRIBE_MODEL = 'claude-opus-5-5';
 
 const MAX_SQL_CHARS = 60_000;
@@ -101,31 +98,62 @@ export class ClaudeDescriber implements Describer {
     }
 }
 
-/// Caches descriptions on disk, keyed by model, prompt version and script content
-export class CachedDescriber implements Describer {
+/// Runs a command with the given stdin and resolves with its stdout
+export type CommandRunner = (command: string, args: string[], input: string) => Promise<string>;
+
+const runCommand: CommandRunner = (command, args, input) =>
+    new Promise((resolve, reject) => {
+        // An empty working directory, so that Claude Code picks up no project instructions
+        const child = spawn(command, args, { cwd: tmpdir(), stdio: ['pipe', 'pipe', 'pipe'] });
+        let stdout = '';
+        let stderr = '';
+        child.stdout.on('data', chunk => (stdout += chunk));
+        child.stderr.on('data', chunk => (stderr += chunk));
+        child.on('error', reject);
+        child.on('close', code => {
+            // Claude Code reports errors in its JSON result and exits with 1, the caller reads them from stdout
+            if (code === 0 || stdout.trim().startsWith('{')) resolve(stdout);
+            else reject(new Error(`${command} exited with ${code}: ${stderr.trim() || stdout.trim()}`));
+        });
+        child.stdin.end(input);
+    });
+
+/// Describes scripts through the Claude Code CLI (`claude -p`), which uses the login of Claude Code instead of an API key
+export class ClaudeCodeDescriber implements Describer {
     constructor(
-        private readonly inner: Describer,
-        private readonly cacheDir: string,
-        private readonly model: string,
+        private readonly model: string = DEFAULT_DESCRIBE_MODEL,
+        private readonly command: string = 'claude',
+        private readonly run: CommandRunner = runCommand,
     ) {}
 
-    private path(input: DescribeInput): string {
-        const key = sha256([this.model, PROMPT_VERSION, input.sql].join('\u0000'));
-        return join(this.cacheDir, 'descriptions', `${key}.json`);
-    }
-
     async describe(input: DescribeInput): Promise<Description> {
-        const path = this.path(input);
-        try {
-            return parseDescription(await readFile(path, 'utf8'));
-        } catch {
-            // Cache miss or unreadable entry
+        if (input.sql.length > MAX_SQL_CHARS) {
+            throw new DescribeSkipError(`script is longer than ${MAX_SQL_CHARS} characters`);
         }
-        const description = await this.inner.describe(input);
-        await mkdir(dirname(path), { recursive: true });
-        const temp = `${path}.${process.pid}.tmp`;
-        await writeFile(temp, JSON.stringify(description));
-        await rename(temp, path);
-        return description;
+        const args = [
+            '--print',
+            '--model', this.model,
+            '--effort', 'low',
+            '--tools', '',
+            '--no-session-persistence',
+            '--output-format', 'json',
+            '--system-prompt', SYSTEM_PROMPT,
+            '--json-schema', JSON.stringify(DESCRIPTION_SCHEMA),
+        ];
+        // The SQL goes through stdin, it may be long or start with a dash
+        const stdout = await this.run(this.command, args, buildUserPrompt(input));
+        let result: { is_error?: boolean; subtype?: string; result?: string; structured_output?: unknown };
+        try {
+            result = JSON.parse(stdout);
+        } catch {
+            throw new Error(`${this.command} returned no JSON result: ${stdout.trim().slice(0, 200)}`);
+        }
+        if (result.is_error || result.subtype !== 'success') {
+            throw new Error(`${this.command}: ${result.result ?? result.subtype ?? 'unknown error'}`);
+        }
+        if (result.structured_output == null) {
+            throw new DescribeSkipError('the model returned no structured output');
+        }
+        return parseDescription(JSON.stringify(result.structured_output));
     }
 }
