@@ -1,0 +1,10 @@
+{
+    "name": "@ankoh/dashql-lint",
+    "version": "0.0.2-dev.17",
+    "description": "Report DashQL scanner, parser and analyzer diagnostics of SQL scripts",
+    "private": true,
+    "type": "module",
+    "bin": {
+        "dashql-lint": "bin/dashql-lint.mjs"
+    }
+}

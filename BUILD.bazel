@@ -53,7 +53,7 @@ js_library(
 # Dashql-app uses this plus //packages/dashql-app:ankoh_overlay via NODE_PATH (two entries), no copy_to_directory merge.
 npm_link_all_packages(name = "node_modules")
 
-# The in-repo core package, linked like an npm dependency for Node consumers such as //packages/dashql-embed.
+# The in-repo core package, linked like an npm dependency for Node consumers such as //packages/dashql-embed and //packages/dashql-lint.
 npm_link_package(
     name = "node_modules/@ankoh/dashql-core",
     src = "//packages/dashql-core-js:npm_package",

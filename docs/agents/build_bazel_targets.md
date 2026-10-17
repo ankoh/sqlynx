@@ -103,6 +103,7 @@ bazel test //packages/dashql-core:*_tests
 | `//packages/dashql-native:test` | Electron host unit tests |
 | `//packages/dashql-embed:tests` | Embedding CLI unit tests, offline end-to-end test and the `snapshots/embed` check |
 | `//packages/dashql-embed:model_smoke_test` | Downloads the default embedding model and checks vector shape (`manual`) |
+| `//packages/dashql-lint:tests` | SQL linter CLI unit tests |
 | `//packages/dashql-app:test_chromium` | Web app tests in Chromium |
 | `//packages/dashql-app:test_firefox` | Web app tests in Firefox |
 
@@ -318,6 +319,18 @@ bazel run //snapshots/parser:update
 
 # Verify snapshot changes
 git diff snapshots/parser/
+```
+
+### Linting SQL Scripts
+
+`//packages/dashql-lint:cli` reports the scanner, parser and analyzer errors and warnings of SQL scripts as a JSON
+array with one diagnostic per line. Use it to check scripts you write, see `packages/dashql-lint/README.md`.
+
+```bash
+bazel run //packages/dashql-lint:cli -- path/to/script.sql path/to/dir
+echo "select 1 +;" | bazel run //packages/dashql-lint:cli -- -
+# Resolve names against CREATE TABLE statements
+bazel run //packages/dashql-lint:cli -- --schema schema.sql query.sql
 ```
 
 ### Before Committing

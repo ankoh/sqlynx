@@ -216,6 +216,8 @@ importers:
 
   packages/dashql-embed: {}
 
+  packages/dashql-lint: {}
+
   packages/dashql-native:
     dependencies:
       electron-updater:
