@@ -1,0 +1,16 @@
+{
+    // Editor-only config, Bazel compiles with tsconfig.bazel.json.
+    // @ankoh/dashql-core is linked by Bazel and not installed by pnpm, so we resolve it from bazel-bin.
+    // Run `bazel build //packages/dashql-core-js:compile` to produce the declarations.
+    "extends": "./tsconfig.bazel.json",
+    "compilerOptions": {
+        "noEmit": true,
+        "rootDir": ".",
+        "paths": {
+            "@ankoh/dashql-core": ["../../bazel-bin/packages/dashql-core-js/dist/index.d.ts"],
+            "@ankoh/dashql-core/buffers": ["../../bazel-bin/packages/dashql-core-js/dist/buffers.d.ts"]
+        }
+    },
+    "include": ["src/**/*.ts", "*.ts"],
+    "exclude": []
+}
