@@ -164,3 +164,13 @@ Snowflake retrieval prefix). `--model` accepts only the Snowflake Arctic Embed p
   model, or that it skips the script because it already has a description. No model is involved; the header rendering
   is covered by unit tests. Regenerate with `bazel run //snapshots/embed:update` from `snapshots/embed/*.tpl.yaml`.
 - `bazel test //packages/dashql-embed:model_smoke_test` checks that the default model loads (needs network).
+
+# Examples
+
+```
+# Generate descriptions
+bazel run //packages/dashql-embed:cli -- describe ./examples/atlas --model claude-sonnet-5-5
+
+# Generate embeddings
+bazel run //packages/dashql-embed:cli -- index ./examples/atlas --out-dir /tmp/atlas-index
+```

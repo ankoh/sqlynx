@@ -69,3 +69,10 @@ complete them. They are not reported by the analysis, but Hyper rejects them whe
 ## Tests
 
 `bazel test //packages/dashql-cli:tests`
+
+# Example
+
+
+Executing all scripts under ./examples/atlas:
+
+`bazel run //packages/dashql-cli:cli -- examples/atlas`
