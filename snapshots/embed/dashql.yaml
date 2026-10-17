@@ -1,0 +1,1121 @@
+# Generated from the .tpl.yaml next to this file. Do not edit.
+# Update with: bazel run //snapshots/embed:update
+embed_snapshots:
+  - name: visualize_vegalite
+    describe: {}
+    script:
+      input: |-
+        SELECT * FROM external('https://data.dashql.app/vega-cars/v1/cars.parquet', format => 'parquet')
+        VISUALIZE USING vegalite (
+          mark => point,
+          encoding => (
+            x => (field => "Year", type => temporal),
+            y => (field => "Weight_in_lbs", type => quantitative),
+            color => (field => "Origin")
+          )
+        );
+    describe_prompt: |-
+      SELECT * FROM external('https://data.dashql.app/vega-cars/v1/cars.parquet', format => 'parquet')
+      VISUALIZE USING vegalite (
+        mark => point,
+        encoding => (
+          x => (field => "Year", type => temporal),
+          y => (field => "Weight_in_lbs", type => quantitative),
+          color => (field => "Origin")
+        )
+      );
+    features:
+      statement_types:
+        - visualize
+      tables: []
+      columns: []
+      functions:
+        - external
+      aggregates: []
+      function_calls:
+        - external('https://data.dashql.app/vega-cars/v1/cars.parquet', format => 'parquet')
+      ctes: []
+      joins: []
+      filters: []
+      operators: []
+      output_columns:
+        - "*"
+      group_by: []
+      order_by: []
+      visualizations:
+        - vegalite point (x Year temporal, y Weight_in_lbs quantitative, color Origin)
+    visualization:
+      renderer: vegalite
+      vegalite_spec:
+        $schema: https://vega.github.io/schema/vega-lite/v5.json
+        data:
+          $sql: SELECT * FROM external('https://data.dashql.app/vega-cars/v1/cars.parquet', format => 'parquet')
+        mark: point
+        encoding:
+          x:
+            field: Year
+            type: temporal
+          y:
+            field: Weight_in_lbs
+            type: quantitative
+          color:
+            field: Origin
+    feature_text: |-
+      Statements: 1 visualize statement
+      Visualization: vegalite point (x Year temporal, y Weight_in_lbs quantitative, color Origin)
+      Function calls: external('https://data.dashql.app/vega-cars/v1/cars.parquet', format => 'parquet')
+      Output: *
+    comments: []
+    diagnostics: []
+  - name: visualize_generated_series
+    describe: {}
+    script:
+      input: |-
+        -- Random points for a scatter plot
+        SELECT v AS x, random() AS y
+        FROM generate_series(1, 100) t(v)
+        VISUALIZE USING vegalite (
+          mark => point,
+          encoding => (
+            x => (field => x, type => quantitative),
+            y => (field => y, type => quantitative)
+          )
+        );
+    describe_prompt: |-
+      SELECT v AS x, random() AS y
+      FROM generate_series(1, 100) t(v)
+      VISUALIZE USING vegalite (
+        mark => point,
+        encoding => (
+          x => (field => x, type => quantitative),
+          y => (field => y, type => quantitative)
+        )
+      );
+    features:
+      statement_types:
+        - visualize
+      tables: []
+      columns:
+        - v
+      functions:
+        - generate_series
+        - random
+      aggregates: []
+      function_calls:
+        - generate_series(1, 100)
+        - random()
+      ctes: []
+      joins: []
+      filters: []
+      operators: []
+      output_columns:
+        - x
+        - y
+      group_by: []
+      order_by: []
+      visualizations:
+        - vegalite scatter plot (point, x x quantitative, y y quantitative)
+    visualization:
+      renderer: vegalite
+      vegalite_spec:
+        $schema: https://vega.github.io/schema/vega-lite/v5.json
+        data:
+          $sql: |-
+            SELECT v AS x, random() AS y
+            FROM generate_series(1, 100) t(v)
+        mark: point
+        encoding:
+          x:
+            field: x
+            type: quantitative
+          y:
+            field: y
+            type: quantitative
+    feature_text: |-
+      Statements: 1 visualize statement
+      Visualization: vegalite scatter plot (point, x x quantitative, y y quantitative)
+      Function calls: generate_series(1, 100); random()
+      Output: x, y
+      Columns: v
+    comments:
+      - source: comment
+        text: Random points for a scatter plot
+    diagnostics: []
+  - name: visualize_markdown
+    describe: {}
+    script:
+      input: |-
+        WITH customer_summary AS (
+          SELECT c.c_name AS customer, n.n_name AS nation, count(*) AS order_count, sum(o.o_totalprice) AS order_value
+          FROM customer c
+          JOIN orders o ON o.o_custkey = c.c_custkey
+          JOIN nation n ON n.n_nationkey = c.c_nationkey
+          GROUP BY c.c_name, n.n_name
+          ORDER BY order_value DESC
+          LIMIT 5
+        )
+        SELECT customer, nation, order_count, order_value
+        FROM customer_summary
+        VISUALIZE USING markdown (
+          template => '## {{customer}}
+
+        **Market:** {{nation}} · **Orders:** {{order_count}}
+
+        **Order value:** {{order_value}}'
+        );
+    describe_prompt: |-
+      WITH customer_summary AS (
+        SELECT c.c_name AS customer, n.n_name AS nation, count(*) AS order_count, sum(o.o_totalprice) AS order_value
+        FROM customer c
+        JOIN orders o ON o.o_custkey = c.c_custkey
+        JOIN nation n ON n.n_nationkey = c.c_nationkey
+        GROUP BY c.c_name, n.n_name
+        ORDER BY order_value DESC
+        LIMIT 5
+      )
+      SELECT customer, nation, order_count, order_value
+      FROM customer_summary
+      VISUALIZE USING markdown (
+        template => '## {{customer}}
+
+      **Market:** {{nation}} · **Orders:** {{order_count}}
+
+      **Order value:** {{order_value}}'
+      );
+    features:
+      statement_types:
+        - visualize
+      tables:
+        - customer
+        - nation
+        - orders
+      columns:
+        - customer
+        - customer.c_custkey
+        - customer.c_name
+        - customer.c_nationkey
+        - nation
+        - nation.n_name
+        - nation.n_nationkey
+        - order_count
+        - order_value
+        - orders.o_custkey
+        - orders.o_totalprice
+      functions: []
+      aggregates:
+        - count
+        - sum
+      function_calls:
+        - count(*)
+        - sum(orders.o_totalprice)
+      ctes:
+        - customer_summary
+      joins:
+        - customer.c_custkey = orders.o_custkey
+        - customer.c_nationkey = nation.n_nationkey
+      filters: []
+      operators:
+        - inner join
+        - cte
+        - group by
+        - order by
+        - limit
+      output_columns:
+        - customer
+        - nation
+        - order_count
+        - order_value
+      group_by:
+        - customer.c_name
+        - nation.n_name
+      order_by:
+        - order_value
+      visualizations:
+        - markdown (customer, nation, order_count, order_value)
+    visualization:
+      renderer: markdown
+      markdown:
+        template: |-
+          ## {{customer}}
+
+          **Market:** {{nation}} · **Orders:** {{order_count}}
+
+          **Order value:** {{order_value}}
+        fields:
+          - customer
+          - nation
+          - order_count
+          - order_value
+    feature_text: |-
+      Statements: 1 visualize statement
+      Tables: customer, nation, orders
+      Visualization: markdown (customer, nation, order_count, order_value)
+      Joins: customer.c_custkey = orders.o_custkey; customer.c_nationkey = nation.n_nationkey
+      Function calls: count(*); sum(orders.o_totalprice)
+      Grouped by: customer.c_name, nation.n_name
+      Operators: inner join, cte, group by, order by, limit
+      Ordered by: order_value
+      Output: customer, nation, order_count, order_value
+      CTEs: customer_summary
+      Columns: customer, customer.c_custkey, customer.c_name, customer.c_nationkey, nation, nation.n_name, nation.n_nationkey, order_count, order_value, orders.o_custkey, orders.o_totalprice
+      Terms: customer nation orders custkey name nationkey order count value totalprice summary
+    comments: []
+    diagnostics: []
+  - name: visualize_markdown_values
+    describe: {}
+    script:
+      input: |-
+        WITH metrics(metric, value, status) AS (
+          VALUES
+            ('Gross revenue', '$1.24M', 'On track'),
+            ('Open pipeline', '$842K', 'Watch')
+        )
+        SELECT metric, value, status
+        FROM metrics
+        VISUALIZE USING markdown (
+          template => '### {{metric}}
+
+        **{{value}}** · {{status}}'
+        );
+    describe_prompt: |-
+      WITH metrics(metric, value, status) AS (
+        VALUES
+          ('Gross revenue', '$1.24M', 'On track'),
+          ('Open pipeline', '$842K', 'Watch')
+      )
+      SELECT metric, value, status
+      FROM metrics
+      VISUALIZE USING markdown (
+        template => '### {{metric}}
+
+      **{{value}}** · {{status}}'
+      );
+    features:
+      statement_types:
+        - visualize
+      tables: []
+      columns:
+        - metric
+        - status
+        - value
+      functions: []
+      aggregates: []
+      function_calls: []
+      ctes:
+        - metrics
+      joins: []
+      filters: []
+      operators:
+        - cte
+      output_columns:
+        - metric
+        - value
+        - status
+      group_by: []
+      order_by: []
+      visualizations:
+        - markdown (metric, value, status)
+    visualization:
+      renderer: markdown
+      markdown:
+        template: |-
+          ### {{metric}}
+
+          **{{value}}** · {{status}}
+        fields:
+          - metric
+          - value
+          - status
+    feature_text: |-
+      Statements: 1 visualize statement
+      Visualization: markdown (metric, value, status)
+      Operators: cte
+      Output: metric, value, status
+      CTEs: metrics
+      Columns: metric, status, value
+      Terms: metric status value metrics
+    comments: []
+    diagnostics: []
+  - name: visualize_declared_table
+    describe: {}
+    script:
+      input: |-
+        create table sales (category text, revenue int, date timestamp);
+        SELECT category, sum(revenue) AS revenue FROM sales GROUP BY category
+        VISUALIZE USING vegalite (
+          mark => (type => bar, color => 'steelblue'),
+          encoding => (
+            x => (field => category, type => nominal),
+            y => (field => revenue, type => quantitative)
+          ),
+          dashboard => (width => 8, height => 4)
+        );
+    describe_prompt: |-
+      create table sales (category text, revenue int, date timestamp);
+
+      SELECT category, sum(revenue) AS revenue FROM sales GROUP BY category
+      VISUALIZE USING vegalite (
+        mark => (type => bar, color => 'steelblue'),
+        encoding => (
+          x => (field => category, type => nominal),
+          y => (field => revenue, type => quantitative)
+        ),
+        dashboard => (width => 8, height => 4)
+      );
+    features:
+      statement_types:
+        - create table
+        - visualize
+      tables:
+        - sales
+      columns:
+        - sales.category
+        - sales.revenue
+      functions: []
+      aggregates:
+        - sum
+      function_calls:
+        - sum(sales.revenue)
+      ctes: []
+      joins: []
+      filters: []
+      operators:
+        - group by
+      output_columns:
+        - category
+        - revenue
+      group_by:
+        - sales.category
+      order_by: []
+      visualizations:
+        - vegalite bar chart (bar, x category nominal, y revenue quantitative)
+    visualization:
+      renderer: vegalite
+      vegalite_spec:
+        $schema: https://vega.github.io/schema/vega-lite/v5.json
+        data:
+          $sql: SELECT category, sum(revenue) AS revenue FROM sales GROUP BY category
+        mark:
+          type: bar
+          color: steelblue
+        encoding:
+          x:
+            field: category
+            type: nominal
+          y:
+            field: revenue
+            type: quantitative
+    feature_text: |-
+      Statements: 1 create table statement, 1 visualize statement
+      Tables: sales
+      Visualization: vegalite bar chart (bar, x category nominal, y revenue quantitative)
+      Function calls: sum(sales.revenue)
+      Grouped by: sales.category
+      Operators: group by
+      Output: category, revenue
+      Columns: sales.category, sales.revenue
+      Terms: sales category revenue
+    comments: []
+    diagnostics: []
+  - name: visualize_scatter_bubble
+    describe: {}
+    script:
+      input: |-
+        create table cars (name text, weight int, horsepower int, displacement int, origin text);
+        SELECT * FROM cars
+        VISUALIZE USING vegalite (
+          title => 'Weight against horsepower',
+          mark => circle,
+          encoding => (
+            x => (field => weight, type => quantitative),
+            y => (field => horsepower, type => quantitative),
+            size => (field => displacement, type => quantitative),
+            color => (field => origin, type => nominal)
+          )
+        );
+    describe_prompt: |-
+      create table cars (name text, weight int, horsepower int, displacement int, origin text);
+
+      SELECT * FROM cars
+      VISUALIZE USING vegalite (
+        title => 'Weight against horsepower',
+        mark => circle,
+        encoding => (
+          x => (field => weight, type => quantitative),
+          y => (field => horsepower, type => quantitative),
+          size => (field => displacement, type => quantitative),
+          color => (field => origin, type => nominal)
+        )
+      );
+    features:
+      statement_types:
+        - create table
+        - visualize
+      tables:
+        - cars
+      columns: []
+      functions: []
+      aggregates: []
+      function_calls: []
+      ctes: []
+      joins: []
+      filters: []
+      operators: []
+      output_columns:
+        - "*"
+      group_by: []
+      order_by: []
+      visualizations:
+        - vegalite bubble chart titled "Weight against horsepower" (circle, x weight quantitative, y horsepower quantitative, size displacement quantitative, color origin nominal)
+    visualization:
+      renderer: vegalite
+      vegalite_spec:
+        $schema: https://vega.github.io/schema/vega-lite/v5.json
+        data:
+          $sql: SELECT * FROM cars
+        mark: circle
+        title: Weight against horsepower
+        encoding:
+          x:
+            field: weight
+            type: quantitative
+          y:
+            field: horsepower
+            type: quantitative
+          size:
+            field: displacement
+            type: quantitative
+          color:
+            field: origin
+            type: nominal
+    feature_text: |-
+      Statements: 1 create table statement, 1 visualize statement
+      Tables: cars
+      Visualization: vegalite bubble chart titled "Weight against horsepower" (circle, x weight quantitative, y horsepower quantitative, size displacement quantitative, color origin nominal)
+      Output: *
+      Terms: cars
+    comments: []
+    diagnostics: []
+  - name: visualize_histogram
+    describe: {}
+    script:
+      input: |-
+        create table orders (o_orderkey int, o_totalprice decimal(12, 2));
+        SELECT o_totalprice FROM orders
+        VISUALIZE USING vegalite (
+          mark => bar,
+          encoding => (
+            x => (field => o_totalprice, type => quantitative, bin => true),
+            y => (field => o_orderkey, type => quantitative, aggregate => count)
+          )
+        );
+    describe_prompt: |-
+      create table orders (o_orderkey int, o_totalprice decimal(12, 2));
+
+      SELECT o_totalprice FROM orders
+      VISUALIZE USING vegalite (
+        mark => bar,
+        encoding => (
+          x => (field => o_totalprice, type => quantitative, bin => true),
+          y => (field => o_orderkey, type => quantitative, aggregate => count)
+        )
+      );
+    features:
+      statement_types:
+        - create table
+        - visualize
+      tables:
+        - orders
+      columns:
+        - orders.o_totalprice
+      functions: []
+      aggregates: []
+      function_calls: []
+      ctes: []
+      joins: []
+      filters: []
+      operators: []
+      output_columns:
+        - o_totalprice
+      group_by: []
+      order_by: []
+      visualizations:
+        - vegalite histogram (bar, x o_totalprice binned quantitative, y count(o_orderkey) quantitative)
+    visualization:
+      renderer: vegalite
+      vegalite_spec:
+        $schema: https://vega.github.io/schema/vega-lite/v5.json
+        data:
+          $sql: SELECT o_totalprice FROM orders
+        mark: bar
+        encoding:
+          x:
+            field: o_totalprice
+            type: quantitative
+            bin: true
+          y:
+            field: o_orderkey
+            type: quantitative
+            aggregate: count
+    feature_text: |-
+      Statements: 1 create table statement, 1 visualize statement
+      Tables: orders
+      Visualization: vegalite histogram (bar, x o_totalprice binned quantitative, y count(o_orderkey) quantitative)
+      Output: o_totalprice
+      Columns: orders.o_totalprice
+      Terms: orders totalprice
+    comments: []
+    diagnostics: []
+  - name: visualize_normalized_stack
+    describe: {}
+    script:
+      input: |-
+        create table sales (category text, region text, revenue int, date timestamp);
+        SELECT category, region, revenue FROM sales
+        VISUALIZE USING vegalite (
+          mark => bar,
+          encoding => (
+            x => (field => category, type => nominal, axis => (title => 'Product category')),
+            y => (field => revenue, type => quantitative, aggregate => sum, stack => 'normalize'),
+            color => (field => region, type => nominal, legend => (title => 'Region'))
+          )
+        );
+    describe_prompt: |-
+      create table sales (category text, region text, revenue int, date timestamp);
+
+      SELECT category, region, revenue FROM sales
+      VISUALIZE USING vegalite (
+        mark => bar,
+        encoding => (
+          x => (field => category, type => nominal, axis => (title => 'Product category')),
+          y => (field => revenue, type => quantitative, aggregate => sum, stack => 'normalize'),
+          color => (field => region, type => nominal, legend => (title => 'Region'))
+        )
+      );
+    features:
+      statement_types:
+        - create table
+        - visualize
+      tables:
+        - sales
+      columns:
+        - sales.category
+        - sales.region
+        - sales.revenue
+      functions: []
+      aggregates: []
+      function_calls: []
+      ctes: []
+      joins: []
+      filters: []
+      operators: []
+      output_columns:
+        - category
+        - region
+        - revenue
+      group_by: []
+      order_by: []
+      visualizations:
+        - vegalite normalized stacked bar chart (bar, x category nominal titled "Product category", y sum(revenue) quantitative normalized stack, color region nominal titled "Region")
+    visualization:
+      renderer: vegalite
+      vegalite_spec:
+        $schema: https://vega.github.io/schema/vega-lite/v5.json
+        data:
+          $sql: SELECT category, region, revenue FROM sales
+        mark: bar
+        encoding:
+          x:
+            field: category
+            type: nominal
+            axis:
+              title: Product category
+          y:
+            field: revenue
+            type: quantitative
+            aggregate: sum
+            stack: normalize
+          color:
+            field: region
+            type: nominal
+            legend:
+              title: Region
+    feature_text: |-
+      Statements: 1 create table statement, 1 visualize statement
+      Tables: sales
+      Visualization: vegalite normalized stacked bar chart (bar, x category nominal titled "Product category", y sum(revenue) quantitative normalized stack, color region nominal titled "Region")
+      Output: category, region, revenue
+      Columns: sales.category, sales.region, sales.revenue
+      Terms: sales category region revenue
+    comments: []
+    diagnostics: []
+  - name: visualize_time_series
+    describe: {}
+    script:
+      input: |-
+        create table sales (category text, revenue int, date timestamp);
+        SELECT date, revenue, category FROM sales
+        VISUALIZE USING vegalite (
+          mark => (type => line, point => true, interpolate => 'monotone'),
+          encoding => (
+            x => (field => date, type => temporal, time_unit => 'yearmonth'),
+            y => (field => revenue, type => quantitative, aggregate => sum),
+            color => (field => category, type => nominal)
+          )
+        );
+    describe_prompt: |-
+      create table sales (category text, revenue int, date timestamp);
+
+      SELECT date, revenue, category FROM sales
+      VISUALIZE USING vegalite (
+        mark => (type => line, point => true, interpolate => 'monotone'),
+        encoding => (
+          x => (field => date, type => temporal, time_unit => 'yearmonth'),
+          y => (field => revenue, type => quantitative, aggregate => sum),
+          color => (field => category, type => nominal)
+        )
+      );
+    features:
+      statement_types:
+        - create table
+        - visualize
+      tables:
+        - sales
+      columns:
+        - sales.category
+        - sales.date
+        - sales.revenue
+      functions: []
+      aggregates: []
+      function_calls: []
+      ctes: []
+      joins: []
+      filters: []
+      operators: []
+      output_columns:
+        - date
+        - revenue
+        - category
+      group_by: []
+      order_by: []
+      visualizations:
+        - vegalite time series line chart (line with points monotone interpolation, x date yearmonth temporal, y sum(revenue) quantitative, color category nominal)
+    visualization:
+      renderer: vegalite
+      vegalite_spec:
+        $schema: https://vega.github.io/schema/vega-lite/v5.json
+        data:
+          $sql: SELECT date, revenue, category FROM sales
+        mark:
+          type: line
+          interpolate: monotone
+          point: true
+        encoding:
+          x:
+            field: date
+            type: temporal
+            timeUnit: yearmonth
+          y:
+            field: revenue
+            type: quantitative
+            aggregate: sum
+          color:
+            field: category
+            type: nominal
+    feature_text: |-
+      Statements: 1 create table statement, 1 visualize statement
+      Tables: sales
+      Visualization: vegalite time series line chart (line with points monotone interpolation, x date yearmonth temporal, y sum(revenue) quantitative, color category nominal)
+      Output: date, revenue, category
+      Columns: sales.category, sales.date, sales.revenue
+      Terms: sales category date revenue
+    comments: []
+    diagnostics: []
+  - name: visualize_facets
+    describe: {}
+    script:
+      input: |-
+        create table sales (category text, region text, revenue int);
+        SELECT category, region, revenue FROM sales
+        VISUALIZE USING vegalite (
+          mark => bar,
+          encoding => (
+            x => (field => category, type => nominal),
+            y => (field => revenue, type => quantitative),
+            row => (field => region, type => nominal)
+          )
+        );
+    describe_prompt: |-
+      create table sales (category text, region text, revenue int);
+
+      SELECT category, region, revenue FROM sales
+      VISUALIZE USING vegalite (
+        mark => bar,
+        encoding => (
+          x => (field => category, type => nominal),
+          y => (field => revenue, type => quantitative),
+          row => (field => region, type => nominal)
+        )
+      );
+    features:
+      statement_types:
+        - create table
+        - visualize
+      tables:
+        - sales
+      columns:
+        - sales.category
+        - sales.region
+        - sales.revenue
+      functions: []
+      aggregates: []
+      function_calls: []
+      ctes: []
+      joins: []
+      filters: []
+      operators: []
+      output_columns:
+        - category
+        - region
+        - revenue
+      group_by: []
+      order_by: []
+      visualizations:
+        - vegalite bar chart (bar, small multiples, x category nominal, y revenue quantitative, row region nominal)
+    visualization:
+      renderer: vegalite
+      vegalite_spec:
+        $schema: https://vega.github.io/schema/vega-lite/v5.json
+        data:
+          $sql: SELECT category, region, revenue FROM sales
+        mark: bar
+        encoding:
+          x:
+            field: category
+            type: nominal
+          y:
+            field: revenue
+            type: quantitative
+          row:
+            field: region
+            type: nominal
+    feature_text: |-
+      Statements: 1 create table statement, 1 visualize statement
+      Tables: sales
+      Visualization: vegalite bar chart (bar, small multiples, x category nominal, y revenue quantitative, row region nominal)
+      Output: category, region, revenue
+      Columns: sales.category, sales.region, sales.revenue
+      Terms: sales category region revenue
+    comments: []
+    diagnostics: []
+  - name: visualize_layers
+    describe: {}
+    script:
+      input: |-
+        create table sales (category text, revenue int, target int, date timestamp);
+        SELECT * FROM sales
+        VISUALIZE USING vegalite (
+          title => 'Revenue against target',
+          encoding => (
+            x => (field => date, type => temporal)
+          ),
+          layer => [
+            (
+              mark => line,
+              encoding => (
+                y => (field => revenue, type => quantitative),
+                color => (field => category, type => nominal)
+              )
+            ),
+            (
+              mark => point,
+              encoding => (
+                y => (field => target, type => quantitative)
+              )
+            )
+          ],
+          resolve => (
+            scale => (y => 'independent'),
+            legend => (color => 'shared')
+          )
+        );
+    describe_prompt: |-
+      create table sales (category text, revenue int, target int, date timestamp);
+
+      SELECT * FROM sales
+      VISUALIZE USING vegalite (
+        title => 'Revenue against target',
+        encoding => (
+          x => (field => date, type => temporal)
+        ),
+        layer => [
+          (
+            mark => line,
+            encoding => (
+              y => (field => revenue, type => quantitative),
+              color => (field => category, type => nominal)
+            )
+          ),
+          (
+            mark => point,
+            encoding => (
+              y => (field => target, type => quantitative)
+            )
+          )
+        ],
+        resolve => (
+          scale => (y => 'independent'),
+          legend => (color => 'shared')
+        )
+      );
+    features:
+      statement_types:
+        - create table
+        - visualize
+      tables:
+        - sales
+      columns: []
+      functions: []
+      aggregates: []
+      function_calls: []
+      ctes: []
+      joins: []
+      filters: []
+      operators: []
+      output_columns:
+        - "*"
+      group_by: []
+      order_by: []
+      visualizations:
+        - vegalite layer 1 of 2 time series line chart titled "Revenue against target" (line, x date temporal, y revenue quantitative, color category nominal, independent y scale)
+        - vegalite layer 2 of 2 point (x date temporal, y target quantitative)
+    visualization:
+      renderer: vegalite
+      vegalite_spec:
+        $schema: https://vega.github.io/schema/vega-lite/v5.json
+        data:
+          $sql: SELECT * FROM sales
+        title: Revenue against target
+        encoding:
+          x:
+            field: date
+            type: temporal
+        resolve:
+          scale:
+            y: independent
+          legend:
+            color: shared
+        layer:
+          - mark: line
+            encoding:
+              y:
+                field: revenue
+                type: quantitative
+              color:
+                field: category
+                type: nominal
+          - mark: point
+            encoding:
+              y:
+                field: target
+                type: quantitative
+    feature_text: |-
+      Statements: 1 create table statement, 1 visualize statement
+      Tables: sales
+      Visualization: vegalite layer 1 of 2 time series line chart titled "Revenue against target" (line, x date temporal, y revenue quantitative, color category nominal, independent y scale); vegalite layer 2 of 2 point (x date temporal, y target quantitative)
+      Output: *
+      Terms: sales
+    comments: []
+    diagnostics: []
+  - name: visualize_empty
+    script:
+      input: VISUALIZE;
+    features:
+      statement_types: []
+      tables: []
+      columns: []
+      functions: []
+      aggregates: []
+      function_calls: []
+      ctes: []
+      joins: []
+      filters: []
+      operators: []
+      output_columns: []
+      group_by: []
+      order_by: []
+      visualizations: []
+    feature_text: ""
+    comments: []
+    diagnostics:
+      - "parse error at 0: syntax error, unexpected VISUALIZE"
+  - name: set_statement
+    describe: {}
+    script:
+      input: |-
+        -- Connection settings
+        SET variable = (
+          'some' = 42,
+          'with' = ('nesting' = true)
+        );
+        SELECT 1;
+    describe_prompt: |-
+      SET variable = (
+        'some' = 42,
+        'with' = ('nesting' = true)
+      );
+
+      SELECT 1;
+    features:
+      statement_types:
+        - set
+        - select
+      tables: []
+      columns: []
+      functions: []
+      aggregates: []
+      function_calls: []
+      ctes: []
+      joins: []
+      filters: []
+      operators: []
+      output_columns:
+        - "1"
+      group_by: []
+      order_by: []
+      visualizations: []
+    feature_text: |-
+      Statements: 1 set statement, 1 select statement
+      Output: 1
+    comments:
+      - source: comment
+        text: Connection settings
+    diagnostics: []
+  - name: explain_statement
+    describe: {}
+    script:
+      input: explain (analyze, format text) select o_orderstatus, count(*) from orders group by o_orderstatus;
+    describe_prompt: explain (analyze, format text) select o_orderstatus, count(*) from orders group by o_orderstatus;
+    features:
+      statement_types:
+        - explain
+      tables:
+        - orders
+      columns:
+        - o_orderstatus
+      functions: []
+      aggregates:
+        - count
+      function_calls:
+        - count(*)
+      ctes: []
+      joins: []
+      filters: []
+      operators:
+        - group by
+      output_columns: []
+      group_by:
+        - o_orderstatus
+      order_by: []
+      visualizations: []
+    feature_text: |-
+      Statements: 1 explain statement
+      Tables: orders
+      Function calls: count(*)
+      Grouped by: o_orderstatus
+      Operators: group by
+      Columns: o_orderstatus
+      Terms: orders orderstatus
+    comments: []
+    diagnostics: []
+  - name: mixed_script
+    describe: {}
+    script:
+      input: |-
+        -- Orders by status
+        create table orders (o_orderkey int, o_orderstatus varchar, o_totalprice decimal(12, 2));
+        SET variable = 'value';
+        SELECT o_orderstatus, sum(o_totalprice) AS total
+        FROM orders
+        GROUP BY o_orderstatus
+        VISUALIZE USING vegalite (
+          mark => bar,
+          encoding => (
+            x => (field => o_orderstatus, type => nominal),
+            y => (field => total, type => quantitative)
+          )
+        );
+    describe_prompt: |-
+      create table orders (o_orderkey int, o_orderstatus varchar, o_totalprice decimal(12, 2));
+
+      SET variable = 'value';
+
+      SELECT o_orderstatus, sum(o_totalprice) AS total
+      FROM orders
+      GROUP BY o_orderstatus
+      VISUALIZE USING vegalite (
+        mark => bar,
+        encoding => (
+          x => (field => o_orderstatus, type => nominal),
+          y => (field => total, type => quantitative)
+        )
+      );
+    features:
+      statement_types:
+        - create table
+        - set
+        - visualize
+      tables:
+        - orders
+      columns:
+        - orders.o_orderstatus
+        - orders.o_totalprice
+      functions: []
+      aggregates:
+        - sum
+      function_calls:
+        - sum(orders.o_totalprice)
+      ctes: []
+      joins: []
+      filters: []
+      operators:
+        - group by
+      output_columns:
+        - o_orderstatus
+        - total
+      group_by:
+        - orders.o_orderstatus
+      order_by: []
+      visualizations:
+        - vegalite bar chart (bar, x o_orderstatus nominal, y total quantitative)
+    visualization:
+      renderer: vegalite
+      vegalite_spec:
+        $schema: https://vega.github.io/schema/vega-lite/v5.json
+        data:
+          $sql: |-
+            SELECT o_orderstatus, sum(o_totalprice) AS total
+            FROM orders
+            GROUP BY o_orderstatus
+        mark: bar
+        encoding:
+          x:
+            field: o_orderstatus
+            type: nominal
+          y:
+            field: total
+            type: quantitative
+    feature_text: |-
+      Statements: 1 create table statement, 1 set statement, 1 visualize statement
+      Tables: orders
+      Visualization: vegalite bar chart (bar, x o_orderstatus nominal, y total quantitative)
+      Function calls: sum(orders.o_totalprice)
+      Grouped by: orders.o_orderstatus
+      Operators: group by
+      Output: o_orderstatus, total
+      Columns: orders.o_orderstatus, orders.o_totalprice
+      Terms: orders orderstatus totalprice total
+    comments:
+      - source: comment
+        text: Orders by status
+    diagnostics: []

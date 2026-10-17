@@ -70,6 +70,7 @@ embed_snapshots:
       order_by:
         - revenue
         - o_orderdate
+      visualizations: []
     feature_text: |-
       Statements: 1 select statement
       Tables: customer, lineitem, orders
@@ -180,6 +181,7 @@ embed_snapshots:
         - o_year
       order_by:
         - o_year
+      visualizations: []
     feature_text: |-
       Statements: 1 select statement
       Tables: customer, lineitem, nation, orders, part, region, supplier
@@ -253,6 +255,7 @@ embed_snapshots:
       order_by:
         - custdist
         - c_count
+      visualizations: []
     feature_text: |-
       Statements: 1 select statement
       Tables: customer, orders
@@ -326,6 +329,7 @@ embed_snapshots:
         - c_nationkey
         - c_custkey
       order_by: []
+      visualizations: []
     feature_text: |-
       Statements: 1 select statement
       Tables: customer, orders
@@ -374,6 +378,7 @@ embed_snapshots:
         - b.y
       group_by: []
       order_by: []
+      visualizations: []
     feature_text: |-
       Statements: 1 select statement
       Tables: bar, foo
@@ -416,6 +421,7 @@ embed_snapshots:
         - o_orderstatus
       group_by: []
       order_by: []
+      visualizations: []
     feature_text: |-
       Statements: 1 select statement
       Tables: orders
@@ -458,6 +464,7 @@ embed_snapshots:
         - count(*)
       group_by: []
       order_by: []
+      visualizations: []
     feature_text: |-
       Statements: 1 select statement
       Tables: nation
@@ -500,6 +507,7 @@ embed_snapshots:
         - count(*)
       group_by: []
       order_by: []
+      visualizations: []
     feature_text: |-
       Statements: 1 select statement
       Tables: nation
@@ -540,6 +548,7 @@ embed_snapshots:
         - a
       group_by: []
       order_by: []
+      visualizations: []
     feature_text: |-
       Statements: 1 create table statement, 1 insert statement, 1 select statement
       Tables: t
@@ -602,6 +611,7 @@ embed_snapshots:
         - date_trunc('day', o_orderdate)
       order_by:
         - date_trunc('day', o_orderdate)
+      visualizations: []
     feature_text: |-
       Statements: 1 select statement
       Tables: orders
@@ -669,6 +679,7 @@ embed_snapshots:
       group_by:
         - customer.c_name
       order_by: []
+      visualizations: []
     feature_text: |-
       Statements: 2 create table statements, 1 select statement
       Tables: customer, orders

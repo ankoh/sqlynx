@@ -10,7 +10,14 @@ interface Section {
     title: string;
     items: string[];
     separator: string;
+    /// The largest share of the token budget that this section may use on its own
+    maxShare?: number;
 }
+
+/// A list of tables can be arbitrarily long (generated scripts, wide joins) and tables come early in the priority
+/// order. Without a cap, 100 tables would leave nothing for the visualization, joins or filters behind them.
+/// A quarter of the budget still lists plenty of tables, the remaining ones are marked with "(+N more)".
+const TABLES_MAX_SHARE = 0.25;
 
 /// Split identifiers into lowercase terms, dropping single characters (table prefixes like `o_`)
 export function identifierTerms(identifiers: string[]): string[] {
@@ -32,6 +39,10 @@ function countStatements(types: string[]): string[] {
 
 /// Render the features as a deterministic, natural-language-like text that fits a token budget.
 /// Sections are added by priority, lists that do not fit are cut and marked with "(+N more)".
+/// The budget is checked with the model's own tokenizer, so the text never exceeds it and the model never truncates
+/// it silently. Items are the smallest unit that is cut: an item that does not fit on its own is dropped as a whole
+/// (never shortened), which is why visualization entries are one per chart and capped in size.
+/// A section whose first item does not fit is skipped, smaller sections behind it can still be added.
 export function renderFeatureDocument(
     features: ScriptFeatures,
     maxTokens: number,
@@ -40,7 +51,8 @@ export function renderFeatureDocument(
     const identifiers = [...features.tables, ...features.columns, ...features.outputColumns, ...features.ctes];
     const sections: Section[] = [
         { title: 'Statements', items: countStatements(features.statementTypes), separator: ', ' },
-        { title: 'Tables', items: features.tables, separator: ', ' },
+        { title: 'Tables', items: features.tables, separator: ', ', maxShare: TABLES_MAX_SHARE },
+        { title: 'Visualization', items: features.visualizations, separator: '; ' },
         { title: 'Joins', items: features.joins, separator: '; ' },
         { title: 'Function calls', items: features.functionCalls, separator: '; ' },
         { title: 'Grouped by', items: features.groupBy, separator: ', ' },
@@ -58,8 +70,12 @@ export function renderFeatureDocument(
     const render = (title: string, items: string[], separator: string, omitted: number): string =>
         `${title}: ${items.join(separator)}${omitted > 0 ? ` (+${omitted} more)` : ''}`;
     for (const section of sections) {
+        const cap = section.maxShare === undefined ? Infinity : Math.floor(maxTokens * section.maxShare);
+        // The whole document and, for capped sections, the line itself must fit
+        const fits = (line: string): boolean =>
+            countTokens([...lines, line].join('\n')) <= maxTokens && (cap === Infinity || countTokens(line) <= cap);
         const full = render(section.title, section.items, section.separator, 0);
-        if (countTokens([...lines, full].join('\n')) <= maxTokens) {
+        if (fits(full)) {
             lines.push(full);
             continue;
         }
@@ -70,7 +86,7 @@ export function renderFeatureDocument(
         while (lo < hi) {
             const mid = (lo + hi + 1) >> 1;
             const candidate = render(section.title, section.items.slice(0, mid), section.separator, section.items.length - mid);
-            if (countTokens([...lines, candidate].join('\n')) <= maxTokens) lo = mid;
+            if (fits(candidate)) lo = mid;
             else hi = mid - 1;
         }
         if (lo > 0) {

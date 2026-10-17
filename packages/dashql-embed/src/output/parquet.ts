@@ -103,6 +103,7 @@ export function featuresTable(rows: FeatureRow[], dim: number, metadata: Map<str
             ['joins', utf8List, list(r => r.features.joins)],
             ['filters', utf8List, list(r => r.features.filters)],
             ['operators', utf8List, list(r => r.features.operators)],
+            ['visualizations', utf8List, list(r => r.features.visualizations)],
             ['diagnostics', utf8List, list(r => r.diagnostics)],
         ],
         rows.length,

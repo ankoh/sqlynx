@@ -158,4 +158,29 @@ describe('extractFeatures keeps function names and literal arguments', () => {
         expect(f.groupBy).toEqual(["date_trunc('month', orders.o_orderdate)"]);
         expect(f.orderBy).toEqual(["date_trunc('month', orders.o_orderdate)", 'count(*)']);
     });
+
+    it('describes the effective Vega-Lite spec of a VISUALIZE statement', async () => {
+        const f = await features(`select o_orderdate, sum(o_totalprice) as total from orders group by o_orderdate
+visualize using vegalite (mark => line, encoding => (
+    x => (field => o_orderdate, type => temporal),
+    y => (field => total, type => quantitative)
+));`);
+        expect(f.statementTypes).toEqual(['visualize']);
+        expect(f.visualizations).toEqual(['vegalite time series line chart (line, x o_orderdate temporal, y total quantitative)']);
+        // The spec's `data.$sql` repeats the query and stays out of the description
+        expect(f.visualizations.join()).not.toContain('select');
+        expect(f.outputColumns).toEqual(['o_orderdate', 'total']);
+        // The spec fields are not columns of the query, `total` is an alias
+        expect(f.columns).toEqual(['orders.o_orderdate', 'orders.o_totalprice']);
+    });
+
+    it('lists the fields of a markdown template', async () => {
+        const f = await features(`select o_orderkey as id, o_orderstatus as status from orders
+visualize using markdown (template => '{{id}}: {{status}}');`);
+        expect(f.visualizations).toEqual(['markdown (id, status)']);
+    });
+
+    it('has no visualizations without a VISUALIZE statement', async () => {
+        expect((await features('select 1')).visualizations).toEqual([]);
+    });
 });

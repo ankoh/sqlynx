@@ -62,7 +62,7 @@ filters, operators and output columns, fitted to the model window.
 | `feature_text` | utf8 | the embedded text |
 | `token_count`, `truncated` | int32, bool | whether sections had to be cut to fit |
 | `embedding` | fixed size list<float32>[dim] | L2-normalized |
-| `statement_types`, `tables`, `columns`, `functions`, `aggregates`, `function_calls`, `ctes`, `joins`, `filters`, `operators` | list<utf8> | the extracted features |
+| `statement_types`, `tables`, `columns`, `functions`, `aggregates`, `function_calls`, `ctes`, `joins`, `filters`, `operators`, `visualizations` | list<utf8> | the extracted features |
 | `diagnostics` | list<utf8> | scan, parse and analyze messages |
 
 The metadata of both files records `kind`, `model`, `dtype`, `pooling`, `query_prefix`, `max_tokens`, `dim`,
@@ -102,6 +102,22 @@ filters:        date_trunc('day', orders.o_orderdate) > current_timestamp - inte
                 orders.o_orderdate < date '1995-03-15'
 ```
 
+A trailing `VISUALIZE USING` statement is compiled like the app does it. The effective spec becomes one `visualizations`
+entry per chart (one per layer), rendered as the `Visualization:` line of the feature text. An entry names the chart in
+the words that people search for, then lists the mark and the encoded channels:
+
+```
+vegalite scatter plot (point, x weight quantitative, y horsepower quantitative, color origin nominal)
+vegalite normalized stacked bar chart titled "Revenue by region" (bar, x category nominal, y sum(revenue) quantitative normalized stack, color region nominal)
+vegalite layer 1 of 2 time series line chart (line, x date temporal, y revenue quantitative, independent y scale)
+markdown (customer, nation, order_count)
+```
+
+Chart names are derived from the mark and the encoding (scatter plot, bubble chart, histogram, stacked and grouped bar
+chart, time series, heatmap, pie chart, map). Titles, mark options, time units, binning, aggregates, stacking, sorting,
+faceting and independent layer scales are kept. The fields of the spec are not listed as `columns` and the raw JSON,
+including its `data` member, is not embedded. The spec itself only shows up in the snapshots.
+
 `group by 1` and `order by 1` are shown as the expression they refer to. Single expressions are cut at 120 characters.
 
 ## Models
@@ -114,7 +130,7 @@ Snowflake retrieval prefix). `--model` accepts only the Snowflake Arctic Embed p
 
 - `bazel test //packages/dashql-embed:tests` runs unit tests, an offline end-to-end test (stubbed describer, hash
   embedder) and the snapshot check.
-- `snapshots/embed/basic.yaml` shows what `index` extracts from a script: features, feature text and the
+- `snapshots/embed/*.yaml` (`basic` for plain SQL, `dashql` for VISUALIZE, SET and EXPLAIN scripts) show what `index` extracts from a script: features, feature text and the
   comment chunks that are embedded. Cases with a `describe` key also show the exact prompt that `describe` sends to the
   model, or that it skips the script because it already has a description. No model is involved; the header rendering
   is covered by unit tests. Regenerate with `bazel run //snapshots/embed:update` from `snapshots/embed/*.tpl.yaml`.

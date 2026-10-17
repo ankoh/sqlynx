@@ -1,7 +1,7 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import YAML from 'yaml';
-import { SqlAnalyzer } from '../analysis/core.js';
+import { SqlAnalyzer, type CompiledVisualization } from '../analysis/core.js';
 import { prepareDescribeInput } from '../commands/describe.js';
 import { buildUserPrompt } from '../describe/describe.js';
 import { HashEmbedder } from '../embedding/embedder.js';
@@ -40,6 +40,17 @@ export function generatedPath(dir: string, template: string): string {
 /// Token budgets only matter for long inputs, which fixtures avoid. Using a fixed tokenizer keeps snapshots model-free.
 const TOKENIZER = new HashEmbedder(8, 512);
 
+/// The compiled VISUALIZE statement, with the Vega-Lite spec as structured data to keep the snapshot readable.
+/// The snapshot shows the full spec including `data.$sql`, only the description derived from it is embedded.
+function describeCompiled(v: CompiledVisualization): Record<string, unknown> {
+    return {
+        renderer: v.renderer,
+        ...(v.vegaliteSpec && { vegalite_spec: JSON.parse(v.vegaliteSpec) }),
+        ...(v.markdown && { markdown: v.markdown }),
+        ...(v.umap && { umap: v.umap }),
+    };
+}
+
 export async function generateCase(c: SnapshotCase, analyzer: SqlAnalyzer): Promise<Record<string, unknown>> {
     const input = { id: `${c.name}.sql`, text: c.script.input };
     const out: Record<string, unknown> = { ...c };
@@ -73,7 +84,9 @@ export async function generateCase(c: SnapshotCase, analyzer: SqlAnalyzer): Prom
         output_columns: f.outputColumns,
         group_by: f.groupBy,
         order_by: f.orderBy,
+        visualizations: f.visualizations,
     };
+    if (script.analyzed.visualization) out.visualization = describeCompiled(script.analyzed.visualization);
     out.feature_text = script.featureText;
     out.comments = script.commentChunks.map(chunk => ({ source: chunk.source, text: chunk.text }));
     out.diagnostics = script.analyzed.diagnostics;

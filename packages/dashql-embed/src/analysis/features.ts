@@ -1,6 +1,7 @@
 import { buffers } from '@ankoh/dashql-core';
 import type { AnalyzedSql } from './core.js';
 import { Ast, AttributeKey as K, NodeType as T } from './ast.js';
+import { describeVisualization } from './visualization.js';
 
 /// Structural features of a SQL script, extracted from the DashQL AST and analyzer output
 export interface ScriptFeatures {
@@ -21,6 +22,8 @@ export interface ScriptFeatures {
     outputColumns: string[];
     groupBy: string[];
     orderBy: string[];
+    /// What the trailing VISUALIZE statement renders, one entry per chart, e.g. `vegalite scatter plot (point, x Year temporal)`
+    visualizations: string[];
 }
 
 const AGGREGATES = new Set([
@@ -164,7 +167,12 @@ export function extractFeatures(sql: AnalyzedSql): ScriptFeatures | null {
     const statementRoots = new Set<number>();
     for (let i = 0; i < parsed.statementsLength(); ++i) {
         const statement = parsed.statements(i)!;
-        statementTypes.push(words(buffers.parser.StatementType[statement.statementType()] ?? 'none'));
+        // A VISUALIZE statement wraps a select, name it by what it does ("vis visualise" is the grammar's name)
+        statementTypes.push(
+            statement.statementType() === buffers.parser.StatementType.VIS_VISUALISE
+                ? 'visualize'
+                : words(buffers.parser.StatementType[statement.statementType()] ?? 'none'),
+        );
         statementRoots.add(statement.rootNode());
     }
 
@@ -220,7 +228,11 @@ export function extractFeatures(sql: AnalyzedSql): ScriptFeatures | null {
         const first = inputs !== null ? ast.children(inputs)[0] : undefined;
         return first !== undefined ? targetsOf(first) : null;
     };
-    for (const root of statementRoots) {
+    for (const statementRoot of statementRoots) {
+        // The query of a VISUALIZE statement is its select, its output columns are the ones of the script
+        const root = ast.type(statementRoot) === T.OBJECT_VIS_VISUALISE
+            ? (ast.child(statementRoot, K.VIS_VISUALISE_SELECT) ?? statementRoot)
+            : statementRoot;
         if (ast.type(root) !== T.OBJECT_SQL_SELECT || outputColumns.length > 0) continue;
         const targets = targetsOf(root);
         if (targets === null) continue;
@@ -238,6 +250,13 @@ export function extractFeatures(sql: AnalyzedSql): ScriptFeatures | null {
             }
         }
     }
+
+    const inVisualizeSpec = (node: number): boolean => {
+        for (let p: number | null = node; p !== null; p = ast.parent(p)) {
+            if (ast.key(p) === K.VIS_VISUALISE_SPEC) return true;
+        }
+        return false;
+    };
 
     // Column references by AST node id
     const columnByNode = new Map<number, ColumnInfo>();
@@ -259,7 +278,9 @@ export function extractFeatures(sql: AnalyzedSql): ScriptFeatures | null {
         }
         const label = table ? `${table}.${column}` : column;
         columnByNode.set(expr.astNodeId(), { table, label });
-        if (resolved || table || !outputAliases.has(column)) {
+        // Fields of the VISUALIZE spec name result columns of the query (often aliases like `total`), so they are not
+        // columns of the script. They show up in the visualization description instead.
+        if (!inVisualizeSpec(expr.astNodeId()) && (resolved || table || !outputAliases.has(column))) {
             columns.add(label);
         }
     }
@@ -573,5 +594,6 @@ export function extractFeatures(sql: AnalyzedSql): ScriptFeatures | null {
         outputColumns,
         groupBy: [...groupBy],
         orderBy: [...orderBy],
+        visualizations: sql.visualization ? describeVisualization(sql.visualization) : [],
     };
 }
