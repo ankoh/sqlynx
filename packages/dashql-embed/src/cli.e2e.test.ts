@@ -7,6 +7,7 @@ import { runIndex } from './commands/index.js';
 import type { Describer } from './describe/describe.js';
 import { HashEmbedder } from './embedding/embedder.js';
 import { collectSqlFiles } from './inputs.js';
+import { LAYOUT_COLUMNS, readParquetFile } from './output/parquet.js';
 import { embedderForIndex, loadIndex, searchIndex } from './query.js';
 import { tpchAnalyzer } from './test_fixture.js';
 
@@ -54,6 +55,31 @@ describe('describe, index and query', () => {
         const summary = await runIndex({ inputs: [scripts], outDir: out, embedder, log: () => {} });
         expect(summary).toMatchObject({ scripts: 24, featureRows: 24, withDiagnostics: 0 });
         expect(summary.commentRows).toBeGreaterThanOrEqual(24);
+
+        // The scripts are placed in 2D, and indexing the same scripts again continues from that layout
+        expect(summary.layout).toBe('cold');
+        const layoutOf = async (dir: string) => {
+            const file = await readParquetFile(join(dir, 'features.parquet'));
+            return {
+                file,
+                coords: LAYOUT_COLUMNS.map(name => Array.from(file.table.getChild(name)?.toArray() ?? [])),
+            };
+        };
+        const placed = await layoutOf(out);
+        expect(placed.file.metadata.get('dashql_embed.layout')).toBe('umap-2d');
+        expect(placed.coords.map(c => c.length)).toEqual([24, 24]);
+        expect(placed.coords.flat().every(Number.isFinite)).toBe(true);
+        const again = await runIndex({ inputs: [scripts], outDir: out, embedder, log: () => {} });
+        expect(again.layout).toBe('warm');
+        const replaced = await layoutOf(out);
+        const moved = placed.coords[0].map((_, i) => Math.hypot(...placed.coords.map((c, d) => replaced.coords[d][i] - c[i])));
+        expect(Math.max(...moved)).toBeLessThan(1e-4);
+
+        const unplaced = await runIndex({ inputs: [scripts], outDir: join(work, 'no-layout'), embedder, layout: false, log: () => {} });
+        expect(unplaced.layout).toBe('off');
+        const bare = await readParquetFile(join(work, 'no-layout', 'features.parquet'));
+        expect(bare.table.schema.fields.map(f => f.name)).not.toContain('layout_x');
+        expect(bare.metadata.has('dashql_embed.layout')).toBe(false);
 
         const index = await loadIndex(out);
         const restored = await embedderForIndex(index.features);

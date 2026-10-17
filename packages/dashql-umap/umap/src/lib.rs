@@ -115,6 +115,10 @@ pub enum Init {
     Spectral,
     /// Random uniform initialization in [-10, 10].
     Random,
+    /// Caller-provided coordinates, shape (n_samples, n_components). Used as is, so
+    /// the caller picks the scale (umap-learn scales PCA starts to a max of 10).
+    /// Unlike the other methods this is also honored by the momentum optimizer.
+    Custom(Array2<f32>),
 }
 
 /// Builder for UMAP dimensionality reduction.
@@ -552,7 +556,7 @@ impl<'a> UmapBuilder<'a> {
 
         // Spectral init hurts momentum early (and costs LOBPCG time); prefer random
         // when momentum is selected. (Single-line guard; see plan §5.)
-        let init = if self.optimizer == Optimizer::Momentum {
+        let init = if self.optimizer == Optimizer::Momentum && !matches!(self.init, Init::Custom(_)) {
             Init::Random
         } else {
             self.init.clone()
@@ -575,6 +579,22 @@ impl<'a> UmapBuilder<'a> {
                 emb
             }
             Init::Random => random_layout(n_samples, self.n_components, &mut rng),
+            Init::Custom(coords) => {
+                if coords.dim() != (n_samples, self.n_components) {
+                    return Err(UmapError::InvalidParameter(format!(
+                        "initial embedding has shape {:?}, expected ({}, {})",
+                        coords.dim(),
+                        n_samples,
+                        self.n_components
+                    )));
+                }
+                if coords.iter().any(|x| !x.is_finite()) {
+                    return Err(UmapError::InvalidParameter(
+                        "initial embedding contains non-finite values".to_string(),
+                    ));
+                }
+                coords
+            }
         };
         logger.pop_stage();
 
@@ -1090,6 +1110,36 @@ mod tests {
         assert_eq!(result.embedding.nrows(), 200);
         assert_eq!(result.embedding.ncols(), 2);
         assert!(!result.embedding.iter().any(|x| x.is_nan()));
+    }
+
+    #[test]
+    fn test_umap_custom_init_is_start_of_layout() {
+        let data = make_test_data(100, 10, 42);
+        let start = Array2::from_shape_fn((100, 3), |(i, d)| (i * 3 + d) as f32 * 0.01);
+        // Zero epochs: the result is exactly the supplied coordinates, also for momentum
+        for optimizer in [Optimizer::Sgd, Optimizer::Momentum] {
+            let result = Umap::builder(&data)
+                .n_neighbors(10)
+                .n_components(3)
+                .n_epochs(0)
+                .init_method(Init::Custom(start.clone()))
+                .optimizer(optimizer)
+                .random_state(42)
+                .build()
+                .unwrap();
+            assert_eq!(result.embedding, start);
+        }
+    }
+
+    #[test]
+    fn test_umap_custom_init_rejects_bad_shape() {
+        let data = make_test_data(100, 10, 42);
+        let result = Umap::builder(&data)
+            .n_neighbors(10)
+            .n_components(3)
+            .init_method(Init::Custom(Array2::zeros((100, 2))))
+            .build();
+        assert!(matches!(result, Err(UmapError::InvalidParameter(_))));
     }
 
     #[test]

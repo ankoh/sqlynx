@@ -6,7 +6,7 @@ The embeddings go into two Parquet files that a later example library can search
 
 ```
 dashql-embed describe <dir|file.sql>... [--force] [--dry-run]
-dashql-embed index    <dir|file.sql>... --out-dir <dir> [--model <id>]
+dashql-embed index    <dir|file.sql>... --out-dir <dir> [--model <id>] [--no-layout]
 dashql-embed query    <dir|file.sql>... --index-dir <dir> --prompt "<text>" [--top 10]
 ```
 
@@ -64,11 +64,36 @@ filters, operators and output columns, fitted to the model window.
 | `embedding` | fixed size list<float32>[dim] | L2-normalized |
 | `statement_types`, `tables`, `columns`, `functions`, `aggregates`, `function_calls`, `ctes`, `joins`, `filters`, `operators`, `visualizations` | list<utf8> | the extracted features |
 | `diagnostics` | list<utf8> | scan, parse and analyze messages |
+| `layout_x`, `layout_y` | float32 | position in a 2D scatter plot, see [Layout](#layout) (`--no-layout` omits them) |
 
 The metadata of both files records `kind`, `model`, `dtype`, `pooling`, `query_prefix`, `max_tokens`, `dim`,
 `dashql_core_version` and `format_version`, so queries are embedded exactly like the documents.
 
 Comments and features are never mixed into one window.
+
+## Layout
+
+`index` also places every script in 2D so that a viewer can show the library as a scatter plot. The coordinates are
+in `features.parquet` as `layout_x` and `layout_y`. They are centered at the origin and scaled so that the
+98th percentile of the distance from the center is 1. The metadata has `dashql_embed.layout` (`umap-2d`) and
+`dashql_embed.layout_scale`.
+
+The layout is UMAP on the feature embeddings (cosine, the UMAP defaults of 15 neighbors and minimum distance 0.1), run
+by the vendored wasm module of `//packages/dashql-umap`. Three things keep it stable:
+
+- **Duplicates are removed first.** Scripts with the same feature text have the same embedding. UMAP gets only the
+  distinct vectors and the duplicates are scattered in a radius of 0.01 around their twin. With duplicates in the input
+  the layout changes completely from one run to the next.
+- **PCA start.** A cold start begins at the first two principal components instead of spectral or random
+  coordinates, so the same embeddings always give the same layout.
+- **Warm start.** When `--out-dir` already has a `features.parquet` of the same model, scripts with the same name and
+  hash start where they were. New scripts start at the mean position of their five nearest neighbors, and 60 gentle
+  epochs follow instead of a full run. If no script is new, nothing is optimized and the layout stays as it is. If less
+  than half of the scripts are known, the layout starts from scratch.
+
+On the embeddings of 700 distinct test scripts, replacing 10% of the scripts moved the known ones by 0.07 to 0.08 of
+the cloud radius (from 150 scripts up), with the same neighbor quality as a fresh layout. With 60 scripts they moved by
+0.23. Re-indexing the same scripts moves nothing.
 
 ## Searching
 

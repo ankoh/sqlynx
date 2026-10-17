@@ -27,6 +27,7 @@ Usage:
       --max-tokens <n>         Token window of the model (default from the preset)
       --batch-size <n>         Embedding batch size (default 32)
       --embedder <kind>        transformers (default) or hash (offline, deterministic, for tests)
+      --no-layout              Skip the 2D layout (layout_x/y) of the scripts
       --cache-dir <dir>        Model cache
 
   dashql-embed query <dir|file.sql>... --index-dir <dir> --prompt <text> [options]
@@ -71,6 +72,7 @@ async function main(argv: string[]): Promise<number> {
             'max-tokens': { type: 'string' },
             'batch-size': { type: 'string' },
             embedder: { type: 'string' },
+            'no-layout': { type: 'boolean' },
             prompt: { type: 'string' },
             top: { type: 'string' },
             fusion: { type: 'string' },
@@ -124,11 +126,12 @@ async function main(argv: string[]): Promise<number> {
                 inputs: positionals,
                 outDir: values['out-dir'],
                 embedder,
+                layout: !values['no-layout'],
                 log,
             });
             log(
                 `${summary.scripts} scripts: ${summary.featureRows} feature rows, ${summary.commentRows} comment rows, ` +
-                    `${summary.truncated} truncated, ${summary.withDiagnostics} with diagnostics`,
+                    `${summary.truncated} truncated, ${summary.withDiagnostics} with diagnostics, layout: ${summary.layout}`,
             );
             return 0;
         }

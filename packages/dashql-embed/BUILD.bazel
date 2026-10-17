@@ -49,6 +49,9 @@ _RUNTIME_DEPS = [
     "//:node_modules/yaml",
 ]
 
+# The vendored UMAP wasm module that places the scripts in 2D, loaded from disk (src/layout/umap_module.ts)
+_UMAP_DATA = ["//packages/dashql-umap:node_module"]
+
 typescript_bin.tsc_binary(
     name = "tsc_bin",
 )
@@ -79,7 +82,7 @@ js_binary(
     data = [
         ":compile",
         ":package.json",
-    ] + _RUNTIME_DEPS,
+    ] + _RUNTIME_DEPS + _UMAP_DATA,
     entry_point = "bin/dashql-embed.mjs",
     visibility = ["//visibility:public"],
 )
@@ -100,7 +103,7 @@ vitest_bin.vitest_test(
         "//:example_notebooks_test_data",
         "//:node_modules/vitest",
         "//snapshots/embed:files",
-    ] + _RUNTIME_DEPS,
+    ] + _RUNTIME_DEPS + _UMAP_DATA,
 )
 
 # Regenerates snapshots/embed/*.yaml from the *.tpl.yaml templates

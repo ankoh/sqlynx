@@ -12,6 +12,7 @@ export type IndexKind = 'comments' | 'features';
 const utf8 = new arrow.Utf8();
 const int32 = new arrow.Int32();
 const bool = new arrow.Bool();
+const float32 = new arrow.Float32();
 const utf8List = new arrow.List(new arrow.Field('item', new arrow.Utf8(), true));
 
 function embeddingType(dim: number): arrow.FixedSizeList<arrow.Float32> {
@@ -65,6 +66,14 @@ export function indexMetadata(kind: IndexKind, config: EmbedderConfig, dim: numb
     ]);
 }
 
+/// Metadata that tells how the layout_x/y/z columns were made
+export function layoutMetadata(scale: number): Map<string, string> {
+    return new Map<string, string>([
+        ['dashql_embed.layout', LAYOUT_KIND],
+        ['dashql_embed.layout_scale', String(scale)],
+    ]);
+}
+
 export function commentsTable(rows: CommentRow[], dim: number, metadata: Map<string, string>): arrow.Table {
     return buildTable(
         [
@@ -82,7 +91,18 @@ export function commentsTable(rows: CommentRow[], dim: number, metadata: Map<str
     );
 }
 
-export function featuresTable(rows: FeatureRow[], dim: number, metadata: Map<string, string>): arrow.Table {
+export const LAYOUT_COLUMNS = ['layout_x', 'layout_y'] as const;
+/// Value of the dashql_embed.layout metadata
+export const LAYOUT_KIND = 'umap-2d';
+
+/// `layout` holds x and y per row (row-major) and adds the layout_x/y columns
+export function featuresTable(rows: FeatureRow[], dim: number, metadata: Map<string, string>, layout?: Float32Array): arrow.Table {
+    if (layout && layout.length !== rows.length * LAYOUT_COLUMNS.length) {
+        throw new Error(`expected ${rows.length * LAYOUT_COLUMNS.length} layout values, got ${layout.length}`);
+    }
+    const layoutColumns: [string, arrow.DataType, arrow.Data][] = layout
+        ? LAYOUT_COLUMNS.map((name, d) => [name, float32, column(rows.map((_, i) => layout[i * LAYOUT_COLUMNS.length + d]), float32)])
+        : [];
     const list = (pick: (r: FeatureRow) => string[]): arrow.Data => column(rows.map(pick), utf8List);
     return buildTable(
         [
@@ -93,6 +113,7 @@ export function featuresTable(rows: FeatureRow[], dim: number, metadata: Map<str
             ['token_count', int32, column(rows.map(r => r.tokenCount), int32)],
             ['truncated', bool, column(rows.map(r => r.truncated), bool)],
             ['embedding', embeddingType(dim), embeddingColumn(rows.map(r => r.embedding), dim)],
+            ...layoutColumns,
             ['statement_types', utf8List, list(r => r.features.statementTypes)],
             ['tables', utf8List, list(r => r.features.tables)],
             ['columns', utf8List, list(r => r.features.columns)],

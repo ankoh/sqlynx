@@ -82,6 +82,7 @@ pub struct UMAPBuilder {
     local_connectivity: f32,
     set_op_mix_ratio: f32,
     init: Init,
+    initial_embedding: Option<Vec<f32>>,
     optimizer: Optimizer,
     random_state: Option<u64>,
     verbose: bool,
@@ -115,6 +116,7 @@ impl UMAPBuilder {
             local_connectivity: 1.0,
             set_op_mix_ratio: 1.0,
             init: Init::Spectral,
+            initial_embedding: None,
             optimizer: Optimizer::Sgd,
             random_state: None,
             verbose: false,
@@ -202,6 +204,15 @@ impl UMAPBuilder {
         self
     }
 
+    /// Start the layout from these coordinates (row-major, n_rows * n_components)
+    /// instead of an init method. The caller picks the scale. Unlike the init
+    /// methods this is also used with the momentum optimizer.
+    #[wasm_bindgen(js_name = "initialEmbedding")]
+    pub fn initial_embedding(mut self, coords: &[f32]) -> UMAPBuilder {
+        self.initial_embedding = Some(coords.to_vec());
+        self
+    }
+
     /// Optimizer: "sgd" (default) or "momentum".
     pub fn optimizer(mut self, optimizer: &str) -> UMAPBuilder {
         self.optimizer = match optimizer {
@@ -245,6 +256,10 @@ impl UMAPBuilder {
     /// interactively.
     pub async fn build(self) -> Result<Umap, JsError> {
         let array = parse_data(&self.data, self.n_rows, self.n_cols)?;
+        let init = match &self.initial_embedding {
+            Some(coords) => Init::Custom(parse_data(coords, self.n_rows, self.n_components)?),
+            None => self.init.clone(),
+        };
 
         let mut builder = UmapCore::builder(&array)
             .n_components(self.n_components)
@@ -257,7 +272,7 @@ impl UMAPBuilder {
             .repulsion_strength(self.repulsion_strength)
             .local_connectivity(self.local_connectivity)
             .set_op_mix_ratio(self.set_op_mix_ratio)
-            .init_method(self.init)
+            .init_method(init)
             .optimizer(self.optimizer)
             .gpu(self.gpu)
             .verbose(self.verbose);

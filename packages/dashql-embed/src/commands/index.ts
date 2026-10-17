@@ -5,12 +5,16 @@ import { SqlAnalyzer } from '../analysis/core.js';
 import type { Embedder } from '../embedding/embedder.js';
 import { analyzeScripts, embedScripts } from '../indexer.js';
 import { collectSqlFiles, resolveUserPath } from '../inputs.js';
-import { commentsTable, featuresTable, indexMetadata, writeParquetFile } from '../output/parquet.js';
+import { computeLayout, layoutKey } from '../layout/layout.js';
+import { readPreviousLayout } from '../layout/previous.js';
+import { commentsTable, featuresTable, indexMetadata, layoutMetadata, writeParquetFile } from '../output/parquet.js';
 
 export interface IndexOptions {
     inputs: string[];
     outDir: string;
     embedder: Embedder;
+    /// Place the scripts in 2D (layout_x/y). Default true.
+    layout?: boolean;
     log: (message: string) => void;
 }
 
@@ -20,6 +24,8 @@ export interface IndexSummary {
     commentRows: number;
     truncated: number;
     withDiagnostics: number;
+    /// How the layout started, or off
+    layout: 'cold' | 'warm' | 'trivial' | 'off';
 }
 
 /// Read the version of the DashQL core package that produced the analysis
@@ -50,19 +56,34 @@ export async function runIndex(options: IndexOptions): Promise<IndexSummary> {
 
     const version = await coreVersion();
     const outDir = resolveUserPath(options.outDir);
+    const featuresPath = join(outDir, 'features.parquet');
+    const featuresMetadata = indexMetadata('features', embedder.config, embedder.dim, version);
+    let layout: Float32Array | undefined;
+    let layoutMode: IndexSummary['layout'] = 'off';
+    if ((options.layout ?? true) && features.length > 0) {
+        const flat = new Float32Array(features.length * embedder.dim);
+        features.forEach((f, i) => flat.set(f.embedding, i * embedder.dim));
+        const result = await computeLayout(
+            flat,
+            features.map(f => layoutKey(f.scriptName, f.scriptHash)),
+            embedder.dim,
+            { previous: await readPreviousLayout(featuresPath, embedder.config, embedder.dim), log },
+        );
+        layout = result.coords;
+        layoutMode = result.mode;
+        for (const [key, value] of layoutMetadata(result.scale)) featuresMetadata.set(key, value);
+    }
     await writeParquetFile(
         join(outDir, 'comments.parquet'),
         commentsTable(comments, embedder.dim, indexMetadata('comments', embedder.config, embedder.dim, version)),
     );
-    await writeParquetFile(
-        join(outDir, 'features.parquet'),
-        featuresTable(features, embedder.dim, indexMetadata('features', embedder.config, embedder.dim, version)),
-    );
+    await writeParquetFile(featuresPath, featuresTable(features, embedder.dim, featuresMetadata, layout));
     return {
         scripts: files.length,
         featureRows: features.length,
         commentRows: comments.length,
         truncated: features.filter(f => f.truncated).length,
         withDiagnostics: scripts.filter(s => s.analyzed.diagnostics.length > 0).length,
+        layout: layoutMode,
     };
 }
