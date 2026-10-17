@@ -6,7 +6,7 @@ edition = "2021"
 rust-version = "1.70"
 
 [build-dependencies.tauri-build]
-version = "2.6.2"
+version = "2.7.3"
 features = []
 
 [build-dependencies.tonic-prost-build]
@@ -18,7 +18,7 @@ anyhow = "1.0.104"
 base64 = "0.22.1"
 byteorder = "1.5.0"
 serde_json = "1.0.154"
-tauri-plugin = "2.6.2"
+tauri-plugin = "2.7.2"
 tauri-plugin-updater = "2.10.1"
 tauri-plugin-deep-link = "2.4.9"
 tauri-plugin-log = "2.8.0"
@@ -72,7 +72,7 @@ version = "1.0.229"
 features = ["derive"]
 
 [dependencies.tauri]
-version = "2.11.2"
+version = "2.12.4"
 features = ["custom-protocol"]
 
 
