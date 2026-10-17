@@ -4,6 +4,7 @@ package(default_visibility = ["//visibility:public"])
 
 load("@aspect_rules_js//js:defs.bzl", "js_library")
 load("@hedron_compile_commands//:refresh_compile_commands.bzl", "refresh_compile_commands")
+load("@aspect_rules_js//npm:defs.bzl", "npm_link_package")
 load("@npm//:defs.bzl", "npm_link_all_packages")
 
 exports_files([
@@ -51,6 +52,12 @@ js_library(
 # npm link tree from pnpm lockfile (package.bazel.json + pnpm-lock.yaml).
 # Dashql-app uses this plus //packages/dashql-app:ankoh_overlay via NODE_PATH (two entries), no copy_to_directory merge.
 npm_link_all_packages(name = "node_modules")
+
+# The in-repo core package, linked like an npm dependency for Node consumers such as //packages/dashql-embed.
+npm_link_package(
+    name = "node_modules/@ankoh/dashql-core",
+    src = "//packages/dashql-core-js:npm_package",
+)
 
 refresh_compile_commands(
     name = "refresh_compile_commands",

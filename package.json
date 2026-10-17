@@ -10,6 +10,7 @@
     "flatbuffers": "25.9.23"
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "^0.135.0",
     "@bufbuild/buf": "^1.70.0",
     "@bufbuild/protobuf": "^2.12.0",
     "@bufbuild/protoc-gen-es": "^2.12.0",
@@ -22,6 +23,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@eslint/js": "^10.0.1",
+    "@huggingface/transformers": "^4.3.1",
     "@lezer/highlight": "^1.2.5",
     "@primer/behaviors": "^1.10.3",
     "@react-hook/resize-observer": "^2.0.2",
@@ -54,6 +56,7 @@
     "jszip": "^3.10.2",
     "mocha": "^12.0.0",
     "oauth-pkce": "^0.0.7",
+    "parquet-wasm": "^0.9.0",
     "playwright-core": "1.63.0",
     "prettier": "^3.8.3",
     "react": "^19.2.8",
@@ -71,7 +74,8 @@
     "vega-lite": "^5.23.0",
     "vite": "^8.0.14",
     "vite-plugin-checker": "^0.14.5",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.7",
+    "yaml": "^2.9.1"
   },
   "browserslist": [
     "last 1 version",

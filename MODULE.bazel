@@ -114,6 +114,9 @@ npm.npm_translate_lock(
         "lightningcss-darwin-x64": [""],
         "lightningcss-linux-x64-gnu": [""],
         "lightningcss-linux-arm64-gnu": [""],
+        # transformers.js imports onnxruntime-common without declaring it, pnpm hoists it but rules_js does not.
+        # The version has to match onnxruntime-node (used by //packages/dashql-embed).
+        "onnxruntime-common@1.30.0": [""],
     },
 )
 use_repo(npm, "npm")

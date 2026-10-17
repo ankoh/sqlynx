@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "rootDir": "src",
+        "outDir": "dist",
+        "strict": true,
+        "isolatedModules": true,
+        "sourceMap": true,
+        "skipLibCheck": true,
+        "types": ["node"],
+        "lib": ["ES2022", "WebWorker"]
+    },
+    "include": ["src/**/*.ts"],
+    "exclude": ["src/**/*.test.ts", "src/**/*.smoke.ts", "src/**/*.snapshot.ts", "src/test_fixture.ts"]
+}

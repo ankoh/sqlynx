@@ -1,0 +1,18 @@
+load("@aspect_rules_js//js:defs.bzl", "js_library")
+
+package(default_visibility = ["//visibility:public"])
+
+# A js_library so that Node tests in other packages can use the files as data
+js_library(
+    name = "files",
+    srcs = glob(["*.yaml"]),
+)
+
+# Regenerates the *.yaml files from the *.tpl.yaml templates. Needs neither the embedding model nor an LLM.
+# Not part of //snapshots:update, which runs the C++ snapshotter.
+#
+#   bazel run //snapshots/embed:update
+alias(
+    name = "update",
+    actual = "//packages/dashql-embed:snapshotter",
+)

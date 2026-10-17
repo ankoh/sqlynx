@@ -1,0 +1,684 @@
+# Generated from the .tpl.yaml next to this file. Do not edit.
+# Update with: bazel run //snapshots/embed:update
+embed_snapshots:
+  - name: tpch_q3
+    script:
+      input: |-
+        -- TPC-H query 3
+        select l_orderkey, sum(l_extendedprice * (1 - l_discount)) as revenue, o_orderdate, o_shippriority
+        from customer, orders, lineitem
+        where c_mktsegment = 'BUILDING' and c_custkey = o_custkey and l_orderkey = o_orderkey
+            and o_orderdate < date '1995-03-15'
+            and l_shipdate > date '1995-03-15'
+        group by l_orderkey, o_orderdate, o_shippriority
+        order by revenue desc, o_orderdate
+        limit 10;
+    describe: {}
+    describe_prompt: |-
+      select l_orderkey, sum(l_extendedprice * (1 - l_discount)) as revenue, o_orderdate, o_shippriority
+      from customer, orders, lineitem
+      where c_mktsegment = 'BUILDING' and c_custkey = o_custkey and l_orderkey = o_orderkey
+          and o_orderdate < date '1995-03-15'
+          and l_shipdate > date '1995-03-15'
+      group by l_orderkey, o_orderdate, o_shippriority
+      order by revenue desc, o_orderdate
+      limit 10;
+    features:
+      statement_types:
+        - select
+      tables:
+        - customer
+        - lineitem
+        - orders
+      columns:
+        - c_custkey
+        - c_mktsegment
+        - l_discount
+        - l_extendedprice
+        - l_orderkey
+        - l_shipdate
+        - o_custkey
+        - o_orderdate
+        - o_orderkey
+        - o_shippriority
+      functions: []
+      aggregates:
+        - sum
+      function_calls:
+        - sum(l_extendedprice * (1 - l_discount))
+      ctes: []
+      joins: []
+      filters:
+        - c_custkey = o_custkey
+        - c_mktsegment = 'BUILDING'
+        - l_orderkey = o_orderkey
+        - l_shipdate > date '1995-03-15'
+        - o_orderdate < date '1995-03-15'
+      operators:
+        - group by
+        - order by
+        - limit
+      output_columns:
+        - l_orderkey
+        - revenue
+        - o_orderdate
+        - o_shippriority
+      group_by:
+        - l_orderkey
+        - o_orderdate
+        - o_shippriority
+      order_by:
+        - revenue
+        - o_orderdate
+    feature_text: |-
+      Statements: 1 select statement
+      Tables: customer, lineitem, orders
+      Function calls: sum(l_extendedprice * (1 - l_discount))
+      Grouped by: l_orderkey, o_orderdate, o_shippriority
+      Filters: c_custkey = o_custkey; c_mktsegment = 'BUILDING'; l_orderkey = o_orderkey; l_shipdate > date '1995-03-15'; o_orderdate < date '1995-03-15'
+      Operators: group by, order by, limit
+      Ordered by: revenue, o_orderdate
+      Output: l_orderkey, revenue, o_orderdate, o_shippriority
+      Columns: c_custkey, c_mktsegment, l_discount, l_extendedprice, l_orderkey, l_shipdate, o_custkey, o_orderdate, o_orderkey, o_shippriority
+      Terms: customer lineitem orders custkey mktsegment discount extendedprice orderkey shipdate orderdate shippriority revenue
+    comments:
+      - source: comment
+        text: TPC-H query 3
+    diagnostics: []
+  - name: tpch_q8
+    describe: {}
+    script:
+      input: |-
+        -- TPC-H query 8
+        select o_year, sum(case when nation = 'BRAZIL' then volume else 0 end) / sum(volume) as mkt_share
+        from (
+            select extract(year from o_orderdate) as o_year, l_extendedprice * (1 - l_discount) as volume, n2.n_name as nation
+            from part, supplier, lineitem, orders, customer, nation n1, nation n2, region
+            where p_partkey = l_partkey and s_suppkey = l_suppkey and l_orderkey = o_orderkey
+                and o_custkey = c_custkey and c_nationkey = n1.n_nationkey and n1.n_regionkey = r_regionkey
+                and r_name = 'AMERICA' and s_nationkey = n2.n_nationkey
+                and o_orderdate between date '1995-01-01' and date '1996-12-31' and p_type = 'ECONOMY ANODIZED STEEL'
+        ) all_nations
+        group by o_year
+        order by o_year;
+    describe_prompt: |-
+      select o_year, sum(case when nation = 'BRAZIL' then volume else 0 end) / sum(volume) as mkt_share
+      from (
+          select extract(year from o_orderdate) as o_year, l_extendedprice * (1 - l_discount) as volume, n2.n_name as nation
+          from part, supplier, lineitem, orders, customer, nation n1, nation n2, region
+          where p_partkey = l_partkey and s_suppkey = l_suppkey and l_orderkey = o_orderkey
+              and o_custkey = c_custkey and c_nationkey = n1.n_nationkey and n1.n_regionkey = r_regionkey
+              and r_name = 'AMERICA' and s_nationkey = n2.n_nationkey
+              and o_orderdate between date '1995-01-01' and date '1996-12-31' and p_type = 'ECONOMY ANODIZED STEEL'
+      ) all_nations
+      group by o_year
+      order by o_year;
+    features:
+      statement_types:
+        - select
+      tables:
+        - customer
+        - lineitem
+        - nation
+        - orders
+        - part
+        - region
+        - supplier
+      columns:
+        - c_custkey
+        - c_nationkey
+        - l_discount
+        - l_extendedprice
+        - l_orderkey
+        - l_partkey
+        - l_suppkey
+        - nation
+        - nation.n_name
+        - nation.n_nationkey
+        - nation.n_regionkey
+        - o_custkey
+        - o_orderdate
+        - o_orderkey
+        - o_year
+        - p_partkey
+        - p_type
+        - r_name
+        - r_regionkey
+        - s_nationkey
+        - s_suppkey
+        - volume
+      functions:
+        - extract
+      aggregates:
+        - sum
+      function_calls:
+        - extract(year from o_orderdate)
+        - sum(case when nation = 'BRAZIL' then volume else 0 end)
+        - sum(volume)
+      ctes: []
+      joins: []
+      filters:
+        - c_nationkey = nation.n_nationkey
+        - l_orderkey = o_orderkey
+        - nation.n_regionkey = r_regionkey
+        - o_custkey = c_custkey
+        - o_orderdate between date '1995-01-01' and date '1996-12-31'
+        - p_partkey = l_partkey
+        - p_type = 'ECONOMY ANODIZED STEEL'
+        - r_name = 'AMERICA'
+        - s_nationkey = nation.n_nationkey
+        - s_suppkey = l_suppkey
+      operators:
+        - subquery
+        - case
+        - group by
+        - order by
+      output_columns:
+        - o_year
+        - mkt_share
+      group_by:
+        - o_year
+      order_by:
+        - o_year
+    feature_text: |-
+      Statements: 1 select statement
+      Tables: customer, lineitem, nation, orders, part, region, supplier
+      Function calls: extract(year from o_orderdate); sum(case when nation = 'BRAZIL' then volume else 0 end); sum(volume)
+      Grouped by: o_year
+      Filters: c_nationkey = nation.n_nationkey; l_orderkey = o_orderkey; nation.n_regionkey = r_regionkey; o_custkey = c_custkey; o_orderdate between date '1995-01-01' and date '1996-12-31'; p_partkey = l_partkey; p_type = 'ECONOMY ANODIZED STEEL'; r_name = 'AMERICA'; s_nationkey = nation.n_nationkey; s_suppkey = l_suppkey
+      Operators: subquery, case, group by, order by
+      Ordered by: o_year
+      Output: o_year, mkt_share
+      Columns: c_custkey, c_nationkey, l_discount, l_extendedprice, l_orderkey, l_partkey, l_suppkey, nation, nation.n_name, nation.n_nationkey, nation.n_regionkey, o_custkey, o_orderdate, o_orderkey, o_year, p_partkey, p_type, r_name, r_regionkey, s_nationkey, s_suppkey, volume
+      Terms: customer lineitem nation orders part region supplier custkey nationkey discount extendedprice orderkey partkey suppkey name regionkey orderdate year type volume mkt share
+    comments:
+      - source: comment
+        text: TPC-H query 8
+    diagnostics: []
+  - name: tpch_q13
+    describe: {}
+    script:
+      input: |-
+        select c_count, count(*) as custdist
+        from (
+            select c_custkey, count(o_orderkey) as c_count
+            from customer left outer join orders on c_custkey = o_custkey and o_comment not like '%special%requests%'
+            group by c_custkey
+        ) c_orders
+        group by c_count
+        order by custdist desc, c_count desc;
+    describe_prompt: |-
+      select c_count, count(*) as custdist
+      from (
+          select c_custkey, count(o_orderkey) as c_count
+          from customer left outer join orders on c_custkey = o_custkey and o_comment not like '%special%requests%'
+          group by c_custkey
+      ) c_orders
+      group by c_count
+      order by custdist desc, c_count desc;
+    features:
+      statement_types:
+        - select
+      tables:
+        - customer
+        - orders
+      columns:
+        - c_count
+        - c_custkey
+        - o_comment
+        - o_custkey
+        - o_orderkey
+      functions: []
+      aggregates:
+        - count
+      function_calls:
+        - count(*)
+        - count(o_orderkey)
+      ctes: []
+      joins: []
+      filters:
+        - c_custkey = o_custkey
+        - o_comment not like '%special%requests%'
+      operators:
+        - left outer join
+        - subquery
+        - group by
+        - order by
+      output_columns:
+        - c_count
+        - custdist
+      group_by:
+        - c_custkey
+        - c_count
+      order_by:
+        - custdist
+        - c_count
+    feature_text: |-
+      Statements: 1 select statement
+      Tables: customer, orders
+      Function calls: count(*); count(o_orderkey)
+      Grouped by: c_custkey, c_count
+      Filters: c_custkey = o_custkey; o_comment not like '%special%requests%'
+      Operators: left outer join, subquery, group by, order by
+      Ordered by: custdist, c_count
+      Output: c_count, custdist
+      Columns: c_count, c_custkey, o_comment, o_custkey, o_orderkey
+      Terms: customer orders count custkey comment orderkey custdist
+    comments: []
+    diagnostics: []
+  - name: cte_window_union
+    describe: {}
+    script:
+      input: |-
+        -- Ranked customers per nation, plus a total row
+        with spend as (
+            select c_nationkey, c_custkey, sum(o_totalprice) as total
+            from customer join orders on c_custkey = o_custkey
+            group by c_nationkey, c_custkey
+        )
+        select c_nationkey, c_custkey, rank() over (partition by c_nationkey order by total desc) as rnk from spend
+        union all
+        select null, null, 0;
+    describe_prompt: |-
+      with spend as (
+          select c_nationkey, c_custkey, sum(o_totalprice) as total
+          from customer join orders on c_custkey = o_custkey
+          group by c_nationkey, c_custkey
+      )
+      select c_nationkey, c_custkey, rank() over (partition by c_nationkey order by total desc) as rnk from spend
+      union all
+      select null, null, 0;
+    features:
+      statement_types:
+        - select
+      tables:
+        - customer
+        - orders
+      columns:
+        - c_custkey
+        - c_nationkey
+        - o_custkey
+        - o_totalprice
+        - total
+      functions:
+        - rank
+      aggregates:
+        - sum
+      function_calls:
+        - rank() over (partition by c_nationkey order by total desc)
+        - sum(o_totalprice)
+      ctes:
+        - spend
+      joins: []
+      filters:
+        - c_custkey = o_custkey
+      operators:
+        - inner join
+        - cte
+        - window
+        - group by
+        - union all
+      output_columns:
+        - c_nationkey
+        - c_custkey
+        - rnk
+      group_by:
+        - c_nationkey
+        - c_custkey
+      order_by: []
+    feature_text: |-
+      Statements: 1 select statement
+      Tables: customer, orders
+      Function calls: rank() over (partition by c_nationkey order by total desc); sum(o_totalprice)
+      Grouped by: c_nationkey, c_custkey
+      Filters: c_custkey = o_custkey
+      Operators: inner join, cte, window, group by, union all
+      Output: c_nationkey, c_custkey, rnk
+      CTEs: spend
+      Columns: c_custkey, c_nationkey, o_custkey, o_totalprice, total
+      Terms: customer orders custkey nationkey totalprice total rnk spend
+    comments:
+      - source: comment
+        text: Ranked customers per nation, plus a total row
+    diagnostics: []
+  - name: join_using
+    script:
+      input: |-
+        select a.x, b.y
+        from foo a join bar b using (id)
+        where a.kind = 'z' and b.amount > 10;
+    features:
+      statement_types:
+        - select
+      tables:
+        - bar
+        - foo
+      columns:
+        - bar.amount
+        - bar.y
+        - foo.kind
+        - foo.x
+      functions: []
+      aggregates: []
+      function_calls: []
+      ctes: []
+      joins:
+        - bar = foo using (id)
+      filters:
+        - bar.amount > 10
+        - foo.kind = 'z'
+      operators:
+        - inner join
+      output_columns:
+        - a.x
+        - b.y
+      group_by: []
+      order_by: []
+    feature_text: |-
+      Statements: 1 select statement
+      Tables: bar, foo
+      Joins: bar = foo using (id)
+      Filters: bar.amount > 10; foo.kind = 'z'
+      Operators: inner join
+      Output: a.x, b.y
+      Columns: bar.amount, bar.y, foo.kind, foo.x
+      Terms: bar foo amount kind
+    comments: []
+    diagnostics: []
+  - name: comments
+    describe: {}
+    script:
+      input: |-
+        /* Orders of one customer
+           with their status */
+        -- select * from customer;
+        select o_orderkey, o_orderstatus from orders where o_custkey = 42;
+    describe_prompt: select o_orderkey, o_orderstatus from orders where o_custkey = 42;
+    features:
+      statement_types:
+        - select
+      tables:
+        - orders
+      columns:
+        - o_custkey
+        - o_orderkey
+        - o_orderstatus
+      functions: []
+      aggregates: []
+      function_calls: []
+      ctes: []
+      joins: []
+      filters:
+        - o_custkey = 42
+      operators: []
+      output_columns:
+        - o_orderkey
+        - o_orderstatus
+      group_by: []
+      order_by: []
+    feature_text: |-
+      Statements: 1 select statement
+      Tables: orders
+      Filters: o_custkey = 42
+      Output: o_orderkey, o_orderstatus
+      Columns: o_custkey, o_orderkey, o_orderstatus
+      Terms: orders custkey orderkey orderstatus
+    comments:
+      - source: comment
+        text: |-
+          Orders of one customer
+          with their status
+    diagnostics: []
+  - name: existing_description
+    script:
+      input: |-
+        -- @dashql:description
+        -- Old text.
+        -- @dashql:end
+        -- Keep me
+        select count(*) from nation;
+    describe: {}
+    describe_skipped: the script already has a description
+    features:
+      statement_types:
+        - select
+      tables:
+        - nation
+      columns: []
+      functions: []
+      aggregates:
+        - count
+      function_calls:
+        - count(*)
+      ctes: []
+      joins: []
+      filters: []
+      operators: []
+      output_columns:
+        - count(*)
+      group_by: []
+      order_by: []
+    feature_text: |-
+      Statements: 1 select statement
+      Tables: nation
+      Function calls: count(*)
+      Output: count(*)
+      Terms: nation count
+    comments:
+      - source: dashql_description
+        text: Old text.
+      - source: comment
+        text: Keep me
+    diagnostics: []
+  - name: forced_description
+    script:
+      input: |-
+        -- @dashql:description
+        -- Old text.
+        -- @dashql:end
+        -- Keep me
+        select count(*) from nation;
+    describe:
+      force: true
+    describe_prompt: select count(*) from nation;
+    features:
+      statement_types:
+        - select
+      tables:
+        - nation
+      columns: []
+      functions: []
+      aggregates:
+        - count
+      function_calls:
+        - count(*)
+      ctes: []
+      joins: []
+      filters: []
+      operators: []
+      output_columns:
+        - count(*)
+      group_by: []
+      order_by: []
+    feature_text: |-
+      Statements: 1 select statement
+      Tables: nation
+      Function calls: count(*)
+      Output: count(*)
+      Terms: nation count
+    comments:
+      - source: dashql_description
+        text: Old text.
+      - source: comment
+        text: Keep me
+    diagnostics: []
+  - name: statements
+    script:
+      input: |-
+        create table t (a int, b varchar);
+        insert into t values (1, 'x');
+        select a from t where b = 'x';
+    features:
+      statement_types:
+        - create table
+        - insert
+        - select
+      tables:
+        - t
+      columns:
+        - t.a
+        - t.b
+      functions: []
+      aggregates: []
+      function_calls: []
+      ctes: []
+      joins: []
+      filters:
+        - t.b = 'x'
+      operators: []
+      output_columns:
+        - a
+      group_by: []
+      order_by: []
+    feature_text: |-
+      Statements: 1 create table statement, 1 insert statement, 1 select statement
+      Tables: t
+      Filters: t.b = 'x'
+      Output: a
+      Columns: t.a, t.b
+    comments: []
+    diagnostics: []
+  - name: last_30_days
+    describe: {}
+    script:
+      input: |-
+        -- Recent orders
+        select date_trunc('day', o_orderdate) as day, count(*) as orders, sum(o_totalprice) as total
+        from orders
+        where date_trunc('day', o_orderdate) > current_timestamp - interval '30' day
+            and o_orderstatus = 'F'
+        group by 1
+        order by 1;
+    describe_prompt: |-
+      select date_trunc('day', o_orderdate) as day, count(*) as orders, sum(o_totalprice) as total
+      from orders
+      where date_trunc('day', o_orderdate) > current_timestamp - interval '30' day
+          and o_orderstatus = 'F'
+      group by 1
+      order by 1;
+    features:
+      statement_types:
+        - select
+      tables:
+        - orders
+      columns:
+        - o_orderdate
+        - o_orderstatus
+        - o_totalprice
+      functions:
+        - current_timestamp
+        - date_trunc
+      aggregates:
+        - count
+        - sum
+      function_calls:
+        - count(*)
+        - current_timestamp
+        - date_trunc('day', o_orderdate)
+        - sum(o_totalprice)
+      ctes: []
+      joins: []
+      filters:
+        - date_trunc('day', o_orderdate) > current_timestamp - interval '30' day
+        - o_orderstatus = 'F'
+      operators:
+        - group by
+        - order by
+      output_columns:
+        - day
+        - orders
+        - total
+      group_by:
+        - date_trunc('day', o_orderdate)
+      order_by:
+        - date_trunc('day', o_orderdate)
+    feature_text: |-
+      Statements: 1 select statement
+      Tables: orders
+      Function calls: count(*); current_timestamp; date_trunc('day', o_orderdate); sum(o_totalprice)
+      Grouped by: date_trunc('day', o_orderdate)
+      Filters: date_trunc('day', o_orderdate) > current_timestamp - interval '30' day; o_orderstatus = 'F'
+      Operators: group by, order by
+      Ordered by: date_trunc('day', o_orderdate)
+      Output: day, orders, total
+      Columns: o_orderdate, o_orderstatus, o_totalprice
+      Terms: orders orderdate orderstatus totalprice day total
+    comments:
+      - source: comment
+        text: Recent orders
+    diagnostics: []
+  - name: self_contained
+    describe: {}
+    script:
+      input: |-
+        create table customer (c_custkey int, c_name varchar, c_mktsegment varchar);
+        create table orders (o_orderkey int, o_custkey int, o_totalprice decimal(12, 2));
+        select c_name, sum(o_totalprice) as total
+        from customer join orders on c_custkey = o_custkey
+        where c_mktsegment = 'BUILDING'
+        group by c_name;
+    describe_prompt: |-
+      create table customer (c_custkey int, c_name varchar, c_mktsegment varchar);
+
+      create table orders (o_orderkey int, o_custkey int, o_totalprice decimal(12, 2));
+
+      select c_name, sum(o_totalprice) as total
+      from customer join orders on c_custkey = o_custkey
+      where c_mktsegment = 'BUILDING'
+      group by c_name;
+    features:
+      statement_types:
+        - create table
+        - create table
+        - select
+      tables:
+        - customer
+        - orders
+      columns:
+        - customer.c_custkey
+        - customer.c_mktsegment
+        - customer.c_name
+        - orders.o_custkey
+        - orders.o_totalprice
+      functions: []
+      aggregates:
+        - sum
+      function_calls:
+        - sum(orders.o_totalprice)
+      ctes: []
+      joins:
+        - customer.c_custkey = orders.o_custkey
+      filters:
+        - customer.c_mktsegment = 'BUILDING'
+      operators:
+        - inner join
+        - group by
+      output_columns:
+        - c_name
+        - total
+      group_by:
+        - customer.c_name
+      order_by: []
+    feature_text: |-
+      Statements: 2 create table statements, 1 select statement
+      Tables: customer, orders
+      Joins: customer.c_custkey = orders.o_custkey
+      Function calls: sum(orders.o_totalprice)
+      Grouped by: customer.c_name
+      Filters: customer.c_mktsegment = 'BUILDING'
+      Operators: inner join, group by
+      Output: c_name, total
+      Columns: customer.c_custkey, customer.c_mktsegment, customer.c_name, orders.o_custkey, orders.o_totalprice
+      Terms: customer orders custkey mktsegment name totalprice total
+    comments: []
+    diagnostics: []

@@ -107,8 +107,11 @@ ustar format, and timestamp-free gzip compression. The consumer test compares
 two independent archive actions byte for byte. This guarantees reproducible
 packaging for identical inputs/toolchains, not identical Wasm across build
 configurations or compiler versions. `package.json` is the only publish-version
-source; rules_js's optional Bazel link version is unused because this target
-has no Bazel npm-link consumers.
+source; rules_js's optional Bazel link version is unused. The root package links
+`:npm_package` as `//:node_modules/@ankoh/dashql-core`, and in-repo consumers
+(`//packages/dashql-app`, `//packages/dashql-embed`) depend on that link instead of
+copying the package. TypeScript resolves it through node_modules, and the app's vite
+config points `__CORE_PATH__` at `node_modules/@ankoh/dashql-core/dist`.
 
 The external test extracts `:npm_tarball` into a fresh temporary
 `node_modules/@ankoh/dashql-core`, copies only the declared FlatBuffers runtime

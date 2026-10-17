@@ -9,15 +9,6 @@ load("@npm//:vite/package_json.bzl", vite_bin = "bin")
 load(":bazel/browser_test.bzl", "browser_test")
 
 copy_to_directory(
-    name = "dep_core",
-    srcs = ["//packages/dashql-core-js:npm_package"],
-    out = "dependencies/dashql-core",
-    replace_prefixes = {
-        "packages/dashql-core-js/npm_package": "",
-    },
-    visibility = ["//visibility:private"],
-)
-copy_to_directory(
     name = "dep_protobuf",
     srcs = ["//proto/pb:ts_gen"],
     out = "./dependencies/dashql-protobuf",
@@ -138,7 +129,6 @@ genrule(
         "vite.config.tpl.ts",
         "@dashql_app_version//:version.env",
         "//:package.json",
-        ":dep_core",
         ":dep_protobuf",
         ":dep_shell_wasm",
         ":dep_umap_wasm",
@@ -155,7 +145,7 @@ genrule(
         sed -e "s|__PUBLIC_DIR__|./public|g" \\
             -e "s|__PROTOBUF_PATH__|./dependencies/dashql-protobuf|g" \\
             -e "s|__JSONSCHEMA_PATH__|./dependencies/dashql-jsonschema|g" \\
-            -e "s|__CORE_PATH__|./dependencies/dashql-core/dist|g" \\
+            -e "s|__CORE_PATH__|../../node_modules/@ankoh/dashql-core/dist|g" \\
             -e "s|__SHELL_JS_PATH__|./dependencies/dashql-shell-wasm/dashql_shell.js|g" \\
             -e "s|__SHELL_WASM_PATH__|./dependencies/dashql-shell-wasm/dashql_shell.wasm|g" \\
             -e "s|__UMAP_JS_PATH__|./dependencies/umap-wasm/index.js|g" \\
@@ -186,7 +176,7 @@ genrule(
             -e "s|__DASHQL_VERSION__|$${VERSION}|g" \
             -e "s|__DASHQL_COMMIT__|$${COMMIT}|g" \
             -e "s|__HYPERDB_WASM_VERSION__|$${HYPERDB_WASM_VERSION}|g" \
-            -e "s|__CORE_PATH__|../../bazel-bin/packages/dashql-app/dependencies/dashql-core/dist|g" \
+            -e "s|__CORE_PATH__|../../bazel-bin/node_modules/@ankoh/dashql-core/dist|g" \
             -e "s|__PROTOBUF_PATH__|../../bazel-bin/packages/dashql-app/dependencies/dashql-protobuf|g" \
             -e "s|__JSONSCHEMA_PATH__|../../bazel-bin/packages/dashql-app/dependencies/dashql-jsonschema|g" \
             -e "s|__SHELL_JS_PATH__|../../bazel-bin/packages/dashql-app/dependencies/dashql-shell-wasm/dashql_shell.js|g" \
@@ -238,12 +228,6 @@ copy_to_bin(
 )
 
 js_library(
-    name = "dep_core_lib",
-    srcs = [":dep_core"],
-    visibility = ["//visibility:private"],
-)
-
-js_library(
     name = "dep_protobuf_lib",
     srcs = [":dep_protobuf"],
     visibility = ["//visibility:private"],
@@ -276,10 +260,10 @@ ts_project(
     validate = False,
     validator = ":_tsc_bin",
     deps = [
-        ":dep_core_lib",
         ":dep_protobuf_lib",
         ":dep_jsonschema_lib",
         "//:node_modules",
+        "//:node_modules/@ankoh/dashql-core",
     ],
     visibility = ["//visibility:public"],
 )
@@ -289,7 +273,7 @@ _vite_web_deps = [
     ":browser_test_files",
     ":example_notebooks",
     ":vite_config",
-    ":dep_core",
+    "//:node_modules/@ankoh/dashql-core",
     ":dep_protobuf",
     ":dep_jsonschema",
     ":dep_shell_wasm",
@@ -430,7 +414,7 @@ sh_binary(
     data = [
         ":example_notebooks",
         ":dev_config",
-        ":dep_core",
+        "//:node_modules/@ankoh/dashql-core",
         ":dep_protobuf",
         ":dep_jsonschema",
         ":dep_shell_wasm",

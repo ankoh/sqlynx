@@ -1,0 +1,137 @@
+load("@aspect_rules_js//js:defs.bzl", "js_binary", "js_library")
+load("@aspect_rules_ts//ts:defs.bzl", "ts_project")
+load("@npm//:typescript/package_json.bzl", typescript_bin = "bin")
+load("@npm//:vitest/package_json.bzl", vitest_bin = "bin")
+
+package(default_visibility = ["//visibility:private"])
+
+exports_files(["package.json"])
+
+filegroup(
+    name = "srcs",
+    srcs = glob(["src/**/*.ts"]),
+)
+
+# Everything that ships in the CLI, without tests and test fixtures
+filegroup(
+    name = "lib_srcs",
+    srcs = glob(
+        ["src/**/*.ts"],
+        exclude = [
+            "src/**/*.test.ts",
+            "src/**/*.smoke.ts",
+            "src/**/*.snapshot.ts",
+            "src/test_fixture.ts",
+        ],
+    ),
+)
+
+# Shared by the vitest targets. Copying the files in one place avoids conflicting copy actions between
+# targets that differ in their tags.
+js_library(
+    name = "test_srcs",
+    srcs = [
+        ":srcs",
+        "package.json",
+        "tsconfig.bazel.json",
+    ],
+)
+
+_RUNTIME_DEPS = [
+    "//:node_modules/@ankoh/dashql-core",
+    "//:node_modules/@anthropic-ai/sdk",
+    "//:node_modules/@huggingface/transformers",
+    "//:node_modules/apache-arrow",
+    "//:node_modules/flatbuffers",
+    # Imported by transformers.js without being declared, see public_hoist_packages in MODULE.bazel
+    "//:node_modules/onnxruntime-common",
+    "//:node_modules/parquet-wasm",
+    "//:node_modules/yaml",
+]
+
+typescript_bin.tsc_binary(
+    name = "tsc_bin",
+)
+
+ts_project(
+    name = "compile",
+    # package.json is an input so that tsc sees `"type": "module"` for NodeNext module detection
+    srcs = [
+        ":lib_srcs",
+        "package.json",
+    ],
+    out_dir = "dist",
+    root_dir = "src",
+    source_map = True,
+    tsconfig = "tsconfig.bazel.json",
+    tsc = ":tsc_bin",
+    tsc_worker = ":tsc_bin",
+    transpiler = "tsc",
+    validate = False,
+    validator = ":tsc_bin",
+    deps = _RUNTIME_DEPS + ["//:node_modules/@types/node"],
+    visibility = ["//visibility:public"],
+)
+
+# bazel run //packages/dashql-embed:cli -- index <dir> --out-dir <dir>
+js_binary(
+    name = "cli",
+    data = [
+        ":compile",
+        ":package.json",
+    ] + _RUNTIME_DEPS,
+    entry_point = "bin/dashql-embed.mjs",
+    visibility = ["//visibility:public"],
+)
+
+# Unit tests and the offline end-to-end test (hash embedder, stubbed describer)
+vitest_bin.vitest_test(
+    name = "tests",
+    size = "medium",
+    args = [
+        "run",
+        "--config",
+        "vitest.config.ts",
+    ],
+    chdir = "packages/dashql-embed",
+    data = [
+        ":test_srcs",
+        "vitest.config.ts",
+        "//:example_notebooks_test_data",
+        "//:node_modules/vitest",
+        "//snapshots/embed:files",
+    ] + _RUNTIME_DEPS,
+)
+
+# Regenerates snapshots/embed/*.yaml from the *.tpl.yaml templates
+js_binary(
+    name = "snapshotter",
+    data = [
+        ":compile",
+        ":package.json",
+    ] + _RUNTIME_DEPS,
+    entry_point = "bin/snapshot.mjs",
+    visibility = ["//snapshots/embed:__pkg__"],
+)
+
+# Downloads the default embedding model once and checks the vector shape
+vitest_bin.vitest_test(
+    name = "model_smoke_test",
+    size = "large",
+    args = [
+        "run",
+        "--config",
+        "vitest.smoke.config.ts",
+    ],
+    chdir = "packages/dashql-embed",
+    data = [
+        ":test_srcs",
+        "vitest.smoke.config.ts",
+        "//:node_modules/vitest",
+    ] + _RUNTIME_DEPS,
+    tags = [
+        "manual",
+        "requires-network",
+    ],
+    timeout = "long",
+)
