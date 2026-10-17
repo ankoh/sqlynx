@@ -1,12 +1,12 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { Linter, formatDiagnostics, lineColumn, type Diagnostic } from './lint.js';
+import { Linter, lineColumn } from './lint.js';
 
 let linter: Linter;
 beforeAll(async () => {
     linter = await Linter.create();
 });
 
-const lintOne = (text: string, l: Linter = linter) => l.lint([{ id: 'test.sql', text }]);
+const lintOne = (text: string, l: Linter = linter) => l.lint([{ id: 'test.sql', text }])[0];
 
 describe('lineColumn', () => {
     const bytes = new TextEncoder().encode('ab\näöc\nx');
@@ -37,6 +37,14 @@ describe('Linter', () => {
         expect(parse[0].message).not.toBe('');
     });
 
+    it('returns the diagnostics of every script in input order', () => {
+        const results = linter.lint([
+            { id: 'a.sql', text: 'select 1;' },
+            { id: 'b.sql', text: 'select 1 +;' },
+        ]);
+        expect(results.map(r => r.map(d => d.file))).toEqual([[], ['b.sql']]);
+    });
+
     it('reports analyzer errors against a schema', async () => {
         const withSchema = await Linter.create();
         expect(
@@ -44,27 +52,5 @@ describe('Linter', () => {
         ).toEqual([]);
         const diagnostics = lintOne('select id from a, b;', withSchema);
         expect(diagnostics).toEqual([expect.objectContaining({ stage: 'analyze', severity: 'error', line: 1, column: 8 })]);
-    });
-});
-
-describe('formatDiagnostics', () => {
-    const diagnostics: Diagnostic[] = [
-        { file: 'a.sql', line: 1, column: 2, stage: 'parse', severity: 'error', message: 'oops', offset: 1, length: 3 },
-        { file: 'b.sql', stage: 'failure', severity: 'error', message: 'boom' },
-    ];
-
-    it('writes one diagnostic per line as a JSON array', () => {
-        const text = formatDiagnostics(diagnostics);
-        expect(text).toBe(
-            '[\n' +
-                '{"file":"a.sql","line":1,"column":2,"stage":"parse","severity":"error","message":"oops","offset":1,"length":3},\n' +
-                '{"file":"b.sql","stage":"failure","severity":"error","message":"boom"}\n' +
-                ']\n',
-        );
-        expect(JSON.parse(text)).toEqual(diagnostics);
-    });
-
-    it('writes an empty array without diagnostics', () => {
-        expect(JSON.parse(formatDiagnostics([]))).toEqual([]);
     });
 });

@@ -1,10 +1,10 @@
 {
-    "name": "@ankoh/dashql-lint",
+    "name": "@ankoh/dashql-cli",
     "version": "0.0.2-dev.17",
     "description": "Report DashQL scanner, parser and analyzer diagnostics of SQL scripts",
     "private": true,
     "type": "module",
     "bin": {
-        "dashql-lint": "bin/dashql-lint.mjs"
+        "dashql-cli": "bin/dashql-cli.mjs"
     }
 }

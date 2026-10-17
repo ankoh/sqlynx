@@ -216,7 +216,7 @@ importers:
 
   packages/dashql-embed: {}
 
-  packages/dashql-lint: {}
+  packages/dashql-cli: {}
 
   packages/dashql-native:
     dependencies:

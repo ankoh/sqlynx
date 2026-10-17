@@ -30,8 +30,13 @@ js_library(
     ],
 )
 
+# hyperdb-wasm uses wasm exception references, which the Node 24.4 toolchain has behind a flag.
+# vitest.config.ts passes the same flag to the test workers.
+_NODE_OPTIONS = ["--experimental-wasm-exnref"]
+
 _RUNTIME_DEPS = [
     "//:node_modules/@ankoh/dashql-core",
+    "//:node_modules/hyperdb-wasm",
 ]
 
 typescript_bin.tsc_binary(
@@ -58,14 +63,15 @@ ts_project(
     visibility = ["//visibility:public"],
 )
 
-# bazel run //packages/dashql-lint:cli -- <file.sql|dir|->...
+# bazel run //packages/dashql-cli:cli -- <file.sql|dir|->...
 js_binary(
     name = "cli",
     data = [
         ":compile",
         ":package.json",
     ] + _RUNTIME_DEPS,
-    entry_point = "bin/dashql-lint.mjs",
+    entry_point = "bin/dashql-cli.mjs",
+    node_options = _NODE_OPTIONS,
     visibility = ["//visibility:public"],
 )
 
@@ -77,7 +83,7 @@ vitest_bin.vitest_test(
         "--config",
         "vitest.config.ts",
     ],
-    chdir = "packages/dashql-lint",
+    chdir = "packages/dashql-cli",
     data = [
         ":test_srcs",
         "vitest.config.ts",

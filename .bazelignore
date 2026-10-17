@@ -2,7 +2,7 @@ packages/dashql-core/build
 packages/dashql-app/node_modules
 packages/dashql-native/node_modules
 packages/dashql-embed/node_modules
-packages/dashql-lint/node_modules
+packages/dashql-cli/node_modules
 packages/dashql-core-js/node_modules
 packages/vite-example/node_modules
 node_modules

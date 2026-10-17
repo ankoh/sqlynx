@@ -1,5 +1,5 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
-import { isAbsolute, join, relative, resolve } from 'node:path';
+import { isAbsolute, join, relative, resolve, sep } from 'node:path';
 import type { LintInput } from './lint.js';
 
 /// The id of a script read from stdin
@@ -16,6 +16,15 @@ export function resolveUserPath(path: string): string {
     return resolve(workingDirectory(), path);
 }
 
+/// Catalog dumps that notebooks keep next to their scripts, they describe the connection and are not meant to run
+const GENERATED_FILES = new Set(['dashql-functions.sql', 'dashql-relations.sql']);
+
+/// Paths relative to the invoking directory, absolute ones for files outside of it
+function displayPath(path: string): string {
+    const rel = relative(workingDirectory(), path);
+    return rel === '' || rel === '..' || rel.startsWith(`..${sep}`) || isAbsolute(rel) ? path : rel;
+}
+
 async function walk(dir: string): Promise<string[]> {
     const out: string[] = [];
     for (const entry of (await readdir(dir, { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name))) {
@@ -25,7 +34,7 @@ async function walk(dir: string): Promise<string[]> {
         if (!info) continue;
         if (info.isDirectory()) {
             if (entry.name !== 'node_modules' && !entry.name.startsWith('.')) out.push(...(await walk(path)));
-        } else if (info.isFile() && entry.name.toLowerCase().endsWith('.sql')) {
+        } else if (info.isFile() && entry.name.toLowerCase().endsWith('.sql') && !GENERATED_FILES.has(entry.name)) {
             out.push(path);
         }
     }
@@ -38,7 +47,7 @@ async function readStdin(): Promise<string> {
     return Buffer.concat(chunks).toString('utf8');
 }
 
-/// Read SQL scripts from files, directories (recursively, *.sql only) and stdin (`-`).
+/// Read SQL scripts from files, directories (recursively, *.sql only, without generated catalog files) and stdin (`-`).
 /// Scripts are identified by their path relative to the invoking directory.
 export async function readInputs(paths: string[]): Promise<LintInput[]> {
     const inputs = new Map<string, LintInput>();
@@ -50,7 +59,7 @@ export async function readInputs(paths: string[]): Promise<LintInput[]> {
         const root = resolveUserPath(path);
         const files = (await stat(root)).isDirectory() ? await walk(root) : [root];
         for (const file of files) {
-            const id = relative(workingDirectory(), file) || file;
+            const id = displayPath(file);
             if (!inputs.has(id)) inputs.set(id, { id, text: await readFile(file, 'utf8') });
         }
     }

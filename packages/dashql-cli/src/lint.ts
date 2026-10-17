@@ -83,9 +83,9 @@ export class Linter {
         return toDiagnostics(input.id, this.encoder.encode(input.text), result);
     }
 
-    /// Lint scripts against the loaded schemas
-    lint(inputs: LintInput[]): Diagnostic[] {
-        const out: Diagnostic[] = [];
+    /// Lint scripts against the loaded schemas, returns the diagnostics of every script in input order
+    lint(inputs: LintInput[]): Diagnostic[][] {
+        const out: Diagnostic[][] = [];
         for (let i = 0; i < inputs.length; i += BATCH_SIZE) {
             const chunk = inputs.slice(i, i + BATCH_SIZE);
             const result = this.core.processBatch({
@@ -93,15 +93,9 @@ export class Linter {
                 catalogDescriptors: this.catalogDescriptors,
             });
             for (let j = 0; j < chunk.length; ++j) {
-                out.push(...toDiagnostics(chunk[j].id, this.encoder.encode(chunk[j].text), result.scripts[j]));
+                out.push(toDiagnostics(chunk[j].id, this.encoder.encode(chunk[j].text), result.scripts[j]));
             }
         }
         return out;
     }
-}
-
-/// A JSON array with one diagnostic per line, readable by people and by JSON.parse
-export function formatDiagnostics(diagnostics: Diagnostic[]): string {
-    if (diagnostics.length === 0) return '[\n]\n';
-    return `[\n${diagnostics.map(d => JSON.stringify(d)).join(',\n')}\n]\n`;
 }
