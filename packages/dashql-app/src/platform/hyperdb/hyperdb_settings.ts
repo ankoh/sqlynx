@@ -1,5 +1,5 @@
 export const HYPERDB_WASM_ENGINE_SETTINGS = Object.freeze({
-    default_database_version: 3,
+    default_database_version: 4,
     identifier_resolution: 'case_insensitive',
     experimental_view_creation: true,
     experimental_persisted_view_creation: true,
