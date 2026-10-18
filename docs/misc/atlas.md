@@ -8,8 +8,8 @@ index files. It needs the File System Access API (Chromium) and a cross-origin-i
 
 ## The index file
 
-Atlas writes one Parquet file into the selected folder, `dashql-atlas.parquet`, with one row per chunk of the
-`@dashql:description` block of a script. Only the descriptions are embedded and laid out in 3D. The structure and the
+Atlas writes one Parquet file into the selected folder, `dashql-atlas.parquet`, with one row per script, the
+embedding of its `@dashql:description` block. Only the descriptions are embedded and laid out in 3D. The structure and the
 metadata of a script are columns of its rows, to filter by, they are neither embedded nor laid out. A script without a
 description has no row: run `dashql-describe` first.
 
@@ -18,10 +18,10 @@ The columns are prefixed by where they come from and ordered by prefix:
 | Columns | Type | Content |
 |---------|------|---------|
 | `script_name`, `script_hash` | text | The path of the script in the folder and the SHA-256 of its text |
-| `description_chunk_index`, `description_chunk` | int, text | The chunk of the `@dashql:description` block |
-| `description_embedding` | real[] | The embedding of the chunk |
+| `description` | text | The `@dashql:description` block |
+| `description_embedding` | real[] | The embedding of the description |
 | `description_embedding_model` | text | The model that computed the embedding, the same in every row |
-| `description_x`, `description_y`, `description_z` | real | The position of the chunk in the cloud |
+| `description_x`, `description_y`, `description_z` | real | The position of the script in the cloud |
 | `metadata_<key>` | double, bool or text | One column per key of the `@dashql:metadata` blocks |
 | `structure_*_count` next to its list | int, text[] | The analysis of the SQL, see below |
 
@@ -47,8 +47,8 @@ of two tables are join conditions and are left out of the filter predicates. The
 a script that could not be analyzed. A metadata column is a double if all its values are numbers, a bool if all are booleans, text
 otherwise (objects and arrays as JSON), null for scripts without the key. Only the vector columns are stored as `real`.
 
-The structure and the metadata are repeated on every chunk of a script, so a histogram counts chunks, not scripts.
-Most descriptions are a single chunk.
+The model reads 512 tokens, the embedding pipeline truncates longer descriptions. `dashql-describe` is told to stay
+well below that.
 
 Ordinary comments are not embedded, only `@dashql:description` blocks (written by `dashql-describe` or by hand).
 
@@ -62,8 +62,8 @@ removes those of earlier versions (`dashql-atlas-structure.parquet`, `dashql-atl
 `dashql-atlas-index.json`).
 
 Search is plain SQL over the mounted file, see `src/atlas/search/search.ts`:
-`dot_product(description_embedding, ARRAY[...]::real[])`. The cast is required. Every script is ranked by its best
-description chunk.
+`dot_product(description_embedding, ARRAY[...]::real[])`. The cast is required. Scripts are ranked by the
+similarity of their description.
 
 ## Metadata
 
@@ -93,14 +93,14 @@ metadata, named after the row number (`row_00001.sql`, ...)
 ## The page
 
 Before a folder is open the background is made-up dots. Hovering one pauses the rotation and shows a made-up script
-(`src/atlas/demo_data.ts`). Once a folder is open the background shows the real index, one point per description
-chunk, at the `description_{x,y,z}` positions of the file (`indexPoints` in `src/atlas/store.ts`, drawn by
+(`src/atlas/demo_data.ts`). Once a folder is open the background shows the real index, one point per script,
+at the `description_{x,y,z}` positions of the file (`indexPoints` in `src/atlas/store.ts`, drawn by
 `src/atlas/point_cloud.ts`).
 
 The shape of the cloud depends on how many points there are (`src/atlas/point_cloud_shape.ts`): a handful of scripts
 get big dots on a contracted cloud, a thousand get fine dots on the full one, and points are pulled toward the middle.
-Hovering a dot, made up or indexed, holds the rotation, rings the dot, marks the other dots of its script and shows a
-tooltip with the script, the description chunk and the tables of the script.
+Hovering a dot, made up or indexed, holds the rotation, rings the dot, marks its script and shows a
+tooltip with the script, the description and the tables of the script.
 
 The rows of the index file are a panel on the left, built like the result overlay of the shell
 (`src/atlas/index_rows.tsx`). The file is loaded without its embedding, analyzed like a query result (`analyzeTable`:
@@ -110,7 +110,7 @@ headers. Brushing a histogram or clicking a frequent value cross-filters the row
 is point i of the cloud.
 
 The prompt sits at the bottom and the candidates of every search strategy are a card on the right. Hovering a candidate
-pauses the rotation and marks all dots of its script, the other candidates are marked less strongly.
+pauses the rotation and marks its dot, the other candidates are marked less strongly.
 
 ## The embedding model
 

@@ -3,7 +3,6 @@ import { readMetadata, type ScriptMetadata } from '@ankoh/dashql-core';
 import { descriptionText, extractComments } from './analysis/comments.js';
 import { SqlAnalyzer, type AnalyzedSql } from './analysis/core.js';
 import { extractStructureFeatures, type StructureFeatures } from './analysis/structure.js';
-import { chunkText } from './chunking.js';
 import { computeLayout, type LayoutResult } from './layout.js';
 import type { Embedder } from './model.js';
 import type { IndexRow } from './rows.js';
@@ -14,47 +13,39 @@ export interface ScriptAnalysis {
     file: SqlFile;
     analyzed: AnalyzedSql;
     features: StructureFeatures | null;
-    descriptionChunks: string[];
+    /// Null without a description
+    description: string | null;
     metadata: ScriptMetadata | null;
 }
 
-const CHUNK_OVERLAP_TOKENS = 16;
-
-/// Analyze scripts and split their descriptions into the chunks that will be embedded
-export function analyzeScripts(
-    files: SqlFile[],
-    analyzer: SqlAnalyzer,
-    countTokens: (text: string) => number,
-    maxTokens: number,
-): ScriptAnalysis[] {
+/// Analyze scripts and extract the descriptions that will be embedded
+export function analyzeScripts(files: SqlFile[], analyzer: SqlAnalyzer): ScriptAnalysis[] {
     const analyzed = analyzer.analyze(files.map(f => ({ id: f.id, text: f.text })));
     return analyzed.map((sql, i) => {
         const features = extractStructureFeatures(sql);
         const description = descriptionText(extractComments(sql));
-        const descriptionChunks = description ? chunkText(description, maxTokens, countTokens, CHUNK_OVERLAP_TOKENS) : [];
         const metadata = sql.parsed ? readMetadata(sql.parsed, sql.bytes) : null;
-        return { file: files[i], analyzed: sql, features, descriptionChunks, metadata };
+        return { file: files[i], analyzed: sql, features, description, metadata };
     });
 }
 
 /// Does a script get rows in the index? Only described scripts do.
 export function hasDescription(script: ScriptAnalysis): boolean {
-    return script.descriptionChunks.length > 0;
+    return script.description != null;
 }
 
-/// Embed the description chunks of analyzed scripts, a row per chunk. Scripts without a description get no row.
+/// Embed the descriptions of analyzed scripts, a row per script. Scripts without a description get no row.
 export async function embedScripts(
     scripts: ScriptAnalysis[],
     embedder: Embedder,
     onProgress?: (done: number, total: number) => void,
 ): Promise<IndexRow[]> {
-    const chunks = scripts.flatMap(s => s.descriptionChunks.map((text, index) => ({ script: s, text, index })));
-    const vectors = await embedder.embedDocuments(chunks.map(c => c.text), onProgress);
-    return chunks.map(({ script, text, index }, i) => ({
+    const described = scripts.filter(hasDescription);
+    const vectors = await embedder.embedDocuments(described.map(s => s.description!), onProgress);
+    return described.map((script, i) => ({
         scriptName: script.file.id,
         scriptHash: script.file.hash,
-        chunkIndex: index,
-        text,
+        description: script.description!,
         embedding: vectors[i],
         features: script.features,
         diagnostics: script.analyzed.diagnostics,
@@ -86,7 +77,7 @@ export async function buildIndex(
     onProgress?: (progress: IndexProgress) => void,
 ): Promise<BuiltIndex> {
     onProgress?.({ stage: 'analyze', fraction: 0, message: `Analyzing ${files.length} scripts` });
-    const scripts = analyzeScripts(files, analyzer, t => embedder.countTokens(t), embedder.config.maxTokens);
+    const scripts = analyzeScripts(files, analyzer);
     onProgress?.({ stage: 'analyze', fraction: 1, message: `Analyzed ${files.length} scripts` });
 
     const rows = await embedScripts(scripts, embedder, (done, total) => {

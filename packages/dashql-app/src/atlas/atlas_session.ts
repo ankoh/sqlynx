@@ -49,7 +49,7 @@ export interface OpenedFolder {
     reused: boolean;
     /// The number of scripts that were added, changed or removed since the loaded index was written
     outdated: number;
-    /// The embedded description chunks in their 3D layout
+    /// The embedded descriptions in their 3D layout
     points: IndexPoints;
     /// The rows of the index file without the embeddings and the layout, row i is point i
     rows: arrow.Table;
@@ -179,7 +179,7 @@ export class AtlasSession {
     private indexableScripts(files: SqlFile[], indexed: ReadonlyMap<string, string>, embedder: Embedder): Map<string, string> {
         const unknown = files.filter(f => !indexed.has(f.id));
         const described = new Set(
-            analyzeScripts(unknown, this.analyzer, t => embedder.countTokens(t), embedder.config.maxTokens)
+            analyzeScripts(unknown, this.analyzer)
                 .filter(hasDescription)
                 .map(s => s.file.id),
         );

@@ -62,7 +62,7 @@ export async function hasIndexFile(directory: FileSystemDirectoryHandle): Promis
 export async function loadIndexedScripts(sql: AtlasSql, location: AtlasLocation): Promise<Map<string, string>> {
     const table = await sql.query(
         'Load indexed scripts',
-        `SELECT DISTINCT script_name, script_hash FROM ${externalTable(location.path)}`,
+        `SELECT script_name, script_hash FROM ${externalTable(location.path)}`,
     );
     const scripts = new Map<string, string>();
     for (const row of table.toArray()) {
@@ -83,15 +83,13 @@ export function countOutdatedScripts(indexed: ReadonlyMap<string, string>, curre
     return outdated;
 }
 
-/// The embedded description chunks at their 3D positions
+/// The embedded descriptions at their 3D positions
 export interface IndexPoints {
-    /// The distinct script names
+    /// The script of every point
     scripts: string[];
-    /// The index into `scripts` of every point
-    owners: Int32Array;
     /// LAYOUT_DIMS values per point, the 98th percentile radius of the cloud is 1
     coords: Float32Array;
-    /// The description chunk of every point
+    /// The description of every point
     details: string[];
     /// The tables that the script of every point reads
     tables: string[][];
@@ -109,14 +107,14 @@ function listItems(value: unknown): string[] {
 /// unreadable and the page asks to reindex the folder.
 const REQUIRED_COLUMNS: readonly string[] = [
     'script_name',
-    'description_chunk',
+    'description',
     EMBEDDING_MODEL_COLUMN,
     'structure_table_count',
     'structure_table_names',
     ...LAYOUT_COLUMNS,
 ];
 
-/// Read the index file without its embeddings, a row per description chunk. The columns depend on the metadata keys, so
+/// Read the index file without its embeddings, a row per described script. The columns depend on the metadata keys, so
 /// the file is read with * and the embedding is dropped here.
 export async function loadIndexTable(sql: AtlasSql, location: AtlasLocation): Promise<arrow.Table> {
     const table = await sql.query('Load index', `SELECT * FROM ${externalTable(location.path)}`);
@@ -151,33 +149,24 @@ export function indexRowsTable(table: arrow.Table): arrow.Table {
 /// The 3D layout of the index table, point i is row i
 export function indexPoints(table: arrow.Table): IndexPoints {
     const names = table.getChild('script_name');
-    const text = table.getChild('description_chunk');
+    const text = table.getChild('description');
     const tableLists = table.getChild('structure_table_names');
     const axes = LAYOUT_COLUMNS.map(name => table.getChild(name));
     if (names == null || axes.some(axis => axis == null)) {
-        return { scripts: [], owners: new Int32Array(0), coords: new Float32Array(0), details: [], tables: [] };
+        return { scripts: [], coords: new Float32Array(0), details: [], tables: [] };
     }
     const scripts: string[] = [];
-    const indexOf = new Map<string, number>();
-    const owners = new Int32Array(table.numRows);
     const coords = new Float32Array(table.numRows * LAYOUT_DIMS);
     const details: string[] = [];
     const tables: string[][] = [];
     for (let i = 0; i < table.numRows; ++i) {
-        const name = String(names.get(i));
-        let owner = indexOf.get(name);
-        if (owner === undefined) {
-            owner = scripts.length;
-            indexOf.set(name, owner);
-            scripts.push(name);
-        }
-        owners[i] = owner;
+        scripts.push(String(names.get(i)));
         const value = text?.get(i);
         details.push(value == null ? '' : String(value));
         tables.push(listItems(tableLists?.get(i)));
         axes.forEach((axis, d) => { coords[i * LAYOUT_DIMS + d] = Number(axis!.get(i)); });
     }
-    return { scripts, owners, coords, details, tables };
+    return { scripts, coords, details, tables };
 }
 
 async function removeIfExists(directory: FileSystemDirectoryHandle, name: string): Promise<void> {
