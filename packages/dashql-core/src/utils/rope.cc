@@ -1167,7 +1167,8 @@ Rope Rope::SplitOff(size_t char_idx) {
             leaf->RemoveByteRange(0, leaf_prefix_bytes);
             // Update parents
             assert(left_child_idx == (left_parent->GetSize() - 1));
-            left_parent->Pop();
+            // The popped slot is past the end of the child stats now, keep its stats
+            auto leaf_stats = left_parent->Pop().second;
             right_parent->GetChildNodes()[0] = leaf;
             // Make sure parents point to the correct nodes
             assert(left_parent->GetChildNodes().back() == NodePtr{neighbor});
@@ -1178,7 +1179,7 @@ Rope Rope::SplitOff(size_t char_idx) {
             right_node->previous_node = nullptr;
             // Update text statistics
             TextStats left_info = left_parent->GetChildStats()[left_child_idx - 1] + diff;
-            TextStats right_info = left_parent->GetChildStats()[left_child_idx] - diff;
+            TextStats right_info = leaf_stats - diff;
             return finish(left_info, right_node, right_info, right_seam_nodes, std::move(right_seam_pages));
         }
     }
