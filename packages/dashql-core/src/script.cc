@@ -661,6 +661,7 @@ flatbuffers::Offset<buffers::parser::ParsedScript> ParsedScript::Pack(flatbuffer
     out.comments = scanned_script->comments;
     out.comment_blocks = comment_blocks.blocks;
     out.comment_lines = comment_blocks.lines;
+    out.properties_block = comment_blocks.properties_block;
     out.feature_flags = feature_flags;
     return buffers::parser::ParsedScript::Pack(builder, &out);
 }

@@ -7,6 +7,7 @@ import { classNames } from '../../../../../utils/classnames.js';
 import { ButtonSize, ButtonVariant, IconButton } from '../../../../../ui/foundations/button.js';
 import { DataFrame } from '../../../../../compute/data_frame.js';
 import { DataTableLayout } from './data_table_layout.js';
+import { AtlasExportOverlay } from './atlas_export_overlay.js';
 
 /// ---------------------------------------------------------------------------
 /// Header Name Cell
@@ -58,6 +59,9 @@ export function HeaderNameCell(props: HeaderNameCellProps): React.ReactElement {
     } else {
         // Regular header cell
         const isRightmost = props.columnIndex === props.rightmostVisibleColumn;
+        // A column of SQL texts can be exported as an atlas, a folder with a script per row
+        const canExportAtlas = props.gridLayout.isTextColumn[props.columnIndex] == 1 &&
+            props.gridLayout.isSystemColumn[props.columnIndex] != 1;
         return (
             <div
                 className={classNames(styles.header_cell, {
@@ -72,6 +76,13 @@ export function HeaderNameCell(props: HeaderNameCellProps): React.ReactElement {
                     {fieldName}
                 </span>
                 <span className={styles.header_cell_actions}>
+                    {canExportAtlas && (
+                        <AtlasExportOverlay
+                            table={props.table}
+                            sqlField={fieldId}
+                            visibleFields={visibleFields(props.gridLayout)}
+                        />
+                    )}
                     <IconButton
                         variant={sortButtonVariant}
                         size={ButtonSize.Small}
@@ -87,4 +98,15 @@ export function HeaderNameCell(props: HeaderNameCellProps): React.ReactElement {
             </div>
         );
     }
+}
+
+/// The fields of the columns that the table shows, without the row numbers and system columns
+function visibleFields(layout: DataTableLayout): number[] {
+    const fields: number[] = [];
+    for (let i = 1; i < layout.columnCount && i < layout.arrowFieldByColumnIndex.length; ++i) {
+        if (layout.isSystemColumn[i] == 1) continue;
+        const field = layout.arrowFieldByColumnIndex[i];
+        if (!fields.includes(field)) fields.push(field);
+    }
+    return fields;
 }

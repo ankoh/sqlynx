@@ -47,6 +47,31 @@ describe('description header', () => {
         expect((await apply(result.text, true)).text).toBe(result.text);
     });
 
+    const properties = '-- @dashql:properties\n-- {\n--   "owner": "finance"\n-- }\n-- @dashql:end\n';
+
+    it('inserts below leading properties and keeps them', async () => {
+        const result = await apply(properties + '\n-- TPC-H query 3\nselect 1;\n');
+        expect(result.action).toBe('inserted');
+        expect(result.text).toBe(properties + '\n' + renderHeader(description, '\n') + '\n-- TPC-H query 3\nselect 1;\n');
+        // Without a blank line after the properties, one is added
+        const tight = await apply(properties + 'select 1;\n');
+        expect(tight.text).toBe(properties + '\n' + renderHeader(description, '\n') + '\nselect 1;\n');
+    });
+
+    it('never touches properties when forced', async () => {
+        const first = (await apply(properties + '\nselect 1;\n')).text;
+        const forced = await apply(first, true);
+        expect(forced.action).toBe('replaced');
+        expect(forced.text).toBe(first);
+        expect(forced.text.startsWith(properties + '\n')).toBe(true);
+        expect((await apply(forced.text, true)).text).toBe(first);
+    });
+
+    it('does not count properties as comments', async () => {
+        const blocks = extractComments(await analyzeOne(properties + 'select 1;\n'));
+        expect(blocks.map(b => b.source)).toEqual(['dashql_properties']);
+    });
+
     it('keeps CRLF line endings and multi-byte text', async () => {
         const result = await apply('-- Größe\r\nselect 1;\r\n');
         expect(result.text).not.toMatch(/[^\r]\n/);

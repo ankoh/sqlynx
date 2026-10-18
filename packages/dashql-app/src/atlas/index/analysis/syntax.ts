@@ -4,7 +4,7 @@ import { Ast, AttributeKey as K, NodeType as T } from './ast.js';
 import { describeVisualization } from './visualization.js';
 
 /// Structural features of a SQL script, extracted from the DashQL AST and analyzer output
-export interface ScriptFeatures {
+export interface SyntaxFeatures {
     /// One entry per statement, e.g. "select" or "create table"
     statementTypes: string[];
     tables: string[];
@@ -154,7 +154,7 @@ interface ColumnInfo {
     label: string;
 }
 
-export function extractFeatures(sql: AnalyzedSql): ScriptFeatures | null {
+export function extractSyntaxFeatures(sql: AnalyzedSql): SyntaxFeatures | null {
     if (!sql.parsed || !sql.analyzed) {
         return null;
     }

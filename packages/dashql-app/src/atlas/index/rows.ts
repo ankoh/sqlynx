@@ -1,20 +1,29 @@
-import type { CommentSource } from './analysis/comments.js';
-import type { ScriptFeatures } from './analysis/features.js';
+import type { SyntaxFeatures } from './analysis/syntax.js';
 
-export interface CommentRow {
-    scriptName: string;
-    scriptHash: string;
-    chunkIndex: number;
-    source: CommentSource;
-    text: string;
-    embedding: Float32Array;
-}
-
-export interface FeatureRow {
+export interface SyntaxRow {
     scriptName: string;
     scriptHash: string;
     truncated: boolean;
     embedding: Float32Array;
-    features: ScriptFeatures;
+    features: SyntaxFeatures;
     diagnostics: string[];
+}
+
+export interface DescriptionRow {
+    scriptName: string;
+    scriptHash: string;
+    chunkIndex: number;
+    text: string;
+    embedding: Float32Array;
+}
+
+export interface PropertiesRow {
+    scriptName: string;
+    scriptHash: string;
+    /// The JSON object of the `@dashql:properties` block
+    properties: string;
+    /// The embedded text, one `key: value` line per property
+    text: string;
+    truncated: boolean;
+    embedding: Float32Array;
 }

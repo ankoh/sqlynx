@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { embeddableComments, extractComments } from './comments.js';
+import { descriptionText, extractComments } from './comments.js';
 import { analyzeOne } from '../test_fixture.js';
 
 describe('extractComments', () => {
@@ -24,13 +24,20 @@ describe('extractComments', () => {
         expect(range.endsWith('-- @dashql:end')).toBe(true);
     });
 
-    it('embeds commented-out SQL like any other comment', async () => {
+    it('embeds only descriptions', async () => {
         const sql = `-- Customers per segment\n\n-- select * from customer;\n\nselect 1;`;
         const blocks = extractComments(await analyzeOne(sql));
         expect(blocks.map(b => b.text)).toEqual(['Customers per segment', 'select * from customer;']);
-        expect(embeddableComments(blocks).map(c => c.text)).toEqual([
-            'Customers per segment\n\nselect * from customer;',
-        ]);
+        expect(descriptionText(blocks)).toBeNull();
+        const described = extractComments(await analyzeOne(`-- @dashql:description\n-- Customers\n-- @dashql:end\n-- note\n${sql}`));
+        expect(descriptionText(described)).toBe('Customers');
+    });
+
+    it('classifies properties blocks', async () => {
+        const sql = `-- @dashql:properties\n-- {"owner": "finance"}\n-- @dashql:end\nselect 1;`;
+        const blocks = extractComments(await analyzeOne(sql));
+        expect(blocks.map(b => [b.source, b.text])).toEqual([['dashql_properties', '{"owner": "finance"}']]);
+        expect(descriptionText(blocks)).toBeNull();
     });
 
     it('treats an unterminated description as an ordinary comment', async () => {

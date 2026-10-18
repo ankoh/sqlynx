@@ -1,5 +1,5 @@
-/// The settings that define an embedding space. They are stored in the index sidecar so that a query is embedded
-/// exactly like the indexed documents.
+/// The settings that define an embedding space. A query has to be embedded exactly like the indexed documents, an index
+/// written with other settings has to be reindexed.
 export interface EmbedderConfig {
     model: string;
     dtype: 'fp32' | 'fp16' | 'q8' | 'q4';

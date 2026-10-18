@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+#include <limits>
 #include <span>
 #include <string>
 #include <string_view>
@@ -24,6 +26,8 @@ struct CommentBlocks {
     std::vector<buffers::parser::TextSpan> lines;
     /// Malformed comment tags
     std::vector<std::pair<buffers::parser::TextSpan, std::string>> warnings;
+    /// The `@dashql:properties` block whose content is a valid JSON object, if any
+    uint32_t properties_block = std::numeric_limits<uint32_t>::max();
 };
 
 /// Group comments into blocks.
@@ -34,6 +38,7 @@ struct CommentBlocks {
 /// `-- @dashql:end`. A block comment is tagged if its first text is `@dashql:<tag>`, the comment end closes it.
 /// The content lines omit comment markers, block comment gutters (` * `), tag lines and leading or trailing empty
 /// lines. Text following the opening tag on the same line is content.
+/// The content of the first `@dashql:properties` block must be a JSON object, further properties blocks are ignored.
 CommentBlocks GroupComments(std::string_view text, std::span<const buffers::parser::TextSpan> comments);
 
 }  // namespace parser
