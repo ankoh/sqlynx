@@ -303,7 +303,8 @@ ParsedScript::ParsedScript(std::shared_ptr<ScannedScript> scan, parser::ParseCon
       nodes(ctx.nodes.Flatten()),
       statements(std::move(ctx.statements)),
       errors(std::move(ctx.errors)),
-      vis_spec_spans(std::move(ctx.vis_spec_spans)) {
+      vis_spec_spans(std::move(ctx.vis_spec_spans)),
+      comment_blocks(parser::GroupComments(scan->GetInput(), scan->comments)) {
     for (const auto& node : nodes) {
         switch (node.node_type()) {
             case buffers::parser::NodeType::OBJECT_VIS_VISUALISE:
@@ -518,6 +519,8 @@ std::vector<ParsedScript::StatementDescription> ParsedScript::AssociateDescripti
 
     size_t comment_cursor = 0;
     size_t previous_end = 0;
+    size_t block_cursor = 0;
+    auto& blocks = comment_blocks.blocks;
     for (size_t i = 0; i < statements.size(); ++i) {
         auto& statement_metadata = metadata[i];
         while (comment_cursor < comments.size() && comments[comment_cursor].offset() < previous_end) {
@@ -540,6 +543,13 @@ std::vector<ParsedScript::StatementDescription> ParsedScript::AssociateDescripti
         if (begin < end && IsDescriptionGap(input, cursor, statement_metadata.source_span.offset())) {
             statement_metadata.description_begin = static_cast<uint32_t>(begin);
             statement_metadata.description_count = static_cast<uint32_t>(end - begin);
+            // Blocks never straddle the description comments, find the last description block among them
+            while (block_cursor < blocks.size() && blocks[block_cursor].comments_begin() < begin) ++block_cursor;
+            for (; block_cursor < blocks.size() && blocks[block_cursor].comments_begin() < end; ++block_cursor) {
+                if (blocks[block_cursor].block_type() == buffers::parser::CommentBlockType::DASHQL_DESCRIPTION) {
+                    statement_metadata.description_block = static_cast<uint32_t>(block_cursor);
+                }
+            }
         }
         previous_end = statement_metadata.source_span.offset() + statement_metadata.source_span.length();
         comment_cursor = end;
@@ -624,6 +634,7 @@ flatbuffers::Offset<buffers::parser::ParsedScript> ParsedScript::Pack(flatbuffer
         statement->statement_span = std::make_unique<buffers::parser::TextSpan>(metadata.statement_span);
         statement->description_begin = metadata.description_begin;
         statement->description_count = metadata.description_count;
+        statement->description_block = metadata.description_block;
         out.statements.push_back(std::move(statement));
     }
     // Pack scanner errors
@@ -648,6 +659,8 @@ flatbuffers::Offset<buffers::parser::ParsedScript> ParsedScript::Pack(flatbuffer
     out.tokens = PackTokens();
     out.line_breaks = scanned_script->line_breaks;
     out.comments = scanned_script->comments;
+    out.comment_blocks = comment_blocks.blocks;
+    out.comment_lines = comment_blocks.lines;
     out.feature_flags = feature_flags;
     return buffers::parser::ParsedScript::Pack(builder, &out);
 }

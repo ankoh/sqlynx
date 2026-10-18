@@ -44,6 +44,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: pgq_full_definition
     input: |-
@@ -360,6 +362,8 @@ parser-snapshots:
         - text: [442,443]
         - text: [444,445]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: pgq_synonyms_and_properties
     input: |-
@@ -510,6 +514,8 @@ parser-snapshots:
         - text: [171,172]
         - text: [173,174]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: pgq_graph_table
     input: |-
@@ -683,6 +689,8 @@ parser-snapshots:
         - text: [124,125]
         - text: [158,159]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: pgq_graph_table_optional_clauses
     input: |-
@@ -774,6 +782,8 @@ parser-snapshots:
         - text: [55,56]
         - text: [70,71]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: pgq_graph_table_where_rows_columns
     input: |-
@@ -968,6 +978,8 @@ parser-snapshots:
         - text: [148,149]
         - text: [204,205]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: pgq_graph_table_wildcard
     input: |-
@@ -1081,6 +1093,8 @@ parser-snapshots:
         - text: [70,71]
         - text: [86,87]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: pgq_graph_table_wildcard_exclude
     input: |-
@@ -1226,3 +1240,5 @@ parser-snapshots:
         - text: [70,71]
         - text: [138,139]
       comments: []
+      comment-blocks: []
+      comment-warnings: []

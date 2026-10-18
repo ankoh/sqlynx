@@ -79,6 +79,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: func_restrict_time
     input: |-
@@ -165,6 +167,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: func_restrict_time_minus_interval
     input: |-
@@ -251,3 +255,5 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []

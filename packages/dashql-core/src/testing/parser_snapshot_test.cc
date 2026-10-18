@@ -127,6 +127,9 @@ void ParserSnapshotTest::EncodeScript(c4::yml::NodeRef root, const ScannedScript
         EncodeLocationText(description_node, description.source_span, text);
         description_node.append_child() << c4::yml::key("description-begin") << description.description_begin;
         description_node.append_child() << c4::yml::key("description-count") << description.description_count;
+        if (description.description_block != PROTO_NULL_U32) {
+            description_node.append_child() << c4::yml::key("description-block") << description.description_block;
+        }
         ParserSnapshotTest::EncodeAST(stmt, text, scanned, nodes, s.root);
     }
 
@@ -169,6 +172,44 @@ void ParserSnapshotTest::EncodeScript(c4::yml::NodeRef root, const ScannedScript
         auto comment_node = comments_node.append_child();
         comment_node.set_type(c4::yml::MAP);
         EncodeLocationText(comment_node, comment, text);
+    }
+
+    auto blocks_node = root.append_child();
+    blocks_node << c4::yml::key("comment-blocks");
+    blocks_node |= c4::yml::SEQ;
+    for (auto& block : parsed.comment_blocks.blocks) {
+        auto block_node = blocks_node.append_child();
+        block_node.set_type(c4::yml::MAP);
+        block_node.append_child() << c4::yml::key("type")
+                                  << std::string(buffers::parser::EnumNameCommentBlockType(block.block_type()));
+        EncodeLocationText(block_node, block.text_span(), text);
+        if (block.tag_span().length() > 0) {
+            EncodeLocationText(block_node, block.tag_span(), text, "tag");
+        }
+        auto comments_range = block_node.append_child();
+        comments_range << c4::yml::key("comments");
+        comments_range |= c4::yml::SEQ;
+        comments_range.set_container_style(c4::yml::FLOW_SL);
+        comments_range.append_child() << block.comments_begin();
+        comments_range.append_child() << block.comments_count();
+        auto lines_node = block_node.append_child();
+        lines_node << c4::yml::key("lines");
+        lines_node |= c4::yml::SEQ;
+        for (size_t i = 0; i < block.lines_count(); ++i) {
+            auto& line = parsed.comment_blocks.lines[block.lines_begin() + i];
+            auto line_node = lines_node.append_child();
+            line_node << std::string(text.substr(line.offset(), line.length()));
+            line_node.set_val_style(c4::yml::VAL_DQUO);
+        }
+    }
+    auto warnings_node = root.append_child();
+    warnings_node << c4::yml::key("comment-warnings");
+    warnings_node |= c4::yml::SEQ;
+    for (auto& [span, message] : parsed.comment_blocks.warnings) {
+        auto warning_node = warnings_node.append_child();
+        warning_node.set_type(c4::yml::MAP);
+        warning_node.append_child() << c4::yml::key("message") << message;
+        EncodeLocationText(warning_node, span, text);
     }
 }
 

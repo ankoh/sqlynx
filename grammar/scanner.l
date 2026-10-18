@@ -355,8 +355,8 @@ auto& ext_depth = ctx.ext_depth;
 {hyper_obfuscated_hex_string} { return Parser::make_XCONST(loc); }
 {hyper_obfuscated_bit_string} { return Parser::make_BCONST(loc); }
 
-{xcstart}       { ext_begin = loc; ++ext_depth; BEGIN(xc); }
-<xc>{xcstart}   { ext_begin = loc; ++ext_depth; }
+{xcstart}       { yyless(2); ext_begin = loc; ++ext_depth; BEGIN(xc); }
+<xc>{xcstart}   { yyless(2); ++ext_depth; }
 <xc>{xcstop}    { if (--ext_depth == 0) { ctx.AddComment(Loc({ext_begin, loc})); BEGIN(INITIAL); } }
 <xc>{xcinside}
 <xc>{op_chars}

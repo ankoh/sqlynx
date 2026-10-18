@@ -30,6 +30,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_1_2
     input: |-
@@ -67,6 +69,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_1_2_from_a
     input: |-
@@ -119,3 +123,5 @@ parser-snapshots:
       line-breaks:
         - text: [11,12]
       comments: []
+      comment-blocks: []
+      comment-warnings: []

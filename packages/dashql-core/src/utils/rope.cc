@@ -97,9 +97,10 @@ void LeafNode::InsertBytes(size_t ofs, std::span<const std::byte> data) noexcept
     assert((GetCapacity() - ofs) >= data.size());
     assert(utf8::isCodepointBoundary(GetData(), ofs));
 
-    auto buffer = GetDataBuffer();
-    std::memmove(&buffer[ofs + data.size()], &buffer[ofs], buffer_size - ofs);
-    std::memcpy(&buffer[ofs], data.data(), data.size());
+    // Pointer arithmetic instead of &buffer[i], the offsets may equal the capacity of a full leaf
+    auto* buffer = GetDataBuffer().data();
+    std::memmove(buffer + ofs + data.size(), buffer + ofs, buffer_size - ofs);
+    std::memcpy(buffer + ofs, data.data(), data.size());
     buffer_size += data.size();
 }
 /// Appends a string to the end of the buffer
@@ -111,8 +112,8 @@ void LeafNode::RemoveByteRange(size_t start_byte_idx, size_t byte_count) noexcep
     assert(utf8::isCodepointBoundary(GetData(), start_byte_idx));
     assert(utf8::isCodepointBoundary(GetData(), upper_byte_idx));
 
-    auto buffer = GetDataBuffer();
-    std::memmove(&buffer[start_byte_idx], &buffer[upper_byte_idx], GetSize() - upper_byte_idx);
+    auto* buffer = GetDataBuffer().data();
+    std::memmove(buffer + start_byte_idx, buffer + upper_byte_idx, GetSize() - upper_byte_idx);
     buffer_size -= byte_count;
 }
 /// Remove text in range
@@ -130,7 +131,8 @@ std::span<std::byte> LeafNode::TruncateBytes(size_t byte_idx) noexcept {
     assert(utf8::isCodepointBoundary(GetData(), byte_idx));
 
     auto buffer = GetDataBuffer();
-    std::span<std::byte> tail{&buffer[byte_idx], GetSize() - byte_idx};
+    // Subspan instead of &buffer[byte_idx], the offset may equal the capacity of a full leaf
+    auto tail = buffer.subspan(byte_idx, GetSize() - byte_idx);
     buffer_size = byte_idx;
     return tail;
 }
@@ -347,8 +349,8 @@ void InnerNode::Insert(size_t idx, NodePtr child, TextStats stats) {
     auto tail = GetSize() - idx;
     auto child_nodes = GetChildNodesBuffer();
     auto child_stats = GetChildStatsBuffer();
-    std::memmove(&child_nodes[idx + 1], &child_nodes[idx], tail * sizeof(NodePtr));
-    std::memmove(&child_stats[idx + 1], &child_stats[idx], tail * sizeof(TextStats));
+    std::memmove(child_nodes.data() + idx + 1, child_nodes.data() + idx, tail * sizeof(NodePtr));
+    std::memmove(child_stats.data() + idx + 1, child_stats.data() + idx, tail * sizeof(TextStats));
     child_nodes[idx] = child;
     child_stats[idx] = stats;
     ++child_count;
@@ -362,10 +364,10 @@ void InnerNode::Insert(size_t idx, std::span<const NodePtr> nodes, std::span<con
     auto tail = GetSize() - idx;
     auto child_nodes = GetChildNodesBuffer();
     auto child_stats = GetChildStatsBuffer();
-    std::memmove(&child_nodes[idx + n], &child_nodes[idx], tail * sizeof(NodePtr));
-    std::memmove(&child_stats[idx + n], &child_stats[idx], tail * sizeof(TextStats));
-    std::memcpy(&child_nodes[idx], nodes.data(), n * sizeof(NodePtr));
-    std::memcpy(&child_stats[idx], stats.data(), n * sizeof(TextStats));
+    std::memmove(child_nodes.data() + idx + n, child_nodes.data() + idx, tail * sizeof(NodePtr));
+    std::memmove(child_stats.data() + idx + n, child_stats.data() + idx, tail * sizeof(TextStats));
+    std::memcpy(child_nodes.data() + idx, nodes.data(), n * sizeof(NodePtr));
+    std::memcpy(child_stats.data() + idx, stats.data(), n * sizeof(TextStats));
     child_count += n;
 }
 /// Remove an element at a position
@@ -378,8 +380,8 @@ std::pair<NodePtr, TextStats> InnerNode::Remove(size_t idx) {
     auto s = child_stats[idx];
     if ((idx + 1) < GetSize()) {
         auto tail = GetSize() - (idx + 1);
-        std::memmove(&child_nodes[idx], &child_nodes[idx + 1], tail * sizeof(NodePtr));
-        std::memmove(&child_stats[idx], &child_stats[idx + 1], tail * sizeof(TextStats));
+        std::memmove(child_nodes.data() + idx, child_nodes.data() + idx + 1, tail * sizeof(NodePtr));
+        std::memmove(child_stats.data() + idx, child_stats.data() + idx + 1, tail * sizeof(TextStats));
     }
     --child_count;
     return {n, s};
@@ -391,15 +393,15 @@ void InnerNode::RemoveRange(size_t idx, size_t count) {
     auto child_nodes = GetChildNodesBuffer();
     auto child_stats = GetChildStatsBuffer();
     auto tail = GetSize() - (idx + count);
-    std::memmove(&child_nodes[idx], &child_nodes[idx + count], tail * sizeof(NodePtr));
-    std::memmove(&child_stats[idx], &child_stats[idx + count], tail * sizeof(TextStats));
+    std::memmove(child_nodes.data() + idx, child_nodes.data() + idx + count, tail * sizeof(NodePtr));
+    std::memmove(child_stats.data() + idx, child_stats.data() + idx + count, tail * sizeof(TextStats));
     child_count -= count;
 }
 /// Truncate children from a position
 std::pair<std::span<const NodePtr>, std::span<const TextStats>> InnerNode::Truncate(size_t idx) noexcept {
     assert(idx <= GetSize());
-    std::span<const NodePtr> tail_nodes{&GetChildNodesBuffer()[idx], GetSize() - idx};
-    std::span<const TextStats> tail_stats{&GetChildStatsBuffer()[idx], GetSize() - idx};
+    std::span<const NodePtr> tail_nodes{GetChildNodesBuffer().data() + idx, GetSize() - idx};
+    std::span<const TextStats> tail_stats{GetChildStatsBuffer().data() + idx, GetSize() - idx};
     child_count = idx;
     return {tail_nodes, tail_stats};
 }
@@ -413,8 +415,8 @@ void InnerNode::SplitOffRight(size_t child_idx, InnerNode& right) {
     auto right_child_stats = right.GetChildStatsBuffer();
 
     right.child_count = GetSize() - child_idx;
-    std::memcpy(right_child_nodes.data(), &left_child_nodes[child_idx], right.child_count * sizeof(NodePtr));
-    std::memcpy(right_child_stats.data(), &left_child_stats[child_idx], right.child_count * sizeof(TextStats));
+    std::memcpy(right_child_nodes.data(), left_child_nodes.data() + child_idx, right.child_count * sizeof(NodePtr));
+    std::memcpy(right_child_stats.data(), left_child_stats.data() + child_idx, right.child_count * sizeof(TextStats));
     child_count = child_idx;
 
     LinkNodeRight(right);
@@ -431,8 +433,8 @@ void InnerNode::SplitOffLeft(size_t child_idx, InnerNode& left) {
     left.child_count = child_idx;
     std::memcpy(left_child_nodes.data(), right_child_nodes.data(), child_idx * sizeof(NodePtr));
     std::memcpy(left_child_stats.data(), right_child_stats.data(), child_idx * sizeof(TextStats));
-    std::memmove(right_child_nodes.data(), &right_child_nodes[child_idx], (child_count - child_idx) * sizeof(NodePtr));
-    std::memmove(right_child_stats.data(), &right_child_stats[child_idx],
+    std::memmove(right_child_nodes.data(), right_child_nodes.data() + child_idx, (child_count - child_idx) * sizeof(NodePtr));
+    std::memmove(right_child_stats.data(), right_child_stats.data() + child_idx,
                  (child_count - child_idx) * sizeof(TextStats));
     child_count -= child_idx;
 

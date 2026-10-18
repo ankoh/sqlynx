@@ -28,6 +28,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: drop_table_if_exists
     input: |-
@@ -60,6 +62,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: drop_table_named_if
     input: |-
@@ -87,6 +91,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: drop_view
     input: |-
@@ -116,6 +122,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: drop_view_if_exists
     input: |-
@@ -148,6 +156,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: drop_view_named_if
     input: |-
@@ -175,6 +185,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: attach_database
     input: |-
@@ -202,6 +214,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: attach_local_database_with_options
     input: |-
@@ -254,3 +268,5 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []

@@ -343,6 +343,8 @@ parser-snapshots:
         - text: [425,426]
         - text: [460,461]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: trino_inhibitors
     input: |-
@@ -617,6 +619,8 @@ parser-snapshots:
         - text: [317,318]
         - text: [345,346]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: trino_array_json_cast
     input: |-
@@ -724,3 +728,5 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []

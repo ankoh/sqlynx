@@ -51,6 +51,8 @@ parser-snapshots:
           text: "."
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: dot_test_space_keyword
     input: |-
@@ -100,6 +102,8 @@ parser-snapshots:
           text: "."
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: dot_test_eof
     input: |-
@@ -149,6 +153,8 @@ parser-snapshots:
           text: "."
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: dot_where_recovery
     input: |-
@@ -227,3 +233,5 @@ parser-snapshots:
           text: "."
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []

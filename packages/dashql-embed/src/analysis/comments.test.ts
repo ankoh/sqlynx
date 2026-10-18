@@ -40,6 +40,17 @@ describe('extractComments', () => {
 
     it('treats an unterminated description as an ordinary comment', async () => {
         const blocks = extractComments(await analyzeOne(`-- @dashql:description\n-- text\nselect 1;`));
-        expect(blocks.map(b => b.source)).toEqual(['comment']);
+        expect(blocks.map(b => [b.source, b.text])).toEqual([['comment', '@dashql:description\ntext']]);
+    });
+
+    it('reads descriptions in block comments', async () => {
+        const blocks = extractComments(await analyzeOne(`/* @dashql:description\n   Revenue by segment.\n*/\nselect 1;`));
+        expect(blocks).toMatchObject([{ source: 'dashql_description', text: 'Revenue by segment.' }]);
+    });
+
+    it('skips blocks with unknown tags', async () => {
+        const sql = `-- @dashql:parameters\n-- region = 'EUROPE'\n-- @dashql:end\n-- note\nselect 1;`;
+        const blocks = extractComments(await analyzeOne(sql));
+        expect(blocks.map(b => [b.source, b.text])).toEqual([['comment', 'note']]);
     });
 });

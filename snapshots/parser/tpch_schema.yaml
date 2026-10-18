@@ -2189,6 +2189,8 @@ parser-snapshots:
         - text: [2475,2476]
         - text: [2504,2505]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpch_schema_compact
     input: |-
@@ -4211,3 +4213,5 @@ parser-snapshots:
         - text: [1971,1972]
         - text: [2139,2140]
       comments: []
+      comment-blocks: []
+      comment-warnings: []

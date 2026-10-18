@@ -259,6 +259,7 @@ enum AnalyzerErrorType: uint8 {
     DUPLICATE_TABLE_ALIAS,
     UNSUPPORTED_VIS_KEY,
     INVALID_DASHBOARD_LAYOUT,
+    MALFORMED_COMMENT_TAG,
 }
 
 /// The severity of an analyzer error. WARNING-level diagnostics still carry a

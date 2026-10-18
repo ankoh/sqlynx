@@ -25,6 +25,15 @@ std::shared_ptr<AnalyzedScript> Analyzer::Execute() {
         *name_resolution, *identify_function_calls, *identify_constants, *analyze_visualization,
     };
     pass_manager.Execute(state, scan1);
+    // Malformed comment tags fall back to ordinary comments, warn so that they don't go unnoticed
+    for (auto& [span, message] : state.analyzed->parsed_script->comment_blocks.warnings) {
+        auto& warning = state.analyzed->errors.emplace_back();
+        warning.error_type = buffers::analyzer::AnalyzerErrorType::MALFORMED_COMMENT_TAG;
+        warning.severity = buffers::analyzer::AnalyzerErrorSeverity::WARNING;
+        warning.ast_node_id = PROTO_NULL_U32;
+        warning.text_span = std::make_unique<buffers::parser::TextSpan>(span);
+        warning.message = message;
+    }
     return state.analyzed;
 }
 

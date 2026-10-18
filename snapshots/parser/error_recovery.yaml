@@ -34,6 +34,8 @@ parser-snapshots:
       line-breaks:
         - text: [8,9]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: recovery_expr_0
     input: |-
@@ -100,6 +102,8 @@ parser-snapshots:
           text: "invalid"
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: recovery_interactive_2
     input: |-
@@ -138,6 +142,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: recovery_interactive_3
     input: |-
@@ -179,6 +185,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: recovery_interactive_4
     input: |-
@@ -213,6 +221,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: recovery_interactive_5
     input: |-
@@ -260,6 +270,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: recovery_interactive_6
     input: |-
@@ -304,3 +316,5 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
