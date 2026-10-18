@@ -4,8 +4,9 @@ import * as arrow from 'apache-arrow';
 import { Compression, Table as WasmTable, WriterPropertiesBuilder, readParquet, writeParquet } from 'parquet-wasm';
 import type { EmbedderConfig } from '../embedding/embedder.js';
 import type { CommentRow, FeatureRow } from '../indexer.js';
+import type { LayoutDims } from '../layout/layout.js';
 
-export const FORMAT_VERSION = '2';
+export const FORMAT_VERSION = '3';
 
 export type IndexKind = 'comments' | 'features';
 
@@ -66,10 +67,10 @@ export function indexMetadata(kind: IndexKind, config: EmbedderConfig, dim: numb
     ]);
 }
 
-/// Metadata that tells how the layout_x/y/z columns were made
-export function layoutMetadata(scale: number): Map<string, string> {
+/// Metadata that tells how the atlas_<dims>d_* columns were made
+export function layoutMetadata(dims: LayoutDims, scale: number): Map<string, string> {
     return new Map<string, string>([
-        ['dashql_embed.layout', LAYOUT_KIND],
+        ['dashql_embed.layout', layoutKind(dims)],
         ['dashql_embed.layout_scale', String(scale)],
     ]);
 }
@@ -89,13 +90,20 @@ export function commentsTable(rows: CommentRow[], dim: number, metadata: Map<str
     );
 }
 
-export const LAYOUT_COLUMNS = ['layout_x', 'layout_y'] as const;
+/// The dimensions are part of the names so that SQL, which does not see the metadata, cannot mistake the first two
+/// coordinates of a 3D layout for a 2D one
+export function layoutColumns(dims: LayoutDims): string[] {
+    return ['x', 'y', 'z'].slice(0, dims).map(axis => `atlas_${dims}d_${axis}`);
+}
+
 /// Value of the dashql_embed.layout metadata
-export const LAYOUT_KIND = 'umap-2d';
+export function layoutKind(dims: LayoutDims): string {
+    return `umap-${dims}d`;
+}
 
 export interface FeaturesTableOptions {
-    /// x and y per row (row-major), adds the layout_x/y columns
-    layout?: Float32Array;
+    /// `dims` coordinates per row (row-major), adds the atlas_<dims>d_* columns
+    layout?: { coords: Float32Array; dims: LayoutDims };
     /// Add the embedded feature text and its token count, for debugging
     featureText?: boolean;
 }
@@ -103,11 +111,11 @@ export interface FeaturesTableOptions {
 /// The feature text and the script are not stored, both can be recomputed from the SQL files
 export function featuresTable(rows: FeatureRow[], dim: number, metadata: Map<string, string>, options: FeaturesTableOptions = {}): arrow.Table {
     const { layout } = options;
-    if (layout && layout.length !== rows.length * LAYOUT_COLUMNS.length) {
-        throw new Error(`expected ${rows.length * LAYOUT_COLUMNS.length} layout values, got ${layout.length}`);
+    if (layout && layout.coords.length !== rows.length * layout.dims) {
+        throw new Error(`expected ${rows.length * layout.dims} layout values, got ${layout.coords.length}`);
     }
-    const layoutColumns: [string, arrow.DataType, arrow.Data][] = layout
-        ? LAYOUT_COLUMNS.map((name, d) => [name, float32, column(rows.map((_, i) => layout[i * LAYOUT_COLUMNS.length + d]), float32)])
+    const coordinateColumns: [string, arrow.DataType, arrow.Data][] = layout
+        ? layoutColumns(layout.dims).map((name, d) => [name, float32, column(rows.map((_, i) => layout.coords[i * layout.dims + d]), float32)])
         : [];
     const featureTextColumns: [string, arrow.DataType, arrow.Data][] = options.featureText
         ? [
@@ -122,7 +130,7 @@ export function featuresTable(rows: FeatureRow[], dim: number, metadata: Map<str
             ['script_hash', utf8, column(rows.map(r => r.scriptHash), utf8)],
             ['truncated', bool, column(rows.map(r => r.truncated), bool)],
             ['embedding', embeddingType(dim), embeddingColumn(rows.map(r => r.embedding), dim)],
-            ...layoutColumns,
+            ...coordinateColumns,
             ['statement_types', utf8List, list(r => r.features.statementTypes)],
             ['tables', utf8List, list(r => r.features.tables)],
             ['columns', utf8List, list(r => r.features.columns)],

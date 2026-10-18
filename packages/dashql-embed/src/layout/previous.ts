@@ -1,11 +1,16 @@
 import { readFile } from 'node:fs/promises';
 import type { EmbedderConfig } from '../embedding/embedder.js';
-import { LAYOUT_COLUMNS, LAYOUT_KIND, readParquetFile } from '../output/parquet.js';
-import { layoutKey, type PreviousLayout } from './layout.js';
+import { layoutColumns, layoutKind, readParquetFile } from '../output/parquet.js';
+import { layoutKey, type LayoutDims, type PreviousLayout } from './layout.js';
 
-/// Read the layout of an earlier `index` run. Undefined when there is none, or when it came from another model, since
-/// the coordinates only mean something for the embeddings they were made from.
-export async function readPreviousLayout(path: string, config: EmbedderConfig, dim: number): Promise<PreviousLayout | undefined> {
+/// Read the layout of an earlier `index` run. Undefined when there is none, when it came from another model, since
+/// the coordinates only mean something for the embeddings they were made from, or when it has other dimensions.
+export async function readPreviousLayout(
+    path: string,
+    config: EmbedderConfig,
+    dim: number,
+    dims: LayoutDims,
+): Promise<PreviousLayout | undefined> {
     try {
         await readFile(path);
     } catch {
@@ -14,8 +19,8 @@ export async function readPreviousLayout(path: string, config: EmbedderConfig, d
     try {
         const file = await readParquetFile(path);
         const scale = Number(file.metadata.get('dashql_embed.layout_scale'));
-        const columns = LAYOUT_COLUMNS.map(name => file.table.getChild(name));
-        if (file.metadata.get('dashql_embed.layout') !== LAYOUT_KIND || !(scale > 0) || columns.some(c => !c)) return undefined;
+        const columns = layoutColumns(dims).map(name => file.table.getChild(name));
+        if (file.metadata.get('dashql_embed.layout') !== layoutKind(dims) || !(scale > 0) || columns.some(c => !c)) return undefined;
         if (file.dim !== dim || file.metadata.get('dashql_embed.model') !== config.model) return undefined;
         const names = file.table.getChild('script_name')!;
         const hashes = file.table.getChild('script_hash')!;
