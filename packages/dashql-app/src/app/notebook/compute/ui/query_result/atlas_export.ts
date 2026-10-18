@@ -3,10 +3,10 @@ import * as dashql from '@ankoh/dashql-core';
 
 import { arrowValueToJson } from '../../../../../compute/arrow_formatter.js';
 
-/// What to export: a SQL text column and the columns that become properties
+/// What to export: a SQL text column and the columns that become metadata
 export interface AtlasExportOptions {
     sqlField: number;
-    propertyFields: number[];
+    metadataFields: number[];
 }
 
 export interface AtlasExportFile {
@@ -28,8 +28,8 @@ const decoder = new TextDecoder();
 
 /// Turn a cell into a JSON value. Strings, booleans and numbers stay as they are, lists and structs become arrays and
 /// objects. Everything else (dates, timestamps, decimals, ...) is written as the table shows it.
-/// Returns undefined for nulls, which are left out of the properties.
-export function propertyValue(value: unknown, type: arrow.DataType, formatted: () => string | null): unknown {
+/// Returns undefined for nulls, which are left out of the metadata.
+export function metadataValue(value: unknown, type: arrow.DataType, formatted: () => string | null): unknown {
     if (value == null) return undefined;
     switch (type.typeId) {
         case arrow.Type.Utf8:
@@ -74,13 +74,13 @@ export function rowFileName(row: number, rowCount: number): string {
     return `row_${String(row + 1).padStart(digits, '0')}.sql`;
 }
 
-/// Locates the first `@dashql:properties` block of a script, valid or not, as a UTF-16 range
-export type PropertiesBlockFinder = (text: string) => { begin: number; end: number } | null;
+/// Locates the first `@dashql:metadata` block of a script, valid or not, as a UTF-16 range
+export type MetadataBlockFinder = (text: string) => { begin: number; end: number } | null;
 
-/// Find properties blocks with the parser of the core
-export function corePropertiesBlockFinder(core: dashql.DashQL): PropertiesBlockFinder {
+/// Find metadata blocks with the parser of the core
+export function coreMetadataBlockFinder(core: dashql.DashQL): MetadataBlockFinder {
     return (text: string) => {
-        if (!text.includes(dashql.PROPERTIES_TAG)) return null;
+        if (!text.includes(dashql.METADATA_TAG)) return null;
         const catalog = core.createCatalog();
         const script = core.createScript(catalog);
         try {
@@ -92,7 +92,7 @@ export function corePropertiesBlockFinder(core: dashql.DashQL): PropertiesBlockF
                 const block = new dashql.buffers.parser.CommentBlock();
                 for (let i = 0; i < parsed.commentBlocksLength(); ++i) {
                     parsed.commentBlocks(i, block);
-                    if (block.blockType() !== dashql.buffers.parser.CommentBlockType.DASHQL_PROPERTIES) continue;
+                    if (block.blockType() !== dashql.buffers.parser.CommentBlockType.DASHQL_METADATA) continue;
                     const span = block.textSpan()!;
                     // The core reports UTF-8 offsets
                     const bytes = encoder.encode(text);
@@ -111,8 +111,8 @@ export function corePropertiesBlockFinder(core: dashql.DashQL): PropertiesBlockF
     };
 }
 
-/// Put the properties block at the top of a script. An existing properties block is replaced, everything else stays.
-export function applyProperties(text: string, properties: dashql.ScriptProperties, findBlock: PropertiesBlockFinder): string {
+/// Put the metadata block at the top of a script. An existing metadata block is replaced, everything else stays.
+export function applyMetadata(text: string, metadata: dashql.ScriptMetadata, findBlock: MetadataBlockFinder): string {
     const eol = text.includes('\r\n') ? '\r\n' : '\n';
     const existing = findBlock(text);
     let rest = text;
@@ -125,7 +125,7 @@ export function applyProperties(text: string, properties: dashql.ScriptPropertie
         }
         rest = rest.slice(0, existing.begin) + rest.slice(end);
     }
-    return `${dashql.renderPropertiesBlock(properties, eol)}${eol}${eol}${rest}`;
+    return `${dashql.renderMetadataBlock(metadata, eol)}${eol}${eol}${rest}`;
 }
 
 /// Build one script per row of the table
@@ -133,11 +133,11 @@ export function buildAtlasExport(
     table: arrow.Table,
     options: AtlasExportOptions,
     format: CellFormatter,
-    findBlock: PropertiesBlockFinder,
+    findBlock: MetadataBlockFinder,
 ): AtlasExport {
     const fields = table.schema.fields;
     const sqlColumn = table.getChildAt(options.sqlField)!;
-    const propertyColumns = options.propertyFields.map(f => ({
+    const metadataColumns = options.metadataFields.map(f => ({
         field: f,
         name: fields[f].name,
         type: fields[f].type,
@@ -152,12 +152,12 @@ export function buildAtlasExport(
             ++skipped;
             continue;
         }
-        const properties: dashql.ScriptProperties = {};
-        for (const { field, name, type, column } of propertyColumns) {
-            const value = propertyValue(column.get(row), type, () => format(row, field));
-            if (value !== undefined) properties[name] = value;
+        const metadata: dashql.ScriptMetadata = {};
+        for (const { field, name, type, column } of metadataColumns) {
+            const value = metadataValue(column.get(row), type, () => format(row, field));
+            if (value !== undefined) metadata[name] = value;
         }
-        files.push({ name: rowFileName(row, table.numRows), text: applyProperties(sql, properties, findBlock) });
+        files.push({ name: rowFileName(row, table.numRows), text: applyMetadata(sql, metadata, findBlock) });
     }
     return { files, skipped };
 }

@@ -1346,9 +1346,9 @@ parser-snapshots:
             - "@dashql:end of description"
       comment-warnings: []
 
-  - name: properties_line_form
+  - name: metadata_line_form
     input: |-
-      -- @dashql:properties
+      -- @dashql:metadata
       -- {
       --   "owner": "finance",
       --   "avg_runtime_ms": 1834
@@ -1381,35 +1381,35 @@ parser-snapshots:
       scanner-errors: []
       parser-errors: []
       line-breaks:
-        - text: [21,22]
-        - text: [26,27]
-        - text: [51,52]
-        - text: [79,80]
-        - text: [84,85]
-        - text: [99,100]
+        - text: [19,20]
+        - text: [24,25]
+        - text: [49,50]
+        - text: [77,78]
+        - text: [82,83]
+        - text: [97,98]
       comments:
-        - text: "-- @dashql..properties"
+        - text: "-- @dashql:metadata"
         - text: "-- {"
         - text: "--   \"owne..\"finance\","
         - text: "--   \"avg_.._ms\": 1834"
         - text: "-- }"
         - text: "-- @dashql:end"
       comment-blocks:
-        - type: DASHQL_PROPERTIES
+        - type: DASHQL_METADATA
           text: "-- @dashql..dashql:end"
-          tag: "properties"
+          tag: "metadata"
           comments: [0,6]
           lines:
             - "{"
             - "  \"owner\": \"finance\","
             - "  \"avg_runtime_ms\": 1834"
             - "}"
-      properties-block: 0
+      metadata-block: 0
       comment-warnings: []
 
-  - name: properties_block_form
+  - name: metadata_block_form
     input: |-
-      /* @dashql:properties
+      /* @dashql:metadata
        * {"owner": "finance"}
        */
       select 1
@@ -1439,24 +1439,24 @@ parser-snapshots:
       scanner-errors: []
       parser-errors: []
       line-breaks:
-        - text: [21,22]
-        - text: [45,46]
-        - text: [49,50]
+        - text: [19,20]
+        - text: [43,44]
+        - text: [47,48]
       comments:
         - text: "/* @dashql..ance\"}\n */"
       comment-blocks:
-        - type: DASHQL_PROPERTIES
+        - type: DASHQL_METADATA
           text: "/* @dashql..ance\"}\n */"
-          tag: "properties"
+          tag: "metadata"
           comments: [0,1]
           lines:
             - "{\"owner\": \"finance\"}"
-      properties-block: 0
+      metadata-block: 0
       comment-warnings: []
 
-  - name: properties_nested_values
+  - name: metadata_nested_values
     input: |-
-      -- @dashql:properties
+      -- @dashql:metadata
       -- {
       --   "tags": [
       --     "weekly",
@@ -1498,23 +1498,23 @@ parser-snapshots:
       scanner-errors: []
       parser-errors: []
       line-breaks:
-        - text: [21,22]
-        - text: [26,27]
-        - text: [41,42]
-        - text: [58,59]
-        - text: [68,69]
-        - text: [76,77]
-        - text: [93,94]
-        - text: [131,132]
-        - text: [173,174]
-        - text: [181,182]
-        - text: [216,217]
-        - text: [237,238]
-        - text: [261,262]
-        - text: [266,267]
-        - text: [281,282]
+        - text: [19,20]
+        - text: [24,25]
+        - text: [39,40]
+        - text: [56,57]
+        - text: [66,67]
+        - text: [74,75]
+        - text: [91,92]
+        - text: [129,130]
+        - text: [171,172]
+        - text: [179,180]
+        - text: [214,215]
+        - text: [235,236]
+        - text: [259,260]
+        - text: [264,265]
+        - text: [279,280]
       comments:
-        - text: "-- @dashql..properties"
+        - text: "-- @dashql:metadata"
         - text: "-- {"
         - text: "--   \"tags\": ["
         - text: "--     \"weekly\","
@@ -1530,9 +1530,9 @@ parser-snapshots:
         - text: "-- }"
         - text: "-- @dashql:end"
       comment-blocks:
-        - type: DASHQL_PROPERTIES
+        - type: DASHQL_METADATA
           text: "-- @dashql..dashql:end"
-          tag: "properties"
+          tag: "metadata"
           comments: [0,15]
           lines:
             - "{"
@@ -1548,12 +1548,12 @@ parser-snapshots:
             - "  \"public\": true,"
             - "  \"deleted_at\": null"
             - "}"
-      properties-block: 0
+      metadata-block: 0
       comment-warnings: []
 
-  - name: properties_invalid_json
+  - name: metadata_invalid_json
     input: |-
-      -- @dashql:properties
+      -- @dashql:metadata
       -- owner: finance
       -- @dashql:end
       select 1
@@ -1583,27 +1583,27 @@ parser-snapshots:
       scanner-errors: []
       parser-errors: []
       line-breaks:
-        - text: [21,22]
-        - text: [39,40]
-        - text: [54,55]
+        - text: [19,20]
+        - text: [37,38]
+        - text: [52,53]
       comments:
-        - text: "-- @dashql..properties"
+        - text: "-- @dashql:metadata"
         - text: "-- owner: finance"
         - text: "-- @dashql:end"
       comment-blocks:
-        - type: DASHQL_PROPERTIES
+        - type: DASHQL_METADATA
           text: "-- @dashql..dashql:end"
-          tag: "properties"
+          tag: "metadata"
           comments: [0,3]
           lines:
             - "owner: finance"
       comment-warnings:
-        - message: '@dashql:properties is not valid JSON'
+        - message: '@dashql:metadata is not valid JSON'
           text: "-- @dashql..dashql:end"
 
-  - name: properties_not_an_object
+  - name: metadata_not_an_object
     input: |-
-      -- @dashql:properties
+      -- @dashql:metadata
       -- ["finance"]
       -- @dashql:end
       select 1
@@ -1633,31 +1633,31 @@ parser-snapshots:
       scanner-errors: []
       parser-errors: []
       line-breaks:
-        - text: [21,22]
-        - text: [36,37]
-        - text: [51,52]
+        - text: [19,20]
+        - text: [34,35]
+        - text: [49,50]
       comments:
-        - text: "-- @dashql..properties"
+        - text: "-- @dashql:metadata"
         - text: "-- [\"finance\"]"
         - text: "-- @dashql:end"
       comment-blocks:
-        - type: DASHQL_PROPERTIES
+        - type: DASHQL_METADATA
           text: "-- @dashql..dashql:end"
-          tag: "properties"
+          tag: "metadata"
           comments: [0,3]
           lines:
             - "[\"finance\"]"
       comment-warnings:
-        - message: '@dashql:properties must be a JSON object'
+        - message: '@dashql:metadata must be a JSON object'
           text: "-- @dashql..dashql:end"
 
-  - name: properties_twice
+  - name: metadata_twice
     input: |-
-      -- @dashql:properties
+      -- @dashql:metadata
       -- {
       -- @dashql:end
 
-      -- @dashql:properties
+      -- @dashql:metadata
       -- {"owner": "finance"}
       -- @dashql:end
       select 1
@@ -1687,42 +1687,42 @@ parser-snapshots:
       scanner-errors: []
       parser-errors: []
       line-breaks:
-        - text: [21,22]
-        - text: [26,27]
-        - text: [41,42]
-        - text: [42,43]
-        - text: [64,65]
-        - text: [88,89]
-        - text: [103,104]
+        - text: [19,20]
+        - text: [24,25]
+        - text: [39,40]
+        - text: [40,41]
+        - text: [60,61]
+        - text: [84,85]
+        - text: [99,100]
       comments:
-        - text: "-- @dashql..properties"
+        - text: "-- @dashql:metadata"
         - text: "-- {"
         - text: "-- @dashql:end"
-        - text: "-- @dashql..properties"
+        - text: "-- @dashql:metadata"
         - text: "-- {\"owner..\"finance\"}"
         - text: "-- @dashql:end"
       comment-blocks:
-        - type: DASHQL_PROPERTIES
+        - type: DASHQL_METADATA
           text: "-- @dashql..dashql:end"
-          tag: "properties"
+          tag: "metadata"
           comments: [0,3]
           lines:
             - "{"
-        - type: DASHQL_PROPERTIES
+        - type: DASHQL_METADATA
           text: "-- @dashql..dashql:end"
-          tag: "properties"
+          tag: "metadata"
           comments: [3,3]
           lines:
             - "{\"owner\": \"finance\"}"
       comment-warnings:
-        - message: '@dashql:properties is not valid JSON'
+        - message: '@dashql:metadata is not valid JSON'
           text: "-- @dashql..dashql:end"
-        - message: '@dashql:properties is ignored, a script has a single properties block'
+        - message: '@dashql:metadata is ignored, a script has a single metadata block'
           text: "-- @dashql..dashql:end"
 
-  - name: properties_and_description
+  - name: metadata_and_description
     input: |-
-      -- @dashql:properties
+      -- @dashql:metadata
       -- {
       --   "owner": "finance"
       -- }
@@ -1759,17 +1759,17 @@ parser-snapshots:
       scanner-errors: []
       parser-errors: []
       line-breaks:
-        - text: [21,22]
-        - text: [26,27]
-        - text: [50,51]
-        - text: [55,56]
-        - text: [70,71]
-        - text: [71,72]
-        - text: [94,95]
-        - text: [118,119]
-        - text: [133,134]
+        - text: [19,20]
+        - text: [24,25]
+        - text: [48,49]
+        - text: [53,54]
+        - text: [68,69]
+        - text: [69,70]
+        - text: [92,93]
+        - text: [116,117]
+        - text: [131,132]
       comments:
-        - text: "-- @dashql..properties"
+        - text: "-- @dashql:metadata"
         - text: "-- {"
         - text: "--   \"owne.. \"finance\""
         - text: "-- }"
@@ -1778,9 +1778,9 @@ parser-snapshots:
         - text: "-- Revenue..r segment."
         - text: "-- @dashql:end"
       comment-blocks:
-        - type: DASHQL_PROPERTIES
+        - type: DASHQL_METADATA
           text: "-- @dashql..dashql:end"
-          tag: "properties"
+          tag: "metadata"
           comments: [0,5]
           lines:
             - "{"
@@ -1792,5 +1792,5 @@ parser-snapshots:
           comments: [5,3]
           lines:
             - "Revenue per segment."
-      properties-block: 0
+      metadata-block: 0
       comment-warnings: []

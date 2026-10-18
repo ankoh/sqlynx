@@ -1,4 +1,5 @@
 import type {
+    AIModels,
     AppSettings,
     DataFile,
     CachedQueryResult,
@@ -18,6 +19,7 @@ export class NotebookTestBackend implements StorageBackend {
     readonly data = new Map<string, Map<string, Uint8Array>>();
     readonly calls: string[] = [];
     appSettings: AppSettings | null = null;
+    aiModels: AIModels | null = null;
 
     constructor(private readonly type = StorageBackendType.OPFS) {}
 
@@ -25,6 +27,8 @@ export class NotebookTestBackend implements StorageBackend {
     async listNotebooks(): Promise<NotebookEntry[]> { return [...this.notebooks.keys()].map(path => ({ path })); }
     async loadAppSettings(): Promise<AppSettings | null> { return this.appSettings; }
     async saveAppSettings(settings: AppSettings): Promise<void> { this.appSettings = settings; }
+    async loadAIModels(): Promise<AIModels | null> { return this.aiModels; }
+    async saveAIModels(models: AIModels): Promise<void> { this.aiModels = models; }
     async loadNotebook(notebookId: string): Promise<NotebookData> {
         const notebook = this.notebooks.get(notebookId);
         if (!notebook) throw new Error(`No notebook ${notebookId}`);

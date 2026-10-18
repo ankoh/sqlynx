@@ -717,8 +717,8 @@ enum CommentBlockType: uint8 {
     DASHQL_DESCRIPTION = 1,
     /// A well-formed `@dashql:<tag>` region whose tag is not known to this version
     DASHQL_UNKNOWN_TAG = 2,
-    /// A `@dashql:properties` region, its content is a JSON object with user-provided properties
-    DASHQL_PROPERTIES = 3,
+    /// A `@dashql:metadata` region, its content is a JSON object with user-provided metadata
+    DASHQL_METADATA = 3,
 }
 
 /// A group of comments: a single block comment or a run of line comments on consecutive lines.
@@ -804,6 +804,6 @@ table ParsedScript {
     comment_lines: [TextSpan];
     /// Bitwise OR of ParsedScriptFeature values detected by the parser.
     feature_flags: uint32;
-    /// Index into comment_blocks of the `@dashql:properties` block whose content is a valid JSON object
-    properties_block: uint32 = 4294967295;
+    /// Index into comment_blocks of the `@dashql:metadata` block whose content is a valid JSON object
+    metadata_block: uint32 = 4294967295;
 }

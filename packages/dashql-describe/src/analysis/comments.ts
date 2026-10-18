@@ -4,7 +4,7 @@ import type { AnalyzedSql } from './core.js';
 export const DESCRIPTION_BEGIN = '@dashql:description';
 export const DESCRIPTION_END = '@dashql:end';
 
-export type CommentSource = 'dashql_description' | 'dashql_properties' | 'comment';
+export type CommentSource = 'dashql_description' | 'dashql_metadata' | 'comment';
 
 export interface CommentBlock {
     source: CommentSource;
@@ -38,8 +38,8 @@ export function extractComments(sql: AnalyzedSql): CommentBlock[] {
             case buffers.parser.CommentBlockType.DASHQL_DESCRIPTION:
                 source = 'dashql_description';
                 break;
-            case buffers.parser.CommentBlockType.DASHQL_PROPERTIES:
-                source = 'dashql_properties';
+            case buffers.parser.CommentBlockType.DASHQL_METADATA:
+                source = 'dashql_metadata';
                 break;
             default:
                 continue;

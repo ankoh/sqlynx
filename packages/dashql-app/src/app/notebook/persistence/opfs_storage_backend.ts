@@ -1,4 +1,4 @@
-import { type NotebookRegistryBackend, type NotebookData, type ScriptData, type NotebookEntry, type StorageManifest, type AppSettings, type CachedQueryResult, StorageBackendType, STORAGE_MANIFEST_FILE, STORAGE_NOTEBOOKS_FOLDER, STORAGE_NOTEBOOK_FILE, STORAGE_NOTEBOOK_INDEX_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_SCRIPT_SCHEMA, STORAGE_SCRIPT_FUNCTIONS, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX, STORAGE_SHELL_FOLDER } from './storage_backend.js';
+import { type NotebookRegistryBackend, type NotebookData, type ScriptData, type NotebookEntry, type StorageManifest, type AppSettings, type AIModels, type CachedQueryResult, StorageBackendType, STORAGE_MANIFEST_FILE, STORAGE_NOTEBOOKS_FOLDER, STORAGE_NOTEBOOK_FILE, STORAGE_NOTEBOOK_INDEX_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_SCRIPT_SCHEMA, STORAGE_SCRIPT_FUNCTIONS, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX, STORAGE_SHELL_FOLDER } from './storage_backend.js';
 import { type CacheFileStat, type QueryResultCacheStore, evictToFit } from './query_result_cache_eviction.js';
 import { serializeNotebookIndex } from './notebook_index.js';
 import { type DataFile, type DataFileContent, STORAGE_ATTACHMENTS_FOLDER, validateDataFileName } from './storage_backend.js';
@@ -36,6 +36,9 @@ export class OPFSStorageBackend implements NotebookRegistryBackend {
                 const reset: StorageManifest = { notebooks: [] };
                 if (manifest.appSettings != null) {
                     reset.appSettings = manifest.appSettings;
+                }
+                if (manifest.aiModels != null) {
+                    reset.aiModels = manifest.aiModels;
                 }
                 await this.writeManifest(root, reset);
             }
@@ -628,6 +631,19 @@ export class OPFSStorageBackend implements NotebookRegistryBackend {
         const root = this.ensureInitialized();
         const manifest = await this.readManifest(root);
         manifest.appSettings = settings;
+        await this.writeManifest(root, manifest);
+    }
+
+    async loadAIModels(): Promise<AIModels | null> {
+        const root = this.ensureInitialized();
+        const manifest = await this.readManifest(root);
+        return manifest.aiModels ?? null;
+    }
+
+    async saveAIModels(models: AIModels): Promise<void> {
+        const root = this.ensureInitialized();
+        const manifest = await this.readManifest(root);
+        manifest.aiModels = models;
         await this.writeManifest(root, manifest);
     }
 

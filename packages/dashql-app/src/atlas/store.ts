@@ -4,41 +4,19 @@ import type {
     EmbeddedExternalDirectoryDatabase,
 } from '../platform/database/embedded_database.js';
 import { AtlasSql, quoteIdentifier, quoteString } from './atlas_sql.js';
-import {
-    ATLAS_DESCRIPTION_FILE,
-    ATLAS_INDEX_FILES,
-    ATLAS_PROPERTIES_FILE,
-    ATLAS_STALE_FILES,
-    ATLAS_STRUCTURE_FILE,
-} from './index/files.js';
-import { EMBEDDING_KINDS, type EmbeddingKind, type IndexResult } from './index/indexer.js';
+import { ATLAS_INDEX_FILE, ATLAS_STALE_FILES } from './index/files.js';
 import type { LayoutResult } from './index/layout.js';
-import {
-    descriptionTable,
-    exportSelect,
-    propertiesTable,
-    structureTable,
-    EMBEDDING_COLUMN,
-    LAYOUT_COLUMNS,
-    LAYOUT_DIMS,
-} from './index/tables.js';
-
-export type { EmbeddingKind } from './index/indexer.js';
+import type { IndexRow } from './index/rows.js';
+import { exportSelect, indexTable, EMBEDDING_COLUMN, LAYOUT_COLUMNS, LAYOUT_DIMS } from './index/tables.js';
 
 /// Hyper only reads and writes files below /mnt/external/, one folder is mounted at a time
 export const ATLAS_MOUNT_PATH = '/mnt/external/atlas';
 
 export interface AtlasLocation {
     directory: FileSystemDirectoryHandle;
-    /// The Parquet file of every embedding space
-    paths: Record<EmbeddingKind, string>;
+    /// The Parquet file of the index
+    path: string;
 }
-
-const FILE_NAMES: Record<EmbeddingKind, string> = {
-    structure: ATLAS_STRUCTURE_FILE,
-    description: ATLAS_DESCRIPTION_FILE,
-    properties: ATLAS_PROPERTIES_FILE,
-};
 
 export function externalDirectoryDatabase(database: unknown): EmbeddedExternalDirectoryDatabase | undefined {
     if (database == null || typeof database !== 'object') return undefined;
@@ -52,14 +30,7 @@ export async function mountFolder(
     directory: FileSystemDirectoryHandle,
 ): Promise<AtlasLocation> {
     const path = await database.registerExternalDirectory(directory, ATLAS_MOUNT_PATH, 'readwrite');
-    return {
-        directory,
-        paths: {
-            structure: `${path}/${ATLAS_STRUCTURE_FILE}`,
-            description: `${path}/${ATLAS_DESCRIPTION_FILE}`,
-            properties: `${path}/${ATLAS_PROPERTIES_FILE}`,
-        },
-    };
+    return { directory, path: `${path}/${ATLAS_INDEX_FILE}` };
 }
 
 export async function unmountFolder(database: EmbeddedExternalDirectoryDatabase): Promise<void> {
@@ -68,25 +39,22 @@ export async function unmountFolder(database: EmbeddedExternalDirectoryDatabase)
 
 export const externalTable = (path: string): string => `external(${quoteString(path)})`;
 
-/// Does the folder hold any index file? A folder without one is indexed right away.
-export async function hasIndexFiles(directory: FileSystemDirectoryHandle): Promise<boolean> {
-    for (const name of ATLAS_INDEX_FILES) {
-        try {
-            await directory.getFileHandle(name);
-            return true;
-        } catch (e) {
-            if (!(e instanceof DOMException && e.name === 'NotFoundError')) throw e;
-        }
+/// Does the folder hold an index file? A folder without one is indexed right away.
+export async function hasIndexFile(directory: FileSystemDirectoryHandle): Promise<boolean> {
+    try {
+        await directory.getFileHandle(ATLAS_INDEX_FILE);
+        return true;
+    } catch (e) {
+        if (!(e instanceof DOMException && e.name === 'NotFoundError')) throw e;
+        return false;
     }
-    return false;
 }
 
-/// The scripts of the index files with the hashes of their texts at indexing time
+/// The scripts of the index file with the hashes of their texts at indexing time
 export async function loadIndexedScripts(sql: AtlasSql, location: AtlasLocation): Promise<Map<string, string>> {
-    const selects = EMBEDDING_KINDS.map(kind => `SELECT script_name, script_hash FROM ${externalTable(location.paths[kind])}`);
     const table = await sql.query(
         'Load indexed scripts',
-        `SELECT DISTINCT script_name, script_hash FROM (${selects.join(' UNION ALL ')}) scripts`,
+        `SELECT DISTINCT script_name, script_hash FROM ${externalTable(location.path)}`,
     );
     const scripts = new Map<string, string>();
     for (const row of table.toArray()) {
@@ -107,7 +75,7 @@ export function countOutdatedScripts(indexed: ReadonlyMap<string, string>, curre
     return outdated;
 }
 
-/// The embeddings of one index file at their 3D positions
+/// The embedded description chunks at their 3D positions
 export interface IndexPoints {
     /// The distinct script names
     scripts: string[];
@@ -115,8 +83,10 @@ export interface IndexPoints {
     owners: Int32Array;
     /// LAYOUT_DIMS values per point, the 98th percentile radius of the cloud is 1
     coords: Float32Array;
-    /// What a point says about its script: the description chunk, the tables of the structure or the properties
+    /// The description chunk of every point
     details: string[];
+    /// The tables that the script of every point reads
+    tables: string[][];
 }
 
 function listItems(value: unknown): string[] {
@@ -127,46 +97,49 @@ function listItems(value: unknown): string[] {
     return Array.from(items, v => String(v));
 }
 
-/// Columns that every file of a kind must have. The count columns of the structure were added after the first version,
-/// files without them are reported as unreadable and the page asks to reindex the folder.
-const REQUIRED_COLUMNS: Record<EmbeddingKind, readonly string[]> = {
-    description: ['script_name', 'text', ...LAYOUT_COLUMNS],
-    structure: ['script_name', 'tables', 'table_count', ...LAYOUT_COLUMNS],
-    properties: ['script_name', 'text', ...LAYOUT_COLUMNS],
-};
+/// Columns that the index file must have. A file without them was written by another version, it is reported as
+/// unreadable and the page asks to reindex the folder.
+const REQUIRED_COLUMNS: readonly string[] = [
+    'script_name',
+    'description_chunk',
+    'structure_table_count',
+    'structure_table_names',
+    ...LAYOUT_COLUMNS,
+];
 
-/// Read one index file without its embeddings, a row per structure, description chunk or properties block. The columns
-/// of the properties file depend on the property keys, so the file is read with * and the embedding is dropped here.
-export async function loadIndexTable(sql: AtlasSql, location: AtlasLocation, kind: EmbeddingKind): Promise<arrow.Table> {
-    const table = await sql.query(`Load ${kind} index`, `SELECT * FROM ${externalTable(location.paths[kind])}`);
+/// Read the index file without its embeddings, a row per description chunk. The columns depend on the metadata keys, so
+/// the file is read with * and the embedding is dropped here.
+export async function loadIndexTable(sql: AtlasSql, location: AtlasLocation): Promise<arrow.Table> {
+    const table = await sql.query('Load index', `SELECT * FROM ${externalTable(location.path)}`);
     const names = table.schema.fields.map(f => f.name);
-    const missing = REQUIRED_COLUMNS[kind].filter(name => !names.includes(name));
+    const missing = REQUIRED_COLUMNS.filter(name => !names.includes(name));
     if (missing.length > 0) {
-        throw new Error(`${FILE_NAMES[kind]} has no column ${missing.map(quoteIdentifier).join(', ')}`);
+        throw new Error(`${ATLAS_INDEX_FILE} has no column ${missing.map(quoteIdentifier).join(', ')}`);
     }
     return table.select(names.filter(name => name !== EMBEDDING_COLUMN));
 }
 
-/// The columns of an index table that are shown as rows: the hash and the layout only matter to the atlas itself
+/// The columns of the index table that are shown as rows: the hash and the layout only matter to the atlas itself
 export function indexRowsTable(table: arrow.Table): arrow.Table {
     const hidden = new Set<string>(['script_hash', ...LAYOUT_COLUMNS]);
     return table.select(table.schema.fields.map(f => f.name).filter(name => !hidden.has(name)));
 }
 
-/// The 3D layout of one index table, point i is row i
-export function indexPoints(table: arrow.Table, kind: EmbeddingKind): IndexPoints {
-    const detailColumn = kind === 'structure' ? 'tables' : 'text';
+/// The 3D layout of the index table, point i is row i
+export function indexPoints(table: arrow.Table): IndexPoints {
     const names = table.getChild('script_name');
-    const detail = table.getChild(detailColumn);
+    const text = table.getChild('description_chunk');
+    const tableLists = table.getChild('structure_table_names');
     const axes = LAYOUT_COLUMNS.map(name => table.getChild(name));
     if (names == null || axes.some(axis => axis == null)) {
-        return { scripts: [], owners: new Int32Array(0), coords: new Float32Array(0), details: [] };
+        return { scripts: [], owners: new Int32Array(0), coords: new Float32Array(0), details: [], tables: [] };
     }
     const scripts: string[] = [];
     const indexOf = new Map<string, number>();
     const owners = new Int32Array(table.numRows);
     const coords = new Float32Array(table.numRows * LAYOUT_DIMS);
     const details: string[] = [];
+    const tables: string[][] = [];
     for (let i = 0; i < table.numRows; ++i) {
         const name = String(names.get(i));
         let owner = indexOf.get(name);
@@ -176,11 +149,12 @@ export function indexPoints(table: arrow.Table, kind: EmbeddingKind): IndexPoint
             scripts.push(name);
         }
         owners[i] = owner;
-        const value = detail?.get(i);
-        details.push(kind === 'structure' ? listItems(value).join(', ') : value == null ? '' : String(value));
+        const value = text?.get(i);
+        details.push(value == null ? '' : String(value));
+        tables.push(listItems(tableLists?.get(i)));
         axes.forEach((axis, d) => { coords[i * LAYOUT_DIMS + d] = Number(axis!.get(i)); });
     }
-    return { scripts, owners, coords, details };
+    return { scripts, owners, coords, details, tables };
 }
 
 async function removeIfExists(directory: FileSystemDirectoryHandle, name: string): Promise<void> {
@@ -193,33 +167,25 @@ async function removeIfExists(directory: FileSystemDirectoryHandle, name: string
 
 /// Write the rows as Parquet into the mounted folder: load an Arrow table into a scratch table and let Hyper COPY it.
 /// Index files of earlier format versions are removed.
-export async function writeIndexFiles(
+export async function writeIndexFile(
     sql: AtlasSql,
     location: AtlasLocation,
-    rows: IndexResult,
-    layouts: Record<EmbeddingKind, LayoutResult>,
+    rows: IndexRow[],
+    layout: LayoutResult,
     dim: number,
 ): Promise<void> {
-    const tables: Record<EmbeddingKind, ReturnType<typeof structureTable>> = {
-        structure: structureTable(rows.structure, dim, layouts.structure.coords),
-        description: descriptionTable(rows.description, dim, layouts.description.coords),
-        properties: propertiesTable(rows.properties, dim, layouts.properties.coords),
-    };
-    for (const kind of EMBEDDING_KINDS) {
-        const scratch = `atlas_${kind}_scratch`;
-        const table = tables[kind];
-        const name = FILE_NAMES[kind];
+    const scratch = 'atlas_index_scratch';
+    const table = indexTable(rows, dim, layout.coords);
+    await sql.run(`Drop ${scratch}`, `DROP TABLE IF EXISTS ${quoteIdentifier(scratch)}`);
+    try {
+        await sql.insert(`Load ${scratch}`, table, scratch);
+        await removeIfExists(location.directory, ATLAS_INDEX_FILE);
+        await sql.run(
+            `Write ${ATLAS_INDEX_FILE}`,
+            `COPY (SELECT ${exportSelect(table)} FROM ${quoteIdentifier(scratch)}) TO ${quoteString(location.path)} WITH (FORMAT PARQUET)`,
+        );
+    } finally {
         await sql.run(`Drop ${scratch}`, `DROP TABLE IF EXISTS ${quoteIdentifier(scratch)}`);
-        try {
-            await sql.insert(`Load ${scratch}`, table, scratch);
-            await removeIfExists(location.directory, name);
-            await sql.run(
-                `Write ${name}`,
-                `COPY (SELECT ${exportSelect(table)} FROM ${quoteIdentifier(scratch)}) TO ${quoteString(location.paths[kind])} WITH (FORMAT PARQUET)`,
-            );
-        } finally {
-            await sql.run(`Drop ${scratch}`, `DROP TABLE IF EXISTS ${quoteIdentifier(scratch)}`);
-        }
     }
     for (const name of ATLAS_STALE_FILES) {
         await removeIfExists(location.directory, name);

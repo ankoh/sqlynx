@@ -19,6 +19,8 @@ import { DashQLCoreProvider } from '../app/providers/core_provider.js';
 import { AppConfigProvider } from '../app/config/app_config.js';
 import { PlatformEventListenerProvider } from '../platform/events/event_listener_provider.js';
 import { HttpClientProvider } from '../platform/http/http_client_provider.js';
+import { AIModelsProvider } from '../app/config/ai_models_provider.js';
+import { ShellInternals } from '../shell/internals.js';
 import { AtlasPage } from './atlas_page.js';
 import * as styles from './atlas.module.css';
 
@@ -27,6 +29,8 @@ import '../styles/colors.css';
 import '../styles/globals.css';
 
 export const ATLAS_DATABASE_ID = 'atlas';
+
+const AtlasInternals: React.FC = () => <ShellInternals aiSettings />;
 
 /// Same provider tree as the shell (including the router that the platform event listener needs). The computation
 /// registry holds the rows of the index files as data frames, their histograms and cross-filters.
@@ -48,37 +52,40 @@ export const Atlas: React.FC = () => {
                             <AppConfigProvider>
                                 <PlatformEventListenerProvider>
                                     <HttpClientProvider>
-                                        <ProcessProvider>
-                                            <EmbeddedDatabaseProvider>
-                                                <GitHubTheme>
-                                                    <DashQLCoreProvider>
-                                                        <ComputationRegistry>
-                                                            <AttachedDatabaseRegistry>
-                                                                <ShellConnectionProvider
-                                                                    key={generation}
-                                                                    databaseId={ATLAS_DATABASE_ID}
-                                                                    notebookId={ATLAS_DATABASE_ID}
-                                                                >
-                                                                    <ShellComputeQueryExecutionProvider>
-                                                                        <ComputationScheduler />
-                                                                        <div className={styles.root}>
-                                                                            <ShellNavBar
-                                                                                engineVersion={engineVersion}
-                                                                                onReset={reset}
-                                                                                brandSymbol="dashql"
-                                                                                brandLabel="Reset atlas"
-                                                                                brandTitle="Atlas"
-                                                                            />
-                                                                            <AtlasPage onEngineVersion={setEngineVersion} />
-                                                                        </div>
-                                                                    </ShellComputeQueryExecutionProvider>
-                                                                </ShellConnectionProvider>
-                                                            </AttachedDatabaseRegistry>
-                                                        </ComputationRegistry>
-                                                    </DashQLCoreProvider>
-                                                </GitHubTheme>
-                                            </EmbeddedDatabaseProvider>
-                                        </ProcessProvider>
+                                        <AIModelsProvider>
+                                            <ProcessProvider>
+                                                <EmbeddedDatabaseProvider>
+                                                    <GitHubTheme>
+                                                        <DashQLCoreProvider>
+                                                            <ComputationRegistry>
+                                                                <AttachedDatabaseRegistry>
+                                                                    <ShellConnectionProvider
+                                                                        key={generation}
+                                                                        databaseId={ATLAS_DATABASE_ID}
+                                                                        notebookId={ATLAS_DATABASE_ID}
+                                                                    >
+                                                                        <ShellComputeQueryExecutionProvider>
+                                                                            <ComputationScheduler />
+                                                                            <div className={styles.root}>
+                                                                                <ShellNavBar
+                                                                                    engineVersion={engineVersion}
+                                                                                    onReset={reset}
+                                                                                    brandSymbol="dashql"
+                                                                                    brandLabel="Reset atlas"
+                                                                                    brandTitle="Atlas"
+                                                                                    Internals={AtlasInternals}
+                                                                                />
+                                                                                <AtlasPage onEngineVersion={setEngineVersion} />
+                                                                            </div>
+                                                                        </ShellComputeQueryExecutionProvider>
+                                                                    </ShellConnectionProvider>
+                                                                </AttachedDatabaseRegistry>
+                                                            </ComputationRegistry>
+                                                        </DashQLCoreProvider>
+                                                    </GitHubTheme>
+                                                </EmbeddedDatabaseProvider>
+                                            </ProcessProvider>
+                                        </AIModelsProvider>
                                     </HttpClientProvider>
                                 </PlatformEventListenerProvider>
                             </AppConfigProvider>

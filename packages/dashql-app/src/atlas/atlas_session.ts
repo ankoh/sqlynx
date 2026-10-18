@@ -13,23 +13,22 @@ import type { QueryExecutionTracker } from '../query/query_execution_state.js';
 import { AtlasSql } from './atlas_sql.js';
 import { SqlAnalyzer } from './index/analysis/core.js';
 import { AtlasEmbedder } from './index/embedder_client.js';
-import { analyzeScripts, buildIndex, EMBEDDING_KINDS, hasEmbeddableText, type IndexProgress } from './index/indexer.js';
+import { analyzeScripts, buildIndex, hasDescription, type IndexProgress } from './index/indexer.js';
 import { ATLAS_EMBEDDER_CONFIG, type Embedder } from './index/model.js';
 import { readSqlFile, scanSqlFiles, type SqlFile } from './index/scan.js';
 import { searchAll, type SearchResults } from './search/search.js';
 import {
     countOutdatedScripts,
     externalDirectoryDatabase,
-    hasIndexFiles,
+    hasIndexFile,
     loadIndexedScripts,
     indexPoints,
     indexRowsTable,
     loadIndexTable,
     mountFolder,
     unmountFolder,
-    writeIndexFiles,
+    writeIndexFile,
     type AtlasLocation,
-    type EmbeddingKind,
     type IndexPoints,
 } from './store.js';
 
@@ -45,19 +44,19 @@ export type AtlasPhase =
 export interface OpenedFolder {
     name: string;
     scripts: number;
-    /// The index files in the folder were loaded, nothing had to be computed
+    /// The index file in the folder was loaded, nothing had to be computed
     reused: boolean;
     /// The number of scripts that were added, changed or removed since the loaded index was written
     outdated: number;
-    /// The embeddings of every index file in their 3D layouts
-    points: Record<EmbeddingKind, IndexPoints>;
-    /// The rows of every index file without the embeddings and the layout, row i is point i
-    rows: Record<EmbeddingKind, arrow.Table>;
+    /// The embedded description chunks in their 3D layout
+    points: IndexPoints;
+    /// The rows of the index file without the embeddings and the layout, row i is point i
+    rows: arrow.Table;
 }
 
 type LoadedIndex = Pick<OpenedFolder, 'points' | 'rows'>;
 
-/// The index files of a folder exist but cannot be loaded, e.g. because they were written by an older version.
+/// The index file of a folder exists but cannot be loaded, e.g. because they were written by an older version.
 /// The folder stays open so that it can be reindexed.
 export class AtlasIndexUnreadable extends Error {
     constructor(readonly folder: string, cause: unknown) {
@@ -132,8 +131,8 @@ export class AtlasSession {
         return this.sql;
     }
 
-    /// Mount the folder, load the index files or build them, and get ready for prompts. A folder without index files is
-    /// indexed, index files that cannot be loaded throw AtlasIndexUnreadable. `force` builds the index in any case.
+    /// Mount the folder, load the index file or build it, and get ready for prompts. A folder without an index file is
+    /// indexed, an index file that cannot be loaded throws AtlasIndexUnreadable. `force` builds the index in any case.
     async open(directory: FileSystemDirectoryHandle, report: (phase: AtlasPhase) => void, force = false): Promise<OpenedFolder> {
         if (this.mounts == null) throw new Error('this database cannot mount folders');
         await this.closeFolder();
@@ -153,7 +152,7 @@ export class AtlasSession {
         }
 
         const embedder = await this.loadEmbedder(report);
-        if (!force && await hasIndexFiles(directory)) {
+        if (!force && await hasIndexFile(directory)) {
             let loaded: LoadedIndex;
             let indexed: Map<string, string>;
             try {
@@ -174,15 +173,15 @@ export class AtlasSession {
     }
 
     /// The scripts of the folder that an index would contain. Scripts that are not in the index are only counted if they
-    /// have something to embed, an empty or comment-only script never gets a row and would always look new.
+    /// have a description, a script without one never gets a row and would always look new.
     private indexableScripts(files: SqlFile[], indexed: ReadonlyMap<string, string>, embedder: Embedder): Map<string, string> {
         const unknown = files.filter(f => !indexed.has(f.id));
-        const embeddable = new Set(
+        const described = new Set(
             analyzeScripts(unknown, this.analyzer, t => embedder.countTokens(t), embedder.config.maxTokens)
-                .filter(hasEmbeddableText)
+                .filter(hasDescription)
                 .map(s => s.file.id),
         );
-        return new Map(files.filter(f => indexed.has(f.id) || embeddable.has(f.id)).map(f => [f.id, f.hash]));
+        return new Map(files.filter(f => indexed.has(f.id) || described.has(f.id)).map(f => [f.id, f.hash]));
     }
 
     /// Build the index of the open folder again, e.g. after the embedder or the analysis changed
@@ -192,14 +191,8 @@ export class AtlasSession {
     }
 
     private async loadIndex(sql: AtlasSql, location: AtlasLocation): Promise<LoadedIndex> {
-        const points: Partial<Record<EmbeddingKind, IndexPoints>> = {};
-        const rows: Partial<Record<EmbeddingKind, arrow.Table>> = {};
-        for (const kind of EMBEDDING_KINDS) {
-            const table = await loadIndexTable(sql, location, kind);
-            points[kind] = indexPoints(table, kind);
-            rows[kind] = indexRowsTable(table);
-        }
-        return { points: points as Record<EmbeddingKind, IndexPoints>, rows: rows as Record<EmbeddingKind, arrow.Table> };
+        const table = await loadIndexTable(sql, location);
+        return { points: indexPoints(table), rows: indexRowsTable(table) };
     }
 
     private async index(
@@ -216,18 +209,14 @@ export class AtlasSession {
         });
         this.traced.info('Built the index', {
             scripts: String(built.analyzedScripts),
-            structure: String(built.structure.length),
-            description: String(built.description.length),
-            properties: String(built.properties.length),
-            structureLayout: built.layouts.structure.mode,
-            descriptionLayout: built.layouts.description.mode,
-            propertiesLayout: built.layouts.properties.mode,
+            rows: String(built.rows.length),
+            layout: built.layout.mode,
             ms: String(Math.round(performance.now() - startedAt)),
         }, LOG_CTX);
 
-        report({ kind: 'write', message: 'Writing the Parquet files' });
-        await writeIndexFiles(sql, location, built, built.layouts, embedder.config.dim);
-        this.traced.info('Wrote the index files', { name: directory.name }, LOG_CTX);
+        report({ kind: 'write', message: 'Writing the Parquet file' });
+        await writeIndexFile(sql, location, built.rows, built.layout, embedder.config.dim);
+        this.traced.info('Wrote the index file', { name: directory.name }, LOG_CTX);
     }
 
     /// Embed the prompt and run all search strategies

@@ -14,24 +14,24 @@ afterEach(async () => {
 
 const encoder = new TextEncoder();
 
-function parseProperties(text: string): dashql.ScriptProperties | null {
+function parseMetadata(text: string): dashql.ScriptMetadata | null {
     const catalog = dql!.createCatalog();
     const script = dql!.createScript(catalog);
     script.insertTextAt(0, text);
     script.parse();
     const parsed = script.getParsed();
-    const properties = dashql.readProperties(parsed.read(), encoder.encode(text));
+    const metadata = dashql.readMetadata(parsed.read(), encoder.encode(text));
     parsed.destroy();
     script.destroy();
     catalog.destroy();
-    return properties;
+    return metadata;
 }
 
-describe('Comment properties', () => {
+describe('Comment metadata', () => {
     it('renders pretty-printed JSON as line comments', () => {
-        expect(dashql.renderPropertiesBlock({ owner: 'finance', runtime_ms: 1834 })).toEqual(
+        expect(dashql.renderMetadataBlock({ owner: 'finance', runtime_ms: 1834 })).toEqual(
             [
-                '-- @dashql:properties',
+                '-- @dashql:metadata',
                 '-- {',
                 '--   "owner": "finance",',
                 '--   "runtime_ms": 1834',
@@ -39,11 +39,11 @@ describe('Comment properties', () => {
                 '-- @dashql:end',
             ].join('\n'),
         );
-        expect(dashql.renderPropertiesBlock({}, '\r\n')).toEqual('-- @dashql:properties\r\n-- {}\r\n-- @dashql:end');
+        expect(dashql.renderMetadataBlock({}, '\r\n')).toEqual('-- @dashql:metadata\r\n-- {}\r\n-- @dashql:end');
     });
 
     it('round-trips through the parser', () => {
-        const properties = {
+        const metadata = {
             owner: 'finance',
             notes: 'first line\nsecond line\r\n\tindented',
             quotes: 'say "hi" */ -- not a comment',
@@ -57,31 +57,31 @@ describe('Comment properties', () => {
             nothing: null,
         };
         for (const eol of ['\n', '\r\n']) {
-            const text = `${dashql.renderPropertiesBlock(properties, eol)}${eol}${eol}select 1;${eol}`;
-            expect(parseProperties(text)).toEqual(properties);
+            const text = `${dashql.renderMetadataBlock(metadata, eol)}${eol}${eol}select 1;${eol}`;
+            expect(parseMetadata(text)).toEqual(metadata);
         }
     });
 
     it('reads hand-written block comments', () => {
-        const text = '/* @dashql:properties\n * {"owner": "finance",\n *  "tags": ["weekly"]}\n */\nselect 1;\n';
-        expect(parseProperties(text)).toEqual({ owner: 'finance', tags: ['weekly'] });
+        const text = '/* @dashql:metadata\n * {"owner": "finance",\n *  "tags": ["weekly"]}\n */\nselect 1;\n';
+        expect(parseMetadata(text)).toEqual({ owner: 'finance', tags: ['weekly'] });
     });
 
-    it('ignores scripts without valid properties', () => {
-        expect(parseProperties('select 1;')).toBeNull();
-        expect(parseProperties('-- @dashql:properties\n-- owner: finance\n-- @dashql:end\nselect 1;')).toBeNull();
-        expect(parseProperties('-- @dashql:properties\n-- [1, 2]\n-- @dashql:end\nselect 1;')).toBeNull();
+    it('ignores scripts without valid metadata', () => {
+        expect(parseMetadata('select 1;')).toBeNull();
+        expect(parseMetadata('-- @dashql:metadata\n-- owner: finance\n-- @dashql:end\nselect 1;')).toBeNull();
+        expect(parseMetadata('-- @dashql:metadata\n-- [1, 2]\n-- @dashql:end\nselect 1;')).toBeNull();
     });
 
-    it('keeps properties next to a description', () => {
+    it('keeps metadata next to a description', () => {
         const text = [
-            dashql.renderPropertiesBlock({ owner: 'finance' }),
+            dashql.renderMetadataBlock({ owner: 'finance' }),
             '',
             '-- @dashql:description',
             '-- Revenue per segment.',
             '-- @dashql:end',
             'select 1;',
         ].join('\n');
-        expect(parseProperties(text)).toEqual({ owner: 'finance' });
+        expect(parseMetadata(text)).toEqual({ owner: 'finance' });
     });
 });

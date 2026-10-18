@@ -59,6 +59,7 @@ export function validateDataFileName(name: string): void {
 export type NotebookEntry = app_manifest.NotebookEntry;
 export type StorageManifest = app_manifest.StorageManifest;
 export type AppSettings = app_manifest.AppSettings;
+export type AIModels = app_manifest.AIModels;
 export type NotebookData = app_notebook.NotebookData;
 export type NotebookMetadata = app_notebook.NotebookMetadata;
 export type AttachedDatabase = app_notebook.AttachedDatabase;
@@ -95,6 +96,10 @@ export interface StorageBackend {
     loadAppSettings(): Promise<AppSettings | null>;
     /// Persist app settings to the manifest (registry-level)
     saveAppSettings(settings: AppSettings): Promise<void>;
+    /// Load the AI models from the manifest (registry-level)
+    loadAIModels(): Promise<AIModels | null>;
+    /// Persist the AI models to the manifest (registry-level)
+    saveAIModels(models: AIModels): Promise<void>;
     /// Load a notebook by UUID
     loadNotebook(notebookId: string): Promise<NotebookData>;
     /// Save a notebook

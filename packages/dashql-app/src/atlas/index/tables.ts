@@ -1,23 +1,25 @@
 import * as arrow from 'apache-arrow';
 
-import type { DescriptionRow, PropertiesRow, StructureRow } from './rows.js';
+import type { IndexRow } from './rows.js';
 
-/// Number of coordinates per row in the layout of every file
+/// Number of coordinates per row in the layout
 export const LAYOUT_DIMS = 3;
-/// Every embedding space has its own file and its own layout, the files share the names of the vector columns
-export const EMBEDDING_COLUMN = 'dashql_atlas_embedding';
-export const LAYOUT_COLUMNS = ['dashql_atlas_x', 'dashql_atlas_y', 'dashql_atlas_z'] as const;
+/// The columns are prefixed by where they come from: `script_` (the file), `description_` (the description chunk, its
+/// embedding and its position in the cloud), `metadata_` (the `@dashql:metadata` block) and `structure_` (the
+/// analysis of the SQL).
+export const EMBEDDING_COLUMN = 'description_embedding';
+export const LAYOUT_COLUMNS = ['description_x', 'description_y', 'description_z'] as const;
 
 const utf8 = new arrow.Utf8();
 const int32 = new arrow.Int32();
 const bool = new arrow.Bool();
 /// The tables are only a staging area for Hyper: persistent tables of the compute database do not support 32-bit floats,
-/// so floats travel as doubles and are cast back to real when the Parquet files are written (see `exportSelect`).
+/// so floats travel as doubles and are cast back to real when the Parquet file is written (see `exportSelect`).
 const float64 = new arrow.Float64();
 const utf8List = new arrow.List(new arrow.Field('item', new arrow.Utf8(), true));
 const embeddingType = new arrow.List(new arrow.Field('item', new arrow.Float64(), false));
 
-/// Columns are not nullable unless they say so, only the property columns are
+/// Columns are not nullable unless they say so, only the metadata and count columns are
 type Column = [name: string, type: arrow.DataType, data: arrow.Data, nullable?: boolean];
 
 /// Columns are assembled from buffers. arrow.vectorFromArray goes through the Arrow builders, which compile their null
@@ -57,6 +59,11 @@ function boolData(values: (boolean | null)[]): arrow.Data<arrow.Bool> {
     return arrow.makeData({ type: bool, length: values.length, ...validity(values), data });
 }
 
+function int32Data(values: (number | null)[]): arrow.Data<arrow.Int32> {
+    const data = Int32Array.from(values, v => v ?? 0);
+    return arrow.makeData({ type: int32, length: values.length, ...validity(values), data });
+}
+
 function float64Data(values: (number | null)[]): arrow.Data<arrow.Float64> {
     const data = Float64Array.from(values, v => v ?? 0);
     return arrow.makeData({ type: float64, length: values.length, ...validity(values), data });
@@ -83,7 +90,7 @@ function column(values: unknown[], type: arrow.DataType): arrow.Data {
         case arrow.Type.Bool:
             return boolData(values as boolean[]);
         case arrow.Type.Int:
-            return arrow.makeData({ type: int32, length: values.length, nullCount: 0, data: Int32Array.from(values as number[]) });
+            return int32Data(values as (number | null)[]);
         case arrow.Type.Float:
             return float64Data(values as number[]);
         case arrow.Type.List:
@@ -123,7 +130,7 @@ function buildTable(columns: Column[], length: number): arrow.Table {
     return new arrow.Table([new arrow.RecordBatch(new arrow.Schema(fields), struct)]);
 }
 
-/// The embedding and layout columns of `rows` rows, `coords` holds LAYOUT_DIMS values per row
+/// The embedding and layout columns of the description chunks of `rows` rows, `coords` holds LAYOUT_DIMS values per row
 function vectorColumns(vectors: Float32Array[], dim: number, coords: Float32Array): Column[] {
     const rows = vectors.length;
     if (coords.length !== rows * LAYOUT_DIMS) {
@@ -139,68 +146,36 @@ function vectorColumns(vectors: Float32Array[], dim: number, coords: Float32Arra
     ];
 }
 
-/// `coords` holds LAYOUT_DIMS values per row
-export function descriptionTable(rows: DescriptionRow[], dim: number, coords: Float32Array): arrow.Table {
-    return buildTable(
-        [
-            ['script_name', utf8, column(rows.map(r => r.scriptName), utf8)],
-            ['script_hash', utf8, column(rows.map(r => r.scriptHash), utf8)],
-            ['chunk_index', int32, column(rows.map(r => r.chunkIndex), int32)],
-            ['text', utf8, column(rows.map(r => r.text), utf8)],
-            ...vectorColumns(rows.map(r => r.embedding), dim, coords),
-        ],
-        rows.length,
-    );
-}
-
-/// The feature lists of the structure file. Most lists also get a count column, the lists themselves cannot be binned.
-/// The joins and the operators are not counted: how many joins a query has is up to the optimizer (a cross join with a
-/// predicate is a join, too), and the operators are SQL clauses, not the operators of a plan.
-const STRUCTURE_LISTS: [list: string, count: string | null, pick: (r: StructureRow) => string[]][] = [
-    ['statement_types', 'statement_type_count', r => r.features.statementTypes],
-    ['tables', 'table_count', r => r.features.tables],
-    ['columns', 'column_count', r => r.features.columns],
-    ['functions', 'function_count', r => r.features.functions],
-    ['aggregates', 'aggregate_count', r => r.features.aggregates],
-    ['function_calls', 'function_call_count', r => r.features.functionCalls],
-    ['ctes', 'cte_count', r => r.features.ctes],
-    ['joins', null, r => r.features.joins],
-    ['filters', 'filter_count', r => r.features.filters],
-    ['operators', null, r => r.features.operators],
-    ['visualizations', 'visualization_count', r => r.features.visualizations],
-    ['diagnostics', 'diagnostic_count', r => r.diagnostics],
+/// The feature lists of the analysis and its diagnostics, each next to its count. The lists themselves cannot be
+/// binned. The joins and the operators are not counted: how many joins a query has is up to the optimizer (a cross join
+/// with a predicate is a join, too), and the operators are SQL clauses, not the operators of a plan.
+/// The lists of the analysis are null for scripts that could not be analyzed.
+const LISTS: [count: string | null, list: string, pick: (r: IndexRow) => string[] | null][] = [
+    ['structure_statement_count', 'structure_statement_types', r => r.features?.statementTypes ?? null],
+    ['structure_table_count', 'structure_table_names', r => r.features?.tables ?? null],
+    ['structure_column_count', 'structure_column_names', r => r.features?.columns ?? null],
+    ['structure_function_count', 'structure_function_names', r => r.features?.functions ?? null],
+    ['structure_aggregate_count', 'structure_aggregate_names', r => r.features?.aggregates ?? null],
+    ['structure_function_call_count', 'structure_function_call_expressions', r => r.features?.functionCalls ?? null],
+    ['structure_cte_count', 'structure_cte_names', r => r.features?.ctes ?? null],
+    [null, 'structure_join_conditions', r => r.features?.joins ?? null],
+    ['structure_filter_count', 'structure_filter_predicates', r => r.features?.filters ?? null],
+    [null, 'structure_operator_names', r => r.features?.operators ?? null],
+    ['structure_visualization_count', 'structure_visualization_summaries', r => r.features?.visualizations ?? null],
+    ['structure_diagnostic_count', 'structure_diagnostic_messages', r => r.diagnostics],
 ];
 
-/// The structure text and the script are not stored, both can be recomputed from the SQL files.
-/// `coords` holds LAYOUT_DIMS values per row.
-export function structureTable(rows: StructureRow[], dim: number, coords: Float32Array): arrow.Table {
-    return buildTable(
-        [
-            ['script_name', utf8, column(rows.map(r => r.scriptName), utf8)],
-            ['script_hash', utf8, column(rows.map(r => r.scriptHash), utf8)],
-            ['truncated', bool, column(rows.map(r => r.truncated), bool)],
-            ...STRUCTURE_LISTS.flatMap(([, count, pick]): Column[] =>
-                count == null ? [] : [[count, int32, column(rows.map(r => pick(r).length), int32)]]),
-            ...vectorColumns(rows.map(r => r.embedding), dim, coords),
-            ...STRUCTURE_LISTS.map(([list, , pick]): Column => [list, utf8List, column(rows.map(pick), utf8List)]),
-        ],
-        rows.length,
-    );
-}
-
-/// The fixed columns of the properties file, a property with such a name gets the prefix `property_`
-const PROPERTIES_COLUMNS = new Set(['script_name', 'script_hash', 'text', 'truncated']);
-
-/// One column per property key, in the order the keys are first seen. Numbers become doubles and booleans bools if every
-/// row agrees, anything else is a string with objects and arrays as JSON. Rows without the key are null.
-function propertyColumns(rows: PropertiesRow[]): Column[] {
-    const keys = [...new Set(rows.flatMap(r => Object.keys(r.properties)))];
-    const names = new Set<string>([...PROPERTIES_COLUMNS, EMBEDDING_COLUMN, ...LAYOUT_COLUMNS]);
+/// One column `metadata_<key>` per metadata key, in the order the keys are first seen. Numbers become doubles and
+/// booleans bools if every row agrees, anything else is a string with objects and arrays as JSON. Rows without the key
+/// are null.
+function metadataColumns(rows: IndexRow[]): Column[] {
+    const keys = [...new Set(rows.flatMap(r => Object.keys(r.metadata ?? {})))];
     return keys.map((key): Column => {
-        let name = key;
-        while (names.has(name) || name.startsWith('dashql_atlas_')) name = `property_${name}`;
-        names.add(name);
-        const values = rows.map(r => (Object.prototype.hasOwnProperty.call(r.properties, key) ? r.properties[key] : null) ?? null);
+        const name = `metadata_${key}`;
+        const values = rows.map(r => {
+            const has = r.metadata != null && Object.prototype.hasOwnProperty.call(r.metadata, key);
+            return (has ? r.metadata![key] : null) ?? null;
+        });
         const present = values.filter(v => v != null);
         if (present.length > 0 && present.every(v => typeof v === 'number')) {
             return [name, float64, float64Data(values as (number | null)[]), true];
@@ -213,23 +188,31 @@ function propertyColumns(rows: PropertiesRow[]): Column[] {
     });
 }
 
-/// `coords` holds LAYOUT_DIMS values per row
-export function propertiesTable(rows: PropertiesRow[], dim: number, coords: Float32Array): arrow.Table {
+/// A row per description chunk with the metadata and the analysis of its script, in this order: `script_`,
+/// `description_`, `metadata_`, `structure_`. The script is not stored, it can be read from the SQL files. The counts
+/// are null and the lists empty for scripts that could not be analyzed.
+/// `coords` holds LAYOUT_DIMS values per row.
+export function indexTable(rows: IndexRow[], dim: number, coords: Float32Array): arrow.Table {
     return buildTable(
         [
             ['script_name', utf8, column(rows.map(r => r.scriptName), utf8)],
             ['script_hash', utf8, column(rows.map(r => r.scriptHash), utf8)],
-            ['truncated', bool, column(rows.map(r => r.truncated), bool)],
-            ...propertyColumns(rows),
-            ['text', utf8, column(rows.map(r => r.text), utf8)],
+            ['description_chunk_index', int32, column(rows.map(r => r.chunkIndex), int32)],
+            ['description_chunk', utf8, column(rows.map(r => r.text), utf8)],
             ...vectorColumns(rows.map(r => r.embedding), dim, coords),
+            ...metadataColumns(rows),
+            ...LISTS.flatMap(([count, list, pick]): Column[] => {
+                const listColumn: Column = [list, utf8List, column(rows.map(r => pick(r) ?? []), utf8List)];
+                if (count == null) return [listColumn];
+                return [[count, int32, column(rows.map(r => pick(r)?.length ?? null), int32), true], listColumn];
+            }),
         ],
         rows.length,
     );
 }
 
-/// The SELECT list that casts the staged doubles of the vector columns back to real, so that the Parquet files hold
-/// 32-bit floats. Everything else is passed through, numeric properties stay doubles.
+/// The SELECT list that casts the staged doubles of the vector columns back to real, so that the Parquet file holds
+/// 32-bit floats. Everything else is passed through, numeric metadata stays doubles.
 export function exportSelect(table: arrow.Table): string {
     const vectors = new Set<string>([EMBEDDING_COLUMN, ...LAYOUT_COLUMNS]);
     return table.schema.fields.map(f => {
