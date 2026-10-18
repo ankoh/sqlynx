@@ -68,6 +68,27 @@ function drifted(x: number, y: number, z: number, time: number, out: THREE.Vecto
     );
 }
 
+/// The dots are small beads, lit from the top left. They have a cool rim and a highlight.
+const BEAD_GLSL = `
+    /// The normal of a sphere seen from the front, at a point of its disc. y is up.
+    vec3 beadNormal(vec2 p, float radius) {
+        vec2 n = p / radius;
+        float len = length(n);
+        if (len > 1.0) n /= len;
+        return vec3(n, sqrt(max(1.0 - dot(n, n), 0.0)));
+    }
+    vec3 beadColor(vec3 normal) {
+        vec3 light = normalize(vec3(-0.45, 0.55, 0.7));
+        float diffuse = max(dot(normal, light), 0.0);
+        float rim = pow(1.0 - normal.z, 3.0);
+        return mix(vec3(0.10, 0.12, 0.15), vec3(0.34, 0.40, 0.48), 0.8 * diffuse) + vec3(0.30, 0.38, 0.50) * 0.5 * rim;
+    }
+    float beadSpecular(vec3 normal) {
+        vec3 light = normalize(vec3(-0.45, 0.55, 0.7));
+        return pow(max(dot(reflect(-light, normal), vec3(0.0, 0.0, 1.0)), 0.0), 28.0);
+    }
+`;
+
 const VERTEX_SHADER = `
     ${DRIFT_GLSL}
     attribute float aSize;
@@ -88,6 +109,8 @@ const VERTEX_SHADER = `
     /// Where and when the ripple of the last search started
     uniform vec3 uRippleOrigin;
     uniform float uRippleStart;
+    /// 1 if the points are beads with shading and a shadow, the made up dots are flat
+    uniform float uBeads;
     varying float vAlpha;
     varying float vSelected;
     /// Size of the point in device pixels, edges are antialiased over a fixed number of pixels
@@ -96,6 +119,8 @@ const VERTEX_SHADER = `
     varying float vFar;
     /// How much the ripple lights the point up
     varying float vWave;
+    /// How much of a shadow the point casts around it
+    varying float vHalo;
     void main() {
         vec4 mv = modelViewMatrix * vec4(position + drift(position), 1.0);
         gl_Position = projectionMatrix * mv;
@@ -112,11 +137,16 @@ const VERTEX_SHADER = `
         float front = (length(position - uRippleOrigin) - age * ${RIPPLE_SPEED.toFixed(2)}) / 0.16;
         vWave = exp(-front * front) * exp(-age * 0.9);
         size *= 1.0 + 0.9 * vWave;
-        gl_PointSize = size * uPixelRatio * uScale / -mv.z;
+        float pixels = size * uPixelRatio * uScale / -mv.z;
+        // Dots that are big on screen cast a soft shadow, the point grows to make room for it and the bead keeps its size
+        vHalo = uBeads * smoothstep(7.0, 14.0, pixels / uPixelRatio) * (1.0 - vFar);
+        gl_PointSize = pixels / (1.0 - 0.3 * vHalo);
         vPixels = gl_PointSize;
         vSelected = selected;
         // Points in the back are dimmer, which gives the cloud its depth
         float depth = clamp(1.0 - (-mv.z - uScale + 2.4) / 3.2, 0.3, 1.0);
+        // Beads that are see-through lose their shading, the haze and the blur show their depth instead
+        depth = mix(depth, 0.65 + 0.35 * depth, uBeads);
         // While there is a selection, the selected points are bright and the others fade
         float alpha = uHasSelection > 0.5 ? mix(aAlpha * 0.15, max(aAlpha, 0.9), selected) : aAlpha;
         // Every point twinkles slowly at its own pace
@@ -133,22 +163,36 @@ const FRAGMENT_SHADER = `
     varying float vPixels;
     varying float vFar;
     varying float vWave;
+    varying float vHalo;
+    uniform float uBeads;
+    ${BEAD_GLSL}
     void main() {
-        float d = length(gl_PointCoord - vec2(0.5));
-        if (d > 0.5) discard;
-        // One device pixel in the units of gl_PointCoord
-        float aa = 1.0 / max(vPixels, 1.0);
-        // A solid disc whose edge is about a pixel wide, whatever the size of the point. Out of focus points are soft.
-        float soft = mix(1.25 * aa, 0.45, vFar * vFar);
-        float disc = 1.0 - smoothstep(0.5 - soft, 0.5 - 0.25 * aa, d);
-        // The rim is a little cooler than the center, which gives the dots some volume
-        vec3 color = mix(vec3(0.14, 0.16, 0.19), vec3(0.28, 0.34, 0.42), smoothstep(0.1, 0.5, d));
+        // From the center of the point to its edge, y up
+        vec2 c = (gl_PointCoord - 0.5) * vec2(2.0, -2.0);
+        float r = length(c);
+        if (r > 1.0) discard;
+        // One device pixel in these units
+        float aa = 2.0 / max(vPixels, 1.0);
+        // The bead fills the point, unless there is a shadow around it
+        float radius = 1.0 - 0.3 * vHalo;
+        // An edge about a pixel wide, whatever the size of the point. Out of focus points are soft.
+        float soft = mix(1.25 * aa, 0.9 * radius, vFar * vFar);
+        float body = 1.0 - smoothstep(radius - soft, radius - 0.25 * aa, r);
+        vec3 normal = beadNormal(c, radius);
+        // Dots of a few pixels are too small for the shading, they stay flat
+        float detail = uBeads * smoothstep(3.0, 8.0, vPixels) * (1.0 - vFar);
+        vec3 color = mix(vec3(0.16, 0.19, 0.23), beadColor(normal), detail);
         // Far points take on the cool grey of the haze
         color = mix(color, vec3(0.48, 0.55, 0.64), 0.5 * vFar);
         // Selected points get a blue rim, the accent of the highlights stays for the search candidates
-        color = mix(color, vec3(0.04, 0.41, 0.85), vSelected * smoothstep(0.0, 0.45, d));
+        color = mix(color, vec3(0.04, 0.41, 0.85), vSelected * smoothstep(0.2, 1.0, 1.0 - normal.z));
         color = mix(color, vec3(0.9, 0.55, 0.05), vWave);
-        gl_FragColor = vec4(color, vAlpha * disc);
+        color += vec3(0.7 * detail * (1.0 - vWave) * beadSpecular(normal));
+        // The shadow fades out toward the edge of the point
+        float outside = clamp((r - radius) / max(1.0 - radius, 0.001), 0.0, 1.0);
+        float shadow = vHalo * 0.16 * (1.0 - outside) * (1.0 - outside);
+        color = mix(vec3(0.16, 0.19, 0.24), color, body);
+        gl_FragColor = vec4(color, vAlpha * max(body, shadow));
     }
 `;
 
@@ -215,7 +259,7 @@ function easeInOutCubic(p: number): number {
     return p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
 }
 
-/// Small dark dots that slowly turn around a center point, like the pairing screen of the Apple Watch. The rotation axis
+/// Small dark beads that slowly turn around a center point, like the pairing screen of the Apple Watch. The rotation axis
 /// is tilted and drifts a little, which makes the motion wobble. Every dot also drifts and twinkles a little on its own,
 /// the cloud leans toward the pointer and the dots near it grow.
 ///
@@ -297,6 +341,7 @@ export class PointCloud {
                 uLens: { value: 0 },
                 uRippleOrigin: { value: new THREE.Vector3() },
                 uRippleStart: { value: -1000 },
+                uBeads: { value: 0 },
             },
         });
         this.cloud = new THREE.Points(this.demoGeometry, this.material);
@@ -387,6 +432,7 @@ export class PointCloud {
         this.dataGeometry = geometry;
         this.selection = null;
         this.material.uniforms.uHasSelection.value = 0;
+        this.material.uniforms.uBeads.value = 1;
         this.dataPositions = positions;
         this.dataSize = size;
         this.highlightMaterial.uniforms.uBaseSize.value = size;
@@ -405,6 +451,7 @@ export class PointCloud {
         this.selection = null;
         this.material.uniforms.uHasSelection.value = 0;
         this.showingDemo = true;
+        this.material.uniforms.uBeads.value = 0;
         this.dataSize = DEMO_POINT_SIZE;
         this.highlightMaterial.uniforms.uBaseSize.value = DEMO_POINT_SIZE;
         this.setHighlight([], []);
