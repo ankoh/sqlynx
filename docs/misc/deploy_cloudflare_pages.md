@@ -41,9 +41,17 @@ defines the cross-origin isolation headers and browser cache policy:
   Mutable files such as `/static/config.json` are intentionally excluded and retain Pages'
   deployment-aware default (`max-age=0, must-revalidate`).
 - `/releases/*`: one year, immutable.
-- Uncompressed WASM under `/static/wasm/*.wasm`: `Content-Type: application/wasm`.
-- Brotli-compressed WASM under `/static/assets/*.br`: `Content-Encoding: br` and
-  `Content-Type: application/wasm`.
+- WebAssembly is pre-compressed, so the bytes we deploy are the bytes users download and nothing depends on the CDN
+  compressing it. The `pages` build compresses every emitted `.wasm` with Brotli (quality 11, `precompressWasm` in
+  `packages/dashql-app/vite.config.tpl.ts`) and rewrites the references, `x.HASH.wasm` becomes `x.HASH.wasm.br`. The
+  build fails if a raw `.wasm` is left or a reference cannot be rewritten. hyperdb-wasm ships as `.br` from npm, which
+  it needs anyway because the raw file is above the 25 MiB limit of Pages.
+  - `/static/wasm/*.br` and `/static/assets/hyperdb-wasm.wasm.*.br`: `Content-Encoding: br` and
+    `Content-Type: application/wasm`. The browser decompresses before `fetch()` or
+    `WebAssembly.instantiateStreaming()` sees the bytes. For such responses `Content-Length` is the compressed size,
+    so loaders must not use it as the total of a progress bar (`utils/content_length.ts`).
+  - The Electron app protocol and the browser test server serve every `*.wasm.br` the same way. Dev, `reloc` and
+    `electron` builds stay uncompressed.
 - Published notebook source under `/static/examples/notebooks/*`: `no-store`, so every open fetches the
   current manifest, generated index, and SQL files.
 - HTML entrypoints: stored with mandatory revalidation.
@@ -68,6 +76,7 @@ After switching the custom domain, verify the production responses:
 curl -I https://dashql.app/
 curl -I https://dashql.app/oauth.html
 curl -I https://dashql.app/static/assets/<fingerprinted-wasm>.br
+curl -I https://dashql.app/static/wasm/<fingerprinted-core-wasm>.br
 curl -I https://dashql.app/a/client/side/route
 curl -I https://hyperdb.sh/
 ```
@@ -75,4 +84,5 @@ curl -I https://hyperdb.sh/
 The responses should include `Cross-Origin-Embedder-Policy: require-corp`,
 `Cross-Origin-Opener-Policy: same-origin`, and `Access-Control-Allow-Origin: *`. The unknown client
 route should return the app HTML, entrypoints should require revalidation, and fingerprinted
-static assets should be immutable.
+static assets should be immutable. Every `.br` WebAssembly response needs `Content-Encoding: br` and
+`Content-Type: application/wasm`.

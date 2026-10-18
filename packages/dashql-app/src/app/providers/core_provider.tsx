@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useLogger } from '../../platform/logger/logger_provider.js';
 import { TracedLogger, stringifyError } from '../../platform/logger/logger.js';
 import { createTrace } from '../../platform/logger/trace_context.js';
+import { decodedContentLength } from '../../utils/content_length.js';
 import { disposeCatalogBatchWorker, initializeCatalogBatchWorker } from '../notebook/connections/catalog_batch.js';
 
 // Load the WebAssembly asset through the core package export.
@@ -75,8 +76,7 @@ export const DashQLCoreProvider: React.FC<Props> = (props: Props) => {
             if (!response.ok) {
                 throw new Error(`Failed to fetch core wasm: ${response.status} ${response.statusText}`);
             }
-            const contentLengthHdr = response.headers.get('content-length');
-            const contentLength = contentLengthHdr ? parseInt(contentLengthHdr, 10) || 0 : 0;
+            const contentLength = decodedContentLength(response);
 
             const now = new Date();
             internal.startedAt = now;

@@ -3,6 +3,7 @@ import shellWasmUrl from '@ankoh/dashql-shell-wasm?url';
 import { DashQL, DashQLCatalog, DashQLModuleOptions, DashQLScript, EmscriptenModule } from '@ankoh/dashql-core';
 import * as dashql from '@ankoh/dashql-core';
 import { stringifyError } from '../platform/logger/logger.js';
+import { decodedContentLength } from '../utils/content_length.js';
 
 const RESULT_SIZE = 16;
 const RESULT_STATUS = 0;
@@ -296,7 +297,7 @@ export class DashQLShell {
             ? async (imports: WebAssembly.Imports, successCallback: (instance: WebAssembly.Instance, module: WebAssembly.Module) => void) => {
                 const response = await fetch(wasmUrl);
                 if (!response.ok) throw new Error(`failed to fetch shell Wasm: ${response.status} ${response.statusText}`);
-                const bytesTotal = Number(response.headers.get('content-length')) || 0;
+                const bytesTotal = decodedContentLength(response);
                 let bytesLoaded = 0;
                 onProgress({ bytesLoaded, bytesTotal });
                 const body = response.body?.pipeThrough(new TransformStream<Uint8Array, Uint8Array>({
