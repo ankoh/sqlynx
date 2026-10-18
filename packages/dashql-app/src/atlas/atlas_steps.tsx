@@ -10,6 +10,7 @@ import { CodeMirror, createReadonlyCodeMirrorExtensions } from '../app/notebook/
 
 import * as baseStyles from '../ui/banner/banner_page.module.css';
 import { Button, ButtonSize, ButtonVariant } from '../ui/foundations/button.js';
+import { SegmentedControl, SegmentedControlSize } from '../ui/foundations/segmented_control.js';
 import { ComposeIcon, FileDirectoryIcon, SearchIcon, SyncIcon, XIcon } from '../ui/foundations/symbol_icon.js';
 import type { AtlasPhase, DescribeSummary, OpenedFolder } from './atlas_session.js';
 import { PromptBar } from './prompt_bar.js';
@@ -248,10 +249,18 @@ interface ScriptCardProps {
     onClose: () => void;
 }
 
+const enum ScriptView {
+    Raw = 0,
+    Compact = 1,
+    Pretty = 2,
+}
+
+const SCRIPT_VIEW_LABELS = ['Raw', 'Compact', 'Pretty'] as const;
+
 /// A script with syntax highlighting that can be formatted
 const ScriptCard: React.FC<ScriptCardProps> = (props: ScriptCardProps) => {
     const [view, setView] = React.useState<EditorView | null>(null);
-    const [pretty, setPretty] = React.useState(false);
+    const [scriptView, setScriptView] = React.useState(ScriptView.Raw);
     const extensions = React.useMemo(() => [...createReadonlyCodeMirrorExtensions(), EditorView.lineWrapping], []);
     // The core is resolved from the provider, never passed as a prop. React's dev profiler walks changed props and
     // would iterate the whole wasm heap of the instance.
@@ -266,9 +275,16 @@ const ScriptCard: React.FC<ScriptCardProps> = (props: ScriptCardProps) => {
     React.useEffect(() => {
         if (view == null || core == null) return;
         let text = script.text;
-        if (pretty) text = formatSql(core, text, measureScriptFormatWidth(view)) ?? text;
+        if (scriptView !== ScriptView.Raw) {
+            const mode = scriptView === ScriptView.Compact
+                ? buffers.formatting.FormattingMode.COMPACT
+                : buffers.formatting.FormattingMode.PRETTY;
+            // The pretty printer uses a fixed width, the compact one fills the editor
+            const width = scriptView === ScriptView.Compact ? measureScriptFormatWidth(view) : undefined;
+            text = formatSql(core, text, mode, width) ?? text;
+        }
         updateReadonlyScriptEditor(view, core, 0, text);
-    }, [view, core, script.text, pretty]);
+    }, [view, core, script.text, scriptView]);
     return (
         <Card
             title={script.name}
@@ -276,14 +292,17 @@ const ScriptCard: React.FC<ScriptCardProps> = (props: ScriptCardProps) => {
             actions={(
                 <>
                     {core != null && (
-                        <Button
-                            variant={pretty ? ButtonVariant.Primary : ButtonVariant.Invisible}
-                            size={ButtonSize.Small}
-                            aria-pressed={pretty}
-                            onClick={() => setPretty(!pretty)}
+                        <SegmentedControl
+                            aria-label="Format mode"
+                            size={SegmentedControlSize.Small}
+                            onChange={index => setScriptView(index as ScriptView)}
                         >
-                            Pretty
-                        </Button>
+                            {SCRIPT_VIEW_LABELS.map((label, index) => (
+                                <SegmentedControl.Button key={label} selected={scriptView === index}>
+                                    {label}
+                                </SegmentedControl.Button>
+                            ))}
+                        </SegmentedControl>
                     )}
                     <Button
                         variant={ButtonVariant.Invisible}
@@ -300,15 +319,20 @@ const ScriptCard: React.FC<ScriptCardProps> = (props: ScriptCardProps) => {
     );
 };
 
-/// Format SQL text with the pretty printer, null if it cannot be formatted
-function formatSql(core: DashQL, text: string, width: number): string | null {
+/// Format SQL text, null if it cannot be formatted
+function formatSql(
+    core: DashQL,
+    text: string,
+    mode: buffers.formatting.FormattingMode,
+    width?: number,
+): string | null {
     const catalog = core.createCatalog();
     const session = core.createScriptSession(catalog);
     let formatted: DashQLScript | null = null;
     try {
         session.replaceText(0n, text);
         session.analyze();
-        formatted = session.format(createScriptFormatConfig(buffers.formatting.FormattingMode.PRETTY, false, width), null);
+        formatted = session.format(createScriptFormatConfig(mode, false, width), null);
         return formatted.toString();
     } catch {
         return null;
