@@ -26,6 +26,8 @@ export default vite.defineConfig(({ mode, command }) => {
     // import.meta.url, so only the entry needs an alias — the .wasm has no placeholder.
     const UMAP_JS_PATH = path.resolve(rootDir, "__UMAP_JS_PATH__");
     const SVG_SYMBOLS_PATH = path.resolve(rootDir, "__SVG_SYMBOLS_PATH__");
+    // Atlas model files, provisioned by Bazel. Only served by the dev server, deployments host them elsewhere.
+    const ATLAS_MODELS_PATH = path.resolve(rootDir, "__ATLAS_MODELS_PATH__");
     // copy_to_bin can leave deleted sources in the execroot. Only bundle declared test inputs.
     const browserTestPatterns = includesBrowserTests && command === 'build'
         ? nodeFs.readFileSync(path.join(rootDir, 'browser_test_files.txt'), 'utf8')
@@ -51,6 +53,57 @@ export default vite.defineConfig(({ mode, command }) => {
         },
     };
 
+
+    // Serves the atlas model files at /static/models/ in the dev server (with Range support, transformers.js probes files
+    // with `Range: bytes=0-0`). Without them, a missing file would be answered with the SPA fallback.
+    const serveAtlasModels = {
+        name: 'dashql-serve-atlas-models',
+        configureServer(server: vite.ViteDevServer): void {
+            const prefix = '/static/models/';
+            const types: Record<string, string> = {
+                '.json': 'application/json', '.mjs': 'text/javascript', '.wasm': 'application/wasm',
+            };
+            server.middlewares.use((req, res, next) => {
+                const url = (req.url ?? '').split('?', 1)[0]!;
+                if (!url.startsWith(prefix) || (req.method !== 'GET' && req.method !== 'HEAD')) return next();
+                const file = path.join(ATLAS_MODELS_PATH, decodeURIComponent(url.slice(prefix.length)));
+                const stat = file.startsWith(ATLAS_MODELS_PATH + path.sep) && nodeFs.existsSync(file) ? nodeFs.statSync(file) : null;
+                if (!stat?.isFile()) {
+                    res.statusCode = 404;
+                    res.end(`atlas model file not found: ${url} (expected in ${ATLAS_MODELS_PATH})`);
+                    return;
+                }
+                res.setHeader('Content-Type', types[path.extname(file)] ?? 'application/octet-stream');
+                res.setHeader('Accept-Ranges', 'bytes');
+                res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+                let start = 0;
+                let end = stat.size - 1;
+                const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range ?? '');
+                if (range && (range[1] || range[2])) {
+                    if (range[1]) {
+                        start = Number(range[1]);
+                        if (range[2]) end = Math.min(end, Number(range[2]));
+                    } else {
+                        start = Math.max(0, stat.size - Number(range[2]));
+                    }
+                    if (start > end) {
+                        res.statusCode = 416;
+                        res.setHeader('Content-Range', `bytes */${stat.size}`);
+                        res.end();
+                        return;
+                    }
+                    res.statusCode = 206;
+                    res.setHeader('Content-Range', `bytes ${start}-${end}/${stat.size}`);
+                }
+                res.setHeader('Content-Length', end - start + 1);
+                if (req.method === 'HEAD') {
+                    res.end();
+                    return;
+                }
+                nodeFs.createReadStream(file, { start, end }).pipe(res);
+            });
+        },
+    };
 
     // The pages deployment ships WebAssembly pre-compressed with Brotli, like hyperdb-wasm does: the bytes we deploy are
     // the bytes users download, no matter what the CDN decides to compress. Each `x.HASH.wasm` is replaced by
@@ -109,6 +162,7 @@ export default vite.defineConfig(({ mode, command }) => {
         plugins: [
             react(),
             stripOnnxRuntimeWasmAsset,
+            ...(command === 'serve' ? [serveAtlasModels] : []),
             ...(mode === 'pages' ? [precompressWasm] : []),
             // In the Bazel sandbox, HTML entry files are symlinks to the execroot. Rolldown
             // follows them during input resolution, causing vite:build-html to compute the

@@ -371,6 +371,11 @@ export class AtlasSession {
         return results;
     }
 
+    /// The dashql-core instance of the session
+    get core(): DashQL {
+        return this.options.core;
+    }
+
     async readScript(name: string): Promise<string> {
         if (this.location == null) throw new Error('no folder is open');
         return await readSqlFile(this.location.directory, name);

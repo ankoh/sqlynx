@@ -174,18 +174,10 @@ to be reindexed by hand.
 
 ### Local development
 
-`packages/dashql-app/static/models/` is ignored by git. Fetch the files once and serve them from the dev server:
-
-```bash
-M=packages/dashql-app/static/models
-HF=https://huggingface.co/Snowflake/snowflake-arctic-embed-xs/resolve/main
-mkdir -p $M/Snowflake/snowflake-arctic-embed-xs/onnx $M/ort
-for f in config.json tokenizer.json tokenizer_config.json onnx/model.onnx; do
-    curl -L --fail -o $M/Snowflake/snowflake-arctic-embed-xs/$f $HF/$f
-done
-cp node_modules/.pnpm/onnxruntime-web@*/node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.asyncify.{mjs,wasm} $M/ort/
-bazel run //packages/dashql-app:dev   # http://localhost:9002/atlas.html
-```
+`bazel run //packages/dashql-app:dev` needs no setup. Bazel downloads the pinned, hash-checked model files (`MODULE.bazel`),
+takes the ONNX runtime from the installed `onnxruntime-web` and stages both in `//packages/dashql-app:dep_atlas_models`.
+The dev server (`dashql-serve-atlas-models` in `vite.config.tpl.ts`) serves them at `/static/models/` with Range support.
+Deployments do not bundle them, they come from `atlas.modelBaseUrl`.
 
 ## Internals
 

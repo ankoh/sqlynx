@@ -32,6 +32,26 @@ export function configureTransformers(env: any, baseUrl: string): void {
     };
 }
 
+/// Check that the ONNX runtime files are served. A dev server answers unknown paths with the SPA fallback, which
+/// surfaces as a cryptic "no available backend found" from onnxruntime. Missing files are the common cause.
+export async function checkRuntimeFiles(baseUrl: string): Promise<void> {
+    const base = normalizeBaseUrl(baseUrl);
+    const url = `${base}ort/${ORT_FILE_STEM}.mjs`;
+    let response: Response;
+    try {
+        response = await fetch(url, { method: 'HEAD' });
+    } catch (e) {
+        throw new Error(`cannot reach ${url}: ${e instanceof Error ? e.message : String(e)}`);
+    }
+    const type = response.headers.get('content-type') ?? '';
+    if (!response.ok || type.includes('text/html')) {
+        throw new Error(
+            `the embedding model files are not served from ${base} (${url}: ${response.status} ${type}). ` +
+            `In development, start the app with "bazel run //packages/dashql-app:dev", it provisions static/models/.`,
+        );
+    }
+}
+
 export interface DownloadProgress {
     file: string;
     loaded: number;

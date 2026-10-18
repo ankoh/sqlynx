@@ -39,4 +39,3 @@ yarn-error.log
 /dist
 
 # Embedding model and onnxruntime assets of the atlas, served from the configured atlas.modelBaseUrl
-/packages/dashql-app/static/models/

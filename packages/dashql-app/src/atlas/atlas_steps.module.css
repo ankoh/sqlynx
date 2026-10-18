@@ -126,6 +126,25 @@
 .card {
     width: 100%;
     box-sizing: border-box;
+    /* The body scrolls, the header stays */
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+    min-height: 0;
+}
+
+.card > :first-child {
+    flex: none;
+}
+
+.card > :last-child {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.card_body_bare {
+    padding: 0;
 }
 
 .card_wide {
@@ -156,7 +175,15 @@
     flex-direction: column;
     gap: 8px;
     min-height: 0;
-    max-height: 100%;
+    height: 100%;
+    /* The empty part still hovers and clicks the cloud, only the cards take events */
+    pointer-events: none;
+}
+
+.search_prompt,
+.script_card,
+.results {
+    pointer-events: auto;
 }
 
 .search_info {
@@ -178,6 +205,7 @@
     justify-content: flex-end;
     align-items: flex-start;
     gap: 8px;
+    flex: 1 1 0;
     min-height: 0;
 }
 
@@ -186,25 +214,18 @@
     min-width: 0;
     max-width: 560px;
     max-height: 100%;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 
-.script {
-    margin: 0;
-    max-height: 70vh;
-    overflow: auto;
-    font-family: 'Roboto Mono';
-    font-size: 0.8rem;
-    line-height: 1.5;
-    white-space: pre;
-}
 
 .results {
     flex: 0 1 420px;
     min-width: 0;
     min-height: 0;
     max-height: 100%;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 
 .result_section + .result_section {
