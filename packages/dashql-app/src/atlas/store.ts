@@ -62,23 +62,36 @@ export interface IndexPoints {
     owners: Int32Array;
     /// LAYOUT_DIMS values per point, the 98th percentile radius of the cloud is 1
     coords: Float32Array;
+    /// What a point says about its script: the comment chunk, or the tables of the features
+    details: string[];
+}
+
+function listItems(value: unknown): string[] {
+    if (value == null) return [];
+    const items = typeof (value as { toArray?: unknown }).toArray === 'function'
+        ? (value as { toArray(): Iterable<unknown> }).toArray()
+        : (value as Iterable<unknown>);
+    return Array.from(items, v => String(v));
 }
 
 /// Read the 3D layout of one index file: a point per feature row or per comment chunk
 export async function loadIndexPoints(sql: AtlasSql, location: AtlasLocation, kind: EmbeddingKind): Promise<IndexPoints> {
     const path = kind === 'features' ? location.featuresPath : location.commentsPath;
     const layoutColumns = LAYOUT_COLUMNS[kind];
-    const columns = ['script_name', ...layoutColumns].map(quoteIdentifier).join(', ');
+    const detailColumn = kind === 'features' ? 'tables' : 'text';
+    const columns = ['script_name', detailColumn, ...layoutColumns].map(quoteIdentifier).join(', ');
     const table = await sql.query(`Load ${kind} layout`, `SELECT ${columns} FROM ${externalTable(path)}`);
     const names = table.getChild('script_name');
+    const detail = table.getChild(detailColumn);
     const axes = layoutColumns.map(name => table.getChild(name));
     if (names == null || axes.some(axis => axis == null)) {
-        return { scripts: [], owners: new Int32Array(0), coords: new Float32Array(0) };
+        return { scripts: [], owners: new Int32Array(0), coords: new Float32Array(0), details: [] };
     }
     const scripts: string[] = [];
     const indexOf = new Map<string, number>();
     const owners = new Int32Array(table.numRows);
     const coords = new Float32Array(table.numRows * LAYOUT_DIMS);
+    const details: string[] = [];
     for (let i = 0; i < table.numRows; ++i) {
         const name = String(names.get(i));
         let owner = indexOf.get(name);
@@ -88,9 +101,11 @@ export async function loadIndexPoints(sql: AtlasSql, location: AtlasLocation, ki
             scripts.push(name);
         }
         owners[i] = owner;
+        const value = detail?.get(i);
+        details.push(kind === 'features' ? listItems(value).join(', ') : value == null ? '' : String(value));
         axes.forEach((axis, d) => { coords[i * LAYOUT_DIMS + d] = Number(axis!.get(i)); });
     }
-    return { scripts, owners, coords };
+    return { scripts, owners, coords, details };
 }
 
 async function removeIfExists(directory: FileSystemDirectoryHandle, name: string): Promise<void> {

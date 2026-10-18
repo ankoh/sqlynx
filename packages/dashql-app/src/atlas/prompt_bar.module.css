@@ -1,0 +1,134 @@
+.bar {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 12px 8px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 28px;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(14px);
+    color: white;
+    font-family: 'Roboto';
+    transition: border-color 0.12s, background-color 0.12s;
+}
+
+.bar:focus-within {
+    border-color: rgba(255, 255, 255, 0.8);
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.input_row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.input {
+    flex: 1 1 auto;
+    min-width: 0;
+    box-sizing: border-box;
+    /* The bar grows toward the top until it reaches this height, then the text scrolls */
+    max-height: min(40vh, 280px);
+    padding: 6px 0;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 1.05rem;
+    line-height: 1.5;
+    resize: none;
+    outline: none;
+    overflow-y: auto;
+}
+
+.input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.send {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: white;
+    color: hsl(210, 24%, 16%);
+    cursor: pointer;
+    transition: opacity 0.12s, transform 0.12s;
+}
+
+.send:hover:not(:disabled) {
+    transform: scale(1.06);
+}
+
+.send:focus-visible {
+    outline: 2px solid white;
+    outline-offset: 2px;
+}
+
+.send:disabled {
+    background: rgba(255, 255, 255, 0.18);
+    color: rgba(255, 255, 255, 0.5);
+    cursor: default;
+}
+
+.action_row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 28px;
+    /* Lines up the right actions with the send button above */
+    padding-right: 8px;
+}
+
+.actions_start,
+.actions_end {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+}
+
+.actions_end {
+    justify-content: flex-end;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.78rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 10px;
+    border: none;
+    border-radius: 14px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.8);
+    font: inherit;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background-color 0.12s, color 0.12s;
+}
+
+.action:hover:not(:disabled),
+.action:focus-visible {
+    background: rgba(255, 255, 255, 0.14);
+    color: white;
+    outline: none;
+}
+
+.action:disabled {
+    color: rgba(255, 255, 255, 0.35);
+    cursor: default;
+}

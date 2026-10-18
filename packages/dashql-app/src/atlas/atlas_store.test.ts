@@ -128,11 +128,15 @@ describe('atlas store and search', () => {
         // Rows were written with the values i / 10, feature row 7 starts at 21
         expect(xOf(features, 'script_7.sql')).toHaveLength(1);
         expect(xOf(features, 'script_7.sql')[0]).toBeCloseTo(2.1, 4);
+        // Every point says what it is about, the features by their tables
+        expect(features.details).toHaveLength(12);
+        expect(features.details[features.owners.indexOf(features.scripts.indexOf('script_7.sql'))]).toBe('table_7');
 
         const comments = await loadIndexPoints(sql, location, 'comments');
         expect(comments.scripts.sort()).toEqual(['script_3.sql', 'script_7.sql']);
         expect(comments.owners).toHaveLength(3);
         expect(xOf(comments, 'script_3.sql')).toHaveLength(2);
+        expect(comments.details.slice().sort()).toEqual(['Orders per region', 'Revenue per customer', 'Top suppliers']);
         // Comment row 2 starts at 6 in the layout of the comments
         expect(xOf(comments, 'script_7.sql')[0]).toBeCloseTo(100.6, 3);
     }, 60_000);

@@ -12,10 +12,12 @@ import { selectPlatformDirectory } from '../shell/shell_files.js';
 import * as baseStyles from '../ui/banner/banner_page.module.css';
 import { Button, ButtonVariant } from '../ui/foundations/button.js';
 import { SegmentedControl, SegmentedControlSize } from '../ui/foundations/segmented_control.js';
+import { FileDirectoryIcon, SyncIcon } from '../ui/foundations/symbol_icon.js';
 import { ParticleFlowBackground, type BackgroundAnimation, type BackgroundAnimationLoader } from '../ui/particle_flow/particle_flow_background.js';
 import { AtlasSession, type AtlasPhase, type OpenedFolder } from './atlas_session.js';
 import { DEFAULT_MODEL_BASE_URL } from './index/model.js';
 import { demoScript } from './demo_data.js';
+import { PromptAction, PromptBar } from './prompt_bar.js';
 import type { DotHover, PointCloud } from './point_cloud.js';
 import type { SearchResults } from './search/search.js';
 import type { EmbeddingKind } from './store.js';
@@ -32,6 +34,13 @@ type View =
     | { kind: 'busy'; phase: AtlasPhase }
     | { kind: 'search' }
     | { kind: 'script'; name: string; text: string };
+
+/// What the tooltip of a dot says
+interface DotTooltip {
+    name: string;
+    snippet: string;
+    tables?: string[];
+}
 
 interface AtlasPageProps {
     onEngineVersion: (version: string) => void;
@@ -76,8 +85,8 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
     const [cloud, setCloud] = React.useState<PointCloud | null>(null);
     /// The script of the candidate under the pointer
     const [hovered, setHovered] = React.useState<string | null>(null);
-    /// The made up dot under the pointer, as long as no folder is open
-    const [demoHover, setDemoHover] = React.useState<number | null>(null);
+    /// The dot under the pointer, a made up one as long as no folder is open
+    const [dotHover, setDotHover] = React.useState<number | null>(null);
     const tooltipRef = React.useRef<HTMLDivElement>(null);
     const onAnimation = React.useCallback((animation: BackgroundAnimation | null) => setCloud(animation as PointCloud | null), []);
 
@@ -92,11 +101,18 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
     React.useEffect(() => {
         if (cloud == null) return;
         cloud.setHoverListener((hover: DotHover | null) => {
-            setDemoHover(hover?.index ?? null);
+            setDotHover(hover?.index ?? null);
             const tooltip = tooltipRef.current;
             if (hover == null || tooltip == null) return;
-            const flip = hover.x + 16 + tooltip.offsetWidth > window.innerWidth;
-            tooltip.style.transform = `translate(${flip ? hover.x - 16 - tooltip.offsetWidth : hover.x + 16}px, ${hover.y + 16}px)`;
+            // Next to the disc of the dot, on the other side when there is no room
+            const gap = hover.radius + 12;
+            const flipX = hover.x + gap + tooltip.offsetWidth > window.innerWidth;
+            const flipY = hover.y + gap + tooltip.offsetHeight > window.innerHeight;
+            const x = flipX ? hover.x - gap - tooltip.offsetWidth : hover.x + gap;
+            const y = flipY ? hover.y - gap - tooltip.offsetHeight : hover.y + gap;
+            tooltip.style.transform = `translate(${Math.max(8, x)}px, ${Math.max(8, y)}px)`;
+            // Hidden until placed, so that it does not flash in the corner
+            tooltip.style.opacity = '1';
         });
         return () => cloud.setHoverListener(null);
     }, [cloud]);
@@ -119,18 +135,27 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
         });
         return out;
     }, [folder, kind]);
+    /// The script of the dot under the pointer
+    const dotScript = React.useMemo(() => {
+        const points = folder?.points[kind];
+        if (points == null || dotHover == null || dotHover >= points.owners.length) return null;
+        return points.scripts[points.owners[dotHover]];
+    }, [folder, kind, dotHover]);
     React.useEffect(() => {
         if (cloud == null) return;
         // The cloud turns again once the pointer leaves the candidate
         cloud.setRotationPaused(hovered != null);
-        // Without a folder, the cloud highlights the dot under the pointer itself
-        if (folder == null) return;
         const candidates: number[] = [];
         for (const { hits } of results ?? []) {
             for (const hit of hits) candidates.push(...pointsOfScript.get(hit.scriptName) ?? []);
         }
-        cloud.setHighlight(candidates, hovered == null ? [] : pointsOfScript.get(hovered) ?? []);
-    }, [cloud, folder, results, hovered, pointsOfScript]);
+        // A hovered candidate lights up all dots of its script, a hovered dot lights up itself and marks its script
+        if (dotScript != null) candidates.push(...pointsOfScript.get(dotScript) ?? []);
+        let emphasized: readonly number[] = [];
+        if (hovered != null) emphasized = pointsOfScript.get(hovered) ?? [];
+        else if (dotHover != null) emphasized = [dotHover];
+        cloud.setHighlight(candidates, emphasized);
+    }, [cloud, results, hovered, dotHover, dotScript, pointsOfScript]);
 
     React.useEffect(() => {
         if (unsupported != null) return;
@@ -168,6 +193,31 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [unsupported]);
 
+    /// Show the progress of opening or indexing a folder, and the search once the folder is ready. `keepPrompt` holds on
+    /// to the text of the prompt, which a reindex does not invalidate.
+    const showFolder = React.useCallback(async (
+        name: string,
+        run: (report: (phase: AtlasPhase) => void) => Promise<OpenedFolder>,
+        message: string,
+        keepPrompt: boolean,
+    ) => {
+        setResults(null);
+        setHovered(null);
+        setFolder(null);
+        if (!keepPrompt) setPrompt('');
+        setView({ kind: 'busy', phase: { kind: 'mount', message } });
+        try {
+            const opened = await run(phase => setView({ kind: 'busy', phase }));
+            setKind(opened.points.comments.owners.length > 0 ? 'comments' : 'features');
+            setFolder(opened);
+            setView({ kind: 'search' });
+        } catch (e) {
+            logger.error('Failed to open folder', { error: stringifyError(e), name, stack: e instanceof Error ? e.stack : undefined }, LOG_CTX);
+            setError(stringifyError(e));
+            setView({ kind: 'pick' });
+        }
+    }, [logger]);
+
     const selectFolder = React.useCallback(async () => {
         const session = sessionRef.current;
         if (session == null) return;
@@ -181,22 +231,15 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
             setError(stringifyError(e));
             return;
         }
-        setResults(null);
-        setHovered(null);
-        setFolder(null);
-        setPrompt('');
-        setView({ kind: 'busy', phase: { kind: 'mount', message: `Mounting ${handle.name}` } });
-        try {
-            const opened = await session.open(handle, phase => setView({ kind: 'busy', phase }));
-            setKind(opened.points.comments.owners.length > 0 ? 'comments' : 'features');
-            setFolder(opened);
-            setView({ kind: 'search' });
-        } catch (e) {
-            logger.error('Failed to open folder', { error: stringifyError(e), name: handle.name, stack: e instanceof Error ? e.stack : undefined }, LOG_CTX);
-            setError(stringifyError(e));
-            setView({ kind: 'pick' });
-        }
-    }, [logger]);
+        await showFolder(handle.name, report => session.open(handle, report), `Mounting ${handle.name}`, false);
+    }, [showFolder]);
+
+    const reindex = React.useCallback(async () => {
+        const session = sessionRef.current;
+        if (session == null || folder == null) return;
+        setError(null);
+        await showFolder(folder.name, report => session.reindex(report), `Indexing ${folder.name}`, true);
+    }, [showFolder, folder]);
 
     const submit = React.useCallback(async () => {
         const session = sessionRef.current;
@@ -326,22 +369,24 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
                 <div className={styles.prompt_area}>
                     {searching && <div className={styles.status}>Searching</div>}
                     {error != null && <div className={styles.error_banner}>{error}</div>}
-                    <input
-                        className={styles.prompt}
-                        type="text"
-                        autoFocus
+                    <PromptBar
                         value={prompt}
+                        onChange={setPrompt}
+                        onSubmit={() => void submit()}
+                        busy={searching}
                         placeholder={`Search ${folder?.scripts ?? 0} scripts in ${folder?.name ?? 'the folder'}`}
-                        aria-label="Search prompt"
-                        disabled={searching}
-                        onChange={e => setPrompt(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Enter') void submit(); }}
+                        start={(
+                            <>
+                                <PromptAction icon={<FileDirectoryIcon />} onClick={() => void selectFolder()} disabled={searching}>
+                                    Select folder
+                                </PromptAction>
+                                <PromptAction icon={<SyncIcon />} onClick={() => void reindex()} disabled={searching || folder == null}>
+                                    Reindex
+                                </PromptAction>
+                            </>
+                        )}
+                        end={folder == null ? null : `${folder.scripts} scripts · ${folder.reused ? 'existing index' : 'index written'}`}
                     />
-                    <div className={styles.folder_actions}>
-                        <Button variant={ButtonVariant.Invisible} onClick={selectFolder}>
-                            {folder?.reused ? 'Using the existing index' : 'Index written'} · Select another folder
-                        </Button>
-                    </div>
                 </div>
             </div>
         );
@@ -363,7 +408,15 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
         );
     }
 
-    const dot = folder == null && demoHover != null ? demoScript(demoHover) : null;
+    let dot: DotTooltip | null = null;
+    if (dotHover != null) {
+        const points = folder?.points[kind];
+        if (folder == null) {
+            dot = demoScript(dotHover);
+        } else if (points != null && dotScript != null) {
+            dot = { name: dotScript, snippet: points.details[dotHover] ?? '' };
+        }
+    }
     return (
         <main className={styles.page} onPointerMove={onPointerMove} onPointerLeave={onPointerLeave}>
             <ParticleFlowBackground load={loadPointCloud} onAnimation={onAnimation} />
@@ -371,8 +424,8 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
             {dot != null && (
                 <div ref={tooltipRef} className={styles.dot_tooltip} role="tooltip">
                     <div className={styles.hit_name}>{dot.name}</div>
-                    <div className={styles.dot_snippet}>{dot.snippet}</div>
-                    <div className={styles.dot_tables}>{dot.tables.join(', ')}</div>
+                    {dot.snippet !== '' && <div className={styles.dot_snippet}>{dot.snippet}</div>}
+                    {dot.tables != null && <div className={styles.dot_tables}>{dot.tables.join(', ')}</div>}
                 </div>
             )}
         </main>
