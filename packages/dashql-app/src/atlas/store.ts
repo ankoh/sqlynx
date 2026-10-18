@@ -7,7 +7,15 @@ import { AtlasSql, quoteIdentifier, quoteString } from './atlas_sql.js';
 import { ATLAS_INDEX_FILE, ATLAS_STALE_FILES } from './index/files.js';
 import type { LayoutResult } from './index/layout.js';
 import type { IndexRow } from './index/rows.js';
-import { exportSelect, indexTable, EMBEDDING_COLUMN, LAYOUT_COLUMNS, LAYOUT_DIMS } from './index/tables.js';
+import {
+    exportSelect,
+    indexTable,
+    EMBEDDING_COLUMN,
+    EMBEDDING_MODEL_COLUMN,
+    LAYOUT_COLUMNS,
+    LAYOUT_DIMS,
+    type IndexEmbedder,
+} from './index/tables.js';
 
 /// Hyper only reads and writes files below /mnt/external/, one folder is mounted at a time
 export const ATLAS_MOUNT_PATH = '/mnt/external/atlas';
@@ -102,6 +110,7 @@ function listItems(value: unknown): string[] {
 const REQUIRED_COLUMNS: readonly string[] = [
     'script_name',
     'description_chunk',
+    EMBEDDING_MODEL_COLUMN,
     'structure_table_count',
     'structure_table_names',
     ...LAYOUT_COLUMNS,
@@ -117,6 +126,20 @@ export async function loadIndexTable(sql: AtlasSql, location: AtlasLocation): Pr
         throw new Error(`${ATLAS_INDEX_FILE} has no column ${missing.map(quoteIdentifier).join(', ')}`);
     }
     return table.select(names.filter(name => name !== EMBEDDING_COLUMN));
+}
+
+/// Fail if the index file was embedded by another model than `model`, its embeddings are not comparable to the query.
+/// Every row has the same model, so the first one is enough. An empty file has nothing to compare.
+export async function checkIndexModel(sql: AtlasSql, location: AtlasLocation, model: string): Promise<void> {
+    const table = await sql.query(
+        'Load index model',
+        `SELECT ${quoteIdentifier(EMBEDDING_MODEL_COLUMN)} AS model FROM ${externalTable(location.path)} LIMIT 1`,
+    );
+    if (table.numRows === 0) return;
+    const indexed = String(table.toArray()[0].model);
+    if (indexed !== model) {
+        throw new Error(`${ATLAS_INDEX_FILE} was embedded with ${indexed}, the atlas embeds with ${model}`);
+    }
 }
 
 /// The columns of the index table that are shown as rows: the hash and the layout only matter to the atlas itself
@@ -172,10 +195,10 @@ export async function writeIndexFile(
     location: AtlasLocation,
     rows: IndexRow[],
     layout: LayoutResult,
-    dim: number,
+    embedder: IndexEmbedder,
 ): Promise<void> {
     const scratch = 'atlas_index_scratch';
-    const table = indexTable(rows, dim, layout.coords);
+    const table = indexTable(rows, embedder, layout.coords);
     await sql.run(`Drop ${scratch}`, `DROP TABLE IF EXISTS ${quoteIdentifier(scratch)}`);
     try {
         await sql.insert(`Load ${scratch}`, table, scratch);

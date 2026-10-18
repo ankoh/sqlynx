@@ -18,6 +18,7 @@ import { ATLAS_EMBEDDER_CONFIG, type Embedder } from './index/model.js';
 import { readSqlFile, scanSqlFiles, type SqlFile } from './index/scan.js';
 import { searchAll, type SearchResults } from './search/search.js';
 import {
+    checkIndexModel,
     countOutdatedScripts,
     externalDirectoryDatabase,
     hasIndexFile,
@@ -157,6 +158,7 @@ export class AtlasSession {
             let indexed: Map<string, string>;
             try {
                 loaded = await this.loadIndex(sql, location);
+                await checkIndexModel(sql, location, embedder.config.model);
                 indexed = await loadIndexedScripts(sql, location);
             } catch (e) {
                 this.traced.warn('Failed to load the index', { name: directory.name, error: stringifyError(e) }, LOG_CTX);
@@ -215,7 +217,7 @@ export class AtlasSession {
         }, LOG_CTX);
 
         report({ kind: 'write', message: 'Writing the Parquet file' });
-        await writeIndexFile(sql, location, built.rows, built.layout, embedder.config.dim);
+        await writeIndexFile(sql, location, built.rows, built.layout, embedder.config);
         this.traced.info('Wrote the index file', { name: directory.name }, LOG_CTX);
     }
 
