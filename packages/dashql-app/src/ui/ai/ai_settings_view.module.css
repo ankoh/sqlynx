@@ -119,6 +119,52 @@
     min-width: 0;
 }
 
+/* The models of the endpoint after a test, each can be copied or used */
+.model_list {
+    max-width: 1000px;
+    max-height: 240px;
+    overflow-y: auto;
+    margin: 2px 20px 8px 20px;
+    padding: 0;
+    list-style: none;
+    border: 1px solid var(--border_color_primary);
+    border-radius: var(--border_radius);
+}
+
+.model_row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) max-content max-content;
+    align-items: center;
+    column-gap: 4px;
+    min-height: 32px;
+    padding: 0 4px 0 12px;
+}
+
+.model_row:not(:last-child) {
+    border-bottom: 1px solid var(--border_color_primary);
+}
+
+.model_row_selected {
+    background: var(--base_color_neutral_1);
+}
+
+.model_name {
+    font-family: 'Roboto Mono';
+    font-size: var(--font_size_small);
+    overflow-wrap: anywhere;
+    user-select: text;
+}
+
+.model_row_selected .model_name {
+    font-weight: 500;
+}
+
+.model_selected_label {
+    padding: 0 12px;
+    font-size: var(--font_size_small);
+    color: #8c959f;
+}
+
 .section {
     display: flex;
     flex-direction: column;

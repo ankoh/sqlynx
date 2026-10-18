@@ -214,8 +214,6 @@ importers:
         specifier: 25.9.23
         version: 25.9.23
 
-  packages/dashql-describe: {}
-
   packages/dashql-cli: {}
 
   packages/dashql-native:

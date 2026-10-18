@@ -1,12 +1,13 @@
 import { HttpClient, HttpFetchResult } from '../http/http_client.js';
 import { Logger } from '../logger/logger.js';
 import { AIModelConfig, AIModelHeader } from './ai_models.js';
-import { AIChatMessage, AIDescribeClient, AIEmbedClient } from './ai_task_clients.js';
+import { AIChatMessage, AICompletion, AICompletionOptions, AIDescribeClient, AIEmbedClient } from './ai_task_clients.js';
 
 const LOG_CTX = 'ai_client';
 
 interface ChatCompletionResponse {
-    choices?: { message?: { content?: string } }[];
+    choices?: { message?: { content?: string }; finish_reason?: string }[];
+    usage?: { prompt_tokens?: number; completion_tokens?: number };
 }
 
 interface EmbeddingsResponse {
@@ -53,6 +54,10 @@ export class AIClient implements AIDescribeClient, AIEmbedClient {
         this.config = config;
     }
 
+    get model(): string {
+        return this.config.model;
+    }
+
     /// List the models of the endpoint. Used by the Test button in the AI settings.
     async listModels(signal: AbortSignal): Promise<string[]> {
         const url = joinUrl(this.config.endpointUrl, '/v1/models');
@@ -72,14 +77,19 @@ export class AIClient implements AIDescribeClient, AIEmbedClient {
     }
 
     /// Generate a chat completion
-    async complete(messages: AIChatMessage[], signal: AbortSignal): Promise<string> {
+    async complete(messages: AIChatMessage[], signal: AbortSignal, options?: AICompletionOptions): Promise<AICompletion> {
         const url = joinUrl(this.config.endpointUrl, '/v1/chat/completions');
+        const schema = options?.jsonSchema;
         const body = JSON.stringify({
             model: this.config.model,
             messages,
             stream: false,
+            ...(schema != null
+                ? { response_format: { type: 'json_schema', json_schema: { name: schema.name, schema: schema.schema, strict: true } } }
+                : {}),
         });
         this.logger.debug('Calling AI chat completion', { url: url.toString(), model: this.config.model }, LOG_CTX);
+        const startedAt = performance.now();
         const response = await this.httpClient.fetch(url, {
             method: 'POST',
             headers: buildHeaders(this.config.headers),
@@ -88,9 +98,19 @@ export class AIClient implements AIDescribeClient, AIEmbedClient {
         });
         await checkStatus(response);
         const parsed = (await response.json()) as ChatCompletionResponse;
-        const content = parsed.choices?.[0]?.message?.content ?? '';
-        this.logger.debug('Received AI chat completion', { length: String(content.length) }, LOG_CTX);
-        return content;
+        const choice = parsed.choices?.[0];
+        const completion: AICompletion = {
+            content: choice?.message?.content ?? '',
+            promptTokens: parsed.usage?.prompt_tokens ?? null,
+            completionTokens: parsed.usage?.completion_tokens ?? null,
+            finishReason: choice?.finish_reason ?? null,
+        };
+        this.logger.debug('Received AI chat completion', {
+            model: this.config.model,
+            ms: String(Math.round(performance.now() - startedAt)),
+            length: String(completion.content.length),
+        }, LOG_CTX);
+        return completion;
     }
 
     /// Embed a query. Queries and documents are embedded the same way.

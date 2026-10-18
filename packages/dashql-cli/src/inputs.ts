@@ -1,6 +1,14 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { isAbsolute, join, relative, resolve, sep } from 'node:path';
-import type { LintInput } from './lint.js';
+
+/// A script and where it was read from
+export interface SqlFile {
+    /// The path relative to the invoking directory, absolute for files outside of it, `<stdin>` for stdin
+    id: string;
+    text: string;
+    /// The file the script was read from, null for stdin
+    path: string | null;
+}
 
 /// The id of a script read from stdin
 export const STDIN = '-';
@@ -49,18 +57,18 @@ async function readStdin(): Promise<string> {
 
 /// Read SQL scripts from files, directories (recursively, *.sql only, without generated catalog files) and stdin (`-`).
 /// Scripts are identified by their path relative to the invoking directory.
-export async function readInputs(paths: string[]): Promise<LintInput[]> {
-    const inputs = new Map<string, LintInput>();
+export async function readInputs(paths: string[]): Promise<SqlFile[]> {
+    const inputs = new Map<string, SqlFile>();
     for (const path of paths) {
         if (path === STDIN) {
-            inputs.set('<stdin>', { id: '<stdin>', text: await readStdin() });
+            inputs.set('<stdin>', { id: '<stdin>', text: await readStdin(), path: null });
             continue;
         }
         const root = resolveUserPath(path);
         const files = (await stat(root)).isDirectory() ? await walk(root) : [root];
         for (const file of files) {
             const id = displayPath(file);
-            if (!inputs.has(id)) inputs.set(id, { id, text: await readFile(file, 'utf8') });
+            if (!inputs.has(id)) inputs.set(id, { id, text: await readFile(file, 'utf8'), path: file });
         }
     }
     return [...inputs.values()];

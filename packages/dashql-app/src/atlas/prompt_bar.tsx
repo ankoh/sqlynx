@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { PaperAirplaneIcon, SearchIcon, XIcon } from '../ui/foundations/symbol_icon.js';
+import { PaperAirplaneIcon } from '../ui/foundations/symbol_icon.js';
 import * as styles from './prompt_bar.module.css';
 
 interface PromptBarProps {
@@ -10,19 +10,17 @@ interface PromptBarProps {
     placeholder: string;
     /// A search is running, the text stays but cannot be changed or sent
     busy?: boolean;
-    /// Small actions on the left of the second row
-    start?: React.ReactNode;
-    /// Small actions or information on the right of the second row
-    end?: React.ReactNode;
-    /// Collapses the prompt into its search button again, Escape does the same
-    onClose: () => void;
+    /// There is nothing to search yet
+    disabled?: boolean;
+    /// Information below the text
+    info?: React.ReactNode;
 }
 
 /// A rounded prompt that grows with its text, like the prompt of a chat client. Enter sends, Shift+Enter
-/// starts a new line. The second row holds small actions. It unfolds to the left out of the search button.
+/// starts a new line.
 export const PromptBar: React.FC<PromptBarProps> = (props: PromptBarProps) => {
     const inputRef = React.useRef<HTMLTextAreaElement>(null);
-    const canSubmit = !props.busy && props.value.trim().length > 0;
+    const canSubmit = !props.busy && !props.disabled && props.value.trim().length > 0;
 
     // The height follows the content, CSS limits it and the text scrolls beyond that
     const fit = React.useCallback(() => {
@@ -47,10 +45,6 @@ export const PromptBar: React.FC<PromptBarProps> = (props: PromptBarProps) => {
     }, [fit]);
 
     const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === 'Escape') {
-            props.onClose();
-            return;
-        }
         if (e.key !== 'Enter' || e.shiftKey || e.nativeEvent.isComposing) return;
         e.preventDefault();
         if (canSubmit) props.onSubmit();
@@ -58,7 +52,7 @@ export const PromptBar: React.FC<PromptBarProps> = (props: PromptBarProps) => {
 
     return (
         <form
-            className={styles.bar}
+            className={props.disabled ? `${styles.bar} ${styles.bar_disabled}` : styles.bar}
             onSubmit={e => {
                 e.preventDefault();
                 if (canSubmit) props.onSubmit();
@@ -69,11 +63,11 @@ export const PromptBar: React.FC<PromptBarProps> = (props: PromptBarProps) => {
                     ref={inputRef}
                     className={styles.input}
                     rows={1}
-                    autoFocus
                     value={props.value}
                     placeholder={props.placeholder}
                     aria-label="Search prompt"
                     readOnly={props.busy}
+                    disabled={props.disabled}
                     onChange={e => props.onChange(e.target.value)}
                     onKeyDown={onKeyDown}
                 />
@@ -81,37 +75,7 @@ export const PromptBar: React.FC<PromptBarProps> = (props: PromptBarProps) => {
                     <PaperAirplaneIcon size={16} />
                 </button>
             </div>
-            <div className={styles.action_row}>
-                <div className={styles.actions_start}>{props.start}</div>
-                <div className={styles.actions_end}>
-                    <span className={styles.actions_info}>{props.end}</span>
-                    <button type="button" className={styles.close} aria-label="Close search" title="Close search" onClick={props.onClose}>
-                        <XIcon size={16} />
-                    </button>
-                </div>
-            </div>
+            {props.info != null && <div className={styles.info}>{props.info}</div>}
         </form>
     );
 };
-
-/// The round button that the prompt unfolds from
-export const SearchButton: React.FC<{ onClick: () => void }> = props => (
-    <button type="button" className={styles.search_button} aria-label="Search" title="Search" onClick={props.onClick}>
-        <SearchIcon size={16} />
-    </button>
-);
-
-interface PromptActionProps {
-    icon?: React.ReactElement;
-    onClick: () => void;
-    disabled?: boolean;
-    children: React.ReactNode;
-}
-
-/// A small action in the second row of the prompt
-export const PromptAction: React.FC<PromptActionProps> = (props: PromptActionProps) => (
-    <button type="button" className={styles.action} disabled={props.disabled} onClick={props.onClick}>
-        {props.icon}
-        <span>{props.children}</span>
-    </button>
-);

@@ -71,14 +71,21 @@ export async function loadIndexedScripts(sql: AtlasSql, location: AtlasLocation)
     return scripts;
 }
 
-/// The number of scripts that were added, changed or removed since the index was written
-export function countOutdatedScripts(indexed: ReadonlyMap<string, string>, current: ReadonlyMap<string, string>): number {
-    let outdated = 0;
+export interface OutdatedScript {
+    script: string;
+    change: 'added' | 'changed' | 'removed';
+}
+
+/// The scripts that were added, changed or removed since the index was written
+export function outdatedScripts(indexed: ReadonlyMap<string, string>, current: ReadonlyMap<string, string>): OutdatedScript[] {
+    const outdated: OutdatedScript[] = [];
     for (const [name, hash] of current) {
-        if (indexed.get(name) !== hash) ++outdated;
+        const indexedHash = indexed.get(name);
+        if (indexedHash === undefined) outdated.push({ script: name, change: 'added' });
+        else if (indexedHash !== hash) outdated.push({ script: name, change: 'changed' });
     }
     for (const name of indexed.keys()) {
-        if (!current.has(name)) ++outdated;
+        if (!current.has(name)) outdated.push({ script: name, change: 'removed' });
     }
     return outdated;
 }

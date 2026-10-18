@@ -11,7 +11,7 @@ index files. It needs the File System Access API (Chromium) and a cross-origin-i
 Atlas writes one Parquet file into the selected folder, `dashql-atlas.parquet`, with one row per script, the
 embedding of its `@dashql:description` block. Only the descriptions are embedded and laid out in 3D. The structure and the
 metadata of a script are columns of its rows, to filter by, they are neither embedded nor laid out. A script without a
-description has no row: run `dashql-describe` first.
+description has no row: describe it first, in the page or with `dashql-cli describe`.
 
 The columns are prefixed by where they come from and ordered by prefix:
 
@@ -47,16 +47,18 @@ of two tables are join conditions and are left out of the filter predicates. The
 a script that could not be analyzed. A metadata column is a double if all its values are numbers, a bool if all are booleans, text
 otherwise (objects and arrays as JSON), null for scripts without the key. Only the vector columns are stored as `real`.
 
-The model reads 512 tokens, the embedding pipeline truncates longer descriptions. `dashql-describe` is told to stay
+The model reads 512 tokens, the embedding pipeline truncates longer descriptions. `dashql-cli describe` is told to stay
 well below that.
 
-Ordinary comments are not embedded, only `@dashql:description` blocks (written by `dashql-describe` or by hand).
+Ordinary comments are not embedded, only `@dashql:description` blocks (written by the page, by `dashql-cli describe` or by
+hand).
 
-There is no sidecar. A folder without an index file is indexed when it is opened. Otherwise the index file is loaded,
-and if that fails, e.g. because an older version wrote it (no `structure_table_count`) or another model embedded it
-(the `description_embedding_model` of its first row is not the model of the atlas), the page asks to reindex the
-folder. Every row carries the `script_name` and the SHA-256 `script_hash` of the script text, the prompt bar shows how
-many described scripts were added, changed or removed since the index was written. Reindexing replaces the file and
+There is no sidecar. Opening a folder computes nothing: a folder without an index file waits until it is indexed or
+described. Otherwise the index file is loaded, and if that fails, e.g. because an older version wrote it (no
+`structure_table_count`) or another model embedded it (the `description_embedding_model` of its first row is not the
+model of the atlas), the Index card says so and indexing replaces it. Every row carries the `script_name` and the
+SHA-256 `script_hash` of the script text, the Index card shows how many described scripts were added, changed or
+removed since the index was written. Indexing replaces the file and
 removes those of earlier versions (`dashql-atlas-structure.parquet`, `dashql-atlas-description.parquet`,
 `dashql-atlas-properties.parquet`, `dashql-atlas-comments.parquet`, `dashql-atlas-features.parquet`,
 `dashql-atlas-index.json`).
@@ -83,7 +85,7 @@ dashql-core recognizes the tag and validates that the content is a JSON object (
 `MALFORMED_COMMENT_TAG` warnings otherwise). `readMetadata` and `renderMetadataBlock` in `@ankoh/dashql-core` read and
 write the block, clients never parse it themselves. Atlas stores every key as a `metadata_<key>` column of the index
 file.
-`dashql-describe` never touches the block, never sends it to the model and inserts new descriptions below it.
+`dashql-cli describe` never touches the block, never sends it to the model and inserts new descriptions below it.
 
 The query result viewer writes such folders: the download button of a result offers **SQL Column as Atlas** next to
 **Result as Arrow**. It writes one `.sql` file per row of the chosen SQL text column with the other columns as
@@ -92,8 +94,20 @@ metadata, named after the row number (`row_00001.sql`, ...)
 
 ## The page
 
-Before a folder is open the background is made-up dots. Hovering one pauses the rotation and shows a made-up script
-(`src/atlas/demo_data.ts`). Once a folder is open the background shows the real index, one point per script,
+The steps are brief cards on the left (`src/atlas/atlas_steps.tsx`), the search is on the right:
+
+- **Folder** selects a folder (read-write) and shows how many of its scripts are described.
+- **Index** embeds the described scripts and writes the index file, or says why the existing one cannot be loaded or
+  that it is outdated.
+- **Describe** sends every script without a description to the model of the **describe** task (see
+  [AI models](#ai-models)) and writes the `@dashql:description` blocks into the files, then indexes the folder again.
+- **Search** is the prompt of the semantic search, enabled once the folder has an index, and the best matches below it.
+
+Only one step runs at a time and its card shows the progress. Describing can be cancelled, the files that were written
+stay described.
+
+Before a folder is indexed the background is made-up dots. Hovering one pauses the rotation and shows a made-up script
+(`src/atlas/demo_data.ts`). Once a folder is indexed the background shows the real index, one point per script,
 at the `description_{x,y,z}` positions of the file (`indexPoints` in `src/atlas/store.ts`, drawn by
 `src/atlas/point_cloud.ts`).
 
@@ -109,8 +123,30 @@ headers. Brushing a histogram or clicking a frequent value cross-filters the row
 `structure_table_count`, and the dots of the rows that do not match fade (`PointCloud.setSelection`), row i of the file
 is point i of the cloud.
 
-The prompt sits at the bottom and the candidates of every search strategy are a card on the right. Hovering a candidate
-pauses the rotation and marks its dot, the other candidates are marked less strongly.
+The candidates of every search strategy are a card below the prompt on the right. Hovering a candidate pauses the
+rotation and marks its dot, the other candidates are marked less strongly.
+
+## Describing in the page
+
+`src/atlas/describe/` describes like `dashql-cli describe` and shares its prompt and its header logic:
+`describe/prompt.ts` and `describe/header.ts` are copies of the files of the same name in
+`packages/dashql-cli/src/describe/`, keep them in sync. The model gets the system prompt and the statements of the
+script, and is asked for the JSON schema of a description through the OpenAI `response_format`. The answer is parsed
+leniently (code fences and prose around the object are dropped) for endpoints that ignore the format. Twelve scripts
+are described at a time, a request mostly waits for the model. Every script is written into its file as soon as it is
+described, so a run can be stopped at any point: the cards count the new descriptions right away, and a stopped run is
+not reindexed, the Index card offers it. A script that changed while it was described is skipped, and a run stops
+after three failures in a row, which usually means that the endpoint is not reachable or rejects the key.
+
+Both steps log every script. A run is a span below the trace of the session and, for describing, every script is a
+span below the run:
+
+- `atlas_describe`: the scripts that are left out and why, then per script the time in total and with the model, the
+  token counts, the finish reason and the summary, or the reason and the start of the response if it was skipped.
+  Many completion tokens for a short description mean that the model reasons before it answers.
+- `atlas_index`: per script whether it gets a row, its statements, tables, metadata keys and diagnostics, then the
+  time of every stage (analyze, embed, layout, write). Opening a folder logs every script that was added, changed or
+  removed since the index was written.
 
 ## The embedding model
 
@@ -162,16 +198,17 @@ target. `ShellConnectionProvider` is shared and registers the database as `atlas
 The internals overlay of the atlas has an **AI** tab with three sections. **Bundled Model** shows the embedding model
 above, which ships with the app. **External Model** configures one model behind an OpenAI-compatible endpoint (Ollama,
 OpenAI, vLLM, ...) with its URL, model id and extra headers. **Tasks** chooses per task which of the two runs it:
-**embed** wants a fast model (bundled by default), **describe** writes `dashql-describe` style descriptions and wants a
+**embed** wants a fast model (bundled by default), **describe** writes `dashql-cli describe` style descriptions and wants a
 smart one (external by default). `useAIClientForTask(task)` (`src/app/config/ai_models_provider.tsx`)
-returns the client of the model a task runs on: `complete(messages)` for describe, `embedDocuments(texts)` and
-`embedQuery(text)` for embed, null if the model cannot run the task. The bundled model only embeds, describing with it
-has no client until a bundled text model ships. It is loaded when it embeds the first time.
+returns the client of the model a task runs on: `complete(messages, signal, { jsonSchema })` for describe,
+`embedDocuments(texts)` and `embedQuery(text)` for embed, null if the model cannot run the task. The bundled model only
+embeds, describing with it has no client until a bundled text model ships, and the Describe card asks to choose an
+external model. It is loaded when it embeds the first time.
 
 The settings are stored in the app manifest (`dashql-manifest.json` in OPFS) as a top-level `aiModels` field
 (`{ config: { external }, tasks: { describe, embed } }`), headers (API keys) included. They are not part of `appSettings`, the app rewrites
-`appSettings` from memory and would drop changes made by the atlas. Nothing uses these clients yet: indexing and search
-still load their own bundled embedder.
+`appSettings` from memory and would drop changes made by the atlas. The Describe card uses the describe client, indexing
+and search still load their own bundled embedder.
 
 ## Tests
 

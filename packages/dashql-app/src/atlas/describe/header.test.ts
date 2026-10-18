@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { extractComments } from '../analysis/comments.js';
+import { extractComments } from '../index/analysis/comments.js';
 import { applyHeader, renderHeader } from './header.js';
-import { analyzeOne } from '../test_fixture.js';
+import { analyzeOne } from '../index/test_fixture.js';
 
 const description = {
     summary: 'Revenue of the open orders per market segment.',
@@ -70,6 +70,13 @@ describe('description header', () => {
     it('does not count metadata as comments', async () => {
         const blocks = extractComments(await analyzeOne(metadata + 'select 1;\n'));
         expect(blocks.map(b => b.source)).toEqual(['dashql_metadata']);
+    });
+
+    it('inserts below metadata with multi-byte text by its byte offsets', async () => {
+        const unicode = '-- @dashql:metadata\n-- {\n--   "owner": "Größenwahn 📈"\n-- }\n-- @dashql:end\n';
+        const result = await apply(unicode + '\nselect 1;\n');
+        expect(result.text).toBe(unicode + '\n' + renderHeader(description, '\n') + '\nselect 1;\n');
+        expect((await apply(result.text, true)).text).toBe(result.text);
     });
 
     it('keeps CRLF line endings and multi-byte text', async () => {

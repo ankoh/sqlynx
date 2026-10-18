@@ -14,5 +14,5 @@ js_library(
 #   bazel run //snapshots/describe:update
 alias(
     name = "update",
-    actual = "//packages/dashql-describe:snapshotter",
+    actual = "//packages/dashql-cli:describe_snapshotter",
 )

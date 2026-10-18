@@ -18,7 +18,7 @@ import { LAYOUT_DIMS } from './index/tables.js';
 import { DESCRIPTION_SEARCH, searchAll } from './search/search.js';
 import {
     checkIndexModel,
-    countOutdatedScripts,
+    outdatedScripts,
     externalDirectoryDatabase,
     hasIndexFile,
     indexPoints,
@@ -319,11 +319,15 @@ describe('atlas store and search', () => {
         expect(indexed.size).toBe(3);
         expect(indexed.get('script_2.sql')).toBe('hash_2');
         const current = new Map(indexed);
-        expect(countOutdatedScripts(indexed, current)).toBe(0);
+        expect(outdatedScripts(indexed, current)).toEqual([]);
         current.set('script_2.sql', 'changed');
         current.set('new.sql', 'hash');
         current.delete('script_1.sql');
-        expect(countOutdatedScripts(indexed, current)).toBe(3);
+        expect(outdatedScripts(indexed, current)).toEqual([
+            { script: 'script_2.sql', change: 'changed' },
+            { script: 'new.sql', change: 'added' },
+            { script: 'script_1.sql', change: 'removed' },
+        ]);
     }, 60_000);
 
     it('runs all strategies for one query', async () => {

@@ -51,24 +51,25 @@ struct GatewayOptions<'a> {
 /// Run a Workers AI model through an AI Gateway when `gateway_id` is set, else the plain binding.
 ///
 /// This mirrors `worker::Ai::run` (serialize input, await the promise via a `SendFuture` so the
-/// router handler stays `Send`, deserialize the output) but calls our 3-arg [`run_with_options`]
-/// so requests flow through the named gateway — giving us its account-wide rate/spend limits,
-/// caching, and per-model cost analytics on top of the per-key neuron quota in [`crate::keys`].
+/// router handler stays `Send`, deserialize the output) but calls our 3-arg binding so requests
+/// flow through the named gateway — giving us its account-wide rate/spend limits, caching, and
+/// per-model cost analytics on top of the per-key neuron quota in [`crate::keys`].
+///
+/// The input is serialized JSON-compatibly: the default `serde_wasm_bindgen` serializer turns
+/// maps (e.g. the `serde_json::Value` of a `response_format` JSON schema) into JS `Map`s, which
+/// Workers AI does not read as objects.
 async fn run_ai<T, U>(ai: &Ai, model: &str, input: T, gateway_id: Option<&str>) -> Result<U>
 where
     T: Serialize,
     U: serde::de::DeserializeOwned,
 {
-    let Some(gateway_id) = gateway_id else {
-        // No gateway configured: fall back to the crate's stock 2-arg binding.
-        return ai.run(model, input).await;
-    };
-
     let ai_js: &AiWithGateway = ai.as_ref().unchecked_ref();
-    let input = serde_wasm_bindgen::to_value(&input)?;
-    let options = serde_wasm_bindgen::to_value(&RunOptions {
-        gateway: GatewayOptions { id: gateway_id },
-    })?;
+    let input = input.serialize(&serde_wasm_bindgen::Serializer::json_compatible())?;
+    // Without a gateway, an undefined third argument is the stock 2-arg call
+    let options = match gateway_id {
+        Some(id) => serde_wasm_bindgen::to_value(&RunOptions { gateway: GatewayOptions { id } })?,
+        None => JsValue::UNDEFINED,
+    };
     let promise = ai_js.run(model, input, options);
     let output = SendFuture::new(js_sys::futures::JsFuture::from(promise)).await?;
     Ok(serde_wasm_bindgen::from_value(output)?)
@@ -117,6 +118,10 @@ struct ChatCompletionRequest {
     #[serde(default)]
     #[allow(dead_code)]
     stream: bool,
+    /// OpenAI's `response_format` (`text`, `json_object` or `json_schema` with `{ name, schema,
+    /// strict }`). Gemma 4 on Workers AI takes the same shape, so it is forwarded as is.
+    #[serde(default)]
+    response_format: Option<serde_json::Value>,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -160,6 +165,8 @@ struct ModelEntry {
 #[derive(Serialize)]
 struct WorkersAiInput {
     messages: Vec<ChatMessage>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    response_format: Option<serde_json::Value>,
 }
 
 /// Workers AI text-generation output: `{ "response": "...", "usage": { ... } }`. The `usage`
@@ -293,7 +300,7 @@ async fn chat_completions(mut req: Request, ctx: RouteContext<()>) -> Result<Res
     };
 
     let ai = ctx.env.ai("AI")?;
-    let input = WorkersAiInput { messages: body.messages };
+    let input = WorkersAiInput { messages: body.messages, response_format: body.response_format };
     // Route through the AI Gateway named by AI_GATEWAY_ID (if set), so its account-wide
     // rate/spend limits and caching apply on top of the per-key quota. Unset => direct binding.
     let gateway_id = ctx.env.var("AI_GATEWAY_ID").map(|v| v.to_string()).ok();
@@ -382,6 +389,23 @@ mod tests {
         let out: WorkersAiOutput = serde_json::from_str(raw).unwrap();
         assert_eq!(out.usage.prompt_tokens, 10);
         assert_eq!(response_text(out.response), r#"{"mark":"bar"}"#);
+    }
+
+    #[test]
+    fn response_format_is_forwarded() {
+        use serde_json::json;
+        let format = json!({
+            "type": "json_schema",
+            "json_schema": { "name": "description", "schema": { "type": "object" }, "strict": true },
+        });
+        let raw = json!({ "model": "m", "messages": [], "response_format": format.clone() }).to_string();
+        let body: ChatCompletionRequest = serde_json::from_str(&raw).unwrap();
+        let input = WorkersAiInput { messages: body.messages, response_format: body.response_format };
+        assert_eq!(serde_json::to_value(&input).unwrap(), json!({ "messages": [], "response_format": format }));
+        // Without one, the input stays the plain `{ messages }` form
+        let body: ChatCompletionRequest = serde_json::from_str(r#"{"model":"m","messages":[]}"#).unwrap();
+        let input = WorkersAiInput { messages: body.messages, response_format: body.response_format };
+        assert_eq!(serde_json::to_value(&input).unwrap(), json!({ "messages": [] }));
     }
 
     #[test]

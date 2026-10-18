@@ -1,4 +1,4 @@
-# Scripts as seen by `dashql-describe`. Every case shows the prompt that is sent to the model, or that the script is
+# Scripts as seen by `dashql-cli describe`. Every case shows the prompt that is sent to the model, or that the script is
 # skipped because it already has a description. `describe: {force: true}` replaces existing descriptions.
 describe_snapshots:
   - name: tpch_q3
