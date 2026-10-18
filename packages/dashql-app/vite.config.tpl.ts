@@ -3,6 +3,7 @@ import { checker } from "vite-plugin-checker";
 import * as vite from "vite";
 import * as path from "node:path";
 import * as nodeFs from "node:fs";
+import { brotliCompressSync, constants as zlibConstants } from "node:zlib";
 
 const DASHQL_VERSION = "__DASHQL_VERSION__";
 const DASHQL_COMMIT = "__DASHQL_COMMIT__";
@@ -31,9 +32,63 @@ export default vite.defineConfig(({ mode, command }) => {
             .trim().split('\n').filter(Boolean).map(file => `../${file}`)
         : null;
 
+    // The pages deployment ships WebAssembly pre-compressed with Brotli, like hyperdb-wasm does: the bytes we deploy are
+    // the bytes users download, no matter what the CDN decides to compress. Each `x.HASH.wasm` is replaced by
+    // `x.HASH.wasm.br` in the same directory and the references in the JS are rewritten. `_headers` serves them with
+    // `Content-Encoding: br`, so fetch() and WebAssembly.instantiateStreaming() see plain WebAssembly. The Electron
+    // app protocol and the browser test server do the same for every `*.wasm.br`.
+    // The build fails if a raw `.wasm` is left, or if a reference to a compressed file could not be rewritten.
+    const precompressWasm = {
+        name: 'dashql-precompress-wasm',
+        enforce: 'post' as const,
+        generateBundle(this: vite.Rollup.PluginContext, _options: unknown, bundle: Record<string, any>): void {
+            const renamed = new Map<string, string>();
+            for (const [fileName, item] of Object.entries(bundle)) {
+                if (item.type !== 'asset' || !fileName.endsWith('.wasm')) continue;
+                const source = Buffer.from(item.source);
+                const compressed = brotliCompressSync(source, {
+                    params: {
+                        [zlibConstants.BROTLI_PARAM_QUALITY]: zlibConstants.BROTLI_MAX_QUALITY,
+                        // 16 MiB, the largest window that every decoder has to support
+                        [zlibConstants.BROTLI_PARAM_LGWIN]: 24,
+                        [zlibConstants.BROTLI_PARAM_SIZE_HINT]: source.length,
+                    },
+                });
+                this.emitFile({ type: 'asset', fileName: `${fileName}.br`, source: compressed });
+                delete bundle[fileName];
+                renamed.set(path.posix.basename(fileName), path.posix.basename(`${fileName}.br`));
+                console.info(`brotli ${fileName}: ${source.length} -> ${compressed.length} bytes`);
+            }
+            if (renamed.size === 0) {
+                throw new Error('dashql-precompress-wasm found no WebAssembly to compress');
+            }
+            // Rewrite the references: chunks, and assets that are JS themselves (bundled workers)
+            const unreferenced = new Set(renamed.keys());
+            for (const [fileName, item] of Object.entries(bundle)) {
+                let code: string | undefined;
+                if (item.type === 'chunk') code = item.code;
+                else if (/\.(m?js|html|css)$/.test(fileName)) code = Buffer.from(item.source).toString('utf8');
+                if (code === undefined) continue;
+                let rewritten = code;
+                for (const [from, to] of renamed) {
+                    if (!rewritten.includes(from)) continue;
+                    rewritten = rewritten.split(from).join(to);
+                    unreferenced.delete(from);
+                }
+                if (rewritten === code) continue;
+                if (item.type === 'chunk') item.code = rewritten;
+                else item.source = rewritten;
+            }
+            if (unreferenced.size > 0) {
+                throw new Error(`dashql-precompress-wasm: nothing refers to ${[...unreferenced].join(', ')}`);
+            }
+        },
+    };
+
     return {
         plugins: [
             react(),
+            ...(mode === 'pages' ? [precompressWasm] : []),
             // In the Bazel sandbox, HTML entry files are symlinks to the execroot. Rolldown
             // follows them during input resolution, causing vite:build-html to compute the
             // output fileName as a deep ../../execroot/... traversal, which Rolldown rejects.

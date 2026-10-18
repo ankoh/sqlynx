@@ -35,6 +35,12 @@
 /static/wasm/*.wasm
   Content-Type: application/wasm
 
+# The pages build compresses all WebAssembly with Brotli (precompressWasm in vite.config.tpl.ts) and keeps the
+# `.br` suffix. The browser decompresses it before fetch() and WebAssembly.instantiateStreaming() see it.
+/static/wasm/*.br
+  Content-Encoding: br
+  Content-Type: application/wasm
+
 # Vite preserves the .br suffix but inserts the content hash before it.
 /static/assets/hyperdb-wasm.wasm.*.br
   Content-Encoding: br
