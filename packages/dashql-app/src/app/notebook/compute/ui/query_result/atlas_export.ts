@@ -3,12 +3,10 @@ import * as dashql from '@ankoh/dashql-core';
 
 import { arrowValueToJson } from '../../../../../compute/arrow_formatter.js';
 
-/// What to export: a SQL text column, the columns that become properties and the column that names the files
+/// What to export: a SQL text column and the columns that become properties
 export interface AtlasExportOptions {
     sqlField: number;
     propertyFields: number[];
-    /// null names the files after their row numbers
-    nameField: number | null;
 }
 
 export interface AtlasExportFile {
@@ -70,21 +68,10 @@ function jsonSafe(value: unknown): unknown {
     return jsonNumber(value);
 }
 
-/// File names that are safe on all platforms and unique within the folder, ignoring case
-export function exportFileNames(names: (string | null)[]): string[] {
-    const digits = Math.max(5, String(names.length).length);
-    const used = new Set<string>();
-    return names.map((name, i) => {
-        let base = (name ?? '')
-            .replace(/\.sql$/i, '')
-            .replace(/[^A-Za-z0-9._-]+/g, '_')
-            .replace(/^[._]+|[._]+$/g, '');
-        if (base.length === 0) base = `row_${String(i + 1).padStart(digits, '0')}`;
-        let candidate = base;
-        for (let n = 2; used.has(candidate.toLowerCase()); ++n) candidate = `${base}_${n}`;
-        used.add(candidate.toLowerCase());
-        return `${candidate}.sql`;
-    });
+/// Files are named after the row of the result, padded so that they sort in row order
+export function rowFileName(row: number, rowCount: number): string {
+    const digits = Math.max(5, String(rowCount).length);
+    return `row_${String(row + 1).padStart(digits, '0')}.sql`;
 }
 
 /// Locates the first `@dashql:properties` block of a script, valid or not, as a UTF-16 range
@@ -150,7 +137,6 @@ export function buildAtlasExport(
 ): AtlasExport {
     const fields = table.schema.fields;
     const sqlColumn = table.getChildAt(options.sqlField)!;
-    const nameColumn = options.nameField != null ? table.getChildAt(options.nameField) : null;
     const propertyColumns = options.propertyFields.map(f => ({
         field: f,
         name: fields[f].name,
@@ -158,7 +144,7 @@ export function buildAtlasExport(
         column: table.getChildAt(f)!,
     }));
 
-    const rows: { text: string; name: string | null; properties: dashql.ScriptProperties }[] = [];
+    const files: AtlasExportFile[] = [];
     let skipped = 0;
     for (let row = 0; row < table.numRows; ++row) {
         const sql = sqlColumn.get(row);
@@ -171,14 +157,9 @@ export function buildAtlasExport(
             const value = propertyValue(column.get(row), type, () => format(row, field));
             if (value !== undefined) properties[name] = value;
         }
-        const name = nameColumn != null ? format(row, options.nameField!) : null;
-        rows.push({ text: sql, name, properties });
+        files.push({ name: rowFileName(row, table.numRows), text: applyProperties(sql, properties, findBlock) });
     }
-    const names = exportFileNames(rows.map(r => r.name));
-    return {
-        files: rows.map((r, i) => ({ name: names[i], text: applyProperties(r.text, r.properties, findBlock) })),
-        skipped,
-    };
+    return { files, skipped };
 }
 
 /// The files of an export that already exist in the folder

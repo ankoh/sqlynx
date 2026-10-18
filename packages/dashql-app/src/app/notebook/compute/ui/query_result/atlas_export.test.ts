@@ -6,8 +6,8 @@ import {
     applyProperties,
     buildAtlasExport,
     corePropertiesBlockFinder,
-    exportFileNames,
     propertyValue,
+    rowFileName,
     type PropertiesBlockFinder,
 } from './atlas_export.js';
 
@@ -39,14 +39,10 @@ function readBack(text: string): dashql.ScriptProperties | null {
 }
 
 describe('atlas export', () => {
-    it('names files after a column or the row number', () => {
-        expect(exportFileNames(['Revenue Weekly', 'revenue weekly', 'a/b\\c.sql', '..', null])).toEqual([
-            'Revenue_Weekly.sql',
-            'revenue_weekly_2.sql',
-            'a_b_c.sql',
-            'row_00004.sql',
-            'row_00005.sql',
-        ]);
+    it('names files after the row number', () => {
+        expect(rowFileName(0, 3)).toBe('row_00001.sql');
+        expect(rowFileName(41, 100)).toBe('row_00042.sql');
+        expect(rowFileName(0, 123456)).toBe('row_000001.sql');
     });
 
     it('converts cells to JSON values', () => {
@@ -86,17 +82,16 @@ describe('atlas export', () => {
         };
         const table = new arrow.Table({
             sql: utf8(['select 1;', null, 'select 2;']),
-            name: utf8(['one', 'two', 'three']),
             owner: utf8(['finance', 'sales', null]),
         });
         const result = buildAtlasExport(
             table,
-            { sqlField: 0, propertyFields: [2], nameField: 1 },
+            { sqlField: 0, propertyFields: [1] },
             (row, field) => String(table.getChildAt(field)!.get(row)),
             findBlock,
         );
         expect(result.skipped).toBe(1);
-        expect(result.files.map(f => f.name)).toEqual(['one.sql', 'three.sql']);
+        expect(result.files.map(f => f.name)).toEqual(['row_00001.sql', 'row_00003.sql']);
         expect(readBack(result.files[0].text)).toEqual({ owner: 'finance' });
         // Nulls are left out
         expect(readBack(result.files[1].text)).toEqual({});
