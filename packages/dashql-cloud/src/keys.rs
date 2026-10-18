@@ -46,8 +46,8 @@ pub const DEFAULT_QUOTA_WINDOW_SECS: u32 = 5 * 60 * 60;
 pub const DEFAULT_REQUEST_LIMIT: u32 = 500;
 
 /// Default per-key neuron cap per window, in whole neurons. Sized against the 10k-neuron/day
-/// free tier: on the cheapest model (`llama-3.2-1b`, 18252 neurons/M output tokens) this is
-/// ~550k output tokens per window — generous for a personal tool, tunable via `NEURON_LIMIT`.
+/// free tier: on `gemma-4-26b-a4b-it` (27273 neurons/M output tokens) this is
+/// ~370k output tokens per window — generous for a personal tool, tunable via `NEURON_LIMIT`.
 pub const DEFAULT_NEURON_LIMIT: u64 = 10_000;
 
 /// Stored (by `sha256(key)`) in the `DASHQL_CLOUD_API_KEYS` namespace.

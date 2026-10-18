@@ -3,7 +3,7 @@ import { act } from '@dashql/browser-test-act';
 import { createRoot, type Root } from 'react-dom/client';
 
 import { AIClient } from '../../platform/ai/ai_client.js';
-import { AIModelChoice, AITask } from '../../platform/ai/ai_models.js';
+import { AIModelChoice, AITask, DEFAULT_EXTERNAL_AI_MODEL } from '../../platform/ai/ai_models.js';
 import { BundledEmbedClient } from '../../atlas/index/bundled_embed_client.js';
 import { HttpClientProvider } from '../../platform/http/http_client_provider.js';
 import { LoggerProvider } from '../../platform/logger/logger_provider.js';
@@ -69,7 +69,7 @@ describe('AIModelsProvider', () => {
         });
         expect(probe.embed).toBeInstanceOf(AIClient);
         expect(probe.embed).toBe(probe.describe);
-        expect((probe.embed as AIClient).config).toEqual({ endpointUrl: 'https://example.com', model: 'fast', headers: [] });
+        expect((probe.embed as AIClient).config).toEqual({ endpointUrl: 'https://example.com', model: 'fast', headers: DEFAULT_EXTERNAL_AI_MODEL.headers });
     });
 
     it('has no describe client when describing with the bundled model, it only embeds', async () => {

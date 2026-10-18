@@ -56,9 +56,9 @@ export interface AIModelConfig {
 }
 
 export const DEFAULT_EXTERNAL_AI_MODEL: AIModelConfig = {
-    endpointUrl: 'http://localhost:11434',
-    model: 'llama3',
-    headers: [],
+    endpointUrl: 'https://ai.dashql.app',
+    model: '@cf/google/gemma-4-26b-a4b-it',
+    headers: [{ name: 'Authorization', value: 'Bearer <yourtoken>' }],
 };
 
 /// The model that a task runs on

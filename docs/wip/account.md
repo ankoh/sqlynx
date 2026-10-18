@@ -7,8 +7,8 @@
 ## Context
 
 Cloudflare Workers AI hosts small language models (SLMs) at a very cheap price point
-(10,000 neurons/day free, then $0.011 per 1k neurons — e.g. `llama-3.2-1b-instruct` is
-~2.5k neurons per **million** input tokens). The goal is a minimal gateway that exposes
+(10,000 neurons/day free, then $0.011 per 1k neurons — e.g. `gemma-4-26b-a4b-it` is
+~9.1k neurons per **million** input tokens). The goal is a minimal gateway that exposes
 these models over an **OpenAI-compatible API**, gatekept by a **simple account system**, so
 that dashql (and any OpenAI-compatible client) can use it.
 
@@ -94,7 +94,7 @@ Two front doors on one Worker, split by hostname:
 
 ## API contract
 
-- `GET /v1/models` → `{ "object":"list", "data":[{"id":"@cf/meta/llama-3.2-1b-instruct"}, …] }`
+- `GET /v1/models` → `{ "object":"list", "data":[{"id":"@cf/google/gemma-4-26b-a4b-it"}, …] }`
   — a **static allowlist** of enabled CF model ids.
 - `POST /v1/chat/completions` with `{model, messages, stream:false}`:
   - verify `Authorization: Bearer <key>`; reject 401 if unknown/revoked.
@@ -170,7 +170,7 @@ user's existing keys; only their *allowlist* entry would need re-adding under th
   the shared 10k-neuron free tier.
 - **Neuron rates**: neurons are Cloudflare's GPU-compute unit. They aren't returned per request,
   but the response's `usage` token counts are, and CF publishes a fixed *neurons-per-million-
-  tokens* rate per model (e.g. `llama-3.2-1b`: 2457 in / 18252 out). The gateway holds a small
+  tokens* rate per model (e.g. `gemma-4-26b-a4b-it`: 9091 in / 27273 out). The gateway holds a small
   table of these ([`ai.rs`]) and computes each request's neuron cost as `promptTokens × inRate +
   completionTokens × outRate`. Re-check the table if CF changes pricing.
 - **Concurrency caveat**: counters are read-modify-write KV, not atomic, so parallel requests on
@@ -262,7 +262,7 @@ hand-written TS.) Secrets via `wrangler secret put`: `SESSION_SECRET`.
 
 - **Local API (no SIWA):** `wrangler dev`, then
   `curl localhost:8787/v1/models -H "Authorization: Bearer <testkey>"` and a
-  `POST /v1/chat/completions` with `{"model":"@cf/meta/llama-3.2-1b-instruct",
+  `POST /v1/chat/completions` with `{"model":"@cf/google/gemma-4-26b-a4b-it",
   "messages":[{"role":"user","content":"hi"}],"stream":false}` — assert the
   `{choices:[{message:{content}}]}` shape and a non-empty completion.
 - **Quota:** loop the POST past `REQUEST_LIMIT` within one window; assert a 429 and that the KV
