@@ -55,7 +55,7 @@ export const ShellInternalsViewer: React.FC<ShellInternalsViewerProps> = props =
                 },
                 [TabKey.AISettings]: {
                     tabId: TabKey.AISettings,
-                    icon: `${icons}#pencil_ai_16`,
+                    icon: `${icons}#sparkles_fill_24`,
                     labelShort: 'AI',
                     ariaLabel: 'AI model settings',
                     description: 'Configure the AI models',
