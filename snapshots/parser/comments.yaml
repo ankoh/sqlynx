@@ -1,0 +1,1347 @@
+parser-snapshots:
+
+  - name: line_comment_run
+    input: |-
+      -- Revenue per segment
+      --   indented continuation
+      select 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 2
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [22,23]
+        - text: [49,50]
+      comments:
+        - text: "-- Revenue..er segment"
+        - text: "--   inden..ntinuation"
+      comment-blocks:
+        - type: COMMENT
+          text: "-- Revenue..ntinuation"
+          comments: [0,2]
+          lines:
+            - "Revenue per segment"
+            - "  indented continuation"
+      comment-warnings: []
+
+  - name: line_comment_runs_split_by_blank_line
+    input: |-
+      -- first block
+
+      -- second block
+      select 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 2
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [14,15]
+        - text: [15,16]
+        - text: [31,32]
+      comments:
+        - text: "-- first block"
+        - text: "-- second block"
+      comment-blocks:
+        - type: COMMENT
+          text: "-- first block"
+          comments: [0,1]
+          lines:
+            - "first block"
+        - type: COMMENT
+          text: "-- second block"
+          comments: [1,1]
+          lines:
+            - "second block"
+      comment-warnings: []
+
+  - name: line_comment_empty_lines
+    input: |-
+      --
+      -- first paragraph
+      --
+      -- second paragraph
+      --
+      select 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 5
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [2,3]
+        - text: [21,22]
+        - text: [24,25]
+        - text: [44,45]
+        - text: [47,48]
+      comments:
+        - text: "--"
+        - text: "-- first paragraph"
+        - text: "--"
+        - text: "-- second paragraph"
+        - text: "--"
+      comment-blocks:
+        - type: COMMENT
+          text: "--\n-- firs..ragraph\n--"
+          comments: [0,5]
+          lines:
+            - "first paragraph"
+            - ""
+            - "second paragraph"
+      comment-warnings: []
+
+  - name: line_comment_separator
+    input: |-
+      ----------
+      --- banner
+      select 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 2
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [10,11]
+        - text: [21,22]
+      comments:
+        - text: "----------"
+        - text: "--- banner"
+      comment-blocks:
+        - type: COMMENT
+          text: "----------..--- banner"
+          comments: [0,2]
+          lines:
+            - "banner"
+      comment-warnings: []
+
+  - name: line_comment_trailing
+    input: |-
+      select 1; -- trailing
+      -- leading for the second statement
+      select 2
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1; ..- trailing"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+        - type: SELECT
+          ast-begin: 4
+          ast-size: 4
+          description:
+            text: "select 2"
+            description-begin: 1
+            description-count: 1
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 2"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "2"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "2"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "2"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [21,22]
+        - text: [57,58]
+      comments:
+        - text: "-- trailing"
+        - text: "-- leading.. statement"
+      comment-blocks:
+        - type: COMMENT
+          text: "-- trailing"
+          comments: [0,1]
+          lines:
+            - "trailing"
+        - type: COMMENT
+          text: "-- leading.. statement"
+          comments: [1,1]
+          lines:
+            - "leading for the second statement"
+      comment-warnings: []
+
+  - name: block_comment_gutter
+    input: |-
+      /**
+       * Revenue per segment
+       *
+       * Second paragraph
+       */
+      select 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 1
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [3,4]
+        - text: [26,27]
+        - text: [29,30]
+        - text: [49,50]
+        - text: [53,54]
+      comments:
+        - text: "/**\n * Rev..agraph\n */"
+      comment-blocks:
+        - type: COMMENT
+          text: "/**\n * Rev..agraph\n */"
+          comments: [0,1]
+          lines:
+            - "Revenue per segment"
+            - ""
+            - "Second paragraph"
+      comment-warnings: []
+
+  - name: block_comment_single_line
+    input: |-
+      /* inline */ select 1 /**/
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1 /**/"
+            description-begin: 0
+            description-count: 1
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments:
+        - text: "/* inline */"
+        - text: "/**/"
+      comment-blocks:
+        - type: COMMENT
+          text: "/* inline */"
+          comments: [0,1]
+          lines:
+            - "inline"
+        - type: COMMENT
+          text: "/**/"
+          comments: [1,1]
+          lines: []
+      comment-warnings: []
+
+  - name: block_comment_empty
+    input: |-
+      /**/ select 1 /***/
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1 /***/"
+            description-begin: 0
+            description-count: 1
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments:
+        - text: "/**/"
+        - text: "/***/"
+      comment-blocks:
+        - type: COMMENT
+          text: "/**/"
+          comments: [0,1]
+          lines: []
+        - type: COMMENT
+          text: "/***/"
+          comments: [1,1]
+          lines: []
+      comment-warnings: []
+
+  - name: block_comment_nested
+    input: |-
+      /* outer /* inner */ still outer */ select 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 1
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments:
+        - text: "/* outer /..l outer */"
+      comment-blocks:
+        - type: COMMENT
+          text: "/* outer /..l outer */"
+          comments: [0,1]
+          lines:
+            - "outer /* inner */ still outer"
+      comment-warnings: []
+
+  - name: block_comment_between_line_comments
+    input: |-
+      -- before
+      /* block */
+      -- after
+      select 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 3
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [9,10]
+        - text: [21,22]
+        - text: [30,31]
+      comments:
+        - text: "-- before"
+        - text: "/* block */"
+        - text: "-- after"
+      comment-blocks:
+        - type: COMMENT
+          text: "-- before"
+          comments: [0,1]
+          lines:
+            - "before"
+        - type: COMMENT
+          text: "/* block */"
+          comments: [1,1]
+          lines:
+            - "block"
+        - type: COMMENT
+          text: "-- after"
+          comments: [2,1]
+          lines:
+            - "after"
+      comment-warnings: []
+
+  - name: description_line_form
+    input: |-
+      -- @dashql:description
+      -- Revenue of the open orders per market segment.
+      --
+      -- Example questions:
+      -- - Which segment earns the most?
+      -- @dashql:end
+
+      -- TPC-H query 3
+      select 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 7
+            description-block: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [22,23]
+        - text: [72,73]
+        - text: [75,76]
+        - text: [97,98]
+        - text: [132,133]
+        - text: [147,148]
+        - text: [148,149]
+        - text: [165,166]
+      comments:
+        - text: "-- @dashql..escription"
+        - text: "-- Revenue..t segment."
+        - text: "--"
+        - text: "-- Example..questions:"
+        - text: "-- - Which.. the most?"
+        - text: "-- @dashql:end"
+        - text: "-- TPC-H query 3"
+      comment-blocks:
+        - type: DASHQL_DESCRIPTION
+          text: "-- @dashql..dashql:end"
+          tag: "description"
+          comments: [0,6]
+          lines:
+            - "Revenue of the open orders per market segment."
+            - ""
+            - "Example questions:"
+            - "- Which segment earns the most?"
+        - type: COMMENT
+          text: "-- TPC-H query 3"
+          comments: [6,1]
+          lines:
+            - "TPC-H query 3"
+      comment-warnings: []
+
+  - name: description_line_form_after_comment
+    input: |-
+      -- my own note
+      -- @dashql:description
+      -- Revenue per segment.
+      -- @dashql:end
+      -- another note
+      select 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 5
+            description-block: 1
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [14,15]
+        - text: [37,38]
+        - text: [61,62]
+        - text: [76,77]
+        - text: [92,93]
+      comments:
+        - text: "-- my own note"
+        - text: "-- @dashql..escription"
+        - text: "-- Revenue..r segment."
+        - text: "-- @dashql:end"
+        - text: "-- another note"
+      comment-blocks:
+        - type: COMMENT
+          text: "-- my own note"
+          comments: [0,1]
+          lines:
+            - "my own note"
+        - type: DASHQL_DESCRIPTION
+          text: "-- @dashql..dashql:end"
+          tag: "description"
+          comments: [1,3]
+          lines:
+            - "Revenue per segment."
+        - type: COMMENT
+          text: "-- another note"
+          comments: [4,1]
+          lines:
+            - "another note"
+      comment-warnings: []
+
+  - name: description_line_form_inline_text
+    input: |-
+      -- @dashql:description Revenue per segment.
+      -- Second line.
+      -- @dashql:end
+      select 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 3
+            description-block: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [43,44]
+        - text: [59,60]
+        - text: [74,75]
+      comments:
+        - text: "-- @dashql..r segment."
+        - text: "-- Second line."
+        - text: "-- @dashql:end"
+      comment-blocks:
+        - type: DASHQL_DESCRIPTION
+          text: "-- @dashql..dashql:end"
+          tag: "description"
+          comments: [0,3]
+          lines:
+            - "Revenue per segment."
+            - "Second line."
+      comment-warnings: []
+
+  - name: description_line_form_indented
+    input: |-
+      --   @dashql:description
+      -- Revenue per segment.
+      --   @dashql:end
+      select 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 3
+            description-block: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [24,25]
+        - text: [48,49]
+        - text: [65,66]
+      comments:
+        - text: "--   @dash..escription"
+        - text: "-- Revenue..r segment."
+        - text: "--   @dashql:end"
+      comment-blocks:
+        - type: DASHQL_DESCRIPTION
+          text: "--   @dash..dashql:end"
+          tag: "description"
+          comments: [0,3]
+          lines:
+            - "Revenue per segment."
+      comment-warnings: []
+
+  - name: description_block_form
+    input: |-
+      /* @dashql:description
+         Revenue per segment.
+
+         Example questions:
+         - Which segment earns the most?
+      */
+      select 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 1
+            description-block: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [22,23]
+        - text: [46,47]
+        - text: [47,48]
+        - text: [69,70]
+        - text: [104,105]
+        - text: [107,108]
+      comments:
+        - text: "/* @dashql..e most?\n*/"
+      comment-blocks:
+        - type: DASHQL_DESCRIPTION
+          text: "/* @dashql..e most?\n*/"
+          tag: "description"
+          comments: [0,1]
+          lines:
+            - "Revenue per segment."
+            - ""
+            - "Example questions:"
+            - "- Which segment earns the most?"
+      comment-warnings: []
+
+  - name: description_block_form_gutter
+    input: |-
+      /**
+       * @dashql:description
+       * Revenue per segment.
+       */
+      select 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 1
+            description-block: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [3,4]
+        - text: [26,27]
+        - text: [50,51]
+        - text: [54,55]
+      comments:
+        - text: "/**\n * @da..gment.\n */"
+      comment-blocks:
+        - type: DASHQL_DESCRIPTION
+          text: "/**\n * @da..gment.\n */"
+          tag: "description"
+          comments: [0,1]
+          lines:
+            - "Revenue per segment."
+      comment-warnings: []
+
+  - name: description_block_form_single_line
+    input: |-
+      /* @dashql:description Revenue per segment. */ select 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 1
+            description-block: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments:
+        - text: "/* @dashql..egment. */"
+      comment-blocks:
+        - type: DASHQL_DESCRIPTION
+          text: "/* @dashql..egment. */"
+          tag: "description"
+          comments: [0,1]
+          lines:
+            - "Revenue per segment."
+      comment-warnings: []
+
+  - name: description_per_statement
+    input: |-
+      -- @dashql:description
+      -- First query.
+      -- @dashql:end
+      select 1;
+
+      -- @dashql:description
+      -- Second query.
+      -- @dashql:end
+      select 2;
+      select 3
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1;"
+            description-begin: 0
+            description-count: 3
+            description-block: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+        - type: SELECT
+          ast-begin: 4
+          ast-size: 4
+          description:
+            text: "select 2;"
+            description-begin: 3
+            description-count: 3
+            description-block: 1
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 2"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "2"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "2"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "2"
+        - type: SELECT
+          ast-begin: 8
+          ast-size: 4
+          description:
+            text: "select 3"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 3"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "3"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "3"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "3"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [22,23]
+        - text: [38,39]
+        - text: [53,54]
+        - text: [63,64]
+        - text: [64,65]
+        - text: [87,88]
+        - text: [104,105]
+        - text: [119,120]
+        - text: [129,130]
+      comments:
+        - text: "-- @dashql..escription"
+        - text: "-- First query."
+        - text: "-- @dashql:end"
+        - text: "-- @dashql..escription"
+        - text: "-- Second query."
+        - text: "-- @dashql:end"
+      comment-blocks:
+        - type: DASHQL_DESCRIPTION
+          text: "-- @dashql..dashql:end"
+          tag: "description"
+          comments: [0,3]
+          lines:
+            - "First query."
+        - type: DASHQL_DESCRIPTION
+          text: "-- @dashql..dashql:end"
+          tag: "description"
+          comments: [3,3]
+          lines:
+            - "Second query."
+      comment-warnings: []
+
+  - name: description_not_leading
+    input: |-
+      -- @dashql:description
+      -- First query.
+      -- @dashql:end
+      select 1; select 2
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1;"
+            description-begin: 0
+            description-count: 3
+            description-block: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+        - type: SELECT
+          ast-begin: 4
+          ast-size: 4
+          description:
+            text: "select 2"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 2"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "2"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "2"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "2"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [22,23]
+        - text: [38,39]
+        - text: [53,54]
+      comments:
+        - text: "-- @dashql..escription"
+        - text: "-- First query."
+        - text: "-- @dashql:end"
+      comment-blocks:
+        - type: DASHQL_DESCRIPTION
+          text: "-- @dashql..dashql:end"
+          tag: "description"
+          comments: [0,3]
+          lines:
+            - "First query."
+      comment-warnings: []
+
+  - name: description_unterminated
+    input: |-
+      -- @dashql:description
+      -- Revenue per segment.
+
+      -- @dashql:end
+      select 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 3
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [22,23]
+        - text: [46,47]
+        - text: [47,48]
+        - text: [62,63]
+      comments:
+        - text: "-- @dashql..escription"
+        - text: "-- Revenue..r segment."
+        - text: "-- @dashql:end"
+      comment-blocks:
+        - type: COMMENT
+          text: "-- @dashql..r segment."
+          comments: [0,2]
+          lines:
+            - "@dashql:description"
+            - "Revenue per segment."
+        - type: COMMENT
+          text: "-- @dashql:end"
+          comments: [2,1]
+          lines:
+            - "@dashql:end"
+      comment-warnings:
+        - message: '@dashql:description is not closed by a -- @dashql:end line'
+          text: "-- @dashql..escription"
+        - message: '@dashql:end without an opening tag'
+          text: "-- @dashql:end"
+
+  - name: unknown_tag
+    input: |-
+      -- @dashql:parameters
+      -- region = 'EUROPE'
+      -- @dashql:end
+      /* @dashql:chart bar */
+      select 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 4
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [21,22]
+        - text: [42,43]
+        - text: [57,58]
+        - text: [81,82]
+      comments:
+        - text: "-- @dashql..parameters"
+        - text: "-- region ..= 'EUROPE'"
+        - text: "-- @dashql:end"
+        - text: "/* @dashql..art bar */"
+      comment-blocks:
+        - type: DASHQL_UNKNOWN_TAG
+          text: "-- @dashql..dashql:end"
+          tag: "parameters"
+          comments: [0,3]
+          lines:
+            - "region = 'EUROPE'"
+        - type: DASHQL_UNKNOWN_TAG
+          text: "/* @dashql..art bar */"
+          tag: "chart"
+          comments: [3,1]
+          lines:
+            - "bar"
+      comment-warnings:
+        - message: 'unknown comment tag @dashql:parameters'
+          text: "-- @dashql..parameters"
+        - message: 'unknown comment tag @dashql:chart'
+          text: "/* @dashql..art bar */"
+
+  - name: end_tag_without_opening
+    input: |-
+      -- @dashql:end
+      /* @dashql:end */
+      select 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 2
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [14,15]
+        - text: [32,33]
+      comments:
+        - text: "-- @dashql:end"
+        - text: "/* @dashql:end */"
+      comment-blocks:
+        - type: COMMENT
+          text: "-- @dashql:end"
+          comments: [0,1]
+          lines:
+            - "@dashql:end"
+        - type: COMMENT
+          text: "/* @dashql:end */"
+          comments: [1,1]
+          lines:
+            - "@dashql:end"
+      comment-warnings:
+        - message: '@dashql:end without an opening tag'
+          text: "-- @dashql:end"
+        - message: '@dashql:end without an opening tag'
+          text: "/* @dashql:end */"
+
+  - name: not_a_tag
+    input: |-
+      -- see @dashql:description
+      -- @dashql:description: Revenue
+      -- @dashqldescription
+      -- @dashql:
+      -- @DASHQL:description
+      select 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 5
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [26,27]
+        - text: [58,59]
+        - text: [80,81]
+        - text: [92,93]
+        - text: [115,116]
+      comments:
+        - text: "-- see @da..escription"
+        - text: "-- @dashql..n: Revenue"
+        - text: "-- @dashql..escription"
+        - text: "-- @dashql:"
+        - text: "-- @DASHQL..escription"
+      comment-blocks:
+        - type: COMMENT
+          text: "-- see @da..escription"
+          comments: [0,5]
+          lines:
+            - "see @dashql:description"
+            - "@dashql:description: Revenue"
+            - "@dashqldescription"
+            - "@dashql:"
+            - "@DASHQL:description"
+      comment-warnings: []
+
+  - name: end_tag_with_text
+    input: |-
+      -- @dashql:description
+      -- Revenue per segment.
+      -- @dashql:end of description
+      -- @dashql:end
+      select 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 4
+            description-block: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [22,23]
+        - text: [46,47]
+        - text: [76,77]
+        - text: [91,92]
+      comments:
+        - text: "-- @dashql..escription"
+        - text: "-- Revenue..r segment."
+        - text: "-- @dashql..escription"
+        - text: "-- @dashql:end"
+      comment-blocks:
+        - type: DASHQL_DESCRIPTION
+          text: "-- @dashql..dashql:end"
+          tag: "description"
+          comments: [0,4]
+          lines:
+            - "Revenue per segment."
+            - "@dashql:end of description"
+      comment-warnings: []

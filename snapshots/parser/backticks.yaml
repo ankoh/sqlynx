@@ -33,6 +33,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: backtick_table_alias
     input: |-
@@ -80,6 +82,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: backtick_table_name
     input: |-
@@ -124,6 +128,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: backtick_qualified_name
     input: |-
@@ -179,6 +185,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: backtick_column_name
     input: |-
@@ -243,6 +251,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: backtick_mixed_quoting
     input: |-
@@ -320,6 +330,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: backtick_reserved_word
     input: |-
@@ -384,6 +396,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: backtick_spaces_in_name
     input: |-
@@ -435,6 +449,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: backtick_numeric_name
     input: |-
@@ -469,6 +485,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: backtick_escaped_backtick
     input: |-
@@ -503,6 +521,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: backtick_cast_alias
     input: |-
@@ -604,3 +624,5 @@ parser-snapshots:
         - text: [41,42]
         - text: [95,96]
       comments: []
+      comment-blocks: []
+      comment-warnings: []

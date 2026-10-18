@@ -29,6 +29,7 @@ TEST_P(ParserSnapshotTestSuite, Test) {
 
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(Simple, ParserSnapshotTestSuite, ::testing::ValuesIn(ParserSnapshotTest::GetTests("simple.yaml")), ParserSnapshotTest::TestPrinter());
+INSTANTIATE_TEST_SUITE_P(Comments, ParserSnapshotTestSuite, ::testing::ValuesIn(ParserSnapshotTest::GetTests("comments.yaml")), ParserSnapshotTest::TestPrinter());
 INSTANTIATE_TEST_SUITE_P(Bugs, ParserSnapshotTestSuite, ::testing::ValuesIn(ParserSnapshotTest::GetTests("bugs.yaml")), ParserSnapshotTest::TestPrinter());
 INSTANTIATE_TEST_SUITE_P(ColumnRef, ParserSnapshotTestSuite, ::testing::ValuesIn(ParserSnapshotTest::GetTests("columnref.yaml")), ParserSnapshotTest::TestPrinter());
 INSTANTIATE_TEST_SUITE_P(Regression, ParserSnapshotTestSuite, ::testing::ValuesIn(ParserSnapshotTest::GetTests("regression.yaml")), ParserSnapshotTest::TestPrinter());

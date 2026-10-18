@@ -34,6 +34,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: explain_with_analyze
     input: |-
@@ -79,6 +81,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: explain_with_options
     input: |-
@@ -133,6 +137,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: explain_with_bool_option
     input: |-
@@ -190,6 +196,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: explain_create_table
     input: |-
@@ -238,6 +246,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: explain_select_from
     input: |-
@@ -328,6 +338,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: explain_parenthesized_values
     input: |-
@@ -362,6 +374,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: explain_values_option_without_arg
     input: |-
@@ -407,6 +421,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: explain_raw_sql_subquery_descriptor
     input: |-
@@ -570,6 +586,8 @@ parser-snapshots:
         - text: [145,146]
         - text: [147,148]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: explain_convert_currency_table_argument
     input: |-
@@ -674,6 +692,8 @@ parser-snapshots:
       line-breaks:
         - text: [39,40]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: explain_streaming_options
     input: |-
@@ -843,6 +863,8 @@ parser-snapshots:
         - text: [285,286]
         - text: [287,288]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: explain_sql_expressions
     input: |-
@@ -976,3 +998,5 @@ parser-snapshots:
         - text: [122,123]
         - text: [130,131]
       comments: []
+      comment-blocks: []
+      comment-warnings: []

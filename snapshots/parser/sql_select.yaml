@@ -30,6 +30,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_iconst_1
     input: |-
@@ -61,6 +63,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_fconst_1e04
     input: |-
@@ -92,6 +96,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_bconst_b1010
     input: |-
@@ -123,6 +129,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_sconst_string
     input: |-
@@ -161,6 +169,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_sconst_string_latin1
     input: |-
@@ -199,6 +209,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_sconst_string_unicode_plane1
     input: |-
@@ -237,6 +249,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_1_gt_2
     input: |-
@@ -280,6 +294,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_parenthesized_and_chain
     input: |-
@@ -419,6 +435,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_right_parenthesized_and_chain
     input: |-
@@ -558,6 +576,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_parenthesized_or_chain
     input: |-
@@ -697,6 +717,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_parenthesized_mixed_boolean_groups
     input: |-
@@ -856,6 +878,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_right_parenthesized_mixed_boolean_groups
     input: |-
@@ -1005,6 +1029,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_sconst_quotes
     input: |-
@@ -1036,6 +1062,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_sconst_quotes_nested_quote
     input: |-
@@ -1067,6 +1095,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_sconst_quotes_nested_dquote
     input: |-
@@ -1098,6 +1128,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_iconst_1_ident
     input: |-
@@ -1132,6 +1164,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: comments_cstyle
     input: |-
@@ -1166,6 +1200,13 @@ parser-snapshots:
         - text: [9,10]
       comments:
         - text: "/* foo */"
+      comment-blocks:
+        - type: COMMENT
+          text: "/* foo */"
+          comments: [0,1]
+          lines:
+            - "foo"
+      comment-warnings: []
 
   - name: comments_cstyle_nested
     input: |-
@@ -1179,7 +1220,7 @@ parser-snapshots:
           description:
             text: "select 1"
             description-begin: 0
-            description-count: 0
+            description-count: 1
           ast:
             type: OBJECT_SQL_SELECT
             text: "select 1"
@@ -1199,7 +1240,14 @@ parser-snapshots:
       line-breaks:
         - text: [19,20]
       comments:
-        - text: "/* bar */ */"
+        - text: "/* foo /* bar */ */"
+      comment-blocks:
+        - type: COMMENT
+          text: "/* foo /* bar */ */"
+          comments: [0,1]
+          lines:
+            - "foo /* bar */"
+      comment-warnings: []
 
   - name: select_iconst_list
     input: |-
@@ -1237,6 +1285,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_from_1rel
     input: |-
@@ -1288,6 +1338,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_from_1rel_indirect1
     input: |-
@@ -1341,6 +1393,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_from_1rel_indirect1_noinherit
     input: |-
@@ -1397,6 +1451,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_from_1rel_indirect1_alias
     input: |-
@@ -1453,6 +1509,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_from_2rel
     input: |-
@@ -1513,6 +1571,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_from_into_2rel
     input: |-
@@ -1586,6 +1646,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_into_qualified_target
     input: |-
@@ -1632,6 +1694,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_from_1rel_group1
     input: |-
@@ -1696,6 +1760,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_from_1rel_window_empty
     input: |-
@@ -1761,6 +1827,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_from_1rel_window_partition1
     input: |-
@@ -1839,6 +1907,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_from_1rel_window_partition1_rows_unbounded
     input: |-
@@ -1944,6 +2014,8 @@ parser-snapshots:
       line-breaks:
         - text: [15,16]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_from_1rel_window_partition1_rows_1preceding_current
     input: |-
@@ -2049,6 +2121,8 @@ parser-snapshots:
       line-breaks:
         - text: [15,16]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_from_1rel_2windows
     input: |-
@@ -2179,6 +2253,8 @@ parser-snapshots:
         - text: [15,16]
         - text: [99,100]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_distinct_from_1rel
     input: |-
@@ -2234,6 +2310,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_distinct_on_from_1rel
     input: |-
@@ -2298,6 +2376,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_all_from_1rel
     input: |-
@@ -2335,6 +2415,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: values_1
     input: |-
@@ -2365,6 +2447,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: values_1_2
     input: |-
@@ -2400,6 +2484,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: values_12_34
     input: |-
@@ -2439,6 +2525,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: table_a
     input: |-
@@ -2470,6 +2558,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: union_select1_select2
     input: |-
@@ -2524,6 +2614,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: union_all_select1_select2
     input: |-
@@ -2581,6 +2673,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: union_distinct_select1_select2
     input: |-
@@ -2638,6 +2732,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: intersect_select1_select2
     input: |-
@@ -2692,6 +2788,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: with_1cte_select2
     input: |-
@@ -2747,6 +2845,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: with_2ctes_select3
     input: |-
@@ -2822,6 +2922,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: with_recursive_2ctes_select3
     input: |-
@@ -2900,6 +3002,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_a_orderby_b
     input: |-
@@ -2955,6 +3059,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_a_orderby_b_c
     input: |-
@@ -3023,6 +3129,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_a_orderby_b_c_directions
     input: |-
@@ -3097,6 +3205,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_a_orderby_b_c_directions_nulls
     input: |-
@@ -3177,6 +3287,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_table_ref
     input: |-
@@ -3257,6 +3369,8 @@ parser-snapshots:
       line-breaks:
         - text: [16,17]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_table_ref_1
     input: |-
@@ -3349,6 +3463,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_column_ref_expr_1
     input: |-
@@ -3480,6 +3596,8 @@ parser-snapshots:
       line-breaks:
         - text: [16,17]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_column_ref_expr_2
     input: |-
@@ -3628,6 +3746,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_generate_series
     input: |-
@@ -3732,6 +3852,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_functable
     input: |-
@@ -3800,6 +3922,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_functable_table_argument
     input: |-
@@ -3907,6 +4031,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_functable_table_argument_full_query
     input: |-
@@ -4429,6 +4555,8 @@ parser-snapshots:
         - text: [884,885]
         - text: [906,907]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_funcconst_1
     input: |-
@@ -4470,6 +4598,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_funcconst_2
     input: |-
@@ -4521,6 +4651,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_const_typename_cast
     input: |-
@@ -4563,6 +4695,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_const_interval_1
     input: |-
@@ -4605,6 +4739,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_const_interval_2
     input: |-
@@ -4647,6 +4783,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_const_interval_3
     input: |-
@@ -4689,6 +4827,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: sql_datetime_type_1
     input: |-
@@ -4742,6 +4882,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: sql_datetime_type_2
     input: |-
@@ -4798,6 +4940,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: sql_datetime_type_3
     input: |-
@@ -4851,6 +4995,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: sql_datetime_type_4
     input: |-
@@ -4907,6 +5053,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: sql_interval_type_1
     input: |-
@@ -4960,6 +5108,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: sql_interval_type_2
     input: |-
@@ -5013,6 +5163,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: sql_generic_type_1
     input: |-
@@ -5066,6 +5218,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: sql_bit_type_1
     input: |-
@@ -5119,6 +5273,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: sql_bit_type_2
     input: |-
@@ -5175,6 +5331,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: sql_bit_type_3
     input: |-
@@ -5231,6 +5389,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_operators_1
     input: |-
@@ -5279,6 +5439,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_between_1
     input: |-
@@ -5324,6 +5486,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_between_2
     input: |-
@@ -5369,6 +5533,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_between_3
     input: |-
@@ -5414,6 +5580,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_between_4
     input: |-
@@ -5459,6 +5627,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_between_5
     input: |-
@@ -5504,6 +5674,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_between_6
     input: |-
@@ -5549,6 +5721,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_attimezone_1
     input: |-
@@ -5592,6 +5766,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_typecast_1
     input: |-
@@ -5634,6 +5810,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_lateral_json_arrays
     input: |-
@@ -6052,6 +6230,8 @@ parser-snapshots:
         - text: [404,405]
         - text: [430,431]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_collate_1
     input: |-
@@ -6098,6 +6278,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_overlaps_1
     input: |-
@@ -6191,6 +6373,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_distinct_1
     input: |-
@@ -6248,6 +6432,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_distinct_2
     input: |-
@@ -6305,6 +6491,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_isof_1
     input: |-
@@ -6357,6 +6545,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_isof_2
     input: |-
@@ -6412,6 +6602,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_case_1
     input: |-
@@ -6482,6 +6674,8 @@ parser-snapshots:
         - text: [43,44]
         - text: [73,74]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_case_2
     input: |-
@@ -6546,6 +6740,8 @@ parser-snapshots:
         - text: [43,44]
         - text: [67,68]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_param_2
     input: |-
@@ -6600,6 +6796,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_func_1
     input: |-
@@ -6648,6 +6846,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_func_2
     input: |-
@@ -6713,6 +6913,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_func_3
     input: |-
@@ -6778,6 +6980,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_func_4
     input: |-
@@ -6855,6 +7059,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_select_1
     input: |-
@@ -6901,6 +7107,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_select_2
     input: |-
@@ -6973,6 +7181,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_select_3
     input: |-
@@ -7026,6 +7236,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_indirection_1
     input: |-
@@ -7074,6 +7286,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_in_1
     input: |-
@@ -7139,6 +7353,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_in_2
     input: |-
@@ -7194,6 +7410,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_subquery_1
     input: |-
@@ -7260,6 +7478,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_subquery_2
     input: |-
@@ -7326,6 +7546,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_subquery_3
     input: |-
@@ -7392,6 +7614,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_subquery_4
     input: |-
@@ -7460,6 +7684,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_default
     input: |-
@@ -7512,6 +7738,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_1
     input: |-
@@ -7547,6 +7775,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_2
     input: |-
@@ -7582,6 +7812,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_3
     input: |-
@@ -7617,6 +7849,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_4
     input: |-
@@ -7652,6 +7886,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_5
     input: |-
@@ -7687,6 +7923,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_7
     input: |-
@@ -7728,6 +7966,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_8
     input: |-
@@ -7769,6 +8009,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_9
     input: |-
@@ -7810,6 +8052,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_10
     input: |-
@@ -7851,6 +8095,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_11
     input: |-
@@ -7886,6 +8132,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_12
     input: |-
@@ -7921,6 +8169,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_13
     input: |-
@@ -7956,6 +8206,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_14
     input: |-
@@ -7991,6 +8243,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_15
     input: |-
@@ -8026,6 +8280,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_16
     input: |-
@@ -8061,6 +8317,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_17
     input: |-
@@ -8110,6 +8368,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_18
     input: |-
@@ -8159,6 +8419,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_19
     input: |-
@@ -8209,6 +8471,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_20
     input: |-
@@ -8266,6 +8530,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_21
     input: |-
@@ -8314,6 +8580,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_22
     input: |-
@@ -8362,6 +8630,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_23
     input: |-
@@ -8413,6 +8683,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_24
     input: |-
@@ -8466,6 +8738,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_25
     input: |-
@@ -8514,6 +8788,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_26
     input: |-
@@ -8562,6 +8838,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_27
     input: |-
@@ -8607,6 +8885,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_28
     input: |-
@@ -8672,6 +8952,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_28_1
     input: |-
@@ -8729,6 +9011,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_29
     input: |-
@@ -8777,6 +9061,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_30
     input: |-
@@ -8822,6 +9108,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_31
     input: |-
@@ -8867,6 +9155,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_32
     input: |-
@@ -8912,6 +9202,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_33
     input: |-
@@ -8955,6 +9247,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_34
     input: |-
@@ -9000,6 +9294,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_knownfunc_35
     input: |-
@@ -9048,6 +9344,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_table_func_1
     input: |-
@@ -9113,6 +9411,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_table_func_2
     input: |-
@@ -9178,6 +9478,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_table_func_3
     input: |-
@@ -9273,6 +9575,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_table_func_4
     input: |-
@@ -9402,6 +9706,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_table_func_5
     input: |-
@@ -9559,6 +9865,8 @@ parser-snapshots:
         - text: [112,113]
         - text: [182,183]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_sample_1
     input: |-
@@ -9613,6 +9921,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_sample_2
     input: |-
@@ -9667,6 +9977,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_sample_3
     input: |-
@@ -9724,6 +10036,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_sample_4
     input: |-
@@ -9784,6 +10098,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_sample_5
     input: |-
@@ -9844,6 +10160,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_sample_6
     input: |-
@@ -9943,6 +10261,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_sample_7
     input: |-
@@ -10042,6 +10362,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_join_1
     input: |-
@@ -10138,6 +10460,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_join_2
     input: |-
@@ -10234,6 +10558,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_join_3
     input: |-
@@ -10301,6 +10627,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_join_4
     input: |-
@@ -10368,6 +10696,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_join_5
     input: |-
@@ -10464,6 +10794,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_join_6
     input: |-
@@ -10560,6 +10892,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_join_7
     input: |-
@@ -10656,6 +10990,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_join_8
     input: |-
@@ -10752,6 +11088,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_join_9
     input: |-
@@ -10827,6 +11165,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_join_anti
     input: |-
@@ -10927,6 +11267,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_join_semi
     input: |-
@@ -11027,6 +11369,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_join_cross_semi_chain
     input: |-
@@ -11150,6 +11494,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_join_cross_anti_chain
     input: |-
@@ -11273,6 +11619,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_join_natural_semi_chain
     input: |-
@@ -11396,6 +11744,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_join_natural_anti_chain
     input: |-
@@ -11519,6 +11869,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_join_natural_left_semi_chain
     input: |-
@@ -11642,6 +11994,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_join_natural_left_anti_chain
     input: |-
@@ -11765,6 +12119,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_join_anti_semi_cte_union
     input: |-
@@ -12192,6 +12548,8 @@ parser-snapshots:
         - text: [518,519]
         - text: [570,571]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_row_locking_1
     input: |-
@@ -12292,6 +12650,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_row_locking_2
     input: |-
@@ -12392,6 +12752,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_row_locking_3
     input: |-
@@ -12492,6 +12854,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_row_locking_4
     input: |-
@@ -12592,6 +12956,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_row_locking_5
     input: |-
@@ -12692,6 +13058,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_row_locking_6
     input: |-
@@ -12801,6 +13169,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_row_locking_7
     input: |-
@@ -12913,6 +13283,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_limit_1
     input: |-
@@ -12960,6 +13332,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_limit_2
     input: |-
@@ -13010,6 +13384,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_limit_3
     input: |-
@@ -13057,6 +13433,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_limit_4
     input: |-
@@ -13107,6 +13485,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_limit_5
     input: |-
@@ -13154,6 +13534,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_limit_6
     input: |-
@@ -13201,6 +13583,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_limit_7
     input: |-
@@ -13248,6 +13632,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_limit_8
     input: |-
@@ -13298,6 +13684,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: select_alias_1
     input: |-
@@ -13397,3 +13785,5 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []

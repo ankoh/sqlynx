@@ -11,6 +11,8 @@ parser-snapshots:
           text: "select"
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: error_reporting_sconst_in_from
     input: |-
@@ -24,6 +26,8 @@ parser-snapshots:
           hint: string literals cannot be used as identifiers here; use a double-quoted identifier instead
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: error_reporting_sconst_as_implicit_alias
     input: |-
@@ -37,6 +41,8 @@ parser-snapshots:
           hint: string literals cannot be used as identifiers here; use a double-quoted identifier instead
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: error_reporting_sconst_explicit_alias_ok
     input: |-
@@ -71,6 +77,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: error_reporting_vis_unknown_renderer
     input: |-
@@ -83,3 +91,5 @@ parser-snapshots:
           text: "foo"
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []

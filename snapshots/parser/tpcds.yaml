@@ -551,6 +551,8 @@ parser-snapshots:
         - text: [655,656]
         - text: [678,679]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_02
     input: |-
@@ -2438,6 +2440,8 @@ parser-snapshots:
         - text: [2488,2489]
         - text: [2523,2524]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_03
     input: |-
@@ -2845,6 +2849,8 @@ parser-snapshots:
         - text: [417,418]
         - text: [435,436]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_04
     input: |-
@@ -5638,6 +5644,8 @@ parser-snapshots:
         - text: [4588,4589]
         - text: [4650,4651]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_05
     input: |-
@@ -8636,6 +8644,8 @@ parser-snapshots:
         - text: [4203,4204]
         - text: [4227,4228]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_06
     input: |-
@@ -9277,6 +9287,8 @@ parser-snapshots:
         - text: [611,612]
         - text: [643,644]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_07
     input: |-
@@ -9839,6 +9851,8 @@ parser-snapshots:
         - text: [546,547]
         - text: [565,566]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_08
     input: |-
@@ -12146,6 +12160,8 @@ parser-snapshots:
         - text: [19122,19123]
         - text: [19144,19145]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_09
     input: |-
@@ -13598,6 +13614,8 @@ parser-snapshots:
         - text: [2410,2411]
         - text: [2422,2423]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_10
     input: |-
@@ -14856,6 +14874,8 @@ parser-snapshots:
         - text: [1817,1818]
         - text: [1847,1848]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_11
     input: |-
@@ -16641,6 +16661,8 @@ parser-snapshots:
         - text: [2933,2934]
         - text: [2995,2996]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_12
     input: |-
@@ -17280,6 +17302,8 @@ parser-snapshots:
         - text: [716,717]
         - text: [738,739]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_13
     input: |-
@@ -18466,6 +18490,8 @@ parser-snapshots:
         - text: [2237,2238]
         - text: [2331,2332]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_14
     input: |-
@@ -21747,6 +21773,8 @@ parser-snapshots:
         - text: [4183,4184]
         - text: [4218,4219]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_15
     input: |-
@@ -22200,6 +22228,8 @@ parser-snapshots:
         - text: [772,773]
         - text: [800,801]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_16
     input: |-
@@ -22828,6 +22858,8 @@ parser-snapshots:
         - text: [769,770]
         - text: [810,811]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_17
     input: |-
@@ -24060,6 +24092,8 @@ parser-snapshots:
         - text: [1724,1725]
         - text: [1753,1754]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_18
     input: |-
@@ -25295,6 +25329,8 @@ parser-snapshots:
         - text: [1545,1546]
         - text: [1582,1583]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_19
     input: |-
@@ -25940,6 +25976,8 @@ parser-snapshots:
         - text: [676,677]
         - text: [696,697]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_20
     input: |-
@@ -26594,6 +26632,8 @@ parser-snapshots:
         - text: [774,775]
         - text: [808,809]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_21
     input: |-
@@ -27368,6 +27408,8 @@ parser-snapshots:
         - text: [972,973]
         - text: [1003,1004]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_22
     input: |-
@@ -27782,6 +27824,8 @@ parser-snapshots:
         - text: [443,444]
         - text: [475,476]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_23
     input: |-
@@ -29759,6 +29803,8 @@ parser-snapshots:
         - text: [2403,2404]
         - text: [2430,2431]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_24
     input: |-
@@ -30867,6 +30913,8 @@ parser-snapshots:
         - text: [1217,1218]
         - text: [1240,1241]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_25
     input: |-
@@ -31772,6 +31820,8 @@ parser-snapshots:
         - text: [1034,1035]
         - text: [1056,1057]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_26
     input: |-
@@ -32334,6 +32384,8 @@ parser-snapshots:
         - text: [553,554]
         - text: [572,573]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_27
     input: |-
@@ -33643,6 +33695,8 @@ parser-snapshots:
         - text: [1510,1511]
         - text: [1539,1540]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_28
     input: |-
@@ -35449,6 +35503,8 @@ parser-snapshots:
         - text: [1990,1991]
         - text: [2045,2046]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_29
     input: |-
@@ -36374,6 +36430,8 @@ parser-snapshots:
         - text: [1056,1057]
         - text: [1078,1079]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_30
     input: |-
@@ -37364,6 +37422,8 @@ parser-snapshots:
         - text: [1458,1459]
         - text: [1496,1497]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_31
     input: |-
@@ -39127,6 +39187,8 @@ parser-snapshots:
         - text: [1954,1955]
         - text: [1970,1971]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_32
     input: |-
@@ -39588,6 +39650,8 @@ parser-snapshots:
         - text: [481,482]
         - text: [522,523]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_33
     input: |-
@@ -41055,6 +41119,8 @@ parser-snapshots:
         - text: [1638,1639]
         - text: [1659,1660]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_34
     input: |-
@@ -41950,6 +42016,8 @@ parser-snapshots:
         - text: [1361,1362]
         - text: [1410,1411]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_35
     input: |-
@@ -43289,6 +43357,8 @@ parser-snapshots:
         - text: [1692,1693]
         - text: [1734,1735]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_36
     input: |-
@@ -44537,6 +44607,8 @@ parser-snapshots:
         - text: [1793,1794]
         - text: [1833,1834]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_37
     input: |-
@@ -45005,6 +45077,8 @@ parser-snapshots:
         - text: [562,563]
         - text: [581,582]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_38
     input: |-
@@ -45707,6 +45781,8 @@ parser-snapshots:
         - text: [962,963]
         - text: [1021,1022]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_39
     input: |-
@@ -46918,6 +46994,8 @@ parser-snapshots:
         - text: [1483,1484]
         - text: [1515,1516]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_40
     input: |-
@@ -47689,6 +47767,8 @@ parser-snapshots:
         - text: [1017,1018]
         - text: [1036,1037]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_41
     input: |-
@@ -49605,6 +49685,8 @@ parser-snapshots:
         - text: [2710,2711]
         - text: [2734,2735]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_42
     input: |-
@@ -50062,6 +50144,8 @@ parser-snapshots:
         - text: [488,489]
         - text: [542,543]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_43
     input: |-
@@ -51002,6 +51086,8 @@ parser-snapshots:
         - text: [1316,1317]
         - text: [1335,1336]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_44
     input: |-
@@ -52197,6 +52283,8 @@ parser-snapshots:
         - text: [1424,1425]
         - text: [1451,1452]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_45
     input: |-
@@ -52804,6 +52892,8 @@ parser-snapshots:
         - text: [1131,1132]
         - text: [1148,1149]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_46
     input: |-
@@ -53767,6 +53857,8 @@ parser-snapshots:
         - text: [1425,1426]
         - text: [1463,1464]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_47
     input: |-
@@ -55493,6 +55585,8 @@ parser-snapshots:
         - text: [2392,2393]
         - text: [2462,2463]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_48
     input: |-
@@ -56420,6 +56514,8 @@ parser-snapshots:
         - text: [1337,1338]
         - text: [1371,1372]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_49
     input: |-
@@ -59589,6 +59685,8 @@ parser-snapshots:
         - text: [4318,4319]
         - text: [4341,4342]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_50
     input: |-
@@ -61016,6 +61114,8 @@ parser-snapshots:
         - text: [1877,1878]
         - text: [1892,1893]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_51
     input: |-
@@ -62366,6 +62466,8 @@ parser-snapshots:
         - text: [1960,1961]
         - text: [1988,1989]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_52
     input: |-
@@ -62798,6 +62900,8 @@ parser-snapshots:
         - text: [439,440]
         - text: [457,458]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_53
     input: |-
@@ -63766,6 +63870,8 @@ parser-snapshots:
         - text: [1774,1775]
         - text: [1797,1798]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_54
     input: |-
@@ -65065,6 +65171,8 @@ parser-snapshots:
         - text: [1632,1633]
         - text: [1654,1655]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_55
     input: |-
@@ -65418,6 +65526,8 @@ parser-snapshots:
         - text: [314,315]
         - text: [334,335]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_56
     input: |-
@@ -66930,6 +67040,8 @@ parser-snapshots:
         - text: [1815,1816]
         - text: [1846,1847]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_57
     input: |-
@@ -68513,6 +68625,8 @@ parser-snapshots:
         - text: [2029,2030]
         - text: [2107,2108]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_58
     input: |-
@@ -70552,6 +70666,8 @@ parser-snapshots:
         - text: [2206,2207]
         - text: [2239,2240]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_59
     input: |-
@@ -72425,6 +72541,8 @@ parser-snapshots:
         - text: [2737,2738]
         - text: [2770,2771]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_60
     input: |-
@@ -73898,6 +74016,8 @@ parser-snapshots:
         - text: [1567,1568]
         - text: [1588,1589]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_61
     input: |-
@@ -75052,6 +75172,8 @@ parser-snapshots:
         - text: [1253,1254]
         - text: [1268,1269]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_62
     input: |-
@@ -76106,6 +76228,8 @@ parser-snapshots:
         - text: [1387,1388]
         - text: [1410,1411]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_63
     input: |-
@@ -77074,6 +77198,8 @@ parser-snapshots:
         - text: [1765,1766]
         - text: [1784,1785]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_64
     input: |-
@@ -79895,6 +80021,8 @@ parser-snapshots:
         - text: [3749,3750]
         - text: [3766,3767]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_65
     input: |-
@@ -80810,6 +80938,8 @@ parser-snapshots:
         - text: [1020,1021]
         - text: [1051,1052]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_66
     input: |-
@@ -88150,6 +88280,8 @@ parser-snapshots:
         - text: [7381,7382]
         - text: [7420,7421]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_67
     input: |-
@@ -89086,6 +89218,8 @@ parser-snapshots:
         - text: [1189,1190]
         - text: [1213,1214]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_68
     input: |-
@@ -90040,6 +90174,8 @@ parser-snapshots:
         - text: [1404,1405]
         - text: [1442,1443]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_69
     input: |-
@@ -91093,6 +91229,8 @@ parser-snapshots:
         - text: [1398,1399]
         - text: [1424,1425]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_70
     input: |-
@@ -92127,6 +92265,8 @@ parser-snapshots:
         - text: [1219,1220]
         - text: [1247,1248]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_71
     input: |-
@@ -93191,6 +93331,8 @@ parser-snapshots:
         - text: [1339,1340]
         - text: [1368,1369]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_72
     input: |-
@@ -94367,6 +94509,13 @@ parser-snapshots:
         - text: [1391,1392]
       comments:
         - text: "-- SQL Ser..d1.d_date)"
+      comment-blocks:
+        - type: COMMENT
+          text: "-- SQL Ser..d1.d_date)"
+          comments: [0,1]
+          lines:
+            - "SQL Server: DATEADD(day, 5, d1.d_date)"
+      comment-warnings: []
 
   - name: tpcds_73
     input: |-
@@ -95219,6 +95368,8 @@ parser-snapshots:
         - text: [1377,1378]
         - text: [1408,1409]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_74
     input: |-
@@ -96652,6 +96803,8 @@ parser-snapshots:
         - text: [2117,2118]
         - text: [2140,2141]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_75
     input: |-
@@ -98846,6 +98999,8 @@ parser-snapshots:
         - text: [2904,2905]
         - text: [2928,2929]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_76
     input: |-
@@ -99895,6 +100050,8 @@ parser-snapshots:
         - text: [1665,1666]
         - text: [1697,1698]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_77
     input: |-
@@ -102452,6 +102609,8 @@ parser-snapshots:
         - text: [3095,3096]
         - text: [3118,3119]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_78
     input: |-
@@ -104663,6 +104822,8 @@ parser-snapshots:
         - text: [2486,2487]
         - text: [2501,2502]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_79
     input: |-
@@ -105490,6 +105651,8 @@ parser-snapshots:
         - text: [1151,1152]
         - text: [1177,1178]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_80
     input: |-
@@ -107929,6 +108092,8 @@ parser-snapshots:
         - text: [3639,3640]
         - text: [3663,3664]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_81
     input: |-
@@ -108970,6 +109135,8 @@ parser-snapshots:
         - text: [1422,1423]
         - text: [1448,1449]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_82
     input: |-
@@ -109438,6 +109605,8 @@ parser-snapshots:
         - text: [560,561]
         - text: [579,580]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_83
     input: |-
@@ -111168,6 +111337,8 @@ parser-snapshots:
         - text: [2151,2152]
         - text: [2184,2185]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_84
     input: |-
@@ -111643,6 +111814,8 @@ parser-snapshots:
         - text: [560,561]
         - text: [595,596]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_85
     input: |-
@@ -113084,6 +113257,8 @@ parser-snapshots:
         - text: [2134,2135]
         - text: [2155,2156]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_86
     input: |-
@@ -113777,6 +113952,8 @@ parser-snapshots:
         - text: [796,797]
         - text: [836,837]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_87
     input: |-
@@ -114480,6 +114657,8 @@ parser-snapshots:
         - text: [1027,1028]
         - text: [1097,1098]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_88
     input: |-
@@ -118429,6 +118608,8 @@ parser-snapshots:
         - text: [5551,5552]
         - text: [5616,5617]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_89
     input: |-
@@ -119324,6 +119505,8 @@ parser-snapshots:
         - text: [911,912]
         - text: [954,955]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_90
     input: |-
@@ -120072,6 +120255,8 @@ parser-snapshots:
         - text: [950,951]
         - text: [971,972]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_91
     input: |-
@@ -120811,6 +120996,8 @@ parser-snapshots:
         - text: [921,922]
         - text: [950,951]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_92
     input: |-
@@ -121308,6 +121495,8 @@ parser-snapshots:
         - text: [510,511]
         - text: [544,545]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_93
     input: |-
@@ -121817,6 +122006,8 @@ parser-snapshots:
         - text: [622,623]
         - text: [658,659]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_94
     input: |-
@@ -122445,6 +122636,8 @@ parser-snapshots:
         - text: [743,744]
         - text: [784,785]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_95
     input: |-
@@ -123231,6 +123424,8 @@ parser-snapshots:
         - text: [958,959]
         - text: [999,1000]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_96
     input: |-
@@ -123552,6 +123747,8 @@ parser-snapshots:
         - text: [353,354]
         - text: [371,372]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_97
     input: |-
@@ -124396,6 +124593,8 @@ parser-snapshots:
         - text: [1090,1091]
         - text: [1148,1149]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_98
     input: |-
@@ -125045,6 +125244,8 @@ parser-snapshots:
         - text: [741,742]
         - text: [776,777]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: tpcds_99
     input: |-
@@ -126118,3 +126319,5 @@ parser-snapshots:
         - text: [1418,1419]
         - text: [1446,1447]
       comments: []
+      comment-blocks: []
+      comment-warnings: []

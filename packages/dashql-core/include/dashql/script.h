@@ -15,6 +15,7 @@
 #include "dashql/catalog.h"
 #include "dashql/catalog_object.h"
 #include "dashql/external.h"
+#include "dashql/parser/comment_blocks.h"
 #include "dashql/parser/parser.h"
 #include "dashql/text/rope.h"
 #include "dashql/utils/intrusive_list.h"
@@ -178,6 +179,8 @@ class ParsedScript {
         TextSpan source_span;
         uint32_t description_begin = 0;
         uint32_t description_count = 0;
+        /// The `@dashql:description` block among the description comments
+        uint32_t description_block = PROTO_NULL_U32;
     };
 
     /// The origin id
@@ -194,6 +197,8 @@ class ParsedScript {
     std::vector<std::pair<uint32_t, uint32_t>> vis_spec_spans;
     /// Bitwise OR of ParsedScriptFeature values detected by the parser.
     uint32_t feature_flags = 0;
+    /// The comments grouped into blocks
+    parser::CommentBlocks comment_blocks;
 
    public:
     /// Constructor

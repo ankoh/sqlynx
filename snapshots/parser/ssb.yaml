@@ -212,6 +212,8 @@ parser-snapshots:
         - text: [123,124]
         - text: [155,156]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: q12_sql
     input: |-
@@ -427,6 +429,8 @@ parser-snapshots:
         - text: [133,134]
         - text: [165,166]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: q13_sql
     input: |-
@@ -665,6 +669,8 @@ parser-snapshots:
         - text: [147,148]
         - text: [179,180]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: q21_sql
     input: |-
@@ -1005,6 +1011,8 @@ parser-snapshots:
         - text: [216,217]
         - text: [242,243]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: q22_sql
     input: |-
@@ -1349,6 +1357,8 @@ parser-snapshots:
         - text: [235,236]
         - text: [261,262]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: q23_sql
     input: |-
@@ -1689,6 +1699,8 @@ parser-snapshots:
         - text: [215,216]
         - text: [241,242]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: q31_sql
     input: |-
@@ -2109,6 +2121,8 @@ parser-snapshots:
         - text: [271,272]
         - text: [307,308]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: q32_sql
     input: |-
@@ -2531,6 +2545,8 @@ parser-snapshots:
         - text: [285,286]
         - text: [317,318]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: q33_sql
     input: |-
@@ -3019,6 +3035,8 @@ parser-snapshots:
         - text: [321,322]
         - text: [353,354]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: q34_sql
     input: |-
@@ -3486,6 +3504,8 @@ parser-snapshots:
         - text: [311,312]
         - text: [343,344]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: q41_sql
     input: |-
@@ -3941,6 +3961,8 @@ parser-snapshots:
         - text: [322,323]
         - text: [348,349]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: q42_sql
     input: |-
@@ -4494,6 +4516,8 @@ parser-snapshots:
         - text: [371,372]
         - text: [409,410]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: q43_sql
     input: |-
@@ -5014,3 +5038,5 @@ parser-snapshots:
         - text: [355,356]
         - text: [389,390]
       comments: []
+      comment-blocks: []
+      comment-warnings: []

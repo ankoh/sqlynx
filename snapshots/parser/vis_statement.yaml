@@ -11,6 +11,8 @@ parser-snapshots:
           text: "VISUALISE"
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_visualize_empty
     input: |-
@@ -23,6 +25,8 @@ parser-snapshots:
           text: "VISUALIZE"
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_table_source
     input: |-
@@ -82,6 +86,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_qualified_table_source
     input: |-
@@ -145,6 +151,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_select_source
     input: |-
@@ -204,6 +212,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_multi_spec_keys
     input: |-
@@ -273,6 +283,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_encoding_single_channel
     input: |-
@@ -364,6 +376,8 @@ parser-snapshots:
         - text: [123,124]
         - text: [127,128]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_encoding_two_channels
     input: |-
@@ -475,6 +489,8 @@ parser-snapshots:
         - text: [172,173]
         - text: [176,177]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_encoding_with_scale
     input: |-
@@ -576,6 +592,8 @@ parser-snapshots:
         - text: [136,137]
         - text: [140,141]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_encoding_with_axis
     input: |-
@@ -671,6 +689,8 @@ parser-snapshots:
         - text: [146,147]
         - text: [150,151]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_encoding_with_legend
     input: |-
@@ -766,6 +786,8 @@ parser-snapshots:
         - text: [160,161]
         - text: [164,165]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_scale_full
     input: |-
@@ -900,6 +922,8 @@ parser-snapshots:
         - text: [271,272]
         - text: [275,276]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_encoding_shorthand_value
     input: |-
@@ -989,6 +1013,8 @@ parser-snapshots:
         - text: [94,95]
         - text: [98,99]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_encoding_color_channel
     input: |-
@@ -1120,6 +1146,8 @@ parser-snapshots:
         - text: [222,223]
         - text: [226,227]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_mark_def_simple
     input: |-
@@ -1193,6 +1221,8 @@ parser-snapshots:
         - text: [46,47]
         - text: [102,103]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_mark_def_point_toggle
     input: |-
@@ -1263,6 +1293,8 @@ parser-snapshots:
         - text: [46,47]
         - text: [86,87]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_mark_def_nested_overlay
     input: |-
@@ -1340,6 +1372,8 @@ parser-snapshots:
         - text: [46,47]
         - text: [116,117]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_mark_def_broad
     input: |-
@@ -1462,6 +1496,8 @@ parser-snapshots:
         - text: [270,271]
         - text: [274,275]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_array_value
     input: |-
@@ -1551,6 +1587,8 @@ parser-snapshots:
         - text: [107,108]
         - text: [111,112]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_numeric_values
     input: |-
@@ -1625,6 +1663,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_full_pipeline
     input: |-
@@ -1794,6 +1834,8 @@ parser-snapshots:
         - text: [353,354]
         - text: [384,385]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_trailing_comma_spec
     input: |-
@@ -1860,6 +1902,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_trailing_comma_encoding
     input: |-
@@ -1967,6 +2011,8 @@ parser-snapshots:
         - text: [152,153]
         - text: [157,158]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_keyword_collision_select
     input: |-
@@ -2044,6 +2090,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_keyword_collision_vis_keywords_as_columns
     input: |-
@@ -2147,6 +2195,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_umap_minimal
     input: |-
@@ -2212,6 +2262,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_umap_category_label
     input: |-
@@ -2305,6 +2357,8 @@ parser-snapshots:
         - text: [96,97]
         - text: [112,113]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_umap_projection
     input: |-
@@ -2401,6 +2455,8 @@ parser-snapshots:
         - text: [134,135]
         - text: [153,154]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_umap_select_source
     input: |-
@@ -2473,6 +2529,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_umap_keywords_as_columns
     input: |-
@@ -2589,6 +2647,8 @@ parser-snapshots:
       parser-errors: []
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_markdown
     input: |-
@@ -2671,6 +2731,8 @@ parser-snapshots:
         - text: [71,72]
         - text: [115,116]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_table
     input: |-
@@ -2760,6 +2822,8 @@ parser-snapshots:
         - text: [68,69]
         - text: [109,110]
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: vis_statement_nested_dashboard_rejected
     input: |-
@@ -2776,3 +2840,5 @@ parser-snapshots:
         - text: [46,47]
         - text: [100,101]
       comments: []
+      comment-blocks: []
+      comment-warnings: []

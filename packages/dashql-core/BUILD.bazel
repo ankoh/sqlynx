@@ -29,6 +29,7 @@ LIB_SRCS = [
     "src/formatter/formatter_select.cc",
     "src/formatter/formatter_vis.cc",
     "src/formatter/formatting_program.cc",
+    "src/parser/comment_blocks.cc",
     "src/parser/grammar/enums.cc",
     "src/parser/grammar/keywords.cc",
     "src/parser/grammar/state.cc",

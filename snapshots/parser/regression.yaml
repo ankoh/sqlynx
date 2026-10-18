@@ -11,6 +11,8 @@ parser-snapshots:
           text: ""
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: group_by_eof_2
     input: |-
@@ -23,6 +25,8 @@ parser-snapshots:
           text: "b"
       line-breaks: []
       comments: []
+      comment-blocks: []
+      comment-warnings: []
 
   - name: error_recovery_wrong_leak_assertion
     input: |-
@@ -127,3 +131,5 @@ parser-snapshots:
         - text: [858,859]
         - text: [864,865]
       comments: []
+      comment-blocks: []
+      comment-warnings: []

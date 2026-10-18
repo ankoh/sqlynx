@@ -709,6 +709,32 @@ table Error {
     hint: string;
 }
 
+/// The kind of a comment block
+enum CommentBlockType: uint8 {
+    /// An ordinary comment
+    COMMENT = 0,
+    /// A `@dashql:description` region
+    DASHQL_DESCRIPTION = 1,
+    /// A well-formed `@dashql:<tag>` region whose tag is not known to this version
+    DASHQL_UNKNOWN_TAG = 2,
+}
+
+/// A group of comments: a single block comment or a run of line comments on consecutive lines.
+/// Tagged regions (`-- @dashql:<tag>` ... `-- @dashql:end`, or `/* @dashql:<tag> ... */`) are split into their own blocks.
+struct CommentBlock {
+    block_type: CommentBlockType;
+    /// Byte span of the whole block in the source text, including comment markers and tag lines
+    text_span: TextSpan;
+    /// Byte span of the tag name (e.g. `description`), empty for ordinary comments
+    tag_span: TextSpan;
+    /// Slice into ParsedScript.comments
+    comments_begin: uint32;
+    comments_count: uint32;
+    /// Slice into ParsedScript.comment_lines
+    lines_begin: uint32;
+    lines_count: uint32;
+}
+
 table Statement {
     statement_type: StatementType;
     root_node: uint32;
@@ -719,6 +745,8 @@ table Statement {
     // Slice into ParsedScript.comments containing this statement's description comments.
     description_begin: uint32;
     description_count: uint32;
+    // Index into ParsedScript.comment_blocks of the `@dashql:description` block among the description comments.
+    description_block: uint32 = 4294967295;
     // Normalized metadata for statement consumers that do not need to traverse the AST.
     target_type: StatementTargetType;
     target: StatementTarget;
@@ -767,6 +795,11 @@ table ParsedScript {
     tokens: ScannerTokens;
     line_breaks: [TextSpan];
     comments: [TextSpan];
+    /// The comments grouped into blocks, in script order
+    comment_blocks: [CommentBlock];
+    /// The content lines of all comment blocks, without comment markers, gutters and tag lines.
+    /// Joining the lines of a block with line breaks gives its text.
+    comment_lines: [TextSpan];
     /// Bitwise OR of ParsedScriptFeature values detected by the parser.
     feature_flags: uint32;
 }
