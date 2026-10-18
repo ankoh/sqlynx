@@ -3,24 +3,24 @@ import * as dashql from '@ankoh/dashql-core';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import {
-    applyProperties,
+    applyMetadata,
     buildAtlasExport,
-    corePropertiesBlockFinder,
-    propertyValue,
+    coreMetadataBlockFinder,
+    metadataValue,
     rowFileName,
-    type PropertiesBlockFinder,
+    type MetadataBlockFinder,
 } from './atlas_export.js';
 
 const encoder = new TextEncoder();
 
 let core: dashql.DashQL;
-let findBlock: PropertiesBlockFinder;
+let findBlock: MetadataBlockFinder;
 beforeAll(async () => {
     core = await dashql.DashQL.create();
-    findBlock = corePropertiesBlockFinder(core);
+    findBlock = coreMetadataBlockFinder(core);
 }, 60_000);
 
-function readBack(text: string): dashql.ScriptProperties | null {
+function readBack(text: string): dashql.ScriptMetadata | null {
     const catalog = core.createCatalog();
     const script = core.createScript(catalog);
     try {
@@ -28,7 +28,7 @@ function readBack(text: string): dashql.ScriptProperties | null {
         script.parse();
         const parsed = script.getParsed();
         try {
-            return dashql.readProperties(parsed.read(), encoder.encode(text));
+            return dashql.readMetadata(parsed.read(), encoder.encode(text));
         } finally {
             parsed.destroy();
         }
@@ -47,30 +47,30 @@ describe('atlas export', () => {
 
     it('converts cells to JSON values', () => {
         const formatted = () => '2026-10-18';
-        expect(propertyValue(null, new arrow.Utf8(), formatted)).toBeUndefined();
-        expect(propertyValue('x', new arrow.Utf8(), formatted)).toBe('x');
-        expect(propertyValue(42n, new arrow.Int64(), formatted)).toBe(42);
-        expect(propertyValue(2n ** 60n, new arrow.Int64(), formatted)).toBe('1152921504606846976');
-        expect(propertyValue(NaN, new arrow.Float64(), formatted)).toBe('NaN');
-        expect(propertyValue(true, new arrow.Bool(), formatted)).toBe(true);
-        expect(propertyValue(1760745600000, new arrow.DateMillisecond(), formatted)).toBe('2026-10-18');
+        expect(metadataValue(null, new arrow.Utf8(), formatted)).toBeUndefined();
+        expect(metadataValue('x', new arrow.Utf8(), formatted)).toBe('x');
+        expect(metadataValue(42n, new arrow.Int64(), formatted)).toBe(42);
+        expect(metadataValue(2n ** 60n, new arrow.Int64(), formatted)).toBe('1152921504606846976');
+        expect(metadataValue(NaN, new arrow.Float64(), formatted)).toBe('NaN');
+        expect(metadataValue(true, new arrow.Bool(), formatted)).toBe(true);
+        expect(metadataValue(1760745600000, new arrow.DateMillisecond(), formatted)).toBe('2026-10-18');
     });
 
-    it('puts the properties above the script and replaces existing ones', () => {
+    it('puts the metadata above the script and replaces existing metadata', () => {
         const sql = '-- @dashql:description\n-- Revenue.\n-- @dashql:end\nselect 1;\n';
-        const once = applyProperties(sql, { owner: 'finance' }, findBlock);
-        expect(once).toBe(`${dashql.renderPropertiesBlock({ owner: 'finance' })}\n\n${sql}`);
+        const once = applyMetadata(sql, { owner: 'finance' }, findBlock);
+        expect(once).toBe(`${dashql.renderMetadataBlock({ owner: 'finance' })}\n\n${sql}`);
         expect(readBack(once)).toEqual({ owner: 'finance' });
         // Exporting again replaces the block, also an invalid one, and keeps the description
-        const twice = applyProperties(once, { owner: 'sales' }, findBlock);
-        expect(twice).toBe(`${dashql.renderPropertiesBlock({ owner: 'sales' })}\n\n${sql}`);
-        const invalid = '-- @dashql:properties\n-- owner: x\n-- @dashql:end\n\nselect 1;\n';
-        expect(applyProperties(invalid, { owner: 'sales' }, findBlock)).toBe(
-            `${dashql.renderPropertiesBlock({ owner: 'sales' })}\n\nselect 1;\n`,
+        const twice = applyMetadata(once, { owner: 'sales' }, findBlock);
+        expect(twice).toBe(`${dashql.renderMetadataBlock({ owner: 'sales' })}\n\n${sql}`);
+        const invalid = '-- @dashql:metadata\n-- owner: x\n-- @dashql:end\n\nselect 1;\n';
+        expect(applyMetadata(invalid, { owner: 'sales' }, findBlock)).toBe(
+            `${dashql.renderMetadataBlock({ owner: 'sales' })}\n\nselect 1;\n`,
         );
         // CRLF scripts get CRLF blocks
-        expect(applyProperties('select 1;\r\n', { a: 1 }, findBlock)).toBe(
-            `${dashql.renderPropertiesBlock({ a: 1 }, '\r\n')}\r\n\r\nselect 1;\r\n`,
+        expect(applyMetadata('select 1;\r\n', { a: 1 }, findBlock)).toBe(
+            `${dashql.renderMetadataBlock({ a: 1 }, '\r\n')}\r\n\r\nselect 1;\r\n`,
         );
     });
 
@@ -86,7 +86,7 @@ describe('atlas export', () => {
         });
         const result = buildAtlasExport(
             table,
-            { sqlField: 0, propertyFields: [1] },
+            { sqlField: 0, metadataFields: [1] },
             (row, field) => String(table.getChildAt(field)!.get(row)),
             findBlock,
         );

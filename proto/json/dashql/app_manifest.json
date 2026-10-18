@@ -15,6 +15,10 @@
     "appSettings": {
       "$ref": "#/definitions/AppSettings",
       "description": "Persisted app-level settings"
+    },
+    "aiModels": {
+      "$ref": "#/definitions/AIModels",
+      "description": "The AI models, written by the atlas page as well and therefore not part of appSettings"
     }
   },
   "required": ["notebooks"],
@@ -80,6 +84,84 @@
           "type": "number"
         }
       },
+      "additionalProperties": false
+    },
+    "AIModels": {
+      "type": "object",
+      "description": "The AI models and, per task, the model that runs it",
+      "properties": {
+        "config": {
+          "$ref": "#/definitions/AIModelsConfig"
+        },
+        "tasks": {
+          "$ref": "#/definitions/AITasks"
+        }
+      },
+      "additionalProperties": false
+    },
+    "AIModelsConfig": {
+      "type": "object",
+      "description": "The models that can run tasks, the bundled model needs no configuration",
+      "properties": {
+        "external": {
+          "$ref": "#/definitions/ExternalAIModel"
+        }
+      },
+      "additionalProperties": false
+    },
+    "AITasks": {
+      "type": "object",
+      "description": "The model that every task runs on",
+      "properties": {
+        "describe": {
+          "$ref": "#/definitions/AIModelChoice",
+          "description": "Writing descriptions of scripts"
+        },
+        "embed": {
+          "$ref": "#/definitions/AIModelChoice",
+          "description": "Computing the embeddings of a semantic search"
+        }
+      },
+      "additionalProperties": false
+    },
+    "AIModelChoice": {
+      "type": "string",
+      "enum": ["bundled", "external"],
+      "description": "Whether a task runs on the model bundled with the app or on the external model"
+    },
+    "ExternalAIModel": {
+      "type": "object",
+      "description": "A model behind an OpenAI-compatible endpoint (Ollama, OpenAI, vLLM, etc.)",
+      "properties": {
+        "endpointUrl": {
+          "type": "string",
+          "description": "Base URL of the OpenAI-compatible server (e.g. http://localhost:11434)"
+        },
+        "model": {
+          "type": "string",
+          "description": "The model identifier"
+        },
+        "headers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AIModelHeader"
+          },
+          "description": "Additional HTTP headers (e.g. Authorization)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "AIModelHeader": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "required": ["name", "value"],
       "additionalProperties": false
     }
   }

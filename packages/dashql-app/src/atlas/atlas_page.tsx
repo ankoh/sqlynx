@@ -15,26 +15,16 @@ import { useShellConnection } from '../shell/shell_connection.js';
 import { selectPlatformDirectory } from '../shell/shell_files.js';
 import * as baseStyles from '../ui/banner/banner_page.module.css';
 import { Button, ButtonVariant } from '../ui/foundations/button.js';
-import { SegmentedControl, SegmentedControlSize } from '../ui/foundations/segmented_control.js';
 import { FileDirectoryIcon, SyncIcon } from '../ui/foundations/symbol_icon.js';
 import { ParticleFlowBackground, type BackgroundAnimation, type BackgroundAnimationLoader } from '../ui/particle_flow/particle_flow_background.js';
 import { AtlasIndexUnreadable, AtlasSession, type AtlasPhase, type OpenedFolder } from './atlas_session.js';
-import { EMBEDDING_KINDS } from './index/indexer.js';
 import { IndexRowsCard, selectedRows, useRowsCollapsed } from './index_rows.js';
 import { DEFAULT_MODEL_BASE_URL } from './index/model.js';
 import { demoScript } from './demo_data.js';
 import { PromptAction, PromptBar } from './prompt_bar.js';
 import type { DotHover, PointCloud } from './point_cloud.js';
 import type { SearchResults } from './search/search.js';
-import type { EmbeddingKind } from './store.js';
 import * as styles from './atlas.module.css';
-
-/// The embedding kinds that the cloud can show, in the order of the control
-const KIND_CONTROLS: { kind: EmbeddingKind; title: string }[] = [
-    { kind: 'description', title: 'Semantics' },
-    { kind: 'structure', title: 'Structure' },
-    { kind: 'properties', title: 'Properties' },
-];
 
 const LOG_CTX = 'atlas';
 
@@ -102,16 +92,14 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
     const [results, setResults] = React.useState<SearchResults[] | null>(null);
     /// The warning about an outdated index was closed, until another folder is opened
     const [outdatedDismissed, setOutdatedDismissed] = React.useState(false);
-    /// Which embeddings the cloud shows, every kind has its own layout
-    const [kind, setKind] = React.useState<EmbeddingKind>('description');
     const [cloud, setCloud] = React.useState<PointCloud | null>(null);
     /// The script of the candidate under the pointer
     const [hovered, setHovered] = React.useState<string | null>(null);
     /// The dot under the pointer, a made up one as long as no folder is open
     const [dotHover, setDotHover] = React.useState<number | null>(null);
     const tooltipRef = React.useRef<HTMLDivElement>(null);
-    /// The computations of the rows of the open folder, by kind
-    const [rowTables, setRowTables] = React.useState<Partial<Record<EmbeddingKind, number>>>({});
+    /// The computation of the rows of the open folder
+    const [rowTableId, setRowTableId] = React.useState<number | null>(null);
     const nextRowTableId = React.useRef(1);
     const [rowsCollapsed, toggleRows] = useRowsCollapsed();
     const onAnimation = React.useCallback((animation: BackgroundAnimation | null) => setCloud(animation as PointCloud | null), []);
@@ -120,8 +108,8 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
     React.useEffect(() => {
         if (cloud == null) return;
         if (folder == null) cloud.clearPoints();
-        else cloud.setPoints(folder.points[kind].coords);
-    }, [cloud, folder, kind]);
+        else cloud.setPoints(folder.points.coords);
+    }, [cloud, folder]);
 
     // The tooltip follows its dot while the cloud turns, which is too often for React
     React.useEffect(() => {
@@ -148,40 +136,22 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
     }, [cloud]);
     const onPointerLeave = React.useCallback(() => cloud?.setPointer(null), [cloud]);
 
-    // The rows of every index file become a data frame with histograms and cross-filters. The shown kind goes first.
+    // The rows of the index file become a data frame with histograms and cross-filters
     React.useEffect(() => {
         const database = databaseRef.current;
-        if (folder == null || database == null) {
-            setRowTables({});
+        if (folder == null || database == null || folder.rows.numRows === 0) {
+            setRowTableId(null);
             return;
         }
-        const ids: Partial<Record<EmbeddingKind, number>> = {};
-        for (const k of EMBEDDING_KINDS) {
-            if (folder.rows[k].numRows > 0) ids[k] = nextRowTableId.current++;
-        }
-        setRowTables(ids);
-        const order = [kind, ...EMBEDDING_KINDS.filter(k => k !== kind)];
-        const analyzed = (async () => {
-            for (const k of order) {
-                const id = ids[k];
-                if (id == null) continue;
-                try {
-                    await analyzeTable(id, folder.rows[k], dispatchComputation, database, logger);
-                } catch (e) {
-                    logger.error('Failed to analyze the index rows', { kind: k, error: stringifyError(e) }, LOG_CTX);
-                }
-            }
-        })();
+        const id = nextRowTableId.current++;
+        setRowTableId(id);
+        const analyzed = analyzeTable(id, folder.rows, dispatchComputation, database, logger)
+            .catch(e => logger.error('Failed to analyze the index rows', { error: stringifyError(e) }, LOG_CTX));
         // The results of a running analysis must not arrive after the computation is gone
         return () => {
-            void analyzed.finally(() => {
-                for (const id of Object.values(ids)) dispatchComputation({ type: DELETE_COMPUTATION, value: [id] });
-            });
+            void analyzed.finally(() => dispatchComputation({ type: DELETE_COMPUTATION, value: [id] }));
         };
-        // The kind only picks the order, it does not start another analysis
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [folder, dispatchComputation, logger]);
-    const rowTableId = rowTables[kind];
     const rowTable = rowTableId == null ? null : computationState.tableComputations[rowTableId] ?? null;
     // Only the system columns make the rows filterable, before that the table has no histograms
     const shownRowTable = rowTable?.rowNumberColumnName != null ? rowTable : null;
@@ -191,12 +161,12 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
     React.useEffect(() => {
         cloud?.setSelection(folder == null ? null : selectedRows(shownRowTable));
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [cloud, folder, kind, filterTable]);
+    }, [cloud, folder, filterTable]);
 
-    /// Every dot of a script in the shown kind, e.g. each description chunk
+    /// Every dot of a script, one per description chunk
     const pointsOfScript = React.useMemo(() => {
         const out = new Map<string, number[]>();
-        const points = folder?.points[kind];
+        const points = folder?.points;
         if (points == null) return out;
         points.owners.forEach((owner, point) => {
             const name = points.scripts[owner];
@@ -205,13 +175,13 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
             else list.push(point);
         });
         return out;
-    }, [folder, kind]);
+    }, [folder]);
     /// The script of the dot under the pointer
     const dotScript = React.useMemo(() => {
-        const points = folder?.points[kind];
+        const points = folder?.points;
         if (points == null || dotHover == null || dotHover >= points.owners.length) return null;
         return points.scripts[points.owners[dotHover]];
-    }, [folder, kind, dotHover]);
+    }, [folder, dotHover]);
     React.useEffect(() => {
         if (cloud == null) return;
         // The cloud turns again once the pointer leaves the candidate
@@ -281,7 +251,6 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
         setView({ kind: 'busy', phase: { kind: 'mount', message } });
         try {
             const opened = await run(phase => setView({ kind: 'busy', phase }));
-            setKind(opened.points.description.owners.length > 0 ? 'description' : 'structure');
             setFolder(opened);
             setOutdatedDismissed(false);
             setView({ kind: 'search' });
@@ -369,7 +338,8 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
                 action={<Button variant={ButtonVariant.Primary} onClick={selectFolder}>Select folder</Button>}
             >
                 <p>
-                    Search the <code>.sql</code> files of a folder by their descriptions, their SQL and their properties.
+                    Search the <code>.sql</code> files of a folder by their descriptions and filter them by their SQL and
+                    their metadata.
                     Everything stays in your browser, the index is written into the folder.
                 </p>
                 {error != null && <p className={styles.error}>{error}</p>}
@@ -387,8 +357,8 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
                 )}
             >
                 <p>
-                    The index files in <code>{view.name}</code> cannot be loaded. They may have been written by an older
-                    version of DashQL. Reindexing the folder replaces them.
+                    The index file in <code>{view.name}</code> cannot be loaded. It may have been written by an older
+                    version of DashQL. Reindexing the folder replaces it.
                 </p>
                 <p className={styles.error}>{view.message}</p>
             </StepPanel>
@@ -413,33 +383,17 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
     } else {
         content = (
             <div className={styles.workspace}>
-                <div className={styles.kind_control}>
-                    <SegmentedControl
-                        aria-label="Embeddings in the cloud"
-                        size={SegmentedControlSize.Small}
-                        onChange={index => setKind(KIND_CONTROLS[index].kind)}
-                    >
-                        {KIND_CONTROLS.map(control => (
-                            <SegmentedControl.Button
-                                key={control.kind}
-                                selected={kind === control.kind}
-                                disabled={folder?.points[control.kind].owners.length === 0}
-                                count={folder?.points[control.kind].owners.length}
-                            >
-                                {control.title}
-                            </SegmentedControl.Button>
-                        ))}
-                    </SegmentedControl>
-                </div>
                 <div className={styles.panels}>
                     <aside className={styles.rows} aria-label="Rows">
-                        <IndexRowsCard
-                            title={`${KIND_CONTROLS.find(c => c.kind === kind)?.title ?? ''} rows`}
-                            table={shownRowTable}
-                            dispatchComputation={dispatchComputation}
-                            collapsed={rowsCollapsed}
-                            onToggle={toggleRows}
-                        />
+                        {folder != null && folder.rows.numRows > 0 && (
+                            <IndexRowsCard
+                                title="Descriptions"
+                                table={shownRowTable}
+                                dispatchComputation={dispatchComputation}
+                                collapsed={rowsCollapsed}
+                                onToggle={toggleRows}
+                            />
+                        )}
                     </aside>
                     {results != null && (
                         <aside className={styles.candidates} aria-label="Candidates">
@@ -473,6 +427,14 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
                 <div className={styles.prompt_area}>
                     {searching && <div className={styles.status}>Searching</div>}
                     {error != null && <div className={styles.error_banner}>{error}</div>}
+                    {folder != null && folder.points.scripts.length === 0 && (
+                        <div className={styles.warning_banner} role="status">
+                            <span className={styles.warning_text}>
+                                None of the scripts has a <code>@dashql:description</code> block, there is nothing to
+                                search. Describe them with <code>dashql-describe</code> and reindex the folder.
+                            </span>
+                        </div>
+                    )}
                     {folder != null && folder.outdated > 0 && !outdatedDismissed && (
                         <div className={styles.warning_banner} role="status">
                             <span className={styles.warning_text}>
@@ -492,7 +454,7 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
                         onChange={setPrompt}
                         onSubmit={() => void submit()}
                         busy={searching}
-                        placeholder={`Search ${folder?.scripts ?? 0} scripts in ${folder?.name ?? 'the folder'}`}
+                        placeholder={`Search ${folder?.points.scripts.length ?? 0} described scripts in ${folder?.name ?? 'the folder'}`}
                         start={(
                             <>
                                 <PromptAction icon={<FileDirectoryIcon />} onClick={() => void selectFolder()} disabled={searching}>
@@ -528,11 +490,11 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
 
     let dot: DotTooltip | null = null;
     if (dotHover != null) {
-        const points = folder?.points[kind];
         if (folder == null) {
             dot = demoScript(dotHover);
-        } else if (points != null && dotScript != null) {
-            dot = { name: dotScript, snippet: points.details[dotHover] ?? '' };
+        } else if (dotScript != null) {
+            const tables = folder.points.tables[dotHover] ?? [];
+            dot = { name: dotScript, snippet: folder.points.details[dotHover] ?? '', tables: tables.length > 0 ? tables : undefined };
         }
     }
     return (

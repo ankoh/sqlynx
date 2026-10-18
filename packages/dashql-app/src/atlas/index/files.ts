@@ -1,7 +1,11 @@
-/// File names of an atlas index in the selected folder, one Parquet file per embedding space
-export const ATLAS_STRUCTURE_FILE = 'dashql-atlas-structure.parquet';
-export const ATLAS_DESCRIPTION_FILE = 'dashql-atlas-description.parquet';
-export const ATLAS_PROPERTIES_FILE = 'dashql-atlas-properties.parquet';
-export const ATLAS_INDEX_FILES = [ATLAS_STRUCTURE_FILE, ATLAS_DESCRIPTION_FILE, ATLAS_PROPERTIES_FILE];
+/// File name of the atlas index in the selected folder
+export const ATLAS_INDEX_FILE = 'dashql-atlas.parquet';
 /// Index files of earlier versions that are removed when a folder is indexed again
-export const ATLAS_STALE_FILES = ['dashql-atlas-comments.parquet', 'dashql-atlas-features.parquet', 'dashql-atlas-index.json'];
+export const ATLAS_STALE_FILES = [
+    'dashql-atlas-structure.parquet',
+    'dashql-atlas-description.parquet',
+    'dashql-atlas-properties.parquet',
+    'dashql-atlas-comments.parquet',
+    'dashql-atlas-features.parquet',
+    'dashql-atlas-index.json',
+];

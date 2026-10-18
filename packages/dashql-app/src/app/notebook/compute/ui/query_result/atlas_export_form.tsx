@@ -11,7 +11,7 @@ import { Select } from '../../../../../ui/foundations/select.js';
 import { useDashQLCoreSetup } from '../../../../providers/core_provider.js';
 import {
     buildAtlasExport,
-    corePropertiesBlockFinder,
+    coreMetadataBlockFinder,
     existingFiles,
     writeAtlasExport,
 } from './atlas_export.js';
@@ -41,7 +41,7 @@ interface AtlasExportFormProps {
     onBusy: (busy: boolean) => void;
 }
 
-/// Write every row of a text column into a .sql file of a folder. The other columns of the row become the properties
+/// Write every row of a text column into a .sql file of a folder. The other columns of the row become the metadata
 /// of the script, Atlas embeds them next to the structure and the description.
 export function AtlasExportForm(props: AtlasExportFormProps): React.ReactElement {
     const logger = useLogger();
@@ -68,9 +68,9 @@ export function AtlasExportForm(props: AtlasExportFormProps): React.ReactElement
             const formatter = new ArrowTableFormatter(props.table.schema, props.table.batches, logger);
             const result = buildAtlasExport(
                 props.table,
-                { sqlField, propertyFields: others },
+                { sqlField, metadataFields: others },
                 (row, field) => formatter.getValue(row, field),
-                corePropertiesBlockFinder(core),
+                coreMetadataBlockFinder(core),
             );
             const existing = await existingFiles(directory, result.files);
             if (existing.length > 0) {

@@ -183,11 +183,11 @@ describe_snapshots:
       from customer join orders on c_custkey = o_custkey
       where c_mktsegment = 'BUILDING'
       group by c_name;
-  - name: properties_not_in_prompt
+  - name: metadata_not_in_prompt
     describe: {}
     script:
       input: |-
-        -- @dashql:properties
+        -- @dashql:metadata
         -- {
         --   "owner": "finance",
         --   "dashboard": "Revenue Weekly"

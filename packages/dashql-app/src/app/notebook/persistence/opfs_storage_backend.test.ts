@@ -120,6 +120,12 @@ describe('OPFSStorageBackend V2 flat storage', () => {
         expect(await backend.loadAppSettings()).toEqual({ theme: 'dark' });
     });
 
+    it('keeps the AI models when resetting an obsolete manifest', async () => {
+        files.set(STORAGE_MANIFEST_FILE, JSON.stringify({ sessions: [{ path: 'old' }], aiModels: { tasks: { embed: 'external' } } }));
+        await backend.initialize();
+        expect(await backend.loadAIModels()).toEqual({ tasks: { embed: 'external' } });
+    });
+
     it('round-trips the SQL keyword case preference in the app manifest', async () => {
         await backend.saveAppSettings({ keywordCase: 'upper' });
         expect(await backend.loadAppSettings()).toEqual({ keywordCase: 'upper' });
@@ -132,6 +138,23 @@ describe('OPFSStorageBackend V2 flat storage', () => {
         expect(JSON.parse(files.get(STORAGE_MANIFEST_FILE)! as string).appSettings.narrowScreenLayout).toBe(true);
         await backend.saveAppSettings({ narrowScreenLayout: false });
         expect(await backend.loadAppSettings()).toEqual({ narrowScreenLayout: false });
+    });
+
+    it('keeps the AI models next to the app settings in the manifest', async () => {
+        const models = {
+            config: { external: { endpointUrl: 'https://example.com', model: 'smart', headers: [{ name: 'a', value: 'b' }] } },
+            tasks: { describe: 'external' as const, embed: 'bundled' as const },
+        };
+        expect(await backend.loadAIModels()).toBeNull();
+        await backend.saveAIModels(models);
+        await backend.saveAppSettings({ keywordCase: 'upper' });
+        await backend.upsertNotebookEntry({ path: TEST_NOTEBOOK_ID });
+        expect(await backend.loadAIModels()).toEqual(models);
+        expect(JSON.parse(files.get(STORAGE_MANIFEST_FILE)! as string)).toEqual({
+            notebooks: [{ path: TEST_NOTEBOOK_ID }],
+            appSettings: { keywordCase: 'upper' },
+            aiModels: models,
+        });
     });
 
     it('removes obsolete AI provider settings from the manifest', async () => {

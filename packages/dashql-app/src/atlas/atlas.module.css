@@ -132,21 +132,15 @@
     padding: 16px;
     box-sizing: border-box;
     display: grid;
-    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr) auto;
     gap: 16px;
     /* The page behind is hovered, the cards and the prompt take events again */
     pointer-events: none;
 }
 
 /* The rows are a card on the left and the candidates a card on the right, the cloud stays visible between them */
-.kind_control {
-    grid-row: 1;
-    justify-self: center;
-    pointer-events: auto;
-}
-
 .panels {
-    grid-row: 2;
+    grid-row: 1;
     min-height: 0;
     display: flex;
     justify-content: space-between;
@@ -184,7 +178,7 @@
 }
 
 .prompt_area {
-    grid-row: 3;
+    grid-row: 2;
     justify-self: center;
     display: flex;
     flex-direction: column;

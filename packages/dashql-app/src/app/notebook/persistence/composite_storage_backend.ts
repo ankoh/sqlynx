@@ -7,6 +7,7 @@ import {
     type DataFileContent,
     type NotebookEntry,
     type AppSettings,
+    type AIModels,
     type CachedQueryResult,
     StorageBackendType,
     STORAGE_MANIFEST_FILE,
@@ -140,6 +141,12 @@ export class CompositeStorageBackend implements NotebookRegistryBackend {
     }
     saveAppSettings(settings: AppSettings): Promise<void> {
         return this.opfs.saveAppSettings(settings);
+    }
+    loadAIModels(): Promise<AIModels | null> {
+        return this.opfs.loadAIModels();
+    }
+    saveAIModels(models: AIModels): Promise<void> {
+        return this.opfs.saveAIModels(models);
     }
 
     async upsertNotebookEntry(entry: NotebookEntry): Promise<void> {

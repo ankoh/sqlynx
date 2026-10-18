@@ -1,13 +1,13 @@
 import type { CompiledVisualization } from './core.js';
 
 const MAX_TEXT_LENGTH = 80;
-/// A chart entry is the smallest unit that the token budget can drop (see `renderStructureDocument`), so one crowded
-/// chart must not grow without bound. The chart name and the first items (mark, faceting, x, y, color) say the most.
+/// A chart entry is one value of the `visualizations` column of the index, so one crowded chart must not grow without
+/// bound. The chart name and the first items (mark, faceting, x, y, color) say the most.
 const MAX_ENTRY_ITEMS = 8;
 
 /// The parts of a Vega-Lite spec that describe what a chart shows. Everything else is ignored:
-/// the embedding should capture what a chart is about, not how it is styled (scales, colors, sizes, padding, ...).
-/// The spec's `data` member is never read, it only repeats the query that the feature text already covers.
+/// an entry should say what a chart is about, not how it is styled (scales, colors, sizes, padding, ...).
+/// The spec's `data` member is never read, it only repeats the query that the other features already cover.
 /// This reads the generated JSON and not the DashQL AST, so it describes exactly what the app renders and stays
 /// independent of the DashQL grammar.
 interface FieldDef {
@@ -217,8 +217,7 @@ function describeVegaLite(renderer: string, specText: string): string[] {
         const head = [renderer];
         if (leaves.length > 1) head.push(`layer ${i + 1} of ${leaves.length}`);
         head.push(kind ?? info?.text ?? '');
-        // Titles and resolve rules belong to the whole chart. They are listed once, on the first layer, to save tokens.
-        // Layers are cut from the end when the budget is tight, so the first layer is the one that survives.
+        // Titles and resolve rules belong to the whole chart. They are listed once, on the first layer.
         if (i === 0 && title) head.push(`titled ${quote(title)}`);
         if (i === 0 && description) head.push(`described ${quote(description)}`);
 

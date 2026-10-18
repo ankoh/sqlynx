@@ -177,27 +177,27 @@ parser-snapshots:
       -- @dashql:end of description
       -- @dashql:end
       select 1
-  # A properties block holds a pretty-printed JSON object
-  - name: properties_line_form
+  # A metadata block holds a pretty-printed JSON object
+  - name: metadata_line_form
     input: |
-      -- @dashql:properties
+      -- @dashql:metadata
       -- {
       --   "owner": "finance",
       --   "avg_runtime_ms": 1834
       -- }
       -- @dashql:end
       select 1
-  # Properties in a block comment
-  - name: properties_block_form
+  # Metadata in a block comment
+  - name: metadata_block_form
     input: |
-      /* @dashql:properties
+      /* @dashql:metadata
        * {"owner": "finance"}
        */
       select 1
   # Values can be any JSON, strings that look like tags stay inside the JSON
-  - name: properties_nested_values
+  - name: metadata_nested_values
     input: |
-      -- @dashql:properties
+      -- @dashql:metadata
       -- {
       --   "tags": [
       --     "weekly",
@@ -213,35 +213,35 @@ parser-snapshots:
       -- }
       -- @dashql:end
       select 1
-  # Invalid JSON keeps the block but yields no properties
-  - name: properties_invalid_json
+  # Invalid JSON keeps the block but yields no metadata
+  - name: metadata_invalid_json
     input: |
-      -- @dashql:properties
+      -- @dashql:metadata
       -- owner: finance
       -- @dashql:end
       select 1
-  # The properties must be an object
-  - name: properties_not_an_object
+  # The metadata must be an object
+  - name: metadata_not_an_object
     input: |
-      -- @dashql:properties
+      -- @dashql:metadata
       -- ["finance"]
       -- @dashql:end
       select 1
-  # Only the first properties block counts, even if it is invalid
-  - name: properties_twice
+  # Only the first metadata block counts, even if it is invalid
+  - name: metadata_twice
     input: |
-      -- @dashql:properties
+      -- @dashql:metadata
       -- {
       -- @dashql:end
 
-      -- @dashql:properties
+      -- @dashql:metadata
       -- {"owner": "finance"}
       -- @dashql:end
       select 1
-  # Properties and a description side by side, the description stays the statement description
-  - name: properties_and_description
+  # Metadata and a description side by side, the description stays the statement description
+  - name: metadata_and_description
     input: |
-      -- @dashql:properties
+      -- @dashql:metadata
       -- {
       --   "owner": "finance"
       -- }

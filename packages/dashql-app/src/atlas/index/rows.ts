@@ -1,29 +1,16 @@
 import type { StructureFeatures } from './analysis/structure.js';
 
-export interface StructureRow {
-    scriptName: string;
-    scriptHash: string;
-    truncated: boolean;
-    embedding: Float32Array;
-    features: StructureFeatures;
-    diagnostics: string[];
-}
-
-export interface DescriptionRow {
+/// One chunk of the description of a script. The structure and the metadata of the script are repeated on every chunk,
+/// they are columns to filter by and are not embedded.
+export interface IndexRow {
     scriptName: string;
     scriptHash: string;
     chunkIndex: number;
     text: string;
     embedding: Float32Array;
-}
-
-export interface PropertiesRow {
-    scriptName: string;
-    scriptHash: string;
-    /// The JSON object of the `@dashql:properties` block, every key becomes a column of the properties file
-    properties: Record<string, unknown>;
-    /// The embedded text, one `key: value` line per property
-    text: string;
-    truncated: boolean;
-    embedding: Float32Array;
+    /// Null if the script could not be analyzed
+    features: StructureFeatures | null;
+    diagnostics: string[];
+    /// The JSON object of the `@dashql:metadata` block, every key becomes a column. Null without a block.
+    metadata: Record<string, unknown> | null;
 }

@@ -124,12 +124,12 @@ describe_snapshots:
         from customer join orders on c_custkey = o_custkey
         where c_mktsegment = 'BUILDING'
         group by c_name;
-  # User-provided properties are kept in the file but never sent to the model
-  - name: properties_not_in_prompt
+  # User-provided metadata is kept in the file but never sent to the model
+  - name: metadata_not_in_prompt
     describe: {}
     script:
       input: |-
-        -- @dashql:properties
+        -- @dashql:metadata
         -- {
         --   "owner": "finance",
         --   "dashboard": "Revenue Weekly"

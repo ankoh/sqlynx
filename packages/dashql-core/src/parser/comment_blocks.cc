@@ -66,7 +66,7 @@ std::optional<Tag> ReadTag(std::string_view text, Range line) {
 /// Resolve the block type of a tag
 CommentBlockType ResolveTagType(std::string_view name) {
     if (name == "description") return CommentBlockType::DASHQL_DESCRIPTION;
-    if (name == "properties") return CommentBlockType::DASHQL_PROPERTIES;
+    if (name == "metadata") return CommentBlockType::DASHQL_METADATA;
     return CommentBlockType::DASHQL_UNKNOWN_TAG;
 }
 
@@ -241,15 +241,15 @@ class CommentGrouper {
         }
     }
 
-    /// Check the properties blocks, the first one must contain a JSON object
-    void ValidateProperties() {
+    /// Check the metadata blocks, the first one must contain a JSON object
+    void ValidateMetadata() {
         bool seen = false;
         for (size_t i = 0; i < out.blocks.size(); ++i) {
             auto& block = out.blocks[i];
-            if (block.block_type() != CommentBlockType::DASHQL_PROPERTIES) continue;
+            if (block.block_type() != CommentBlockType::DASHQL_METADATA) continue;
             if (seen) {
                 out.warnings.emplace_back(block.text_span(),
-                                          "@dashql:properties is ignored, a script has a single properties block");
+                                          "@dashql:metadata is ignored, a script has a single metadata block");
                 continue;
             }
             seen = true;
@@ -262,11 +262,11 @@ class CommentGrouper {
             rapidjson::Document doc;
             doc.Parse(json.data(), json.size());
             if (doc.HasParseError()) {
-                out.warnings.emplace_back(block.text_span(), "@dashql:properties is not valid JSON");
+                out.warnings.emplace_back(block.text_span(), "@dashql:metadata is not valid JSON");
             } else if (!doc.IsObject()) {
-                out.warnings.emplace_back(block.text_span(), "@dashql:properties must be a JSON object");
+                out.warnings.emplace_back(block.text_span(), "@dashql:metadata must be a JSON object");
             } else {
-                out.properties_block = static_cast<uint32_t>(i);
+                out.metadata_block = static_cast<uint32_t>(i);
             }
         }
     }
@@ -298,7 +298,7 @@ class CommentGrouper {
             GroupLineComments(i, run_end);
             i = run_end;
         }
-        ValidateProperties();
+        ValidateMetadata();
         return std::move(out);
     }
 };

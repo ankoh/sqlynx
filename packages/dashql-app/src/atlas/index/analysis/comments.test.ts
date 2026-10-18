@@ -33,10 +33,10 @@ describe('extractComments', () => {
         expect(descriptionText(described)).toBe('Customers');
     });
 
-    it('classifies properties blocks', async () => {
-        const sql = `-- @dashql:properties\n-- {"owner": "finance"}\n-- @dashql:end\nselect 1;`;
+    it('classifies metadata blocks', async () => {
+        const sql = `-- @dashql:metadata\n-- {"owner": "finance"}\n-- @dashql:end\nselect 1;`;
         const blocks = extractComments(await analyzeOne(sql));
-        expect(blocks.map(b => [b.source, b.text])).toEqual([['dashql_properties', '{"owner": "finance"}']]);
+        expect(blocks.map(b => [b.source, b.text])).toEqual([['dashql_metadata', '{"owner": "finance"}']]);
         expect(descriptionText(blocks)).toBeNull();
     });
 
