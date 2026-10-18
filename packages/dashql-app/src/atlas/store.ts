@@ -1,3 +1,5 @@
+import type * as arrow from 'apache-arrow';
+
 import type {
     EmbeddedExternalDirectoryDatabase,
 } from '../platform/database/embedded_database.js';
@@ -16,6 +18,7 @@ import {
     exportSelect,
     propertiesTable,
     structureTable,
+    EMBEDDING_COLUMN,
     LAYOUT_COLUMNS,
     LAYOUT_DIMS,
 } from './index/tables.js';
@@ -124,11 +127,35 @@ function listItems(value: unknown): string[] {
     return Array.from(items, v => String(v));
 }
 
-/// Read the 3D layout of one index file: a point per structure row, description chunk or properties row
-export async function loadIndexPoints(sql: AtlasSql, location: AtlasLocation, kind: EmbeddingKind): Promise<IndexPoints> {
+/// Columns that every file of a kind must have. The count columns of the structure were added after the first version,
+/// files without them are reported as unreadable and the page asks to reindex the folder.
+const REQUIRED_COLUMNS: Record<EmbeddingKind, readonly string[]> = {
+    description: ['script_name', 'text', ...LAYOUT_COLUMNS],
+    structure: ['script_name', 'tables', 'table_count', ...LAYOUT_COLUMNS],
+    properties: ['script_name', 'text', ...LAYOUT_COLUMNS],
+};
+
+/// Read one index file without its embeddings, a row per structure, description chunk or properties block. The columns
+/// of the properties file depend on the property keys, so the file is read with * and the embedding is dropped here.
+export async function loadIndexTable(sql: AtlasSql, location: AtlasLocation, kind: EmbeddingKind): Promise<arrow.Table> {
+    const table = await sql.query(`Load ${kind} index`, `SELECT * FROM ${externalTable(location.paths[kind])}`);
+    const names = table.schema.fields.map(f => f.name);
+    const missing = REQUIRED_COLUMNS[kind].filter(name => !names.includes(name));
+    if (missing.length > 0) {
+        throw new Error(`${FILE_NAMES[kind]} has no column ${missing.map(quoteIdentifier).join(', ')}`);
+    }
+    return table.select(names.filter(name => name !== EMBEDDING_COLUMN));
+}
+
+/// The columns of an index table that are shown as rows: the hash and the layout only matter to the atlas itself
+export function indexRowsTable(table: arrow.Table): arrow.Table {
+    const hidden = new Set<string>(['script_hash', ...LAYOUT_COLUMNS]);
+    return table.select(table.schema.fields.map(f => f.name).filter(name => !hidden.has(name)));
+}
+
+/// The 3D layout of one index table, point i is row i
+export function indexPoints(table: arrow.Table, kind: EmbeddingKind): IndexPoints {
     const detailColumn = kind === 'structure' ? 'tables' : 'text';
-    const columns = ['script_name', detailColumn, ...LAYOUT_COLUMNS].map(quoteIdentifier).join(', ');
-    const table = await sql.query(`Load ${kind} layout`, `SELECT ${columns} FROM ${externalTable(location.paths[kind])}`);
     const names = table.getChild('script_name');
     const detail = table.getChild(detailColumn);
     const axes = LAYOUT_COLUMNS.map(name => table.getChild(name));

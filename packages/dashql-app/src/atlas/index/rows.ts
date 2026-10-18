@@ -20,8 +20,8 @@ export interface DescriptionRow {
 export interface PropertiesRow {
     scriptName: string;
     scriptHash: string;
-    /// The JSON object of the `@dashql:properties` block
-    properties: string;
+    /// The JSON object of the `@dashql:properties` block, every key becomes a column of the properties file
+    properties: Record<string, unknown>;
     /// The embedded text, one `key: value` line per property
     text: string;
     truncated: boolean;

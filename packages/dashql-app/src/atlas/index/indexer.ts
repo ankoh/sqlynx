@@ -110,7 +110,7 @@ export async function embedScripts(
     const properties: PropertiesRow[] = withProperties.map((s, i) => ({
         scriptName: s.file.id,
         scriptHash: s.file.hash,
-        properties: JSON.stringify(s.properties),
+        properties: s.properties!,
         text: s.propertiesDocument.text,
         truncated: s.propertiesDocument.truncated,
         embedding: propertyVectors[i],

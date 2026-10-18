@@ -138,17 +138,45 @@
     pointer-events: none;
 }
 
-/* The candidates are a card on the right, the cloud stays visible on the left */
+/* The rows are a card on the left and the candidates a card on the right, the cloud stays visible between them */
 .kind_control {
     grid-row: 1;
     justify-self: center;
     pointer-events: auto;
 }
 
-.candidates {
+.panels {
     grid-row: 2;
-    justify-self: end;
-    align-self: start;
+    min-height: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.rows {
+    width: min(440px, 100%);
+    max-height: 100%;
+    overflow-y: auto;
+    pointer-events: auto;
+}
+
+.rows_panel {
+    background: white;
+    border: 1px solid var(--border_color_primary);
+    border-radius: var(--border_radius);
+    box-shadow: 0 1px 3px rgba(31, 35, 40, 0.12), 0 8px 24px rgba(66, 74, 83, 0.12);
+    overflow: hidden;
+}
+
+.rows_status {
+    padding: 8px;
+    font-size: var(--font_size_small);
+    color: hsl(210, 12%, 36%);
+}
+
+.candidates {
+    margin-left: auto;
     width: min(400px, 100%);
     max-height: 100%;
     overflow-y: auto;
@@ -252,7 +280,14 @@
 }
 
 @media (max-width: 720px) {
+    .panels {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .rows,
     .candidates {
+        width: 100%;
         max-height: 55vh;
     }
 }

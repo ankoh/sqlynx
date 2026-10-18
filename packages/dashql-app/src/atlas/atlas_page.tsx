@@ -2,6 +2,10 @@ import * as React from 'react';
 
 import { useAppConfig } from '../app/config/app_config.js';
 import { useDashQLCoreSetup } from '../app/providers/core_provider.js';
+import { analyzeTable } from '../compute/computation_logic.js';
+import { useComputationRegistry } from '../compute/computation_registry.js';
+import { DELETE_COMPUTATION } from '../compute/computation_state.js';
+import type { EmbeddedComputeDatabase } from '../platform/database/embedded_database.js';
 import { useEmbeddedDatabaseSetup } from '../platform/database/embedded_database_provider.js';
 import { getHyperDBWebSupportError } from '../platform/hyperdb/hyperdb_web_support.js';
 import { stringifyError } from '../platform/logger/logger.js';
@@ -15,6 +19,8 @@ import { SegmentedControl, SegmentedControlSize } from '../ui/foundations/segmen
 import { FileDirectoryIcon, SyncIcon } from '../ui/foundations/symbol_icon.js';
 import { ParticleFlowBackground, type BackgroundAnimation, type BackgroundAnimationLoader } from '../ui/particle_flow/particle_flow_background.js';
 import { AtlasIndexUnreadable, AtlasSession, type AtlasPhase, type OpenedFolder } from './atlas_session.js';
+import { EMBEDDING_KINDS } from './index/indexer.js';
+import { IndexRowsCard, selectedRows, useRowsCollapsed } from './index_rows.js';
 import { DEFAULT_MODEL_BASE_URL } from './index/model.js';
 import { demoScript } from './demo_data.js';
 import { PromptAction, PromptBar } from './prompt_bar.js';
@@ -83,7 +89,11 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
     modelBaseUrlRef.current = appConfig?.atlas?.modelBaseUrl ?? DEFAULT_MODEL_BASE_URL;
     const unsupported = React.useMemo(() => supportError(platformType), [platformType]);
 
+    const [computationState, dispatchComputation] = useComputationRegistry();
+
     const sessionRef = React.useRef<AtlasSession | null>(null);
+    /// The database of the session, the rows of the index files are analyzed there as well
+    const databaseRef = React.useRef<EmbeddedComputeDatabase | null>(null);
     const [view, setView] = React.useState<View>({ kind: 'setup', status: 'Instantiating hyperdb-wasm' });
     const [error, setError] = React.useState<string | null>(null);
     const [folder, setFolder] = React.useState<OpenedFolder | null>(null);
@@ -100,6 +110,10 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
     /// The dot under the pointer, a made up one as long as no folder is open
     const [dotHover, setDotHover] = React.useState<number | null>(null);
     const tooltipRef = React.useRef<HTMLDivElement>(null);
+    /// The computations of the rows of the open folder, by kind
+    const [rowTables, setRowTables] = React.useState<Partial<Record<EmbeddingKind, number>>>({});
+    const nextRowTableId = React.useRef(1);
+    const [rowsCollapsed, toggleRows] = useRowsCollapsed();
     const onAnimation = React.useCallback((animation: BackgroundAnimation | null) => setCloud(animation as PointCloud | null), []);
 
     // The made up dots only show until a folder is open, then the cloud is the embeddings of the index
@@ -133,6 +147,51 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
         cloud?.setPointer(e.target === e.currentTarget ? { x: e.clientX, y: e.clientY } : null);
     }, [cloud]);
     const onPointerLeave = React.useCallback(() => cloud?.setPointer(null), [cloud]);
+
+    // The rows of every index file become a data frame with histograms and cross-filters. The shown kind goes first.
+    React.useEffect(() => {
+        const database = databaseRef.current;
+        if (folder == null || database == null) {
+            setRowTables({});
+            return;
+        }
+        const ids: Partial<Record<EmbeddingKind, number>> = {};
+        for (const k of EMBEDDING_KINDS) {
+            if (folder.rows[k].numRows > 0) ids[k] = nextRowTableId.current++;
+        }
+        setRowTables(ids);
+        const order = [kind, ...EMBEDDING_KINDS.filter(k => k !== kind)];
+        const analyzed = (async () => {
+            for (const k of order) {
+                const id = ids[k];
+                if (id == null) continue;
+                try {
+                    await analyzeTable(id, folder.rows[k], dispatchComputation, database, logger);
+                } catch (e) {
+                    logger.error('Failed to analyze the index rows', { kind: k, error: stringifyError(e) }, LOG_CTX);
+                }
+            }
+        })();
+        // The results of a running analysis must not arrive after the computation is gone
+        return () => {
+            void analyzed.finally(() => {
+                for (const id of Object.values(ids)) dispatchComputation({ type: DELETE_COMPUTATION, value: [id] });
+            });
+        };
+        // The kind only picks the order, it does not start another analysis
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [folder, dispatchComputation, logger]);
+    const rowTableId = rowTables[kind];
+    const rowTable = rowTableId == null ? null : computationState.tableComputations[rowTableId] ?? null;
+    // Only the system columns make the rows filterable, before that the table has no histograms
+    const shownRowTable = rowTable?.rowNumberColumnName != null ? rowTable : null;
+
+    // The dots of the rows that match the cross-filters stay, the others fade
+    const filterTable = shownRowTable?.filterTable ?? null;
+    React.useEffect(() => {
+        cloud?.setSelection(folder == null ? null : selectedRows(shownRowTable));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [cloud, folder, kind, filterTable]);
 
     /// Every dot of a script in the shown kind, e.g. each description chunk
     const pointsOfScript = React.useMemo(() => {
@@ -187,6 +246,7 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
             if (!cancelled) setView({ kind: 'setup', status: 'Instantiating dashql-core' });
             const core = await setupCore(LOG_CTX);
             if (cancelled) return;
+            databaseRef.current = database;
             sessionRef.current = new AtlasSession({ database, core, logger, tracker: queryExecutions, modelBaseUrl: () => modelBaseUrlRef.current });
             setConnected(true);
             setView({ kind: 'pick' });
@@ -199,6 +259,7 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
             cancelled = true;
             const session = sessionRef.current;
             sessionRef.current = null;
+            databaseRef.current = null;
             setConnected(false);
             void session?.dispose();
         };
@@ -370,34 +431,45 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
                         ))}
                     </SegmentedControl>
                 </div>
-                {results != null && (
-                    <aside className={styles.candidates} aria-label="Candidates">
-                        <Card title="Best matches">
-                            {results.map(({ strategy, hits }) => (
-                                <section key={strategy.id} className={styles.result_section} aria-label={strategy.title}>
-                                    <h2 className={styles.result_title}>{strategy.title}</h2>
-                                    {hits.length === 0 && <div className={styles.no_hits}>No matches</div>}
-                                    {hits.map(hit => (
-                                        <button
-                                            key={hit.scriptName}
-                                            type="button"
-                                            className={styles.hit}
-                                            onClick={() => void openScript(hit.scriptName)}
-                                            onMouseEnter={() => setHovered(hit.scriptName)}
-                                            onMouseLeave={() => setHovered(null)}
-                                            onFocus={() => setHovered(hit.scriptName)}
-                                            onBlur={() => setHovered(null)}
-                                        >
-                                            <span className={styles.hit_name}>{hit.scriptName}</span>
-                                            <span className={styles.hit_score}>{hit.score.toFixed(3)}</span>
-                                            <span className={styles.hit_snippet}>{hit.snippet}</span>
-                                        </button>
-                                    ))}
-                                </section>
-                            ))}
-                        </Card>
+                <div className={styles.panels}>
+                    <aside className={styles.rows} aria-label="Rows">
+                        <IndexRowsCard
+                            title={`${KIND_CONTROLS.find(c => c.kind === kind)?.title ?? ''} rows`}
+                            table={shownRowTable}
+                            dispatchComputation={dispatchComputation}
+                            collapsed={rowsCollapsed}
+                            onToggle={toggleRows}
+                        />
                     </aside>
-                )}
+                    {results != null && (
+                        <aside className={styles.candidates} aria-label="Candidates">
+                            <Card title="Best matches">
+                                {results.map(({ strategy, hits }) => (
+                                    <section key={strategy.id} className={styles.result_section} aria-label={strategy.title}>
+                                        <h2 className={styles.result_title}>{strategy.title}</h2>
+                                        {hits.length === 0 && <div className={styles.no_hits}>No matches</div>}
+                                        {hits.map(hit => (
+                                            <button
+                                                key={hit.scriptName}
+                                                type="button"
+                                                className={styles.hit}
+                                                onClick={() => void openScript(hit.scriptName)}
+                                                onMouseEnter={() => setHovered(hit.scriptName)}
+                                                onMouseLeave={() => setHovered(null)}
+                                                onFocus={() => setHovered(hit.scriptName)}
+                                                onBlur={() => setHovered(null)}
+                                            >
+                                                <span className={styles.hit_name}>{hit.scriptName}</span>
+                                                <span className={styles.hit_score}>{hit.score.toFixed(3)}</span>
+                                                <span className={styles.hit_snippet}>{hit.snippet}</span>
+                                            </button>
+                                        ))}
+                                    </section>
+                                ))}
+                            </Card>
+                        </aside>
+                    )}
+                </div>
                 <div className={styles.prompt_area}>
                     {searching && <div className={styles.status}>Searching</div>}
                     {error != null && <div className={styles.error_banner}>{error}</div>}

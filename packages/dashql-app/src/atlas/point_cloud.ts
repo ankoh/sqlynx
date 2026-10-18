@@ -23,25 +23,34 @@ export interface DotHover {
 const VERTEX_SHADER = `
     attribute float aSize;
     attribute float aAlpha;
+    /// 1 if the point matches the cross-filters of the rows, only read while uHasSelection is 1
+    attribute float aSelected;
     uniform float uPixelRatio;
     /// Distance at which a point has its nominal size
     uniform float uScale;
+    uniform float uHasSelection;
     varying float vAlpha;
+    varying float vSelected;
     /// Size of the point in device pixels, edges are antialiased over a fixed number of pixels
     varying float vPixels;
     void main() {
         vec4 mv = modelViewMatrix * vec4(position, 1.0);
         gl_Position = projectionMatrix * mv;
-        gl_PointSize = aSize * uPixelRatio * uScale / -mv.z;
+        float selected = uHasSelection > 0.5 ? aSelected : 0.0;
+        gl_PointSize = aSize * (1.0 + 0.4 * selected) * uPixelRatio * uScale / -mv.z;
         vPixels = gl_PointSize;
+        vSelected = selected;
         // Points in the back are dimmer, which gives the cloud its depth
         float depth = clamp(1.0 - (-mv.z - 2.0) / 3.2, 0.3, 1.0);
-        vAlpha = aAlpha * depth;
+        // While there is a selection, the selected points are bright and the others fade
+        float alpha = uHasSelection > 0.5 ? mix(aAlpha * 0.15, max(aAlpha, 0.9), selected) : aAlpha;
+        vAlpha = alpha * depth;
     }
 `;
 
 const FRAGMENT_SHADER = `
     varying float vAlpha;
+    varying float vSelected;
     varying float vPixels;
     void main() {
         float d = length(gl_PointCoord - vec2(0.5));
@@ -52,6 +61,8 @@ const FRAGMENT_SHADER = `
         float disc = 1.0 - smoothstep(0.5 - 1.25 * aa, 0.5 - 0.25 * aa, d);
         // The rim is a little cooler than the center, which gives the dots some volume
         vec3 color = mix(vec3(1.0), vec3(0.86, 0.92, 1.0), smoothstep(0.1, 0.5, d));
+        // Selected points get a blue rim, the accent of the highlights stays for the search candidates
+        color = mix(color, vec3(0.45, 0.72, 1.0), vSelected * smoothstep(0.0, 0.45, d));
         gl_FragColor = vec4(color, vAlpha * disc);
     }
 `;
@@ -109,7 +120,8 @@ function mulberry32(seed: number): () => number {
 /// Small white dots that slowly turn around a center point, like the pairing screen of the Apple Watch. The rotation axis
 /// is tilted and drifts a little, which makes the motion wobble.
 ///
-/// The dots are made up until `setPoints` replaces them with the indexed scripts. `setHighlight` marks some of those.
+/// The dots are made up until `setPoints` replaces them with the indexed scripts. `setHighlight` marks some of those,
+/// `setSelection` fades all others.
 export class PointCloud {
     private readonly renderer: THREE.WebGLRenderer;
     private readonly scene = new THREE.Scene();
@@ -130,6 +142,8 @@ export class PointCloud {
     private showingDemo = true;
     /// Nominal size of the indexed points, depends on how many there are
     private dataSize = DEMO_POINT_SIZE;
+    /// A bit per indexed point that matches the cross-filters, null if nothing is filtered
+    private selection: Uint32Array | null = null;
     /// The pointer in client coordinates. The dot under it is reported to the hover listener.
     private pointer: { x: number; y: number } | null = null;
     private hoveredDot = -1;
@@ -160,7 +174,7 @@ export class PointCloud {
             fragmentShader: FRAGMENT_SHADER,
             transparent: true,
             depthWrite: false,
-            uniforms: { uPixelRatio: { value: 1 }, uScale: { value: 1 } },
+            uniforms: { uPixelRatio: { value: 1 }, uScale: { value: 1 }, uHasSelection: { value: 0 } },
         });
         this.cloud = new THREE.Points(this.demoGeometry, this.material);
         this.highlightMaterial = new THREE.ShaderMaterial({
@@ -234,7 +248,10 @@ export class PointCloud {
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         geometry.setAttribute('aSize', new THREE.BufferAttribute(new Float32Array(count).fill(size), 1));
         geometry.setAttribute('aAlpha', new THREE.BufferAttribute(new Float32Array(count).fill(pointAlpha(count)), 1));
+        geometry.setAttribute('aSelected', new THREE.BufferAttribute(new Float32Array(count), 1));
         this.dataGeometry = geometry;
+        this.selection = null;
+        this.material.uniforms.uHasSelection.value = 0;
         this.dataPositions = positions;
         this.dataSize = size;
         this.highlightMaterial.uniforms.uBaseSize.value = size;
@@ -247,6 +264,8 @@ export class PointCloud {
         this.dataGeometry?.dispose();
         this.dataGeometry = null;
         this.dataPositions = null;
+        this.selection = null;
+        this.material.uniforms.uHasSelection.value = 0;
         this.showingDemo = true;
         this.dataSize = DEMO_POINT_SIZE;
         this.highlightMaterial.uniforms.uBaseSize.value = DEMO_POINT_SIZE;
@@ -286,6 +305,28 @@ export class PointCloud {
         this.renderOnce();
     }
 
+    /// Fade the indexed points that are not in `selection`, a bit per point in the coords of `setPoints`. None shows all
+    /// points as they are.
+    setSelection(selection: Uint32Array | null): void {
+        const geometry = this.dataGeometry;
+        this.selection = geometry == null ? null : selection;
+        this.material.uniforms.uHasSelection.value = this.selection == null ? 0 : 1;
+        if (geometry != null) {
+            const attribute = geometry.getAttribute('aSelected') as THREE.BufferAttribute;
+            const values = attribute.array as Float32Array;
+            for (let i = 0; i < values.length; ++i) values[i] = this.isSelected(i) ? 1 : 0;
+            attribute.needsUpdate = true;
+        }
+        // Faded points cannot be hovered
+        if (this.hoveredDot >= 0 && !this.isSelected(this.hoveredDot)) this.setDotHover(-1);
+        this.renderOnce();
+    }
+
+    private isSelected(index: number): boolean {
+        const selection = this.selection;
+        return selection == null || ((selection[index >>> 5] >>> (index & 31)) & 1) === 1;
+    }
+
     /// Receives the dot under the pointer on every frame while there is one, and null once there is none
     setHoverListener(listener: ((hover: DotHover | null) => void) | null): void {
         this.hoverListener = listener;
@@ -317,6 +358,7 @@ export class PointCloud {
         let best: DotHover | null = null;
         let bestScore = 1;
         for (let i = 0; i * 3 < positions.length; ++i) {
+            if (!this.showingDemo && !this.isSelected(i)) continue;
             vector.set(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2])
                 .applyMatrix4(this.root.matrixWorld)
                 .applyMatrix4(this.camera.matrixWorldInverse);
