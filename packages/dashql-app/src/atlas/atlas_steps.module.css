@@ -165,8 +165,45 @@
     gap: 6px;
 }
 
-.results {
+/* The prompt stays in the column on the right, the script opens to the left of the matches below it */
+.search_prompt {
+    width: 100%;
+    max-width: 420px;
+    align-self: flex-end;
+}
+
+.search_below {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: flex-start;
+    gap: 8px;
     min-height: 0;
+}
+
+.script_card {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 560px;
+    max-height: 100%;
+    overflow-y: auto;
+}
+
+.script {
+    margin: 0;
+    max-height: 70vh;
+    overflow: auto;
+    font-family: 'Roboto Mono';
+    font-size: 0.8rem;
+    line-height: 1.5;
+    white-space: pre;
+}
+
+.results {
+    flex: 0 1 420px;
+    min-width: 0;
+    min-height: 0;
+    max-height: 100%;
     overflow-y: auto;
 }
 

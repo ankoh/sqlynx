@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import * as baseStyles from '../ui/banner/banner_page.module.css';
 import { Button, ButtonSize, ButtonVariant } from '../ui/foundations/button.js';
-import { ComposeIcon, FileDirectoryIcon, SearchIcon, SyncIcon } from '../ui/foundations/symbol_icon.js';
+import { ComposeIcon, FileDirectoryIcon, SearchIcon, SyncIcon, XIcon } from '../ui/foundations/symbol_icon.js';
 import type { AtlasPhase, DescribeSummary, OpenedFolder } from './atlas_session.js';
 import { PromptBar } from './prompt_bar.js';
 import type { SearchResults } from './search/search.js';
@@ -245,6 +245,9 @@ interface SearchCardProps {
     /// The script of the hit under the pointer
     onHover: (scriptName: string | null) => void;
     onOpen: (scriptName: string) => void;
+    /// The script that was opened, it shows left of the best matches
+    script: { name: string; text: string } | null;
+    onCloseScript: () => void;
 }
 
 /// The prompt of the semantic search and its best matches
@@ -257,6 +260,7 @@ export const SearchCard: React.FC<SearchCardProps> = (props: SearchCardProps) =>
     else placeholder = 'Index the folder to search it';
     return (
         <div className={styles.search}>
+            <div className={styles.search_prompt}>
             <PromptBar
                 value={props.prompt}
                 onChange={props.onPromptChange}
@@ -271,6 +275,26 @@ export const SearchCard: React.FC<SearchCardProps> = (props: SearchCardProps) =>
                     </span>
                 )}
             />
+            </div>
+            <div className={styles.search_below}>
+            {props.script != null && (
+                <div className={styles.script_card}>
+                    <Card
+                        title={props.script.name}
+                        actions={(
+                            <Button
+                                variant={ButtonVariant.Invisible}
+                                size={ButtonSize.Small}
+                                aria-label="Close script"
+                                onClick={props.onCloseScript}
+                                leadingVisual={<XIcon />}
+                            />
+                        )}
+                    >
+                        <pre className={styles.script}>{props.script.text}</pre>
+                    </Card>
+                </div>
+            )}
             {props.results != null && (
                 <div className={styles.results}>
                     <Card title="Best matches">
@@ -299,6 +323,7 @@ export const SearchCard: React.FC<SearchCardProps> = (props: SearchCardProps) =>
                     </Card>
                 </div>
             )}
+            </div>
         </div>
     );
 };

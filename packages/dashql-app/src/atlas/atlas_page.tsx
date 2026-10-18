@@ -15,10 +15,9 @@ import { useLogger } from '../platform/logger/logger_provider.js';
 import { PlatformType, usePlatformType } from '../platform/platform_type.js';
 import { useShellConnection } from '../shell/shell_connection.js';
 import { selectPlatformDirectory } from '../shell/shell_files.js';
-import { Button } from '../ui/foundations/button.js';
 import { ParticleFlowBackground, type BackgroundAnimation, type BackgroundAnimationLoader } from '../ui/particle_flow/particle_flow_background.js';
 import { AtlasSession, type AtlasPhase, type DescribeSummary, type OpenedFolder } from './atlas_session.js';
-import { Card, DescribeCard, FolderCard, IndexCard, SearchCard, type AtlasActivity } from './atlas_steps.js';
+import { DescribeCard, FolderCard, IndexCard, SearchCard, type AtlasActivity } from './atlas_steps.js';
 import type { DescribeOutcome } from './describe/describe.js';
 import { IndexRowsCard, selectedRows, useRowsCollapsed } from './index_rows.js';
 import { DEFAULT_MODEL_BASE_URL } from './index/model.js';
@@ -35,8 +34,7 @@ const loadPointCloud: BackgroundAnimationLoader = async () => (await import('./p
 
 type View =
     | { kind: 'setup'; status: string }
-    | { kind: 'ready' }
-    | { kind: 'script'; name: string; text: string };
+    | { kind: 'ready' };
 
 /// What the tooltip of a dot says
 interface DotTooltip {
@@ -93,6 +91,8 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
     const [prompt, setPrompt] = React.useState('');
     const [searching, setSearching] = React.useState(false);
     const [results, setResults] = React.useState<SearchResults[] | null>(null);
+    /// The script that was opened from a hit or a dot
+    const [openedScript, setOpenedScript] = React.useState<{ name: string; text: string } | null>(null);
     const [cloud, setCloud] = React.useState<PointCloud | null>(null);
     /// The script of the candidate under the pointer
     const [hovered, setHovered] = React.useState<string | null>(null);
@@ -282,6 +282,7 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
         }
         setFolder(null);
         setResults(null);
+        setOpenedScript(null);
         setHovered(null);
         setPrompt('');
         setDescribeSummary(null);
@@ -358,7 +359,7 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
         if (session == null) return;
         setHovered(null);
         try {
-            setView({ kind: 'script', name, text: await session.readScript(name) });
+            setOpenedScript({ name, text: await session.readScript(name) });
         } catch (e) {
             logger.error('Failed to read script', { error: stringifyError(e), name }, LOG_CTX);
             setError(stringifyError(e));
@@ -376,21 +377,9 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
                 </div>
             </div>
         );
-    } else if (view.kind === 'script') {
-        layout = (
-            <div className={styles.foreground}>
-                <Card
-                    title={view.name}
-                    wide
-                    actions={<Button onClick={() => setView({ kind: 'ready' })}>Back to results</Button>}
-                >
-                    <pre className={styles.script}>{view.text}</pre>
-                </Card>
-            </div>
-        );
     } else {
         layout = (
-            <div className={styles.workspace}>
+            <div className={openedScript == null ? styles.workspace : `${styles.workspace} ${styles.workspace_script}`}>
                 <div className={styles.steps}>
                     {error != null && <div className={styles.error_banner} role="alert">{error}</div>}
                     <FolderCard
@@ -419,6 +408,8 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
                         results={results}
                         onHover={setHovered}
                         onOpen={name => void openScript(name)}
+                        script={openedScript}
+                        onCloseScript={() => setOpenedScript(null)}
                     />
                 </div>
                 {index != null && index.rows.numRows > 0 && (
