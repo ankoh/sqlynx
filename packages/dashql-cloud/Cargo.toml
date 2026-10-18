@@ -39,8 +39,8 @@ hex = "0.4.3"
 # `{ gateway }` lives), so `ai.rs` re-declares the JS `Ai.run` method via `#[wasm_bindgen]`. All
 # three crates are already in the tree transitively via `worker`; declaring them directly just lets
 # our FFI shim name them. Versions kept loose so Cargo unifies to whatever `worker` resolves.
-wasm-bindgen = "0.2.127"
-js-sys = "0.3.104"
+wasm-bindgen = "0.2.129"
+js-sys = "0.3.106"
 serde-wasm-bindgen = "0.6.5"
 
 [profile.release]

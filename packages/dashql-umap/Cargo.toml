@@ -23,8 +23,8 @@ authors = ["Apple Inc."]
 ndarray = "0.17.2"
 rayon = "1.12.0"
 pollster = "0.4"
-wasm-bindgen = "=0.2.105"
-js-sys = "0.3.69"
+wasm-bindgen = "=0.2.129"
+js-sys = "0.3.106"
 getrandom = "0.4.3"
 wgpu = "24.0.5"
 bytemuck = { version = "1.25.2", features = ["derive"] }

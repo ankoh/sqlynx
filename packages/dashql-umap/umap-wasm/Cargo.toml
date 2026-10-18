@@ -21,7 +21,7 @@ gpu = ["nndescent/gpu", "umap/gpu"]
 nndescent = { path = "../nndescent" }
 umap = { path = "../umap" }
 wasm-bindgen = { workspace = true }
-wasm-bindgen-futures = "0.4"
+wasm-bindgen-futures = "0.4.79"
 js-sys = { workspace = true }
 ndarray = { workspace = true }
 getrandom = { workspace = true, features = ["wasm_js"] }
