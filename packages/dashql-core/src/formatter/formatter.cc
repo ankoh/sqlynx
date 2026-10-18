@@ -507,6 +507,12 @@ void Formatter::IdentifyParentheses(size_t node_id) {
 
 FmtReg Formatter::FormatLeaf(const buffers::parser::Node& node) {
     auto text = scanned.ReadTextAtSymbolSpan(node.symbol_span());
+    if (replace_obfuscated_literals) {
+        auto text_offset = static_cast<uint32_t>(text.data() - scanned.text_buffer.data());
+        if (auto* literal = scanned.FindObfuscatedLiteral(text_offset)) {
+            return fmt.Verbatim(literal->replacement);
+        }
+    }
     if (node.node_type() == NodeType::BOOL || node.node_type() == NodeType::LITERAL_NULL ||
         node.node_type() == NodeType::OPERATOR) {
         return fmt.Text(text);

@@ -208,7 +208,8 @@ ScriptCompilationResult ScriptCompiler::Compile(Script& script, const buffers::f
                                           parsed.scanned_script->ResolveTextSpan(error.location)));
     }
     if (!result.errors.empty()) {
-        const auto sql = script.ToString();
+        auto input = parsed.scanned_script->GetInput();
+        const auto sql = parsed.scanned_script->ReadExecutableText(TextSpan(0, input.size()));
         if (std::any_of(sql.begin(), sql.end(), [](unsigned char c) { return !std::isspace(c); })) {
             // The remote dialect may accept SQL that our scanner/parser does not. Without a
             // reliable AST, send the original text once and do not cache or split it locally.
@@ -254,7 +255,7 @@ ScriptCompilationResult ScriptCompiler::Compile(Script& script, const buffers::f
             .statement_id = statement_id,
             .statement_type = statement.type,
             .kind = produces_output ? CompiledKind::OUTPUT : CompiledKind::COMMAND,
-            .sql = std::string{input.substr(statement_span.offset(), statement_span.length())},
+            .sql = parsed.scanned_script->ReadExecutableText(statement_span),
         });
     }
     if (!result.errors.empty()) return result;
@@ -282,6 +283,7 @@ ScriptCompilationResult ScriptCompiler::Compile(Script& script, const buffers::f
     }
 
     Formatter formatter{parsed};
+    formatter.ReplaceObfuscatedLiterals();
     result.sql = formatter.FormatNodeAt(*terminal_sql_node_id, config);
     if (result.sql.empty()) {
         result.sql.clear();

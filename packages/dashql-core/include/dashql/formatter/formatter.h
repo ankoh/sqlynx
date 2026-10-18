@@ -29,6 +29,8 @@ struct Formatter {
 
    protected:
     const ScannedScript& scanned;
+    /// Emit executable literals instead of obfuscated literal markers?
+    bool replace_obfuscated_literals = false;
     const ParsedScript& parsed;
     const std::span<const buffers::parser::Node> ast;
     buffers::formatting::FormattingConfigT config;
@@ -162,6 +164,9 @@ struct Formatter {
 
    public:
     explicit Formatter(ParsedScript& parsed);
+
+    /// Emit executable literals instead of the obfuscated literal markers of Hyper
+    void ReplaceObfuscatedLiterals() { replace_obfuscated_literals = true; }
 
     size_t EstimateFormattedSize() const;
     std::string Format(const buffers::formatting::FormattingConfigT& config);

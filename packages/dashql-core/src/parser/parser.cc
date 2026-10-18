@@ -23,8 +23,11 @@
 
 #include "dashql/parser/parser.h"
 
+#include <algorithm>
 #include <array>
 #include <cassert>
+#include <cctype>
+#include <string>
 
 #include "dashql/parser/parse_context.h"
 #include "dashql/parser/parser_generated.h"
@@ -544,6 +547,52 @@ Parser::SuffixProbe Parser::ProbeSuffixSequenceFromPrefix(const PrefixSnapshot& 
     return policy.probe;
 }
 
+/// Obfuscated strings that are cast to a type need a replacement that the type accepts.
+/// E.g. timestamptz /*String(A834)*/ cannot become timestamptz 'A834'.
+static void ReplaceObfuscatedCastLiterals(ParsedScript& parsed) {
+    auto& scanned = *parsed.scanned_script;
+    if (scanned.obfuscated_literals.empty()) return;
+    auto input = scanned.GetInput();
+    for (auto& node : parsed.nodes) {
+        if (node.node_type() != buffers::parser::NodeType::LITERAL_STRING ||
+            node.attribute_key() != buffers::parser::AttributeKey::SQL_CONST_CAST_VALUE) {
+            continue;
+        }
+        auto& cast = parsed.nodes[node.parent()];
+        if (cast.node_type() != buffers::parser::NodeType::OBJECT_SQL_CONST_TYPE_CAST &&
+            cast.node_type() != buffers::parser::NodeType::OBJECT_SQL_CONST_FUNCTION_CAST &&
+            cast.node_type() != buffers::parser::NodeType::OBJECT_SQL_CONST_INTERVAL_CAST) {
+            continue;
+        }
+        auto literal_span = scanned.ResolveTextSpan(node.symbol_span());
+        auto* literal = scanned.FindObfuscatedLiteral(literal_span.offset());
+        if (!literal) continue;
+        // The type is the text of the cast in front of the literal, e.g. "timestamp with time zone"
+        auto cast_span = scanned.ResolveTextSpan(cast.symbol_span());
+        std::string type{input.substr(cast_span.offset(), literal_span.offset() - cast_span.offset())};
+        std::transform(type.begin(), type.end(), type.begin(), [](unsigned char c) { return std::tolower(c); });
+        auto hash = literal->replacement.substr(1, 4);
+        auto has = [&](std::string_view s) { return type.find(s) != std::string::npos; };
+        if (has("timestamp")) {
+            literal->replacement = "'2000-01-01 00:00:00'";
+        } else if (has("date")) {
+            literal->replacement = "'2000-01-01'";
+        } else if (has("time")) {
+            literal->replacement = "'00:00:00'";
+        } else if (has("interval")) {
+            literal->replacement = "'1'";
+        } else if (has("uuid")) {
+            literal->replacement = "'00000000-0000-0000-0000-00000000" + hash + "'";
+        } else if (has("json")) {
+            literal->replacement = "'{}'";
+        } else if (has("bool")) {
+            literal->replacement = "'true'";
+        } else if (has("int") || has("numeric") || has("decimal") || has("real") || has("double") || has("float")) {
+            literal->replacement = "'" + std::to_string(std::stoul(hash, nullptr, 16)) + "'";
+        }
+    }
+}
+
 std::shared_ptr<ParsedScript> Parser::Parse(std::shared_ptr<ScannedScript> scanned, bool debug) {
     assert(scanned != nullptr);
 
@@ -587,7 +636,9 @@ std::shared_ptr<ParsedScript> Parser::Parse(std::shared_ptr<ScannedScript> scann
     }
 
     // Pack the program
-    return std::make_shared<ParsedScript>(scanned, std::move(ctx));
+    auto parsed = std::make_shared<ParsedScript>(scanned, std::move(ctx));
+    ReplaceObfuscatedCastLiterals(*parsed);
+    return parsed;
 }
 
 }  // namespace dashql::parser

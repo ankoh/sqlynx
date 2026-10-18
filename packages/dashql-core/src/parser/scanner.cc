@@ -36,6 +36,33 @@ void Scanner::AddComment(buffers::parser::SymbolSpan location) {
     output->comments.push_back(buffers::parser::TextSpan(location.offset(), location.length()));
 }
 
+/// Add a literal that Hyper obfuscated.
+/// The marker carries the type and a 4-digit hex hash, we derive a literal of that type from the hash.
+void Scanner::AddObfuscatedLiteral(buffers::parser::SymbolSpan location) {
+    auto marker = std::string_view{output->text_buffer}.substr(location.offset(), location.length());
+    // /*<Type>(<HASH>)*/
+    auto open = marker.find('(');
+    auto type = marker.substr(2, open - 2);
+    auto hash = marker.substr(open + 1, 4);
+    auto value = std::stoul(std::string{hash}, nullptr, 16);
+    std::string replacement;
+    if (type == "String") {
+        replacement = "'" + std::string{hash} + "'";
+    } else if (type == "Integer") {
+        replacement = std::to_string(value);
+    } else if (type == "Float") {
+        replacement = std::to_string(value) + ".0";
+    } else if (type == "HexString") {
+        replacement = "X'" + std::string{hash} + "'";
+    } else {
+        replacement = "B'";
+        for (int bit = 15; bit >= 0; --bit) replacement += ((value >> bit) & 1) ? '1' : '0';
+        replacement += "'";
+    }
+    output->obfuscated_literals.push_back(
+        {buffers::parser::TextSpan(location.offset(), location.length()), std::move(replacement)});
+}
+
 /// Read an integer
 Parser::symbol_type Scanner::ReadInteger(buffers::parser::SymbolSpan loc) {
     auto text = GetInputData().substr(loc.offset(), loc.length());

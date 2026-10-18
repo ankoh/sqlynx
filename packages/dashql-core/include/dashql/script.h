@@ -8,6 +8,7 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <utility>
 #include <variant>
 
 #include "dashql/analyzer/analyzer_types.h"
@@ -63,6 +64,15 @@ class ScannedScript {
     std::vector<buffers::parser::TextSpan> line_breaks;
     /// The comments
     std::vector<buffers::parser::TextSpan> comments;
+    /// A literal that Hyper replaced with a typed marker comment, e.g. /*Integer(4888)*/
+    struct ObfuscatedLiteral {
+        /// The location of the marker
+        buffers::parser::TextSpan location;
+        /// An executable literal derived from the marker hash, e.g. 18568
+        std::string replacement;
+    };
+    /// The obfuscated literals, sorted by offset
+    std::vector<ObfuscatedLiteral> obfuscated_literals;
 
     /// The name pool
     StringPool<1024> name_pool;
@@ -101,6 +111,13 @@ class ScannedScript {
     std::string_view ReadTextAtTextSpan(sx::parser::TextSpan span) const {
         return std::string_view{text_buffer}.substr(span.offset(), span.length());
     }
+    /// Find the obfuscated literal whose marker starts at a text offset
+    const ObfuscatedLiteral* FindObfuscatedLiteral(uint32_t offset) const;
+    ObfuscatedLiteral* FindObfuscatedLiteral(uint32_t offset) {
+        return const_cast<ObfuscatedLiteral*>(std::as_const(*this).FindObfuscatedLiteral(offset));
+    }
+    /// Read the text at a text span with obfuscated literals replaced, so that it can be executed
+    std::string ReadExecutableText(sx::parser::TextSpan span) const;
 
     /// A symbol location info
     struct SymbolLocationInfo {

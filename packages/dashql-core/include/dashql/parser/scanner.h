@@ -66,6 +66,8 @@ class Scanner {
     void AddLineBreak(buffers::parser::SymbolSpan location);
     /// Add a comment
     void AddComment(buffers::parser::SymbolSpan location);
+    /// Add a literal that Hyper obfuscated, e.g. /*Integer(4888)*/
+    void AddObfuscatedLiteral(buffers::parser::SymbolSpan location);
 
    protected:
     /// Constructor
