@@ -10,6 +10,8 @@
 %nonassoc    BETWEEN IN_P GLOB LIKE ILIKE SIMILAR NOT_LA
 %nonassoc    ESCAPE            /* ESCAPE must be just above LIKE/ILIKE/SIMILAR */
 %left        POSTFIXOP        /* dummy for postfix Op rules */
+%nonassoc    COLON            /* :name parameters, see SLICE_EMPTY_BOUND */
+%nonassoc    SLICE_EMPTY_BOUND /* a[:n] is a slice with an empty lower bound, not an index with parameter :n */
 
 /*
  * To support target_el without AS, we must give IDENT an explicit priority

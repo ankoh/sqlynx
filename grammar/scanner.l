@@ -456,7 +456,9 @@ auto& ext_depth = ctx.ext_depth;
 {raw_less_than}     { return Parser::make_LESS_THAN(loc); }
 {raw_greater_than}  { return Parser::make_GREATER_THAN(loc); }
 {raw_equals}        { return Parser::make_EQUALS(loc); }
-{raw_question_mark} { return Parser::make_QUESTION_MARK(loc); }
+    /* ?name, ?1 and ?"name" are named parameters, a standalone ? is a positional JDBC-style parameter */
+{raw_question_mark}/({ident_cont}|{dquote}) { return Parser::make_QUESTION_MARK(loc); }
+{raw_question_mark} { return Parser::make_PARAM(loc); }
 {raw_dollar}        { return Parser::make_DOLLAR(loc); }
 
 {operator}      {

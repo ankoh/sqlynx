@@ -1321,11 +1321,14 @@ FmtReg Formatter::FormatColumnRef(const buffers::parser::Node& node) {
 FmtReg Formatter::FormatParameterRef(const buffers::parser::Node& node) {
     auto [prefix, name] =
         GetAttributes<AttributeKey::SQL_PARAMETER_PREFIX, AttributeKey::SQL_PARAMETER_NAME>(node);
-    if (!prefix || !name) return FormatUnimplemented(node);
+    if (!prefix) return FormatUnimplemented(node);
 
     auto prefix_reg = Reg(*prefix);
+    if (prefix_reg == 0) return FormatUnimplemented(node);
+    // Positional parameters (?) have no name
+    if (!name) return prefix_reg;
     auto name_reg = Reg(*name);
-    if (prefix_reg == 0 || name_reg == 0) return FormatUnimplemented(node);
+    if (name_reg == 0) return FormatUnimplemented(node);
     return fmt.Concat({prefix_reg, name_reg});
 }
 
