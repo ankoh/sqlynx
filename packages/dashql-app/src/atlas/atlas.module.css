@@ -45,37 +45,6 @@
     margin: auto;
 }
 
-.card {
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.card_wide {
-    max-width: 720px;
-}
-
-.card_title {
-    margin: 0;
-    font-size: 1rem;
-    font-weight: 500;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.card_body {
-    font-size: 0.9rem;
-    line-height: 1.5;
-}
-
-.card_body p {
-    margin: 0;
-}
-
-.error {
-    color: #cf222e;
-}
-
 .error_banner {
     padding: 8px 12px;
     border-radius: var(--border_radius);
@@ -84,60 +53,7 @@
     font-size: 0.85rem;
 }
 
-.warning_banner {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 8px 12px;
-    border-radius: var(--border_radius);
-    background: #fff8c5;
-    color: #4d2d00;
-    font-size: 0.85rem;
-}
-
-.warning_text {
-    flex: 1;
-}
-
-.banner_action {
-    padding: 2px 8px;
-    border: 1px solid rgba(77, 45, 0, 0.3);
-    border-radius: var(--border_radius);
-    background: transparent;
-    color: inherit;
-    font: inherit;
-    cursor: pointer;
-}
-
-.banner_action:hover:not(:disabled) {
-    background: rgba(77, 45, 0, 0.08);
-}
-
-.progress {
-    height: 6px;
-    border-radius: 3px;
-    background: rgba(31, 35, 40, 0.12);
-    overflow: hidden;
-}
-
-.progress_bar {
-    height: 100%;
-    background: hsl(210, 24%, 16%);
-    transition: width 0.2s;
-}
-
-.progress_indeterminate {
-    height: 100%;
-    width: 30%;
-    background: hsl(210, 24%, 16%);
-    animation: indeterminate 1.4s ease-in-out infinite;
-}
-
-@keyframes indeterminate {
-    from { transform: translateX(-100%); }
-    to { transform: translateX(340%); }
-}
-
+/* The steps on the left, the search on the right and the cloud between them */
 .workspace {
     position: absolute;
     inset: 0;
@@ -147,25 +63,44 @@
     /* The table of the rows sits on the bottom edge */
     padding-bottom: 0;
     display: grid;
-    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 300px) minmax(0, 1fr) minmax(0, 420px);
+    grid-template-rows: minmax(0, 1fr) auto;
     gap: 16px;
     /* The page behind is hovered, the cards and the prompt take events again */
     pointer-events: none;
 }
 
-/* The candidates are a card on the right, the cloud stays visible next to them */
-.panels {
-    grid-row: 2;
-    min-height: 0;
+.steps {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: start;
     display: flex;
-    justify-content: flex-end;
-    align-items: flex-start;
-    gap: 16px;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.search_column {
+    grid-column: 3;
+    grid-row: 1;
+    align-self: start;
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+    min-height: 0;
+}
+
+.steps > *,
+.search_column > * {
+    pointer-events: auto;
 }
 
 /* The rows are a card that stands on the bottom edge of the page */
 .rows {
-    grid-row: 3;
+    grid-column: 1 / -1;
+    grid-row: 2;
     /* Full width, cancels the horizontal padding of the workspace */
     margin: 0 -16px;
     min-width: 0;
@@ -219,28 +154,8 @@
     color: hsl(210, 12%, 36%);
 }
 
-.candidates {
-    margin-left: auto;
-    width: min(400px, 100%);
-    max-height: 100%;
-    overflow-y: auto;
-    pointer-events: auto;
-}
-
-/* The search button sits in the top right corner, the prompt unfolds from it to the left */
-.prompt_area {
-    grid-row: 1;
-    justify-self: end;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 8px;
-    width: 100%;
-    max-width: 640px;
-    pointer-events: none;
-}
-
 .step_area {
+    grid-column: 1 / -1;
     grid-row: 1;
     justify-self: center;
     display: flex;
@@ -252,14 +167,26 @@
     pointer-events: none;
 }
 
-.prompt_area > *,
 .step_area > * {
     pointer-events: auto;
 }
 
-.step_actions {
-    display: flex;
-    gap: 8px;
+/* The steps and the search stack on narrow screens, the cloud shows below them */
+@media (max-width: 860px) {
+    .workspace {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto auto minmax(0, 1fr) auto;
+        overflow-y: auto;
+    }
+
+    .search_column {
+        grid-column: 1;
+        grid-row: 2;
+    }
+
+    .rows {
+        grid-row: 4;
+    }
 }
 
 .step {
@@ -320,6 +247,14 @@
     transition: opacity 0.12s;
 }
 
+.dot_name {
+    font-family: 'Roboto Mono';
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .dot_snippet {
     margin-top: 2px;
     color: hsl(210, 10%, 30%);
@@ -335,86 +270,6 @@
     margin-top: 4px;
     font-family: 'Roboto Mono';
     color: hsl(210, 10%, 40%);
-}
-
-@media (max-width: 720px) {
-    .panels {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .rows,
-    .candidates {
-        width: 100%;
-    }
-}
-
-.status {
-    color: rgba(31, 35, 40, 0.8);
-    font-size: 0.85rem;
-}
-
-.result_section + .result_section {
-    margin-top: 12px;
-}
-
-.result_title {
-    margin: 0 0 4px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: hsl(210, 10%, 40%);
-}
-
-.no_hits {
-    color: hsl(210, 10%, 40%);
-}
-
-.hit {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) max-content;
-    column-gap: 12px;
-    width: 100%;
-    padding: 8px 10px;
-    border: 1px solid transparent;
-    border-radius: var(--border_radius);
-    background: transparent;
-    text-align: left;
-    font: inherit;
-    cursor: pointer;
-}
-
-.hit:hover,
-.hit:focus-visible {
-    background: hsl(210, 29%, 97%);
-    border-color: var(--border_color_primary);
-    outline: none;
-}
-
-.hit_name {
-    font-family: 'Roboto Mono';
-    font-weight: 500;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.hit_score {
-    font-family: 'Roboto Mono';
-    color: hsl(210, 10%, 40%);
-}
-
-.hit_snippet {
-    grid-column: 1 / -1;
-    margin-top: 2px;
-    color: hsl(210, 10%, 30%);
-    font-size: 0.82rem;
-    white-space: pre-line;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
 }
 
 .script {

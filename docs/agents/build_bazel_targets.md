@@ -101,8 +101,7 @@ bazel test //packages/dashql-core:*_tests
 | `//packages/dashql-core-js/test:all` | Core browser tests in Chromium and Firefox, including browser workers |
 | `//packages/hyper-api:smoke_test` | Native Tableau Hyper API integration test |
 | `//packages/dashql-native:test` | Electron host unit tests |
-| `//packages/dashql-describe:tests` | Describe CLI unit tests, offline end-to-end test and the `snapshots/describe` check |
-| `//packages/dashql-cli:tests` | DashQL CLI unit tests, including execution in hyperdb-wasm |
+| `//packages/dashql-cli:tests` | DashQL CLI unit tests, including execution in hyperdb-wasm, the offline describe end-to-end test and the `snapshots/describe` check |
 | `//packages/dashql-app:test_chromium` | Web app tests in Chromium |
 | `//packages/dashql-app:test_firefox` | Web app tests in Firefox |
 
@@ -132,9 +131,9 @@ bazel run //snapshots/plans/hyper/tests:update
 
 These targets regenerate `/snapshots/*.yaml` from `/snapshots/*.tpl.yaml` templates.
 
-The describe CLI has its own snapshots in `/snapshots/describe/`. They show the prompt that `dashql-describe` sends to
+`dashql-cli describe` has its own snapshots in `/snapshots/describe/`. They show the prompt that it sends to
 the model for a script, or that it skips the script. No LLM is involved, so they are checked by
-`bazel test //packages/dashql-describe:tests`. They are not part of `//snapshots:update`:
+`bazel test //packages/dashql-cli:tests`. They are not part of `//snapshots:update`:
 
 ```bash
 bazel run //snapshots/describe:update
@@ -321,17 +320,17 @@ git diff snapshots/parser/
 
 ### Checking and Executing SQL Scripts
 
-`//packages/dashql-cli:cli` scans, parses and analyzes SQL scripts and executes the ones without errors in an
+`//packages/dashql-cli:cli execute` scans, parses and analyzes SQL scripts and executes the ones without errors in an
 in-memory Hyper database. It prints the errors and warnings and, per script, how many rows its final query or
 VISUALIZE returns. Use it to check scripts you write, see `packages/dashql-cli/README.md`.
 
 ```bash
-bazel run //packages/dashql-cli:cli -- path/to/script.sql path/to/dir
-echo "select 1 +;" | bazel run //packages/dashql-cli:cli -- -
+bazel run //packages/dashql-cli:cli -- execute path/to/script.sql path/to/dir
+echo "select 1 +;" | bazel run //packages/dashql-cli:cli -- execute -
 # Only scan, parse and analyze
-bazel run //packages/dashql-cli:cli -- --lint path/to/dir
+bazel run //packages/dashql-cli:cli -- lint path/to/dir
 # Resolve names against CREATE TABLE statements, which also run first
-bazel run //packages/dashql-cli:cli -- --schema schema.sql query.sql
+bazel run //packages/dashql-cli:cli -- execute --schema schema.sql query.sql
 ```
 
 ### Before Committing

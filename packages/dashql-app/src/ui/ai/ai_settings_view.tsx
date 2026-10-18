@@ -24,6 +24,7 @@ import { useAIModels, useAIModelsReconfigure } from '../../app/config/ai_models_
 import { ATLAS_EMBEDDER_CONFIG } from '../../atlas/index/model.js';
 import { useHttpClient } from '../../platform/http/http_client_provider.js';
 import { useLogger } from '../../platform/logger/logger_provider.js';
+import { CopyToClipboardButton } from '../../utils/clipboard.js';
 
 const LOG_CTX = 'ai_settings';
 
@@ -47,6 +48,8 @@ interface TestState {
     status: IndicatorStatus;
     text: string;
     error?: string;
+    /// The models of the endpoint, once it was reached
+    models?: string[];
 }
 
 const INITIAL_TEST_STATE: TestState = {
@@ -115,6 +118,11 @@ function ExternalModelSection() {
 
     const update = (patch: ExternalAIModelSettings) => {
         reconfigure(s => ({ ...s, config: { ...s.config, external: { endpointUrl, model, headers, ...patch } } }));
+        // Another endpoint or other credentials may list other models, the test has to run again
+        if (patch.endpointUrl !== undefined || patch.headers !== undefined) {
+            abortRef.current?.abort();
+            setTestState(INITIAL_TEST_STATE);
+        }
     };
     const modifyHeaders = (updater: (prev: KeyValueListElement[]) => KeyValueListElement[]) => {
         update({ headers: keyValueListToHeaders(updater(headersToKeyValueList(headers))) });
@@ -128,14 +136,14 @@ function ExternalModelSection() {
         setTestState({ status: IndicatorStatus.Running, text: 'Testing…' });
         try {
             const client = new AIClient(logger, httpClient, resolveExternalAIModel(settings));
-            const models = await client.listModels(ac.signal);
+            const models = [...new Set(await client.listModels(ac.signal))].sort();
             if (ac.signal.aborted) return;
-            const reachable = `Reachable, ${models.length} model${models.length === 1 ? '' : 's'} available`;
-            if (models.length > 0 && !models.includes(client.config.model)) {
-                setTestState({ status: IndicatorStatus.Failed, text: reachable, error: `${client.config.model} is not one of them` });
-            } else {
-                setTestState({ status: IndicatorStatus.Succeeded, text: reachable });
-            }
+            logger.info('AI model test succeeded', { endpoint: client.config.endpointUrl, models: models.join(', ') }, LOG_CTX);
+            setTestState({
+                status: IndicatorStatus.Succeeded,
+                text: `Reachable, ${models.length} model${models.length === 1 ? '' : 's'} available`,
+                models,
+            });
         } catch (e: any) {
             if (ac.signal.aborted) return;
             const msg = e instanceof Error ? e.message : String(e);
@@ -145,6 +153,11 @@ function ExternalModelSection() {
     };
 
     const editable = settings != null;
+    // The listed models follow the model field, a model that the endpoint does not list fails the test
+    const models = testState.models;
+    const unlisted = models != null && models.length > 0 && !models.includes(model);
+    const status = unlisted ? IndicatorStatus.Failed : testState.status;
+    const error = unlisted ? `${model} is not one of them, choose one below` : testState.error;
     return (
         <div className={styles.section}>
             <SectionHeader
@@ -156,12 +169,12 @@ function ExternalModelSection() {
                     <div className={styles.status_indicator}>
                         <StatusIndicator
                             className={styles.status_indicator_spinner}
-                            status={testState.status}
+                            status={status}
                         />
                     </div>
                     <div className={styles.status_text}>{testState.text}</div>
-                    {testState.error && (
-                        <div className={styles.status_error}>{testState.error}</div>
+                    {error && (
+                        <div className={styles.status_error}>{error}</div>
                     )}
                 </div>
                 <Button
@@ -173,6 +186,36 @@ function ExternalModelSection() {
                     Test
                 </Button>
             </div>
+            {models != null && models.length > 0 && (
+                <ul className={styles.model_list} aria-label="Available models">
+                    {models.map(id => (
+                        <li key={id} className={id === model ? `${styles.model_row} ${styles.model_row_selected}` : styles.model_row}>
+                            {/* Plain text, so that the name can be selected as well */}
+                            <span className={styles.model_name}>{id}</span>
+                            <CopyToClipboardButton
+                                value={id}
+                                aria-label={`Copy ${id}`}
+                                aria-labelledby=""
+                                logContext={LOG_CTX}
+                                variant={ButtonVariant.Invisible}
+                                size={ButtonSize.Small}
+                            />
+                            {id === model ? (
+                                <span className={styles.model_selected_label}>Selected</span>
+                            ) : (
+                                <Button
+                                    size={ButtonSize.Small}
+                                    variant={ButtonVariant.Invisible}
+                                    disabled={!editable}
+                                    onClick={() => update({ model: id })}
+                                >
+                                    Use
+                                </Button>
+                            )}
+                        </li>
+                    ))}
+                </ul>
+            )}
             <div className={styles.section_layout}>
                 <TextField
                     className={styles.grid_column_1}

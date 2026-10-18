@@ -1,0 +1,234 @@
+/* The steps look like the prompt of the search, translucent over the cloud */
+.step_card {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid rgba(31, 35, 40, 0.2);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(14px);
+    color: hsl(210, 24%, 16%);
+    font-family: 'Roboto';
+    transition: opacity 0.12s;
+}
+
+.step_card_dimmed {
+    opacity: 0.6;
+}
+
+.step_row {
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr) max-content;
+    align-items: start;
+    column-gap: 10px;
+}
+
+.step_icon {
+    display: flex;
+    /* Centered on the first line of the title */
+    margin-top: 2px;
+    color: rgba(31, 35, 40, 0.75);
+}
+
+.step_text {
+    min-width: 0;
+}
+
+.step_title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 500;
+    line-height: 20px;
+}
+
+.step_status {
+    display: flex;
+    flex-direction: column;
+    margin-top: 2px;
+    color: rgba(31, 35, 40, 0.75);
+    font-size: 0.82rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.status_warning {
+    color: #7d4e00;
+}
+
+.status_error {
+    color: #cf222e;
+}
+
+.last_error {
+    margin-top: 2px;
+    font-family: 'Roboto Mono';
+    font-size: 0.75rem;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+}
+
+.step_action {
+    display: flex;
+    gap: 4px;
+}
+
+.folder_name {
+    font-family: 'Roboto Mono';
+    font-weight: 500;
+    color: hsl(210, 24%, 16%);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.step_progress {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.step_progress_message {
+    color: rgba(31, 35, 40, 0.75);
+    font-size: 0.78rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.progress {
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(31, 35, 40, 0.12);
+    overflow: hidden;
+}
+
+.progress_bar {
+    height: 100%;
+    background: hsl(210, 24%, 16%);
+    transition: width 0.2s;
+}
+
+.progress_indeterminate {
+    height: 100%;
+    width: 30%;
+    background: hsl(210, 24%, 16%);
+    animation: indeterminate 1.4s ease-in-out infinite;
+}
+
+@keyframes indeterminate {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(340%); }
+}
+
+.card {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.card_wide {
+    max-width: 720px;
+}
+
+.card_title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.card_body {
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.card_body p {
+    margin: 0;
+}
+
+/* The prompt on top, the best matches below it scroll */
+.search {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 0;
+    max-height: 100%;
+}
+
+.search_info {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.results {
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.result_section + .result_section {
+    margin-top: 12px;
+}
+
+.result_title {
+    margin: 0 0 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: hsl(210, 10%, 40%);
+}
+
+.no_hits {
+    color: hsl(210, 10%, 40%);
+}
+
+.hit {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) max-content;
+    column-gap: 12px;
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid transparent;
+    border-radius: var(--border_radius);
+    background: transparent;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+}
+
+.hit:hover,
+.hit:focus-visible {
+    background: hsl(210, 29%, 97%);
+    border-color: var(--border_color_primary);
+    outline: none;
+}
+
+.hit_name {
+    font-family: 'Roboto Mono';
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.hit_score {
+    font-family: 'Roboto Mono';
+    color: hsl(210, 10%, 40%);
+}
+
+.hit_snippet {
+    grid-column: 1 / -1;
+    margin-top: 2px;
+    color: hsl(210, 10%, 30%);
+    font-size: 0.82rem;
+    white-space: pre-line;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}

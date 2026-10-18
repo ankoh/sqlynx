@@ -12,12 +12,15 @@ filegroup(
     srcs = glob(["src/**/*.ts"]),
 )
 
-# Everything that ships in the CLI, without tests
+# Everything that ships in the CLI, without tests and test fixtures
 filegroup(
     name = "lib_srcs",
     srcs = glob(
         ["src/**/*.ts"],
-        exclude = ["src/**/*.test.ts"],
+        exclude = [
+            "src/**/*.test.ts",
+            "src/describe/test_fixture.ts",
+        ],
     ),
 )
 
@@ -36,7 +39,10 @@ _NODE_OPTIONS = ["--experimental-wasm-exnref"]
 
 _RUNTIME_DEPS = [
     "//:node_modules/@ankoh/dashql-core",
+    "//:node_modules/@anthropic-ai/sdk",
+    "//:node_modules/flatbuffers",
     "//:node_modules/hyperdb-wasm",
+    "//:node_modules/yaml",
 ]
 
 typescript_bin.tsc_binary(
@@ -63,7 +69,7 @@ ts_project(
     visibility = ["//visibility:public"],
 )
 
-# bazel run //packages/dashql-cli:cli -- <file.sql|dir|->...
+# bazel run //packages/dashql-cli:cli -- <execute|lint|describe> <file.sql|dir|->...
 js_binary(
     name = "cli",
     data = [
@@ -75,9 +81,11 @@ js_binary(
     visibility = ["//visibility:public"],
 )
 
+# Unit tests, execution in hyperdb-wasm, an offline end-to-end test of describe (stubbed describer) and the
+# snapshots/describe check
 vitest_bin.vitest_test(
     name = "tests",
-    size = "small",
+    size = "medium",
     args = [
         "run",
         "--config",
@@ -87,6 +95,19 @@ vitest_bin.vitest_test(
     data = [
         ":test_srcs",
         "vitest.config.ts",
+        "//:example_notebooks_test_data",
         "//:node_modules/vitest",
+        "//snapshots/describe:files",
     ] + _RUNTIME_DEPS,
+)
+
+# Regenerates snapshots/describe/*.yaml from the *.tpl.yaml templates
+js_binary(
+    name = "describe_snapshotter",
+    data = [
+        ":compile",
+        ":package.json",
+    ] + _RUNTIME_DEPS,
+    entry_point = "bin/describe-snapshot.mjs",
+    visibility = ["//snapshots/describe:__pkg__"],
 )

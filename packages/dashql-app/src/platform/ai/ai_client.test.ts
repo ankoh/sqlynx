@@ -61,23 +61,37 @@ describe('AIClient', () => {
 
     it('complete POSTs /v1/chat/completions and returns the first choice', async () => {
         const fetch = vi.fn().mockResolvedValue(makeResponse({
-            choices: [{ message: { content: 'hello world' } }],
+            choices: [{ message: { content: 'hello world' }, finish_reason: 'stop' }],
+            usage: { prompt_tokens: 12, completion_tokens: 3 },
         }));
         const client = new AIClient(logger, { fetch }, { ...CONFIG, model: 'llama3' });
 
         const messages = [{ role: 'system' as const, content: 'be brief' }, { role: 'user' as const, content: 'hi' }];
         const result = await client.complete(messages, new AbortController().signal);
-        expect(result).toBe('hello world');
+        expect(result).toEqual({ content: 'hello world', promptTokens: 12, completionTokens: 3, finishReason: 'stop' });
         const [url, init] = fetch.mock.calls[0];
         expect(url.toString()).toBe('http://localhost:11434/v1/chat/completions');
         expect(init.method).toBe('POST');
         expect(JSON.parse(init.body as string)).toEqual({ model: 'llama3', messages, stream: false });
     });
 
+    it('complete asks for a JSON schema in the OpenAI response format', async () => {
+        const fetch = vi.fn().mockResolvedValue(makeResponse({ choices: [{ message: { content: '{}' } }] }));
+        const client = new AIClient(logger, { fetch }, CONFIG);
+        const schema = { type: 'object', properties: { summary: { type: 'string' } } };
+        await client.complete([{ role: 'user', content: 'hi' }], new AbortController().signal, {
+            jsonSchema: { name: 'description', schema },
+        });
+        expect(JSON.parse(fetch.mock.calls[0][1].body as string).response_format).toEqual({
+            type: 'json_schema',
+            json_schema: { name: 'description', schema, strict: true },
+        });
+    });
+
     it('complete returns an empty string without choices', async () => {
         const fetch = vi.fn().mockResolvedValue(makeResponse({ choices: [] }));
         const client = new AIClient(logger, { fetch }, CONFIG);
-        expect(await client.complete([{ role: 'user', content: 'hi' }], new AbortController().signal)).toBe('');
+        expect((await client.complete([{ role: 'user', content: 'hi' }], new AbortController().signal)).content).toBe('');
     });
 
     it('embedDocuments POSTs /v1/embeddings and orders the vectors by index', async () => {

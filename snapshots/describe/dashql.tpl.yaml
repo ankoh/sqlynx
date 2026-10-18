@@ -1,4 +1,4 @@
-# DashQL scripts as seen by `dashql-describe`: SQL with the VISUALIZE USING, SET and EXPLAIN extensions.
+# DashQL scripts as seen by `dashql-cli describe`: SQL with the VISUALIZE USING, SET and EXPLAIN extensions.
 # Same format as basic.tpl.yaml.
 describe_snapshots:
   # Vega-Lite visualization of an external table function

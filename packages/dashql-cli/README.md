@@ -1,19 +1,22 @@
 # dashql-cli
 
-A CLI that checks and executes DashQL scripts. It is meant for agents that write DashQL scripts and want to know
-whether they work before handing them over.
+A CLI that checks, executes and describes DashQL scripts. `execute` and `lint` are meant for agents that write DashQL
+scripts and want to know whether they work before handing them over, `describe` writes the descriptions that the
+semantic search of [DashQL Atlas](../../docs/misc/atlas.md) matches a prompt against.
 
 ```
-dashql-cli [--lint] [--schema <file.sql>]... <file.sql|dir|->...
+dashql-cli execute [--schema <file.sql>]... [--debug] <file.sql|dir|->...
+dashql-cli lint [--schema <file.sql>]... [--debug] <file.sql|dir|->...
+dashql-cli describe [--force] [--dry-run] [--skip-commented] [--model <id>] [--describer claude-code|api] [--concurrency <n>] <file.sql|dir>...
 ```
 
-Run it through Bazel: `bazel run //packages/dashql-cli:cli -- examples/notebooks/tpch`.
+Run it through Bazel: `bazel run //packages/dashql-cli:cli -- execute examples/notebooks/tpch`.
 Relative paths are resolved against the directory you invoke Bazel from. Directories are searched recursively for
 `*.sql` files, the generated catalog files of notebooks (`dashql-functions.sql`, `dashql-relations.sql`) are skipped.
 `-` reads a script from stdin:
 
 ```
-echo "select 1 +;" | bazel run //packages/dashql-cli:cli -- -
+echo "select 1 +;" | bazel run //packages/dashql-cli:cli -- execute -
 ```
 
 ## What it does
@@ -28,7 +31,7 @@ Hyper database (hyperdb-wasm) with the engine settings of the app, so they may l
 - Scripts run in the given order on one connection, later scripts see the tables of earlier ones. The database is
   removed when the CLI exits.
 
-`--lint` stops after the analysis and prints only the scripts with diagnostics.
+`lint` stops after the analysis and prints only the scripts with diagnostics.
 
 ## Output
 
@@ -66,13 +69,57 @@ tables are reported. Schema scripts are checked and executed first.
 The parser accepts some incomplete statements (e.g. a `FROM` or `WHERE` without anything after it) so the editor can
 complete them. They are not reported by the analysis, but Hyper rejects them when they are executed.
 
+## Describe
+
+`describe` asks Claude for a short description and a few example questions per script and writes them as a marked
+header comment. The model sees the statements of the script and nothing else, no comments and no analysis. Scripts
+that already have such a block are skipped, `--force` replaces the block and leaves everything else alone.
+
+```sql
+-- @dashql:description
+-- Revenue of the ten highest-value unshipped orders for customers of the BUILDING market segment.
+--
+-- Example questions:
+-- - Which unshipped orders bring in the most revenue?
+-- @dashql:end
+-- TPC-H query 3
+select ...
+```
+
+A `@dashql:metadata` block (user-provided metadata, see [DashQL Atlas](../../docs/misc/atlas.md#metadata)) is
+never changed or sent to the model. If a script starts with one, the description is inserted below it.
+
+The result is plain SQL that can be reviewed, edited and committed. Run it again and only scripts without a
+description block are sent to the model. Scripts from stdin cannot be described.
+
+By default it runs the Claude Code CLI (`claude -p`) and uses its login, so `claude` has to be on the `PATH`.
+`--describer api` calls the Anthropic API instead, with credentials from `ANTHROPIC_API_KEY` or an `ant auth login`
+profile.
+
+Twelve scripts are described at a time (`--concurrency`), a request mostly waits for the model. Every script is written
+and reported with its time as soon as it is described, and a run stops after three failures in a row, which usually
+means that the describer cannot reach the model or is not logged in. Progress goes to stderr, the descriptions of a
+`--dry-run` to stdout. The exit code is 1 if a script failed.
+
+```
+bazel run //packages/dashql-cli:cli -- describe examples/atlas --model claude-sonnet-5-5
+```
+
+The atlas page describes the same way with the external model of its AI settings. It carries copies of
+`src/describe/prompt.ts` and `src/describe/header.ts` in `packages/dashql-app/src/atlas/describe/`, both are free of
+Node APIs and have to be kept in sync.
+
 ## Tests
 
-`bazel test //packages/dashql-cli:tests`
+`bazel test //packages/dashql-cli:tests` runs the unit tests, the execution in hyperdb-wasm, an offline end-to-end
+test of `describe` (stubbed describer) and the snapshot check.
+
+`snapshots/describe/*.yaml` (`basic` for plain SQL, `dashql` for VISUALIZE, SET and EXPLAIN scripts) show the prompt
+that `describe` sends to the model for a script, or that the script is skipped. Regenerate with
+`bazel run //snapshots/describe:update` from `snapshots/describe/*.tpl.yaml`.
 
 # Example
 
-
 Executing all scripts under ./examples/atlas:
 
-`bazel run //packages/dashql-cli:cli -- examples/atlas`
+`bazel run //packages/dashql-cli:cli -- execute examples/atlas`

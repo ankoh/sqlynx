@@ -2,14 +2,14 @@ import { readFile, readdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import YAML from 'yaml';
 import { SqlAnalyzer } from '../analysis/core.js';
-import { prepareDescribeInput } from '../commands/describe.js';
-import { buildUserPrompt } from '../describe/describe.js';
+import { prepareDescribeInput } from '../command.js';
+import { buildUserPrompt } from '../describe.js';
 
 /// A fixture as authored in snapshots/describe/*.tpl.yaml
 export interface SnapshotCase {
     name: string;
     script: { input: string };
-    /// Options of `dashql-describe` for the script. The snapshot shows the prompt that it sends to the model.
+    /// Options of `dashql-cli describe` for the script. The snapshot shows the prompt that it sends to the model.
     describe?: { force?: boolean } | null;
 }
 
@@ -38,7 +38,7 @@ export async function generateCase(c: SnapshotCase, analyzer: SqlAnalyzer): Prom
     const input = { id: `${c.name}.sql`, text: c.script.input };
     const out: Record<string, unknown> = { ...c };
 
-    // What `dashql-describe` sends to the model. The answer is not part of the snapshot.
+    // What `dashql-cli describe` sends to the model. The answer is not part of the snapshot.
     const [analyzed] = analyzer.analyze([input]);
     const { input: promptInput, blocks } = prepareDescribeInput(input, analyzed);
     if (blocks.some(b => b.source === 'dashql_description') && !(c.describe?.force ?? false)) {
