@@ -23,6 +23,9 @@ export function configureTransformers(env: any, baseUrl: string): void {
     env.useBrowserCache = true;
     // The wasm factory would otherwise be turned into a blob URL, which the CSP does not need to allow this way
     env.useWasmCache = false;
+    // A single thread: the runtime would otherwise spawn its thread pool from inside this worker, which can stall on
+    // initialization. The model is small enough that threads hardly pay off.
+    env.backends.onnx.wasm.numThreads = 1;
     env.backends.onnx.wasm.wasmPaths = {
         mjs: `${base}ort/${ORT_FILE_STEM}.mjs`,
         wasm: `${base}ort/${ORT_FILE_STEM}.wasm`,
