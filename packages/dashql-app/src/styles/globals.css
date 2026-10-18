@@ -39,9 +39,9 @@
     /* Backdrop of pages with a lot of empty space, like the atlas and the notebook feed: a soft light in the middle,
        a faint dot grid, and a vignette that fades the grid out toward the edges. Centered in the element it paints. */
     --stage_color: hsl(210, 29%, 97%);
-    --stage_light: radial-gradient(ellipse 65% 70% at 50% 50%, hsl(210, 33%, 99.5%) 0%, var(--stage_color) 60%);
+    --stage_light: radial-gradient(ellipse 65% 70% at 50% 50%, hsl(210, 30%, 98.1%) 0%, var(--stage_color) 60%);
     --stage_dot_grid: radial-gradient(circle, hsla(210, 24%, 30%, 0.1) 0.8px, transparent 1.3px) center / 22px 22px;
-    --stage_vignette: radial-gradient(ellipse 70% 75% at 50% 50%, hsla(210, 24%, 94%, 0) 35%, hsl(210, 24%, 94%) 100%);
+    --stage_vignette: radial-gradient(ellipse 70% 75% at 50% 50%, hsla(210, 27%, 96.1%, 0) 45%, hsl(210, 27%, 96.1%) 100%);
     --stage_background: var(--stage_vignette), var(--stage_dot_grid), var(--stage_light), var(--stage_color);
 
     --logo_color_salesforce: rgb(0, 161, 224);
