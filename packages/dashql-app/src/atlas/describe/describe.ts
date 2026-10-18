@@ -118,19 +118,25 @@ async function describeOne(
         log?.warn('Skipped script', { script: scriptName, reason, sql_chars: String(target.input.sql.length) }, DESCRIBE_LOG_CTX);
         return { scriptName, status: 'skipped', reason, ms: 0 };
     }
-    log?.debug('Describing script', { script: scriptName, sql_chars: String(target.input.sql.length) }, DESCRIBE_LOG_CTX);
+    const userPrompt = buildUserPrompt(target.input);
+    log?.info('Describing script', {
+        script: scriptName,
+        sql_chars: String(target.input.sql.length),
+        prompt_chars: String(SYSTEM_PROMPT.length + userPrompt.length),
+    }, DESCRIBE_LOG_CTX);
     let completion: AICompletion | null = null;
     let modelMs = 0;
     try {
         completion = await client.complete(
             [
                 { role: 'system', content: SYSTEM_PROMPT },
-                { role: 'user', content: buildUserPrompt(target.input) },
+                { role: 'user', content: userPrompt },
             ],
             signal,
             { jsonSchema: { name: 'description', schema: DESCRIPTION_SCHEMA } },
         );
         modelMs = ms();
+        log?.info('Received model response', completionDetails(scriptName, modelMs, modelMs, completion), DESCRIBE_LOG_CTX);
         if (completion.finishReason === 'length') {
             throw new DescribeSkipError('the model response was cut off');
         }
@@ -147,6 +153,7 @@ async function describeOne(
             throw new DescribeSkipError('the script changed while it was described');
         }
         const applied = applyHeader(current, target.blocks, description, false);
+        const writeStart = performance.now();
         if (applied.action !== 'kept') {
             // The new contents replace the file when the stream is closed. Every script is written as soon as it is
             // described, a run can stop at any point without losing descriptions.
@@ -162,6 +169,10 @@ async function describeOne(
             sql_chars: String(target.input.sql.length),
             questions: String(description.questions.length),
             header: applied.action,
+            // Parsing the response and checking the file, then writing it
+            check_ms: String(Math.round(writeStart - startedAt) - modelMs),
+            write_ms: String(Math.round(performance.now() - writeStart)),
+            file_chars: String(applied.text.length),
             summary: description.summary,
         }, DESCRIBE_LOG_CTX);
         return { scriptName, status: 'described', ms: ms() };
@@ -210,16 +221,29 @@ export async function describeScripts(
     let done = 0;
     let failuresInARow = 0;
     const stopped = () => failuresInARow >= MAX_CONSECUTIVE_FAILURES;
+    const workers = Math.max(1, Math.min(DESCRIBE_CONCURRENCY, targets.length));
+    log?.info('Sending scripts to the model', { scripts: String(targets.length), concurrency: String(workers) }, DESCRIBE_LOG_CTX);
+    const onAbort = () => {
+        log?.info('Cancelling, waiting for the requests in flight', { done: String(done), in_flight: String(next - done) }, DESCRIBE_LOG_CTX);
+    };
+    signal.addEventListener('abort', onAbort, { once: true });
     const worker = async () => {
         while (next < targets.length && !signal.aborted && !stopped()) {
             const i = next++;
+            if (next === targets.length && targets.length > 1) {
+                log?.info('Sent the last script, waiting for the requests in flight', { done: String(done), in_flight: String(next - done) }, DESCRIBE_LOG_CTX);
+            }
             const outcome = await describeOne(targets[i], client, signal, log?.childSpan());
             outcomes[i] = outcome;
             failuresInARow = outcome.status === 'failed' ? failuresInARow + 1 : 0;
             onProgress?.(++done, targets.length, outcome);
         }
     };
-    await Promise.all(Array.from({ length: Math.max(1, Math.min(DESCRIBE_CONCURRENCY, targets.length)) }, worker));
+    try {
+        await Promise.all(Array.from({ length: workers }, worker));
+    } finally {
+        signal.removeEventListener('abort', onAbort);
+    }
     if (stopped()) {
         log?.error('Stopped describing after failures in a row', { failures: String(failuresInARow) }, DESCRIBE_LOG_CTX);
     }

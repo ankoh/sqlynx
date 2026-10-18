@@ -11,6 +11,8 @@ export interface DescribeOptions {
     dryRun: boolean;
     skipCommented: boolean;
     concurrency: number;
+    /// Called once the scripts are analyzed, before the first one is sent
+    onStart?: (start: { targets: number; skipped: number; workers: number; analyzeMs: number }) => void;
     /// Called for every script as soon as it is done, in the order the scripts finish
     onOutcome?: (outcome: DescribeOutcome) => void;
 }
@@ -81,7 +83,9 @@ export async function describeFiles(
     describer: Describer,
     options: DescribeOptions,
 ): Promise<DescribeRun> {
+    const analyzeStart = performance.now();
     const analyzed = analyzer.analyze(files.map(f => ({ id: f.id, text: f.text })));
+    const analyzeMs = Math.round(performance.now() - analyzeStart);
     const outcomes: (DescribeOutcome | undefined)[] = new Array(files.length);
     const report = (i: number, outcome: DescribeOutcome) => {
         outcomes[i] = outcome;
@@ -102,6 +106,8 @@ export async function describeFiles(
     });
 
     // A request mostly waits for the model, the workers keep several of them in flight
+    const workers = Math.max(1, Math.min(options.concurrency, targets.length));
+    options.onStart?.({ targets: targets.length, skipped: files.length - targets.length, workers, analyzeMs });
     let next = 0;
     let failuresInARow = 0;
     const stopped = () => failuresInARow >= MAX_CONSECUTIVE_FAILURES;
@@ -113,7 +119,7 @@ export async function describeFiles(
             report(index, outcome);
         }
     };
-    await Promise.all(Array.from({ length: Math.max(1, Math.min(options.concurrency, targets.length)) }, worker));
+    await Promise.all(Array.from({ length: workers }, worker));
     return { outcomes: outcomes.filter((o): o is DescribeOutcome => o != null), stopped: stopped() };
 }
 

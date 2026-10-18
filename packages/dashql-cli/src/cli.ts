@@ -1,6 +1,6 @@
 import { parseArgs, styleText } from 'node:util';
 import { SqlAnalyzer } from './describe/analysis/core.js';
-import { describableFiles, describeFiles } from './describe/command.js';
+import { describableFiles, describeFiles, type DescribeOutcome } from './describe/command.js';
 import { ClaudeCodeDescriber, ClaudeDescriber, DEFAULT_DESCRIBE_MODEL } from './describe/describe.js';
 import { Executor } from './execute.js';
 import { readInputs } from './inputs.js';
@@ -192,19 +192,30 @@ async function describe(argv: string[]): Promise<number> {
               ? new ClaudeDescriber(model)
               : null;
     if (describer == null) throw new UsageError('--describer must be claude-code or api');
-    const files = describableFiles(await readInputs(positionals));
-    const analyzer = await SqlAnalyzer.create();
     const dryRun = values['dry-run'] ?? false;
     // Progress goes to stderr, the descriptions of a dry run to stdout
     const log = (message: string) => console.error(message);
+    const seconds = (ms: number) => `${(ms / 1000).toFixed(1)}s`;
+    const startedAt = performance.now();
+    const files = describableFiles(await readInputs(positionals));
+    log(`read ${files.length} scripts (${seconds(performance.now() - startedAt)})`);
+    const analyzerStart = performance.now();
+    const analyzer = await SqlAnalyzer.create();
+    log(`loaded the analyzer (${seconds(performance.now() - analyzerStart)})`);
     let described = 0, skipped = 0, failed = 0;
+    let sentAt = performance.now();
     const run = await describeFiles(files, analyzer, describer, {
         force: values.force ?? false,
         dryRun,
         skipCommented: values['skip-commented'] ?? false,
         concurrency,
+        onStart: start => {
+            sentAt = performance.now();
+            log(`analyzed the scripts (${seconds(start.analyzeMs)}), describing ${start.targets} of ${files.length} with ${model}` +
+                ` via ${values.describer ?? 'claude-code'}, ${start.workers} at a time`);
+        },
         onOutcome: outcome => {
-            const took = outcome.ms === undefined ? '' : ` (${(outcome.ms / 1000).toFixed(1)}s)`;
+            const took = outcome.ms === undefined ? '' : ` (${seconds(outcome.ms)})`;
             if (outcome.status === 'described') {
                 described += 1;
                 log(`${dryRun ? 'would write' : outcome.action} ${outcome.scriptName}${took}`);
@@ -221,7 +232,10 @@ async function describe(argv: string[]): Promise<number> {
     if (run.stopped) {
         log(`stopped after failures in a row, ${files.length - run.outcomes.length} scripts were not sent`);
     }
-    log(`${described} described, ${skipped} skipped, ${failed} failed`);
+    const sentFor = performance.now() - sentAt;
+    const slowest = run.outcomes.reduce<DescribeOutcome | null>((max, o) => (o.ms !== undefined && (max == null || o.ms > max.ms!) ? o : max), null);
+    log(`${described} described, ${skipped} skipped, ${failed} failed in ${seconds(sentFor)}` +
+        ` (${seconds(performance.now() - startedAt)} total${slowest ? `, slowest ${slowest.scriptName} ${seconds(slowest.ms!)}` : ''})`);
     return failed > 0 ? 1 : 0;
 }
 
