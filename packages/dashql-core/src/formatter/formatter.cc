@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -99,8 +100,8 @@ void AppendWrappedCommentParagraph(std::string& output, const std::vector<std::s
     if (!line.empty()) AppendCommentLine(output, line, max_width);
 }
 
-void AppendLineCommentBlock(std::string& output, std::string_view input,
-                            std::span<const buffers::parser::TextSpan> comments, size_t max_width) {
+void AppendWrappedLineComments(std::string& output, std::string_view input,
+                               std::span<const buffers::parser::TextSpan> comments, size_t max_width) {
     std::vector<std::string_view> normalized_lines;
     for (const auto& comment : comments) {
         auto text = input.substr(comment.offset(), comment.length());
@@ -154,8 +155,77 @@ void AppendLineCommentBlock(std::string& output, std::string_view input,
     if (!words.empty()) AppendWrappedCommentParagraph(output, words, max_width);
 }
 
+/// The tag name of a `-- @dashql:<tag>` line comment and whether the tag is alone on its line
+struct CommentTag {
+    std::string_view name;
+    bool alone;
+};
+
+std::optional<CommentTag> ReadCommentTag(std::string_view input, const buffers::parser::TextSpan& comment) {
+    auto text = input.substr(comment.offset(), comment.length());
+    if (!text.starts_with("--")) return std::nullopt;
+    text = TrimWhitespace(text.substr(2));
+    constexpr std::string_view prefix = "@dashql:";
+    if (!text.starts_with(prefix)) return std::nullopt;
+    text.remove_prefix(prefix.size());
+    auto name_end = text.find_first_of(" \t\r\n\f");
+    auto name = text.substr(0, name_end);
+    if (name.empty()) return std::nullopt;
+    bool alone = name_end == std::string_view::npos || TrimWhitespace(text.substr(name_end)).empty();
+    return CommentTag{name, alone};
+}
+
+/// Format a run of line comments. Regions from `-- @dashql:<tag>` to `-- @dashql:end` are kept as written, since
+/// their content is structured (e.g. JSON) and rewrapping it would break it. Other comments are rewrapped.
+/// A blank line that follows a region is kept, `following` is the offset of the text after the comment block.
+void AppendLineCommentBlock(std::string& output, std::string_view input,
+                            std::span<const buffers::parser::TextSpan> comments, size_t max_width,
+                            size_t following) {
+    size_t pending = 0;
+    size_t i = 0;
+    while (i < comments.size()) {
+        auto tag = ReadCommentTag(input, comments[i]);
+        if (!tag.has_value() || tag->name == "end") {
+            ++i;
+            continue;
+        }
+        size_t close = i + 1;
+        while (close < comments.size()) {
+            auto end_tag = ReadCommentTag(input, comments[close]);
+            if (end_tag.has_value() && end_tag->alone && end_tag->name == "end") break;
+            ++close;
+        }
+        // An unterminated region is an ordinary comment
+        if (close == comments.size()) {
+            ++i;
+            continue;
+        }
+        if (pending < i) {
+            AppendWrappedLineComments(output, input, comments.subspan(pending, i - pending), max_width);
+        }
+        for (size_t j = i; j <= close; ++j) {
+            if (!output.empty() && output.back() != '\n') output += '\n';
+            auto text = input.substr(comments[j].offset(), comments[j].length());
+            while (!text.empty() && std::isspace(static_cast<unsigned char>(text.back()))) text.remove_suffix(1);
+            output.append(text);
+        }
+        size_t region_end = comments[close].offset() + comments[close].length();
+        size_t next = close + 1 < comments.size() ? comments[close + 1].offset() : following;
+        if (next != std::string_view::npos && next >= region_end) {
+            auto gap = input.substr(region_end, next - region_end);
+            if (std::count(gap.begin(), gap.end(), '\n') > 1) output += "\n\n";
+        }
+        pending = close + 1;
+        i = close + 1;
+    }
+    if (pending < comments.size()) {
+        AppendWrappedLineComments(output, input, comments.subspan(pending), max_width);
+    }
+}
+
 void AppendComments(std::string& output, std::string_view input,
-                    std::span<const buffers::parser::TextSpan> comments, size_t max_width) {
+                    std::span<const buffers::parser::TextSpan> comments, size_t max_width,
+                    size_t following = std::string_view::npos) {
     size_t block_begin = 0;
     for (size_t i = 0; i <= comments.size(); ++i) {
         bool end_block = i == comments.size();
@@ -172,7 +242,9 @@ void AppendComments(std::string& output, std::string_view input,
         }
         if (end_block) {
             if (i > block_begin) {
-                AppendLineCommentBlock(output, input, comments.subspan(block_begin, i - block_begin), max_width);
+                size_t next = i < comments.size() ? comments[i].offset() : following;
+                AppendLineCommentBlock(output, input, comments.subspan(block_begin, i - block_begin), max_width,
+                                       next);
             }
             block_begin = i;
         }
@@ -2686,12 +2758,12 @@ std::string Formatter::WriteOutput() const {
             size_t leading_begin = description.description_begin;
             size_t leading_end = leading_begin + description.description_count;
             AppendComments(output, input, comments.subspan(comment_begin, leading_begin - comment_begin),
-                           config.max_width);
+                           config.max_width, comments[leading_begin].offset());
             AppendComments(output, input, comments.subspan(leading_begin, leading_end - leading_begin),
-                           config.max_width);
+                           config.max_width, root_span.offset());
         } else {
             AppendComments(output, input, comments.subspan(comment_begin, before_end - comment_begin),
-                           config.max_width);
+                           config.max_width, root_span.offset());
         }
 
         if (!output.empty() && output.back() != '\n') output += '\n';
