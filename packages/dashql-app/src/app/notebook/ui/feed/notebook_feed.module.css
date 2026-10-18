@@ -13,7 +13,8 @@
     position: relative;
     height: 100%;
     width: 100%;
-    background-color: var(--base_color_neutral_0);
+    /* Stays in place while the scripts scroll over it */
+    background: var(--stage_background);
     overflow: hidden;
     display: grid;
     grid-template-rows: minmax(0, 1fr);

@@ -4,7 +4,8 @@
     min-width: 0;
     overflow: auto;
     padding: 20px;
-    background: hsl(210, 29%, 97%);
+    /* The stage without its dot grid, which would not line up with the cells of the cards */
+    background: var(--stage_vignette), var(--stage_light), var(--stage_color);
 }
 
 .grid {

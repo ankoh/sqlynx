@@ -11,6 +11,22 @@ const PICK_RADIUS = 12;
 const DEMO_POINT_SIZE = 2.2;
 /// Per second, how fast the rotation eases to a halt and back
 const ROTATION_EASING = 6;
+/// How far the dots wander off their place in scene units, and how fast the flow field that moves them changes
+const DRIFT_AMPLITUDE = 0.014;
+const DRIFT_SPEED = 0.35;
+/// Seconds a dot needs to fly to a new place, and up to how much later some of them start
+const MORPH_DURATION = 1.4;
+const MORPH_STAGGER = 0.45;
+/// How far the dots swing outward halfway through their flight, relative to their distance from the center
+const MORPH_BULGE = 0.12;
+/// Radians the cloud leans toward the pointer when it is at the edge of the container
+const PARALLAX_TILT = 0.12;
+/// Per second, how fast the lean follows the pointer
+const PARALLAX_EASING = 3;
+/// Dots within this distance of the pointer grow, in CSS pixels
+const LENS_RADIUS = 110;
+/// Scene units per second that the ripple of a search travels
+const RIPPLE_SPEED = 1.6;
 
 /// A dot under the pointer. x and y are client coordinates of the dot, radius is the size of its disc in CSS pixels.
 export interface DotHover {
@@ -20,31 +36,94 @@ export interface DotHover {
     radius: number;
 }
 
+/// Dots on their way from where the previous dots were drawn to their own place
+interface Morph {
+    attribute: THREE.BufferAttribute;
+    from: Float32Array;
+    to: Float32Array;
+    /// Seconds each dot waits before it starts
+    delays: Float32Array;
+    start: number;
+}
+
+/// A slow flow field that both point sets go through. Neighbors move together, so the cloud breathes
+/// instead of jittering. `drifted` computes the same on the CPU for picking.
+const DRIFT_GLSL = `
+    uniform float uTime;
+    vec3 drift(vec3 p) {
+        float t = uTime * ${DRIFT_SPEED.toFixed(4)};
+        return ${DRIFT_AMPLITUDE.toFixed(4)} * vec3(
+            sin(t + p.y * 4.1 + p.z * 2.3),
+            sin(t * 0.83 + p.z * 3.7 + p.x * 2.9),
+            sin(t * 1.17 + p.x * 4.3 + p.y * 3.1));
+    }
+`;
+
+function drifted(x: number, y: number, z: number, time: number, out: THREE.Vector3): THREE.Vector3 {
+    const t = time * DRIFT_SPEED;
+    return out.set(
+        x + DRIFT_AMPLITUDE * Math.sin(t + y * 4.1 + z * 2.3),
+        y + DRIFT_AMPLITUDE * Math.sin(t * 0.83 + z * 3.7 + x * 2.9),
+        z + DRIFT_AMPLITUDE * Math.sin(t * 1.17 + x * 4.3 + y * 3.1),
+    );
+}
+
 const VERTEX_SHADER = `
+    ${DRIFT_GLSL}
     attribute float aSize;
     attribute float aAlpha;
+    /// Random per point, offsets its twinkle
+    attribute float aPhase;
     /// 1 if the point matches the cross-filters of the rows, only read while uHasSelection is 1
     attribute float aSelected;
     uniform float uPixelRatio;
-    /// Distance at which a point has its nominal size
+    /// Distance at which a point has its nominal size, the camera is that far from the center of the cloud
     uniform float uScale;
     uniform float uHasSelection;
+    /// The pointer in normalized device coordinates, half the size of the canvas in CSS pixels, and how much the lens
+    /// around the pointer shows
+    uniform vec2 uPointer;
+    uniform vec2 uHalfSize;
+    uniform float uLens;
+    /// Where and when the ripple of the last search started
+    uniform vec3 uRippleOrigin;
+    uniform float uRippleStart;
     varying float vAlpha;
     varying float vSelected;
     /// Size of the point in device pixels, edges are antialiased over a fixed number of pixels
     varying float vPixels;
+    /// 0 in front of the center of the cloud, 1 far behind it, where points are out of focus and fade into the haze
+    varying float vFar;
+    /// How much the ripple lights the point up
+    varying float vWave;
     void main() {
-        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        vec4 mv = modelViewMatrix * vec4(position + drift(position), 1.0);
         gl_Position = projectionMatrix * mv;
         float selected = uHasSelection > 0.5 ? aSelected : 0.0;
-        gl_PointSize = aSize * (1.0 + 0.4 * selected) * uPixelRatio * uScale / -mv.z;
+        vFar = clamp((-mv.z - uScale) / 1.6, 0.0, 1.0);
+        // Out of focus points are bigger and blurred
+        float size = aSize * (1.0 + 0.4 * selected) * (1.0 + 0.6 * vFar * vFar);
+        // Points near the pointer grow a little, like under a lens
+        vec2 ndc = gl_Position.xy / gl_Position.w;
+        float lens = uLens * (1.0 - smoothstep(0.0, ${LENS_RADIUS.toFixed(1)}, length((ndc - uPointer) * uHalfSize)));
+        size *= 1.0 + 0.5 * lens;
+        // The ripple runs outward from the best hit and fades
+        float age = uTime - uRippleStart;
+        float front = (length(position - uRippleOrigin) - age * ${RIPPLE_SPEED.toFixed(2)}) / 0.16;
+        vWave = exp(-front * front) * exp(-age * 0.9);
+        size *= 1.0 + 0.9 * vWave;
+        gl_PointSize = size * uPixelRatio * uScale / -mv.z;
         vPixels = gl_PointSize;
         vSelected = selected;
         // Points in the back are dimmer, which gives the cloud its depth
-        float depth = clamp(1.0 - (-mv.z - 2.0) / 3.2, 0.3, 1.0);
+        float depth = clamp(1.0 - (-mv.z - uScale + 2.4) / 3.2, 0.3, 1.0);
         // While there is a selection, the selected points are bright and the others fade
         float alpha = uHasSelection > 0.5 ? mix(aAlpha * 0.15, max(aAlpha, 0.9), selected) : aAlpha;
-        vAlpha = alpha * depth;
+        // Every point twinkles slowly at its own pace
+        alpha *= 0.85 + 0.15 * sin(uTime * 0.6 + aPhase * 6.2832);
+        alpha *= depth;
+        alpha = mix(alpha, max(alpha, 0.85), 0.7 * lens);
+        vAlpha = max(alpha, 0.95 * vWave);
     }
 `;
 
@@ -52,23 +131,30 @@ const FRAGMENT_SHADER = `
     varying float vAlpha;
     varying float vSelected;
     varying float vPixels;
+    varying float vFar;
+    varying float vWave;
     void main() {
         float d = length(gl_PointCoord - vec2(0.5));
         if (d > 0.5) discard;
         // One device pixel in the units of gl_PointCoord
         float aa = 1.0 / max(vPixels, 1.0);
-        // A solid disc whose edge is about a pixel wide, whatever the size of the point
-        float disc = 1.0 - smoothstep(0.5 - 1.25 * aa, 0.5 - 0.25 * aa, d);
+        // A solid disc whose edge is about a pixel wide, whatever the size of the point. Out of focus points are soft.
+        float soft = mix(1.25 * aa, 0.45, vFar * vFar);
+        float disc = 1.0 - smoothstep(0.5 - soft, 0.5 - 0.25 * aa, d);
         // The rim is a little cooler than the center, which gives the dots some volume
-        vec3 color = mix(vec3(1.0), vec3(0.86, 0.92, 1.0), smoothstep(0.1, 0.5, d));
+        vec3 color = mix(vec3(0.14, 0.16, 0.19), vec3(0.28, 0.34, 0.42), smoothstep(0.1, 0.5, d));
+        // Far points take on the cool grey of the haze
+        color = mix(color, vec3(0.48, 0.55, 0.64), 0.5 * vFar);
         // Selected points get a blue rim, the accent of the highlights stays for the search candidates
-        color = mix(color, vec3(0.45, 0.72, 1.0), vSelected * smoothstep(0.0, 0.45, d));
+        color = mix(color, vec3(0.04, 0.41, 0.85), vSelected * smoothstep(0.0, 0.45, d));
+        color = mix(color, vec3(0.9, 0.55, 0.05), vWave);
         gl_FragColor = vec4(color, vAlpha * disc);
     }
 `;
 
 /// Highlighted points are drawn on top in the accent color and are not dimmed by depth
 const HIGHLIGHT_VERTEX_SHADER = `
+    ${DRIFT_GLSL}
     attribute float aEmphasis;
     uniform float uPixelRatio;
     uniform float uScale;
@@ -77,7 +163,7 @@ const HIGHLIGHT_VERTEX_SHADER = `
     varying float vEmphasis;
     varying float vPixels;
     void main() {
-        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        vec4 mv = modelViewMatrix * vec4(position + drift(position), 1.0);
         gl_Position = projectionMatrix * mv;
         float size = aEmphasis > 0.5 ? max(15.0, uBaseSize * 1.7 + 4.0) : max(6.0, uBaseSize * 1.3);
         gl_PointSize = size * uPixelRatio * uScale / -mv.z;
@@ -94,7 +180,7 @@ const HIGHLIGHT_FRAGMENT_SHADER = `
         if (d > 0.5) discard;
         // One device pixel in the units of gl_PointCoord
         float aa = 1.0 / max(vPixels, 1.0);
-        vec3 accent = vec3(1.0, 0.78, 0.35);
+        vec3 accent = vec3(0.9, 0.55, 0.05);
         if (vEmphasis > 0.5) {
             // A bright core with a ring, so that the point is easy to find in the cloud
             float ring = smoothstep(0.34 - aa, 0.34, d) * (1.0 - smoothstep(0.46 - aa, 0.46, d));
@@ -117,16 +203,31 @@ function mulberry32(seed: number): () => number {
     };
 }
 
-/// Small white dots that slowly turn around a center point, like the pairing screen of the Apple Watch. The rotation axis
-/// is tilted and drifts a little, which makes the motion wobble.
+function randomPhases(count: number, seed: number): Float32Array {
+    const random = mulberry32(seed);
+    const phases = new Float32Array(count);
+    for (let i = 0; i < count; ++i) phases[i] = random();
+    return phases;
+}
+
+/// Ease in and out, so that the dots leave and arrive slowly
+function easeInOutCubic(p: number): number {
+    return p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+}
+
+/// Small dark dots that slowly turn around a center point, like the pairing screen of the Apple Watch. The rotation axis
+/// is tilted and drifts a little, which makes the motion wobble. Every dot also drifts and twinkles a little on its own,
+/// the cloud leans toward the pointer and the dots near it grow.
 ///
-/// The dots are made up until `setPoints` replaces them with the indexed scripts. `setHighlight` marks some of those,
-/// `setSelection` fades all others.
+/// The dots are made up until `setPoints` replaces them with the indexed scripts, they fly from where the previous dots
+/// were. `setHighlight` marks some of those, `setSelection` fades all others and `ripple` sends a wave through the cloud.
 export class PointCloud {
     private readonly renderer: THREE.WebGLRenderer;
     private readonly scene = new THREE.Scene();
     private readonly camera = new THREE.PerspectiveCamera(45, 1, 0.1, 20);
-    /// Rotates both point sets together
+    /// Leans toward the pointer
+    private readonly tilt = new THREE.Group();
+    /// Rotates all point sets together
     private readonly root = new THREE.Group();
     private readonly cloud: THREE.Points;
     private readonly material: THREE.ShaderMaterial;
@@ -135,9 +236,11 @@ export class PointCloud {
     private readonly highlights: THREE.Points;
     private readonly highlightMaterial: THREE.ShaderMaterial;
     private highlightGeometry: THREE.BufferGeometry | null = null;
-    /// Positions of both point sets as drawn (inside `root`), kept for highlights and picking
+    /// Positions of both point sets at rest (inside `root`), kept for highlights and picking. The drawn positions differ
+    /// while the dots fly to their place.
     private demoPositions = new Float32Array(0);
     private dataPositions: Float32Array | null = null;
+    private morph: Morph | null = null;
     /// The made up dots are shown, as long as `setPoints` was not called
     private showingDemo = true;
     /// Nominal size of the indexed points, depends on how many there are
@@ -147,6 +250,10 @@ export class PointCloud {
     /// The pointer in client coordinates. The dot under it is reported to the hover listener.
     private pointer: { x: number; y: number } | null = null;
     private hoveredDot = -1;
+    /// The pointer anywhere in the window, from -1 to 1 across the container. The cloud leans toward it.
+    private readonly parallax = { x: 0, y: 0 };
+    /// 1 while the pointer is over the cloud, the lens fades in and out
+    private lens = 0;
     private rotationPaused = false;
     /// 1 while the cloud turns, eases to 0 when it is held
     private rotationSpeed = 1;
@@ -160,6 +267,8 @@ export class PointCloud {
     /// How much of the bottom of the container is covered, in CSS pixels. The cloud is centered in the space above.
     private bottomInset = 0;
     private readonly clock = new THREE.Clock(false);
+    /// Seconds the animation ran, without the time the page was hidden
+    private time = 0;
     private readonly axis = new THREE.Vector3();
     private animationFrame = 0;
     private disposed = false;
@@ -178,7 +287,17 @@ export class PointCloud {
             fragmentShader: FRAGMENT_SHADER,
             transparent: true,
             depthWrite: false,
-            uniforms: { uPixelRatio: { value: 1 }, uScale: { value: 1 }, uHasSelection: { value: 0 } },
+            uniforms: {
+                uTime: { value: 0 },
+                uPixelRatio: { value: 1 },
+                uScale: { value: 1 },
+                uHasSelection: { value: 0 },
+                uPointer: { value: new THREE.Vector2() },
+                uHalfSize: { value: new THREE.Vector2(1, 1) },
+                uLens: { value: 0 },
+                uRippleOrigin: { value: new THREE.Vector3() },
+                uRippleStart: { value: -1000 },
+            },
         });
         this.cloud = new THREE.Points(this.demoGeometry, this.material);
         this.highlightMaterial = new THREE.ShaderMaterial({
@@ -187,15 +306,20 @@ export class PointCloud {
             transparent: true,
             depthWrite: false,
             depthTest: false,
-            uniforms: { uPixelRatio: { value: 1 }, uScale: { value: 1 }, uBaseSize: { value: DEMO_POINT_SIZE } },
+            uniforms: { uTime: { value: 0 }, uPixelRatio: { value: 1 }, uScale: { value: 1 }, uBaseSize: { value: DEMO_POINT_SIZE } },
         });
         this.highlights = new THREE.Points(new THREE.BufferGeometry(), this.highlightMaterial);
         this.highlights.renderOrder = 1;
         this.highlights.visible = false;
+        // The points move in the shaders, the bounding spheres of the geometries do not know where they are
+        for (const object of [this.cloud, this.highlights]) object.frustumCulled = false;
         this.root.add(this.cloud, this.highlights);
         // Start tilted, so that the first frame already looks lively
         this.root.rotation.set(0.5, 0, 0.3);
-        this.scene.add(this.root);
+        this.tilt.add(this.root);
+        this.scene.add(this.tilt);
+        // The made up dots unfold out of the center
+        this.flyIn(this.demoGeometry, this.demoPositions, this.demoPositions.map(v => v * 0.15));
 
         this.resizeObserver = new ResizeObserver(this.observe);
         try {
@@ -207,6 +331,8 @@ export class PointCloud {
         this.resize();
         this.renderOnce();
         document.addEventListener('visibilitychange', this.handleVisibilityChange);
+        window.addEventListener('pointermove', this.handleWindowPointer, { passive: true });
+        document.documentElement.addEventListener('pointerleave', this.handleWindowLeave);
     }
 
     start(): void {
@@ -222,6 +348,8 @@ export class PointCloud {
         cancelAnimationFrame(this.animationFrame);
         this.resizeObserver.disconnect();
         document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+        window.removeEventListener('pointermove', this.handleWindowPointer);
+        document.documentElement.removeEventListener('pointerleave', this.handleWindowLeave);
         this.demoGeometry.dispose();
         this.dataGeometry?.dispose();
         this.highlightGeometry?.dispose();
@@ -233,6 +361,8 @@ export class PointCloud {
 
     /// Show indexed embeddings instead of the made up dots. `coords` has 3 values per embedding, none shows nothing.
     setPoints(coords: Float32Array): void {
+        const previous = this.drawnPositions();
+        this.morph = null;
         this.dataGeometry?.dispose();
         this.dataGeometry = null;
         this.dataPositions = null;
@@ -249,9 +379,10 @@ export class PointCloud {
         const size = pointSize(count);
         const positions = shapeCoords(coords);
         const geometry = new THREE.BufferGeometry();
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions.length), 3));
         geometry.setAttribute('aSize', new THREE.BufferAttribute(new Float32Array(count).fill(size), 1));
         geometry.setAttribute('aAlpha', new THREE.BufferAttribute(new Float32Array(count).fill(pointAlpha(count)), 1));
+        geometry.setAttribute('aPhase', new THREE.BufferAttribute(randomPhases(count, 11), 1));
         geometry.setAttribute('aSelected', new THREE.BufferAttribute(new Float32Array(count), 1));
         this.dataGeometry = geometry;
         this.selection = null;
@@ -260,11 +391,14 @@ export class PointCloud {
         this.dataSize = size;
         this.highlightMaterial.uniforms.uBaseSize.value = size;
         this.cloud.geometry = geometry;
+        this.flyIn(geometry, positions, previous);
         this.renderOnce();
     }
 
     /// Back to the made up dots
     clearPoints(): void {
+        const previous = this.drawnPositions();
+        const wasDemo = this.showingDemo;
         this.dataGeometry?.dispose();
         this.dataGeometry = null;
         this.dataPositions = null;
@@ -276,6 +410,8 @@ export class PointCloud {
         this.setHighlight([], []);
         this.cloud.geometry = this.demoGeometry;
         this.cloud.visible = true;
+        // The made up dots that are already shown keep flying, if they still unfold
+        if (!wasDemo) this.flyIn(this.demoGeometry, this.demoPositions, previous);
         this.renderOnce();
     }
 
@@ -286,7 +422,7 @@ export class PointCloud {
 
     /// Mark points by their index, in the coords of `setPoints` or in the made up dots. The hovered ones are emphasized.
     setHighlight(candidates: readonly number[], hovered: readonly number[]): void {
-        const coords = this.showingDemo ? this.demoPositions : this.dataPositions ?? new Float32Array(0);
+        const coords = this.restingPositions();
         const inside = (i: number) => i >= 0 && i * 3 < coords.length;
         const emphasized = new Set(hovered.filter(inside));
         const indices = [...candidates.filter(i => inside(i) && !emphasized.has(i)), ...emphasized];
@@ -326,6 +462,14 @@ export class PointCloud {
         this.renderOnce();
     }
 
+    /// Send a wave through the cloud that starts at a point, by its index in the coords of `setPoints`
+    ripple(origin: number): void {
+        const coords = this.restingPositions();
+        if (origin < 0 || origin * 3 >= coords.length) return;
+        (this.material.uniforms.uRippleOrigin.value as THREE.Vector3).fromArray(coords, origin * 3);
+        this.material.uniforms.uRippleStart.value = this.time;
+    }
+
     private isSelected(index: number): boolean {
         const selection = this.selection;
         return selection == null || ((selection[index >>> 5] >>> (index & 31)) & 1) === 1;
@@ -345,6 +489,8 @@ export class PointCloud {
     setBottomInset(inset: number): void {
         if (inset === this.bottomInset) return;
         this.bottomInset = inset;
+        // The backdrop of the page centers its light on the cloud
+        this.container.style.setProperty('--cloud_inset', `${inset}px`);
         this.updateViewOffset();
         this.renderOnce();
     }
@@ -356,11 +502,67 @@ export class PointCloud {
         if (index < 0) this.hoverListener?.(null);
     }
 
+    /// Where the points of the shown set are at rest
+    private restingPositions(): Float32Array {
+        return this.showingDemo ? this.demoPositions : this.dataPositions ?? new Float32Array(0);
+    }
+
+    /// Where the points of the shown set are drawn right now, none if nothing is shown
+    private drawnPositions(): Float32Array | null {
+        if (!this.cloud.visible) return null;
+        return (this.cloud.geometry.getAttribute('position') as THREE.BufferAttribute).array as Float32Array;
+    }
+
+    /// Let the dots of `geometry` fly from the drawn positions `from` to their resting positions `to`. Point i starts
+    /// where point i was, so that the same scripts stay in place when a folder is reindexed.
+    private flyIn(geometry: THREE.BufferGeometry, to: Float32Array, from: Float32Array | null): void {
+        const attribute = geometry.getAttribute('position') as THREE.BufferAttribute;
+        const fromCount = from == null ? 0 : from.length / 3;
+        if (from == null || fromCount === 0) {
+            this.morph = null;
+            (attribute.array as Float32Array).set(to);
+            attribute.needsUpdate = true;
+            return;
+        }
+        const count = to.length / 3;
+        const start = new Float32Array(to.length);
+        const delays = new Float32Array(count);
+        for (let i = 0; i < count; ++i) {
+            const source = i % fromCount;
+            for (let d = 0; d < 3; ++d) start[i * 3 + d] = from[source * 3 + d];
+            delays[i] = Math.random() * MORPH_STAGGER;
+        }
+        this.morph = { attribute, from: start, to, delays, start: this.time };
+        this.updateMorph();
+    }
+
+    private updateMorph(): void {
+        const morph = this.morph;
+        if (morph == null) return;
+        const { attribute, from, to, delays } = morph;
+        const drawn = attribute.array as Float32Array;
+        const elapsed = this.time - morph.start;
+        let done = true;
+        for (let i = 0; i < delays.length; ++i) {
+            const progress = Math.max(0, Math.min(1, (elapsed - delays[i]) / MORPH_DURATION));
+            if (progress < 1) done = false;
+            const e = easeInOutCubic(progress);
+            // Halfway through, the dots swing outward a little, like the cloud takes a breath
+            const bulge = 1 + MORPH_BULGE * Math.sin(Math.PI * e);
+            for (let d = 0; d < 3; ++d) {
+                const k = i * 3 + d;
+                drawn[k] = (from[k] + (to[k] - from[k]) * e) * bulge;
+            }
+        }
+        attribute.needsUpdate = true;
+        if (done) this.morph = null;
+    }
+
     /// The dot closest to the pointer, measured in the radius of its disc
-    private pickDot(): DotHover | null {
+    private pickDot(rect: DOMRect): DotHover | null {
         const pointer = this.pointer;
-        if (pointer == null) return null;
-        const rect = this.container.getBoundingClientRect();
+        // Dots that are still flying are not picked
+        if (pointer == null || this.morph != null) return null;
         const positions = this.showingDemo ? this.demoPositions : this.dataPositions;
         if (positions == null) return null;
         const scale = this.camera.position.z;
@@ -370,7 +572,7 @@ export class PointCloud {
         let bestScore = 1;
         for (let i = 0; i * 3 < positions.length; ++i) {
             if (!this.showingDemo && !this.isSelected(i)) continue;
-            vector.set(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2])
+            drifted(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2], this.time, vector)
                 .applyMatrix4(this.root.matrixWorld)
                 .applyMatrix4(this.camera.matrixWorldInverse);
             const depth = -vector.z;
@@ -425,9 +627,10 @@ export class PointCloud {
         }
         const geometry = new THREE.BufferGeometry();
         this.demoPositions = positions;
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions.length), 3));
         geometry.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1));
         geometry.setAttribute('aAlpha', new THREE.BufferAttribute(alphas, 1));
+        geometry.setAttribute('aPhase', new THREE.BufferAttribute(randomPhases(POINT_COUNT, 13), 1));
         return geometry;
     }
 
@@ -489,6 +692,19 @@ export class PointCloud {
         else if (this.running) this.resume();
     };
 
+    private readonly handleWindowPointer = (e: PointerEvent): void => {
+        const rect = this.container.getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0) return;
+        const clamp = (v: number) => Math.max(-1, Math.min(1, v));
+        this.parallax.x = clamp(((e.clientX - rect.left) / rect.width) * 2 - 1);
+        this.parallax.y = clamp(((e.clientY - rect.top) / rect.height) * 2 - 1);
+    };
+
+    private readonly handleWindowLeave = (): void => {
+        this.parallax.x = 0;
+        this.parallax.y = 0;
+    };
+
     private resume(): void {
         cancelAnimationFrame(this.animationFrame);
         this.clock.start();
@@ -503,19 +719,38 @@ export class PointCloud {
     private readonly frame = (): void => {
         if (this.disposed || !this.running) return;
         const dt = Math.min(this.clock.getDelta(), 0.1);
-        const t = this.clock.elapsedTime;
+        this.time += dt;
+        const t = this.time;
         // A tilted axis that drifts slowly: the cloud does not turn like a record on a player
         this.axis.set(0.32 + Math.sin(t * 0.11) * 0.22, 1, 0.18 + Math.cos(t * 0.07) * 0.2).normalize();
         // Hovering a dot holds the cloud, so that the dot does not run away from the pointer
         const held = this.rotationPaused || this.hoveredDot >= 0;
         this.rotationSpeed += ((held ? 0 : 1) - this.rotationSpeed) * (1 - Math.exp(-dt * ROTATION_EASING));
         this.root.rotateOnWorldAxis(this.axis, dt * ROTATION_SPEED * this.rotationSpeed);
-        this.root.updateMatrixWorld();
-        const hover = this.pickDot();
+        // The cloud leans toward the pointer: its front turns to face it
+        const lean = 1 - Math.exp(-dt * PARALLAX_EASING);
+        this.tilt.rotation.y += (this.parallax.x * PARALLAX_TILT - this.tilt.rotation.y) * lean;
+        this.tilt.rotation.x += (this.parallax.y * PARALLAX_TILT - this.tilt.rotation.x) * lean;
+        this.scene.updateMatrixWorld();
+        this.updateMorph();
+        for (const material of [this.material, this.highlightMaterial]) material.uniforms.uTime.value = t;
+
+        const rect = this.container.getBoundingClientRect();
+        const pointer = this.pointer;
+        this.lens += ((pointer != null ? 1 : 0) - this.lens) * (1 - Math.exp(-dt * ROTATION_EASING));
+        this.material.uniforms.uLens.value = this.lens;
+        if (pointer != null && rect.width > 0 && rect.height > 0) {
+            (this.material.uniforms.uPointer.value as THREE.Vector2).set(
+                ((pointer.x - rect.left) / rect.width) * 2 - 1,
+                1 - ((pointer.y - rect.top) / rect.height) * 2,
+            );
+        }
+        (this.material.uniforms.uHalfSize.value as THREE.Vector2).set(rect.width / 2, rect.height / 2);
+
+        const hover = this.pickDot(rect);
         this.setDotHover(hover?.index ?? -1);
         if (hover != null) this.hoverListener?.(hover);
         this.renderOnce();
         this.animationFrame = requestAnimationFrame(this.frame);
     };
 }
-
