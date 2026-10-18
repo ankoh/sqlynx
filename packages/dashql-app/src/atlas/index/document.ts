@@ -1,6 +1,7 @@
-import type { ScriptFeatures } from './analysis/features.js';
+import type { SyntaxFeatures } from './analysis/syntax.js';
 
-export interface FeatureDocument {
+/// A text to embed that fits the token budget of the model
+export interface EmbeddingDocument {
     text: string;
     tokenCount: number;
     truncated: boolean;
@@ -37,17 +38,17 @@ function countStatements(types: string[]): string[] {
     return [...counts].map(([type, n]) => (n > 1 ? `${n} ${type} statements` : `1 ${type} statement`));
 }
 
-/// Render the features as a deterministic, natural-language-like text that fits a token budget.
+/// Render the syntax features as a deterministic, natural-language-like text that fits a token budget.
 /// Sections are added by priority, lists that do not fit are cut and marked with "(+N more)".
 /// The budget is checked with the model's own tokenizer, so the text never exceeds it and the model never truncates
 /// it silently. Items are the smallest unit that is cut: an item that does not fit on its own is dropped as a whole
 /// (never shortened), which is why visualization entries are one per chart and capped in size.
 /// A section whose first item does not fit is skipped, smaller sections behind it can still be added.
-export function renderFeatureDocument(
-    features: ScriptFeatures,
+export function renderSyntaxDocument(
+    features: SyntaxFeatures,
     maxTokens: number,
     countTokens: (text: string) => number,
-): FeatureDocument {
+): EmbeddingDocument {
     const identifiers = [...features.tables, ...features.columns, ...features.outputColumns, ...features.ctes];
     const sections: Section[] = [
         { title: 'Statements', items: countStatements(features.statementTypes), separator: ', ' },
@@ -92,6 +93,30 @@ export function renderFeatureDocument(
         if (lo > 0) {
             lines.push(render(section.title, section.items.slice(0, lo), section.separator, section.items.length - lo));
         }
+    }
+    const text = lines.join('\n');
+    return { text, tokenCount: countTokens(text), truncated };
+}
+
+/// Render user-provided properties as one `key: value` line per property, in the order of the JSON object.
+/// Plain lines embed better than JSON punctuation. Strings are written as they are, other values as compact JSON.
+/// Properties are added until the token budget is used up, a property that does not fit is dropped as a whole.
+export function renderPropertiesDocument(
+    properties: Record<string, unknown>,
+    maxTokens: number,
+    countTokens: (text: string) => number,
+): EmbeddingDocument {
+    const lines: string[] = [];
+    let truncated = false;
+    for (const [key, value] of Object.entries(properties)) {
+        if (value == null) continue;
+        const rendered = typeof value === 'string' ? value : JSON.stringify(value);
+        const line = `${key}: ${rendered.replace(/\s+/g, ' ').trim()}`;
+        if (countTokens([...lines, line].join('\n')) > maxTokens) {
+            truncated = true;
+            continue;
+        }
+        lines.push(line);
     }
     const text = lines.join('\n');
     return { text, tokenCount: countTokens(text), truncated };

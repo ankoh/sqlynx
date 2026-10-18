@@ -183,3 +183,20 @@ describe_snapshots:
       from customer join orders on c_custkey = o_custkey
       where c_mktsegment = 'BUILDING'
       group by c_name;
+  - name: properties_not_in_prompt
+    describe: {}
+    script:
+      input: |-
+        -- @dashql:properties
+        -- {
+        --   "owner": "finance",
+        --   "dashboard": "Revenue Weekly"
+        -- }
+        -- @dashql:end
+        select o_orderdate, sum(o_totalprice) as total
+        from orders
+        group by o_orderdate;
+    describe_prompt: |-
+      select o_orderdate, sum(o_totalprice) as total
+      from orders
+      group by o_orderdate;

@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <optional>
 
+#include "rapidjson/document.h"
+
 namespace dashql {
 namespace parser {
 
@@ -64,6 +66,7 @@ std::optional<Tag> ReadTag(std::string_view text, Range line) {
 /// Resolve the block type of a tag
 CommentBlockType ResolveTagType(std::string_view name) {
     if (name == "description") return CommentBlockType::DASHQL_DESCRIPTION;
+    if (name == "properties") return CommentBlockType::DASHQL_PROPERTIES;
     return CommentBlockType::DASHQL_UNKNOWN_TAG;
 }
 
@@ -238,6 +241,36 @@ class CommentGrouper {
         }
     }
 
+    /// Check the properties blocks, the first one must contain a JSON object
+    void ValidateProperties() {
+        bool seen = false;
+        for (size_t i = 0; i < out.blocks.size(); ++i) {
+            auto& block = out.blocks[i];
+            if (block.block_type() != CommentBlockType::DASHQL_PROPERTIES) continue;
+            if (seen) {
+                out.warnings.emplace_back(block.text_span(),
+                                          "@dashql:properties is ignored, a script has a single properties block");
+                continue;
+            }
+            seen = true;
+            std::string json;
+            for (uint32_t j = 0; j < block.lines_count(); ++j) {
+                auto& line = out.lines[block.lines_begin() + j];
+                if (j > 0) json += '\n';
+                json += text.substr(line.offset(), line.length());
+            }
+            rapidjson::Document doc;
+            doc.Parse(json.data(), json.size());
+            if (doc.HasParseError()) {
+                out.warnings.emplace_back(block.text_span(), "@dashql:properties is not valid JSON");
+            } else if (!doc.IsObject()) {
+                out.warnings.emplace_back(block.text_span(), "@dashql:properties must be a JSON object");
+            } else {
+                out.properties_block = static_cast<uint32_t>(i);
+            }
+        }
+    }
+
     /// Group all comments
     CommentBlocks Group() && {
         size_t i = 0;
@@ -265,6 +298,7 @@ class CommentGrouper {
             GroupLineComments(i, run_end);
             i = run_end;
         }
+        ValidateProperties();
         return std::move(out);
     }
 };

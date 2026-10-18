@@ -14,7 +14,7 @@ import { Button, ButtonVariant } from '../ui/foundations/button.js';
 import { SegmentedControl, SegmentedControlSize } from '../ui/foundations/segmented_control.js';
 import { FileDirectoryIcon, SyncIcon } from '../ui/foundations/symbol_icon.js';
 import { ParticleFlowBackground, type BackgroundAnimation, type BackgroundAnimationLoader } from '../ui/particle_flow/particle_flow_background.js';
-import { AtlasSession, type AtlasPhase, type OpenedFolder } from './atlas_session.js';
+import { AtlasIndexUnreadable, AtlasSession, type AtlasPhase, type OpenedFolder } from './atlas_session.js';
 import { DEFAULT_MODEL_BASE_URL } from './index/model.js';
 import { demoScript } from './demo_data.js';
 import { PromptAction, PromptBar } from './prompt_bar.js';
@@ -23,7 +23,15 @@ import type { SearchResults } from './search/search.js';
 import type { EmbeddingKind } from './store.js';
 import * as styles from './atlas.module.css';
 
+/// The embedding kinds that the cloud can show, in the order of the control
+const KIND_CONTROLS: { kind: EmbeddingKind; title: string }[] = [
+    { kind: 'description', title: 'Semantics' },
+    { kind: 'syntax', title: 'Structure' },
+    { kind: 'properties', title: 'Properties' },
+];
+
 const LOG_CTX = 'atlas';
+
 
 /// three.js is only loaded once the page is up
 const loadPointCloud: BackgroundAnimationLoader = async () => (await import('./point_cloud.js')).PointCloud;
@@ -32,6 +40,8 @@ type View =
     | { kind: 'setup'; status: string }
     | { kind: 'pick' }
     | { kind: 'busy'; phase: AtlasPhase }
+    /// The index files of the folder could not be loaded, the folder is still mounted and can be reindexed
+    | { kind: 'unreadable'; name: string; message: string }
     | { kind: 'search' }
     | { kind: 'script'; name: string; text: string };
 
@@ -80,8 +90,10 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
     const [prompt, setPrompt] = React.useState('');
     const [searching, setSearching] = React.useState(false);
     const [results, setResults] = React.useState<SearchResults[] | null>(null);
-    /// Which embeddings the cloud shows, features and comments have independent layouts
-    const [kind, setKind] = React.useState<EmbeddingKind>('comments');
+    /// The warning about an outdated index was closed, until another folder is opened
+    const [outdatedDismissed, setOutdatedDismissed] = React.useState(false);
+    /// Which embeddings the cloud shows, every kind has its own layout
+    const [kind, setKind] = React.useState<EmbeddingKind>('description');
     const [cloud, setCloud] = React.useState<PointCloud | null>(null);
     /// The script of the candidate under the pointer
     const [hovered, setHovered] = React.useState<string | null>(null);
@@ -122,7 +134,7 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
     }, [cloud]);
     const onPointerLeave = React.useCallback(() => cloud?.setPointer(null), [cloud]);
 
-    /// Every dot of a script: the features embedding and each comment chunk
+    /// Every dot of a script in the shown kind, e.g. each description chunk
     const pointsOfScript = React.useMemo(() => {
         const out = new Map<string, number[]>();
         const points = folder?.points[kind];
@@ -208,10 +220,15 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
         setView({ kind: 'busy', phase: { kind: 'mount', message } });
         try {
             const opened = await run(phase => setView({ kind: 'busy', phase }));
-            setKind(opened.points.comments.owners.length > 0 ? 'comments' : 'features');
+            setKind(opened.points.description.owners.length > 0 ? 'description' : 'syntax');
             setFolder(opened);
+            setOutdatedDismissed(false);
             setView({ kind: 'search' });
         } catch (e) {
+            if (e instanceof AtlasIndexUnreadable) {
+                setView({ kind: 'unreadable', name: e.folder, message: e.message });
+                return;
+            }
             logger.error('Failed to open folder', { error: stringifyError(e), name, stack: e instanceof Error ? e.stack : undefined }, LOG_CTX);
             setError(stringifyError(e));
             setView({ kind: 'pick' });
@@ -236,10 +253,11 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
 
     const reindex = React.useCallback(async () => {
         const session = sessionRef.current;
-        if (session == null || folder == null) return;
+        const name = folder?.name ?? (view.kind === 'unreadable' ? view.name : null);
+        if (session == null || name == null) return;
         setError(null);
-        await showFolder(folder.name, report => session.reindex(report), `Indexing ${folder.name}`, true);
-    }, [showFolder, folder]);
+        await showFolder(name, report => session.reindex(report), `Indexing ${name}`, true);
+    }, [showFolder, folder, view]);
 
     const submit = React.useCallback(async () => {
         const session = sessionRef.current;
@@ -290,10 +308,28 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
                 action={<Button variant={ButtonVariant.Primary} onClick={selectFolder}>Select folder</Button>}
             >
                 <p>
-                    Search the <code>.sql</code> files of a folder by what their comments and their SQL are about.
+                    Search the <code>.sql</code> files of a folder by their descriptions, their SQL and their properties.
                     Everything stays in your browser, the index is written into the folder.
                 </p>
                 {error != null && <p className={styles.error}>{error}</p>}
+            </StepPanel>
+        );
+    } else if (view.kind === 'unreadable') {
+        content = (
+            <StepPanel
+                title="Reindex the folder?"
+                action={(
+                    <div className={styles.step_actions}>
+                        <Button onClick={selectFolder}>Select another folder</Button>
+                        <Button variant={ButtonVariant.Primary} onClick={() => void reindex()}>Reindex</Button>
+                    </div>
+                )}
+            >
+                <p>
+                    The index files in <code>{view.name}</code> cannot be loaded. They may have been written by an older
+                    version of DashQL. Reindexing the folder replaces them.
+                </p>
+                <p className={styles.error}>{view.message}</p>
             </StepPanel>
         );
     } else if (view.kind === 'busy') {
@@ -320,22 +356,18 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
                     <SegmentedControl
                         aria-label="Embeddings in the cloud"
                         size={SegmentedControlSize.Small}
-                        onChange={index => setKind(index === 0 ? 'comments' : 'features')}
+                        onChange={index => setKind(KIND_CONTROLS[index].kind)}
                     >
-                        <SegmentedControl.Button
-                            selected={kind === 'comments'}
-                            disabled={folder?.points.comments.owners.length === 0}
-                            count={folder?.points.comments.owners.length}
-                        >
-                            Description
-                        </SegmentedControl.Button>
-                        <SegmentedControl.Button
-                            selected={kind === 'features'}
-                            disabled={folder?.points.features.owners.length === 0}
-                            count={folder?.points.features.owners.length}
-                        >
-                            Features
-                        </SegmentedControl.Button>
+                        {KIND_CONTROLS.map(control => (
+                            <SegmentedControl.Button
+                                key={control.kind}
+                                selected={kind === control.kind}
+                                disabled={folder?.points[control.kind].owners.length === 0}
+                                count={folder?.points[control.kind].owners.length}
+                            >
+                                {control.title}
+                            </SegmentedControl.Button>
+                        ))}
                     </SegmentedControl>
                 </div>
                 {results != null && (
@@ -369,6 +401,20 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
                 <div className={styles.prompt_area}>
                     {searching && <div className={styles.status}>Searching</div>}
                     {error != null && <div className={styles.error_banner}>{error}</div>}
+                    {folder != null && folder.outdated > 0 && !outdatedDismissed && (
+                        <div className={styles.warning_banner} role="status">
+                            <span className={styles.warning_text}>
+                                The index seems outdated, {folder.outdated} {folder.outdated === 1 ? 'script was' : 'scripts were'} added,
+                                changed or removed since it was written.
+                            </span>
+                            <button className={styles.banner_action} onClick={() => void reindex()} disabled={searching}>
+                                Reindex
+                            </button>
+                            <button className={styles.banner_action} onClick={() => setOutdatedDismissed(true)} aria-label="Dismiss">
+                                Dismiss
+                            </button>
+                        </div>
+                    )}
                     <PromptBar
                         value={prompt}
                         onChange={setPrompt}

@@ -4,7 +4,7 @@ import type { AnalyzedSql } from './core.js';
 export const DESCRIPTION_BEGIN = '@dashql:description';
 export const DESCRIPTION_END = '@dashql:end';
 
-export type CommentSource = 'dashql_description' | 'comment';
+export type CommentSource = 'dashql_description' | 'dashql_properties' | 'comment';
 
 export interface CommentBlock {
     source: CommentSource;
@@ -38,6 +38,9 @@ export function extractComments(sql: AnalyzedSql): CommentBlock[] {
             case buffers.parser.CommentBlockType.DASHQL_DESCRIPTION:
                 source = 'dashql_description';
                 break;
+            case buffers.parser.CommentBlockType.DASHQL_PROPERTIES:
+                source = 'dashql_properties';
+                break;
             default:
                 continue;
         }
@@ -47,7 +50,7 @@ export function extractComments(sql: AnalyzedSql): CommentBlock[] {
             lines.push(decoder.decode(sql.bytes.subarray(line.offset(), line.offset() + line.length())));
         }
         const text = lines.join('\n');
-        // Descriptions are kept even when empty so that `describe` can replace them
+        // Tagged blocks are kept even when empty so that `describe` can replace or skip them
         if (text.length === 0 && source === 'comment') {
             continue;
         }

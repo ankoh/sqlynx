@@ -286,6 +286,11 @@ export default vite.defineConfig(({ mode, command }) => {
         optimizeDeps: {
             include: ['react', 'react-dom', 'react-router-dom'],
             exclude: [
+                // Served straight from bazel-bin. A pre-bundled copy is not rebuilt when the core changes, it only
+                // depends on the lockfile and the config, and would miss new exports.
+                '@ankoh/dashql-core',
+                '@ankoh/dashql-core/buffers',
+                '@ankoh/dashql-core/browser-worker',
                 '@dashql/hyperdb-wasm?url',
                 '@dashql/hyperdb-wasm-js?url',
                 '@dashql/hyperdb-wasm-worker?url',

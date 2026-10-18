@@ -202,6 +202,9 @@ void ParserSnapshotTest::EncodeScript(c4::yml::NodeRef root, const ScannedScript
             line_node.set_val_style(c4::yml::VAL_DQUO);
         }
     }
+    if (parsed.comment_blocks.properties_block != PROTO_NULL_U32) {
+        root.append_child() << c4::yml::key("properties-block") << parsed.comment_blocks.properties_block;
+    }
     auto warnings_node = root.append_child();
     warnings_node << c4::yml::key("comment-warnings");
     warnings_node |= c4::yml::SEQ;

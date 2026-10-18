@@ -177,3 +177,77 @@ parser-snapshots:
       -- @dashql:end of description
       -- @dashql:end
       select 1
+  # A properties block holds a pretty-printed JSON object
+  - name: properties_line_form
+    input: |
+      -- @dashql:properties
+      -- {
+      --   "owner": "finance",
+      --   "avg_runtime_ms": 1834
+      -- }
+      -- @dashql:end
+      select 1
+  # Properties in a block comment
+  - name: properties_block_form
+    input: |
+      /* @dashql:properties
+       * {"owner": "finance"}
+       */
+      select 1
+  # Values can be any JSON, strings that look like tags stay inside the JSON
+  - name: properties_nested_values
+    input: |
+      -- @dashql:properties
+      -- {
+      --   "tags": [
+      --     "weekly",
+      --     -1
+      --   ],
+      --   "source": {
+      --     "dashboard": "Revenue Weekly",
+      --     "notes": "first line\nsecond line"
+      --   },
+      --   "@dashql:end": "@dashql:end",
+      --   "public": true,
+      --   "deleted_at": null
+      -- }
+      -- @dashql:end
+      select 1
+  # Invalid JSON keeps the block but yields no properties
+  - name: properties_invalid_json
+    input: |
+      -- @dashql:properties
+      -- owner: finance
+      -- @dashql:end
+      select 1
+  # The properties must be an object
+  - name: properties_not_an_object
+    input: |
+      -- @dashql:properties
+      -- ["finance"]
+      -- @dashql:end
+      select 1
+  # Only the first properties block counts, even if it is invalid
+  - name: properties_twice
+    input: |
+      -- @dashql:properties
+      -- {
+      -- @dashql:end
+
+      -- @dashql:properties
+      -- {"owner": "finance"}
+      -- @dashql:end
+      select 1
+  # Properties and a description side by side, the description stays the statement description
+  - name: properties_and_description
+    input: |
+      -- @dashql:properties
+      -- {
+      --   "owner": "finance"
+      -- }
+      -- @dashql:end
+
+      -- @dashql:description
+      -- Revenue per segment.
+      -- @dashql:end
+      select 1

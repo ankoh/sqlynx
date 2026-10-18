@@ -71,6 +71,35 @@
     font-size: 0.85rem;
 }
 
+.warning_banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    border-radius: var(--border_radius);
+    background: #fff8c5;
+    color: #4d2d00;
+    font-size: 0.85rem;
+}
+
+.warning_text {
+    flex: 1;
+}
+
+.banner_action {
+    padding: 2px 8px;
+    border: 1px solid rgba(77, 45, 0, 0.3);
+    border-radius: var(--border_radius);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+.banner_action:hover:not(:disabled) {
+    background: rgba(77, 45, 0, 0.08);
+}
+
 .progress {
     height: 6px;
     border-radius: 3px;
@@ -140,6 +169,11 @@
 
 .prompt_area > * {
     pointer-events: auto;
+}
+
+.step_actions {
+    display: flex;
+    gap: 8px;
 }
 
 .step {

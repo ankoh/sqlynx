@@ -1,15 +1,12 @@
 import * as arrow from 'apache-arrow';
 
-import type { CommentRow, FeatureRow } from './rows.js';
+import type { DescriptionRow, PropertiesRow, SyntaxRow } from './rows.js';
 
-/// Number of coordinates per row in the features and the comments file
+/// Number of coordinates per row in the layout of every file
 export const LAYOUT_DIMS = 3;
-/// Both files have their own layout and name its columns after what the embeddings are about: the comments say what a
-/// script is about (description), the features describe the shape of its queries.
-export const LAYOUT_COLUMNS = {
-    features: ['atlas_features_3d_x', 'atlas_features_3d_y', 'atlas_features_3d_z'],
-    comments: ['atlas_description_3d_x', 'atlas_description_3d_y', 'atlas_description_3d_z'],
-} as const;
+/// Every embedding space has its own file and its own layout, the files share the names of the vector columns
+export const EMBEDDING_COLUMN = 'dashql_atlas_embedding';
+export const LAYOUT_COLUMNS = ['dashql_atlas_x', 'dashql_atlas_y', 'dashql_atlas_z'] as const;
 
 const utf8 = new arrow.Utf8();
 const int32 = new arrow.Int32();
@@ -109,45 +106,46 @@ function buildTable(columns: Column[], length: number): arrow.Table {
     return new arrow.Table([new arrow.RecordBatch(new arrow.Schema(fields), struct)]);
 }
 
-/// The layout columns of `rows` rows, `coords` holds LAYOUT_DIMS values per row
-function layoutColumns(kind: keyof typeof LAYOUT_COLUMNS, rows: number, coords: Float32Array): Column[] {
+/// The embedding and layout columns of `rows` rows, `coords` holds LAYOUT_DIMS values per row
+function vectorColumns(vectors: Float32Array[], dim: number, coords: Float32Array): Column[] {
+    const rows = vectors.length;
     if (coords.length !== rows * LAYOUT_DIMS) {
         throw new Error(`expected ${rows * LAYOUT_DIMS} layout values, got ${coords.length}`);
     }
-    return LAYOUT_COLUMNS[kind].map((name, d) => [
-        name,
-        float64,
-        column(Array.from({ length: rows }, (_, i) => coords[i * LAYOUT_DIMS + d]), float64),
-    ]);
+    return [
+        [EMBEDDING_COLUMN, embeddingType, embeddingColumn(vectors, dim)],
+        ...LAYOUT_COLUMNS.map((name, d): Column => [
+            name,
+            float64,
+            column(Array.from({ length: rows }, (_, i) => coords[i * LAYOUT_DIMS + d]), float64),
+        ]),
+    ];
 }
 
 /// `coords` holds LAYOUT_DIMS values per row
-export function commentsTable(rows: CommentRow[], dim: number, coords: Float32Array): arrow.Table {
+export function descriptionTable(rows: DescriptionRow[], dim: number, coords: Float32Array): arrow.Table {
     return buildTable(
         [
             ['script_name', utf8, column(rows.map(r => r.scriptName), utf8)],
             ['script_hash', utf8, column(rows.map(r => r.scriptHash), utf8)],
             ['chunk_index', int32, column(rows.map(r => r.chunkIndex), int32)],
-            ['source', utf8, column(rows.map(r => r.source), utf8)],
             ['text', utf8, column(rows.map(r => r.text), utf8)],
-            ['embedding', embeddingType, embeddingColumn(rows.map(r => r.embedding), dim)],
-            ...layoutColumns('comments', rows.length, coords),
+            ...vectorColumns(rows.map(r => r.embedding), dim, coords),
         ],
         rows.length,
     );
 }
 
-/// The feature text and the script are not stored, both can be recomputed from the SQL files.
+/// The syntax text and the script are not stored, both can be recomputed from the SQL files.
 /// `coords` holds LAYOUT_DIMS values per row.
-export function featuresTable(rows: FeatureRow[], dim: number, coords: Float32Array): arrow.Table {
-    const list = (pick: (r: FeatureRow) => string[]): arrow.Data => column(rows.map(pick), utf8List);
+export function syntaxTable(rows: SyntaxRow[], dim: number, coords: Float32Array): arrow.Table {
+    const list = (pick: (r: SyntaxRow) => string[]): arrow.Data => column(rows.map(pick), utf8List);
     return buildTable(
         [
             ['script_name', utf8, column(rows.map(r => r.scriptName), utf8)],
             ['script_hash', utf8, column(rows.map(r => r.scriptHash), utf8)],
             ['truncated', bool, column(rows.map(r => r.truncated), bool)],
-            ['embedding', embeddingType, embeddingColumn(rows.map(r => r.embedding), dim)],
-            ...layoutColumns('features', rows.length, coords),
+            ...vectorColumns(rows.map(r => r.embedding), dim, coords),
             ['statement_types', utf8List, list(r => r.features.statementTypes)],
             ['tables', utf8List, list(r => r.features.tables)],
             ['columns', utf8List, list(r => r.features.columns)],
@@ -160,6 +158,21 @@ export function featuresTable(rows: FeatureRow[], dim: number, coords: Float32Ar
             ['operators', utf8List, list(r => r.features.operators)],
             ['visualizations', utf8List, list(r => r.features.visualizations)],
             ['diagnostics', utf8List, list(r => r.diagnostics)],
+        ],
+        rows.length,
+    );
+}
+
+/// `coords` holds LAYOUT_DIMS values per row
+export function propertiesTable(rows: PropertiesRow[], dim: number, coords: Float32Array): arrow.Table {
+    return buildTable(
+        [
+            ['script_name', utf8, column(rows.map(r => r.scriptName), utf8)],
+            ['script_hash', utf8, column(rows.map(r => r.scriptHash), utf8)],
+            ['properties', utf8, column(rows.map(r => r.properties), utf8)],
+            ['text', utf8, column(rows.map(r => r.text), utf8)],
+            ['truncated', bool, column(rows.map(r => r.truncated), bool)],
+            ...vectorColumns(rows.map(r => r.embedding), dim, coords),
         ],
         rows.length,
     );

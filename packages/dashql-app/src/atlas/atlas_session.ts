@@ -12,20 +12,15 @@ import type { QueryExecutionTracker } from '../query/query_execution_state.js';
 import { AtlasSql } from './atlas_sql.js';
 import { SqlAnalyzer } from './index/analysis/core.js';
 import { AtlasEmbedder } from './index/embedder_client.js';
-import { buildIndex, type IndexProgress } from './index/indexer.js';
+import { analyzeScripts, buildIndex, EMBEDDING_KINDS, hasEmbeddableText, type IndexProgress } from './index/indexer.js';
 import { ATLAS_EMBEDDER_CONFIG, type Embedder } from './index/model.js';
 import { readSqlFile, scanSqlFiles, type SqlFile } from './index/scan.js';
-import {
-    ATLAS_FORMAT_VERSION,
-    isIndexCurrent,
-    readSidecar,
-    writeSidecar,
-    type AtlasSidecar,
-} from './index/sidecar.js';
 import { searchAll, type SearchResults } from './search/search.js';
 import {
+    countOutdatedScripts,
     externalDirectoryDatabase,
-    indexFilesReadable,
+    hasIndexFiles,
+    loadIndexedScripts,
     loadIndexPoints,
     mountFolder,
     unmountFolder,
@@ -47,10 +42,20 @@ export type AtlasPhase =
 export interface OpenedFolder {
     name: string;
     scripts: number;
-    /// The index files in the folder were current, nothing had to be computed
+    /// The index files in the folder were loaded, nothing had to be computed
     reused: boolean;
-    /// The embeddings of both index files in their 3D layouts
+    /// The number of scripts that were added, changed or removed since the loaded index was written
+    outdated: number;
+    /// The embeddings of every index file in their 3D layouts
     points: Record<EmbeddingKind, IndexPoints>;
+}
+
+/// The index files of a folder exist but cannot be loaded, e.g. because they were written by an older version.
+/// The folder stays open so that it can be reindexed.
+export class AtlasIndexUnreadable extends Error {
+    constructor(readonly folder: string, cause: unknown) {
+        super(`the index of ${folder} cannot be loaded: ${stringifyError(cause)}`);
+    }
 }
 
 export interface AtlasSessionOptions {
@@ -120,8 +125,8 @@ export class AtlasSession {
         return this.sql;
     }
 
-    /// Mount the folder, load the index files or build them, and get ready for prompts. `force` builds the index even if
-    /// the existing one is current.
+    /// Mount the folder, load the index files or build them, and get ready for prompts. A folder without index files is
+    /// indexed, index files that cannot be loaded throw AtlasIndexUnreadable. `force` builds the index in any case.
     async open(directory: FileSystemDirectoryHandle, report: (phase: AtlasPhase) => void, force = false): Promise<OpenedFolder> {
         if (this.mounts == null) throw new Error('this database cannot mount folders');
         await this.closeFolder();
@@ -141,16 +146,35 @@ export class AtlasSession {
         }
 
         const embedder = await this.loadEmbedder(report);
-        const hashes = new Map(files.map(f => [f.id, f.hash]));
-        const sidecar = await readSidecar(directory);
-        const current = !force && isIndexCurrent(sidecar, ATLAS_EMBEDDER_CONFIG, hashes) && await indexFilesReadable(sql, location);
-        if (current) {
-            this.traced.info('Reusing the existing index', { scripts: String(files.length) }, LOG_CTX);
-            return { name: directory.name, scripts: files.length, reused: true, points: await this.loadPoints(sql, location) };
+        if (!force && await hasIndexFiles(directory)) {
+            let points: Record<EmbeddingKind, IndexPoints>;
+            let indexed: Map<string, string>;
+            try {
+                points = await this.loadPoints(sql, location);
+                indexed = await loadIndexedScripts(sql, location);
+            } catch (e) {
+                this.traced.warn('Failed to load the index', { name: directory.name, error: stringifyError(e) }, LOG_CTX);
+                throw new AtlasIndexUnreadable(directory.name, e);
+            }
+            const outdated = countOutdatedScripts(indexed, this.indexableScripts(files, indexed, embedder));
+            this.traced.info('Loaded the existing index', { scripts: String(files.length), outdated: String(outdated) }, LOG_CTX);
+            return { name: directory.name, scripts: files.length, reused: true, outdated, points };
         }
-        this.traced.info(force ? 'Reindexing on request' : sidecar ? 'The index is outdated, indexing' : 'No index found, indexing', {}, LOG_CTX);
+        this.traced.info(force ? 'Reindexing on request' : 'No index found, indexing', {}, LOG_CTX);
         await this.index(directory, location, files, embedder, sql, report);
-        return { name: directory.name, scripts: files.length, reused: false, points: await this.loadPoints(sql, location) };
+        return { name: directory.name, scripts: files.length, reused: false, outdated: 0, points: await this.loadPoints(sql, location) };
+    }
+
+    /// The scripts of the folder that an index would contain. Scripts that are not in the index are only counted if they
+    /// have something to embed, an empty or comment-only script never gets a row and would always look new.
+    private indexableScripts(files: SqlFile[], indexed: ReadonlyMap<string, string>, embedder: Embedder): Map<string, string> {
+        const unknown = files.filter(f => !indexed.has(f.id));
+        const embeddable = new Set(
+            analyzeScripts(unknown, this.analyzer, t => embedder.countTokens(t), embedder.config.maxTokens)
+                .filter(hasEmbeddableText)
+                .map(s => s.file.id),
+        );
+        return new Map(files.filter(f => indexed.has(f.id) || embeddable.has(f.id)).map(f => [f.id, f.hash]));
     }
 
     /// Build the index of the open folder again, e.g. after the embedder or the analysis changed
@@ -160,10 +184,11 @@ export class AtlasSession {
     }
 
     private async loadPoints(sql: AtlasSql, location: AtlasLocation): Promise<Record<EmbeddingKind, IndexPoints>> {
-        return {
-            features: await loadIndexPoints(sql, location, 'features'),
-            comments: await loadIndexPoints(sql, location, 'comments'),
-        };
+        const points: Partial<Record<EmbeddingKind, IndexPoints>> = {};
+        for (const kind of EMBEDDING_KINDS) {
+            points[kind] = await loadIndexPoints(sql, location, kind);
+        }
+        return points as Record<EmbeddingKind, IndexPoints>;
     }
 
     private async index(
@@ -180,24 +205,17 @@ export class AtlasSession {
         });
         this.traced.info('Built the index', {
             scripts: String(built.analyzedScripts),
-            features: String(built.features.length),
-            comments: String(built.comments.length),
-            featureLayout: built.featureLayout.mode,
-            commentLayout: built.commentLayout.mode,
+            syntax: String(built.syntax.length),
+            description: String(built.description.length),
+            properties: String(built.properties.length),
+            syntaxLayout: built.layouts.syntax.mode,
+            descriptionLayout: built.layouts.description.mode,
+            propertiesLayout: built.layouts.properties.mode,
             ms: String(Math.round(performance.now() - startedAt)),
         }, LOG_CTX);
 
         report({ kind: 'write', message: 'Writing the Parquet files' });
-        await writeIndexFiles(sql, location, built.comments, built.features, built.featureLayout.coords, built.commentLayout.coords, embedder.config.dim);
-        const sidecar: AtlasSidecar = {
-            formatVersion: ATLAS_FORMAT_VERSION,
-            embedder: ATLAS_EMBEDDER_CONFIG,
-            layout: built.features.length + built.comments.length > 0 ? 'umap-3d' : 'none',
-            layoutScales: { features: built.featureLayout.scale, comments: built.commentLayout.scale },
-            scripts: Object.fromEntries(files.map(f => [f.id, f.hash])),
-            createdAt: new Date().toISOString(),
-        };
-        await writeSidecar(directory, sidecar);
+        await writeIndexFiles(sql, location, built, built.layouts, embedder.config.dim);
         this.traced.info('Wrote the index files', { name: directory.name }, LOG_CTX);
     }
 

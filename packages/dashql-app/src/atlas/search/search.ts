@@ -1,11 +1,12 @@
-import { AtlasSql, vectorLiteral } from '../atlas_sql.js';
+import { AtlasSql, quoteIdentifier, vectorLiteral } from '../atlas_sql.js';
+import { EMBEDDING_COLUMN } from '../index/tables.js';
 import { externalTable, type AtlasLocation } from '../store.js';
 
 export interface SearchHit {
     scriptName: string;
     /// Cosine similarity, the embeddings are L2-normalized
     score: number;
-    /// What matched: the best comment chunk, or the features of the script
+    /// What matched: the best description chunk, the syntax features or the properties of the script
     snippet: string;
 }
 
@@ -27,17 +28,19 @@ function asStrings(value: unknown): string[] {
     return Array.from(items, v => String(v));
 }
 
-/// The best comment chunk of every script against the query
-export const COMMENT_SEARCH: SearchStrategy = {
-    id: 'comments',
-    title: 'Comments',
+const EMBEDDING = quoteIdentifier(EMBEDDING_COLUMN);
+
+/// The best description chunk of every script against the query
+export const DESCRIPTION_SEARCH: SearchStrategy = {
+    id: 'description',
+    title: 'Description',
     async run(sql, location, query, limit) {
         const vector = vectorLiteral(query);
-        const table = await sql.query('Search comments', `
+        const table = await sql.query('Search descriptions', `
 SELECT script_name, text, score FROM (
-    SELECT script_name, text, dot_product(embedding, ${vector}) AS score,
-        row_number() OVER (PARTITION BY script_name ORDER BY dot_product(embedding, ${vector}) DESC) AS rank
-    FROM ${externalTable(location.commentsPath)}
+    SELECT script_name, text, dot_product(${EMBEDDING}, ${vector}) AS score,
+        row_number() OVER (PARTITION BY script_name ORDER BY dot_product(${EMBEDDING}, ${vector}) DESC) AS rank
+    FROM ${externalTable(location.paths.description)}
 ) ranked
 WHERE rank = 1
 ORDER BY score DESC
@@ -50,14 +53,14 @@ LIMIT ${Math.trunc(limit)}`);
     },
 };
 
-/// The script features (tables, joins, functions, ...) against the query
-export const FEATURE_SEARCH: SearchStrategy = {
-    id: 'features',
-    title: 'Features',
+/// The syntax features of the scripts (tables, joins, functions, ...) against the query
+export const SYNTAX_SEARCH: SearchStrategy = {
+    id: 'syntax',
+    title: 'Syntax',
     async run(sql, location, query, limit) {
-        const table = await sql.query('Search features', `
-SELECT script_name, tables, function_calls, dot_product(embedding, ${vectorLiteral(query)}) AS score
-FROM ${externalTable(location.featuresPath)}
+        const table = await sql.query('Search syntax', `
+SELECT script_name, tables, function_calls, dot_product(${EMBEDDING}, ${vectorLiteral(query)}) AS score
+FROM ${externalTable(location.paths.syntax)}
 ORDER BY score DESC
 LIMIT ${Math.trunc(limit)}`);
         return table.toArray().map(row => {
@@ -71,8 +74,29 @@ LIMIT ${Math.trunc(limit)}`);
     },
 };
 
+/// The number of properties that a hit shows
+const PROPERTIES_SNIPPET_LINES = 4;
+
+/// The user-provided properties of the scripts against the query
+export const PROPERTIES_SEARCH: SearchStrategy = {
+    id: 'properties',
+    title: 'Properties',
+    async run(sql, location, query, limit) {
+        const table = await sql.query('Search properties', `
+SELECT script_name, text, dot_product(${EMBEDDING}, ${vectorLiteral(query)}) AS score
+FROM ${externalTable(location.paths.properties)}
+ORDER BY score DESC
+LIMIT ${Math.trunc(limit)}`);
+        return table.toArray().map(row => ({
+            scriptName: String(row.script_name),
+            score: asNumber(row.score),
+            snippet: String(row.text).split('\n').slice(0, PROPERTIES_SNIPPET_LINES).join('\n'),
+        }));
+    },
+};
+
 /// More strategies plug in here
-export const SEARCH_STRATEGIES: readonly SearchStrategy[] = [COMMENT_SEARCH, FEATURE_SEARCH];
+export const SEARCH_STRATEGIES: readonly SearchStrategy[] = [DESCRIPTION_SEARCH, SYNTAX_SEARCH, PROPERTIES_SEARCH];
 
 export interface SearchResults {
     strategy: SearchStrategy;

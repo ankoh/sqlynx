@@ -26,6 +26,9 @@ already have such a block are skipped, `--force` replaces the block and leaves e
 select ...
 ```
 
+A `@dashql:properties` block (user-provided properties, see [DashQL Atlas](../../docs/misc/atlas.md#properties)) is
+never changed or sent to the model. If a script starts with one, the description is inserted below it.
+
 The result is plain SQL that can be reviewed, edited and committed. Run it again and only scripts without a
 description block are sent to the model.
 

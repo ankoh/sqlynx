@@ -47,6 +47,7 @@ export type HeaderAction = 'inserted' | 'replaced' | 'kept';
 
 /// Insert or replace the generated description block of a script, followed by a blank line.
 /// Everything outside of the marked range and that blank line stays untouched.
+/// A new description goes after the properties block if the script starts with one, the properties are never touched.
 export function applyHeader(
     text: string,
     comments: CommentBlock[],
@@ -56,16 +57,30 @@ export function applyHeader(
     const eol = detectEol(text);
     const header = renderHeader(description, eol);
     const existing = comments.find(c => c.source === 'dashql_description');
-    if (!existing) {
-        return { text: header + eol + text, action: 'inserted' };
-    }
-    if (!force) {
+    if (existing && !force) {
         return { text, action: 'kept' };
     }
     const bytes = Buffer.from(text, 'utf8');
     // Skip the line break of the old block and the blank line after it, if any
     const skipLineBreak = (offset: number) =>
         bytes[offset] === 0x0d && bytes[offset + 1] === 0x0a ? offset + 2 : bytes[offset] === 0x0a ? offset + 1 : offset;
+    if (!existing) {
+        const properties = comments.find(c => c.source === 'dashql_properties');
+        const leading = properties !== undefined && bytes.subarray(0, properties.begin).toString('utf8').trim() === '';
+        if (!leading) {
+            return { text: header + eol + text, action: 'inserted' };
+        }
+        // Keep the blank line after the properties, or add one
+        const afterBreak = skipLineBreak(properties.end);
+        const afterBlank = skipLineBreak(afterBreak);
+        const separator = afterBlank > afterBreak ? '' : afterBreak > properties.end ? eol : eol + eol;
+        const out = Buffer.concat([
+            bytes.subarray(0, afterBlank),
+            Buffer.from(separator + header + eol, 'utf8'),
+            bytes.subarray(afterBlank),
+        ]);
+        return { text: out.toString('utf8'), action: 'inserted' };
+    }
     const end = skipLineBreak(skipLineBreak(existing.end));
     const out = Buffer.concat([bytes.subarray(0, existing.begin), Buffer.from(header + eol, 'utf8'), bytes.subarray(end)]);
     return { text: out.toString('utf8'), action: 'replaced' };

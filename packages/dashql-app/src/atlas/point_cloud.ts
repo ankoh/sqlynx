@@ -27,10 +27,13 @@ const VERTEX_SHADER = `
     /// Distance at which a point has its nominal size
     uniform float uScale;
     varying float vAlpha;
+    /// Size of the point in device pixels, edges are antialiased over a fixed number of pixels
+    varying float vPixels;
     void main() {
         vec4 mv = modelViewMatrix * vec4(position, 1.0);
         gl_Position = projectionMatrix * mv;
         gl_PointSize = aSize * uPixelRatio * uScale / -mv.z;
+        vPixels = gl_PointSize;
         // Points in the back are dimmer, which gives the cloud its depth
         float depth = clamp(1.0 - (-mv.z - 2.0) / 3.2, 0.3, 1.0);
         vAlpha = aAlpha * depth;
@@ -39,15 +42,17 @@ const VERTEX_SHADER = `
 
 const FRAGMENT_SHADER = `
     varying float vAlpha;
+    varying float vPixels;
     void main() {
         float d = length(gl_PointCoord - vec2(0.5));
         if (d > 0.5) discard;
-        // A solid disc with a soft rim and a faint halo, so that big points stay crisp and small ones stay round
-        float disc = 1.0 - smoothstep(0.32, 0.5, d);
-        float halo = 0.25 * (1.0 - smoothstep(0.0, 0.5, d));
+        // One device pixel in the units of gl_PointCoord
+        float aa = 1.0 / max(vPixels, 1.0);
+        // A solid disc whose edge is about a pixel wide, whatever the size of the point
+        float disc = 1.0 - smoothstep(0.5 - 1.25 * aa, 0.5 - 0.25 * aa, d);
         // The rim is a little cooler than the center, which gives the dots some volume
-        vec3 color = mix(vec3(1.0), vec3(0.8, 0.88, 1.0), smoothstep(0.1, 0.5, d));
-        gl_FragColor = vec4(color, vAlpha * max(disc, halo));
+        vec3 color = mix(vec3(1.0), vec3(0.86, 0.92, 1.0), smoothstep(0.1, 0.5, d));
+        gl_FragColor = vec4(color, vAlpha * disc);
     }
 `;
 
@@ -59,28 +64,33 @@ const HIGHLIGHT_VERTEX_SHADER = `
     /// Nominal size of the points that are highlighted
     uniform float uBaseSize;
     varying float vEmphasis;
+    varying float vPixels;
     void main() {
         vec4 mv = modelViewMatrix * vec4(position, 1.0);
         gl_Position = projectionMatrix * mv;
         float size = aEmphasis > 0.5 ? max(15.0, uBaseSize * 1.7 + 4.0) : max(6.0, uBaseSize * 1.3);
         gl_PointSize = size * uPixelRatio * uScale / -mv.z;
+        vPixels = gl_PointSize;
         vEmphasis = aEmphasis;
     }
 `;
 
 const HIGHLIGHT_FRAGMENT_SHADER = `
     varying float vEmphasis;
+    varying float vPixels;
     void main() {
         float d = length(gl_PointCoord - vec2(0.5));
         if (d > 0.5) discard;
+        // One device pixel in the units of gl_PointCoord
+        float aa = 1.0 / max(vPixels, 1.0);
         vec3 accent = vec3(1.0, 0.78, 0.35);
         if (vEmphasis > 0.5) {
             // A bright core with a ring, so that the point is easy to find in the cloud
-            float ring = smoothstep(0.34, 0.4, d) * (1.0 - smoothstep(0.44, 0.5, d));
-            float core = 1.0 - smoothstep(0.1, 0.2, d);
+            float ring = smoothstep(0.34 - aa, 0.34, d) * (1.0 - smoothstep(0.46 - aa, 0.46, d));
+            float core = 1.0 - smoothstep(0.16 - aa, 0.16, d);
             gl_FragColor = vec4(mix(accent, vec3(1.0), core), max(core, ring * 0.9));
         } else {
-            gl_FragColor = vec4(accent, 0.95 * smoothstep(0.5, 0.2, d));
+            gl_FragColor = vec4(accent, 0.95 * (1.0 - smoothstep(0.5 - 1.25 * aa, 0.5 - 0.25 * aa, d)));
         }
     }
 `;
@@ -129,6 +139,8 @@ export class PointCloud {
     private hoverListener: ((hover: DotHover | null) => void) | null = null;
     private readonly pickVector = new THREE.Vector3();
     private readonly resizeObserver: ResizeObserver;
+    /// The container in device pixels, when the browser reports it
+    private devicePixels: { width: number; height: number } | null = null;
     private readonly clock = new THREE.Clock(false);
     private readonly axis = new THREE.Vector3();
     private animationFrame = 0;
@@ -167,8 +179,13 @@ export class PointCloud {
         this.root.rotation.set(0.5, 0, 0.3);
         this.scene.add(this.root);
 
-        this.resizeObserver = new ResizeObserver(this.resize);
-        this.resizeObserver.observe(this.container);
+        this.resizeObserver = new ResizeObserver(this.observe);
+        try {
+            // Reports the size in device pixels, which is the size the canvas has to be to stay sharp
+            this.resizeObserver.observe(this.container, { box: 'device-pixel-content-box' });
+        } catch {
+            this.resizeObserver.observe(this.container);
+        }
         this.resize();
         this.renderOnce();
         document.addEventListener('visibilitychange', this.handleVisibilityChange);
@@ -361,11 +378,31 @@ export class PointCloud {
         return geometry;
     }
 
+    private readonly observe = (entries: ResizeObserverEntry[]): void => {
+        const size = entries[entries.length - 1]?.devicePixelContentBoxSize?.[0];
+        this.devicePixels = size == null ? null : { width: size.inlineSize, height: size.blockSize };
+        this.resize();
+    };
+
     private readonly resize = (): void => {
-        const width = Math.max(1, this.container.clientWidth);
-        const height = Math.max(1, this.container.clientHeight);
-        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
-        this.renderer.setPixelRatio(pixelRatio);
+        let pixelRatio: number;
+        let width: number;
+        let height: number;
+        const devicePixels = this.devicePixels;
+        if (devicePixels != null && devicePixels.width > 0 && devicePixels.height > 0) {
+            // One canvas pixel per device pixel. A canvas of css size * devicePixelRatio is resampled by the browser
+            // whenever the ratio is fractional (125% or 150% scaling), which blurs everything.
+            const rect = this.container.getBoundingClientRect();
+            width = devicePixels.width;
+            height = devicePixels.height;
+            pixelRatio = rect.width > 0 ? width / rect.width : window.devicePixelRatio || 1;
+            this.renderer.setPixelRatio(1);
+        } else {
+            width = Math.max(1, this.container.clientWidth);
+            height = Math.max(1, this.container.clientHeight);
+            pixelRatio = Math.min(window.devicePixelRatio || 1, 3);
+            this.renderer.setPixelRatio(pixelRatio);
+        }
         this.renderer.setSize(width, height, false);
         this.camera.aspect = width / height;
         // Keep the cloud in view on narrow screens

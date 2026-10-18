@@ -4,7 +4,7 @@ import type { AnalyzedSql } from './core.js';
 export const DESCRIPTION_BEGIN = '@dashql:description';
 export const DESCRIPTION_END = '@dashql:end';
 
-export type CommentSource = 'dashql_description' | 'comment';
+export type CommentSource = 'dashql_description' | 'dashql_properties' | 'comment';
 
 export interface CommentBlock {
     source: CommentSource;
@@ -38,6 +38,9 @@ export function extractComments(sql: AnalyzedSql): CommentBlock[] {
             case buffers.parser.CommentBlockType.DASHQL_DESCRIPTION:
                 source = 'dashql_description';
                 break;
+            case buffers.parser.CommentBlockType.DASHQL_PROPERTIES:
+                source = 'dashql_properties';
+                break;
             default:
                 continue;
         }
@@ -47,7 +50,7 @@ export function extractComments(sql: AnalyzedSql): CommentBlock[] {
             lines.push(decoder.decode(sql.bytes.subarray(line.offset(), line.offset() + line.length())));
         }
         const text = lines.join('\n');
-        // Descriptions are kept even when empty so that `describe` can replace them
+        // Tagged blocks are kept even when empty so that `describe` can replace or skip them
         if (text.length === 0 && source === 'comment') {
             continue;
         }
@@ -58,16 +61,9 @@ export function extractComments(sql: AnalyzedSql): CommentBlock[] {
     return blocks;
 }
 
-/// The comment text that should be embedded, description first
-export function embeddableComments(blocks: CommentBlock[]): { source: CommentSource; text: string }[] {
-    const out: { source: CommentSource; text: string }[] = [];
+/// The text of the `@dashql:description` blocks that is embedded, null if there is none.
+/// Ordinary comments are not embedded, they are too often commented-out SQL or notes that say little about a script.
+export function descriptionText(blocks: CommentBlock[]): string | null {
     const description = blocks.filter(b => b.source === 'dashql_description').map(b => b.text).join('\n\n');
-    if (description.length > 0) {
-        out.push({ source: 'dashql_description', text: description });
-    }
-    const comments = blocks.filter(b => b.source === 'comment').map(b => b.text).join('\n\n');
-    if (comments.length > 0) {
-        out.push({ source: 'comment', text: comments });
-    }
-    return out;
+    return description.length > 0 ? description : null;
 }

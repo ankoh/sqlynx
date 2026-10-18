@@ -1345,3 +1345,452 @@ parser-snapshots:
             - "Revenue per segment."
             - "@dashql:end of description"
       comment-warnings: []
+
+  - name: properties_line_form
+    input: |-
+      -- @dashql:properties
+      -- {
+      --   "owner": "finance",
+      --   "avg_runtime_ms": 1834
+      -- }
+      -- @dashql:end
+      select 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 6
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [21,22]
+        - text: [26,27]
+        - text: [51,52]
+        - text: [79,80]
+        - text: [84,85]
+        - text: [99,100]
+      comments:
+        - text: "-- @dashql..properties"
+        - text: "-- {"
+        - text: "--   \"owne..\"finance\","
+        - text: "--   \"avg_.._ms\": 1834"
+        - text: "-- }"
+        - text: "-- @dashql:end"
+      comment-blocks:
+        - type: DASHQL_PROPERTIES
+          text: "-- @dashql..dashql:end"
+          tag: "properties"
+          comments: [0,6]
+          lines:
+            - "{"
+            - "  \"owner\": \"finance\","
+            - "  \"avg_runtime_ms\": 1834"
+            - "}"
+      properties-block: 0
+      comment-warnings: []
+
+  - name: properties_block_form
+    input: |-
+      /* @dashql:properties
+       * {"owner": "finance"}
+       */
+      select 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 1
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [21,22]
+        - text: [45,46]
+        - text: [49,50]
+      comments:
+        - text: "/* @dashql..ance\"}\n */"
+      comment-blocks:
+        - type: DASHQL_PROPERTIES
+          text: "/* @dashql..ance\"}\n */"
+          tag: "properties"
+          comments: [0,1]
+          lines:
+            - "{\"owner\": \"finance\"}"
+      properties-block: 0
+      comment-warnings: []
+
+  - name: properties_nested_values
+    input: |-
+      -- @dashql:properties
+      -- {
+      --   "tags": [
+      --     "weekly",
+      --     -1
+      --   ],
+      --   "source": {
+      --     "dashboard": "Revenue Weekly",
+      --     "notes": "first line\nsecond line"
+      --   },
+      --   "@dashql:end": "@dashql:end",
+      --   "public": true,
+      --   "deleted_at": null
+      -- }
+      -- @dashql:end
+      select 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 15
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [21,22]
+        - text: [26,27]
+        - text: [41,42]
+        - text: [58,59]
+        - text: [68,69]
+        - text: [76,77]
+        - text: [93,94]
+        - text: [131,132]
+        - text: [173,174]
+        - text: [181,182]
+        - text: [216,217]
+        - text: [237,238]
+        - text: [261,262]
+        - text: [266,267]
+        - text: [281,282]
+      comments:
+        - text: "-- @dashql..properties"
+        - text: "-- {"
+        - text: "--   \"tags\": ["
+        - text: "--     \"weekly\","
+        - text: "--     -1"
+        - text: "--   ],"
+        - text: "--   \"source\": {"
+        - text: "--     \"da..e Weekly\","
+        - text: "--     \"no..cond line\""
+        - text: "--   },"
+        - text: "--   \"@das..shql:end\","
+        - text: "--   \"publ..ic\": true,"
+        - text: "--   \"dele.._at\": null"
+        - text: "-- }"
+        - text: "-- @dashql:end"
+      comment-blocks:
+        - type: DASHQL_PROPERTIES
+          text: "-- @dashql..dashql:end"
+          tag: "properties"
+          comments: [0,15]
+          lines:
+            - "{"
+            - "  \"tags\": ["
+            - "    \"weekly\","
+            - "    -1"
+            - "  ],"
+            - "  \"source\": {"
+            - "    \"dashboard\": \"Revenue Weekly\","
+            - "    \"notes\": \"first line\\nsecond line\""
+            - "  },"
+            - "  \"@dashql:end\": \"@dashql:end\","
+            - "  \"public\": true,"
+            - "  \"deleted_at\": null"
+            - "}"
+      properties-block: 0
+      comment-warnings: []
+
+  - name: properties_invalid_json
+    input: |-
+      -- @dashql:properties
+      -- owner: finance
+      -- @dashql:end
+      select 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 3
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [21,22]
+        - text: [39,40]
+        - text: [54,55]
+      comments:
+        - text: "-- @dashql..properties"
+        - text: "-- owner: finance"
+        - text: "-- @dashql:end"
+      comment-blocks:
+        - type: DASHQL_PROPERTIES
+          text: "-- @dashql..dashql:end"
+          tag: "properties"
+          comments: [0,3]
+          lines:
+            - "owner: finance"
+      comment-warnings:
+        - message: '@dashql:properties is not valid JSON'
+          text: "-- @dashql..dashql:end"
+
+  - name: properties_not_an_object
+    input: |-
+      -- @dashql:properties
+      -- ["finance"]
+      -- @dashql:end
+      select 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 3
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [21,22]
+        - text: [36,37]
+        - text: [51,52]
+      comments:
+        - text: "-- @dashql..properties"
+        - text: "-- [\"finance\"]"
+        - text: "-- @dashql:end"
+      comment-blocks:
+        - type: DASHQL_PROPERTIES
+          text: "-- @dashql..dashql:end"
+          tag: "properties"
+          comments: [0,3]
+          lines:
+            - "[\"finance\"]"
+      comment-warnings:
+        - message: '@dashql:properties must be a JSON object'
+          text: "-- @dashql..dashql:end"
+
+  - name: properties_twice
+    input: |-
+      -- @dashql:properties
+      -- {
+      -- @dashql:end
+
+      -- @dashql:properties
+      -- {"owner": "finance"}
+      -- @dashql:end
+      select 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 6
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [21,22]
+        - text: [26,27]
+        - text: [41,42]
+        - text: [42,43]
+        - text: [64,65]
+        - text: [88,89]
+        - text: [103,104]
+      comments:
+        - text: "-- @dashql..properties"
+        - text: "-- {"
+        - text: "-- @dashql:end"
+        - text: "-- @dashql..properties"
+        - text: "-- {\"owner..\"finance\"}"
+        - text: "-- @dashql:end"
+      comment-blocks:
+        - type: DASHQL_PROPERTIES
+          text: "-- @dashql..dashql:end"
+          tag: "properties"
+          comments: [0,3]
+          lines:
+            - "{"
+        - type: DASHQL_PROPERTIES
+          text: "-- @dashql..dashql:end"
+          tag: "properties"
+          comments: [3,3]
+          lines:
+            - "{\"owner\": \"finance\"}"
+      comment-warnings:
+        - message: '@dashql:properties is not valid JSON'
+          text: "-- @dashql..dashql:end"
+        - message: '@dashql:properties is ignored, a script has a single properties block'
+          text: "-- @dashql..dashql:end"
+
+  - name: properties_and_description
+    input: |-
+      -- @dashql:properties
+      -- {
+      --   "owner": "finance"
+      -- }
+      -- @dashql:end
+
+      -- @dashql:description
+      -- Revenue per segment.
+      -- @dashql:end
+      select 1
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 4
+          description:
+            text: "select 1"
+            description-begin: 0
+            description-count: 8
+            description-block: 1
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select 1"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "1"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [21,22]
+        - text: [26,27]
+        - text: [50,51]
+        - text: [55,56]
+        - text: [70,71]
+        - text: [71,72]
+        - text: [94,95]
+        - text: [118,119]
+        - text: [133,134]
+      comments:
+        - text: "-- @dashql..properties"
+        - text: "-- {"
+        - text: "--   \"owne.. \"finance\""
+        - text: "-- }"
+        - text: "-- @dashql:end"
+        - text: "-- @dashql..escription"
+        - text: "-- Revenue..r segment."
+        - text: "-- @dashql:end"
+      comment-blocks:
+        - type: DASHQL_PROPERTIES
+          text: "-- @dashql..dashql:end"
+          tag: "properties"
+          comments: [0,5]
+          lines:
+            - "{"
+            - "  \"owner\": \"finance\""
+            - "}"
+        - type: DASHQL_DESCRIPTION
+          text: "-- @dashql..dashql:end"
+          tag: "description"
+          comments: [5,3]
+          lines:
+            - "Revenue per segment."
+      properties-block: 0
+      comment-warnings: []

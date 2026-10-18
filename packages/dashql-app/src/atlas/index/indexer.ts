@@ -1,24 +1,28 @@
-import { extractComments, embeddableComments, type CommentSource } from './analysis/comments.js';
+import { readProperties, type ScriptProperties } from '@ankoh/dashql-core';
+
+import { descriptionText, extractComments } from './analysis/comments.js';
 import { SqlAnalyzer, type AnalyzedSql } from './analysis/core.js';
-import { extractFeatures, type ScriptFeatures } from './analysis/features.js';
+import { extractSyntaxFeatures, type SyntaxFeatures } from './analysis/syntax.js';
 import { chunkText } from './chunking.js';
-import { renderFeatureDocument } from './document.js';
+import { renderPropertiesDocument, renderSyntaxDocument, type EmbeddingDocument } from './document.js';
 import { computeLayout, type LayoutResult } from './layout.js';
 import type { Embedder } from './model.js';
-import type { CommentRow, FeatureRow } from './rows.js';
+import type { DescriptionRow, PropertiesRow, SyntaxRow } from './rows.js';
 import type { SqlFile } from './scan.js';
 
 /// The embedding-free part of an indexed script
 export interface ScriptAnalysis {
     file: SqlFile;
     analyzed: AnalyzedSql;
-    features: ScriptFeatures | null;
-    featureText: string;
-    truncated: boolean;
-    commentChunks: { source: CommentSource; text: string }[];
+    features: SyntaxFeatures | null;
+    syntaxDocument: EmbeddingDocument;
+    descriptionChunks: string[];
+    properties: ScriptProperties | null;
+    propertiesDocument: EmbeddingDocument;
 }
 
 const CHUNK_OVERLAP_TOKENS = 16;
+const EMPTY_DOCUMENT: EmbeddingDocument = { text: '', tokenCount: 0, truncated: false };
 
 /// Analyze scripts and derive the texts that will be embedded
 export function analyzeScripts(
@@ -29,65 +33,92 @@ export function analyzeScripts(
 ): ScriptAnalysis[] {
     const analyzed = analyzer.analyze(files.map(f => ({ id: f.id, text: f.text })));
     return analyzed.map((sql, i) => {
-        const features = extractFeatures(sql);
-        const doc = features
-            ? renderFeatureDocument(features, maxTokens, countTokens)
-            : { text: '', tokenCount: 0, truncated: false };
-        const commentChunks = embeddableComments(extractComments(sql)).flatMap(({ source, text }) =>
-            chunkText(text, maxTokens, countTokens, CHUNK_OVERLAP_TOKENS).map(chunk => ({ source, text: chunk })),
-        );
-        return { file: files[i], analyzed: sql, features, featureText: doc.text, truncated: doc.truncated, commentChunks };
+        const features = extractSyntaxFeatures(sql);
+        const syntaxDocument = features ? renderSyntaxDocument(features, maxTokens, countTokens) : EMPTY_DOCUMENT;
+        const description = descriptionText(extractComments(sql));
+        const descriptionChunks = description ? chunkText(description, maxTokens, countTokens, CHUNK_OVERLAP_TOKENS) : [];
+        const properties = sql.parsed ? readProperties(sql.parsed, sql.bytes) : null;
+        const propertiesDocument = properties
+            ? renderPropertiesDocument(properties, maxTokens, countTokens)
+            : EMPTY_DOCUMENT;
+        return { file: files[i], analyzed: sql, features, syntaxDocument, descriptionChunks, properties, propertiesDocument };
     });
 }
 
+/// Does a script get a row in any of the index files?
+export function hasEmbeddableText(script: ScriptAnalysis): boolean {
+    return (script.features != null && script.syntaxDocument.text.length > 0) ||
+        script.descriptionChunks.length > 0 ||
+        (script.properties != null && script.propertiesDocument.text.length > 0);
+}
+
+/// The embedding spaces of an index, each has its own file and its own 3D layout
+export type EmbeddingKind = 'syntax' | 'description' | 'properties';
+export const EMBEDDING_KINDS: readonly EmbeddingKind[] = ['description', 'syntax', 'properties'];
+
 export interface IndexResult {
-    comments: CommentRow[];
-    features: FeatureRow[];
+    syntax: SyntaxRow[];
+    description: DescriptionRow[];
+    properties: PropertiesRow[];
 }
 
 export interface EmbedProgress {
-    stage: 'features' | 'comments';
+    stage: EmbeddingKind;
     done: number;
     total: number;
 }
 
-/// Embed the texts of analyzed scripts. Scripts without features or usable comments get no row of that kind.
+/// Embed the texts of analyzed scripts. Scripts without syntax features, a description or properties get no row of
+/// that kind.
 export async function embedScripts(
     scripts: ScriptAnalysis[],
     embedder: Embedder,
     onProgress?: (progress: EmbedProgress) => void,
 ): Promise<IndexResult> {
-    const withFeatures = scripts.filter(s => s.features && s.featureText.length > 0);
-    const featureVectors = await embedder.embedDocuments(
-        withFeatures.map(s => s.featureText),
-        (done, total) => onProgress?.({ stage: 'features', done, total }),
+    const withSyntax = scripts.filter(s => s.features != null && s.syntaxDocument.text.length > 0);
+    const syntaxVectors = await embedder.embedDocuments(
+        withSyntax.map(s => s.syntaxDocument.text),
+        (done, total) => onProgress?.({ stage: 'syntax', done, total }),
     );
-    const features: FeatureRow[] = withFeatures.map((s, i) => ({
+    const syntax: SyntaxRow[] = withSyntax.map((s, i) => ({
         scriptName: s.file.id,
         scriptHash: s.file.hash,
-        truncated: s.truncated,
-        embedding: featureVectors[i],
+        truncated: s.syntaxDocument.truncated,
+        embedding: syntaxVectors[i],
         features: s.features!,
         diagnostics: s.analyzed.diagnostics,
     }));
 
-    const chunks = scripts.flatMap(s => s.commentChunks.map((chunk, index) => ({ script: s, chunk, index })));
-    const commentVectors = await embedder.embedDocuments(
-        chunks.map(c => c.chunk.text),
-        (done, total) => onProgress?.({ stage: 'comments', done, total }),
+    const chunks = scripts.flatMap(s => s.descriptionChunks.map((text, index) => ({ script: s, text, index })));
+    const descriptionVectors = await embedder.embedDocuments(
+        chunks.map(c => c.text),
+        (done, total) => onProgress?.({ stage: 'description', done, total }),
     );
-    const comments: CommentRow[] = chunks.map(({ script, chunk, index }, i) => ({
+    const description: DescriptionRow[] = chunks.map(({ script, text, index }, i) => ({
         scriptName: script.file.id,
         scriptHash: script.file.hash,
         chunkIndex: index,
-        source: chunk.source,
-        text: chunk.text,
-        embedding: commentVectors[i],
+        text,
+        embedding: descriptionVectors[i],
     }));
-    return { comments, features };
+
+    const withProperties = scripts.filter(s => s.properties != null && s.propertiesDocument.text.length > 0);
+    const propertyVectors = await embedder.embedDocuments(
+        withProperties.map(s => s.propertiesDocument.text),
+        (done, total) => onProgress?.({ stage: 'properties', done, total }),
+    );
+    const properties: PropertiesRow[] = withProperties.map((s, i) => ({
+        scriptName: s.file.id,
+        scriptHash: s.file.hash,
+        properties: JSON.stringify(s.properties),
+        text: s.propertiesDocument.text,
+        truncated: s.propertiesDocument.truncated,
+        embedding: propertyVectors[i],
+    }));
+    return { syntax, description, properties };
 }
 
-export type IndexStage = 'analyze' | 'embed_features' | 'embed_comments' | 'layout';
+export type IndexStage = 'analyze' | 'embed' | 'layout';
 
 export interface IndexProgress {
     stage: IndexStage;
@@ -97,11 +128,9 @@ export interface IndexProgress {
 }
 
 export interface BuiltIndex extends IndexResult {
-    /// Coordinates for the `features` rows
-    featureLayout: LayoutResult;
-    /// Coordinates for the `comments` rows. Features and comments are laid out independently, the comments of a script
-    /// would otherwise end up next to the features of the scripts they are about instead of next to similar comments.
-    commentLayout: LayoutResult;
+    /// Coordinates of the rows of every kind. The kinds are laid out independently, the description of a script would
+    /// otherwise end up next to the syntax of the scripts it is about instead of next to similar descriptions.
+    layouts: Record<EmbeddingKind, LayoutResult>;
     analyzedScripts: number;
 }
 
@@ -118,22 +147,26 @@ export async function buildIndex(
 
     const result = await embedScripts(scripts, embedder, ({ stage, done, total }) => {
         onProgress?.({
-            stage: stage === 'features' ? 'embed_features' : 'embed_comments',
+            stage: 'embed',
             fraction: total === 0 ? 1 : done / total,
             message: `Embedding ${stage} ${done}/${total}`,
         });
     });
 
     const dim = embedder.config.dim;
-    const layOut = async (kind: 'features' | 'comments', rows: { embedding: Float32Array }[]) => {
+    const layOut = async (kind: EmbeddingKind) => {
+        const rows: { embedding: Float32Array }[] = result[kind];
         const flat = new Float32Array(rows.length * dim);
         rows.forEach((row, i) => flat.set(row.embedding, i * dim));
-        onProgress?.({ stage: 'layout', fraction: 0, message: `Laying out ${rows.length} ${kind} in 3D` });
+        onProgress?.({ stage: 'layout', fraction: 0, message: `Laying out ${rows.length} ${kind} rows in 3D` });
         return await computeLayout(flat, rows.length, dim, (fraction, stage) => {
             onProgress?.({ stage: 'layout', fraction, message: `Laying out ${kind} (${stage})` });
         });
     };
-    const featureLayout = await layOut('features', result.features);
-    const commentLayout = await layOut('comments', result.comments);
-    return { ...result, featureLayout, commentLayout, analyzedScripts: scripts.length };
+    const layouts = {
+        syntax: await layOut('syntax'),
+        description: await layOut('description'),
+        properties: await layOut('properties'),
+    };
+    return { ...result, layouts, analyzedScripts: scripts.length };
 }
