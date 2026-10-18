@@ -295,6 +295,7 @@ bool Completion::IsSymbolKindCompletable(parser::Parser::symbol_kind_type kind) 
         case parser::Parser::symbol_kind_type::S_DIVIDE:
         case parser::Parser::symbol_kind_type::S_MODULO:
         case parser::Parser::symbol_kind_type::S_QUESTION_MARK:
+        case parser::Parser::symbol_kind_type::S_PARAM:
         case parser::Parser::symbol_kind_type::S_CIRCUMFLEX:
         case parser::Parser::symbol_kind_type::S_LESS_THAN:
         case parser::Parser::symbol_kind_type::S_GREATER_THAN:

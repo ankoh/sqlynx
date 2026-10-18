@@ -819,3 +819,19 @@ parser-snapshots:
   - name: select_alias_1
     input: |
       select v into a FROM somefunc() as t(a integer);
+  # Parse positional ? parameters followed by keywords
+  - name: select_positional_param_fetch_next
+    input: |
+      select a from t where (b = ? and c = ?) fetch next 10 rows only
+  # Parse named ?name and ?1 parameters next to positional ones
+  - name: select_named_and_positional_params
+    input: |
+      select ?foo, ?1, ? from t where x in (?, ?)
+  # Parse psql-style :name, :"name" and :'name' parameters
+  - name: select_colon_params
+    input: |
+      select * from hybrid_search(table(t), :"_SEARCH_STRING", :limit, :'mode') as s where s.x = :foo
+  # Parse array slices next to colon parameters
+  - name: select_array_slices_with_colon_params
+    input: |
+      select a[1:2], a[i:j], a[:n], a[n:], a[:], a[:"x"] from t where a[:k] = :p

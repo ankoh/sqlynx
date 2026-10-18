@@ -13787,3 +13787,630 @@ parser-snapshots:
       comments: []
       comment-blocks: []
       comment-warnings: []
+
+  - name: select_positional_param_fetch_next
+    input: |-
+      select a from t where (b = ? and c = ?) fetch next 10 rows only
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 30
+          description:
+            text: "select a f.. rows only"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select a f.. rows only"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "a"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "a"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_COLUMN_REF
+                        text: "a"
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "a"
+                            children:
+                              - type: NAME
+                                text: "a"
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from t"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "t"
+                    children:
+                      - key: SQL_TABLEREF_NAME
+                        type: ARRAY
+                        text: "t"
+                        children:
+                          - type: NAME
+                            text: "t"
+              - key: SQL_SELECT_WHERE
+                type: OBJECT_SQL_NARY_EXPRESSION
+                text: "b = ? and c = ?"
+                children:
+                  - key: SQL_EXPRESSION_OPERATOR
+                    type: ENUM_SQL_EXPRESSION_OPERATOR
+                    value: AND
+                  - key: SQL_EXPRESSION_ARGS
+                    type: ARRAY
+                    text: "b = ? and c = ?"
+                    children:
+                      - type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "b = ?"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: EQUAL
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "b = ?"
+                            children:
+                              - type: OBJECT_SQL_COLUMN_REF
+                                text: "b"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "b"
+                                    children:
+                                      - type: NAME
+                                        text: "b"
+                              - type: OBJECT_SQL_PARAMETER_REF
+                                text: "?"
+                                children:
+                                  - key: SQL_PARAMETER_PREFIX
+                                    type: OPERATOR
+                                    text: "?"
+                      - type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "c = ?"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: EQUAL
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "c = ?"
+                            children:
+                              - type: OBJECT_SQL_COLUMN_REF
+                                text: "c"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "c"
+                                    children:
+                                      - type: NAME
+                                        text: "c"
+                              - type: OBJECT_SQL_PARAMETER_REF
+                                text: "?"
+                                children:
+                                  - key: SQL_PARAMETER_PREFIX
+                                    type: OPERATOR
+                                    text: "?"
+              - key: SQL_SELECT_LIMIT
+                type: LITERAL_INTEGER
+                text: "10"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: select_named_and_positional_params
+    input: |-
+      select ?foo, ?1, ? from t where x in (?, ?)
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 30
+          description:
+            text: "select ?fo.. in (?, ?)"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select ?fo.. in (?, ?)"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "?foo, ?1, ?"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "?foo"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_PARAMETER_REF
+                        text: "?foo"
+                        children:
+                          - key: SQL_PARAMETER_PREFIX
+                            type: OPERATOR
+                            text: "?"
+                          - key: SQL_PARAMETER_NAME
+                            type: ARRAY
+                            text: "foo"
+                            children:
+                              - type: NAME
+                                text: "foo"
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "?1"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_PARAMETER_REF
+                        text: "?1"
+                        children:
+                          - key: SQL_PARAMETER_PREFIX
+                            type: OPERATOR
+                            text: "?"
+                          - key: SQL_PARAMETER_NAME
+                            type: ARRAY
+                            text: "1"
+                            children:
+                              - type: NAME
+                                text: "1"
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "?"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_PARAMETER_REF
+                        text: "?"
+                        children:
+                          - key: SQL_PARAMETER_PREFIX
+                            type: OPERATOR
+                            text: "?"
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from t"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "t"
+                    children:
+                      - key: SQL_TABLEREF_NAME
+                        type: ARRAY
+                        text: "t"
+                        children:
+                          - type: NAME
+                            text: "t"
+              - key: SQL_SELECT_WHERE
+                type: OBJECT_SQL_NARY_EXPRESSION
+                text: "x in (?, ?)"
+                children:
+                  - key: SQL_EXPRESSION_OPERATOR
+                    type: ENUM_SQL_EXPRESSION_OPERATOR
+                    value: IN
+                  - key: SQL_EXPRESSION_ARGS
+                    type: ARRAY
+                    text: "x in (?, ?)"
+                    children:
+                      - type: OBJECT_SQL_COLUMN_REF
+                        text: "x"
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "x"
+                            children:
+                              - type: NAME
+                                text: "x"
+                      - type: ARRAY
+                        text: "(?, ?)"
+                        children:
+                          - type: OBJECT_SQL_PARAMETER_REF
+                            text: "?"
+                            children:
+                              - key: SQL_PARAMETER_PREFIX
+                                type: OPERATOR
+                                text: "?"
+                          - type: OBJECT_SQL_PARAMETER_REF
+                            text: "?"
+                            children:
+                              - key: SQL_PARAMETER_PREFIX
+                                type: OPERATOR
+                                text: "?"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: select_colon_params
+    input: |-
+      select * from hybrid_search(table(t), :"_SEARCH_STRING", :limit, :'mode') as s where s.x = :foo
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 43
+          description:
+            text: "select * f..s.x = :foo"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select * f..s.x = :foo"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "*"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "*"
+                    children:
+                      - key: SQL_RESULT_TARGET_STAR
+                        type: BOOL
+                        value: 1
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from hybri..ode') as s"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "hybrid_sea..ode') as s"
+                    children:
+                      - key: SQL_TABLEREF_ALIAS
+                        type: NAME
+                        text: "s"
+                      - key: SQL_TABLEREF_TABLE
+                        type: OBJECT_SQL_FUNCTION_TABLE
+                        text: "hybrid_sea.., :'mode')"
+                        children:
+                          - key: SQL_FUNCTION_TABLE_FUNCTION
+                            type: OBJECT_SQL_FUNCTION_EXPRESSION
+                            text: "hybrid_sea.., :'mode')"
+                            children:
+                              - key: SQL_FUNCTION_NAME
+                                type: ARRAY
+                                text: "hybrid_search"
+                                children:
+                                  - type: NAME
+                                    text: "hybrid_search"
+                              - key: SQL_FUNCTION_ARGUMENTS
+                                type: ARRAY
+                                text: "table(t), ..t, :'mode'"
+                                children:
+                                  - type: OBJECT_SQL_FUNCTION_ARG
+                                    text: "table(t)"
+                                    children:
+                                      - key: SQL_FUNCTION_ARG_VALUE
+                                        type: OBJECT_SQL_RELATION_EXPR
+                                        text: "table(t)"
+                                        children:
+                                          - key: SQL_TABLEREF_NAME
+                                            type: ARRAY
+                                            text: "t"
+                                            children:
+                                              - type: NAME
+                                                text: "t"
+                                  - type: OBJECT_SQL_FUNCTION_ARG
+                                    text: ":\"_SEARCH_STRING\""
+                                    children:
+                                      - key: SQL_FUNCTION_ARG_VALUE
+                                        type: OBJECT_SQL_PARAMETER_REF
+                                        text: ":\"_SEARCH_STRING\""
+                                        children:
+                                          - key: SQL_PARAMETER_PREFIX
+                                            type: OPERATOR
+                                            text: ":"
+                                          - key: SQL_PARAMETER_NAME
+                                            type: ARRAY
+                                            text: "\"_SEARCH_STRING\""
+                                            children:
+                                              - type: NAME
+                                                text: "\"_SEARCH_STRING\""
+                                  - type: OBJECT_SQL_FUNCTION_ARG
+                                    text: ":limit"
+                                    children:
+                                      - key: SQL_FUNCTION_ARG_VALUE
+                                        type: OBJECT_SQL_PARAMETER_REF
+                                        text: ":limit"
+                                        children:
+                                          - key: SQL_PARAMETER_PREFIX
+                                            type: OPERATOR
+                                            text: ":"
+                                          - key: SQL_PARAMETER_NAME
+                                            type: ARRAY
+                                            text: "limit"
+                                            children:
+                                              - type: NAME
+                                                text: "limit"
+                                  - type: OBJECT_SQL_FUNCTION_ARG
+                                    text: ":'mode'"
+                                    children:
+                                      - key: SQL_FUNCTION_ARG_VALUE
+                                        type: OBJECT_SQL_PARAMETER_REF
+                                        text: ":'mode'"
+                                        children:
+                                          - key: SQL_PARAMETER_PREFIX
+                                            type: OPERATOR
+                                            text: ":"
+                                          - key: SQL_PARAMETER_NAME
+                                            type: ARRAY
+                                            text: "'mode'"
+                                            children:
+                                              - type: NAME
+                                                text: "'mode'"
+                          - key: SQL_FUNCTION_TABLE_WITH_ORDINALITY
+                            type: BOOL
+                            value: 0
+              - key: SQL_SELECT_WHERE
+                type: OBJECT_SQL_NARY_EXPRESSION
+                text: "s.x = :foo"
+                children:
+                  - key: SQL_EXPRESSION_OPERATOR
+                    type: ENUM_SQL_EXPRESSION_OPERATOR
+                    value: EQUAL
+                  - key: SQL_EXPRESSION_ARGS
+                    type: ARRAY
+                    text: "s.x = :foo"
+                    children:
+                      - type: OBJECT_SQL_COLUMN_REF
+                        text: "s.x"
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "s.x"
+                            children:
+                              - type: NAME
+                                text: "s"
+                              - type: NAME
+                                text: "x"
+                      - type: OBJECT_SQL_PARAMETER_REF
+                        text: ":foo"
+                        children:
+                          - key: SQL_PARAMETER_PREFIX
+                            type: OPERATOR
+                            text: ":"
+                          - key: SQL_PARAMETER_NAME
+                            type: ARRAY
+                            text: "foo"
+                            children:
+                              - type: NAME
+                                text: "foo"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: select_array_slices_with_colon_params
+    input: |-
+      select a[1:2], a[i:j], a[:n], a[n:], a[:], a[:"x"] from t where a[:k] = :p
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 66
+          description:
+            text: "select a[1..a[:k] = :p"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select a[1..a[:k] = :p"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "a[1:2], a[..], a[:\"x\"]"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "a[1:2]"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_COLUMN_REF
+                        text: "a[1:2]"
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "a[1:2]"
+                            children:
+                              - type: NAME
+                                text: "a"
+                              - type: OBJECT_SQL_INDIRECTION_INDEX
+                                text: "[1:2]"
+                                children:
+                                  - key: SQL_INDIRECTION_INDEX_LOWER_BOUND
+                                    type: LITERAL_INTEGER
+                                    text: "1"
+                                  - key: SQL_INDIRECTION_INDEX_UPPER_BOUND
+                                    type: LITERAL_INTEGER
+                                    text: "2"
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "a[i:j]"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_COLUMN_REF
+                        text: "a[i:j]"
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "a[i:j]"
+                            children:
+                              - type: NAME
+                                text: "a"
+                              - type: OBJECT_SQL_INDIRECTION_INDEX
+                                text: "[i:j]"
+                                children:
+                                  - key: SQL_INDIRECTION_INDEX_LOWER_BOUND
+                                    type: OBJECT_SQL_COLUMN_REF
+                                    text: "i"
+                                    children:
+                                      - key: SQL_COLUMN_REF_PATH
+                                        type: ARRAY
+                                        text: "i"
+                                        children:
+                                          - type: NAME
+                                            text: "i"
+                                  - key: SQL_INDIRECTION_INDEX_UPPER_BOUND
+                                    type: OBJECT_SQL_COLUMN_REF
+                                    text: "j"
+                                    children:
+                                      - key: SQL_COLUMN_REF_PATH
+                                        type: ARRAY
+                                        text: "j"
+                                        children:
+                                          - type: NAME
+                                            text: "j"
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "a[:n]"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_COLUMN_REF
+                        text: "a[:n]"
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "a[:n]"
+                            children:
+                              - type: NAME
+                                text: "a"
+                              - type: OBJECT_SQL_INDIRECTION_INDEX
+                                text: "[:n]"
+                                children:
+                                  - key: SQL_INDIRECTION_INDEX_UPPER_BOUND
+                                    type: OBJECT_SQL_COLUMN_REF
+                                    text: "n"
+                                    children:
+                                      - key: SQL_COLUMN_REF_PATH
+                                        type: ARRAY
+                                        text: "n"
+                                        children:
+                                          - type: NAME
+                                            text: "n"
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "a[n:]"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_COLUMN_REF
+                        text: "a[n:]"
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "a[n:]"
+                            children:
+                              - type: NAME
+                                text: "a"
+                              - type: OBJECT_SQL_INDIRECTION_INDEX
+                                text: "[n:]"
+                                children:
+                                  - key: SQL_INDIRECTION_INDEX_LOWER_BOUND
+                                    type: OBJECT_SQL_COLUMN_REF
+                                    text: "n"
+                                    children:
+                                      - key: SQL_COLUMN_REF_PATH
+                                        type: ARRAY
+                                        text: "n"
+                                        children:
+                                          - type: NAME
+                                            text: "n"
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "a[:]"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_COLUMN_REF
+                        text: "a[:]"
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "a[:]"
+                            children:
+                              - type: NAME
+                                text: "a"
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "a[:\"x\"]"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_COLUMN_REF
+                        text: "a[:\"x\"]"
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "a[:\"x\"]"
+                            children:
+                              - type: NAME
+                                text: "a"
+                              - type: OBJECT_SQL_INDIRECTION_INDEX
+                                text: "[:\"x\"]"
+                                children:
+                                  - key: SQL_INDIRECTION_INDEX_UPPER_BOUND
+                                    type: OBJECT_SQL_COLUMN_REF
+                                    text: "\"x\""
+                                    children:
+                                      - key: SQL_COLUMN_REF_PATH
+                                        type: ARRAY
+                                        text: "\"x\""
+                                        children:
+                                          - type: NAME
+                                            text: "\"x\""
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from t"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "t"
+                    children:
+                      - key: SQL_TABLEREF_NAME
+                        type: ARRAY
+                        text: "t"
+                        children:
+                          - type: NAME
+                            text: "t"
+              - key: SQL_SELECT_WHERE
+                type: OBJECT_SQL_NARY_EXPRESSION
+                text: "a[:k] = :p"
+                children:
+                  - key: SQL_EXPRESSION_OPERATOR
+                    type: ENUM_SQL_EXPRESSION_OPERATOR
+                    value: EQUAL
+                  - key: SQL_EXPRESSION_ARGS
+                    type: ARRAY
+                    text: "a[:k] = :p"
+                    children:
+                      - type: OBJECT_SQL_COLUMN_REF
+                        text: "a[:k]"
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "a[:k]"
+                            children:
+                              - type: NAME
+                                text: "a"
+                              - type: OBJECT_SQL_INDIRECTION_INDEX
+                                text: "[:k]"
+                                children:
+                                  - key: SQL_INDIRECTION_INDEX_UPPER_BOUND
+                                    type: OBJECT_SQL_COLUMN_REF
+                                    text: "k"
+                                    children:
+                                      - key: SQL_COLUMN_REF_PATH
+                                        type: ARRAY
+                                        text: "k"
+                                        children:
+                                          - type: NAME
+                                            text: "k"
+                      - type: OBJECT_SQL_PARAMETER_REF
+                        text: ":p"
+                        children:
+                          - key: SQL_PARAMETER_PREFIX
+                            type: OPERATOR
+                            text: ":"
+                          - key: SQL_PARAMETER_NAME
+                            type: ARRAY
+                            text: "p"
+                            children:
+                              - type: NAME
+                                text: "p"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []

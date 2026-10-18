@@ -1270,3 +1270,40 @@ formatter-snapshots:
           - mode: pretty
             expected: |-
               select 1 except select 2;
+
+  - name: expr_positional_params
+    input: |-
+      select ?foo, ? from t where a = ? and b in (?, ?) fetch next 3 rows only
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select ?foo, ? from t where a = ? and b in (?, ?) limit 3;
+          - mode: compact
+            expected: |-
+              select ?foo, ? from t where a = ? and b in (?, ?) limit 3;
+          - mode: pretty
+            expected: |-
+              select ?foo, ?
+              from t
+              where a = ? and b in (?, ?)
+              limit 3;
+
+  - name: expr_colon_params
+    input: |-
+      select * from f(table(t), :"_SEARCH_STRING", :lim, :'mode') where a = :foo and b = :"Bar"
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from f(table(t), :"_SEARCH_STRING", :lim, :'mode') where a = :foo and b = :"Bar";
+          - mode: compact
+            expected: |-
+              select * from f(table(t), :"_SEARCH_STRING", :lim, :'mode') where a = :foo and b = :"Bar";
+          - mode: pretty
+            expected: |-
+              select *
+              from f(table(t), :"_SEARCH_STRING", :lim, :'mode')
+              where a = :foo and b = :"Bar";

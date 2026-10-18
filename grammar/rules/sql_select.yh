@@ -131,6 +131,7 @@
 %type <buffers::parser::Node> sql_overlay_placing;
 %type <buffers::parser::Node> sql_param_name;
 %type <buffers::parser::Node> sql_param_ref;
+%type <buffers::parser::Node> sql_colon_param_ref;
 %type <buffers::parser::Node> sql_preparable_stmt;
 %type <buffers::parser::Node> sql_qual_all_op;
 %type <buffers::parser::Node> sql_qual_op;

@@ -1455,11 +1455,34 @@ sql_param_ref:
           Attr(Key::SQL_PARAMETER_PREFIX, Operator(@1)),
           Attr(Key::SQL_PARAMETER_NAME, ctx.Array(@2, {ctx.NameFromStringLiteral(@2)})),
       });
+  }
+  | PARAM {
+      $$ = ctx.Object(@$, buffers::parser::NodeType::OBJECT_SQL_PARAMETER_REF, {
+          Attr(Key::SQL_PARAMETER_PREFIX, Operator(@1)),
+      });
+  };
+
+// psql-style :name, :"name" and :'name' parameters.
+// Kept out of sql_param_ref so that they cannot follow type and function names in casts,
+// which would be ambiguous with array slices such as a[x:y].
+sql_colon_param_ref:
+    COLON sql_attr_name {
+      $$ = ctx.Object(@$, buffers::parser::NodeType::OBJECT_SQL_PARAMETER_REF, {
+          Attr(Key::SQL_PARAMETER_PREFIX, Operator(@1)),
+          Attr(Key::SQL_PARAMETER_NAME, ctx.Array(@2, {$2})),
+      });
+  }
+  | COLON SCONST {
+      $$ = ctx.Object(@$, buffers::parser::NodeType::OBJECT_SQL_PARAMETER_REF, {
+          Attr(Key::SQL_PARAMETER_PREFIX, Operator(@1)),
+          Attr(Key::SQL_PARAMETER_NAME, ctx.Array(@2, {ctx.NameFromStringLiteral(@2)})),
+      });
   };
 
 sql_c_expr:
     sql_columnref     { $$ = $1; }
   | sql_a_expr_const  { $$ = std::move($1); }
+  | sql_colon_param_ref { $$ = $1; }
   | LRB sql_a_expr RRB sql_opt_indirection {
         if  ($4->empty()) {
             // Keep boolean chains temporary so an enclosing AND/OR can merge them.
@@ -2193,7 +2216,7 @@ sql_indirection_el:
 
 sql_opt_slice_bound:
     sql_a_expr              { $$ = ctx.Expression(std::move($1)); }
-  | %empty                  { $$ = Null(); }
+  | %empty %prec SLICE_EMPTY_BOUND { $$ = Null(); }
     ;
 
 sql_indirection:
