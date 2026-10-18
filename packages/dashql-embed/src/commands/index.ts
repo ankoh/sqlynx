@@ -15,7 +15,7 @@ export interface IndexOptions {
     embedder: Embedder;
     /// Place the scripts in 3D (atlas_3d_x/y/z) or 2D (atlas_2d_x/y), or not at all. Default DEFAULT_LAYOUT_DIMS.
     layout?: LayoutDims | false;
-    /// Add the embedded feature text to features.parquet, for debugging. Default false.
+    /// Add the embedded feature text to dashql-features.parquet, for debugging. Default false.
     featureText?: boolean;
     log: (message: string) => void;
 }
@@ -58,7 +58,7 @@ export async function runIndex(options: IndexOptions): Promise<IndexSummary> {
 
     const version = await coreVersion();
     const outDir = resolveUserPath(options.outDir);
-    const featuresPath = join(outDir, 'features.parquet');
+    const featuresPath = join(outDir, 'dashql-features.parquet');
     const featuresMetadata = indexMetadata('features', embedder.config, embedder.dim, version);
     const dims = options.layout ?? DEFAULT_LAYOUT_DIMS;
     let layout: { coords: Float32Array; dims: LayoutDims } | undefined;
@@ -77,7 +77,7 @@ export async function runIndex(options: IndexOptions): Promise<IndexSummary> {
         for (const [key, value] of layoutMetadata(dims, result.scale)) featuresMetadata.set(key, value);
     }
     await writeParquetFile(
-        join(outDir, 'comments.parquet'),
+        join(outDir, 'dashql-comments.parquet'),
         commentsTable(comments, embedder.dim, indexMetadata('comments', embedder.config, embedder.dim, version)),
     );
     await writeParquetFile(featuresPath, featuresTable(features, embedder.dim, featuresMetadata, { layout, featureText: options.featureText }));

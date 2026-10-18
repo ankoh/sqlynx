@@ -88,11 +88,11 @@ export interface LoadedIndex {
 }
 
 export async function loadIndex(dir: string): Promise<LoadedIndex> {
-    const features = await readParquetFile(join(dir, 'features.parquet'));
-    const comments = await readParquetFile(join(dir, 'comments.parquet'));
+    const features = await readParquetFile(join(dir, 'dashql-features.parquet'));
+    const comments = await readParquetFile(join(dir, 'dashql-comments.parquet'));
     for (const key of ['model', 'dtype', 'pooling', 'query_prefix', 'dim']) {
         if (comments.metadata.get(`dashql_embed.${key}`) !== features.metadata.get(`dashql_embed.${key}`)) {
-            throw new Error(`comments.parquet and features.parquet disagree on '${key}', they were not built together`);
+            throw new Error(`dashql-comments.parquet and dashql-features.parquet disagree on '${key}', they were not built together`);
         }
     }
     return { features, comments: comments.table.numRows > 0 ? comments : null };
