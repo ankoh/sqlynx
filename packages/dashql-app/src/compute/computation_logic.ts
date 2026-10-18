@@ -160,16 +160,24 @@ export async function analyzeTable(tableId: number, table: arrow.Table, dispatch
 
     // Compute the column aggregates
     let colAggregateCount = 0;
+    let colAggregateOrdinalCount = 0;
+    let colAggregateStringCount = 0;
+    let colAggregateSlowestDuration = 0;
+    let colAggregateSlowestColumn: string | null = null;
     let colAggregatesBegin = performance.now();
-    logger.info("Computing column aggregates", {}, LOG_CTX);
+    logger.info("Computing column aggregates", {
+        "table": tableId.toString(),
+        "rows": newTable.numRows.toString(),
+        "columns": gridColumnGroups.length.toString(),
+    }, LOG_CTX);
     for (let columnId = 0; columnId < gridColumnGroups.length; ++columnId) {
         // LIST columns (e.g. float32 embedding arrays) are not aggregated: their value
         // identifier / frequent-value / distinct-count computations are very expensive
         // (full-vector sort/hash) and buy nothing — no summary histogram is rendered for
         // them. We keep the LIST_COLUMN group (UMAP still attaches its projection to it),
         // but skip all of its embedded-database aggregation work.
-        const columnType = gridColumnGroups[columnId].type;
-        if (columnType == SKIPPED_COLUMN || columnType == ROWNUMBER_COLUMN || columnType == LIST_COLUMN) {
+        const columnEntry = gridColumnGroups[columnId];
+        if (columnEntry.type == SKIPPED_COLUMN || columnEntry.type == ROWNUMBER_COLUMN || columnEntry.type == LIST_COLUMN) {
             continue;
         }
         const columnAggregationTask: ColumnAggregationTask = {
@@ -177,18 +185,38 @@ export async function analyzeTable(tableId: number, table: arrow.Table, dispatch
             tableVersion: new ComputationStateVersion(0, 0),
             columnId,
             tableAggregate,
-            columnEntry: gridColumnGroups[columnId],
+            columnEntry,
             inputDataFrame: newDataFrame,
         };
+        // Measured around the dispatch, so this includes the scheduler round trip.
+        const columnBegin = performance.now();
         await computeColumnAggregatesDispatched(columnAggregationTask, dispatch);
+        const columnDuration = performance.now() - columnBegin;
+        if (columnDuration > colAggregateSlowestDuration) {
+            colAggregateSlowestDuration = columnDuration;
+            colAggregateSlowestColumn = columnEntry.value.inputFieldName;
+        }
         ++colAggregateCount;
+        if (columnEntry.type == ORDINAL_COLUMN) {
+            ++colAggregateOrdinalCount;
+        } else {
+            ++colAggregateStringCount;
+        }
     }
     let colAggregatesEnd = performance.now();
 
     if (colAggregateCount > 0) {
+        const duration = colAggregatesEnd - colAggregatesBegin;
         logger.info("Computed column aggregates", {
+            "table": tableId.toString(),
+            "rows": newTable.numRows.toString(),
             "aggregates": colAggregateCount.toString(),
-            "duration": Math.floor(colAggregatesEnd - colAggregatesBegin).toString()
+            "ordinal": colAggregateOrdinalCount.toString(),
+            "string": colAggregateStringCount.toString(),
+            "duration": Math.floor(duration).toString(),
+            "avgDuration": Math.floor(duration / colAggregateCount).toString(),
+            "maxDuration": Math.floor(colAggregateSlowestDuration).toString(),
+            "slowestColumn": colAggregateSlowestColumn ?? "",
         }, LOG_CTX);
     }
 
@@ -1051,18 +1079,10 @@ export async function computeColumnAggregates(task: ColumnAggregationTask, logge
         const tableName = generateTableName("__col_agg");
         const aggregateDataFrame = await executeQuery(sql, () => DataFrame.fromSQL(task.inputDataFrame.database, sql, tableName));
         const transformEnd = performance.now();
-        logger.debug("Aggregated table column", {
-            "version": task.tableVersion.toString(),
-            "table": task.tableId.toString(),
-            "columnIndex": task.columnId.toString(),
-            "columnName": task.columnEntry.value.inputFieldName,
-            "groupType": getGridColumnTypeName(task.columnEntry),
-            "duration": Math.floor(transformEnd - transformStart).toString(),
-            "sql": sql,
-        }, LOG_CTX);
 
         const aggregateTable = await aggregateDataFrame.readTable();
         const aggregateTableFormatter = new ArrowTableFormatter(aggregateTable.schema, aggregateTable.batches, logger);
+        const readEnd = performance.now();
 
         let columnAggregate: ColumnAggregationVariant;
         switch (task.columnEntry.type) {
@@ -1095,6 +1115,20 @@ export async function computeColumnAggregates(task: ColumnAggregationTask, logge
                 break;
             }
         }
+        const analysisEnd = performance.now();
+        logger.info("Aggregated table column", {
+            "version": task.tableVersion.toString(),
+            "table": task.tableId.toString(),
+            "columnIndex": task.columnId.toString(),
+            "columnName": task.columnEntry.value.inputFieldName,
+            "groupType": getGridColumnTypeName(task.columnEntry),
+            "duration": Math.floor(analysisEnd - transformStart).toString(),
+            "queryDuration": Math.floor(transformEnd - transformStart).toString(),
+            "readDuration": Math.floor(readEnd - transformEnd).toString(),
+            "analysisDuration": Math.floor(analysisEnd - readEnd).toString(),
+            "resultRows": aggregateTable.numRows.toString(),
+            "sql": sql,
+        }, LOG_CTX);
         return columnAggregate;
 
     } catch (error: any) {
