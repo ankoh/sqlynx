@@ -32,6 +32,8 @@ interface ParticleFlowBackgroundProps {
     load?: BackgroundAnimationLoader;
     /// Called with the running animation, and with null when it is disposed. Lets entrypoints feed their animation.
     onAnimation?: (animation: BackgroundAnimation | null) => void;
+    /// Added to the layer, e.g. for a backdrop behind the animation
+    className?: string;
 }
 
 export const ParticleFlowBackground: React.FC<ParticleFlowBackgroundProps> = (props: ParticleFlowBackgroundProps) => {
@@ -84,5 +86,6 @@ export const ParticleFlowBackground: React.FC<ParticleFlowBackgroundProps> = (pr
         };
     }, [load]);
 
-    return <div ref={containerRef} className={styles.background} aria-hidden="true" />;
+    const className = props.className == null ? styles.background : `${styles.background} ${props.className}`;
+    return <div ref={containerRef} className={className} aria-hidden="true" />;
 };

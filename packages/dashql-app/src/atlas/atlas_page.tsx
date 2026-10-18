@@ -314,14 +314,21 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
         setError(null);
         setHovered(null);
         try {
-            setResults(await session.search(text));
+            const found = await session.search(text);
+            setResults(found);
+            // A wave runs through the cloud from the chunk of the best hit
+            const best = found[0]?.hits[0];
+            const points = best == null ? undefined : pointsOfScript.get(best.scriptName);
+            if (best != null && points != null && points.length > 0) {
+                cloud?.ripple(points.find(point => folder?.points.details[point] === best.snippet) ?? points[0]);
+            }
         } catch (e) {
             logger.error('Search failed', { error: stringifyError(e) }, LOG_CTX);
             setError(stringifyError(e));
         } finally {
             setSearching(false);
         }
-    }, [prompt, searching, logger]);
+    }, [prompt, searching, logger, cloud, folder, pointsOfScript]);
 
     const openScript = React.useCallback(async (name: string) => {
         const session = sessionRef.current;
@@ -521,7 +528,7 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
     }
     return (
         <main className={styles.page} onPointerMove={onPointerMove} onPointerLeave={onPointerLeave}>
-            <ParticleFlowBackground load={loadPointCloud} onAnimation={onAnimation} />
+            <ParticleFlowBackground load={loadPointCloud} onAnimation={onAnimation} className={styles.cloud_stage} />
             {layout}
             {dot != null && (
                 <div ref={tooltipRef} className={styles.dot_tooltip} role="tooltip">
