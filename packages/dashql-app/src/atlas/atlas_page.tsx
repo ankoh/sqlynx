@@ -365,6 +365,10 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
             setError(stringifyError(e));
         }
     }, [logger]);
+    // Clicking the dot under the pointer opens its script, cards and the prompt are in front of the page
+    const onClick = (e: React.MouseEvent<HTMLElement>) => {
+        if (e.target === e.currentTarget && dotScript != null) void openScript(dotScript);
+    };
 
     let layout: React.ReactNode;
     if (unsupported != null) {
@@ -409,7 +413,9 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
                         onHover={setHovered}
                         onOpen={name => void openScript(name)}
                         script={openedScript}
+                        core={sessionRef.current?.core ?? null}
                         onCloseScript={() => setOpenedScript(null)}
+                        onCloseResults={() => setResults(null)}
                     />
                 </div>
                 {index != null && index.rows.numRows > 0 && (
@@ -437,7 +443,7 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
         }
     }
     return (
-        <main className={styles.page} onPointerMove={onPointerMove} onPointerLeave={onPointerLeave}>
+        <main className={styles.page} onPointerMove={onPointerMove} onPointerLeave={onPointerLeave} onClick={onClick}>
             <ParticleFlowBackground load={loadPointCloud} onAnimation={onAnimation} className={styles.cloud_stage} />
             {layout}
             {dot != null && (

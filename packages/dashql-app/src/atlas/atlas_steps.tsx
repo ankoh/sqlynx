@@ -1,5 +1,12 @@
 import * as React from 'react';
 
+import { buffers, type DashQL, type DashQLScript } from '@ankoh/dashql-core';
+import { EditorView } from '@codemirror/view';
+
+import { updateReadonlyScriptEditor } from '../app/notebook/ui/catalog_script_card.js';
+import { createScriptFormatConfig, measureScriptFormatWidth } from '../app/notebook/ui/script_format.js';
+import { CodeMirror, createReadonlyCodeMirrorExtensions } from '../app/notebook/scripts/editor/codemirror.js';
+
 import * as baseStyles from '../ui/banner/banner_page.module.css';
 import { Button, ButtonSize, ButtonVariant } from '../ui/foundations/button.js';
 import { ComposeIcon, FileDirectoryIcon, SearchIcon, SyncIcon, XIcon } from '../ui/foundations/symbol_icon.js';
@@ -221,7 +228,7 @@ export const DescribeCard: React.FC<DescribeCardProps> = (props: DescribeCardPro
     );
 };
 
-export const Card: React.FC<{ title: string; wide?: boolean; actions?: React.ReactNode; children: React.ReactNode }> = props => (
+export const Card: React.FC<{ title: string; wide?: boolean; bare?: boolean; actions?: React.ReactNode; children: React.ReactNode }> = props => (
     <section className={`${baseStyles.card} ${styles.card} ${props.wide ? styles.card_wide : ''}`}>
         <div className={baseStyles.card_header}>
             <div className={baseStyles.card_header_left_container}>
@@ -230,10 +237,78 @@ export const Card: React.FC<{ title: string; wide?: boolean; actions?: React.Rea
             {props.actions != null && <div className={baseStyles.card_header_right_container}>{props.actions}</div>}
         </div>
         <div className={baseStyles.card_section}>
-            <div className={`${baseStyles.section_entries} ${styles.card_body}`}>{props.children}</div>
+            <div className={`${baseStyles.section_entries} ${styles.card_body} ${props.bare ? styles.card_body_bare : ''}`}>{props.children}</div>
         </div>
     </section>
 );
+
+interface ScriptCardProps {
+    core: DashQL | null;
+    script: { name: string; text: string };
+    onClose: () => void;
+}
+
+/// A script with syntax highlighting that can be formatted
+const ScriptCard: React.FC<ScriptCardProps> = (props: ScriptCardProps) => {
+    const [view, setView] = React.useState<EditorView | null>(null);
+    const [pretty, setPretty] = React.useState(false);
+    const extensions = React.useMemo(() => [...createReadonlyCodeMirrorExtensions(), EditorView.lineWrapping], []);
+    const { core, script } = props;
+    React.useEffect(() => {
+        if (view == null || core == null) return;
+        let text = script.text;
+        if (pretty) text = formatSql(core, text, measureScriptFormatWidth(view)) ?? text;
+        updateReadonlyScriptEditor(view, core, 0, text);
+    }, [view, core, script.text, pretty]);
+    return (
+        <Card
+            title={script.name}
+            bare
+            actions={(
+                <>
+                    {core != null && (
+                        <Button
+                            variant={pretty ? ButtonVariant.Primary : ButtonVariant.Invisible}
+                            size={ButtonSize.Small}
+                            aria-pressed={pretty}
+                            onClick={() => setPretty(!pretty)}
+                        >
+                            Pretty
+                        </Button>
+                    )}
+                    <Button
+                        variant={ButtonVariant.Invisible}
+                        size={ButtonSize.Small}
+                        aria-label="Close script"
+                        onClick={props.onClose}
+                        leadingVisual={<XIcon />}
+                    />
+                </>
+            )}
+        >
+            <CodeMirror ref={setView} extensions={extensions} style={{ height: 'auto' }} />
+        </Card>
+    );
+};
+
+/// Format SQL text with the pretty printer, null if it cannot be formatted
+function formatSql(core: DashQL, text: string, width: number): string | null {
+    const catalog = core.createCatalog();
+    const session = core.createScriptSession(catalog);
+    let formatted: DashQLScript | null = null;
+    try {
+        session.replaceText(0n, text);
+        session.analyze();
+        formatted = session.format(createScriptFormatConfig(buffers.formatting.FormattingMode.PRETTY, false, width), null);
+        return formatted.toString();
+    } catch {
+        return null;
+    } finally {
+        formatted?.destroy();
+        session.destroy();
+        catalog.destroy();
+    }
+}
 
 interface SearchCardProps {
     folder: OpenedFolder | null;
@@ -247,7 +322,10 @@ interface SearchCardProps {
     onOpen: (scriptName: string) => void;
     /// The script that was opened, it shows left of the best matches
     script: { name: string; text: string } | null;
+    /// The dashql-core instance that highlights and formats the script
+    core: DashQL | null;
     onCloseScript: () => void;
+    onCloseResults: () => void;
 }
 
 /// The prompt of the semantic search and its best matches
@@ -279,25 +357,23 @@ export const SearchCard: React.FC<SearchCardProps> = (props: SearchCardProps) =>
             <div className={styles.search_below}>
             {props.script != null && (
                 <div className={styles.script_card}>
-                    <Card
-                        title={props.script.name}
-                        actions={(
-                            <Button
-                                variant={ButtonVariant.Invisible}
-                                size={ButtonSize.Small}
-                                aria-label="Close script"
-                                onClick={props.onCloseScript}
-                                leadingVisual={<XIcon />}
-                            />
-                        )}
-                    >
-                        <pre className={styles.script}>{props.script.text}</pre>
-                    </Card>
+                    <ScriptCard core={props.core} script={props.script} onClose={props.onCloseScript} />
                 </div>
             )}
             {props.results != null && (
                 <div className={styles.results}>
-                    <Card title="Best matches">
+                    <Card
+                        title="Best matches"
+                        actions={(
+                            <Button
+                                variant={ButtonVariant.Invisible}
+                                size={ButtonSize.Small}
+                                aria-label="Close search results"
+                                onClick={props.onCloseResults}
+                                leadingVisual={<XIcon />}
+                            />
+                        )}
+                    >
                         {props.results.map(({ strategy, hits }) => (
                             <section key={strategy.id} className={styles.result_section} aria-label={strategy.title}>
                                 <h2 className={styles.result_title}>{strategy.title}</h2>

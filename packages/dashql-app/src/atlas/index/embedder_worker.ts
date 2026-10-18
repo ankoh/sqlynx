@@ -7,7 +7,7 @@ import {
     EmbedderResponseType,
 } from './embedder_protocol.js';
 import type { EmbedderConfig } from './model.js';
-import { configureTransformers, pipelineOptions } from './transformers_env.js';
+import { checkRuntimeFiles, configureTransformers, pipelineOptions } from './transformers_env.js';
 
 const BATCH_SIZE = 32;
 
@@ -21,6 +21,7 @@ function post(message: EmbedderResponse, transfer?: Transferable[]): void {
 }
 
 async function init(id: number, baseUrl: string, config: EmbedderConfig): Promise<void> {
+    await checkRuntimeFiles(baseUrl);
     const { pipeline, env } = await import('@huggingface/transformers');
     configureTransformers(env, baseUrl);
     extractor = await pipeline('feature-extraction', config.model, pipelineOptions(config, progress => {
