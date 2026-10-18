@@ -101,8 +101,7 @@ bazel test //packages/dashql-core:*_tests
 | `//packages/dashql-core-js/test:all` | Core browser tests in Chromium and Firefox, including browser workers |
 | `//packages/hyper-api:smoke_test` | Native Tableau Hyper API integration test |
 | `//packages/dashql-native:test` | Electron host unit tests |
-| `//packages/dashql-embed:tests` | Embedding CLI unit tests, offline end-to-end test and the `snapshots/embed` check |
-| `//packages/dashql-embed:model_smoke_test` | Downloads the default embedding model and checks vector shape (`manual`) |
+| `//packages/dashql-describe:tests` | Describe CLI unit tests, offline end-to-end test and the `snapshots/describe` check |
 | `//packages/dashql-cli:tests` | DashQL CLI unit tests, including execution in hyperdb-wasm |
 | `//packages/dashql-app:test_chromium` | Web app tests in Chromium |
 | `//packages/dashql-app:test_firefox` | Web app tests in Firefox |
@@ -133,13 +132,12 @@ bazel run //snapshots/plans/hyper/tests:update
 
 These targets regenerate `/snapshots/*.yaml` from `/snapshots/*.tpl.yaml` templates.
 
-The embedding CLI has its own snapshots in `/snapshots/embed/`. They show what `dashql-embed index` extracts from a
-script (features, feature text, comments) and, for cases with a `describe` key, the prompt that
-`dashql-embed describe` sends to the model. Neither the embedding model nor an LLM is involved, so they are checked by
-`bazel test //packages/dashql-embed:tests`. They are not part of `//snapshots:update`:
+The describe CLI has its own snapshots in `/snapshots/describe/`. They show the prompt that `dashql-describe` sends to
+the model for a script, or that it skips the script. No LLM is involved, so they are checked by
+`bazel test //packages/dashql-describe:tests`. They are not part of `//snapshots:update`:
 
 ```bash
-bazel run //snapshots/embed:update
+bazel run //snapshots/describe:update
 ```
 
 ## Type Checking

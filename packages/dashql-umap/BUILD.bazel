@@ -204,36 +204,3 @@ filegroup(
     ],
     visibility = ["//visibility:public"],
 )
-
-# The module laid out the way umap-wasm/index.js expects it ("./pkg/umap_wasm.js" glue next to
-# "pkg/umap_wasm_bg.wasm"), for consumers that load it from disk, such as the dashql-embed CLI.
-# //packages/dashql-app stages the same layout for the web bundle (dep_umap_wasm).
-genrule(
-    name = "node_module",
-    srcs = [
-        ":js",
-        ":wasm",
-    ],
-    outs = [
-        "node/index.js",
-        "node/index.d.ts",
-        "node/pkg/umap_wasm.js",
-        "node/pkg/umap_wasm.d.ts",
-        "node/pkg/umap_wasm_bg.wasm",
-    ],
-    cmd = """
-        OUT_DIR="$(RULEDIR)/node"
-        mkdir -p "$$OUT_DIR/pkg"
-        for src in $(SRCS); do
-            case "$$src" in
-                */umap_bindgen/umap_wasm.js)   cp "$$src" "$$OUT_DIR/pkg/umap_wasm.js" ;;
-                */umap_bindgen/umap_wasm.d.ts) cp "$$src" "$$OUT_DIR/pkg/umap_wasm.d.ts" ;;
-                */umap_bindgen/*)              : ;;  # the unoptimized .wasm and its .d.ts
-                */umap-wasm/index.js)          cp "$$src" "$$OUT_DIR/index.js" ;;
-                */umap-wasm/index.d.ts)        cp "$$src" "$$OUT_DIR/index.d.ts" ;;
-                *umap_wasm_bg.wasm)            cp "$$src" "$$OUT_DIR/pkg/umap_wasm_bg.wasm" ;;  # the optimized :wasm output
-            esac
-        done
-    """,
-    visibility = ["//packages/dashql-embed:__pkg__"],
-)

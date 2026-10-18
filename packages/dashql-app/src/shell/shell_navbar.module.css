@@ -26,6 +26,18 @@
     height: 100%;
 }
 
+.brand_logo_mark {
+    width: 28px;
+    height: 28px;
+}
+
+.brand_title {
+    margin-left: 12px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: var(--font_size_body);
+    letter-spacing: 0.04em;
+}
+
 .brand:focus-visible {
     outline: 2px solid white;
     outline-offset: -2px;

@@ -55,14 +55,14 @@ async function run(requestId: number, params: UMAPWorkerRequest & { type: UMAPWo
     const state = { requestId, cancelled: false };
     active = state;
 
-    const { data, count, dimension, options } = params.params;
+    const { data, count, dimension, options, outputDimension } = params.params;
     // Prefer the GPU path when the caller hasn't forced a choice and this worker's
     // WebGPU adapter is reachable. An explicit options.gpu (true/false) wins.
     const gpu = options.gpu ?? (await webgpuAvailable());
     if (state.cancelled) return;
     let umap: Awaited<ReturnType<typeof createUMAP>> | null = null;
     try {
-        umap = await createUMAP(count, dimension, 2, data, {
+        umap = await createUMAP(count, dimension, outputDimension ?? 2, data, {
             ...options,
             gpu,
             progress: (progress: number, stage: string) => {

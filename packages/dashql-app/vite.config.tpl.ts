@@ -32,6 +32,26 @@ export default vite.defineConfig(({ mode, command }) => {
             .trim().split('\n').filter(Boolean).map(file => `../${file}`)
         : null;
 
+    // onnxruntime-web (bundled by transformers.js for the atlas) refers to its 27 MB wasm with
+    // new URL("ort-wasm-*.wasm", import.meta.url), which Vite would emit into every deployment even though nothing
+    // loads it from there. The atlas always sets env.backends.onnx.wasm.wasmPaths to the files it hosts itself
+    // (see atlas/index/transformers_env.ts), so the default location is never used. Workers bundle transformers.js
+    // again and have their own plugin list.
+    const stripOnnxRuntimeWasmAsset = {
+        name: 'dashql-strip-onnxruntime-wasm-asset',
+        enforce: 'pre' as const,
+        transform(code: string, id: string): string | undefined {
+            const cleanId = id.split('?', 1)[0]?.split(path.sep).join('/');
+            if (!cleanId || !/\/onnxruntime-web\/dist\/[^/]+\.m?js$/.test(cleanId)) return;
+            const replaced = code.replace(
+                /new URL\(("ort-wasm-[\w.-]+\.wasm"),\s*import\.meta\.url\)/g,
+                'new URL($1,"http://onnxruntime-wasm.invalid/")',
+            );
+            return replaced === code ? undefined : replaced;
+        },
+    };
+
+
     // The pages deployment ships WebAssembly pre-compressed with Brotli, like hyperdb-wasm does: the bytes we deploy are
     // the bytes users download, no matter what the CDN decides to compress. Each `x.HASH.wasm` is replaced by
     // `x.HASH.wasm.br` in the same directory and the references in the JS are rewritten. `_headers` serves them with
@@ -88,6 +108,7 @@ export default vite.defineConfig(({ mode, command }) => {
     return {
         plugins: [
             react(),
+            stripOnnxRuntimeWasmAsset,
             ...(mode === 'pages' ? [precompressWasm] : []),
             // In the Bazel sandbox, HTML entry files are symlinks to the execroot. Rolldown
             // follows them during input resolution, causing vite:build-html to compute the
@@ -138,6 +159,7 @@ export default vite.defineConfig(({ mode, command }) => {
                 input: {
                     app: path.resolve(rootDir, "index.html"),
                     shell: path.resolve(rootDir, "shell.html"),
+                    atlas: path.resolve(rootDir, "atlas.html"),
                     oauth_redirect: path.resolve(rootDir, "oauth.html"),
                     ...(isElectronBuild
                         ? { hyperdb_capability: path.resolve(rootDir, "hyperdb-capability.html") }
@@ -271,6 +293,7 @@ export default vite.defineConfig(({ mode, command }) => {
         },
         worker: {
             format: 'es',
+            plugins: () => [stripOnnxRuntimeWasmAsset],
             rolldownOptions: {
                 output: {
                     entryFileNames: 'static/js/[name].[hash].js',

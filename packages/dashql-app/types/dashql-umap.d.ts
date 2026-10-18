@@ -5,6 +5,8 @@ declare module '@dashql/umap-wasm' {
     export interface UMAPOptions {
         metric?: 'euclidean' | 'cosine';
         initializeMethod?: 'spectral' | 'random';
+        /// Start the layout from these coordinates (row-major, count * outputDim) instead of an init method
+        initialEmbedding?: Float32Array;
         optimizer?: 'sgd' | 'momentum';
         localConnectivity?: number;
         mixRatio?: number;

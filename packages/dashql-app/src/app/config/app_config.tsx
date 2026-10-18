@@ -23,9 +23,15 @@ export interface AppSettings {
     minLogLevel?: number;
 }
 
+export interface AtlasConfig {
+    /// Where the embedding model and the onnxruntime assets are served, see atlas/index/model.ts
+    modelBaseUrl?: string;
+}
+
 export interface AppConfig {
     settings?: AppSettings;
     connectors?: ConnectorConfigs;
+    atlas?: AtlasConfig;
 }
 
 function readAppConfig(object: Record<string, object>): AppConfig {

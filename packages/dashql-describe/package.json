@@ -1,0 +1,10 @@
+{
+    "name": "@ankoh/dashql-describe",
+    "version": "0.0.2-dev.17",
+    "description": "Describe SQL scripts for semantic example search",
+    "private": true,
+    "type": "module",
+    "bin": {
+        "dashql-describe": "bin/dashql-describe.mjs"
+    }
+}

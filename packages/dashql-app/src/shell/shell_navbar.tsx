@@ -94,16 +94,27 @@ interface ShellNavBarProps {
     engineVersion: string | null;
     onReset: () => void;
     Internals?: React.ComponentType;
+    /// Entrypoints that share this navbar (e.g. atlas) brand it with their own symbol and label
+    brandSymbol?: string;
+    brandLabel?: string;
+    /// Text next to the brand symbol, none for the shell whose banner already contains it
+    brandTitle?: string;
 }
 
 export const ShellNavBar: React.FC<ShellNavBarProps> = (props: ShellNavBarProps) => {
     const Internals = props.Internals ?? ShellInternals;
     return (
         <header className={styles.navbar}>
-            <button type="button" className={styles.brand} aria-label="Reset shell" onClick={props.onReset}>
-                <svg className={styles.brand_logo} width="100%" height="100%" aria-hidden="true">
-                    <use xlinkHref={`${symbols}#hyper_banner`} />
+            <button type="button" className={styles.brand} aria-label={props.brandLabel ?? 'Reset shell'} onClick={props.onReset}>
+                <svg
+                    className={props.brandTitle != null ? `${styles.brand_logo} ${styles.brand_logo_mark}` : styles.brand_logo}
+                    width="100%"
+                    height="100%"
+                    aria-hidden="true"
+                >
+                    <use xlinkHref={`${symbols}#${props.brandSymbol ?? 'hyper_banner'}`} />
                 </svg>
+                {props.brandTitle != null && <span className={styles.brand_title}>{props.brandTitle}</span>}
             </button>
             <nav className={styles.actions} aria-label="Shell utilities">
                 <Internals />
