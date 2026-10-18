@@ -1,5 +1,6 @@
 import * as arrow from 'apache-arrow';
 
+import type { EmbedderConfig } from './model.js';
 import type { IndexRow } from './rows.js';
 
 /// Number of coordinates per row in the layout
@@ -8,6 +9,8 @@ export const LAYOUT_DIMS = 3;
 /// embedding and its position in the cloud), `metadata_` (the `@dashql:metadata` block) and `structure_` (the
 /// analysis of the SQL).
 export const EMBEDDING_COLUMN = 'description_embedding';
+/// The model that computed the embedding. It is the same for every row, which Parquet stores in a few bytes.
+export const EMBEDDING_MODEL_COLUMN = 'description_embedding_model';
 export const LAYOUT_COLUMNS = ['description_x', 'description_y', 'description_z'] as const;
 
 const utf8 = new arrow.Utf8();
@@ -130,14 +133,15 @@ function buildTable(columns: Column[], length: number): arrow.Table {
     return new arrow.Table([new arrow.RecordBatch(new arrow.Schema(fields), struct)]);
 }
 
-/// The embedding and layout columns of the description chunks of `rows` rows, `coords` holds LAYOUT_DIMS values per row
-function vectorColumns(vectors: Float32Array[], dim: number, coords: Float32Array): Column[] {
+/// The embedding, its model and the layout columns of the description chunks, `coords` holds LAYOUT_DIMS values per row
+function vectorColumns(vectors: Float32Array[], embedder: IndexEmbedder, coords: Float32Array): Column[] {
     const rows = vectors.length;
     if (coords.length !== rows * LAYOUT_DIMS) {
         throw new Error(`expected ${rows * LAYOUT_DIMS} layout values, got ${coords.length}`);
     }
     return [
-        [EMBEDDING_COLUMN, embeddingType, embeddingColumn(vectors, dim)],
+        [EMBEDDING_COLUMN, embeddingType, embeddingColumn(vectors, embedder.dim)],
+        [EMBEDDING_MODEL_COLUMN, utf8, column(vectors.map(() => embedder.model), utf8)],
         ...LAYOUT_COLUMNS.map((name, d): Column => [
             name,
             float64,
@@ -188,18 +192,21 @@ function metadataColumns(rows: IndexRow[]): Column[] {
     });
 }
 
+/// What the index file records about the embedder of its rows
+export type IndexEmbedder = Pick<EmbedderConfig, 'model' | 'dim'>;
+
 /// A row per description chunk with the metadata and the analysis of its script, in this order: `script_`,
 /// `description_`, `metadata_`, `structure_`. The script is not stored, it can be read from the SQL files. The counts
 /// are null and the lists empty for scripts that could not be analyzed.
 /// `coords` holds LAYOUT_DIMS values per row.
-export function indexTable(rows: IndexRow[], dim: number, coords: Float32Array): arrow.Table {
+export function indexTable(rows: IndexRow[], embedder: IndexEmbedder, coords: Float32Array): arrow.Table {
     return buildTable(
         [
             ['script_name', utf8, column(rows.map(r => r.scriptName), utf8)],
             ['script_hash', utf8, column(rows.map(r => r.scriptHash), utf8)],
             ['description_chunk_index', int32, column(rows.map(r => r.chunkIndex), int32)],
             ['description_chunk', utf8, column(rows.map(r => r.text), utf8)],
-            ...vectorColumns(rows.map(r => r.embedding), dim, coords),
+            ...vectorColumns(rows.map(r => r.embedding), embedder, coords),
             ...metadataColumns(rows),
             ...LISTS.flatMap(([count, list, pick]): Column[] => {
                 const listColumn: Column = [list, utf8List, column(rows.map(r => pick(r) ?? []), utf8List)];

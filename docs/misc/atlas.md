@@ -20,6 +20,7 @@ The columns are prefixed by where they come from and ordered by prefix:
 | `script_name`, `script_hash` | text | The path of the script in the folder and the SHA-256 of its text |
 | `description_chunk_index`, `description_chunk` | int, text | The chunk of the `@dashql:description` block |
 | `description_embedding` | real[] | The embedding of the chunk |
+| `description_embedding_model` | text | The model that computed the embedding, the same in every row |
 | `description_x`, `description_y`, `description_z` | real | The position of the chunk in the cloud |
 | `metadata_<key>` | double, bool or text | One column per key of the `@dashql:metadata` blocks |
 | `structure_*_count` next to its list | int, text[] | The analysis of the SQL, see below |
@@ -54,7 +55,8 @@ Most descriptions are a single chunk.
 Ordinary comments are not embedded, only `@dashql:description` blocks (written by `dashql-describe` or by hand).
 
 There is no sidecar. A folder without an index file is indexed when it is opened. Otherwise the index file is loaded,
-and if that fails, e.g. because an older version wrote it (no `structure_table_count`), the page asks to reindex the
+and if that fails, e.g. because an older version wrote it (no `structure_table_count`) or another model embedded it
+(the `description_embedding_model` of its first row is not the model of the atlas), the page asks to reindex the
 folder. Every row carries the `script_name` and the SHA-256 `script_hash` of the script text, the prompt bar shows how
 many described scripts were added, changed or removed since the index was written. Reindexing replaces the file and
 removes those of earlier versions (`dashql-atlas-structure.parquet`, `dashql-atlas-description.parquet`,
@@ -132,7 +134,9 @@ They are loaded from `atlas.modelBaseUrl` in `static/config.json` and default to
 A base URL on another origin has to send CORS headers that allow the `Range` request header (transformers.js probes files
 with `Range: bytes=0-0`) and `Cross-Origin-Resource-Policy: cross-origin`, because the page is cross-origin isolated.
 
-The index files do not record the model. After changing the model or its settings, folders have to be reindexed.
+The index file records the model in `description_embedding_model`, a file of another model is reported as unreadable
+and has to be reindexed. The other settings (dtype, pooling, prefixes) are not recorded, after changing them folders have
+to be reindexed by hand.
 
 ### Local development
 

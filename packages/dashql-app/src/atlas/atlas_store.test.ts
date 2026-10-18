@@ -17,6 +17,7 @@ import type { IndexRow } from './index/rows.js';
 import { LAYOUT_DIMS } from './index/tables.js';
 import { DESCRIPTION_SEARCH, searchAll } from './search/search.js';
 import {
+    checkIndexModel,
     countOutdatedScripts,
     externalDirectoryDatabase,
     hasIndexFile,
@@ -32,6 +33,7 @@ import {
 } from './store.js';
 
 const DIM = 384;
+const EMBEDDER = { model: 'test/embedder', dim: DIM };
 
 function basis(index: number, secondary?: number): Float32Array {
     const v = new Float32Array(DIM);
@@ -154,7 +156,7 @@ describe('atlas store and search', () => {
         const stale = await directory.getFileHandle(ATLAS_STALE_FILES[0], { create: true });
         const writable = await stale.createWritable();
         await writable.close();
-        await writeIndexFile(sql, location, rows, layout(rows.length), DIM);
+        await writeIndexFile(sql, location, rows, layout(rows.length), EMBEDDER);
         await expect(directory.getFileHandle(ATLAS_STALE_FILES[0])).rejects.toThrow();
 
         // The file is a real file of the selected folder, not only visible to Hyper
@@ -167,6 +169,9 @@ describe('atlas store and search', () => {
         expect(table.numRows).toBe(4);
         const script2 = table.toArray().find(r => r.script_name === 'script_2.sql');
         expect(script2.structure_table_names.toArray()).toEqual(['table_2', 'table_3']);
+        const models = await sql.query('Read back models', `
+            SELECT DISTINCT description_embedding_model AS model FROM external('${location.path}')`);
+        expect(models.toArray().map(r => r.model)).toEqual(['test/embedder']);
 
         // Every chunk carries the structure of its script, the counts of a script without analysis are null
         const counts = await sql.query('Read back counts', `
@@ -193,6 +198,7 @@ describe('atlas store and search', () => {
             'description_chunk_index',
             'description_chunk',
             'description_embedding',
+            'description_embedding_model',
             'description_x',
             'description_y',
             'description_z',
@@ -264,10 +270,11 @@ describe('atlas store and search', () => {
 
         // The rows leave out what only the cloud needs
         const shown = indexRowsTable(table).schema.fields.map(f => f.name);
-        expect(shown.slice(0, 8)).toEqual([
+        expect(shown.slice(0, 9)).toEqual([
             'script_name',
             'description_chunk_index',
             'description_chunk',
+            'description_embedding_model',
             'metadata_owner',
             'metadata_dashboard',
             'metadata_avg_runtime_ms',
@@ -289,6 +296,11 @@ describe('atlas store and search', () => {
                   FROM external('${location.path}')) TO '${old.path}' WITH (FORMAT PARQUET)`);
         await expect(loadIndexTable(sql, old)).rejects.toThrow(/structure_table_count/);
         await directory.removeEntry('old-index.parquet');
+    }, 60_000);
+
+    it('reports index files of another model as unreadable', async () => {
+        await expect(checkIndexModel(sql, location, EMBEDDER.model)).resolves.toBeUndefined();
+        await expect(checkIndexModel(sql, location, 'other/embedder')).rejects.toThrow(/test\/embedder.*other\/embedder/);
     }, 60_000);
 
     it('analyzes the rows of the index file with histograms', async () => {
@@ -352,10 +364,10 @@ describe('atlas store and search', () => {
     }, 60_000);
 
     it('replaces an existing index file', async () => {
-        await writeIndexFile(sql, location, rows.slice(0, 1), layout(1), DIM);
+        await writeIndexFile(sql, location, rows.slice(0, 1), layout(1), EMBEDDER);
         const table = await sql.query('Count', `SELECT count(*) AS n FROM external('${location.path}')`);
         expect(Number(table.toArray()[0].n)).toBe(1);
-        await writeIndexFile(sql, location, [], layout(0), DIM);
+        await writeIndexFile(sql, location, [], layout(0), EMBEDDER);
         const empty = await sql.query('Count', `SELECT count(*) AS n FROM external('${location.path}')`);
         expect(Number(empty.toArray()[0].n)).toBe(0);
     }, 120_000);
