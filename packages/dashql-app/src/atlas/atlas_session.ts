@@ -205,10 +205,10 @@ export class AtlasSession {
         });
         this.traced.info('Built the index', {
             scripts: String(built.analyzedScripts),
-            syntax: String(built.syntax.length),
+            structure: String(built.structure.length),
             description: String(built.description.length),
             properties: String(built.properties.length),
-            syntaxLayout: built.layouts.syntax.mode,
+            structureLayout: built.layouts.structure.mode,
             descriptionLayout: built.layouts.description.mode,
             propertiesLayout: built.layouts.properties.mode,
             ms: String(Math.round(performance.now() - startedAt)),

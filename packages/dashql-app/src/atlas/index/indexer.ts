@@ -2,20 +2,20 @@ import { readProperties, type ScriptProperties } from '@ankoh/dashql-core';
 
 import { descriptionText, extractComments } from './analysis/comments.js';
 import { SqlAnalyzer, type AnalyzedSql } from './analysis/core.js';
-import { extractSyntaxFeatures, type SyntaxFeatures } from './analysis/syntax.js';
+import { extractStructureFeatures, type StructureFeatures } from './analysis/structure.js';
 import { chunkText } from './chunking.js';
-import { renderPropertiesDocument, renderSyntaxDocument, type EmbeddingDocument } from './document.js';
+import { renderPropertiesDocument, renderStructureDocument, type EmbeddingDocument } from './document.js';
 import { computeLayout, type LayoutResult } from './layout.js';
 import type { Embedder } from './model.js';
-import type { DescriptionRow, PropertiesRow, SyntaxRow } from './rows.js';
+import type { DescriptionRow, PropertiesRow, StructureRow } from './rows.js';
 import type { SqlFile } from './scan.js';
 
 /// The embedding-free part of an indexed script
 export interface ScriptAnalysis {
     file: SqlFile;
     analyzed: AnalyzedSql;
-    features: SyntaxFeatures | null;
-    syntaxDocument: EmbeddingDocument;
+    features: StructureFeatures | null;
+    structureDocument: EmbeddingDocument;
     descriptionChunks: string[];
     properties: ScriptProperties | null;
     propertiesDocument: EmbeddingDocument;
@@ -33,31 +33,31 @@ export function analyzeScripts(
 ): ScriptAnalysis[] {
     const analyzed = analyzer.analyze(files.map(f => ({ id: f.id, text: f.text })));
     return analyzed.map((sql, i) => {
-        const features = extractSyntaxFeatures(sql);
-        const syntaxDocument = features ? renderSyntaxDocument(features, maxTokens, countTokens) : EMPTY_DOCUMENT;
+        const features = extractStructureFeatures(sql);
+        const structureDocument = features ? renderStructureDocument(features, maxTokens, countTokens) : EMPTY_DOCUMENT;
         const description = descriptionText(extractComments(sql));
         const descriptionChunks = description ? chunkText(description, maxTokens, countTokens, CHUNK_OVERLAP_TOKENS) : [];
         const properties = sql.parsed ? readProperties(sql.parsed, sql.bytes) : null;
         const propertiesDocument = properties
             ? renderPropertiesDocument(properties, maxTokens, countTokens)
             : EMPTY_DOCUMENT;
-        return { file: files[i], analyzed: sql, features, syntaxDocument, descriptionChunks, properties, propertiesDocument };
+        return { file: files[i], analyzed: sql, features, structureDocument, descriptionChunks, properties, propertiesDocument };
     });
 }
 
 /// Does a script get a row in any of the index files?
 export function hasEmbeddableText(script: ScriptAnalysis): boolean {
-    return (script.features != null && script.syntaxDocument.text.length > 0) ||
+    return (script.features != null && script.structureDocument.text.length > 0) ||
         script.descriptionChunks.length > 0 ||
         (script.properties != null && script.propertiesDocument.text.length > 0);
 }
 
 /// The embedding spaces of an index, each has its own file and its own 3D layout
-export type EmbeddingKind = 'syntax' | 'description' | 'properties';
-export const EMBEDDING_KINDS: readonly EmbeddingKind[] = ['description', 'syntax', 'properties'];
+export type EmbeddingKind = 'structure' | 'description' | 'properties';
+export const EMBEDDING_KINDS: readonly EmbeddingKind[] = ['description', 'structure', 'properties'];
 
 export interface IndexResult {
-    syntax: SyntaxRow[];
+    structure: StructureRow[];
     description: DescriptionRow[];
     properties: PropertiesRow[];
 }
@@ -68,23 +68,23 @@ export interface EmbedProgress {
     total: number;
 }
 
-/// Embed the texts of analyzed scripts. Scripts without syntax features, a description or properties get no row of
+/// Embed the texts of analyzed scripts. Scripts without structure features, a description or properties get no row of
 /// that kind.
 export async function embedScripts(
     scripts: ScriptAnalysis[],
     embedder: Embedder,
     onProgress?: (progress: EmbedProgress) => void,
 ): Promise<IndexResult> {
-    const withSyntax = scripts.filter(s => s.features != null && s.syntaxDocument.text.length > 0);
-    const syntaxVectors = await embedder.embedDocuments(
-        withSyntax.map(s => s.syntaxDocument.text),
-        (done, total) => onProgress?.({ stage: 'syntax', done, total }),
+    const withStructure = scripts.filter(s => s.features != null && s.structureDocument.text.length > 0);
+    const structureVectors = await embedder.embedDocuments(
+        withStructure.map(s => s.structureDocument.text),
+        (done, total) => onProgress?.({ stage: 'structure', done, total }),
     );
-    const syntax: SyntaxRow[] = withSyntax.map((s, i) => ({
+    const structure: StructureRow[] = withStructure.map((s, i) => ({
         scriptName: s.file.id,
         scriptHash: s.file.hash,
-        truncated: s.syntaxDocument.truncated,
-        embedding: syntaxVectors[i],
+        truncated: s.structureDocument.truncated,
+        embedding: structureVectors[i],
         features: s.features!,
         diagnostics: s.analyzed.diagnostics,
     }));
@@ -115,7 +115,7 @@ export async function embedScripts(
         truncated: s.propertiesDocument.truncated,
         embedding: propertyVectors[i],
     }));
-    return { syntax, description, properties };
+    return { structure, description, properties };
 }
 
 export type IndexStage = 'analyze' | 'embed' | 'layout';
@@ -129,7 +129,7 @@ export interface IndexProgress {
 
 export interface BuiltIndex extends IndexResult {
     /// Coordinates of the rows of every kind. The kinds are laid out independently, the description of a script would
-    /// otherwise end up next to the syntax of the scripts it is about instead of next to similar descriptions.
+    /// otherwise end up next to the structure of the scripts it is about instead of next to similar descriptions.
     layouts: Record<EmbeddingKind, LayoutResult>;
     analyzedScripts: number;
 }
@@ -164,7 +164,7 @@ export async function buildIndex(
         });
     };
     const layouts = {
-        syntax: await layOut('syntax'),
+        structure: await layOut('structure'),
         description: await layOut('description'),
         properties: await layOut('properties'),
     };

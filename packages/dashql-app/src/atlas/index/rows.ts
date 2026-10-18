@@ -1,11 +1,11 @@
-import type { SyntaxFeatures } from './analysis/syntax.js';
+import type { StructureFeatures } from './analysis/structure.js';
 
-export interface SyntaxRow {
+export interface StructureRow {
     scriptName: string;
     scriptHash: string;
     truncated: boolean;
     embedding: Float32Array;
-    features: SyntaxFeatures;
+    features: StructureFeatures;
     diagnostics: string[];
 }
 

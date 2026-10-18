@@ -6,7 +6,7 @@ export interface SearchHit {
     scriptName: string;
     /// Cosine similarity, the embeddings are L2-normalized
     score: number;
-    /// What matched: the best description chunk, the syntax features or the properties of the script
+    /// What matched: the best description chunk, the structure features or the properties of the script
     snippet: string;
 }
 
@@ -53,14 +53,14 @@ LIMIT ${Math.trunc(limit)}`);
     },
 };
 
-/// The syntax features of the scripts (tables, joins, functions, ...) against the query
-export const SYNTAX_SEARCH: SearchStrategy = {
-    id: 'syntax',
-    title: 'Syntax',
+/// The structure features of the scripts (tables, joins, functions, ...) against the query
+export const STRUCTURE_SEARCH: SearchStrategy = {
+    id: 'structure',
+    title: 'Structure',
     async run(sql, location, query, limit) {
-        const table = await sql.query('Search syntax', `
+        const table = await sql.query('Search structure', `
 SELECT script_name, tables, function_calls, dot_product(${EMBEDDING}, ${vectorLiteral(query)}) AS score
-FROM ${externalTable(location.paths.syntax)}
+FROM ${externalTable(location.paths.structure)}
 ORDER BY score DESC
 LIMIT ${Math.trunc(limit)}`);
         return table.toArray().map(row => {
@@ -96,7 +96,7 @@ LIMIT ${Math.trunc(limit)}`);
 };
 
 /// More strategies plug in here
-export const SEARCH_STRATEGIES: readonly SearchStrategy[] = [DESCRIPTION_SEARCH, SYNTAX_SEARCH, PROPERTIES_SEARCH];
+export const SEARCH_STRATEGIES: readonly SearchStrategy[] = [DESCRIPTION_SEARCH, STRUCTURE_SEARCH, PROPERTIES_SEARCH];
 
 export interface SearchResults {
     strategy: SearchStrategy;

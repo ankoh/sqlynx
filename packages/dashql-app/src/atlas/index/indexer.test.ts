@@ -25,7 +25,7 @@ describe('analyzeScripts', () => {
             'select c_mktsegment, sum(o_totalprice) from customer, orders where c_custkey = o_custkey group by 1;',
         ].join('\n');
         const [script] = analyzeScripts([file(text)], await tpchAnalyzer(), words, 512);
-        expect(script.syntaxDocument.text).toContain('Tables: customer, orders');
+        expect(script.structureDocument.text).toContain('Tables: customer, orders');
         // Ordinary comments are not embedded
         expect(script.descriptionChunks).toEqual(['Revenue per market segment.']);
         expect(script.properties).toEqual({ owner: 'finance', runtime_ms: 1834 });

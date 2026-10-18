@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { identifierTerms, renderPropertiesDocument, renderSyntaxDocument } from './document.js';
-import type { SyntaxFeatures } from './analysis/syntax.js';
+import { identifierTerms, renderPropertiesDocument, renderStructureDocument } from './document.js';
+import type { StructureFeatures } from './analysis/structure.js';
 
-const features: SyntaxFeatures = {
+const features: StructureFeatures = {
     statementTypes: ['select'],
     tables: ['customer', 'orders'],
     columns: ['customer.c_custkey', 'orders.o_custkey'],
@@ -20,9 +20,9 @@ const features: SyntaxFeatures = {
 };
 const words = (t: string) => t.split(/\s+/).filter(Boolean).length;
 
-describe('renderSyntaxDocument', () => {
+describe('renderStructureDocument', () => {
     it('renders sections in priority order', () => {
-        const doc = renderSyntaxDocument(features, 1000, words);
+        const doc = renderStructureDocument(features, 1000, words);
         expect(doc.truncated).toBe(false);
         expect(doc.text.split('\n').map(l => l.split(':')[0])).toEqual([
             'Statements', 'Tables', 'Joins', 'Function calls', 'Grouped by', 'Filters', 'Operators', 'Output', 'Columns', 'Terms',
@@ -30,7 +30,7 @@ describe('renderSyntaxDocument', () => {
     });
 
     it('trims low-priority sections to fit the budget', () => {
-        const doc = renderSyntaxDocument(features, 14, words);
+        const doc = renderStructureDocument(features, 14, words);
         expect(doc.truncated).toBe(true);
         expect(doc.tokenCount).toBeLessThanOrEqual(14);
         expect(doc.text).toContain('Tables: customer, orders');
@@ -39,7 +39,7 @@ describe('renderSyntaxDocument', () => {
 
     it('marks cut lists', () => {
         const many = { ...features, tables: Array.from({ length: 50 }, (_, i) => `table_${i}`) };
-        const doc = renderSyntaxDocument(many, 20, words);
+        const doc = renderStructureDocument(many, 20, words);
         expect(doc.text).toMatch(/Tables: table_0.*\(\+\d+ more\)/);
         expect(doc.tokenCount).toBeLessThanOrEqual(20);
     });
@@ -52,7 +52,7 @@ describe('renderSyntaxDocument', () => {
                 'vegalite layer 2 of 2 point (x date, y a very long list of words that cannot possibly fit anymore)',
             ],
         };
-        const doc = renderSyntaxDocument(layered, 24, words);
+        const doc = renderStructureDocument(layered, 24, words);
         expect(doc.truncated).toBe(true);
         expect(doc.tokenCount).toBeLessThanOrEqual(24);
         expect(doc.text).toContain('Visualization: vegalite layer 1 of 2 line chart (line, x date) (+1 more)');
@@ -61,7 +61,7 @@ describe('renderSyntaxDocument', () => {
 
     it('limits the tables to a share of the budget', () => {
         const many = { ...features, tables: Array.from({ length: 100 }, (_, i) => `t${i}`) };
-        const doc = renderSyntaxDocument(many, 40, words);
+        const doc = renderStructureDocument(many, 40, words);
         const tables = doc.text.split('\n').find(l => l.startsWith('Tables:'))!;
         expect(words(tables)).toBeLessThanOrEqual(10);
         // The sections behind the tables still get their room

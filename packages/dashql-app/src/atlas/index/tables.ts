@@ -1,6 +1,6 @@
 import * as arrow from 'apache-arrow';
 
-import type { DescriptionRow, PropertiesRow, SyntaxRow } from './rows.js';
+import type { DescriptionRow, PropertiesRow, StructureRow } from './rows.js';
 
 /// Number of coordinates per row in the layout of every file
 export const LAYOUT_DIMS = 3;
@@ -136,10 +136,10 @@ export function descriptionTable(rows: DescriptionRow[], dim: number, coords: Fl
     );
 }
 
-/// The syntax text and the script are not stored, both can be recomputed from the SQL files.
+/// The structure text and the script are not stored, both can be recomputed from the SQL files.
 /// `coords` holds LAYOUT_DIMS values per row.
-export function syntaxTable(rows: SyntaxRow[], dim: number, coords: Float32Array): arrow.Table {
-    const list = (pick: (r: SyntaxRow) => string[]): arrow.Data => column(rows.map(pick), utf8List);
+export function structureTable(rows: StructureRow[], dim: number, coords: Float32Array): arrow.Table {
+    const list = (pick: (r: StructureRow) => string[]): arrow.Data => column(rows.map(pick), utf8List);
     return buildTable(
         [
             ['script_name', utf8, column(rows.map(r => r.scriptName), utf8)],
