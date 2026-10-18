@@ -168,6 +168,34 @@
     height: 36px;
 }
 
+.plots_toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    border-right: 1px solid rgb(210, 210, 210);
+    border-bottom: 1px solid rgb(210, 210, 210);
+    box-sizing: border-box;
+    background-color: white;
+    color: hsl(210, 10%, 40%);
+    cursor: pointer;
+}
+
+.plots_toggle:hover,
+.plots_toggle:focus-visible {
+    background-color: hsl(210, 29%, 97%);
+    color: var(--base_color_black);
+    outline: none;
+}
+
+.plots_collapsed_cell {
+    flex-shrink: 0;
+    background-color: var(--data_table_bg);
+    border-bottom: 1px solid rgb(210, 210, 210);
+    box-sizing: border-box;
+}
+
 .plots_corner_cell {
     background-color: white;
     border-right: 1px solid rgb(210, 210, 210);

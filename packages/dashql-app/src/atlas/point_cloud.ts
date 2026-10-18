@@ -155,6 +155,10 @@ export class PointCloud {
     private readonly resizeObserver: ResizeObserver;
     /// The container in device pixels, when the browser reports it
     private devicePixels: { width: number; height: number } | null = null;
+    /// The size of the canvas and its pixels per CSS pixel, as of the last resize
+    private canvas = { width: 1, height: 1, scale: 1 };
+    /// How much of the bottom of the container is covered, in CSS pixels. The cloud is centered in the space above.
+    private bottomInset = 0;
     private readonly clock = new THREE.Clock(false);
     private readonly axis = new THREE.Vector3();
     private animationFrame = 0;
@@ -338,6 +342,13 @@ export class PointCloud {
         if (pointer == null) this.setDotHover(-1);
     }
 
+    setBottomInset(inset: number): void {
+        if (inset === this.bottomInset) return;
+        this.bottomInset = inset;
+        this.updateViewOffset();
+        this.renderOnce();
+    }
+
     private setDotHover(index: number): void {
         if (index === this.hoveredDot) return;
         this.hoveredDot = index;
@@ -430,6 +441,8 @@ export class PointCloud {
         let pixelRatio: number;
         let width: number;
         let height: number;
+        /// Canvas pixels per CSS pixel
+        let scale: number;
         const devicePixels = this.devicePixels;
         if (devicePixels != null && devicePixels.width > 0 && devicePixels.height > 0) {
             // One canvas pixel per device pixel. A canvas of css size * devicePixelRatio is resampled by the browser
@@ -438,24 +451,34 @@ export class PointCloud {
             width = devicePixels.width;
             height = devicePixels.height;
             pixelRatio = rect.width > 0 ? width / rect.width : window.devicePixelRatio || 1;
+            scale = pixelRatio;
             this.renderer.setPixelRatio(1);
         } else {
             width = Math.max(1, this.container.clientWidth);
             height = Math.max(1, this.container.clientHeight);
             pixelRatio = Math.min(window.devicePixelRatio || 1, 3);
+            // The renderer scales the canvas itself, its size stays in CSS pixels
+            scale = 1;
             this.renderer.setPixelRatio(pixelRatio);
         }
         this.renderer.setSize(width, height, false);
+        this.canvas = { width, height, scale };
         this.camera.aspect = width / height;
         // Keep the cloud in view on narrow screens
         this.camera.position.z = width / height < 1 ? 4.4 / Math.max(0.55, width / height) : 4.4;
-        this.camera.updateProjectionMatrix();
+        this.updateViewOffset();
         for (const material of [this.material, this.highlightMaterial]) {
             material.uniforms.uPixelRatio.value = pixelRatio;
             material.uniforms.uScale.value = this.camera.position.z;
         }
         this.renderOnce();
     };
+
+    /// Looking at a window below the center moves the cloud up, into the middle of the space above the inset
+    private updateViewOffset(): void {
+        const { width, height, scale } = this.canvas;
+        this.camera.setViewOffset(width, height, 0, this.bottomInset * 0.5 * scale, width, height);
+    }
 
     private renderOnce(): void {
         this.renderer.render(this.scene, this.camera);

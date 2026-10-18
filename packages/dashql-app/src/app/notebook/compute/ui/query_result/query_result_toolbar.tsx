@@ -2,6 +2,8 @@ import * as React from 'react';
 
 import type { QueryExecutionState } from '../../../connections/query_execution_state.js';
 import { useComputationRegistry } from '../../../../../compute/computation_registry.js';
+import type { ComputationAction, TableComputationState } from '../../../../../compute/computation_state.js';
+import type { Dispatch } from '../../../../../utils/variant.js';
 import { QueryResultSearchControls } from './query_result_search_controls.js';
 import { useQueryResultSearch } from './use_query_result_search.js';
 
@@ -10,9 +12,21 @@ interface Props {
     children?: React.ReactNode;
 }
 
-export function QueryResultToolbar(props: Props) {
+export function QueryResultToolbar(props: Props): React.ReactNode {
     const [computationState, dispatch] = useComputationRegistry();
     const table = computationState.tableComputations[props.query.queryId] ?? null;
+    return <TableSearchToolbar table={table} dispatch={dispatch}>{props.children}</TableSearchToolbar>;
+}
+
+interface TableSearchToolbarProps {
+    table: TableComputationState | null;
+    dispatch: Dispatch<ComputationAction>;
+    children?: React.ReactNode;
+}
+
+/// The column and data search of any analyzed table, not only of query results
+export function TableSearchToolbar(props: TableSearchToolbarProps) {
+    const { table, dispatch } = props;
     const search = useQueryResultSearch(table, dispatch);
     if (search.columnSearch == null || search.dataSearch == null) return props.children;
     const dataMatchCount = getMatchingRowCount(table);
@@ -40,7 +54,7 @@ export function useQueryResultRowCounts(query: QueryExecutionState | null) {
     return { totalRows, currentRows, matchingRows };
 }
 
-function getMatchingRowCount(table: ReturnType<typeof useComputationRegistry>[0]['tableComputations'][number] | null): number | null {
+export function getMatchingRowCount(table: ReturnType<typeof useComputationRegistry>[0]['tableComputations'][number] | null): number | null {
     const dataMatches = table?.dataSearch?.matchingRows;
     if (table == null || dataMatches == null) return null;
     if (table.filterTable == null) return dataMatches.size;

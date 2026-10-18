@@ -7,6 +7,7 @@ import { describeVisualization } from './visualization.js';
 export interface StructureFeatures {
     /// One entry per statement, e.g. "select" or "create table"
     statementTypes: string[];
+    /// Every table that is referenced, base tables and CTEs alike, and the tables the script defines
     tables: string[];
     columns: string[];
     /// Names of the functions that are called, e.g. `date_trunc`
@@ -15,9 +16,7 @@ export interface StructureFeatures {
     /// The function calls with their arguments, e.g. `date_trunc('day', orders.o_orderdate)`. Literal arguments are kept.
     functionCalls: string[];
     ctes: string[];
-    joins: string[];
     filters: string[];
-    operators: string[];
     /// Names of the result columns of the (first) top-level select
     outputColumns: string[];
     groupBy: string[];
@@ -62,18 +61,6 @@ const OPERATOR_SYMBOLS: Record<string, string> = {
 
 /// Operators that keep their meaning when the operands are swapped (or flip to a known counterpart)
 const FLIPPED: Record<string, string> = { '<': '>', '>': '<', '<=': '>=', '>=': '<=', '=': '=', '<>': '<>' };
-
-/// Canonical order of the operator list
-const OPERATOR_ORDER = [
-    'cte', 'subquery', 'exists', 'case', 'window', 'distinct', 'group by', 'having', 'order by', 'limit',
-    'union', 'union all', 'intersect', 'intersect all', 'except', 'except all',
-];
-
-function operatorRank(operator: string): number {
-    const i = OPERATOR_ORDER.indexOf(operator);
-    // Join types come first, in alphabetical order among themselves
-    return i >= 0 ? i + 1 : operator.endsWith(' join') ? 0 : OPERATOR_ORDER.length + 1;
-}
 
 /// Symbols of all operators that are rendered in expressions
 const EXPRESSION_SYMBOLS: Record<string, string> = {
@@ -125,14 +112,6 @@ function limitLength(text: string): string {
 
 function words(name: string): string {
     return name.toLowerCase().replace(/_/g, ' ');
-}
-
-/// "OUTER_LEFT" -> "left outer", "NATURAL_INNER" -> "natural inner"
-function joinTypeName(value: number): string {
-    const parts = (buffers.parser.JoinType[value] ?? 'INNER').toLowerCase().split('_').filter(p => p.length > 0);
-    if (parts[0] === 'outer' && parts.length > 1) return `${parts[1]} outer`;
-    if (parts[0] === 'natural' && parts[1] === 'outer' && parts.length > 2) return `natural ${parts[2]} outer`;
-    return parts.join(' ');
 }
 
 function qualified(name: buffers.analyzer.QualifiedTableName | null): string {
@@ -205,13 +184,8 @@ export function extractStructureFeatures(sql: AnalyzedSql): StructureFeatures | 
             name = qualified(resolved.tableName());
             tableById.set(resolved.catalogTableId().toString(), name);
         } else {
+            // Unresolved references are kept as written, CTEs among them
             name = qualified(ref.tableName());
-            if (ctes.has(name)) {
-                // CTE references are tracked separately
-                const alias = ref.aliasName();
-                if (alias) aliases.set(alias.toLowerCase(), name);
-                continue;
-            }
         }
         if (name) tables.add(name);
         const alias = ref.aliasName();
@@ -423,8 +397,7 @@ export function extractStructureFeatures(sql: AnalyzedSql): StructureFeatures | 
         return found;
     };
 
-    // Filters and join edges
-    const joins = new Set<string>();
+    // Filters. Equality between columns of two tables is a join condition, not a filter.
     const filters = new Set<string>();
     const predicate = (node: number, allowJoin: boolean): void => {
         if (ast.type(node) !== T.OBJECT_SQL_NARY_EXPRESSION) return;
@@ -443,10 +416,7 @@ export function extractStructureFeatures(sql: AnalyzedSql): StructureFeatures | 
         const left = columnByNode.get(args[0]);
         const right = args.length > 1 ? columnByNode.get(args[1]) : undefined;
         if (left && right && symbol === '=' && allowJoin && args.length === 2) {
-            if (left.table && right.table && left.table !== right.table) {
-                joins.add([left.label, right.label].sort().join(' = '));
-                return;
-            }
+            if (left.table && right.table && left.table !== right.table) return;
         }
         if (!containsColumn(node)) return;
         if (args.length === 2 && !columnByNode.has(args[0]) && right && FLIPPED[symbol]) {
@@ -458,125 +428,38 @@ export function extractStructureFeatures(sql: AnalyzedSql): StructureFeatures | 
     };
 
     // Single pass over the flat node array
-    const operators = new Set<string>();
     const functions = new Set<string>();
     const aggregates = new Set<string>();
     const calls = new Set<string>();
     const groupBy = new Set<string>();
     const orderBy = new Set<string>();
-    const slotKey = (node: number): buffers.parser.AttributeKey => {
-        const key = ast.key(node);
-        if (key !== K.NONE) return key;
-        const parent = ast.parent(node);
-        return parent !== null && ast.type(parent) === T.ARRAY ? ast.key(parent) : K.NONE;
-    };
     for (let i = 0; i < ast.length; ++i) {
-        const type = ast.type(i);
-        const key = ast.key(i);
-        switch (key) {
+        switch (ast.key(i)) {
             case K.SQL_SELECT_WHERE:
-                predicate(i, true);
-                break;
-            case K.SQL_SELECT_HAVING:
-                operators.add('having');
-                predicate(i, false);
-                break;
             case K.SQL_JOIN_ON:
                 predicate(i, true);
                 break;
-            case K.SQL_JOIN_USING: {
-                // Columns joined by name: tables come from the two join inputs
-                const parent = ast.parent(i);
-                const inputs = parent !== null ? ast.child(parent, K.SQL_JOIN_INPUT) : null;
-                const names = ast.children(i).map(c => ast.nameText(c));
-                if (inputs !== null) {
-                    const sides = ast.children(inputs).map(input => {
-                        let found = '';
-                        ast.walk(input, n => {
-                            if (found === '' && ast.key(n) === K.SQL_TABLEREF_NAME) {
-                                found = ast.nameText(n);
-                                const resolved = aliases.get(found.toLowerCase());
-                                found = resolved ?? found;
-                            }
-                        });
-                        return found;
-                    });
-                    if (sides.length === 2 && sides[0] && sides[1]) {
-                        joins.add(`${[sides[0], sides[1]].sort().join(' = ')} using (${names.join(', ')})`);
-                    }
-                }
+            case K.SQL_SELECT_HAVING:
+                predicate(i, false);
                 break;
-            }
-            case K.SQL_JOIN_TYPE: {
-                const name = joinTypeName(ast.value(i));
-                operators.add(name === 'none' ? 'join' : `${name} join`);
-                break;
-            }
             case K.SQL_SELECT_GROUPS:
-                operators.add('group by');
                 for (const item of ast.children(i)) {
                     const arg = ast.child(item, K.SQL_GROUP_BY_ITEM_ARG);
                     if (arg !== null) groupBy.add(expressionLabel(arg));
                 }
                 break;
             case K.SQL_SELECT_ORDER:
-                operators.add('order by');
                 for (const item of ast.children(i)) {
                     const value = ast.child(item, K.SQL_ORDER_VALUE);
                     if (value !== null) orderBy.add(expressionLabel(value));
                 }
                 break;
-            case K.SQL_SELECT_LIMIT:
-                operators.add('limit');
-                break;
-            case K.SQL_SELECT_DISTINCT:
-                if (type !== T.BOOL || ast.value(i)) operators.add('distinct');
-                break;
-            case K.SQL_SELECT_WITH_CTES:
-                operators.add('cte');
-                break;
-            case K.SQL_FUNCTION_OVER:
-                operators.add('window');
-                break;
-            case K.SQL_COMBINE_OPERATION: {
-                const op = words(buffers.parser.CombineOperation[ast.value(i)] ?? 'union');
-                const parent = ast.parent(i);
-                const modifier = parent !== null ? ast.child(parent, K.SQL_COMBINE_MODIFIER) : null;
-                const all = modifier !== null && ast.value(modifier) === buffers.parser.CombineModifier.ALL;
-                operators.add(all ? `${op} all` : op);
-                break;
-            }
         }
-        switch (type) {
-            case T.OBJECT_SQL_FUNCTION_EXPRESSION: {
-                const name = functionName(i);
-                if (AGGREGATES.has(name)) aggregates.add(name);
-                else functions.add(name);
-                calls.add(renderExpr(i));
-                break;
-            }
-            case T.OBJECT_SQL_CASE:
-                operators.add('case');
-                break;
-            case T.OBJECT_SQL_EXISTS_EXPRESSION:
-                operators.add('exists');
-                break;
-            case T.OBJECT_SQL_SUBQUERY_EXPRESSION:
-                operators.add('subquery');
-                break;
-            case T.OBJECT_SQL_SELECT: {
-                if (statementRoots.has(i)) break;
-                const slot = slotKey(i);
-                if (slot === K.SQL_CTE_STATEMENT || slot === K.SQL_COMBINE_INPUT) break;
-                // Only selects nested in another query are subqueries, e.g. not the rows of INSERT ... SELECT
-                for (let p = ast.parent(i); p !== null; p = ast.parent(p)) {
-                    if (ast.type(p) === T.OBJECT_SQL_SELECT) {
-                        operators.add('subquery');
-                        break;
-                    }
-                }
-                break;
-            }
+        if (ast.type(i) === T.OBJECT_SQL_FUNCTION_EXPRESSION) {
+            const name = functionName(i);
+            if (AGGREGATES.has(name)) aggregates.add(name);
+            else functions.add(name);
+            calls.add(renderExpr(i));
         }
     }
 
@@ -588,9 +471,7 @@ export function extractStructureFeatures(sql: AnalyzedSql): StructureFeatures | 
         aggregates: uniqueSorted(aggregates),
         functionCalls: uniqueSorted(calls),
         ctes: uniqueSorted(ctes),
-        joins: uniqueSorted(joins),
         filters: uniqueSorted(filters),
-        operators: [...operators].sort((a, b) => operatorRank(a) - operatorRank(b) || a.localeCompare(b)),
         outputColumns,
         groupBy: [...groupBy],
         orderBy: [...orderBy],
