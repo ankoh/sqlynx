@@ -100,7 +100,7 @@ pub fn hash_key(key: &str) -> String {
 /// Generate a fresh `dashql_<43-char-base64url>` key (256 bits of entropy).
 pub fn generate_key() -> Result<String> {
     let mut bytes = [0u8; 32];
-    getrandom::getrandom(&mut bytes)
+    getrandom::fill(&mut bytes)
         .map_err(|e| worker::Error::RustError(format!("getrandom failed: {e}")))?;
     let rand = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(bytes);
     Ok(format!("{KEY_PREFIX}{rand}"))
