@@ -45,6 +45,25 @@ describe('parquet output', () => {
         expect(c.table.getChild('source')!.get(0)).toBe('comment');
         expect(c.table.getChild('script_name')!.get(0)).toBe('a.sql');
         expect(f.table.getChild('script_name')!.toArray()).toEqual(['a.sql', 'b.sql']);
+
+        // The SQL and the embedded texts can be recomputed from the scripts and are not duplicated
+        expect(c.table.schema.fields.map(x => x.name)).toEqual(['script_name', 'script_hash', 'chunk_index', 'source', 'text', 'embedding']);
+        const featureColumns = f.table.schema.fields.map(x => x.name);
+        for (const name of ['sql', 'feature_text', 'feature_token_count']) expect(featureColumns).not.toContain(name);
+    });
+
+    it('adds the feature text on request', async () => {
+        const embedder = new HashEmbedder(8);
+        const text = 'select c_mktsegment from customer';
+        const scripts = analyzeScripts([{ id: 'a.sql', path: '/x/a.sql', text, hash: sha256(text) }], await tpchAnalyzer(), embedder);
+        const { features } = await embedScripts(scripts, embedder);
+        const dir = await mkdtemp(join(tmpdir(), 'dashql-embed-'));
+        dirs.push(dir);
+        const meta = indexMetadata('features', embedder.config, 8, 'test');
+        await writeParquetFile(join(dir, 'features.parquet'), featuresTable(features, 8, meta, { featureText: true }));
+        const f = await readParquetFile(join(dir, 'features.parquet'));
+        expect(f.table.getChild('feature_text')!.get(0)).toBe(features[0].featureText);
+        expect(f.table.getChild('feature_token_count')!.get(0)).toBe(features[0].featureTokens);
     });
 
     it('writes empty tables', async () => {
