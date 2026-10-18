@@ -4,7 +4,7 @@ import { Ast, AttributeKey as K, NodeType as T } from './ast.js';
 import { describeVisualization } from './visualization.js';
 
 /// Structural features of a SQL script, extracted from the DashQL AST and analyzer output
-export interface SyntaxFeatures {
+export interface StructureFeatures {
     /// One entry per statement, e.g. "select" or "create table"
     statementTypes: string[];
     tables: string[];
@@ -154,7 +154,7 @@ interface ColumnInfo {
     label: string;
 }
 
-export function extractSyntaxFeatures(sql: AnalyzedSql): SyntaxFeatures | null {
+export function extractStructureFeatures(sql: AnalyzedSql): StructureFeatures | null {
     if (!sql.parsed || !sql.analyzed) {
         return null;
     }
@@ -367,7 +367,7 @@ export function extractSyntaxFeatures(sql: AnalyzedSql): SyntaxFeatures | null {
         } else if (
             ast.children(fn).some(c => ![K.SQL_FUNCTION_NAME, K.SQL_FUNCTION_OVER, K.SQL_FUNCTION_DISTINCT, K.SQL_FUNCTION_FILTER, K.SQL_FUNCTION_ORDER, K.SQL_FUNCTION_ALL].includes(ast.key(c)))
         ) {
-            // Special argument syntax (CAST, TRIM, SUBSTRING, ...)
+            // Special argument structure (CAST, TRIM, SUBSTRING, ...)
             return normalizeText(ast.text(fn));
         }
         const known = (() => {

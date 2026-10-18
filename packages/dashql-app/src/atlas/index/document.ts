@@ -1,4 +1,4 @@
-import type { SyntaxFeatures } from './analysis/syntax.js';
+import type { StructureFeatures } from './analysis/structure.js';
 
 /// A text to embed that fits the token budget of the model
 export interface EmbeddingDocument {
@@ -38,14 +38,14 @@ function countStatements(types: string[]): string[] {
     return [...counts].map(([type, n]) => (n > 1 ? `${n} ${type} statements` : `1 ${type} statement`));
 }
 
-/// Render the syntax features as a deterministic, natural-language-like text that fits a token budget.
+/// Render the structure features as a deterministic, natural-language-like text that fits a token budget.
 /// Sections are added by priority, lists that do not fit are cut and marked with "(+N more)".
 /// The budget is checked with the model's own tokenizer, so the text never exceeds it and the model never truncates
 /// it silently. Items are the smallest unit that is cut: an item that does not fit on its own is dropped as a whole
 /// (never shortened), which is why visualization entries are one per chart and capped in size.
 /// A section whose first item does not fit is skipped, smaller sections behind it can still be added.
-export function renderSyntaxDocument(
-    features: SyntaxFeatures,
+export function renderStructureDocument(
+    features: StructureFeatures,
     maxTokens: number,
     countTokens: (text: string) => number,
 ): EmbeddingDocument {

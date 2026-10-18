@@ -26,7 +26,7 @@ import * as styles from './atlas.module.css';
 /// The embedding kinds that the cloud can show, in the order of the control
 const KIND_CONTROLS: { kind: EmbeddingKind; title: string }[] = [
     { kind: 'description', title: 'Semantics' },
-    { kind: 'syntax', title: 'Structure' },
+    { kind: 'structure', title: 'Structure' },
     { kind: 'properties', title: 'Properties' },
 ];
 
@@ -220,7 +220,7 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
         setView({ kind: 'busy', phase: { kind: 'mount', message } });
         try {
             const opened = await run(phase => setView({ kind: 'busy', phase }));
-            setKind(opened.points.description.owners.length > 0 ? 'description' : 'syntax');
+            setKind(opened.points.description.owners.length > 0 ? 'description' : 'structure');
             setFolder(opened);
             setOutdatedDismissed(false);
             setView({ kind: 'search' });

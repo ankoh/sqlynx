@@ -35,7 +35,7 @@ interface AtlasExportOverlayProps {
 }
 
 /// Write every row of a text column into a .sql file of a folder. The other columns of the row become the properties
-/// of the script, Atlas embeds them next to the syntax and the description.
+/// of the script, Atlas embeds them next to the structure and the description.
 export function AtlasExportOverlay(props: AtlasExportOverlayProps): React.ReactElement {
     const logger = useLogger();
     const setupCore = useDashQLCoreSetup();

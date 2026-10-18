@@ -4,13 +4,13 @@ import type { EmbeddedComputeDatabase, EmbeddedTableImportConnection } from '../
 import { setupWebHyperDB } from '../platform/hyperdb/hyperdb_provider_web.js';
 import { TestLogger } from '../platform/logger/test_logger.js';
 import { AtlasSql } from './atlas_sql.js';
-import type { SyntaxFeatures } from './index/analysis/syntax.js';
-import { ATLAS_DESCRIPTION_FILE, ATLAS_PROPERTIES_FILE, ATLAS_STALE_FILES, ATLAS_SYNTAX_FILE } from './index/files.js';
+import type { StructureFeatures } from './index/analysis/structure.js';
+import { ATLAS_DESCRIPTION_FILE, ATLAS_PROPERTIES_FILE, ATLAS_STALE_FILES, ATLAS_STRUCTURE_FILE } from './index/files.js';
 import type { EmbeddingKind } from './index/indexer.js';
 import type { LayoutResult } from './index/layout.js';
-import type { DescriptionRow, PropertiesRow, SyntaxRow } from './index/rows.js';
+import type { DescriptionRow, PropertiesRow, StructureRow } from './index/rows.js';
 import { LAYOUT_DIMS } from './index/tables.js';
-import { DESCRIPTION_SEARCH, PROPERTIES_SEARCH, SYNTAX_SEARCH, searchAll } from './search/search.js';
+import { DESCRIPTION_SEARCH, PROPERTIES_SEARCH, STRUCTURE_SEARCH, searchAll } from './search/search.js';
 import {
     countOutdatedScripts,
     externalDirectoryDatabase,
@@ -36,7 +36,7 @@ function basis(index: number, secondary?: number): Float32Array {
     return v;
 }
 
-function features(tables: string[]): SyntaxFeatures {
+function features(tables: string[]): StructureFeatures {
     return {
         statementTypes: ['select'],
         tables,
@@ -85,7 +85,7 @@ describe('atlas store and search', () => {
         await root?.removeEntry(directoryName, { recursive: true }).catch(() => {});
     });
 
-    const syntaxRows: SyntaxRow[] = Array.from({ length: 12 }, (_, i) => ({
+    const structureRows: StructureRow[] = Array.from({ length: 12 }, (_, i) => ({
         scriptName: `script_${i}.sql`,
         scriptHash: `hash_${i}`,
         truncated: false,
@@ -124,14 +124,14 @@ describe('atlas store and search', () => {
         uniqueVectors: rows,
     });
     const layouts = (): Record<EmbeddingKind, LayoutResult> => ({
-        syntax: layout(syntaxRows.length, 0),
+        structure: layout(structureRows.length, 0),
         description: layout(descriptionRows.length, 100),
         properties: layout(propertiesRows.length, 200),
     });
 
     it('finds no index files in a new folder', async () => {
         expect(await hasIndexFiles(directory)).toBe(false);
-        await expect(loadIndexPoints(sql, location, 'syntax')).rejects.toThrow();
+        await expect(loadIndexPoints(sql, location, 'structure')).rejects.toThrow();
     }, 60_000);
 
     it('writes Parquet files into the folder and reads them back', async () => {
@@ -142,40 +142,40 @@ describe('atlas store and search', () => {
         await writeIndexFiles(
             sql,
             location,
-            { syntax: syntaxRows, description: descriptionRows, properties: propertiesRows },
+            { structure: structureRows, description: descriptionRows, properties: propertiesRows },
             layouts(),
             DIM,
         );
         await expect(directory.getFileHandle(ATLAS_STALE_FILES[0])).rejects.toThrow();
 
         // The files are real files of the selected folder, not only visible to Hyper
-        expect((await (await directory.getFileHandle(ATLAS_SYNTAX_FILE)).getFile()).size).toBeGreaterThan(0);
+        expect((await (await directory.getFileHandle(ATLAS_STRUCTURE_FILE)).getFile()).size).toBeGreaterThan(0);
         expect((await (await directory.getFileHandle(ATLAS_DESCRIPTION_FILE)).getFile()).size).toBeGreaterThan(0);
         expect((await (await directory.getFileHandle(ATLAS_PROPERTIES_FILE)).getFile()).size).toBeGreaterThan(0);
         expect(await hasIndexFiles(directory)).toBe(true);
 
         const table = await sql.query('Read back', `
-            SELECT script_name, dashql_atlas_embedding, dashql_atlas_x, tables FROM external('${location.paths.syntax}') ORDER BY script_name`);
+            SELECT script_name, dashql_atlas_embedding, dashql_atlas_x, tables FROM external('${location.paths.structure}') ORDER BY script_name`);
         expect(table.numRows).toBe(12);
         const properties = await sql.query('Read back properties', `
             SELECT properties FROM external('${location.paths.properties}') WHERE script_name = 'script_1.sql'`);
         expect(JSON.parse(String(properties.toArray()[0].properties))).toEqual({ owner: 'finance', dashboard: 'Revenue Weekly' });
     }, 120_000);
 
-    it('loads a point for every syntax row, description chunk and properties row', async () => {
+    it('loads a point for every structure row, description chunk and properties row', async () => {
         const xOf = (points: IndexPoints, script: string) =>
             Array.from(points.owners, (owner, i) => points.scripts[owner] === script ? points.coords[i * LAYOUT_DIMS] : null)
                 .filter((x): x is number => x != null)
                 .sort((a, b) => a - b);
 
-        const features = await loadIndexPoints(sql, location, 'syntax');
+        const features = await loadIndexPoints(sql, location, 'structure');
         expect(features.scripts).toHaveLength(12);
         expect(features.owners).toHaveLength(12);
         expect(features.coords).toHaveLength(12 * LAYOUT_DIMS);
-        // Rows were written with the values i / 10, syntax row 7 starts at 21
+        // Rows were written with the values i / 10, structure row 7 starts at 21
         expect(xOf(features, 'script_7.sql')).toHaveLength(1);
         expect(xOf(features, 'script_7.sql')[0]).toBeCloseTo(2.1, 4);
-        // Every point says what it is about, the syntax by its tables
+        // Every point says what it is about, the structure by its tables
         expect(features.details).toHaveLength(12);
         expect(features.details[features.owners.indexOf(features.scripts.indexOf('script_7.sql'))]).toBe('table_7');
 
@@ -193,8 +193,8 @@ describe('atlas store and search', () => {
         expect(xOf(properties, 'script_2.sql')[0]).toBeCloseTo(200.3, 3);
     }, 60_000);
 
-    it('finds the most similar script by syntax', async () => {
-        const hits = await SYNTAX_SEARCH.run(sql, location, basis(5), 3);
+    it('finds the most similar script by structure', async () => {
+        const hits = await STRUCTURE_SEARCH.run(sql, location, basis(5), 3);
         expect(hits).toHaveLength(3);
         expect(hits[0].scriptName).toBe('script_5.sql');
         expect(hits[0].score).toBeCloseTo(1, 4);
@@ -233,7 +233,7 @@ describe('atlas store and search', () => {
 
     it('runs all strategies for one query', async () => {
         const results = await searchAll(sql, location, basis(3));
-        expect(results.map(r => r.strategy.id)).toEqual(['description', 'syntax', 'properties']);
+        expect(results.map(r => r.strategy.id)).toEqual(['description', 'structure', 'properties']);
         expect(results[1].hits[0].scriptName).toBe('script_3.sql');
     }, 60_000);
 
@@ -241,11 +241,11 @@ describe('atlas store and search', () => {
         await writeIndexFiles(
             sql,
             location,
-            { syntax: syntaxRows.slice(0, 2), description: [], properties: [] },
-            { syntax: layout(2, 0), description: layout(0, 0), properties: layout(0, 0) },
+            { structure: structureRows.slice(0, 2), description: [], properties: [] },
+            { structure: layout(2, 0), description: layout(0, 0), properties: layout(0, 0) },
             DIM,
         );
-        const table = await sql.query('Count', `SELECT count(*) AS n FROM external('${location.paths.syntax}')`);
+        const table = await sql.query('Count', `SELECT count(*) AS n FROM external('${location.paths.structure}')`);
         expect(Number(table.toArray()[0].n)).toBe(2);
         const empty = await sql.query('Count', `SELECT count(*) AS n FROM external('${location.paths.properties}')`);
         expect(Number(empty.toArray()[0].n)).toBe(0);

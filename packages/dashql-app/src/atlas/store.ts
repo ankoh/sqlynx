@@ -7,7 +7,7 @@ import {
     ATLAS_INDEX_FILES,
     ATLAS_PROPERTIES_FILE,
     ATLAS_STALE_FILES,
-    ATLAS_SYNTAX_FILE,
+    ATLAS_STRUCTURE_FILE,
 } from './index/files.js';
 import { EMBEDDING_KINDS, type EmbeddingKind, type IndexResult } from './index/indexer.js';
 import type { LayoutResult } from './index/layout.js';
@@ -15,7 +15,7 @@ import {
     descriptionTable,
     exportSelect,
     propertiesTable,
-    syntaxTable,
+    structureTable,
     LAYOUT_COLUMNS,
     LAYOUT_DIMS,
 } from './index/tables.js';
@@ -32,7 +32,7 @@ export interface AtlasLocation {
 }
 
 const FILE_NAMES: Record<EmbeddingKind, string> = {
-    syntax: ATLAS_SYNTAX_FILE,
+    structure: ATLAS_STRUCTURE_FILE,
     description: ATLAS_DESCRIPTION_FILE,
     properties: ATLAS_PROPERTIES_FILE,
 };
@@ -52,7 +52,7 @@ export async function mountFolder(
     return {
         directory,
         paths: {
-            syntax: `${path}/${ATLAS_SYNTAX_FILE}`,
+            structure: `${path}/${ATLAS_STRUCTURE_FILE}`,
             description: `${path}/${ATLAS_DESCRIPTION_FILE}`,
             properties: `${path}/${ATLAS_PROPERTIES_FILE}`,
         },
@@ -112,7 +112,7 @@ export interface IndexPoints {
     owners: Int32Array;
     /// LAYOUT_DIMS values per point, the 98th percentile radius of the cloud is 1
     coords: Float32Array;
-    /// What a point says about its script: the description chunk, the tables of the syntax or the properties
+    /// What a point says about its script: the description chunk, the tables of the structure or the properties
     details: string[];
 }
 
@@ -124,9 +124,9 @@ function listItems(value: unknown): string[] {
     return Array.from(items, v => String(v));
 }
 
-/// Read the 3D layout of one index file: a point per syntax row, description chunk or properties row
+/// Read the 3D layout of one index file: a point per structure row, description chunk or properties row
 export async function loadIndexPoints(sql: AtlasSql, location: AtlasLocation, kind: EmbeddingKind): Promise<IndexPoints> {
-    const detailColumn = kind === 'syntax' ? 'tables' : 'text';
+    const detailColumn = kind === 'structure' ? 'tables' : 'text';
     const columns = ['script_name', detailColumn, ...LAYOUT_COLUMNS].map(quoteIdentifier).join(', ');
     const table = await sql.query(`Load ${kind} layout`, `SELECT ${columns} FROM ${externalTable(location.paths[kind])}`);
     const names = table.getChild('script_name');
@@ -150,7 +150,7 @@ export async function loadIndexPoints(sql: AtlasSql, location: AtlasLocation, ki
         }
         owners[i] = owner;
         const value = detail?.get(i);
-        details.push(kind === 'syntax' ? listItems(value).join(', ') : value == null ? '' : String(value));
+        details.push(kind === 'structure' ? listItems(value).join(', ') : value == null ? '' : String(value));
         axes.forEach((axis, d) => { coords[i * LAYOUT_DIMS + d] = Number(axis!.get(i)); });
     }
     return { scripts, owners, coords, details };
@@ -173,8 +173,8 @@ export async function writeIndexFiles(
     layouts: Record<EmbeddingKind, LayoutResult>,
     dim: number,
 ): Promise<void> {
-    const tables: Record<EmbeddingKind, ReturnType<typeof syntaxTable>> = {
-        syntax: syntaxTable(rows.syntax, dim, layouts.syntax.coords),
+    const tables: Record<EmbeddingKind, ReturnType<typeof structureTable>> = {
+        structure: structureTable(rows.structure, dim, layouts.structure.coords),
         description: descriptionTable(rows.description, dim, layouts.description.coords),
         properties: propertiesTable(rows.properties, dim, layouts.properties.coords),
     };

@@ -1,7 +1,7 @@
 import type { CompiledVisualization } from './core.js';
 
 const MAX_TEXT_LENGTH = 80;
-/// A chart entry is the smallest unit that the token budget can drop (see `renderSyntaxDocument`), so one crowded
+/// A chart entry is the smallest unit that the token budget can drop (see `renderStructureDocument`), so one crowded
 /// chart must not grow without bound. The chart name and the first items (mark, faceting, x, y, color) say the most.
 const MAX_ENTRY_ITEMS = 8;
 

@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { SqlAnalyzer } from './core.js';
-import { extractSyntaxFeatures } from './syntax.js';
+import { extractStructureFeatures } from './structure.js';
 import { analyzeOne } from '../test_fixture.js';
 
 async function features(sql: string, analyzer?: SqlAnalyzer) {
-    const f = extractSyntaxFeatures(await analyzeOne(sql, analyzer));
+    const f = extractStructureFeatures(await analyzeOne(sql, analyzer));
     expect(f).not.toBeNull();
     return f!;
 }
 
-describe('extractSyntaxFeatures', () => {
+describe('extractStructureFeatures', () => {
     it('resolves comma joins, filters and aggregates (TPC-H Q3)', async () => {
         const f = await features(`select l_orderkey, sum(l_extendedprice * (1 - l_discount)) as revenue, o_orderdate
 from customer, orders, lineitem
@@ -84,11 +84,11 @@ select c_name from customer where c_custkey in (select o_custkey from big where 
     it('returns null when nothing could be parsed', async () => {
         const analyzer = await SqlAnalyzer.create();
         const analyzed = analyzer.analyze([{ id: 'x', text: '' }])[0];
-        expect(extractSyntaxFeatures(analyzed)?.tables ?? []).toEqual([]);
+        expect(extractStructureFeatures(analyzed)?.tables ?? []).toEqual([]);
     });
 });
 
-describe('extractSyntaxFeatures for DDL', () => {
+describe('extractStructureFeatures for DDL', () => {
     it('lists tables that the script creates', async () => {
         const analyzer = await SqlAnalyzer.create();
         const f = await features(`create table a (x int); create table b as select * from a;`, analyzer);
@@ -96,7 +96,7 @@ describe('extractSyntaxFeatures for DDL', () => {
     });
 });
 
-describe('extractSyntaxFeatures keeps function names and literal arguments', () => {
+describe('extractStructureFeatures keeps function names and literal arguments', () => {
     it('renders relative time filters (last 30 days)', async () => {
         const f = await features(`select o_orderkey from orders where date_trunc('day', o_orderdate) > current_timestamp - interval '30' day`);
         expect(f.filters).toEqual([`date_trunc('day', orders.o_orderdate) > current_timestamp - interval '30' day`]);

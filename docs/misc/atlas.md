@@ -13,13 +13,13 @@ Every embedding space has its own Parquet file and its own 3D layout. All files 
 
 | File | Content |
 |------|---------|
-| `dashql-atlas-syntax.parquet` | One row per script: the embedding of its syntax features (tables, joins, function calls, ...) and the features |
+| `dashql-atlas-structure.parquet` | One row per script: the embedding of its structure features (tables, joins, function calls, ...) and the features |
 | `dashql-atlas-description.parquet` | One row per chunk of the `@dashql:description` blocks of a script |
 | `dashql-atlas-properties.parquet` | One row per script with a `@dashql:properties` block: the JSON object and the embedded `key: value` text |
 
 Ordinary comments are not embedded, only `@dashql:description` blocks (written by `dashql-describe` or by hand).
 The spaces are laid out independently: embedded together, UMAP clusters the descriptions with the descriptions and the
-syntax with the syntax, which says nothing about the scripts.
+structure with the structure, which says nothing about the scripts.
 
 There is no sidecar. A folder without index files is indexed when it is opened. Otherwise the index files are loaded,
 and if that fails, e.g. because an older version wrote them, the page asks to reindex the folder. Every row carries the
@@ -58,14 +58,14 @@ file per row with the selected other columns as properties
 Before a folder is open the background is made-up dots. Hovering one pauses the rotation and shows a made-up script
 (`src/atlas/demo_data.ts`). Once a folder is open the background shows the real index, one point per embedding. A
 segmented control at the top switches between **Description** (the description chunks, what a script is about),
-**Syntax** (the extracted syntax features, what its queries look like) and **Properties** (what the user said about
+**Structure** (the extracted structure features, what its queries look like) and **Properties** (what the user said about
 it). The points sit at the `dashql_atlas_{x,y,z}` positions of the file (`loadIndexPoints` in `src/atlas/store.ts`,
 drawn by `src/atlas/point_cloud.ts`).
 
 The shape of the cloud depends on how many points there are (`src/atlas/point_cloud_shape.ts`): a handful of scripts
 get big dots on a contracted cloud, a thousand get fine dots on the full one, and points are pulled toward the middle.
 Hovering a dot, made up or indexed, holds the rotation, rings the dot, marks the other dots of its script and shows a
-tooltip with the script and what the dot says (the description chunk, the tables of the syntax or the properties).
+tooltip with the script and what the dot says (the description chunk, the tables of the structure or the properties).
 
 The prompt sits at the bottom and the candidates of every search strategy are a card on the right. Hovering a candidate
 pauses the rotation and marks all dots of its script in the shown cloud, the other candidates are marked less strongly.
