@@ -31,6 +31,11 @@ segmented control at the top switches between **Description** (the comment chunk
 **Features** (the extracted query features, what its queries look like). The points sit at their `atlas_description_3d_{x,y,z}` or
 `atlas_features_3d_{x,y,z}` positions (`loadIndexPoints` in `src/atlas/store.ts`, drawn by `src/atlas/point_cloud.ts`).
 
+The shape of the cloud depends on how many points there are (`src/atlas/point_cloud_shape.ts`): a handful of scripts
+get big dots on a contracted cloud, a thousand get fine dots on the full one, and points are pulled toward the middle.
+Hovering a dot, made up or indexed, holds the rotation, rings the dot, marks the other dots of its script and shows a
+tooltip with the script and what the dot says (the comment chunk, or the tables of the features).
+
 The prompt sits at the bottom and the candidates of every search strategy are a card on the right. Hovering a candidate
 pauses the rotation and marks all dots of its script in the shown cloud, the other candidates are marked less strongly.
 

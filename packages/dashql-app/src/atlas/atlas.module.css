@@ -195,11 +195,20 @@
     font-size: 0.82rem;
     line-height: 1.4;
     pointer-events: none;
+    /* Shown once it is placed next to its dot */
+    opacity: 0;
+    transition: opacity 0.12s;
 }
 
 .dot_snippet {
     margin-top: 2px;
     color: hsl(210, 10%, 30%);
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 5;
+    overflow: hidden;
 }
 
 .dot_tables {
@@ -214,34 +223,9 @@
     }
 }
 
-.prompt {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 14px 18px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 24px;
-    background: rgba(0, 0, 0, 0.25);
-    color: white;
-    font-family: 'Roboto';
-    font-size: 1.05rem;
-    outline: none;
-}
-
-.prompt::placeholder {
-    color: rgba(255, 255, 255, 0.6);
-}
-
-.prompt:focus {
-    border-color: rgba(255, 255, 255, 0.8);
-}
-
 .status {
     color: rgba(255, 255, 255, 0.8);
     font-size: 0.85rem;
-}
-
-.folder_actions {
-    color: white;
 }
 
 .result_section + .result_section {

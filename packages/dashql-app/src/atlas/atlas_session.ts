@@ -120,8 +120,9 @@ export class AtlasSession {
         return this.sql;
     }
 
-    /// Mount the folder, load the index files or build them, and get ready for prompts
-    async open(directory: FileSystemDirectoryHandle, report: (phase: AtlasPhase) => void): Promise<OpenedFolder> {
+    /// Mount the folder, load the index files or build them, and get ready for prompts. `force` builds the index even if
+    /// the existing one is current.
+    async open(directory: FileSystemDirectoryHandle, report: (phase: AtlasPhase) => void, force = false): Promise<OpenedFolder> {
         if (this.mounts == null) throw new Error('this database cannot mount folders');
         await this.closeFolder();
         const sql = await this.ensureSql();
@@ -142,14 +143,20 @@ export class AtlasSession {
         const embedder = await this.loadEmbedder(report);
         const hashes = new Map(files.map(f => [f.id, f.hash]));
         const sidecar = await readSidecar(directory);
-        const current = isIndexCurrent(sidecar, ATLAS_EMBEDDER_CONFIG, hashes) && await indexFilesReadable(sql, location);
+        const current = !force && isIndexCurrent(sidecar, ATLAS_EMBEDDER_CONFIG, hashes) && await indexFilesReadable(sql, location);
         if (current) {
             this.traced.info('Reusing the existing index', { scripts: String(files.length) }, LOG_CTX);
             return { name: directory.name, scripts: files.length, reused: true, points: await this.loadPoints(sql, location) };
         }
-        this.traced.info(sidecar ? 'The index is outdated, indexing' : 'No index found, indexing', {}, LOG_CTX);
+        this.traced.info(force ? 'Reindexing on request' : sidecar ? 'The index is outdated, indexing' : 'No index found, indexing', {}, LOG_CTX);
         await this.index(directory, location, files, embedder, sql, report);
         return { name: directory.name, scripts: files.length, reused: false, points: await this.loadPoints(sql, location) };
+    }
+
+    /// Build the index of the open folder again, e.g. after the embedder or the analysis changed
+    async reindex(report: (phase: AtlasPhase) => void): Promise<OpenedFolder> {
+        if (this.location == null) throw new Error('no folder is open');
+        return await this.open(this.location.directory, report, true);
     }
 
     private async loadPoints(sql: AtlasSql, location: AtlasLocation): Promise<Record<EmbeddingKind, IndexPoints>> {

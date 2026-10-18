@@ -1,16 +1,23 @@
 import * as THREE from 'three';
 
+import { pointAlpha, pointSize, shapeCoords } from './point_cloud_shape.js';
+
 const POINT_COUNT = 1000;
 /// Radians per second around the rotation axis
 const ROTATION_SPEED = 0.07;
-/// How close the pointer has to be to a made up dot, in CSS pixels
+/// How close the pointer has to be to a small dot, in CSS pixels. Bigger dots are picked on their whole disc.
 const PICK_RADIUS = 12;
+/// Nominal size of the made up dots, which vary a little
+const DEMO_POINT_SIZE = 2.2;
+/// Per second, how fast the rotation eases to a halt and back
+const ROTATION_EASING = 6;
 
-/// A made up dot under the pointer. x and y are client coordinates of the dot.
+/// A dot under the pointer. x and y are client coordinates of the dot, radius is the size of its disc in CSS pixels.
 export interface DotHover {
     index: number;
     x: number;
     y: number;
+    radius: number;
 }
 
 const VERTEX_SHADER = `
@@ -25,7 +32,7 @@ const VERTEX_SHADER = `
         gl_Position = projectionMatrix * mv;
         gl_PointSize = aSize * uPixelRatio * uScale / -mv.z;
         // Points in the back are dimmer, which gives the cloud its depth
-        float depth = clamp(1.0 - (-mv.z - 2.0) / 3.2, 0.15, 1.0);
+        float depth = clamp(1.0 - (-mv.z - 2.0) / 3.2, 0.3, 1.0);
         vAlpha = aAlpha * depth;
     }
 `;
@@ -33,10 +40,14 @@ const VERTEX_SHADER = `
 const FRAGMENT_SHADER = `
     varying float vAlpha;
     void main() {
-        vec2 c = gl_PointCoord - vec2(0.5);
-        float d = length(c);
+        float d = length(gl_PointCoord - vec2(0.5));
         if (d > 0.5) discard;
-        gl_FragColor = vec4(1.0, 1.0, 1.0, vAlpha * smoothstep(0.5, 0.15, d));
+        // A solid disc with a soft rim and a faint halo, so that big points stay crisp and small ones stay round
+        float disc = 1.0 - smoothstep(0.32, 0.5, d);
+        float halo = 0.25 * (1.0 - smoothstep(0.0, 0.5, d));
+        // The rim is a little cooler than the center, which gives the dots some volume
+        vec3 color = mix(vec3(1.0), vec3(0.8, 0.88, 1.0), smoothstep(0.1, 0.5, d));
+        gl_FragColor = vec4(color, vAlpha * max(disc, halo));
     }
 `;
 
@@ -45,11 +56,14 @@ const HIGHLIGHT_VERTEX_SHADER = `
     attribute float aEmphasis;
     uniform float uPixelRatio;
     uniform float uScale;
+    /// Nominal size of the points that are highlighted
+    uniform float uBaseSize;
     varying float vEmphasis;
     void main() {
         vec4 mv = modelViewMatrix * vec4(position, 1.0);
         gl_Position = projectionMatrix * mv;
-        gl_PointSize = (aEmphasis > 0.5 ? 15.0 : 6.0) * uPixelRatio * uScale / -mv.z;
+        float size = aEmphasis > 0.5 ? max(15.0, uBaseSize * 1.7 + 4.0) : max(6.0, uBaseSize * 1.3);
+        gl_PointSize = size * uPixelRatio * uScale / -mv.z;
         vEmphasis = aEmphasis;
     }
 `;
@@ -70,9 +84,6 @@ const HIGHLIGHT_FRAGMENT_SHADER = `
         }
     }
 `;
-
-/// Radius of the cloud of scripts, the layout is normalized to a 98th percentile radius of 1
-const DATA_RADIUS = 1.5;
 
 /// A deterministic generator, so that every visit shows the same cloud
 function mulberry32(seed: number): () => number {
@@ -107,10 +118,14 @@ export class PointCloud {
     private dataPositions: Float32Array | null = null;
     /// The made up dots are shown, as long as `setPoints` was not called
     private showingDemo = true;
-    /// The pointer in client coordinates. Made up dots can be hovered, indexed scripts are highlighted from outside.
+    /// Nominal size of the indexed points, depends on how many there are
+    private dataSize = DEMO_POINT_SIZE;
+    /// The pointer in client coordinates. The dot under it is reported to the hover listener.
     private pointer: { x: number; y: number } | null = null;
     private hoveredDot = -1;
     private rotationPaused = false;
+    /// 1 while the cloud turns, eases to 0 when it is held
+    private rotationSpeed = 1;
     private hoverListener: ((hover: DotHover | null) => void) | null = null;
     private readonly pickVector = new THREE.Vector3();
     private readonly resizeObserver: ResizeObserver;
@@ -142,7 +157,7 @@ export class PointCloud {
             transparent: true,
             depthWrite: false,
             depthTest: false,
-            uniforms: { uPixelRatio: { value: 1 }, uScale: { value: 1 } },
+            uniforms: { uPixelRatio: { value: 1 }, uScale: { value: 1 }, uBaseSize: { value: DEMO_POINT_SIZE } },
         });
         this.highlights = new THREE.Points(new THREE.BufferGeometry(), this.highlightMaterial);
         this.highlights.renderOrder = 1;
@@ -195,16 +210,17 @@ export class PointCloud {
             this.renderOnce();
             return;
         }
-        // The more scripts, the smaller the points
-        const size = Math.max(1, Math.min(2.6, 14 / Math.cbrt(count)));
-        const positions = new Float32Array(coords.length);
-        for (let i = 0; i < coords.length; ++i) positions[i] = coords[i] * DATA_RADIUS;
+        // The more scripts, the smaller the points, and the wider the cloud
+        const size = pointSize(count);
+        const positions = shapeCoords(coords);
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         geometry.setAttribute('aSize', new THREE.BufferAttribute(new Float32Array(count).fill(size), 1));
-        geometry.setAttribute('aAlpha', new THREE.BufferAttribute(new Float32Array(count).fill(0.8), 1));
+        geometry.setAttribute('aAlpha', new THREE.BufferAttribute(new Float32Array(count).fill(pointAlpha(count)), 1));
         this.dataGeometry = geometry;
         this.dataPositions = positions;
+        this.dataSize = size;
+        this.highlightMaterial.uniforms.uBaseSize.value = size;
         this.cloud.geometry = geometry;
         this.renderOnce();
     }
@@ -215,6 +231,8 @@ export class PointCloud {
         this.dataGeometry = null;
         this.dataPositions = null;
         this.showingDemo = true;
+        this.dataSize = DEMO_POINT_SIZE;
+        this.highlightMaterial.uniforms.uBaseSize.value = DEMO_POINT_SIZE;
         this.setHighlight([], []);
         this.cloud.geometry = this.demoGeometry;
         this.cloud.visible = true;
@@ -251,12 +269,12 @@ export class PointCloud {
         this.renderOnce();
     }
 
-    /// Receives the made up dot under the pointer on every frame while there is one, and null once there is none
+    /// Receives the dot under the pointer on every frame while there is one, and null once there is none
     setHoverListener(listener: ((hover: DotHover | null) => void) | null): void {
         this.hoverListener = listener;
     }
 
-    /// Where the pointer is, in client coordinates, or null when it left. Only made up dots react to it.
+    /// Where the pointer is, in client coordinates, or null when it left
     setPointer(pointer: { x: number; y: number } | null): void {
         this.pointer = pointer;
         if (pointer == null) this.setDotHover(-1);
@@ -265,28 +283,37 @@ export class PointCloud {
     private setDotHover(index: number): void {
         if (index === this.hoveredDot) return;
         this.hoveredDot = index;
+        // What lights up is up to the listener, it knows which dots belong together
         if (index < 0) this.hoverListener?.(null);
-        this.setHighlight([], index < 0 ? [] : [index]);
     }
 
-    /// The made up dot closest to the pointer
+    /// The dot closest to the pointer, measured in the radius of its disc
     private pickDot(): DotHover | null {
         const pointer = this.pointer;
-        if (pointer == null || !this.showingDemo) return null;
+        if (pointer == null) return null;
         const rect = this.container.getBoundingClientRect();
-        const positions = this.demoPositions;
+        const positions = this.showingDemo ? this.demoPositions : this.dataPositions;
+        if (positions == null) return null;
+        const scale = this.camera.position.z;
+        const vector = this.pickVector;
+        this.camera.updateMatrixWorld();
         let best: DotHover | null = null;
-        let bestDistance = PICK_RADIUS;
+        let bestScore = 1;
         for (let i = 0; i * 3 < positions.length; ++i) {
-            this.pickVector.set(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2])
+            vector.set(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2])
                 .applyMatrix4(this.root.matrixWorld)
-                .project(this.camera);
-            const x = rect.left + (this.pickVector.x * 0.5 + 0.5) * rect.width;
-            const y = rect.top + (-this.pickVector.y * 0.5 + 0.5) * rect.height;
-            const distance = Math.hypot(x - pointer.x, y - pointer.y);
-            if (distance < bestDistance) {
-                best = { index: i, x, y };
-                bestDistance = distance;
+                .applyMatrix4(this.camera.matrixWorldInverse);
+            const depth = -vector.z;
+            vector.applyMatrix4(this.camera.projectionMatrix);
+            const x = rect.left + (vector.x * 0.5 + 0.5) * rect.width;
+            const y = rect.top + (-vector.y * 0.5 + 0.5) * rect.height;
+            // The size on screen is the nominal size at the distance of the cloud center
+            const size = this.showingDemo ? DEMO_POINT_SIZE : this.dataSize;
+            const disc = size * 0.5 * scale / depth;
+            const score = Math.hypot(x - pointer.x, y - pointer.y) / Math.max(PICK_RADIUS, disc + 4);
+            if (score < bestScore) {
+                best = { index: i, x, y, radius: disc };
+                bestScore = score;
             }
         }
         return best;
@@ -378,7 +405,9 @@ export class PointCloud {
         // A tilted axis that drifts slowly: the cloud does not turn like a record on a player
         this.axis.set(0.32 + Math.sin(t * 0.11) * 0.22, 1, 0.18 + Math.cos(t * 0.07) * 0.2).normalize();
         // Hovering a dot holds the cloud, so that the dot does not run away from the pointer
-        if (!this.rotationPaused && this.hoveredDot < 0) this.root.rotateOnWorldAxis(this.axis, dt * ROTATION_SPEED);
+        const held = this.rotationPaused || this.hoveredDot >= 0;
+        this.rotationSpeed += ((held ? 0 : 1) - this.rotationSpeed) * (1 - Math.exp(-dt * ROTATION_EASING));
+        this.root.rotateOnWorldAxis(this.axis, dt * ROTATION_SPEED * this.rotationSpeed);
         this.root.updateMatrixWorld();
         const hover = this.pickDot();
         this.setDotHover(hover?.index ?? -1);
