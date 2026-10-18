@@ -1,5 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { analyzeTable } from '../compute/computation_logic.js';
+import { processTask } from '../compute/computation_scheduler.js';
+import { createComputationState, reduceComputationState, type ComputationAction, type ComputationState } from '../compute/computation_state.js';
+import { ORDINAL_COLUMN, STRING_COLUMN } from '../compute/computation_types.js';
+import { DataFrameRegistry } from '../compute/data_frame.js';
+
 import type { EmbeddedComputeDatabase, EmbeddedTableImportConnection } from '../platform/database/embedded_database.js';
 import { setupWebHyperDB } from '../platform/hyperdb/hyperdb_provider_web.js';
 import { TestLogger } from '../platform/logger/test_logger.js';
@@ -15,8 +21,10 @@ import {
     countOutdatedScripts,
     externalDirectoryDatabase,
     hasIndexFiles,
+    indexPoints,
+    indexRowsTable,
     loadIndexedScripts,
-    loadIndexPoints,
+    loadIndexTable,
     mountFolder,
     unmountFolder,
     writeIndexFiles,
@@ -102,7 +110,7 @@ describe('atlas store and search', () => {
         {
             scriptName: 'script_1.sql',
             scriptHash: 'hash_1',
-            properties: '{"owner":"finance","dashboard":"Revenue Weekly"}',
+            properties: { owner: 'finance', dashboard: 'Revenue Weekly', avg_runtime_ms: 1834.5, text: 'clashes' },
             text: 'owner: finance\ndashboard: Revenue Weekly',
             truncated: false,
             embedding: basis(200),
@@ -110,7 +118,7 @@ describe('atlas store and search', () => {
         {
             scriptName: 'script_2.sql',
             scriptHash: 'hash_2',
-            properties: '{"owner":"sales"}',
+            properties: { owner: 'sales', tags: ['a', 'b'] },
             text: 'owner: sales',
             truncated: false,
             embedding: basis(201),
@@ -131,7 +139,7 @@ describe('atlas store and search', () => {
 
     it('finds no index files in a new folder', async () => {
         expect(await hasIndexFiles(directory)).toBe(false);
-        await expect(loadIndexPoints(sql, location, 'structure')).rejects.toThrow();
+        await expect(loadIndexTable(sql, location, 'structure')).rejects.toThrow();
     }, 60_000);
 
     it('writes Parquet files into the folder and reads them back', async () => {
@@ -157,9 +165,26 @@ describe('atlas store and search', () => {
         const table = await sql.query('Read back', `
             SELECT script_name, dashql_atlas_embedding, dashql_atlas_x, tables FROM external('${location.paths.structure}') ORDER BY script_name`);
         expect(table.numRows).toBe(12);
+        expect(table.toArray().find(r => r.script_name === 'script_7.sql').tables.toArray()).toEqual(['table_7']);
+        const counts = await sql.query('Read back counts', `
+            SELECT table_count, function_call_count, cte_count FROM external('${location.paths.structure}') ORDER BY script_name`);
+        expect({ ...counts.toArray()[0] }).toEqual({ table_count: 1, function_call_count: 1, cte_count: 0 });
+        expect(counts.schema.fields.map(f => f.name)).toHaveLength(3);
+        const columns = (await sql.query('Structure columns', `SELECT * FROM external('${location.paths.structure}') LIMIT 1`))
+            .schema.fields.map(f => f.name);
+        expect(columns).not.toContain('join_count');
+        expect(columns).not.toContain('operator_count');
+
+        // Every property is a column, typed by its values, rows without the property are null
         const properties = await sql.query('Read back properties', `
-            SELECT properties FROM external('${location.paths.properties}') WHERE script_name = 'script_1.sql'`);
-        expect(JSON.parse(String(properties.toArray()[0].properties))).toEqual({ owner: 'finance', dashboard: 'Revenue Weekly' });
+            SELECT owner, dashboard, avg_runtime_ms, tags, property_text
+            FROM external('${location.paths.properties}') ORDER BY script_name`);
+        expect(properties.toArray().map(r => ({ ...r }))).toEqual([
+            { owner: 'finance', dashboard: 'Revenue Weekly', avg_runtime_ms: 1834.5, tags: null, property_text: 'clashes' },
+            { owner: 'sales', dashboard: null, avg_runtime_ms: null, tags: '["a","b"]', property_text: null },
+        ]);
+        // Numeric properties stay doubles, only the vectors are written as real
+        expect(properties.schema.fields.find(f => f.name === 'avg_runtime_ms')!.type.toString()).toBe('Float64');
     }, 120_000);
 
     it('loads a point for every structure row, description chunk and properties row', async () => {
@@ -168,7 +193,9 @@ describe('atlas store and search', () => {
                 .filter((x): x is number => x != null)
                 .sort((a, b) => a - b);
 
-        const features = await loadIndexPoints(sql, location, 'structure');
+        const structureTable = await loadIndexTable(sql, location, 'structure');
+        expect(structureTable.schema.fields.map(f => f.name)).not.toContain('dashql_atlas_embedding');
+        const features = indexPoints(structureTable, 'structure');
         expect(features.scripts).toHaveLength(12);
         expect(features.owners).toHaveLength(12);
         expect(features.coords).toHaveLength(12 * LAYOUT_DIMS);
@@ -179,7 +206,7 @@ describe('atlas store and search', () => {
         expect(features.details).toHaveLength(12);
         expect(features.details[features.owners.indexOf(features.scripts.indexOf('script_7.sql'))]).toBe('table_7');
 
-        const comments = await loadIndexPoints(sql, location, 'description');
+        const comments = indexPoints(await loadIndexTable(sql, location, 'description'), 'description');
         expect(comments.scripts.sort()).toEqual(['script_3.sql', 'script_7.sql']);
         expect(comments.owners).toHaveLength(3);
         expect(xOf(comments, 'script_3.sql')).toHaveLength(2);
@@ -187,11 +214,66 @@ describe('atlas store and search', () => {
         // Description row 2 starts at 6 in the layout of the descriptions
         expect(xOf(comments, 'script_7.sql')[0]).toBeCloseTo(100.6, 3);
 
-        const properties = await loadIndexPoints(sql, location, 'properties');
+        const propertiesTable = await loadIndexTable(sql, location, 'properties');
+        const properties = indexPoints(propertiesTable, 'properties');
         expect(properties.scripts.sort()).toEqual(['script_1.sql', 'script_2.sql']);
         expect(properties.details).toContain('owner: sales');
         expect(xOf(properties, 'script_2.sql')[0]).toBeCloseTo(200.3, 3);
+
+        // The rows leave out what only the cloud needs
+        expect(indexRowsTable(propertiesTable).schema.fields.map(f => f.name))
+            .toEqual(['script_name', 'truncated', 'owner', 'dashboard', 'avg_runtime_ms', 'property_text', 'tags', 'text']);
     }, 60_000);
+
+    it('reports structure files without count columns as unreadable', async () => {
+        const directoryPath = location.paths.structure.slice(0, location.paths.structure.lastIndexOf('/'));
+        const old = { ...location, paths: { ...location.paths, structure: `${directoryPath}/old-structure.parquet` } };
+        await sql.run('Write old structure', `
+            COPY (SELECT script_name, script_hash, tables, dashql_atlas_x, dashql_atlas_y, dashql_atlas_z
+                  FROM external('${location.paths.structure}')) TO '${old.paths.structure}' WITH (FORMAT PARQUET)`);
+        await expect(loadIndexTable(sql, old, 'structure')).rejects.toThrow(/table_count/);
+        await directory.removeEntry('old-structure.parquet');
+    }, 60_000);
+
+    it('analyzes the rows of the index files with histograms', async () => {
+        // The registry and the scheduler of the page, without React
+        const logger = new TestLogger();
+        const memory = new DataFrameRegistry(logger);
+        let state: ComputationState = createComputationState();
+        const launched = new Set<number>();
+        const dispatch = (action: ComputationAction) => {
+            state = reduceComputationState(state, action, memory, logger);
+            for (const [id, task] of Object.entries(state.schedulerTasks)) {
+                if (launched.has(+id)) continue;
+                launched.add(+id);
+                void processTask(task, dispatch, logger);
+            }
+        };
+        const groupKinds = async (tableId: number, kind: EmbeddingKind) => {
+            const rows = indexRowsTable(await loadIndexTable(sql, location, kind));
+            await analyzeTable(tableId, rows, dispatch, database, logger);
+            const table = state.tableComputations[tableId]!;
+            const fields = table.dataTable.schema.fields.map(f => f.name);
+            const kinds = new Map<string, symbol | undefined>();
+            table.columnGroups.forEach((group, i) => {
+                if (group.type !== ORDINAL_COLUMN && group.type !== STRING_COLUMN) return;
+                kinds.set(group.value.inputFieldName, table.columnAggregates[i]?.type);
+            });
+            expect(fields).toContain(table.rowNumberColumnName);
+            return kinds;
+        };
+
+        const structure = await groupKinds(1, 'structure');
+        // The feature lists survive the data frame
+        const analyzed = state.tableComputations[1]!.dataTable;
+        const row = analyzed.toArray().find(r => r.script_name === 'script_7.sql');
+        expect(Array.from(row.tables ?? [])).toEqual(['table_7']);
+        expect(structure.get('table_count')).toBe(ORDINAL_COLUMN);
+        expect(structure.get('script_name')).toBe(STRING_COLUMN);
+        const properties = await groupKinds(2, 'properties');
+        expect(properties.get('avg_runtime_ms')).toBe(ORDINAL_COLUMN);
+        expect(properties.get('owner')).toBe(STRING_COLUMN);
+    }, 120_000);
 
     it('finds the most similar script by structure', async () => {
         const hits = await STRUCTURE_SEARCH.run(sql, location, basis(5), 3);

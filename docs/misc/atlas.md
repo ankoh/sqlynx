@@ -13,16 +13,25 @@ Every embedding space has its own Parquet file and its own 3D layout. All files 
 
 | File | Content |
 |------|---------|
-| `dashql-atlas-structure.parquet` | One row per script: the embedding of its structure features (tables, joins, function calls, ...) and the features |
+| `dashql-atlas-structure.parquet` | One row per script: the embedding of its structure features (tables, joins, function calls, ...), the feature lists and a `<feature>_count` column for most of them |
 | `dashql-atlas-description.parquet` | One row per chunk of the `@dashql:description` blocks of a script |
-| `dashql-atlas-properties.parquet` | One row per script with a `@dashql:properties` block: the JSON object and the embedded `key: value` text |
+| `dashql-atlas-properties.parquet` | One row per script with a `@dashql:properties` block: a column per property and the embedded `key: value` text |
+
+The files are written in the shape that the page shows, nothing is derived when they are loaded. The feature lists of
+the structure cannot be binned, so `table_count`, `function_call_count`, `cte_count` and so on are stored next to them.
+Joins and operators are not counted: the number of joins is up to the optimizer (a cross join with a predicate is a join
+as well), and the operators are SQL clauses, not the operators of a plan. Every property key becomes a column of the
+properties file: a double if all its values are numbers, a bool if all are booleans, text otherwise (objects and arrays
+as JSON), null for scripts without the key. A key that collides with a fixed column is prefixed with `property_`. Only
+the vector columns are stored as `real`.
 
 Ordinary comments are not embedded, only `@dashql:description` blocks (written by `dashql-describe` or by hand).
 The spaces are laid out independently: embedded together, UMAP clusters the descriptions with the descriptions and the
 structure with the structure, which says nothing about the scripts.
 
 There is no sidecar. A folder without index files is indexed when it is opened. Otherwise the index files are loaded,
-and if that fails, e.g. because an older version wrote them, the page asks to reindex the folder. Every row carries the
+and if that fails, e.g. because an older version wrote them (a structure file without `table_count`), the page asks to
+reindex the folder. Every row carries the
 `script_name` and the SHA-256 `script_hash` of the script text, the prompt bar shows how many scripts were added,
 changed or removed since the index was written. Reindexing replaces the files and removes those of earlier versions
 (`dashql-atlas-comments.parquet`, `dashql-atlas-features.parquet`, `dashql-atlas-index.json`).
@@ -67,6 +76,12 @@ The shape of the cloud depends on how many points there are (`src/atlas/point_cl
 get big dots on a contracted cloud, a thousand get fine dots on the full one, and points are pulled toward the middle.
 Hovering a dot, made up or indexed, holds the rotation, rings the dot, marks the other dots of its script and shows a
 tooltip with the script and what the dot says (the description chunk, the tables of the structure or the properties).
+
+The rows of the shown file are a panel on the left, built like the result overlay of the shell
+(`src/atlas/index_rows.tsx`). Each file is loaded without its embedding, analyzed like a query result (`analyzeTable`:
+table and column aggregates, a histogram or the most frequent values per column) and shown as a data table with plot
+headers. Brushing a histogram or clicking a frequent value cross-filters the rows, and the dots of the rows that do not
+match fade (`PointCloud.setSelection`), row i of a file is point i of its cloud. Every kind keeps its own filters.
 
 The prompt sits at the bottom and the candidates of every search strategy are a card on the right. Hovering a candidate
 pauses the rotation and marks all dots of its script in the shown cloud, the other candidates are marked less strongly.

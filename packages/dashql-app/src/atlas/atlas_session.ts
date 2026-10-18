@@ -1,4 +1,5 @@
 import type { DashQL } from '@ankoh/dashql-core';
+import type * as arrow from 'apache-arrow';
 
 import type {
     EmbeddedComputeDatabase,
@@ -21,7 +22,9 @@ import {
     externalDirectoryDatabase,
     hasIndexFiles,
     loadIndexedScripts,
-    loadIndexPoints,
+    indexPoints,
+    indexRowsTable,
+    loadIndexTable,
     mountFolder,
     unmountFolder,
     writeIndexFiles,
@@ -48,7 +51,11 @@ export interface OpenedFolder {
     outdated: number;
     /// The embeddings of every index file in their 3D layouts
     points: Record<EmbeddingKind, IndexPoints>;
+    /// The rows of every index file without the embeddings and the layout, row i is point i
+    rows: Record<EmbeddingKind, arrow.Table>;
 }
+
+type LoadedIndex = Pick<OpenedFolder, 'points' | 'rows'>;
 
 /// The index files of a folder exist but cannot be loaded, e.g. because they were written by an older version.
 /// The folder stays open so that it can be reindexed.
@@ -147,10 +154,10 @@ export class AtlasSession {
 
         const embedder = await this.loadEmbedder(report);
         if (!force && await hasIndexFiles(directory)) {
-            let points: Record<EmbeddingKind, IndexPoints>;
+            let loaded: LoadedIndex;
             let indexed: Map<string, string>;
             try {
-                points = await this.loadPoints(sql, location);
+                loaded = await this.loadIndex(sql, location);
                 indexed = await loadIndexedScripts(sql, location);
             } catch (e) {
                 this.traced.warn('Failed to load the index', { name: directory.name, error: stringifyError(e) }, LOG_CTX);
@@ -158,11 +165,12 @@ export class AtlasSession {
             }
             const outdated = countOutdatedScripts(indexed, this.indexableScripts(files, indexed, embedder));
             this.traced.info('Loaded the existing index', { scripts: String(files.length), outdated: String(outdated) }, LOG_CTX);
-            return { name: directory.name, scripts: files.length, reused: true, outdated, points };
+            return { name: directory.name, scripts: files.length, reused: true, outdated, ...loaded };
         }
         this.traced.info(force ? 'Reindexing on request' : 'No index found, indexing', {}, LOG_CTX);
         await this.index(directory, location, files, embedder, sql, report);
-        return { name: directory.name, scripts: files.length, reused: false, outdated: 0, points: await this.loadPoints(sql, location) };
+        const loaded = await this.loadIndex(sql, location);
+        return { name: directory.name, scripts: files.length, reused: false, outdated: 0, ...loaded };
     }
 
     /// The scripts of the folder that an index would contain. Scripts that are not in the index are only counted if they
@@ -183,12 +191,15 @@ export class AtlasSession {
         return await this.open(this.location.directory, report, true);
     }
 
-    private async loadPoints(sql: AtlasSql, location: AtlasLocation): Promise<Record<EmbeddingKind, IndexPoints>> {
+    private async loadIndex(sql: AtlasSql, location: AtlasLocation): Promise<LoadedIndex> {
         const points: Partial<Record<EmbeddingKind, IndexPoints>> = {};
+        const rows: Partial<Record<EmbeddingKind, arrow.Table>> = {};
         for (const kind of EMBEDDING_KINDS) {
-            points[kind] = await loadIndexPoints(sql, location, kind);
+            const table = await loadIndexTable(sql, location, kind);
+            points[kind] = indexPoints(table, kind);
+            rows[kind] = indexRowsTable(table);
         }
-        return points as Record<EmbeddingKind, IndexPoints>;
+        return { points: points as Record<EmbeddingKind, IndexPoints>, rows: rows as Record<EmbeddingKind, arrow.Table> };
     }
 
     private async index(
