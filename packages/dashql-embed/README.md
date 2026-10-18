@@ -6,7 +6,7 @@ The embeddings go into two Parquet files that a later example library can search
 
 ```
 dashql-embed describe <dir|file.sql>... [--force] [--dry-run]
-dashql-embed index    <dir|file.sql>... --out-dir <dir> [--model <id>] [--no-layout]
+dashql-embed index    <dir|file.sql>... --out-dir <dir> [--model <id>] [--no-layout] [--output-feature-text]
 dashql-embed query    <dir|file.sql>... --index-dir <dir> --prompt "<text>" [--top 10]
 ```
 
@@ -40,35 +40,33 @@ profile.
 
 **`index`** analyzes every script with DashQL and embeds two separate things, one Parquet file each.
 Both files identify the script by `script_name` (its path relative to the input directory) and `script_hash`
-(sha256 of its content), which is also how the two files are joined.
+(sha256 of its content), which is also how the two files are joined. Neither file stores the script or the embedded
+feature text: apps that need them read the SQL files, and the feature text can be recomputed from them.
 
 `comments.parquet`, one row per comment chunk. The description block and human comments are embedded, commented-out SQL
 is not. Long comments are split to fit the model window.
 
 | column | type | |
 |---|---|---|
-| `entry_id` | utf8 | `<script_name>#<chunk_index>` |
 | `script_name` | utf8 | |
 | `script_hash` | utf8 | |
 | `chunk_index` | int32 | |
 | `source` | utf8 | `dashql_description` or `comment` |
-| `text` | utf8 | the embedded text |
-| `token_count` | int32 | |
+| `text` | utf8 | the embedded chunk |
 | `embedding` | fixed size list<float32>[dim] | L2-normalized |
 
-`features.parquet`, one row per script. `feature_text` is a deterministic summary of tables, joins, aggregates, grouping,
-filters, operators and output columns, fitted to the model window.
+`features.parquet`, one row per script. The embedding is computed from the feature text, a deterministic summary of
+tables, joins, aggregates, grouping, filters, operators and output columns, fitted to the model window.
 
 | column | type | |
 |---|---|---|
 | `script_name`, `script_hash` | utf8 | |
-| `sql` | utf8 | the script |
-| `feature_text` | utf8 | the embedded text |
-| `token_count`, `truncated` | int32, bool | whether sections had to be cut to fit |
+| `truncated` | bool | whether sections of the feature text had to be cut to fit |
 | `embedding` | fixed size list<float32>[dim] | L2-normalized |
 | `statement_types`, `tables`, `columns`, `functions`, `aggregates`, `function_calls`, `ctes`, `joins`, `filters`, `operators`, `visualizations` | list<utf8> | the extracted features |
 | `diagnostics` | list<utf8> | scan, parse and analyze messages |
 | `layout_x`, `layout_y` | float32 | position in a 2D scatter plot, see [Layout](#layout) (`--no-layout` omits them) |
+| `feature_text`, `feature_token_count` | utf8, int32 | the embedded text and its length, only with `--output-feature-text` (for debugging) |
 
 The metadata of both files records `kind`, `model`, `dtype`, `pooling`, `query_prefix`, `max_tokens`, `dim`,
 `dashql_core_version` and `format_version`, so queries are embedded exactly like the documents.

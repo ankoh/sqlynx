@@ -15,6 +15,8 @@ export interface IndexOptions {
     embedder: Embedder;
     /// Place the scripts in 2D (layout_x/y). Default true.
     layout?: boolean;
+    /// Add the embedded feature text to features.parquet, for debugging. Default false.
+    featureText?: boolean;
     log: (message: string) => void;
 }
 
@@ -77,7 +79,7 @@ export async function runIndex(options: IndexOptions): Promise<IndexSummary> {
         join(outDir, 'comments.parquet'),
         commentsTable(comments, embedder.dim, indexMetadata('comments', embedder.config, embedder.dim, version)),
     );
-    await writeParquetFile(featuresPath, featuresTable(features, embedder.dim, featuresMetadata, layout));
+    await writeParquetFile(featuresPath, featuresTable(features, embedder.dim, featuresMetadata, { layout, featureText: options.featureText }));
     return {
         scripts: files.length,
         featureRows: features.length,

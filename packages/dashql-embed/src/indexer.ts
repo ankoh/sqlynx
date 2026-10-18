@@ -7,22 +7,20 @@ import type { Embedder } from './embedding/embedder.js';
 import type { SqlFile } from './inputs.js';
 
 export interface CommentRow {
-    entryId: string;
     scriptName: string;
     scriptHash: string;
     chunkIndex: number;
     source: CommentSource;
     text: string;
-    tokenCount: number;
     embedding: Float32Array;
 }
 
 export interface FeatureRow {
     scriptName: string;
     scriptHash: string;
-    sql: string;
+    /// The embedded text, only written to the Parquet file for debugging
     featureText: string;
-    tokenCount: number;
+    featureTokens: number;
     truncated: boolean;
     embedding: Float32Array;
     features: ScriptFeatures;
@@ -37,7 +35,7 @@ export interface ScriptAnalysis {
     featureText: string;
     featureTokens: number;
     truncated: boolean;
-    commentChunks: { source: CommentSource; text: string; tokenCount: number }[];
+    commentChunks: { source: CommentSource; text: string }[];
 }
 
 const CHUNK_OVERLAP_TOKENS = 16;
@@ -52,11 +50,7 @@ export function analyzeScripts(files: SqlFile[], analyzer: SqlAnalyzer, embedder
             ? renderFeatureDocument(features, maxTokens, t => embedder.countTokens(t))
             : { text: '', tokenCount: 0, truncated: false };
         const commentChunks = embeddableComments(extractComments(sql, analyzer)).flatMap(({ source, text }) =>
-            chunkText(text, maxTokens, t => embedder.countTokens(t), CHUNK_OVERLAP_TOKENS).map(chunk => ({
-                source,
-                text: chunk,
-                tokenCount: embedder.countTokens(chunk),
-            })),
+            chunkText(text, maxTokens, t => embedder.countTokens(t), CHUNK_OVERLAP_TOKENS).map(chunk => ({ source, text: chunk })),
         );
         return {
             file: files[i],
@@ -82,9 +76,8 @@ export async function embedScripts(scripts: ScriptAnalysis[], embedder: Embedder
     const features: FeatureRow[] = withFeatures.map((s, i) => ({
         scriptName: s.file.id,
         scriptHash: s.file.hash,
-        sql: s.file.text,
         featureText: s.featureText,
-        tokenCount: s.featureTokens,
+        featureTokens: s.featureTokens,
         truncated: s.truncated,
         embedding: featureVectors[i],
         features: s.features!,
@@ -94,13 +87,11 @@ export async function embedScripts(scripts: ScriptAnalysis[], embedder: Embedder
     const chunks = scripts.flatMap(s => s.commentChunks.map((chunk, index) => ({ script: s, chunk, index })));
     const commentVectors = await embedder.embedDocuments(chunks.map(c => c.chunk.text));
     const comments: CommentRow[] = chunks.map(({ script, chunk, index }, i) => ({
-        entryId: `${script.file.id}#${index}`,
         scriptName: script.file.id,
         scriptHash: script.file.hash,
         chunkIndex: index,
         source: chunk.source,
         text: chunk.text,
-        tokenCount: chunk.tokenCount,
         embedding: commentVectors[i],
     }));
     return { comments, features };

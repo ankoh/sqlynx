@@ -29,6 +29,7 @@ Usage:
       --batch-size <n>         Embedding batch size (default 32)
       --embedder <kind>        transformers (default) or hash (offline, deterministic, for tests)
       --no-layout              Skip the 2D layout (layout_x/y) of the scripts
+      --output-feature-text    Add the embedded feature text to features.parquet, for debugging
       --cache-dir <dir>        Model cache (default ${defaultCacheDir()})
 
   dashql-embed query <dir|file.sql>... --index-dir <dir> --prompt <text> [options]
@@ -75,6 +76,7 @@ async function main(argv: string[]): Promise<number> {
             embedder: { type: 'string' },
             describer: { type: 'string' },
             'no-layout': { type: 'boolean' },
+            'output-feature-text': { type: 'boolean' },
             prompt: { type: 'string' },
             top: { type: 'string' },
             fusion: { type: 'string' },
@@ -129,6 +131,7 @@ async function main(argv: string[]): Promise<number> {
                 outDir: values['out-dir'],
                 embedder,
                 layout: !values['no-layout'],
+                featureText: values['output-feature-text'] ?? false,
                 log,
             });
             log(

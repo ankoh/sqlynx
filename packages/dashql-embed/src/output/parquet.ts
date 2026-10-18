@@ -5,7 +5,7 @@ import { Compression, Table as WasmTable, WriterPropertiesBuilder, readParquet, 
 import type { EmbedderConfig } from '../embedding/embedder.js';
 import type { CommentRow, FeatureRow } from '../indexer.js';
 
-export const FORMAT_VERSION = '1';
+export const FORMAT_VERSION = '2';
 
 export type IndexKind = 'comments' | 'features';
 
@@ -77,13 +77,11 @@ export function layoutMetadata(scale: number): Map<string, string> {
 export function commentsTable(rows: CommentRow[], dim: number, metadata: Map<string, string>): arrow.Table {
     return buildTable(
         [
-            ['entry_id', utf8, column(rows.map(r => r.entryId), utf8)],
             ['script_name', utf8, column(rows.map(r => r.scriptName), utf8)],
             ['script_hash', utf8, column(rows.map(r => r.scriptHash), utf8)],
             ['chunk_index', int32, column(rows.map(r => r.chunkIndex), int32)],
             ['source', utf8, column(rows.map(r => r.source), utf8)],
             ['text', utf8, column(rows.map(r => r.text), utf8)],
-            ['token_count', int32, column(rows.map(r => r.tokenCount), int32)],
             ['embedding', embeddingType(dim), embeddingColumn(rows.map(r => r.embedding), dim)],
         ],
         rows.length,
@@ -95,22 +93,33 @@ export const LAYOUT_COLUMNS = ['layout_x', 'layout_y'] as const;
 /// Value of the dashql_embed.layout metadata
 export const LAYOUT_KIND = 'umap-2d';
 
-/// `layout` holds x and y per row (row-major) and adds the layout_x/y columns
-export function featuresTable(rows: FeatureRow[], dim: number, metadata: Map<string, string>, layout?: Float32Array): arrow.Table {
+export interface FeaturesTableOptions {
+    /// x and y per row (row-major), adds the layout_x/y columns
+    layout?: Float32Array;
+    /// Add the embedded feature text and its token count, for debugging
+    featureText?: boolean;
+}
+
+/// The feature text and the script are not stored, both can be recomputed from the SQL files
+export function featuresTable(rows: FeatureRow[], dim: number, metadata: Map<string, string>, options: FeaturesTableOptions = {}): arrow.Table {
+    const { layout } = options;
     if (layout && layout.length !== rows.length * LAYOUT_COLUMNS.length) {
         throw new Error(`expected ${rows.length * LAYOUT_COLUMNS.length} layout values, got ${layout.length}`);
     }
     const layoutColumns: [string, arrow.DataType, arrow.Data][] = layout
         ? LAYOUT_COLUMNS.map((name, d) => [name, float32, column(rows.map((_, i) => layout[i * LAYOUT_COLUMNS.length + d]), float32)])
         : [];
+    const featureTextColumns: [string, arrow.DataType, arrow.Data][] = options.featureText
+        ? [
+              ['feature_text', utf8, column(rows.map(r => r.featureText), utf8)],
+              ['feature_token_count', int32, column(rows.map(r => r.featureTokens), int32)],
+          ]
+        : [];
     const list = (pick: (r: FeatureRow) => string[]): arrow.Data => column(rows.map(pick), utf8List);
     return buildTable(
         [
             ['script_name', utf8, column(rows.map(r => r.scriptName), utf8)],
             ['script_hash', utf8, column(rows.map(r => r.scriptHash), utf8)],
-            ['sql', utf8, column(rows.map(r => r.sql), utf8)],
-            ['feature_text', utf8, column(rows.map(r => r.featureText), utf8)],
-            ['token_count', int32, column(rows.map(r => r.tokenCount), int32)],
             ['truncated', bool, column(rows.map(r => r.truncated), bool)],
             ['embedding', embeddingType(dim), embeddingColumn(rows.map(r => r.embedding), dim)],
             ...layoutColumns,
@@ -126,6 +135,7 @@ export function featuresTable(rows: FeatureRow[], dim: number, metadata: Map<str
             ['operators', utf8List, list(r => r.features.operators)],
             ['visualizations', utf8List, list(r => r.features.visualizations)],
             ['diagnostics', utf8List, list(r => r.diagnostics)],
+            ...featureTextColumns,
         ],
         rows.length,
         metadata,
