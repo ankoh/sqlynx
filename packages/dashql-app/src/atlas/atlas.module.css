@@ -70,6 +70,10 @@
     pointer-events: none;
 }
 
+.workspace_script {
+    grid-template-columns: minmax(0, 300px) minmax(0, 1fr) minmax(0, 1000px);
+}
+
 .steps {
     grid-column: 1;
     grid-row: 1;
@@ -270,14 +274,4 @@
     margin-top: 4px;
     font-family: 'Roboto Mono';
     color: hsl(210, 10%, 40%);
-}
-
-.script {
-    margin: 0;
-    max-height: 60vh;
-    overflow: auto;
-    font-family: 'Roboto Mono';
-    font-size: 0.8rem;
-    line-height: 1.5;
-    white-space: pre;
 }
