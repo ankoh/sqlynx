@@ -349,11 +349,11 @@ auto& ext_depth = ctx.ext_depth;
 {space}+        {}
 {comment}       { ctx.AddComment(loc); } 
 
-{hyper_obfuscated_string}     { return Parser::make_SCONST(loc); }
-{hyper_obfuscated_integer}    { return Parser::make_ICONST(loc); }
-{hyper_obfuscated_float}      { return Parser::make_FCONST(loc); }
-{hyper_obfuscated_hex_string} { return Parser::make_XCONST(loc); }
-{hyper_obfuscated_bit_string} { return Parser::make_BCONST(loc); }
+{hyper_obfuscated_string}     { ctx.AddObfuscatedLiteral(loc); return Parser::make_SCONST(loc); }
+{hyper_obfuscated_integer}    { ctx.AddObfuscatedLiteral(loc); return Parser::make_ICONST(loc); }
+{hyper_obfuscated_float}      { ctx.AddObfuscatedLiteral(loc); return Parser::make_FCONST(loc); }
+{hyper_obfuscated_hex_string} { ctx.AddObfuscatedLiteral(loc); return Parser::make_XCONST(loc); }
+{hyper_obfuscated_bit_string} { ctx.AddObfuscatedLiteral(loc); return Parser::make_BCONST(loc); }
 
 {xcstart}       { yyless(2); ext_begin = loc; ++ext_depth; BEGIN(xc); }
 <xc>{xcstart}   { yyless(2); ++ext_depth; }

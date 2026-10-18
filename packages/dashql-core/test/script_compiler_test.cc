@@ -71,6 +71,53 @@ TEST(ScriptCompilerTest, PassesUnparseableRemoteSQLThroughUncached) {
     EXPECT_EQ(result.statements[0].sql, sql);
 }
 
+TEST(ScriptCompilerTest, ReplacesObfuscatedLiterals) {
+    auto result = Compile(
+        "select '/*String(1234)*/' from t where a in (/*String(284E)*/,/*String(9AEF)*/) and b = /*Float(5A86)*/ "
+        "and c = /*HexString(C85C)*/ and d = /*BitString(8AB8)*/ fetch next /*Integer(4888)*/ rows only");
+
+    ASSERT_TRUE(result.errors.empty()) << (result.errors.empty() ? "" : result.errors.front().message);
+    EXPECT_EQ(result.sql,
+              "select '/*String(1234)*/' from t where a in ('284E','9AEF') and b = 23174.0 and c = X'C85C' and d = "
+              "B'1000101010111000' fetch next 18568 rows only");
+}
+
+TEST(ScriptCompilerTest, ReplacesObfuscatedLiteralsInCasts) {
+    auto result = Compile(
+        "select to_char(timestamptz /*String(A834)*/, /*String(118C)*/), date /*String(0001)*/, "
+        "timestamp with time zone /*String(0002)*/, interval /*String(0003)*/ day, uuid /*String(00FF)*/");
+
+    ASSERT_TRUE(result.errors.empty()) << (result.errors.empty() ? "" : result.errors.front().message);
+    EXPECT_EQ(result.sql,
+              "select to_char(timestamptz '2000-01-01 00:00:00', '118C'), date '2000-01-01', "
+              "timestamp with time zone '2000-01-01 00:00:00', interval '1' day, "
+              "uuid '00000000-0000-0000-0000-0000000000FF'");
+}
+
+TEST(ScriptCompilerTest, ReplacesObfuscatedLiteralsInUnparseableSQL) {
+    auto result = Compile("SELECT * FROM t QUALIFY x = /*Integer(000A)*/");
+
+    ASSERT_FALSE(result.errors.empty());
+    ASSERT_EQ(result.statements.size(), 1);
+    EXPECT_EQ(result.statements[0].sql, "SELECT * FROM t QUALIFY x = 10");
+}
+
+TEST(ScriptCompilerTest, ReplacesObfuscatedLiteralsInVisualization) {
+    auto result = Compile(R"SQL(
+SELECT category, amount FROM sales WHERE region = /*String(ABCD)*/ LIMIT /*Integer(0010)*/
+VISUALIZE USING vegalite (
+    mark => bar,
+    encoding => (
+        x => (field => category, type => nominal),
+        y => (field => amount, type => quantitative)
+    )
+);
+)SQL");
+
+    ASSERT_TRUE(result.errors.empty()) << (result.errors.empty() ? "" : result.errors.front().message);
+    EXPECT_NE(result.sql.find("where region = 'ABCD' limit 16"), std::string::npos) << result.sql;
+}
+
 TEST(ScriptCompilerTest, ClassifiesInsertAsQuery) {
     constexpr std::string_view sql = "INSERT INTO target VALUES (1);";
     auto result = Compile(sql);

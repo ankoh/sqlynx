@@ -127,6 +127,29 @@ std::unique_ptr<buffers::parser::StatementT> ParsedScript::Statement::Pack() con
 ScannedScript::ScannedScript(const rope::Rope& text, TextVersion text_version, CatalogEntryID external_id)
     : external_id(external_id), text_buffer(text.ToString(true)), text_version(text_version) {}
 /// Constructor
+const ScannedScript::ObfuscatedLiteral* ScannedScript::FindObfuscatedLiteral(uint32_t offset) const {
+    auto iter = std::lower_bound(obfuscated_literals.begin(), obfuscated_literals.end(), offset,
+                                 [](const ObfuscatedLiteral& literal, uint32_t o) { return literal.location.offset() < o; });
+    if (iter == obfuscated_literals.end() || iter->location.offset() != offset) return nullptr;
+    return &*iter;
+}
+std::string ScannedScript::ReadExecutableText(sx::parser::TextSpan span) const {
+    auto begin = span.offset();
+    auto end = span.offset() + span.length();
+    auto iter = std::lower_bound(obfuscated_literals.begin(), obfuscated_literals.end(), begin,
+                                 [](const ObfuscatedLiteral& literal, uint32_t o) { return literal.location.offset() < o; });
+    std::string out;
+    out.reserve(span.length());
+    auto text = std::string_view{text_buffer};
+    for (; iter != obfuscated_literals.end() && iter->location.offset() + iter->location.length() <= end; ++iter) {
+        out += text.substr(begin, iter->location.offset() - begin);
+        out += iter->replacement;
+        begin = iter->location.offset() + iter->location.length();
+    }
+    out += text.substr(begin, end - begin);
+    return out;
+}
+/// Constructor
 ScannedScript::ScannedScript(std::string text, TextVersion text_version, CatalogEntryID external_id)
     : external_id(external_id), text_buffer(std::move(text)), text_version(text_version) {
     if (text_buffer.size() < 2) {
