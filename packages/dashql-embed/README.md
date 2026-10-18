@@ -43,7 +43,7 @@ Both files identify the script by `script_name` (its path relative to the input 
 (sha256 of its content), which is also how the two files are joined. Neither file stores the script or the embedded
 feature text: apps that need them read the SQL files, and the feature text can be recomputed from them.
 
-`comments.parquet`, one row per comment chunk. The description block and human comments are embedded, commented-out SQL
+`dashql-comments.parquet`, one row per comment chunk. The description block and human comments are embedded, commented-out SQL
 is not. Long comments are split to fit the model window.
 
 | column | type | |
@@ -55,7 +55,7 @@ is not. Long comments are split to fit the model window.
 | `text` | utf8 | the embedded chunk |
 | `embedding` | fixed size list<float32>[dim] | L2-normalized |
 
-`features.parquet`, one row per script. The embedding is computed from the feature text, a deterministic summary of
+`dashql-features.parquet`, one row per script. The embedding is computed from the feature text, a deterministic summary of
 tables, joins, aggregates, grouping, filters, operators and output columns, fitted to the model window.
 
 | column | type | |
@@ -77,7 +77,7 @@ Comments and features are never mixed into one window.
 ## Layout
 
 `index` also places every script in 3D so that a viewer can show the library as a point cloud. The coordinates are
-in `features.parquet` as `atlas_3d_x`, `atlas_3d_y` and `atlas_3d_z`. `--layout 2d` writes `atlas_2d_x` and
+in `dashql-features.parquet` as `atlas_3d_x`, `atlas_3d_y` and `atlas_3d_z`. `--layout 2d` writes `atlas_2d_x` and
 `atlas_2d_y` for a scatter plot instead. The 2D layout is a UMAP run of its own, not the 3D one without z, and the
 dimensions are in the column names so that a SQL query cannot mistake one for the other. The coordinates are
 centered at the origin and scaled so that the 98th percentile of the distance from the center is 1. The metadata has
@@ -91,7 +91,7 @@ by the vendored wasm module of `//packages/dashql-umap`. Three things keep it st
   the layout changes completely from one run to the next.
 - **PCA start.** A cold start begins at the first three (or two) principal components instead of spectral or random
   coordinates, so the same embeddings always give the same layout.
-- **Warm start.** When `--out-dir` already has a `features.parquet` of the same model and layout dimensions, scripts
+- **Warm start.** When `--out-dir` already has a `dashql-features.parquet` of the same model and layout dimensions, scripts
   with the same name and hash start where they were. New scripts start at the mean position of their five nearest
   neighbors, and 60 gentle epochs follow instead of a full run. If no script is new, nothing is optimized and the layout
   stays as it is. If less than half of the scripts are known, the layout starts from scratch.

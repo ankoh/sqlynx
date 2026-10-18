@@ -27,10 +27,10 @@ describe('parquet output', () => {
         const dir = await mkdtemp(join(tmpdir(), 'dashql-embed-'));
         dirs.push(dir);
         const meta = (kind: 'comments' | 'features') => indexMetadata(kind, embedder.config, 32, 'test');
-        await writeParquetFile(join(dir, 'features.parquet'), featuresTable(features, 32, meta('features')));
-        await writeParquetFile(join(dir, 'comments.parquet'), commentsTable(comments, 32, meta('comments')));
+        await writeParquetFile(join(dir, 'dashql-features.parquet'), featuresTable(features, 32, meta('features')));
+        await writeParquetFile(join(dir, 'dashql-comments.parquet'), commentsTable(comments, 32, meta('comments')));
 
-        const f = await readParquetFile(join(dir, 'features.parquet'));
+        const f = await readParquetFile(join(dir, 'dashql-features.parquet'));
         expect(f.dim).toBe(32);
         expect(f.metadata.get('dashql_embed.model')).toBe('hash-32');
         expect(f.table.numRows).toBe(2);
@@ -40,7 +40,7 @@ describe('parquet output', () => {
         expect(Array.from(vectors.subarray(0, 32))).toEqual(Array.from(features[0].embedding));
         expect(Array.from(vectors.subarray(32, 64))).toEqual(Array.from(features[1].embedding));
 
-        const c = await readParquetFile(join(dir, 'comments.parquet'));
+        const c = await readParquetFile(join(dir, 'dashql-comments.parquet'));
         expect(c.table.getChild('text')!.get(0)).toBe('Customers per segment');
         expect(c.table.getChild('source')!.get(0)).toBe('comment');
         expect(c.table.getChild('script_name')!.get(0)).toBe('a.sql');
@@ -60,8 +60,8 @@ describe('parquet output', () => {
         const dir = await mkdtemp(join(tmpdir(), 'dashql-embed-'));
         dirs.push(dir);
         const meta = indexMetadata('features', embedder.config, 8, 'test');
-        await writeParquetFile(join(dir, 'features.parquet'), featuresTable(features, 8, meta, { featureText: true }));
-        const f = await readParquetFile(join(dir, 'features.parquet'));
+        await writeParquetFile(join(dir, 'dashql-features.parquet'), featuresTable(features, 8, meta, { featureText: true }));
+        const f = await readParquetFile(join(dir, 'dashql-features.parquet'));
         expect(f.table.getChild('feature_text')!.get(0)).toBe(features[0].featureText);
         expect(f.table.getChild('feature_token_count')!.get(0)).toBe(features[0].featureTokens);
     });
@@ -70,7 +70,7 @@ describe('parquet output', () => {
         const dir = await mkdtemp(join(tmpdir(), 'dashql-embed-'));
         dirs.push(dir);
         const meta = indexMetadata('comments', new HashEmbedder(8).config, 8, 'test');
-        await writeParquetFile(join(dir, 'comments.parquet'), commentsTable([], 8, meta));
-        expect((await readParquetFile(join(dir, 'comments.parquet'))).table.numRows).toBe(0);
+        await writeParquetFile(join(dir, 'dashql-comments.parquet'), commentsTable([], 8, meta));
+        expect((await readParquetFile(join(dir, 'dashql-comments.parquet'))).table.numRows).toBe(0);
     });
 });

@@ -23,20 +23,20 @@ Usage:
       --concurrency <n>        Parallel requests (default 4)
 
   dashql-embed index <dir|file.sql>... --out-dir <dir> [options]
-      Write comments.parquet and features.parquet with embeddings.
+      Write dashql-comments.parquet and dashql-features.parquet with embeddings.
       --model <id>             transformers.js model, Snowflake Arctic Embed only (default ${DEFAULT_MODEL})
       --dtype <dtype>          fp32 (default), fp16, q8, q4, ...
       --max-tokens <n>         Token window of the model (default from the preset)
       --batch-size <n>         Embedding batch size (default 32)
       --embedder <kind>        transformers (default) or hash (offline, deterministic, for tests)
       --layout <3d|2d|none>    Place the scripts in 3D (atlas_3d_x/y/z, default) or 2D (atlas_2d_x/y), or not at all
-      --output-feature-text    Add the embedded feature text to features.parquet, for debugging
+      --output-feature-text    Add the embedded feature text to dashql-features.parquet, for debugging
       --cache-dir <dir>        Model cache (default ${defaultCacheDir()})
 
   dashql-embed query <dir|file.sql>... --index-dir <dir> --prompt <text> [options]
       Search a set of scripts with the Parquet files that "index" wrote for it and print the best matches.
       Index rows of other scripts are ignored. Scripts that changed since indexing are reported and not searched.
-      --index-dir <dir>        Directory with comments.parquet and features.parquet
+      --index-dir <dir>        Directory with dashql-comments.parquet and dashql-features.parquet
       --prompt <text>          What you are looking for
       --top <n>                Number of scripts to print (default ${DEFAULT_SEARCH_OPTIONS.topK})
       --fusion <weighted|rrf>  How comment and feature scores are combined (default weighted)

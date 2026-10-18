@@ -60,7 +60,7 @@ describe('describe, index and query', () => {
         // The scripts are placed in 3D, and indexing the same scripts again continues from that layout
         expect(summary.layout).toBe('cold');
         const layoutOf = async (dir: string, dims: LayoutDims) => {
-            const file = await readParquetFile(join(dir, 'features.parquet'));
+            const file = await readParquetFile(join(dir, 'dashql-features.parquet'));
             return {
                 file,
                 coords: layoutColumns(dims).map(name => Array.from(file.table.getChild(name)?.toArray() ?? [])),
@@ -88,7 +88,7 @@ describe('describe, index and query', () => {
 
         const unplaced = await runIndex({ inputs: [scripts], outDir: join(work, 'no-layout'), embedder, layout: false, log: () => {} });
         expect(unplaced.layout).toBe('off');
-        const bare = await readParquetFile(join(work, 'no-layout', 'features.parquet'));
+        const bare = await readParquetFile(join(work, 'no-layout', 'dashql-features.parquet'));
         expect(bare.table.schema.fields.map(f => f.name)).not.toContain('atlas_3d_x');
         expect(bare.metadata.has('dashql_embed.layout')).toBe(false);
 
