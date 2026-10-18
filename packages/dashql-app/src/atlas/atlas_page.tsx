@@ -21,7 +21,7 @@ import { AtlasIndexUnreadable, AtlasSession, type AtlasPhase, type OpenedFolder 
 import { IndexRowsCard, selectedRows, useRowsCollapsed } from './index_rows.js';
 import { DEFAULT_MODEL_BASE_URL } from './index/model.js';
 import { demoScript } from './demo_data.js';
-import { PromptAction, PromptBar } from './prompt_bar.js';
+import { PromptAction, PromptBar, SearchButton } from './prompt_bar.js';
 import type { DotHover, PointCloud } from './point_cloud.js';
 import type { SearchResults } from './search/search.js';
 import * as styles from './atlas.module.css';
@@ -88,6 +88,8 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
     const [error, setError] = React.useState<string | null>(null);
     const [folder, setFolder] = React.useState<OpenedFolder | null>(null);
     const [prompt, setPrompt] = React.useState('');
+    /// The prompt is unfolded out of its search button
+    const [searchOpen, setSearchOpen] = React.useState(false);
     const [searching, setSearching] = React.useState(false);
     const [results, setResults] = React.useState<SearchResults[] | null>(null);
     /// The warning about an outdated index was closed, until another folder is opened
@@ -102,6 +104,8 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
     const [rowTableId, setRowTableId] = React.useState<number | null>(null);
     const nextRowTableId = React.useRef(1);
     const [rowsCollapsed, toggleRows] = useRowsCollapsed();
+    /// The rows table on the bottom edge, the cloud is centered in the space above it
+    const [rowsDock, setRowsDock] = React.useState<HTMLDivElement | null>(null);
     const onAnimation = React.useCallback((animation: BackgroundAnimation | null) => setCloud(animation as PointCloud | null), []);
 
     // The made up dots only show until a folder is open, then the cloud is the embeddings of the index
@@ -110,6 +114,18 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
         if (folder == null) cloud.clearPoints();
         else cloud.setPoints(folder.points.coords);
     }, [cloud, folder]);
+
+    React.useEffect(() => {
+        if (cloud == null) return;
+        if (rowsDock == null) {
+            cloud.setBottomInset(0);
+            return;
+        }
+        // Follows the table while its handle is dragged or it is collapsed
+        const observer = new ResizeObserver(() => cloud.setBottomInset(rowsDock.offsetHeight));
+        observer.observe(rowsDock);
+        return () => observer.disconnect();
+    }, [cloud, rowsDock]);
 
     // The tooltip follows its dot while the cloud turns, which is too often for React
     React.useEffect(() => {
@@ -156,12 +172,13 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
     // Only the system columns make the rows filterable, before that the table has no histograms
     const shownRowTable = rowTable?.rowNumberColumnName != null ? rowTable : null;
 
-    // The dots of the rows that match the cross-filters stay, the others fade
+    // The dots of the rows that match the cross-filters and the data search stay, the others fade
     const filterTable = shownRowTable?.filterTable ?? null;
+    const searchedRows = shownRowTable?.dataSearch.matchingRows ?? null;
     React.useEffect(() => {
         cloud?.setSelection(folder == null ? null : selectedRows(shownRowTable));
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [cloud, folder, filterTable]);
+    }, [cloud, folder, filterTable, searchedRows]);
 
     /// Every dot of a script, one per description chunk
     const pointsOfScript = React.useMemo(() => {
@@ -383,18 +400,56 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
     } else {
         content = (
             <div className={styles.workspace}>
+                <div className={styles.prompt_area}>
+                    {searchOpen ? (
+                        <PromptBar
+                            value={prompt}
+                            onChange={setPrompt}
+                            onSubmit={() => void submit()}
+                            busy={searching}
+                            placeholder={`Search ${folder?.points.scripts.length ?? 0} described scripts in ${folder?.name ?? 'the folder'}`}
+                            start={(
+                                <>
+                                    <PromptAction icon={<FileDirectoryIcon />} onClick={() => void selectFolder()} disabled={searching}>
+                                        Select folder
+                                    </PromptAction>
+                                    <PromptAction icon={<SyncIcon />} onClick={() => void reindex()} disabled={searching || folder == null}>
+                                        Reindex
+                                    </PromptAction>
+                                </>
+                            )}
+                            end={folder == null ? null : `${folder.scripts} scripts · ${folder.reused ? 'existing index' : 'index written'}`}
+                            onClose={() => setSearchOpen(false)}
+                        />
+                    ) : (
+                        <SearchButton onClick={() => setSearchOpen(true)} />
+                    )}
+                    {searching && <div className={styles.status}>Searching</div>}
+                    {error != null && <div className={styles.error_banner}>{error}</div>}
+                    {folder != null && folder.points.scripts.length === 0 && (
+                        <div className={styles.warning_banner} role="status">
+                            <span className={styles.warning_text}>
+                                None of the scripts has a <code>@dashql:description</code> block, there is nothing to
+                                search. Describe them with <code>dashql-describe</code> and reindex the folder.
+                            </span>
+                        </div>
+                    )}
+                    {folder != null && folder.outdated > 0 && !outdatedDismissed && (
+                        <div className={styles.warning_banner} role="status">
+                            <span className={styles.warning_text}>
+                                The index seems outdated, {folder.outdated} {folder.outdated === 1 ? 'script was' : 'scripts were'} added,
+                                changed or removed since it was written.
+                            </span>
+                            <button className={styles.banner_action} onClick={() => void reindex()} disabled={searching}>
+                                Reindex
+                            </button>
+                            <button className={styles.banner_action} onClick={() => setOutdatedDismissed(true)} aria-label="Dismiss">
+                                Dismiss
+                            </button>
+                        </div>
+                    )}
+                </div>
                 <div className={styles.panels}>
-                    <aside className={styles.rows} aria-label="Rows">
-                        {folder != null && folder.rows.numRows > 0 && (
-                            <IndexRowsCard
-                                title="Descriptions"
-                                table={shownRowTable}
-                                dispatchComputation={dispatchComputation}
-                                collapsed={rowsCollapsed}
-                                onToggle={toggleRows}
-                            />
-                        )}
-                    </aside>
                     {results != null && (
                         <aside className={styles.candidates} aria-label="Candidates">
                             <Card title="Best matches">
@@ -424,50 +479,17 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
                         </aside>
                     )}
                 </div>
-                <div className={styles.prompt_area}>
-                    {searching && <div className={styles.status}>Searching</div>}
-                    {error != null && <div className={styles.error_banner}>{error}</div>}
-                    {folder != null && folder.points.scripts.length === 0 && (
-                        <div className={styles.warning_banner} role="status">
-                            <span className={styles.warning_text}>
-                                None of the scripts has a <code>@dashql:description</code> block, there is nothing to
-                                search. Describe them with <code>dashql-describe</code> and reindex the folder.
-                            </span>
-                        </div>
-                    )}
-                    {folder != null && folder.outdated > 0 && !outdatedDismissed && (
-                        <div className={styles.warning_banner} role="status">
-                            <span className={styles.warning_text}>
-                                The index seems outdated, {folder.outdated} {folder.outdated === 1 ? 'script was' : 'scripts were'} added,
-                                changed or removed since it was written.
-                            </span>
-                            <button className={styles.banner_action} onClick={() => void reindex()} disabled={searching}>
-                                Reindex
-                            </button>
-                            <button className={styles.banner_action} onClick={() => setOutdatedDismissed(true)} aria-label="Dismiss">
-                                Dismiss
-                            </button>
-                        </div>
-                    )}
-                    <PromptBar
-                        value={prompt}
-                        onChange={setPrompt}
-                        onSubmit={() => void submit()}
-                        busy={searching}
-                        placeholder={`Search ${folder?.points.scripts.length ?? 0} described scripts in ${folder?.name ?? 'the folder'}`}
-                        start={(
-                            <>
-                                <PromptAction icon={<FileDirectoryIcon />} onClick={() => void selectFolder()} disabled={searching}>
-                                    Select folder
-                                </PromptAction>
-                                <PromptAction icon={<SyncIcon />} onClick={() => void reindex()} disabled={searching || folder == null}>
-                                    Reindex
-                                </PromptAction>
-                            </>
-                        )}
-                        end={folder == null ? null : `${folder.scripts} scripts · ${folder.reused ? 'existing index' : 'index written'}`}
-                    />
-                </div>
+                {folder != null && folder.rows.numRows > 0 && (
+                    <div ref={setRowsDock} className={styles.rows}>
+                        <IndexRowsCard
+                            title="Index"
+                            table={shownRowTable}
+                            dispatchComputation={dispatchComputation}
+                            collapsed={rowsCollapsed}
+                            onToggle={toggleRows}
+                        />
+                    </div>
+                )}
             </div>
         );
     }
@@ -478,10 +500,10 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
     } else if (view.kind === 'script') {
         layout = <div className={styles.foreground}>{content}</div>;
     } else {
-        // The cards of the steps before the search sit where the prompt will be
+        // The cards of the steps before the search sit on top of the page
         layout = (
             <div className={styles.workspace}>
-                <div className={styles.prompt_area}>
+                <div className={styles.step_area}>
                     {content}
                 </div>
             </div>

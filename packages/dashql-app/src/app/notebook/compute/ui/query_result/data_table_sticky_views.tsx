@@ -5,6 +5,7 @@ import * as styles from './data_table.module.css';
 import type { DataCellData, HeaderNameCellProps, HeaderPlotsCellProps } from './data_table_cell.js';
 import { DataCell, HeaderNameCell, HeaderPlotsCell, TableColumnHeader } from './data_table_cell.js';
 import type { DataTablePortalContainers } from './data_table_portals.js';
+import { ChevronDownIcon, ChevronUpIcon } from '../../../../../ui/foundations/symbol_icon.js';
 
 interface StickyHeadersProps {
     container: DataTablePortalContainers['header'] | null;
@@ -17,6 +18,9 @@ interface StickyHeadersProps {
     renderedColumnCount: number;
     getColumnWidth: (columnIndex: number) => number;
     columnHeader: TableColumnHeader;
+    plotsHeight: number;
+    plotsCollapsed: boolean;
+    onTogglePlots: () => void;
     nameCellProps: Omit<HeaderNameCellProps, 'columnIndex' | 'style' | 'sortAscending'> & {
         getSortDirection: (fieldId: number) => boolean | null;
     };
@@ -50,11 +54,12 @@ export const DataTableStickyHeaders: React.FC<StickyHeadersProps> = (props) => {
             columnIndex={columnIndex}
             style={{
                 width: props.getColumnWidth(columnIndex),
-                height: 76,
+                height: props.plotsHeight,
                 ...(!sticky ? { flexShrink: 0 } : {}),
             }}
         />
     );
+    const PlotsChevron = props.plotsCollapsed ? ChevronDownIcon : ChevronUpIcon;
 
     return ReactDOM.createPortal(
         <div
@@ -68,11 +73,30 @@ export const DataTableStickyHeaders: React.FC<StickyHeadersProps> = (props) => {
                 {props.rightSpacerWidth > 0 && <div style={{ width: props.rightSpacerWidth, flexShrink: 0 }} />}
             </div>
             {props.columnHeader === TableColumnHeader.WithColumnPlots && (
-                <div className={styles.sticky_header_row} style={{ display: 'flex', height: 76 }}>
-                    <div style={{ position: 'sticky', left: 0, zIndex: 11, flexShrink: 0 }}>{renderPlotCell(0, true)}</div>
-                    {props.leftSpacerWidth > 0 && <div style={{ width: props.leftSpacerWidth, flexShrink: 0 }} />}
-                    {Array.from({ length: props.renderedColumnCount }, (_, index) => renderPlotCell(props.firstRenderedColumn + index, false))}
-                    {props.rightSpacerWidth > 0 && <div style={{ width: props.rightSpacerWidth, flexShrink: 0 }} />}
+                <div className={styles.sticky_header_row} style={{ display: 'flex', height: props.plotsHeight }}>
+                    <div style={{ position: 'sticky', left: 0, zIndex: 11, flexShrink: 0 }}>
+                        <button
+                            type="button"
+                            className={styles.plots_toggle}
+                            style={{ width: props.firstColumnWidth, height: props.plotsHeight }}
+                            aria-label={props.plotsCollapsed ? 'Show column plots' : 'Hide column plots'}
+                            aria-expanded={!props.plotsCollapsed}
+                            title={props.plotsCollapsed ? 'Show column plots' : 'Hide column plots'}
+                            onClick={props.onTogglePlots}
+                        >
+                            <PlotsChevron size={props.plotsCollapsed ? 12 : 16} />
+                        </button>
+                    </div>
+                    {props.plotsCollapsed ? (
+                        // The plots are not rendered at all, which also holds off their filtered aggregations
+                        <div className={styles.plots_collapsed_cell} style={{ width: props.totalWidth - props.firstColumnWidth }} />
+                    ) : (
+                        <>
+                            {props.leftSpacerWidth > 0 && <div style={{ width: props.leftSpacerWidth, flexShrink: 0 }} />}
+                            {Array.from({ length: props.renderedColumnCount }, (_, index) => renderPlotCell(props.firstRenderedColumn + index, false))}
+                            {props.rightSpacerWidth > 0 && <div style={{ width: props.rightSpacerWidth, flexShrink: 0 }} />}
+                        </>
+                    )}
                 </div>
             )}
         </div>,

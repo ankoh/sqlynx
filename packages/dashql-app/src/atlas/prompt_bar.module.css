@@ -12,6 +12,46 @@
     color: white;
     font-family: 'Roboto';
     transition: border-color 0.12s, background-color 0.12s;
+    /* Unfolds to the left out of the search button in the top right corner */
+    animation: unfold 0.22s ease-out;
+}
+
+@keyframes unfold {
+    from { clip-path: inset(0 0 calc(100% - 44px) calc(100% - 44px) round 22px); }
+    to { clip-path: inset(0 0 0 0 round 28px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bar {
+        animation: none;
+    }
+}
+
+.search_button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(14px);
+    color: white;
+    cursor: pointer;
+    transition: border-color 0.12s, background-color 0.12s, transform 0.12s;
+}
+
+.search_button:hover,
+.search_button:focus-visible {
+    border-color: rgba(255, 255, 255, 0.8);
+    background: rgba(0, 0, 0, 0.4);
+    outline: none;
+}
+
+.search_button:hover {
+    transform: scale(1.06);
 }
 
 .bar:focus-within {
@@ -29,7 +69,7 @@
     flex: 1 1 auto;
     min-width: 0;
     box-sizing: border-box;
-    /* The bar grows toward the top until it reaches this height, then the text scrolls */
+    /* The bar grows until it reaches this height, then the text scrolls */
     max-height: min(40vh, 280px);
     padding: 6px 0;
     border: none;
@@ -84,8 +124,8 @@
     justify-content: space-between;
     gap: 8px;
     min-height: 28px;
-    /* Lines up the right actions with the send button above */
-    padding-right: 8px;
+    /* Lines up the close button with the send button above */
+    padding-right: 4px;
 }
 
 .actions_start,
@@ -100,9 +140,36 @@
     justify-content: flex-end;
     color: rgba(255, 255, 255, 0.6);
     font-size: 0.78rem;
+}
+
+.actions_info {
+    min-width: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.close {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    transition: background-color 0.12s, color 0.12s;
+}
+
+.close:hover,
+.close:focus-visible {
+    background: rgba(255, 255, 255, 0.14);
+    color: white;
+    outline: none;
 }
 
 .action {

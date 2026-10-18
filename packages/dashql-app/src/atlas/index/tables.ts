@@ -151,10 +151,8 @@ function vectorColumns(vectors: Float32Array[], embedder: IndexEmbedder, coords:
 }
 
 /// The feature lists of the analysis and its diagnostics, each next to its count. The lists themselves cannot be
-/// binned. The joins and the operators are not counted: how many joins a query has is up to the optimizer (a cross join
-/// with a predicate is a join, too), and the operators are SQL clauses, not the operators of a plan.
-/// The lists of the analysis are null for scripts that could not be analyzed.
-const LISTS: [count: string | null, list: string, pick: (r: IndexRow) => string[] | null][] = [
+/// binned. The lists of the analysis are null for scripts that could not be analyzed.
+const LISTS: [count: string, list: string, pick: (r: IndexRow) => string[] | null][] = [
     ['structure_statement_count', 'structure_statement_types', r => r.features?.statementTypes ?? null],
     ['structure_table_count', 'structure_table_names', r => r.features?.tables ?? null],
     ['structure_column_count', 'structure_column_names', r => r.features?.columns ?? null],
@@ -162,9 +160,7 @@ const LISTS: [count: string | null, list: string, pick: (r: IndexRow) => string[
     ['structure_aggregate_count', 'structure_aggregate_names', r => r.features?.aggregates ?? null],
     ['structure_function_call_count', 'structure_function_call_expressions', r => r.features?.functionCalls ?? null],
     ['structure_cte_count', 'structure_cte_names', r => r.features?.ctes ?? null],
-    [null, 'structure_join_conditions', r => r.features?.joins ?? null],
     ['structure_filter_count', 'structure_filter_predicates', r => r.features?.filters ?? null],
-    [null, 'structure_operator_names', r => r.features?.operators ?? null],
     ['structure_visualization_count', 'structure_visualization_summaries', r => r.features?.visualizations ?? null],
     ['structure_diagnostic_count', 'structure_diagnostic_messages', r => r.diagnostics],
 ];
@@ -208,11 +204,10 @@ export function indexTable(rows: IndexRow[], embedder: IndexEmbedder, coords: Fl
             ['description_chunk', utf8, column(rows.map(r => r.text), utf8)],
             ...vectorColumns(rows.map(r => r.embedding), embedder, coords),
             ...metadataColumns(rows),
-            ...LISTS.flatMap(([count, list, pick]): Column[] => {
-                const listColumn: Column = [list, utf8List, column(rows.map(r => pick(r) ?? []), utf8List)];
-                if (count == null) return [listColumn];
-                return [[count, int32, column(rows.map(r => pick(r)?.length ?? null), int32), true], listColumn];
-            }),
+            ...LISTS.flatMap(([count, list, pick]): Column[] => [
+                [count, int32, column(rows.map(r => pick(r)?.length ?? null), int32), true],
+                [list, utf8List, column(rows.map(r => pick(r) ?? []), utf8List)],
+            ]),
         ],
         rows.length,
     );

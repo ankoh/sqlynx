@@ -36,17 +36,15 @@ The structure columns, each count next to its list:
 | `structure_aggregate_count` | `structure_aggregate_names` |
 | `structure_function_call_count` | `structure_function_call_expressions` |
 | `structure_cte_count` | `structure_cte_names` |
-| | `structure_join_conditions` |
 | `structure_filter_count` | `structure_filter_predicates` |
-| | `structure_operator_names` |
 | `structure_visualization_count` | `structure_visualization_summaries` |
 | `structure_diagnostic_count` | `structure_diagnostic_messages` |
 
 The file is written in the shape that the page shows, nothing is derived when it is loaded. The lists cannot be binned,
-so `structure_table_count`, `structure_function_call_count` and so on are stored next to them. Joins and operators are
-not counted: the number of joins is up to the optimizer (a cross join with a predicate is a join as well), and the
-operators are SQL clauses, not the operators of a plan. The counts are null and the lists empty for a script that could
-not be analyzed. A metadata column is a double if all its values are numbers, a bool if all are booleans, text
+so `structure_table_count`, `structure_function_call_count` and so on are stored next to them. The table names are all
+referenced tables as written, base tables and CTEs alike, plus the tables the script creates. Equalities between columns
+of two tables are join conditions and are left out of the filter predicates. The counts are null and the lists empty for
+a script that could not be analyzed. A metadata column is a double if all its values are numbers, a bool if all are booleans, text
 otherwise (objects and arrays as JSON), null for scripts without the key. Only the vector columns are stored as `real`.
 
 The structure and the metadata are repeated on every chunk of a script, so a histogram counts chunks, not scripts.

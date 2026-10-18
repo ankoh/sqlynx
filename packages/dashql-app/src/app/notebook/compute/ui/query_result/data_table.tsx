@@ -42,6 +42,8 @@ const MIN_GRID_HEIGHT = 200;
 const MIN_GRID_WIDTH = 100;
 const COLUMN_HEADER_HEIGHT = 32;
 const COLUMN_HEADER_PLOTS_HEIGHT = 76;
+/// The row of the column plots shrinks to a strip that still holds its toggle
+const COLUMN_HEADER_PLOTS_COLLAPSED_HEIGHT = 18;
 const ROW_HEIGHT = 26;
 const GRID_OVERSCAN_COUNT = 10;
 const NOOP_BRUSHING = () => { };
@@ -92,6 +94,9 @@ export const DataTable: React.FC<Props> = (props: Props) => {
     const columnHeader = props.columnHeader ?? ((config?.settings?.enableTableColumnPlots ?? false)
         ? TableColumnHeader.WithColumnPlots
         : TableColumnHeader.OnlyColumnName);
+    const [plotsCollapsed, setPlotsCollapsed] = React.useState(false);
+    const togglePlots = React.useCallback(() => setPlotsCollapsed(c => !c), []);
+    const plotsHeight = plotsCollapsed ? COLUMN_HEADER_PLOTS_COLLAPSED_HEIGHT : COLUMN_HEADER_PLOTS_HEIGHT;
 
     // Get the row-id indirection column from ordering or filtering
     const visibleRowIndices = React.useMemo(
@@ -285,7 +290,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
     const totalColumnsWidth = gridLayout.columnXOffsets[gridLayout.columnCount] ?? 0;
     const firstColumnWidth = getColumnWidth(0);
     const headerHeight = columnHeader === TableColumnHeader.WithColumnPlots
-        ? COLUMN_HEADER_HEIGHT + COLUMN_HEADER_PLOTS_HEIGHT
+        ? COLUMN_HEADER_HEIGHT + plotsHeight
         : COLUMN_HEADER_HEIGHT;
     const scrollbarHeight = useScrollbarHeight();
     const needsHorizontalScroll = totalColumnsWidth > gridContainerWidth;
@@ -363,6 +368,9 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                     renderedColumnCount={renderedColumnCount}
                     getColumnWidth={getColumnWidth}
                     columnHeader={columnHeader}
+                    plotsHeight={plotsHeight}
+                    plotsCollapsed={plotsCollapsed}
+                    onTogglePlots={togglePlots}
                     nameCellProps={{
                         table: computationState.dataTable,
                         gridLayout,

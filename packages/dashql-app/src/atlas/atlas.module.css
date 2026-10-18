@@ -131,36 +131,75 @@
     z-index: 1;
     padding: 16px;
     box-sizing: border-box;
+    /* The table of the rows sits on the bottom edge */
+    padding-bottom: 0;
     display: grid;
-    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr) auto;
     gap: 16px;
     /* The page behind is hovered, the cards and the prompt take events again */
     pointer-events: none;
 }
 
-/* The rows are a card on the left and the candidates a card on the right, the cloud stays visible between them */
+/* The candidates are a card on the right, the cloud stays visible next to them */
 .panels {
-    grid-row: 1;
+    grid-row: 2;
     min-height: 0;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: flex-start;
     gap: 16px;
 }
 
+/* The rows are a card that stands on the bottom edge of the page */
 .rows {
-    width: min(440px, 100%);
-    max-height: 100%;
-    overflow-y: auto;
+    grid-row: 3;
+    justify-self: center;
+    width: 80%;
+    max-width: 1200px;
+    min-width: 0;
     pointer-events: auto;
 }
 
 .rows_panel {
     background: white;
     border: 1px solid var(--border_color_primary);
-    border-radius: var(--border_radius);
-    box-shadow: 0 1px 3px rgba(31, 35, 40, 0.12), 0 8px 24px rgba(66, 74, 83, 0.12);
+    border-bottom: none;
+    border-radius: 12px 12px 0 0;
+    box-shadow: 0 -1px 3px rgba(31, 35, 40, 0.12), 0 -8px 24px rgba(66, 74, 83, 0.12);
     overflow: hidden;
+}
+
+/* Looks like the separator of a vertical split */
+.rows_handle {
+    display: grid;
+    place-items: center;
+    height: 10px;
+    cursor: row-resize;
+    touch-action: none;
+    outline: none;
+    background-color: var(--base_color_neutral_1);
+}
+
+.rows_handle_bar {
+    width: 32px;
+    height: 2px;
+    border-radius: 2px;
+    background-color: var(--base_color_neutral_4);
+}
+
+.rows_handle:hover .rows_handle_bar,
+.rows_dragging .rows_handle_bar {
+    background-color: var(--base_color_neutral_8);
+}
+
+.rows_handle:focus-visible .rows_handle_bar {
+    outline: 2px solid var(--focus_outline_color, #0969da);
+    outline-offset: 3px;
+}
+
+.rows_dragging {
+    cursor: row-resize;
+    user-select: none;
 }
 
 .rows_status {
@@ -177,8 +216,21 @@
     pointer-events: auto;
 }
 
+/* The search button sits in the top right corner, the prompt unfolds from it to the left */
 .prompt_area {
-    grid-row: 2;
+    grid-row: 1;
+    justify-self: end;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    width: 100%;
+    max-width: 640px;
+    pointer-events: none;
+}
+
+.step_area {
+    grid-row: 1;
     justify-self: center;
     display: flex;
     flex-direction: column;
@@ -189,7 +241,8 @@
     pointer-events: none;
 }
 
-.prompt_area > * {
+.prompt_area > *,
+.step_area > * {
     pointer-events: auto;
 }
 
@@ -282,7 +335,6 @@
     .rows,
     .candidates {
         width: 100%;
-        max-height: 55vh;
     }
 }
 

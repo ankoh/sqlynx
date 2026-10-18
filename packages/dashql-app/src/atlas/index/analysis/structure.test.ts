@@ -10,7 +10,7 @@ async function features(sql: string, analyzer?: SqlAnalyzer) {
 }
 
 describe('extractStructureFeatures', () => {
-    it('resolves comma joins, filters and aggregates (TPC-H Q3)', async () => {
+    it('keeps join conditions out of the filters (TPC-H Q3)', async () => {
         const f = await features(`select l_orderkey, sum(l_extendedprice * (1 - l_discount)) as revenue, o_orderdate
 from customer, orders, lineitem
 where c_mktsegment = 'BUILDING' and c_custkey = o_custkey and l_orderkey = o_orderkey
@@ -18,7 +18,6 @@ where c_mktsegment = 'BUILDING' and c_custkey = o_custkey and l_orderkey = o_ord
 group by l_orderkey, o_orderdate order by revenue desc limit 10;`);
         expect(f.statementTypes).toEqual(['select']);
         expect(f.tables).toEqual(['customer', 'lineitem', 'orders']);
-        expect(f.joins).toEqual(['customer.c_custkey = orders.o_custkey', 'lineitem.l_orderkey = orders.o_orderkey']);
         expect(f.filters).toEqual([
             "customer.c_mktsegment = 'BUILDING'",
             "lineitem.l_shipdate > date '1995-03-15'",
@@ -26,31 +25,28 @@ group by l_orderkey, o_orderdate order by revenue desc limit 10;`);
         ]);
         expect(f.aggregates).toEqual(['sum']);
         expect(f.groupBy).toEqual(['lineitem.l_orderkey', 'orders.o_orderdate']);
-        expect(f.operators).toEqual(['group by', 'order by', 'limit']);
         expect(f.outputColumns).toEqual(['l_orderkey', 'revenue', 'o_orderdate']);
         expect(f.columns).toContain('orders.o_orderdate');
         expect(f.columns).not.toContain('revenue');
     });
 
-    it('extracts explicit join conditions with aliases and join types', async () => {
+    it('resolves aliases in explicit join conditions', async () => {
         const f = await features(`select count(*) from customer c left join orders o on c.c_custkey = o.o_custkey and o.o_comment not like '%x%'`);
-        expect(f.joins).toEqual(['customer.c_custkey = orders.o_custkey']);
+        expect(f.tables).toEqual(['customer', 'orders']);
         expect(f.filters).toEqual(["orders.o_comment not like '%x%'"]);
-        expect(f.operators).toContain('left join');
         expect(f.aggregates).toEqual(['count']);
     });
 
-    it('treats CTEs separately from tables and flags subqueries', async () => {
+    it('counts referenced CTEs as tables', async () => {
         const f = await features(`with big as (select o_custkey, sum(o_totalprice) as total from orders group by o_custkey)
 select c_name from customer where c_custkey in (select o_custkey from big where total > 1000)`);
         expect(f.ctes).toEqual(['big']);
-        expect(f.tables).toEqual(['customer', 'orders']);
-        expect(f.operators).toEqual(expect.arrayContaining(['cte', 'subquery']));
+        expect(f.tables).toEqual(['big', 'customer', 'orders']);
     });
 
-    it('does not turn OR groups into join edges', async () => {
+    it('keeps equalities in OR groups as filters', async () => {
         const f = await features(`select * from customer c, orders o where c.c_custkey = o.o_custkey or c.c_nationkey = o.o_shippriority`);
-        expect(f.joins).toEqual([]);
+        expect(f.filters).toEqual(['customer.c_custkey = orders.o_custkey', 'customer.c_nationkey = orders.o_shippriority']);
     });
 
     it('canonicalizes literal-first comparisons and BETWEEN / IN', async () => {
@@ -62,9 +58,8 @@ select c_name from customer where c_custkey in (select o_custkey from big where 
         ]);
     });
 
-    it('records set operations, windows and known functions', async () => {
+    it('records known functions', async () => {
         const f = await features(`select rank() over (partition by o_custkey order by o_totalprice), coalesce(o_comment, 'x') from orders union all select 1, 'a'`);
-        expect(f.operators).toEqual(expect.arrayContaining(['window', 'union all']));
         expect(f.functions).toEqual(expect.arrayContaining(['rank', 'coalesce']));
     });
 
@@ -72,7 +67,6 @@ select c_name from customer where c_custkey in (select o_custkey from big where 
         const analyzer = await SqlAnalyzer.create();
         const f = await features(`select a.x, b.y from foo a join bar b on a.id = b.id where a.kind = 'z'`, analyzer);
         expect(f.tables).toEqual(['bar', 'foo']);
-        expect(f.joins).toEqual(['bar.id = foo.id']);
         expect(f.filters).toEqual(["foo.kind = 'z'"]);
     });
 
