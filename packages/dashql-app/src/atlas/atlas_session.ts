@@ -205,8 +205,14 @@ export class AtlasSession {
     private async scan(report: (phase: AtlasPhase) => void): Promise<void> {
         const directory = this.location!.directory;
         report({ kind: 'scan', message: 'Looking for .sql files' });
+        this.traced.info('Scanning folder', { name: directory.name }, LOG_CTX);
+        const startedAt = performance.now();
         const files = await scanSqlFiles(directory, count => report({ kind: 'scan', message: `Found ${count} .sql files` }));
-        this.traced.info('Scanned folder', { name: directory.name, scripts: String(files.length) }, LOG_CTX);
+        this.traced.info('Scanned folder', {
+            name: directory.name,
+            scripts: String(files.length),
+            ms: String(Math.round(performance.now() - startedAt)),
+        }, LOG_CTX);
         if (files.length === 0) {
             await this.closeFolder();
             throw new Error(`there are no .sql files in ${directory.name}`);
@@ -290,15 +296,22 @@ export class AtlasSession {
         if (this.location == null) throw new Error('no folder is open');
         // A span per run, the records of the scripts are spans below it
         const log = this.traced.childSpan();
+        const preparedAt = performance.now();
+        log.info('Preparing to describe scripts', { folder: this.location.directory.name, model: client.model }, DESCRIBE_LOG_CTX);
         await this.scan(report);
+        const analyzeStart = performance.now();
+        const analyzed = this.analyzeFiles();
+        const analyzeMs = performance.now() - analyzeStart;
         const excluded = new Map<DescribeExclusion, number>();
-        const targets = describeTargets(this.files, this.analyzeFiles(), (file, reason) => {
+        const targets = describeTargets(this.files, analyzed, (file, reason) => {
             excluded.set(reason, (excluded.get(reason) ?? 0) + 1);
             log.debug('Not describing script', { script: file.id, reason }, DESCRIBE_LOG_CTX);
         });
         log.info('Describing scripts', {
             model: client.model,
             scripts: String(targets.length),
+            analyze_ms: String(Math.round(analyzeMs)),
+            prepare_ms: String(Math.round(performance.now() - analyzeStart)),
             already_described: String(excluded.get('already described') ?? 0),
             unparsable: String(excluded.get('cannot be parsed') ?? 0),
             without_statements: String(excluded.get('has no statements') ?? 0),
@@ -326,14 +339,20 @@ export class AtlasSession {
         summary.cancelled = signal.aborted;
         summary.stopped = run.stopped;
         const ms = performance.now() - startedAt;
+        const slowest = run.outcomes.reduce<DescribeOutcome | null>((max, o) => (max == null || o.ms > max.ms ? o : max), null);
         log.info('Described scripts', {
             described: String(summary.described),
             skipped: String(summary.skipped),
             failed: String(summary.failed),
+            not_sent: String(targets.length - run.outcomes.length),
             cancelled: String(summary.cancelled),
             stopped: String(summary.stopped),
             ms: String(Math.round(ms)),
+            total_ms: String(Math.round(performance.now() - preparedAt)),
             ms_per_script: run.outcomes.length === 0 ? undefined : String(Math.round(ms / run.outcomes.length)),
+            max_script_ms: slowest?.ms.toString(),
+            slowest_script: slowest?.scriptName,
+            last_error: summary.lastError ?? undefined,
         }, DESCRIBE_LOG_CTX);
         return summary;
     }
