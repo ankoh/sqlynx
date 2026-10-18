@@ -49,7 +49,7 @@ _RUNTIME_DEPS = [
     "//:node_modules/yaml",
 ]
 
-# The vendored UMAP wasm module that places the scripts in 2D, loaded from disk (src/layout/umap_module.ts)
+# The vendored UMAP wasm module that places the scripts in 3D or 2D, loaded from disk (src/layout/umap_module.ts)
 _UMAP_DATA = ["//packages/dashql-umap:node_module"]
 
 typescript_bin.tsc_binary(

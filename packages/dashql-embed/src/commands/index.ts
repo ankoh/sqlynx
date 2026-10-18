@@ -5,7 +5,7 @@ import { SqlAnalyzer } from '../analysis/core.js';
 import type { Embedder } from '../embedding/embedder.js';
 import { analyzeScripts, embedScripts } from '../indexer.js';
 import { collectSqlFiles, resolveUserPath } from '../inputs.js';
-import { computeLayout, layoutKey } from '../layout/layout.js';
+import { DEFAULT_LAYOUT_DIMS, computeLayout, layoutKey, type LayoutDims } from '../layout/layout.js';
 import { readPreviousLayout } from '../layout/previous.js';
 import { commentsTable, featuresTable, indexMetadata, layoutMetadata, writeParquetFile } from '../output/parquet.js';
 
@@ -13,8 +13,8 @@ export interface IndexOptions {
     inputs: string[];
     outDir: string;
     embedder: Embedder;
-    /// Place the scripts in 2D (layout_x/y). Default true.
-    layout?: boolean;
+    /// Place the scripts in 3D (atlas_3d_x/y/z) or 2D (atlas_2d_x/y), or not at all. Default DEFAULT_LAYOUT_DIMS.
+    layout?: LayoutDims | false;
     /// Add the embedded feature text to features.parquet, for debugging. Default false.
     featureText?: boolean;
     log: (message: string) => void;
@@ -60,20 +60,21 @@ export async function runIndex(options: IndexOptions): Promise<IndexSummary> {
     const outDir = resolveUserPath(options.outDir);
     const featuresPath = join(outDir, 'features.parquet');
     const featuresMetadata = indexMetadata('features', embedder.config, embedder.dim, version);
-    let layout: Float32Array | undefined;
+    const dims = options.layout ?? DEFAULT_LAYOUT_DIMS;
+    let layout: { coords: Float32Array; dims: LayoutDims } | undefined;
     let layoutMode: IndexSummary['layout'] = 'off';
-    if ((options.layout ?? true) && features.length > 0) {
+    if (dims && features.length > 0) {
         const flat = new Float32Array(features.length * embedder.dim);
         features.forEach((f, i) => flat.set(f.embedding, i * embedder.dim));
         const result = await computeLayout(
             flat,
             features.map(f => layoutKey(f.scriptName, f.scriptHash)),
             embedder.dim,
-            { previous: await readPreviousLayout(featuresPath, embedder.config, embedder.dim), log },
+            { dims, previous: await readPreviousLayout(featuresPath, embedder.config, embedder.dim, dims), log },
         );
-        layout = result.coords;
+        layout = { coords: result.coords, dims };
         layoutMode = result.mode;
-        for (const [key, value] of layoutMetadata(result.scale)) featuresMetadata.set(key, value);
+        for (const [key, value] of layoutMetadata(dims, result.scale)) featuresMetadata.set(key, value);
     }
     await writeParquetFile(
         join(outDir, 'comments.parquet'),

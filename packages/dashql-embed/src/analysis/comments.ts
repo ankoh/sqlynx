@@ -55,7 +55,7 @@ export function extractComments(sql: AnalyzedSql, analyzer?: SqlAnalyzer): Comme
         if (text.length === 0 && source === 'comment') {
             continue;
         }
-        const span = block.textSpan();
+        const span = block.textSpan()!;
         blocks.push({ source, text, begin: span.offset(), end: span.offset() + span.length(), isCode: false });
     }
 

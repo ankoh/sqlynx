@@ -5,6 +5,7 @@ import { runIndex } from './commands/index.js';
 import { ClaudeCodeDescriber, ClaudeDescriber, DEFAULT_DESCRIBE_MODEL, type Describer } from './describe/describe.js';
 import { DEFAULT_MODEL, HashEmbedder, TransformersEmbedder, defaultCacheDir, type Embedder } from './embedding/embedder.js';
 import { collectSqlFiles, resolveUserPath } from './inputs.js';
+import type { LayoutDims } from './layout/layout.js';
 import { DEFAULT_SEARCH_OPTIONS, embedderForIndex, loadIndex, searchIndex, type Fusion } from './query.js';
 
 const USAGE = `dashql-embed: describe and embed SQL scripts for semantic example search
@@ -28,7 +29,7 @@ Usage:
       --max-tokens <n>         Token window of the model (default from the preset)
       --batch-size <n>         Embedding batch size (default 32)
       --embedder <kind>        transformers (default) or hash (offline, deterministic, for tests)
-      --no-layout              Skip the 2D layout (layout_x/y) of the scripts
+      --layout <3d|2d|none>    Place the scripts in 3D (atlas_3d_x/y/z, default) or 2D (atlas_2d_x/y), or not at all
       --output-feature-text    Add the embedded feature text to features.parquet, for debugging
       --cache-dir <dir>        Model cache (default ${defaultCacheDir()})
 
@@ -75,7 +76,7 @@ async function main(argv: string[]): Promise<number> {
             'batch-size': { type: 'string' },
             embedder: { type: 'string' },
             describer: { type: 'string' },
-            'no-layout': { type: 'boolean' },
+            layout: { type: 'string' },
             'output-feature-text': { type: 'boolean' },
             prompt: { type: 'string' },
             top: { type: 'string' },
@@ -130,7 +131,7 @@ async function main(argv: string[]): Promise<number> {
                 inputs: positionals,
                 outDir: values['out-dir'],
                 embedder,
-                layout: !values['no-layout'],
+                layout: layoutOption(values.layout),
                 featureText: values['output-feature-text'] ?? false,
                 log,
             });
@@ -178,6 +179,13 @@ async function main(argv: string[]): Promise<number> {
             console.error(USAGE);
             return 1;
     }
+}
+
+function layoutOption(value: string | undefined): LayoutDims | false {
+    if (value === undefined || value === '3d') return 3;
+    if (value === '2d') return 2;
+    if (value === 'none') return false;
+    throw new Error('--layout must be 3d, 2d or none');
 }
 
 function createDescriber(kind: string | undefined, model: string): Describer {
