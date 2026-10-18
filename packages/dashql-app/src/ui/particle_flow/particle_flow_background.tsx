@@ -16,8 +16,29 @@ function supportsWebGL(): boolean {
     }
 }
 
-export const ParticleFlowBackground: React.FC = () => {
+/// A WebGL animation that fills a container
+export interface BackgroundAnimation {
+    start(): void;
+    dispose(): void;
+}
+
+/// Lazily loads the animation class, so that three.js stays out of the entry chunk
+export type BackgroundAnimationLoader = () => Promise<new (container: HTMLElement) => BackgroundAnimation>;
+
+const loadParticleFlow: BackgroundAnimationLoader = async () => (await import('./particle_flow.js')).ParticleFlow;
+
+interface ParticleFlowBackgroundProps {
+    /// Other entrypoints (e.g. atlas) show their own animation behind the same transparent layer. Has to be stable.
+    load?: BackgroundAnimationLoader;
+    /// Called with the running animation, and with null when it is disposed. Lets entrypoints feed their animation.
+    onAnimation?: (animation: BackgroundAnimation | null) => void;
+}
+
+export const ParticleFlowBackground: React.FC<ParticleFlowBackgroundProps> = (props: ParticleFlowBackgroundProps) => {
+    const load = props.load ?? loadParticleFlow;
     const containerRef = React.useRef<HTMLDivElement>(null);
+    const onAnimationRef = React.useRef(props.onAnimation);
+    onAnimationRef.current = props.onAnimation;
 
     React.useEffect(() => {
         const container = containerRef.current;
@@ -27,10 +48,11 @@ export const ParticleFlowBackground: React.FC = () => {
 
         const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
         let generation = 0;
-        let particleFlow: { dispose(): void; start(): void } | null = null;
+        let particleFlow: BackgroundAnimation | null = null;
 
         const syncParticleFlow = () => {
             const currentGeneration = ++generation;
+            if (particleFlow != null) onAnimationRef.current?.(null);
             particleFlow?.dispose();
             particleFlow = null;
 
@@ -38,12 +60,13 @@ export const ParticleFlowBackground: React.FC = () => {
                 return;
             }
 
-            import('./particle_flow.js').then(({ ParticleFlow }) => {
+            load().then(Animation => {
                 if (currentGeneration !== generation || motionQuery.matches) {
                     return;
                 }
-                particleFlow = new ParticleFlow(container);
+                particleFlow = new Animation(container);
                 particleFlow.start();
+                onAnimationRef.current?.(particleFlow);
             }).catch(error => {
                 container.replaceChildren();
                 console.warn('WebGL particle background could not be initialized.', error);
@@ -56,9 +79,10 @@ export const ParticleFlowBackground: React.FC = () => {
         return () => {
             generation += 1;
             motionQuery.removeEventListener('change', syncParticleFlow);
+            if (particleFlow != null) onAnimationRef.current?.(null);
             particleFlow?.dispose();
         };
-    }, []);
+    }, [load]);
 
     return <div ref={containerRef} className={styles.background} aria-hidden="true" />;
 };

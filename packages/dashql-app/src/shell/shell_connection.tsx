@@ -17,9 +17,9 @@ interface ShellConnectionContextValue {
 
 const SHELL_CONNECTION_CTX = React.createContext<ShellConnectionContextValue | null>(null);
 
-function createShellAttachedDatabaseState(): AttachedDatabaseState {
+function createShellAttachedDatabaseState(databaseId: string): AttachedDatabaseState {
     return {
-        databaseId: SHELL_DATABASE_ID,
+        databaseId,
         active: false,
         connectionStatus: ConnectionStatus.NOT_STARTED,
         connectionHealth: ConnectionHealth.NOT_STARTED,
@@ -33,24 +33,33 @@ function createShellAttachedDatabaseState(): AttachedDatabaseState {
     } as unknown as AttachedDatabaseState;
 }
 
-export const ShellConnectionProvider: React.FC<{ children: React.ReactElement }> = props => {
+interface ShellConnectionProviderProps {
+    children: React.ReactElement;
+    /// Other entrypoints that run queries against an embedded database (e.g. atlas) reuse this provider under their own ids
+    databaseId?: string;
+    notebookId?: string;
+}
+
+export const ShellConnectionProvider: React.FC<ShellConnectionProviderProps> = props => {
+    const databaseId = props.databaseId ?? SHELL_DATABASE_ID;
+    const notebookId = props.notebookId ?? SHELL_NOTEBOOK_ID;
     const [, setRegistry] = useAttachedDatabaseRegistry();
-    const stateRef = React.useRef<AttachedDatabaseState>(createShellAttachedDatabaseState());
+    const stateRef = React.useRef<AttachedDatabaseState>(createShellAttachedDatabaseState(databaseId));
 
     const publish = React.useCallback((state: AttachedDatabaseState) => {
         stateRef.current = state;
         setRegistry(registry => {
-            registry.attachedDatabases.set(SHELL_DATABASE_ID, state);
-            registry.attachedDatabasesByNotebook.set(SHELL_NOTEBOOK_ID, {
-                mainDatabaseId: SHELL_DATABASE_ID,
+            registry.attachedDatabases.set(databaseId, state);
+            registry.attachedDatabasesByNotebook.set(notebookId, {
+                mainDatabaseId: databaseId,
                 attachedDatabaseIds: [],
             });
-            if (!registry.attachedDatabasesByType[ConnectorType.HYPER].includes(SHELL_DATABASE_ID)) {
-                registry.attachedDatabasesByType[ConnectorType.HYPER].push(SHELL_DATABASE_ID);
+            if (!registry.attachedDatabasesByType[ConnectorType.HYPER].includes(databaseId)) {
+                registry.attachedDatabasesByType[ConnectorType.HYPER].push(databaseId);
             }
             return { ...registry };
         });
-    }, [setRegistry]);
+    }, [setRegistry, databaseId, notebookId]);
 
     const [queryExecutions] = React.useState(() => new ShellQueryExecutionTracker((history: QueryExecutionHistoryState) => {
         publish({
@@ -71,14 +80,14 @@ export const ShellConnectionProvider: React.FC<{ children: React.ReactElement }>
         publish(stateRef.current);
         return () => {
             setRegistry(registry => {
-                registry.attachedDatabases.delete(SHELL_DATABASE_ID);
-                registry.attachedDatabasesByNotebook.delete(SHELL_NOTEBOOK_ID);
+                registry.attachedDatabases.delete(databaseId);
+                registry.attachedDatabasesByNotebook.delete(notebookId);
                 registry.attachedDatabasesByType[ConnectorType.HYPER] = registry.attachedDatabasesByType[ConnectorType.HYPER]
-                    .filter(connectionId => connectionId !== SHELL_DATABASE_ID);
+                    .filter(connectionId => connectionId !== databaseId);
                 return { ...registry };
             });
         };
-    }, [publish, setRegistry]);
+    }, [publish, setRegistry, databaseId, notebookId]);
 
     const value = React.useMemo(() => ({ queryExecutions, setConnected }), [queryExecutions, setConnected]);
     return <SHELL_CONNECTION_CTX.Provider value={value}>{props.children}</SHELL_CONNECTION_CTX.Provider>;

@@ -1,0 +1,126 @@
+# Scripts as seen by `dashql-describe`. Every case shows the prompt that is sent to the model, or that the script is
+# skipped because it already has a description. `describe: {force: true}` replaces existing descriptions.
+describe_snapshots:
+  - name: tpch_q3
+    script:
+      input: |-
+        -- TPC-H query 3
+        select l_orderkey, sum(l_extendedprice * (1 - l_discount)) as revenue, o_orderdate, o_shippriority
+        from customer, orders, lineitem
+        where c_mktsegment = 'BUILDING' and c_custkey = o_custkey and l_orderkey = o_orderkey
+            and o_orderdate < date '1995-03-15'
+            and l_shipdate > date '1995-03-15'
+        group by l_orderkey, o_orderdate, o_shippriority
+        order by revenue desc, o_orderdate
+        limit 10;
+    describe: {}
+  # Subquery with CASE, EXTRACT, BETWEEN and aliases of the same table
+  - name: tpch_q8
+    describe: {}
+    script:
+      input: |-
+        -- TPC-H query 8
+        select o_year, sum(case when nation = 'BRAZIL' then volume else 0 end) / sum(volume) as mkt_share
+        from (
+            select extract(year from o_orderdate) as o_year, l_extendedprice * (1 - l_discount) as volume, n2.n_name as nation
+            from part, supplier, lineitem, orders, customer, nation n1, nation n2, region
+            where p_partkey = l_partkey and s_suppkey = l_suppkey and l_orderkey = o_orderkey
+                and o_custkey = c_custkey and c_nationkey = n1.n_nationkey and n1.n_regionkey = r_regionkey
+                and r_name = 'AMERICA' and s_nationkey = n2.n_nationkey
+                and o_orderdate between date '1995-01-01' and date '1996-12-31' and p_type = 'ECONOMY ANODIZED STEEL'
+        ) all_nations
+        group by o_year
+        order by o_year;
+  # Explicit LEFT JOIN with a subquery
+  - name: tpch_q13
+    describe: {}
+    script:
+      input: |-
+        select c_count, count(*) as custdist
+        from (
+            select c_custkey, count(o_orderkey) as c_count
+            from customer left outer join orders on c_custkey = o_custkey and o_comment not like '%special%requests%'
+            group by c_custkey
+        ) c_orders
+        group by c_count
+        order by custdist desc, c_count desc;
+  # CTE, window function and set operation
+  - name: cte_window_union
+    describe: {}
+    script:
+      input: |-
+        -- Ranked customers per nation, plus a total row
+        with spend as (
+            select c_nationkey, c_custkey, sum(o_totalprice) as total
+            from customer join orders on c_custkey = o_custkey
+            group by c_nationkey, c_custkey
+        )
+        select c_nationkey, c_custkey, rank() over (partition by c_nationkey order by total desc) as rnk from spend
+        union all
+        select null, null, 0;
+  # JOIN ... USING
+  - name: join_using
+    script:
+      input: |-
+        select a.x, b.y
+        from foo a join bar b using (id)
+        where a.kind = 'z' and b.amount > 10;
+  # Commented-out code is not embedded, block comments are
+  - name: comments
+    describe: {}
+    script:
+      input: |-
+        /* Orders of one customer
+           with their status */
+        -- select * from customer;
+        select o_orderkey, o_orderstatus from orders where o_custkey = 42;
+  # A generated description is kept unless forced
+  - name: existing_description
+    script:
+      input: |-
+        -- @dashql:description
+        -- Old text.
+        -- @dashql:end
+        -- Keep me
+        select count(*) from nation;
+    describe: {}
+  - name: forced_description
+    script:
+      input: |-
+        -- @dashql:description
+        -- Old text.
+        -- @dashql:end
+        -- Keep me
+        select count(*) from nation;
+    describe:
+      force: true
+  # DDL and DML statements
+  - name: statements
+    script:
+      input: |-
+        create table t (a int, b varchar);
+        insert into t values (1, 'x');
+        select a from t where b = 'x';
+  # Function names and literals are kept, e.g. for relative time ranges
+  - name: last_30_days
+    describe: {}
+    script:
+      input: |-
+        -- Recent orders
+        select date_trunc('day', o_orderdate) as day, count(*) as orders, sum(o_totalprice) as total
+        from orders
+        where date_trunc('day', o_orderdate) > current_timestamp - interval '30' day
+            and o_orderstatus = 'F'
+        group by 1
+        order by 1;
+  # Tables that the script declares itself are resolved
+  - name: self_contained
+    describe: {}
+    script:
+      input: |-
+        create table customer (c_custkey int, c_name varchar, c_mktsegment varchar);
+        create table orders (o_orderkey int, o_custkey int, o_totalprice decimal(12, 2));
+        select c_name, sum(o_totalprice) as total
+        from customer join orders on c_custkey = o_custkey
+        where c_mktsegment = 'BUILDING'
+        group by c_name;

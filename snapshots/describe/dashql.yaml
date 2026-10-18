@@ -1,0 +1,396 @@
+# Generated from the .tpl.yaml next to this file. Do not edit.
+# Update with: bazel run //snapshots/describe:update
+describe_snapshots:
+  - name: visualize_vegalite
+    describe: {}
+    script:
+      input: |-
+        SELECT * FROM external('https://data.dashql.app/vega-cars/v1/cars.parquet', format => 'parquet')
+        VISUALIZE USING vegalite (
+          mark => point,
+          encoding => (
+            x => (field => "Year", type => temporal),
+            y => (field => "Weight_in_lbs", type => quantitative),
+            color => (field => "Origin")
+          )
+        );
+    describe_prompt: |-
+      SELECT * FROM external('https://data.dashql.app/vega-cars/v1/cars.parquet', format => 'parquet')
+      VISUALIZE USING vegalite (
+        mark => point,
+        encoding => (
+          x => (field => "Year", type => temporal),
+          y => (field => "Weight_in_lbs", type => quantitative),
+          color => (field => "Origin")
+        )
+      );
+  - name: visualize_generated_series
+    describe: {}
+    script:
+      input: |-
+        -- Random points for a scatter plot
+        SELECT v AS x, random() AS y
+        FROM generate_series(1, 100) t(v)
+        VISUALIZE USING vegalite (
+          mark => point,
+          encoding => (
+            x => (field => x, type => quantitative),
+            y => (field => y, type => quantitative)
+          )
+        );
+    describe_prompt: |-
+      SELECT v AS x, random() AS y
+      FROM generate_series(1, 100) t(v)
+      VISUALIZE USING vegalite (
+        mark => point,
+        encoding => (
+          x => (field => x, type => quantitative),
+          y => (field => y, type => quantitative)
+        )
+      );
+  - name: visualize_markdown
+    describe: {}
+    script:
+      input: |-
+        WITH customer_summary AS (
+          SELECT c.c_name AS customer, n.n_name AS nation, count(*) AS order_count, sum(o.o_totalprice) AS order_value
+          FROM customer c
+          JOIN orders o ON o.o_custkey = c.c_custkey
+          JOIN nation n ON n.n_nationkey = c.c_nationkey
+          GROUP BY c.c_name, n.n_name
+          ORDER BY order_value DESC
+          LIMIT 5
+        )
+        SELECT customer, nation, order_count, order_value
+        FROM customer_summary
+        VISUALIZE USING markdown (
+          template => '## {{customer}}
+
+        **Market:** {{nation}} · **Orders:** {{order_count}}
+
+        **Order value:** {{order_value}}'
+        );
+    describe_prompt: |-
+      WITH customer_summary AS (
+        SELECT c.c_name AS customer, n.n_name AS nation, count(*) AS order_count, sum(o.o_totalprice) AS order_value
+        FROM customer c
+        JOIN orders o ON o.o_custkey = c.c_custkey
+        JOIN nation n ON n.n_nationkey = c.c_nationkey
+        GROUP BY c.c_name, n.n_name
+        ORDER BY order_value DESC
+        LIMIT 5
+      )
+      SELECT customer, nation, order_count, order_value
+      FROM customer_summary
+      VISUALIZE USING markdown (
+        template => '## {{customer}}
+
+      **Market:** {{nation}} · **Orders:** {{order_count}}
+
+      **Order value:** {{order_value}}'
+      );
+  - name: visualize_markdown_values
+    describe: {}
+    script:
+      input: |-
+        WITH metrics(metric, value, status) AS (
+          VALUES
+            ('Gross revenue', '$1.24M', 'On track'),
+            ('Open pipeline', '$842K', 'Watch')
+        )
+        SELECT metric, value, status
+        FROM metrics
+        VISUALIZE USING markdown (
+          template => '### {{metric}}
+
+        **{{value}}** · {{status}}'
+        );
+    describe_prompt: |-
+      WITH metrics(metric, value, status) AS (
+        VALUES
+          ('Gross revenue', '$1.24M', 'On track'),
+          ('Open pipeline', '$842K', 'Watch')
+      )
+      SELECT metric, value, status
+      FROM metrics
+      VISUALIZE USING markdown (
+        template => '### {{metric}}
+
+      **{{value}}** · {{status}}'
+      );
+  - name: visualize_declared_table
+    describe: {}
+    script:
+      input: |-
+        create table sales (category text, revenue int, date timestamp);
+        SELECT category, sum(revenue) AS revenue FROM sales GROUP BY category
+        VISUALIZE USING vegalite (
+          mark => (type => bar, color => 'steelblue'),
+          encoding => (
+            x => (field => category, type => nominal),
+            y => (field => revenue, type => quantitative)
+          ),
+          dashboard => (width => 8, height => 4)
+        );
+    describe_prompt: |-
+      create table sales (category text, revenue int, date timestamp);
+
+      SELECT category, sum(revenue) AS revenue FROM sales GROUP BY category
+      VISUALIZE USING vegalite (
+        mark => (type => bar, color => 'steelblue'),
+        encoding => (
+          x => (field => category, type => nominal),
+          y => (field => revenue, type => quantitative)
+        ),
+        dashboard => (width => 8, height => 4)
+      );
+  - name: visualize_scatter_bubble
+    describe: {}
+    script:
+      input: |-
+        create table cars (name text, weight int, horsepower int, displacement int, origin text);
+        SELECT * FROM cars
+        VISUALIZE USING vegalite (
+          title => 'Weight against horsepower',
+          mark => circle,
+          encoding => (
+            x => (field => weight, type => quantitative),
+            y => (field => horsepower, type => quantitative),
+            size => (field => displacement, type => quantitative),
+            color => (field => origin, type => nominal)
+          )
+        );
+    describe_prompt: |-
+      create table cars (name text, weight int, horsepower int, displacement int, origin text);
+
+      SELECT * FROM cars
+      VISUALIZE USING vegalite (
+        title => 'Weight against horsepower',
+        mark => circle,
+        encoding => (
+          x => (field => weight, type => quantitative),
+          y => (field => horsepower, type => quantitative),
+          size => (field => displacement, type => quantitative),
+          color => (field => origin, type => nominal)
+        )
+      );
+  - name: visualize_histogram
+    describe: {}
+    script:
+      input: |-
+        create table orders (o_orderkey int, o_totalprice decimal(12, 2));
+        SELECT o_totalprice FROM orders
+        VISUALIZE USING vegalite (
+          mark => bar,
+          encoding => (
+            x => (field => o_totalprice, type => quantitative, bin => true),
+            y => (field => o_orderkey, type => quantitative, aggregate => count)
+          )
+        );
+    describe_prompt: |-
+      create table orders (o_orderkey int, o_totalprice decimal(12, 2));
+
+      SELECT o_totalprice FROM orders
+      VISUALIZE USING vegalite (
+        mark => bar,
+        encoding => (
+          x => (field => o_totalprice, type => quantitative, bin => true),
+          y => (field => o_orderkey, type => quantitative, aggregate => count)
+        )
+      );
+  - name: visualize_normalized_stack
+    describe: {}
+    script:
+      input: |-
+        create table sales (category text, region text, revenue int, date timestamp);
+        SELECT category, region, revenue FROM sales
+        VISUALIZE USING vegalite (
+          mark => bar,
+          encoding => (
+            x => (field => category, type => nominal, axis => (title => 'Product category')),
+            y => (field => revenue, type => quantitative, aggregate => sum, stack => 'normalize'),
+            color => (field => region, type => nominal, legend => (title => 'Region'))
+          )
+        );
+    describe_prompt: |-
+      create table sales (category text, region text, revenue int, date timestamp);
+
+      SELECT category, region, revenue FROM sales
+      VISUALIZE USING vegalite (
+        mark => bar,
+        encoding => (
+          x => (field => category, type => nominal, axis => (title => 'Product category')),
+          y => (field => revenue, type => quantitative, aggregate => sum, stack => 'normalize'),
+          color => (field => region, type => nominal, legend => (title => 'Region'))
+        )
+      );
+  - name: visualize_time_series
+    describe: {}
+    script:
+      input: |-
+        create table sales (category text, revenue int, date timestamp);
+        SELECT date, revenue, category FROM sales
+        VISUALIZE USING vegalite (
+          mark => (type => line, point => true, interpolate => 'monotone'),
+          encoding => (
+            x => (field => date, type => temporal, time_unit => 'yearmonth'),
+            y => (field => revenue, type => quantitative, aggregate => sum),
+            color => (field => category, type => nominal)
+          )
+        );
+    describe_prompt: |-
+      create table sales (category text, revenue int, date timestamp);
+
+      SELECT date, revenue, category FROM sales
+      VISUALIZE USING vegalite (
+        mark => (type => line, point => true, interpolate => 'monotone'),
+        encoding => (
+          x => (field => date, type => temporal, time_unit => 'yearmonth'),
+          y => (field => revenue, type => quantitative, aggregate => sum),
+          color => (field => category, type => nominal)
+        )
+      );
+  - name: visualize_facets
+    describe: {}
+    script:
+      input: |-
+        create table sales (category text, region text, revenue int);
+        SELECT category, region, revenue FROM sales
+        VISUALIZE USING vegalite (
+          mark => bar,
+          encoding => (
+            x => (field => category, type => nominal),
+            y => (field => revenue, type => quantitative),
+            row => (field => region, type => nominal)
+          )
+        );
+    describe_prompt: |-
+      create table sales (category text, region text, revenue int);
+
+      SELECT category, region, revenue FROM sales
+      VISUALIZE USING vegalite (
+        mark => bar,
+        encoding => (
+          x => (field => category, type => nominal),
+          y => (field => revenue, type => quantitative),
+          row => (field => region, type => nominal)
+        )
+      );
+  - name: visualize_layers
+    describe: {}
+    script:
+      input: |-
+        create table sales (category text, revenue int, target int, date timestamp);
+        SELECT * FROM sales
+        VISUALIZE USING vegalite (
+          title => 'Revenue against target',
+          encoding => (
+            x => (field => date, type => temporal)
+          ),
+          layer => [
+            (
+              mark => line,
+              encoding => (
+                y => (field => revenue, type => quantitative),
+                color => (field => category, type => nominal)
+              )
+            ),
+            (
+              mark => point,
+              encoding => (
+                y => (field => target, type => quantitative)
+              )
+            )
+          ],
+          resolve => (
+            scale => (y => 'independent'),
+            legend => (color => 'shared')
+          )
+        );
+    describe_prompt: |-
+      create table sales (category text, revenue int, target int, date timestamp);
+
+      SELECT * FROM sales
+      VISUALIZE USING vegalite (
+        title => 'Revenue against target',
+        encoding => (
+          x => (field => date, type => temporal)
+        ),
+        layer => [
+          (
+            mark => line,
+            encoding => (
+              y => (field => revenue, type => quantitative),
+              color => (field => category, type => nominal)
+            )
+          ),
+          (
+            mark => point,
+            encoding => (
+              y => (field => target, type => quantitative)
+            )
+          )
+        ],
+        resolve => (
+          scale => (y => 'independent'),
+          legend => (color => 'shared')
+        )
+      );
+  - name: visualize_empty
+    script:
+      input: VISUALIZE;
+    describe_prompt: ""
+  - name: set_statement
+    describe: {}
+    script:
+      input: |-
+        -- Connection settings
+        SET variable = (
+          'some' = 42,
+          'with' = ('nesting' = true)
+        );
+        SELECT 1;
+    describe_prompt: |-
+      SET variable = (
+        'some' = 42,
+        'with' = ('nesting' = true)
+      );
+
+      SELECT 1;
+  - name: explain_statement
+    describe: {}
+    script:
+      input: explain (analyze, format text) select o_orderstatus, count(*) from orders group by o_orderstatus;
+    describe_prompt: explain (analyze, format text) select o_orderstatus, count(*) from orders group by o_orderstatus;
+  - name: mixed_script
+    describe: {}
+    script:
+      input: |-
+        -- Orders by status
+        create table orders (o_orderkey int, o_orderstatus varchar, o_totalprice decimal(12, 2));
+        SET variable = 'value';
+        SELECT o_orderstatus, sum(o_totalprice) AS total
+        FROM orders
+        GROUP BY o_orderstatus
+        VISUALIZE USING vegalite (
+          mark => bar,
+          encoding => (
+            x => (field => o_orderstatus, type => nominal),
+            y => (field => total, type => quantitative)
+          )
+        );
+    describe_prompt: |-
+      create table orders (o_orderkey int, o_orderstatus varchar, o_totalprice decimal(12, 2));
+
+      SET variable = 'value';
+
+      SELECT o_orderstatus, sum(o_totalprice) AS total
+      FROM orders
+      GROUP BY o_orderstatus
+      VISUALIZE USING vegalite (
+        mark => bar,
+        encoding => (
+          x => (field => o_orderstatus, type => nominal),
+          y => (field => total, type => quantitative)
+        )
+      );

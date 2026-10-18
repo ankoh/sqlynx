@@ -38,6 +38,13 @@ export type ProjectionProgress = (progress: number, stage: string) => void;
 
 let nextRunId = 1;
 
+/// A running projection to `outputDimension` coordinates per row.
+export interface RunningEmbedding {
+    /// Row-major count×outputDimension coordinates
+    readonly promise: Promise<Float32Array>;
+    cancel(): void;
+}
+
 /// Spawn (or reuse) the UMAP worker and project `matrix` to 2D. Each call gets a
 /// fresh messageId; the returned handle streams progress and can be cancelled.
 ///
@@ -48,11 +55,32 @@ export function projectWithUMAP(
     options: UMAPOptions,
     onProgress?: ProjectionProgress,
 ): RunningProjection {
+    const running = embedWithUMAP(matrix, options, 2, onProgress);
+    const promise = running.promise.then(embedding => {
+        const count = matrix.count;
+        const x = new Float32Array(count);
+        const y = new Float32Array(count);
+        for (let i = 0; i < count; ++i) {
+            x[i] = embedding[i * 2];
+            y[i] = embedding[i * 2 + 1];
+        }
+        return { x, y };
+    });
+    return { promise, cancel: running.cancel };
+}
+
+/// Like projectWithUMAP but with any number of output coordinates, returned row-major.
+export function embedWithUMAP(
+    matrix: EmbeddingMatrix,
+    options: UMAPOptions,
+    outputDimension: number,
+    onProgress?: ProjectionProgress,
+): RunningEmbedding {
     const runId = nextRunId++;
     const worker = new Worker(new URL('./umap_worker.js', import.meta.url), { type: 'module' });
 
     let settled = false;
-    const promise = new Promise<Projection2D>((resolve, reject) => {
+    const promise = new Promise<Float32Array>((resolve, reject) => {
         worker.onmessage = (event: MessageEvent<UMAPWorkerResponse>) => {
             const msg = event.data;
             if (msg.requestId !== runId) return;
@@ -60,19 +88,11 @@ export function projectWithUMAP(
                 case UMAPWorkerResponseType.PROGRESS:
                     onProgress?.(msg.progress, msg.stage);
                     break;
-                case UMAPWorkerResponseType.RESULT: {
+                case UMAPWorkerResponseType.RESULT:
                     settled = true;
-                    const { embedding, count } = msg;
-                    const x = new Float32Array(count);
-                    const y = new Float32Array(count);
-                    for (let i = 0; i < count; ++i) {
-                        x[i] = embedding[i * 2];
-                        y[i] = embedding[i * 2 + 1];
-                    }
-                    resolve({ x, y });
+                    resolve(msg.embedding);
                     worker.terminate();
                     break;
-                }
                 case UMAPWorkerResponseType.ERROR:
                     settled = true;
                     reject(new Error(msg.error));
@@ -96,7 +116,7 @@ export function projectWithUMAP(
     worker.postMessage({
         messageId: runId,
         type: UMAPWorkerRequestType.RUN,
-        params: { data: matrix.data, count: matrix.count, dimension: matrix.dimension, options },
+        params: { data: matrix.data, count: matrix.count, dimension: matrix.dimension, options, outputDimension },
     });
 
     return {

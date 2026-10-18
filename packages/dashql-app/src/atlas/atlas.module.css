@@ -1,0 +1,318 @@
+.root {
+    display: grid;
+    grid-template-rows: 40px minmax(0, 1fr);
+    width: 100%;
+    height: 100%;
+    background: var(--background);
+    position: relative;
+    isolation: isolate;
+}
+
+.root > header {
+    position: relative;
+    z-index: 2;
+}
+
+.page {
+    position: relative;
+    min-height: 0;
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.foreground {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 440px;
+    margin: auto;
+}
+
+.card {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.card_wide {
+    max-width: 720px;
+}
+
+.card_title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.card_body {
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.card_body p {
+    margin: 0;
+}
+
+.error {
+    color: #ff8f8f;
+}
+
+.error_banner {
+    padding: 8px 12px;
+    border-radius: var(--border_radius);
+    background: white;
+    color: #cf222e;
+    font-size: 0.85rem;
+}
+
+.progress {
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.2);
+    overflow: hidden;
+}
+
+.progress_bar {
+    height: 100%;
+    background: white;
+    transition: width 0.2s;
+}
+
+.progress_indeterminate {
+    height: 100%;
+    width: 30%;
+    background: white;
+    animation: indeterminate 1.4s ease-in-out infinite;
+}
+
+@keyframes indeterminate {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(340%); }
+}
+
+.workspace {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    padding: 16px;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    gap: 16px;
+    /* The page behind is hovered, the cards and the prompt take events again */
+    pointer-events: none;
+}
+
+/* The candidates are a card on the right, the cloud stays visible on the left */
+.kind_control {
+    grid-row: 1;
+    justify-self: center;
+    pointer-events: auto;
+}
+
+.candidates {
+    grid-row: 2;
+    justify-self: end;
+    align-self: start;
+    width: min(400px, 100%);
+    max-height: 100%;
+    overflow-y: auto;
+    pointer-events: auto;
+}
+
+.prompt_area {
+    grid-row: 3;
+    justify-self: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 640px;
+    pointer-events: none;
+}
+
+.prompt_area > * {
+    pointer-events: auto;
+}
+
+.step {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 20px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 14px 18px 14px 22px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 24px;
+    background: rgba(0, 0, 0, 0.25);
+    color: white;
+    font-family: 'Roboto';
+}
+
+.step_text {
+    flex: 1 1 280px;
+    min-width: 0;
+}
+
+.step_title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 500;
+}
+
+.step_body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 2px;
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 0.85rem;
+    line-height: 1.45;
+}
+
+.step_body p {
+    margin: 0;
+}
+
+.dot_tooltip {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 3;
+    max-width: 260px;
+    padding: 8px 10px;
+    border-radius: var(--border_radius);
+    background: white;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    font-size: 0.82rem;
+    line-height: 1.4;
+    pointer-events: none;
+}
+
+.dot_snippet {
+    margin-top: 2px;
+    color: hsl(210, 10%, 30%);
+}
+
+.dot_tables {
+    margin-top: 4px;
+    font-family: 'Roboto Mono';
+    color: hsl(210, 10%, 40%);
+}
+
+@media (max-width: 720px) {
+    .candidates {
+        max-height: 55vh;
+    }
+}
+
+.prompt {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 14px 18px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 24px;
+    background: rgba(0, 0, 0, 0.25);
+    color: white;
+    font-family: 'Roboto';
+    font-size: 1.05rem;
+    outline: none;
+}
+
+.prompt::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.prompt:focus {
+    border-color: rgba(255, 255, 255, 0.8);
+}
+
+.status {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.85rem;
+}
+
+.folder_actions {
+    color: white;
+}
+
+.result_section + .result_section {
+    margin-top: 12px;
+}
+
+.result_title {
+    margin: 0 0 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: hsl(210, 10%, 40%);
+}
+
+.no_hits {
+    color: hsl(210, 10%, 40%);
+}
+
+.hit {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) max-content;
+    column-gap: 12px;
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid transparent;
+    border-radius: var(--border_radius);
+    background: transparent;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+}
+
+.hit:hover,
+.hit:focus-visible {
+    background: hsl(210, 29%, 97%);
+    border-color: var(--border_color_primary);
+    outline: none;
+}
+
+.hit_name {
+    font-family: 'Roboto Mono';
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.hit_score {
+    font-family: 'Roboto Mono';
+    color: hsl(210, 10%, 40%);
+}
+
+.hit_snippet {
+    grid-column: 1 / -1;
+    margin-top: 2px;
+    color: hsl(210, 10%, 30%);
+    font-size: 0.82rem;
+    white-space: pre-line;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.script {
+    margin: 0;
+    max-height: 60vh;
+    overflow: auto;
+    font-family: 'Roboto Mono';
+    font-size: 0.8rem;
+    line-height: 1.5;
+    white-space: pre;
+}
