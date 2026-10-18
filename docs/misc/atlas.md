@@ -49,8 +49,9 @@ dashql-core recognizes the tag and validates that the content is a JSON object (
 and write the block, clients never parse it themselves. Atlas embeds the properties as `key: value` lines.
 `dashql-describe` never touches the block, never sends it to the model and inserts new descriptions below it.
 
-The query result viewer writes such folders: the menu of a text column has **Export as Atlas**, which writes one `.sql`
-file per row with the selected other columns as properties
+The query result viewer writes such folders: the download button of a result offers **SQL Column as Atlas** next to
+**Result as Arrow**. It writes one `.sql` file per row of the chosen SQL text column with the other columns as
+properties, named after the row number (`row_00001.sql`, ...)
 (`src/app/notebook/compute/ui/query_result/atlas_export.ts`).
 
 ## The page
