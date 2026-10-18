@@ -79,3 +79,26 @@ formatter-snapshots:
             width: 28
         validation:
           setup: ""
+
+  - name: tagged_comment_regions_are_kept
+    input: |-
+      -- @dashql:metadata
+      -- {
+      --   "ctx": "{\"workload\":{\"name\":\"activation-engine\",\"group\":\"activation-engine\",\"type\":\"background\"}}",
+      --   "rows": 1
+      -- }
+      -- @dashql:end
+
+      -- @dashql:description
+      -- Returns every row of the table with all of its columns, which is long enough to be wrapped.
+      -- @dashql:end
+      select 1
+    dialects:
+      hyper:
+        formatted:
+          - mode: compact
+            width: 40
+          - mode: pretty
+            width: 40
+        validation:
+          setup: ""

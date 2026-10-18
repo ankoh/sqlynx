@@ -413,7 +413,6 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
                         onHover={setHovered}
                         onOpen={name => void openScript(name)}
                         script={openedScript}
-                        core={sessionRef.current?.core ?? null}
                         onCloseScript={() => setOpenedScript(null)}
                         onCloseResults={() => setResults(null)}
                     />

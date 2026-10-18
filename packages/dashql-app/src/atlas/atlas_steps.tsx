@@ -3,6 +3,7 @@ import * as React from 'react';
 import { buffers, type DashQL, type DashQLScript } from '@ankoh/dashql-core';
 import { EditorView } from '@codemirror/view';
 
+import { useDashQLCoreSetup } from '../app/providers/core_provider.js';
 import { updateReadonlyScriptEditor } from '../app/notebook/ui/catalog_script_card.js';
 import { createScriptFormatConfig, measureScriptFormatWidth } from '../app/notebook/ui/script_format.js';
 import { CodeMirror, createReadonlyCodeMirrorExtensions } from '../app/notebook/scripts/editor/codemirror.js';
@@ -243,7 +244,6 @@ export const Card: React.FC<{ title: string; wide?: boolean; bare?: boolean; act
 );
 
 interface ScriptCardProps {
-    core: DashQL | null;
     script: { name: string; text: string };
     onClose: () => void;
 }
@@ -253,7 +253,16 @@ const ScriptCard: React.FC<ScriptCardProps> = (props: ScriptCardProps) => {
     const [view, setView] = React.useState<EditorView | null>(null);
     const [pretty, setPretty] = React.useState(false);
     const extensions = React.useMemo(() => [...createReadonlyCodeMirrorExtensions(), EditorView.lineWrapping], []);
-    const { core, script } = props;
+    // The core is resolved from the provider, never passed as a prop. React's dev profiler walks changed props and
+    // would iterate the whole wasm heap of the instance.
+    const setupCore = useDashQLCoreSetup();
+    const [core, setCore] = React.useState<DashQL | null>(null);
+    React.useEffect(() => {
+        let cancelled = false;
+        setupCore('atlas_script_card').then(c => { if (!cancelled) setCore(c); }).catch(() => {});
+        return () => { cancelled = true; };
+    }, [setupCore]);
+    const { script } = props;
     React.useEffect(() => {
         if (view == null || core == null) return;
         let text = script.text;
@@ -322,8 +331,6 @@ interface SearchCardProps {
     onOpen: (scriptName: string) => void;
     /// The script that was opened, it shows left of the best matches
     script: { name: string; text: string } | null;
-    /// The dashql-core instance that highlights and formats the script
-    core: DashQL | null;
     onCloseScript: () => void;
     onCloseResults: () => void;
 }
@@ -357,7 +364,7 @@ export const SearchCard: React.FC<SearchCardProps> = (props: SearchCardProps) =>
             <div className={styles.search_below}>
             {props.script != null && (
                 <div className={styles.script_card}>
-                    <ScriptCard core={props.core} script={props.script} onClose={props.onCloseScript} />
+                    <ScriptCard script={props.script} onClose={props.onCloseScript} />
                 </div>
             )}
             {props.results != null && (
