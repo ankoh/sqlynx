@@ -98,11 +98,9 @@ impl Model {
     }
 }
 
-/// Kept small and cheap on purpose (see design doc pricing notes).
+/// Gemma 4 26B-A4B is the only model we expose ($0.10 / $0.30 per M input / output tokens).
 pub const MODELS: &[Model] = &[
-    Model { id: "@cf/meta/llama-3.2-1b-instruct", neurons_per_m_input: 2457, neurons_per_m_output: 18252 },
-    Model { id: "@cf/meta/llama-3.2-3b-instruct", neurons_per_m_input: 4625, neurons_per_m_output: 30475 },
-    Model { id: "@cf/ibm-granite/granite-4.0-h-micro", neurons_per_m_input: 1542, neurons_per_m_output: 10158 },
+    Model { id: "@cf/google/gemma-4-26b-a4b-it", neurons_per_m_input: 9091, neurons_per_m_output: 27273 },
 ];
 
 /// Look up an enabled model by id.
@@ -388,14 +386,14 @@ mod tests {
 
     #[test]
     fn neuron_micros_matches_cloudflare_rates() {
-        let m = find_model("@cf/meta/llama-3.2-1b-instruct").unwrap();
+        let m = find_model("@cf/google/gemma-4-26b-a4b-it").unwrap();
         // Exactly 1M input + 1M output tokens => the per-million rates, in whole neurons.
         let micros = m.neuron_micros(1_000_000, 1_000_000);
-        assert_eq!(micros / NEURON, 2457 + 18252);
+        assert_eq!(micros / NEURON, 9091 + 27273);
         // A million input tokens costs exactly `neurons_per_m_input` neurons (no rounding).
-        assert_eq!(m.neuron_micros(1_000_000, 0), 2457 * NEURON);
+        assert_eq!(m.neuron_micros(1_000_000, 0), 9091 * NEURON);
         // Sub-million counts stay exact in micros: 500k output tokens = half the output rate.
-        assert_eq!(m.neuron_micros(0, 500_000), 18252 * NEURON / 2);
+        assert_eq!(m.neuron_micros(0, 500_000), 27273 * NEURON / 2);
         // Zero tokens => zero cost.
         assert_eq!(m.neuron_micros(0, 0), 0);
     }

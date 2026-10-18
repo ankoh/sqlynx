@@ -38,7 +38,7 @@ curl localhost:8787/v1/models -H "Authorization: Bearer dashql_devtestkey"
 curl localhost:8787/v1/chat/completions \
   -H "Authorization: Bearer dashql_devtestkey" \
   -H "Content-Type: application/json" \
-  -d '{"model":"@cf/meta/llama-3.2-1b-instruct","messages":[{"role":"user","content":"hi"}],"stream":false}'
+  -d '{"model":"@cf/google/gemma-4-26b-a4b-it","messages":[{"role":"user","content":"hi"}],"stream":false}'
 ```
 
 ## Deploy
