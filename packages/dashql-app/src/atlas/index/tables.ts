@@ -5,7 +5,7 @@ import type { IndexRow } from './rows.js';
 
 /// Number of coordinates per row in the layout
 export const LAYOUT_DIMS = 3;
-/// The columns are prefixed by where they come from: `script_` (the file), `description_` (the description chunk, its
+/// The columns are prefixed by where they come from: `script_` (the file), `description_` (the description, its
 /// embedding and its position in the cloud), `metadata_` (the `@dashql:metadata` block) and `structure_` (the
 /// analysis of the SQL).
 export const EMBEDDING_COLUMN = 'description_embedding';
@@ -133,7 +133,7 @@ function buildTable(columns: Column[], length: number): arrow.Table {
     return new arrow.Table([new arrow.RecordBatch(new arrow.Schema(fields), struct)]);
 }
 
-/// The embedding, its model and the layout columns of the description chunks, `coords` holds LAYOUT_DIMS values per row
+/// The embedding, its model and the layout columns of the descriptions, `coords` holds LAYOUT_DIMS values per row
 function vectorColumns(vectors: Float32Array[], embedder: IndexEmbedder, coords: Float32Array): Column[] {
     const rows = vectors.length;
     if (coords.length !== rows * LAYOUT_DIMS) {
@@ -191,7 +191,7 @@ function metadataColumns(rows: IndexRow[]): Column[] {
 /// What the index file records about the embedder of its rows
 export type IndexEmbedder = Pick<EmbedderConfig, 'model' | 'dim'>;
 
-/// A row per description chunk with the metadata and the analysis of its script, in this order: `script_`,
+/// A row per described script with the metadata and the analysis of its script, in this order: `script_`,
 /// `description_`, `metadata_`, `structure_`. The script is not stored, it can be read from the SQL files. The counts
 /// are null and the lists empty for scripts that could not be analyzed.
 /// `coords` holds LAYOUT_DIMS values per row.
@@ -200,8 +200,7 @@ export function indexTable(rows: IndexRow[], embedder: IndexEmbedder, coords: Fl
         [
             ['script_name', utf8, column(rows.map(r => r.scriptName), utf8)],
             ['script_hash', utf8, column(rows.map(r => r.scriptHash), utf8)],
-            ['description_chunk_index', int32, column(rows.map(r => r.chunkIndex), int32)],
-            ['description_chunk', utf8, column(rows.map(r => r.text), utf8)],
+            ['description', utf8, column(rows.map(r => r.description), utf8)],
             ...vectorColumns(rows.map(r => r.embedding), embedder, coords),
             ...metadataColumns(rows),
             ...LISTS.flatMap(([count, list, pick]): Column[] => [

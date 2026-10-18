@@ -29,6 +29,7 @@ Write:
 - "summary": one to three sentences about what the result answers, which entities it covers and which important conditions or groupings it applies. Do not narrate SQL syntax and do not repeat the script.
 - "questions": three to five short questions or requests, phrased the way a person would ask for this result. Vary the wording and cover different aspects.
 
+Keep the summary and the questions together well below 512 tokens, the search embeds only the first 512 tokens of a description.
 Base everything on the script and do not invent facts that it does not support.`;
 
 export const DESCRIPTION_SCHEMA = {

@@ -6,7 +6,7 @@ export interface SearchHit {
     scriptName: string;
     /// Cosine similarity, the embeddings are L2-normalized
     score: number;
-    /// What matched: the best description chunk of the script
+    /// What matched: the description of the script
     snippet: string;
 }
 
@@ -22,25 +22,21 @@ function asNumber(value: unknown): number {
 
 const EMBEDDING = quoteIdentifier(EMBEDDING_COLUMN);
 
-/// The best description chunk of every script against the query
+/// The description of every script against the query
 export const DESCRIPTION_SEARCH: SearchStrategy = {
     id: 'description',
     title: 'Description',
     async run(sql, location, query, limit) {
         const vector = vectorLiteral(query);
         const table = await sql.query('Search descriptions', `
-SELECT script_name, description_chunk, score FROM (
-    SELECT script_name, description_chunk, dot_product(${EMBEDDING}, ${vector}) AS score,
-        row_number() OVER (PARTITION BY script_name ORDER BY dot_product(${EMBEDDING}, ${vector}) DESC) AS rank
-    FROM ${externalTable(location.path)}
-) ranked
-WHERE rank = 1
+SELECT script_name, description, dot_product(${EMBEDDING}, ${vector}) AS score
+FROM ${externalTable(location.path)}
 ORDER BY score DESC
 LIMIT ${Math.trunc(limit)}`);
         return table.toArray().map(row => ({
             scriptName: String(row.script_name),
             score: asNumber(row.score),
-            snippet: String(row.description_chunk),
+            snippet: String(row.description),
         }));
     },
 };

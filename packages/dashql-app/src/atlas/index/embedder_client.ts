@@ -5,7 +5,7 @@ import {
     type EmbedderRequest,
 } from './embedder_protocol.js';
 import type { Embedder, EmbedderConfig } from './model.js';
-import { configureTransformers, pipelineOptions, type DownloadProgress } from './transformers_env.js';
+import type { DownloadProgress } from './transformers_env.js';
 
 type Pending = {
     resolve: (response: EmbedderResponse) => void;
@@ -14,8 +14,7 @@ type Pending = {
     onDownload?: (progress: DownloadProgress) => void;
 };
 
-/// Embeds with the model in a worker. The tokenizer lives on the main thread: chunking needs token counts synchronously,
-/// a round trip to the worker per candidate chunk would be far too slow.
+/// Embeds with the model in a worker.
 export class AtlasEmbedder implements Embedder {
     private nextId = 1;
     private readonly pending = new Map<number, Pending>();
@@ -23,7 +22,6 @@ export class AtlasEmbedder implements Embedder {
     private constructor(
         readonly config: EmbedderConfig,
         private readonly worker: Worker,
-        private readonly tokenizer: any,
     ) {
         worker.onmessage = (event: MessageEvent<EmbedderResponse>) => this.onMessage(event.data);
         worker.onerror = event => this.failAll(new Error(event.message || 'embedder worker error'));
@@ -34,23 +32,14 @@ export class AtlasEmbedder implements Embedder {
         config: EmbedderConfig,
         onDownload?: (progress: DownloadProgress) => void,
     ): Promise<AtlasEmbedder> {
-        const { AutoTokenizer, env } = await import('@huggingface/transformers');
-        configureTransformers(env, baseUrl);
-        const tokenizer = await AutoTokenizer.from_pretrained(config.model, {
-            progress_callback: pipelineOptions(config, onDownload).progress_callback,
-        } as any);
         const worker = new Worker(new URL('./embedder_worker.js', import.meta.url), { type: 'module' });
-        const embedder = new AtlasEmbedder(config, worker, tokenizer);
+        const embedder = new AtlasEmbedder(config, worker);
         const ready = await embedder.request({ type: EmbedderRequestType.INIT, baseUrl, config }, { onDownload });
         if (ready.type === EmbedderResponseType.READY && ready.dim !== config.dim) {
             embedder.dispose();
             throw new Error(`the model produces ${ready.dim} dimensions, expected ${config.dim}`);
         }
         return embedder;
-    }
-
-    countTokens(text: string): number {
-        return this.tokenizer.encode(text).length;
     }
 
     async embedDocuments(texts: string[], onProgress?: (done: number, total: number) => void): Promise<Float32Array[]> {

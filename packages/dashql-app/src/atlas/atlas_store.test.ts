@@ -29,7 +29,6 @@ import {
     unmountFolder,
     writeIndexFile,
     type AtlasLocation,
-    type IndexPoints,
 } from './store.js';
 
 const DIM = 384;
@@ -93,24 +92,13 @@ describe('atlas store and search', () => {
     });
 
     const finance = { owner: 'finance', dashboard: 'Revenue Weekly', avg_runtime_ms: 1834.5, text: 'no clash' };
-    /// script_1 has two description chunks, script_3 could not be analyzed
+    /// script_3 could not be analyzed
     const rows: IndexRow[] = [
         {
             scriptName: 'script_1.sql',
             scriptHash: 'hash_1',
-            chunkIndex: 0,
-            text: 'Revenue per customer',
+            description: 'Revenue per customer',
             embedding: basis(100),
-            features: features(['table_1']),
-            diagnostics: [],
-            metadata: finance,
-        },
-        {
-            scriptName: 'script_1.sql',
-            scriptHash: 'hash_1',
-            chunkIndex: 1,
-            text: 'Orders per region',
-            embedding: basis(101),
             features: features(['table_1']),
             diagnostics: [],
             metadata: finance,
@@ -118,9 +106,8 @@ describe('atlas store and search', () => {
         {
             scriptName: 'script_2.sql',
             scriptHash: 'hash_2',
-            chunkIndex: 0,
-            text: 'Top suppliers',
-            embedding: basis(102),
+            description: 'Top suppliers',
+            embedding: basis(101),
             features: features(['table_2', 'table_3']),
             diagnostics: [],
             metadata: { owner: 'sales', tags: ['a', 'b'] },
@@ -128,9 +115,8 @@ describe('atlas store and search', () => {
         {
             scriptName: 'script_3.sql',
             scriptHash: 'hash_3',
-            chunkIndex: 0,
-            text: 'Late shipments',
-            embedding: basis(103),
+            description: 'Late shipments',
+            embedding: basis(102),
             features: null,
             diagnostics: ['syntax error'],
             metadata: null,
@@ -162,19 +148,19 @@ describe('atlas store and search', () => {
         expect(await hasIndexFile(directory)).toBe(true);
 
         const table = await sql.query('Read back', `
-            SELECT script_name, description_chunk_index, description_embedding, description_x, structure_table_names
-            FROM external('${location.path}') ORDER BY script_name, description_chunk_index`);
-        expect(table.numRows).toBe(4);
+            SELECT script_name, description_embedding, description_x, structure_table_names
+            FROM external('${location.path}') ORDER BY script_name`);
+        expect(table.numRows).toBe(3);
         const script2 = table.toArray().find(r => r.script_name === 'script_2.sql');
         expect(script2.structure_table_names.toArray()).toEqual(['table_2', 'table_3']);
         const models = await sql.query('Read back models', `
             SELECT DISTINCT description_embedding_model AS model FROM external('${location.path}')`);
         expect(models.toArray().map(r => r.model)).toEqual(['test/embedder']);
 
-        // Every chunk carries the structure of its script, the counts of a script without analysis are null
+        // The counts of a script without analysis are null
         const counts = await sql.query('Read back counts', `
             SELECT structure_table_count, structure_function_call_count, structure_cte_count, structure_diagnostic_count
-            FROM external('${location.path}') ORDER BY script_name, description_chunk_index`);
+            FROM external('${location.path}') ORDER BY script_name`);
         const count = (tables: number | null, calls: number | null, ctes: number | null, diagnostics: number) => ({
             structure_table_count: tables,
             structure_function_call_count: calls,
@@ -182,7 +168,6 @@ describe('atlas store and search', () => {
             structure_diagnostic_count: diagnostics,
         });
         expect(counts.toArray().map(r => ({ ...r }))).toEqual([
-            count(1, 1, 0, 0),
             count(1, 1, 0, 0),
             count(2, 1, 0, 0),
             count(null, null, null, 1),
@@ -193,8 +178,7 @@ describe('atlas store and search', () => {
         expect(columns).toEqual([
             'script_name',
             'script_hash',
-            'description_chunk_index',
-            'description_chunk',
+            'description',
             'description_embedding',
             'description_embedding_model',
             'description_x',
@@ -231,9 +215,8 @@ describe('atlas store and search', () => {
         const metadata = await sql.query('Read back metadata', `
             SELECT metadata_owner AS owner, metadata_dashboard AS dashboard, metadata_avg_runtime_ms AS avg_runtime_ms,
                 metadata_tags AS tags, metadata_text AS text
-            FROM external('${location.path}') ORDER BY script_name, description_chunk_index`);
+            FROM external('${location.path}') ORDER BY script_name`);
         expect(metadata.toArray().map(r => ({ ...r }))).toEqual([
-            { owner: 'finance', dashboard: 'Revenue Weekly', avg_runtime_ms: 1834.5, tags: null, text: 'no clash' },
             { owner: 'finance', dashboard: 'Revenue Weekly', avg_runtime_ms: 1834.5, tags: null, text: 'no clash' },
             { owner: 'sales', dashboard: null, avg_runtime_ms: null, tags: '["a","b"]', text: null },
             { owner: null, dashboard: null, avg_runtime_ms: null, tags: null, text: null },
@@ -242,34 +225,25 @@ describe('atlas store and search', () => {
         expect(metadata.schema.fields.find(f => f.name === 'avg_runtime_ms')!.type.toString()).toBe('Float64');
     }, 120_000);
 
-    it('loads a point for every description chunk', async () => {
-        const xOf = (points: IndexPoints, script: string) =>
-            Array.from(points.owners, (owner, i) => points.scripts[owner] === script ? points.coords[i * LAYOUT_DIMS] : null)
-                .filter((x): x is number => x != null)
-                .sort((a, b) => a - b);
-
+    it('loads a point for every described script', async () => {
         const table = await loadIndexTable(sql, location);
         expect(table.schema.fields.map(f => f.name)).not.toContain('description_embedding');
         const points = indexPoints(table);
         expect(points.scripts.slice().sort()).toEqual(['script_1.sql', 'script_2.sql', 'script_3.sql']);
-        expect(points.owners).toHaveLength(4);
-        expect(points.coords).toHaveLength(4 * LAYOUT_DIMS);
-        expect(xOf(points, 'script_1.sql')).toHaveLength(2);
-        // Rows were written with the values i / 10, row 2 starts at 6
-        expect(xOf(points, 'script_2.sql')[0]).toBeCloseTo(0.6, 4);
-        // Every point says what it is about, the description chunk and the tables of its script
-        expect(points.details.slice().sort())
-            .toEqual(['Late shipments', 'Orders per region', 'Revenue per customer', 'Top suppliers']);
-        const script2 = points.owners.indexOf(points.scripts.indexOf('script_2.sql'));
+        expect(points.coords).toHaveLength(3 * LAYOUT_DIMS);
+        // Rows were written with the values i / 10, row 1 starts at 3
+        const script2 = points.scripts.indexOf('script_2.sql');
+        expect(points.coords[script2 * LAYOUT_DIMS]).toBeCloseTo(0.3, 4);
+        // Every point says what it is about, the description and the tables of its script
+        expect(points.details.slice().sort()).toEqual(['Late shipments', 'Revenue per customer', 'Top suppliers']);
         expect(points.tables[script2]).toEqual(['table_2', 'table_3']);
-        expect(points.tables[points.owners.indexOf(points.scripts.indexOf('script_3.sql'))]).toEqual([]);
+        expect(points.tables[points.scripts.indexOf('script_3.sql')]).toEqual([]);
 
         // The rows leave out what only the cloud needs
         const shown = indexRowsTable(table).schema.fields.map(f => f.name);
-        expect(shown.slice(0, 9)).toEqual([
+        expect(shown.slice(0, 8)).toEqual([
             'script_name',
-            'description_chunk_index',
-            'description_chunk',
+            'description',
             'description_embedding_model',
             'metadata_owner',
             'metadata_dashboard',
@@ -287,7 +261,7 @@ describe('atlas store and search', () => {
         const directoryPath = location.path.slice(0, location.path.lastIndexOf('/'));
         const old = { ...location, path: `${directoryPath}/old-index.parquet` };
         await sql.run('Write old index', `
-            COPY (SELECT script_name, script_hash, description_chunk, structure_table_names,
+            COPY (SELECT script_name, script_hash, description, structure_table_names,
                     description_x, description_y, description_z
                   FROM external('${location.path}')) TO '${old.path}' WITH (FORMAT PARQUET)`);
         await expect(loadIndexTable(sql, old)).rejects.toThrow(/structure_table_count/);
@@ -331,12 +305,11 @@ describe('atlas store and search', () => {
         expect(kinds.get('metadata_owner')).toBe(STRING_COLUMN);
     }, 120_000);
 
-    it('finds the best description chunk of a script', async () => {
-        const hits = await DESCRIPTION_SEARCH.run(sql, location, basis(101, 102), 5);
+    it('finds the scripts closest to a query', async () => {
+        const hits = await DESCRIPTION_SEARCH.run(sql, location, basis(100, 101), 5);
         expect(hits.map(h => h.scriptName).slice(0, 2).sort()).toEqual(['script_1.sql', 'script_2.sql']);
         const byName = new Map(hits.map(h => [h.scriptName, h]));
-        // script_1 has two chunks, the better one of them is reported
-        expect(byName.get('script_1.sql')!.snippet).toBe('Orders per region');
+        expect(byName.get('script_1.sql')!.snippet).toBe('Revenue per customer');
         expect(byName.get('script_1.sql')!.score).toBeCloseTo(Math.SQRT1_2, 4);
         expect(byName.get('script_2.sql')!.snippet).toBe('Top suppliers');
     }, 60_000);
@@ -354,7 +327,7 @@ describe('atlas store and search', () => {
     }, 60_000);
 
     it('runs all strategies for one query', async () => {
-        const results = await searchAll(sql, location, basis(103));
+        const results = await searchAll(sql, location, basis(102));
         expect(results.map(r => r.strategy.id)).toEqual(['description']);
         expect(results[0].hits[0].scriptName).toBe('script_3.sql');
     }, 60_000);

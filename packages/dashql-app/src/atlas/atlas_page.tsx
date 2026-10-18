@@ -180,24 +180,16 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [cloud, folder, filterTable, searchedRows]);
 
-    /// Every dot of a script, one per description chunk
-    const pointsOfScript = React.useMemo(() => {
-        const out = new Map<string, number[]>();
-        const points = folder?.points;
-        if (points == null) return out;
-        points.owners.forEach((owner, point) => {
-            const name = points.scripts[owner];
-            const list = out.get(name);
-            if (list === undefined) out.set(name, [point]);
-            else list.push(point);
-        });
-        return out;
-    }, [folder]);
+    /// The dot of every script
+    const pointOfScript = React.useMemo(
+        () => new Map<string, number>((folder?.points.scripts ?? []).map((name, point) => [name, point])),
+        [folder],
+    );
     /// The script of the dot under the pointer
     const dotScript = React.useMemo(() => {
         const points = folder?.points;
-        if (points == null || dotHover == null || dotHover >= points.owners.length) return null;
-        return points.scripts[points.owners[dotHover]];
+        if (points == null || dotHover == null || dotHover >= points.scripts.length) return null;
+        return points.scripts[dotHover];
     }, [folder, dotHover]);
     React.useEffect(() => {
         if (cloud == null) return;
@@ -205,15 +197,18 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
         cloud.setRotationPaused(hovered != null);
         const candidates: number[] = [];
         for (const { hits } of results ?? []) {
-            for (const hit of hits) candidates.push(...pointsOfScript.get(hit.scriptName) ?? []);
+            for (const hit of hits) {
+                const point = pointOfScript.get(hit.scriptName);
+                if (point !== undefined) candidates.push(point);
+            }
         }
-        // A hovered candidate lights up all dots of its script, a hovered dot lights up itself and marks its script
-        if (dotScript != null) candidates.push(...pointsOfScript.get(dotScript) ?? []);
+        // A hovered candidate lights up its dot, a hovered dot lights up itself and marks its script
+        if (dotScript != null) candidates.push(pointOfScript.get(dotScript)!);
         let emphasized: readonly number[] = [];
-        if (hovered != null) emphasized = pointsOfScript.get(hovered) ?? [];
+        if (hovered != null) emphasized = pointOfScript.has(hovered) ? [pointOfScript.get(hovered)!] : [];
         else if (dotHover != null) emphasized = [dotHover];
         cloud.setHighlight(candidates, emphasized);
-    }, [cloud, results, hovered, dotHover, dotScript, pointsOfScript]);
+    }, [cloud, results, hovered, dotHover, dotScript, pointOfScript]);
 
     React.useEffect(() => {
         if (unsupported != null) return;
@@ -316,19 +311,17 @@ export const AtlasPage: React.FC<AtlasPageProps> = (props: AtlasPageProps) => {
         try {
             const found = await session.search(text);
             setResults(found);
-            // A wave runs through the cloud from the chunk of the best hit
+            // A wave runs through the cloud from the dot of the best hit
             const best = found[0]?.hits[0];
-            const points = best == null ? undefined : pointsOfScript.get(best.scriptName);
-            if (best != null && points != null && points.length > 0) {
-                cloud?.ripple(points.find(point => folder?.points.details[point] === best.snippet) ?? points[0]);
-            }
+            const point = best == null ? undefined : pointOfScript.get(best.scriptName);
+            if (point !== undefined) cloud?.ripple(point);
         } catch (e) {
             logger.error('Search failed', { error: stringifyError(e) }, LOG_CTX);
             setError(stringifyError(e));
         } finally {
             setSearching(false);
         }
-    }, [prompt, searching, logger, cloud, folder, pointsOfScript]);
+    }, [prompt, searching, logger, cloud, pointOfScript]);
 
     const openScript = React.useCallback(async (name: string) => {
         const session = sessionRef.current;

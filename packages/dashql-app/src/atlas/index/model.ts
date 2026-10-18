@@ -1,12 +1,11 @@
 /// The settings that define an embedding space. A query has to be embedded exactly like the indexed documents, an index
-/// written with other settings has to be reindexed.
+/// written with other settings has to be reindexed. The model reads 512 tokens, the pipeline truncates longer documents.
 export interface EmbedderConfig {
     model: string;
     dtype: 'fp32' | 'fp16' | 'q8' | 'q4';
     pooling: 'cls' | 'mean';
     queryPrefix: string;
     documentPrefix: string;
-    maxTokens: number;
     dim: number;
 }
 
@@ -16,7 +15,6 @@ export const ATLAS_EMBEDDER_CONFIG: EmbedderConfig = {
     pooling: 'cls',
     queryPrefix: 'Represent this sentence for searching relevant passages: ',
     documentPrefix: '',
-    maxTokens: 512,
     dim: 384,
 };
 
@@ -29,7 +27,6 @@ export const DEFAULT_MODEL_BASE_URL = '/static/models/';
 /// Embeds texts. Documents and queries differ in their prefix.
 export interface Embedder {
     readonly config: EmbedderConfig;
-    countTokens(text: string): number;
     embedDocuments(texts: string[], onProgress?: (done: number, total: number) => void): Promise<Float32Array[]>;
     embedQuery(text: string): Promise<Float32Array>;
 }
