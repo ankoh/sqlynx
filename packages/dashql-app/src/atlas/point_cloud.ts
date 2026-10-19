@@ -27,6 +27,8 @@ const PARALLAX_EASING = 3;
 const LENS_RADIUS = 110;
 /// Scene units per second that the ripple of a search travels
 const RIPPLE_SPEED = 1.6;
+/// The cloud renders at most 60 frames per second, displays with higher refresh rates would render it more often
+const FRAME_INTERVAL_MS = 1000 / 60;
 
 /// A dot under the pointer. x and y are client coordinates of the dot, radius is the size of its disc in CSS pixels.
 export interface DotHover {
@@ -315,6 +317,9 @@ export class PointCloud {
     private time = 0;
     private readonly axis = new THREE.Vector3();
     private animationFrame = 0;
+    private lastFrameTimestamp: number | null = null;
+    /// The container in client coordinates, measured again after it resized or something scrolled
+    private containerRect: DOMRect | null = null;
     private disposed = false;
     private running = false;
 
@@ -376,6 +381,10 @@ export class PointCloud {
         this.resize();
         this.renderOnce();
         document.addEventListener('visibilitychange', this.handleVisibilityChange);
+        window.addEventListener('blur', this.handleWindowBlur);
+        window.addEventListener('focus', this.handleWindowFocus);
+        window.addEventListener('resize', this.invalidateContainerRect);
+        window.addEventListener('scroll', this.invalidateContainerRect, { capture: true, passive: true });
         window.addEventListener('pointermove', this.handleWindowPointer, { passive: true });
         document.documentElement.addEventListener('pointerleave', this.handleWindowLeave);
     }
@@ -393,6 +402,10 @@ export class PointCloud {
         cancelAnimationFrame(this.animationFrame);
         this.resizeObserver.disconnect();
         document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+        window.removeEventListener('blur', this.handleWindowBlur);
+        window.removeEventListener('focus', this.handleWindowFocus);
+        window.removeEventListener('resize', this.invalidateContainerRect);
+        window.removeEventListener('scroll', this.invalidateContainerRect, { capture: true });
         window.removeEventListener('pointermove', this.handleWindowPointer);
         document.documentElement.removeEventListener('pointerleave', this.handleWindowLeave);
         this.demoGeometry.dispose();
@@ -684,6 +697,7 @@ export class PointCloud {
     private readonly observe = (entries: ResizeObserverEntry[]): void => {
         const size = entries[entries.length - 1]?.devicePixelContentBoxSize?.[0];
         this.devicePixels = size == null ? null : { width: size.inlineSize, height: size.blockSize };
+        this.containerRect = null;
         this.resize();
     };
 
@@ -739,8 +753,24 @@ export class PointCloud {
         else if (this.running) this.resume();
     };
 
+    // The cloud holds still while the window is in the background
+    private readonly handleWindowBlur = (): void => this.pause();
+    private readonly handleWindowFocus = (): void => {
+        if (this.running) this.resume();
+    };
+
+    private readonly invalidateContainerRect = (): void => {
+        this.containerRect = null;
+    };
+
+    /// The container in client coordinates, without a layout per frame
+    private getContainerRect(): DOMRect {
+        if (this.containerRect == null) this.containerRect = this.container.getBoundingClientRect();
+        return this.containerRect;
+    }
+
     private readonly handleWindowPointer = (e: PointerEvent): void => {
-        const rect = this.container.getBoundingClientRect();
+        const rect = this.getContainerRect();
         if (rect.width <= 0 || rect.height <= 0) return;
         const clamp = (v: number) => Math.max(-1, Math.min(1, v));
         this.parallax.x = clamp(((e.clientX - rect.left) / rect.width) * 2 - 1);
@@ -754,6 +784,8 @@ export class PointCloud {
 
     private resume(): void {
         cancelAnimationFrame(this.animationFrame);
+        if (document.hidden || !document.hasFocus()) return;
+        this.lastFrameTimestamp = null;
         this.clock.start();
         this.animationFrame = requestAnimationFrame(this.frame);
     }
@@ -763,8 +795,14 @@ export class PointCloud {
         this.clock.stop();
     }
 
-    private readonly frame = (): void => {
+    private readonly frame = (timestamp: number): void => {
         if (this.disposed || !this.running) return;
+        // Skip the frames of displays with high refresh rates
+        if (this.lastFrameTimestamp != null && timestamp - this.lastFrameTimestamp < FRAME_INTERVAL_MS - 1) {
+            this.animationFrame = requestAnimationFrame(this.frame);
+            return;
+        }
+        this.lastFrameTimestamp = timestamp;
         const dt = Math.min(this.clock.getDelta(), 0.1);
         this.time += dt;
         const t = this.time;
@@ -782,7 +820,7 @@ export class PointCloud {
         this.updateMorph();
         for (const material of [this.material, this.highlightMaterial]) material.uniforms.uTime.value = t;
 
-        const rect = this.container.getBoundingClientRect();
+        const rect = this.getContainerRect();
         const pointer = this.pointer;
         this.lens += ((pointer != null ? 1 : 0) - this.lens) * (1 - Math.exp(-dt * ROTATION_EASING));
         this.material.uniforms.uLens.value = this.lens;
