@@ -304,6 +304,8 @@ export function reduceNotebookScripts(state: NotebookScripts, action: NotebookSc
         case SELECT_SCRIPT: {
             const fileName = action.value;
             if (!state.scriptRefs[fileName]) return state;
+            // Hovering a card re-selects it constantly, keep the state (and the semantic focus) untouched.
+            if (state.scriptFocus.fileName === fileName) return state;
             return {
                 ...clearSemanticUserFocus(state),
                 scriptFocus: { ...state.scriptFocus, fileName },
