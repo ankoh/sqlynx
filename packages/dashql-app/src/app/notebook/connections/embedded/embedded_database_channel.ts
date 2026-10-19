@@ -62,14 +62,24 @@ class EmbeddedQueryResultStream implements QueryExecutionResponseStream {
 }
 
 export class EmbeddedDatabaseChannel {
+    /// The connection runs one statement at a time, so queries wait for the previous ones.
+    /// One connection keeps the session state of the scripts, such as settings and attached databases.
+    private previousQuery: Promise<unknown> = Promise.resolve();
+
     constructor(private readonly connection: EmbeddedConnection) {}
 
     async executeQuery(query: string, abort?: AbortSignal): Promise<QueryExecutionResponseStream> {
         abort?.throwIfAborted();
-        const startedAt = performance.now();
-        const bytes = await this.connection.queryArrowIPC(query, abort);
+        const execution = this.previousQuery.then(async () => {
+            abort?.throwIfAborted();
+            const startedAt = performance.now();
+            const bytes = await this.connection.queryArrowIPC(query, abort);
+            return { bytes, durationMs: performance.now() - startedAt };
+        });
+        this.previousQuery = execution.catch(() => {});
+        const { bytes, durationMs } = await execution;
         abort?.throwIfAborted();
-        return new EmbeddedQueryResultStream(bytes, performance.now() - startedAt);
+        return new EmbeddedQueryResultStream(bytes, durationMs);
     }
 
     async close(): Promise<void> {
