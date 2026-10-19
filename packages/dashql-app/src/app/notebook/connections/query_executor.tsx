@@ -1,7 +1,7 @@
 import * as arrow from 'apache-arrow';
 import * as React from 'react';
 
-import { findNotebookForAttachedDatabase, useAttachedDatabaseState, useDynamicAttachedDatabaseDispatch } from './attached_database_registry.js';
+import { findNotebookForAttachedDatabase, useAttachedDatabaseDispatch, useAttachedDatabaseRegistryStore, useAttachedDatabaseState, useDynamicAttachedDatabaseDispatch } from './attached_database_registry.js';
 import {
     createQueryResponseStreamMetrics,
     QUERY_CACHE_RECORDED,
@@ -106,10 +106,10 @@ function createConnectionQueryExecutionTracker(connectionId: string, dispatch: R
 export function QueryExecutorProvider(props: { children?: React.ReactElement }) {
     const logger = useLogger();
 
-    // The connection registry changes frequently, the connection map is stable.
-    // This executor will depend on the map directly since it can resolve everything ad-hoc.
-    const [connReg, connDispatch] = useDynamicAttachedDatabaseDispatch();
-    const connMap = connReg.attachedDatabases;
+    // The connection registry changes frequently.
+    // This executor resolves everything ad-hoc through the registry store and never re-renders for registry changes.
+    const connStore = useAttachedDatabaseRegistryStore();
+    const connDispatch = useAttachedDatabaseDispatch();
 
     const computeDispatch = useComputationDispatch();
     const computeDb = useComputeDatabase();
@@ -122,12 +122,12 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
         if (!computeDb) {
             throw new Error(`Compute database is not yet ready`);
         }
-        const conn = connMap.get(connectionId);
+        const conn = connStore.current.attachedDatabases.get(connectionId);
         if (!conn) {
             traced.error("Connection not configured", { connectionId, "query": queryId.toString() }, LOG_CTX);
             throw new Error(`Couldn't find a connection with id ${connectionId}`);
         }
-        const notebookId = findNotebookForAttachedDatabase(connReg, connectionId);
+        const notebookId = findNotebookForAttachedDatabase(connStore.current, connectionId);
         if (notebookId == null) {
             throw new Error(`Couldn't find a notebook for database ${connectionId}`);
         }
@@ -545,7 +545,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
         });
         return execution;
 
-    }, [computeDb, connMap, computeDispatch, logger, storageReader]);
+    }, [computeDb, connStore, connDispatch, computeDispatch, logger, storageReader]);
 
     // Allocate the next query id and start the execution
     const execute = React.useCallback<QueryExecutor>((connectionId: string, args: QueryExecutionArgs): [number, Promise<arrow.Table | null>] => {

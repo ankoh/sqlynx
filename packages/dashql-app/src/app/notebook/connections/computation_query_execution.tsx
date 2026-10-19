@@ -13,15 +13,19 @@ import {
 } from '../../../compute/computation_scheduler.js';
 import { QueryType } from '../../../query/query_execution_state.js';
 import { executeTrackedQuery } from '../../../query/tracked_query_execution.js';
-import { useDynamicAttachedDatabaseDispatch } from './attached_database_registry.js';
+import { useAttachedDatabaseDispatch, useAttachedDatabaseRegistryStore } from './attached_database_registry.js';
 
 const LOG_CTX = 'scheduler';
 
 export function NotebookComputeQueryExecutionProvider(props: React.PropsWithChildren) {
-    const [registry, dispatch] = useDynamicAttachedDatabaseDispatch();
+    // Resolve the connection through the store when the task starts.
+    // Every tracked compute query changes the registry, subscribing to it would re-create the execution factory
+    // and re-render the scheduler for every query lifecycle event.
+    const store = useAttachedDatabaseRegistryStore();
+    const dispatch = useAttachedDatabaseDispatch();
     const createExecution = React.useCallback((task: TaskVariant) => {
         let connectionId: string | null = null;
-        for (const [candidateId, connection] of registry.attachedDatabases) {
+        for (const [candidateId, connection] of store.current.attachedDatabases) {
             if (connection.queriesActive.has(task.value.tableId) || connection.queriesFinished.has(task.value.tableId)) {
                 connectionId = candidateId;
                 break;
@@ -43,7 +47,7 @@ export function NotebookComputeQueryExecutionProvider(props: React.PropsWithChil
                 errorTarget: LOG_CTX,
             });
         };
-    }, [registry, dispatch]);
+    }, [store, dispatch]);
 
     return (
         <ComputeQueryExecutionProvider createExecution={createExecution}>

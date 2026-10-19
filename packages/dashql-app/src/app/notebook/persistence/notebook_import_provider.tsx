@@ -16,7 +16,7 @@ import { displayPath } from './notebook_locator.js';
 import { useStorage } from './storage_provider.js';
 import { restoreSingleNotebook } from './app_state_loader.js';
 import { mergeRestoredNotebookIntoConnections, mergeRestoredNotebookIntoScripts } from './app_state_loader.js';
-import { useAttachedDatabaseRegistry } from '../connections/attached_database_registry.js';
+import { useAttachedDatabaseRegistrySetter, useAttachedDatabaseRegistryStore } from '../connections/attached_database_registry.js';
 import type { AttachedDatabaseState } from '../connections/attached_database_state.js';
 import { useNotebookScriptsRegistrySetter } from '../scripts/notebook_scripts_registry.js';
 import { useDashQLCoreSetup } from '../../providers/core_provider.js';
@@ -69,7 +69,9 @@ export function NotebookImportProvider(props: React.PropsWithChildren) {
     const logger = useLogger();
     const setupCore = useDashQLCoreSetup();
     const [reader, writer] = useStorage();
-    const [connections, setConnections] = useAttachedDatabaseRegistry();
+    // Read the registry when importing instead of re-creating the import context for every query event
+    const connectionStore = useAttachedDatabaseRegistryStore();
+    const setConnections = useAttachedDatabaseRegistrySetter();
     const setScripts = useNotebookScriptsRegistrySetter();
     const cancelQuery = useCancelQuery();
     const [dialog, setDialog] = React.useState<ConflictDialogState | null>(null);
@@ -89,6 +91,7 @@ export function NotebookImportProvider(props: React.PropsWithChildren) {
     }, [logger, setupCore]);
 
     const stopNotebookWork = React.useCallback(async (notebookId: string) => {
+        const connections = connectionStore.current;
         const mapping = connections.attachedDatabasesByNotebook.get(notebookId);
         const databases = mapping == null ? [] : [mapping.mainDatabaseId, ...mapping.attachedDatabaseIds]
             .filter((databaseId): databaseId is string => databaseId != null)
@@ -104,7 +107,7 @@ export function NotebookImportProvider(props: React.PropsWithChildren) {
             writer.resume();
             throw error;
         }
-    }, [cancelQuery, connections, writer]);
+    }, [cancelQuery, connectionStore, writer]);
 
     const restoreFreshPortable = React.useCallback(async (
         bundle: NotebookBundle,
@@ -123,7 +126,7 @@ export function NotebookImportProvider(props: React.PropsWithChildren) {
                 backend,
                 logger,
                 targetNotebookId,
-                connections.attachedDatabasesBySignature,
+                connectionStore.current.attachedDatabasesBySignature,
             );
             setConnections(registry => mergeRestoredNotebookIntoConnections(registry, restored));
             setScripts(registry => mergeRestoredNotebookIntoScripts(registry, restored));
@@ -136,7 +139,7 @@ export function NotebookImportProvider(props: React.PropsWithChildren) {
             }
             throw error;
         }
-    }, [backend, connections.attachedDatabasesBySignature, logger, setConnections, setScripts, setupCore]);
+    }, [backend, connectionStore, logger, setConnections, setScripts, setupCore]);
 
     const requestConflictChoice = React.useCallback((
         bundle: NotebookBundle,

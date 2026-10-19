@@ -96,7 +96,21 @@ export type AttachedDatabaseCloner = (state: AttachedDatabaseState) => AttachedD
 export type AttachedDatabaseDispatch = (action: AttachedDatabaseAction) => void;
 export type DynamicAttachedDatabaseDispatch = (databaseId: string | null, action: AttachedDatabaseAction) => void;
 
-const ATTACHED_DATABASE_REGISTRY_CTX = React.createContext<[AttachedDatabaseRegistry, Dispatch<SetAttachedDatabaseRegistryAction>] | null>(null);
+/// A stable handle to the latest registry.
+///
+/// The registry changes with every query lifecycle event (including the internal SQLFrame queries of
+/// computations), which re-renders every context consumer.
+/// Components that only care about a small slice of the registry subscribe to the store instead.
+export interface AttachedDatabaseRegistryStore {
+    /// The latest registry
+    current: AttachedDatabaseRegistry;
+    /// Subscribe to registry changes
+    subscribe: (listener: () => void) => () => void;
+}
+
+const ATTACHED_DATABASE_REGISTRY_CTX = React.createContext<AttachedDatabaseRegistry | null>(null);
+const ATTACHED_DATABASE_REGISTRY_SETTER_CTX = React.createContext<Dispatch<SetAttachedDatabaseRegistryAction> | null>(null);
+const ATTACHED_DATABASE_REGISTRY_STORE_CTX = React.createContext<AttachedDatabaseRegistryStore | null>(null);
 
 type Props = {
     children: React.ReactElement | React.ReactElement[];
@@ -111,15 +125,52 @@ export const AttachedDatabaseRegistry: React.FC<Props> = (props: Props) => {
             attachedDatabasesBySignature: new Map(),
         });
     });
+    const listeners = React.useRef(new Set<() => void>());
+    const store = React.useMemo<AttachedDatabaseRegistryStore>(() => ({
+        current: reg,
+        subscribe: (listener: () => void) => {
+            listeners.current.add(listener);
+            return () => listeners.current.delete(listener);
+        },
+    }), []);
+    // Publish the registry during render so that store readers and context consumers see the same registry
+    store.current = reg;
+    React.useLayoutEffect(() => {
+        for (const listener of listeners.current) {
+            listener();
+        }
+    }, [reg]);
     return (
-        <ATTACHED_DATABASE_REGISTRY_CTX.Provider value={[reg, setReg]}>
-            {props.children}
-        </ATTACHED_DATABASE_REGISTRY_CTX.Provider>
+        <ATTACHED_DATABASE_REGISTRY_STORE_CTX.Provider value={store}>
+            <ATTACHED_DATABASE_REGISTRY_SETTER_CTX.Provider value={setReg}>
+                <ATTACHED_DATABASE_REGISTRY_CTX.Provider value={reg}>
+                    {props.children}
+                </ATTACHED_DATABASE_REGISTRY_CTX.Provider>
+            </ATTACHED_DATABASE_REGISTRY_SETTER_CTX.Provider>
+        </ATTACHED_DATABASE_REGISTRY_STORE_CTX.Provider>
     );
 };
 
+/// Get the registry store without subscribing to registry changes
+export function useAttachedDatabaseRegistryStore(): AttachedDatabaseRegistryStore {
+    return React.useContext(ATTACHED_DATABASE_REGISTRY_STORE_CTX)!;
+}
+
+/// Subscribe to a slice of the registry.
+/// The component only re-renders when the selected value changes.
+/// The selector must return values that keep their identity while unchanged.
+export function useAttachedDatabaseRegistrySelector<T>(select: (registry: AttachedDatabaseRegistry) => T): T {
+    const store = useAttachedDatabaseRegistryStore();
+    return React.useSyncExternalStore(store.subscribe, () => select(store.current));
+}
+
+/// Modify the registry without subscribing to registry changes
+export function useAttachedDatabaseRegistrySetter(): Dispatch<SetAttachedDatabaseRegistryAction> {
+    return React.useContext(ATTACHED_DATABASE_REGISTRY_SETTER_CTX)!;
+}
+
 export function useAttachedDatabaseStateAllocator(): AttachedDatabaseAllocator {
-    const [_reg, setReg] = React.useContext(ATTACHED_DATABASE_REGISTRY_CTX)!;
+    const setReg = React.useContext(ATTACHED_DATABASE_REGISTRY_SETTER_CTX)!;
     return React.useCallback((notebookId: string, state: AttachedDatabaseStateWithoutId, role: AttachedDatabaseRole = 'main') => {
         const databaseId = crypto.randomUUID();
         const database: AttachedDatabaseState = { ...state, databaseId };
@@ -149,11 +200,18 @@ export function useAttachedDatabaseStateAllocator(): AttachedDatabaseAllocator {
 }
 
 export function useAttachedDatabaseRegistry(): [AttachedDatabaseRegistry, Dispatch<SetAttachedDatabaseRegistryAction>] {
-    return React.useContext(ATTACHED_DATABASE_REGISTRY_CTX)!;
+    return [React.useContext(ATTACHED_DATABASE_REGISTRY_CTX)!, React.useContext(ATTACHED_DATABASE_REGISTRY_SETTER_CTX)!];
 }
 
 export function useDynamicAttachedDatabaseDispatch(): [AttachedDatabaseRegistry, DynamicAttachedDatabaseDispatch] {
-    const [registry, setRegistry] = React.useContext(ATTACHED_DATABASE_REGISTRY_CTX)!;
+    const registry = React.useContext(ATTACHED_DATABASE_REGISTRY_CTX)!;
+    const dispatch = useAttachedDatabaseDispatch();
+    return [registry, dispatch];
+}
+
+/// Dispatch actions to attached databases without subscribing to registry changes
+export function useAttachedDatabaseDispatch(): DynamicAttachedDatabaseDispatch {
+    const setRegistry = React.useContext(ATTACHED_DATABASE_REGISTRY_SETTER_CTX)!;
     const storageWriter = useStorageWriter();
     const logger = useLogger();
 
@@ -268,7 +326,7 @@ export function useDynamicAttachedDatabaseDispatch(): [AttachedDatabaseRegistry,
         }
     }, [flushPendingActions]);
 
-    return [registry, dispatch];
+    return dispatch;
 }
 
 function notebookAttachedDatabaseStates(registry: AttachedDatabaseRegistry, notebookId: string): AttachedDatabaseState[] {

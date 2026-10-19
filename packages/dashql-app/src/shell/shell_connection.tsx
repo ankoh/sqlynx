@@ -4,7 +4,7 @@ import { createQueryExecutionMetrics } from '../query/query_execution_state.js';
 import type { QueryExecutionHistoryState } from '../query/query_execution_state.js';
 import { CONNECTOR_INFOS, ConnectorType } from '../app/notebook/connections/connector_info.js';
 import { ConnectionHealth, ConnectionStatus, type AttachedDatabaseState } from '../app/notebook/connections/attached_database_state.js';
-import { useAttachedDatabaseRegistry } from '../app/notebook/connections/attached_database_registry.js';
+import { useAttachedDatabaseRegistrySetter } from '../app/notebook/connections/attached_database_registry.js';
 import { ShellQueryExecutionTracker } from './query_execution.js';
 
 export const SHELL_DATABASE_ID = 'shell';
@@ -43,7 +43,7 @@ interface ShellConnectionProviderProps {
 export const ShellConnectionProvider: React.FC<ShellConnectionProviderProps> = props => {
     const databaseId = props.databaseId ?? SHELL_DATABASE_ID;
     const notebookId = props.notebookId ?? SHELL_NOTEBOOK_ID;
-    const [, setRegistry] = useAttachedDatabaseRegistry();
+    const setRegistry = useAttachedDatabaseRegistrySetter();
     const stateRef = React.useRef<AttachedDatabaseState>(createShellAttachedDatabaseState(databaseId));
 
     const publish = React.useCallback((state: AttachedDatabaseState) => {
