@@ -7,6 +7,7 @@ import { classNames } from '../../../../../utils/classnames.js';
 import { ButtonSize, ButtonVariant, IconButton } from '../../../../../ui/foundations/button.js';
 import { DataFrame } from '../../../../../compute/data_frame.js';
 import { DataTableLayout } from './data_table_layout.js';
+import { arePropsEqualWithStyle } from './memo_props.js';
 
 /// ---------------------------------------------------------------------------
 /// Header Name Cell
@@ -24,7 +25,7 @@ export interface HeaderNameCellProps {
     onShowTable?: () => void;
 }
 
-export function HeaderNameCell(props: HeaderNameCellProps): React.ReactElement {
+function HeaderNameCellImpl(props: HeaderNameCellProps): React.ReactElement {
     if (props.columnIndex >= props.gridLayout.arrowFieldByColumnIndex.length) {
         return <div style={props.style} />;
     }
@@ -88,3 +89,5 @@ export function HeaderNameCell(props: HeaderNameCellProps): React.ReactElement {
         );
     }
 }
+
+export const HeaderNameCell = React.memo(HeaderNameCellImpl, arePropsEqualWithStyle);

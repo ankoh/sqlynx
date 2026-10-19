@@ -19,6 +19,7 @@ import { useScrollbarHeight } from '../../../../../utils/scrollbar.js';
 import { useDataTableOrdering } from './data_table_ordering.js';
 import { useDataTablePortalContainers } from './data_table_portals.js';
 import { DataTableStickyColumn, DataTableStickyHeaders } from './data_table_sticky_views.js';
+import { DataTableFocusStore } from './data_table_focus.js';
 import { resolveSearchedRowIndices } from './visible_rows.js';
 import { collectSearchableResultColumns } from '../../../../../compute/sql/query_result_search_sql.js';
 
@@ -69,11 +70,6 @@ export function computeGridHeight(
     return maxRows != null ? contentHeight : Math.max(measuredHeight, MIN_GRID_HEIGHT);
 }
 
-interface FocusedCells {
-    row: number | null,
-    field: number | null
-}
-
 interface RenderedCells {
     rowStart: number;
     rowStop: number;
@@ -81,7 +77,7 @@ interface RenderedCells {
     columnStop: number;
 }
 
-export const DataTable: React.FC<Props> = (props: Props) => {
+export const DataTable = React.memo((props: Props) => {
     const config = useAppConfig();
     const logger = useLogger();
     const dispatchComputation = props.dispatchComputation;
@@ -174,19 +170,16 @@ export const DataTable: React.FC<Props> = (props: Props) => {
 
     const { orderByColumn, getSortDirection } = useDataTableOrdering(computationState, dispatchComputation);
 
-    // Maintain the focused cell - updates are stored in ref and read during next render
-    const focusedCells = React.useRef<FocusedCells | null>(null);
-    const [updateCounter, forceUpdate] = React.useReducer(x => x + 1, 0);
+    // Maintain the focused cell outside of React state, cells subscribe to their own row
+    const [focusStore] = React.useState(() => new DataTableFocusStore());
     const onMouseEnterCell: React.PointerEventHandler<HTMLDivElement> = React.useCallback((event: React.PointerEvent<HTMLDivElement>) => {
         const tableRow = Number.parseInt(event.currentTarget.dataset["tableRow"]!);
         const tableCol = Number.parseInt(event.currentTarget.dataset["tableCol"]!);
-        focusedCells.current = { row: tableRow, field: tableCol };
-        forceUpdate();
-    }, []);
-    const onMouseLeaveCell: React.PointerEventHandler<HTMLDivElement> = React.useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-        focusedCells.current = null;
-        forceUpdate();
-    }, []);
+        focusStore.setFocus(tableRow, tableCol);
+    }, [focusStore]);
+    const onMouseLeaveCell: React.PointerEventHandler<HTMLDivElement> = React.useCallback((_event: React.PointerEvent<HTMLDivElement>) => {
+        focusStore.setFocus(null, null);
+    }, [focusStore]);
 
     // Cell detail overlay state
     const [cellDetail, setCellDetail] = React.useState<{
@@ -241,8 +234,7 @@ export const DataTable: React.FC<Props> = (props: Props) => {
         onMouseLeave: onMouseLeaveCell,
         onClick: onClickCell,
         table: computationState.dataTable,
-        focusedRow: focusedCells.current?.row ?? null,
-        focusedField: focusedCells.current?.field ?? null,
+        focus: focusStore,
         rightmostVisibleColumn: gridLayout.columnCount - 1,
         matchingRows: computationState.dataSearch.matchingRows,
         searchColumnIndexByGroup,
@@ -255,13 +247,11 @@ export const DataTable: React.FC<Props> = (props: Props) => {
         tableFormatter,
         computationState.dataSearch.matchingRows,
         searchColumnIndexByGroup,
-        updateCounter, // Force recomputation when focused cell changes
-        // Stable callbacks (empty deps) - included for correctness but won't cause re-renders
+        // Stable callbacks - included for correctness but won't cause re-renders
+        focusStore,
         onMouseEnterCell,
         onMouseLeaveCell,
         onClickCell,
-        // Note: focusedCells is a ref, reading it here won't trigger re-renders
-        // but the value will be fresh when gridData is created
     ]);
     // Track only range boundary changes, rather than updating React state for every scroll event.
     const onCellsRendered = React.useCallback((
@@ -320,6 +310,53 @@ export const DataTable: React.FC<Props> = (props: Props) => {
         : 0;
 
 
+    // Keep the header cell props stable so that the memoized header cells skip unrelated renders
+    const nameCellProps = React.useMemo(() => ({
+        table: computationState.dataTable,
+        gridLayout,
+        dataFrame: computationState.dataFrame,
+        rightmostVisibleColumn: gridLayout.columnCount - 1,
+        getSortDirection,
+        onOrderByColumn: orderByColumn,
+        onShowTable: props.onShowTable,
+    }), [computationState.dataTable, gridLayout, computationState.dataFrame, getSortDirection, orderByColumn, props.onShowTable]);
+    const selectionEpoch = computationState.filterTable?.version ?? computationState.version;
+    const dataSearchRequestId = computationState.dataSearchTable?.requestId ?? null;
+    const plotCellProps = React.useMemo(() => ({
+        gridLayout,
+        columnGroups: computationState.columnGroups,
+        columnAggregations: computationState.columnAggregates,
+        columnAggregationTasks: computationState.tasks.columnAggregationTasks,
+        filteredColumnAggregations: computationState.filteredColumnAggregates,
+        filteredColumnAggregationTasks: computationState.tasks.filteredColumnAggregationTasks,
+        filteredColumnAggregationOutdated: computationState.filteredColumnAggregatesOutdated,
+        tableAggregation: computationState.tableAggregation,
+        selectionEpoch,
+        dataSearchRequestId,
+        crossFilters,
+        isVisible: true,
+        rightmostVisibleColumn: gridLayout.columnCount - 1,
+        onRequestFilteredColumnAggregation: requestFilteredColumnAggregation,
+        onHistogramFilter: histogramFilter,
+        onBrushingChange: NOOP_BRUSHING,
+        onMostFrequentValueFilter: mostFrequentValueFilter,
+    }), [
+        gridLayout,
+        computationState.columnGroups,
+        computationState.columnAggregates,
+        computationState.tasks.columnAggregationTasks,
+        computationState.filteredColumnAggregates,
+        computationState.tasks.filteredColumnAggregationTasks,
+        computationState.filteredColumnAggregatesOutdated,
+        computationState.tableAggregation,
+        selectionEpoch,
+        dataSearchRequestId,
+        crossFilters,
+        requestFilteredColumnAggregation,
+        histogramFilter,
+        mostFrequentValueFilter,
+    ]);
+
     // Create containers for sticky header and sticky column
     const portalContainers = useDataTablePortalContainers(gridApi);
 
@@ -371,34 +408,8 @@ export const DataTable: React.FC<Props> = (props: Props) => {
                     plotsHeight={plotsHeight}
                     plotsCollapsed={plotsCollapsed}
                     onTogglePlots={togglePlots}
-                    nameCellProps={{
-                        table: computationState.dataTable,
-                        gridLayout,
-                        dataFrame: computationState.dataFrame,
-                        rightmostVisibleColumn: gridLayout.columnCount - 1,
-                        getSortDirection,
-                        onOrderByColumn: orderByColumn,
-                        onShowTable: props.onShowTable,
-                    }}
-                    plotCellProps={{
-                        gridLayout,
-                        columnGroups: computationState.columnGroups,
-                        columnAggregations: computationState.columnAggregates,
-                        columnAggregationTasks: computationState.tasks.columnAggregationTasks,
-                        filteredColumnAggregations: computationState.filteredColumnAggregates,
-                        filteredColumnAggregationTasks: computationState.tasks.filteredColumnAggregationTasks,
-                        filteredColumnAggregationOutdated: computationState.filteredColumnAggregatesOutdated,
-                        tableAggregation: computationState.tableAggregation,
-                        selectionEpoch: computationState.filterTable?.version ?? computationState.version,
-                        dataSearchRequestId: computationState.dataSearchTable?.requestId ?? null,
-                        crossFilters,
-                        isVisible: true,
-                        rightmostVisibleColumn: gridLayout.columnCount - 1,
-                        onRequestFilteredColumnAggregation: requestFilteredColumnAggregation,
-                        onHistogramFilter: histogramFilter,
-                        onBrushingChange: NOOP_BRUSHING,
-                        onMostFrequentValueFilter: mostFrequentValueFilter,
-                    }}
+                    nameCellProps={nameCellProps}
+                    plotCellProps={plotCellProps}
                 />
                 <DataTableStickyColumn
                     container={portalContainers?.data ?? null}
@@ -421,4 +432,4 @@ export const DataTable: React.FC<Props> = (props: Props) => {
             />
         </div>
     );
-};
+});
