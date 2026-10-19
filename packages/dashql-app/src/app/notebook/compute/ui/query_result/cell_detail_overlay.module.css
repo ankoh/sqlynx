@@ -16,6 +16,23 @@
     max-height: min(600px, calc(100vh - 32px));
 }
 
+/* Expanded, the overlay fills the window and the body fills the overlay */
+.modal[data-expanded] {
+    height: 100%;
+}
+
+.modal[data-expanded] .main {
+    max-height: none;
+}
+
+.modal[data-expanded] .plan_container {
+    height: 100%;
+}
+
+.modal[data-expanded] .plan_container > div {
+    height: 100%;
+}
+
 /* Right sidebar with close + arrow buttons */
 .sidebar {
     grid-column: 2;
@@ -32,6 +49,7 @@
     flex-direction: column;
     align-items: center;
     padding: 4px;
+    gap: 4px;
 }
 
 .sidebar_bottom {

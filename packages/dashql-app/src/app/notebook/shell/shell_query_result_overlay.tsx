@@ -5,7 +5,7 @@ import type { QueryExecutionState } from '../connections/query_execution_state.j
 import { ButtonSize, ButtonVariant, IconButton } from '../../../ui/foundations/button.js';
 import { useFocusTrap } from '../../../ui/foundations/focus.js';
 import { Overlay, OverlaySize } from '../../../ui/foundations/overlay.js';
-import { SymbolIcon } from '../../../ui/foundations/symbol_icon.js';
+import { ScreenFullIcon, ScreenNormalIcon, SymbolIcon } from '../../../ui/foundations/symbol_icon.js';
 import { VerticalTabs, VerticalTabProps, VerticalTabVariant } from '../../../ui/foundations/vertical_tabs.js';
 import { QueryResultDetails } from '../compute/ui/query_result/query_result_details.js';
 import { TableColumnHeader } from '../compute/ui/query_result/data_table_cell.js';
@@ -38,6 +38,7 @@ interface Props {
 const MAX_OVERLAY_HEIGHT = 600;
 const MIN_PLAN_OVERLAY_HEIGHT = 'min(360px, 80vh)';
 const IGNORE_OUTSIDE_CLICK = () => {};
+const CloseIcon = SymbolIcon('x_16');
 
 const enum ResultTab {
     Data = 0,
@@ -56,7 +57,6 @@ export const ShellQueryResultOverlay: React.FC<Props> = ({
     const dialogRef = React.useRef<HTMLElement>(null);
     const [lockedHeight, setLockedHeight] = React.useState<{ queryId: number; height: number } | null>(null);
     const currentLockedHeight = lockedHeight?.queryId === query.queryId ? lockedHeight.height : null;
-    const CloseIcon = SymbolIcon('x_16');
     const planText = React.useMemo(() => getPlanResultText(query.resultTable), [query.resultTable]);
     const { plan } = dependencies.useHyperPlan(planText);
     const hasPlan = plan != null;
@@ -74,7 +74,11 @@ export const ShellQueryResultOverlay: React.FC<Props> = ({
         }
     }, [hasPlan, query.queryId, selectedTab]);
 
-    const closeButton = (
+    // Only the plan tab can be expanded to fill the window
+    const [planExpanded, setPlanExpanded] = React.useState(false);
+    const expanded = planExpanded && selectedTab === ResultTab.Plan;
+
+    const closeButton = React.useMemo(() => (
         <IconButton
             ref={closeRef}
             variant={ButtonVariant.Invisible}
@@ -84,7 +88,21 @@ export const ShellQueryResultOverlay: React.FC<Props> = ({
         >
             <CloseIcon size={16} />
         </IconButton>
-    );
+    ), [onClose]);
+    const planActions = React.useMemo(() => (
+        <>
+            <IconButton
+                variant={ButtonVariant.Invisible}
+                size={ButtonSize.Small}
+                aria-label={planExpanded ? 'Restore plan size' : 'Expand plan'}
+                aria-pressed={planExpanded}
+                onClick={() => setPlanExpanded(e => !e)}
+            >
+                {planExpanded ? <ScreenNormalIcon size={16} /> : <ScreenFullIcon size={16} />}
+            </IconButton>
+            {closeButton}
+        </>
+    ), [closeButton, planExpanded]);
     const tabProps = React.useMemo<Record<ResultTab, VerticalTabProps>>(() => ({
         [ResultTab.Data]: {
             tabId: ResultTab.Data,
@@ -116,11 +134,11 @@ export const ShellQueryResultOverlay: React.FC<Props> = ({
         ),
         [ResultTab.Plan]: () => (
             <div className={styles.plan_tab}>
-                <TabHeader title="Query Plan" actions={closeButton} />
+                <TabHeader title="Query Plan" actions={planActions} />
                 <div className={styles.plan_body}>{plan != null && <PlanViewComponent plan={plan} />}</div>
             </div>
         ),
-    }), [closeButton, plan, PlanViewComponent, query, ResultDetails]);
+    }), [closeButton, planActions, plan, PlanViewComponent, query, ResultDetails]);
     useFocusTrap({
         containerRef: dialogRef as React.RefObject<HTMLElement>,
         initialFocusRef: dialogRef as React.RefObject<HTMLElement>,
@@ -132,18 +150,22 @@ export const ShellQueryResultOverlay: React.FC<Props> = ({
             width={OverlaySize.XXL}
             height={OverlaySize.AUTO}
             maxHeight={OverlaySize.XL}
+            expanded={expanded}
             initialFocusRef={dialogRef as React.RefObject<HTMLElement>}
             onEscape={onClose}
             onClickOutside={dismissOnClickOutside ? onClose : IGNORE_OUTSIDE_CLICK}
         >
             <section
                 ref={dialogRef}
-                className={classNames(styles.card, { [styles.card_locked_height]: currentLockedHeight != null })}
+                className={classNames(styles.card, {
+                    [styles.card_locked_height]: currentLockedHeight != null && !expanded,
+                    [styles.card_expanded]: expanded,
+                })}
                 role="dialog"
                 aria-modal="true"
                 aria-label="Shell query results"
                 tabIndex={-1}
-                style={{
+                style={expanded ? undefined : {
                     height: currentLockedHeight ?? undefined,
                     minHeight: selectedTab === ResultTab.Plan ? MIN_PLAN_OVERLAY_HEIGHT : undefined,
                 }}

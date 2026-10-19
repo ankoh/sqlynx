@@ -14,6 +14,14 @@ import { CellFocus, DataTableFocusStore, useCellFocus } from './data_table_focus
 /// Data Cell
 /// ---------------------------------------------------------------------------
 
+/// Cells are at most a few hundred pixels wide but text values can be megabytes large.
+/// Render only a prefix, laying out the full text is what makes large cells slow.
+const MAX_CELL_TEXT_LENGTH = 256;
+
+function truncateCellText(text: string): string {
+    return text.length > MAX_CELL_TEXT_LENGTH ? `${text.slice(0, MAX_CELL_TEXT_LENGTH)}…` : text;
+}
+
 export interface DataCellData {
     columnGroups: ColumnGroup[];
     visibleRowIndices: Int32Array | null;
@@ -87,6 +95,7 @@ export function DataCell(props: CellComponentProps<DataCellData>): React.ReactEl
         // Compute class name inline to avoid object allocation in classNames()
         const isMetadata = props.gridLayout.isSystemColumn[props.columnIndex] === 1;
         const isNull = formatted == null;
+        const displayText = isNull ? null : truncateCellText(formatted);
         const isRightmost = props.columnIndex === props.rightmostVisibleColumn;
         const searchColumnIndex = props.searchColumnIndexByGroup.get(
             props.gridLayout.columnGroupByColumnIndex[props.columnIndex],
@@ -134,7 +143,7 @@ export function DataCell(props: CellComponentProps<DataCellData>): React.ReactEl
                 style={props.style}
                 role="gridcell"
                 aria-label={isSearchMatch
-                    ? `${isNull ? 'NULL' : formatted}${hint == null ? '' : `, ${hint}`}, search match`
+                    ? `${isNull ? 'NULL' : displayText}${hint == null ? '' : `, ${hint}`}, search match`
                     : undefined}
                 tabIndex={canOpenDetail ? 0 : -1}
                 data-table-col={fieldId}
@@ -152,11 +161,11 @@ export function DataCell(props: CellComponentProps<DataCellData>): React.ReactEl
             >
                 {hint != null ? (
                     <>
-                        <span className={styles.data_cell_text}>{formatted}</span>
+                        <span className={styles.data_cell_text}>{displayText}</span>
                         <span className={styles.format_bean}>{hint}</span>
                     </>
                 ) : (
-                    isNull ? "NULL" : formatted
+                    isNull ? "NULL" : displayText
                 )}
             </div>
         );
