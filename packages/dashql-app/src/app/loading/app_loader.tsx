@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { AppLoadingStatus } from '../router/app_loading_status.js';
 import { OPEN_LINK_NOTEBOOK, SELECT_NOTEBOOK, useRouteContext, useRouterNavigate } from '../router/router.js';
-import { resolveNotebookExecutionDatabase, useAttachedDatabaseRegistry, useAttachedDatabaseStateAllocator, useDynamicAttachedDatabaseDispatch } from '../notebook/connections/attached_database_registry.js';
+import { resolveNotebookExecutionDatabase, useAttachedDatabaseDispatch, useAttachedDatabaseRegistry, useAttachedDatabaseStateAllocator } from '../notebook/connections/attached_database_registry.js';
 import { useDashQLCoreSetup } from '../providers/core_provider.js';
 import { useLogger } from '../../platform/logger/logger_provider.js';
 import { createTrace } from '../../platform/logger/trace_context.js';
@@ -66,7 +66,7 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
     const [storageReader, storageWriter] = useStorage();
     const allocateAttachedDatabase = useAttachedDatabaseStateAllocator();
     const [connReg, setConnReg] = useAttachedDatabaseRegistry();
-    const [, dispatchDatabase] = useDynamicAttachedDatabaseDispatch();
+    const dispatchDatabase = useAttachedDatabaseDispatch();
     const setNotebookScriptsRegistry = useNotebookScriptsRegistrySetter();
     const setupEmbeddedDatabase = useEmbeddedDatabaseSetup();
     const hyperSetup = useHyperSetup();
