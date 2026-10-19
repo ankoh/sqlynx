@@ -296,12 +296,17 @@ export function EmbeddingScatter(props: Props): React.ReactElement {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Reset the viewport to frame the cloud whenever the point set identity changes,
-    // then sync it into the renderer.
+    // Reset the viewport to frame the cloud whenever the coordinate buffers change,
+    // then sync it into the renderer. Selection or category changes keep pan/zoom.
+    const framedCoordinatesRef = React.useRef<{ x: Float32Array; y: Float32Array } | null>(null);
     React.useEffect(() => {
-        const vp = defaultViewport(points);
-        defaultViewportRef.current = vp;
-        viewportRef.current = vp;
+        const framed = framedCoordinatesRef.current;
+        if (framed == null || framed.x !== points.x || framed.y !== points.y) {
+            const vp = defaultViewport(points);
+            defaultViewportRef.current = vp;
+            viewportRef.current = vp;
+            framedCoordinatesRef.current = { x: points.x, y: points.y };
+        }
         syncRenderer();
     }, [points, syncRenderer]);
 

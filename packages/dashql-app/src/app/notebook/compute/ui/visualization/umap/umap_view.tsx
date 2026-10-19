@@ -89,69 +89,80 @@ export function UmapView(props: Props): React.ReactElement {
     // the rest are dimmed by the renderer. Ordering is intentionally NOT reflected here — it
     // only changes display order, which has no meaning in a scatter, so ordering alone dims
     // nothing. Only a `filterTable` produces a selection.
+    const dataTable = tableComputation?.dataTable ?? null;
+    const columnGroups = tableComputation?.columnGroups ?? null;
     const filterTable = tableComputation?.filterTable ?? null;
-    const resolved = React.useMemo<{ points: EmbeddingPoints } | null>(() => {
-        if (!tableComputation) return null;
-        const umapGroup = tableComputation.columnGroups.find(
+    const orderingTable = tableComputation?.orderingTable ?? null;
+
+    // The coordinates only change with the analyzed table, not with every task step of the computation.
+    const coordinates = React.useMemo<{ x: Float32Array; y: Float32Array } | null>(() => {
+        if (dataTable == null || columnGroups == null) return null;
+        const umapGroup = columnGroups.find(
             g => g.type === LIST_COLUMN && g.value.umapProjection != null);
         if (!umapGroup || umapGroup.type !== LIST_COLUMN || umapGroup.value.umapProjection == null) return null;
-
-        const dataTable = tableComputation.dataTable;
         const x = extractFloat32Column(dataTable, umapGroup.value.umapProjection.xFieldName);
         const y = extractFloat32Column(dataTable, umapGroup.value.umapProjection.yFieldName);
         if (!x || !y) return null;
+        return { x, y };
+    }, [dataTable, columnGroups]);
 
-        const categoryColumn = typeof spec?.categoryColumn === 'string' ? spec.categoryColumn : null;
-        const categories = categoryColumn ? extractCategories(dataTable, categoryColumn) : null;
-        const category = categories?.category ?? null;
-        const categoryCount = categoryColumn ? (categories?.categoryCount ?? 0) : null;
+    const categoryColumn = typeof spec?.categoryColumn === 'string' ? spec.categoryColumn : null;
+    const categories = React.useMemo(
+        () => (dataTable != null && categoryColumn) ? extractCategories(dataTable, categoryColumn) : null,
+        [dataTable, categoryColumn],
+    );
 
-        // Build a selection bitmask from the filtered row set (1-based row numbers → 0-based
-        // positional indices, already resolved by `resolveVisibleRowIndices`). A null result
-        // means no filter is active, so the whole cloud renders at full opacity.
+    // Build a selection bitmask from the filtered row set (1-based row numbers → 0-based
+    // positional indices, already resolved by `resolveVisibleRowIndices`). A null result
+    // means no filter is active, so the whole cloud renders at full opacity.
+    const pointCount = coordinates?.x.length ?? 0;
+    const selection = React.useMemo<Uint32Array | null>(() => {
+        // Reads only the ordering and filter tables of the computation, both are dependencies
         const selectedRows = filterTable != null ? resolveVisibleRowIndices(tableComputation) : null;
-        let selection: Uint32Array | null = null;
-        if (selectedRows != null) {
-            selection = new Uint32Array(Math.ceil(x.length / 32));
-            for (let i = 0; i < selectedRows.length; ++i) {
-                const row = selectedRows[i];
-                if (row >= 0 && row < x.length) {
-                    selection[row >>> 5] |= 1 << (row & 31);
-                }
+        if (selectedRows == null) return null;
+        const selection = new Uint32Array(Math.ceil(pointCount / 32));
+        for (let i = 0; i < selectedRows.length; ++i) {
+            const row = selectedRows[i];
+            if (row >= 0 && row < pointCount) {
+                selection[row >>> 5] |= 1 << (row & 31);
             }
         }
+        return selection;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [filterTable, orderingTable, pointCount]);
 
+    const resolved = React.useMemo<{ points: EmbeddingPoints } | null>(() => {
+        if (coordinates == null) return null;
         const points: EmbeddingPoints = {
-            x,
-            y,
-            category,
-            categoryCount: categoryCount ?? 1,
+            x: coordinates.x,
+            y: coordinates.y,
+            category: categories?.category ?? null,
+            categoryCount: categoryColumn ? (categories?.categoryCount ?? 0) : 1,
             selection,
         };
         return { points };
-    }, [tableComputation, spec, filterTable]);
+    }, [coordinates, categories, categoryColumn, selection]);
     const points = resolved?.points ?? null;
 
     // Single-point selection: hovering overrules the last click, which is "sticky" (falls back to
     // it when the cursor leaves the cloud). Both are positional indices into the point cloud, which
     // equals the positional row index into the analyzed data table (the memo builds points straight
-    // from dataTable, no reordering). Reset on point-cloud identity change to avoid a stale row.
+    // from dataTable, no reordering). Reset when the data table changes to avoid a stale row.
     const [clickedIndex, setClickedIndex] = React.useState<number | null>(null);
     const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
     const selectedIndex = hoveredIndex ?? clickedIndex;
     React.useEffect(() => {
         setClickedIndex(null);
         setHoveredIndex(null);
-    }, [tableComputation]);
+    }, [dataTable]);
 
     // The selected point's column values, formatted with the app's Arrow formatter. Generated
     // system columns (row number, stats, bins, value-ids, UMAP coords) are hidden — only the user's
     // own query columns are shown.
     const attributes = React.useMemo<UmapAttribute[] | null>(() => {
-        if (tableComputation == null || selectedIndex == null) return null;
-        const dataTable = tableComputation.dataTable;
+        if (dataTable == null || columnGroups == null || selectedIndex == null) return null;
         if (selectedIndex < 0 || selectedIndex >= dataTable.numRows) return null;
-        const systemFields = collectSystemFieldNames(tableComputation.columnGroups);
+        const systemFields = collectSystemFieldNames(columnGroups);
         return dataTable.schema.fields
             .filter(field => !systemFields.has(field.name))
             .map(field => {
@@ -159,7 +170,7 @@ export function UmapView(props: Props): React.ReactElement {
                 const formatter = makeArrowValueFormatter(field);
                 return { name: field.name, value: formatter.format(value) };
             });
-    }, [tableComputation, selectedIndex]);
+    }, [dataTable, columnGroups, selectedIndex]);
 
     if (!spec) {
         return <div className={styles.empty}>No visualization available</div>;
