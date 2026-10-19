@@ -56,7 +56,9 @@ const SETTINGS = {
     experimental_external_http_location: true,
     experimental_external_metaquery: true,
     experimental_persisted_external_tables: true,
+    enable_raw_sql: true,
     raw_sql_format_table_scan: true,
+    enable_row_types: true,
     http_location_allowlist: ['*'],
     // No log file, Hyper would announce its path on stdout
     log_config: '',
