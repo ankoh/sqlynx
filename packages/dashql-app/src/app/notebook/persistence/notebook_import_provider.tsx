@@ -18,7 +18,7 @@ import { restoreSingleNotebook } from './app_state_loader.js';
 import { mergeRestoredNotebookIntoConnections, mergeRestoredNotebookIntoScripts } from './app_state_loader.js';
 import { useAttachedDatabaseRegistry } from '../connections/attached_database_registry.js';
 import type { AttachedDatabaseState } from '../connections/attached_database_state.js';
-import { useNotebookScriptsRegistry } from '../scripts/notebook_scripts_registry.js';
+import { useNotebookScriptsRegistrySetter } from '../scripts/notebook_scripts_registry.js';
 import { useDashQLCoreSetup } from '../../providers/core_provider.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
 import { useCancelQuery } from '../connections/query_executor.js';
@@ -70,7 +70,7 @@ export function NotebookImportProvider(props: React.PropsWithChildren) {
     const setupCore = useDashQLCoreSetup();
     const [reader, writer] = useStorage();
     const [connections, setConnections] = useAttachedDatabaseRegistry();
-    const [, setScripts] = useNotebookScriptsRegistry();
+    const setScripts = useNotebookScriptsRegistrySetter();
     const cancelQuery = useCancelQuery();
     const [dialog, setDialog] = React.useState<ConflictDialogState | null>(null);
 

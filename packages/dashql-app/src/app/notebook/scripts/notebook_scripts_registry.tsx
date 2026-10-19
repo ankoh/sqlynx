@@ -39,30 +39,40 @@ export type NotebookScriptsAllocator = (
 export type ModifyNotebookScripts = (action: NotebookScriptsAction) => Promise<NotebookScripts | null> | void;
 export type ModifyConnectionNotebookScripts = (conn: string, action: NotebookScriptsAction) => void;
 
-const NOTEBOOK_SCRIPTS_REGISTRY_CTX = React.createContext<[NotebookScriptsRegistry, Dispatch<SetNotebookScriptsRegistryAction>] | null>(null);
+// The registry changes with every editor update while the setter is stable.
+// Hooks that only modify the registry subscribe to the setter context and don't re-render on every update.
+const NOTEBOOK_SCRIPTS_REGISTRY_CTX = React.createContext<NotebookScriptsRegistry | null>(null);
+const NOTEBOOK_SCRIPTS_REGISTRY_SETTER_CTX = React.createContext<Dispatch<SetNotebookScriptsRegistryAction> | null>(null);
 
 type Props = {};
 
 export const NotebookScriptsRegistryProvider: React.FC<React.PropsWithChildren<Props>> = (props: React.PropsWithChildren<Props>) => {
-    const reg = React.useState<NotebookScriptsRegistry>(() => ({
+    const [reg, setReg] = React.useState<NotebookScriptsRegistry>(() => ({
         notebookScriptsMap: new Map(),
         notebookScriptsByConnection: new Map(),
         notebookScriptsByConnectionType: CONNECTOR_TYPES.map(() => []),
     }));
     return (
-        <NOTEBOOK_SCRIPTS_REGISTRY_CTX.Provider value={reg}>
-            {props.children}
-        </NOTEBOOK_SCRIPTS_REGISTRY_CTX.Provider>
+        <NOTEBOOK_SCRIPTS_REGISTRY_SETTER_CTX.Provider value={setReg}>
+            <NOTEBOOK_SCRIPTS_REGISTRY_CTX.Provider value={reg}>
+                {props.children}
+            </NOTEBOOK_SCRIPTS_REGISTRY_CTX.Provider>
+        </NOTEBOOK_SCRIPTS_REGISTRY_SETTER_CTX.Provider>
     );
 };
 
 export function useNotebookScriptsRegistry(): [NotebookScriptsRegistry, Dispatch<SetNotebookScriptsRegistryAction>] {
-    return React.useContext(NOTEBOOK_SCRIPTS_REGISTRY_CTX)!;
+    return [React.useContext(NOTEBOOK_SCRIPTS_REGISTRY_CTX)!, React.useContext(NOTEBOOK_SCRIPTS_REGISTRY_SETTER_CTX)!];
+}
+
+/// Modify the registry without subscribing to its changes
+export function useNotebookScriptsRegistrySetter(): Dispatch<SetNotebookScriptsRegistryAction> {
+    return React.useContext(NOTEBOOK_SCRIPTS_REGISTRY_SETTER_CTX)!;
 }
 
 export function useNotebookScriptsAllocator(): NotebookScriptsAllocator {
     const storage = useStorageWriter();
-    const [_reg, setReg] = React.useContext(NOTEBOOK_SCRIPTS_REGISTRY_CTX)!;
+    const setReg = React.useContext(NOTEBOOK_SCRIPTS_REGISTRY_SETTER_CTX)!;
     return React.useCallback((state: NotebookScriptsInput, catalogFunctionScript: DashQLScript) => {
         const notebookId = state.notebookId;
         const scripts: NotebookScripts = { ...state };
@@ -118,7 +128,8 @@ export function removeNotebookScriptsFromRegistry(reg: NotebookScriptsRegistry, 
 /// pure updater (safe to run more than once). Callers must invoke this before dispatching
 /// DELETE_ATTACHED_DATABASE for the same notebook.
 export function useNotebookScriptsDeletion(): (notebookId: string) => void {
-    const [reg, setReg] = React.useContext(NOTEBOOK_SCRIPTS_REGISTRY_CTX)!;
+    const reg = React.useContext(NOTEBOOK_SCRIPTS_REGISTRY_CTX)!;
+    const setReg = React.useContext(NOTEBOOK_SCRIPTS_REGISTRY_SETTER_CTX)!;
     return React.useCallback((notebookId: string) => {
         // Free the notebook-owned Wasm now, before the shared catalog can be destroyed. The
         // registry closure is recreated on every change, so this read is current at call time.
@@ -132,7 +143,8 @@ export function useNotebookScriptsDeletion(): (notebookId: string) => void {
 }
 
 export function useNotebookScripts(id: string | null): [NotebookScripts | null, ModifyNotebookScripts] {
-    const [registry, setRegistry] = React.useContext(NOTEBOOK_SCRIPTS_REGISTRY_CTX)!;
+    const registry = React.useContext(NOTEBOOK_SCRIPTS_REGISTRY_CTX)!;
+    const setRegistry = React.useContext(NOTEBOOK_SCRIPTS_REGISTRY_SETTER_CTX)!;
     const storageWriter = useStorageWriter();
     const logger = useLogger();
 
@@ -215,7 +227,7 @@ export async function ensureNotebookScriptAnalyzed(
 }
 
 export function useConnectionScriptsDispatch(): ModifyConnectionNotebookScripts {
-    const [_registry, setRegistry] = React.useContext(NOTEBOOK_SCRIPTS_REGISTRY_CTX)!;
+    const setRegistry = React.useContext(NOTEBOOK_SCRIPTS_REGISTRY_SETTER_CTX)!;
     const storage = useStorageWriter();
     const logger = useLogger();
 

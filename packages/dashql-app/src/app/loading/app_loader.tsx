@@ -16,7 +16,7 @@ import { canShowNotebook, loadApp, selectStartupNotebook, shouldFinishInitialNav
 import { useAppConfig, useAppReconfigure } from '../config/app_config.js';
 import { useStorage } from '../notebook/persistence/storage_provider.js';
 import { groupNotebookManifestWrites, WRITE_NOTEBOOK_MANIFEST } from '../notebook/persistence/storage_writer.js';
-import { useNotebookScriptsRegistry } from '../notebook/scripts/notebook_scripts_registry.js';
+import { useNotebookScriptsRegistrySetter } from '../notebook/scripts/notebook_scripts_registry.js';
 import { useEmbeddedDatabaseSetup } from '../../platform/database/embedded_database_provider.js';
 import { InvalidNotebook } from '../notebook/persistence/notebook_validation.js';
 import { AppHost, getAppHost } from '../../platform/native_globals.js';
@@ -67,7 +67,7 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
     const allocateAttachedDatabase = useAttachedDatabaseStateAllocator();
     const [connReg, setConnReg] = useAttachedDatabaseRegistry();
     const [, dispatchDatabase] = useDynamicAttachedDatabaseDispatch();
-    const [, setNotebookScriptsRegistry] = useNotebookScriptsRegistry();
+    const setNotebookScriptsRegistry = useNotebookScriptsRegistrySetter();
     const setupEmbeddedDatabase = useEmbeddedDatabaseSetup();
     const hyperSetup = useHyperSetup();
 
