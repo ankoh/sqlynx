@@ -426,52 +426,70 @@ interface AttachedDatabaseTreeProps {
 
 const attachedDatabaseKey = (databaseId: string) => `attached-database:${databaseId}`;
 
+/// Keep the identity of an array as long as its elements are identical
+function useShallowStableArray<T>(values: T[]): T[] {
+    const ref = React.useRef(values);
+    if (ref.current.length !== values.length || ref.current.some((value, i) => value !== values[i])) {
+        ref.current = values;
+    }
+    return ref.current;
+}
+
 export const AttachedDatabaseTree: React.FC<AttachedDatabaseTreeProps> = ({ databases, onOpenSettings }) => {
-    const catalogTrees = databases.map(database => {
-        const reader = database.catalog.createSnapshot().read();
+    // The database states change with every query event while the catalogs rarely change.
+    // A catalog caches its snapshot until it is modified (which destroys the snapshot), so the snapshot identity
+    // tells us when the trees must be rebuilt. Never keep a reader of a snapshot that is no longer current.
+    const databaseIds = useShallowStableArray(databases.map(database => database.databaseId));
+    const snapshots = useShallowStableArray(databases.map(database => database.catalog.createSnapshot()));
+    const catalogTrees = React.useMemo(() => databaseIds.map((databaseId, i) => {
+        const reader = snapshots[i].read();
         return {
-            database,
+            databaseId,
             reader,
-            roots: createCatalogTree(reader, `${attachedDatabaseKey(database.databaseId)}/catalog`),
+            roots: createCatalogTree(reader, `${attachedDatabaseKey(databaseId)}/catalog`),
         };
-    });
+    }), [databaseIds, snapshots]);
     const [expanded, setExpanded] = React.useState<ReadonlySet<string>>(() => {
         const initial = new Set<string>();
-        for (const tree of catalogTrees) {
-            if (!isAttachedDatabaseInitiallyExpanded(tree.database, databases.length)) continue;
-            initial.add(attachedDatabaseKey(tree.database.databaseId));
+        catalogTrees.forEach((tree, i) => {
+            if (!isAttachedDatabaseInitiallyExpanded(databases[i], databases.length)) return;
+            initial.add(attachedDatabaseKey(tree.databaseId));
             for (const root of tree.roots) initial.add(root.key);
-        }
+        });
         return initial;
     });
-    const knownDatabaseIds = React.useRef(new Set(databases.map(database => database.databaseId)));
+    const knownDatabaseIds = React.useRef(new Set(databaseIds));
     React.useEffect(() => {
-        const nextDatabaseIds = new Set(databases.map(database => database.databaseId));
+        const nextDatabaseIds = new Set(databaseIds);
         setExpanded(current => {
             const next = new Set([...current].filter(key => {
                 const databaseId = key.split(':', 2)[1]?.split('/', 1)[0];
                 return databaseId == null || nextDatabaseIds.has(databaseId);
             }));
-            for (const tree of catalogTrees) {
-                if (knownDatabaseIds.current.has(tree.database.databaseId)) continue;
-                if (isAttachedDatabaseInitiallyExpanded(tree.database, databases.length)) {
-                    next.add(attachedDatabaseKey(tree.database.databaseId));
+            catalogTrees.forEach((tree, i) => {
+                if (knownDatabaseIds.current.has(tree.databaseId)) return;
+                if (isAttachedDatabaseInitiallyExpanded(databases[i], databases.length)) {
+                    next.add(attachedDatabaseKey(tree.databaseId));
                     for (const root of tree.roots) next.add(root.key);
                 }
-            }
+            });
             return next;
         });
         knownDatabaseIds.current = nextDatabaseIds;
-    }, [databases]);
+    }, [databaseIds]);
+    const catalogRows = React.useMemo(() => catalogTrees.map(tree => (
+        expanded.has(attachedDatabaseKey(tree.databaseId))
+            ? flattenCatalogRows(tree.reader, tree.roots, expanded)
+            : []
+    )), [catalogTrees, expanded]);
     const rows = React.useMemo(() => {
         const next: AttachedDatabaseTreeRow[] = [];
-        for (const tree of catalogTrees) {
-            const key = attachedDatabaseKey(tree.database.databaseId);
-            next.push({ type: 'attached-database', key, database: tree.database });
-            if (expanded.has(key)) next.push(...flattenCatalogRows(tree.reader, tree.roots, expanded));
-        }
+        databases.forEach((database, i) => {
+            next.push({ type: 'attached-database', key: attachedDatabaseKey(database.databaseId), database });
+            next.push(...catalogRows[i]);
+        });
         return next;
-    }, [catalogTrees, expanded]);
+    }, [databases, catalogRows]);
     const containerRef = React.useRef<HTMLDivElement>(null);
     const size = observeSize(containerRef);
     const listRef = useListRef(null);
