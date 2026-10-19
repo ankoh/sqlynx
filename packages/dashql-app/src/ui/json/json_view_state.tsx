@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { type JsonViewProps } from './json_view.js';
-import { useToolVisibilityReducer, ToolVisibilityStateProvider } from './json_tool_state.js';
+import { ToolVisibilityStore, ToolVisibilityStateProvider } from './json_tool_state.js';
 import { useNestedExpansionReducer, NestedExpansionStateProvider } from './json_nested_state.js';
 
 export interface JsonViewerState {
@@ -26,25 +26,10 @@ export const initialState: JsonViewerState = {
     indentWidth: 15,
 };
 
-type Dispatch = React.Dispatch<JsonViewerState>;
-
 export const Context = React.createContext<JsonViewerState>(initialState);
-
-const DispatchContext = React.createContext<Dispatch>(() => { });
-
-function reducer(state: JsonViewerState, action: JsonViewerState): JsonViewerState {
-    return {
-        ...state,
-        ...action,
-    };
-}
 
 export const useJsonViewerState = () => {
     return React.useContext(Context);
-};
-
-export const useJsonViewerDispatch = () => {
-    return React.useContext(DispatchContext);
 };
 
 export interface JsonViewerStateProps {
@@ -55,19 +40,17 @@ export const JsonViewerStateProvider = ({
     children,
     initialState: init,
 }: React.PropsWithChildren<JsonViewerStateProps>) => {
-    const [state, dispatch] = React.useReducer(reducer, Object.assign({}, initialState, init));
-    const [showTools, showToolsDispatch] = useToolVisibilityReducer();
+    // The JsonView memoizes the state, so this only changes when one of its props changes
+    const state = React.useMemo(() => Object.assign({}, initialState, init), [init]);
+    const [toolStore] = React.useState(() => new ToolVisibilityStore());
     const [expands, expandsDispatch] = useNestedExpansionReducer();
-    React.useEffect(() => dispatch({ ...init }), [init]);
     return (
         <Context.Provider value={state}>
-            <DispatchContext.Provider value={dispatch}>
-                <ToolVisibilityStateProvider initial={showTools} dispatch={showToolsDispatch}>
-                    <NestedExpansionStateProvider initial={expands} dispatch={expandsDispatch}>
-                        {children}
-                    </NestedExpansionStateProvider>
-                </ToolVisibilityStateProvider>
-            </DispatchContext.Provider>
+            <ToolVisibilityStateProvider store={toolStore}>
+                <NestedExpansionStateProvider initial={expands} dispatch={expandsDispatch}>
+                    {children}
+                </NestedExpansionStateProvider>
+            </ToolVisibilityStateProvider>
         </Context.Provider>
     );
 };

@@ -60,4 +60,24 @@ describe('JsonView array pagination', () => {
         act(() => (collapsedButtons[0] as HTMLButtonElement).click());
         expect(container.textContent).toContain('deep');
     });
+
+    it('shows the copy button of hovered values only', () => {
+        act(() => root.render(<JsonView value={{ a: 1, b: 2 }} />));
+        expect(container.querySelectorAll('[aria-label="Copy JSON value"]').length).toBe(0);
+
+        // The innermost element of the key is its line
+        const findLine = (key: string) => Array.from(container.querySelectorAll('div'))
+            .filter(div => div.textContent?.startsWith(`"${key}"`))
+            .pop();
+        const lineA = findLine('a')!;
+        const lineB = findLine('b')!;
+        expect(lineA).toBeDefined();
+        expect(lineB).toBeDefined();
+        act(() => lineA.dispatchEvent(new MouseEvent('mouseover', { bubbles: true })));
+        expect(lineA.querySelector('[aria-label="Copy JSON value"]')).not.toBeNull();
+        expect(lineB.querySelector('[aria-label="Copy JSON value"]')).toBeNull();
+
+        act(() => lineA.dispatchEvent(new MouseEvent('mouseout', { bubbles: true })));
+        expect(container.querySelectorAll('[aria-label="Copy JSON value"]').length).toBe(0);
+    });
 });
