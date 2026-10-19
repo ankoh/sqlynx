@@ -161,9 +161,14 @@ export const NotebookCommands: React.FC<Props> = (props: Props) => {
         }
     }, [dashboardsEnabled, settingsReady, location.search, navigate]);
 
-    // Setup command dispatch logic
+    // Setup command dispatch logic.
+    // The notebook scripts change with every keystroke and the connection with every query event.
+    // Read them through a ref to keep the dispatch (and the context value) stable.
+    const latest = React.useRef({ notebookScripts, modifyNotebookScripts, connection, connectionAttention, executeQuery, refreshCatalog, notebookId: route.notebookId });
+    latest.current = { notebookScripts, modifyNotebookScripts, connection, connectionAttention, executeQuery, refreshCatalog, notebookId: route.notebookId };
     const commandDispatch = React.useCallback(
         async (command: NotebookCommandType) => {
+            const { notebookScripts, modifyNotebookScripts, connection, connectionAttention, executeQuery, refreshCatalog, notebookId } = latest.current;
             if (notebookScripts == null) {
                 logger.warn("Notebook is null", {});
                 return;
@@ -172,26 +177,26 @@ export const NotebookCommands: React.FC<Props> = (props: Props) => {
                 // Execute the query script in the current notebook
                 case NotebookCommandType.ExecuteEditorQuery:
                     logger.info("Ctrl+E notebook command received", {
-                        notebookId: route.notebookId,
+                        notebookId,
                         viewMode: notebookViewModeRef.current.toString(),
                         connectionHealth: printConnectionHealth(connection?.connectionHealth ?? ConnectionHealth.NOT_STARTED),
                         focusedFile: notebookScripts.scriptFocus.fileName,
                     }, LOG_CTX);
                     if (notebookViewModeRef.current !== NotebookViewMode.Notebook) {
-                        logger.warn("Ignoring Ctrl+E outside notebook view", { notebookId: route.notebookId }, LOG_CTX);
+                        logger.warn("Ignoring Ctrl+E outside notebook view", { notebookId }, LOG_CTX);
                         break;
                     }
                     if (connection == null || connection.connectionHealth !== ConnectionHealth.ONLINE) {
                         connectionAttention.request(notebookScripts.notebookId);
                         logger.warn("Cannot execute query command with an unhealthy connection", {
-                            notebookId: route.notebookId,
+                            notebookId,
                             status: printConnectionHealth(connection?.connectionHealth ?? ConnectionHealth.NOT_STARTED)
                         }, LOG_CTX);
                     } else {
                         const entry = getSelectedScriptRef(notebookScripts);
                         if (!entry) {
                             logger.warn("Ignoring Ctrl+E because no committed script is selected", {
-                                notebookId: route.notebookId,
+                                notebookId,
                                 focusedFile: notebookScripts.scriptFocus.fileName,
                             }, LOG_CTX);
                             break;
@@ -199,7 +204,7 @@ export const NotebookCommands: React.FC<Props> = (props: Props) => {
                         const scriptData = notebookScripts.scripts[entry.scriptId];
                         if (!scriptData) {
                             logger.warn("Ignoring Ctrl+E because selected script data is missing", {
-                                notebookId: route.notebookId,
+                                notebookId,
                                 scriptKey: entry.scriptId.toString(),
                             }, LOG_CTX);
                             break;
@@ -257,7 +262,7 @@ export const NotebookCommands: React.FC<Props> = (props: Props) => {
                     break;
             }
         },
-        [connection, notebookScripts, notebookScripts?.connectorInfo, connectionAttention.request],
+        [logger],
     );
 
     // Helper to require connector info
