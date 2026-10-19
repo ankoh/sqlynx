@@ -89,14 +89,24 @@ export const JsonView: JsonViewComponent = React.forwardRef<HTMLDivElement, Json
         className,
         ...containerProps
     } = props;
+    // Collapse nested values below a numeric depth, unless the caller decides explicitly
+    const expandNodeInitially = React.useMemo<ShouldExpandNodeInitially>(() => {
+        if (collapsed === true) {
+            return AlwaysCollapse;
+        } else if (shouldExpandNodeInitially) {
+            return shouldExpandNodeInitially;
+        } else if (typeof collapsed === 'number') {
+            return (_isExpanded, { level }) => level <= collapsed;
+        } else {
+            return AlwaysExpand;
+        }
+    }, [collapsed, shouldExpandNodeInitially]);
     const initialState: JsonViewerState = {
         value,
         objectSortKeys,
         indentWidth: indentWidth ?? 15,
         arrayPageSize: arrayPageSize ?? 0,
-        shouldExpandNodeInitially: collapsed === true
-            ? AlwaysCollapse
-            : (shouldExpandNodeInitially ?? AlwaysExpand),
+        shouldExpandNodeInitially: expandNodeInitially,
         displayObjectSize: displayObjectSize ?? true,
         collapsed: collapsed ?? false,
         enableClipboard,
