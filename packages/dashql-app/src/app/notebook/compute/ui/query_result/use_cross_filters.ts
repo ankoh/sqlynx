@@ -9,6 +9,7 @@ import { HistogramFilterCallback } from './histogram_cell.js';
 import { MostFrequentValueFilterCallback } from './mostfrequent_cell.js';
 import { DataTableLayout } from './data_table_layout.js';
 import { computeFilteredColumnAggregatesDispatched, filterTableDispatched } from '../../../../../compute/computation_logic.js';
+import { forEachIntegerValue } from './visible_rows.js';
 
 /// Compare two scalar filter lists for equality.
 function scalarFiltersEqual(left: ScalarFilter[], right: ScalarFilter[]): boolean {
@@ -295,18 +296,30 @@ export function useCrossFilters(
     };
 }
 
+/// Selection row counts per filter table and data search table.
+/// Weakly keyed by both Arrow tables, so a count never outlives the tables it was computed from.
+const selectionRowCounts = new WeakMap<object, WeakMap<object, number>>();
+
 function countSelectionRows(filterTable: FilterTable | null, dataSearchTable: DataSearchTable | null): number {
     if (filterTable == null) return dataSearchTable?.dataTable.numRows ?? 0;
     if (dataSearchTable == null) return filterTable.dataTable.numRows;
+    let countsBySearch = selectionRowCounts.get(filterTable.dataTable);
+    const cached = countsBySearch?.get(dataSearchTable.dataTable);
+    if (cached !== undefined) return cached;
     const searchRows = dataSearchTable.dataTable.getChildAt(0);
     const filterRows = filterTable.dataTable.getChildAt(0);
     if (searchRows == null || filterRows == null) return 0;
     const matches = new Set<number>();
-    for (let i = 0; i < searchRows.length; ++i) matches.add(Number(searchRows.get(i)));
+    forEachIntegerValue(searchRows, rowId => matches.add(rowId));
     let count = 0;
-    for (let i = 0; i < filterRows.length; ++i) {
-        if (matches.has(Number(filterRows.get(i)))) ++count;
+    forEachIntegerValue(filterRows, rowId => {
+        if (matches.has(rowId)) ++count;
+    });
+    if (countsBySearch == null) {
+        countsBySearch = new WeakMap();
+        selectionRowCounts.set(filterTable.dataTable, countsBySearch);
     }
+    countsBySearch.set(dataSearchTable.dataTable, count);
     return count;
 }
 

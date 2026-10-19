@@ -2,6 +2,31 @@ import * as arrow from 'apache-arrow';
 
 import { TableComputationState } from '../../../../../compute/computation_state.js';
 
+/// Visit the values of an integer column as numbers, like `Number(column.get(i))` (nulls become 0).
+/// Integer chunks are read from their value buffers directly. A chunk's values are already narrowed
+/// to the chunk's window, so value `i` of the chunk is `values[i]`, exactly what `Vector.get` reads.
+export function forEachIntegerValue(column: arrow.Vector, visit: (value: number, index: number) => void): void {
+    if (column.type.typeId !== arrow.Type.Int) {
+        for (let i = 0; i < column.length; ++i) {
+            visit(Number(column.get(i)), i);
+        }
+        return;
+    }
+    let index = 0;
+    for (const chunk of column.data) {
+        const values = chunk.values as ArrayLike<number | bigint>;
+        if (chunk.nullCount === 0) {
+            for (let i = 0; i < chunk.length; ++i) {
+                visit(Number(values[i]), index++);
+            }
+        } else {
+            for (let i = 0; i < chunk.length; ++i) {
+                visit(chunk.getValid(i) ? Number(values[i]) : 0, index++);
+            }
+        }
+    }
+}
+
 /// Resolve the active row-id indirection for a table computation.
 ///
 /// When a cross-filter and/or ordering is active, the compute module produces a
@@ -30,10 +55,10 @@ export function resolveVisibleRowIndices(computation: TableComputationState | nu
         return null;
     }
     const out = new Int32Array(column.length);
-    for (let i = 0; i < column.length; ++i) {
+    forEachIntegerValue(column, (rowNumber, i) => {
         // Row numbers are 1-based; convert to a 0-based positional index.
-        out[i] = Math.max(Number(column.get(i)), 1) - 1;
-    }
+        out[i] = Math.max(rowNumber, 1) - 1;
+    });
     return out;
 }
 
