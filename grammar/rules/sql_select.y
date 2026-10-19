@@ -976,6 +976,12 @@ sql_simple_typename:
             Attr(Key::SQL_GENERIC_TYPE_MODIFIERS, ctx.Array(Loc({@2, @3, @4}), { std::move($3) })),
         });
     }
+  | ROW LRB sql_table_func_element_list RRB {
+        $$ = ctx.Object(@$, buffers::parser::NodeType::OBJECT_SQL_GENERIC_TYPE, {
+            Attr(Key::SQL_GENERIC_TYPE_NAME, ctx.NameFromKeyword(@1, "row")),
+            Attr(Key::SQL_GENERIC_TYPE_MODIFIERS, ctx.Array(Loc({@2, @3, @4}), std::move($3))),
+        });
+    }
   | sql_numeric                         { $$ = $1; }
   | sql_bit                             { $$ = $1; }
   | sql_const_character                 { $$ = $1; }

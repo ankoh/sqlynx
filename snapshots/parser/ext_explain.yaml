@@ -1000,3 +1000,253 @@ parser-snapshots:
       comments: []
       comment-blocks: []
       comment-warnings: []
+
+  - name: explain_raw_sql_aggregate_row_type
+    input: |-
+      explain (sql internal_spark)
+      select
+        order_id,
+        raw_sql_aggregate(
+          descriptor(output array(row(product_name text, available_quantity numeric(38,18)))),
+          'collect_list(named_struct(''product_name'', {0}, ''available_quantity'', {1}))',
+          product_name,
+          available_quantity
+        ) as products
+      from order_products
+      group by order_id;
+    expected:
+      statements:
+        - type: EXPLAIN
+          ast-begin: 0
+          ast-size: 63
+          description:
+            text: "explain (s.. order_id;"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_EXT_EXPLAIN
+            text: "explain (s..y order_id"
+            children:
+              - key: EXT_EXPLAIN_STATEMENT
+                type: OBJECT_SQL_SELECT
+                text: "select\n  o..y order_id"
+                children:
+                  - key: SQL_SELECT_TARGETS
+                    type: ARRAY
+                    text: "order_id,\n..s products"
+                    children:
+                      - type: OBJECT_SQL_RESULT_TARGET
+                        text: "order_id"
+                        children:
+                          - key: SQL_RESULT_TARGET_VALUE
+                            type: OBJECT_SQL_COLUMN_REF
+                            text: "order_id"
+                            children:
+                              - key: SQL_COLUMN_REF_PATH
+                                type: ARRAY
+                                text: "order_id"
+                                children:
+                                  - type: NAME
+                                    text: "order_id"
+                      - type: OBJECT_SQL_RESULT_TARGET
+                        text: "raw_sql_ag..s products"
+                        children:
+                          - key: SQL_RESULT_TARGET_VALUE
+                            type: OBJECT_SQL_FUNCTION_EXPRESSION
+                            text: "raw_sql_ag..antity\n  )"
+                            children:
+                              - key: SQL_FUNCTION_NAME
+                                type: ARRAY
+                                text: "raw_sql_aggregate"
+                                children:
+                                  - type: NAME
+                                    text: "raw_sql_aggregate"
+                              - key: SQL_FUNCTION_ARGUMENTS
+                                type: ARRAY
+                                text: "descriptor..e_quantity"
+                                children:
+                                  - type: OBJECT_SQL_FUNCTION_ARG
+                                    text: "descriptor..(38,18))))"
+                                    children:
+                                      - key: SQL_FUNCTION_ARG_VALUE
+                                        type: OBJECT_SQL_DESCRIPTOR
+                                        text: "descriptor..(38,18))))"
+                                        children:
+                                          - key: SQL_DESCRIPTOR_COLUMNS
+                                            type: ARRAY
+                                            text: "output arr..c(38,18)))"
+                                            children:
+                                              - type: OBJECT_SQL_COLUMN_DEF
+                                                text: "output arr..c(38,18)))"
+                                                children:
+                                                  - key: SQL_COLUMN_DEF_NAME
+                                                    type: NAME
+                                                    text: "output"
+                                                  - key: SQL_COLUMN_DEF_TYPE
+                                                    type: OBJECT_SQL_TYPENAME
+                                                    text: "array(row(..c(38,18)))"
+                                                    children:
+                                                      - key: SQL_TYPENAME_TYPE
+                                                        type: OBJECT_SQL_GENERIC_TYPE
+                                                        text: "array(row(..c(38,18)))"
+                                                        children:
+                                                          - key: SQL_GENERIC_TYPE_NAME
+                                                            type: NAME
+                                                            text: "array"
+                                                          - key: SQL_GENERIC_TYPE_MODIFIERS
+                                                            type: ARRAY
+                                                            text: "(row(produ..c(38,18)))"
+                                                            children:
+                                                              - type: OBJECT_SQL_TYPENAME
+                                                                text: "row(produc..ic(38,18))"
+                                                                children:
+                                                                  - key: SQL_TYPENAME_TYPE
+                                                                    type: OBJECT_SQL_GENERIC_TYPE
+                                                                    text: "row(produc..ic(38,18))"
+                                                                    children:
+                                                                      - key: SQL_GENERIC_TYPE_NAME
+                                                                        type: NAME
+                                                                        text: "row"
+                                                                      - key: SQL_GENERIC_TYPE_MODIFIERS
+                                                                        type: ARRAY
+                                                                        text: "(product_n..ic(38,18))"
+                                                                        children:
+                                                                          - type: OBJECT_SQL_COLUMN_DEF
+                                                                            text: "product_name text"
+                                                                            children:
+                                                                              - key: SQL_COLUMN_DEF_NAME
+                                                                                type: NAME
+                                                                                text: "product_name"
+                                                                              - key: SQL_COLUMN_DEF_TYPE
+                                                                                type: OBJECT_SQL_TYPENAME
+                                                                                text: "text"
+                                                                                children:
+                                                                                  - key: SQL_TYPENAME_TYPE
+                                                                                    type: OBJECT_SQL_GENERIC_TYPE
+                                                                                    text: "text"
+                                                                                    children:
+                                                                                      - key: SQL_GENERIC_TYPE_NAME
+                                                                                        type: NAME
+                                                                                        text: "text"
+                                                                          - type: OBJECT_SQL_COLUMN_DEF
+                                                                            text: "available_..ric(38,18)"
+                                                                            children:
+                                                                              - key: SQL_COLUMN_DEF_NAME
+                                                                                type: NAME
+                                                                                text: "available_quantity"
+                                                                              - key: SQL_COLUMN_DEF_TYPE
+                                                                                type: OBJECT_SQL_TYPENAME
+                                                                                text: "numeric(38,18)"
+                                                                                children:
+                                                                                  - key: SQL_TYPENAME_TYPE
+                                                                                    type: OBJECT_SQL_NUMERIC_TYPE
+                                                                                    text: "numeric(38,18)"
+                                                                                    children:
+                                                                                      - key: SQL_NUMERIC_TYPE_BASE
+                                                                                        type: ENUM_SQL_NUMERIC_TYPE
+                                                                                        value: NUMERIC
+                                                                                      - key: SQL_NUMERIC_TYPE_MODIFIERS
+                                                                                        type: ARRAY
+                                                                                        text: "(38,18)"
+                                                                                        children:
+                                                                                          - type: LITERAL_INTEGER
+                                                                                            text: "38"
+                                                                                          - type: LITERAL_INTEGER
+                                                                                            text: "18"
+                                  - type: OBJECT_SQL_FUNCTION_ARG
+                                    text: "'collect_l..'', {1}))'"
+                                    children:
+                                      - key: SQL_FUNCTION_ARG_VALUE
+                                        type: LITERAL_STRING
+                                        text: "'collect_l..'', {1}))'"
+                                  - type: OBJECT_SQL_FUNCTION_ARG
+                                    text: "product_name"
+                                    children:
+                                      - key: SQL_FUNCTION_ARG_VALUE
+                                        type: OBJECT_SQL_COLUMN_REF
+                                        text: "product_name"
+                                        children:
+                                          - key: SQL_COLUMN_REF_PATH
+                                            type: ARRAY
+                                            text: "product_name"
+                                            children:
+                                              - type: NAME
+                                                text: "product_name"
+                                  - type: OBJECT_SQL_FUNCTION_ARG
+                                    text: "available_quantity"
+                                    children:
+                                      - key: SQL_FUNCTION_ARG_VALUE
+                                        type: OBJECT_SQL_COLUMN_REF
+                                        text: "available_quantity"
+                                        children:
+                                          - key: SQL_COLUMN_REF_PATH
+                                            type: ARRAY
+                                            text: "available_quantity"
+                                            children:
+                                              - type: NAME
+                                                text: "available_quantity"
+                          - key: SQL_RESULT_TARGET_NAME
+                            type: NAME
+                            text: "products"
+                  - key: SQL_SELECT_FROM
+                    type: ARRAY
+                    text: "from order_products"
+                    children:
+                      - type: OBJECT_SQL_TABLEREF
+                        text: "order_products"
+                        children:
+                          - key: SQL_TABLEREF_NAME
+                            type: ARRAY
+                            text: "order_products"
+                            children:
+                              - type: NAME
+                                text: "order_products"
+                  - key: SQL_SELECT_GROUPS
+                    type: ARRAY
+                    text: "group by order_id"
+                    children:
+                      - type: OBJECT_SQL_GROUP_BY_ITEM
+                        text: "order_id"
+                        children:
+                          - key: SQL_GROUP_BY_ITEM_TYPE
+                            type: ENUM_SQL_GROUP_BY_ITEM_TYPE
+                            value: EXPRESSION
+                          - key: SQL_GROUP_BY_ITEM_ARG
+                            type: OBJECT_SQL_COLUMN_REF
+                            text: "order_id"
+                            children:
+                              - key: SQL_COLUMN_REF_PATH
+                                type: ARRAY
+                                text: "order_id"
+                                children:
+                                  - type: NAME
+                                    text: "order_id"
+              - key: EXT_EXPLAIN_OPTIONS
+                type: ARRAY
+                text: "(sql inter..nal_spark)"
+                children:
+                  - type: OBJECT_SQL_GENERIC_OPTION
+                    text: "sql internal_spark"
+                    children:
+                      - key: SQL_GENERIC_OPTION_KEY
+                        type: NAME
+                        text: "sql"
+                      - key: SQL_GENERIC_OPTION_VALUE
+                        type: NAME
+                        text: "internal_spark"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks:
+        - text: [28,29]
+        - text: [35,36]
+        - text: [47,48]
+        - text: [68,69]
+        - text: [157,158]
+        - text: [243,244]
+        - text: [261,262]
+        - text: [284,285]
+        - text: [300,301]
+        - text: [320,321]
+      comments: []
+      comment-blocks: []
+      comment-warnings: []

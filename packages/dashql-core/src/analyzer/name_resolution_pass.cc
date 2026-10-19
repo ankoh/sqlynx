@@ -726,7 +726,11 @@ void NameResolutionPass::Visit(std::span<const buffers::parser::Node> morsel) {
                 size_t parent_id = node.parent();
                 if (parent_id < state.ast.size()) {
                     const auto& parent = state.ast[parent_id];
-                    if (parent.attribute_key() == AttributeKey::SQL_DESCRIPTOR_COLUMNS) break;
+                    // Fields of descriptors and row types are not table columns
+                    if (parent.attribute_key() == AttributeKey::SQL_DESCRIPTOR_COLUMNS ||
+                        parent.attribute_key() == AttributeKey::SQL_GENERIC_TYPE_MODIFIERS) {
+                        break;
+                    }
                 }
                 auto [column_def_node] = state.GetAttributes<AttributeKey::SQL_COLUMN_DEF_NAME>(node);
                 if (column_def_node && column_def_node->node_type() == buffers::parser::NodeType::NAME) {
