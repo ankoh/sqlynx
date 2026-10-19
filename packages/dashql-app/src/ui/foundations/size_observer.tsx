@@ -10,13 +10,23 @@ export interface ObservedSize {
 export const OBSERVED_SIZE = React.createContext<ObservedSize | null>(null);
 export const useObservedSize = () => React.useContext(OBSERVED_SIZE)!;
 
+/// Keep the previous size if the dimensions did not change.
+/// Resize observers report a new rect object for every observation.
+function keepSameSize(prev: ObservedSize | null, next: ObservedSize | null): ObservedSize | null {
+    if (prev !== null && next !== null && prev.width === next.width && prev.height === next.height) {
+        return prev;
+    }
+    return next;
+}
+
 export const observeSize = (target: React.RefObject<HTMLElement | null>): ObservedSize | null => {
     const [size, setSize] = React.useState<ObservedSize | null>(null);
     React.useLayoutEffect(() => {
-        setSize(target.current?.getBoundingClientRect() ?? null);
+        const next = target.current?.getBoundingClientRect() ?? null;
+        setSize(prev => keepSameSize(prev, next));
     }, [target.current]);
     useResizeObserver(target, (entry: ResizeObserverEntry) => {
-        setSize(entry.contentRect);
+        setSize(prev => keepSameSize(prev, entry.contentRect));
     });
     return size;
 };
