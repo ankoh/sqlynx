@@ -18,6 +18,27 @@ import * as styles from './dashboard.module.css';
 
 const GRID_GAP = 12;
 
+function samePlacement(a: DashboardPlacement | undefined, b: DashboardPlacement): boolean {
+    return a != null && a.id === b.id && a.row === b.row && a.column === b.column && a.width === b.width && a.height === b.height;
+}
+
+/// Keep the placements that did not change, the memoized cards only render again when their own placement changes.
+/// Returns the previous layout if nothing changed.
+function sharePlacements(next: DashboardPlacement[], previous: DashboardPlacement[]): DashboardPlacement[] {
+    const previousById = new Map(previous.map(item => [item.id, item]));
+    let changed = next.length !== previous.length;
+    const shared = next.map((item, index) => {
+        const before = previousById.get(item.id);
+        if (!samePlacement(before, item)) {
+            changed = true;
+            return item;
+        }
+        if (previous[index] !== before) changed = true;
+        return before!;
+    });
+    return changed ? shared : previous;
+}
+
 interface Props {
     notebookScripts: NotebookScripts;
     modifyNotebookScripts: ModifyNotebookScripts;
@@ -103,16 +124,22 @@ export function Dashboard(props: Props): React.ReactElement {
         }
     }, [layout, columnStep, rowStep, persistLayout, props.notebookScripts.scripts]);
 
+    // The resize handler reads the layout through a ref, so that the cards keep their callback while the layout changes
+    const layoutRef = React.useRef(layout);
+    layoutRef.current = layout;
     const handleResize = React.useCallback((ownerId: number, width: number, height: number, commit: boolean) => {
-        const baseline = resizeBaselineRef.current ?? layout;
-        if (!commit && resizeBaselineRef.current == null) resizeBaselineRef.current = layout;
-        const next = resizeDashboardItem(layout, ownerId, width, height);
+        const current = layoutRef.current;
+        const baseline = resizeBaselineRef.current ?? current;
+        if (!commit && resizeBaselineRef.current == null) resizeBaselineRef.current = current;
+        const next = sharePlacements(resizeDashboardItem(current, ownerId, width, height), current);
+        // Pointer moves within the snapped size do not change the layout
+        if (!commit && next === current) return;
         setLayout(next);
         if (commit) {
             persistLayout(next, baseline);
             resizeBaselineRef.current = null;
         }
-    }, [layout, persistLayout]);
+    }, [persistLayout]);
 
     const handleResizeCancel = React.useCallback(() => {
         if (resizeBaselineRef.current != null) setLayout(resizeBaselineRef.current);

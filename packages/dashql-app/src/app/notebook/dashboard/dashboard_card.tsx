@@ -42,7 +42,8 @@ interface Props {
     dependencies?: DashboardCardDependencies;
 }
 
-export function DashboardCard(props: Props): React.ReactElement {
+/// Memoized, a resize of one card only renders the cards whose placement changed
+export const DashboardCard = React.memo(function DashboardCard(props: Props): React.ReactElement {
     const dependencies = props.dependencies ?? DEFAULT_DEPENDENCIES;
     const query = dependencies.useQueryState(props.notebookId, props.script.latestQueryId);
     const visualizeQuery = props.script.annotations.visualizeQuery as ResolvedVisualizeQuery;
@@ -173,4 +174,4 @@ export function DashboardCard(props: Props): React.ReactElement {
             />
         </article>
     );
-}
+});
