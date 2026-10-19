@@ -90,6 +90,8 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
     const keywordCase = getKeywordCase(config?.settings);
     const compactLayout = useCompactFeedLayout();
     const scriptRefs = props.notebookScripts.scriptRefs;
+    // The estimated heights only matter until a row is measured.
+    // Don't re-estimate (and copy the text of every script) whenever any script changes.
     const canonicalEntries = React.useMemo(
         () => getSelectedScriptRefs(props.notebookScripts).map(entry => ({
             ...entry,
@@ -97,7 +99,7 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
                 props.notebookScripts.scripts[entry.scriptId]?.scriptSession.getText() ?? '',
             ),
         })),
-        [scriptRefs, props.notebookScripts.scripts],
+        [scriptRefs],
     );
     const [displayEntries, setDisplayEntries] = React.useState(() => ({
         source: scriptRefs,
