@@ -345,9 +345,9 @@ function formatSql(
 
 interface SearchCardProps {
     folder: OpenedFolder | null;
-    prompt: string;
-    onPromptChange: (prompt: string) => void;
-    onSubmit: () => void;
+    /// Clears the prompt whenever it changes
+    promptReset: number;
+    onSubmit: (prompt: string) => void;
     searching: boolean;
     results: SearchResults[] | null;
     /// The script of the hit under the pointer
@@ -359,8 +359,24 @@ interface SearchCardProps {
     onCloseResults: () => void;
 }
 
-/// The prompt of the semantic search and its best matches
-export const SearchCard: React.FC<SearchCardProps> = (props: SearchCardProps) => {
+interface SearchPromptProps {
+    folder: OpenedFolder | null;
+    promptReset: number;
+    onSubmit: (prompt: string) => void;
+    searching: boolean;
+}
+
+/// The prompt of the semantic search. It owns the text, a keystroke does not render the page.
+const SearchPrompt: React.FC<SearchPromptProps> = (props: SearchPromptProps) => {
+    const [prompt, setPrompt] = React.useState('');
+    const [promptReset, setPromptReset] = React.useState(props.promptReset);
+    if (promptReset !== props.promptReset) {
+        setPromptReset(props.promptReset);
+        setPrompt('');
+    }
+    const { onSubmit } = props;
+    const submit = React.useCallback(() => onSubmit(prompt), [onSubmit, prompt]);
+
     const index = props.folder?.index ?? null;
     const searchable = index != null && index.points.scripts.length > 0;
     let placeholder: string;
@@ -368,21 +384,33 @@ export const SearchCard: React.FC<SearchCardProps> = (props: SearchCardProps) =>
     else if (props.folder == null) placeholder = 'Select a folder to search it';
     else placeholder = 'Index the folder to search it';
     return (
+        <PromptBar
+            value={prompt}
+            onChange={setPrompt}
+            onSubmit={submit}
+            busy={props.searching}
+            disabled={!searchable}
+            placeholder={placeholder}
+            info={(
+                <span className={styles.search_info}>
+                    <SearchIcon size={12} />
+                    {props.searching ? 'Searching' : searchable ? `Semantic search in ${props.folder!.name}` : 'Semantic search'}
+                </span>
+            )}
+        />
+    );
+};
+
+/// The prompt of the semantic search and its best matches
+export const SearchCard: React.FC<SearchCardProps> = React.memo((props: SearchCardProps) => {
+    return (
         <div className={styles.search}>
             <div className={styles.search_prompt}>
-            <PromptBar
-                value={props.prompt}
-                onChange={props.onPromptChange}
+            <SearchPrompt
+                folder={props.folder}
+                promptReset={props.promptReset}
                 onSubmit={props.onSubmit}
-                busy={props.searching}
-                disabled={!searchable}
-                placeholder={placeholder}
-                info={(
-                    <span className={styles.search_info}>
-                        <SearchIcon size={12} />
-                        {props.searching ? 'Searching' : searchable ? `Semantic search in ${props.folder!.name}` : 'Semantic search'}
-                    </span>
-                )}
+                searching={props.searching}
             />
             </div>
             <div className={styles.search_below}>
@@ -433,4 +461,4 @@ export const SearchCard: React.FC<SearchCardProps> = (props: SearchCardProps) =>
             </div>
         </div>
     );
-};
+});
