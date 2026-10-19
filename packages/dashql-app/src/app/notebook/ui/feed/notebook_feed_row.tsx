@@ -129,6 +129,8 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo((props: ScriptCa
     const hasPendingDiff = props.scriptData?.pendingDiff != null;
 
     // Is the script cached?
+    // Compiling the query is a full pass over the script, only re-check when the text, the catalog,
+    // the queries or their cache entries changed (and not on every cursor move).
     const [isCached, setIsCached] = React.useState<boolean | null>(null);
     React.useEffect(() => {
         const cancel = new AbortController();
@@ -167,7 +169,18 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo((props: ScriptCa
         };
         run();
         return () => cancel.abort();
-    }, [props.scriptData, props.connectionDetails, props.notebookId]);
+    }, [
+        props.scriptData?.scriptSession,
+        props.scriptData?.analysisOutdated,
+        props.scriptData?.editorUpdate?.textVersion,
+        props.scriptData?.editorUpdate?.catalogRevision,
+        props.scriptData?.latestQueryId,
+        props.scriptData?.latestResultQueryId,
+        queryState?.cacheKey,
+        queryState?.cacheDeleted,
+        props.connectionDetails,
+        props.notebookId,
+    ]);
 
     // The result header persists for active and terminal execution states. It can collapse the
     // result body without affecting its cancel, cache, and rerun actions.
