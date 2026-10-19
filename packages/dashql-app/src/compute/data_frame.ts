@@ -24,7 +24,7 @@ export class DataFrame {
     }
 
     static async withConnection<T>(database: EmbeddedComputeDatabase, fn: (conn: EmbeddedTableImportConnection) => Promise<T>): Promise<T> {
-        const conn = await database.connect();
+        const conn = await database.connect({ pooled: true });
         try {
             return await fn(conn);
         } finally {

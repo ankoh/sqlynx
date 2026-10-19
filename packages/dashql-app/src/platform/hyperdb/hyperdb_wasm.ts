@@ -136,8 +136,15 @@ function yieldToEventLoop(): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, 0));
 }
 
+// Pooled connections stay attached to their default database when closed and are reused.
+// ATTACH is expensive since Hyper loads the statistics of every table in the database, and the compute code
+// opens a connection per statement. Connections are only pooled when the caller opts in.
+const MAX_IDLE_SESSIONS = 4;
+
 export class HyperDB implements EmbeddedComputeDatabase, EmbeddedExternalFileDatabase, EmbeddedExternalDirectoryDatabase {
-    private readonly connections = new Set<HyperDBConnection>();
+    private readonly sessions = new Set<HyperDBSession>();
+    /// The idle pooled sessions by default database alias.
+    private readonly idleSessions = new Map<string, HyperDBSession[]>();
     private initialization: Promise<void> | null = null;
     private termination: Promise<void> | null = null;
     private terminated = false;
@@ -177,6 +184,19 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedExternalFileDat
         if (this.termination || this.terminated) {
             throw new Error('database is terminated');
         }
+        const compute = options.defaultDatabase !== 'hyper';
+        const alias = compute ? '__dashql_compute' : 'hyper';
+        let pool: HyperDBSession[] | null = null;
+        if (options.pooled) {
+            pool = this.idleSessions.get(alias) ?? [];
+            this.idleSessions.set(alias, pool);
+        }
+        const release = (session: HyperDBSession) => this.releaseSession(session, pool);
+
+        const idle = pool?.pop();
+        if (idle != null) {
+            return new HyperDBConnection(idle, release);
+        }
 
         const connectionHandle = readHandle(await this.client.connect(), 'connect');
         if (this.termination || this.terminated) {
@@ -184,21 +204,29 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedExternalFileDat
             throw new Error('database is terminated');
         }
 
-        const databasePath = options.defaultDatabase === 'hyper' ? this.defaultDatabasePath : this.computeDatabasePath;
-        const alias = options.defaultDatabase === 'hyper' ? 'hyper' : '__dashql_compute';
-        const connection = new HyperDBConnection(this.client, connectionHandle, () => {
-            this.connections.delete(connection);
+        const databasePath = compute ? this.computeDatabasePath : this.defaultDatabasePath;
+        const session = new HyperDBSession(this.client, connectionHandle, () => {
+            this.sessions.delete(session);
         }, databasePath == null ? undefined : alias);
         try {
             if (databasePath != null) {
-                await connection.query(`ATTACH DATABASE ${quoteIdentifier(databasePath)} AS ${quoteIdentifier(alias)}`);
+                await session.query(`ATTACH DATABASE ${quoteIdentifier(databasePath)} AS ${quoteIdentifier(alias)}`);
             }
         } catch (error) {
-            await connection.close();
+            await session.close();
             throw error;
         }
-        this.connections.add(connection);
-        return connection;
+        this.sessions.add(session);
+        return new HyperDBConnection(session, release);
+    }
+
+    private async releaseSession(session: HyperDBSession, pool: HyperDBSession[] | null): Promise<void> {
+        if (pool != null && session.reusable && !this.termination && !this.terminated
+            && pool.length < MAX_IDLE_SESSIONS) {
+            pool.push(session);
+            return;
+        }
+        await session.close();
     }
 
     async getVersion(): Promise<string> {
@@ -282,7 +310,8 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedExternalFileDat
             this.termination = (async () => {
                 try {
                     await this.databaseOperation;
-                    await Promise.all([...this.connections].map(connection => connection.closeForTermination()));
+                    this.idleSessions.clear();
+                    await Promise.all([...this.sessions].map(session => session.closeForTermination()));
                     for (const [path, url] of this.externalFiles) {
                         expectOK(await this.client.unmount(path), 'remove external file during termination');
                         this.externalFiles.delete(path);
@@ -353,11 +382,11 @@ export class HyperDB implements EmbeddedComputeDatabase, EmbeddedExternalFileDat
     }
 
     private async executeDatabaseStatement(statement: string): Promise<void> {
-        const connection = new HyperDBConnection(this.client, readHandle(await this.client.connect(), 'connect'), () => {});
+        const session = new HyperDBSession(this.client, readHandle(await this.client.connect(), 'connect'), () => {});
         try {
-            await connection.query(statement);
+            await session.query(statement);
         } finally {
-            await connection.close();
+            await session.close();
         }
     }
 
@@ -385,9 +414,61 @@ function throwIfAborted(signal?: AbortSignal): void {
     if (signal?.aborted) throw signal.reason ?? new DOMException('The operation was aborted', 'AbortError');
 }
 
+/// A connection lease handed out by HyperDB.connect().
+/// Closing it releases the physical session, which HyperDB may hand to the next lease.
+/// The lease stays closed, so a stale reference cannot run statements on a reused session.
 export class HyperDBConnection implements EmbeddedTableImportConnection {
     private closed = false;
-    private active = false;
+
+    constructor(
+        private readonly session: HyperDBSession,
+        private readonly release: (session: HyperDBSession) => Promise<void>,
+    ) {}
+
+    async close(): Promise<void> {
+        if (this.closed) {
+            return;
+        }
+        if (this.session.active) {
+            throw new Error('connection has an active operation');
+        }
+        this.closed = true;
+        await this.release(this.session);
+    }
+
+    async query(query: string): Promise<arrow.Table> {
+        this.checkOpen();
+        return await this.session.query(query);
+    }
+
+    async queryArrowIPC(query: string, abort?: AbortSignal): Promise<Uint8Array> {
+        this.checkOpen();
+        return await this.session.queryArrowIPC(query, abort);
+    }
+
+    async insertArrowTable(table: arrow.Table, options: EmbeddedTableInsertOptions): Promise<void> {
+        this.checkOpen();
+        await this.session.insertArrowTable(table, options);
+    }
+
+    async createTableAs(name: string, query: string, abort?: AbortSignal): Promise<void> {
+        this.checkOpen();
+        await this.session.createTableAs(name, query, abort);
+    }
+
+    private checkOpen(): void {
+        if (this.closed) {
+            throw new Error('connection is closed');
+        }
+    }
+}
+
+/// A physical engine connection.
+class HyperDBSession implements EmbeddedTableImportConnection {
+    private closed = false;
+    active = false;
+    /// Cleared when a query could not be cancelled or finished, the session must not be reused then.
+    reusable = true;
     private closing: Promise<void> | null = null;
 
     constructor(
@@ -445,6 +526,7 @@ export class HyperDBConnection implements EmbeddedTableImportConnection {
                     try {
                         expectOK(await this.client.cancelQuery(queryHandle), 'cancel query');
                     } catch (error) {
+                        this.reusable = false;
                         cleanupError = error;
                     }
                 }
@@ -558,6 +640,7 @@ export class HyperDBConnection implements EmbeddedTableImportConnection {
                 return;
             }
             if (result.state !== 'pending') {
+                this.reusable = false;
                 throw readError(result, 'finish query');
             }
             await new Promise(resolve => setTimeout(resolve, delay));

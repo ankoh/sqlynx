@@ -14,6 +14,9 @@ export interface EmbeddedConnection {
 
 export interface EmbeddedConnectionOptions {
     defaultDatabase?: '__dashql_compute' | 'hyper';
+    /// Reuse an idle connection and return it to a pool on close.
+    /// Only for callers that leave no session state behind, such as settings, transactions or temporary tables.
+    pooled?: boolean;
 }
 
 export interface EmbeddedTableImportConnection extends EmbeddedConnection {
