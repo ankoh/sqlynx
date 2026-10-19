@@ -68,7 +68,7 @@ type JsonViewComponent = React.FC<React.PropsWithRef<JsonViewProps>>;
 export const AlwaysExpand: ShouldExpandNodeInitially = () => true;
 export const AlwaysCollapse = () => false;
 
-export const JsonView: JsonViewComponent = React.forwardRef<HTMLDivElement, JsonViewProps>((props, ref) => {
+export const JsonView: JsonViewComponent = React.memo(React.forwardRef<HTMLDivElement, JsonViewProps>((props, ref) => {
     const {
         value,
         keyName: _keyName,
@@ -101,7 +101,8 @@ export const JsonView: JsonViewComponent = React.forwardRef<HTMLDivElement, Json
             return AlwaysExpand;
         }
     }, [collapsed, shouldExpandNodeInitially]);
-    const initialState: JsonViewerState = {
+    // Memoize the state to not re-render the whole tree when the parent re-renders
+    const initialState: JsonViewerState = React.useMemo(() => ({
         value,
         objectSortKeys,
         indentWidth: indentWidth ?? 15,
@@ -115,7 +116,21 @@ export const JsonView: JsonViewComponent = React.forwardRef<HTMLDivElement, Json
         onCopied,
         onExpand,
         beforeCopy,
-    };
+    }), [
+        value,
+        objectSortKeys,
+        indentWidth,
+        arrayPageSize,
+        expandNodeInitially,
+        displayObjectSize,
+        collapsed,
+        enableClipboard,
+        shortenTextAfterLength,
+        stringEllipsis,
+        onCopied,
+        onExpand,
+        beforeCopy,
+    ]);
     return (
         <JsonViewerStateProvider initialState={initialState}>
             <div
@@ -135,6 +150,6 @@ export const JsonView: JsonViewComponent = React.forwardRef<HTMLDivElement, Json
             </div>
         </JsonViewerStateProvider>
     );
-}) as unknown as JsonViewComponent;
+})) as unknown as JsonViewComponent;
 
 export default JsonView;

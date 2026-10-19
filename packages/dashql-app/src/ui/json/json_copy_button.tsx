@@ -4,7 +4,7 @@ import * as styles from './json_view.module.css';
 import icons from '@ankoh/dashql-svg-symbols';
 
 import { useJsonViewerState } from './json_view_state.js';
-import { useToolVisibilityStore } from './json_tool_state.js';
+import { useToolVisibility } from './json_tool_state.js';
 import { bigIntToString } from './json_literal.js';
 import { classNames } from '../../utils/classnames.js';
 
@@ -30,8 +30,7 @@ export interface JsonCopyButtonProps<T extends object> extends Omit<React.Button
 export function JsonCopyButton<T extends object>(props: JsonCopyButtonProps<T>) {
     const { keyName, value, parentValue, expandKey, keyPath, beforeCopy, ...other } = props;
     const { onCopied, enableClipboard, beforeCopy: globalBeforeCopy } = useJsonViewerState();
-    const showTools = useToolVisibilityStore();
-    const isShowTools = showTools[expandKey];
+    const isShowTools = useToolVisibility(expandKey);
     const [copied, setCopied] = React.useState(false);
 
     if (enableClipboard === false || !isShowTools) return null;
