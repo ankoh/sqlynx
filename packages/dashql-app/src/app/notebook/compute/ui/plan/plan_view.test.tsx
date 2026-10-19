@@ -178,7 +178,9 @@ describe('PlanView keyboard navigation', () => {
     }
 
     function renderPlan(edgeRendering?: React.ComponentProps<typeof PlanView>['edgeRendering']) {
-        act(() => root.render(<PlanView plan={plan} edgeRendering={edgeRendering} dependencies={dependencies} />));
+        // The tests mutate the shared scene fixture in place, the view memoizes derived edges per scene
+        const freshScene: PlanViewDependencies = { materializePlanScene: () => ({ ...scene }) };
+        act(() => root.render(<PlanView plan={plan} edgeRendering={edgeRendering} dependencies={freshScene} />));
     }
 
     function selectAnnotation(label: string) {
