@@ -146,7 +146,7 @@ export const ScriptDetails: React.FC<ScriptDetailsProps> = (props) => {
     const formattingDialect = formattingDialectForConnector(props.notebookScripts.connectorInfo?.connectorType);
     const isFormattable = React.useMemo(
         () => dependencies.isScriptFormattable(scriptData, formattingDialect),
-        [scriptData?.scriptSession, scriptData?.editorUpdate?.stateRevision, formattingDialect],
+        [scriptData?.scriptSession, scriptData?.editorUpdate?.textVersion, formattingDialect],
     );
     const handleFormat = React.useCallback((mode: dashql.buffers.formatting.FormattingMode) => {
         dependencies.formatScriptEditor(editorView, scriptData, mode, (text) => {
