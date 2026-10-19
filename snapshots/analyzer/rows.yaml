@@ -1,0 +1,311 @@
+analyzer-snapshots:
+
+  - name: row_type_columns
+    script:
+      input: create table orders (id int, product row(name text, quantity int), tags array(row(tag text)))
+      catalog-id: 1
+      tables:
+        - catalog-id: "256.65536.4294967296"
+          name: orders
+          text: "create tab..ag text)))"
+          columns:
+            - catalog-id: "256.65536.4294967296.0"
+              name: id
+              text: "id int"
+            - catalog-id: "256.65536.4294967296.1"
+              name: product
+              text: "product ro..ntity int)"
+            - catalog-id: "256.65536.4294967296.2"
+              name: tags
+              text: "tags array..tag text))"
+      errors: []
+
+  - name: row_field_access
+    catalog:
+      script:
+        input: create table orders (id int, product row(name text, quantity int));
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: orders
+            text: "create tab..tity int))"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: id
+                text: "id int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: product
+                text: "product ro..ntity int)"
+        errors: []
+    script:
+      input: select (product).name, (o.product).quantity, o.product.name, product.quantity from orders o
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "orders o"
+      expressions:
+        - expression-idx: 0
+          type: colref/catalog
+          catalog: "256.65536.4294967296.1"
+          statement-id: 0
+          text: "product"
+        - expression-idx: 1
+          type: colref/catalog
+          catalog: "256.65536.4294967296.1"
+          statement-id: 0
+          text: "o.product"
+        - expression-idx: 2
+          type: colref/catalog
+          catalog: "256.65536.4294967296.1"
+          statement-id: 0
+          text: "o.product.name"
+        - expression-idx: 3
+          type: colref/catalog
+          catalog: "256.65536.4294967296.1"
+          statement-id: 0
+          text: "product.quantity"
+
+  - name: row_field_access_table_wins
+    catalog:
+      script:
+        input: |-
+          create table product (name text);
+          create table orders (id int, product row(name text, quantity int));
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: product
+            text: "create tab..name text)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: name
+                text: "name text"
+          - catalog-id: "256.65536.4294967297"
+            name: orders
+            text: "create tab..tity int))"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: id
+                text: "id int"
+              - catalog-id: "256.65536.4294967297.1"
+                name: product
+                text: "product ro..ntity int)"
+        errors: []
+    script:
+      input: select product.name from product, orders
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "product"
+        - type: name/catalog
+          catalog-id: "256.65536.4294967297"
+          statement-id: 0
+          text: "orders"
+      expressions:
+        - expression-idx: 0
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 0
+          text: "product.name"
+
+  - name: row_field_access_correlated
+    catalog:
+      script:
+        input: |-
+          create table orders (id int, product row(name text, quantity int));
+          create table stock (name text, quantity int);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: orders
+            text: "create tab..tity int))"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: id
+                text: "id int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: product
+                text: "product ro..ntity int)"
+          - catalog-id: "256.65536.4294967297"
+            name: stock
+            text: "create tab..ntity int)"
+            columns:
+              - catalog-id: "256.65536.4294967297.0"
+                name: name
+                text: "name text"
+              - catalog-id: "256.65536.4294967297.1"
+                name: quantity
+                text: "quantity int"
+        errors: []
+    script:
+      input: select id from orders where exists (select 1 from stock where stock.name = product.name)
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967297"
+          statement-id: 0
+          text: "stock"
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "orders"
+      expressions:
+        - expression-idx: 0
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 0
+          text: "id"
+        - expression-idx: 1
+          type: colref/catalog
+          catalog: "256.65536.4294967297.0"
+          statement-id: 0
+          text: "stock.name"
+        - expression-idx: 2
+          type: colref/catalog
+          catalog: "256.65536.4294967296.1"
+          statement-id: 0
+          text: "product.name"
+        - expression-idx: 3
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+      constants:
+        - expression: 3
+          text: "1"
+
+  - name: row_constructor_columns
+    catalog:
+      script:
+        input: create table orders (id int, product row(name text, quantity int));
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: orders
+            text: "create tab..tity int))"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: id
+                text: "id int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: product
+                text: "product ro..ntity int)"
+        errors: []
+    script:
+      input: select row(id, product.name) from orders where (id, (product).quantity) = (1, 2)
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "orders"
+      expressions:
+        - expression-idx: 0
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 0
+          text: "id"
+        - expression-idx: 1
+          type: colref/catalog
+          catalog: "256.65536.4294967296.1"
+          statement-id: 0
+          text: "product.name"
+        - expression-idx: 2
+          type: colref/catalog
+          catalog: "256.65536.4294967296.1"
+          statement-id: 0
+          text: "product"
+        - expression-idx: 3
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 0
+          text: "id"
+        - expression-idx: 4
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 5
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+      constants:
+        - expression: 4
+          text: "1"
+        - expression: 5
+          text: "2"
+
+  - name: row_field_access_inferred
+    script:
+      input: select o.product.name from orders o
+      catalog-id: 1
+      errors: []
+      table-refs:
+        - type: name/unresolved
+          statement-id: 0
+          text: "orders o"
+      expressions:
+        - expression-idx: 0
+          type: colref/unresolved
+          statement-id: 0
+          text: "o.product.name"
+      inferred-tables:
+        - name: orders
+          confidence: confident
+          columns:
+            - name: product
+              confidence: confident
+
+  - name: row_field_access_unresolved
+    catalog:
+      script:
+        input: create table orders (id int, product row(name text, quantity int));
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: orders
+            text: "create tab..tity int))"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: id
+                text: "id int"
+              - catalog-id: "256.65536.4294967296.1"
+                name: product
+                text: "product ro..ntity int)"
+        errors: []
+    script:
+      input: select s.id, missing.name from (select id from orders) s, orders
+      catalog-id: 2
+      errors: []
+      table-refs:
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "orders"
+        - type: name/catalog
+          catalog-id: "256.65536.4294967296"
+          statement-id: 0
+          text: "orders"
+      expressions:
+        - expression-idx: 0
+          type: colref/unresolved
+          statement-id: 0
+          text: "s.id"
+        - expression-idx: 1
+          type: colref/unresolved
+          statement-id: 0
+          text: "missing.name"
+        - expression-idx: 2
+          type: colref/catalog
+          catalog: "256.65536.4294967296.0"
+          statement-id: 0
+          text: "id"

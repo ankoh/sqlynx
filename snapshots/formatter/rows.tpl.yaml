@@ -1,0 +1,87 @@
+formatter-snapshots:
+  # Row constructors keep their spelling, a single value needs the row keyword
+  - name: row_constructors
+    input: SELECT ROW(1,'a'),(1,'a'),ROW(1),ROW()
+    dialects:
+      hyper:
+        validation: {}
+
+  # Row comparisons. Hyper only allows row-typed columns in temporary tables.
+  - name: row_comparison
+    input: SELECT id FROM orders WHERE (id,(product).quantity)=(1,2) AND ROW(id,1)<ROW(2,1)
+    dialects:
+      hyper:
+        validation:
+          setup: create temp table orders(id int, product row(name text, quantity int));
+      trino:
+
+  # Rows in IN lists
+  - name: row_in_list
+    input: SELECT id FROM orders WHERE (id,(product).quantity) IN ((1,2),(3,4))
+    dialects:
+      hyper:
+        validation:
+          setup: create temp table orders(id int, product row(name text, quantity int));
+      trino:
+
+  # Row values in INSERT
+  - name: row_insert
+    input: INSERT INTO orders VALUES (1,ROW('a',2)),(2,('b',3))
+    dialects:
+      hyper:
+        validation:
+          setup: create temp table orders(id int, product row(name text, quantity int));
+
+  # Field access on row-typed columns
+  - name: row_field_access
+    input: SELECT (product).name,(o.product).quantity,o.product.name,((nested).a).b FROM orders o
+    dialects:
+      hyper:
+        validation:
+          setup: create temp table orders(id int, product row(name text, quantity int), nested row(a row(b int)));
+      trino:
+
+  # Row types as cast targets
+  - name: row_type_cast
+    input: SELECT CAST(ROW(1,'a') AS ROW(x INT,y TEXT)),(ROW(1,'a')::ROW(x INT,y TEXT)).y
+    dialects:
+      hyper:
+        validation: {}
+
+  # Arrays of rows stay array(row(...)) in Hyper
+  - name: row_type_array_cast
+    input: SELECT ARRAY_AGG(ROW(id,name))::ARRAY(ROW(id INT,name TEXT)) FROM items
+    dialects:
+      hyper:
+        validation:
+          setup: create table items(id int, name text);
+      trino:
+
+  # Row types as column types
+  - name: row_type_create_table
+    input: CREATE TABLE orders (id INT, product ROW(name TEXT, quantity NUMERIC(38,18)), tags ARRAY(ROW(tag TEXT)), notes ROW(note TEXT)[], nested ROW(a ROW(b INT)))
+    dialects:
+      hyper:
+      trino:
+
+  # Long rows break like function arguments
+  - name: row_long
+    input: SELECT ROW(first_value_column,second_value_column,third_value_column,fourth_value_column,fifth_value_column,sixth_value_column),(first_value_column,second_value_column,third_value_column,fourth_value_column,fifth_value_column) FROM wide
+    dialects:
+      hyper:
+        validation:
+          setup: create table wide(first_value_column int, second_value_column int, third_value_column int, fourth_value_column int, fifth_value_column int, sixth_value_column int);
+
+  # Long row types break between fields
+  - name: row_type_long
+    input: SELECT CAST(NULL AS ROW(first_field_name TEXT,second_field_name INTEGER,third_field_name NUMERIC(38,18),fourth_field_name ROW(nested_field TEXT)))
+    dialects:
+      hyper:
+        validation: {}
+
+  # OVERLAPS compares two rows
+  - name: row_overlaps
+    input: SELECT (DATE '2021-01-10',DATE '2021-02-01') OVERLAPS (DATE '2021-01-20',DATE '2021-02-10')
+    dialects:
+      hyper:
+      trino:

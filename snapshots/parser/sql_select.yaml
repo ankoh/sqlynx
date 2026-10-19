@@ -6288,7 +6288,7 @@ parser-snapshots:
       statements:
         - type: SELECT
           ast-begin: 0
-          ast-size: 24
+          ast-size: 26
           description:
             text: "select (da..1-02-10');"
             description-begin: 0
@@ -6315,60 +6315,68 @@ parser-snapshots:
                             type: ARRAY
                             text: "(date '202..21-02-10')"
                             children:
-                              - type: ARRAY
+                              - type: OBJECT_SQL_ROW_EXPRESSION
                                 text: "(date '202..21-02-01')"
                                 children:
-                                  - type: OBJECT_SQL_CONST_FUNCTION_CAST
-                                    text: "date '2021-01-10'"
+                                  - key: SQL_ROW_EXPRESSION_VALUES
+                                    type: ARRAY
+                                    text: "date '2021..021-02-01'"
                                     children:
-                                      - key: SQL_CONST_CAST_FUNC_NAME
-                                        type: ARRAY
-                                        text: "date"
+                                      - type: OBJECT_SQL_CONST_FUNCTION_CAST
+                                        text: "date '2021-01-10'"
                                         children:
-                                          - type: NAME
+                                          - key: SQL_CONST_CAST_FUNC_NAME
+                                            type: ARRAY
                                             text: "date"
-                                      - key: SQL_CONST_CAST_VALUE
-                                        type: LITERAL_STRING
-                                        text: "'2021-01-10'"
-                                  - type: OBJECT_SQL_CONST_FUNCTION_CAST
-                                    text: "date '2021-02-01'"
-                                    children:
-                                      - key: SQL_CONST_CAST_FUNC_NAME
-                                        type: ARRAY
-                                        text: "date"
+                                            children:
+                                              - type: NAME
+                                                text: "date"
+                                          - key: SQL_CONST_CAST_VALUE
+                                            type: LITERAL_STRING
+                                            text: "'2021-01-10'"
+                                      - type: OBJECT_SQL_CONST_FUNCTION_CAST
+                                        text: "date '2021-02-01'"
                                         children:
-                                          - type: NAME
+                                          - key: SQL_CONST_CAST_FUNC_NAME
+                                            type: ARRAY
                                             text: "date"
-                                      - key: SQL_CONST_CAST_VALUE
-                                        type: LITERAL_STRING
-                                        text: "'2021-02-01'"
-                              - type: ARRAY
+                                            children:
+                                              - type: NAME
+                                                text: "date"
+                                          - key: SQL_CONST_CAST_VALUE
+                                            type: LITERAL_STRING
+                                            text: "'2021-02-01'"
+                              - type: OBJECT_SQL_ROW_EXPRESSION
                                 text: "(date '202..21-02-10')"
                                 children:
-                                  - type: OBJECT_SQL_CONST_FUNCTION_CAST
-                                    text: "date '2021-01-20'"
+                                  - key: SQL_ROW_EXPRESSION_VALUES
+                                    type: ARRAY
+                                    text: "date '2021..021-02-10'"
                                     children:
-                                      - key: SQL_CONST_CAST_FUNC_NAME
-                                        type: ARRAY
-                                        text: "date"
+                                      - type: OBJECT_SQL_CONST_FUNCTION_CAST
+                                        text: "date '2021-01-20'"
                                         children:
-                                          - type: NAME
+                                          - key: SQL_CONST_CAST_FUNC_NAME
+                                            type: ARRAY
                                             text: "date"
-                                      - key: SQL_CONST_CAST_VALUE
-                                        type: LITERAL_STRING
-                                        text: "'2021-01-20'"
-                                  - type: OBJECT_SQL_CONST_FUNCTION_CAST
-                                    text: "date '2021-02-10'"
-                                    children:
-                                      - key: SQL_CONST_CAST_FUNC_NAME
-                                        type: ARRAY
-                                        text: "date"
+                                            children:
+                                              - type: NAME
+                                                text: "date"
+                                          - key: SQL_CONST_CAST_VALUE
+                                            type: LITERAL_STRING
+                                            text: "'2021-01-20'"
+                                      - type: OBJECT_SQL_CONST_FUNCTION_CAST
+                                        text: "date '2021-02-10'"
                                         children:
-                                          - type: NAME
+                                          - key: SQL_CONST_CAST_FUNC_NAME
+                                            type: ARRAY
                                             text: "date"
-                                      - key: SQL_CONST_CAST_VALUE
-                                        type: LITERAL_STRING
-                                        text: "'2021-02-10'"
+                                            children:
+                                              - type: NAME
+                                                text: "date"
+                                          - key: SQL_CONST_CAST_VALUE
+                                            type: LITERAL_STRING
+                                            text: "'2021-02-10'"
       scanner-errors: []
       parser-errors: []
       line-breaks: []

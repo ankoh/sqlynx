@@ -1,0 +1,65 @@
+parser-snapshots:
+  # Row type as a column type
+  - name: row_type_column
+    input: |
+      create table orders (id int, product row(name text, quantity numeric(38, 18)))
+  # Row types nest and contain arrays
+  - name: row_type_nested
+    input: |
+      create table t (p row(a row(b int), c text[]))
+  # Arrays of rows in both spellings
+  - name: row_type_array
+    input: |
+      create table t (ps array(row(x int)), qs row(x int)[])
+  # Row field with a collation
+  - name: row_type_collate
+    input: |
+      create table t (p row(name text collate "de_DE"))
+  # Row types as cast targets
+  - name: row_type_cast
+    input: |
+      select cast(x as row(a int, b text)), x::row(a int) from t
+  # Row types in a descriptor
+  - name: row_type_descriptor
+    input: |
+      select * from raw_sql_subquery(descriptor(p row(x int, y text)), 'select 1')
+  # A row type needs at least one field
+  - name: row_type_empty
+    input: |
+      create table t (p row())
+  # Row fields need names
+  - name: row_type_anonymous_field
+    input: |
+      create table t (p row(int))
+  # Explicit row constructors
+  - name: row_explicit
+    input: |
+      select row(1, 'a'), row(1), row()
+  # Implicit row constructors need at least two values
+  - name: row_implicit
+    input: |
+      select (1, 'a'), (a, b, c), (1) from t
+  # Row comparisons
+  - name: row_comparison
+    input: |
+      select * from t where (a, b) = (1, 2) and row(a, b) < row(3, 4)
+  # Rows in IN lists and against subqueries
+  - name: row_in
+    input: |
+      select * from t where (a, b) in ((1, 2), (3, 4)) or (a, b) in (select x, y from u)
+  # Rows as inserted values
+  - name: row_insert_values
+    input: |
+      insert into t values (1, row(2, 'b')), (2, (3, 'c'))
+  # Field access on row values
+  - name: row_field_access
+    input: |
+      select (p).x, (t.p).y, ((p).a).b, t.p.x, (row(1, 2)::row(a int, b int)).a from t
+  # Incomplete implicit row
+  - name: row_implicit_trailing_comma
+    input: |
+      select (1, )
+  # Incomplete explicit row
+  - name: row_explicit_unclosed
+    input: |
+      select row(1, 2

@@ -977,9 +977,8 @@ sql_simple_typename:
         });
     }
   | ROW LRB sql_table_func_element_list RRB {
-        $$ = ctx.Object(@$, buffers::parser::NodeType::OBJECT_SQL_GENERIC_TYPE, {
-            Attr(Key::SQL_GENERIC_TYPE_NAME, ctx.NameFromKeyword(@1, "row")),
-            Attr(Key::SQL_GENERIC_TYPE_MODIFIERS, ctx.Array(Loc({@2, @3, @4}), std::move($3))),
+        $$ = ctx.Object(@$, buffers::parser::NodeType::OBJECT_SQL_ROW_TYPE, {
+            Attr(Key::SQL_ROW_TYPE_FIELDS, ctx.Array(@3, std::move($3))),
         });
     }
   | sql_numeric                         { $$ = $1; }
@@ -1340,7 +1339,7 @@ sql_a_expr:
   | sql_a_expr NOT NULL_P                   { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::NOT_NULL), std::move($1)); }
   | sql_a_expr NOTNULL                      { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::NOT_NULL), std::move($1)); }
 
-  | sql_row OVERLAPS sql_row { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::OVERLAPS), ctx.Array(@1, std::move($1), false), ctx.Array(@3, std::move($3), false)); }
+  | sql_row OVERLAPS sql_row { $$ = Expr(ctx, @$, Enum(@2, ExprFunc::OVERLAPS), std::move($1), std::move($3)); }
   | sql_a_expr IS TRUE_P                            %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::IS_TRUE), std::move($1)); }
   | sql_a_expr IS NOT TRUE_P                        %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3, @4}), ExprFunc::IS_NOT_TRUE), std::move($1)); }
   | sql_a_expr IS FALSE_P                           %prec IS    { $$ = Expr(ctx, @$, Enum(Loc({@2, @3}), ExprFunc::IS_FALSE), std::move($1)); }
@@ -1488,6 +1487,8 @@ sql_colon_param_ref:
 sql_c_expr:
     sql_columnref     { $$ = $1; }
   | sql_a_expr_const  { $$ = std::move($1); }
+  | sql_explicit_row  { $$ = std::move($1); }
+  | sql_implicit_row  { $$ = std::move($1); }
   | sql_colon_param_ref { $$ = $1; }
   | LRB sql_a_expr RRB sql_opt_indirection {
         if  ($4->empty()) {
@@ -1867,9 +1868,32 @@ sql_frame_bound:
 // ROW keyword, there must be more than one a_expr inside the parens.
 
 sql_row:
-    ROW LRB sql_expr_list RRB               { $$ = std::move($3); }
-  | ROW LRB RRB                             { $$ = ctx.List(); }
-  | LRB sql_expr_list COMMA sql_a_expr RRB  { $2->push_back(ctx.Expression(std::move($4))); $$ = std::move($2); }
+    sql_explicit_row    { $$ = std::move($1); }
+  | sql_implicit_row    { $$ = std::move($1); }
+    ;
+
+sql_explicit_row:
+    ROW LRB sql_expr_list RRB {
+        $$ = ctx.Object(@$, buffers::parser::NodeType::OBJECT_SQL_ROW_EXPRESSION, {
+            Attr(Key::SQL_ROW_EXPRESSION_EXPLICIT, Bool(@1, true)),
+            Attr(Key::SQL_ROW_EXPRESSION_VALUES, ctx.Array(@3, std::move($3))),
+        });
+    }
+  | ROW LRB RRB {
+        $$ = ctx.Object(@$, buffers::parser::NodeType::OBJECT_SQL_ROW_EXPRESSION, {
+            Attr(Key::SQL_ROW_EXPRESSION_EXPLICIT, Bool(@1, true)),
+            Attr(Key::SQL_ROW_EXPRESSION_VALUES, ctx.Array(Loc({@2, @3}), ctx.List(), false)),
+        });
+    }
+    ;
+
+sql_implicit_row:
+    LRB sql_expr_list COMMA sql_a_expr RRB {
+        $2->push_back(ctx.Expression(std::move($4)));
+        $$ = ctx.Object(@$, buffers::parser::NodeType::OBJECT_SQL_ROW_EXPRESSION, {
+            Attr(Key::SQL_ROW_EXPRESSION_VALUES, ctx.Array(Loc({@2, @3, @4}), std::move($2))),
+        });
+    }
     ;
 
 sql_subquery_quantifier:

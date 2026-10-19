@@ -40,7 +40,6 @@
 %type <BackedUniquePtr<NodeList>> sql_position_list;
 %type <BackedUniquePtr<NodeList>> sql_qualified_name_list;
 %type <BackedUniquePtr<NodeList>> sql_relation_expr;
-%type <BackedUniquePtr<NodeList>> sql_row;
 %type <BackedUniquePtr<NodeList>> sql_rowsfrom_list;
 %type <BackedUniquePtr<NodeList>> sql_sample_count;
 %type <BackedUniquePtr<NodeList>> sql_select_clause;
@@ -138,6 +137,9 @@
 %type <buffers::parser::Node> sql_qualified_name;
 %type <buffers::parser::Node> sql_relation_arg;
 %type <buffers::parser::Node> sql_rowsfrom_item;
+%type <buffers::parser::Node> sql_row;
+%type <buffers::parser::Node> sql_explicit_row;
+%type <buffers::parser::Node> sql_implicit_row;
 %type <buffers::parser::Node> sql_sample_clause;
 %type <buffers::parser::Node> sql_select_fetch_first_value;
 %type <buffers::parser::Node> sql_select_limit_value;

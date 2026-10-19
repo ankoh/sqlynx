@@ -1,0 +1,318 @@
+formatter-snapshots:
+
+  - name: row_constructors
+    input: |-
+      SELECT ROW(1,'a'),(1,'a'),ROW(1),ROW()
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select row(1, 'a'), (1, 'a'), row(1), row();
+          - mode: compact
+            expected: |-
+              select row(1, 'a'), (1, 'a'), row(1), row();
+          - mode: pretty
+            expected: |-
+              select row(1, 'a'), (1, 'a'), row(1), row();
+        validation:
+
+  - name: row_comparison
+    input: |-
+      SELECT id FROM orders WHERE (id,(product).quantity)=(1,2) AND ROW(id,1)<ROW(2,1)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select id from orders where (id, (product).quantity) = (1, 2) and row(id, 1) < row(2, 1);
+          - mode: compact
+            expected: |-
+              select id from orders where (id, (product).quantity) = (1, 2) and row(id, 1) < row(2, 1);
+          - mode: pretty
+            expected: |-
+              select id
+              from orders
+              where (id, (product).quantity) = (1, 2) and row(id, 1) < row(2, 1);
+        validation:
+          setup: |-
+            create temp table orders(id int, product row(name text, quantity int));
+      trino:
+        formatted:
+          - mode: inline
+            expected: |-
+              select id from orders where (id, (product).quantity) = (1, 2) and row(id, 1) < row(2, 1);
+          - mode: compact
+            expected: |-
+              select id from orders where (id, (product).quantity) = (1, 2) and row(id, 1) < row(2, 1);
+          - mode: pretty
+            expected: |-
+              select id
+              from orders
+              where (id, (product).quantity) = (1, 2) and row(id, 1) < row(2, 1);
+
+  - name: row_in_list
+    input: |-
+      SELECT id FROM orders WHERE (id,(product).quantity) IN ((1,2),(3,4))
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select id from orders where (id, (product).quantity) in ((1, 2), (3, 4));
+          - mode: compact
+            expected: |-
+              select id from orders where (id, (product).quantity) in ((1, 2), (3, 4));
+          - mode: pretty
+            expected: |-
+              select id
+              from orders
+              where (id, (product).quantity) in ((1, 2), (3, 4));
+        validation:
+          setup: |-
+            create temp table orders(id int, product row(name text, quantity int));
+      trino:
+        formatted:
+          - mode: inline
+            expected: |-
+              select id from orders where (id, (product).quantity) in ((1, 2), (3, 4));
+          - mode: compact
+            expected: |-
+              select id from orders where (id, (product).quantity) in ((1, 2), (3, 4));
+          - mode: pretty
+            expected: |-
+              select id
+              from orders
+              where (id, (product).quantity) in ((1, 2), (3, 4));
+
+  - name: row_insert
+    input: |-
+      INSERT INTO orders VALUES (1,ROW('a',2)),(2,('b',3))
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              insert into orders values (1, row('a', 2)), (2, ('b', 3));
+          - mode: compact
+            expected: |-
+              insert into orders values (1, row('a', 2)), (2, ('b', 3));
+          - mode: pretty
+            expected: |-
+              insert into orders
+              values
+                (1, row('a', 2)),
+                (2, ('b', 3));
+        validation:
+          setup: |-
+            create temp table orders(id int, product row(name text, quantity int));
+
+  - name: row_field_access
+    input: |-
+      SELECT (product).name,(o.product).quantity,o.product.name,((nested).a).b FROM orders o
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select (product).name, (o.product).quantity, o.product.name, ((nested).a).b from orders o;
+          - mode: compact
+            expected: |-
+              select (product).name, (o.product).quantity, o.product.name, ((nested).a).b from orders o;
+          - mode: pretty
+            expected: |-
+              select (product).name, (o.product).quantity, o.product.name, ((nested).a).b
+              from orders o;
+        validation:
+          setup: |-
+            create temp table orders(id int, product row(name text, quantity int), nested row(a row(b int)));
+      trino:
+        formatted:
+          - mode: inline
+            expected: |-
+              select (product).name, (o.product).quantity, o.product.name, ((nested).a).b from orders o;
+          - mode: compact
+            expected: |-
+              select (product).name, (o.product).quantity, o.product.name, ((nested).a).b from orders o;
+          - mode: pretty
+            expected: |-
+              select (product).name, (o.product).quantity, o.product.name, ((nested).a).b
+              from orders o;
+
+  - name: row_type_cast
+    input: |-
+      SELECT CAST(ROW(1,'a') AS ROW(x INT,y TEXT)),(ROW(1,'a')::ROW(x INT,y TEXT)).y
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select cast(row(1, 'a') as row(x integer, y TEXT)), (row(1, 'a')::row(x integer, y TEXT)).y;
+          - mode: compact
+            expected: |-
+              select cast(row(1, 'a') as row(x integer, y TEXT)), (row(1, 'a')::row(x integer, y TEXT)).y;
+          - mode: pretty
+            expected: |-
+              select cast(row(1, 'a') as row(x integer, y TEXT)), (row(1, 'a')::row(x integer, y TEXT)).y;
+        validation:
+
+  - name: row_type_array_cast
+    input: |-
+      SELECT ARRAY_AGG(ROW(id,name))::ARRAY(ROW(id INT,name TEXT)) FROM items
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select ARRAY_AGG(row(id, name))::array(row(id integer, name TEXT)) from items;
+          - mode: compact
+            expected: |-
+              select ARRAY_AGG(row(id, name))::array(row(id integer, name TEXT)) from items;
+          - mode: pretty
+            expected: |-
+              select ARRAY_AGG(row(id, name))::array(row(id integer, name TEXT))
+              from items;
+        validation:
+          setup: |-
+            create table items(id int, name text);
+      trino:
+        formatted:
+          - mode: inline
+            expected: |-
+              select ARRAY_AGG(row(id, name))::array(row(id integer, name TEXT)) from items;
+          - mode: compact
+            expected: |-
+              select ARRAY_AGG(row(id, name))::array(row(id integer, name TEXT)) from items;
+          - mode: pretty
+            expected: |-
+              select ARRAY_AGG(row(id, name))::array(row(id integer, name TEXT))
+              from items;
+
+  - name: row_type_create_table
+    input: |-
+      CREATE TABLE orders (id INT, product ROW(name TEXT, quantity NUMERIC(38,18)), tags ARRAY(ROW(tag TEXT)), notes ROW(note TEXT)[], nested ROW(a ROW(b INT)))
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              create table orders (id integer, product row(name TEXT, quantity numeric(38, 18)), tags array(row(tag TEXT)), notes array(row(note TEXT)), nested row(a row(b integer)));
+          - mode: compact
+            expected: |-
+              create table orders (
+                id integer, product row(name TEXT, quantity numeric(38, 18)), tags array(row(tag TEXT)), notes array(row(note TEXT)),
+                nested row(a row(b integer))
+              );
+          - mode: pretty
+            expected: |-
+              create table orders (
+                id integer,
+                product row(name TEXT, quantity numeric(38, 18)),
+                tags array(row(tag TEXT)),
+                notes array(row(note TEXT)),
+                nested row(a row(b integer))
+              );
+      trino:
+        formatted:
+          - mode: inline
+            expected: |-
+              create table orders (id integer, product row(name TEXT, quantity numeric(38, 18)), tags array(row(tag TEXT)), notes array(row(note TEXT)), nested row(a row(b integer)));
+          - mode: compact
+            expected: |-
+              create table orders (
+                id integer, product row(name TEXT, quantity numeric(38, 18)), tags array(row(tag TEXT)), notes array(row(note TEXT)),
+                nested row(a row(b integer))
+              );
+          - mode: pretty
+            expected: |-
+              create table orders (
+                id integer,
+                product row(name TEXT, quantity numeric(38, 18)),
+                tags array(row(tag TEXT)),
+                notes array(row(note TEXT)),
+                nested row(a row(b integer))
+              );
+
+  - name: row_long
+    input: |-
+      SELECT ROW(first_value_column,second_value_column,third_value_column,fourth_value_column,fifth_value_column,sixth_value_column),(first_value_column,second_value_column,third_value_column,fourth_value_column,fifth_value_column) FROM wide
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select row(first_value_column, second_value_column, third_value_column, fourth_value_column, fifth_value_column, sixth_value_column), (first_value_column, second_value_column, third_value_column, fourth_value_column, fifth_value_column) from wide;
+          - mode: compact
+            expected: |-
+              select row(
+                  first_value_column, second_value_column, third_value_column, fourth_value_column, fifth_value_column,
+                    sixth_value_column
+                ), (first_value_column, second_value_column, third_value_column, fourth_value_column, fifth_value_column)
+              from wide;
+          - mode: pretty
+            expected: |-
+              select row(
+                  first_value_column, second_value_column, third_value_column, fourth_value_column, fifth_value_column,
+                    sixth_value_column
+                ),
+                (first_value_column, second_value_column, third_value_column, fourth_value_column, fifth_value_column)
+              from wide;
+        validation:
+          setup: |-
+            create table wide(first_value_column int, second_value_column int, third_value_column int, fourth_value_column int, fifth_value_column int, sixth_value_column int);
+
+  - name: row_type_long
+    input: |-
+      SELECT CAST(NULL AS ROW(first_field_name TEXT,second_field_name INTEGER,third_field_name NUMERIC(38,18),fourth_field_name ROW(nested_field TEXT)))
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select cast(NULL as row(first_field_name TEXT, second_field_name integer, third_field_name numeric(38, 18), fourth_field_name row(nested_field TEXT)));
+          - mode: compact
+            expected: |-
+              select cast(
+                NULL as row(
+                  first_field_name TEXT, second_field_name integer, third_field_name numeric(38, 18),
+                    fourth_field_name row(nested_field TEXT)
+                )
+              );
+          - mode: pretty
+            expected: |-
+              select cast(
+                NULL as row(
+                  first_field_name TEXT,
+                    second_field_name integer,
+                    third_field_name numeric(38, 18),
+                    fourth_field_name row(nested_field TEXT)
+                )
+              );
+        validation:
+
+  - name: row_overlaps
+    input: |-
+      SELECT (DATE '2021-01-10',DATE '2021-02-01') OVERLAPS (DATE '2021-01-20',DATE '2021-02-10')
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select (DATE '2021-01-10', DATE '2021-02-01') overlaps (DATE '2021-01-20', DATE '2021-02-10');
+          - mode: compact
+            expected: |-
+              select (DATE '2021-01-10', DATE '2021-02-01') overlaps (DATE '2021-01-20', DATE '2021-02-10');
+          - mode: pretty
+            expected: |-
+              select (DATE '2021-01-10', DATE '2021-02-01') overlaps (DATE '2021-01-20', DATE '2021-02-10');
+      trino:
+        formatted:
+          - mode: inline
+            expected: |-
+              select (DATE '2021-01-10', DATE '2021-02-01') overlaps (DATE '2021-01-20', DATE '2021-02-10');
+          - mode: compact
+            expected: |-
+              select (DATE '2021-01-10', DATE '2021-02-01') overlaps (DATE '2021-01-20', DATE '2021-02-10');
+          - mode: pretty
+            expected: |-
+              select (DATE '2021-01-10', DATE '2021-02-01') overlaps (DATE '2021-01-20', DATE '2021-02-10');

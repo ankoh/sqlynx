@@ -1018,7 +1018,7 @@ parser-snapshots:
       statements:
         - type: EXPLAIN
           ast-begin: 0
-          ast-size: 63
+          ast-size: 62
           description:
             text: "explain (s.. order_id;"
             description-begin: 0
@@ -1101,15 +1101,12 @@ parser-snapshots:
                                                                 text: "row(produc..ic(38,18))"
                                                                 children:
                                                                   - key: SQL_TYPENAME_TYPE
-                                                                    type: OBJECT_SQL_GENERIC_TYPE
+                                                                    type: OBJECT_SQL_ROW_TYPE
                                                                     text: "row(produc..ic(38,18))"
                                                                     children:
-                                                                      - key: SQL_GENERIC_TYPE_NAME
-                                                                        type: NAME
-                                                                        text: "row"
-                                                                      - key: SQL_GENERIC_TYPE_MODIFIERS
+                                                                      - key: SQL_ROW_TYPE_FIELDS
                                                                         type: ARRAY
-                                                                        text: "(product_n..ic(38,18))"
+                                                                        text: "product_na..ric(38,18)"
                                                                         children:
                                                                           - type: OBJECT_SQL_COLUMN_DEF
                                                                             text: "product_name text"

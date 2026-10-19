@@ -169,6 +169,8 @@ enum NodeType: uint16 {
     OBJECT_VIS_DASHBOARD_SPEC,
     OBJECT_VIS_TABLE_SPEC,
     OBJECT_SQL_DELETE,
+    OBJECT_SQL_ROW_TYPE,
+    OBJECT_SQL_ROW_EXPRESSION,
 }
 
 enum AttributeKey: uint16 {
@@ -650,6 +652,9 @@ enum AttributeKey: uint16 {
     SQL_DELETE_USING,
     SQL_DELETE_WHERE,
     SQL_DELETE_RETURNING,
+    SQL_ROW_TYPE_FIELDS,
+    SQL_ROW_EXPRESSION_VALUES,
+    SQL_ROW_EXPRESSION_EXPLICIT,
 }
 
 enum StatementType: uint8 {
