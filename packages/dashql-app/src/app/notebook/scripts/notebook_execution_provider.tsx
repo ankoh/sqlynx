@@ -22,12 +22,14 @@ export function notebookExecutionIsBusy(state: NotebookExecutionState | null | u
 export function useNotebookExecution(notebookId: string) {
     const context = React.useContext(CONTEXT);
     const state = context?.states.get(notebookId) ?? null;
-    return {
+    const start = context?.start;
+    const stop = context?.stop;
+    return React.useMemo(() => ({
         state,
         busy: notebookExecutionIsBusy(state),
-        start: (modify: ModifyNotebookScripts) => context?.start(notebookId, modify),
-        stop: () => context?.stop(notebookId),
-    };
+        start: (modify: ModifyNotebookScripts) => start?.(notebookId, modify),
+        stop: () => stop?.(notebookId),
+    }), [state, start, stop, notebookId]);
 }
 
 export function NotebookExecutionProvider(props: React.PropsWithChildren) {
@@ -51,7 +53,13 @@ export function NotebookExecutionProvider(props: React.PropsWithChildren) {
         }
     }, [registry, connections]);
 
-    const start = (notebookId: string, modifyNotebookScripts: ModifyNotebookScripts) => {
+    // The provider re-renders with every registry change.
+    // Keep the context value stable and read the latest registries when an execution starts.
+    const latest = React.useRef({ registry, connections, executeQuery, cancelQuery });
+    latest.current = { registry, connections, executeQuery, cancelQuery };
+
+    const start = React.useCallback((notebookId: string, modifyNotebookScripts: ModifyNotebookScripts) => {
+        const { registry, connections, executeQuery, cancelQuery } = latest.current;
         const notebook = registry.notebookScriptsMap.get(notebookId);
         if (!notebook || runs.current.has(notebookId) || runningDatabases.current.has(notebook.databaseId)
             || Object.keys(notebook.scriptRefs).length === 0) return;
@@ -62,7 +70,7 @@ export function NotebookExecutionProvider(props: React.PropsWithChildren) {
         runningDatabases.current.add(notebook.databaseId);
         void runNotebookExecution({
             notebook,
-            getNotebook: () => registry.notebookScriptsMap.get(notebookId) ?? null,
+            getNotebook: () => latest.current.registry.notebookScriptsMap.get(notebookId) ?? null,
             executeQuery, cancelQuery, modifyNotebookScripts,
             maxConcurrentQueries: connection.connectorInfo.connectorType === ConnectorType.HYPER
                 && connection.details.type === HYPER_CONNECTOR
@@ -74,9 +82,11 @@ export function NotebookExecutionProvider(props: React.PropsWithChildren) {
             runs.current.delete(notebookId);
             runningDatabases.current.delete(notebook.databaseId);
         });
-    };
+    }, []);
+    const stop = React.useCallback((id: string) => runs.current.get(id)?.abort(), []);
+    const value = React.useMemo<ExecutionContext>(() => ({ states, start, stop }), [states, start, stop]);
 
-    return <CONTEXT.Provider value={{ states, start, stop: id => runs.current.get(id)?.abort() }}>
+    return <CONTEXT.Provider value={value}>
         {props.children}
     </CONTEXT.Provider>;
 }
