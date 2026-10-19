@@ -17,6 +17,18 @@ import { VerticalScrollShadows } from '../foundations/vertical_scroll_shadows.js
 
 export const ROW_HEIGHT = 32;
 
+/// Formatting a timestamp with toLocaleTimeString creates a new formatter for every row
+const TIMESTAMP_FORMAT = new Intl.DateTimeFormat('en-GB', {
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric',
+    hour12: false,
+});
+
+export function formatLogTimestamp(timestamp: number): string {
+    return TIMESTAMP_FORMAT.format(timestamp);
+}
+
 export interface LogRowProps {
     logger: ReturnType<typeof useLogger>;
     showJsonRecord: (rowIndex: number) => void;
@@ -52,7 +64,7 @@ export const LogRow = (props: RowComponentProps<LogRowProps>) => {
         >
             <div className={styles.log_row_main}>
                 <div className={styles.log_cell_timestamp}>
-                    {(new Date(record.timestamp)).toLocaleTimeString('en-GB', { hour12: false })}
+                    {formatLogTimestamp(record.timestamp)}
                 </div>
                 <div className={styles.log_cell_level}>
                     {getLogLevelName(record.level)}
