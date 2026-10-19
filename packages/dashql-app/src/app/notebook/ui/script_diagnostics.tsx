@@ -50,7 +50,7 @@ function formattingDetails(scriptData: ScriptData, connectorType?: ConnectorType
 }
 
 export function collectScriptDiagnostics(scriptData: ScriptData, isFormattable: boolean,
-    connectorType?: ConnectorType): ScriptDiagnostic[] {
+    connectorType?: ConnectorType, formatting: Record<string, unknown> | null = null): ScriptDiagnostic[] {
     const diagnostics: ScriptDiagnostic[] = (scriptData.editorUpdate?.diagnostics ?? []).map(diagnostic => {
         const severity = diagnostic.severity === dashql.buffers.editor.EditorDiagnosticSeverity.WARNING
             ? 'warning'
@@ -74,7 +74,7 @@ export function collectScriptDiagnostics(scriptData: ScriptData, isFormattable: 
         diagnostics.push({
             severity: 'warning',
             message: SCRIPT_FORMATTING_WARNING,
-            details: formattingDetails(scriptData, connectorType),
+            details: formatting ?? formattingDetails(scriptData, connectorType),
         });
     }
     return diagnostics;
@@ -88,7 +88,15 @@ export const ScriptDiagnosticsButton: React.FC<{
     const [isOpen, setIsOpen] = React.useState(false);
     const [selectedDiagnostic, setSelectedDiagnostic] = React.useState<ScriptDiagnostic | null>(null);
     const triggerRef = React.useRef<HTMLButtonElement | null>(null);
-    const diagnostics = collectScriptDiagnostics(scriptData, isFormattable, connectorType);
+    // Inspecting the formatter is a full pass over the script, only repeat it when the text changes
+    const formatting = React.useMemo(
+        () => isFormattable ? null : formattingDetails(scriptData, connectorType),
+        [scriptData.scriptSession, scriptData.editorUpdate?.textVersion, isFormattable, connectorType],
+    );
+    const diagnostics = React.useMemo(
+        () => collectScriptDiagnostics(scriptData, isFormattable, connectorType, formatting),
+        [scriptData.editorUpdate, isFormattable, connectorType, formatting],
+    );
     React.useEffect(() => {
         if (diagnostics.length === 0) {
             if (isOpen) setIsOpen(false);
