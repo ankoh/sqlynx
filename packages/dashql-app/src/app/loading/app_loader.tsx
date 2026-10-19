@@ -391,6 +391,10 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
             return next;
         });
     }, [storageWriter, logger]);
+    const invalidNotebookRegistry = React.useMemo(
+        () => ({ invalidNotebooks, deleteInvalidNotebook }),
+        [invalidNotebooks, deleteInvalidNotebook],
+    );
 
     if (showNarrowScreenWarning) {
         return <NarrowScreenWarning onEnable={() => reconfigure(value => value == null ? null : {
@@ -425,7 +429,7 @@ export const AppLoader: React.FC<React.PropsWithChildren<Props>> = (props: React
     const pauseAfterSetup = config?.settings?.pauseAfterAppSetup ?? false;
     if (canShowNotebook(routeContext, pauseAfterSetup)) {
         return (
-            <InvalidNotebookRegistryProvider value={{ invalidNotebooks, deleteInvalidNotebook }}>
+            <InvalidNotebookRegistryProvider value={invalidNotebookRegistry}>
                 {props.children}
             </InvalidNotebookRegistryProvider>
         );
