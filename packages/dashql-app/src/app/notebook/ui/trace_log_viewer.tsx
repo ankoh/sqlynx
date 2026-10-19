@@ -31,7 +31,8 @@ interface TraceLogViewerProps {
 
 export const TraceLogViewer: React.FC<TraceLogViewerProps> = (props: TraceLogViewerProps) => {
     const logger = useLogger();
-    const logVersion = pollLogVersion(100);
+    // The trace subscription drives the re-renders, poll the log version only when showing all logs
+    const logVersion = pollLogVersion(100, props.traceId === undefined);
 
     // Maintain filtered log records for trace-specific viewing
     const [filteredLogs, setFilteredLogs] = React.useState<LogRecord[]>([]);
