@@ -9,6 +9,7 @@ import { assert } from '../../../../../utils/assert.js';
 import { NULL_SYMBOL } from './histogram_cell.js';
 import { COLUMN_SUMMARY_COLORS, getTotalBarColor, getFilteredBarColor } from './data_table_colors.js';
 import { formatHistogramFocusDescription } from './histogram_label.js';
+import { arePropsEqualWithStyle } from './memo_props.js';
 
 export type MostFrequentValueFilterCallback = (table: TableAggregation, columnIndex: number, column: StringColumnAggregation, frequentValueId: number | null) => void;
 
@@ -39,7 +40,7 @@ function resolveRowUsingOffset(offsets: BigInt64Array, offset: number) {
     return Math.max(offsets.length - 1, 0);
 }
 
-export function MostFrequentCell(props: MostFrequentCellProps): React.ReactElement {
+function MostFrequentCellImpl(props: MostFrequentCellProps): React.ReactElement {
     const svgContainer = React.useRef<HTMLDivElement>(null);
     const svgContainerSize = observeSize(svgContainer);
     const pendingFilterFrame = React.useRef<number | null>(null);
@@ -354,3 +355,5 @@ export function MostFrequentCell(props: MostFrequentCellProps): React.ReactEleme
         </div>
     );
 }
+
+export const MostFrequentCell = React.memo(MostFrequentCellImpl, arePropsEqualWithStyle);

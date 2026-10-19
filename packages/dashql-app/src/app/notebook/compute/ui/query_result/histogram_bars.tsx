@@ -38,7 +38,7 @@ interface HistogramBarsProps {
     filteredBarFocusedColor: string;
 }
 
-export function HistogramBars(props: HistogramBarsProps): React.ReactElement {
+function HistogramBarsImpl(props: HistogramBarsProps): React.ReactElement {
     const filteredBinCounts = props.filteredBinCounts;
     const totalBars = Array.from({ length: props.binCounts.length }, (_, bin) => {
         const geometry = getBarGeometry(bin, props.binCounts[bin], props.xScale, props.yScale, props.height);
@@ -70,6 +70,8 @@ export function HistogramBars(props: HistogramBarsProps): React.ReactElement {
         </>
     );
 }
+
+export const HistogramBars = React.memo(HistogramBarsImpl);
 
 interface HistogramNullBarProps {
     countNull: number;

@@ -8,6 +8,7 @@ import { RectangleWaveSpinner } from '../../../../../ui/foundations/spinners.js'
 import { BrushingStateCallback, HistogramCell, HistogramFilterCallback } from './histogram_cell.js';
 import { MostFrequentCell, MostFrequentValueFilterCallback } from './mostfrequent_cell.js';
 import { DataTableLayout } from './data_table_layout.js';
+import { arePropsEqualWithStyle } from './memo_props.js';
 import { CrossFilters, HISTOGRAM_FILTER } from '../../../../../compute/cross_filters.js';
 
 /// ---------------------------------------------------------------------------
@@ -36,7 +37,7 @@ export interface HeaderPlotsCellProps {
     onMostFrequentValueFilter: MostFrequentValueFilterCallback;
 }
 
-export function HeaderPlotsCell(props: HeaderPlotsCellProps): React.ReactElement {
+function HeaderPlotsCellImpl(props: HeaderPlotsCellProps): React.ReactElement {
     if (props.columnIndex >= props.gridLayout.arrowFieldByColumnIndex.length) {
         return <div style={props.style} />;
     }
@@ -193,3 +194,5 @@ export function HeaderPlotsCell(props: HeaderPlotsCellProps): React.ReactElement
         [styles.plots_cell_rightmost]: isRightmost
     })} style={props.style} />;
 }
+
+export const HeaderPlotsCell = React.memo(HeaderPlotsCellImpl, arePropsEqualWithStyle);

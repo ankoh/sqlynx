@@ -6,6 +6,11 @@ import type { DataCellData, HeaderNameCellProps, HeaderPlotsCellProps } from './
 import { DataCell, HeaderNameCell, HeaderPlotsCell, TableColumnHeader } from './data_table_cell.js';
 import type { DataTablePortalContainers } from './data_table_portals.js';
 import { ChevronDownIcon, ChevronUpIcon } from '../../../../../ui/foundations/symbol_icon.js';
+import { arePropsEqualWithStyle } from './memo_props.js';
+
+/// Row header cells of the sticky column only re-render when their own props change
+const StickyRowHeaderCell = React.memo(DataCell, arePropsEqualWithStyle);
+const STICKY_ROW_HEADER_ARIA = { 'aria-colindex': 1, role: 'gridcell' } as const;
 
 interface StickyHeadersProps {
     container: DataTablePortalContainers['header'] | null;
@@ -27,7 +32,7 @@ interface StickyHeadersProps {
     plotCellProps: Omit<HeaderPlotsCellProps, 'columnIndex' | 'style'>;
 }
 
-export const DataTableStickyHeaders: React.FC<StickyHeadersProps> = (props) => {
+export const DataTableStickyHeaders = React.memo((props: StickyHeadersProps) => {
     if (props.container == null) return null;
     const renderNameCell = (columnIndex: number, sticky: boolean) => (
         <HeaderNameCell
@@ -102,7 +107,7 @@ export const DataTableStickyHeaders: React.FC<StickyHeadersProps> = (props) => {
         </div>,
         props.container,
     );
-};
+});
 
 interface StickyColumnProps {
     container: DataTablePortalContainers['data'] | null;
@@ -113,7 +118,7 @@ interface StickyColumnProps {
     gridData: DataCellData;
 }
 
-export const DataTableStickyColumn: React.FC<StickyColumnProps> = (props) => {
+export const DataTableStickyColumn = React.memo((props: StickyColumnProps) => {
     if (props.container == null) return null;
     const visibleCount = Math.max(0, props.stopRow - props.startRow + 1);
     return ReactDOM.createPortal(
@@ -143,8 +148,8 @@ export const DataTableStickyColumn: React.FC<StickyColumnProps> = (props) => {
                             pointerEvents: 'auto',
                         }}
                     >
-                        <DataCell
-                            ariaAttributes={{ 'aria-colindex': 1, role: 'gridcell' }}
+                        <StickyRowHeaderCell
+                            ariaAttributes={STICKY_ROW_HEADER_ARIA}
                             rowIndex={rowIndex}
                             columnIndex={0}
                             style={{ width: props.firstColumnWidth, height: 26 }}
@@ -157,4 +162,4 @@ export const DataTableStickyColumn: React.FC<StickyColumnProps> = (props) => {
         </div>,
         props.container,
     );
-};
+});

@@ -8,6 +8,7 @@ import { ArrowTableFormatter, isArrowListType } from '../../../../../compute/arr
 import { ColumnGroup } from '../../../../../compute/computation_types.js';
 import { DataTableLayout } from './data_table_layout.js';
 import { peekFormat } from './format_peek.js';
+import { CellFocus, DataTableFocusStore, useCellFocus } from './data_table_focus.js';
 
 /// ---------------------------------------------------------------------------
 /// Data Cell
@@ -16,8 +17,7 @@ import { peekFormat } from './format_peek.js';
 export interface DataCellData {
     columnGroups: ColumnGroup[];
     visibleRowIndices: Int32Array | null;
-    focusedField: number | null;
-    focusedRow: number | null;
+    focus: DataTableFocusStore;
     gridLayout: DataTableLayout;
     hideRowHeader: boolean;
     table: arrow.Table;
@@ -31,19 +31,30 @@ export interface DataCellData {
 }
 
 export function DataCell(props: CellComponentProps<DataCellData>): React.ReactElement | null {
-    if (props.columnIndex >= props.gridLayout.arrowFieldByColumnIndex.length) {
-        return <div style={props.style} />;
-    }
-    const fieldId = props.gridLayout.arrowFieldByColumnIndex[props.columnIndex];
-    let dataRow = props.rowIndex;
-
-    if (props.columnIndex === 0 && props.hideRowHeader) {
-        return null;
-    }
+    const inLayout = props.columnIndex < props.gridLayout.arrowFieldByColumnIndex.length;
+    const isHiddenRowHeader = props.columnIndex === 0 && props.hideRowHeader;
+    const fieldId = inLayout ? props.gridLayout.arrowFieldByColumnIndex[props.columnIndex] : -1;
 
     // Translate the row index through the visible row ids, if an indirection table is active
-    if (props.visibleRowIndices != null) {
-        dataRow = props.visibleRowIndices[dataRow];
+    const dataRow = props.visibleRowIndices != null
+        ? props.visibleRowIndices[props.rowIndex]
+        : props.rowIndex;
+
+    // Subscribe to the hovered cell, only the previous and the next focused row re-render
+    const focus = useCellFocus(props.focus, (inLayout && !isHiddenRowHeader) ? dataRow : -1, fieldId);
+
+    // Format the value and peek into text values only when the value changes
+    const formatted = (inLayout && !isHiddenRowHeader && props.tableFormatter)
+        ? props.tableFormatter.getValue(dataRow, fieldId)
+        : null;
+    const peekText = inLayout && props.columnIndex !== 0 && props.gridLayout.isTextColumn[props.columnIndex] === 1;
+    const peekedFormat = React.useMemo(() => peekText ? peekFormat(formatted) : null, [peekText, formatted]);
+
+    if (!inLayout) {
+        return <div style={props.style} />;
+    }
+    if (isHiddenRowHeader) {
+        return null;
     }
 
     // Abort if no formatter is available
@@ -60,11 +71,7 @@ export function DataCell(props: CellComponentProps<DataCellData>): React.ReactEl
             />
         );
     }
-
-    // Format the value
-    const formatted = props.tableFormatter.getValue(dataRow, fieldId);
-    const focusedRow = props.focusedRow;
-    const isRowFocused = dataRow === focusedRow;
+    const isRowFocused = focus !== CellFocus.None;
 
     if (props.columnIndex == 0) {
         // Row number column - inline class computation to avoid object allocation
@@ -78,7 +85,6 @@ export function DataCell(props: CellComponentProps<DataCellData>): React.ReactEl
         );
     } else {
         // Compute class name inline to avoid object allocation in classNames()
-        const focusedField = props.focusedField;
         const isMetadata = props.gridLayout.isSystemColumn[props.columnIndex] === 1;
         const isNull = formatted == null;
         const isRightmost = props.columnIndex === props.rightmostVisibleColumn;
@@ -97,7 +103,7 @@ export function DataCell(props: CellComponentProps<DataCellData>): React.ReactEl
             className = styles.data_cell;
         }
         if (isRowFocused) {
-            className += fieldId === focusedField
+            className += focus === CellFocus.Primary
                 ? ` ${styles.data_cell_focused_primary}`
                 : ` ${styles.data_cell_focused_secondary}`;
         }
@@ -120,7 +126,7 @@ export function DataCell(props: CellComponentProps<DataCellData>): React.ReactEl
             ? 'array'
             : (!isNull && field.type.typeId === arrow.Type.Struct
                 ? 'struct'
-                : (props.gridLayout.isTextColumn[props.columnIndex] === 1 ? peekFormat(formatted) : null));
+                : peekedFormat);
 
         return (
             <div

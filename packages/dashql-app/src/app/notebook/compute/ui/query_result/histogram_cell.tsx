@@ -9,6 +9,7 @@ import { getTotalBarColor, getFilteredBarColor } from './data_table_colors.js';
 import { HistogramBars, HistogramNullBar, NULL_SYMBOL } from './histogram_bars.js';
 import { useHistogramBrush } from './histogram_brush.js';
 import { formatHistogramFocusDescription } from './histogram_label.js';
+import { arePropsEqualWithStyle } from './memo_props.js';
 
 export { NULL_SYMBOL } from './histogram_bars.js';
 export { SettledBrushUpdates } from './histogram_brush.js';
@@ -28,7 +29,7 @@ interface HistogramCellProps {
     onBrushingChange?: BrushingStateCallback;
 }
 
-export function HistogramCell(props: HistogramCellProps): React.ReactElement {
+function HistogramCellImpl(props: HistogramCellProps): React.ReactElement {
     const inputNullable = props.columnAggregate.columnEntry.inputFieldNullable;
     const countNull = props.columnAggregate.columnAnalysis.countNull;
     const binCounts = props.columnAggregate.columnAnalysis.binValueCounts;
@@ -345,3 +346,5 @@ export function HistogramCell(props: HistogramCellProps): React.ReactElement {
         </div>
     );
 };
+
+export const HistogramCell = React.memo(HistogramCellImpl, arePropsEqualWithStyle);
