@@ -160,6 +160,11 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
         if (props.active && attachmentsEnabled) void saveAttachments(Array.from(event.dataTransfer.files));
     }, [attachmentsEnabled, props.active, saveAttachments]);
 
+    // The notebook scripts change with every keystroke and the connection with every query event.
+    // Callbacks read the latest values through a ref to stay stable for the memoized feed rows.
+    const latest = React.useRef({ notebookScripts: props.notebookScripts, conn: props.conn });
+    latest.current = { notebookScripts: props.notebookScripts, conn: props.conn };
+
     const pendingCreatedScriptKeyRef = React.useRef<number | null>(null);
     const editorViewsRef = React.useRef(new Map<number, EditorView>());
     // Presence means collapsed. A query id marks an automatic no-result collapse; null marks a
@@ -199,7 +204,7 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
         if (isDisconnected) {
             return;
         }
-        const notebookScripts = props.notebookScripts;
+        const { notebookScripts, conn } = latest.current;
         const entry = notebookScripts.scriptRefs[fileName];
         const scriptData = entry != null ? notebookScripts.scripts[entry.scriptId] : undefined;
         if (scriptData == null) {
@@ -210,17 +215,17 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
         if (cacheKey != null) {
             await storageReader.backend.deleteQueryResultCache(notebookScripts.notebookId, cacheKey).catch(() => { });
         }
-        runNotebookScript(props.conn!.databaseId, notebookScripts, scriptData, executeQuery, props.modifyNotebookScripts, logger);
-    }, [props.notebookScripts, props.modifyNotebookScripts, props.conn, isDisconnected, executeQuery, storageReader, logger]);
+        runNotebookScript(conn!.databaseId, notebookScripts, scriptData, executeQuery, props.modifyNotebookScripts, logger);
+    }, [props.modifyNotebookScripts, isDisconnected, executeQuery, storageReader, logger]);
 
     const handleExecuteEntry = React.useCallback((fileName: string) => {
         if (isDisconnected) return;
-        const notebookScripts = props.notebookScripts;
+        const { notebookScripts, conn } = latest.current;
         const entry = notebookScripts.scriptRefs[fileName];
         const scriptData = entry != null ? notebookScripts.scripts[entry.scriptId] : undefined;
         if (scriptData == null) return;
-        runNotebookScript(props.conn!.databaseId, notebookScripts, scriptData, executeQuery, props.modifyNotebookScripts, logger);
-    }, [executeQuery, isDisconnected, props.conn, props.modifyNotebookScripts, props.notebookScripts, logger]);
+        runNotebookScript(conn!.databaseId, notebookScripts, scriptData, executeQuery, props.modifyNotebookScripts, logger);
+    }, [executeQuery, isDisconnected, props.modifyNotebookScripts, logger]);
 
     const handleDelete = React.useCallback((fileName: string) => {
         props.modifyNotebookScripts({ type: DELETE_SCRIPT, value: fileName });
@@ -233,7 +238,7 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
     // Move a script one position up/down within the notebook by swapping it with its neighbour in the
     // feed order and dispatching the new full order to REORDER_SCRIPTS.
     const moveScript = React.useCallback((fileName: string, delta: number) => {
-        const order = getSortedScriptFileNames(props.notebookScripts.scriptRefs);
+        const order = getSortedScriptFileNames(latest.current.notebookScripts.scriptRefs);
         const from = order.indexOf(fileName);
         const to = from + delta;
         if (from < 0 || to < 0 || to >= order.length) return;
@@ -242,7 +247,7 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
             type: REORDER_SCRIPTS,
             value: order,
         });
-    }, [props.notebookScripts, props.modifyNotebookScripts]);
+    }, [props.modifyNotebookScripts]);
     const handleMoveUp = React.useCallback((fileName: string) => moveScript(fileName, -1), [moveScript]);
     const handleMoveDown = React.useCallback((fileName: string) => moveScript(fileName, 1), [moveScript]);
     const dndSensors = useSensors(
@@ -324,8 +329,9 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
                 if (active && active !== document.body && active !== document.documentElement) {
                     return;
                 }
-                const focused = getSelectedScriptRef(props.notebookScripts);
-                const focusedScript = focused != null ? props.notebookScripts.scripts[focused.scriptId] : null;
+                const notebookScripts = latest.current.notebookScripts;
+                const focused = getSelectedScriptRef(notebookScripts);
+                const focusedScript = focused != null ? notebookScripts.scripts[focused.scriptId] : null;
                 if (focusedScript?.pendingDiff != null) {
                     event.preventDefault();
                     handleAcceptDiff(focusedScript.scriptKey);
@@ -348,15 +354,16 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
                 if (active && active !== document.body && active !== document.documentElement) {
                     return;
                 }
-                const focused = getSelectedScriptRef(props.notebookScripts);
-                const focusedScript = focused != null ? props.notebookScripts.scripts[focused.scriptId] : null;
+                const notebookScripts = latest.current.notebookScripts;
+                const focused = getSelectedScriptRef(notebookScripts);
+                const focusedScript = focused != null ? notebookScripts.scripts[focused.scriptId] : null;
                 if (focusedScript?.pendingDiff != null) {
                     event.preventDefault();
                     handleRejectDiff(focusedScript.scriptKey);
                 }
             },
         },
-    ], [feedActive, props.notebookScripts, handleAcceptDiff, handleRejectDiff]);
+    ], [feedActive, handleAcceptDiff, handleRejectDiff]);
     useKeyEvents(keyHandlers);
 
     const feedLayout = useNotebookFeedLayout(
@@ -390,7 +397,9 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
     const canDelete = entries.length > 1;
     const rowProps = React.useMemo<ScriptFeedRowProps>(() => ({
         notebookId: props.notebookScripts.notebookId,
-        connection: props.conn,
+        databaseId: props.conn?.databaseId ?? null,
+        connectionHealth: props.conn?.connectionHealth ?? null,
+        connectionDetails: props.conn?.details ?? null,
         connectorType: props.notebookScripts.connectorInfo.connectorType,
         entries,
         storageReader: storageReader,
@@ -423,7 +432,7 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
         onCreate: handleCreate,
         onEditorView: handleEditorView,
         onRowHeightChange: feedLayout.rowHeights.setRowHeight,
-    }), [entries, props.active, props.notebookScripts.scripts, props.notebookScripts.scriptFocus.fileName, props.notebookScripts.connectorInfo.connectorType, scriptDebugMode, formattingDebugMode, keywordCase, compactLayout, canDelete, handleFocus, handleDelete, handleRename, handleMoveUp, handleMoveDown, handleExecuteEntry, handleShowStatus, handleShowTable, handleShowVisualization, handleShowDetails, handleRerunEntry, handleFormat, handleAcceptDiff, handleRejectDiff, collapsedResults, handleToggleResultExpanded, handleAutoCollapseResult, handleResetAutoCollapsedResult, handleCreate, handleEditorView, feedLayout.rowHeights.setRowHeight]);
+    }), [entries, props.active, props.conn?.databaseId, props.conn?.connectionHealth, props.conn?.details, props.notebookScripts.scripts, props.notebookScripts.scriptFocus.fileName, props.notebookScripts.connectorInfo.connectorType, scriptDebugMode, formattingDebugMode, keywordCase, compactLayout, canDelete, handleFocus, handleDelete, handleRename, handleMoveUp, handleMoveDown, handleExecuteEntry, handleShowStatus, handleShowTable, handleShowVisualization, handleShowDetails, handleRerunEntry, handleFormat, handleAcceptDiff, handleRejectDiff, collapsedResults, handleToggleResultExpanded, handleAutoCollapseResult, handleResetAutoCollapsedResult, handleCreate, handleEditorView, feedLayout.rowHeights.setRowHeight]);
     const getScrollElement = React.useCallback(() => feedLayout.listRef.current?.element ?? null, [feedLayout.listRef]);
 
     return (
