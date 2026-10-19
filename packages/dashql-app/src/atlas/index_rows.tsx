@@ -86,7 +86,7 @@ interface IndexRowsCardProps {
 /// The rows of the index file that the cloud shows, with a histogram per column. Brushing a histogram or picking a
 /// frequent value filters the rows and fades the other dots of the cloud. Looks like the result overlay of the shell:
 /// a tab header and the table below it, standing on the bottom edge of the page.
-export const IndexRowsCard: React.FC<IndexRowsCardProps> = props => {
+export const IndexRowsCard: React.FC<IndexRowsCardProps> = React.memo((props: IndexRowsCardProps) => {
     const { table, dispatchComputation } = props;
     const [tableHeight, maxTableHeight, setTableHeight] = useTableHeight();
     const [dragging, setDragging] = React.useState(false);
@@ -207,4 +207,4 @@ export const IndexRowsCard: React.FC<IndexRowsCardProps> = props => {
                 ))}
         </section>
     );
-};
+});
