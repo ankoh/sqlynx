@@ -13,11 +13,16 @@
     height: 100%;
 }
 
-.card:not(.card_locked_height) .tabs {
+.card_expanded {
+    height: 100%;
+    max-height: none;
+}
+
+.card:not(.card_locked_height):not(.card_expanded) .tabs {
     height: auto;
 }
 
-.card:not(.card_locked_height) .tabs > div:last-child {
+.card:not(.card_locked_height):not(.card_expanded) .tabs > div:last-child {
     height: auto;
 }
 

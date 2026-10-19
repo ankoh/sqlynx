@@ -142,6 +142,43 @@ describe('ShellQueryResultOverlay', () => {
         expect(document.querySelector<HTMLElement>('[aria-label="Shell query results"]')!.style.height).toBe('');
     });
 
+    it('expands the Plan tab to fill the window', () => {
+        const plan = '{"operator":"executiontarget","operatorId":1}';
+        vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ height: 272 } as DOMRect);
+        act(() => root.render(
+            <ShellQueryResultOverlay
+                query={{
+                    queryId: 42,
+                    status: QueryExecutionStatus.SUCCEEDED,
+                    resultTable: arrow.tableFromArrays({ value: [plan] }),
+                } as any}
+                onClose={vi.fn()}
+                dependencies={dependencies}
+            />,
+        ));
+
+        const card = () => document.querySelector<HTMLElement>('[aria-label="Shell query results"]')!;
+        const overlay = () => card().parentElement!;
+        const sizeBefore = overlay().className;
+        expect(card().style.height).toBe('272px');
+
+        act(() => document.querySelector<HTMLButtonElement>('button[aria-label="Expand plan"]')!.click());
+        const restore = document.querySelector<HTMLButtonElement>('button[aria-label="Restore plan size"]')!;
+        expect(restore.getAttribute('aria-pressed')).toBe('true');
+        expect(overlay().className).not.toBe(sizeBefore);
+        expect(card().style.height).toBe('');
+        expect(card().style.minHeight).toBe('');
+
+        // The Data tab keeps its regular size
+        act(() => document.querySelector<HTMLButtonElement>('button[aria-label="Query results"]')!.click());
+        expect(overlay().className).toBe(sizeBefore);
+
+        act(() => document.querySelector<HTMLButtonElement>('button[aria-label="Query plan"]')!.click());
+        act(() => document.querySelector<HTMLButtonElement>('button[aria-label="Restore plan size"]')!.click());
+        expect(overlay().className).toBe(sizeBefore);
+        expect(card().style.height).toBe('272px');
+    });
+
     it('locks the initial result height before selecting the Plan tab', () => {
         const plan = '{"operator":"executiontarget","operatorId":1}';
         const getBoundingClientRect = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect')

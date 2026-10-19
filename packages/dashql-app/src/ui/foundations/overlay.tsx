@@ -145,6 +145,8 @@ export interface OverlayProps {
     maxHeight?: OverlaySize;
     anchorSide?: AnchorSide;
     centered?: boolean;
+    /// Fill the window except for the inset, overrides the width and height sizes
+    expanded?: boolean;
     children?: React.ReactNode;
     role?: React.AriaRole;
 }
@@ -190,7 +192,7 @@ export const Overlay = React.forwardRef((props: OverlayProps, forwardedRef: Reac
 
     const overlay = (
         <div
-            className={classNames(styles.overlay, width, height, minWidth, maxWidth, maxHeight)}
+            className={classNames(styles.overlay, width, height, minWidth, maxWidth, maxHeight, { [styles.expanded]: props.expanded === true })}
             ref={overlayRef}
             role={props.role}
             data-electron-drag-region="false"

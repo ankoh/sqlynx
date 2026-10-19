@@ -90,3 +90,12 @@
 .max_height_m    { max-height: 320px; }
 .max_height_l    { max-height: 432px; }
 .max_height_xl   { max-height: 600px; }
+
+/* Fill the window with the same 16px inset as the maximum overlay size.
+   Switches instantly, animating the size would re-layout the content on every frame. */
+.overlay.expanded {
+    width: calc(100vw - 32px);
+    height: calc(100vh - 32px);
+    max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 32px);
+}

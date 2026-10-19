@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ScreenFullIcon, ZoomInIcon, ZoomOutIcon } from '../../../../../ui/foundations/symbol_icon.js';
+import { ZoomInIcon, ZoomOutIcon } from '../../../../../ui/foundations/symbol_icon.js';
 import { color as parseColor, interpolateBrBG, interpolatePuOr, interpolateRdBu, interpolateRdPu, select, zoom, zoomIdentity, ZoomBehavior, ZoomTransform } from 'd3';
 
 import * as dashql from '@ankoh/dashql-core';
@@ -17,6 +17,8 @@ import type { PlanNavigationDirection } from './plan_navigation.js';
 import { getPlanOperatorSymbol, PLAN_OPERATOR_SYMBOL_SIZE, shouldRenderPlanOperatorSymbol } from './plan_operator_symbol.js';
 import { estimateRelativeDifference, materializePlanScene, PLAN_OPERATOR_PORT_INPUT, PLAN_OPERATOR_PORT_OUTPUT, PlanScene, PlanSceneEdge, PlanSceneOperator } from './plan_scene.js';
 import * as styles from './plan_view.module.css';
+
+const FitIcon = SymbolIcon('graph_align');
 
 const FIT_PADDING = 24;
 const EDGE_WIDTH = 2;
@@ -215,17 +217,22 @@ export function PlanView({ plan, showProgress = false, controllerRef, autoFocus 
         ...highlightedEdges.map(edge => edge.parentOperator),
         ...highlightedCrossEdges.map(edge => edge.targetOperator),
     ]), [highlightedCrossEdges, highlightedEdges]);
-    const describeCrossEdge = React.useCallback((operator: PlanSceneOperator) => {
-        const relationships = scene.crossEdges.flatMap(edge => {
-            if (edge.sourceOperator === operator.id) {
-                return [`provides ${edge.kind} to ${scene.operators[edge.targetOperator]?.label ?? 'operator'}`];
-            }
-            if (edge.targetOperator === operator.id) {
-                return [`uses ${edge.kind} from ${scene.operators[edge.sourceOperator]?.label ?? 'operator'}`];
-            }
-            return [];
-        });
-        return relationships.length > 0 ? `; ${relationships.join('; ')}` : '';
+    const crossEdgeDescriptions = React.useMemo(() => {
+        const relationships = new Map<number, string[]>();
+        const add = (operatorId: number, relationship: string) => {
+            const existing = relationships.get(operatorId);
+            if (existing == null) relationships.set(operatorId, [relationship]);
+            else existing.push(relationship);
+        };
+        for (const edge of scene.crossEdges) {
+            add(edge.sourceOperator, `provides ${edge.kind} to ${scene.operators[edge.targetOperator]?.label ?? 'operator'}`);
+            if (edge.targetOperator !== edge.sourceOperator) add(edge.targetOperator, `uses ${edge.kind} from ${scene.operators[edge.sourceOperator]?.label ?? 'operator'}`);
+        }
+        const descriptions = new Map<number, string>();
+        for (const [operatorId, operatorRelationships] of relationships) {
+            descriptions.set(operatorId, `; ${operatorRelationships.join('; ')}`);
+        }
+        return descriptions;
     }, [scene.crossEdges, scene.operators]);
 
     React.useLayoutEffect(() => {
@@ -289,6 +296,8 @@ export function PlanView({ plan, showProgress = false, controllerRef, autoFocus 
             });
         zoomRef.current = behavior;
         select(svg).call(behavior).on('dblclick.zoom', null);
+        // Re-fit when the viewport is resized, e.g. when the surrounding card is expanded.
+        // The zoom event of the fit also repositions an open inspector.
         const observer = new ResizeObserver(() => fit());
         observer.observe(viewport);
         fit();
@@ -485,7 +494,7 @@ export function PlanView({ plan, showProgress = false, controllerRef, autoFocus 
                                 highlightedInputPort={highlightedInputPortOperatorIds.has(operator.id)}
                                 expanded={inspectorOpen && selection?.operator.id === operator.id}
                                 controller={controller}
-                                relationshipDescription={describeCrossEdge(operator)}
+                                relationshipDescription={crossEdgeDescriptions.get(operator.id) ?? ''}
                                 setAnchor={setOperatorAnchor}
                                 onFocus={onFocusOperator}
                                 onSelect={onSelectOperator}
@@ -541,7 +550,7 @@ export function PlanView({ plan, showProgress = false, controllerRef, autoFocus 
             <ButtonGroup className={styles.controls} aria-label="Plan zoom controls">
                 <IconButton variant={ButtonVariant.Default} size={ButtonSize.Small} aria-label="Zoom in" onClick={() => zoomBy(1.25)}><ZoomInIcon size={12} /></IconButton>
                 <IconButton variant={ButtonVariant.Default} size={ButtonSize.Small} aria-label="Zoom out" onClick={() => zoomBy(0.8)}><ZoomOutIcon size={12} /></IconButton>
-                <IconButton variant={ButtonVariant.Default} size={ButtonSize.Small} aria-label="Fit plan" onClick={() => fit(true)}><ScreenFullIcon size={12} /></IconButton>
+                <IconButton variant={ButtonVariant.Default} size={ButtonSize.Small} aria-label="Fit plan" onClick={() => fit(true)}><FitIcon size={12} /></IconButton>
             </ButtonGroup>
             <AnchoredOverlay
                 renderAnchor={null}
@@ -594,7 +603,6 @@ const PlanOperatorNode = React.memo(function PlanOperatorNode(props: {
     onSelect: (operator: PlanSceneOperator, anchor: SVGGElement, toggle: boolean) => void;
 }) {
     const { operator, scene } = props;
-    const labelClipId = React.useId();
     const setAnchor = React.useCallback((anchor: SVGGElement | null) => props.setAnchor(operator.id, anchor), [props.setAnchor, operator.id]);
     const x = operator.rect.x - operator.rect.width / 2;
     const y = operator.rect.y - operator.rect.height / 2;
@@ -635,9 +643,6 @@ const PlanOperatorNode = React.memo(function PlanOperatorNode(props: {
                 ry={6}
                 data-plan-operator-frame
             />
-            <clipPath id={labelClipId}>
-                <path d={`M ${regionStart} 0 H ${regionEnd} V ${input.nodeHeight} H ${regionStart} Z`} />
-            </clipPath>
             {props.showProgress && (
                 <g
                     ref={slot => props.controller.registerOperator(operator.id, slot)}
@@ -650,7 +655,8 @@ const PlanOperatorNode = React.memo(function PlanOperatorNode(props: {
             )}
             {OperatorSymbol != null
                 ? <g className={styles.operator_symbol} transform={`translate(${(regionStart + regionEnd - PLAN_OPERATOR_SYMBOL_SIZE) / 2}, ${(input.nodeHeight - PLAN_OPERATOR_SYMBOL_SIZE) / 2})`} aria-hidden="true"><OperatorSymbol size={PLAN_OPERATOR_SYMBOL_SIZE} /></g>
-                : <text clipPath={`url(#${labelClipId})`} x={(regionStart + regionEnd) / 2} y={input.nodeHeight / 2 + 5}>{operator.displayLabel}</text>}
+                // The label is truncated to maxLabelChars and the core sizes the operator for it, no clipping needed
+                : <text x={(regionStart + regionEnd) / 2} y={input.nodeHeight / 2 + 5}>{operator.displayLabel}</text>}
             {(operator.ports & PLAN_OPERATOR_PORT_OUTPUT) !== 0 && (
                 <g
                     className={styles.operator_port}

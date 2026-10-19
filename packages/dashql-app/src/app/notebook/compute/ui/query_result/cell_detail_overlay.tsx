@@ -3,7 +3,7 @@ import * as styles from './cell_detail_overlay.module.css';
 import * as dashql from '@ankoh/dashql-core';
 
 import { EditorView } from '@codemirror/view';
-import { XIcon, ChevronUpIcon, ChevronDownIcon } from '../../../../../ui/foundations/symbol_icon.js';
+import { XIcon, ChevronUpIcon, ChevronDownIcon, ScreenFullIcon, ScreenNormalIcon } from '../../../../../ui/foundations/symbol_icon.js';
 
 import { ButtonSize, IconButton, ButtonVariant } from '../../../../../ui/foundations/button.js';
 import { SegmentedControl, SegmentedControlSize } from '../../../../../ui/foundations/segmented_control.js';
@@ -66,20 +66,24 @@ export function detectFormats(core: dashql.DashQL | null, value: string | null, 
     const result: DetectedFormats = { json: null, sql: null, plan: null };
     if (value == null) return result;
 
-    if (peekFormat(value) === 'plan') {
+    const peeked = peekFormat(value);
+    if (peeked === 'plan') {
         result.plan = value;
     }
 
-    try {
-        const parsed = JSON.parse(value);
-        if (typeof parsed === 'object' && parsed !== null) {
-            result.json = parsed;
+    if (peeked === 'plan' || peeked === 'json') {
+        try {
+            const parsed = JSON.parse(value);
+            if (typeof parsed === 'object' && parsed !== null) {
+                result.json = parsed;
+            }
+        } catch {
+            // Not JSON
         }
-    } catch {
-        // Not JSON
     }
 
-    if (core != null) {
+    // JSON is never meaningful SQL, skip scanning, parsing, analyzing and formatting large documents
+    if (core != null && result.json == null) {
         let catalog: dashql.DashQLCatalog | null = null;
         let script: dashql.DashQLScript | null = null;
         let formattedScript: dashql.DashQLScript | null = null;
@@ -268,6 +272,7 @@ function CellDetailOverlayInner(props: CellDetailOverlayProps) {
     const [core, setCore] = React.useState<dashql.DashQL | null>(null);
     const [formats, setFormats] = React.useState<DetectedFormats>(EMPTY_FORMATS);
     const [selectedFormat, setSelectedFormat] = React.useState<FormatMode>(FormatMode.Raw);
+    const [expanded, setExpanded] = React.useState(false);
 
     React.useEffect(() => {
         let cancelled = false;
@@ -324,8 +329,9 @@ function CellDetailOverlayInner(props: CellDetailOverlayProps) {
             preventFocusOnOpen
             width={OverlaySize.XL}
             maxHeight={OverlaySize.XL}
+            expanded={expanded}
         >
-            <div className={styles.modal}>
+            <div className={styles.modal} data-expanded={expanded || undefined}>
                 <div className={styles.main}>
                     <div className={styles.header}>
                         <span className={styles.header_title}>
@@ -394,6 +400,14 @@ function CellDetailOverlayInner(props: CellDetailOverlayProps) {
                             onClick={props.onClose}
                         >
                             <XIcon />
+                        </IconButton>
+                        <IconButton
+                            variant={ButtonVariant.Invisible}
+                            aria-label={expanded ? 'Restore size' : 'Expand'}
+                            aria-pressed={expanded}
+                            onClick={() => setExpanded(e => !e)}
+                        >
+                            {expanded ? <ScreenNormalIcon /> : <ScreenFullIcon />}
                         </IconButton>
                     </div>
                     <div className={styles.sidebar_bottom}>

@@ -39,6 +39,19 @@ describe('peekFormat', () => {
         expect(peekFormat('{"operator":"join","left":{},"right":{}}')).toBe('plan');
     });
 
+    it('detects large hyper plans', () => {
+        const inputs = Array.from({ length: 20000 }, (_, i) => `{"operator":"tablescan","operator-id":${i}}`).join(',');
+        const plan = `{"tree":{"operator":"result-sink","operator-id":0,"inputs":[${inputs}]}}  `;
+        expect(plan.length).toBeGreaterThan(800000);
+        expect(peekFormat(plan)).toBe('plan');
+        expect(peekFormat(`${plan} trailing`)).toBeNull();
+    });
+
+    it('only looks for the operator key at the start of large values', () => {
+        const value = `{"padding":"${'x'.repeat(10000)}","operator":"sort"}`;
+        expect(peekFormat(value)).toBe('json');
+    });
+
     it('detects sql keywords', () => {
         expect(peekFormat('SELECT * FROM t')).toBe('sql');
         expect(peekFormat('select 1')).toBe('sql');

@@ -41,6 +41,16 @@ describe('result cell SQL formatting', () => {
         })).toBe(true);
     });
 
+    it('does not treat JSON values as SQL', () => {
+        const plan = '{"tree":{"operator":"result-sink","operator-id":1,"inputs":[]}}';
+        const formats = detectFormats(dql, plan);
+        expect(formats.plan).toBe(plan);
+        expect(formats.json).toEqual({ tree: { operator: 'result-sink', 'operator-id': 1, inputs: [] } });
+        expect(formats.sql).toBeNull();
+
+        expect(detectFormats(dql, '[1, 2, 3]').sql).toBeNull();
+    });
+
     it('formats SQL previews using the selected keyword case', () => {
         const formats = detectFormats(dql, 'select id from items', dashql.buffers.formatting.KeywordCase.UPPER);
         expect(formats.sql?.formattedText).toContain('SELECT id');
