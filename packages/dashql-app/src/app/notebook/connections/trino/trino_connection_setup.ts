@@ -20,7 +20,7 @@ import {
 import { Dispatch } from '../../../../utils/index.js';
 import { LoggableException, Logger, stringifyError } from '../../../../platform/logger/logger.js';
 import { RESET_ATTACHED_DATABASE } from '../attached_database_state.js';
-import { TrinoApiClientInterface, TrinoApiEndpoint } from './trino_api_client.js';
+import { requestTrinoAccessToken, TrinoApiClientInterface, TrinoApiEndpoint } from './trino_api_client.js';
 import { TrinoChannel, TrinoChannelInterface } from './trino_channel.js';
 import { TrinoConnectorConfig } from '../connector_configs.js';
 import { generatePKCEChallenge } from '../../../../utils/pkce.js';
@@ -32,13 +32,8 @@ const LOG_CTX = "trino_setup";
 
 // Default OAuth callback URL for Trino
 const DEFAULT_OAUTH_CALLBACK_URL = "http://localhost:56512/Callback";
-
-interface OAuthCallbackData {
-    code?: string;
-    state?: string;
-    error?: string;
-    error_description?: string;
-}
+// Default OAuth scopes if the connection does not configure any
+const DEFAULT_OAUTH_SCOPES = ["openid", "email", "profile", "offline_access"];
 
 /// Setup Trino connection with basic auth (username/password)
 async function setupTrinoConnectionBasic(
@@ -95,62 +90,18 @@ async function setupTrinoConnectionBasic(
     return channel;
 }
 
-/// Wait for OAuth callback from the native server
-async function waitForOAuthCallback(abortSignal: AbortSignal): Promise<OAuthCallbackData> {
-    abortSignal.throwIfAborted();
-    throw new Error('Trino OAuth callback handling is not available');
-}
-
-/// Exchange the authorization code for an access token
-async function exchangeCodeForToken(
-    tokenEndpoint: string,
-    clientId: string,
-    code: string,
-    codeVerifier: string,
-    redirectUri: string,
-    httpClient: HttpClient,
-    logger: Logger
-): Promise<connection.TrinoAccessToken> {
-    logger.debug("Exchanging authorization code for token", { tokenEndpoint }, LOG_CTX);
-
-    const body = new URLSearchParams({
-        grant_type: 'authorization_code',
-        client_id: clientId,
-        code: code,
-        redirect_uri: redirectUri,
-        code_verifier: codeVerifier,
-    });
-
-    const response = await httpClient.fetch(new URL(tokenEndpoint), {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: body.toString(),
-    });
-
-    if (response.status < 200 || response.status >= 300) {
-        const errorText = await response.text();
-        throw new Error(`Token exchange failed: ${response.status} ${errorText}`);
+/// Wait for the OAuth redirect to reach the native loopback server
+async function waitForOAuthCallback(bridge: DashQLElectronBridge, loopbackId: number, abortSignal: AbortSignal): Promise<DashQLOAuthLoopbackResult> {
+    const onAbort = () => void bridge.oauthLoopback.close(loopbackId);
+    abortSignal.addEventListener('abort', onAbort, { once: true });
+    try {
+        return await bridge.oauthLoopback.wait(loopbackId);
+    } catch (e: any) {
+        abortSignal.throwIfAborted();
+        throw e;
+    } finally {
+        abortSignal.removeEventListener('abort', onAbort);
     }
-
-    const tokenData = await response.json();
-
-    const now = new Date();
-    const expiresAt = tokenData.expires_in
-        ? new Date(Date.now() + (tokenData.expires_in * 1000))
-        : undefined;
-
-    const accessToken: connection.TrinoAccessToken = {
-        createdAt: dateToTimestamp(now)!,
-        accessToken: tokenData.access_token,
-        tokenType: tokenData.token_type || 'Bearer',
-        refreshToken: tokenData.refresh_token,
-        expiresAt: expiresAt ? dateToTimestamp(expiresAt) : undefined,
-        scope: tokenData.scope,
-    };
-
-    return accessToken;
 }
 
 /// Setup Trino connection with OAuth
@@ -170,6 +121,7 @@ async function setupTrinoConnectionOAuth(
         throw new LoggableException("OAuth configuration is required for OAuth authentication", {}, LOG_CTX);
     }
     const oauthConfig = params.auth.oauth;
+    let loopbackId: number | null = null;
 
     try {
         // Start OAuth flow
@@ -184,30 +136,37 @@ async function setupTrinoConnectionOAuth(
         abortSignal.throwIfAborted();
         modifyState({ type: GENERATED_PKCE_CHALLENGE, value: pkceChallenge });
 
-        // Build the authorization URL
+        // The redirect is received by a loopback server of the desktop app
+        const bridge = globalThis.dashqlElectron;
+        if (!bridge) {
+            throw new LoggableException("Trino OAuth requires the DashQL desktop app", {}, LOG_CTX);
+        }
         const callbackUrl = oauthConfig.callbackUrl || DEFAULT_OAUTH_CALLBACK_URL;
+        loopbackId = await bridge.oauthLoopback.listen(callbackUrl);
+        abortSignal.throwIfAborted();
+
+        // Build the authorization URL
+        const state = crypto.randomUUID();
+        const scopes = oauthConfig.scopes?.length ? oauthConfig.scopes : DEFAULT_OAUTH_SCOPES;
         const authURLParams = new URLSearchParams({
             client_id: oauthConfig.clientId,
             redirect_uri: callbackUrl,
             response_type: 'code',
             code_challenge: pkceChallenge.value,
             code_challenge_method: 'S256',
-            scope: 'openid email profile offline_access',
+            scope: scopes.join(' '),
+            state,
         });
         if (forceReLogin) {
             // Force the identity provider to re-authenticate instead of silently reusing an
             // existing session cookie in the system browser.
             authURLParams.set('prompt', 'login');
         }
-
-        // if (oauthConfig.scopes) {
-        //     authURLParams.set('scope', oauthConfig.scopes);
-        // }
         const authUrl = `${oauthConfig.authorizationUrl}?${authURLParams.toString()}`;
 
         // Open the browser for OAuth
         logger.debug("Opening OAuth URL", { url: authUrl }, LOG_CTX);
-        window.open(authUrl, '_blank', 'noopener,noreferrer');
+        await bridge.openExternal(authUrl);
         modifyState({
             type: OAUTH_BROWSER_OPENED,
             value: null,
@@ -215,12 +174,15 @@ async function setupTrinoConnectionOAuth(
         abortSignal.throwIfAborted();
 
         // Wait for the OAuth callback
-        const callbackData = await waitForOAuthCallback(abortSignal);
+        const callbackData = await waitForOAuthCallback(bridge, loopbackId, abortSignal);
         abortSignal.throwIfAborted();
 
         // Check for errors
         if (callbackData.error) {
-            throw new LoggableException(callbackData.error_description || callbackData.error, {}, LOG_CTX);
+            throw new LoggableException(callbackData.errorDescription || callbackData.error, {}, LOG_CTX);
+        }
+        if (callbackData.state !== state) {
+            throw new LoggableException("OAuth callback state does not match the authorization request", {}, LOG_CTX);
         }
         if (!callbackData.code) {
             throw new LoggableException("No authorization code received", {}, LOG_CTX);
@@ -244,15 +206,14 @@ async function setupTrinoConnectionOAuth(
             type: REQUESTING_ACCESS_TOKEN,
             value: null,
         });
-        const accessToken = await exchangeCodeForToken(
-            oauthConfig.tokenUrl,
-            oauthConfig.clientId,
-            callbackData.code,
-            pkceChallenge.verifier,
-            callbackUrl,
-            httpClient,
-            logger
-        );
+        logger.debug("Exchanging authorization code for token", { tokenEndpoint: oauthConfig.tokenUrl }, LOG_CTX);
+        const accessToken = await requestTrinoAccessToken(httpClient, oauthConfig.tokenUrl, new URLSearchParams({
+            grant_type: 'authorization_code',
+            client_id: oauthConfig.clientId,
+            code: callbackData.code,
+            redirect_uri: callbackUrl,
+            code_verifier: pkceChallenge.verifier,
+        }));
         abortSignal.throwIfAborted();
 
         logger.debug("Received access token", {}, LOG_CTX);
@@ -303,6 +264,10 @@ async function setupTrinoConnectionOAuth(
             });
         }
         throw error;
+    } finally {
+        if (loopbackId !== null) {
+            void globalThis.dashqlElectron?.oauthLoopback.close(loopbackId).catch(() => { });
+        }
     }
 
     return channel;

@@ -24,6 +24,11 @@ interface DashQLElectronBridge {
     nativeProxyRequest(request: unknown): Promise<unknown>;
     onDeepLink(listener: (link: {type: "event" | "notebook"; value: string}) => void): () => void;
     openExternal(url: string): Promise<void>;
+    oauthLoopback: {
+        listen(callbackUrl: string): Promise<number>;
+        wait(loopbackId: number): Promise<DashQLOAuthLoopbackResult>;
+        close(loopbackId: number): Promise<void>;
+    };
     openDirectory(title: string): Promise<string | null>;
     updates: {
         check(channel?: DashQLUpdateChannel): Promise<DashQLElectronUpdateStatus>;
@@ -33,6 +38,13 @@ interface DashQLElectronBridge {
         onStatus(listener: (status: DashQLElectronUpdateStatus) => void): () => void;
     };
     watchDirectory(path: string, listener: (paths: string[]) => void): Promise<() => Promise<void>>;
+}
+
+interface DashQLOAuthLoopbackResult {
+    code?: string;
+    state?: string;
+    error?: string;
+    errorDescription?: string;
 }
 
 type DashQLUpdateChannel = 'canary' | 'stable';

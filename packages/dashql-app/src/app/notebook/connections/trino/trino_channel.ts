@@ -74,7 +74,7 @@ export class TrinoQueryResultStream implements QueryExecutionResponseStream {
         // Get the next query result
         this.queryMetrics.totalQueryRequestsStarted += 1;
         const timeBefore = (new Date()).getTime();
-        const queryResult = await this.apiClient.getQueryResult(nextUri, abort);
+        const queryResult = await this.apiClient.getQueryResult(this.endpoint, nextUri, abort);
         const timeAfter = (new Date()).getTime();
         this.latestQueryResult = queryResult;
         this.latestQueryStats = queryResult.stats ?? null;

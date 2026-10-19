@@ -13,6 +13,7 @@ import {DeepLinkQueue, parseDeepLink, parseDeepLinksFromCommandLine} from "./dee
 import {DirectoryWatchRegistry} from "./directory_watch_registry.js";
 import {GrpcTestServer, GRPC_TEST_REQUEST, GRPC_TEST_STREAM_BODY, GRPC_TEST_UNARY_RESPONSE} from "./grpc_test_server.js";
 import {NativeProxyService, type NativeProxyRequest, validateNativeProxyRequest} from "./native_proxy.js";
+import {OAuthLoopbackServer} from "./oauth_loopback.js";
 import {createElectronUpdater, type ElectronUpdater} from "./updater.js";
 
 protocol.registerSchemesAsPrivileged([
@@ -36,6 +37,8 @@ let nativeProxy: NativeProxyService | null = null;
 let mainWindow: BrowserWindow | null = null;
 let updater: ElectronUpdater | null = null;
 const directoryWatches = new DirectoryWatchRegistry();
+const oauthLoopbacks = new Map<number, OAuthLoopbackServer>();
+let nextOAuthLoopbackId = 1;
 
 if (process.argv.some((arg) => arg.endsWith("-test") || arg.includes("-test="))) {
     app.disableHardwareAcceleration();
@@ -531,6 +534,29 @@ if (!hasSingleInstanceLock) {
         const url = new URL(requestedUrl);
         if (url.protocol !== "https:") throw new Error("Rejected external URL request");
         await shell.openExternal(url.toString());
+    });
+
+    ipcMain.handle("dashql:oauth-loopback-listen", async (event, callbackUrl: unknown) => {
+        if (!isTrustedRenderer(event.senderFrame?.url) || typeof callbackUrl !== "string") throw new Error("Rejected OAuth loopback request");
+        const server = await OAuthLoopbackServer.listen(callbackUrl);
+        const loopbackId = nextOAuthLoopbackId++;
+        oauthLoopbacks.set(loopbackId, server);
+        return loopbackId;
+    });
+    ipcMain.handle("dashql:oauth-loopback-wait", async (event, loopbackId: unknown) => {
+        if (!isTrustedRenderer(event.senderFrame?.url) || typeof loopbackId !== "number") throw new Error("Rejected OAuth loopback request");
+        const server = oauthLoopbacks.get(loopbackId);
+        if (server === undefined) throw new Error("Unknown OAuth loopback server");
+        try {
+            return await server.result;
+        } finally {
+            oauthLoopbacks.delete(loopbackId);
+        }
+    });
+    ipcMain.handle("dashql:oauth-loopback-close", (event, loopbackId: unknown) => {
+        if (!isTrustedRenderer(event.senderFrame?.url) || typeof loopbackId !== "number") throw new Error("Rejected OAuth loopback request");
+        oauthLoopbacks.get(loopbackId)?.close();
+        oauthLoopbacks.delete(loopbackId);
     });
 
     ipcMain.handle("dashql:update-status", (event) => {
