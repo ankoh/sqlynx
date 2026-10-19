@@ -60,6 +60,8 @@ export interface BrowserShellController {
     focus(): void;
     replaceShell(shell: DashQLShell): void;
     writeStatus(message: string): void;
+    /// Offer prompts one after another, each submit fills in the next one
+    queuePrompts(prompts: readonly string[]): void;
     dispose(): void;
 }
 
@@ -206,6 +208,7 @@ export async function embedDashQLShell(options: BrowserShellOptions): Promise<Br
     let activeQuery: AbortController | null = null;
     let activeProgress: TerminalQueryProgress | null = null;
     let disposed = false;
+    let pendingPrompts: string[] = [];
     const prompt = options.prompt ?? 'dashql> ';
     const terminal: Terminal = new Terminal({
         allowProposedApi: false,
@@ -279,13 +282,21 @@ export async function embedDashQLShell(options: BrowserShellOptions): Promise<Br
             progress.stop();
             if (activeProgress === progress) activeProgress = null;
             if (activeQuery === abort) activeQuery = null;
+            if (!disposed && shell === executingShell) fillNextPrompt();
         }
     };
     const consume = (key: DashQLShellPromptInput, text = '') => {
+        if (key === DashQLShellPromptInput.CANCEL) pendingPrompts = [];
         const output = shell.consumeTerminalInput(key, text);
         terminal.write(output.data);
         if (output.action === DashQLShellPromptAction.SUBMIT) void submit();
         else if (output.action === DashQLShellPromptAction.EXIT) options.onExit?.();
+    };
+    // Inserting text never submits, the user runs every queued prompt with Enter
+    const fillNextPrompt = () => {
+        if (activeQuery != null) return;
+        const next = pendingPrompts.shift();
+        if (next != null) consume(DashQLShellPromptInput.TEXT, next);
     };
 
     terminal.attachCustomKeyEventHandler(event => {
@@ -342,6 +353,7 @@ export async function embedDashQLShell(options: BrowserShellOptions): Promise<Br
         focus: () => terminal.focus(),
         replaceShell(nextShell) {
             const history = shell.exportHistory();
+            pendingPrompts = [];
             activeProgress?.clear();
             activeProgress = null;
             activeQuery?.abort();
@@ -353,8 +365,14 @@ export async function embedDashQLShell(options: BrowserShellOptions): Promise<Br
         writeStatus(message) {
             terminal.write(shell.renderTerminalStatus(message).data);
         },
+        queuePrompts(prompts) {
+            if (disposed) return;
+            pendingPrompts = [...prompts];
+            fillNextPrompt();
+        },
         dispose() {
             if (disposed) return;
+            pendingPrompts = [];
             activeProgress?.clear();
             activeProgress = null;
             disposed = true;

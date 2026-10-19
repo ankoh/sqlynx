@@ -1,0 +1,133 @@
+.dialog {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: min(600px, calc(100vh - 32px));
+    min-width: 0;
+    min-height: 280px;
+    overflow: hidden;
+    background: #ffffff;
+}
+
+.header {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    min-width: 0;
+    height: 44px;
+    padding: 0 8px 0 12px;
+    gap: 8px;
+    border-bottom: 1px solid var(--border_color_primary);
+}
+
+.title {
+    flex: 0 0 auto;
+    margin: 0;
+    color: hsl(210, 10%, 30%);
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.spacer {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.diagnostic {
+    display: flex;
+    flex: 0 1 auto;
+    align-items: center;
+    min-width: 0;
+    max-width: 320px;
+    gap: 5px;
+    color: #cf222e;
+    font-size: var(--font_size_compact);
+}
+
+.diagnostic_text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.url_bar {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    min-width: 0;
+    height: 36px;
+    padding: 0 8px 0 12px;
+    gap: 8px;
+    border-bottom: 1px solid var(--border_color_primary);
+    font-size: var(--font_size_compact);
+}
+
+.url_label {
+    flex: 0 0 auto;
+    color: hsl(210, 10%, 40%);
+    font-weight: 600;
+}
+
+.url,
+.url_placeholder {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.url {
+    font-family: 'Roboto Mono', monospace;
+    color: hsl(210, 10%, 20%);
+}
+
+.url_placeholder {
+    color: hsl(210, 10%, 55%);
+}
+
+.url_length {
+    flex: 0 0 auto;
+    color: hsl(210, 10%, 40%);
+    font-variant-numeric: tabular-nums;
+}
+
+.editor {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    font-size: var(--font_size_compact);
+}
+
+.editor :global(.cm-editor) {
+    height: 100%;
+}
+
+.editor :global(.cm-scroller) {
+    overflow: auto;
+}
+
+@media (max-width: 640px) {
+    .dialog {
+        min-height: min(280px, calc(100vh - 32px));
+    }
+
+    .header {
+        height: auto;
+        min-height: 44px;
+        padding-block: 6px;
+        flex-wrap: wrap;
+    }
+
+    .spacer {
+        display: none;
+    }
+
+    .diagnostic {
+        order: 4;
+        flex-basis: 100%;
+        max-width: none;
+    }
+}
