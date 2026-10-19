@@ -213,6 +213,8 @@ export const NativeNotebookSync: React.FC = () => {
         if (!isNativePlatform()) {
             return;
         }
+        // enqueueReload is an effect event and must not be a dependency.
+        // It changes with every render and would tear down all directory watches on every registry update.
         const service = new NativeNotebookSyncService(logger, enqueueReload);
         serviceRef.current = service;
         return () => {
@@ -221,7 +223,7 @@ export const NativeNotebookSync: React.FC = () => {
                 serviceRef.current = null;
             }
         };
-    }, [logger, enqueueReload]);
+    }, [logger]);
 
     React.useEffect(() => {
         if (!isNativePlatform() || !serviceRef.current) {
