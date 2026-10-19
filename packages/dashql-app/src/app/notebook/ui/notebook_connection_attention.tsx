@@ -33,7 +33,9 @@ export function useNotebookConnectionAttention(notebookId: string | null, databa
             setActive(false);
         }, CONNECTION_ATTENTION_DURATION_MS);
     }, [notebookId, health]);
-    return shared?.notebookId === notebookId ? shared : { notebookId, active, request };
+    // The value is provided as context to every execute button in the feed, keep it stable
+    const own = React.useMemo(() => ({ notebookId, active, request }), [notebookId, active, request]);
+    return shared?.notebookId === notebookId ? shared : own;
 }
 
 export function ExecuteConnectionGuard(props: { notebookId: string; blocked: boolean; children: React.ReactElement }) {
