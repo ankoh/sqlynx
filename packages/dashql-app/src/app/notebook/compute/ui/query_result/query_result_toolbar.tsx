@@ -6,6 +6,7 @@ import type { ComputationAction, TableComputationState } from '../../../../../co
 import type { Dispatch } from '../../../../../utils/variant.js';
 import { QueryResultSearchControls } from './query_result_search_controls.js';
 import { useQueryResultSearch } from './use_query_result_search.js';
+import { forEachIntegerValue } from './visible_rows.js';
 
 interface Props {
     query: QueryExecutionState;
@@ -49,20 +50,33 @@ export function useQueryResultRowCounts(query: QueryExecutionState | null) {
     const [computationState] = useComputationRegistry();
     const table = query == null ? null : computationState.tableComputations[query.queryId] ?? null;
     const totalRows = table?.dataTable.numRows ?? null;
-    const currentRows = getMatchingRowCount(table) ?? table?.filterTable?.dataTable.numRows ?? totalRows;
     const matchingRows = getMatchingRowCount(table);
+    const currentRows = matchingRows ?? table?.filterTable?.dataTable.numRows ?? totalRows;
     return { totalRows, currentRows, matchingRows };
 }
+
+/// Matching row counts per filter table and data search matches.
+/// Weakly keyed by both, so a count never outlives the tables it was computed from.
+const matchingRowCounts = new WeakMap<object, WeakMap<object, number>>();
 
 export function getMatchingRowCount(table: ReturnType<typeof useComputationRegistry>[0]['tableComputations'][number] | null): number | null {
     const dataMatches = table?.dataSearch?.matchingRows;
     if (table == null || dataMatches == null) return null;
     if (table.filterTable == null) return dataMatches.size;
-    const rowIds = table.filterTable.dataTable.getChildAt(0);
+    const filterDataTable = table.filterTable.dataTable;
+    let countsByMatches = matchingRowCounts.get(filterDataTable);
+    const cached = countsByMatches?.get(dataMatches);
+    if (cached !== undefined) return cached;
+    const rowIds = filterDataTable.getChildAt(0);
     if (rowIds == null) return 0;
     let count = 0;
-    for (let i = 0; i < rowIds.length; ++i) {
-        if (dataMatches.has(Number(rowIds.get(i)))) ++count;
+    forEachIntegerValue(rowIds, rowId => {
+        if (dataMatches.has(rowId)) ++count;
+    });
+    if (countsByMatches == null) {
+        countsByMatches = new WeakMap();
+        matchingRowCounts.set(filterDataTable, countsByMatches);
     }
+    countsByMatches.set(dataMatches, count);
     return count;
 }
