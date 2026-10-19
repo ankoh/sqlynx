@@ -192,9 +192,10 @@ export const ScriptCard: React.FC<ScriptCardProps> = (props: ScriptCardProps) =>
     const [isEditing, setIsEditing] = React.useState(false);
     const [editorView, setEditorView] = React.useState<EditorView | null>(null);
     const formattingDialect = formattingDialectForConnector(props.connectorType);
+    // Formattability only depends on the text, cursor moves bump the state revision but not the text version
     const isFormattable = React.useMemo(
         () => dependencies.isScriptFormattable(props.scriptData ?? null, formattingDialect),
-        [props.scriptData?.scriptSession, props.scriptData?.editorUpdate?.stateRevision, formattingDialect],
+        [props.scriptData?.scriptSession, props.scriptData?.editorUpdate?.textVersion, formattingDialect],
     );
     const handleEditorView = React.useCallback((view: EditorView) => {
         setEditorView(view);
