@@ -96,14 +96,23 @@ export function VerticalTabs<TabProps extends VerticalTabProps>(props: Props<Tab
         }
     }, [isDragging, handleResizeMove, handleResizeEnd]);
 
-    // Render primary tab body
+    // Render primary tab body.
+    // The bodies are memoized to not re-render them for every mouse move while dragging the split.
     const primaryTabKey = props.splitModeEnabled ? props.primaryTabKey ?? props.selectedTab : props.selectedTab;
     const primaryTabRenderer = props.tabRenderers[primaryTabKey];
-    const primaryTabBody = primaryTabRenderer ? primaryTabRenderer(props.tabProps[primaryTabKey]) : undefined;
+    const primaryTabBodyProps = props.tabProps[primaryTabKey];
+    const primaryTabBody = React.useMemo(
+        () => primaryTabRenderer ? primaryTabRenderer(primaryTabBodyProps) : undefined,
+        [primaryTabRenderer, primaryTabBodyProps],
+    );
 
     // Render split tab body if split mode is enabled
     const splitTabRenderer = (props.splitModeEnabled && props.splitTab != null) ? props.tabRenderers[props.splitTab] : null;
-    const splitTabBody = (splitTabRenderer && props.splitTab != null) ? splitTabRenderer(props.tabProps[props.splitTab]) : undefined;
+    const splitTabBodyProps = props.splitTab != null ? props.tabProps[props.splitTab] : undefined;
+    const splitTabBody = React.useMemo(
+        () => splitTabRenderer ? splitTabRenderer(splitTabBodyProps!) : undefined,
+        [splitTabRenderer, splitTabBodyProps],
+    );
 
     const renderStackedTab = (tabProps: VerticalTabProps) => {
         const isPrimaryTab = props.splitModeEnabled && tabProps.tabId === props.primaryTabKey;
