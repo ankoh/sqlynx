@@ -47,4 +47,17 @@ describe('JsonView array pagination', () => {
 
         expect(container.firstElementChild?.getAttribute('data-electron-drag-region')).toBe('false');
     });
+
+    it('collapses nested values below a numeric depth', () => {
+        const value = { a: { b: { c: { d: 'deep' } } } };
+        act(() => root.render(<JsonView value={value} collapsed={2} />));
+
+        expect(container.textContent).toContain('c');
+        expect(container.textContent).not.toContain('deep');
+        const collapsedButtons = container.querySelectorAll('button[aria-expanded="false"]');
+        expect(collapsedButtons.length).toBe(1);
+
+        act(() => (collapsedButtons[0] as HTMLButtonElement).click());
+        expect(container.textContent).toContain('deep');
+    });
 });
