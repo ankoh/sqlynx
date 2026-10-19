@@ -114,47 +114,9 @@ npm.npm_translate_lock(
         "lightningcss-darwin-x64": [""],
         "lightningcss-linux-x64-gnu": [""],
         "lightningcss-linux-arm64-gnu": [""],
-        # transformers.js imports onnxruntime-common without declaring it, pnpm hoists it but rules_js does not.
-        # The version has to match the onnxruntime-node that transformers.js depends on.
-        "onnxruntime-common@1.30.0": [""],
-        # The atlas hosts the onnxruntime-web wasm runtime itself, dev.sh copies it from this package.
-        "onnxruntime-web@1.31.0-dev.20260914-8d85527a0": [""],
     },
 )
 use_repo(npm, "npm")
-
-# Embedding model of the atlas, served from static/models/ in dev (see packages/dashql-app/utils/dev.sh).
-http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
-
-_ARCTIC_XS = "https://huggingface.co/Snowflake/snowflake-arctic-embed-xs/resolve/d8c86521100d3556476a063fc2342036d45c106f/"
-
-http_file(
-    name = "arctic_embed_xs_config",
-    urls = [_ARCTIC_XS + "config.json"],
-    sha256 = "d7d071046ab952af96b7abad788db7ab3fc997b465e1b9914ff39707092254ec",
-    downloaded_file_path = "config.json",
-)
-
-http_file(
-    name = "arctic_embed_xs_tokenizer",
-    urls = [_ARCTIC_XS + "tokenizer.json"],
-    sha256 = "91f1def9b9391fdabe028cd3f3fcc4efd34e5d1f08c3bf2de513ebb5911a1854",
-    downloaded_file_path = "tokenizer.json",
-)
-
-http_file(
-    name = "arctic_embed_xs_tokenizer_config",
-    urls = [_ARCTIC_XS + "tokenizer_config.json"],
-    sha256 = "9ca59277519f6e3692c8685e26b94d4afca2d5438deff66483db495e48735810",
-    downloaded_file_path = "tokenizer_config.json",
-)
-
-http_file(
-    name = "arctic_embed_xs_model",
-    urls = [_ARCTIC_XS + "onnx/model.onnx"],
-    sha256 = "cf2698d30ff05da02c70a088313bad56e5c2f401d734cb24a8390d446111936c",
-    downloaded_file_path = "model.onnx",
-)
 
 playwright_chromium = use_repo_rule("//bazel:playwright_chromium.bzl", "playwright_chromium_repository")
 playwright_chromium(name = "playwright_chromium")

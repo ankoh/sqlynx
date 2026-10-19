@@ -101,7 +101,7 @@ bazel test //packages/dashql-core:*_tests
 | `//packages/dashql-core-js/test:all` | Core browser tests in Chromium and Firefox, including browser workers |
 | `//packages/hyper-api:smoke_test` | Native Tableau Hyper API integration test |
 | `//packages/dashql-native:test` | Electron host unit tests |
-| `//packages/dashql-cli:tests` | DashQL CLI unit tests, including execution in hyperdb-wasm, the offline describe end-to-end test and the `snapshots/describe` check |
+| `//packages/dashql-cli:tests` | DashQL CLI unit tests, including execution in hyperdb-wasm |
 | `//packages/dashql-app:test_chromium` | Web app tests in Chromium |
 | `//packages/dashql-app:test_firefox` | Web app tests in Firefox |
 
@@ -130,14 +130,6 @@ bazel run //snapshots/plans/hyper/tests:update
 ```
 
 These targets regenerate `/snapshots/*.yaml` from `/snapshots/*.tpl.yaml` templates.
-
-`dashql-cli describe` has its own snapshots in `/snapshots/describe/`. They show the prompt that it sends to
-the model for a script, or that it skips the script. No LLM is involved, so they are checked by
-`bazel test //packages/dashql-cli:tests`. They are not part of `//snapshots:update`:
-
-```bash
-bazel run //snapshots/describe:update
-```
 
 ## Type Checking
 

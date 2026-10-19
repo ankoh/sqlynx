@@ -37,5 +37,3 @@ yarn-error.log
 
 /.local
 /dist
-
-# Embedding model and onnxruntime assets of the atlas, served from the configured atlas.modelBaseUrl

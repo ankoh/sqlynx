@@ -59,7 +59,6 @@ describe('V2 app state loader', () => {
             getBackendType: () => StorageBackendType.OPFS,
             listNotebooks: vi.fn(async () => [{ path: TEST_NOTEBOOK_ID }]),
             loadAppSettings: vi.fn(async () => null), saveAppSettings: vi.fn(),
-            loadAIModels: vi.fn(async () => null), saveAIModels: vi.fn(),
             loadNotebook: vi.fn(async () => testNotebook()), saveNotebookManifest: vi.fn(), deleteNotebook: vi.fn(),
             ensureNotebookIndex: vi.fn(),
             loadNotebookSchema: vi.fn(async () => null), saveNotebookSchema: vi.fn(),

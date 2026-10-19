@@ -32,15 +32,6 @@ const dependencies = {
     }} />,
 } as QueryResultDetailsDependencies;
 
-/// Open the download dialog and pick one of its items
-async function chooseDownload(button: HTMLButtonElement, item: 'Result' | 'SQL Column'): Promise<HTMLButtonElement> {
-    await act(async () => button.click());
-    const choice = Array.from(document.querySelectorAll<HTMLButtonElement>('[aria-label="Download type"] button'))
-        .find(element => element.textContent?.startsWith(item))!;
-    await act(async () => choice.click());
-    return choice;
-}
-
 describe('QueryResultDetails', () => {
     let container: HTMLDivElement;
     let root: Root;
@@ -138,11 +129,10 @@ describe('QueryResultDetails', () => {
             />,
         ));
 
-        const button = container.querySelector<HTMLButtonElement>('button[aria-label="Download query result"]')!;
+        const button = container.querySelector<HTMLButtonElement>('button[aria-label="Download query result as Arrow file"]')!;
         expect(button.disabled).toBe(false);
-        await chooseDownload(button, 'Result');
+        await act(async () => button.click());
 
-        expect(document.querySelector('[role="dialog"]')).toBeNull();
         expect(mockState.download).toHaveBeenCalledTimes(1);
         const [bytes, filename] = mockState.download.mock.calls[0];
         expect(filename).toBe('query-result-42.arrow');
@@ -161,7 +151,7 @@ describe('QueryResultDetails', () => {
                 dependencies={dependencies}
             />,
         ));
-        const button = () => container.querySelector<HTMLButtonElement>('button[aria-label="Download query result"]')!;
+        const button = () => container.querySelector<HTMLButtonElement>('button[aria-label="Download query result as Arrow file"]')!;
 
         render(QueryExecutionStatus.RUNNING, arrow.tableFromArrays({ value: [1] }));
         expect(button().disabled).toBe(true);
@@ -181,52 +171,12 @@ describe('QueryResultDetails', () => {
             />,
         ));
 
-        const button = container.querySelector<HTMLButtonElement>('button[aria-label="Download query result"]')!;
-        await chooseDownload(button, 'Result');
+        const button = container.querySelector<HTMLButtonElement>('button[aria-label="Download query result as Arrow file"]')!;
+        await act(async () => button.click());
 
         expect(mockState.logError).toHaveBeenCalledWith('Failed to download query result', { error: 'Disk full' }, 'query_result_download');
         await vi.waitFor(() => expect(button.disabled).toBe(false));
-        await chooseDownload(button, 'Result');
+        await act(async () => button.click());
         expect(mockState.download).toHaveBeenCalledTimes(2);
-    });
-
-    it('exports a column as atlas with a SQL text column', async () => {
-        mockState.computationState = { tableComputations: {} };
-        act(() => root.render(
-            <QueryResultDetails
-                query={{
-                    queryId: 42,
-                    status: QueryExecutionStatus.SUCCEEDED,
-                    resultTable: arrow.tableFromArrays({ id: [1, 2], name: ['a', 'b'], sql: ['select 1', 'select 2'] }),
-                } as any}
-                debugMode={false}
-                dependencies={dependencies}
-            />,
-        ));
-
-        const button = container.querySelector<HTMLButtonElement>('button[aria-label="Download query result"]')!;
-        await chooseDownload(button, 'SQL Column');
-
-        expect(mockState.download).not.toHaveBeenCalled();
-        expect(document.querySelector('[role="dialog"] h2')?.textContent).toBe('Atlas Export');
-        const selects = Array.from(document.querySelectorAll<HTMLSelectElement>('[role="dialog"] select'));
-        expect(selects.length).toBe(1);
-        expect(Array.from(selects[0].options).map(o => o.text)).toEqual(['name', 'sql']);
-    });
-
-    it('disables the atlas export without text columns', async () => {
-        mockState.computationState = { tableComputations: {} };
-        act(() => root.render(
-            <QueryResultDetails
-                query={{ queryId: 42, status: QueryExecutionStatus.SUCCEEDED, resultTable: arrow.tableFromArrays({ value: [1] }) } as any}
-                debugMode={false}
-                dependencies={dependencies}
-            />,
-        ));
-
-        const button = container.querySelector<HTMLButtonElement>('button[aria-label="Download query result"]')!;
-        const column = await chooseDownload(button, 'SQL Column');
-        expect(column.disabled).toBe(true);
-        expect(document.querySelector('[role="dialog"] h2')?.textContent).toBe('Download');
     });
 });

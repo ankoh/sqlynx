@@ -26,8 +26,6 @@ export interface UMAPRunParams {
     count: number;
     dimension: number;
     options: UMAPOptions;
-    /// Number of output coordinates per row, 2 when absent
-    outputDimension?: number;
 }
 
 export type UMAPWorkerRequest =
@@ -44,7 +42,7 @@ export type UMAPWorkerResponse =
     | {
           readonly requestId: number;
           readonly type: UMAPWorkerResponseType.RESULT;
-          /// N×outputDimension row-major embedding (N×2 unless the run asked for more).
+          /// N×2 row-major embedding.
           readonly embedding: Float32Array;
           readonly count: number;
       }

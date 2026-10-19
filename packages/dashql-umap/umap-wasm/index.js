@@ -25,7 +25,6 @@ export async function createUMAP(count, inputDim, outputDim, data, options = {})
   if (options.localConnectivity != null) builder = builder.localConnectivity(options.localConnectivity);
   if (options.mixRatio != null) builder = builder.mixRatio(options.mixRatio);
   if (options.initializeMethod != null) builder = builder.initMethod(options.initializeMethod);
-  if (options.initialEmbedding != null) builder = builder.initialEmbedding(options.initialEmbedding);
   if (options.optimizer != null) builder = builder.optimizer(options.optimizer);
   if (options.seed != null) builder = builder.randomState(BigInt(options.seed));
   if (options.progress != null) builder = builder.progress(options.progress);

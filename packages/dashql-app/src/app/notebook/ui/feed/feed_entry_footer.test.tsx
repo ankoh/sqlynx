@@ -55,13 +55,10 @@ describe('FeedEntryFooter', () => {
         expect(container.querySelector('[data-testid="feed-preview"]')).not.toBeNull();
         const header = Array.from(container.querySelectorAll<HTMLDivElement>('div'))
             .find(element => element.querySelector(':scope > button')?.textContent?.includes('Query Results'))!;
-        const button = header.querySelector<HTMLButtonElement>('button[aria-label="Download query result"]')!;
+        const button = header.querySelector<HTMLButtonElement>('button[aria-label="Download query result as Arrow file"]')!;
         expect(button).not.toBeNull();
         expect(button.disabled).toBe(false);
         await act(async () => button.click());
-        const result = Array.from(document.querySelectorAll<HTMLButtonElement>('[aria-label="Download type"] button'))
-            .find(element => element.textContent?.startsWith('Result'))!;
-        await act(async () => result.click());
 
         expect(onShowTable).not.toHaveBeenCalled();
         expect(download).toHaveBeenCalledTimes(1);

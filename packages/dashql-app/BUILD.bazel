@@ -65,38 +65,6 @@ genrule(
     """,
     visibility = ["//visibility:private"],
 )
-# Atlas embedding model and the onnxruntime wasm runtime, served at /static/models/ by the dev server. The downloads are
-# hash-pinned in MODULE.bazel, the runtime comes from the installed onnxruntime-web so that it matches the JS side.
-genrule(
-    name = "dep_atlas_models",
-    srcs = [
-        "@arctic_embed_xs_config//file",
-        "@arctic_embed_xs_tokenizer//file",
-        "@arctic_embed_xs_tokenizer_config//file",
-        "@arctic_embed_xs_model//file",
-        "//:node_modules/onnxruntime-web/dir",
-    ],
-    outs = [
-        "dependencies/atlas-models/Snowflake/snowflake-arctic-embed-xs/config.json",
-        "dependencies/atlas-models/Snowflake/snowflake-arctic-embed-xs/tokenizer.json",
-        "dependencies/atlas-models/Snowflake/snowflake-arctic-embed-xs/tokenizer_config.json",
-        "dependencies/atlas-models/Snowflake/snowflake-arctic-embed-xs/onnx/model.onnx",
-        "dependencies/atlas-models/ort/ort-wasm-simd-threaded.asyncify.mjs",
-        "dependencies/atlas-models/ort/ort-wasm-simd-threaded.asyncify.wasm",
-    ],
-    cmd = """
-        OUT="$(RULEDIR)/dependencies/atlas-models"
-        MODEL="$$OUT/Snowflake/snowflake-arctic-embed-xs"
-        mkdir -p "$$MODEL/onnx" "$$OUT/ort"
-        cp $(location @arctic_embed_xs_config//file) "$$MODEL/config.json"
-        cp $(location @arctic_embed_xs_tokenizer//file) "$$MODEL/tokenizer.json"
-        cp $(location @arctic_embed_xs_tokenizer_config//file) "$$MODEL/tokenizer_config.json"
-        cp $(location @arctic_embed_xs_model//file) "$$MODEL/onnx/model.onnx"
-        ORT="$(location //:node_modules/onnxruntime-web/dir)/dist"
-        cp "$$ORT/ort-wasm-simd-threaded.asyncify.mjs" "$$ORT/ort-wasm-simd-threaded.asyncify.wasm" "$$OUT/ort/"
-    """,
-    visibility = ["//visibility:private"],
-)
 genrule(
     name = "dep_umap_wasm",
     srcs = [
@@ -182,7 +150,6 @@ genrule(
             -e "s|__SHELL_WASM_PATH__|./dependencies/dashql-shell-wasm/dashql_shell.wasm|g" \\
             -e "s|__UMAP_JS_PATH__|./dependencies/umap-wasm/index.js|g" \\
             -e "s|__SVG_SYMBOLS_PATH__|./dependencies/svg-symbols/symbols.generated.svg|g" \\
-            -e "s|__ATLAS_MODELS_PATH__|./dependencies/atlas-models|g" \\
             -e "s|__DASHQL_VERSION__|$${VERSION}|g" \\
             -e "s|__DASHQL_COMMIT__|$${COMMIT}|g" \\
             -e "s|__HYPERDB_WASM_VERSION__|$${HYPERDB_WASM_VERSION}|g" \\
@@ -216,7 +183,6 @@ genrule(
             -e "s|__SHELL_WASM_PATH__|../../bazel-bin/packages/dashql-app/dependencies/dashql-shell-wasm/dashql_shell.wasm|g" \
             -e "s|__UMAP_JS_PATH__|../../bazel-bin/packages/dashql-app/dependencies/umap-wasm/index.js|g" \
             -e "s|__SVG_SYMBOLS_PATH__|../../bazel-bin/packages/dashql-app/dependencies/svg-symbols/symbols.generated.svg|g" \
-            -e "s|__ATLAS_MODELS_PATH__|../../bazel-bin/packages/dashql-app/dependencies/atlas-models|g" \
             $(location vite.config.tpl.ts) > $@
     """,
 )
@@ -240,7 +206,6 @@ copy_to_bin(
         "src/**/*.tsx",
         "src/**/*.js",
         "src/**/*.wgsl",
-        "atlas.html",
         "hyperdb-capability.html",
         "index.html",
         "oauth.html",
@@ -333,7 +298,6 @@ _vite_web_deps = [
     "//:node_modules/@xterm/addon-fit",
     "//:node_modules/@xterm/addon-webgl",
     "//:node_modules/@xterm/xterm",
-    "//:node_modules/@huggingface/transformers",
     "//:node_modules/apache-arrow",
     "//:node_modules/d3",
     "//:node_modules/d3-color",
@@ -342,8 +306,6 @@ _vite_web_deps = [
     "//:node_modules/immutable",
     "//:node_modules/jszip",
     "//:node_modules/mocha",
-    # Imported by transformers.js without being declared, see public_hoist_packages in MODULE.bazel
-    "//:node_modules/onnxruntime-common",
     "//:node_modules/react",
     "//:node_modules/react-dom",
     "//:node_modules/react-router-dom",
@@ -452,7 +414,6 @@ sh_binary(
     data = [
         ":example_notebooks",
         ":dev_config",
-        ":dep_atlas_models",
         "//:node_modules/@ankoh/dashql-core",
         ":dep_protobuf",
         ":dep_jsonschema",

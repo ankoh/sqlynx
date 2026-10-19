@@ -66,9 +66,6 @@
 /shell.html
   Cache-Control: public, max-age=0, must-revalidate
 
-/atlas.html
-  Cache-Control: public, max-age=0, must-revalidate
-
 /tests.html
   Cache-Control: public, max-age=0, must-revalidate
 

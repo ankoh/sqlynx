@@ -36,7 +36,7 @@
             var(--background_color_100) 100%
         );
 
-    /* Backdrop of pages with a lot of empty space, like the atlas and the notebook feed: a soft light in the middle,
+    /* Backdrop of pages with a lot of empty space, like the notebook feed: a soft light in the middle,
        a faint dot grid, and a vignette that fades the grid out toward the edges. Centered in the element it paints. */
     --stage_color: hsl(210, 29%, 97%);
     --stage_light: radial-gradient(ellipse 65% 70% at 50% 50%, hsl(210, 30%, 98.1%) 0%, var(--stage_color) 60%);

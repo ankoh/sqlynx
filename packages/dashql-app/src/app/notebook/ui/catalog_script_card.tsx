@@ -8,7 +8,7 @@ import { LockIcon, XIcon } from '../../../ui/foundations/symbol_icon.js';
 import { CodeMirror, createReadonlyCodeMirrorExtensions } from '../scripts/editor/codemirror.js';
 import { DashQLUpdateEffect } from '../scripts/editor/dashql_processor.js';
 import { ScriptName } from './script_name.js';
-import type { DashQL, DashQLScript } from '@ankoh/dashql-core';
+import type { DashQLScript } from '@ankoh/dashql-core';
 import { ButtonSize, ButtonVariant, IconButton } from '../../../ui/foundations/button.js';
 
 export interface CatalogScriptCardProps {
@@ -19,13 +19,8 @@ export interface CatalogScriptCardProps {
 }
 
 export function updateCatalogScriptEditor(view: EditorView, script: DashQLScript, text: string): void {
-    updateReadonlyScriptEditor(view, script.ptr.api, script.getCatalogEntryId(), text);
-}
-
-/// Replace the text of a read-only editor and publish its analysis for the syntax highlighting
-export function updateReadonlyScriptEditor(view: EditorView, core: DashQL, scriptKey: number, text: string): void {
-    const catalog = core.createCatalog();
-    const session = core.createScriptSession(catalog);
+    const catalog = script.ptr.api.createCatalog();
+    const session = script.ptr.api.createScriptSession(catalog);
     try {
         session.replaceText(0n, text);
         const editorUpdate = session.analyze();
@@ -33,7 +28,7 @@ export function updateReadonlyScriptEditor(view: EditorView, core: DashQL, scrip
             changes: { from: 0, to: view.state.doc.length, insert: text },
             effects: [
                 DashQLUpdateEffect.of({
-                    scriptKey,
+                    scriptKey: script.getCatalogEntryId(),
                     scriptSession: null,
                     editorUpdate,
                     scriptBuffers: null,

@@ -64,14 +64,6 @@ export interface UMAPOptions {
   /** The initialization method. Default: "spectral" (momentum forces "random"). */
   initializeMethod?: "spectral" | "random";
 
-  /**
-   * Start the layout from these coordinates (row-major, `count * outputDim`)
-   * instead of an init method. Used as is, so pick the scale (umap-learn scales a
-   * PCA start to a max of 10). Unlike `initializeMethod`, also honored by "momentum".
-   * Not available in `createUMAPFromKNN`.
-   */
-  initialEmbedding?: Float32Array;
-
   /** The optimizer. Default: "sgd". "momentum" gives better global structure. */
   optimizer?: "sgd" | "momentum";
 
@@ -183,7 +175,7 @@ export function createUMAP(
  * Options for {@link createUMAPFromKNN}. The kNN-computation knobs (`metric`,
  * `nNeighbors`) do not apply when the graph is supplied directly.
  */
-export type UMAPFromKNNOptions = Omit<UMAPOptions, "metric" | "nNeighbors" | "initialEmbedding">;
+export type UMAPFromKNNOptions = Omit<UMAPOptions, "metric" | "nNeighbors">;
 
 /**
  * Build a UMAP instance from a precomputed kNN graph, skipping the internal

@@ -1,4 +1,4 @@
-import { type StorageBackend, type NotebookData, type ScriptData, type NotebookEntry, type AppSettings, type AIModels, type CachedQueryResult, StorageBackendType, STORAGE_NOTEBOOK_FILE, STORAGE_NOTEBOOK_INDEX_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_SCRIPT_SCHEMA, STORAGE_SCRIPT_FUNCTIONS, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX } from './storage_backend.js';
+import { type StorageBackend, type NotebookData, type ScriptData, type NotebookEntry, type AppSettings, type CachedQueryResult, StorageBackendType, STORAGE_NOTEBOOK_FILE, STORAGE_NOTEBOOK_INDEX_FILE, STORAGE_SCRIPTS_FOLDER, STORAGE_SCRIPT_SCHEMA, STORAGE_SCRIPT_FUNCTIONS, STORAGE_CACHE_FOLDER, STORAGE_CACHE_EXTENSION, STORAGE_CACHE_ACCESS_SUFFIX } from './storage_backend.js';
 import { type CacheFileStat, type QueryResultCacheStore, evictToFit } from './query_result_cache_eviction.js';
 import { serializeNotebookIndex } from './notebook_index.js';
 import { type DataFile, type DataFileContent, STORAGE_ATTACHMENTS_FOLDER, validateDataFileName } from './storage_backend.js';
@@ -74,14 +74,6 @@ export class NativeStorageBackend implements StorageBackend {
 
     async saveAppSettings(_settings: AppSettings): Promise<void> {
         // No-op: app settings live on the OPFS root manifest.
-    }
-
-    async loadAIModels(): Promise<AIModels | null> {
-        return null;
-    }
-
-    async saveAIModels(_models: AIModels): Promise<void> {
-        // No-op: the AI models live on the OPFS root manifest.
     }
 
     // ---- Per-notebook operations ---------------------------------------------------------------

@@ -12,6 +12,4 @@ allowBuilds:
   '@parcel/watcher': true
   electron: true
   electron-winstaller: true
-  # Prebuilt CPU binaries ship in the tarball; the install script only fetches optional GPU providers.
-  onnxruntime-node: false
   protobufjs: false

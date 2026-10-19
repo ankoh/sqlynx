@@ -1,7 +1,7 @@
 {
     "name": "@ankoh/dashql-cli",
     "version": "0.0.2-dev.17",
-    "description": "Check, execute and describe DashQL scripts",
+    "description": "Check and execute DashQL scripts",
     "private": true,
     "type": "module",
     "bin": {

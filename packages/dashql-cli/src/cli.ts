@@ -1,16 +1,10 @@
 import { parseArgs, styleText } from 'node:util';
-import { SqlAnalyzer } from './describe/analysis/core.js';
-import { describableFiles, describeFiles, type DescribeOutcome } from './describe/command.js';
-import { ClaudeCodeDescriber, ClaudeDescriber, DEFAULT_DESCRIBE_MODEL } from './describe/describe.js';
 import { Executor } from './execute.js';
 import { readInputs } from './inputs.js';
 import { Linter } from './lint.js';
 import { formatFile, formatSummary, formatTimings, type FileReport, type RunTimings, type Style } from './report.js';
 
-/// A request mostly waits for the model, more of them in flight make a run faster until the model throttles
-const DEFAULT_CONCURRENCY = 12;
-
-const USAGE = `dashql-cli: check, execute and describe DashQL scripts
+const USAGE = `dashql-cli: check and execute DashQL scripts
 
 Usage:
   dashql-cli execute [options] <file.sql|dir|->...
@@ -26,33 +20,12 @@ Usage:
       --schema <file.sql>      Schema script (CREATE TABLE ...) to resolve names against, can be repeated
       --debug                  Show where the time goes in dashql-core
 
-  dashql-cli describe [options] <file.sql|dir>...
-      Asks Claude for a description of each script and writes it as a header comment into scripts that have none.
-      The model gets the statements of the script, without comments.
-      --model <id>             Claude model (default ${DEFAULT_DESCRIBE_MODEL})
-      --describer <kind>       claude-code (default, runs \`claude -p\` with the login of Claude Code) or
-                               api (needs ANTHROPIC_API_KEY or an \`ant auth login\` profile)
-      --force                  Replace existing generated descriptions
-      --skip-commented         Skip scripts that already have comments
-      --dry-run                Print the descriptions without touching the scripts
-      --concurrency <n>        Parallel requests (default ${DEFAULT_CONCURRENCY})
-
 Directories are searched recursively for *.sql files, - reads a script from stdin.
 Exits with 0 without errors (warnings are fine), 1 with errors and 2 on usage errors.
 `;
 
 /// Colors only when stdout is a terminal, styleText also honors NO_COLOR and FORCE_COLOR
 const style: Style = (format, text) => styleText(format, text, { stream: process.stdout });
-
-/// Thrown for invalid arguments, the CLI prints the usage and exits with 2
-class UsageError extends Error {}
-
-function intOption(value: string | undefined, fallback: number, name: string): number {
-    if (value === undefined) return fallback;
-    const n = Number(value);
-    if (!Number.isInteger(n) || n <= 0) throw new UsageError(`--${name} must be a positive integer`);
-    return n;
-}
 
 async function main(argv: string[]): Promise<number> {
     const [command, ...args] = argv;
@@ -61,8 +34,6 @@ async function main(argv: string[]): Promise<number> {
             return check(args, false);
         case 'lint':
             return check(args, true);
-        case 'describe':
-            return describe(args);
         case '-h':
         case '--help':
         case 'help':
@@ -160,92 +131,12 @@ async function check(argv: string[], lint: boolean): Promise<number> {
     return summary.errors > 0 ? 1 : 0;
 }
 
-/// Describe the scripts with Claude and write the descriptions into them
-async function describe(argv: string[]): Promise<number> {
-    const { values, positionals } = parseArgs({
-        args: argv,
-        allowPositionals: true,
-        options: {
-            model: { type: 'string' },
-            force: { type: 'boolean' },
-            'skip-commented': { type: 'boolean' },
-            'dry-run': { type: 'boolean' },
-            concurrency: { type: 'string' },
-            describer: { type: 'string' },
-            help: { type: 'boolean', short: 'h' },
-        },
-    });
-    if (values.help) {
-        console.log(USAGE);
-        return 0;
-    }
-    if (positionals.length === 0) {
-        console.error(USAGE);
-        return 2;
-    }
-    const concurrency = intOption(values.concurrency, DEFAULT_CONCURRENCY, 'concurrency');
-    const model = values.model ?? DEFAULT_DESCRIBE_MODEL;
-    const describer =
-        values.describer === undefined || values.describer === 'claude-code'
-            ? new ClaudeCodeDescriber(model)
-            : values.describer === 'api'
-              ? new ClaudeDescriber(model)
-              : null;
-    if (describer == null) throw new UsageError('--describer must be claude-code or api');
-    const dryRun = values['dry-run'] ?? false;
-    // Progress goes to stderr, the descriptions of a dry run to stdout
-    const log = (message: string) => console.error(message);
-    const seconds = (ms: number) => `${(ms / 1000).toFixed(1)}s`;
-    const startedAt = performance.now();
-    const files = describableFiles(await readInputs(positionals));
-    log(`read ${files.length} scripts (${seconds(performance.now() - startedAt)})`);
-    const analyzerStart = performance.now();
-    const analyzer = await SqlAnalyzer.create();
-    log(`loaded the analyzer (${seconds(performance.now() - analyzerStart)})`);
-    let described = 0, skipped = 0, failed = 0;
-    let sentAt = performance.now();
-    const run = await describeFiles(files, analyzer, describer, {
-        force: values.force ?? false,
-        dryRun,
-        skipCommented: values['skip-commented'] ?? false,
-        concurrency,
-        onStart: start => {
-            sentAt = performance.now();
-            log(`analyzed the scripts (${seconds(start.analyzeMs)}), describing ${start.targets} of ${files.length} with ${model}` +
-                ` via ${values.describer ?? 'claude-code'}, ${start.workers} at a time`);
-        },
-        onOutcome: outcome => {
-            const took = outcome.ms === undefined ? '' : ` (${seconds(outcome.ms)})`;
-            if (outcome.status === 'described') {
-                described += 1;
-                log(`${dryRun ? 'would write' : outcome.action} ${outcome.scriptName}${took}`);
-                if (dryRun) console.log(`# ${outcome.scriptName}\n${outcome.header}`);
-            } else if (outcome.status === 'skipped') {
-                skipped += 1;
-                log(`skipped ${outcome.scriptName}${took}: ${outcome.reason}`);
-            } else {
-                failed += 1;
-                log(`warning: ${outcome.scriptName}${took}: ${outcome.reason}`);
-            }
-        },
-    });
-    if (run.stopped) {
-        log(`stopped after failures in a row, ${files.length - run.outcomes.length} scripts were not sent`);
-    }
-    const sentFor = performance.now() - sentAt;
-    const slowest = run.outcomes.reduce<DescribeOutcome | null>((max, o) => (o.ms !== undefined && (max == null || o.ms > max.ms!) ? o : max), null);
-    log(`${described} described, ${skipped} skipped, ${failed} failed in ${seconds(sentFor)}` +
-        ` (${seconds(performance.now() - startedAt)} total${slowest ? `, slowest ${slowest.scriptName} ${seconds(slowest.ms!)}` : ''})`);
-    return failed > 0 ? 1 : 0;
-}
-
 main(process.argv.slice(2)).then(
     code => {
         process.exitCode = code;
     },
     error => {
         console.error(`error: ${error instanceof Error ? error.message : String(error)}`);
-        if (error instanceof UsageError) console.error(`\n${USAGE}`);
         process.exitCode = 2;
     },
 );

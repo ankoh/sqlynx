@@ -7,29 +7,19 @@ import { OverlaySize } from '../ui/foundations/overlay.js';
 import { VerticalTabs, VerticalTabVariant } from '../ui/foundations/vertical_tabs.js';
 import { LogViewer } from '../ui/logs/log_viewer.js';
 import { QueryViewer } from '../app/notebook/connections/ui/query_viewer.js';
-import { AISettingsView } from '../ui/ai/ai_settings_view.js';
 import * as styles from './shell_navbar.module.css';
 
 enum TabKey {
     LogViewer = 0,
     QueryViewer = 1,
-    AISettings = 2,
 }
 
-interface ShellInternalsProps {
-    /// Show the AI model settings, the page has to provide an AIModelsProvider
-    aiSettings?: boolean;
-}
-
-interface ShellInternalsViewerProps extends ShellInternalsProps {
+interface ShellInternalsViewerProps {
     onClose: () => void;
 }
 
 export const ShellInternalsViewer: React.FC<ShellInternalsViewerProps> = props => {
     const [selectedTab, selectTab] = React.useState<TabKey>(TabKey.LogViewer);
-    const tabKeys = props.aiSettings
-        ? [TabKey.LogViewer, TabKey.QueryViewer, TabKey.AISettings]
-        : [TabKey.LogViewer, TabKey.QueryViewer];
 
     return (
         <VerticalTabs
@@ -53,26 +43,17 @@ export const ShellInternalsViewer: React.FC<ShellInternalsViewerProps> = props =
                     description: 'View query execution history',
                     disabled: false,
                 },
-                [TabKey.AISettings]: {
-                    tabId: TabKey.AISettings,
-                    icon: `${icons}#sparkles_fill_24`,
-                    labelShort: 'AI',
-                    ariaLabel: 'AI model settings',
-                    description: 'Configure the AI models',
-                    disabled: false,
-                },
             }}
-            tabKeys={tabKeys}
+            tabKeys={[TabKey.LogViewer, TabKey.QueryViewer]}
             tabRenderers={{
                 [TabKey.LogViewer]: () => <LogViewer onClose={props.onClose} />,
                 [TabKey.QueryViewer]: () => <QueryViewer onClose={props.onClose} />,
-                [TabKey.AISettings]: () => <AISettingsView onClose={props.onClose} />,
             }}
         />
     );
 };
 
-export const ShellInternals: React.FC<ShellInternalsProps> = (internalsProps: ShellInternalsProps) => {
+export const ShellInternals: React.FC = () => {
     const [isOpen, setIsOpen] = React.useState(false);
     const close = React.useCallback(() => setIsOpen(false), []);
 
@@ -98,7 +79,7 @@ export const ShellInternals: React.FC<ShellInternalsProps> = (internalsProps: Sh
                 </button>
             )}
         >
-            <ShellInternalsViewer onClose={close} aiSettings={internalsProps.aiSettings} />
+            <ShellInternalsViewer onClose={close} />
         </AnchoredOverlay>
     );
 };
