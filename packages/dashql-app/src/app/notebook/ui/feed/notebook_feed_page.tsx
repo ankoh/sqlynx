@@ -187,7 +187,7 @@ export const NotebookFeedPage: React.FC<Props> = (props) => {
                 <div className={styles.header_actions}>
                     <dependencies.Button ref={connectionTriggerRef} size={ButtonSize.Small}
                         variant={ButtonVariant.Invisible}
-                        leadingVisual={() => <span aria-hidden="true" className={styles.connection_spinner}>
+                        leadingVisual={<span aria-hidden="true" className={styles.connection_spinner}>
                             {connectionHealth === ConnectionHealth.CONNECTING
                                 ? <StatusIndicator width="16px" height="16px" status={IndicatorStatus.Running} />
                                 : <svg width="16px" height="16px" viewBox="0 0 16 16">

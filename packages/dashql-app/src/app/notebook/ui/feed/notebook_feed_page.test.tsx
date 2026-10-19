@@ -156,6 +156,15 @@ describe('NotebookFeedPage', () => {
         expect(container.querySelector('[aria-label="Connecting: main execution database"] svg')).not.toBeNull();
     });
 
+    it('keeps the connecting status indicator mounted across rerenders', () => {
+        const render = () => act(() => root.render(<NotebookFeedPage notebookScripts={scripts()} modifyNotebookScripts={vi.fn()}
+            connection={{ databaseId: 'main', connectionHealth: ConnectionHealth.CONNECTING } as any} active dependencies={dependencies} />));
+        render();
+        const indicator = container.querySelector('[aria-label="Connecting: main execution database"] svg');
+        render();
+        expect(container.querySelector('[aria-label="Connecting: main execution database"] svg')).toBe(indicator);
+    });
+
     it('pulses Connect on blocked execution hover and clears on main health or notebook changes', async () => {
         const render = (notebookId: string, health: ConnectionHealth) => act(() => root.render(<NotebookFeedPage
             notebookScripts={{ ...scripts(), notebookId }} modifyNotebookScripts={vi.fn()}
