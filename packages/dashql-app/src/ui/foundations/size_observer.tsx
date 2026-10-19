@@ -1,6 +1,6 @@
 import * as React from 'react';
 import useResizeObserverRaw from '@react-hook/resize-observer';
-const useResizeObserver = useResizeObserverRaw as unknown as (target: React.RefObject<HTMLElement | null>, callback: (entry: ResizeObserverEntry) => void) => void;
+const useResizeObserver = useResizeObserverRaw as unknown as (target: React.RefObject<HTMLElement | null> | null, callback: (entry: ResizeObserverEntry) => void) => void;
 
 export interface ObservedSize {
     width: number;
@@ -19,13 +19,13 @@ function keepSameSize(prev: ObservedSize | null, next: ObservedSize | null): Obs
     return next;
 }
 
-export const observeSize = (target: React.RefObject<HTMLElement | null>): ObservedSize | null => {
+export const observeSize = (target: React.RefObject<HTMLElement | null>, enabled: boolean = true): ObservedSize | null => {
     const [size, setSize] = React.useState<ObservedSize | null>(null);
     React.useLayoutEffect(() => {
         const next = target.current?.getBoundingClientRect() ?? null;
         setSize(prev => keepSameSize(prev, next));
     }, [target.current]);
-    useResizeObserver(target, (entry: ResizeObserverEntry) => {
+    useResizeObserver(enabled ? target : null, (entry: ResizeObserverEntry) => {
         setSize(prev => keepSameSize(prev, entry.contentRect));
     });
     return size;
