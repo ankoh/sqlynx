@@ -7,6 +7,9 @@ import { TextInputAction } from '../../../../../ui/foundations/text_input_action
 import type { ResultSearchState } from '../../../../../compute/computation_types.js';
 import * as styles from './query_result_search_controls.module.css';
 
+/// Data searches run SQL over the whole result, so they only start once typing pauses
+const DATA_SEARCH_DEBOUNCE_MS = 200;
+
 interface SearchControlProps {
     kind: 'Columns' | 'Data';
     state: ResultSearchState;
@@ -15,6 +18,8 @@ interface SearchControlProps {
     onCollapse: () => void;
     onChange: (value: string) => void;
     matchCount: number | null;
+    /// Delay before a typed pattern is propagated, 0 propagates immediately
+    debounceMs?: number;
 }
 
 function SearchControl(props: SearchControlProps) {
@@ -24,6 +29,40 @@ function SearchControl(props: SearchControlProps) {
     React.useEffect(() => {
         if (props.expanded) inputRef.current?.focus();
     }, [props.expanded]);
+
+    // Keep the input responsive with a local value and propagate it debounced
+    const requestedPattern = props.state.requestedPattern;
+    const [pattern, setPattern] = React.useState(requestedPattern);
+    const pendingChange = React.useRef<{ timer: ReturnType<typeof setTimeout>; value: string } | null>(null);
+    const onChangeRef = React.useRef(props.onChange);
+    onChangeRef.current = props.onChange;
+    const flushChange = React.useCallback(() => {
+        const pending = pendingChange.current;
+        if (pending == null) return;
+        clearTimeout(pending.timer);
+        pendingChange.current = null;
+        onChangeRef.current(pending.value);
+    }, []);
+    const changePattern = React.useCallback((value: string, immediate: boolean) => {
+        setPattern(value);
+        const pending = pendingChange.current;
+        if (pending != null) {
+            clearTimeout(pending.timer);
+            pendingChange.current = null;
+        }
+        const debounceMs = props.debounceMs ?? 0;
+        if (immediate || debounceMs <= 0) {
+            onChangeRef.current(value);
+            return;
+        }
+        pendingChange.current = { timer: setTimeout(flushChange, debounceMs), value };
+    }, [props.debounceMs, flushChange]);
+    // Adopt patterns that change from outside while no local edit is pending
+    React.useEffect(() => {
+        if (pendingChange.current == null) setPattern(requestedPattern);
+    }, [requestedPattern]);
+    // Don't drop a pending edit when the control unmounts
+    React.useEffect(() => () => flushChange(), [flushChange]);
 
     return (
         <div className={styles.control} aria-busy={props.state.pending || undefined}>
@@ -35,16 +74,16 @@ function SearchControl(props: SearchControlProps) {
                     aria-label={`Search ${props.kind.toLowerCase()}`}
                     placeholder={`Search ${props.kind.toLowerCase()}`}
                     leadingVisual={SearchIcon}
-                    value={props.state.requestedPattern}
-                    onChange={event => props.onChange(event.target.value)}
+                    value={pattern}
+                    onChange={event => changePattern(event.target.value, false)}
                     onBlur={() => {
-                        if (props.state.requestedPattern.length === 0) {
+                        if (pattern.length === 0) {
                             props.onCollapse();
                         }
                     }}
                     onKeyDown={event => {
                         if (event.key === 'Escape') {
-                            if (props.state.requestedPattern.length === 0) {
+                            if (pattern.length === 0) {
                                 event.preventDefault();
                                 props.onCollapse();
                                 requestAnimationFrame(() => buttonRef.current?.focus());
@@ -56,7 +95,7 @@ function SearchControl(props: SearchControlProps) {
                             aria-label={`Close ${props.kind.toLowerCase()} search`}
                             aria-labelledby=""
                             onClick={() => {
-                                props.onChange('');
+                                changePattern('', true);
                                 props.onCollapse();
                                 requestAnimationFrame(() => buttonRef.current?.focus());
                             }}
@@ -128,6 +167,7 @@ export function QueryResultSearchControls(props: Props) {
                 onCollapse={() => setDataExpanded(false)}
                 onChange={props.onDataPatternChange}
                 matchCount={props.dataMatchCount}
+                debounceMs={DATA_SEARCH_DEBOUNCE_MS}
             />
         </>
     );
