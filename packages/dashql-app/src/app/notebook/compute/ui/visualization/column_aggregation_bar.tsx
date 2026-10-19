@@ -61,27 +61,49 @@ export function ColumnAggregationBar(props: Props): React.ReactElement | null {
         return new ArrowTableFormatter(dataTable.schema, dataTable.batches, logger);
     }, [tableComputation?.dataTable, logger]);
 
-    const gridLayout = React.useMemo<DataTableLayout | null>(() => {
+    // The layout only reads the column groups and the data table, so it is not recomputed on every
+    // task step of the table computation.
+    const dataTable = tableComputation?.dataTable ?? null;
+    const columnGroups = tableComputation?.columnGroups ?? null;
+    // The bar does not render the leading row-number column, but the layout still reserves
+    // its width. Offset the container width by that reserved width so the data columns we DO
+    // render fill the whole bar.
+    const rowNumberWidth = React.useMemo<number | null>(() => {
         if (!tableComputation || !tableFormatter) return null;
-        // The bar does not render the leading row-number column, but the layout still reserves
-        // its width. Offset the container width by that reserved width so the data columns we DO
-        // render fill the whole bar.
         const probe = computeTableLayout(tableFormatter, tableComputation, debugMode, HEADER_ROW_COUNT);
-        const rowNumberWidth = probe.columnCount > 0 ? probe.columnXOffsets[1] : 0;
+        return probe.columnCount > 0 ? probe.columnXOffsets[1] : 0;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dataTable, columnGroups, tableFormatter, debugMode]);
+    const gridLayout = React.useMemo<DataTableLayout | null>(() => {
+        if (!tableComputation || !tableFormatter || rowNumberWidth == null) return null;
         const effectiveWidth = containerWidth > 0 ? containerWidth + rowNumberWidth : 0;
         return computeTableLayout(tableFormatter, tableComputation, debugMode, HEADER_ROW_COUNT, effectiveWidth);
-    }, [tableComputation, tableFormatter, debugMode, containerWidth]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dataTable, columnGroups, tableFormatter, debugMode, containerWidth, rowNumberWidth]);
 
+    // Track the scroll offset at most once per frame, it only decides which plots are mounted
+    const hasScrollElement = tableComputation != null && gridLayout != null && gridLayout.columnCount > 0;
     React.useEffect(() => {
         const element = scrollRef.current;
         if (!element) return;
+        let frame: number | null = null;
         const updateScrollLeft = () => {
             setScrollLeft(previous => previous === element.scrollLeft ? previous : element.scrollLeft);
         };
+        const onScroll = () => {
+            if (frame != null) return;
+            frame = requestAnimationFrame(() => {
+                frame = null;
+                updateScrollLeft();
+            });
+        };
         updateScrollLeft();
-        element.addEventListener('scroll', updateScrollLeft, { passive: true });
-        return () => element.removeEventListener('scroll', updateScrollLeft);
-    }, [gridLayout]);
+        element.addEventListener('scroll', onScroll, { passive: true });
+        return () => {
+            element.removeEventListener('scroll', onScroll);
+            if (frame != null) cancelAnimationFrame(frame);
+        };
+    }, [hasScrollElement]);
 
     // The cross-filter controller must be called unconditionally to satisfy the rules of hooks;
     // it no-ops harmlessly when there is no table computation / data frame yet.
