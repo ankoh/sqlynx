@@ -131,7 +131,8 @@ describe('query plan dialog', () => {
         const raw = `  ${VALID_PLAN}\n`;
         await act(async () => {
             setEditorText(raw);
-            await Promise.resolve();
+            // Edits are parsed once the typing pauses
+            await new Promise(resolve => setTimeout(resolve, 200));
         });
 
         expect(modeButton('Viewer').disabled).toBe(false);
@@ -175,21 +176,24 @@ describe('query plan dialog', () => {
         const result = open();
         await act(async () => {
             setEditorText('{not valid');
-            await Promise.resolve();
+            // Edits are parsed once the typing pauses
+            await new Promise(resolve => setTimeout(resolve, 200));
         });
         expect(document.querySelector('[role="alert"]')?.textContent).not.toBe('');
         expect(modeButton('Viewer').disabled).toBe(true);
 
         await act(async () => {
             setEditorText('{}');
-            await Promise.resolve();
+            // Edits are parsed once the typing pauses
+            await new Promise(resolve => setTimeout(resolve, 200));
         });
         expect(document.querySelector('[role="alert"]')?.textContent).toContain('no operators');
         expect(modeButton('Viewer').disabled).toBe(true);
 
         await act(async () => {
             setEditorText(VALID_PLAN);
-            await Promise.resolve();
+            // Edits are parsed once the typing pauses
+            await new Promise(resolve => setTimeout(resolve, 200));
         });
         expect(document.querySelector('[role="alert"]')).toBeNull();
         expect(modeButton('Viewer').disabled).toBe(false);
