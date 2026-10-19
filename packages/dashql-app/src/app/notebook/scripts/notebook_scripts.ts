@@ -495,14 +495,7 @@ export function reduceNotebookScripts(state: NotebookScripts, action: NotebookSc
             if (documentChanged || analysisRefreshed) {
                 // Mark all other scripts as outdated.
                 // Eventually, we could restrict to those that are depending?
-                for (const key in nextState.scripts) {
-                    if (+key === update.scriptKey) continue;
-                    const script = nextState.scripts[key];
-                    nextState.scripts[key] = {
-                        ...script,
-                        analysisOutdated: true,
-                    };
-                }
+                markOtherScriptsOutdatedInPlace(nextState.scripts, update.scriptKey);
             }
             // Persist only when the document text changed. Cursor/completion updates
             // still flow through this action but must not rewrite identical SQL.
@@ -950,6 +943,22 @@ export function reduceNotebookScripts(state: NotebookScripts, action: NotebookSc
 
 export function clearSemanticUserFocus<V extends NotebookScriptsInput>(state: V): V {
     return { ...state, semanticUserFocus: null };
+}
+
+/// Mark all scripts except one as outdated in a scripts map that the caller already owns.
+///
+/// Scripts that are already outdated keep their identity.
+/// This runs for every keystroke and every new ScriptData object re-renders its editor and card.
+function markOtherScriptsOutdatedInPlace(scripts: ScriptDataMap, except: ScriptKey) {
+    for (const key in scripts) {
+        if (+key === except) continue;
+        const script = scripts[key];
+        if (script.analysisOutdated) continue;
+        scripts[key] = {
+            ...script,
+            analysisOutdated: true,
+        };
+    }
 }
 function destroyScriptData(data: ScriptData) {
     data.scriptSession.destroy();
