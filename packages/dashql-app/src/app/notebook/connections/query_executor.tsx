@@ -1,7 +1,7 @@
 import * as arrow from 'apache-arrow';
 import * as React from 'react';
 
-import { findNotebookForAttachedDatabase, useAttachedDatabaseDispatch, useAttachedDatabaseRegistryStore, useAttachedDatabaseState, useDynamicAttachedDatabaseDispatch } from './attached_database_registry.js';
+import { findNotebookForAttachedDatabase, resolveNotebookExecutionDatabase, useAttachedDatabaseDispatch, useAttachedDatabaseRegistryStore, useDynamicAttachedDatabaseDispatch } from './attached_database_registry.js';
 import {
     createQueryResponseStreamMetrics,
     QUERY_CACHE_RECORDED,
@@ -92,9 +92,15 @@ export const useQueryExecutor = () => React.useContext(EXECUTOR_CTX)!.execute;
 export const useCancelQuery = () => React.useContext(EXECUTOR_CTX)!.cancel;
 /// Use the query state
 export function useQueryState(notebookId: string | null, queryId: number | null) {
-    const [connReg, _connDispatch] = useAttachedDatabaseState(notebookId);
-    if (queryId == null) return null;
-    return connReg?.queriesActive.get(queryId) ?? connReg?.queriesFinished.get(queryId) ?? null;
+    // Subscribe to the single query instead of the registry.
+    // The registry changes with every lifecycle event of every query, including the internal queries of computations.
+    const store = useAttachedDatabaseRegistryStore();
+    const getQueryState = React.useCallback(() => {
+        if (queryId == null) return null;
+        const database = resolveNotebookExecutionDatabase(store.current, notebookId);
+        return database?.queriesActive.get(queryId) ?? database?.queriesFinished.get(queryId) ?? null;
+    }, [store, notebookId, queryId]);
+    return React.useSyncExternalStore(store.subscribe, getQueryState);
 }
 
 function createConnectionQueryExecutionTracker(connectionId: string, dispatch: ReturnType<typeof useDynamicAttachedDatabaseDispatch>[1]): QueryExecutionTracker {
