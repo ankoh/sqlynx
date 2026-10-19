@@ -1342,13 +1342,17 @@ export function analyzeOutdatedScript<V extends NotebookScriptsInput>(state: V, 
     const nextScriptData = analyzeScriptData(scriptData, state.connectionCatalog, logger,
         state.connectorInfo.connectorType);
     const next = {
-        ...clearSemanticUserFocus(state),
+        ...state,
         scripts: {
             ...state.scripts,
             [scriptKey]: nextScriptData
         }
     };
 
-    next.semanticUserFocus = deriveFocusFromEditorUpdate(scriptKey, nextScriptData.editorUpdate);
+    // Only the selected script drives the semantic focus.
+    // Scripts in the background are re-analyzed whenever another script changes and must not steal it.
+    if (getSelectedScriptRef(state)?.scriptId === scriptKey) {
+        next.semanticUserFocus = deriveFocusFromEditorUpdate(scriptKey, nextScriptData.editorUpdate);
+    }
     return next;
 }
