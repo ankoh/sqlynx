@@ -3,6 +3,7 @@ import * as auth from '@ankoh/dashql-jsonschema/auth.js';
 
 import { HttpClient } from "../../../../platform/http/http_client.js";
 import { LoggableException, Logger } from "../../../../platform/logger/logger.js";
+import { dateToTimestamp } from '../proto_helper.js';
 
 const LOG_CTX = "trino_api";
 
@@ -13,13 +14,46 @@ export class TrinoApiEndpoint {
     authParams: auth.TrinoAuthParams;
     // The auth state
     oauthState: connection.TrinoOAuthState | null;
+    // The pending access token refresh
+    oauthRefresh: Promise<void> | null;
 
     constructor(endpoint: string, params: auth.TrinoAuthParams) {
         this.endpoint = endpoint;
         this.authParams = params;
         this.oauthState = null;
+        this.oauthRefresh = null;
     }
 }
+
+/// Request an access token from an OAuth token endpoint
+export async function requestTrinoAccessToken(httpClient: HttpClient, tokenUrl: string, body: URLSearchParams): Promise<connection.TrinoAccessToken> {
+    const response = await httpClient.fetch(new URL(tokenUrl), {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: body.toString(),
+    });
+    if (response.status < 200 || response.status >= 300) {
+        const errorText = await response.text();
+        throw new Error(`Token request failed: ${response.status} ${errorText}`);
+    }
+    const tokenData = await response.json();
+    const expiresAt = tokenData.expires_in
+        ? new Date(Date.now() + (tokenData.expires_in * 1000))
+        : null;
+    return {
+        createdAt: dateToTimestamp(new Date())!,
+        accessToken: tokenData.access_token,
+        tokenType: tokenData.token_type || 'Bearer',
+        refreshToken: tokenData.refresh_token,
+        expiresAt: dateToTimestamp(expiresAt),
+        scope: tokenData.scope,
+    };
+}
+
+/// Refresh access tokens a minute before they expire
+const ACCESS_TOKEN_REFRESH_MARGIN_MS = 60 * 1000;
 
 export interface TrinoQueryFailureInfo {
     /// The failure type
@@ -164,7 +198,7 @@ export interface TrinoApiClientInterface {
     /// Run a query
     runQuery(endpoint: TrinoApiEndpoint, catalogName: string, text: string, abort?: AbortSignal): Promise<TrinoQueryResult>;
     /// Get a query result
-    getQueryResult(nextUri: string, abort?: AbortSignal): Promise<TrinoQueryResult>;
+    getQueryResult(endpoint: TrinoApiEndpoint, nextUri: string, abort?: AbortSignal): Promise<TrinoQueryResult>;
     /// Get a query info
     getQueryInfo(endpoint: TrinoApiEndpoint, queryId: string): Promise<TrinoQueryInfo>;
     /// Cancel a query
@@ -183,12 +217,44 @@ export class TrinoApiClient implements TrinoApiClientInterface {
         this.httpClient = httpClient;
     }
 
+    /// Refresh the OAuth access token if it is about to expire
+    async refreshAccessToken(endpoint: TrinoApiEndpoint): Promise<void> {
+        const oauth = endpoint.authParams.oauth;
+        const token = endpoint.oauthState?.accessToken;
+        if (endpoint.authParams.authType != "AUTH_OAUTH" || !oauth || !token?.refreshToken || !token.expiresAt) {
+            return;
+        }
+        if (new Date(token.expiresAt).getTime() - Date.now() > ACCESS_TOKEN_REFRESH_MARGIN_MS) {
+            return;
+        }
+        if (!endpoint.oauthRefresh) {
+            this.logger.debug("Refreshing access token", {}, LOG_CTX);
+            endpoint.oauthRefresh = requestTrinoAccessToken(this.httpClient, oauth.tokenUrl, new URLSearchParams({
+                grant_type: 'refresh_token',
+                client_id: oauth.clientId,
+                refresh_token: token.refreshToken,
+            })).then(refreshed => {
+                endpoint.oauthState!.accessToken = { ...refreshed, refreshToken: refreshed.refreshToken ?? token.refreshToken };
+            }).finally(() => {
+                endpoint.oauthRefresh = null;
+            });
+        }
+        await endpoint.oauthRefresh;
+    }
+
+    /// Build the request headers for an endpoint
+    async getHeaders(endpoint: TrinoApiEndpoint): Promise<Headers> {
+        await this.refreshAccessToken(endpoint);
+        const headers = new Headers();
+        addAuthHeaders(headers, endpoint);
+        return headers;
+    }
+
     /// Run a query
     async runQuery(endpoint: TrinoApiEndpoint, catalogName: string, text: string, abort?: AbortSignal): Promise<TrinoQueryResult> {
         this.logger.debug("Running query", { "text": text }, LOG_CTX);
         const url = new URL(`${endpoint.endpoint}/v1/statement`);
-        const headers = new Headers();
-        addAuthHeaders(headers, endpoint);
+        const headers = await this.getHeaders(endpoint);
         headers.set('X-Trino-Catalog', catalogName);
         const rawResponse = await this.httpClient.fetch(url, {
             method: 'POST',
@@ -208,10 +274,10 @@ export class TrinoApiClient implements TrinoApiClientInterface {
     }
 
     /// Get the query result batch
-    async getQueryResult(nextUri: string, abort?: AbortSignal): Promise<TrinoQueryResult> {
+    async getQueryResult(endpoint: TrinoApiEndpoint, nextUri: string, abort?: AbortSignal): Promise<TrinoQueryResult> {
         this.logger.debug("Getting query results", { "nextUri": nextUri }, LOG_CTX);
         const url = new URL(nextUri);
-        const headers = new Headers();
+        const headers = await this.getHeaders(endpoint);
         const rawResponse = await this.httpClient.fetch(url, {
             method: 'GET',
             headers,
@@ -232,7 +298,7 @@ export class TrinoApiClient implements TrinoApiClientInterface {
     async getQueryInfo(endpoint: TrinoApiEndpoint, queryId: string): Promise<TrinoQueryInfo> {
         this.logger.debug("Getting query info", { "query": queryId }, LOG_CTX);
         const url = new URL(`${endpoint.endpoint}/v1/query/${queryId}`);
-        const headers = new Headers();
+        const headers = await this.getHeaders(endpoint);
         const rawResponse = await this.httpClient.fetch(url, {
             method: 'GET',
             headers
@@ -252,7 +318,7 @@ export class TrinoApiClient implements TrinoApiClientInterface {
     async cancelQuery(endpoint: TrinoApiEndpoint, queryId: string): Promise<TrinoQueryResult> {
         this.logger.debug("Cancelling query", { "query": queryId }, LOG_CTX);
         const url = new URL(`${endpoint.endpoint}/v1/query/${queryId}`);
-        const headers = new Headers();
+        const headers = await this.getHeaders(endpoint);
         const rawResponse = await this.httpClient.fetch(url, {
             method: 'DELETE',
             headers

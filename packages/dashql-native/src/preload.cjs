@@ -31,6 +31,11 @@ contextBridge.exposeInMainWorld("dashqlElectron", {
         url: request.url,
     }),
     openExternal: async (url) => await ipcRenderer.invoke("dashql:open-external", url),
+    oauthLoopback: {
+        listen: async (callbackUrl) => await ipcRenderer.invoke("dashql:oauth-loopback-listen", callbackUrl),
+        wait: async (loopbackId) => await ipcRenderer.invoke("dashql:oauth-loopback-wait", loopbackId),
+        close: async (loopbackId) => await ipcRenderer.invoke("dashql:oauth-loopback-close", loopbackId),
+    },
     updates: {
         check: async (channel) => await ipcRenderer.invoke("dashql:check-for-updates", channel),
         download: async (channel) => await ipcRenderer.invoke("dashql:download-update", channel),
