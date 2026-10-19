@@ -33,6 +33,7 @@ class FakeHyperDBEngineClient implements HyperDBEngineClient {
     activeOperationCount = 0;
     maximumActiveOperationCount = 0;
     failStartQuery = false;
+    failFinishQuery = false;
     failExternalFileRemoval = false;
 
     private nextConnection = 7;
@@ -162,6 +163,7 @@ class FakeHyperDBEngineClient implements HyperDBEngineClient {
 
     finishQuery(query: number): Promise<HyperDBResult> {
         this.calls.push(`finish:${query}`);
+        if (this.failFinishQuery) return Promise.resolve({ state: 'error', error: 'finish failed' });
         this.queries.delete(query);
         this.activeOperationCount--;
         return Promise.resolve({ state: 'ok', payload: new Uint8Array() });
@@ -369,6 +371,133 @@ describe('HyperDB embedded database adapter', () => {
         expect(client.disconnectCount).toBe(3);
         expect(client.terminateCount).toBe(1);
         expect(client.calls).toContain('shutdown');
+    });
+
+    it('reuses closed pooled connections without attaching again', async () => {
+        const client = new FakeHyperDBEngineClient();
+        const database = await HyperDB.create(client, undefined, { computeDatabasePath: '/mnt/fs/compute.hyper' });
+        const setupConnects = client.connectCount;
+
+        for (let i = 0; i < 3; ++i) {
+            const connection = await database.connect({ pooled: true });
+            await connection.close();
+        }
+
+        expect(client.connectCount - setupConnects).toBe(1);
+        expect(client.calls.filter(call => /query:\d+:ATTACH DATABASE "\/mnt\/fs\/compute.hyper"/.test(call))).toHaveLength(1);
+        expect(client.calls.filter(call => /query:\d+:DETACH DATABASE/.test(call))).toHaveLength(0);
+
+        await database.terminate();
+
+        expect(client.calls.filter(call => /query:\d+:DETACH DATABASE "__dashql_compute"/.test(call))).toHaveLength(1);
+        expect(client.disconnectCount).toBe(client.connectCount);
+    });
+
+    it('does not reuse connections without opting into pooling', async () => {
+        const client = new FakeHyperDBEngineClient();
+        const database = await HyperDB.create(client, undefined, { computeDatabasePath: '/mnt/fs/compute.hyper' });
+        const setupConnects = client.connectCount;
+
+        for (let i = 0; i < 2; ++i) {
+            const connection = await database.connect();
+            await connection.close();
+        }
+        const pooled = await database.connect({ pooled: true });
+
+        expect(client.connectCount - setupConnects).toBe(3);
+        expect(client.calls.filter(call => /query:\d+:DETACH DATABASE "__dashql_compute"/.test(call))).toHaveLength(2);
+        await pooled.close();
+        await database.terminate();
+    });
+
+    it('pools connections separately per default database', async () => {
+        const client = new FakeHyperDBEngineClient();
+        const database = await HyperDB.create(client, undefined, {
+            computeDatabasePath: '/mnt/fs/compute.hyper',
+            defaultDatabasePath: '/mnt/fs/session.hyper',
+        });
+        const setupConnects = client.connectCount;
+
+        const compute = await database.connect({ pooled: true });
+        await compute.close();
+        const hyper = await database.connect({ pooled: true, defaultDatabase: 'hyper' });
+        await hyper.close();
+        const computeAgain = await database.connect({ pooled: true });
+        const hyperAgain = await database.connect({ pooled: true, defaultDatabase: 'hyper' });
+
+        expect(client.connectCount - setupConnects).toBe(2);
+        expect(client.calls.filter(call => /query:\d+:ATTACH DATABASE "\/mnt\/fs\/compute.hyper" AS "__dashql_compute"/.test(call))).toHaveLength(1);
+        expect(client.calls.filter(call => /query:\d+:ATTACH DATABASE "\/mnt\/fs\/session.hyper" AS "hyper"/.test(call))).toHaveLength(1);
+
+        await computeAgain.close();
+        await hyperAgain.close();
+        await database.terminate();
+    });
+
+    it('gives concurrent pooled connections separate sessions and reuses both', async () => {
+        const client = new FakeHyperDBEngineClient();
+        const database = await HyperDB.create(client);
+
+        const [first, second] = await Promise.all([database.connect({ pooled: true }), database.connect({ pooled: true })]);
+        await Promise.all([first.close(), second.close()]);
+        const [third, fourth] = await Promise.all([database.connect({ pooled: true }), database.connect({ pooled: true })]);
+
+        expect(client.connectCount).toBe(2);
+        expect(client.disconnectCount).toBe(0);
+
+        await Promise.all([third.close(), fourth.close()]);
+        await database.terminate();
+        expect(client.disconnectCount).toBe(2);
+    });
+
+    it('closes pooled sessions beyond the idle limit', async () => {
+        const client = new FakeHyperDBEngineClient();
+        const database = await HyperDB.create(client);
+
+        const connections = await Promise.all(Array.from({ length: 6 }, () => database.connect({ pooled: true })));
+        for (const connection of connections) {
+            await connection.close();
+        }
+
+        expect(client.connectCount).toBe(6);
+        expect(client.disconnectCount).toBe(2);
+        await database.terminate();
+        expect(client.disconnectCount).toBe(6);
+    });
+
+    it('rejects a closed connection while its session serves the next connection', async () => {
+        const client = new FakeHyperDBEngineClient();
+        client.queryResults.set('SELECT 1 AS value', ipc(arrow.tableFromArrays({ value: new Int32Array([1]) })));
+        const database = await HyperDB.create(client);
+        const first = await database.connect({ pooled: true });
+        await first.close();
+        const second = await database.connect({ pooled: true });
+
+        await expect(first.query('SELECT 1 AS value')).rejects.toThrow('connection is closed');
+        await expect(second.query('SELECT 1 AS value')).resolves.toBeDefined();
+        expect(client.connectCount).toBe(1);
+
+        await second.close();
+        await database.terminate();
+    });
+
+    it('does not reuse a pooled session whose query could not be finished', async () => {
+        const client = new FakeHyperDBEngineClient();
+        client.queryResults.set('SELECT 1 AS value', ipc(arrow.tableFromArrays({ value: new Int32Array([1]) })));
+        const database = await HyperDB.create(client);
+        const first = await database.connect({ pooled: true });
+
+        client.failFinishQuery = true;
+        await expect(first.query('SELECT 1 AS value')).rejects.toThrow('finish failed');
+        client.failFinishQuery = false;
+        await first.close();
+        const second = await database.connect({ pooled: true });
+
+        expect(client.connectCount).toBe(2);
+        expect(client.disconnectCount).toBe(1);
+
+        await second.close();
+        await database.terminate();
     });
 
     it('initializes the engine settings before opening connections', async () => {

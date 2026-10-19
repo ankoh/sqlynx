@@ -351,6 +351,7 @@ describe('HyperDB embedded database integration', () => {
             { id: 3, label: 'gamma' },
         ]);
         expect(toPlainObjects(secondRead)).toEqual(toPlainObjects(firstRead));
+        const connectsAfterReads = client.connectCount;
 
         const summary = await DataFrame.fromSQL(
             database!,
@@ -358,8 +359,8 @@ describe('HyperDB embedded database integration', () => {
             summaryName,
         );
         expect(toPlainObjects(await summary.readTable())).toEqual([{ row_count: 3 }]);
-        expect(client.connectCount).toBeGreaterThan(1);
-        expect(client.disconnectCount).toBe(client.connectCount);
+        // Later statements reuse the attached sessions of the parallel reads.
+        expect(client.connectCount).toBe(connectsAfterReads);
 
         await summary.destroy();
         await expect(summary.readTable()).rejects.toThrow();
