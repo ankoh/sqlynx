@@ -61,7 +61,7 @@ const dependencies = {
         backend: { deleteNotebook: state.deleteNotebook },
         cancelPendingWritesForNotebook: vi.fn(),
     }),
-    useComputationRegistry: () => [null, vi.fn()],
+    useComputationDispatch: () => vi.fn(),
     BundledNotebooksOverlay: () => null,
     NotebookStorageOverlay: () => null,
     NotebookURLShareOverlay: (props: typeof state.shareProps) => {
