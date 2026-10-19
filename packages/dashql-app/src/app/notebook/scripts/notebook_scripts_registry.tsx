@@ -169,6 +169,7 @@ export function useNotebookScripts(id: string | null): [NotebookScripts | null, 
         }, LOG_CTX);
 
         setRegistry((reg: NotebookScriptsRegistry) => {
+            let changed = false;
             for (const { notebookId, action, resolve } of pending) {
                 const prev = reg.notebookScriptsMap.get(notebookId);
                 if (!prev) {
@@ -182,9 +183,11 @@ export function useNotebookScripts(id: string | null): [NotebookScripts | null, 
                 }, LOG_CTX);
                 const next = reduceNotebookScripts(prev, action, storageWriter, logger, true);
                 reg.notebookScriptsMap.set(notebookId, next);
+                changed ||= next !== prev;
                 resolve(next);
             }
-            return { ...reg };
+            // Keep the registry identity if all actions were no-ops (e.g. re-selecting the hovered script)
+            return changed ? { ...reg } : reg;
         });
     }, [id, setRegistry, storageWriter, logger]);
 
@@ -243,6 +246,7 @@ export function useConnectionScriptsDispatch(): ModifyConnectionNotebookScripts 
         pendingActionsRef.current = [];
 
         setRegistry((reg: NotebookScriptsRegistry) => {
+            let changed = false;
             for (const { conn, action } of actions) {
                 const notebookId = reg.notebookScriptsByConnection.get(conn);
                 if (notebookId) {
@@ -250,10 +254,11 @@ export function useConnectionScriptsDispatch(): ModifyConnectionNotebookScripts 
                     if (prev) {
                         const next = reduceNotebookScripts(prev, action, storage, logger, true);
                         reg.notebookScriptsMap.set(notebookId, next);
+                        changed ||= next !== prev;
                     }
                 }
             }
-            return { ...reg };
+            return changed ? { ...reg } : reg;
         });
     }, [setRegistry, storage, logger]);
 
