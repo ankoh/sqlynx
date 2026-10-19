@@ -21,6 +21,8 @@ import { AlertIcon, XIcon } from '../ui/foundations/symbol_icon.js';
 import * as styles from './format_dialog.module.css';
 
 const IGNORE_OUTSIDE_CLICK = () => {};
+/// Edits are validated once the user pauses typing, analyzing the script per keystroke is too expensive
+const VALIDATION_DELAY_MS = 150;
 
 const enum FormatMode {
     Raw = 0,
@@ -213,27 +215,50 @@ function FormatDialog(props: FormatDialogProps) {
     const editableCompartmentRef = React.useRef(new Compartment());
     const attributesCompartmentRef = React.useRef(new Compartment());
     const onRawChangeRef = React.useRef<(text: string) => void>(() => {});
+    const validationTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    /// The editor width for validating edits, measured when the editor resizes instead of per edit
+    const validationWidthRef = React.useRef(80);
+    const widthObserverRef = React.useRef<ResizeObserver | null>(null);
 
     const measureWidth = React.useCallback(() => {
         const view = editorViewRef.current;
         return view == null ? 80 : measureScriptFormatWidth(view);
     }, []);
 
-    const validateRaw = React.useCallback((text: string) => {
-        const validation = analyzeSql(props.core, props.catalog, text, measureWidth());
+    const validateRaw = React.useCallback((text: string, width: number = measureWidth()) => {
+        const validation = analyzeSql(props.core, props.catalog, text, width);
         rawUpdateRef.current = validation.update;
         setDiagnostic(validation.diagnostic);
         return validation;
     }, [measureWidth, props.catalog, props.core]);
 
+    const cancelValidation = React.useCallback(() => {
+        if (validationTimerRef.current != null) {
+            clearTimeout(validationTimerRef.current);
+            validationTimerRef.current = null;
+        }
+    }, []);
+
+    // The core and the catalog belong to the request, never validate after the dialog is gone
+    React.useEffect(() => () => {
+        cancelValidation();
+        widthObserverRef.current?.disconnect();
+        widthObserverRef.current = null;
+    }, [cancelValidation]);
+
+    // Validate the raw text and update the decorations of the raw view
+    const runValidation = React.useCallback(() => {
+        cancelValidation();
+        const validation = validateRaw(rawTextRef.current, validationWidthRef.current);
+        const view = editorViewRef.current;
+        if (view == null || changingViewRef.current || view.state.doc.toString() !== rawTextRef.current) return;
+        view.dispatch({ effects: DashQLScannerDecorationUpdateEffect.of(validation.update) });
+    }, [cancelValidation, validateRaw]);
+
     onRawChangeRef.current = (text: string) => {
         rawTextRef.current = text;
-        const validation = validateRaw(text);
-        queueMicrotask(() => {
-            const view = editorViewRef.current;
-            if (view == null || changingViewRef.current || view.state.doc.toString() !== rawTextRef.current) return;
-            view.dispatch({ effects: DashQLScannerDecorationUpdateEffect.of(validation.update) });
-        });
+        cancelValidation();
+        validationTimerRef.current = setTimeout(runValidation, VALIDATION_DELAY_MS);
     };
 
     const extensions = React.useMemo<Extension[]>(() => [
@@ -259,12 +284,24 @@ function FormatDialog(props: FormatDialogProps) {
     const setView = React.useCallback((view: EditorView | null) => {
         editorViewRef.current = view;
         editorFocusRef.current = view?.contentDOM ?? null;
+        widthObserverRef.current?.disconnect();
+        widthObserverRef.current = null;
+        if (view != null) {
+            validationWidthRef.current = measureScriptFormatWidth(view);
+            const observer = new ResizeObserver(() => {
+                validationWidthRef.current = measureScriptFormatWidth(view);
+            });
+            observer.observe(view.scrollDOM);
+            widthObserverRef.current = observer;
+        }
         view?.focus();
     }, []);
 
     const showMode = React.useCallback((nextMode: FormatMode, refresh = false) => {
         const view = editorViewRef.current;
         if (view == null || (nextMode === mode && !refresh)) return;
+        // Validate pending edits right away
+        if (validationTimerRef.current != null) runValidation();
 
         let text = rawTextRef.current;
         let update = rawUpdateRef.current;
@@ -304,7 +341,7 @@ function FormatDialog(props: FormatDialogProps) {
             changingViewRef.current = false;
         }
         setMode(nextMode);
-    }, [measureWidth, mode, props.catalog, props.core, validateRaw, keywordCase]);
+    }, [measureWidth, mode, props.catalog, props.core, validateRaw, keywordCase, runValidation]);
 
     const renderedCase = React.useRef(keywordCase);
     React.useEffect(() => {

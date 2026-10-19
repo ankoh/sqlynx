@@ -144,9 +144,10 @@ describe('SQL formatter dialog', () => {
 
     it('disables formatted views for invalid SQL and re-enables them after correction', async () => {
         const result = open();
+        // Edits are validated once the typing pauses
         await act(async () => {
             setEditorText('select * from foo group');
-            await Promise.resolve();
+            await new Promise(resolve => setTimeout(resolve, 200));
         });
 
         expect(document.querySelector('[role="alert"]')?.textContent).not.toBe('');
@@ -155,7 +156,7 @@ describe('SQL formatter dialog', () => {
 
         await act(async () => {
             setEditorText('select 1');
-            await Promise.resolve();
+            await new Promise(resolve => setTimeout(resolve, 200));
         });
         expect(document.querySelector('[role="alert"]')).toBeNull();
         expect(modeButton('Compact').disabled).toBe(false);
