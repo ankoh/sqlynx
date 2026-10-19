@@ -98,6 +98,9 @@ export const ScriptEditor: React.FC<ScriptEditorProps> = (props) => {
         }
     }, [view, props.setView]);
 
+    // The CodeMirror view only reads the initial document when mounting, don't copy the text on every render
+    const initialDoc = React.useMemo(() => scriptData?.scriptSession.getText() ?? '', [scriptData?.scriptSession]);
+
     const containerClass = [
         props.autoHeight ? styles.auto_height_editor : styles.editor,
         props.className,
@@ -107,7 +110,7 @@ export const ScriptEditor: React.FC<ScriptEditorProps> = (props) => {
         <div className={containerClass} onFocusCapture={props.onFocus}>
             <dependencies.CodeMirror
                 ref={setViewState}
-                initialDoc={scriptData?.scriptSession.getText() ?? ''}
+                initialDoc={initialDoc}
                 style={props.autoHeight ? { height: 'auto' } : undefined}
             />
         </div>
