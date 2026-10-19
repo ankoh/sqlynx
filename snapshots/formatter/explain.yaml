@@ -176,3 +176,41 @@ formatter-snapshots:
                 1 + 2 + 3,
                 3 + a
               );
+
+  - name: explain_raw_sql_aggregate_row_type
+    input: |-
+      explain (sql internal_spark)
+      select order_id,
+        raw_sql_aggregate(descriptor(output array(row(product_name text, available_quantity numeric(38,18)))),
+          'collect_list(named_struct(''product_name'', {0}, ''available_quantity'', {1}))',
+          product_name, available_quantity) as products
+      from order_products
+      group by order_id;
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              explain (sql internal_spark) select order_id, raw_sql_aggregate(descriptor(output row(product_name text, available_quantity numeric(38, 18))[]), 'collect_list(named_struct(''product_name'', {0}, ''available_quantity'', {1}))', product_name, available_quantity) as products from order_products group by order_id;
+          - mode: compact
+            expected: |-
+              explain (sql internal_spark)
+              select order_id,
+                raw_sql_aggregate(
+                  descriptor(output row(product_name text, available_quantity numeric(38, 18))[]),
+                    'collect_list(named_struct(''product_name'', {0}, ''available_quantity'', {1}))', product_name,
+                    available_quantity
+                ) as products
+              from order_products
+              group by order_id;
+          - mode: pretty
+            expected: |-
+              explain (sql internal_spark)
+              select order_id,
+                raw_sql_aggregate(
+                  descriptor(output row(product_name text, available_quantity numeric(38, 18))[]),
+                    'collect_list(named_struct(''product_name'', {0}, ''available_quantity'', {1}))', product_name,
+                    available_quantity
+                ) as products
+              from order_products
+              group by order_id;
