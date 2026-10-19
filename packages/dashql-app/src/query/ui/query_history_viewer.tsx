@@ -242,7 +242,7 @@ export function QueryHistoryViewer(props: {
                             listRef={setListApi}
                             style={{ width: containerWidth, height: containerHeight }}
                             rowCount={entries.length}
-                            rowHeight={() => ROW_HEIGHT}
+                            rowHeight={ROW_HEIGHT}
                             rowComponent={QueryRow}
                             rowProps={rowProps}
                         />

@@ -13,7 +13,6 @@ import {
     LogRow,
     LogRowProps,
     ROW_HEIGHT,
-    computeLogRowHeight,
 } from '../../../ui/logs/log_viewer.js';
 
 interface TraceLogViewerProps {
@@ -184,7 +183,7 @@ export const TraceLogViewer: React.FC<TraceLogViewerProps> = (props: TraceLogVie
                     // would override react-window's default `overflowY: 'auto'` and disable scrolling.
                     style={{ width: containerWidth, height: containerHeight, overflowY: props.maxRows != null ? 'hidden' : 'auto' }}
                     rowCount={rowCount}
-                    rowHeight={computeLogRowHeight}
+                    rowHeight={ROW_HEIGHT}
                     rowComponent={LogRow}
                     rowProps={rowProps}
                 />

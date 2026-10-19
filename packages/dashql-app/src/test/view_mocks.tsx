@@ -200,7 +200,7 @@ export function fakeReactWindowModule(
         }),
         List: (props: {
             rowCount: number;
-            rowHeight: (rowIndex: number) => number;
+            rowHeight: number | ((rowIndex: number) => number);
             rowComponent: React.ComponentType<any>;
             rowProps: any;
             style?: React.CSSProperties;
@@ -209,14 +209,14 @@ export function fakeReactWindowModule(
                 'div',
                 {
                     key: index,
-                    'data-row-height': props.rowHeight(index),
+                    'data-row-height': typeof props.rowHeight === 'number' ? props.rowHeight : props.rowHeight(index),
                     'data-row-script-id': index % 2 === 1 && Math.floor(index / 2) < props.rowProps.entries.length
                         ? props.rowProps.entries[Math.floor(index / 2)].scriptId
                         : undefined,
                 },
                 React.createElement(props.rowComponent, {
                     index,
-                    style: { height: props.rowHeight(index) },
+                    style: { height: typeof props.rowHeight === 'number' ? props.rowHeight : props.rowHeight(index) },
                     ...props.rowProps,
                 }),
             ));
