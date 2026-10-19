@@ -138,10 +138,15 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo((props: ScriptCa
         const connectionDetails = props.connectionDetails;
         const run = async () => {
             // Not script data? Clear cache indicator.
-            if (props.scriptData == null || props.scriptData.analysisOutdated || !connectionDetails) {
+            if (props.scriptData == null || !connectionDetails) {
                 if ((wasCached == null || wasCached) && !cancel.signal.aborted) {
                     setIsCached(null);
                 }
+                return;
+            }
+            // Outdated analysis? Keep the last known indicator until the script is re-analyzed.
+            // Every keystroke outdates all scripts of the notebook, clearing it would make it flicker.
+            if (props.scriptData.analysisOutdated) {
                 return;
             }
             try {
