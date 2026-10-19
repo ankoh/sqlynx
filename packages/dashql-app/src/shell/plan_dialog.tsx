@@ -17,6 +17,8 @@ import { AlertIcon, XIcon } from '../ui/foundations/symbol_icon.js';
 import * as styles from './plan_dialog.module.css';
 
 const IGNORE_OUTSIDE_CLICK = () => {};
+/// Edits are parsed once the user pauses typing, loading the plan per keystroke is too expensive
+const VALIDATION_DELAY_MS = 150;
 
 const enum PlanMode {
     Raw = 0,
@@ -156,9 +158,26 @@ function PlanDialog(props: PlanDialogProps) {
         }
     }, [layoutConfig, props.core]);
 
+    const validationTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    const cancelValidation = React.useCallback(() => {
+        if (validationTimerRef.current != null) {
+            clearTimeout(validationTimerRef.current);
+            validationTimerRef.current = null;
+        }
+    }, []);
+    const runValidation = React.useCallback(() => {
+        cancelValidation();
+        rawTextIsValidRef.current = validate(rawTextRef.current);
+    }, [cancelValidation, validate]);
+    // Validate pending edits right away, e.g. before showing the viewer
+    const flushValidation = React.useCallback(() => {
+        if (validationTimerRef.current != null) runValidation();
+    }, [runValidation]);
+
     onRawChangeRef.current = text => {
         rawTextRef.current = text;
-        rawTextIsValidRef.current = validate(text);
+        cancelValidation();
+        validationTimerRef.current = setTimeout(runValidation, VALIDATION_DELAY_MS);
     };
 
     const extensions = React.useMemo<Extension[]>(() => [
@@ -180,9 +199,11 @@ function PlanDialog(props: PlanDialogProps) {
     }, []);
 
     React.useEffect(() => () => {
+        // A pending validation must not load a plan into the destroyed view model
+        cancelValidation();
         viewModelRef.current?.destroy();
         viewModelRef.current = null;
-    }, []);
+    }, [cancelValidation]);
 
     React.useEffect(() => {
         const handleFallbackPaste = (text: string) => {
@@ -192,11 +213,19 @@ function PlanDialog(props: PlanDialogProps) {
             } else {
                 onRawChangeRef.current(text);
             }
+            flushValidation();
             if (rawTextIsValidRef.current) setMode(PlanMode.Viewer);
         };
         props.appEvents.subscribeFallbackPasteEvents(handleFallbackPaste);
         return () => props.appEvents.unsubscribeFallbackPasteEvents(handleFallbackPaste);
-    }, [props.appEvents, validate]);
+    }, [props.appEvents, flushValidation]);
+
+    const selectMode = React.useCallback((nextMode: PlanMode) => {
+        flushValidation();
+        // The viewer button was enabled for the text before the pending edits
+        if (nextMode === PlanMode.Viewer && !rawTextIsValidRef.current) return;
+        setMode(nextMode);
+    }, [flushValidation]);
 
     useFocusTrap({
         containerRef: dialogRef as React.RefObject<HTMLElement>,
@@ -233,7 +262,7 @@ function PlanDialog(props: PlanDialogProps) {
                     <SegmentedControl
                         aria-label="Plan view"
                         size={SegmentedControlSize.Small}
-                        onChange={index => setMode(index as PlanMode)}
+                        onChange={index => selectMode(index as PlanMode)}
                     >
                         <SegmentedControl.Button selected={mode === PlanMode.Raw}>Raw</SegmentedControl.Button>
                         <SegmentedControl.Button
