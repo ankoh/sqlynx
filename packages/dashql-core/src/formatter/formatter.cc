@@ -384,6 +384,8 @@ std::string_view GetOperatorText(ExpressionOperator op) {
             return "similar to";
         case ExpressionOperator::NOT_SIMILAR_TO:
             return "not similar to";
+        case ExpressionOperator::OVERLAPS:
+            return "overlaps";
         case ExpressionOperator::GLOB:
             return "glob";
         case ExpressionOperator::NOT_GLOB:
@@ -659,6 +661,7 @@ FmtReg Formatter::FormatArray(const buffers::parser::Node& node) {
         case AttributeKey::SQL_FUNCTION_ARGUMENTS:
         case AttributeKey::SQL_EXPRESSION_ARGS:
         case AttributeKey::SQL_DESCRIPTOR_COLUMNS:
+        case AttributeKey::SQL_ROW_TYPE_FIELDS:
         case AttributeKey::SQL_CASE_CLAUSES:
         case AttributeKey::SQL_CREATE_TABLE_ELEMENTS:
         case AttributeKey::SQL_CREATE_AS_COLUMNS:
@@ -703,6 +706,32 @@ FmtReg Formatter::FormatArray(const buffers::parser::Node& node) {
         case AttributeKey::EXT_VARARG_FIELD_VALUE:
         case AttributeKey::SQL_GENERIC_OPTION_VALUE:
             return fmt.Parenthesized(FormatCommaList(node));
+        case AttributeKey::SQL_INDIRECTION_PATH: {
+            // Only field accesses for now, (p).x
+            auto elements = GetArrayStates(node);
+            std::vector<FmtReg> parts;
+            parts.reserve(elements.size() * 2);
+            auto begin = node.children_begin_or_value();
+            for (size_t i = 0; i < elements.size(); ++i) {
+                if (ast[begin + i].node_type() != NodeType::NAME || elements[i].reg == 0) {
+                    return FormatUnimplemented(node);
+                }
+                parts.push_back(fmt.Text("."));
+                parts.push_back(elements[i].reg);
+            }
+            return fmt.Concat(std::move(parts));
+        }
+        case AttributeKey::SQL_ROW_EXPRESSION_VALUES: {
+            auto values = GetArrayStates(node);
+            std::vector<FmtReg> parts;
+            parts.reserve(values.size());
+            for (auto& value : values) {
+                if (value.reg == 0) return FormatUnimplemented(node);
+                parts.push_back(value.reg);
+            }
+            return fmt.Join(parts, fmt.Text(", "), fmt.Concat({fmt.Text(","), fmt.Break()}),
+                            FormattingJoinPolicy::BreakOnOverflow, true);
+        }
         case AttributeKey::SQL_WINDOW_FRAME_BOUNDS: {
             auto bounds = GetArrayStates(node);
             if (bounds.size() == 1 && bounds.front().reg != 0) return bounds.front().reg;
@@ -1030,11 +1059,15 @@ FmtReg Formatter::FormatTypeName(const buffers::parser::Node& node) {
 
     FmtReg type_reg = Reg(*type);
     if (array && array->node_type() == NodeType::ARRAY) {
+        // Hyper does not accept row(...)[], only array(row(...))
+        bool row_element = type->node_type() == NodeType::OBJECT_SQL_ROW_TYPE;
         auto begin = array->children_begin_or_value();
         for (size_t i = 0; i < array->children_count(); ++i) {
             const auto& bound = ast[begin + i];
             if (config.dialect == buffers::formatting::FormattingDialect::TRINO) {
                 if (bound.node_type() != NodeType::BOOL) return FormatUnimplemented(node);
+                type_reg = fmt.Concat({fmt.Text("array("), type_reg, fmt.Text(")")});
+            } else if (row_element && bound.node_type() == NodeType::BOOL) {
                 type_reg = fmt.Concat({fmt.Text("array("), type_reg, fmt.Text(")")});
             } else {
                 type_reg = fmt.Concat({type_reg, fmt.Text("["),
@@ -1269,8 +1302,12 @@ FmtReg Formatter::FormatGenericType(const buffers::parser::Node& node) {
                                            [](unsigned char a, unsigned char b) { return std::tolower(a) == b; }) &&
         modifiers &&
         modifiers->node_type() == NodeType::ARRAY && modifiers->children_count() == 1) {
-        auto element = Reg(ast[modifiers->children_begin_or_value()]);
-        if (config.dialect == buffers::formatting::FormattingDialect::HYPER) {
+        const auto& element_node = ast[modifiers->children_begin_or_value()];
+        auto element = Reg(element_node);
+        // Hyper does not accept row(...)[], only array(row(...))
+        auto [element_type] = GetAttributes<AttributeKey::SQL_TYPENAME_TYPE>(element_node);
+        bool row_element = element_type && element_type->node_type() == NodeType::OBJECT_SQL_ROW_TYPE;
+        if (config.dialect == buffers::formatting::FormattingDialect::HYPER && !row_element) {
             return fmt.Concat({element, fmt.Text("[]")});
         }
         return fmt.Concat({fmt.Text("array("), element, fmt.Text(")")});
@@ -1426,6 +1463,40 @@ FmtReg Formatter::FormatDescriptor(const buffers::parser::Node& node) {
     auto columns_reg = Reg(*columns);
     if (columns_reg == 0) return FormatUnimplemented(node);
     return fmt.Concat({fmt.Text("descriptor"), fmt.Parenthesized(columns_reg)});
+}
+
+FmtReg Formatter::FormatIndirection(const buffers::parser::Node& node) {
+    auto [value, path] = GetAttributes<AttributeKey::SQL_INDIRECTION_VALUE, AttributeKey::SQL_INDIRECTION_PATH>(node);
+    if (!value || !path) return FormatUnimplemented(node);
+
+    auto value_reg = Reg(*value);
+    auto path_reg = Reg(*path);
+    if (value_reg == 0 || path_reg == 0) return FormatUnimplemented(node);
+    return fmt.Concat({fmt.Parenthesized(value_reg), path_reg});
+}
+
+FmtReg Formatter::FormatRowType(const buffers::parser::Node& node) {
+    auto [fields] = GetAttributes<AttributeKey::SQL_ROW_TYPE_FIELDS>(node);
+    if (!fields) return FormatUnimplemented(node);
+
+    auto fields_reg = Reg(*fields);
+    if (fields_reg == 0) return FormatUnimplemented(node);
+    return fmt.Concat({fmt.Text("row"), fmt.Parenthesized(fields_reg)});
+}
+
+FmtReg Formatter::FormatRowExpression(const buffers::parser::Node& node) {
+    auto [is_explicit, values] =
+        GetAttributes<AttributeKey::SQL_ROW_EXPRESSION_EXPLICIT, AttributeKey::SQL_ROW_EXPRESSION_VALUES>(node);
+    if (!values || values->node_type() != NodeType::ARRAY) return FormatUnimplemented(node);
+    if (values->children_count() == 0) return fmt.Text("row()");
+
+    auto values_reg = Reg(*values);
+    if (values_reg == 0) return FormatUnimplemented(node);
+    // (x) is just x, so a single value always needs the row keyword
+    if (is_explicit || values->children_count() == 1) {
+        return fmt.Concat({fmt.Text("row"), fmt.Parenthesized(values_reg)});
+    }
+    return fmt.Parenthesized(values_reg);
 }
 
 FmtReg Formatter::FormatColumnDef(const buffers::parser::Node& node) {
@@ -2567,6 +2638,12 @@ FmtReg Formatter::FormatNode(size_t node_id) {
             return FormatRelationExpression(node);
         case NodeType::OBJECT_SQL_DESCRIPTOR:
             return FormatDescriptor(node);
+        case NodeType::OBJECT_SQL_INDIRECTION:
+            return FormatIndirection(node);
+        case NodeType::OBJECT_SQL_ROW_TYPE:
+            return FormatRowType(node);
+        case NodeType::OBJECT_SQL_ROW_EXPRESSION:
+            return FormatRowExpression(node);
         case NodeType::OBJECT_SQL_SELECT_EXPRESSION:
             return FormatSelectExpression(node);
         case NodeType::OBJECT_SQL_RESULT_TARGET:

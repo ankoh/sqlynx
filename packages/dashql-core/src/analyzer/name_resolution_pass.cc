@@ -467,6 +467,39 @@ static const ReferencedTable* LookupAliasInScopeChain(AnalyzedScript::NameScope&
     return nullptr;
 }
 
+void NameResolutionPass::ResolveRowFieldAccesses(AnalyzedScript::NameScope& scope) {
+    for (auto& expr : scope.expressions) {
+        auto* col_ref = std::get_if<AnalyzedScript::Expression::ColumnRef>(&expr.inner);
+        if (col_ref == nullptr || col_ref->IsResolved() || !col_ref->column_name.table_alias.has_value()) continue;
+        auto& qualifier = col_ref->column_name.table_alias->get();
+        if (LookupAliasInScopeChain(scope, qualifier.text) != nullptr) continue;
+
+        // In p.x, p is not a table in scope but may be a row-typed column with a field x.
+        // We keep this reading only if p resolves as a column.
+        auto qualified = col_ref->column_name;
+        col_ref->column_name.table_alias = std::nullopt;
+        col_ref->column_name.column_name = qualifier;
+        bool resolved = TryResolveColumnInScope(expr, scope, state);
+        if (!resolved && !scope.child_output_resolution_barrier) {
+            for (auto& child_node : scope.child_scopes) {
+                auto& child_scope = *static_cast<AnalyzedScript::NameScope*>(&child_node);
+                if ((resolved = TryResolveColumnFromOutputs(expr, child_scope))) break;
+            }
+        }
+        if (!resolved && !scope.column_correlation_barrier) {
+            for (auto* target = scope.parent_scope; target != nullptr; target = target->parent_scope) {
+                if ((resolved = TryResolveColumnInScope(expr, *target, state))) break;
+                if (target->column_correlation_barrier) break;
+            }
+        }
+        if (resolved) {
+            qualifier.coarse_analyzer_tags |= buffers::analyzer::NameTag::COLUMN_NAME;
+        } else {
+            col_ref->column_name = qualified;
+        }
+    }
+}
+
 void NameResolutionPass::AssociateUnresolvedColumns(AnalyzedScript::NameScope& scope) {
     // Gather the unresolved relations visible directly in this scope. Unqualified columns can only
     // be owned by an unresolved table in their own scope (we do not pull in parents' unresolved
@@ -653,6 +686,7 @@ void NameResolutionPass::ResolveNames() {
             if (!ambiguous) TryResolveColumnInScope(expr, *scope, state);
         }
         ResolveColumnRefsFromParents(*scope);
+        ResolveRowFieldAccesses(*scope);
         for (auto& child : scope->child_scopes) {
             dfs.push({static_cast<AnalyzedScript::NameScope*>(&child), false});
         }
@@ -728,7 +762,7 @@ void NameResolutionPass::Visit(std::span<const buffers::parser::Node> morsel) {
                     const auto& parent = state.ast[parent_id];
                     // Fields of descriptors and row types are not table columns
                     if (parent.attribute_key() == AttributeKey::SQL_DESCRIPTOR_COLUMNS ||
-                        parent.attribute_key() == AttributeKey::SQL_GENERIC_TYPE_MODIFIERS) {
+                        parent.attribute_key() == AttributeKey::SQL_ROW_TYPE_FIELDS) {
                         break;
                     }
                 }

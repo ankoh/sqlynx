@@ -1,0 +1,1546 @@
+parser-snapshots:
+
+  - name: row_type_column
+    input: |-
+      create table orders (id int, product row(name text, quantity numeric(38, 18)))
+    expected:
+      statements:
+        - type: CREATE_TABLE
+          ast-begin: 0
+          ast-size: 26
+          description:
+            text: "create tab..(38, 18)))"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_CREATE
+            text: "create tab..(38, 18)))"
+            children:
+              - key: SQL_CREATE_TABLE_NAME
+                type: ARRAY
+                text: "orders"
+                children:
+                  - type: NAME
+                    text: "orders"
+              - key: SQL_CREATE_TABLE_ELEMENTS
+                type: ARRAY
+                text: "(id int, p..(38, 18)))"
+                children:
+                  - type: OBJECT_SQL_COLUMN_DEF
+                    text: "id int"
+                    children:
+                      - key: SQL_COLUMN_DEF_NAME
+                        type: NAME
+                        text: "id"
+                      - key: SQL_COLUMN_DEF_TYPE
+                        type: OBJECT_SQL_TYPENAME
+                        text: "int"
+                        children:
+                          - key: SQL_TYPENAME_TYPE
+                            type: ENUM_SQL_NUMERIC_TYPE
+                            value: INT4
+                  - type: OBJECT_SQL_COLUMN_DEF
+                    text: "product ro..c(38, 18))"
+                    children:
+                      - key: SQL_COLUMN_DEF_NAME
+                        type: NAME
+                        text: "product"
+                      - key: SQL_COLUMN_DEF_TYPE
+                        type: OBJECT_SQL_TYPENAME
+                        text: "row(name t..c(38, 18))"
+                        children:
+                          - key: SQL_TYPENAME_TYPE
+                            type: OBJECT_SQL_ROW_TYPE
+                            text: "row(name t..c(38, 18))"
+                            children:
+                              - key: SQL_ROW_TYPE_FIELDS
+                                type: ARRAY
+                                text: "name text,..ic(38, 18)"
+                                children:
+                                  - type: OBJECT_SQL_COLUMN_DEF
+                                    text: "name text"
+                                    children:
+                                      - key: SQL_COLUMN_DEF_NAME
+                                        type: NAME
+                                        text: "name"
+                                      - key: SQL_COLUMN_DEF_TYPE
+                                        type: OBJECT_SQL_TYPENAME
+                                        text: "text"
+                                        children:
+                                          - key: SQL_TYPENAME_TYPE
+                                            type: OBJECT_SQL_GENERIC_TYPE
+                                            text: "text"
+                                            children:
+                                              - key: SQL_GENERIC_TYPE_NAME
+                                                type: NAME
+                                                text: "text"
+                                  - type: OBJECT_SQL_COLUMN_DEF
+                                    text: "quantity n..ic(38, 18)"
+                                    children:
+                                      - key: SQL_COLUMN_DEF_NAME
+                                        type: NAME
+                                        text: "quantity"
+                                      - key: SQL_COLUMN_DEF_TYPE
+                                        type: OBJECT_SQL_TYPENAME
+                                        text: "numeric(38, 18)"
+                                        children:
+                                          - key: SQL_TYPENAME_TYPE
+                                            type: OBJECT_SQL_NUMERIC_TYPE
+                                            text: "numeric(38, 18)"
+                                            children:
+                                              - key: SQL_NUMERIC_TYPE_BASE
+                                                type: ENUM_SQL_NUMERIC_TYPE
+                                                value: NUMERIC
+                                              - key: SQL_NUMERIC_TYPE_MODIFIERS
+                                                type: ARRAY
+                                                text: "(38, 18)"
+                                                children:
+                                                  - type: LITERAL_INTEGER
+                                                    text: "38"
+                                                  - type: LITERAL_INTEGER
+                                                    text: "18"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: row_type_nested
+    input: |-
+      create table t (p row(a row(b int), c text[]))
+    expected:
+      statements:
+        - type: CREATE_TABLE
+          ast-begin: 0
+          ast-size: 25
+          description:
+            text: "create tab..c text[]))"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_CREATE
+            text: "create tab..c text[]))"
+            children:
+              - key: SQL_CREATE_TABLE_NAME
+                type: ARRAY
+                text: "t"
+                children:
+                  - type: NAME
+                    text: "t"
+              - key: SQL_CREATE_TABLE_ELEMENTS
+                type: ARRAY
+                text: "(p row(a r..c text[]))"
+                children:
+                  - type: OBJECT_SQL_COLUMN_DEF
+                    text: "p row(a ro.. c text[])"
+                    children:
+                      - key: SQL_COLUMN_DEF_NAME
+                        type: NAME
+                        text: "p"
+                      - key: SQL_COLUMN_DEF_TYPE
+                        type: OBJECT_SQL_TYPENAME
+                        text: "row(a row(.. c text[])"
+                        children:
+                          - key: SQL_TYPENAME_TYPE
+                            type: OBJECT_SQL_ROW_TYPE
+                            text: "row(a row(.. c text[])"
+                            children:
+                              - key: SQL_ROW_TYPE_FIELDS
+                                type: ARRAY
+                                text: "a row(b in.., c text[]"
+                                children:
+                                  - type: OBJECT_SQL_COLUMN_DEF
+                                    text: "a row(b int)"
+                                    children:
+                                      - key: SQL_COLUMN_DEF_NAME
+                                        type: NAME
+                                        text: "a"
+                                      - key: SQL_COLUMN_DEF_TYPE
+                                        type: OBJECT_SQL_TYPENAME
+                                        text: "row(b int)"
+                                        children:
+                                          - key: SQL_TYPENAME_TYPE
+                                            type: OBJECT_SQL_ROW_TYPE
+                                            text: "row(b int)"
+                                            children:
+                                              - key: SQL_ROW_TYPE_FIELDS
+                                                type: ARRAY
+                                                text: "b int"
+                                                children:
+                                                  - type: OBJECT_SQL_COLUMN_DEF
+                                                    text: "b int"
+                                                    children:
+                                                      - key: SQL_COLUMN_DEF_NAME
+                                                        type: NAME
+                                                        text: "b"
+                                                      - key: SQL_COLUMN_DEF_TYPE
+                                                        type: OBJECT_SQL_TYPENAME
+                                                        text: "int"
+                                                        children:
+                                                          - key: SQL_TYPENAME_TYPE
+                                                            type: ENUM_SQL_NUMERIC_TYPE
+                                                            value: INT4
+                                  - type: OBJECT_SQL_COLUMN_DEF
+                                    text: "c text[]"
+                                    children:
+                                      - key: SQL_COLUMN_DEF_NAME
+                                        type: NAME
+                                        text: "c"
+                                      - key: SQL_COLUMN_DEF_TYPE
+                                        type: OBJECT_SQL_TYPENAME
+                                        text: "text[]"
+                                        children:
+                                          - key: SQL_TYPENAME_TYPE
+                                            type: OBJECT_SQL_GENERIC_TYPE
+                                            text: "text"
+                                            children:
+                                              - key: SQL_GENERIC_TYPE_NAME
+                                                type: NAME
+                                                text: "text"
+                                          - key: SQL_TYPENAME_ARRAY
+                                            type: ARRAY
+                                            text: "[]"
+                                            children:
+                                              - type: BOOL
+                                                value: 1
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: row_type_array
+    input: |-
+      create table t (ps array(row(x int)), qs row(x int)[])
+    expected:
+      statements:
+        - type: CREATE_TABLE
+          ast-begin: 0
+          ast-size: 28
+          description:
+            text: "create tab..(x int)[])"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_CREATE
+            text: "create tab..(x int)[])"
+            children:
+              - key: SQL_CREATE_TABLE_NAME
+                type: ARRAY
+                text: "t"
+                children:
+                  - type: NAME
+                    text: "t"
+              - key: SQL_CREATE_TABLE_ELEMENTS
+                type: ARRAY
+                text: "(ps array(..(x int)[])"
+                children:
+                  - type: OBJECT_SQL_COLUMN_DEF
+                    text: "ps array(r..ow(x int))"
+                    children:
+                      - key: SQL_COLUMN_DEF_NAME
+                        type: NAME
+                        text: "ps"
+                      - key: SQL_COLUMN_DEF_TYPE
+                        type: OBJECT_SQL_TYPENAME
+                        text: "array(row(x int))"
+                        children:
+                          - key: SQL_TYPENAME_TYPE
+                            type: OBJECT_SQL_GENERIC_TYPE
+                            text: "array(row(x int))"
+                            children:
+                              - key: SQL_GENERIC_TYPE_NAME
+                                type: NAME
+                                text: "array"
+                              - key: SQL_GENERIC_TYPE_MODIFIERS
+                                type: ARRAY
+                                text: "(row(x int))"
+                                children:
+                                  - type: OBJECT_SQL_TYPENAME
+                                    text: "row(x int)"
+                                    children:
+                                      - key: SQL_TYPENAME_TYPE
+                                        type: OBJECT_SQL_ROW_TYPE
+                                        text: "row(x int)"
+                                        children:
+                                          - key: SQL_ROW_TYPE_FIELDS
+                                            type: ARRAY
+                                            text: "x int"
+                                            children:
+                                              - type: OBJECT_SQL_COLUMN_DEF
+                                                text: "x int"
+                                                children:
+                                                  - key: SQL_COLUMN_DEF_NAME
+                                                    type: NAME
+                                                    text: "x"
+                                                  - key: SQL_COLUMN_DEF_TYPE
+                                                    type: OBJECT_SQL_TYPENAME
+                                                    text: "int"
+                                                    children:
+                                                      - key: SQL_TYPENAME_TYPE
+                                                        type: ENUM_SQL_NUMERIC_TYPE
+                                                        value: INT4
+                  - type: OBJECT_SQL_COLUMN_DEF
+                    text: "qs row(x int)[]"
+                    children:
+                      - key: SQL_COLUMN_DEF_NAME
+                        type: NAME
+                        text: "qs"
+                      - key: SQL_COLUMN_DEF_TYPE
+                        type: OBJECT_SQL_TYPENAME
+                        text: "row(x int)[]"
+                        children:
+                          - key: SQL_TYPENAME_TYPE
+                            type: OBJECT_SQL_ROW_TYPE
+                            text: "row(x int)"
+                            children:
+                              - key: SQL_ROW_TYPE_FIELDS
+                                type: ARRAY
+                                text: "x int"
+                                children:
+                                  - type: OBJECT_SQL_COLUMN_DEF
+                                    text: "x int"
+                                    children:
+                                      - key: SQL_COLUMN_DEF_NAME
+                                        type: NAME
+                                        text: "x"
+                                      - key: SQL_COLUMN_DEF_TYPE
+                                        type: OBJECT_SQL_TYPENAME
+                                        text: "int"
+                                        children:
+                                          - key: SQL_TYPENAME_TYPE
+                                            type: ENUM_SQL_NUMERIC_TYPE
+                                            value: INT4
+                          - key: SQL_TYPENAME_ARRAY
+                            type: ARRAY
+                            text: "[]"
+                            children:
+                              - type: BOOL
+                                value: 1
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: row_type_collate
+    input: |-
+      create table t (p row(name text collate "de_DE"))
+    expected:
+      statements:
+        - type: CREATE_TABLE
+          ast-begin: 0
+          ast-size: 16
+          description:
+            text: "create tab.. \"de_DE\"))"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_CREATE
+            text: "create tab.. \"de_DE\"))"
+            children:
+              - key: SQL_CREATE_TABLE_NAME
+                type: ARRAY
+                text: "t"
+                children:
+                  - type: NAME
+                    text: "t"
+              - key: SQL_CREATE_TABLE_ELEMENTS
+                type: ARRAY
+                text: "(p row(nam.. \"de_DE\"))"
+                children:
+                  - type: OBJECT_SQL_COLUMN_DEF
+                    text: "p row(name..e \"de_DE\")"
+                    children:
+                      - key: SQL_COLUMN_DEF_NAME
+                        type: NAME
+                        text: "p"
+                      - key: SQL_COLUMN_DEF_TYPE
+                        type: OBJECT_SQL_TYPENAME
+                        text: "row(name t..e \"de_DE\")"
+                        children:
+                          - key: SQL_TYPENAME_TYPE
+                            type: OBJECT_SQL_ROW_TYPE
+                            text: "row(name t..e \"de_DE\")"
+                            children:
+                              - key: SQL_ROW_TYPE_FIELDS
+                                type: ARRAY
+                                text: "name text ..te \"de_DE\""
+                                children:
+                                  - type: OBJECT_SQL_COLUMN_DEF
+                                    text: "name text ..te \"de_DE\""
+                                    children:
+                                      - key: SQL_COLUMN_DEF_NAME
+                                        type: NAME
+                                        text: "name"
+                                      - key: SQL_COLUMN_DEF_TYPE
+                                        type: OBJECT_SQL_TYPENAME
+                                        text: "text"
+                                        children:
+                                          - key: SQL_TYPENAME_TYPE
+                                            type: OBJECT_SQL_GENERIC_TYPE
+                                            text: "text"
+                                            children:
+                                              - key: SQL_GENERIC_TYPE_NAME
+                                                type: NAME
+                                                text: "text"
+                                      - key: SQL_COLUMN_DEF_COLLATE
+                                        type: ARRAY
+                                        text: "collate \"de_DE\""
+                                        children:
+                                          - type: NAME
+                                            text: "\"de_DE\""
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: row_type_cast
+    input: |-
+      select cast(x as row(a int, b text)), x::row(a int) from t
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 37
+          description:
+            text: "select cas..nt) from t"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select cas..nt) from t"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "cast(x as ..row(a int)"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "cast(x as .., b text))"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_FUNCTION_EXPRESSION
+                        text: "cast(x as .., b text))"
+                        children:
+                          - key: SQL_FUNCTION_NAME
+                            type: ENUM_SQL_KNOWN_FUNCTION
+                            value: CAST
+                          - key: SQL_FUNCTION_CAST_ARGS
+                            type: OBJECT_SQL_FUNCTION_CAST_ARGS
+                            text: "(x as row(.., b text))"
+                            children:
+                              - key: SQL_FUNCTION_CAST_VALUE
+                                type: OBJECT_SQL_COLUMN_REF
+                                text: "x"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "x"
+                                    children:
+                                      - type: NAME
+                                        text: "x"
+                              - key: SQL_FUNCTION_CAST_TYPE
+                                type: OBJECT_SQL_TYPENAME
+                                text: "row(a int, b text)"
+                                children:
+                                  - key: SQL_TYPENAME_TYPE
+                                    type: OBJECT_SQL_ROW_TYPE
+                                    text: "row(a int, b text)"
+                                    children:
+                                      - key: SQL_ROW_TYPE_FIELDS
+                                        type: ARRAY
+                                        text: "a int, b text"
+                                        children:
+                                          - type: OBJECT_SQL_COLUMN_DEF
+                                            text: "a int"
+                                            children:
+                                              - key: SQL_COLUMN_DEF_NAME
+                                                type: NAME
+                                                text: "a"
+                                              - key: SQL_COLUMN_DEF_TYPE
+                                                type: OBJECT_SQL_TYPENAME
+                                                text: "int"
+                                                children:
+                                                  - key: SQL_TYPENAME_TYPE
+                                                    type: ENUM_SQL_NUMERIC_TYPE
+                                                    value: INT4
+                                          - type: OBJECT_SQL_COLUMN_DEF
+                                            text: "b text"
+                                            children:
+                                              - key: SQL_COLUMN_DEF_NAME
+                                                type: NAME
+                                                text: "b"
+                                              - key: SQL_COLUMN_DEF_TYPE
+                                                type: OBJECT_SQL_TYPENAME
+                                                text: "text"
+                                                children:
+                                                  - key: SQL_TYPENAME_TYPE
+                                                    type: OBJECT_SQL_GENERIC_TYPE
+                                                    text: "text"
+                                                    children:
+                                                      - key: SQL_GENERIC_TYPE_NAME
+                                                        type: NAME
+                                                        text: "text"
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "x::row(a int)"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_TYPECAST_EXPRESSION
+                        text: "x::row(a int)"
+                        children:
+                          - key: SQL_TYPECAST_VALUE
+                            type: OBJECT_SQL_COLUMN_REF
+                            text: "x"
+                            children:
+                              - key: SQL_COLUMN_REF_PATH
+                                type: ARRAY
+                                text: "x"
+                                children:
+                                  - type: NAME
+                                    text: "x"
+                          - key: SQL_TYPECAST_TYPE
+                            type: OBJECT_SQL_TYPENAME
+                            text: "row(a int)"
+                            children:
+                              - key: SQL_TYPENAME_TYPE
+                                type: OBJECT_SQL_ROW_TYPE
+                                text: "row(a int)"
+                                children:
+                                  - key: SQL_ROW_TYPE_FIELDS
+                                    type: ARRAY
+                                    text: "a int"
+                                    children:
+                                      - type: OBJECT_SQL_COLUMN_DEF
+                                        text: "a int"
+                                        children:
+                                          - key: SQL_COLUMN_DEF_NAME
+                                            type: NAME
+                                            text: "a"
+                                          - key: SQL_COLUMN_DEF_TYPE
+                                            type: OBJECT_SQL_TYPENAME
+                                            text: "int"
+                                            children:
+                                              - key: SQL_TYPENAME_TYPE
+                                                type: ENUM_SQL_NUMERIC_TYPE
+                                                value: INT4
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from t"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "t"
+                    children:
+                      - key: SQL_TABLEREF_NAME
+                        type: ARRAY
+                        text: "t"
+                        children:
+                          - type: NAME
+                            text: "t"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: row_type_descriptor
+    input: |-
+      select * from raw_sql_subquery(descriptor(p row(x int, y text)), 'select 1')
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 31
+          description:
+            text: "select * f..select 1')"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select * f..select 1')"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "*"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "*"
+                    children:
+                      - key: SQL_RESULT_TARGET_STAR
+                        type: BOOL
+                        value: 1
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from raw_s..select 1')"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "raw_sql_su..select 1')"
+                    children:
+                      - key: SQL_TABLEREF_TABLE
+                        type: OBJECT_SQL_FUNCTION_TABLE
+                        text: "raw_sql_su..select 1')"
+                        children:
+                          - key: SQL_FUNCTION_TABLE_FUNCTION
+                            type: OBJECT_SQL_FUNCTION_EXPRESSION
+                            text: "raw_sql_su..select 1')"
+                            children:
+                              - key: SQL_FUNCTION_NAME
+                                type: ARRAY
+                                text: "raw_sql_subquery"
+                                children:
+                                  - type: NAME
+                                    text: "raw_sql_subquery"
+                              - key: SQL_FUNCTION_ARGUMENTS
+                                type: ARRAY
+                                text: "descriptor..'select 1'"
+                                children:
+                                  - type: OBJECT_SQL_FUNCTION_ARG
+                                    text: "descriptor.., y text))"
+                                    children:
+                                      - key: SQL_FUNCTION_ARG_VALUE
+                                        type: OBJECT_SQL_DESCRIPTOR
+                                        text: "descriptor.., y text))"
+                                        children:
+                                          - key: SQL_DESCRIPTOR_COLUMNS
+                                            type: ARRAY
+                                            text: "p row(x in..t, y text)"
+                                            children:
+                                              - type: OBJECT_SQL_COLUMN_DEF
+                                                text: "p row(x in..t, y text)"
+                                                children:
+                                                  - key: SQL_COLUMN_DEF_NAME
+                                                    type: NAME
+                                                    text: "p"
+                                                  - key: SQL_COLUMN_DEF_TYPE
+                                                    type: OBJECT_SQL_TYPENAME
+                                                    text: "row(x int, y text)"
+                                                    children:
+                                                      - key: SQL_TYPENAME_TYPE
+                                                        type: OBJECT_SQL_ROW_TYPE
+                                                        text: "row(x int, y text)"
+                                                        children:
+                                                          - key: SQL_ROW_TYPE_FIELDS
+                                                            type: ARRAY
+                                                            text: "x int, y text"
+                                                            children:
+                                                              - type: OBJECT_SQL_COLUMN_DEF
+                                                                text: "x int"
+                                                                children:
+                                                                  - key: SQL_COLUMN_DEF_NAME
+                                                                    type: NAME
+                                                                    text: "x"
+                                                                  - key: SQL_COLUMN_DEF_TYPE
+                                                                    type: OBJECT_SQL_TYPENAME
+                                                                    text: "int"
+                                                                    children:
+                                                                      - key: SQL_TYPENAME_TYPE
+                                                                        type: ENUM_SQL_NUMERIC_TYPE
+                                                                        value: INT4
+                                                              - type: OBJECT_SQL_COLUMN_DEF
+                                                                text: "y text"
+                                                                children:
+                                                                  - key: SQL_COLUMN_DEF_NAME
+                                                                    type: NAME
+                                                                    text: "y"
+                                                                  - key: SQL_COLUMN_DEF_TYPE
+                                                                    type: OBJECT_SQL_TYPENAME
+                                                                    text: "text"
+                                                                    children:
+                                                                      - key: SQL_TYPENAME_TYPE
+                                                                        type: OBJECT_SQL_GENERIC_TYPE
+                                                                        text: "text"
+                                                                        children:
+                                                                          - key: SQL_GENERIC_TYPE_NAME
+                                                                            type: NAME
+                                                                            text: "text"
+                                  - type: OBJECT_SQL_FUNCTION_ARG
+                                    text: "'select 1'"
+                                    children:
+                                      - key: SQL_FUNCTION_ARG_VALUE
+                                        type: LITERAL_STRING
+                                        text: "'select 1'"
+                          - key: SQL_FUNCTION_TABLE_WITH_ORDINALITY
+                            type: BOOL
+                            value: 0
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: row_type_empty
+    input: |-
+      create table t (p row())
+    expected:
+      statements: []
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected RRB'
+          text: ")"
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: row_type_anonymous_field
+    input: |-
+      create table t (p row(int))
+    expected:
+      statements: []
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected RRB'
+          text: ")"
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: row_explicit
+    input: |-
+      select row(1, 'a'), row(1), row()
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 17
+          description:
+            text: "select row..(1), row()"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select row..(1), row()"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "row(1, 'a'..(1), row()"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "row(1, 'a')"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_ROW_EXPRESSION
+                        text: "row(1, 'a')"
+                        children:
+                          - key: SQL_ROW_EXPRESSION_EXPLICIT
+                            type: BOOL
+                            value: 1
+                          - key: SQL_ROW_EXPRESSION_VALUES
+                            type: ARRAY
+                            text: "1, 'a'"
+                            children:
+                              - type: LITERAL_INTEGER
+                                text: "1"
+                              - type: LITERAL_STRING
+                                text: "'a'"
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "row(1)"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_ROW_EXPRESSION
+                        text: "row(1)"
+                        children:
+                          - key: SQL_ROW_EXPRESSION_EXPLICIT
+                            type: BOOL
+                            value: 1
+                          - key: SQL_ROW_EXPRESSION_VALUES
+                            type: ARRAY
+                            text: "1"
+                            children:
+                              - type: LITERAL_INTEGER
+                                text: "1"
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "row()"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_ROW_EXPRESSION
+                        text: "row()"
+                        children:
+                          - key: SQL_ROW_EXPRESSION_EXPLICIT
+                            type: BOOL
+                            value: 1
+                          - key: SQL_ROW_EXPRESSION_VALUES
+                            type: ARRAY
+                            text: "()"
+                            children: []
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: row_implicit
+    input: |-
+      select (1, 'a'), (a, b, c), (1) from t
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 25
+          description:
+            text: "select (1,..(1) from t"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select (1,..(1) from t"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "(1, 'a'), ..b, c), (1)"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "(1, 'a')"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_ROW_EXPRESSION
+                        text: "(1, 'a')"
+                        children:
+                          - key: SQL_ROW_EXPRESSION_VALUES
+                            type: ARRAY
+                            text: "1, 'a'"
+                            children:
+                              - type: LITERAL_INTEGER
+                                text: "1"
+                              - type: LITERAL_STRING
+                                text: "'a'"
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "(a, b, c)"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_ROW_EXPRESSION
+                        text: "(a, b, c)"
+                        children:
+                          - key: SQL_ROW_EXPRESSION_VALUES
+                            type: ARRAY
+                            text: "a, b, c"
+                            children:
+                              - type: OBJECT_SQL_COLUMN_REF
+                                text: "a"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "a"
+                                    children:
+                                      - type: NAME
+                                        text: "a"
+                              - type: OBJECT_SQL_COLUMN_REF
+                                text: "b"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "b"
+                                    children:
+                                      - type: NAME
+                                        text: "b"
+                              - type: OBJECT_SQL_COLUMN_REF
+                                text: "c"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "c"
+                                    children:
+                                      - type: NAME
+                                        text: "c"
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "(1)"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: LITERAL_INTEGER
+                        text: "1"
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from t"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "t"
+                    children:
+                      - key: SQL_TABLEREF_NAME
+                        type: ARRAY
+                        text: "t"
+                        children:
+                          - type: NAME
+                            text: "t"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: row_comparison
+    input: |-
+      select * from t where (a, b) = (1, 2) and row(a, b) < row(3, 4)
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 43
+          description:
+            text: "select * f.. row(3, 4)"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select * f.. row(3, 4)"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "*"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "*"
+                    children:
+                      - key: SQL_RESULT_TARGET_STAR
+                        type: BOOL
+                        value: 1
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from t"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "t"
+                    children:
+                      - key: SQL_TABLEREF_NAME
+                        type: ARRAY
+                        text: "t"
+                        children:
+                          - type: NAME
+                            text: "t"
+              - key: SQL_SELECT_WHERE
+                type: OBJECT_SQL_NARY_EXPRESSION
+                text: "(a, b) = (.. row(3, 4)"
+                children:
+                  - key: SQL_EXPRESSION_OPERATOR
+                    type: ENUM_SQL_EXPRESSION_OPERATOR
+                    value: AND
+                  - key: SQL_EXPRESSION_ARGS
+                    type: ARRAY
+                    text: "(a, b) = (.. row(3, 4)"
+                    children:
+                      - type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "(a, b) = (1, 2)"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: EQUAL
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "(a, b) = (1, 2)"
+                            children:
+                              - type: OBJECT_SQL_ROW_EXPRESSION
+                                text: "(a, b)"
+                                children:
+                                  - key: SQL_ROW_EXPRESSION_VALUES
+                                    type: ARRAY
+                                    text: "a, b"
+                                    children:
+                                      - type: OBJECT_SQL_COLUMN_REF
+                                        text: "a"
+                                        children:
+                                          - key: SQL_COLUMN_REF_PATH
+                                            type: ARRAY
+                                            text: "a"
+                                            children:
+                                              - type: NAME
+                                                text: "a"
+                                      - type: OBJECT_SQL_COLUMN_REF
+                                        text: "b"
+                                        children:
+                                          - key: SQL_COLUMN_REF_PATH
+                                            type: ARRAY
+                                            text: "b"
+                                            children:
+                                              - type: NAME
+                                                text: "b"
+                              - type: OBJECT_SQL_ROW_EXPRESSION
+                                text: "(1, 2)"
+                                children:
+                                  - key: SQL_ROW_EXPRESSION_VALUES
+                                    type: ARRAY
+                                    text: "1, 2"
+                                    children:
+                                      - type: LITERAL_INTEGER
+                                        text: "1"
+                                      - type: LITERAL_INTEGER
+                                        text: "2"
+                      - type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "row(a, b) .. row(3, 4)"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: LESS_THAN
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "row(a, b) .. row(3, 4)"
+                            children:
+                              - type: OBJECT_SQL_ROW_EXPRESSION
+                                text: "row(a, b)"
+                                children:
+                                  - key: SQL_ROW_EXPRESSION_EXPLICIT
+                                    type: BOOL
+                                    value: 1
+                                  - key: SQL_ROW_EXPRESSION_VALUES
+                                    type: ARRAY
+                                    text: "a, b"
+                                    children:
+                                      - type: OBJECT_SQL_COLUMN_REF
+                                        text: "a"
+                                        children:
+                                          - key: SQL_COLUMN_REF_PATH
+                                            type: ARRAY
+                                            text: "a"
+                                            children:
+                                              - type: NAME
+                                                text: "a"
+                                      - type: OBJECT_SQL_COLUMN_REF
+                                        text: "b"
+                                        children:
+                                          - key: SQL_COLUMN_REF_PATH
+                                            type: ARRAY
+                                            text: "b"
+                                            children:
+                                              - type: NAME
+                                                text: "b"
+                              - type: OBJECT_SQL_ROW_EXPRESSION
+                                text: "row(3, 4)"
+                                children:
+                                  - key: SQL_ROW_EXPRESSION_EXPLICIT
+                                    type: BOOL
+                                    value: 1
+                                  - key: SQL_ROW_EXPRESSION_VALUES
+                                    type: ARRAY
+                                    text: "3, 4"
+                                    children:
+                                      - type: LITERAL_INTEGER
+                                        text: "3"
+                                      - type: LITERAL_INTEGER
+                                        text: "4"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: row_in
+    input: |-
+      select * from t where (a, b) in ((1, 2), (3, 4)) or (a, b) in (select x, y from u)
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 57
+          description:
+            text: "select * f.. y from u)"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select * f.. y from u)"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "*"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "*"
+                    children:
+                      - key: SQL_RESULT_TARGET_STAR
+                        type: BOOL
+                        value: 1
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from t"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "t"
+                    children:
+                      - key: SQL_TABLEREF_NAME
+                        type: ARRAY
+                        text: "t"
+                        children:
+                          - type: NAME
+                            text: "t"
+              - key: SQL_SELECT_WHERE
+                type: OBJECT_SQL_NARY_EXPRESSION
+                text: "(a, b) in .. y from u)"
+                children:
+                  - key: SQL_EXPRESSION_OPERATOR
+                    type: ENUM_SQL_EXPRESSION_OPERATOR
+                    value: OR
+                  - key: SQL_EXPRESSION_ARGS
+                    type: ARRAY
+                    text: "(a, b) in .. y from u)"
+                    children:
+                      - type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "(a, b) in ..), (3, 4))"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: IN
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "(a, b) in ..), (3, 4))"
+                            children:
+                              - type: OBJECT_SQL_ROW_EXPRESSION
+                                text: "(a, b)"
+                                children:
+                                  - key: SQL_ROW_EXPRESSION_VALUES
+                                    type: ARRAY
+                                    text: "a, b"
+                                    children:
+                                      - type: OBJECT_SQL_COLUMN_REF
+                                        text: "a"
+                                        children:
+                                          - key: SQL_COLUMN_REF_PATH
+                                            type: ARRAY
+                                            text: "a"
+                                            children:
+                                              - type: NAME
+                                                text: "a"
+                                      - type: OBJECT_SQL_COLUMN_REF
+                                        text: "b"
+                                        children:
+                                          - key: SQL_COLUMN_REF_PATH
+                                            type: ARRAY
+                                            text: "b"
+                                            children:
+                                              - type: NAME
+                                                text: "b"
+                              - type: ARRAY
+                                text: "((1, 2), (3, 4))"
+                                children:
+                                  - type: OBJECT_SQL_ROW_EXPRESSION
+                                    text: "(1, 2)"
+                                    children:
+                                      - key: SQL_ROW_EXPRESSION_VALUES
+                                        type: ARRAY
+                                        text: "1, 2"
+                                        children:
+                                          - type: LITERAL_INTEGER
+                                            text: "1"
+                                          - type: LITERAL_INTEGER
+                                            text: "2"
+                                  - type: OBJECT_SQL_ROW_EXPRESSION
+                                    text: "(3, 4)"
+                                    children:
+                                      - key: SQL_ROW_EXPRESSION_VALUES
+                                        type: ARRAY
+                                        text: "3, 4"
+                                        children:
+                                          - type: LITERAL_INTEGER
+                                            text: "3"
+                                          - type: LITERAL_INTEGER
+                                            text: "4"
+                      - type: OBJECT_SQL_NARY_EXPRESSION
+                        text: "(a, b) in .. y from u)"
+                        children:
+                          - key: SQL_EXPRESSION_OPERATOR
+                            type: ENUM_SQL_EXPRESSION_OPERATOR
+                            value: IN
+                          - key: SQL_EXPRESSION_ARGS
+                            type: ARRAY
+                            text: "(a, b) in .. y from u)"
+                            children:
+                              - type: OBJECT_SQL_ROW_EXPRESSION
+                                text: "(a, b)"
+                                children:
+                                  - key: SQL_ROW_EXPRESSION_VALUES
+                                    type: ARRAY
+                                    text: "a, b"
+                                    children:
+                                      - type: OBJECT_SQL_COLUMN_REF
+                                        text: "a"
+                                        children:
+                                          - key: SQL_COLUMN_REF_PATH
+                                            type: ARRAY
+                                            text: "a"
+                                            children:
+                                              - type: NAME
+                                                text: "a"
+                                      - type: OBJECT_SQL_COLUMN_REF
+                                        text: "b"
+                                        children:
+                                          - key: SQL_COLUMN_REF_PATH
+                                            type: ARRAY
+                                            text: "b"
+                                            children:
+                                              - type: NAME
+                                                text: "b"
+                              - type: OBJECT_SQL_SELECT_EXPRESSION
+                                text: "(select x,.. y from u)"
+                                children:
+                                  - key: SQL_SELECT_EXPRESSION_STATEMENT
+                                    type: OBJECT_SQL_SELECT
+                                    text: "(select x,.. y from u)"
+                                    children:
+                                      - key: SQL_SELECT_TARGETS
+                                        type: ARRAY
+                                        text: "x, y"
+                                        children:
+                                          - type: OBJECT_SQL_RESULT_TARGET
+                                            text: "x"
+                                            children:
+                                              - key: SQL_RESULT_TARGET_VALUE
+                                                type: OBJECT_SQL_COLUMN_REF
+                                                text: "x"
+                                                children:
+                                                  - key: SQL_COLUMN_REF_PATH
+                                                    type: ARRAY
+                                                    text: "x"
+                                                    children:
+                                                      - type: NAME
+                                                        text: "x"
+                                          - type: OBJECT_SQL_RESULT_TARGET
+                                            text: "y"
+                                            children:
+                                              - key: SQL_RESULT_TARGET_VALUE
+                                                type: OBJECT_SQL_COLUMN_REF
+                                                text: "y"
+                                                children:
+                                                  - key: SQL_COLUMN_REF_PATH
+                                                    type: ARRAY
+                                                    text: "y"
+                                                    children:
+                                                      - type: NAME
+                                                        text: "y"
+                                      - key: SQL_SELECT_FROM
+                                        type: ARRAY
+                                        text: "from u"
+                                        children:
+                                          - type: OBJECT_SQL_TABLEREF
+                                            text: "u"
+                                            children:
+                                              - key: SQL_TABLEREF_NAME
+                                                type: ARRAY
+                                                text: "u"
+                                                children:
+                                                  - type: NAME
+                                                    text: "u"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: row_insert_values
+    input: |-
+      insert into t values (1, row(2, 'b')), (2, (3, 'c'))
+    expected:
+      statements:
+        - type: INSERT
+          ast-begin: 0
+          ast-size: 19
+          description:
+            text: "insert int.. (3, 'c'))"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_INSERT
+            text: "insert int.. (3, 'c'))"
+            children:
+              - key: SQL_INSERT_SOURCE
+                type: OBJECT_SQL_SELECT
+                text: "values (1,.. (3, 'c'))"
+                children:
+                  - key: SQL_SELECT_VALUES
+                    type: ARRAY
+                    text: "values (1,.. (3, 'c'))"
+                    children:
+                      - type: ARRAY
+                        text: "1, row(2, 'b')"
+                        children:
+                          - type: LITERAL_INTEGER
+                            text: "1"
+                          - type: OBJECT_SQL_ROW_EXPRESSION
+                            text: "row(2, 'b')"
+                            children:
+                              - key: SQL_ROW_EXPRESSION_EXPLICIT
+                                type: BOOL
+                                value: 1
+                              - key: SQL_ROW_EXPRESSION_VALUES
+                                type: ARRAY
+                                text: "2, 'b'"
+                                children:
+                                  - type: LITERAL_INTEGER
+                                    text: "2"
+                                  - type: LITERAL_STRING
+                                    text: "'b'"
+                      - type: ARRAY
+                        text: "2, (3, 'c')"
+                        children:
+                          - type: LITERAL_INTEGER
+                            text: "2"
+                          - type: OBJECT_SQL_ROW_EXPRESSION
+                            text: "(3, 'c')"
+                            children:
+                              - key: SQL_ROW_EXPRESSION_VALUES
+                                type: ARRAY
+                                text: "3, 'c'"
+                                children:
+                                  - type: LITERAL_INTEGER
+                                    text: "3"
+                                  - type: LITERAL_STRING
+                                    text: "'c'"
+              - key: SQL_INSERT_TARGET
+                type: OBJECT_SQL_TABLEREF
+                text: "t"
+                children:
+                  - key: SQL_TABLEREF_NAME
+                    type: ARRAY
+                    text: "t"
+                    children:
+                      - type: NAME
+                        text: "t"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: row_field_access
+    input: |-
+      select (p).x, (t.p).y, ((p).a).b, t.p.x, (row(1, 2)::row(a int, b int)).a from t
+    expected:
+      statements:
+        - type: SELECT
+          ast-begin: 0
+          ast-size: 58
+          description:
+            text: "select (p)..).a from t"
+            description-begin: 0
+            description-count: 0
+          ast:
+            type: OBJECT_SQL_SELECT
+            text: "select (p)..).a from t"
+            children:
+              - key: SQL_SELECT_TARGETS
+                type: ARRAY
+                text: "(p).x, (t... b int)).a"
+                children:
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "(p).x"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_INDIRECTION
+                        text: "(p).x"
+                        children:
+                          - key: SQL_INDIRECTION_VALUE
+                            type: OBJECT_SQL_COLUMN_REF
+                            text: "p"
+                            children:
+                              - key: SQL_COLUMN_REF_PATH
+                                type: ARRAY
+                                text: "p"
+                                children:
+                                  - type: NAME
+                                    text: "p"
+                          - key: SQL_INDIRECTION_PATH
+                            type: ARRAY
+                            text: ".x"
+                            children:
+                              - type: NAME
+                                text: "x"
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "(t.p).y"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_INDIRECTION
+                        text: "(t.p).y"
+                        children:
+                          - key: SQL_INDIRECTION_VALUE
+                            type: OBJECT_SQL_COLUMN_REF
+                            text: "t.p"
+                            children:
+                              - key: SQL_COLUMN_REF_PATH
+                                type: ARRAY
+                                text: "t.p"
+                                children:
+                                  - type: NAME
+                                    text: "t"
+                                  - type: NAME
+                                    text: "p"
+                          - key: SQL_INDIRECTION_PATH
+                            type: ARRAY
+                            text: ".y"
+                            children:
+                              - type: NAME
+                                text: "y"
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "((p).a).b"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_INDIRECTION
+                        text: "((p).a).b"
+                        children:
+                          - key: SQL_INDIRECTION_VALUE
+                            type: OBJECT_SQL_INDIRECTION
+                            text: "(p).a"
+                            children:
+                              - key: SQL_INDIRECTION_VALUE
+                                type: OBJECT_SQL_COLUMN_REF
+                                text: "p"
+                                children:
+                                  - key: SQL_COLUMN_REF_PATH
+                                    type: ARRAY
+                                    text: "p"
+                                    children:
+                                      - type: NAME
+                                        text: "p"
+                              - key: SQL_INDIRECTION_PATH
+                                type: ARRAY
+                                text: ".a"
+                                children:
+                                  - type: NAME
+                                    text: "a"
+                          - key: SQL_INDIRECTION_PATH
+                            type: ARRAY
+                            text: ".b"
+                            children:
+                              - type: NAME
+                                text: "b"
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "t.p.x"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_COLUMN_REF
+                        text: "t.p.x"
+                        children:
+                          - key: SQL_COLUMN_REF_PATH
+                            type: ARRAY
+                            text: "t.p.x"
+                            children:
+                              - type: NAME
+                                text: "t"
+                              - type: NAME
+                                text: "p"
+                              - type: NAME
+                                text: "x"
+                  - type: OBJECT_SQL_RESULT_TARGET
+                    text: "(row(1, 2).. b int)).a"
+                    children:
+                      - key: SQL_RESULT_TARGET_VALUE
+                        type: OBJECT_SQL_INDIRECTION
+                        text: "(row(1, 2).. b int)).a"
+                        children:
+                          - key: SQL_INDIRECTION_VALUE
+                            type: OBJECT_SQL_TYPECAST_EXPRESSION
+                            text: "row(1, 2):..nt, b int)"
+                            children:
+                              - key: SQL_TYPECAST_VALUE
+                                type: OBJECT_SQL_ROW_EXPRESSION
+                                text: "row(1, 2)"
+                                children:
+                                  - key: SQL_ROW_EXPRESSION_EXPLICIT
+                                    type: BOOL
+                                    value: 1
+                                  - key: SQL_ROW_EXPRESSION_VALUES
+                                    type: ARRAY
+                                    text: "1, 2"
+                                    children:
+                                      - type: LITERAL_INTEGER
+                                        text: "1"
+                                      - type: LITERAL_INTEGER
+                                        text: "2"
+                              - key: SQL_TYPECAST_TYPE
+                                type: OBJECT_SQL_TYPENAME
+                                text: "row(a int, b int)"
+                                children:
+                                  - key: SQL_TYPENAME_TYPE
+                                    type: OBJECT_SQL_ROW_TYPE
+                                    text: "row(a int, b int)"
+                                    children:
+                                      - key: SQL_ROW_TYPE_FIELDS
+                                        type: ARRAY
+                                        text: "a int, b int"
+                                        children:
+                                          - type: OBJECT_SQL_COLUMN_DEF
+                                            text: "a int"
+                                            children:
+                                              - key: SQL_COLUMN_DEF_NAME
+                                                type: NAME
+                                                text: "a"
+                                              - key: SQL_COLUMN_DEF_TYPE
+                                                type: OBJECT_SQL_TYPENAME
+                                                text: "int"
+                                                children:
+                                                  - key: SQL_TYPENAME_TYPE
+                                                    type: ENUM_SQL_NUMERIC_TYPE
+                                                    value: INT4
+                                          - type: OBJECT_SQL_COLUMN_DEF
+                                            text: "b int"
+                                            children:
+                                              - key: SQL_COLUMN_DEF_NAME
+                                                type: NAME
+                                                text: "b"
+                                              - key: SQL_COLUMN_DEF_TYPE
+                                                type: OBJECT_SQL_TYPENAME
+                                                text: "int"
+                                                children:
+                                                  - key: SQL_TYPENAME_TYPE
+                                                    type: ENUM_SQL_NUMERIC_TYPE
+                                                    value: INT4
+                          - key: SQL_INDIRECTION_PATH
+                            type: ARRAY
+                            text: ".a"
+                            children:
+                              - type: NAME
+                                text: "a"
+              - key: SQL_SELECT_FROM
+                type: ARRAY
+                text: "from t"
+                children:
+                  - type: OBJECT_SQL_TABLEREF
+                    text: "t"
+                    children:
+                      - key: SQL_TABLEREF_NAME
+                        type: ARRAY
+                        text: "t"
+                        children:
+                          - type: NAME
+                            text: "t"
+      scanner-errors: []
+      parser-errors: []
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: row_implicit_trailing_comma
+    input: |-
+      select (1, )
+    expected:
+      statements: []
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected RRB'
+          text: ")"
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []
+
+  - name: row_explicit_unclosed
+    input: |-
+      select row(1, 2
+    expected:
+      statements: []
+      scanner-errors: []
+      parser-errors:
+        - message: 'syntax error, unexpected EOF'
+          text: ""
+      line-breaks: []
+      comments: []
+      comment-blocks: []
+      comment-warnings: []

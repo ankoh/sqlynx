@@ -78,5 +78,6 @@ INSTANTIATE_TEST_SUITE_P(Delete, FormatterSnapshotTestSuite, ::testing::ValuesIn
 INSTANTIATE_TEST_SUITE_P(Tpch, FormatterSnapshotTestSuite, ::testing::ValuesIn(FormatterSnapshotTest::GetTests("tpch.yaml")), FormatterSnapshotTest::TestPrinter());
 INSTANTIATE_TEST_SUITE_P(Tpcds, FormatterSnapshotTestSuite, ::testing::ValuesIn(FormatterSnapshotTest::GetTests("tpcds.yaml")), FormatterSnapshotTest::TestPrinter());
 INSTANTIATE_TEST_SUITE_P(PGQ, FormatterSnapshotTestSuite, ::testing::ValuesIn(FormatterSnapshotTest::GetTests("pgq.yaml")), FormatterSnapshotTest::TestPrinter());
+INSTANTIATE_TEST_SUITE_P(Rows, FormatterSnapshotTestSuite, ::testing::ValuesIn(FormatterSnapshotTest::GetTests("rows.yaml")), FormatterSnapshotTest::TestPrinter());
 
 } // namespace

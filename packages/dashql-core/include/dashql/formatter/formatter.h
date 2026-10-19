@@ -107,6 +107,9 @@ struct Formatter {
     FmtReg FormatParameterRef(const buffers::parser::Node& node);
     FmtReg FormatRelationExpression(const buffers::parser::Node& node);
     FmtReg FormatDescriptor(const buffers::parser::Node& node);
+    FmtReg FormatIndirection(const buffers::parser::Node& node);
+    FmtReg FormatRowType(const buffers::parser::Node& node);
+    FmtReg FormatRowExpression(const buffers::parser::Node& node);
     FmtReg FormatSelectExpression(const buffers::parser::Node& node);
     FmtReg FormatColumnDef(const buffers::parser::Node& node);
     FmtReg FormatTableConstraintType(const buffers::parser::Node& node);

@@ -87,6 +87,8 @@ struct NameResolutionPass : public PassManager::LTRPass {
     void ResolveColumnRefsFromChildOutputs(AnalyzedScript::NameScope& scope);
     /// Resolve remaining unresolved column refs by walking up parent scopes (correlation)
     void ResolveColumnRefsFromParents(AnalyzedScript::NameScope& scope);
+    /// Resolve qualified column refs whose qualifier is not a table in scope as field accesses of row-typed columns
+    void ResolveRowFieldAccesses(AnalyzedScript::NameScope& scope);
     /// Associate still-unresolved column refs with unresolved tables in scope (schema inference).
     /// Emits InferenceConstraints into the AnalyzedScript for the solver to resolve in Finish().
     void AssociateUnresolvedColumns(AnalyzedScript::NameScope& scope);

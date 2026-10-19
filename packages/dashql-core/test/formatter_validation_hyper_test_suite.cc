@@ -31,6 +31,7 @@ hyperapi::HyperProcess& GetHyperProcess() {
             "dashql-formatter-validation",
             {
                 {"default_database_version", "4"},
+                {"enable_row_types", "true"},
                 {"log_config", ""},
             },
         };
@@ -176,5 +177,6 @@ INSTANTIATE_TEST_SUITE_P(Statements, FormatterValidationHyperTestSuite, ::testin
 INSTANTIATE_TEST_SUITE_P(PGQ, FormatterValidationHyperTestSuite, ::testing::ValuesIn(FormatterSnapshotTest::GetTestsWithValidation("pgq.yaml", "hyper")), FormatterSnapshotTest::TestPrinter());
 INSTANTIATE_TEST_SUITE_P(Insert, FormatterValidationHyperTestSuite, ::testing::ValuesIn(FormatterSnapshotTest::GetTestsWithValidation("insert.yaml", "hyper")), FormatterSnapshotTest::TestPrinter());
 INSTANTIATE_TEST_SUITE_P(Delete, FormatterValidationHyperTestSuite, ::testing::ValuesIn(FormatterSnapshotTest::GetTestsWithValidation("delete.yaml", "hyper")), FormatterSnapshotTest::TestPrinter());
+INSTANTIATE_TEST_SUITE_P(Rows, FormatterValidationHyperTestSuite, ::testing::ValuesIn(FormatterSnapshotTest::GetTestsWithValidation("rows.yaml", "hyper")), FormatterSnapshotTest::TestPrinter());
 
 }  // namespace

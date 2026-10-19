@@ -1,0 +1,48 @@
+analyzer-snapshots:
+  # Row fields are not columns of the table
+  - name: row_type_columns
+    script:
+      input: create table orders (id int, product row(name text, quantity int), tags array(row(tag text)))
+  # Field access through parentheses, a table alias and the bare column
+  - name: row_field_access
+    catalog:
+      script:
+        input: create table orders (id int, product row(name text, quantity int));
+    script:
+      input: select (product).name, (o.product).quantity, o.product.name, product.quantity from orders o
+  # A table in scope wins over a row-typed column of the same name
+  - name: row_field_access_table_wins
+    catalog:
+      script:
+        input: |-
+          create table product (name text);
+          create table orders (id int, product row(name text, quantity int));
+    script:
+      input: select product.name from product, orders
+  # Row fields of a column from the outer query
+  - name: row_field_access_correlated
+    catalog:
+      script:
+        input: |-
+          create table orders (id int, product row(name text, quantity int));
+          create table stock (name text, quantity int);
+    script:
+      input: select id from orders where exists (select 1 from stock where stock.name = product.name)
+  # Row constructors and comparisons reference their columns
+  - name: row_constructor_columns
+    catalog:
+      script:
+        input: create table orders (id int, product row(name text, quantity int));
+    script:
+      input: select row(id, product.name) from orders where (id, (product).quantity) = (1, 2)
+  # Field access on an unknown table infers the row-typed column
+  - name: row_field_access_inferred
+    script:
+      input: select o.product.name from orders o
+  # Qualifiers that are neither tables nor columns stay unresolved
+  - name: row_field_access_unresolved
+    catalog:
+      script:
+        input: create table orders (id int, product row(name text, quantity int));
+    script:
+      input: select s.id, missing.name from (select id from orders) s, orders

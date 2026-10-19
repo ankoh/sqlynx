@@ -78,17 +78,18 @@ std::optional<AnalyzedScript::QualifiedColumnName> AnalysisState::ReadQualifiedC
     }
     auto name_path = ReadNamePath(*node);
     uint32_t ast_node_id = node - ast.data();
-    // Build the qualified column name
+    // Build the qualified column name.
+    // Paths with more than two names access fields of a row-typed column, e.g. table.column.field.
     switch (name_path.size()) {
-        case 2:
-            name_path[0].get().coarse_analyzer_tags |= sx::analyzer::NameTag::TABLE_ALIAS;
-            name_path[1].get().coarse_analyzer_tags |= sx::analyzer::NameTag::COLUMN_NAME;
-            return AnalyzedScript::QualifiedColumnName{ast_node_id, name_path[0], name_path[1]};
+        case 0:
+            return std::nullopt;
         case 1:
             name_path[0].get().coarse_analyzer_tags |= sx::analyzer::NameTag::COLUMN_NAME;
             return AnalyzedScript::QualifiedColumnName{ast_node_id, std::nullopt, name_path[0]};
         default:
-            return std::nullopt;
+            name_path[0].get().coarse_analyzer_tags |= sx::analyzer::NameTag::TABLE_ALIAS;
+            name_path[1].get().coarse_analyzer_tags |= sx::analyzer::NameTag::COLUMN_NAME;
+            return AnalyzedScript::QualifiedColumnName{ast_node_id, name_path[0], name_path[1]};
     }
 }
 
