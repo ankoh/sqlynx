@@ -227,7 +227,7 @@ export function StorageWriterView(props: { notebookId: string | null; onClose: (
                             listRef={setListApi}
                             style={{ width: containerWidth, height: containerHeight }}
                             rowCount={entries.length}
-                            rowHeight={() => ROW_HEIGHT}
+                            rowHeight={ROW_HEIGHT}
                             rowComponent={StorageWriterRow}
                             rowProps={rowProps}
                         />

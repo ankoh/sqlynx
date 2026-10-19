@@ -17,10 +17,6 @@ import { VerticalScrollShadows } from '../foundations/vertical_scroll_shadows.js
 
 export const ROW_HEIGHT = 32;
 
-export function computeLogRowHeight(): number {
-    return ROW_HEIGHT;
-}
-
 export interface LogRowProps {
     logger: ReturnType<typeof useLogger>;
     showJsonRecord: (rowIndex: number) => void;
@@ -288,7 +284,7 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
                         listRef={setListApi}
                         style={{ width: containerWidth, height: containerHeight }}
                         rowCount={rowCount}
-                        rowHeight={computeLogRowHeight}
+                        rowHeight={ROW_HEIGHT}
                         rowComponent={LogRow}
                         rowProps={rowProps}
                     />
