@@ -312,9 +312,9 @@ function CellDetailOverlayInner(props: CellDetailOverlayProps) {
         },
     ], [props.dataRow, props.maxRow, props.onNavigate]));
 
-    const rawText = props.structuredValue == null
+    const rawText = React.useMemo(() => props.structuredValue == null
         ? (props.formattedValue ?? 'NULL')
-        : structuredValueToText(props.structuredValue);
+        : structuredValueToText(props.structuredValue), [props.structuredValue, props.formattedValue]);
 
     return (
         <Overlay

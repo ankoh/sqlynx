@@ -119,6 +119,18 @@ function arrowTableToRows(table: arrow.Table): Record<string, unknown>[] {
     return rows;
 }
 
+/// Structural signatures of specs, computed once per spec object
+const specSignatures = new WeakMap<object, string>();
+
+function getSpecSignature(spec: object): string {
+    let signature = specSignatures.get(spec);
+    if (signature === undefined) {
+        signature = JSON.stringify(spec);
+        specSignatures.set(spec, signature);
+    }
+    return signature;
+}
+
 export function VegaLiteView(props: Props): React.ReactElement {
     const containerRef = React.useRef<HTMLDivElement | null>(null);
     const crossFilterUpdaterRef = React.useRef<VegaCrossFilterUpdater | null>(null);
@@ -130,7 +142,7 @@ export function VegaLiteView(props: Props): React.ReactElement {
     // Analysis emits a fresh spec object for editor transactions, including cursor-only updates.
     // Keep the previous identity when the authored spec is structurally unchanged so Vega's
     // effect does not finalize and rebuild the canvas while the user types or moves the cursor.
-    const specSignature = props.vegaLiteSpec == null ? null : JSON.stringify(props.vegaLiteSpec);
+    const specSignature = props.vegaLiteSpec == null ? null : getSpecSignature(props.vegaLiteSpec);
     const spec = React.useMemo(() => props.vegaLiteSpec, [specSignature]);
     const queryId = props.query?.queryId ?? null;
 
