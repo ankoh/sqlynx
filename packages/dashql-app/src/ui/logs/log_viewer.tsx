@@ -172,14 +172,27 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
     const containerWidth = containerSize?.width ?? 200;
     const containerHeight = containerSize?.height ?? 100;
 
-    // Redraw whenever the log version changes or filtered logs change
-    const seenLogRows = React.useRef<number>(0);
+    // Track whether the list is scrolled to the bottom
     const [listApi, setListApi] = useListCallbackRef(null);
     const getScrollElement = React.useCallback(() => listApi?.element ?? null, [listApi]);
+    const followTail = React.useRef<boolean>(true);
     React.useEffect(() => {
-        if (listApi) {
+        const element = listApi?.element;
+        if (!element) {
+            return;
+        }
+        const onScroll = () => {
+            followTail.current = element.scrollTop + element.clientHeight >= element.scrollHeight - ROW_HEIGHT / 2;
+        };
+        element.addEventListener('scroll', onScroll, { passive: true });
+        return () => element.removeEventListener('scroll', onScroll);
+    }, [listApi]);
+
+    // Follow new log rows if the list was at the bottom and no record is inspected
+    const isInspectingRecord = jsonModalRecord !== null;
+    React.useEffect(() => {
+        if (listApi && followTail.current && !isInspectingRecord) {
             const rowCount = props.traceId !== undefined ? filteredLogs.length : logger.buffer.length;
-            seenLogRows.current = rowCount;
 
             // Scroll to last row
             listApi.scrollToRow({
@@ -187,7 +200,7 @@ export const LogViewer: React.FC<LogViewerProps> = (props: LogViewerProps) => {
                 align: 'end',
             });
         }
-    }, [logVersion, containerHeight, filteredLogs, filteredLogsVersion, props.traceId, logger, listApi]);
+    }, [logVersion, containerHeight, filteredLogs, filteredLogsVersion, props.traceId, logger, listApi, isInspectingRecord]);
 
     // Helper to show JSON modal for a log record
     const showJsonRecord = React.useCallback((rowIndex: number) => {
