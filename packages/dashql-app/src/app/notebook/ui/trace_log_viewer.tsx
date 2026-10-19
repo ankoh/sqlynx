@@ -34,8 +34,11 @@ export const TraceLogViewer: React.FC<TraceLogViewerProps> = (props: TraceLogVie
     // The trace subscription drives the re-renders, poll the log version only when showing all logs
     const logVersion = pollLogVersion(100, props.traceId === undefined);
 
-    // Maintain filtered log records for trace-specific viewing
-    const [filteredLogs, setFilteredLogs] = React.useState<LogRecord[]>([]);
+    // Maintain filtered log records for trace-specific viewing.
+    // We append to a mutable array and bump a version, copying the array per record is quadratic.
+    const filteredLogsRef = React.useRef<LogRecord[]>([]);
+    const [filteredLogsVersion, setFilteredLogsVersion] = React.useState<number>(0);
+    const filteredLogs = filteredLogsRef.current;
 
     // Track which log record to show in JSON modal (record and index as tuple)
     const [jsonModalState, setJsonModalState] = React.useState<[LogRecord | null, number]>([null, -1]);
@@ -54,11 +57,13 @@ export const TraceLogViewer: React.FC<TraceLogViewerProps> = (props: TraceLogVie
 
         // Get initial logs for this trace
         const initialLogs = logger.buffer.collectTraceLogs(props.traceId);
-        setFilteredLogs(initialLogs);
+        filteredLogsRef.current = initialLogs;
+        setFilteredLogsVersion(v => v + 1);
 
         // Subscribe to new logs for this trace
         const observer = (record: LogRecord) => {
-            setFilteredLogs(prev => [...prev, record]);
+            initialLogs.push(record);
+            setFilteredLogsVersion(v => v + 1);
         };
         logger.buffer.subscribeTrace(props.traceId, observer);
 
@@ -103,7 +108,7 @@ export const TraceLogViewer: React.FC<TraceLogViewerProps> = (props: TraceLogVie
         scrollToLast();
         const raf = requestAnimationFrame(scrollToLast);
         return () => cancelAnimationFrame(raf);
-    }, [logVersion, containerHeight, filteredLogs, props.traceId, logger]);
+    }, [logVersion, containerHeight, filteredLogs, filteredLogsVersion, props.traceId, logger]);
 
     // Helper to show JSON modal for a log record
     const showJsonRecord = React.useCallback((rowIndex: number) => {
@@ -116,7 +121,7 @@ export const TraceLogViewer: React.FC<TraceLogViewerProps> = (props: TraceLogVie
         if (record) {
             setJsonModalState([record, rowIndex]);
         }
-    }, [props.traceId, filteredLogs, logger]);
+    }, [props.traceId, filteredLogs, filteredLogsVersion, logger]);
 
     // Navigate to previous log record
     const showPreviousRecord = React.useCallback(() => {
@@ -129,7 +134,7 @@ export const TraceLogViewer: React.FC<TraceLogViewerProps> = (props: TraceLogVie
         const maxIndex = props.traceId !== undefined ? filteredLogs.length - 1 : logger.buffer.length - 1;
         if (jsonModalRecordIndex >= maxIndex) return;
         showJsonRecord(jsonModalRecordIndex + 1);
-    }, [jsonModalRecordIndex, showJsonRecord, props.traceId, filteredLogs, logger]);
+    }, [jsonModalRecordIndex, showJsonRecord, props.traceId, filteredLogs, filteredLogsVersion, logger]);
 
     // Keyboard navigation when modal is open
     useKeyEvents(
@@ -171,7 +176,7 @@ export const TraceLogViewer: React.FC<TraceLogViewerProps> = (props: TraceLogVie
         showJsonRecord,
         selectedRecordIndex: jsonModalRecordIndex,
         filteredLogs: props.traceId !== undefined ? filteredLogs : undefined,
-    }), [logger, showJsonRecord, jsonModalRecordIndex, props.traceId, filteredLogs]);
+    }), [logger, showJsonRecord, jsonModalRecordIndex, props.traceId, filteredLogs, filteredLogsVersion]);
 
     return (
         <>
