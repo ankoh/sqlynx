@@ -6,7 +6,7 @@ import { ChangeSpec, EditorSelection, StateEffect, EditorState } from '@codemirr
 
 import { CodeMirror, createCodeMirrorExtensions } from '../scripts/editor/codemirror.js';
 import { DashQLProcessorPlugin, DashQLProcessorUpdateOut, DashQLUpdateEffect } from '../scripts/editor/dashql_processor.js';
-import { ScriptData, ANALYZE_OUTDATED_SCRIPT, UPDATE_FROM_PROCESSOR, NotebookScripts } from '../scripts/notebook_scripts.js';
+import { ScriptData, ANALYZE_OUTDATED_SCRIPT, UPDATE_FROM_PROCESSOR, NotebookScripts, getSelectedScriptRef } from '../scripts/notebook_scripts.js';
 import { AppConfig, useAppConfig } from '../../config/app_config.js';
 import { useLogger } from '../../../platform/logger/logger_provider.js';
 import { ModifyNotebookScripts, useNotebookScripts } from '../scripts/notebook_scripts_registry.js';
@@ -14,6 +14,9 @@ import { Logger } from '../../../platform/logger/logger.js';
 import { getKeywordCase } from './script_format.js';
 
 const LOG_CTX = "notebook_editor";
+/// Typing in one script marks all other scripts outdated.
+/// Re-analyze the scripts in the background once the user pauses instead of on every keystroke.
+const BACKGROUND_ANALYSIS_DELAY_MS = 150;
 const WRITABLE_SESSION_VIEWS = new WeakMap<object, EditorView>();
 
 function leaseWritableSession(scriptSession: object, view: EditorView): () => void {
@@ -64,11 +67,23 @@ export const ScriptEditor: React.FC<ScriptEditorProps> = (props) => {
 
     const scriptData = scripts?.scripts[props.scriptKey] ?? null;
 
-    // Update outdated scripts that are displayed in the editor
+    // Update outdated scripts that are displayed in the editor.
+    // The selected script is analyzed right away, all others are deferred.
+    // Deferring is safe since the script stays marked as outdated until the analysis ran,
+    // and anything that needs the analysis analyzes it on demand (see ensureNotebookScriptAnalyzed).
     React.useEffect(() => {
-        if (scriptData?.analysisOutdated) {
-            modifyScripts({ type: ANALYZE_OUTDATED_SCRIPT, value: scriptData.scriptKey });
+        if (scripts == null || !scriptData?.analysisOutdated) {
+            return;
         }
+        const scriptKey = scriptData.scriptKey;
+        if (getSelectedScriptRef(scripts)?.scriptId === scriptKey) {
+            modifyScripts({ type: ANALYZE_OUTDATED_SCRIPT, value: scriptKey });
+            return;
+        }
+        const timeout = setTimeout(() => {
+            modifyScripts({ type: ANALYZE_OUTDATED_SCRIPT, value: scriptKey });
+        }, BACKGROUND_ANALYSIS_DELAY_MS);
+        return () => clearTimeout(timeout);
     }, [scriptData]);
 
     // Track the current CodeMirror view
