@@ -79,6 +79,9 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
     const hyperDBSupportError = platformType === PlatformType.WEB ? getHyperDBWebSupportError() : null;
     const keywordCaseRef = React.useRef(keywordCase);
     keywordCaseRef.current = keywordCase;
+    // The login reads the config when it runs, a config that arrives later must not tear down the shell
+    const appConfigRef = React.useRef(appConfig);
+    appConfigRef.current = appConfig;
     const loginHistoryRef = React.useRef(new SalesforceLoginHistoryStore());
     const { controller: loginDialog, dialog } = useSalesforceLoginDialog({
         nativeOAuth: platformType !== PlatformType.WEB,
@@ -163,7 +166,7 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
                 requestForm: loginDialog.request,
                 authenticate: async (form, signal, onProgress) => {
                     if (!httpClient) throw new Error('HTTP client is not ready');
-                    const oauthRedirect = appConfig?.connectors?.salesforce?.auth?.oauthRedirect;
+                    const oauthRedirect = appConfigRef.current?.connectors?.salesforce?.auth?.oauthRedirect;
                     if (!oauthRedirect) throw new Error('Salesforce OAuth redirect is not configured');
                     const abortSignal = signal ?? new AbortController().signal;
                     const params: connectionTypes.SalesforceConnectionParams = {
@@ -180,7 +183,7 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
                         platformType,
                         apiClient: new SalesforceApiClient(logger, httpClient),
                         appEvents,
-                        forceReLogin: appConfig?.settings?.forceReLogin ?? false,
+                        forceReLogin: appConfigRef.current?.settings?.forceReLogin ?? false,
                         abortSignal,
                         oauthPopup: form.oauthPopup,
                         onProgress: progress => {
@@ -333,7 +336,7 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
             setConnected(false);
             void fileRegistry?.dispose().finally(() => connection?.close());
         };
-    }, [appConfig?.connectors, appConfig?.settings?.forceReLogin, appEvents, dispatchComputation, formatDialog, httpClient, hyperDBSupportError, logger, loginDialog, planDialog, platformType, props.onEngineVersion, queryExecutions, setConnected, setupEmbeddedDatabase, showResultQuery]);
+    }, [appEvents, dispatchComputation, formatDialog, httpClient, hyperDBSupportError, logger, loginDialog, planDialog, platformType, props.onEngineVersion, queryExecutions, setConnected, setupEmbeddedDatabase, showResultQuery]);
 
     if (hyperDBSupportError != null) {
         return (
