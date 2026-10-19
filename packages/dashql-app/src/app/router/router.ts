@@ -61,19 +61,23 @@ export type RouteTarget =
 export function useRouteContext() {
     const location = useLocation();
     const route = location.state as RouteContext;
-    if (!route) {
-        return {
-            appLoadingStatus: AppLoadingStatus.NOT_STARTED,
-            confirmedFinishedSetup: false,
-            notebookId: notebookIdFromPathname(location.pathname),
-            notebookSetupStatus: NotebookSetupStatus.NONE,
-        };
-    } else {
-        return {
-            ...route,
-            notebookSetupStatus: route.notebookSetupStatus ?? NotebookSetupStatus.NONE,
-        };
-    }
+    const pathname = location.pathname;
+    // Memoized on the location, callers depend on the context in callbacks and effects
+    return React.useMemo(() => {
+        if (!route) {
+            return {
+                appLoadingStatus: AppLoadingStatus.NOT_STARTED,
+                confirmedFinishedSetup: false,
+                notebookId: notebookIdFromPathname(pathname),
+                notebookSetupStatus: NotebookSetupStatus.NONE,
+            };
+        } else {
+            return {
+                ...route,
+                notebookSetupStatus: route.notebookSetupStatus ?? NotebookSetupStatus.NONE,
+            };
+        }
+    }, [route, pathname]);
 }
 
 export function useRouterNavigate() {
