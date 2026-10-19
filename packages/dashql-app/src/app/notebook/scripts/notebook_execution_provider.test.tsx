@@ -125,10 +125,11 @@ describe('NotebookExecutionProvider', () => {
     let fixtures: Fixture[];
     let current: Execution;
     let observer: Execution;
+    let observerCommits = 0;
     let backend: NotebookTestBackend;
     let setupDatabase: () => Promise<EmbeddedComputeDatabase>;
     const capture = (execution: Execution) => { current = execution; };
-    const captureObserver = (execution: Execution) => { observer = execution; };
+    const captureObserver = (execution: Execution) => { observer = execution; observerCommits += 1; };
 
     beforeEach(() => {
         fixtures = [fixture('first'), fixture('second')];
@@ -151,7 +152,8 @@ describe('NotebookExecutionProvider', () => {
     });
 
     async function render(notebookId = 'first', showConsumer = true, showProvider = true) {
-        const previousObserver = observer;
+        // The execution value is memoized, count the observer commits instead of comparing identities.
+        const previousObserverCommits = observerCommits;
         await act(async () => {
             root.render(<LoggerProvider>
                 <StorageProvider backend={backend}>
@@ -178,7 +180,7 @@ describe('NotebookExecutionProvider', () => {
             await new Promise(resolve => setTimeout(resolve, 0));
         });
         // A timer turn does not guarantee that async database setup and React commits have finished.
-        if (showProvider) await vi.waitFor(() => expect(observer).not.toBe(previousObserver));
+        if (showProvider) await vi.waitFor(() => expect(observerCommits).toBeGreaterThan(previousObserverCommits));
     }
 
     async function start(f = fixtures[0]) {
