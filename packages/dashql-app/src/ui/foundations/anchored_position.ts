@@ -479,6 +479,8 @@ function shouldRecalculateAlignment(
 export interface AnchoredPositionHookArgs extends Partial<PositionSettings> {
     floatingElementRef?: React.RefObject<HTMLElement | null>
     anchorElementRef?: React.RefObject<Element | null>
+    /// Observe window resizes? Callers can disable this while the floating element is hidden. @default true
+    observeWindow?: boolean
 }
 
 export function useAnchoredPosition(args?: AnchoredPositionHookArgs, dependencies: React.DependencyList = []): {
@@ -494,7 +496,7 @@ export function useAnchoredPosition(args?: AnchoredPositionHookArgs, dependencie
     const [position, setPosition] = React.useState<AnchorPosition | undefined>(undefined)
 
     const windowElem = React.useRef(document.documentElement);
-    const windowSize = observeSize(windowElem);
+    const windowSize = observeSize(windowElem, args?.observeWindow ?? true);
 
     // Update the anchored position whenever the window resizes
     React.useLayoutEffect(() => {

@@ -98,6 +98,7 @@ export function AnchoredOverlay(args: AnchoredOverlayProps) {
         align: args.align,
         alignmentOffset: args.alignmentOffset,
         anchorOffset: args.anchorOffset,
+        observeWindow: args.open,
     }, [overlayRef.current, args.positionRevision])
 
     React.useEffect(() => {
