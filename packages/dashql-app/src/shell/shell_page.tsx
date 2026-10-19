@@ -28,6 +28,7 @@ import { useMountDialog } from './filesystem_mount_dialog.js';
 import { useFilesystemDialog } from './filesystem_dialog.js';
 import { createFormatCommand } from './commands/format.js';
 import { createPlanCommand } from './commands/plan.js';
+import { createShareCommand } from './commands/share.js';
 import { useSalesforceLoginDialog } from './salesforce_login_dialog.js';
 import { SalesforceApiClient } from '../app/notebook/connections/salesforce/salesforce_api_client.js';
 import { authenticateSalesforce } from '../app/notebook/connections/salesforce/salesforce_authentication.js';
@@ -39,6 +40,8 @@ import { getKeywordCase } from '../app/notebook/ui/script_format.js';
 import { useShellQueryResult } from './use_shell_query_result.js';
 import { useFormatDialog } from './format_dialog.js';
 import { usePlanDialog } from './plan_dialog.js';
+import { useShareDialog } from './share_dialog.js';
+import { decodeShareScript, readShareScriptFromLocation, splitShareScript } from './shell_share.js';
 import { getHyperDBWebSupportError } from '../platform/hyperdb/hyperdb_web_support.js';
 import * as styles from './shell_page.module.css';
 
@@ -90,6 +93,7 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
     });
     const { controller: formatDialog, dialog: formatterDialog } = useFormatDialog();
     const { controller: planDialog, dialog: queryPlanDialog } = usePlanDialog(appEvents);
+    const { controller: shareDialog, dialog: shareScriptDialog } = useShareDialog();
     const fileRegistryRef = React.useRef<ShellFileRegistry | null>(null);
     const { controller: mountDialog, dialog: mountDialogOverlay } = useMountDialog({
         selectFiles: async signal => {
@@ -265,6 +269,12 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
                         return planDialog.request(shell.core, signal);
                     },
                 }),
+                createShareCommand({
+                    requestDialog: signal => {
+                        if (shell == null) throw new Error('Shell is not ready');
+                        return shareDialog.request(shell.core, shell.catalog, signal);
+                    },
+                }),
                 loginCommand,
                 createShellOutputCommand(getOutputMode, mode => { outputModeRef.current = mode; }),
                 createShellFilesCommand(fileRegistry, mountDialog.request, filesystemDialog.request),
@@ -318,6 +328,22 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
             }
             controller = nextController;
             setStatus('');
+
+            // Offer the statements of a shared script one after another
+            const sharedScript = readShareScriptFromLocation();
+            if (sharedScript == null) return;
+            try {
+                const text = await decodeShareScript(sharedScript);
+                if (cancelled) return;
+                const prompts = splitShareScript(nextShell.core, nextShell.catalog, text);
+                if (prompts.length === 0) return;
+                nextController.writeStatus(`Shared script with ${prompts.length} ${prompts.length === 1 ? 'statement' : 'statements'}. Press Enter to run each, Ctrl+C to skip the rest.`);
+                nextController.queuePrompts(prompts);
+            } catch (error) {
+                if (cancelled) return;
+                logger.warn('Failed to load shared script', { error: stringifyError(error) }, LOG_CTX);
+                nextController.writeStatus(`Failed to load shared script: ${stringifyError(error)}`);
+            }
         };
 
         void setup().catch(error => {
@@ -336,7 +362,7 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
             setConnected(false);
             void fileRegistry?.dispose().finally(() => connection?.close());
         };
-    }, [appEvents, dispatchComputation, formatDialog, httpClient, hyperDBSupportError, logger, loginDialog, planDialog, platformType, props.onEngineVersion, queryExecutions, setConnected, setupEmbeddedDatabase, showResultQuery]);
+    }, [appEvents, dispatchComputation, formatDialog, httpClient, hyperDBSupportError, logger, loginDialog, planDialog, platformType, props.onEngineVersion, queryExecutions, setConnected, setupEmbeddedDatabase, shareDialog, showResultQuery]);
 
     if (hyperDBSupportError != null) {
         return (
@@ -369,6 +395,7 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
             {dialog}
             {formatterDialog}
             {queryPlanDialog}
+            {shareScriptDialog}
             {mountDialogOverlay}
             {filesystemDialogOverlay}
         </main>
