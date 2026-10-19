@@ -117,6 +117,16 @@ export const NotebookFeedPage: React.FC<Props> = (props) => {
     const dashboardsEnabled = dependencies.useAppConfig()?.settings?.experimental_dashboards === true;
     const dashboardActive = dashboardsEnabled && mode === NotebookViewMode.Dashboard;
     const feedActive = props.active && !dashboardActive && !showDetails;
+    // Stable since it is passed into the callbacks of every feed row
+    const latestNotebookScripts = React.useRef(props.notebookScripts);
+    latestNotebookScripts.current = props.notebookScripts;
+    const openDetails = React.useCallback((fileName?: string, initialTab?: DetailsTabKey) => {
+        const notebookScripts = latestNotebookScripts.current;
+        const targetFileName = fileName ?? notebookScripts.scriptFocus.fileName;
+        setDetailsScriptId(notebookScripts.scriptRefs[targetFileName]?.scriptId);
+        setDetailsInitialTab(initialTab);
+        setShowDetails(true);
+    }, []);
     const workbench = (closeAfterSelection: boolean) => (
         <dependencies.NotebookWorkbenchSidebar
             notebookScripts={props.notebookScripts}
@@ -264,12 +274,7 @@ export const NotebookFeedPage: React.FC<Props> = (props) => {
                             modifyNotebookScripts={props.modifyNotebookScripts}
                             active={feedActive}
                             scrollShadowContainer={feedShadowContainer}
-                            showDetails={(fileName?: string, initialTab?: DetailsTabKey) => {
-                                const targetFileName = fileName ?? props.notebookScripts.scriptFocus.fileName;
-                                setDetailsScriptId(props.notebookScripts.scriptRefs[targetFileName]?.scriptId);
-                                setDetailsInitialTab(initialTab);
-                                setShowDetails(true);
-                            }}
+                            showDetails={openDetails}
                             conn={props.connection}
                         />
                     </div>

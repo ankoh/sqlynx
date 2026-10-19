@@ -50,7 +50,7 @@ vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect()
 
 function baseProps() {
     return {
-        notebookId: 'notebook', connection: null, connectorType: ConnectorType.TRINO,
+        notebookId: 'notebook', databaseId: null, connectionHealth: null, connectionDetails: null, connectorType: ConnectorType.TRINO,
         storageReader: { backend: { hasCachedQueryResult: vi.fn() } },
         entries: [{ scriptId: 1, fileName: '01_alpha.sql' }, { scriptId: 2, fileName: '02_beta.sql' }],
         scripts: { 1: script(1, '01_alpha.sql'), 2: script(2, '02_beta.sql') }, scriptDebugMode: false, formattingDebugMode: false,
@@ -184,7 +184,7 @@ describe('V2 notebook feed rows', () => {
 
     it('keeps Play available for SQL with parser diagnostics', () => {
         const props = baseProps();
-        props.connection = { databaseId: 'database', connectionHealth: ConnectionHealth.ONLINE } as any;
+        Object.assign(props, { databaseId: 'database', connectionHealth: ConnectionHealth.ONLINE });
         props.scripts[1] = { ...props.scripts[1], analysisOutdated: false,
             editorUpdate: { analysisAvailable: true }, scriptSession: { getText: () => 'SELECT * FROM t QUALIFY x = 1' } } as any;
         act(() => root.render(<ScriptFeedRow {...({ ...props, index: 1, style: {} } as any)} />));

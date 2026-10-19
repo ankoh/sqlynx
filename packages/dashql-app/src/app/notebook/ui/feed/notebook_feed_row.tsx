@@ -37,7 +37,11 @@ const DragHandleIcon: Icon = SymbolIcon('drag_handle_16');
 
 export interface ScriptCardProps {
     notebookId: string;
-    connection: AttachedDatabaseState | null;
+    /// The connection fields of the card.
+    /// The connection state itself changes with every query event of the notebook.
+    databaseId: string | null;
+    connectionHealth: ConnectionHealth | null;
+    connectionDetails: AttachedDatabaseState['details'] | null;
     connectorType: ConnectorType;
     storageReader: StorageReader;
     isFocused: boolean;
@@ -105,7 +109,8 @@ const DEFAULT_SCRIPT_CARD_DEPENDENCIES: ScriptCardDependencies = {
     FeedEntryFooter,
 };
 
-export const ScriptCard: React.FC<ScriptCardProps> = (props: ScriptCardProps) => {
+// Memoized since every row of the feed re-renders whenever any script changes
+export const ScriptCard: React.FC<ScriptCardProps> = React.memo((props: ScriptCardProps) => {
     const notebookExecution = useNotebookExecution(props.notebookId);
     const dependencies = props.dependencies ?? DEFAULT_SCRIPT_CARD_DEPENDENCIES;
     const MoveUpIcon: Icon = SymbolIcon('chevron_up_16');
@@ -128,9 +133,10 @@ export const ScriptCard: React.FC<ScriptCardProps> = (props: ScriptCardProps) =>
     React.useEffect(() => {
         const cancel = new AbortController();
         const wasCached = isCached;
+        const connectionDetails = props.connectionDetails;
         const run = async () => {
             // Not script data? Clear cache indicator.
-            if (props.scriptData == null || props.scriptData.analysisOutdated || !props.connection?.details) {
+            if (props.scriptData == null || props.scriptData.analysisOutdated || !connectionDetails) {
                 if ((wasCached == null || wasCached) && !cancel.signal.aborted) {
                     setIsCached(null);
                 }
@@ -144,7 +150,7 @@ export const ScriptCard: React.FC<ScriptCardProps> = (props: ScriptCardProps) =>
                     return;
                 }
                 // Compute the query cache key
-                const cacheKey = await dependencies.computeQueryCacheKeyForConnection(props.connection.details, compiled.cacheSignature);
+                const cacheKey = await dependencies.computeQueryCacheKeyForConnection(connectionDetails, compiled.cacheSignature);
                 // Cache key is null, then clear the cache if required
                 if (cacheKey == null) {
                     if ((wasCached == null || wasCached) && !cancel.signal.aborted) {
@@ -161,7 +167,7 @@ export const ScriptCard: React.FC<ScriptCardProps> = (props: ScriptCardProps) =>
         };
         run();
         return () => cancel.abort();
-    }, [props.scriptData, props.connection?.details, props.notebookId]);
+    }, [props.scriptData, props.connectionDetails, props.notebookId]);
 
     // The result header persists for active and terminal execution states. It can collapse the
     // result body without affecting its cancel, cache, and rerun actions.
@@ -178,9 +184,9 @@ export const ScriptCard: React.FC<ScriptCardProps> = (props: ScriptCardProps) =>
     const cancelEntryOperation = React.useCallback(() => {
         if (entryStatus?.kind === EntryStatusKind.Query && props.scriptData?.latestQueryId != null) {
             if (notebookExecution.busy) notebookExecution.stop();
-            else if (props.connection != null) cancelQuery(props.connection.databaseId, props.scriptData.latestQueryId);
+            else if (props.databaseId != null) cancelQuery(props.databaseId, props.scriptData.latestQueryId);
         }
-    }, [cancelQuery, entryStatus?.kind, props.connection, props.scriptData?.latestQueryId, notebookExecution.busy, notebookExecution.stop]);
+    }, [cancelQuery, entryStatus?.kind, props.databaseId, props.scriptData?.latestQueryId, notebookExecution.busy, notebookExecution.stop]);
 
     const acceptDiff = React.useCallback(() => {
         if (scriptKey != null) props.onAcceptDiff(scriptKey);
@@ -246,6 +252,10 @@ export const ScriptCard: React.FC<ScriptCardProps> = (props: ScriptCardProps) =>
         }
     }, [isEditing]);
 
+    const showStatus = React.useCallback(() => props.onShowStatus(props.scriptFileName), [props.onShowStatus, props.scriptFileName]);
+    const showTable = React.useCallback(() => props.onShowTable(props.scriptFileName), [props.onShowTable, props.scriptFileName]);
+    const showVisualization = React.useCallback(() => props.onShowVisualization(props.scriptFileName), [props.onShowVisualization, props.scriptFileName]);
+
     const resultContentId = props.scriptData != null ? `feed-result-${props.scriptData.scriptKey}` : undefined;
     const hasFooterContent = entryStatus.kind !== EntryStatusKind.Idle;
     return (
@@ -257,18 +267,18 @@ export const ScriptCard: React.FC<ScriptCardProps> = (props: ScriptCardProps) =>
         >
             <div className={styles.feed_entry_cell} data-result-card={hasFooterContent ? '' : undefined}>
                 <div className={styles.feed_entry_action_bar}>
-                    <ExecuteConnectionGuard notebookId={props.notebookId} blocked={!queryActive && props.connection?.connectionHealth !== ConnectionHealth.ONLINE}>
+                    <ExecuteConnectionGuard notebookId={props.notebookId} blocked={!queryActive && props.connectionHealth !== ConnectionHealth.ONLINE}>
                     <IconButton
                         className={props.isFocused ? undefined : styles.feed_entry_execute_unfocused}
                         variant={ButtonVariant.Invisible}
                         size={ButtonSize.Small}
                         aria-label={queryActive ? `Stop ${displayName} query` : `Execute ${displayName} query`}
                         aria-current={props.isFocused ? 'true' : undefined}
-                        disabled={!queryActive && (!props.canExecute || notebookExecution.busy || props.connection?.connectionHealth !== ConnectionHealth.ONLINE)}
+                        disabled={!queryActive && (!props.canExecute || notebookExecution.busy || props.connectionHealth !== ConnectionHealth.ONLINE)}
                         onClick={() => {
                             if (queryActive && props.scriptData?.latestQueryId != null) {
                                 if (notebookExecution.busy) notebookExecution.stop();
-                                else if (props.connection != null) cancelQuery(props.connection.databaseId, props.scriptData.latestQueryId);
+                                else if (props.databaseId != null) cancelQuery(props.databaseId, props.scriptData.latestQueryId);
                             } else {
                                 props.onExecute(props.scriptFileName);
                             }
@@ -395,7 +405,7 @@ export const ScriptCard: React.FC<ScriptCardProps> = (props: ScriptCardProps) =>
                                     <dependencies.QueryResultCacheLabel query={queryState} />
                                     <dependencies.QueryResultRerunButton
                                         query={queryState}
-                                        onRerun={props.connection?.connectionHealth === ConnectionHealth.ONLINE && !notebookExecution.busy
+                                        onRerun={props.connectionHealth === ConnectionHealth.ONLINE && !notebookExecution.busy
                                             ? (cacheKey) => props.onRerun(props.scriptFileName, cacheKey) : undefined}
                                     />
                                 </>
@@ -407,9 +417,9 @@ export const ScriptCard: React.FC<ScriptCardProps> = (props: ScriptCardProps) =>
                                     notebookId={props.notebookId}
                                     queryState={queryState}
                                     visualizeQuery={props.scriptData?.annotations.visualizeQuery ?? null}
-                                    onShowStatus={() => props.onShowStatus(props.scriptFileName)}
-                                    onShowTable={() => props.onShowTable(props.scriptFileName)}
-                                    onShowVisualization={() => props.onShowVisualization(props.scriptFileName)}
+                                    onShowStatus={showStatus}
+                                    onShowTable={showTable}
+                                    onShowVisualization={showVisualization}
                                 />
                             </div>
                         ) : null}
@@ -418,11 +428,13 @@ export const ScriptCard: React.FC<ScriptCardProps> = (props: ScriptCardProps) =>
             </div>
         </article>
     );
-};
+});
 
 export interface ScriptFeedRowProps {
     notebookId: string;
-    connection: AttachedDatabaseState | null;
+    databaseId: string | null;
+    connectionHealth: ConnectionHealth | null;
+    connectionDetails: AttachedDatabaseState['details'] | null;
     connectorType: ConnectorType;
     storageReader: StorageReader;
     entries: ReturnType<typeof getSelectedScriptRefs>;
@@ -561,7 +573,9 @@ export function ScriptFeedRow(props: RowComponentProps<ScriptFeedRowProps>) {
                 <ScriptCard
                     key={entry?.scriptId}
                     notebookId={props.notebookId}
-                    connection={props.connection}
+                    databaseId={props.databaseId}
+                    connectionHealth={props.connectionHealth}
+                    connectionDetails={props.connectionDetails}
                     connectorType={props.connectorType}
                     storageReader={props.storageReader}
                     isFocused={scriptFileName === props.focusedFileName}
@@ -570,7 +584,7 @@ export function ScriptFeedRow(props: RowComponentProps<ScriptFeedRowProps>) {
                     scriptDebugMode={props.scriptDebugMode}
                     formattingDebugMode={props.formattingDebugMode}
                     keywordCase={props.keywordCase}
-                    canExecute={scriptData != null && props.connection?.connectionHealth === ConnectionHealth.ONLINE}
+                    canExecute={scriptData != null && props.connectionHealth === ConnectionHealth.ONLINE}
                     canDelete={props.canDelete}
                     active={props.active}
                     canMoveUp={canMoveUp}
