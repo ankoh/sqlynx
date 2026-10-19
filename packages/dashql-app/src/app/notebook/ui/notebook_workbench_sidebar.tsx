@@ -19,7 +19,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { List, type RowComponentProps, useListRef } from 'react-window';
 
 import * as core from '@ankoh/dashql-core';
-import { useComputationRegistry } from '../../../compute/computation_registry.js';
+import { useComputationDispatch } from '../../../compute/computation_registry.js';
 import { DELETE_COMPUTATION } from '../../../compute/computation_state.js';
 import { AnchorAlignment, AnchorSide } from '../../../ui/foundations/anchored_position.js';
 import { AnchoredOverlay } from '../../../ui/foundations/anchored_overlay.js';
@@ -164,7 +164,7 @@ export interface NotebookWorkbenchSidebarDependencies {
     useAttachedDatabaseStateAllocator: typeof useAttachedDatabaseStateAllocator;
     useNotebookScriptsSetup: typeof useNotebookScriptsSetup;
     useNotebookScriptsDeletion: typeof useNotebookScriptsDeletion;
-    useComputationRegistry: typeof useComputationRegistry;
+    useComputationDispatch: typeof useComputationDispatch;
     useStorageReader: typeof useStorageReader;
     useStorageWriter: typeof useStorageWriter;
     useDashQLCoreSetup: typeof useDashQLCoreSetup;
@@ -191,7 +191,7 @@ const DEFAULT_NOTEBOOK_WORKBENCH_SIDEBAR_DEPENDENCIES: NotebookWorkbenchSidebarD
     useAttachedDatabaseStateAllocator,
     useNotebookScriptsSetup,
     useNotebookScriptsDeletion,
-    useComputationRegistry,
+    useComputationDispatch,
     useStorageReader,
     useStorageWriter,
     useDashQLCoreSetup,
@@ -804,7 +804,7 @@ export const NotebookWorkbenchSidebar: React.FC<Props> = (props) => {
     const allocateDatabase = dependencies.useAttachedDatabaseStateAllocator();
     const setupNotebookScripts = dependencies.useNotebookScriptsSetup();
     const deleteNotebookScripts = dependencies.useNotebookScriptsDeletion();
-    const [, computationDispatch] = dependencies.useComputationRegistry();
+    const computationDispatch = dependencies.useComputationDispatch();
     const storageReader = dependencies.useStorageReader();
     const storageWriter = dependencies.useStorageWriter();
     const setupCore = dependencies.useDashQLCoreSetup();

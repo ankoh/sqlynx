@@ -15,7 +15,7 @@ import {
     QueryExecutionResponseStream,
     QueryExecutionTracker,
 } from '../../../query/query_execution_state.js';
-import { useComputationRegistry } from '../../../compute/computation_registry.js';
+import { useComputationDispatch } from '../../../compute/computation_registry.js';
 import { analyzeTable } from '../../../compute/computation_logic.js';
 import { DELETE_COMPUTATION } from '../../../compute/computation_state.js';
 import { useComputeDatabase } from '../../../compute/compute_connection_provider.js';
@@ -111,7 +111,7 @@ export function QueryExecutorProvider(props: { children?: React.ReactElement }) 
     const [connReg, connDispatch] = useDynamicAttachedDatabaseDispatch();
     const connMap = connReg.attachedDatabases;
 
-    const [_, computeDispatch] = useComputationRegistry();
+    const computeDispatch = useComputationDispatch();
     const computeDb = useComputeDatabase();
     const storageReader = useStorageReader();
     const queryRuntimes = React.useRef(new Map<number, QueryExecutionRuntime>());

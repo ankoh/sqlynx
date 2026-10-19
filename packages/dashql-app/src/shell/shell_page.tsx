@@ -10,7 +10,7 @@ import { useLogger } from '../platform/logger/logger_provider.js';
 import { createDashQLShell, type DashQLShell, type DashQLShellCommand } from './api.js';
 import type { BrowserShellController } from './browser_shell.js';
 import { analyzeTable } from '../compute/computation_logic.js';
-import { useComputationRegistry } from '../compute/computation_registry.js';
+import { useComputationDispatch } from '../compute/computation_registry.js';
 import { ShellQueryResultOverlay } from '../app/notebook/shell/shell_query_result_overlay.js';
 import { createEmbeddedDatabaseShellEnvironment } from './embedded_database_shell_environment.js';
 import { createLoginCommand, type SalesforceLoginAuthentication } from './commands/login.js';
@@ -70,7 +70,7 @@ export const ShellPage: React.FC<ShellPageProps> = (props: ShellPageProps) => {
     const logger = useLogger();
     const setupEmbeddedDatabase = useEmbeddedDatabaseSetup();
     const { setConnected, queryExecutions } = useShellConnection();
-    const [, dispatchComputation] = useComputationRegistry();
+    const dispatchComputation = useComputationDispatch();
     const httpClient = useHttpClient();
     const appEvents = usePlatformEventListener();
     const platformType = usePlatformType();
