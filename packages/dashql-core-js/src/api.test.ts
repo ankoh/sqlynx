@@ -1,7 +1,6 @@
 import * as dashql from './index.js';
 
 import { loadCoreWasm } from './test_fixture.js';
-import createDashQLModule from './wasm/dashql_core.js';
 
 let dql: dashql.DashQL | null = null;
 beforeAll(async () => {
@@ -17,49 +16,6 @@ describe('DashQL setup', () => {
     it('instantiates WebAssembly module', async () => {
         expect(dql).not.toBeNull();
         expect(dql).not.toBeUndefined();
-    });
-
-    it('copies strings into shared Wasm memory without encoding into it directly', () => {
-        const heap = new Uint8Array(new SharedArrayBuffer(64));
-        const module = {
-            HEAPU8: heap,
-            memory: { buffer: heap.buffer },
-            _dashql_malloc: () => 8,
-            _dashql_free: vi.fn(),
-        } as any;
-        const api = new dashql.DashQL(module);
-        const encoder = new TextEncoder();
-        api.encoder = {
-            encodeInto(source: string, destination: Uint8Array) {
-                if (destination.buffer instanceof SharedArrayBuffer) {
-                    throw new TypeError('The provided Uint8Array value must not be shared');
-                }
-                return encoder.encodeInto(source, destination);
-            },
-        } as TextEncoder;
-
-        expect(api.copyString('shell')).toEqual([8, 5]);
-        expect(Array.from(heap.subarray(8, 14))).toEqual([115, 104, 101, 108, 108, 0]);
-    });
-
-    it('copies strings from shared Wasm memory before decoding them', () => {
-        const heap = new Uint8Array(new SharedArrayBuffer(64));
-        heap.set(new TextEncoder().encode('shell'), 8);
-        const api = new dashql.DashQL({
-            HEAPU8: heap,
-            memory: { buffer: heap.buffer },
-        } as any);
-        const decoder = new TextDecoder();
-        api.decoder = {
-            decode(input?: AllowSharedBufferSource) {
-                if (ArrayBuffer.isView(input) && input.buffer instanceof SharedArrayBuffer) {
-                    throw new TypeError('The provided ArrayBufferView value must not be shared');
-                }
-                return decoder.decode(input);
-            },
-        } as TextDecoder;
-
-        expect(api.readString(8, 5)).toBe('shell');
     });
 
     it('copies FlatBuffer strings from shared Wasm memory before decoding them', () => {
@@ -127,9 +83,10 @@ describe('DashQL planner', () => {
         expect(reader.unresolvedReferencesLength()).toBe(0);
         expect(reader.edgesLength()).toBe(0);
         expect(reader.diagnosticsLength()).toBe(0);
-        expect(dql!.registeredMemory.size).toBe(1);
+        expect(dql!.registeredMemory.size).toBe(0);
         result.destroy();
         result.destroy();
+        expect(result.isNull()).toBe(true);
         expect(dql!.registeredMemory.size).toBe(0);
     });
 
@@ -389,55 +346,28 @@ describe('DashQL planner', () => {
         expect(refreshed.nodes[0].sql).toBe('select 1');
     });
 
-    it('plans pointer arrays larger than the Wasm stack without trapping', () => {
+    it('plans large session arrays and frees the native session list', () => {
         const session = prepare(dql!.createCatalog(), 'select 1');
         const baseline = dql!.registeredMemory.size;
-        const allocate = vi.spyOn(dql!.instanceExports, 'dashql_malloc');
-        const free = vi.spyOn(dql!.instanceExports, 'dashql_free');
-        const stack = vi.spyOn(dql!.module, 'stackAlloc');
+        const free = vi.spyOn(dql!.bindings.SessionList.prototype, 'free');
         try {
             const result = dql!.plan(new Array(300000).fill(session));
             expect(result.read().valid()).toBe(false);
             expect(result.read().nodesLength()).toBe(0);
             expect(result.read().diagnostics(0)?.message()).toContain('duplicate');
-            expect(allocate).toHaveBeenCalledWith(1200000);
-            expect(free).toHaveBeenCalledWith(allocate.mock.results[0].value);
-            expect(stack.mock.calls.every(([size]) => size === 16)).toBe(true);
-            result.destroy();
+            expect(free).toHaveBeenCalledTimes(1);
             expect(dql!.registeredMemory.size).toBe(baseline);
         } finally {
-            allocate.mockRestore();
             free.mockRestore();
-            stack.mockRestore();
         }
     });
 
-    it('rejects oversized pointer arrays and allocation failure before FFI', () => {
+    it('rejects foreign, destroyed, null, and non-session inputs before entering native code', () => {
         const session = prepare(dql!.createCatalog(), 'select 1');
-        const allocate = vi.spyOn(dql!.instanceExports, 'dashql_malloc');
-        const ffi = vi.spyOn(dql!.instanceExports, 'dashql_planner_plan');
-        try {
-            expect(() => dql!.plan(new Array(0x40000000))).toThrow(RangeError);
-            expect(allocate).not.toHaveBeenCalled();
-            allocate.mockReturnValue(0);
-            expect(() => dql!.plan([session])).toThrow('failed to allocate planner session pointers');
-            expect(ffi).not.toHaveBeenCalled();
-        } finally {
-            allocate.mockRestore();
-            ffi.mockRestore();
-        }
-    });
-
-    it('rejects foreign, destroyed, null, and non-session inputs before FFI', async () => {
-        const session = prepare(dql!.createCatalog(), 'select 1');
-        // The browser harness caches DashQL.create(); bypass it for ownership isolation.
-        const other = new dashql.DashQL(await createDashQLModule({ wasmBinary: await loadCoreWasm() }));
+        const other = new dashql.DashQL(dql!.bindings);
         expect(other).not.toBe(dql);
-        expect(other.module.HEAPU8.buffer).not.toBe(dql!.module.HEAPU8.buffer);
         const foreign = other.createScriptSession(other.createCatalog());
-        const ffi = vi.spyOn(dql!.instanceExports, 'dashql_planner_plan');
-        const stack = vi.spyOn(dql!.module, 'stackSave');
-        const allocate = vi.spyOn(dql!.instanceExports, 'dashql_malloc');
+        const plan = vi.spyOn(dql!.bindings, 'plan');
         try {
             expect(() => dql!.plan([session, foreign])).toThrow('different DashQL instance');
             session.destroy();
@@ -445,92 +375,47 @@ describe('DashQL planner', () => {
             for (const input of [null, undefined, {}, [null], [undefined], [{}], new Array(1)]) {
                 expect(() => dql!.plan(input as any)).toThrow(TypeError);
             }
-            expect(ffi).not.toHaveBeenCalled();
-            expect(stack).not.toHaveBeenCalled();
-            expect(allocate).not.toHaveBeenCalled();
+            expect(plan).not.toHaveBeenCalled();
         } finally {
-            ffi.mockRestore();
-            stack.mockRestore();
-            allocate.mockRestore();
+            plan.mockRestore();
             other.resetUnsafe();
-        }
-    });
-
-    it('returns diagnostics for null native arguments without throwing', () => {
-        const read = (pointers: number, count: number) => {
-            const result = dql!.callSRetFlatBufPtr(
-                Symbol('test graph'),
-                resultPtr => dql!.instanceExports.dashql_planner_plan(resultPtr, pointers, count),
-                () => new execution.ExecutionGraph(),
-            );
-            return result.unpackAndDestroy();
-        };
-        expect(read(0, 1).diagnostics[0].message).toContain('null planner session array');
-        const stack = dql!.module.stackSave();
-        try {
-            const pointers = dql!.module.stackAlloc(4);
-            dql!.module.HEAPU32[pointers / 4] = 0;
-            const graph = read(pointers, 1);
-            expect(graph.valid).toBe(false);
-            expect(graph.nodes).toEqual([]);
-            expect(graph.diagnostics[0].message).toContain('null planner script');
-        } finally {
-            dql!.module.stackRestore(stack);
         }
     });
 
     it('owns detached graph bytes and preserves unpacked data after release', () => {
         const catalog = dql!.createCatalog();
         const session = prepare(catalog, 'select 1');
-        const baseline = dql!.registeredMemory.size;
         const first = dql!.plan([session]);
         const second = dql!.plan([session]);
-        expect(first.resultPtr).not.toBe(second.resultPtr);
-        expect(dql!.registeredMemory.size).toBe(baseline + 2);
+        expect(first.equals(second)).toBe(false);
+        expect(dql!.registeredMemory.size).toBe(2);
         session.replaceText(1n, 'select 2');
         session.destroy();
         catalog.destroy();
+        expect(dql!.registeredMemory.size).toBe(0);
         expect(first.read().nodes(0)?.sql()).toBe('select 1');
         const unpacked = first.unpackAndDestroy();
-        expect(dql!.registeredMemory.size).toBe(1);
-        expect(second.read().nodes(0)?.sql()).toBe('select 1');
+        expect(first.isNull()).toBe(true);
         dql!.resetUnsafe();
-        expect(second.resultPtr).toBeNull();
-        expect(dql!.registeredMemory.size).toBe(0);
+        expect(second.read().nodes(0)?.sql()).toBe('select 1');
         expect(unpacked.nodes[0].sql).toBe('select 1');
         expect(unpacked.scripts[0].textVersion).toBe(1n);
         expect(unpacked.scripts[0].analyzedTextVersion).toBe(unpacked.scripts[0].textVersion);
     });
 
-    it('frees heap pointers, restores the stack, and releases failed FFI results', () => {
+    it('frees the native session list when planning throws', () => {
         const session = prepare(dql!.createCatalog(), 'select 1');
-        const stack = dql!.module.stackSave();
         const baseline = dql!.registeredMemory.size;
-        const native = dql!.instanceExports.dashql_planner_plan;
-        const ffi = vi.spyOn(dql!.instanceExports, 'dashql_planner_plan').mockImplementation(
-            (result, sessions, count) => {
-                native(result, sessions, count);
-                throw new Error('test FFI failure');
-            },
-        );
-        const release = vi.spyOn(dql!.instanceExports, 'dashql_delete_owner');
-        const allocate = vi.spyOn(dql!.instanceExports, 'dashql_malloc');
-        const free = vi.spyOn(dql!.instanceExports, 'dashql_free');
+        const plan = vi.spyOn(dql!.bindings, 'plan').mockImplementation(() => {
+            throw new Error('test failure');
+        });
+        const free = vi.spyOn(dql!.bindings.SessionList.prototype, 'free');
         try {
-            expect(() => dql!.plan([session])).toThrow('test FFI failure');
-            expect(release).toHaveBeenCalledTimes(1);
-            expect(free).toHaveBeenCalledWith(allocate.mock.results[0].value);
-            expect(dql!.module.stackSave()).toBe(stack);
-            expect(dql!.registeredMemory.size).toBe(baseline);
-            ffi.mockImplementation(result => dql!.module.HEAPU32.fill(0, result / 4, result / 4 + 4));
-            expect(() => dql!.plan([session])).toThrow('failed to allocate planner graph');
-            expect(free).toHaveBeenCalledWith(allocate.mock.results[1].value);
-            expect(dql!.module.stackSave()).toBe(stack);
+            expect(() => dql!.plan([session])).toThrow('test failure');
+            expect(free).toHaveBeenCalledTimes(1);
             expect(dql!.registeredMemory.size).toBe(baseline);
         } finally {
-            ffi.mockRestore();
-            release.mockRestore();
-            allocate.mockRestore();
+            plan.mockRestore();
             free.mockRestore();
         }
     });
@@ -699,34 +584,6 @@ describe('DashQL editor sessions', () => {
         diff.destroy();
         target.destroy();
         formatted.destroy();
-    });
-
-    it('decodes compiled SQL without passing shared memory to TextDecoder', () => {
-        const decoder = dql!.decoder;
-        const nativeDecoder = new TextDecoder();
-        dql!.decoder = {
-            decode(input?: AllowSharedBufferSource) {
-                if (ArrayBuffer.isView(input) && input.buffer instanceof SharedArrayBuffer) {
-                    throw new TypeError('The provided ArrayBufferView value must not be shared');
-                }
-                return nativeDecoder.decode(input);
-            },
-        } as TextDecoder;
-
-        try {
-            const catalog = dql!.createCatalog();
-            const session = dql!.createScriptSession(catalog);
-            session.replaceText(0n, 'select 1 as value');
-            session.analyze();
-            const compilation = session.compileQuery(formattingConfig());
-            try {
-                expect(compilation.read().sql()).toBe('select 1 as value');
-            } finally {
-                compilation.destroy();
-            }
-        } finally {
-            dql!.decoder = decoder;
-        }
     });
 
     it('loads and drops the session-owned script from its catalog', () => {

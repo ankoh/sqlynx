@@ -24,7 +24,7 @@ function descriptor(text: string): Uint8Array {
 
 describe('DashQL batches', () => {
     it('processes all sixteen output subsets in one native call', () => {
-        const process = vi.spyOn(dql.instanceExports, 'dashql_process_batch');
+        const process = vi.spyOn(dql.bindings, 'processBatch');
         const scripts = Array.from({ length: 16 }, (_, mask) => ({
             id: String(mask),
             text: 'create table items(id int)',
@@ -43,7 +43,6 @@ describe('DashQL batches', () => {
                 if (mask & (1 << bit)) {
                     expect(Object.prototype.toString.call(bytes)).toBe('[object Uint8Array]');
                     expect(bytes!.byteLength).toBeGreaterThan(0);
-                    expect(bytes!.buffer).not.toBe(dql.module.HEAPU8.buffer);
                     expect(bytes!.byteOffset).toBe(0);
                     expect(bytes!.buffer.byteLength).toBe(bytes!.byteLength);
                 } else {
@@ -169,24 +168,20 @@ describe('DashQL batches', () => {
         expect(dql.registeredMemory.size).toBe(0);
     });
 
-    it('rejects unknown public output strings before allocating native input', () => {
-        const allocate = vi.spyOn(dql.instanceExports, 'dashql_malloc');
-        const process = vi.spyOn(dql.instanceExports, 'dashql_process_batch');
+    it('rejects unknown public output strings before entering native code', () => {
+        const process = vi.spyOn(dql.bindings, 'processBatch');
         expect(() => dql.processBatch({ scripts: [
             { id: 'invalid', text: 'select 1', outputs: ['unknown' as dashql.BatchOutput] },
         ] })).toThrow('unknown batch output: unknown');
-        expect(allocate).not.toHaveBeenCalled();
         expect(process).not.toHaveBeenCalled();
     });
 
     it('leaves invalid numeric masks to native per-script rejection', () => {
-        const process = dql.instanceExports.dashql_process_batch;
-        vi.spyOn(dql.instanceExports, 'dashql_process_batch').mockImplementation((result, ptr, length) => {
-            const request = dashql.buffers.batch.BatchRequest.getRootAsBatchRequest(
-                new flatbuffers.ByteBuffer(dql.module.HEAPU8.subarray(ptr, ptr + length)),
-            );
+        const process = dql.bindings.processBatch;
+        vi.spyOn(dql.bindings, 'processBatch').mockImplementation(bytes => {
+            const request = dashql.buffers.batch.BatchRequest.getRootAsBatchRequest(new flatbuffers.ByteBuffer(bytes));
             expect(request.scripts(0)!.mutate_outputs(16)).toBe(true);
-            process(result, ptr, length);
+            return process(bytes);
         });
         const result = dql.processBatch({ scripts: [
             { id: 'invalid', text: 'select 1', outputs: ['parsed'] },
@@ -198,78 +193,33 @@ describe('DashQL batches', () => {
         expect(result.scripts[1].parsed).toBeDefined();
     });
 
-    it('frees borrowed input on malformed contexts and malformed native requests', () => {
-        const allocate = vi.spyOn(dql.instanceExports, 'dashql_malloc');
-        const free = vi.spyOn(dql.instanceExports, 'dashql_free');
+    it('rejects malformed contexts and malformed native requests', () => {
         expect(() => dql.processBatch({ scripts: [], catalogDescriptors: [new Uint8Array([0, 1, 2, 3])] })).toThrow();
-        const process = dql.instanceExports.dashql_process_batch;
-        vi.spyOn(dql.instanceExports, 'dashql_process_batch').mockImplementation((result, ptr, length) => {
-            dql.module.HEAPU8.fill(0xff, ptr, ptr + length);
-            process(result, ptr, length);
-        });
+        const process = dql.bindings.processBatch;
+        vi.spyOn(dql.bindings, 'processBatch').mockImplementation(bytes => process(bytes.fill(0xff)));
         expect(() => dql.processBatch({ scripts: [] })).toThrow();
-        expect(allocate).toHaveBeenCalledTimes(2);
-        expect(free).toHaveBeenCalledTimes(2);
-        expect(free.mock.calls.map(call => call[0])).toEqual(allocate.mock.results.map(result => result.value));
         expect(dql.registeredMemory.size).toBe(0);
     });
 
-    it('frees input and output when decoding throws', () => {
-        const process = dql.instanceExports.dashql_process_batch;
-        const allocate = vi.spyOn(dql.instanceExports, 'dashql_malloc');
-        const free = vi.spyOn(dql.instanceExports, 'dashql_free');
-        const release = vi.spyOn(dql.instanceExports, 'dashql_delete_owner');
-        vi.spyOn(dql.instanceExports, 'dashql_process_batch').mockImplementation((result, ptr, length) => {
-            process(result, ptr, length);
-            const heap = dql.module.HEAPU32;
-            const dataPtr = heap[result / 4 + 1];
-            const dataLength = heap[result / 4];
-            const response = dashql.buffers.batch.BatchResult.getRootAsBatchResult(
-                new flatbuffers.ByteBuffer(dql.module.HEAPU8.subarray(dataPtr, dataPtr + dataLength)),
-            );
+    it('throws when decoding the native result fails', () => {
+        const process = dql.bindings.processBatch;
+        vi.spyOn(dql.bindings, 'processBatch').mockImplementation(bytes => {
+            const output = process(bytes);
+            const response = dashql.buffers.batch.BatchResult.getRootAsBatchResult(new flatbuffers.ByteBuffer(output));
             expect(response.scripts(0)!.diagnostics(0)!.mutate_stage(255 as dashql.buffers.batch.ProcessingStage)).toBe(true);
+            return output;
         });
         expect(() => dql.processBatch({ scripts: [
             { id: 'parse', text: 'create table broken(', outputs: ['catalogDescriptor'] },
         ] })).toThrow('unknown batch diagnostic stage');
-        expect(free).toHaveBeenCalledExactlyOnceWith(allocate.mock.results[0].value);
-        expect(release).toHaveBeenCalledTimes(1);
-        expect(release.mock.calls[0][0]).toBeGreaterThan(0);
         expect(dql.registeredMemory.size).toBe(0);
     });
 
-    it('frees output already written by a native call that then throws', () => {
-        const process = dql.instanceExports.dashql_process_batch;
-        const allocate = vi.spyOn(dql.instanceExports, 'dashql_malloc');
-        const free = vi.spyOn(dql.instanceExports, 'dashql_free');
-        const release = vi.spyOn(dql.instanceExports, 'dashql_delete_owner');
-        vi.spyOn(dql.instanceExports, 'dashql_process_batch').mockImplementation((result, ptr, length) => {
-            process(result, ptr, length);
+    it('propagates native failures', () => {
+        vi.spyOn(dql.bindings, 'processBatch').mockImplementation(() => {
             throw new Error('native call failed');
         });
         expect(() => dql.processBatch({ scripts: [] })).toThrow('native call failed');
-        expect(free).toHaveBeenCalledExactlyOnceWith(allocate.mock.results[0].value);
-        expect(release).toHaveBeenCalledTimes(1);
-        expect(release.mock.calls[0][0]).toBeGreaterThan(0);
-    });
-
-    it('does not enter native processing after allocation failure', () => {
-        vi.spyOn(dql.instanceExports, 'dashql_malloc').mockReturnValue(0);
-        const process = vi.spyOn(dql.instanceExports, 'dashql_process_batch');
-        expect(() => dql.processBatch({ scripts: [] })).toThrow('failed to allocate a buffer');
-        expect(process).not.toHaveBeenCalled();
-    });
-
-    it('frees native input if copying bytes into the heap throws', () => {
-        const allocate = vi.spyOn(dql.instanceExports, 'dashql_malloc');
-        const free = vi.spyOn(dql.instanceExports, 'dashql_free');
-        const process = vi.spyOn(dql.instanceExports, 'dashql_process_batch');
-        vi.spyOn(dql.module.HEAPU8, 'subarray').mockImplementation(() => {
-            throw new Error('copy failed');
-        });
-        expect(() => dql.processBatch({ scripts: [] })).toThrow('copy failed');
-        expect(free).toHaveBeenCalledExactlyOnceWith(allocate.mock.results[0].value);
-        expect(process).not.toHaveBeenCalled();
     });
 });
 
@@ -288,7 +238,7 @@ describe('DashQL catalog descriptors', () => {
         const before = catalog.createSnapshot();
         const version = before.read().catalogReader.catalogVersion();
         catalog.replaceDescriptor(id, 20, bytes);
-        expect(before.ptr.resultPtr).toBeNull();
+        expect(before.ptr.isNull()).toBe(true);
         const snapshot = catalog.createSnapshot();
         expect(snapshot.read().catalogReader.catalogVersion()).toBe(version + 1n);
         expect(snapshot.read().catalogReader.tablesLength()).toBe(1);
@@ -315,7 +265,7 @@ describe('DashQL catalog descriptors', () => {
             expect(completion.candidates.map((candidate: dashql.buffers.completion.CompletionCandidateT) => candidate.completionText)).toContain(expected);
         }
         catalog.dropDescriptor(id);
-        expect(snapshot.ptr.resultPtr).toBeNull();
+        expect(snapshot.ptr.isNull()).toBe(true);
         expect(catalog.containsEntryId(id)).toBe(false);
         expect(catalog.createSnapshot().read().catalogReader.tablesLength()).toBe(0);
     });
@@ -334,7 +284,7 @@ describe('DashQL catalog descriptors', () => {
         const snapshot = catalog.createSnapshot();
         const version = snapshot.read().catalogReader.catalogVersion();
         catalog.replaceDescriptor(id, 1, updated);
-        expect(snapshot.ptr.resultPtr).toBeNull();
+        expect(snapshot.ptr.isNull()).toBe(true);
         const current = catalog.createSnapshot();
         expect(current.read().catalogReader.catalogVersion()).toBe(version + 1n);
         expect(current.read().catalogReader.tablesLength()).toBe(2);
@@ -353,7 +303,7 @@ describe('DashQL catalog descriptors', () => {
             .toBe(dashql.ExternalObjectID.create(id, 0));
 
         catalog.replaceDescriptor(otherId, 0xffffffff, original);
-        expect(current.ptr.resultPtr).toBeNull();
+        expect(current.ptr.isNull()).toBe(true);
         const next = catalog.createSnapshot();
         expect(next.read().catalogReader.catalogVersion()).toBe(version + 2n);
         expect(catalog.containsEntryId(script.getCatalogEntryId())).toBe(true);
@@ -388,9 +338,8 @@ describe('DashQL catalog descriptors', () => {
         const catalog = dql.createCatalog();
         const id = catalog.allocateEntryId();
         const snapshot = catalog.createSnapshot();
-        const replace = vi.spyOn(dql.instanceExports, 'dashql_catalog_replace_descriptor');
-        const drop = vi.spyOn(dql.instanceExports, 'dashql_catalog_drop_descriptor');
-        const allocate = vi.spyOn(dql.instanceExports, 'dashql_malloc');
+        const replace = vi.spyOn(dql.bindings.Catalog.prototype, 'replaceDescriptor');
+        const drop = vi.spyOn(dql.bindings.Catalog.prototype, 'dropDescriptor');
         for (const invalid of [-1, 1.5, NaN, Infinity, -Infinity, 0x100000000]) {
             expect(() => catalog.replaceDescriptor(invalid, 0, bytes)).toThrow('catalogEntryId must be a uint32');
             expect(() => catalog.replaceDescriptor(id, invalid, bytes)).toThrow('rank must be a uint32');
@@ -399,84 +348,40 @@ describe('DashQL catalog descriptors', () => {
         }
         expect(replace).not.toHaveBeenCalled();
         expect(drop).not.toHaveBeenCalled();
-        expect(allocate).not.toHaveBeenCalled();
         catalog.destroy();
         expect(() => catalog.allocateEntryId()).toThrow(dashql.NULL_POINTER_EXCEPTION);
         expect(() => catalog.replaceDescriptor(id, 0, bytes)).toThrow(dashql.NULL_POINTER_EXCEPTION);
         expect(() => catalog.dropDescriptor(id)).toThrow(dashql.NULL_POINTER_EXCEPTION);
     });
 
-    it('passes raw descriptor bytes to the singular ABI and frees input on success and rejection', () => {
+    it('passes raw descriptor bytes to the native catalog without modifying them', () => {
         const bytes = descriptor('create table items(id int)');
         const original = bytes.slice();
         const catalog = dql.createCatalog();
         const id = catalog.allocateEntryId();
         const memoryCount = dql.registeredMemory.size;
-        const nativeReplace = dql.instanceExports.dashql_catalog_replace_descriptor;
-        const replace = vi.spyOn(dql.instanceExports, 'dashql_catalog_replace_descriptor')
-            .mockImplementationOnce((catalogPtr, entryId, rank, ptr, length) => {
-                expect(catalogPtr).toBe(catalog.ptr.assertNotNull());
-                expect(entryId).toBe(id);
-                expect(rank).toBe(0);
-                expect(dql.module.HEAPU8.slice(ptr, ptr + length)).toEqual(bytes);
-                nativeReplace(catalogPtr, entryId, rank, ptr, length);
-            });
-        const allocate = vi.spyOn(dql.instanceExports, 'dashql_malloc');
-        const free = vi.spyOn(dql.instanceExports, 'dashql_free');
+        const replace = vi.spyOn(dql.bindings.Catalog.prototype, 'replaceDescriptor');
         catalog.replaceDescriptor(id, 0, bytes);
+        expect(replace.mock.calls[0][0]).toBe(id);
+        expect(replace.mock.calls[0][1]).toBe(0);
+        expect(replace.mock.calls[0][2]).toEqual(original);
         expect(bytes).toEqual(original);
         expect(() => catalog.replaceDescriptor(id, 0, new Uint8Array([0, 1, 2, 3]))).toThrow();
         expect(replace).toHaveBeenCalledTimes(2);
-        expect(allocate.mock.calls).toEqual([[bytes.byteLength], [4]]);
-        expect(free.mock.calls.map(call => call[0])).toEqual(allocate.mock.results.map(result => result.value));
         expect(dql.registeredMemory.size).toBe(memoryCount);
     });
 
-    it('frees descriptor input when native replacement throws without invalidating the cache', () => {
+    it('keeps the snapshot when native replacement throws', () => {
         const bytes = descriptor('create table items(id int)');
         const catalog = dql.createCatalog();
         const id = catalog.allocateEntryId();
         const snapshot = catalog.createSnapshot();
         const memoryCount = dql.registeredMemory.size;
-        const allocate = vi.spyOn(dql.instanceExports, 'dashql_malloc');
-        const free = vi.spyOn(dql.instanceExports, 'dashql_free');
-        vi.spyOn(dql.instanceExports, 'dashql_catalog_replace_descriptor').mockImplementation(() => {
+        vi.spyOn(dql.bindings.Catalog.prototype, 'replaceDescriptor').mockImplementation(() => {
             throw new Error('native replacement failed');
         });
         expect(() => catalog.replaceDescriptor(id, 0, bytes)).toThrow('native replacement failed');
-        expect(free).toHaveBeenCalledExactlyOnceWith(allocate.mock.results[0].value);
         expect(catalog.createSnapshot()).toBe(snapshot);
         expect(dql.registeredMemory.size).toBe(memoryCount);
-    });
-
-    it('does not enter native replacement after descriptor allocation failure', () => {
-        const bytes = descriptor('create table items(id int)');
-        const catalog = dql.createCatalog();
-        const id = catalog.allocateEntryId();
-        const snapshot = catalog.createSnapshot();
-        vi.spyOn(dql.instanceExports, 'dashql_malloc').mockReturnValue(0);
-        const free = vi.spyOn(dql.instanceExports, 'dashql_free');
-        const replace = vi.spyOn(dql.instanceExports, 'dashql_catalog_replace_descriptor');
-        expect(() => catalog.replaceDescriptor(id, 0, bytes)).toThrow('failed to allocate a buffer');
-        expect(replace).not.toHaveBeenCalled();
-        expect(free).not.toHaveBeenCalled();
-        expect(catalog.createSnapshot()).toBe(snapshot);
-    });
-
-    it('frees descriptor input if copying bytes into the native heap throws', () => {
-        const bytes = descriptor('create table items(id int)');
-        const catalog = dql.createCatalog();
-        const id = catalog.allocateEntryId();
-        const snapshot = catalog.createSnapshot();
-        const allocate = vi.spyOn(dql.instanceExports, 'dashql_malloc');
-        const free = vi.spyOn(dql.instanceExports, 'dashql_free');
-        const replace = vi.spyOn(dql.instanceExports, 'dashql_catalog_replace_descriptor');
-        vi.spyOn(dql.module.HEAPU8, 'subarray').mockImplementation(() => {
-            throw new Error('copy failed');
-        });
-        expect(() => catalog.replaceDescriptor(id, 0, bytes)).toThrow('copy failed');
-        expect(free).toHaveBeenCalledExactlyOnceWith(allocate.mock.results[0].value);
-        expect(replace).not.toHaveBeenCalled();
-        expect(catalog.createSnapshot()).toBe(snapshot);
     });
 });

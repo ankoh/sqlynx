@@ -39,11 +39,7 @@ async function run(): Promise<void> {
         instance ??= create({
             ...options,
             wasmBinary: undefined,
-            instantiateWasm: options.instantiateWasm ?? (async (imports, success) => {
-                const wasmInstance = await WebAssembly.instantiate(wasmModule, imports);
-                success(wasmInstance, wasmModule);
-                return wasmInstance.exports;
-            }),
+            module: options.module ?? wasmModule,
         });
         return resolvedInstance = await instance;
     };

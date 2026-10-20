@@ -55,7 +55,6 @@ async function setupBrowserTestEnvironment(): Promise<void> {
         DASHQL_PRECOMPILED?: Promise<Uint8Array>;
         DASHQL_SHELL_PRECOMPILED?: Promise<Uint8Array>;
         __DASHQL_TEST_HYPERDB_CLIENT__?: typeof globalThis.__DASHQL_TEST_HYPERDB_CLIENT__;
-        __DASHQL_TEST_SHARE_SHELL_MODULE__?: boolean;
         IS_REACT_ACT_ENVIRONMENT?: boolean;
     };
     globals.IS_REACT_ACT_ENVIRONMENT = true;
@@ -65,7 +64,6 @@ async function setupBrowserTestEnvironment(): Promise<void> {
     globals.__DASHQL_TEST_HYPERDB_CLIENT__ = parent.__DASHQL_TEST_HYPERDB_CLIENT__;
     installSharedCoreTestPool();
     globals.DASHQL_SHELL_PRECOMPILED = fetch(shellWasmUrl).then(response => response.bytes());
-    globals.__DASHQL_TEST_SHARE_SHELL_MODULE__ = true;
     if (typeof ResizeObserver === 'undefined') {
         globals.ResizeObserver = class ResizeObserverMock {
             observe() {}

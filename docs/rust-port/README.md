@@ -73,9 +73,9 @@ CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
 | 5 | Cursor and completion | 161 completion snapshots; differential at every prefix and cursor | **done** (unit tests open) |
 | 6 | visualize, compiler, Script, batch, planner | 27 visualize and 38 planner snapshots; batch differential | **done** |
 | 7 | ScriptSession, ScriptExecution, Hyper plan view | Session, execution and plan tests; 36 plan snapshots | **done** |
-| 8 | wasm-bindgen API and rewrite of `dashql-core-js/src/api.ts` | core-js, browser and app tests on the Rust wasm; size and speed budgets | |
-| 9 | Switch-over | Release built from Rust; C++ removed after one release cycle | |
-| 10 | Shell (arrow-rs) | Shell tests ported | |
+| 8 | wasm-bindgen API and rewrite of `dashql-core-js/src/api.ts` | core-js, browser and app tests on the Rust wasm; size and speed budgets | **done** |
+| 9 | Switch-over | Release built from Rust; C++ removed after one release cycle | **switched** (C++ kept as oracle) |
+| 10 | Shell (arrow-rs) | Shell tests ported | **done** |
 
 ## Phase 0 results (2026-10-20)
 
@@ -332,6 +332,43 @@ remaining per-list allocations.
   analysis (a qualified function name) hits an `assert` in the C++ fastbuild oracle.
 - `ScriptCompiler::Compile` (C++) keeps a reference to the parsed script while the `Analyze(false)`
   it calls can replace it. Not hit, but undefined behavior.
+
+## Phase 8–10 results
+
+The app and `@ankoh/dashql-core` run on the Rust core. The C++ core still builds and serves as the
+oracle of the differential tests.
+
+- **wasm-bindgen API** (`dashql-core-wasm`, an rlib `:dashql_core_wasm_lib` wrapped by the cdylib
+  `:dashql_core_wasm`): `Catalog`, `Script`, `ScriptBatch`, `ScriptSession`, `ScriptExecution`,
+  `SessionList`, `PlanViewModel`, `plan`, `processBatch`, `parseVegaLiteToVisualize`. Results are
+  FlatBuffer bytes owned by JS, errors are exceptions. Scripts and sessions share their catalog
+  (`Rc<RefCell<Catalog>>`); freeing them drops them from the catalog like the C++ destructors.
+  wasm-bindgen 0.2.105 cannot take `Option<&T>`, so formatting into another catalog is `formatInto`.
+- **`dashql-core-js/src/api.ts`** keeps its public classes. `ptr` now wraps a wasm-bindgen object
+  (`assertNotNull()` returns it) and `FlatBufferPtr` owns a `Uint8Array`, so results need no freeing.
+  `DashQL.create({ wasmBinary | module })` replaces Emscripten's `instantiateWasm`. A wasm-bindgen
+  module is instantiated once per page, so all `DashQL` instances share one wasm memory; each still
+  owns and frees its own objects. `print`/`printErr` are accepted but unused.
+- **Shell** (`dashql_core::shell`, arrow-rs 60): prompt buffer, VT100 terminal, Arrow renderer,
+  session relations and the effect protocol (the coroutines are a list of pending effects). The
+  shell module `:shell_wasm` re-exports the core bindings, so the app creates its `DashQL` on it.
+  `packages/dashql-app/src/shell/api.ts` uses the `Shell` class instead of the C ABI.
+- **Tests**: `dashql-core-js` vitest (255), Node smoke and tarball consumer tests, browser tests in
+  Chromium and Firefox, and the app tests (185 files, 9620 tests) in Chromium and Firefox pass.
+  The shell tests (51 + 21 + 10) are ported; `:shell_differential_test` compares utf8proc widths and
+  graphemes of all code points, 24k Arrow renders and 1600 random sessions with 0 differences
+  (Arrow error texts are compared by status only).
+
+| Release module | Rust | C++ |
+|---|---|---|
+| Core (with sessions and executions) | 2.38 MB (525 KB brotli) | 2.82 MB |
+| Shell (with the core) | 3.96 MB (780 KB brotli) | 15.26 MB |
+
+**Open items**
+- The shell module is 1.6 MB larger than the core module, mostly arrow-ipc and arrow-array.
+- Run-end-encoded, list-view and extension Arrow types are neither generated nor emulated, and
+  dictionary pretty printing is only exact for flat value types.
+- Delete the C++ core, flex and the C++ rule set after one release cycle.
 
 **Open items (phase 6)**
 - The repository `rustfmt.toml` is not valid TOML (`max_width: 120`), so rustfmt refuses it. Format

@@ -147,7 +147,6 @@ describe('Core batch worker integration', () => {
             expect(read(contextual.scripts[0].analyzed!).tableReferences(0)!.resolvedTable()).not.toBeNull();
             expect(read(independent.scripts[0].analyzed!).tableReferences(0)!.resolvedTable()).toBeNull();
             expect(descriptor.byteLength).toBeGreaterThan(0);
-            expect(Object.prototype.toString.call(core.module.HEAPU8.buffer)).toBe('[object ArrayBuffer]');
         } finally {
             worker.dispose();
             catalog.destroy();

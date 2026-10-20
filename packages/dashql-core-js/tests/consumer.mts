@@ -1,6 +1,6 @@
-import { DashQL, buffers, type DashQLModuleOptions, type EmscriptenModule, type VariantKind } from '@ankoh/dashql-core';
+import { DashQL, buffers, type DashQLBindings, type DashQLModuleOptions, type VariantKind } from '@ankoh/dashql-core';
 import * as publicBuffers from '@ankoh/dashql-core/buffers';
-import createModule from '@ankoh/dashql-core/wasm/glue';
+import * as glue from '@ankoh/dashql-core/wasm/glue';
 import {
     createBatchWorker,
     DashQLBatchWorker,
@@ -25,15 +25,11 @@ const response: BatchWorkerResponse = { requestId: message.requestId, result };
 const variant: VariantKind<'result', BatchResult> = { type: 'result', value: result };
 const options: DashQLModuleOptions = {
     wasmBinary: new Uint8Array(),
-    instantiateWasm: (imports, ready) => {
-        const module = new WebAssembly.Module(new Uint8Array());
-        const instance = new WebAssembly.Instance(module, imports);
-        ready(instance, module);
-        return instance.exports;
-    },
+    module: new WebAssembly.Module(new Uint8Array()),
 };
-const module: EmscriptenModule = await createModule(options);
-const core: DashQL = new DashQL(module);
+await glue.default({ module_or_path: options.module! });
+const bindings: DashQLBindings = { ...glue };
+const core: DashQL = new DashQL(bindings);
 const parsed: publicBuffers.parser.ParsedScript = new buffers.parser.ParsedScript();
 const worker: DashQLBatchWorker = createBatchWorker();
 const pending: Promise<BatchResult> = worker.processBatch(request);

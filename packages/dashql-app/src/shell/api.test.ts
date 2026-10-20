@@ -32,11 +32,6 @@ describe('DashQL shell Wasm', () => {
 
     afterEach(() => shell.destroy());
 
-    it('uses non-shared Wasm memory', () => {
-        expect((shell as any).module.HEAPU8.buffer).toBeInstanceOf(ArrayBuffer);
-        expect((shell as any).module.HEAPU8.buffer).not.toBeInstanceOf(SharedArrayBuffer);
-    });
-
     it('rejects operations after destruction', () => {
         shell.destroy();
         expect(() => shell.resize(40)).toThrowError(DashQLShellError);
@@ -289,46 +284,12 @@ describe('DashQL shell Wasm', () => {
         expect(output).toContain(VT100.FOREGROUND_SILVER + 't' + VT100.RESET_ATTRIBUTES);
     });
 
-    it('copies terminal output from shared Wasm memory before decoding it', () => {
-        const decoder = new TextDecoder();
-        (shell as any).textDecoder = {
-            decode(input?: AllowSharedBufferSource) {
-                if (ArrayBuffer.isView(input) && input.buffer instanceof SharedArrayBuffer) {
-                    throw new TypeError('The provided ArrayBufferView value must not be shared');
-                }
-                return decoder.decode(input);
-            },
-        } as TextDecoder;
-
-        expect(shell.openTerminal('db> ').data).toContain('db> ');
-    });
-
-    it('copies query effects from shared Wasm memory before decoding them', async () => {
-        const heap = (shell as any).module.HEAPU8 as any;
-        const slice = heap.slice;
-        // Model browsers retaining the shared backing buffer when slicing pthread Wasm memory.
-        heap.slice = function (start?: number, end?: number) {
-            return this.subarray(start, end);
-        };
-        const decoder = new TextDecoder();
-        (shell as any).textDecoder = {
-            decode(input?: AllowSharedBufferSource) {
-                if (ArrayBuffer.isView(input) && input.buffer instanceof SharedArrayBuffer) {
-                    throw new TypeError('The provided ArrayBufferView value must not be shared');
-                }
-                return decoder.decode(input);
-            },
-        } as TextDecoder;
+    it('passes query effects to the environment', async () => {
         executeQuery = async query => {
             expect(query).toBe('CREATE TABLE foo(a INT)');
             return arrow.tableToIPC(arrow.tableFromArrays({}), 'file');
         };
-
-        try {
-            await expect(shell.executeQuery('CREATE TABLE foo(a INT)')).resolves.toBe('No results\r\n');
-        } finally {
-            heap.slice = slice;
-        }
+        await expect(shell.executeQuery('CREATE TABLE foo(a INT)')).resolves.toBe('No results\r\n');
     });
 
     it('redraws a wrapped prompt from its current physical row', () => {
@@ -824,7 +785,7 @@ describe('DashQL shell Wasm', () => {
             .toBe(new TextEncoder().encode(query).byteLength);
     });
 
-    it('runs the asynchronous query workflow through a C++ coroutine', async () => {
+    it('runs the asynchronous query workflow through the shell core', async () => {
         let database: HyperDB | null = null;
         let connection: HyperDBConnection | null = null;
         try {
@@ -854,7 +815,7 @@ describe('DashQL shell Wasm', () => {
         }
     }, 60_000);
 
-    it('cancels a suspended C++ coroutine', async () => {
+    it('cancels a suspended shell effect', async () => {
         const abort = new AbortController();
         executeQuery = () => new Promise<Uint8Array>(() => {});
         const query = shell.executeQuery('SELECT 42', abort.signal);

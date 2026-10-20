@@ -38,30 +38,25 @@ copy_to_directory(
     },
     visibility = ["//visibility:private"],
 )
+# The wasm-bindgen module of the Rust shell, which also carries the core bindings. The glue loads
+# `dashql_shell_bg.wasm` by default; the app ships the optimized module as `dashql_shell.wasm`.
 genrule(
     name = "dep_shell_wasm",
-    srcs = ["//packages/dashql-core:shell_wasm"],
+    srcs = [
+        "//packages/dashql-core-rs:dashql_shell_bindgen",
+        "//packages/dashql-core-rs:shell_wasm",
+    ],
     outs = [
         "dependencies/dashql-shell-wasm/dashql_shell.wasm",
         "dependencies/dashql-shell-wasm/dashql_shell.js",
     ],
     cmd = """
-        SRCS=($(SRCS))
-        OUTS=($(OUTS))
-        for src in $${SRCS[@]}; do
-            if [[ $$src == *.wasm ]]; then
-                cp $$src $${OUTS[0]}
-            elif [[ $$src == *.js ]]; then
-                sed \
-                    -e 's|new URL("dashql_shell_wasm.wasm", import.meta.url)|new URL("dashql_shell.wasm", import.meta.url)|g' \
-                    -e 's|new URL("dashql_shell_wasm.wasm",import.meta.url)|new URL("dashql_shell.wasm", import.meta.url)|g' \
-                    -e 's|new Worker(new URL("dashql_shell_wasm.js", import.meta.url)|/* @vite-ignore */ new Worker(new URL("dashql_shell.js", import.meta.url)|g' \
-                    -e 's|new Worker(new URL("dashql_shell_wasm.js",import.meta.url)|/* @vite-ignore */ new Worker(new URL("dashql_shell.js", import.meta.url)|g' \
-                    -e 's|new Worker(new URL("dashql_shell_wasm", import.meta.url)|/* @vite-ignore */ new Worker(new URL("dashql_shell.js", import.meta.url)|g' \
-                    -e 's|new Worker(new URL("dashql_shell_wasm",import.meta.url)|/* @vite-ignore */ new Worker(new URL("dashql_shell.js", import.meta.url)|g' \
-                    $$src > $${OUTS[1]}
-            fi
+        for src in $(locations //packages/dashql-core-rs:dashql_shell_bindgen); do
+            case "$$src" in
+                */dashql_shell.js) sed 's/dashql_shell_bg[.]wasm/dashql_shell.wasm/g' "$$src" > "$(RULEDIR)/dependencies/dashql-shell-wasm/dashql_shell.js" ;;
+            esac
         done
+        cp "$(location //packages/dashql-core-rs:shell_wasm)" "$(RULEDIR)/dependencies/dashql-shell-wasm/dashql_shell.wasm"
     """,
     visibility = ["//visibility:private"],
 )

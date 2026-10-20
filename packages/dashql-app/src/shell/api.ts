@@ -1,20 +1,9 @@
-import createDashQLShellModule from '@ankoh/dashql-shell-js';
+import * as shellModule from '@ankoh/dashql-shell-js';
 import shellWasmUrl from '@ankoh/dashql-shell-wasm?url';
-import { DashQL, DashQLCatalog, DashQLModuleOptions, DashQLScript, EmscriptenModule } from '@ankoh/dashql-core';
+import { DashQL, DashQLCatalog, DashQLScript } from '@ankoh/dashql-core';
 import * as dashql from '@ankoh/dashql-core';
 import { stringifyError } from '../platform/logger/logger.js';
 import { decodedContentLength } from '../utils/content_length.js';
-
-const RESULT_SIZE = 16;
-const RESULT_STATUS = 0;
-const RESULT_DATA_LENGTH = 1;
-const RESULT_DATA_POINTER = 2;
-const EFFECT_HEADER_SIZE = 16;
-const EFFECT_VERSION = 1;
-const PROMPT_RESULT_SIZE = 40;
-const TERMINAL_RESULT_SIZE = 20;
-const COMPLETION_RESULT_SIZE = 12;
-const COMPLETION_CANDIDATE_SIZE = 24;
 
 export enum DashQLShellStatus {
     OK = 0,
@@ -35,55 +24,6 @@ enum DashQLShellEffectCompletionStatus {
     SUCCESS = 0,
     ERROR = 1,
     CANCELLED = 2,
-}
-
-export interface DashQLShellModule extends EmscriptenModule {
-    HEAPU8: Uint8Array;
-    HEAPU32: Uint32Array;
-    _dashql_shell_new(catalog: number, terminalColumns: number, autoQualifyNonDefaultDatabaseTables: boolean): number;
-    _dashql_shell_destroy(shell: number): void;
-    _dashql_shell_resize(shell: number, terminalColumns: number): void;
-    _dashql_shell_keyword_case_set(shell: number, keywordCase: number): void;
-    _dashql_shell_session_relations_set(shell: number, enabled: boolean): number;
-    _dashql_shell_commands_set(shell: number, commands: number, commandsLength: number): number;
-    _dashql_shell_prompt_set(shell: number, text: number, textLength: number, result: number): number;
-    _dashql_shell_prompt_insert(shell: number, text: number, textLength: number, result: number): number;
-    _dashql_shell_prompt_move_left(shell: number, result: number): number;
-    _dashql_shell_prompt_move_right(shell: number, result: number): number;
-    _dashql_shell_prompt_delete_backward(shell: number, result: number): number;
-    _dashql_shell_prompt_delete_forward(shell: number, result: number): number;
-    _dashql_shell_prompt_complete(shell: number, limit: number, result: number): number;
-    _dashql_shell_prompt_apply_completion(shell: number, candidate: number, result: number): number;
-    _dashql_shell_prompt_consume(shell: number, key: number, text: number, textLength: number, result: number): number;
-    _dashql_shell_prompt_submit(shell: number, result: number): number;
-    _dashql_shell_prompt_result_destroy(result: number): void;
-    _dashql_shell_completion_result_destroy(result: number): void;
-    _dashql_shell_terminal_open(shell: number, prompt: number, promptLength: number, result: number): number;
-    _dashql_shell_terminal_consume(shell: number, key: number, text: number, textLength: number, result: number): number;
-    _dashql_shell_terminal_finish_query(shell: number, output: number, outputLength: number, error: boolean, result: number): number;
-    _dashql_shell_terminal_query_progress(shell: number, message: number, messageLength: number, advanceFrame: boolean, result: number): number;
-    _dashql_shell_terminal_query_progress_clear(shell: number, result: number): number;
-    _dashql_shell_terminal_status(shell: number, message: number, messageLength: number, result: number): number;
-    _dashql_shell_terminal_result_destroy(result: number): void;
-    _dashql_shell_history_export(shell: number, result: number): number;
-    _dashql_shell_history_import(shell: number, data: number, dataLength: number, result: number): number;
-    _dashql_shell_start_query(shell: number, query: number, queryLength: number, result: number): number;
-    _dashql_shell_complete_effect(
-        shell: number,
-        effectIdLow: number,
-        effectIdHigh: number,
-        completionStatus: number,
-        data: number,
-        dataLength: number,
-        result: number,
-    ): number;
-    _dashql_shell_cancel_effect(
-        shell: number,
-        effectIdLow: number,
-        effectIdHigh: number,
-        result: number,
-    ): number;
-    _dashql_shell_result_destroy(result: number): void;
 }
 
 export interface DashQLShellEnvironment {
@@ -114,13 +54,15 @@ export type DashQLShellCommand = readonly [
 
 interface DashQLShellOperation {
     status: DashQLShellStatus;
-    data: Uint8Array;
+    /// The output, the error message or the effect description
+    text: string;
+    effect: DashQLShellEffect | null;
 }
 
 interface DashQLShellEffect {
     id: bigint;
     type: DashQLShellEffectType;
-    payload: Uint8Array;
+    payload: string;
 }
 
 interface DashQLShellEffectResult {
@@ -138,7 +80,6 @@ export interface DashQLShellOptions {
     autoQualifyNonDefaultDatabaseTables?: boolean;
     commands?: readonly DashQLShellCommand[];
     terminalColumns?: number;
-    instantiateWasm?: DashQLModuleOptions['instantiateWasm'];
     onProgress?: (progress: DashQLShellInstantiationProgress) => void;
     wasmBinary?: Uint8Array;
     wasmUrl?: string | URL;
@@ -152,16 +93,72 @@ export interface DashQLShellInstantiationProgress {
 }
 
 interface DashQLShellModuleCacheEntry {
-    url: string;
-    promise: Promise<DashQLShellModule>;
+    promise: Promise<void>;
     progress: DashQLShellInstantiationProgress | null;
     listeners: Set<(progress: DashQLShellInstantiationProgress) => void>;
 }
 
 const shellModuleGlobal = globalThis as typeof globalThis & {
     __dashqlShellModuleCache?: DashQLShellModuleCacheEntry;
-    __DASHQL_TEST_SHARE_SHELL_MODULE__?: boolean;
 };
+
+/// Fetch the shell module, reporting the download progress
+async function fetchShellWasm(
+    wasmUrl: string,
+    onProgress: (progress: DashQLShellInstantiationProgress) => void,
+): Promise<ArrayBuffer> {
+    const response = await fetch(wasmUrl);
+    if (!response.ok) throw new Error(`failed to fetch shell Wasm: ${response.status} ${response.statusText}`);
+    const bytesTotal = decodedContentLength(response);
+    let bytesLoaded = 0;
+    onProgress({ bytesLoaded, bytesTotal });
+    const body = response.body?.pipeThrough(new TransformStream<Uint8Array, Uint8Array>({
+        transform(chunk, controller) {
+            bytesLoaded += chunk.byteLength;
+            onProgress({ bytesLoaded, bytesTotal });
+            controller.enqueue(chunk);
+        },
+    }));
+    return body == null ? await response.arrayBuffer() : await new Response(body).arrayBuffer();
+}
+
+/// Instantiate the wasm-bindgen shell module. It is instantiated once per page; later calls share it.
+async function instantiateShellModule(options: DashQLShellOptions): Promise<void> {
+    let entry = shellModuleGlobal.__dashqlShellModuleCache;
+    if (entry == null) {
+        const listeners = new Set<(progress: DashQLShellInstantiationProgress) => void>();
+        const created: DashQLShellModuleCacheEntry = {
+            progress: null,
+            listeners,
+            promise: Promise.resolve(),
+        };
+        const onProgress = (progress: DashQLShellInstantiationProgress) => {
+            created.progress = progress;
+            for (const listener of listeners) listener(progress);
+        };
+        const wasmUrl = options.wasmUrl?.toString() ?? shellWasmUrl;
+        created.promise = (async () => {
+            const moduleOrPath = options.wasmBinary ?? await fetchShellWasm(wasmUrl, onProgress);
+            await shellModule.default({ module_or_path: moduleOrPath });
+        })().catch(error => {
+            if (shellModuleGlobal.__dashqlShellModuleCache === created) {
+                delete shellModuleGlobal.__dashqlShellModuleCache;
+            }
+            throw error;
+        });
+        shellModuleGlobal.__dashqlShellModuleCache = created;
+        entry = created;
+    }
+    if (options.onProgress != null) {
+        entry.listeners.add(options.onProgress);
+        if (entry.progress != null) options.onProgress(entry.progress);
+    }
+    try {
+        await entry.promise;
+    } finally {
+        if (options.onProgress != null) entry.listeners.delete(options.onProgress);
+    }
+}
 
 export interface DashQLShellPrompt {
     revision: bigint;
@@ -235,7 +232,7 @@ export class DashQLShellError extends Error {
 export class DashQLShell {
     protected readonly textDecoder = new TextDecoder();
     protected readonly textEncoder = new TextEncoder();
-    protected shell: number;
+    protected shell: shellModule.Shell | null;
     protected readonly lifecycleAbort = new AbortController();
     protected activeExecution: AbortController | null = null;
     protected readonly catalogScripts: DashQLScript[] = [];
@@ -243,7 +240,6 @@ export class DashQLShell {
     protected readonly settings: DashQLShellSettings;
 
     protected constructor(
-        protected readonly module: DashQLShellModule,
         public readonly core: DashQL,
         public readonly catalog: DashQLCatalog,
         protected readonly environment: DashQLShellEnvironment,
@@ -254,114 +250,27 @@ export class DashQLShell {
     ) {
         this.commands = commands;
         this.settings = settings;
-        this.shell = module._dashql_shell_new(
+        this.shell = new shellModule.Shell(
             catalog.ptr.assertNotNull(),
             terminalColumns,
             autoQualifyNonDefaultDatabaseTables,
         );
-        if (this.shell === 0) {
-            throw new DashQLShellError(DashQLShellStatus.INTERNAL_ERROR, 'failed to create DashQL shell');
-        }
-        const commandNames = this.textEncoder.encode(Array.from(commands.keys()).join('\n'));
-        const commandNamesPointer = this.module._dashql_malloc(commandNames.byteLength);
-        if (commandNamesPointer === 0) {
-            this.module._dashql_shell_destroy(this.shell);
-            this.shell = 0;
-            throw new DashQLShellError(DashQLShellStatus.INTERNAL_ERROR, 'failed to allocate shell commands');
-        }
-        try {
-            this.module.HEAPU8.set(commandNames, commandNamesPointer);
-            const status = this.module._dashql_shell_commands_set(
-                this.shell,
-                commandNamesPointer,
-                commandNames.byteLength,
-            ) as DashQLShellStatus;
-            if (status !== DashQLShellStatus.OK) {
-                this.module._dashql_shell_destroy(this.shell);
-                this.shell = 0;
-                throw new DashQLShellError(status, 'failed to configure shell commands');
-            }
-        } finally {
-            this.module._dashql_free(commandNamesPointer);
+        const status = this.shell.setCommands(Array.from(commands.keys()).join('\n')) as DashQLShellStatus;
+        if (status !== DashQLShellStatus.OK) {
+            this.shell.free();
+            this.shell = null;
+            throw new DashQLShellError(status, 'failed to configure shell commands');
         }
     }
 
     static async create(options: DashQLShellOptions): Promise<DashQLShell> {
         const settings: DashQLShellSettings = { timer: false };
         const commands = createShellCommands(options.commands ?? [], settings);
-        const wasmUrl = options.wasmUrl?.toString() ?? shellWasmUrl;
-        const instantiateModule = async (
-            onProgress: ((progress: DashQLShellInstantiationProgress) => void) | undefined,
-        ): Promise<DashQLShellModule> => {
-            const instantiateWasm = options.instantiateWasm ?? (options.wasmBinary == null && onProgress != null
-            ? async (imports: WebAssembly.Imports, successCallback: (instance: WebAssembly.Instance, module: WebAssembly.Module) => void) => {
-                const response = await fetch(wasmUrl);
-                if (!response.ok) throw new Error(`failed to fetch shell Wasm: ${response.status} ${response.statusText}`);
-                const bytesTotal = decodedContentLength(response);
-                let bytesLoaded = 0;
-                onProgress({ bytesLoaded, bytesTotal });
-                const body = response.body?.pipeThrough(new TransformStream<Uint8Array, Uint8Array>({
-                    transform(chunk, controller) {
-                        bytesLoaded += chunk.byteLength;
-                        onProgress({ bytesLoaded, bytesTotal });
-                        controller.enqueue(chunk);
-                    },
-                }));
-                const result = body == null
-                    ? await WebAssembly.instantiate(await response.arrayBuffer(), imports)
-                    : await WebAssembly.instantiateStreaming(new Response(body, response), imports);
-                successCallback(result.instance, result.module);
-                return {};
-            }
-            : undefined);
-            return await createDashQLShellModule({
-                instantiateWasm,
-                wasmBinary: options.wasmBinary,
-                locateFile: path => path.endsWith('.wasm') ? wasmUrl : path,
-                print: options.print,
-                printErr: options.printErr,
-            }) as unknown as DashQLShellModule;
-        };
-
-        let module: DashQLShellModule;
-        if ((options.wasmBinary != null || options.instantiateWasm != null)
-            && !shellModuleGlobal.__DASHQL_TEST_SHARE_SHELL_MODULE__) {
-            module = await instantiateModule(options.onProgress);
-        } else {
-            let entry = shellModuleGlobal.__dashqlShellModuleCache;
-            if (entry == null || entry.url !== wasmUrl) {
-                const listeners = new Set<(progress: DashQLShellInstantiationProgress) => void>();
-                entry = {
-                    url: wasmUrl,
-                    progress: null,
-                    listeners,
-                    promise: Promise.resolve(null as unknown as DashQLShellModule),
-                };
-                entry.promise = instantiateModule(progress => {
-                    entry!.progress = progress;
-                    for (const listener of listeners) listener(progress);
-                }).catch(error => {
-                    if (shellModuleGlobal.__dashqlShellModuleCache === entry) {
-                        delete shellModuleGlobal.__dashqlShellModuleCache;
-                    }
-                    throw error;
-                });
-                shellModuleGlobal.__dashqlShellModuleCache = entry;
-            }
-            if (options.onProgress != null) {
-                entry.listeners.add(options.onProgress);
-                if (entry.progress != null) options.onProgress(entry.progress);
-            }
-            try {
-                module = await entry.promise;
-            } finally {
-                if (options.onProgress != null) entry.listeners.delete(options.onProgress);
-            }
-        }
-        const core = new DashQL(module);
+        await instantiateShellModule(options);
+        // The shell module carries the core bindings, a shell takes catalogs of the same module
+        const core = new DashQL({ ...shellModule });
         const catalog = core.createCatalog();
         const shell = new DashQLShell(
-            module,
             core,
             catalog,
             options.environment,
@@ -371,7 +280,7 @@ export class DashQLShell {
             settings,
         );
         if (options.trackSessionRelations) {
-            const status = module._dashql_shell_session_relations_set(shell.shell, true) as DashQLShellStatus;
+            const status = shell.alive().setSessionRelations(true) as DashQLShellStatus;
             if (status !== DashQLShellStatus.OK) {
                 shell.destroy();
                 throw new DashQLShellError(status, 'failed to enable session relation tracking');
@@ -405,180 +314,105 @@ export class DashQLShell {
     }
 
     resize(terminalColumns: number): void {
-        this.assertAlive();
-        this.module._dashql_shell_resize(this.shell, terminalColumns);
+        this.alive().resize(terminalColumns);
     }
 
     setKeywordCase(keywordCase: dashql.buffers.formatting.KeywordCase): void {
-        this.assertAlive();
-        this.module._dashql_shell_keyword_case_set(this.shell, keywordCase);
+        this.alive().setKeywordCase(keywordCase);
     }
 
     setPrompt(text: string): DashQLShellPrompt {
-        return this.invokePrompt(this.textEncoder.encode(text), (input, inputLength, result) => {
-            this.module._dashql_shell_prompt_set(this.shell, input, inputLength, result);
-        });
+        return this.readPrompt(this.alive().setPrompt(text));
     }
 
     insertPrompt(text: string): DashQLShellPrompt {
-        return this.invokePrompt(this.textEncoder.encode(text), (input, inputLength, result) => {
-            this.module._dashql_shell_prompt_insert(this.shell, input, inputLength, result);
-        });
+        return this.readPrompt(this.alive().insertPrompt(text));
     }
 
     movePromptLeft(): DashQLShellPrompt {
-        return this.invokePrompt(new Uint8Array(), (_input, _inputLength, result) => {
-            this.module._dashql_shell_prompt_move_left(this.shell, result);
-        });
+        return this.readPrompt(this.alive().movePromptLeft());
     }
 
     movePromptRight(): DashQLShellPrompt {
-        return this.invokePrompt(new Uint8Array(), (_input, _inputLength, result) => {
-            this.module._dashql_shell_prompt_move_right(this.shell, result);
-        });
+        return this.readPrompt(this.alive().movePromptRight());
     }
 
     deletePromptBackward(): DashQLShellPrompt {
-        return this.invokePrompt(new Uint8Array(), (_input, _inputLength, result) => {
-            this.module._dashql_shell_prompt_delete_backward(this.shell, result);
-        });
+        return this.readPrompt(this.alive().deletePromptBackward());
     }
 
     deletePromptForward(): DashQLShellPrompt {
-        return this.invokePrompt(new Uint8Array(), (_input, _inputLength, result) => {
-            this.module._dashql_shell_prompt_delete_forward(this.shell, result);
-        });
+        return this.readPrompt(this.alive().deletePromptForward());
     }
 
     completePrompt(limit = 20): DashQLShellCompletionCandidate[] {
-        this.assertAlive();
-        const result = this.module._dashql_malloc(COMPLETION_RESULT_SIZE);
-        if (result === 0) {
-            throw new DashQLShellError(DashQLShellStatus.INTERNAL_ERROR, 'failed to allocate completion result');
-        }
+        const shell = this.alive();
+        let candidates: shellModule.ShellCompletionCandidate[];
         try {
-            this.module.HEAPU32.fill(0, result >>> 2, (result + COMPLETION_RESULT_SIZE) >>> 2);
-            const status = this.module._dashql_shell_prompt_complete(this.shell, limit, result) as DashQLShellStatus;
-            if (status !== DashQLShellStatus.OK) {
-                throw new DashQLShellError(status, 'failed to complete shell prompt');
-            }
-            const resultIndex = result >>> 2;
-            const count = this.module.HEAPU32[resultIndex];
-            const candidates = this.module.HEAPU32[resultIndex + 1];
-            const output: DashQLShellCompletionCandidate[] = [];
-            for (let i = 0; i < count; ++i) {
-                const candidate = (candidates + i * COMPLETION_CANDIDATE_SIZE) >>> 2;
-                const displayLength = this.module.HEAPU32[candidate];
-                const displayPointer = this.module.HEAPU32[candidate + 1];
-                const completionLength = this.module.HEAPU32[candidate + 2];
-                const completionPointer = this.module.HEAPU32[candidate + 3];
-                output.push({
-                    displayText: this.readText(displayPointer, displayLength),
-                    completionText: this.readText(completionPointer, completionLength),
-                    targetOffset: this.module.HEAPU32[candidate + 4],
-                    targetLength: this.module.HEAPU32[candidate + 5],
-                });
-            }
-            return output;
-        } finally {
-            this.module._dashql_shell_completion_result_destroy(result);
-            this.module._dashql_free(result);
+            candidates = shell.completePrompt(limit);
+        } catch (error) {
+            throw new DashQLShellError(DashQLShellStatus.INTERNAL_ERROR, 'failed to complete shell prompt');
         }
+        return candidates.map(candidate => {
+            try {
+                return {
+                    displayText: candidate.displayText,
+                    completionText: candidate.completionText,
+                    targetOffset: candidate.targetOffset,
+                    targetLength: candidate.targetLength,
+                };
+            } finally {
+                candidate.free();
+            }
+        });
     }
 
     applyCompletion(candidate: DashQLShellCompletionCandidate): DashQLShellPrompt {
-        this.assertAlive();
-        const display = this.textEncoder.encode(candidate.displayText);
-        const completion = this.textEncoder.encode(candidate.completionText);
-        const storage = this.module._dashql_malloc(COMPLETION_CANDIDATE_SIZE + display.byteLength + completion.byteLength);
-        if (storage === 0) {
-            throw new DashQLShellError(DashQLShellStatus.INTERNAL_ERROR, 'failed to allocate completion candidate');
-        }
-        try {
-            const displayPointer = storage + COMPLETION_CANDIDATE_SIZE;
-            const completionPointer = displayPointer + display.byteLength;
-            this.module.HEAPU8.set(display, displayPointer);
-            this.module.HEAPU8.set(completion, completionPointer);
-            const index = storage >>> 2;
-            this.module.HEAPU32.set([
-                display.byteLength,
-                displayPointer,
-                completion.byteLength,
-                completionPointer,
-                candidate.targetOffset,
-                candidate.targetLength,
-            ], index);
-            return this.invokePrompt(new Uint8Array(), (_input, _inputLength, result) => {
-                this.module._dashql_shell_prompt_apply_completion(this.shell, storage, result);
-            });
-        } finally {
-            this.module._dashql_free(storage);
-        }
+        return this.readPrompt(this.alive().applyCompletion(
+            candidate.displayText,
+            candidate.completionText,
+            candidate.targetOffset,
+            candidate.targetLength,
+        ));
     }
 
     consumePromptInput(key: DashQLShellPromptInput, text = ''): DashQLShellPrompt {
-        return this.invokePrompt(this.textEncoder.encode(text), (input, inputLength, result) => {
-            this.module._dashql_shell_prompt_consume(this.shell, key, input, inputLength, result);
-        });
+        return this.readPrompt(this.alive().consumePromptInput(key, text));
     }
 
     openTerminal(prompt = 'dashql> '): DashQLShellTerminalOutput {
-        return this.invokeTerminal(this.textEncoder.encode(prompt), (input, inputLength, result) => {
-            this.module._dashql_shell_terminal_open(this.shell, input, inputLength, result);
-        });
+        return this.readTerminal(this.alive().openTerminal(prompt));
     }
 
     consumeTerminalInput(key: DashQLShellPromptInput, text = ''): DashQLShellTerminalOutput {
-        return this.invokeTerminal(this.textEncoder.encode(text), (input, inputLength, result) => {
-            this.module._dashql_shell_terminal_consume(this.shell, key, input, inputLength, result);
-        });
+        return this.readTerminal(this.alive().consumeTerminalInput(key, text));
     }
 
     finishTerminalQuery(output: string, error = false): DashQLShellTerminalOutput {
-        return this.invokeTerminal(this.textEncoder.encode(output), (input, inputLength, result) => {
-            this.module._dashql_shell_terminal_finish_query(this.shell, input, inputLength, error, result);
-        });
+        return this.readTerminal(this.alive().finishTerminalQuery(output, error));
     }
 
     renderTerminalQueryProgress(message = '', advanceFrame = false): DashQLShellTerminalOutput {
-        return this.invokeTerminal(this.textEncoder.encode(message), (input, inputLength, result) => {
-            this.module._dashql_shell_terminal_query_progress(
-                this.shell,
-                input,
-                inputLength,
-                advanceFrame,
-                result,
-            );
-        });
+        return this.readTerminal(this.alive().renderTerminalQueryProgress(message, advanceFrame));
     }
 
     clearTerminalQueryProgress(): DashQLShellTerminalOutput {
-        return this.invokeTerminal(new Uint8Array(), (_input, _inputLength, result) => {
-            this.module._dashql_shell_terminal_query_progress_clear(this.shell, result);
-        });
+        return this.readTerminal(this.alive().clearTerminalQueryProgress());
     }
 
     renderTerminalStatus(message: string): DashQLShellTerminalOutput {
-        return this.invokeTerminal(this.textEncoder.encode(message), (input, inputLength, result) => {
-            this.module._dashql_shell_terminal_status(this.shell, input, inputLength, result);
-        });
+        return this.readTerminal(this.alive().renderTerminalStatus(message));
     }
 
     exportHistory(): Uint8Array {
-        const operation = this.invoke(new Uint8Array(), (_input, _inputLength, result) => {
-            this.module._dashql_shell_history_export(this.shell, result);
-        });
-        if (operation.status !== DashQLShellStatus.OK) {
-            throw new DashQLShellError(operation.status, this.textDecoder.decode(operation.data));
-        }
-        return operation.data;
+        return this.alive().exportHistory();
     }
 
     importHistory(data: Uint8Array): void {
-        const operation = this.invoke(data, (input, inputLength, result) => {
-            this.module._dashql_shell_history_import(this.shell, input, inputLength, result);
-        });
-        this.requireComplete(operation);
+        const status = this.alive().importHistory(data) as DashQLShellStatus;
+        if (status !== DashQLShellStatus.OK) {
+            throw new DashQLShellError(status, 'failed to import shell history');
+        }
     }
 
     async submitPrompt(
@@ -587,9 +421,7 @@ export class DashQLShell {
         onResult?: (queryId: number, rowCount: number) => void,
     ): Promise<string> {
         this.assertAlive();
-        return await this.executeOperation(() => this.invoke(new Uint8Array(), (_input, _inputLength, result) => {
-            this.module._dashql_shell_prompt_submit(this.shell, result);
-        }), signal, onProgress, onResult);
+        return await this.executeOperation(() => this.readOperation(this.alive().submitPrompt()), signal, onProgress, onResult);
     }
 
     async executeQuery(
@@ -598,9 +430,7 @@ export class DashQLShell {
         onProgress?: (message: string) => void,
         onResult?: (queryId: number, rowCount: number) => void,
     ): Promise<string> {
-        return await this.executeOperation(() => this.invoke(this.textEncoder.encode(query), (input, inputLength, result) => {
-            this.module._dashql_shell_start_query(this.shell, input, inputLength, result);
-        }), signal, onProgress, onResult);
+        return await this.executeOperation(() => this.readOperation(this.alive().startQuery(query)), signal, onProgress, onResult);
     }
 
     protected async executeOperation(
@@ -637,7 +467,7 @@ export class DashQLShell {
                         ? undefined
                         : (label, elapsedMs) => { queryTimings.push({ label, elapsedMs }); },
                 );
-                if (this.shell === 0) {
+                if (this.shell == null) {
                     throw new DashQLShellError(DashQLShellStatus.STALE_EFFECT, 'DashQL shell was destroyed');
                 }
                 operation = completion.status === DashQLShellEffectCompletionStatus.CANCELLED
@@ -663,77 +493,54 @@ export class DashQLShell {
         }
     }
 
-    protected invokePrompt(
-        data: Uint8Array,
-        callback: (input: number, inputLength: number, result: number) => void,
-    ): DashQLShellPrompt {
-        this.assertAlive();
-        const input = data.byteLength === 0 ? 0 : this.module._dashql_malloc(data.byteLength);
-        const result = this.module._dashql_malloc(PROMPT_RESULT_SIZE);
-        if ((data.byteLength !== 0 && input === 0) || result === 0) {
-            if (input !== 0) this.module._dashql_free(input);
-            if (result !== 0) this.module._dashql_free(result);
-            throw new DashQLShellError(DashQLShellStatus.INTERNAL_ERROR, 'failed to allocate prompt input');
-        }
+    protected readPrompt(result: shellModule.ShellPromptResult): DashQLShellPrompt {
         try {
-            if (data.byteLength !== 0) this.module.HEAPU8.set(data, input);
-            this.module.HEAPU32.fill(0, result >>> 2, (result + PROMPT_RESULT_SIZE) >>> 2);
-            callback(input, data.byteLength, result);
-            const index = result >>> 2;
-            const status = this.module.HEAPU32[index] as DashQLShellStatus;
-            const message = this.readText(this.module.HEAPU32[index + 7], this.module.HEAPU32[index + 6]);
+            const status = result.status as DashQLShellStatus;
+            const message = result.message;
             if (status !== DashQLShellStatus.OK) {
                 throw new DashQLShellError(status, message);
             }
             return {
-                revision: BigInt(this.module.HEAPU32[index + 1]) | (BigInt(this.module.HEAPU32[index + 2]) << 32n),
-                cursorByteOffset: this.module.HEAPU32[index + 3],
-                text: this.readText(this.module.HEAPU32[index + 5], this.module.HEAPU32[index + 4]),
+                revision: result.revision,
+                cursorByteOffset: result.cursorByteOffset,
+                text: result.text,
                 message,
-                action: this.module.HEAPU32[index + 9] as DashQLShellPromptAction,
+                action: result.action as DashQLShellPromptAction,
             };
         } finally {
-            this.module._dashql_shell_prompt_result_destroy(result);
-            this.module._dashql_free(result);
-            this.module._dashql_free(input);
+            result.free();
         }
     }
 
-    protected invokeTerminal(
-        data: Uint8Array,
-        callback: (input: number, inputLength: number, result: number) => void,
-    ): DashQLShellTerminalOutput {
-        this.assertAlive();
-        const input = data.byteLength === 0 ? 0 : this.module._dashql_malloc(data.byteLength);
-        const result = this.module._dashql_malloc(TERMINAL_RESULT_SIZE);
-        if ((data.byteLength !== 0 && input === 0) || result === 0) {
-            if (input !== 0) this.module._dashql_free(input);
-            if (result !== 0) this.module._dashql_free(result);
-            throw new DashQLShellError(DashQLShellStatus.INTERNAL_ERROR, 'failed to allocate terminal input');
-        }
+    protected readTerminal(result: shellModule.ShellTerminalResult): DashQLShellTerminalOutput {
         try {
-            if (data.byteLength !== 0) this.module.HEAPU8.set(data, input);
-            this.module.HEAPU32.fill(0, result >>> 2, (result + TERMINAL_RESULT_SIZE) >>> 2);
-            callback(input, data.byteLength, result);
-            const index = result >>> 2;
-            const status = this.module.HEAPU32[index] as DashQLShellStatus;
-            const output = this.readText(this.module.HEAPU32[index + 3], this.module.HEAPU32[index + 2]);
+            const status = result.status as DashQLShellStatus;
+            const output = result.data;
             if (status !== DashQLShellStatus.OK) throw new DashQLShellError(status, output);
             return {
-                action: this.module.HEAPU32[index + 1] as DashQLShellPromptAction,
+                action: result.action as DashQLShellPromptAction,
                 data: output,
             };
         } finally {
-            this.module._dashql_shell_terminal_result_destroy(result);
-            this.module._dashql_free(result);
-            this.module._dashql_free(input);
+            result.free();
         }
     }
 
-    protected readText(pointer: number, length: number): string {
-        if (length === 0) return '';
-        const data = new Uint8Array(this.module.HEAPU8.subarray(pointer, pointer + length));
-        return this.textDecoder.decode(data);
+    protected readOperation(operation: shellModule.ShellOperation): DashQLShellOperation {
+        try {
+            const status = operation.status as DashQLShellStatus;
+            const effectId = operation.effectId;
+            const effectType = operation.effectType;
+            return {
+                status,
+                text: operation.text,
+                effect: status === DashQLShellStatus.PENDING && effectId != null && effectType != null
+                    ? { id: effectId, type: effectType as DashQLShellEffectType, payload: operation.effectPayload ?? '' }
+                    : null,
+            };
+        } finally {
+            operation.free();
+        }
     }
 
     protected async runEffect(
@@ -771,7 +578,7 @@ export class DashQLShell {
             }
             signal?.addEventListener('abort', onAbort, { once: true });
 
-            const effectInput = this.textDecoder.decode(effect.payload);
+            const effectInput = effect.payload;
             Promise.resolve()
                 .then(async () => {
                     if (effect.type === DashQLShellEffectType.EXECUTE_QUERY) {
@@ -819,101 +626,40 @@ export class DashQLShell {
         };
     }
 
-    protected invoke(
-        data: Uint8Array,
-        callback: (input: number, inputLength: number, result: number) => void,
-    ): DashQLShellOperation {
-        const input = data.byteLength === 0 ? 0 : this.module._dashql_malloc(data.byteLength);
-        const result = this.module._dashql_malloc(RESULT_SIZE);
-        if ((data.byteLength !== 0 && input === 0) || result === 0) {
-            if (input !== 0) this.module._dashql_free(input);
-            if (result !== 0) this.module._dashql_free(result);
-            throw new DashQLShellError(DashQLShellStatus.INTERNAL_ERROR, 'failed to allocate shell input');
-        }
-
-        try {
-            if (data.byteLength !== 0) {
-                this.module.HEAPU8.set(data, input);
-            }
-            this.module.HEAPU32.fill(0, result >>> 2, (result >>> 2) + (RESULT_SIZE >>> 2));
-            callback(input, data.byteLength, result);
-
-            const resultIndex = result >>> 2;
-            const status = this.module.HEAPU32[resultIndex + RESULT_STATUS] as DashQLShellStatus;
-            const outputLength = this.module.HEAPU32[resultIndex + RESULT_DATA_LENGTH];
-            const outputPointer = this.module.HEAPU32[resultIndex + RESULT_DATA_POINTER];
-            return {
-                status,
-                data: new Uint8Array(this.module.HEAPU8.subarray(outputPointer, outputPointer + outputLength)),
-            };
-        } finally {
-            this.module._dashql_shell_result_destroy(result);
-            this.module._dashql_free(result);
-            this.module._dashql_free(input);
-        }
-    }
-
     protected completeEffect(
         effectId: bigint,
         status: DashQLShellEffectCompletionStatus,
         data: Uint8Array,
     ): DashQLShellOperation {
-        const [low, high] = this.splitEffectId(effectId);
-        return this.invoke(data, (input, inputLength, result) => {
-            this.module._dashql_shell_complete_effect(
-                this.shell,
-                low,
-                high,
-                status,
-                input,
-                inputLength,
-                result,
-            );
-        });
+        return this.readOperation(this.alive().completeEffect(effectId, status, data));
     }
 
     protected cancelEffect(effectId: bigint): DashQLShellOperation {
-        const [low, high] = this.splitEffectId(effectId);
-        return this.invoke(new Uint8Array(), (_input, _inputLength, result) => {
-            this.module._dashql_shell_cancel_effect(this.shell, low, high, result);
-        });
+        return this.readOperation(this.alive().cancelEffect(effectId));
     }
 
     protected requireComplete(operation: DashQLShellOperation): string {
         if (operation.status !== DashQLShellStatus.OK) {
-            throw new DashQLShellError(operation.status, this.textDecoder.decode(operation.data));
+            throw new DashQLShellError(operation.status, operation.text);
         }
-        return this.textDecoder.decode(operation.data);
+        return operation.text;
     }
 
     protected requireEffect(operation: DashQLShellOperation): DashQLShellEffect {
         if (operation.status !== DashQLShellStatus.PENDING) {
-            throw new DashQLShellError(operation.status, this.textDecoder.decode(operation.data));
+            throw new DashQLShellError(operation.status, operation.text);
         }
-        if (operation.data.byteLength < EFFECT_HEADER_SIZE) {
+        if (operation.effect == null) {
             throw new DashQLShellError(DashQLShellStatus.INTERNAL_ERROR, 'invalid shell effect envelope');
         }
-        const view = new DataView(operation.data.buffer, operation.data.byteOffset, operation.data.byteLength);
-        const version = view.getUint32(0, true);
-        if (version !== EFFECT_VERSION) {
-            throw new DashQLShellError(DashQLShellStatus.INTERNAL_ERROR, `unsupported shell effect version ${version}`);
-        }
-        return {
-            type: view.getUint32(4, true) as DashQLShellEffectType,
-            id: view.getBigUint64(8, true),
-            payload: operation.data.subarray(EFFECT_HEADER_SIZE),
-        };
-    }
-
-    protected splitEffectId(effectId: bigint): [number, number] {
-        return [Number(effectId & 0xffffffffn), Number(effectId >> 32n)];
+        return operation.effect;
     }
 
     destroy(): void {
-        if (this.shell !== 0) {
+        if (this.shell != null) {
             this.lifecycleAbort.abort();
-            this.module._dashql_shell_destroy(this.shell);
-            this.shell = 0;
+            this.shell.free();
+            this.shell = null;
             for (let i = this.catalogScripts.length - 1; i >= 0; --i) {
                 this.catalogScripts[i].destroy();
             }
@@ -922,10 +668,15 @@ export class DashQLShell {
         }
     }
 
-    protected assertAlive(): void {
-        if (this.shell === 0) {
+    protected alive(): shellModule.Shell {
+        if (this.shell == null) {
             throw new DashQLShellError(DashQLShellStatus.INVALID_ARGUMENT, 'DashQL shell has been destroyed');
         }
+        return this.shell;
+    }
+
+    protected assertAlive(): void {
+        this.alive();
     }
 }
 

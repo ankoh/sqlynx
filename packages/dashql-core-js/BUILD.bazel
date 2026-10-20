@@ -12,17 +12,24 @@ filegroup(
     srcs = glob(["src/**/*.ts"]),
 )
 
+# The wasm-bindgen module of the Rust core. The glue loads `dashql_core_bg.wasm` by default, the
+# package ships the module as `dashql_core.wasm`.
 genrule(
     name = "wasm_assets",
-    srcs = ["//packages/dashql-core:core_wasm"],
-    outs = ["src/wasm/dashql_core.js", "src/wasm/dashql_core.wasm"],
+    srcs = [
+        "//packages/dashql-core-rs:dashql_core_bindgen",
+        "//packages/dashql-core-rs:core_wasm",
+    ],
+    outs = ["src/wasm/dashql_core.js", "src/wasm/dashql_core.d.ts", "src/wasm/dashql_core.wasm"],
     cmd = """
-        for src in $(SRCS); do
+        for src in $(locations //packages/dashql-core-rs:dashql_core_bindgen); do
             case "$$src" in
-                *.js) sed 's/dashql_core_wasm[.]wasm/dashql_core.wasm/g' "$$src" > "$(RULEDIR)/src/wasm/dashql_core.js" ;;
-                *.wasm) cp "$$src" "$(RULEDIR)/src/wasm/dashql_core.wasm" ;;
+                */dashql_core.js) sed 's/dashql_core_bg[.]wasm/dashql_core.wasm/g' "$$src" > "$(RULEDIR)/src/wasm/dashql_core.js" ;;
+                # Symbol.dispose needs lib esnext.disposable, which ES2022 consumers lack
+                */dashql_core.d.ts) sed '/[[]Symbol[.]dispose[]]/d' "$$src" > "$(RULEDIR)/src/wasm/dashql_core.d.ts" ;;
             esac
         done
+        cp "$(location //packages/dashql-core-rs:core_wasm)" "$(RULEDIR)/src/wasm/dashql_core.wasm"
     """,
 )
 
@@ -46,7 +53,7 @@ npm_package(
     name = "npm_package",
     package = "@ankoh/dashql-core",
     # No Bazel linking consumers: publish metadata comes only from package.json.
-    srcs = [":compile", ":wasm_assets", "src/wasm/dashql_core.d.ts", "package.json", "README.md", ":notice", ":license"],
+    srcs = [":compile", ":wasm_assets", "package.json", "README.md", ":notice", ":license"],
     include_transitive_sources = False,
     include_transitive_types = False,
     replace_prefixes = {"src/wasm": "dist/wasm"},

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import * as core from '@ankoh/dashql-core';
 import * as buffers from '@ankoh/dashql-core/buffers';
-import createModule from '@ankoh/dashql-core/wasm/glue';
+import * as glue from '@ankoh/dashql-core/wasm/glue';
 
 assert.equal(globalThis.Worker, undefined);
 assert.equal(globalThis.window, undefined);
@@ -17,7 +17,7 @@ assert.equal(WebAssembly.validate(binary), true);
 const instances = [
     await core.DashQL.create(),
     await core.DashQL.create({ wasmBinary: binary }),
-    new core.DashQL(await createModule({ wasmBinary: binary })),
+    await glue.default({ module_or_path: binary }).then(() => new core.DashQL({ ...glue })),
 ];
 for (const instance of instances) {
     try {

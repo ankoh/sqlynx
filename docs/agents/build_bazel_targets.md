@@ -50,7 +50,9 @@ bazel build //...
 | `//packages/dashql-native:mac_package_x86_64` | x86_64 macOS Electron app, DMG, ZIP, and blockmaps |
 | `//packages/dashql-pack:pack` | Publish architecture-specific Electron artifacts and update manifests to R2 |
 | `//packages/dashql-pack:vacuum` | Remove complete expired release versions, including old updater blockmaps |
-| `//packages/dashql-core:dashql_core` | Core C++ library |
+| `//packages/dashql-core-rs:core_wasm` | Core Wasm module (Rust, wasm-bindgen) shipped by `dashql-core-js` |
+| `//packages/dashql-core-rs:shell_wasm` | Shell Wasm module (Rust, includes the core bindings) shipped by the app |
+| `//packages/dashql-core:dashql_core` | Core C++ library, kept as the differential oracle of the Rust core |
 | `//packages/dashql-core-js:compile` | Core ESM bindings and TypeScript declarations |
 | `//packages/dashql-core-js:npm_package` | Standalone core npm package directory |
 | `//packages/dashql-core-js:npm_tarball` | Core npm archive at `bazel-bin/packages/dashql-core-js/dashql-core.tgz` |
@@ -97,7 +99,7 @@ bazel test //packages/dashql-core:*_tests
 | `//packages/dashql-core:analyzer_tests` | Analyzer snapshot tests |
 | `//packages/dashql-core:formatter_tests` | Formatter snapshot tests |
 | `//packages/dashql-core:formatter_validation_hyper_tests` | Execute formatted SQL against Hyper |
-| `//packages/dashql-core-rs/...` | Rust rewrite of the core: grammar tables, table parity, C++ oracle replay (see `docs/rust-port/README.md`) |
+| `//packages/dashql-core-rs/...` | Rust core: unit, snapshot and differential tests against the C++ oracle (see `docs/rust-port/README.md`) |
 | `//packages/dashql-core-js:all` | Core Node unit, assembled-runtime, and tarball consumer tests |
 | `//packages/dashql-core-js/test:all` | Core browser tests in Chromium and Firefox, including browser workers |
 | `//packages/hyper-api:smoke_test` | Native Tableau Hyper API integration test |
@@ -292,8 +294,8 @@ bazel test //packages/dashql-core-js:all //packages/dashql-core-js/test:all
 bazel build --config=release //packages/dashql-core-js:npm_tarball
 ```
 
-The package targets depend directly on `//packages/dashql-core:core_wasm` and build
-the generated bindings around that artifact. The release archive is
+The package targets depend directly on `//packages/dashql-core-rs:core_wasm` and its
+wasm-bindgen glue (`:dashql_core_bindgen`) and build the TypeScript API around them. The release archive is
 `bazel-bin/packages/dashql-core-js/dashql-core.tgz`. Trusted CI waits for the release
 Wasm build and requires that artifact to be available in the remote cache before
 packaging, so it does not rebuild the same Wasm action. It uploads the archive as

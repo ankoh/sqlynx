@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import * as core from '../npm_package/dist/index.js';
-import createModule from '../npm_package/dist/wasm/dashql_core.js';
+import * as glue from '../npm_package/dist/wasm/dashql_core.js';
 
 assert.equal('createBatchWorker' in core, false);
 assert.equal('DashQLBatchWorker' in core, false);
 const binary = new Uint8Array(await readFile(new URL('../npm_package/dist/wasm/dashql_core.wasm', import.meta.url)));
 const first = await core.DashQL.create();
-const second = new core.DashQL(await createModule({ wasmBinary: binary }));
+await glue.default({ module_or_path: binary });
+const second = new core.DashQL({ ...glue });
 assert.notEqual(first, second);
 for (const instance of [first, second]) {
     const catalog = instance.createCatalog();

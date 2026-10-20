@@ -12,13 +12,7 @@ declare global {
 export async function createPrecompiledTestCore(bytes: Promise<Uint8Array>): Promise<DashQL> {
     globalThis.__DASHQL_TEST_CORE_WASM_MODULE__ ??= bytes.then(binary => WebAssembly.compile(binary.slice().buffer));
     const module = await globalThis.__DASHQL_TEST_CORE_WASM_MODULE__;
-    return DashQL.create({
-        instantiateWasm: async (imports, success) => {
-            const instance = await WebAssembly.instantiate(module, imports);
-            success(instance, module);
-            return instance.exports;
-        },
-    });
+    return DashQL.create({ module });
 }
 
 export function installSharedCoreTestPool(): void {

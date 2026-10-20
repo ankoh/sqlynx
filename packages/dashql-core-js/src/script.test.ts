@@ -97,8 +97,7 @@ describe('DashQL scripts', () => {
         catalog.destroy();
     });
 
-    it('uses non-shared Wasm memory and remains editable after analysis', () => {
-        expect(Object.prototype.toString.call(dql!.module.HEAPU8.buffer)).toBe('[object ArrayBuffer]');
+    it('remains editable after analysis', () => {
         const catalog = dql!.createCatalog();
         const script = dql!.createScript(catalog);
         script.replaceText('select 1');

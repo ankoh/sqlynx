@@ -202,6 +202,28 @@ the C++ wasm build may differ there.
 - **Text padding.** Spans that end past the text read the two NUL padding bytes of the text buffer.
   The Rust `script_diff` reads them the same way instead of panicking.
 
+## Shell (`packages/dashql-core/src/shell/`)
+
+- **Arrow values print like Arrow C++ 19 `Scalar::ToString`.** Binary columns print as raw bytes.
+  Nested values embed `DataType::ToString` (`list<item: int32>[…]`, `{name:type = v}`,
+  `union{f: t = v}`, `map<…>` with ` ('keys')`). A dictionary cell pretty-prints the whole
+  dictionary followed by `[index]`. Half floats inside pretty printing show their raw int16 bits,
+  durations print raw counts, `date64` truncates towards zero, out-of-range dates and times print
+  `<value out of range: N>`, timestamps with a time zone get a trailing `Z` without conversion, and
+  decimals with an out-of-range scale print a marker text.
+- **Float ties** round to an even digit (double-conversion); Rust rounds them up, which is emulated.
+- **Sliced sparse unions.** `IsNullSparseUnion` ignores the slice offset, so union elements inside
+  lists, maps and structs take the null flag of another row.
+- **Stale cursor row.** After prompt edits outside the terminal the cursor row is stale, and the
+  cursor-down count of a submit wraps like `size_t`.
+- **`\r\n` is one grapheme of width 0** in the prompt layout.
+- **utf8proc 2.4**: grapheme rules of Unicode 12.1 and the width table of 2.4.
+- **Completion limit 0** trips an assertion in the C++ `TopKHeap`.
+- **Up/Down at a CR LF line break** dereferences an empty `std::optional` in C++ (undefined
+  behavior); Rust takes the boundary before it.
+- **Invalid UTF-8 queries.** `StartQuery` returns `INTERNAL_ERROR` "rope input must contain valid
+  UTF-8" after allocating a catalog entry id.
+
 ## Test infrastructure
 
 - **Unregistered parser snapshots.** The C++ parser snapshot suite
