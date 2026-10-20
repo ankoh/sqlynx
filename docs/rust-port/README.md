@@ -72,7 +72,7 @@ CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
 | 4 | Catalog, descriptor, AnalyzedScript, 4 analyzer passes | 101 analyzer snapshots; `ComputeSignature` equals C++ | **analyzer and signature done** (packing, catalog tests open) |
 | 5 | Cursor and completion | 161 completion snapshots; differential at every prefix and cursor | **done** (unit tests open) |
 | 6 | visualize, compiler, Script, batch, planner | 27 visualize and 38 planner snapshots; batch differential | **done** |
-| 7 | ScriptSession, ScriptExecution, Hyper plan view | Session, execution and plan tests; 36 plan snapshots | |
+| 7 | ScriptSession, ScriptExecution, Hyper plan view | Session, execution and plan tests; 36 plan snapshots | **done** |
 | 8 | wasm-bindgen API and rewrite of `dashql-core-js/src/api.ts` | core-js, browser and app tests on the Rust wasm; size and speed budgets | |
 | 9 | Switch-over | Release built from Rust; C++ removed after one release cycle | |
 | 10 | Shell (arrow-rs) | Shell tests ported | |
@@ -303,7 +303,37 @@ remaining per-list allocations.
   that analyzed scripts record, so loading a script of another catalog fails with
   `CATALOG_MISMATCH` as in C++.
 
+## Phase 7 results
+
+- **ScriptSession** (`dashql_core::script_session`): sessions share their catalog through a
+  `CatalogHandle` (`Rc<RefCell<Catalog>>`) and borrow it only during a call; dropping a session drops
+  its script from the catalog like the C++ destructor. Editor events, cursors, analysis, completion,
+  compilation, formatting, dashboard rewrites, diffs and catalog publication are ported, including
+  the UTF-8 and UTF-16 offset projections (`utils::rope`).
+- **ScriptExecution** (`dashql_core::script_execution`): the C++ coroutine is an explicit state
+  machine (phase, statement index, pending statement id).
+- **Script**: statement text, dashboard rewrites, formatting, unformattable nodes and statistics.
+- **Tests**: `:script_session_test` (34: all 29 of `script_session_test.cc`, 3 of `api_test.cc`, 2
+  new) and `:script_execution_test` (6). `:session_differential_test` runs 88 random episodes over
+  both offset units against a stateful C++ oracle (`tools/oracle_ffi_session.cc`): about 231k
+  comparisons of updates, texts, versions, revisions and the catalog version, 0 differences.
+- **Planner**: takes the catalog of each script (`PlannerInput`) and reports scripts of different
+  catalogs like C++.
+
+**Deviations**
+- An editor event with invalid UTF-8 inserts fails buffer verification with `INVALID_EVENT`; C++
+  reports `INVALID_UTF8`. Rust strings are always valid UTF-8.
+- Memory statistics: rope, scanner input, AST bytes and the name index size match C++. Symbol,
+  name dictionary, analyzer description and name index bytes measure the Rust data structures.
+- Timings stay 0 on wasm32, because `Instant` panics there.
+
 **Open items**
+- `ANALYSIS_FAILED` is not covered by the session differential: the only known input that fails
+  analysis (a qualified function name) hits an `assert` in the C++ fastbuild oracle.
+- `ScriptCompiler::Compile` (C++) keeps a reference to the parsed script while the `Analyze(false)`
+  it calls can replace it. Not hit, but undefined behavior.
+
+**Open items (phase 6)**
 - The repository `rustfmt.toml` is not valid TOML (`max_width: 120`), so rustfmt refuses it. Format
   with `--config max_width=120,use_small_heuristics=Max` until it is fixed.
 - rustfmt is not wired into Bazel. `@rules_rust//tools/upstream_wrapper:rustfmt` crashes Bazel during

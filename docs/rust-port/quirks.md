@@ -184,6 +184,24 @@ the C++ wasm build may differ there.
   `earlyProbes` blocks the `early-probes` fallback, pipeline operator lists keep duplicates, and
   pipeline edge ids count across pipelines.
 
+## Script session (`packages/dashql-core/src/script_session.cc`)
+
+- **Offset projection.** In UTF-8 mode, offsets are projected without checks. In UTF-16 mode, spans
+  that are not on a code point boundary are dropped, including keyword names whose byte-span fields
+  hold token indexes.
+- **Scanner errors at the end of the file** are projected one byte past the text.
+- **Field presence differs by offset unit.** In UTF-16 mode, completions and diffs go through an
+  object API round trip, so empty strings and vectors are left out; in UTF-8 mode they are not.
+- **Stale spans.** `PackDiff` and `RewriteDashboard` apply the spans of a possibly outdated parse to
+  the current text. A diff span that is then not on a boundary is an error.
+- **Table definitions** are sorted with libstdc++'s unstable `std::sort`.
+- **Cursor bookkeeping.** `Analyze()` stamps the cursor versions even when placing the cursor failed;
+  `Apply` does not.
+- **`Format` allocates the entry id** before rejecting output that is not valid UTF-8 (comment
+  wrapping can cut a character).
+- **Text padding.** Spans that end past the text read the two NUL padding bytes of the text buffer.
+  The Rust `script_diff` reads them the same way instead of panicking.
+
 ## Test infrastructure
 
 - **Unregistered parser snapshots.** The C++ parser snapshot suite
@@ -208,6 +226,13 @@ lists were built with `PushElement` of the `size_t` field `buffer_index` into `u
 readers saw the first half of the reversed 64-bit values, and `NameScope::buffer_index` was never
 set, so child scopes were all 0. They are now the scope, expression and table reference ids in list
 order. No TypeScript code read them.
+
+**Removing an empty range at the end of a text with several leaves aborted the process.**
+`Rope::Remove` descended into a leaf that does not contain the end of the text, and the `noexcept`
+`LeafNode::RemoveCharRange` threw "UTF-8 codepoint index exceeds buffer". `ScriptSession::Apply`
+removes an empty range before every insert, so typing at the end of a pure ASCII document of about
+1 KB or more terminated the core. Empty removals are now a no-op (`RopeTest.RemovesEmptyRangeAtEndOfMultiLeafText`).
+Found by `:session_differential_test`.
 
 Hash-table-dependent behavior was also made deterministic:
 

@@ -234,6 +234,21 @@ TEST_F(RopeTest, RecomputesGraphemesAcrossEditBoundaries) {
     ASSERT_NO_THROW(rope.CheckIntegrity());
 }
 
+TEST_F(RopeTest, RemovesEmptyRangeAtEndOfMultiLeafText) {
+    std::string text(4096, 'a');
+    rope::Rope rope{128, text};
+    for (size_t char_idx : {text.size(), text.size() + 1, size_t{0}, text.size() / 2}) {
+        rope.Remove(char_idx, 0);
+        EXPECT_EQ(rope.ToString(), text);
+        ASSERT_NO_THROW(rope.CheckIntegrity());
+    }
+    rope.Remove(text.size(), 10);
+    EXPECT_EQ(rope.ToString(), text);
+    rope.Insert(text.size(), "b");
+    EXPECT_EQ(rope.ToString(), text + "b");
+    ASSERT_NO_THROW(rope.CheckIntegrity());
+}
+
 TEST_F(RopeTest, RejectsGraphemeLargerThanLeaf) {
     std::string combining = "a";
     for (size_t i = 0; i < 24; ++i) {

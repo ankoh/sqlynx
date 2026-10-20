@@ -1891,6 +1891,11 @@ void Rope::BalanceChild(InnerNode& parent, size_t child_idx, LeafNode*& first_le
 void Rope::Remove(size_t char_idx, size_t char_count) {
     char_idx = std::min<size_t>(char_idx, root_info.utf8_codepoints);
     char_count = std::min<size_t>(char_count, root_info.utf8_codepoints - char_idx);
+    // Removing nothing is a no-op. The descent below cannot place an empty range at the end of a text that spans
+    // several leaves.
+    if (char_count == 0) {
+        return;
+    }
 
     // As with insertion, deleting Unicode codepoints can change the segmentation of the surrounding text.
     if (root_info.text_bytes != root_info.utf8_codepoints) {

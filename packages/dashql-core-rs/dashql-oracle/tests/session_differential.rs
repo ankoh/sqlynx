@@ -322,19 +322,6 @@ fn random_event(rng: &mut Rng, session: &ScriptSession, inputs: &[String]) -> Ed
         change.insert = (rng.below(8) != 0).then(|| random_insert(rng, inputs));
         changes.push(change);
     }
-    // The C++ rope aborts the process when `Rope::Remove` starts at the end of a pure ASCII text with
-    // several leaves (`RemoveCharRange` is noexcept and throws "UTF-8 codepoint index exceeds
-    // buffer"). `ScriptSession::Apply` removes an empty range before every insert, so inserts at the
-    // end of ASCII documents above 1 KiB crash. Move them one character back.
-    if text.is_ascii() && text.len() >= 900 {
-        let end = text.len() as u64;
-        for change in &mut changes {
-            if change.from == change.to && change.from >= end {
-                change.from = end - 1;
-                change.to = end - 1;
-            }
-        }
-    }
     event.changes = (rng.below(10) != 0).then_some(changes);
     // The selection uses post-change offsets, guess them from the text before the change
     event.primary_selection = random_selection(rng, &text, utf16);
