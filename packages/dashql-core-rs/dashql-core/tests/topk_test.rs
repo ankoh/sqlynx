@@ -1,6 +1,7 @@
 //! A port of `packages/dashql-core/test/topk_test.cc`.
 
 use dashql_core::utils::topk::TopKHeap;
+use std::cmp::Ordering;
 
 #[derive(Clone, Copy, Debug)]
 struct Entry {
@@ -12,13 +13,13 @@ fn entry(value: usize, score: usize) -> Entry {
     Entry { value, score }
 }
 
-fn less(l: &Entry, r: &Entry) -> bool {
-    l.score < r.score
+fn cmp(l: &Entry, r: &Entry) -> Ordering {
+    l.score.cmp(&r.score)
 }
 
 /// Insert the entries into a heap of capacity k and return the values of the top k, best first
 fn top_k(k: usize, entries: impl IntoIterator<Item = Entry>) -> Vec<usize> {
-    let mut heap = TopKHeap::new(k, less);
+    let mut heap = TopKHeap::new(k, cmp);
     for e in entries {
         heap.insert(e);
     }

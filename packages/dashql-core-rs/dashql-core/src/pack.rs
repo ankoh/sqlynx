@@ -11,7 +11,6 @@
 
 use crate::analyzer::*;
 use crate::catalog::*;
-use crate::utils::sort::std_sort;
 use dashql_buffers::algebra::{
     BinaryExpressionT, ColumnRefExpressionT, ComparisonT, ConstIntervalCastT, ExpressionSubTypeT, ExpressionT,
     FunctionCallExpressionT, LiteralT, ResolvedColumnT,
@@ -584,7 +583,7 @@ pub fn pack_analyzed_script(script: &AnalyzedScript, visualize: &VisualizationPa
         .collect();
     let expressions = script.expressions.iter().map(|e| pack_expression(script, e)).collect();
 
-    // Index the resolved table refs by catalog id, ties keep the order of std::sort
+    // Index the resolved table and column refs by catalog id, then by their own id
     let mut table_refs_by_id: Vec<IndexedTableReferenceT> = script
         .table_references
         .iter()
@@ -600,9 +599,8 @@ pub fn pack_analyzed_script(script: &AnalyzedScript, visualize: &VisualizationPa
             }))
         })
         .collect();
-    std_sort(&mut table_refs_by_id, &|l: &IndexedTableReferenceT, r: &IndexedTableReferenceT| {
-        (l.catalog_database_id, l.catalog_schema_id, l.catalog_table_id)
-            < (r.catalog_database_id, r.catalog_schema_id, r.catalog_table_id)
+    table_refs_by_id.sort_unstable_by_key(|r| {
+        (r.catalog_database_id, r.catalog_schema_id, r.catalog_table_id, r.table_reference_id)
     });
     let mut column_refs_by_id: Vec<IndexedColumnReferenceT> = script
         .expressions
@@ -625,9 +623,8 @@ pub fn pack_analyzed_script(script: &AnalyzedScript, visualize: &VisualizationPa
             }))
         })
         .collect();
-    std_sort(&mut column_refs_by_id, &|l: &IndexedColumnReferenceT, r: &IndexedColumnReferenceT| {
-        (l.catalog_database_id, l.catalog_schema_id, l.catalog_table_id, l.table_column_id)
-            < (r.catalog_database_id, r.catalog_schema_id, r.catalog_table_id, r.table_column_id)
+    column_refs_by_id.sort_unstable_by_key(|r| {
+        (r.catalog_database_id, r.catalog_schema_id, r.catalog_table_id, r.table_column_id, r.expression_id)
     });
 
     let name_scopes = script

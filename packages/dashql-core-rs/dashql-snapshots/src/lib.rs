@@ -8,6 +8,7 @@ pub mod corpus;
 pub mod encode;
 pub mod formatter;
 pub mod ryml;
+pub mod ties;
 
 use std::fmt::Write as _;
 use std::fs;

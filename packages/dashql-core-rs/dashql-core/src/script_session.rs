@@ -26,7 +26,6 @@ use crate::pack::{pack_completion, pack_tokens};
 use crate::script::{Script, TextVersion};
 use crate::script_diff::ScriptDiff;
 use crate::utils::rope::{resolve_byte_boundary, resolve_utf16_boundary, TextPosition, Utf16Projector};
-use crate::utils::sort::std_sort;
 use dashql_buffers::analyzer::AnalyzerErrorSeverity;
 use dashql_buffers::completion::CompletionT;
 use dashql_buffers::cursor::RelativeSymbolPosition;
@@ -768,10 +767,7 @@ impl ScriptSession {
                 definition
             })
             .collect();
-        // std::sort, ties come out in introsort order
-        std_sort(&mut table_definitions, &|a: &EditorTableDefinitionT, b: &EditorTableDefinitionT| {
-            a.name.as_deref().unwrap_or("") < b.name.as_deref().unwrap_or("")
-        });
+        table_definitions.sort_by(|a, b| (a.name.as_deref(), a.statement_id).cmp(&(b.name.as_deref(), b.statement_id)));
         annotations.table_definitions = non_empty(table_definitions);
         let mut referenced: Vec<String> = analyzed
             .table_references

@@ -286,8 +286,9 @@ remaining per-list allocations.
   probes over a state snapshot, with the 128-reductions bound.
 - `dashql_core::cursor` ports `ScriptCursor` and the location lookups, `dashql_core::completion`
   ports the completion. Name lookups use per-entry suffix indexes in the case-insensitive order of
-  the C++ `btree::multimap`; candidates are ranked with a port of libstdc++'s `std::sort`
-  (`dashql_core::utils::sort`), because `TopKHeap` breaks ties by the unstable sort.
+  the C++ `btree::multimap`. Candidates are ranked by score, then by name (case-insensitive, then
+  byte order), keywords before names that spell the same. C++ leaves such ties to the unstable
+  `std::sort`, so the differential tests compare them in a canonical order (`dashql_snapshots::ties`).
 - `:completion_snapshot_test` passes all 161 completion snapshots (including the analysis of the
   catalog and editor scripts).
 - `:completion_differential_test` compares the complete encoding with

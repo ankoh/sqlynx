@@ -2,7 +2,8 @@
 //!
 //! Both sides are unpacked into the object API and compared, so field presence counts but the
 //! byte layout of the builders does not, including the generated visualization specs. Runs over all snapshot inputs and their prefixes, alone
-//! and against catalog scripts, through the `Script` facade.
+//! and against catalog scripts, through the `Script` facade. References with equal catalog ids are compared in
+//! a canonical order (`dashql_snapshots::ties`).
 
 use dashql_buffers::analyzer::AnalyzedScriptT;
 use dashql_buffers::parser::{ParsedScriptT, ScannedScriptT};
@@ -11,7 +12,7 @@ use dashql_core::pack::{pack_analyzed_script, pack_parsed_script, pack_scanned_s
 use dashql_core::script::Script;
 use dashql_oracle::pack::{pack, Packed};
 use dashql_snapshots::corpus::{prefixes, snapshot_inputs, Rng, CATEGORIES};
-use dashql_snapshots::{load_category, run, trim_input, Arguments, Failed, Trial};
+use dashql_snapshots::{load_category, run, ties, trim_input, Arguments, Failed, Trial};
 use std::sync::Arc;
 
 /// Analyze a script with the Rust core like the oracle does
@@ -91,6 +92,8 @@ fn compare_with_oracle(catalog: Option<&str>, text: &str) -> Result<(), String> 
                     flatbuffers::root::<dashql_buffers::analyzer::AnalyzedScript>(builder.finished_data())
                         .unwrap()
                         .unpack();
+                ties::analyzed_script(&mut expected);
+                ties::analyzed_script(&mut actual);
                 (format!("{expected:#?}"), format!("{actual:#?}"))
             }
         };

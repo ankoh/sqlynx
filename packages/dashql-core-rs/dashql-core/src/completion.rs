@@ -2,8 +2,8 @@
 //!
 //! Completion collects candidates from the expected grammar symbols at the cursor (probed through
 //! the LR automaton), the name search indexes of the script and the catalog, and the name scopes
-//! around the cursor. Candidates are scored by tags and the top k are selected with the tie order of
-//! the C++ `TopKHeap` and `std::sort`.
+//! around the cursor. Candidates are scored by tags and the top k are selected by score, ties are ranked
+//! by name.
 
 // Bison names some symbol kinds in mixed case (S_Op)
 #![allow(non_upper_case_globals)]
@@ -24,6 +24,7 @@ use dashql_grammar::parser::probe::{self, PrefixSnapshot};
 use dashql_grammar::scanner::Symbol;
 use dashql_grammar::symbol_kind::*;
 use dashql_grammar::SymbolKind;
+use std::cmp::Ordering;
 use std::sync::Arc;
 
 /// A score value
@@ -286,14 +287,20 @@ impl Candidate {
     }
 }
 
-/// Is `l` kicked out of the heap before `r`? Lower scores first, then larger names.
-fn candidate_less(l: &Candidate, r: &Candidate) -> bool {
-    l.score < r.score
-        || (l.score == r.score
-            && ci_cmp(l.completion_text.as_bytes(), r.completion_text.as_bytes()) == std::cmp::Ordering::Greater)
+/// The rank of candidates, greater is better: higher scores, then smaller names in case-insensitive order, then in
+/// byte order. Names are unique among the candidates of the name indexes, but a keyword or the identity candidate
+/// may spell the same; keywords rank before names, the rest by their tags.
+fn candidate_cmp(l: &Candidate, r: &Candidate) -> Ordering {
+    l.score
+        .cmp(&r.score)
+        .then_with(|| ci_cmp(r.completion_text.as_bytes(), l.completion_text.as_bytes()))
+        .then_with(|| r.completion_text.cmp(&l.completion_text))
+        .then_with(|| l.keyword_symbol.is_some().cmp(&r.keyword_symbol.is_some()))
+        .then_with(|| r.keyword_symbol.cmp(&l.keyword_symbol))
+        .then_with(|| r.candidate_tags.cmp(&l.candidate_tags))
 }
 
-type CandidateHeap = TopKHeap<Candidate, fn(&Candidate, &Candidate) -> bool>;
+type CandidateHeap = TopKHeap<Candidate, fn(&Candidate, &Candidate) -> Ordering>;
 
 /// A completion at a cursor
 pub struct Completion<'c, 'a> {
@@ -372,7 +379,7 @@ impl<'c, 'a> Completion<'c, 'a> {
             candidate_objects: Vec::new(),
             candidates_by_name: HashMap::default(),
             candidate_objects_by_id: HashMap::default(),
-            candidate_heap: TopKHeap::new(k, candidate_less as fn(&Candidate, &Candidate) -> bool),
+            candidate_heap: TopKHeap::new(k, candidate_cmp as fn(&Candidate, &Candidate) -> Ordering),
             top_candidates: Vec::new(),
         }
     }
@@ -1461,7 +1468,9 @@ impl<'c, 'a> Completion<'c, 'a> {
     /// Score all candidates and select the top k (`SelectTopCandidates`)
     fn select_top_candidates(&mut self) {
         let scores = name_tag_scores(self.strategy);
-        let mut object_heap = TopKHeap::new(24, |l: &(usize, Score), r: &(usize, Score)| l.1 < r.1);
+        // Objects with higher scores first, then in the order they were found
+        let mut object_heap =
+            TopKHeap::new(24, |l: &(usize, Score), r: &(usize, Score)| l.1.cmp(&r.1).then(r.0.cmp(&l.0)));
         for i in 0..self.candidates.len() {
             // The base score is the maximum among the name tags
             let tags = self.candidates[i].coarse_name_tags;

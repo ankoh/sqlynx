@@ -21,7 +21,10 @@ use arrow_schema::{DataType, Field, Fields, Schema, UnionFields};
 use dashql_core::catalog::Catalog;
 use dashql_core::script::Script;
 use dashql_core::shell::unicode;
-use dashql_core::shell::{ArrowRenderer, PromptSnapshot, SharedCatalog, Shell, ShellOperation, TerminalOutput};
+use dashql_core::shell::{
+    ArrowRenderer, CompletionCandidate, PromptSnapshot, SharedCatalog, Shell, ShellOperation, ShellStatus,
+    TerminalOutput,
+};
 use dashql_oracle::shell::{self as oracle, CxxCatalog, CxxOperation, CxxPrompt, CxxShell, CxxTerminal};
 use dashql_snapshots::corpus::Rng;
 use dashql_snapshots::{run, Arguments, Failed, Trial};
@@ -590,6 +593,8 @@ const ARROW_ERROR: u32 = 2;
 struct Stats {
     comparisons: usize,
     arrow_errors: usize,
+    /// Differences in the order of completion ties, which end a session
+    ties: usize,
     differences: Vec<String>,
 }
 
@@ -655,6 +660,9 @@ impl Stats {
 
     fn result(self, name: &str) -> Result<(), Failed> {
         println!("{name}: {} comparisons, {} arrow errors compared by status", self.comparisons, self.arrow_errors);
+        if self.ties > 0 {
+            println!("{name}: {} sessions ended at completion ties", self.ties);
+        }
         if self.differences.is_empty() {
             return Ok(());
         }
@@ -862,6 +870,30 @@ fn input_key(rng: &mut Rng) -> u32 {
     }
 }
 
+/// Completion candidates: display text, completion text, target offset and length
+type CompletionList = Result<Vec<(Vec<u8>, Vec<u8>, u32, u32)>, u32>;
+
+/// Do two candidate lists differ only in the order of ties? Candidates of equal rank whose names differ only in case
+/// (`Account`, `account`) or that spell a keyword (`source`, `SOURCE`) come out in `std::sort` order in C++ and are
+/// ranked by name in Rust, so their texts are compared ignoring case and their order within such runs is ignored.
+fn ties_only(expected: &CompletionList, actual: &CompletionList) -> bool {
+    fn canonical(candidates: &[(Vec<u8>, Vec<u8>, u32, u32)]) -> Vec<(Vec<u8>, Vec<u8>, u32, u32)> {
+        let mut candidates = candidates.to_vec();
+        for (display, completion, _, _) in candidates.iter_mut() {
+            display.make_ascii_lowercase();
+            completion.make_ascii_lowercase();
+        }
+        for run in candidates.chunk_by_mut(|l, r| l.1 == r.1) {
+            run.sort();
+        }
+        candidates
+    }
+    match (expected, actual) {
+        (Ok(e), Ok(a)) => canonical(e) == canonical(a),
+        _ => false,
+    }
+}
+
 struct Session {
     _rust_catalog: SharedCatalog,
     _rust_schemas: Vec<Script>,
@@ -908,6 +940,31 @@ impl Session {
         }
     }
 
+    /// Complete in both shells: the comparable candidates of C++ and Rust, and the Rust candidates
+    fn complete(
+        &mut self,
+        limit: usize,
+    ) -> (CompletionList, CompletionList, Result<Vec<CompletionCandidate>, ShellStatus>) {
+        let e = self.cxx.prompt_complete(limit).map(|cs| {
+            cs.into_iter().map(|c| (c.display_text, c.completion_text, c.target_offset, c.target_length)).collect()
+        });
+        let rust = self.rust.prompt_complete(limit);
+        let a = rust.clone().map_err(|s| s as u32).map(|cs| {
+            cs.into_iter()
+                .map(|c| {
+                    (c.display_text.into_bytes(), c.completion_text.into_bytes(), c.target_offset, c.target_length)
+                })
+                .collect()
+        });
+        (e, a, rust)
+    }
+
+    /// Do the completions at the prompt differ only in the order of ties?
+    fn completions_differ_in_ties(&mut self) -> bool {
+        let (e, a, _) = self.complete(50);
+        e != a && ties_only(&e, &a)
+    }
+
     fn step(&mut self, rng: &mut Rng, stats: &mut Stats, ctx: &dyn Fn() -> String) {
         match rng.below(100) {
             0..=44 => {
@@ -921,7 +978,20 @@ impl Session {
                 };
                 let e = self.cxx.terminal_consume(key, &text);
                 let a = self.rust.terminal_consume(key, &text);
-                stats.terminal(&format!("terminal_consume({key}, {:?})", String::from_utf8_lossy(&text)), ctx, &e, &a);
+                let same_but_case = e.status == a.status as u32
+                    && e.action == a.action as u32
+                    && e.data != a.data
+                    && e.data.eq_ignore_ascii_case(&a.data);
+                if same_but_case && self.completions_differ_in_ties() {
+                    stats.ties += 1;
+                } else {
+                    stats.terminal(
+                        &format!("terminal_consume({key}, {:?})", String::from_utf8_lossy(&text)),
+                        ctx,
+                        &e,
+                        &a,
+                    );
+                }
             }
             45..=52 => {
                 let key = input_key(rng);
@@ -951,34 +1021,13 @@ impl Session {
             60..=65 => {
                 // A limit of 0 fails an assertion of the C++ TopKHeap
                 let limit = *rng.pick(&[1usize, 3, 10, 50]);
-                let e = self.cxx.prompt_complete(limit);
-                let a = self.rust.prompt_complete(limit);
-                let e_cmp = e.clone().map(|cs| {
-                    cs.into_iter()
-                        .map(|c| (c.display_text, c.completion_text, c.target_offset, c.target_length))
-                        .collect::<Vec<_>>()
-                });
-                let a_cmp = a.clone().map(|cs| {
-                    cs.into_iter()
-                        .map(|c| {
-                            (
-                                c.display_text.into_bytes(),
-                                c.completion_text.into_bytes(),
-                                c.target_offset,
-                                c.target_length,
-                            )
-                        })
-                        .collect::<Vec<_>>()
-                });
-                let a_status = a_cmp.as_ref().map_err(|s| *s as u32).map(|v| v.clone());
-                stats.check(
-                    &format!("prompt_complete({limit})"),
-                    ctx,
-                    e_cmp == a_status,
-                    format!("{e_cmp:?}"),
-                    format!("{a_status:?}"),
-                );
-                self.candidates = a
+                let (e, a, rust) = self.complete(limit);
+                if e != a && ties_only(&e, &a) {
+                    stats.ties += 1;
+                } else {
+                    stats.check(&format!("prompt_complete({limit})"), ctx, e == a, format!("{e:?}"), format!("{a:?}"));
+                }
+                self.candidates = rust
                     .unwrap_or_default()
                     .into_iter()
                     .map(|c| (c.display_text, c.completion_text, c.target_offset, c.target_length))
@@ -1164,9 +1213,9 @@ fn session_trial(seed: u64, sessions: usize, steps: usize) -> Result<(), Failed>
         let (e, a) = (session.cxx.terminal_open(&prompt), session.rust.terminal_open(&prompt));
         stats.terminal("terminal_open", &|| format!("session {session_seed}"), &e, &a);
         for step in 0..steps {
-            let before = stats.differences.len();
+            let before = (stats.differences.len(), stats.ties);
             session.step(&mut rng, &mut stats, &|| format!("session {session_seed}, step {step}"));
-            if stats.differences.len() > before {
+            if (stats.differences.len(), stats.ties) != before {
                 break;
             }
         }

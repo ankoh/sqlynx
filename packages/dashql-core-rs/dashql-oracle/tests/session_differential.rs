@@ -9,10 +9,11 @@
 //!
 //! Every packed result is unpacked into the FlatBuffers object API and compared including field
 //! presence. Timings are masked, and so are the memory statistics that measure implementation data
-//! structures (see `Script::memory_statistics`). After every operation the texts, versions,
+//! structures (see `Script::memory_statistics`), and ties of completion ranks and table definitions are compared in a
+//! canonical order (`dashql_snapshots::ties`). After every operation the texts, versions,
 //! revisions and entry ids of all sessions and the catalog version must agree.
 
-use dashql_buffers::completion::Completion;
+use dashql_buffers::completion::{Completion, CompletionT};
 use dashql_buffers::diff::ScriptDiff;
 use dashql_buffers::editor::{
     EditorEventAction, EditorEventIntent, EditorEventOrigin, EditorEventT, EditorOffsetUnit, EditorSelectionT,
@@ -29,7 +30,7 @@ use dashql_core::script_execution::ScriptExecution;
 use dashql_core::script_session::{CatalogHandle, ScriptSession};
 use dashql_oracle::session::{OracleCatalog, OracleSession};
 use dashql_snapshots::corpus::{collect_inputs, Rng, CATEGORIES};
-use dashql_snapshots::{load_category, run, trim_input, Arguments, Failed, Trial};
+use dashql_snapshots::{load_category, run, ties, trim_input, Arguments, Failed, Trial};
 use std::cell::RefCell;
 use std::fmt::Debug;
 use std::rc::Rc;
@@ -149,8 +150,9 @@ fn same_result<T: Debug>(what: &str, expected: Result<T, String>, actual: Result
     }
 }
 
-/// Mask timings and the memory statistics of implementation data structures
+/// Mask timings and the memory statistics of implementation data structures, order ties canonically
 fn mask_update(mut update: EditorUpdateT) -> EditorUpdateT {
+    ties::editor_update(&mut update);
     if let Some(s) = update.processing_statistics.as_mut() {
         s.scanner_last_elapsed_ns = 0.0;
         s.parser_last_elapsed_ns = 0.0;
@@ -538,9 +540,16 @@ fn episode(
                     let limit = rng.below(20) + 1;
                     let keyword_case = rng.below(2) as u8;
                     note(&mut log, format!("{i}: complete {limit} {keyword_case}"));
-                    let expected = pair.cpp.complete(limit, keyword_case).and_then(|b| unpack!(b, Completion));
-                    let actual =
-                        pair.rust.complete(limit, KeywordCase(keyword_case)).map(|c| roundtrip!(c, Completion));
+                    let canonical = |mut c: CompletionT| {
+                        ties::completion(&mut c);
+                        c
+                    };
+                    let expected =
+                        pair.cpp.complete(limit, keyword_case).and_then(|b| unpack!(b, Completion)).map(canonical);
+                    let actual = pair
+                        .rust
+                        .complete(limit, KeywordCase(keyword_case))
+                        .map(|c| canonical(roundtrip!(c, Completion)));
                     if let Ok(c) = &actual {
                         let n = c.candidates.as_ref().map_or(0, |c| c.len());
                         count(format!(

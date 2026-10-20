@@ -81,8 +81,10 @@ the C++ core.
 
 - **Candidates are ranked with the unstable `std::sort`.** `TopKHeap` sorts the candidates (score,
   then case-insensitive name) and the catalog objects of a candidate (score only), so ties come out
-  in introsort order. `dashql_core::utils::sort::std_sort` reproduces the libstdc++ algorithm;
-  libc++ (the C++ wasm build) orders ties differently.
+  in introsort order, and libc++ (the C++ wasm build) orders them differently than libstdc++. Rust
+  does not reproduce this: candidates of equal score and case-insensitive name are ranked by byte
+  order, keywords before names that spell the same, and catalog objects of equal score keep the
+  order in which they were found.
 - **A candidate scores with its lowest top object.** `SelectTopCandidates` takes the score of the
   last of the descending top 24 catalog objects.
 - **Spans mix text offsets and token indexes.** Candidate target locations are `SymbolSpan`s holding
@@ -199,7 +201,8 @@ them with rapidjson (comments, NaN and infinity, trailing commas, imprecise numb
   object API round trip, so empty strings and vectors are left out; in UTF-8 mode they are not.
 - **Stale spans.** `PackDiff` and `RewriteDashboard` apply the spans of a possibly outdated parse to
   the current text. A diff span that is then not on a boundary is an error.
-- **Table definitions** are sorted with libstdc++'s unstable `std::sort`.
+- **Table definitions** are sorted by name with the unstable `std::sort`. Rust sorts by name and
+  statement id; packed table and column references with equal catalog ids are ordered by their own id.
 - **Cursor bookkeeping.** `Analyze()` stamps the cursor versions even when placing the cursor failed;
   `Apply` does not.
 - **`Format` allocates the entry id** before rejecting output that is not valid UTF-8 (comment
