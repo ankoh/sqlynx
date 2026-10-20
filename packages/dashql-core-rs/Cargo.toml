@@ -19,6 +19,8 @@ license = "MPL-2.0"
 # Arrow IPC for the shell (dashql_core::shell). No compression codecs, like the C++ Arrow build.
 arrow-array = { version = "=60.0.0", default-features = false }
 arrow-buffer = { version = "=60.0.0", default-features = false }
+# Value formatting of the shell renderer (arrow_cast::display)
+arrow-cast = { version = "=60.0.0", default-features = false }
 arrow-ipc = { version = "=60.0.0", default-features = false }
 arrow-schema = { version = "=60.0.0", default-features = false }
 flatbuffers = "=25.12.19"

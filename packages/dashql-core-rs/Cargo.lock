@@ -136,6 +136,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "arrow-cast"
+version = "60.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d52cf840f0c34aeeb7e8b05aba72d66878e6c001827f423331f0b260209e7b7e"
+dependencies = [
+ "arrow-array",
+ "arrow-buffer",
+ "arrow-data",
+ "arrow-ord",
+ "arrow-schema",
+ "arrow-select",
+ "atoi",
+ "base64",
+ "chrono",
+ "half",
+ "lexical-core",
+ "num-traits",
+ "ryu",
+]
+
+[[package]]
 name = "arrow-cmp"
 version = "60.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -174,6 +195,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "arrow-ord"
+version = "60.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5a7ac2c6a9cdc782fa9548d3763461eaec8c93347e297fddbaa44807e70a3698"
+dependencies = [
+ "arrow-array",
+ "arrow-buffer",
+ "arrow-cmp",
+ "arrow-data",
+ "arrow-schema",
+ "arrow-select",
+]
+
+[[package]]
 name = "arrow-schema"
 version = "60.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -195,10 +230,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "atoi"
+version = "3.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d12c37257553c19e9aee6cba77814fdc9e07844abfc8b3a2c377cd920ee5a993"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f2032f911046de80f0a198e0901378627c33f59ea0ac00e363d481118bd70a53"
+
+[[package]]
+name = "base64"
+version = "0.23.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ac07cdecf99051d9a5238b80f35af32cdeba5b336e55d957b318b50137e18da5"
 
 [[package]]
 name = "bitflags"
@@ -335,6 +385,7 @@ version = "0.1.0"
 dependencies = [
  "arrow-array",
  "arrow-buffer",
+ "arrow-cast",
  "arrow-ipc",
  "arrow-schema",
  "flatbuffers",
@@ -549,6 +600,63 @@ dependencies = [
 ]
 
 [[package]]
+name = "lexical-core"
+version = "1.0.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7d8d125a277f807e55a77304455eb7b1cb52f2b18c143b60e766c120bd64a594"
+dependencies = [
+ "lexical-parse-float",
+ "lexical-parse-integer",
+ "lexical-util",
+ "lexical-write-float",
+ "lexical-write-integer",
+]
+
+[[package]]
+name = "lexical-parse-float"
+version = "1.0.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "52a9f232fbd6f550bc0137dcb5f99ab674071ac2d690ac69704593cb4abbea56"
+dependencies = [
+ "lexical-parse-integer",
+ "lexical-util",
+]
+
+[[package]]
+name = "lexical-parse-integer"
+version = "1.0.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a7a039f8fb9c19c996cd7b2fcce303c1b2874fe1aca544edc85c4a5f8489b34"
+dependencies = [
+ "lexical-util",
+]
+
+[[package]]
+name = "lexical-util"
+version = "1.0.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2604dd126bb14f13fb5d1bd6a66155079cb9fa655b37f875b3a742c705dbed17"
+
+[[package]]
+name = "lexical-write-float"
+version = "1.0.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "50c438c87c013188d415fbabbb1dceb44249ab81664efbd31b14ae55dabb6361"
+dependencies = [
+ "lexical-util",
+ "lexical-write-integer",
+]
+
+[[package]]
+name = "lexical-write-integer"
+version = "1.0.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "409851a618475d2d5796377cad353802345cba92c867d9fbcde9cf4eac4e14df"
+dependencies = [
+ "lexical-util",
+]
+
+[[package]]
 name = "libc"
 version = "0.2.191"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -699,6 +807,12 @@ name = "rustversion"
 version = "1.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
+
+[[package]]
+name = "ryu"
+version = "1.0.23"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9774ba4a74de5f7b1c1451ed6cd5285a32eddb5cccb8cc655a4e50009e06477f"
 
 [[package]]
 name = "scopeguard"

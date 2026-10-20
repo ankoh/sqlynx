@@ -114,6 +114,7 @@ rust_library(
         "//proto/fb:dashql_buffers_rs",
         "@core_crates//:arrow-array",
         "@core_crates//:arrow-buffer",
+        "@core_crates//:arrow-cast",
         "@core_crates//:arrow-ipc",
         "@core_crates//:arrow-schema",
         "@core_crates//:flatbuffers",
