@@ -326,3 +326,21 @@ rust_binary(
     edition = "2021",
     deps = [":dashql_grammar"],
 )
+
+# The Rust formatter must produce exactly the output of the C++ formatter: all snapshot inputs and
+# their prefixes, and deterministic fuzz inputs, across modes, dialects, keyword cases and widths.
+rust_test(
+    name = "formatter_differential_test",
+    size = "medium",
+    srcs = ["dashql-oracle/tests/formatter_differential.rs"],
+    data = ["//snapshots:files"],
+    edition = "2021",
+    use_libtest_harness = False,
+    deps = [
+        ":dashql_core",
+        ":dashql_grammar",
+        ":dashql_oracle",
+        ":dashql_snapshots",
+        "//proto/fb:dashql_buffers_rs",
+    ],
+)
