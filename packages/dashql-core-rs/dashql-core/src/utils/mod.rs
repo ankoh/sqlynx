@@ -1,5 +1,6 @@
 //! Utilities shared by the modules of the core.
 
+pub mod rope;
 pub mod sort;
 pub mod topk;
 

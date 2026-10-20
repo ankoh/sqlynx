@@ -15,6 +15,8 @@ pub mod pack;
 pub mod planner;
 pub mod script;
 pub mod script_diff;
+pub mod script_execution;
+pub mod script_session;
 pub mod signature;
 pub mod utils;
 pub mod view;

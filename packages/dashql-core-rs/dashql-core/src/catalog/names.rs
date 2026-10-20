@@ -55,6 +55,20 @@ impl NameSearchIndex {
         Self { names, suffixes }
     }
 
+    /// The number of indexed suffixes (the entry count of the C++ multimap)
+    pub fn len(&self) -> usize {
+        self.suffixes.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.suffixes.is_empty()
+    }
+
+    /// The bytes of the suffix index
+    pub fn byte_size(&self) -> usize {
+        self.suffixes.len() * std::mem::size_of::<(u32, u32)>()
+    }
+
     fn suffix(&self, entry: (u32, u32)) -> &[u8] {
         &self.names[entry.0 as usize].text.as_bytes()[entry.1 as usize..]
     }

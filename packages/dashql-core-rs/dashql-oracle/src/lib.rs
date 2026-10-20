@@ -11,6 +11,7 @@ pub mod completion;
 pub mod formatter;
 pub mod pack;
 pub mod script_diff;
+pub mod session;
 pub mod signature;
 pub mod view;
 pub mod visualize;

@@ -503,6 +503,8 @@ DASHQL_CORE_UNIT_TESTS = [
     "completion_test",
     "cursor_test",
     "name_tagging_test",
+    "script_execution_test",
+    "script_session_test",
     "script_test",
     "string_conversion_test",
     "topk_test",
@@ -521,3 +523,21 @@ DASHQL_CORE_UNIT_TESTS = [
         "@core_crates//:flatbuffers",
     ],
 ) for name in DASHQL_CORE_UNIT_TESTS]
+
+# Editor sessions and script executions must behave exactly like the C++ core: random event, analysis, completion,
+# compilation, formatting, diff, catalog and execution sequences seeded from all snapshot inputs, in both offset units.
+rust_test(
+    name = "session_differential_test",
+    size = "large",
+    srcs = ["dashql-oracle/tests/session_differential.rs"],
+    data = ["//snapshots:files"],
+    edition = "2021",
+    use_libtest_harness = False,
+    deps = [
+        ":dashql_core",
+        ":dashql_oracle",
+        ":dashql_snapshots",
+        "//proto/fb:dashql_buffers_rs",
+        "@core_crates//:flatbuffers",
+    ],
+)

@@ -92,10 +92,23 @@ fn key_id(n: &Node) -> u16 {
     n.attribute_key().0
 }
 
+/// The text of a span like `ScannedScript::ReadTextAtTextSpan`, which reads the text buffer with its
+/// two padding NUL bytes. Spans of EOF errors end one byte past the text.
+fn padded_text(script: &ParsedScript, span: TextSpan) -> std::borrow::Cow<'_, [u8]> {
+    let text = script.scanned.text.as_bytes();
+    let begin = (span.offset as usize).min(text.len() + 2);
+    let end = (span.end() as usize).min(text.len() + 2);
+    if end <= text.len() {
+        return std::borrow::Cow::Borrowed(&text[begin..end]);
+    }
+    let mut out = text[begin.min(text.len())..].to_vec();
+    out.resize(end - begin, 0);
+    std::borrow::Cow::Owned(out)
+}
+
 /// The resolved text of a node (for operators and literals)
-fn node_text<'a>(script: &'a ParsedScript, node: &Node) -> &'a [u8] {
-    let span = resolve(script, node);
-    &script.scanned.text.as_bytes()[span.offset as usize..span.end() as usize]
+fn node_text<'a>(script: &'a ParsedScript, node: &Node) -> std::borrow::Cow<'a, [u8]> {
+    padded_text(script, resolve(script, node))
 }
 
 /// The registered name text of a NAME node
@@ -196,9 +209,7 @@ impl<'a> ScriptDiff<'a> {
         let s_span = resolve(self.source, s);
         let t_span = resolve(self.target, t);
         if s.children_count() == t.children_count() && s_span.length == t_span.length {
-            let st = &self.source.scanned.text.as_bytes()[s_span.offset as usize..s_span.end() as usize];
-            let tt = &self.target.scanned.text.as_bytes()[t_span.offset as usize..t_span.end() as usize];
-            if st == tt {
+            if padded_text(self.source, s_span) == padded_text(self.target, t_span) {
                 return SimilarityEstimate::Equal;
             }
         }
