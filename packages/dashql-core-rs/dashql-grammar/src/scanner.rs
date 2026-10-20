@@ -89,6 +89,7 @@ pub fn scan(text: &str, text_version: u64, external_id: u32) -> ScannedScript {
         external_id,
         text_version,
         text: text.to_string(),
+        symbols: Vec::with_capacity(text.len() / 4 + 8),
         ..Default::default()
     };
     let mut lexer = Lexer::new(text.as_bytes());
@@ -278,6 +279,8 @@ struct Lexer<'a> {
     state: State,
     ext_begin: TextSpan,
     ext_depth: usize,
+    /// A buffer for lower-casing and unescaping names
+    buffer: Vec<u8>,
 }
 
 impl<'a> Lexer<'a> {
@@ -288,6 +291,7 @@ impl<'a> Lexer<'a> {
             state: State::Initial,
             ext_begin: TextSpan::default(),
             ext_depth: 0,
+            buffer: Vec::with_capacity(64),
         }
     }
 
@@ -456,19 +460,25 @@ impl<'a> Lexer<'a> {
         Symbol::new(kind, TextSpan::new(loc.offset, trimmed as u32))
     }
 
-    fn read_quoted_identifier(&self, out: &mut ScannedScript, loc: TextSpan, quote: u8) -> Symbol {
+    fn read_quoted_identifier(&mut self, out: &mut ScannedScript, loc: TextSpan, quote: u8) -> Symbol {
         let text = &self.text[loc.offset as usize..loc.end() as usize];
         let inner = &text[1..text.len() - 1];
-        let mut name = Vec::with_capacity(inner.len());
-        let mut i = 0;
-        while i < inner.len() {
-            name.push(inner[i]);
-            if inner[i] == quote && i + 1 < inner.len() && inner[i + 1] == quote {
+        let name = if inner.contains(&quote) {
+            let name = &mut self.buffer;
+            name.clear();
+            let mut i = 0;
+            while i < inner.len() {
+                name.push(inner[i]);
+                if inner[i] == quote && i + 1 < inner.len() && inner[i + 1] == quote {
+                    i += 1;
+                }
                 i += 1;
             }
-            i += 1;
-        }
-        let id = out.names.register(&utf8(&name), loc);
+            &self.buffer[..]
+        } else {
+            inner
+        };
+        let id = out.names.register(utf8(name), loc);
         Symbol {
             kind: S_IDENT,
             location: loc,
@@ -476,10 +486,12 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn read_identifier(&self, out: &mut ScannedScript, loc: TextSpan) -> Symbol {
+    fn read_identifier(&mut self, out: &mut ScannedScript, loc: TextSpan) -> Symbol {
         let text = &self.text[loc.offset as usize..loc.end() as usize];
-        let lower = text.to_ascii_lowercase();
-        if let Some(keyword) = Keyword::find(&lower) {
+        self.buffer.clear();
+        self.buffer.extend(text.iter().map(u8::to_ascii_lowercase));
+        let lower = &self.buffer[..];
+        if let Some(keyword) = Keyword::find(lower) {
             if keyword.category == KeywordCategory::VisUnreserved {
                 out.names.register(keyword.name, loc);
             }
@@ -489,7 +501,7 @@ impl<'a> Lexer<'a> {
                 value: SymbolValue::Text(keyword.name),
             };
         }
-        let id = out.names.register(&utf8(&lower), loc);
+        let id = out.names.register(utf8(lower), loc);
         Symbol {
             kind: S_IDENT,
             location: loc,
@@ -838,8 +850,8 @@ fn obfuscated_literal(text: &[u8], location: TextSpan) -> ObfuscatedLiteral {
 }
 
 /// Names are cut out of valid UTF-8 at ASCII boundaries, so they are valid UTF-8 themselves.
-fn utf8(bytes: &[u8]) -> String {
-    String::from_utf8(bytes.to_vec()).expect("names are cut at ASCII boundaries")
+fn utf8(bytes: &[u8]) -> &str {
+    std::str::from_utf8(bytes).expect("names are cut at ASCII boundaries")
 }
 
 #[cfg(test)]

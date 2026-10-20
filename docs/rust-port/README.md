@@ -174,6 +174,22 @@ CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
     tokens, about 85 tokens each)
   - 8000 fuzz inputs
 
+**Performance** (`bazel run -c opt //packages/dashql-core-rs:bench_pipeline`, TPC-DS q1, same
+machine as the baseline):
+
+| Measure | Rust | C++ |
+|---|---|---|
+| scan | 2.3 µs | 3.2 µs |
+| parse | 8.6 µs | 7.7 µs |
+
+Changes that got the Rust code here:
+- **Scanner:** keyword lookup through a generated FNV hash table, an open-addressing name registry,
+  and no per-identifier allocations.
+- **Parser:**
+  - each grammar action is its own function, so `reduce` has a small frame
+  - list allocations are recycled
+  - the parse context state uses a `RefCell` only in debug builds
+
 **Open items**
 - rustfmt is not wired into Bazel. `@rules_rust//tools/upstream_wrapper:rustfmt` crashes Bazel during
   execution platform registration (duplicate `@platforms//host` entry).

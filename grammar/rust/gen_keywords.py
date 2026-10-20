@@ -43,6 +43,29 @@ def read_lists(paths):
     return sorted(keywords, key=lambda k: k[0].encode("utf-8"))
 
 
+# The keyword lookup table: FNV-1a over the lower-case keyword, linear probing. Must match
+# keywords::fnv1a in dashql-grammar.
+TABLE_SIZE = 2048
+
+
+def fnv1a(data: bytes) -> int:
+    h = 0x811C9DC5
+    for b in data:
+        h ^= b
+        h = (h * 0x01000193) & 0xFFFFFFFF
+    return h
+
+
+def lookup_table(keywords):
+    table = [0] * TABLE_SIZE
+    for i, (name, _, _) in enumerate(keywords):
+        slot = fnv1a(name.encode("utf-8")) & (TABLE_SIZE - 1)
+        while table[slot] != 0:
+            slot = (slot + 1) & (TABLE_SIZE - 1)
+        table[slot] = i + 1
+    return table
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", required=True)
@@ -65,6 +88,13 @@ def main() -> int:
         out.append(
             f'    Keyword {{ name: "{name}", symbol: symbol_kind::S_{token}, category: KeywordCategory::{category} }},'
         )
+    out.append("];")
+    out.append("")
+    out.append(f"/// Keyword indexes + 1 by FNV-1a hash (linear probing, 0 = empty)")
+    out.append(f"pub static KEYWORD_TABLE: [u16; {TABLE_SIZE}] = [")
+    table = lookup_table(keywords)
+    for i in range(0, TABLE_SIZE, 16):
+        out.append("    " + ", ".join(str(v) for v in table[i : i + 16]) + ",")
     out.append("];")
     with open(args.output, "w", encoding="utf-8") as f:
         f.write("\n".join(out) + "\n")

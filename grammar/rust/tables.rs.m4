@@ -151,10 +151,20 @@ m4_define([b4_rhs_location],
 
 # b4_case(LABEL, STATEMENTS, [COMMENTS])
 # --------------------------------------
+# Every action is a function of its own: inlined into one function, the actions of a large grammar
+# make for a huge stack frame that every reduction would have to pay for.
 m4_define([b4_case],
 [        $1 => {m4_ifval([$3], [ b4_comment([$3])])
-            let yyvalue = $2;
-            Ok(Value::from(yyvalue))
+            #@{inline(never)@}
+            fn action(
+                ctx: &mut ]b4_percent_define_get([[api.rust.context]])[,
+                yystack: &impl ReduceStack,
+                yyloc: ]b4_percent_define_get([[api.rust.location]])[,
+            ) -> Result<Value, ]b4_percent_define_get([[api.rust.error]])[> {
+                let yyvalue = $2;
+                Ok(Value::from(yyvalue))
+            }
+            action(ctx, yystack, yyloc)
         }
 ])
 

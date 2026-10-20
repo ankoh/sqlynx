@@ -6,6 +6,7 @@ use crate::{symbol_kind, SymbolKind};
 mod table;
 
 pub use table::{KEYWORDS, MAX_KEYWORD_LENGTH};
+use table::KEYWORD_TABLE;
 
 /// The category of a keyword
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -34,10 +35,20 @@ impl Keyword {
         if text.len() > MAX_KEYWORD_LENGTH {
             return None;
         }
-        KEYWORDS
-            .binary_search_by(|k| k.name.as_bytes().cmp(text))
-            .ok()
-            .map(|i| &KEYWORDS[i])
+        let mask = KEYWORD_TABLE.len() - 1;
+        let mut slot = fnv1a(text) as usize & mask;
+        loop {
+            match KEYWORD_TABLE[slot] {
+                0 => return None,
+                i => {
+                    let keyword = &KEYWORDS[i as usize - 1];
+                    if keyword.name.as_bytes() == text {
+                        return Some(keyword);
+                    }
+                }
+            }
+            slot = (slot + 1) & mask;
+        }
     }
 
     /// The keyword text of a terminal symbol, if the symbol is a keyword
@@ -47,6 +58,16 @@ impl Keyword {
         }
         keyword_names()[symbol as usize]
     }
+}
+
+/// FNV-1a, the hash of the keyword lookup table (see //grammar/rust:gen_keywords.py)
+fn fnv1a(text: &[u8]) -> u32 {
+    let mut h: u32 = 0x811C_9DC5;
+    for &b in text {
+        h ^= b as u32;
+        h = h.wrapping_mul(0x0100_0193);
+    }
+    h
 }
 
 /// Keyword texts indexed by symbol kind
@@ -75,6 +96,7 @@ mod tests {
         assert_eq!(Keyword::find(b"selec"), None);
         assert_eq!(Keyword::find(b"a_name_that_is_too_long_to_be_a_keyword"), None);
         assert!(KEYWORDS.windows(2).all(|w| w[0].name < w[1].name));
+        assert!(KEYWORDS.iter().all(|k| Keyword::find(k.name.as_bytes()) == Some(k)));
     }
 
     #[test]

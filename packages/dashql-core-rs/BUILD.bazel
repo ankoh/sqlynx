@@ -262,3 +262,14 @@ rust_test(
         ":dashql_snapshots",
     ],
 )
+
+# ---------------------------------------------------------------------------
+# Benchmarks (bazel run -c opt //packages/dashql-core-rs:bench_pipeline)
+# ---------------------------------------------------------------------------
+
+rust_binary(
+    name = "bench_pipeline",
+    srcs = ["benches/pipeline.rs"],
+    edition = "2021",
+    deps = [":dashql_grammar"],
+)

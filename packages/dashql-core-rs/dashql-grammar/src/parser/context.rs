@@ -2,16 +2,61 @@
 //!
 //! The grammar actions build the AST through the parse context. Nodes are appended to a flat buffer
 //! in post-order: `object` and `array` emit the children of a node and return the node itself,
-//! which the enclosing rule emits later. Every method takes `&self` (the state sits in a `RefCell`)
-//! so that the translated actions can nest calls like `ctx.object(.., &[attr(.., ctx.array(..))])`
-//! with the same evaluation order as the C++ actions.
+//! which the enclosing rule emits later. Every method takes `&self` (the state sits in a
+//! [`StateCell`]) so that the translated actions can nest calls like
+//! `ctx.object(.., &[attr(.., ctx.array(..))])` with the same evaluation order as the C++ actions.
 
 use super::value::{ExprVariant, NodeList};
 use crate::names::NameRegistry;
 use crate::scanner::Symbol;
 use crate::span::TextSpan;
 use dashql_buffers::parser::{AttributeKey, ExpressionOperator, Node, NodeType, NumericType, StatementType, SymbolSpan};
-use std::cell::RefCell;
+
+/// The cell of the parse context state.
+///
+/// Methods of the parse context borrow the state only within their own body and never call each
+/// other while holding a borrow. Debug builds check this with a `RefCell`, release builds skip the
+/// bookkeeping, which is a hot path of parsing (about a thousand borrows per statement).
+#[cfg(debug_assertions)]
+pub(crate) struct StateCell<T>(std::cell::RefCell<T>);
+
+#[cfg(debug_assertions)]
+impl<T> StateCell<T> {
+    fn new(value: T) -> Self {
+        Self(std::cell::RefCell::new(value))
+    }
+    pub(crate) fn borrow(&self) -> std::cell::Ref<'_, T> {
+        self.0.borrow()
+    }
+    pub(crate) fn borrow_mut(&self) -> std::cell::RefMut<'_, T> {
+        self.0.borrow_mut()
+    }
+    fn into_inner(self) -> T {
+        self.0.into_inner()
+    }
+}
+
+#[cfg(not(debug_assertions))]
+pub(crate) struct StateCell<T>(std::cell::UnsafeCell<T>);
+
+#[cfg(not(debug_assertions))]
+impl<T> StateCell<T> {
+    fn new(value: T) -> Self {
+        Self(std::cell::UnsafeCell::new(value))
+    }
+    pub(crate) fn borrow(&self) -> &T {
+        // SAFETY: borrows never overlap with a mutable borrow, checked by debug builds.
+        unsafe { &*self.0.get() }
+    }
+    #[allow(clippy::mut_from_ref)]
+    pub(crate) fn borrow_mut(&self) -> &mut T {
+        // SAFETY: borrows never overlap, checked by debug builds.
+        unsafe { &mut *self.0.get() }
+    }
+    fn into_inner(self) -> T {
+        self.0.into_inner()
+    }
+}
 
 /// The parent of nodes that have none (yet)
 pub const NO_PARENT: u32 = u32::MAX;
@@ -70,6 +115,8 @@ pub(crate) struct State {
     pub(crate) clear_lookahead: bool,
     current_statement: Statement,
     lists: Vec<Vec<Node>>,
+    /// Consumed lists whose allocation can be reused
+    free_lists: Vec<u32>,
     nary_expressions: Vec<NaryExpression>,
 }
 
@@ -88,7 +135,7 @@ pub struct ParseContext<'a> {
     symbols: &'a [Symbol],
     /// Is the VISUALISE syntax enabled?
     vis_enabled: bool,
-    pub(crate) state: RefCell<State>,
+    pub(crate) state: StateCell<State>,
 }
 
 /// Arguments that are node lists: list ids and node slices (the C++ initializer lists)
@@ -130,7 +177,11 @@ impl<'a> ParseContext<'a> {
             text,
             symbols,
             vis_enabled,
-            state: RefCell::new(State { names, ..Default::default() }),
+            state: StateCell::new(State {
+                names,
+                nodes: Vec::with_capacity(symbols.len() * 3),
+                ..Default::default()
+            }),
         }
     }
 
@@ -167,8 +218,20 @@ impl<'a> ParseContext<'a> {
     /// Create a list
     pub fn list(&self, nodes: &[Node]) -> NodeList {
         let mut state = self.state.borrow_mut();
+        if let Some(id) = state.free_lists.pop() {
+            state.lists[id as usize].extend_from_slice(nodes);
+            return NodeList(id);
+        }
         state.lists.push(nodes.to_vec());
         NodeList(state.lists.len() as u32 - 1)
+    }
+
+    /// Release a consumed list, keeping its allocation for reuse
+    fn recycle(&self, list: NodeList, mut nodes: Vec<Node>) {
+        nodes.clear();
+        let mut state = self.state.borrow_mut();
+        state.lists[list.0 as usize] = nodes;
+        state.free_lists.push(list.0);
     }
 
     /// Append a node
@@ -198,7 +261,8 @@ impl<'a> ParseContext<'a> {
             return;
         }
         let nodes = self.take_list(other);
-        self.state.borrow_mut().lists[list.0 as usize].extend(nodes);
+        self.state.borrow_mut().lists[list.0 as usize].extend_from_slice(&nodes);
+        self.recycle(other, nodes);
     }
 
     /// `Concat(l, r)`
@@ -256,12 +320,14 @@ impl<'a> ParseContext<'a> {
     /// Emit the children of a list and return their range, skipping null nodes
     fn emit_children(&self, list: NodeList) -> (u32, u32) {
         let begin = self.state.borrow().nodes.len() as u32;
-        for node in self.take_list(list) {
+        let nodes = self.take_list(list);
+        for node in &nodes {
             if node.node_type() == NodeType::NONE {
                 continue;
             }
-            self.add_node(node);
+            self.add_node(*node);
         }
+        self.recycle(list, nodes);
         let n = self.state.borrow().nodes.len() as u32 - begin;
         (begin, n)
     }
