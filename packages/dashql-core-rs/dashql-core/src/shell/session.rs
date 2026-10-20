@@ -91,13 +91,11 @@ fn push(output: &mut Vec<u8>, text: &str) {
     output.extend_from_slice(text.as_bytes());
 }
 
-/// The byte offset after the grapheme at `offset`, one byte for invalid UTF-8
-fn next_cluster(text: &[u8], offset: usize, valid_utf8: bool) -> usize {
-    let next = if valid_utf8 { next_grapheme(text, offset) } else { offset + 1 };
-    if next <= offset {
-        offset + 1
-    } else {
-        next
+/// The byte offset after the grapheme cluster at `offset`, one byte further if the text is not valid UTF-8
+fn next_cluster(utf8: Option<&str>, offset: usize) -> usize {
+    match utf8 {
+        Some(text) => next_grapheme(text, offset),
+        None => offset + 1,
     }
 }
 
@@ -111,10 +109,10 @@ fn truncate_display_text(text: &[u8], width: usize) -> Vec<u8> {
     let content_width = width - marker_width;
     let mut rendered = 0;
     let mut end = 0;
-    let valid_utf8 = is_valid(text);
+    let utf8 = std::str::from_utf8(text).ok();
     let mut offset = 0;
     while offset < text.len() {
-        let next = next_cluster(text, offset, valid_utf8);
+        let next = next_cluster(utf8, offset);
         let grapheme_width = display_width(&text[offset..next]);
         if rendered + grapheme_width > content_width {
             break;
@@ -152,10 +150,10 @@ fn append_prompt_prefix(output: &mut Vec<u8>, prefix: &[u8], columns: usize, lay
     if !prefix.is_empty() {
         push(output, vt100::BOLD);
     }
-    let valid_utf8 = is_valid(prefix);
+    let utf8 = std::str::from_utf8(prefix).ok();
     let mut offset = 0;
     while offset < prefix.len() {
-        let next = next_cluster(prefix, offset, valid_utf8);
+        let next = next_cluster(utf8, offset);
         let grapheme = &prefix[offset..next];
         let width = display_width(grapheme);
         if layout.column != 0 && layout.column + width > columns {
@@ -174,10 +172,10 @@ fn append_prompt_prefix(output: &mut Vec<u8>, prefix: &[u8], columns: usize, lay
 }
 
 fn advance_prompt_prefix(prefix: &[u8], columns: usize, layout: &mut PromptLayout) {
-    let valid_utf8 = is_valid(prefix);
+    let utf8 = std::str::from_utf8(prefix).ok();
     let mut offset = 0;
     while offset < prefix.len() {
-        let next = next_cluster(prefix, offset, valid_utf8);
+        let next = next_cluster(utf8, offset);
         let width = display_width(&prefix[offset..next]);
         if layout.column != 0 && layout.column + width > columns {
             layout.rows += 1;
@@ -221,7 +219,7 @@ fn layout_prompt(text: &[u8], initial: &[u8], continuation: &[u8], columns: usiz
     let columns = columns.max(1);
     let mut layout = PromptLayout::default();
     advance_prompt_prefix(initial, columns, &mut layout);
-    let valid_utf8 = is_valid(text);
+    let utf8 = std::str::from_utf8(text).ok();
     let mut offset = 0;
     while offset < text.len() {
         if text[offset] == b'\n' {
@@ -229,7 +227,7 @@ fn layout_prompt(text: &[u8], initial: &[u8], continuation: &[u8], columns: usiz
             offset += 1;
             continue;
         }
-        let next = next_cluster(text, offset, valid_utf8);
+        let next = next_cluster(utf8, offset);
         let width = display_width(&text[offset..next]);
         if layout.column != 0 && layout.column + width > columns {
             break_prompt_line(None, continuation, &[], columns, &mut layout);
@@ -251,7 +249,7 @@ fn render_highlighted_prompt(
     let mut layout = PromptLayout::default();
     append_prompt_prefix(output, initial, columns, &mut layout);
     let mut active_style: Vec<u8> = Vec::new();
-    let valid_utf8 = is_valid(highlighted);
+    let utf8 = std::str::from_utf8(highlighted).ok();
     let mut offset = 0;
     while offset < highlighted.len() {
         if highlighted[offset] == 0x1b && offset + 1 < highlighted.len() && highlighted[offset + 1] == b'[' {
@@ -269,7 +267,7 @@ fn render_highlighted_prompt(
             offset += 1;
             continue;
         }
-        let next = next_cluster(highlighted, offset, valid_utf8);
+        let next = next_cluster(utf8, offset);
         let grapheme = &highlighted[offset..next];
         let width = display_width(grapheme);
         if layout.column != 0 && layout.column + width > columns {

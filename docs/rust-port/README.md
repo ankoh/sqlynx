@@ -387,9 +387,12 @@ oracle of the differential tests.
   `packages/dashql-app/src/shell/api.ts` uses the `Shell` class instead of the C ABI.
 - **Tests**: `dashql-core-js` vitest (255), Node smoke and tarball consumer tests, browser tests in
   Chromium and Firefox, and the app tests (185 files, 9620 tests) in Chromium and Firefox pass.
-  The shell tests (51 + 21 + 10) are ported; `:shell_differential_test` compares utf8proc widths and
-  graphemes of all code points, 24k Arrow renders and 1600 random sessions with 0 differences
-  (Arrow error texts are compared by status only).
+  The shell tests (51 + 21 + 10) are ported; `:shell_differential_test` compares 24k Arrow renders and
+  1600 random sessions with 0 differences (Arrow error texts are compared by status only).
+- **Shell text measurement** uses `unicode-segmentation` (extended grapheme clusters) and `unicode-width`
+  (terminal columns) instead of a port of utf8proc 2.4 (Unicode 12.1). Flags are 2 columns wide, emoji
+  presentation sequences 2, the soft hyphen 0, and newer code points have their current properties. The
+  differential test only generates texts that both measure alike.
 
 | Release module | Rust | C++ |
 |---|---|---|

@@ -70,20 +70,8 @@ impl Positions {
     }
 }
 
-fn is_word_grapheme(grapheme: &[u8]) -> bool {
-    let Some(&byte) = grapheme.first() else {
-        return false;
-    };
-    byte >= 0x80 || byte.is_ascii_alphanumeric() || byte == b'_'
-}
-
-fn next_grapheme_at_least_one(text: &[u8], offset: usize) -> usize {
-    let next = next_grapheme(text, offset);
-    if next > offset {
-        next
-    } else {
-        offset + 1
-    }
+fn is_word_grapheme(grapheme: &str) -> bool {
+    grapheme.chars().next().is_some_and(|c| !c.is_ascii() || c.is_ascii_alphanumeric() || c == '_')
 }
 
 /// The prompt of a shell (`PromptBuffer`)
@@ -210,7 +198,7 @@ impl PromptBuffer {
     }
 
     /// The byte offset of the word start left of the cursor
-    fn word_left(&self, text: &[u8], mut cursor: usize) -> usize {
+    fn word_left(&self, text: &str, mut cursor: usize) -> usize {
         while cursor > 0 {
             let previous = previous_grapheme(text, cursor);
             if is_word_grapheme(&text[previous..cursor]) {
@@ -231,20 +219,19 @@ impl PromptBuffer {
     pub fn move_word_left(&mut self) -> bool {
         let text = self.text();
         let original = self.cursor_byte_offset();
-        let cursor = self.word_left(text.as_bytes(), original);
+        let cursor = self.word_left(&text, original);
         cursor != original && self.move_to_byte_offset(cursor)
     }
 
     pub fn move_word_right(&mut self) -> bool {
         let text = self.text();
-        let text = text.as_bytes();
         let original = self.cursor_byte_offset();
         let mut cursor = original;
-        while cursor < text.len() && !is_word_grapheme(&text[cursor..next_grapheme_at_least_one(text, cursor)]) {
-            cursor = next_grapheme_at_least_one(text, cursor);
+        while cursor < text.len() && !is_word_grapheme(&text[cursor..next_grapheme(&text, cursor)]) {
+            cursor = next_grapheme(&text, cursor);
         }
-        while cursor < text.len() && is_word_grapheme(&text[cursor..next_grapheme_at_least_one(text, cursor)]) {
-            cursor = next_grapheme_at_least_one(text, cursor);
+        while cursor < text.len() && is_word_grapheme(&text[cursor..next_grapheme(&text, cursor)]) {
+            cursor = next_grapheme(&text, cursor);
         }
         cursor != original && self.move_to_byte_offset(cursor)
     }

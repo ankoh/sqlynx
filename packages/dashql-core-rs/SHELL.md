@@ -38,6 +38,8 @@ bazel build //packages/dashql-core-rs:shell_wasm
 
 Prompt text uses a contiguous UTF-8 buffer with cached grapheme boundaries. Cursor movement and deletion operate on
 extended grapheme clusters, while cursor positions remain UTF-8 byte offsets for parser and host interoperability.
+Clusters come from `unicode-segmentation` and occupy the terminal columns of `unicode-width`; clusters that start with a
+control character take no columns, and text that is not valid UTF-8 takes one column per byte (`shell::unicode`).
 
 The Rust shell is the single source of truth for shell behavior and rendering. New highlighting, completion
 presentation, cursor, redraw, history, and status behavior belongs in the Rust shell code, not in the TypeScript xterm

@@ -221,8 +221,11 @@ them with rapidjson (comments, NaN and infinity, trailing commas, imprecise numb
   lists, maps and structs take the null flag of another row.
 - **Stale cursor row.** After prompt edits outside the terminal the cursor row is stale, and the
   cursor-down count of a submit wraps like `size_t`.
-- **`\r\n` is one grapheme of width 0** in the prompt layout.
-- **utf8proc 2.4**: grapheme rules of Unicode 12.1 and the width table of 2.4.
+- **`\r\n` is one grapheme of width 0** in the prompt layout. Rust keeps this: clusters that start with a
+  control character take no columns.
+- **utf8proc 2.4** measures text with the grapheme rules of Unicode 12.1 and the width of the first code
+  point of a cluster. Rust measures with `unicode-segmentation` and `unicode-width` and does not
+  reproduce this.
 - **Completion limit 0** trips an assertion in the C++ `TopKHeap`.
 - **Up/Down at a CR LF line break** dereferences an empty `std::optional` in C++ (undefined
   behavior); Rust takes the boundary before it.

@@ -20,7 +20,6 @@ pub mod prompt_buffer;
 mod session;
 pub mod session_relations;
 pub mod unicode;
-mod unicode_tables;
 pub mod vt100;
 
 pub use api::{SharedCatalog, Shell};

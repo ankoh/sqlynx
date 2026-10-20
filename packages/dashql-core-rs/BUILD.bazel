@@ -104,7 +104,7 @@ rust_test(
 
 rust_library(
     name = "dashql_core",
-    srcs = glob(["dashql-core/src/**/*.rs"]) + [":dashql_core_unicode_tables_rs"],
+    srcs = glob(["dashql-core/src/**/*.rs"]),
     crate_name = "dashql_core",
     crate_root = "dashql-core/src/lib.rs",
     edition = "2021",
@@ -631,23 +631,8 @@ rust_test(
 # //packages/dashql-core:dashql_shell and the shell wasm module.
 # ---------------------------------------------------------------------------
 
-# The utf8proc properties (charwidth, boundclass) of the vendored utf8proc that the C++ shell uses.
-genrule(
-    name = "dashql_core_unicode_tables_rs",
-    srcs = [
-        "//packages/dashql-core/vendor/utf8proc:utf8proc.data",
-        "//packages/dashql-core/vendor/utf8proc:include/utf8proc/utf8proc.hpp",
-    ],
-    outs = ["dashql-core/src/shell/unicode_tables.rs"],
-    cmd = "python3 $(location :tools/gen_utf8proc_tables.py) " +
-          "--data $(location //packages/dashql-core/vendor/utf8proc:utf8proc.data) " +
-          "--header $(location //packages/dashql-core/vendor/utf8proc:include/utf8proc/utf8proc.hpp) " +
-          "--output $@",
-    tools = [":tools/gen_utf8proc_tables.py"],
-)
-
-# The Rust shell must behave exactly like the C++ shell: utf8proc widths and grapheme breaks of all code points,
-# synthetic Arrow IPC results rendered at many widths, and random sessions driving both shells through the same calls.
+# The Rust shell must behave exactly like the C++ shell: synthetic Arrow IPC results rendered at many widths and random
+# sessions driving both shells through the same calls, on texts whose width both Unicode versions agree on.
 rust_test(
     name = "shell_differential_test",
     size = "large",

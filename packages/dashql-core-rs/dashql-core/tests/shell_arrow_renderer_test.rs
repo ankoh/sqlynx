@@ -4,7 +4,7 @@ use arrow_array::{ArrayRef, Int32Array, RecordBatch, RecordBatchOptions, StringA
 use arrow_ipc::writer::{FileWriter, StreamWriter};
 use arrow_schema::{DataType, Field, Schema};
 use dashql_core::catalog::Catalog;
-use dashql_core::shell::unicode::render_width;
+use dashql_core::shell::unicode::display_width;
 use dashql_core::shell::vt100::{self, Command};
 use dashql_core::shell::{
     ArrowRenderer, EffectCompletionStatus, EffectType, PromptInputKey, ShellSession, ShellStatus,
@@ -46,7 +46,7 @@ fn render(columns: u32, ipc: &[u8]) -> String {
 
 fn expect_lines_fit(output: &str, width: usize) {
     for line in output.split('\n') {
-        assert!(render_width(line.as_bytes()) <= width, "{line}");
+        assert!(display_width(line.as_bytes()) <= width, "{line}");
     }
 }
 
