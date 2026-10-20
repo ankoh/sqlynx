@@ -662,3 +662,117 @@ impl Catalog {
         }
     }
 }
+
+/// Describe a catalog entry (`CatalogEntry::DescribeEntry`)
+fn describe_entry(entry: &CatalogEntryRef) -> dashql_buffers::catalog::CatalogEntryT {
+    use dashql_buffers::catalog::{CatalogEntryT, CatalogEntryType, SchemaDescriptorT, SchemaTableColumnT, SchemaTableT};
+    let data = entry.data();
+    let mut out = CatalogEntryT::default();
+    out.catalog_entry_id = data.catalog_entry_id;
+    out.catalog_entry_type = CatalogEntryType::DESCRIPTOR_POOL;
+    match entry {
+        // Scripts are described as one anonymous schema with all tables, with rank 0
+        CatalogEntryRef::Script(_) => {
+            out.rank = 0;
+            let tables = data
+                .table_declarations
+                .iter()
+                .enumerate()
+                .map(|(i, table)| {
+                    let mut t = SchemaTableT::default();
+                    t.table_id = i as u32;
+                    t.table_name = Some(table.table_name.table_name.text.to_string());
+                    t.columns = Some(
+                        table
+                            .table_columns
+                            .iter()
+                            .map(|c| {
+                                let mut column = SchemaTableColumnT::default();
+                                column.column_name = Some(c.column_name.text.to_string());
+                                column
+                            })
+                            .collect(),
+                    );
+                    t
+                })
+                .collect();
+            let mut schema = SchemaDescriptorT::default();
+            schema.tables = Some(tables);
+            out.schemas = Some(vec![schema]);
+        }
+        CatalogEntryRef::Descriptor(descriptor) => {
+            out.rank = descriptor.rank;
+            let schemas = data
+                .schemas_by_qualified_name
+                .iter()
+                .map(|((db, name), &i)| {
+                    let schema_id = data.schema_references[i].object_id;
+                    let tables = data
+                        .table_declarations
+                        .iter()
+                        .filter(|t| t.catalog_schema_id == schema_id)
+                        .map(|table| {
+                            let mut t = SchemaTableT::default();
+                            t.table_id = table.table_id().object;
+                            t.table_name = Some(table.table_name.table_name.text.to_string());
+                            t.columns = Some(
+                                table
+                                    .table_columns
+                                    .iter()
+                                    .map(|c| {
+                                        let mut column = SchemaTableColumnT::default();
+                                        column.column_name = Some(c.column_name.text.to_string());
+                                        column.ordinal_position = c.column_index();
+                                        column
+                                    })
+                                    .collect(),
+                            );
+                            t
+                        })
+                        .collect();
+                    let mut schema = SchemaDescriptorT::default();
+                    schema.database_name = Some(db.to_string());
+                    schema.schema_name = Some(name.to_string());
+                    schema.tables = Some(tables);
+                    schema
+                })
+                .collect();
+            out.schemas = Some(schemas);
+        }
+    }
+    out
+}
+
+impl Catalog {
+    /// Describe all entries in rank order (`DescribeEntries`)
+    pub fn describe_entries(&self) -> dashql_buffers::catalog::CatalogEntriesT {
+        let mut out = dashql_buffers::catalog::CatalogEntriesT::default();
+        out.entries = Some(self.entries_ranked().map(|(_, e)| describe_entry(e)).collect());
+        out
+    }
+
+    /// Describe one entry (`DescribeEntriesOf`), None if the entry is unknown
+    pub fn describe_entries_of(&self, id: CatalogEntryId) -> Option<dashql_buffers::catalog::CatalogEntriesT> {
+        let entry = self.entries.get(&id)?;
+        let mut out = dashql_buffers::catalog::CatalogEntriesT::default();
+        out.entries = Some(vec![describe_entry(entry)]);
+        Some(out)
+    }
+
+    /// The statistics of the catalog content (`GetStatistics`)
+    pub fn statistics(&self) -> dashql_buffers::catalog::CatalogStatisticsT {
+        let mut content = dashql_buffers::catalog::CatalogContentStatisticsT::default();
+        content.database_count = self.databases.len() as u32;
+        content.schema_count = self.schemas.len() as u32;
+        content.table_count = self.entries.values().map(|e| e.data().table_declarations.len() as u32).sum();
+        content.table_column_count = self
+            .entries
+            .values()
+            .flat_map(|e| e.data().table_declarations.iter())
+            .map(|t| t.table_columns.len() as u32)
+            .sum();
+        let mut out = dashql_buffers::catalog::CatalogStatisticsT::default();
+        out.content = Some(content);
+        out
+    }
+}

@@ -251,7 +251,10 @@ rust_shared_library(
     edition = "2021",
     target_compatible_with = ["@platforms//cpu:wasm32"],
     deps = [
+        ":dashql_core",
         ":dashql_grammar",
+        "//proto/fb:dashql_buffers_rs",
+        "@core_crates//:flatbuffers",
         "@core_crates//:wasm-bindgen",
     ],
 )

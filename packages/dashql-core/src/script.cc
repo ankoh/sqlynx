@@ -992,6 +992,7 @@ flatbuffers::Offset<buffers::catalog::CatalogEntry> AnalyzedScript::DescribeEntr
             table_builder.add_table_id(table_id++);
             table_builder.add_table_name(table_name);
             table_builder.add_columns(columns_offset);
+            table_offsets.push_back(table_builder.Finish());
         }
     }
     auto tables_offset = builder.CreateVector(table_offsets);
