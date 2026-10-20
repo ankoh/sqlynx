@@ -25,7 +25,6 @@ DEPS = [
     ("rapidjson",                   "_RAPIDJSON_VERSION",   "https://github.com/Tencent/rapidjson/archive/refs/tags/v{VERSION}.zip"),
     ("c4core",                      "_C4CORE_VERSION",      "https://github.com/biojppm/c4core/archive/refs/tags/v{VERSION}.zip"),
     ("rapidyaml",                   "_RAPIDYAML_VERSION",   "https://github.com/biojppm/rapidyaml/archive/refs/tags/v{VERSION}.zip"),
-    ("com_google_benchmark",        "_BENCHMARK_VERSION",   "https://github.com/google/benchmark/archive/refs/tags/v{VERSION}.zip"),
     ("duckdb_cli_osx",              "_DUCKDB_VERSION",      "https://github.com/duckdb/duckdb/releases/download/v{VERSION}/duckdb_cli-osx-universal.zip"),
     ("duckdb_cli_linux_amd64",      "_DUCKDB_VERSION",      "https://github.com/duckdb/duckdb/releases/download/v{VERSION}/duckdb_cli-linux-amd64.zip"),
     ("apache_arrow",                "_ARROW_VERSION",       "https://github.com/apache/arrow/archive/refs/tags/apache-arrow-{VERSION}.tar.gz"),

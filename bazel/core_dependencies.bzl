@@ -4,7 +4,6 @@
     fetches and build overlays. Fetched/built in this extension:
     - flatbuffers, ankerl, rapidjson, c4core, rapidyaml (http_archive + build_file)
     - bison_src, m4_src, flex_src (prebuilt xPack)
-    - com_google_benchmark (http_archive + external_benchmark.BUILD)
     googletest and gflags remain from BCR in MODULE.bazel.
 
     sha256 hashes are maintained by scripts/update_bazel_hashes.sh and are
@@ -28,8 +27,6 @@ _RAPIDJSON_VERSION = "1.1.0"
 _C4CORE_VERSION = "0.3.0"
 # renovate: datasource=github-releases depName=biojppm/rapidyaml
 _RAPIDYAML_VERSION = "0.12.1"
-# renovate: datasource=github-releases depName=google/benchmark
-_BENCHMARK_VERSION = "1.9.5"
 # renovate: datasource=github-releases depName=duckdb/duckdb
 _DUCKDB_VERSION = "1.5.6"
 # renovate: datasource=github-releases depName=apache/arrow
@@ -87,13 +84,6 @@ def _dashql_core_deps_impl(mctx):
         strip_prefix = "rapidyaml-" + _RAPIDYAML_VERSION,
         urls = ["https://github.com/biojppm/rapidyaml/archive/refs/tags/v" + _RAPIDYAML_VERSION + ".zip"],
         build_file = "//bazel:external_rapidyaml.BUILD",
-    )
-    http_archive(
-        name = "com_google_benchmark",
-        sha256 = "68c9c65cee4864db42c3af9ff5b5cfa32ce1b01d9653136c5f4ff96e18a9b8f2",
-        strip_prefix = "benchmark-" + _BENCHMARK_VERSION,
-        urls = ["https://github.com/google/benchmark/archive/refs/tags/v" + _BENCHMARK_VERSION + ".zip"],
-        build_file = "//bazel:external_benchmark.BUILD",
     )
     # DuckDB CLI: exec-config build tool used by //packages/dashql-data to convert
     # dataset sources to Parquet in a genrule. One archive per exec platform,

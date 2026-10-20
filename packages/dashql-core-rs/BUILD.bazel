@@ -364,13 +364,30 @@ rust_test(
 
 rust_binary(
     name = "bench_pipeline",
-    srcs = ["benches/pipeline.rs"],
+    srcs = [
+        "benches/harness.rs",
+        "benches/pipeline.rs",
+    ],
+    crate_root = "benches/pipeline.rs",
     edition = "2021",
     deps = [
         ":dashql_core",
         ":dashql_grammar",
         "//proto/fb:dashql_buffers_rs",
     ],
+)
+
+# Scan, parse and analyze over CTE chains of 1 to 1000 TPC-H queries:
+# bazel run -c opt //packages/dashql-core-rs:bench_pipeline_ctes [-- <filter>]
+rust_binary(
+    name = "bench_pipeline_ctes",
+    srcs = [
+        "benches/harness.rs",
+        "benches/pipeline_ctes.rs",
+    ],
+    crate_root = "benches/pipeline_ctes.rs",
+    edition = "2021",
+    deps = [":dashql_core"],
 )
 
 # The Rust formatter must produce exactly the output of the C++ formatter: all snapshot inputs and

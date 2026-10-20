@@ -1,14 +1,21 @@
-//! Pipeline benchmarks, the counterpart of packages/dashql-core/benchmarks/benchmark_pipeline.cc.
+//! Pipeline benchmarks, the counterpart of the former packages/dashql-core/benchmarks/benchmark_pipeline.cc.
+//!
+//! The benchmarks named like the C++ ones (`scan_query`, `parse_query`, `format_query`, `analyze_query`,
+//! `analyze_query_only`, `move_cursor`, `complete_cursor`) measure the same work. The others isolate parts of it.
 //!
 //!   bazel run -c opt //packages/dashql-core-rs:bench_pipeline
 
+mod harness;
+
 use dashql_buffers::formatting::FormattingConfigT;
+use dashql_core::catalog::Catalog;
 use dashql_core::formatter::Formatter;
+use dashql_core::script::Script;
 use dashql_grammar::parser::parse;
 use dashql_grammar::scanner::scan;
+use harness::bench;
 use std::hint::black_box;
 use std::sync::Arc;
-use std::time::{Duration, Instant};
 
 /// The external script of benchmark_pipeline.cc (the TPC-DS schema)
 const EXTERNAL_SCRIPT: &str = r#"
@@ -594,35 +601,8 @@ order by c_customer_id
 limit 100;
 "#;
 
-/// Run a function repeatedly and print the median time per iteration of several batches
-fn bench(name: &str, mut f: impl FnMut()) {
-    // Calibrate the batch size to ~10ms
-    let mut iterations = 1u64;
-    loop {
-        let start = Instant::now();
-        for _ in 0..iterations {
-            f();
-        }
-        if start.elapsed() > Duration::from_millis(10) {
-            break;
-        }
-        iterations *= 2;
-    }
-    let mut samples: Vec<f64> = (0..21)
-        .map(|_| {
-            let start = Instant::now();
-            for _ in 0..iterations {
-                f();
-            }
-            start.elapsed().as_nanos() as f64 / iterations as f64
-        })
-        .collect();
-    samples.sort_by(|a, b| a.partial_cmp(b).unwrap());
-    println!("{name:<20} {:>12.0} ns", samples[samples.len() / 2]);
-}
-
 fn main() {
-    bench("scan_query", || {
+    bench("scan_text", || {
         black_box(scan(black_box(MAIN_SCRIPT), 0, 1));
     });
     let scanned = scan(MAIN_SCRIPT, 0, 1);
@@ -641,12 +621,59 @@ fn main() {
         black_box(parse(Arc::new(scan(black_box(MAIN_SCRIPT), 0, 1))));
     });
     bench_attribute_lookups();
+    bench_script();
     bench_analyze();
     let parsed = parse(Arc::new(scan(MAIN_SCRIPT, 0, 1)));
     let config = FormattingConfigT::default();
     bench("format_query", || {
         let mut formatter = Formatter::new(black_box(&parsed));
         black_box(formatter.format(&config));
+    });
+    bench_cursor();
+}
+
+/// `scan_query`, `parse_query` and `analyze_query` through the `Script` facade, like the C++ benchmarks
+fn bench_script() {
+    let mut catalog = Catalog::new();
+    let mut external = Script::new(&catalog);
+    external.insert_text_at(0, EXTERNAL_SCRIPT);
+    external.analyze(&catalog, true).expect("external script");
+    catalog.load_script(external.analyzed.clone().unwrap(), 0).expect("load external script");
+
+    let mut main = Script::new(&catalog);
+    main.insert_text_at(0, MAIN_SCRIPT);
+    main.analyze(&catalog, true).expect("main script");
+    bench("scan_query", || {
+        main.scan();
+        black_box(&main);
+    });
+    main.parse();
+    bench("parse_query", || {
+        main.parse();
+        black_box(&main);
+    });
+    main.analyze(&catalog, true).expect("main script");
+    bench("analyze_query", || {
+        main.analyze(&catalog, false).expect("main script");
+        black_box(&main);
+    });
+}
+
+/// `move_cursor` and `complete_cursor`: the cursor after `,customer` of the analyzed main script
+fn bench_cursor() {
+    let catalog = Catalog::new();
+    let mut main = Script::new(&catalog);
+    main.insert_text_at(0, MAIN_SCRIPT);
+    main.analyze(&catalog, true).expect("main script");
+    let text = ",customer";
+    let offset = MAIN_SCRIPT.find(text).unwrap() + text.len();
+    bench("move_cursor", || {
+        black_box(main.move_cursor(&catalog, black_box(offset)));
+    });
+    let cursor = main.move_cursor(&catalog, offset);
+    Script::complete_at_cursor(&cursor, 10).expect("completion");
+    bench("complete_cursor", || {
+        black_box(Script::complete_at_cursor(&cursor, 10).expect("completion"));
     });
 }
 
@@ -681,10 +708,9 @@ fn bench_attribute_lookups() {
     }
 }
 
-/// `analyze_query`: analyze the main script against the external script in the catalog
+/// `analyze_query_only`: analyze the parsed main script against the external script in the catalog
 fn bench_analyze() {
     use dashql_core::analyzer::analyze;
-    use dashql_core::catalog::Catalog;
     let mut catalog = Catalog::new();
     let external_id = catalog.allocate_entry_id();
     let external = Arc::new(parse(Arc::new(scan(EXTERNAL_SCRIPT, 0, external_id))));
@@ -692,7 +718,7 @@ fn bench_analyze() {
     catalog.load_script(Arc::new(external), 0).expect("load external script");
     let main_id = catalog.allocate_entry_id();
     let main = Arc::new(parse(Arc::new(scan(MAIN_SCRIPT, 0, main_id))));
-    bench("analyze_query", || {
+    bench("analyze_query_only", || {
         black_box(analyze(main.clone(), &catalog).expect("main script"));
     });
 }

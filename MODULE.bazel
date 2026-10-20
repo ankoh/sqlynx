@@ -128,7 +128,6 @@ use_repo(
     "binaryen",
     "bison_src",
     "c4core",
-    "com_google_benchmark",
     "com_google_flatbuffers",
     "duckdb_cli_linux_amd64",
     "duckdb_cli_osx",

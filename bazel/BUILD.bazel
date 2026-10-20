@@ -4,7 +4,6 @@ exports_files([
 
     "external_ankerl.BUILD",
     "external_arrow.BUILD",
-    "external_benchmark.BUILD",
     "external_bison.bzl",
     "external_c4core.BUILD",
     "external_duckdb_cli.BUILD",

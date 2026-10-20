@@ -62,9 +62,6 @@ npm_link_package(
 refresh_compile_commands(
     name = "refresh_compile_commands",
     targets = {
-        "//packages/dashql-core:benchmark_pipeline": "",
-        "//packages/dashql-core:benchmark_pipeline_ctes": "",
-        "//packages/dashql-core:benchmark_catalog": "",
         "//packages/dashql-core:dashql_core": "",
         "//packages/dashql-core:test_utils": "",
         "//packages/dashql-core:test_main": "",
