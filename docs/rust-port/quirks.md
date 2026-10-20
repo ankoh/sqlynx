@@ -77,6 +77,29 @@ the C++ core.
 - **Root scopes iterate like `ankerl::unordered_dense::set`**: in insertion order, and erasing moves
   the last element into the hole. Name resolution visits the roots in that order.
 
+## Completion (`packages/dashql-core/src/analyzer/completion.cc`)
+
+- **Candidates are ranked with the unstable `std::sort`.** `TopKHeap` sorts the candidates (score,
+  then case-insensitive name) and the catalog objects of a candidate (score only), so ties come out
+  in introsort order. `dashql_core::utils::sort::std_sort` reproduces the libstdc++ algorithm;
+  libc++ (the C++ wasm build) orders ties differently.
+- **A candidate scores with its lowest top object.** `SelectTopCandidates` takes the score of the
+  last of the descending top 24 catalog objects.
+- **Spans mix text offsets and token indexes.** Candidate target locations are `SymbolSpan`s holding
+  text offsets, and keyword-registered names keep token indexes in their text location, which the
+  "is it the cursor symbol" check compares with text offsets.
+- **A dot at the begin of the cursor symbol never completes.** The switch in `Compute` falls through
+  from `BEGIN_OF_SYMBOL` into the `return`.
+- **The analysis of one script can attach objects to the names of another one.** Derived tables
+  (`CREATE VIEW v AS SELECT * FROM t`) push their columns into the resolved objects of the names they
+  copy, which can be names of a catalog entry. The Rust analyzer only records objects for the name
+  index of its own script.
+- **Table refs are promoted through the catalog only.** `PromoteIdentifiersInScope` resolves the
+  tables of the scope with `Catalog::ResolveTable`, so tables of the script being edited are only
+  promoted once that script is loaded into the catalog.
+- **The snapshot encoder reads the target symbol unconditionally**, which completions inside comments
+  do not have. The oracle reports them as `no-target`.
+
 ## Formatter (`packages/dashql-core/src/formatter/`)
 
 - **Attribute lookup picks different duplicates** (`utils/ast_attributes.h` `LookupAttributes`). With

@@ -8,10 +8,12 @@
 pub mod descriptor;
 pub mod entry;
 pub mod ids;
+pub mod names;
 
 pub use descriptor::DescriptorEntry;
 pub use entry::*;
 pub use ids::*;
+pub use names::{IndexedName, NameSearchIndex};
 
 use crate::analyzer::AnalyzedScript;
 use crate::error::{Error, Result};
@@ -33,6 +35,14 @@ impl CatalogEntryRef {
         match self {
             CatalogEntryRef::Script(s) => &s.entry,
             CatalogEntryRef::Descriptor(d) => &d.entry,
+        }
+    }
+
+    /// The name search index of the entry, built on first use
+    pub fn name_search_index(&self) -> &NameSearchIndex {
+        match self {
+            CatalogEntryRef::Script(s) => s.name_search_index(),
+            CatalogEntryRef::Descriptor(d) => d.name_search_index(),
         }
     }
 }

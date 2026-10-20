@@ -238,6 +238,44 @@ pub struct ColumnLoc {
     pub column: u32,
 }
 
+/// The location of an object in the vectors of a catalog entry
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct ObjectLoc {
+    pub entry: CatalogEntryId,
+    pub index: u32,
+}
+
+/// A catalog object (`CatalogObject`): a declaration of a catalog entry
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum CatalogObjectRef {
+    Database(ObjectLoc),
+    Schema(ObjectLoc),
+    Table(TableLoc),
+    Column(ColumnLoc),
+    Function(ObjectLoc),
+}
+
+impl CatalogObjectRef {
+    pub fn object_type(&self) -> CatalogObjectType {
+        match self {
+            CatalogObjectRef::Database(_) => CatalogObjectType::DatabaseReference,
+            CatalogObjectRef::Schema(_) => CatalogObjectType::SchemaReference,
+            CatalogObjectRef::Table(_) => CatalogObjectType::TableDeclaration,
+            CatalogObjectRef::Column(_) => CatalogObjectType::ColumnDeclaration,
+            CatalogObjectRef::Function(_) => CatalogObjectType::FunctionDeclaration,
+        }
+    }
+
+    /// The entry that declares the object
+    pub fn entry(&self) -> CatalogEntryId {
+        match self {
+            CatalogObjectRef::Database(l) | CatalogObjectRef::Schema(l) | CatalogObjectRef::Function(l) => l.entry,
+            CatalogObjectRef::Table(t) => t.entry,
+            CatalogObjectRef::Column(c) => c.table.entry,
+        }
+    }
+}
+
 /// The declarations of a catalog entry and their indexes
 #[derive(Clone, Debug, Default)]
 pub struct CatalogEntryData {
@@ -280,6 +318,17 @@ impl CatalogEntryData {
         TableLoc {
             entry: self.catalog_entry_id,
             index: index as u32,
+        }
+    }
+
+    /// The id of an object of this entry
+    pub fn object_id(&self, object: CatalogObjectRef) -> QualifiedCatalogObjectId {
+        match object {
+            CatalogObjectRef::Database(l) => self.database_references[l.index as usize].object_id,
+            CatalogObjectRef::Schema(l) => self.schema_references[l.index as usize].object_id,
+            CatalogObjectRef::Table(t) => self.table_declarations[t.index as usize].object_id,
+            CatalogObjectRef::Column(c) => self.table_declarations[c.table.index as usize].table_columns[c.column as usize].object_id,
+            CatalogObjectRef::Function(l) => self.function_declarations[l.index as usize].object_id,
         }
     }
 

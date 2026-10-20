@@ -1,7 +1,7 @@
 //! The state shared between the analysis passes (`analysis_state.h`).
 
 use super::types::*;
-use super::{AnalyzedScript, NameObject};
+use super::AnalyzedScript;
 use crate::catalog::*;
 use dashql_buffers::analyzer::{AnalyzerErrorSeverity, AnalyzerErrorType, NameTag, SemanticNodeMarkerType};
 use dashql_buffers::parser::{Node, NodeType, SymbolSpan};
@@ -60,6 +60,7 @@ impl<'a> AnalysisState<'a> {
             inferred_table_schemas: Vec::new(),
             inferred_table_schemas_by_name: Default::default(),
             dependencies: catalog.entries_ranked().map(|(_, e)| e.clone()).collect(),
+            name_search_index: Default::default(),
         };
         Self {
             parsed,
@@ -104,6 +105,14 @@ impl<'a> AnalysisState<'a> {
         }
     }
 
+    /// The location of an object of this script
+    pub fn loc(&self, index: usize) -> ObjectLoc {
+        ObjectLoc {
+            entry: self.entry_id,
+            index: index as u32,
+        }
+    }
+
     /// The empty name
     pub fn empty_name(&self) -> Name {
         self.name(self.out.empty_name)
@@ -123,7 +132,7 @@ impl<'a> AnalysisState<'a> {
     }
 
     /// Remember an object a name resolves to
-    pub fn resolve_name(&mut self, name: &Name, object: NameObject) {
+    pub fn resolve_name(&mut self, name: &Name, object: CatalogObjectRef) {
         self.out.name_objects.push((name.entry, name.id, object));
     }
 
@@ -296,9 +305,10 @@ impl<'a> AnalysisState<'a> {
     /// The statement that contains an AST node (`FindStatementId`)
     pub fn find_statement_id(&self, ast_node_id: u32) -> u32 {
         let mut root = ast_node_id;
+        // Statement roots are their own parents (C++ walks on for the remaining depth budget)
         for _ in 0..self.ast.len() {
             let parent = self.ast[root as usize].parent();
-            if parent as usize >= self.ast.len() {
+            if parent as usize >= self.ast.len() || parent == root {
                 break;
             }
             root = parent;
@@ -320,26 +330,4 @@ pub(super) fn literal_type(node_type: NodeType) -> dashql_buffers::algebra::Lite
     dashql_buffers::algebra::LiteralType((node_type.0 - 5) as u8)
 }
 
-/// Quote an identifier if it would not round-trip unquoted (`quote_anyupper_fuzzy`)
-pub(super) fn quote_identifier(text: &str) -> String {
-    let is_start = |c: u8| c.is_ascii_alphabetic() || c == b'_' || c >= 0x80;
-    let is_cont = |c: u8| is_start(c) || c.is_ascii_digit() || c == b'$';
-    let bytes = text.as_bytes();
-    let requires_quotes = bytes.is_empty()
-        || bytes.iter().any(|c| c.is_ascii_uppercase())
-        || !is_start(bytes[0])
-        || !bytes.iter().all(|&c| is_cont(c));
-    if !requires_quotes {
-        return text.to_string();
-    }
-    let mut out = String::with_capacity(text.len() + 2);
-    out.push('"');
-    for c in text.chars() {
-        if c == '"' {
-            out.push('"');
-        }
-        out.push(c);
-    }
-    out.push('"');
-    out
-}
+pub(super) use crate::utils::quote_identifier;

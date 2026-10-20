@@ -5,6 +5,7 @@
 //! through YAML type inference, double-quoted scalars stay strings.
 
 pub mod analyzer;
+pub mod completion;
 pub mod parser;
 
 use yaml_rust2::yaml::Hash;

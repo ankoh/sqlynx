@@ -25,16 +25,6 @@ use crate::hash::HashMap;
 use std::fmt;
 use std::sync::Arc;
 
-/// An object a name resolves to (`RegisteredName::resolved_objects`)
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum NameObject {
-    Database(u32),
-    Schema(u32),
-    Table(u32),
-    Column(ColumnLoc),
-    Function(u32),
-}
-
 /// An analyzed script
 pub struct AnalyzedScript {
     /// The parsed script
@@ -45,8 +35,9 @@ pub struct AnalyzedScript {
     pub names: NameRegistry,
     /// The analyzer tags of the names
     pub name_tags: Vec<NameTag>,
-    /// The objects that names of this or other entries resolve to, in registration order
-    pub name_objects: Vec<(CatalogEntryId, NameId, NameObject)>,
+    /// The objects of this script that names of this or other entries resolve to, in registration order
+    /// (`RegisteredName::resolved_objects`)
+    pub name_objects: Vec<(CatalogEntryId, NameId, CatalogObjectRef)>,
     /// The empty name
     pub empty_name: NameId,
     /// The analyzer errors
@@ -77,6 +68,8 @@ pub struct AnalyzedScript {
     pub inferred_table_schemas_by_name: HashMap<QualifiedKey, usize>,
     /// The catalog entries the script was analyzed against
     pub dependencies: Vec<CatalogEntryRef>,
+    /// The name search index, built on first use
+    pub(crate) name_search_index: std::sync::OnceLock<NameSearchIndex>,
 }
 
 impl fmt::Debug for AnalyzedScript {
@@ -97,6 +90,30 @@ impl AnalyzedScript {
     /// The text of a name of this script
     pub fn name_text(&self, id: NameId) -> &str {
         &self.names.get(id).text
+    }
+
+    /// The name search index (`AnalyzedScript::GetNameSearchIndex`)
+    pub fn name_search_index(&self) -> &NameSearchIndex {
+        self.name_search_index.get_or_init(|| {
+            let entry_id = self.entry.catalog_entry_id;
+            let mut names: Vec<IndexedName> = self
+                .names
+                .iter()
+                .map(|n| IndexedName {
+                    text: Arc::from(n.text.as_str()),
+                    occurrences: n.occurrences,
+                    location: n.location,
+                    tags: self.name_tags[n.name_id as usize],
+                    objects: Vec::new(),
+                })
+                .collect();
+            for &(entry, name, object) in &self.name_objects {
+                if entry == entry_id {
+                    names[name as usize].objects.push(object);
+                }
+            }
+            NameSearchIndex::new(names, crate::catalog::names::SuffixOrder::ShortestFirst)
+        })
     }
 
     /// A table declared by this script or by a dependency

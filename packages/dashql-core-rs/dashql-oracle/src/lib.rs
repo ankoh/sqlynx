@@ -5,6 +5,7 @@
 //! it on arbitrary inputs, not only on the checked-in snapshots.
 
 pub mod analyzer;
+pub mod completion;
 pub mod formatter;
 pub mod script_diff;
 pub mod signature;

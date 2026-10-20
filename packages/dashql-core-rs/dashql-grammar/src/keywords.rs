@@ -51,12 +51,27 @@ impl Keyword {
         }
     }
 
+    /// The text of a keyword or operator symbol (`Keyword::GetSymbolText`)
+    pub fn symbol_text(symbol: SymbolKind) -> Option<&'static str> {
+        if let Some(name) = Self::name_of(symbol) {
+            return Some(name);
+        }
+        match symbol {
+            symbol_kind::S_EQUALS_GREATER => Some("=>"),
+            symbol_kind::S_LESS_EQUALS => Some("<="),
+            symbol_kind::S_GREATER_EQUALS => Some(">="),
+            symbol_kind::S_NOT_EQUALS => Some("!="),
+            symbol_kind::S_COLON_EQUALS => Some(":="),
+            _ => None,
+        }
+    }
+
     /// The keyword text of a terminal symbol, if the symbol is a keyword
     pub fn name_of(symbol: SymbolKind) -> Option<&'static str> {
         if symbol == symbol_kind::S_VISUALIZE_LA {
             return Some("visualize");
         }
-        keyword_names()[symbol as usize]
+        keyword_names().get(symbol as usize).copied().flatten()
     }
 }
 

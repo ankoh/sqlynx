@@ -9,7 +9,6 @@
 
 use super::state::{quote_identifier, AnalysisState};
 use super::types::*;
-use super::NameObject;
 use crate::catalog::*;
 use dashql_buffers::analyzer::{AnalyzerErrorSeverity, AnalyzerErrorType, NameTag, SemanticNodeMarkerType};
 use dashql_buffers::parser::{AttributeKey as K, Node, NodeType, StatementType};
@@ -176,7 +175,7 @@ impl NameResolutionPass {
                     database_alias: Arc::from(""),
                 });
                 state.out.entry.databases_by_name.insert(database_name.text.clone(), index);
-                state.resolve_name(database_name, NameObject::Database(index as u32));
+                state.resolve_name(database_name, CatalogObjectRef::Database(state.loc(index)));
                 db_id
             }
         };
@@ -192,7 +191,7 @@ impl NameResolutionPass {
                     schema_name: schema_name.text.clone(),
                 });
                 state.out.entry.schemas_by_qualified_name.insert(key, index);
-                state.resolve_name(schema_name, NameObject::Schema(index as u32));
+                state.resolve_name(schema_name, CatalogObjectRef::Schema(state.loc(index)));
                 schema_id
             }
         }
@@ -230,7 +229,7 @@ impl NameResolutionPass {
         table.ast_statement_id = Some(state.find_statement_id(declaration_id));
         table.ast_scope_root = Some(state.node_id(select_node));
         state.out.entry.table_declarations.push(table);
-        state.resolve_name(&name, NameObject::Table(index));
+        state.resolve_name(&name, CatalogObjectRef::Table(TableLoc { entry: state.entry_id, index }));
 
         let mut column_aliases = Vec::new();
         if let Some(columns) = columns_node.filter(|n| n.node_type() == NodeType::ARRAY) {
@@ -281,7 +280,7 @@ impl NameResolutionPass {
                 table: TableLoc::from(table_id),
                 column: column_index as u32,
             };
-            state.resolve_name(&column_name, NameObject::Column(loc));
+            state.resolve_name(&column_name, CatalogObjectRef::Column(loc));
         }
     }
 
@@ -863,6 +862,8 @@ impl NameResolutionPass {
             }
             match state.ast[parent as usize].node_type() {
                 NodeType::OBJECT_SQL_PROPERTY_GRAPH | NodeType::OBJECT_SQL_GRAPH_TABLE => return true,
+                // Statement roots are their own parents
+                _ if parent == node_id => return false,
                 _ => node_id = parent,
             }
         }
@@ -1151,13 +1152,13 @@ impl NameResolutionPass {
                     });
                 }
                 state.out.entry.table_declarations.push(table);
-                state.resolve_name(&name, NameObject::Table(index));
+                state.resolve_name(&name, CatalogObjectRef::Table(TableLoc { entry: state.entry_id, index }));
                 for (column_index, column) in columns.iter().enumerate() {
                     let loc = ColumnLoc {
                         table: TableLoc::from(table_id),
                         column: column_index as u32,
                     };
-                    state.resolve_name(&column.column_name, NameObject::Column(loc));
+                    state.resolve_name(&column.column_name, CatalogObjectRef::Column(loc));
                 }
             }
 
@@ -1205,7 +1206,7 @@ impl NameResolutionPass {
                 }
                 state.out.entry.function_declarations.push(declaration);
                 state.tag(&function_name.function_name, NameTag::FUNCTION_NAME);
-                state.resolve_name(&function_name.function_name, NameObject::Function(index));
+                state.resolve_name(&function_name.function_name, CatalogObjectRef::Function(state.loc(index as usize)));
             }
 
             NodeType::OBJECT_SQL_CREATE_AS | NodeType::OBJECT_SQL_VIEW => {

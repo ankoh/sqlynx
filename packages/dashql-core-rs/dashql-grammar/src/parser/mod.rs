@@ -3,6 +3,7 @@
 pub mod actions;
 pub mod context;
 pub mod driver;
+pub mod probe;
 pub mod enums;
 pub mod value;
 

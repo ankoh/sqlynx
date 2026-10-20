@@ -70,7 +70,7 @@ CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
 | 2 | Parser: Rust rule set, ParseContext, driver, LAC, recovery | Table parity between both rule sets; 506 parser snapshots; AST differential at 0 diffs | **done** |
 | 3 | Formatter, script_diff | 422 formatter and 13 diff snapshots; idempotency; Hyper validation | **done** (idempotency and Hyper validation open) |
 | 4 | Catalog, descriptor, AnalyzedScript, 4 analyzer passes | 101 analyzer snapshots; `ComputeSignature` equals C++ | **analyzer and signature done** (packing, catalog tests open) |
-| 5 | Cursor and completion | 161 completion snapshots; differential at every prefix and cursor | |
+| 5 | Cursor and completion | 161 completion snapshots; differential at every prefix and cursor | **done** (unit tests open) |
 | 6 | visualize, compiler, Script, batch, planner | 27 visualize and 38 planner snapshots; batch differential | |
 | 7 | ScriptSession, ScriptExecution, Hyper plan view | Session, execution and plan tests; 36 plan snapshots | |
 | 8 | wasm-bindgen API and rewrite of `dashql-core-js/src/api.ts` | core-js, browser and app tests on the Rust wasm; size and speed budgets | |
@@ -260,6 +260,23 @@ alone. What made the Rust analyzer fast, from 25.6 µs:
 
 Name resolution could also store its node states as linked lists like C++, which would remove the
 remaining per-list allocations.
+
+## Phase 5 results
+
+- The LR probes of the completion (`DriveLALR` and its policies) are ported to
+  `dashql_grammar::parser::probe`: `parse_until_with_snapshot`, `parse_until_after`, and the suffix
+  probes over a state snapshot, with the 128-reductions bound.
+- `dashql_core::cursor` ports `ScriptCursor` and the location lookups, `dashql_core::completion`
+  ports the completion. Name lookups use per-entry suffix indexes in the case-insensitive order of
+  the C++ `btree::multimap`; candidates are ranked with a port of libstdc++'s `std::sort`
+  (`dashql_core::utils::sort`), because `TopKHeap` breaks ties by the unstable sort.
+- `:completion_snapshot_test` passes all 161 completion snapshots (including the analysis of the
+  catalog and editor scripts).
+- `:completion_differential_test` compares the complete encoding with
+  `tools/oracle_ffi_completion.cc` at every cursor position of every completion snapshot, at sampled
+  positions in all other snapshot inputs (with and without a catalog), and at the end of prefixes:
+  0 differences.
+- Open: `completion_test.cc` (33 tests) and `cursor_test.cc`, which need the `Script` facade.
 
 **Open items**
 - The repository `rustfmt.toml` is not valid TOML (`max_width: 120`), so rustfmt refuses it. Format

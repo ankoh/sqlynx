@@ -25,8 +25,12 @@ pub struct DescriptorEntry {
     pub rank: Rank,
     /// The names in registration order
     pub names: Vec<DescriptorName>,
+    /// The objects the names resolve to, in registration order (`RegisteredName::resolved_objects`)
+    pub name_objects: Vec<(NameId, CatalogObjectRef)>,
     /// The descriptor bytes
     pub bytes: Vec<u8>,
+    /// The name search index, built on first use
+    name_search_index: std::sync::OnceLock<super::NameSearchIndex>,
 }
 
 fn invalid(message: &str) -> Error {
@@ -99,6 +103,27 @@ pub fn validate_descriptor(data: &[u8]) -> Result<CatalogDescriptor<'_>> {
 }
 
 impl DescriptorEntry {
+    /// The name search index (`DescriptorEntry::GetNameSearchIndex`)
+    pub fn name_search_index(&self) -> &super::NameSearchIndex {
+        self.name_search_index.get_or_init(|| {
+            let mut names: Vec<super::IndexedName> = self
+                .names
+                .iter()
+                .map(|n| super::IndexedName {
+                    text: n.text.clone(),
+                    occurrences: n.occurrences,
+                    location: Default::default(),
+                    tags: NameTag(n.tags),
+                    objects: Vec::new(),
+                })
+                .collect();
+            for &(name, object) in &self.name_objects {
+                names[name as usize].objects.push(object);
+            }
+            super::NameSearchIndex::new(names, super::names::SuffixOrder::LongestFirst)
+        })
+    }
+
     /// Import descriptor bytes (`DescriptorEntry::DescriptorEntry`)
     pub fn new(catalog: &Catalog, id: CatalogEntryId, rank: Rank, bytes: &[u8]) -> Result<Self> {
         let descriptor = validate_descriptor(bytes)?;
@@ -106,7 +131,9 @@ impl DescriptorEntry {
             entry: CatalogEntryData::new(id, catalog.version()),
             rank,
             names: Vec::new(),
+            name_objects: Vec::new(),
             bytes: bytes.to_vec(),
+            name_search_index: Default::default(),
         };
         // The new entry is published with the next catalog version, as are its tables
         out.entry.catalog_version = catalog.version() + 1;
@@ -149,7 +176,9 @@ impl DescriptorEntry {
                         database_name: database.text.clone(),
                         database_alias: Arc::from(""),
                     });
-                    entry.databases_by_name.insert(database.text.clone(), entry.database_references.len() - 1);
+                    let index = entry.database_references.len() - 1;
+                    entry.databases_by_name.insert(database.text.clone(), index);
+                    out.name_objects.push((database.id, CatalogObjectRef::Database(ObjectLoc { entry: id, index: index as u32 })));
                     db_id
                 }
             };
@@ -163,7 +192,9 @@ impl DescriptorEntry {
                 database_name: database.text.clone(),
                 schema_name: schema.text.clone(),
             });
-            entry.schemas_by_qualified_name.insert(key, entry.schema_references.len() - 1);
+            let index = entry.schema_references.len() - 1;
+            entry.schemas_by_qualified_name.insert(key, index);
+            out.name_objects.push((schema.id, CatalogObjectRef::Schema(ObjectLoc { entry: id, index: index as u32 })));
             schema_id
         };
 
@@ -187,11 +218,21 @@ impl DescriptorEntry {
                     },
                 );
                 table.catalog_version = table_version;
+                let table_loc = TableLoc {
+                    entry: id,
+                    index: table_index as u32,
+                };
+                out.name_objects.push((table_name.id, CatalogObjectRef::Table(table_loc)));
                 if let Some(columns) = source.table_columns() {
                     for source_column in columns {
                         let column_name =
                             register(&mut out, source_column.column_name().unwrap_or(""), NameTag::COLUMN_NAME);
                         let ordinal = table.table_columns.len() as u32;
+                        let column_loc = ColumnLoc {
+                            table: table_loc,
+                            column: ordinal,
+                        };
+                        out.name_objects.push((column_name.id, CatalogObjectRef::Column(column_loc)));
                         table.table_columns_by_name.entry(column_name.text.clone()).or_insert(ordinal as usize);
                         out.entry.table_columns_by_name.entry(column_name.text.clone()).or_default().push(ColumnLoc {
                             table: TableLoc {
@@ -254,6 +295,13 @@ impl DescriptorEntry {
                     params,
                     return_type: Arc::from(source.return_type().unwrap_or("")),
                 };
+                out.name_objects.push((
+                    function.function_name.function_name.id,
+                    CatalogObjectRef::Function(ObjectLoc {
+                        entry: id,
+                        index: function_index as u32,
+                    }),
+                ));
                 let entry = &mut out.entry;
                 entry.functions_by_qualified_name.entry(function.function_name.key()).or_insert(function_index);
                 entry
