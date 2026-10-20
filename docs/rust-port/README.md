@@ -68,7 +68,7 @@ CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
 | 0 | Spikes and scaffolding | Skeleton emits the C++ automaton; harness and oracle reproduce the snapshots | **done** |
 | 1 | Scanner, keywords, names, comment blocks | Token-stream differential at 0 diffs; scanner and keyword tests ported | **done** |
 | 2 | Parser: Rust rule set, ParseContext, driver, LAC, recovery | Table parity between both rule sets; 506 parser snapshots; AST differential at 0 diffs | **done** |
-| 3 | Formatter, script_diff | 422 formatter and 13 diff snapshots; idempotency; Hyper validation | |
+| 3 | Formatter, script_diff | 422 formatter and 13 diff snapshots; idempotency; Hyper validation | **done** (idempotency and Hyper validation open) |
 | 4 | Catalog, descriptor, AnalyzedScript, 4 analyzer passes | 101 analyzer snapshots; `ComputeSignature` equals C++ | |
 | 5 | Cursor and completion | 161 completion snapshots; differential at every prefix and cursor | |
 | 6 | visualize, compiler, Script, batch, planner | 27 visualize and 38 planner snapshots; batch differential | |
@@ -190,6 +190,21 @@ Changes that got the Rust code here:
   - list allocations are recycled
   - the parse context state uses a `RefCell` only in debug builds
 
+## Phase 3 results
+
+- `script_diff` is ported (`dashql_core::script_diff`). `:diff_snapshot_test` passes the 13 diff
+  snapshots and a differential against `tools/oracle_ffi_script_diff.cc` over edited snapshot inputs.
+- The formatter is ported (`dashql_core::formatter`).
+  - `:formatter_snapshot_test` passes all 422 cases (1287 expectations), including the reparse checks
+    of the `coverage_` cases.
+  - `:formatter_differential_test` compares text and unformattable nodes against
+    `tools/oracle_ffi_formatter.cc`: 238k whole-script and 12.5k single-node comparisons, covering
+    every snapshot input under 16 configs (modes, dialects, keyword cases, widths, indentation, debug
+    mode), prefixes, and fuzz inputs with comments. 0 differences.
+- Open: the idempotency check and the Hyper validation of formatted SQL.
+
 **Open items**
+- The repository `rustfmt.toml` is not valid TOML (`max_width: 120`), so rustfmt refuses it. Format
+  with `--config max_width=120,use_small_heuristics=Max` until it is fixed.
 - rustfmt is not wired into Bazel. `@rules_rust//tools/upstream_wrapper:rustfmt` crashes Bazel during
   execution platform registration (duplicate `@platforms//host` entry).

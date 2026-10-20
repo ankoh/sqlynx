@@ -59,6 +59,27 @@ the C++ core.
   - Many `OBJECT_SQL_*` types come after `VIS_OBJECT_KEYS_` (118).
   - Pinned by `//packages/dashql-core-rs:dashql_buffers_test`.
 
+## Formatter (`packages/dashql-core/src/formatter/`)
+
+- **Attribute lookup picks different duplicates** (`utils/ast_attributes.h` `LookupAttributes`). With
+  one key it returns the first matching child; with several keys it returns the last match of each.
+  The analyzer relies on the same helper.
+- **Comment wrapping splits words at byte offsets** (`AppendWrappedCommentParagraph`) and can cut a
+  UTF-8 character in half. `Formatter::format_bytes` returns the raw bytes.
+- **Two whitespace sets in comments.** Trimming uses C `isspace` (including `\v`), word splitting
+  uses `" \t\r\n\f"`.
+- **Keyword upper-casing** (`AppendGeneratedText`) only touches exact lower-case keywords in
+  generated text, so source `TRUE` or `Select` stay as written. Line widths count bytes.
+- **`FormatNodeAt` does not mark statement roots**, so a CREATE TABLE formatted that way renders
+  `'<OBJECT_SQL_CREATE>'`.
+- **An empty property graph** formats as `Text("")`, a non-empty document.
+- **Unformattable nodes** are recorded in visit order and can repeat.
+- **Unknown enum values** are unformattable. `GetOperatorPrecedence` has no default case (undefined
+  behavior); Rust returns precedence 0, non-associative. `ENUM_VIS_ENCODING_CHANNEL` is always
+  unformattable.
+- **Text past the end of the input.** C++ reads into the two padding NUL bytes after the text, Rust
+  stops at the end. No differential input hits a difference.
+
 ## Test infrastructure
 
 - **Unregistered parser snapshots.** The C++ parser snapshot suite
