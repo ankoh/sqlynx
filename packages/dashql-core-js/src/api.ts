@@ -26,10 +26,6 @@ export interface DashQLModuleOptions {
     wasmBinary?: Uint8Array | ArrayBuffer;
     /// A precompiled wasm module, takes precedence over the binary
     module?: WebAssembly.Module;
-    /// Kept for compatibility, the Rust core does not print
-    print?: (text: string) => void;
-    /// Kept for compatibility, the Rust core does not print
-    printErr?: (text: string) => void;
 }
 
 interface FlatBufferObject<T, O> {

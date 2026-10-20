@@ -608,7 +608,7 @@ rust_library(
     ],
 )
 
-# The shell wasm module: the core bindings and the shell (like //packages/dashql-core:shell_wasm).
+# The shell wasm module: the core bindings and the shell.
 rust_shared_library(
     name = "dashql_shell_wasm",
     srcs = glob(["dashql-shell-wasm/src/**/*.rs"]),

@@ -1,8 +1,9 @@
 # Rust rewrite of dashql-core
 
-`packages/dashql-core` (C++20, emscripten) is being rewritten in Rust as a parallel crate set,
-`packages/dashql-core-rs`. The Rust core replaces the C++ core once it reaches parity. Until then the C++
-core keeps shipping and serves as the differential test oracle.
+`packages/dashql-core` (C++20) has been rewritten in Rust as a parallel crate set,
+`packages/dashql-core-rs`. The app and `@ankoh/dashql-core` ship the Rust wasm modules. The C++ core
+only builds natively and serves as the differential test oracle until it is deleted; its emscripten
+build and the emsdk toolchain are gone.
 
 ## Decisions
 

@@ -83,8 +83,6 @@ export interface DashQLShellOptions {
     onProgress?: (progress: DashQLShellInstantiationProgress) => void;
     wasmBinary?: Uint8Array;
     wasmUrl?: string | URL;
-    print?: (text: string) => void;
-    printErr?: (text: string) => void;
 }
 
 export interface DashQLShellInstantiationProgress {

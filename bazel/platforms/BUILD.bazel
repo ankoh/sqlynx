@@ -1,7 +1,3 @@
-# Platform for building C/C++ to WebAssembly (wasm32-wasi).
-# dist_wasm / tests apply this via use_wasm32_platform transition (no --config=wasm needed).
-# Direct build: bazel build --platforms=//bazel/platforms:wasm32 //packages/dashql-core:dashql_core_wasm
-
 package(default_visibility = ["//visibility:public"])
 
 # Neutral exec platform for wasm-opt / wasm-strip actions.
@@ -19,14 +15,6 @@ constraint_value(
 platform(
     name = "wasm_tool_exec",
     constraint_values = [":is_wasm_tool_exec"],
-)
-
-platform(
-    name = "wasm32",
-    constraint_values = [
-        "@platforms//cpu:wasm32",
-        "@platforms//os:none",
-    ],
 )
 
 # macOS platforms for universal binary builds (macos_universal_binary rule).

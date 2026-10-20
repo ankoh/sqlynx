@@ -2161,13 +2161,9 @@ void Rope::FlattenTree() {
 /// Validate a rope
 void Rope::CheckIntegrity() {
     auto validate = [](bool value, std::string_view msg) {
-#ifdef WASM
-        assert(value);
-#else
         if (!value) {
             throw std::logic_error{std::string{msg}};
         }
-#endif
     };
     if (root_node.IsNull()) return;
 

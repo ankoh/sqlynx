@@ -2,7 +2,7 @@
 
 Portable ESM bindings for DashQL's SQL parser, analyzer, formatter, catalog,
 batch processing, and plan view models. FlatBuffers is the only runtime npm
-dependency. The package includes the Emscripten glue, Wasm binary, generated
+dependency. The package includes the wasm-bindgen glue, Wasm binary, generated
 FlatBuffer bindings, and TypeScript declarations.
 
 ```ts
@@ -33,9 +33,9 @@ outlive their owners or be retained across Wasm memory growth; copy or unpack
 results when they need to survive subsequent operations. `resetUnsafe()` is a
 test/reset escape hatch that invalidates all outstanding handles.
 
-`DashQL.create` accepts `wasmBinary`, `locateFile`, `instantiateWasm`, `print`,
-and `printErr`. An already initialized compatible Emscripten module (including
-the shell module) can still be wrapped with `new DashQL(module)`.
+`DashQL.create` accepts a `wasmBinary` or a precompiled WebAssembly `module` and
+loads the bundled binary otherwise. The shell module re-exports the core
+bindings, so `new DashQL(shellModule)` wraps it as well.
 
 The root export does not export browser workers. In browsers, use:
 
@@ -81,7 +81,7 @@ No ambient type shim or extra runtime dependency is installed by this package.
 
 Serve the package's `dist` directory intact or use a bundler that preserves
 module-worker and `new URL(..., import.meta.url)` assets. The `./wasm` subpath
-exports the binary; `./wasm/glue` exports the Emscripten factory for custom
+exports the binary; `./wasm/glue` exports the wasm-bindgen glue for custom
 loading. No application-specific aliases or test globals are required.
 
 ## Bazel

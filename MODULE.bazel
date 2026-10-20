@@ -6,9 +6,6 @@ module(
 # Rules for C/C++ (cc_library, cc_test, etc.)
 bazel_dep(name = "rules_cc", version = "0.2.22")
 
-# Emscripten SDK
-bazel_dep(name = "emsdk", version = "5.0.5")
-
 # Rules for Rust
 bazel_dep(name = "rules_rust", version = "0.69.0")
 
@@ -31,15 +28,13 @@ single_version_override(
 )
 
 bazel_dep(name = "platforms", version = "1.1.0")
-bazel_dep(name = "rules_foreign_cc", version = "0.15.1")
 bazel_dep(name = "googletest", version = "1.18.0")
 bazel_dep(name = "gflags", version = "2.3.1")
 
-# JS/TS/Jest (aspect rules) used by the app and core npm package.
+# JS/TS (aspect rules) used by the app and core npm package.
 bazel_dep(name = "aspect_bazel_lib", version = "2.22.5")
 bazel_dep(name = "aspect_rules_js", version = "2.9.2")
 bazel_dep(name = "aspect_rules_ts", version = "3.8.8")
-bazel_dep(name = "aspect_rules_jest", version = "0.25.2")
 
 bazel_dep(name = "rules_nodejs", version = "6.7.3")
 bazel_dep(name = "rules_shell", version = "0.7.1")
@@ -160,16 +155,6 @@ use_repo(
     "tpch_extension_osx_arm64",
 )
 
-# Emscripten binaries (downloaded per-platform; default version is the latest bundled with emsdk 5.0.4).
-emsdk_ext = use_extension("@emsdk//:emscripten_deps.bzl", "emscripten_deps")
-use_repo(
-    emsdk_ext,
-    "emscripten_bin_linux",
-    "emscripten_bin_linux_arm64",
-    "emscripten_bin_mac",
-    "emscripten_bin_mac_arm64",
-)
-
 rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
 rust.toolchain(
     edition = "2021",
@@ -258,9 +243,6 @@ use_repo(
     native_crate,
     "crates",
 )
-
-# WASM build: use emscripten toolchain (standalone mode, same .wasm output as WASI SDK).
-register_toolchains("@emsdk//emscripten_toolchain:all")
 
 # Execution platforms: host first (default for non-wasm actions), then the neutral
 # wasm_tool_exec platform used by wasm_tool exec groups in wasm_tools.bzl / rust_wasm.bzl.

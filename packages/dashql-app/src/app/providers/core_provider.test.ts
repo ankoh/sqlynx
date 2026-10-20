@@ -3,41 +3,12 @@ import { act } from '@dashql/browser-test-act';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DashQLCoreProvider, logCoreStderr, useDashQLCoreSetup, type DashQLCoreSetupOptions, type DashQLSetupFn } from './core_provider.js';
+import { DashQLCoreProvider, useDashQLCoreSetup, type DashQLCoreSetupOptions, type DashQLSetupFn } from './core_provider.js';
 import { DashQL } from '@ankoh/dashql-core';
 import type { BatchWorkerRequest, BatchWorkerResponse } from '@ankoh/dashql-core/browser-worker';
 import { TracedLogger } from '../../platform/logger/logger.js';
 import { LoggerProvider } from '../../platform/logger/logger_provider.js';
 import { initializeCatalogBatchWorker } from '../notebook/connections/catalog_batch.js';
-
-describe('logCoreStderr', () => {
-    it('logs Emscripten abort output as a warning', () => {
-        const logger = {
-            warn: vi.fn(),
-            error: vi.fn(),
-        } as unknown as TracedLogger;
-
-        logCoreStderr(logger, 'Aborted()');
-
-        expect(logger.warn).toHaveBeenCalledWith('Aborted()', {}, 'core');
-        expect(logger.error).not.toHaveBeenCalled();
-    });
-
-    it.each([
-        'core initialization failed',
-        'Aborted(native code called abort())',
-    ])('keeps diagnostic core stderr output at error severity: %s', (message) => {
-        const logger = {
-            warn: vi.fn(),
-            error: vi.fn(),
-        } as unknown as TracedLogger;
-
-        logCoreStderr(logger, message);
-
-        expect(logger.error).toHaveBeenCalledWith(message, {}, 'core');
-        expect(logger.warn).not.toHaveBeenCalled();
-    });
-});
 
 class TestWorker extends EventTarget {
     readonly requests: BatchWorkerRequest[] = [];

@@ -14,7 +14,7 @@ bazel test //packages/dashql-core-js/test:test_chromium --test_arg=package_consu
 The parent package must expose these public build targets:
 
 - `:srcs`: `src/**/*.ts`, including core tests and their fixtures.
-- `:wasm_assets`: Emscripten JS and Wasm under `src/wasm/dashql_core.{js,wasm}`.
+- `:wasm_assets`: wasm-bindgen glue and Wasm under `src/wasm/dashql_core.{js,d.ts,wasm}`.
 
 `:inputs` stages source files, Wasm assets, and `//proto/fb:dashql_buffers_ts_gen`
 under `inputs/src/`, with generated bindings under `inputs/src/gen/`. Core code and
