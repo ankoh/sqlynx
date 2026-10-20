@@ -65,22 +65,32 @@ fn compare_with_oracle(catalog: Option<&str>, text: &str) -> Result<(), String> 
                 let expected = flatbuffers::root::<dashql_buffers::parser::ScannedScript>(&bytes).unwrap().unpack();
                 let packed = pack_scanned_script(script.scanned.as_ref().unwrap()).pack(&mut builder);
                 builder.finish(packed, None);
-                let actual: ScannedScriptT = flatbuffers::root::<dashql_buffers::parser::ScannedScript>(builder.finished_data()).unwrap().unpack();
+                let actual: ScannedScriptT =
+                    flatbuffers::root::<dashql_buffers::parser::ScannedScript>(builder.finished_data())
+                        .unwrap()
+                        .unpack();
                 (format!("{expected:#?}"), format!("{actual:#?}"))
             }
             Packed::ParsedScript => {
                 let expected = flatbuffers::root::<dashql_buffers::parser::ParsedScript>(&bytes).unwrap().unpack();
                 let packed = pack_parsed_script(script.parsed.as_ref().unwrap()).pack(&mut builder);
                 builder.finish(packed, None);
-                let actual: ParsedScriptT = flatbuffers::root::<dashql_buffers::parser::ParsedScript>(builder.finished_data()).unwrap().unpack();
+                let actual: ParsedScriptT =
+                    flatbuffers::root::<dashql_buffers::parser::ParsedScript>(builder.finished_data())
+                        .unwrap()
+                        .unpack();
                 (format!("{expected:#?}"), format!("{actual:#?}"))
             }
             Packed::AnalyzedScript => {
-                let mut expected = flatbuffers::root::<dashql_buffers::analyzer::AnalyzedScript>(&bytes).unwrap().unpack();
-                let packed = pack_analyzed_script(script.analyzed.as_ref().unwrap(), &pack_visualization).pack(&mut builder);
+                let mut expected =
+                    flatbuffers::root::<dashql_buffers::analyzer::AnalyzedScript>(&bytes).unwrap().unpack();
+                let packed =
+                    pack_analyzed_script(script.analyzed.as_ref().unwrap(), &pack_visualization).pack(&mut builder);
                 builder.finish(packed, None);
                 let mut actual: AnalyzedScriptT =
-                    flatbuffers::root::<dashql_buffers::analyzer::AnalyzedScript>(builder.finished_data()).unwrap().unpack();
+                    flatbuffers::root::<dashql_buffers::analyzer::AnalyzedScript>(builder.finished_data())
+                        .unwrap()
+                        .unpack();
                 (format!("{expected:#?}"), format!("{actual:#?}"))
             }
         };

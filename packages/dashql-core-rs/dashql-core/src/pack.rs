@@ -13,19 +13,19 @@ use crate::analyzer::*;
 use crate::catalog::*;
 use crate::utils::sort::std_sort;
 use dashql_buffers::algebra::{
-    BinaryExpressionT, ColumnRefExpressionT, ComparisonT, ConstIntervalCastT, ExpressionSubTypeT, ExpressionT, FunctionCallExpressionT,
-    LiteralT, ResolvedColumnT,
+    BinaryExpressionT, ColumnRefExpressionT, ComparisonT, ConstIntervalCastT, ExpressionSubTypeT, ExpressionT,
+    FunctionCallExpressionT, LiteralT, ResolvedColumnT,
 };
 use dashql_buffers::analyzer::{
-    AnalyzedScriptT, ConstantExpressionT, FunctionDeclarationT, FunctionParamT, IndexedColumnReferenceT, IndexedTableReferenceT,
-    InferredColumnT, InferredTableSchemaT, InsertStatementT, InsertTargetColumnT, NameScopeT, QualifiedColumnNameT,
-    QualifiedFunctionNameT, QualifiedTableNameT, ResolvedTableT, TableColumnT, TableReferenceRole, TableReferenceT, TableT,
-    VisSourceKind as PackedVisSourceKind, VisualizationSpecT,
+    AnalyzedScriptT, ConstantExpressionT, FunctionDeclarationT, FunctionParamT, IndexedColumnReferenceT,
+    IndexedTableReferenceT, InferredColumnT, InferredTableSchemaT, InsertStatementT, InsertTargetColumnT, NameScopeT,
+    QualifiedColumnNameT, QualifiedFunctionNameT, QualifiedTableNameT, ResolvedTableT, TableColumnT,
+    TableReferenceRole, TableReferenceT, TableT, VisSourceKind as PackedVisSourceKind, VisualizationSpecT,
 };
 use dashql_buffers::parser::{
-    AttachDatabaseStatementT, AttributeKey, CommentBlockT, ErrorT, Node, NodeT, NodeType, ParsedScriptFeature, ParsedScriptT, ScannedScriptT,
-    ScannerTokenType, ScannerTokensT, StatementT, StatementTargetT, StatementTargetType, StatementType, SymbolSpan, SymbolSpanT,
-    TextSpanT,
+    AttachDatabaseStatementT, AttributeKey, CommentBlockT, ErrorT, Node, NodeT, NodeType, ParsedScriptFeature,
+    ParsedScriptT, ScannedScriptT, ScannerTokenType, ScannerTokensT, StatementT, StatementTargetT, StatementTargetType,
+    StatementType, SymbolSpan, SymbolSpanT, TextSpanT,
 };
 use dashql_buffers::visualization::{DashboardSpecT, TableSpecT};
 use dashql_grammar::keywords::Keyword;
@@ -58,17 +58,11 @@ fn non_empty_str(s: &str) -> Option<String> {
 }
 
 fn text_span(span: TextSpan) -> TextSpanT {
-    build!(TextSpanT {
-        offset: span.offset,
-        length: span.length,
-    })
+    build!(TextSpanT { offset: span.offset, length: span.length })
 }
 
 fn symbol_span(span: SymbolSpan) -> SymbolSpanT {
-    build!(SymbolSpanT {
-        offset: span.offset(),
-        length: span.length(),
-    })
+    build!(SymbolSpanT { offset: span.offset(), length: span.length() })
 }
 
 /// The index of a node in its AST
@@ -216,7 +210,10 @@ fn pack_statement(parsed: &ParsedScript, statement_id: usize) -> StatementT {
                 if child.attribute_key() == key {
                     return Some(child);
                 }
-                if child.attribute_key() == AttributeKey::SQL_COMBINE_INPUT && child.node_type() == NodeType::ARRAY && child.children_count() > 0 {
+                if child.attribute_key() == AttributeKey::SQL_COMBINE_INPUT
+                    && child.node_type() == NodeType::ARRAY
+                    && child.children_count() > 0
+                {
                     next = Some(&nodes[child.children_begin_or_value() as usize]);
                 }
             }
@@ -226,14 +223,17 @@ fn pack_statement(parsed: &ParsedScript, statement_id: usize) -> StatementT {
     };
     let read_name = |source: Option<&Node>| -> String {
         match source {
-            Some(n) if n.node_type() == NodeType::NAME => parsed.scanned.names.get(n.children_begin_or_value()).text.clone(),
+            Some(n) if n.node_type() == NodeType::NAME => {
+                parsed.scanned.names.get(n.children_begin_or_value()).text.clone()
+            }
             _ => String::new(),
         }
     };
     let read_target = |out: &mut StatementT, source: Option<&Node>| {
         let mut source: Option<&Node> = source.map(|n| &nodes[n_index(nodes, n)]);
         if let Some(s) = source.filter(|s| s.node_type() == NodeType::OBJECT_SQL_TABLEREF) {
-            if let Some(name) = children(nodes, s).iter().find(|c| c.attribute_key() == AttributeKey::SQL_TABLEREF_NAME) {
+            if let Some(name) = children(nodes, s).iter().find(|c| c.attribute_key() == AttributeKey::SQL_TABLEREF_NAME)
+            {
                 source = Some(name);
             }
         }
@@ -258,15 +258,23 @@ fn pack_statement(parsed: &ParsedScript, statement_id: usize) -> StatementT {
         read_target(out, find_attribute(key));
     };
     match statement.statement_type {
-        StatementType::CREATE_TABLE => set_target(&mut out, StatementTargetType::TABLE, AttributeKey::SQL_CREATE_TABLE_NAME),
-        StatementType::CREATE_TABLE_AS => set_target(&mut out, StatementTargetType::TABLE, AttributeKey::SQL_CREATE_AS_NAME),
+        StatementType::CREATE_TABLE => {
+            set_target(&mut out, StatementTargetType::TABLE, AttributeKey::SQL_CREATE_TABLE_NAME)
+        }
+        StatementType::CREATE_TABLE_AS => {
+            set_target(&mut out, StatementTargetType::TABLE, AttributeKey::SQL_CREATE_AS_NAME)
+        }
         StatementType::CREATE_VIEW => set_target(&mut out, StatementTargetType::VIEW, AttributeKey::SQL_VIEW_NAME),
         StatementType::DROP_TABLE => set_target(&mut out, StatementTargetType::TABLE, AttributeKey::SQL_DROP_NAME),
         StatementType::DROP_VIEW => set_target(&mut out, StatementTargetType::VIEW, AttributeKey::SQL_DROP_NAME),
         StatementType::SELECT_INTO => {
-            if let Some(into) = find_select_attribute(AttributeKey::SQL_SELECT_INTO).filter(|n| n.node_type() != NodeType::NONE) {
+            if let Some(into) =
+                find_select_attribute(AttributeKey::SQL_SELECT_INTO).filter(|n| n.node_type() != NodeType::NONE)
+            {
                 out.target_type = StatementTargetType::TABLE;
-                if let Some(name) = children(nodes, into).iter().find(|c| c.attribute_key() == AttributeKey::SQL_TEMP_NAME) {
+                if let Some(name) =
+                    children(nodes, into).iter().find(|c| c.attribute_key() == AttributeKey::SQL_TEMP_NAME)
+                {
                     read_target(&mut out, Some(name));
                 }
             }
@@ -308,22 +316,26 @@ pub fn pack_parsed_script(parsed: &ParsedScript) -> ParsedScriptT {
     let scanner_errors = scanned
         .errors
         .iter()
-        .map(|e| build!(ErrorT {
-            text_span: Some(text_span(e.location)),
-            symbol_span: None,
-            message: non_empty_str(&e.message),
-            hint: None,
-        }))
+        .map(|e| {
+            build!(ErrorT {
+                text_span: Some(text_span(e.location)),
+                symbol_span: None,
+                message: non_empty_str(&e.message),
+                hint: None,
+            })
+        })
         .collect();
     let parser_errors = parsed
         .errors
         .iter()
-        .map(|e| build!(ErrorT {
-            symbol_span: Some(symbol_span(e.location)),
-            text_span: Some(text_span(resolve_text_span(&scanned.text, &scanned.symbols, e.location))),
-            message: non_empty_str(&e.message),
-            hint: non_empty_str(&e.hint),
-        }))
+        .map(|e| {
+            build!(ErrorT {
+                symbol_span: Some(symbol_span(e.location)),
+                text_span: Some(text_span(resolve_text_span(&scanned.text, &scanned.symbols, e.location))),
+                message: non_empty_str(&e.message),
+                hint: non_empty_str(&e.hint),
+            })
+        })
         .collect();
     let blocks = &parsed.comment_blocks;
     build!(ParsedScriptT {
@@ -410,9 +422,7 @@ pub fn pack_table(table: &TableDeclaration) -> TableT {
             table
                 .table_columns
                 .iter()
-                .map(|c| build!(TableColumnT {
-                    column_name: Some(c.column_name.text.to_string()),
-                }))
+                .map(|c| build!(TableColumnT { column_name: Some(c.column_name.text.to_string()) }))
                 .collect(),
         ),
     })
@@ -434,11 +444,13 @@ fn pack_expression(script: &AnalyzedScript, expr: &Expression) -> ExpressionT {
     let scanned = &script.parsed.scanned;
     let inner = match &expr.inner {
         ExpressionInner::None => ExpressionSubTypeT::NONE,
-        ExpressionInner::ColumnRef(c) => ExpressionSubTypeT::ColumnRefExpression(Box::new(build!(ColumnRefExpressionT {
-            ast_scope_root: c.ast_scope_root.unwrap_or(u32::MAX),
-            column_name: Some(Box::new(qualified_column_name(&c.column_name))),
-            resolved_column: c.resolved_ids.as_ref().map(|ids| Box::new(resolved_column(ids))),
-        }))),
+        ExpressionInner::ColumnRef(c) => {
+            ExpressionSubTypeT::ColumnRefExpression(Box::new(build!(ColumnRefExpressionT {
+                ast_scope_root: c.ast_scope_root.unwrap_or(u32::MAX),
+                column_name: Some(Box::new(qualified_column_name(&c.column_name))),
+                resolved_column: c.resolved_ids.as_ref().map(|ids| Box::new(resolved_column(ids))),
+            })))
+        }
         ExpressionInner::Literal(l) => {
             let begin = (l.raw_value.offset as usize).min(scanned.text.len());
             let end = (begin + l.raw_value.length as usize).min(scanned.text.len());
@@ -453,11 +465,13 @@ fn pack_expression(script: &AnalyzedScript, expr: &Expression) -> ExpressionT {
             left_child: c.left_expression_id,
             right_child: c.right_expression_id,
         }))),
-        ExpressionInner::BinaryExpression(b) => ExpressionSubTypeT::BinaryExpression(Box::new(build!(BinaryExpressionT {
-            func: b.func,
-            left_child: b.left_expression_id,
-            right_child: b.right_expression_id,
-        }))),
+        ExpressionInner::BinaryExpression(b) => {
+            ExpressionSubTypeT::BinaryExpression(Box::new(build!(BinaryExpressionT {
+                func: b.func,
+                left_child: b.left_expression_id,
+                right_child: b.right_expression_id,
+            })))
+        }
         ExpressionInner::FunctionCall(f) => {
             let arguments = match f.arguments {
                 FunctionArguments::None => None,
@@ -478,9 +492,7 @@ fn pack_expression(script: &AnalyzedScript, expr: &Expression) -> ExpressionT {
             })))
         }
         ExpressionInner::ConstIntervalCast(c) => {
-            let mut out = build!(ConstIntervalCastT {
-                value_expression: c.value_expression_id,
-            });
+            let mut out = build!(ConstIntervalCastT { value_expression: c.value_expression_id });
             if let Some(interval) = &c.interval {
                 out.interval_type = interval.interval_type;
                 if let Some(p) = interval.precision_expression {
@@ -499,8 +511,14 @@ fn pack_expression(script: &AnalyzedScript, expr: &Expression) -> ExpressionT {
 }
 
 /// The renderer-specific packing of a visualization spec: (vegalite json, umap spec, markdown spec)
-pub type VisualizationPacker =
-    dyn Fn(&AnalyzedScript, &VisualizationSpec) -> (Option<String>, Option<Box<dashql_buffers::visualization::UmapSpecT>>, Option<Box<dashql_buffers::visualization::MarkdownSpecT>>);
+pub type VisualizationPacker = dyn Fn(
+    &AnalyzedScript,
+    &VisualizationSpec,
+) -> (
+    Option<String>,
+    Option<Box<dashql_buffers::visualization::UmapSpecT>>,
+    Option<Box<dashql_buffers::visualization::MarkdownSpecT>>,
+);
 
 /// Pack an analyzed script (`AnalyzedScript::Pack`). `visualize` packs the renderer-specific specs.
 pub fn pack_analyzed_script(script: &AnalyzedScript, visualize: &VisualizationPacker) -> AnalyzedScriptT {
@@ -534,33 +552,35 @@ pub fn pack_analyzed_script(script: &AnalyzedScript, visualize: &VisualizationPa
     let insert_statements = script
         .insert_statements
         .iter()
-        .map(|insert| build!(InsertStatementT {
-            ast_node_id: insert.ast_node_id,
-            ast_statement_id: insert.ast_statement_id.unwrap_or(PROTO_NULL_U32),
-            target_table_reference_id: script.table_references[insert.target as usize].table_reference_id.object,
-            source_ast_node_id: insert.source_ast_node_id.unwrap_or(PROTO_NULL_U32),
-            default_values: insert.default_values,
-            returning: insert.returning,
-            target_columns: Some(
-                insert
-                    .target_columns
-                    .iter()
-                    .map(|c| build!(InsertTargetColumnT {
-                        ast_node_id: c.ast_node_id,
-                        column_name: Some(c.column_name.text.to_string()),
-                        resolved_column: c.resolved.and_then(|loc| {
-                            let table = script.table(loc.table)?;
-                            let ids = ResolvedColumnIds {
-                                catalog_schema_id: table.catalog_schema_id,
-                                catalog_table_column_id: table.table_columns[loc.column as usize].object_id,
-                                referenced_catalog_version: table.catalog_version,
-                            };
-                            Some(Box::new(resolved_column(&ids)))
-                        }),
-                    }))
-                    .collect(),
-            ),
-        }))
+        .map(|insert| {
+            build!(InsertStatementT {
+                ast_node_id: insert.ast_node_id,
+                ast_statement_id: insert.ast_statement_id.unwrap_or(PROTO_NULL_U32),
+                target_table_reference_id: script.table_references[insert.target as usize].table_reference_id.object,
+                source_ast_node_id: insert.source_ast_node_id.unwrap_or(PROTO_NULL_U32),
+                default_values: insert.default_values,
+                returning: insert.returning,
+                target_columns: Some(
+                    insert
+                        .target_columns
+                        .iter()
+                        .map(|c| build!(InsertTargetColumnT {
+                            ast_node_id: c.ast_node_id,
+                            column_name: Some(c.column_name.text.to_string()),
+                            resolved_column: c.resolved.and_then(|loc| {
+                                let table = script.table(loc.table)?;
+                                let ids = ResolvedColumnIds {
+                                    catalog_schema_id: table.catalog_schema_id,
+                                    catalog_table_column_id: table.table_columns[loc.column as usize].object_id,
+                                    referenced_catalog_version: table.catalog_version,
+                                };
+                                Some(Box::new(resolved_column(&ids)))
+                            }),
+                        }))
+                        .collect(),
+                ),
+            })
+        })
         .collect();
     let expressions = script.expressions.iter().map(|e| pack_expression(script, e)).collect();
 
@@ -581,7 +601,8 @@ pub fn pack_analyzed_script(script: &AnalyzedScript, visualize: &VisualizationPa
         })
         .collect();
     std_sort(&mut table_refs_by_id, &|l: &IndexedTableReferenceT, r: &IndexedTableReferenceT| {
-        (l.catalog_database_id, l.catalog_schema_id, l.catalog_table_id) < (r.catalog_database_id, r.catalog_schema_id, r.catalog_table_id)
+        (l.catalog_database_id, l.catalog_schema_id, l.catalog_table_id)
+            < (r.catalog_database_id, r.catalog_schema_id, r.catalog_table_id)
     });
     let mut column_refs_by_id: Vec<IndexedColumnReferenceT> = script
         .expressions
@@ -613,14 +634,16 @@ pub fn pack_analyzed_script(script: &AnalyzedScript, visualize: &VisualizationPa
         .name_scopes
         .iter()
         .enumerate()
-        .map(|(i, scope)| build!(NameScopeT {
-            scope_id: i as u32,
-            ast_node_id: scope.ast_node_id,
-            ast_statement_id: scope.ast_statement_id,
-            child_scopes: Some(scope.child_scopes.clone()),
-            expressions: Some(scope.expressions.clone()),
-            table_references: Some(scope.table_references.clone()),
-        }))
+        .map(|(i, scope)| {
+            build!(NameScopeT {
+                scope_id: i as u32,
+                ast_node_id: scope.ast_node_id,
+                ast_statement_id: scope.ast_statement_id,
+                child_scopes: Some(scope.child_scopes.clone()),
+                expressions: Some(scope.expressions.clone()),
+                table_references: Some(scope.table_references.clone()),
+            })
+        })
         .collect();
     let constant_expressions = script
         .constant_expressions
@@ -635,11 +658,7 @@ pub fn pack_analyzed_script(script: &AnalyzedScript, visualize: &VisualizationPa
             })
         })
         .collect();
-    let function_declarations = entry
-        .function_declarations
-        .iter()
-        .map(pack_function_declaration)
-        .collect();
+    let function_declarations = entry.function_declarations.iter().map(pack_function_declaration).collect();
     let visualization_specs = script
         .visualization_specs
         .iter()
@@ -650,7 +669,10 @@ pub fn pack_analyzed_script(script: &AnalyzedScript, visualize: &VisualizationPa
                 ast_statement_id: spec.ast_statement_id.unwrap_or(PROTO_NULL_U32),
                 source_kind: PackedVisSourceKind(spec.resolved_source.kind as u8),
                 source_ast_node_id: spec.source_node_id.unwrap_or(PROTO_NULL_U32),
-                source_inline_select_ast_node_id: spec.resolved_source.inline_select_ast_node_id.unwrap_or(PROTO_NULL_U32),
+                source_inline_select_ast_node_id: spec
+                    .resolved_source
+                    .inline_select_ast_node_id
+                    .unwrap_or(PROTO_NULL_U32),
                 renderer: spec.renderer.clone(),
                 vegalite_spec,
                 umap_spec,
@@ -668,21 +690,25 @@ pub fn pack_analyzed_script(script: &AnalyzedScript, visualize: &VisualizationPa
     let inferred_table_schemas = script
         .inferred_table_schemas
         .iter()
-        .map(|schema| build!(InferredTableSchemaT {
-            table_name: Some(Box::new(qualified_table_name(&schema.table_name))),
-            confidence: dashql_buffers::analyzer::InferenceConfidence(schema.confidence as u8),
-            columns: Some(
-                schema
-                    .columns
-                    .iter()
-                    .map(|c| build!(InferredColumnT {
-                        column_name: Some(c.column_name.text.to_string()),
-                        confidence: dashql_buffers::analyzer::InferenceConfidence(c.confidence as u8),
-                        candidate_table_names: non_empty(c.candidate_table_names.iter().map(qualified_table_name).collect()),
-                    }))
-                    .collect(),
-            ),
-        }))
+        .map(|schema| {
+            build!(InferredTableSchemaT {
+                table_name: Some(Box::new(qualified_table_name(&schema.table_name))),
+                confidence: dashql_buffers::analyzer::InferenceConfidence(schema.confidence as u8),
+                columns: Some(
+                    schema
+                        .columns
+                        .iter()
+                        .map(|c| build!(InferredColumnT {
+                            column_name: Some(c.column_name.text.to_string()),
+                            confidence: dashql_buffers::analyzer::InferenceConfidence(c.confidence as u8),
+                            candidate_table_names: non_empty(
+                                c.candidate_table_names.iter().map(qualified_table_name).collect()
+                            ),
+                        }))
+                        .collect(),
+                ),
+            })
+        })
         .collect();
     build!(AnalyzedScriptT {
         catalog_entry_id: entry.catalog_entry_id,
@@ -709,7 +735,8 @@ pub fn has_visualize(parsed: &ParsedScript) -> bool {
 pub fn pack_cursor(cursor: &crate::cursor::ScriptCursor) -> dashql_buffers::cursor::ScriptCursorT {
     use crate::cursor::CursorContext;
     use dashql_buffers::cursor::{
-        RelativeSymbolPosition, ScriptCursorColumnRefContextT, ScriptCursorContextT, ScriptCursorT, ScriptCursorTableRefContextT,
+        RelativeSymbolPosition, ScriptCursorColumnRefContextT, ScriptCursorContextT, ScriptCursorT,
+        ScriptCursorTableRefContextT,
     };
     let mut out = ScriptCursorT::default();
     out.text_offset = cursor.text_offset as u32;
@@ -751,10 +778,15 @@ pub fn pack_cursor(cursor: &crate::cursor::ScriptCursor) -> dashql_buffers::curs
 }
 
 /// Pack a completion (`Completion::Pack`)
-pub fn pack_completion(completion: &crate::completion::Completion, upper_case_keywords: bool) -> dashql_buffers::completion::CompletionT {
+pub fn pack_completion(
+    completion: &crate::completion::Completion,
+    upper_case_keywords: bool,
+) -> dashql_buffers::completion::CompletionT {
     use crate::completion::CandidateObjectRef;
     use crate::utils::quote_identifier;
-    use dashql_buffers::completion::{CompletionCandidateObjectT, CompletionCandidateObjectType, CompletionCandidateT, CompletionT};
+    use dashql_buffers::completion::{
+        CompletionCandidateObjectT, CompletionCandidateObjectType, CompletionCandidateT, CompletionT,
+    };
 
     let candidates = completion
         .top_candidates
@@ -803,7 +835,8 @@ pub fn pack_completion(completion: &crate::completion::Completion, upper_case_ke
                         CandidateObjectRef::Column(loc) => {
                             if let Some(table) = completion.table(loc.table) {
                                 let (db, schema) = table.catalog_schema_id.unpack_schema_id();
-                                let (table_id, column) = table.table_columns[loc.column as usize].object_id.unpack_table_column_id();
+                                let (table_id, column) =
+                                    table.table_columns[loc.column as usize].object_id.unpack_table_column_id();
                                 o.catalog_database_id = db;
                                 o.catalog_schema_id = schema;
                                 o.catalog_table_id = table_id.pack();
@@ -813,7 +846,10 @@ pub fn pack_completion(completion: &crate::completion::Completion, upper_case_ke
                         }
                         CandidateObjectRef::Function(loc) => {
                             is_function = true;
-                            if let Some(f) = completion.entry_data(loc.entry).and_then(|d| d.function_declarations.get(loc.index as usize)) {
+                            if let Some(f) = completion
+                                .entry_data(loc.entry)
+                                .and_then(|d| d.function_declarations.get(loc.index as usize))
+                            {
                                 let (db, schema) = f.catalog_schema_id.unpack_schema_id();
                                 o.catalog_database_id = db;
                                 o.catalog_schema_id = schema;
@@ -860,7 +896,11 @@ pub fn pack_completion(completion: &crate::completion::Completion, upper_case_ke
 pub fn pack_visualization(
     script: &AnalyzedScript,
     spec: &VisualizationSpec,
-) -> (Option<String>, Option<Box<dashql_buffers::visualization::UmapSpecT>>, Option<Box<dashql_buffers::visualization::MarkdownSpecT>>) {
+) -> (
+    Option<String>,
+    Option<Box<dashql_buffers::visualization::UmapSpecT>>,
+    Option<Box<dashql_buffers::visualization::MarkdownSpecT>>,
+) {
     use crate::visualize;
     use dashql_buffers::visualization::{MarkdownSpec, UmapSpec};
     let renderer = spec.renderer.as_deref();
@@ -873,12 +913,13 @@ pub fn pack_visualization(
         builder.finish(packed, None);
         Box::new(flatbuffers::root::<UmapSpec>(builder.finished_data()).unwrap().unpack())
     });
-    let markdown = (renderer == Some("markdown")).then(|| visualize::compile_markdown_spec(spec)).flatten().map(|doc| {
-        let mut builder = flatbuffers::FlatBufferBuilder::new();
-        let packed = visualize::pack_markdown_spec(&mut builder, &doc);
-        builder.finish(packed, None);
-        Box::new(flatbuffers::root::<MarkdownSpec>(builder.finished_data()).unwrap().unpack())
-    });
+    let markdown =
+        (renderer == Some("markdown")).then(|| visualize::compile_markdown_spec(spec)).flatten().map(|doc| {
+            let mut builder = flatbuffers::FlatBufferBuilder::new();
+            let packed = visualize::pack_markdown_spec(&mut builder, &doc);
+            builder.finish(packed, None);
+            Box::new(flatbuffers::root::<MarkdownSpec>(builder.finished_data()).unwrap().unpack())
+        });
     (vegalite, umap, markdown)
 }
 
@@ -887,7 +928,8 @@ pub fn pack_catalog_descriptor(entry: &CatalogEntryData) -> crate::error::Result
     let mut descriptor = dashql_buffers::catalog::CatalogDescriptorT::default();
     // The C++ builder always writes both vectors
     descriptor.tables = Some(entry.table_declarations.iter().map(pack_table).collect());
-    descriptor.function_declarations = Some(entry.function_declarations.iter().map(pack_function_declaration).collect());
+    descriptor.function_declarations =
+        Some(entry.function_declarations.iter().map(pack_function_declaration).collect());
     let mut builder = flatbuffers::FlatBufferBuilder::new();
     let packed = descriptor.pack(&mut builder);
     builder.finish(packed, None);

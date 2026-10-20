@@ -13,11 +13,7 @@ pub struct TopKHeap<T, L: Fn(&T, &T) -> bool> {
 
 impl<T, L: Fn(&T, &T) -> bool> TopKHeap<T, L> {
     pub fn new(capacity: usize, less: L) -> Self {
-        Self {
-            entries: Vec::with_capacity(capacity),
-            capacity,
-            less,
-        }
+        Self { entries: Vec::with_capacity(capacity), capacity, less }
     }
 
     /// Move the root down until the heap property holds

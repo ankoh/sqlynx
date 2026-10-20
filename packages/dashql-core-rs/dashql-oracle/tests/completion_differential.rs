@@ -14,7 +14,9 @@ use dashql_snapshots::{compare, load_category, parse_yaml, run, trim_input, Argu
 const LIMIT: usize = 10;
 
 fn compare_with_oracle(catalog: Option<&str>, text: &str, offset: usize) -> Result<(), String> {
-    let context = || format!("catalog {catalog:?}\nscript {text:?}\ncursor {offset} ({:?}|{:?})", &text[..offset], &text[offset..]);
+    let context = || {
+        format!("catalog {catalog:?}\nscript {text:?}\ncursor {offset} ({:?}|{:?})", &text[..offset], &text[offset..])
+    };
     let expected = dashql_oracle::completion::complete(catalog, text, offset, LIMIT);
     let actual = complete_case(catalog, text, CursorOffset::Offset(offset), LIMIT);
     match (expected, actual) {
@@ -28,9 +30,11 @@ fn compare_with_oracle(catalog: Option<&str>, text: &str, offset: usize) -> Resu
     // The packed cursor and completion, upper-casing keywords at odd offsets
     let upper_case = offset % 2 == 1;
     let (cursor_bytes, completion_bytes) =
-        dashql_oracle::completion::complete_packed(catalog, text, offset, LIMIT, upper_case).map_err(|e| format!("{}\n{e}", context()))?;
+        dashql_oracle::completion::complete_packed(catalog, text, offset, LIMIT, upper_case)
+            .map_err(|e| format!("{}\n{e}", context()))?;
     let expected_cursor = flatbuffers::root::<dashql_buffers::cursor::ScriptCursor>(&cursor_bytes).unwrap().unpack();
-    let expected_completion = flatbuffers::root::<dashql_buffers::completion::Completion>(&completion_bytes).unwrap().unpack();
+    let expected_completion =
+        flatbuffers::root::<dashql_buffers::completion::Completion>(&completion_bytes).unwrap().unpack();
     let (cursor, completion) = complete_packed(catalog, text, offset, LIMIT, upper_case)?;
     // Round trip the Rust objects through a FlatBuffer, so that the field presence is compared
     let mut builder = flatbuffers::FlatBufferBuilder::new();
@@ -40,7 +44,8 @@ fn compare_with_oracle(catalog: Option<&str>, text: &str, offset: usize) -> Resu
     let mut builder = flatbuffers::FlatBufferBuilder::new();
     let packed = completion.pack(&mut builder);
     builder.finish(packed, None);
-    let completion = flatbuffers::root::<dashql_buffers::completion::Completion>(builder.finished_data()).unwrap().unpack();
+    let completion =
+        flatbuffers::root::<dashql_buffers::completion::Completion>(builder.finished_data()).unwrap().unpack();
     if format!("{expected_cursor:?}") != format!("{cursor:?}") {
         return Err(format!("{}\ncursor\nC++:  {expected_cursor:?}\nRust: {cursor:?}", context()));
     }

@@ -144,8 +144,8 @@ fn keyword_prevalence(keyword: SymbolKind) -> CandidateTag {
     match keyword {
         S_SELECT | S_FROM | S_WHERE => CandidateTag::KEYWORD_A,
         S_AND | S_GROUP_P | S_ORDER => CandidateTag::KEYWORD_B,
-        S_AS | S_ASC_P | S_BY | S_CASE | S_CAST | S_DESC_P | S_END_P | S_LIKE | S_LIMIT | S_OFFSET | S_OR | S_SET | S_THEN
-        | S_WHEN | S_WITH => CandidateTag::KEYWORD_C,
+        S_AS | S_ASC_P | S_BY | S_CASE | S_CAST | S_DESC_P | S_END_P | S_LIKE | S_LIMIT | S_OFFSET | S_OR | S_SET
+        | S_THEN | S_WHEN | S_WITH => CandidateTag::KEYWORD_C,
         _ => CandidateTag::KEYWORD_D,
     }
 }
@@ -159,8 +159,8 @@ fn suppress_passive_hint(kind: SymbolKind) -> bool {
 fn keyword_continuation_score(kind: SymbolKind) -> u8 {
     match kind {
         S_BY | S_AS | S_EQUALS_GREATER | S_ON | S_SELECT | S_INTO | S_TABLE | S_SET => 10,
-        S_OUTER_P | S_ASC_P | S_DESC_P | S_NULLS_P | S_FIRST_P | S_LAST_P | S_UNBOUNDED | S_PRECEDING | S_CURRENT_P | S_ROW
-        | S_WITHIN | S_SETS => 6,
+        S_OUTER_P | S_ASC_P | S_DESC_P | S_NULLS_P | S_FIRST_P | S_LAST_P | S_UNBOUNDED | S_PRECEDING | S_CURRENT_P
+        | S_ROW | S_WITHIN | S_SETS => 6,
         _ => 0,
     }
 }
@@ -264,7 +264,13 @@ pub struct Candidate {
 }
 
 impl Candidate {
-    fn new(completion_text: Arc<str>, name_tags: u8, tags: CandidateTags, location: SymbolSpan, qualified: SymbolSpan) -> Self {
+    fn new(
+        completion_text: Arc<str>,
+        name_tags: u8,
+        tags: CandidateTags,
+        location: SymbolSpan,
+        qualified: SymbolSpan,
+    ) -> Self {
         Self {
             completion_text,
             completion_text_is_verbatim: false,
@@ -283,7 +289,8 @@ impl Candidate {
 /// Is `l` kicked out of the heap before `r`? Lower scores first, then larger names.
 fn candidate_less(l: &Candidate, r: &Candidate) -> bool {
     l.score < r.score
-        || (l.score == r.score && ci_cmp(l.completion_text.as_bytes(), r.completion_text.as_bytes()) == std::cmp::Ordering::Greater)
+        || (l.score == r.score
+            && ci_cmp(l.completion_text.as_bytes(), r.completion_text.as_bytes()) == std::cmp::Ordering::Greater)
 }
 
 type CandidateHeap = TopKHeap<Candidate, fn(&Candidate, &Candidate) -> bool>;
@@ -436,7 +443,13 @@ impl<'c, 'a> Completion<'c, 'a> {
     }
 
     /// Add a catalog object to a candidate
-    fn add_object(&mut self, candidate: usize, tags: CandidateTags, object_id: QualifiedCatalogObjectId, object: CandidateObjectRef) {
+    fn add_object(
+        &mut self,
+        candidate: usize,
+        tags: CandidateTags,
+        object_id: QualifiedCatalogObjectId,
+        object: CandidateObjectRef,
+    ) {
         let co = self.candidate_objects.len();
         self.candidate_objects.push(CandidateObject {
             candidate,
@@ -472,21 +485,22 @@ impl<'c, 'a> Completion<'c, 'a> {
         }
         let between_symbols = completion.between_symbols;
 
-        let use_previous_if_at_end = |completion: &mut Completion, previous: &mut Option<SymbolLocation>| {
-            match *previous {
+        let use_previous_if_at_end =
+            |completion: &mut Completion, previous: &mut Option<SymbolLocation>| match *previous {
                 Some(p) if p.relative_pos == RelativeSymbolPosition::END_OF_SYMBOL => {
                     completion.target_symbol = Some(p);
                     *previous = None;
                     true
                 }
                 _ => false,
-            }
-        };
+            };
 
         let target = completion.target_symbol.unwrap();
         if !between_symbols && target.is_dot() {
             match target.relative_pos {
-                RelativeSymbolPosition::AFTER_SYMBOL | RelativeSymbolPosition::END_OF_SYMBOL => completion.dot_completion = true,
+                RelativeSymbolPosition::AFTER_SYMBOL | RelativeSymbolPosition::END_OF_SYMBOL => {
+                    completion.dot_completion = true
+                }
                 // Don't complete the dot itself. The C++ switch falls through to the return.
                 _ => {
                     if target.relative_pos == RelativeSymbolPosition::BEGIN_OF_SYMBOL {
@@ -497,7 +511,9 @@ impl<'c, 'a> Completion<'c, 'a> {
             }
         } else if !between_symbols && target.is_trailing_dot() {
             match target.relative_pos {
-                RelativeSymbolPosition::AFTER_SYMBOL | RelativeSymbolPosition::END_OF_SYMBOL => completion.dot_completion = true,
+                RelativeSymbolPosition::AFTER_SYMBOL | RelativeSymbolPosition::END_OF_SYMBOL => {
+                    completion.dot_completion = true
+                }
                 RelativeSymbolPosition::BEGIN_OF_SYMBOL => {
                     if !use_previous_if_at_end(&mut completion, &mut previous_symbol) {
                         return completion;
@@ -522,7 +538,9 @@ impl<'c, 'a> Completion<'c, 'a> {
         let mut expects_identifier = false;
         let mut expected_at_cursor = probe::ExpectedAtCursor::default();
         if !completion.dot_completion {
-            let parse_until = if target.relative_pos == RelativeSymbolPosition::AFTER_SYMBOL && !completion.is_at_eof(target.symbol_id) {
+            let parse_until = if target.relative_pos == RelativeSymbolPosition::AFTER_SYMBOL
+                && !completion.is_at_eof(target.symbol_id)
+            {
                 completion.next_symbol(target.symbol_id)
             } else {
                 target.symbol_id
@@ -556,7 +574,9 @@ impl<'c, 'a> Completion<'c, 'a> {
         if previous_symbol.is_some_and(|p| p.is_dot()) && expects_identifier {
             if matches!(
                 target.relative_pos,
-                RelativeSymbolPosition::END_OF_SYMBOL | RelativeSymbolPosition::BEGIN_OF_SYMBOL | RelativeSymbolPosition::MID_OF_SYMBOL
+                RelativeSymbolPosition::END_OF_SYMBOL
+                    | RelativeSymbolPosition::BEGIN_OF_SYMBOL
+                    | RelativeSymbolPosition::MID_OF_SYMBOL
             ) {
                 completion.dot_completion = true;
             }
@@ -569,7 +589,8 @@ impl<'c, 'a> Completion<'c, 'a> {
         } else if between_symbols {
             // Only expected keywords with an empty target, the passive inline hints
             if !suppress_passive_hint(target.symbol.kind) {
-                completion.add_expected_keywords_as_candidates(&expected_at_cursor.expected, &expected_at_cursor.prefix);
+                completion
+                    .add_expected_keywords_as_candidates(&expected_at_cursor.expected, &expected_at_cursor.prefix);
             }
         } else {
             completion.add_expected_keywords_as_candidates(&expected_at_cursor.expected, &expected_at_cursor.prefix);
@@ -592,14 +613,18 @@ impl<'c, 'a> Completion<'c, 'a> {
                         }
                     };
                     let location = Self::symbol_location(&sym);
-                    let mut identity = Candidate::new(text_arc(symbol_text), 0, CandidateTag::IDENTITY.0, location, location);
+                    let mut identity =
+                        Candidate::new(text_arc(symbol_text), 0, CandidateTag::IDENTITY.0, location, location);
                     identity.completion_text_is_verbatim = true;
                     identity.score = identity_score;
                     completion.candidate_heap.insert(identity);
                 }
             }
             // Search the name indexes when expecting an identifier that is not a definition or alias
-            if expects_identifier && !completion.at_definition && completion.strategy != CompletionStrategy::TABLE_REF_ALIAS {
+            if expects_identifier
+                && !completion.at_definition
+                && completion.strategy != CompletionStrategy::TABLE_REF_ALIAS
+            {
                 completion.find_candidates_in_indexes();
                 completion.find_candidates_in_scope();
                 completion.find_candidates_in_inline_visualize_source();
@@ -622,10 +647,14 @@ impl<'c, 'a> Completion<'c, 'a> {
         let Some(target) = self.target_symbol else { return false };
         let replace_target = matches!(
             target.relative_pos,
-            RelativeSymbolPosition::BEGIN_OF_SYMBOL | RelativeSymbolPosition::MID_OF_SYMBOL | RelativeSymbolPosition::END_OF_SYMBOL
+            RelativeSymbolPosition::BEGIN_OF_SYMBOL
+                | RelativeSymbolPosition::MID_OF_SYMBOL
+                | RelativeSymbolPosition::END_OF_SYMBOL
         );
         let mut post_id = target.symbol_id;
-        if (target.relative_pos == RelativeSymbolPosition::AFTER_SYMBOL || replace_target) && !self.is_at_eof(target.symbol_id) {
+        if (target.relative_pos == RelativeSymbolPosition::AFTER_SYMBOL || replace_target)
+            && !self.is_at_eof(target.symbol_id)
+        {
             post_id = self.next_symbol(target.symbol_id);
         }
         if self.is_at_eof(post_id) {
@@ -639,7 +668,9 @@ impl<'c, 'a> Completion<'c, 'a> {
         let target = self.target_symbol.unwrap();
         let replace_target = matches!(
             target.relative_pos,
-            RelativeSymbolPosition::BEGIN_OF_SYMBOL | RelativeSymbolPosition::MID_OF_SYMBOL | RelativeSymbolPosition::END_OF_SYMBOL
+            RelativeSymbolPosition::BEGIN_OF_SYMBOL
+                | RelativeSymbolPosition::MID_OF_SYMBOL
+                | RelativeSymbolPosition::END_OF_SYMBOL
         );
         let mut feed_id = target.symbol_id;
         if target.relative_pos == RelativeSymbolPosition::AFTER_SYMBOL && !self.is_at_eof(target.symbol_id) {
@@ -662,7 +693,9 @@ impl<'c, 'a> Completion<'c, 'a> {
         let keyword_tags = |keyword: SymbolKind, text: &str| -> CandidateTags {
             let mut tags = CandidateTag::EXPECTED_PARSER_SYMBOL.0 | keyword_prevalence(keyword).0;
             match target.relative_pos {
-                RelativeSymbolPosition::BEGIN_OF_SYMBOL | RelativeSymbolPosition::MID_OF_SYMBOL | RelativeSymbolPosition::END_OF_SYMBOL => {
+                RelativeSymbolPosition::BEGIN_OF_SYMBOL
+                | RelativeSymbolPosition::MID_OF_SYMBOL
+                | RelativeSymbolPosition::END_OF_SYMBOL => {
                     let typed = typed_text;
                     if !typed.is_empty() {
                         if let Some(t) = match_tags(text.as_bytes(), typed) {
@@ -766,7 +799,9 @@ impl<'c, 'a> Completion<'c, 'a> {
             }
             if matches!(
                 target.relative_pos,
-                RelativeSymbolPosition::BEGIN_OF_SYMBOL | RelativeSymbolPosition::MID_OF_SYMBOL | RelativeSymbolPosition::END_OF_SYMBOL
+                RelativeSymbolPosition::BEGIN_OF_SYMBOL
+                    | RelativeSymbolPosition::MID_OF_SYMBOL
+                    | RelativeSymbolPosition::END_OF_SYMBOL
             ) {
                 tags |= CandidateTag::SUBSTRING_MATCH.0;
                 if ci_starts_with(name.text.as_bytes(), prefix_text) {
@@ -817,7 +852,15 @@ impl<'c, 'a> Completion<'c, 'a> {
     }
 
     /// Add or merge a candidate without catalog objects (`AddLocalCandidate`)
-    fn add_local_candidate(&mut self, name: &Arc<str>, name_tags: u8, mut tags: CandidateTags, prefix: &[u8], location: SymbolSpan, qualified: SymbolSpan) {
+    fn add_local_candidate(
+        &mut self,
+        name: &Arc<str>,
+        name_tags: u8,
+        mut tags: CandidateTags,
+        prefix: &[u8],
+        location: SymbolSpan,
+        qualified: SymbolSpan,
+    ) {
         if !prefix.is_empty() {
             match match_tags(name.as_bytes(), prefix) {
                 Some(t) => tags |= t,
@@ -870,7 +913,8 @@ impl<'c, 'a> Completion<'c, 'a> {
     /// Add CTEs and the columns of CTE sources in scope (`FindCandidatesInScope`)
     fn find_candidates_in_scope(&mut self) {
         let cursor = self.cursor;
-        let (Some(target), Some(parsed), Some(analyzed)) = (self.target_symbol, cursor.script.parsed, self.analyzed()) else {
+        let (Some(target), Some(parsed), Some(analyzed)) = (self.target_symbol, cursor.script.parsed, self.analyzed())
+        else {
             return;
         };
         let prefix = self.read_target_prefix();
@@ -884,14 +928,26 @@ impl<'c, 'a> Completion<'c, 'a> {
                 let scope = &analyzed.name_scopes[scope_id as usize];
                 for (_, cte) in scope.cte_definitions.iter() {
                     let Some(&cte_node) = scope.cte_definition_nodes.get(&cte.cte_name.text) else { continue };
-                    let cte_text = resolve_text_span(&scanned.text, &scanned.symbols, *parsed.nodes[cte_node as usize].symbol_span());
+                    let cte_text = resolve_text_span(
+                        &scanned.text,
+                        &scanned.symbols,
+                        *parsed.nodes[cte_node as usize].symbol_span(),
+                    );
                     if !scope.ctes_recursive && cte_text.offset as usize >= cursor.text_offset {
                         continue;
                     }
-                    if !scope.ctes_recursive && Self::is_scope_within(analyzed, cursor.name_scopes[0], cte.child_scope) {
+                    if !scope.ctes_recursive && Self::is_scope_within(analyzed, cursor.name_scopes[0], cte.child_scope)
+                    {
                         continue;
                     }
-                    self.add_local_candidate(&cte.cte_name.text, NameTag::TABLE_NAME.0, tags, prefix, location, location);
+                    self.add_local_candidate(
+                        &cte.cte_name.text,
+                        NameTag::TABLE_NAME.0,
+                        tags,
+                        prefix,
+                        location,
+                        location,
+                    );
                 }
             }
             return;
@@ -915,7 +971,9 @@ impl<'c, 'a> Completion<'c, 'a> {
     /// Add the output columns of the inline SELECT of a VISUALIZE statement
     /// (`FindCandidatesInInlineVisualizeSource`)
     fn find_candidates_in_inline_visualize_source(&mut self) {
-        let (Some(target), Some(parsed), Some(analyzed)) = (self.target_symbol, self.cursor.script.parsed, self.analyzed()) else {
+        let (Some(target), Some(parsed), Some(analyzed)) =
+            (self.target_symbol, self.cursor.script.parsed, self.analyzed())
+        else {
             return;
         };
         let nodes = &parsed.nodes;
@@ -942,8 +1000,11 @@ impl<'c, 'a> Completion<'c, 'a> {
         let Some(source_scope) = source_scope else { return };
         let prefix = self.read_target_prefix();
         let location = Self::symbol_location(&target.symbol);
-        let names: Vec<Arc<str>> =
-            analyzed.name_scopes[source_scope as usize].output_columns.iter().map(|o| o.column_name.text.clone()).collect();
+        let names: Vec<Arc<str>> = analyzed.name_scopes[source_scope as usize]
+            .output_columns
+            .iter()
+            .map(|o| o.column_name.text.clone())
+            .collect();
         for name in names {
             let tags = CandidateTag::NAME_INDEX.0 | CandidateTag::IN_NAME_SCOPE.0;
             self.add_local_candidate(&name, NameTag::COLUMN_NAME.0, tags, prefix, location, location);
@@ -954,11 +1015,8 @@ impl<'c, 'a> Completion<'c, 'a> {
     fn promote_identifiers_in_scope(&mut self) {
         let cursor = self.cursor;
         let Some(analyzed) = self.analyzed() else { return };
-        let in_insert_source = self
-            .cursor
-            .name_scopes
-            .iter()
-            .any(|&s| analyzed.name_scopes[s as usize].column_correlation_barrier);
+        let in_insert_source =
+            self.cursor.name_scopes.iter().any(|&s| analyzed.name_scopes[s as usize].column_correlation_barrier);
         let promote = |completion: &mut Self, object_id: QualifiedCatalogObjectId| {
             if let Some(&co) = completion.candidate_objects_by_id.get(&object_id) {
                 let candidate = completion.candidate_objects[co].candidate;
@@ -997,7 +1055,8 @@ impl<'c, 'a> Completion<'c, 'a> {
     /// (`PromoteTablesAndPeersForUnresolvedColumns`)
     fn promote_tables_and_peers_for_unresolved_columns(&mut self) {
         let cursor = self.cursor;
-        let (Some(_), Some(analyzed), Some(parsed)) = (cursor.statement_id, self.analyzed(), cursor.script.parsed) else {
+        let (Some(_), Some(analyzed), Some(parsed)) = (cursor.statement_id, self.analyzed(), cursor.script.parsed)
+        else {
             return;
         };
         let nodes = &parsed.nodes;
@@ -1018,7 +1077,11 @@ impl<'c, 'a> Completion<'c, 'a> {
                     continue;
                 }
                 columns.clear();
-                self.resolve_table_columns_with_catalog(analyzed, &column_ref.column_name.column_name.text, &mut columns);
+                self.resolve_table_columns_with_catalog(
+                    analyzed,
+                    &column_ref.column_name.column_name.text,
+                    &mut columns,
+                );
                 for &column in &columns {
                     let Some(table) = self.table(column.table) else { continue };
                     if let Some(&co) = self.candidate_objects_by_id.get(&table.object_id) {
@@ -1083,7 +1146,13 @@ impl<'c, 'a> Completion<'c, 'a> {
     }
 
     /// Tables of a qualified schema, the own script first (`ResolveSchemaTablesWithCatalog`)
-    fn resolve_qualified_schema_tables(&self, analyzed: &AnalyzedScript, database: &str, schema: &str, out: &mut Vec<(TableLoc, bool)>) {
+    fn resolve_qualified_schema_tables(
+        &self,
+        analyzed: &AnalyzedScript,
+        database: &str,
+        schema: &str,
+        out: &mut Vec<(TableLoc, bool)>,
+    ) {
         let own = &analyzed.entry;
         let key = (Arc::<str>::from(schema), Arc::<str>::from(database));
         if let Some(tables) = own.tables_by_unqualified_schema.get(&key) {
@@ -1104,7 +1173,11 @@ impl<'c, 'a> Completion<'c, 'a> {
     }
 
     /// Schemas of a database, the own script first (`ResolveDatabaseSchemasWithCatalog`)
-    fn resolve_database_schemas(&self, analyzed: &AnalyzedScript, database: &str) -> Vec<(Arc<str>, QualifiedCatalogObjectId, bool)> {
+    fn resolve_database_schemas(
+        &self,
+        analyzed: &AnalyzedScript,
+        database: &str,
+    ) -> Vec<(Arc<str>, QualifiedCatalogObjectId, bool)> {
         let mut out = Vec::new();
         let lower = (Arc::<str>::from(database), Arc::<str>::from(""));
         for ((db, _), &i) in analyzed.entry.schemas_by_qualified_name.range(lower.clone()..) {
@@ -1134,7 +1207,8 @@ impl<'c, 'a> Completion<'c, 'a> {
         if let CursorContext::ColumnRef { expression_id: u32::MAX } = cursor.context {
             let Some(location) = cursor.scanner_location else { return };
             let Some(dot) = ScriptCursor::dot_symbol(&location, &target) else { return };
-            let (alias_begin, alias_end) = crate::cursor::qualifier_before(&scanned.text, dot.symbol.location.offset as usize);
+            let (alias_begin, alias_end) =
+                crate::cursor::qualifier_before(&scanned.text, dot.symbol.location.offset as usize);
             let alias_text = &scanned.text[alias_begin..alias_end];
             // The qualifier is sealed, only the text after the dot is replaced
             let replace_at = SymbolSpan::new(cursor.text_offset as u32, 0);
@@ -1150,13 +1224,27 @@ impl<'c, 'a> Completion<'c, 'a> {
                             .map(|t| t.table_columns.iter().map(|c| c.column_name.text.clone()).collect())
                             .unwrap_or_default();
                         for name in names {
-                            self.add_local_candidate(&name, NameTag::COLUMN_NAME.0, tags, &[], replace_at, qualified_at);
+                            self.add_local_candidate(
+                                &name,
+                                NameTag::COLUMN_NAME.0,
+                                tags,
+                                &[],
+                                replace_at,
+                                qualified_at,
+                            );
                         }
                     }
                     ReferencedTable::Cte(loc) => {
                         let cte = analyzed.name_scopes[loc.scope as usize].cte_definitions.at(loc.index as usize);
                         for name in Self::cte_columns(analyzed, cte) {
-                            self.add_local_candidate(&name, NameTag::COLUMN_NAME.0, tags, &[], replace_at, qualified_at);
+                            self.add_local_candidate(
+                                &name,
+                                NameTag::COLUMN_NAME.0,
+                                tags,
+                                &[],
+                                replace_at,
+                                qualified_at,
+                            );
                         }
                     }
                     ReferencedTable::Unresolved(_) => {}
@@ -1209,7 +1297,8 @@ impl<'c, 'a> Completion<'c, 'a> {
         let script_length = scanned.text.len() as u32;
         let name_path_end = (name_path_ts.offset + name_path_ts.length).min(script_length);
         let replace_text_at = SymbolSpan::new(truncate_at, name_path_end.max(truncate_at) - truncate_at);
-        let name_path_text_loc = SymbolSpan::new(name_path_ts.offset, name_path_end.max(name_path_ts.offset) - name_path_ts.offset);
+        let name_path_text_loc =
+            SymbolSpan::new(name_path_ts.offset, name_path_end.max(name_path_ts.offset) - name_path_ts.offset);
         if name_path.is_empty() {
             return;
         }
@@ -1303,10 +1392,18 @@ impl<'c, 'a> Completion<'c, 'a> {
                                     }
                                 }
                                 ReferencedTable::Cte(loc) => {
-                                    let cte = analyzed.name_scopes[loc.scope as usize].cte_definitions.at(loc.index as usize);
+                                    let cte =
+                                        analyzed.name_scopes[loc.scope as usize].cte_definitions.at(loc.index as usize);
                                     let tags = CandidateTag::DOT_RESOLUTION_COLUMN.0 | CandidateTag::IN_NAME_SCOPE.0;
                                     for name in Self::cte_columns(analyzed, cte) {
-                                        self.add_local_candidate(&name, NameTag::COLUMN_NAME.0, tags, last_text_prefix, replace_text_at, name_path_text_loc);
+                                        self.add_local_candidate(
+                                            &name,
+                                            NameTag::COLUMN_NAME.0,
+                                            tags,
+                                            last_text_prefix,
+                                            replace_text_at,
+                                            name_path_text_loc,
+                                        );
                                     }
                                 }
                                 ReferencedTable::Unresolved(_) => {}
@@ -1424,7 +1521,10 @@ impl<'c, 'a> Completion<'c, 'a> {
                 match object.object {
                     CandidateObjectRef::Column(loc) => {
                         column_count_in_scope += in_scope as usize;
-                        columns_by_table.push((QualifiedCatalogObjectId::table(object.catalog_object_id.unpack_table_column_id().0), co));
+                        columns_by_table.push((
+                            QualifiedCatalogObjectId::table(object.catalog_object_id.unpack_table_column_id().0),
+                            co,
+                        ));
                         let table = self.table(loc.table);
                         let qualified = match table {
                             Some(table) => {
@@ -1440,7 +1540,8 @@ impl<'c, 'a> Completion<'c, 'a> {
                     }
                     CandidateObjectRef::Table(loc) => {
                         table_count += 1;
-                        let qualified = self.table(loc).map(|t| Self::qualified_table_name(&t.table_name)).unwrap_or_default();
+                        let qualified =
+                            self.table(loc).map(|t| Self::qualified_table_name(&t.table_name)).unwrap_or_default();
                         let object = &mut self.candidate_objects[co];
                         object.qualified_name_target_idx = qualified.len().wrapping_sub(1);
                         object.qualified_name = qualified;
@@ -1571,7 +1672,8 @@ impl<'c, 'a> Completion<'c, 'a> {
             if !has_post_cursor_token {
                 return true;
             }
-            let probe = probe::probe_suffix_sequence(symbols, feed_id, prefix, &[candidate, continuation], replace_target);
+            let probe =
+                probe::probe_suffix_sequence(symbols, feed_id, prefix, &[candidate, continuation], replace_target);
             probe.k1_compatible || probe.reached_eof
         };
 
