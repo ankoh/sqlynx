@@ -188,7 +188,13 @@ fn advance_prompt_prefix(prefix: &[u8], columns: usize, layout: &mut PromptLayou
     }
 }
 
-fn break_prompt_line(output: Option<&mut Vec<u8>>, continuation: &[u8], active_style: &[u8], columns: usize, layout: &mut PromptLayout) {
+fn break_prompt_line(
+    output: Option<&mut Vec<u8>>,
+    continuation: &[u8],
+    active_style: &[u8],
+    columns: usize,
+    layout: &mut PromptLayout,
+) {
     match output {
         Some(output) => {
             if !active_style.is_empty() {
@@ -234,7 +240,13 @@ fn layout_prompt(text: &[u8], initial: &[u8], continuation: &[u8], columns: usiz
     layout
 }
 
-fn render_highlighted_prompt(output: &mut Vec<u8>, highlighted: &[u8], initial: &[u8], continuation: &[u8], columns: usize) -> PromptLayout {
+fn render_highlighted_prompt(
+    output: &mut Vec<u8>,
+    highlighted: &[u8],
+    initial: &[u8],
+    continuation: &[u8],
+    columns: usize,
+) -> PromptLayout {
     let columns = columns.max(1);
     let mut layout = PromptLayout::default();
     append_prompt_prefix(output, initial, columns, &mut layout);
@@ -246,7 +258,8 @@ fn render_highlighted_prompt(output: &mut Vec<u8>, highlighted: &[u8], initial: 
             if let Some(end) = find_from(highlighted, b'm', offset + 2) {
                 let sequence = &highlighted[offset..end + 1];
                 output.extend_from_slice(sequence);
-                active_style = if sequence == vt100::RESET_ATTRIBUTES.as_bytes() { Vec::new() } else { sequence.to_vec() };
+                active_style =
+                    if sequence == vt100::RESET_ATTRIBUTES.as_bytes() { Vec::new() } else { sequence.to_vec() };
                 offset = end + 1;
                 continue;
             }
@@ -412,7 +425,10 @@ fn select_terminal_completion_hint(overlay: &mut TerminalCompletionOverlay, prom
     let current = &prompt_text[begin..(begin + selected.target_length as usize).min(prompt_text.len())];
     for (i, candidate) in overlay.candidates.iter().enumerate() {
         let target_end = candidate.target_offset as usize + candidate.target_length as usize;
-        if target_end == selected_end && candidate.completion_text.as_bytes().starts_with(current) && candidate.completion_text.as_bytes() != current {
+        if target_end == selected_end
+            && candidate.completion_text.as_bytes().starts_with(current)
+            && candidate.completion_text.as_bytes() != current
+        {
             overlay.selection = i;
             return;
         }
@@ -574,7 +590,8 @@ impl ShellSession {
 
     pub fn insert_prompt(&mut self, text: &[u8]) -> PromptSnapshot {
         if !self.prompt.insert(text) {
-            return self.snapshot_prompt(ShellStatus::InvalidArgument, "prompt insertion must contain valid non-empty UTF-8");
+            return self
+                .snapshot_prompt(ShellStatus::InvalidArgument, "prompt insertion must contain valid non-empty UTF-8");
         }
         self.reset_history_cursor();
         self.snapshot_prompt(ShellStatus::Ok, "")
@@ -606,7 +623,10 @@ impl ShellSession {
         let text = prompt_text.as_bytes();
         let cursor = self.prompt.cursor_byte_offset();
         if let Some(command_begin) = find_first_not_of(text, b" \t") {
-            if text[command_begin] == b'.' && cursor > command_begin && find_first_of(text, b"\r\n", command_begin).is_none() {
+            if text[command_begin] == b'.'
+                && cursor > command_begin
+                && find_first_of(text, b"\r\n", command_begin).is_none()
+            {
                 let target_end = find_first_of(text, b" \t", command_begin).unwrap_or(text.len());
                 if cursor <= target_end {
                     let prefix = &text[command_begin + 1..cursor];
@@ -644,7 +664,8 @@ impl ShellSession {
         let mut candidates = Vec::with_capacity(completion.top_candidates.len());
         for candidate in &completion.top_candidates {
             let upper_keyword = upper_keywords && candidate.keyword_symbol.is_some();
-            let keyword_text = if upper_keyword { candidate.completion_text.to_ascii_uppercase() } else { String::new() };
+            let keyword_text =
+                if upper_keyword { candidate.completion_text.to_ascii_uppercase() } else { String::new() };
             let mut completion_text = if upper_keyword {
                 keyword_text.clone()
             } else if candidate.completion_text_is_verbatim {
@@ -652,7 +673,8 @@ impl ShellSession {
             } else {
                 quote_identifier(&candidate.completion_text)
             };
-            let objects: Vec<_> = candidate.catalog_objects.iter().map(|&co| &completion.candidate_objects[co]).collect();
+            let objects: Vec<_> =
+                candidate.catalog_objects.iter().map(|&co| &completion.candidate_objects[co]).collect();
             let is_function = objects.iter().any(|o| o.object.object_type() == CatalogObjectType::FunctionDeclaration);
             if is_function {
                 completion_text.push_str("()");
@@ -676,11 +698,12 @@ impl ShellSession {
                     }
                     let qualification_offset = candidate.target_location_qualified.offset() as usize;
                     let target_offset = candidate.target_location.offset() as usize;
-                    let qualifier_already_present = qualification_offset <= target_offset && target_offset <= text.len() && {
-                        let mut present = text[qualification_offset..target_offset].to_vec();
-                        present.extend_from_slice(completion_text.as_bytes());
-                        qualification_text.as_bytes() == present
-                    };
+                    let qualifier_already_present =
+                        qualification_offset <= target_offset && target_offset <= text.len() && {
+                            let mut present = text[qualification_offset..target_offset].to_vec();
+                            present.extend_from_slice(completion_text.as_bytes());
+                            qualification_text.as_bytes() == present
+                        };
                     if !qualifier_already_present {
                         qualification_texts.push(qualification_text);
                     }
@@ -709,7 +732,11 @@ impl ShellSession {
 
     /// Replace the target of a candidate (`ApplyCompletion`)
     pub fn apply_completion(&mut self, candidate: &CompletionCandidate) -> PromptSnapshot {
-        if !self.prompt.replace_byte_range(candidate.target_offset as usize, candidate.target_length as usize, &candidate.completion_text) {
+        if !self.prompt.replace_byte_range(
+            candidate.target_offset as usize,
+            candidate.target_length as usize,
+            &candidate.completion_text,
+        ) {
             return self.snapshot_prompt(ShellStatus::InvalidArgument, "completion target is not on prompt boundaries");
         }
         self.prompt.move_to_byte_offset(candidate.target_offset as usize + candidate.completion_cursor_offset as usize);
@@ -717,7 +744,13 @@ impl ShellSession {
     }
 
     /// Apply the completion of the C ABI, whose texts may be invalid UTF-8 (`dashql_shell_prompt_apply_completion`)
-    pub fn apply_completion_bytes(&mut self, display_text: &[u8], completion_text: &[u8], target_offset: u32, target_length: u32) -> PromptSnapshot {
+    pub fn apply_completion_bytes(
+        &mut self,
+        display_text: &[u8],
+        completion_text: &[u8],
+        target_offset: u32,
+        target_length: u32,
+    ) -> PromptSnapshot {
         match std::str::from_utf8(completion_text) {
             Ok(completion) => self.apply_completion(&CompletionCandidate {
                 display_text: String::from_utf8_lossy(display_text).into_owned(),
@@ -729,7 +762,9 @@ impl ShellSession {
                 qualification_target_length: target_length,
                 ..Default::default()
             }),
-            Err(_) => self.snapshot_prompt(ShellStatus::InvalidArgument, "completion target is not on prompt boundaries"),
+            Err(_) => {
+                self.snapshot_prompt(ShellStatus::InvalidArgument, "completion target is not on prompt boundaries")
+            }
         }
     }
 
@@ -739,7 +774,10 @@ impl ShellSession {
         match key {
             PromptInputKey::Text => {
                 if !self.prompt.insert(text) {
-                    return self.snapshot_prompt(ShellStatus::InvalidArgument, "prompt input must contain valid non-empty UTF-8");
+                    return self.snapshot_prompt(
+                        ShellStatus::InvalidArgument,
+                        "prompt input must contain valid non-empty UTF-8",
+                    );
                 }
                 self.reset_history_cursor();
             }
@@ -831,7 +869,8 @@ impl ShellSession {
                 }
             }
             PromptInputKey::Up | PromptInputKey::HistoryPrevious => {
-                let moved = key == PromptInputKey::Up && self.history_cursor == self.history.len() && self.prompt.move_up();
+                let moved =
+                    key == PromptInputKey::Up && self.history_cursor == self.history.len() && self.prompt.move_up();
                 if !moved && !self.history.is_empty() && self.history_cursor > 0 {
                     if self.history_cursor == self.history.len() {
                         self.history_draft = self.prompt.text();
@@ -842,7 +881,8 @@ impl ShellSession {
                 }
             }
             PromptInputKey::Down | PromptInputKey::HistoryNext => {
-                let moved = key == PromptInputKey::Down && self.history_cursor == self.history.len() && self.prompt.move_down();
+                let moved =
+                    key == PromptInputKey::Down && self.history_cursor == self.history.len() && self.prompt.move_down();
                 if !moved && self.history_cursor < self.history.len() {
                     self.history_cursor += 1;
                     let entry = if self.history_cursor < self.history.len() {
@@ -873,11 +913,9 @@ impl ShellSession {
 
     fn terminal_output(&self, result: Result<ShellOperation, String>) -> TerminalOutput {
         match result {
-            Ok(operation) => TerminalOutput {
-                status: operation.status,
-                action: self.terminal_action,
-                data: operation.data,
-            },
+            Ok(operation) => {
+                TerminalOutput { status: operation.status, action: self.terminal_action, data: operation.data }
+            }
             Err(message) => TerminalOutput {
                 status: ShellStatus::InternalError,
                 action: PromptInputAction::None,
@@ -919,7 +957,12 @@ impl ShellSession {
         self.terminal_output(result)
     }
 
-    fn consume_terminal_input_impl(&mut self, key: PromptInputKey, text: &[u8], catalog: &Catalog) -> Result<ShellOperation, String> {
+    fn consume_terminal_input_impl(
+        &mut self,
+        key: PromptInputKey,
+        text: &[u8],
+        catalog: &Catalog,
+    ) -> Result<ShellOperation, String> {
         self.terminal_action = PromptInputAction::None;
         if let Some(overlay) = &self.overlay {
             if !overlay.hint_only {
@@ -1069,7 +1112,10 @@ impl ShellSession {
     pub fn render_terminal_query_progress(&mut self, message: &[u8], advance_frame: bool) -> TerminalOutput {
         self.terminal_action = PromptInputAction::None;
         if !is_valid(message) {
-            return self.terminal_output(Ok(ShellOperation::new(ShellStatus::InvalidArgument, "terminal query progress must contain valid UTF-8")));
+            return self.terminal_output(Ok(ShellOperation::new(
+                ShellStatus::InvalidArgument,
+                "terminal query progress must contain valid UTF-8",
+            )));
         }
         let normalized = normalize_terminal_progress_message(message);
         let active = self.progress.is_some();
@@ -1265,7 +1311,10 @@ impl ShellSession {
         script.insert_text_at(0, text);
         script.parse();
         if script.parsed.as_ref().is_some_and(|p| p.feature_flags & ParsedScriptFeature::VISUALIZE.0 != 0) {
-            return ShellOperation::new(ShellStatus::InvalidArgument, "DashQL VISUALIZE syntax is not executable in the shell");
+            return ShellOperation::new(
+                ShellStatus::InvalidArgument,
+                "DashQL VISUALIZE syntax is not executable in the shell",
+            );
         }
         self.suspend_effect(EffectType::ExecuteQuery, query.to_vec())
     }
@@ -1284,7 +1333,13 @@ impl ShellSession {
     }
 
     /// Resume the operation of an effect with its result (`CompleteEffect`)
-    pub fn complete_effect(&mut self, effect_id: u64, status: EffectCompletionStatus, data: &[u8], catalog: &mut Catalog) -> ShellOperation {
+    pub fn complete_effect(
+        &mut self,
+        effect_id: u64,
+        status: EffectCompletionStatus,
+        data: &[u8],
+        catalog: &mut Catalog,
+    ) -> ShellOperation {
         let Some(index) = self.pending_effects.iter().position(|e| e.id == effect_id) else {
             return ShellOperation::new(ShellStatus::StaleEffect, "effect is no longer pending");
         };
@@ -1357,7 +1412,8 @@ impl ShellSession {
                 let comment_begin = comments.get(comment_idx).map_or(usize::MAX, |c| c.offset as usize);
                 let is_comment = comment_begin < token_begin;
                 let begin = if is_comment { comment_begin } else { token_begin };
-                let length = if is_comment { comments[comment_idx].length as usize } else { lengths[token_idx] as usize };
+                let length =
+                    if is_comment { comments[comment_idx].length as usize } else { lengths[token_idx] as usize };
                 let token_type = if is_comment { ScannerTokenType::COMMENT } else { types[token_idx] };
                 let end = begin + length;
                 if begin > offset {
@@ -1402,7 +1458,8 @@ impl ShellSession {
             push(&mut output, vt100::CARRIAGE_RETURN);
         }
 
-        let rendered_layout = render_highlighted_prompt(&mut output, &highlighted, &terminal_prompt, &continuation, terminal_columns);
+        let rendered_layout =
+            render_highlighted_prompt(&mut output, &highlighted, &terminal_prompt, &continuation, terminal_columns);
         self.terminal_prompt_rows = rendered_layout.rows;
 
         let cursor = self.prompt.cursor_byte_offset();
@@ -1419,10 +1476,7 @@ impl ShellSession {
     }
 
     fn open_terminal_completion_overlay(&mut self, candidates: Vec<CompletionCandidate>) -> Vec<u8> {
-        let mut overlay = TerminalCompletionOverlay {
-            candidates,
-            ..Default::default()
-        };
+        let mut overlay = TerminalCompletionOverlay { candidates, ..Default::default() };
         let prompt_text = self.prompt.text();
         let text = prompt_text.as_bytes();
         let target = (overlay.candidates[0].target_offset as usize).min(text.len());
@@ -1430,8 +1484,14 @@ impl ShellSession {
         overlay.hint_only = !follows_dot && (overlay.candidates.len() == 1 || overlay.candidates[0].target_length == 0);
         let terminal_prompt = self.terminal_prompt_text().to_vec();
         let terminal_columns = self.renderer.terminal_columns() as usize;
-        let target_layout = layout_prompt(&text[..target], &terminal_prompt, &self.terminal_continuation, terminal_columns);
-        let cursor_layout = layout_prompt(&text[..self.prompt.cursor_byte_offset()], &terminal_prompt, &self.terminal_continuation, terminal_columns);
+        let target_layout =
+            layout_prompt(&text[..target], &terminal_prompt, &self.terminal_continuation, terminal_columns);
+        let cursor_layout = layout_prompt(
+            &text[..self.prompt.cursor_byte_offset()],
+            &terminal_prompt,
+            &self.terminal_continuation,
+            terminal_columns,
+        );
         overlay.cursor_row = cursor_layout.rows - 1;
         overlay.anchor_column = target_layout.column;
         let max_content_width = if terminal_columns > 4 { terminal_columns - 4 } else { 1 };
@@ -1446,14 +1506,25 @@ impl ShellSession {
             .unwrap_or(0);
         overlay.show_variant_info = max_variant_info_width < max_content_width;
         for candidate in overlay.candidates.iter_mut() {
-            let variant_info_width = if overlay.show_variant_info { completion_variant_info_width(candidate.qualification_texts.len()) } else { 0 };
-            let display = truncate_display_text(&escape_terminal_text(candidate.display_text.as_bytes()), max_content_width - variant_info_width);
+            let variant_info_width = if overlay.show_variant_info {
+                completion_variant_info_width(candidate.qualification_texts.len())
+            } else {
+                0
+            };
+            let display = truncate_display_text(
+                &escape_terminal_text(candidate.display_text.as_bytes()),
+                max_content_width - variant_info_width,
+            );
             overlay.content_width = overlay.content_width.max(display_width(&display) + variant_info_width);
             candidate.display_text = String::from_utf8_lossy(&display).into_owned();
         }
         select_terminal_completion_hint(&mut overlay, text);
         if overlay.anchor_column + overlay.content_width + 4 > terminal_columns {
-            overlay.anchor_column = if terminal_columns > overlay.content_width + 4 { terminal_columns - overlay.content_width - 4 } else { 0 };
+            overlay.anchor_column = if terminal_columns > overlay.content_width + 4 {
+                terminal_columns - overlay.content_width - 4
+            } else {
+                0
+            };
         }
         self.overlay = Some(overlay);
         self.render_terminal_completion_overlay()
@@ -1510,7 +1581,10 @@ impl ShellSession {
             let variant_count = candidate.qualification_texts.len();
             if i == overlay.selection && overlay.show_variant_info && variant_count > 1 {
                 let variant_info = format!(" <- {}/{} ->", overlay.variant_selection + 1, variant_count);
-                output.extend(std::iter::repeat_n(b' ', overlay.content_width - width - display_width(variant_info.as_bytes())));
+                output.extend(std::iter::repeat_n(
+                    b' ',
+                    overlay.content_width - width - display_width(variant_info.as_bytes()),
+                ));
                 push(&mut output, &variant_info);
             } else {
                 output.extend(std::iter::repeat_n(b' ', overlay.content_width - width));
@@ -1549,7 +1623,11 @@ impl ShellSession {
             overlay.hint_suffix_inserted = false;
         }
         if overlay.hint_prefix_width > 0 {
-            append_cursor_move(&mut output, overlay.hint_current_width + overlay.hint_prefix_width, Command::CursorBackward);
+            append_cursor_move(
+                &mut output,
+                overlay.hint_current_width + overlay.hint_prefix_width,
+                Command::CursorBackward,
+            );
             append_cursor_move(&mut output, overlay.hint_prefix_width, Command::DeleteCharacter);
             append_cursor_move(&mut output, overlay.hint_current_width, Command::CursorForward);
             overlay.hint_prefix_width = 0;
@@ -1741,7 +1819,8 @@ impl ShellSession {
             return ShellOperation::ok(Vec::new());
         }
         if direction < 0 {
-            overlay.variant_selection = if overlay.variant_selection == 0 { count - 1 } else { overlay.variant_selection - 1 };
+            overlay.variant_selection =
+                if overlay.variant_selection == 0 { count - 1 } else { overlay.variant_selection - 1 };
         } else {
             overlay.variant_selection = (overlay.variant_selection + 1) % count;
         }

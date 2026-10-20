@@ -6,7 +6,9 @@ use arrow_schema::{DataType, Field, Schema};
 use dashql_core::catalog::Catalog;
 use dashql_core::shell::unicode::render_width;
 use dashql_core::shell::vt100::{self, Command};
-use dashql_core::shell::{ArrowRenderer, EffectCompletionStatus, EffectType, PromptInputKey, ShellSession, ShellStatus};
+use dashql_core::shell::{
+    ArrowRenderer, EffectCompletionStatus, EffectType, PromptInputKey, ShellSession, ShellStatus,
+};
 use std::sync::Arc;
 
 fn write_ipc(batch: &RecordBatch) -> Vec<u8> {
@@ -93,7 +95,10 @@ fn gives_short_columns_only_the_space_they_need() {
 
 #[test]
 fn wraps_at_word_boundaries() {
-    let batch = batch(vec![Field::new("text", DataType::Utf8, true)], vec![Arc::new(StringArray::from(vec!["alpha beta gamma"]))]);
+    let batch = batch(
+        vec![Field::new("text", DataType::Utf8, true)],
+        vec![Arc::new(StringArray::from(vec!["alpha beta gamma"]))],
+    );
     let output = render(12, &write_ipc(&batch));
     expect_lines_fit(&output, 12);
     assert!(output.contains("│ alpha    │\n│ beta     │\n│ gamma    │"), "{output}");
@@ -116,7 +121,11 @@ fn hides_columns_that_cannot_fit() {
             Field::new("second", DataType::Int32, true),
             Field::new("third", DataType::Int32, true),
         ],
-        vec![Arc::new(Int32Array::from(vec![1])), Arc::new(Int32Array::from(vec![2])), Arc::new(Int32Array::from(vec![3]))],
+        vec![
+            Arc::new(Int32Array::from(vec![1])),
+            Arc::new(Int32Array::from(vec![2])),
+            Arc::new(Int32Array::from(vec![3])),
+        ],
     );
     let output = render(8, &write_ipc(&batch));
     expect_lines_fit(&output, 8);
@@ -125,7 +134,10 @@ fn hides_columns_that_cannot_fit() {
 
 #[test]
 fn escapes_terminal_control_characters() {
-    let batch = batch(vec![Field::new("text", DataType::Utf8, true)], vec![Arc::new(StringArray::from(vec!["safe\x1b[31mred"]))]);
+    let batch = batch(
+        vec![Field::new("text", DataType::Utf8, true)],
+        vec![Arc::new(StringArray::from(vec!["safe\x1b[31mred"]))],
+    );
     let output = render(80, &write_ipc(&batch));
     assert!(!output.contains('\x1b'));
     assert!(output.contains("safe\\x1b[31mred"));
@@ -151,7 +163,8 @@ fn suspends_and_resumes_query_coroutine() {
     assert_eq!(&pending.data[16..], b"SELECT 42");
 
     let ipc = write_ipc(&make_batch());
-    let complete = session.complete_effect(read_u64(&pending.data, 8), EffectCompletionStatus::Success, &ipc, &mut catalog);
+    let complete =
+        session.complete_effect(read_u64(&pending.data, 8), EffectCompletionStatus::Success, &ipc, &mut catalog);
     assert_eq!(complete.status, ShellStatus::Ok);
     assert!(text(&complete.data).contains("alpha"));
     assert!(complete.data.ends_with(vt100::NEW_LINE.as_bytes()));
@@ -164,9 +177,15 @@ fn keeps_empty_query_results_empty() {
     let pending = session.start_query(b"CREATE TABLE foo(a INT)", &catalog);
     assert_eq!(pending.status, ShellStatus::Pending);
 
-    let empty = RecordBatch::try_new_with_options(Arc::new(Schema::empty()), vec![], &RecordBatchOptions::new().with_row_count(Some(0))).unwrap();
+    let empty = RecordBatch::try_new_with_options(
+        Arc::new(Schema::empty()),
+        vec![],
+        &RecordBatchOptions::new().with_row_count(Some(0)),
+    )
+    .unwrap();
     let ipc = write_ipc(&empty);
-    let complete = session.complete_effect(read_u64(&pending.data, 8), EffectCompletionStatus::Success, &ipc, &mut catalog);
+    let complete =
+        session.complete_effect(read_u64(&pending.data, 8), EffectCompletionStatus::Success, &ipc, &mut catalog);
     assert_eq!(complete.status, ShellStatus::Ok);
     assert_eq!(complete.data, b"No results\r\n");
 }
@@ -235,7 +254,10 @@ fn compiles_plain_sql_before_execution() {
 fn rejects_dashql_extensions() {
     let catalog = Catalog::new();
     let mut session = ShellSession::new(&catalog, 80, false);
-    let visualize = session.start_query(b"SELECT 1 AS value VISUALIZE USING vegalite (mark => bar, encoding => (x => (field => value)))", &catalog);
+    let visualize = session.start_query(
+        b"SELECT 1 AS value VISUALIZE USING vegalite (mark => bar, encoding => (x => (field => value)))",
+        &catalog,
+    );
     assert_eq!(visualize.status, ShellStatus::InvalidArgument);
     assert!(text(&visualize.data).contains("not executable in the shell"));
 }
@@ -259,7 +281,12 @@ fn converts_query_errors_to_output() {
     let mut session = ShellSession::new(&catalog, 80, false);
     let pending = session.start_query(b"SELECT * FROM missing_table", &catalog);
     assert_eq!(pending.status, ShellStatus::Pending);
-    let complete = session.complete_effect(read_u64(&pending.data, 8), EffectCompletionStatus::Error, b"syntax error", &mut catalog);
+    let complete = session.complete_effect(
+        read_u64(&pending.data, 8),
+        EffectCompletionStatus::Error,
+        b"syntax error",
+        &mut catalog,
+    );
     assert_eq!(complete.status, ShellStatus::Ok);
     assert_eq!(complete.data, b"syntax error");
 }
@@ -285,10 +312,16 @@ fn applies_readline_bindings_to_multiline_prompt() {
     let mut session = ShellSession::new(&catalog, 80, false);
 
     session.set_prompt(b"SELECT one\nFROM table");
-    assert_eq!(session.consume_prompt_input(PromptInputKey::LineStart, b"").cursor_byte_offset as usize, "SELECT one\n".len());
+    assert_eq!(
+        session.consume_prompt_input(PromptInputKey::LineStart, b"").cursor_byte_offset as usize,
+        "SELECT one\n".len()
+    );
     assert_eq!(session.consume_prompt_input(PromptInputKey::KillWord, b"").text, "SELECT one\n table");
     assert_eq!(session.consume_prompt_input(PromptInputKey::Yank, b"").text, "SELECT one\nFROM table");
-    assert_eq!(session.consume_prompt_input(PromptInputKey::LineEnd, b"").cursor_byte_offset as usize, "SELECT one\nFROM table".len());
+    assert_eq!(
+        session.consume_prompt_input(PromptInputKey::LineEnd, b"").cursor_byte_offset as usize,
+        "SELECT one\nFROM table".len()
+    );
     assert_eq!(session.consume_prompt_input(PromptInputKey::BackwardKillWord, b"").text, "SELECT one\nFROM ");
 }
 

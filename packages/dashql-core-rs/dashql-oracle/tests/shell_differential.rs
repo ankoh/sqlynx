@@ -105,7 +105,12 @@ fn nulls(rng: &mut Rng, n: usize, percent: usize) -> Option<NullBuffer> {
     Some(NullBuffer::from((0..n).map(|_| !chance(rng, percent)).collect::<Vec<bool>>()))
 }
 
-fn primitive<T: ArrowPrimitiveType>(rng: &mut Rng, n: usize, null_percent: usize, mut value: impl FnMut(&mut Rng) -> T::Native) -> PrimitiveArray<T> {
+fn primitive<T: ArrowPrimitiveType>(
+    rng: &mut Rng,
+    n: usize,
+    null_percent: usize,
+    mut value: impl FnMut(&mut Rng) -> T::Native,
+) -> PrimitiveArray<T> {
     let values: Vec<T::Native> = (0..n).map(|_| value(rng)).collect();
     PrimitiveArray::<T>::new(ScalarBuffer::from(values), nulls(rng, n, null_percent))
 }
@@ -166,31 +171,44 @@ fn random_array(rng: &mut Rng, n: usize, depth: usize) -> (Field, ArrayRef) {
             let precision = between(rng, 1, 9) as u8;
             let scale = between(rng, -3, precision as i64) as i8;
             let max = 10i64.pow(precision as u32) - 1;
-            Arc::new(primitive::<Decimal32Type>(rng, n, null_percent, |r| between(r, -max, max) as i32).with_precision_and_scale(precision, scale).unwrap())
+            Arc::new(
+                primitive::<Decimal32Type>(rng, n, null_percent, |r| between(r, -max, max) as i32)
+                    .with_precision_and_scale(precision, scale)
+                    .unwrap(),
+            )
         }
         14 => {
             let precision = between(rng, 1, 18) as u8;
             let scale = between(rng, -3, precision as i64) as i8;
             let max = 10i64.pow(precision as u32) - 1;
-            Arc::new(primitive::<Decimal64Type>(rng, n, null_percent, |r| between(r, -max, max)).with_precision_and_scale(precision, scale).unwrap())
+            Arc::new(
+                primitive::<Decimal64Type>(rng, n, null_percent, |r| between(r, -max, max))
+                    .with_precision_and_scale(precision, scale)
+                    .unwrap(),
+            )
         }
         15 => {
             let precision = between(rng, 1, 38) as u8;
             let scale = between(rng, -5, precision as i64) as i8;
             let max = 10i128.pow(precision as u32) - 1;
             Arc::new(
-                primitive::<Decimal128Type>(rng, n, null_percent, |r| ((r.next() as i128) << 64 | r.next() as i128) % (max + 1))
-                    .with_precision_and_scale(precision, scale)
-                    .unwrap(),
+                primitive::<Decimal128Type>(rng, n, null_percent, |r| {
+                    ((r.next() as i128) << 64 | r.next() as i128) % (max + 1)
+                })
+                .with_precision_and_scale(precision, scale)
+                .unwrap(),
             )
         }
         16 => {
             let precision = between(rng, 1, 76) as u8;
             let scale = between(rng, -5, precision as i64) as i8;
             Arc::new(
-                primitive::<Decimal256Type>(rng, n, null_percent, |r| i256::from_i128((r.next() as i128) << 32 | r.next() as i128) * i256::from_i128(r.below(1000) as i128))
-                    .with_precision_and_scale(precision, scale)
-                    .unwrap(),
+                primitive::<Decimal256Type>(rng, n, null_percent, |r| {
+                    i256::from_i128((r.next() as i128) << 32 | r.next() as i128)
+                        * i256::from_i128(r.below(1000) as i128)
+                })
+                .with_precision_and_scale(precision, scale)
+                .unwrap(),
             )
         }
         17 => Arc::new(primitive::<Date32Type>(rng, n, null_percent, |r| match r.below(4) {
@@ -203,11 +221,15 @@ fn random_array(rng: &mut Rng, n: usize, depth: usize) -> (Field, ArrayRef) {
         })),
         19 => match rng.below(2) {
             0 => Arc::new(primitive::<Time32SecondType>(rng, n, null_percent, |r| between(r, -5, 86_405) as i32)),
-            _ => Arc::new(primitive::<Time32MillisecondType>(rng, n, null_percent, |r| between(r, -5, 86_400_005) as i32)),
+            _ => Arc::new(primitive::<Time32MillisecondType>(rng, n, null_percent, |r| {
+                between(r, -5, 86_400_005) as i32
+            })),
         },
         20 => match rng.below(2) {
             0 => Arc::new(primitive::<Time64MicrosecondType>(rng, n, null_percent, |r| between(r, -5, 86_400_000_005))),
-            _ => Arc::new(primitive::<Time64NanosecondType>(rng, n, null_percent, |r| between(r, -5, 86_400_000_000_005))),
+            _ => Arc::new(primitive::<Time64NanosecondType>(rng, n, null_percent, |r| {
+                between(r, -5, 86_400_000_000_005)
+            })),
         },
         21 => {
             let tz = *rng.pick(&[None, Some("UTC"), Some("+02:00"), Some("Europe/Berlin")]);
@@ -217,9 +239,17 @@ fn random_array(rng: &mut Rng, n: usize, depth: usize) -> (Field, ArrayRef) {
             };
             let array: ArrayRef = match rng.below(4) {
                 0 => Arc::new(primitive::<TimestampSecondType>(rng, n, null_percent, value).with_timezone_opt(tz)),
-                1 => Arc::new(primitive::<TimestampMillisecondType>(rng, n, null_percent, |r| value(r).wrapping_mul(1000)).with_timezone_opt(tz)),
-                2 => Arc::new(primitive::<TimestampMicrosecondType>(rng, n, null_percent, |r| value(r).wrapping_mul(1_000_123)).with_timezone_opt(tz)),
-                _ => Arc::new(primitive::<TimestampNanosecondType>(rng, n, null_percent, special_i64).with_timezone_opt(tz)),
+                1 => Arc::new(
+                    primitive::<TimestampMillisecondType>(rng, n, null_percent, |r| value(r).wrapping_mul(1000))
+                        .with_timezone_opt(tz),
+                ),
+                2 => Arc::new(
+                    primitive::<TimestampMicrosecondType>(rng, n, null_percent, |r| value(r).wrapping_mul(1_000_123))
+                        .with_timezone_opt(tz),
+                ),
+                _ => Arc::new(
+                    primitive::<TimestampNanosecondType>(rng, n, null_percent, special_i64).with_timezone_opt(tz),
+                ),
             };
             array
         }
@@ -231,13 +261,16 @@ fn random_array(rng: &mut Rng, n: usize, depth: usize) -> (Field, ArrayRef) {
         },
         23 => match rng.below(3) {
             0 => Arc::new(primitive::<IntervalYearMonthType>(rng, n, null_percent, |r| special_i64(r) as i32)),
-            1 => Arc::new(primitive::<IntervalDayTimeType>(rng, n, null_percent, |r| IntervalDayTime::new(special_i64(r) as i32, special_i64(r) as i32))),
+            1 => Arc::new(primitive::<IntervalDayTimeType>(rng, n, null_percent, |r| {
+                IntervalDayTime::new(special_i64(r) as i32, special_i64(r) as i32)
+            })),
             _ => Arc::new(primitive::<IntervalMonthDayNanoType>(rng, n, null_percent, |r| {
                 IntervalMonthDayNano::new(special_i64(r) as i32, special_i64(r) as i32, special_i64(r))
             })),
         },
         24..=27 => {
-            let values: Vec<Option<String>> = (0..n).map(|_| if chance(rng, null_percent) { None } else { Some(random_string(rng)) }).collect();
+            let values: Vec<Option<String>> =
+                (0..n).map(|_| if chance(rng, null_percent) { None } else { Some(random_string(rng)) }).collect();
             match rng.below(3) {
                 0 => Arc::new(StringArray::from(values)),
                 1 => Arc::new(LargeStringArray::from(values)),
@@ -245,7 +278,8 @@ fn random_array(rng: &mut Rng, n: usize, depth: usize) -> (Field, ArrayRef) {
             }
         }
         28 | 29 => {
-            let values: Vec<Option<Vec<u8>>> = (0..n).map(|_| if chance(rng, null_percent) { None } else { Some(random_bytes(rng, 24)) }).collect();
+            let values: Vec<Option<Vec<u8>>> =
+                (0..n).map(|_| if chance(rng, null_percent) { None } else { Some(random_bytes(rng, 24)) }).collect();
             let refs: Vec<Option<&[u8]>> = values.iter().map(|v| v.as_deref()).collect();
             match rng.below(3) {
                 0 => Arc::new(BinaryArray::from(refs)),
@@ -256,7 +290,13 @@ fn random_array(rng: &mut Rng, n: usize, depth: usize) -> (Field, ArrayRef) {
         30 => {
             let width = rng.below(6) + 1;
             let values: Vec<Option<Vec<u8>>> = (0..n)
-                .map(|_| if chance(rng, null_percent) { None } else { Some((0..width).map(|_| rng.next() as u8).collect()) })
+                .map(|_| {
+                    if chance(rng, null_percent) {
+                        None
+                    } else {
+                        Some((0..width).map(|_| rng.next() as u8).collect())
+                    }
+                })
                 .collect();
             Arc::new(FixedSizeBinaryArray::try_from_sparse_iter_with_size(values.into_iter(), width as i32).unwrap())
         }
@@ -264,23 +304,39 @@ fn random_array(rng: &mut Rng, n: usize, depth: usize) -> (Field, ArrayRef) {
             // Dictionary of strings or integers
             let dictionary_size = rng.below(25) + 1;
             let values: ArrayRef = if chance(rng, 70) {
-                Arc::new(StringArray::from((0..dictionary_size).map(|_| if chance(rng, 10) { None } else { Some(random_string(rng)) }).collect::<Vec<_>>()))
+                Arc::new(StringArray::from(
+                    (0..dictionary_size)
+                        .map(|_| if chance(rng, 10) { None } else { Some(random_string(rng)) })
+                        .collect::<Vec<_>>(),
+                ))
             } else {
                 Arc::new(primitive::<Int64Type>(rng, dictionary_size, 10, special_i64))
             };
             let keys: Vec<i32> = (0..n).map(|_| rng.below(dictionary_size) as i32).collect();
             match rng.below(3) {
-                0 => Arc::new(DictionaryArray::<Int32Type>::try_new(Int32Array::new(ScalarBuffer::from(keys), nulls(rng, n, null_percent)), values).unwrap()),
+                0 => Arc::new(
+                    DictionaryArray::<Int32Type>::try_new(
+                        Int32Array::new(ScalarBuffer::from(keys), nulls(rng, n, null_percent)),
+                        values,
+                    )
+                    .unwrap(),
+                ),
                 1 => Arc::new(
                     DictionaryArray::<UInt8Type>::try_new(
-                        UInt8Array::new(ScalarBuffer::from(keys.iter().map(|&k| k as u8).collect::<Vec<_>>()), nulls(rng, n, null_percent)),
+                        UInt8Array::new(
+                            ScalarBuffer::from(keys.iter().map(|&k| k as u8).collect::<Vec<_>>()),
+                            nulls(rng, n, null_percent),
+                        ),
                         values,
                     )
                     .unwrap(),
                 ),
                 _ => Arc::new(
                     DictionaryArray::<Int16Type>::try_new(
-                        Int16Array::new(ScalarBuffer::from(keys.iter().map(|&k| k as i16).collect::<Vec<_>>()), nulls(rng, n, null_percent)),
+                        Int16Array::new(
+                            ScalarBuffer::from(keys.iter().map(|&k| k as i16).collect::<Vec<_>>()),
+                            nulls(rng, n, null_percent),
+                        ),
                         values,
                     )
                     .unwrap(),
@@ -315,15 +371,22 @@ fn random_array(rng: &mut Rng, n: usize, depth: usize) -> (Field, ArrayRef) {
             let child_field = Arc::new(child_field.with_name(*rng.pick(&["item", "element", "x"])).with_nullable(true));
             let list_nulls = nulls(rng, n, null_percent);
             match rng.below(2) {
-                0 => Arc::new(ListArray::try_new(child_field, OffsetBuffer::from_lengths(lengths), values, list_nulls).unwrap()),
-                _ => Arc::new(LargeListArray::try_new(child_field, OffsetBuffer::from_lengths(lengths), values, list_nulls).unwrap()),
+                0 => Arc::new(
+                    ListArray::try_new(child_field, OffsetBuffer::from_lengths(lengths), values, list_nulls).unwrap(),
+                ),
+                _ => Arc::new(
+                    LargeListArray::try_new(child_field, OffsetBuffer::from_lengths(lengths), values, list_nulls)
+                        .unwrap(),
+                ),
             }
         }
         37 => {
             let size = rng.below(4) + 1;
             let (child_field, values) = random_array(rng, n * size, depth + 1);
             let child_field = Arc::new(child_field.with_name("item").with_nullable(true));
-            Arc::new(FixedSizeListArray::try_new(child_field, size as i32, values, nulls(rng, n, null_percent)).unwrap())
+            Arc::new(
+                FixedSizeListArray::try_new(child_field, size as i32, values, nulls(rng, n, null_percent)).unwrap(),
+            )
         }
         38..=40 => {
             // Structs
@@ -365,12 +428,18 @@ fn random_array(rng: &mut Rng, n: usize, depth: usize) -> (Field, ArrayRef) {
             }
             let union_fields = UnionFields::try_new(codes.clone(), fields).unwrap();
             Arc::new(
-                UnionArray::try_new(union_fields, ScalarBuffer::from(type_ids), if dense { Some(ScalarBuffer::from(offsets)) } else { None }, children)
-                    .unwrap(),
+                UnionArray::try_new(
+                    union_fields,
+                    ScalarBuffer::from(type_ids),
+                    if dense { Some(ScalarBuffer::from(offsets)) } else { None },
+                    children,
+                )
+                .unwrap(),
             )
         }
     };
-    let has_nulls = array.logical_null_count() > 0 || matches!(array.data_type(), DataType::Null | DataType::Union(_, _));
+    let has_nulls =
+        array.logical_null_count() > 0 || matches!(array.data_type(), DataType::Null | DataType::Union(_, _));
     let nullable = has_nulls || chance(rng, 70);
     (Field::new(name, array.data_type().clone(), nullable), array)
 }
@@ -380,7 +449,9 @@ fn random_column_name(rng: &mut Rng) -> String {
         0 => random_string(rng),
         1 => format!("c{}", rng.below(100)),
         2 => "a_rather_long_column_name_for_wrapping".to_string(),
-        _ => rng.pick(&["id", "name", "value", "界", "amount", "x", "description", "Col With Spaces", "tab\tname"]).to_string(),
+        _ => rng
+            .pick(&["id", "name", "value", "界", "amount", "x", "description", "Col With Spaces", "tab\tname"])
+            .to_string(),
     }
 }
 
@@ -400,7 +471,12 @@ fn random_ipc(rng: &mut Rng, max_columns: usize, max_rows: usize) -> Vec<u8> {
         arrays.push(array);
     }
     let schema = Arc::new(Schema::new(fields));
-    let batch = RecordBatch::try_new_with_options(schema.clone(), arrays, &RecordBatchOptions::new().with_row_count(Some(rows))).unwrap();
+    let batch = RecordBatch::try_new_with_options(
+        schema.clone(),
+        arrays,
+        &RecordBatchOptions::new().with_row_count(Some(rows)),
+    )
+    .unwrap();
     // arrow-rs cannot read back sliced sparse unions, write tables with unions in one batch
     let has_union = format!("{:?}", schema).contains("Union(");
     let batches = if has_union { 1 } else { rng.below(3) + 1 };
@@ -483,11 +559,8 @@ impl Stats {
     }
 
     fn terminal(&mut self, what: &str, context: &dyn Fn() -> String, expected: &CxxTerminal, actual: &TerminalOutput) {
-        let actual = CxxTerminal {
-            status: actual.status as u32,
-            action: actual.action as u32,
-            data: actual.data.clone(),
-        };
+        let actual =
+            CxxTerminal { status: actual.status as u32, action: actual.action as u32, data: actual.data.clone() };
         self.check(
             what,
             context,
@@ -497,9 +570,18 @@ impl Stats {
         );
     }
 
-    fn operation(&mut self, what: &str, context: &dyn Fn() -> String, expected: &CxxOperation, actual: &ShellOperation) {
+    fn operation(
+        &mut self,
+        what: &str,
+        context: &dyn Fn() -> String,
+        expected: &CxxOperation,
+        actual: &ShellOperation,
+    ) {
         let status = actual.status as u32;
-        let equal = if expected.status == ARROW_ERROR && status == ARROW_ERROR && expected.data != b"Invalid: Arrow IPC buffer is empty" {
+        let equal = if expected.status == ARROW_ERROR
+            && status == ARROW_ERROR
+            && expected.data != b"Invalid: Arrow IPC buffer is empty"
+        {
             self.arrow_errors += 1;
             true
         } else {
@@ -535,7 +617,19 @@ impl Stats {
 
 fn unicode_trial() -> Result<(), Failed> {
     let mut stats = Stats::default();
-    let followers = ['a', '\u{301}', '\u{200d}', '\u{1f1e9}', '\u{1f600}', '\u{1161}', '\u{11a8}', '\n', '\r', '\u{93f}', '\u{1f3fd}'];
+    let followers = [
+        'a',
+        '\u{301}',
+        '\u{200d}',
+        '\u{1f1e9}',
+        '\u{1f600}',
+        '\u{1161}',
+        '\u{11a8}',
+        '\n',
+        '\r',
+        '\u{93f}',
+        '\u{1f3fd}',
+    ];
     let encode = |c: char| -> Vec<u8> { c.to_string().into_bytes() };
     for cp in 0..0x110000u32 {
         let Some(c) = char::from_u32(cp) else {
@@ -543,13 +637,25 @@ fn unicode_trial() -> Result<(), Failed> {
         };
         let text = encode(c);
         let ctx = || format!("code point U+{cp:04X}");
-        stats.check("render width", &ctx, oracle::utf8_render_width(&text, 0) == unicode::render_width_at(&text, 0), format!("{}", oracle::utf8_render_width(&text, 0)), format!("{}", unicode::render_width_at(&text, 0)));
+        stats.check(
+            "render width",
+            &ctx,
+            oracle::utf8_render_width(&text, 0) == unicode::render_width_at(&text, 0),
+            format!("{}", oracle::utf8_render_width(&text, 0)),
+            format!("{}", unicode::render_width_at(&text, 0)),
+        );
         let follower = followers[cp as usize % followers.len()];
         let mut pair = text.clone();
         pair.extend(encode(follower));
         let expected = oracle::utf8_next_grapheme(&pair, 0);
         let actual = unicode::next_grapheme(&pair, 0);
-        stats.check("next grapheme of a pair", &|| format!("U+{cp:04X} U+{:04X}", follower as u32), expected == actual, expected.to_string(), actual.to_string());
+        stats.check(
+            "next grapheme of a pair",
+            &|| format!("U+{cp:04X} U+{:04X}", follower as u32),
+            expected == actual,
+            expected.to_string(),
+            actual.to_string(),
+        );
     }
     // Random sequences of interesting code points
     let interesting: Vec<char> = "a1 \t\n\r界é\u{301}\u{200d}\u{200c}\u{fe0f}\u{1f1e9}\u{1f1ea}\u{1f600}\u{1f469}\u{1f4bb}\u{1f3fd}\u{1100}\u{1161}\u{11a8}\u{ac00}\u{ac01}\u{915}\u{94d}\u{93f}\u{600}\u{e33}\u{a9}\u{2764}\u{7f}\u{1}\u{85}\u{2028}"
@@ -592,7 +698,13 @@ fn arrow_trial(seed: u64, count: usize) -> Result<(), Failed> {
             let actual = ArrowRenderer::new(width).render_ipc(&ipc);
             let ctx = || format!("table {i} of seed {seed:#x} at width {width}");
             match (&expected, &actual) {
-                (Ok(e), Ok(a)) => stats.check("render", &ctx, e == a, String::from_utf8_lossy(e).into_owned(), String::from_utf8_lossy(a).into_owned()),
+                (Ok(e), Ok(a)) => stats.check(
+                    "render",
+                    &ctx,
+                    e == a,
+                    String::from_utf8_lossy(e).into_owned(),
+                    String::from_utf8_lossy(a).into_owned(),
+                ),
                 (Err(_), Err(_)) => {
                     stats.arrow_errors += 1;
                     stats.check("render error", &ctx, true, String::new(), String::new());
@@ -627,12 +739,87 @@ const SCHEMAS: &[&str] = &[
 ];
 
 const FRAGMENTS: &[&str] = &[
-    "select", "SELECT", " ", " ", " ", "*", " from ", "FROM ", "orders", "customers", "o", "c", ".", "customer_id", " where ", "WHERE ", ";", ";", "\n",
-    "sel", "gro", "group", " by", "acc", "Acc", "\"Account\"", "ord", "sup", "supplier", "hyperdb_quer", "q", "q.", "x.", "join ", " on ", " = ", ".help",
-    ".cl", ".clear", ".timer on", ".unknown", ".", "visualize ", "'str'", "'unterminated", "-- comment\n", "/* c */", "1", "42.5", "界", "👩‍💻", "é",
-    "e\u{301}", "\t", "(", ")", ",", "x", "with foo as (", "create table t (a int)", "drop table t", "insert into t values (1)", "count(", "my",
-    "Salesforce", "alpha.", "beta.public.", "\u{200d}", "🇩", "🇪", "into ", "as ", "limit 10", "order by ", "o.customer_id", "c.", "n_", "s_",
-    "fooo;", "SELECT 1;", "select a, b from t where x = 'y';",
+    "select",
+    "SELECT",
+    " ",
+    " ",
+    " ",
+    "*",
+    " from ",
+    "FROM ",
+    "orders",
+    "customers",
+    "o",
+    "c",
+    ".",
+    "customer_id",
+    " where ",
+    "WHERE ",
+    ";",
+    ";",
+    "\n",
+    "sel",
+    "gro",
+    "group",
+    " by",
+    "acc",
+    "Acc",
+    "\"Account\"",
+    "ord",
+    "sup",
+    "supplier",
+    "hyperdb_quer",
+    "q",
+    "q.",
+    "x.",
+    "join ",
+    " on ",
+    " = ",
+    ".help",
+    ".cl",
+    ".clear",
+    ".timer on",
+    ".unknown",
+    ".",
+    "visualize ",
+    "'str'",
+    "'unterminated",
+    "-- comment\n",
+    "/* c */",
+    "1",
+    "42.5",
+    "界",
+    "👩‍💻",
+    "é",
+    "e\u{301}",
+    "\t",
+    "(",
+    ")",
+    ",",
+    "x",
+    "with foo as (",
+    "create table t (a int)",
+    "drop table t",
+    "insert into t values (1)",
+    "count(",
+    "my",
+    "Salesforce",
+    "alpha.",
+    "beta.public.",
+    "\u{200d}",
+    "🇩",
+    "🇪",
+    "into ",
+    "as ",
+    "limit 10",
+    "order by ",
+    "o.customer_id",
+    "c.",
+    "n_",
+    "s_",
+    "fooo;",
+    "SELECT 1;",
+    "select a, b from t where x = 'y';",
 ];
 
 const QUERIES: &[&str] = &[
@@ -736,7 +923,13 @@ impl Session {
         match rng.below(100) {
             0..=44 => {
                 let key = input_key(rng);
-                let text = if key == 0 { input_text(rng) } else if chance(rng, 5) { input_text(rng) } else { Vec::new() };
+                let text = if key == 0 {
+                    input_text(rng)
+                } else if chance(rng, 5) {
+                    input_text(rng)
+                } else {
+                    Vec::new()
+                };
                 let e = self.cxx.terminal_consume(key, &text);
                 let a = self.rust.terminal_consume(key, &text);
                 stats.terminal(&format!("terminal_consume({key}, {:?})", String::from_utf8_lossy(&text)), ctx, &e, &a);
@@ -750,7 +943,11 @@ impl Session {
             }
             53..=55 => {
                 let text = input_text(rng);
-                let (e, a) = if chance(rng, 50) { (self.cxx.prompt_set(&text), self.rust.prompt_set(&text)) } else { (self.cxx.prompt_insert(&text), self.rust.prompt_insert(&text)) };
+                let (e, a) = if chance(rng, 50) {
+                    (self.cxx.prompt_set(&text), self.rust.prompt_set(&text))
+                } else {
+                    (self.cxx.prompt_insert(&text), self.rust.prompt_insert(&text))
+                };
                 stats.prompt(&format!("prompt_set/insert({:?})", String::from_utf8_lossy(&text)), ctx, &e, &a);
             }
             56..=59 => {
@@ -767,10 +964,31 @@ impl Session {
                 let limit = *rng.pick(&[1usize, 3, 10, 50]);
                 let e = self.cxx.prompt_complete(limit);
                 let a = self.rust.prompt_complete(limit);
-                let e_cmp = e.clone().map(|cs| cs.into_iter().map(|c| (c.display_text, c.completion_text, c.target_offset, c.target_length)).collect::<Vec<_>>());
-                let a_cmp = a.clone().map(|cs| cs.into_iter().map(|c| (c.display_text.into_bytes(), c.completion_text.into_bytes(), c.target_offset, c.target_length)).collect::<Vec<_>>());
+                let e_cmp = e.clone().map(|cs| {
+                    cs.into_iter()
+                        .map(|c| (c.display_text, c.completion_text, c.target_offset, c.target_length))
+                        .collect::<Vec<_>>()
+                });
+                let a_cmp = a.clone().map(|cs| {
+                    cs.into_iter()
+                        .map(|c| {
+                            (
+                                c.display_text.into_bytes(),
+                                c.completion_text.into_bytes(),
+                                c.target_offset,
+                                c.target_length,
+                            )
+                        })
+                        .collect::<Vec<_>>()
+                });
                 let a_status = a_cmp.as_ref().map_err(|s| *s as u32).map(|v| v.clone());
-                stats.check(&format!("prompt_complete({limit})"), ctx, e_cmp == a_status, format!("{e_cmp:?}"), format!("{a_status:?}"));
+                stats.check(
+                    &format!("prompt_complete({limit})"),
+                    ctx,
+                    e_cmp == a_status,
+                    format!("{e_cmp:?}"),
+                    format!("{a_status:?}"),
+                );
                 self.candidates = a
                     .unwrap_or_default()
                     .into_iter()
@@ -786,7 +1004,12 @@ impl Session {
                 };
                 let e = self.cxx.prompt_apply_completion(&display, &completion, offset, length);
                 let a = self.rust.prompt_apply_completion(&display, &completion, offset, length);
-                stats.prompt(&format!("prompt_apply_completion({:?}, {offset}, {length})", String::from_utf8_lossy(&completion)), ctx, &e, &a);
+                stats.prompt(
+                    &format!("prompt_apply_completion({:?}, {offset}, {length})", String::from_utf8_lossy(&completion)),
+                    ctx,
+                    &e,
+                    &a,
+                );
             }
             68..=72 => {
                 let e = self.cxx.prompt_submit();
@@ -795,14 +1018,22 @@ impl Session {
                 self.remember_effect(&e);
             }
             73..=75 => {
-                let query = if chance(rng, 80) { QUERIES[rng.below(QUERIES.len())].as_bytes().to_vec() } else { input_text(rng) };
+                let query = if chance(rng, 80) {
+                    QUERIES[rng.below(QUERIES.len())].as_bytes().to_vec()
+                } else {
+                    input_text(rng)
+                };
                 let e = self.cxx.start_query(&query);
                 let a = self.rust.start_query(&query);
                 stats.operation(&format!("start_query({:?})", String::from_utf8_lossy(&query)), ctx, &e, &a);
                 self.remember_effect(&e);
             }
             76..=82 => {
-                let id = if !self.effects.is_empty() && chance(rng, 85) { self.effects.remove(rng.below(self.effects.len())) } else { rng.below(6) as u64 };
+                let id = if !self.effects.is_empty() && chance(rng, 85) {
+                    self.effects.remove(rng.below(self.effects.len()))
+                } else {
+                    rng.below(6) as u64
+                };
                 if chance(rng, 15) {
                     let e = self.cxx.cancel_effect(id);
                     let a = self.rust.cancel_effect(id);
@@ -847,7 +1078,10 @@ impl Session {
                     0 => {
                         let message = if chance(rng, 50) { random_string(rng).into_bytes() } else { input_text(rng) };
                         let advance = chance(rng, 50);
-                        (self.cxx.terminal_query_progress(&message, advance), self.rust.terminal_query_progress(&message, advance))
+                        (
+                            self.cxx.terminal_query_progress(&message, advance),
+                            self.rust.terminal_query_progress(&message, advance),
+                        )
                     }
                     1 => (self.cxx.terminal_query_progress_clear(), self.rust.terminal_query_progress_clear()),
                     _ => {
@@ -874,7 +1108,15 @@ impl Session {
                 stats.check("set_session_relations", ctx, e == a, e.to_string(), a.to_string());
             }
             95 => {
-                let options: [&[u8]; 7] = [b"clear\ntimer\nhelp", b"clear\nhelp\nlogin\nrefresh", b"", b"Bad", b"a\n\nb", b".x", b"ok-name_1"];
+                let options: [&[u8]; 7] = [
+                    b"clear\ntimer\nhelp",
+                    b"clear\nhelp\nlogin\nrefresh",
+                    b"",
+                    b"Bad",
+                    b"a\n\nb",
+                    b".x",
+                    b"ok-name_1",
+                ];
                 let commands = *rng.pick(&options);
                 let e = self.cxx.set_commands(commands);
                 let a = self.rust.set_commands(commands) as u32;
@@ -883,7 +1125,13 @@ impl Session {
             _ => {
                 let e = self.cxx.history_export();
                 let a = self.rust.history_export();
-                stats.check("history_export", ctx, e.status == 0 && e.data == a, format!("{:?}", e), format!("{:?}", a));
+                stats.check(
+                    "history_export",
+                    ctx,
+                    e.status == 0 && e.data == a,
+                    format!("{:?}", e),
+                    format!("{:?}", a),
+                );
                 let data = match rng.below(4) {
                     0 => random_bytes(rng, 16),
                     1 => Vec::new(),

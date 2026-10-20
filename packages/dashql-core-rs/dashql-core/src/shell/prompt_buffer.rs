@@ -43,11 +43,7 @@ impl Positions {
     }
 
     fn position(&self, idx: usize) -> Position {
-        Position {
-            bytes: self.bytes[idx],
-            codepoints: self.codepoints[idx],
-            graphemes: idx,
-        }
+        Position { bytes: self.bytes[idx], codepoints: self.codepoints[idx], graphemes: idx }
     }
 
     /// `ResolveGrapheme`: the start of a grapheme cluster, the end for indexes past the end
@@ -69,7 +65,8 @@ impl Positions {
     /// The boundary at a byte offset that C++ dereferences without a check. A line break inside a CR LF cluster
     /// has no boundary, which is undefined behavior in C++; take the boundary before it.
     fn unchecked_boundary(&self, byte: usize) -> Position {
-        self.boundary(byte).unwrap_or_else(|| self.position(self.bytes.partition_point(|&b| b <= byte).saturating_sub(1)))
+        self.boundary(byte)
+            .unwrap_or_else(|| self.position(self.bytes.partition_point(|&b| b <= byte).saturating_sub(1)))
     }
 }
 
@@ -98,11 +95,7 @@ pub struct PromptBuffer {
 
 impl PromptBuffer {
     pub fn new(catalog: &Catalog) -> Self {
-        Self {
-            script: Script::new(catalog),
-            cursor_grapheme_offset: 0,
-            revision: 0,
-        }
+        Self { script: Script::new(catalog), cursor_grapheme_offset: 0, revision: 0 }
     }
 
     fn positions(&self) -> Positions {
@@ -401,7 +394,9 @@ impl PromptBuffer {
     /// Replace a byte range on grapheme boundaries and move the cursor behind the replacement (`ReplaceByteRange`)
     pub fn replace_byte_range(&mut self, byte_offset: usize, byte_length: usize, text: &str) -> bool {
         let positions = self.positions();
-        let (Some(begin), Some(end)) = (positions.boundary(byte_offset), positions.boundary(byte_offset.saturating_add(byte_length))) else {
+        let (Some(begin), Some(end)) =
+            (positions.boundary(byte_offset), positions.boundary(byte_offset.saturating_add(byte_length)))
+        else {
             return false;
         };
         let deleted = end.codepoints - begin.codepoints;
