@@ -20,6 +20,11 @@ build and the emsdk toolchain are gone.
 - **Parse tree: unchanged by default.** Intentional changes follow [ast-changes.md](ast-changes.md) and
   land on the C++ side first.
 - **Parity first, fixes later.** Known C++ bugs are reproduced and listed in [quirks.md](quirks.md).
+- **Parity of semantics, not of incidental text.** Output that is an artifact of a C++ library (number
+  formatting of rapidjson, c4 or `%g`) is not reproduced. The Rust core writes doubles with the shortest
+  round-trip digits, and the differential tests compare such numbers by value
+  (`dashql_snapshots::corpus::canonical_numbers`). For an infinite double the C++ Vega-Lite generator
+  writes no value (invalid JSON); Rust writes `null`.
 - **Bazel only.**
   - Generated code comes from genrules, never `build.rs`.
   - Cargo manifests only feed the `@core_crates` crate universe.
@@ -468,6 +473,6 @@ It takes the same flags: `--source_dir=<repository> [--filter=<category>]`.
 - Deviation: when a location hint (`prefix..suffix`) cuts a multi-byte UTF-8 character, C++ wrote the
   invalid bytes, Rust writes U+FFFD. No snapshot is affected, and the Rust tests cannot load files with
   invalid UTF-8.
-- Doubles in the analyzer and UMAP encodings are written like c4 (`std::to_chars` with
-  `chars_format::general`): the shortest round-trip digits, scientific below 1e-4 and from 1e6 on
-  (`1e+06`). The former Rust encoder wrote `1000000`, which the analyzer differential test never hit.
+- Doubles in the analyzer and UMAP encodings are written with Rust's shortest round-trip digits, in
+  scientific notation below 1e-4 and from 1e16 on. C++ wrote `%g`-style `1e+06`; no snapshot contains
+  such values.

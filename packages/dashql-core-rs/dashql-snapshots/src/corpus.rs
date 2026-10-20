@@ -76,3 +76,78 @@ pub fn fragments(rng: &mut Rng, fragments: &[&str], max_count: usize) -> String 
     let n = rng.below(max_count + 1);
     (0..n).map(|_| *rng.pick(fragments)).collect()
 }
+
+/// Rewrite every decimal or exponent number literal of a text in one canonical form.
+///
+/// The Rust core writes doubles with the shortest round-trip digits, the C++ core with rapidjson's Grisu2 and its
+/// own notation (`12345678901234568000.0` vs `1.2345678901234567e+19`). Differential tests compare texts that embed
+/// such numbers after canonicalizing both sides, so they compare the values. Integers and digits that are part of
+/// identifiers or hex literals stay as they are.
+pub fn canonical_numbers(text: &str) -> String {
+    let bytes = text.as_bytes();
+    let is_word = |c: u8| c.is_ascii_alphanumeric() || c == b'_' || c == b'.';
+    let mut out = String::with_capacity(text.len());
+    let mut copied = 0;
+    let mut i = 0;
+    while i < bytes.len() {
+        if !bytes[i].is_ascii_digit() || (i > 0 && is_word(bytes[i - 1])) {
+            i += 1;
+            continue;
+        }
+        // An optional sign belongs to the number
+        let begin = if i > 0 && bytes[i - 1] == b'-' { i - 1 } else { i };
+        let mut end = i;
+        while end < bytes.len() && bytes[end].is_ascii_digit() {
+            end += 1;
+        }
+        let mut is_double = false;
+        if end + 1 < bytes.len() && bytes[end] == b'.' && bytes[end + 1].is_ascii_digit() {
+            is_double = true;
+            end += 1;
+            while end < bytes.len() && bytes[end].is_ascii_digit() {
+                end += 1;
+            }
+        }
+        if end < bytes.len() && (bytes[end] == b'e' || bytes[end] == b'E') {
+            let mut exp = end + 1;
+            if exp < bytes.len() && (bytes[exp] == b'+' || bytes[exp] == b'-') {
+                exp += 1;
+            }
+            if exp < bytes.len() && bytes[exp].is_ascii_digit() {
+                is_double = true;
+                end = exp;
+                while end < bytes.len() && bytes[end].is_ascii_digit() {
+                    end += 1;
+                }
+            }
+        }
+        let followed_by_word = end < bytes.len() && is_word(bytes[end]);
+        if is_double && !followed_by_word {
+            if let Ok(value) = text[begin..end].parse::<f64>() {
+                out.push_str(&text[copied..begin]);
+                out.push_str(&format!("{value:e}"));
+                copied = end;
+            }
+        }
+        i = end.max(i + 1);
+    }
+    out.push_str(&text[copied..]);
+    out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::canonical_numbers;
+
+    #[test]
+    fn canonicalizes_doubles() {
+        assert_eq!(
+            canonical_numbers("string 9: 12345678901234568000.0"),
+            canonical_numbers("string 9: 1.2345678901234567e+19")
+        );
+        assert_eq!(canonical_numbers("[0.5,-1e-7]"), "[5e-1,-1e-7]");
+        assert_eq!(canonical_numbers("{\"a\":1e21}"), canonical_numbers("{\"a\":1000000000000000000000.0}"));
+        // Integers, identifiers and hex literals stay
+        assert_eq!(canonical_numbers("id 42 x1.5 0x3e5 v2 a_1e5"), "id 42 x1.5 0x3e5 v2 a_1e5");
+    }
+}

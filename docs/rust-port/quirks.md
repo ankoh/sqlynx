@@ -109,7 +109,8 @@ the C++ core.
 - Bounds are numbers when `strtod` consumes the whole C string, so empty text becomes 0.
 - Integer literals beyond int64 (the x86 cast gives INT64_MIN) are written as doubles.
 - NaN and infinity make the rapidjson writer fail after the key, leaving invalid JSON such as
-  `"rangeMax": ,`, and the round trip becomes empty.
+  `"rangeMax": ,`, and the round trip becomes empty. **Not reproduced:** Rust writes `null`, and the
+  visualize differential test skips such scripts.
 - The top-level spec writes `resolve` before `layer`, nested layers `layer` before `resolve`.
 
 **Vega-Lite parser** (`vegalite_parser.cc`)

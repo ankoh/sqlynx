@@ -77,23 +77,17 @@ fn real(value: f64) -> Node {
     super::plain(&format_double(value))
 }
 
-/// Format a double like rapidyaml (`std::to_chars` with `chars_format::general`): the shortest digits that
-/// round-trip, in scientific notation if the decimal exponent is below -4 or at least 6, like `%g`
+/// Format a double as a YAML scalar: the shortest round-trip digits, in scientific notation for very large and
+/// very small magnitudes
 pub fn format_double(value: f64) -> String {
     if value.is_nan() {
-        return ".nan".into();
-    }
-    if value.is_infinite() {
-        return if value > 0.0 { ".inf".into() } else { "-.inf".into() };
-    }
-    let scientific = format!("{value:e}");
-    let (mantissa, exponent) = scientific.split_once('e').unwrap();
-    let exponent: i32 = exponent.parse().unwrap();
-    if value != 0.0 && !(-4..6).contains(&exponent) {
-        let sign = if exponent < 0 { '-' } else { '+' };
-        format!("{mantissa}e{sign}{:02}", exponent.abs())
-    } else {
+        ".nan".into()
+    } else if value.is_infinite() {
+        if value > 0.0 { ".inf".into() } else { "-.inf".into() }
+    } else if value == 0.0 || (1e-4..1e16).contains(&value.abs()) {
         format!("{value}")
+    } else {
+        format!("{value:e}")
     }
 }
 
@@ -569,22 +563,20 @@ mod tests {
     use super::format_double;
 
     #[test]
-    fn formats_doubles_like_cxx() {
+    fn formats_doubles() {
         let cases = [
             (100.0, "100"),
             (-45.0, "-45"),
             (0.1, "0.1"),
             (0.0001, "0.0001"),
-            (0.00001, "1e-05"),
-            (99999.5, "99999.5"),
-            (999999.0, "999999"),
-            (1e6, "1e+06"),
-            (1234567.0, "1.234567e+06"),
-            (1000000.5, "1.0000005e+06"),
-            (1.2345678901234567e19, "1.2345678901234567e+19"),
-            (1.5e300, "1.5e+300"),
+            (0.00001, "1e-5"),
+            (1e6, "1000000"),
+            (1000000.5, "1000000.5"),
+            (1.2345678901234567e19, "1.2345678901234567e19"),
+            (1.5e300, "1.5e300"),
             (0.30000000000000004, "0.30000000000000004"),
             (0.0, "0"),
+            (f64::NEG_INFINITY, "-.inf"),
         ];
         for (value, text) in cases {
             assert_eq!(format_double(value), text);

@@ -1,4 +1,5 @@
-//! The Rust visualization port must produce exactly the output of the C++ core.
+//! The Rust visualization port must produce exactly the output of the C++ core. Doubles in generated JSON are
+//! compared by value: the Rust core writes the shortest round-trip digits, the C++ core rapidjson's Grisu2.
 //!
 //! Compares the generated Vega-Lite JSON, its round trip through the Vega-Lite parser, the compiled Markdown and
 //! UMAP specs and the dashboard layout of every visualization (`dashql_oracle::visualize`) on:
@@ -11,7 +12,7 @@
 //! and fuzzed JSON, and on fuzzed Markdown templates.
 
 use dashql_core::visualize::{compile_markdown_template, parse_vegalite_to_visualize_bytes};
-use dashql_snapshots::corpus::{prefixes, snapshot_inputs, Rng, CATEGORIES};
+use dashql_snapshots::corpus::{canonical_numbers, prefixes, snapshot_inputs, Rng, CATEGORIES};
 use dashql_snapshots::encode::visualize::{analyze_scripts, dump_markdown, dump_visualizations};
 use dashql_snapshots::{load_category, run, Arguments, Failed, Trial};
 use std::sync::atomic::{AtomicUsize, Ordering::Relaxed};
@@ -24,41 +25,55 @@ static VEGALITE_PARSES: AtomicUsize = AtomicUsize::new(0);
 static VEGALITE_STATEMENTS: AtomicUsize = AtomicUsize::new(0);
 static MARKDOWN_TEMPLATES: AtomicUsize = AtomicUsize::new(0);
 static MARKDOWN_NODES: AtomicUsize = AtomicUsize::new(0);
+static INVALID_CPP_JSON: AtomicUsize = AtomicUsize::new(0);
 
 /// Show the first difference of two dumps
 fn first_difference(expected: &str, actual: &str) -> String {
-    // Without the length prefixes of the JSON texts
-    let strip = |s: &str| -> Vec<u8> {
-        let mut out = String::new();
-        let mut rest = s;
-        while let Some(at) = rest.find("vegalite ").or_else(|| rest.find("roundtrip ")) {
-            let (head, tail) = rest.split_at(at);
-            out.push_str(head);
-            let space = tail.find(' ').unwrap() + 1;
-            out.push_str(&tail[..space]);
-            let tail = &tail[space..];
-            rest = match tail.find(':') {
-                Some(colon) if tail[..colon].bytes().all(|c| c.is_ascii_digit()) => &tail[colon + 1..],
-                _ => tail,
-            };
-        }
-        out.push_str(rest);
-        out.into_bytes()
-    };
-    let (e, a) = (strip(expected), strip(actual));
-    let (e, a) = (&e[..], &a[..]);
+    let (e, a) = (expected.as_bytes(), actual.as_bytes());
     let at = e.iter().zip(a).position(|(x, y)| x != y).unwrap_or(e.len().min(a.len()));
     let begin = at.saturating_sub(120);
     let context = |s: &[u8]| String::from_utf8_lossy(&s[begin.min(s.len())..(at + 80).min(s.len())]).into_owned();
     format!("at byte {at}\n  C++:  {:?}\n  Rust: {:?}", context(e), context(a))
 }
 
+/// A dump with canonical doubles and without the length prefixes of the JSON texts, which depend on the digits
+fn comparable(dump: &str) -> String {
+    let mut out = String::new();
+    let mut rest = dump;
+    while let Some(at) = rest.find("vegalite ").or_else(|| rest.find("roundtrip ")) {
+        let (head, tail) = rest.split_at(at);
+        out.push_str(head);
+        let space = tail.find(' ').unwrap() + 1;
+        out.push_str(&tail[..space]);
+        let tail = &tail[space..];
+        rest = match tail.find(':') {
+            Some(colon) if tail[..colon].bytes().all(|c| c.is_ascii_digit()) => &tail[colon + 1..],
+            _ => tail,
+        };
+    }
+    out.push_str(rest);
+    canonical_numbers(&out)
+}
+
+/// Does a dump contain a JSON key or array element without a value?
+fn has_value_hole(dump: &str) -> bool {
+    dump.lines().any(|line| {
+        let line = line.strip_suffix(',').unwrap_or(line);
+        line.ends_with("\": ") || (!line.is_empty() && line.trim().is_empty())
+    })
+}
+
 /// Compare the visualizations of a script
 fn compare_visualizations(catalog: Option<&str>, text: &str) -> Result<(), String> {
-    let expected = dashql_oracle::visualize::visualize(catalog, text);
-    let actual = analyze_scripts(catalog, text).map(|analyzed| dump_visualizations(&analyzed));
+    let expected = dashql_oracle::visualize::visualize(catalog, text).map(|dump| comparable(&dump));
+    let actual = analyze_scripts(catalog, text).map(|analyzed| comparable(&dump_visualizations(&analyzed)));
     SCRIPTS.fetch_add(1, Relaxed);
     match (expected, actual) {
+        // C++ writes no value for an infinite double, so its JSON is invalid. Rust writes null.
+        (Ok(e), Ok(_)) if has_value_hole(&e) => {
+            INVALID_CPP_JSON.fetch_add(1, Relaxed);
+            Ok(())
+        }
         (Ok(e), Ok(a)) if e == a => {
             SPECS.fetch_add(e.matches("\nvegalite ").count(), Relaxed);
             let roundtrips = e.lines().filter(|l| l.starts_with("roundtrip ") && !l.starts_with("roundtrip 0:"));
@@ -692,7 +707,7 @@ fn main() {
     let conclusion = run(&args, trials);
     eprintln!(
         "compared {} scripts with {} visualizations ({} round trips, {} markdown nodes), {} Vega-Lite texts ({} \
-         statements), {} Markdown templates",
+         statements), {} Markdown templates, skipped {} scripts with invalid C++ JSON",
         SCRIPTS.load(Relaxed),
         SPECS.load(Relaxed),
         ROUNDTRIPS.load(Relaxed),
@@ -700,6 +715,7 @@ fn main() {
         VEGALITE_PARSES.load(Relaxed),
         VEGALITE_STATEMENTS.load(Relaxed),
         MARKDOWN_TEMPLATES.load(Relaxed),
+        INVALID_CPP_JSON.load(Relaxed),
     );
     conclusion.exit();
 }

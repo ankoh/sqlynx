@@ -2,9 +2,10 @@
 //!
 //! The C++ core parses plans in situ with `kParseCommentsFlag | kParseNanAndInfFlag | kParseTrailingCommasFlag |
 //! kParseValidateEncodingFlag` and serializes attribute values with `rapidjson::Writer`. serde_json differs in
-//! what it accepts (comments, NaN, trailing commas, lone surrogates), in duplicate keys, in number parsing (rapidjson
-//! uses its imprecise fast path without `kParseFullPrecisionFlag`) and in number formatting (Grisu2), so this module
-//! ports the parts of rapidjson the view model relies on:
+//! what it accepts (comments, NaN, trailing commas, lone surrogates), in duplicate keys and in number parsing
+//! (rapidjson uses its imprecise fast path without `kParseFullPrecisionFlag`), so this module ports the parts of
+//! rapidjson the view model relies on. Doubles are written with the shortest round-trip digits instead of
+//! rapidjson's Grisu2 output:
 //!
 //! - the recursive descent reader (`GenericReader`), including the number fast path of 64 bit platforms
 //! - the value types and accessors with rapidjson's number flags (`GenericValue`)
@@ -15,7 +16,6 @@
 //! The visualization port reads Vega-Lite specs with the same reader and the default flags
 //! (`Document::parse_with(input, ParseFlags::DEFAULT)`).
 
-use super::dtoa;
 use std::sync::OnceLock;
 
 /// The id of a value in a document
@@ -797,6 +797,11 @@ impl Reader<'_> {
     }
 }
 
+/// Write a double with the shortest digits that round-trip, `null` for NaN and infinity
+pub(crate) fn write_double(out: &mut Vec<u8>, d: f64) {
+    serde_json::to_writer(out, &d).expect("writing to a vector cannot fail");
+}
+
 /// `Writer::WriteString` with the default flags: escapes control characters, quotes and backslashes and copies
 /// all other bytes without validation
 pub(crate) fn write_string(out: &mut Vec<u8>, s: &[u8]) {
@@ -879,10 +884,10 @@ impl Writer {
                 self.prefix();
                 match *n {
                     Number::Double(d) => {
-                        if dtoa::is_nan_or_inf(d) {
+                        if !d.is_finite() {
                             return false;
                         }
-                        dtoa::dtoa(d, &mut self.out);
+                        write_double(&mut self.out, d);
                     }
                     Number::Int(i) => self.out.extend_from_slice(i.to_string().as_bytes()),
                     Number::Uint(u) => self.out.extend_from_slice(u.to_string().as_bytes()),
@@ -981,10 +986,10 @@ mod tests {
         assert_eq!(roundtrip(r#"{"a":Infinity}"#).as_deref(), Some(r#"{"a":"#));
         assert_eq!(roundtrip("-Inf").as_deref(), Some(""));
         assert_eq!(roundtrip("NaN.5").as_deref(), Some("0.5"));
-        // Grisu2 does not find the shortest digits for 2^64
+        // Doubles get the shortest round-trip digits
         assert_eq!(
             roundtrip("[18446744073709551615, 18446744073709551616]").as_deref(),
-            Some("[18446744073709551615,18446744073709553000.0]")
+            Some("[18446744073709551615,1.8446744073709552e+19]")
         );
         assert_eq!(roundtrip("[-2147483648, -2147483649]").as_deref(), Some("[-2147483648,-2147483649]"));
     }

@@ -1,7 +1,8 @@
 //! The Rust plan view model must produce exactly the output of the C++ plan view model.
 //!
 //! Both sides configure a view model, load a Hyper plan (`ParseHyperPlan` + `ComputeLayout`) and pack it. The
-//! packed flatbuffers are decoded and dumped field by field (doubles by their bits) and compared. Inputs:
+//! packed flatbuffers are decoded and dumped field by field (doubles by their bits) and compared. Doubles that
+//! attribute strings embed are compared by value (see `comparable`). Inputs:
 //! - all plans of the snapshots (snapshots/plans/hyper/tests) under several layout configs
 //! - prefixes of these plans
 //! - deterministic mutations of these plans and of handwritten plans that exercise the JSON dialect
@@ -18,6 +19,7 @@ use dashql_buffers::view as fb;
 use dashql_core::view::json::{c_str, Document, Number, Value, ValueId};
 use dashql_core::view::PlanViewModel;
 use dashql_oracle::view::{load_hyper_plan, PlanLayoutConfig};
+use dashql_snapshots::corpus::canonical_numbers;
 use dashql_snapshots::{load_category_from, run, snapshot_root, Arguments, Failed, Trial};
 use flatbuffers::{ForwardsUOffset, Vector};
 use std::fmt::Write as _;
@@ -126,6 +128,21 @@ fn f(v: f64) -> String {
     } else {
         format!("{v:?}/{:x}", v.to_bits())
     }
+}
+
+/// A dump with the doubles in attribute strings compared by value. The Rust core writes the shortest round-trip
+/// digits, the C++ core rapidjson's Grisu2. Layout doubles are dumped by their bits and stay as they are.
+fn comparable(dump: &str) -> String {
+    let mut out = String::with_capacity(dump.len());
+    for line in dump.lines() {
+        if line.starts_with("string ") {
+            out.push_str(&canonical_numbers(line));
+        } else {
+            out.push_str(line);
+        }
+        out.push('\n');
+    }
+    out
 }
 
 fn bytes(s: &[u8]) -> String {
@@ -393,7 +410,7 @@ fn compare_plan(plan: &[u8], config: &PlanLayoutConfig) -> Outcome {
     if cpp.error != rust_error {
         return Outcome::Different(format!("errors differ: C++ {:?}, Rust {:?}", cpp.error, rust_error));
     }
-    let (expected, actual) = (dump(&cpp.buffer), dump(&rust_buffer));
+    let (expected, actual) = (comparable(&dump(&cpp.buffer)), comparable(&dump(&rust_buffer)));
     if expected == actual {
         return Outcome::Same;
     }

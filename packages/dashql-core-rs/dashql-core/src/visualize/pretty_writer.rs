@@ -1,8 +1,7 @@
 //! `rapidjson::PrettyWriter<StringBuffer>` of rapidjson 1.1.0 with the default flags, as the Vega-Lite generator
 //! uses it (`SetIndent(' ', 2)`).
 
-use crate::view::dtoa;
-use crate::view::json::write_string;
+use crate::view::json::{write_double, write_string};
 
 /// A nesting level (`Writer::Level`)
 struct Level {
@@ -88,12 +87,10 @@ impl PrettyWriter {
         self.out.extend_from_slice(i.to_string().as_bytes());
     }
 
-    /// `Double`: NaN and infinity fail after the prefix was written, the generator ignores the failure
+    /// A double with the shortest round-trip digits, `null` for NaN and infinity
     pub fn double(&mut self, d: f64) {
         self.prefix();
-        if !dtoa::is_nan_or_inf(d) {
-            dtoa::dtoa(d, &mut self.out);
-        }
+        write_double(&mut self.out, d);
     }
 
     pub fn start_object(&mut self) {
@@ -132,7 +129,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn writes_like_rapidjson() {
+    fn writes_pretty_json() {
         let mut w = PrettyWriter::new();
         w.start_object();
         w.key(b"a");
@@ -152,7 +149,7 @@ mod tests {
         w.end_object();
         assert_eq!(
             String::from_utf8(w.finish()).unwrap(),
-            "{\n  \"a\": [\n    1,\n    2.0,\n    \n  ],\n  \"b\": {},\n  \"c\": [],\n  \"d\\u0000\": false\n}"
+            "{\n  \"a\": [\n    1,\n    2.0,\n    null\n  ],\n  \"b\": {},\n  \"c\": [],\n  \"d\\u0000\": false\n}"
         );
     }
 }
