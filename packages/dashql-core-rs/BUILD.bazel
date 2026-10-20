@@ -344,3 +344,21 @@ rust_test(
         "//proto/fb:dashql_buffers_rs",
     ],
 )
+
+# The Rust plan view model must produce exactly the output of the C++ plan view model: all snapshot plans under
+# several layout configs, their prefixes, mutations, handwritten plans and random operator trees.
+rust_test(
+    name = "plan_view_model_differential_test",
+    size = "medium",
+    srcs = ["dashql-oracle/tests/plan_view_model_differential.rs"],
+    data = ["//snapshots/plans/hyper/tests:files"],
+    edition = "2021",
+    use_libtest_harness = False,
+    deps = [
+        ":dashql_core",
+        ":dashql_oracle",
+        ":dashql_snapshots",
+        "//proto/fb:dashql_buffers_rs",
+        "@core_crates//:flatbuffers",
+    ],
+)
