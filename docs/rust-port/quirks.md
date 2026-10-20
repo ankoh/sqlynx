@@ -212,16 +212,17 @@ them with rapidjson (comments, NaN and infinity, trailing commas, imprecise numb
 
 ## Shell (`packages/dashql-core/src/shell/`)
 
-- **Arrow values print like Arrow C++ 19 `Scalar::ToString`.** Binary columns print as raw bytes.
-  Nested values embed `DataType::ToString` (`list<item: int32>[…]`, `{name:type = v}`,
-  `union{f: t = v}`, `map<…>` with ` ('keys')`). A dictionary cell pretty-prints the whole
-  dictionary followed by `[index]`. Half floats inside pretty printing show their raw int16 bits,
-  durations print raw counts, `date64` truncates towards zero, out-of-range dates and times print
-  `<value out of range: N>`, timestamps with a time zone get a trailing `Z` without conversion, and
-  decimals with an out-of-range scale print a marker text.
-- **Float ties** round to an even digit (double-conversion); Rust rounds them up, which is emulated.
+- **Arrow values print like Arrow C++ 19 `Scalar::ToString`.** **Not reproduced:** the Rust shell
+  formats cells with arrow-cast (`ArrayFormatter`). C++ prints binaries as raw bytes, embeds
+  `DataType::ToString` in nested values (`list<item: int32>[…]`, `{name:type = v}`), pretty-prints the
+  whole dictionary of a dictionary cell followed by `[index]`, prints durations as raw counts, floats
+  with double-conversion (`1e+10`, `inf`) and timestamps with a time zone with a trailing `Z` without
+  conversion. Rust prints binaries in hex, nested values as `[1, null, 3]` and `{x: 1, y: a}`, the
+  dictionary value, durations in ISO 8601, floats with ryu (`10000000000.0`, `inf`) and timestamps in
+  their time zone (named zones in UTC, chrono-tz is not linked). Columns that arrow-cast cannot format
+  show their type.
 - **Sliced sparse unions.** `IsNullSparseUnion` ignores the slice offset, so union elements inside
-  lists, maps and structs take the null flag of another row.
+  lists, maps and structs take the null flag of another row. **Not reproduced.**
 - **Stale cursor row.** After prompt edits outside the terminal the cursor row is stale, and the
   cursor-down count of a submit wraps like `size_t`.
 - **`\r\n` is one grapheme of width 0** in the prompt layout. Rust keeps this: clusters that start with a

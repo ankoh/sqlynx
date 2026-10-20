@@ -388,10 +388,17 @@ oracle of the differential tests.
   session relations and the effect protocol (the coroutines are a list of pending effects). The
   shell module `:shell_wasm` re-exports the core bindings, so the app creates its `DashQL` on it.
   `packages/dashql-app/src/shell/api.ts` uses the `Shell` class instead of the C ABI.
+- **Shell cells are formatted by arrow-cast** (`ArrayFormatter`), not like Arrow C++
+  `Scalar::ToString`: floats with ryu, temporal values in ISO 8601, binaries in hex, nested values as
+  `[1, null, 3]` or `{x: 1, y: a}`, a dictionary cell as its value. Named time zones are shown in UTC
+  (chrono-tz is not linked), columns that arrow-cast cannot format show their type. See
+  [quirks.md](quirks.md#shell-packagesdashql-coresrcshell).
 - **Tests**: `dashql-core-js` vitest (255), Node smoke and tarball consumer tests, browser tests in
   Chromium and Firefox, and the app tests (185 files, 9620 tests) in Chromium and Firefox pass.
-  The shell tests (51 + 21 + 10) are ported; `:shell_differential_test` compares 24k Arrow renders and
-  1600 random sessions with 0 differences (Arrow error texts are compared by status only).
+  The shell tests (51 + 22 + 10) are ported; `:shell_differential_test` compares 24k Arrow renders and
+  1600 random sessions with 0 differences. Renders are compared byte for byte for tables of null,
+  boolean, integer and string columns, which both shells print alike; tables of all other types are
+  compared by status, like Arrow errors.
 - **Shell text measurement** uses `unicode-segmentation` (extended grapheme clusters) and `unicode-width`
   (terminal columns) instead of a port of utf8proc 2.4 (Unicode 12.1). Flags are 2 columns wide, emoji
   presentation sequences 2, the soft hyphen 0, and newer code points have their current properties. The
@@ -400,12 +407,11 @@ oracle of the differential tests.
 | Release module | Rust | C++ |
 |---|---|---|
 | Core (with sessions and executions) | 2.38 MB (525 KB brotli) | 2.82 MB |
-| Shell (with the core) | 3.96 MB (780 KB brotli) | 15.26 MB |
+| Shell (with the core) | 4.21 MB (844 KB brotli) | 15.26 MB |
 
 **Open items**
-- The shell module is 1.6 MB larger than the core module, mostly arrow-ipc and arrow-array.
-- Run-end-encoded, list-view and extension Arrow types are neither generated nor emulated, and
-  dictionary pretty printing is only exact for flat value types.
+- The shell module is 1.7 MB larger than the core module, mostly arrow-ipc, arrow-array and
+  arrow-cast.
 - Delete the C++ core, flex and the C++ rule set after one release cycle.
 
 **Open items (phase 6)**

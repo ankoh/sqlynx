@@ -21,6 +21,14 @@ re-exports the core bindings. Shell instances are independent and results are ow
 internal to the query workflow; consumers execute queries through the database effect interface rather than passing
 result buffers to a public rendering function.
 
+Result tables are drawn by `shell::arrow_renderer`, which formats cell values with arrow-cast's `ArrayFormatter`
+(one formatter per column): floats with their shortest round-trip digits, temporal values in ISO 8601, binaries in
+hex, nested values as `[1, null, 3]` or `{x: 1, y: a}`. Null cells are empty, numbers and booleans are
+right-aligned. Timestamps with a named time zone are shown in UTC because chrono-tz is not linked, and a column of a
+type that arrow-cast cannot format shows its type name. Values do not print like the C++ shell (Arrow C++
+`Scalar::ToString`), so the differential test compares renders byte for byte only for null, boolean, integer and
+string columns.
+
 The TypeScript binding lives in `packages/dashql-app/src/shell`. Its root entrypoint exports
 `createDashQLShell({ environment, ... })` and `createDuckDBShellEnvironment(connection)`. The environment returns Arrow IPC
 file bytes from `executeQuery()`, while the shell owns effect dispatch, cancellation, coroutine resumption, input handling,

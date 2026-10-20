@@ -11,10 +11,9 @@
 //! may publish session relations take `&mut Catalog` (see [`ShellSession`]).
 //!
 //! Inputs that C++ validates as UTF-8 are byte slices so that invalid input fails like in C++, and
-//! outputs are bytes because rendered Arrow binaries are emitted raw.
+//! outputs are terminal bytes.
 
 pub mod api;
-pub mod arrow_format;
 pub mod arrow_renderer;
 pub mod prompt_buffer;
 mod session;

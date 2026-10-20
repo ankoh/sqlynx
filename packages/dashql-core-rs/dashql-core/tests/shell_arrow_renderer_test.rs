@@ -1,6 +1,11 @@
 //! A port of `packages/dashql-core/test/shell_arrow_renderer_test.cc`.
 
-use arrow_array::{ArrayRef, Int32Array, RecordBatch, RecordBatchOptions, StringArray};
+use arrow_array::builder::{Int32Builder, ListBuilder};
+use arrow_array::types::Int32Type;
+use arrow_array::{
+    ArrayRef, BinaryArray, BooleanArray, Date32Array, Decimal128Array, DictionaryArray, Float64Array, Int32Array,
+    RecordBatch, RecordBatchOptions, StringArray, StructArray, TimestampMicrosecondArray,
+};
 use arrow_ipc::writer::{FileWriter, StreamWriter};
 use arrow_schema::{DataType, Field, Schema};
 use dashql_core::catalog::Catalog;
@@ -141,6 +146,62 @@ fn escapes_terminal_control_characters() {
     let output = render(80, &write_ipc(&batch));
     assert!(!output.contains('\x1b'));
     assert!(output.contains("safe\\x1b[31mred"));
+}
+
+#[test]
+fn formats_values_with_arrow_cast() {
+    let ts = |tz: Option<&str>| -> ArrayRef {
+        Arc::new(TimestampMicrosecondArray::from(vec![Some(1_500_000_000_123_456), None]).with_timezone_opt(tz))
+    };
+    let mut list = ListBuilder::new(Int32Builder::new());
+    list.append_value([Some(1), None, Some(3)]);
+    list.append_null();
+    let tags: DictionaryArray<Int32Type> = vec![Some("red"), None].into_iter().collect();
+    let point = StructArray::from(vec![
+        (Arc::new(Field::new("x", DataType::Int32, true)), Arc::new(Int32Array::from(vec![1, 2])) as ArrayRef),
+        (
+            Arc::new(Field::new("y", DataType::Utf8, true)),
+            Arc::new(StringArray::from(vec![Some("a"), None])) as ArrayRef,
+        ),
+    ]);
+    let render_columns = |columns: Vec<(&str, ArrayRef)>| {
+        let fields = columns.iter().map(|(name, column)| Field::new(*name, column.data_type().clone(), true)).collect();
+        render(200, &write_ipc(&batch(fields, columns.into_iter().map(|(_, column)| column).collect())))
+    };
+    let output = render_columns(vec![
+        ("float", Arc::new(Float64Array::from(vec![Some(0.1 + 0.2), Some(1e10)]))),
+        ("dec", Arc::new(Decimal128Array::from(vec![Some(-12345), None]).with_precision_and_scale(10, 2).unwrap())),
+        ("date", Arc::new(Date32Array::from(vec![Some(19000), None]))),
+        ("ts", ts(None)),
+        ("ts_offset", ts(Some("+02:00"))),
+        // Named time zones are shown in UTC
+        ("ts_named", ts(Some("Europe/Berlin"))),
+    ]);
+    assert_eq!(
+        output,
+        "╭─────────────────────┬─────────┬────────────┬────────────────────────────┬──────────────────────────────────┬─────────────────────────────╮\n\
+         │ float               │ dec     │ date       │ ts                         │ ts_offset                        │ ts_named                    │\n\
+         ╞═════════════════════╪═════════╪════════════╪════════════════════════════╪══════════════════════════════════╪═════════════════════════════╡\n\
+         │ 0.30000000000000004 │ -123.45 │ 2022-01-08 │ 2017-07-14T02:40:00.123456 │ 2017-07-14T04:40:00.123456+02:00 │ 2017-07-14T02:40:00.123456Z │\n\
+         │       10000000000.0 │         │            │                            │                                  │                             │\n\
+         ╰─────────────────────┴─────────┴────────────┴────────────────────────────┴──────────────────────────────────┴─────────────────────────────╯"
+    );
+    let output = render_columns(vec![
+        ("list", Arc::new(list.finish())),
+        ("struct", Arc::new(point)),
+        ("dict", Arc::new(tags)),
+        ("bin", Arc::new(BinaryArray::from(vec![Some(&b"\x00\xff"[..]), None]))),
+        ("bool", Arc::new(BooleanArray::from(vec![Some(true), None]))),
+    ]);
+    assert_eq!(
+        output,
+        "╭──────────────┬─────────────────┬──────┬──────┬──────╮\n\
+         │ list         │ struct          │ dict │ bin  │ bool │\n\
+         ╞══════════════╪═════════════════╪══════╪══════╪══════╡\n\
+         │ [1, null, 3] │ {x: 1, y: a}    │ red  │ 00ff │ true │\n\
+         │              │ {x: 2, y: null} │      │      │      │\n\
+         ╰──────────────┴─────────────────┴──────┴──────┴──────╯"
+    );
 }
 
 fn read_u32(data: &[u8], offset: usize) -> u32 {

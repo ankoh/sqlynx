@@ -1,9 +1,14 @@
 //! Renders Arrow IPC results as box-drawn tables (`src/shell/arrow_renderer.cc`).
+//!
+//! Cell values are formatted by arrow-cast (`ArrayFormatter`): floats with their shortest round-trip digits,
+//! temporal values in ISO 8601, binaries in hex, nested values like `[1, 2]` or `{a: 1}`.
 
-use super::arrow_format::{is_null, is_right_aligned, scalar_to_string};
 use super::unicode::{display_width, graphemes};
-use arrow_array::{Array, RecordBatch};
-use arrow_schema::Schema;
+use arrow_array::timezone::Tz;
+use arrow_array::{make_array, Array, ArrayRef, RecordBatch};
+use arrow_cast::display::{ArrayFormatter, FormatOptions};
+use arrow_schema::{DataType, Schema};
+use std::fmt::Write;
 use std::io::Cursor;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -17,6 +22,8 @@ const MIN_CONTENT_WIDTH: usize = 1;
 const MAX_ROW_HEIGHT: usize = 20;
 const TRUNCATION_MARKER: &[u8] = b"...";
 const NO_RESULTS_MESSAGE: &[u8] = b"No results";
+/// Null cells stay empty, nulls inside nested values print as `null`
+const FORMAT_OPTIONS: FormatOptions<'static> = FormatOptions::new().with_null("null");
 
 struct Cell {
     text: Vec<u8>,
@@ -53,6 +60,11 @@ fn escape_cell_text(text: &[u8]) -> Vec<u8> {
     output
 }
 
+/// Numbers and booleans are right-aligned
+fn is_right_aligned(data_type: &DataType) -> bool {
+    data_type.is_numeric() || *data_type == DataType::Boolean
+}
+
 fn create_table(schema: &Schema) -> Table {
     Table {
         headers: schema.fields().iter().map(|f| escape_cell_text(f.name().as_bytes())).collect(),
@@ -65,17 +77,36 @@ fn create_table(schema: &Schema) -> Table {
     }
 }
 
+/// arrow-cast resolves named time zones only with chrono-tz, which the shell does not link. Timestamp columns
+/// with such a time zone are shown in UTC.
+fn displayable(column: &ArrayRef) -> ArrayRef {
+    match column.data_type() {
+        DataType::Timestamp(unit, Some(tz)) if tz.parse::<Tz>().is_err() => {
+            let utc = DataType::Timestamp(*unit, Some("+00:00".into()));
+            make_array(column.to_data().into_builder().data_type(utc).build().expect("timestamps keep their layout"))
+        }
+        _ => column.clone(),
+    }
+}
+
 fn append_batch(table: &mut Table, batch: &RecordBatch) {
-    let mut text = Vec::new();
+    let columns: Vec<ArrayRef> = batch.columns().iter().map(displayable).collect();
+    let nulls: Vec<_> = columns.iter().map(|column| column.logical_nulls()).collect();
+    // A column that arrow-cast cannot format shows its type
+    let formatters: Vec<_> =
+        columns.iter().map(|column| ArrayFormatter::try_new(column.as_ref(), &FORMAT_OPTIONS).ok()).collect();
+    let mut text = String::new();
     for row in 0..batch.num_rows() {
-        let mut cells = Vec::with_capacity(batch.num_columns());
-        for column in 0..batch.num_columns() {
-            let array: &dyn Array = batch.column(column).as_ref();
+        let mut cells = Vec::with_capacity(columns.len());
+        for column in 0..columns.len() {
             text.clear();
-            if !is_null(array, row) {
-                scalar_to_string(array, row, &mut text);
+            if !nulls[column].as_ref().is_some_and(|nulls| nulls.is_null(row)) {
+                let _ = match &formatters[column] {
+                    Some(formatter) => write!(text, "{}", formatter.value(row)),
+                    None => write!(text, "{}", columns[column].data_type()),
+                };
             }
-            cells.push(Cell { text: escape_cell_text(&text), alignment: table.alignments[column] });
+            cells.push(Cell { text: escape_cell_text(text.as_bytes()), alignment: table.alignments[column] });
         }
         table.rows.push(cells);
     }

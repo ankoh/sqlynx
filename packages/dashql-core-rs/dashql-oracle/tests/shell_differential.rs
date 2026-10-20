@@ -1,9 +1,14 @@
-//! The Rust shell must behave exactly like the C++ shell (`packages/dashql-core/src/shell`).
+//! The Rust shell must behave like the C++ shell (`packages/dashql-core/src/shell`), except for how cell values print.
 //!
-//! - `arrow`: synthetic Arrow IPC files and streams with many types, nulls, nested values, wide and long tables
-//!   and unicode, rendered at many terminal widths.
+//! - `arrow`: synthetic Arrow IPC files and streams with wide and long tables, nulls and unicode, rendered at many
+//!   terminal widths.
 //! - `sessions`: random sessions that drive both shells through the same calls (keystrokes, edits, history,
 //!   completion, dot commands, queries with synthetic results) and compare every result.
+//!
+//! The Rust shell formats cell values with arrow-cast, Arrow C++ prints them with `Scalar::ToString`. Renders are
+//! compared byte for byte for tables of the types that both print alike (null, booleans, integers, strings), which
+//! covers the table layout. Tables of all types, including temporal, decimal, binary, dictionary and nested
+//! columns, only have to be accepted or rejected by both.
 //!
 //! Arrow error messages are excluded from the comparison (status only): Arrow C++ and arrow-rs word their
 //! errors differently. The message of empty buffers is reproduced and compared.
@@ -107,23 +112,6 @@ fn agreeable(text: String) -> String {
     }
 }
 
-/// Replace the code points that the shells measure differently in binary data with '?'
-fn agreeable_bytes(bytes: Vec<u8>) -> Vec<u8> {
-    let mut out = Vec::with_capacity(bytes.len());
-    for chunk in bytes.utf8_chunks() {
-        for c in chunk.valid().chars() {
-            let encoded = c.encode_utf8(&mut [0; 4]).to_string();
-            if tables_agree(&encoded) {
-                out.extend_from_slice(encoded.as_bytes());
-            } else {
-                out.extend(std::iter::repeat_n(b'?', encoded.len()));
-            }
-        }
-        out.extend_from_slice(chunk.invalid());
-    }
-    out
-}
-
 /// A random text that both shells measure alike
 fn random_string(rng: &mut Rng) -> String {
     agreeable(random_text(rng))
@@ -204,12 +192,16 @@ fn special_f64(rng: &mut Rng) -> f64 {
     }
 }
 
-/// A random array of length `n` with its field
-fn random_array(rng: &mut Rng, n: usize, depth: usize) -> (Field, ArrayRef) {
+/// The array kinds of `random_array` whose values both shells print alike: null, booleans, integers, strings
+const COMPARABLE_KINDS: &[usize] = &[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 24, 25, 26, 27];
+
+/// A random array of length `n` with its field, only of `COMPARABLE_KINDS` if `comparable`
+fn random_array(rng: &mut Rng, n: usize, depth: usize, comparable: bool) -> (Field, ArrayRef) {
     let name = random_column_name(rng);
     let null_percent = *rng.pick(&[0, 10, 50, 100]);
     let kinds = if depth >= 2 { 34 } else { 44 };
-    let array: ArrayRef = match rng.below(kinds) {
+    let kind = if comparable { *rng.pick(COMPARABLE_KINDS) } else { rng.below(kinds) };
+    let array: ArrayRef = match kind {
         0 => Arc::new(NullArray::new(n)),
         1 => Arc::new(BooleanArray::new((0..n).map(|_| chance(rng, 50)).collect(), nulls(rng, n, null_percent))),
         2 => Arc::new(primitive::<Int8Type>(rng, n, null_percent, |r| r.next() as i8)),
@@ -337,9 +329,8 @@ fn random_array(rng: &mut Rng, n: usize, depth: usize) -> (Field, ArrayRef) {
             }
         }
         28 | 29 => {
-            let values: Vec<Option<Vec<u8>>> = (0..n)
-                .map(|_| if chance(rng, null_percent) { None } else { Some(agreeable_bytes(random_bytes(rng, 24))) })
-                .collect();
+            let values: Vec<Option<Vec<u8>>> =
+                (0..n).map(|_| if chance(rng, null_percent) { None } else { Some(random_bytes(rng, 24)) }).collect();
             let refs: Vec<Option<&[u8]>> = values.iter().map(|v| v.as_deref()).collect();
             match rng.below(3) {
                 0 => Arc::new(BinaryArray::from(refs)),
@@ -354,7 +345,7 @@ fn random_array(rng: &mut Rng, n: usize, depth: usize) -> (Field, ArrayRef) {
                     if chance(rng, null_percent) {
                         None
                     } else {
-                        Some(agreeable_bytes((0..width).map(|_| rng.next() as u8).collect()))
+                        Some((0..width).map(|_| rng.next() as u8).collect())
                     }
                 })
                 .collect();
@@ -427,7 +418,7 @@ fn random_array(rng: &mut Rng, n: usize, depth: usize) -> (Field, ArrayRef) {
             // Lists
             let lengths: Vec<usize> = (0..n).map(|_| rng.below(5)).collect();
             let total: usize = lengths.iter().sum();
-            let (child_field, values) = random_array(rng, total, depth + 1);
+            let (child_field, values) = random_array(rng, total, depth + 1, false);
             let child_field = Arc::new(child_field.with_name(*rng.pick(&["item", "element", "x"])).with_nullable(true));
             let list_nulls = nulls(rng, n, null_percent);
             match rng.below(2) {
@@ -442,7 +433,7 @@ fn random_array(rng: &mut Rng, n: usize, depth: usize) -> (Field, ArrayRef) {
         }
         37 => {
             let size = rng.below(4) + 1;
-            let (child_field, values) = random_array(rng, n * size, depth + 1);
+            let (child_field, values) = random_array(rng, n * size, depth + 1, false);
             let child_field = Arc::new(child_field.with_name("item").with_nullable(true));
             Arc::new(
                 FixedSizeListArray::try_new(child_field, size as i32, values, nulls(rng, n, null_percent)).unwrap(),
@@ -454,7 +445,7 @@ fn random_array(rng: &mut Rng, n: usize, depth: usize) -> (Field, ArrayRef) {
             let mut fields = Vec::new();
             let mut arrays = Vec::new();
             for i in 0..count {
-                let (field, array) = random_array(rng, n, depth + 1);
+                let (field, array) = random_array(rng, n, depth + 1, false);
                 fields.push(field.with_name(format!("{}{}", rng.pick(&["f", "Field ", "界"]), i)).with_nullable(true));
                 arrays.push(array);
             }
@@ -482,7 +473,7 @@ fn random_array(rng: &mut Rng, n: usize, depth: usize) -> (Field, ArrayRef) {
                 } else {
                     n
                 };
-                let (field, array) = random_array(rng, child_length, depth + 1);
+                let (field, array) = random_array(rng, child_length, depth + 1, false);
                 fields.push(field.with_name(format!("u{c}")).with_nullable(true));
                 children.push(array);
             }
@@ -516,7 +507,7 @@ fn random_column_name(rng: &mut Rng) -> String {
 }
 
 /// A random Arrow IPC file or stream
-fn random_ipc(rng: &mut Rng, max_columns: usize, max_rows: usize) -> Vec<u8> {
+fn random_ipc(rng: &mut Rng, max_columns: usize, max_rows: usize, comparable: bool) -> Vec<u8> {
     let columns = rng.below(max_columns + 1);
     let rows = match rng.below(10) {
         0 => 0,
@@ -526,7 +517,7 @@ fn random_ipc(rng: &mut Rng, max_columns: usize, max_rows: usize) -> Vec<u8> {
     let mut fields = Vec::new();
     let mut arrays = Vec::new();
     for _ in 0..columns {
-        let (field, array) = random_array(rng, rows, 0);
+        let (field, array) = random_array(rng, rows, 0, comparable);
         fields.push(field);
         arrays.push(array);
     }
@@ -567,19 +558,19 @@ fn random_ipc(rng: &mut Rng, max_columns: usize, max_rows: usize) -> Vec<u8> {
 }
 
 /// Query results: mostly valid Arrow IPC, sometimes broken
-fn random_result(rng: &mut Rng) -> Vec<u8> {
+fn random_result(rng: &mut Rng, comparable: bool) -> Vec<u8> {
     match rng.below(12) {
         0 => Vec::new(),
         1 => random_bytes(rng, 64),
         2 => {
-            let mut ipc = random_ipc(rng, 3, 5);
+            let mut ipc = random_ipc(rng, 3, 5, comparable);
             let cut = rng.below(ipc.len().max(1));
             ipc.truncate(cut);
             ipc
         }
-        3 => random_ipc(rng, 30, 3),
-        4 => random_ipc(rng, 3, 120),
-        _ => random_ipc(rng, 6, 8),
+        3 => random_ipc(rng, 30, 3, comparable),
+        4 => random_ipc(rng, 3, 120, comparable),
+        _ => random_ipc(rng, 6, 8, comparable),
     }
 }
 
@@ -593,6 +584,8 @@ const ARROW_ERROR: u32 = 2;
 struct Stats {
     comparisons: usize,
     arrow_errors: usize,
+    /// Renders of tables with values that the shells print differently, compared by status
+    renders_by_status: usize,
     /// Differences in the order of completion ties, which end a session
     ties: usize,
     differences: Vec<String>,
@@ -659,7 +652,10 @@ impl Stats {
     }
 
     fn result(self, name: &str) -> Result<(), Failed> {
-        println!("{name}: {} comparisons, {} arrow errors compared by status", self.comparisons, self.arrow_errors);
+        println!(
+            "{name}: {} comparisons, {} arrow errors and {} renders of other types compared by status",
+            self.comparisons, self.arrow_errors, self.renders_by_status
+        );
         if self.ties > 0 {
             println!("{name}: {} sessions ended at completion ties", self.ties);
         }
@@ -685,11 +681,12 @@ fn arrow_trial(seed: u64, count: usize) -> Result<(), Failed> {
     let mut rng = Rng::new(seed);
     let widths = [1u32, 2, 3, 5, 8, 12, 15, 20, 33, 40, 80, 100, 173, 300];
     for i in 0..count {
+        let comparable = chance(&mut rng, 75);
         let ipc = match rng.below(20) {
-            0 => random_result(&mut rng),
-            1 => random_ipc(&mut rng, 40, 4),
-            2 => random_ipc(&mut rng, 4, 300),
-            _ => random_ipc(&mut rng, 8, 10),
+            0 => random_result(&mut rng, comparable),
+            1 => random_ipc(&mut rng, 40, 4, comparable),
+            2 => random_ipc(&mut rng, 4, 300, comparable),
+            _ => random_ipc(&mut rng, 8, 10, comparable),
         };
         for _ in 0..3 {
             let width = *rng.pick(&widths);
@@ -697,6 +694,10 @@ fn arrow_trial(seed: u64, count: usize) -> Result<(), Failed> {
             let actual = ArrowRenderer::new(width).render_ipc(&ipc);
             let ctx = || format!("table {i} of seed {seed:#x} at width {width}");
             match (&expected, &actual) {
+                (Ok(_), Ok(_)) if !comparable => {
+                    stats.renders_by_status += 1;
+                    stats.check("render", &ctx, true, String::new(), String::new());
+                }
                 (Ok(e), Ok(a)) => stats.check(
                     "render",
                     &ctx,
@@ -1085,7 +1086,7 @@ impl Session {
                             d.extend(input_text(rng));
                             d
                         }
-                        _ => random_result(rng),
+                        _ => random_result(rng, true),
                     };
                     let e = self.cxx.complete_effect(id, status, &data);
                     let a = self.rust.complete_effect(id, status, &data);
