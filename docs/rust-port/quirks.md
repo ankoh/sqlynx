@@ -80,6 +80,23 @@ the C++ core.
 - **Text past the end of the input.** C++ reads into the two padding NUL bytes after the text, Rust
   stops at the end. No differential input hits a difference.
 
+## Plan view model (`packages/dashql-core/src/view/`)
+
+- **Root order follows heap addresses** (`FlattenOperators`): roots are placed in the iteration order
+  of an `std::unordered_map` keyed by node address. Rust uses reverse plan order, which matches
+  libstdc++ for up to two roots and unless hash buckets collide.
+- **Strings stop at NUL bytes.** Attribute names, operator types and labels are read as C strings,
+  so `\u0000` truncates them and `"operator\u0000x"` counts as `operator`. A NUL byte ends the input.
+- **Lone low surrogates** (`\uDC00`) decode into invalid UTF-8; lone high surrogates are errors.
+- **Lenient JSON.** Comments, `NaN`/`Inf`/`Infinity`, trailing commas and duplicate keys parse (the
+  first duplicate wins), `NaN.5` parses as 0.5 and `-0` becomes integer 0.
+- **NaN/Inf attributes are cut short**, because the rapidjson writer fails on them (e.g. `[1,`).
+- **Wrong-typed numbers are read raw** (`ReadExecutionStatistics`, `sqlpos`), as release builds do.
+- **Fragment order.** Execution-target fragments come in reverse root order, before federate fragments.
+- **Lookups.** `FindNumber` stops at the first existing name even if it is not a number, a non-array
+  `earlyProbes` blocks the `early-probes` fallback, pipeline operator lists keep duplicates, and
+  pipeline edge ids count across pipelines.
+
 ## Test infrastructure
 
 - **Unregistered parser snapshots.** The C++ parser snapshot suite

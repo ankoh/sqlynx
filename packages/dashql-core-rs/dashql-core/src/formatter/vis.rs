@@ -1,5 +1,6 @@
 //! VISUALIZE statements (`formatter/formatter_vis.cc`).
 
+use dashql_grammar::attrs;
 use super::{FmtReg, Formatter, FormattingJoinPolicy, K};
 use dashql_buffers::formatting::FormattingMode;
 use dashql_buffers::parser::{AttributeKey, Node, NodeType, VisFieldType, VisMarkType, VisScaleType};
@@ -240,7 +241,7 @@ impl<'a> Formatter<'a> {
 
     pub(super) fn format_vararg_array(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [values] = self.attrs(node, [K::EXT_VARARG_ARRAY_VALUES]);
+        let [values] = attrs!(self.children(node), [K::EXT_VARARG_ARRAY_VALUES]);
         let Some(values) = values.filter(|v| v.node_type() == NodeType::ARRAY) else {
             return self.format_unimplemented(node);
         };
@@ -305,7 +306,7 @@ impl<'a> Formatter<'a> {
         let f = &self.fmt;
         let node: &'a Node = &self.ast[node_id];
         let [source, spec, renderer] =
-            self.attrs(node, [K::VIS_VISUALISE_SELECT, K::VIS_VISUALISE_SPEC, K::VIS_VISUALISE_USING]);
+            attrs!(self.children(node), [K::VIS_VISUALISE_SELECT, K::VIS_VISUALISE_SPEC, K::VIS_VISUALISE_USING]);
         let Some(spec) = spec else { return self.format_unimplemented(node) };
         let spec_reg = self.reg(spec);
         if spec_reg == 0 {

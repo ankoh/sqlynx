@@ -1,3 +1,4 @@
+#include "dashql/formatter/formatter.h"
 #include "benchmark/benchmark.h"
 #include "dashql/analyzer/completion.h"
 #include "dashql/buffers/index_generated.h"
@@ -613,6 +614,20 @@ static void parse_query(benchmark::State& state) {
     }
 }
 
+static void format_query(benchmark::State& state) {
+    Catalog catalog;
+    Script main{catalog};
+    main.InsertTextAt(0, main_script);
+    main.Scan();
+    main.Parse();
+    buffers::formatting::FormattingConfigT config;
+
+    for (auto _ : state) {
+        Formatter formatter{*main.parsed_script};
+        benchmark::DoNotOptimize(formatter.Format(config));
+    }
+}
+
 static void analyze_query(benchmark::State& state) {
     Catalog catalog;
     Script external{catalog};
@@ -671,6 +686,7 @@ static void complete_cursor(benchmark::State& state) {
 
 BENCHMARK(scan_query);
 BENCHMARK(parse_query);
+BENCHMARK(format_query);
 BENCHMARK(analyze_query);
 BENCHMARK(move_cursor);
 BENCHMARK(complete_cursor);

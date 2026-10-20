@@ -1,5 +1,6 @@
 //! EXPLAIN statements (`formatter/formatter_explain.cc`).
 
+use dashql_grammar::attrs;
 use super::{FmtReg, Formatter, FormattingJoinPolicy, K};
 use dashql_buffers::parser::Node;
 
@@ -7,7 +8,7 @@ impl<'a> Formatter<'a> {
     pub(super) fn format_explain(&self, node_id: usize) -> FmtReg {
         let f = &self.fmt;
         let node: &'a Node = &self.ast[node_id];
-        let [statement, options] = self.attrs(node, [K::EXT_EXPLAIN_STATEMENT, K::EXT_EXPLAIN_OPTIONS]);
+        let [statement, options] = attrs!(self.children(node), [K::EXT_EXPLAIN_STATEMENT, K::EXT_EXPLAIN_OPTIONS]);
         let Some(statement) = statement else { return self.format_unimplemented(node) };
         let stmt_reg = self.reg(statement);
         if stmt_reg == 0 {
@@ -26,7 +27,7 @@ impl<'a> Formatter<'a> {
 
     pub(super) fn format_explain_expressions(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [expressions] = self.attrs(node, [K::EXT_EXPLAIN_EXPRESSIONS]);
+        let [expressions] = attrs!(self.children(node), [K::EXT_EXPLAIN_EXPRESSIONS]);
         let Some(expressions) = expressions else { return self.format_unimplemented(node) };
         let expressions_reg = self.reg(expressions);
         if expressions_reg == 0 {

@@ -202,6 +202,25 @@ Changes that got the Rust code here:
     every snapshot input under 16 configs (modes, dialects, keyword cases, widths, indentation, debug
     mode), prefixes, and fuzz inputs with comments. 0 differences.
 - Open: the idempotency check and the Hyper validation of formatted SQL.
+- The Hyper plan view model is ported (`dashql_core::view`) with a port of the needed parts of
+  rapidjson. `:plan_view_model_snapshot_test` passes 36 of 36 plans (including the `pipelines`
+  section, which the C++ suite skips), the 19 `hyper_plan_test.cc` tests pass, and
+  `:plan_view_model_differential_test` finds 0 differences in 51,720 comparisons (bit-identical
+  layout) against `tools/oracle_ffi_view.cc`.
+
+**Attribute lookups.** The C++ core looks up object attributes through compile-time
+`frozen::unordered_map`s. `dashql_grammar::attrs!` fixes the keys at compile time too (duplicate
+keys fail constant evaluation) and scans the children against the constant key array, which LLVM
+vectorizes. Measured with `bench_pipeline` (`attrs_21/*`, the 21 keys of a vis scale):
+
+| Children | Constant-key scan | Static perfect hash | Direct-index table |
+|---|---|---|---|
+| 5 | 4 ns | 8 ns | 9 ns |
+| 21 | 11 ns | 13 ns | 24 ns |
+| 40 | 14 ns | 18 ns | 28 ns |
+
+Formatting TPC-DS q1 (`format_query`, added to both benchmarks) takes 6.1 µs in Rust and 11.4 µs in
+C++. The hash table variant was 6.5 µs, so it was dropped.
 
 **Open items**
 - The repository `rustfmt.toml` is not valid TOML (`max_width: 120`), so rustfmt refuses it. Format

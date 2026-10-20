@@ -1,5 +1,6 @@
 //! SELECT statements (`formatter/formatter_select.cc`).
 
+use dashql_grammar::attrs;
 use super::{FmtReg, Formatter, FormattingJoinPolicy, K};
 use dashql_buffers::formatting::FormattingMode;
 use dashql_buffers::parser::{CombineModifier, CombineOperation, Node, NodeType};
@@ -14,9 +15,7 @@ impl<'a> Formatter<'a> {
             select_having, select_windows, select_order, select_row_locking, select_with_ctes, select_with_recursive,
             select_offset, select_limit, select_limit_all, select_sample, select_values, select_table,
             combine_operation, combine_modifier, combine_input, select_statement,
-        ] = self.attrs(
-            node,
-            [
+        ] = attrs!(self.children(node), [
                 K::SQL_SELECT_ALL,
                 K::SQL_SELECT_DISTINCT,
                 K::SQL_SELECT_TARGETS,

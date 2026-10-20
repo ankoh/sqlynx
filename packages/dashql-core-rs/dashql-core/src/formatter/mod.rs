@@ -21,6 +21,7 @@ mod vis;
 
 pub use program::*;
 
+use dashql_grammar::attrs;
 use dashql_buffers::formatting::{FormattingConfigT, FormattingDialect, FormattingMode};
 use dashql_buffers::parser::{
     AttributeKey, CharacterType, ColumnConstraint, ConstraintAttribute, ExpressionOperator, ExtractTarget,
@@ -395,7 +396,7 @@ impl<'a> Formatter<'a> {
             if node.node_type() != NodeType::OBJECT_SQL_NARY_EXPRESSION {
                 continue;
             }
-            let [op_node, args_node] = self.attrs(node, [K::SQL_EXPRESSION_OPERATOR, K::SQL_EXPRESSION_ARGS]);
+            let [op_node, args_node] = attrs!(self.children(node), [K::SQL_EXPRESSION_OPERATOR, K::SQL_EXPRESSION_ARGS]);
             let Some(op_node) = op_node else { continue };
 
             let (precedence, associativity) = if op_node.node_type() == NodeType::ENUM_SQL_EXPRESSION_OPERATOR {
@@ -687,9 +688,7 @@ impl<'a> Formatter<'a> {
 
     fn format_table_ref(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [name, alias, table, lateral, sample, only] = self.attrs(
-            node,
-            [
+        let [name, alias, table, lateral, sample, only] = attrs!(self.children(node), [
                 K::SQL_TABLEREF_NAME,
                 K::SQL_TABLEREF_ALIAS,
                 K::SQL_TABLEREF_TABLE,
@@ -736,7 +735,7 @@ impl<'a> Formatter<'a> {
 
     fn format_into(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [temp, name] = self.attrs(node, [K::SQL_TEMP_TYPE, K::SQL_TEMP_NAME]);
+        let [temp, name] = attrs!(self.children(node), [K::SQL_TEMP_TYPE, K::SQL_TEMP_NAME]);
         let Some(name) = name else { return self.format_unimplemented(node) };
         let mut parts = vec![f.text("into ")];
         if let Some(temp) = temp {
@@ -751,7 +750,7 @@ impl<'a> Formatter<'a> {
 
     fn format_window_def(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [name, frame] = self.attrs(node, [K::SQL_WINDOW_DEF_NAME, K::SQL_WINDOW_DEF_FRAME]);
+        let [name, frame] = attrs!(self.children(node), [K::SQL_WINDOW_DEF_NAME, K::SQL_WINDOW_DEF_FRAME]);
         let (Some(name), Some(frame)) = (name, frame) else { return self.format_unimplemented(node) };
         f.concat(&[self.reg(name), f.text(" as "), f.parenthesized(self.reg(frame))])
     }
@@ -780,7 +779,7 @@ impl<'a> Formatter<'a> {
     fn format_row_locking(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
         let [strength, of, behavior] =
-            self.attrs(node, [K::SQL_ROW_LOCKING_STRENGTH, K::SQL_ROW_LOCKING_OF, K::SQL_ROW_LOCKING_BLOCK_BEHAVIOR]);
+            attrs!(self.children(node), [K::SQL_ROW_LOCKING_STRENGTH, K::SQL_ROW_LOCKING_OF, K::SQL_ROW_LOCKING_BLOCK_BEHAVIOR]);
         let Some(strength) = strength else { return self.format_unimplemented(node) };
         let mut parts = vec![self.reg(strength)];
         if let Some(of) = of.filter(|of| of.children_count() > 0) {
@@ -805,9 +804,7 @@ impl<'a> Formatter<'a> {
 
     fn format_sample(&self, node: &'a Node, table_sample: bool) -> FmtReg {
         let f = &self.fmt;
-        let [value, unit, function, repeat, seed] = self.attrs(
-            node,
-            [
+        let [value, unit, function, repeat, seed] = attrs!(self.children(node), [
                 K::SQL_SAMPLE_COUNT_VALUE,
                 K::SQL_SAMPLE_COUNT_UNIT,
                 K::SQL_SAMPLE_FUNCTION,
@@ -836,7 +833,7 @@ impl<'a> Formatter<'a> {
     fn format_joined_table(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
         let [inputs, join_type, join_on, join_using] =
-            self.attrs(node, [K::SQL_JOIN_INPUT, K::SQL_JOIN_TYPE, K::SQL_JOIN_ON, K::SQL_JOIN_USING]);
+            attrs!(self.children(node), [K::SQL_JOIN_INPUT, K::SQL_JOIN_TYPE, K::SQL_JOIN_ON, K::SQL_JOIN_USING]);
         let (Some(inputs), Some(join_type)) = (inputs, join_type) else { return self.format_unimplemented(node) };
         if inputs.node_type() != NodeType::ARRAY || inputs.children_count() != 2 {
             return self.format_unimplemented(node);
@@ -894,7 +891,7 @@ impl<'a> Formatter<'a> {
 
     fn format_group_by_item(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [item_type, arg] = self.attrs(node, [K::SQL_GROUP_BY_ITEM_TYPE, K::SQL_GROUP_BY_ITEM_ARG]);
+        let [item_type, arg] = attrs!(self.children(node), [K::SQL_GROUP_BY_ITEM_TYPE, K::SQL_GROUP_BY_ITEM_ARG]);
         let Some(item_type) = item_type.filter(|t| t.node_type() == NodeType::ENUM_SQL_GROUP_BY_ITEM_TYPE) else {
             return f.empty();
         };
@@ -925,7 +922,7 @@ impl<'a> Formatter<'a> {
     fn format_type_name(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
         let [type_node, array, setof] =
-            self.attrs(node, [K::SQL_TYPENAME_TYPE, K::SQL_TYPENAME_ARRAY, K::SQL_TYPENAME_SETOF]);
+            attrs!(self.children(node), [K::SQL_TYPENAME_TYPE, K::SQL_TYPENAME_ARRAY, K::SQL_TYPENAME_SETOF]);
         let Some(type_node) = type_node else { return self.format_unimplemented(node) };
 
         let mut type_reg = self.reg(type_node);
@@ -980,7 +977,7 @@ impl<'a> Formatter<'a> {
 
     fn format_interval_type(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [interval_type, precision] = self.attrs(node, [K::SQL_INTERVAL_TYPE, K::SQL_INTERVAL_PRECISION]);
+        let [interval_type, precision] = attrs!(self.children(node), [K::SQL_INTERVAL_TYPE, K::SQL_INTERVAL_PRECISION]);
         let Some(interval_type) = interval_type else { return self.format_unimplemented(node) };
         let mut parts = vec![self.reg(interval_type)];
         if let Some(precision) = precision {
@@ -991,7 +988,7 @@ impl<'a> Formatter<'a> {
 
     fn format_const_type_cast(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [type_node, value] = self.attrs(node, [K::SQL_CONST_CAST_TYPE, K::SQL_CONST_CAST_VALUE]);
+        let [type_node, value] = attrs!(self.children(node), [K::SQL_CONST_CAST_TYPE, K::SQL_CONST_CAST_VALUE]);
         let (Some(type_node), Some(value)) = (type_node, value) else { return self.format_unimplemented(node) };
         let type_reg = self.reg(type_node);
         let value_reg = self.reg(value);
@@ -1003,7 +1000,7 @@ impl<'a> Formatter<'a> {
 
     fn format_const_interval_cast(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [value, interval] = self.attrs(node, [K::SQL_CONST_CAST_VALUE, K::SQL_CONST_CAST_INTERVAL]);
+        let [value, interval] = attrs!(self.children(node), [K::SQL_CONST_CAST_VALUE, K::SQL_CONST_CAST_INTERVAL]);
         let Some(value) = value else { return self.format_unimplemented(node) };
         let mut parts = vec![f.text("interval "), self.reg(value)];
         if let Some(interval) = interval {
@@ -1033,9 +1030,7 @@ impl<'a> Formatter<'a> {
 
     fn format_const_function_cast(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [name, args, order, value] = self.attrs(
-            node,
-            [
+        let [name, args, order, value] = attrs!(self.children(node), [
                 K::SQL_CONST_CAST_FUNC_NAME,
                 K::SQL_CONST_CAST_FUNC_ARGS_LIST,
                 K::SQL_CONST_CAST_FUNC_ARGS_ORDER,
@@ -1101,7 +1096,7 @@ impl<'a> Formatter<'a> {
     }
 
     fn format_numeric_type(&self, node: &'a Node) -> FmtReg {
-        let [base, modifiers] = self.attrs(node, [K::SQL_NUMERIC_TYPE_BASE, K::SQL_NUMERIC_TYPE_MODIFIERS]);
+        let [base, modifiers] = attrs!(self.children(node), [K::SQL_NUMERIC_TYPE_BASE, K::SQL_NUMERIC_TYPE_MODIFIERS]);
         let Some(base) = base else { return self.format_unimplemented(node) };
         let mut parts = vec![self.reg(base)];
         if let Some(modifiers) = modifiers.filter(|m| m.node_type() == NodeType::ARRAY && m.children_count() > 0) {
@@ -1124,7 +1119,7 @@ impl<'a> Formatter<'a> {
 
     fn format_character_type(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [character_type, length] = self.attrs(node, [K::SQL_CHARACTER_TYPE, K::SQL_CHARACTER_TYPE_LENGTH]);
+        let [character_type, length] = attrs!(self.children(node), [K::SQL_CHARACTER_TYPE, K::SQL_CHARACTER_TYPE_LENGTH]);
         let Some(character_type) = character_type else { return self.format_unimplemented(node) };
         let mut parts = vec![self.reg(character_type)];
         if let Some(length) = length {
@@ -1135,7 +1130,7 @@ impl<'a> Formatter<'a> {
 
     fn format_generic_type(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [name, modifiers] = self.attrs(node, [K::SQL_GENERIC_TYPE_NAME, K::SQL_GENERIC_TYPE_MODIFIERS]);
+        let [name, modifiers] = attrs!(self.children(node), [K::SQL_GENERIC_TYPE_NAME, K::SQL_GENERIC_TYPE_MODIFIERS]);
         let Some(name) = name else { return self.format_unimplemented(node) };
 
         let name_text = self.text_at(name.symbol_span());
@@ -1144,7 +1139,7 @@ impl<'a> Formatter<'a> {
                 let element_node = &self.ast[modifiers.children_begin_or_value() as usize];
                 let element = self.reg(element_node);
                 // Hyper does not accept row(...)[], only array(row(...))
-                let [element_type] = self.attrs(element_node, [K::SQL_TYPENAME_TYPE]);
+                let [element_type] = attrs!(self.children(element_node), [K::SQL_TYPENAME_TYPE]);
                 let row_element = element_type.is_some_and(|t| t.node_type() == NodeType::OBJECT_SQL_ROW_TYPE);
                 if self.config.dialect == FormattingDialect::HYPER && !row_element {
                     return f.concat(&[element, f.text("[]")]);
@@ -1162,7 +1157,7 @@ impl<'a> Formatter<'a> {
 
     fn format_timestamp_type(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [precision, with_tz] = self.attrs(node, [K::SQL_TIME_TYPE_PRECISION, K::SQL_TIME_TYPE_WITH_TIMEZONE]);
+        let [precision, with_tz] = attrs!(self.children(node), [K::SQL_TIME_TYPE_PRECISION, K::SQL_TIME_TYPE_WITH_TIMEZONE]);
         let is_time = node.node_type() == NodeType::OBJECT_SQL_TIME_TYPE;
         let mut parts = vec![f.text(if is_time { "time" } else { "timestamp" })];
         if let Some(precision) = precision {
@@ -1180,7 +1175,7 @@ impl<'a> Formatter<'a> {
 
     fn format_order(&self, node: &'a Node) -> FmtReg {
         let [value, direction, nullrule] =
-            self.attrs(node, [K::SQL_ORDER_VALUE, K::SQL_ORDER_DIRECTION, K::SQL_ORDER_NULLRULE]);
+            attrs!(self.children(node), [K::SQL_ORDER_VALUE, K::SQL_ORDER_DIRECTION, K::SQL_ORDER_NULLRULE]);
         let Some(value) = value else { return self.format_unimplemented(node) };
         let mut parts = vec![self.reg(value)];
         if let Some(direction) = direction {
@@ -1250,7 +1245,7 @@ impl<'a> Formatter<'a> {
     // -----------------------------------------------------------------------------------------
 
     fn format_column_ref(&self, node: &'a Node) -> FmtReg {
-        let [path] = self.attrs(node, [K::SQL_COLUMN_REF_PATH]);
+        let [path] = attrs!(self.children(node), [K::SQL_COLUMN_REF_PATH]);
         match path {
             Some(path) => self.reg(path),
             None => self.format_unimplemented(node),
@@ -1258,7 +1253,7 @@ impl<'a> Formatter<'a> {
     }
 
     fn format_parameter_ref(&self, node: &'a Node) -> FmtReg {
-        let [prefix, name] = self.attrs(node, [K::SQL_PARAMETER_PREFIX, K::SQL_PARAMETER_NAME]);
+        let [prefix, name] = attrs!(self.children(node), [K::SQL_PARAMETER_PREFIX, K::SQL_PARAMETER_NAME]);
         let Some(prefix) = prefix else { return self.format_unimplemented(node) };
         let prefix_reg = self.reg(prefix);
         if prefix_reg == 0 {
@@ -1275,7 +1270,7 @@ impl<'a> Formatter<'a> {
 
     /// `<keyword>(<attribute>)`, unformattable without the attribute
     fn format_keyword_call(&self, node: &'a Node, key: AttributeKey, keyword: &'static str) -> FmtReg {
-        let [child] = self.attrs(node, [key]);
+        let [child] = attrs!(self.children(node), [key]);
         let Some(child) = child else { return self.format_unimplemented(node) };
         let child_reg = self.reg(child);
         if child_reg == 0 {
@@ -1294,7 +1289,7 @@ impl<'a> Formatter<'a> {
     }
 
     fn format_indirection(&self, node: &'a Node) -> FmtReg {
-        let [value, path] = self.attrs(node, [K::SQL_INDIRECTION_VALUE, K::SQL_INDIRECTION_PATH]);
+        let [value, path] = attrs!(self.children(node), [K::SQL_INDIRECTION_VALUE, K::SQL_INDIRECTION_PATH]);
         let (Some(value), Some(path)) = (value, path) else { return self.format_unimplemented(node) };
         let value_reg = self.reg(value);
         let path_reg = self.reg(path);
@@ -1310,7 +1305,7 @@ impl<'a> Formatter<'a> {
 
     fn format_row_expression(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [is_explicit, values] = self.attrs(node, [K::SQL_ROW_EXPRESSION_EXPLICIT, K::SQL_ROW_EXPRESSION_VALUES]);
+        let [is_explicit, values] = attrs!(self.children(node), [K::SQL_ROW_EXPRESSION_EXPLICIT, K::SQL_ROW_EXPRESSION_VALUES]);
         let Some(values) = values.filter(|v| v.node_type() == NodeType::ARRAY) else {
             return self.format_unimplemented(node);
         };
@@ -1334,9 +1329,7 @@ impl<'a> Formatter<'a> {
 
     fn format_column_def(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [name, type_node, options, constraints] = self.attrs(
-            node,
-            [K::SQL_COLUMN_DEF_NAME, K::SQL_COLUMN_DEF_TYPE, K::SQL_COLUMN_DEF_OPTIONS, K::SQL_COLUMN_DEF_CONSTRAINTS],
+        let [name, type_node, options, constraints] = attrs!(self.children(node), [K::SQL_COLUMN_DEF_NAME, K::SQL_COLUMN_DEF_TYPE, K::SQL_COLUMN_DEF_OPTIONS, K::SQL_COLUMN_DEF_CONSTRAINTS],
         );
         let (Some(name), Some(type_node)) = (name, type_node) else { return self.format_unimplemented(node) };
 
@@ -1428,7 +1421,7 @@ impl<'a> Formatter<'a> {
     }
 
     fn format_key_action(&self, node: &'a Node) -> FmtReg {
-        let [trigger, command] = self.attrs(node, [K::SQL_KEY_ACTION_TRIGGER, K::SQL_KEY_ACTION_COMMAND]);
+        let [trigger, command] = attrs!(self.children(node), [K::SQL_KEY_ACTION_TRIGGER, K::SQL_KEY_ACTION_COMMAND]);
         let (Some(trigger), Some(command)) = (trigger, command) else { return self.format_unimplemented(node) };
         self.space_join(&[self.reg(trigger), self.reg(command)], FormattingJoinPolicy::BreakAllOrNone, true)
     }
@@ -1452,9 +1445,7 @@ impl<'a> Formatter<'a> {
             constraint_type, constraint_name, constraint_argument, constraint_index, constraint_columns,
             constraint_references_name, constraint_references_columns, constraint_attributes, constraint_definition,
             constraint_key_actions, constraint_key_match,
-        ] = self.attrs(
-            node,
-            [
+        ] = attrs!(self.children(node), [
                 K::SQL_TABLE_CONSTRAINT_TYPE,
                 K::SQL_TABLE_CONSTRAINT_NAME,
                 K::SQL_TABLE_CONSTRAINT_ARGUMENT,
@@ -1566,9 +1557,7 @@ impl<'a> Formatter<'a> {
         let [
             constraint_type, constraint_name, constraint_value, constraint_no_inherit, constraint_definition,
             constraint_collate,
-        ] = self.attrs(
-            node,
-            [
+        ] = attrs!(self.children(node), [
                 K::SQL_COLUMN_CONSTRAINT_TYPE,
                 K::SQL_COLUMN_CONSTRAINT_NAME,
                 K::SQL_COLUMN_CONSTRAINT_VALUE,
@@ -1642,7 +1631,7 @@ impl<'a> Formatter<'a> {
 
     fn format_generic_option(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [key, value] = self.attrs(node, [K::SQL_GENERIC_OPTION_KEY, K::SQL_GENERIC_OPTION_VALUE]);
+        let [key, value] = attrs!(self.children(node), [K::SQL_GENERIC_OPTION_KEY, K::SQL_GENERIC_OPTION_VALUE]);
         let Some(key) = key else { return self.format_unimplemented(node) };
         let key_reg = self.reg(key);
         match value {
@@ -1657,7 +1646,7 @@ impl<'a> Formatter<'a> {
 
     fn format_function_arg(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [arg_name, arg_value] = self.attrs(node, [K::SQL_FUNCTION_ARG_NAME, K::SQL_FUNCTION_ARG_VALUE]);
+        let [arg_name, arg_value] = attrs!(self.children(node), [K::SQL_FUNCTION_ARG_NAME, K::SQL_FUNCTION_ARG_VALUE]);
         let Some(arg_value) = arg_value else { return self.format_unimplemented(node) };
         let value_reg = self.reg(arg_value);
         if value_reg == 0 {
@@ -1695,9 +1684,7 @@ impl<'a> Formatter<'a> {
         let [
             star, all, distinct, variadic, over, within_group, filter, name, args, order, cast_args, extract_args,
             overlay_args, position_args, substring_args, treat_args, trim_args,
-        ] = self.attrs(
-            node,
-            [
+        ] = attrs!(self.children(node), [
                 K::SQL_FUNCTION_ARGUMENTS_STAR,
                 K::SQL_FUNCTION_ALL,
                 K::SQL_FUNCTION_DISTINCT,
@@ -1859,9 +1846,7 @@ impl<'a> Formatter<'a> {
 
     fn format_substring_args(&self, name_reg: FmtReg, args: &'a Node) -> Option<FmtReg> {
         let f = &self.fmt;
-        let [sub_input, sub_from, sub_for] = self.attrs(
-            args,
-            [K::SQL_FUNCTION_SUBSTRING_INPUT, K::SQL_FUNCTION_SUBSTRING_FROM, K::SQL_FUNCTION_SUBSTRING_FOR],
+        let [sub_input, sub_from, sub_for] = attrs!(self.children(args), [K::SQL_FUNCTION_SUBSTRING_INPUT, K::SQL_FUNCTION_SUBSTRING_FROM, K::SQL_FUNCTION_SUBSTRING_FOR],
         );
         let input_reg = self.reg(sub_input?);
         let from_reg = self.reg(sub_from?);
@@ -1882,8 +1867,7 @@ impl<'a> Formatter<'a> {
 
     fn format_trim_args(&self, name_reg: FmtReg, args: &'a Node) -> Option<FmtReg> {
         let f = &self.fmt;
-        let [trim_input, trim_dir, trim_chars] = self
-            .attrs(args, [K::SQL_FUNCTION_TRIM_INPUT, K::SQL_FUNCTION_TRIM_DIRECTION, K::SQL_FUNCTION_TRIM_CHARACTERS]);
+        let [trim_input, trim_dir, trim_chars] = attrs!(self.children(args), [K::SQL_FUNCTION_TRIM_INPUT, K::SQL_FUNCTION_TRIM_DIRECTION, K::SQL_FUNCTION_TRIM_CHARACTERS]);
         let input_reg = self.reg(trim_input?);
         if input_reg == 0 {
             return None;
@@ -1914,9 +1898,7 @@ impl<'a> Formatter<'a> {
 
     fn format_overlay_args(&self, name_reg: FmtReg, args: &'a Node) -> Option<FmtReg> {
         let f = &self.fmt;
-        let [ov_input, ov_placing, ov_from, ov_for] = self.attrs(
-            args,
-            [
+        let [ov_input, ov_placing, ov_from, ov_for] = attrs!(self.children(args), [
                 K::SQL_FUNCTION_OVERLAY_INPUT,
                 K::SQL_FUNCTION_OVERLAY_PLACING,
                 K::SQL_FUNCTION_OVERLAY_FROM,
@@ -1944,9 +1926,7 @@ impl<'a> Formatter<'a> {
 
     fn format_function_table(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [function, rows_from, with_ordinality] = self.attrs(
-            node,
-            [K::SQL_FUNCTION_TABLE_FUNCTION, K::SQL_FUNCTION_TABLE_ROWS_FROM, K::SQL_FUNCTION_TABLE_WITH_ORDINALITY],
+        let [function, rows_from, with_ordinality] = attrs!(self.children(node), [K::SQL_FUNCTION_TABLE_FUNCTION, K::SQL_FUNCTION_TABLE_ROWS_FROM, K::SQL_FUNCTION_TABLE_WITH_ORDINALITY],
         );
         let mut base_reg = 0;
         if let Some(function) = function {
@@ -1974,9 +1954,7 @@ impl<'a> Formatter<'a> {
 
     fn format_window_frame(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [partition, order, mode, bounds, exclude, name] = self.attrs(
-            node,
-            [
+        let [partition, order, mode, bounds, exclude, name] = attrs!(self.children(node), [
                 K::SQL_WINDOW_FRAME_PARTITION,
                 K::SQL_WINDOW_FRAME_ORDER,
                 K::SQL_WINDOW_FRAME_MODE,
@@ -2028,7 +2006,7 @@ impl<'a> Formatter<'a> {
     fn format_window_bound(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
         let [mode, direction, value] =
-            self.attrs(node, [K::SQL_WINDOW_BOUND_MODE, K::SQL_WINDOW_BOUND_DIRECTION, K::SQL_WINDOW_BOUND_VALUE]);
+            attrs!(self.children(node), [K::SQL_WINDOW_BOUND_MODE, K::SQL_WINDOW_BOUND_DIRECTION, K::SQL_WINDOW_BOUND_VALUE]);
         let Some(mode) = mode else { return self.format_unimplemented(node) };
         match (WindowBoundMode(value_u8(mode)), direction, value) {
             (WindowBoundMode::UNBOUNDED, Some(direction), None) => {
@@ -2075,7 +2053,7 @@ impl<'a> Formatter<'a> {
     fn format_alias(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
         let [name, col_names, col_defs] =
-            self.attrs(node, [K::SQL_ALIAS_NAME, K::SQL_ALIAS_COLUMN_NAMES, K::SQL_ALIAS_COLUMN_DEFS]);
+            attrs!(self.children(node), [K::SQL_ALIAS_NAME, K::SQL_ALIAS_COLUMN_NAMES, K::SQL_ALIAS_COLUMN_DEFS]);
         let Some(name) = name else { return self.format_unimplemented(node) };
         let name_reg = self.reg(name);
         if name_reg == 0 {
@@ -2092,7 +2070,7 @@ impl<'a> Formatter<'a> {
 
     fn format_typecast_expression(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [value, type_node] = self.attrs(node, [K::SQL_TYPECAST_VALUE, K::SQL_TYPECAST_TYPE]);
+        let [value, type_node] = attrs!(self.children(node), [K::SQL_TYPECAST_VALUE, K::SQL_TYPECAST_TYPE]);
         let (Some(value), Some(type_node)) = (value, type_node) else { return self.format_unimplemented(node) };
         let mut value_reg = self.reg(value);
         let type_reg = self.reg(type_node);
@@ -2108,7 +2086,7 @@ impl<'a> Formatter<'a> {
     fn format_case(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
         let [argument, clauses, default_value] =
-            self.attrs(node, [K::SQL_CASE_ARGUMENT, K::SQL_CASE_CLAUSES, K::SQL_CASE_DEFAULT]);
+            attrs!(self.children(node), [K::SQL_CASE_ARGUMENT, K::SQL_CASE_CLAUSES, K::SQL_CASE_DEFAULT]);
         let Some(clauses) = clauses else { return self.format_unimplemented(node) };
 
         let mut parts = Vec::new();
@@ -2145,7 +2123,7 @@ impl<'a> Formatter<'a> {
 
     fn format_case_clause(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [when_value, then_value] = self.attrs(node, [K::SQL_CASE_CLAUSE_WHEN, K::SQL_CASE_CLAUSE_THEN]);
+        let [when_value, then_value] = attrs!(self.children(node), [K::SQL_CASE_CLAUSE_WHEN, K::SQL_CASE_CLAUSE_THEN]);
         let (Some(when_value), Some(then_value)) = (when_value, then_value) else {
             return self.format_unimplemented(node);
         };
@@ -2163,9 +2141,7 @@ impl<'a> Formatter<'a> {
 
     fn format_cte(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [name, columns, statement, graph, secure, options] = self.attrs(
-            node,
-            [
+        let [name, columns, statement, graph, secure, options] = attrs!(self.children(node), [
                 K::SQL_CTE_NAME,
                 K::SQL_CTE_COLUMNS,
                 K::SQL_CTE_STATEMENT,
@@ -2230,9 +2206,7 @@ impl<'a> Formatter<'a> {
 
     fn format_result_target(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [value, name, star, exclude] = self.attrs(
-            node,
-            [
+        let [value, name, star, exclude] = attrs!(self.children(node), [
                 K::SQL_RESULT_TARGET_VALUE,
                 K::SQL_RESULT_TARGET_NAME,
                 K::SQL_RESULT_TARGET_STAR,
@@ -2278,7 +2252,7 @@ impl<'a> Formatter<'a> {
 
     fn format_select_expression(&self, node: &'a Node) -> FmtReg {
         let [statement, indirection] =
-            self.attrs(node, [K::SQL_SELECT_EXPRESSION_STATEMENT, K::SQL_SELECT_EXPRESSION_INDIRECTION]);
+            attrs!(self.children(node), [K::SQL_SELECT_EXPRESSION_STATEMENT, K::SQL_SELECT_EXPRESSION_INDIRECTION]);
         let Some(statement) = statement else { return self.format_unimplemented(node) };
         if indirection.is_some_and(|i| i.node_type() == NodeType::ARRAY && i.children_count() > 0) {
             return self.format_unimplemented(node);
@@ -2293,7 +2267,7 @@ impl<'a> Formatter<'a> {
         while parent_id < self.ast.len() && depth < self.ast.len() {
             let parent = &self.ast[parent_id];
             if parent.attribute_key() == K::SQL_INSERT_SOURCE {
-                let [values] = self.attrs(parent, [K::SQL_SELECT_VALUES]);
+                let [values] = attrs!(self.children(parent), [K::SQL_SELECT_VALUES]);
                 return parent.node_type() == NodeType::OBJECT_SQL_SELECT && values.is_some();
             }
             if parent.node_type() == NodeType::OBJECT_SQL_INSERT {
@@ -2314,7 +2288,7 @@ impl<'a> Formatter<'a> {
         let node = &self.ast[node_id];
         let state = self.node_states[node_id];
 
-        let [op_node, args_node] = self.attrs(node, [K::SQL_EXPRESSION_OPERATOR, K::SQL_EXPRESSION_ARGS]);
+        let [op_node, args_node] = attrs!(self.children(node), [K::SQL_EXPRESSION_OPERATOR, K::SQL_EXPRESSION_ARGS]);
         if let (Some(op_node), None) = (op_node, args_node) {
             if op_node.node_type() == NodeType::ENUM_SQL_EXPRESSION_OPERATOR
                 && ExpressionOperator(value_u8(op_node)) == ExpressionOperator::DEFAULT

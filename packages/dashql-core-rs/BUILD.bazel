@@ -324,7 +324,11 @@ rust_binary(
     name = "bench_pipeline",
     srcs = ["benches/pipeline.rs"],
     edition = "2021",
-    deps = [":dashql_grammar"],
+    deps = [
+        ":dashql_core",
+        ":dashql_grammar",
+        "//proto/fb:dashql_buffers_rs",
+    ],
 )
 
 # The Rust formatter must produce exactly the output of the C++ formatter: all snapshot inputs and

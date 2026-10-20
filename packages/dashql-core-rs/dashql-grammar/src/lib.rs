@@ -11,6 +11,7 @@
 
 use std::borrow::Cow;
 
+pub mod attributes;
 pub mod comment_blocks;
 pub mod keywords;
 pub mod names;

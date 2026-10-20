@@ -1,14 +1,13 @@
 //! INSERT statements (`formatter/formatter_insert.cc`).
 
+use dashql_grammar::attrs;
 use super::{FmtReg, Formatter, FormattingJoinPolicy, K};
 use dashql_buffers::parser::{Node, NodeType};
 
 impl<'a> Formatter<'a> {
     pub(super) fn format_insert(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [target, columns, source, default_values, returning, with_ctes, with_recursive] = self.attrs(
-            node,
-            [
+        let [target, columns, source, default_values, returning, with_ctes, with_recursive] = attrs!(self.children(node), [
                 K::SQL_INSERT_TARGET,
                 K::SQL_INSERT_COLUMNS,
                 K::SQL_INSERT_SOURCE,

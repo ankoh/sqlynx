@@ -2,6 +2,8 @@
 //!
 //!   bazel run -c opt //packages/dashql-core-rs:bench_pipeline
 
+use dashql_buffers::formatting::FormattingConfigT;
+use dashql_core::formatter::Formatter;
 use dashql_grammar::parser::parse;
 use dashql_grammar::scanner::scan;
 use std::hint::black_box;
@@ -80,4 +82,42 @@ fn main() {
     bench("scan_parse_query", || {
         black_box(parse(Arc::new(scan(black_box(MAIN_SCRIPT), 0, 1))));
     });
+    bench_attribute_lookups();
+    let parsed = parse(Arc::new(scan(MAIN_SCRIPT, 0, 1)));
+    let config = FormattingConfigT::default();
+    bench("format_query", || {
+        let mut formatter = Formatter::new(black_box(&parsed));
+        black_box(formatter.format(&config));
+    });
+}
+
+/// Attribute lookups of a wide object (the 21 keys of a vis scale) with 5, 21 and 40 children
+fn bench_attribute_lookups() {
+    use dashql_buffers::parser::{AttributeKey as K, Node, NodeType, SymbolSpan};
+    use dashql_grammar::attrs;
+    const KEYS: [K; 21] = [
+        K::VIS_SCALE_TYPE, K::VIS_SCALE_DOMAIN, K::VIS_SCALE_DOMAIN_MIN, K::VIS_SCALE_DOMAIN_MAX,
+        K::VIS_SCALE_DOMAIN_MID, K::VIS_SCALE_RANGE, K::VIS_SCALE_RANGE_MIN, K::VIS_SCALE_RANGE_MAX,
+        K::VIS_SCALE_SCHEME, K::VIS_SCALE_INTERPOLATE, K::VIS_SCALE_NICE, K::VIS_SCALE_ZERO, K::VIS_SCALE_CLAMP,
+        K::VIS_SCALE_PADDING, K::VIS_SCALE_PADDING_INNER, K::VIS_SCALE_PADDING_OUTER, K::VIS_SCALE_REVERSE,
+        K::VIS_SCALE_ROUND, K::VIS_SCALE_EXPONENT, K::VIS_SCALE_BINS, K::VIS_SCALE_NAME,
+    ];
+    let node = |k: K| Node::new(&SymbolSpan::new(0, 0), NodeType::NONE, k, 0, 0, 0);
+    let few: Vec<Node> =
+        [K::VIS_SCALE_TYPE, K::VIS_SCALE_DOMAIN, K::VIS_SCALE_NICE, K::VIS_SCALE_NAME, K::NONE].map(node).to_vec();
+    let many: Vec<Node> = KEYS.iter().rev().map(|k| node(*k)).collect();
+    let wide: Vec<Node> = (0..40u16).map(|i| node(K(KEYS[(i % 21) as usize].0 + (i / 21) * 300))).collect();
+    for (label, children) in [("5", &few), ("21", &many), ("40", &wide)] {
+        bench(&format!("attrs_21/{label}"), || {
+            let found = attrs!(black_box(&children[..]), [
+                K::VIS_SCALE_TYPE, K::VIS_SCALE_DOMAIN, K::VIS_SCALE_DOMAIN_MIN, K::VIS_SCALE_DOMAIN_MAX,
+                K::VIS_SCALE_DOMAIN_MID, K::VIS_SCALE_RANGE, K::VIS_SCALE_RANGE_MIN, K::VIS_SCALE_RANGE_MAX,
+                K::VIS_SCALE_SCHEME, K::VIS_SCALE_INTERPOLATE, K::VIS_SCALE_NICE, K::VIS_SCALE_ZERO,
+                K::VIS_SCALE_CLAMP, K::VIS_SCALE_PADDING, K::VIS_SCALE_PADDING_INNER, K::VIS_SCALE_PADDING_OUTER,
+                K::VIS_SCALE_REVERSE, K::VIS_SCALE_ROUND, K::VIS_SCALE_EXPONENT, K::VIS_SCALE_BINS,
+                K::VIS_SCALE_NAME,
+            ]);
+            black_box(found);
+        });
+    }
 }

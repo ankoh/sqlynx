@@ -1,5 +1,6 @@
 //! CREATE, DROP, ATTACH and SET statements (`formatter/formatter_create.cc`).
 
+use dashql_grammar::attrs;
 use super::{FmtReg, Formatter, FormattingJoinPolicy, K};
 use dashql_buffers::parser::{Node, NodeType, OnCommitOption, TempType};
 
@@ -32,9 +33,7 @@ impl<'a> Formatter<'a> {
         if !self.node_states[node_id].is_statement_root {
             return self.format_unimplemented(node);
         }
-        let [name, elements, if_not_exists, temp, on_commit] = self.attrs(
-            node,
-            [
+        let [name, elements, if_not_exists, temp, on_commit] = attrs!(self.children(node), [
                 K::SQL_CREATE_TABLE_NAME,
                 K::SQL_CREATE_TABLE_ELEMENTS,
                 K::SQL_CREATE_TABLE_IF_NOT_EXISTS,
@@ -80,9 +79,7 @@ impl<'a> Formatter<'a> {
 
     pub(super) fn format_create_as(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [name, columns, if_not_exists, temp, statement, with_data, on_commit] = self.attrs(
-            node,
-            [
+        let [name, columns, if_not_exists, temp, statement, with_data, on_commit] = attrs!(self.children(node), [
                 K::SQL_CREATE_AS_NAME,
                 K::SQL_CREATE_AS_COLUMNS,
                 K::SQL_CREATE_AS_IF_NOT_EXISTS,
@@ -122,9 +119,7 @@ impl<'a> Formatter<'a> {
 
     pub(super) fn format_view(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [name, columns, or_replace, temp, statement] = self.attrs(
-            node,
-            [K::SQL_VIEW_NAME, K::SQL_VIEW_COLUMNS, K::SQL_VIEW_OR_REPLACE, K::SQL_VIEW_TEMP, K::SQL_VIEW_STATEMENT],
+        let [name, columns, or_replace, temp, statement] = attrs!(self.children(node), [K::SQL_VIEW_NAME, K::SQL_VIEW_COLUMNS, K::SQL_VIEW_OR_REPLACE, K::SQL_VIEW_TEMP, K::SQL_VIEW_STATEMENT],
         );
         let (Some(name), Some(statement)) = (name, statement) else { return self.format_unimplemented(node) };
 
@@ -148,16 +143,14 @@ impl<'a> Formatter<'a> {
 
     pub(super) fn format_function_param(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [name, type_node] = self.attrs(node, [K::SQL_FUNCTION_PARAM_NAME, K::SQL_FUNCTION_PARAM_TYPE]);
+        let [name, type_node] = attrs!(self.children(node), [K::SQL_FUNCTION_PARAM_NAME, K::SQL_FUNCTION_PARAM_TYPE]);
         let (Some(name), Some(type_node)) = (name, type_node) else { return self.format_unimplemented(node) };
         f.concat(&[self.reg(name), f.text(" "), self.reg(type_node)])
     }
 
     pub(super) fn format_create_function(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [name, params, returns, aggregate] = self.attrs(
-            node,
-            [
+        let [name, params, returns, aggregate] = attrs!(self.children(node), [
                 K::SQL_CREATE_FUNCTION_NAME,
                 K::SQL_CREATE_FUNCTION_PARAMS,
                 K::SQL_CREATE_FUNCTION_RETURNS,
@@ -172,7 +165,7 @@ impl<'a> Formatter<'a> {
 
     pub(super) fn format_drop(&self, node: &'a Node, table: bool) -> FmtReg {
         let f = &self.fmt;
-        let [name, if_exists] = self.attrs(node, [K::SQL_DROP_NAME, K::SQL_DROP_IF_EXISTS]);
+        let [name, if_exists] = attrs!(self.children(node), [K::SQL_DROP_NAME, K::SQL_DROP_IF_EXISTS]);
         let Some(name) = name else { return self.format_unimplemented(node) };
         let object = if table { "table " } else { "view " };
         let if_exists_reg = if if_exists.is_some() { f.text("if exists ") } else { f.empty() };
@@ -181,16 +174,14 @@ impl<'a> Formatter<'a> {
 
     pub(super) fn format_attach_database_option(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [key, value] = self.attrs(node, [K::SQL_GENERIC_OPTION_KEY, K::SQL_GENERIC_OPTION_VALUE]);
+        let [key, value] = attrs!(self.children(node), [K::SQL_GENERIC_OPTION_KEY, K::SQL_GENERIC_OPTION_VALUE]);
         let (Some(key), Some(value)) = (key, value) else { return self.format_unimplemented(node) };
         f.concat(&[self.reg(key), f.text(" = "), self.reg(value)])
     }
 
     pub(super) fn format_attach_database(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [path, alias, local, options] = self.attrs(
-            node,
-            [
+        let [path, alias, local, options] = attrs!(self.children(node), [
                 K::SQL_ATTACH_DATABASE_PATH,
                 K::SQL_ATTACH_DATABASE_ALIAS,
                 K::SQL_ATTACH_DATABASE_LOCAL,
@@ -213,14 +204,14 @@ impl<'a> Formatter<'a> {
 
     pub(super) fn format_vararg_field(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [key, value] = self.attrs(node, [K::EXT_VARARG_FIELD_KEY, K::EXT_VARARG_FIELD_VALUE]);
+        let [key, value] = attrs!(self.children(node), [K::EXT_VARARG_FIELD_KEY, K::EXT_VARARG_FIELD_VALUE]);
         let (Some(key), Some(value)) = (key, value) else { return self.format_unimplemented(node) };
         f.concat(&[self.reg(key), f.text(" = "), self.reg(value)])
     }
 
     pub(super) fn format_set(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [varargs] = self.attrs(node, [K::EXT_SET_VARARGS]);
+        let [varargs] = attrs!(self.children(node), [K::EXT_SET_VARARGS]);
         let Some(varargs) = varargs else { return self.format_unimplemented(node) };
         f.concat(&[f.text("set "), self.reg(varargs)])
     }

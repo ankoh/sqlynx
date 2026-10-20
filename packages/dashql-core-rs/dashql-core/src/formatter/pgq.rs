@@ -1,5 +1,6 @@
 //! Property graphs and graph queries (`formatter/formatter_pgq.cc`).
 
+use dashql_grammar::attrs;
 use super::{is_true, FmtReg, Formatter, FormattingJoinPolicy, K};
 use dashql_buffers::parser::{Node, NodeType};
 
@@ -7,7 +8,7 @@ impl<'a> Formatter<'a> {
     pub(super) fn format_property_graph(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
         let [vertices, edges] =
-            self.attrs(node, [K::SQL_PROPERTY_GRAPH_VERTEX_TABLES, K::SQL_PROPERTY_GRAPH_EDGE_TABLES]);
+            attrs!(self.children(node), [K::SQL_PROPERTY_GRAPH_VERTEX_TABLES, K::SQL_PROPERTY_GRAPH_EDGE_TABLES]);
         let mut sections = Vec::new();
         if let Some(vertices) = vertices.filter(|v| v.children_count() > 0) {
             sections.push(f.concat(&[f.text("vertex tables "), f.parenthesized(self.reg(vertices))]));
@@ -24,9 +25,7 @@ impl<'a> Formatter<'a> {
 
     pub(super) fn format_graph_element_table(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [table, key, source, destination, labels] = self.attrs(
-            node,
-            [
+        let [table, key, source, destination, labels] = attrs!(self.children(node), [
                 K::SQL_GRAPH_ELEMENT_TABLE_TABLE,
                 K::SQL_GRAPH_ELEMENT_TABLE_KEY,
                 K::SQL_GRAPH_ELEMENT_TABLE_SOURCE,
@@ -36,7 +35,7 @@ impl<'a> Formatter<'a> {
         );
         let Some(table) = table else { return self.format_unimplemented(node) };
         let [table_name, table_alias, table_query] =
-            self.attrs(table, [K::SQL_TABLEREF_NAME, K::SQL_TABLEREF_ALIAS, K::SQL_TABLEREF_TABLE]);
+            attrs!(self.children(table), [K::SQL_TABLEREF_NAME, K::SQL_TABLEREF_ALIAS, K::SQL_TABLEREF_TABLE]);
         let mut table_reg = self.reg(table);
         if let Some(table_alias) = table_alias {
             let mut base_reg = match (table_name, table_query) {
@@ -71,9 +70,7 @@ impl<'a> Formatter<'a> {
 
     pub(super) fn format_graph_vertex_reference(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [name, key, columns] = self.attrs(
-            node,
-            [
+        let [name, key, columns] = attrs!(self.children(node), [
                 K::SQL_GRAPH_VERTEX_REFERENCE_NAME,
                 K::SQL_GRAPH_VERTEX_REFERENCE_KEY,
                 K::SQL_GRAPH_VERTEX_REFERENCE_COLUMNS,
@@ -92,7 +89,7 @@ impl<'a> Formatter<'a> {
     pub(super) fn format_graph_label(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
         let [name, is_default, properties] =
-            self.attrs(node, [K::SQL_GRAPH_LABEL_NAME, K::SQL_GRAPH_LABEL_DEFAULT, K::SQL_GRAPH_LABEL_PROPERTIES]);
+            attrs!(self.children(node), [K::SQL_GRAPH_LABEL_NAME, K::SQL_GRAPH_LABEL_DEFAULT, K::SQL_GRAPH_LABEL_PROPERTIES]);
         let Some(properties) = properties else { return self.format_unimplemented(node) };
         if name.is_none() && !is_true(is_default) {
             return self.format_unimplemented(node);
@@ -106,9 +103,7 @@ impl<'a> Formatter<'a> {
 
     pub(super) fn format_graph_properties(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [all, columns, exclude] = self.attrs(
-            node,
-            [K::SQL_GRAPH_PROPERTIES_ALL, K::SQL_GRAPH_PROPERTIES_COLUMNS, K::SQL_GRAPH_PROPERTIES_EXCLUDE],
+        let [all, columns, exclude] = attrs!(self.children(node), [K::SQL_GRAPH_PROPERTIES_ALL, K::SQL_GRAPH_PROPERTIES_COLUMNS, K::SQL_GRAPH_PROPERTIES_EXCLUDE],
         );
         if is_true(all) {
             let mut result = f.text("properties are all columns");
@@ -125,7 +120,7 @@ impl<'a> Formatter<'a> {
 
     pub(super) fn format_graph_property(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [value, name] = self.attrs(node, [K::SQL_GRAPH_PROPERTY_VALUE, K::SQL_GRAPH_PROPERTY_NAME]);
+        let [value, name] = attrs!(self.children(node), [K::SQL_GRAPH_PROPERTY_VALUE, K::SQL_GRAPH_PROPERTY_NAME]);
         let Some(value) = value else { return self.format_unimplemented(node) };
         match name {
             Some(name) => f.concat(&[self.reg(value), f.text(" as "), self.reg(name)]),
@@ -135,9 +130,7 @@ impl<'a> Formatter<'a> {
 
     pub(super) fn format_graph_table(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [graph, graph_match, rows, columns] = self.attrs(
-            node,
-            [K::SQL_GRAPH_TABLE_GRAPH, K::SQL_GRAPH_TABLE_MATCH, K::SQL_GRAPH_TABLE_ROWS, K::SQL_GRAPH_TABLE_COLUMNS],
+        let [graph, graph_match, rows, columns] = attrs!(self.children(node), [K::SQL_GRAPH_TABLE_GRAPH, K::SQL_GRAPH_TABLE_MATCH, K::SQL_GRAPH_TABLE_ROWS, K::SQL_GRAPH_TABLE_COLUMNS],
         );
         let (Some(graph), Some(graph_match)) = (graph, graph_match) else { return self.format_unimplemented(node) };
         let mut clauses = vec![self.reg(graph), self.reg(graph_match)];
@@ -161,7 +154,7 @@ impl<'a> Formatter<'a> {
 
     pub(super) fn format_graph_match(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [patterns, where_clause] = self.attrs(node, [K::SQL_GRAPH_MATCH_PATTERNS, K::SQL_GRAPH_MATCH_WHERE]);
+        let [patterns, where_clause] = attrs!(self.children(node), [K::SQL_GRAPH_MATCH_PATTERNS, K::SQL_GRAPH_MATCH_WHERE]);
         let Some(patterns) = patterns else { return self.format_unimplemented(node) };
         let result = f.concat(&[f.text("match "), self.reg(patterns)]);
         match where_clause {
@@ -172,9 +165,7 @@ impl<'a> Formatter<'a> {
 
     pub(super) fn format_graph_path_element(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [vertex, left, right, any, variable, label, where_clause, quantifier] = self.attrs(
-            node,
-            [
+        let [vertex, left, right, any, variable, label, where_clause, quantifier] = attrs!(self.children(node), [
                 K::SQL_GRAPH_PATH_ELEMENT_VERTEX,
                 K::SQL_GRAPH_PATH_ELEMENT_EDGE_LEFT,
                 K::SQL_GRAPH_PATH_ELEMENT_EDGE_RIGHT,
@@ -227,8 +218,7 @@ impl<'a> Formatter<'a> {
 
     pub(super) fn format_graph_quantifier(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [lower, upper, fixed] = self
-            .attrs(node, [K::SQL_GRAPH_QUANTIFIER_LOWER, K::SQL_GRAPH_QUANTIFIER_UPPER, K::SQL_GRAPH_QUANTIFIER_FIXED]);
+        let [lower, upper, fixed] = attrs!(self.children(node), [K::SQL_GRAPH_QUANTIFIER_LOWER, K::SQL_GRAPH_QUANTIFIER_UPPER, K::SQL_GRAPH_QUANTIFIER_FIXED]);
         if is_true(fixed) {
             let Some(lower) = lower else { return self.format_unimplemented(node) };
             return f.concat(&[f.text("{"), self.reg(lower), f.text("}")]);
@@ -240,9 +230,7 @@ impl<'a> Formatter<'a> {
 
     pub(super) fn format_graph_label_expression(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [label, wildcard, negated, left, right, disjunction] = self.attrs(
-            node,
-            [
+        let [label, wildcard, negated, left, right, disjunction] = attrs!(self.children(node), [
                 K::SQL_GRAPH_LABEL_EXPRESSION_LABEL,
                 K::SQL_GRAPH_LABEL_EXPRESSION_WILDCARD,
                 K::SQL_GRAPH_LABEL_EXPRESSION_NEGATED,
@@ -270,9 +258,7 @@ impl<'a> Formatter<'a> {
 
     pub(super) fn format_graph_rows(&self, node: &'a Node) -> FmtReg {
         let f = &self.fmt;
-        let [per_match, per_step, source, edge, destination] = self.attrs(
-            node,
-            [
+        let [per_match, per_step, source, edge, destination] = attrs!(self.children(node), [
                 K::SQL_GRAPH_ROWS_PER_MATCH,
                 K::SQL_GRAPH_ROWS_PER_STEP,
                 K::SQL_GRAPH_ROWS_SOURCE,
