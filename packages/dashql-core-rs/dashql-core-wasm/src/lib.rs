@@ -137,6 +137,13 @@ impl Default for Catalog {
     }
 }
 
+impl Catalog {
+    /// The shared core catalog, for bindings of other crates in the same module (the shell)
+    pub fn shared(&self) -> Rc<RefCell<CoreCatalog>> {
+        self.inner.clone()
+    }
+}
+
 /// A batch of analyzed scripts for `Catalog::loadScripts`
 #[wasm_bindgen]
 pub struct ScriptBatch {

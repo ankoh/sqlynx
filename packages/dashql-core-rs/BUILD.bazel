@@ -103,7 +103,7 @@ rust_test(
 
 rust_library(
     name = "dashql_core",
-    srcs = glob(["dashql-core/src/**/*.rs"]),
+    srcs = glob(["dashql-core/src/**/*.rs"]) + [":dashql_core_unicode_tables_rs"],
     crate_name = "dashql_core",
     crate_root = "dashql-core/src/lib.rs",
     edition = "2021",
@@ -111,6 +111,10 @@ rust_library(
     deps = [
         ":dashql_grammar",
         "//proto/fb:dashql_buffers_rs",
+        "@core_crates//:arrow-array",
+        "@core_crates//:arrow-buffer",
+        "@core_crates//:arrow-ipc",
+        "@core_crates//:arrow-schema",
         "@core_crates//:flatbuffers",
         "@core_crates//:ropey",
         "@core_crates//:serde_json",
@@ -244,17 +248,17 @@ rust_test(
 # dashql-core-wasm: the wasm-bindgen module (same pipeline as //packages/dashql-umap)
 # ---------------------------------------------------------------------------
 
+# The bindings live in an rlib (:dashql_core_wasm_lib, see the end of the file) that the core and the shell
+# modules re-export.
 rust_shared_library(
     name = "dashql_core_wasm",
-    srcs = glob(["dashql-core-wasm/src/**/*.rs"]),
+    srcs = ["dashql-core-wasm/cdylib.rs"],
     crate_name = "dashql_core_wasm",
+    crate_root = "dashql-core-wasm/cdylib.rs",
     edition = "2021",
     target_compatible_with = ["@platforms//cpu:wasm32"],
     deps = [
-        ":dashql_core",
-        ":dashql_grammar",
-        "//proto/fb:dashql_buffers_rs",
-        "@core_crates//:flatbuffers",
+        ":dashql_core_wasm_lib",
         "@core_crates//:wasm-bindgen",
     ],
 )
@@ -506,6 +510,9 @@ DASHQL_CORE_UNIT_TESTS = [
     "script_execution_test",
     "script_session_test",
     "script_test",
+    "shell_api_test",
+    "shell_arrow_renderer_test",
+    "shell_prompt_buffer_test",
     "string_conversion_test",
     "topk_test",
     "unification_test",
@@ -520,6 +527,9 @@ DASHQL_CORE_UNIT_TESTS = [
         ":dashql_core",
         ":dashql_grammar",
         "//proto/fb:dashql_buffers_rs",
+        "@core_crates//:arrow-array",
+        "@core_crates//:arrow-ipc",
+        "@core_crates//:arrow-schema",
         "@core_crates//:flatbuffers",
     ],
 ) for name in DASHQL_CORE_UNIT_TESTS]
@@ -540,4 +550,95 @@ rust_test(
         "//proto/fb:dashql_buffers_rs",
         "@core_crates//:flatbuffers",
     ],
+)
+
+# ---------------------------------------------------------------------------
+# Shell (phase 10): dashql_core::shell, its unit tests, the differential test against
+# //packages/dashql-core:dashql_shell and the shell wasm module.
+# ---------------------------------------------------------------------------
+
+# The utf8proc properties (charwidth, boundclass) of the vendored utf8proc that the C++ shell uses.
+genrule(
+    name = "dashql_core_unicode_tables_rs",
+    srcs = [
+        "//packages/dashql-core/vendor/utf8proc:utf8proc.data",
+        "//packages/dashql-core/vendor/utf8proc:include/utf8proc/utf8proc.hpp",
+    ],
+    outs = ["dashql-core/src/shell/unicode_tables.rs"],
+    cmd = "python3 $(location :tools/gen_utf8proc_tables.py) " +
+          "--data $(location //packages/dashql-core/vendor/utf8proc:utf8proc.data) " +
+          "--header $(location //packages/dashql-core/vendor/utf8proc:include/utf8proc/utf8proc.hpp) " +
+          "--output $@",
+    tools = [":tools/gen_utf8proc_tables.py"],
+)
+
+# The Rust shell must behave exactly like the C++ shell: utf8proc widths and grapheme breaks of all code points,
+# synthetic Arrow IPC results rendered at many widths, and random sessions driving both shells through the same calls.
+rust_test(
+    name = "shell_differential_test",
+    size = "large",
+    srcs = ["dashql-oracle/tests/shell_differential.rs"],
+    edition = "2021",
+    use_libtest_harness = False,
+    deps = [
+        ":dashql_core",
+        ":dashql_oracle",
+        ":dashql_snapshots",
+        "@core_crates//:arrow-array",
+        "@core_crates//:arrow-buffer",
+        "@core_crates//:arrow-ipc",
+        "@core_crates//:arrow-schema",
+    ],
+)
+
+# The wasm-bindgen items of the core, shared by the core and the shell module.
+rust_library(
+    name = "dashql_core_wasm_lib",
+    srcs = glob(["dashql-core-wasm/src/**/*.rs"]),
+    crate_name = "dashql_core_wasm_lib",
+    crate_root = "dashql-core-wasm/src/lib.rs",
+    edition = "2021",
+    target_compatible_with = ["@platforms//cpu:wasm32"],
+    deps = [
+        ":dashql_core",
+        ":dashql_grammar",
+        "//proto/fb:dashql_buffers_rs",
+        "@core_crates//:flatbuffers",
+        "@core_crates//:wasm-bindgen",
+    ],
+)
+
+# The shell wasm module: the core bindings and the shell (like //packages/dashql-core:shell_wasm).
+rust_shared_library(
+    name = "dashql_shell_wasm",
+    srcs = glob(["dashql-shell-wasm/src/**/*.rs"]),
+    crate_name = "dashql_shell_wasm",
+    edition = "2021",
+    target_compatible_with = ["@platforms//cpu:wasm32"],
+    deps = [
+        ":dashql_core",
+        ":dashql_core_wasm_lib",
+        "@core_crates//:wasm-bindgen",
+    ],
+)
+
+rust_wasm_bindgen(
+    name = "dashql_shell_bindgen",
+    visibility = ["//visibility:public"],
+    out_name = "dashql_shell",
+    target = "web",
+    wasm_file = ":dashql_shell_wasm",
+)
+
+wasm_bindgen_module(
+    name = "dashql_shell_bindgen_wasm",
+    bindgen = ":dashql_shell_bindgen",
+)
+
+# Release: wasm-opt -O3 + strip; dev: copy through unchanged.
+optimize_wasm(
+    name = "shell_wasm",
+    visibility = ["//visibility:public"],
+    src = ":dashql_shell_bindgen_wasm",
+    out = "dashql_shell_bg.wasm",
 )

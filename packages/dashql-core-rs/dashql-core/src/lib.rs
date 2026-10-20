@@ -17,6 +17,7 @@ pub mod script;
 pub mod script_diff;
 pub mod script_execution;
 pub mod script_session;
+pub mod shell;
 pub mod signature;
 pub mod utils;
 pub mod view;

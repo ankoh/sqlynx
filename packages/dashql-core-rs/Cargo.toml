@@ -8,7 +8,7 @@
 # Repin after editing any member manifest: CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
 [workspace]
 resolver = "2"
-members = ["dashql-core", "dashql-core-wasm", "dashql-grammar", "dashql-oracle", "dashql-snapshots"]
+members = ["dashql-core", "dashql-core-wasm", "dashql-grammar", "dashql-oracle", "dashql-shell-wasm", "dashql-snapshots"]
 
 [workspace.package]
 version = "0.1.0"
@@ -16,6 +16,11 @@ edition = "2021"
 license = "MPL-2.0"
 
 [workspace.dependencies]
+# Arrow IPC for the shell (dashql_core::shell). No compression codecs, like the C++ Arrow build.
+arrow-array = { version = "=60.0.0", default-features = false }
+arrow-buffer = { version = "=60.0.0", default-features = false }
+arrow-ipc = { version = "=60.0.0", default-features = false }
+arrow-schema = { version = "=60.0.0", default-features = false }
 flatbuffers = "=25.12.19"
 libtest-mimic = "=0.8.1"
 ropey = "=1.6.1"

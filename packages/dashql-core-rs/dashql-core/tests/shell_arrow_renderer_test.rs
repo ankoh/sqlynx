@@ -1,0 +1,306 @@
+//! A port of `packages/dashql-core/test/shell_arrow_renderer_test.cc`.
+
+use arrow_array::{ArrayRef, Int32Array, RecordBatch, RecordBatchOptions, StringArray};
+use arrow_ipc::writer::{FileWriter, StreamWriter};
+use arrow_schema::{DataType, Field, Schema};
+use dashql_core::catalog::Catalog;
+use dashql_core::shell::unicode::render_width;
+use dashql_core::shell::vt100::{self, Command};
+use dashql_core::shell::{ArrowRenderer, EffectCompletionStatus, EffectType, PromptInputKey, ShellSession, ShellStatus};
+use std::sync::Arc;
+
+fn write_ipc(batch: &RecordBatch) -> Vec<u8> {
+    let mut writer = FileWriter::try_new(Vec::new(), &batch.schema()).unwrap();
+    writer.write(batch).unwrap();
+    writer.finish().unwrap();
+    writer.into_inner().unwrap()
+}
+
+fn write_ipc_stream(batch: &RecordBatch) -> Vec<u8> {
+    let mut writer = StreamWriter::try_new(Vec::new(), &batch.schema()).unwrap();
+    writer.write(batch).unwrap();
+    writer.finish().unwrap();
+    writer.into_inner().unwrap()
+}
+
+fn batch(fields: Vec<Field>, columns: Vec<ArrayRef>) -> RecordBatch {
+    RecordBatch::try_new(Arc::new(Schema::new(fields)), columns).unwrap()
+}
+
+fn make_batch() -> RecordBatch {
+    batch(
+        vec![Field::new("name", DataType::Utf8, true), Field::new("value", DataType::Int32, true)],
+        vec![
+            Arc::new(StringArray::from(vec![Some("alpha"), Some("界"), None])),
+            Arc::new(Int32Array::from(vec![1, 20, 300])),
+        ],
+    )
+}
+
+fn render(columns: u32, ipc: &[u8]) -> String {
+    let output = ArrowRenderer::new(columns).render_ipc(ipc).unwrap();
+    String::from_utf8(output).unwrap()
+}
+
+fn expect_lines_fit(output: &str, width: usize) {
+    for line in output.split('\n') {
+        assert!(render_width(line.as_bytes()) <= width, "{line}");
+    }
+}
+
+fn text(data: &[u8]) -> String {
+    String::from_utf8_lossy(data).into_owned()
+}
+
+#[test]
+fn renders_arrow_ipc() {
+    let output = render(80, &write_ipc(&make_batch()));
+    assert_eq!(
+        output,
+        "╭───────┬───────╮\n\
+         │ name  │ value │\n\
+         ╞═══════╪═══════╡\n\
+         │ alpha │     1 │\n\
+         │ 界    │    20 │\n\
+         │       │   300 │\n\
+         ╰───────┴───────╯"
+    );
+}
+
+#[test]
+fn renders_arrow_ipc_stream() {
+    let output = render(80, &write_ipc_stream(&make_batch()));
+    assert!(output.contains("alpha"));
+    assert!(output.contains("300"));
+}
+
+#[test]
+fn constrains_output_to_terminal_width() {
+    let output = render(15, &write_ipc(&make_batch()));
+    expect_lines_fit(&output, 15);
+}
+
+#[test]
+fn gives_short_columns_only_the_space_they_need() {
+    let batch = batch(
+        vec![Field::new("k", DataType::Utf8, true), Field::new("description", DataType::Utf8, true)],
+        vec![Arc::new(StringArray::from(vec!["x"])), Arc::new(StringArray::from(vec!["alpha beta gamma delta"]))],
+    );
+    let output = render(22, &write_ipc(&batch));
+    expect_lines_fit(&output, 22);
+    assert!(output.contains("alpha beta"), "{output}");
+}
+
+#[test]
+fn wraps_at_word_boundaries() {
+    let batch = batch(vec![Field::new("text", DataType::Utf8, true)], vec![Arc::new(StringArray::from(vec!["alpha beta gamma"]))]);
+    let output = render(12, &write_ipc(&batch));
+    expect_lines_fit(&output, 12);
+    assert!(output.contains("│ alpha    │\n│ beta     │\n│ gamma    │"), "{output}");
+}
+
+#[test]
+fn truncates_pathological_multiline_cells() {
+    let value = vec!["line"; 25].join("\n");
+    let batch = batch(vec![Field::new("text", DataType::Utf8, true)], vec![Arc::new(StringArray::from(vec![value]))]);
+    let output = render(20, &write_ipc(&batch));
+    assert!(output.contains("l..."), "{output}");
+    assert_eq!(output.matches('\n').count(), 23);
+}
+
+#[test]
+fn hides_columns_that_cannot_fit() {
+    let batch = batch(
+        vec![
+            Field::new("first", DataType::Int32, true),
+            Field::new("second", DataType::Int32, true),
+            Field::new("third", DataType::Int32, true),
+        ],
+        vec![Arc::new(Int32Array::from(vec![1])), Arc::new(Int32Array::from(vec![2])), Arc::new(Int32Array::from(vec![3]))],
+    );
+    let output = render(8, &write_ipc(&batch));
+    expect_lines_fit(&output, 8);
+    assert!(output.contains("..."), "{output}");
+}
+
+#[test]
+fn escapes_terminal_control_characters() {
+    let batch = batch(vec![Field::new("text", DataType::Utf8, true)], vec![Arc::new(StringArray::from(vec!["safe\x1b[31mred"]))]);
+    let output = render(80, &write_ipc(&batch));
+    assert!(!output.contains('\x1b'));
+    assert!(output.contains("safe\\x1b[31mred"));
+}
+
+fn read_u32(data: &[u8], offset: usize) -> u32 {
+    u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap())
+}
+
+fn read_u64(data: &[u8], offset: usize) -> u64 {
+    u64::from_le_bytes(data[offset..offset + 8].try_into().unwrap())
+}
+
+#[test]
+fn suspends_and_resumes_query_coroutine() {
+    let mut catalog = Catalog::new();
+    let mut session = ShellSession::new(&catalog, 80, false);
+    let pending = session.start_query(b"SELECT 42", &catalog);
+    assert_eq!(pending.status, ShellStatus::Pending);
+    assert!(pending.data.len() >= 16);
+    assert_eq!(read_u32(&pending.data, 0), 1);
+    assert_eq!(read_u32(&pending.data, 4), EffectType::ExecuteQuery as u32);
+    assert_eq!(&pending.data[16..], b"SELECT 42");
+
+    let ipc = write_ipc(&make_batch());
+    let complete = session.complete_effect(read_u64(&pending.data, 8), EffectCompletionStatus::Success, &ipc, &mut catalog);
+    assert_eq!(complete.status, ShellStatus::Ok);
+    assert!(text(&complete.data).contains("alpha"));
+    assert!(complete.data.ends_with(vt100::NEW_LINE.as_bytes()));
+}
+
+#[test]
+fn keeps_empty_query_results_empty() {
+    let mut catalog = Catalog::new();
+    let mut session = ShellSession::new(&catalog, 80, false);
+    let pending = session.start_query(b"CREATE TABLE foo(a INT)", &catalog);
+    assert_eq!(pending.status, ShellStatus::Pending);
+
+    let empty = RecordBatch::try_new_with_options(Arc::new(Schema::empty()), vec![], &RecordBatchOptions::new().with_row_count(Some(0))).unwrap();
+    let ipc = write_ipc(&empty);
+    let complete = session.complete_effect(read_u64(&pending.data, 8), EffectCompletionStatus::Success, &ipc, &mut catalog);
+    assert_eq!(complete.status, ShellStatus::Ok);
+    assert_eq!(complete.data, b"No results\r\n");
+}
+
+#[test]
+fn suspends_dot_command_as_effect() {
+    let catalog = Catalog::new();
+    let mut session = ShellSession::new(&catalog, 100, false);
+    session.set_prompt(b".help");
+
+    let pending = session.submit_prompt(&catalog);
+    assert_eq!(pending.status, ShellStatus::Pending);
+    assert_eq!(read_u32(&pending.data, 4), EffectType::ExecuteCommand as u32);
+    assert_eq!(&pending.data[16..], b".help");
+}
+
+#[test]
+fn completes_dot_command_prefixes() {
+    let catalog = Catalog::new();
+    let mut session = ShellSession::new(&catalog, 100, false);
+    assert_eq!(session.set_commands(b"clear\nhelp\nlogin"), ShellStatus::Ok);
+    session.set_prompt(b".hel");
+
+    let candidates = session.complete_prompt(10, &catalog).unwrap();
+    assert_eq!(candidates.len(), 1);
+    assert_eq!(candidates[0].display_text, ".help");
+    assert_eq!(candidates[0].completion_text, ".help");
+    assert_eq!(candidates[0].target_offset, 0);
+    assert_eq!(candidates[0].target_length, 4);
+}
+
+#[test]
+fn renders_inline_dot_command_hint() {
+    let catalog = Catalog::new();
+    let mut session = ShellSession::new(&catalog, 100, false);
+    assert_eq!(session.set_commands(b"clear\nhelp"), ShellStatus::Ok);
+    session.open_terminal(b"db> ");
+
+    let output = text(&session.consume_terminal_input(PromptInputKey::Text, b".hel", &catalog).data);
+    assert!(output.contains(&format!("{}p", vt100::FOREGROUND_BRIGHT_BLACK)), "{output}");
+    assert!(!output.contains('╭'), "{output}");
+}
+
+#[test]
+fn renders_registered_dot_command_names_in_bold() {
+    let catalog = Catalog::new();
+    let mut session = ShellSession::new(&catalog, 100, false);
+    assert_eq!(session.set_commands(b"login\nrefresh"), ShellStatus::Ok);
+    session.open_terminal(b"hyperdb> ");
+
+    let output = text(&session.consume_terminal_input(PromptInputKey::Text, b".refresh", &catalog).data);
+    assert!(output.contains(&format!("{}.refresh{}", vt100::BOLD, vt100::RESET_ATTRIBUTES)), "{output}");
+}
+
+#[test]
+fn compiles_plain_sql_before_execution() {
+    let catalog = Catalog::new();
+    let mut session = ShellSession::new(&catalog, 80, false);
+    let query = b"  SELECT 42; -- context\n";
+    let pending = session.start_query(query, &catalog);
+    assert_eq!(pending.status, ShellStatus::Pending);
+    assert_eq!(&pending.data[16..], query);
+}
+
+#[test]
+fn rejects_dashql_extensions() {
+    let catalog = Catalog::new();
+    let mut session = ShellSession::new(&catalog, 80, false);
+    let visualize = session.start_query(b"SELECT 1 AS value VISUALIZE USING vegalite (mark => bar, encoding => (x => (field => value)))", &catalog);
+    assert_eq!(visualize.status, ShellStatus::InvalidArgument);
+    assert!(text(&visualize.data).contains("not executable in the shell"));
+}
+
+#[test]
+fn rejects_concurrent_queries_and_stale_completions() {
+    let mut catalog = Catalog::new();
+    let mut session = ShellSession::new(&catalog, 80, false);
+    let pending = session.start_query(b"SELECT 1", &catalog);
+    assert_eq!(pending.status, ShellStatus::Pending);
+    let effect_id = read_u64(&pending.data, 8);
+
+    assert_eq!(session.start_query(b"SELECT 2", &catalog).status, ShellStatus::Busy);
+    assert_eq!(session.cancel_effect(effect_id, &mut catalog).data, b"Cancelled");
+    assert_eq!(session.cancel_effect(effect_id, &mut catalog).status, ShellStatus::StaleEffect);
+}
+
+#[test]
+fn converts_query_errors_to_output() {
+    let mut catalog = Catalog::new();
+    let mut session = ShellSession::new(&catalog, 80, false);
+    let pending = session.start_query(b"SELECT * FROM missing_table", &catalog);
+    assert_eq!(pending.status, ShellStatus::Pending);
+    let complete = session.complete_effect(read_u64(&pending.data, 8), EffectCompletionStatus::Error, b"syntax error", &mut catalog);
+    assert_eq!(complete.status, ShellStatus::Ok);
+    assert_eq!(complete.data, b"syntax error");
+}
+
+#[test]
+fn aligns_continuation_marker_with_prompt_marker() {
+    let catalog = Catalog::new();
+
+    let mut short_session = ShellSession::new(&catalog, 80, false);
+    assert_eq!(short_session.open_terminal(b"hyper> ").status, ShellStatus::Ok);
+    let short_output = text(&short_session.consume_terminal_input(PromptInputKey::Enter, b"", &catalog).data);
+    assert!(short_output.contains("    -> "));
+
+    let mut long_session = ShellSession::new(&catalog, 80, false);
+    assert_eq!(long_session.open_terminal(b"long-connection> ").status, ShellStatus::Ok);
+    let long_output = text(&long_session.consume_terminal_input(PromptInputKey::Enter, b"", &catalog).data);
+    assert!(long_output.contains("              -> "));
+}
+
+#[test]
+fn applies_readline_bindings_to_multiline_prompt() {
+    let catalog = Catalog::new();
+    let mut session = ShellSession::new(&catalog, 80, false);
+
+    session.set_prompt(b"SELECT one\nFROM table");
+    assert_eq!(session.consume_prompt_input(PromptInputKey::LineStart, b"").cursor_byte_offset as usize, "SELECT one\n".len());
+    assert_eq!(session.consume_prompt_input(PromptInputKey::KillWord, b"").text, "SELECT one\n table");
+    assert_eq!(session.consume_prompt_input(PromptInputKey::Yank, b"").text, "SELECT one\nFROM table");
+    assert_eq!(session.consume_prompt_input(PromptInputKey::LineEnd, b"").cursor_byte_offset as usize, "SELECT one\nFROM table".len());
+    assert_eq!(session.consume_prompt_input(PromptInputKey::BackwardKillWord, b"").text, "SELECT one\nFROM ");
+}
+
+#[test]
+fn renders_shell_prefixes_in_bold() {
+    let catalog = Catalog::new();
+    let mut session = ShellSession::new(&catalog, 80, false);
+    let initial = session.open_terminal(b"dashql> ");
+    assert_eq!(initial.status, ShellStatus::Ok);
+    assert!(text(&initial.data).contains("\x1b[1mdashql> \x1b[0m"));
+
+    let continuation = session.consume_terminal_input(PromptInputKey::Enter, b"", &catalog);
+    assert!(text(&continuation.data).contains("\x1b[1m     -> \x1b[0m"));
+    let _ = vt100::sequence(1, Command::CursorDown);
+}

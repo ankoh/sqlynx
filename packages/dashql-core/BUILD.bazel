@@ -544,6 +544,7 @@ cc_library(
     linkopts = DASHQL_LINKOPTS,
     deps = [
         ":dashql_core",
+        ":dashql_shell",
         ":test_utils",
         "@rapidyaml//:rapidyaml",
     ],
