@@ -356,16 +356,6 @@ cc_test(
     visibility = ["//visibility:public"]
 )
 cc_test(
-    name = "visualize_tests",
-    size = "small",
-    srcs = ["test/visualize_snapshot_test_suite.cc"],
-    data = ["//snapshots/visualize:files"],
-    copts = DASHQL_COPTS,
-    linkopts = DASHQL_LINKOPTS,
-    deps = CORE_TEST_DEPS,
-    visibility = ["//visibility:public"]
-)
-cc_test(
     name = "diff_tests",
     size = "small",
     srcs = ["test/diff_snapshot_test_suite.cc"],

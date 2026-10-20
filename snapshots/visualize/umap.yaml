@@ -111,7 +111,7 @@ visualize-snapshots:
       projection:
         method: umap
         metric: cosine
-        neighbors: 15
+        neighbors: 15.0
         min-dist: 0.1
 
   - name: vis_umap_select_source

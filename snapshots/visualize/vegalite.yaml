@@ -194,7 +194,7 @@ visualize-snapshots:
     roundtrip: |-
       SELECT * FROM sales
       VISUALIZE USING vegalite (
-        mark => (type => area, color => 'steelblue', stroke_dash => [4, 2], interpolate => 'monotone', tension => 0.5, tooltip => true, point => false, line => (stroke => 'red', stroke_width => 2))
+        mark => (type => area, color => 'steelblue', stroke_dash => [4, 2], interpolate => 'monotone', tension => 0.5, tooltip => true, point => false, line => (stroke => 'red', stroke_width => 2.0))
       );
 
   - name: vis_encoding_field_type
@@ -415,7 +415,7 @@ visualize-snapshots:
       VISUALIZE USING vegalite (
         mark => bar,
         encoding => (
-          x => (field => category, type => nominal, axis => (title => 'Category', label_angle => -45))
+          x => (field => category, type => nominal, axis => (title => 'Category', label_angle => -45.0))
         )
       );
 

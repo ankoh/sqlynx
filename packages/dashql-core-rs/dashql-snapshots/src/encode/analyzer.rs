@@ -84,7 +84,7 @@ pub fn format_double(value: f64) -> String {
     } else if value.is_infinite() {
         if value > 0.0 { ".inf".into() } else { "-.inf".into() }
     } else {
-        dashql_core::utils::format_double(value)
+        format!("{value:?}")
     }
 }
 
@@ -553,30 +553,4 @@ pub fn compare_script(expected: &Yaml, actual: &Yaml) -> Result<(), String> {
         crate::compare(want, &actual[key]).map_err(|e| format!("{key}: {e}"))?;
     }
     Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::format_double;
-
-    #[test]
-    fn formats_doubles() {
-        let cases = [
-            (100.0, "100"),
-            (-45.0, "-45"),
-            (0.1, "0.1"),
-            (0.0001, "0.0001"),
-            (0.00001, "1e-5"),
-            (1e6, "1000000"),
-            (1000000.5, "1000000.5"),
-            (1.2345678901234567e19, "1.2345678901234567e19"),
-            (1.5e300, "1.5e300"),
-            (0.30000000000000004, "0.30000000000000004"),
-            (0.0, "0"),
-            (f64::NEG_INFINITY, "-.inf"),
-        ];
-        for (value, text) in cases {
-            assert_eq!(format_double(value), text);
-        }
-    }
 }

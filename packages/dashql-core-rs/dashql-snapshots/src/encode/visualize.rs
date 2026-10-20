@@ -150,15 +150,6 @@ pub fn encode_dashboard_spec(spec: &DashboardSpec) -> Node {
     map.into_node()
 }
 
-/// A double of the dump format, `inf` and `nan` like the C++ oracle
-fn dump_double(d: f64) -> String {
-    match d {
-        d if d.is_nan() => "nan".to_string(),
-        d if d.is_infinite() => if d < 0.0 { "-inf" } else { "inf" }.to_string(),
-        d => dashql_core::utils::format_double(d),
-    }
-}
-
 /// A length-prefixed string of the dump format
 fn dump_string(out: &mut String, s: &str) {
     let _ = write!(out, "{}:{s}", s.len());
@@ -234,7 +225,7 @@ pub fn dump_visualizations(script: &AnalyzedScript) -> String {
             if let Some(p) = &umap.projection {
                 let _ = write!(out, " method={} metric=", p.method.0);
                 dump_string(&mut out, &p.metric);
-                let optional = |v: Option<f64>| v.map(dump_double).unwrap_or_else(|| "null".to_string());
+                let optional = |v: Option<f64>| v.map(|d| format!("{d:?}")).unwrap_or_else(|| "null".to_string());
                 let _ = write!(out, " neighbors={} min_dist={}", optional(p.neighbors), optional(p.min_dist));
             }
             out.push('\n');

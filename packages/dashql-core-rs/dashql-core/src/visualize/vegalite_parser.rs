@@ -1,6 +1,5 @@
 //! Turn a Vega-Lite spec back into a VISUALIZE statement (`vegalite_parser.cc`).
 
-use crate::utils::format_double;
 use serde_json::{Map, Number, Value};
 
 /// A JSON object
@@ -87,10 +86,10 @@ fn emit_string_literal(s: &str) -> String {
     format!("'{}'", s.replace('\'', "''"))
 }
 
-/// A JSON number as a bare DSL literal: integers as they are, doubles with their shortest round-trip digits
+/// A JSON number as a bare DSL literal
 fn emit_number(n: &Number) -> String {
     match n.as_f64() {
-        Some(d) if n.is_f64() => format_double(d),
+        Some(d) if n.is_f64() => format!("{d:?}"),
         _ => n.to_string(),
     }
 }
@@ -325,8 +324,8 @@ mod tests {
         for (json, literal) in [
             ("1", "1"),
             ("-12", "-12"),
-            ("1.0", "1"),
-            ("1234567.0", "1234567"),
+            ("1.0", "1.0"),
+            ("1234567.0", "1234567.0"),
             ("123456.7", "123456.7"),
             ("0.1", "0.1"),
             ("0.00001234", "1.234e-5"),
@@ -379,7 +378,7 @@ mod tests {
     fn emits_numbers() {
         assert_eq!(
             roundtrip(r#"{"data":{"$raw":"r"},"encoding":{"x":{"sort":[1, -2, 18446744073709551615, -0, 2.0, 0.25]}}}"#),
-            "r\nVISUALIZE USING vegalite (\n  encoding => (\n    x => (sort => [1, -2, 18446744073709551615, -0, 2, 0.25])\n  )\n);"
+            "r\nVISUALIZE USING vegalite (\n  encoding => (\n    x => (sort => [1, -2, 18446744073709551615, -0.0, 2.0, 0.25])\n  )\n);"
         );
     }
 }

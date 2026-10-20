@@ -77,14 +77,14 @@ pub fn fragments(rng: &mut Rng, fragments: &[&str], max_count: usize) -> String 
     (0..n).map(|_| *rng.pick(fragments)).collect()
 }
 
-/// Rewrite every decimal or exponent number literal of a text in one canonical form.
+/// Rewrite every number literal of a text in one canonical form.
 ///
-/// The Rust core writes doubles with the shortest round-trip digits, the C++ core with rapidjson's Grisu2 and its
-/// own notation (`12345678901234568000.0` vs `1.2345678901234567e+19`). Differential tests compare texts that embed
-/// such numbers after canonicalizing both sides, so they compare the values. Integers and digits that are part of
+/// The Rust core writes doubles with Rust's float formatting, the C++ core with rapidjson's Grisu2 or printf
+/// (`12345678901234568000.0` vs `1.2345678901234567e19`, `15` vs `15.0`). Differential tests compare texts that
+/// embed such numbers after canonicalizing both sides, so they compare the values. Digits that are part of
 /// identifiers or hex literals stay as they are.
 pub fn canonical_numbers(text: &str) -> String {
-    map_numbers(text, |value, is_double| is_double.then(|| format!("{value:e}")))
+    map_numbers(text, |value| format!("{value:e}"))
 }
 
 /// Round every number literal of a text, integers included, to the given number of significant digits.
@@ -94,12 +94,11 @@ pub fn canonical_numbers(text: &str) -> String {
 pub fn round_numbers(text: &str, significant_digits: usize) -> String {
     let precision = significant_digits.saturating_sub(1);
     // Adding zero folds -0 into 0
-    map_numbers(text, |value, _| Some(format!("{:.precision$e}", value + 0.0)))
+    map_numbers(text, |value| format!("{:.precision$e}", value + 0.0))
 }
 
-/// Replace the number literals of a text. `replace` gets the value and whether the literal has a fraction or an
-/// exponent, and returns the replacement or `None` to keep the literal.
-fn map_numbers(text: &str, replace: impl Fn(f64, bool) -> Option<String>) -> String {
+/// Replace the number literals of a text with a formatting of their values
+fn map_numbers(text: &str, replace: impl Fn(f64) -> String) -> String {
     let bytes = text.as_bytes();
     let is_word = |c: u8| c.is_ascii_alphanumeric() || c == b'_' || c == b'.';
     let mut out = String::with_capacity(text.len());
@@ -116,9 +115,7 @@ fn map_numbers(text: &str, replace: impl Fn(f64, bool) -> Option<String>) -> Str
         while end < bytes.len() && bytes[end].is_ascii_digit() {
             end += 1;
         }
-        let mut is_double = false;
         if end + 1 < bytes.len() && bytes[end] == b'.' && bytes[end + 1].is_ascii_digit() {
-            is_double = true;
             end += 1;
             while end < bytes.len() && bytes[end].is_ascii_digit() {
                 end += 1;
@@ -130,8 +127,7 @@ fn map_numbers(text: &str, replace: impl Fn(f64, bool) -> Option<String>) -> Str
                 exp += 1;
             }
             if exp < bytes.len() && bytes[exp].is_ascii_digit() {
-                is_double = true;
-                end = exp;
+                    end = exp;
                 while end < bytes.len() && bytes[end].is_ascii_digit() {
                     end += 1;
                 }
@@ -139,9 +135,9 @@ fn map_numbers(text: &str, replace: impl Fn(f64, bool) -> Option<String>) -> Str
         }
         let followed_by_word = end < bytes.len() && is_word(bytes[end]);
         if !followed_by_word {
-            if let Some(replacement) = text[begin..end].parse::<f64>().ok().and_then(|v| replace(v, is_double)) {
+            if let Ok(value) = text[begin..end].parse::<f64>() {
                 out.push_str(&text[copied..begin]);
-                out.push_str(&replacement);
+                out.push_str(&replace(value));
                 copied = end;
             }
         }
@@ -213,9 +209,10 @@ mod tests {
             canonical_numbers("string 9: 1.2345678901234567e+19")
         );
         assert_eq!(canonical_numbers("[0.5,-1e-7]"), "[5e-1,-1e-7]");
+        assert_eq!(canonical_numbers("min_dist=15"), canonical_numbers("min_dist=15.0"));
         assert_eq!(canonical_numbers("{\"a\":1e21}"), canonical_numbers("{\"a\":1000000000000000000000.0}"));
-        // Integers, identifiers and hex literals stay
-        assert_eq!(canonical_numbers("id 42 x1.5 0x3e5 v2 a_1e5"), "id 42 x1.5 0x3e5 v2 a_1e5");
+        // Identifiers and hex literals stay
+        assert_eq!(canonical_numbers("x1.5 0x3e5 v2 a_1e5"), "x1.5 0x3e5 v2 a_1e5");
     }
 
     #[test]

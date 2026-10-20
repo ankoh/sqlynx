@@ -440,7 +440,7 @@ analyzer-snapshots:
                 field-expr: 0
                 field-type: NOMINAL
                 axis:
-                  label-angle: -45
+                  label-angle: -45.0
 
   - name: vis_encoding_color
     catalog:

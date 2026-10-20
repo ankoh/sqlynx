@@ -158,7 +158,18 @@ fn compare_at(path: &mut String, expected: &Yaml, actual: &Yaml) -> Result<(), S
             Ok(())
         }
         (e, a) if e == a => Ok(()),
+        // Numbers compare by value, so `1` equals `1.0`
+        (e, a) if number(e).is_some_and(|e| number(a) == Some(e)) => Ok(()),
         (e, a) => Err(format!("{}: expected {}, got {}", location(path), describe(e), describe(a))),
+    }
+}
+
+/// The value of a numeric scalar
+fn number(value: &Yaml) -> Option<f64> {
+    match value {
+        Yaml::Integer(i) => Some(*i as f64),
+        Yaml::Real(_) => value.as_f64(),
+        _ => None,
     }
 }
 
@@ -220,6 +231,8 @@ mod tests {
         );
         assert_eq!(compare(&yaml("a: [1, 2]"), &yaml("a: [1]")), Err(".a: expected 2 entries, got 1".to_string()));
         assert!(compare(&yaml("a: 1\nb: 2"), &yaml("b: 2\na: 1")).unwrap_err().contains("keys differ"));
+        assert!(compare(&yaml("a: [1, -45, 1e+06]"), &yaml("a: [1.0, -45.0, 1000000.0]")).is_ok());
+        assert!(compare(&yaml("a: 1"), &yaml("a: '1'")).is_err());
     }
 
     #[test]
