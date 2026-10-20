@@ -236,6 +236,24 @@ wasm_crate.from_cargo(
 )
 use_repo(wasm_crate, "umap_crates")
 
+# Crate universe for the Rust rewrite of dashql-core (//packages/dashql-core-rs). Isolated
+# like umap_crates: the core is built natively (tests, differential oracle) and for wasm32.
+# After changing packages/dashql-core-rs/Cargo.{toml,lock} or a member manifest, repin:
+#   CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
+core_crate = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate", isolate = True)
+core_crate.from_cargo(
+    name = "core_crates",
+    cargo_lockfile = "//packages/dashql-core-rs:Cargo.lock",
+    manifests = ["//packages/dashql-core-rs:Cargo.toml"],
+    supported_platform_triples = [
+        "wasm32-unknown-unknown",
+        "aarch64-apple-darwin",
+        "x86_64-apple-darwin",
+        "x86_64-unknown-linux-gnu",
+    ],
+)
+use_repo(core_crate, "core_crates")
+
 use_repo(
     native_crate,
     "crates",

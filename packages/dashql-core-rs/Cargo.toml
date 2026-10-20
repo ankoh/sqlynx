@@ -1,0 +1,26 @@
+# Rust rewrite of dashql-core (see docs/rust-port/README.md).
+#
+# Bazel builds everything (//packages/dashql-core-rs:BUILD.bazel); these manifests only feed the
+# isolated @core_crates crate universe (MODULE.bazel) and Cargo.lock generation. Generated
+# sources (parser tables, FlatBuffers bindings) exist only in Bazel, so `cargo build` is not
+# expected to work.
+#
+# Repin after editing any member manifest: CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
+[workspace]
+resolver = "2"
+members = ["dashql-core-wasm", "dashql-grammar", "dashql-oracle", "dashql-snapshots"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MPL-2.0"
+
+[workspace.dependencies]
+flatbuffers = "=25.12.19"
+libtest-mimic = "=0.8.1"
+# Must match the wasm-bindgen-cli bundled with rules_rust_wasm_bindgen (MODULE.bazel).
+wasm-bindgen = "=0.2.105"
+yaml-rust2 = "=0.11.0"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }

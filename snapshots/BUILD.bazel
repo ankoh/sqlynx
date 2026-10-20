@@ -14,6 +14,7 @@ snapshot_library(
         "//snapshots/diff:files",
         "//snapshots/formatter:files",
         "//snapshots/parser:files",
+        "//snapshots/planner:files",
         "//snapshots/plans/hyper/tests:files",
         "//snapshots/visualize:files",
     ],

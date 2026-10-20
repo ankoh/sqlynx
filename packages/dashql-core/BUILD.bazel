@@ -533,6 +533,24 @@ cc_binary(
 )
 
 # ---------------------------------------------------------------------------
+# Differential test oracle for the Rust rewrite (//packages/dashql-core-rs).
+# A C ABI over the snapshot encoders that never throws; linked natively into rust_test targets.
+# ---------------------------------------------------------------------------
+
+cc_library(
+    name = "oracle_ffi",
+    srcs = ["tools/oracle_ffi.cc"],
+    copts = DASHQL_COPTS,
+    linkopts = DASHQL_LINKOPTS,
+    deps = [
+        ":dashql_core",
+        ":test_utils",
+        "@rapidyaml//:rapidyaml",
+    ],
+    visibility = ["//packages/dashql-core-rs:__pkg__"],
+)
+
+# ---------------------------------------------------------------------------
 # Fuzzer Tests
 # ---------------------------------------------------------------------------
 

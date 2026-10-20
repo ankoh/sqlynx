@@ -97,6 +97,7 @@ bazel test //packages/dashql-core:*_tests
 | `//packages/dashql-core:analyzer_tests` | Analyzer snapshot tests |
 | `//packages/dashql-core:formatter_tests` | Formatter snapshot tests |
 | `//packages/dashql-core:formatter_validation_hyper_tests` | Execute formatted SQL against Hyper |
+| `//packages/dashql-core-rs/...` | Rust rewrite of the core: grammar tables, table parity, C++ oracle replay (see `docs/rust-port/README.md`) |
 | `//packages/dashql-core-js:all` | Core Node unit, assembled-runtime, and tarball consumer tests |
 | `//packages/dashql-core-js/test:all` | Core browser tests in Chromium and Firefox, including browser workers |
 | `//packages/hyper-api:smoke_test` | Native Tableau Hyper API integration test |
