@@ -65,3 +65,17 @@ the C++ core.
   (`packages/dashql-core/test/parser_snapshot_test_suite.cc`) never registers `error_recovery.yaml`,
   `functions.yaml`, `sql_function.yaml` and `tpch_schema.yaml` (18 cases). They are still up to date:
   `//packages/dashql-core-rs:oracle_parser_snapshot_test` replays all 506 parser cases.
+
+## Fixed in C++ before porting
+
+Behavior that depended on the hash table implementation was made deterministic in the C++ core first,
+because native builds (libstdc++) and wasm builds (libc++) could disagree, and a port cannot reproduce
+it. This changed one snapshot (`analyzer/names.yaml`):
+
+- **Ambiguous column candidates are listed in FROM order.** `NameScope::referenced_tables_by_name` and
+  `NameScope::cte_definitions` are `ankerl::unordered_dense::map`s, which iterate in insertion order.
+- **Duplicate unqualified names resolve in declaration order.** `CatalogEntry::tables_by_unqualified_name`,
+  `table_columns_by_name` and `functions_by_unqualified_name` are btree multimaps that keep the insertion
+  order of equal keys.
+- **Catalog-wide column lookups visit entries by rank** (`ResolveTableColumnsWithCatalog`).
+- **The `FlatCatalog` name dictionary is built in rank order** (`Catalog::Flatten`).

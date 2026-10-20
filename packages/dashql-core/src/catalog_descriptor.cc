@@ -141,11 +141,11 @@ DescriptorEntry::DescriptorEntry(Catalog& catalog, CatalogEntryID id, Rank rank,
                     column.table = table;
                     column_name.resolved_objects.PushBack(column);
                     table.table_columns_by_name.emplace(column_name.text, column);
-                    table_columns_by_name.emplace(column_name.text, column);
+                    table_columns_by_name.insert({column_name.text, column});
                 }
             }
             tables_by_qualified_name.emplace(QualifiedTableName::Key{db.text, schema.text, table_name.text}, table);
-            tables_by_unqualified_name.emplace(table_name.text, table);
+            tables_by_unqualified_name.insert({table_name.text, table});
             tables_by_unqualified_schema.insert({{schema.text, db.text}, table});
         }
     }
@@ -171,7 +171,7 @@ DescriptorEntry::DescriptorEntry(Catalog& catalog, CatalogEntryID id, Rank rank,
             function_name.resolved_objects.PushBack(function);
             functions_by_qualified_name.emplace(
                 QualifiedFunctionName::Key{db.text, schema.text, function_name.text}, function);
-            functions_by_unqualified_name.emplace(function_name.text, function);
+            functions_by_unqualified_name.insert({function_name.text, function});
         }
     }
 }

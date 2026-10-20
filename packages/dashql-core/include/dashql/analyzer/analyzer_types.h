@@ -10,6 +10,8 @@
 #include <string_view>
 #include <type_traits>
 #include <unordered_map>
+
+#include "ankerl/unordered_dense.h"
 #include <variant>
 #include <vector>
 
@@ -412,8 +414,9 @@ struct NameScope : public IntrusiveListNode {
     std::vector<ScopeColumn> output_columns;
     /// The output columns indexed by name (points into output_columns)
     std::unordered_map<std::string_view, size_t> output_columns_by_name;
-    /// The resolved CTEs in this scope (name → resolved CTE)
-    std::unordered_map<std::string_view, ResolvedCTE> cte_definitions;
+    /// The resolved CTEs in this scope (name → resolved CTE).
+    /// Iterates in definition order so that results do not depend on the hash implementation.
+    ankerl::unordered_dense::map<std::string_view, ResolvedCTE> cte_definitions;
     /// The AST node ids of CTE definitions, indexed by CTE name
     std::unordered_map<std::string_view, uint32_t> cte_definition_nodes;
     /// Whether this scope's WITH clause is recursive
@@ -422,8 +425,9 @@ struct NameScope : public IntrusiveListNode {
     bool child_output_resolution_barrier = false;
     /// Do not resolve child expressions against this scope or scopes above it.
     bool column_correlation_barrier = false;
-    /// The named table-like sources in scope (catalog tables and CTEs brought in via FROM)
-    std::unordered_map<std::string_view, ReferencedTable> referenced_tables_by_name;
+    /// The named table-like sources in scope (catalog tables and CTEs brought in via FROM).
+    /// Iterates in FROM order so that results (e.g. ambiguity errors) do not depend on the hash implementation.
+    ankerl::unordered_dense::map<std::string_view, ReferencedTable> referenced_tables_by_name;
 };
 
 /// A candidate owner table for a schema-inference constraint.

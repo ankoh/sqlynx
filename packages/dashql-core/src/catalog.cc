@@ -226,7 +226,9 @@ void CatalogEntry::ResolveTableColumns(std::string_view table_column, std::vecto
 }
 
 void CatalogEntry::ResolveTableColumnsWithCatalog(std::string_view table_column, std::vector<TableColumn>& tmp) const {
-    for (auto& [key, entry] : catalog.entries) {
+    // Visit the entries in ranked order so that the order does not depend on the hash implementation
+    for (auto& [rank, entry_id] : catalog.entries_ranked) {
+        auto* entry = catalog.entries.at(entry_id);
         if (entry != this) {
             entry->ResolveTableColumns(table_column, tmp);
         }
@@ -454,10 +456,11 @@ flatbuffers::Offset<buffers::catalog::FlatCatalog> Catalog::Flatten(flatbuffers:
     std::unordered_map<QualifiedCatalogObjectID, DatabaseNode*> database_node_map;
     std::unordered_map<QualifiedCatalogObjectID, SchemaNode*> schema_node_map;
 
-    for (auto& [catalog_entry_id, catalog_entry] : entries) {
+    // Visit entries and databases in a defined order, the name dictionary must not depend on the hash implementation
+    for (auto& [rank, catalog_entry_id] : entries_ranked) {
+        auto* catalog_entry = entries.at(catalog_entry_id);
         /// Register all databases
-        for (auto& [db_key, db_ref_raw] : catalog_entry->databases_by_name) {
-            auto& db_ref = db_ref_raw.get();
+        catalog_entry->database_references.ForEach([&](size_t, const CatalogEntry::DatabaseReference& db_ref) {
             if (auto iter = database_node_map.find(db_ref.object_id); iter == database_node_map.end()) {
                 auto db_name = db_ref.database_name;
                 auto db_name_id = add_name(db_ref.database_name);
@@ -468,7 +471,7 @@ flatbuffers::Offset<buffers::catalog::FlatCatalog> Catalog::Flatten(flatbuffers:
                 [[maybe_unused]] bool db_name_unique = root.insert({db_name, db_node}).second;
                 assert(db_name_unique);
             }
-        }
+        });
 
         /// Register all schemas
         for (auto& [schema_key, schema_ref_raw] : catalog_entry->schemas_by_qualified_name) {

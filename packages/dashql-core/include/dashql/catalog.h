@@ -345,8 +345,8 @@ class CatalogEntry {
     /// We use this multimap to quickly find all table declarations if the table name is not qualified.
     /// Note that this name may easily be amgiguous then cross schemas.
     /// We pick an arbitrary match and emit an ambiguity warning
-    std::unordered_multimap<std::string_view, std::reference_wrapper<const TableDeclaration>>
-        tables_by_unqualified_name;
+    /// Duplicate names keep their declaration order so that the pick does not depend on the hash implementation.
+    btree::multimap<std::string_view, std::reference_wrapper<const TableDeclaration>> tables_by_unqualified_name;
     /// The tables indexed by schema name.
     /// Key: (schema, database)
     ///
@@ -360,15 +360,16 @@ class CatalogEntry {
     ///
     /// During SQL completion, we also want to find out what tables a column *might* come from.
     /// This is a more costly completion since a columns names might occur in many tables which are not yet in scope.
-    std::unordered_multimap<std::string_view, std::reference_wrapper<const TableColumn>> table_columns_by_name;
+    /// Duplicate names keep their declaration order.
+    btree::multimap<std::string_view, std::reference_wrapper<const TableColumn>> table_columns_by_name;
     /// The function declarations
     ChunkBuffer<FunctionDeclaration, 16> function_declarations;
     /// Functions indexed by qualified name
     std::unordered_map<QualifiedFunctionName::Key, std::reference_wrapper<const FunctionDeclaration>, TupleHasher>
         functions_by_qualified_name;
     /// Functions by unqualified name
-    std::unordered_multimap<std::string_view, std::reference_wrapper<const FunctionDeclaration>>
-        functions_by_unqualified_name;
+    /// Duplicate names keep their declaration order.
+    btree::multimap<std::string_view, std::reference_wrapper<const FunctionDeclaration>> functions_by_unqualified_name;
     /// The name search index.
     /// This name search index stores suffixes of all registered names.
     std::optional<CatalogEntry::NameSearchIndex> name_search_index;

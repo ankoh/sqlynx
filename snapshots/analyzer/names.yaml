@@ -28,7 +28,7 @@ analyzer-snapshots:
       catalog-id: 2
       errors:
         - type: COLUMN_REF_AMBIGUOUS
-          message: 'column reference is ambiguous, candidates: b.a, a.a'
+          message: 'column reference is ambiguous, candidates: a.a, b.a'
           text: "a"
       table-refs:
         - type: name/catalog
