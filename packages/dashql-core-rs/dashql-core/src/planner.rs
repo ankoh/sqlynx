@@ -102,9 +102,17 @@ impl PlanState<'_> {
     }
 }
 
+/// A script to plan and the catalog it was analyzed with (`PlannerInput`)
+#[derive(Clone, Copy)]
+pub struct PlannerInput<'a> {
+    pub script: &'a Script,
+    pub catalog: &'a Catalog,
+}
+
 /// Plan the statements of scripts (`Planner::Plan`). Consumes the current analysis without
-/// analyzing, publishing or changing scripts.
-pub fn plan(inputs: &[&Script], catalog: &Catalog) -> ExecutionGraphT {
+/// analyzing, publishing or changing scripts. All scripts must belong to the same catalog.
+pub fn plan(planner_inputs: &[PlannerInput]) -> ExecutionGraphT {
+    let inputs: Vec<&Script> = planner_inputs.iter().map(|input| input.script).collect();
     let mut state = PlanState {
         graph: ExecutionGraphT::default(),
         entities: BTreeMap::new(),
@@ -119,8 +127,15 @@ pub fn plan(inputs: &[&Script], catalog: &Catalog) -> ExecutionGraphT {
     let mut offsets = Vec::new();
     let mut scripts_meta = Vec::new();
     let mut count = 0u32;
-    for script in inputs {
+    // The catalog of the first script
+    let mut catalog: Option<&Catalog> = None;
+    for input in planner_inputs {
+        let script = input.script;
         offsets.push(count);
+        let first = *catalog.get_or_insert(input.catalog);
+        if first.id() != input.catalog.id() {
+            state.diagnose(NONE, "planner scripts belong to different catalogs".into(), true);
+        }
         if !script_ids.insert(script.catalog_entry_id()) {
             state.diagnose(NONE, "duplicate planner script".into(), true);
         }
@@ -132,7 +147,7 @@ pub fn plan(inputs: &[&Script], catalog: &Catalog) -> ExecutionGraphT {
             state.diagnose(NONE, "missing or stale script analysis".into(), true);
             continue;
         }
-        if analyzed.entry.catalog_version != catalog.version() {
+        if analyzed.entry.catalog_version != input.catalog.version() {
             state.diagnose(NONE, "stale catalog analysis".into(), true);
             continue;
         }
@@ -184,7 +199,7 @@ pub fn plan(inputs: &[&Script], catalog: &Catalog) -> ExecutionGraphT {
             }
         }
     };
-    for (_, entry) in catalog.entries_ranked() {
+    for (_, entry) in catalog.into_iter().flat_map(|c| c.entries_ranked()) {
         if let CatalogEntryRef::Script(analyzed) = entry {
             remember_views(&mut views, analyzed);
         }
@@ -212,7 +227,7 @@ pub fn plan(inputs: &[&Script], catalog: &Catalog) -> ExecutionGraphT {
     let mut dropped_resources: BTreeSet<Name> = BTreeSet::new();
     let mut live_views: BTreeSet<Name> = BTreeSet::new();
     let mut live_namespace: BTreeMap<Name, &TableDeclaration> = BTreeMap::new();
-    for (_, entry) in catalog.entries_ranked() {
+    for (_, entry) in catalog.into_iter().flat_map(|c| c.entries_ranked()) {
         // Participating declarations enter the namespace only when their CREATE is reached
         if script_ids.contains(&entry.data().catalog_entry_id) {
             continue;

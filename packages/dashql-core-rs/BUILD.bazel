@@ -264,6 +264,7 @@ rust_wasm_bindgen(
     name = "dashql_core_bindgen",
     out_name = "dashql_core",
     target = "web",
+    visibility = ["//visibility:public"],
     wasm_file = ":dashql_core_wasm",
 )
 
@@ -277,6 +278,7 @@ optimize_wasm(
     name = "core_wasm",
     src = ":dashql_core_bindgen_wasm",
     out = "dashql_core_bg.wasm",
+    visibility = ["//visibility:public"],
 )
 
 # The Rust scanner must produce exactly the output of the C++ scanner: all snapshot inputs, their

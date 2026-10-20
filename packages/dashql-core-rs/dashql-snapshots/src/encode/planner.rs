@@ -97,7 +97,8 @@ pub fn encode_fixture(fixture: &Yaml) -> Result<Yaml, String> {
         }
     }
     let inputs: Vec<&Script> = scripts.iter().map(|(s, _)| s).collect();
-    let graph = dashql_core::planner::plan(&inputs, &catalog);
+    let planner_inputs: Vec<_> = inputs.iter().map(|&script| dashql_core::planner::PlannerInput { script, catalog: &catalog }).collect();
+    let graph = dashql_core::planner::plan(&planner_inputs);
     drop(catalog_script);
     Ok(encode_graph(&graph, &inputs, &names))
 }
