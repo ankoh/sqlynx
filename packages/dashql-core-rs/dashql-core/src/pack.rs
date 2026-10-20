@@ -373,6 +373,27 @@ fn qualified_function_name(n: &QualifiedFunctionName) -> QualifiedFunctionNameT 
     })
 }
 
+/// Pack a function declaration (`FunctionDeclaration::Pack`)
+pub fn pack_function_declaration(f: &FunctionDeclaration) -> FunctionDeclarationT {
+    build!(FunctionDeclarationT {
+        ast_node_id: f.ast_node_id,
+        ast_statement_id: f.ast_statement_id.unwrap_or(PROTO_NULL_U32),
+        is_aggregate: f.is_aggregate,
+        function_name: Some(Box::new(qualified_function_name(&f.function_name))),
+        params: Some(
+            f.params
+                .iter()
+                .map(|p| build!(FunctionParamT {
+                    ast_node_id: p.ast_node_id.unwrap_or(PROTO_NULL_U32),
+                    param_name: Some(p.param_name.text.to_string()),
+                    param_type: Some(p.param_type.to_string()),
+                }))
+                .collect(),
+        ),
+        return_type: non_empty_str(&f.return_type),
+    })
+}
+
 /// Pack a table declaration (`TableDeclaration::Pack`)
 pub fn pack_table(table: &TableDeclaration) -> TableT {
     let (db, schema) = table.catalog_schema_id.unpack_schema_id();
@@ -617,23 +638,7 @@ pub fn pack_analyzed_script(script: &AnalyzedScript, visualize: &VisualizationPa
     let function_declarations = entry
         .function_declarations
         .iter()
-        .map(|f| build!(FunctionDeclarationT {
-            ast_node_id: f.ast_node_id,
-            ast_statement_id: f.ast_statement_id.unwrap_or(PROTO_NULL_U32),
-            is_aggregate: f.is_aggregate,
-            function_name: Some(Box::new(qualified_function_name(&f.function_name))),
-            params: Some(
-                f.params
-                    .iter()
-                    .map(|p| build!(FunctionParamT {
-                        ast_node_id: p.ast_node_id.unwrap_or(PROTO_NULL_U32),
-                        param_name: Some(p.param_name.text.to_string()),
-                        param_type: Some(p.param_type.to_string()),
-                    }))
-                    .collect(),
-            ),
-            return_type: non_empty_str(&f.return_type),
-        }))
+        .map(pack_function_declaration)
         .collect();
     let visualization_specs = script
         .visualization_specs
@@ -875,4 +880,18 @@ pub fn pack_visualization(
         Box::new(flatbuffers::root::<MarkdownSpec>(builder.finished_data()).unwrap().unpack())
     });
     (vegalite, umap, markdown)
+}
+
+/// Pack the declarations of a catalog entry as descriptor (`PackCatalogDescriptor`)
+pub fn pack_catalog_descriptor(entry: &CatalogEntryData) -> crate::error::Result<Vec<u8>> {
+    let mut descriptor = dashql_buffers::catalog::CatalogDescriptorT::default();
+    // The C++ builder always writes both vectors
+    descriptor.tables = Some(entry.table_declarations.iter().map(pack_table).collect());
+    descriptor.function_declarations = Some(entry.function_declarations.iter().map(pack_function_declaration).collect());
+    let mut builder = flatbuffers::FlatBufferBuilder::new();
+    let packed = descriptor.pack(&mut builder);
+    builder.finish(packed, None);
+    let bytes = builder.finished_data().to_vec();
+    crate::catalog::descriptor::validate_descriptor(&bytes)?;
+    Ok(bytes)
 }

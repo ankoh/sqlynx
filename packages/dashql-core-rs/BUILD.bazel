@@ -471,3 +471,20 @@ rust_test(
         "@core_crates//:flatbuffers",
     ],
 )
+
+# Batch processing must produce exactly the BatchResult of the C++ core.
+rust_test(
+    name = "batch_differential_test",
+    size = "medium",
+    srcs = ["dashql-oracle/tests/batch_differential.rs"],
+    data = ["//snapshots:files"],
+    edition = "2021",
+    use_libtest_harness = False,
+    deps = [
+        ":dashql_core",
+        ":dashql_oracle",
+        ":dashql_snapshots",
+        "//proto/fb:dashql_buffers_rs",
+        "@core_crates//:flatbuffers",
+    ],
+)

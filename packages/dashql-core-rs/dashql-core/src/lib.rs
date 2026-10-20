@@ -3,6 +3,7 @@
 //! Builds on `dashql_grammar` (scanner and parser) and the FlatBuffers bindings `dashql_buffers`.
 
 pub mod analyzer;
+pub mod batch;
 pub mod catalog;
 pub mod compiler;
 pub mod completion;
