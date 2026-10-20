@@ -222,8 +222,14 @@ fn warn(state: &mut AnalysisState, error_type: AnalyzerErrorType, node: &Node, m
 }
 
 /// Saturating double to int32 conversion of the clamped values
+/// `static_cast<int32_t>(value)` as x86-64 computes it (`cvttsd2si`): NaN and values out of range become
+/// `INT32_MIN`, where Rust would saturate
 fn to_i32(value: f64) -> i32 {
-    value as i32
+    if value.is_nan() || value >= 2_147_483_648.0 || value <= -2_147_483_649.0 {
+        i32::MIN
+    } else {
+        value as i32
+    }
 }
 
 fn extract_dashboard_spec(state: &mut AnalysisState, node: &Node) -> DashboardSpec {

@@ -11,6 +11,7 @@ pub mod pack;
 pub mod script_diff;
 pub mod signature;
 pub mod view;
+pub mod visualize;
 
 use std::os::raw::c_char;
 

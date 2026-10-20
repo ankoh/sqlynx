@@ -5,7 +5,7 @@
 //! - `plan_view_model`: the view model and its FlatBuffers encoding (`PlanViewModel::Pack`)
 //! - `plan_layout`: the tree layout (Walker with the improvements of Buchheim, Juenger and Leipert)
 
-mod dtoa;
+pub(crate) mod dtoa;
 mod hyper_plan_parser;
 pub mod json;
 mod plan_layout;

@@ -11,6 +11,9 @@
 //! - the writer (`Writer<StringBuffer>`), which stops at NaN and infinity and leaves partial output behind
 //!
 //! The input is copied into a NUL-terminated buffer before parsing, so a NUL byte ends the input.
+//!
+//! The visualization port reads Vega-Lite specs with the same reader and the default flags
+//! (`Document::parse_with(input, ParseFlags::DEFAULT)`).
 
 use super::dtoa;
 use std::sync::OnceLock;
@@ -114,6 +117,28 @@ pub fn c_str(s: &[u8]) -> &[u8] {
     }
 }
 
+/// The `kParse*Flag`s of the reader that the C++ core uses
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ParseFlags {
+    /// `kParseCommentsFlag`
+    pub comments: bool,
+    /// `kParseNanAndInfFlag`
+    pub nan_and_inf: bool,
+    /// `kParseTrailingCommasFlag`
+    pub trailing_commas: bool,
+    /// `kParseValidateEncodingFlag`
+    pub validate_encoding: bool,
+}
+
+impl ParseFlags {
+    /// `kParseDefaultFlags` (`GenericDocument::Parse` without flags)
+    pub const DEFAULT: ParseFlags =
+        ParseFlags { comments: false, nan_and_inf: false, trailing_commas: false, validate_encoding: false };
+    /// The flags of the plan view model
+    pub const PLAN: ParseFlags =
+        ParseFlags { comments: true, nan_and_inf: true, trailing_commas: true, validate_encoding: true };
+}
+
 /// A parsed JSON document
 #[derive(Clone, Debug, Default)]
 pub struct Document {
@@ -125,9 +150,14 @@ impl Document {
     /// Parse a document (`GenericDocument::ParseInsitu` with the flags of the plan view model).
     /// Returns `None` if rapidjson reports a parse error.
     pub fn parse(input: &[u8]) -> Option<Document> {
+        Self::parse_with(input, ParseFlags::PLAN)
+    }
+
+    /// Parse a document with the given flags. Returns `None` if rapidjson reports a parse error.
+    pub fn parse_with(input: &[u8], flags: ParseFlags) -> Option<Document> {
         // The input is copied into a NUL-terminated buffer, the reader stops at the first NUL
         let end = input.iter().position(|b| *b == 0).unwrap_or(input.len());
-        let mut reader = Reader { src: &input[..end], pos: 0, values: Vec::new() };
+        let mut reader = Reader { src: &input[..end], pos: 0, values: Vec::new(), flags };
         reader.parse().ok()?;
         Some(Document { values: reader.values })
     }
@@ -295,6 +325,8 @@ struct Reader<'a> {
     pos: usize,
     /// The values
     values: Vec<Value>,
+    /// The parse flags
+    flags: ParseFlags,
 }
 
 impl Reader<'_> {
@@ -344,6 +376,9 @@ impl Reader<'_> {
 
     fn skip_whitespace_and_comments(&mut self) -> ParseResult<()> {
         self.skip_whitespace();
+        if !self.flags.comments {
+            return Ok(());
+        }
         while self.consume(b'/') {
             if self.consume(b'*') {
                 loop {
@@ -428,7 +463,7 @@ impl Reader<'_> {
                 _ => return Err(ParseError),
             }
             // kParseTrailingCommasFlag
-            if self.peek() == b'}' {
+            if self.flags.trailing_commas && self.peek() == b'}' {
                 self.take();
                 return Ok(self.push(Value::Object(members)));
             }
@@ -453,7 +488,7 @@ impl Reader<'_> {
                 return Err(ParseError);
             }
             // kParseTrailingCommasFlag
-            if self.peek() == b']' {
+            if self.flags.trailing_commas && self.peek() == b']' {
                 self.take();
                 return Ok(self.push(Value::Array(elements)));
             }
@@ -477,7 +512,7 @@ impl Reader<'_> {
         Ok(codepoint)
     }
 
-    /// `ParseString` with `ParseStringToStream` and `kParseValidateEncodingFlag`
+    /// `ParseString` with `ParseStringToStream`
     fn parse_string(&mut self) -> ParseResult<Vec<u8>> {
         self.take(); // Skip '"'
         let mut out = Vec::new();
@@ -513,6 +548,9 @@ impl Reader<'_> {
             } else if c < 0x20 {
                 // kParseErrorStringMissQuotationMark or kParseErrorStringEscapeInvalid
                 return Err(ParseError);
+            } else if !self.flags.validate_encoding {
+                // `Transcoder<UTF8, UTF8>::Transcode` copies the code unit
+                out.push(self.take());
             } else if !self.validate_utf8(&mut out) {
                 return Err(ParseError);
             }
@@ -593,7 +631,7 @@ impl Reader<'_> {
             }
         }
         // Parse NaN or Infinity here
-        else if self.peek() == b'I' || self.peek() == b'N' {
+        else if self.flags.nan_and_inf && (self.peek() == b'I' || self.peek() == b'N') {
             use_nan_or_inf = true;
             if self.consume(b'N') && self.consume(b'a') && self.consume(b'N') {
                 d = f64::NAN;
@@ -759,6 +797,39 @@ impl Reader<'_> {
     }
 }
 
+/// `Writer::WriteString` with the default flags: escapes control characters, quotes and backslashes and copies
+/// all other bytes without validation
+pub(crate) fn write_string(out: &mut Vec<u8>, s: &[u8]) {
+    const HEX_DIGITS: &[u8; 16] = b"0123456789ABCDEF";
+    out.push(b'"');
+    for &c in s {
+        let escape = match c {
+            0x08 => b'b',
+            0x09 => b't',
+            0x0A => b'n',
+            0x0C => b'f',
+            0x0D => b'r',
+            0x00..=0x1F => b'u',
+            b'"' => b'"',
+            b'\\' => b'\\',
+            _ => 0,
+        };
+        if escape != 0 {
+            out.push(b'\\');
+            out.push(escape);
+            if escape == b'u' {
+                out.extend_from_slice(b"00");
+                out.push(HEX_DIGITS[(c >> 4) as usize]);
+                out.push(HEX_DIGITS[(c & 0xF) as usize]);
+            }
+        } else {
+            // UTF-8 to UTF-8 without validation copies the code unit
+            out.push(c);
+        }
+    }
+    out.push(b'"');
+}
+
 /// A nesting level of the writer
 struct Level {
     in_array: bool,
@@ -788,34 +859,7 @@ impl Writer {
 
     /// `WriteString`
     fn write_string(&mut self, s: &[u8]) {
-        const HEX_DIGITS: &[u8; 16] = b"0123456789ABCDEF";
-        self.out.push(b'"');
-        for &c in s {
-            let escape = match c {
-                0x08 => b'b',
-                0x09 => b't',
-                0x0A => b'n',
-                0x0C => b'f',
-                0x0D => b'r',
-                0x00..=0x1F => b'u',
-                b'"' => b'"',
-                b'\\' => b'\\',
-                _ => 0,
-            };
-            if escape != 0 {
-                self.out.push(b'\\');
-                self.out.push(escape);
-                if escape == b'u' {
-                    self.out.extend_from_slice(b"00");
-                    self.out.push(HEX_DIGITS[(c >> 4) as usize]);
-                    self.out.push(HEX_DIGITS[(c & 0xF) as usize]);
-                }
-            } else {
-                // UTF-8 to UTF-8 without validation copies the code unit
-                self.out.push(c);
-            }
-        }
-        self.out.push(b'"');
+        write_string(&mut self.out, s);
     }
 
     /// `GenericValue::Accept`
@@ -912,6 +956,20 @@ mod tests {
         assert_eq!(doc.string(doc.root()), Some(&b"\xed\xb0\x80"[..]));
         assert_eq!(Document::parse(b"\"\xff\"").is_none(), true);
         assert_eq!(Document::parse(b"\"\xc0\x80\"").is_none(), true);
+    }
+
+    #[test]
+    fn parses_with_default_flags() {
+        let parse = |input: &[u8]| Document::parse_with(input, ParseFlags::DEFAULT);
+        assert!(parse(br#"{"a":[1,2]}"#).is_some());
+        assert!(parse(br#"{"a":[1,2,]}"#).is_none());
+        assert!(parse(br#"{"a":1,}"#).is_none());
+        assert!(parse(b"[1] // c").is_none());
+        assert!(parse(b"[NaN]").is_none());
+        assert!(parse(b"[Infinity]").is_none());
+        // Without validation, invalid UTF-8 is copied
+        let doc = parse(b"\"\xff\xc0\x80\"").unwrap();
+        assert_eq!(doc.string(doc.root()), Some(&b"\xff\xc0\x80"[..]));
     }
 
     #[test]

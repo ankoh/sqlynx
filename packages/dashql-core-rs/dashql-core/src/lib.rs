@@ -15,3 +15,4 @@ pub mod script_diff;
 pub mod signature;
 pub mod utils;
 pub mod view;
+pub mod visualize;

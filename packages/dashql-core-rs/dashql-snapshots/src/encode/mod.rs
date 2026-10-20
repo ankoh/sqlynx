@@ -7,6 +7,7 @@
 pub mod analyzer;
 pub mod completion;
 pub mod parser;
+pub mod visualize;
 
 use yaml_rust2::yaml::Hash;
 use yaml_rust2::Yaml;
