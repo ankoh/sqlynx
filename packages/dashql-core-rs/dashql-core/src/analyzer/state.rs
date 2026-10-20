@@ -41,6 +41,7 @@ impl<'a> AnalysisState<'a> {
         let node_count = parsed.nodes.len();
         let out = AnalyzedScript {
             parsed: parsed.clone(),
+            catalog_id: catalog.id(),
             entry: CatalogEntryData::new(entry_id, catalog.version()),
             names,
             name_tags,

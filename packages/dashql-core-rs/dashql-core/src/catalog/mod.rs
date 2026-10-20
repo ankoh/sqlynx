@@ -89,9 +89,14 @@ struct IdReservations {
     next_entry_id: CatalogEntryId,
 }
 
+/// The source of unique catalog ids
+static NEXT_CATALOG_ID: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
+
 /// The catalog
 #[derive(Debug)]
 pub struct Catalog {
+    /// A process-unique id, recorded by the scripts analyzed against the catalog
+    id: u64,
     /// The version, bumped by every modification
     version: CatalogVersion,
     /// The published entries
@@ -123,6 +128,7 @@ impl Default for Catalog {
 impl Catalog {
     pub fn new() -> Self {
         Self {
+            id: NEXT_CATALOG_ID.fetch_add(1, std::sync::atomic::Ordering::Relaxed),
             version: 1,
             entries: HashMap::default(),
             script_entries: HashMap::default(),
@@ -140,6 +146,11 @@ impl Catalog {
                 next_entry_id: INITIAL_ENTRY_ID,
             }),
         }
+    }
+
+    /// The process-unique id of the catalog
+    pub fn id(&self) -> u64 {
+        self.id
     }
 
     pub fn version(&self) -> CatalogVersion {
@@ -243,6 +254,9 @@ impl Catalog {
         }
         let mut batch_ids = BTreeSet::new();
         for (script, _) in scripts {
+            if script.catalog_id != self.id {
+                return Err(Error::status(StatusCode::CATALOG_MISMATCH));
+            }
             let id = script.entry.catalog_entry_id;
             if !batch_ids.insert(id) {
                 return Err(Error::status(StatusCode::EXTERNAL_ID_COLLISION));

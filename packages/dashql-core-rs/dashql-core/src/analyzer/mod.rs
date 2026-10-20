@@ -30,6 +30,8 @@ use std::sync::Arc;
 pub struct AnalyzedScript {
     /// The parsed script
     pub parsed: Arc<ParsedScript>,
+    /// The id of the catalog the script was analyzed against (`Catalog::id`)
+    pub catalog_id: u64,
     /// The catalog declarations of the script
     pub entry: CatalogEntryData,
     /// The names of the scanned script, plus the empty name registered by the analyzer

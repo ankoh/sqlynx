@@ -1,8 +1,7 @@
 //! A port of `packages/dashql-core/test/catalog_test.cc`.
 //!
-//! Rust scripts do not reference a catalog and `Catalog::load_scripts` takes analyzed scripts, so
-//! the C++ checks for unanalyzed scripts (`CATALOG_SCRIPT_NOT_ANALYZED`) and scripts of another
-//! catalog (`CATALOG_MISMATCH`) have no Rust counterpart.
+//! `Catalog::load_scripts` takes analyzed scripts, so the C++ check for unanalyzed scripts
+//! (`CATALOG_SCRIPT_NOT_ANALYZED`) has no Rust counterpart.
 
 use dashql_buffers::status::StatusCode;
 use dashql_core::catalog::{Catalog, CatalogEntryId, Rank};
@@ -200,12 +199,18 @@ fn load_scripts_validation_failure_preserves_catalog() {
     catalog.load_script(loaded.analyzed.clone().unwrap(), 1).unwrap();
     let previous_version = catalog.version();
 
-    // The C++ batches with an unanalyzed script and with a script of another catalog cannot be
-    // expressed, see the module comment.
+    // The C++ batch with an unanalyzed script cannot be expressed, see the module comment.
     let valid_analyzed = valid.analyzed.clone().unwrap();
-    let error = catalog.load_scripts(&[(valid_analyzed.clone(), 2), (valid_analyzed, 3)]).unwrap_err();
+    let error = catalog.load_scripts(&[(valid_analyzed.clone(), 2), (valid_analyzed.clone(), 3)]).unwrap_err();
     assert_eq!(error.status, Some(StatusCode::EXTERNAL_ID_COLLISION));
     assert_eq!(catalog.version(), previous_version);
     assert!(catalog.contains(loaded.catalog_entry_id()));
+    assert!(!catalog.contains(valid.catalog_entry_id()));
+
+    let other_catalog = Catalog::new();
+    let mismatched = analyze(&other_catalog, "create table db.schema.other(id int);");
+    let error = catalog.load_scripts(&[(valid_analyzed, 2), (mismatched.analyzed.clone().unwrap(), 3)]).unwrap_err();
+    assert_eq!(error.status, Some(StatusCode::CATALOG_MISMATCH));
+    assert_eq!(catalog.version(), previous_version);
     assert!(!catalog.contains(valid.catalog_entry_id()));
 }

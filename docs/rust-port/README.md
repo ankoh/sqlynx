@@ -71,7 +71,7 @@ CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
 | 3 | Formatter, script_diff | 422 formatter and 13 diff snapshots; idempotency; Hyper validation | **done** (idempotency and Hyper validation open) |
 | 4 | Catalog, descriptor, AnalyzedScript, 4 analyzer passes | 101 analyzer snapshots; `ComputeSignature` equals C++ | **analyzer and signature done** (packing, catalog tests open) |
 | 5 | Cursor and completion | 161 completion snapshots; differential at every prefix and cursor | **done** (unit tests open) |
-| 6 | visualize, compiler, Script, batch, planner | 27 visualize and 38 planner snapshots; batch differential | |
+| 6 | visualize, compiler, Script, batch, planner | 27 visualize and 38 planner snapshots; batch differential | **done** |
 | 7 | ScriptSession, ScriptExecution, Hyper plan view | Session, execution and plan tests; 36 plan snapshots | |
 | 8 | wasm-bindgen API and rewrite of `dashql-core-js/src/api.ts` | core-js, browser and app tests on the Rust wasm; size and speed budgets | |
 | 9 | Switch-over | Release built from Rust; C++ removed after one release cycle | |
@@ -289,8 +289,19 @@ remaining per-list allocations.
 - **Visualize** (`dashql_core::visualize`): the Vega-Lite generator and parser, Markdown (md4c 0.5.2
   ported by hand) and UMAP. `:visualize_snapshot_test` passes 27/27, `:visualize_differential_test`
   finds 0 differences over 38k analyzed scripts, 73k Vega-Lite texts and 128k Markdown templates.
-- Open: compiler, batch, planner, and the `Script` unit tests (`completion_test.cc`,
-  `cursor_test.cc`, `script_test.cc`).
+- **Compiler** (`dashql_core::compiler`): `:compiler_differential_test` compares the packed
+  `ScriptCompilationResult` with C++ on all snapshot inputs and prefixes.
+- **Planner** (`dashql_core::planner`): `:planner_snapshot_test` passes all 38 planner snapshots.
+- **Batch** (`dashql_core::batch`): `:batch_differential_test` compares `BatchResult`s with the
+  nested FlatBuffers unpacked. A request with invalid UTF-8 script text fails as a whole in Rust (the
+  FlatBuffers verifier rejects it), C++ reports it per script.
+- **Unit tests**: 105 tests ported from `completion_test`, `cursor_test`, `catalog_test`,
+  `unification_test`, `name_tagging_test`, `analyzer_{declaration,delete,insert}_test`,
+  `script_test`, `topk_test` and `string_conversion_test` (`DASHQL_CORE_UNIT_TESTS`). Left out:
+  writes of the C++ public `text_version`, invalid UTF-8 edits (Rust takes `&str`), and
+  `CATALOG_SCRIPT_NOT_ANALYZED` (only analyzed scripts can be loaded). Catalogs carry a unique id
+  that analyzed scripts record, so loading a script of another catalog fails with
+  `CATALOG_MISMATCH` as in C++.
 
 **Open items**
 - The repository `rustfmt.toml` is not valid TOML (`max_width: 120`), so rustfmt refuses it. Format
