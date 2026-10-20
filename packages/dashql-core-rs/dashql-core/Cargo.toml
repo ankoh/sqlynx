@@ -11,8 +11,11 @@ arrow-buffer.workspace = true
 arrow-ipc.workspace = true
 arrow-schema.workspace = true
 flatbuffers.workspace = true
+pulldown-cmark.workspace = true
 ropey.workspace = true
 serde_json.workspace = true
+unicode-segmentation.workspace = true
+unicode-width.workspace = true
 
 [lints]
 workspace = true

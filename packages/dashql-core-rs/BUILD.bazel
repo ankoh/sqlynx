@@ -117,8 +117,11 @@ rust_library(
         "@core_crates//:arrow-ipc",
         "@core_crates//:arrow-schema",
         "@core_crates//:flatbuffers",
+        "@core_crates//:pulldown-cmark",
         "@core_crates//:ropey",
         "@core_crates//:serde_json",
+        "@core_crates//:unicode-segmentation",
+        "@core_crates//:unicode-width",
     ],
 )
 
