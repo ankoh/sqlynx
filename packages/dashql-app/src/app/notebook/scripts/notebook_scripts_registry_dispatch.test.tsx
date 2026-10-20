@@ -76,16 +76,15 @@ describe('useNotebookScripts dispatch', () => {
                         </AttachedDatabaseRegistry>
                     </StorageProvider>
                 </LoggerProvider>);
-                await new Promise(resolve => setTimeout(resolve, 0));
             });
+            // The seeded registry renders the consumer from a scheduled (non-sync) update.
+            await vi.waitFor(() => expect(current?.[0]?.notebookId).toBe(notebookId));
         };
 
         try {
             await render('a');
-            expect(current[0]?.notebookId).toBe('a');
             const modifyA = current[1];
             await render('b');
-            expect(current[0]?.notebookId).toBe('b');
             const modifyB = current[1];
             expect(modifyB).not.toBe(modifyA);
 
@@ -97,22 +96,20 @@ describe('useNotebookScripts dispatch', () => {
                 resultB = modifyB({ type: REGISTER_QUERY, value: [1, 202] });
                 expect(registry.notebookScriptsMap.get('a')?.scripts[1].latestQueryId).toBeNull();
                 expect(registry.notebookScriptsMap.get('b')?.scripts[1].latestQueryId).toBeNull();
-                await new Promise(resolve => setTimeout(resolve, 0));
             });
 
             const [resolvedA, resolvedB] = await Promise.all([resultA, resultB]);
             expect(resolvedA).toMatchObject({ notebookId: 'a', scripts: { 1: { latestQueryId: 101 } } });
             expect(resolvedB).toMatchObject({ notebookId: 'b', scripts: { 1: { latestQueryId: 202 } } });
+            await vi.waitFor(() => expect(current[0]?.scripts[1].latestQueryId).toBe(202));
             expect(registry.notebookScriptsMap.get('a')?.scripts[1].latestQueryId).toBe(101);
             expect(registry.notebookScriptsMap.get('b')?.scripts[1].latestQueryId).toBe(202);
-            expect(current[0]?.scripts[1].latestQueryId).toBe(202);
-            await act(async () => {
+            act(() => {
                 modifyA({ type: RENAME_NOTEBOOK, value: 'Offline notebook' });
-                await new Promise(resolve => setTimeout(resolve, 0));
             });
-            expect(write).toHaveBeenCalledWith(expect.any(String), {
+            await vi.waitFor(() => expect(write).toHaveBeenCalledWith(expect.any(String), {
                 type: WRITE_NOTEBOOK_NAME, value: ['a', 'Offline notebook'],
-            }, expect.any(Number));
+            }, expect.any(Number)));
         } finally {
             write.mockRestore();
             act(() => root.unmount());

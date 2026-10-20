@@ -100,12 +100,19 @@ try {
         throw error;
     }
 
+    // V8 stacks start with the error message, Firefox stacks only list frames.
+    const formatError = error => {
+        if (!error) return 'Failed';
+        const header = `${error.name ?? 'Error'}: ${error.message ?? ''}`;
+        if (!error.stack) return header;
+        return error.stack.startsWith(header) ? error.stack : `${header}\n${error.stack}`;
+    };
     const summary = await page.evaluate(() => globalThis.__DASHQL_BROWSER_TESTS__);
     const failures = summary.files.flatMap(file => {
-        const fileFailure = file.error ? [`${file.file}\n${file.error.stack ?? file.error.message}`] : [];
+        const fileFailure = file.error ? [`${file.file}\n${formatError(file.error)}`] : [];
         const testFailures = file.tests
             .filter(test => test.status === 'failed')
-            .map(test => `${file.file}: ${test.titlePath.join(' > ')}\n${test.error?.stack ?? test.error?.message ?? 'Failed'}`);
+            .map(test => `${file.file}: ${test.titlePath.join(' > ')}\n${formatError(test.error)}`);
         return [...fileFailure, ...testFailures];
     });
 
