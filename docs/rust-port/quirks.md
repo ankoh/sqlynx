@@ -103,22 +103,12 @@ the C++ core.
 ## Visualize (`packages/dashql-core/src/visualize/`)
 
 **Vega-Lite generator** (`vegalite_generator.cc`)
-- Text taken from the script (field names, `$sql`, array strings, stack and resolve values, bounds)
-  goes through `c_str()` and is cut at the first NUL; analyzed strings (`scheme`, `title`) are not.
-- String array elements have their quotes stripped before the NUL cut, `''` is not unescaped.
-- Bounds are numbers when `strtod` consumes the whole C string, so empty text becomes 0.
-- Integer literals beyond int64 (the x86 cast gives INT64_MIN) are written as doubles.
-- NaN and infinity make the rapidjson writer fail after the key, leaving invalid JSON such as
-  `"rangeMax": ,`, and the round trip becomes empty. **Not reproduced:** Rust writes `null`, and the
-  visualize differential test skips such scripts.
+- String array elements have their quotes stripped, `''` is not unescaped.
+- Integer literals in arrays are JSON integers if their double value is an integer in the int64 range,
+  doubles otherwise.
 - The top-level spec writes `resolve` before `layer`, nested layers `layer` before `resolve`.
 
 **Vega-Lite parser** (`vegalite_parser.cc`)
-- rapidjson default flags: no comments, trailing commas or NaN, no UTF-8 validation, lone low
-  surrogates become invalid UTF-8, a NUL ends the input.
-- `GetString()` cuts values and member names at NUL, and the cut names are compared to `type`,
-  `point` and `line`; channel keys and `HasMember` compare at full length.
-- Duplicate keys: lookups take the first member, iterations emit all of them.
 - Doubles that are not integral or are at least 1e15 are printed with `%g`.
 - `ToSnakeCase("Field")` gives `field`, which then counts as an identifier key.
 - A mark object with only `type` collapses to `mark => type`, an empty bin object becomes `true`.
@@ -143,9 +133,19 @@ behavior that differs:
 - An autolink scheme only needs an ASCII first character.
 - An empty ordered list item interrupts a paragraph.
 
-**Casts.** Axis and legend `zindex` values outside int32 become INT32_MIN, as `static_cast<int32_t>`
-does on x86-64. The port and the oracle follow native x86-64 (glibc, `cvttsd2si`, 64-bit rapidjson);
-the C++ wasm build may differ there.
+**Not reproduced.** The Rust core reads and writes JSON with serde_json and parses numbers of the
+script with `str::parse::<f64>`. These C++ behaviors are gone; the visualize differential test skips
+the inputs that hit them:
+- Text from the script (field names, `$sql`, array strings, stack and resolve values, bounds) was cut
+  at the first NUL (`c_str()`), and so were strings of parsed specs (`GetString()`).
+- Bounds and numeric options were numbers when glibc `strtod` consumed the whole text: empty text
+  became 0, hex floats and `nan(...)` were numbers. Rust takes the number syntax of `str::parse::<f64>`.
+- NaN and infinity made the rapidjson writer fail after the key (`"rangeMax": ,`). Rust writes `null`.
+- Axis and legend `zindex` values outside int32 became INT32_MIN (`static_cast<int32_t>` is
+  `cvttsd2si` on x86-64). Rust saturates.
+- The Vega-Lite parser read rapidjson's default dialect: no UTF-8 validation, lone low surrogates
+  decoded into invalid UTF-8, a NUL ended the input. Duplicate keys were looked up by their first
+  member and iterated all; serde_json keeps the last one.
 
 ## Formatter (`packages/dashql-core/src/formatter/`)
 
@@ -173,17 +173,21 @@ the C++ wasm build may differ there.
 - **Root order follows heap addresses** (`FlattenOperators`): roots are placed in the iteration order
   of an `std::unordered_map` keyed by node address. Rust uses reverse plan order, which matches
   libstdc++ for up to two roots and unless hash buckets collide.
-- **Strings stop at NUL bytes.** Attribute names, operator types and labels are read as C strings,
-  so `\u0000` truncates them and `"operator\u0000x"` counts as `operator`. A NUL byte ends the input.
-- **Lone low surrogates** (`\uDC00`) decode into invalid UTF-8; lone high surrogates are errors.
-- **Lenient JSON.** Comments, `NaN`/`Inf`/`Infinity`, trailing commas and duplicate keys parse (the
-  first duplicate wins), `NaN.5` parses as 0.5 and `-0` becomes integer 0.
-- **NaN/Inf attributes are cut short**, because the rapidjson writer fails on them (e.g. `[1,`).
-- **Wrong-typed numbers are read raw** (`ReadExecutionStatistics`, `sqlpos`), as release builds do.
 - **Fragment order.** Execution-target fragments come in reverse root order, before federate fragments.
 - **Lookups.** `FindNumber` stops at the first existing name even if it is not a number, a non-array
   `earlyProbes` blocks the `early-probes` fallback, pipeline operator lists keep duplicates, and
   pipeline edge ids count across pipelines.
+
+**Not reproduced.** The Rust core reads plans as standard JSON with serde_json. The C++ core parses
+them with rapidjson (comments, NaN and infinity, trailing commas, imprecise number parsing):
+- Comments, `NaN`/`Inf`/`Infinity`, trailing commas and input after a NUL byte are parse errors.
+  Lone surrogates (`\uDC00`) are parse errors; C++ decoded lone low surrogates into invalid UTF-8.
+- Strings keep NUL characters; C++ read attribute names, operator types and labels as C strings, so
+  `"operator\u0000x"` counted as `operator`.
+- Duplicate keys keep the last value; C++ kept all members and looked up the first.
+- Numbers are read with full precision, `-0` is the double -0.0 (C++: integer 0).
+- Counts in the runtime statistics that are not unsigned integers are ignored, `sqlpos` entries that
+  are not unsigned 32-bit integers are 0. C++ asserted, release builds read the raw number storage.
 
 ## Script session (`packages/dashql-core/src/script_session.cc`)
 

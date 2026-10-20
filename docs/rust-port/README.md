@@ -25,6 +25,11 @@ build and the emsdk toolchain are gone.
   round-trip digits, and the differential tests compare such numbers by value
   (`dashql_snapshots::corpus::canonical_numbers`). For an infinite double the C++ Vega-Lite generator
   writes no value (invalid JSON); Rust writes `null`.
+- **JSON is standard JSON.** Hyper plans and Vega-Lite specs are read and written with serde_json
+  (`preserve_order`), numbers of the script are parsed with `str::parse::<f64>`. rapidjson's dialect
+  (comments, NaN, trailing commas, NUL-terminated input, C strings, imprecise numbers, duplicate keys)
+  and the glibc `strtod` and x86 cast behavior are not reproduced; the differential tests compare
+  standard JSON only and skip the classes listed in [quirks.md](quirks.md).
 - **Bazel only.**
   - Generated code comes from genrules, never `build.rs`.
   - Cargo manifests only feed the `@core_crates` crate universe.
@@ -215,11 +220,11 @@ Changes that got the Rust code here:
   (`formatter_validation_hyper_tests`, deleted), and it picks up every snapshot file with a validation
   instead of a hand-maintained list.
 - Open: the idempotency check.
-- The Hyper plan view model is ported (`dashql_core::view`) with a port of the needed parts of
-  rapidjson. `:plan_view_model_snapshot_test` passes 36 of 36 plans (including the `pipelines`
-  section, which the C++ suite skips), the 19 `hyper_plan_test.cc` tests pass, and
-  `:plan_view_model_differential_test` finds 0 differences in 51,720 comparisons (bit-identical
-  layout) against `tools/oracle_ffi_view.cc`.
+- The Hyper plan view model is ported (`dashql_core::view`) and reads plans with serde_json.
+  `:plan_view_model_snapshot_test` passes 36 of 36 plans (including the `pipelines` section, which the
+  C++ suite skips), the 19 `hyper_plan_test.cc` tests pass, and `:plan_view_model_differential_test`
+  finds 0 differences in about 20,000 comparisons of standard JSON plans (bit-identical layout) against
+  `tools/oracle_ffi_view.cc`.
 
 **Attribute lookups.** The C++ core looks up object attributes through compile-time
 `frozen::unordered_map`s. `dashql_grammar::attrs!` fixes the keys at compile time too (duplicate
@@ -301,7 +306,7 @@ remaining per-list allocations.
   into the object API and compare them, including the generated visualization specs.
 - **Visualize** (`dashql_core::visualize`): the Vega-Lite generator and parser, Markdown and UMAP.
   `:visualize_snapshot_test` passes 27/27, `:visualize_differential_test` finds 0 differences over 38k
-  analyzed scripts and 73k Vega-Lite texts.
+  analyzed scripts and 31k Vega-Lite texts (standard JSON).
 - **Markdown**: templates are parsed with pulldown-cmark (CommonMark, no extensions) instead of a port of
   md4c, so the documents differ from C++ in details:
   - adjacent text is one text node (md4c cuts text at every mark, entity and line break),

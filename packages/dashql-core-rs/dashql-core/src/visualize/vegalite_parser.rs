@@ -1,69 +1,68 @@
 //! Turn a Vega-Lite spec back into a VISUALIZE statement (`vegalite_parser.cc`).
-//!
-//! The JSON is read like `rapidjson::Document::Parse` with the default flags. The C++ code reads many strings
-//! through `GetString()` as C strings, which cuts them at the first NUL byte, and compares member names with
-//! their full length elsewhere. Both are reproduced.
 
-use crate::view::json::{c_str, Document, Number, ParseFlags, Value, ValueId};
+use serde_json::{Map, Number, Value};
+
+/// A JSON object
+type Object = Map<String, Value>;
 
 /// The DSL channel keyword of a Vega-Lite encoding channel (`VEGALITE_TO_CHANNEL_KEY`)
-fn channel_keyword(name: &[u8]) -> Option<&'static str> {
+fn channel_keyword(name: &str) -> Option<&'static str> {
     Some(match name {
-        b"x" => "x",
-        b"y" => "y",
-        b"x2" => "x2",
-        b"y2" => "y2",
-        b"color" => "color",
-        b"fill" => "fill",
-        b"stroke" => "stroke",
-        b"fillOpacity" => "fill_opacity",
-        b"strokeOpacity" => "stroke_opacity",
-        b"strokeWidth" => "stroke_width",
-        b"strokeDash" => "stroke_dash",
-        b"opacity" => "opacity",
-        b"size" => "size",
-        b"shape" => "shape",
-        b"angle" => "angle",
-        b"theta" => "theta",
-        b"theta2" => "theta2",
-        b"radius" => "radius",
-        b"radius2" => "radius2",
-        b"detail" => "detail",
-        b"order" => "order",
-        b"tooltip" => "tooltip",
-        b"text" => "text",
-        b"row" => "row",
-        b"column" => "column",
-        b"facet" => "facet",
-        b"href" => "href",
-        b"url" => "url",
-        b"key" => "key",
-        b"latitude" => "latitude",
-        b"longitude" => "longitude",
-        b"latitude2" => "latitude2",
-        b"longitude2" => "longitude2",
-        b"xOffset" => "x_offset",
-        b"yOffset" => "y_offset",
+        "x" => "x",
+        "y" => "y",
+        "x2" => "x2",
+        "y2" => "y2",
+        "color" => "color",
+        "fill" => "fill",
+        "stroke" => "stroke",
+        "fillOpacity" => "fill_opacity",
+        "strokeOpacity" => "stroke_opacity",
+        "strokeWidth" => "stroke_width",
+        "strokeDash" => "stroke_dash",
+        "opacity" => "opacity",
+        "size" => "size",
+        "shape" => "shape",
+        "angle" => "angle",
+        "theta" => "theta",
+        "theta2" => "theta2",
+        "radius" => "radius",
+        "radius2" => "radius2",
+        "detail" => "detail",
+        "order" => "order",
+        "tooltip" => "tooltip",
+        "text" => "text",
+        "row" => "row",
+        "column" => "column",
+        "facet" => "facet",
+        "href" => "href",
+        "url" => "url",
+        "key" => "key",
+        "latitude" => "latitude",
+        "longitude" => "longitude",
+        "latitude2" => "latitude2",
+        "longitude2" => "longitude2",
+        "xOffset" => "x_offset",
+        "yOffset" => "y_offset",
         _ => return None,
     })
 }
 
 /// A simple SQL identifier: starts with a letter or underscore, followed by alphanumerics or underscores
-fn is_simple_ident(s: &[u8]) -> bool {
-    match s.first() {
-        Some(c) if c.is_ascii_alphabetic() || *c == b'_' => {}
+fn is_simple_ident(s: &str) -> bool {
+    match s.chars().next() {
+        Some(c) if c.is_ascii_alphabetic() || c == '_' => {}
         _ => return false,
     }
-    s.iter().all(|c| c.is_ascii_alphanumeric() || *c == b'_')
+    s.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
 }
 
 /// Convert a camelCase JSON key to a snake_case DSL key (`labelAngle` -> `label_angle`)
-fn to_snake_case(key: &[u8]) -> Vec<u8> {
-    let mut out = Vec::with_capacity(key.len() + 4);
-    for &c in key {
+fn to_snake_case(key: &str) -> String {
+    let mut out = String::with_capacity(key.len() + 4);
+    for c in key.chars() {
         if c.is_ascii_uppercase() {
             if !out.is_empty() {
-                out.push(b'_');
+                out.push('_');
             }
             out.push(c.to_ascii_lowercase());
         } else {
@@ -74,36 +73,17 @@ fn to_snake_case(key: &[u8]) -> Vec<u8> {
 }
 
 /// An identifier value: bare when simple, double-quoted otherwise (`EmitIdentifier`)
-fn emit_identifier(s: &[u8]) -> Vec<u8> {
+fn emit_identifier(s: &str) -> String {
     if is_simple_ident(s) {
-        return s.to_vec();
+        s.to_string()
+    } else {
+        format!("\"{}\"", s.replace('"', "\"\""))
     }
-    let mut out = Vec::with_capacity(s.len() + 2);
-    out.push(b'"');
-    for &c in s {
-        if c == b'"' {
-            out.extend_from_slice(b"\"\"");
-        } else {
-            out.push(c);
-        }
-    }
-    out.push(b'"');
-    out
 }
 
 /// A single-quoted SQL string literal (`EmitStringLiteral`)
-fn emit_string_literal(s: &[u8]) -> Vec<u8> {
-    let mut out = Vec::with_capacity(s.len() + 2);
-    out.push(b'\'');
-    for &c in s {
-        if c == b'\'' {
-            out.extend_from_slice(b"''");
-        } else {
-            out.push(c);
-        }
-    }
-    out.push(b'\'');
-    out
+fn emit_string_literal(s: &str) -> String {
+    format!("'{}'", s.replace('\'', "''"))
 }
 
 /// `printf("%g", d)`: 6 significant digits, exponent notation below 1e-4 and from 1e6 on, no trailing zeros
@@ -139,432 +119,240 @@ fn trim_fraction_zeros(s: &str) -> &str {
     s.trim_end_matches('0').trim_end_matches('.')
 }
 
-/// A JSON number as a bare DSL literal (`EmitNumber`)
-fn emit_number(n: Number) -> Vec<u8> {
-    match n {
-        Number::Int(i) => i.to_string().into_bytes(),
-        Number::Uint(u) => u.to_string().into_bytes(),
-        Number::Int64(i) => i.to_string().into_bytes(),
-        Number::Uint64(u) => u.to_string().into_bytes(),
-        Number::Double(d) => {
-            let i = super::cvt_f64_i64(d);
-            if d.is_finite() && d == i as f64 && d.abs() < 1e15 {
-                i.to_string().into_bytes()
+/// A JSON number as a bare DSL literal (`EmitNumber`): integers as they are, integral doubles below 1e15 without
+/// fraction, other doubles with `%g`
+fn emit_number(n: &Number) -> String {
+    match n.as_f64() {
+        Some(d) if n.is_f64() => {
+            if d.fract() == 0.0 && d.abs() < 1e15 {
+                (d as i64).to_string()
             } else {
-                format_g(d).into_bytes()
+                format_g(d)
             }
         }
+        _ => n.to_string(),
     }
 }
 
 /// Join parts with a separator, in parentheses
-fn parenthesize(parts: &[Vec<u8>]) -> Vec<u8> {
-    let mut out = vec![b'('];
-    for (i, part) in parts.iter().enumerate() {
-        if i > 0 {
-            out.extend_from_slice(b", ");
-        }
-        out.extend_from_slice(part);
-    }
-    out.push(b')');
-    out
+fn parenthesize(parts: &[String]) -> String {
+    format!("({})", parts.join(", "))
 }
 
 /// `key => value`
-fn assignment(key: &[u8], value: &[u8]) -> Vec<u8> {
-    let mut out = Vec::with_capacity(key.len() + value.len() + 4);
-    out.extend_from_slice(key);
-    out.extend_from_slice(b" => ");
-    out.extend_from_slice(value);
-    out
+fn assignment(key: &str, value: &str) -> String {
+    format!("{key} => {value}")
 }
 
-/// The parser state
-struct Parser {
-    doc: Document,
+/// A lower-cased string (enum keywords)
+fn lower_string(value: &Value) -> Option<String> {
+    value.as_str().map(str::to_ascii_lowercase)
 }
 
-impl Parser {
-    fn value(&self, id: ValueId) -> &Value {
-        self.doc.get(id)
+/// A scalar as a DSL value, `None` for null, arrays and objects (`EmitScalar`)
+fn emit_scalar(value: &Value, as_ident: bool) -> Option<String> {
+    match value {
+        Value::String(s) => Some(if as_ident { emit_identifier(s) } else { emit_string_literal(s) }),
+        Value::Bool(b) => Some(b.to_string()),
+        Value::Number(n) => Some(emit_number(n)),
+        _ => None,
     }
+}
 
-    /// The string of a value read through `GetString()`, cut at the first NUL
-    fn c_string(&self, id: ValueId) -> Option<&[u8]> {
-        self.doc.string(id).map(c_str)
-    }
+/// A scalar or an array of scalars, array strings are always string literals (`EmitValue`)
+fn emit_value(value: &Value, as_ident: bool) -> Option<String> {
+    let Value::Array(elements) = value else {
+        return emit_scalar(value, as_ident);
+    };
+    let elements: Vec<String> = elements.iter().filter_map(|element| emit_scalar(element, false)).collect();
+    Some(format!("[{}]", elements.join(", ")))
+}
 
-    /// `HasMember(name) && operator[](name)`
-    fn member(&self, id: ValueId, name: &[u8]) -> Option<ValueId> {
-        self.doc.find_member(id, name)
-    }
-
-    /// A lower-cased C string (enum keywords)
-    fn lower_c_string(&self, id: ValueId) -> Option<Vec<u8>> {
-        self.c_string(id).map(|s| s.to_ascii_lowercase())
-    }
-
-    /// A scalar as a DSL value, `None` for null, arrays and objects (`EmitScalar`)
-    fn emit_scalar(&self, id: ValueId, as_ident: bool) -> Option<Vec<u8>> {
-        match self.value(id) {
-            Value::String(s) => {
-                let s = c_str(s);
-                Some(if as_ident { emit_identifier(s) } else { emit_string_literal(s) })
+/// A `( k => v, ... )` sub-object with snake_case keys, `type` is an enum keyword of scales
+/// (`EmitSubObject`). `None` if nothing was emitted.
+fn emit_sub_object(object: &Object, type_is_enum: bool) -> Option<String> {
+    let mut parts = Vec::new();
+    for (key, value) in object {
+        if type_is_enum && key == "type" {
+            if let Some(ty) = lower_string(value) {
+                parts.push(assignment("type", &ty));
             }
-            Value::Bool(b) => Some(if *b { b"true".to_vec() } else { b"false".to_vec() }),
-            Value::Number(n) => Some(emit_number(*n)),
-            _ => None,
+            continue;
+        }
+        if let Some(emitted) = emit_value(value, false) {
+            parts.push(assignment(&to_snake_case(key), &emitted));
         }
     }
+    (!parts.is_empty()).then(|| parenthesize(&parts))
+}
 
-    /// A scalar or an array of scalars, array strings are always string literals (`EmitValue`)
-    fn emit_value(&self, id: ValueId, as_ident: bool) -> Option<Vec<u8>> {
-        let Value::Array(elements) = self.value(id) else {
-            return self.emit_scalar(id, as_ident);
+/// A mark definition (`EmitMark`): `type` is an enum keyword, `point` and `line` recurse
+fn emit_mark(object: &Object) -> String {
+    let mut parts = Vec::new();
+    for (key, value) in object {
+        match (key.as_str(), value) {
+            ("type", _) => {
+                if let Some(ty) = lower_string(value) {
+                    parts.push(assignment("type", &ty));
+                }
+            }
+            ("point" | "line", Value::Object(overlay)) => parts.push(assignment(key, &emit_mark(overlay))),
+            ("point" | "line", Value::Bool(b)) => parts.push(assignment(key, &b.to_string())),
+            ("point" | "line", _) => {}
+            _ => {
+                if let Some(emitted) = emit_value(value, false) {
+                    parts.push(assignment(&to_snake_case(key), &emitted));
+                }
+            }
+        }
+    }
+    parenthesize(&parts)
+}
+
+/// A `bin => ...` value: a boolean or an object of bin parameters (`EmitBin`)
+fn emit_bin(value: &Value) -> Option<String> {
+    match value {
+        Value::Bool(b) => Some(b.to_string()),
+        Value::Object(members) => {
+            let parts: Vec<String> =
+                members.iter().filter_map(|(key, value)| Some(assignment(key, &emit_scalar(value, false)?))).collect();
+            Some(if parts.is_empty() { "true".to_string() } else { parenthesize(&parts) })
+        }
+        _ => None,
+    }
+}
+
+/// An encoding channel `<channel> => (field => ..., type => ..., ...)` (`AppendChannel`)
+fn emit_channel(channel_name: &str, channel: &Object) -> String {
+    let string = |key: &str| channel.get(key).and_then(Value::as_str);
+    let mut parts = Vec::new();
+    if let Some(field) = string("field") {
+        parts.push(assignment("field", &emit_identifier(field)));
+    }
+    if let Some(ty) = channel.get("type").and_then(lower_string) {
+        parts.push(assignment("type", &ty));
+    }
+    if let Some(aggregate) = string("aggregate") {
+        parts.push(assignment("aggregate", &emit_identifier(aggregate)));
+    }
+    if let Some(bin) = channel.get("bin").and_then(emit_bin) {
+        parts.push(assignment("bin", &bin));
+    }
+    if let Some(time_unit) = string("timeUnit") {
+        parts.push(assignment("time_unit", &emit_identifier(time_unit)));
+    }
+    for (key, type_is_enum) in [("scale", true), ("axis", false), ("legend", false)] {
+        let Some(value) = channel.get(key).and_then(Value::as_object) else {
+            continue;
         };
-        let mut out = vec![b'['];
-        let mut first = true;
-        for element in elements {
-            let Some(element) = self.emit_scalar(*element, false) else {
-                continue;
-            };
-            if !first {
-                out.extend_from_slice(b", ");
-            }
-            first = false;
-            out.extend_from_slice(&element);
-        }
-        out.push(b']');
-        Some(out)
-    }
-
-    /// A `( k => v, ... )` sub-object with snake_case keys, `type` is an enum keyword of scales
-    /// (`EmitSubObject`). `None` if nothing was emitted.
-    fn emit_sub_object(&self, id: ValueId, type_is_enum: bool) -> Option<Vec<u8>> {
-        let mut parts = Vec::new();
-        for member in self.doc.members(id) {
-            let key = c_str(&member.name);
-            if type_is_enum && key == b"type" {
-                if let Some(ty) = self.lower_c_string(member.value) {
-                    parts.push(assignment(b"type", &ty));
-                }
-                continue;
-            }
-            let Some(emitted) = self.emit_value(member.value, false) else {
-                continue;
-            };
-            parts.push(assignment(&to_snake_case(key), &emitted));
-        }
-        if parts.is_empty() {
-            return None;
-        }
-        Some(parenthesize(&parts))
-    }
-
-    /// A mark definition (`EmitMark`): `type` is an enum keyword, `point` and `line` recurse
-    fn emit_mark(&self, id: ValueId) -> Vec<u8> {
-        let mut parts = Vec::new();
-        for member in self.doc.members(id) {
-            let key = c_str(&member.name);
-            if key == b"type" {
-                if let Some(ty) = self.lower_c_string(member.value) {
-                    parts.push(assignment(b"type", &ty));
-                }
-                continue;
-            }
-            if key == b"point" || key == b"line" {
-                match self.value(member.value) {
-                    Value::Object(_) => parts.push(assignment(key, &self.emit_mark(member.value))),
-                    Value::Bool(b) => parts.push(assignment(key, if *b { b"true" } else { b"false" })),
-                    _ => {}
-                }
-                continue;
-            }
-            let Some(emitted) = self.emit_value(member.value, false) else {
-                continue;
-            };
-            parts.push(assignment(&to_snake_case(key), &emitted));
-        }
-        if parts.is_empty() {
-            return b"()".to_vec();
-        }
-        parenthesize(&parts)
-    }
-
-    /// A `bin => ...` value: a boolean or an object of bin parameters (`EmitBin`)
-    fn emit_bin(&self, id: ValueId) -> Option<Vec<u8>> {
-        match self.value(id) {
-            Value::Bool(b) => Some(if *b { b"true".to_vec() } else { b"false".to_vec() }),
-            Value::Object(members) => {
-                let mut parts = Vec::new();
-                for member in members {
-                    let Some(emitted) = self.emit_scalar(member.value, false) else {
-                        continue;
-                    };
-                    parts.push(assignment(c_str(&member.name), &emitted));
-                }
-                if parts.is_empty() {
-                    return Some(b"true".to_vec());
-                }
-                Some(parenthesize(&parts))
-            }
-            _ => None,
+        if let Some(emitted) = emit_sub_object(value, type_is_enum) {
+            parts.push(assignment(key, &emitted));
         }
     }
-
-    /// Append an encoding channel `<channel> => (field => ..., type => ..., ...)` (`AppendChannel`)
-    fn append_channel(&self, out: &mut Vec<u8>, channel_name: &str, channel: ValueId) {
-        out.extend_from_slice(channel_name.as_bytes());
-        out.extend_from_slice(b" => (");
-
-        let mut parts = Vec::new();
-        if let Some(field) = self.member(channel, b"field").and_then(|v| self.c_string(v)) {
-            parts.push(assignment(b"field", &emit_identifier(field)));
+    // Remaining simple field-def keys (sort, stack, title, format, ...)
+    for (key, value) in channel {
+        if matches!(key.as_str(), "field" | "type" | "aggregate" | "bin" | "timeUnit" | "scale" | "axis" | "legend") {
+            continue;
         }
-        if let Some(ty) = self.member(channel, b"type").and_then(|v| self.lower_c_string(v)) {
-            parts.push(assignment(b"type", &ty));
-        }
-        if let Some(aggregate) = self.member(channel, b"aggregate").and_then(|v| self.c_string(v)) {
-            parts.push(assignment(b"aggregate", &emit_identifier(aggregate)));
-        }
-        if let Some(bin) = self.member(channel, b"bin").and_then(|v| self.emit_bin(v)) {
-            parts.push(assignment(b"bin", &bin));
-        }
-        if let Some(time_unit) = self.member(channel, b"timeUnit").and_then(|v| self.c_string(v)) {
-            parts.push(assignment(b"time_unit", &emit_identifier(time_unit)));
-        }
-        for (json_key, dsl_key, type_is_enum) in
-            [(&b"scale"[..], &b"scale"[..], true), (b"axis", b"axis", false), (b"legend", b"legend", false)]
-        {
-            let Some(value) = self.member(channel, json_key).filter(|v| self.doc.is_object(*v)) else {
-                continue;
-            };
-            if let Some(emitted) = self.emit_sub_object(value, type_is_enum) {
-                parts.push(assignment(dsl_key, &emitted));
-            }
-        }
-        // Remaining simple field-def keys (sort, stack, title, format, ...)
-        for member in self.doc.members(channel) {
-            let key: &[u8] = &member.name;
-            if matches!(
-                key,
-                b"field" | b"type" | b"aggregate" | b"bin" | b"timeUnit" | b"scale" | b"axis" | b"legend"
-            ) {
-                continue;
-            }
-            let dsl_key = to_snake_case(key);
-            let as_ident = matches!(&dsl_key[..], b"field" | b"aggregate" | b"time_unit");
-            let Some(emitted) = self.emit_value(member.value, as_ident) else {
-                continue;
-            };
+        let dsl_key = to_snake_case(key);
+        let as_ident = matches!(dsl_key.as_str(), "field" | "aggregate" | "time_unit");
+        if let Some(emitted) = emit_value(value, as_ident) {
             parts.push(assignment(&dsl_key, &emitted));
         }
+    }
+    format!("{channel_name} => ({})", parts.join(", "))
+}
 
-        for (i, part) in parts.iter().enumerate() {
-            if i > 0 {
-                out.extend_from_slice(b", ");
-            }
-            out.extend_from_slice(part);
-        }
-        out.push(b')');
+/// `EmitResolveMap`
+fn emit_resolve_map(value: &Value) -> Option<String> {
+    let parts: Vec<String> = value
+        .as_object()?
+        .iter()
+        .filter_map(|(key, value)| Some(assignment(channel_keyword(key)?, &emit_scalar(value, true)?)))
+        .collect();
+    (!parts.is_empty()).then(|| parenthesize(&parts))
+}
+
+/// A block of items, one per line, between an opening line and a closing line
+fn block(open: String, items: &[String], close: String) -> String {
+    format!("{open}\n{}\n{close}", items.join(",\n"))
+}
+
+/// `AppendVegaLiteSpecLines`
+fn append_spec_lines(spec: &Object, lines: &mut Vec<String>, indent: &str) {
+    match spec.get("mark") {
+        Some(Value::String(mark)) => lines.push(format!("{indent}mark => {}", mark.to_ascii_lowercase())),
+        Some(Value::Object(mark)) => match mark.get("type").and_then(lower_string) {
+            Some(ty) if mark.len() == 1 => lines.push(format!("{indent}mark => {ty}")),
+            _ if !mark.is_empty() => lines.push(format!("{indent}mark => {}", emit_mark(mark))),
+            _ => {}
+        },
+        _ => {}
     }
 
-    /// `EmitResolveMap`
-    fn emit_resolve_map(&self, id: ValueId) -> Option<Vec<u8>> {
-        if !self.doc.is_object(id) {
-            return None;
-        }
-        let mut parts = Vec::new();
-        for member in self.doc.members(id) {
-            let Some(channel) = channel_keyword(&member.name) else {
-                continue;
-            };
-            let Some(value) = self.emit_scalar(member.value, true) else {
-                continue;
-            };
-            parts.push(assignment(channel.as_bytes(), &value));
-        }
-        if parts.is_empty() {
-            return None;
-        }
-        Some(parenthesize(&parts))
+    if let Some(title) = spec.get("title").and_then(Value::as_str) {
+        lines.push(format!("{indent}title => {}", emit_string_literal(title)));
     }
 
-    /// `AppendVegaLiteSpecLines`
-    fn append_spec_lines(&self, spec: ValueId, lines: &mut Vec<Vec<u8>>, indent: &[u8]) {
-        if !self.doc.is_object(spec) {
-            return;
-        }
-        let line = |head: &[u8], tail: &[u8]| -> Vec<u8> {
-            let mut out = Vec::with_capacity(indent.len() + head.len() + tail.len());
-            out.extend_from_slice(indent);
-            out.extend_from_slice(head);
-            out.extend_from_slice(tail);
-            out
-        };
-
-        if let Some(mark) = self.member(spec, b"mark") {
-            match self.value(mark) {
-                Value::String(s) => lines.push(line(b"mark => ", &c_str(s).to_ascii_lowercase())),
-                Value::Object(members) => {
-                    let ty = self.member(mark, b"type").and_then(|t| self.lower_c_string(t));
-                    match ty {
-                        Some(ty) if members.len() == 1 => lines.push(line(b"mark => ", &ty)),
-                        _ if !members.is_empty() => lines.push(line(b"mark => ", &self.emit_mark(mark))),
-                        _ => {}
-                    }
-                }
-                _ => {}
-            }
-        }
-
-        if let Some(title) = self.member(spec, b"title").and_then(|t| self.c_string(t)) {
-            lines.push(line(b"title => ", &emit_string_literal(title)));
-        }
-
-        if let Some(encoding) = self.member(spec, b"encoding").filter(|e| self.doc.is_object(*e)) {
-            let mut channels = Vec::new();
-            for member in self.doc.members(encoding) {
-                if !self.doc.is_object(member.value) {
-                    continue;
-                }
-                let Some(channel_name) = channel_keyword(&member.name) else {
-                    continue;
-                };
-                let mut channel = line(b"  ", b"");
-                self.append_channel(&mut channel, channel_name, member.value);
-                channels.push(channel);
-            }
-            if !channels.is_empty() {
-                let mut block = line(b"encoding => (\n", b"");
-                for (i, channel) in channels.iter().enumerate() {
-                    if i > 0 {
-                        block.extend_from_slice(b",\n");
-                    }
-                    block.extend_from_slice(channel);
-                }
-                block.push(b'\n');
-                block.extend_from_slice(indent);
-                block.push(b')');
-                lines.push(block);
-            }
-        }
-
-        if let Some(Value::Array(layer_ids)) = self.member(spec, b"layer").map(|l| self.value(l)) {
-            let mut layer_indent = indent.to_vec();
-            layer_indent.extend_from_slice(b"    ");
-            let mut layers = Vec::new();
-            for &layer in layer_ids {
-                if !self.doc.is_object(layer) {
-                    continue;
-                }
-                let mut layer_lines = Vec::new();
-                self.append_spec_lines(layer, &mut layer_lines, &layer_indent);
-                if layer_lines.is_empty() {
-                    continue;
-                }
-                let mut block = line(b"  (\n", b"");
-                for (i, layer_line) in layer_lines.iter().enumerate() {
-                    if i > 0 {
-                        block.extend_from_slice(b",\n");
-                    }
-                    block.extend_from_slice(layer_line);
-                }
-                block.push(b'\n');
-                block.extend_from_slice(indent);
-                block.extend_from_slice(b"  )");
-                layers.push(block);
-            }
-            if !layers.is_empty() {
-                let mut block = line(b"layer => [\n", b"");
-                for (i, layer) in layers.iter().enumerate() {
-                    if i > 0 {
-                        block.extend_from_slice(b",\n");
-                    }
-                    block.extend_from_slice(layer);
-                }
-                block.push(b'\n');
-                block.extend_from_slice(indent);
-                block.push(b']');
-                lines.push(block);
-            }
-        }
-
-        if let Some(resolve) = self.member(spec, b"resolve").filter(|r| self.doc.is_object(*r)) {
-            let mut parts = Vec::new();
-            for key in [&b"scale"[..], b"axis", b"legend"] {
-                let Some(value) = self.member(resolve, key) else {
-                    continue;
-                };
-                if let Some(value) = self.emit_resolve_map(value) {
-                    parts.push(assignment(key, &value));
-                }
-            }
-            if !parts.is_empty() {
-                let mut block = line(b"resolve => (", b"");
-                for (i, part) in parts.iter().enumerate() {
-                    if i > 0 {
-                        block.extend_from_slice(b", ");
-                    }
-                    block.extend_from_slice(part);
-                }
-                block.push(b')');
-                lines.push(block);
-            }
+    if let Some(encoding) = spec.get("encoding").and_then(Value::as_object) {
+        let channels: Vec<String> = encoding
+            .iter()
+            .filter_map(|(key, value)| {
+                let channel = value.as_object()?;
+                Some(format!("{indent}  {}", emit_channel(channel_keyword(key)?, channel)))
+            })
+            .collect();
+        if !channels.is_empty() {
+            lines.push(block(format!("{indent}encoding => ("), &channels, format!("{indent})")));
         }
     }
 
-    /// The query before the VISUALIZE clause, from `$sql` or `$raw` of the `data` member (`EmitSource`)
-    fn emit_source(&self, data: ValueId) -> Option<Vec<u8>> {
-        if !self.doc.is_object(data) {
-            return None;
-        }
-        for key in [&b"$sql"[..], b"$raw"] {
-            if let Some(text) = self.member(data, key).and_then(|v| self.c_string(v)) {
-                return if text.is_empty() { None } else { Some(text.to_vec()) };
+    if let Some(layer_specs) = spec.get("layer").and_then(Value::as_array) {
+        let layer_indent = format!("{indent}    ");
+        let mut layers = Vec::new();
+        for layer in layer_specs.iter().filter_map(Value::as_object) {
+            let mut layer_lines = Vec::new();
+            append_spec_lines(layer, &mut layer_lines, &layer_indent);
+            if !layer_lines.is_empty() {
+                layers.push(block(format!("{indent}  ("), &layer_lines, format!("{indent}  )")));
             }
         }
-        None
+        if !layers.is_empty() {
+            lines.push(block(format!("{indent}layer => ["), &layers, format!("{indent}]")));
+        }
     }
+
+    if let Some(resolve) = spec.get("resolve").and_then(Value::as_object) {
+        let parts: Vec<String> = ["scale", "axis", "legend"]
+            .into_iter()
+            .filter_map(|key| Some(assignment(key, &emit_resolve_map(resolve.get(key)?)?)))
+            .collect();
+        if !parts.is_empty() {
+            lines.push(format!("{indent}resolve => ({})", parts.join(", ")));
+        }
+    }
+}
+
+/// The query before the VISUALIZE clause, from `$sql` or `$raw` of the `data` member (`EmitSource`)
+fn emit_source(data: &Value) -> Option<&str> {
+    let data = data.as_object()?;
+    let text = ["$sql", "$raw"].into_iter().find_map(|key| data.get(key).and_then(Value::as_str))?;
+    (!text.is_empty()).then_some(text)
 }
 
 /// Parse a Vega-Lite spec and produce a pretty-printed VISUALIZE statement (`ParseVegaLiteToVisualize`).
 ///
-/// Returns the raw bytes: strings of the spec are copied without UTF-8 validation, and escaped lone low surrogates
-/// decode into invalid UTF-8. Empty if the spec is not a JSON object or has no source.
-pub fn parse_vegalite_to_visualize_bytes(vegalite_json: &[u8]) -> Vec<u8> {
-    let Some(doc) = Document::parse_with(vegalite_json, ParseFlags::DEFAULT) else {
-        return Vec::new();
+/// Empty if the spec is not a JSON object or has no source.
+pub fn parse_vegalite_to_visualize(vegalite_json: impl AsRef<[u8]>) -> String {
+    let Ok(Value::Object(root)) = serde_json::from_slice(vegalite_json.as_ref()) else {
+        return String::new();
     };
-    let parser = Parser { doc };
-    let root = parser.doc.root();
-    if !parser.doc.is_object(root) {
-        return Vec::new();
-    }
-
+    let Some(source) = root.get("data").and_then(emit_source) else {
+        return String::new();
+    };
     let mut lines = Vec::new();
-    parser.append_spec_lines(root, &mut lines, b"  ");
-
-    let Some(source) = parser.member(root, b"data").and_then(|data| parser.emit_source(data)) else {
-        return Vec::new();
-    };
-    let mut result = source;
-    result.extend_from_slice(b"\nVISUALIZE USING vegalite (\n");
-    for (i, line) in lines.iter().enumerate() {
-        if i > 0 {
-            result.extend_from_slice(b",\n");
-        }
-        result.extend_from_slice(line);
-    }
-    result.extend_from_slice(b"\n);");
-    result
-}
-
-/// Parse a Vega-Lite spec and produce a pretty-printed VISUALIZE statement (`ParseVegaLiteToVisualize`).
-///
-/// Invalid UTF-8 in the result (see `parse_vegalite_to_visualize_bytes`) is replaced.
-pub fn parse_vegalite_to_visualize(vegalite_json: &str) -> String {
-    super::into_string(parse_vegalite_to_visualize_bytes(vegalite_json.as_bytes()))
+    append_spec_lines(&root, &mut lines, "  ");
+    format!("{source}\nVISUALIZE USING vegalite (\n{}\n);", lines.join(",\n"))
 }
 
 #[cfg(test)]
@@ -605,9 +393,10 @@ mod tests {
         assert_eq!(roundtrip(r#"{"mark":"bar"}"#), "");
         assert_eq!(roundtrip(r#"{"data":{"$sql":""}}"#), "");
         assert_eq!(roundtrip(r#"{"data":{"$sql":1, "$raw":"x"}}"#), "x\nVISUALIZE USING vegalite (\n\n);");
-        // The default flags reject comments and trailing commas
+        // Only standard JSON is accepted
         assert_eq!(roundtrip(r#"{"data":{"$sql":"x"},}"#), "");
         assert_eq!(roundtrip("{\"data\":{\"$sql\":\"x\"}} // c"), "");
+        assert_eq!(roundtrip("{\"data\":{\"$sql\":\"x\"}}\0"), "");
     }
 
     #[test]
@@ -627,6 +416,14 @@ mod tests {
                 "  resolve => (scale => (x => independent))\n",
                 ");"
             )
+        );
+    }
+
+    #[test]
+    fn emits_numbers() {
+        assert_eq!(
+            roundtrip(r#"{"data":{"$raw":"r"},"encoding":{"x":{"sort":[1, -2, 18446744073709551615, -0, 2.0, 0.25]}}}"#),
+            "r\nVISUALIZE USING vegalite (\n  encoding => (\n    x => (sort => [1, -2, 18446744073709551615, 0, 2, 0.25])\n  )\n);"
         );
     }
 }

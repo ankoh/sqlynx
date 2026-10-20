@@ -1,12 +1,17 @@
 //! Generate a Vega-Lite spec from an analyzed VISUALIZE statement (`vegalite_generator.cc`).
+//!
+//! The spec is built as a `serde_json` value and pretty-printed with an indentation of two spaces.
 
-use super::pretty_writer::PrettyWriter;
-use super::{c_str, cvt_f64_i64, node_text, strip_single_quotes, strtod_c};
+use super::{node_text, strip_single_quotes};
 use crate::analyzer::types::{
     VegaLiteSpec, VisAxis, VisBin, VisEncodingChannel, VisLegend, VisMark, VisResolve, VisScale, VisualizationSpec,
 };
 use crate::analyzer::AnalyzedScript;
 use dashql_buffers::parser::{AttributeKey as K, Node, NodeType, VisMarkType};
+use serde_json::{Map, Value};
+
+/// A JSON object
+type Object = Map<String, Value>;
 
 /// The Vega-Lite name of an encoding channel key (`CHANNEL_KEY_TO_VEGALITE`)
 pub(crate) fn channel_name(key: K) -> Option<&'static str> {
@@ -51,8 +56,8 @@ pub(crate) fn channel_name(key: K) -> Option<&'static str> {
 }
 
 /// The lower-cased name of an enum value in its type table (`ToLower(tt->names[value])`)
-fn enum_name(name: Option<&'static str>) -> Vec<u8> {
-    name.unwrap_or_default().to_ascii_lowercase().into_bytes()
+fn enum_name(name: Option<&'static str>) -> Value {
+    Value::from(name.unwrap_or_default().to_ascii_lowercase())
 }
 
 /// The field name of an expression (`ResolveFieldName`): the column name of a column reference, the text of the
@@ -65,284 +70,222 @@ pub(crate) fn resolve_field_name<'a>(script: &'a AnalyzedScript, expression_id: 
     }
 }
 
+/// A JSON string of script text
+fn text_value(text: &[u8]) -> Value {
+    Value::from(String::from_utf8_lossy(text))
+}
+
+/// A number literal of a script
+fn parse_number(text: &[u8]) -> Option<f64> {
+    std::str::from_utf8(text).ok()?.parse().ok()
+}
+
+/// Insert a member if the value is present
+fn put(object: &mut Object, key: &str, value: Option<impl Into<Value>>) {
+    if let Some(value) = value {
+        insert(object, key, value.into());
+    }
+}
+
+/// Insert a member. Not inlined into the many `put` calls, which saves 12 KB of wasm.
+#[inline(never)]
+fn insert(object: &mut Object, key: &str, value: Value) {
+    object.insert(key.to_string(), value);
+}
+
 /// The generator state
 struct Generator<'a> {
     script: &'a AnalyzedScript,
-    writer: PrettyWriter,
 }
 
-impl<'a> Generator<'a> {
-    /// Write a number if the text of a node is one, the text otherwise (domain and range bounds)
-    fn write_number_or_string(&mut self, node_id: u32) {
-        let text = c_str(node_text(self.script, node_id));
-        match strtod_c(text) {
-            Some(value) => self.writer.double(value),
-            None => self.writer.string(text),
-        }
+impl Generator<'_> {
+    /// A number if the text of a node is one, the text otherwise (domain and range bounds)
+    fn number_or_string(&self, node_id: u32) -> Value {
+        let text = node_text(self.script, node_id);
+        parse_number(text).map(Value::from).unwrap_or_else(|| text_value(text))
     }
 
     /// `WriteArrayNode`: the values of an `OBJECT_EXT_VARARG_ARRAY`
-    fn write_array_node(&mut self, node_id: u32) {
-        let script: &'a AnalyzedScript = self.script;
-        let nodes = &script.parsed.nodes;
+    fn array_node(&self, node_id: u32) -> Value {
+        let nodes = &self.script.parsed.nodes;
         let node = &nodes[node_id as usize];
-        let array_node = children(node).find(|&i| nodes[i as usize].attribute_key() == K::EXT_VARARG_ARRAY_VALUES);
-        self.writer.start_array();
-        if let Some(array_node) = array_node {
-            for elem_id in children(&nodes[array_node as usize]) {
-                let elem = &nodes[elem_id as usize];
-                let full_text = node_text(script, elem_id);
-                let text = c_str(full_text);
-                match elem.node_type() {
-                    NodeType::LITERAL_INTEGER | NodeType::LITERAL_FLOAT | NodeType::OBJECT_SQL_NARY_EXPRESSION => {
-                        match strtod_c(text) {
-                            Some(value)
-                                if elem.node_type() == NodeType::LITERAL_INTEGER
-                                    && value == cvt_f64_i64(value) as f64 =>
-                            {
-                                self.writer.int64(cvt_f64_i64(value))
-                            }
-                            Some(value) => self.writer.double(value),
-                            None => self.writer.string(text),
-                        }
-                    }
-                    // The quotes are stripped before the string is cut at a NUL
-                    NodeType::LITERAL_STRING => self.writer.string(c_str(strip_single_quotes(full_text))),
-                    _ => self.writer.string(text),
-                }
-            }
-        }
-        self.writer.end_array();
+        let Some(array_node) =
+            children(node).find(|&i| nodes[i as usize].attribute_key() == K::EXT_VARARG_ARRAY_VALUES)
+        else {
+            return Value::Array(Vec::new());
+        };
+        let elements = children(&nodes[array_node as usize]).map(|elem_id| {
+            let elem = &nodes[elem_id as usize];
+            let text = node_text(self.script, elem_id);
+            let number = match elem.node_type() {
+                // Integer literals are integers in JSON if they are integers as doubles
+                NodeType::LITERAL_INTEGER => parse_number(text).map(|d| match d {
+                    d if d.fract() == 0.0 && (-(2f64.powi(63))..2f64.powi(63)).contains(&d) => Value::from(d as i64),
+                    d => Value::from(d),
+                }),
+                NodeType::LITERAL_FLOAT | NodeType::OBJECT_SQL_NARY_EXPRESSION => parse_number(text).map(Value::from),
+                // The quotes are stripped, `''` stays as it is
+                NodeType::LITERAL_STRING => return text_value(strip_single_quotes(text)),
+                _ => None,
+            };
+            number.unwrap_or_else(|| text_value(text))
+        });
+        Value::Array(elements.collect())
     }
 
     /// `WriteScale`
-    fn write_scale(&mut self, s: &VisScale) {
-        let w = &mut self.writer;
-        w.start_object();
-        if let Some(scale_type) = s.scale_type {
-            w.key(b"type");
-            w.string(&enum_name(scale_type.variant_name()));
-        }
-        write_bool(w, b"zero", s.zero);
-        write_bool(w, b"nice", s.nice);
-        write_bool(w, b"clamp", s.clamp);
-        write_bool(w, b"reverse", s.reverse);
-        write_bool(w, b"round", s.round);
-        write_str(w, b"scheme", &s.scheme);
-        write_str(w, b"interpolate", &s.interpolate);
-        write_double(w, b"exponent", s.exponent);
-        write_double(w, b"base", s.base);
-        write_double(w, b"constant", s.constant);
-        write_double(w, b"padding", s.padding);
-        write_double(w, b"paddingInner", s.padding_inner);
-        write_double(w, b"paddingOuter", s.padding_outer);
-        write_double(w, b"align", s.align);
-        for (key, node_id, is_array) in [
-            (&b"domain"[..], s.domain_node_id, true),
-            (b"domainMin", s.domain_min_node_id, false),
-            (b"domainMax", s.domain_max_node_id, false),
-            (b"domainMid", s.domain_mid_node_id, false),
-            (b"range", s.range_node_id, true),
-            (b"rangeMin", s.range_min_node_id, false),
-            (b"rangeMax", s.range_max_node_id, false),
-        ] {
-            let Some(node_id) = node_id else {
-                continue;
-            };
-            self.writer.key(key);
-            if is_array {
-                self.write_array_node(node_id);
-            } else {
-                self.write_number_or_string(node_id);
-            }
-        }
-        write_str(&mut self.writer, b"name", &s.name);
-        self.writer.end_object();
+    fn scale(&self, s: &VisScale) -> Value {
+        let mut o = Object::new();
+        put(&mut o, "type", s.scale_type.map(|t| enum_name(t.variant_name())));
+        put(&mut o, "zero", s.zero);
+        put(&mut o, "nice", s.nice);
+        put(&mut o, "clamp", s.clamp);
+        put(&mut o, "reverse", s.reverse);
+        put(&mut o, "round", s.round);
+        put(&mut o, "scheme", s.scheme.as_deref());
+        put(&mut o, "interpolate", s.interpolate.as_deref());
+        put(&mut o, "exponent", s.exponent);
+        put(&mut o, "base", s.base);
+        put(&mut o, "constant", s.constant);
+        put(&mut o, "padding", s.padding);
+        put(&mut o, "paddingInner", s.padding_inner);
+        put(&mut o, "paddingOuter", s.padding_outer);
+        put(&mut o, "align", s.align);
+        put(&mut o, "domain", s.domain_node_id.map(|n| self.array_node(n)));
+        put(&mut o, "domainMin", s.domain_min_node_id.map(|n| self.number_or_string(n)));
+        put(&mut o, "domainMax", s.domain_max_node_id.map(|n| self.number_or_string(n)));
+        put(&mut o, "domainMid", s.domain_mid_node_id.map(|n| self.number_or_string(n)));
+        put(&mut o, "range", s.range_node_id.map(|n| self.array_node(n)));
+        put(&mut o, "rangeMin", s.range_min_node_id.map(|n| self.number_or_string(n)));
+        put(&mut o, "rangeMax", s.range_max_node_id.map(|n| self.number_or_string(n)));
+        put(&mut o, "name", s.name.as_deref());
+        Value::Object(o)
     }
 
     /// `WriteMark`: `point` and `line` overlays recurse, a boolean toggle writes a bool
-    fn write_mark(&mut self, m: &VisMark) {
-        self.writer.start_object();
-        if let Some(mark_type) = m.mark_type {
-            self.writer.key(b"type");
-            self.writer.string(&enum_name(mark_type.variant_name()));
+    fn mark(&self, m: &VisMark) -> Value {
+        let mut o = Object::new();
+        put(&mut o, "type", m.mark_type.map(|t| enum_name(t.variant_name())));
+        put(&mut o, "filled", m.filled);
+        put(&mut o, "fill", m.fill.as_deref());
+        put(&mut o, "stroke", m.stroke.as_deref());
+        put(&mut o, "color", m.color.as_deref());
+        put(&mut o, "opacity", m.opacity);
+        put(&mut o, "fillOpacity", m.fill_opacity);
+        put(&mut o, "strokeOpacity", m.stroke_opacity);
+        put(&mut o, "strokeWidth", m.stroke_width);
+        put(&mut o, "strokeDash", m.stroke_dash_node_id.map(|n| self.array_node(n)));
+        put(&mut o, "size", m.size);
+        put(&mut o, "shape", m.shape.as_deref());
+        put(&mut o, "angle", m.angle);
+        put(&mut o, "radius", m.radius);
+        put(&mut o, "cornerRadius", m.corner_radius);
+        put(&mut o, "orient", m.orient.as_deref());
+        put(&mut o, "interpolate", m.interpolate.as_deref());
+        put(&mut o, "tension", m.tension);
+        put(&mut o, "thickness", m.thickness);
+        put(&mut o, "tooltip", m.tooltip);
+        match &m.point {
+            Some(point) => put(&mut o, "point", Some(self.mark(point))),
+            None => put(&mut o, "point", m.point_enabled),
         }
-        let w = &mut self.writer;
-        write_bool(w, b"filled", m.filled);
-        write_str(w, b"fill", &m.fill);
-        write_str(w, b"stroke", &m.stroke);
-        write_str(w, b"color", &m.color);
-        write_double(w, b"opacity", m.opacity);
-        write_double(w, b"fillOpacity", m.fill_opacity);
-        write_double(w, b"strokeOpacity", m.stroke_opacity);
-        write_double(w, b"strokeWidth", m.stroke_width);
-        if let Some(node_id) = m.stroke_dash_node_id {
-            self.writer.key(b"strokeDash");
-            self.write_array_node(node_id);
+        match &m.line {
+            Some(line) => put(&mut o, "line", Some(self.mark(line))),
+            None => put(&mut o, "line", m.line_enabled),
         }
-        let w = &mut self.writer;
-        write_double(w, b"size", m.size);
-        write_str(w, b"shape", &m.shape);
-        write_double(w, b"angle", m.angle);
-        write_double(w, b"radius", m.radius);
-        write_double(w, b"cornerRadius", m.corner_radius);
-        write_str(w, b"orient", &m.orient);
-        write_str(w, b"interpolate", &m.interpolate);
-        write_double(w, b"tension", m.tension);
-        write_double(w, b"thickness", m.thickness);
-        write_bool(w, b"tooltip", m.tooltip);
-        if let Some(point) = &m.point {
-            self.writer.key(b"point");
-            self.write_mark(point);
-        } else {
-            write_bool(&mut self.writer, b"point", m.point_enabled);
-        }
-        if let Some(line) = &m.line {
-            self.writer.key(b"line");
-            self.write_mark(line);
-        } else {
-            write_bool(&mut self.writer, b"line", m.line_enabled);
-        }
-        self.writer.end_object();
+        Value::Object(o)
     }
 
     /// `WriteStack`: booleans become a JSON bool, everything else a string without single quotes
-    fn write_stack(&mut self, node_id: u32) {
-        let script: &'a AnalyzedScript = self.script;
-        let node = &script.parsed.nodes[node_id as usize];
+    fn stack(&self, node_id: u32) -> Value {
+        let node = &self.script.parsed.nodes[node_id as usize];
         if node.node_type() == NodeType::BOOL {
-            self.writer.bool(node.children_begin_or_value() != 0);
-            return;
+            return Value::Bool(node.children_begin_or_value() != 0);
         }
-        let text = strip_single_quotes(node_text(script, node_id));
-        if text == b"true" || text == b"false" {
-            self.writer.bool(text == b"true");
-            return;
+        match strip_single_quotes(node_text(self.script, node_id)) {
+            b"true" => Value::Bool(true),
+            b"false" => Value::Bool(false),
+            text => text_value(text),
         }
-        self.writer.string(c_str(text));
     }
 
     /// `WriteResolveMap`
-    fn write_resolve_map(&mut self, node_id: u32) {
-        let script: &'a AnalyzedScript = self.script;
-        let nodes = &script.parsed.nodes;
-        self.writer.start_object();
+    fn resolve_map(&self, node_id: u32) -> Value {
+        let nodes = &self.script.parsed.nodes;
+        let mut o = Object::new();
         for child_id in children(&nodes[node_id as usize]) {
             let child = &nodes[child_id as usize];
             let Some(channel) = channel_name(child.attribute_key()) else {
                 continue;
             };
             let value_node_id = if child.children_count() == 1 { child.children_begin_or_value() } else { child_id };
-            let value = strip_single_quotes(node_text(script, value_node_id));
-            self.writer.key(channel.as_bytes());
-            self.writer.string(c_str(value));
+            o.insert(channel.to_string(), text_value(strip_single_quotes(node_text(self.script, value_node_id))));
         }
-        self.writer.end_object();
+        Value::Object(o)
     }
 
     /// `WriteEncoding`
-    fn write_encoding(&mut self, channels: &[VisEncodingChannel]) {
-        let script: &'a AnalyzedScript = self.script;
+    fn encoding(&self, channels: &[VisEncodingChannel]) -> Option<Value> {
         if channels.is_empty() {
-            return;
+            return None;
         }
-        self.writer.key(b"encoding");
-        self.writer.start_object();
+        let mut encoding = Object::new();
         for channel in channels {
             let Some(name) = channel_name(channel.channel_key) else {
                 continue;
             };
-            self.writer.key(name.as_bytes());
-            self.writer.start_object();
+            let mut o = Object::new();
             let field_name = match (channel.field_expression_id, channel.field_node_id) {
-                (Some(expression_id), _) => Some(resolve_field_name(script, expression_id)),
-                (None, Some(node_id)) => Some(node_text(script, node_id)),
+                (Some(expression_id), _) => Some(resolve_field_name(self.script, expression_id)),
+                (None, Some(node_id)) => Some(node_text(self.script, node_id)),
                 (None, None) => None,
             };
-            if let Some(field_name) = field_name {
-                self.writer.key(b"field");
-                self.writer.string(c_str(field_name));
-            }
-            if let Some(field_type) = channel.field_type {
-                self.writer.key(b"type");
-                self.writer.string(&enum_name(field_type.variant_name()));
-            }
-            write_str(&mut self.writer, b"aggregate", &channel.aggregate);
-            if let Some(bin) = &channel.bin {
-                self.writer.key(b"bin");
-                write_bin(&mut self.writer, bin);
-            }
-            write_str(&mut self.writer, b"timeUnit", &channel.time_unit);
-            if let Some(node_id) = channel.stack_node_id {
-                self.writer.key(b"stack");
-                self.write_stack(node_id);
-            }
-            if let Some(scale) = &channel.scale {
-                self.writer.key(b"scale");
-                self.write_scale(scale);
-            }
-            if let Some(axis) = &channel.axis {
-                self.writer.key(b"axis");
-                write_axis(&mut self.writer, axis);
-            }
-            if let Some(legend) = &channel.legend {
-                self.writer.key(b"legend");
-                write_legend(&mut self.writer, legend);
-            }
-            self.writer.end_object();
+            put(&mut o, "field", field_name.map(text_value));
+            put(&mut o, "type", channel.field_type.map(|t| enum_name(t.variant_name())));
+            put(&mut o, "aggregate", channel.aggregate.as_deref());
+            put(&mut o, "bin", channel.bin.as_ref().map(bin));
+            put(&mut o, "timeUnit", channel.time_unit.as_deref());
+            put(&mut o, "stack", channel.stack_node_id.map(|n| self.stack(n)));
+            put(&mut o, "scale", channel.scale.as_ref().map(|s| self.scale(s)));
+            put(&mut o, "axis", channel.axis.as_ref().map(axis));
+            put(&mut o, "legend", channel.legend.as_ref().map(legend));
+            encoding.insert(name.to_string(), Value::Object(o));
         }
-        self.writer.end_object();
+        Some(Value::Object(encoding))
     }
 
     /// `WriteVegaLiteSpecFields`. Nested specs write their layers before `resolve`, the top-level spec writes them
     /// after it (the caller does).
-    fn write_spec_fields(&mut self, fields: SpecFields, layers: Option<&[VegaLiteSpec]>) {
-        match fields.mark {
-            Some(mark) if mark.has_properties() => {
-                self.writer.key(b"mark");
-                self.write_mark(mark);
-            }
-            _ => {
-                if let Some(mark_type) = fields.mark_type {
-                    self.writer.key(b"mark");
-                    self.writer.string(&enum_name(mark_type.variant_name()));
-                }
-            }
-        }
-        write_str(&mut self.writer, b"title", fields.title);
-        self.write_encoding(fields.encoding_channels);
+    fn spec_fields(&self, o: &mut Object, fields: SpecFields, layers: Option<&[VegaLiteSpec]>) {
+        let mark = match fields.mark {
+            Some(mark) if mark.has_properties() => Some(self.mark(mark)),
+            _ => fields.mark_type.map(|t| enum_name(t.variant_name())),
+        };
+        put(o, "mark", mark);
+        put(o, "title", fields.title.as_deref());
+        put(o, "encoding", self.encoding(fields.encoding_channels));
         if let Some(layers) = layers {
-            self.write_layers(layers);
+            self.layers(o, layers);
         }
         if let Some(resolve) = fields.resolve {
-            self.writer.key(b"resolve");
-            self.writer.start_object();
-            for (key, node_id) in [
-                (&b"scale"[..], resolve.scale_node_id),
-                (b"axis", resolve.axis_node_id),
-                (b"legend", resolve.legend_node_id),
-            ] {
-                if let Some(node_id) = node_id {
-                    self.writer.key(key);
-                    self.write_resolve_map(node_id);
-                }
-            }
-            self.writer.end_object();
+            let mut r = Object::new();
+            put(&mut r, "scale", resolve.scale_node_id.map(|n| self.resolve_map(n)));
+            put(&mut r, "axis", resolve.axis_node_id.map(|n| self.resolve_map(n)));
+            put(&mut r, "legend", resolve.legend_node_id.map(|n| self.resolve_map(n)));
+            o.insert("resolve".to_string(), Value::Object(r));
         }
     }
 
-    fn write_layers(&mut self, layers: &[VegaLiteSpec]) {
+    fn layers(&self, o: &mut Object, layers: &[VegaLiteSpec]) {
         if layers.is_empty() {
             return;
         }
-        self.writer.key(b"layer");
-        self.writer.start_array();
-        for layer in layers {
-            self.writer.start_object();
-            self.write_spec_fields(SpecFields::of_layer(layer), Some(&layer.layers));
-            self.writer.end_object();
-        }
-        self.writer.end_array();
+        let layers = layers.iter().map(|layer| {
+            let mut l = Object::new();
+            self.spec_fields(&mut l, SpecFields::of_layer(layer), Some(&layer.layers));
+            Value::Object(l)
+        });
+        o.insert("layer".to_string(), Value::Array(layers.collect()));
     }
 }
 
@@ -383,74 +326,46 @@ fn children(node: &Node) -> std::ops::Range<u32> {
     begin..begin + node.children_count()
 }
 
-fn write_bool(w: &mut PrettyWriter, key: &[u8], value: Option<bool>) {
-    if let Some(value) = value {
-        w.key(key);
-        w.bool(value);
-    }
-}
-
-fn write_double(w: &mut PrettyWriter, key: &[u8], value: Option<f64>) {
-    if let Some(value) = value {
-        w.key(key);
-        w.double(value);
-    }
-}
-
-fn write_int(w: &mut PrettyWriter, key: &[u8], value: Option<i32>) {
-    if let Some(value) = value {
-        w.key(key);
-        w.int(value);
-    }
-}
-
-fn write_str(w: &mut PrettyWriter, key: &[u8], value: &Option<String>) {
-    if let Some(value) = value {
-        w.key(key);
-        w.string(value.as_bytes());
-    }
-}
-
 /// `WriteAxis`
-fn write_axis(w: &mut PrettyWriter, a: &VisAxis) {
-    w.start_object();
-    write_str(w, b"orient", &a.orient);
-    write_str(w, b"title", &a.title);
-    write_str(w, b"format", &a.format);
-    write_str(w, b"formatType", &a.format_type);
-    write_bool(w, b"grid", a.grid);
-    write_bool(w, b"ticks", a.ticks);
-    write_bool(w, b"domain", a.domain);
-    write_double(w, b"tickCount", a.tick_count);
-    write_double(w, b"tickSize", a.tick_size);
-    write_double(w, b"labelAngle", a.label_angle);
-    write_double(w, b"labelFontSize", a.label_font_size);
-    write_str(w, b"labelOverlap", &a.label_overlap);
-    write_str(w, b"direction", &a.direction);
-    write_double(w, b"offset", a.offset);
-    write_int(w, b"zIndex", a.zindex);
-    write_str(w, b"name", &a.name);
-    w.end_object();
+fn axis(a: &VisAxis) -> Value {
+    let mut o = Object::new();
+    put(&mut o, "orient", a.orient.as_deref());
+    put(&mut o, "title", a.title.as_deref());
+    put(&mut o, "format", a.format.as_deref());
+    put(&mut o, "formatType", a.format_type.as_deref());
+    put(&mut o, "grid", a.grid);
+    put(&mut o, "ticks", a.ticks);
+    put(&mut o, "domain", a.domain);
+    put(&mut o, "tickCount", a.tick_count);
+    put(&mut o, "tickSize", a.tick_size);
+    put(&mut o, "labelAngle", a.label_angle);
+    put(&mut o, "labelFontSize", a.label_font_size);
+    put(&mut o, "labelOverlap", a.label_overlap.as_deref());
+    put(&mut o, "direction", a.direction.as_deref());
+    put(&mut o, "offset", a.offset);
+    put(&mut o, "zIndex", a.zindex);
+    put(&mut o, "name", a.name.as_deref());
+    Value::Object(o)
 }
 
 /// `WriteLegend`
-fn write_legend(w: &mut PrettyWriter, l: &VisLegend) {
-    w.start_object();
-    write_str(w, b"type", &l.legend_type);
-    write_str(w, b"orient", &l.orient);
-    write_str(w, b"title", &l.title);
-    write_str(w, b"format", &l.format);
-    write_str(w, b"formatType", &l.format_type);
-    write_str(w, b"direction", &l.direction);
-    write_double(w, b"padding", l.padding);
-    write_double(w, b"offset", l.offset);
-    write_int(w, b"zIndex", l.zindex);
-    write_str(w, b"name", &l.name);
-    w.end_object();
+fn legend(l: &VisLegend) -> Value {
+    let mut o = Object::new();
+    put(&mut o, "type", l.legend_type.as_deref());
+    put(&mut o, "orient", l.orient.as_deref());
+    put(&mut o, "title", l.title.as_deref());
+    put(&mut o, "format", l.format.as_deref());
+    put(&mut o, "formatType", l.format_type.as_deref());
+    put(&mut o, "direction", l.direction.as_deref());
+    put(&mut o, "padding", l.padding);
+    put(&mut o, "offset", l.offset);
+    put(&mut o, "zIndex", l.zindex);
+    put(&mut o, "name", l.name.as_deref());
+    Value::Object(o)
 }
 
 /// `WriteBin`: `true` without parameters
-fn write_bin(w: &mut PrettyWriter, b: &VisBin) {
+fn bin(b: &VisBin) -> Value {
     let has_params = b.step.is_some()
         || b.maxbins.is_some()
         || b.minstep.is_some()
@@ -459,39 +374,32 @@ fn write_bin(w: &mut PrettyWriter, b: &VisBin) {
         || b.nice.is_some()
         || b.binned.is_some();
     if !has_params {
-        w.bool(true);
-        return;
+        return Value::Bool(true);
     }
-    w.start_object();
-    write_bool(w, b"binned", b.binned);
-    write_double(w, b"step", b.step);
-    write_double(w, b"maxbins", b.maxbins);
-    write_double(w, b"minstep", b.minstep);
-    write_double(w, b"anchor", b.anchor);
-    write_double(w, b"base", b.base);
-    write_bool(w, b"nice", b.nice);
-    w.end_object();
+    let mut o = Object::new();
+    put(&mut o, "binned", b.binned);
+    put(&mut o, "step", b.step);
+    put(&mut o, "maxbins", b.maxbins);
+    put(&mut o, "minstep", b.minstep);
+    put(&mut o, "anchor", b.anchor);
+    put(&mut o, "base", b.base);
+    put(&mut o, "nice", b.nice);
+    Value::Object(o)
 }
 
 /// Generate the pretty-printed Vega-Lite spec of a visualization (`GenerateVegaLiteSpec`)
 pub fn generate_vegalite_spec(spec: &VisualizationSpec, script: &AnalyzedScript) -> String {
-    let mut g = Generator { script, writer: PrettyWriter::new() };
-    g.writer.start_object();
-    g.writer.key(b"$schema");
-    g.writer.string(b"https://vega.github.io/schema/vega-lite/v5.json");
-
+    let g = Generator { script };
+    let mut root = Object::new();
+    root.insert("$schema".to_string(), Value::from("https://vega.github.io/schema/vega-lite/v5.json"));
     if let Some(source_node_id) = spec.source_node_id {
-        g.writer.key(b"data");
-        g.writer.start_object();
+        let mut data = Object::new();
         if script.parsed.nodes[source_node_id as usize].node_type() == NodeType::OBJECT_SQL_SELECT {
-            g.writer.key(b"$sql");
-            g.writer.string(c_str(node_text(script, source_node_id)));
+            data.insert("$sql".to_string(), text_value(node_text(script, source_node_id)));
         }
-        g.writer.end_object();
+        root.insert("data".to_string(), Value::Object(data));
     }
-
-    g.write_spec_fields(SpecFields::of_spec(spec), None);
-    g.write_layers(&spec.layers);
-    g.writer.end_object();
-    super::into_string(g.writer.finish())
+    g.spec_fields(&mut root, SpecFields::of_spec(spec), None);
+    g.layers(&mut root, &spec.layers);
+    serde_json::to_string_pretty(&root).expect("a JSON value always serializes")
 }

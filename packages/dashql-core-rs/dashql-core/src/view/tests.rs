@@ -414,6 +414,49 @@ fn reads_camel_case_memory_bytes() {
 }
 
 #[test]
+fn reads_standard_json_only() {
+    use dashql_buffers::status::StatusCode;
+    for plan in
+        ["", "{\"operator\":\"scan\",}", "/* c */ {\"operator\":\"scan\"}", "{\"operator\":\"scan\"}\0", "[NaN]"]
+    {
+        let mut model = PlanViewModel::new();
+        assert_eq!(
+            model.parse_hyper_plan(plan.as_bytes()),
+            Err(StatusCode::VIEWMODEL_INPUT_JSON_PARSER_ERROR),
+            "{plan:?}"
+        );
+    }
+}
+
+#[test]
+fn serializes_attributes_and_ignores_counts_that_are_not_unsigned() {
+    let buffer = pack_plan(
+        r#"{
+        "operator":"scan",
+        "values":[1, -0.0, 1.5e3, "a\u0000\"b\/"],
+        "sqlpos":[[-1, 4294967296]],
+        "statistics":{"processed-rows":-1,"output-rows":2.5,"memory-bytes":7}
+    }"#,
+    );
+    let plan = root(&buffer);
+    let op = plan.operators().unwrap().get(0);
+    let attribute = |name: &str| {
+        (op.attributes_begin()..op.attributes_begin() + op.attribute_count())
+            .map(|i| plan.attributes().unwrap().get(i as usize))
+            .find(|a| string(&plan, a.name()) == name)
+            .map(|a| string(&plan, a.value_json()))
+    };
+    assert_eq!(attribute("operator"), Some(r#""scan""#));
+    assert_eq!(attribute("values"), Some(r#"[1,-0.0,1500.0,"a\u0000\"b/"]"#));
+    assert_eq!(op.source_location().offset(), 0);
+    assert_eq!(op.source_location().length(), 0);
+    let statistics = op.execution_statistics();
+    assert_eq!(statistics.input_cardinality_consumed(), 0);
+    assert_eq!(statistics.output_cardinality_produced(), 0);
+    assert_eq!(statistics.memory_bytes(), 7);
+}
+
+#[test]
 fn variable_width_nodes_do_not_overlap() {
     let margin = 0.25;
     let config = make_layout_config(margin);

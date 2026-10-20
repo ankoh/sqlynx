@@ -15,7 +15,6 @@ pub mod types;
 mod visualization;
 
 pub use types::*;
-pub(crate) use visualization::strtod_full;
 
 use crate::catalog::*;
 use crate::error::Result;

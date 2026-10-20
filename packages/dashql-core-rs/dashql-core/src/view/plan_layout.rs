@@ -34,15 +34,10 @@ fn cpp_max(a: f64, b: f64) -> f64 {
     }
 }
 
-/// Count the code points of UTF-8 text (bytes that are not continuation bytes)
-fn count_utf8_code_points(text: &[u8]) -> usize {
-    text.iter().filter(|c| (**c & 0xc0) != 0x80).count()
-}
-
 /// Compute the rendered width of an operator node
 fn compute_node_width(op: &OperatorNode, layout_config: &fb::PlanLayoutConfig) -> f64 {
-    let label: &[u8] = op.operator_label.as_deref().or(op.operator_type.as_deref()).unwrap_or(b"");
-    let label_chars = count_utf8_code_points(label).min(layout_config.max_label_chars() as usize);
+    let label = op.operator_label.as_deref().or(op.operator_type.as_deref()).unwrap_or("");
+    let label_chars = label.chars().count().min(layout_config.max_label_chars() as usize);
     cpp_max(
         layout_config.node_padding_left()
             + layout_config.icon_width()

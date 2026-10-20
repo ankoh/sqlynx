@@ -683,7 +683,7 @@ pub fn process_batch(request: &[u8]) -> Result<Vec<u8>, JsError> {
 /// Parse a Vega-Lite spec into a DashQL VISUALIZE spec
 #[wasm_bindgen(js_name = parseVegaLiteToVisualize)]
 pub fn parse_vegalite_to_visualize(json: &[u8]) -> Vec<u8> {
-    dashql_core::visualize::parse_vegalite_to_visualize_bytes(json)
+    dashql_core::visualize::parse_vegalite_to_visualize(json).into_bytes()
 }
 
 /// A plan view model (`dashql_plan_view_model_*`)

@@ -1,35 +1,47 @@
 //! The plan view model and its FlatBuffers encoding (`plan_view_model.cc`, `plan_view_model.h`).
 
-use super::json::{c_str, Document, Number, ValueId};
 use dashql_buffers::parser::SymbolSpan;
 use dashql_buffers::view as fb;
-use flatbuffers::{FlatBufferBuilder, ForwardsUOffset, Vector, WIPOffset};
+use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use std::collections::HashMap;
 
 /// A component of the path from an operator to the JSON value of its child operator
 #[derive(Clone, Debug, PartialEq)]
 pub(super) enum PathComponent {
     /// A member in an object (the C++ code keeps the index of the object on the DFS stack, but never reads it)
-    MemberInObject { attribute: Box<[u8]> },
+    MemberInObject { attribute: String },
     /// An entry in an array
     EntryInArray { index: usize },
     /// No path (the document root)
     None,
 }
 
-/// An operator found in the JSON plan, before flattening (`ParsedOperatorNode`).
-///
-/// The C++ node also collects the operator attributes, which are never read again.
+/// A reference of an operator to another operator through the operator id serialized by Hyper
+#[derive(Debug)]
+pub(super) struct OperatorReference {
+    /// The operator id serialized by Hyper of the referenced operator
+    pub(super) source_operator_id: u64,
+    /// The relationship kind
+    pub(super) kind: &'static str,
+    /// Additional reference attributes, values serialized as JSON
+    pub(super) attributes: Vec<(String, String)>,
+}
+
+/// An operator found in the JSON plan, before flattening (`ParsedOperatorNode`)
 #[derive(Debug, Default)]
 pub(super) struct ParsedOperatorNode {
     /// The path from the parent operator (or the document root)
     pub(super) parent_child_path: Vec<PathComponent>,
-    /// The source value
-    pub(super) source_value: ValueId,
+    /// The members of the operator object that contain no operators, values serialized as JSON
+    pub(super) attributes: Vec<(String, String)>,
+    /// The execution statistics
+    pub(super) statistics: fb::PlanExecutionStatistics,
+    /// The references to other operators
+    pub(super) references: Vec<OperatorReference>,
     /// The operator type
-    pub(super) operator_type: Option<Box<[u8]>>,
+    pub(super) operator_type: Option<String>,
     /// The operator label
-    pub(super) operator_label: Option<Box<[u8]>>,
+    pub(super) operator_label: Option<String>,
     /// The operator id serialized by Hyper
     pub(super) source_operator_id: Option<u64>,
     /// The child operators (indexes of parsed operators)
@@ -75,9 +87,9 @@ pub(super) struct OperatorCrossEdge {
     /// The operator containing the reference
     pub(super) target_node: u32,
     /// The relationship kind
-    pub(super) kind: &'static [u8],
-    /// Additional reference attributes serialized as JSON
-    pub(super) attributes: Vec<(Box<[u8]>, Vec<u8>)>,
+    pub(super) kind: &'static str,
+    /// Additional reference attributes, values serialized as JSON
+    pub(super) attributes: Vec<(String, String)>,
 }
 
 /// An operator edge
@@ -104,19 +116,23 @@ pub(super) struct OperatorNode {
     /// The operator id
     pub(super) operator_id: u32,
     /// The operator type
-    pub(super) operator_type: Option<Box<[u8]>>,
+    pub(super) operator_type: Option<String>,
     /// The operator label
-    pub(super) operator_label: Option<Box<[u8]>>,
+    pub(super) operator_label: Option<String>,
     /// The operator id serialized by Hyper
     pub(super) source_operator_id: Option<u64>,
+    /// The members of the operator object that contain no operators, values serialized as JSON
+    pub(super) attributes: Vec<(String, String)>,
+    /// The execution statistics
+    pub(super) statistics: fb::PlanExecutionStatistics,
+    /// The references to other operators, until the cross edges are resolved
+    pub(super) references: Vec<OperatorReference>,
     /// The parent operator id
     pub(super) parent_operator_id: Option<usize>,
     /// The parent path
     pub(super) parent_path: Vec<PathComponent>,
     /// The source location
     pub(super) source_location: Option<SymbolSpan>,
-    /// The source value
-    pub(super) source_value: ValueId,
     /// The child operators
     pub(super) children_begin: usize,
     pub(super) children_count: usize,
@@ -135,28 +151,30 @@ impl OperatorNode {
             operator_type: parsed.operator_type,
             operator_label: parsed.operator_label,
             source_operator_id: parsed.source_operator_id,
+            attributes: parsed.attributes,
+            statistics: parsed.statistics,
+            references: parsed.references,
             parent_path: parsed.parent_child_path,
             source_location: parsed.source_location,
-            source_value: parsed.source_value,
             ..Default::default()
         }
     }
 
     /// Serialize the parent child path
-    pub(super) fn serialize_parent_path(&self) -> Vec<u8> {
-        let mut out = Vec::new();
+    pub(super) fn serialize_parent_path(&self) -> String {
+        let mut out = String::new();
         for (i, component) in self.parent_path.iter().enumerate() {
             match component {
                 PathComponent::MemberInObject { attribute } => {
                     if i > 0 {
-                        out.push(b'.');
+                        out.push('.');
                     }
-                    out.extend_from_slice(attribute);
+                    out.push_str(attribute);
                 }
                 PathComponent::EntryInArray { index } => {
-                    out.push(b'[');
-                    out.extend_from_slice(index.to_string().as_bytes());
-                    out.push(b']');
+                    out.push('[');
+                    out.push_str(&index.to_string());
+                    out.push(']');
                 }
                 PathComponent::None => {}
             }
@@ -169,28 +187,26 @@ impl OperatorNode {
 #[derive(Default)]
 struct StringDictionary {
     /// The allocated strings
-    strings: Vec<Vec<u8>>,
+    strings: Vec<String>,
     /// The string ids
-    string_ids: HashMap<Vec<u8>, usize>,
+    string_ids: HashMap<String, u32>,
 }
 
 impl StringDictionary {
     /// Allocate a string in the string dictionary
-    fn allocate(&mut self, s: &[u8]) -> u32 {
+    fn allocate(&mut self, s: &str) -> u32 {
         if let Some(id) = self.string_ids.get(s) {
-            return *id as u32;
+            return *id;
         }
-        let id = self.strings.len();
-        self.strings.push(s.to_vec());
-        self.string_ids.insert(s.to_vec(), id);
-        id as u32
+        let id = self.strings.len() as u32;
+        self.strings.push(s.to_string());
+        self.string_ids.insert(s.to_string(), id);
+        id
     }
 }
 
 /// The view model of a Hyper plan
 pub struct PlanViewModel {
-    /// The input JSON plan
-    pub(super) document: Document,
     /// The operators
     pub(super) operators: Vec<OperatorNode>,
     /// The operator edges
@@ -215,70 +231,10 @@ impl Default for PlanViewModel {
     }
 }
 
-/// Does a JSON value contain an operator?
-fn contains_operator(doc: &Document, value: ValueId) -> bool {
-    use super::json::Value;
-    match doc.get(value) {
-        Value::Object(members) => {
-            if doc.find_member(value, b"operator").and_then(|op| doc.string(op)).is_some() {
-                return true;
-            }
-            members.iter().any(|m| contains_operator(doc, m.value))
-        }
-        Value::Array(elements) => elements.iter().any(|e| contains_operator(doc, *e)),
-        _ => false,
-    }
-}
-
-/// The first of several members that exists (`FindMember` in plan_view_model.cc)
-fn find_member(doc: &Document, value: ValueId, names: &[&[u8]]) -> Option<ValueId> {
-    if !doc.is_object(value) {
-        return None;
-    }
-    names.iter().find_map(|name| doc.find_member(value, name))
-}
-
-/// The first of several members that exists, if it is a number (`FindNumber`)
-fn find_number(doc: &Document, value: ValueId, names: &[&[u8]]) -> Option<Number> {
-    find_member(doc, value, names).and_then(|member| doc.number(member))
-}
-
-/// Read the execution statistics of an operator
-fn read_execution_statistics(doc: &Document, source: ValueId, out: &mut fb::PlanExecutionStatistics) {
-    let statistics = find_member(doc, source, &[b"statistics"]);
-    let runtime = match statistics {
-        Some(statistics) if doc.is_object(statistics) => statistics,
-        _ => source,
-    };
-
-    const ROWS_IN_TABLE: &[&[u8]] = &[b"estimated-rows-in-table", b"estimatedRowsInTable"];
-    let input_estimated = find_number(doc, source, ROWS_IN_TABLE).or_else(|| find_number(doc, runtime, ROWS_IN_TABLE));
-    if let Some(n) = input_estimated {
-        out.set_input_cardinality_estimated(n.get_double());
-    }
-
-    const ROWS: &[&[u8]] = &[b"estimated-rows", b"estimatedRows", b"cardinality"];
-    let output_estimated = find_number(doc, source, ROWS).or_else(|| find_number(doc, runtime, ROWS));
-    if let Some(n) = output_estimated {
-        out.set_output_cardinality_estimated(n.get_double());
-    }
-
-    if let Some(n) = find_number(doc, runtime, &[b"processed-rows", b"processedRows"]) {
-        out.set_input_cardinality_consumed(n.get_uint64());
-    }
-    if let Some(n) = find_number(doc, runtime, &[b"output-rows", b"outputRows"]) {
-        out.set_output_cardinality_produced(n.get_uint64());
-    }
-    if let Some(n) = find_number(doc, runtime, &[b"memory-bytes", b"memoryBytes"]) {
-        out.set_memory_bytes(n.get_uint64());
-    }
-}
-
 impl PlanViewModel {
     /// Constructor
     pub fn new() -> Self {
         Self {
-            document: Document::default(),
             operators: Vec::new(),
             operator_edges: Vec::new(),
             operator_cross_edges: Vec::new(),
@@ -299,7 +255,6 @@ impl PlanViewModel {
         self.operator_edges.clear();
         self.operator_cross_edges.clear();
         self.layout_rect = None;
-        self.document = Document::default();
     }
 
     /// Reset the view model execution (not implemented in the C++ core either)
@@ -383,7 +338,6 @@ impl PlanViewModel {
         strings: &mut StringDictionary,
         attributes: &mut Vec<fb::PlanAttribute>,
     ) -> fb::PlanOperator {
-        let doc = &self.document;
         let mut out = fb::PlanOperator::default();
         out.set_operator_id(op.operator_id);
         out.set_operator_type_name(op.operator_type.as_ref().map(|t| strings.allocate(t)).unwrap_or(u32::MAX));
@@ -399,20 +353,15 @@ impl PlanViewModel {
         out.set_cross_edge_count(op.cross_edge_count as u32);
         let attributes_begin = attributes.len();
         out.set_attributes_begin(attributes_begin as u32);
-        for member in doc.members(op.source_value) {
-            if contains_operator(doc, member.value) {
-                continue;
-            }
+        for (name, value_json) in &op.attributes {
             let mut attribute = fb::PlanAttribute::default();
             attribute.set_attribute_id(attributes.len() as u32);
-            attribute.set_name(strings.allocate(c_str(&member.name)));
-            attribute.set_value_json(strings.allocate(&doc.serialize(member.value)));
+            attribute.set_name(strings.allocate(name));
+            attribute.set_value_json(strings.allocate(value_json));
             attributes.push(attribute);
         }
         out.set_attribute_count((attributes.len() - attributes_begin) as u32);
-        let mut statistics = *out.execution_statistics();
-        read_execution_statistics(doc, op.source_value, &mut statistics);
-        out.set_execution_statistics(&statistics);
+        out.set_execution_statistics(&op.statistics);
         if let Some(rect) = &op.layout_rect {
             out.set_layout_rect(rect);
         }
@@ -492,8 +441,8 @@ impl PlanViewModel {
 
             let mut kind = fb::PlanAttribute::default();
             kind.set_attribute_id(flat_attributes.len() as u32);
-            kind.set_name(dictionary.allocate(b"kind"));
-            kind.set_value_json(dictionary.allocate(&[b"\"", edge.kind, b"\""].concat()));
+            kind.set_name(dictionary.allocate("kind"));
+            kind.set_value_json(dictionary.allocate(&format!("\"{}\"", edge.kind)));
             flat_attributes.push(kind);
             for (name, value_json) in &edge.attributes {
                 let mut attribute = fb::PlanAttribute::default();
@@ -516,13 +465,9 @@ impl PlanViewModel {
         let flat_edges_ofs = builder.create_vector(&flat_op_edges);
         let flat_cross_edges_ofs = builder.create_vector(&flat_cross_edges);
         let flat_roots_ofs = builder.create_vector(&self.root_operators);
-        // Strings are written as bytes: rapidjson decodes lone low surrogates into invalid UTF-8
-        let string_offsets: Vec<WIPOffset<&str>> = dictionary
-            .strings
-            .iter()
-            .map(|s| WIPOffset::new(builder.create_byte_string(s).value()))
-            .collect();
-        let string_dictionary_ofs: WIPOffset<Vector<ForwardsUOffset<&str>>> = builder.create_vector(&string_offsets);
+        let string_offsets: Vec<WIPOffset<&str>> =
+            dictionary.strings.iter().map(|s| builder.create_string(s)).collect();
+        let string_dictionary_ofs = builder.create_vector(&string_offsets);
 
         fb::PlanViewModel::create(
             builder,

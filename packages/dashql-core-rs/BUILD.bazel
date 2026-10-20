@@ -435,8 +435,8 @@ rust_test(
     ],
 )
 
-# The Rust plan view model must produce exactly the output of the C++ plan view model: all snapshot plans under
-# several layout configs, their prefixes, mutations, handwritten plans and random operator trees.
+# The Rust plan view model must produce the output of the C++ plan view model on standard JSON: all snapshot plans
+# under several layout configs, mutations, handwritten plans and random operator trees.
 rust_test(
     name = "plan_view_model_differential_test",
     size = "medium",
@@ -450,6 +450,7 @@ rust_test(
         ":dashql_snapshots",
         "//proto/fb:dashql_buffers_rs",
         "@core_crates//:flatbuffers",
+        "@core_crates//:serde_json",
     ],
 )
 
@@ -533,6 +534,7 @@ rust_test(
         ":dashql_core",
         ":dashql_oracle",
         ":dashql_snapshots",
+        "@core_crates//:serde_json",
     ],
 )
 

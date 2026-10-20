@@ -135,9 +135,60 @@ pub fn canonical_numbers(text: &str) -> String {
     out
 }
 
+/// Does a JSON text have an object with the same key twice?
+///
+/// JSON leaves the meaning of duplicate keys open: the C++ core (rapidjson) keeps all members and looks up the
+/// first one, the Rust core (serde_json) keeps the last value. Differential tests skip such inputs. Keys are
+/// compared as written, the text should be valid JSON.
+pub fn has_duplicate_keys(json: &[u8]) -> bool {
+    // The keys of the enclosing containers, `None` for arrays
+    let mut containers: Vec<Option<Vec<&[u8]>>> = Vec::new();
+    let mut expect_key = false;
+    let mut i = 0;
+    while i < json.len() {
+        match json[i] {
+            b'{' => {
+                containers.push(Some(Vec::new()));
+                expect_key = true;
+            }
+            b'[' => containers.push(None),
+            b'}' | b']' => {
+                containers.pop();
+            }
+            b',' => expect_key = matches!(containers.last(), Some(Some(_))),
+            b'"' => {
+                let begin = i + 1;
+                i += 1;
+                while i < json.len() && json[i] != b'"' {
+                    i += if json[i] == b'\\' { 2 } else { 1 };
+                }
+                if let (true, Some(Some(keys))) = (expect_key, containers.last_mut()) {
+                    let key = &json[begin..i.min(json.len())];
+                    if keys.contains(&key) {
+                        return true;
+                    }
+                    keys.push(key);
+                }
+                expect_key = false;
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+    false
+}
+
 #[cfg(test)]
 mod tests {
-    use super::canonical_numbers;
+    use super::{canonical_numbers, has_duplicate_keys};
+
+    #[test]
+    fn finds_duplicate_keys() {
+        assert!(has_duplicate_keys(br#"{"a":1,"b":{"a":2},"a":3}"#));
+        assert!(has_duplicate_keys(br#"[{"x":[1,{"k\"":1,"k\"":2}]}]"#));
+        assert!(!has_duplicate_keys(br#"{"a":"a","b":{"a":["a","a"]},"c":{"a":1}}"#));
+        assert!(!has_duplicate_keys(br#"[{"a":1},{"a":2}]"#));
+    }
 
     #[test]
     fn canonicalizes_doubles() {

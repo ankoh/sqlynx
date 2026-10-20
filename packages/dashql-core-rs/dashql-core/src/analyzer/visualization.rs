@@ -51,97 +51,6 @@ impl NodeState {
     }
 }
 
-/// Parse a double like `strtod` and require that it consumes the whole text
-pub(crate) fn strtod_full(text: &str) -> Option<f64> {
-    let s = text.trim_start_matches([' ', '\t', '\n', '\x0b', '\x0c', '\r']);
-    let (negative, body) = match s.as_bytes().first() {
-        Some(b'-') => (true, &s[1..]),
-        Some(b'+') => (false, &s[1..]),
-        _ => (false, s),
-    };
-    let lower = body.to_ascii_lowercase();
-    let value = if lower == "inf" || lower == "infinity" {
-        f64::INFINITY
-    } else if lower == "nan" || (lower.starts_with("nan(") && lower.ends_with(')')) {
-        f64::NAN
-    } else if lower.starts_with("0x") {
-        parse_hex_float(&lower[2..])?
-    } else {
-        // Decimal: digits, optional fraction, optional exponent
-        let bytes = body.as_bytes();
-        let mut i = 0;
-        let mut digits = 0;
-        while i < bytes.len() && bytes[i].is_ascii_digit() {
-            i += 1;
-            digits += 1;
-        }
-        if i < bytes.len() && bytes[i] == b'.' {
-            i += 1;
-            while i < bytes.len() && bytes[i].is_ascii_digit() {
-                i += 1;
-                digits += 1;
-            }
-        }
-        if digits == 0 {
-            return None;
-        }
-        if i < bytes.len() && (bytes[i] == b'e' || bytes[i] == b'E') {
-            let mut j = i + 1;
-            if j < bytes.len() && (bytes[j] == b'+' || bytes[j] == b'-') {
-                j += 1;
-            }
-            let exp_begin = j;
-            while j < bytes.len() && bytes[j].is_ascii_digit() {
-                j += 1;
-            }
-            if j > exp_begin {
-                i = j;
-            }
-        }
-        if i != bytes.len() {
-            return None;
-        }
-        body.parse::<f64>().ok()?
-    };
-    Some(if negative { -value } else { value })
-}
-
-/// Parse the mantissa and exponent of a hexadecimal float (after `0x`)
-fn parse_hex_float(text: &str) -> Option<f64> {
-    let bytes = text.as_bytes();
-    let mut i = 0;
-    let mut mantissa = 0f64;
-    let mut exponent = 0i32;
-    let mut digits = 0;
-    while i < bytes.len() && bytes[i].is_ascii_hexdigit() {
-        mantissa = mantissa * 16.0 + (bytes[i] as char).to_digit(16)? as f64;
-        i += 1;
-        digits += 1;
-    }
-    if i < bytes.len() && bytes[i] == b'.' {
-        i += 1;
-        while i < bytes.len() && bytes[i].is_ascii_hexdigit() {
-            mantissa = mantissa * 16.0 + (bytes[i] as char).to_digit(16)? as f64;
-            exponent -= 4;
-            i += 1;
-            digits += 1;
-        }
-    }
-    if digits == 0 {
-        return None;
-    }
-    if i < bytes.len() && bytes[i] == b'p' {
-        let rest = &text[i + 1..];
-        let e: i32 = rest.parse().ok()?;
-        exponent = exponent.checked_add(e)?;
-        i = bytes.len();
-    }
-    if i != bytes.len() {
-        return None;
-    }
-    Some(mantissa * 2f64.powi(exponent))
-}
-
 fn read_text_value(state: &AnalysisState, node: Option<&Node>) -> Option<String> {
     let node = node?;
     match node.node_type() {
@@ -179,10 +88,7 @@ fn read_numeric_value(state: &AnalysisState, node: Option<&Node>) -> Option<f64>
     let node = node?;
     match node.node_type() {
         NodeType::LITERAL_INTEGER | NodeType::LITERAL_FLOAT | NodeType::OBJECT_SQL_NARY_EXPRESSION => {
-            // strtod stops at an embedded NUL
-            let text = state.text_at(*node.symbol_span());
-            let text = text.split('\0').next().unwrap_or("");
-            strtod_full(text)
+            state.text_at(*node.symbol_span()).parse().ok()
         }
         _ => None,
     }
@@ -221,17 +127,6 @@ fn warn(state: &mut AnalysisState, error_type: AnalyzerErrorType, node: &Node, m
     state.add_error(error_type, AnalyzerErrorSeverity::WARNING, node_id, message);
 }
 
-/// Saturating double to int32 conversion of the clamped values
-/// `static_cast<int32_t>(value)` as x86-64 computes it (`cvttsd2si`): NaN and values out of range become
-/// `INT32_MIN`, where Rust would saturate
-fn to_i32(value: f64) -> i32 {
-    if value.is_nan() || value >= 2_147_483_648.0 || value <= -2_147_483_649.0 {
-        i32::MIN
-    } else {
-        value as i32
-    }
-}
-
 fn extract_dashboard_spec(state: &mut AnalysisState, node: &Node) -> DashboardSpec {
     let mut spec = DashboardSpec::default();
     let mut column_was_clamped = false;
@@ -246,14 +141,14 @@ fn extract_dashboard_spec(state: &mut AnalysisState, node: &Node) -> DashboardSp
         if value < 0.0 {
             warn(state, INVALID, row.unwrap(), "dashboard row must be non-negative and was removed".into());
         } else {
-            spec.row = Some(to_i32(value.min(i32::MAX as f64)));
+            spec.row = Some(value as i32);
         }
     }
     if let Some(value) = read_numeric_value(state, column) {
         if value < 0.0 {
             warn(state, INVALID, column.unwrap(), "dashboard column must be non-negative and was removed".into());
         } else {
-            spec.column = Some(to_i32(value.min(11.0)));
+            spec.column = Some(value.min(11.0) as i32);
             if value > 11.0 {
                 column_was_clamped = true;
                 warn(state, INVALID, column.unwrap(), "dashboard column was clamped to 11".into());
@@ -261,7 +156,7 @@ fn extract_dashboard_spec(state: &mut AnalysisState, node: &Node) -> DashboardSp
         }
     }
     if let Some(value) = read_numeric_value(state, width) {
-        spec.width = to_i32(value.clamp(1.0, 12.0));
+        spec.width = value.clamp(1.0, 12.0) as i32;
         if !(1.0..=12.0).contains(&value) {
             warn(state, INVALID, width.unwrap(), "dashboard width was clamped to the range 1..12".into());
         }
@@ -271,7 +166,7 @@ fn extract_dashboard_spec(state: &mut AnalysisState, node: &Node) -> DashboardSp
             spec.height = 1;
             warn(state, INVALID, height.unwrap(), "dashboard height was clamped to 1".into());
         } else {
-            spec.height = to_i32(value.min(i32::MAX as f64));
+            spec.height = value as i32;
         }
     }
     if let Some(c) = spec.column {
@@ -467,7 +362,7 @@ fn read_axis(state: &AnalysisState, node: &Node) -> VisAxis {
         direction: read_text_value(state, direction),
         offset: read_numeric_value(state, offset),
         values_node_id: values.map(|n| state.node_id(n)),
-        zindex: read_numeric_value(state, zindex).map(to_i32),
+        zindex: read_numeric_value(state, zindex).map(|v| v as i32),
         title: read_text_value(state, title),
         domain: read_bool_value(state, domain),
         name: read_text_value(state, name),
@@ -501,7 +396,7 @@ fn read_legend(state: &AnalysisState, node: &Node) -> VisLegend {
         values_node_id: values.map(|n| state.node_id(n)),
         padding: read_numeric_value(state, padding),
         offset: read_numeric_value(state, offset),
-        zindex: read_numeric_value(state, zindex).map(to_i32),
+        zindex: read_numeric_value(state, zindex).map(|v| v as i32),
         name: read_text_value(state, name),
     }
 }
