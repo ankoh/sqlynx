@@ -14,6 +14,8 @@ use dashql_core::catalog::Catalog as CoreCatalog;
 use dashql_core::completion::Completion;
 use dashql_core::error::Error;
 use dashql_core::script::Script as CoreScript;
+use dashql_core::script_execution::ScriptExecution as CoreScriptExecution;
+use dashql_core::script_session::ScriptSession as CoreScriptSession;
 use std::cell::RefCell;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
@@ -46,7 +48,7 @@ fn formatting_config(dialect: u8, mode: u8, max_width: u32, indentation_width: u
 }
 
 /// The shared handle of a catalog
-type SharedCatalog = Rc<RefCell<CoreCatalog>>;
+type SharedCatalog = dashql_core::script_session::CatalogHandle;
 
 /// A catalog (`dashql_catalog_*`)
 #[wasm_bindgen]
@@ -179,6 +181,15 @@ impl Drop for Script {
         if let Ok(mut catalog) = self.catalog.try_borrow_mut() {
             catalog.drop_script(self.inner.catalog_entry_id());
         }
+    }
+}
+
+impl Script {
+    fn format_with(&mut self, catalog: SharedCatalog, config: FormattingConfigT, parse_if_outdated: bool) -> Result<Script, JsError> {
+        let text = self.inner.format(&config, parse_if_outdated).map_err(js_error)?;
+        let mut inner = CoreScript::new(&catalog.borrow());
+        inner.replace_text(&text);
+        Ok(Script { catalog, inner })
     }
 }
 
@@ -323,6 +334,337 @@ impl Script {
     pub fn compute_signature(&mut self, parse_if_outdated: bool) -> Result<String, JsError> {
         self.inner.compute_signature(parse_if_outdated).map_err(js_error)
     }
+
+    /// The first parsed statement without its separator or surrounding trivia
+    #[wasm_bindgen(js_name = getStatementText)]
+    pub fn get_statement_text(&mut self, parse_if_outdated: bool) -> Result<String, JsError> {
+        self.inner.statement_text(parse_if_outdated).map_err(js_error)
+    }
+
+    /// The packed `ScriptStatistics`
+    #[wasm_bindgen(js_name = getStatistics)]
+    pub fn get_statistics(&self) -> Vec<u8> {
+        finish!(self.inner.statistics())
+    }
+
+    /// Rewrite the dashboard clause of the terminal VISUALIZE statement, negative rows and columns
+    /// are absent
+    #[wasm_bindgen(js_name = rewriteDashboard)]
+    pub fn rewrite_dashboard(&mut self, row: i32, column: i32, width: i32, height: i32, parse_if_outdated: bool) -> Result<String, JsError> {
+        self.inner
+            .rewrite_dashboard((row >= 0).then_some(row), (column >= 0).then_some(column), width, height, parse_if_outdated)
+            .map_err(js_error)
+    }
+
+    /// Format the script into a new script of the catalog of this script
+    #[allow(clippy::too_many_arguments)]
+    pub fn format(
+        &mut self,
+        dialect: u8,
+        mode: u8,
+        max_width: u32,
+        indentation_width: u32,
+        debug_mode: bool,
+        keyword_case: u8,
+        parse_if_outdated: bool,
+    ) -> Result<Script, JsError> {
+        let catalog = self.catalog.clone();
+        self.format_with(catalog, formatting_config(dialect, mode, max_width, indentation_width, debug_mode, keyword_case), parse_if_outdated)
+    }
+
+    /// Format the script into a new script of another catalog
+    #[allow(clippy::too_many_arguments)]
+    #[wasm_bindgen(js_name = formatInto)]
+    pub fn format_into(
+        &mut self,
+        dialect: u8,
+        mode: u8,
+        max_width: u32,
+        indentation_width: u32,
+        debug_mode: bool,
+        keyword_case: u8,
+        parse_if_outdated: bool,
+        catalog: &Catalog,
+    ) -> Result<Script, JsError> {
+        let config = formatting_config(dialect, mode, max_width, indentation_width, debug_mode, keyword_case);
+        self.format_with(catalog.inner.clone(), config, parse_if_outdated)
+    }
+
+    /// The AST node ids that formatting cannot represent
+    #[allow(clippy::too_many_arguments)]
+    #[wasm_bindgen(js_name = getUnformattableNodes)]
+    pub fn get_unformattable_nodes(
+        &mut self,
+        dialect: u8,
+        mode: u8,
+        max_width: u32,
+        indentation_width: u32,
+        debug_mode: bool,
+        parse_if_outdated: bool,
+    ) -> Result<Vec<u32>, JsError> {
+        let config = formatting_config(dialect, mode, max_width, indentation_width, debug_mode, 0);
+        self.inner.unformattable_nodes(&config, parse_if_outdated).map_err(js_error)
+    }
+
+    /// Can formatting represent every node?
+    #[allow(clippy::too_many_arguments)]
+    #[wasm_bindgen(js_name = isFullyFormattable)]
+    pub fn is_fully_formattable(
+        &mut self,
+        dialect: u8,
+        mode: u8,
+        max_width: u32,
+        indentation_width: u32,
+        debug_mode: bool,
+        parse_if_outdated: bool,
+    ) -> Result<bool, JsError> {
+        let config = formatting_config(dialect, mode, max_width, indentation_width, debug_mode, 0);
+        self.inner.is_fully_formattable(&config, parse_if_outdated).map_err(js_error)
+    }
+}
+
+/// An editor session (`dashql_script_session_*`). Shared, so that session lists can refer to it.
+#[wasm_bindgen]
+pub struct ScriptSession {
+    inner: Rc<RefCell<CoreScriptSession>>,
+}
+
+impl ScriptSession {
+    fn format_with(&self, catalog: SharedCatalog, config: FormattingConfigT, parse_if_outdated: bool) -> Result<Script, JsError> {
+        let inner = self.inner.borrow_mut().format(&config, parse_if_outdated, Some(&catalog.borrow())).map_err(js_error)?;
+        Ok(Script { catalog, inner })
+    }
+}
+
+#[wasm_bindgen]
+impl ScriptSession {
+    #[wasm_bindgen(constructor)]
+    pub fn new(catalog: &Catalog, offset_unit: u8) -> Result<ScriptSession, JsError> {
+        let session = CoreScriptSession::new(catalog.inner.clone(), dashql_buffers::editor::EditorOffsetUnit(offset_unit)).map_err(js_error)?;
+        Ok(ScriptSession {
+            inner: Rc::new(RefCell::new(session)),
+        })
+    }
+
+    #[wasm_bindgen(js_name = catalogEntryId)]
+    pub fn catalog_entry_id(&self) -> u32 {
+        self.inner.borrow().catalog_entry_id()
+    }
+
+    pub fn text(&self) -> String {
+        self.inner.borrow().text()
+    }
+
+    #[wasm_bindgen(js_name = textVersion)]
+    pub fn text_version(&self) -> u64 {
+        self.inner.borrow().text_version()
+    }
+
+    #[wasm_bindgen(js_name = stateRevision)]
+    pub fn state_revision(&self) -> u64 {
+        self.inner.borrow().state_revision()
+    }
+
+    #[wasm_bindgen(js_name = catalogRevision)]
+    pub fn catalog_revision(&self) -> u64 {
+        self.inner.borrow().catalog_revision()
+    }
+
+    /// Replace the text, returns the packed `EditorUpdate`
+    #[wasm_bindgen(js_name = replaceText)]
+    pub fn replace_text(&self, expected_text_version: u64, text: &str) -> Vec<u8> {
+        finish!(self.inner.borrow_mut().replace_text(expected_text_version, text))
+    }
+
+    /// Apply a packed `EditorEvent`, returns the packed `EditorUpdate`
+    pub fn apply(&self, event: &[u8]) -> Vec<u8> {
+        finish!(self.inner.borrow_mut().apply_buffer(event))
+    }
+
+    /// Move the primary cursor, returns the packed `EditorUpdate`
+    #[wasm_bindgen(js_name = setPrimaryCursor)]
+    pub fn set_primary_cursor(&self, expected_text_version: u64, offset: u64) -> Vec<u8> {
+        finish!(self.inner.borrow_mut().set_primary_cursor(expected_text_version, offset))
+    }
+
+    /// Analyze, returns the packed `EditorUpdate`
+    pub fn analyze(&self) -> Vec<u8> {
+        finish!(self.inner.borrow_mut().analyze())
+    }
+
+    /// Complete at the primary cursor, returns the packed `Completion`
+    #[wasm_bindgen(js_name = completeAtCursor)]
+    pub fn complete_at_cursor(&self, limit: usize, keyword_case: u8) -> Result<Vec<u8>, JsError> {
+        let completion = self.inner.borrow().complete(limit, KeywordCase(keyword_case)).map_err(js_error)?;
+        Ok(finish!(completion))
+    }
+
+    /// Compile the script, returns the packed `ScriptCompilationResult`
+    #[wasm_bindgen(js_name = compileQuery)]
+    pub fn compile_query(
+        &self,
+        dialect: u8,
+        mode: u8,
+        max_width: u32,
+        indentation_width: u32,
+        allow_extensions: bool,
+        parse_if_outdated: bool,
+    ) -> Vec<u8> {
+        let config = formatting_config(dialect, mode, max_width, indentation_width, false, 0);
+        finish!(self.inner.borrow_mut().compile_query(&config, allow_extensions, parse_if_outdated))
+    }
+
+    /// Format the script into a new script of the session catalog
+    #[allow(clippy::too_many_arguments)]
+    pub fn format(
+        &self,
+        dialect: u8,
+        mode: u8,
+        max_width: u32,
+        indentation_width: u32,
+        debug_mode: bool,
+        keyword_case: u8,
+        parse_if_outdated: bool,
+    ) -> Result<Script, JsError> {
+        let catalog = self.inner.borrow().catalog().clone();
+        self.format_with(catalog, formatting_config(dialect, mode, max_width, indentation_width, debug_mode, keyword_case), parse_if_outdated)
+    }
+
+    /// Format the script into a new script of another catalog
+    #[allow(clippy::too_many_arguments)]
+    #[wasm_bindgen(js_name = formatInto)]
+    pub fn format_into(
+        &self,
+        dialect: u8,
+        mode: u8,
+        max_width: u32,
+        indentation_width: u32,
+        debug_mode: bool,
+        keyword_case: u8,
+        parse_if_outdated: bool,
+        catalog: &Catalog,
+    ) -> Result<Script, JsError> {
+        let config = formatting_config(dialect, mode, max_width, indentation_width, debug_mode, keyword_case);
+        self.format_with(catalog.inner.clone(), config, parse_if_outdated)
+    }
+
+    /// Rewrite the dashboard clause of the terminal VISUALIZE statement, negative rows and columns
+    /// are absent
+    #[wasm_bindgen(js_name = rewriteDashboard)]
+    pub fn rewrite_dashboard(&self, row: i32, column: i32, width: i32, height: i32, parse_if_outdated: bool) -> Result<String, JsError> {
+        self.inner
+            .borrow_mut()
+            .rewrite_dashboard((row >= 0).then_some(row), (column >= 0).then_some(column), width, height, parse_if_outdated)
+            .map_err(js_error)
+    }
+
+    /// Can formatting represent every node?
+    #[allow(clippy::too_many_arguments)]
+    #[wasm_bindgen(js_name = isFullyFormattable)]
+    pub fn is_fully_formattable(
+        &self,
+        dialect: u8,
+        mode: u8,
+        max_width: u32,
+        indentation_width: u32,
+        debug_mode: bool,
+        parse_if_outdated: bool,
+    ) -> Result<bool, JsError> {
+        let config = formatting_config(dialect, mode, max_width, indentation_width, debug_mode, 0);
+        self.inner.borrow_mut().is_fully_formattable(&config, parse_if_outdated).map_err(js_error)
+    }
+
+    /// The packed `ScriptDiff` from the session script to a target script
+    #[wasm_bindgen(js_name = computeDiff)]
+    pub fn compute_diff(&self, target: &Script) -> Result<Vec<u8>, JsError> {
+        let diff = self.inner.borrow().diff(&target.inner).map_err(js_error)?;
+        Ok(finish!(diff))
+    }
+
+    #[wasm_bindgen(js_name = loadIntoCatalog)]
+    pub fn load_into_catalog(&self, rank: u32) -> Result<(), JsError> {
+        self.inner.borrow_mut().load_into_catalog(rank).map_err(js_error)
+    }
+
+    #[wasm_bindgen(js_name = dropFromCatalog)]
+    pub fn drop_from_catalog(&self) {
+        self.inner.borrow_mut().drop_from_catalog();
+    }
+
+    /// Compile the session text into an execution
+    #[wasm_bindgen(js_name = startExecution)]
+    pub fn start_execution(&self, dialect: u8, mode: u8, max_width: u32, indentation_width: u32, debug_mode: bool) -> ScriptExecution {
+        let config = formatting_config(dialect, mode, max_width, indentation_width, debug_mode, 0);
+        ScriptExecution {
+            inner: CoreScriptExecution::new(&mut self.inner.borrow_mut(), config),
+        }
+    }
+}
+
+/// The execution of a session script (`dashql_script_execution_*`). Updates are packed
+/// `ScriptExecutionUpdate`s.
+#[wasm_bindgen]
+pub struct ScriptExecution {
+    inner: CoreScriptExecution,
+}
+
+#[wasm_bindgen]
+impl ScriptExecution {
+    pub fn start(&mut self) -> Vec<u8> {
+        finish!(self.inner.start())
+    }
+
+    /// Resume with a packed `StatementResult`
+    pub fn resume(&mut self, statement_result: &[u8]) -> Result<Vec<u8>, JsError> {
+        let result = flatbuffers::root::<dashql_buffers::execution::StatementResult>(statement_result)
+            .map_err(|e| JsError::new(&format!("invalid statement result: {e}")))?
+            .unpack();
+        Ok(finish!(self.inner.resume(&result)))
+    }
+
+    pub fn cancel(&mut self) -> Vec<u8> {
+        finish!(self.inner.cancel())
+    }
+}
+
+/// The sessions to plan, in notebook order
+#[wasm_bindgen]
+pub struct SessionList {
+    sessions: Vec<Rc<RefCell<CoreScriptSession>>>,
+}
+
+#[wasm_bindgen]
+impl SessionList {
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> SessionList {
+        SessionList { sessions: Vec::new() }
+    }
+
+    pub fn add(&mut self, session: &ScriptSession) {
+        self.sessions.push(session.inner.clone());
+    }
+}
+
+impl Default for SessionList {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Plan the current analysis of sessions, returns the packed `ExecutionGraph`
+#[wasm_bindgen]
+pub fn plan(sessions: &SessionList) -> Vec<u8> {
+    let sessions: Vec<_> = sessions.sessions.iter().map(|s| s.borrow()).collect();
+    let catalogs: Vec<_> = sessions.iter().map(|s| s.catalog().borrow()).collect();
+    let inputs: Vec<_> = sessions
+        .iter()
+        .zip(&catalogs)
+        .map(|(session, catalog)| dashql_core::planner::PlannerInput {
+            script: session.script(),
+            catalog,
+        })
+        .collect();
+    finish!(dashql_core::planner::plan(&inputs))
 }
 
 /// Process a batch request into a `BatchResult`
@@ -382,12 +724,12 @@ impl PlanViewModel {
         self.inner.configure(&config);
     }
 
-    /// Load a Hyper plan and compute the layout. Like the C ABI, a plan that fails to parse leaves
-    /// the view model in its partially parsed state without an error.
+    /// Load a Hyper plan and compute the layout, throws if the plan cannot be parsed
     #[wasm_bindgen(js_name = loadHyperPlan)]
-    pub fn load_hyper_plan(&mut self, plan: &[u8]) {
-        let _ = self.inner.parse_hyper_plan(plan);
+    pub fn load_hyper_plan(&mut self, plan: &[u8]) -> Result<(), JsError> {
+        self.inner.parse_hyper_plan(plan).map_err(|status| js_error(Error::status(status)))?;
         self.inner.compute_layout();
+        Ok(())
     }
 
     pub fn reset(&mut self) {
