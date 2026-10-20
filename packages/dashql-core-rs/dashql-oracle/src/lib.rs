@@ -7,6 +7,7 @@
 pub mod analyzer;
 pub mod formatter;
 pub mod script_diff;
+pub mod signature;
 pub mod view;
 
 use std::os::raw::c_char;

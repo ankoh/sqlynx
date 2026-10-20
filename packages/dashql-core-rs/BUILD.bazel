@@ -383,3 +383,19 @@ rust_test(
         ":dashql_snapshots",
     ],
 )
+
+# Script signatures are persisted cache keys and must equal the C++ signatures.
+rust_test(
+    name = "signature_differential_test",
+    size = "medium",
+    srcs = ["dashql-oracle/tests/signature_differential.rs"],
+    data = ["//snapshots:files"],
+    edition = "2021",
+    use_libtest_harness = False,
+    deps = [
+        ":dashql_core",
+        ":dashql_grammar",
+        ":dashql_oracle",
+        ":dashql_snapshots",
+    ],
+)

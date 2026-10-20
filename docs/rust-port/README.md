@@ -69,7 +69,7 @@ CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
 | 1 | Scanner, keywords, names, comment blocks | Token-stream differential at 0 diffs; scanner and keyword tests ported | **done** |
 | 2 | Parser: Rust rule set, ParseContext, driver, LAC, recovery | Table parity between both rule sets; 506 parser snapshots; AST differential at 0 diffs | **done** |
 | 3 | Formatter, script_diff | 422 formatter and 13 diff snapshots; idempotency; Hyper validation | **done** (idempotency and Hyper validation open) |
-| 4 | Catalog, descriptor, AnalyzedScript, 4 analyzer passes | 101 analyzer snapshots; `ComputeSignature` equals C++ | **analyzer done** (signature, catalog tests open) |
+| 4 | Catalog, descriptor, AnalyzedScript, 4 analyzer passes | 101 analyzer snapshots; `ComputeSignature` equals C++ | **analyzer and signature done** (packing, catalog tests open) |
 | 5 | Cursor and completion | 161 completion snapshots; differential at every prefix and cursor | |
 | 6 | visualize, compiler, Script, batch, planner | 27 visualize and 38 planner snapshots; batch differential | |
 | 7 | ScriptSession, ScriptExecution, Hyper plan view | Session, execution and plan tests; 36 plan snapshots | |
@@ -236,7 +236,9 @@ C++. The hash table variant was 6.5 µs, so it was dropped.
   `tools/oracle_ffi_analyzer.cc` with 0 differences. Inputs: every analyzer case with prefixes, every
   snapshot input of every category alone and against the snapshot catalogs with prefixes, and 3200
   fuzzed scripts against fuzzed catalogs.
-- Open: `ComputeSignature`, the FlatBuffer packing of the analyzed script, and the catalog,
+- `dashql_core::signature::compute_signature` equals `Script::ComputeSignature` on every snapshot
+  input, their prefixes and 4000 fuzz inputs (`:signature_differential_test`).
+- Open: the FlatBuffer packing of the analyzed script, and the catalog,
   descriptor and analyzer unit tests.
 
 **Performance** (TPC-DS q1 against the TPC-DS schema in the catalog, `bench_pipeline` and
