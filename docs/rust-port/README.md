@@ -69,7 +69,7 @@ CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
 | 0 | Spikes and scaffolding | Skeleton emits the C++ automaton; harness and oracle reproduce the snapshots | **done** |
 | 1 | Scanner, keywords, names, comment blocks | Token-stream differential at 0 diffs; scanner and keyword tests ported | **done** |
 | 2 | Parser: Rust rule set, ParseContext, driver, LAC, recovery | Table parity between both rule sets; 506 parser snapshots; AST differential at 0 diffs | **done** |
-| 3 | Formatter, script_diff | 422 formatter and 13 diff snapshots; idempotency; Hyper validation | **done** (idempotency and Hyper validation open) |
+| 3 | Formatter, script_diff | 422 formatter and 13 diff snapshots; idempotency; Hyper validation | **done** (idempotency open) |
 | 4 | Catalog, descriptor, AnalyzedScript, 4 analyzer passes | 101 analyzer snapshots; `ComputeSignature` equals C++ | **analyzer and signature done** (packing, catalog tests open) |
 | 5 | Cursor and completion | 161 completion snapshots; differential at every prefix and cursor | **done** (unit tests open) |
 | 6 | visualize, compiler, Script, batch, planner | 27 visualize and 38 planner snapshots; batch differential | **done** |
@@ -202,7 +202,13 @@ Changes that got the Rust code here:
     `tools/oracle_ffi_formatter.cc`: 238k whole-script and 12.5k single-node comparisons, covering
     every snapshot input under 16 configs (modes, dialects, keyword cases, widths, indentation, debug
     mode), prefixes, and fuzz inputs with comments. 0 differences.
-- Open: the idempotency check and the Hyper validation of formatted SQL.
+- `:formatter_validation_hyper_test` executes the Rust formatter output of the 91 cases with a `hyper`
+  validation in Hyper: a fresh database per case, the setup script, then every expectation statement by
+  statement. Hyper only ships a C++ SDK, so the test links `//packages/hyper-api:hyper_ffi`, a C ABI
+  over it that never throws. It passes the same 91 cases as the C++ suite it replaces
+  (`formatter_validation_hyper_tests`, deleted), and it picks up every snapshot file with a validation
+  instead of a hand-maintained list.
+- Open: the idempotency check.
 - The Hyper plan view model is ported (`dashql_core::view`) with a port of the needed parts of
   rapidjson. `:plan_view_model_snapshot_test` passes 36 of 36 plans (including the `pipelines`
   section, which the C++ suite skips), the 19 `hyper_plan_test.cc` tests pass, and

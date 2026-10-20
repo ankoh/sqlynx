@@ -98,7 +98,7 @@ bazel test //packages/dashql-core:*_tests
 | `//packages/dashql-core:parser_tests` | Parser snapshot tests |
 | `//packages/dashql-core:analyzer_tests` | Analyzer snapshot tests |
 | `//packages/dashql-core:formatter_tests` | Formatter snapshot tests |
-| `//packages/dashql-core:formatter_validation_hyper_tests` | Execute formatted SQL against Hyper |
+| `//packages/dashql-core-rs:formatter_validation_hyper_test` | Execute the formatted SQL of the formatter snapshots in Hyper |
 | `//packages/dashql-core-rs/...` | Rust core: unit, snapshot and differential tests against the C++ oracle (see `docs/rust-port/README.md`) |
 | `//packages/dashql-core-js:all` | Core Node unit, assembled-runtime, and tarball consumer tests |
 | `//packages/dashql-core-js/test:all` | Core browser tests in Chromium and Firefox, including browser workers |

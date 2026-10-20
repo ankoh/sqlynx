@@ -1,4 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_test")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -68,6 +68,15 @@ cc_binary(
     name = "hyper_sql",
     srcs = ["hyper_sql.cc"],
     data = [":hyperd"],
+    deps = [":hyperapi"],
+)
+
+# A never-throwing C ABI over the Hyper API for the Rust tests
+# (//packages/dashql-core-rs:formatter_validation_hyper_test).
+cc_library(
+    name = "hyper_ffi",
+    srcs = ["hyper_ffi.cc"],
+    hdrs = ["hyper_ffi.h"],
     deps = [":hyperapi"],
 )
 

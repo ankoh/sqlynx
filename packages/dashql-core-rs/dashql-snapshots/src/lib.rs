@@ -6,6 +6,7 @@
 
 pub mod corpus;
 pub mod encode;
+pub mod formatter;
 
 use std::fmt::Write as _;
 use std::fs;

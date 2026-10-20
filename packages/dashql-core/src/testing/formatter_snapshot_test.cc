@@ -146,19 +146,4 @@ std::vector<const FormatterSnapshotTest*> FormatterSnapshotTest::GetTests(std::s
     return tests;
 }
 
-std::vector<const FormatterSnapshotTest*> FormatterSnapshotTest::GetTestsWithValidation(std::string_view filename,
-                                                                                        std::string_view dialect) {
-    auto all = GetTests(filename);
-    std::vector<const FormatterSnapshotTest*> out;
-    for (auto* t : all) {
-        for (auto& d : t->dialects) {
-            if (d.dialect == dialect && d.validation.has_value()) {
-                out.push_back(t);
-                break;
-            }
-        }
-    }
-    return out;
-}
-
 }  // namespace dashql::testing

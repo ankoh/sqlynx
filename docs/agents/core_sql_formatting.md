@@ -53,12 +53,14 @@ File:
 Add an `INSTANTIATE_TEST_SUITE_P(...)` entry using:
 - `FormatterSnapshotTest::GetTests("<category>.yaml")`
 
-### Hyper validation suite
-File:
-- `packages/dashql-core/test/formatter_validation_hyper_test_suite.cc`
+### Hyper validation
+Target:
+- `//packages/dashql-core-rs:formatter_validation_hyper_test` (`packages/dashql-core-rs/dashql-core/tests/formatter_validation_hyper.rs`)
 
-Add an `INSTANTIATE_TEST_SUITE_P(...)` entry using:
-- `FormatterSnapshotTest::GetTestsWithValidation("<category>.yaml", "hyper")`
+Needs no registration: every case of every formatter snapshot file with a `dialects.hyper.validation` block runs
+in a fresh Hyper database. The test executes `validation.setup`, checks that the Rust formatter output equals each
+expectation of the `hyper` dialect, and executes it statement by statement. Hyper is reached through the C ABI
+`//packages/hyper-api:hyper_ffi`.
 
 This ensures both textual snapshot checks and executable SQL validation are covered.
 
@@ -81,6 +83,7 @@ Run the full targets used for acceptance:
 
 ```bash
 bazel test //packages/dashql-core:all
+bazel test //packages/dashql-core-rs:formatter_snapshot_test //packages/dashql-core-rs:formatter_validation_hyper_test
 bazel test //packages/dashql-app:all
 ```
 
@@ -95,7 +98,8 @@ If failures occur:
 - [ ] New/updated `.tpl.yaml` tests added
 - [ ] Snapshots regenerated via `//snapshots/formatter:update`
 - [ ] Snapshot suite registration updated
-- [ ] Hyper validation suite registration updated (if validatable)
+- [ ] `validation.setup` added for Hyper-validatable cases
 - [ ] JS API formatting test added/updated
 - [ ] `bazel test //packages/dashql-core:all` passes
+- [ ] `//packages/dashql-core-rs:formatter_validation_hyper_test` passes
 - [ ] `bazel test //packages/dashql-app:all` passes

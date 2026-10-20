@@ -343,20 +343,6 @@ cc_test(
     visibility = ["//visibility:public"]
 )
 cc_test(
-    name = "formatter_validation_hyper_tests",
-    size = "medium",
-    srcs = ["test/formatter_validation_hyper_test_suite.cc"],
-    data = [
-        "//packages/hyper-api:hyperd",
-        "//snapshots/formatter:files",
-    ],
-    copts = DASHQL_COPTS,
-    env = {"HYPERD_BINARY": "$(rootpath //packages/hyper-api:hyperd)"},
-    linkopts = DASHQL_LINKOPTS,
-    deps = CORE_TEST_DEPS + ["//packages/hyper-api:hyperapi"],
-    visibility = ["//visibility:public"]
-)
-cc_test(
     name = "hyper_plan_tests",
     size = "small",
     srcs = [

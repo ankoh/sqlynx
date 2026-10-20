@@ -53,9 +53,6 @@ struct FormatterSnapshotTest {
     static void LoadTests(const std::filesystem::path& project_root);
     /// Get tests for a snapshot file
     static std::vector<const FormatterSnapshotTest*> GetTests(std::string_view filename);
-    /// Get tests that have a validation block for the given dialect
-    static std::vector<const FormatterSnapshotTest*> GetTestsWithValidation(std::string_view filename,
-                                                                            std::string_view dialect);
 };
 
 extern void operator<<(std::ostream& out, const FormatterSnapshotTest& p);
