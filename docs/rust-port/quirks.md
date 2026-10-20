@@ -124,24 +124,24 @@ the C++ core.
 - A mark object with only `type` collapses to `mark => type`, an empty bin object becomes `true`.
 - An empty `$sql` does not fall back to `$raw`.
 
-**Markdown** (`markdown.cc` and md4c 0.5.2, hand-ported because pulldown-cmark splits text
-differently)
+**Markdown** (`markdown.cc` and md4c 0.5.2). **Not reproduced:** the Rust core parses templates with
+pulldown-cmark (see the README), and the differential test compares the documents by meaning. md4c
+behavior that differs:
 - Text nodes are cut at every resolved mark and never merged.
 - `md_text_with_null_replacement` does not advance past a NUL, which also starts the next text node.
 - The empty-list-item check reads the last 8 bytes of the block stream as a block header, so a list
   item paragraph whose last line starts at offset 4 (mod 256) followed by two blank lines ends the
-  list (`-   a\n\n\n  b`).
+  list (`-   a\n\n\n    b`).
+- A fence closes the fenced code block of a list item even if it is indented less than the item
+  content (`` - ```\n  a\n ```\n- b ``).
+- Tabs in indented code blocks are expanded to spaces.
+- A code span that starts in a link destination wins over the link (`` [a](`b)` ``).
+- The trailing whitespace of a paragraph at the end of the document is kept.
 - `md_line_contains` misses an HTML end marker that ends at the end of the document.
 - HTML block type 4 starts with `<!` and any ASCII character; `<header>` matches `head` first, fails,
   and becomes type 7, which cannot interrupt a paragraph.
 - An autolink scheme only needs an ASCII first character.
-- `char` is signed, so invalid UTF-8 decodes to sign-extended code points.
-- The reference label hash treats a newline as whitespace but the label comparison does not; the hash
-  table, sorted buckets and glibc `bsearch` are reproduced.
-- A link title continued on the next line is scanned from the previous line's end, including
-  container prefixes.
-- `code_fence_length` is set even when the info string rejects the fence.
-- Unknown named entities stay raw text.
+- An empty ordered list item interrupts a paragraph.
 
 **Casts.** Axis and legend `zindex` values outside int32 become INT32_MIN, as `static_cast<int32_t>`
 does on x86-64. The port and the oracle follow native x86-64 (glibc, `cvttsd2si`, 64-bit rapidjson);

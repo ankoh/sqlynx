@@ -61,10 +61,10 @@ SELECT product, revenue FROM product_summary VISUALIZE USING table (
 The renderer is captured on the AST as the `VIS_VISUALISE_USING` attribute and
 surfaced on the analyzed `VisualizationSpec` as `renderer`. Renderer-specific
 analysis and output generation then process the spec. Vega-Lite and UMAP emit
-their renderer JSON. Markdown templates are parsed once in `dashql-core` with
-MD4C and encoded as a safe typed FlatBuffer AST. `{{field}}` placeholders become
-`FIELD` leaves, raw HTML is discarded, and unsafe or dynamic link destinations
-are not emitted as links. The app renders the generated FlatBuffer object model
+their renderer JSON. Markdown templates are parsed once in the core with
+pulldown-cmark (CommonMark) and encoded as a safe typed FlatBuffer AST.
+`{{field}}` placeholders become `FIELD` leaves, raw HTML is discarded, and
+unsafe or dynamic link destinations are not emitted as links. The app renders the generated FlatBuffer object model
 directly, substituting formatted Arrow values as React text without parsing them
 as Markdown, once per result row.
 

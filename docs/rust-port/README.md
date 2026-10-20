@@ -299,9 +299,23 @@ remaining per-list allocations.
 - **Packing** (`dashql_core::pack`): scanned, parsed and analyzed scripts, cursors and completions.
   `:pack_differential_test` and `:completion_differential_test` unpack the FlatBuffers of both cores
   into the object API and compare them, including the generated visualization specs.
-- **Visualize** (`dashql_core::visualize`): the Vega-Lite generator and parser, Markdown (md4c 0.5.2
-  ported by hand) and UMAP. `:visualize_snapshot_test` passes 27/27, `:visualize_differential_test`
-  finds 0 differences over 38k analyzed scripts, 73k Vega-Lite texts and 128k Markdown templates.
+- **Visualize** (`dashql_core::visualize`): the Vega-Lite generator and parser, Markdown and UMAP.
+  `:visualize_snapshot_test` passes 27/27, `:visualize_differential_test` finds 0 differences over 38k
+  analyzed scripts and 73k Vega-Lite texts.
+- **Markdown**: templates are parsed with pulldown-cmark (CommonMark, no extensions) instead of a port of
+  md4c, so the documents differ from C++ in details:
+  - adjacent text is one text node (md4c cuts text at every mark, entity and line break),
+  - list tightness is derived from the item paragraphs (pulldown-cmark does not report it),
+  - the last line of a code block keeps no line break that is not in the template, and trailing
+    whitespace at the end of the template is dropped,
+  - the md4c deviations from the spec in [quirks.md](quirks.md) are gone (tabs in code blocks are kept,
+    a closing fence must be indented like its list item, NUL characters become U+FFFD exactly once, ...).
+
+  `:visualize_differential_test` compares the documents by meaning (adjacent text merged, trailing
+  whitespace and tightness ignored) on the snapshot scripts, handcrafted corner cases and 8k well-formed
+  generated templates. 128k fuzzed templates hit corner cases where md4c deviates from CommonMark, so
+  they only have to compile in both cores to the same fields. pulldown-cmark makes the release core
+  module 85 KB larger (26 KB brotli) than the md4c port.
 - **Compiler** (`dashql_core::compiler`): `:compiler_differential_test` compares the packed
   `ScriptCompilationResult` with C++ on all snapshot inputs and prefixes.
 - **Planner** (`dashql_core::planner`): `:planner_snapshot_test` passes all 38 planner snapshots.

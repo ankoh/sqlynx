@@ -520,7 +520,8 @@ rust_test(
 
 # The Rust visualization port must produce exactly the output of the C++ core: generated Vega-Lite specs and their
 # round trips, compiled Markdown and UMAP specs on the visualize snapshots, all VISUALIZE statements of the snapshot
-# inputs and their prefixes, fuzzed vis specs, fuzzed Vega-Lite JSON and fuzzed Markdown templates.
+# inputs and their prefixes, fuzzed vis specs, fuzzed Vega-Lite JSON and fuzzed Markdown templates. Compiled Markdown
+# is compared by meaning (pulldown-cmark vs. md4c), fuzzed templates only need to compile in both cores.
 rust_test(
     name = "visualize_differential_test",
     size = "medium",

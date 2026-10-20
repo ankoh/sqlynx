@@ -35,13 +35,12 @@ fn render(node: &MarkdownNode) -> String {
 }
 
 fn compile(template: &str) -> String {
-    let document = compile_markdown_template(template).unwrap();
-    render(&document.document)
+    render(&compile_markdown_template(template).document)
 }
 
 #[test]
 fn tokenizes_fields() {
-    let document = compile_markdown_template("{{ a }} {{b}} {{a}} {{}} {{ ").unwrap();
+    let document = compile_markdown_template("{{ a }} {{b}} {{a}} {{}} {{ ");
     assert_eq!(document.fields, vec!["a", "b"]);
     assert_eq!(
         render(&document.document),
@@ -49,21 +48,21 @@ fn tokenizes_fields() {
          field[value=\"a\"], text[value=\" {{}} {{\"]))"
     );
     // The token prefix grows until it does not occur in the template
-    let (markdown, _) = tokenize_fields(b"DASHQLMARKDOWNFIELD {{x}}");
-    assert_eq!(markdown, b"DASHQLMARKDOWNFIELD DASHQLMARKDOWNFIELDX0TOKEN");
+    let (markdown, _) = tokenize_fields("DASHQLMARKDOWNFIELD {{x}}");
+    assert_eq!(markdown, "DASHQLMARKDOWNFIELD DASHQLMARKDOWNFIELDX0TOKEN");
+    // Fields in code, and fields in raw HTML are dropped with it
+    assert_eq!(
+        compile("`{{a}}` <b title=\"{{b}}\">x</b>"),
+        "document(paragraph(inlineCode(field[value=\"a\"]), text[value=\" x\"]))"
+    );
 }
 
 #[test]
-fn splits_text_at_marks() {
-    assert_eq!(
-        compile("a\\*b &amp; c"),
-        "document(paragraph(text[value=\"a\"], text[value=\"*\"], text[value=\"b \"], text[value=\"&\"], text[value=\" c\"]))"
-    );
-    assert_eq!(
-        compile("&bogus; &#x41;"),
-        "document(paragraph(text[value=\"&bogus;\"], text[value=\" \"], text[value=\"A\"]))"
-    );
-    assert_eq!(compile("a\0b"), "document(paragraph(text[value=\"a\"], text[value=\"\u{fffd}\"], text[value=\"b\"]))");
+fn merges_text() {
+    assert_eq!(compile("a\\*b &amp; c"), "document(paragraph(text[value=\"a*b & c\"]))");
+    assert_eq!(compile("&bogus; &#x41; &#0;"), "document(paragraph(text[value=\"&bogus; A \u{fffd}\"]))");
+    assert_eq!(compile("a\0b"), "document(paragraph(text[value=\"a\u{fffd}b\"]))");
+    assert_eq!(compile("a\nb <!-- c --> {{x}}"), "document(paragraph(text[value=\"a\\nb  \"], field[value=\"x\"]))");
 }
 
 #[test]
@@ -82,8 +81,8 @@ fn builds_blocks() {
         "document(list[ordered=false tight=false start=0](listItem(paragraph(text[value=\"a\"])), listItem(paragraph(text[value=\"b\"]))))"
     );
     assert_eq!(
-        compile("```sql x\nselect\n```\n\n    code"),
-        "document(codeBlock[lang=\"sql\"](text[value=\"select\"], text[value=\"\\n\"]), codeBlock(text[value=\"code\"], text[value=\"\\n\"]))"
+        compile("```sql x\nselect\n1\n```\n\n    code"),
+        "document(codeBlock[lang=\"sql\"](text[value=\"select\\n1\\n\"]), codeBlock(text[value=\"code\"]))"
     );
     assert_eq!(compile("<div>\nhtml\n</div>\n\n***"), "document(thematicBreak)");
     assert_eq!(compile("> q\n"), "document(blockquote(paragraph(text[value=\"q\"])))");
@@ -101,6 +100,7 @@ fn resolves_links() {
         compile("[x]({{f}} \"{{f}}\")"),
         "document(paragraph(span[url=\"DASHQLMARKDOWNFIELD0TOKEN\"](text[value=\"x\"])))"
     );
+    assert_eq!(compile("[x](/a&amp;b\\) \"t {{f}}\")"), "document(paragraph(link[url=\"/a&b)\"](text[value=\"x\"])))");
 }
 
 #[test]
@@ -116,17 +116,17 @@ fn resolves_emphasis() {
 
 #[test]
 fn checks_urls() {
-    assert!(is_safe_url(b"https://x"));
-    assert!(is_safe_url(b"/a:b"));
-    assert!(is_safe_url(b"a?b:c"));
-    assert!(is_safe_url(b" MailTo:x"));
-    assert!(!is_safe_url(b"java\nscript:alert(1)"));
-    assert!(!is_safe_url(b"data:text"));
+    assert!(is_safe_url("https://x"));
+    assert!(is_safe_url("/a:b"));
+    assert!(is_safe_url("a?b:c"));
+    assert!(is_safe_url(" MailTo:x"));
+    assert!(!is_safe_url("java\nscript:alert(1)"));
+    assert!(!is_safe_url("data:text"));
 }
 
 #[test]
 fn packs_documents() {
-    let document = compile_markdown_template("# {{a}}").unwrap();
+    let document = compile_markdown_template("# {{a}}");
     let mut builder = FlatBufferBuilder::new();
     let spec = pack_markdown_spec(&mut builder, &document);
     builder.finish(spec, None);
@@ -138,24 +138,4 @@ fn packs_documents() {
     let heading = root.children().unwrap().get(0);
     assert_eq!(heading.level(), 1);
     assert_eq!(heading.children().unwrap().get(0).value(), Some("a"));
-}
-
-#[test]
-fn reproduces_md4c_quirks() {
-    // The empty list item check reads the last line of the paragraph (it starts at offset 4) as a block header
-    // with the type MD_BLOCK_LI, so the blank lines end the list
-    assert_eq!(
-        compile("-   a\n\n\n  b"),
-        "document(list[ordered=false tight=true start=0](listItem(text[value=\"a\"])), paragraph(text[value=\"b\"]))"
-    );
-    // At offset 2, the same list stays one loose list
-    assert_eq!(
-        compile("- a\n\n\n  b"),
-        "document(list[ordered=false tight=false start=0](listItem(paragraph(text[value=\"a\"]), paragraph(text[value=\"b\"]))))"
-    );
-    // A NUL byte in a code block is also the first byte of the following text
-    assert_eq!(
-        compile("    a\0b"),
-        "document(codeBlock(text[value=\"a\"], text[value=\"\u{fffd}\"], text[value=\"\\0b\"], text[value=\"\\n\"]))"
-    );
 }

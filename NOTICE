@@ -127,7 +127,8 @@ GitHub Octicons (https://github.com/primer/octicons).
 5. MD4C
 --------------------------------------------------------------------------------
 
-Markdown parsing in dashql-core uses MD4C (https://github.com/mity/md4c).
+The C++ core under `packages/dashql-core`, kept as the test oracle of the Rust
+core, vendors MD4C (https://github.com/mity/md4c) for Markdown parsing.
 
     The MIT License (MIT)
 

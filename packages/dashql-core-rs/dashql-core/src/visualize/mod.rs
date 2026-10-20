@@ -2,8 +2,8 @@
 //!
 //! - `vegalite_generator`: the Vega-Lite JSON of an analyzed visualization (`GenerateVegaLiteSpec`)
 //! - `vegalite_parser`: a VISUALIZE statement from Vega-Lite JSON (`ParseVegaLiteToVisualize`)
-//! - `markdown`: the Markdown row template compiled into a document tree (`CompileMarkdownSpec`), with a port of
-//!   the md4c parser
+//! - `markdown`: the Markdown row template compiled into a document tree (`CompileMarkdownSpec`), parsed with
+//!   pulldown-cmark
 //! - `umap`: the UMAP spec (`CompileUmapSpec`)
 //!
 //! The C++ core caches the compiled specs in mutable fields of the visualization spec. The Rust functions are

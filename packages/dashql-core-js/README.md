@@ -126,7 +126,7 @@ or skipped declaration checks. This does not replace real browser execution.
 
 DashQL is licensed under MPL-2.0, as confirmed by the repository-root `LICENSE`
 and `NOTICE`. Both files are copied unchanged into the package; `NOTICE` is
-the repository-wide third-party notice, including MD4C used by the core.
+the repository-wide third-party notice.
 Source is available at <https://github.com/ankoh/dashql>, including the bindings
 under `packages/dashql-core-js`, native core under `packages/dashql-core`, and
 generated binding schemas under `proto/fb`. Third-party components retain
