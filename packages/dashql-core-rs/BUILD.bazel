@@ -416,3 +416,20 @@ rust_test(
         ":dashql_snapshots",
     ],
 )
+
+# The FlatBuffers of scanned, parsed and analyzed scripts must equal those of the C++ core.
+rust_test(
+    name = "pack_differential_test",
+    size = "medium",
+    srcs = ["dashql-oracle/tests/pack_differential.rs"],
+    data = ["//snapshots:files"],
+    edition = "2021",
+    use_libtest_harness = False,
+    deps = [
+        ":dashql_core",
+        ":dashql_oracle",
+        ":dashql_snapshots",
+        "//proto/fb:dashql_buffers_rs",
+        "@core_crates//:flatbuffers",
+    ],
+)

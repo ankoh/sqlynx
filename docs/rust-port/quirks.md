@@ -157,6 +157,12 @@ Neither changed a checked-in snapshot:
 - **Warnings without a symbol span crashed the encoder.** `MALFORMED_COMMENT_TAG` warnings only have
   a text span, and the encoder dereferenced the null symbol span.
 
+The packed name scopes of `AnalyzedScript::Pack` carried corrupted id lists and were fixed: the
+lists were built with `PushElement` of the `size_t` field `buffer_index` into `uint32` vectors, so the
+readers saw the first half of the reversed 64-bit values, and `NameScope::buffer_index` was never
+set, so child scopes were all 0. They are now the scope, expression and table reference ids in list
+order. No TypeScript code read them.
+
 Hash-table-dependent behavior was also made deterministic:
 
 Behavior that depended on the hash table implementation was made deterministic in the C++ core first,

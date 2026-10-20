@@ -9,6 +9,8 @@ pub mod cursor;
 pub mod error;
 pub mod formatter;
 pub mod hash;
+pub mod pack;
+pub mod script;
 pub mod script_diff;
 pub mod signature;
 pub mod utils;

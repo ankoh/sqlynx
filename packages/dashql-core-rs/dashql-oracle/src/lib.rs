@@ -7,6 +7,7 @@
 pub mod analyzer;
 pub mod completion;
 pub mod formatter;
+pub mod pack;
 pub mod script_diff;
 pub mod signature;
 pub mod view;
@@ -93,5 +94,20 @@ mod tests {
     fn parses() {
         let yaml = parse("select 1").unwrap();
         assert!(yaml.contains("OBJECT_SQL_SELECT"), "{yaml}");
+    }
+}
+
+/// Take the bytes of an oracle call: Ok for status 0, Err with the message otherwise
+///
+/// # Safety
+/// `result` must be returned by an oracle function and not be released yet.
+pub unsafe fn take_bytes(result: OracleResult) -> Result<Vec<u8>, String> {
+    let bytes = std::slice::from_raw_parts(result.data as *const u8, result.length).to_vec();
+    let status = result.status;
+    crate::dashql_oracle_free(result);
+    if status == 0 {
+        Ok(bytes)
+    } else {
+        Err(String::from_utf8_lossy(&bytes).into_owned())
     }
 }

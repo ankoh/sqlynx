@@ -1173,29 +1173,22 @@ flatbuffers::Offset<buffers::analyzer::AnalyzedScript> AnalyzedScript::Pack(flat
     {
         std::vector<flatbuffers::Offset<buffers::analyzer::NameScope>> name_scope_offsets;
         name_scopes.ForEach([&](size_t scope_id, const NameScope& scope) {
-            // Encode child scopes
-            builder.StartVector<uint32_t>(scope.child_scopes.GetSize());
+            // Encode the child scopes, expressions and table references by id
+            std::vector<uint32_t> ids;
             for (auto& child_scope : scope.child_scopes) {
-                builder.PushElement(child_scope.buffer_index);
+                ids.push_back(static_cast<const NameScope&>(child_scope).name_scope_id);
             }
-            flatbuffers::Offset<flatbuffers::Vector<uint32_t>> child_scopes_ofs{
-                builder.EndVector(scope.child_scopes.GetSize())};
-
-            // Encode expressions
-            builder.StartVector<uint32_t>(scope.child_scopes.GetSize());
+            auto child_scopes_ofs = builder.CreateVector(ids);
+            ids.clear();
             for (auto& expr : scope.expressions) {
-                builder.PushElement(expr.buffer_index);
+                ids.push_back(expr.expression_id);
             }
-            flatbuffers::Offset<flatbuffers::Vector<uint32_t>> expressions_ofs{
-                builder.EndVector(scope.expressions.GetSize())};
-
-            // Encode table references
-            builder.StartVector<uint32_t>(scope.table_references.GetSize());
+            auto expressions_ofs = builder.CreateVector(ids);
+            ids.clear();
             for (auto& ref : scope.table_references) {
-                builder.PushElement(ref.buffer_index);
+                ids.push_back(ref.table_reference_id.GetObject());
             }
-            flatbuffers::Offset<flatbuffers::Vector<uint32_t>> table_refs_ofs{
-                builder.EndVector(scope.table_references.GetSize())};
+            auto table_refs_ofs = builder.CreateVector(ids);
 
             buffers::analyzer::NameScopeBuilder scope_builder{builder};
             scope_builder.add_scope_id(scope_id);

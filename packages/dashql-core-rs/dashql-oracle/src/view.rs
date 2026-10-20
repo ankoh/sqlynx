@@ -36,20 +36,6 @@ pub struct LoadedPlan {
     pub buffer: Vec<u8>,
 }
 
-/// Take the bytes of an oracle call: Ok for status 0, Err with the message otherwise
-///
-/// # Safety
-/// `result` must be returned by an oracle function and not be released yet.
-unsafe fn take_bytes(result: OracleResult) -> Result<Vec<u8>, String> {
-    let bytes = std::slice::from_raw_parts(result.data as *const u8, result.length).to_vec();
-    let status = result.status;
-    crate::dashql_oracle_free(result);
-    if status == 0 {
-        Ok(bytes)
-    } else {
-        Err(String::from_utf8_lossy(&bytes).into_owned())
-    }
-}
 
 /// Configure a C++ plan view model, load a Hyper plan and pack it (`dashql_oracle_plan_view_model`).
 ///
@@ -69,7 +55,7 @@ pub fn load_hyper_plan(plan: &[u8], config: &PlanLayoutConfig) -> Result<LoadedP
     ];
     // SAFETY: the oracle reads `plan.len()` bytes of `plan` and 9 doubles, and returns an unreleased result.
     let out = unsafe {
-        take_bytes(dashql_oracle_plan_view_model(
+        crate::take_bytes(dashql_oracle_plan_view_model(
             plan.as_ptr() as *const c_char,
             plan.len(),
             doubles.as_ptr(),
