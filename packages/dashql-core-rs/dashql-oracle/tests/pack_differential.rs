@@ -1,27 +1,18 @@
 //! The FlatBuffers of scanned, parsed and analyzed scripts must equal those of the C++ core.
 //!
 //! Both sides are unpacked into the object API and compared, so field presence counts but the
-//! byte layout of the builders does not. Runs over all snapshot inputs and their prefixes, alone
+//! byte layout of the builders does not, including the generated visualization specs. Runs over all snapshot inputs and their prefixes, alone
 //! and against catalog scripts, through the `Script` facade.
 
 use dashql_buffers::analyzer::AnalyzedScriptT;
 use dashql_buffers::parser::{ParsedScriptT, ScannedScriptT};
 use dashql_core::catalog::Catalog;
-use dashql_core::pack::{pack_analyzed_script, pack_parsed_script, pack_scanned_script};
+use dashql_core::pack::{pack_analyzed_script, pack_parsed_script, pack_scanned_script, pack_visualization};
 use dashql_core::script::Script;
 use dashql_oracle::pack::{pack, Packed};
 use dashql_snapshots::corpus::{prefixes, snapshot_inputs, Rng, CATEGORIES};
 use dashql_snapshots::{load_category, run, trim_input, Arguments, Failed, Trial};
 use std::sync::Arc;
-
-/// The renderer-specific payloads of visualizations are packed by the visualize port, mask them
-fn mask_visualizations(script: &mut AnalyzedScriptT) {
-    for spec in script.visualization_specs.iter_mut().flatten() {
-        spec.vegalite_spec = None;
-        spec.umap_spec = None;
-        spec.markdown_spec = None;
-    }
-}
 
 /// Analyze a script with the Rust core like the oracle does
 fn analyze(catalog_text: Option<&str>, text: &str) -> Result<Script, String> {
@@ -86,12 +77,10 @@ fn compare_with_oracle(catalog: Option<&str>, text: &str) -> Result<(), String> 
             }
             Packed::AnalyzedScript => {
                 let mut expected = flatbuffers::root::<dashql_buffers::analyzer::AnalyzedScript>(&bytes).unwrap().unpack();
-                mask_visualizations(&mut expected);
-                let packed = pack_analyzed_script(script.analyzed.as_ref().unwrap(), &|_, _| (None, None, None)).pack(&mut builder);
+                let packed = pack_analyzed_script(script.analyzed.as_ref().unwrap(), &pack_visualization).pack(&mut builder);
                 builder.finish(packed, None);
                 let mut actual: AnalyzedScriptT =
                     flatbuffers::root::<dashql_buffers::analyzer::AnalyzedScript>(builder.finished_data()).unwrap().unpack();
-                mask_visualizations(&mut actual);
                 (format!("{expected:#?}"), format!("{actual:#?}"))
             }
         };

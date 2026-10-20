@@ -278,6 +278,20 @@ remaining per-list allocations.
   0 differences.
 - Open: `completion_test.cc` (33 tests) and `cursor_test.cc`, which need the `Script` facade.
 
+## Phase 6 progress
+
+- **Script facade** (`dashql_core::script`): the text is a ropey rope indexed by code points like the
+  C++ rope, so edits in the middle of large scripts stay logarithmic. A script does not reference its
+  catalog; analysis takes `&Catalog`, and dropping a script leaves the catalog alone.
+- **Packing** (`dashql_core::pack`): scanned, parsed and analyzed scripts, cursors and completions.
+  `:pack_differential_test` and `:completion_differential_test` unpack the FlatBuffers of both cores
+  into the object API and compare them, including the generated visualization specs.
+- **Visualize** (`dashql_core::visualize`): the Vega-Lite generator and parser, Markdown (md4c 0.5.2
+  ported by hand) and UMAP. `:visualize_snapshot_test` passes 27/27, `:visualize_differential_test`
+  finds 0 differences over 38k analyzed scripts, 73k Vega-Lite texts and 128k Markdown templates.
+- Open: compiler, batch, planner, and the `Script` unit tests (`completion_test.cc`,
+  `cursor_test.cc`, `script_test.cc`).
+
 **Open items**
 - The repository `rustfmt.toml` is not valid TOML (`max_width: 120`), so rustfmt refuses it. Format
   with `--config max_width=120,use_small_heuristics=Max` until it is fixed.

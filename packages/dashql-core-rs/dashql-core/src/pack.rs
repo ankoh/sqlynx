@@ -843,3 +843,31 @@ pub fn pack_completion(completion: &crate::completion::Completion, upper_case_ke
     out.candidates = Some(candidates);
     out
 }
+
+/// The renderer-specific packing of a visualization (the vegalite, umap and markdown branches of
+/// `AnalyzedScript::Pack`)
+#[allow(clippy::type_complexity)]
+pub fn pack_visualization(
+    script: &AnalyzedScript,
+    spec: &VisualizationSpec,
+) -> (Option<String>, Option<Box<dashql_buffers::visualization::UmapSpecT>>, Option<Box<dashql_buffers::visualization::MarkdownSpecT>>) {
+    use crate::visualize;
+    use dashql_buffers::visualization::{MarkdownSpec, UmapSpec};
+    let renderer = spec.renderer.as_deref();
+    let vegalite = (renderer == Some("vegalite"))
+        .then(|| visualize::generate_vegalite_spec(spec, script))
+        .filter(|json| !json.is_empty());
+    let umap = (renderer == Some("umap")).then(|| visualize::compile_umap_spec(spec, script)).flatten().map(|doc| {
+        let mut builder = flatbuffers::FlatBufferBuilder::new();
+        let packed = visualize::pack_umap_spec(&mut builder, &doc);
+        builder.finish(packed, None);
+        Box::new(flatbuffers::root::<UmapSpec>(builder.finished_data()).unwrap().unpack())
+    });
+    let markdown = (renderer == Some("markdown")).then(|| visualize::compile_markdown_spec(spec)).flatten().map(|doc| {
+        let mut builder = flatbuffers::FlatBufferBuilder::new();
+        let packed = visualize::pack_markdown_spec(&mut builder, &doc);
+        builder.finish(packed, None);
+        Box::new(flatbuffers::root::<MarkdownSpec>(builder.finished_data()).unwrap().unpack())
+    });
+    (vegalite, umap, markdown)
+}
