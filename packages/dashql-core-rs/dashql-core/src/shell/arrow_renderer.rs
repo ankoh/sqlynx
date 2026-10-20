@@ -75,10 +75,7 @@ fn append_batch(table: &mut Table, batch: &RecordBatch) {
             if !is_null(array, row) {
                 scalar_to_string(array, row, &mut text);
             }
-            cells.push(Cell {
-                text: escape_cell_text(&text),
-                alignment: table.alignments[column],
-            });
+            cells.push(Cell { text: escape_cell_text(&text), alignment: table.alignments[column] });
         }
         table.rows.push(cells);
     }
@@ -99,7 +96,8 @@ fn read_ipc(data: &[u8]) -> Result<Table, String> {
         return Ok(table);
     }
     check_stream_framing(data)?;
-    let reader = arrow_ipc::reader::StreamReader::try_new(Cursor::new(data), None).map_err(|e| format!("Invalid: {}", e))?;
+    let reader =
+        arrow_ipc::reader::StreamReader::try_new(Cursor::new(data), None).map_err(|e| format!("Invalid: {}", e))?;
     let mut table = create_table(&reader.schema());
     for batch in reader {
         let batch = batch.map_err(|e| format!("Invalid: {}", e))?;
@@ -143,14 +141,21 @@ fn check_stream_framing(data: &[u8]) -> Result<(), String> {
         };
         let remaining = data.len() - pos;
         if remaining < metadata_length {
-            return Err(format!("Invalid: Expected to read {} metadata bytes, but only read {}", metadata_length, remaining));
+            return Err(format!(
+                "Invalid: Expected to read {} metadata bytes, but only read {}",
+                metadata_length, remaining
+            ));
         }
-        let message = arrow_ipc::root_as_message(&data[pos..pos + metadata_length]).map_err(|e| format!("Invalid: {}", e))?;
+        let message =
+            arrow_ipc::root_as_message(&data[pos..pos + metadata_length]).map_err(|e| format!("Invalid: {}", e))?;
         pos += metadata_length;
         let body_length = message.bodyLength().max(0) as usize;
         let remaining = data.len() - pos;
         if remaining < body_length {
-            return Err(format!("IOError: Expected to be able to read {} bytes for message body, got {}", body_length, remaining));
+            return Err(format!(
+                "IOError: Expected to be able to read {} bytes for message body, got {}",
+                body_length, remaining
+            ));
         }
         pos += body_length;
     }
@@ -165,11 +170,7 @@ struct Grapheme {
 fn text_graphemes(text: &[u8]) -> Vec<Grapheme> {
     graphemes(text)
         .into_iter()
-        .map(|(begin, end)| Grapheme {
-            begin,
-            end,
-            width: display_width(&text[begin..end]),
-        })
+        .map(|(begin, end)| Grapheme { begin, end, width: display_width(&text[begin..end]) })
         .collect()
 }
 
@@ -392,10 +393,7 @@ fn render_table(table: &Table, terminal_columns: usize) -> Vec<u8> {
             if column + 1 == widths.len() && widths.len() < table.headers.len() {
                 header = mark_truncated(&header, widths[column]);
             }
-            Cell {
-                text: header,
-                alignment: Alignment::Left,
-            }
+            Cell { text: header, alignment: Alignment::Left }
         })
         .collect();
     append_row(&mut output, &headers, &widths, "│");
@@ -416,9 +414,7 @@ pub struct ArrowRenderer {
 
 impl ArrowRenderer {
     pub fn new(terminal_columns: u32) -> Self {
-        Self {
-            terminal_columns: terminal_columns.max(1),
-        }
+        Self { terminal_columns: terminal_columns.max(1) }
     }
 
     pub fn resize(&mut self, terminal_columns: u32) {
