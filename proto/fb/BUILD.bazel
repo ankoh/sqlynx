@@ -3,6 +3,7 @@
 # Entry schema: dashql/index.fbs (includes all other .fbs).
 
 load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_rust//rust:defs.bzl", "rust_library")
 load("//proto/fb/bazel:flatbuf_ts_gen.bzl", "dashql_buffers_ts_gen")
 
 package(default_visibility = ["//visibility:public"])
@@ -44,4 +45,39 @@ dashql_buffers_ts_gen(
     name = "dashql_buffers_ts_gen",
     srcs = FBS_DEPS,
     index_fbs = "dashql/index.fbs",
+)
+
+# Rust codegen for the Rust core (//packages/dashql-core-rs). flatc writes one file per type;
+# flatbuf_rust_bundle.py inlines them into a single crate root so the output is declarable.
+# plan_view_model_events.fbs is excluded: flatc --rust does not support vectors of unions,
+# and the core does not use those tables.
+genrule(
+    name = "dashql_buffers_rs_gen",
+    srcs = FBS_DEPS,
+    outs = ["dashql_buffers.rs"],
+    cmd = """
+        FLATC=$(location @com_google_flatbuffers//:flatc)
+        INC=$$(dirname $$(dirname $(location dashql/index.fbs)))
+        TMP=$$(mktemp -d)
+        mkdir -p $$TMP/in/dashql $$TMP/out
+        cp $$INC/dashql/*.fbs $$TMP/in/dashql/
+        grep -v plan_view_model_events $$INC/dashql/index.fbs > $$TMP/in/dashql/index_rust.fbs
+        $$FLATC -I $$TMP/in -o $$TMP/out $$TMP/in/dashql/index_rust.fbs --rust \\
+            --gen-all --rust-module-root-file --gen-object-api
+        python3 $(location //proto/fb/bazel:flatbuf_rust_bundle.py) --root_dir $$TMP/out --output $@
+        rm -rf $$TMP
+    """,
+    tools = [
+        "//proto/fb/bazel:flatbuf_rust_bundle.py",
+        "@com_google_flatbuffers//:flatc",
+    ],
+)
+
+rust_library(
+    name = "dashql_buffers_rs",
+    srcs = [":dashql_buffers_rs_gen"],
+    crate_name = "dashql_buffers",
+    crate_root = ":dashql_buffers_rs_gen",
+    edition = "2021",
+    deps = ["@core_crates//:flatbuffers"],
 )
