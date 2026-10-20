@@ -285,6 +285,11 @@ fn pack_statement(parsed: &ParsedScript, statement_id: usize) -> StatementT {
     out
 }
 
+/// The statement of a parsed script with its target (`ParsedScript::PackStatement`)
+pub fn pack_parsed_statement(parsed: &ParsedScript, statement_id: usize) -> StatementT {
+    pack_statement(parsed, statement_id)
+}
+
 /// Pack a parsed script (`ParsedScript::Pack`)
 pub fn pack_parsed_script(parsed: &ParsedScript) -> ParsedScriptT {
     let scanned = &parsed.scanned;

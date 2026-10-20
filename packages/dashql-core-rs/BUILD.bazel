@@ -129,6 +129,7 @@ DASHQL_CORE_SNAPSHOT_TESTS = {
     "analyzer_snapshot_test": ("analyzer_snapshots.rs", "//snapshots/analyzer:files"),
     "completion_snapshot_test": ("completion_snapshots.rs", "//snapshots/completion:files"),
     "diff_snapshot_test": ("diff_snapshots.rs", "//snapshots:files"),
+    "planner_snapshot_test": ("planner_snapshots.rs", "//snapshots/planner:files"),
     "plan_view_model_snapshot_test": ("plan_view_model_snapshots.rs", "//snapshots/plans/hyper/tests:files"),
     "visualize_snapshot_test": ("visualize_snapshots.rs", "//snapshots/visualize:files"),
 }
