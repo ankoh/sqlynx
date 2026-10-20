@@ -1,0 +1,6 @@
+# Bison skeleton that emits the LALR(1) tables (and optionally Rust user actions) of a
+# grammar as Rust source. See tables.rs.m4 and defs.bzl.
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files(["tables.rs.m4"])

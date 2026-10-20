@@ -1,6 +1,7 @@
 # Grammar sources for the dashql parser (consumed by packages/dashql-core).
 
 load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//grammar/rust:defs.bzl", "bison_rust_tables")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -191,4 +192,15 @@ cc_library(
     hdrs = [":grammar_lists"],
     includes = ["."],
     visibility = ["//packages/dashql-core:__pkg__"],
+)
+
+# ---------------------------------------------------------------------------
+# Rust: the LALR(1) automaton of the grammar, emitted through //grammar/rust:tables.rs.m4.
+# Tables only for now: the C++ actions stay in rules/*.y until the Rust rule set exists.
+# ---------------------------------------------------------------------------
+
+bison_rust_tables(
+    name = "parser_tables_rs",
+    grammar = ":grammar_y",
+    out = "gen/rust/parser_tables.rs",
 )
