@@ -488,3 +488,31 @@ rust_test(
         "@core_crates//:flatbuffers",
     ],
 )
+
+# Ports of the C++ unit tests in packages/dashql-core/test, one libtest binary per test file.
+DASHQL_CORE_UNIT_TESTS = [
+    "analyzer_declaration_test",
+    "analyzer_delete_test",
+    "analyzer_insert_test",
+    "catalog_test",
+    "completion_test",
+    "cursor_test",
+    "name_tagging_test",
+    "script_test",
+    "string_conversion_test",
+    "topk_test",
+    "unification_test",
+]
+
+[rust_test(
+    name = name,
+    size = "small",
+    srcs = ["dashql-core/tests/" + name + ".rs"],
+    edition = "2021",
+    deps = [
+        ":dashql_core",
+        ":dashql_grammar",
+        "//proto/fb:dashql_buffers_rs",
+        "@core_crates//:flatbuffers",
+    ],
+) for name in DASHQL_CORE_UNIT_TESTS]

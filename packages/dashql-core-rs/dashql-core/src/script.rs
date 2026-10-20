@@ -16,6 +16,7 @@ use crate::error::{Error, Result};
 use dashql_buffers::status::StatusCode;
 use dashql_grammar::parser::{parse, ParsedScript};
 use dashql_grammar::scanner::{scan, ScannedScript};
+use dashql_grammar::span::TextSpan;
 use ropey::Rope;
 use std::sync::Arc;
 
@@ -109,6 +110,19 @@ impl Script {
     /// The text as a string
     pub fn to_text(&self) -> String {
         self.text.to_string()
+    }
+
+    /// The text of a byte span (`ToString(TextSpan)`), empty if the span begins past the end. The span
+    /// is clamped to the text; characters cut by the span bounds become replacement characters.
+    pub fn to_text_span(&self, span: TextSpan) -> String {
+        let len = self.text.len_bytes();
+        let begin = span.offset as usize;
+        if begin >= len {
+            return String::new();
+        }
+        let end = (begin + span.length as usize).min(len);
+        let bytes: Vec<u8> = self.text.bytes_at(begin).take(end - begin).collect();
+        String::from_utf8_lossy(&bytes).into_owned()
     }
 
     /// Scan the script unconditionally

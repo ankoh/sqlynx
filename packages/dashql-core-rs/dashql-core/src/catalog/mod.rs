@@ -17,6 +17,9 @@ pub use names::{IndexedName, NameSearchIndex};
 
 use crate::analyzer::AnalyzedScript;
 use crate::error::{Error, Result};
+use dashql_buffers::catalog::{
+    FlatCatalogEntryT, FlatCatalogT, IndexedFlatDatabaseEntryT, IndexedFlatSchemaEntryT, IndexedFlatTableEntryT,
+};
 use dashql_buffers::status::StatusCode;
 use std::cell::RefCell;
 use crate::hash::HashMap;
@@ -411,6 +414,174 @@ impl Catalog {
         self.schemas.clear();
         self.databases.clear();
         self.version += 1;
+    }
+
+    /// Flatten the catalog (`Catalog::Flatten`).
+    ///
+    /// Databases, schemas and tables are merged across entries and ordered by name. A table name that
+    /// occurs in several entries is taken from the entry with the lowest rank. Names go through a
+    /// dictionary, built in rank order, so that JS only decodes the names it renders.
+    pub fn flatten(&self) -> FlatCatalogT {
+        struct TableNode {
+            table_id: CatalogTableId,
+            name_id: usize,
+            columns_begin: usize,
+            column_count: usize,
+        }
+        struct SchemaNode {
+            schema_id: CatalogSchemaId,
+            name_id: usize,
+            children: BTreeMap<Arc<str>, usize>,
+        }
+        struct DatabaseNode {
+            database_id: CatalogDatabaseId,
+            name_id: usize,
+            children: BTreeMap<Arc<str>, usize>,
+        }
+
+        let mut name_dictionary: Vec<String> = Vec::new();
+        let mut name_dictionary_index: HashMap<Arc<str>, usize> = HashMap::default();
+        let mut add_name = |name: &Arc<str>| -> usize {
+            *name_dictionary_index.entry(name.clone()).or_insert_with(|| {
+                name_dictionary.push(name.to_string());
+                name_dictionary.len() - 1
+            })
+        };
+
+        let mut database_nodes: Vec<DatabaseNode> = Vec::new();
+        let mut schema_nodes: Vec<SchemaNode> = Vec::new();
+        let mut table_nodes: Vec<TableNode> = Vec::new();
+        // (column id, name id)
+        let mut column_nodes: Vec<(u32, usize)> = Vec::new();
+        let mut root: BTreeMap<Arc<str>, usize> = BTreeMap::new();
+        let mut database_node_map: HashMap<QualifiedCatalogObjectId, usize> = HashMap::default();
+        let mut schema_node_map: HashMap<QualifiedCatalogObjectId, usize> = HashMap::default();
+
+        // Visit entries in rank order, the name dictionary must not depend on the hash implementation
+        for (_, entry) in self.entries_ranked() {
+            let data = entry.data();
+            for db_ref in &data.database_references {
+                if database_node_map.contains_key(&db_ref.object_id) {
+                    continue;
+                }
+                let name_id = add_name(&db_ref.database_name);
+                database_nodes.push(DatabaseNode {
+                    database_id: db_ref.database_id(),
+                    name_id,
+                    children: BTreeMap::new(),
+                });
+                database_node_map.insert(db_ref.object_id, database_nodes.len() - 1);
+                root.entry(db_ref.database_name.clone()).or_insert(database_nodes.len() - 1);
+            }
+            for &i in data.schemas_by_qualified_name.values() {
+                let schema_ref = &data.schema_references[i];
+                if schema_node_map.contains_key(&schema_ref.object_id) {
+                    continue;
+                }
+                let name_id = add_name(&schema_ref.schema_name);
+                schema_nodes.push(SchemaNode {
+                    schema_id: schema_ref.schema_id(),
+                    name_id,
+                    children: BTreeMap::new(),
+                });
+                let schema_node = schema_nodes.len() - 1;
+                schema_node_map.insert(schema_ref.object_id, schema_node);
+                let db_node = database_node_map[&QualifiedCatalogObjectId::database(schema_ref.database_id())];
+                database_nodes[db_node].children.entry(schema_ref.schema_name.clone()).or_insert(schema_node);
+            }
+        }
+
+        // Tables are not deduplicated among entries, the entry with the lowest rank wins
+        for (_, entry) in self.entries_ranked() {
+            for table in &entry.data().table_declarations {
+                let schema_node = schema_node_map[&table.catalog_schema_id];
+                let table_name = &table.table_name.table_name.text;
+                if schema_nodes[schema_node].children.contains_key(table_name) {
+                    continue;
+                }
+                let columns_begin = column_nodes.len();
+                for (column_id, column) in table.table_columns.iter().enumerate() {
+                    let name_id = add_name(&column.column_name.text);
+                    column_nodes.push((column_id as u32, name_id));
+                }
+                let name_id = add_name(table_name);
+                table_nodes.push(TableNode {
+                    table_id: table.table_id(),
+                    name_id,
+                    columns_begin,
+                    column_count: table.table_columns.len(),
+                });
+                schema_nodes[schema_node].children.insert(table_name.clone(), table_nodes.len() - 1);
+            }
+        }
+
+        // (entry index, parent index, object id, name id, child begin, child count)
+        let entry = |idx: usize, parent: usize, object_id: u64, name_id: usize, begin: usize, count: usize| {
+            FlatCatalogEntryT {
+                flat_entry_idx: idx as u32,
+                flat_parent_idx: parent as u32,
+                catalog_object_id: object_id,
+                name_id: name_id as u32,
+                child_begin: begin as u32,
+                child_count: count as u32,
+            }
+        };
+        let mut databases = Vec::new();
+        let mut schemas = Vec::new();
+        let mut tables = Vec::new();
+        let mut columns = Vec::new();
+        let mut databases_by_id = Vec::new();
+        let mut schemas_by_id = Vec::new();
+        let mut tables_by_id = Vec::new();
+        for &db_node in root.values() {
+            let db = &database_nodes[db_node];
+            let db_idx = databases.len();
+            databases.push(entry(db_idx, 0, db.database_id as u64, db.name_id, schemas.len(), db.children.len()));
+            databases_by_id.push(IndexedFlatDatabaseEntryT {
+                database_id: db.database_id,
+                flat_entry_idx: db_idx as u32,
+            });
+            for &schema_node in db.children.values() {
+                let schema = &schema_nodes[schema_node];
+                let schema_idx = schemas.len();
+                let schema_id = schema.schema_id as u64;
+                schemas.push(entry(schema_idx, db_idx, schema_id, schema.name_id, tables.len(), schema.children.len()));
+                schemas_by_id.push(IndexedFlatSchemaEntryT {
+                    schema_id: schema.schema_id,
+                    flat_entry_idx: schema_idx as u32,
+                });
+                for &table_node in schema.children.values() {
+                    let table = &table_nodes[table_node];
+                    let table_idx = tables.len();
+                    let table_id = table.table_id.pack();
+                    let column_count = table.column_count;
+                    tables.push(entry(table_idx, schema_idx, table_id, table.name_id, columns.len(), column_count));
+                    tables_by_id.push(IndexedFlatTableEntryT {
+                        table_id,
+                        flat_entry_idx: table_idx as u32,
+                    });
+                    let table_columns = table.columns_begin..table.columns_begin + table.column_count;
+                    for &(column_id, name_id) in &column_nodes[table_columns] {
+                        columns.push(entry(columns.len(), table_idx, column_id as u64, name_id, 0, 0));
+                    }
+                }
+            }
+        }
+        databases_by_id.sort_by_key(|e| e.database_id);
+        schemas_by_id.sort_by_key(|e| e.schema_id);
+        tables_by_id.sort_by_key(|e| e.table_id);
+
+        let mut out = FlatCatalogT::default();
+        out.catalog_version = self.version as u64;
+        out.name_dictionary = Some(name_dictionary);
+        out.databases = Some(databases);
+        out.schemas = Some(schemas);
+        out.tables = Some(tables);
+        out.columns = Some(columns);
+        out.databases_by_id = Some(databases_by_id);
+        out.schemas_by_id = Some(schemas_by_id);
+        out.tables_by_id = Some(tables_by_id);
+        out
     }
 
     /// A table by id
