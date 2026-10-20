@@ -414,6 +414,8 @@ rust_test(
     deps = [
         ":dashql_oracle",
         ":dashql_snapshots",
+        "//proto/fb:dashql_buffers_rs",
+        "@core_crates//:flatbuffers",
     ],
 )
 

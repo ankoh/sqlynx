@@ -7,7 +7,7 @@
 //!   - the end of prefixes of these inputs (the write front).
 
 use dashql_snapshots::corpus::{prefixes, snapshot_inputs, Rng};
-use dashql_snapshots::encode::completion::{complete_case, CursorOffset};
+use dashql_snapshots::encode::completion::{complete_case, complete_packed, CursorOffset};
 use dashql_snapshots::{compare, load_category, parse_yaml, run, trim_input, Arguments, Failed, Trial};
 
 /// The number of candidates
@@ -20,11 +20,34 @@ fn compare_with_oracle(catalog: Option<&str>, text: &str, offset: usize) -> Resu
     match (expected, actual) {
         (Ok(expected), Ok(actual)) => {
             let expected = parse_yaml(&expected).map_err(|e| format!("{}\n{e}", context()))?;
-            compare(&expected, &actual.completions).map_err(|e| format!("{}\n{e}", context()))
+            compare(&expected, &actual.completions).map_err(|e| format!("{}\n{e}", context()))?;
         }
-        (Err(_), Err(_)) => Ok(()),
-        (e, a) => Err(format!("{}\nC++: {:?}\nRust: {:?}", context(), e.err(), a.err().map(|_| ()))),
+        (Err(_), Err(_)) => return Ok(()),
+        (e, a) => return Err(format!("{}\nC++: {:?}\nRust: {:?}", context(), e.err(), a.err().map(|_| ()))),
     }
+    // The packed cursor and completion, upper-casing keywords at odd offsets
+    let upper_case = offset % 2 == 1;
+    let (cursor_bytes, completion_bytes) =
+        dashql_oracle::completion::complete_packed(catalog, text, offset, LIMIT, upper_case).map_err(|e| format!("{}\n{e}", context()))?;
+    let expected_cursor = flatbuffers::root::<dashql_buffers::cursor::ScriptCursor>(&cursor_bytes).unwrap().unpack();
+    let expected_completion = flatbuffers::root::<dashql_buffers::completion::Completion>(&completion_bytes).unwrap().unpack();
+    let (cursor, completion) = complete_packed(catalog, text, offset, LIMIT, upper_case)?;
+    // Round trip the Rust objects through a FlatBuffer, so that the field presence is compared
+    let mut builder = flatbuffers::FlatBufferBuilder::new();
+    let packed = cursor.pack(&mut builder);
+    builder.finish(packed, None);
+    let cursor = flatbuffers::root::<dashql_buffers::cursor::ScriptCursor>(builder.finished_data()).unwrap().unpack();
+    let mut builder = flatbuffers::FlatBufferBuilder::new();
+    let packed = completion.pack(&mut builder);
+    builder.finish(packed, None);
+    let completion = flatbuffers::root::<dashql_buffers::completion::Completion>(builder.finished_data()).unwrap().unpack();
+    if format!("{expected_cursor:?}") != format!("{cursor:?}") {
+        return Err(format!("{}\ncursor\nC++:  {expected_cursor:?}\nRust: {cursor:?}", context()));
+    }
+    if format!("{expected_completion:?}") != format!("{completion:?}") {
+        return Err(format!("{}\ncompletion\nC++:  {expected_completion:?}\nRust: {completion:?}", context()));
+    }
+    Ok(())
 }
 
 /// The cursor offsets of a text: every char boundary

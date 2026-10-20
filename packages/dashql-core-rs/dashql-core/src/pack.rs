@@ -694,3 +694,152 @@ pub fn pack_analyzed_script(script: &AnalyzedScript, visualize: &VisualizationPa
 pub fn has_visualize(parsed: &ParsedScript) -> bool {
     parsed.feature_flags & ParsedScriptFeature::VISUALIZE.0 != 0
 }
+
+/// Pack a cursor (`ScriptCursor::Pack`)
+pub fn pack_cursor(cursor: &crate::cursor::ScriptCursor) -> dashql_buffers::cursor::ScriptCursorT {
+    use crate::cursor::CursorContext;
+    use dashql_buffers::cursor::{
+        RelativeSymbolPosition, ScriptCursorColumnRefContextT, ScriptCursorContextT, ScriptCursorT, ScriptCursorTableRefContextT,
+    };
+    let mut out = ScriptCursorT::default();
+    out.text_offset = cursor.text_offset as u32;
+    match &cursor.scanner_location {
+        Some(location) => {
+            let target = &location.current;
+            out.scanner_symbol_id = target.symbol_id;
+            out.scanner_relative_position = target.relative_pos;
+            out.scanner_symbol_offset = target.symbol.location.offset;
+            out.scanner_symbol_kind = target.symbol.kind as u32;
+            out.scanner_symbol_completable = crate::completion::is_symbol_kind_completable(target.symbol.kind);
+        }
+        None => {
+            out.scanner_symbol_id = u32::MAX;
+            out.scanner_relative_position = RelativeSymbolPosition::AFTER_SYMBOL;
+            out.scanner_symbol_offset = 0;
+            out.scanner_symbol_kind = 0;
+            out.scanner_symbol_completable = false;
+        }
+    }
+    out.statement_id = cursor.statement_id.unwrap_or(u32::MAX);
+    out.ast_node_id = cursor.ast_node_id.unwrap_or(u32::MAX);
+    out.ast_path_to_root = non_empty(cursor.ast_path_to_root.clone());
+    out.name_scopes = non_empty(cursor.name_scopes.clone());
+    out.context = match cursor.context {
+        CursorContext::None => ScriptCursorContextT::NONE,
+        CursorContext::TableRef { table_reference_id, .. } => {
+            let mut ctx = ScriptCursorTableRefContextT::default();
+            ctx.table_reference_id = table_reference_id;
+            ScriptCursorContextT::ScriptCursorTableRefContext(Box::new(ctx))
+        }
+        CursorContext::ColumnRef { expression_id } => {
+            let mut ctx = ScriptCursorColumnRefContextT::default();
+            ctx.expression_id = expression_id;
+            ScriptCursorContextT::ScriptCursorColumnRefContext(Box::new(ctx))
+        }
+    };
+    out
+}
+
+/// Pack a completion (`Completion::Pack`)
+pub fn pack_completion(completion: &crate::completion::Completion, upper_case_keywords: bool) -> dashql_buffers::completion::CompletionT {
+    use crate::completion::CandidateObjectRef;
+    use crate::utils::quote_identifier;
+    use dashql_buffers::completion::{CompletionCandidateObjectT, CompletionCandidateObjectType, CompletionCandidateT, CompletionT};
+
+    let candidates = completion
+        .top_candidates
+        .iter()
+        .map(|candidate| {
+            let upper_keyword = upper_case_keywords && candidate.keyword_symbol.is_some();
+            let display_text = if upper_keyword {
+                candidate.completion_text.to_ascii_uppercase()
+            } else {
+                candidate.completion_text.to_string()
+            };
+            let mut completion_text = if upper_keyword || candidate.completion_text_is_verbatim {
+                display_text.clone()
+            } else {
+                quote_identifier(&candidate.completion_text)
+            };
+            let mut is_function = false;
+            let catalog_objects = candidate
+                .catalog_objects
+                .iter()
+                .map(|&co| {
+                    let object = &completion.candidate_objects[co];
+                    let mut o = CompletionCandidateObjectT::default();
+                    o.object_type = CompletionCandidateObjectType(object.object.object_type() as u8);
+                    o.candidate_tags = object.candidate_tags;
+                    o.score = object.score;
+                    o.qualified_name = Some(object.qualified_name.iter().map(|n| quote_identifier(n)).collect());
+                    o.qualified_name_target_idx = object.qualified_name_target_idx as u32;
+                    o.prefer_qualified = object.prefer_qualified;
+                    match object.object {
+                        CandidateObjectRef::Database(id) => o.catalog_database_id = id.unpack_database_id(),
+                        CandidateObjectRef::Schema(id) => {
+                            let (db, schema) = id.unpack_schema_id();
+                            o.catalog_database_id = db;
+                            o.catalog_schema_id = schema;
+                        }
+                        CandidateObjectRef::Table(loc) => {
+                            if let Some(table) = completion.table(loc) {
+                                let (db, schema) = table.catalog_schema_id.unpack_schema_id();
+                                o.catalog_database_id = db;
+                                o.catalog_schema_id = schema;
+                                o.catalog_table_id = table.table_id().pack();
+                                o.referenced_catalog_version = table.catalog_version;
+                            }
+                        }
+                        CandidateObjectRef::Column(loc) => {
+                            if let Some(table) = completion.table(loc.table) {
+                                let (db, schema) = table.catalog_schema_id.unpack_schema_id();
+                                let (table_id, column) = table.table_columns[loc.column as usize].object_id.unpack_table_column_id();
+                                o.catalog_database_id = db;
+                                o.catalog_schema_id = schema;
+                                o.catalog_table_id = table_id.pack();
+                                o.table_column_id = column;
+                                o.referenced_catalog_version = table.catalog_version;
+                            }
+                        }
+                        CandidateObjectRef::Function(loc) => {
+                            is_function = true;
+                            if let Some(f) = completion.entry_data(loc.entry).and_then(|d| d.function_declarations.get(loc.index as usize)) {
+                                let (db, schema) = f.catalog_schema_id.unpack_schema_id();
+                                o.catalog_database_id = db;
+                                o.catalog_schema_id = schema;
+                            }
+                        }
+                    }
+                    o
+                })
+                .collect();
+            if is_function {
+                completion_text.push_str("()");
+            }
+            let mut c = CompletionCandidateT::default();
+            c.completion_cursor_offset = (completion_text.len() - if is_function { 1 } else { 0 }) as u32;
+            c.display_text = Some(display_text);
+            c.completion_text = Some(completion_text);
+            c.candidate_tags = candidate.candidate_tags;
+            c.name_tags = candidate.coarse_name_tags;
+            c.catalog_objects = Some(catalog_objects);
+            c.score = candidate.score;
+            c.target_location = Some(symbol_span(candidate.target_location));
+            c.target_location_qualified = Some(symbol_span(candidate.target_location_qualified));
+            c.keyword_continuation = candidate.keyword_continuation.filter(|k| !k.is_empty()).map(|k| {
+                if upper_case_keywords {
+                    k.to_ascii_uppercase()
+                } else {
+                    k.to_string()
+                }
+            });
+            c
+        })
+        .collect();
+    let mut out = CompletionT::default();
+    out.cursor_offset = completion.cursor.text_offset as u32;
+    out.dot_completion = completion.dot_completion;
+    out.strategy = completion.strategy;
+    out.candidates = Some(candidates);
+    out
+}

@@ -191,3 +191,35 @@ pub enum CursorOffset<'a> {
     /// At a byte offset
     Offset(usize),
 }
+
+/// Complete like [`complete_case`] and return the packed cursor and completion
+pub fn complete_packed(
+    catalog_input: Option<&str>,
+    editor_input: &str,
+    offset: usize,
+    limit: usize,
+    upper_case: bool,
+) -> Result<(dashql_buffers::cursor::ScriptCursorT, dashql_buffers::completion::CompletionT), String> {
+    let mut catalog = Catalog::new();
+    if let Some(input) = catalog_input {
+        let entry_id = catalog.allocate_entry_id();
+        let parsed = Arc::new(parse(Arc::new(scan(input, 0, entry_id))));
+        let analyzed = dashql_core::analyzer::analyze(parsed, &catalog).map_err(|e| e.message)?;
+        let rank = analyzed.catalog_entry_id();
+        catalog.load_script(Arc::new(analyzed), rank).map_err(|e| e.message)?;
+    }
+    let entry_id = catalog.allocate_entry_id();
+    let scanned = Arc::new(scan(editor_input, 0, entry_id));
+    let parsed = Arc::new(parse(scanned.clone()));
+    let analyzed = Arc::new(dashql_core::analyzer::analyze(parsed.clone(), &catalog).map_err(|e| e.message)?);
+    let view = ScriptView {
+        scanned: Some(&scanned),
+        parsed: Some(&parsed),
+        analyzed: Some(&analyzed),
+        catalog: &catalog,
+    };
+    let cursor = ScriptCursor::place(view, offset);
+    let packed_cursor = dashql_core::pack::pack_cursor(&cursor);
+    let completion = Completion::compute(&cursor, limit);
+    Ok((packed_cursor, dashql_core::pack::pack_completion(&completion, upper_case)))
+}
