@@ -453,3 +453,20 @@ rust_test(
         ":dashql_snapshots",
     ],
 )
+
+# The script compiler must produce exactly the ScriptCompilationResult of the C++ core.
+rust_test(
+    name = "compiler_differential_test",
+    size = "medium",
+    srcs = ["dashql-oracle/tests/compiler_differential.rs"],
+    data = ["//snapshots:files"],
+    edition = "2021",
+    use_libtest_harness = False,
+    deps = [
+        ":dashql_core",
+        ":dashql_oracle",
+        ":dashql_snapshots",
+        "//proto/fb:dashql_buffers_rs",
+        "@core_crates//:flatbuffers",
+    ],
+)

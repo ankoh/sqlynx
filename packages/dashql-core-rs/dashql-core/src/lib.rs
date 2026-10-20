@@ -4,6 +4,7 @@
 
 pub mod analyzer;
 pub mod catalog;
+pub mod compiler;
 pub mod completion;
 pub mod cursor;
 pub mod error;

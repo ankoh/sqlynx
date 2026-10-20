@@ -122,8 +122,12 @@ impl Script {
         if self.scanned.as_ref().is_none_or(|s| s.text_version != self.text_version) {
             self.scan();
         }
-        let scanned = self.scanned.clone().unwrap();
-        self.parsed = Some(Arc::new(parse(scanned)));
+        // The parser registers keyword names and the replacements of obfuscated literals in a copy
+        // of the scanned script (in place if it is not shared), which becomes the scanned script
+        let scanned = self.scanned.take().unwrap();
+        let parsed = parse(scanned);
+        self.scanned = Some(parsed.scanned.clone());
+        self.parsed = Some(Arc::new(parsed));
     }
 
     /// Scan and parse if the text changed
