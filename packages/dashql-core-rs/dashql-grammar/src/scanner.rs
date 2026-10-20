@@ -737,26 +737,27 @@ impl<'a> Lexer<'a> {
         p + 2 + self.run(p + 2, |c| !is_newline(c))
     }
 
-    /// The positions reachable from `from` through `{whitespace}*`, as a bitmap starting at `from`
+    /// The positions reachable from `from` through `{whitespace}*`, as a bitmap starting at `from` that ends at the
+    /// last reachable position
     fn whitespace_reach(&self, from: usize) -> Vec<bool> {
-        let mut reach = vec![false; self.text.len() + 1 - from];
-        reach[0] = true;
+        let mut reach = vec![true];
         let mut comment_covered = 0;
-        for i in from..=self.text.len() {
-            if !reach[i - from] {
-                continue;
-            }
-            match self.at(i) {
-                Some(c) if is_space(c) => reach[i + 1 - from] = true,
-                Some(b'-') if self.is(i + 1, b'-') => {
-                    let end = self.comment_end(i);
-                    for j in (i + 2).max(comment_covered)..=end {
-                        reach[j - from] = true;
+        let mut i = from;
+        while i - from < reach.len() {
+            if reach[i - from] {
+                match self.at(i) {
+                    Some(c) if is_space(c) => mark(&mut reach, i + 1 - from),
+                    Some(b'-') if self.is(i + 1, b'-') => {
+                        let end = self.comment_end(i);
+                        for j in (i + 2).max(comment_covered)..=end {
+                            mark(&mut reach, j - from);
+                        }
+                        comment_covered = comment_covered.max(end + 1);
                     }
-                    comment_covered = comment_covered.max(end + 1);
+                    _ => {}
                 }
-                _ => {}
             }
+            i += 1;
         }
         reach
     }
@@ -780,53 +781,58 @@ impl<'a> Lexer<'a> {
     /// `{whitespace_with_newline}` = `{horiz_whitespace}*{newline}{special_whitespace}*`
     fn quote_continue(&self, p: usize) -> Option<usize> {
         let from = p + 1;
-        let n = self.text.len() + 1 - from;
         // {horiz_whitespace}* = ({horiz_space}|{comment})*
-        let mut horiz = vec![false; n];
-        horiz[0] = true;
-        for i in from..=self.text.len() {
-            if !horiz[i - from] {
-                continue;
-            }
-            match self.at(i) {
-                Some(c) if is_horiz_space(c) => horiz[i + 1 - from] = true,
-                Some(b'-') if self.is(i + 1, b'-') => {
-                    for j in i + 2..=self.comment_end(i) {
-                        horiz[j - from] = true;
+        let mut horiz = vec![true];
+        let mut i = from;
+        while i - from < horiz.len() {
+            if horiz[i - from] {
+                match self.at(i) {
+                    Some(c) if is_horiz_space(c) => mark(&mut horiz, i + 1 - from),
+                    Some(b'-') if self.is(i + 1, b'-') => {
+                        for j in i + 2..=self.comment_end(i) {
+                            mark(&mut horiz, j - from);
+                        }
                     }
+                    _ => {}
                 }
-                _ => {}
             }
+            i += 1;
         }
         // {newline}
-        let mut special = vec![false; n];
-        for i in from..self.text.len() {
-            if horiz[i - from] && is_newline(self.text[i]) {
-                special[i + 1 - from] = true;
+        let mut special = Vec::new();
+        for offset in (0..horiz.len()).filter(|&offset| horiz[offset]) {
+            if self.at(from + offset).is_some_and(is_newline) {
+                mark(&mut special, offset + 1);
             }
         }
         // {special_whitespace}* = ({space}+|{comment}{newline})*
-        for i in from..=self.text.len() {
-            if !special[i - from] {
-                continue;
-            }
-            match self.at(i) {
-                Some(c) if is_space(c) => special[i + 1 - from] = true,
-                Some(b'-') if self.is(i + 1, b'-') => {
-                    let end = self.comment_end(i);
-                    if end < self.text.len() {
-                        special[end + 1 - from] = true;
+        let mut i = from;
+        while i - from < special.len() {
+            if special[i - from] {
+                match self.at(i) {
+                    Some(c) if is_space(c) => mark(&mut special, i + 1 - from),
+                    Some(b'-') if self.is(i + 1, b'-') => {
+                        let end = self.comment_end(i);
+                        if end < self.text.len() {
+                            mark(&mut special, end + 1 - from);
+                        }
                     }
+                    _ => {}
                 }
-                _ => {}
             }
+            i += 1;
         }
         // {quote}
-        (from..self.text.len())
-            .rev()
-            .find(|&i| special[i - from] && self.text[i] == b'\'')
-            .map(|i| i + 1 - p)
+        (0..special.len()).rev().find(|&offset| special[offset] && self.is(from + offset, b'\'')).map(|offset| offset + 2)
     }
+}
+
+/// Mark a position of a reachability bitmap, growing the bitmap up to it
+fn mark(reach: &mut Vec<bool>, position: usize) {
+    if position >= reach.len() {
+        reach.resize(position + 1, false);
+    }
+    reach[position] = true;
 }
 
 /// The C++ `AddObfuscatedLiteral`: derive an executable literal from the hash of a marker.

@@ -453,27 +453,26 @@ schema. Milliseconds per iteration:
 
 | CTEs | Bytes | scan Rust | scan C++ | parse Rust | parse C++ | analyze Rust | analyze C++ |
 |---|---|---|---|---|---|---|---|
-| 1 | 587 | 0.003 | 0.003 | 0.011 | 0.009 | 0.010 | 0.032 |
-| 5 | 2.9k | 0.027 | 0.015 | 0.048 | 0.040 | 0.044 | 0.275 |
-| 10 | 5.8k | 0.087 | 0.029 | 0.093 | 0.079 | 0.090 | 0.812 |
-| 20 | 11.5k | 0.336 | 0.058 | 0.184 | 0.156 | 0.175 | 2.69 |
-| 30 | 17.3k | 0.718 | 0.087 | 0.273 | 0.237 | 0.271 | 5.62 |
-| 40 | 23.0k | 1.27 | 0.115 | 0.368 | 0.311 | 0.351 | 9.64 |
-| 50 | 28.8k | 1.97 | 0.147 | 0.458 | 0.392 | 0.445 | 14.7 |
-| 100 | 57.6k | 7.77 | 0.299 | 0.901 | 0.800 | 0.877 | 56.6 |
-| 150 | 86.5k | 17.2 | 0.437 | 1.36 | 1.18 | 1.28 | 125 |
-| 200 | 115k | 29.9 | 0.591 | 1.81 | 1.57 | 1.71 | 232 |
-| 250 | 144k | 46.7 | 0.728 | 2.25 | 1.96 | 2.14 | 356 |
-| 300 | 173k | 66.0 | 0.874 | 2.71 | 2.34 | 2.57 | 509 |
-| 500 | 288k | 180 | 1.46 | 4.58 | 3.90 | 4.28 | 1388 |
-| 1000 | 577k | 692 | 2.90 | 9.08 | 7.84 | 8.55 | 5452 |
+| 1 | 587 | 0.005 | 0.003 | 0.011 | 0.009 | 0.010 | 0.032 |
+| 5 | 2.9k | 0.021 | 0.015 | 0.048 | 0.040 | 0.044 | 0.275 |
+| 10 | 5.8k | 0.040 | 0.029 | 0.093 | 0.079 | 0.090 | 0.812 |
+| 20 | 11.5k | 0.084 | 0.058 | 0.184 | 0.156 | 0.175 | 2.69 |
+| 30 | 17.3k | 0.116 | 0.087 | 0.273 | 0.237 | 0.271 | 5.62 |
+| 40 | 23.0k | 0.155 | 0.115 | 0.368 | 0.311 | 0.351 | 9.64 |
+| 50 | 28.8k | 0.196 | 0.147 | 0.458 | 0.392 | 0.445 | 14.7 |
+| 100 | 57.6k | 0.384 | 0.299 | 0.901 | 0.800 | 0.877 | 56.6 |
+| 150 | 86.5k | 0.575 | 0.437 | 1.36 | 1.18 | 1.28 | 125 |
+| 200 | 115k | 0.780 | 0.591 | 1.81 | 1.57 | 1.71 | 232 |
+| 250 | 144k | 0.977 | 0.728 | 2.25 | 1.96 | 2.14 | 356 |
+| 300 | 173k | 1.15 | 0.874 | 2.71 | 2.34 | 2.57 | 509 |
+| 500 | 288k | 1.90 | 1.46 | 4.58 | 3.90 | 4.28 | 1388 |
+| 1000 | 577k | 3.80 | 2.90 | 9.08 | 7.84 | 8.55 | 5452 |
 
 - The C++ analysis grows quadratically with the number of CTEs. The Rust analysis stays linear.
-- **Open: the Rust scanner is quadratic in the number of string literals.** `whitespace_reach` and
-  `quote_continue` in `dashql-grammar/src/scanner.rs` allocate and walk bitmaps over the whole rest of
-  the input at every closing quote (`{quotestop}`, `{quotefail}`, `{quotecontinue}`). The two literals
-  per CTE make a 577 KB script take 692 ms to scan instead of 3 ms. Bounding the walks at the furthest
-  reachable position would make them linear again.
+- The Rust scanner was quadratic in the number of string literals: at every closing quote,
+  `whitespace_reach` and `quote_continue` in `dashql-grammar/src/scanner.rs` walked bitmaps over the
+  whole rest of the input (692 ms for 1000 CTEs). The bitmaps now end at the last reachable position,
+  so scanning is linear again (scan Rust column above, measured after the fix).
 
 ## Snapshotter
 
