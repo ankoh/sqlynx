@@ -4,6 +4,9 @@
 //! turns every case into a libtest-mimic trial, and compares produced YAML structurally against
 //! the `expected` node of a case.
 
+pub mod corpus;
+pub mod encode;
+
 use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};

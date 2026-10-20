@@ -55,6 +55,16 @@ void dashql_oracle_free(DashQLOracleResult result);
 DashQLOracleResult dashql_oracle_scan(const char* text, size_t length);
 /// Scan and parse a script, return the `expected` YAML of a parser snapshot
 DashQLOracleResult dashql_oracle_parse(const char* text, size_t length);
+/// Scan and parse a script and dump the raw parser output, one record per line:
+///   N <id> <offset> <length> <node type> <attribute key> <parent> <children begin or value> <children count>
+///   S <statement type> <root> <nodes begin> <node count>
+///   E <offset> <length> <message> <hint>                    errors, located by symbol indexes
+///   V <begin> <end>                                         vis spec spans
+///   F <feature flags>
+///   R <id> <offset> <length> <occurrences> <text>           registered names after parsing
+///   O <offset> <length> <replacement>                       obfuscated literals after parsing
+/// Strings are written as <byte length>:<bytes>.
+DashQLOracleResult dashql_oracle_parse_raw(const char* text, size_t length);
 }
 
 namespace {
@@ -161,5 +171,48 @@ DashQLOracleResult dashql_oracle_parse(const char* text, size_t length) {
         dashql::testing::ParserSnapshotTest::EncodeScript(out_root, *scanned, *parsed, input);
         // The emitter recurses once per container, deep ASTs (e.g. tpcds) need a raised limit.
         return c4::yml::emitrs_yaml<std::string>(out_tree.rootref(), c4::yml::EmitOptions().max_depth(256));
+    });
+}
+
+DashQLOracleResult dashql_oracle_parse_raw(const char* text, size_t length) {
+    return Guard([&]() {
+        rope::Rope input{1024, std::string_view{text, length}};
+        auto scanned = parser::Scanner::Scan(input, 0, 2);
+        auto parsed = parser::Parser::Parse(scanned);
+        std::stringstream out;
+        auto str = [&](std::string_view s) { out << s.size() << ":" << s; };
+        for (size_t i = 0; i < parsed->nodes.size(); ++i) {
+            auto& n = parsed->nodes[i];
+            out << "N " << i << " " << n.symbol_span().offset() << " " << n.symbol_span().length() << " "
+                << static_cast<int>(n.node_type()) << " " << static_cast<int>(n.attribute_key()) << " " << n.parent()
+                << " " << n.children_begin_or_value() << " " << n.children_count() << "\n";
+        }
+        for (auto& stmt : parsed->statements) {
+            out << "S " << static_cast<int>(stmt.type) << " " << stmt.root << " " << stmt.nodes_begin << " "
+                << stmt.node_count << "\n";
+        }
+        for (auto& error : parsed->errors) {
+            out << "E " << error.location.offset() << " " << error.location.length() << " ";
+            str(error.message);
+            out << " ";
+            str(error.hint);
+            out << "\n";
+        }
+        for (auto& [begin, end] : parsed->vis_spec_spans) {
+            out << "V " << begin << " " << end << "\n";
+        }
+        out << "F " << parsed->feature_flags << "\n";
+        scanned->name_registry.names.ForEach([&](size_t, const RegisteredName& name) {
+            out << "R " << name.name_id << " " << name.location.offset() << " " << name.location.length() << " "
+                << name.occurrences << " ";
+            str(name.text);
+            out << "\n";
+        });
+        for (auto& literal : scanned->obfuscated_literals) {
+            out << "O " << literal.location.offset() << " " << literal.location.length() << " ";
+            str(literal.replacement);
+            out << "\n";
+        }
+        return out.str();
     });
 }

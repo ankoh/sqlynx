@@ -11,7 +11,8 @@ use dashql_grammar::comment_blocks::group_comments;
 use dashql_grammar::keywords::Keyword;
 use dashql_grammar::scanner::{scan, ScannedScript, SymbolValue};
 use dashql_grammar::symbol_kind;
-use dashql_snapshots::{load_category, run, Arguments, Failed, Trial, Yaml};
+use dashql_snapshots::corpus::{fragments, prefixes, snapshot_inputs, Rng, CATEGORIES};
+use dashql_snapshots::{run, Arguments, Failed, Trial};
 use std::fmt::Write as _;
 
 /// Dump a scanned script in the format of `dashql_oracle_scan` (tools/oracle_ffi.cc).
@@ -102,47 +103,6 @@ fn compare(input: &str) -> Result<(), String> {
     ))
 }
 
-/// Collect all `input` strings of a YAML tree.
-fn collect_inputs(node: &Yaml, out: &mut Vec<String>) {
-    match node {
-        Yaml::Hash(hash) => {
-            for (key, value) in hash {
-                if key.as_str() == Some("input") {
-                    if let Some(s) = value.as_str() {
-                        out.push(s.to_string());
-                    }
-                }
-                collect_inputs(value, out);
-            }
-        }
-        Yaml::Array(items) => items.iter().for_each(|item| collect_inputs(item, out)),
-        _ => {}
-    }
-}
-
-/// Prefixes of an input: all of them for short inputs, a sample for long ones.
-fn prefixes(input: &str) -> Vec<&str> {
-    let boundaries: Vec<usize> = (0..input.len()).filter(|&i| input.is_char_boundary(i)).collect();
-    let step = (boundaries.len() / 64).max(1);
-    boundaries.iter().step_by(step).map(|&i| &input[..i]).collect()
-}
-
-/// A xorshift64* generator, deterministic across runs.
-struct Rng(u64);
-
-impl Rng {
-    fn next(&mut self) -> u64 {
-        self.0 ^= self.0 >> 12;
-        self.0 ^= self.0 << 25;
-        self.0 ^= self.0 >> 27;
-        self.0.wrapping_mul(0x2545_f491_4f6c_dd1d)
-    }
-
-    fn below(&mut self, n: usize) -> usize {
-        (self.next() % n as u64) as usize
-    }
-}
-
 /// Fragments that exercise the scanner rules and their interactions.
 const FRAGMENTS: &[&str] = &[
     "'", "''", "\"", "\"\"", "`", "``", "-", "--", "---", "/", "*", "/*", "*/", "**/", ".", "..", ". ", ":", "::",
@@ -156,33 +116,18 @@ const FRAGMENTS: &[&str] = &[
     "description", " * ", "/**", "-- x\n",
 ];
 
-fn fuzz_input(rng: &mut Rng) -> String {
-    let n = rng.below(24);
-    (0..n).map(|_| FRAGMENTS[rng.below(FRAGMENTS.len())]).collect()
-}
-
 fn main() {
     let args = Arguments::from_args();
     let mut trials = Vec::new();
 
-    for category in ["analyzer", "completion", "diff", "formatter", "parser", "planner", "visualize"] {
-        let cases = load_category(category).unwrap_or_else(|e| panic!("cannot load {category} snapshots: {e}"));
-        let mut by_file: Vec<(String, Vec<String>)> = Vec::new();
-        for case in cases {
-            let mut inputs = Vec::new();
-            collect_inputs(&case.node, &mut inputs);
-            match by_file.last_mut() {
-                Some((file, all)) if *file == case.file => all.extend(inputs),
-                _ => by_file.push((case.file.clone(), inputs)),
-            }
-        }
-        for (file, inputs) in by_file {
+    for &category in CATEGORIES {
+        for (file, inputs) in snapshot_inputs(category) {
             trials.push(Trial::test(format!("{category}::{file}"), move || {
                 for input in &inputs {
                     compare(input)?;
                 }
                 for input in &inputs {
-                    for prefix in prefixes(input) {
+                    for prefix in prefixes(input, 64) {
                         compare(prefix)?;
                     }
                 }
@@ -193,9 +138,9 @@ fn main() {
 
     for batch in 0..32u64 {
         trials.push(Trial::test(format!("fuzz::batch_{batch:02}"), move || {
-            let mut rng = Rng(0x9e37_79b9_7f4a_7c15 ^ (batch + 1).wrapping_mul(0x1000_0000_01b3));
+            let mut rng = Rng::new(batch + 1);
             for _ in 0..1000 {
-                compare(&fuzz_input(&mut rng))?;
+                compare(&fragments(&mut rng, FRAGMENTS, 24))?;
             }
             Ok::<(), Failed>(())
         }));

@@ -1,9 +1,8 @@
 //! The Rust tables must be the automaton of the C++ parser.
 //!
-//! Reads the tables out of the bison lalr1.cc output (`//grammar:parser_generated`) and
-//! compares them entry by entry with the tables emitted through the Rust skeleton. Today both
-//! come from the same `dashql.y`, so this guards the skeleton. Once the grammar has a Rust
-//! rule set, the same comparison guards against the two rule sets drifting apart.
+//! Reads the tables out of the bison lalr1.cc output of the C++ rule set (`//grammar:parser_generated`)
+//! and compares them entry by entry with the tables of the Rust rule set (`grammar/rules_rs`). Both rule
+//! sets must describe the same automaton; a grammar change has to be made in both.
 
 use dashql_grammar::tables;
 use std::fs;
@@ -106,7 +105,8 @@ fn constants_match() {
 #[test]
 fn tables_match() {
     let cxx = CxxParser::load();
-    let rust: [(&str, Vec<i64>); 10] = [
+    // yyrline_ (the source line of each rule, for debug output) differs between the rule sets.
+    let rust: [(&str, Vec<i64>); 9] = [
         ("yypact_", widen(tables::YYPACT)),
         ("yydefact_", widen(tables::YYDEFACT)),
         ("yypgoto_", widen(tables::YYPGOTO)),
@@ -116,7 +116,6 @@ fn tables_match() {
         ("yystos_", widen(tables::YYSTOS)),
         ("yyr1_", widen(tables::YYR1)),
         ("yyr2_", widen(tables::YYR2)),
-        ("yyrline_", widen(tables::YYRLINE)),
     ];
     for (name, table) in rust {
         let expected = cxx.int_table(name);

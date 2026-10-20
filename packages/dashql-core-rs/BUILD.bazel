@@ -125,6 +125,8 @@ rust_library(
     crate_root = "dashql-snapshots/src/lib.rs",
     edition = "2021",
     deps = [
+        ":dashql_grammar",
+        "//proto/fb:dashql_buffers_rs",
         "@core_crates//:libtest-mimic",
         "@core_crates//:yaml-rust2",
     ],
@@ -227,6 +229,36 @@ rust_test(
     deps = [
         ":dashql_grammar",
         ":dashql_oracle",
+        ":dashql_snapshots",
+    ],
+)
+
+# The Rust parser must produce exactly the output of the C++ parser: all snapshot inputs, their
+# prefixes, random sentences of the grammar, and deterministic fuzz inputs.
+rust_test(
+    name = "parser_differential_test",
+    size = "medium",
+    srcs = ["dashql-oracle/tests/parser_differential.rs"],
+    data = ["//snapshots:files"],
+    edition = "2021",
+    use_libtest_harness = False,
+    deps = [
+        ":dashql_grammar",
+        ":dashql_oracle",
+        ":dashql_snapshots",
+    ],
+)
+
+# The parser snapshots, produced by the Rust parser.
+rust_test(
+    name = "parser_snapshot_test",
+    size = "small",
+    srcs = ["dashql-snapshots/tests/parser_snapshots.rs"],
+    data = ["//snapshots/parser:files"],
+    edition = "2021",
+    use_libtest_harness = False,
+    deps = [
+        ":dashql_grammar",
         ":dashql_snapshots",
     ],
 )

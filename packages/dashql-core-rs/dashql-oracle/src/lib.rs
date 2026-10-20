@@ -17,6 +17,7 @@ extern "C" {
     fn dashql_oracle_free(result: DashQLOracleResult);
     fn dashql_oracle_scan(text: *const c_char, length: usize) -> DashQLOracleResult;
     fn dashql_oracle_parse(text: *const c_char, length: usize) -> DashQLOracleResult;
+    fn dashql_oracle_parse_raw(text: *const c_char, length: usize) -> DashQLOracleResult;
 }
 
 fn call(f: unsafe extern "C" fn(*const c_char, usize) -> DashQLOracleResult, text: &str) -> Result<String, String> {
@@ -50,6 +51,14 @@ pub fn scan(text: &str) -> Result<String, String> {
 /// Returns the YAML the parser snapshot tests expect under `expected`.
 pub fn parse(text: &str) -> Result<String, String> {
     call(dashql_oracle_parse, text)
+}
+
+/// Scan and parse a script with the C++ parser.
+///
+/// Returns the raw parser output, one record per line (see `dashql_oracle_parse_raw` in
+/// `packages/dashql-core/tools/oracle_ffi.cc`).
+pub fn parse_raw(text: &str) -> Result<String, String> {
+    call(dashql_oracle_parse_raw, text)
 }
 
 #[cfg(test)]

@@ -67,7 +67,7 @@ CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
 |---|---|---|---|
 | 0 | Spikes and scaffolding | Skeleton emits the C++ automaton; harness and oracle reproduce the snapshots | **done** |
 | 1 | Scanner, keywords, names, comment blocks | Token-stream differential at 0 diffs; scanner and keyword tests ported | **done** |
-| 2 | Parser: Rust rule set, ParseContext, driver, LAC, recovery | Table parity between both rule sets; 506 parser snapshots; AST differential at 0 diffs | |
+| 2 | Parser: Rust rule set, ParseContext, driver, LAC, recovery | Table parity between both rule sets; 506 parser snapshots; AST differential at 0 diffs | **done** |
 | 3 | Formatter, script_diff | 422 formatter and 13 diff snapshots; idempotency; Hyper validation | |
 | 4 | Catalog, descriptor, AnalyzedScript, 4 analyzer passes | 101 analyzer snapshots; `ComputeSignature` equals C++ | |
 | 5 | Cursor and completion | 161 completion snapshots; differential at every prefix and cursor | |
@@ -140,6 +140,39 @@ CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
 **Comment blocks**
 - `dashql_grammar::comment_blocks` ports `GroupComments`.
 - Metadata JSON is validated with serde_json instead of rapidjson.
+
+## Phase 2 results
+
+**Rust rule set**
+- `//grammar:rust_rule_files` translates the actions of `grammar/rules/*.y` into Rust in the build,
+  using `grammar/rust/translate_actions.py`. All 1238 actions translate, and the rules themselves are
+  copied verbatim.
+- `grammar/rules/*.y` therefore stay the single source of the grammar until the C++ core is removed.
+  At that point the translated rules get checked in and the translator is deleted.
+- `assemble_grammar.py --lang rust` derives the Rust prologue (tokens, types) from the C++ one.
+- `:dashql_grammar_table_parity_test` asserts that both rule sets describe the identical automaton.
+  Only `yyrline` (debug line numbers) differs.
+
+**Runtime** (`dashql_grammar::parser`)
+- `ParseContext` is ported with interior mutability, so translated actions nest calls in the same
+  order as the C++ actions. Semantic values are `Copy`, with lists and n-ary expressions in arenas.
+- The driver ports the lalr1.cc loop:
+  - full LAC
+  - verbose errors and the SCONST hint
+  - `error` token recovery, `YYERROR` and `yyclearin`
+  - the custom `YYLLOC_DEFAULT`
+- `feed` and `lac_check` are exposed for the completion probes.
+
+**Gates**
+- `:parser_snapshot_test`: all 506 parser snapshots pass, produced by the Rust parser and a port of
+  the C++ encoder.
+- `:parser_differential_test`: raw output equals the C++ parser. The comparison covers every node
+  field, statements, errors with hints, vis spec spans, feature flags, names, and obfuscated
+  literals. The inputs are:
+  - all snapshot inputs and their prefixes
+  - 3200 random sentences of the grammar (random walks through the LR automaton over acceptable
+    tokens, about 85 tokens each)
+  - 8000 fuzz inputs
 
 **Open items**
 - rustfmt is not wired into Bazel. `@rules_rust//tools/upstream_wrapper:rustfmt` crashes Bazel during

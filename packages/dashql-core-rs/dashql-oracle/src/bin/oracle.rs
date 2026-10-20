@@ -8,7 +8,7 @@ use std::io::Read;
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     if args.len() != 3 {
-        eprintln!("usage: oracle <scan|parse> <text|->");
+        eprintln!("usage: oracle <scan|parse|parse-raw> <text|->");
         std::process::exit(2);
     }
     let text = if args[2] == "-" {
@@ -21,6 +21,7 @@ fn main() {
     let result = match args[1].as_str() {
         "scan" => dashql_oracle::scan(&text),
         "parse" => dashql_oracle::parse(&text),
+        "parse-raw" => dashql_oracle::parse_raw(&text),
         other => {
             eprintln!("unknown command {other}");
             std::process::exit(2);
