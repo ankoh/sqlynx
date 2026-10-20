@@ -1,8 +1,9 @@
 //! A port of `AnalyzerSnapshotTest::EncodeScript` (`src/testing/analyzer_snapshot_test.cc`).
 
 use super::{encode_location_text, Map};
+use crate::ryml::Node;
 use dashql_buffers::algebra::LiteralType;
-use dashql_buffers::parser::{Node, SymbolSpan};
+use dashql_buffers::parser::{Node as AstNode, SymbolSpan};
 use dashql_core::analyzer::*;
 use dashql_core::catalog::{QualifiedCatalogObjectId, TableDeclaration};
 use dashql_grammar::parser::context::resolve_text_span;
@@ -20,7 +21,7 @@ impl Encoder<'_> {
         resolve_text_span(&scanned.text, &scanned.symbols, span)
     }
 
-    fn node(&self, node_id: u32) -> &Node {
+    fn node(&self, node_id: u32) -> &AstNode {
         &self.script.parsed.nodes[node_id as usize]
     }
 
@@ -36,7 +37,7 @@ fn table_catalog_id(schema: QualifiedCatalogObjectId, table: QualifiedCatalogObj
     format!("{db}.{schema}.{}", table.unpack_table_id().pack())
 }
 
-fn encode_tables(e: &Encoder, tables: &[TableDeclaration]) -> Yaml {
+fn encode_tables(e: &Encoder, tables: &[TableDeclaration]) -> Node {
     let items = tables
         .iter()
         .map(|table| {
@@ -57,26 +58,27 @@ fn encode_tables(e: &Encoder, tables: &[TableDeclaration]) -> Yaml {
                     if let Some(node_id) = column.ast_node_id {
                         e.location(&mut c, node_id, "text");
                     }
-                    c.into_yaml()
+                    c.into_node()
                 })
                 .collect();
-            m.insert("columns", Yaml::Array(columns));
-            m.into_yaml()
+            m.insert("columns", Node::seq(columns));
+            m.into_node()
         })
         .collect();
-    Yaml::Array(items)
+    Node::seq(items)
 }
 
-fn boolean(value: bool) -> Yaml {
-    Yaml::Boolean(value)
+fn boolean(value: bool) -> Node {
+    Node::boolean(value)
 }
 
 /// A double as c4 writes it, read back through YAML inference
-fn real(value: f64) -> Yaml {
+fn real(value: f64) -> Node {
     super::plain(&format_double(value))
 }
 
-/// Format a double like the `%g`-style shortest output of rapidyaml
+/// Format a double like rapidyaml (`std::to_chars` with `chars_format::general`): the shortest digits that
+/// round-trip, in scientific notation if the decimal exponent is below -4 or at least 6, like `%g`
 pub fn format_double(value: f64) -> String {
     if value.is_nan() {
         return ".nan".into();
@@ -84,15 +86,20 @@ pub fn format_double(value: f64) -> String {
     if value.is_infinite() {
         return if value > 0.0 { ".inf".into() } else { "-.inf".into() };
     }
-    format!("{value}")
+    let scientific = format!("{value:e}");
+    let (mantissa, exponent) = scientific.split_once('e').unwrap();
+    let exponent: i32 = exponent.parse().unwrap();
+    if value != 0.0 && !(-4..6).contains(&exponent) {
+        let sign = if exponent < 0 { '-' } else { '+' };
+        format!("{mantissa}e{sign}{:02}", exponent.abs())
+    } else {
+        format!("{value}")
+    }
 }
 
 /// Encode an analyzed script (`AnalyzerSnapshotTest::EncodeScript`)
-pub fn encode_script(script: &AnalyzedScript, is_main: bool) -> Yaml {
-    let e = Encoder {
-        script,
-        text: &script.parsed.scanned.text,
-    };
+pub fn encode_script(script: &AnalyzedScript, is_main: bool) -> Node {
+    let e = Encoder { script, text: &script.parsed.scanned.text };
     let entry_id = script.catalog_entry_id();
     let mut out = Map::new();
     out.int("catalog-id", entry_id as i64);
@@ -119,10 +126,10 @@ pub fn encode_script(script: &AnalyzedScript, is_main: bool) -> Yaml {
                 None => error.text_span.unwrap_or_default(),
             };
             encode_location_text(&mut m, e.text, span.offset, span.length, "text");
-            m.into_yaml()
+            m.into_node()
         })
         .collect();
-    out.insert("errors", Yaml::Array(errors));
+    out.insert("errors", Node::seq(errors));
 
     // Table references
     if !script.table_references.is_empty() {
@@ -140,7 +147,10 @@ pub fn encode_script(script: &AnalyzedScript, is_main: bool) -> Yaml {
                             let table_id = resolved.catalog_table_id.unpack_table_id();
                             let internal = is_main && table_id.origin == entry_id;
                             m.plain("type", if internal { "name/internal" } else { "name/catalog" });
-                            m.quoted("catalog-id", &table_catalog_id(resolved.catalog_schema_id, resolved.catalog_table_id));
+                            m.quoted(
+                                "catalog-id",
+                                &table_catalog_id(resolved.catalog_schema_id, resolved.catalog_table_id),
+                            );
                         }
                     }
                 }
@@ -151,10 +161,10 @@ pub fn encode_script(script: &AnalyzedScript, is_main: bool) -> Yaml {
                     m.plain("role", "write");
                 }
                 e.location(&mut m, table_ref.ast_node_id, "text");
-                m.into_yaml()
+                m.into_node()
             })
             .collect();
-        out.insert("table-refs", Yaml::Array(items));
+        out.insert("table-refs", Node::seq(items));
     }
 
     // INSERT statements
@@ -186,15 +196,15 @@ pub fn encode_script(script: &AnalyzedScript, is_main: bool) -> Yaml {
                             let mut c = Map::new();
                             c.plain("name", &column.column_name.text);
                             c.insert("resolved", boolean(column.resolved.is_some()));
-                            c.into_yaml()
+                            c.into_node()
                         })
                         .collect();
-                    m.insert("columns", Yaml::Array(columns));
+                    m.insert("columns", Node::seq(columns));
                 }
-                m.into_yaml()
+                m.into_node()
             })
             .collect();
-        out.insert("inserts", Yaml::Array(items));
+        out.insert("inserts", Node::seq(items));
     }
 
     // Expressions
@@ -271,10 +281,10 @@ pub fn encode_script(script: &AnalyzedScript, is_main: bool) -> Yaml {
                     m.int("statement-id", statement as i64);
                 }
                 e.location(&mut m, expr.ast_node_id, "text");
-                m.into_yaml()
+                m.into_node()
             })
             .collect();
-        out.insert("expressions", Yaml::Array(items));
+        out.insert("expressions", Node::seq(items));
     }
 
     // Constant expressions
@@ -287,16 +297,16 @@ pub fn encode_script(script: &AnalyzedScript, is_main: bool) -> Yaml {
                 let mut m = Map::new();
                 m.int("expression", root.expression_id as i64);
                 e.location(&mut m, root.ast_node_id, "text");
-                m.into_yaml()
+                m.into_node()
             })
             .collect();
-        out.insert("constants", Yaml::Array(items));
+        out.insert("constants", Node::seq(items));
     }
 
     // Visualization specs
     if !script.visualization_specs.is_empty() {
         let items = script.visualization_specs.iter().map(|spec| encode_visualization(&e, spec)).collect();
-        out.insert("visualizations", Yaml::Array(items));
+        out.insert("visualizations", Node::seq(items));
     }
 
     // Inferred table schemas
@@ -323,21 +333,21 @@ pub fn encode_script(script: &AnalyzedScript, is_main: bool) -> Yaml {
                         if !column.candidate_table_names.is_empty() {
                             let candidates =
                                 column.candidate_table_names.iter().map(|n| super::plain(&n.debug_string())).collect();
-                            c.insert("candidates", Yaml::Array(candidates));
+                            c.insert("candidates", Node::seq(candidates));
                         }
-                        c.into_yaml()
+                        c.into_node()
                     })
                     .collect();
-                m.insert("columns", Yaml::Array(columns));
-                m.into_yaml()
+                m.insert("columns", Node::seq(columns));
+                m.into_node()
             })
             .collect();
-        out.insert("inferred-tables", Yaml::Array(items));
+        out.insert("inferred-tables", Node::seq(items));
     }
-    out.into_yaml()
+    out.into_node()
 }
 
-fn encode_visualization(e: &Encoder, spec: &VisualizationSpec) -> Yaml {
+fn encode_visualization(e: &Encoder, spec: &VisualizationSpec) -> Node {
     let mut m = Map::new();
     if let Some(statement) = spec.ast_statement_id {
         m.int("statement-id", statement as i64);
@@ -357,10 +367,10 @@ fn encode_visualization(e: &Encoder, spec: &VisualizationSpec) -> Yaml {
     }
     dashboard.int("width", spec.dashboard.width as i64);
     dashboard.int("height", spec.dashboard.height as i64);
-    m.insert("dashboard", dashboard.into_yaml());
+    m.insert("dashboard", dashboard.into_node());
     // The structured spec is renderer-specific, only vegalite is understood today
     if spec.renderer.as_deref() != Some("vegalite") {
-        return m.into_yaml();
+        return m.into_node();
     }
     let mut vl = Map::new();
     if let Some(mark) = spec.mark_type {
@@ -382,14 +392,14 @@ fn encode_visualization(e: &Encoder, spec: &VisualizationSpec) -> Yaml {
         opt("scale-node-id", resolve.scale_node_id);
         opt("axis-node-id", resolve.axis_node_id);
         opt("legend-node-id", resolve.legend_node_id);
-        vl.insert("resolve", r.into_yaml());
+        vl.insert("resolve", r.into_node());
     }
     if !spec.encoding_channels.is_empty() {
         let channels = spec.encoding_channels.iter().map(encode_channel).collect();
-        vl.insert("encodings", Yaml::Array(channels));
+        vl.insert("encodings", Node::seq(channels));
     }
-    m.insert("vegalite", vl.into_yaml());
-    m.into_yaml()
+    m.insert("vegalite", vl.into_node());
+    m.into_node()
 }
 
 /// A map builder with helpers for optional values
@@ -418,7 +428,7 @@ impl Opt {
     }
 }
 
-fn encode_channel(channel: &VisEncodingChannel) -> Yaml {
+fn encode_channel(channel: &VisEncodingChannel) -> Node {
     let mut m = Opt(Map::new());
     m.0.plain("channel", channel.channel_key.variant_name().unwrap_or(""));
     m.int("field-expr", channel.field_expression_id);
@@ -438,7 +448,7 @@ fn encode_channel(channel: &VisEncodingChannel) -> Yaml {
         bin.int("extent-node-id", b.extent_node_id);
         bin.int("divide-node-id", b.divide_node_id);
         bin.int("steps-node-id", b.steps_node_id);
-        m.0.insert("bin", bin.0.into_yaml());
+        m.0.insert("bin", bin.0.into_node());
     }
     m.text("aggregate", &channel.aggregate);
     m.text("time-unit", &channel.time_unit);
@@ -471,7 +481,7 @@ fn encode_channel(channel: &VisEncodingChannel) -> Yaml {
         scale.int("range-max-node-id", s.range_max_node_id);
         scale.int("bins-node-id", s.bins_node_id);
         scale.text("name", &s.name);
-        m.0.insert("scale", scale.0.into_yaml());
+        m.0.insert("scale", scale.0.into_node());
     }
     if let Some(a) = &channel.axis {
         let mut axis = Opt(Map::new());
@@ -492,7 +502,7 @@ fn encode_channel(channel: &VisEncodingChannel) -> Yaml {
         axis.int("zindex", a.zindex);
         axis.int("values-node-id", a.values_node_id);
         axis.text("name", &a.name);
-        m.0.insert("axis", axis.0.into_yaml());
+        m.0.insert("axis", axis.0.into_node());
     }
     if let Some(l) = &channel.legend {
         let mut legend = Opt(Map::new());
@@ -507,13 +517,14 @@ fn encode_channel(channel: &VisEncodingChannel) -> Yaml {
         legend.int("zindex", l.zindex);
         legend.int("values-node-id", l.values_node_id);
         legend.text("name", &l.name);
-        m.0.insert("legend", legend.0.into_yaml());
+        m.0.insert("legend", legend.0.into_node());
     }
-    m.0.into_yaml()
+    m.0.into_node()
 }
 
 /// The keys the analyzer snapshot test compares
-pub const COMPARED_KEYS: [&str; 7] = ["errors", "tables", "table-refs", "inserts", "expressions", "constants", "inferred-tables"];
+pub const COMPARED_KEYS: [&str; 7] =
+    ["errors", "tables", "table-refs", "inserts", "expressions", "constants", "inferred-tables"];
 
 /// Analyze the scripts of an analyzer snapshot case like `AnalyzerSnapshotTest` does: the catalog
 /// script is analyzed and loaded with its entry id as rank, then the main script is analyzed.
@@ -533,12 +544,12 @@ pub fn analyze_case(catalog_input: Option<&str>, main_input: &str) -> Result<(Op
     let mut catalog_yaml = None;
     if let Some(input) = catalog_input {
         let analyzed = analyze_text(&catalog, input)?;
-        catalog_yaml = Some(encode_script(&analyzed, false));
+        catalog_yaml = Some(encode_script(&analyzed, false).to_yaml());
         let rank = analyzed.catalog_entry_id();
         catalog.load_script(Arc::new(analyzed), rank).map_err(|e| e.message)?;
     }
     let analyzed = analyze_text(&catalog, main_input)?;
-    Ok((catalog_yaml, encode_script(&analyzed, true)))
+    Ok((catalog_yaml, encode_script(&analyzed, true).to_yaml()))
 }
 
 /// Compare the keys that the analyzer snapshot test compares
@@ -551,4 +562,32 @@ pub fn compare_script(expected: &Yaml, actual: &Yaml) -> Result<(), String> {
         crate::compare(want, &actual[key]).map_err(|e| format!("{key}: {e}"))?;
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::format_double;
+
+    #[test]
+    fn formats_doubles_like_cxx() {
+        let cases = [
+            (100.0, "100"),
+            (-45.0, "-45"),
+            (0.1, "0.1"),
+            (0.0001, "0.0001"),
+            (0.00001, "1e-05"),
+            (99999.5, "99999.5"),
+            (999999.0, "999999"),
+            (1e6, "1e+06"),
+            (1234567.0, "1.234567e+06"),
+            (1000000.5, "1.0000005e+06"),
+            (1.2345678901234567e19, "1.2345678901234567e+19"),
+            (1.5e300, "1.5e+300"),
+            (0.30000000000000004, "0.30000000000000004"),
+            (0.0, "0"),
+        ];
+        for (value, text) in cases {
+            assert_eq!(format_double(value), text);
+        }
+    }
 }

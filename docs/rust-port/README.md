@@ -34,8 +34,8 @@ Snapshots alone do not prove parity. The port is checked on several levels:
    - the same FlatBuffers enums, checked by `:dashql_buffers_test`
    - the same keyword lists
 2. **Shared snapshots.** The Rust tests read the same `snapshots/**/*.yaml` and compare structurally,
-   including the key order of every map. A Rust snapshotter must later regenerate the files byte for
-   byte.
+   including the key order of every map. The Rust snapshotter regenerates the files byte for byte
+   (see [Snapshotter](#snapshotter)).
 3. **Differential oracle.**
    - `//packages/dashql-core:oracle_ffi` is a C ABI over the C++ core that never throws, linked
      natively into Rust tests through `:dashql_oracle`. It answers in the snapshot serialization.
@@ -51,7 +51,8 @@ Snapshots alone do not prove parity. The port is checked on several levels:
 | `//grammar:parser_tables_rs` | The tables of `dashql.y` as Rust (tables only, actions are still C++) |
 | `//proto/fb:dashql_buffers_rs` | `flatc --rust` bindings, bundled into one crate by `proto/fb/bazel/flatbuf_rust_bundle.py`. `plan_view_model_events.fbs` is excluded because Rust does not support vectors of unions. |
 | `//packages/dashql-core-rs:dashql_grammar` | Grammar crate: tables, symbol kinds, symbol names, keywords (`//grammar:keywords_rs`), scanner, comment blocks |
-| `//packages/dashql-core-rs:dashql_snapshots` | Loads snapshot categories as libtest-mimic trials, structural YAML comparison |
+| `//packages/dashql-core-rs:dashql_snapshots` | Loads snapshot categories as libtest-mimic trials, structural YAML comparison, the snapshot encoders, and a rapidyaml-compatible YAML emitter (`ryml`) |
+| `//packages/dashql-core-rs:snapshotter` | Regenerates `snapshots/**/*.yaml` from the templates, run through `bazel run //snapshots/<category>:update` |
 | `//packages/dashql-core-rs:dashql_oracle` | The C++ core as an oracle (`scan`, `parse`). `bazel run //packages/dashql-core-rs:oracle -- scan "..."` queries it from the shell. |
 | `//packages/dashql-core-rs:core_wasm` | wasm-bindgen module (for now: grammar only, to track the module size) |
 
@@ -443,3 +444,30 @@ schema. Milliseconds per iteration:
   the input at every closing quote (`{quotestop}`, `{quotefail}`, `{quotecontinue}`). The two literals
   per CTE make a 577 KB script take 692 ms to scan instead of 3 ms. Bounding the walks at the furthest
   reachable position would make them linear again.
+
+## Snapshotter
+
+`//packages/dashql-core-rs:snapshotter` replaces the C++ snapshotter (`tools/snapshotter.cc`, deleted).
+`bazel run //snapshots/<category>:update` runs it, `bazel run //snapshots:update` updates all categories.
+It takes the same flags: `--source_dir=<repository> [--filter=<category>]`.
+
+- The encoders in `dashql_snapshots::encode` build styled trees (`dashql_snapshots::ryml::Node`): every
+  scalar carries the style the C++ encoder gave rapidyaml (plain unless the emitter must quote it,
+  double-quoted, single-quoted, block literal), every container block or flow style, and maps keep
+  their key order. The snapshot tests compare the same trees structurally (`Node::to_yaml`).
+- `ryml::emit` ports the rapidyaml 0.12.1 emitter, including its quirks: flow sequences without spaces
+  (`[0,2]`), the scalar style choice of unstyled values, `|2` for block literals with leading spaces.
+  `inject_blank_lines` ports `InjectBlankLinesInSnapshot`.
+- `ryml::parse` reads templates with the styles rapidyaml records (scalar styles, flow and multi-line
+  flow containers) through the event parser of yaml-rust2. Analyzer, completion, planner and visualize
+  write their templates back with the results appended, so the template styles must survive.
+- Gate: deleting all generated files and regenerating them gives byte-identical files in all
+  categories. A differential run against the C++ snapshotter over extra templates (odd quoting,
+  flow and multi-line flow containers, quoted keys, nulls, folded scalars, other top-level keys) found
+  no differences.
+- Deviation: when a location hint (`prefix..suffix`) cuts a multi-byte UTF-8 character, C++ wrote the
+  invalid bytes, Rust writes U+FFFD. No snapshot is affected, and the Rust tests cannot load files with
+  invalid UTF-8.
+- Doubles in the analyzer and UMAP encodings are written like c4 (`std::to_chars` with
+  `chars_format::general`): the shortest round-trip digits, scientific below 1e-4 and from 1e6 on
+  (`1e+06`). The former Rust encoder wrote `1000000`, which the analyzer differential test never hit.

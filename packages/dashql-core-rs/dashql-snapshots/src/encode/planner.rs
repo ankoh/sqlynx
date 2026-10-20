@@ -1,17 +1,13 @@
 //! A port of `PlannerSnapshotTest::Encode` (`src/testing/planner_snapshot_test.cc`).
 
 use super::{plain, Map};
+use crate::ryml::Node;
 use dashql_buffers::execution::{ExecutionGraphEntityType, ExecutionGraphT};
 use dashql_core::catalog::Catalog;
 use dashql_core::script::Script;
 use dashql_core::utils::quote_identifier;
 use dashql_grammar::keywords::Keyword;
 use yaml_rust2::Yaml;
-
-/// Trim a fixture text like the C++ test (leading spaces and newlines, trailing newlines)
-fn sql(node: &Yaml) -> String {
-    crate::trim_input(node.as_str().unwrap_or(""))
-}
 
 /// Does `identifier_requires_quotes` hold?
 fn requires_quotes(text: &str) -> bool {
@@ -58,12 +54,59 @@ fn prepare(catalog: &Catalog, text: &str) -> Result<Script, String> {
     Ok(script)
 }
 
+/// The texts of a planner fixture
+pub struct Fixture {
+    /// The catalog script
+    pub catalog: Option<String>,
+    /// The scripts: name, input and the text to prepend after the analysis (`stale-prepend`)
+    pub scripts: Vec<(String, String, Option<String>)>,
+}
+
+impl Fixture {
+    /// Read a fixture of a snapshot file
+    pub fn from_yaml(fixture: &Yaml) -> Self {
+        let text = |node: &Yaml| node.as_str().unwrap_or("").to_string();
+        Self {
+            catalog: (!matches!(fixture["catalog"], Yaml::BadValue)).then(|| text(&fixture["catalog"])),
+            scripts: fixture["scripts"]
+                .as_vec()
+                .into_iter()
+                .flatten()
+                .map(|s| (text(&s["name"]), text(&s["input"]), s["stale-prepend"].as_str().map(str::to_string)))
+                .collect(),
+        }
+    }
+
+    /// Read a fixture of a template
+    pub fn from_node(fixture: &Node) -> Self {
+        let text = |node: Option<&Node>| node.and_then(Node::val).unwrap_or("").to_string();
+        Self {
+            catalog: fixture.get("catalog").map(|c| text(Some(c))),
+            scripts: fixture
+                .get("scripts")
+                .map(Node::children)
+                .unwrap_or_default()
+                .into_iter()
+                .map(|s| {
+                    let prepend = s.get("stale-prepend").map(|p| text(Some(p)));
+                    (text(s.get("name")), text(s.get("input")), prepend)
+                })
+                .collect(),
+        }
+    }
+}
+
 /// Plan a fixture and encode the execution graph (`PlannerSnapshotTest::Encode`)
 pub fn encode_fixture(fixture: &Yaml) -> Result<Yaml, String> {
+    encode_planner_fixture(&Fixture::from_yaml(fixture)).map(|node| node.to_yaml())
+}
+
+/// Plan a fixture and encode the execution graph as a styled tree
+pub fn encode_planner_fixture(fixture: &Fixture) -> Result<Node, String> {
     let mut catalog = Catalog::new();
     let mut catalog_script = None;
-    if !matches!(fixture["catalog"], Yaml::BadValue) {
-        let script = prepare(&catalog, &sql(&fixture["catalog"]))?;
+    if let Some(text) = &fixture.catalog {
+        let script = prepare(&catalog, &crate::trim_input(text))?;
         if !publishable(&script) {
             return Err("invalid planner fixture catalog".into());
         }
@@ -72,13 +115,12 @@ pub fn encode_fixture(fixture: &Yaml) -> Result<Yaml, String> {
     }
     let mut names = Vec::new();
     let mut scripts = Vec::new();
-    for source in fixture["scripts"].as_vec().cloned().unwrap_or_default() {
-        let name = source["name"].as_str().unwrap_or("").to_string();
-        if name.is_empty() || names.contains(&name) {
+    for (name, input, prepend) in &fixture.scripts {
+        if name.is_empty() || names.contains(name) {
             return Err("planner fixture script names must be nonempty and unique".into());
         }
-        names.push(name);
-        scripts.push((prepare(&catalog, &sql(&source["input"]))?, source));
+        names.push(name.clone());
+        scripts.push((prepare(&catalog, &crate::trim_input(input))?, prepend));
     }
     // Publish the complete definition set before resolving any cross-script references
     let definitions: Vec<_> = scripts
@@ -92,20 +134,21 @@ pub fn encode_fixture(fixture: &Yaml) -> Result<Yaml, String> {
         script.analyze(&catalog, false).map_err(|e| e.message)?;
     }
     for (script, source) in scripts.iter_mut() {
-        if let Some(prepend) = source["stale-prepend"].as_str() {
+        if let Some(prepend) = source {
             script.insert_text_at(0, prepend);
         }
     }
     let inputs: Vec<&Script> = scripts.iter().map(|(s, _)| s).collect();
-    let planner_inputs: Vec<_> = inputs.iter().map(|&script| dashql_core::planner::PlannerInput { script, catalog: &catalog }).collect();
+    let planner_inputs: Vec<_> =
+        inputs.iter().map(|&script| dashql_core::planner::PlannerInput { script, catalog: &catalog }).collect();
     let graph = dashql_core::planner::plan(&planner_inputs);
     drop(catalog_script);
     Ok(encode_graph(&graph, &inputs, &names))
 }
 
-fn encode_graph(graph: &ExecutionGraphT, inputs: &[&Script], names: &[String]) -> Yaml {
+fn encode_graph(graph: &ExecutionGraphT, inputs: &[&Script], names: &[String]) -> Node {
     let mut out = Map::new();
-    out.insert("valid", Yaml::Boolean(graph.valid));
+    out.boolean("valid", graph.valid);
     let scripts = graph
         .scripts
         .iter()
@@ -117,10 +160,10 @@ fn encode_graph(graph: &ExecutionGraphT, inputs: &[&Script], names: &[String]) -
             m.int("text-version", s.text_version as i64);
             m.int("analyzed-text-version", s.analyzed_text_version as i64);
             m.int("analyzed-catalog-revision", s.analyzed_catalog_revision as i64);
-            m.into_yaml()
+            m.into_node()
         })
         .collect();
-    out.insert("scripts", Yaml::Array(scripts));
+    out.insert("scripts", Node::seq(scripts));
     let entities = graph.entities.as_deref().unwrap_or_default();
     let catalog_id = |index: u32| -> String {
         let entity = &entities[index as usize];
@@ -146,13 +189,13 @@ fn encode_graph(graph: &ExecutionGraphT, inputs: &[&Script], names: &[String]) -
         .enumerate()
         .map(|(i, e)| {
             let mut m = Map::new();
-            m.quoted("catalog-id", &catalog_id(i as u32));
+            m.insert("catalog-id", Node::squo(catalog_id(i as u32)));
             m.plain("type", e.catalog_object_id.object_type.variant_name().unwrap_or(""));
             m.plain("name", &qualified_name(&e.database_name, &e.schema_name, &e.name));
-            m.into_yaml()
+            m.into_node()
         })
         .collect();
-    out.insert("entities", Yaml::Array(entity_list));
+    out.insert("entities", Node::seq(entity_list));
     let unresolved = graph
         .unresolved_references
         .iter()
@@ -160,13 +203,13 @@ fn encode_graph(graph: &ExecutionGraphT, inputs: &[&Script], names: &[String]) -
         .map(|r| {
             let mut m = Map::new();
             m.plain("name", &qualified_name(&r.database_name, &r.schema_name, &r.name));
-            m.into_yaml()
+            m.into_node()
         })
         .collect();
-    out.insert("unresolved-references", Yaml::Array(unresolved));
+    out.insert("unresolved-references", Node::seq(unresolved));
     let target = |m: &mut Map, entity: u32, unresolved: u32| {
         if entity != u32::MAX {
-            m.quoted("entity", &catalog_id(entity));
+            m.insert("entity", Node::squo(catalog_id(entity)));
         }
         if unresolved != u32::MAX {
             m.int("unresolved-reference", unresolved as i64);
@@ -184,8 +227,8 @@ fn encode_graph(graph: &ExecutionGraphT, inputs: &[&Script], names: &[String]) -
             m.int("statement-id", n.statement_id as i64);
             m.plain("type", n.statement_type.variant_name().unwrap_or(""));
             m.quoted("sql", n.sql.as_deref().unwrap_or(""));
-            m.insert("produces-output", Yaml::Boolean(n.produces_output));
-            m.insert("barrier", Yaml::Boolean(n.barrier));
+            m.boolean("produces-output", n.produces_output);
+            m.boolean("barrier", n.barrier);
             let accesses = n
                 .accesses
                 .iter()
@@ -194,14 +237,14 @@ fn encode_graph(graph: &ExecutionGraphT, inputs: &[&Script], names: &[String]) -
                     let mut am = Map::new();
                     target(&mut am, a.entity, a.unresolved_reference);
                     am.plain("mode", a.mode.variant_name().unwrap_or(""));
-                    am.into_yaml()
+                    am.into_node()
                 })
                 .collect();
-            m.insert("accesses", Yaml::Array(accesses));
-            m.into_yaml()
+            m.insert("accesses", Node::seq(accesses));
+            m.into_node()
         })
         .collect();
-    out.insert("nodes", Yaml::Array(nodes));
+    out.insert("nodes", Node::seq(nodes));
     let edges = graph
         .edges
         .iter()
@@ -212,10 +255,10 @@ fn encode_graph(graph: &ExecutionGraphT, inputs: &[&Script], names: &[String]) -
             m.int("to", e.to as i64);
             m.plain("reason", e.reason.variant_name().unwrap_or(""));
             target(&mut m, e.entity, e.unresolved_reference);
-            m.into_yaml()
+            m.into_node()
         })
         .collect();
-    out.insert("edges", Yaml::Array(edges));
+    out.insert("edges", Node::seq(edges));
     let diagnostics = graph
         .diagnostics
         .iter()
@@ -226,9 +269,9 @@ fn encode_graph(graph: &ExecutionGraphT, inputs: &[&Script], names: &[String]) -
                 m.int("node", d.node as i64);
             }
             m.insert("message", plain(d.message.as_deref().unwrap_or("")));
-            m.into_yaml()
+            m.into_node()
         })
         .collect();
-    out.insert("diagnostics", Yaml::Array(diagnostics));
-    out.into_yaml()
+    out.insert("diagnostics", Node::seq(diagnostics));
+    out.into_node()
 }

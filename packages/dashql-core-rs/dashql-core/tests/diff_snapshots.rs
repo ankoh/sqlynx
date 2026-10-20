@@ -1,57 +1,17 @@
 //! The diff snapshots (snapshots/diff/*.yaml), and a differential test of the script diff against the
 //! C++ core on pairs of snapshot inputs and their edits.
 
-use dashql_buffers::diff::ScriptDiffOpCode;
 use dashql_core::script_diff::{DiffOp, ScriptDiff};
 use dashql_grammar::parser::{parse, ParsedScript};
 use dashql_grammar::scanner::scan;
 use dashql_snapshots::corpus::{snapshot_inputs, Rng};
-use dashql_snapshots::encode::{encode_location_text, Map};
-use dashql_snapshots::{compare, load_category, run, trim_input, Arguments, Failed, Trial, Yaml};
+use dashql_snapshots::encode::diff::encode_diff;
+use dashql_snapshots::{compare, load_category, run, trim_input, Arguments, Failed, Trial};
 use std::fmt::Write as _;
 use std::sync::Arc;
 
 fn parse_text(text: &str, external_id: u32) -> ParsedScript {
     parse(Arc::new(scan(text, 0, external_id)))
-}
-
-/// `DiffSnapshotTest::EncodeDiff`
-fn encode_diff(ops: &[DiffOp], source_text: &str, target_text: &str) -> Yaml {
-    let items = ops
-        .iter()
-        .map(|op| {
-            let mut m = Map::new();
-            m.plain("code", op.code.variant_name().unwrap_or(""));
-            if let Some(s) = op.source_statement {
-                m.int("source-statement", s as i64);
-            }
-            if let Some(t) = op.target_statement {
-                m.int("target-statement", t as i64);
-            }
-            match op.code {
-                ScriptDiffOpCode::UPDATE => {
-                    let changes = op
-                        .target_changes
-                        .iter()
-                        .map(|c| {
-                            let mut cm = Map::new();
-                            encode_location_text(&mut cm, target_text, c.offset, c.length, "text");
-                            cm.into_yaml()
-                        })
-                        .collect();
-                    m.insert("target-changes", Yaml::Array(changes));
-                }
-                ScriptDiffOpCode::DELETE => {
-                    encode_location_text(&mut m, source_text, op.source_span.offset, op.source_span.length, "source-span")
-                }
-                _ => encode_location_text(&mut m, target_text, op.target_span.offset, op.target_span.length, "target-span"),
-            }
-            m.into_yaml()
-        })
-        .collect();
-    let mut root = Map::new();
-    root.insert("ops", Yaml::Array(items));
-    root.into_yaml()
 }
 
 /// Dump ops in the format of `dashql_oracle_script_diff`
@@ -130,7 +90,7 @@ fn main() {
             let source_parsed = parse_text(&source, 1);
             let target_parsed = parse_text(&target, 2);
             let mut diff = ScriptDiff::new(&source_parsed, &target_parsed);
-            let produced = encode_diff(diff.compute(), &source, &target);
+            let produced = encode_diff(diff.compute(), &source, &target).to_yaml();
             compare(case.expected().unwrap(), &produced).map_err(Failed::from)
         }));
     }

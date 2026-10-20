@@ -129,10 +129,16 @@ bazel run //snapshots/parser:update
 bazel run //snapshots/analyzer:update
 bazel run //snapshots/formatter:update
 bazel run //snapshots/completion:update
+bazel run //snapshots/planner:update
+bazel run //snapshots/visualize:update
+bazel run //snapshots/diff:update
 bazel run //snapshots/plans/hyper/tests:update
+# All categories at once
+bazel run //snapshots:update
 ```
 
-These targets regenerate `/snapshots/*.yaml` from `/snapshots/*.tpl.yaml` templates.
+These targets regenerate `/snapshots/*.yaml` from `/snapshots/*.tpl.yaml` templates with the Rust core
+(`//packages/dashql-core-rs:snapshotter`).
 
 ## Type Checking
 
@@ -305,8 +311,7 @@ untrusted fastbuild CI run both core JS test target sets.
 ### After Changing Parser Grammar
 
 ```bash
-# Rebuild parser and update snapshots
-bazel build //packages/dashql-core:dashql_core
+# Rebuild the parser and update the snapshots
 bazel run //snapshots/parser:update
 
 # Verify snapshot changes

@@ -28,7 +28,8 @@ fn run_case(node: &Yaml, name: &str) -> Result<(), String> {
     let renderer = spec.renderer.as_deref();
 
     if !matches!(node["dashboard"], Yaml::BadValue) {
-        compare(&node["dashboard"], &encode_dashboard_spec(&spec.dashboard)).map_err(|e| format!("dashboard: {e}"))?;
+        compare(&node["dashboard"], &encode_dashboard_spec(&spec.dashboard).to_yaml())
+            .map_err(|e| format!("dashboard: {e}"))?;
     }
 
     if name == "vis_layer_resolve" {
@@ -42,14 +43,15 @@ fn run_case(node: &Yaml, name: &str) -> Result<(), String> {
     if renderer == Some("umap") {
         let umap = compile_umap_spec(spec, &analyzed).ok_or("no umap spec")?;
         if !matches!(node["umap"], Yaml::BadValue) {
-            compare(&node["umap"], &encode_umap_spec(&umap)).map_err(|e| format!("umap: {e}"))?;
+            compare(&node["umap"], &encode_umap_spec(&umap).to_yaml()).map_err(|e| format!("umap: {e}"))?;
         }
         return Ok(());
     }
     if renderer == Some("markdown") {
         let markdown = compile_markdown_spec(spec).ok_or("no markdown spec")?;
         if !matches!(node["markdown"], Yaml::BadValue) {
-            compare(&node["markdown"], &encode_markdown_spec(&markdown)).map_err(|e| format!("markdown: {e}"))?;
+            compare(&node["markdown"], &encode_markdown_spec(&markdown).to_yaml())
+                .map_err(|e| format!("markdown: {e}"))?;
         }
         return Ok(());
     }

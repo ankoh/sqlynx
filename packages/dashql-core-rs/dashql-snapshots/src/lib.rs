@@ -7,6 +7,7 @@
 pub mod corpus;
 pub mod encode;
 pub mod formatter;
+pub mod ryml;
 
 use std::fmt::Write as _;
 use std::fs;
@@ -51,10 +52,7 @@ impl SnapshotCase {
 
 /// Trim an input the same way the C++ snapshot tests do.
 pub fn trim_input(input: &str) -> String {
-    input
-        .trim_start_matches([' ', '\n'])
-        .trim_end_matches(['\n', '\r'])
-        .to_string()
+    input.trim_start_matches([' ', '\n']).trim_end_matches(['\n', '\r']).to_string()
 }
 
 /// The directory holding the snapshot categories.
@@ -219,10 +217,7 @@ mod tests {
             compare(&yaml("a: {b: [1, 2]}"), &yaml("a: {b: [1, 3]}")),
             Err(".a.b[1]: expected 2, got 3".to_string())
         );
-        assert_eq!(
-            compare(&yaml("a: [1, 2]"), &yaml("a: [1]")),
-            Err(".a: expected 2 entries, got 1".to_string())
-        );
+        assert_eq!(compare(&yaml("a: [1, 2]"), &yaml("a: [1]")), Err(".a: expected 2 entries, got 1".to_string()));
         assert!(compare(&yaml("a: 1\nb: 2"), &yaml("b: 2\na: 1")).unwrap_err().contains("keys differ"));
     }
 
@@ -230,7 +225,11 @@ mod tests {
     fn loads_categories() {
         let dir = std::env::temp_dir().join(format!("dashql-snapshots-test-{}", std::process::id()));
         fs::create_dir_all(&dir).unwrap();
-        fs::write(dir.join("a.yaml"), "parser-snapshots:\n  - name: one\n    input: |-\n      select 1\n    expected: {statements: []}\n").unwrap();
+        fs::write(
+            dir.join("a.yaml"),
+            "parser-snapshots:\n  - name: one\n    input: |-\n      select 1\n    expected: {statements: []}\n",
+        )
+        .unwrap();
         fs::write(dir.join("a.tpl.yaml"), "parser-snapshots:\n  - name: one\n    input: select 1\n").unwrap();
         let cases = load_category_from(&dir, "parser").unwrap();
         fs::remove_dir_all(&dir).unwrap();

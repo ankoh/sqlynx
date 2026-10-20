@@ -16,7 +16,7 @@ fn main() {
             Trial::test(case.trial_name(), move || {
                 let input = case.input().ok_or("case without input")?;
                 let parsed = parse(Arc::new(scan(&input, 0, 2)));
-                let produced = encode_script(&parsed, &input);
+                let produced = encode_script(&parsed, &input).to_yaml();
                 compare(case.expected().unwrap(), &produced).map_err(Failed::from)
             })
         })

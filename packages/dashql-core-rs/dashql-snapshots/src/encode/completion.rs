@@ -3,6 +3,7 @@
 
 use super::{encode_location_text, plain, Map};
 use crate::encode::analyzer::encode_script;
+use crate::ryml::Node;
 use dashql_buffers::analyzer::NameTag;
 use dashql_buffers::completion::CandidateTag;
 use dashql_core::catalog::Catalog;
@@ -15,21 +16,17 @@ use std::sync::Arc;
 use yaml_rust2::Yaml;
 
 /// The names of the set bits of a tag bitset, in bit order (`EnumBitset::ForEach`)
-fn tag_names(value: u32, bits: u32, name: impl Fn(u32) -> Option<&'static str>) -> Vec<Yaml> {
-    (0..bits)
-        .map(|b| 1u32 << b)
-        .filter(|tag| value & tag != 0)
-        .map(|tag| plain(name(tag).unwrap_or("")))
-        .collect()
+fn tag_names(value: u32, bits: u32, name: impl Fn(u32) -> Option<&'static str>) -> Vec<Node> {
+    (0..bits).map(|b| 1u32 << b).filter(|tag| value & tag != 0).map(|tag| plain(name(tag).unwrap_or(""))).collect()
 }
 
-fn insert_tags(map: &mut Map, key: &str, tags: Vec<Yaml>) {
+fn insert_tags(map: &mut Map, key: &str, tags: Vec<Node>) {
     if !tags.is_empty() {
-        map.insert(key, Yaml::Array(tags));
+        map.insert(key, Node::flow_seq(tags));
     }
 }
 
-fn candidate_tag_names(value: u32) -> Vec<Yaml> {
+fn candidate_tag_names(value: u32) -> Vec<Node> {
     tag_names(value, 32, |t| CandidateTag(t).variant_name())
 }
 
@@ -56,7 +53,11 @@ pub fn encode_completion(out: &mut Map, completion: &Completion) {
             if let Some(continuation) = candidate.keyword_continuation {
                 m.plain("keyword-continuation", continuation);
             }
-            insert_tags(&mut m, "name-tags", tag_names(candidate.coarse_name_tags as u32, 8, |t| NameTag(t as u8).variant_name()));
+            insert_tags(
+                &mut m,
+                "name-tags",
+                tag_names(candidate.coarse_name_tags as u32, 8, |t| NameTag(t as u8).variant_name()),
+            );
             insert_tags(&mut m, "candidate-tags", candidate_tag_names(candidate.candidate_tags));
             let loc = candidate.target_location;
             encode_location_text(&mut m, text, loc.offset(), loc.length(), "location");
@@ -85,11 +86,13 @@ pub fn encode_completion(out: &mut Map, completion: &Completion) {
                         CandidateObjectRef::Column(loc) => {
                             let table = completion.table(loc.table).expect("table");
                             let (db, schema) = table.catalog_schema_id.unpack_schema_id();
-                            let (table_id, column) = table.table_columns[loc.column as usize].object_id.unpack_table_column_id();
+                            let (table_id, column) =
+                                table.table_columns[loc.column as usize].object_id.unpack_table_column_id();
                             ("column", format!("{db}.{schema}.{}.{column}", table_id.pack()))
                         }
                         CandidateObjectRef::Function(loc) => {
-                            let function = &completion.entry_data(loc.entry).expect("entry").function_declarations[loc.index as usize];
+                            let function = &completion.entry_data(loc.entry).expect("entry").function_declarations
+                                [loc.index as usize];
                             let (db, schema) = function.catalog_schema_id.unpack_schema_id();
                             ("function", format!("{db}.{schema}.{}", function.function_id().pack()))
                         }
@@ -103,14 +106,14 @@ pub fn encode_completion(out: &mut Map, completion: &Completion) {
                         o.int("qualified-idx", object.qualified_name_target_idx as i64);
                         o.int("prefer-qualified", object.prefer_qualified as i64);
                     }
-                    o.into_yaml()
+                    o.into_node()
                 })
                 .collect();
-            m.insert("objects", Yaml::Array(objects));
-            m.into_yaml()
+            m.insert("objects", Node::seq(objects));
+            m.into_node()
         })
         .collect();
-    out.insert("entries", Yaml::Array(entries));
+    out.insert("entries", Node::seq(entries));
 }
 
 /// The output of a completion snapshot case
@@ -122,14 +125,19 @@ pub struct CompletionCase {
 
 /// Run a completion snapshot case: analyze the catalog script and the editor script like the
 /// analyzer snapshots, place the cursor after the search text plus `index`, and complete.
-pub fn complete_case(catalog_input: Option<&str>, editor_input: &str, cursor_offset: CursorOffset, limit: usize) -> Result<CompletionCase, String> {
+pub fn complete_case(
+    catalog_input: Option<&str>,
+    editor_input: &str,
+    cursor_offset: CursorOffset,
+    limit: usize,
+) -> Result<CompletionCase, String> {
     let mut catalog = Catalog::new();
     let mut catalog_yaml = None;
     if let Some(input) = catalog_input {
         let entry_id = catalog.allocate_entry_id();
         let parsed = Arc::new(parse(Arc::new(scan(input, 0, entry_id))));
         let analyzed = dashql_core::analyzer::analyze(parsed, &catalog).map_err(|e| e.message)?;
-        catalog_yaml = Some(encode_script(&analyzed, false));
+        catalog_yaml = Some(encode_script(&analyzed, false).to_yaml());
         let rank = analyzed.catalog_entry_id();
         catalog.load_script(Arc::new(analyzed), rank).map_err(|e| e.message)?;
     }
@@ -137,7 +145,7 @@ pub fn complete_case(catalog_input: Option<&str>, editor_input: &str, cursor_off
     let scanned = Arc::new(scan(editor_input, 0, entry_id));
     let parsed = Arc::new(parse(scanned.clone()));
     let analyzed = Arc::new(dashql_core::analyzer::analyze(parsed.clone(), &catalog).map_err(|e| e.message)?);
-    let editor_yaml = encode_script(&analyzed, true);
+    let editor_yaml = encode_script(&analyzed, true).to_yaml();
 
     let offset = match cursor_offset {
         CursorOffset::Search { text, index } => {
@@ -149,12 +157,8 @@ pub fn complete_case(catalog_input: Option<&str>, editor_input: &str, cursor_off
     if offset > editor_input.len() {
         return Err("cursor out of bounds".into());
     }
-    let view = ScriptView {
-        scanned: Some(&scanned),
-        parsed: Some(&parsed),
-        analyzed: Some(&analyzed),
-        catalog: &catalog,
-    };
+    let view =
+        ScriptView { scanned: Some(&scanned), parsed: Some(&parsed), analyzed: Some(&analyzed), catalog: &catalog };
     let cursor = ScriptCursor::place(view, offset);
     if cursor.scanner_location.is_none() {
         return Err("COMPLETION_MISSES_SCANNER_TOKEN".into());
@@ -165,22 +169,14 @@ pub fn complete_case(catalog_input: Option<&str>, editor_input: &str, cursor_off
     // Completions inside comments have no target symbol, the C++ encoder cannot encode them
     if completion.target_symbol.is_none() {
         out.int("no-target", 1);
-        return Ok(CompletionCase {
-            catalog: catalog_yaml,
-            editor: editor_yaml,
-            completions: out.into_yaml(),
-        });
+        return Ok(CompletionCase { catalog: catalog_yaml, editor: editor_yaml, completions: out.into_yaml() });
     }
     encode_completion(&mut out, &completion);
     if let Some(target) = completion.target_symbol {
         let loc = target.symbol.location;
         encode_location_text(&mut out, editor_input, loc.offset, loc.length, "text");
     }
-    Ok(CompletionCase {
-        catalog: catalog_yaml,
-        editor: editor_yaml,
-        completions: out.into_yaml(),
-    })
+    Ok(CompletionCase { catalog: catalog_yaml, editor: editor_yaml, completions: out.into_yaml() })
 }
 
 /// Where to place the cursor
@@ -212,12 +208,8 @@ pub fn complete_packed(
     let scanned = Arc::new(scan(editor_input, 0, entry_id));
     let parsed = Arc::new(parse(scanned.clone()));
     let analyzed = Arc::new(dashql_core::analyzer::analyze(parsed.clone(), &catalog).map_err(|e| e.message)?);
-    let view = ScriptView {
-        scanned: Some(&scanned),
-        parsed: Some(&parsed),
-        analyzed: Some(&analyzed),
-        catalog: &catalog,
-    };
+    let view =
+        ScriptView { scanned: Some(&scanned), parsed: Some(&parsed), analyzed: Some(&analyzed), catalog: &catalog };
     let cursor = ScriptCursor::place(view, offset);
     let packed_cursor = dashql_core::pack::pack_cursor(&cursor);
     let completion = Completion::compute(&cursor, limit);

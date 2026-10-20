@@ -14,12 +14,15 @@ def snapshot_library(filter, files_srcs = None):
         srcs = files_srcs if files_srcs != None else native.glob(["*.yaml"]),
         visibility = ["//visibility:public"],
     )
+
+    # The snapshotter uses the snapshot encoders of the (testonly) test library
     sh_binary(
         name = "update",
+        testonly = True,
         srcs = ["//snapshots:run_snapshotter.sh"],
         args = [
-            "$(rootpath //packages/dashql-core:snapshotter)",
+            "$(rootpath //packages/dashql-core-rs:snapshotter)",
             filter,
         ],
-        data = ["//packages/dashql-core:snapshotter"],
+        data = ["//packages/dashql-core-rs:snapshotter"],
     )

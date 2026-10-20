@@ -79,7 +79,6 @@ refresh_compile_commands(
         "//packages/dashql-core:rope_fuzzer_1024s_bulk": "",
         "//packages/dashql-core:rope_fuzzer_1024l": "",
         "//packages/dashql-core:rope_fuzzer_1024l_bulk": "",
-        "//packages/dashql-core:snapshotter": "",
         "//packages/dashql-core:dashql_shell": "",
         "//packages/dashql-core:shell_unit_tests": "",
     },

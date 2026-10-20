@@ -4,7 +4,7 @@
     fetches and build overlays. Fetched/built in this extension:
     - flatbuffers, ankerl, rapidjson, c4core, rapidyaml (http_archive + build_file)
     - bison_src, m4_src, flex_src (prebuilt xPack)
-    googletest and gflags remain from BCR in MODULE.bazel.
+    googletest remains from BCR in MODULE.bazel.
 
     sha256 hashes are maintained by scripts/update_bazel_hashes.sh and are
     automatically recomputed by Renovate's postUpgradeTasks on version bumps.

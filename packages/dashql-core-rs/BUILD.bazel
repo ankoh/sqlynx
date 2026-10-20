@@ -2,7 +2,8 @@
 #
 #   dashql_grammar    LALR(1) tables of //grammar emitted through //grammar/rust:tables.rs.m4
 #                     (later: scanner, parse context, LR driver)
-#   dashql_snapshots  loads the shared //snapshots YAML files for libtest-mimic trials
+#   dashql_snapshots  loads the shared //snapshots YAML files for libtest-mimic trials, and the snapshot
+#                     encoders of :snapshotter, which regenerates the snapshot files
 #   dashql_oracle     the C++ core linked natively as a differential test oracle
 #   dashql_buffers    FlatBuffers bindings, see //proto/fb:dashql_buffers_rs
 #   core_wasm         the wasm-bindgen module (phase 0: grammar only, tracks the module size)
@@ -206,7 +207,10 @@ rust_test(
 rust_library(
     name = "dashql_snapshots",
     testonly = True,
-    srcs = glob(["dashql-snapshots/src/**/*.rs"]),
+    srcs = glob(
+        ["dashql-snapshots/src/**/*.rs"],
+        exclude = ["dashql-snapshots/src/bin/**"],
+    ),
     crate_name = "dashql_snapshots",
     crate_root = "dashql-snapshots/src/lib.rs",
     edition = "2021",
@@ -214,6 +218,7 @@ rust_library(
         ":dashql_core",
         ":dashql_grammar",
         "//proto/fb:dashql_buffers_rs",
+        "@core_crates//:flatbuffers",
         "@core_crates//:libtest-mimic",
         "@core_crates//:yaml-rust2",
     ],
@@ -223,6 +228,25 @@ rust_test(
     name = "dashql_snapshots_unit_tests",
     size = "small",
     crate = ":dashql_snapshots",
+)
+
+# Regenerates snapshots/**/*.yaml from the templates *.tpl.yaml, byte for byte like the former C++ snapshotter.
+# bazel run //snapshots/<category>:update, or directly:
+#   bazel run //packages/dashql-core-rs:snapshotter -- --source_dir=$PWD [--filter=<category>]
+rust_binary(
+    name = "snapshotter",
+    testonly = True,
+    srcs = ["dashql-snapshots/src/bin/snapshotter.rs"],
+    edition = "2021",
+    # Snapshot generation runs the whole pipeline over large scripts (TPC-DS), always optimize
+    rustc_flags = ["-Copt-level=3"],
+    visibility = ["//snapshots:__subpackages__"],
+    deps = [
+        ":dashql_core",
+        ":dashql_grammar",
+        ":dashql_snapshots",
+        "//proto/fb:dashql_buffers_rs",
+    ],
 )
 
 # ---------------------------------------------------------------------------

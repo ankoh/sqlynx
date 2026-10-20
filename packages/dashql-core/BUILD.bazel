@@ -377,24 +377,6 @@ cc_test(
 )
 
 # ---------------------------------------------------------------------------
-# Snapshotter (always compiled with -O3 for fast snapshot generation)
-# ---------------------------------------------------------------------------
-
-cc_binary(
-    name = "snapshotter",
-    srcs = ["tools/snapshotter.cc"],
-    copts = DASHQL_COPTS,
-    linkopts = DASHQL_LINKOPTS,
-    deps = [
-        ":dashql_core",
-        ":test_utils",
-        "@gflags//:gflags",
-        "@rapidyaml//:rapidyaml",
-    ],
-    visibility = ["//visibility:public"],
-)
-
-# ---------------------------------------------------------------------------
 # Differential test oracle for the Rust rewrite (//packages/dashql-core-rs).
 # A C ABI over the snapshot encoders that never throws; linked natively into rust_test targets.
 # ---------------------------------------------------------------------------

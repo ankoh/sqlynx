@@ -2,6 +2,7 @@
 //! visualization oracle (`dashql_oracle::visualize`).
 
 use super::{plain, Map};
+use crate::ryml::Node;
 use dashql_buffers::visualization::MarkdownNodeType;
 use dashql_core::analyzer::{AnalyzedScript, DashboardSpec};
 use dashql_core::visualize::{
@@ -9,7 +10,6 @@ use dashql_core::visualize::{
     MarkdownNode, UmapDocument,
 };
 use std::fmt::Write as _;
-use yaml_rust2::Yaml;
 
 /// Analyze a script like the visualize snapshot test: the catalog script (if any) is analyzed and loaded with its
 /// entry id as rank, then the main script is analyzed
@@ -58,7 +58,7 @@ pub fn markdown_node_name(node_type: MarkdownNodeType) -> &'static str {
 }
 
 /// `EncodeMarkdownNode`
-fn encode_markdown_node(node: &MarkdownNode) -> Yaml {
+fn encode_markdown_node(node: &MarkdownNode) -> Node {
     let mut map = Map::new();
     map.plain("type", markdown_node_name(node.node_type));
     match node.node_type {
@@ -72,8 +72,8 @@ fn encode_markdown_node(node: &MarkdownNode) -> Yaml {
             map.int("level", node.level as i64);
         }
         MarkdownNodeType::LIST => {
-            map.insert("ordered", Yaml::Boolean(node.ordered));
-            map.insert("tight", Yaml::Boolean(node.tight));
+            map.boolean("ordered", node.ordered);
+            map.boolean("tight", node.tight);
             if node.ordered {
                 map.int("start", node.start as i64);
             }
@@ -90,27 +90,27 @@ fn encode_markdown_node(node: &MarkdownNode) -> Yaml {
         _ => {}
     }
     if !node.children.is_empty() {
-        map.insert("children", Yaml::Array(node.children.iter().map(encode_markdown_node).collect()));
+        map.insert("children", Node::seq(node.children.iter().map(encode_markdown_node).collect()));
     }
-    map.into_yaml()
+    map.into_node()
 }
 
 /// `EncodeMarkdownSpec`
-pub fn encode_markdown_spec(spec: &MarkdownDocument) -> Yaml {
+pub fn encode_markdown_spec(spec: &MarkdownDocument) -> Node {
     let mut map = Map::new();
-    // Multi-line templates are emitted as block literals, others are typed by YAML inference
+    // Multi-line templates are emitted as block literals
     if spec.template.contains('\n') {
-        map.quoted("template", &spec.template);
+        map.insert("template", Node::literal(spec.template.as_str()));
     } else {
         map.plain("template", &spec.template);
     }
-    map.insert("fields", Yaml::Array(spec.fields.iter().map(|f| plain(f)).collect()));
+    map.insert("fields", Node::seq(spec.fields.iter().map(|f| plain(f)).collect()));
     map.insert("document", encode_markdown_node(&spec.document));
-    map.into_yaml()
+    map.into_node()
 }
 
 /// `EncodeUmapSpec`
-pub fn encode_umap_spec(spec: &UmapDocument) -> Yaml {
+pub fn encode_umap_spec(spec: &UmapDocument) -> Node {
     let mut map = Map::new();
     map.plain("vector-column", &spec.vector_column);
     if !spec.category_column.is_empty() {
@@ -126,18 +126,18 @@ pub fn encode_umap_spec(spec: &UmapDocument) -> Yaml {
             projection.plain("metric", &p.metric);
         }
         if let Some(neighbors) = p.neighbors {
-            projection.plain("neighbors", &neighbors.to_string());
+            projection.plain("neighbors", &super::analyzer::format_double(neighbors));
         }
         if let Some(min_dist) = p.min_dist {
-            projection.plain("min-dist", &min_dist.to_string());
+            projection.plain("min-dist", &super::analyzer::format_double(min_dist));
         }
     }
-    map.insert("projection", projection.into_yaml());
-    map.into_yaml()
+    map.insert("projection", projection.into_node());
+    map.into_node()
 }
 
 /// `EncodeDashboardSpec`
-pub fn encode_dashboard_spec(spec: &DashboardSpec) -> Yaml {
+pub fn encode_dashboard_spec(spec: &DashboardSpec) -> Node {
     let mut map = Map::new();
     if let Some(row) = spec.row {
         map.int("row", row as i64);
@@ -147,7 +147,7 @@ pub fn encode_dashboard_spec(spec: &DashboardSpec) -> Yaml {
     }
     map.int("width", spec.width as i64);
     map.int("height", spec.height as i64);
-    map.into_yaml()
+    map.into_node()
 }
 
 /// A length-prefixed string of the dump format
