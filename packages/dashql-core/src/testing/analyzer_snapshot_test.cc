@@ -175,9 +175,11 @@ void AnalyzerSnapshotTest::EncodeScript(c4::yml::NodeRef out, const AnalyzedScri
                 << std::string(buffers::analyzer::EnumNameAnalyzerErrorSeverity(error.severity));
         }
         error_node.append_child() << c4::yml::key("message") << error.message;
-        EncodeLocationText(error_node,
-                           script.parsed_script->scanned_script->ResolveTextSpan(*error.symbol_span),
-                           script.parsed_script->scanned_script->GetInput());
+        // Warnings about comment tags only carry a text span
+        auto error_span = error.symbol_span
+                              ? script.parsed_script->scanned_script->ResolveTextSpan(*error.symbol_span)
+                              : (error.text_span ? *error.text_span : buffers::parser::TextSpan());
+        EncodeLocationText(error_node, error_span, script.parsed_script->scanned_script->GetInput());
     }
     // Write table references
     if (!script.table_references.IsEmpty()) {
@@ -322,17 +324,16 @@ void AnalyzerSnapshotTest::EncodeScript(c4::yml::NodeRef out, const AnalyzedScri
                     } else if constexpr (std::is_same_v<T, AnalyzedScript::Expression::Comparison>) {
                         auto& cmp = value;
                         yml_ref.append_child() << c4::yml::key("type") << "comparison";
-                        auto* op_tt = buffers::algebra::ComparisonFunctionTypeTable();
                         yml_ref.append_child()
-                            << c4::yml::key("op") << std::string(op_tt->names[static_cast<uint8_t>(cmp.func)]);
+                            << c4::yml::key("op") << std::string(buffers::algebra::EnumNameComparisonFunction(cmp.func));
                         yml_ref.append_child() << c4::yml::key("arg-left") << cmp.left_expression_id;
                         yml_ref.append_child() << c4::yml::key("arg-right") << cmp.right_expression_id;
                     } else if constexpr (std::is_same_v<T, AnalyzedScript::Expression::BinaryExpression>) {
                         auto& binary = value;
                         yml_ref.append_child() << c4::yml::key("type") << "binary";
-                        auto* op_tt = buffers::algebra::BinaryExpressionFunctionTypeTable();
-                        yml_ref.append_child()
-                            << c4::yml::key("op") << std::string(op_tt->names[static_cast<uint8_t>(binary.func)]);
+                        // The enum has gaps, so the name is looked up by value and not by type table index
+                        yml_ref.append_child() << c4::yml::key("op")
+                                               << std::string(buffers::algebra::EnumNameBinaryExpressionFunction(binary.func));
                         yml_ref.append_child() << c4::yml::key("arg-left") << binary.left_expression_id;
                         yml_ref.append_child() << c4::yml::key("arg-right") << binary.right_expression_id;
                     } else if constexpr (std::is_same_v<T, AnalyzedScript::Expression::FunctionCallExpression>) {

@@ -125,6 +125,7 @@ rust_test(
 # Snapshot tests of the core: one target per category, each a libtest-mimic binary.
 DASHQL_CORE_SNAPSHOT_TESTS = {
     "formatter_snapshot_test": ("formatter_snapshots.rs", "//snapshots/formatter:files"),
+    "analyzer_snapshot_test": ("analyzer_snapshots.rs", "//snapshots/analyzer:files"),
     "diff_snapshot_test": ("diff_snapshots.rs", "//snapshots:files"),
     "plan_view_model_snapshot_test": ("plan_view_model_snapshots.rs", "//snapshots/plans/hyper/tests:files"),
 }
@@ -175,6 +176,7 @@ rust_library(
     crate_root = "dashql-snapshots/src/lib.rs",
     edition = "2021",
     deps = [
+        ":dashql_core",
         ":dashql_grammar",
         "//proto/fb:dashql_buffers_rs",
         "@core_crates//:libtest-mimic",
@@ -364,5 +366,20 @@ rust_test(
         ":dashql_snapshots",
         "//proto/fb:dashql_buffers_rs",
         "@core_crates//:flatbuffers",
+    ],
+)
+
+# The Rust analyzer must produce exactly the output of the C++ analyzer: the analyzer snapshot cases, all
+# snapshot inputs alone and against snapshot catalogs, their prefixes, and fuzzed scripts and catalogs.
+rust_test(
+    name = "analyzer_differential_test",
+    size = "medium",
+    srcs = ["dashql-oracle/tests/analyzer_differential.rs"],
+    data = ["//snapshots:files"],
+    edition = "2021",
+    use_libtest_harness = False,
+    deps = [
+        ":dashql_oracle",
+        ":dashql_snapshots",
     ],
 )

@@ -69,7 +69,7 @@ CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
 | 1 | Scanner, keywords, names, comment blocks | Token-stream differential at 0 diffs; scanner and keyword tests ported | **done** |
 | 2 | Parser: Rust rule set, ParseContext, driver, LAC, recovery | Table parity between both rule sets; 506 parser snapshots; AST differential at 0 diffs | **done** |
 | 3 | Formatter, script_diff | 422 formatter and 13 diff snapshots; idempotency; Hyper validation | **done** (idempotency and Hyper validation open) |
-| 4 | Catalog, descriptor, AnalyzedScript, 4 analyzer passes | 101 analyzer snapshots; `ComputeSignature` equals C++ | |
+| 4 | Catalog, descriptor, AnalyzedScript, 4 analyzer passes | 101 analyzer snapshots; `ComputeSignature` equals C++ | **analyzer done** (signature, catalog tests open) |
 | 5 | Cursor and completion | 161 completion snapshots; differential at every prefix and cursor | |
 | 6 | visualize, compiler, Script, batch, planner | 27 visualize and 38 planner snapshots; batch differential | |
 | 7 | ScriptSession, ScriptExecution, Hyper plan view | Session, execution and plan tests; 36 plan snapshots | |
@@ -221,6 +221,23 @@ vectorizes. Measured with `bench_pipeline` (`attrs_21/*`, the 21 keys of a vis s
 
 Formatting TPC-DS q1 (`format_query`, added to both benchmarks) takes 6.1 µs in Rust and 11.4 µs in
 C++. The hash table variant was 6.5 µs, so it was dropped.
+
+## Phase 4 results
+
+- The catalog (`dashql_core::catalog`) publishes analyzed scripts and descriptor pools as immutable
+  entries shared through `Arc`. An analyzed script holds the entries it was analyzed against, which
+  replaces the `retained_catalog_dependencies` lease. Id reservations go through the catalog by
+  shared reference, so an analysis only needs `&Catalog`.
+- The analyzer (`dashql_core::analyzer`) ports the four passes with the 1024-node morsel
+  interleaving of the `PassManager`, so expression ids match. Objects live in vectors of the
+  analyzed script and reference each other by index.
+- `:analyzer_snapshot_test` passes all 101 analyzer snapshots on the keys the C++ suite compares.
+- `:analyzer_differential_test` compares the complete encoding, including visualizations, against
+  `tools/oracle_ffi_analyzer.cc` with 0 differences. Inputs: every analyzer case with prefixes, every
+  snapshot input of every category alone and against the snapshot catalogs with prefixes, and 3200
+  fuzzed scripts against fuzzed catalogs.
+- Open: `ComputeSignature`, the FlatBuffer packing of the analyzed script, and the catalog,
+  descriptor and analyzer unit tests.
 
 **Open items**
 - The repository `rustfmt.toml` is not valid TOML (`max_width: 120`), so rustfmt refuses it. Format

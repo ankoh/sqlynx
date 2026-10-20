@@ -59,6 +59,24 @@ the C++ core.
   - Many `OBJECT_SQL_*` types come after `VIS_OBJECT_KEYS_` (118).
   - Pinned by `//packages/dashql-core-rs:dashql_buffers_test`.
 
+## Analyzer (`packages/dashql-core/src/analyzer/`)
+
+- **The analyzer modifies the scanned script.** `AnalysisState` registers an empty name in the
+  scanner's name registry and writes analyzer tags and resolved objects into the scanned names, which
+  forces `Script::AnalyzeInternal` to rescan before reanalyzing. The Rust analyzed script owns a copy
+  of the names (`AnalyzedScript::names`, `name_tags`, `name_objects`) and leaves the scan untouched.
+- **CREATE TABLE columns are sorted with the unstable `std::sort`.** Duplicate column names in tables
+  with more than 16 columns may be ordered differently in C++. Rust sorts stably.
+- **`AND`/`OR` over constants become binary expressions with function `UNKNOWN`**, because
+  `ReadBinaryExpressionFunction` has no mapping for them.
+- **Function calls without arguments are constant but never constant roots.** Only calls with
+  arguments are added to the constant list.
+- **Unreadable qualified function names throw.** `IdentifyFunctionCallsPass` calls `value()` on the
+  empty optional of a function name path it cannot read, which throws `std::bad_optional_access` out
+  of the analysis. Rust returns an error.
+- **Root scopes iterate like `ankerl::unordered_dense::set`**: in insertion order, and erasing moves
+  the last element into the hole. Name resolution visits the roots in that order.
+
 ## Formatter (`packages/dashql-core/src/formatter/`)
 
 - **Attribute lookup picks different duplicates** (`utils/ast_attributes.h` `LookupAttributes`). With
@@ -105,6 +123,18 @@ the C++ core.
   `//packages/dashql-core-rs:oracle_parser_snapshot_test` replays all 506 parser cases.
 
 ## Fixed in C++ before porting
+
+Two bugs of the C++ analyzer snapshot encoder (`src/testing/analyzer_snapshot_test.cc`) were fixed.
+Neither changed a checked-in snapshot:
+
+- **Binary expression names were off by one.** The encoder looked up names by indexing the dense
+  type table names with the enum value, but `BinaryExpressionFunction` skips the value 3. `MULTIPLY`
+  printed as `DIVIDE`, `DIVIDE` as `MODULUS`, and `XOR` read past the end. It now uses
+  `EnumNameBinaryExpressionFunction` (and `EnumNameComparisonFunction`).
+- **Warnings without a symbol span crashed the encoder.** `MALFORMED_COMMENT_TAG` warnings only have
+  a text span, and the encoder dereferenced the null symbol span.
+
+Hash-table-dependent behavior was also made deterministic:
 
 Behavior that depended on the hash table implementation was made deterministic in the C++ core first,
 because native builds (libstdc++) and wasm builds (libc++) could disagree, and a port cannot reproduce

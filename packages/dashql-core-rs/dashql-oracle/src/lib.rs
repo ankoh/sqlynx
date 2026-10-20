@@ -4,6 +4,7 @@
 //! answers in the serialization of the snapshot tests. Rust tests compare the Rust core against
 //! it on arbitrary inputs, not only on the checked-in snapshots.
 
+pub mod analyzer;
 pub mod formatter;
 pub mod script_diff;
 pub mod view;
