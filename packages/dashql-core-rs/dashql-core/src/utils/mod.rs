@@ -60,3 +60,13 @@ pub fn quote_identifier(text: &str) -> String {
     out.push('"');
     out
 }
+
+/// Format a finite double with the shortest digits that round-trip, in scientific notation for very large and very
+/// small magnitudes (`1e-5`, `1.5e300`)
+pub fn format_double(value: f64) -> String {
+    if value == 0.0 || (1e-4..1e16).contains(&value.abs()) {
+        format!("{value}")
+    } else {
+        format!("{value:e}")
+    }
+}

@@ -21,7 +21,9 @@
 //! are not standard JSON or have duplicate keys or NUL characters (see `is_comparable_json`).
 
 use dashql_core::visualize::{compile_markdown_template, parse_vegalite_to_visualize};
-use dashql_snapshots::corpus::{canonical_numbers, has_duplicate_keys, prefixes, snapshot_inputs, Rng, CATEGORIES};
+use dashql_snapshots::corpus::{
+    canonical_numbers, has_duplicate_keys, prefixes, round_numbers, snapshot_inputs, Rng, CATEGORIES,
+};
 use dashql_snapshots::encode::visualize::{analyze_scripts, dump_markdown, dump_visualizations};
 use dashql_snapshots::{load_category, run, Arguments, Failed, Trial};
 use std::sync::atomic::{AtomicUsize, Ordering::Relaxed};
@@ -48,23 +50,27 @@ fn first_difference(expected: &str, actual: &str) -> String {
     format!("at byte {at}\n  C++:  {:?}\n  Rust: {:?}", context(e), context(a))
 }
 
-/// A dump with canonical doubles and without the length prefixes of the JSON texts, which depend on the digits
+/// A dump without the length prefixes of its texts, which depend on the digits, and with comparable numbers: the
+/// generated Vega-Lite JSON compares doubles by value, the statements parsed back from it at the 6 significant
+/// digits that the C++ parser writes (`%g`)
 fn comparable(dump: &str) -> String {
     let mut out = String::new();
     let mut rest = dump;
-    while let Some(at) = rest.find("vegalite ").or_else(|| rest.find("roundtrip ")) {
-        let (head, tail) = rest.split_at(at);
-        out.push_str(head);
-        let space = tail.find(' ').unwrap() + 1;
-        out.push_str(&tail[..space]);
-        let tail = &tail[space..];
-        rest = match tail.find(':') {
-            Some(colon) if tail[..colon].bytes().all(|c| c.is_ascii_digit()) => &tail[colon + 1..],
-            _ => tail,
-        };
+    loop {
+        let next = ["vegalite ", "roundtrip "].into_iter().filter_map(|p| rest.find(p).map(|at| (at, p))).min();
+        let Some((at, prefix)) = next else { break };
+        out.push_str(&canonical_numbers(&rest[..at]));
+        out.push_str(prefix);
+        rest = &rest[at + prefix.len()..];
+        let length = rest.find(':').filter(|&colon| colon > 0 && rest[..colon].bytes().all(|c| c.is_ascii_digit()));
+        let Some(colon) = length else { continue };
+        let end = colon + 1 + rest[..colon].parse::<usize>().unwrap();
+        let Some(text) = rest.get(colon + 1..end) else { continue };
+        out.push_str(&if prefix == "vegalite " { canonical_numbers(text) } else { round_numbers(text, 6) });
+        rest = &rest[end..];
     }
-    out.push_str(rest);
-    canonical_numbers(&out)
+    out.push_str(&canonical_numbers(rest));
+    out
 }
 
 /// Does a dump contain a JSON key or array element without a value?
@@ -160,7 +166,9 @@ fn compare_vegalite(json: &[u8]) -> Result<(), String> {
     if !expected.is_empty() {
         VEGALITE_STATEMENTS.fetch_add(1, Relaxed);
     }
-    if expected != actual {
+    // The C++ parser writes doubles with 6 significant digits
+    let comparable = |text: &[u8]| round_numbers(&String::from_utf8_lossy(text), 6);
+    if comparable(&expected) != comparable(&actual) {
         return Err(format!(
             "json {:?}\nC++:  {:?}\nRust: {:?}",
             String::from_utf8_lossy(json),

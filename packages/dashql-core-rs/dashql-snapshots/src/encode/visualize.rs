@@ -150,38 +150,18 @@ pub fn encode_dashboard_spec(spec: &DashboardSpec) -> Node {
     map.into_node()
 }
 
+/// A double of the dump format, `inf` and `nan` like the C++ oracle
+fn dump_double(d: f64) -> String {
+    match d {
+        d if d.is_nan() => "nan".to_string(),
+        d if d.is_infinite() => if d < 0.0 { "-inf" } else { "inf" }.to_string(),
+        d => dashql_core::utils::format_double(d),
+    }
+}
+
 /// A length-prefixed string of the dump format
 fn dump_string(out: &mut String, s: &str) {
     let _ = write!(out, "{}:{s}", s.len());
-}
-
-/// `printf("%.17g")`
-fn format_g17(d: f64) -> String {
-    if d.is_nan() {
-        return if d.is_sign_negative() { "-nan" } else { "nan" }.to_string();
-    }
-    if d.is_infinite() {
-        return if d < 0.0 { "-inf" } else { "inf" }.to_string();
-    }
-    if d == 0.0 {
-        return if d.is_sign_negative() { "-0" } else { "0" }.to_string();
-    }
-    let e_form = format!("{:.16e}", d);
-    let (mantissa, exponent) = e_form.split_once('e').unwrap();
-    let exponent: i32 = exponent.parse().unwrap();
-    let trim = |s: &str| -> String {
-        if s.contains('.') {
-            s.trim_end_matches('0').trim_end_matches('.').to_string()
-        } else {
-            s.to_string()
-        }
-    };
-    if !(-4..17).contains(&exponent) {
-        let sign = if exponent < 0 { '-' } else { '+' };
-        format!("{}e{sign}{:02}", trim(mantissa), exponent.abs())
-    } else {
-        trim(&format!("{:.*}", (16 - exponent) as usize, d))
-    }
 }
 
 fn dump_markdown_node(out: &mut String, node: &MarkdownNode, depth: usize) {
@@ -254,25 +234,11 @@ pub fn dump_visualizations(script: &AnalyzedScript) -> String {
             if let Some(p) = &umap.projection {
                 let _ = write!(out, " method={} metric=", p.method.0);
                 dump_string(&mut out, &p.metric);
-                let optional = |v: Option<f64>| v.map(format_g17).unwrap_or_else(|| "null".to_string());
+                let optional = |v: Option<f64>| v.map(dump_double).unwrap_or_else(|| "null".to_string());
                 let _ = write!(out, " neighbors={} min_dist={}", optional(p.neighbors), optional(p.min_dist));
             }
             out.push('\n');
         }
     }
     out
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn formats_like_printf() {
-        assert_eq!(format_g17(0.1), "0.10000000000000001");
-        assert_eq!(format_g17(15.0), "15");
-        assert_eq!(format_g17(1e17), "1e+17");
-        assert_eq!(format_g17(1e-5), "1.0000000000000001e-05");
-        assert_eq!(format_g17(123456.5), "123456.5");
-    }
 }

@@ -84,6 +84,22 @@ pub fn fragments(rng: &mut Rng, fragments: &[&str], max_count: usize) -> String 
 /// such numbers after canonicalizing both sides, so they compare the values. Integers and digits that are part of
 /// identifiers or hex literals stay as they are.
 pub fn canonical_numbers(text: &str) -> String {
+    map_numbers(text, |value, is_double| is_double.then(|| format!("{value:e}")))
+}
+
+/// Round every number literal of a text, integers included, to the given number of significant digits.
+///
+/// The C++ core writes some doubles with `%g` (6 significant digits), the Rust core keeps all digits. Comparing both
+/// at the lower precision compares the values C++ can represent.
+pub fn round_numbers(text: &str, significant_digits: usize) -> String {
+    let precision = significant_digits.saturating_sub(1);
+    // Adding zero folds -0 into 0
+    map_numbers(text, |value, _| Some(format!("{:.precision$e}", value + 0.0)))
+}
+
+/// Replace the number literals of a text. `replace` gets the value and whether the literal has a fraction or an
+/// exponent, and returns the replacement or `None` to keep the literal.
+fn map_numbers(text: &str, replace: impl Fn(f64, bool) -> Option<String>) -> String {
     let bytes = text.as_bytes();
     let is_word = |c: u8| c.is_ascii_alphanumeric() || c == b'_' || c == b'.';
     let mut out = String::with_capacity(text.len());
@@ -122,10 +138,10 @@ pub fn canonical_numbers(text: &str) -> String {
             }
         }
         let followed_by_word = end < bytes.len() && is_word(bytes[end]);
-        if is_double && !followed_by_word {
-            if let Ok(value) = text[begin..end].parse::<f64>() {
+        if !followed_by_word {
+            if let Some(replacement) = text[begin..end].parse::<f64>().ok().and_then(|v| replace(v, is_double)) {
                 out.push_str(&text[copied..begin]);
-                out.push_str(&format!("{value:e}"));
+                out.push_str(&replacement);
                 copied = end;
             }
         }
@@ -180,7 +196,7 @@ pub fn has_duplicate_keys(json: &[u8]) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{canonical_numbers, has_duplicate_keys};
+    use super::{canonical_numbers, has_duplicate_keys, round_numbers};
 
     #[test]
     fn finds_duplicate_keys() {
@@ -200,5 +216,15 @@ mod tests {
         assert_eq!(canonical_numbers("{\"a\":1e21}"), canonical_numbers("{\"a\":1000000000000000000000.0}"));
         // Integers, identifiers and hex literals stay
         assert_eq!(canonical_numbers("id 42 x1.5 0x3e5 v2 a_1e5"), "id 42 x1.5 0x3e5 v2 a_1e5");
+    }
+
+    #[test]
+    fn rounds_numbers() {
+        assert_eq!(
+            round_numbers("(a => 123457, b => 1.23457e+06)", 6),
+            round_numbers("(a => 123456.7, b => 1234567)", 6)
+        );
+        assert_ne!(round_numbers("x => 1.5", 6), round_numbers("x => 1.6", 6));
+        assert_eq!(round_numbers("v2 0x10", 6), "v2 0x10");
     }
 }

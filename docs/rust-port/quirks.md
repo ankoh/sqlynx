@@ -109,7 +109,7 @@ the C++ core.
 - The top-level spec writes `resolve` before `layer`, nested layers `layer` before `resolve`.
 
 **Vega-Lite parser** (`vegalite_parser.cc`)
-- Doubles that are not integral or are at least 1e15 are printed with `%g`.
+- Doubles that are not integral or are at least 1e15 are printed with `%g` (6 significant digits). **Not reproduced:** Rust writes the shortest round-trip digits, the differential test compares at 6 digits.
 - `ToSnakeCase("Field")` gives `field`, which then counts as an identifier key.
 - A mark object with only `type` collapses to `mark => type`, an empty bin object becomes `true`.
 - An empty `$sql` does not fall back to `$raw`.

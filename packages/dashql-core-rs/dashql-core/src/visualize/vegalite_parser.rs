@@ -1,5 +1,6 @@
 //! Turn a Vega-Lite spec back into a VISUALIZE statement (`vegalite_parser.cc`).
 
+use crate::utils::format_double;
 use serde_json::{Map, Number, Value};
 
 /// A JSON object
@@ -86,50 +87,10 @@ fn emit_string_literal(s: &str) -> String {
     format!("'{}'", s.replace('\'', "''"))
 }
 
-/// `printf("%g", d)`: 6 significant digits, exponent notation below 1e-4 and from 1e6 on, no trailing zeros
-pub(crate) fn format_g(d: f64) -> String {
-    if d.is_infinite() {
-        return if d < 0.0 { "-inf".to_string() } else { "inf".to_string() };
-    }
-    if d.is_nan() {
-        return if d.is_sign_negative() { "-nan".to_string() } else { "nan".to_string() };
-    }
-    if d == 0.0 {
-        return if d.is_sign_negative() { "-0".to_string() } else { "0".to_string() };
-    }
-    // The exponent after rounding to 6 significant digits
-    let e_form = format!("{:.5e}", d);
-    let (mantissa, exponent) = e_form.split_once('e').unwrap();
-    let exponent: i32 = exponent.parse().unwrap();
-    if !(-4..6).contains(&exponent) {
-        let mantissa = trim_fraction_zeros(mantissa);
-        let sign = if exponent < 0 { '-' } else { '+' };
-        format!("{mantissa}e{sign}{:02}", exponent.abs())
-    } else {
-        let decimals = (5 - exponent) as usize;
-        trim_fraction_zeros(&format!("{:.*}", decimals, d)).to_string()
-    }
-}
-
-/// Remove trailing zeros of a fraction, and the decimal point if nothing follows it
-fn trim_fraction_zeros(s: &str) -> &str {
-    if !s.contains('.') {
-        return s;
-    }
-    s.trim_end_matches('0').trim_end_matches('.')
-}
-
-/// A JSON number as a bare DSL literal (`EmitNumber`): integers as they are, integral doubles below 1e15 without
-/// fraction, other doubles with `%g`
+/// A JSON number as a bare DSL literal: integers as they are, doubles with their shortest round-trip digits
 fn emit_number(n: &Number) -> String {
     match n.as_f64() {
-        Some(d) if n.is_f64() => {
-            if d.fract() == 0.0 && d.abs() < 1e15 {
-                (d as i64).to_string()
-            } else {
-                format_g(d)
-            }
-        }
+        Some(d) if n.is_f64() => format_double(d),
         _ => n.to_string(),
     }
 }
@@ -360,25 +321,20 @@ mod tests {
     use super::*;
 
     #[test]
-    fn formats_like_printf_g() {
-        for (value, expected) in [
-            (1e15, "1e+15"),
-            (1.5e15, "1.5e+15"),
-            (0.1, "0.1"),
-            (0.0001, "0.0001"),
-            (0.00001234, "1.234e-05"),
-            (123456.7, "123457"),
-            (1234567.0, "1.23457e+06"),
-            (0.5, "0.5"),
-            (-2.25, "-2.25"),
-            (1e300, "1e+300"),
-            (1e-300, "1e-300"),
-            (f64::INFINITY, "inf"),
-            (f64::NEG_INFINITY, "-inf"),
-            (999999.5, "1e+06"),
-            (9.9999949, "9.99999"),
+    fn emits_numbers_without_losing_digits() {
+        for (json, literal) in [
+            ("1", "1"),
+            ("-12", "-12"),
+            ("1.0", "1"),
+            ("1234567.0", "1234567"),
+            ("123456.7", "123456.7"),
+            ("0.1", "0.1"),
+            ("0.00001234", "1.234e-5"),
+            ("1e300", "1e300"),
+            ("18446744073709551615", "18446744073709551615"),
         ] {
-            assert_eq!(format_g(value), expected, "{value}");
+            let number: Number = serde_json::from_str(json).unwrap();
+            assert_eq!(emit_number(&number), literal, "{json}");
         }
     }
 
@@ -411,7 +367,7 @@ mod tests {
                 "SELECT 1\nVISUALIZE USING vegalite (\n",
                 "  mark => (type => bar, opacity => 0.5, point => (filled => true)),\n",
                 "  encoding => (\n",
-                "    x => (field => \"a b\", type => nominal, sort => ['x', 1.5e+20], label_angle => 3)\n",
+                "    x => (field => \"a b\", type => nominal, sort => ['x', 1.5e20], label_angle => 3)\n",
                 "  ),\n",
                 "  resolve => (scale => (x => independent))\n",
                 ");"
@@ -423,7 +379,7 @@ mod tests {
     fn emits_numbers() {
         assert_eq!(
             roundtrip(r#"{"data":{"$raw":"r"},"encoding":{"x":{"sort":[1, -2, 18446744073709551615, -0, 2.0, 0.25]}}}"#),
-            "r\nVISUALIZE USING vegalite (\n  encoding => (\n    x => (sort => [1, -2, 18446744073709551615, 0, 2, 0.25])\n  )\n);"
+            "r\nVISUALIZE USING vegalite (\n  encoding => (\n    x => (sort => [1, -2, 18446744073709551615, -0, 2, 0.25])\n  )\n);"
         );
     }
 }

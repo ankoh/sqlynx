@@ -77,17 +77,14 @@ fn real(value: f64) -> Node {
     super::plain(&format_double(value))
 }
 
-/// Format a double as a YAML scalar: the shortest round-trip digits, in scientific notation for very large and
-/// very small magnitudes
+/// Format a double as a YAML scalar
 pub fn format_double(value: f64) -> String {
     if value.is_nan() {
         ".nan".into()
     } else if value.is_infinite() {
         if value > 0.0 { ".inf".into() } else { "-.inf".into() }
-    } else if value == 0.0 || (1e-4..1e16).contains(&value.abs()) {
-        format!("{value}")
     } else {
-        format!("{value:e}")
+        dashql_core::utils::format_double(value)
     }
 }
 
