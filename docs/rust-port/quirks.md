@@ -26,6 +26,17 @@ the C++ core.
   comment mentions dollar quotes. Backslash has no special meaning in `'...'`, and quoted strings
   continue across a newline only for bit and hex strings.
 - **`\r` is not recorded as a line break.**
+- **Operators keep the wrong length after trimming.** The `{operator}` action calls `yyless(yyleng - nchars)`
+  where Postgres calls `yyless(nchars)`. So `+--x` scans as a 2-byte PLUS followed by MINUS, and the
+  comment is lost; `*/*` scans as a 2-byte STAR.
+- **Literals swallow trailing comments.** `{quotestop}` includes trailing `{whitespace}`, comments included,
+  and `Read*Literal` only trims spaces and `\n`. `'abc'  -- c` is an 11-byte SCONST, and the comment is
+  never recorded.
+- **Some line breaks are recorded twice.** A `{quotefail}` match records the line breaks of its whitespace,
+  then `yyless(1)` puts that whitespace back and it is scanned again (`'a'\n-1`).
+- **EOF is located at `(length, 1)`.** Errors of unterminated constructs therefore end one byte past the
+  text.
+- **Zero-length quoted identifiers still return an IDENT**, with an empty name, next to the error.
 
 ## Parser (`grammar/`, `packages/dashql-core/src/parser/`)
 

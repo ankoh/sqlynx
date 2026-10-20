@@ -14,6 +14,8 @@
 #include "c4/yml/emit.hpp"
 #include "c4/yml/std/std.hpp"
 #include "dashql/exception.h"
+#include "dashql/parser/comment_blocks.h"
+#include "dashql/parser/grammar/keywords.h"
 #include "dashql/parser/parser.h"
 #include "dashql/parser/scanner.h"
 #include "dashql/script.h"
@@ -37,7 +39,19 @@ struct DashQLOracleResult {
 
 /// Release an oracle result
 void dashql_oracle_free(DashQLOracleResult result);
-/// Scan a script and dump the symbols as lines of `<kind> <offset> <length>[ <name_id>]`
+/// Scan a script and dump the scanner output, one record per line:
+///   T <kind> <offset> <length> [<name id> | <keyword text>]   symbols, in order
+///   E <offset> <length> <message>                           errors
+///   L <offset> <length>                                     line breaks
+///   C <offset> <length>                                     comments
+///   O <offset> <length> <replacement>                       obfuscated literals
+///   N <id> <offset> <length> <occurrences> <text>           registered names
+///   B <type> <text span> <tag span> <comments begin> <comments count> <lines begin> <lines count>
+///                                                           comment blocks (GroupComments)
+///   BL <offset> <length>                                    comment block lines
+///   W <offset> <length> <message>                           comment warnings
+///   M <block index>                                         the metadata block (u32 max if none)
+/// Strings are written as <byte length>:<bytes>.
 DashQLOracleResult dashql_oracle_scan(const char* text, size_t length);
 /// Scan and parse a script, return the `expected` YAML of a parser snapshot
 DashQLOracleResult dashql_oracle_parse(const char* text, size_t length);
@@ -78,14 +92,58 @@ DashQLOracleResult dashql_oracle_scan(const char* text, size_t length) {
         rope::Rope input{1024, std::string_view{text, length}};
         auto scanned = parser::Scanner::Scan(input, 0, 2);
         std::stringstream out;
+        // Strings are written as <byte length>:<bytes> so that they may contain any byte.
+        auto str = [&](std::string_view s) { out << s.size() << ":" << s; };
         scanned->symbols.ForEach([&](size_t, const parser::Parser::symbol_type& symbol) {
-            out << static_cast<int>(symbol.kind()) << " " << symbol.location.offset() << " "
+            out << "T " << static_cast<int>(symbol.kind()) << " " << symbol.location.offset() << " "
                 << symbol.location.length();
             if (symbol.kind() == parser::Parser::symbol_kind_type::S_IDENT) {
                 out << " " << symbol.value.as<size_t>();
+            } else if (symbol.kind() == parser::Parser::symbol_kind_type::S_VISUALIZE_LA ||
+                       !parser::Keyword::GetKeywordName(symbol.kind()).empty()) {
+                out << " ";
+                str(symbol.value.as<std::string_view>());
             }
             out << "\n";
         });
+        for (auto& [span, message] : scanned->errors) {
+            out << "E " << span.offset() << " " << span.length() << " ";
+            str(message);
+            out << "\n";
+        }
+        for (auto& span : scanned->line_breaks) {
+            out << "L " << span.offset() << " " << span.length() << "\n";
+        }
+        for (auto& span : scanned->comments) {
+            out << "C " << span.offset() << " " << span.length() << "\n";
+        }
+        for (auto& literal : scanned->obfuscated_literals) {
+            out << "O " << literal.location.offset() << " " << literal.location.length() << " ";
+            str(literal.replacement);
+            out << "\n";
+        }
+        scanned->name_registry.names.ForEach([&](size_t, const RegisteredName& name) {
+            out << "N " << name.name_id << " " << name.location.offset() << " " << name.location.length() << " "
+                << name.occurrences << " ";
+            str(name.text);
+            out << "\n";
+        });
+        auto blocks = parser::GroupComments(scanned->GetInput(), scanned->comments);
+        for (auto& block : blocks.blocks) {
+            out << "B " << static_cast<int>(block.block_type()) << " " << block.text_span().offset() << " "
+                << block.text_span().length() << " " << block.tag_span().offset() << " " << block.tag_span().length()
+                << " " << block.comments_begin() << " " << block.comments_count() << " " << block.lines_begin() << " "
+                << block.lines_count() << "\n";
+        }
+        for (auto& line : blocks.lines) {
+            out << "BL " << line.offset() << " " << line.length() << "\n";
+        }
+        for (auto& [span, message] : blocks.warnings) {
+            out << "W " << span.offset() << " " << span.length() << " ";
+            str(message);
+            out << "\n";
+        }
+        out << "M " << blocks.metadata_block << "\n";
         return out.str();
     });
 }

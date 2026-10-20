@@ -204,3 +204,12 @@ bison_rust_tables(
     grammar = ":grammar_y",
     out = "gen/rust/parser_tables.rs",
 )
+
+# The keyword table of the Rust scanner, generated from the lists shared with the C++ scanner.
+genrule(
+    name = "keywords_rs",
+    srcs = [":keyword_lists"],
+    outs = ["gen/rust/keywords.rs"],
+    cmd = "python3 $(location //grammar/rust:gen_keywords.py) --output $@ $(locations :keyword_lists)",
+    tools = ["//grammar/rust:gen_keywords.py"],
+)

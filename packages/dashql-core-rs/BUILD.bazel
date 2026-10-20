@@ -9,7 +9,7 @@
 #
 # All third-party crates resolve from the isolated @core_crates universe (MODULE.bazel).
 
-load("@rules_rust//rust:defs.bzl", "rust_library", "rust_shared_library", "rust_test")
+load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library", "rust_shared_library", "rust_test")
 load("@rules_rust_wasm_bindgen//:defs.bzl", "rust_wasm_bindgen")
 load("//bazel:wasm_tools.bzl", "optimize_wasm", "wasm_bindgen_module")
 load("//grammar/rust:defs.bzl", "bison_rust_tables")
@@ -24,7 +24,7 @@ exports_files([
 # ---------------------------------------------------------------------------
 
 # rules_rust places generated sources next to the checked-in ones only if they belong to the same
-# package, copy the tables of //grammar into the crate.
+# package, copy the generated modules of //grammar into the crate.
 genrule(
     name = "dashql_grammar_tables_rs",
     srcs = ["//grammar:parser_tables_rs"],
@@ -32,13 +32,27 @@ genrule(
     cmd = "cp $< $@",
 )
 
+genrule(
+    name = "dashql_grammar_keywords_rs",
+    srcs = ["//grammar:keywords_rs"],
+    outs = ["dashql-grammar/src/keywords/table.rs"],
+    cmd = "cp $< $@",
+)
+
 rust_library(
     name = "dashql_grammar",
-    srcs = glob(["dashql-grammar/src/**/*.rs"]) + [":dashql_grammar_tables_rs"],
+    srcs = glob(["dashql-grammar/src/**/*.rs"]) + [
+        ":dashql_grammar_keywords_rs",
+        ":dashql_grammar_tables_rs",
+    ],
     crate_name = "dashql_grammar",
     crate_root = "dashql-grammar/src/lib.rs",
     edition = "2021",
     visibility = ["//visibility:public"],
+    deps = [
+        "//proto/fb:dashql_buffers_rs",
+        "@core_crates//:serde_json",
+    ],
 )
 
 rust_test(
@@ -129,11 +143,20 @@ rust_test(
 rust_library(
     name = "dashql_oracle",
     testonly = True,
-    srcs = glob(["dashql-oracle/src/**/*.rs"]),
+    srcs = ["dashql-oracle/src/lib.rs"],
     crate_name = "dashql_oracle",
     crate_root = "dashql-oracle/src/lib.rs",
     edition = "2021",
     deps = ["//packages/dashql-core:oracle_ffi"],
+)
+
+# Query the oracle from the command line: bazel run //packages/dashql-core-rs:oracle -- scan "select 1"
+rust_binary(
+    name = "oracle",
+    testonly = True,
+    srcs = ["dashql-oracle/src/bin/oracle.rs"],
+    edition = "2021",
+    deps = [":dashql_oracle"],
 )
 
 rust_test(
@@ -190,4 +213,20 @@ optimize_wasm(
     name = "core_wasm",
     src = ":dashql_core_bindgen_wasm",
     out = "dashql_core_bg.wasm",
+)
+
+# The Rust scanner must produce exactly the output of the C++ scanner: all snapshot inputs, their
+# prefixes, and deterministic fuzz inputs.
+rust_test(
+    name = "scanner_differential_test",
+    size = "medium",
+    srcs = ["dashql-oracle/tests/scanner_differential.rs"],
+    data = ["//snapshots:files"],
+    edition = "2021",
+    use_libtest_harness = False,
+    deps = [
+        ":dashql_grammar",
+        ":dashql_oracle",
+        ":dashql_snapshots",
+    ],
 )

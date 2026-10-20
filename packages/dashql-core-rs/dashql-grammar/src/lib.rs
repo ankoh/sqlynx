@@ -5,10 +5,17 @@
 //! (`tests/table_parity.rs` asserts that), which keeps parse trees, error messages, error
 //! recovery and the completion probes of the Rust core identical by construction.
 //!
-//! The scanner, the parse context and the LR driver follow in later phases of the port
+//! [`scanner`] is a port of the flex scanner `grammar/scanner.l` that reproduces its output
+//! exactly. The parse context and the LR driver follow in later phases of the port
 //! (docs/rust-port/README.md).
 
 use std::borrow::Cow;
+
+pub mod comment_blocks;
+pub mod keywords;
+pub mod names;
+pub mod scanner;
+pub mod span;
 
 #[allow(dead_code, non_upper_case_globals, unused_braces, unused_parens, unused_variables)]
 #[rustfmt::skip]

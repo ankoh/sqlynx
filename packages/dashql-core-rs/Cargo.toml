@@ -18,6 +18,7 @@ license = "MPL-2.0"
 [workspace.dependencies]
 flatbuffers = "=25.12.19"
 libtest-mimic = "=0.8.1"
+serde_json = { version = "=1.0.151", features = ["preserve_order"] }
 # Must match the wasm-bindgen-cli bundled with rules_rust_wasm_bindgen (MODULE.bazel).
 wasm-bindgen = "=0.2.105"
 yaml-rust2 = "=0.11.0"

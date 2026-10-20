@@ -38,8 +38,9 @@ fn call(f: unsafe extern "C" fn(*const c_char, usize) -> DashQLOracleResult, tex
 
 /// Scan a script with the C++ scanner.
 ///
-/// Returns one line per symbol: `<kind> <offset> <length>`, followed by the name id for
-/// identifiers. Symbol kinds are bison symbol kinds, see `dashql_grammar::symbol_kind`.
+/// Returns the complete scanner output, one record per line (see `dashql_oracle_scan` in
+/// `packages/dashql-core/tools/oracle_ffi.cc`). Symbol kinds are bison symbol kinds, see
+/// `dashql_grammar::symbol_kind`.
 pub fn scan(text: &str) -> Result<String, String> {
     call(dashql_oracle_scan, text)
 }
@@ -58,12 +59,12 @@ mod tests {
     #[test]
     fn scans() {
         // select, 1, EOF
-        let tokens = scan("select 1").unwrap();
-        let lines: Vec<&str> = tokens.lines().collect();
-        assert_eq!(lines.len(), 3, "{tokens}");
-        assert!(lines[0].ends_with(" 0 6"), "{tokens}");
-        assert!(lines[1].ends_with(" 7 1"), "{tokens}");
-        assert!(lines[2].starts_with("0 "), "{tokens}");
+        let out = scan("select 1").unwrap();
+        let tokens: Vec<&str> = out.lines().filter(|l| l.starts_with("T ")).collect();
+        assert_eq!(tokens.len(), 3, "{out}");
+        assert!(tokens[0].ends_with(" 0 6 6:select"), "{out}");
+        assert!(tokens[1].ends_with(" 7 1"), "{out}");
+        assert!(tokens[2].starts_with("T 0 "), "{out}");
     }
 
     #[test]

@@ -49,9 +49,9 @@ Snapshots alone do not prove parity. The port is checked on several levels:
 | `//grammar/rust:tables.rs.m4`, `//grammar/rust:defs.bzl` | Bison skeleton and `bison_rust_tables` macro |
 | `//grammar:parser_tables_rs` | The tables of `dashql.y` as Rust (tables only, actions are still C++) |
 | `//proto/fb:dashql_buffers_rs` | `flatc --rust` bindings, bundled into one crate by `proto/fb/bazel/flatbuf_rust_bundle.py`. `plan_view_model_events.fbs` is excluded because Rust does not support vectors of unions. |
-| `//packages/dashql-core-rs:dashql_grammar` | Grammar crate: tables, symbol kinds, symbol names |
+| `//packages/dashql-core-rs:dashql_grammar` | Grammar crate: tables, symbol kinds, symbol names, keywords (`//grammar:keywords_rs`), scanner, comment blocks |
 | `//packages/dashql-core-rs:dashql_snapshots` | Loads snapshot categories as libtest-mimic trials, structural YAML comparison |
-| `//packages/dashql-core-rs:dashql_oracle` | The C++ core as an oracle (`scan`, `parse`) |
+| `//packages/dashql-core-rs:dashql_oracle` | The C++ core as an oracle (`scan`, `parse`). `bazel run //packages/dashql-core-rs:oracle -- scan "..."` queries it from the shell. |
 | `//packages/dashql-core-rs:core_wasm` | wasm-bindgen module (for now: grammar only, to track the module size) |
 
 ```bash
@@ -66,7 +66,7 @@ CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
 | # | Phase | Gate | Status |
 |---|---|---|---|
 | 0 | Spikes and scaffolding | Skeleton emits the C++ automaton; harness and oracle reproduce the snapshots | **done** |
-| 1 | Scanner, keywords, names, comment blocks | Token-stream differential at 0 diffs; scanner and keyword tests ported | |
+| 1 | Scanner, keywords, names, comment blocks | Token-stream differential at 0 diffs; scanner and keyword tests ported | **done** |
 | 2 | Parser: Rust rule set, ParseContext, driver, LAC, recovery | Table parity between both rule sets; 506 parser snapshots; AST differential at 0 diffs | |
 | 3 | Formatter, script_diff | 422 formatter and 13 diff snapshots; idempotency; Hyper validation | |
 | 4 | Catalog, descriptor, AnalyzedScript, 4 analyzer passes | 101 analyzer snapshots; `ComputeSignature` equals C++ | |
@@ -118,6 +118,28 @@ CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
 - The legacy `DashQLScript` wrapper is still used by the app (format dialog, shell share,
   `shell/api.ts`, catalog cards). It cannot be dropped wholesale; shrink it to the methods in use when
   designing the wasm-bindgen API.
+
+## Phase 1 results
+
+**Scanner**
+- `dashql_grammar::scanner` emulates the flex matching discipline instead of using a generated DFA:
+  - every rule of the current start condition computes its longest match
+  - the longest match wins, and ties go to the earlier rule
+  - line breaks are recorded per match, before `yyless` puts text back
+- The lookahead filter is ported literally.
+
+**Differential test**
+- `:scanner_differential_test` compares the complete scanner output against the C++ scanner on:
+  - every snapshot input of every category, and their prefixes
+  - 32,000 deterministic fuzz inputs
+- The compared output covers symbols and values, errors, line breaks, comments, obfuscated literals,
+  names, comment blocks, and comment warnings.
+- There are no differences.
+- New quirks found along the way are in [quirks.md](quirks.md).
+
+**Comment blocks**
+- `dashql_grammar::comment_blocks` ports `GroupComments`.
+- Metadata JSON is validated with serde_json instead of rapidjson.
 
 **Open items**
 - rustfmt is not wired into Bazel. `@rules_rust//tools/upstream_wrapper:rustfmt` crashes Bazel during
