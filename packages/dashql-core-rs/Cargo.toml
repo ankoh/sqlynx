@@ -8,7 +8,7 @@
 # Repin after editing any member manifest: CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
 [workspace]
 resolver = "2"
-members = ["dashql-core-wasm", "dashql-grammar", "dashql-oracle", "dashql-snapshots"]
+members = ["dashql-core", "dashql-core-wasm", "dashql-grammar", "dashql-oracle", "dashql-snapshots"]
 
 [workspace.package]
 version = "0.1.0"

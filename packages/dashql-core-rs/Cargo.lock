@@ -153,6 +153,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f8f80099a98041a3d1622845c271458a2d73e688351bf3cb999266764b81d48"
 
 [[package]]
+name = "dashql-core"
+version = "0.1.0"
+dependencies = [
+ "flatbuffers",
+ "serde_json",
+]
+
+[[package]]
 name = "dashql-core-wasm"
 version = "0.1.0"
 dependencies = [

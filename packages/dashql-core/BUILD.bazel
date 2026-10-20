@@ -539,7 +539,7 @@ cc_binary(
 
 cc_library(
     name = "oracle_ffi",
-    srcs = ["tools/oracle_ffi.cc"],
+    srcs = glob(["tools/oracle_ffi*.cc"]),
     copts = DASHQL_COPTS,
     linkopts = DASHQL_LINKOPTS,
     deps = [
