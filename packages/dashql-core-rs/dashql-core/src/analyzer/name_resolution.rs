@@ -14,7 +14,7 @@ use crate::catalog::*;
 use dashql_buffers::analyzer::{AnalyzerErrorSeverity, AnalyzerErrorType, NameTag, SemanticNodeMarkerType};
 use dashql_buffers::parser::{AttributeKey as K, Node, NodeType, StatementType};
 use dashql_grammar::attrs;
-use std::collections::HashMap;
+use crate::hash::HashMap;
 use std::ops::Range;
 use std::sync::Arc;
 
@@ -39,14 +39,25 @@ struct NodeState {
     ctes: Vec<CteDefinition>,
 }
 
+/// Move the entries of a list to the end of another one. Takes over the buffer if the destination is
+/// empty, so states move up the tree without copying, like the C++ intrusive lists.
+#[inline]
+fn append<T>(dst: &mut Vec<T>, src: &mut Vec<T>) {
+    if dst.is_empty() {
+        std::mem::swap(dst, src);
+    } else {
+        dst.append(src);
+    }
+}
+
 impl NodeState {
     fn merge(&mut self, other: &mut NodeState) {
-        self.child_scopes.append(&mut other.child_scopes);
-        self.table_columns.append(&mut other.table_columns);
-        self.table_references.append(&mut other.table_references);
-        self.column_references.append(&mut other.column_references);
-        self.result_targets.append(&mut other.result_targets);
-        self.ctes.append(&mut other.ctes);
+        append(&mut self.child_scopes, &mut other.child_scopes);
+        append(&mut self.table_columns, &mut other.table_columns);
+        append(&mut self.table_references, &mut other.table_references);
+        append(&mut self.column_references, &mut other.column_references);
+        append(&mut self.result_targets, &mut other.result_targets);
+        append(&mut self.ctes, &mut other.ctes);
     }
 
     fn clear(&mut self) {
@@ -91,6 +102,8 @@ impl RootScopes {
 
 pub(super) struct NameResolutionPass {
     node_states: Vec<NodeState>,
+    /// Does the script contain property graph syntax?
+    has_graph_syntax: bool,
     root_scopes: RootScopes,
     pending_derived_tables: Vec<PendingDerivedTable>,
 }
@@ -99,8 +112,13 @@ impl NameResolutionPass {
     pub fn new(state: &AnalysisState) -> Self {
         let mut node_states = Vec::with_capacity(state.ast.len());
         node_states.resize_with(state.ast.len(), NodeState::default);
+        let has_graph_syntax = state
+            .ast
+            .iter()
+            .any(|n| matches!(n.node_type(), NodeType::OBJECT_SQL_PROPERTY_GRAPH | NodeType::OBJECT_SQL_GRAPH_TABLE));
         Self {
             node_states,
+            has_graph_syntax,
             root_scopes: RootScopes::default(),
             pending_derived_tables: Vec::new(),
         }
@@ -833,7 +851,10 @@ impl NameResolutionPass {
     }
 
     /// Is the node nested inside syntax-only property graph syntax?
-    fn is_inside_graph_syntax(state: &AnalysisState, ast_node_id: u32) -> bool {
+    fn is_inside_graph_syntax(&self, state: &AnalysisState, ast_node_id: u32) -> bool {
+        if !self.has_graph_syntax {
+            return false;
+        }
         let mut node_id = ast_node_id;
         for _ in 0..state.ast.len() {
             let parent = state.ast[node_id as usize].parent();
@@ -880,7 +901,7 @@ impl NameResolutionPass {
             }
 
             NodeType::OBJECT_SQL_COLUMN_REF => {
-                if Self::is_inside_graph_syntax(state, node_id) {
+                if self.is_inside_graph_syntax(state, node_id) {
                     return;
                 }
                 let [path] = attrs!(state.children(node), [K::SQL_COLUMN_REF_PATH]);
@@ -902,7 +923,7 @@ impl NameResolutionPass {
             }
 
             NodeType::OBJECT_SQL_TABLEREF => {
-                if Self::is_inside_graph_syntax(state, node_id) {
+                if self.is_inside_graph_syntax(state, node_id) {
                     return;
                 }
                 let [name_node, alias_node] = attrs!(state.children(node), [K::SQL_TABLEREF_NAME, K::SQL_TABLEREF_ALIAS]);
@@ -937,7 +958,7 @@ impl NameResolutionPass {
             }
 
             NodeType::OBJECT_SQL_RESULT_TARGET => {
-                if Self::is_inside_graph_syntax(state, node_id) {
+                if self.is_inside_graph_syntax(state, node_id) {
                     return;
                 }
                 self.merge_child_states(node_state, node);
@@ -984,7 +1005,7 @@ impl NameResolutionPass {
             }
 
             NodeType::OBJECT_SQL_SELECT => {
-                if Self::is_inside_graph_syntax(state, node_id) {
+                if self.is_inside_graph_syntax(state, node_id) {
                     return;
                 }
                 self.merge_child_states(node_state, node);
@@ -1388,7 +1409,7 @@ impl NameResolutionPass {
                 table_name: table_name.clone(),
                 confidence: InferenceConfidence::None,
                 columns: Vec::new(),
-                columns_by_name: HashMap::new(),
+                columns_by_name: HashMap::default(),
             });
             let i = out.inferred_table_schemas.len() - 1;
             out.inferred_table_schemas_by_name.insert(key, i);

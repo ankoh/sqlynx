@@ -17,7 +17,8 @@ use crate::analyzer::AnalyzedScript;
 use crate::error::{Error, Result};
 use dashql_buffers::status::StatusCode;
 use std::cell::RefCell;
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use crate::hash::HashMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
 /// A published catalog entry
@@ -110,17 +111,17 @@ impl Catalog {
     pub fn new() -> Self {
         Self {
             version: 1,
-            entries: HashMap::new(),
-            script_entries: HashMap::new(),
-            descriptor_entries: HashMap::new(),
+            entries: HashMap::default(),
+            script_entries: HashMap::default(),
+            descriptor_entries: HashMap::default(),
             entries_ranked: BTreeSet::new(),
             entries_by_qualified_schema: BTreeMap::new(),
             entries_by_schema: BTreeMap::new(),
             databases: BTreeMap::new(),
             schemas: BTreeMap::new(),
             ids: RefCell::new(IdReservations {
-                database_ids_by_name: HashMap::new(),
-                schema_ids_by_name: HashMap::new(),
+                database_ids_by_name: HashMap::default(),
+                schema_ids_by_name: HashMap::default(),
                 next_database_id: INITIAL_DATABASE_ID,
                 next_schema_id: INITIAL_SCHEMA_ID,
                 next_entry_id: INITIAL_ENTRY_ID,
@@ -252,7 +253,7 @@ impl Catalog {
         script_entries: HashMap<CatalogEntryId, (Arc<AnalyzedScript>, Rank)>,
         descriptor_entries: HashMap<CatalogEntryId, Arc<DescriptorEntry>>,
     ) -> Result<()> {
-        let mut entries = HashMap::new();
+        let mut entries = HashMap::default();
         let mut entries_ranked = BTreeSet::new();
         let mut entries_by_qualified_schema = BTreeMap::new();
         let mut entries_by_schema = BTreeMap::new();

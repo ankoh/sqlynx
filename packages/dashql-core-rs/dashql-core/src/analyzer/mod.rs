@@ -21,7 +21,7 @@ use crate::error::Result;
 use dashql_buffers::analyzer::{AnalyzerErrorSeverity, AnalyzerErrorType, NameTag, SemanticNodeMarkerType};
 use dashql_grammar::names::{NameId, NameRegistry};
 use dashql_grammar::parser::ParsedScript;
-use std::collections::HashMap;
+use crate::hash::HashMap;
 use std::fmt;
 use std::sync::Arc;
 

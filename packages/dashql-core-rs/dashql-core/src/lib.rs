@@ -6,5 +6,6 @@ pub mod analyzer;
 pub mod catalog;
 pub mod error;
 pub mod formatter;
+pub mod hash;
 pub mod script_diff;
 pub mod view;

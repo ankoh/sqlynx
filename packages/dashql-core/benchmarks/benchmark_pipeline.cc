@@ -1,3 +1,4 @@
+#include "dashql/analyzer/analyzer.h"
 #include "dashql/formatter/formatter.h"
 #include "benchmark/benchmark.h"
 #include "dashql/analyzer/completion.h"
@@ -648,6 +649,24 @@ static void analyze_query(benchmark::State& state) {
     }
 }
 
+/// Analysis only: analyze_query also rescans and reparses, because a script is never reanalyzed in place
+static void analyze_query_only(benchmark::State& state) {
+    Catalog catalog;
+    Script external{catalog};
+    external.InsertTextAt(0, external_script);
+    external.Analyze();
+    catalog.LoadScript(external, 0);
+
+    Script main{catalog};
+    main.InsertTextAt(0, main_script);
+    main.Scan();
+    main.Parse();
+
+    for (auto _ : state) {
+        benchmark::DoNotOptimize(Analyzer::Analyze(main.parsed_script, catalog));
+    }
+}
+
 static void move_cursor(benchmark::State& state) {
     Catalog catalog;
     Script main{catalog};
@@ -688,6 +707,7 @@ BENCHMARK(scan_query);
 BENCHMARK(parse_query);
 BENCHMARK(format_query);
 BENCHMARK(analyze_query);
+BENCHMARK(analyze_query_only);
 BENCHMARK(move_cursor);
 BENCHMARK(complete_cursor);
 

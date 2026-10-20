@@ -612,44 +612,79 @@ fn extract_vega_lite_spec(state: &AnalysisState, node: &Node) -> VegaLiteSpec {
 }
 
 pub(super) struct AnalyzeVisualizationPass {
-    node_states: Vec<NodeState>,
+    /// The node states, only allocated for nodes that carry visualization state
+    node_states: Vec<Option<Box<NodeState>>>,
     collected_specs: Vec<VisualizationSpec>,
 }
 
 impl AnalyzeVisualizationPass {
     pub fn new(state: &AnalysisState) -> Self {
         let mut node_states = Vec::with_capacity(state.ast.len());
-        node_states.resize_with(state.ast.len(), NodeState::default);
+        node_states.resize_with(state.ast.len(), || None);
         Self {
             node_states,
             collected_specs: Vec::new(),
         }
     }
 
-    fn merge_child_states(&mut self, dst: &mut NodeState, node: &Node) {
+    /// Merge the states of the children into a state. A missing state is empty, and merging into an
+    /// empty state takes over the child state.
+    fn merge_child_states(&mut self, dst: &mut Option<Box<NodeState>>, node: &Node) {
         let begin = node.children_begin_or_value() as usize;
         for child in begin..begin + node.children_count() as usize {
-            dst.merge_from(&mut self.node_states[child]);
+            let Some(mut child_state) = self.node_states[child].take() else { continue };
+            match dst {
+                None => *dst = Some(child_state),
+                Some(dst) => dst.merge_from(&mut child_state),
+            }
         }
     }
 
     pub fn visit(&mut self, state: &mut AnalysisState, morsel: Range<usize>) {
         for node_id in morsel {
             let node = &state.ast[node_id];
-            let mut node_state = std::mem::take(&mut self.node_states[node_id]);
+            // Most nodes have no visualization state: skip nodes without children quickly
+            if node.children_count() == 0 && !Self::produces_state(node) {
+                continue;
+            }
+            let mut node_state = self.node_states[node_id].take();
             self.visit_node(state, node, node_id as u32, &mut node_state);
             self.node_states[node_id] = node_state;
         }
     }
 
-    fn visit_node(&mut self, state: &mut AnalysisState, node: &Node, node_id: u32, node_state: &mut NodeState) {
-        match node.node_type() {
+    /// Does a node create visualization state on its own?
+    fn produces_state(node: &Node) -> bool {
+        matches!(
+            node.node_type(),
+            NodeType::OBJECT_VIS_SCALE
+                | NodeType::OBJECT_VIS_AXIS
+                | NodeType::OBJECT_VIS_LEGEND
+                | NodeType::OBJECT_VIS_FIELD_DEF
+                | NodeType::OBJECT_VIS_ENCODING
+                | NodeType::OBJECT_VIS_SPEC
+                | NodeType::OBJECT_VIS_VISUALISE
+        )
+    }
+
+    fn visit_node(&mut self, state: &mut AnalysisState, node: &Node, node_id: u32, slot: &mut Option<Box<NodeState>>) {
+        let node_type = node.node_type();
+        if !Self::produces_state(node) {
+            self.merge_child_states(slot, node);
+            return;
+        }
+        if node_type == NodeType::OBJECT_VIS_SPEC && node.attribute_key() != K::VIS_VISUALISE_SPEC {
+            return;
+        }
+        let node_state = slot.get_or_insert_with(Default::default);
+        let node_state: &mut NodeState = node_state;
+        match node_type {
             NodeType::OBJECT_VIS_SCALE => node_state.scale = Some(read_scale(state, node)),
             NodeType::OBJECT_VIS_AXIS => node_state.axis = Some(read_axis(state, node)),
             NodeType::OBJECT_VIS_LEGEND => node_state.legend = Some(read_legend(state, node)),
 
             NodeType::OBJECT_VIS_FIELD_DEF => {
-                self.merge_child_states(node_state, node);
+                self.merge_into(node_state, node);
                 let mut channel = VisEncodingChannel {
                     ast_node_id: node_id,
                     channel_key: node.attribute_key(),
@@ -672,7 +707,7 @@ impl AnalyzeVisualizationPass {
             }
 
             NodeType::OBJECT_VIS_ENCODING => {
-                self.merge_child_states(node_state, node);
+                self.merge_into(node_state, node);
                 // Shorthand encoding values (direct column refs as children)
                 for child in state.children(node) {
                     let key = child.attribute_key().0;
@@ -692,10 +727,7 @@ impl AnalyzeVisualizationPass {
             }
 
             NodeType::OBJECT_VIS_SPEC => {
-                if node.attribute_key() != K::VIS_VISUALISE_SPEC {
-                    return;
-                }
-                self.merge_child_states(node_state, node);
+                self.merge_into(node_state, node);
                 let [mark, layer, resolve, title] =
                     attrs!(state.children(node), [K::VIS_SPEC_MARK, K::VIS_SPEC_LAYER, K::VIS_SPEC_RESOLVE, K::VIS_SPEC_TITLE]);
                 if let Some(mark) = mark {
@@ -716,7 +748,7 @@ impl AnalyzeVisualizationPass {
             }
 
             NodeType::OBJECT_VIS_VISUALISE => {
-                self.merge_child_states(node_state, node);
+                self.merge_into(node_state, node);
                 let [select, spec_node, using] =
                     attrs!(state.children(node), [K::VIS_VISUALISE_SELECT, K::VIS_VISUALISE_SPEC, K::VIS_VISUALISE_USING]);
                 let mut spec = VisualizationSpec {
@@ -745,7 +777,17 @@ impl AnalyzeVisualizationPass {
                 self.collected_specs.push(spec);
             }
 
-            _ => self.merge_child_states(node_state, node),
+            _ => unreachable!(),
+        }
+    }
+
+    /// Merge the states of the children into an existing state
+    fn merge_into(&mut self, dst: &mut NodeState, node: &Node) {
+        let begin = node.children_begin_or_value() as usize;
+        for child in begin..begin + node.children_count() as usize {
+            if let Some(mut child_state) = self.node_states[child].take() {
+                dst.merge_from(&mut child_state);
+            }
         }
     }
 

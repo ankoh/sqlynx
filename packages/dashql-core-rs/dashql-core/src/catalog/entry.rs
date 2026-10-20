@@ -5,7 +5,8 @@
 //! registries of other entries.
 
 use super::ids::*;
-use std::collections::{BTreeMap, HashMap};
+use crate::hash::HashMap;
+use std::collections::BTreeMap;
 use std::sync::Arc;
 
 /// The id of a name within the names of its catalog entry
@@ -142,7 +143,7 @@ impl TableDeclaration {
             ast_scope_root: None,
             table_name,
             table_columns: Vec::new(),
-            table_columns_by_name: HashMap::new(),
+            table_columns_by_name: HashMap::default(),
         }
     }
 

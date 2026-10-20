@@ -239,6 +239,26 @@ C++. The hash table variant was 6.5 µs, so it was dropped.
 - Open: `ComputeSignature`, the FlatBuffer packing of the analyzed script, and the catalog,
   descriptor and analyzer unit tests.
 
+**Performance** (TPC-DS q1 against the TPC-DS schema in the catalog, `bench_pipeline` and
+`benchmark_pipeline`):
+
+| Measure | Rust | C++ |
+|---|---|---|
+| analyze (analysis only) | 10.6 µs | 12.7 µs (`analyze_query_only`) |
+| `Script::Analyze` (rescan, reparse, analyze) | | 29.0 µs (`analyze_query`) |
+
+`analyze_query` of the C++ benchmark rescans and reparses on every iteration, because a script whose
+names carry analyzer tags is never reanalyzed in place. `analyze_query_only` measures the analysis
+alone. What made the Rust analyzer fast, from 25.6 µs:
+- node states move up the tree by taking over the child buffers instead of copying (C++ splices
+  intrusive lists),
+- visualization node states exist only for nodes with visualization state,
+- the property graph ancestor walk is skipped for scripts without graph syntax,
+- the maps use FxHash (`dashql_core::hash`) instead of SipHash.
+
+Name resolution could also store its node states as linked lists like C++, which would remove the
+remaining per-list allocations.
+
 **Open items**
 - The repository `rustfmt.toml` is not valid TOML (`max_width: 120`), so rustfmt refuses it. Format
   with `--config max_width=120,use_small_heuristics=Max` until it is fixed.

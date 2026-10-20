@@ -8,7 +8,7 @@ use dashql_buffers::algebra::{BinaryExpressionFunction, ComparisonFunction, Lite
 use dashql_buffers::analyzer::{AnalyzerErrorSeverity, AnalyzerErrorType};
 use dashql_buffers::parser::{AttributeKey, IntervalType as IntervalTypeEnum, KnownFunction, SymbolSpan, VisFieldType, VisMarkType, VisScaleType};
 use dashql_grammar::span::TextSpan;
-use std::collections::HashMap;
+use crate::hash::HashMap;
 use std::sync::Arc;
 
 /// An expression id (index into the expressions)
@@ -30,7 +30,7 @@ impl<V> Default for OrderedMap<V> {
     fn default() -> Self {
         Self {
             entries: Vec::new(),
-            index: HashMap::new(),
+            index: HashMap::default(),
         }
     }
 }
