@@ -1,7 +1,7 @@
 """Repository rules for the native Tableau Hyper API C++ distribution."""
 
 # renovate: datasource=pypi depName=tableauhyperapi
-TABLEAUHYPERAPI_VERSION = "0.0.26784"
+TABLEAUHYPERAPI_VERSION = "0.0.26963"
 
 _CXX_ARCHIVES = {
     "linux_x86_64": {
