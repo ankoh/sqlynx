@@ -64,6 +64,9 @@ bazel run //snapshots/visualize:update
 # Upgrade the Rust crates declared in bazel/crates/*.MODULE.bazel
 bazel run //scripts:repin_crates -- full
 
+# Generate rust-project.json for rust-analyzer in IDEs (see docs/agents/rust_analyzer.md)
+bazel run //scripts:rust_project
+
 # Fetch test datasets
 bazel build //packages/dashql-datasets:datasets
 # Upload missing test datasets to data.dashql.app (requires R2 key)

@@ -8,13 +8,13 @@ bindings) exist only in `bazel-out`. rust-analyzer therefore cannot load them th
 ## Generating rust-project.json
 
 ```bash
-bazel run //scripts:gen_rust_project
+bazel run //scripts:rust_project
 ```
 
 This writes `rust-project.json` to the repository root. It covers every package with Rust targets. On Linux
 without the OpenSSL headers it skips `packages/dashql-native-proxy` with a warning, because `openssl-sys` cannot
 build there (`apt install libssl-dev pkg-config` fixes that). Pass target patterns to cover less, for example
-`bazel run //scripts:gen_rust_project -- //packages/dashql-core/...`.
+`bazel run //scripts:rust_project -- //packages/dashql-core/...`.
 
 Rerun it after adding or removing crates, targets or dependencies, after editing `bazel/crates/*.MODULE.bazel`
 or repinning, after changing the Rust toolchain, and after `bazel clean`. Edits to existing source files need no

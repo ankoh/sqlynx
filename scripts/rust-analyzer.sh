@@ -11,13 +11,13 @@ workspace="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 project="${workspace}/rust-project.json"
 
 if [[ ! -f "${project}" ]]; then
-    echo "${project} is missing, run: bazel run //scripts:gen_rust_project" >&2
+    echo "${project} is missing, run: bazel run //scripts:rust_project" >&2
     exit 1
 fi
 
 sysroot="$(sed -n 's/^  "sysroot": "\(.*\)",$/\1/p' "${project}")"
 if [[ ! -x "${sysroot}/bin/rust-analyzer" ]]; then
-    echo "no rust-analyzer in the sysroot '${sysroot}', run: bazel run //scripts:gen_rust_project" >&2
+    echo "no rust-analyzer in the sysroot '${sysroot}', run: bazel run //scripts:rust_project" >&2
     exit 1
 fi
 

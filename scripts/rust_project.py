@@ -1,6 +1,6 @@
 """Generates rust-project.json for rust-analyzer from the Bazel build graph.
 
-Usage: bazel run //scripts:gen_rust_project [-- <target patterns>]
+Usage: bazel run //scripts:rust_project [-- <target patterns>]
 
 Runs @rules_rust//tools/rust_analyzer:gen_rust_project for every package with Rust targets (or the given target
 patterns) and repairs two things it gets wrong for this repository:
@@ -161,7 +161,7 @@ def default_targets(workspace):
 def main():
     workspace = os.environ.get("BUILD_WORKSPACE_DIRECTORY")
     if not workspace:
-        sys.exit("run this with bazel run //scripts:gen_rust_project")
+        sys.exit("run this with bazel run //scripts:rust_project")
     gen_rust_project = runfiles.Create().Rlocation(sys.argv[1])
     targets = sys.argv[2:]
     if not targets:
