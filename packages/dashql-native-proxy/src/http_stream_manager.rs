@@ -86,6 +86,7 @@ impl HttpServerStreamBatchEvent {
     }
 }
 
+/// A batch of response data read from an HTTP server stream in one read call
 #[derive(Debug)]
 pub struct HttpServerStreamBatch {
     /// The event that emitted the batch
@@ -112,6 +113,7 @@ impl Default for HttpServerStreamBatch {
     }
 }
 
+/// An HTTP response stream whose events are buffered by a background reader task
 pub struct HttpServerStream {
     /// The response queue
     response_sender: tokio::sync::mpsc::Sender<HttpServerStreamEvent>,
@@ -119,6 +121,7 @@ pub struct HttpServerStream {
     response_receiver: Mutex<tokio::sync::mpsc::Receiver<HttpServerStreamEvent>>,
 }
 
+/// The registry of open HTTP server streams, keyed by stream id
 #[derive(Default)]
 pub struct HttpStreamManager {
     /// The next message id

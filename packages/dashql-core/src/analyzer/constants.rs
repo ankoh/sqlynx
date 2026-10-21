@@ -12,6 +12,7 @@ use dashql_buffers::parser::{AttributeKey as K, ExpressionOperator as Op, Interv
 use dashql_parser::attrs;
 use std::ops::Range;
 
+/// The pass that identifies constant expressions (`ConstantPropagationPass`)
 #[derive(Default)]
 pub(super) struct ConstantPropagationPass {
     /// The constant expressions, stored as roots during Finish

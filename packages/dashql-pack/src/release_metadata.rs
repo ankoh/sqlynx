@@ -28,9 +28,12 @@ pub enum BundleType {
     Nsis,
 }
 
+/// A platform and architecture a bundle runs on, serialized as `<platform>-<arch>`
 #[derive(Hash, Eq, PartialEq, Debug)]
 pub struct BundleTarget {
+    /// The operating system
     pub platform: Platform,
+    /// The CPU architecture
     pub arch: Architecture,
 }
 
@@ -92,19 +95,27 @@ impl<'d> Deserialize<'d> for BundleTarget {
     }
 }
 
+/// An update artifact of a single platform in an [`UpdateManifest`]
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct UpdateArtifact {
+    /// The public URL of the update ZIP
     pub url: String,
+    /// The signature of the update artifact, currently empty
     pub signature: String,
 }
 
+/// The update manifest of a release, listing the update artifact per platform
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UpdateManifest {
+    /// The release version
     #[serde(with = "serde_version")]
     pub version: Version,
+    /// The release notes, currently empty
     pub notes: String,
+    /// The publication date
     #[serde(with = "serde_date")]
     pub pub_date: DateTime<Utc>,
+    /// The update artifacts, keyed by target platform
     pub platforms: HashMap<BundleTarget, UpdateArtifact>,
 }
 
@@ -119,39 +130,62 @@ impl Default for UpdateManifest {
     }
 }
 
+/// A downloadable installer bundle of a release
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Bundle {
+    /// The public URL of the bundle
     pub url: String,
+    /// The signature of the bundle, if signed
     pub signature: Option<String>,
+    /// The file name of the bundle
     pub name: String,
+    /// The bundle format
     pub bundle_type: BundleType,
+    /// The platforms the bundle runs on
     pub targets: Vec<BundleTarget>,
 }
 
+/// The metadata of a release, uploaded next to its artifacts and to the channel pointers
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ReleaseMetadata {
+    /// The release id, a UUID derived from the version
     pub release_id: String,
+    /// The publication date
     #[serde(with = "serde_date")]
     pub pub_date: DateTime<Utc>,
+    /// The release version
     #[serde(with = "serde_version")]
     pub version: Version,
+    /// The abbreviated hash of the released commit
     pub git_commit_hash: String,
+    /// The GitHub URL of the released commit
     pub git_commit_url: String,
+    /// The public URL of the release update manifest
     pub update_manifest_url: String,
+    /// The downloadable bundles of the release
     pub bundles: Vec<Bundle>,
 }
 
+/// A summary of a published release, optionally written by the publish command
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ReleaseSummary {
+    /// The release id, a UUID derived from the version
     pub release_id: String,
+    /// The release version
     #[serde(with = "serde_version")]
     pub version: Version,
+    /// The publication date
     #[serde(with = "serde_date")]
     pub pub_date: DateTime<Utc>,
+    /// The abbreviated hash of the released commit
     pub git_commit_hash: String,
+    /// The GitHub URL of the released commit
     pub git_commit_url: String,
+    /// The public URL of the release metadata
     pub release_metadata_url: String,
+    /// The public URL of the release update manifest
     pub update_manifest_url: String,
+    /// The public URL of the first macOS DMG bundle
     pub bundle_macos_dmg_url: String,
 }
 

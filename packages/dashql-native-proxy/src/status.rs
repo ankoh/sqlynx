@@ -41,9 +41,12 @@ pub enum Status {
     HttpUrlIsInvalid{ message: String },
 }
 
+/// The JSON error body sent for a failed proxy request
 #[derive(Serialize)]
 pub struct StatusMessage {
+    /// The human-readable error message
     message: String,
+    /// Additional error details, e.g. the offending header or the underlying error
     details: HashMap<&'static str, String>,
 }
 

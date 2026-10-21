@@ -127,14 +127,19 @@ fn default_location(rhs: &[SymbolSpan], below: SymbolSpan) -> SymbolSpan {
 /// A lookahead token
 #[derive(Clone, Copy, Debug)]
 struct Lookahead {
+    /// The token kind
     kind: SymbolKind,
+    /// The semantic value of the token
     value: Value,
 }
 
 /// The parser stack
 struct Stack {
+    /// The automaton states
     states: Vec<StateId>,
+    /// The semantic values, parallel to the states
     values: Vec<Value>,
+    /// The symbol-index locations, parallel to the states
     locations: Vec<SymbolSpan>,
 }
 
@@ -169,6 +174,7 @@ impl ReduceStack for Stack {
 /// The token stream of the parser (`ParseContext::NextSymbol`): scanned symbols located by their
 /// index, followed by EOF tokens of length 0 once the symbols are exhausted.
 pub struct TokenStream {
+    /// The index of the next symbol to return
     pub next_index: u32,
 }
 

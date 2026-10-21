@@ -15,13 +15,17 @@ use std::ffi::{c_char, CStr, CString};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, OnceLock};
 
+/// An opaque Hyper process of the C ABI
 #[repr(C)]
 struct DashQLHyperProcess {
+    /// Zero-sized, the type is only used behind pointers
     _private: [u8; 0],
 }
 
+/// An opaque Hyper connection of the C ABI
 #[repr(C)]
 struct DashQLHyperConnection {
+    /// Zero-sized, the type is only used behind pointers
     _private: [u8; 0],
 }
 
@@ -215,6 +219,7 @@ fn hyper_process(process: &OnceLock<HyperProcess>) -> &HyperProcess {
 
 /// A database file in a directory of its own, removed with the directory
 struct TemporaryDatabase {
+    /// The path of the database file
     path: PathBuf,
 }
 

@@ -28,9 +28,11 @@ const INDEX_FILE: &str = "index.json";
 /// immutable and future syncs must not merge a rebuilt folder into that version.
 const FOLDER_INDEX_FILE: &str = "index.json";
 
+/// The command-line interface of the dataset indexer and R2 mirror
 #[derive(Parser, Debug)]
 #[command(name = "dashql-datasets", about = "Indexer + R2 mirror for data.dashql.app")]
 struct Cli {
+    /// The subcommand to run
     #[command(subcommand)]
     command: Command,
 }
@@ -45,6 +47,7 @@ enum Command {
     FolderIndex(FolderIndexArgs),
 }
 
+/// Arguments of the `index` subcommand
 #[derive(Parser, Debug)]
 struct IndexArgs {
     /// The assembled Parquet tree (<dataset>/v<version>/<file>.parquet).
@@ -58,6 +61,7 @@ struct IndexArgs {
     out: PathBuf,
 }
 
+/// Arguments of the `sync` subcommand
 #[derive(Parser, Debug)]
 struct SyncArgs {
     /// The built :datasets dir (Parquet tree + index.json).
@@ -68,6 +72,7 @@ struct SyncArgs {
     dry_run: bool,
 }
 
+/// Arguments of the `folder-index` subcommand
 #[derive(Parser, Debug)]
 struct FolderIndexArgs {
     /// Folder artifact to index. The index is written inside this directory.
@@ -78,9 +83,12 @@ struct FolderIndexArgs {
 /// One entry in the index registry.
 #[derive(Serialize)]
 struct FileEntry {
+    /// The public URL the file is served from
     url: String,
+    /// The file size in bytes, omitted for folder indexes
     #[serde(skip_serializing_if = "Option::is_none")]
     bytes: Option<u64>,
+    /// The hex SHA-256 of the file content, omitted for folder indexes
     #[serde(skip_serializing_if = "Option::is_none")]
     sha256: Option<String>,
 }
@@ -89,8 +97,11 @@ struct FileEntry {
 /// indexes intentionally use paths relative to their own artifact root.
 #[derive(Serialize)]
 struct FolderFileEntry {
+    /// The file path relative to the folder artifact root
     path: String,
+    /// The file size in bytes
     bytes: u64,
+    /// The hex SHA-256 of the file content
     sha256: String,
 }
 
@@ -241,8 +252,11 @@ fn run_folder_index(args: FolderIndexArgs) -> Result<()> {
 /// R2 credentials, read from the environment. Mirrors dashql-pack's RemoteAccess but
 /// with the DATA (not GET) variable prefix — the two tools stay independent.
 struct RemoteAccess {
+    /// The R2 S3 endpoint URL (`DASHQL_DATA_R2_ENDPOINT`)
     r2_endpoint: String,
+    /// The R2 access key id (`DASHQL_DATA_R2_ACCESS_KEY_ID`)
     r2_access_key_id: String,
+    /// The R2 secret access key (`DASHQL_DATA_R2_SECRET_ACCESS_KEY`)
     r2_secret_access_key: String,
 }
 

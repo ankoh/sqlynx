@@ -4,9 +4,12 @@
 //! that the emitted tables, symbol kinds and `reduce` dispatch fit together; the real driver
 //! is a port of the C++ `DriveLALR`.
 
+/// A location of the calculator grammar, a span of token indexes
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Location {
+    /// The index of the first token
     pub offset: u32,
+    /// The number of tokens
     pub length: u32,
 }
 
@@ -60,8 +63,10 @@ pub enum ReduceError {
     DivisionByZero(Location),
 }
 
+/// The context of the calculator actions
 #[derive(Default)]
 pub struct ParseContext {
+    /// The value and location of the parsed expression, set by the start rule
     pub result: Option<(i64, Location)>,
 }
 
@@ -71,9 +76,13 @@ mod calc;
 
 use calc::symbol_kind::*;
 
+/// The parser stack of the test driver
 struct Stack {
+    /// The automaton states
     states: Vec<i32>,
+    /// The semantic values, parallel to the states
     values: Vec<Value>,
+    /// The locations, parallel to the states
     locations: Vec<Location>,
 }
 

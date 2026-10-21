@@ -2,6 +2,7 @@
 
 /// Bit-level visited table for tracking which nodes have been explored.
 pub struct VisitedTable {
+    /// Bitmap with one bit per node, packed 8 nodes per byte
     table: Vec<u8>,
 }
 

@@ -14,7 +14,9 @@ pub type FilteredResult = (u32, u32, f32);
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C)]
 struct Params {
+    /// Number of features (columns) per data point
     n_features: u32,
+    /// Number of (p, q) pairs in the current dispatch
     n_pairs: u32,
 }
 
@@ -22,8 +24,11 @@ struct Params {
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C)]
 struct ProjectionParams {
+    /// Number of features (columns) per data point
     n_features: u32,
+    /// Number of point indices to project
     n_points: u32,
+    /// Hyperplane offset added to every dot product
     offset: f32,
     /// Base index offset for chunked dispatch when n_points exceeds max workgroups.
     base_idx: u32,
@@ -33,10 +38,13 @@ struct ProjectionParams {
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C)]
 struct BatchProjectionParams {
+    /// Number of features (columns) per data point
     n_features: u32,
+    /// Total number of (point, node) assignments across all nodes in the batch
     n_total_points: u32,
     /// Base index offset for chunked dispatch when n_total_points exceeds max workgroups.
     base_idx: u32,
+    /// Padding to keep the uniform struct 16-byte aligned
     _pad: u32,
 }
 
@@ -45,40 +53,67 @@ const OUTPUT_ENTRY_BYTES: u64 = 3 * 4;
 
 /// Holds wgpu device state and pre-allocated buffers for GPU distance computation.
 pub struct GpuContext {
+    /// The wgpu device
     device: wgpu::Device,
+    /// The command queue of the device
     queue: wgpu::Queue,
+    /// Compute pipeline for the metric-specific distance shader
     pipeline: wgpu::ComputePipeline,
+    /// Bind group layout of the distance pipeline
     bind_group_layout: wgpu::BindGroupLayout,
+    /// Row-major data matrix (n_points x n_features f32), uploaded once
     data_buffer: wgpu::Buffer,
+    /// Per-point heap thresholds; a distance is only output if it beats the threshold
     threshold_buffer: wgpu::Buffer,
     /// Pre-allocated pair/output/staging buffers, sized for max_pairs_per_chunk.
     pairs_buffer: wgpu::Buffer,
+    /// Filtered distance results as (target, source, distance bits) u32 triples
     output_buffer: wgpu::Buffer,
+    /// Atomic counter of results written to the output buffer
     counter_buffer: wgpu::Buffer,
+    /// Uniform buffer holding the distance shader `Params`
     params_buffer: wgpu::Buffer,
+    /// Mappable staging buffer for reading back the output buffer
     output_staging: wgpu::Buffer,
+    /// Mappable staging buffer for reading back the result counter
     counter_staging: wgpu::Buffer,
+    /// Number of points (rows) in the data matrix
     n_points: u32,
+    /// Number of features (columns) in the data matrix
     n_features: u32,
     /// Max pairs per GPU dispatch, derived from device buffer size limits.
     max_pairs_per_chunk: usize,
     // Projection pipeline for RP tree construction
     proj_pipeline: wgpu::ComputePipeline,
+    /// Bind group layout of the projection pipeline
     proj_bind_group_layout: wgpu::BindGroupLayout,
+    /// The splitting hyperplane (n_features f32)
     proj_hyperplane_buffer: wgpu::Buffer,
+    /// Indices of the points to project (up to n_points u32)
     proj_indices_buffer: wgpu::Buffer,
+    /// Output margins, one per projected point
     proj_margins_buffer: wgpu::Buffer,
+    /// Mappable staging buffer for reading back the projection margins
     proj_margins_staging: wgpu::Buffer,
+    /// Uniform buffer holding the `ProjectionParams`
     proj_params_buffer: wgpu::Buffer,
     // Batch projection pipeline for level-wise RP tree construction
     batch_proj_pipeline: wgpu::ComputePipeline,
+    /// Bind group layout of the batch projection pipeline
     batch_proj_bind_group_layout: wgpu::BindGroupLayout,
+    /// Hyperplanes of all nodes in the batch (max_batch_nodes x n_features f32)
     batch_proj_hyperplanes_buffer: wgpu::Buffer,
+    /// Hyperplane offsets, one per node in the batch
     batch_proj_offsets_buffer: wgpu::Buffer,
+    /// Point index of each (point, node) assignment
     batch_proj_point_indices_buffer: wgpu::Buffer,
+    /// Batch-local node id of each (point, node) assignment
     batch_proj_node_ids_buffer: wgpu::Buffer,
+    /// Output margins, one per (point, node) assignment
     batch_proj_margins_buffer: wgpu::Buffer,
+    /// Mappable staging buffer for reading back the batch projection margins
     batch_proj_margins_staging: wgpu::Buffer,
+    /// Uniform buffer holding the `BatchProjectionParams`
     batch_proj_params_buffer: wgpu::Buffer,
     /// Max number of nodes per batch projection dispatch.
     max_batch_nodes: usize,

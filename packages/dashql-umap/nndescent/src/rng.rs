@@ -1,8 +1,8 @@
 /// Tau random number generator based on the Python PyNNDescent library (https://github.com/lmcinnes/pynndescent).
 /// Uses a 3-element i64 state with specific bitmask operations.
-
 #[derive(Clone, Debug)]
 pub struct TauRng {
+    /// The three 64-bit generator state words
     pub state: [i64; 3],
 }
 
@@ -86,6 +86,7 @@ impl TauRng {
 /// A fast, high-quality 256-bit PRNG (xoshiro256**).
 #[derive(Clone, Debug)]
 pub struct Xoshiro256StarStar {
+    /// The 256-bit generator state as four 64-bit words
     s: [u64; 4],
 }
 

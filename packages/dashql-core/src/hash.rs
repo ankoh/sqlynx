@@ -8,6 +8,7 @@ use std::hash::{BuildHasherDefault, Hasher};
 /// The FxHash hasher
 #[derive(Clone, Copy, Default)]
 pub struct FxHasher {
+    /// The hash state
     hash: u64,
 }
 

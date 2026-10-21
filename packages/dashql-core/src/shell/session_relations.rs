@@ -22,17 +22,25 @@ fn quote_identifier(identifier: &str, out: &mut String) {
     out.push('"');
 }
 
+/// A relation created during the session
 struct Relation {
+    /// The database name, empty for the default database
     database_name: String,
+    /// The schema name, `public` if not given
     schema_name: String,
+    /// The relation name
     relation_name: String,
+    /// The column names
     columns: Vec<String>,
 }
 
 /// The relations of successful DDL statements (`SessionRelationCatalog`)
 pub struct SessionRelationCatalog {
+    /// The script that analyzes the successful queries
     parser_script: Script,
+    /// The script with the CREATE TABLE statements of the relations, loaded into the catalog
     catalog_script: Script,
+    /// The relations, keyed by database, schema and relation name
     relations: BTreeMap<(String, String, String), Relation>,
 }
 

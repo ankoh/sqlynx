@@ -11,19 +11,26 @@ use flatbuffers::{FlatBufferBuilder, WIPOffset};
 /// The projection of a UMAP spec (`UmapProjectionSpecT`)
 #[derive(Clone, Debug, PartialEq)]
 pub struct UmapProjectionDocument {
+    /// The projection method
     pub method: UmapProjectionMethod,
     /// Empty if not set
     pub metric: String,
+    /// The number of neighbors, if set
     pub neighbors: Option<f64>,
+    /// The minimum distance of embedded points, if set
     pub min_dist: Option<f64>,
 }
 
 /// A compiled UMAP spec (`UmapSpecT`). Empty columns are not set.
 #[derive(Clone, Debug, PartialEq)]
 pub struct UmapDocument {
+    /// The column with the vectors to project
     pub vector_column: String,
+    /// The column that categorizes the points
     pub category_column: String,
+    /// The column with the point labels
     pub label_column: String,
+    /// The projection parameters
     pub projection: Option<UmapProjectionDocument>,
 }
 

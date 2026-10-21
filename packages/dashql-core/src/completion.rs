@@ -231,25 +231,32 @@ impl CandidateObjectRef {
 pub struct CandidateObject {
     /// The candidate (index into the candidate buffer)
     pub candidate: usize,
+    /// The candidate tags of the object
     pub candidate_tags: CandidateTags,
+    /// The qualified id of the catalog object
     pub catalog_object_id: QualifiedCatalogObjectId,
+    /// The catalog object
     pub object: CandidateObjectRef,
+    /// The score, computed from the candidate tags
     pub score: Score,
     /// The qualified name
     pub qualified_name: Vec<Arc<str>>,
     /// The index of the target name in the qualified name
     pub qualified_name_target_idx: usize,
+    /// Whether to prefer the qualified name, set for ambiguous names and aliased tables
     pub prefer_qualified: bool,
 }
 
 /// A completion candidate (`Completion::Candidate`)
 #[derive(Clone, Debug)]
 pub struct Candidate {
+    /// The text to insert
     pub completion_text: Arc<str>,
     /// Identity candidates are emitted as typed, without quoting
     pub completion_text_is_verbatim: bool,
     /// The combined analyzer tags of the name
     pub coarse_name_tags: u8,
+    /// The combined candidate tags
     pub candidate_tags: CandidateTags,
     /// The text range to replace
     pub target_location: SymbolSpan,
@@ -257,6 +264,7 @@ pub struct Candidate {
     pub target_location_qualified: SymbolSpan,
     /// The catalog objects (indices into the candidate objects)
     pub catalog_objects: Vec<usize>,
+    /// The score, higher is better
     pub score: Score,
     /// The keyword symbol of keyword candidates
     pub keyword_symbol: Option<SymbolKind>,
@@ -304,7 +312,9 @@ type CandidateHeap = TopKHeap<Candidate, fn(&Candidate, &Candidate) -> Ordering>
 
 /// A completion at a cursor
 pub struct Completion<'c, 'a> {
+    /// The cursor to complete at
     pub cursor: &'c ScriptCursor<'a>,
+    /// The completion strategy, derived from the cursor context
     pub strategy: CompletionStrategy,
     /// Is the target qualified?
     pub dot_completion: bool,
@@ -316,10 +326,15 @@ pub struct Completion<'c, 'a> {
     pub has_post_cursor_token: bool,
     /// The symbol being completed
     pub target_symbol: Option<SymbolLocation>,
+    /// The collected candidates, one per name
     pub candidates: Vec<Candidate>,
+    /// The catalog objects of the candidates
     pub candidate_objects: Vec<CandidateObject>,
+    /// The candidate indexes by completion text
     candidates_by_name: HashMap<Arc<str>, usize>,
+    /// The candidate object indexes by catalog object id
     candidate_objects_by_id: HashMap<QualifiedCatalogObjectId, usize>,
+    /// The heap that selects the top candidates
     candidate_heap: CandidateHeap,
     /// The selected candidates, best first
     pub top_candidates: Vec<Candidate>,
@@ -327,10 +342,15 @@ pub struct Completion<'c, 'a> {
 
 /// A dot candidate
 struct DotCandidate {
+    /// The name to complete
     name: Arc<str>,
+    /// The candidate tags
     candidate_tags: CandidateTags,
+    /// The analyzer tags of the name
     name_tags: u8,
+    /// The qualified id of the catalog object
     object_id: QualifiedCatalogObjectId,
+    /// The catalog object the name refers to
     object: CandidateObjectRef,
 }
 

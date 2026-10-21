@@ -6,7 +6,9 @@ use dashql_core::catalog::Catalog;
 /// A script that should be linted
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Input {
+    /// The path relative to the invoking directory, `<stdin>` for standard input
     pub id: String,
+    /// The script text
     pub text: String,
 }
 
@@ -50,16 +52,22 @@ impl Severity {
 pub struct Location {
     /// 1-based line and column, the column counts code points
     pub line: usize,
+    /// The 1-based column in code points
     pub column: usize,
     /// UTF-8 byte offset and length in the script
     pub offset: usize,
+    /// The UTF-8 byte length in the script
     pub length: usize,
 }
 
+/// A diagnostic reported for a script
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Diagnostic {
+    /// The stage that reported the diagnostic
     pub stage: Stage,
+    /// Whether the diagnostic is an error or a warning
     pub severity: Severity,
+    /// The diagnostic message
     pub message: String,
     /// Absent for failures
     pub location: Option<Location>,
@@ -90,7 +98,9 @@ pub fn line_column(text: &str, offset: usize) -> (usize, usize) {
 /// Runs scripts through the DashQL scanner, parser and analyzer against a catalog of schema scripts
 #[derive(Default)]
 pub struct Linter {
+    /// The catalog holding the loaded schema scripts
     catalog: Catalog,
+    /// The number of schema scripts loaded so far, used as the catalog rank of the next one
     schemas: u32,
 }
 

@@ -3,9 +3,12 @@
 use dashql_core::utils::topk::TopKHeap;
 use std::cmp::Ordering;
 
+/// A scored value in the heap
 #[derive(Clone, Copy, Debug)]
 struct Entry {
+    /// The value that identifies the entry
     value: usize,
+    /// The score the heap orders by
     score: usize,
 }
 

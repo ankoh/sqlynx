@@ -53,6 +53,7 @@ type SharedCatalog = dashql_core::script_session::CatalogHandle;
 /// A catalog (`dashql_catalog_*`)
 #[wasm_bindgen]
 pub struct Catalog {
+    /// The core catalog, shared with the scripts and sessions created on it
     inner: SharedCatalog,
 }
 
@@ -147,6 +148,7 @@ impl Catalog {
 /// A batch of analyzed scripts for `Catalog::loadScripts`
 #[wasm_bindgen]
 pub struct ScriptBatch {
+    /// The analyzed scripts with their catalog ranks
     scripts: Vec<(std::sync::Arc<dashql_core::analyzer::AnalyzedScript>, u32)>,
 }
 
@@ -178,7 +180,9 @@ impl Default for ScriptBatch {
 /// A script (`dashql_script_*`)
 #[wasm_bindgen]
 pub struct Script {
+    /// The catalog the script was created for, the script is dropped from it on drop
     catalog: SharedCatalog,
+    /// The core script
     inner: CoreScript,
 }
 
@@ -433,6 +437,7 @@ impl Script {
 /// An editor session (`dashql_script_session_*`). Shared, so that session lists can refer to it.
 #[wasm_bindgen]
 pub struct ScriptSession {
+    /// The core session, shared with the session lists it was added to
     inner: Rc<RefCell<CoreScriptSession>>,
 }
 
@@ -612,6 +617,7 @@ impl ScriptSession {
 /// `ScriptExecutionUpdate`s.
 #[wasm_bindgen]
 pub struct ScriptExecution {
+    /// The core execution
     inner: CoreScriptExecution,
 }
 
@@ -637,6 +643,7 @@ impl ScriptExecution {
 /// The sessions to plan, in notebook order
 #[wasm_bindgen]
 pub struct SessionList {
+    /// The shared sessions in notebook order
     sessions: Vec<Rc<RefCell<CoreScriptSession>>>,
 }
 
@@ -689,6 +696,7 @@ pub fn parse_vegalite_to_visualize(json: &[u8]) -> Vec<u8> {
 /// A plan view model (`dashql_plan_view_model_*`)
 #[wasm_bindgen]
 pub struct PlanViewModel {
+    /// The core plan view model
     inner: dashql_core::view::PlanViewModel,
 }
 

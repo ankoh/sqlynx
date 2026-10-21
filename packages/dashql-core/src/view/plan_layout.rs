@@ -55,6 +55,7 @@ struct PlanLayoutNode {
     parent: Option<usize>,
     /// The children
     children_begin: usize,
+    /// The number of children
     children_count: usize,
     /// The rendered node width
     width: f64,
@@ -134,6 +135,7 @@ impl PlanLayoutNode {
     }
 }
 
+/// The tree layouter that positions the operators of a plan
 struct PlanLayouter<'a> {
     /// The plan layout nodes
     nodes: Vec<PlanLayoutNode>,

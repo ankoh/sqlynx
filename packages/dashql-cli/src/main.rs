@@ -24,9 +24,13 @@ Exits with 0 without errors (warnings are fine), 1 with errors and 2 on usage or
 /// The arguments of `lint`
 #[derive(Debug, Default, PartialEq, Eq)]
 struct Args {
+    /// The schema scripts passed with `--schema`
     schemas: Vec<String>,
+    /// The files, directories or `-` to lint
     paths: Vec<String>,
+    /// Print timings with `--debug`
     debug: bool,
+    /// Print the usage with `-h` or `--help`
     help: bool,
 }
 

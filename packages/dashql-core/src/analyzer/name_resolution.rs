@@ -27,20 +27,30 @@ const MAX_TABLE_REF_AMBIGUITY: usize = 100;
 /// A table column collected from a column definition
 #[derive(Clone)]
 struct PendingColumn {
+    /// The AST node id of the column definition
     ast_node_id: u32,
+    /// The column name
     column_name: Name,
 }
 
 /// The state of a node during name resolution
 #[derive(Default)]
 struct NodeState {
+    /// The scopes created in the subtree that have no parent scope yet
     child_scopes: Vec<ScopeId>,
+    /// The column definitions of a CREATE TABLE
     table_columns: Vec<PendingColumn>,
+    /// The table references not yet attached to a scope
     table_references: Vec<TableRefId>,
+    /// The column ref expressions not yet attached to a scope
     column_references: Vec<ExprId>,
+    /// The result targets of the enclosing SELECT
     result_targets: Vec<ResultTarget>,
+    /// The CTE definitions of the enclosing WITH clause
     ctes: Vec<CteDefinition>,
+    /// The derived tables, the FROM items of the next scope
     derived_tables: Vec<ScopeSource>,
+    /// The joins with USING or NATURAL of the next scope
     using_joins: Vec<UsingJoin>,
 }
 
@@ -75,6 +85,7 @@ impl NodeState {
 /// A join with USING, or NATURAL that uses all common columns. The USING columns of both inputs
 /// are one column of the join.
 struct UsingJoin {
+    /// The AST node id of the joined table
     ast_node_id: u32,
     /// The USING columns, all common columns of a NATURAL join if None
     using: Option<Vec<Arc<str>>>,
@@ -106,8 +117,11 @@ enum OutputNames {
 
 /// A declaration whose columns are derived after its SELECT scope is resolved
 struct PendingDerivedTable {
+    /// The table declaration (index into the table declarations of the script)
     table: u32,
+    /// The AST node id of the SELECT that defines the columns
     select_node_id: u32,
+    /// The declared column names, they rename the leading output columns
     column_aliases: Vec<Name>,
 }
 
@@ -116,7 +130,9 @@ struct PendingDerivedTable {
 /// The set iterates in insertion order, and erasing moves the last element into the hole.
 #[derive(Default)]
 struct RootScopes {
+    /// The root scopes in insertion order
     values: Vec<ScopeId>,
+    /// The position of every root scope in the values
     positions: HashMap<ScopeId, usize>,
 }
 
@@ -139,11 +155,15 @@ impl RootScopes {
     }
 }
 
+/// The pass that groups names into scopes and resolves tables and columns (`NameResolutionPass`)
 pub(super) struct NameResolutionPass {
+    /// The state of every AST node
     node_states: Vec<NodeState>,
     /// Does the script contain property graph syntax?
     has_graph_syntax: bool,
+    /// The scopes without a parent scope
     root_scopes: RootScopes,
+    /// The table declarations whose columns are derived after resolution
     pending_derived_tables: Vec<PendingDerivedTable>,
     /// The joins with USING or NATURAL of the scopes
     using_joins: HashMap<ScopeId, Vec<UsingJoin>>,

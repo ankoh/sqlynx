@@ -26,7 +26,9 @@ const B64: base64::engine::general_purpose::GeneralPurpose =
 
 /// The verified identity carried by a valid session.
 pub struct Session {
+    /// The Apple `sub` of the signed-in user
     pub apple_sub: String,
+    /// The email of the signed-in user
     pub email: String,
 }
 

@@ -11,9 +11,13 @@ enum Pws {
     Newline,
 }
 
+/// The state of the YAML emitter
 struct Emitter {
+    /// The emitted YAML
     out: String,
+    /// The indentation level, two spaces per level
     ilevel: usize,
+    /// The whitespace to write before the next token
     pws: Pws,
 }
 

@@ -39,6 +39,7 @@ impl GrpcServerStreamBatchEvent {
     }
 }
 
+/// A batch of messages read from a gRPC server stream in one read call
 #[derive(Debug)]
 pub struct GrpcServerStreamBatch {
     /// The event that emitted the batch
@@ -62,6 +63,7 @@ impl Default for GrpcServerStreamBatch {
     }
 }
 
+/// A gRPC server stream whose messages are buffered by a background reader task
 pub struct GRPCServerStream {
     /// The channel id
     #[allow(dead_code)]
@@ -72,6 +74,7 @@ pub struct GRPCServerStream {
     response_receiver: Mutex<tokio::sync::mpsc::Receiver<GrpcServerStreamEvent>>,
 }
 
+/// The registry of open gRPC server streams, keyed by stream id
 #[derive(Default)]
 pub struct GrpcStreamManager {
     /// The next message id

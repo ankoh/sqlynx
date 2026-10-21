@@ -155,7 +155,9 @@ pub enum PromptInputAction {
 /// The result of an operation: rendered output, an effect envelope or an error message (`ShellOperation`)
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ShellOperation {
+    /// The status of the operation
     pub status: ShellStatus,
+    /// The rendered output, the encoded effect envelope or the error message
     pub data: Vec<u8>,
 }
 
@@ -172,35 +174,53 @@ impl ShellOperation {
 /// Terminal output with the action of the input (`DashQLShellTerminalResult`)
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TerminalOutput {
+    /// The status of the input
     pub status: ShellStatus,
+    /// What the host should do after the input
     pub action: PromptInputAction,
+    /// The terminal output with VT100 escape sequences, or the error message
     pub data: Vec<u8>,
 }
 
 /// A completion candidate of the prompt (`CompletionCandidate`)
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct CompletionCandidate {
+    /// The text shown in the completion list
     pub display_text: String,
+    /// The text that replaces the target, quoted if needed and with `()` for functions
     pub completion_text: String,
+    /// The keywords that usually follow the completion, shown as hint, empty if none
     pub continuation_text: String,
     /// Whether this candidate only preserves the token already under the cursor
     pub is_identity: bool,
+    /// The qualified names of the candidate objects that are shown as variants
     pub qualification_texts: Vec<String>,
+    /// The cursor offset within the completion text after applying it
     pub completion_cursor_offset: u32,
+    /// The byte offset of the replaced text in the prompt
     pub target_offset: u32,
+    /// The byte length of the replaced text in the prompt
     pub target_length: u32,
+    /// The byte offset of the text that a qualified name replaces
     pub qualification_target_offset: u32,
+    /// The byte length of the text that a qualified name replaces
     pub qualification_target_length: u32,
 }
 
 /// The state of the prompt after an edit (`PromptSnapshot`)
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PromptSnapshot {
+    /// The status of the edit
     pub status: ShellStatus,
+    /// The revision of the prompt text
     pub revision: u64,
+    /// The byte offset of the cursor in the text
     pub cursor_byte_offset: u32,
+    /// The prompt text
     pub text: String,
+    /// The error message, empty on success
     pub message: String,
+    /// What the host should do after the edit
     pub action: PromptInputAction,
 }
 

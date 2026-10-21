@@ -20,6 +20,7 @@ pub const COMMENT_TAG_END: &str = "end";
 /// A block of comments
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct CommentBlock {
+    /// The kind of block: an ordinary comment or a tagged `@dashql:<tag>` region
     pub block_type: CommentBlockType,
     /// The whole block, including comment markers and tag lines
     pub text_span: TextSpan,
@@ -27,9 +28,11 @@ pub struct CommentBlock {
     pub tag_span: TextSpan,
     /// Slice of the comments of the script
     pub comments_begin: u32,
+    /// The number of comments in the block
     pub comments_count: u32,
     /// Slice of [`CommentBlocks::lines`]
     pub lines_begin: u32,
+    /// The number of content lines of the block
     pub lines_count: u32,
 }
 
@@ -65,7 +68,9 @@ fn is_horizontal_space(c: u8) -> bool {
 /// A byte range [begin, end) in the script text
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 struct Range {
+    /// The first byte offset
     begin: usize,
+    /// The byte offset past the end
     end: usize,
 }
 
@@ -89,9 +94,13 @@ struct Tag {
     rest: Range,
 }
 
+/// Groups the comments of a script into blocks
 struct Grouper<'a> {
+    /// The script text
     text: &'a [u8],
+    /// The comments of the script in script order
     comments: &'a [TextSpan],
+    /// The comment blocks built so far
     out: CommentBlocks,
 }
 

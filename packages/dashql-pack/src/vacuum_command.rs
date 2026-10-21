@@ -5,12 +5,16 @@ use std::collections::HashMap;
 
 use crate::remote_access::RemoteAccess;
 
+/// Delete all but the newest release versions from R2
 #[derive(Parser, Debug)]
 pub struct VacuumArgs {
+    /// List the objects to delete without deleting them
     #[arg(long, required = false, default_value = "false")]
     dry_run: bool,
+    /// The number of newest canary versions to keep
     #[arg(long, required = false, default_value_t = 10)]
     keep_canary: usize,
+    /// The number of newest stable versions to keep
     #[arg(long, required = false, default_value_t = 100)]
     keep_stable: usize,
 }

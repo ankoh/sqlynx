@@ -71,21 +71,37 @@ impl std::error::Error for NNDescentError {}
 /// let (indices, distances) = index.neighbor_graph().unwrap();
 /// ```
 pub struct NNDescentBuilder {
+    /// Input data, shape (n_samples, n_features)
     data: Array2<f32>,
+    /// Distance metric name (e.g. "euclidean", "cosine")
     metric: String,
+    /// Number of nearest neighbors to find per point, including the point itself
     n_neighbors: usize,
+    /// Seed for the random number generator; None seeds from OS entropy
     random_state: Option<u64>,
+    /// Number of RP trees for initialization; None derives it from the sample count
     n_trees: Option<usize>,
+    /// Max points per RP tree leaf; None derives it from n_neighbors
     leaf_size: Option<usize>,
+    /// Search graph degree limit as a multiple of n_neighbors (default 1.5, currently unused)
     pruning_degree_multiplier: f32,
+    /// Probability of pruning a redundant edge when diversifying the search graph (default 1.0)
     diversify_prob: f32,
+    /// Max number of NN-descent iterations; None derives it from the sample count
     n_iters: Option<usize>,
+    /// Early stopping threshold as a fraction of n_neighbors * n_samples graph updates (default 0.001)
     delta: f32,
+    /// Whether to initialize the graph from RP tree leaves (default true)
     tree_init: bool,
+    /// Max candidate neighbors per point per iteration; None uses min(60, n_neighbors)
     max_candidates: Option<usize>,
+    /// Max depth of the RP trees (default 200)
     max_rptree_depth: usize,
+    /// Whether to print progress messages to stderr
     verbose: bool,
+    /// Whether to compute distances on the GPU when available
     gpu: bool,
+    /// Optional progress callback
     progress: Option<ProgressCallback>,
 }
 
@@ -384,22 +400,36 @@ impl NNDescentBuilder {
 pub struct NNDescent {
     // Configuration (retained for prepare/query)
     n_neighbors: usize,
+    /// Max points per search tree leaf; None defaults to 30
     leaf_size: Option<usize>,
+    /// Probability of pruning a redundant edge when diversifying the search graph
     diversify_prob: f32,
+    /// Max depth of the search tree
     max_rptree_depth: usize,
 
     // Built state
     raw_data: Array2<f32>,
+    /// The k-NN graph as (indices, uncorrected distances), each of shape (n_samples, n_neighbors)
     neighbor_graph: Option<(Array2<i32>, Array2<f32>)>,
+    /// Diversified, symmetrized search graph in reordered vertex numbering; set by `prepare`
     search_graph: Option<CsrGraph>,
+    /// Search tree used to seed queries, in reordered vertex numbering; set by `prepare`
     search_forest: Vec<FlatTree>,
+    /// Map from reordered vertex index to original row index; set by `prepare`
     vertex_order: Option<Vec<i32>>,
+    /// TauRng state for tree construction
     rng_state: [i64; 3],
+    /// TauRng base state for queries
     search_rng_state: [i64; 3],
+    /// Distance function used internally (possibly a faster, uncorrected alternative)
     distance_func: DistanceFunc,
+    /// Correction mapping internal distances to true metric distances, if a fast alternative is used
     distance_correction: Option<CorrectionFunc>,
+    /// Whether the metric uses angular RP tree splits
     angular_trees: bool,
+    /// Smallest positive search graph edge distance, used to bound query search
     min_distance: f32,
+    /// Whether `prepare` has built the search structures
     is_prepared: bool,
 }
 

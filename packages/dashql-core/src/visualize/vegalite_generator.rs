@@ -95,6 +95,7 @@ fn insert(object: &mut Object, key: &str, value: Value) {
 
 /// The generator state
 struct Generator<'a> {
+    /// The analyzed script of the visualization
     script: &'a AnalyzedScript,
 }
 
@@ -291,10 +292,15 @@ impl Generator<'_> {
 
 /// The fields that top-level and nested specs share
 struct SpecFields<'a> {
+    /// The mark definition, written instead of the mark type if it has properties
     mark: Option<&'a VisMark>,
+    /// The mark type
     mark_type: Option<VisMarkType>,
+    /// The title
     title: &'a Option<String>,
+    /// The encoding channels
     encoding_channels: &'a [VisEncodingChannel],
+    /// The resolution of scales, axes and legends
     resolve: Option<&'a VisResolve>,
 }
 

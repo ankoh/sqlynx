@@ -42,6 +42,7 @@ pub struct StatementDescription {
     pub source_span: TextSpan,
     /// The description comments (a slice of the comments of the script)
     pub description_begin: u32,
+    /// The number of description comments
     pub description_count: u32,
     /// The `@dashql:description` block among the description comments
     pub description_block: Option<u32>,

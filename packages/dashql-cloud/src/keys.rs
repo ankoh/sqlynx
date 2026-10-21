@@ -120,8 +120,11 @@ pub fn bearer_token(req: &Request) -> Option<String> {
 /// A request that has passed the up-front quota check and had its request slot charged. Hold
 /// it across the AI call, then call [`Charge::charge_neurons`] with the request's neuron cost.
 pub struct Charge {
+    /// The `sha256(key)` hash of the charged API key
     hash: String,
+    /// The start of the charged quota window in epoch seconds
     window_start: u64,
+    /// The length of the quota window in seconds
     window_secs: u32,
 }
 
@@ -270,8 +273,11 @@ const OWNER_PREFIX: &str = "owner:";
 pub struct KeyInfo {
     /// `sha256(key)` — used as the id to revoke.
     pub hash: String,
+    /// Epoch millis when the key was minted
     pub created_at: u64,
+    /// Max requests allowed within each rolling window
     pub request_limit: u32,
+    /// Max neurons allowed within each rolling window
     #[serde(default = "default_neuron_limit")]
     pub neuron_limit: u64,
 }

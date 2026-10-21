@@ -10,8 +10,11 @@ use dashql_parser::parser::context::resolve_text_span;
 use dashql_parser::span::TextSpan;
 use yaml_rust2::Yaml;
 
+/// Encodes an analyzed script into a snapshot node
 struct Encoder<'a> {
+    /// The analyzed script
     script: &'a AnalyzedScript,
+    /// The script text
     text: &'a str,
 }
 

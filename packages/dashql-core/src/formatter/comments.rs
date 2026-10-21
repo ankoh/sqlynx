@@ -172,7 +172,9 @@ fn append_wrapped_line_comments(output: &mut Vec<u8>, input: &[u8], comments: &[
 
 /// The tag name of a `-- @dashql:<tag>` line comment and whether the tag is alone on its line
 struct CommentTag<'a> {
+    /// The tag name after `@dashql:`
     name: &'a [u8],
+    /// Is the tag the only text after the comment marker?
     alone: bool,
 }
 

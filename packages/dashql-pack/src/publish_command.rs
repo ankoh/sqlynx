@@ -11,29 +11,41 @@ use clap::Parser;
 use std::io::Write;
 use std::path::PathBuf;
 
+/// Publish the macOS Electron artifacts of a release to R2
 #[derive(Parser, Debug)]
 pub struct PublishArgs {
+    /// Build the release without uploading anything to R2
     #[arg(long, required = false, default_value = "false")]
     dry_run: bool,
+    /// Write a JSON summary of the release to this path
     #[arg(long, required = false)]
     save_summary: Option<PathBuf>,
+    /// The git repository to derive the release version from
     #[arg(long, required = true)]
     source_dir: PathBuf,
 
+    /// The arm64 macOS DMG
     #[arg(long, required = true)]
     macos_arm64_dmg_path: PathBuf,
+    /// The arm64 macOS ZIP used for auto updates
     #[arg(long, required = true)]
     macos_arm64_zip_path: PathBuf,
+    /// The blockmap of the arm64 macOS ZIP
     #[arg(long, required = true)]
     macos_arm64_zip_blockmap_path: PathBuf,
+    /// The electron-builder update manifest (latest-mac.yml) for arm64
     #[arg(long, required = true)]
     macos_arm64_update_manifest_path: PathBuf,
+    /// The x64 macOS DMG
     #[arg(long, required = true)]
     macos_x64_dmg_path: PathBuf,
+    /// The x64 macOS ZIP used for auto updates
     #[arg(long, required = true)]
     macos_x64_zip_path: PathBuf,
+    /// The blockmap of the x64 macOS ZIP
     #[arg(long, required = true)]
     macos_x64_zip_blockmap_path: PathBuf,
+    /// The electron-builder update manifest (latest-mac.yml) for x64
     #[arg(long, required = true)]
     macos_x64_update_manifest_path: PathBuf,
 }

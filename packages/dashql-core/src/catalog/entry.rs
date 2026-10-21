@@ -34,8 +34,11 @@ impl Name {
 pub struct QualifiedTableName {
     /// The AST node id in the declaring script
     pub ast_node_id: Option<u32>,
+    /// The database name, empty when not qualified
     pub database_name: Name,
+    /// The schema name, empty when not qualified
     pub schema_name: Name,
+    /// The table name
     pub table_name: Name,
 }
 
@@ -73,7 +76,9 @@ fn debug_string(database: &str, schema: &str, name: &str) -> String {
 pub struct QualifiedColumnName {
     /// The AST node id in the declaring script
     pub ast_node_id: Option<u32>,
+    /// The table alias qualifying the column, if any
     pub table_alias: Option<Name>,
+    /// The column name
     pub column_name: Name,
 }
 
@@ -82,8 +87,11 @@ pub struct QualifiedColumnName {
 pub struct QualifiedFunctionName {
     /// The AST node id in the declaring script
     pub ast_node_id: Option<u32>,
+    /// The database name, empty when not qualified
     pub database_name: Name,
+    /// The schema name, empty when not qualified
     pub schema_name: Name,
+    /// The function name
     pub function_name: Name,
 }
 
@@ -101,11 +109,13 @@ impl QualifiedFunctionName {
 /// A table column
 #[derive(Clone, Debug)]
 pub struct TableColumn {
+    /// The qualified object id, packs the table id and the column index
     pub object_id: QualifiedCatalogObjectId,
     /// The table of the column
     pub table: Option<CatalogTableId>,
     /// The AST node id in the declaring script
     pub ast_node_id: Option<u32>,
+    /// The column name
     pub column_name: Name,
 }
 
@@ -118,15 +128,21 @@ impl TableColumn {
 /// A table declaration
 #[derive(Clone, Debug)]
 pub struct TableDeclaration {
+    /// The qualified object id of the table
     pub object_id: QualifiedCatalogObjectId,
     /// The catalog version
     pub catalog_version: CatalogVersion,
     /// The schema of the table
     pub catalog_schema_id: QualifiedCatalogObjectId,
+    /// The AST node id of the declaration in the declaring script
     pub ast_node_id: Option<u32>,
+    /// The id of the declaring statement
     pub ast_statement_id: Option<u32>,
+    /// The root node of the name scope of the defining SELECT, for derived tables
     pub ast_scope_root: Option<u32>,
+    /// The qualified table name
     pub table_name: QualifiedTableName,
+    /// The columns, in declaration order
     pub table_columns: Vec<TableColumn>,
     /// The column indexes by name
     pub table_columns_by_name: HashMap<Arc<str>, usize>,
@@ -160,21 +176,32 @@ impl TableDeclaration {
 /// A function parameter
 #[derive(Clone, Debug)]
 pub struct FunctionParam {
+    /// The AST node id in the declaring script
     pub ast_node_id: Option<u32>,
+    /// The parameter name
     pub param_name: Name,
+    /// The parameter type as written, empty when not specified
     pub param_type: Arc<str>,
 }
 
 /// A function declaration
 #[derive(Clone, Debug)]
 pub struct FunctionDeclaration {
+    /// The qualified object id of the function
     pub object_id: QualifiedCatalogObjectId,
+    /// The schema of the function
     pub catalog_schema_id: QualifiedCatalogObjectId,
+    /// Whether the function is an aggregate function
     pub is_aggregate: bool,
+    /// The AST node id in the declaring script, `u32::MAX` for descriptor functions
     pub ast_node_id: u32,
+    /// The id of the declaring statement
     pub ast_statement_id: Option<u32>,
+    /// The qualified function name
     pub function_name: QualifiedFunctionName,
+    /// The parameters, in declaration order
     pub params: Vec<FunctionParam>,
+    /// The return type as written, empty when not specified
     pub return_type: Arc<str>,
 }
 
@@ -187,8 +214,11 @@ impl FunctionDeclaration {
 /// A referenced database
 #[derive(Clone, Debug)]
 pub struct DatabaseReference {
+    /// The qualified object id of the database
     pub object_id: QualifiedCatalogObjectId,
+    /// The database name
     pub database_name: Arc<str>,
+    /// The database alias, empty when not aliased
     pub database_alias: Arc<str>,
 }
 
@@ -201,8 +231,11 @@ impl DatabaseReference {
 /// A referenced schema
 #[derive(Clone, Debug)]
 pub struct SchemaReference {
+    /// The qualified object id, packs the database and schema ids
     pub object_id: QualifiedCatalogObjectId,
+    /// The database name
     pub database_name: Arc<str>,
+    /// The schema name
     pub schema_name: Arc<str>,
 }
 
@@ -218,7 +251,9 @@ impl SchemaReference {
 /// The location of a table: catalog entry and index of the declaration
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct TableLoc {
+    /// The catalog entry that declares the table
     pub entry: CatalogEntryId,
+    /// The index in the table declarations of the entry
     pub index: u32,
 }
 
@@ -234,14 +269,18 @@ impl From<CatalogTableId> for TableLoc {
 /// The location of a table column
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct ColumnLoc {
+    /// The table of the column
     pub table: TableLoc,
+    /// The index in the columns of the table
     pub column: u32,
 }
 
 /// The location of an object in the vectors of a catalog entry
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct ObjectLoc {
+    /// The catalog entry that declares the object
     pub entry: CatalogEntryId,
+    /// The index in the declaration vector of the object kind
     pub index: u32,
 }
 
@@ -279,12 +318,17 @@ impl CatalogObjectRef {
 /// The declarations of a catalog entry and their indexes
 #[derive(Clone, Debug, Default)]
 pub struct CatalogEntryData {
+    /// The id of the catalog entry
     pub catalog_entry_id: CatalogEntryId,
     /// The catalog version when the entry was created
     pub catalog_version: CatalogVersion,
+    /// The databases the entry references, in registration order
     pub database_references: Vec<DatabaseReference>,
+    /// The schemas the entry references, in registration order
     pub schema_references: Vec<SchemaReference>,
+    /// The tables the entry declares, in declaration order
     pub table_declarations: Vec<TableDeclaration>,
+    /// The functions the entry declares, in declaration order
     pub function_declarations: Vec<FunctionDeclaration>,
     /// Database references by name
     pub databases_by_name: HashMap<Arc<str>, usize>,

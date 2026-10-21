@@ -134,9 +134,12 @@ fn completion_variant_info_width(count: usize) -> usize {
     " <- /".len() + digits * 2 + " ->".len()
 }
 
+/// The extent of a laid out prompt in the terminal
 #[derive(Clone, Copy, Debug)]
 struct PromptLayout {
+    /// The number of terminal rows
     rows: usize,
+    /// The column after the last grapheme
     column: usize,
 }
 
@@ -386,26 +389,42 @@ fn find_first_of(text: &[u8], set: &[u8], from: usize) -> Option<usize> {
 /// The completion overlay of the terminal (`TerminalCompletionOverlay`)
 #[derive(Clone, Debug, Default)]
 struct TerminalCompletionOverlay {
+    /// The completion candidates
     candidates: Vec<CompletionCandidate>,
+    /// The index of the selected candidate
     selection: usize,
+    /// The index of the selected qualification variant of the selected candidate
     variant_selection: usize,
+    /// The index of the first visible candidate
     window_begin: usize,
+    /// The number of terminal rows below the prompt that the list occupies, 0 if not drawn
     rows: usize,
+    /// The prompt row of the cursor
     cursor_row: usize,
+    /// The terminal column of the left list border
     anchor_column: usize,
+    /// The width of the list content in columns
     content_width: usize,
+    /// The width of the inline hint before the typed text
     hint_prefix_width: usize,
+    /// The width of the inline hint after the cursor
     hint_suffix_width: usize,
+    /// The width of the typed text of the target
     hint_current_width: usize,
+    /// Was the hint suffix inserted before following text instead of written at the line end?
     hint_suffix_inserted: bool,
+    /// Show only the inline hint without the candidate list?
     hint_only: bool,
+    /// Does the ` <- i/n ->` variant indicator fit into the list?
     show_variant_info: bool,
 }
 
 /// The spinner line of a running query (`TerminalQueryProgressState`)
 #[derive(Clone, Debug, Default)]
 struct TerminalQueryProgress {
+    /// The current spinner frame
     frame: usize,
+    /// The text after the spinner
     message: Vec<u8>,
 }
 
@@ -436,8 +455,11 @@ fn select_terminal_completion_hint(overlay: &mut TerminalCompletionOverlay, prom
 /// A suspended operation that waits for the host (`PendingEffect`)
 #[derive(Clone, Debug)]
 struct PendingEffect {
+    /// The effect id that the host passes back on completion
     id: u64,
+    /// The kind of the effect
     effect_type: EffectType,
+    /// The payload, the query or command text
     payload: Vec<u8>,
 }
 
@@ -447,25 +469,45 @@ struct PendingEffect {
 /// when it completes. They become pending effects here: starting one encodes its envelope,
 /// completing it renders the result.
 pub struct ShellSession {
+    /// The relations of successful DDL statements, if tracked
     session_relations: Option<SessionRelationCatalog>,
+    /// The prompt
     prompt: PromptBuffer,
+    /// The renderer of query results
     renderer: ArrowRenderer,
+    /// The submitted queries, oldest first
     history: VecDeque<String>,
+    /// The history entry shown in the prompt, the history length when not browsing
     history_cursor: usize,
+    /// The prompt text before browsing the history
     history_draft: String,
+    /// The text deleted by the last kill command, inserted by yank
     kill_buffer: String,
+    /// The id of the next effect
     next_effect_id: u64,
+    /// The effects that wait for the host
     pending_effects: Vec<PendingEffect>,
+    /// Clear the screen when the terminal query finishes, requested by the last command
     clear_terminal_after_command: bool,
+    /// Complete tables of non-default databases with their qualified name?
     auto_qualify_non_default_database_tables: bool,
+    /// The keyword case of completions, 1 is upper case
     keyword_case: u32,
+    /// The names of the dot commands
     commands: Vec<String>,
+    /// The terminal prompt, the default prompt if empty
     terminal_prompt: Vec<u8>,
+    /// The prefix of continuation lines, with `->` below the `>` of the prompt
     terminal_continuation: Vec<u8>,
+    /// The number of terminal rows of the rendered prompt
     terminal_prompt_rows: usize,
+    /// The prompt row of the cursor
     terminal_prompt_cursor_row: usize,
+    /// What the host should do after the last terminal input
     terminal_action: PromptInputAction,
+    /// The completion overlay, if open
     overlay: Option<TerminalCompletionOverlay>,
+    /// The progress line of a running query, if shown
     progress: Option<TerminalQueryProgress>,
 }
 

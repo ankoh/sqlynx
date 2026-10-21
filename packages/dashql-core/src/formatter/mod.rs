@@ -46,12 +46,18 @@ pub enum FormattingAssociativity {
 
 use FormattingAssociativity as Associativity;
 
+/// The formatting state of an AST node
 #[derive(Clone, Copy, Debug, Default)]
 pub struct FormattingNodeState {
+    /// The operator precedence of an n-ary expression or its argument array, 0 if none
     pub precedence: usize,
+    /// The operator associativity of an n-ary expression or its argument array
     pub associativity: FormattingAssociativity,
+    /// Must the n-ary expression be parenthesized within its parent expression?
     pub needs_parentheses: bool,
+    /// Is the node the root of a statement, or the statement of an EXPLAIN?
     pub is_statement_root: bool,
+    /// The formatted document of the node
     pub reg: FmtReg,
 }
 
@@ -200,14 +206,21 @@ fn is_true(node: Option<&Node>) -> bool {
 
 /// The SQL formatter
 pub struct Formatter<'a> {
+    /// The scanned script
     scanned: &'a ScannedScript,
     /// Emit executable literals instead of obfuscated literal markers?
     replace_obfuscated_literals: bool,
+    /// The parsed script
     parsed: &'a ParsedScript,
+    /// The AST nodes of the parsed script
     ast: &'a [Node],
+    /// The formatting config of the current run
     config: FormattingConfigT,
+    /// The document arena that holds the formatted nodes
     fmt: FormattingProgram<'a>,
+    /// The formatting states, indexed by AST node id
     node_states: Vec<FormattingNodeState>,
+    /// The ids of the nodes that were rendered as placeholders
     unformattable_nodes: RefCell<Vec<u32>>,
 }
 

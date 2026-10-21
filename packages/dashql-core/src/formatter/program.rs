@@ -76,25 +76,39 @@ pub enum FormattingJoinPolicy {
     ForceBreak,
 }
 
+/// An operation of a formatting program, a node of the document tree
 #[derive(Clone, Debug, Default)]
 pub struct FormattingOperation<'a> {
+    /// The operation kind
     pub code: FormattingOpCode,
+    /// The text of a text operation
     pub text: &'a str,
     /// Verbatim text keeps its case when keywords are upper-cased
     pub verbatim: bool,
+    /// The child documents of a concat, join, indent or parenthesis operation
     pub children: Vec<FmtReg>,
+    /// The separator between join children when rendered inline
     pub inline_separator: FmtReg,
+    /// The separator between join children when rendered broken
     pub break_separator: FmtReg,
+    /// Indent the join children when the join is rendered broken?
     pub indent_after_breaks: bool,
+    /// The policy that decides where a join breaks
     pub join_policy: FormattingJoinPolicy,
 }
 
+/// The options for rendering a formatting program
 #[derive(Clone, Copy, Debug)]
 pub struct FormattingRenderOptions {
+    /// The maximum line width in bytes
     pub max_width: usize,
+    /// The number of spaces per indentation level
     pub indentation_width: usize,
+    /// Append the line width as `/*n*/` comment before every line break?
     pub debug_mode: bool,
+    /// The formatting mode, INLINE renders every join and parenthesis flat
     pub mode: FormattingMode,
+    /// The case of keywords in generated text
     pub keyword_case: KeywordCase,
 }
 
@@ -115,7 +129,9 @@ impl Default for FormattingRenderOptions {
 /// The builder methods take `&self` (the arena lives in a `RefCell`), so that operations can be
 /// nested like in the C++ code: `f.concat(&[f.text("a"), f.text("b")])`.
 pub struct FormattingProgram<'a> {
+    /// The formatting config, selects the default join policy
     pub config: FormattingConfigT,
+    /// The operations, register 0 is the empty document
     program: RefCell<Vec<FormattingOperation<'a>>>,
 }
 
@@ -269,17 +285,25 @@ enum RendererOpCode {
     CloseParenthesisAfterBreak,
 }
 
+/// A pending document of an inline dry run
 #[derive(Clone, Copy, Debug)]
 struct InlineRenderCommand {
+    /// The document to measure
     doc: FmtReg,
+    /// The indentation of the document
     indentation: usize,
 }
 
+/// A pending step of the renderer
 #[derive(Clone, Copy, Debug)]
 struct RenderCommand {
+    /// The step kind
     kind: RendererOpCode,
+    /// The document to render, or the join that continues
     reg: FmtReg,
+    /// The indentation of the document
     indentation: usize,
+    /// The index of the next join child to render on overflow
     next_index: usize,
 }
 

@@ -28,6 +28,7 @@ pub struct ScriptExecution {
     statement_index: u32,
     /// The index of the statement that produces the output
     output_statement_index: u32,
+    /// The phase of the execution
     phase: Phase,
     /// The error of a failed execution
     error: String,

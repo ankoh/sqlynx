@@ -35,10 +35,15 @@ pub struct FlatTree {
 
 // ===== Tree construction (recursive node lists) =====
 
+/// Incrementally built RP tree with one entry per node, flattened into a `FlatTree` afterwards
 struct TreeBuilder {
+    /// Splitting hyperplane per node; `[-1.0]` for leaves
     hyperplanes: Vec<Vec<f32>>,
+    /// Hyperplane offset per node; negative infinity for leaves
     offsets: Vec<f32>,
+    /// (left, right) child node ids per node; (-1, -1) for leaves
     children: Vec<(i32, i32)>,
+    /// Point indices per leaf node; `[-1]` for internal nodes
     point_indices: Vec<Vec<i32>>,
 }
 

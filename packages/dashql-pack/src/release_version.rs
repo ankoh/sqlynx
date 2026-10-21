@@ -18,9 +18,13 @@ impl fmt::Display for ReleaseChannel {
     }
 }
 
+/// The version, id and channel of a release
 pub struct ReleaseVersion {
+    /// The semantic version, a `dev` prerelease for untagged commits
     pub version: Version,
+    /// The release id, a UUID v5 of the version string
     pub id: Uuid,
+    /// The release channel, stable for tagged commits and canary otherwise
     pub channel: ReleaseChannel,
 }
 

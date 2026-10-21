@@ -7,10 +7,15 @@ pub type ProgressCallback = Box<dyn FnMut(f32, &str)>;
 /// Progress is computed from stage definitions: each stage has an estimated fraction
 /// of total time, and `stage_progress()` maps within-stage progress to overall [0, 1].
 pub struct Logger {
+    /// Whether log messages are printed to stderr
     verbose: bool,
+    /// Optional callback receiving overall progress and stage name
     pub callback: Option<ProgressCallback>,
+    /// Stage definitions as (name, estimated fraction of total time)
     stages: Vec<(&'static str, f32)>,
+    /// Overall progress at the start of each stage (prefix sums of the stage fractions)
     cumulative: Vec<f32>,
+    /// Index of the active stage in `stages`, if any
     current_stage: Option<usize>,
 }
 

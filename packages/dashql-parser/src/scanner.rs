@@ -57,7 +57,9 @@ pub struct ObfuscatedLiteral {
 /// A scanner error
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ScannerError {
+    /// The byte span of the error
     pub location: TextSpan,
+    /// The error message
     pub message: String,
 }
 
@@ -385,11 +387,17 @@ fn two_char_operator(a: u8, b: u8) -> Option<SymbolKind> {
     })
 }
 
+/// The scanner, switches between the lexers of the start conditions like the flex scanner
 struct Lexer<'a> {
+    /// The script text
     text: &'a [u8],
+    /// The byte offset of the next match
     pos: usize,
+    /// The current start condition
     state: State,
+    /// The start of the current extended token (quoted literal, identifier or comment)
     ext_begin: TextSpan,
+    /// The nesting depth of C-style comments
     ext_depth: usize,
     /// A buffer for lower-casing and unescaping names
     buffer: Vec<u8>,

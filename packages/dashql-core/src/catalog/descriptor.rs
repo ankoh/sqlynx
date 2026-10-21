@@ -12,16 +12,20 @@ use std::sync::Arc;
 /// A name of a descriptor entry
 #[derive(Clone, Debug)]
 pub struct DescriptorName {
+    /// The name text
     pub text: Arc<str>,
     /// The name tags
     pub tags: u8,
+    /// How often the name is registered by the descriptor
     pub occurrences: u32,
 }
 
 /// Declarations imported from verified `CatalogDescriptor` bytes
 #[derive(Debug)]
 pub struct DescriptorEntry {
+    /// The declarations of the entry
     pub entry: CatalogEntryData,
+    /// The rank of the entry, entries with a lower rank win on name conflicts
     pub rank: Rank,
     /// The names in registration order
     pub names: Vec<DescriptorName>,

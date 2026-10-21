@@ -40,11 +40,14 @@ extern "C" {
 /// (renamed to `skipCache`/`cacheTtl`) here if we ever want per-request cache control.
 #[derive(Serialize)]
 struct RunOptions<'a> {
+    /// The AI Gateway to route the request through
     gateway: GatewayOptions<'a>,
 }
 
+/// The AI Gateway selection inside [`RunOptions`]
 #[derive(Serialize)]
 struct GatewayOptions<'a> {
+    /// The AI Gateway id (from `AI_GATEWAY_ID`)
     id: &'a str,
 }
 
@@ -82,6 +85,7 @@ where
 /// a neuron-micro is `neurons × 1e6`, `tokens × rate` yields neuron-micros exactly, with no
 /// division or rounding — see [`Model::neuron_micros`]. Re-check these if CF changes pricing.
 pub struct Model {
+    /// The Workers AI model id, e.g. `@cf/google/gemma-4-26b-a4b-it`
     pub id: &'static str,
     /// Neurons per million input (prompt) tokens.
     pub neurons_per_m_input: u64,
@@ -111,10 +115,14 @@ fn find_model(id: &str) -> Option<&'static Model> {
 
 // ---- OpenAI-compatible wire types -----------------------------------------------------
 
+/// The body of an OpenAI-style `POST /v1/chat/completions` request
 #[derive(Deserialize)]
 struct ChatCompletionRequest {
+    /// The requested model id, must be one of [`MODELS`]
     model: String,
+    /// The chat history to complete
     messages: Vec<ChatMessage>,
+    /// Whether the client asked for streaming (ignored, responses are never streamed)
     #[serde(default)]
     #[allow(dead_code)]
     stream: bool,
@@ -124,38 +132,56 @@ struct ChatCompletionRequest {
     response_format: Option<serde_json::Value>,
 }
 
+/// A single chat message in OpenAI's `{ role, content }` form
 #[derive(Deserialize, Serialize, Clone)]
 struct ChatMessage {
+    /// The message author role, e.g. `system`, `user` or `assistant`
     role: String,
+    /// The message text
     content: String,
 }
 
+/// The OpenAI-shaped response of `POST /v1/chat/completions`
 #[derive(Serialize)]
 struct ChatCompletionResponse {
+    /// The OpenAI object type, always `chat.completion`
     object: &'static str,
+    /// The model id echoed from the request
     model: String,
+    /// The completions, always exactly one
     choices: Vec<Choice>,
     /// Echo Workers AI's token counts back (OpenAI clients expect a `usage` object).
     usage: Usage,
 }
 
+/// A single completion choice in a [`ChatCompletionResponse`]
 #[derive(Serialize)]
 struct Choice {
+    /// The position of the choice in the response, always 0
     index: u32,
+    /// The generated assistant message
     message: ChatMessage,
+    /// Why generation stopped, always `stop`
     finish_reason: &'static str,
 }
 
+/// The OpenAI-shaped response of `GET /v1/models`
 #[derive(Serialize)]
 struct ModelList {
+    /// The OpenAI object type, always `list`
     object: &'static str,
+    /// The exposed models
     data: Vec<ModelEntry>,
 }
 
+/// A single model in a [`ModelList`]
 #[derive(Serialize)]
 struct ModelEntry {
+    /// The Workers AI model id
     id: &'static str,
+    /// The OpenAI object type, always `model`
     object: &'static str,
+    /// The model owner, always `cloudflare`
     owned_by: &'static str,
 }
 
@@ -164,7 +190,9 @@ struct ModelEntry {
 /// Input to a Workers AI text-generation model (the `{ messages }` form).
 #[derive(Serialize)]
 struct WorkersAiInput {
+    /// The chat history to complete
     messages: Vec<ChatMessage>,
+    /// The optional response format forwarded from the request, omitted when unset
     #[serde(skip_serializing_if = "Option::is_none")]
     response_format: Option<serde_json::Value>,
 }
@@ -179,8 +207,10 @@ struct WorkersAiInput {
 /// typing it as `String` would fail deserialization with "invalid type: Object, expected a string".
 #[derive(Deserialize)]
 struct WorkersAiOutput {
+    /// The generated text, or an already parsed JSON value
     #[serde(default)]
     response: serde_json::Value,
+    /// The token counts of the request, all zero when absent
     #[serde(default)]
     usage: Usage,
 }
@@ -201,10 +231,13 @@ fn response_text(value: serde_json::Value) -> String {
 /// the binding's output and re-serialized into our OpenAI-shaped response unchanged.
 #[derive(Deserialize, Serialize, Default)]
 struct Usage {
+    /// The number of input (prompt) tokens
     #[serde(default)]
     prompt_tokens: u64,
+    /// The number of output (completion) tokens
     #[serde(default)]
     completion_tokens: u64,
+    /// The total number of tokens
     #[serde(default)]
     total_tokens: u64,
 }

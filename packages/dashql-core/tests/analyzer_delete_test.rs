@@ -9,7 +9,9 @@ use std::sync::Arc;
 
 /// The fixture: a catalog with the tables target, source and audit
 struct AnalyzerDeleteTest {
+    /// The catalog with the schema tables
     catalog: Catalog,
+    /// The schema script, kept alive while its tables are in the catalog
     _schema: Script,
 }
 

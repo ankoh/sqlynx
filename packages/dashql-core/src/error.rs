@@ -8,6 +8,7 @@ use std::fmt;
 pub struct Error {
     /// The status code, None for invalid arguments (`std::invalid_argument`)
     pub status: Option<StatusCode>,
+    /// The error message, the variant name of the status code for status errors
     pub message: String,
 }
 

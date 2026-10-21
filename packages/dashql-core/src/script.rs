@@ -29,6 +29,7 @@ use std::sync::Arc;
 /// The version of the script text, bumped by every edit
 pub type TextVersion = u64;
 
+/// A script text and its latest scanned, parsed and analyzed versions
 pub struct Script {
     /// The catalog entry id
     catalog_entry_id: CatalogEntryId,
@@ -51,6 +52,7 @@ pub struct Script {
 /// A stopwatch for the processing timings. `std::time::Instant` panics on wasm32-unknown-unknown,
 /// where the timings stay 0 until the host provides a clock.
 struct Stopwatch {
+    /// The instant the stopwatch was started
     #[cfg(not(target_arch = "wasm32"))]
     start: std::time::Instant,
 }

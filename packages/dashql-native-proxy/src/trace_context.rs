@@ -12,10 +12,14 @@ pub const SPAN_ID_KEY: &str = "span_id";
 #[allow(dead_code)]
 pub const PARENT_SPAN_ID_KEY: &str = "parent_span_id";
 
+/// The tracing identifiers attached to a proxied operation
 #[derive(Clone, Debug)]
 pub struct TraceContext {
+    /// The id of the trace, a random UUID for new traces
     pub trace_id: String,
+    /// The id of the current span
     pub span_id: String,
+    /// The id of the parent span, `None` for a root span
     pub parent_span_id: Option<String>,
 }
 

@@ -24,7 +24,9 @@ pub struct RegisteredName {
 /// stored once.
 #[derive(Clone, Debug, Default)]
 pub struct NameRegistry {
+    /// The names indexed by name id
     names: Vec<RegisteredName>,
+    /// The hash slots holding name id + 1, 0 for an empty slot, the length is a power of two
     table: Vec<u32>,
 }
 

@@ -12,28 +12,37 @@ use dashql_core::formatter::{
 
 /// One (config, expected output) pair
 pub struct Expectation {
+    /// The formatting config: dialect, mode, indentation and width
     pub config: FormattingConfigT,
+    /// The expected output, trimmed of spaces and newlines on both ends
     pub formatted: String,
 }
 
 /// The validation of a dialect: run `setup`, then every formatted output, against a live database
 pub struct Validation {
+    /// The setup script, trimmed, empty if the case has none
     pub setup: String,
 }
 
 /// The expectations of a dialect
 pub struct DialectExpectations {
+    /// The dialect name, the key in the `dialects` map
     pub dialect: String,
+    /// Is the dialect marked as skipped?
     pub skip: bool,
+    /// The expected outputs of the dialect
     pub expectations: Vec<Expectation>,
+    /// The validation against a live database, if the dialect has one
     pub validation: Option<Validation>,
 }
 
 /// A formatter snapshot case with at least one dialect
 pub struct FormatterCase {
+    /// The snapshot case
     pub case: SnapshotCase,
     /// The input, trimmed of spaces and newlines on both ends
     pub input: String,
+    /// The dialects with expectations or a skip mark, in file order
     pub dialects: Vec<DialectExpectations>,
 }
 

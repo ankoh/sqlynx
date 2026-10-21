@@ -203,6 +203,7 @@ fn generalized_eigh(g: &[f64], s: &[f64], m: usize) -> Option<(Vec<f64>, Vec<f64
 
 /// A block of k column vectors, each of length n.
 struct Block {
+    /// The k column vectors, each of length n
     cols: Vec<Vec<f64>>,
 }
 

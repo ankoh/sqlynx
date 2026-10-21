@@ -16,9 +16,13 @@ use std::sync::Arc;
 /// The state of a script that a cursor points into (the parts of `Script` the cursor reads)
 #[derive(Clone, Copy)]
 pub struct ScriptView<'a> {
+    /// The scanned script, if scanned
     pub scanned: Option<&'a Arc<ScannedScript>>,
+    /// The parsed script, if parsed
     pub parsed: Option<&'a Arc<ParsedScript>>,
+    /// The analyzed script, if analyzed, possibly from an older parsed script
     pub analyzed: Option<&'a Arc<AnalyzedScript>>,
+    /// The catalog the script is analyzed against
     pub catalog: &'a Catalog,
 }
 
@@ -37,9 +41,11 @@ impl<'a> ScriptView<'a> {
 pub struct SymbolLocation {
     /// The symbol index
     pub symbol_id: u32,
+    /// The scanner symbol
     pub symbol: Symbol,
     /// The text offset
     pub text_offset: u32,
+    /// The position of the text offset relative to the symbol
     pub relative_pos: RelativeSymbolPosition,
 }
 
@@ -227,8 +233,11 @@ pub enum NameComponentType {
 /// A component of a name path
 #[derive(Clone, Copy, Debug)]
 pub struct NameComponent {
+    /// The symbol span of the component
     pub loc: SymbolSpan,
+    /// The kind of the component
     pub component_type: NameComponentType,
+    /// The name id, set for name components only
     pub name: Option<NameId>,
 }
 
@@ -245,15 +254,21 @@ pub enum CursorContext {
 
 /// A cursor in a script (`ScriptCursor`)
 pub struct ScriptCursor<'a> {
+    /// The script the cursor points into
     pub script: ScriptView<'a>,
+    /// The UTF-8 byte offset of the cursor in the script text
     pub text_offset: usize,
+    /// The symbol at the cursor, if the script was scanned
     pub scanner_location: Option<LocationInfo>,
+    /// The statement at the cursor
     pub statement_id: Option<u32>,
+    /// The innermost AST node at the cursor
     pub ast_node_id: Option<u32>,
     /// The AST nodes from the cursor node to the statement root
     pub ast_path_to_root: Vec<u32>,
     /// The name scopes that contain the cursor, innermost first
     pub name_scopes: Vec<ScopeId>,
+    /// What the cursor points at
     pub context: CursorContext,
 }
 

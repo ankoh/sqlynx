@@ -3,7 +3,9 @@
 /// A span of bytes in the script text.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct TextSpan {
+    /// The byte offset of the start
     pub offset: u32,
+    /// The length in bytes
     pub length: u32,
 }
 

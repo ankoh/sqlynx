@@ -264,20 +264,33 @@ pub(crate) fn run_one_epoch_hogwild(
 /// the embedding into the CPU `embedding` mirror once at the end, and all getters
 /// read that mirror.
 pub struct UmapOptimizer {
+    /// The embedding, shape (n_vertices, dim); the CPU mirror when running on GPU
     embedding: Array2<f32>,
+    /// Number of embedded points
     n_vertices: usize,
+    /// Embedding dimension
     dim: usize,
+    /// Head vertex of each graph edge
     head: Vec<usize>,
+    /// Tail vertex of each graph edge
     tail: Vec<usize>,
+    /// Epochs between positive samples of each edge (inverse of its normalized weight)
     epochs_per_sample: Vec<f64>,
+    /// Per-edge epoch at which the edge is next sampled
     epoch_of_next_sample: Vec<f64>,
+    /// Per-edge epoch at which the next negative samples are due
     epoch_of_next_negative_sample: Vec<f64>,
+    /// Number of epochs run so far
     current_epoch: u64,
+    /// Live-tunable parameters (learning rate, repulsion, negative rate, a/b curve)
     params: LiveParams,
+    /// The active optimizer
     optimizer: Optimizer,
+    /// TauRng base state from which per-edge negative-sampling RNGs are derived
     rng_state: [i64; 3],
     /// Velocity buffer for Momentum; empty for Sgd (no overhead).
     velocity: Vec<f32>,
+    /// Resident GPU context; None runs the optimization on the CPU
     #[cfg(feature = "gpu")]
     gpu: Option<crate::gpu_optimize::OptimizeGpuContext>,
     /// f32-counter coordinate for the GPU schedule; reset to 0 on rebase.

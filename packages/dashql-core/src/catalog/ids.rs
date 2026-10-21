@@ -78,8 +78,11 @@ pub enum CatalogObjectType {
 /// The id of a catalog object (`QualifiedCatalogObjectID`), ordered by type, part 0, part 1
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct QualifiedCatalogObjectId {
+    /// The type of the object
     object_type: CatalogObjectType,
+    /// The database id, or the packed table or function id
     part0: u64,
+    /// The schema id or the column index, 0 for other types
     part1: u32,
 }
 

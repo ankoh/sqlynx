@@ -12,6 +12,7 @@ use dashql_parser::scanner::ScannedScript;
 use dashql_parser::span::TextSpan;
 use std::sync::Arc;
 
+/// The state shared between the analysis passes of a script (`AnalysisState`)
 pub(super) struct AnalysisState<'a> {
     /// The parsed script
     pub parsed: &'a ParsedScript,

@@ -16,60 +16,98 @@ use crate::optimize::{LiveParams, Optimizer};
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 #[repr(C)]
 struct OptimizeParams {
+    /// Number of embedded points
     n_vertices: u32,
+    /// Embedding dimension
     dim: u32,
+    /// Number of graph edges
     n_edges: u32,
+    /// Current epoch; for rebase_schedule, the baseline subtracted from the counters
     epoch: u32,
+    /// Curve parameter a of the low-dimensional similarity 1 / (1 + a * d^(2b))
     a: f32,
+    /// Curve parameter b of the low-dimensional similarity 1 / (1 + a * d^(2b))
     b: f32,
+    /// Repulsion strength applied to negative samples
     gamma: f32,
+    /// Learning rate
     alpha: f32,
+    /// Clamp on the summed per-element SGD delta
     grad_clamp: f32,
+    /// Number of negative samples per positive edge sample
     negative_sample_rate: f32,
+    /// Seed for the per-edge negative sampling hash
     base_seed: u32,
     /// Base element offset for chunked apply_grads dispatch.
     apply_offset: u32,
     /// Sub-batch edge range [edge_offset, edge_end) for accumulate_grads.
     edge_offset: u32,
+    /// Exclusive end of the sub-batch edge range
     edge_end: u32,
     /// 0 = Sgd, 1 = Momentum.
     optimizer: u32,
+    /// Momentum velocity decay factor (only used by Momentum)
     beta: f32,
 }
 
 /// Holds resident wgpu state for the GPU optimization pipeline.
 pub struct OptimizeGpuContext {
+    /// The wgpu device
     device: wgpu::Device,
+    /// The command queue of the device
     queue: wgpu::Queue,
+    /// Pipeline for the `accumulate_grads` entry point
     accumulate_pipeline: wgpu::ComputePipeline,
+    /// Pipeline for the `apply_grads` entry point
     apply_pipeline: wgpu::ComputePipeline,
+    /// Pipeline for the `rebase_schedule` entry point
     rebase_pipeline: wgpu::ComputePipeline,
+    /// Bind group of the accumulate pass
     accumulate_bind_group: wgpu::BindGroup,
+    /// Bind group of the apply pass
     apply_bind_group: wgpu::BindGroup,
+    /// Bind group of the rebase pass
     rebase_bind_group: wgpu::BindGroup,
+    /// Resident embedding, row-major (n_vertices x dim f32)
     embedding_buffer: wgpu::Buffer,
     // head/tail/eps are uploaded once and only referenced by the accumulate bind
     // group; retained here so the buffers outlive that bind group.
+    /// Head vertex of each edge
     #[allow(dead_code)]
     head_buffer: wgpu::Buffer,
+    /// Tail vertex of each edge
     #[allow(dead_code)]
     tail_buffer: wgpu::Buffer,
+    /// Epochs per positive sample of each edge
     #[allow(dead_code)]
     eps_buffer: wgpu::Buffer,
+    /// Per-edge epoch of the next positive sample
     eons_buffer: wgpu::Buffer,
+    /// Per-edge epoch of the next negative sample
     eonns_buffer: wgpu::Buffer,
+    /// Fixed-point i32 gradient accumulator, one per embedding element
     grad_accum_buffer: wgpu::Buffer,
+    /// Momentum velocity, one per embedding element
     velocity_buffer: wgpu::Buffer,
+    /// Uniform buffer holding the `OptimizeParams`
     params_buffer: wgpu::Buffer,
+    /// Mappable staging buffer for reading back the embedding
     embedding_staging: wgpu::Buffer,
     /// Initial epochs_per_sample (CPU copy), used to reset the schedule counters.
     eps: Vec<f32>,
+    /// Number of embedded points
     n_vertices: u32,
+    /// Embedding dimension
     dim: u32,
+    /// Number of graph edges
     n_edges: usize,
+    /// Neighbors per point, used to size the SGD clamp and sub-batch count
     n_neighbors: usize,
+    /// Clamp on the summed per-element SGD delta, 4 * sqrt(7 * n_neighbors)
     grad_clamp: f32,
+    /// Seed for the per-edge negative sampling hash, derived from the RNG state
     base_seed: u32,
+    /// Max workgroups per dispatch dimension (from device limits)
     max_workgroups_per_dim: u32,
 }
 

@@ -16,6 +16,7 @@ use wasm_bindgen::prelude::*;
 /// A prompt after an input (`DashQLShellPromptResult`)
 #[wasm_bindgen]
 pub struct ShellPromptResult {
+    /// The core prompt snapshot
     inner: PromptSnapshot,
 }
 
@@ -60,6 +61,7 @@ impl ShellPromptResult {
 /// Terminal output (`DashQLShellTerminalResult`)
 #[wasm_bindgen]
 pub struct ShellTerminalResult {
+    /// The core terminal output
     inner: TerminalOutput,
 }
 
@@ -87,6 +89,7 @@ impl ShellTerminalResult {
 /// The result of an operation: rendered output, an effect or an error (`DashQLShellResult`)
 #[wasm_bindgen]
 pub struct ShellOperation {
+    /// The core operation result
     inner: CoreOperation,
 }
 
@@ -142,6 +145,7 @@ impl ShellOperation {
 /// A completion candidate (`DashQLShellCompletionCandidate`)
 #[wasm_bindgen]
 pub struct ShellCompletionCandidate {
+    /// The core completion candidate
     inner: CompletionCandidate,
 }
 
@@ -185,6 +189,7 @@ fn operation(inner: CoreOperation) -> ShellOperation {
 /// A shell session on a catalog (`dashql_shell_*`). Freeing it drops the session relations from the catalog.
 #[wasm_bindgen]
 pub struct Shell {
+    /// The core shell
     inner: dashql_core::shell::Shell,
 }
 

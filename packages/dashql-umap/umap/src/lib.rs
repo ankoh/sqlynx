@@ -135,26 +135,44 @@ pub enum Init {
 ///     .unwrap();
 /// ```
 pub struct UmapBuilder<'a> {
+    /// Input data, shape (n_samples, n_features); None when built from a kNN graph
     data: Option<&'a Array2<f32>>,
     /// Precomputed kNN graph (indices, distances). When set, NNDescent is skipped
     /// and `data` is unused. See [`Umap::builder_from_knn`].
     knn: Option<(Array2<i32>, Array2<f32>)>,
+    /// Number of nearest neighbors, clamped to n_samples - 1 (default 15; ignored with a kNN graph)
     n_neighbors: usize,
+    /// Target embedding dimension (default 2)
     n_components: usize,
+    /// Minimum distance between embedded points (default 0.1)
     min_dist: f32,
+    /// Effective scale of embedded points, together with min_dist shapes the a/b curve (default 1.0)
     spread: f32,
+    /// Distance metric name for nearest neighbor search (default "euclidean")
     metric: String,
+    /// Number of optimization epochs; None picks 500 for up to 10000 samples, else 200
     n_epochs: Option<usize>,
+    /// Initial SGD learning rate (default 1.0)
     learning_rate: f32,
+    /// Number of negative samples per positive edge sample (default 5)
     negative_sample_rate: usize,
+    /// Weight of the repulsive force on negative samples (default 1.0)
     repulsion_strength: f32,
+    /// Number of nearest neighbors assumed to be locally connected (default 1.0)
     local_connectivity: f32,
+    /// Interpolation between fuzzy union (1.0) and intersection (0.0) when symmetrizing the graph (default 1.0)
     set_op_mix_ratio: f32,
+    /// Random seed; None seeds from OS entropy
     random_state: Option<u64>,
+    /// Whether to print progress messages to stderr
     verbose: bool,
+    /// Embedding initialization method (default spectral; momentum forces random)
     init: Init,
+    /// Whether to use the GPU for nearest neighbors and layout optimization when available
     gpu: bool,
+    /// Layout optimizer (default plain SGD)
     optimizer: Optimizer,
+    /// Optional progress callback
     progress: Option<ProgressCallback>,
 }
 
@@ -663,19 +681,33 @@ async fn build_optimizer(
 /// Output of [`UmapBuilder::prepare`]: everything needed to construct the
 /// optimizer plus the retained pruned graph and kNN arrays.
 struct Prepared {
+    /// Initial embedding, shape (n_samples, n_components)
     embedding: Array2<f32>,
+    /// The pruned fuzzy graph
     graph: CsrMatrix,
+    /// kNN indices with the point itself in column 0, shape (n_samples, n_neighbors)
     knn_indices: Array2<i32>,
+    /// kNN distances, shape (n_samples, n_neighbors)
     knn_distances: Array2<f32>,
+    /// Head vertex of each graph edge
     head: Vec<usize>,
+    /// Tail vertex of each graph edge
     tail: Vec<usize>,
+    /// Epochs between positive samples of each edge
     epochs_per_sample: Vec<f32>,
+    /// Nominal optimization horizon in epochs
     n_epochs: usize,
+    /// Effective number of neighbors per point
     n_neighbors: usize,
+    /// TauRng state for the optimizer's negative sampling
     rng_state: [i64; 3],
+    /// Initial live optimizer parameters
     params: LiveParams,
+    /// The layout optimizer to use
     optimizer: Optimizer,
+    /// Whether to run the optimization on the GPU
     gpu: bool,
+    /// Logger carrying the progress callback
     logger: Logger,
 }
 

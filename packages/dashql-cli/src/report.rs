@@ -16,6 +16,7 @@ pub enum Color {
 /// Applies text styles with ANSI escapes, they do not change the visible width
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Style {
+    /// Whether to emit ANSI escapes at all
     pub colors: bool,
 }
 

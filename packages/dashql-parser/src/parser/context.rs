@@ -36,6 +36,7 @@ impl<T> StateCell<T> {
     }
 }
 
+/// The cell of the parse context state, unchecked in release builds
 #[cfg(not(debug_assertions))]
 pub(crate) struct StateCell<T>(std::cell::UnsafeCell<T>);
 
@@ -64,6 +65,7 @@ pub const NO_PARENT: u32 = u32::MAX;
 /// A parsed statement
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Statement {
+    /// The statement type, derived from the type of the root node
     pub statement_type: StatementType,
     /// The root node
     pub root: u32,
@@ -87,36 +89,51 @@ impl Default for Statement {
 /// A parser error, located by symbol indexes
 #[derive(Clone, Debug, PartialEq)]
 pub struct ParseError {
+    /// The symbol indexes of the error
     pub location: SymbolSpan,
+    /// The error message
     pub message: String,
+    /// A hint how to fix the error, empty if there is none
     pub hint: String,
 }
 
 /// An n-ary expression whose materialization is deferred to flatten conjunctions and disjunctions
 #[derive(Clone, Copy, Debug)]
 struct NaryExpression {
+    /// The symbol indexes of the expression
     location: SymbolSpan,
+    /// The operator, AND or OR
     op: ExpressionOperator,
+    /// The operator node
     op_node: Node,
+    /// The flattened arguments
     args: NodeList,
 }
 
 /// The mutable state of the parse context
 #[derive(Default)]
 pub(crate) struct State {
+    /// The AST nodes in post-order
     pub(crate) nodes: Vec<Node>,
+    /// The finished statements
     pub(crate) statements: Vec<Statement>,
+    /// The parser errors
     pub(crate) errors: Vec<ParseError>,
+    /// Symbol-index spans (begin, end) covering the bodies of vis specs
     pub(crate) vis_spec_spans: Vec<(u32, u32)>,
+    /// The names of the scanned script, extended by names the parser registers
     pub(crate) names: NameRegistry,
     /// The hint of the next error, produced while building a syntax error message
     pub(crate) pending_hint: String,
     /// Set by an action to drop the lookahead (`yyclearin`)
     pub(crate) clear_lookahead: bool,
+    /// The statement being parsed, its nodes start at `nodes_begin`
     current_statement: Statement,
+    /// The node lists indexed by list id
     lists: Vec<Vec<Node>>,
     /// Consumed lists whose allocation can be reused
     free_lists: Vec<u32>,
+    /// The deferred n-ary expressions indexed by `ExprVariant::Nary` id
     nary_expressions: Vec<NaryExpression>,
 }
 
@@ -135,6 +152,7 @@ pub struct ParseContext<'a> {
     symbols: &'a [Symbol],
     /// Is the VISUALISE syntax enabled?
     vis_enabled: bool,
+    /// The mutable parser state
     pub(crate) state: StateCell<State>,
 }
 

@@ -6,8 +6,11 @@ use rayon::prelude::*;
 
 /// A neighbor heap storing k-nearest neighbors for n points.
 pub struct NeighborHeap {
+    /// Neighbor indices per point, shape (n_points, size); -1 marks an empty slot
     pub indices: Array2<i32>,
+    /// Neighbor distances per point, shape (n_points, size); infinity marks an empty slot
     pub distances: Array2<f32>,
+    /// Per-neighbor "new" flags (1 = not yet used as a candidate in a local join), shape (n_points, size)
     pub flags: Array2<u8>,
 }
 

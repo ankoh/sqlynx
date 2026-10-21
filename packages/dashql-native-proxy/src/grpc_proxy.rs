@@ -35,14 +35,21 @@ use crate::proxy_headers::HEADER_NAME_TLS_CLIENT_KEY;
 use crate::proxy_headers::HEADER_PREFIX;
 use crate::status::Status;
 
+/// The TLS settings of a gRPC channel, read from the proxy request headers
 struct GrpcRequestTlsConfig {
+    /// The path of the PEM client private key, required together with the client certificate
     client_key: Option<String>,
+    /// The path of the PEM client certificate, required together with the client key
     client_cert: Option<String>,
+    /// The path of a PEM file with extra CA certificates to trust on top of the OS roots
     cacerts: Option<String>,
 }
 
+/// The parameters for opening a gRPC channel, read from the proxy request headers
 struct GrpcChannelParams {
+    /// The endpoint to connect to
     endpoint: Endpoint,
+    /// The TLS settings, `None` for a plaintext channel
     tls: Option<GrpcRequestTlsConfig>,
 }
 
@@ -105,13 +112,19 @@ async fn connect_tls_endpoint(
     connect_endpoint(endpoint).await
 }
 
+/// An open gRPC channel registered in the [`GrpcProxy`]
 pub struct GrpcChannelEntry {
+    /// The connected tonic channel
     pub channel: tonic::transport::Channel,
 }
 
+/// The gRPC proxy that manages open channels and their server streams
 pub struct GrpcProxy {
+    /// The id to assign to the next created channel, starting at 1
     pub next_channel_id: AtomicUsize,
+    /// The open channels, keyed by channel id
     pub channels: RwLock<HashMap<usize, Arc<GrpcChannelEntry>>>,
+    /// The server streams opened on the channels
     pub streams: Arc<GrpcStreamManager>,
 }
 

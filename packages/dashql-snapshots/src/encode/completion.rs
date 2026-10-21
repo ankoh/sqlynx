@@ -118,8 +118,11 @@ pub fn encode_completion(out: &mut Map, completion: &Completion) {
 
 /// The output of a completion snapshot case
 pub struct CompletionCase {
+    /// The encoded catalog script, if the case has one
     pub catalog: Option<Yaml>,
+    /// The encoded editor script
     pub editor: Yaml,
+    /// The encoded completion at the cursor
     pub completions: Yaml,
 }
 

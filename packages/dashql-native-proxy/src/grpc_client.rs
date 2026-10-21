@@ -5,10 +5,13 @@ use tonic::{codec::{Codec, DecodeBuf, Decoder, EncodeBuf, Encoder}, Status};
 
 type GenericGrpcClientData = Vec<u8>;
 
+/// A tonic codec that passes raw message bytes through without protobuf encoding
 #[derive(Debug, Clone, Default)]
 struct PassthroughCodec();
 
+/// A gRPC client that calls arbitrary methods with raw, already encoded message bytes
 pub struct GenericGrpcClient {
+    /// The underlying tonic client on the gRPC channel
     inner: tonic::client::Grpc<tonic::transport::Channel>,
 }
 
@@ -61,8 +64,10 @@ impl GenericGrpcClient {
     }
 }
 
+/// The encoder of the [`PassthroughCodec`], writing message bytes as is
 #[derive(Debug, Clone, Default)]
 struct PassthroughEncoder();
+/// The decoder of the [`PassthroughCodec`], reading message bytes as is
 #[derive(Debug, Clone, Default)]
 struct PassthroughDecoder();
 

@@ -25,14 +25,21 @@ const NO_RESULTS_MESSAGE: &[u8] = b"No results";
 /// Null cells stay empty, nulls inside nested values print as `null`
 const FORMAT_OPTIONS: FormatOptions<'static> = FormatOptions::new().with_null("null");
 
+/// A cell of a rendered table
 struct Cell {
+    /// The escaped cell text
     text: Vec<u8>,
+    /// The horizontal alignment of the text
     alignment: Alignment,
 }
 
+/// A result table with formatted cells
 struct Table {
+    /// The escaped column names
     headers: Vec<Vec<u8>>,
+    /// The alignment of every column, right for numeric and boolean columns
     alignments: Vec<Alignment>,
+    /// The rows of cells
     rows: Vec<Vec<Cell>>,
 }
 
@@ -192,9 +199,13 @@ fn check_stream_framing(data: &[u8]) -> Result<(), String> {
     }
 }
 
+/// A grapheme cluster of a text
 struct Grapheme {
+    /// The byte offset of the cluster
     begin: usize,
+    /// The byte offset after the cluster
     end: usize,
+    /// The display width in terminal columns
     width: usize,
 }
 
@@ -440,6 +451,7 @@ fn render_table(table: &Table, terminal_columns: usize) -> Vec<u8> {
 /// Renders Arrow IPC results for a terminal width (`ArrowRenderer`)
 #[derive(Clone, Debug)]
 pub struct ArrowRenderer {
+    /// The terminal width in columns, at least 1
     terminal_columns: u32,
 }
 

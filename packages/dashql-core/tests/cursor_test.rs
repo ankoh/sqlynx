@@ -5,13 +5,20 @@ use dashql_core::catalog::{Catalog, QualifiedColumnName, QualifiedTableName};
 use dashql_core::cursor::CursorContext;
 use dashql_core::script::Script;
 
+/// The expected state of a script cursor
 #[derive(Default)]
 struct ExpectedScriptCursor {
+    /// The text of the token under the cursor, `None` if there is none
     scanner_token_text: Option<&'static str>,
+    /// The statement under the cursor
     statement_id: Option<u32>,
+    /// The attribute key of the AST node under the cursor
     ast_attribute_key: AttributeKey,
+    /// The type of the AST node under the cursor
     ast_node_type: NodeType,
+    /// The resolved or written name of the table ref under the cursor, `None` if not in a table ref
     table_ref_name: Option<&'static str>,
+    /// The name of the column ref under the cursor, `None` if not in a column ref
     column_ref_name: Option<&'static str>,
 }
 

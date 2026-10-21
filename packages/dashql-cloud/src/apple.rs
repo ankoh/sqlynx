@@ -22,7 +22,9 @@ const B64URL: base64::engine::general_purpose::GeneralPurpose =
 
 /// The verified claims we care about from Apple's id_token.
 pub struct AppleIdentity {
+    /// The stable Apple user id (`sub` claim)
     pub sub: String,
+    /// The user email, empty when Apple omitted it
     pub email: String,
 }
 
@@ -43,32 +45,47 @@ pub fn authorize_url(service_id: &str, redirect_uri: &str) -> String {
 
 // ---- id_token verification ------------------------------------------------------------
 
+/// The decoded header of an Apple id_token JWT
 #[derive(Deserialize)]
 struct JwtHeader {
+    /// The id of the JWKS key that signed the token
     kid: String,
+    /// The signature algorithm, must be `RS256`
     alg: String,
 }
 
+/// The decoded claims of an Apple id_token JWT
 #[derive(Deserialize)]
 struct JwtClaims {
+    /// The token issuer, must be Apple
     iss: String,
+    /// The token audience, must be our Services ID
     aud: String,
+    /// The expiry time in epoch seconds
     exp: u64,
+    /// The stable Apple user id
     sub: String,
+    /// The user email, empty when absent
     #[serde(default)]
     email: String,
 }
 
+/// Apple's JSON Web Key Set
 #[derive(Deserialize)]
 struct Jwks {
+    /// The published signing keys
     keys: Vec<Jwk>,
 }
 
+/// A single RSA public key in Apple's JWKS
 #[derive(Deserialize)]
 struct Jwk {
+    /// The key id, matched against the JWT header `kid`
     kid: String,
-    n: String, // base64url modulus
-    e: String, // base64url exponent
+    /// The RSA modulus, base64url-encoded
+    n: String,
+    /// The RSA public exponent, base64url-encoded
+    e: String,
 }
 
 /// Verify an Apple id_token JWT and return the identity. Checks the RS256 signature against

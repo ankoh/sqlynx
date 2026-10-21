@@ -45,7 +45,9 @@ pub enum ContainerStyle {
 /// A scalar: its text and style. A scalar without text is a null value (`key:`).
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Scalar {
+    /// The text, `None` for a null value
     pub text: Option<String>,
+    /// The emit style
     pub style: ScalarStyle,
 }
 

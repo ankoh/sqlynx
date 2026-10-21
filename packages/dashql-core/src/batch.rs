@@ -29,15 +29,19 @@ fn non_empty<T>(v: Vec<T>) -> Option<Vec<T>> {
 /// A diagnostic of a checked script
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Diagnostic {
+    /// The processing stage that reported the diagnostic
     pub stage: ProcessingStage,
+    /// Whether the diagnostic is an error or a warning
     pub severity: DiagnosticSeverity,
     /// The UTF-8 byte span in the script text
     pub span: TextSpan,
+    /// The diagnostic message
     pub message: String,
 }
 
 /// A script processed by [`check_script`]
 pub struct CheckedScript {
+    /// The processed script, not published to the catalog
     pub script: Script,
     /// The diagnostics of all stages that ran, in stage order
     pub diagnostics: Vec<Diagnostic>,

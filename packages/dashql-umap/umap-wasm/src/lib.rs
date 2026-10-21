@@ -66,26 +66,45 @@ fn js_to_progress_callback(f: js_sys::Function) -> nndescent::ProgressCallback {
 /// ```
 #[wasm_bindgen]
 pub struct UMAPBuilder {
+    /// Input data, flat row-major (n_rows * n_cols)
     data: Vec<f32>,
+    /// Number of data points
     n_rows: usize,
+    /// Number of input features per point
     n_cols: usize,
+    /// Target embedding dimension
     n_components: usize,
     // Optional parameters with defaults
     metric: String,
+    /// Number of nearest neighbors for graph construction (default 15)
     n_neighbors: usize,
+    /// Minimum distance between embedded points (default 0.1)
     min_dist: f32,
+    /// Effective scale of embedded points, together with min_dist shapes the a/b curve (default 1.0)
     spread: f32,
+    /// Number of optimization epochs; None picks 500 for up to 10000 points, else 200
     n_epochs: Option<usize>,
+    /// Initial SGD learning rate (default 1.0)
     learning_rate: f32,
+    /// Number of negative samples per positive edge sample (default 5)
     negative_sample_rate: usize,
+    /// Weight of the repulsive force on negative samples (default 1.0)
     repulsion_strength: f32,
+    /// Number of nearest neighbors assumed to be locally connected (default 1.0)
     local_connectivity: f32,
+    /// Interpolation between fuzzy union (1.0) and intersection (0.0) when symmetrizing the graph (default 1.0)
     set_op_mix_ratio: f32,
+    /// Embedding initialization method (default spectral)
     init: Init,
+    /// Layout optimizer (default plain SGD)
     optimizer: Optimizer,
+    /// Random seed; None seeds from OS entropy
     random_state: Option<u64>,
+    /// Whether to print progress messages
     verbose: bool,
+    /// Whether to use WebGPU for nearest neighbors and layout optimization when available
     gpu: bool,
+    /// Optional JS progress callback `(progress, stage) => void`
     progress: Option<js_sys::Function>,
 }
 
@@ -304,19 +323,31 @@ impl UMAPBuilder {
 /// [`UMAPBuilder::build`] (eager setup); `run`/`step` advance the layout in place.
 #[wasm_bindgen]
 pub struct Umap {
+    /// The resumable layout optimizer holding the current embedding
     optimizer: UmapOptimizer,
     /// Pruned fuzzy graph, retained for spectral re-initialization in `reset`.
     graph: CsrMatrix,
+    /// kNN indices, flat row-major (n_rows * n_neighbors_out)
     knn_indices: Vec<i32>,
+    /// kNN distances, flat row-major (n_rows * n_neighbors_out)
     knn_distances: Vec<f32>,
+    /// Number of neighbors per point in the kNN graph
     n_neighbors_out: usize,
+    /// Number of data points
     n_rows: usize,
+    /// Embedding dimension
     n_components: usize,
+    /// Current min_dist, used to re-fit the a/b curve in `set_parameters`
     min_dist: f32,
+    /// Current spread, used to re-fit the a/b curve in `set_parameters`
     spread: f32,
+    /// Random seed for re-initialization in `reset`; None seeds from OS entropy
     seed: Option<u64>,
+    /// Nominal optimization horizon that `run` anneals to
     n_epochs: usize,
+    /// Optional JS progress callback, reported to during `run`
     progress: Option<js_sys::Function>,
+    /// Whether to print progress messages
     verbose: bool,
 }
 
@@ -497,24 +528,41 @@ impl Umap {
 /// trims every row to its length.
 #[wasm_bindgen]
 pub struct UMAPFromKnnBuilder {
+    /// Precomputed kNN indices, flat row-major (n_rows * k)
     knn_indices: Vec<i32>,
+    /// Precomputed kNN distances, flat row-major (n_rows * k)
     knn_distances: Vec<f32>,
+    /// Number of data points
     n_rows: usize,
+    /// Target embedding dimension
     n_components: usize,
     // Optional parameters with defaults (no metric / n_neighbors: k comes from the graph)
     min_dist: f32,
+    /// Effective scale of embedded points, together with min_dist shapes the a/b curve (default 1.0)
     spread: f32,
+    /// Number of optimization epochs; None picks 500 for up to 10000 points, else 200
     n_epochs: Option<usize>,
+    /// Initial SGD learning rate (default 1.0)
     learning_rate: f32,
+    /// Number of negative samples per positive edge sample (default 5)
     negative_sample_rate: usize,
+    /// Weight of the repulsive force on negative samples (default 1.0)
     repulsion_strength: f32,
+    /// Number of nearest neighbors assumed to be locally connected (default 1.0)
     local_connectivity: f32,
+    /// Interpolation between fuzzy union (1.0) and intersection (0.0) when symmetrizing the graph (default 1.0)
     set_op_mix_ratio: f32,
+    /// Embedding initialization method (default spectral)
     init: Init,
+    /// Layout optimizer (default plain SGD)
     optimizer: Optimizer,
+    /// Random seed; None seeds from OS entropy
     random_state: Option<u64>,
+    /// Whether to print progress messages
     verbose: bool,
+    /// Whether to use WebGPU for the layout optimization when available
     gpu: bool,
+    /// Optional JS progress callback `(progress, stage) => void`
     progress: Option<js_sys::Function>,
 }
 
@@ -749,22 +797,37 @@ impl UMAPFromKnnBuilder {
 /// ```
 #[wasm_bindgen]
 pub struct NNDescentBuilder {
+    /// Input data, flat row-major (n_rows * n_cols)
     data: Vec<f32>,
+    /// Number of data points
     n_rows: usize,
+    /// Number of features per point
     n_cols: usize,
+    /// Distance metric name (e.g. "euclidean", "cosine")
     metric: String,
+    /// Number of nearest neighbors to find per point
     n_neighbors: usize,
     // Optional parameters
     random_state: Option<u64>,
+    /// Number of RP trees for initialization; None derives it from the point count
     n_trees: Option<usize>,
+    /// Max number of NN-descent iterations; None derives it from the point count
     n_iters: Option<usize>,
+    /// Early stopping threshold as a fraction of n_neighbors * n_rows graph updates (default 0.001)
     delta: f32,
+    /// Whether to initialize the graph from RP tree leaves (default true)
     tree_init: bool,
+    /// Max depth of the RP trees (default 200)
     max_rptree_depth: usize,
+    /// Probability of pruning a redundant edge when diversifying the search graph (default 1.0)
     diversify_prob: f32,
+    /// Search graph degree limit as a multiple of n_neighbors (default 1.5)
     pruning_degree_multiplier: f32,
+    /// Whether to print progress messages
     verbose: bool,
+    /// Whether to compute distances via WebGPU when available
     gpu: bool,
+    /// Optional progress callback wrapping the JS function
     progress: Option<nndescent::ProgressCallback>,
 }
 
@@ -917,6 +980,7 @@ impl NNDescentBuilder {
 /// An NNDescent nearest neighbor index.
 #[wasm_bindgen]
 pub struct NNDescentIndex {
+    /// The wrapped native index
     inner: NNDescent,
 }
 
@@ -978,9 +1042,13 @@ impl NNDescentIndex {
 /// Result of a neighbor graph or query operation.
 #[wasm_bindgen]
 pub struct NeighborResult {
+    /// Neighbor indices, flat row-major (n_rows * n_cols)
     indices: Vec<i32>,
+    /// Neighbor distances, flat row-major (n_rows * n_cols)
     distances: Vec<f32>,
+    /// Number of rows (points)
     n_rows: usize,
+    /// Number of columns (neighbors per point)
     n_cols: usize,
 }
 

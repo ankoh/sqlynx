@@ -135,6 +135,7 @@ pub(super) struct OperatorNode {
     pub(super) source_location: Option<SymbolSpan>,
     /// The child operators
     pub(super) children_begin: usize,
+    /// The number of child operators
     pub(super) children_count: usize,
     /// The begin of outgoing cross edges
     pub(super) cross_edges_begin: usize,

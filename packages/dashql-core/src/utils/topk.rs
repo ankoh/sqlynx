@@ -5,9 +5,13 @@
 
 use std::cmp::Ordering;
 
+/// A min heap that keeps the `capacity` greatest entries
 pub struct TopKHeap<T, C: Fn(&T, &T) -> Ordering> {
+    /// The entries, a min heap once full and sorted in descending order when finished
     entries: Vec<T>,
+    /// The maximum number of entries
     capacity: usize,
+    /// The total order of the entries
     cmp: C,
 }
 

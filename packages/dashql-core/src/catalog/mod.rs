@@ -53,16 +53,22 @@ impl CatalogEntryRef {
 /// A database declared by the catalog
 #[derive(Clone, Debug)]
 pub struct DatabaseDeclaration {
+    /// The qualified object id of the database
     pub object_id: QualifiedCatalogObjectId,
+    /// The database name
     pub database_name: Arc<str>,
+    /// The database alias, empty when not aliased
     pub database_alias: Arc<str>,
 }
 
 /// A schema declared by the catalog
 #[derive(Clone, Debug)]
 pub struct SchemaDeclaration {
+    /// The qualified object id, packs the database and schema ids
     pub object_id: QualifiedCatalogObjectId,
+    /// The database name
     pub database_name: Arc<str>,
+    /// The schema name
     pub schema_name: Arc<str>,
 }
 
@@ -75,17 +81,24 @@ impl SchemaDeclaration {
 /// A catalog entry that populates a schema
 #[derive(Clone, Copy, Debug)]
 pub struct SchemaEntryInfo {
+    /// The catalog entry
     pub catalog_entry_id: CatalogEntryId,
+    /// The qualified object id of the schema
     pub catalog_schema_id: QualifiedCatalogObjectId,
 }
 
 /// Canonical ids, reserved during analysis and never reused
 #[derive(Debug)]
 struct IdReservations {
+    /// The reserved database ids by database name
     database_ids_by_name: HashMap<String, CatalogDatabaseId>,
+    /// The reserved schema ids by (database, schema)
     schema_ids_by_name: HashMap<(String, String), QualifiedCatalogObjectId>,
+    /// The next database id to reserve
     next_database_id: CatalogDatabaseId,
+    /// The next schema id to reserve
     next_schema_id: CatalogSchemaId,
+    /// The next entry id to allocate
     next_entry_id: CatalogEntryId,
 }
 
@@ -436,20 +449,33 @@ impl Catalog {
     /// occurs in several entries is taken from the entry with the lowest rank. Names go through a
     /// dictionary, built in rank order, so that JS only decodes the names it renders.
     pub fn flatten(&self) -> FlatCatalogT {
+        /// A table of the flattened catalog
         struct TableNode {
+            /// The table id
             table_id: CatalogTableId,
+            /// The index of the table name in the name dictionary
             name_id: usize,
+            /// The index of the first column in the column nodes
             columns_begin: usize,
+            /// The number of columns
             column_count: usize,
         }
+        /// A schema of the flattened catalog
         struct SchemaNode {
+            /// The schema id
             schema_id: CatalogSchemaId,
+            /// The index of the schema name in the name dictionary
             name_id: usize,
+            /// The table node indexes by table name
             children: BTreeMap<Arc<str>, usize>,
         }
+        /// A database of the flattened catalog
         struct DatabaseNode {
+            /// The database id
             database_id: CatalogDatabaseId,
+            /// The index of the database name in the name dictionary
             name_id: usize,
+            /// The schema node indexes by schema name
             children: BTreeMap<Arc<str>, usize>,
         }
 

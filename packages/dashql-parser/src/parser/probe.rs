@@ -30,7 +30,9 @@ pub struct PrefixSnapshot {
 /// The expected symbols at the cursor and the snapshot they were computed from
 #[derive(Clone, Debug, Default)]
 pub struct ExpectedAtCursor {
+    /// The tokens the parser would eventually shift at the cursor, empty if the cursor was not reached
     pub expected: Vec<SymbolKind>,
+    /// The state stack before the read of the cursor token
     pub prefix: PrefixSnapshot,
 }
 
@@ -47,7 +49,9 @@ pub struct SuffixProbe {
 
 /// The token reader of the probes, `ParseContext::NextSymbol` without semantic values
 struct Tokens<'a> {
+    /// The scanned symbols
     symbols: &'a [Symbol],
+    /// The index of the next symbol to read, EOF past the end
     next_index: u32,
 }
 
@@ -218,7 +222,9 @@ pub fn collect_expected_symbols(states: &[StateId]) -> Vec<SymbolKind> {
 
 /// Capture the state stack when the cursor token would be read
 struct PrefixCapture<'a> {
+    /// The symbol index of the cursor token
     target: u32,
+    /// The captured snapshot
     out: &'a mut PrefixSnapshot,
 }
 
@@ -247,10 +253,13 @@ pub fn parse_until_with_snapshot(symbols: &[Symbol], target: u32) -> ExpectedAtC
 /// Replace the cursor token with a symbol, then inject COMPLETE_HERE to collect the expected
 /// symbols after it at the next error
 struct CollectAfter {
+    /// The symbol index of the cursor token
     target: u32,
+    /// The symbol that replaces the cursor token
     feed: SymbolKind,
     /// 0 = parsing, 1 = fed the symbol, 2 = injected COMPLETE_HERE
     phase: u8,
+    /// The expected symbols after the fed symbol, collected at the first error after COMPLETE_HERE
     expected: Vec<SymbolKind>,
 }
 
@@ -292,8 +301,11 @@ pub fn parse_until_after(symbols: &[Symbol], target: u32, feed: SymbolKind) -> V
 
 /// Feed symbols at the cursor and count the real tokens that shift after them
 struct SuffixProbePolicy<'a> {
+    /// The symbols fed at the cursor
     feed: &'a [SymbolKind],
+    /// Does the first fed symbol replace the cursor token instead of being inserted before it?
     replace_target: bool,
+    /// The probe result
     probe: SuffixProbe,
     /// The number of fed symbols
     fed_count: usize,

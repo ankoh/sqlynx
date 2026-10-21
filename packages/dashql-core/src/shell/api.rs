@@ -14,7 +14,9 @@ pub type SharedCatalog = Rc<RefCell<Catalog>>;
 
 /// A shell session with its catalog (`DashQLShell`)
 pub struct Shell {
+    /// The catalog, shared with the owner of the shell
     catalog: SharedCatalog,
+    /// The interactive session
     session: ShellSession,
 }
 

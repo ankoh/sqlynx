@@ -14,13 +14,20 @@ lazy_static! {
         Regex::new("v([0-9]+).([0-9]+).([0-9]+)-([0-9]+)-g([a-f0-9]+)").unwrap();
 }
 
+/// A version derived from the long `git describe` output of a repository
 #[derive(Clone)]
 pub struct GitVersion {
+    /// The raw `git describe` output, e.g. `v1.2.3-4-gabcdef0`
     pub description: String,
+    /// The major version of the latest tag
     pub major: u32,
+    /// The minor version of the latest tag
     pub minor: u32,
+    /// The patch version of the latest tag
     pub patch: u32,
+    /// The number of commits since the latest tag, 0 for a tagged commit
     pub iteration: u32,
+    /// The abbreviated hash of the described commit
     pub short_hash: String,
 }
 
@@ -53,8 +60,10 @@ impl fmt::Display for GitVersion {
     }
 }
 
+/// The git information of the repository a release is built from
 #[derive(Clone)]
 pub struct GitInfo {
+    /// The version described by git
     pub version: GitVersion,
 }
 

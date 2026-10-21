@@ -13,7 +13,9 @@ use std::sync::Arc;
 /// A name of the index (the fields of `RegisteredName` the completion reads)
 #[derive(Clone, Debug)]
 pub struct IndexedName {
+    /// The name text
     pub text: Arc<str>,
+    /// How often the name occurs in the entry
     pub occurrences: u32,
     /// The location of the first occurrence in the script text
     pub location: TextSpan,
@@ -32,8 +34,10 @@ pub enum SuffixOrder {
     LongestFirst,
 }
 
+/// A substring search index over the names of a catalog entry
 #[derive(Debug, Default)]
 pub struct NameSearchIndex {
+    /// The indexed names, the suffixes refer to them by index
     pub names: Vec<IndexedName>,
     /// (name index, byte offset of the suffix), sorted case-insensitively by the suffix
     suffixes: Vec<(u32, u32)>,

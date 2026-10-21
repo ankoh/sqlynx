@@ -10,14 +10,23 @@ use std::ops::Range;
 /// The state of a node
 #[derive(Default)]
 struct NodeState {
+    /// The encoding channels collected in the subtree
     encoding_channels: Vec<VisEncodingChannel>,
+    /// The mark type of the spec
     mark_type: Option<VisMarkType>,
+    /// The structured mark definition, if the mark carries properties
     mark: Option<VisMark>,
+    /// The chart title
     title: Option<String>,
+    /// The nested Vega-Lite layer specifications
     layers: Vec<VegaLiteSpec>,
+    /// The scale/axis/legend resolution settings
     resolve: Option<VisResolve>,
+    /// The scale definition, taken by the enclosing field def
     scale: Option<VisScale>,
+    /// The axis definition, taken by the enclosing field def
     axis: Option<VisAxis>,
+    /// The legend definition, taken by the enclosing field def
     legend: Option<VisLegend>,
 }
 
@@ -512,9 +521,11 @@ fn extract_vega_lite_spec(state: &AnalysisState, node: &Node) -> VegaLiteSpec {
     spec
 }
 
+/// The pass that extracts the visualization specs of VISUALIZE statements (`AnalyzeVisualizationPass`)
 pub(super) struct AnalyzeVisualizationPass {
     /// The node states, only allocated for nodes that carry visualization state
     node_states: Vec<Option<Box<NodeState>>>,
+    /// The visualization specs, moved to the output during finish
     collected_specs: Vec<VisualizationSpec>,
 }
 

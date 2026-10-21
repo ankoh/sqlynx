@@ -1,11 +1,18 @@
 use super::release_version::{ReleaseChannel, ReleaseVersion};
 
+/// The object keys a release is uploaded to
 pub struct RemotePaths {
+    /// The channel metadata keys to point to the release, e.g. `stable.json`
     pub channel_metadata: Vec<&'static str>,
+    /// The channel update manifest keys to point to the release, e.g. `stable-update.json`
     pub channel_update: Vec<&'static str>,
+    /// The versioned directory of the release, `releases/<version>`
     pub release_directory: String,
+    /// The key of the release metadata
     pub release_metadata: String,
+    /// The key of the release update manifest
     pub release_update: String,
+    /// The name of the release channel, `stable` or `canary`
     pub channel: &'static str,
 }
 

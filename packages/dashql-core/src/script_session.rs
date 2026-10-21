@@ -69,20 +69,30 @@ fn non_empty_string(s: impl Into<String>) -> Option<String> {
 
 /// A text change, validated and resolved to byte and code point offsets (`PreparedChange`)
 struct PreparedChange<'e> {
+    /// The UTF-8 byte offset where the replaced range begins
     from_byte: usize,
+    /// The UTF-8 byte offset where the replaced range ends
     to_byte: usize,
+    /// The code point offset where the replaced range begins
     from_codepoint: usize,
+    /// The code point offset where the replaced range ends
     to_codepoint: usize,
+    /// The inserted text
     insert: &'e str,
+    /// The index of the change in the event, orders changes at the same range
     input_order: usize,
 }
 
 /// The catalog ids of a resolved table (`ResolvedTableIDs`)
 #[derive(Clone, Copy)]
 struct ResolvedTableIds {
+    /// The database id
     database_id: u32,
+    /// The schema id
     schema_id: u32,
+    /// The packed table id
     table_id: u64,
+    /// The catalog version the reference was resolved against
     catalog_version: u32,
 }
 
@@ -170,15 +180,23 @@ impl Projector<'_> {
 
 /// The state of one editor document (`ScriptSession`)
 pub struct ScriptSession {
+    /// The catalog the script is analyzed against
     catalog: CatalogHandle,
+    /// The script of the document
     script: Script,
+    /// The unit of the text offsets exchanged with the editor
     offset_unit: EditorOffsetUnit,
     /// Bumped by every committed change of the text, selection or analysis
     state_revision: u64,
+    /// The text version the analysis is current with, `NO_VERSION` if none
     analyzed_text_version: TextVersion,
+    /// The catalog version the analysis is current with, `NO_VERSION` if none
     analyzed_catalog_revision: u64,
+    /// The text version the cursor is current with, `NO_VERSION` if not placed
     cursor_text_version: TextVersion,
+    /// The catalog version the cursor is current with, `NO_VERSION` if not placed
     cursor_catalog_revision: u64,
+    /// The primary editor selection, in the offset unit of the session
     primary_selection: Option<EditorSelectionT>,
 }
 

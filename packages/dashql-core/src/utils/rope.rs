@@ -57,8 +57,11 @@ pub fn resolve_utf16_boundary(text: &Rope, utf16_idx: usize) -> Option<TextPosit
 pub struct Utf16Projector<'a> {
     /// The text of the rope, if it is at hand
     text: Option<&'a str>,
+    /// The rope to look offsets up in
     rope: &'a Rope,
+    /// The byte offset of the last projection
     last_byte: usize,
+    /// The UTF-16 offset of the last projection
     last_utf16: usize,
 }
 

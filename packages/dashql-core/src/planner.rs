@@ -46,12 +46,19 @@ fn is_view(analyzed: &AnalyzedScript, table: &TableDeclaration) -> bool {
 
 /// A table of the plan: a published or an input declaration
 struct PlanState<'a> {
+    /// The execution graph, completed with the lists below when finished
     graph: ExecutionGraphT,
+    /// The entity indexes by table object id
     entities: BTreeMap<QualifiedCatalogObjectId, u32>,
+    /// The unresolved reference indexes by (database, schema, table) name
     unresolved_references: BTreeMap<Name, u32>,
+    /// The interned table entities, in interning order
     entity_list: Vec<ExecutionGraphEntityT>,
+    /// The interned unresolved references, in interning order
     unresolved_list: Vec<ExecutionGraphUnresolvedReferenceT>,
+    /// The diagnostics of the plan
     diagnostics: Vec<ExecutionGraphDiagnosticT>,
+    /// Binds the lifetime parameter
     _marker: std::marker::PhantomData<&'a ()>,
 }
 
@@ -105,7 +112,9 @@ impl PlanState<'_> {
 /// A script to plan and the catalog it was analyzed with (`PlannerInput`)
 #[derive(Clone, Copy)]
 pub struct PlannerInput<'a> {
+    /// The script to plan
     pub script: &'a Script,
+    /// The catalog the script was analyzed with
     pub catalog: &'a Catalog,
 }
 
@@ -575,10 +584,14 @@ pub fn plan(planner_inputs: &[PlannerInput]) -> ExecutionGraphT {
     }
 
     // Order conflicting accesses along the timeline of every relation
+    /// The accesses of a relation that later accesses must be ordered after
     #[derive(Default)]
     struct Timeline {
+        /// The node that wrote the relation last
         writer: Option<u32>,
+        /// The access mode of the last writer
         mode: Option<Mode>,
+        /// The nodes that read the relation since the last write
         readers: Vec<u32>,
     }
     let mut timelines: BTreeMap<Name, Timeline> = BTreeMap::new();

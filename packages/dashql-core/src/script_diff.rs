@@ -21,6 +21,7 @@ const UPDATE_SIMILARITY_THRESHOLD: f64 = 0.75;
 /// A single diff operation
 #[derive(Clone, Debug, PartialEq)]
 pub struct DiffOp {
+    /// The operation: MOVE, UPDATE, DELETE, INSERT or KEEP
     pub code: ScriptDiffOpCode,
     /// The source (old) statement index, None for INSERT
     pub source_statement: Option<u32>,
@@ -45,7 +46,9 @@ enum SimilarityEstimate {
 /// A statement similarity score (matching nodes / total nodes)
 #[derive(Clone, Copy, Debug, Default)]
 struct StatementSimilarity {
+    /// The number of nodes that match in both statements
     matching_nodes: usize,
+    /// The node count of the larger statement
     total_nodes: usize,
 }
 
@@ -64,8 +67,11 @@ type StatementMapping = (usize, usize);
 
 /// The emitted operations and statements while computing a diff
 struct Emitter {
+    /// The emitted operations
     ops: Vec<DiffOp>,
+    /// Whether a source statement was emitted, by statement index
     source_emitted: Vec<bool>,
+    /// Whether a target statement was emitted, by statement index
     target_emitted: Vec<bool>,
 }
 
@@ -138,12 +144,17 @@ fn collect_sorted_children(script: &ParsedScript, node: &Node, out: &mut Vec<u32
 
 /// The diff between two parsed scripts
 pub struct ScriptDiff<'a> {
+    /// The source (old) script
     source: &'a ParsedScript,
+    /// The target (new) script
     target: &'a ParsedScript,
     /// Memoized subtree sizes (0 = not computed yet)
     source_subtree_sizes: Vec<usize>,
+    /// Memoized subtree sizes of the target (0 = not computed yet)
     target_subtree_sizes: Vec<usize>,
+    /// The computed operations
     ops: Vec<DiffOp>,
+    /// Whether the operations were computed
     computed: bool,
 }
 
@@ -240,11 +251,17 @@ impl<'a> ScriptDiff<'a> {
         if node_count == 0 {
             return StatementSimilarity::default();
         }
+        /// A pair of nodes on the stack of the lockstep DFS
         struct Entry {
+            /// The node in the source script
             source_node: usize,
+            /// The node in the target script
             target_node: usize,
+            /// The stack index of the parent entry
             parent_entry: usize,
+            /// The number of matching nodes in the subtree
             matching_nodes: usize,
+            /// Whether the children were pushed
             visited: bool,
         }
         let mut pending = Vec::with_capacity(32);

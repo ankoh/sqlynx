@@ -13,7 +13,9 @@ use crate::utils::VisitedTable;
 /// CSR (Compressed Sparse Row) graph representation for the search graph.
 #[derive(Clone)]
 pub struct CsrGraph {
+    /// Row offsets into `indices`; neighbors of vertex i are `indices[indptr[i]..indptr[i + 1]]`
     pub indptr: Vec<i32>,
+    /// Neighbor vertex indices of all rows, concatenated
     pub indices: Vec<i32>,
 }
 

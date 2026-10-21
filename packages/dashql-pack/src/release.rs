@@ -16,36 +16,61 @@ use crate::{
 
 const CANARY_BADGE_PATH: &str = "channels/canary/badge.svg";
 
+/// A local file to upload into the release bucket
 #[derive(Debug)]
 pub struct FileUpload {
+    /// The local path of the file
     pub source_path: PathBuf,
+    /// The object key in the release bucket
     pub remote_path: String,
 }
 
+/// A release prepared for upload, with its artifacts, metadata and channel pointers
 #[derive(Default, Debug)]
 pub struct Release {
+    /// The artifact uploads, keyed by remote path
     pub file_uploads: HashMap<String, FileUpload>,
+    /// The metadata of the release
     pub release_metadata: ReleaseMetadata,
+    /// The object key of the release metadata
     pub release_metadata_path: String,
+    /// The update manifest of the release
     pub release_update_manifest: UpdateManifest,
+    /// The object key of the release update manifest
     pub release_update_manifest_path: String,
+    /// The channel metadata keys that are pointed to this release
     pub channel_metadata_paths: Vec<&'static str>,
+    /// The channel update manifest keys that are pointed to this release
     pub channel_update_manifest_paths: Vec<&'static str>,
+    /// The electron-builder channel manifests as `(object key, content)` pairs
     pub electron_channel_manifests: Vec<(String, Vec<u8>)>,
+    /// The SVG version badge uploaded for the canary channel
     pub canary_badge: Vec<u8>,
 }
 
+/// The inputs for building a [`Release`]
 pub struct ReleaseArgs {
+    /// The public base URL of the release bucket, e.g. `https://get.dashql.app`
     pub remote_base_url: String,
+    /// The git information of the released commit
     pub git_repo: GitInfo,
+    /// The version, id and channel of the release
     pub release_version: ReleaseVersion,
+    /// The path of the arm64 macOS DMG
     pub macos_arm64_dmg_path: PathBuf,
+    /// The path of the arm64 macOS ZIP used for auto updates
     pub macos_arm64_zip_path: PathBuf,
+    /// The path of the blockmap of the arm64 macOS ZIP
     pub macos_arm64_zip_blockmap_path: PathBuf,
+    /// The path of the electron-builder update manifest for arm64
     pub macos_arm64_update_manifest_path: PathBuf,
+    /// The path of the x64 macOS DMG
     pub macos_x64_dmg_path: PathBuf,
+    /// The path of the x64 macOS ZIP used for auto updates
     pub macos_x64_zip_path: PathBuf,
+    /// The path of the blockmap of the x64 macOS ZIP
     pub macos_x64_zip_blockmap_path: PathBuf,
+    /// The path of the electron-builder update manifest for x64
     pub macos_x64_update_manifest_path: PathBuf,
 }
 

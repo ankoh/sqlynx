@@ -15,15 +15,25 @@ use pulldown_cmark::{CodeBlockKind, Event, LinkType, Parser, Tag, TagEnd};
 /// A node of a compiled document (`MarkdownNodeT`). Empty strings are not set.
 #[derive(Clone, Debug, PartialEq)]
 pub struct MarkdownNode {
+    /// The node type
     pub node_type: MarkdownNodeType,
+    /// The text of a text node or the field name of a field node
     pub value: String,
+    /// The URL of a link or image
     pub url: String,
+    /// The title of a link or image, empty if it contains a field
     pub title: String,
+    /// The language of a fenced code block, the first word of its info string
     pub language: String,
+    /// The level of a heading
     pub level: u8,
+    /// The number of the first item of an ordered list
     pub start: u32,
+    /// Is the list ordered?
     pub ordered: bool,
+    /// Is the list tight, its items not wrapped in paragraphs?
     pub tight: bool,
+    /// The child nodes
     pub children: Vec<MarkdownNode>,
 }
 
@@ -55,12 +65,15 @@ pub struct MarkdownDocument {
     pub template: String,
     /// The distinct field names in order of appearance
     pub fields: Vec<String>,
+    /// The document tree, a DOCUMENT node
     pub document: MarkdownNode,
 }
 
 /// A field of the template and the token that stands for it in the parsed Markdown
 struct MarkdownField {
+    /// The field name between the braces, trimmed
     name: String,
+    /// The unique token that replaces the placeholder
     token: String,
 }
 
@@ -110,6 +123,7 @@ fn is_safe_url(url: &str) -> bool {
 
 /// Builds the document tree from the pulldown-cmark events
 struct DocumentBuilder<'a> {
+    /// The fields of the template
     fields: &'a [MarkdownField],
     /// The open nodes, the root first. A node is added to its parent when it is closed.
     stack: Vec<MarkdownNode>,

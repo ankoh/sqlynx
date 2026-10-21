@@ -15,9 +15,11 @@ use publish_command::{publish, PublishArgs};
 use std::env;
 use vacuum_command::{vacuum, VacuumArgs};
 
+/// Publish and clean up DashQL native app releases
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Cli {
+    /// The subcommand to run
     #[command(subcommand)]
     command: CliCommand,
 }

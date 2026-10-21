@@ -7,11 +7,16 @@ use url::Url;
 
 use crate::{http_stream_manager::HttpStreamManager, proxy_headers::{HEADER_NAME_BATCH_BYTES, HEADER_NAME_BATCH_TIMEOUT, HEADER_NAME_ENDPOINT, HEADER_NAME_METHOD, HEADER_NAME_PATH, HEADER_NAME_READ_TIMEOUT, HEADER_PREFIX}, status::Status};
 
+/// The parameters of a proxied HTTP request, read from the proxy request headers
 #[derive(Debug)]
 struct HttpRequestParams {
+    /// The HTTP method
     method: http::Method,
+    /// The target URL built from endpoint, path and search params
     url: Url,
+    /// The read timeout of the HTTP client in milliseconds
     read_timeout: usize,
+    /// The headers to forward, i.e. all request headers without the proxy prefix
     headers: HeaderMap<HeaderValue>
 }
 
@@ -85,8 +90,10 @@ fn read_request_params(headers: &mut HeaderMap) -> Result<HttpRequestParams, Sta
     Ok(HttpRequestParams { method, url, read_timeout, headers: extra_metadata })
 }
 
+/// The HTTP proxy that streams responses of remote HTTP requests
 #[derive(Default)]
 pub struct HttpProxy {
+    /// The response streams of the started requests
     pub streams: Arc<HttpStreamManager>,
 }
 

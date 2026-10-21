@@ -9,9 +9,13 @@ const MIN_K_DIST_SCALE: f32 = 1e-3;
 /// needs incremental insertion — which lets `symmetrize`/`to_csr`/`to_edge_list`
 /// run on flat arrays instead of hashing millions of `(row, col)` keys.
 pub struct SparseMatrix {
+    /// Row offsets; row i occupies `indptr[i]..indptr[i + 1]` of `indices` and `data`
     pub indptr: Vec<usize>,
+    /// Column index of each stored entry
     pub indices: Vec<usize>,
+    /// Edge weight of each stored entry
     pub data: Vec<f32>,
+    /// Matrix dimensions as (nrows, ncols)
     pub shape: (usize, usize),
 }
 
@@ -149,10 +153,15 @@ impl SparseMatrix {
 
 /// CSR sparse matrix.
 pub struct CsrMatrix {
+    /// Row offsets; row i occupies `indptr[i]..indptr[i + 1]` of `indices` and `data`
     pub indptr: Vec<usize>,
+    /// Column index of each stored entry
     pub indices: Vec<usize>,
+    /// Value of each stored entry
     pub data: Vec<f32>,
+    /// Number of rows
     pub nrows: usize,
+    /// Number of columns
     pub ncols: usize,
 }
 

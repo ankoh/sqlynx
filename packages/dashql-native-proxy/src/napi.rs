@@ -3,19 +3,29 @@ use http::Request;
 use napi::bindgen_prelude::Buffer;
 use napi_derive::napi;
 
+/// A proxy request passed in from JavaScript
 #[napi(object)]
 pub struct ProxyRequest {
+    /// The HTTP method
     pub method: String,
+    /// The request URL
     pub url: String,
+    /// The request headers as `[name, value]` pairs
     pub headers: Vec<Vec<String>>,
+    /// The request body
     pub body: Buffer,
 }
 
+/// A proxy response returned to JavaScript
 #[napi(object)]
 pub struct ProxyResponse {
+    /// The HTTP status code
     pub status: u32,
+    /// The canonical reason phrase of the status code, empty if unknown
     pub status_text: String,
+    /// The response headers as `[name, value]` pairs, skipping non-ASCII values
     pub headers: Vec<Vec<String>>,
+    /// The response body
     pub body: Buffer,
 }
 

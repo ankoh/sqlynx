@@ -11,8 +11,11 @@ use crate::script::Script;
 /// A grapheme position: the byte and code point offsets of a grapheme cluster boundary
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct Position {
+    /// The byte offset of the boundary
     bytes: usize,
+    /// The code point offset of the boundary
     codepoints: usize,
+    /// The index of the grapheme cluster that starts at the boundary
     graphemes: usize,
 }
 
@@ -76,8 +79,11 @@ fn is_word_grapheme(grapheme: &str) -> bool {
 
 /// The prompt of a shell (`PromptBuffer`)
 pub struct PromptBuffer {
+    /// The script that holds the prompt text
     script: Script,
+    /// The cursor position in grapheme clusters
     cursor_grapheme_offset: usize,
+    /// The number of text changes
     revision: u64,
 }
 
