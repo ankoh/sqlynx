@@ -61,10 +61,8 @@ bazel run //snapshots/planner:update
 bazel run //snapshots/plans/hyper/tests:update
 bazel run //snapshots/visualize:update
 
-# Repin cargo dependencies
-bazel run //scripts:repin_crates
-# Repin the crates of the Rust core (packages/dashql-{grammar,core,snapshots,core-wasm,shell-wasm})
-CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
+# Upgrade the Rust crates declared in bazel/crates/*.MODULE.bazel
+bazel run //scripts:repin_crates -- full
 
 # Fetch test datasets
 bazel build //packages/dashql-datasets:datasets

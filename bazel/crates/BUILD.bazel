@@ -1,0 +1,7 @@
+# Cargo lockfiles of the crate universes declared in the *.MODULE.bazel files next to this one.
+# crate_universe resolves the crate.spec requirements against them and writes them back.
+exports_files([
+    "core/Cargo.lock",
+    "native/Cargo.lock",
+    "umap/Cargo.lock",
+])

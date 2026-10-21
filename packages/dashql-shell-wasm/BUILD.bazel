@@ -6,8 +6,6 @@ load("@rules_rust//rust:defs.bzl", "rust_shared_library")
 load("@rules_rust_wasm_bindgen//:defs.bzl", "rust_wasm_bindgen")
 load("//bazel:wasm_tools.bzl", "optimize_wasm", "wasm_bindgen_module")
 
-exports_files(["Cargo.toml"])
-
 rust_shared_library(
     name = "dashql_shell_wasm",
     srcs = glob(["src/**/*.rs"]),

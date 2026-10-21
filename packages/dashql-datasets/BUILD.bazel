@@ -1,8 +1,6 @@
 load("@rules_rust//rust:defs.bzl", "rust_binary")
 load(":datasets.bzl", "declare_datasets", "tpch_extension_repo_name")
 
-exports_files(["Cargo.toml"])
-
 # The vendored TPC-H extension, selected per exec platform. Unlike //bazel:duckdb_cli
 # (whose macOS zip is universal, so it branches on OS only), the extension is arch-
 # specific — a build compiled for osx_arm64 will not load into an x86_64 process — so

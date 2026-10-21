@@ -38,9 +38,8 @@ core is a set of top-level packages; the app and `@ankoh/dashql-core` ship its w
   and the glibc `strtod` and x86 cast behavior are not reproduced (see [quirks.md](quirks.md)).
 - **Bazel only.**
   - Generated code comes from genrules, never `build.rs`.
-  - Every crate package has its own `Cargo.toml`, and there is no Cargo workspace. The manifests only
-    feed the isolated `@core_crates` crate universe (`MODULE.bazel`, lockfile
-    `bazel/core_crates/Cargo.lock`).
+  - There are no Cargo manifests. The external crates are declared with `crate.spec` in the isolated
+    `@core_crates` universe (`bazel/crates/core.MODULE.bazel`, lockfile `bazel/crates/core/Cargo.lock`).
   - Never `cargo build` or `cargo test`.
 
 ## Verification
@@ -79,8 +78,8 @@ phase results below mention them as history.
 ```bash
 bazel test //packages/dashql-parser/... //packages/dashql-core/... //packages/dashql-snapshots/...
 bazel build --config=release //packages/dashql-core-wasm:core_wasm
-# After editing packages/dashql-{parser,core,snapshots,core-wasm,shell-wasm}/Cargo.toml:
-CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
+# After editing bazel/crates/core.MODULE.bazel, any build re-resolves the lockfile. To upgrade:
+bazel run //scripts:repin_crates -- full
 ```
 
 ## Phases

@@ -89,6 +89,24 @@
     ],
     "packageRules": [
         {
+            "description": "Rust crates declared with crate.spec in bazel/crates/*.MODULE.bazel. bazel mod deps re-resolves their Cargo.lock files, which have to be committed along with MODULE.bazel.lock.",
+            "matchManagers": ["bazel-module"],
+            "matchDepTypes": ["crate_spec"],
+            "labels": ["dependencies", "rust"],
+            "postUpgradeTasks": {
+                "commands": ["bash scripts/repin_crates.sh"],
+                "fileFilters": ["bazel/crates/*/Cargo.lock", "MODULE.bazel.lock"],
+                "executionMode": "branch"
+            }
+        },
+        {
+            "description": "wasm-bindgen must match the wasm-bindgen-cli bundled with rules_rust_wasm_bindgen, js-sys and wasm-bindgen-futures follow it. Bump them by hand together with that module.",
+            "matchManagers": ["bazel-module"],
+            "matchDepTypes": ["crate_spec"],
+            "matchPackageNames": ["wasm-bindgen", "wasm-bindgen-futures", "js-sys"],
+            "enabled": false
+        },
+        {
             "groupName": "tokio",
             "automerge": false,
             "matchPackageNames": ["/^tokio.*/"]
@@ -131,7 +149,7 @@
         {
             "groupName": "arrow_datafusion",
             "automerge": false,
-            "matchPackageNames": ["arrow", "datafusion", "/^datafusion-.*/"]
+            "matchPackageNames": ["arrow", "/^arrow-.*/", "datafusion", "/^datafusion-.*/"]
         },
         {
             "groupName": "protobuf",

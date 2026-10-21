@@ -7,8 +7,8 @@ py_binary(
     main = "update_bazel_hashes.py",
 )
 
-# Repin native crate universe (root Cargo.toml / Cargo.lock -> @crates).
-# Usage: bazel run //scripts:repin_crates
+# Re-resolve the crate universes of bazel/crates/*.MODULE.bazel and rewrite their Cargo.lock files.
+# Usage: bazel run //scripts:repin_crates [-- full | <crate>@<version>]
 sh_binary(
     name = "repin_crates",
     srcs = ["repin_crates.sh"],

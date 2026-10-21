@@ -1,4 +1,4 @@
-# Root package: exposes Cargo.lock and Cargo.toml for the native crate_universe and release tooling;
+# Root package: exports shared repo files;
 # node_modules at root: npm link tree. App uses NODE_PATH = overlay/node_modules + node_modules (no full merge).
 package(default_visibility = ["//visibility:public"])
 
@@ -7,8 +7,6 @@ load("@aspect_rules_js//npm:defs.bzl", "npm_link_package")
 load("@npm//:defs.bzl", "npm_link_all_packages")
 
 exports_files([
-    "Cargo.lock",
-    "Cargo.toml",
     "LICENSE",
     "NOTICE",
     "package.json",

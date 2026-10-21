@@ -5,8 +5,6 @@
 
 load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library", "rust_test")
 
-exports_files(["Cargo.toml"])
-
 rust_library(
     name = "dashql_snapshots",
     testonly = True,

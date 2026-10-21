@@ -339,20 +339,29 @@ bazel test //packages/dashql-core:all
 
 ### Updating Rust Dependencies
 
+There are no Cargo manifests. Crate versions and features are declared with `crate.spec` in one file per
+crate universe, and each universe keeps its `Cargo.lock` under `bazel/crates/<universe>/`:
+
+| Universe | Specs | Used by |
+|---|---|---|
+| `@crates` | `bazel/crates/native.MODULE.bazel` | `dashql-native-proxy`, `dashql-pack`, `dashql-datasets` |
+| `@core_crates` | `bazel/crates/core.MODULE.bazel` | `dashql-parser`, `dashql-core`, `dashql-snapshots`, `dashql-core-wasm`, `dashql-shell-wasm` |
+| `@umap_crates` | `bazel/crates/umap.MODULE.bazel` | `dashql-umap` |
+
+To add or change a dependency, edit the spec, reference the crate from the BUILD file as
+`@<universe>//:<crate>`, and build. Bazel re-resolves the lockfile on the next build. To upgrade crates
+beyond what the lockfile pins:
+
 ```bash
-# Update Cargo.lock and regenerate Bazel files
-bazel run //scripts:repin_crates
+# Upgrade every crate to the newest version the specs allow
+bazel run //scripts:repin_crates -- full
+# Upgrade a single crate
+bazel run //scripts:repin_crates -- tokio@1.53.0
 ```
 
-This repins the `@crates` universe of the root `Cargo.toml` workspace.
-
-The core crates (`packages/dashql-parser`, `dashql-core`, `dashql-snapshots`, `dashql-core-wasm`,
-`dashql-shell-wasm`) are no Cargo workspace. Their manifests feed the isolated `@core_crates` universe
-(`MODULE.bazel`) with the lockfile `bazel/core_crates/Cargo.lock`. After editing one of them:
-
-```bash
-CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
-```
+`wasm-bindgen` is pinned to the `wasm-bindgen-cli` bundled with `rules_rust_wasm_bindgen` and has to move
+together with that module. `packages/dashql-cloud` is the only Cargo-built crate; wrangler builds it outside
+Bazel.
 
 ### Updating Node Dependencies
 

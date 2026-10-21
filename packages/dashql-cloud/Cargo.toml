@@ -1,11 +1,9 @@
 # dashql-cloud — Cloudflare Worker (workers-rs) for the dashql service: an OpenAI-compatible
 # SLM gateway (ai.dashql.app) plus the account dashboard (account.dashql.app).
 #
-# This crate is INTENTIONALLY isolated from the repo's root Cargo workspace:
-#  * the root Cargo.toml uses an explicit `members` list (not a glob), and this crate is not on it;
-#  * the empty [workspace] table below makes this an isolated workspace root, so Cargo never
-#    attaches it to the parent and Bazel's crate_universe (which consumes the root workspace)
-#    never ingests it. See docs/wip/account.md.
+# This is the only Cargo-built crate in the repo; wrangler builds it outside Bazel. The other Rust crates
+# have no manifests (their crates are declared in bazel/crates/*.MODULE.bazel). The empty [workspace]
+# table keeps Cargo from looking for a parent workspace. See docs/wip/account.md.
 [workspace]
 
 [package]

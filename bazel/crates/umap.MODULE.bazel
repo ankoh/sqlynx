@@ -1,0 +1,40 @@
+# Crate universe @umap_crates of the vendored UMAP + NNDescent crates (//packages/dashql-umap). Isolated
+# from @crates so its wasm-only deps (wasm-bindgen, js-sys, getrandom/wasm_js, wgpu) never leak into the
+# native binaries.
+#
+# The specs below are the only place that declares crate versions and features. BUILD files pick crates
+# with @umap_crates//:<name>. After editing a spec, `bazel build` re-resolves bazel/crates/umap/Cargo.lock.
+#
+# Renovate's bazel-module manager only recognizes extension variables named crate*.
+crate_umap = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate", isolate = True)
+crate_umap.spec(package = "bytemuck", features = ["derive"], version = "1.25.2")
+crate_umap.spec(package = "getrandom", features = ["wasm_js"], version = "0.4.3")
+crate_umap.spec(package = "js-sys", version = "0.3.69")
+crate_umap.spec(package = "ndarray", features = ["rayon"], version = "0.17.2")
+crate_umap.spec(package = "ordered-float", version = "5.3.0")
+crate_umap.spec(package = "pollster", version = "0.4")
+crate_umap.spec(package = "rayon", version = "1.12.0")
+
+# Must match the wasm-bindgen-cli bundled with rules_rust_wasm_bindgen (MODULE.bazel).
+crate_umap.spec(package = "wasm-bindgen", version = "=0.2.105")
+crate_umap.spec(package = "wasm-bindgen-futures", version = "0.4")
+
+# WebGPU acceleration of the kNN and layout phases (the upstream `gpu` feature)
+crate_umap.spec(package = "wgpu", version = "24.0.5")
+crate_umap.spec(package = "wide", version = "1.2.0")
+crate_umap.from_specs(
+    name = "umap_crates",
+    cargo_lockfile = "//bazel/crates:umap/Cargo.lock",
+    strip_internal_dependencies_from_cargo_lockfile = True,
+    # wasm32 is the actual compile target, but the host triples MUST also be listed:
+    # cargo build scripts (e.g. matrixmultiply's, via autocfg) run in the exec/host
+    # configuration, and crate_universe marks host-side helper crates
+    # @@platforms//:incompatible if no host triple is declared.
+    supported_platform_triples = [
+        "wasm32-unknown-unknown",
+        "aarch64-apple-darwin",
+        "x86_64-apple-darwin",
+        "x86_64-unknown-linux-gnu",
+    ],
+)
+use_repo(crate_umap, "umap_crates")

@@ -1,0 +1,55 @@
+# Native crate universe @crates: the Electron addon (//packages/dashql-native-proxy) and the release
+# tooling (//packages/dashql-pack, //packages/dashql-datasets). Built for the macOS universal binary
+# slices and Linux, never for wasm.
+#
+# The specs below are the only place that declares crate versions and features. BUILD files pick crates
+# with @crates//:<name>. After editing a spec, `bazel build` re-resolves bazel/crates/native/Cargo.lock;
+# `bazel run //scripts:repin_crates` upgrades the transitive crates as well.
+#
+# Renovate's bazel-module manager only recognizes extension variables named crate*.
+crate_native = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate", isolate = True)
+crate_native.spec(package = "anyhow", version = "1.0.104")
+crate_native.spec(package = "aws-config", default_features = False, features = ["rt-tokio"], version = "1.8.18")
+crate_native.spec(package = "aws-credential-types", version = "1.2.14")
+crate_native.spec(package = "aws-sdk-s3", default_features = False, features = ["sigv4a", "http-1x", "rustls", "rt-tokio"], version = "1.134.0")
+crate_native.spec(package = "base64", version = "0.22")
+crate_native.spec(package = "byteorder", version = "1.5.0")
+crate_native.spec(package = "bytes", version = "1")
+crate_native.spec(package = "chrono", version = "0.4.45")
+crate_native.spec(package = "clap", features = ["derive"], version = "4.6.7")
+crate_native.spec(package = "env_logger", version = "0.11.11")
+crate_native.spec(package = "futures", version = "0.3.34")
+crate_native.spec(package = "git2", version = "0.21.0")
+crate_native.spec(package = "http", version = "1")
+crate_native.spec(package = "lazy_static", version = "1.5.1")
+crate_native.spec(package = "log", version = "0.4.34")
+crate_native.spec(package = "mime", version = "0.3.17")
+crate_native.spec(package = "minisign", version = "0.9.1")
+crate_native.spec(package = "napi", features = ["async", "napi8", "tokio_rt"], version = "3.12.2")
+crate_native.spec(package = "napi-derive", version = "3.6.3")
+crate_native.spec(package = "once_cell", version = "1.21.4")
+crate_native.spec(package = "regex", version = "1.12.3")
+crate_native.spec(package = "regex-automata", version = "0.4.18")
+crate_native.spec(package = "reqwest", default_features = False, features = ["charset", "http2", "json", "native-tls", "stream", "system-proxy"], version = "0.13.4")
+crate_native.spec(package = "semver", version = "1.0.28")
+crate_native.spec(package = "serde", features = ["derive"], version = "1.0.229")
+crate_native.spec(package = "serde_json", features = ["preserve_order"], version = "1.0.154")
+crate_native.spec(package = "serde_with", features = ["json"], version = "3.24.0")
+crate_native.spec(package = "sha2", version = "0.10.9")
+crate_native.spec(package = "tokio", features = ["full"], version = "1.52.3")
+crate_native.spec(package = "tonic", features = ["tls-native-roots", "tls-ring"], version = "0.14.6")
+crate_native.spec(package = "tracing", version = "0.1.44")
+crate_native.spec(package = "url", version = "2.5.8")
+crate_native.spec(package = "uuid", features = ["v4", "v5"], version = "1.25.0")
+crate_native.spec(package = "walkdir", version = "2.5.0")
+crate_native.from_specs(
+    name = "crates",
+    cargo_lockfile = "//bazel/crates:native/Cargo.lock",
+    strip_internal_dependencies_from_cargo_lockfile = True,
+    supported_platform_triples = [
+        "aarch64-apple-darwin",
+        "x86_64-apple-darwin",
+        "x86_64-unknown-linux-gnu",
+    ],
+)
+use_repo(crate_native, "crates")

@@ -171,75 +171,13 @@ register_toolchains("@rust_toolchains//:all")
 app_version = use_extension("//packages/dashql-app:bazel/version.bzl", "dashql_app_version_ext")
 use_repo(app_version, "dashql_app_version")
 
-# Native crate universe for the Electron addon and release tooling (no WASM).
-# Root workspace at Cargo.toml with members pointing downward into packages/.
-# Run CARGO_BAZEL_REPIN=1 bazel build @crates//:all after changing root Cargo.toml or Cargo.lock.
-# Native crate universe: aarch64 + x86_64 macOS (for universal binary) + Linux.
-# After changing triples, repin: CARGO_BAZEL_REPIN=1 bazel build @crates//:all
-native_crate = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate", isolate = True)
-native_crate.from_cargo(
-    name = "crates",
-    cargo_lockfile = "//:Cargo.lock",
-    manifests = ["//:Cargo.toml"],
-    supported_platform_triples = [
-        "aarch64-apple-darwin",
-        "x86_64-apple-darwin",
-        "x86_64-unknown-linux-gnu",
-    ],
-)
+# Rust crate universes. Each file declares its crates with crate.spec and keeps a Cargo.lock under
+# bazel/crates/<universe>/. There are no Cargo manifests; BUILD files are the only source of crate wiring.
+include("//bazel/crates:native.MODULE.bazel")
 
-# WASM crate universe for the vendored UMAP crates (//packages/dashql-umap). Separate
-# from the native "crates" universe (isolate = True) so its wasm-only deps
-# (wasm-bindgen, js-sys, getrandom/wasm_js, ...) never leak into the native binaries,
-# and pinned to the single wasm32-unknown-unknown triple.
-# After changing packages/dashql-umap/Cargo.{toml,lock}, repin:
-#   CARGO_BAZEL_REPIN=1 bazel build @umap_crates//:all
-wasm_crate = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate", isolate = True)
-wasm_crate.from_cargo(
-    name = "umap_crates",
-    cargo_lockfile = "//packages/dashql-umap:Cargo.lock",
-    manifests = ["//packages/dashql-umap:Cargo.toml"],
-    # wasm32 is the actual compile target, but the host triples MUST also be listed:
-    # cargo build scripts (e.g. matrixmultiply's, via autocfg) run in the exec/host
-    # configuration, and crate_universe marks host-side helper crates
-    # @@platforms//:incompatible if no host triple is declared.
-    supported_platform_triples = [
-        "wasm32-unknown-unknown",
-        "aarch64-apple-darwin",
-        "x86_64-apple-darwin",
-        "x86_64-unknown-linux-gnu",
-    ],
-)
-use_repo(wasm_crate, "umap_crates")
+include("//bazel/crates:core.MODULE.bazel")
 
-# Crate universe of the Rust core (//packages/dashql-{parser,core,snapshots,core-wasm,shell-wasm}). Isolated
-# like umap_crates: the core is built natively (tests, snapshotter, benchmarks) and for wasm32.
-# After changing one of the manifests below, repin:
-#   CARGO_BAZEL_REPIN=1 bazel build @core_crates//:all
-core_crate = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate", isolate = True)
-core_crate.from_cargo(
-    name = "core_crates",
-    cargo_lockfile = "//bazel/core_crates:Cargo.lock",
-    manifests = [
-        "//packages/dashql-core:Cargo.toml",
-        "//packages/dashql-core-wasm:Cargo.toml",
-        "//packages/dashql-parser:Cargo.toml",
-        "//packages/dashql-shell-wasm:Cargo.toml",
-        "//packages/dashql-snapshots:Cargo.toml",
-    ],
-    supported_platform_triples = [
-        "wasm32-unknown-unknown",
-        "aarch64-apple-darwin",
-        "x86_64-apple-darwin",
-        "x86_64-unknown-linux-gnu",
-    ],
-)
-use_repo(core_crate, "core_crates")
-
-use_repo(
-    native_crate,
-    "crates",
-)
+include("//bazel/crates:umap.MODULE.bazel")
 
 # Execution platforms: host first (default for non-wasm actions), then the neutral
 # wasm_tool_exec platform used by wasm_tool exec groups in wasm_tools.bzl / rust_wasm.bzl.

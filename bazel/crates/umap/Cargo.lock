@@ -529,20 +529,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "nndescent"
-version = "0.1.0"
-dependencies = [
- "bytemuck",
- "getrandom",
- "ndarray",
- "ordered-float 5.3.0",
- "pollster",
- "rayon",
- "wgpu",
- "wide",
-]
-
-[[package]]
 name = "num-complex"
 version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -915,31 +901,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 3.0.2",
-]
-
-[[package]]
-name = "umap"
-version = "0.1.0"
-dependencies = [
- "bytemuck",
- "ndarray",
- "nndescent",
- "pollster",
- "rayon",
- "wgpu",
-]
-
-[[package]]
-name = "umap-wasm"
-version = "0.1.0"
-dependencies = [
- "getrandom",
- "js-sys",
- "ndarray",
- "nndescent",
- "umap",
- "wasm-bindgen",
- "wasm-bindgen-futures",
 ]
 
 [[package]]

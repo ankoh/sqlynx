@@ -6,8 +6,6 @@ load("@rules_rust//rust:defs.bzl", "rust_library", "rust_shared_library")
 load("@rules_rust_wasm_bindgen//:defs.bzl", "rust_wasm_bindgen")
 load("//bazel:wasm_tools.bzl", "optimize_wasm", "wasm_bindgen_module")
 
-exports_files(["Cargo.toml"])
-
 # The wasm-bindgen items of the core, shared by the core and the shell module.
 rust_library(
     name = "dashql_core_wasm_lib",

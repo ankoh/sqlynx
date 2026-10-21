@@ -4,8 +4,6 @@ load("//bazel:macos_packaging.bzl", "platform_binary")
 
 package(default_visibility = ["//visibility:private"])
 
-exports_files(["Cargo.toml"])
-
 rust_library(
     name = "proxy",
     srcs = glob(

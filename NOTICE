@@ -54,6 +54,9 @@ projection behind `VISUALIZE ... USING umap`, including the GPU (`wgpu`
 `gpu_optimize.rs`, `**/shaders/*.wgsl`). All files retain their original
 `// Copyright (c) 2025 Apple Inc. Licensed under MIT License.` headers. Licensed
 under the same MIT License as section 1 (Copyright (c) 2025 Apple Inc.).
+The upstream Cargo manifests are replaced by the Bazel targets in
+`packages/dashql-umap/BUILD.bazel` and the crate specs in
+`bazel/crates/umap.MODULE.bazel`.
 
 --------------------------------------------------------------------------------
 3. fast-kde (Deriche Gaussian approximation)

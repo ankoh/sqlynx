@@ -17,17 +17,12 @@
 # way Cargo does, so the wasm path uses dedicated +gpu library variants; the native test
 # crates (:nndescent, :umap) stay CPU-only so the correctness gate keeps a lean dep tree.
 #
-# All crate deps resolve from the wasm32-only @umap_crates universe (MODULE.bazel),
+# All crate deps resolve from the wasm32-only @umap_crates universe (bazel/crates/umap.MODULE.bazel),
 # kept isolated from the native @crates universe. See //NOTICE for attribution.
 
 load("@rules_rust//rust:defs.bzl", "rust_library", "rust_shared_library", "rust_test")
 load("@rules_rust_wasm_bindgen//:defs.bzl", "rust_wasm_bindgen")
 load("//bazel:wasm_tools.bzl", "optimize_wasm", "wasm_bindgen_module")
-
-exports_files([
-    "Cargo.toml",
-    "Cargo.lock",
-])
 
 # Only the wasm-bindgen wrapper (umap_wasm) is genuinely wasm-specific. The two
 # numeric crates below are pure, portable Rust — they build and, crucially, TEST

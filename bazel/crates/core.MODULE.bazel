@@ -1,0 +1,49 @@
+# Crate universe @core_crates of the Rust core (//packages/dashql-{parser,core,snapshots,core-wasm,shell-wasm}).
+# Isolated from @crates because the core is built natively (tests, snapshotter, benchmarks) and for
+# wasm32, and its pins (wasm-bindgen, serde_json) conflict with the native crates.
+#
+# The specs below are the only place that declares crate versions and features. BUILD files pick crates
+# with @core_crates//:<name>. After editing a spec, `bazel build` re-resolves bazel/crates/core/Cargo.lock.
+# The core pins exact versions.
+#
+# Renovate's bazel-module manager only recognizes extension variables named crate*.
+crate_core = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate", isolate = True)
+
+# Arrow IPC and value formatting for the shell (dashql_core::shell), without compression codecs
+crate_core.spec(package = "arrow-array", default_features = False, version = "=60.0.0")
+crate_core.spec(package = "arrow-buffer", default_features = False, version = "=60.0.0")
+crate_core.spec(package = "arrow-cast", default_features = False, version = "=60.0.0")
+crate_core.spec(package = "arrow-ipc", default_features = False, version = "=60.0.0")
+crate_core.spec(package = "arrow-schema", default_features = False, version = "=60.0.0")
+crate_core.spec(package = "flatbuffers", version = "=25.12.19")
+
+# Snapshot test harness (//packages/dashql-snapshots)
+crate_core.spec(package = "libtest-mimic", version = "=0.8.1")
+
+# Lexer generator of the SQL scanner (dashql_parser::scanner)
+crate_core.spec(package = "logos", version = "=0.16.1")
+
+# CommonMark parser for the Markdown renderer spec (dashql_core::visualize::markdown)
+crate_core.spec(package = "pulldown-cmark", default_features = False, version = "=0.13.4")
+crate_core.spec(package = "ropey", version = "=1.6.1")
+crate_core.spec(package = "serde_json", features = ["preserve_order"], version = "=1.0.151")
+
+# Display widths and grapheme clusters for the shell (dashql_core::shell)
+crate_core.spec(package = "unicode-segmentation", version = "=1.13.3")
+crate_core.spec(package = "unicode-width", version = "=0.2.2")
+
+# Must match the wasm-bindgen-cli bundled with rules_rust_wasm_bindgen (MODULE.bazel).
+crate_core.spec(package = "wasm-bindgen", version = "=0.2.105")
+crate_core.spec(package = "yaml-rust2", version = "=0.11.0")
+crate_core.from_specs(
+    name = "core_crates",
+    cargo_lockfile = "//bazel/crates:core/Cargo.lock",
+    strip_internal_dependencies_from_cargo_lockfile = True,
+    supported_platform_triples = [
+        "wasm32-unknown-unknown",
+        "aarch64-apple-darwin",
+        "x86_64-apple-darwin",
+        "x86_64-unknown-linux-gnu",
+    ],
+)
+use_repo(crate_core, "core_crates")

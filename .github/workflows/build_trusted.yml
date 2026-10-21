@@ -36,6 +36,12 @@ jobs:
                   bazel-mtls-client-cert: ${{ secrets.BAZEL_CACHE_MTLS_CLIENT_CERT }}
                   bazel-mtls-client-key: ${{ secrets.BAZEL_CACHE_MTLS_CLIENT_KEY }}
 
+            - name: Check crate lockfiles
+              shell: bash
+              run: |
+                bazel mod deps --lockfile_mode=update
+                git diff --exit-code -- bazel/crates
+
             - name: Build WASM
               shell: bash
               run: |

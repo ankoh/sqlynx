@@ -28,17 +28,13 @@ standalone OpenAI-compatible service for future use and for other compatible cli
   **outside** the Bazel/Cargo build graph — Cloudflare's toolchain (wrangler) doesn't fit
   them. Because it's a **Rust** crate (not a JS package), living under `packages/` is safe —
   pnpm's `packages/*` glob only adopts dirs containing a `package.json`, and this crate has
-  none. Isolation from the root Cargo workspace is achieved by two facts:
-   - The root `Cargo.toml` uses an **explicit `members` list** (not a glob). A crate not on that
-     list is not pulled in.
-  - `packages/dashql-cloud/Cargo.toml` carries its **own `[workspace]` table**, making it an
-    isolated workspace root so Cargo doesn't try to attach it to the parent (and Bazel's
-    `crate_universe`, which consumes the root workspace, never ingests it).
+  none. It is the only crate with a `Cargo.toml`: the Bazel-built crates declare their
+  dependencies with `crate.spec` in `bazel/crates/*.MODULE.bazel`, so crate_universe never sees
+  this manifest. Its own empty `[workspace]` table keeps Cargo from looking for a parent workspace.
 
   Constraints:
   - **Add `packages/dashql-cloud` to `.bazelignore`** so `//...` never scans it (matches the
     existing pattern that excludes node_modules / build trees).
-  - **Do NOT add it to the root `Cargo.toml` `members`**.
   - The service has no build-time coupling to the DashQL application.
 - **Public domains (two, one Worker):** a single Worker is bound to **both** custom domains
   and routes by hostname (assumes `dashql.app` is a zone on the same Cloudflare account):
@@ -182,7 +178,7 @@ user's existing keys; only their *allowlist* entry would need re-adding under th
 ```
 packages/dashql-cloud/
   wrangler.jsonc      # AI binding, KV namespaces, vars, custom domains
-  Cargo.toml          # isolated crate: own [workspace] table so it's NOT a root member
+  Cargo.toml          # the repo's only Cargo manifest, with its own [workspace] table
   src/
     lib.rs            # #[event(fetch)] entry; Router: branch on host, then method+path
     apple.rs          # SIWA authorize URL + pure-Rust RS256 id_token verification (rsa+sha2)
@@ -200,10 +196,8 @@ WASM randomness).
 **Repo integration (keep it out of the build graph):**
 
 - Append `packages/dashql-cloud` to the repo `.bazelignore`.
-- Do **NOT** add `packages/dashql-cloud` to the root `Cargo.toml` `members` list (it's an
-  explicit list, not a glob — see the existing non-member `packages/hyper-http-proxy` for
-  precedent). Give `packages/dashql-cloud/Cargo.toml` its **own empty `[workspace]` table** so
-  Cargo treats it as an isolated workspace root and Bazel's `crate_universe` never ingests it.
+- Give `packages/dashql-cloud/Cargo.toml` its **own empty `[workspace]` table** so Cargo treats it
+  as a workspace root. Its crates stay out of `bazel/crates/*.MODULE.bazel`.
 - No `package.json`, so pnpm's `packages/*` glob does not adopt it; wrangler is invoked
   directly (`npx wrangler …` or a globally installed wrangler) from `packages/dashql-cloud/`.
 

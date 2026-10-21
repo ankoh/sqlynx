@@ -1,7 +1,5 @@
 load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_test")
 
-exports_files(["Cargo.toml"])
-
 _DEPS = [
     "@crates//:anyhow",
     "@crates//:aws-config",

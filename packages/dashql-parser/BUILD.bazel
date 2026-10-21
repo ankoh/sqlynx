@@ -6,8 +6,6 @@
 load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 load("//grammar/rust:defs.bzl", "bison_rust_tables")
 
-exports_files(["Cargo.toml"])
-
 # rules_rust places generated sources next to the checked-in ones only if they belong to the same
 # package, copy the generated modules of //grammar into the crate.
 genrule(

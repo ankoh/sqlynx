@@ -389,54 +389,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "460fbee9c2c2f33933d720630a6a0bac33ba7053db5344fac858d4b8952d77d5"
 
 [[package]]
-name = "dashql-core"
-version = "0.1.0"
-dependencies = [
- "arrow-array",
- "arrow-buffer",
- "arrow-cast",
- "arrow-ipc",
- "arrow-schema",
- "flatbuffers",
- "pulldown-cmark",
- "ropey",
- "serde_json",
- "unicode-segmentation",
- "unicode-width",
-]
-
-[[package]]
-name = "dashql-core-wasm"
-version = "0.1.0"
-dependencies = [
- "wasm-bindgen",
-]
-
-[[package]]
-name = "dashql-parser"
-version = "0.1.0"
-dependencies = [
- "flatbuffers",
- "logos",
- "serde_json",
-]
-
-[[package]]
-name = "dashql-shell-wasm"
-version = "0.1.0"
-dependencies = [
- "wasm-bindgen",
-]
-
-[[package]]
-name = "dashql-snapshots"
-version = "0.1.0"
-dependencies = [
- "libtest-mimic",
- "yaml-rust2",
-]
-
-[[package]]
 name = "encoding_rs"
 version = "0.8.42"
 source = "registry+https://github.com/rust-lang/crates.io-index"
