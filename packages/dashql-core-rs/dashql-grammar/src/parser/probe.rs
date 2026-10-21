@@ -1,5 +1,5 @@
 //! The LR probes of the completion, a port of `DriveLALR` and its policies in
-//! `packages/dashql-core/src/parser/parser.cc`.
+//! the C++ `src/parser/parser.cc`.
 //!
 //! The probes run the automaton without grammar actions, only the state numbers matter:
 //! - [`parse_until_with_snapshot`] parses up to the cursor token, returns the expected symbols there

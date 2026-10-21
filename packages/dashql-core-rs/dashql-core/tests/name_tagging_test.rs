@@ -1,4 +1,4 @@
-//! A port of `packages/dashql-core/test/name_tagging_test.cc`.
+//! A port of the C++ `test/name_tagging_test.cc`.
 //!
 //! The C++ test reads the tags from the scanned names, which the C++ analyzer modifies. The Rust
 //! analyzer leaves the scan untouched and keeps the names and their tags in the analyzed script.

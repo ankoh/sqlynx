@@ -1,4 +1,4 @@
-//! A port of `packages/dashql-core/test/string_conversion_test.cc` (`quote_anyupper_fuzzy`).
+//! A port of the C++ `test/string_conversion_test.cc` (`quote_anyupper_fuzzy`).
 
 use dashql_core::utils::quote_identifier as quote;
 

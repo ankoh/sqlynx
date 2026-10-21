@@ -1,5 +1,5 @@
 //! Encoders that produce the `expected` YAML of the snapshot tests, ports of the C++ encoders in
-//! `packages/dashql-core/src/testing`.
+//! the C++ `src/testing`.
 //!
 //! The encoders build styled trees ([`Node`]) so that the snapshotter can write the snapshot files byte for byte
 //! like the C++ snapshotter. The tests compare them structurally through [`Node::to_yaml`]: plain scalars go

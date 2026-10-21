@@ -1,4 +1,4 @@
-//! A port of `packages/dashql-core/test/shell_api_test.cc`.
+//! A port of the C++ `test/shell_api_test.cc`.
 //!
 //! The C++ tests drive the C ABI of the shell wasm. They drive [`Shell`] here, which maps the C ABI
 //! one to one (keys and completion statuses as integers, the same results and actions).

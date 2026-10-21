@@ -1,4 +1,4 @@
-//! A port of `packages/dashql-core/test/unification_test.cc`.
+//! A port of the C++ `test/unification_test.cc`.
 
 use dashql_core::catalog::{Catalog, ExternalObjectId, INITIAL_DATABASE_ID, INITIAL_ENTRY_ID, INITIAL_SCHEMA_ID};
 use dashql_core::script::Script;

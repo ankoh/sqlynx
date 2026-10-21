@@ -1,4 +1,4 @@
-//! The parse context, a port of `packages/dashql-core/src/parser/parse_context.cc`.
+//! The parse context, a port of the C++ `src/parser/parse_context.cc`.
 //!
 //! The grammar actions build the AST through the parse context. Nodes are appended to a flat buffer
 //! in post-order: `object` and `array` emit the children of a node and return the node itself,

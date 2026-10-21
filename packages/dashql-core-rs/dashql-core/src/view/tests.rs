@@ -1,4 +1,4 @@
-//! Port of `packages/dashql-core/test/hyper_plan_test.cc`.
+//! Port of the C++ `test/hyper_plan_test.cc`.
 
 use super::PlanViewModel;
 use dashql_buffers::view as fb;

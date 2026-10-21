@@ -1,4 +1,4 @@
-//! A port of `packages/dashql-core/test/analyzer_delete_test.cc`.
+//! A port of the C++ `test/analyzer_delete_test.cc`.
 
 use dashql_buffers::analyzer::TableReferenceRole;
 use dashql_core::analyzer::{AnalyzedScript, ColumnRef, TableRole};

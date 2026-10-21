@@ -1,5 +1,5 @@
 //! A statement-level semantic diff between two parsed scripts, a port of
-//! `packages/dashql-core/src/script_diff.cc`.
+//! the C++ `src/script_diff.cc`.
 //!
 //! A modified patience diff over the statements of two parsed scripts: statements are mapped by
 //! structural equality (order-insensitive), the longest common subsequence of unambiguous pairs is

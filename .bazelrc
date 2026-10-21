@@ -10,14 +10,13 @@ common --enable_platform_specific_config
 build --host_compilation_mode=fastbuild
 
 # Use Clang + LLD on Linux.
-# Clang is required for -fconstexpr-steps and LLVM coverage instrumentation.
+# Clang is required for LLVM coverage instrumentation.
 # LLD is required because Rust is incompatible with the gold linker.
 build:linux --repo_env=CC=clang
 build:linux --host_linkopt=-fuse-ld=lld
 build:linux --linkopt=-fuse-ld=lld
 
-# macOS 13.3+ required for std::format (std::to_chars for long double).
-# Set globally so all C/C++ deps (not just dashql_core) use the same target.
+# macOS deployment target, set globally so all C/C++ deps (hyper-api, flatc, protoc) use the same target.
 build --action_env=MACOSX_DEPLOYMENT_TARGET=13.3
 build --host_action_env=MACOSX_DEPLOYMENT_TARGET=13.3
 build --macos_minimum_os=13.3

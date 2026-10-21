@@ -1,4 +1,4 @@
-//! A port of `packages/dashql-core/test/shell_prompt_buffer_test.cc`.
+//! A port of the C++ `test/shell_prompt_buffer_test.cc`.
 
 use dashql_core::catalog::Catalog;
 use dashql_core::shell::PromptBuffer;

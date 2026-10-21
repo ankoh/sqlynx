@@ -1,5 +1,5 @@
 //! Pipeline benchmarks over growing CTE chains, the counterpart of the former
-//! packages/dashql-core/benchmarks/benchmark_pipeline_ctes.cc.
+//! `benchmarks/benchmark_pipeline_ctes.cc`.
 //!
 //! The main script is `with cte_0 as (<TPC-H q1>), ..., cte_<n-1> as (<TPC-H q1>) select 1`, analyzed
 //! against the TPC-H schema in the catalog. Each benchmark goes through the `Script` facade like the

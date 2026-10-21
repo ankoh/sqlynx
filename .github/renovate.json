@@ -70,28 +70,10 @@
         },
         {
             "customType": "regex",
-            "managerFilePatterns": ["/^bazel/external_wasi_sdk\\.bzl$/"],
-            "matchStrings": ["_WASI_VERSION = \"(?<currentValue>[^\"]+)\""],
-            "datasourceTemplate": "github-releases",
-            "depNameTemplate": "WebAssembly/wasi-sdk",
-            "extractVersionTemplate": "^wasi-sdk-(?<version>.+)$",
-            "versioningTemplate": "loose"
-        },
-        {
-            "customType": "regex",
             "managerFilePatterns": ["/^bazel/external_bison\\.bzl$/"],
             "matchStrings": ["_XPACK_VERSION = \"(?<currentValue>[^\"]+)\""],
             "datasourceTemplate": "github-releases",
             "depNameTemplate": "xpack-dev-tools/bison-xpack",
-            "extractVersionTemplate": "^v(?<version>.+)$",
-            "versioningTemplate": "loose"
-        },
-        {
-            "customType": "regex",
-            "managerFilePatterns": ["/^bazel/external_flex\\.bzl$/"],
-            "matchStrings": ["_XPACK_VERSION = \"(?<currentValue>[^\"]+)\""],
-            "datasourceTemplate": "github-releases",
-            "depNameTemplate": "xpack-dev-tools/flex-xpack",
             "extractVersionTemplate": "^v(?<version>.+)$",
             "versioningTemplate": "loose"
         },
@@ -166,7 +148,6 @@
             "automerge": false,
             "matchPackageNames": [
                 "xpack-dev-tools/bison-xpack",
-                "xpack-dev-tools/flex-xpack",
                 "xpack-dev-tools/m4-xpack"
             ]
         },
@@ -179,13 +160,6 @@
                 "/^@vitejs\/.*/",
                 "/^@vitest\/.*/"
             ]
-        },
-        {
-            "matchPackageNames": [
-                "hedron_compile_commands",
-                "hedronvision/bazel-compile-commands-extractor"
-            ],
-            "enabled": false
         }
     ]
 }

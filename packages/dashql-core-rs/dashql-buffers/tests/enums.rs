@@ -1,8 +1,8 @@
-//! The FlatBuffers enums are the in-memory representation of the AST, and the C++ core relies on
-//! their exact numbering: ordinal range checks on `NodeType`, `LITERAL_* - 5 == LiteralType`, the
+//! The FlatBuffers enums are the in-memory representation of the AST, and the core relies on their
+//! exact numbering: ordinal range checks on `NodeType`, `LITERAL_* - 5 == LiteralType`, the
 //! catalog object types doubling as completion candidate types, and `Script::ComputeSignature`
-//! hashing raw enum values into a persisted cache key. Both cores generate the enums from the same
-//! schemas; these tests pin the invariants so that a schema edit that breaks them fails loudly.
+//! hashing raw enum values into a cache key. These tests pin the invariants so that a schema edit
+//! that breaks them fails loudly.
 
 use dashql_buffers::algebra::LiteralType;
 use dashql_buffers::completion::CompletionCandidateObjectType;
@@ -17,7 +17,7 @@ fn node_type_markers() {
 
 #[test]
 fn node_type_ranges() {
-    // The C++ core classifies node types by ordinal ranges, the names must agree with them.
+    // The core classifies node types by ordinal ranges, the names must agree with them.
     for &node_type in NodeType::ENUM_VALUES {
         let name = node_type.variant_name().unwrap();
         let v = node_type.0;

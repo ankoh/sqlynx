@@ -1,4 +1,4 @@
-//! A port of `packages/dashql-core/test/analyzer_declaration_test.cc`.
+//! A port of the C++ `test/analyzer_declaration_test.cc`.
 
 use dashql_core::catalog::{Catalog, TableDeclaration};
 use dashql_core::script::Script;

@@ -1,4 +1,4 @@
-//! A port of `packages/dashql-core/test/script_test.cc`.
+//! A port of the C++ `test/script_test.cc`.
 //!
 //! Not ported: `TextVersionAndAnalysisSnapshotExceed32Bits`, which writes the public C++ field
 //! `text_version`; the Rust text version is private and only bumped by edits.

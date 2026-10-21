@@ -1,8 +1,6 @@
-# FlatBuffers code generation for DashQL (C++ path via Bazel).
-# TypeScript generation: hermetic target dashql_buffers_ts_gen below.
+# FlatBuffers code generation for DashQL: TypeScript (dashql_buffers_ts_gen) and Rust (dashql_buffers_rs).
 # Entry schema: dashql/index.fbs (includes all other .fbs).
 
-load("@rules_cc//cc:defs.bzl", "cc_library")
 load("@rules_rust//rust:defs.bzl", "rust_library")
 load("//proto/fb/bazel:flatbuf_ts_gen.bzl", "dashql_buffers_ts_gen")
 
@@ -11,36 +9,7 @@ package(default_visibility = ["//visibility:public"])
 # All .fbs schemas (needed so flatc can resolve includes in the genrule).
 FBS_DEPS = glob(["dashql/*.fbs"])
 
-# Generate C++ from dashql/index.fbs using flatc. Flags match scripts/generate_flatbuf.sh.
-# flatc --cpp produces only a .h (header-only; no .cc).
-genrule(
-    name = "dashql_buffers_cc_gen",
-    srcs = FBS_DEPS,
-    outs = ["dashql/buffers/index_generated.h"],
-    cmd = """
-        FLATC=$(location @com_google_flatbuffers//:flatc)
-        INC=$$(dirname $$(dirname $(location dashql/index.fbs)))
-        mkdir -p $(@D)
-        $$FLATC -I $$INC -o $(@D) $$INC/dashql/index.fbs --cpp \\
-            --gen-all \\
-            --no-prefix --scoped-enums \\
-            --reflect-types --reflect-names \\
-            --gen-object-api --gen-name-strings --gen-compare \\
-            --gen-mutable
-    """,
-    tools = ["@com_google_flatbuffers//:flatc"],
-)
-
-# Header-only cc_library so dashql-core can depend on it; include path is this package root
-# so #include "dashql/buffers/index_generated.h" resolves.
-cc_library(
-    name = "dashql_buffers_cc",
-    hdrs = [":dashql_buffers_cc_gen"],
-    includes = ["."],
-    deps = ["@com_google_flatbuffers//:flatbuffers"],
-)
-
-# Hermetic FlatBuffer TypeScript codegen (same layout as packages/dashql-core/api/gen/dashql/buffers).
+# Hermetic FlatBuffer TypeScript codegen.
 dashql_buffers_ts_gen(
     name = "dashql_buffers_ts_gen",
     srcs = FBS_DEPS,

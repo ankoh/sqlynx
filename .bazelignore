@@ -1,4 +1,3 @@
-packages/dashql-core/build
 packages/dashql-app/node_modules
 packages/dashql-native/node_modules
 packages/dashql-cli/node_modules

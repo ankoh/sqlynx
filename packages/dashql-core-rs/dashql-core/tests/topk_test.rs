@@ -1,4 +1,4 @@
-//! A port of `packages/dashql-core/test/topk_test.cc`.
+//! A port of the C++ `test/topk_test.cc`.
 
 use dashql_core::utils::topk::TopKHeap;
 use std::cmp::Ordering;

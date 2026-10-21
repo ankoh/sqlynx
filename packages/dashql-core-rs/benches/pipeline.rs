@@ -1,4 +1,4 @@
-//! Pipeline benchmarks, the counterpart of the former packages/dashql-core/benchmarks/benchmark_pipeline.cc.
+//! Pipeline benchmarks, the counterpart of the former C++ `benchmarks/benchmark_pipeline.cc`.
 //!
 //! The benchmarks named like the C++ ones (`scan_query`, `parse_query`, `format_query`, `analyze_query`,
 //! `analyze_query_only`, `move_cursor`, `complete_cursor`) measure the same work. The others isolate parts of it.

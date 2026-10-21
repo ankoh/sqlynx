@@ -1,4 +1,4 @@
-//! A port of `packages/dashql-core/test/catalog_test.cc`.
+//! A port of the C++ `test/catalog_test.cc`.
 //!
 //! `Catalog::load_scripts` takes analyzed scripts, so the C++ check for unanalyzed scripts
 //! (`CATALOG_SCRIPT_NOT_ANALYZED`) has no Rust counterpart.

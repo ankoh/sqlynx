@@ -1,4 +1,4 @@
-//! A port of `packages/dashql-core/test/shell_arrow_renderer_test.cc`.
+//! A port of the C++ `test/shell_arrow_renderer_test.cc`.
 
 use arrow_array::builder::{Int32Builder, ListBuilder};
 use arrow_array::types::Int32Type;

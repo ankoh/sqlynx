@@ -1,14 +1,11 @@
 //! The shared YAML snapshot tests (`//snapshots/<category>/*.yaml`) for the Rust core.
 //!
-//! The C++ and the Rust core run against the very same snapshot files. This crate loads them,
-//! turns every case into a libtest-mimic trial, and compares produced YAML structurally against
-//! the `expected` node of a case.
+//! This crate loads the snapshot files, turns every case into a libtest-mimic trial, and compares
+//! produced YAML structurally against the `expected` node of a case.
 
-pub mod corpus;
 pub mod encode;
 pub mod formatter;
 pub mod ryml;
-pub mod ties;
 
 use std::fmt::Write as _;
 use std::fs;

@@ -1,9 +1,9 @@
 //! The SQL scanner.
 //!
-//! A port of the flex scanner `grammar/scanner.l` that reproduces its output exactly, including its
-//! quirks (docs/rust-port/quirks.md). The rules of every flex start condition are a logos lexer,
-//! which matches like flex: the longest match wins, and ties go to the rule that comes first in
-//! `scanner.l` (through logos priorities). The lexer of the current start condition matches one
+//! A port of the former flex scanner (`grammar/scanner.l`) that reproduces its output exactly,
+//! including its quirks (docs/rust-port/quirks.md). The rules of every flex start condition are a
+//! logos lexer, which matches like flex: the longest match wins, and ties go to the rule that came
+//! first in `scanner.l` (through logos priorities). The lexer of the current start condition matches one
 //! token at a time, so that actions can switch the start condition and put text back with
 //! `yyless`. Line breaks are recorded for every match before its action runs, so text that is put
 //! back is counted again when it is scanned a second time, exactly like the C++ `YY_USER_ACTION`.

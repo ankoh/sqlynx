@@ -39,7 +39,6 @@ const config = ts.config(
             "bazel-*",
             "target/*",
             "node_modules/*",
-            "packages/dashql-core/**",
             "packages/dashql-pack/**",
         ],
     }

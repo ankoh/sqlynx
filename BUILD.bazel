@@ -3,7 +3,6 @@
 package(default_visibility = ["//visibility:public"])
 
 load("@aspect_rules_js//js:defs.bzl", "js_library")
-load("@hedron_compile_commands//:refresh_compile_commands.bzl", "refresh_compile_commands")
 load("@aspect_rules_js//npm:defs.bzl", "npm_link_package")
 load("@npm//:defs.bzl", "npm_link_all_packages")
 
@@ -29,7 +28,7 @@ filegroup(
     ),
 )
 
-# Wrapper so other packages (e.g. //packages/dashql-core/api) can use root tsconfig in data.
+# Wrapper so other packages can use the root tsconfig in data.
 js_library(
     name = "tsconfig_json",
     srcs = ["tsconfig.json"],
@@ -57,31 +56,4 @@ npm_link_all_packages(name = "node_modules")
 npm_link_package(
     name = "node_modules/@ankoh/dashql-core",
     src = "//packages/dashql-core-js:npm_package",
-)
-
-refresh_compile_commands(
-    name = "refresh_compile_commands",
-    targets = {
-        "//packages/dashql-core:dashql_core": "",
-        "//packages/dashql-core:test_utils": "",
-        "//packages/dashql-core:test_main": "",
-        "//packages/dashql-core:unit_tests": "",
-        "//packages/dashql-core:parser_tests": "",
-        "//packages/dashql-core:analyzer_tests": "",
-        "//packages/dashql-core:completion_tests": "",
-        "//packages/dashql-core:formatter_tests": "",
-        "//packages/dashql-core:hyper_plan_tests": "",
-        "//packages/dashql-core:rope_fuzzer_128s": "",
-        "//packages/dashql-core:rope_fuzzer_128s_bulk": "",
-        "//packages/dashql-core:rope_fuzzer_128l": "",
-        "//packages/dashql-core:rope_fuzzer_128l_bulk": "",
-        "//packages/dashql-core:rope_fuzzer_1024s": "",
-        "//packages/dashql-core:rope_fuzzer_1024s_bulk": "",
-        "//packages/dashql-core:rope_fuzzer_1024l": "",
-        "//packages/dashql-core:rope_fuzzer_1024l_bulk": "",
-        "//packages/dashql-core:dashql_shell": "",
-        "//packages/dashql-core:shell_unit_tests": "",
-    },
-    exclude_external_sources = True,
-    exclude_headers = "external",
 )

@@ -21,13 +21,8 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 DEPS = [
     ("com_google_flatbuffers",      "_FLATBUFFERS_VERSION", "https://github.com/google/flatbuffers/archive/refs/tags/v{VERSION}.zip"),
-    ("ankerl_unordered_dense",      "_ANKERL_VERSION",      "https://github.com/martinus/unordered_dense/archive/refs/tags/v{VERSION}.zip"),
-    ("rapidjson",                   "_RAPIDJSON_VERSION",   "https://github.com/Tencent/rapidjson/archive/refs/tags/v{VERSION}.zip"),
-    ("c4core",                      "_C4CORE_VERSION",      "https://github.com/biojppm/c4core/archive/refs/tags/v{VERSION}.zip"),
-    ("rapidyaml",                   "_RAPIDYAML_VERSION",   "https://github.com/biojppm/rapidyaml/archive/refs/tags/v{VERSION}.zip"),
     ("duckdb_cli_osx",              "_DUCKDB_VERSION",      "https://github.com/duckdb/duckdb/releases/download/v{VERSION}/duckdb_cli-osx-universal.zip"),
     ("duckdb_cli_linux_amd64",      "_DUCKDB_VERSION",      "https://github.com/duckdb/duckdb/releases/download/v{VERSION}/duckdb_cli-linux-amd64.zip"),
-    ("apache_arrow",                "_ARROW_VERSION",       "https://github.com/apache/arrow/archive/refs/tags/apache-arrow-{VERSION}.tar.gz"),
 ]
 
 

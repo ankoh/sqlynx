@@ -1,4 +1,4 @@
-//! The renderer specs of VISUALIZE statements, a port of `packages/dashql-core/src/visualize`.
+//! The renderer specs of VISUALIZE statements, a port of the C++ `src/visualize`.
 //!
 //! - `vegalite_generator`: the Vega-Lite JSON of an analyzed visualization (`GenerateVegaLiteSpec`)
 //! - `vegalite_parser`: a VISUALIZE statement from Vega-Lite JSON (`ParseVegaLiteToVisualize`)

@@ -16,8 +16,7 @@ def bison_rust_tables(name, grammar, out, actions = False, **kwargs):
         srcs = [grammar, "//grammar/rust:tables.rs.m4"],
         outs = [out],
         tools = ["@bison_src//:bison", "@m4_src//:m4"],
-        # The prebuilt bison fails with a broken pipe to m4 inside the sandbox, same as
-        # //grammar:parser_generated.
+        # The prebuilt bison fails with a broken pipe to m4 inside the sandbox.
         local = 1,
         cmd = (
             "export PATH=\"$$(dirname $(location @m4_src//:m4)):$$(dirname $(location @bison_src//:bison)):$$PATH\" && " +

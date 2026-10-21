@@ -1,4 +1,4 @@
-//! Grouping comments into blocks, a port of `packages/dashql-core/src/parser/comment_blocks.cc`.
+//! Grouping comments into blocks, a port of the C++ `src/parser/comment_blocks.cc`.
 //!
 //! A block is either a single block comment or a run of line comments that start their own lines on
 //! consecutive lines. A trailing line comment (`select 1; -- note`) is a block of its own. A run of

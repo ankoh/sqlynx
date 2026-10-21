@@ -1,4 +1,4 @@
-//! The catalog, a port of `packages/dashql-core/src/catalog.cc`.
+//! The catalog, a port of the C++ `src/catalog.cc`.
 //!
 //! The catalog publishes catalog entries (analyzed scripts and descriptor pools) atomically and
 //! resolves table names across them. Entries are immutable once published and shared through

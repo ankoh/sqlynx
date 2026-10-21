@@ -422,10 +422,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dashql-oracle"
-version = "0.1.0"
-
-[[package]]
 name = "dashql-shell-wasm"
 version = "0.1.0"
 dependencies = [

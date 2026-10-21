@@ -1,4 +1,4 @@
-//! The analyzer, a port of `packages/dashql-core/src/analyzer/`.
+//! The analyzer, a port of the C++ `src/analyzer`.
 //!
 //! The analysis runs four left-to-right passes over the post-order AST, interleaved per morsel of
 //! 1024 nodes like the C++ `PassManager`, so expressions get the same ids:

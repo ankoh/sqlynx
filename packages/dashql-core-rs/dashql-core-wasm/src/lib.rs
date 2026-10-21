@@ -1,5 +1,5 @@
 //! The wasm-bindgen API of the Rust core, the replacement of the C ABI in
-//! `packages/dashql-core/src/api.cc` (see docs/rust-port/README.md, phase 8).
+//! the C++ `src/api.cc` (see docs/rust-port/README.md, phase 8).
 //!
 //! Objects own their state; results are FlatBuffers returned as byte arrays, which the TypeScript
 //! wrappers in `packages/dashql-core-js/src/api.ts` read with the generated FlatBuffers classes.

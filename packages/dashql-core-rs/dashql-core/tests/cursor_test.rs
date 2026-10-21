@@ -1,4 +1,4 @@
-//! A port of `packages/dashql-core/test/cursor_test.cc`.
+//! A port of the C++ `test/cursor_test.cc`.
 
 use dashql_buffers::parser::{AttributeKey, NodeType};
 use dashql_core::catalog::{Catalog, QualifiedColumnName, QualifiedTableName};

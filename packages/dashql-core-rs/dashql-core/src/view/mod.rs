@@ -1,4 +1,4 @@
-//! The view model of Hyper query plans, a port of `packages/dashql-core/src/view`.
+//! The view model of Hyper query plans, a port of the C++ `src/view`.
 //!
 //! - `hyper_plan_parser`: `PlanViewModel::ParseHyperPlan` (plans are read with serde_json) and the derived edges,
 //!   fragments and pipelines

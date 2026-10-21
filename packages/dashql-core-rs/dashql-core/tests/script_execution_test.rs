@@ -1,4 +1,4 @@
-//! A port of `packages/dashql-core/test/script_execution_test.cc` and the execution part of
+//! A port of the C++ `test/script_execution_test.cc` and the execution part of
 //! `ApiTest.SessionAndExecutionExpose64BitTextVersions`.
 
 use dashql_buffers::editor::EditorOffsetUnit;

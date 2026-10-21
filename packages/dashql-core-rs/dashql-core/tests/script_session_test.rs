@@ -1,4 +1,4 @@
-//! A port of `packages/dashql-core/test/script_session_test.cc` and the session tests of
+//! A port of the C++ `test/script_session_test.cc` and the session tests of
 //! `api_test.cc`.
 //!
 //! The C ABI tests (`CAbi...`, `Compatibility...`, `CatalogLoadAndDrop...`) call the Rust session

@@ -1,4 +1,4 @@
-//! The DashQL shell (`packages/dashql-core/src/shell/`): a readline-like prompt with SQL
+//! The DashQL shell (the C++ `src/shell`): a readline-like prompt with SQL
 //! highlighting and completion, a VT100 terminal renderer, and the execution protocol of queries
 //! and dot commands.
 //!

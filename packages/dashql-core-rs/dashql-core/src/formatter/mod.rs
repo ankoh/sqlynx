@@ -1,11 +1,11 @@
-//! The SQL formatter, a port of `packages/dashql-core/src/formatter`.
+//! The SQL formatter, a port of the C++ `src/formatter`.
 //!
 //! The formatter visits the AST in post-order and builds a document for every node in a
 //! [`FormattingProgram`], so the documents of the children always exist when a parent is visited.
 //! Nodes that cannot be formatted are rendered as `'<NODE_TYPE>'` placeholders and recorded as
 //! unformattable. The statements are then rendered with the comments of the script in between.
 //!
-//! The output is byte-identical to the C++ formatter, quirks included (docs/rust-port/quirks.md).
+//! The output was byte-identical to the C++ formatter, quirks included (docs/rust-port/quirks.md).
 //! Function names follow the C++ methods (`FormatTableRef` is `format_table_ref`), the statement
 //! formatters live in the submodules like in the C++ files `formatter_<kind>.cc`.
 

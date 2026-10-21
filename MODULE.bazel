@@ -122,19 +122,12 @@ core_deps = use_extension("//bazel:core_dependencies.bzl", "dashql_core_dependen
 
 use_repo(
     core_deps,
-    "ankerl_unordered_dense",
-    "apache_arrow",
     "binaryen",
     "bison_src",
-    "c4core",
     "com_google_flatbuffers",
     "duckdb_cli_linux_amd64",
     "duckdb_cli_osx",
-    "flex_src",
     "m4_src",
-    "md4c",
-    "rapidjson",
-    "rapidyaml",
     "wabt",
 )
 
@@ -259,13 +252,4 @@ use_repo(
     "tableauhyperapi_cxx_linux_x86_64",
     "tableauhyperapi_cxx_macos_arm64",
     "tableauhyperapi_cxx_macos_x86_64",
-)
-
-# Hedron's Compile Commands Extractor for Bazel
-# https://github.com/hedronvision/bazel-compile-commands-extractor
-bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
-git_override(
-    module_name = "hedron_compile_commands",
-    commit = "7fe1eab26d2b8eeb5e1c6a2f38bddb001e3f9696",
-    remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
 )

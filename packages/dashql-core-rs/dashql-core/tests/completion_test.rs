@@ -1,4 +1,4 @@
-//! A port of `packages/dashql-core/test/completion_test.cc`.
+//! A port of the C++ `test/completion_test.cc`.
 
 // Bison names some symbol kinds in mixed case (S_Op)
 #![allow(non_upper_case_globals)]

@@ -1,4 +1,4 @@
-//! The wasm-bindgen API of the shell, the replacement of the C ABI in `packages/dashql-core/src/shell/api.cc`.
+//! The wasm-bindgen API of the shell, the replacement of the C ABI in the C++ `src/shell/api.cc`.
 //!
 //! Like the C++ shell wasm, the module carries the whole core: it re-exports the core bindings
 //! (`Catalog`, `Script`, `ScriptBatch`, `PlanViewModel`, `processBatch`, ...) with their JS names, so a shell
