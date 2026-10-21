@@ -6,6 +6,10 @@
 //! [`StateCell`]) so that the translated actions can nest calls like
 //! `ctx.object(.., &[attr(.., ctx.array(..))])` with the same evaluation order as the C++ actions.
 
+// Release builds hand out a plain `&mut State` from `StateCell::borrow_mut`, so the `mut` that the
+// debug `RefMut` guard needs on `let mut state = ..` is unused there.
+#![cfg_attr(not(debug_assertions), allow(unused_mut))]
+
 use super::value::{ExprVariant, NodeList};
 use crate::names::NameRegistry;
 use crate::scanner::Symbol;
