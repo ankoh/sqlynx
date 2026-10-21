@@ -33,64 +33,66 @@
 */
 
 explain_stmt:
-    EXPLAIN explainable_stmt {
-        $$ = ctx.Object(@$, buffers::parser::NodeType::OBJECT_EXT_EXPLAIN, {
-            Attr(Key::EXT_EXPLAIN_STATEMENT, $2),
-        });
-    }
+    EXPLAIN explainable_stmt { ctx.object(@$, NodeType::OBJECT_EXT_EXPLAIN, &[attr(Key::EXT_EXPLAIN_STATEMENT, $2)]) }
   | EXPLAIN LRB explain_option_list RRB explainable_stmt {
-        $$ = ctx.Object(@$, buffers::parser::NodeType::OBJECT_EXT_EXPLAIN, {
-            Attr(Key::EXT_EXPLAIN_STATEMENT, $5),
-            Attr(Key::EXT_EXPLAIN_OPTIONS, ctx.Array(Loc({@2, @3, @4}), std::move($3))),
-        });
-    }
+      ctx.object(
+          @$,
+          NodeType::OBJECT_EXT_EXPLAIN,
+          &[
+              attr(Key::EXT_EXPLAIN_STATEMENT, $5),
+              attr(Key::EXT_EXPLAIN_OPTIONS, ctx.array(loc(&[@2, @3, @4]), $3)),
+          ],
+      )
+  }
     ;
 
 explainable_stmt:
-    sql_select_stmt     { $$ = ctx.Object(@$, buffers::parser::NodeType::OBJECT_SQL_SELECT, std::move($1)); }
-  | sql_create_stmt     { $$ = std::move($1); }
-  | sql_create_as_stmt  { $$ = std::move($1); }
-  | sql_view_stmt       { $$ = std::move($1); }
-  | sql_insert_stmt     { $$ = std::move($1); }
-  | sql_delete_stmt     { $$ = std::move($1); }
+    sql_select_stmt     { ctx.object(@$, NodeType::OBJECT_SQL_SELECT, $1) }
+  | sql_create_stmt     { $1 }
+  | sql_create_as_stmt  { $1 }
+  | sql_view_stmt       { $1 }
+  | sql_insert_stmt     { $1 }
+  | sql_delete_stmt     { $1 }
   | EXPRESSIONS LRB sql_expr_list RRB {
-        $$ = ctx.Object(@$, buffers::parser::NodeType::OBJECT_EXT_EXPLAIN_EXPRESSIONS, {
-            Attr(Key::EXT_EXPLAIN_EXPRESSIONS, ctx.Array(@3, std::move($3))),
-        });
-    }
+      ctx.object(@$, NodeType::OBJECT_EXT_EXPLAIN_EXPRESSIONS, &[attr(Key::EXT_EXPLAIN_EXPRESSIONS, ctx.array(@3, $3))])
+  }
     ;
 
 explain_option_list:
-    explain_option_elem                                     { $$ = ctx.List({ std::move($1) }); }
-  | explain_option_list COMMA explain_option_elem           { $1->push_back(std::move($3)); $$ = std::move($1); }
+    explain_option_elem                                     { ctx.list(&[$1]) }
+  | explain_option_list COMMA explain_option_elem           {
+      ctx.push_back($1, $3);
+      $1
+  }
     ;
 
 explain_option_elem:
     explain_option_name explain_option_arg {
-        $$ = ctx.Object(@$, buffers::parser::NodeType::OBJECT_SQL_GENERIC_OPTION, {
-            Attr(Key::SQL_GENERIC_OPTION_KEY, $1),
-            Attr(Key::SQL_GENERIC_OPTION_VALUE, $2),
-        });
+        ctx.object(
+            @$,
+            NodeType::OBJECT_SQL_GENERIC_OPTION,
+            &[attr(Key::SQL_GENERIC_OPTION_KEY, $1), attr(Key::SQL_GENERIC_OPTION_VALUE, $2)],
+        )
     }
     ;
 
 explain_option_name:
-    sql_col_id                  { $$ = std::move($1); }
-  | sql_type_func_keywords      { $$ = ctx.NameFromKeyword(@1, $1); }
-  | ANALYZE                     { $$ = ctx.NameFromKeyword(@1, $1); }
-  | ANALYSE                     { $$ = ctx.NameFromKeyword(@1, $1); }
+    sql_col_id                  { $1 }
+  | sql_type_func_keywords      { ctx.name_from_keyword(@1, $1) }
+  | ANALYZE                     { ctx.name_from_keyword(@1, $1) }
+  | ANALYSE                     { ctx.name_from_keyword(@1, $1) }
     ;
 
 explain_option_arg:
-    TRUE_P                      { $$ = Bool(@1, true); }
-  | FALSE_P                     { $$ = Bool(@1, false); }
-  | ON                          { $$ = Bool(@1, true); }
-  | LRB sql_name_list RRB       { $$ = ctx.Array(@$, std::move($2)); }
-  | sql_descriptor_arg          { $$ = std::move($1); }
-  | sql_col_id                  { $$ = std::move($1); }
-  | sql_type_func_keywords      { $$ = ctx.NameFromKeyword(@1, $1); }
-  | ICONST                      { $$ = Const(@1, buffers::parser::AConstType::INTEGER); }
-  | FCONST                      { $$ = Const(@1, buffers::parser::AConstType::FLOAT); }
-  | SCONST                      { $$ = Const(@1, buffers::parser::AConstType::STRING); }
-  | %empty                      { $$ = Null(); }
+    TRUE_P                      { bool_node(@1, true) }
+  | FALSE_P                     { bool_node(@1, false) }
+  | ON                          { bool_node(@1, true) }
+  | LRB sql_name_list RRB       { ctx.array(@$, $2) }
+  | sql_descriptor_arg          { $1 }
+  | sql_col_id                  { $1 }
+  | sql_type_func_keywords      { ctx.name_from_keyword(@1, $1) }
+  | ICONST                      { const_node(@1, AConstType::INTEGER) }
+  | FCONST                      { const_node(@1, AConstType::FLOAT) }
+  | SCONST                      { const_node(@1, AConstType::STRING) }
+  | %empty                      { null() }
     ;

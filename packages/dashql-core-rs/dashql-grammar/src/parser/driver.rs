@@ -1,7 +1,7 @@
 //! The LALR(1) driver, a port of the `parse()` loop of bison's lalr1.cc skeleton as the C++ core
 //! configures it: `parse.lac full`, `parse.error verbose` with the hint of `Parser::yysyntax_error_`,
-//! error recovery through the `error` token, and the custom `YYLLOC_DEFAULT` of
-//! `grammar/prologue.y`.
+//! error recovery through the `error` token, and the custom `YYLLOC_DEFAULT` of the former C++
+//! prologue.
 
 use super::actions::{ReduceError, ReduceStack};
 use super::context::ParseContext;
@@ -112,7 +112,7 @@ pub fn feed(states: &mut Vec<StateId>, token: SymbolKind) -> bool {
     }
 }
 
-/// The location of the left-hand side of a reduction (`YYLLOC_DEFAULT` of grammar/prologue.y).
+/// The location of the left-hand side of a reduction (the `YYLLOC_DEFAULT` of the former C++ prologue).
 /// Uses the wrapping uint32 arithmetic of the C++ macro.
 fn default_location(rhs: &[SymbolSpan], below: SymbolSpan) -> SymbolSpan {
     match (rhs.first(), rhs.last()) {

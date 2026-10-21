@@ -5,6 +5,5 @@ package(default_visibility = ["//visibility:public"])
 
 exports_files([
     "gen_keywords.py",
-    "translate_actions.py",
     "tables.rs.m4",
 ])

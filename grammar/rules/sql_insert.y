@@ -1,46 +1,36 @@
 sql_insert_stmt:
     INSERT INTO sql_qualified_name sql_insert_rest sql_insert_returning_clause {
-        auto target = ctx.Object(@3, buffers::parser::NodeType::OBJECT_SQL_TABLEREF, {
-            Attr(Key::SQL_TABLEREF_NAME, std::move($3)),
-        });
-        $$ = ctx.Object(@$, buffers::parser::NodeType::OBJECT_SQL_INSERT,
-                        Concat(std::move($4), {
-                            Attr(Key::SQL_INSERT_TARGET, target),
-                            Attr(Key::SQL_INSERT_RETURNING, std::move($5)),
-                        }));
+        let target = ctx.object(@3, NodeType::OBJECT_SQL_TABLEREF, &[attr(Key::SQL_TABLEREF_NAME, $3)]);
+        ctx.object(
+            @$,
+            NodeType::OBJECT_SQL_INSERT,
+            ctx.concat2($4, &[attr(Key::SQL_INSERT_TARGET, target), attr(Key::SQL_INSERT_RETURNING, $5)]),
+        )
     }
   | sql_with_clause INSERT INTO sql_qualified_name sql_insert_rest sql_insert_returning_clause {
-        auto target = ctx.Object(@4, buffers::parser::NodeType::OBJECT_SQL_TABLEREF, {
-            Attr(Key::SQL_TABLEREF_NAME, std::move($4)),
-        });
-        $$ = ctx.Object(@$, buffers::parser::NodeType::OBJECT_SQL_INSERT,
-                        Concat(std::move($1), std::move($5), {
-                            Attr(Key::SQL_INSERT_TARGET, target),
-                            Attr(Key::SQL_INSERT_RETURNING, std::move($6)),
-                        }));
-    }
+      let target = ctx.object(@4, NodeType::OBJECT_SQL_TABLEREF, &[attr(Key::SQL_TABLEREF_NAME, $4)]);
+      ctx.object(
+          @$,
+          NodeType::OBJECT_SQL_INSERT,
+          ctx.concat3($1, $5, &[attr(Key::SQL_INSERT_TARGET, target), attr(Key::SQL_INSERT_RETURNING, $6)]),
+      )
+  }
     ;
 
 sql_insert_rest:
-    sql_select_stmt {
-        $$ = ctx.List({
-            Attr(Key::SQL_INSERT_SOURCE,
-                 ctx.Object(@1, buffers::parser::NodeType::OBJECT_SQL_SELECT, std::move($1))),
-        });
-    }
+    sql_select_stmt { ctx.list(&[attr(Key::SQL_INSERT_SOURCE, ctx.object(@1, NodeType::OBJECT_SQL_SELECT, $1))]) }
   | LRB sql_name_list RRB sql_select_stmt {
-        $$ = ctx.List({
-            Attr(Key::SQL_INSERT_COLUMNS, ctx.Array(Loc({@1, @2, @3}), std::move($2))),
-            Attr(Key::SQL_INSERT_SOURCE,
-                 ctx.Object(@4, buffers::parser::NodeType::OBJECT_SQL_SELECT, std::move($4))),
-        });
-    }
-  | DEFAULT VALUES {
-        $$ = ctx.List({ Attr(Key::SQL_INSERT_DEFAULT_VALUES, Bool(@$, true)) });
-    }
+      ctx.list(
+          &[
+              attr(Key::SQL_INSERT_COLUMNS, ctx.array(loc(&[@1, @2, @3]), $2)),
+              attr(Key::SQL_INSERT_SOURCE, ctx.object(@4, NodeType::OBJECT_SQL_SELECT, $4)),
+          ],
+      )
+  }
+  | DEFAULT VALUES { ctx.list(&[attr(Key::SQL_INSERT_DEFAULT_VALUES, bool_node(@$, true))]) }
     ;
 
 sql_insert_returning_clause:
-    RETURNING sql_target_list { $$ = ctx.Array(@2, std::move($2)); }
-  | %empty                    { $$ = Null(); }
+    RETURNING sql_target_list { ctx.array(@2, $2) }
+  | %empty                    { null() }
     ;

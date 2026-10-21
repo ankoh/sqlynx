@@ -1,66 +1,66 @@
-%type <buffers::parser::Node> vis_visualise_stmt;
-%type <std::string_view> vis_visualise_keyword;
+%type<Node> vis_visualise_stmt;
+%type<Str> vis_visualise_keyword;
 
-%type <BackedUniquePtr<NodeList>> vis_umap_spec_list;
-%type <buffers::parser::Node> opt_vis_umap_spec_field;
-%type <buffers::parser::AttributeKey> vis_umap_spec_col_key;
-%type <buffers::parser::AttributeKey> vis_umap_spec_num_key;
-%type <buffers::parser::Node> vis_umap_column;
-%type <buffers::parser::Node> vis_umap_metric;
-%type <buffers::parser::Node> vis_umap_number;
+%type<NodeList> vis_umap_spec_list;
+%type<Node> opt_vis_umap_spec_field;
+%type<AttributeKey> vis_umap_spec_col_key;
+%type<AttributeKey> vis_umap_spec_num_key;
+%type<Node> vis_umap_column;
+%type<Node> vis_umap_metric;
+%type<Node> vis_umap_number;
 
-%type <BackedUniquePtr<NodeList>> vis_markdown_spec_list;
-%type <buffers::parser::Node> opt_vis_markdown_spec_field;
+%type<NodeList> vis_markdown_spec_list;
+%type<Node> opt_vis_markdown_spec_field;
 
-%type <BackedUniquePtr<NodeList>> vis_table_spec_list;
-%type <buffers::parser::Node> opt_vis_table_spec_field;
+%type<NodeList> vis_table_spec_list;
+%type<Node> opt_vis_table_spec_field;
 
-%type <BackedUniquePtr<NodeList>> vis_dashboard_spec_list;
-%type <buffers::parser::Node> opt_vis_dashboard_spec_field;
-%type <buffers::parser::AttributeKey> vis_dashboard_spec_key;
-%type <buffers::parser::Node> vis_dashboard_integer;
-%type <buffers::parser::Node> vis_dashboard_field;
+%type<NodeList> vis_dashboard_spec_list;
+%type<Node> opt_vis_dashboard_spec_field;
+%type<AttributeKey> vis_dashboard_spec_key;
+%type<Node> vis_dashboard_integer;
+%type<Node> vis_dashboard_field;
 
-%type <BackedUniquePtr<NodeList>> vis_spec_list;
-%type <buffers::parser::Node> opt_vis_spec_field;
-%type <BackedUniquePtr<NodeList>> vis_layer_spec_field_list;
-%type <buffers::parser::Node> opt_vis_layer_spec_field;
-%type <buffers::parser::AttributeKey> vis_spec_key;
-%type <BackedUniquePtr<NodeList>> vis_layer_list;
-%type <buffers::parser::Node> vis_layer_spec;
-%type <BackedUniquePtr<NodeList>> vis_resolve_list;
-%type <buffers::parser::Node> opt_vis_resolve_field;
-%type <buffers::parser::AttributeKey> vis_resolve_key;
-%type <BackedUniquePtr<NodeList>> vis_resolve_map_list;
-%type <buffers::parser::Node> opt_vis_resolve_map_field;
-%type <buffers::parser::Node> vis_mark_value;
-%type <buffers::parser::Node> vis_mark_type;
-%type <BackedUniquePtr<NodeList>> vis_mark_list;
-%type <buffers::parser::Node> opt_vis_mark_field;
-%type <buffers::parser::Node> vis_mark_overlay;
-%type <buffers::parser::AttributeKey> vis_mark_key;
+%type<NodeList> vis_spec_list;
+%type<Node> opt_vis_spec_field;
+%type<NodeList> vis_layer_spec_field_list;
+%type<Node> opt_vis_layer_spec_field;
+%type<AttributeKey> vis_spec_key;
+%type<NodeList> vis_layer_list;
+%type<Node> vis_layer_spec;
+%type<NodeList> vis_resolve_list;
+%type<Node> opt_vis_resolve_field;
+%type<AttributeKey> vis_resolve_key;
+%type<NodeList> vis_resolve_map_list;
+%type<Node> opt_vis_resolve_map_field;
+%type<Node> vis_mark_value;
+%type<Node> vis_mark_type;
+%type<NodeList> vis_mark_list;
+%type<Node> opt_vis_mark_field;
+%type<Node> vis_mark_overlay;
+%type<AttributeKey> vis_mark_key;
 
-%type <BackedUniquePtr<NodeList>> vis_encoding_list;
-%type <buffers::parser::Node> opt_vis_encoding_field;
-%type <buffers::parser::AttributeKey> vis_channel_key;
-%type <buffers::parser::Node> vis_encoding_value;
+%type<NodeList> vis_encoding_list;
+%type<Node> opt_vis_encoding_field;
+%type<AttributeKey> vis_channel_key;
+%type<Node> vis_encoding_value;
 
-%type <BackedUniquePtr<NodeList>> vis_fielddef_list;
-%type <buffers::parser::Node> opt_vis_fielddef_field;
-%type <buffers::parser::AttributeKey> vis_fielddef_key;
-%type <buffers::parser::Node> vis_field_type;
+%type<NodeList> vis_fielddef_list;
+%type<Node> opt_vis_fielddef_field;
+%type<AttributeKey> vis_fielddef_key;
+%type<Node> vis_field_type;
 
-%type <BackedUniquePtr<NodeList>> vis_scale_list;
-%type <buffers::parser::Node> opt_vis_scale_field;
-%type <buffers::parser::AttributeKey> vis_scale_key;
-%type <buffers::parser::Node> vis_scale_type;
+%type<NodeList> vis_scale_list;
+%type<Node> opt_vis_scale_field;
+%type<AttributeKey> vis_scale_key;
+%type<Node> vis_scale_type;
 
-%type <BackedUniquePtr<NodeList>> vis_axis_list;
-%type <buffers::parser::Node> opt_vis_axis_field;
-%type <buffers::parser::AttributeKey> vis_axis_key;
+%type<NodeList> vis_axis_list;
+%type<Node> opt_vis_axis_field;
+%type<AttributeKey> vis_axis_key;
 
-%type <BackedUniquePtr<NodeList>> vis_legend_list;
-%type <buffers::parser::Node> opt_vis_legend_field;
-%type <buffers::parser::AttributeKey> vis_legend_key;
+%type<NodeList> vis_legend_list;
+%type<Node> opt_vis_legend_field;
+%type<AttributeKey> vis_legend_key;
 
-%type <buffers::parser::Node> vis_value;
+%type<Node> vis_value;

@@ -1,1 +1,1 @@
-%type <buffers::parser::Node> sql_view_stmt;
+%type<Node> sql_view_stmt;

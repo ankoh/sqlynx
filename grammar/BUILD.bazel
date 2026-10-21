@@ -73,63 +73,41 @@ filegroup(
 )
 
 # ---------------------------------------------------------------------------
-# Rust: the grammar with Rust actions (translated from rules/*.y by rust/translate_actions.py),
-# emitted through //grammar/rust:tables.rs.m4.
+# Grammar assembly (fragments -> dashql.y)
 # ---------------------------------------------------------------------------
 
-# The Rust rule set is translated from the C++ actions of rules/*.y.
-RULE_NAMES = [
-    "ext_explain",
-    "ext_set",
-    "ext_statement",
-    "ext_varargs",
-    "ext_visualize",
-    "sql_create",
-    "sql_delete",
-    "sql_drop_attach",
-    "sql_function",
-    "sql_insert",
-    "sql_pgq",
-    "sql_select",
-    "sql_view",
-]
-
 genrule(
-    name = "rust_rule_files",
-    srcs = [":rule_files"],
-    outs = ["rules_rs/%s.y" % name for name in RULE_NAMES],
-    cmd = "python3 $(location //grammar/rust:translate_actions.py) --output_dir $(RULEDIR)/rules_rs $(locations :rule_files)",
-    tools = ["//grammar/rust:translate_actions.py"],
-)
-
-genrule(
-    name = "grammar_rs_y",
+    name = "grammar_y",
     srcs = [
         ":prologue",
         ":epilogue",
         ":precedences",
         ":keyword_lists",
         ":type_files",
-        ":rust_rule_files",
+        ":rule_files",
     ],
-    outs = ["dashql_rs.y"],
+    outs = ["dashql.y"],
     cmd = (
-        "python3 $(location assemble_grammar.py) --lang rust " +
-        "--output $(location dashql_rs.y) " +
+        "python3 $(location assemble_grammar.py) " +
+        "--output $(location dashql.y) " +
         "--prologue $(location :prologue) " +
         "--epilogue $(location :epilogue) " +
         "--precedences $(location :precedences) " +
         "--keyword_lists $(locations :keyword_lists) " +
         "--type_files $(locations :type_files) " +
-        "--rule_files $(locations :rust_rule_files)"
+        "--rule_files $(locations :rule_files)"
     ),
     tools = ["assemble_grammar.py"],
 )
 
+# ---------------------------------------------------------------------------
+# Rust: the tables and actions of dashql.y, emitted through //grammar/rust:tables.rs.m4
+# ---------------------------------------------------------------------------
+
 bison_rust_tables(
     name = "parser_tables_rs",
     actions = True,
-    grammar = ":grammar_rs_y",
+    grammar = ":grammar_y",
     out = "gen/rust/parser_tables.rs",
 )
 

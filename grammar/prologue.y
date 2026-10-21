@@ -1,82 +1,28 @@
-%skeleton "lalr1.cc"
-%require "3.3"
+// The grammar of DashQL, assembled by grammar/assemble_grammar.py.
+// Emitted through //grammar/rust:tables.rs.m4, the actions run in dashql_grammar::parser.
 
-%define api.namespace {dashql::parser}
-%define api.parser.class {ParserBase}
-%define api.token.constructor
-%define api.token.prefix {FQL_}
-%define api.value.type variant
+%code use {
+use crate::parser::actions::*;
+}
+
 %define api.token.raw true
-%define parse.error verbose
-%define parse.lac full
+%define api.rust.context {ParseContext}
+%define api.rust.location {SymbolSpan}
+%define api.rust.error {ReduceError}
 
-%locations
-%define api.location.type {buffers::parser::SymbolSpan}
-
-%parse-param    { dashql::parser::ParseContext& ctx }
-
-// ---------------------------------------------------------------------------
-// HEADER
-
-%code requires {
-
-#ifndef NDEBUG
-#define YYDEBUG 1
-#endif
-
-#include <string>
-#include <cstdlib>
-#include <utility>
-#include "dashql/parser/grammar/state.h"
-#include "dashql/parser/grammar/location.h"
-#include "dashql/buffers/index_generated.h"
-
-namespace sx = dashql::buffers;
-
-namespace dashql { namespace parser { class ParseContext;  }}
-
-#define YYRHSLOC(Rhs, K) ((Rhs)[K].location)
-#define YYLLOC_DEFAULT(Cur, Rhs, N) { \
-    if (N) { \
-        uint32_t o = YYRHSLOC(Rhs, 1).offset(); \
-        uint32_t l = YYRHSLOC(Rhs, N).offset() + YYRHSLOC(Rhs, N).length() - YYRHSLOC(Rhs, 1).offset(); \
-        (Cur) = buffers::parser::SymbolSpan(o, l); \
-    } else { \
-        uint32_t o = YYRHSLOC(Rhs, 0).offset() + YYRHSLOC(Rhs, 0).length(); \
-        uint32_t l = 0; \
-        (Cur) = buffers::parser::SymbolSpan(o, l); \
-    } \
-}
-
-}
-
-// ---------------------------------------------------------------------------
-// IMPLEMENTATION
-
-%code {
-#include "dashql/parser/grammar/enums.h"
-#include "dashql/parser/grammar/location.h"
-#include "dashql/parser/grammar/nodes.h"
-#include "dashql/parser/scanner.h"
-#include "dashql/parser/parse_context.h"
-
-#undef yylex
-#define yylex ctx.NextSymbol
-
-using namespace dashql::parser;
-}
+%require "3.3"
 
 // ---------------------------------------------------------------------------
 // TOKENS
 
 /*
- * Non-keyword token types.  These are hard-wired into the "flex" lexer.
+ * Non-keyword token types.  These are hard-wired into the scanner.
  * They must be listed first so that their numeric codes do not depend on
  * the set of keywords.  PL/pgSQL depends on this so that it can share the
  * same lexer.  If you add/change tokens here, fix PL/pgSQL to match!
  */
 
-%token<size_t> IDENT   "identifier literal"
+%token<NameId> IDENT   "identifier literal"
 %token         SCONST  "string literal"
 %token         Op
 %token         FCONST BCONST XCONST
@@ -93,7 +39,7 @@ using namespace dashql::parser;
 
 %token EOF 0
 
-%token<std::string_view> VISUALIZE_LA
+%token<Str> VISUALIZE_LA
 
 /*
  * The grammar thinks these are keywords, but they are not in the kwlist.h

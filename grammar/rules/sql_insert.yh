@@ -1,3 +1,3 @@
-%type <buffers::parser::Node> sql_insert_stmt;
-%type <BackedUniquePtr<NodeList>> sql_insert_rest;
-%type <buffers::parser::Node> sql_insert_returning_clause;
+%type<Node> sql_insert_stmt;
+%type<NodeList> sql_insert_rest;
+%type<Node> sql_insert_returning_clause;

@@ -1,13 +1,12 @@
 //! The DashQL SQL grammar.
 //!
-//! [`tables`] holds the LALR(1) automaton and the actions that bison computes from the Rust rule
-//! set of `//grammar` (`grammar/rules_rs`), emitted through `//grammar/rust:tables.rs.m4`. It is the
-//! very automaton the C++ parser runs (`tests/table_parity.rs` asserts that), which keeps parse
-//! trees, error messages, error recovery and the completion probes of the Rust core identical by
-//! construction.
+//! [`tables`] holds the LALR(1) automaton and the actions that bison computes from the rules of
+//! `//grammar` (`grammar/rules`), emitted through `//grammar/rust:tables.rs.m4`. It is the automaton
+//! the former C++ parser ran, which kept parse trees, error messages, error recovery and the
+//! completion probes identical to the C++ core by construction.
 //!
-//! [`scanner`] is a port of the flex scanner `grammar/scanner.l` that reproduces its output
-//! exactly. [`parser`] runs the automaton with the Rust actions of `grammar/rules_rs`.
+//! [`scanner`] is a logos port of the former flex scanner. [`parser`] runs the automaton with the
+//! actions of `grammar/rules`.
 
 use std::borrow::Cow;
 

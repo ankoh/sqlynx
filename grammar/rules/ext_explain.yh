@@ -1,6 +1,6 @@
-%type <buffers::parser::Node> explain_stmt;
-%type <buffers::parser::Node> explainable_stmt;
-%type <BackedUniquePtr<NodeList>> explain_option_list;
-%type <buffers::parser::Node> explain_option_elem;
-%type <buffers::parser::Node> explain_option_name;
-%type <buffers::parser::Node> explain_option_arg;
+%type<Node> explain_stmt;
+%type<Node> explainable_stmt;
+%type<NodeList> explain_option_list;
+%type<Node> explain_option_elem;
+%type<Node> explain_option_name;
+%type<Node> explain_option_arg;
