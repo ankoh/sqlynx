@@ -78,6 +78,80 @@
         },
         "minLogLevel": {
           "type": "number"
+        },
+        "aiProvider": {
+          "$ref": "#/definitions/AIProviderSettings",
+          "description": "Configuration of the OpenAI-compatible AI provider"
+        }
+      },
+      "additionalProperties": false
+    },
+    "AIProviderHeader": {
+      "type": "object",
+      "description": "Additional HTTP header sent with AI provider requests",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Header name"
+        },
+        "value": {
+          "type": "string",
+          "description": "Header value"
+        }
+      },
+      "required": ["name", "value"],
+      "additionalProperties": false
+    },
+    "AIProviderSettings": {
+      "type": "object",
+      "description": "Configuration for an OpenAI-compatible AI provider (Ollama, OpenAI, vLLM, etc.)",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether AI features are enabled"
+        },
+        "endpointUrl": {
+          "type": "string",
+          "description": "Base URL of the OpenAI-compatible server (e.g. http://localhost:11434)"
+        },
+        "model": {
+          "type": "string",
+          "description": "The model identifier to use for chat completions"
+        },
+        "headers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AIProviderHeader"
+          },
+          "description": "Additional HTTP headers (e.g. Authorization)"
+        },
+        "auth": {
+          "$ref": "#/definitions/AIProviderAuth",
+          "description": "How requests to the AI provider are authorized"
+        }
+      },
+      "additionalProperties": false
+    },
+    "AIProviderAuth": {
+      "type": "object",
+      "description": "Authorization of AI provider requests, the credentials of every method are kept",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["none", "basic", "bearer"],
+          "description": "The authorization method"
+        },
+        "username": {
+          "type": "string",
+          "description": "The username (for basic auth)"
+        },
+        "password": {
+          "type": "string",
+          "description": "The password (for basic auth)"
+        },
+        "token": {
+          "type": "string",
+          "description": "The token (for bearer auth)"
         }
       },
       "additionalProperties": false

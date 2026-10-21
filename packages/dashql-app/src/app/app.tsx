@@ -15,6 +15,7 @@ import { FileDownloaderProvider } from '../platform/file/file_downloader_provide
 import { FileDropzone } from './ui/file_dropzone.js';
 import { GitHubTheme } from '../theme/github_theme.js';
 import { HttpClientProvider } from '../platform/http/http_client_provider.js';
+import { AIClientProvider } from '../platform/ai/ai_client_provider.js';
 import { HyperConnector } from './notebook/connections/hyper/hyper_connector.js';
 import { HyperDatabaseClientProvider } from './notebook/connections/hyper/hyperdb_grpc_client_provider.js';
 import { HyperPlanDemoPage } from './ui/demos/plan_demo.js';
@@ -99,17 +100,19 @@ const AppProviders = (props: { children: React.ReactElement }) => (
                                     <StorageProvider>
                                         <HttpClientProvider>
                                             <AppSettingsSync>
-                                                <HyperDatabaseClientProvider>
-                                                    <DashQLCoreProvider initialSetup={{ setupBatchWorker: true }}>
-                                                        <EmbeddedDatabaseProvider>
-                                                            <ComputeConnectionProvider>
-                                                                <NotebookProviders>
-                                                                    {props.children}
-                                                                </NotebookProviders>
-                                                            </ComputeConnectionProvider>
-                                                        </EmbeddedDatabaseProvider>
-                                                    </DashQLCoreProvider>
-                                                </HyperDatabaseClientProvider>
+                                                <AIClientProvider>
+                                                    <HyperDatabaseClientProvider>
+                                                        <DashQLCoreProvider initialSetup={{ setupBatchWorker: true }}>
+                                                            <EmbeddedDatabaseProvider>
+                                                                <ComputeConnectionProvider>
+                                                                    <NotebookProviders>
+                                                                        {props.children}
+                                                                    </NotebookProviders>
+                                                                </ComputeConnectionProvider>
+                                                            </EmbeddedDatabaseProvider>
+                                                        </DashQLCoreProvider>
+                                                    </HyperDatabaseClientProvider>
+                                                </AIClientProvider>
                                             </AppSettingsSync>
                                         </HttpClientProvider>
                                     </StorageProvider>

@@ -32,13 +32,8 @@ export const AppSettingsSync: React.FC<Props> = (props: Props) => {
         storageReader.backend.loadAppSettings().then(stored => {
             if (stored != null) {
                 logger.info("Hydrated app settings from manifest", {}, LOG_CTX);
-                const {
-                    lastOpenedNotebookId: _lastOpenedNotebookId,
-                    aiProvider: _aiProvider,
-                    ...settings
-                } = stored as typeof stored & {
+                const { lastOpenedNotebookId: _lastOpenedNotebookId, ...settings } = stored as typeof stored & {
                     lastOpenedNotebookId?: string;
-                    aiProvider?: unknown;
                 };
                 reconfigure(c => c == null ? null : {
                     ...c,
@@ -55,9 +50,7 @@ export const AppSettingsSync: React.FC<Props> = (props: Props) => {
     React.useEffect(() => {
         if (!hydrated) return;
         if (config?.settings == null) return;
-        const { aiProvider: _aiProvider, ...settings } = config.settings as typeof config.settings & {
-            aiProvider?: unknown;
-        };
+        const settings = config.settings;
         const handle = setTimeout(() => {
             storageReader.backend.saveAppSettings(settings).catch(e => {
                 logger.warn("Failed to persist app settings", { error: String(e) }, LOG_CTX);

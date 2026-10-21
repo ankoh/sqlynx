@@ -4,6 +4,7 @@ import icons from '@ankoh/dashql-svg-symbols';
 import { AnchorAlignment, AnchorSide } from '../../../ui/foundations/anchored_position.js';
 import { AnchoredOverlay } from '../../../ui/foundations/anchored_overlay.js';
 import { AppSettings } from './app_settings_view.js';
+import { AISettingsView } from './ai_settings_view.js';
 import { StorageWriterView } from '../../notebook/persistence/ui/storage_writer_view.js';
 import { LogViewer } from '../../../ui/logs/log_viewer.js';
 import { OverlaySize } from '../../../ui/foundations/overlay.js';
@@ -23,11 +24,12 @@ enum TabKey {
     AppSettings = 2,
     StorageWriter = 3,
     QueryCache = 4,
+    AISettings = 5,
 }
 
 export const InternalsViewer: React.FC<InternalsViewerProps> = (props: InternalsViewerProps) => {
     const [selectedTab, selectTab] = React.useState<TabKey>(TabKey.LogViewer);
-    const tabKeys = [TabKey.LogViewer, TabKey.QueryViewer, TabKey.QueryCache, TabKey.StorageWriter, TabKey.AppSettings];
+    const tabKeys = [TabKey.LogViewer, TabKey.QueryViewer, TabKey.QueryCache, TabKey.StorageWriter, TabKey.AISettings, TabKey.AppSettings];
 
     return (
         <VerticalTabs
@@ -67,6 +69,14 @@ export const InternalsViewer: React.FC<InternalsViewerProps> = (props: Internals
                     description: 'Inspect and evict cached query results',
                     disabled: false,
                 },
+                [TabKey.AISettings]: {
+                    tabId: TabKey.AISettings,
+                    icon: `${icons}#sparkles_fill_24`,
+                    labelShort: 'AI',
+                    ariaLabel: 'AI provider settings',
+                    description: 'Configure the AI provider',
+                    disabled: false,
+                },
                 [TabKey.AppSettings]: {
                     tabId: TabKey.AppSettings,
                     icon: `${icons}#settings_24`,
@@ -89,6 +99,9 @@ export const InternalsViewer: React.FC<InternalsViewerProps> = (props: Internals
                 ),
                 [TabKey.QueryCache]: _props => (
                     <QueryCacheView notebookId={props.notebookId} onClose={props.onClose} />
+                ),
+                [TabKey.AISettings]: _props => (
+                    <AISettingsView onClose={props.onClose} />
                 ),
                 [TabKey.AppSettings]: _props => (
                     <AppSettings onClose={props.onClose} />

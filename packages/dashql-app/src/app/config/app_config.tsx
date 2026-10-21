@@ -7,6 +7,39 @@ import { createTrace } from '../../platform/logger/trace_context.js';
 
 const CONFIG_URL = new URL('../../../static/config.json', import.meta.url);
 
+export interface AIProviderHeader {
+    name: string;
+    value: string;
+}
+
+/// How the AI provider requests are authorized
+export type AIProviderAuthType = 'none' | 'basic' | 'bearer';
+
+/// The credentials of every method are kept, switching the method does not lose them
+export interface AIProviderAuth {
+    type?: AIProviderAuthType;
+    username?: string;
+    password?: string;
+    token?: string;
+}
+
+export interface AIProviderSettings {
+    enabled?: boolean;
+    endpointUrl?: string;
+    model?: string;
+    headers?: AIProviderHeader[];
+    auth?: AIProviderAuth;
+}
+
+export const DEFAULT_AI_ENDPOINT_URL = "http://127.0.0.1:4097";
+export const DEFAULT_AI_MODEL = "gpt-6-luna";
+
+export const DEFAULT_AI_PROVIDER_SETTINGS: AIProviderSettings = {
+    endpointUrl: DEFAULT_AI_ENDPOINT_URL,
+    model: DEFAULT_AI_MODEL,
+    headers: [],
+};
+
 export interface AppSettings {
     pauseAfterAppSetup?: boolean;
     enableTableColumnPlots?: boolean;
@@ -21,6 +54,7 @@ export interface AppSettings {
     /// existing browser session. Adds `prompt=login` to the authorization request.
     forceReLogin?: boolean;
     minLogLevel?: number;
+    aiProvider?: AIProviderSettings;
 }
 
 export interface AppConfig {

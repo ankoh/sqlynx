@@ -134,16 +134,15 @@ describe('OPFSStorageBackend V2 flat storage', () => {
         expect(await backend.loadAppSettings()).toEqual({ narrowScreenLayout: false });
     });
 
-    it('removes obsolete AI provider settings from the manifest', async () => {
-        files.set(STORAGE_MANIFEST_FILE, JSON.stringify({
-            notebooks: [],
-            appSettings: { theme: 'dark', aiProvider: { enabled: true, model: 'legacy' } },
-        }));
-
-        expect(await backend.loadAppSettings()).toEqual({ theme: 'dark' });
-        expect(JSON.parse(files.get(STORAGE_MANIFEST_FILE)! as string)).toEqual({
-            notebooks: [],
-            appSettings: { theme: 'dark' },
-        });
+    it('round-trips the AI provider settings in the app manifest', async () => {
+        const aiProvider = {
+            enabled: true,
+            endpointUrl: 'http://localhost:11434',
+            model: 'llama3',
+            headers: [{ name: 'Authorization', value: 'Bearer token' }],
+        };
+        await backend.saveAppSettings({ aiProvider });
+        expect(await backend.loadAppSettings()).toEqual({ aiProvider });
+        expect(JSON.parse(files.get(STORAGE_MANIFEST_FILE)! as string).appSettings.aiProvider).toEqual(aiProvider);
     });
 });
