@@ -53,6 +53,9 @@ coverage --experimental_generate_llvm_lcov
 coverage --features=llvm_coverage_map_format
 coverage --repo_env=BAZEL_USE_LLVM_NATIVE_COVERAGE=1
 coverage --repo_env=GCOV=llvm-cov
+# collect_coverage.sh runs the coverage collector of rules_rust only if GENERATE_LLVM_LCOV is set. Since Bazel 9,
+# only cc_test of rules_cc sets it, rust_test does not.
+coverage --test_env=GENERATE_LLVM_LCOV=1
 coverage:linux --test_env=LLVM_COV=/usr/bin/llvm-cov
 coverage:linux --test_env=LLVM_PROFDATA=/usr/bin/llvm-profdata
 coverage:macos --test_env=LLVM_COV=/opt/homebrew/opt/llvm/bin/llvm-cov

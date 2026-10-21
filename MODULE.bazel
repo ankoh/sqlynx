@@ -20,10 +20,15 @@ bazel_dep(name = "rules_rust_wasm_bindgen", version = "0.69.0")
 # explicitly clears RUNFILES_DIR before exec-ing the LCOV merger, which caused
 # collect_coverage.rs to resolve the wrong test binary path and produce an empty
 # coverage.dat.  The patch derives the bin dir from COVERAGE_DIR instead.
+# The second patch reports the sources of crates with generated sources, which
+# rules_rust copies into bazel-out/<config>/bin, at their source paths.
 single_version_override(
     module_name = "rules_rust",
     version = "0.69.0",
-    patches = ["//bazel/patches:rules_rust_collect_coverage_fix.patch"],
+    patches = [
+        "//bazel/patches:rules_rust_collect_coverage_fix.patch",
+        "//bazel/patches:rules_rust_coverage_source_paths.patch",
+    ],
     patch_strip = 1,
 )
 

@@ -1,0 +1,51 @@
+--- a/util/collect_coverage/collect_coverage.rs
++++ b/util/collect_coverage/collect_coverage.rs
+@@ -85,6 +85,30 @@
+     }
+ }
+ 
++// rules_rust copies all sources of a crate with generated sources into
++// bazel-out/<config>/bin, so llvm-cov reports them there. The LCOV merger only
++// keeps files of the instrumented files manifest, which lists them at their
++// source paths. Strip the bin directory to report them at their source paths.
++// Generated sources are not in the manifest and are still dropped.
++fn strip_bin_dirs(report: &str) -> String {
++    let mut out = String::with_capacity(report.len());
++    for line in report.lines() {
++        let source = line
++            .strip_prefix("SF:bazel-out/")
++            .and_then(|rest| rest.split_once('/'))
++            .and_then(|(_config, rest)| rest.strip_prefix("bin/"));
++        match source {
++            Some(path) => {
++                out.push_str("SF:");
++                out.push_str(path);
++            }
++            None => out.push_str(line),
++        }
++        out.push('\n');
++    }
++    out
++}
++
+ fn main() {
+     let coverage_dir = PathBuf::from(env::var("COVERAGE_DIR").unwrap());
+     let execroot = PathBuf::from(env::var("ROOT").unwrap());
+@@ -185,13 +209,10 @@
+     let report_str = std::str::from_utf8(&output.stdout).expect("Failed to parse llvm-cov output");
+ 
+     debug_log!("Writing output to {}", coverage_output_file.display());
+-    fs::write(
+-        coverage_output_file,
+-        report_str
+-            .replace("#/proc/self/cwd/", "")
+-            .replace(&execroot.display().to_string(), ""),
+-    )
+-    .unwrap();
++    let report = report_str
++        .replace("#/proc/self/cwd/", "")
++        .replace(&execroot.display().to_string(), "");
++    fs::write(coverage_output_file, strip_bin_dirs(&report)).unwrap();
+ 
+     // Destroy the intermediate binary file so lcov_merger doesn't parse it twice.
+     debug_log!("Cleaning up {}", profdata_file.display());

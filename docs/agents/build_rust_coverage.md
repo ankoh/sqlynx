@@ -130,6 +130,30 @@ no longer merges tracefiles with `lcov`; it uploads Bazel's combined report dire
 | `.github/workflows/coverage.yml` | Added `--ignore-errors empty,corrupt` to `lcov` merge |
 | `.bazelrc` | `--experimental_generate_llvm_lcov` → `--generate_llvm_lcov` (previous session) |
 
+## Rust tests reported no coverage
+
+Under Bazel 9 every `rust_test` produced an empty `coverage.dat`, and the per-test LCOV merger logged
+`There was no coverage found.` `collect_coverage.sh` runs the collector of the test rule
+(`CC_CODE_COVERAGE_SCRIPT`, the `collect_coverage` binary of `rules_rust`) only if `GENERATE_LLVM_LCOV` is set.
+`--experimental_generate_llvm_lcov` does not set it for every test anymore: `cc_test` of `rules_cc` puts it into
+its own test environment, `rust_test` does not. `.bazelrc` sets it for all tests under `coverage`:
+
+```starlark
+coverage --test_env=GENERATE_LLVM_LCOV=1
+```
+
+## Sources of dashql-parser were dropped
+
+`dashql-parser` has generated sources (`src/tables.rs`, `src/keywords/table.rs`). `rules_rust` then copies all
+sources of the crate into `bazel-out/<config>/bin`, and llvm-cov reports them as
+`bazel-out/<config>/bin/packages/dashql-parser/src/...`. The LCOV merger keeps only files listed in the
+instrumented files manifest, which names them at their source paths, so the whole parser vanished from the
+report.
+
+**`bazel/patches/rules_rust_coverage_source_paths.patch`** makes `collect_coverage.rs` strip the
+`bazel-out/<config>/bin/` prefix from the `SF:` records. The checked-in sources now match the manifest; the
+generated ones are not in it and stay excluded.
+
 ## Upstream
 
 The same bug is tracked in [rules_rust PR #3812](https://github.com/bazelbuild/rules_rust/pull/3812).
