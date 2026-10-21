@@ -109,8 +109,8 @@ two independent archive actions byte for byte. This guarantees reproducible
 packaging for identical inputs/toolchains, not identical Wasm across build
 configurations or compiler versions. `package.json` is the only publish-version
 source; rules_js's optional Bazel link version is unused. The root package links
-`:npm_package` as `//:node_modules/@ankoh/dashql-core`, and in-repo consumers
-(`//packages/dashql-app`, `//packages/dashql-cli`) depend on that link instead of
+`:npm_package` as `//:node_modules/@ankoh/dashql-core`, and the in-repo consumer
+`//packages/dashql-app` depends on that link instead of
 copying the package. TypeScript resolves it through node_modules, and the app's vite
 config points `__CORE_PATH__` at `node_modules/@ankoh/dashql-core/dist`.
 

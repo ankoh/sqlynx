@@ -10,6 +10,7 @@ core is a set of top-level packages; the app and `@ankoh/dashql-core` ship its w
 | `packages/dashql-snapshots` | `dashql_snapshots` | Snapshot loading and encoders, YAML emitter, snapshotter |
 | `packages/dashql-core-wasm` | `dashql_core_wasm_lib`, `dashql_core_wasm` (cdylib) | wasm-bindgen API shipped by `@ankoh/dashql-core` |
 | `packages/dashql-shell-wasm` | `dashql_shell_wasm` | Shell wasm module (with the core bindings) shipped by the app |
+| `packages/dashql-cli` | `dashql_cli` (binary) | `dashql-cli lint`, checks scripts with the native core |
 
 ## Decisions
 

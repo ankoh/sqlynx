@@ -6,9 +6,8 @@ use crate::error::{Error, Result};
 use crate::pack::{pack_analyzed_script, pack_catalog_descriptor, pack_parsed_script, pack_scanned_script, pack_visualization};
 use crate::script::Script;
 use dashql_buffers::analyzer::AnalyzerErrorSeverity;
-use dashql_buffers::batch::{
-    BatchDiagnosticT, BatchRequest, BatchResultT, BatchScriptResultT, DiagnosticSeverity, ProcessingStage,
-};
+use dashql_buffers::batch::{BatchDiagnosticT, BatchRequest, BatchResultT, BatchScriptResultT};
+pub use dashql_buffers::batch::{DiagnosticSeverity, ProcessingStage};
 use dashql_parser::parser::context::resolve_text_span;
 use dashql_parser::span::TextSpan;
 
@@ -25,6 +24,79 @@ macro_rules! pack_bytes {
 /// A vector the C++ object API leaves out when empty
 fn non_empty<T>(v: Vec<T>) -> Option<Vec<T>> {
     (!v.is_empty()).then_some(v)
+}
+
+/// A diagnostic of a checked script
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Diagnostic {
+    pub stage: ProcessingStage,
+    pub severity: DiagnosticSeverity,
+    /// The UTF-8 byte span in the script text
+    pub span: TextSpan,
+    pub message: String,
+}
+
+/// A script processed by [`check_script`]
+pub struct CheckedScript {
+    pub script: Script,
+    /// The diagnostics of all stages that ran, in stage order
+    pub diagnostics: Vec<Diagnostic>,
+    /// Why the analysis failed, the diagnostics of the earlier stages are kept
+    pub failure: Option<String>,
+}
+
+impl CheckedScript {
+    /// Whether processing failed or found an error
+    pub fn has_errors(&self) -> bool {
+        self.failure.is_some() || self.diagnostics.iter().any(|d| d.severity == DiagnosticSeverity::ERROR)
+    }
+}
+
+/// Scan, parse and analyze a script against a catalog up to `until`, collecting the diagnostics of every
+/// stage. The script is not published to the catalog.
+pub fn check_script(catalog: &Catalog, text: &str, until: ProcessingStage) -> CheckedScript {
+    let mut diagnostics = Vec::new();
+    let mut diagnostic = |stage, severity, span, message: &str| {
+        diagnostics.push(Diagnostic { stage, severity, span, message: message.to_string() });
+    };
+    let mut script = Script::new(catalog);
+    script.replace_text(text);
+    script.scan();
+    for e in &script.scanned.as_ref().unwrap().errors {
+        diagnostic(ProcessingStage::SCAN, DiagnosticSeverity::ERROR, e.location, &e.message);
+    }
+    if until >= ProcessingStage::PARSE {
+        script.parse();
+        let parsed = script.parsed.as_ref().unwrap();
+        for e in &parsed.errors {
+            let span = resolve_text_span(&parsed.scanned.text, &parsed.scanned.symbols, e.location);
+            diagnostic(ProcessingStage::PARSE, DiagnosticSeverity::ERROR, span, &e.message);
+        }
+    }
+    let mut failure = None;
+    if until >= ProcessingStage::ANALYZE {
+        match script.analyze(catalog, false) {
+            Ok(()) => {
+                let analyzed = script.analyzed.as_ref().unwrap();
+                let scanned = &analyzed.parsed.scanned;
+                for e in &analyzed.errors {
+                    let severity = if e.severity == AnalyzerErrorSeverity::WARNING {
+                        DiagnosticSeverity::WARNING
+                    } else {
+                        DiagnosticSeverity::ERROR
+                    };
+                    let span = match (e.text_span, e.symbol_span) {
+                        (Some(t), _) => t,
+                        (None, Some(s)) => resolve_text_span(&scanned.text, &scanned.symbols, s),
+                        (None, None) => TextSpan::default(),
+                    };
+                    diagnostic(ProcessingStage::ANALYZE, severity, span, &e.message);
+                }
+            }
+            Err(e) => failure = Some(e.message),
+        }
+    }
+    CheckedScript { script, diagnostics, failure }
 }
 
 /// Process a batch request (`ProcessBatch`). Inputs share only the descriptor context, they never
@@ -46,84 +118,55 @@ pub fn process_batch(request: &[u8]) -> Result<Vec<u8>> {
     for input in request.scripts().into_iter().flatten() {
         let mut out = BatchScriptResultT::default();
         out.id = input.id().filter(|id| !id.is_empty()).map(str::to_string);
-        let mut diagnostics: Vec<BatchDiagnosticT> = Vec::new();
-        let diagnostic = |diagnostics: &mut Vec<BatchDiagnosticT>, stage, severity, span: TextSpan, message: &str| {
-            let mut d = BatchDiagnosticT::default();
-            d.stage = stage;
-            d.severity = severity;
-            d.offset = span.offset;
-            d.length = span.length;
-            d.message = (!message.is_empty()).then(|| message.to_string());
-            diagnostics.push(d);
-        };
-        let process = |out: &mut BatchScriptResultT, diagnostics: &mut Vec<BatchDiagnosticT>| -> std::result::Result<(), String> {
-            let outputs = input.outputs();
-            if outputs & !15 != 0 {
-                return Err("invalid batch output mask".into());
-            }
+        let outputs = input.outputs();
+        if outputs & !15 != 0 {
+            out.failure = Some("invalid batch output mask".into());
+        } else if outputs != 0 {
+            let until = if outputs & 12 != 0 {
+                ProcessingStage::ANALYZE
+            } else if outputs & 2 != 0 {
+                ProcessingStage::PARSE
+            } else {
+                ProcessingStage::SCAN
+            };
             // The FlatBuffers verifier already rejects requests with invalid UTF-8 texts, which the C++
             // core reports per script
-            let text = input.text().unwrap_or("");
-            if outputs == 0 {
-                return Ok(());
-            }
-            let mut script = Script::new(&catalog);
-            script.replace_text(text);
-            script.scan();
-            let scanned = script.scanned.clone().unwrap();
-            for e in &scanned.errors {
-                diagnostic(diagnostics, ProcessingStage::SCAN, DiagnosticSeverity::ERROR, e.location, &e.message);
-            }
+            let checked = check_script(&catalog, input.text().unwrap_or(""), until);
+            let script = &checked.script;
             if outputs & 1 != 0 {
-                out.scanned = Some(pack_bytes!(pack_scanned_script(&scanned)));
+                out.scanned = script.scanned.as_deref().map(|s| pack_bytes!(pack_scanned_script(s)));
             }
-            if outputs & 14 != 0 {
-                script.parse();
-                let parsed = script.parsed.clone().unwrap();
-                for e in &parsed.errors {
-                    let span = resolve_text_span(&parsed.scanned.text, &parsed.scanned.symbols, e.location);
-                    diagnostic(diagnostics, ProcessingStage::PARSE, DiagnosticSeverity::ERROR, span, &e.message);
-                }
-                if outputs & 2 != 0 {
-                    out.parsed = Some(pack_bytes!(pack_parsed_script(&parsed)));
-                }
+            if outputs & 2 != 0 {
+                out.parsed = script.parsed.as_deref().map(|p| pack_bytes!(pack_parsed_script(p)));
             }
-            if outputs & 12 != 0 {
-                script.analyze(&catalog, false).map_err(|e| e.message)?;
-                let analyzed = script.analyzed.clone().unwrap();
-                let scanned = &analyzed.parsed.scanned;
-                for e in &analyzed.errors {
-                    let severity = if e.severity == AnalyzerErrorSeverity::WARNING {
-                        DiagnosticSeverity::WARNING
-                    } else {
-                        DiagnosticSeverity::ERROR
-                    };
-                    let span = match (e.text_span, e.symbol_span) {
-                        (Some(t), _) => t,
-                        (None, Some(s)) => resolve_text_span(&scanned.text, &scanned.symbols, s),
-                        (None, None) => TextSpan::default(),
-                    };
-                    diagnostic(diagnostics, ProcessingStage::ANALYZE, severity, span, &e.message);
-                }
+            out.failure = checked.failure.clone();
+            if let (None, Some(analyzed)) = (&checked.failure, script.analyzed.as_deref()) {
                 if outputs & 4 != 0 {
-                    out.analyzed = Some(pack_bytes!(pack_analyzed_script(&analyzed, &pack_visualization)));
+                    out.analyzed = Some(pack_bytes!(pack_analyzed_script(analyzed, &pack_visualization)));
                 }
-                let erroneous = diagnostics.iter().any(|d| d.severity == DiagnosticSeverity::ERROR);
-                if outputs & 8 != 0 && !erroneous {
-                    out.catalog_descriptor = Some(pack_catalog_descriptor(&analyzed.entry).map_err(|e| e.message)?);
+                if outputs & 8 != 0 && !checked.has_errors() {
+                    match pack_catalog_descriptor(&analyzed.entry) {
+                        Ok(descriptor) => out.catalog_descriptor = Some(descriptor),
+                        Err(e) => out.failure = Some(e.message),
+                    }
                 }
             }
-            Ok(())
-        };
-        if let Err(failure) = process(&mut out, &mut diagnostics) {
-            out.failure = Some(failure);
+            let diagnostics = checked.diagnostics.into_iter().map(|d| {
+                let mut out = BatchDiagnosticT::default();
+                out.stage = d.stage;
+                out.severity = d.severity;
+                out.offset = d.span.offset;
+                out.length = d.span.length;
+                out.message = (!d.message.is_empty()).then_some(d.message);
+                out
+            });
+            out.diagnostics = non_empty(diagnostics.collect());
         }
         // The object API leaves out empty vectors
         out.scanned = out.scanned.and_then(non_empty);
         out.parsed = out.parsed.and_then(non_empty);
         out.analyzed = out.analyzed.and_then(non_empty);
         out.catalog_descriptor = out.catalog_descriptor.and_then(non_empty);
-        out.diagnostics = non_empty(diagnostics);
         scripts.push(out);
     }
     result.scripts = non_empty(scripts);
