@@ -1,0 +1,13 @@
+analyzer-snapshots:
+  # An aggregate with FILTER is not a constant expression
+  - name: const_function_filter
+    script:
+      input: select sum(1) filter (where true), sum(1), max(2) filter (where 1 = 1)
+  # An aggregate with ORDER BY is not a constant expression
+  - name: const_function_order_by
+    script:
+      input: select string_agg('a', ',' order by 1), string_agg('a', ',')
+  # Plain functions of constants stay constant
+  - name: const_function_plain
+    script:
+      input: select abs(-1), coalesce(1, 2), greatest(1, 2)

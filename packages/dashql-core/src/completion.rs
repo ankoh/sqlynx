@@ -8,7 +8,7 @@
 // Bison names some symbol kinds in mixed case (S_Op)
 #![allow(non_upper_case_globals)]
 
-use crate::analyzer::{AnalyzedScript, ColumnResolution, ReferencedTable, ScopeSource, TableRole};
+use crate::analyzer::{AnalyzedScript, ColumnResolution, ReferencedTable, ScopeId, ScopeSource, SourceVisibility, TableRole};
 use crate::catalog::*;
 use crate::cursor::{CursorContext, NameComponentType, ScriptCursor, SymbolLocation};
 use crate::hash::HashMap;
@@ -1045,6 +1045,22 @@ impl<'c, 'a> Completion<'c, 'a> {
         }
     }
 
+    /// The name scopes around the cursor with the FROM items that the column refs of the cursor can see in them.
+    /// The innermost scope comes first, a correlation barrier hides all scopes above it.
+    fn visible_scopes(analyzed: &AnalyzedScript, name_scopes: &[ScopeId]) -> Vec<(ScopeId, SourceVisibility)> {
+        let mut visible = Vec::with_capacity(name_scopes.len());
+        let mut visibility = SourceVisibility::All;
+        for &scope_id in name_scopes {
+            visible.push((scope_id, visibility));
+            let scope = &analyzed.name_scopes[scope_id as usize];
+            if scope.column_correlation_barrier {
+                break;
+            }
+            visibility = scope.parent_visibility;
+        }
+        visible
+    }
+
     /// Promote names in the current name scopes (`PromoteIdentifiersInScope`)
     fn promote_identifiers_in_scope(&mut self) {
         let cursor = self.cursor;
@@ -1058,11 +1074,14 @@ impl<'c, 'a> Completion<'c, 'a> {
                 completion.candidates[candidate].candidate_tags |= CandidateTag::IN_NAME_SCOPE.0;
             }
         };
-        for &scope_id in &cursor.name_scopes {
+        for (scope_id, visibility) in Self::visible_scopes(analyzed, &cursor.name_scopes) {
             let scope = &analyzed.name_scopes[scope_id as usize];
             // Columns of resolved table refs in scope
             for &table_ref_id in &scope.table_references {
                 let table_ref = &analyzed.table_references[table_ref_id as usize];
+                if !visibility.sees_node(table_ref.ast_node_id) {
+                    continue;
+                }
                 if in_insert_source && table_ref.role == TableRole::Write {
                     continue;
                 }
@@ -1403,9 +1422,9 @@ impl<'c, 'a> Completion<'c, 'a> {
                 if sealed == 1 {
                     // a._: a might be a table alias
                     let a = name_text(0);
-                    for &scope_id in &cursor.name_scopes {
+                    for (scope_id, visibility) in Self::visible_scopes(analyzed, &cursor.name_scopes) {
                         let scope = &analyzed.name_scopes[scope_id as usize];
-                        if let Some(source) = scope.source(a) {
+                        if let Some(source) = scope.sources.iter().find(|s| visibility.sees(s) && s.name.as_deref() == Some(a)) {
                             match &source.table {
                                 ReferencedTable::Table(loc) => {
                                     if let Some(decl) = self.table(*loc) {
@@ -1445,9 +1464,6 @@ impl<'c, 'a> Completion<'c, 'a> {
                                 }
                                 ReferencedTable::Unresolved(_) => {}
                             }
-                            break;
-                        }
-                        if scope.column_correlation_barrier {
                             break;
                         }
                     }

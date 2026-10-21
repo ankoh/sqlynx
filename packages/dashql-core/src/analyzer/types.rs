@@ -502,9 +502,14 @@ pub enum SourceVisibility {
 
 impl SourceVisibility {
     pub fn sees(self, source: &ScopeSource) -> bool {
+        self.sees_node(source.ast_node_id)
+    }
+
+    /// Whether the FROM item with an AST node id is visible
+    pub fn sees_node(self, ast_node_id: u32) -> bool {
         match self {
             SourceVisibility::All => true,
-            SourceVisibility::Before(node_id) => source.ast_node_id < node_id,
+            SourceVisibility::Before(node_id) => ast_node_id < node_id,
             SourceVisibility::None => false,
         }
     }

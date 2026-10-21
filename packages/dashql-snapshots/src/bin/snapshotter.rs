@@ -239,11 +239,13 @@ fn complete(
         return;
     }
     let completion = Completion::compute(&cursor, limit);
+    let mut out = Map::new();
+    // Completions inside comments have no target symbol
     let Some(loc) = completion.target_symbol.as_ref().map(|t| t.symbol.location) else {
-        println!("  ERROR completion without target symbol");
+        out.int("no-target", 1);
+        append(completions, out.into_node());
         return;
     };
-    let mut out = Map::new();
     encode_completion(&mut out, &completion);
     encode_location_text(&mut out, &scanned.text, loc.offset, loc.length, "text");
     append(completions, out.into_node());

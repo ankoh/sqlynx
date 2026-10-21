@@ -1,0 +1,31 @@
+visualize-snapshots:
+  # String scale bounds lose the quotes of the string literals
+  - name: vis_scale_string_bounds
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+    script:
+      input: |
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => point,
+          encoding => (
+            x => (field => date, type => temporal, scale => (type => utc, domain_min => 'a', domain_max => 'b', domain_mid => 'c')),
+            y => (field => revenue, type => quantitative, scale => (range_min => 'height', range_max => 'width'))
+          )
+        );
+  # Number and string scale bounds side by side
+  - name: vis_scale_mixed_bounds
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+    script:
+      input: |
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => bar,
+          encoding => (
+            x => (field => category, type => nominal, scale => (domain_min => 1, domain_max => 'z')),
+            y => (field => revenue, type => quantitative, scale => (range_min => 0.5, range_max => 'width'))
+          )
+        );

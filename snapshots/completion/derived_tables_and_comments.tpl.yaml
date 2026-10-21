@@ -1,0 +1,103 @@
+completion-snapshots:
+  # A derived table does not see the columns of its sibling FROM items
+  - name: derived_table_hides_siblings
+    catalog:
+      script:
+        input: |-
+          create table t (name int, id int);
+          create table u (na int, nb int);
+    editor:
+      input: select * from t, (select na from u) s
+    cursor:
+      search:
+        text: select na
+        index: 9
+    completions:
+      limit: 5
+  # A correlated subquery sees the alias of the enclosing query
+  - name: subquery_sees_outer_alias
+    catalog:
+      script:
+        input: |-
+          create table t (name int, id int);
+          create table u (na int, nb int);
+    editor:
+      input: select * from t x where exists (select 1 from u where x.n)
+    cursor:
+      search:
+        text: x.n
+        index: 3
+    completions:
+      limit: 5
+  # A CTE is a correlation barrier, it does not see the FROM items of the main query
+  - name: cte_hides_main_query_columns
+    catalog:
+      script:
+        input: |-
+          create table t (name int, id int);
+          create table u (na int, nb int);
+    editor:
+      input: with c as (select na from u) select * from t, c
+    cursor:
+      search:
+        text: select na
+        index: 9
+    completions:
+      limit: 5
+  # The alias of a sibling is no dot-resolution target in a derived table
+  - name: derived_table_hides_sibling_alias
+    catalog:
+      script:
+        input: |-
+          create table t (name int, id int);
+          create table u (na int, nb int);
+    editor:
+      input: select * from t x, (select x.n from u) s
+    cursor:
+      search:
+        text: x.n
+        index: 3
+    completions:
+      limit: 5
+  # The columns of the enclosing query stay visible in a scalar subquery
+  - name: scalar_subquery_sees_outer_columns
+    catalog:
+      script:
+        input: |-
+          create table t (name int, id int);
+          create table u (na int, nb int);
+    editor:
+      input: select (select na from u where n) from t
+    cursor:
+      search:
+        text: where n
+        index: 7
+    completions:
+      limit: 5
+  # The cursor in a line comment has no target
+  - name: cursor_in_line_comment
+    catalog:
+      script:
+        input: create table t (name int, id int);
+    editor:
+      input: |-
+        select * from t -- some comment
+    cursor:
+      search:
+        text: some
+        index: 2
+    completions:
+      limit: 5
+  # The cursor in a block comment has no target
+  - name: cursor_in_block_comment
+    catalog:
+      script:
+        input: create table t (name int, id int);
+    editor:
+      input: select * from /* some comment */ t
+    cursor:
+      search:
+        text: some
+        index: 2
+    completions:
+      limit: 5

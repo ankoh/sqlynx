@@ -1,0 +1,220 @@
+analyzer-snapshots:
+
+  - name: const_function_filter
+    script:
+      input: select sum(1) filter (where true), sum(1), max(2) filter (where 1 = 1)
+      catalog-id: 1
+      errors: []
+      expressions:
+        - expression-idx: 0
+          type: function
+          name: sum
+          statement-id: 0
+          text: "sum(1) fil..here true)"
+        - expression-idx: 1
+          type: function
+          name: sum
+          is-const: true
+          statement-id: 0
+          text: "sum(1)"
+        - expression-idx: 2
+          type: function
+          name: max
+          statement-id: 0
+          text: "max(2) fil..ere 1 = 1)"
+        - expression-idx: 3
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 4
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 5
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+        - expression-idx: 6
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 7
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 8
+          type: comparison
+          op: EQUAL
+          arg-left: 6
+          arg-right: 7
+          is-const: true
+          statement-id: 0
+          text: "1 = 1"
+      constants:
+        - expression: 3
+          text: "1"
+        - expression: 4
+          text: "1"
+        - expression: 1
+          text: "sum(1)"
+        - expression: 5
+          text: "2"
+        - expression: 6
+          text: "1"
+        - expression: 7
+          text: "1"
+        - expression: 8
+          text: "1 = 1"
+      name-scopes:
+        - scope-id: 0
+          columns:
+            - name: '?'
+              expression: 0
+            - name: '?'
+              expression: 1
+            - name: '?'
+              expression: 2
+          text: "select sum..ere 1 = 1)"
+
+  - name: const_function_order_by
+    script:
+      input: select string_agg('a', ',' order by 1), string_agg('a', ',')
+      catalog-id: 1
+      errors: []
+      expressions:
+        - expression-idx: 0
+          type: function
+          name: string_agg
+          statement-id: 0
+          text: "string_agg..rder by 1)"
+        - expression-idx: 1
+          type: function
+          name: string_agg
+          is-const: true
+          statement-id: 0
+          text: "string_agg..('a', ',')"
+        - expression-idx: 2
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'a'"
+        - expression-idx: 3
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "','"
+        - expression-idx: 4
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 5
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "'a'"
+        - expression-idx: 6
+          type: literal/string
+          is-const: true
+          statement-id: 0
+          text: "','"
+      constants:
+        - expression: 2
+          text: "'a'"
+        - expression: 3
+          text: "','"
+        - expression: 4
+          text: "1"
+        - expression: 5
+          text: "'a'"
+        - expression: 6
+          text: "','"
+        - expression: 1
+          text: "string_agg..('a', ',')"
+      name-scopes:
+        - scope-id: 0
+          columns:
+            - name: '?'
+              expression: 0
+            - name: '?'
+              expression: 1
+          text: "select str..('a', ',')"
+
+  - name: const_function_plain
+    script:
+      input: select abs(-1), coalesce(1, 2), greatest(1, 2)
+      catalog-id: 1
+      errors: []
+      expressions:
+        - expression-idx: 0
+          type: function
+          name: abs
+          statement-id: 0
+          text: "abs(-1)"
+        - expression-idx: 1
+          type: function
+          known-function: COALESCE
+          is-const: true
+          statement-id: 0
+          text: "coalesce(1, 2)"
+        - expression-idx: 2
+          type: function
+          name: greatest
+          is-const: true
+          statement-id: 0
+          text: "greatest(1, 2)"
+        - expression-idx: 3
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 4
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 5
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+        - expression-idx: 6
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "1"
+        - expression-idx: 7
+          type: literal/integer
+          is-const: true
+          statement-id: 0
+          text: "2"
+      constants:
+        - expression: 3
+          text: "1"
+        - expression: 4
+          text: "1"
+        - expression: 5
+          text: "2"
+        - expression: 1
+          text: "coalesce(1, 2)"
+        - expression: 6
+          text: "1"
+        - expression: 7
+          text: "2"
+        - expression: 2
+          text: "greatest(1, 2)"
+      name-scopes:
+        - scope-id: 0
+          columns:
+            - name: '?'
+              expression: 0
+            - name: '?'
+              expression: 1
+            - name: '?'
+              expression: 2
+          text: "select abs..test(1, 2)"

@@ -100,9 +100,13 @@ struct Generator<'a> {
 }
 
 impl Generator<'_> {
-    /// A number if the text of a node is one, the text otherwise (domain and range bounds)
+    /// A number if the text of a node is one, the text otherwise with the quotes of a string literal stripped
+    /// (domain and range bounds)
     fn number_or_string(&self, node_id: u32) -> Value {
         let text = node_text(self.script, node_id);
+        if self.script.parsed.nodes[node_id as usize].node_type() == NodeType::LITERAL_STRING {
+            return text_value(strip_single_quotes(text));
+        }
         parse_number(text).map(Value::from).unwrap_or_else(|| text_value(text))
     }
 

@@ -1,7 +1,7 @@
 //! Identify constant expressions (`constant_propagation_pass.cc`).
 //!
 //! Literals, constant interval casts, binary expressions and comparisons over constants, and
-//! function calls without modifiers over constants are constant. Finish stores the roots of the
+//! function calls without modifiers, FILTER and ORDER BY over constants are constant. Finish stores the roots of the
 //! constant expression trees.
 
 use super::state::{literal_type, AnalysisState};
@@ -154,6 +154,11 @@ impl ConstantPropagationPass {
                     };
                     // Skip functions with any modifiers
                     if call.function_call_modifiers != 0 {
+                        continue;
+                    }
+                    // FILTER and ORDER BY have no modifier bit, an aggregate with either is not constant
+                    let [filter, order] = attrs!(state.children(node), [K::SQL_FUNCTION_FILTER, K::SQL_FUNCTION_ORDER]);
+                    if filter.is_some() || order.is_some() {
                         continue;
                     }
                     match call.arguments {

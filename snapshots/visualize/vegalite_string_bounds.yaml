@@ -1,0 +1,135 @@
+visualize-snapshots:
+
+  - name: vis_scale_string_bounds
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..timestamp)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: revenue
+                text: "revenue int"
+        errors: []
+    script:
+      input: |
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => point,
+          encoding => (
+            x => (field => date, type => temporal, scale => (type => utc, domain_min => 'a', domain_max => 'b', domain_mid => 'c')),
+            y => (field => revenue, type => quantitative, scale => (range_min => 'height', range_max => 'width'))
+          )
+        );
+    vegalite: |-
+      {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "data": {
+          "$sql": "SELECT * FROM sales"
+        },
+        "mark": "point",
+        "encoding": {
+          "x": {
+            "field": "date",
+            "type": "temporal",
+            "scale": {
+              "type": "utc",
+              "domainMin": "a",
+              "domainMax": "b",
+              "domainMid": "c"
+            }
+          },
+          "y": {
+            "field": "revenue",
+            "type": "quantitative",
+            "scale": {
+              "rangeMin": "height",
+              "rangeMax": "width"
+            }
+          }
+        }
+      }
+    roundtrip: |-
+      SELECT * FROM sales
+      VISUALIZE USING vegalite (
+        mark => point,
+        encoding => (
+          x => (field => date, type => temporal, scale => (type => utc, domain_min => 'a', domain_max => 'b', domain_mid => 'c')),
+          y => (field => revenue, type => quantitative, scale => (range_min => 'height', range_max => 'width'))
+        )
+      );
+
+  - name: vis_scale_mixed_bounds
+    catalog:
+      script:
+        input: |-
+          create table sales (category text, revenue int, date timestamp);
+        catalog-id: 1
+        tables:
+          - catalog-id: "256.65536.4294967296"
+            name: sales
+            text: "create tab..timestamp)"
+            columns:
+              - catalog-id: "256.65536.4294967296.0"
+                name: category
+                text: "category text"
+              - catalog-id: "256.65536.4294967296.1"
+                name: date
+                text: "date timestamp"
+              - catalog-id: "256.65536.4294967296.2"
+                name: revenue
+                text: "revenue int"
+        errors: []
+    script:
+      input: |
+        SELECT * FROM sales VISUALIZE USING vegalite (
+          mark => bar,
+          encoding => (
+            x => (field => category, type => nominal, scale => (domain_min => 1, domain_max => 'z')),
+            y => (field => revenue, type => quantitative, scale => (range_min => 0.5, range_max => 'width'))
+          )
+        );
+    vegalite: |-
+      {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "data": {
+          "$sql": "SELECT * FROM sales"
+        },
+        "mark": "bar",
+        "encoding": {
+          "x": {
+            "field": "category",
+            "type": "nominal",
+            "scale": {
+              "domainMin": 1.0,
+              "domainMax": "z"
+            }
+          },
+          "y": {
+            "field": "revenue",
+            "type": "quantitative",
+            "scale": {
+              "rangeMin": 0.5,
+              "rangeMax": "width"
+            }
+          }
+        }
+      }
+    roundtrip: |-
+      SELECT * FROM sales
+      VISUALIZE USING vegalite (
+        mark => bar,
+        encoding => (
+          x => (field => category, type => nominal, scale => (domain_min => 1.0, domain_max => 'z')),
+          y => (field => revenue, type => quantitative, scale => (range_min => 0.5, range_max => 'width'))
+        )
+      );
