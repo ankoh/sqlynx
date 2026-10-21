@@ -13,3 +13,14 @@ sh_binary(
     name = "repin_crates",
     srcs = ["repin_crates.sh"],
 )
+
+# Generate rust-project.json for rust-analyzer, see docs/agents/rust_analyzer.md.
+# Usage: bazel run //scripts:gen_rust_project [-- <target patterns>]
+py_binary(
+    name = "gen_rust_project",
+    srcs = ["gen_rust_project.py"],
+    args = ["$(rlocationpath @rules_rust//tools/rust_analyzer:gen_rust_project)"],
+    data = ["@rules_rust//tools/rust_analyzer:gen_rust_project"],
+    main = "gen_rust_project.py",
+    deps = ["@rules_python//python/runfiles"],
+)

@@ -37,3 +37,10 @@ yarn-error.log
 
 /.local
 /dist
+
+# rust-analyzer project and the generated sources it links into the source tree
+# (bazel run //scripts:gen_rust_project)
+/rust-project.json
+/packages/dashql-parser/src/tables.rs
+/packages/dashql-parser/src/keywords/table.rs
+/packages/dashql-parser/tests/calc_tables.rs
