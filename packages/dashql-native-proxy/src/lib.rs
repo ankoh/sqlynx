@@ -12,4 +12,9 @@ mod proxy_router;
 mod status;
 mod trace_context;
 
+#[cfg(test)]
+mod proto;
+#[cfg(test)]
+mod test;
+
 pub use proxy_router::route_proxy_request;

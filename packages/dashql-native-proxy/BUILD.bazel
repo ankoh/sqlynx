@@ -1,4 +1,5 @@
 load("@aspect_bazel_lib//lib:copy_file.bzl", "copy_file")
+load("@rules_rust//cargo:defs.bzl", "cargo_build_script")
 load("@rules_rust//rust:defs.bzl", "rust_library", "rust_shared_library", "rust_test")
 load("//bazel:macos_packaging.bzl", "platform_binary")
 
@@ -34,10 +35,36 @@ rust_library(
     ],
 )
 
+# Generates the protobuf messages and the tonic services of the gRPC mocks in src/test.
+cargo_build_script(
+    name = "test_protos",
+    srcs = ["build.rs"],
+    build_script_env = {
+        "PROTOC": "$(execpath @protobuf//:protoc)",
+        "PROTO_HYPER_SERVICE": "$(execpath //proto/pb:salesforce/hyperdb/grpc/v1/hyper_service.proto)",
+        "PROTO_TEST_SERVICE": "$(execpath //proto/pb:dashql/test/test_service.proto)",
+    },
+    data = [
+        "//proto/pb:dashql/test/test_service.proto",
+        "//proto/pb:google/protobuf/empty.proto",
+        "//proto/pb:salesforce/hyperdb/grpc/v1/hyper_service.proto",
+        "@protobuf//:protoc",
+    ],
+    edition = "2021",
+    deps = ["@crates//:tonic-prost-build"],
+)
+
 rust_test(
     name = "test",
     size = "small",
     crate = ":proxy",
+    deps = [
+        ":test_protos",
+        "@crates//:anyhow",
+        "@crates//:prost",
+        "@crates//:tokio-stream",
+        "@crates//:tonic-prost",
+    ],
 )
 
 # Node-API addon loaded by the Electron utility process (packages/dashql-native).
