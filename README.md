@@ -11,17 +11,6 @@
 
 ---
 
-DashQL is a library for creating and analyzing a compact version of the PostgreSQL AST.
-It builds around a Bison parser that materializes AST Nodes into a single Flatbuffer vector.
-It can be compiled to WebAssembly and has been originally built for lightweight SQL instrumentation, running on every user keystroke in DashQL.
-
-_Each AST node is packed into [24 bytes](https://github.com/ankoh/dashql/blob/b95b3f0959f3a17db8378e79d0adb2fa29925a93/proto/fb/dashql/parsed_script.fbs#L357-L364) and references matched substrings in the original script text.
-This encoding is compact and efficient for simple passes, but is not directly suited for a full semantic analysis._
-
-<img src="misc/ast.png?raw=true" width="680px">
-
----
-
 ### Building
 
 ```
