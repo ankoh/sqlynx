@@ -81,7 +81,7 @@ describe('V2 flat notebook script mutations', () => {
         for (const action of [
             { type: RENAME_NOTEBOOK, value: 'Offline notebook' },
             { type: RENAME_SCRIPT, value: { fileName: '1_alpha.sql', newFileName: 'offline' } },
-            { type: CREATE_SCRIPT, value: 1 },
+            { type: CREATE_SCRIPT, value: { index: 1 } },
         ] as Parameters<typeof reduceNotebookScripts>[1][]) {
             current = reduceNotebookScripts(current, action, writer, logger, false);
         }
@@ -162,12 +162,43 @@ describe('V2 flat notebook script mutations', () => {
     it('inserts at an indexed feed boundary and persists the new flat file', () => {
         const current = state(['1_alpha.sql', '2_beta.sql']);
         const writer = new RecordingWriter(logger, new NotebookTestBackend());
-        const next = reduce(current, { type: CREATE_SCRIPT, value: 1 }, writer);
+        const next = reduce(current, { type: CREATE_SCRIPT, value: { index: 1 } }, writer);
         const names = getSortedScriptFileNames(next.scriptRefs);
         expect(names).toHaveLength(3);
         expect(next.scriptFocus.fileName).toBe(names[1]);
         expect(writer.records.some(task => task.type.description === 'WRITE_SCRIPT'
             && (task.value as string[])[1] === names[1])).toBe(true);
+    });
+
+    it('appends a script with text, analyzes it, and persists the text', () => {
+        const current = state(['1_alpha.sql', '2_beta.sql']);
+        const writer = new RecordingWriter(logger, new NotebookTestBackend());
+        const next = reduce(current, { type: CREATE_SCRIPT, value: { index: null, text: 'SELECT 42' } }, writer);
+        const names = getSortedScriptFileNames(next.scriptRefs);
+        expect(names).toHaveLength(3);
+        expect(next.scriptFocus.fileName).toBe(names[2]);
+        const created = next.scripts[next.scriptRefs[names[2]].scriptId];
+        expect(created.scriptSession.getText()).toBe('SELECT 42');
+        expect(created.analysisOutdated).toBe(false);
+        expect(next.scripts[next.scriptRefs[names[0]].scriptId].analysisOutdated).toBe(true);
+        expect(writer.records).toContainEqual(expect.objectContaining({
+            value: [current.notebookId, names[2], 'SELECT 42'],
+        }));
+    });
+
+    it('creates the first script of an empty notebook', () => {
+        const next = reduce(state([]), { type: CREATE_SCRIPT, value: { index: null, text: 'SELECT 1' } });
+        const names = getSortedScriptFileNames(next.scriptRefs);
+        expect(names).toHaveLength(1);
+        expect(next.scriptFocus.fileName).toBe(names[0]);
+    });
+
+    it('deletes the last script', () => {
+        const current = state(['1_alpha.sql']);
+        const next = reduce(current, { type: DELETE_SCRIPT, value: '1_alpha.sql' });
+        expect(next.scriptRefs).toEqual({});
+        expect(next.scripts).toEqual({});
+        expect(next.scriptFocus.fileName).toBe('');
     });
 
     it('reorders by dense prefixes and follows focus', () => {

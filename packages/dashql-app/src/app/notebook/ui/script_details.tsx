@@ -339,7 +339,6 @@ export const ScriptDetails: React.FC<ScriptDetailsProps> = (props) => {
                                 <ScriptActionMenu
                                     scriptName={scriptDisplay}
                                     formatDisabled={!isFormattable || hasPendingDiff || editorView == null}
-                                    deleteDisabled={Object.keys(props.notebookScripts.scriptRefs).length <= 1}
                                     onFormat={handleFormat}
                                     onDelete={handleDelete}
                                 />

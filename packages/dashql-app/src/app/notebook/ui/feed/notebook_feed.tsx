@@ -1,6 +1,7 @@
 import * as React from 'react';
 import * as styles from './notebook_feed.module.css';
 
+
 import type { EditorView } from '@codemirror/view';
 import { useAppConfig } from '../../../config/app_config.js';
 
@@ -41,6 +42,8 @@ import { NotebookDataCard } from './notebook_data_card.js';
 import { ButtonSize, ButtonVariant, IconButton } from '../../../../ui/foundations/button.js';
 import { ChevronDownIcon, ChevronUpIcon, PlusIcon } from '../../../../ui/foundations/symbol_icon.js';
 import { HYPER_CONNECTOR } from '../../connections/connector_info.js';
+import { NotebookConnectionAttentionContext } from '../notebook_connection_attention.js';
+import { NotebookComposer, NotebookComposerVariant, takeComposerDraft } from './notebook_composer.js';
 
 export interface NotebookFeedProps {
     notebookScripts: NotebookScripts;
@@ -52,7 +55,26 @@ export interface NotebookFeedProps {
     /// while inactive its global key handlers must stand down so Escape/Enter belong to the overlay.
     active: boolean;
     scrollShadowContainer?: HTMLElement | null;
+    dependencies?: NotebookFeedDependencies;
 }
+
+export interface NotebookFeedDependencies {
+    useQueryExecutor: typeof useQueryExecutor;
+    useStorageReader: typeof useStorageReader;
+    useKeyEvents: typeof useKeyEvents;
+    runNotebookScript: typeof runNotebookScript;
+    NotebookComposer: typeof NotebookComposer;
+    ScriptFeedRow: typeof ScriptFeedRow;
+}
+
+const DEFAULT_DEPENDENCIES: NotebookFeedDependencies = {
+    useQueryExecutor,
+    useStorageReader,
+    useKeyEvents,
+    runNotebookScript,
+    NotebookComposer,
+    ScriptFeedRow,
+};
 
 const OVERSCAN_ROW_COUNT = 16;
 const FEED_TOP_PADDING = 16;
@@ -82,6 +104,7 @@ function useCompactFeedLayout() {
 }
 
 export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
+    const dependencies = props.dependencies ?? DEFAULT_DEPENDENCIES;
     const config = useAppConfig();
     const logger = useLogger();
     const scriptDebugMode = config?.settings?.scriptDebugMode ?? false;
@@ -111,7 +134,7 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
     React.useLayoutEffect(() => {
         setDisplayEntries({ source: scriptRefs, entries: canonicalEntries });
     }, [scriptRefs, canonicalEntries]);
-    const storageReader = useStorageReader();
+    const storageReader = dependencies.useStorageReader();
     const notebookId = props.notebookScripts.notebookId;
     const [dataFiles, setDataFiles] = React.useState<{ notebookId: string; files: DataFile[] } | null>(null);
     const [dataFilesVersion, setDataFilesVersion] = React.useState(0);
@@ -196,7 +219,7 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
     }, [props.modifyNotebookScripts, props.showDetails]);
 
     const isDisconnected = props.conn?.connectionHealth !== ConnectionHealth.ONLINE;
-    const executeQuery = useQueryExecutor();
+    const executeQuery = dependencies.useQueryExecutor();
 
     // Refresh: drop the stale cache entry for a script's result, then re-execute — a plain cacheable
     // run then misses the cache and re-populates it. Resolves the script by feed file name.
@@ -215,7 +238,7 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
         if (cacheKey != null) {
             await storageReader.backend.deleteQueryResultCache(notebookScripts.notebookId, cacheKey).catch(() => { });
         }
-        runNotebookScript(conn!.databaseId, notebookScripts, scriptData, executeQuery, props.modifyNotebookScripts, logger);
+        dependencies.runNotebookScript(conn!.databaseId, notebookScripts, scriptData, executeQuery, props.modifyNotebookScripts, logger);
     }, [props.modifyNotebookScripts, isDisconnected, executeQuery, storageReader, logger]);
 
     const handleExecuteEntry = React.useCallback((fileName: string) => {
@@ -224,7 +247,7 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
         const entry = notebookScripts.scriptRefs[fileName];
         const scriptData = entry != null ? notebookScripts.scripts[entry.scriptId] : undefined;
         if (scriptData == null) return;
-        runNotebookScript(conn!.databaseId, notebookScripts, scriptData, executeQuery, props.modifyNotebookScripts, logger);
+        dependencies.runNotebookScript(conn!.databaseId, notebookScripts, scriptData, executeQuery, props.modifyNotebookScripts, logger);
     }, [executeQuery, isDisconnected, props.modifyNotebookScripts, logger]);
 
     const handleDelete = React.useCallback((fileName: string) => {
@@ -310,6 +333,9 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
         });
     }, []);
 
+    const [composerView, setComposerView] = React.useState<EditorView | null>(null);
+    const composerSendRef = React.useRef<(text: string) => void>(() => { });
+
     // The feed stays mounted (just hidden) while the catalog/details overlay is open, so its global
     // key handlers would otherwise keep firing behind the overlay. Gate them all on the active flag.
     const feedActive = props.active;
@@ -363,8 +389,26 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
                 }
             },
         },
-    ], [feedActive, handleAcceptDiff, handleRejectDiff]);
-    useKeyEvents(keyHandlers);
+        {
+            // Ctrl+E executes the selected script globally. While the composer has focus, it sends the
+            // draft instead of running a script the user isn't looking at.
+            key: 'e',
+            ctrlKey: true,
+            capture: true,
+            callback: (event: KeyboardEvent) => {
+                if (!feedActive || composerView == null || !composerView.hasFocus) {
+                    return;
+                }
+                event.preventDefault();
+                event.stopPropagation();
+                const text = takeComposerDraft(composerView);
+                if (text != null) {
+                    composerSendRef.current(text);
+                }
+            },
+        },
+    ], [feedActive, composerView, handleAcceptDiff, handleRejectDiff]);
+    dependencies.useKeyEvents(keyHandlers);
 
     const feedLayout = useNotebookFeedLayout(
         entries,
@@ -379,7 +423,7 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
     }, []);
 
     const handleCreate = React.useCallback((index: number) => {
-        const result = props.modifyNotebookScripts({ type: CREATE_SCRIPT, value: index });
+        const result = props.modifyNotebookScripts({ type: CREATE_SCRIPT, value: { index } });
         if (!result) return;
         void result.then(next => {
             if (next == null) return;
@@ -394,7 +438,33 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
         });
     }, [props.modifyNotebookScripts]);
 
-    const canDelete = entries.length > 1;
+    // The composer appends its draft as a new script and runs it right away.
+    // Without a healthy connection, the script is only created and the connection asks for attention.
+    const connectionAttention = React.useContext(NotebookConnectionAttentionContext);
+    const pendingScrollToEndRef = React.useRef(false);
+    const handleComposerSend = React.useCallback((text: string) => {
+        const result = props.modifyNotebookScripts({ type: CREATE_SCRIPT, value: { index: null, text } });
+        if (!result) return;
+        pendingScrollToEndRef.current = true;
+        void result.then(next => {
+            if (next == null) return;
+            const created = getSelectedScriptRef(next);
+            const scriptData = created != null ? next.scripts[created.scriptId] : undefined;
+            if (scriptData == null) return;
+            const conn = latest.current.conn;
+            if (conn == null || conn.connectionHealth !== ConnectionHealth.ONLINE) {
+                connectionAttention?.request(next.notebookId);
+                return;
+            }
+            dependencies.runNotebookScript(conn.databaseId, next, scriptData, executeQuery, props.modifyNotebookScripts, logger);
+        });
+    }, [connectionAttention, executeQuery, logger, props.modifyNotebookScripts]);
+    React.useEffect(() => {
+        if (!pendingScrollToEndRef.current || entries.length === 0) return;
+        pendingScrollToEndRef.current = false;
+        feedLayout.listRef.current?.scrollToRow({ index: entries.length * 2 - 1, align: 'end' });
+    }, [entries.length]);
+
     const rowProps = React.useMemo<ScriptFeedRowProps>(() => ({
         notebookId: props.notebookScripts.notebookId,
         databaseId: props.conn?.databaseId ?? null,
@@ -408,7 +478,6 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
         formattingDebugMode,
         keywordCase,
         focusedFileName: props.notebookScripts.scriptFocus.fileName,
-        canDelete,
         active: props.active,
         onFocus: handleFocus,
         onDelete: handleDelete,
@@ -432,12 +501,17 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
         onCreate: handleCreate,
         onEditorView: handleEditorView,
         onRowHeightChange: feedLayout.rowHeights.setRowHeight,
-    }), [entries, props.active, props.conn?.databaseId, props.conn?.connectionHealth, props.conn?.details, props.notebookScripts.scripts, props.notebookScripts.scriptFocus.fileName, props.notebookScripts.connectorInfo.connectorType, scriptDebugMode, formattingDebugMode, keywordCase, compactLayout, canDelete, handleFocus, handleDelete, handleRename, handleMoveUp, handleMoveDown, handleExecuteEntry, handleShowStatus, handleShowTable, handleShowVisualization, handleShowDetails, handleRerunEntry, handleFormat, handleAcceptDiff, handleRejectDiff, collapsedResults, handleToggleResultExpanded, handleAutoCollapseResult, handleResetAutoCollapsedResult, handleCreate, handleEditorView, feedLayout.rowHeights.setRowHeight]);
+    }), [entries, props.active, props.conn?.databaseId, props.conn?.connectionHealth, props.conn?.details, props.notebookScripts.scripts, props.notebookScripts.scriptFocus.fileName, props.notebookScripts.connectorInfo.connectorType, scriptDebugMode, formattingDebugMode, keywordCase, compactLayout, handleFocus, handleDelete, handleRename, handleMoveUp, handleMoveDown, handleExecuteEntry, handleShowStatus, handleShowTable, handleShowVisualization, handleShowDetails, handleRerunEntry, handleFormat, handleAcceptDiff, handleRejectDiff, collapsedResults, handleToggleResultExpanded, handleAutoCollapseResult, handleResetAutoCollapsedResult, handleCreate, handleEditorView, feedLayout.rowHeights.setRowHeight]);
+    composerSendRef.current = handleComposerSend;
     const getScrollElement = React.useCallback(() => feedLayout.listRef.current?.element ?? null, [feedLayout.listRef]);
 
+    // An empty notebook greets the user with the composer in place of the feed.
+    // The composer stays at the same position in the tree so it keeps focus when the first script lands.
+    const landing = entries.length === 0;
     return (
         <div
             className={styles.feed_body_container}
+            data-landing={landing ? '' : undefined}
             data-attachments-visible={attachmentsVisible ? '' : undefined}
             data-attachments-expanded={attachmentsExpanded ? '' : undefined}
             style={{ '--feed-scrollbar-inset': `${feedLayout.listScrollbarInset}px` } as React.CSSProperties}
@@ -477,7 +551,13 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
                 )}
                 {attachmentError != null && <div className={styles.feed_data_error} role="alert">{attachmentError}</div>}
             </section>}
-            <div className={styles.feed_list_container} ref={feedLayout.listContainerRef}>
+            {landing && (
+                <div className={styles.feed_landing_header}>
+                    <h1 className={styles.feed_landing_title}>What do you want to know about your data today?</h1>
+                </div>
+            )}
+            {/* Hidden rather than unmounted on the landing view, the size observer binds to the element once */}
+            <div className={styles.feed_list_container} ref={feedLayout.listContainerRef} hidden={landing}>
                 <DndContext
                     sensors={dndSensors}
                     collisionDetection={closestCenter}
@@ -498,7 +578,7 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
                             rowCount={entries.length * 2 + 1}
                             overscanCount={OVERSCAN_ROW_COUNT}
                             rowHeight={feedLayout.rowHeights}
-                            rowComponent={ScriptFeedRow}
+                            rowComponent={dependencies.ScriptFeedRow}
                             rowProps={rowProps}
                         />
                     </SortableContext>
@@ -511,6 +591,17 @@ export const NotebookFeed: React.FC<NotebookFeedProps> = (props) => {
                         refreshKey={`${props.notebookScripts.notebookId}:${entries.length}:${feedLayout.rowHeightsVersion}`}
                     />
                 )}
+            </div>
+            <div className={styles.feed_composer_section}>
+                <dependencies.NotebookComposer
+                    key={props.notebookScripts.notebookId}
+                    instance={props.notebookScripts.instance}
+                    catalog={props.notebookScripts.connectionCatalog}
+                    variant={landing ? NotebookComposerVariant.Hero : NotebookComposerVariant.Docked}
+                    keywordCase={keywordCase}
+                    onSend={handleComposerSend}
+                    setView={setComposerView}
+                />
             </div>
         </div>
     );

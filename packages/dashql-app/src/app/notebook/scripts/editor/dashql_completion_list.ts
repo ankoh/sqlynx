@@ -487,6 +487,7 @@ class CompletionList {
             || processor.scriptCompletion?.passiveHint) {
             if (!this.list.isHidden) {
                 view.requestMeasure<(Position | null)>({
+                    key: this,
                     read: (_view) => null,
                     write: (_null, _view) => {
                         this.list.hide();
@@ -515,12 +516,20 @@ class CompletionList {
         // Collect all candidates
         const pending = this.collectCandidates(completionBuffer, selectedCandidate, selectedCatalogObject);
 
-        // Update the container position
+        // Update the container position.
+        // Keyed so that a later update (e.g. hiding) supersedes a pending measure.
+        // The offset can still outlive the text it points into, the list is hidden then.
         view.requestMeasure<(Position | null)>({
+            key: this,
             read: (view) => {
+                if (candidateLocOffset > view.state.doc.length) return null;
                 return CompletionList.computePosition(view, candidateLocOffset);
             },
-            write: (pos: Position, _view) => {
+            write: (pos: Position | null, _view) => {
+                if (pos == null) {
+                    this.list.hide();
+                    return;
+                }
                 this.list.show();
                 this.list.updatePosition(pos);
                 this.list.updateCandidates(pending);

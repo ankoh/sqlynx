@@ -140,7 +140,7 @@ export type NotebookScriptsAction =
     | VariantKind<typeof REGISTER_QUERY, [ScriptKey, number]>
     | VariantKind<typeof REGISTER_SCRIPT_RESULT, [ScriptKey, number]>
     | VariantKind<typeof SET_SCRIPT_EXECUTION_VISUALIZATION, [ScriptKey, ResolvedVisualizeQuery | null]>
-    | VariantKind<typeof CREATE_SCRIPT, number | null>
+    | VariantKind<typeof CREATE_SCRIPT, { index: number | null, text?: string }>
     | VariantKind<typeof DELETE_SCRIPT, string>
     | VariantKind<typeof RENAME_SCRIPT, { fileName: string, newFileName: string }>
     | VariantKind<typeof REORDER_SCRIPTS, string[]>
@@ -570,7 +570,7 @@ export function reduceNotebookScripts(state: NotebookScripts, action: NotebookSc
         case DELETE_SCRIPT: {
             const deletedFileName = action.value;
             const deletedEntry = state.scriptRefs[deletedFileName];
-            if (!deletedEntry || Object.keys(state.scriptRefs).length <= 1) return state;
+            if (!deletedEntry) return state;
             const remainingFiles = getSortedScriptFileNames(state.scriptRefs).filter(name => name !== deletedFileName);
             const scriptRefs = { ...state.scriptRefs };
             delete scriptRefs[deletedFileName];
@@ -596,8 +596,9 @@ export function reduceNotebookScripts(state: NotebookScripts, action: NotebookSc
         }
 
         case CREATE_SCRIPT: {
-            // Null preserves the existing append behavior; an index inserts at that feed boundary.
-            const plan = planScriptInsertion(state.scriptRefs, undefined, action.value ?? undefined);
+            // Null appends; an index inserts at that feed boundary. Text seeds the new script, e.g. from the composer.
+            const { index, text } = action.value;
+            const plan = planScriptInsertion(state.scriptRefs, undefined, index ?? undefined);
             const fileName = plan.newFileName;
             const repadded = applyScriptRepad(
                 plan.repad,
@@ -613,7 +614,7 @@ export function reduceNotebookScripts(state: NotebookScripts, action: NotebookSc
             const scriptSession = state.instance.createScriptSession(state.connectionCatalog);
             const scriptKey = scriptSession.getCatalogEntryId();
             // Create script data
-            const scriptData: ScriptData = {
+            let scriptData: ScriptData = {
                 scriptKey,
                 scriptSession,
                 analysisOutdated: true,
@@ -625,21 +626,30 @@ export function reduceNotebookScripts(state: NotebookScripts, action: NotebookSc
                 latestResultQueryId: null,
                 fileName,
             };
+            const scripts: ScriptDataMap = { ...repadded.scripts };
+            if (text) {
+                // Analyze right away so the script can be executed without waiting for an editor,
+                // and mark the others outdated since the new script was loaded into the catalog.
+                replaceScriptSessionText(scriptSession, text);
+                scriptData = analyzeScriptData(scriptData, state.connectionCatalog, logger,
+                    state.connectorInfo.connectorType);
+                for (const key in scripts) {
+                    scripts[key] = { ...scripts[key], analysisOutdated: true };
+                }
+            }
+            scripts[scriptKey] = scriptData;
 
             const entry: ScriptRef = createScriptRef(scriptKey, fileName);
 
             const next: NotebookScripts = {
                 ...clearSemanticUserFocus(state),
-                scripts: {
-                    ...repadded.scripts,
-                    [scriptKey]: scriptData,
-                },
+                scripts,
                 scriptRefs: { ...repadded.scriptRefs, [fileName]: entry },
                 scriptFocus: { ...state.scriptFocus, fileName },
             };
             storage?.write(
                 groupScriptWrites(next.notebookId, fileName),
-                { type: WRITE_SCRIPT, value: [next.notebookId, fileName, ''] },
+                { type: WRITE_SCRIPT, value: [next.notebookId, fileName, text ?? ''] },
                 DEBOUNCE_DURATION_SCRIPT_WRITE
             );
             return next;

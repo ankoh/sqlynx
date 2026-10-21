@@ -17,16 +17,75 @@
     background: var(--stage_background);
     overflow: hidden;
     display: grid;
-    grid-template-rows: minmax(0, 1fr);
+    /* The feed, then the docked composer */
+    grid-template-rows: minmax(0, 1fr) auto;
     grid-template-columns: minmax(0, 1fr);
 }
 
 .feed_body_container[data-attachments-visible] {
-    grid-template-rows: 40px minmax(0, 1fr);
+    grid-template-rows: 40px minmax(0, 1fr) auto;
 }
 
 .feed_body_container[data-attachments-visible][data-attachments-expanded] {
-    grid-template-rows: 124px minmax(0, 1fr);
+    grid-template-rows: 124px minmax(0, 1fr) auto;
+}
+
+/* The landing header, the hero composer, then a spacer that keeps the prompt slightly above center */
+.feed_body_container[data-landing] {
+    grid-template-rows: minmax(0, 1fr) auto minmax(0, 1.3fr);
+}
+
+.feed_body_container[data-landing][data-attachments-visible] {
+    grid-template-rows: 40px minmax(0, 1fr) auto minmax(0, 1.3fr);
+}
+
+.feed_body_container[data-landing][data-attachments-visible][data-attachments-expanded] {
+    grid-template-rows: 124px minmax(0, 1fr) auto minmax(0, 1.3fr);
+}
+
+.feed_landing_header {
+    align-self: end;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 16px 24px 16px;
+    text-align: center;
+}
+
+.feed_landing_title {
+    margin: 0;
+    color: var(--base_color_neutral_6);
+    font-size: 22px;
+    font-weight: 400;
+    line-height: 1.3;
+}
+
+.feed_composer_section {
+    position: relative;
+    padding: 8px calc(16px + var(--feed-scrollbar-inset, 0px)) 16px 16px;
+}
+
+/* Fade the scripts out behind the docked composer */
+.feed_composer_section::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: var(--feed-scrollbar-inset, 0px);
+    bottom: 100%;
+    height: 24px;
+    background: linear-gradient(to bottom, transparent, var(--stage_background));
+    pointer-events: none;
+}
+
+.feed_body_container[data-landing] .feed_composer_section {
+    justify-self: center;
+    width: min(720px, 100%);
+    box-sizing: border-box;
+    padding: 0 16px;
+}
+
+.feed_body_container[data-landing] .feed_composer_section::before {
+    content: none;
 }
 
 .feed_data_section {
@@ -184,6 +243,10 @@
 .feed_list_container {
     min-height: 0;
     overflow: hidden;
+}
+
+.feed_list_container[hidden] {
+    display: none;
 }
 
 .feed_data_input {

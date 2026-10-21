@@ -51,7 +51,6 @@ export interface ScriptCardProps {
     formattingDebugMode: boolean;
     keywordCase: dashql.buffers.formatting.KeywordCase;
     canExecute: boolean;
-    canDelete: boolean;
     active: boolean;
     canMoveUp: boolean;
     canMoveDown: boolean;
@@ -119,6 +118,7 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo((props: ScriptCa
     const CheckIcon: Icon = SymbolIcon('check_16');
     const CrossIcon: Icon = SymbolIcon('x_16');
     const ExpandIcon: Icon = SymbolIcon('screen_full_16');
+    const TrashIcon: Icon = SymbolIcon('trash_16');
 
     const queryState = dependencies.useQueryState(props.notebookId, props.scriptData?.latestQueryId ?? null);
     const cancelQuery = dependencies.useCancelQuery();
@@ -335,10 +335,17 @@ export const ScriptCard: React.FC<ScriptCardProps> = React.memo((props: ScriptCa
                             connectorType={props.connectorType}
                         />
                     )}
+                    <IconButton
+                        variant={ButtonVariant.Invisible}
+                        size={ButtonSize.Small}
+                        onClick={(event) => { event.stopPropagation(); props.onDelete(props.scriptFileName); }}
+                        aria-label={`Delete ${displayName} script`}
+                    >
+                        <TrashIcon size={16} />
+                    </IconButton>
                     <ScriptActionMenu
                         scriptName={displayName}
                         formatDisabled={!isFormattable || hasPendingDiff || editorView == null}
-                        deleteDisabled={!props.canDelete}
                         onFormat={handleFormat}
                         onDelete={() => props.onDelete(props.scriptFileName)}
                     />
@@ -461,7 +468,6 @@ export interface ScriptFeedRowProps {
     formattingDebugMode: boolean;
     keywordCase: dashql.buffers.formatting.KeywordCase;
     focusedFileName: string;
-    canDelete: boolean;
     active: boolean;
     onFocus: (fileName: string) => void;
     onDelete: (fileName: string) => void;
@@ -603,7 +609,6 @@ export function ScriptFeedRow(props: RowComponentProps<ScriptFeedRowProps>) {
                     formattingDebugMode={props.formattingDebugMode}
                     keywordCase={props.keywordCase}
                     canExecute={scriptData != null && props.connectionHealth === ConnectionHealth.ONLINE}
-                    canDelete={props.canDelete}
                     active={props.active}
                     canMoveUp={canMoveUp}
                     canMoveDown={canMoveDown}

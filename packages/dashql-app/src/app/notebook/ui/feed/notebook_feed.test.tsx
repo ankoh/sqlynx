@@ -13,6 +13,10 @@ import { LoggerProvider } from '../../../../platform/logger/logger_provider.js';
 import { FileDownloaderProvider } from '../../../../platform/file/file_downloader_provider.js';
 import { WebFileDownloader } from '../../../../platform/file/web_file_downloader.js';
 import { NotebookTestBackend } from '../../persistence/notebook_test_backend.js';
+import { NotebookFeed, type NotebookFeedDependencies } from './notebook_feed.js';
+import { NotebookComposerVariant, type NotebookComposerProps } from './notebook_composer.js';
+import { CREATE_SCRIPT, type NotebookScripts } from '../../scripts/notebook_scripts.js';
+import { CONNECTOR_INFOS } from '../../connections/connector_info.js';
 
 vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
 
@@ -55,7 +59,7 @@ function baseProps() {
         entries: [{ scriptId: 1, fileName: '01_alpha.sql' }, { scriptId: 2, fileName: '02_beta.sql' }],
         scripts: { 1: script(1, '01_alpha.sql'), 2: script(2, '02_beta.sql') }, scriptDebugMode: false, formattingDebugMode: false,
         keywordCase: dashql.buffers.formatting.KeywordCase.UPPER,
-        focusedFileName: '01_alpha.sql', canDelete: true, active: true, onFocus: vi.fn(), onDelete: vi.fn(),
+        focusedFileName: '01_alpha.sql', active: true, onFocus: vi.fn(), onDelete: vi.fn(),
         onRename: vi.fn(), onMoveUp: vi.fn(), onMoveDown: vi.fn(), onExecute: vi.fn(), onShowStatus: vi.fn(),
          onShowTable: vi.fn(), onShowVisualization: vi.fn(), onShowDetails: vi.fn(), onRerun: vi.fn(),
         onFormat: vi.fn(), onAcceptDiff: vi.fn(), onRejectDiff: vi.fn(), collapsedResults: new Map(), onToggleResultExpanded: vi.fn(),
@@ -180,6 +184,10 @@ describe('V2 notebook feed rows', () => {
         expect(props.onShowDetails).toHaveBeenCalledWith('01_alpha.sql');
         expect(container.querySelector('[aria-label="Move script up"]')?.hasAttribute('disabled')).toBe(true);
         expect(container.querySelector('[aria-label="Move script down"]')?.hasAttribute('disabled')).toBe(false);
+        const deleteButton = container.querySelector('[aria-label="Delete alpha script"]') as HTMLButtonElement;
+        expect(deleteButton.compareDocumentPosition(moreButton) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+        act(() => deleteButton.click());
+        expect(props.onDelete).toHaveBeenCalledWith('01_alpha.sql');
     });
 
     it('keeps Play available for SQL with parser diagnostics', () => {
@@ -233,5 +241,127 @@ describe('V2 notebook feed rows', () => {
         const item = container.querySelector('[aria-label="Drag alpha script to reorder"]')!.parentElement as HTMLElement;
         expect(item.style.transform).toBe('translate3d(0px, 120px, 0px)');
         expect(item.style.transform).not.toContain('scale');
+    });
+});
+
+describe('Notebook feed composer', () => {
+    const feedState = {
+        keyHandlers: [] as any[],
+        composerProps: null as NotebookComposerProps | null,
+        runNotebookScript: vi.fn(),
+        executeQuery: vi.fn(),
+        view: null as any,
+    };
+    const feedDependencies: NotebookFeedDependencies = {
+        useQueryExecutor: () => feedState.executeQuery,
+        useStorageReader: () => ({ backend: { listDataFiles: () => Promise.resolve([]) } }) as any,
+        useKeyEvents: (handlers: any[]) => { feedState.keyHandlers = handlers; },
+        runNotebookScript: feedState.runNotebookScript as any,
+        NotebookComposer: (props: NotebookComposerProps) => {
+            feedState.composerProps = props;
+            React.useEffect(() => props.setView?.(feedState.view), [props.setView]);
+            return <div data-testid="composer" />;
+        },
+        ScriptFeedRow: () => <div />,
+    };
+    const onlineConn = {
+        databaseId: 'database', connectionHealth: ConnectionHealth.ONLINE,
+        details: { type: HYPER_CONNECTOR, value: { proto: {} } },
+    } as any;
+
+    function notebook(fileNames: string[] = []): NotebookScripts {
+        const scripts: NotebookScripts['scripts'] = {};
+        const scriptRefs: NotebookScripts['scriptRefs'] = {};
+        fileNames.forEach((fileName, i) => {
+            scripts[i + 1] = script(i + 1, fileName) as any;
+            scriptRefs[fileName] = { scriptId: i + 1, fileName };
+        });
+        return {
+            notebookId: 'notebook', name: null, databaseId: 'database', instance: {} as any, notebookMetadata: {} as any,
+            connectorInfo: CONNECTOR_INFOS[ConnectorType.HYPER], connectionCatalog: {} as any,
+            scripts, scriptRefs, scriptFocus: { fileName: fileNames[fileNames.length - 1] ?? '' }, semanticUserFocus: null,
+        };
+    }
+
+    function fakeView(text: string, hasFocus = true) {
+        return {
+            hasFocus,
+            state: { doc: { toString: () => text, length: text.length } },
+            dispatch: vi.fn(),
+            focus: vi.fn(),
+        };
+    }
+
+    let container: HTMLDivElement;
+    let root: Root;
+    let attention: { notebookId: string; active: boolean; request: ReturnType<typeof vi.fn> };
+    beforeEach(() => {
+        feedState.keyHandlers = [];
+        feedState.composerProps = null;
+        feedState.runNotebookScript.mockReset();
+        feedState.view = fakeView('');
+        attention = { notebookId: 'notebook', active: false, request: vi.fn() };
+        container = document.createElement('div');
+        document.body.appendChild(container);
+        root = createRoot(container);
+    });
+    afterEach(() => { act(() => root.unmount()); container.remove(); });
+
+    function render(notebookScripts: NotebookScripts, modifyNotebookScripts: any, conn: any = onlineConn) {
+        act(() => root.render(<LoggerProvider>
+            <NotebookConnectionAttentionContext.Provider value={attention as any}>
+                <NotebookFeed notebookScripts={notebookScripts} modifyNotebookScripts={modifyNotebookScripts}
+                    showDetails={vi.fn()} conn={conn} active={true} dependencies={feedDependencies} />
+            </NotebookConnectionAttentionContext.Provider>
+        </LoggerProvider>));
+    }
+
+    it('greets an empty notebook with the hero composer', () => {
+        render(notebook(), vi.fn());
+        expect(container.querySelector('h1')?.textContent).toBe('What do you want to know about your data today?');
+        expect(feedState.composerProps?.variant).toBe(NotebookComposerVariant.Hero);
+    });
+
+    it('docks the composer below the scripts of a notebook', () => {
+        render(notebook(['1_alpha.sql']), vi.fn());
+        expect(container.querySelector('h1')).toBeNull();
+        expect(feedState.composerProps?.variant).toBe(NotebookComposerVariant.Docked);
+    });
+
+    it('appends a sent draft as a script and runs it', async () => {
+        const next = notebook(['1_alpha.sql']);
+        const modify = vi.fn(() => Promise.resolve(next));
+        render(notebook(), modify);
+        await act(async () => feedState.composerProps!.onSend('select 1'));
+        expect(modify).toHaveBeenCalledExactlyOnceWith({ type: CREATE_SCRIPT, value: { index: null, text: 'select 1' } });
+        expect(feedState.runNotebookScript).toHaveBeenCalledExactlyOnceWith(
+            'database', next, next.scripts[1], feedState.executeQuery, modify, expect.anything());
+        expect(attention.request).not.toHaveBeenCalled();
+    });
+
+    it('only creates the script without a healthy connection', async () => {
+        const modify = vi.fn(() => Promise.resolve(notebook(['1_alpha.sql'])));
+        render(notebook(), modify, null);
+        await act(async () => feedState.composerProps!.onSend('select 1'));
+        expect(modify).toHaveBeenCalledOnce();
+        expect(feedState.runNotebookScript).not.toHaveBeenCalled();
+        expect(attention.request).toHaveBeenCalledExactlyOnceWith('notebook');
+    });
+
+    it('sends the draft on Ctrl+E only while the composer has focus', async () => {
+        const modify = vi.fn(() => Promise.resolve(notebook(['1_alpha.sql', '2_beta.sql'])));
+        feedState.view = fakeView('select 2', false);
+        render(notebook(['1_alpha.sql']), modify);
+        const handler = feedState.keyHandlers.find(h => h.key === 'e' && h.ctrlKey && h.capture);
+        const event = { preventDefault: vi.fn(), stopPropagation: vi.fn() };
+        handler.callback(event);
+        expect(event.stopPropagation).not.toHaveBeenCalled();
+        expect(modify).not.toHaveBeenCalled();
+
+        feedState.view.hasFocus = true;
+        await act(async () => handler.callback(event));
+        expect(event.stopPropagation).toHaveBeenCalledOnce();
+        expect(modify).toHaveBeenCalledExactlyOnceWith({ type: CREATE_SCRIPT, value: { index: null, text: 'select 2' } });
+        expect(feedState.view.dispatch).toHaveBeenCalledWith(expect.objectContaining({ changes: { from: 0, to: 8, insert: '' } }));
     });
 });

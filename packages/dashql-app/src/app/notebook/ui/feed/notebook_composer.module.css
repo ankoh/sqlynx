@@ -1,0 +1,44 @@
+.composer {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--log_border_color);
+    border-radius: var(--border_radius);
+    background-color: white;
+    box-sizing: border-box;
+    --prompt_editor_max_height: 30vh;
+}
+
+.composer[data-variant="hero"] {
+    border-radius: 12px;
+    --prompt_editor_max_height: 40vh;
+}
+
+.composer_editor {
+    padding: 10px 12px 4px 12px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 12px;
+    line-height: 18px;
+}
+
+.composer[data-variant="hero"] .composer_editor {
+    padding: 14px 16px 6px 16px;
+    font-size: 14px;
+    line-height: 22px;
+}
+
+.composer_editor :global(.cm-placeholder) {
+    color: var(--base_color_neutral_5);
+}
+
+.composer_action_bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 8px 8px 8px;
+}
+
+.composer[data-variant="hero"] .composer_action_bar {
+    padding: 6px 12px 12px 12px;
+}

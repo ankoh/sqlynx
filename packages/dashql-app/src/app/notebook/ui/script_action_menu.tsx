@@ -11,7 +11,6 @@ import { SymbolIcon } from '../../../ui/foundations/symbol_icon.js';
 interface Props {
     scriptName: string;
     formatDisabled: boolean;
-    deleteDisabled: boolean;
     onFormat: (mode: dashql.buffers.formatting.FormattingMode) => void;
     onDelete: () => void;
 }
@@ -68,7 +67,6 @@ export const ScriptActionMenu: React.FC<Props> = (props) => {
                     </ActionList.ListItem>
                     <ActionList.ListItem
                         className={styles.delete_action}
-                        disabled={props.deleteDisabled}
                         onClick={() => run(props.onDelete)}
                     >
                         <ActionList.Leading><TrashIcon size={16} /></ActionList.Leading>
