@@ -193,3 +193,106 @@ fn empty_edits_do_not_advance_revision() {
     assert!(prompt.set_text(b"x"));
     assert_eq!(prompt.revision(), 1);
 }
+
+#[test]
+fn exposes_the_script_of_the_prompt() {
+    let mut prompt = prompt();
+    assert!(prompt.set_text(b"select 1"));
+    assert_eq!(prompt.script().to_text(), "select 1");
+}
+
+#[test]
+fn line_kills_stop_at_line_boundaries_and_report_no_ops() {
+    let mut prompt = prompt();
+    assert!(prompt.set_text(b"one\ntwo"));
+    let mut killed = String::new();
+    // At the end of the text there is nothing after the cursor
+    assert!(!prompt.delete_to_line_end(Some(&mut killed)));
+    assert!(prompt.delete_to_line_start(Some(&mut killed)));
+    assert_eq!(killed, "two");
+    assert_eq!(prompt.text(), "one\n");
+    // Directly behind a line break there is nothing before the cursor
+    assert!(!prompt.delete_to_line_start(Some(&mut killed)));
+
+    // A kill at the end of a line removes the line break
+    assert!(prompt.set_text(b"one\ntwo"));
+    assert!(prompt.move_to_start());
+    assert!(prompt.move_to_line_end());
+    assert!(prompt.delete_to_line_end(Some(&mut killed)));
+    assert_eq!(killed, "\n");
+    assert_eq!(prompt.text(), "onetwo");
+}
+
+#[test]
+fn word_kills_report_no_ops_at_the_boundaries() {
+    let mut prompt = prompt();
+    assert!(prompt.set_text(b"alpha beta"));
+    let mut killed = String::new();
+    assert!(!prompt.delete_word_forward(Some(&mut killed)));
+    assert!(prompt.delete_word_backward(Some(&mut killed)));
+    assert_eq!(killed, "beta");
+    assert!(prompt.move_to_start());
+    assert!(!prompt.delete_word_backward(Some(&mut killed)));
+    assert!(prompt.delete_word_forward(Some(&mut killed)));
+    assert_eq!(killed, "alpha");
+    assert_eq!(prompt.text(), " ");
+}
+
+#[test]
+fn word_movement_skips_separators() {
+    let mut prompt = prompt();
+    assert!(prompt.set_text(b"a, b  c"));
+    assert!(prompt.move_word_left());
+    assert_eq!(prompt.cursor_byte_offset(), 6);
+    assert!(prompt.move_word_left());
+    assert_eq!(prompt.cursor_byte_offset(), 3);
+    assert!(prompt.move_word_left());
+    assert_eq!(prompt.cursor_byte_offset(), 0);
+    assert!(!prompt.move_word_left());
+    assert!(prompt.move_word_right());
+    assert_eq!(prompt.cursor_byte_offset(), 1);
+}
+
+#[test]
+fn transpose_needs_two_graphemes_before_the_cursor() {
+    let mut prompt = prompt();
+    assert!(prompt.set_text(b"a"));
+    assert!(!prompt.transpose_characters());
+    assert!(prompt.set_text(b"ab"));
+    assert!(prompt.move_to_start());
+    assert!(!prompt.transpose_characters());
+    assert!(prompt.move_to_end());
+    assert!(prompt.transpose_characters());
+    assert_eq!(prompt.text(), "ba");
+}
+
+#[test]
+fn replaces_byte_ranges_with_validated_text() {
+    let mut prompt = prompt();
+    assert!(prompt.set_text("select 界".as_bytes()));
+    assert!(prompt.replace_byte_range_bytes(0, 6, b"SELECT"));
+    assert_eq!(prompt.text(), "SELECT 界");
+    // Invalid UTF-8 and ranges inside of a code point are rejected
+    assert!(!prompt.replace_byte_range_bytes(0, 6, b"\xff"));
+    assert!(!prompt.replace_byte_range(8, 1, "x"));
+    assert!(!prompt.replace_byte_range(1000, 1, "x"));
+    assert_eq!(prompt.text(), "SELECT 界");
+}
+
+#[test]
+fn measures_display_width_of_text() {
+    use dashql_core::shell::unicode::{display_width, graphemes, is_valid, next_grapheme, previous_grapheme};
+    assert_eq!(display_width(b"abc"), 3);
+    assert_eq!(display_width("界".as_bytes()), 2);
+    assert_eq!(display_width("e\u{301}".as_bytes()), 1);
+    // Control characters take no cells
+    assert_eq!(display_width(b"\x01"), 0);
+    // Invalid UTF-8 counts bytes
+    assert_eq!(display_width(b"\xff\xfe"), 2);
+    assert_eq!(graphemes(b"\xffa"), vec![(0, 1), (1, 2)]);
+    assert_eq!(graphemes("a界".as_bytes()), vec![(0, 1), (1, 4)]);
+    assert!(is_valid("界".as_bytes()));
+    assert!(!is_valid(b"\xc3"));
+    assert_eq!(next_grapheme("a👩‍💻b", 1), 12);
+    assert_eq!(previous_grapheme("a👩‍💻b", 12), 1);
+}

@@ -4,7 +4,7 @@
 //! (`CATALOG_SCRIPT_NOT_ANALYZED`) has no Rust counterpart.
 
 use dashql_buffers::status::StatusCode;
-use dashql_core::catalog::{Catalog, CatalogEntryId, Rank};
+use dashql_core::catalog::{Catalog, CatalogEntryId, CatalogObjectType, ExternalObjectId, QualifiedCatalogObjectId, Rank};
 use dashql_core::script::Script;
 
 fn analyze(catalog: &Catalog, text: &str) -> Script {
@@ -213,4 +213,153 @@ fn load_scripts_validation_failure_preserves_catalog() {
     assert_eq!(error.status, Some(StatusCode::CATALOG_MISMATCH));
     assert_eq!(catalog.version(), previous_version);
     assert!(!catalog.contains(valid.catalog_entry_id()));
+}
+
+#[test]
+fn describe_entries_lists_scripts_as_one_anonymous_schema() {
+    let mut catalog = Catalog::new();
+    assert!(catalog.describe_entries().entries.unwrap().is_empty());
+    let first = analyze(&catalog, "create table db.main.items(id int, name text); create table db.main.tags(tag text);");
+    let second = analyze(&catalog, "create table other.misc(x int);");
+    catalog.load_script(first.analyzed.clone().unwrap(), 5).unwrap();
+    catalog.load_script(second.analyzed.clone().unwrap(), 2).unwrap();
+
+    // The entries are described in rank order
+    let entries = catalog.describe_entries().entries.unwrap();
+    assert_eq!(entries.len(), 2);
+    assert_eq!(entries[0].catalog_entry_id, second.catalog_entry_id());
+    assert_eq!(entries[1].catalog_entry_id, first.catalog_entry_id());
+    assert!(entries.iter().all(|e| e.rank == 0));
+    let schemas = entries[1].schemas.as_ref().unwrap();
+    assert_eq!(schemas.len(), 1);
+    let tables = schemas[0].tables.as_ref().unwrap();
+    assert_eq!(tables.len(), 2);
+    assert_eq!(tables[0].table_id, 0);
+    assert_eq!(tables[0].table_name.as_deref(), Some("items"));
+    let columns = tables[0].columns.as_ref().unwrap();
+    assert_eq!(columns.iter().map(|c| c.column_name.as_deref().unwrap()).collect::<Vec<_>>(), vec!["id", "name"]);
+    assert_eq!(tables[1].table_id, 1);
+
+    let single = catalog.describe_entries_of(second.catalog_entry_id()).unwrap().entries.unwrap();
+    assert_eq!(single.len(), 1);
+    assert_eq!(single[0].catalog_entry_id, second.catalog_entry_id());
+    assert!(catalog.describe_entries_of(9999).is_none());
+}
+
+#[test]
+fn statistics_count_scripts() {
+    let mut catalog = Catalog::new();
+    let script = analyze(&catalog, "create table db.main.t(a int, b int); create table db.other.u(c int);");
+    catalog.load_script(script.analyzed.clone().unwrap(), 0).unwrap();
+    let content = catalog.statistics().content.unwrap();
+    assert_eq!((content.database_count, content.schema_count, content.table_count, content.table_column_count), (1, 2, 2, 3));
+}
+
+#[test]
+fn drop_script_removes_unreferenced_databases_and_schemas() {
+    let mut catalog = Catalog::new();
+    let first = analyze(&catalog, "create table db.main.t(a int);");
+    let second = analyze(&catalog, "create table db.main.u(a int); create table other.x.v(a int);");
+    catalog.load_script(first.analyzed.clone().unwrap(), 1).unwrap();
+    catalog.load_script(second.analyzed.clone().unwrap(), 2).unwrap();
+    assert_eq!(catalog.databases().len(), 2);
+    assert_eq!(catalog.schemas().len(), 2);
+
+    let version = catalog.version();
+    catalog.drop_script(second.catalog_entry_id());
+    assert!(catalog.version() > version);
+    assert!(!catalog.contains(second.catalog_entry_id()));
+    // db.main stays referenced by the first script
+    assert_eq!(catalog.databases().keys().map(|k| &**k).collect::<Vec<_>>(), vec!["db"]);
+    assert_eq!(catalog.schemas().len(), 1);
+    assert_eq!(catalog.entries_by_qualified_schema().len(), 1);
+    assert_eq!(catalog.entries_by_schema().len(), 1);
+
+    // Unknown scripts are ignored
+    let version = catalog.version();
+    catalog.drop_script(second.catalog_entry_id());
+    assert_eq!(catalog.version(), version);
+
+    catalog.drop_script(first.catalog_entry_id());
+    assert!(catalog.databases().is_empty());
+    assert!(catalog.schemas().is_empty());
+    assert_eq!(catalog.entries_ranked().count(), 0);
+}
+
+#[test]
+fn clear_removes_all_entries() {
+    let mut catalog = Catalog::new();
+    let script = analyze(&catalog, "create table db.main.t(a int);");
+    catalog.load_script(script.analyzed.clone().unwrap(), 1).unwrap();
+    let version = catalog.version();
+    catalog.clear();
+    assert!(catalog.version() > version);
+    assert!(!catalog.contains(script.catalog_entry_id()));
+    assert!(catalog.entry(script.catalog_entry_id()).is_none());
+    assert!(catalog.databases().is_empty());
+    assert!(catalog.schemas().is_empty());
+    assert_eq!(catalog.entries_ranked().count(), 0);
+    assert!(catalog.flatten().databases.unwrap().is_empty());
+}
+
+#[test]
+fn entries_resolve_tables_by_name() {
+    let mut catalog = Catalog::new();
+    let first = analyze(&catalog, "create table db.main.t(a int); create table db.main.u(b int);");
+    let second = analyze(&catalog, "create table db.main.t(c int);");
+    catalog.load_script(first.analyzed.clone().unwrap(), 1).unwrap();
+    catalog.load_script(second.analyzed.clone().unwrap(), 2).unwrap();
+
+    let entry = catalog.entry(first.catalog_entry_id()).unwrap().data();
+    let mut found = Vec::new();
+    entry.resolve_table_in_schema("main", "t", &mut found, 10);
+    assert_eq!(found.len(), 1);
+    // A limit stops the search
+    let mut found = Vec::new();
+    entry.resolve_table_everywhere("u", &mut found, 1);
+    assert_eq!(found.len(), 1);
+    let mut found = Vec::new();
+    entry.resolve_table_everywhere("missing", &mut found, 10);
+    assert!(found.is_empty());
+}
+
+#[test]
+fn external_object_ids_pack_and_unpack() {
+    let id = ExternalObjectId::new(7, 9);
+    assert!(!id.is_null());
+    assert_eq!(ExternalObjectId::unpack(id.pack()), id);
+    let default = ExternalObjectId::default();
+    assert!(default.is_null());
+    assert_eq!((default.origin, default.object), (u32::MAX, u32::MAX));
+
+    let table = QualifiedCatalogObjectId::table(id);
+    assert_eq!(table.object_type(), CatalogObjectType::TableDeclaration);
+    assert_eq!(table.unpack_table_id(), id);
+    let column = QualifiedCatalogObjectId::table_column(id, 3);
+    assert_eq!(column.object_type(), CatalogObjectType::ColumnDeclaration);
+    assert_eq!(column.unpack_table_column_id(), (id, 3));
+    let function = QualifiedCatalogObjectId::function(id);
+    assert_eq!(function.object_type(), CatalogObjectType::FunctionDeclaration);
+    assert_eq!(function.unpack_function_id(), id);
+    let database = QualifiedCatalogObjectId::database(256);
+    assert_eq!(database.object_type(), CatalogObjectType::DatabaseReference);
+    assert_eq!(database.unpack_database_id(), 256);
+    let schema = QualifiedCatalogObjectId::schema(256, 65536);
+    assert_eq!(schema.object_type(), CatalogObjectType::SchemaReference);
+    assert_eq!(schema.unpack_schema_id(), (256, 65536));
+    assert_eq!(QualifiedCatalogObjectId::deferred().object_type(), CatalogObjectType::Deferred);
+}
+
+#[test]
+fn database_and_schema_ids_are_reserved_once() {
+    let catalog = Catalog::new();
+    let first = catalog.reserve_database_id("db");
+    assert_eq!(catalog.reserve_database_id("db"), first);
+    assert_ne!(catalog.reserve_database_id("other"), first);
+    let schema = catalog.reserve_schema_id("db", "main", first);
+    assert_eq!(catalog.reserve_schema_id("db", "main", first), schema);
+    assert_ne!(catalog.reserve_schema_id("db", "second", first), schema);
+    assert_eq!(schema.unpack_schema_id().0, first.unpack_database_id());
+    let entry_a = catalog.allocate_entry_id();
+    assert_eq!(catalog.allocate_entry_id(), entry_a + 1);
 }

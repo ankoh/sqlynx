@@ -398,3 +398,125 @@ fn renders_shell_prefixes_in_bold() {
     assert!(text(&continuation.data).contains("\x1b[1m     -> \x1b[0m"));
     let _ = vt100::sequence(1, Command::CursorDown);
 }
+
+fn render_error(data: &[u8]) -> String {
+    ArrowRenderer::new(80).render_ipc(data).unwrap_err()
+}
+
+#[test]
+fn rejects_empty_buffers() {
+    assert_eq!(render_error(&[]), "Invalid: Arrow IPC buffer is empty");
+}
+
+#[test]
+fn reports_corrupted_stream_framing() {
+    assert_eq!(render_error(&[1, 2, 3]), "Invalid: Corrupted message, only 3 bytes available");
+    // A continuation token without a metadata length
+    assert_eq!(render_error(&[0xff, 0xff, 0xff, 0xff, 1, 2]), "Invalid: Corrupted metadata length, only 2 bytes available");
+    // Negative lengths
+    let mut negative_length = vec![0xff, 0xff, 0xff, 0xff];
+    negative_length.extend_from_slice(&(-5i32).to_le_bytes());
+    assert_eq!(render_error(&negative_length), "IOError: Invalid IPC message: negative metadata length");
+    assert_eq!(render_error(&(-5i32).to_le_bytes()), "IOError: Invalid IPC stream: negative continuation token");
+    // Metadata that is longer than the data
+    let mut short_metadata = vec![0xff, 0xff, 0xff, 0xff];
+    short_metadata.extend_from_slice(&100i32.to_le_bytes());
+    short_metadata.extend_from_slice(&[1, 2, 3]);
+    assert_eq!(render_error(&short_metadata), "Invalid: Expected to read 100 metadata bytes, but only read 3");
+    // The legacy framing without continuation token has the same checks
+    let mut legacy = 64i32.to_le_bytes().to_vec();
+    legacy.extend_from_slice(&[0; 10]);
+    assert_eq!(render_error(&legacy), "Invalid: Expected to read 64 metadata bytes, but only read 10");
+}
+
+#[test]
+fn reports_truncated_stream_bodies() {
+    let stream = write_ipc_stream(&make_batch());
+    // Cut into the record batch message, after the schema message
+    let schema_message_end = 8 + i32::from_le_bytes(stream[4..8].try_into().unwrap()) as usize;
+    let metadata_length = i32::from_le_bytes(stream[schema_message_end + 4..schema_message_end + 8].try_into().unwrap()) as usize;
+    let body_begin = schema_message_end + 8 + metadata_length;
+    let error = render_error(&stream[..body_begin + 2]);
+    assert!(error.starts_with("IOError: Expected to be able to read"), "{error}");
+}
+
+#[test]
+fn end_of_stream_marker_ends_the_stream() {
+    // An immediate end of stream has no schema
+    let mut marker = vec![0xff, 0xff, 0xff, 0xff];
+    marker.extend_from_slice(&0i32.to_le_bytes());
+    assert!(render_error(&marker).starts_with("Invalid:"));
+}
+
+#[test]
+fn escapes_tabs_carriage_returns_and_control_bytes() {
+    let batch = batch(
+        vec![Field::new("text", DataType::Utf8, true)],
+        vec![Arc::new(StringArray::from(vec!["a\tb", "line1\r\nline2", "lone\rcr", "trail\r", "bell\x07", "del\x7f"]))],
+    );
+    let output = render(80, &write_ipc(&batch));
+    assert!(output.contains("a    b"), "{output}");
+    assert!(output.contains("line1") && output.contains("line2"));
+    assert!(!output.contains('\r') || output.contains("\r\n"));
+    assert!(output.contains("lone") && output.contains("cr"));
+    assert!(output.contains("bell\\x07"), "{output}");
+    assert!(output.contains("del\\x7f"), "{output}");
+    assert!(!output.contains('\t'));
+}
+
+#[test]
+fn keeps_minimum_column_widths_on_tiny_terminals() {
+    let wide = batch(
+        vec![
+            Field::new("first_column", DataType::Utf8, true),
+            Field::new("second_column", DataType::Utf8, true),
+            Field::new("third_column", DataType::Utf8, true),
+        ],
+        vec![
+            Arc::new(StringArray::from(vec!["aaaaaaaaaaaa"])),
+            Arc::new(StringArray::from(vec!["bbbbbbbbbbbb"])),
+            Arc::new(StringArray::from(vec!["cccccccccccc"])),
+        ],
+    );
+    let ipc = write_ipc(&wide);
+    for columns in [1, 5, 12, 20] {
+        let output = render(columns, &ipc);
+        assert!(!output.is_empty());
+    }
+}
+
+#[test]
+fn resize_changes_the_wrap_width() {
+    let ipc = write_ipc(&batch(
+        vec![Field::new("text", DataType::Utf8, true)],
+        vec![Arc::new(StringArray::from(vec!["one two three four five six seven eight nine ten eleven twelve"]))],
+    ));
+    let mut renderer = ArrowRenderer::new(80);
+    let wide = String::from_utf8(renderer.render_ipc(&ipc).unwrap()).unwrap();
+    renderer.resize(30);
+    assert_eq!(renderer.terminal_columns(), 30);
+    let narrow = String::from_utf8(renderer.render_ipc(&ipc).unwrap()).unwrap();
+    assert!(narrow.lines().count() > wide.lines().count());
+    expect_lines_fit(&narrow, 30);
+    // A width of zero is clamped
+    renderer.resize(0);
+    assert_eq!(renderer.terminal_columns(), 1);
+}
+
+#[test]
+fn default_renderer_is_100_columns_wide() {
+    assert_eq!(ArrowRenderer::default().terminal_columns(), 100);
+}
+
+#[test]
+fn zero_column_batches_with_rows_render_a_frame() {
+    let rows = RecordBatch::try_new_with_options(
+        Arc::new(Schema::empty()),
+        vec![],
+        &RecordBatchOptions::new().with_row_count(Some(2)),
+    )
+    .unwrap();
+    // No columns, no output
+    let output = ArrowRenderer::new(80).render_ipc(&write_ipc(&rows)).unwrap();
+    assert!(output.is_empty() || !String::from_utf8_lossy(&output).contains("alpha"));
+}

@@ -869,3 +869,95 @@ fn rejects_dashboard_rewrites_without_terminal_visualization() {
         "select 1 visualize using vegalite (mark => bar, dashboard => (column => 0, width => 12, height => 1))"
     );
 }
+
+#[test]
+fn rejects_unknown_offset_units() {
+    let error = ScriptSession::new(new_catalog(), EditorOffsetUnit(99)).err().expect("invalid unit");
+    assert_eq!(error.message, "invalid editor offset unit");
+    assert_eq!(session(&new_catalog(), UTF8).offset_unit(), UTF8);
+    assert_eq!(session(&new_catalog(), UTF16).offset_unit(), UTF16);
+}
+
+#[test]
+fn rejects_reversed_change_ranges() {
+    let catalog = new_catalog();
+    let mut session = session(&catalog, UTF8);
+    assert_eq!(session.replace_text(0, "abcdef").status, EditorUpdateStatus::OK);
+    let update = session.apply(&event(1, vec![change(4, 2, "X")]));
+    assert_eq!(update.status, EditorUpdateStatus::INVALID_RANGE);
+    assert_eq!(session.text(), "abcdef");
+    assert_eq!(session.text_version(), 1);
+}
+
+#[test]
+fn keeps_the_selection_while_it_resolves_in_the_new_text() {
+    let catalog = new_catalog();
+    let mut session = session(&catalog, UTF8);
+    assert_eq!(session.replace_text(0, "abcdef").status, EditorUpdateStatus::OK);
+    assert!(session.primary_selection().is_none());
+
+    let mut e = event(1, vec![]);
+    e.primary_selection = selection(2, 4);
+    let update = session.apply(&e);
+    assert_eq!(update.status, EditorUpdateStatus::OK);
+    assert!(update.selection_changed);
+    let kept = session.primary_selection().unwrap();
+    assert_eq!((kept.anchor, kept.head), (2, 4));
+
+    // An edit after the selection keeps it
+    let update = session.apply(&event(1, vec![change(6, 6, "gh")]));
+    assert_eq!(update.status, EditorUpdateStatus::OK);
+    assert!(!update.selection_changed);
+    assert!(session.primary_selection().is_some());
+
+    // An edit that removes the text the selection points into drops it
+    let update = session.apply(&event(2, vec![change(2, 8, "")]));
+    assert_eq!(update.status, EditorUpdateStatus::OK);
+    assert!(update.selection_changed);
+    assert!(session.primary_selection().is_none());
+}
+
+#[test]
+fn rejects_selections_inside_of_code_points() {
+    let catalog = new_catalog();
+    let mut session = session(&catalog, UTF8);
+    assert_eq!(session.replace_text(0, "é").status, EditorUpdateStatus::OK);
+    let mut e = event(1, vec![]);
+    e.primary_selection = selection(1, 1);
+    let update = session.apply(&e);
+    assert_eq!(update.status, EditorUpdateStatus::INVALID_RANGE);
+    assert!(session.primary_selection().is_none());
+}
+
+#[test]
+fn diff_needs_parsed_scripts() {
+    let catalog = new_catalog();
+    let mut session = session(&catalog, UTF8);
+    assert_eq!(session.replace_text(0, "select 1").status, EditorUpdateStatus::OK);
+    let mut target = Script::new(&catalog.borrow());
+    target.replace_text("select 2");
+    // Neither side is parsed yet
+    let error = session.diff(&target).unwrap_err();
+    assert_eq!(error.status, Some(dashql_buffers::status::StatusCode::SCRIPT_NOT_PARSED));
+    session.script_mut().parse();
+    assert!(session.diff(&target).is_err());
+    target.parse();
+    assert!(session.diff(&target).is_ok());
+}
+
+#[test]
+fn diff_projects_spans_into_utf16() {
+    let catalog = new_catalog();
+    let mut session = session(&catalog, UTF16);
+    assert_eq!(session.replace_text(0, "select '🙂'; select 1").status, EditorUpdateStatus::OK);
+    session.script_mut().parse();
+    let mut target = Script::new(&catalog.borrow());
+    target.replace_text("select '🙂'; select 2");
+    target.parse();
+    let diff = session.diff(&target).unwrap();
+    let ops = diff.ops.unwrap();
+    assert!(!ops.is_empty());
+    // The emoji takes 2 UTF-16 units but 4 UTF-8 bytes
+    let spans: Vec<_> = ops.iter().filter_map(|op| op.source_span.as_ref()).collect();
+    assert!(spans.iter().all(|s| s.offset + s.length <= 21), "{spans:?}");
+}

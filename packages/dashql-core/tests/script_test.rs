@@ -200,3 +200,137 @@ fn converts_text_span_to_string() {
     assert_eq!(script.to_text_span(TextSpan { offset: 7, length: 9 }), "'Grüße'");
     assert_eq!(script.to_text_span(TextSpan { offset: 100, length: 1 }), "");
 }
+
+fn parsed_script(text: &str) -> Script {
+    let catalog = Catalog::new();
+    let mut script = Script::new(&catalog);
+    script.replace_text(text);
+    script.parse();
+    script
+}
+
+#[test]
+fn statement_text_is_the_first_statement_without_separator() {
+    assert_eq!(parsed_script("  select 1 ; select 2").statement_text(false).unwrap(), "select 1");
+    assert_eq!(parsed_script("").statement_text(false).unwrap(), "");
+    assert_eq!(parsed_script("-- only a comment").statement_text(false).unwrap(), "");
+
+    let catalog = Catalog::new();
+    let mut script = Script::new(&catalog);
+    script.replace_text("select 1");
+    assert_eq!(script.statement_text(false).unwrap_err().status, Some(StatusCode::SCRIPT_NOT_PARSED));
+    assert_eq!(script.statement_text(true).unwrap(), "select 1");
+}
+
+#[test]
+fn rewrite_dashboard_replaces_or_appends_the_clause() {
+    let mut script = parsed_script("select 1 visualize using table ()");
+    assert_eq!(
+        script.rewrite_dashboard(Some(2), Some(3), 4, 5, false).unwrap(),
+        "select 1 visualize using table (dashboard => (row => 2, column => 3, width => 4, height => 5))"
+    );
+    // Existing clauses are replaced, other fields stay
+    let mut script = parsed_script("select 1 visualize using vegalite (mark => bar, dashboard => (row => 9, width => 1))");
+    assert_eq!(
+        script.rewrite_dashboard(None, None, 6, 3, false).unwrap(),
+        "select 1 visualize using vegalite (mark => bar, dashboard => (width => 6, height => 3))"
+    );
+    // Fields are appended to a spec with other fields
+    let mut script = parsed_script("select 1 visualize using vegalite (mark => bar)");
+    assert_eq!(
+        script.rewrite_dashboard(Some(0), None, 12, 1, false).unwrap(),
+        "select 1 visualize using vegalite (mark => bar, dashboard => (row => 0, width => 12, height => 1))"
+    );
+}
+
+#[test]
+fn rewrite_dashboard_clamps_the_grid() {
+    let mut script = parsed_script("select 1 visualize using table ()");
+    // Negative rows are dropped, the width is limited to the 12 columns, the column to the free space
+    assert_eq!(
+        script.rewrite_dashboard(Some(-1), Some(20), 40, -3, false).unwrap(),
+        "select 1 visualize using table (dashboard => (column => 0, width => 12, height => 1))"
+    );
+    assert_eq!(
+        script.rewrite_dashboard(None, Some(20), 4, 1, false).unwrap(),
+        "select 1 visualize using table (dashboard => (column => 8, width => 4, height => 1))"
+    );
+    assert_eq!(
+        script.rewrite_dashboard(None, Some(-5), 0, 2, false).unwrap(),
+        "select 1 visualize using table (dashboard => (column => 0, width => 1, height => 2))"
+    );
+}
+
+#[test]
+fn rewrite_dashboard_needs_a_terminal_visualize_statement() {
+    let not_parsed = Some(StatusCode::SCRIPT_NOT_PARSED);
+    assert_eq!(parsed_script("select 1").rewrite_dashboard(None, None, 6, 3, false).unwrap_err().status, not_parsed);
+    assert_eq!(parsed_script("").rewrite_dashboard(None, None, 6, 3, false).unwrap_err().status, not_parsed);
+    assert_eq!(
+        parsed_script("select 1 visualize using table (; ").rewrite_dashboard(None, None, 6, 3, false).unwrap_err().status,
+        not_parsed
+    );
+    let catalog = Catalog::new();
+    let mut script = Script::new(&catalog);
+    script.replace_text("select 1 visualize using table ()");
+    assert_eq!(script.rewrite_dashboard(None, None, 6, 3, false).unwrap_err().status, not_parsed);
+    assert!(script.rewrite_dashboard(None, None, 6, 3, true).is_ok());
+}
+
+#[test]
+fn rewrite_dashboard_applies_spans_to_the_current_text() {
+    // The spans of the outdated parse are spliced into the new text like in C++
+    let mut script = parsed_script("select 1 visualize using table ()");
+    script.replace_text("select 1 visualize using table ()");
+    assert!(script.rewrite_dashboard(None, None, 6, 3, false).is_ok());
+    script.replace_text("x");
+    let error = script.rewrite_dashboard(None, None, 6, 3, false);
+    assert!(error.is_err(), "{error:?}");
+}
+
+#[test]
+fn formatting_needs_a_parse_unless_requested() {
+    use dashql_buffers::formatting::{FormattingConfigT, FormattingDialect, FormattingMode};
+    let mut config = FormattingConfigT::default();
+    config.dialect = FormattingDialect::HYPER;
+    config.mode = FormattingMode::INLINE;
+    config.max_width = 80;
+    config.indentation_width = 4;
+
+    let catalog = Catalog::new();
+    let mut script = Script::new(&catalog);
+    script.replace_text("select   a ,b from   t");
+    assert_eq!(script.format(&config, false).unwrap_err().status, Some(StatusCode::SCRIPT_NOT_PARSED));
+    assert_eq!(script.format(&config, true).unwrap(), "select a, b from t;");
+    assert_eq!(script.format_bytes(&config, false).unwrap(), b"select a, b from t;");
+    assert!(script.is_fully_formattable(&config, false).unwrap());
+    assert!(script.unformattable_nodes(&config, false).unwrap().is_empty());
+
+    // A format of an outdated parse is refreshed on request
+    script.replace_text("select 2");
+    assert_eq!(script.format(&config, false).unwrap(), "select a, b from t;");
+    assert_eq!(script.format(&config, true).unwrap(), "select 2;");
+}
+
+#[test]
+fn statistics_describe_the_latest_analysis() {
+    let catalog = Catalog::new();
+    let mut script = Script::new(&catalog);
+    script.replace_text("create table t (a int); select a from t;");
+    // Before the first analysis only the rope has a size
+    let memory = script.memory_statistics();
+    assert_eq!(memory.rope_bytes as usize, script.to_text().len());
+    assert_eq!(memory.latest_script.scanner_input_bytes, 0);
+
+    script.analyze(&catalog, true).unwrap();
+    let statistics = script.statistics();
+    let memory = statistics.memory.unwrap();
+    assert_eq!(memory.rope_bytes as usize, script.to_text().len());
+    assert_eq!(memory.latest_script.scanner_input_bytes as usize, script.to_text().len());
+    assert!(memory.latest_script.scanner_symbol_bytes > 0);
+    assert!(memory.latest_script.scanner_name_dictionary_bytes > 0);
+    assert!(memory.latest_script.parser_ast_bytes > 0);
+    assert!(memory.latest_script.analyzer_description_bytes > 0);
+    assert!(statistics.timings.is_some());
+    assert_eq!(&script.timings().clone(), statistics.timings.as_ref().unwrap());
+}
