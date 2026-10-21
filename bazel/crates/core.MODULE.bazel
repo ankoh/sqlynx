@@ -26,7 +26,7 @@ crate_core.spec(package = "logos", version = "=0.16.1")
 # CommonMark parser for the Markdown renderer spec (dashql_core::visualize::markdown)
 crate_core.spec(package = "pulldown-cmark", default_features = False, version = "=0.13.4")
 crate_core.spec(package = "ropey", version = "=1.6.1")
-crate_core.spec(package = "serde_json", features = ["preserve_order"], version = "=1.0.151")
+crate_core.spec(package = "serde_json", features = ["preserve_order"], version = "=1.0.154")
 
 # Display widths and grapheme clusters for the shell (dashql_core::shell)
 crate_core.spec(package = "unicode-segmentation", version = "=1.13.3")
