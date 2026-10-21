@@ -1,0 +1,78 @@
+formatter-snapshots:
+
+
+  # Collate and time zone operators
+  - name: op_collate
+    input: select a collate "C" from t
+    dialects:
+      hyper:
+
+  - name: op_at_time_zone
+    input: select a at time zone 'UTC' from t
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(a timestamp);
+
+  # Between family
+  - name: op_between
+    input: select a between 1 and 2, a not between 1 and 2 from t
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(a int);
+
+  # Boolean tests
+  - name: op_boolean_tests
+    input: select a is true, a is not true, a is false, a is not false, a is unknown, a is not unknown from t
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(a boolean);
+
+  # Distinctness and null tests
+  - name: op_distinct_from
+    input: select a is distinct from b, a is not distinct from b, a is null, a is not null from t
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(a int, b int);
+
+  # Pattern matching
+  - name: op_pattern_matching
+    input: select a like b, a not like b, a ilike b, a not ilike b, a similar to b from t
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(a text, b text);
+
+  # In lists and subqueries
+  - name: op_in_lists
+    input: select a in (1, 2), a not in (1, 2), a in (select b from u), exists (select 1) from t
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(a int);
+            create table u(b int);
+
+
+  # Unary operators and casts
+  - name: op_unary_and_casts
+    input: select -a, +a, not b, a::bigint, a::text from t
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(a int, b boolean);
+
+  # Array and row constructors
+  - name: op_row_constructor
+    input: select row(1, 2), (a, b) from t
+    dialects:
+      hyper:

@@ -1,0 +1,170 @@
+formatter-snapshots:
+
+  - name: column_constraints_all
+    input: |-
+      create table t (a int not null, b int null, c int unique, d int primary key, e int check (e > 0), f int default 5, g text collate "C")
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              create table t (a integer not null, b integer null, c integer unique, d integer primary key, e integer check (e > 0), f integer default 5, g text collate "C");
+          - mode: compact
+            expected: |-
+              create table t (
+                a integer not null, b integer null, c integer unique, d integer primary key, e integer check (e > 0),
+                f integer default 5, g text collate "C"
+              );
+          - mode: pretty
+            expected: |-
+              create table t (
+                a integer not null,
+                b integer null,
+                c integer unique,
+                d integer primary key,
+                e integer check (e > 0),
+                f integer default 5,
+                g text collate "C"
+              );
+
+  - name: column_constraint_named
+    input: |-
+      create table t (a int constraint a_nn not null, b int constraint b_ck check (b > 0))
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              create table t (a integer constraint a_nn not null, b integer constraint b_ck check (b > 0));
+          - mode: compact
+            expected: |-
+              create table t (a integer constraint a_nn not null, b integer constraint b_ck check (b > 0));
+          - mode: pretty
+            expected: |-
+              create table t (a integer constraint a_nn not null, b integer constraint b_ck check (b > 0));
+
+  - name: column_constraint_check_no_inherit
+    input: |-
+      create table t (a int check (a > 0) no inherit)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              create table t (a integer check (a > 0) no inherit);
+          - mode: compact
+            expected: |-
+              create table t (a integer check (a > 0) no inherit);
+          - mode: pretty
+            expected: |-
+              create table t (a integer check (a > 0) no inherit);
+
+  - name: column_constraints_multiple
+    input: |-
+      create table t (a int not null default 1 check (a > 0), b text not null unique)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              create table t (a integer not null default 1 check (a > 0), b text not null unique);
+          - mode: compact
+            expected: |-
+              create table t (a integer not null default 1 check (a > 0), b text not null unique);
+          - mode: pretty
+            expected: |-
+              create table t (a integer not null default 1 check (a > 0), b text not null unique);
+
+  - name: table_constraints_all
+    input: |-
+      create table t (a int, b int, primary key (a), unique (b), check (a > b))
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              create table t (a integer, b integer, primary key (a), unique (b), check (a > b));
+          - mode: compact
+            expected: |-
+              create table t (a integer, b integer, primary key (a), unique (b), check (a > b));
+          - mode: pretty
+            expected: |-
+              create table t (a integer, b integer, primary key (a), unique (b), check (a > b));
+
+  - name: table_constraint_foreign_key_actions
+    input: |-
+      create table t (a int, b int, c int, d int, foreign key (a) references u (x) match partial on delete restrict on update no action, foreign key (b) references u match simple on update set default, foreign key (c) references u match full on delete cascade, foreign key (d) references u (x) on delete set null)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              create table t (a integer, b integer, c integer, d integer, foreign key (a) references u (x) match partial on delete restrict on update no action, foreign key (b) references u match simple on update set default, foreign key (c) references u match full on delete cascade, foreign key (d) references u (x) on delete set null);
+          - mode: compact
+            expected: |-
+              create table t (
+                a integer, b integer, c integer, d integer,
+                foreign key (a) references u (x) match partial on delete restrict on update no action,
+                foreign key (b) references u match simple on update set default,
+                foreign key (c) references u match full on delete cascade, foreign key (d) references u (x) on delete set null
+              );
+          - mode: pretty
+            expected: |-
+              create table t (
+                a integer,
+                b integer,
+                c integer,
+                d integer,
+                foreign key (a) references u (x) match partial on delete restrict on update no action,
+                foreign key (b) references u match simple on update set default,
+                foreign key (c) references u match full on delete cascade,
+                foreign key (d) references u (x) on delete set null
+              );
+
+  - name: table_constraint_attribute_deferrable
+    input: |-
+      create table t (a int, unique (a) deferrable)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              create table t (a integer, unique (a) deferrable);
+          - mode: compact
+            expected: |-
+              create table t (a integer, unique (a) deferrable);
+          - mode: pretty
+            expected: |-
+              create table t (a integer, unique (a) deferrable);
+
+  - name: create_temp_table
+    input: |-
+      create temp table t (a int)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              create temporary table t (a integer);
+          - mode: compact
+            expected: |-
+              create temporary table t (a integer);
+          - mode: pretty
+            expected: |-
+              create temporary table t (a integer);
+
+  - name: create_table_as
+    input: |-
+      create table t as select 1
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              create table t as select 1;
+          - mode: compact
+            expected: |-
+              create table t as select 1;
+          - mode: pretty
+            expected: |-
+              create table t as select 1;

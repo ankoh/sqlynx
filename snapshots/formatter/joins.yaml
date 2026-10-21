@@ -1,0 +1,267 @@
+formatter-snapshots:
+
+  - name: join_natural
+    input: |-
+      select * from a natural join b
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from a natural join b;
+          - mode: compact
+            expected: |-
+              select * from a natural join b;
+          - mode: pretty
+            expected: |-
+              select *
+              from a
+                natural join b;
+        validation:
+          setup: |-
+            create table a(x int);
+            create table b(x int);
+
+  - name: join_natural_left
+    input: |-
+      select * from a natural left join b
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from a natural left join b;
+          - mode: compact
+            expected: |-
+              select * from a natural left join b;
+          - mode: pretty
+            expected: |-
+              select *
+              from a
+                natural left join b;
+        validation:
+          setup: |-
+            create table a(x int);
+            create table b(x int);
+
+  - name: join_natural_right
+    input: |-
+      select * from a natural right join b
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from a natural right join b;
+          - mode: compact
+            expected: |-
+              select * from a natural right join b;
+          - mode: pretty
+            expected: |-
+              select *
+              from a
+                natural right join b;
+        validation:
+          setup: |-
+            create table a(x int);
+            create table b(x int);
+
+  - name: join_natural_full
+    input: |-
+      select * from a natural full join b
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from a natural full join b;
+          - mode: compact
+            expected: |-
+              select * from a natural full join b;
+          - mode: pretty
+            expected: |-
+              select *
+              from a
+                natural full join b;
+        validation:
+          setup: |-
+            create table a(x int);
+            create table b(x int);
+
+  - name: join_natural_left_outer
+    input: |-
+      select * from a natural left outer join b
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from a natural left join b;
+          - mode: compact
+            expected: |-
+              select * from a natural left join b;
+          - mode: pretty
+            expected: |-
+              select *
+              from a
+                natural left join b;
+        validation:
+          setup: |-
+            create table a(x int);
+            create table b(x int);
+
+  - name: join_natural_right_outer
+    input: |-
+      select * from a natural right outer join b
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from a natural right join b;
+          - mode: compact
+            expected: |-
+              select * from a natural right join b;
+          - mode: pretty
+            expected: |-
+              select *
+              from a
+                natural right join b;
+        validation:
+          setup: |-
+            create table a(x int);
+            create table b(x int);
+
+  - name: join_natural_full_outer
+    input: |-
+      select * from a natural full outer join b
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from a natural full join b;
+          - mode: compact
+            expected: |-
+              select * from a natural full join b;
+          - mode: pretty
+            expected: |-
+              select *
+              from a
+                natural full join b;
+        validation:
+          setup: |-
+            create table a(x int);
+            create table b(x int);
+
+  - name: join_semi
+    input: |-
+      select * from a semi join b on a.x = b.x
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from a semi join b on a.x = b.x;
+          - mode: compact
+            expected: |-
+              select * from a semi join b on a.x = b.x;
+          - mode: pretty
+            expected: |-
+              select *
+              from a
+                semi join b on a.x = b.x;
+
+  - name: join_anti
+    input: |-
+      select * from a anti join b on a.x = b.x
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from a anti join b on a.x = b.x;
+          - mode: compact
+            expected: |-
+              select * from a anti join b on a.x = b.x;
+          - mode: pretty
+            expected: |-
+              select *
+              from a
+                anti join b on a.x = b.x;
+
+  - name: join_using
+    input: |-
+      select * from a join b using (x)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from a join b using (x);
+          - mode: compact
+            expected: |-
+              select * from a join b using (x);
+          - mode: pretty
+            expected: |-
+              select *
+              from a
+                join b using (x);
+        validation:
+          setup: |-
+            create table a(x int);
+            create table b(x int);
+
+  - name: join_chain
+    input: |-
+      select * from a natural join b cross join c left join d on d.x = c.x
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from a natural join b cross join c left join d on d.x = c.x;
+          - mode: compact
+            expected: |-
+              select * from a natural join b cross join c left join d on d.x = c.x;
+          - mode: pretty
+            expected: |-
+              select *
+              from a
+                natural join b
+                cross join c
+                left join d on d.x = c.x;
+        validation:
+          setup: |-
+            create table a(x int);
+            create table b(x int);
+            create table c(x int);
+            create table d(x int);
+
+  - name: join_subquery
+    input: |-
+      select * from (select x from a) s join (select x from b) u on s.x = u.x
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from (select x from a) s join (select x from b) u on s.x = u.x;
+          - mode: compact
+            expected: |-
+              select * from (select x from a) s join (select x from b) u on s.x = u.x;
+          - mode: pretty
+            expected: |-
+              select *
+              from (
+                  select x
+                  from a
+                ) s
+                join (
+                    select x
+                    from b
+                  ) u on s.x = u.x;
+        validation:
+          setup: |-
+            create table a(x int);
+            create table b(x int);

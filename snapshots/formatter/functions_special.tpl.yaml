@@ -1,0 +1,101 @@
+formatter-snapshots:
+
+  # Overlay with and without a length
+  - name: fn_overlay
+    input: select overlay(a placing b from 2), overlay(a placing b from 2 for 3) from t
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(a text, b text);
+
+  # Position and substring
+  - name: fn_position_substring
+    input: select position(a in b), substring(a from 1 for 2), substring(a from 2) from t
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(a text, b text);
+
+  # Trim variants
+  - name: fn_trim
+    input: select trim(both 'x' from a), trim(leading 'x' from a), trim(trailing 'x' from a), trim(a), trim(both from a) from t
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(a text);
+
+  # Extract with every date field
+  - name: fn_extract_fields
+    input: select extract(year from d), extract(month from d), extract(day from d), extract(hour from d), extract(minute from d), extract(second from d) from t
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(d timestamp);
+
+  # SQL value functions
+  - name: fn_sql_value_functions
+    input: select current_date, current_time, current_timestamp, localtime, localtimestamp, current_user, session_user, current_catalog, current_schema
+    dialects:
+      hyper:
+
+  - name: fn_current_role
+    input: select current_role, user
+    dialects:
+      hyper:
+
+  - name: fn_collation_for
+    input: select collation for (a) from t
+    dialects:
+      hyper:
+
+
+  # Aggregate with distinct and filter
+  - name: fn_aggregate_distinct_filter
+    input: select count(distinct a), sum(a) filter (where b > 1), count(*) filter (where a is not null) from t
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(a int, b int);
+
+  # Ordered-set aggregates
+  - name: fn_within_group
+    input: select percentile_cont(0.5) within group (order by a), mode() within group (order by a) from t
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(a int);
+
+  # Variadic arguments
+  - name: fn_variadic
+    input: select f(variadic a), f(a, variadic b)
+    dialects:
+      hyper:
+
+  # Named arguments
+  - name: fn_named_arguments
+    input: select f(a => 1, b => 2), g(c := 3)
+    dialects:
+      hyper:
+
+
+  # Function in from with alias columns
+  - name: fn_from_alias_columns
+    input: select * from generate_series(1, 3) as g(n)
+    dialects:
+      hyper:
+        validation:
+
+  # Coalesce family
+  - name: fn_coalesce_family
+    input: select coalesce(a, b), nullif(a, b), greatest(a, b), least(a, b) from t
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(a int, b int);

@@ -1,0 +1,288 @@
+formatter-snapshots:
+
+  - name: combine_distinct
+    input: |-
+      select a, b from t union distinct select c, d from u
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select a, b from t union distinct select c, d from u;
+          - mode: compact
+            expected: |-
+              select a, b from t union distinct select c, d from u;
+          - mode: pretty
+            expected: |-
+              select a, b
+              from t
+              union distinct
+              select c, d
+              from u;
+        validation:
+          setup: |-
+            create table t(a int, b int);
+            create table u(c int, d int);
+
+  - name: combine_all_chain
+    input: |-
+      select a from t union all select b from u intersect all select c from v except all select d from w
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select a from t union all select b from u intersect all select c from v except all select d from w;
+          - mode: compact
+            expected: |-
+              select a from t union all select b from u intersect all select c from v except all select d from w;
+          - mode: pretty
+            expected: |-
+              select a
+              from t
+              union all
+              select b
+              from u
+              intersect all
+              select c
+              from v
+              except all
+              select d
+              from w;
+        validation:
+          setup: |-
+            create table t(a int);
+            create table u(b int);
+            create table v(c int);
+            create table w(d int);
+
+  - name: select_distinct_on
+    input: |-
+      select distinct on (a) a, b from t order by a
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select distinct on (a) a, b from t order by a;
+          - mode: compact
+            expected: |-
+              select distinct on (a) a, b from t order by a;
+          - mode: pretty
+            expected: |-
+              select distinct on (a) a, b
+              from t
+              order by a;
+        validation:
+          setup: |-
+            create table t(a int, b int);
+
+  - name: select_distinct_on_multiple
+    input: |-
+      select distinct on (a, b) a, b, c from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select distinct on (a, b) a, b, c from t;
+          - mode: compact
+            expected: |-
+              select distinct on (a, b) a, b, c from t;
+          - mode: pretty
+            expected: |-
+              select distinct on (a, b) a, b, c
+              from t;
+        validation:
+          setup: |-
+            create table t(a int, b int, c int);
+
+  - name: select_into
+    input: |-
+      select a into new_t from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select a into new_t from t;
+          - mode: compact
+            expected: |-
+              select a into new_t from t;
+          - mode: pretty
+            expected: |-
+              select a
+              into new_t
+              from t;
+
+  - name: row_locking_read_only
+    input: |-
+      select * from t for read only
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from t for read only;
+          - mode: compact
+            expected: |-
+              select * from t for read only;
+          - mode: pretty
+            expected: |-
+              select *
+              from t
+              for read only;
+
+  - name: row_locking_key_share_nowait
+    input: |-
+      select * from t for key share nowait
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from t for key share nowait;
+          - mode: compact
+            expected: |-
+              select * from t for key share nowait;
+          - mode: pretty
+            expected: |-
+              select *
+              from t
+              for key share nowait;
+
+  - name: row_locking_share_skip_locked
+    input: |-
+      select * from t for share skip locked
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from t for share skip locked;
+          - mode: compact
+            expected: |-
+              select * from t for share skip locked;
+          - mode: pretty
+            expected: |-
+              select *
+              from t
+              for share skip locked;
+
+  - name: row_locking_no_key_update_of
+    input: |-
+      select * from t, u for no key update of t, u nowait
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from t, u for no key update of t, u nowait;
+          - mode: compact
+            expected: |-
+              select * from t, u for no key update of t, u nowait;
+          - mode: pretty
+            expected: |-
+              select *
+              from t, u
+              for no key update of t, u nowait;
+
+  - name: sample_bernoulli_percent
+    input: |-
+      select * from t tablesample bernoulli (10 percent)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from t tablesample bernoulli(10%);
+          - mode: compact
+            expected: |-
+              select * from t tablesample bernoulli(10%);
+          - mode: pretty
+            expected: |-
+              select *
+              from t tablesample bernoulli(10%);
+
+  - name: sample_system_rows
+    input: |-
+      select * from t tablesample system (100 rows)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from t tablesample system(100 rows);
+          - mode: compact
+            expected: |-
+              select * from t tablesample system(100 rows);
+          - mode: pretty
+            expected: |-
+              select *
+              from t tablesample system(100 rows);
+
+  - name: sample_repeatable
+    input: |-
+      select * from t tablesample bernoulli (10 percent) repeatable (5)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from t tablesample bernoulli(10%) repeatable (5);
+          - mode: compact
+            expected: |-
+              select * from t tablesample bernoulli(10%) repeatable (5);
+          - mode: pretty
+            expected: |-
+              select *
+              from t tablesample bernoulli(10%) repeatable (5);
+
+  - name: select_values_rows
+    input: |-
+      select * from (values (1, 'a'), (2, 'b')) as v(x, y)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from (values (1, 'a'), (2, 'b')) v(x, y);
+          - mode: compact
+            expected: |-
+              select * from (values (1, 'a'), (2, 'b')) v(x, y);
+          - mode: pretty
+            expected: |-
+              select *
+              from (
+                values
+                  (1, 'a'),
+                  (2, 'b')
+              ) v(x, y);
+        validation:
+
+  - name: case_simple_and_searched
+    input: |-
+      select case when a > 1 then 'x' when a > 2 then 'y' end, case a when 1 then 'one' else 'other' end from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select case when a > 1 then 'x' when a > 2 then 'y' end, case a when 1 then 'one' else 'other' end from t;
+          - mode: compact
+            expected: |-
+              select case when a > 1 then 'x' when a > 2 then 'y' end, case a when 1 then 'one' else 'other' end from t;
+          - mode: pretty
+            expected: |-
+              select case
+                  when a > 1 then 'x'
+                  when a > 2 then 'y'
+                end,
+                case a
+                  when 1 then 'one'
+                  else 'other'
+                end
+              from t;
+        validation:
+          setup: |-
+            create table t(a int);

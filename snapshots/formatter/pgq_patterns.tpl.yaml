@@ -1,0 +1,118 @@
+formatter-snapshots:
+
+  # Edge without direction
+  - name: pgq_edge_any_direction
+    input: |-
+      SELECT * FROM GRAPH_TABLE(g MATCH (a:A)-[e:E]-(b:A) COLUMNS (a.x AS y)) AS gt
+    dialects:
+      hyper:
+
+  # Empty vertex and edge patterns
+  - name: pgq_empty_elements
+    input: |-
+      SELECT * FROM GRAPH_TABLE(g MATCH ()-[]->() COLUMNS (1 AS one)) AS gt
+    dialects:
+      hyper:
+
+  # Fixed quantifier
+  - name: pgq_quantifier_fixed
+    input: |-
+      SELECT * FROM GRAPH_TABLE(g MATCH (a)-[:E]->{3}(b) COLUMNS (a.x AS y)) AS gt
+    dialects:
+      hyper:
+
+  # Open and half-open quantifiers
+  - name: pgq_quantifier_bounds
+    input: |-
+      SELECT * FROM GRAPH_TABLE(g MATCH (a)-[:E]->{2,}(b)-[:F]->{,4}(c)<-[:G]-{1,2}(d) COLUMNS (a.x AS y)) AS gt
+    dialects:
+      hyper:
+
+  # Label expressions
+  - name: pgq_label_expressions
+    input: |-
+      SELECT * FROM GRAPH_TABLE(g MATCH (a IS A | B)-[e IS C & D]->(b:%)-[f:!E]->(c:A & !C) COLUMNS (a.x AS y)) AS gt
+    dialects:
+      hyper:
+
+  # Filters on elements and on the match
+  - name: pgq_where_clauses
+    input: |-
+      SELECT * FROM GRAPH_TABLE(g MATCH (a:A WHERE a.x > 1)-[e:E WHERE e.w < 5]->(b:A) WHERE a.x <> b.x COLUMNS (a.x AS ax, b.x AS bx)) AS gt
+    dialects:
+      hyper:
+
+  # Several path patterns in one match
+  - name: pgq_multiple_patterns
+    input: |-
+      SELECT * FROM GRAPH_TABLE(g MATCH (a)-[:E]->(b), (b)-[:F]->(c) COLUMNS (a.x AS ax, c.x AS cx)) AS gt
+    dialects:
+      hyper:
+
+  # Rows per step
+  - name: pgq_rows_per_step
+    input: |-
+      SELECT * FROM GRAPH_TABLE(g MATCH (a)-[e]->(b) ONE ROW PER STEP (s, r, d) COLUMNS (a.x AS y)) AS gt
+    dialects:
+      hyper:
+
+  # Columns without alias
+  - name: pgq_columns_without_alias
+    input: |-
+      SELECT * FROM GRAPH_TABLE(g MATCH (a) COLUMNS (a.x, a.y AS z)) AS gt
+    dialects:
+      hyper:
+
+  # Star with a single excluded column
+  - name: pgq_star_exclude_single
+    input: |-
+      SELECT * FROM GRAPH_TABLE(g MATCH (a) COLUMNS (a.* EXCLUDE a.secret)) AS gt
+    dialects:
+      hyper:
+
+  # Element tables from subqueries
+  - name: pgq_subquery_element_tables
+    input: |-
+      WITH pg AS PROPERTY GRAPH (
+        VERTEX TABLES ((SELECT id, name FROM people WHERE active) AS active_people KEY (id))
+        EDGE TABLES ((SELECT a, b FROM links) AS l KEY (a, b) SOURCE active_people DESTINATION active_people)
+      )
+      SELECT * FROM GRAPH_TABLE(pg MATCH (x)-[]->(y) COLUMNS (x.name AS n)) AS gt
+    dialects:
+      hyper:
+
+  # Edge source and destination with referenced columns
+  - name: pgq_reference_columns
+    input: |-
+      WITH pg AS PROPERTY GRAPH (
+        NODE TABLES (a KEY (id))
+        RELATIONSHIP TABLES (
+          e KEY (x) SOURCE KEY (x) REFERENCES a (id) DESTINATION KEY (y) REFERENCES a (id)
+        )
+      )
+      SELECT 1
+    dialects:
+      hyper:
+
+  # Labels without properties and the default label
+  - name: pgq_label_variants
+    input: |-
+      WITH pg AS PROPERTY GRAPH (
+        VERTEX TABLES (
+          a KEY (id) LABEL A LABEL B PROPERTIES (id),
+          b KEY (id) DEFAULT LABEL,
+          c KEY (id) DEFAULT LABEL PROPERTIES (id),
+          d KEY (id) NO PROPERTIES,
+          e KEY (id) LABEL E NO PROPERTIES
+        )
+      )
+      SELECT 1
+    dialects:
+      hyper:
+
+  # Secure common table expressions
+  - name: pgq_secure_cte
+    input: |-
+      WITH s AS SECURE (SELECT 1 AS a), t (b) AS SECURE (SELECT 2) SELECT * FROM s, t
+    dialects:
+      hyper:

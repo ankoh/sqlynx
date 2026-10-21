@@ -1,0 +1,56 @@
+formatter-snapshots:
+
+  # Every kind of column constraint
+  - name: column_constraints_all
+    input: create table t (a int not null, b int null, c int unique, d int primary key, e int check (e > 0), f int default 5, g text collate "C")
+    dialects:
+      hyper:
+
+  # Named column constraint
+  - name: column_constraint_named
+    input: create table t (a int constraint a_nn not null, b int constraint b_ck check (b > 0))
+    dialects:
+      hyper:
+
+  # Column check constraint that is not inherited
+  - name: column_constraint_check_no_inherit
+    input: create table t (a int check (a > 0) no inherit)
+    dialects:
+      hyper:
+
+  # Several constraints on one column
+  - name: column_constraints_multiple
+    input: create table t (a int not null default 1 check (a > 0), b text not null unique)
+    dialects:
+      hyper:
+
+  # Table constraints
+  - name: table_constraints_all
+    input: create table t (a int, b int, primary key (a), unique (b), check (a > b))
+    dialects:
+      hyper:
+
+  # Foreign key match types and actions
+  - name: table_constraint_foreign_key_actions
+    input: create table t (a int, b int, c int, d int, foreign key (a) references u (x) match partial on delete restrict on update no action, foreign key (b) references u match simple on update set default, foreign key (c) references u match full on delete cascade, foreign key (d) references u (x) on delete set null)
+    dialects:
+      hyper:
+
+  # Constraint attributes
+  - name: table_constraint_attribute_deferrable
+    input: create table t (a int, unique (a) deferrable)
+    dialects:
+      hyper:
+
+
+  # Temporary tables
+  - name: create_temp_table
+    input: create temp table t (a int)
+    dialects:
+      hyper:
+
+  # Create table as
+  - name: create_table_as
+    input: create table t as select 1
+    dialects:
+      hyper:

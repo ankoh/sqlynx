@@ -1,0 +1,272 @@
+formatter-snapshots:
+
+  - name: type_generic_modifiers
+    input: |-
+      select cast(a as foo(1, 2)) from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select cast(a as foo(1, 2)) from t;
+          - mode: compact
+            expected: |-
+              select cast(a as foo(1, 2)) from t;
+          - mode: pretty
+            expected: |-
+              select cast(a as foo(1, 2))
+              from t;
+
+  - name: type_setof
+    input: |-
+      select cast(a as setof int) from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select cast(a as setof integer) from t;
+          - mode: compact
+            expected: |-
+              select cast(a as setof integer) from t;
+          - mode: pretty
+            expected: |-
+              select cast(a as setof integer)
+              from t;
+
+  - name: column_options
+    input: |-
+      create table t (a int options (x 'y', z 'w'), b int options (k 'v') not null)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              create table t (a integer options (x 'y', z 'w'), b integer options (k 'v') not null);
+          - mode: compact
+            expected: |-
+              create table t (a integer options (x 'y', z 'w'), b integer options (k 'v') not null);
+          - mode: pretty
+            expected: |-
+              create table t (a integer options (x 'y', z 'w'), b integer options (k 'v') not null);
+
+  - name: op_typecast_operand
+    input: |-
+      select (a + b)::int, -a::int, (a::int)::text, a::int + b::int from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select (a + b)::integer, -a::integer, a::integer::text, a::integer + b::integer from t;
+          - mode: compact
+            expected: |-
+              select (a + b)::integer, -a::integer, a::integer::text, a::integer + b::integer from t;
+          - mode: pretty
+            expected: |-
+              select (a + b)::integer, -a::integer, a::integer::text, a::integer + b::integer
+              from t;
+        validation:
+          setup: |-
+            create table t(a int, b int);
+
+  - name: insert_values_unary
+    input: |-
+      insert into t values (-1, +2, not true), (3, 4, false)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              insert into t values (-1, 2, not true), (3, 4, false);
+          - mode: compact
+            expected: |-
+              insert into t values (-1, 2, not true), (3, 4, false);
+          - mode: pretty
+            expected: |-
+              insert into t
+              values
+                (-1, 2, not true),
+                (3, 4, false);
+
+  - name: select_nested_subqueries
+    input: |-
+      select (select max(a) from t where a < (select 10)) as m, (select 1) from (select 2) s
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select (select max(a) from t where a < (select 10)) as m, (select 1) from (select 2) s;
+          - mode: compact
+            expected: |-
+              select (select max(a) from t where a < (select 10)) as m, (select 1) from (select 2) s;
+          - mode: pretty
+            expected: |-
+              select (
+                  select max(a)
+                  from t
+                  where a < (select 10)
+                ) as m,
+                (select 1)
+              from (select 2) s;
+        validation:
+          setup: |-
+            create table t(a int);
+
+  - name: select_limit_offset
+    input: |-
+      select a from t order by a limit 10 offset 5
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select a from t order by a limit 10 offset 5;
+          - mode: compact
+            expected: |-
+              select a from t order by a limit 10 offset 5;
+          - mode: pretty
+            expected: |-
+              select a
+              from t
+              order by a
+              limit 10
+              offset 5;
+        validation:
+          setup: |-
+            create table t(a int);
+
+  - name: tableref_lateral
+    input: |-
+      select * from t, lateral (select t.a) s
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from t, lateral (select t.a) s;
+          - mode: compact
+            expected: |-
+              select * from t, lateral (select t.a) s;
+          - mode: pretty
+            expected: |-
+              select *
+              from t, lateral (select t.a) s;
+        validation:
+          setup: |-
+            create table t(a int);
+
+  - name: tableref_alias_columns
+    input: |-
+      select * from t as x(a, b)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from t x(a, b);
+          - mode: compact
+            expected: |-
+              select * from t x(a, b);
+          - mode: pretty
+            expected: |-
+              select *
+              from t x(a, b);
+        validation:
+          setup: |-
+            create table t(c int, d int);
+
+  - name: delete_using_returning
+    input: |-
+      delete from t using u where t.a = u.a returning t.a
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              delete from t using u where t.a = u.a returning t.a;
+          - mode: compact
+            expected: |-
+              delete from t using u where t.a = u.a returning t.a;
+          - mode: pretty
+            expected: |-
+              delete from t
+              using u
+              where t.a = u.a
+              returning t.a;
+
+  - name: insert_select_returning
+    input: |-
+      insert into t (a, b) select c, d from u returning *
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              insert into t(a, b) select c, d from u returning *;
+          - mode: compact
+            expected: |-
+              insert into t(a, b) select c, d from u returning *;
+          - mode: pretty
+            expected: |-
+              insert into t(a, b)
+              select c, d
+              from u
+              returning *;
+
+  - name: insert_default_values
+    input: |-
+      insert into t default values
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              insert into t default values;
+          - mode: compact
+            expected: |-
+              insert into t default values;
+          - mode: pretty
+            expected: |-
+              insert into t
+              default values;
+
+  - name: insert_with_cte
+    input: |-
+      with c as (select 1, 2) insert into t select * from c
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              with c as (select 1, 2) insert into t select * from c;
+          - mode: compact
+            expected: |-
+              with c as (select 1, 2) insert into t select * from c;
+          - mode: pretty
+            expected: |-
+              with c as (
+                select 1, 2
+              )
+              insert into t
+              select *
+              from c;
+
+  - name: explain_format_option
+    input: |-
+      explain (format json) select 1
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              explain (format json) select 1;
+          - mode: compact
+            expected: |-
+              explain (format json)
+              select 1;
+          - mode: pretty
+            expected: |-
+              explain (format json)
+              select 1;

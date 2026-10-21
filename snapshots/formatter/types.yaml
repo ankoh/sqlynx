@@ -1,0 +1,188 @@
+formatter-snapshots:
+
+  - name: type_interval_fields
+    input: |-
+      select interval '1' year, interval '2' month, interval '3' day, interval '4' hour, interval '5' minute, interval '6' second
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select interval '1' year, interval '2' month, interval '3' day, interval '4' hour, interval '5' minute, interval '6' second;
+          - mode: compact
+            expected: |-
+              select interval '1' year, interval '2' month, interval '3' day, interval '4' hour, interval '5' minute,
+                interval '6' second;
+          - mode: pretty
+            expected: |-
+              select interval '1' year,
+                interval '2' month,
+                interval '3' day,
+                interval '4' hour,
+                interval '5' minute,
+                interval '6' second;
+        validation:
+
+  - name: type_interval_ranges
+    input: |-
+      select interval '1-2' year to month, interval '1 2' day to hour, interval '1 2:3' day to minute, interval '1 2:3:4' day to second, interval '1:2' hour to minute, interval '1:2:3' hour to second, interval '1:2' minute to second
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select interval '1-2' year to month, interval '1 2' day to hour, interval '1 2:3' day to minute, interval '1 2:3:4' day to second, interval '1:2' hour to minute, interval '1:2:3' hour to second, interval '1:2' minute to second;
+          - mode: compact
+            expected: |-
+              select interval '1-2' year to month, interval '1 2' day to hour, interval '1 2:3' day to minute,
+                interval '1 2:3:4' day to second, interval '1:2' hour to minute, interval '1:2:3' hour to second,
+                interval '1:2' minute to second;
+          - mode: pretty
+            expected: |-
+              select interval '1-2' year to month,
+                interval '1 2' day to hour,
+                interval '1 2:3' day to minute,
+                interval '1 2:3:4' day to second,
+                interval '1:2' hour to minute,
+                interval '1:2:3' hour to second,
+                interval '1:2' minute to second;
+
+  - name: type_interval_precision
+    input: |-
+      select interval '1.5' second(3)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select interval '1.5' second(3);
+          - mode: compact
+            expected: |-
+              select interval '1.5' second(3);
+          - mode: pretty
+            expected: |-
+              select interval '1.5' second(3);
+
+  - name: type_numeric_casts
+    input: |-
+      select cast(a as smallint), cast(a as bigint), cast(a as real), cast(a as double precision), cast(a as boolean) from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select cast(a as smallint), cast(a as bigint), cast(a as real), cast(a as double precision), cast(a as boolean) from t;
+          - mode: compact
+            expected: |-
+              select cast(a as smallint), cast(a as bigint), cast(a as real), cast(a as double precision), cast(a as boolean) from t;
+          - mode: pretty
+            expected: |-
+              select cast(a as smallint), cast(a as bigint), cast(a as real), cast(a as double precision), cast(a as boolean)
+              from t;
+        validation:
+          setup: |-
+            create table t(a int);
+
+  - name: type_numeric_modifiers
+    input: |-
+      select cast(a as numeric(10, 2)), cast(a as decimal(4)), cast(a as float(10)) from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select cast(a as numeric(10, 2)), cast(a as numeric(4)), cast(a as real) from t;
+          - mode: compact
+            expected: |-
+              select cast(a as numeric(10, 2)), cast(a as numeric(4)), cast(a as real) from t;
+          - mode: pretty
+            expected: |-
+              select cast(a as numeric(10, 2)), cast(a as numeric(4)), cast(a as real)
+              from t;
+        validation:
+          setup: |-
+            create table t(a int);
+
+  - name: type_character_casts
+    input: |-
+      select cast(a as char(3)), cast(a as varchar(10)), cast(a as varchar), cast(a as text), cast(a as character varying(4)) from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select cast(a as char(3)), cast(a as varchar(10)), cast(a as varchar), cast(a as text), cast(a as varchar(4)) from t;
+          - mode: compact
+            expected: |-
+              select cast(a as char(3)), cast(a as varchar(10)), cast(a as varchar), cast(a as text), cast(a as varchar(4)) from t;
+          - mode: pretty
+            expected: |-
+              select cast(a as char(3)), cast(a as varchar(10)), cast(a as varchar), cast(a as text), cast(a as varchar(4))
+              from t;
+        validation:
+          setup: |-
+            create table t(a text);
+
+  - name: type_time_precision
+    input: |-
+      select cast(a as timestamp(3)), cast(a as time(2)), cast(a as timestamp with time zone), cast(a as time without time zone) from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select cast(a as timestamp(3)), cast(a as time(2)), cast(a as timestamp with time zone), cast(a as time) from t;
+          - mode: compact
+            expected: |-
+              select cast(a as timestamp(3)), cast(a as time(2)), cast(a as timestamp with time zone), cast(a as time) from t;
+          - mode: pretty
+            expected: |-
+              select cast(a as timestamp(3)), cast(a as time(2)), cast(a as timestamp with time zone), cast(a as time)
+              from t;
+
+  - name: type_array_casts
+    input: |-
+      select cast(a as int[]) from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select cast(a as integer[]) from t;
+          - mode: compact
+            expected: |-
+              select cast(a as integer[]) from t;
+          - mode: pretty
+            expected: |-
+              select cast(a as integer[])
+              from t;
+
+  - name: type_create_table_all
+    input: |-
+      create table t (a smallint, b bigint, c real, d double precision, e boolean, f char(4), g varchar(10), h numeric(5, 2), i timestamp(3), j time(2))
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              create table t (a smallint, b bigint, c real, d double precision, e boolean, f char(4), g varchar(10), h numeric(5, 2), i timestamp(3), j time(2));
+          - mode: compact
+            expected: |-
+              create table t (
+                a smallint, b bigint, c real, d double precision, e boolean, f char(4), g varchar(10), h numeric(5, 2),
+                i timestamp(3), j time(2)
+              );
+          - mode: pretty
+            expected: |-
+              create table t (
+                a smallint,
+                b bigint,
+                c real,
+                d double precision,
+                e boolean,
+                f char(4),
+                g varchar(10),
+                h numeric(5, 2),
+                i timestamp(3),
+                j time(2)
+              );

@@ -1,0 +1,114 @@
+formatter-snapshots:
+
+  # Blank lines between line comment paragraphs
+  - name: comment_paragraphs
+    input: |-
+      -- First paragraph of the comment that is long enough to wrap.
+      --
+      -- Second paragraph of the comment that is also long enough to wrap.
+      select 1
+    dialects:
+      hyper:
+        formatted:
+          - mode: compact
+            width: 30
+          - mode: pretty
+            width: 30
+
+  # A comment that consists of the marker only
+  - name: comment_empty_marker
+    input: |-
+      --
+      select 1
+    dialects:
+      hyper:
+
+  # Empty comment lines at the start and the end are dropped
+  - name: comment_empty_edges
+    input: |-
+      --
+      -- text
+      --
+      select 1
+    dialects:
+      hyper:
+
+  # A word that is longer than the width
+  - name: comment_long_word
+    input: |-
+      -- short averyveryveryveryveryverylongwordthatdoesnotfit end
+      select 1
+    dialects:
+      hyper:
+        formatted:
+          - mode: compact
+            width: 20
+
+  # A word that starts after other words and has to be split
+  - name: comment_split_after_words
+    input: |-
+      -- ab cdefghijklmnopqrstuvwxyz
+      select 1
+    dialects:
+      hyper:
+        formatted:
+          - mode: compact
+            width: 20
+
+  # An unterminated tagged region is an ordinary comment
+  - name: comment_unterminated_region
+    input: |-
+      -- @dashql:description
+      -- Text that is not closed and wraps because it is quite long.
+      select 1
+    dialects:
+      hyper:
+        formatted:
+          - mode: compact
+            width: 30
+
+  # Tag followed by text and region directly after other comments
+  - name: comment_region_after_comments
+    input: |-
+      -- Leading text that wraps because it is quite long.
+      -- @dashql:note extra
+      -- content inside the region
+      -- @dashql:end
+      -- @dashql:meta
+      -- { "a": 1 }
+      -- @dashql:end
+      -- trailing text
+      select 1
+    dialects:
+      hyper:
+        formatted:
+          - mode: compact
+            width: 30
+
+  # Two regions directly after each other
+  - name: comment_adjacent_regions
+    input: |-
+      -- @dashql:a
+      -- one
+      -- @dashql:end
+      -- @dashql:b
+      -- two
+      -- @dashql:end
+      select 1
+    dialects:
+      hyper:
+
+  # A tag marker without a name
+  - name: comment_tag_without_name
+    input: |-
+      -- @dashql:
+      -- text
+      select 1
+    dialects:
+      hyper:
+
+  # Windows line endings in a block comment
+  - name: comment_crlf_block
+    input: "-- first line\r\n-- second line\r\nselect 1"
+    dialects:
+      hyper:

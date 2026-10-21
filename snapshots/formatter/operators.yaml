@@ -1,0 +1,182 @@
+formatter-snapshots:
+
+  - name: op_collate
+    input: |-
+      select a collate "C" from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select a collate "C" from t;
+          - mode: compact
+            expected: |-
+              select a collate "C" from t;
+          - mode: pretty
+            expected: |-
+              select a collate "C"
+              from t;
+
+  - name: op_at_time_zone
+    input: |-
+      select a at time zone 'UTC' from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select a at time zone 'UTC' from t;
+          - mode: compact
+            expected: |-
+              select a at time zone 'UTC' from t;
+          - mode: pretty
+            expected: |-
+              select a at time zone 'UTC'
+              from t;
+        validation:
+          setup: |-
+            create table t(a timestamp);
+
+  - name: op_between
+    input: |-
+      select a between 1 and 2, a not between 1 and 2 from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select a between 1 and 2, a not between 1 and 2 from t;
+          - mode: compact
+            expected: |-
+              select a between 1 and 2, a not between 1 and 2 from t;
+          - mode: pretty
+            expected: |-
+              select a between 1 and 2, a not between 1 and 2
+              from t;
+        validation:
+          setup: |-
+            create table t(a int);
+
+  - name: op_boolean_tests
+    input: |-
+      select a is true, a is not true, a is false, a is not false, a is unknown, a is not unknown from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select a is true, a is not true, a is false, a is not false, a is unknown, a is not unknown from t;
+          - mode: compact
+            expected: |-
+              select a is true, a is not true, a is false, a is not false, a is unknown, a is not unknown from t;
+          - mode: pretty
+            expected: |-
+              select a is true, a is not true, a is false, a is not false, a is unknown, a is not unknown
+              from t;
+        validation:
+          setup: |-
+            create table t(a boolean);
+
+  - name: op_distinct_from
+    input: |-
+      select a is distinct from b, a is not distinct from b, a is null, a is not null from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select a is distinct from b, a is not distinct from b, a is null, a is not null from t;
+          - mode: compact
+            expected: |-
+              select a is distinct from b, a is not distinct from b, a is null, a is not null from t;
+          - mode: pretty
+            expected: |-
+              select a is distinct from b, a is not distinct from b, a is null, a is not null
+              from t;
+        validation:
+          setup: |-
+            create table t(a int, b int);
+
+  - name: op_pattern_matching
+    input: |-
+      select a like b, a not like b, a ilike b, a not ilike b, a similar to b from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select a like b, a not like b, a ilike b, a not ilike b, a similar to b from t;
+          - mode: compact
+            expected: |-
+              select a like b, a not like b, a ilike b, a not ilike b, a similar to b from t;
+          - mode: pretty
+            expected: |-
+              select a like b, a not like b, a ilike b, a not ilike b, a similar to b
+              from t;
+        validation:
+          setup: |-
+            create table t(a text, b text);
+
+  - name: op_in_lists
+    input: |-
+      select a in (1, 2), a not in (1, 2), a in (select b from u), exists (select 1) from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select a in (1, 2), a not in (1, 2), a in (select b from u), exists (select 1) from t;
+          - mode: compact
+            expected: |-
+              select a in (1, 2), a not in (1, 2), a in (select b from u), exists (select 1) from t;
+          - mode: pretty
+            expected: |-
+              select a in (1, 2),
+                a not in (1, 2),
+                a in (
+                  select b
+                  from u
+                ),
+                exists (select 1)
+              from t;
+        validation:
+          setup: |-
+            create table t(a int);
+            create table u(b int);
+
+  - name: op_unary_and_casts
+    input: |-
+      select -a, +a, not b, a::bigint, a::text from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select -a, a, not b, a::bigint, a::text from t;
+          - mode: compact
+            expected: |-
+              select -a, a, not b, a::bigint, a::text from t;
+          - mode: pretty
+            expected: |-
+              select -a, a, not b, a::bigint, a::text
+              from t;
+        validation:
+          setup: |-
+            create table t(a int, b boolean);
+
+  - name: op_row_constructor
+    input: |-
+      select row(1, 2), (a, b) from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select row(1, 2), (a, b) from t;
+          - mode: compact
+            expected: |-
+              select row(1, 2), (a, b) from t;
+          - mode: pretty
+            expected: |-
+              select row(1, 2), (a, b)
+              from t;

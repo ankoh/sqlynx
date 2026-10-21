@@ -1,0 +1,161 @@
+formatter-snapshots:
+
+  - name: window_rows_frame
+    input: |-
+      select sum(a) over (partition by b order by c rows between unbounded preceding and current row) from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select sum(a) over (partition by b order by c rows between unbounded preceding and current row) from t;
+          - mode: compact
+            expected: |-
+              select sum(a) over (partition by b order by c rows between unbounded preceding and current row) from t;
+          - mode: pretty
+            expected: |-
+              select sum(a) over (partition by b order by c rows between unbounded preceding and current row)
+              from t;
+        validation:
+          setup: |-
+            create table t(a int, b int, c int);
+
+  - name: window_range_frame
+    input: |-
+      select sum(a) over (order by c range between 1 preceding and 1 following) from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select sum(a) over (order by c range between 1 preceding and 1 following) from t;
+          - mode: compact
+            expected: |-
+              select sum(a) over (order by c range between 1 preceding and 1 following) from t;
+          - mode: pretty
+            expected: |-
+              select sum(a) over (order by c range between 1 preceding and 1 following)
+              from t;
+        validation:
+          setup: |-
+            create table t(a int, b int, c int);
+
+  - name: window_single_bound
+    input: |-
+      select sum(a) over (order by c rows 2 preceding), sum(a) over (order by c rows unbounded preceding) from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select sum(a) over (order by c rows 2 preceding), sum(a) over (order by c rows unbounded preceding) from t;
+          - mode: compact
+            expected: |-
+              select sum(a) over (order by c rows 2 preceding), sum(a) over (order by c rows unbounded preceding) from t;
+          - mode: pretty
+            expected: |-
+              select sum(a) over (order by c rows 2 preceding), sum(a) over (order by c rows unbounded preceding)
+              from t;
+        validation:
+          setup: |-
+            create table t(a int, b int, c int);
+
+  - name: window_named
+    input: |-
+      select sum(a) over w from t window w as (partition by b order by c)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select sum(a) over (w) from t window w as (partition by b order by c);
+          - mode: compact
+            expected: |-
+              select sum(a) over (w) from t window w as (partition by b order by c);
+          - mode: pretty
+            expected: |-
+              select sum(a) over (w)
+              from t
+              window w as (partition by b order by c);
+        validation:
+          setup: |-
+            create table t(a int, b int, c int);
+
+  - name: window_named_multiple
+    input: |-
+      select sum(a) over w1, avg(a) over w2 from t window w1 as (partition by b), w2 as (order by c desc nulls first)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select sum(a) over (w1), avg(a) over (w2) from t window w1 as (partition by b), w2 as (order by c desc nulls first);
+          - mode: compact
+            expected: |-
+              select sum(a) over (w1), avg(a) over (w2) from t window w1 as (partition by b), w2 as (order by c desc nulls first);
+          - mode: pretty
+            expected: |-
+              select sum(a) over (w1), avg(a) over (w2)
+              from t
+              window w1 as (partition by b), w2 as (order by c desc nulls first);
+        validation:
+          setup: |-
+            create table t(a int, b int, c int);
+
+  - name: window_extends_named
+    input: |-
+      select sum(a) over (w rows 1 preceding) from t window w as (order by c)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select sum(a) over (w rows 1 preceding) from t window w as (order by c);
+          - mode: compact
+            expected: |-
+              select sum(a) over (w rows 1 preceding) from t window w as (order by c);
+          - mode: pretty
+            expected: |-
+              select sum(a) over (w rows 1 preceding)
+              from t
+              window w as (order by c);
+
+  - name: window_empty
+    input: |-
+      select row_number() over () from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select row_number() over () from t;
+          - mode: compact
+            expected: |-
+              select row_number() over () from t;
+          - mode: pretty
+            expected: |-
+              select row_number() over ()
+              from t;
+        validation:
+          setup: |-
+            create table t(a int);
+
+  - name: window_ranking
+    input: |-
+      select rank() over (partition by a order by b), dense_rank() over (order by b desc), ntile(4) over (order by b) from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select rank() over (partition by a order by b), dense_rank() over (order by b desc), ntile(4) over (order by b) from t;
+          - mode: compact
+            expected: |-
+              select rank() over (partition by a order by b), dense_rank() over (order by b desc), ntile(4) over (order by b) from t;
+          - mode: pretty
+            expected: |-
+              select rank() over (partition by a order by b), dense_rank() over (order by b desc), ntile(4) over (order by b)
+              from t;
+        validation:
+          setup: |-
+            create table t(a int, b int);

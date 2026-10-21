@@ -1,0 +1,261 @@
+formatter-snapshots:
+
+  - name: comment_paragraphs
+    input: |-
+      -- First paragraph of the comment that is long enough to wrap.
+      --
+      -- Second paragraph of the comment that is also long enough to wrap.
+      select 1
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select 1;
+          - mode: compact
+            width: 30
+            expected: |-
+              -- First paragraph of the
+              -- comment that is long enough
+              -- to wrap.
+              --
+              -- Second paragraph of the
+              -- comment that is also long
+              -- enough to wrap.
+              select 1;
+          - mode: pretty
+            width: 30
+            expected: |-
+              -- First paragraph of the
+              -- comment that is long enough
+              -- to wrap.
+              --
+              -- Second paragraph of the
+              -- comment that is also long
+              -- enough to wrap.
+              select 1;
+
+  - name: comment_empty_marker
+    input: |-
+      --
+      select 1
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select 1;
+          - mode: compact
+            expected: |-
+              --
+              select 1;
+          - mode: pretty
+            expected: |-
+              --
+              select 1;
+
+  - name: comment_empty_edges
+    input: |-
+      --
+      -- text
+      --
+      select 1
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select 1;
+          - mode: compact
+            expected: |-
+              -- text
+              select 1;
+          - mode: pretty
+            expected: |-
+              -- text
+              select 1;
+
+  - name: comment_long_word
+    input: |-
+      -- short averyveryveryveryveryverylongwordthatdoesnotfit end
+      select 1
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select 1;
+          - mode: compact
+            width: 20
+            expected: |-
+              -- short
+              -- averyveryveryvery
+              -- veryverylongwordt
+              -- hatdoesnotfit end
+              select 1;
+          - mode: pretty
+            expected: |-
+              -- short averyveryveryveryveryverylongwordthatdoesnotfit end
+              select 1;
+
+  - name: comment_split_after_words
+    input: |-
+      -- ab cdefghijklmnopqrstuvwxyz
+      select 1
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select 1;
+          - mode: compact
+            width: 20
+            expected: |-
+              -- ab
+              -- cdefghijklmnopqrs
+              -- tuvwxyz
+              select 1;
+          - mode: pretty
+            expected: |-
+              -- ab cdefghijklmnopqrstuvwxyz
+              select 1;
+
+  - name: comment_unterminated_region
+    input: |-
+      -- @dashql:description
+      -- Text that is not closed and wraps because it is quite long.
+      select 1
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select 1;
+          - mode: compact
+            width: 30
+            expected: |-
+              -- @dashql:description Text
+              -- that is not closed and
+              -- wraps because it is quite
+              -- long.
+              select 1;
+          - mode: pretty
+            expected: |-
+              -- @dashql:description Text that is not closed and wraps because it is quite long.
+              select 1;
+
+  - name: comment_region_after_comments
+    input: |-
+      -- Leading text that wraps because it is quite long.
+      -- @dashql:note extra
+      -- content inside the region
+      -- @dashql:end
+      -- @dashql:meta
+      -- { "a": 1 }
+      -- @dashql:end
+      -- trailing text
+      select 1
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select 1;
+          - mode: compact
+            width: 30
+            expected: |-
+              -- Leading text that wraps
+              -- because it is quite long.
+              -- @dashql:note extra
+              -- content inside the region
+              -- @dashql:end
+              -- @dashql:meta
+              -- { "a": 1 }
+              -- @dashql:end
+              -- trailing text
+              select 1;
+          - mode: pretty
+            expected: |-
+              -- Leading text that wraps because it is quite long.
+              -- @dashql:note extra
+              -- content inside the region
+              -- @dashql:end
+              -- @dashql:meta
+              -- { "a": 1 }
+              -- @dashql:end
+              -- trailing text
+              select 1;
+
+  - name: comment_adjacent_regions
+    input: |-
+      -- @dashql:a
+      -- one
+      -- @dashql:end
+      -- @dashql:b
+      -- two
+      -- @dashql:end
+      select 1
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select 1;
+          - mode: compact
+            expected: |-
+              -- @dashql:a
+              -- one
+              -- @dashql:end
+              -- @dashql:b
+              -- two
+              -- @dashql:end
+              select 1;
+          - mode: pretty
+            expected: |-
+              -- @dashql:a
+              -- one
+              -- @dashql:end
+              -- @dashql:b
+              -- two
+              -- @dashql:end
+              select 1;
+
+  - name: comment_tag_without_name
+    input: |-
+      -- @dashql:
+      -- text
+      select 1
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select 1;
+          - mode: compact
+            expected: |-
+              -- @dashql: text
+              select 1;
+          - mode: pretty
+            expected: |-
+              -- @dashql: text
+              select 1;
+
+  - name: comment_crlf_block
+    input: |-
+      -- first line
+      -- second line
+      select 1
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select 1;
+          - mode: compact
+            expected: |-
+              -- first line second line
+              select 1;
+          - mode: pretty
+            expected: |-
+              -- first line second line
+              select 1;

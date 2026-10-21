@@ -1,0 +1,228 @@
+formatter-snapshots:
+
+  # Top-level spec keys that hold generic values
+  - name: vis_spec_generic_keys
+    input: |-
+      select * from sales visualize using vegalite (data => (name => 'sales'), transform => [1, 2], params => [3], projection => (type => 'mercator'), autosize => 'fit', datasets => (name => 'd'), view => (name => 'v'), name => 'chart', title => 'Sales', padding => 5, background => 'white', filter => true, describe => 'A chart', type => 'x')
+    dialects:
+      hyper:
+
+  # Layers with their own marks and encodings
+  - name: vis_layer
+    input: |-
+      select * from sales visualize using vegalite (layer => [(mark => line, encoding => (x => (field => d, type => temporal), y => (field => v, type => quantitative))), (mark => point, encoding => (x => d))])
+    dialects:
+      hyper:
+
+
+  # Independent scales, axes and legends across layers
+  - name: vis_resolve
+    input: |-
+      select * from sales visualize using vegalite (resolve => (scale => (x => 'independent', y => 'shared'), axis => (y => 'independent'), legend => (color => 'shared')))
+    dialects:
+      hyper:
+
+  # Every mark type
+  - name: vis_mark_arc
+    input: select * from t visualize using vegalite (mark => arc)
+    dialects:
+      hyper:
+
+  - name: vis_mark_area
+    input: select * from t visualize using vegalite (mark => area)
+    dialects:
+      hyper:
+
+  - name: vis_mark_boxplot
+    input: select * from t visualize using vegalite (mark => boxplot)
+    dialects:
+      hyper:
+
+  - name: vis_mark_circle
+    input: select * from t visualize using vegalite (mark => circle)
+    dialects:
+      hyper:
+
+  - name: vis_mark_geoshape
+    input: select * from t visualize using vegalite (mark => geoshape)
+    dialects:
+      hyper:
+
+  - name: vis_mark_image
+    input: select * from t visualize using vegalite (mark => image)
+    dialects:
+      hyper:
+
+  - name: vis_mark_rect
+    input: select * from t visualize using vegalite (mark => rect)
+    dialects:
+      hyper:
+
+  - name: vis_mark_rule
+    input: select * from t visualize using vegalite (mark => rule)
+    dialects:
+      hyper:
+
+  - name: vis_mark_square
+    input: select * from t visualize using vegalite (mark => square)
+    dialects:
+      hyper:
+
+  - name: vis_mark_text
+    input: select * from t visualize using vegalite (mark => text)
+    dialects:
+      hyper:
+
+  - name: vis_mark_tick
+    input: select * from t visualize using vegalite (mark => tick)
+    dialects:
+      hyper:
+
+  - name: vis_mark_trail
+    input: select * from t visualize using vegalite (mark => trail)
+    dialects:
+      hyper:
+
+  # Mark definition with overlays
+  - name: vis_mark_object_overlays
+    input: |-
+      select * from t visualize using vegalite (mark => (type => line, point => (filled => false, fill => 'white'), line => true, interpolate => 'monotone', tension => 0.5))
+    dialects:
+      hyper:
+
+  # Every mark property
+  - name: vis_mark_object_properties
+    input: |-
+      select * from t visualize using vegalite (mark => (type => bar, filled => true, fill => 'red', stroke => 'black', color => 'blue', opacity => 0.5, fill_opacity => 0.4, stroke_opacity => 0.3, stroke_width => 2, stroke_dash => [4, 2], size => 10, shape => 'circle', angle => 45, radius => 5, corner_radius => 3, orient => 'vertical', thickness => 1, tooltip => true))
+    dialects:
+      hyper:
+
+  # Every encoding channel, part 1
+  - name: vis_encoding_channels_positional
+    input: |-
+      select * from t visualize using vegalite (mark => point, encoding => (x => a, y => b, x2 => c, y2 => d, theta => e, theta2 => f, radius => g, radius2 => h, latitude => i, longitude => j, latitude2 => k, longitude2 => l, x_offset => m, y_offset => n))
+    dialects:
+      hyper:
+
+  # Every encoding channel, part 2
+  - name: vis_encoding_channels_style
+    input: |-
+      select * from t visualize using vegalite (mark => point, encoding => (color => a, fill => b, stroke => c, fill_opacity => d, stroke_opacity => e, stroke_width => f, stroke_dash => g, opacity => h, size => i, shape => j, angle => k))
+    dialects:
+      hyper:
+
+  # Every encoding channel, part 3
+  - name: vis_encoding_channels_misc
+    input: |-
+      select * from t visualize using vegalite (mark => point, encoding => (detail => a, order => b, tooltip => c, text => d, row => e, column => f, facet => g, href => h, url => i, key => j))
+    dialects:
+      hyper:
+
+  # Encoding channels with constants and arrays
+  - name: vis_encoding_channel_values
+    input: |-
+      select * from t visualize using vegalite (mark => point, encoding => (color => 'red', size => 10, opacity => -1, x => +2, tooltip => [a, b]))
+    dialects:
+      hyper:
+
+  # Every field type
+  - name: vis_field_types
+    input: |-
+      select * from t visualize using vegalite (mark => point, encoding => (x => (field => a, type => nominal), y => (field => b, type => ordinal), color => (field => c, type => quantitative), size => (field => d, type => temporal), shape => (field => e, type => geojson)))
+    dialects:
+      hyper:
+
+  # Every field definition property
+  - name: vis_field_def_properties
+    input: |-
+      select * from t visualize using vegalite (mark => bar, encoding => (x => (field => a, type => ordinal, bin => true, aggregate => 'sum', time_unit => 'month', sort => 'descending', stack => 'zero', impute => (name => 'i'), condition => (name => 'c'), title => 'A', band_position => 0.5, datum => 3, value => 4, format => '.2f', format_type => 'number')))
+    dialects:
+      hyper:
+
+  # Scale types, part 1
+  - name: vis_scale_types_numeric
+    input: |-
+      select * from t visualize using vegalite (mark => point, encoding => (x => (field => a, scale => (type => linear)), y => (field => b, scale => (type => log)), size => (field => c, scale => (type => pow, exponent => 2)), opacity => (field => d, scale => (type => sqrt)), stroke_width => (field => e, scale => (type => symlog)), angle => (field => f, scale => (type => identity))))
+    dialects:
+      hyper:
+
+  # Scale types, part 2
+  - name: vis_scale_types_discrete
+    input: |-
+      select * from t visualize using vegalite (mark => point, encoding => (color => (field => a, scale => (type => sequential)), x => (field => b, scale => (type => time)), y => (field => c, scale => (type => utc)), size => (field => d, scale => (type => quantile)), opacity => (field => e, scale => (type => quantize)), fill => (field => f, scale => (type => threshold)), stroke => (field => g, scale => (type => ordinal)), shape => (field => h, scale => (type => band)), angle => (field => i, scale => (type => point)), theta => (field => j, scale => (type => 'custom'))))
+    dialects:
+      hyper:
+
+  # Every scale property
+  - name: vis_scale_properties
+    input: |-
+      select * from t visualize using vegalite (mark => point, encoding => (x => (field => a, scale => (domain => [0, 10], domain_min => 0, domain_max => 10, domain_mid => 5, range => [0, 100], range_min => 0, range_max => 100, scheme => 'blues', interpolate => 'rgb', nice => true, zero => false, clamp => true, padding => 1, padding_inner => 0.1, padding_outer => 0.2, reverse => true, round => true, exponent => 2, bins => [0, 5, 10], name => 'xs'))))
+    dialects:
+      hyper:
+
+  # Every axis property
+  - name: vis_axis_properties
+    input: |-
+      select * from t visualize using vegalite (mark => point, encoding => (x => (field => a, axis => (orient => 'top', format => '.1f', format_type => 'number', grid => true, ticks => false, tick_count => 5, tick_size => 3, label_angle => 45, label_font_size => 10, label_overlap => true, direction => 'horizontal', offset => 2, values => [1, 2, 3], z_index => 1, title => 'X', domain => false, name => 'xa'))))
+    dialects:
+      hyper:
+
+  # Every legend property
+  - name: vis_legend_properties
+    input: |-
+      select * from t visualize using vegalite (mark => point, encoding => (color => (field => a, legend => (type => 'symbol', orient => 'right', format => '.1f', format_type => 'number', direction => 'vertical', title => 'C', values => [1, 2], padding => 4, offset => 2, z_index => 1, name => 'ca'))))
+    dialects:
+      hyper:
+
+  # Nested objects as generic values
+  - name: vis_nested_object_value
+    input: |-
+      select * from t visualize using vegalite (mark => point, encoding => (x => (field => a, condition => (filter => true, name => 'x'), sort => (name => 'by'))))
+    dialects:
+      hyper:
+
+  # Function calls and column refs in generic values
+  - name: vis_function_value
+    input: |-
+      select * from t visualize using vegalite (mark => point, encoding => (x => (field => t.a, aggregate => sum(b)), y => count(c), color => t.d))
+    dialects:
+      hyper:
+
+  # Empty spec fields are skipped
+  - name: vis_empty_fields
+    input: |-
+      select * from t visualize using vegalite (mark => bar,, encoding => (x => a,,))
+    dialects:
+      hyper:
+
+  # Dashboard placement with signed integers
+  - name: vis_dashboard_signed
+    input: |-
+      select * from t visualize using vegalite (mark => bar, dashboard => (row => +1, column => -2, width => 3, height => 4))
+    dialects:
+      hyper:
+
+  # UMAP with euclidean metric and signed numbers
+  - name: vis_umap_euclidean
+    input: |-
+      select * from t visualize using umap (vector => v, min_dist => -0.5, neighbors => +5, metric => euclidean, dashboard => (width => 4))
+    dialects:
+      hyper:
+
+  # UMAP column expressions
+  - name: vis_umap_function_column
+    input: |-
+      select * from t visualize using umap (vector => cast(v as float), category => t.c, label => lower(n))
+    dialects:
+      hyper:
+
+
+
+
+
+  # Markdown with dashboard placement
+  - name: vis_markdown_dashboard
+    input: |-
+      select a from t visualize using markdown (template => '**{{a}}**', dashboard => (row => 0, column => 0, width => 12, height => 2))
+    dialects:
+      hyper:

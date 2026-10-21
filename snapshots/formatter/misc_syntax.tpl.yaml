@@ -1,0 +1,101 @@
+formatter-snapshots:
+
+  # Types with modifiers that are not built in
+  - name: type_generic_modifiers
+    input: select cast(a as foo(1, 2)) from t
+    dialects:
+      hyper:
+
+  # Set returning types
+  - name: type_setof
+    input: select cast(a as setof int) from t
+    dialects:
+      hyper:
+
+  # Column options
+  - name: column_options
+    input: create table t (a int options (x 'y', z 'w'), b int options (k 'v') not null)
+    dialects:
+      hyper:
+
+
+  # Typecast as an operand
+  - name: op_typecast_operand
+    input: select (a + b)::int, -a::int, (a::int)::text, a::int + b::int from t
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(a int, b int);
+
+  # Unary operators in insert values
+  - name: insert_values_unary
+    input: insert into t values (-1, +2, not true), (3, 4, false)
+    dialects:
+      hyper:
+
+  # Nested subqueries
+  - name: select_nested_subqueries
+    input: select (select max(a) from t where a < (select 10)) as m, (select 1) from (select 2) s
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(a int);
+
+  # Fetch and offset
+  - name: select_limit_offset
+    input: select a from t order by a limit 10 offset 5
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(a int);
+
+  # Lateral subquery
+  - name: tableref_lateral
+    input: select * from t, lateral (select t.a) s
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(a int);
+
+  # Table alias with column aliases
+  - name: tableref_alias_columns
+    input: select * from t as x(a, b)
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table t(c int, d int);
+
+  # Delete with using and returning
+  - name: delete_using_returning
+    input: delete from t using u where t.a = u.a returning t.a
+    dialects:
+      hyper:
+
+  # Insert with a select source and returning
+  - name: insert_select_returning
+    input: insert into t (a, b) select c, d from u returning *
+    dialects:
+      hyper:
+
+  # Insert with default values
+  - name: insert_default_values
+    input: insert into t default values
+    dialects:
+      hyper:
+
+  # Common table expression in an insert
+  - name: insert_with_cte
+    input: with c as (select 1, 2) insert into t select * from c
+    dialects:
+      hyper:
+
+  # Explain with options
+  - name: explain_format_option
+    input: explain (format json) select 1
+    dialects:
+      hyper:

@@ -1,0 +1,108 @@
+formatter-snapshots:
+
+  # Natural joins
+  - name: join_natural
+    input: select * from a natural join b
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table a(x int);
+            create table b(x int);
+
+  - name: join_natural_left
+    input: select * from a natural left join b
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table a(x int);
+            create table b(x int);
+
+  - name: join_natural_right
+    input: select * from a natural right join b
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table a(x int);
+            create table b(x int);
+
+  - name: join_natural_full
+    input: select * from a natural full join b
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table a(x int);
+            create table b(x int);
+
+  - name: join_natural_left_outer
+    input: select * from a natural left outer join b
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table a(x int);
+            create table b(x int);
+
+  - name: join_natural_right_outer
+    input: select * from a natural right outer join b
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table a(x int);
+            create table b(x int);
+
+  - name: join_natural_full_outer
+    input: select * from a natural full outer join b
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table a(x int);
+            create table b(x int);
+
+  # Semi and anti joins
+  - name: join_semi
+    input: select * from a semi join b on a.x = b.x
+    dialects:
+      hyper:
+
+  - name: join_anti
+    input: select * from a anti join b on a.x = b.x
+    dialects:
+      hyper:
+
+  # Join with a using list
+  - name: join_using
+    input: select * from a join b using (x)
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table a(x int);
+            create table b(x int);
+
+  # Chained joins nest to the left
+  - name: join_chain
+    input: select * from a natural join b cross join c left join d on d.x = c.x
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table a(x int);
+            create table b(x int);
+            create table c(x int);
+            create table d(x int);
+
+  # Joined subqueries
+  - name: join_subquery
+    input: select * from (select x from a) s join (select x from b) u on s.x = u.x
+    dialects:
+      hyper:
+        validation:
+          setup: |-
+            create table a(x int);
+            create table b(x int);

@@ -1,0 +1,256 @@
+formatter-snapshots:
+
+  - name: fn_overlay
+    input: |-
+      select overlay(a placing b from 2), overlay(a placing b from 2 for 3) from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select overlay(a placing b from 2), overlay(a placing b from 2 for 3) from t;
+          - mode: compact
+            expected: |-
+              select overlay(a placing b from 2), overlay(a placing b from 2 for 3) from t;
+          - mode: pretty
+            expected: |-
+              select overlay(a placing b from 2), overlay(a placing b from 2 for 3)
+              from t;
+        validation:
+          setup: |-
+            create table t(a text, b text);
+
+  - name: fn_position_substring
+    input: |-
+      select position(a in b), substring(a from 1 for 2), substring(a from 2) from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select position(a in b), substring(a from 1 for 2), substring(a from 2) from t;
+          - mode: compact
+            expected: |-
+              select position(a in b), substring(a from 1 for 2), substring(a from 2) from t;
+          - mode: pretty
+            expected: |-
+              select position(a in b), substring(a from 1 for 2), substring(a from 2)
+              from t;
+        validation:
+          setup: |-
+            create table t(a text, b text);
+
+  - name: fn_trim
+    input: |-
+      select trim(both 'x' from a), trim(leading 'x' from a), trim(trailing 'x' from a), trim(a), trim(both from a) from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select trim(both 'x' from a), trim(leading 'x' from a), trim(trailing 'x' from a), trim(a), trim(both from a) from t;
+          - mode: compact
+            expected: |-
+              select trim(both 'x' from a), trim(leading 'x' from a), trim(trailing 'x' from a), trim(a), trim(both from a) from t;
+          - mode: pretty
+            expected: |-
+              select trim(both 'x' from a), trim(leading 'x' from a), trim(trailing 'x' from a), trim(a), trim(both from a)
+              from t;
+        validation:
+          setup: |-
+            create table t(a text);
+
+  - name: fn_extract_fields
+    input: |-
+      select extract(year from d), extract(month from d), extract(day from d), extract(hour from d), extract(minute from d), extract(second from d) from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select extract(year from d), extract(month from d), extract(day from d), extract(hour from d), extract(minute from d), extract(second from d) from t;
+          - mode: compact
+            expected: |-
+              select extract(year from d), extract(month from d), extract(day from d), extract(hour from d), extract(minute from d),
+                extract(second from d)
+              from t;
+          - mode: pretty
+            expected: |-
+              select extract(year from d),
+                extract(month from d),
+                extract(day from d),
+                extract(hour from d),
+                extract(minute from d),
+                extract(second from d)
+              from t;
+        validation:
+          setup: |-
+            create table t(d timestamp);
+
+  - name: fn_sql_value_functions
+    input: |-
+      select current_date, current_time, current_timestamp, localtime, localtimestamp, current_user, session_user, current_catalog, current_schema
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select current_date, current_time, current_timestamp, localtime, localtimestamp, current_user, session_user, current_catalog, current_schema;
+          - mode: compact
+            expected: |-
+              select current_date, current_time, current_timestamp, localtime, localtimestamp, current_user, session_user,
+                current_catalog, current_schema;
+          - mode: pretty
+            expected: |-
+              select current_date,
+                current_time,
+                current_timestamp,
+                localtime,
+                localtimestamp,
+                current_user,
+                session_user,
+                current_catalog,
+                current_schema;
+
+  - name: fn_current_role
+    input: |-
+      select current_role, user
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select current_role, user;
+          - mode: compact
+            expected: |-
+              select current_role, user;
+          - mode: pretty
+            expected: |-
+              select current_role, user;
+
+  - name: fn_collation_for
+    input: |-
+      select collation for (a) from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select collation for(a) from t;
+          - mode: compact
+            expected: |-
+              select collation for(a) from t;
+          - mode: pretty
+            expected: |-
+              select collation for(a)
+              from t;
+
+  - name: fn_aggregate_distinct_filter
+    input: |-
+      select count(distinct a), sum(a) filter (where b > 1), count(*) filter (where a is not null) from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select count(distinct a), sum(a) filter (where b > 1), count(*) filter (where a is not null) from t;
+          - mode: compact
+            expected: |-
+              select count(distinct a), sum(a) filter (where b > 1), count(*) filter (where a is not null) from t;
+          - mode: pretty
+            expected: |-
+              select count(distinct a), sum(a) filter (where b > 1), count(*) filter (where a is not null)
+              from t;
+        validation:
+          setup: |-
+            create table t(a int, b int);
+
+  - name: fn_within_group
+    input: |-
+      select percentile_cont(0.5) within group (order by a), mode() within group (order by a) from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select percentile_cont(0.5) within group (order by a), mode() within group (order by a) from t;
+          - mode: compact
+            expected: |-
+              select percentile_cont(0.5) within group (order by a), mode() within group (order by a) from t;
+          - mode: pretty
+            expected: |-
+              select percentile_cont(0.5) within group (order by a), mode() within group (order by a)
+              from t;
+        validation:
+          setup: |-
+            create table t(a int);
+
+  - name: fn_variadic
+    input: |-
+      select f(variadic a), f(a, variadic b)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select f(variadic a), f(a, variadic b);
+          - mode: compact
+            expected: |-
+              select f(variadic a), f(a, variadic b);
+          - mode: pretty
+            expected: |-
+              select f(variadic a), f(a, variadic b);
+
+  - name: fn_named_arguments
+    input: |-
+      select f(a => 1, b => 2), g(c := 3)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select f(a => 1, b => 2), g(c => 3);
+          - mode: compact
+            expected: |-
+              select f(a => 1, b => 2), g(c => 3);
+          - mode: pretty
+            expected: |-
+              select f(a => 1, b => 2), g(c => 3);
+
+  - name: fn_from_alias_columns
+    input: |-
+      select * from generate_series(1, 3) as g(n)
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select * from generate_series(1, 3) g(n);
+          - mode: compact
+            expected: |-
+              select * from generate_series(1, 3) g(n);
+          - mode: pretty
+            expected: |-
+              select *
+              from generate_series(1, 3) g(n);
+        validation:
+
+  - name: fn_coalesce_family
+    input: |-
+      select coalesce(a, b), nullif(a, b), greatest(a, b), least(a, b) from t
+    dialects:
+      hyper:
+        formatted:
+          - mode: inline
+            expected: |-
+              select coalesce(a, b), nullif(a, b), greatest(a, b), least(a, b) from t;
+          - mode: compact
+            expected: |-
+              select coalesce(a, b), nullif(a, b), greatest(a, b), least(a, b) from t;
+          - mode: pretty
+            expected: |-
+              select coalesce(a, b), nullif(a, b), greatest(a, b), least(a, b)
+              from t;
+        validation:
+          setup: |-
+            create table t(a int, b int);
