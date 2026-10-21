@@ -1,7 +1,15 @@
 """Repository rule for Playwright's pinned Firefox build."""
 
 _REVISION = "1543"
-_BASE_URL = "https://cdn.playwright.dev/dbazure/download/playwright/builds/firefox/{}/".format(_REVISION)
+
+# Mirrors in the order Playwright's own installer tries them. The first one
+# redirects to playwright.download.prss.microsoft.com, which does not always
+# resolve, so fall back to the storage bucket behind cdn.playwright.dev.
+_MIRRORS = [
+    "https://cdn.playwright.dev/dbazure/download/playwright",
+    "https://playwright.download.prss.microsoft.com/dbazure/download/playwright",
+    "https://cdn.playwright.dev",
+]
 
 _PLATFORMS = {
     ("darwin", "aarch64"): (
@@ -40,7 +48,7 @@ def _playwright_firefox_repository_impl(repository_ctx):
         fail("Playwright Firefox is not available for {}-{}".format(os_key, arch))
     archive, sha256, executable = platform
     repository_ctx.download_and_extract(
-        url = _BASE_URL + archive,
+        url = ["{}/builds/firefox/{}/{}".format(mirror, _REVISION, archive) for mirror in _MIRRORS],
         sha256 = sha256,
     )
     repository_ctx.file("BUILD.bazel", content = """
