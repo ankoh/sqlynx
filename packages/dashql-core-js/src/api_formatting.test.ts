@@ -182,10 +182,10 @@ describe('DashQL formatting', () => {
         expect(script.isFullyFormattable(config)).toBe(true);
     });
 
-    it('reports formatter placeholders as incomplete formatting', async () => {
+    it('formats bit types without placeholders', async () => {
         const catalog = dql!.createCatalog();
         const script = dql!.createScript(catalog);
-        script.insertTextAt(0, "select cast('1' as bit)");
+        script.insertTextAt(0, "select cast('1' as bit varying(3))");
         const config = new dashql.buffers.formatting.FormattingConfigT(
             dashql.buffers.formatting.FormattingDialect.HYPER,
             dashql.buffers.formatting.FormattingMode.COMPACT,
@@ -193,12 +193,23 @@ describe('DashQL formatting', () => {
             2,
         );
 
-        const nodeIds = script.getUnformattableNodes(config);
-        expect(nodeIds.length).toBeGreaterThan(0);
-        const parsed = script.getParsed();
-        const nodeTypes = nodeIds.map(nodeId => parsed.read().nodes(nodeId)?.nodeType());
-        expect(nodeTypes).toContain(dashql.buffers.parser.NodeType.OBJECT_SQL_BIT_TYPE);
-        parsed.destroy();
+        expect(script.getUnformattableNodes(config)).toHaveLength(0);
+        expect(script.isFullyFormattable(config)).toBe(true);
+        expect(script.format(config, null, true).toString()).toEqual("select cast('1' as bit varying(3));");
+    });
+
+    it('reports statements with syntax errors as incomplete formatting', async () => {
+        const catalog = dql!.createCatalog();
+        const script = dql!.createScript(catalog);
+        script.insertTextAt(0, "select 1; selec   2");
+        const config = new dashql.buffers.formatting.FormattingConfigT(
+            dashql.buffers.formatting.FormattingDialect.HYPER,
+            dashql.buffers.formatting.FormattingMode.COMPACT,
+            80,
+            2,
+        );
+
+        expect(script.isFullyFormattable(config)).toBe(false);
     });
 
     it('reports trailing visualizations as fully formattable', async () => {
